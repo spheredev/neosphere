@@ -13,10 +13,7 @@ main(int argc, char* argv[])
 {
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap_default();
-	duk_push_global_object(g_duktape);
-	duk_push_c_function(g_duktape, &duk_FlipScreen, DUK_VARARGS);
-	duk_put_prop_string(g_duktape, -2, "FlipScreen");
-	duk_pop(g_duktape);
+	InitializeAPI(g_duktape);
 	
 	// create render window
 	sfVideoMode videoMode;
@@ -27,7 +24,7 @@ main(int argc, char* argv[])
 	sfRenderWindow_clear(g_window, sfColor_fromRGB(0, 0, 0));
 	
 	// inject test script
-	duk_peval_string_noresult(g_duktape, "function game() { while (true) FlipScreen(); }");
+	duk_peval_string_noresult(g_duktape, "function game() { while (true) { Rectangle(10, 10, 110, 110, CreateColor(0, 128, 0, 255)); FlipScreen(); } }");
 	
 	// call game() function in script
 	duk_push_global_object(g_duktape);
