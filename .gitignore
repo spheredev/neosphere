@@ -17,6 +17,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Log files
+*.log
+
 # ==========================
 # Visual Studio build cruft
 # ==========================

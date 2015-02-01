@@ -1,60 +1,55 @@
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
 #include "duktape.h"
-#include <SFML/System.h>
-#include <SFML/Window.h>
-#include <SFML/Graphics.h>
-#include <SFML/Audio.h>
 
-extern sfRenderWindow* g_window;
+extern ALLEGRO_DISPLAY*     g_display;
+extern ALLEGRO_EVENT_QUEUE* g_events;
 
-static void _registerScriptFunc(duk_context* ctx, const char* name, duk_c_function fn);
-static int  duk_CreateColor(duk_context* ctx);
-static int  duk_FlipScreen(duk_context* ctx);
-static int  duk_Rectangle(duk_context* ctx);
+static int duk_CreateColor(duk_context* ctx);
+static int duk_FlipScreen(duk_context* ctx);
+static int duk_Rectangle(duk_context* ctx);
+
+void
+_registerScriptFunc(duk_context* ctx, const char* className, const char* name, duk_c_function fn)
+{
+	duk_push_global_object(ctx);
+	if (className != NULL) {
+		duk_get_prop_string(ctx, -1, className);
+		duk_get_prop_string(ctx, -1, "prototype");
+	}
+	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, name);
+	if (className != NULL) {
+		duk_pop(ctx);
+		duk_pop(ctx);
+	}
+	duk_pop(ctx);
+}
 
 void
 InitializeAPI(duk_context* ctx)
 {
-	_registerScriptFunc(ctx, "CreateColor", &duk_CreateColor);
-	_registerScriptFunc(ctx, "FlipScreen", &duk_FlipScreen);
-	_registerScriptFunc(ctx, "Rectangle", &duk_Rectangle);
-}
-
-void
-_registerScriptFunc(duk_context* ctx, const char* name, duk_c_function fn)
-{
-	duk_push_global_object(ctx);
-	duk_push_c_function(ctx, fn, DUK_VARARGS);
-	duk_put_prop_string(ctx, -2, name);
-	duk_pop(ctx);
+	_registerScriptFunc(ctx, NULL, "CreateColor", &duk_CreateColor);
+	_registerScriptFunc(ctx, NULL, "FlipScreen", &duk_FlipScreen);
+	_registerScriptFunc(ctx, NULL, "Rectangle", &duk_Rectangle);
 }
 
 int
-duk_FlipScreen(duk_context* ctx)
+duk_Abort(duk_context* ctx)
 {
-	sfRenderWindow_display(g_window);
-	sfRenderWindow_clear(g_window, sfColor_fromRGB(0, 0, 0));
-	sfEvent event;
-	while (sfRenderWindow_pollEvent(g_window, &event)) {
-		if (event.type == sfEvtClosed) {
-			sfRenderWindow_close(g_window);
-			duk_push_string(ctx, "");
-			duk_throw(ctx);
-		}
-	}
+	const char* message = duk_get_string(ctx, 0);
+	duk_error(ctx, DUK_ERR_UNCAUGHT_ERROR, "%s", message);
 	return 0;
 }
 
 int
 duk_CreateColor(duk_context* ctx)
 {
-	int nArgs = duk_get_top(ctx);
-	int r = duk_to_int(ctx, 0);
-	int g = duk_to_int(ctx, 1);
-	int b = duk_to_int(ctx, 2);
-	int a = 255;
-	if (nArgs >= 4) {
-		a = duk_to_int(ctx, 3);
-	}
+	int n_args = duk_get_top(ctx);
+	int r = duk_get_int(ctx, 0);
+	int g = duk_get_int(ctx, 1);
+	int b = duk_get_int(ctx, 2);
+	int a = n_args > 3 ? duk_get_int(ctx, 3) : 255;
 	duk_push_object(ctx);
 	duk_push_int(ctx, r);
 	duk_put_prop_string(ctx, -2, "r");
@@ -68,25 +63,39 @@ duk_CreateColor(duk_context* ctx)
 }
 
 int
+duk_FlipScreen(duk_context* ctx)
+{
+	ALLEGRO_EVENT event;
+	ALLEGRO_TIMEOUT timeout;
+	al_init_timeout(&timeout, 0.05);
+	bool got_event = al_wait_for_event_until(g_events, &event, &timeout);
+	if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+		duk_error(ctx, DUK_ERR_NONE, "Display window closed by user");
+	}
+	al_flip_display();
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	return 0;
+}
+
+int
 duk_Rectangle(duk_context* ctx)
 {
-	int nArgs = duk_get_top(ctx);
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int cx = duk_to_int(ctx, 2);
-	int cy = duk_to_int(ctx, 3);
+	float x = (float)duk_get_number(ctx, 0);
+	float y = (float)duk_get_number(ctx, 1);
+	float width = (float)duk_get_number(ctx, 2);
+	float height = (float)duk_get_number(ctx, 3);
 	duk_get_prop_string(ctx, -1, "r");
-	int r = duk_to_int(ctx, -1);
+	int r = duk_get_int(ctx, -1);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "g");
-	int g = duk_to_int(ctx, -1);
+	int g = duk_get_int(ctx, -1);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "b");
-	int b = duk_to_int(ctx, -1);
+	int b = duk_get_int(ctx, -1);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "a");
-	int a = duk_to_int(ctx, -1);
+	int a = duk_get_int(ctx, -1);
 	duk_pop(ctx);
-	// TODO: render rect to window
+	al_draw_filled_rectangle(x, y, x + width, y + height, al_map_rgba(r, g, b, a));
 	return 0;
 }
