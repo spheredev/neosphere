@@ -18,10 +18,10 @@
     <ClCompile Include="duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scriptfuncs.c">
+    <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.c">
+    <ClCompile Include="sphere_api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,10 @@
     <ClInclude Include="duktape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scriptfuncs.h">
+    <ClInclude Include="minisphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sphere_api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

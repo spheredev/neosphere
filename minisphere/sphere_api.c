@@ -1,48 +1,56 @@
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_primitives.h>
-#include "duktape.h"
+#include "minisphere.h"
 
-extern ALLEGRO_DISPLAY*     g_display;
-extern ALLEGRO_EVENT_QUEUE* g_events;
-
-static int duk_CreateColor(duk_context* ctx);
-static int duk_FlipScreen(duk_context* ctx);
-static int duk_Rectangle(duk_context* ctx);
+static void reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
+static duk_ret_t duk_GetVersion(duk_context* ctx);
+static duk_ret_t duk_Abort(duk_context* ctx);
+static duk_ret_t duk_CreateColor(duk_context* ctx);
+static duk_ret_t duk_FlipScreen(duk_context* ctx);
+static duk_ret_t duk_Rectangle(duk_context* ctx);
 
 void
-_registerScriptFunc(duk_context* ctx, const char* className, const char* name, duk_c_function fn)
+init_sphere_api(duk_context* ctx)
+{
+	reg_script_func(ctx, NULL, "GetVersion", &duk_GetVersion);
+	reg_script_func(ctx, NULL, "Abort", &duk_Abort);
+	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
+	reg_script_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
+	reg_script_func(ctx, NULL, "Rectangle", &duk_Rectangle);
+}
+
+void
+reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
-	if (className != NULL) {
-		duk_get_prop_string(ctx, -1, className);
+	if (ctor_name != NULL) {
+		duk_get_prop_string(ctx, -1, ctor_name);
 		duk_get_prop_string(ctx, -1, "prototype");
 	}
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, name);
-	if (className != NULL) {
+	if (ctor_name != NULL) {
 		duk_pop(ctx);
 		duk_pop(ctx);
 	}
 	duk_pop(ctx);
 }
 
-void
-InitializeAPI(duk_context* ctx)
+duk_ret_t
+duk_GetVersion(duk_context* ctx)
 {
-	_registerScriptFunc(ctx, NULL, "CreateColor", &duk_CreateColor);
-	_registerScriptFunc(ctx, NULL, "FlipScreen", &duk_FlipScreen);
-	_registerScriptFunc(ctx, NULL, "Rectangle", &duk_Rectangle);
+	duk_push_number(ctx, 1.5);
+	return 1;
 }
 
-int
+duk_ret_t
 duk_Abort(duk_context* ctx)
 {
-	const char* message = duk_get_string(ctx, 0);
-	duk_error(ctx, DUK_ERR_UNCAUGHT_ERROR, "%s", message);
+	int n_args = duk_get_top(ctx);
+	const char* err_msg = n_args > 0 ? duk_get_string(ctx, 0) : "Abort() was called";
+	duk_error(ctx, DUK_ERR_UNCAUGHT_ERROR, "%s", err_msg);
 	return 0;
 }
 
-int
+duk_ret_t
 duk_CreateColor(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
@@ -62,7 +70,7 @@ duk_CreateColor(duk_context* ctx)
 	return 1;
 }
 
-int
+duk_ret_t
 duk_FlipScreen(duk_context* ctx)
 {
 	ALLEGRO_EVENT event;
@@ -77,7 +85,7 @@ duk_FlipScreen(duk_context* ctx)
 	return 0;
 }
 
-int
+duk_ret_t
 duk_Rectangle(duk_context* ctx)
 {
 	float x = (float)duk_get_number(ctx, 0);

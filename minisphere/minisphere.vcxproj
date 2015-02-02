@@ -96,11 +96,12 @@
   <ItemGroup>
     <ClCompile Include="duktape.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="scriptfuncs.c" />
+    <ClCompile Include="sphere_api.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h" />
-    <ClInclude Include="scriptfuncs.h" />
+    <ClInclude Include="minisphere.h" />
+    <ClInclude Include="sphere_api.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
