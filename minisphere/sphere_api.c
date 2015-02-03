@@ -45,7 +45,7 @@ duk_ret_t
 duk_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* err_msg = n_args > 0 ? duk_get_string(ctx, 0) : "Abort() was called";
+	const char* err_msg = n_args > 0 ? duk_to_string(ctx, 0) : "Abort() was called";
 	duk_error(ctx, DUK_ERR_UNCAUGHT_ERROR, "%s", err_msg);
 	return 0;
 }
@@ -78,7 +78,7 @@ duk_FlipScreen(duk_context* ctx)
 	al_init_timeout(&timeout, 0.05);
 	bool got_event = al_wait_for_event_until(g_events, &event, &timeout);
 	if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-		duk_error(ctx, DUK_ERR_NONE, "Display window closed by user");
+		duk_error(ctx, DUK_ERR_ERROR, "DISPLAY_CLOSED");
 	}
 	al_flip_display();
 	al_clear_to_color(al_map_rgb(0, 0, 0));
