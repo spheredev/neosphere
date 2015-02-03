@@ -45,7 +45,7 @@ duk_ret_t
 duk_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* err_msg = n_args > 0 ? duk_to_string(ctx, 0) : "Abort() was called";
+	const char* err_msg = n_args > 0 ? duk_to_string(ctx, 0) : "Abort() called by script";
 	duk_error(ctx, DUK_ERR_UNCAUGHT_ERROR, "%s", err_msg);
 	return 0;
 }

@@ -1,3 +1,4 @@
+#include <malloc.h>
 #include <stdbool.h>
 
 #include <allegro5/allegro.h>
