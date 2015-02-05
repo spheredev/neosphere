@@ -11,7 +11,7 @@ duk_context*         g_duktape  = NULL;
 ALLEGRO_EVENT_QUEUE* g_events   = NULL;
 ALLEGRO_FONT*        g_sys_font = NULL;
 
-// enables visual styles (VC++)
+// enable visual styles (VC++)
 #pragma comment(linker, \
     "\"/manifestdependency:type='Win32' "\
     "name='Microsoft.Windows.Common-Controls' "\
@@ -45,7 +45,13 @@ main(int argc, char** argv)
 	al_flip_display();
 
 	// inject test script
-	exec_result = duk_peval_string(g_duktape, "function game() { while (true1) { Abort(); Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); Rectangle(80, 80, 100, 100, CreateColor(255, 0, 0, 128)); FlipScreen(); } }");
+	duk_push_string(g_duktape, "functor game() { while (true) { Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); Rectangle(80, 80, 100, 100, CreateColor(255, 0, 0, 128)); FlipScreen(); } }");
+	duk_push_string(g_duktape, "main.js");
+	exec_result = duk_pcompile(g_duktape, 0x0);
+	if (exec_result != DUK_EXEC_SUCCESS) {
+		handle_js_error();
+	}
+	exec_result = duk_pcall(g_duktape, 0);
 	if (exec_result != DUK_EXEC_SUCCESS) {
 		handle_js_error();
 	}
@@ -72,7 +78,7 @@ handle_js_error()
 	duk_errcode_t err_code = duk_get_error_code(g_duktape, -1);
 	duk_dup(g_duktape, -1);
 	const char* err_msg = duk_safe_to_string(g_duktape, -1);
-	if (err_code != DUK_ERR_ERROR || strcmp(err_msg, "Error: DISPLAY_CLOSED") != 0) {
+	if (err_code != DUK_ERR_ERROR || strcmp(err_msg, "Error: !exit") != 0) {
 		duk_get_prop_string(g_duktape, -2, "lineNumber");
 		duk_int_t line_num = duk_get_int(g_duktape, -1);
 		duk_pop(g_duktape);

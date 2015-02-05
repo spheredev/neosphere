@@ -1,8 +1,13 @@
 #include "minisphere.h"
 
 static void reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
+
 static duk_ret_t duk_GetVersion(duk_context* ctx);
+static duk_ret_t duk_GetVersionString(duk_context* ctx);
+static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_Abort(duk_context* ctx);
+static duk_ret_t duk_Exit(duk_context* ctx);
+
 static duk_ret_t duk_CreateColor(duk_context* ctx);
 static duk_ret_t duk_FlipScreen(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
@@ -11,7 +16,10 @@ void
 init_sphere_api(duk_context* ctx)
 {
 	reg_script_func(ctx, NULL, "GetVersion", &duk_GetVersion);
+	reg_script_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
+	reg_script_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	reg_script_func(ctx, NULL, "Abort", &duk_Abort);
+	reg_script_func(ctx, NULL, "Exit", &duk_Exit);
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
 	reg_script_func(ctx, NULL, "Rectangle", &duk_Rectangle);
@@ -42,11 +50,33 @@ duk_GetVersion(duk_context* ctx)
 }
 
 duk_ret_t
+duk_GetVersionString(duk_context* ctx)
+{
+	duk_push_sprintf(ctx, "minisphere %s (API: sphere-%s)", ENGINE_VER, SPHERE_API_VER);
+	return 1;
+}
+
+duk_ret_t
+duk_GarbageCollect(duk_context* ctx)
+{
+	duk_gc(ctx, 0x0);
+	duk_gc(ctx, 0x0);
+	return 0;
+}
+
+duk_ret_t
 duk_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* err_msg = n_args > 0 ? duk_to_string(ctx, 0) : "Abort() called by script";
-	duk_error(ctx, DUK_ERR_UNCAUGHT_ERROR, "%s", err_msg);
+	duk_error(ctx, DUK_ERR_ERROR, "%s", err_msg);
+	return 0;
+}
+
+duk_ret_t
+duk_Exit(duk_context* ctx)
+{
+	duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	return 0;
 }
 
@@ -78,7 +108,7 @@ duk_FlipScreen(duk_context* ctx)
 	al_init_timeout(&timeout, 0.05);
 	bool got_event = al_wait_for_event_until(g_events, &event, &timeout);
 	if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-		duk_error(ctx, DUK_ERR_ERROR, "DISPLAY_CLOSED");
+		duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	}
 	al_flip_display();
 	al_clear_to_color(al_map_rgb(0, 0, 0));
