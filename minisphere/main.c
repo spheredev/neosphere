@@ -45,7 +45,7 @@ main(int argc, char** argv)
 	al_flip_display();
 
 	// inject test script
-	duk_push_string(g_duktape, "functor game() { while (true) { Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); Rectangle(80, 80, 100, 100, CreateColor(255, 0, 0, 128)); FlipScreen(); } }");
+	duk_push_string(g_duktape, "function game() { while (true) { Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); Rectangle(80, 80, 100, 100, CreateColor(255, 0, 0, 128)); FlipScreen(); } }");
 	duk_push_string(g_duktape, "main.js");
 	exec_result = duk_pcompile(g_duktape, 0x0);
 	if (exec_result != DUK_EXEC_SUCCESS) {
