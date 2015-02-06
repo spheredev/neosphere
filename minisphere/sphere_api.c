@@ -53,8 +53,7 @@ reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, name);
 	if (ctor_name != NULL) {
-		duk_pop(ctx);
-		duk_pop(ctx);
+		duk_pop_2(ctx);
 	}
 	duk_pop(ctx);
 }
@@ -153,8 +152,8 @@ duk_BlendColorsWeighted(duk_context* ctx)
 	duk_double_t w2 = duk_get_number(ctx, 3);
 	duk_double_t sigma = w1 + w2;
 	duk_push_object(ctx);
-	duk_push_int(ctx, (g1 * w1 + g2 * w2) / sigma); duk_put_prop_string(ctx, -2, "green");
 	duk_push_int(ctx, (r1 * w1 + r2 * w2) / sigma); duk_put_prop_string(ctx, -2, "red");
+	duk_push_int(ctx, (g1 * w1 + g2 * w2) / sigma); duk_put_prop_string(ctx, -2, "green");
 	duk_push_int(ctx, (b1 * w1 + b2 * w2) / sigma); duk_put_prop_string(ctx, -2, "blue");
 	duk_push_int(ctx, (a1 * w1 + a2 * w2) / sigma); duk_put_prop_string(ctx, -2, "alpha");
 	return 1;
@@ -205,21 +204,14 @@ duk_SetClippingRectangle(duk_context* ctx)
 duk_ret_t
 duk_ApplyColorMask(duk_context* ctx)
 {
-	duk_get_prop_string(ctx, -1, "red");
-	int red = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "green");
-	int green = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "blue");
-	int blue = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "alpha");
-	int alpha = duk_get_int(ctx, -1);
-	duk_pop(ctx);
+	duk_int_t r, g, b, a;
+	duk_get_prop_string(ctx, -1, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	float width = (float)al_get_display_width(g_display);
 	float height = (float)al_get_display_height(g_display);
-	al_draw_filled_rectangle(0, 0, width, height, al_map_rgba(red, green, blue, alpha));
+	al_draw_filled_rectangle(0, 0, width, height, al_map_rgba(r, g, b, a));
 	return 0;
 }
 
@@ -247,18 +239,11 @@ duk_OutlinedRectangle(duk_context* ctx)
 	float x2 = x1 + (float)duk_get_number(ctx, 2) - 1;
 	float y2 = y1 + (float)duk_get_number(ctx, 3) - 1;
 	float thickness = n_args >= 6 ? (float)floor((double)duk_get_number(ctx, 5)) : 1;
-	duk_get_prop_string(ctx, 4, "r");
-	int r = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "g");
-	int g = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "b");
-	int b = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "a");
-	int a = duk_get_int(ctx, -1);
-	duk_pop(ctx);
+	duk_int_t r, g, b, a;
+	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(r, g, b, a), thickness);
 	return 0;
 }
@@ -270,18 +255,11 @@ duk_Rectangle(duk_context* ctx)
 	float y = (float)duk_get_number(ctx, 1);
 	float width = (float)duk_get_number(ctx, 2);
 	float height = (float)duk_get_number(ctx, 3);
-	duk_get_prop_string(ctx, -1, "r");
-	int r = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "g");
-	int g = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "b");
-	int b = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "a");
-	int a = duk_get_int(ctx, -1);
-	duk_pop(ctx);
+	duk_int_t r, g, b, a;
+	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	al_draw_filled_rectangle(x, y, x + width, y + height, al_map_rgba(r, g, b, a));
 	return 0;
 }
