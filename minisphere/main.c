@@ -45,7 +45,7 @@ main(int argc, char** argv)
 	al_flip_display();
 
 	// inject test script
-	duk_push_string(g_duktape, "function game() { while (true) { Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); Rectangle(80, 80, 100, 100, CreateColor(255, 0, 0, 128)); FlipScreen(); } }");
+	duk_push_string(g_duktape, "function game() { while (true) { Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); OutlinedRectangle(10, 10, 100, 100, CreateColor(255, 0, 0, 128), 3); FlipScreen(); } }");
 	duk_push_string(g_duktape, "main.js");
 	exec_result = duk_pcompile(g_duktape, 0x0);
 	if (exec_result != DUK_EXEC_SUCCESS) {
@@ -87,7 +87,7 @@ handle_js_error()
 		char* file_name = strrchr(file_path, '\\');
 		file_name = file_name != NULL ? (file_name + 1) : file_path;
 		duk_pop(g_duktape);
-		duk_push_sprintf(g_duktape, "%s (line %i)\n%s", file_name, (int)line_num, err_msg);
+		duk_push_sprintf(g_duktape, "%s (line %d)\n%s", file_name, (int)line_num, err_msg);
 		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
 	}
 }
