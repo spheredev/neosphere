@@ -6,7 +6,7 @@ static void do_teardown();
 
 static void on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg);
 
-ALLEGRO_DISPLAY*     g_display = NULL;
+ALLEGRO_DISPLAY*     g_display  = NULL;
 duk_context*         g_duktape  = NULL;
 ALLEGRO_EVENT_QUEUE* g_events   = NULL;
 ALLEGRO_FONT*        g_sys_font = NULL;
@@ -35,6 +35,10 @@ main(int argc, char** argv)
 	al_init_primitives_addon();
 	al_init_font_addon();
 	al_init_ttf_addon();
+	al_install_audio();
+	al_init_acodec_addon();
+	al_reserve_samples(8);
+	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_sys_font = al_load_ttf_font("consola.ttf", 8, 0x0);
 	g_display = al_create_display(320, 240);
 	al_set_window_title(g_display, "minisphere");
@@ -95,6 +99,7 @@ handle_js_error()
 void
 do_teardown(void)
 {
+	al_uninstall_audio();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_font(g_sys_font);
