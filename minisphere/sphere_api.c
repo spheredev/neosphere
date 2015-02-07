@@ -26,6 +26,7 @@ static duk_ret_t duk_Rectangle(duk_context* ctx);
 
 // Sound functions
 static duk_ret_t duk_LoadSound(duk_context* ctx);
+static duk_ret_t duk_Sound_finalize(duk_context* ctx);
 static duk_ret_t duk_Sound_isPlaying(duk_context* ctx);
 static duk_ret_t duk_Sound_isSeekable(duk_context* ctx);
 static duk_ret_t duk_Sound_getLength(duk_context* ctx);
@@ -296,7 +297,8 @@ duk_LoadSound(duk_context* ctx)
 	al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
 	al_set_audio_stream_gain(stream, 1.0);
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, stream); duk_put_prop_string(ctx, -2, "\xFFstreamPtr");
+	duk_push_pointer(ctx, stream); duk_put_prop_string(ctx, -2, "\xFFstream_ptr");
+	duk_push_c_function(ctx, &duk_Sound_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &duk_Sound_isPlaying, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isPlaying");
 	duk_push_c_function(ctx, &duk_Sound_isSeekable, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isSeekable");
 	duk_push_c_function(ctx, &duk_Sound_getRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRepeat");
@@ -311,11 +313,22 @@ duk_LoadSound(duk_context* ctx)
 }
 
 duk_ret_t
+duk_Sound_finalize(duk_context* ctx)
+{
+	ALLEGRO_AUDIO_STREAM* stream;
+	duk_get_prop_string(ctx, 0, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	al_set_audio_stream_playing(stream, false);
+	al_detach_audio_stream(stream);
+	al_destroy_audio_stream(stream);
+	return 0;
+}
+
+duk_ret_t
 duk_Sound_isPlaying(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_push_boolean(ctx, al_get_audio_stream_playing(stream));
 	return 1;
@@ -333,7 +346,7 @@ duk_Sound_getRepeat(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_push_boolean(ctx, al_get_audio_stream_playmode(stream) == ALLEGRO_PLAYMODE_LOOP);
 	return 1;
@@ -344,7 +357,7 @@ duk_Sound_getVolume(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_push_number(ctx, al_get_audio_stream_gain(stream));
 	return 1;
@@ -355,7 +368,7 @@ duk_Sound_setRepeat(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_bool_t is_looped = duk_get_boolean(ctx, 0);
 	ALLEGRO_PLAYMODE play_mode = is_looped ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE;
@@ -368,7 +381,7 @@ duk_Sound_setVolume(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	float new_vol = duk_get_number(ctx, 0);
 	al_set_audio_stream_gain(stream, new_vol);
@@ -380,7 +393,7 @@ duk_Sound_pause(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_set_audio_stream_playing(stream, false);
 	return 0;
@@ -392,7 +405,7 @@ duk_Sound_play(duk_context* ctx)
 	duk_idx_t n_args = duk_get_top(ctx);
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (n_args >= 1) {
 		ALLEGRO_PLAYMODE play_mode = duk_get_boolean(ctx, 0)
@@ -410,7 +423,7 @@ duk_Sound_reset(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_seek_audio_stream_secs(stream, 0.0);
 	al_set_audio_stream_playing(stream, true);
@@ -422,7 +435,7 @@ duk_Sound_stop(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFFstreamPtr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFFstream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_set_audio_stream_playing(stream, false);
 	al_seek_audio_stream_secs(stream, 0.0);
