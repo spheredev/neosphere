@@ -3,14 +3,14 @@
 static void reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
 
 // Engine functions
-static duk_ret_t duk_EvaluateScript(duk_context* ctx);
-static duk_ret_t duk_RequireScript(duk_context* ctx);
 static duk_ret_t duk_GetVersion(duk_context* ctx);
 static duk_ret_t duk_GetVersionString(duk_context* ctx);
 static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_Abort(duk_context* ctx);
+static duk_ret_t duk_EvaluateScript(duk_context* ctx);
 static duk_ret_t duk_Exit(duk_context* ctx);
 static duk_ret_t duk_GetTime(duk_context* ctx);
+static duk_ret_t duk_RequireScript(duk_context* ctx);
 
 // Color management functions
 static duk_ret_t duk_CreateColor(duk_context* ctx);
@@ -53,14 +53,14 @@ static duk_ret_t duk_Sound_stop(duk_context* ctx);
 void
 init_sphere_api(duk_context* ctx)
 {
-	reg_script_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
-	reg_script_func(ctx, NULL, "RequireScript", &duk_RequireScript);
 	reg_script_func(ctx, NULL, "GetVersion", &duk_GetVersion);
 	reg_script_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
 	reg_script_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	reg_script_func(ctx, NULL, "Abort", &duk_Abort);
+	reg_script_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
 	reg_script_func(ctx, NULL, "Exit", &duk_Exit);
 	reg_script_func(ctx, NULL, "GetTime", &duk_GetTime);
+	reg_script_func(ctx, NULL, "RequireScript", &duk_RequireScript);
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
@@ -96,33 +96,6 @@ reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c
 }
 
 duk_ret_t
-duk_EvaluateScript(duk_context* ctx)
-{
-	const char* script_file = duk_get_string(ctx, 0);
-	const char* script_path = normalize_path(script_file, "scripts");
-	duk_eval_file_noresult(ctx, script_path);
-	return 0;
-}
-
-duk_ret_t
-duk_RequireScript(duk_context* ctx)
-{
-	const char* script_file = duk_get_string(ctx, 0);
-	const char* script_path = normalize_path(script_file, "scripts");
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "RequireScript");
-	duk_get_prop_string(ctx, -1, script_path);
-	bool is_required = duk_get_boolean(ctx, -1);
-	duk_pop(ctx);
-	if (!is_required) {
-		duk_eval_file_noresult(ctx, script_path);
-		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
-	}
-	duk_pop_2(ctx);
-	return 0;
-}
-
-duk_ret_t
 duk_GetVersion(duk_context* ctx)
 {
 	duk_push_number(ctx, 1.5);
@@ -154,6 +127,15 @@ duk_Abort(duk_context* ctx)
 }
 
 duk_ret_t
+duk_EvaluateScript(duk_context* ctx)
+{
+	const char* script_file = duk_get_string(ctx, 0);
+	const char* script_path = normalize_path(script_file, "scripts");
+	duk_eval_file_noresult(ctx, script_path);
+	return 0;
+}
+
+duk_ret_t
 duk_Exit(duk_context* ctx)
 {
 	duk_error(ctx, DUK_ERR_ERROR, "!exit");
@@ -167,6 +149,24 @@ duk_GetTime(duk_context* ctx)
 	double ms = (double)c_ticks / CLOCKS_PER_SEC * 1000;
 	duk_push_number(ctx, ms);
 	return 1;
+}
+
+duk_ret_t
+duk_RequireScript(duk_context* ctx)
+{
+	const char* script_file = duk_get_string(ctx, 0);
+	const char* script_path = normalize_path(script_file, "scripts");
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "RequireScript");
+	duk_get_prop_string(ctx, -1, script_path);
+	bool is_required = duk_get_boolean(ctx, -1);
+	duk_pop(ctx);
+	if (!is_required) {
+		duk_eval_file_noresult(ctx, script_path);
+		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
+	}
+	duk_pop_2(ctx);
+	return 0;
 }
 
 duk_ret_t

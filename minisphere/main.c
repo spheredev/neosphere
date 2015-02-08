@@ -25,7 +25,8 @@ int
 main(int argc, char** argv)
 {
 	if (argc > 2 && strncmp(argv[1], "-game", 5) == 0) {
-		strncpy(g_game_path, argv[2], 1023);
+		strncpy(g_game_path, argv[2], 1024);
+		g_game_path[1023] = '\0';
 	}
 	else {
 		getcwd(g_game_path, sizeof g_game_path);
