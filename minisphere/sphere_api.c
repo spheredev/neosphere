@@ -3,11 +3,14 @@
 static void reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
 
 // Engine functions
+static duk_ret_t duk_EvaluateScript(duk_context* ctx);
+static duk_ret_t duk_RequireScript(duk_context* ctx);
 static duk_ret_t duk_GetVersion(duk_context* ctx);
 static duk_ret_t duk_GetVersionString(duk_context* ctx);
+static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_Abort(duk_context* ctx);
 static duk_ret_t duk_Exit(duk_context* ctx);
-static duk_ret_t duk_GarbageCollect(duk_context* ctx);
+static duk_ret_t duk_GetTime(duk_context* ctx);
 
 // Color management functions
 static duk_ret_t duk_CreateColor(duk_context* ctx);
@@ -21,6 +24,7 @@ static duk_ret_t duk_GetScreenWidth(duk_context* ctx);
 static duk_ret_t duk_SetClippingRectangle(duk_context* ctx);
 static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
 static duk_ret_t duk_FlipScreen(duk_context* ctx);
+static duk_ret_t duk_GradientRectangle(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
 
@@ -49,11 +53,14 @@ static duk_ret_t duk_Sound_stop(duk_context* ctx);
 void
 init_sphere_api(duk_context* ctx)
 {
+	reg_script_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
+	reg_script_func(ctx, NULL, "RequireScript", &duk_RequireScript);
 	reg_script_func(ctx, NULL, "GetVersion", &duk_GetVersion);
 	reg_script_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
+	reg_script_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	reg_script_func(ctx, NULL, "Abort", &duk_Abort);
 	reg_script_func(ctx, NULL, "Exit", &duk_Exit);
-	reg_script_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
+	reg_script_func(ctx, NULL, "GetTime", &duk_GetTime);
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
@@ -63,9 +70,13 @@ init_sphere_api(duk_context* ctx)
 	reg_script_func(ctx, NULL, "SetClippingRectangle", &duk_SetClippingRectangle);
 	reg_script_func(ctx, NULL, "ApplyColorMask", &duk_ApplyColorMask);
 	reg_script_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
+	reg_script_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
 	reg_script_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
 	reg_script_func(ctx, NULL, "Rectangle", &duk_Rectangle);
 	reg_script_func(ctx, NULL, "LoadSound", &duk_LoadSound);
+	duk_push_global_stash(ctx);
+	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
+	duk_pop(ctx);
 }
 
 void
@@ -82,6 +93,33 @@ reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c
 		duk_pop_2(ctx);
 	}
 	duk_pop(ctx);
+}
+
+duk_ret_t
+duk_EvaluateScript(duk_context* ctx)
+{
+	const char* script_file = duk_get_string(ctx, 0);
+	const char* script_path = normalize_path(script_file, "scripts");
+	duk_eval_file_noresult(ctx, script_path);
+	return 0;
+}
+
+duk_ret_t
+duk_RequireScript(duk_context* ctx)
+{
+	const char* script_file = duk_get_string(ctx, 0);
+	const char* script_path = normalize_path(script_file, "scripts");
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "RequireScript");
+	duk_get_prop_string(ctx, -1, script_path);
+	bool is_required = duk_get_boolean(ctx, -1);
+	duk_pop(ctx);
+	if (!is_required) {
+		duk_eval_file_noresult(ctx, script_path);
+		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
+	}
+	duk_pop_2(ctx);
+	return 0;
 }
 
 duk_ret_t
@@ -120,6 +158,15 @@ duk_Exit(duk_context* ctx)
 {
 	duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	return 0;
+}
+
+duk_ret_t
+duk_GetTime(duk_context* ctx)
+{
+	clock_t c_ticks = clock();
+	double ms = (double)c_ticks / CLOCKS_PER_SEC * 1000;
+	duk_push_number(ctx, ms);
+	return 1;
 }
 
 duk_ret_t
@@ -249,6 +296,44 @@ duk_FlipScreen(duk_context* ctx)
 	}
 	al_flip_display();
 	al_clear_to_color(al_map_rgb(0, 0, 0));
+	return 0;
+}
+
+duk_ret_t
+duk_GradientRectangle(duk_context* ctx)
+{
+	float x1 = (float)duk_get_number(ctx, 0);
+	float y1 = (float)duk_get_number(ctx, 1);
+	float x2 = x1 + (float)duk_get_number(ctx, 2);
+	float y2 = y1 + (float)duk_get_number(ctx, 3);
+	duk_int_t r, g, b, a;
+	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	ALLEGRO_COLOR color_ul = al_map_rgba(r, g, b, a);
+	duk_get_prop_string(ctx, 5, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	ALLEGRO_COLOR color_ur = al_map_rgba(r, g, b, a);
+	duk_get_prop_string(ctx, 6, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	ALLEGRO_COLOR color_lr = al_map_rgba(r, g, b, a);
+	duk_get_prop_string(ctx, 7, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	ALLEGRO_COLOR color_ll = al_map_rgba(r, g, b, a);
+	ALLEGRO_VERTEX verts[] = {
+		{ x1, y1, 0, 0, 0, color_ul },
+		{ x2, y1, 0, 0, 0, color_ur },
+		{ x1, y2, 0, 0, 0, color_ll },
+		{ x2, y2, 0, 0, 0, color_lr }
+	};
+	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
 

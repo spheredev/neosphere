@@ -1,15 +1,16 @@
 #include "minisphere.h"
 #include "sphere_api.h"
 
-static void handle_js_error();
-static void do_teardown();
+static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
-static void on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg);
+static void  handle_js_error ();
+static void  shutdown_engine ();
 
-ALLEGRO_DISPLAY*     g_display  = NULL;
-duk_context*         g_duktape  = NULL;
-ALLEGRO_EVENT_QUEUE* g_events   = NULL;
-ALLEGRO_FONT*        g_sys_font = NULL;
+ALLEGRO_DISPLAY*     g_display         = NULL;
+duk_context*         g_duktape         = NULL;
+ALLEGRO_EVENT_QUEUE* g_events          = NULL;
+char                 g_game_path[1024] = "";
+ALLEGRO_FONT*        g_sys_font        = NULL;
 
 // enable visual styles (VC++)
 #pragma comment(linker, \
@@ -23,8 +24,13 @@ ALLEGRO_FONT*        g_sys_font = NULL;
 int
 main(int argc, char** argv)
 {
-	duk_int_t exec_result;
-	
+	if (argc > 2 && strncmp(argv[1], "-game", 5) == 0) {
+		strncpy(g_game_path, argv[2], 1023);
+	}
+	else {
+		getcwd(g_game_path, sizeof g_game_path);
+	}
+
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_sphere_api(g_duktape);
@@ -48,10 +54,11 @@ main(int argc, char** argv)
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	al_flip_display();
 
-	// inject test script
-	duk_push_string(g_duktape, "function game() { while (true) { Rectangle(10, 10, 100, 100, CreateColor(0, 0, 255, 128)); OutlinedRectangle(10, 10, 100, 100, CreateColor(255, 0, 0, 128), 3); FlipScreen(); } }");
-	duk_push_string(g_duktape, "main.js");
-	exec_result = duk_pcompile(g_duktape, 0x0);
+	// load startup script
+	duk_int_t exec_result;
+	char* script_path = normalize_path("main.js", "scripts");
+	exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
+	free(script_path);
 	if (exec_result != DUK_EXEC_SUCCESS) {
 		handle_js_error();
 	}
@@ -72,8 +79,16 @@ main(int argc, char** argv)
 	duk_pop(g_duktape);
 	
 	// teardown
-	do_teardown();
+	shutdown_engine();
 	return 0;
+}
+
+void
+on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
+{
+	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	shutdown_engine();
+	exit(0);
 }
 
 void
@@ -96,8 +111,35 @@ handle_js_error()
 	}
 }
 
+char*
+normalize_path(const char* path, const char* base_dir)
+{
+	char* norm_path = strdup(path);
+	size_t path_len = strlen(norm_path);
+	for (char* c = norm_path; *c != '\0'; ++c) {
+		if (*c == '\\') *c = '/';
+	}
+	if (norm_path[0] == '/' || norm_path[1] == ':')
+		// absolute path - not allowed
+		return NULL;
+	bool is_homed = (strstr(norm_path, "~/") == norm_path);
+	char* out_path = NULL;
+	if (is_homed) {
+		size_t buf_size = strlen(g_game_path) + strlen(norm_path + 2) + 2;
+		out_path = malloc(buf_size);
+		sprintf(out_path, "%s/%s", g_game_path, norm_path + 2);
+	}
+	else {
+		size_t buf_size = strlen(g_game_path) + strlen(base_dir) + strlen(norm_path) + 3;
+		out_path = malloc(buf_size);
+		sprintf(out_path, "%s/%s/%s", g_game_path, base_dir, norm_path);
+	}
+	free(norm_path);
+	return out_path;
+}
+
 void
-do_teardown(void)
+shutdown_engine(void)
 {
 	al_uninstall_audio();
 	al_destroy_display(g_display);
@@ -105,12 +147,4 @@ do_teardown(void)
 	al_destroy_font(g_sys_font);
 	al_uninstall_system();
 	duk_destroy_heap(g_duktape);
-}
-
-void
-on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
-{
-	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	do_teardown();
-	exit(0);
 }

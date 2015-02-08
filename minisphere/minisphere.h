@@ -1,5 +1,8 @@
+#include <stdlib.h>
 #include <malloc.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <time.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_audio.h>
@@ -16,3 +19,5 @@ static const char* ENGINE_VER = "v0.0";
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
+
+extern char* normalize_path (const char* path, const char* base_dir);

@@ -5,5 +5,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArguments>-game "C:\Users\Bruce\Google Drive\Spectacles Saga Shared\Source\spectacles-i"</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-game "C:\Users\Bruce\Google Drive\Spectacles Saga Shared\Source\spectacles-i"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>
