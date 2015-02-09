@@ -1,7 +1,9 @@
+#ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
+#include <malloc.h>
+#endif
 
 #include <stdlib.h>
-#include <malloc.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>

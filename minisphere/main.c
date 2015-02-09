@@ -12,6 +12,7 @@ ALLEGRO_EVENT_QUEUE* g_events          = NULL;
 char                 g_game_path[1024] = "";
 ALLEGRO_FONT*        g_sys_font        = NULL;
 
+#ifdef _MSC_VER
 // enable visual styles (VC++)
 #pragma comment(linker, \
     "\"/manifestdependency:type='Win32' "\
@@ -20,13 +21,14 @@ ALLEGRO_FONT*        g_sys_font        = NULL;
     "processorArchitecture='*' "\
     "publicKeyToken='6595b64144ccf1df' "\
     "language='*'\"")
+#endif
 
 int
 main(int argc, char** argv)
 {
 	getcwd(g_game_path, sizeof g_game_path);
 	for (int i = 1; i < argc; ++i) {
-		if (stricmp(argv[i], "-game") == 0 && i < argc - 1) {
+		if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
 			strncpy(g_game_path, argv[i + 1], 1024);
 			g_game_path[1023] = '\0';
 		}
@@ -104,7 +106,7 @@ handle_js_error()
 		duk_pop(g_duktape);
 		duk_get_prop_string(g_duktape, -2, "fileName");
 		const char* file_path = duk_get_string(g_duktape, -1);
-		char* file_name = strrchr(file_path, '/');
+		const char* file_name = strrchr(file_path, '/');
 		file_name = file_name != NULL ? (file_name + 1) : file_path;
 		duk_pop(g_duktape);
 		duk_push_sprintf(g_duktape, "%s (line %d)\n%s", file_name, (int)line_num, err_msg);
@@ -112,16 +114,29 @@ handle_js_error()
 	}
 }
 
+inline bool
+path_is_absolute(const char *path)
+{
+    return 
+#ifdef _WIN32
+    (path[0]!='\0' && path[1] == ':') ||
+#else
+    path[0] == '/' ||
+#endif
+    true;
+}
+
 char*
 normalize_path(const char* path, const char* base_dir)
 {
 	char* norm_path = strdup(path);
 	size_t path_len = strlen(norm_path);
+#ifdef _WIN32
 	for (char* c = norm_path; *c != '\0'; ++c) {
 		if (*c == '\\') *c = '/';
 	}
-	if (norm_path[0] == '/' || norm_path[1] == ':')
-		// absolute path - not allowed
+#endif
+	if(path_is_absolute)
 		return NULL;
 	bool is_homed = (strstr(norm_path, "~/") == norm_path);
 	char* out_path = NULL;

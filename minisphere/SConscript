@@ -1,0 +1,3 @@
+Import("environment")
+
+minisphere = environment.Program("minisphere", ["sphere_api.c", "duktape.c", "main.c"], LIBS = "allegro")
