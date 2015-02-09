@@ -24,12 +24,12 @@ ALLEGRO_FONT*        g_sys_font        = NULL;
 int
 main(int argc, char** argv)
 {
-	if (argc > 2 && strncmp(argv[1], "-game", 5) == 0) {
-		strncpy(g_game_path, argv[2], 1024);
-		g_game_path[1023] = '\0';
-	}
-	else {
-		getcwd(g_game_path, sizeof g_game_path);
+	getcwd(g_game_path, sizeof g_game_path);
+	for (int i = 1; i < argc; ++i) {
+		if (stricmp(argv[i], "-game") == 0 && i < argc - 1) {
+			strncpy(g_game_path, argv[i + 1], 1024);
+			g_game_path[1023] = '\0';
+		}
 	}
 
 	// initialize JavaScript engine
@@ -104,7 +104,7 @@ handle_js_error()
 		duk_pop(g_duktape);
 		duk_get_prop_string(g_duktape, -2, "fileName");
 		const char* file_path = duk_get_string(g_duktape, -1);
-		char* file_name = strrchr(file_path, '\\');
+		char* file_name = strrchr(file_path, '/');
 		file_name = file_name != NULL ? (file_name + 1) : file_path;
 		duk_pop(g_duktape);
 		duk_push_sprintf(g_duktape, "%s (line %d)\n%s", file_name, (int)line_num, err_msg);
