@@ -5,11 +5,12 @@ static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* m
 static void handle_js_error ();
 static void shutdown_engine ();
 
-ALLEGRO_DISPLAY*     g_display         = NULL;
-duk_context*         g_duktape         = NULL;
-ALLEGRO_EVENT_QUEUE* g_events          = NULL;
-ALLEGRO_PATH*        g_game_path       = NULL;
-ALLEGRO_FONT*        g_sys_font        = NULL;
+ALLEGRO_DISPLAY*     g_display   = NULL;
+duk_context*         g_duktape   = NULL;
+ALLEGRO_EVENT_QUEUE* g_events    = NULL;
+ALLEGRO_CONFIG*      g_game_conf = NULL;
+ALLEGRO_PATH*        g_game_path = NULL;
+ALLEGRO_FONT*        g_sys_font  = NULL;
 
 // enable visual styles (VC++)
 #ifdef _MSC_VER
@@ -25,26 +26,7 @@ ALLEGRO_FONT*        g_sys_font        = NULL;
 int
 main(int argc, char** argv)
 {
-	char* game_dir = al_get_current_directory();
-	for (int i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
-			game_dir = al_realloc(game_dir, strlen(argv[i + 1]) + 1);
-			strcpy(game_dir, argv[i + 1]);
-		}
-	}
-	g_game_path = al_create_path(game_dir);
-	if (strcmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
-		al_destroy_path(g_game_path);
-		g_game_path = al_create_path_for_directory(game_dir);
-	}
-	al_make_path_canonical(g_game_path);
-	al_free(game_dir);
-
-	// initialize JavaScript engine
-	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
-	init_sphere_api(g_duktape);
-	
-	// initialize Allegro and create display window
+	// initialize Allegro
 	al_init();
 	al_init_native_dialog_addon();
 	al_init_primitives_addon();
@@ -52,11 +34,35 @@ main(int argc, char** argv)
 	al_init_ttf_addon();
 	al_install_audio();
 	al_init_acodec_addon();
+
+	// determine location of game.sgm
+	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(g_game_path, "startup");
+	for (int i = 1; i < argc; ++i) {
+		if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
+			al_destroy_path(g_game_path);
+			g_game_path = al_create_path(argv[i + 1]);
+			if (strcmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
+				al_destroy_path(g_game_path);
+				g_game_path = al_create_path_for_directory(argv[i + 1]);
+			}
+		}
+	}
+	al_make_path_canonical(g_game_path);
+	char* sgm_path = get_asset_path("game.sgm", NULL);
+	g_game_conf = al_load_config_file(sgm_path);
+	free(sgm_path);
+
+	// initialize JavaScript engine
+	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
+	init_sphere_api(g_duktape);
+	
+	// set up engine and create display window
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_sys_font = al_load_font("consola.ttf", 8, 0x0);
 	g_display = al_create_display(320, 240);
-	al_set_window_title(g_display, "minisphere");
+	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
@@ -65,7 +71,7 @@ main(int argc, char** argv)
 
 	// load startup script
 	duk_int_t exec_result;
-	char* script_path = get_asset_path("main.js", "scripts");
+	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts");
 	exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
 	free(script_path);
 	if (exec_result != DUK_EXEC_SUCCESS) {
@@ -132,10 +138,14 @@ handle_js_error()
 		duk_pop(g_duktape);
 		duk_get_prop_string(g_duktape, -2, "fileName");
 		const char* file_path = duk_get_string(g_duktape, -1);
-		char* file_name = strrchr(file_path, '/');
-		file_name = file_name != NULL ? (file_name + 1) : file_path;
-		duk_pop(g_duktape);
-		duk_push_sprintf(g_duktape, "%s (line %d)\n%s", file_name, (int)line_num, err_msg);
+		if (file_path != NULL) {
+			char* file_name = strrchr(file_path, '/');
+			file_name = file_name != NULL ? (file_name + 1) : file_path;
+			duk_push_sprintf(g_duktape, "%s (line %d)\n\n%s", file_name, (int)line_num, err_msg);
+		}
+		else {
+			duk_push_string(g_duktape, err_msg);
+		}
 		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
 	}
 }
@@ -147,6 +157,7 @@ shutdown_engine(void)
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_font(g_sys_font);
+	al_destroy_config(g_game_conf);
 	al_destroy_path(g_game_path);
 	al_uninstall_system();
 	duk_destroy_heap(g_duktape);
