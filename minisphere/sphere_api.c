@@ -130,8 +130,9 @@ duk_ret_t
 duk_EvaluateScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	const char* script_path = normalize_path(script_file, "scripts");
+	char* script_path = get_asset_path(script_file, "scripts");
 	duk_eval_file_noresult(ctx, script_path);
+	free(script_path);
 	return 0;
 }
 
@@ -155,7 +156,7 @@ duk_ret_t
 duk_RequireScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	const char* script_path = normalize_path(script_file, "scripts");
+	char* script_path = get_asset_path(script_file, "scripts");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, script_path);
@@ -166,6 +167,7 @@ duk_RequireScript(duk_context* ctx)
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
 	}
 	duk_pop_2(ctx);
+	free(script_path);
 	return 0;
 }
 

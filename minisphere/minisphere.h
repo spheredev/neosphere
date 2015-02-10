@@ -1,7 +1,9 @@
+#ifdef _MSC_VER
+#define _CRT_NONSTDC_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include <stdlib.h>
-#include <malloc.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
@@ -22,4 +24,4 @@ extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
 
-extern char* normalize_path (const char* path, const char* base_dir);
+extern char* get_asset_path (const char* path, const char* base_dir);
