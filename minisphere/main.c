@@ -99,10 +99,14 @@ get_asset_path(const char* path, const char* base_dir)
 	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
 	al_rebase_path(g_game_path, base_path);
 	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
-	al_rebase_path(is_homed ? g_game_path : base_path, asset_path);
-	al_make_path_canonical(asset_path);
-	// TODO: figure out how to detect absolute paths using Allegro's path API and reject them
-	char* out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
+	bool is_absolute = al_get_path_num_components(asset_path) > 0
+		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
+	char* out_path = NULL;
+	if (!is_absolute) {
+		al_rebase_path(is_homed ? g_game_path : base_path, asset_path);
+		al_make_path_canonical(asset_path);
+		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
+	}
 	al_destroy_path(asset_path);
 	al_destroy_path(base_path);
 	return out_path;
