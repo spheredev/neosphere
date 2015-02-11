@@ -36,7 +36,7 @@ main(int argc, char** argv)
 	al_install_audio();
 	al_init_acodec_addon();
 
-	// determine location of game.sgm
+	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
 	for (int i = 1; i < argc; ++i) {
@@ -49,10 +49,18 @@ main(int argc, char** argv)
 			}
 		}
 	}
+	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
 	char* sgm_path = get_asset_path("game.sgm", NULL);
 	g_game_conf = al_load_config_file(sgm_path);
 	free(sgm_path);
+	if (g_game_conf == NULL) {
+		al_show_native_message_box(NULL, "Unable to Load Game",
+			al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
+			"minisphere was unable to load game.sgm or it was not found. Check to make sure the above directory exists and contains a valid Sphere game.",
+			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+		return EXIT_FAILURE;
+	}
 
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
@@ -96,7 +104,7 @@ main(int argc, char** argv)
 	
 	// teardown
 	shutdown_engine();
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 char*

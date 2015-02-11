@@ -1,5 +1,7 @@
 #include "minisphere.h"
 
+static void push_image_obj(duk_context* ctx, ALLEGRO_BITMAP* bitmap);
+static void push_sound_obj(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream);
 static void reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
 
 // Engine functions
@@ -19,6 +21,7 @@ static duk_ret_t duk_BlendColorsWeighted(duk_context* ctx);
 
 // Image functions
 static duk_ret_t duk_LoadImage(duk_context* ctx);
+static duk_ret_t duk_GrabImage(duk_context* ctx);
 static duk_ret_t duk_Image_finalize(duk_context* ctx);
 static duk_ret_t duk_Image_blit(duk_context* ctx);
 
@@ -69,6 +72,8 @@ init_sphere_api(duk_context* ctx)
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
+	reg_script_func(ctx, NULL, "LoadImage", &duk_LoadImage);
+	reg_script_func(ctx, NULL, "GrabImage", &duk_GrabImage);
 	reg_script_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
 	reg_script_func(ctx, NULL, "GetScreenHeight", &duk_GetScreenHeight);
 	reg_script_func(ctx, NULL, "GetScreenWidth", &duk_GetScreenWidth);
@@ -82,6 +87,25 @@ init_sphere_api(duk_context* ctx)
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
+}
+
+void
+push_image_obj(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
+{
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
+	duk_push_c_function(ctx, &duk_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &duk_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
+	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
+	duk_def_prop(ctx, -3,
+		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
+		DUK_DEFPROP_HAVE_VALUE | 0 |
+		DUK_DEFPROP_HAVE_WRITABLE | 0);
+	duk_push_string(ctx, "height"); duk_push_int(ctx, al_get_bitmap_height(bitmap));
+	duk_def_prop(ctx, -3,
+		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
+		DUK_DEFPROP_HAVE_VALUE | 0 |
+		DUK_DEFPROP_HAVE_WRITABLE | 0);
 }
 
 void
@@ -247,13 +271,26 @@ duk_LoadImage(duk_context* ctx)
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
 	free(path);
 	if (bitmap != NULL) {
-		duk_push_object(ctx);
-		duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFbitmap_ptr");
-		duk_push_c_function(ctx, &duk_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+		push_image_obj(ctx, bitmap);
 		return 1;
 	}
 	else {
 		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Unable to load image '%s'", filename);
+	}
+}
+
+duk_ret_t
+duk_GrabImage(duk_context* ctx)
+{
+	int x_res = al_get_display_width(g_display);
+	int y_res = al_get_display_height(g_display);
+	ALLEGRO_BITMAP* bitmap = al_create_bitmap(x_res, y_res);
+	if (bitmap != NULL) {
+		push_image_obj(ctx, bitmap);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "GrabImage(): Unable to create new bitmap");
 	}
 }
 
