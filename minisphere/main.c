@@ -1,4 +1,5 @@
 #include "minisphere.h"
+#include "rfn_handler.h"
 #include "sphere_api.h"
 
 static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
@@ -67,6 +68,7 @@ main(int argc, char** argv)
 	init_sphere_api(g_duktape);
 	
 	// set up engine and create display window
+	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_sys_font = al_load_font("consola.ttf", 8, 0x0);

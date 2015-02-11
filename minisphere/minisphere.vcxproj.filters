@@ -24,6 +24,9 @@
     <ClCompile Include="sphere_api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rfn_handler.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sphere_api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rfn_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,9 +10,11 @@ static duk_ret_t duk_GetVersionString(duk_context* ctx);
 static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_Abort(duk_context* ctx);
 static duk_ret_t duk_EvaluateScript(duk_context* ctx);
+static duk_ret_t duk_EvaluateSystemScript(duk_context* ctx);
 static duk_ret_t duk_Exit(duk_context* ctx);
 static duk_ret_t duk_GetTime(duk_context* ctx);
 static duk_ret_t duk_RequireScript(duk_context* ctx);
+static duk_ret_t duk_RequireSystemScript(duk_context* ctx);
 
 // Color management functions
 static duk_ret_t duk_CreateColor(duk_context* ctx);
@@ -66,9 +68,11 @@ init_sphere_api(duk_context* ctx)
 	reg_script_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	reg_script_func(ctx, NULL, "Abort", &duk_Abort);
 	reg_script_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
+	reg_script_func(ctx, NULL, "EvaluateSystemScript", &duk_EvaluateSystemScript);
 	reg_script_func(ctx, NULL, "Exit", &duk_Exit);
 	reg_script_func(ctx, NULL, "GetTime", &duk_GetTime);
 	reg_script_func(ctx, NULL, "RequireScript", &duk_RequireScript);
+	reg_script_func(ctx, NULL, "RequireSystemScript", &duk_RequireSystemScript);
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
@@ -106,6 +110,24 @@ push_image_obj(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
 		DUK_DEFPROP_HAVE_VALUE | 0 |
 		DUK_DEFPROP_HAVE_WRITABLE | 0);
+}
+
+void
+push_sound_obj(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream)
+{
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, stream); duk_put_prop_string(ctx, -2, "\xFF" "stream_ptr");
+	duk_push_c_function(ctx, &duk_Sound_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &duk_Sound_isPlaying, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isPlaying");
+	duk_push_c_function(ctx, &duk_Sound_isSeekable, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isSeekable");
+	duk_push_c_function(ctx, &duk_Sound_getRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRepeat");
+	duk_push_c_function(ctx, &duk_Sound_getVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getVolume");
+	duk_push_c_function(ctx, &duk_Sound_setRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setRepeat");
+	duk_push_c_function(ctx, &duk_Sound_setVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setVolume");
+	duk_push_c_function(ctx, &duk_Sound_pause, DUK_VARARGS); duk_put_prop_string(ctx, -2, "pause");
+	duk_push_c_function(ctx, &duk_Sound_play, DUK_VARARGS); duk_put_prop_string(ctx, -2, "play");
+	duk_push_c_function(ctx, &duk_Sound_reset, DUK_VARARGS); duk_put_prop_string(ctx, -2, "reset");
+	duk_push_c_function(ctx, &duk_Sound_stop, DUK_VARARGS); duk_put_prop_string(ctx, -2, "stop");
 }
 
 void
@@ -166,6 +188,16 @@ duk_EvaluateScript(duk_context* ctx)
 }
 
 duk_ret_t
+duk_EvaluateSystemScript(duk_context* ctx)
+{
+	const char* script_file = duk_get_string(ctx, 0);
+	char* script_path = get_asset_path(script_file, "system/scripts");
+	duk_eval_file_noresult(ctx, script_path);
+	free(script_path);
+	return 0;
+}
+
+duk_ret_t
 duk_Exit(duk_context* ctx)
 {
 	duk_error(ctx, DUK_ERR_ERROR, "!exit");
@@ -186,6 +218,25 @@ duk_RequireScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
 	char* script_path = get_asset_path(script_file, "scripts");
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "RequireScript");
+	duk_get_prop_string(ctx, -1, script_path);
+	bool is_required = duk_get_boolean(ctx, -1);
+	duk_pop(ctx);
+	if (!is_required) {
+		duk_eval_file_noresult(ctx, script_path);
+		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
+	}
+	duk_pop_2(ctx);
+	free(script_path);
+	return 0;
+}
+
+duk_ret_t
+duk_RequireSystemScript(duk_context* ctx)
+{
+	const char* script_file = duk_get_string(ctx, 0);
+	char* script_path = get_asset_path(script_file, "system/scripts");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, script_path);
@@ -468,19 +519,7 @@ duk_LoadSound(duk_context* ctx)
 		al_set_audio_stream_playing(stream, false);
 		al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
 		al_set_audio_stream_gain(stream, 1.0);
-		duk_push_object(ctx);
-		duk_push_pointer(ctx, stream); duk_put_prop_string(ctx, -2, "\xFF" "stream_ptr");
-		duk_push_c_function(ctx, &duk_Sound_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-		duk_push_c_function(ctx, &duk_Sound_isPlaying, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isPlaying");
-		duk_push_c_function(ctx, &duk_Sound_isSeekable, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isSeekable");
-		duk_push_c_function(ctx, &duk_Sound_getRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRepeat");
-		duk_push_c_function(ctx, &duk_Sound_getVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getVolume");
-		duk_push_c_function(ctx, &duk_Sound_setRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setRepeat");
-		duk_push_c_function(ctx, &duk_Sound_setVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setVolume");
-		duk_push_c_function(ctx, &duk_Sound_pause, DUK_VARARGS); duk_put_prop_string(ctx, -2, "pause");
-		duk_push_c_function(ctx, &duk_Sound_play, DUK_VARARGS); duk_put_prop_string(ctx, -2, "play");
-		duk_push_c_function(ctx, &duk_Sound_reset, DUK_VARARGS); duk_put_prop_string(ctx, -2, "reset");
-		duk_push_c_function(ctx, &duk_Sound_stop, DUK_VARARGS); duk_put_prop_string(ctx, -2, "stop");
+		push_sound_obj(ctx, stream);
 		return 1;
 	}
 	else {
