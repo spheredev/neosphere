@@ -1,7 +1,6 @@
 #include "minisphere.h"
+#include "sphere_api.h"
 
-static void push_image_obj(duk_context* ctx, ALLEGRO_BITMAP* bitmap);
-static void push_sound_obj(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream);
 static void reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
 
 // Engine functions
@@ -23,6 +22,9 @@ static duk_ret_t duk_BlendColorsWeighted(duk_context* ctx);
 
 // Font functions
 static duk_ret_t duk_GetSystemFont(duk_context* ctx);
+static duk_ret_t duk_LoadFont(duk_context* ctx);
+static duk_ret_t duk_Font_finalize(duk_context* ctx);
+static duk_ret_t duk_Font_drawText(duk_context* ctx);
 
 // Image functions
 static duk_ret_t duk_LoadImage(duk_context* ctx);
@@ -80,6 +82,7 @@ init_sphere_api(duk_context* ctx)
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
 	reg_script_func(ctx, NULL, "GetSystemFont", &duk_GetSystemFont);
+	reg_script_func(ctx, NULL, "LoadFont", &duk_LoadFont);
 	reg_script_func(ctx, NULL, "LoadImage", &duk_LoadImage);
 	reg_script_func(ctx, NULL, "GrabImage", &duk_GrabImage);
 	reg_script_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
@@ -98,7 +101,16 @@ init_sphere_api(duk_context* ctx)
 }
 
 void
-push_image_obj(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
+duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
+{
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "font_ptr");
+	duk_push_c_function(ctx, &duk_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &duk_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
+}
+
+void
+duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
@@ -117,7 +129,7 @@ push_image_obj(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 }
 
 void
-push_sound_obj(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream)
+duk_push_sphere_Sound(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, stream); duk_put_prop_string(ctx, -2, "\xFF" "stream_ptr");
@@ -134,7 +146,7 @@ push_sound_obj(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream)
 	duk_push_c_function(ctx, &duk_Sound_stop, DUK_VARARGS); duk_put_prop_string(ctx, -2, "stop");
 }
 
-void
+static void
 reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
@@ -150,21 +162,21 @@ reg_script_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c
 	duk_pop(ctx);
 }
 
-duk_ret_t
+static duk_ret_t
 duk_GetVersion(duk_context* ctx)
 {
 	duk_push_number(ctx, 1.5);
 	return 1;
 }
 
-duk_ret_t
+static duk_ret_t
 duk_GetVersionString(duk_context* ctx)
 {
 	duk_push_sprintf(ctx, "minisphere %s (API: sphere-%s)", ENGINE_VER, SPHERE_API_VER);
 	return 1;
 }
 
-duk_ret_t
+static duk_ret_t
 duk_GarbageCollect(duk_context* ctx)
 {
 	duk_gc(ctx, 0x0);
@@ -172,7 +184,7 @@ duk_GarbageCollect(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
+static duk_ret_t
 duk_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
@@ -322,9 +334,25 @@ duk_ret_t
 duk_GetSystemFont(duk_context* ctx)
 {
 	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "system_font");
+	duk_get_prop_string(ctx, -1, "system_font");
 	duk_remove(ctx, -2);
 	return 1;
+}
+
+duk_ret_t
+duk_LoadFont(duk_context* ctx)
+{
+	const char* filename = duk_get_string(ctx, 0);
+	char* path = get_asset_path(filename, "fonts");
+	ALLEGRO_FONT* font = al_load_font(path, 0, 0x0);
+	free(path);
+	if (font != NULL) {
+		duk_push_sphere_Font(ctx, font);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "LoadFont(): Unable to load font file '%s'", filename);
+	}
 }
 
 duk_ret_t
@@ -335,12 +363,35 @@ duk_LoadImage(duk_context* ctx)
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
 	free(path);
 	if (bitmap != NULL) {
-		push_image_obj(ctx, bitmap);
+		duk_push_sphere_Image(ctx, bitmap);
 		return 1;
 	}
 	else {
-		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Unable to load image '%s'", filename);
+		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Unable to load image file '%s'", filename);
 	}
+}
+
+duk_ret_t
+duk_Font_finalize(duk_context* ctx)
+{
+	ALLEGRO_FONT* font;
+	duk_get_prop_string(ctx, 0, "\xFF" "font_ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	al_destroy_font(font);
+	return 0;
+}
+
+duk_ret_t
+duk_Font_drawText(duk_context* ctx)
+{
+	ALLEGRO_FONT* font;
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "font_ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	float x = duk_get_number(ctx, 0);
+	float y = duk_get_number(ctx, 1);
+	const char* text = duk_get_string(ctx, 2);
+	al_draw_text(font, al_map_rgb(255, 255, 255), x, y, 0x0, text);
+	return 0;
 }
 
 duk_ret_t
@@ -350,7 +401,7 @@ duk_GrabImage(duk_context* ctx)
 	int y_res = al_get_display_height(g_display);
 	ALLEGRO_BITMAP* bitmap = al_create_bitmap(x_res, y_res);
 	if (bitmap != NULL) {
-		push_image_obj(ctx, bitmap);
+		duk_push_sphere_Image(ctx, bitmap);
 		return 1;
 	}
 	else {
@@ -532,7 +583,7 @@ duk_LoadSound(duk_context* ctx)
 		al_set_audio_stream_playing(stream, false);
 		al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
 		al_set_audio_stream_gain(stream, 1.0);
-		push_sound_obj(ctx, stream);
+		duk_push_sphere_Sound(ctx, stream);
 		return 1;
 	}
 	else {

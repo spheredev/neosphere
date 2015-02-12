@@ -61,7 +61,7 @@ al_load_rfn_font(const char* filename, int size, int flags)
 		void* data = al_malloc(data_size);
 		al_fread(file, data, data_size);
 		glyph->bitmap = al_create_bitmap(glyph->header.width, glyph->header.height);
-		ALLEGRO_LOCKED_REGION* bitmap_lock = al_lock_bitmap(glyph->bitmap, ALLEGRO_PIXEL_FORMAT_RGBA_8888, ALLEGRO_LOCK_WRITEONLY);
+		ALLEGRO_LOCKED_REGION* bitmap_lock = al_lock_bitmap(glyph->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY);
 		uint8_t* src_ptr = data;
 		uint8_t* dest_ptr = bitmap_lock->data;
 		switch (rfn->header.version) {
@@ -128,7 +128,7 @@ rfn_get_length(const ALLEGRO_FONT* f, const ALLEGRO_USTR* text)
 {
 	int length = 0;
 	int ch, pos = 0;
-	while (ch = al_ustr_get_next(text, &pos) >= 0) {
+	while ((ch = al_ustr_get_next(text, &pos)) >= 0) {
 		length += rfn_get_char_length(f, ch);
 	}
 	return length;
@@ -146,11 +146,11 @@ rfn_render_char(const ALLEGRO_FONT* f, ALLEGRO_COLOR color, int ch, float x, flo
 static int
 rfn_render(const ALLEGRO_FONT* f, ALLEGRO_COLOR color, const ALLEGRO_USTR* text, float x, float y)
 {
-	int ch, pos = 0;
-	int length = 0;
+	int32_t ch;
+	int pos = 0, length = 0;
 	bool was_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
-	while (ch = al_ustr_get_next(text, &pos) >= 0) {
+	while ((ch = al_ustr_get_next(text, &pos)) >= 0) {
 		length += rfn_render_char(f, color, ch, x + length, y);
 	}
 	al_hold_bitmap_drawing(was_draw_held);

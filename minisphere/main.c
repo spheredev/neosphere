@@ -74,6 +74,10 @@ main(int argc, char** argv)
 	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
 	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
 	free(sys_font_path);
+	duk_push_global_stash(g_duktape);
+	duk_push_sphere_Font(g_duktape, g_sys_font);
+	duk_put_prop_string(g_duktape, -2, "system_font");
+	duk_pop(g_duktape);
 	g_display = al_create_display(320, 240);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
@@ -85,7 +89,8 @@ main(int argc, char** argv)
 	// load startup script
 	duk_int_t exec_result;
 	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts");
-	exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
+	//exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
+	exec_result = duk_pcompile_string(g_duktape, 0x0, "function game() { var font = GetSystemFont(); while(true) { font.drawText(10, 10, 'maggie'); FlipScreen(); } }");
 	free(script_path);
 	if (exec_result != DUK_EXEC_SUCCESS) {
 		handle_js_error();
@@ -189,12 +194,11 @@ handle_js_error()
 static void
 shutdown_engine(void)
 {
+	duk_destroy_heap(g_duktape);
 	al_uninstall_audio();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
-	al_destroy_font(g_sys_font);
 	al_destroy_config(g_game_conf);
 	al_destroy_path(g_game_path);
 	al_uninstall_system();
-	duk_destroy_heap(g_duktape);
 }
