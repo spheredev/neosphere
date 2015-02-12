@@ -90,7 +90,7 @@ main(int argc, char** argv)
 	duk_int_t exec_result;
 	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts");
 	//exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
-	exec_result = duk_pcompile_string(g_duktape, 0x0, "function game() { var font = GetSystemFont(); while(true) { font.drawText(10, 10, 'maggie'); FlipScreen(); } }");
+	exec_result = duk_pcompile_string(g_duktape, 0x0, "function game() { var font = GetSystemFont(); while(true) { font.drawText(10, 10, 'maggie totally ate everything!\\nFOOD'); FlipScreen(); } }");
 	free(script_path);
 	if (exec_result != DUK_EXEC_SUCCESS) {
 		handle_js_error();

@@ -140,21 +140,21 @@ rfn_render_char(const ALLEGRO_FONT* f, ALLEGRO_COLOR color, int ch, float x, flo
 	rfn_font_t* rfn = f->data;
 	rfn_glyph_t* glyph = &rfn->glyphs[ch];
 	al_draw_tinted_bitmap(glyph->bitmap, color, x, y, 0x0);
-	return glyph->header.height;
+	return glyph->header.width;
 }
 
 static int
 rfn_render(const ALLEGRO_FONT* f, ALLEGRO_COLOR color, const ALLEGRO_USTR* text, float x, float y)
 {
 	int32_t ch;
-	int pos = 0, length = 0;
+	int pos = 0, width = 0;
 	bool was_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
 	while ((ch = al_ustr_get_next(text, &pos)) >= 0) {
-		length += rfn_render_char(f, color, ch, x + length, y);
+		width += rfn_render_char(f, color, ch, x + width, y);
 	}
 	al_hold_bitmap_drawing(was_draw_held);
-	return length;
+	return width;
 }
 
 static
