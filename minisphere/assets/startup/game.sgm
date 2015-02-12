@@ -1,0 +1,7 @@
+author=tunginobi
+description=Compatibility startup game, works under all graphics drivers, including sphere_gl and sphere_dx8. May run slower than original.
+name=Startup
+screen_height=240
+screen_width=320
+script=main.js
+

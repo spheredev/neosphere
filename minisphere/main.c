@@ -71,7 +71,9 @@ main(int argc, char** argv)
 	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
-	g_sys_font = al_load_font("consola.ttf", 8, 0x0);
+	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
+	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
+	free(sys_font_path);
 	g_display = al_create_display(320, 240);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
@@ -125,6 +127,29 @@ get_asset_path(const char* path, const char* base_dir)
 		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
 	}
 	al_destroy_path(asset_path);
+	al_destroy_path(base_path);
+	return out_path;
+}
+
+char*
+get_sys_asset_path(const char* path, const char* base_dir)
+{
+	bool is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
+	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
+	ALLEGRO_PATH* system_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(system_path, "system");
+	al_rebase_path(system_path, base_path);
+	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
+	bool is_absolute = al_get_path_num_components(asset_path) > 0
+		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
+	char* out_path = NULL;
+	if (!is_absolute) {
+		al_rebase_path(is_homed ? system_path : base_path, asset_path);
+		al_make_path_canonical(asset_path);
+		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
+	}
+	al_destroy_path(asset_path);
+	al_destroy_path(system_path);
 	al_destroy_path(base_path);
 	return out_path;
 }
