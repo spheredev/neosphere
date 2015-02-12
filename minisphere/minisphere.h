@@ -26,5 +26,5 @@ extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
 
-extern char* get_asset_path (const char* path, const char* base_dir);
-extern char* get_sys_asset_path(const char* path, const char* base_dir);
+extern char* get_asset_path     (const char* path, const char* base_dir);
+extern char* get_sys_asset_path (const char* path, const char* base_dir);

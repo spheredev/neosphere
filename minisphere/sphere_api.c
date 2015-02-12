@@ -21,6 +21,9 @@ static duk_ret_t duk_CreateColor(duk_context* ctx);
 static duk_ret_t duk_BlendColors(duk_context* ctx);
 static duk_ret_t duk_BlendColorsWeighted(duk_context* ctx);
 
+// Font functions
+static duk_ret_t duk_GetSystemFont(duk_context* ctx);
+
 // Image functions
 static duk_ret_t duk_LoadImage(duk_context* ctx);
 static duk_ret_t duk_GrabImage(duk_context* ctx);
@@ -76,6 +79,7 @@ init_sphere_api(duk_context* ctx)
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
+	reg_script_func(ctx, NULL, "GetSystemFont", &duk_GetSystemFont);
 	reg_script_func(ctx, NULL, "LoadImage", &duk_LoadImage);
 	reg_script_func(ctx, NULL, "GrabImage", &duk_GrabImage);
 	reg_script_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
@@ -311,6 +315,15 @@ duk_BlendColorsWeighted(duk_context* ctx)
 	duk_push_int(ctx, (g1 * w1 + g2 * w2) / sigma); duk_put_prop_string(ctx, -2, "green");
 	duk_push_int(ctx, (b1 * w1 + b2 * w2) / sigma); duk_put_prop_string(ctx, -2, "blue");
 	duk_push_int(ctx, (a1 * w1 + a2 * w2) / sigma); duk_put_prop_string(ctx, -2, "alpha");
+	return 1;
+}
+
+duk_ret_t
+duk_GetSystemFont(duk_context* ctx)
+{
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "system_font");
+	duk_remove(ctx, -2);
 	return 1;
 }
 
