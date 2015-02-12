@@ -52,7 +52,7 @@ main(int argc, char** argv)
 	}
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
-	char* sgm_path = get_asset_path("game.sgm", NULL);
+	char* sgm_path = get_asset_path("game.sgm", NULL, false);
 	g_game_conf = al_load_config_file(sgm_path);
 	free(sgm_path);
 	if (g_game_conf == NULL) {
@@ -88,9 +88,9 @@ main(int argc, char** argv)
 
 	// load startup script
 	duk_int_t exec_result;
-	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts");
-	//exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
-	exec_result = duk_pcompile_string(g_duktape, 0x0, "function game() { var font = GetSystemFont(); while(true) { font.drawText(10, 10, 'maggie totally ate everything!\\nFOOD'); FlipScreen(); } }");
+	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
+	exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
+	//exec_result = duk_pcompile_string(g_duktape, 0x0, "function game() { var font = GetSystemFont(); while(true) { font.drawText(10, 10, 'maggie totally ate everything!\\nFOOD'); FlipScreen(); } }");
 	free(script_path);
 	if (exec_result != DUK_EXEC_SUCCESS) {
 		handle_js_error();
@@ -117,11 +117,15 @@ main(int argc, char** argv)
 }
 
 char*
-get_asset_path(const char* path, const char* base_dir)
+get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
 {
 	bool is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
 	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
 	al_rebase_path(g_game_path, base_path);
+	if (allow_mkdir) {
+		const char* dir_path = al_path_cstr(base_path, ALLEGRO_NATIVE_PATH_SEP);
+		al_make_directory(dir_path);
+	}
 	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
 	bool is_absolute = al_get_path_num_components(asset_path) > 0
 		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;

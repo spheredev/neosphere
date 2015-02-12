@@ -11,9 +11,18 @@ static duk_ret_t duk_Abort(duk_context* ctx);
 static duk_ret_t duk_EvaluateScript(duk_context* ctx);
 static duk_ret_t duk_EvaluateSystemScript(duk_context* ctx);
 static duk_ret_t duk_Exit(duk_context* ctx);
+static duk_ret_t duk_GetFrameRate(duk_context* ctx);
 static duk_ret_t duk_GetTime(duk_context* ctx);
 static duk_ret_t duk_RequireScript(duk_context* ctx);
 static duk_ret_t duk_RequireSystemScript(duk_context* ctx);
+static duk_ret_t duk_SetFrameRate(duk_context* ctx);
+
+// Logging functions
+static duk_ret_t duk_OpenLog(duk_context* ctx);
+static duk_ret_t duk_Log_finalize(duk_context* ctx);
+static duk_ret_t duk_Log_beginBlock(duk_context* ctx);
+static duk_ret_t duk_Log_endBlock(duk_context* ctx);
+static duk_ret_t duk_Log_write(duk_context* ctx);
 
 // Color management functions
 static duk_ret_t duk_CreateColor(duk_context* ctx);
@@ -75,9 +84,12 @@ init_sphere_api(duk_context* ctx)
 	reg_script_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
 	reg_script_func(ctx, NULL, "EvaluateSystemScript", &duk_EvaluateSystemScript);
 	reg_script_func(ctx, NULL, "Exit", &duk_Exit);
+	reg_script_func(ctx, NULL, "GetFrameRate", &duk_GetFrameRate);
 	reg_script_func(ctx, NULL, "GetTime", &duk_GetTime);
 	reg_script_func(ctx, NULL, "RequireScript", &duk_RequireScript);
 	reg_script_func(ctx, NULL, "RequireSystemScript", &duk_RequireSystemScript);
+	reg_script_func(ctx, NULL, "SetFrameRate", &duk_SetFrameRate);
+	reg_script_func(ctx, NULL, "OpenLog", &duk_OpenLog);
 	reg_script_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	reg_script_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	reg_script_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
@@ -126,6 +138,17 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
 		DUK_DEFPROP_HAVE_VALUE | 0 |
 		DUK_DEFPROP_HAVE_WRITABLE | 0);
+}
+
+void
+duk_push_sphere_Log(duk_context* ctx, ALLEGRO_FILE* file)
+{
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, file); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
+	duk_push_c_function(ctx, &duk_Log_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &duk_Log_beginBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "beginBlock");
+	duk_push_c_function(ctx, &duk_Log_endBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "endBlock");
+	duk_push_c_function(ctx, &duk_Log_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
 }
 
 void
@@ -197,7 +220,7 @@ duk_ret_t
 duk_EvaluateScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_asset_path(script_file, "scripts");
+	char* script_path = get_asset_path(script_file, "scripts", false);
 	duk_eval_file_noresult(ctx, script_path);
 	free(script_path);
 	return 0;
@@ -207,7 +230,7 @@ duk_ret_t
 duk_EvaluateSystemScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_asset_path(script_file, "system/scripts");
+	char* script_path = get_sys_asset_path(script_file, "scripts");
 	duk_eval_file_noresult(ctx, script_path);
 	free(script_path);
 	return 0;
@@ -218,6 +241,13 @@ duk_Exit(duk_context* ctx)
 {
 	duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	return 0;
+}
+
+static duk_ret_t
+duk_GetFrameRate(duk_context* ctx)
+{
+	duk_push_int(ctx, 60);
+	return 1;
 }
 
 duk_ret_t
@@ -233,7 +263,7 @@ duk_ret_t
 duk_RequireScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_asset_path(script_file, "scripts");
+	char* script_path = get_asset_path(script_file, "scripts", false);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, script_path);
@@ -252,7 +282,7 @@ duk_ret_t
 duk_RequireSystemScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_asset_path(script_file, "system/scripts");
+	char* script_path = get_sys_asset_path(script_file, "scripts");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, script_path);
@@ -264,6 +294,72 @@ duk_RequireSystemScript(duk_context* ctx)
 	}
 	duk_pop_2(ctx);
 	free(script_path);
+	return 0;
+}
+
+static duk_ret_t
+duk_SetFrameRate(duk_context* ctx)
+{
+	return 0;
+}
+
+static duk_ret_t
+duk_OpenLog(duk_context* ctx)
+{
+	const char* filename = duk_get_string(ctx, 0);
+	char* path = get_asset_path(filename, "logs", true);
+	ALLEGRO_FILE* file = al_fopen(path, "a");
+	free(path);
+	if (file != NULL) {
+		duk_push_sphere_Log(ctx, file);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "OpenLog(): Unable to open log file '%s'", filename);
+	}
+}
+
+static duk_ret_t
+duk_Log_finalize(duk_context* ctx)
+{
+	ALLEGRO_FILE* file;
+	duk_get_prop_string(ctx, 0, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	al_fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+duk_Log_beginBlock(duk_context* ctx)
+{
+	const char* name = duk_to_string(ctx, 0);
+	ALLEGRO_FILE* file = NULL;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	// TODO: implement beginBlock for logs
+	return 0;
+}
+
+static duk_ret_t
+duk_Log_endBlock(duk_context* ctx)
+{
+	ALLEGRO_FILE* file = NULL;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	// TODO: implement endBlock for logs
+	return 0;
+}
+
+static duk_ret_t
+duk_Log_write(duk_context* ctx)
+{
+	const char* text = duk_to_string(ctx, 0);
+	ALLEGRO_FILE* file = NULL;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	al_fputs(file, text); al_fputc(file, '\n');
 	return 0;
 }
 
@@ -343,7 +439,7 @@ duk_ret_t
 duk_LoadFont(duk_context* ctx)
 {
 	const char* filename = duk_get_string(ctx, 0);
-	char* path = get_asset_path(filename, "fonts");
+	char* path = get_asset_path(filename, "fonts", false);
 	ALLEGRO_FONT* font = al_load_font(path, 0, 0x0);
 	free(path);
 	if (font != NULL) {
@@ -359,7 +455,7 @@ duk_ret_t
 duk_LoadImage(duk_context* ctx)
 {
 	const char* filename = duk_get_string(ctx, 0);
-	char* path = get_asset_path(filename, "images");
+	char* path = get_asset_path(filename, "images", false);
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
 	free(path);
 	if (bitmap != NULL) {
@@ -575,7 +671,7 @@ duk_LoadSound(duk_context* ctx)
 {
 	duk_int_t n_args = duk_get_top(ctx);
 	const char* filename = duk_get_string(ctx, 0);
-	char* sound_path = get_asset_path(filename, "sounds");
+	char* sound_path = get_asset_path(filename, "sounds", false);
 	duk_bool_t is_stream = n_args >= 2 ? duk_get_boolean(ctx, 1) : true;
 	ALLEGRO_AUDIO_STREAM* stream = al_load_audio_stream(sound_path, 4, 2048);
 	free(sound_path);
