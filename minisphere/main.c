@@ -2,6 +2,7 @@
 #include "api.h"
 #include "input.h"
 #include "rfn_handler.h"
+#include "sound.h"
 #include "spriteset.h"
 
 static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
@@ -81,6 +82,7 @@ main(int argc, char** argv)
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
 	init_input_api(g_duktape);
+	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);
 	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
 	g_sys_font = al_load_font(sys_font_path, 0, 0x0);

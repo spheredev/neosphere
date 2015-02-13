@@ -112,6 +112,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClInclude Include="minisphere.h" />
     <ClInclude Include="rfn_handler.h" />
     <ClInclude Include="api.h" />
+    <ClInclude Include="sound.h" />
     <ClInclude Include="spriteset.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
