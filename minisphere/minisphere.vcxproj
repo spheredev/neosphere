@@ -99,6 +99,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="duktape.c" />
+    <ClCompile Include="input.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="rfn_handler.c" />
     <ClCompile Include="sound.c" />
@@ -107,6 +108,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h" />
+    <ClInclude Include="input.h" />
     <ClInclude Include="minisphere.h" />
     <ClInclude Include="rfn_handler.h" />
     <ClInclude Include="api.h" />

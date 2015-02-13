@@ -56,10 +56,6 @@ static duk_ret_t duk_Rectangle(duk_context* ctx);
 void
 init_api(duk_context* ctx)
 {
-	register_api_const(ctx, "PLAYER_1", 0);
-	register_api_const(ctx, "PLAYER_2", 1);
-	register_api_const(ctx, "PLAYER_3", 2);
-	register_api_const(ctx, "PLAYER_4", 3);
 	register_api_func(ctx, NULL, "GetVersion", &duk_GetVersion);
 	register_api_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
 	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
