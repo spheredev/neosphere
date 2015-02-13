@@ -56,6 +56,10 @@ static duk_ret_t duk_Rectangle(duk_context* ctx);
 void
 init_api(duk_context* ctx)
 {
+	register_api_const(ctx, "PLAYER_1", 0);
+	register_api_const(ctx, "PLAYER_2", 1);
+	register_api_const(ctx, "PLAYER_3", 2);
+	register_api_const(ctx, "PLAYER_4", 3);
 	register_api_func(ctx, NULL, "GetVersion", &duk_GetVersion);
 	register_api_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
 	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
@@ -91,6 +95,19 @@ init_api(duk_context* ctx)
 }
 
 void
+register_api_const(duk_context* ctx, const char* name, double value)
+{
+	duk_push_global_object(ctx);
+	duk_push_string(ctx, name); duk_push_number(ctx, value);
+	duk_def_prop(ctx, -3,
+		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
+		| DUK_DEFPROP_HAVE_ENUMERABLE | 0
+		| DUK_DEFPROP_HAVE_WRITABLE | 0
+		| DUK_DEFPROP_HAVE_VALUE);
+	duk_pop(ctx);
+}
+
+void
 register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
@@ -116,22 +133,23 @@ duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 }
 
 void
-duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
+duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 {
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
+	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
 	duk_push_c_function(ctx, &duk_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &duk_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
-		DUK_DEFPROP_HAVE_VALUE | 0 |
+		DUK_DEFPROP_HAVE_VALUE |
 		DUK_DEFPROP_HAVE_WRITABLE | 0);
 	duk_push_string(ctx, "height"); duk_push_int(ctx, al_get_bitmap_height(bitmap));
 	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
-		DUK_DEFPROP_HAVE_VALUE | 0 |
-		DUK_DEFPROP_HAVE_WRITABLE | 0);
+		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
+		| DUK_DEFPROP_HAVE_WRITABLE | 0
+		| DUK_DEFPROP_HAVE_VALUE);
 }
 
 void
@@ -419,7 +437,7 @@ duk_LoadImage(duk_context* ctx)
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
 	free(path);
 	if (bitmap != NULL) {
-		duk_push_sphere_Image(ctx, bitmap);
+		duk_push_sphere_Image(ctx, bitmap, true);
 		return 1;
 	}
 	else {
@@ -457,7 +475,7 @@ duk_GrabImage(duk_context* ctx)
 	int y_res = al_get_display_height(g_display);
 	ALLEGRO_BITMAP* bitmap = al_create_bitmap(x_res, y_res);
 	if (bitmap != NULL) {
-		duk_push_sphere_Image(ctx, bitmap);
+		duk_push_sphere_Image(ctx, bitmap, true);
 		return 1;
 	}
 	else {
@@ -468,9 +486,14 @@ duk_GrabImage(duk_context* ctx)
 duk_ret_t
 duk_Image_finalize(duk_context* ctx)
 {
+	bool            allow_free;
 	ALLEGRO_BITMAP* bitmap;
-	duk_get_prop_string(ctx, 0, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	al_destroy_bitmap(bitmap);
+
+	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "\xFF" "allow_free"); allow_free = duk_get_boolean(ctx, -1); duk_pop(ctx);
+	if (allow_free) {
+		al_destroy_bitmap(bitmap);
+	}
 	return 0;
 }
 
@@ -481,7 +504,7 @@ duk_Image_blit(duk_context* ctx)
 	float y = (float)duk_get_number(ctx, 1);
 	ALLEGRO_BITMAP* bitmap;
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_draw_bitmap(bitmap, x, y, 0x0);
 	return 1;

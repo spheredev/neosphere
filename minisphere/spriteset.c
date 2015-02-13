@@ -29,6 +29,7 @@ struct v3_frame {
 
 static ALLEGRO_BITMAP* _fread_sprite_image    (ALLEGRO_FILE* file, int width, int height);
 static char*           _fread_string          (ALLEGRO_FILE* file);
+static void            _duk_push_spriteset    (duk_context* ctx, spriteset_t* spriteset);
 static duk_ret_t       _js_LoadSpriteset      (duk_context* ctx);
 static duk_ret_t       _js_Spriteset_finalize (duk_context* ctx);
 
@@ -39,7 +40,7 @@ init_spriteset_api(duk_context* ctx)
 }
 
 spriteset_t*
-open_spriteset(const char* path)
+load_spriteset(const char* path)
 {
 	struct v3_direction direction;
 	struct v3_frame     frame;
@@ -53,6 +54,10 @@ open_spriteset(const char* path)
 	if (al_fread(file, &rss, sizeof(struct rss_header)) != sizeof(struct rss_header))
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
+	spriteset->base.x1 = rss.base_x1;
+	spriteset->base.y1 = rss.base_y1;
+	spriteset->base.x2 = rss.base_x2;
+	spriteset->base.y2 = rss.base_y2;
 	switch (rss.version) {
 	case 1:
 		spriteset->num_images = rss.num_images;
@@ -132,7 +137,7 @@ on_error:
 }
 
 void
-close_spriteset(spriteset_t* spriteset)
+free_spriteset(spriteset_t* spriteset)
 {
 	int i;
 	
@@ -186,6 +191,49 @@ on_error:
 	return NULL;
 }
 
+static void
+_duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
+{
+	int i, j;
+	
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_c_function(ctx, &_js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	
+	// Spriteset:base
+	duk_push_object(ctx);
+	duk_push_int(ctx, spriteset->base.x1); duk_put_prop_string(ctx, -2, "x1");
+	duk_push_int(ctx, spriteset->base.y1); duk_put_prop_string(ctx, -2, "y1");
+	duk_push_int(ctx, spriteset->base.x2); duk_put_prop_string(ctx, -2, "x2");
+	duk_push_int(ctx, spriteset->base.y2); duk_put_prop_string(ctx, -2, "y2");
+	duk_put_prop_string(ctx, -2, "base");
+
+	// Spriteset:images
+	duk_push_array(ctx);
+	for (i = 0; i < spriteset->num_images; ++i) {
+		duk_push_sphere_Image(ctx, spriteset->bitmaps[i], false);
+		duk_put_prop_index(ctx, -2, i);
+	}
+	duk_put_prop_string(ctx, -2, "images");
+
+	// Spriteset:directions
+	duk_push_array(ctx);
+	for (i = 0; i < spriteset->num_poses; ++i) {
+		duk_push_object(ctx);
+		duk_push_string(ctx, spriteset->poses[i].name); duk_put_prop_string(ctx, -2, "name");
+		duk_push_array(ctx);
+		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
+			duk_push_object(ctx);
+			duk_push_int(ctx, spriteset->poses[i].frames[j].image_idx); duk_put_prop_string(ctx, -2, "index");
+			duk_push_int(ctx, spriteset->poses[i].frames[j].delay); duk_put_prop_string(ctx, -2, "delay");
+			duk_put_prop_index(ctx, -2, j);
+		}
+		duk_put_prop_string(ctx, -2, "frames");
+		duk_put_prop_index(ctx, -2, i);
+	}
+	duk_put_prop_string(ctx, -2, "directions");
+}
+
 static duk_ret_t
 _js_LoadSpriteset(duk_context* ctx)
 {
@@ -195,10 +243,10 @@ _js_LoadSpriteset(duk_context* ctx)
 
 	filename = duk_require_string(ctx, 0);
 	path = get_asset_path(filename, "spritesets", false);
-	if ((spriteset = open_spriteset(path)) == NULL)
+	if ((spriteset = load_spriteset(path)) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "LoadSpriteset(): Unable to load spriteset file '%s'", filename);
 	free(path);
-	duk_push_object(ctx);
+	_duk_push_spriteset(ctx, spriteset);
 	return 1;
 }
 
@@ -208,6 +256,6 @@ _js_Spriteset_finalize(duk_context* ctx)
 	spriteset_t* spriteset;
 	
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	close_spriteset(spriteset);
+	free_spriteset(spriteset);
 	return 0;
 }

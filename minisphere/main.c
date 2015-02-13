@@ -64,22 +64,10 @@ main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	// initialize JavaScript engine
-	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
-	init_api(g_duktape);
-	init_spriteset_api(g_duktape);
-	
 	// set up engine and create display window
 	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
-	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
-	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
-	free(sys_font_path);
-	duk_push_global_stash(g_duktape);
-	duk_push_sphere_Font(g_duktape, g_sys_font);
-	duk_put_prop_string(g_duktape, -2, "system_font");
-	duk_pop(g_duktape);
 	g_display = al_create_display(320, 240);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
@@ -87,6 +75,18 @@ main(int argc, char** argv)
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	al_flip_display();
+
+	// initialize JavaScript engine
+	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
+	init_api(g_duktape);
+	init_spriteset_api(g_duktape);
+	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
+	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
+	free(sys_font_path);
+	duk_push_global_stash(g_duktape);
+	duk_push_sphere_Font(g_duktape, g_sys_font);
+	duk_put_prop_string(g_duktape, -2, "system_font");
+	duk_pop(g_duktape);
 
 	// load startup script
 	duk_int_t exec_result;
