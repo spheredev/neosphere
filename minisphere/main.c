@@ -1,6 +1,7 @@
 #include "minisphere.h"
+#include "api.h"
 #include "rfn_handler.h"
-#include "sphere_api.h"
+#include "spriteset.h"
 
 static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
 static void handle_js_error ();
@@ -65,7 +66,8 @@ main(int argc, char** argv)
 
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
-	init_sphere_api(g_duktape);
+	init_api(g_duktape);
+	init_spriteset_api(g_duktape);
 	
 	// set up engine and create display window
 	al_register_font_loader(".rfn", &al_load_rfn_font);

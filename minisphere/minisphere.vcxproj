@@ -101,13 +101,16 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClCompile Include="duktape.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="rfn_handler.c" />
-    <ClCompile Include="sphere_api.c" />
+    <ClCompile Include="sound.c" />
+    <ClCompile Include="api.c" />
+    <ClCompile Include="spriteset.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h" />
     <ClInclude Include="minisphere.h" />
     <ClInclude Include="rfn_handler.h" />
-    <ClInclude Include="sphere_api.h" />
+    <ClInclude Include="api.h" />
+    <ClInclude Include="spriteset.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

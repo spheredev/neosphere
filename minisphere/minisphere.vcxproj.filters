@@ -21,10 +21,16 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sphere_api.c">
+    <ClCompile Include="rfn_handler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rfn_handler.c">
+    <ClCompile Include="sound.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="api.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="spriteset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,10 +41,13 @@
     <ClInclude Include="minisphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sphere_api.h">
+    <ClInclude Include="rfn_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rfn_handler.h">
+    <ClInclude Include="api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="spriteset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
