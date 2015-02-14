@@ -38,6 +38,7 @@ static duk_ret_t duk_LoadImage(duk_context* ctx);
 static duk_ret_t duk_GrabImage(duk_context* ctx);
 static duk_ret_t duk_Image_finalize(duk_context* ctx);
 static duk_ret_t duk_Image_blit(duk_context* ctx);
+static duk_ret_t duk_Image_blitMask(duk_context* ctx);
 
 // Spriteset functions
 static duk_ret_t duk_LoadSpriteset(duk_context* ctx);
@@ -136,6 +137,7 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
 	duk_push_c_function(ctx, &duk_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &duk_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
+	duk_push_c_function(ctx, &duk_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
@@ -496,13 +498,33 @@ duk_Image_finalize(duk_context* ctx)
 duk_ret_t
 duk_Image_blit(duk_context* ctx)
 {
-	float x = (float)duk_get_number(ctx, 0);
-	float y = (float)duk_get_number(ctx, 1);
 	ALLEGRO_BITMAP* bitmap;
+	float           x = (float)duk_get_number(ctx, 0);
+	float           y = (float)duk_get_number(ctx, 1);
+	
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_draw_bitmap(bitmap, x, y, 0x0);
+	return 1;
+}
+
+duk_ret_t
+duk_Image_blitMask(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	float           x = (float)duk_get_number(ctx, 0);
+	float           y = (float)duk_get_number(ctx, 1);
+	int             r, g, b, a;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_get_prop_string(ctx, 2, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 2, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 2, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 2, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
 	return 1;
 }
 
@@ -563,7 +585,7 @@ duk_FlipScreen(duk_context* ctx)
 {
 	ALLEGRO_EVENT event;
 	ALLEGRO_TIMEOUT timeout;
-	al_init_timeout(&timeout, 0.05);
+	al_init_timeout(&timeout, 0.01);
 	bool got_event = al_wait_for_event_until(g_events, &event, &timeout);
 	if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
 		duk_error(ctx, DUK_ERR_ERROR, "!exit");

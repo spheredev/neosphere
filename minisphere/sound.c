@@ -114,7 +114,7 @@ duk_Sound_getVolume(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_push_number(ctx, al_get_audio_stream_gain(stream));
+	duk_push_int(ctx, (int)(255 * al_get_audio_stream_gain(stream)));
 	return 1;
 }
 
@@ -138,7 +138,7 @@ duk_Sound_setVolume(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	float new_vol = duk_get_number(ctx, 0);
+	float new_vol = duk_get_number(ctx, 0) / 255;
 	al_set_audio_stream_gain(stream, new_vol);
 	return 0;
 }

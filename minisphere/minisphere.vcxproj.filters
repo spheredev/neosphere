@@ -36,6 +36,9 @@
     <ClCompile Include="input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="map_engine.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="map_engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

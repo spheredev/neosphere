@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "input.h"
+#include "map_engine.h"
 #include "rfn_handler.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -39,6 +40,7 @@ main(int argc, char** argv)
 	al_init_ttf_addon();
 	al_install_audio();
 	al_init_acodec_addon();
+	al_install_keyboard();
 
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
@@ -82,6 +84,7 @@ main(int argc, char** argv)
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
 	init_input_api(g_duktape);
+	init_map_engine_api(g_duktape);
 	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);
 	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
