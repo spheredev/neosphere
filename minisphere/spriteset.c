@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "image.h"
 #include "spriteset.h"
 
 struct rss_header {

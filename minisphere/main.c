@@ -1,6 +1,8 @@
 #include "minisphere.h"
 #include "api.h"
+#include "image.h"
 #include "input.h"
+#include "log.h"
 #include "map_engine.h"
 #include "rfn_handler.h"
 #include "sound.h"
@@ -83,7 +85,9 @@ main(int argc, char** argv)
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
+	init_image_api(g_duktape);
 	init_input_api(g_duktape);
+	init_log_api(g_duktape);
 	init_map_engine_api(g_duktape);
 	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);

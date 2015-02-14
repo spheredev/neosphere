@@ -1,26 +1,29 @@
 #include "minisphere.h"
 #include "api.h"
 
-// Engine functions
+// Core engine functions
+static duk_ret_t duk_GarbageCollect(duk_context* ctx);
+static duk_ret_t duk_RequireSystemScript(duk_context* ctx);
+static duk_ret_t duk_RequireScript(duk_context* ctx);
+static duk_ret_t duk_EvaluateSystemScript(duk_context* ctx);
+static duk_ret_t duk_EvaluateScript(duk_context* ctx);
 static duk_ret_t duk_GetVersion(duk_context* ctx);
 static duk_ret_t duk_GetVersionString(duk_context* ctx);
-static duk_ret_t duk_GarbageCollect(duk_context* ctx);
-static duk_ret_t duk_Abort(duk_context* ctx);
-static duk_ret_t duk_EvaluateScript(duk_context* ctx);
-static duk_ret_t duk_EvaluateSystemScript(duk_context* ctx);
-static duk_ret_t duk_Exit(duk_context* ctx);
+static duk_ret_t duk_GetClippingRectangle(duk_context* ctx);
 static duk_ret_t duk_GetFrameRate(duk_context* ctx);
+static duk_ret_t duk_GetScreenHeight(duk_context* ctx);
+static duk_ret_t duk_GetScreenWidth(duk_context* ctx);
 static duk_ret_t duk_GetTime(duk_context* ctx);
-static duk_ret_t duk_RequireScript(duk_context* ctx);
-static duk_ret_t duk_RequireSystemScript(duk_context* ctx);
+static duk_ret_t duk_SetClippingRectangle(duk_context* ctx);
 static duk_ret_t duk_SetFrameRate(duk_context* ctx);
-
-// Logging functions
-static duk_ret_t duk_OpenLog(duk_context* ctx);
-static duk_ret_t duk_Log_finalize(duk_context* ctx);
-static duk_ret_t duk_Log_beginBlock(duk_context* ctx);
-static duk_ret_t duk_Log_endBlock(duk_context* ctx);
-static duk_ret_t duk_Log_write(duk_context* ctx);
+static duk_ret_t duk_Abort(duk_context* ctx);
+static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
+static duk_ret_t duk_Exit(duk_context* ctx);
+static duk_ret_t duk_FlipScreen(duk_context* ctx);
+static duk_ret_t duk_GradientCircle(duk_context* ctx);
+static duk_ret_t duk_GradientRectangle(duk_context* ctx);
+static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
+static duk_ret_t duk_Rectangle(duk_context* ctx);
 
 // Color management functions
 static duk_ret_t duk_CreateColor(duk_context* ctx);
@@ -32,27 +35,6 @@ static duk_ret_t duk_GetSystemFont(duk_context* ctx);
 static duk_ret_t duk_LoadFont(duk_context* ctx);
 static duk_ret_t duk_Font_finalize(duk_context* ctx);
 static duk_ret_t duk_Font_drawText(duk_context* ctx);
-
-// Image functions
-static duk_ret_t duk_LoadImage(duk_context* ctx);
-static duk_ret_t duk_GrabImage(duk_context* ctx);
-static duk_ret_t duk_Image_finalize(duk_context* ctx);
-static duk_ret_t duk_Image_blit(duk_context* ctx);
-static duk_ret_t duk_Image_blitMask(duk_context* ctx);
-
-// Spriteset functions
-static duk_ret_t duk_LoadSpriteset(duk_context* ctx);
-
-// Graphics/rendering functions
-static duk_ret_t duk_GetClippingRectangle(duk_context* ctx);
-static duk_ret_t duk_GetScreenHeight(duk_context* ctx);
-static duk_ret_t duk_GetScreenWidth(duk_context* ctx);
-static duk_ret_t duk_SetClippingRectangle(duk_context* ctx);
-static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
-static duk_ret_t duk_FlipScreen(duk_context* ctx);
-static duk_ret_t duk_GradientRectangle(duk_context* ctx);
-static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
-static duk_ret_t duk_Rectangle(duk_context* ctx);
 
 void
 init_api(duk_context* ctx)
@@ -69,20 +51,18 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "RequireScript", &duk_RequireScript);
 	register_api_func(ctx, NULL, "RequireSystemScript", &duk_RequireSystemScript);
 	register_api_func(ctx, NULL, "SetFrameRate", &duk_SetFrameRate);
-	register_api_func(ctx, NULL, "OpenLog", &duk_OpenLog);
 	register_api_func(ctx, NULL, "CreateColor", &duk_CreateColor);
 	register_api_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	register_api_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
 	register_api_func(ctx, NULL, "GetSystemFont", &duk_GetSystemFont);
 	register_api_func(ctx, NULL, "LoadFont", &duk_LoadFont);
-	register_api_func(ctx, NULL, "LoadImage", &duk_LoadImage);
-	register_api_func(ctx, NULL, "GrabImage", &duk_GrabImage);
 	register_api_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
 	register_api_func(ctx, NULL, "GetScreenHeight", &duk_GetScreenHeight);
 	register_api_func(ctx, NULL, "GetScreenWidth", &duk_GetScreenWidth);
 	register_api_func(ctx, NULL, "SetClippingRectangle", &duk_SetClippingRectangle);
 	register_api_func(ctx, NULL, "ApplyColorMask", &duk_ApplyColorMask);
 	register_api_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
+	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
 	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
 	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
 	register_api_func(ctx, NULL, "Rectangle", &duk_Rectangle);
@@ -127,38 +107,6 @@ duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "font_ptr");
 	duk_push_c_function(ctx, &duk_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &duk_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
-}
-
-void
-duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
-{
-	duk_push_object(ctx);
-	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
-	duk_push_c_function(ctx, &duk_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &duk_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
-	duk_push_c_function(ctx, &duk_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
-	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
-	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
-		DUK_DEFPROP_HAVE_VALUE |
-		DUK_DEFPROP_HAVE_WRITABLE | 0);
-	duk_push_string(ctx, "height"); duk_push_int(ctx, al_get_bitmap_height(bitmap));
-	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
-		| DUK_DEFPROP_HAVE_WRITABLE | 0
-		| DUK_DEFPROP_HAVE_VALUE);
-}
-
-void
-duk_push_sphere_Log(duk_context* ctx, ALLEGRO_FILE* file)
-{
-	duk_push_object(ctx);
-	duk_push_pointer(ctx, file); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
-	duk_push_c_function(ctx, &duk_Log_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &duk_Log_beginBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "beginBlock");
-	duk_push_c_function(ctx, &duk_Log_endBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "endBlock");
-	duk_push_c_function(ctx, &duk_Log_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
 }
 
 static duk_ret_t
@@ -279,66 +227,6 @@ duk_SetFrameRate(duk_context* ctx)
 	return 0;
 }
 
-static duk_ret_t
-duk_OpenLog(duk_context* ctx)
-{
-	const char* filename = duk_get_string(ctx, 0);
-	char* path = get_asset_path(filename, "logs", true);
-	ALLEGRO_FILE* file = al_fopen(path, "a");
-	free(path);
-	if (file != NULL) {
-		duk_push_sphere_Log(ctx, file);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "OpenLog(): Unable to open log file '%s'", filename);
-	}
-}
-
-static duk_ret_t
-duk_Log_finalize(duk_context* ctx)
-{
-	ALLEGRO_FILE* file;
-	duk_get_prop_string(ctx, 0, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	al_fclose(file);
-	return 0;
-}
-
-static duk_ret_t
-duk_Log_beginBlock(duk_context* ctx)
-{
-	const char* name = duk_to_string(ctx, 0);
-	ALLEGRO_FILE* file = NULL;
-
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	// TODO: implement beginBlock for logs
-	return 0;
-}
-
-static duk_ret_t
-duk_Log_endBlock(duk_context* ctx)
-{
-	ALLEGRO_FILE* file = NULL;
-
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	// TODO: implement endBlock for logs
-	return 0;
-}
-
-static duk_ret_t
-duk_Log_write(duk_context* ctx)
-{
-	const char* text = duk_to_string(ctx, 0);
-	ALLEGRO_FILE* file = NULL;
-
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	al_fputs(file, text); al_fputc(file, '\n');
-	return 0;
-}
-
 duk_ret_t
 duk_CreateColor(duk_context* ctx)
 {
@@ -428,22 +316,6 @@ duk_LoadFont(duk_context* ctx)
 }
 
 duk_ret_t
-duk_LoadImage(duk_context* ctx)
-{
-	const char* filename = duk_get_string(ctx, 0);
-	char* path = get_asset_path(filename, "images", false);
-	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
-	free(path);
-	if (bitmap != NULL) {
-		duk_push_sphere_Image(ctx, bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Unable to load image file '%s'", filename);
-	}
-}
-
-duk_ret_t
 duk_Font_finalize(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
@@ -464,68 +336,6 @@ duk_Font_drawText(duk_context* ctx)
 	const char* text = duk_get_string(ctx, 2);
 	al_draw_text(font, al_map_rgb(255, 255, 255), x, y, 0x0, text);
 	return 0;
-}
-
-duk_ret_t
-duk_GrabImage(duk_context* ctx)
-{
-	int x_res = al_get_display_width(g_display);
-	int y_res = al_get_display_height(g_display);
-	ALLEGRO_BITMAP* bitmap = al_create_bitmap(x_res, y_res);
-	if (bitmap != NULL) {
-		duk_push_sphere_Image(ctx, bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "GrabImage(): Unable to create new bitmap");
-	}
-}
-
-duk_ret_t
-duk_Image_finalize(duk_context* ctx)
-{
-	bool            allow_free;
-	ALLEGRO_BITMAP* bitmap;
-
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "allow_free"); allow_free = duk_get_boolean(ctx, -1); duk_pop(ctx);
-	if (allow_free) {
-		al_destroy_bitmap(bitmap);
-	}
-	return 0;
-}
-
-duk_ret_t
-duk_Image_blit(duk_context* ctx)
-{
-	ALLEGRO_BITMAP* bitmap;
-	float           x = (float)duk_get_number(ctx, 0);
-	float           y = (float)duk_get_number(ctx, 1);
-	
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	al_draw_bitmap(bitmap, x, y, 0x0);
-	return 1;
-}
-
-duk_ret_t
-duk_Image_blitMask(duk_context* ctx)
-{
-	ALLEGRO_BITMAP* bitmap;
-	float           x = (float)duk_get_number(ctx, 0);
-	float           y = (float)duk_get_number(ctx, 1);
-	int             r, g, b, a;
-
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
-	return 1;
 }
 
 duk_ret_t
@@ -592,6 +402,33 @@ duk_FlipScreen(duk_context* ctx)
 	}
 	al_flip_display();
 	al_clear_to_color(al_map_rgb(0, 0, 0));
+	return 0;
+}
+
+duk_ret_t
+duk_GradientCircle(duk_context* ctx)
+{
+	ALLEGRO_COLOR inner_color;
+	ALLEGRO_COLOR outer_color;
+	float         radius;
+	int           r, g, b, a;
+	float         x, y;
+	
+	x = (float)duk_require_number(ctx, 0);
+	y = (float)duk_require_number(ctx, 1);
+	radius = (float)duk_require_number(ctx, 2);
+	duk_get_prop_string(ctx, 3, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 3, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 3, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 3, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	inner_color = al_map_rgba(r, g, b, a);
+	duk_get_prop_string(ctx, 5, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	outer_color = al_map_rgba(r, g, b, a);
+	// TODO: actually draw a gradient circle instead of a solid one
+	al_draw_filled_circle(x, y, radius, inner_color);
 	return 0;
 }
 

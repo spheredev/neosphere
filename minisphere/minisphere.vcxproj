@@ -99,7 +99,9 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="duktape.c" />
+    <ClCompile Include="image.c" />
     <ClCompile Include="input.c" />
+    <ClCompile Include="log.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
     <ClCompile Include="rfn_handler.c" />
@@ -109,7 +111,9 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h" />
+    <ClInclude Include="image.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="log.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
     <ClInclude Include="rfn_handler.h" />
