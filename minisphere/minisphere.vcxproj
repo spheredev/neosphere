@@ -99,6 +99,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="duktape.c" />
+    <ClCompile Include="font.c" />
     <ClCompile Include="image.c" />
     <ClCompile Include="input.c" />
     <ClCompile Include="log.c" />
@@ -108,9 +109,11 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClCompile Include="sound.c" />
     <ClCompile Include="api.c" />
     <ClCompile Include="spriteset.c" />
+    <ClCompile Include="surface.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h" />
+    <ClInclude Include="font.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="log.h" />
@@ -120,6 +123,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClInclude Include="api.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="spriteset.h" />
+    <ClInclude Include="surface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

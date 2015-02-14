@@ -13,6 +13,7 @@ static duk_ret_t duk_GetClippingRectangle(duk_context* ctx);
 static duk_ret_t duk_GetFrameRate(duk_context* ctx);
 static duk_ret_t duk_GetScreenHeight(duk_context* ctx);
 static duk_ret_t duk_GetScreenWidth(duk_context* ctx);
+static duk_ret_t duk_GetSystemFont(duk_context* ctx);
 static duk_ret_t duk_GetTime(duk_context* ctx);
 static duk_ret_t duk_SetClippingRectangle(duk_context* ctx);
 static duk_ret_t duk_SetFrameRate(duk_context* ctx);
@@ -29,12 +30,6 @@ static duk_ret_t duk_Rectangle(duk_context* ctx);
 static duk_ret_t duk_CreateColor(duk_context* ctx);
 static duk_ret_t duk_BlendColors(duk_context* ctx);
 static duk_ret_t duk_BlendColorsWeighted(duk_context* ctx);
-
-// Font functions
-static duk_ret_t duk_GetSystemFont(duk_context* ctx);
-static duk_ret_t duk_LoadFont(duk_context* ctx);
-static duk_ret_t duk_Font_finalize(duk_context* ctx);
-static duk_ret_t duk_Font_drawText(duk_context* ctx);
 
 void
 init_api(duk_context* ctx)
@@ -55,7 +50,6 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "BlendColors", &duk_BlendColors);
 	register_api_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
 	register_api_func(ctx, NULL, "GetSystemFont", &duk_GetSystemFont);
-	register_api_func(ctx, NULL, "LoadFont", &duk_LoadFont);
 	register_api_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
 	register_api_func(ctx, NULL, "GetScreenHeight", &duk_GetScreenHeight);
 	register_api_func(ctx, NULL, "GetScreenWidth", &duk_GetScreenWidth);
@@ -98,15 +92,6 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 		duk_pop_2(ctx);
 	}
 	duk_pop(ctx);
-}
-
-void
-duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
-{
-	duk_push_object(ctx);
-	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "font_ptr");
-	duk_push_c_function(ctx, &duk_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &duk_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
 }
 
 static duk_ret_t
@@ -300,45 +285,6 @@ duk_GetSystemFont(duk_context* ctx)
 }
 
 duk_ret_t
-duk_LoadFont(duk_context* ctx)
-{
-	const char* filename = duk_get_string(ctx, 0);
-	char* path = get_asset_path(filename, "fonts", false);
-	ALLEGRO_FONT* font = al_load_font(path, 0, 0x0);
-	free(path);
-	if (font != NULL) {
-		duk_push_sphere_Font(ctx, font);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "LoadFont(): Unable to load font file '%s'", filename);
-	}
-}
-
-duk_ret_t
-duk_Font_finalize(duk_context* ctx)
-{
-	ALLEGRO_FONT* font;
-	duk_get_prop_string(ctx, 0, "\xFF" "font_ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	al_destroy_font(font);
-	return 0;
-}
-
-duk_ret_t
-duk_Font_drawText(duk_context* ctx)
-{
-	ALLEGRO_FONT* font;
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "font_ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	float x = duk_get_number(ctx, 0);
-	float y = duk_get_number(ctx, 1);
-	const char* text = duk_get_string(ctx, 2);
-	al_draw_text(font, al_map_rgb(255, 255, 255), x, y, 0x0, text);
-	return 0;
-}
-
-duk_ret_t
 duk_GetClippingRectangle(duk_context* ctx)
 {
 	int x, y, width, height;
@@ -422,10 +368,10 @@ duk_GradientCircle(duk_context* ctx)
 	duk_get_prop_string(ctx, 3, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 3, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	inner_color = al_map_rgba(r, g, b, a);
-	duk_get_prop_string(ctx, 5, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	outer_color = al_map_rgba(r, g, b, a);
 	// TODO: actually draw a gradient circle instead of a solid one
 	al_draw_filled_circle(x, y, radius, inner_color);
@@ -437,8 +383,8 @@ duk_GradientRectangle(duk_context* ctx)
 {
 	float x1 = (float)duk_get_number(ctx, 0);
 	float y1 = (float)duk_get_number(ctx, 1);
-	float x2 = x1 + (float)duk_get_number(ctx, 2);
-	float y2 = y1 + (float)duk_get_number(ctx, 3);
+	float x2 = x1 + (float)duk_get_number(ctx, 2) - 1;
+	float y2 = y1 + (float)duk_get_number(ctx, 3) - 1;
 	duk_int_t r, g, b, a;
 	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);

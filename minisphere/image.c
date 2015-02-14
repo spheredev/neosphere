@@ -26,9 +26,9 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_c_function(ctx, &_js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0 |
-		DUK_DEFPROP_HAVE_VALUE |
-		DUK_DEFPROP_HAVE_WRITABLE | 0);
+		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
+		| DUK_DEFPROP_HAVE_WRITABLE | 0
+		| DUK_DEFPROP_HAVE_VALUE);
 	duk_push_string(ctx, "height"); duk_push_int(ctx, al_get_bitmap_height(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
@@ -85,12 +85,13 @@ static duk_ret_t
 _js_Image_blit(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
-	float           x = (float)duk_get_number(ctx, 0);
-	float           y = (float)duk_get_number(ctx, 1);
+	float           x, y;
 	
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
+	x = (float)duk_to_number(ctx, 0);
+	y = (float)duk_to_number(ctx, 1);
 	al_draw_bitmap(bitmap, x, y, 0x0);
 	return 1;
 }

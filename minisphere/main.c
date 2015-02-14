@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "font.h"
 #include "image.h"
 #include "input.h"
 #include "log.h"
@@ -7,6 +8,7 @@
 #include "rfn_handler.h"
 #include "sound.h"
 #include "spriteset.h"
+#include "surface.h"
 
 static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
 static void handle_js_error ();
@@ -85,12 +87,14 @@ main(int argc, char** argv)
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
+	init_font_api(g_duktape);
 	init_image_api(g_duktape);
 	init_input_api(g_duktape);
 	init_log_api(g_duktape);
 	init_map_engine_api(g_duktape);
 	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);
+	init_surface_api();
 	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
 	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
 	free(sys_font_path);
