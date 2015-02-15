@@ -104,10 +104,10 @@ _js_Font_drawText(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
-	duk_get_prop_string(ctx, -1, "red"); mask.r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "green"); mask.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "blue"); mask.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "alpha"); mask.a = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "red"); mask.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "green"); mask.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "blue"); mask.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "alpha"); mask.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
 	duk_pop_2(ctx);
 	float x = duk_get_number(ctx, 0);
 	float y = duk_get_number(ctx, 1);

@@ -383,8 +383,8 @@ duk_GradientRectangle(duk_context* ctx)
 {
 	float x1 = (float)duk_get_number(ctx, 0);
 	float y1 = (float)duk_get_number(ctx, 1);
-	float x2 = x1 + (float)duk_get_number(ctx, 2) - 1;
-	float y2 = y1 + (float)duk_get_number(ctx, 3) - 1;
+	float x2 = x1 + (float)duk_get_number(ctx, 2);
+	float y2 = y1 + (float)duk_get_number(ctx, 3);
 	duk_int_t r, g, b, a;
 	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);

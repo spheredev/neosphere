@@ -2,6 +2,8 @@
 #include "api.h"
 #include "surface.h"
 
+static void      _apply_blend_mode             (int blend_mode);
+static void      _reset_blender                (void);
 static duk_ret_t _js_CreateSurface             (duk_context* ctx);
 static duk_ret_t _js_Surface_finalize          (duk_context* ctx);
 static duk_ret_t _js_Surface_setBlendMode      (duk_context* ctx);
@@ -26,6 +28,22 @@ init_surface_api(void)
 	register_api_const(g_duktape, "AVERAGE", BLEND_AVERAGE);
 	register_api_const(g_duktape, "INVERT", BLEND_INVERT);
 	register_api_func(g_duktape, NULL, "CreateSurface", &_js_CreateSurface);
+}
+
+static void
+_apply_blend_mode(int blend_mode)
+{
+	switch (blend_mode) {
+		case BLEND_BLEND: al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA); break;
+		case BLEND_REPLACE: al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO); break;
+		case BLEND_SUBTRACT: al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE); break;
+	}
+}
+
+static void
+_reset_blender(void)
+{
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 }
 
 static void
@@ -94,18 +112,22 @@ static duk_ret_t
 _js_Surface_blitSurface(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
+	int             blend_mode;
 	ALLEGRO_BITMAP* src_bitmap;
 	float           x, y;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "bitmap_ptr"); src_bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	x = (float)duk_to_number(ctx, 1);
 	y = (float)duk_to_number(ctx, 2);
+	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);
 	al_draw_bitmap(src_bitmap, x, y, 0x0);
 	al_set_target_backbuffer(g_display);
+	_reset_blender();
 	return 0;
 }
 
@@ -113,6 +135,7 @@ static duk_ret_t
 _js_Surface_drawText(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
+	int             blend_mode;
 	ALLEGRO_COLOR   color;
 	ALLEGRO_FONT*   font;
 	const char*     text;
@@ -120,20 +143,23 @@ _js_Surface_drawText(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask");
-	duk_get_prop_string(ctx, -1, "red"); color.r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "green"); color.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "blue"); color.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "alpha"); color.a = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "red"); color.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "green"); color.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "blue"); color.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "alpha"); color.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
 	duk_pop(ctx);
 	x = (float)duk_to_number(ctx, 1);
 	y = (float)duk_to_number(ctx, 2);
 	text = duk_to_string(ctx, 3);
+	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);
 	al_draw_text(font, color, x, y, 0x0, text);
 	al_set_target_backbuffer(g_display);
+	_reset_blender();
 	return 0;
 }
 
@@ -141,32 +167,35 @@ static duk_ret_t
 _js_Surface_gradientRectangle(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
+	int             blend_mode;
 	ALLEGRO_COLOR   color_ul, color_ur, color_lr, color_ll;
 	float           x1, y1, x2, y2;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	x1 = (float)duk_to_number(ctx, 0);
 	y1 = (float)duk_to_number(ctx, 1);
-	x2 = x1 + (float)duk_to_number(ctx, 2) - 1;
-	y2 = y1 + (float)duk_to_number(ctx, 3) - 1;
-	duk_get_prop_string(ctx, 4, "red"); color_ul .r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); color_ul.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); color_ul.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); color_ul.a = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "red"); color_ur.r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "green"); color_ur.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "blue"); color_ur.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "alpha"); color_ur.a = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "red"); color_lr.r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "green"); color_lr.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "blue"); color_lr.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "alpha"); color_lr.a = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "red"); color_ll.r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "green"); color_ll.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "blue"); color_ll.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "alpha"); color_ll.a = duk_get_int(ctx, -1); duk_pop(ctx);
+	x2 = x1 + (float)duk_to_number(ctx, 2);
+	y2 = y1 + (float)duk_to_number(ctx, 3);
+	duk_get_prop_string(ctx, 4, "red"); color_ul .r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "green"); color_ul.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "blue"); color_ul.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "alpha"); color_ul.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "red"); color_ur.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "green"); color_ur.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "blue"); color_ur.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 5, "alpha"); color_ur.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "red"); color_lr.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "green"); color_lr.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "blue"); color_lr.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 6, "alpha"); color_lr.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "red"); color_ll.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "green"); color_ll.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "blue"); color_ll.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 7, "alpha"); color_ll.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, color_ul },
@@ -176,6 +205,7 @@ _js_Surface_gradientRectangle(duk_context* ctx)
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	al_set_target_backbuffer(g_display);
+	_reset_blender();
 	return 0;
 }
 
@@ -183,23 +213,27 @@ static duk_ret_t
 _js_Surface_rectangle(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
+	int             blend_mode;
 	ALLEGRO_COLOR   color;
 	float           x, y, w, h;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	x = (float)duk_to_number(ctx, 0);
 	y = (float)duk_to_number(ctx, 1);
 	w = (float)duk_to_number(ctx, 2);
 	h = (float)duk_to_number(ctx, 3);
-	duk_get_prop_string(ctx, 4, "red"); color.r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); color.g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); color.b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); color.a = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "red"); color.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "green"); color.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "blue"); color.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	duk_get_prop_string(ctx, 4, "alpha"); color.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);
-	al_draw_filled_rectangle(x, y, x + w - 1, y + h -1, color);
+	al_draw_filled_rectangle(x, y, x + w, y + h, color);
 	al_set_target_backbuffer(g_display);
+	_reset_blender();
 	return 0;
 }
 

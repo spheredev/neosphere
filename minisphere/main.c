@@ -35,6 +35,8 @@ ALLEGRO_FONT*        g_sys_font  = NULL;
 int
 main(int argc, char** argv)
 {
+	int x_res, y_res;
+	
 	// initialize Allegro
 	al_init();
 	al_init_native_dialog_addon();
@@ -76,7 +78,9 @@ main(int argc, char** argv)
 	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
-	g_display = al_create_display(320, 240);
+	x_res = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
+	y_res = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
+	g_display = al_create_display(x_res, y_res);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();

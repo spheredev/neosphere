@@ -25,6 +25,7 @@ static const char* ENGINE_VER = "v0.0";
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
+extern ALLEGRO_FONT*        g_sys_font;
 
 extern char* get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
 extern char* get_sys_asset_path (const char* path, const char* base_dir);
