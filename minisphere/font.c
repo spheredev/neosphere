@@ -133,16 +133,45 @@ static duk_ret_t
 _js_Font_wordWrapString(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
-	const char*   text;
-	float         width;
+	int           line_width;
+	int           line_idx;
+	int           num_words;
+	int           space_width;
+	char*         text;
+	float         targ_width;
+	char*         word;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	text = duk_to_string(ctx, 0);
-	width = duk_to_number(ctx, 1);
-	// TODO: actually wrap the text
+	text = strdup(duk_to_string(ctx, 0));
+	targ_width = duk_to_number(ctx, 1);
+	space_width = al_get_text_width(font, " ");
 	duk_push_array(ctx);
-	duk_push_string(ctx, text); duk_put_prop_index(ctx, -2, 0);
+	line_idx = 0;
+	line_width = 0;
+	num_words = 0;
+	word = strtok(text, " ");
+	while (word != NULL) {
+		line_width += al_get_text_width(font, word);
+		if (line_width > targ_width) {
+			duk_concat(ctx, num_words);
+			duk_put_prop_index(ctx, -2, line_idx);
+			line_width = al_get_text_width(font, word);
+			num_words = 0;
+			++line_idx;
+		}
+		++num_words;
+		duk_push_string(ctx, word);
+		word = strtok(NULL, " ");
+		if (word != NULL) {
+			duk_push_string(ctx, " ");
+			line_width += space_width;
+			++num_words;
+		}
+	}
+	duk_concat(ctx, num_words);
+	duk_put_prop_index(ctx, -2, line_idx);
+	free(text);
 	return 1;
 }
