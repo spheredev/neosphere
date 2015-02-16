@@ -194,7 +194,7 @@ _js_Surface_drawText(duk_context* ctx)
 	ALLEGRO_COLOR   color;
 	ALLEGRO_FONT*   font;
 	const char*     text;
-	float           x, y;
+	int             x, y;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
@@ -202,8 +202,8 @@ _js_Surface_drawText(duk_context* ctx)
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
-	x = (float)duk_to_number(ctx, 1);
-	y = (float)duk_to_number(ctx, 2);
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
 	text = duk_to_string(ctx, 3);
 	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);

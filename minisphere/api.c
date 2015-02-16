@@ -139,7 +139,7 @@ duk_Exit(duk_context* ctx)
 static duk_ret_t
 duk_GetFrameRate(duk_context* ctx)
 {
-	duk_push_int(ctx, 60);
+	duk_push_int(ctx, g_fps);
 	return 1;
 }
 
@@ -193,6 +193,7 @@ duk_RequireSystemScript(duk_context* ctx)
 static duk_ret_t
 duk_SetFrameRate(duk_context* ctx)
 {
+	g_fps = duk_to_int(ctx, 0);
 	return 0;
 }
 
@@ -259,9 +260,7 @@ duk_ApplyColorMask(duk_context* ctx)
 duk_ret_t
 duk_FlipScreen(duk_context* ctx)
 {
-	if (!do_events()) duk_error(ctx, DUK_ERR_ERROR, "!exit");
-	al_flip_display();
-	al_clear_to_color(al_map_rgb(0, 0, 0));
+	if (!end_frame()) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	return 0;
 }
 

@@ -11,18 +11,6 @@
 #include "spriteset.h"
 #include "surface.h"
 
-static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
-static void handle_js_error ();
-static void shutdown_engine ();
-
-ALLEGRO_DISPLAY*     g_display   = NULL;
-duk_context*         g_duktape   = NULL;
-ALLEGRO_EVENT_QUEUE* g_events    = NULL;
-ALLEGRO_CONFIG*      g_game_conf = NULL;
-ALLEGRO_PATH*        g_game_path = NULL;
-key_queue_t          g_key_queue;
-ALLEGRO_FONT*        g_sys_font  = NULL;
-
 // enable visual styles (VC++)
 #ifdef _MSC_VER
 #pragma comment(linker, \
@@ -33,6 +21,24 @@ ALLEGRO_FONT*        g_sys_font  = NULL;
     "publicKeyToken='6595b64144ccf1df' "\
     "language='*'\"")
 #endif
+
+static const int MAX_FRAME_SKIPS = 3;
+
+static void on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg);
+static void handle_js_error();
+static void shutdown_engine();
+
+static int     s_frame_skips = 0;
+static clock_t s_last_frame_time;
+
+ALLEGRO_DISPLAY*     g_display = NULL;
+duk_context*         g_duktape   = NULL;
+ALLEGRO_EVENT_QUEUE* g_events    = NULL;
+int                  g_fps       = 0;
+ALLEGRO_CONFIG*      g_game_conf = NULL;
+ALLEGRO_PATH*        g_game_path = NULL;
+key_queue_t          g_key_queue;
+ALLEGRO_FONT*        g_sys_font  = NULL;
 
 int
 main(int argc, char** argv)
@@ -127,6 +133,7 @@ main(int argc, char** argv)
 	duk_pop(g_duktape);
 
 	// call game() function in script
+	s_last_frame_time = clock();
 	duk_push_global_object(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "game");
 	exec_result = duk_pcall(g_duktape, 0);
@@ -159,6 +166,39 @@ do_events(void)
 			}
 			break;
 		}
+	}
+	return true;
+}
+
+bool
+end_frame(void)
+{
+	clock_t current_time;
+	clock_t next_frame_time;
+	bool    skipping_frame = false;
+	clock_t frame_ticks;
+	
+	if (g_fps > 0) {
+		frame_ticks = CLOCKS_PER_SEC / g_fps;
+		current_time = clock();
+		next_frame_time = s_last_frame_time + frame_ticks;
+		skipping_frame = s_frame_skips < MAX_FRAME_SKIPS && current_time > next_frame_time;
+		do {
+			if (!do_events()) return false;
+		} while (clock() < next_frame_time);
+		s_last_frame_time += frame_ticks;
+	}
+	else {
+		if (!do_events()) return false;
+	}
+	if (!skipping_frame) {
+		s_last_frame_time = clock();
+		s_frame_skips = 0;
+		al_flip_display();
+		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	}
+	else {
+		++s_frame_skips;
 	}
 	return true;
 }

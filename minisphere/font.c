@@ -98,13 +98,14 @@ _js_Font_drawText(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 	ALLEGRO_COLOR mask;
+	int           x, y;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	float x = duk_get_number(ctx, 0);
-	float y = duk_get_number(ctx, 1);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
 	const char* text = duk_to_string(ctx, 2);
 	al_draw_text(font, mask, x, y, 0x0, text);
 	return 0;
