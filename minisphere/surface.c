@@ -1,5 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
+
 #include "surface.h"
 
 static void      _apply_blend_mode             (int blend_mode);
@@ -199,12 +201,7 @@ _js_Surface_drawText(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "color_mask");
-	duk_get_prop_string(ctx, -1, "red"); color.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "green"); color.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "blue"); color.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "alpha"); color.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
 	x = (float)duk_to_number(ctx, 1);
 	y = (float)duk_to_number(ctx, 2);
 	text = duk_to_string(ctx, 3);
@@ -214,6 +211,23 @@ _js_Surface_drawText(duk_context* ctx)
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
 	return 0;
+}
+
+static duk_ret_t
+_js_Surface_getPixel(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_COLOR   color;
+	int             x, y;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	color = al_get_pixel(bitmap, x, y);
+	duk_push_sphere_color(ctx, color);
+	return 1;
 }
 
 static duk_ret_t
@@ -232,22 +246,10 @@ _js_Surface_gradientRectangle(duk_context* ctx)
 	y1 = (float)duk_to_number(ctx, 1);
 	x2 = x1 + (float)duk_to_number(ctx, 2);
 	y2 = y1 + (float)duk_to_number(ctx, 3);
-	duk_get_prop_string(ctx, 4, "red"); color_ul .r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); color_ul.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); color_ul.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); color_ul.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "red"); color_ur.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "green"); color_ur.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "blue"); color_ur.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "alpha"); color_ur.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "red"); color_lr.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "green"); color_lr.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "blue"); color_lr.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "alpha"); color_lr.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "red"); color_ll.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "green"); color_ll.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "blue"); color_ll.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "alpha"); color_ll.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	color_ul = duk_get_sphere_color(ctx, 4);
+	color_ur = duk_get_sphere_color(ctx, 5);
+	color_lr = duk_get_sphere_color(ctx, 6);
+	color_ll = duk_get_sphere_color(ctx, 7);
 	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);
 	ALLEGRO_VERTEX verts[] = {
@@ -278,10 +280,7 @@ _js_Surface_rectangle(duk_context* ctx)
 	y = (float)duk_to_number(ctx, 1);
 	w = (float)duk_to_number(ctx, 2);
 	h = (float)duk_to_number(ctx, 3);
-	duk_get_prop_string(ctx, 4, "red"); color.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); color.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); color.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); color.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
+	color = duk_get_sphere_color(ctx, 4);
 	_apply_blend_mode(blend_mode);
 	al_set_target_bitmap(bitmap);
 	al_draw_filled_rectangle(x, y, x + w, y + h, color);

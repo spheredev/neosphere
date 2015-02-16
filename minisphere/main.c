@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
 #include "font.h"
 #include "image.h"
 #include "input.h"
@@ -85,12 +86,14 @@ main(int argc, char** argv)
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
+	al_register_event_source(g_events, al_get_keyboard_event_source());
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	al_flip_display();
 
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
+	init_color_api();
 	init_font_api(g_duktape);
 	init_image_api(g_duktape);
 	init_input_api(g_duktape);

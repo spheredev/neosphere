@@ -98,6 +98,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="color.c" />
     <ClCompile Include="duktape.c" />
     <ClCompile Include="font.c" />
     <ClCompile Include="image.c" />
@@ -112,6 +113,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClCompile Include="surface.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="color.h" />
     <ClInclude Include="duktape.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="image.h" />

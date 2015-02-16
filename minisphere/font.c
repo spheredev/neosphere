@@ -1,5 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
+
 #include "font.h"
 
 static duk_ret_t _js_LoadFont            (duk_context* ctx);
@@ -21,13 +23,6 @@ void
 duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 {
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_object(ctx);
-	duk_push_int(ctx, 255); duk_put_prop_string(ctx, -2, "red");
-	duk_push_int(ctx, 255); duk_put_prop_string(ctx, -2, "green");
-	duk_push_int(ctx, 255); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_int(ctx, 255); duk_put_prop_string(ctx, -2, "alpha");
-	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 	duk_push_c_function(ctx, &_js_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &_js_Font_getColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getColorMask");
 	duk_push_c_function(ctx, &_js_Font_getHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getHeight");
@@ -35,6 +30,9 @@ duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 	duk_push_c_function(ctx, &_js_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
 	duk_push_c_function(ctx, &_js_Font_getStringWidth, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringWidth");
 	duk_push_c_function(ctx, &_js_Font_wordWrapString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "wordWrapString");
+	
+	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_sphere_color(ctx, al_map_rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
 
 static duk_ret_t
@@ -103,12 +101,8 @@ _js_Font_drawText(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
-	duk_get_prop_string(ctx, -1, "red"); mask.r = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "green"); mask.g = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "blue"); mask.b = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "alpha"); mask.a = duk_get_number(ctx, -1) / 255; duk_pop(ctx);
-	duk_pop_2(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
 	float x = duk_get_number(ctx, 0);
 	float y = duk_get_number(ctx, 1);
 	const char* text = duk_to_string(ctx, 2);

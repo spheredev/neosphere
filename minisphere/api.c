@@ -1,8 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
 
-// Core engine functions
-static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_RequireSystemScript(duk_context* ctx);
 static duk_ret_t duk_RequireScript(duk_context* ctx);
 static duk_ret_t duk_EvaluateSystemScript(duk_context* ctx);
@@ -21,22 +20,17 @@ static duk_ret_t duk_Abort(duk_context* ctx);
 static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
 static duk_ret_t duk_Exit(duk_context* ctx);
 static duk_ret_t duk_FlipScreen(duk_context* ctx);
+static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_GradientCircle(duk_context* ctx);
 static duk_ret_t duk_GradientRectangle(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
-
-// Color management functions
-static duk_ret_t duk_CreateColor(duk_context* ctx);
-static duk_ret_t duk_BlendColors(duk_context* ctx);
-static duk_ret_t duk_BlendColorsWeighted(duk_context* ctx);
 
 void
 init_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "GetVersion", &duk_GetVersion);
 	register_api_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
-	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	register_api_func(ctx, NULL, "Abort", &duk_Abort);
 	register_api_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
 	register_api_func(ctx, NULL, "EvaluateSystemScript", &duk_EvaluateSystemScript);
@@ -46,9 +40,6 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "RequireScript", &duk_RequireScript);
 	register_api_func(ctx, NULL, "RequireSystemScript", &duk_RequireSystemScript);
 	register_api_func(ctx, NULL, "SetFrameRate", &duk_SetFrameRate);
-	register_api_func(ctx, NULL, "CreateColor", &duk_CreateColor);
-	register_api_func(ctx, NULL, "BlendColors", &duk_BlendColors);
-	register_api_func(ctx, NULL, "BlendColorsWeighted", &duk_BlendColorsWeighted);
 	register_api_func(ctx, NULL, "GetSystemFont", &duk_GetSystemFont);
 	register_api_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
 	register_api_func(ctx, NULL, "GetScreenHeight", &duk_GetScreenHeight);
@@ -56,6 +47,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetClippingRectangle", &duk_SetClippingRectangle);
 	register_api_func(ctx, NULL, "ApplyColorMask", &duk_ApplyColorMask);
 	register_api_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
+	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
 	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
 	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
@@ -213,69 +205,6 @@ duk_SetFrameRate(duk_context* ctx)
 }
 
 duk_ret_t
-duk_CreateColor(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	int red_val = duk_get_int(ctx, 0);
-	int green_val = duk_get_int(ctx, 1);
-	int blue_val = duk_get_int(ctx, 2);
-	int alpha_val = n_args > 3 ? duk_get_int(ctx, 3) : 255;
-	duk_push_object(ctx);
-	duk_push_int(ctx, red_val); duk_put_prop_string(ctx, -2, "red");
-	duk_push_int(ctx, green_val); duk_put_prop_string(ctx, -2, "green");
-	duk_push_int(ctx, blue_val); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_int(ctx, alpha_val); duk_put_prop_string(ctx, -2, "alpha");
-	return 1;
-}
-
-duk_ret_t
-duk_BlendColors(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	duk_int_t r1, g1, b1, a1;
-	duk_int_t r2, g2, b2, a2;
-	duk_get_prop_string(ctx, 0, "red"); r1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "green"); g1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "blue"); b1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "alpha"); a1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "red"); r2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "green"); g2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "blue"); b2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "alpha"); a2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_push_object(ctx);
-	duk_push_int(ctx, (r1 + r2) / 2); duk_put_prop_string(ctx, -2, "red");
-	duk_push_int(ctx, (g1 + g2) / 2); duk_put_prop_string(ctx, -2, "green");
-	duk_push_int(ctx, (b1 + b2) / 2); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_int(ctx, (a1 + a2) / 2); duk_put_prop_string(ctx, -2, "alpha");
-	return 1;
-}
-
-duk_ret_t
-duk_BlendColorsWeighted(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	duk_int_t r1, g1, b1, a1;
-	duk_int_t r2, g2, b2, a2;
-	duk_get_prop_string(ctx, 0, "red"); r1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "green"); g1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "blue"); b1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "alpha"); a1 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "red"); r2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "green"); g2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "blue"); b2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 1, "alpha"); a2 = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_double_t w1 = duk_get_number(ctx, 2);
-	duk_double_t w2 = duk_get_number(ctx, 3);
-	duk_double_t sigma = w1 + w2;
-	duk_push_object(ctx);
-	duk_push_int(ctx, (r1 * w1 + r2 * w2) / sigma); duk_put_prop_string(ctx, -2, "red");
-	duk_push_int(ctx, (g1 * w1 + g2 * w2) / sigma); duk_put_prop_string(ctx, -2, "green");
-	duk_push_int(ctx, (b1 * w1 + b2 * w2) / sigma); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_int(ctx, (a1 * w1 + a2 * w2) / sigma); duk_put_prop_string(ctx, -2, "alpha");
-	return 1;
-}
-
-duk_ret_t
 duk_GetSystemFont(duk_context* ctx)
 {
 	duk_push_global_stash(ctx);
@@ -325,14 +254,13 @@ duk_SetClippingRectangle(duk_context* ctx)
 duk_ret_t
 duk_ApplyColorMask(duk_context* ctx)
 {
-	duk_int_t r, g, b, a;
-	duk_get_prop_string(ctx, -1, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	float width = (float)al_get_display_width(g_display);
-	float height = (float)al_get_display_height(g_display);
-	al_draw_filled_rectangle(0, 0, width, height, al_map_rgba(r, g, b, a));
+	ALLEGRO_COLOR mask_color;
+	float         rect_w, rect_h;
+	
+	mask_color = duk_get_sphere_color(ctx, 0);
+	rect_w = al_get_display_width(g_display);
+	rect_h = al_get_display_height(g_display);
+	al_draw_filled_rectangle(0, 0, rect_w, rect_h, mask_color);
 	return 0;
 }
 
@@ -359,22 +287,13 @@ duk_GradientCircle(duk_context* ctx)
 	ALLEGRO_COLOR inner_color;
 	ALLEGRO_COLOR outer_color;
 	float         radius;
-	int           r, g, b, a;
 	float         x, y;
 	
 	x = (float)duk_require_number(ctx, 0);
 	y = (float)duk_require_number(ctx, 1);
 	radius = (float)duk_require_number(ctx, 2);
-	duk_get_prop_string(ctx, 3, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 3, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 3, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 3, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	inner_color = al_map_rgba(r, g, b, a);
-	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	outer_color = al_map_rgba(r, g, b, a);
+	inner_color = duk_get_sphere_color(ctx, 3);
+	outer_color = duk_get_sphere_color(ctx, 4);
 	// TODO: actually draw a gradient circle instead of a solid one
 	al_draw_filled_circle(x, y, radius, inner_color);
 	return 0;
@@ -383,31 +302,16 @@ duk_GradientCircle(duk_context* ctx)
 duk_ret_t
 duk_GradientRectangle(duk_context* ctx)
 {
+	ALLEGRO_COLOR color_ul, color_ur, color_lr, color_ll;
+	
 	float x1 = (float)duk_get_number(ctx, 0);
 	float y1 = (float)duk_get_number(ctx, 1);
 	float x2 = x1 + (float)duk_get_number(ctx, 2);
 	float y2 = y1 + (float)duk_get_number(ctx, 3);
-	duk_int_t r, g, b, a;
-	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	ALLEGRO_COLOR color_ul = al_map_rgba(r, g, b, a);
-	duk_get_prop_string(ctx, 5, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 5, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	ALLEGRO_COLOR color_ur = al_map_rgba(r, g, b, a);
-	duk_get_prop_string(ctx, 6, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 6, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	ALLEGRO_COLOR color_lr = al_map_rgba(r, g, b, a);
-	duk_get_prop_string(ctx, 7, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 7, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	ALLEGRO_COLOR color_ll = al_map_rgba(r, g, b, a);
+	color_ul = duk_get_sphere_color(ctx, 4);
+	color_ur = duk_get_sphere_color(ctx, 5);
+	color_lr = duk_get_sphere_color(ctx, 6);
+	color_ll = duk_get_sphere_color(ctx, 7);
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, color_ul },
 		{ x2, y1, 0, 0, 0, color_ur },
@@ -421,33 +325,29 @@ duk_GradientRectangle(duk_context* ctx)
 duk_ret_t
 duk_OutlinedRectangle(duk_context* ctx)
 {
+	ALLEGRO_COLOR color;
+	
 	duk_idx_t n_args = duk_get_top(ctx);
 	float x1 = (float)duk_get_number(ctx, 0) + 0.5;
 	float y1 = (float)duk_get_number(ctx, 1) + 0.5;
 	float x2 = x1 + (float)duk_get_number(ctx, 2) - 1;
 	float y2 = y1 + (float)duk_get_number(ctx, 3) - 1;
+	color = duk_get_sphere_color(ctx, 4);
 	float thickness = n_args >= 6 ? (float)floor((double)duk_get_number(ctx, 5)) : 1;
-	duk_int_t r, g, b, a;
-	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	al_draw_rectangle(x1, y1, x2, y2, al_map_rgba(r, g, b, a), thickness);
+	al_draw_rectangle(x1, y1, x2, y2, color, thickness);
 	return 0;
 }
 
 duk_ret_t
 duk_Rectangle(duk_context* ctx)
 {
+	ALLEGRO_COLOR color;
+	
 	float x = (float)duk_get_number(ctx, 0);
 	float y = (float)duk_get_number(ctx, 1);
 	float width = (float)duk_get_number(ctx, 2);
 	float height = (float)duk_get_number(ctx, 3);
-	duk_int_t r, g, b, a;
-	duk_get_prop_string(ctx, 4, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 4, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	al_draw_filled_rectangle(x, y, x + width, y + height, al_map_rgba(r, g, b, a));
+	color = duk_get_sphere_color(ctx, 4);
+	al_draw_filled_rectangle(x, y, x + width, y + height, color);
 	return 0;
 }
