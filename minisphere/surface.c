@@ -5,13 +5,16 @@
 static void      _apply_blend_mode             (int blend_mode);
 static void      _reset_blender                (void);
 static duk_ret_t _js_CreateSurface             (duk_context* ctx);
+static duk_ret_t _js_LoadSurface               (duk_context* ctx);
 static duk_ret_t _js_Surface_finalize          (duk_context* ctx);
 static duk_ret_t _js_Surface_setBlendMode      (duk_context* ctx);
 static duk_ret_t _js_Surface_blit              (duk_context* ctx);
 static duk_ret_t _js_Surface_blitSurface       (duk_context* ctx);
+static duk_ret_t _js_Surface_cloneSection      (duk_context* ctx);
 static duk_ret_t _js_Surface_drawText          (duk_context* ctx);
 static duk_ret_t _js_Surface_gradientRectangle (duk_context* ctx);
 static duk_ret_t _js_Surface_rectangle         (duk_context* ctx);
+static duk_ret_t _js_Surface_save              (duk_context* ctx);
 
 static void _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap);
 
@@ -28,6 +31,7 @@ init_surface_api(void)
 	register_api_const(g_duktape, "AVERAGE", BLEND_AVERAGE);
 	register_api_const(g_duktape, "INVERT", BLEND_INVERT);
 	register_api_func(g_duktape, NULL, "CreateSurface", &_js_CreateSurface);
+	register_api_func(g_duktape, NULL, "LoadSurface", &_js_LoadSurface);
 }
 
 static void
@@ -64,9 +68,11 @@ _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 	duk_push_c_function(ctx, &_js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
 	duk_push_c_function(ctx, &_js_Surface_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, &_js_Surface_blitSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitSurface");
+	duk_push_c_function(ctx, &_js_Surface_cloneSection, DUK_VARARGS); duk_put_prop_string(ctx, -2, "cloneSection");
 	duk_push_c_function(ctx, &_js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
 	duk_push_c_function(ctx, &_js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
 	duk_push_c_function(ctx, &_js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
+	duk_push_c_function(ctx, &_js_Surface_save, DUK_VARARGS); duk_put_prop_string(ctx, -2, "save");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
@@ -90,6 +96,22 @@ _js_CreateSurface(duk_context* ctx)
 	bitmap = al_create_bitmap(w, h);
 	_duk_push_sphere_Surface(ctx, bitmap);
 	return 1;
+}
+
+static duk_ret_t
+_js_LoadSurface(duk_context* ctx)
+{
+	const char* filename = duk_to_string(ctx, 0);
+	char* path = get_asset_path(filename, "images", false);
+	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
+	free(path);
+	if (bitmap != NULL) {
+		_duk_push_sphere_Surface(ctx, bitmap);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "LoadSurface(): Unable to load image file '%s'", filename);
+	}
 }
 
 static duk_ret_t
@@ -138,6 +160,28 @@ _js_Surface_blitSurface(duk_context* ctx)
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
 	return 0;
+}
+
+static duk_ret_t
+_js_Surface_cloneSection(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_BITMAP* new_bitmap;
+	float           x, y, w, h;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	x = duk_to_number(ctx, 0);
+	y = duk_to_number(ctx, 1);
+	w = duk_to_number(ctx, 2);
+	h = duk_to_number(ctx, 3);
+	new_bitmap = al_create_bitmap(w, h);
+	al_set_target_bitmap(new_bitmap);
+	al_draw_bitmap_region(bitmap, x, y, w, h, 0, 0, 0x0);
+	al_set_target_backbuffer(g_display);
+	_duk_push_sphere_Surface(ctx, new_bitmap);
+	return 1;
 }
 
 static duk_ret_t
@@ -244,6 +288,22 @@ _js_Surface_rectangle(duk_context* ctx)
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
 	return 0;
+}
+
+static duk_ret_t
+_js_Surface_save(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	const char*     filename;
+	const char*     path;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	filename = duk_to_string(ctx, 0);
+	path = get_asset_path(filename, "images", true);
+	al_save_bitmap(path, bitmap);
+	return 1;
 }
 
 static duk_ret_t

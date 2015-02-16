@@ -26,6 +26,10 @@ init_input_api(duk_context* ctx)
 	register_api_const(ctx, "PLAYER_KEY_B", PLAYER_KEY_B);
 	register_api_const(ctx, "PLAYER_KEY_X", PLAYER_KEY_X);
 	register_api_const(ctx, "PLAYER_KEY_Y", PLAYER_KEY_Y);
+	register_api_const(ctx, "KEY_UP", ALLEGRO_KEY_UP);
+	register_api_const(ctx, "KEY_DOWN", ALLEGRO_KEY_DOWN);
+	register_api_const(ctx, "KEY_LEFT", ALLEGRO_KEY_LEFT);
+	register_api_const(ctx, "KEY_RIGHT", ALLEGRO_KEY_RIGHT);
 	register_api_const(ctx, "KEY_0", ALLEGRO_KEY_0);
 	register_api_const(ctx, "KEY_1", ALLEGRO_KEY_1);
 	register_api_const(ctx, "KEY_2", ALLEGRO_KEY_2);
