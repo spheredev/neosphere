@@ -22,10 +22,20 @@
 static const char* SPHERE_API_VER = "v1.5";
 static const char* ENGINE_VER = "v0.0";
 
+struct key_queue
+{
+	int num_keys;
+	int keys[255];
+};
+
+typedef struct key_queue key_queue_t;
+
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
+extern key_queue_t          g_key_queue;
 extern ALLEGRO_FONT*        g_sys_font;
 
+extern bool  do_events          (void);
 extern char* get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
 extern char* get_sys_asset_path (const char* path, const char* base_dir);

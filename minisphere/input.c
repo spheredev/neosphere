@@ -79,16 +79,23 @@ init_input_api(duk_context* ctx)
 static duk_ret_t
 _js_AreKeysLeft(duk_context* ctx)
 {
-	ALLEGRO_KEYBOARD_STATE kbd_state;
-	al_get_keyboard_state(&kbd_state);
-	duk_push_false(ctx);
+	duk_push_boolean(ctx, g_key_queue.num_keys > 0);
 	return 1;
 }
 
 static duk_ret_t
 _js_GetKey(duk_context* ctx)
 {
-	return 0;
+	int keycode;
+	
+	while (g_key_queue.num_keys <= 0) {
+		if (!do_events()) duk_error(ctx, DUK_ERR_ERROR, "!exit");
+	}
+	keycode = g_key_queue.keys[0];
+	--g_key_queue.num_keys;
+	memmove(g_key_queue.keys, &g_key_queue.keys[1], sizeof(int) * g_key_queue.num_keys);
+	duk_push_int(ctx, keycode);
+	return 1;
 }
 
 static duk_ret_t

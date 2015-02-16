@@ -96,16 +96,8 @@ duk_GetVersion(duk_context* ctx)
 static duk_ret_t
 duk_GetVersionString(duk_context* ctx)
 {
-	duk_push_sprintf(ctx, "minisphere %s (API: sphere-%s)", ENGINE_VER, SPHERE_API_VER);
+	duk_push_sprintf(ctx, "%s (compatible; minisphere %s)", SPHERE_API_VER, ENGINE_VER);
 	return 1;
-}
-
-static duk_ret_t
-duk_GarbageCollect(duk_context* ctx)
-{
-	duk_gc(ctx, 0x0);
-	duk_gc(ctx, 0x0);
-	return 0;
 }
 
 static duk_ret_t
@@ -267,17 +259,17 @@ duk_ApplyColorMask(duk_context* ctx)
 duk_ret_t
 duk_FlipScreen(duk_context* ctx)
 {
-	ALLEGRO_EVENT event;
-	bool          got_event;
-	
-	do {
-		got_event = al_get_next_event(g_events, &event);
-		if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-			duk_error(ctx, DUK_ERR_ERROR, "!exit");
-		}
-	} while (got_event);
+	if (!do_events()) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	al_flip_display();
 	al_clear_to_color(al_map_rgb(0, 0, 0));
+	return 0;
+}
+
+static duk_ret_t
+duk_GarbageCollect(duk_context* ctx)
+{
+	duk_gc(ctx, 0x0);
+	duk_gc(ctx, 0x0);
 	return 0;
 }
 

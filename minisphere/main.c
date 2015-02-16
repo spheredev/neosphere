@@ -20,6 +20,7 @@ duk_context*         g_duktape   = NULL;
 ALLEGRO_EVENT_QUEUE* g_events    = NULL;
 ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
+key_queue_t          g_key_queue;
 ALLEGRO_FONT*        g_sys_font  = NULL;
 
 // enable visual styles (VC++)
@@ -138,6 +139,28 @@ main(int argc, char** argv)
 	// teardown
 	shutdown_engine();
 	return EXIT_SUCCESS;
+}
+
+bool
+do_events(void)
+{
+	ALLEGRO_EVENT event;
+	int           key_index;
+
+	while (al_get_next_event(g_events, &event)) {
+		switch (event.type) {
+		case ALLEGRO_EVENT_DISPLAY_CLOSE:
+			return false;
+		case ALLEGRO_EVENT_KEY_CHAR:
+			if (g_key_queue.num_keys < 255) {
+				key_index = g_key_queue.num_keys;
+				++g_key_queue.num_keys;
+				g_key_queue.keys[key_index] = event.keyboard.keycode;
+			}
+			break;
+		}
+	}
+	return true;
 }
 
 char*
