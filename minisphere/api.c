@@ -340,12 +340,14 @@ duk_ret_t
 duk_FlipScreen(duk_context* ctx)
 {
 	ALLEGRO_EVENT event;
-	ALLEGRO_TIMEOUT timeout;
-	al_init_timeout(&timeout, 0.01);
-	bool got_event = al_wait_for_event_until(g_events, &event, &timeout);
-	if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-		duk_error(ctx, DUK_ERR_ERROR, "!exit");
-	}
+	bool          got_event;
+	
+	do {
+		got_event = al_get_next_event(g_events, &event);
+		if (got_event && event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			duk_error(ctx, DUK_ERR_ERROR, "!exit");
+		}
+	} while (got_event);
 	al_flip_display();
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	return 0;

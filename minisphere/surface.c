@@ -34,9 +34,18 @@ static void
 _apply_blend_mode(int blend_mode)
 {
 	switch (blend_mode) {
-		case BLEND_BLEND: al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA); break;
-		case BLEND_REPLACE: al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO); break;
-		case BLEND_SUBTRACT: al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE); break;
+	case BLEND_BLEND:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+		break;
+	case BLEND_REPLACE:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+		break;
+	case BLEND_ADD:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+		break;
+	case BLEND_SUBTRACT:
+		al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
+		break;
 	}
 }
 
