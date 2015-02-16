@@ -294,11 +294,12 @@ duk_ret_t
 duk_GradientRectangle(duk_context* ctx)
 {
 	ALLEGRO_COLOR color_ul, color_ur, color_lr, color_ll;
+	int           x1, y1, x2, y2;
 	
-	float x1 = (float)duk_get_number(ctx, 0);
-	float y1 = (float)duk_get_number(ctx, 1);
-	float x2 = x1 + (float)duk_get_number(ctx, 2);
-	float y2 = y1 + (float)duk_get_number(ctx, 3);
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = x1 + duk_to_int(ctx, 2);
+	y2 = y1 + duk_to_int(ctx, 3);
 	color_ul = duk_get_sphere_color(ctx, 4);
 	color_ur = duk_get_sphere_color(ctx, 5);
 	color_lr = duk_get_sphere_color(ctx, 6);
@@ -317,14 +318,16 @@ duk_ret_t
 duk_OutlinedRectangle(duk_context* ctx)
 {
 	ALLEGRO_COLOR color;
+	int           n_args;
+	float         x1, y1, x2, y2;
 	
-	duk_idx_t n_args = duk_get_top(ctx);
-	float x1 = (float)duk_get_number(ctx, 0) + 0.5;
-	float y1 = (float)duk_get_number(ctx, 1) + 0.5;
-	float x2 = x1 + (float)duk_get_number(ctx, 2) - 1;
-	float y2 = y1 + (float)duk_get_number(ctx, 3) - 1;
+	n_args = duk_get_top(ctx);
+	x1 = duk_to_int(ctx, 0) + 0.5;
+	y1 = duk_to_int(ctx, 1) + 0.5;
+	x2 = x1 + duk_to_int(ctx, 2) - 1;
+	y2 = y1 + duk_to_int(ctx, 3) - 1;
 	color = duk_get_sphere_color(ctx, 4);
-	float thickness = n_args >= 6 ? (float)floor((double)duk_get_number(ctx, 5)) : 1;
+	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 	al_draw_rectangle(x1, y1, x2, y2, color, thickness);
 	return 0;
 }
@@ -333,12 +336,13 @@ duk_ret_t
 duk_Rectangle(duk_context* ctx)
 {
 	ALLEGRO_COLOR color;
+	int           x, y, w, h;
 	
-	float x = (float)duk_get_number(ctx, 0);
-	float y = (float)duk_get_number(ctx, 1);
-	float width = (float)duk_get_number(ctx, 2);
-	float height = (float)duk_get_number(ctx, 3);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	w = duk_to_int(ctx, 2);
+	h = duk_to_int(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
-	al_draw_filled_rectangle(x, y, x + width, y + height, color);
+	al_draw_filled_rectangle(x, y, x + w, y + h, color);
 	return 0;
 }

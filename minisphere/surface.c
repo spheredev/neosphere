@@ -135,8 +135,8 @@ _js_Surface_blit(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x = (float)duk_to_number(ctx, 0);
-	y = (float)duk_to_number(ctx, 1);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
 	al_draw_bitmap(bitmap, x, y, 0x0);
 	return 0;
 }
