@@ -34,7 +34,6 @@ static clock_t s_last_frame_time;
 ALLEGRO_DISPLAY*     g_display   = NULL;
 duk_context*         g_duktape   = NULL;
 ALLEGRO_EVENT_QUEUE* g_events    = NULL;
-int                  g_fps       = 0;
 ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
@@ -121,7 +120,6 @@ main(int argc, char** argv)
 	duk_int_t exec_result;
 	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
-	//exec_result = duk_pcompile_string(g_duktape, 0x0, "function game() { var font = GetSystemFont(); while(true) { font.drawText(10, 10, 'maggie totally ate everything!\\nFOOD'); FlipScreen(); } }");
 	free(script_path);
 	if (exec_result != DUK_EXEC_SUCCESS) {
 		handle_js_error();
@@ -171,15 +169,15 @@ do_events(void)
 }
 
 bool
-end_frame(void)
+end_frame(int framerate)
 {
 	clock_t current_time;
 	clock_t next_frame_time;
 	bool    skipping_frame = false;
 	clock_t frame_ticks;
 	
-	if (g_fps > 0) {
-		frame_ticks = CLOCKS_PER_SEC / g_fps;
+	if (framerate > 0) {
+		frame_ticks = CLOCKS_PER_SEC / framerate;
 		current_time = clock();
 		next_frame_time = s_last_frame_time + frame_ticks;
 		skipping_frame = s_frame_skips < MAX_FRAME_SKIPS && current_time > next_frame_time;

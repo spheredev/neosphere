@@ -38,6 +38,6 @@ extern key_queue_t          g_key_queue;
 extern ALLEGRO_FONT*        g_sys_font;
 
 extern bool  do_events          (void);
-extern bool  end_frame          (void);
+extern bool  end_frame          (int framerate);
 extern char* get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
 extern char* get_sys_asset_path (const char* path, const char* base_dir);

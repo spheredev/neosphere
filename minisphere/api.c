@@ -26,6 +26,8 @@ static duk_ret_t duk_GradientRectangle(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
 
+static int s_framerate = 0;
+
 void
 init_api(duk_context* ctx)
 {
@@ -139,7 +141,7 @@ duk_Exit(duk_context* ctx)
 static duk_ret_t
 duk_GetFrameRate(duk_context* ctx)
 {
-	duk_push_int(ctx, g_fps);
+	duk_push_int(ctx, s_framerate);
 	return 1;
 }
 
@@ -193,7 +195,7 @@ duk_RequireSystemScript(duk_context* ctx)
 static duk_ret_t
 duk_SetFrameRate(duk_context* ctx)
 {
-	g_fps = duk_to_int(ctx, 0);
+	s_framerate = duk_to_int(ctx, 0);
 	return 0;
 }
 
@@ -260,7 +262,7 @@ duk_ApplyColorMask(duk_context* ctx)
 duk_ret_t
 duk_FlipScreen(duk_context* ctx)
 {
-	if (!end_frame()) duk_error(ctx, DUK_ERR_ERROR, "!exit");
+	if (!end_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	return 0;
 }
 
