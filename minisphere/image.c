@@ -55,10 +55,20 @@ _js_LoadImage(duk_context* ctx)
 static duk_ret_t
 _js_GrabImage(duk_context* ctx)
 {
-	int x_res = al_get_display_width(g_display);
-	int y_res = al_get_display_height(g_display);
-	ALLEGRO_BITMAP* bitmap = al_create_bitmap(x_res, y_res);
+	ALLEGRO_BITMAP* backbuffer;
+	ALLEGRO_BITMAP* bitmap;
+	int             x, y, w, h;
+
+	backbuffer = al_get_backbuffer(g_display);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	w = duk_to_int(ctx, 2);
+	h = duk_to_int(ctx, 3);
+	bitmap = al_create_bitmap(w, h);
 	if (bitmap != NULL) {
+		al_set_target_bitmap(bitmap);
+		al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
+		al_set_target_backbuffer(g_display);
 		duk_push_sphere_Image(ctx, bitmap, true);
 		return 1;
 	}

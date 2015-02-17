@@ -22,7 +22,7 @@
     "language='*'\"")
 #endif
 
-static const int MAX_FRAME_SKIPS = 3;
+static const int MAX_FRAME_SKIPS = 5;
 
 static void on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg);
 static void handle_js_error();
@@ -31,7 +31,7 @@ static void shutdown_engine();
 static int     s_frame_skips = 0;
 static clock_t s_last_frame_time;
 
-ALLEGRO_DISPLAY*     g_display = NULL;
+ALLEGRO_DISPLAY*     g_display   = NULL;
 duk_context*         g_duktape   = NULL;
 ALLEGRO_EVENT_QUEUE* g_events    = NULL;
 int                  g_fps       = 0;

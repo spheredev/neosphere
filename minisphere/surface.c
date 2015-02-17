@@ -7,6 +7,7 @@
 static void      _apply_blend_mode             (int blend_mode);
 static void      _reset_blender                (void);
 static duk_ret_t _js_CreateSurface             (duk_context* ctx);
+static duk_ret_t _js_GrabSurface               (duk_context* ctx);
 static duk_ret_t _js_LoadSurface               (duk_context* ctx);
 static duk_ret_t _js_Surface_finalize          (duk_context* ctx);
 static duk_ret_t _js_Surface_setBlendMode      (duk_context* ctx);
@@ -33,6 +34,7 @@ init_surface_api(void)
 	register_api_const(g_duktape, "AVERAGE", BLEND_AVERAGE);
 	register_api_const(g_duktape, "INVERT", BLEND_INVERT);
 	register_api_func(g_duktape, NULL, "CreateSurface", &_js_CreateSurface);
+	register_api_func(g_duktape, NULL, "GrabSurface", &_js_GrabSurface);
 	register_api_func(g_duktape, NULL, "LoadSurface", &_js_LoadSurface);
 }
 
@@ -98,6 +100,31 @@ _js_CreateSurface(duk_context* ctx)
 	bitmap = al_create_bitmap(w, h);
 	_duk_push_sphere_Surface(ctx, bitmap);
 	return 1;
+}
+
+static duk_ret_t
+_js_GrabSurface(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* backbuffer;
+	ALLEGRO_BITMAP* bitmap;
+	int             x, y, w, h;
+
+	backbuffer = al_get_backbuffer(g_display);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	w = duk_to_int(ctx, 2);
+	h = duk_to_int(ctx, 3);
+	bitmap = al_create_bitmap(w, h);
+	if (bitmap != NULL) {
+		al_set_target_bitmap(bitmap);
+		al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
+		al_set_target_backbuffer(g_display);
+		_duk_push_sphere_Surface(ctx, bitmap);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Unable to create surface bitmap");
+	}
 }
 
 static duk_ret_t
