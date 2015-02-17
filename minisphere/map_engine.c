@@ -1,21 +1,44 @@
 #include "minisphere.h"
 #include "api.h"
+#include "person.h"
 
 #include "map_engine.h"
 
 
-static duk_ret_t _js_MapEngine(duk_context* ctx);
-static duk_ret_t _js_IsMapEngineRunning(duk_context* ctx);
+static duk_ret_t _js_MapEngine             (duk_context* ctx);
+static duk_ret_t _js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t _js_SetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t _js_SetRenderScript       (duk_context* ctx);
+static duk_ret_t _js_SetUpdateScript       (duk_context* ctx);
+static duk_ret_t _js_IsMapEngineRunning    (duk_context* ctx);
+static duk_ret_t _js_AttachCamera          (duk_context* ctx);
 
-static bool s_exiting   = false;
-static int  s_framerate = 0;
-static bool s_running   = false;
+static char* s_camera_person = NULL;
+static bool  s_exiting       = false;
+static int   s_framerate     = 0;
+static bool  s_running       = false;
 
 void
 init_map_engine_api(duk_context* ctx)
 {
-	register_api_func(ctx, NULL, "IsMapEngineRunning", &_js_IsMapEngineRunning);
 	register_api_func(ctx, NULL, "MapEngine", &_js_MapEngine);
+	register_api_func(ctx, NULL, "GetMapEngineFrameRate", &_js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetMapEngineFrameRate", &_js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetRenderScript", &_js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetUpdateScript", &_js_SetUpdateScript);
+	register_api_func(ctx, NULL, "IsMapEngineRunning", &_js_IsMapEngineRunning);
+	register_api_func(ctx, NULL, "AttachCamera", &_js_AttachCamera);
+
+	// Map script types
+	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", 0);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP", 1);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_NORTH", 2);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_EAST", 3);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_SOUTH", 4);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", 5);
+
+	// initialize subcomponent APIs (persons, etc.)
+	init_person_api();
 }
 
 static duk_ret_t
@@ -51,10 +74,49 @@ _js_SetMapEngineFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+_js_SetRenderScript(duk_context* ctx)
+{
+	const char* script;
+	size_t      script_size;
+
+	script = duk_require_lstring(ctx, 0, &script_size);
+	duk_push_global_stash(ctx);
+	duk_push_string(ctx, "[render]");
+	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
+	duk_put_prop_string(ctx, -2, "render_script");
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+_js_SetUpdateScript(duk_context* ctx)
+{
+	const char* script;
+	size_t      script_size;
+
+	script = duk_require_lstring(ctx, 0, &script_size);
+	duk_push_global_stash(ctx);
+	duk_push_string(ctx, "[update]");
+	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
+	duk_put_prop_string(ctx, -2, "update_script");
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
 _js_IsMapEngineRunning(duk_context* ctx)
 {
 	duk_push_boolean(ctx, s_running);
 	return 1;
+}
+
+static duk_ret_t
+_js_AttachCamera(duk_context* ctx)
+{
+	const char* person_name;
+	
+	person_name = duk_to_string(ctx, 0);
+	return 0;
 }
 
 static duk_ret_t
@@ -67,11 +129,19 @@ _js_ExitMapEngine(duk_context* ctx)
 static duk_ret_t
 _js_RenderMap(duk_context* ctx)
 {
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "render_script");
+	duk_call(ctx, 0);
+	duk_pop_2(ctx);
 	return 0;
 }
 
 static duk_ret_t
 _js_UpdateMapEngine(duk_context* ctx)
 {
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "update_script");
+	duk_call(ctx, 0);
+	duk_pop_2(ctx);
 	return 0;
 }

@@ -106,6 +106,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClCompile Include="log.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
+    <ClCompile Include="person.c" />
     <ClCompile Include="rfn_handler.c" />
     <ClCompile Include="sound.c" />
     <ClCompile Include="api.c" />
@@ -121,6 +122,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClInclude Include="log.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
+    <ClInclude Include="person.h" />
     <ClInclude Include="rfn_handler.h" />
     <ClInclude Include="api.h" />
     <ClInclude Include="sound.h" />

@@ -21,6 +21,7 @@ static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
 static duk_ret_t duk_Exit(duk_context* ctx);
 static duk_ret_t duk_FlipScreen(duk_context* ctx);
 static duk_ret_t duk_GarbageCollect(duk_context* ctx);
+static duk_ret_t duk_GetFileList(duk_context* ctx);
 static duk_ret_t duk_GradientCircle(duk_context* ctx);
 static duk_ret_t duk_GradientRectangle(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
@@ -50,6 +51,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ApplyColorMask", &duk_ApplyColorMask);
 	register_api_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
 	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
+	register_api_func(ctx, NULL, "GetFileList", &duk_GetFileList);
 	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
 	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
 	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
@@ -272,6 +274,38 @@ duk_GarbageCollect(duk_context* ctx)
 	duk_gc(ctx, 0x0);
 	duk_gc(ctx, 0x0);
 	return 0;
+}
+
+static duk_ret_t
+duk_GetFileList(duk_context* ctx)
+{
+	const char*       directory_name;
+	ALLEGRO_FS_ENTRY* file_info;
+	ALLEGRO_PATH*     file_path;
+	ALLEGRO_FS_ENTRY* fs;
+	int               n_args;
+	char*             path;
+	int               i;
+
+	n_args = duk_get_top(ctx);
+	directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : NULL;
+	path = get_asset_path(directory_name, NULL, false);
+	fs = al_create_fs_entry(path);
+	free(path);
+	i = 0;
+	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
+		duk_push_array(ctx);
+		while (file_info = al_read_directory(fs)) {
+			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISFILE) {
+				file_path = al_create_path(al_get_fs_entry_name(file_info));
+				duk_push_string(ctx, al_get_path_filename(file_path)); duk_put_prop_index(ctx, -2, i);
+				al_destroy_path(file_path);
+				++i;
+			}
+		}
+	}
+	al_destroy_fs_entry(fs);
+	return 1;
 }
 
 duk_ret_t
