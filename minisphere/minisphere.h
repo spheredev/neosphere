@@ -35,9 +35,13 @@ extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
 extern int                  g_fps;
 extern key_queue_t          g_key_queue;
+extern int                  g_render_scale;
 extern ALLEGRO_FONT*        g_sys_font;
 
-extern bool  do_events          (void);
+extern void            al_draw_tiled_bitmap (ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height);
+extern ALLEGRO_BITMAP* al_fread_bitmap      (ALLEGRO_FILE* file, int width, int height);
+
+extern bool  do_events(void);
 extern bool  end_frame          (int framerate);
 extern char* get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
 extern char* get_sys_asset_path (const char* path, const char* base_dir);

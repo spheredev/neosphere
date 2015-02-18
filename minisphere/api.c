@@ -226,25 +226,26 @@ duk_GetClippingRectangle(duk_context* ctx)
 duk_ret_t
 duk_GetScreenHeight(duk_context* ctx)
 {
-	duk_push_int(ctx, (duk_int_t)al_get_display_height(g_display));
+	duk_push_int(ctx, (duk_int_t)al_get_display_height(g_display) / g_render_scale);
 	return 1;
 }
 
 duk_ret_t
 duk_GetScreenWidth(duk_context* ctx)
 {
-	duk_push_int(ctx, (duk_int_t)al_get_display_width(g_display));
+	duk_push_int(ctx, al_get_display_width(g_display) / g_render_scale);
 	return 1;
 }
 
 duk_ret_t
 duk_SetClippingRectangle(duk_context* ctx)
 {
-	float x = (float)duk_get_number(ctx, 0);
-	float y = (float)duk_get_number(ctx, 1);
-	float width = (float)duk_get_number(ctx, 2);
-	float height = (float)duk_get_number(ctx, 3);
-	al_set_clipping_rectangle(x, y, width, height);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int width = duk_to_int(ctx, 2);
+	int height = duk_to_int(ctx, 3);
+	// HACK: Allegro doesn't transform the clipping rect, so we have to scale it manually.
+	al_set_clipping_rectangle(x * g_render_scale, y * g_render_scale, width * g_render_scale, height * g_render_scale);
 	return 0;
 }
 

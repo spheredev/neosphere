@@ -85,7 +85,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
       <SDLCheck>false</SDLCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
@@ -112,6 +112,7 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClCompile Include="api.c" />
     <ClCompile Include="spriteset.c" />
     <ClCompile Include="surface.c" />
+    <ClCompile Include="windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="color.h" />
@@ -123,11 +124,19 @@ xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
     <ClInclude Include="person.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="rfn_handler.h" />
     <ClInclude Include="api.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="spriteset.h" />
     <ClInclude Include="surface.h" />
+    <ClInclude Include="windowstyle.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="minisphere.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sphere.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

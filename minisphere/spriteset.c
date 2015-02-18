@@ -28,7 +28,6 @@ struct v3_frame {
 	uint8_t reserved[4];
 };
 
-static ALLEGRO_BITMAP* _fread_sprite_image    (ALLEGRO_FILE* file, int width, int height);
 static char*           _fread_string          (ALLEGRO_FILE* file);
 static void            _duk_push_spriteset    (duk_context* ctx, spriteset_t* spriteset);
 static duk_ret_t       _js_LoadSpriteset      (duk_context* ctx);
@@ -75,7 +74,7 @@ load_spriteset(const char* path)
 		if ((spriteset->bitmaps = al_calloc(spriteset->num_images, sizeof(ALLEGRO_BITMAP*))) == NULL)
 			goto on_error;
 		for (i = 0; i < spriteset->num_images; ++i) {
-			spriteset->bitmaps[i] = _fread_sprite_image(file, rss.frame_width, rss.frame_height);
+			spriteset->bitmaps[i] = al_fread_bitmap(file, rss.frame_width, rss.frame_height);
 			if (spriteset->bitmaps[i] == NULL) goto on_error;
 		}
 		for (i = 0; i < spriteset->num_poses; ++i) {
@@ -98,7 +97,7 @@ load_spriteset(const char* path)
 		if ((spriteset->poses = al_calloc(spriteset->num_poses, sizeof(spriteset_pose_t))) == NULL)
 			goto on_error;
 		for (i = 0; i < rss.num_images; ++i) {
-			spriteset->bitmaps[i] = _fread_sprite_image(file, rss.frame_width, rss.frame_height);
+			spriteset->bitmaps[i] = al_fread_bitmap(file, rss.frame_width, rss.frame_height);
 			if (spriteset->bitmaps[i] == NULL) goto on_error;
 		}
 		for (i = 0; i < rss.num_directions; ++i) {
@@ -152,28 +151,6 @@ free_spriteset(spriteset_t* spriteset)
 	}
 	al_free(spriteset->poses);
 	al_free(spriteset);
-}
-
-static ALLEGRO_BITMAP*
-_fread_sprite_image(ALLEGRO_FILE* file, int width, int height)
-{
-	ALLEGRO_BITMAP*        bitmap = NULL;
-	ALLEGRO_LOCKED_REGION* lock   = NULL;
-	
-	if ((bitmap = al_create_bitmap(width, height)) == NULL)
-		goto on_error;
-	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
-		goto on_error;
-	size_t data_size = width * height * 4;
-	if (al_fread(file, lock->data, data_size) != data_size)
-		goto on_error;
-	al_unlock_bitmap(bitmap);
-	return bitmap;
-
-on_error:
-	if (lock != NULL) al_unlock_bitmap(bitmap);
-	if (bitmap != NULL) al_destroy_bitmap(bitmap);
-	return NULL;
 }
 
 static char*

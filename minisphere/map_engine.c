@@ -4,10 +4,10 @@
 
 #include "map_engine.h"
 
-
 static duk_ret_t _js_MapEngine             (duk_context* ctx);
 static duk_ret_t _js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t _js_SetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t _js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t _js_SetRenderScript       (duk_context* ctx);
 static duk_ret_t _js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t _js_IsMapEngineRunning    (duk_context* ctx);
@@ -18,12 +18,23 @@ static bool  s_exiting       = false;
 static int   s_framerate     = 0;
 static bool  s_running       = false;
 
+enum mapscript
+{
+	MAPSCRIPT_ON_ENTER,
+	MAPSCRIPT_ON_LEAVE,
+	MAPSCRIPT_ON_LEAVE_NORTH,
+	MAPSCRIPT_ON_LEAVE_EAST,
+	MAPSCRIPT_ON_LEAVE_SOUTH,
+	MAPSCRIPT_ON_LEAVE_WEST
+};
+
 void
 init_map_engine_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "MapEngine", &_js_MapEngine);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", &_js_GetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", &_js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetDefaultMapScript", &_js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetRenderScript", &_js_SetRenderScript);
 	register_api_func(ctx, NULL, "SetUpdateScript", &_js_SetUpdateScript);
 	register_api_func(ctx, NULL, "IsMapEngineRunning", &_js_IsMapEngineRunning);
@@ -74,6 +85,36 @@ _js_SetMapEngineFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+_js_SetDefaultMapScript(duk_context* ctx)
+{
+	const char* script;
+	size_t      script_size;
+	const char* script_name;
+	int         script_type;
+
+	script_type = duk_require_int(ctx, 0);
+	script = duk_require_lstring(ctx, 1, &script_size);
+	script_name = (script_type == MAPSCRIPT_ON_ENTER) ? "map_def_enter_script"
+		: (script_type == MAPSCRIPT_ON_LEAVE) ? "map_def_leave_script"
+		: (script_type == MAPSCRIPT_ON_LEAVE_NORTH) ? "map_def_leave_north_script"
+		: (script_type == MAPSCRIPT_ON_LEAVE_EAST) ? "map_def_leave_east_script"
+		: (script_type == MAPSCRIPT_ON_LEAVE_SOUTH) ? "map_def_leave_south_script"
+		: (script_type == MAPSCRIPT_ON_LEAVE_WEST) ? "map_def_leave_west_script"
+		: NULL;
+	if (script_name != NULL) {
+		duk_push_global_stash(ctx);
+		duk_push_string(ctx, "[def-mapscript]");
+		duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
+		duk_put_prop_string(ctx, -2, script_name);
+		duk_pop(ctx);
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "SetDefaultMapScript(): Invalid map script constant");
+	}
+}
+
+static duk_ret_t
 _js_SetRenderScript(duk_context* ctx)
 {
 	const char* script;
@@ -81,7 +122,7 @@ _js_SetRenderScript(duk_context* ctx)
 
 	script = duk_require_lstring(ctx, 0, &script_size);
 	duk_push_global_stash(ctx);
-	duk_push_string(ctx, "[render]");
+	duk_push_string(ctx, "[renderscript]");
 	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
 	duk_put_prop_string(ctx, -2, "render_script");
 	duk_pop(ctx);
@@ -96,7 +137,7 @@ _js_SetUpdateScript(duk_context* ctx)
 
 	script = duk_require_lstring(ctx, 0, &script_size);
 	duk_push_global_stash(ctx);
-	duk_push_string(ctx, "[update]");
+	duk_push_string(ctx, "[updatescript]");
 	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
 	duk_put_prop_string(ctx, -2, "update_script");
 	duk_pop(ctx);

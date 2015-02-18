@@ -10,6 +10,7 @@
 #include "sound.h"
 #include "spriteset.h"
 #include "surface.h"
+#include "windowstyle.h"
 
 // enable visual styles (VC++)
 #ifdef _MSC_VER
@@ -24,9 +25,9 @@
 
 static const int MAX_FRAME_SKIPS = 5;
 
-static void on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg);
-static void handle_js_error();
-static void shutdown_engine();
+static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
+static void handle_js_error ();
+static void shutdown_engine ();
 
 static int     s_frame_skips = 0;
 static clock_t s_last_frame_time;
@@ -37,12 +38,16 @@ ALLEGRO_EVENT_QUEUE* g_events    = NULL;
 ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
+int                  g_render_scale;
 ALLEGRO_FONT*        g_sys_font  = NULL;
 
 int
 main(int argc, char** argv)
 {
-	int x_res, y_res;
+	int               x_res, y_res;
+	ALLEGRO_BITMAP*   icon;
+	char*             icon_path;
+	ALLEGRO_TRANSFORM scaler;
 	
 	// initialize Allegro
 	al_init();
@@ -82,12 +87,27 @@ main(int argc, char** argv)
 	}
 
 	// set up engine and create display window
+	icon_path = get_asset_path("game-icon.png", NULL, false);
+	icon = al_load_bitmap(icon_path);
+	free(icon_path);
 	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	x_res = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	y_res = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	g_display = al_create_display(x_res, y_res);
+	if (x_res > 400 || y_res > 300) {
+		g_display = al_create_display(x_res, y_res);
+		g_render_scale = 1;
+	}
+	else {
+		// 400x300 or below should be 2x scaled to avoid eye strain
+		g_display = al_create_display(x_res * 2, y_res * 2);
+		al_identity_transform(&scaler);
+		al_scale_transform(&scaler, x_res * 2 / (float)x_res, y_res * 2 / (float)y_res);
+		al_use_transform(&scaler);
+		g_render_scale = 2;
+	}
+	if (icon != NULL) al_set_display_icon(g_display, icon);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
@@ -108,6 +128,7 @@ main(int argc, char** argv)
 	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);
 	init_surface_api();
+	init_windowstyle_api();
 	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
 	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
 	free(sys_font_path);
@@ -246,6 +267,53 @@ get_sys_asset_path(const char* path, const char* base_dir)
 	al_destroy_path(system_path);
 	al_destroy_path(base_path);
 	return out_path;
+}
+
+void
+al_draw_tiled_bitmap(ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height)
+{
+	bool draw_held;
+	int  src_w, src_h;
+	int  x_tiles, y_tiles;
+	int  i_x, i_y;
+	
+	src_w = al_get_bitmap_width(bitmap);
+	src_h = al_get_bitmap_height(bitmap);
+	x_tiles = (int)(width / src_w);
+	y_tiles = (int)(height / src_h);
+	draw_held = al_is_bitmap_drawing_held();
+	al_hold_bitmap_drawing(true);
+	for (i_x = 0; i_x < x_tiles; ++i_x) {
+		for (i_y = 0; i_y < y_tiles; ++i_y) {
+			al_draw_bitmap(bitmap, x + i_x * src_w, y + i_y * src_h, 0x0);
+			al_draw_bitmap_region(bitmap, 0, 0, (int)width % src_w, src_h, x + x_tiles * src_w, y + i_y * src_h, 0x0);
+		}
+		al_draw_bitmap_region(bitmap, 0, 0, src_w, (int)height % src_h, x + i_x * src_w, y + y_tiles * src_h, 0x0);
+	}
+	al_draw_bitmap_region(bitmap, 0, 0, (int)width % src_w, (int)height % src_h, x + x_tiles * src_w, y + y_tiles * src_h, 0x0);
+	al_hold_bitmap_drawing(draw_held);
+}
+
+ALLEGRO_BITMAP*
+al_fread_bitmap(ALLEGRO_FILE* file, int width, int height)
+{
+	ALLEGRO_BITMAP*        bitmap = NULL;
+	ALLEGRO_LOCKED_REGION* lock = NULL;
+
+	if ((bitmap = al_create_bitmap(width, height)) == NULL)
+		goto on_error;
+	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
+		goto on_error;
+	size_t data_size = width * height * 4;
+	if (al_fread(file, lock->data, data_size) != data_size)
+		goto on_error;
+	al_unlock_bitmap(bitmap);
+	return bitmap;
+
+on_error:
+	if (lock != NULL) al_unlock_bitmap(bitmap);
+	if (bitmap != NULL) al_destroy_bitmap(bitmap);
+	return NULL;
 }
 
 static void

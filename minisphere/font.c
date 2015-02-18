@@ -4,14 +4,15 @@
 
 #include "font.h"
 
-static duk_ret_t _js_LoadFont            (duk_context* ctx);
-static duk_ret_t _js_Font_finalize       (duk_context* ctx);
-static duk_ret_t _js_Font_getColorMask   (duk_context* ctx);
-static duk_ret_t _js_Font_getHeight      (duk_context* ctx);
-static duk_ret_t _js_Font_setColorMask   (duk_context* ctx);
-static duk_ret_t _js_Font_drawText       (duk_context* ctx);
-static duk_ret_t _js_Font_getStringWidth (duk_context* ctx);
-static duk_ret_t _js_Font_wordWrapString (duk_context* ctx);
+static duk_ret_t _js_LoadFont             (duk_context* ctx);
+static duk_ret_t _js_Font_finalize        (duk_context* ctx);
+static duk_ret_t _js_Font_getColorMask    (duk_context* ctx);
+static duk_ret_t _js_Font_getHeight       (duk_context* ctx);
+static duk_ret_t _js_Font_setColorMask    (duk_context* ctx);
+static duk_ret_t _js_Font_drawText        (duk_context* ctx);
+static duk_ret_t _js_Font_getStringHeight (duk_context* ctx);
+static duk_ret_t _js_Font_getStringWidth  (duk_context* ctx);
+static duk_ret_t _js_Font_wordWrapString  (duk_context* ctx);
 
 void
 init_font_api(duk_context* ctx)
@@ -28,6 +29,7 @@ duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 	duk_push_c_function(ctx, &_js_Font_getHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getHeight");
 	duk_push_c_function(ctx, &_js_Font_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
 	duk_push_c_function(ctx, &_js_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
+	duk_push_c_function(ctx, &_js_Font_getStringHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringHeight");
 	duk_push_c_function(ctx, &_js_Font_getStringWidth, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringWidth");
 	duk_push_c_function(ctx, &_js_Font_wordWrapString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "wordWrapString");
 	
@@ -109,6 +111,19 @@ _js_Font_drawText(duk_context* ctx)
 	const char* text = duk_to_string(ctx, 2);
 	al_draw_text(font, mask, x, y, 0x0, text);
 	return 0;
+}
+
+static duk_ret_t
+_js_Font_getStringHeight(duk_context* ctx)
+{
+	ALLEGRO_FONT* font;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	const char* text = duk_to_string(ctx, 0);
+	duk_push_int(ctx, al_get_font_line_height(font));
+	return 1;
 }
 
 static duk_ret_t
