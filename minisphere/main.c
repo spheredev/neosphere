@@ -1,4 +1,5 @@
 #include "minisphere.h"
+
 #include "api.h"
 #include "color.h"
 #include "font.h"
@@ -29,8 +30,12 @@ static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* m
 static void handle_js_error ();
 static void shutdown_engine ();
 
-static int     s_frame_skips = 0;
+static int     s_current_fps;
+static int     s_frame_skips;
+static clock_t s_last_fps_poll_time;
 static clock_t s_last_frame_time;
+static int     s_num_flips;
+static bool    s_show_fps = false;
 
 ALLEGRO_DISPLAY*     g_display   = NULL;
 duk_context*         g_duktape   = NULL;
@@ -40,11 +45,11 @@ ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
 int                  g_render_scale;
 ALLEGRO_FONT*        g_sys_font  = NULL;
+int                  g_res_x, g_res_y;
 
 int
 main(int argc, char** argv)
 {
-	int               x_res, y_res;
 	ALLEGRO_BITMAP*   icon;
 	char*             icon_path;
 	ALLEGRO_TRANSFORM scaler;
@@ -93,19 +98,19 @@ main(int argc, char** argv)
 	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
-	x_res = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
-	y_res = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	if (x_res > 400 || y_res > 300) {
-		g_display = al_create_display(x_res, y_res);
+	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
+	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
+	if (g_res_x > 400 || g_res_y > 300) {
 		g_render_scale = 1;
+		g_display = al_create_display(g_res_x, g_res_y);
 	}
 	else {
 		// 400x300 or below should be 2x scaled to avoid eye strain
-		g_display = al_create_display(x_res * 2, y_res * 2);
-		al_identity_transform(&scaler);
-		al_scale_transform(&scaler, x_res * 2 / (float)x_res, y_res * 2 / (float)y_res);
-		al_use_transform(&scaler);
 		g_render_scale = 2;
+		g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
+		al_identity_transform(&scaler);
+		al_scale_transform(&scaler, g_render_scale, g_render_scale);
+		al_use_transform(&scaler);
 	}
 	if (icon != NULL) al_set_display_icon(g_display, icon);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
@@ -152,7 +157,8 @@ main(int argc, char** argv)
 	duk_pop(g_duktape);
 
 	// call game() function in script
-	s_last_frame_time = clock();
+	s_last_frame_time = s_last_fps_poll_time = clock();
+	s_num_flips = 0; s_current_fps = 0;
 	duk_push_global_object(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "game");
 	exec_result = duk_pcall(g_duktape, 0);
@@ -178,7 +184,10 @@ do_events(void)
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			return false;
 		case ALLEGRO_EVENT_KEY_CHAR:
-			if (g_key_queue.num_keys < 255) {
+			if (event.keyboard.keycode == ALLEGRO_KEY_F11) {
+				s_show_fps = !s_show_fps;
+			}
+			else if (g_key_queue.num_keys < 255) {
 				key_index = g_key_queue.num_keys;
 				++g_key_queue.num_keys;
 				g_key_queue.keys[key_index] = event.keyboard.keycode;
@@ -193,9 +202,10 @@ bool
 end_frame(int framerate)
 {
 	clock_t current_time;
+	char    fps_text[20];
+	clock_t frame_ticks;
 	clock_t next_frame_time;
 	bool    skipping_frame = false;
-	clock_t frame_ticks;
 	
 	if (framerate > 0) {
 		frame_ticks = CLOCKS_PER_SEC / framerate;
@@ -211,10 +221,21 @@ end_frame(int framerate)
 		if (!do_events()) return false;
 	}
 	if (!skipping_frame) {
+		++s_num_flips;
 		s_last_frame_time = clock();
 		s_frame_skips = 0;
+		if (s_show_fps) {
+			al_draw_filled_rounded_rectangle(g_res_x / 2 - 40, g_res_y - 24, g_res_x / 2 + 40, g_res_y - 8, 4, 4, al_map_rgba(0, 0, 0, 192));
+			sprintf(fps_text, "%i FPS", s_current_fps);
+			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 22, ALLEGRO_ALIGN_CENTER, fps_text);
+		}
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+		if (s_last_frame_time >= s_last_fps_poll_time + CLOCKS_PER_SEC) {
+			s_current_fps = s_num_flips;
+			s_last_fps_poll_time = s_last_frame_time;
+			s_num_flips = 0;
+		}
 	}
 	else {
 		++s_frame_skips;

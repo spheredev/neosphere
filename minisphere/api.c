@@ -226,14 +226,14 @@ duk_GetClippingRectangle(duk_context* ctx)
 duk_ret_t
 duk_GetScreenHeight(duk_context* ctx)
 {
-	duk_push_int(ctx, (duk_int_t)al_get_display_height(g_display) / g_render_scale);
+	duk_push_int(ctx, g_res_y);
 	return 1;
 }
 
 duk_ret_t
 duk_GetScreenWidth(duk_context* ctx)
 {
-	duk_push_int(ctx, al_get_display_width(g_display) / g_render_scale);
+	duk_push_int(ctx, g_res_x);
 	return 1;
 }
 

@@ -37,6 +37,7 @@ extern int                  g_fps;
 extern key_queue_t          g_key_queue;
 extern int                  g_render_scale;
 extern ALLEGRO_FONT*        g_sys_font;
+extern int                  g_res_x, g_res_y;
 
 extern void            al_draw_tiled_bitmap (ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height);
 extern ALLEGRO_BITMAP* al_fread_bitmap      (ALLEGRO_FILE* file, int width, int height);
