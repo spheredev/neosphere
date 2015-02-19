@@ -69,7 +69,8 @@ init_input_api(duk_context* ctx)
 	register_api_const(ctx, "KEY_X", ALLEGRO_KEY_X);
 	register_api_const(ctx, "KEY_Y", ALLEGRO_KEY_Y);
 	register_api_const(ctx, "KEY_Z", ALLEGRO_KEY_Z);
-	
+	register_api_const(ctx, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
+
 	register_api_func(ctx, NULL, "AreKeysLeft", &_js_AreKeysLeft);
 	register_api_func(ctx, NULL, "GetKey", &_js_GetKey);
 	register_api_func(ctx, NULL, "GetKeyString", &_js_GetKeyString);
