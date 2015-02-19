@@ -19,6 +19,7 @@ static duk_ret_t _js_Surface_cloneSection      (duk_context* ctx);
 static duk_ret_t _js_Surface_createImage       (duk_context* ctx);
 static duk_ret_t _js_Surface_drawText          (duk_context* ctx);
 static duk_ret_t _js_Surface_gradientRectangle (duk_context* ctx);
+static duk_ret_t _js_Surface_outlinedRectangle (duk_context* ctx);
 static duk_ret_t _js_Surface_rectangle         (duk_context* ctx);
 static duk_ret_t _js_Surface_save              (duk_context* ctx);
 
@@ -80,6 +81,7 @@ _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 	duk_push_c_function(ctx, &_js_Surface_createImage, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createImage");
 	duk_push_c_function(ctx, &_js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
 	duk_push_c_function(ctx, &_js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
+	duk_push_c_function(ctx, &_js_Surface_outlinedRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "outlinedRectangle");
 	duk_push_c_function(ctx, &_js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
 	duk_push_c_function(ctx, &_js_Surface_save, DUK_VARARGS); duk_put_prop_string(ctx, -2, "save");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
@@ -330,6 +332,35 @@ _js_Surface_gradientRectangle(duk_context* ctx)
 		{ x2, y2, 0, 0, 0, color_lr }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	al_set_target_backbuffer(g_display);
+	_reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+_js_Surface_outlinedRectangle(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	int             blend_mode;
+	ALLEGRO_COLOR   color;
+	int             n_args;
+	float           thickness;
+	float           x1, y1, x2, y2;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	n_args = duk_get_top(ctx);
+	x1 = duk_to_int(ctx, 0) + 0.5;
+	y1 = duk_to_int(ctx, 1) + 0.5;
+	x2 = x1 + duk_to_int(ctx, 2);
+	y2 = y1 + duk_to_int(ctx, 3);
+	color = duk_get_sphere_color(ctx, 4);
+	thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
+	_apply_blend_mode(blend_mode);
+	al_set_target_bitmap(bitmap);
+	al_draw_rectangle(x1, y1, x2, y2, color, thickness);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
 	return 0;

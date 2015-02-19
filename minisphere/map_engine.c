@@ -4,6 +4,23 @@
 
 #include "map_engine.h"
 
+struct rmp_header
+{
+	char    signature[4];
+	int16_t version;
+	uint8_t type;
+	int8_t  num_layers;
+	uint8_t reserved_1;
+	int8_t  num_entities;
+	int16_t start_x;
+	int16_t start_y;
+	int8_t  start_layer;
+	int8_t  start_direction;
+	int16_t num_strings;
+	int16_t num_zones;
+	uint8_t reserved[235];
+};
+
 static duk_ret_t _js_MapEngine             (duk_context* ctx);
 static duk_ret_t _js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t _js_SetMapEngineFrameRate (duk_context* ctx);
@@ -27,6 +44,32 @@ enum mapscript
 	MAPSCRIPT_ON_LEAVE_SOUTH,
 	MAPSCRIPT_ON_LEAVE_WEST
 };
+
+map_t*
+load_map(const char* path)
+{
+	ALLEGRO_FILE*     file;
+	map_t*            map;
+	struct rmp_header rmp;
+	
+	if ((map = al_calloc(1, sizeof(map_t))) == NULL) goto on_error;
+	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
+	if (al_fread(file, &rmp, sizeof(struct rmp_header)) != sizeof(struct rmp_header))
+		goto on_error;
+	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
+	switch (rmp.version) {
+	case 1:
+		goto on_error;
+		break;
+	default:
+		goto on_error;
+		break;
+	}
+
+on_error:
+	if (file != NULL) al_fclose(file);
+	return NULL;
+}
 
 void
 init_map_engine_api(duk_context* ctx)

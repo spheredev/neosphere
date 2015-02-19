@@ -24,6 +24,7 @@ static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_GetFileList(duk_context* ctx);
 static duk_ret_t duk_GradientCircle(duk_context* ctx);
 static duk_ret_t duk_GradientRectangle(duk_context* ctx);
+static duk_ret_t duk_Line(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
 
@@ -54,6 +55,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetFileList", &duk_GetFileList);
 	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
 	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
+	register_api_func(ctx, NULL, "Line", &duk_Line);
 	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
 	register_api_func(ctx, NULL, "Rectangle", &duk_Rectangle);
 	duk_push_global_stash(ctx);
@@ -348,6 +350,21 @@ duk_GradientRectangle(duk_context* ctx)
 		{ x2, y2, 0, 0, 0, color_lr }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	return 0;
+}
+
+duk_ret_t
+duk_Line(duk_context* ctx)
+{
+	ALLEGRO_COLOR color;
+	int           x1, y1, x2, y2;
+
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = duk_to_int(ctx, 2);
+	y2 = duk_to_int(ctx, 3);
+	color = duk_get_sphere_color(ctx, 4);
+	al_draw_line(x1, y1, x2, y2, color, 1);
 	return 0;
 }
 

@@ -1,16 +1,51 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
+
 #include "image.h"
 
-static duk_ret_t _js_LoadImage      (duk_context* ctx);
-static duk_ret_t _js_GrabImage      (duk_context* ctx);
-static duk_ret_t _js_Image_finalize (duk_context* ctx);
-static duk_ret_t _js_Image_blit     (duk_context* ctx);
-static duk_ret_t _js_Image_blitMask (duk_context* ctx);
+static duk_ret_t _js_GetSystemArrow       (duk_context* ctx);
+static duk_ret_t _js_GetSystemDownArrow   (duk_context* ctx);
+static duk_ret_t _js_GetSystemUpArrow     (duk_context* ctx);
+static duk_ret_t _js_LoadImage            (duk_context* ctx);
+static duk_ret_t _js_GrabImage            (duk_context* ctx);
+static duk_ret_t _js_Image_finalize       (duk_context* ctx);
+static duk_ret_t _js_Image_blit           (duk_context* ctx);
+static duk_ret_t _js_Image_blitMask       (duk_context* ctx);
+static duk_ret_t _js_Image_rotateBlit     (duk_context* ctx);
+static duk_ret_t _js_Image_rotateBlitMask (duk_context* ctx);
+static duk_ret_t _js_Image_transformBlit  (duk_context* ctx);
+
+static ALLEGRO_BITMAP* s_sys_arrow    = NULL;
+static ALLEGRO_BITMAP* s_sys_dn_arrow = NULL;
+static ALLEGRO_BITMAP* s_sys_up_arrow = NULL;
 
 void
 init_image_api(duk_context* ctx)
 {
+	const char* filename;
+	char*       path;
+	
+	// load system-provided images
+	if (g_sys_conf != NULL) {
+		filename = al_get_config_value(g_sys_conf, NULL, "Arrow");
+		path = get_sys_asset_path(filename, NULL);
+		s_sys_arrow = al_load_bitmap(path);
+		free(path);
+		filename = al_get_config_value(g_sys_conf, NULL, "UpArrow");
+		path = get_sys_asset_path(filename, NULL);
+		s_sys_up_arrow = al_load_bitmap(path);
+		free(path);
+		filename = al_get_config_value(g_sys_conf, NULL, "DownArrow");
+		path = get_sys_asset_path(filename, NULL);
+		s_sys_dn_arrow = al_load_bitmap(path);
+		free(path);
+	}
+	
+	// register image API functions
+	register_api_func(ctx, NULL, "GetSystemArrow", &_js_GetSystemArrow);
+	register_api_func(ctx, NULL, "GetSystemDownArrow", &_js_GetSystemDownArrow);
+	register_api_func(ctx, NULL, "GetSystemUpArrow", &_js_GetSystemUpArrow);
 	register_api_func(ctx, NULL, "LoadImage", &_js_LoadImage);
 	register_api_func(ctx, NULL, "GrabImage", &_js_GrabImage);
 }
@@ -24,6 +59,9 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_c_function(ctx, &_js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &_js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, &_js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
+	duk_push_c_function(ctx, &_js_Image_rotateBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlit");
+	duk_push_c_function(ctx, &_js_Image_rotateBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlitMask");
+	duk_push_c_function(ctx, &_js_Image_transformBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlit");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
@@ -34,6 +72,42 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
 		| DUK_DEFPROP_HAVE_VALUE);
+}
+
+static duk_ret_t
+_js_GetSystemArrow(duk_context* ctx)
+{
+	if (s_sys_arrow != NULL) {
+		duk_push_sphere_Image(ctx, s_sys_arrow, false);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "GetSystemArrow(): No system arrow image available");
+	}
+}
+
+static duk_ret_t
+_js_GetSystemDownArrow(duk_context* ctx)
+{
+	if (s_sys_dn_arrow != NULL) {
+		duk_push_sphere_Image(ctx, s_sys_dn_arrow, false);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "GetSystemDownArrow(): No system down arrow image available");
+	}
+}
+
+static duk_ret_t
+_js_GetSystemUpArrow(duk_context* ctx)
+{
+	if (s_sys_up_arrow != NULL) {
+		duk_push_sphere_Image(ctx, s_sys_up_arrow, false);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "GetSystemUpArrow(): No system up arrow image available");
+	}
 }
 
 static duk_ret_t
@@ -123,4 +197,72 @@ _js_Image_blitMask(duk_context* ctx)
 	duk_get_prop_string(ctx, 2, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
 	return 1;
+}
+
+static duk_ret_t
+_js_Image_rotateBlit(duk_context* ctx)
+{
+	float           angle;
+	ALLEGRO_BITMAP* bitmap;
+	float           x, y, w, h;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	angle = duk_to_number(ctx, 2);
+	al_draw_rotated_bitmap(bitmap, w / 2, h / 2, x, y, angle, 0x0);
+	return 1;
+}
+
+static duk_ret_t
+_js_Image_rotateBlitMask(duk_context* ctx)
+{
+	float           angle;
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_COLOR   mask_color;
+	float           x, y, w, h;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	angle = duk_to_number(ctx, 2);
+	mask_color = duk_get_sphere_color(ctx, 3);
+	al_draw_tinted_rotated_bitmap(bitmap, mask_color, w / 2, h / 2, x, y, angle, 0x0);
+	return 1;
+}
+
+static duk_ret_t
+_js_Image_transformBlit(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_COLOR   vertex_color;
+	int             w, h;
+	float           x1, y1, x2, y2, x3, y3, x4, y4;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	x1 = duk_to_int(ctx, 0); y1 = duk_to_int(ctx, 1);
+	x2 = duk_to_int(ctx, 2); y2 = duk_to_int(ctx, 3);
+	x3 = duk_to_int(ctx, 4); y3 = duk_to_int(ctx, 5);
+	x4 = duk_to_int(ctx, 6); y4 = duk_to_int(ctx, 7);
+	vertex_color = al_map_rgba(255, 255, 255, 255);
+	ALLEGRO_VERTEX v[] = {
+		{ x1, y1, 0, 0, 0, vertex_color },
+		{ x2, y2, 0, w, 0, vertex_color },
+		{ x4, y4, 0, 0, h, vertex_color },
+		{ x3, y3, 0, w, h, vertex_color }
+	};
+	al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	return 0;
 }

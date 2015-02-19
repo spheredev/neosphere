@@ -47,6 +47,7 @@ ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
 int                  g_render_scale;
+ALLEGRO_CONFIG*      g_sys_conf;
 ALLEGRO_FONT*        g_sys_font  = NULL;
 int                  g_res_x, g_res_y;
 
@@ -55,6 +56,7 @@ main(int argc, char** argv)
 {
 	ALLEGRO_BITMAP*   icon;
 	char*             icon_path;
+	char*             path;
 	ALLEGRO_TRANSFORM trans;
 	
 	// initialize Allegro
@@ -68,6 +70,10 @@ main(int argc, char** argv)
 	al_init_acodec_addon();
 	al_install_keyboard();
 
+	// load system configuraton
+	path = get_sys_asset_path("system.ini", NULL);
+	g_sys_conf = al_load_config_file(path);
+	
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
@@ -254,7 +260,7 @@ end_frame(int framerate)
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			x = al_get_display_width(g_display) - 108;
-			y = al_get_display_height(g_display) -24;
+			y = 8;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
 			al_draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, ALLEGRO_ALIGN_CENTER, fps_text);
 			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, ALLEGRO_ALIGN_CENTER, fps_text);
@@ -275,6 +281,15 @@ end_frame(int framerate)
 		s_num_frames = 0;
 	}
 	return true;
+}
+
+void
+free_lstring(lstring_t* string)
+{
+	if (string != NULL) {
+		free(string->buffer);
+		free(string);
+	}
 }
 
 char*
@@ -371,6 +386,27 @@ on_error:
 	return NULL;
 }
 
+lstring_t*
+al_fread_lstring(ALLEGRO_FILE* file)
+{
+	lstring_t* string = NULL;
+	uint16_t   length;
+
+	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
+		goto on_error;
+	if (al_fread(file, &length, 2) != 2) goto on_error;
+	if ((string->buffer = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
+	if (al_fread(file, string->buffer, length) != length) goto on_error;
+	return string;
+
+on_error:
+	if (string != NULL) {
+		free(string->buffer);
+		free(string);
+	}
+	return NULL;
+}
+
 static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
@@ -412,5 +448,6 @@ shutdown_engine(void)
 	al_destroy_event_queue(g_events);
 	al_destroy_config(g_game_conf);
 	al_destroy_path(g_game_path);
+	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
 	al_uninstall_system();
 }

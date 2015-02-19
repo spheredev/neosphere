@@ -109,6 +109,7 @@ draw_window(windowstyle_t* winstyle, int x, int y, int width, int height)
 		h[i] = al_get_bitmap_height(winstyle->bitmaps[i]);
 	}
 	
+	al_hold_bitmap_drawing(true);
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
 		al_draw_tiled_bitmap(winstyle->bitmaps[8], x, y, width, height);
@@ -125,6 +126,7 @@ draw_window(windowstyle_t* winstyle, int x, int y, int width, int height)
 	al_draw_tiled_bitmap(winstyle->bitmaps[3], x + width, y, w[3], height);
 	al_draw_tiled_bitmap(winstyle->bitmaps[5], x, y + height, width, h[5]);
 	al_draw_tiled_bitmap(winstyle->bitmaps[7], x - w[7], y, w[7], height);
+	al_hold_bitmap_drawing(false);
 }
 
 void
