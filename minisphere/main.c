@@ -31,11 +31,14 @@ static void handle_js_error ();
 static void shutdown_engine ();
 
 static int     s_current_fps;
+static int     s_current_game_fps;
 static int     s_frame_skips;
 static clock_t s_last_fps_poll_time;
 static clock_t s_last_frame_time;
 static int     s_num_flips;
-static bool    s_show_fps = false;
+static int     s_num_frames;
+static bool    s_show_fps = true;
+static bool    s_take_screenshot = false;
 
 ALLEGRO_DISPLAY*     g_display   = NULL;
 duk_context*         g_duktape   = NULL;
@@ -52,7 +55,7 @@ main(int argc, char** argv)
 {
 	ALLEGRO_BITMAP*   icon;
 	char*             icon_path;
-	ALLEGRO_TRANSFORM scaler;
+	ALLEGRO_TRANSFORM trans;
 	
 	// initialize Allegro
 	al_init();
@@ -100,18 +103,12 @@ main(int argc, char** argv)
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	if (g_res_x > 400 || g_res_y > 300) {
-		g_render_scale = 1;
-		g_display = al_create_display(g_res_x, g_res_y);
-	}
-	else {
-		// 400x300 or below should be 2x scaled to avoid eye strain
-		g_render_scale = 2;
-		g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
-		al_identity_transform(&scaler);
-		al_scale_transform(&scaler, g_render_scale, g_render_scale);
-		al_use_transform(&scaler);
-	}
+	g_render_scale = (g_res_x < 400 && g_res_y < 300) ? 2 : 1;
+		// ^ default to 2x if resolution <= 400x300
+	g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
+	al_identity_transform(&trans);
+	al_scale_transform(&trans, g_render_scale, g_render_scale);
+	al_use_transform(&trans);
 	if (icon != NULL) al_set_display_icon(g_display, icon);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
@@ -158,7 +155,8 @@ main(int argc, char** argv)
 
 	// call game() function in script
 	s_last_frame_time = s_last_fps_poll_time = clock();
-	s_num_flips = 0; s_current_fps = 0;
+	s_num_frames = s_num_flips = 0;
+	s_current_fps = s_current_game_fps = 0;
 	duk_push_global_object(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "game");
 	exec_result = duk_pcall(g_duktape, 0);
@@ -184,15 +182,21 @@ do_events(void)
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			return false;
 		case ALLEGRO_EVENT_KEY_CHAR:
-			if (event.keyboard.keycode == ALLEGRO_KEY_F11) {
+			switch (event.keyboard.keycode) {
+			case ALLEGRO_KEY_F11:
 				s_show_fps = !s_show_fps;
+				break;
+			case ALLEGRO_KEY_F12:
+				s_take_screenshot = true;
+				break;
+			default:
+				if (g_key_queue.num_keys < 255) {
+					key_index = g_key_queue.num_keys;
+					++g_key_queue.num_keys;
+					g_key_queue.keys[key_index] = event.keyboard.keycode;
+				}
+				break;
 			}
-			else if (g_key_queue.num_keys < 255) {
-				key_index = g_key_queue.num_keys;
-				++g_key_queue.num_keys;
-				g_key_queue.keys[key_index] = event.keyboard.keycode;
-			}
-			break;
 		}
 	}
 	return true;
@@ -201,11 +205,16 @@ do_events(void)
 bool
 end_frame(int framerate)
 {
-	clock_t current_time;
-	char    fps_text[20];
-	clock_t frame_ticks;
-	clock_t next_frame_time;
-	bool    skipping_frame = false;
+	clock_t           current_time;
+	char              filename[50];
+	char              fps_text[20];
+	clock_t           frame_ticks;
+	clock_t           next_frame_time;
+	char*             path;
+	ALLEGRO_BITMAP*   screenshot;
+	bool              skipping_frame = false;
+	ALLEGRO_TRANSFORM trans;
+	int               x, y;
 	
 	if (framerate > 0) {
 		frame_ticks = CLOCKS_PER_SEC / framerate;
@@ -220,25 +229,50 @@ end_frame(int framerate)
 	else {
 		if (!do_events()) return false;
 	}
+	++s_num_frames;
 	if (!skipping_frame) {
 		++s_num_flips;
 		s_last_frame_time = clock();
 		s_frame_skips = 0;
+		if (s_take_screenshot) {
+			sprintf(filename, "snapshot-%i.png", time(NULL));
+			path = get_asset_path(filename, "screenshots", true);
+			screenshot = al_create_bitmap(g_res_x, g_res_y);
+			al_set_target_bitmap(screenshot);
+			al_draw_scaled_bitmap(al_get_backbuffer(g_display),
+				0, 0, al_get_display_width(g_display), al_get_display_height(g_display), 0, 0, g_res_x, g_res_y,
+				0x0);
+			al_set_target_backbuffer(g_display);
+			al_save_bitmap(path, screenshot);
+			al_destroy_bitmap(screenshot);
+			free(path);
+			s_take_screenshot = false;
+		}
 		if (s_show_fps) {
-			al_draw_filled_rounded_rectangle(g_res_x / 2 - 40, g_res_y - 24, g_res_x / 2 + 40, g_res_y - 8, 4, 4, al_map_rgba(0, 0, 0, 192));
-			sprintf(fps_text, "%i FPS", s_current_fps);
-			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 22, ALLEGRO_ALIGN_CENTER, fps_text);
+			if (framerate > 0) sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
+				else sprintf(fps_text, "%i fps", s_current_fps);
+			al_identity_transform(&trans);
+			al_use_transform(&trans);
+			x = al_get_display_width(g_display) - 108;
+			y = al_get_display_height(g_display) -24;
+			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
+			al_draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, ALLEGRO_ALIGN_CENTER, fps_text);
+			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, ALLEGRO_ALIGN_CENTER, fps_text);
+			al_scale_transform(&trans, g_render_scale, g_render_scale);
+			al_use_transform(&trans);
 		}
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		if (s_last_frame_time >= s_last_fps_poll_time + CLOCKS_PER_SEC) {
-			s_current_fps = s_num_flips;
-			s_last_fps_poll_time = s_last_frame_time;
-			s_num_flips = 0;
-		}
 	}
 	else {
 		++s_frame_skips;
+	}
+	if (s_last_frame_time >= s_last_fps_poll_time + CLOCKS_PER_SEC) {
+		s_current_fps = s_num_flips;
+		s_current_game_fps = s_num_frames;
+		s_last_fps_poll_time = s_last_frame_time;
+		s_num_flips = 0;
+		s_num_frames = 0;
 	}
 	return true;
 }
