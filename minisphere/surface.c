@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include "image.h"
 
 #include "surface.h"
 
@@ -13,7 +14,9 @@ static duk_ret_t _js_Surface_finalize          (duk_context* ctx);
 static duk_ret_t _js_Surface_setBlendMode      (duk_context* ctx);
 static duk_ret_t _js_Surface_blit              (duk_context* ctx);
 static duk_ret_t _js_Surface_blitSurface       (duk_context* ctx);
+static duk_ret_t _js_Surface_clone             (duk_context* ctx);
 static duk_ret_t _js_Surface_cloneSection      (duk_context* ctx);
+static duk_ret_t _js_Surface_createImage       (duk_context* ctx);
 static duk_ret_t _js_Surface_drawText          (duk_context* ctx);
 static duk_ret_t _js_Surface_gradientRectangle (duk_context* ctx);
 static duk_ret_t _js_Surface_rectangle         (duk_context* ctx);
@@ -72,7 +75,9 @@ _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 	duk_push_c_function(ctx, &_js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
 	duk_push_c_function(ctx, &_js_Surface_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, &_js_Surface_blitSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitSurface");
+	duk_push_c_function(ctx, &_js_Surface_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
 	duk_push_c_function(ctx, &_js_Surface_cloneSection, DUK_VARARGS); duk_put_prop_string(ctx, -2, "cloneSection");
+	duk_push_c_function(ctx, &_js_Surface_createImage, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createImage");
 	duk_push_c_function(ctx, &_js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
 	duk_push_c_function(ctx, &_js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
 	duk_push_c_function(ctx, &_js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
@@ -192,6 +197,26 @@ _js_Surface_blitSurface(duk_context* ctx)
 }
 
 static duk_ret_t
+_js_Surface_clone(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_BITMAP* new_bitmap;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	new_bitmap = al_clone_bitmap(bitmap);
+	if (new_bitmap != NULL) {
+		_duk_push_sphere_Surface(ctx, new_bitmap);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:clone() - Unable to create new bitmap");
+	}
+	return 1;
+}
+
+static duk_ret_t
 _js_Surface_cloneSection(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
@@ -211,6 +236,25 @@ _js_Surface_cloneSection(duk_context* ctx)
 	al_set_target_backbuffer(g_display);
 	_duk_push_sphere_Surface(ctx, new_bitmap);
 	return 1;
+}
+
+static duk_ret_t
+_js_Surface_createImage(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_BITMAP* new_bitmap;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	new_bitmap = al_clone_bitmap(bitmap);
+	if (new_bitmap != NULL) {
+		duk_push_sphere_Image(ctx, new_bitmap, true);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:createImage() - Unable to create new bitmap");
+	}
 }
 
 static duk_ret_t
