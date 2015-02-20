@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include <math.h>
 
 static duk_ret_t _js_CreateColor(duk_context* ctx);
 static duk_ret_t _js_BlendColors(duk_context* ctx);
@@ -43,10 +44,10 @@ _js_CreateColor(duk_context* ctx)
 	int           n_args;
 	
 	n_args = duk_get_top(ctx);
-	color.r = duk_to_int(ctx, 0) / 255.0; color.r = min(max(color.r, 0.0), 1.0);
-	color.g = duk_to_int(ctx, 1) / 255.0; color.g = min(max(color.g, 0.0), 1.0);
-	color.b = duk_to_int(ctx, 2) / 255.0; color.b = min(max(color.b, 0.0), 1.0);
-	color.a = n_args > 3 ? duk_to_int(ctx, 3) / 255.0 : 1.0; color.a = min(max(color.a, 0.0), 1.0);
+	color.r = duk_to_int(ctx, 0) / 255.0; color.r = fmin(fmax(color.r, 0.0), 1.0);
+	color.g = duk_to_int(ctx, 1) / 255.0; color.g = fmin(fmax(color.g, 0.0), 1.0);
+	color.b = duk_to_int(ctx, 2) / 255.0; color.b = fmin(fmax(color.b, 0.0), 1.0);
+	color.a = n_args > 3 ? duk_to_int(ctx, 3) / 255.0 : 1.0; color.a = fmin(fmax(color.a, 0.0), 1.0);
 	duk_push_sphere_color(ctx, color);
 	return 1;
 }

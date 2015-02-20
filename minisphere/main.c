@@ -241,7 +241,7 @@ end_frame(int framerate)
 		s_last_frame_time = clock();
 		s_frame_skips = 0;
 		if (s_take_screenshot) {
-			sprintf(filename, "snapshot-%i.png", time(NULL));
+			sprintf(filename, "snapshot-%i.png", (int)time(NULL));
 			path = get_asset_path(filename, "screenshots", true);
 			screenshot = al_create_bitmap(g_res_x, g_res_y);
 			al_set_target_bitmap(screenshot);
@@ -410,7 +410,7 @@ on_error:
 static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
-	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	al_show_native_message_box(g_display, "Script Error", "", msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(0);
 }
@@ -428,7 +428,7 @@ handle_js_error()
 		duk_get_prop_string(g_duktape, -2, "fileName");
 		const char* file_path = duk_get_string(g_duktape, -1);
 		if (file_path != NULL) {
-			char* file_name = strrchr(file_path, '/');
+			const char* file_name = strrchr(file_path, '/');
 			file_name = file_name != NULL ? (file_name + 1) : file_path;
 			duk_push_sprintf(g_duktape, "%s (line %d)\n\n%s", file_name, (int)line_num, err_msg);
 		}
