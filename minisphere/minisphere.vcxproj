@@ -99,6 +99,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
   <ItemGroup>
     <ClCompile Include="color.c" />
     <ClCompile Include="duktape.c" />
+    <ClCompile Include="file.c" />
     <ClCompile Include="font.c" />
     <ClCompile Include="image.c" />
     <ClCompile Include="input.c" />
@@ -116,6 +117,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
   <ItemGroup>
     <ClInclude Include="color.h" />
     <ClInclude Include="duktape.h" />
+    <ClInclude Include="file.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="input.h" />

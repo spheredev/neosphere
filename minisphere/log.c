@@ -46,6 +46,7 @@ static duk_ret_t
 _js_Log_finalize(duk_context* ctx)
 {
 	ALLEGRO_FILE* file;
+
 	duk_get_prop_string(ctx, 0, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	al_fclose(file);
 	return 0;

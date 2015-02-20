@@ -2,6 +2,7 @@
 
 #include "api.h"
 #include "color.h"
+#include "file.h"
 #include "font.h"
 #include "image.h"
 #include "input.h"
@@ -27,7 +28,6 @@
 static const int MAX_FRAME_SKIPS = 5;
 
 static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
-static void handle_js_error ();
 static void shutdown_engine ();
 
 static int     s_current_fps;
@@ -54,6 +54,8 @@ int                  g_res_x, g_res_y;
 int
 main(int argc, char** argv)
 {
+	duk_errcode_t     err_code;
+	duk_int_t         exec_result;
 	const char*       filename;
 	ALLEGRO_BITMAP*   icon;
 	char*             icon_path;
@@ -144,6 +146,7 @@ main(int argc, char** argv)
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
 	init_color_api();
+	init_file_api();
 	init_font_api(g_duktape);
 	init_image_api(g_duktape);
 	init_input_api(g_duktape);
@@ -160,17 +163,11 @@ main(int argc, char** argv)
 	duk_pop(g_duktape);
 
 	// load startup script
-	duk_int_t exec_result;
-	char* script_path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
-	exec_result = duk_pcompile_file(g_duktape, 0x0, script_path);
-	free(script_path);
-	if (exec_result != DUK_EXEC_SUCCESS) {
-		handle_js_error();
-	}
-	exec_result = duk_pcall(g_duktape, 0);
-	if (exec_result != DUK_EXEC_SUCCESS) {
-		handle_js_error();
-	}
+	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
+	exec_result = duk_pcompile_file(g_duktape, 0x0, path);
+	free(path);
+	if (exec_result != DUK_EXEC_SUCCESS) goto on_js_error;
+	if (duk_pcall(g_duktape, 0) != DUK_EXEC_SUCCESS) goto on_js_error;
 	duk_pop(g_duktape);
 
 	// call game() function in script
@@ -179,16 +176,36 @@ main(int argc, char** argv)
 	s_current_fps = s_current_game_fps = 0;
 	duk_push_global_object(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "game");
-	exec_result = duk_pcall(g_duktape, 0);
-	if (exec_result != DUK_EXEC_SUCCESS) {
-		handle_js_error();
-	}
+	if (duk_pcall(g_duktape, 0) != DUK_EXEC_SUCCESS)
+		goto on_js_error;
 	duk_pop(g_duktape);
 	duk_pop(g_duktape);
 	
 	// teardown
 	shutdown_engine();
 	return EXIT_SUCCESS;
+
+on_js_error:
+	err_code = duk_get_error_code(g_duktape, -1);
+	duk_dup(g_duktape, -1);
+	const char* err_msg = duk_safe_to_string(g_duktape, -1);
+	if (err_code != DUK_ERR_ERROR || strcmp(err_msg, "Error: !exit") != 0) {
+		duk_get_prop_string(g_duktape, -2, "lineNumber");
+		duk_int_t line_num = duk_get_int(g_duktape, -1);
+		duk_pop(g_duktape);
+		duk_get_prop_string(g_duktape, -2, "fileName");
+		const char* file_path = duk_get_string(g_duktape, -1);
+		if (file_path != NULL) {
+			char* file_name = strrchr(file_path, '/');
+			file_name = file_name != NULL ? (file_name + 1) : file_path;
+			duk_push_sprintf(g_duktape, "%s (line %d)\n\n%s", file_name, (int)line_num, err_msg);
+		}
+		else {
+			duk_push_string(g_duktape, err_msg);
+		}
+		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
+	}
+	return EXIT_FAILURE;
 }
 
 bool
@@ -417,30 +434,6 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(0);
-}
-
-static void
-handle_js_error()
-{
-	duk_errcode_t err_code = duk_get_error_code(g_duktape, -1);
-	duk_dup(g_duktape, -1);
-	const char* err_msg = duk_safe_to_string(g_duktape, -1);
-	if (err_code != DUK_ERR_ERROR || strcmp(err_msg, "Error: !exit") != 0) {
-		duk_get_prop_string(g_duktape, -2, "lineNumber");
-		duk_int_t line_num = duk_get_int(g_duktape, -1);
-		duk_pop(g_duktape);
-		duk_get_prop_string(g_duktape, -2, "fileName");
-		const char* file_path = duk_get_string(g_duktape, -1);
-		if (file_path != NULL) {
-			char* file_name = strrchr(file_path, '/');
-			file_name = file_name != NULL ? (file_name + 1) : file_path;
-			duk_push_sprintf(g_duktape, "%s (line %d)\n\n%s", file_name, (int)line_num, err_msg);
-		}
-		else {
-			duk_push_string(g_duktape, err_msg);
-		}
-		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
-	}
 }
 
 static void

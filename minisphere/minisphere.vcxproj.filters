@@ -60,6 +60,9 @@
     <ClCompile Include="windowstyle.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -108,6 +111,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
