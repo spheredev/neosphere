@@ -410,7 +410,7 @@ on_error:
 static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
-	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	al_show_native_message_box(g_display, "Script Error", "", msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(0);
 }
