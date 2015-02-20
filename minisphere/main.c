@@ -428,7 +428,7 @@ handle_js_error()
 		duk_get_prop_string(g_duktape, -2, "fileName");
 		const char* file_path = duk_get_string(g_duktape, -1);
 		if (file_path != NULL) {
-			char* file_name = strrchr(file_path, '/');
+			const char* file_name = strrchr(file_path, '/');
 			file_name = file_name != NULL ? (file_name + 1) : file_path;
 			duk_push_sprintf(g_duktape, "%s (line %d)\n\n%s", file_name, (int)line_num, err_msg);
 		}
