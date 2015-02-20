@@ -241,7 +241,7 @@ end_frame(int framerate)
 		s_last_frame_time = clock();
 		s_frame_skips = 0;
 		if (s_take_screenshot) {
-			sprintf(filename, "snapshot-%i.png", time(NULL));
+			sprintf(filename, "snapshot-%i.png", (int)time(NULL));
 			path = get_asset_path(filename, "screenshots", true);
 			screenshot = al_create_bitmap(g_res_x, g_res_y);
 			al_set_target_bitmap(screenshot);
