@@ -54,6 +54,7 @@ int                  g_res_x, g_res_y;
 int
 main(int argc, char** argv)
 {
+	const char*       filename;
 	ALLEGRO_BITMAP*   icon;
 	char*             icon_path;
 	char*             path;
@@ -73,6 +74,7 @@ main(int argc, char** argv)
 	// load system configuraton
 	path = get_sys_asset_path("system.ini", NULL);
 	g_sys_conf = al_load_config_file(path);
+	free(path);
 	
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
@@ -124,6 +126,20 @@ main(int argc, char** argv)
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	al_flip_display();
 
+	// attempt to locate and load system font
+	if (g_sys_conf != NULL) {
+		filename = al_get_config_value(g_sys_conf, NULL, "Font");
+		path = get_sys_asset_path(filename, NULL);
+		g_sys_font = al_load_font(path, 0, 0x0);
+		free(path);
+	}
+	if (g_sys_font == NULL) {
+		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
+			"minisphere was unable to locate the system font or it failed to load.  As a default system font is required for proper operation of the engine, minisphere will now close.",
+			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+		return EXIT_FAILURE;
+	}
+
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
@@ -137,9 +153,7 @@ main(int argc, char** argv)
 	init_spriteset_api(g_duktape);
 	init_surface_api();
 	init_windowstyle_api();
-	char* sys_font_path = get_sys_asset_path("system.rfn", NULL);
-	g_sys_font = al_load_font(sys_font_path, 0, 0x0);
-	free(sys_font_path);
+	
 	duk_push_global_stash(g_duktape);
 	duk_push_sphere_Font(g_duktape, g_sys_font);
 	duk_put_prop_string(g_duktape, -2, "system_font");
@@ -342,26 +356,16 @@ get_sys_asset_path(const char* path, const char* base_dir)
 void
 al_draw_tiled_bitmap(ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height)
 {
-	bool draw_held;
-	int  src_w, src_h;
-	int  x_tiles, y_tiles;
-	int  i_x, i_y;
+	ALLEGRO_COLOR vertex_color;
 	
-	src_w = al_get_bitmap_width(bitmap);
-	src_h = al_get_bitmap_height(bitmap);
-	x_tiles = (int)(width / src_w);
-	y_tiles = (int)(height / src_h);
-	draw_held = al_is_bitmap_drawing_held();
-	al_hold_bitmap_drawing(true);
-	for (i_x = 0; i_x < x_tiles; ++i_x) {
-		for (i_y = 0; i_y < y_tiles; ++i_y) {
-			al_draw_bitmap(bitmap, x + i_x * src_w, y + i_y * src_h, 0x0);
-			al_draw_bitmap_region(bitmap, 0, 0, (int)width % src_w, src_h, x + x_tiles * src_w, y + i_y * src_h, 0x0);
-		}
-		al_draw_bitmap_region(bitmap, 0, 0, src_w, (int)height % src_h, x + i_x * src_w, y + y_tiles * src_h, 0x0);
-	}
-	al_draw_bitmap_region(bitmap, 0, 0, (int)width % src_w, (int)height % src_h, x + x_tiles * src_w, y + y_tiles * src_h, 0x0);
-	al_hold_bitmap_drawing(draw_held);
+	vertex_color = al_map_rgba(255, 255, 255, 255);
+	ALLEGRO_VERTEX v[] = {
+		{ x, y, 0, 0, 0, vertex_color },
+		{ x + width, y, 0, width, 0, vertex_color },
+		{ x, y + height, 0, 0, height, vertex_color },
+		{ x + width, y + height, 0, width, height, vertex_color }
+	};
+	al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 }
 
 ALLEGRO_BITMAP*

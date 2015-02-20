@@ -1,6 +1,6 @@
 #include "minisphere.h"
 
-typedef struct {
+typedef struct rfn_header {
 	char signature[4];
 	int16_t version;
 	int16_t num_chars;
@@ -49,25 +49,37 @@ static ALLEGRO_FONT_VTABLE rfn_font_vtable =
 ALLEGRO_FONT*
 al_load_rfn_font(const char* filename, int size, int flags)
 {
-	ALLEGRO_FILE* file = al_fopen(filename, "rb");
-	rfn_font_t* rfn = al_calloc(1, sizeof(rfn_font_t));
-	al_fread(file, &rfn->header, 256);
-	size_t pixel_size = (rfn->header.version == 1) ? 1 : 4;
-	rfn->glyphs = calloc(rfn->header.num_chars, sizeof(rfn_glyph_t));
-	for (int i = 0; i < rfn->header.num_chars; ++i) {
+	ALLEGRO_LOCKED_REGION* bitmap_lock;
+	ALLEGRO_FILE*          file;
+	ALLEGRO_FONT*          font = NULL;
+	size_t                 pixel_size;
+	rfn_font_t*            rfn = NULL;
+	uint8_t                *src_ptr, *dest_ptr;
+	int                    i, x, y;
+
+	if ((file = al_fopen(filename, "rb")) == NULL) goto on_error;
+	if ((rfn = calloc(1, sizeof(rfn_font_t))) == NULL) goto on_error;
+	if (al_fread(file, &rfn->header, sizeof(rfn_header_t)) != sizeof(rfn_header_t))
+		goto on_error;
+	pixel_size = (rfn->header.version == 1) ? 1 : 4;
+	if ((rfn->glyphs = calloc(rfn->header.num_chars, sizeof(rfn_glyph_t))) == NULL)
+		goto on_error;
+	for (i = 0; i < rfn->header.num_chars; ++i) {
 		rfn_glyph_t* glyph = &rfn->glyphs[i];
-		al_fread(file, &glyph->header, sizeof glyph->header);
+		if (al_fread(file, &glyph->header, sizeof(rfn_glyph_header_t)) != sizeof(rfn_glyph_header_t))
+			goto on_error;
 		size_t data_size = glyph->header.width * glyph->header.height * pixel_size;
-		void* data = al_malloc(data_size);
-		al_fread(file, data, data_size);
-		glyph->bitmap = al_create_bitmap(glyph->header.width, glyph->header.height);
-		ALLEGRO_LOCKED_REGION* bitmap_lock = al_lock_bitmap(glyph->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY);
-		uint8_t* src_ptr = data;
-		uint8_t* dest_ptr = bitmap_lock->data;
+		void* data = malloc(data_size);
+		if (al_fread(file, data, data_size) != data_size) goto on_error;
+		if ((glyph->bitmap = al_create_bitmap(glyph->header.width, glyph->header.height)) == NULL)
+			goto on_error;
+		if ((bitmap_lock = al_lock_bitmap(glyph->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
+			goto on_error;
+		src_ptr = data; dest_ptr = bitmap_lock->data;
 		switch (rfn->header.version) {
 		case 1: // version 1: 8-bit grayscale glyphs
-			for (int y = 0; y < glyph->header.height; ++y) {
-				for (int x = 0; x < glyph->header.width; ++x) {
+			for (y = 0; y < glyph->header.height; ++y) {
+				for (x = 0; x < glyph->header.width; ++x) {
 					dest_ptr[x] = src_ptr[x];
 					dest_ptr[x + 1] = src_ptr[x];
 					dest_ptr[x + 2] = src_ptr[x];
@@ -79,7 +91,7 @@ al_load_rfn_font(const char* filename, int size, int flags)
 			}
 			break;
 		case 2: // version 2: 32-bit truecolor glyphs
-			for (int y = 0; y < glyph->header.height; ++y) {
+			for (y = 0; y < glyph->header.height; ++y) {
 				memcpy(dest_ptr, src_ptr, glyph->header.width * 4);
 				dest_ptr += bitmap_lock->pitch;
 				src_ptr += glyph->header.width * pixel_size;
@@ -87,14 +99,25 @@ al_load_rfn_font(const char* filename, int size, int flags)
 			break;
 		}
 		al_unlock_bitmap(glyph->bitmap);
-		al_free(data);
+		free(data);
 	}
-	ALLEGRO_FONT* font = al_calloc(1, sizeof *font);
+	if ((font = al_calloc(1, sizeof *font)) == NULL) goto on_error;
 	font->vtable = &rfn_font_vtable;
 	font->data = rfn;
 	font->height = rfn->glyphs[0].header.height;
 	al_fclose(file);
 	return font;
+
+on_error:
+	al_free(font);
+	if (rfn != NULL) {
+		for (i = 0; i < rfn->header.num_chars; ++i) {
+			if (rfn->glyphs[i].bitmap != NULL) al_destroy_bitmap(rfn->glyphs[i].bitmap);
+		}
+		al_free(rfn->glyphs);
+		al_free(rfn);
+	}
+	return NULL;
 }
 
 static int
@@ -164,8 +187,8 @@ void rfn_destroy_font(ALLEGRO_FONT* f)
 	for (int i = 0; i < rfn->header.num_chars; ++i) {
 		al_destroy_bitmap(rfn->glyphs[i].bitmap);
 	}
-	al_free(rfn->glyphs);
-	al_free(f->data);
+	free(rfn->glyphs);
+	free(f->data);
 	al_free(f);
 }
 

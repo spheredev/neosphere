@@ -27,6 +27,8 @@ static duk_ret_t       _js_WindowStyle_finalize     (duk_context* ctx);
 static duk_ret_t       _js_WindowStyle_drawWindow   (duk_context* ctx);
 static duk_ret_t       _js_WindowStyle_setColorMask (duk_context* ctx);
 
+static windowstyle_t* s_sys_winstyle = NULL;
+
 windowstyle_t*
 load_windowstyle(const char* path)
 {
@@ -109,7 +111,6 @@ draw_window(windowstyle_t* winstyle, int x, int y, int width, int height)
 		h[i] = al_get_bitmap_height(winstyle->bitmaps[i]);
 	}
 	
-	al_hold_bitmap_drawing(true);
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
 		al_draw_tiled_bitmap(winstyle->bitmaps[8], x, y, width, height);
@@ -126,22 +127,21 @@ draw_window(windowstyle_t* winstyle, int x, int y, int width, int height)
 	al_draw_tiled_bitmap(winstyle->bitmaps[3], x + width, y, w[3], height);
 	al_draw_tiled_bitmap(winstyle->bitmaps[5], x, y + height, width, h[5]);
 	al_draw_tiled_bitmap(winstyle->bitmaps[7], x - w[7], y, w[7], height);
-	al_hold_bitmap_drawing(false);
 }
 
 void
 init_windowstyle_api(void)
 {
+	const char*    filename;
 	char*          path;
-	windowstyle_t* sys_winstyle;
 	
-	// load system windowstyle
-	path = get_sys_asset_path("system.rws", NULL);
-	sys_winstyle = load_windowstyle(path);
-	free(path);
-	duk_push_global_stash(g_duktape);
-	_duk_push_winstyle(g_duktape, sys_winstyle); duk_put_prop_string(g_duktape, -2, "sys_winstyle");
-	duk_pop(g_duktape);
+	// load system window style
+	if (g_sys_conf != NULL) {
+		filename = al_get_config_value(g_sys_conf, NULL, "WindowStyle");
+		path = get_sys_asset_path(filename, NULL);
+		s_sys_winstyle = load_windowstyle(path);
+		free(path);
+	}
 
 	// register windowstyle API functions
 	register_api_func(g_duktape, NULL, "GetSystemWindowStyle", _js_GetSystemWindowStyle);
@@ -195,10 +195,13 @@ _duk_push_winstyle(duk_context* ctx, windowstyle_t* winstyle)
 static duk_ret_t
 _js_GetSystemWindowStyle(duk_context* ctx)
 {
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "sys_winstyle");
-	duk_remove(ctx, -2);
-	return 1;
+	if (s_sys_winstyle != NULL) {
+		_duk_push_winstyle(ctx, s_sys_winstyle);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "GetSystemWindowStyle(): No system window style available");
+	}
 }
 
 static duk_ret_t
@@ -223,7 +226,7 @@ _js_WindowStyle_finalize(duk_context* ctx)
 	windowstyle_t* winstyle;
 
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); winstyle = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	free_windowstyle(winstyle);
+	//free_windowstyle(winstyle);
 	return 0;
 }
 
