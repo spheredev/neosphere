@@ -1,0 +1,7 @@
+Import("environment")
+
+allegro_libs = ["allegro", "allegro_audio", "allegro_ttf", "allegro_image", "allegro_main", "allegro_acodec", "allegro_dialog", "allegro_font", "allegro_primitives"]
+
+minisphere_files = ["api.c", "color.c", "duktape.c", "font.c", "image.c", "input.c", "log.c", "main.c", "map_engine.c", "person.c", "rfn_handler.c", "sound.c", "spriteset.c", "surface.c", "windowstyle.c"]
+
+minisphere = environment.Program("minisphere", minisphere_files, LIBS = allegro_libs, CFLAGS = " -ansi -g ")
