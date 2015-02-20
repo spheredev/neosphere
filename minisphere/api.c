@@ -298,7 +298,7 @@ duk_GetFileList(duk_context* ctx)
 	i = 0;
 	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
 		duk_push_array(ctx);
-		while (file_info = al_read_directory(fs)) {
+		while ((file_info = (ALLEGRO_FS_ENTRY*)al_read_directory(fs))) {
 			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISFILE) {
 				file_path = al_create_path(al_get_fs_entry_name(file_info));
 				duk_push_string(ctx, al_get_path_filename(file_path)); duk_put_prop_index(ctx, -2, i);

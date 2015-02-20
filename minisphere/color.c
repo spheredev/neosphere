@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include <math.h>
 
 static duk_ret_t _js_CreateColor(duk_context* ctx);
 static duk_ret_t _js_BlendColors(duk_context* ctx);
