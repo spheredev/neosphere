@@ -66,24 +66,28 @@ al_load_rfn_font(const char* filename, int size, int flags)
 		uint8_t* dest_ptr = bitmap_lock->data;
 		switch (rfn->header.version) {
 		case 1: // version 1: 8-bit grayscale glyphs
-			for (int y = 0; y < glyph->header.height; ++y) {
-				for (int x = 0; x < glyph->header.width; ++x) {
-					dest_ptr[x] = src_ptr[x];
-					dest_ptr[x + 1] = src_ptr[x];
-					dest_ptr[x + 2] = src_ptr[x];
-					dest_ptr[x + 3] = 255;
-					dest_ptr += 4;
-				}
-				dest_ptr += bitmap_lock->pitch - (glyph->header.width * 4);
-				src_ptr += glyph->header.width;
-			}
+            {
+                for (int y = 0; y < glyph->header.height; ++y) {
+                    for (int x = 0; x < glyph->header.width; ++x) {
+                        dest_ptr[x] = src_ptr[x];
+                        dest_ptr[x + 1] = src_ptr[x];
+                        dest_ptr[x + 2] = src_ptr[x];
+                        dest_ptr[x + 3] = 255;
+                        dest_ptr += 4;
+                    }
+                    dest_ptr += bitmap_lock->pitch - (glyph->header.width * 4);
+                    src_ptr += glyph->header.width;
+                }
+            }
 			break;
 		case 2: // version 2: 32-bit truecolor glyphs
-			for (int y = 0; y < glyph->header.height; ++y) {
-				memcpy(dest_ptr, src_ptr, glyph->header.width * 4);
-				dest_ptr += bitmap_lock->pitch;
-				src_ptr += glyph->header.width * pixel_size;
-			}
+            {
+                for (int y = 0; y < glyph->header.height; ++y) {
+                    memcpy(dest_ptr, src_ptr, glyph->header.width * 4);
+                    dest_ptr += bitmap_lock->pitch;
+                    src_ptr += glyph->header.width * pixel_size;
+                }
+            }
 			break;
 		}
 		al_unlock_bitmap(glyph->bitmap);
