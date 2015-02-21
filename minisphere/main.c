@@ -38,7 +38,7 @@ static clock_t s_last_frame_time;
 static int     s_num_flips;
 static int     s_num_frames;
 static bool    s_show_fps = true;
-static bool    s_take_screenshot = false;
+static bool    s_take_snapshot = false;
 
 ALLEGRO_DISPLAY*     g_display   = NULL;
 duk_context*         g_duktape   = NULL;
@@ -115,6 +115,7 @@ main(int argc, char** argv)
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
 	g_render_scale = (g_res_x < 400 && g_res_y < 300) ? 2 : 1;
 		// ^ default to 2x if resolution <= 400x300
+	al_set_new_display_flags(ALLEGRO_OPENGL);
 	g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
 	al_identity_transform(&trans);
 	al_scale_transform(&trans, g_render_scale, g_render_scale);
@@ -137,7 +138,7 @@ main(int argc, char** argv)
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
-			"minisphere was unable to locate the system font or it failed to load.  As a default system font is required for proper operation of the engine, minisphere will now close.",
+			"minisphere was unable to locate the system font or it failed to load.  As a usable font is necessary for proper operation of the engine, minisphere will now close.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -205,6 +206,7 @@ on_js_error:
 		}
 		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
 	}
+	shutdown_engine();
 	return EXIT_FAILURE;
 }
 
@@ -224,7 +226,7 @@ do_events(void)
 				s_show_fps = !s_show_fps;
 				break;
 			case ALLEGRO_KEY_F12:
-				s_take_screenshot = true;
+				s_take_snapshot = true;
 				break;
 			default:
 				if (g_key_queue.num_keys < 255) {
@@ -248,7 +250,7 @@ end_frame(int framerate)
 	clock_t           frame_ticks;
 	clock_t           next_frame_time;
 	char*             path;
-	ALLEGRO_BITMAP*   screenshot;
+	ALLEGRO_BITMAP*   snapshot;
 	bool              skipping_frame = false;
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
@@ -271,19 +273,14 @@ end_frame(int framerate)
 		++s_num_flips;
 		s_last_frame_time = clock();
 		s_frame_skips = 0;
-		if (s_take_screenshot) {
-			sprintf(filename, "snapshot-%i.png", time(NULL));
-			path = get_asset_path(filename, "screenshots", true);
-			screenshot = al_create_bitmap(g_res_x, g_res_y);
-			al_set_target_bitmap(screenshot);
-			al_draw_scaled_bitmap(al_get_backbuffer(g_display),
-				0, 0, al_get_display_width(g_display), al_get_display_height(g_display), 0, 0, g_res_x, g_res_y,
-				0x0);
-			al_set_target_backbuffer(g_display);
-			al_save_bitmap(path, screenshot);
-			al_destroy_bitmap(screenshot);
+		if (s_take_snapshot) {
+			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
+			sprintf(filename, "snapshot-%li.png", (long)time(NULL));
+			path = get_asset_path(filename, "snapshots", true);
+			al_save_bitmap(path, snapshot);
+			al_destroy_bitmap(snapshot);
 			free(path);
-			s_take_screenshot = false;
+			s_take_snapshot = false;
 		}
 		if (s_show_fps) {
 			if (framerate > 0) sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
@@ -382,6 +379,8 @@ al_draw_tiled_bitmap(ALLEGRO_BITMAP* bitmap, float x, float y, float width, floa
 		{ x, y + height, 0, 0, height, vertex_color },
 		{ x + width, y + height, 0, width, height, vertex_color }
 	};
+	int w = al_get_bitmap_width(bitmap);
+	int h = al_get_bitmap_height(bitmap);
 	al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 }
 
@@ -389,15 +388,20 @@ ALLEGRO_BITMAP*
 al_fread_bitmap(ALLEGRO_FILE* file, int width, int height)
 {
 	ALLEGRO_BITMAP*        bitmap = NULL;
+	uint8_t*               line_ptr;
 	ALLEGRO_LOCKED_REGION* lock = NULL;
+	int                    y;
 
 	if ((bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
 	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
 		goto on_error;
-	size_t data_size = width * height * 4;
-	if (al_fread(file, lock->data, data_size) != data_size)
-		goto on_error;
+	size_t line_size = width * 4;
+	for (y = 0; y < height; ++y) {
+		line_ptr = (uint8_t*)lock->data + y * lock->pitch;
+		if (al_fread(file, line_ptr, line_size) != line_size)
+			goto on_error;
+	}
 	al_unlock_bitmap(bitmap);
 	return bitmap;
 
