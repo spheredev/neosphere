@@ -106,8 +106,8 @@ _js_MapEngine(duk_context* ctx)
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	s_framerate = duk_to_int(ctx, 1);
 	while (!s_exiting) {
+		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 		al_draw_text(g_sys_font, al_map_rgb(255, 255, 255), 160, 114, ALLEGRO_ALIGN_CENTER, filename);
-		if (!end_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	}
 	s_running = false;
 	return 0;

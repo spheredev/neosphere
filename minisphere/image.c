@@ -176,7 +176,7 @@ _js_Image_blit(duk_context* ctx)
 	duk_pop(ctx);
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
-	al_draw_bitmap(bitmap, x, y, 0x0);
+	if (!g_skip_frame) al_draw_bitmap(bitmap, x, y, 0x0);
 	return 1;
 }
 

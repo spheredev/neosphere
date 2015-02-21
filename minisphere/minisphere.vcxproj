@@ -97,6 +97,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bytearray.c" />
     <ClCompile Include="color.c" />
     <ClCompile Include="duktape.c" />
     <ClCompile Include="file.c" />
@@ -115,6 +116,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bytearray.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="duktape.h" />
     <ClInclude Include="file.h" />

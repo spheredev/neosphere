@@ -1,6 +1,7 @@
 #include "minisphere.h"
 
 #include "api.h"
+#include "bytearray.h"
 #include "color.h"
 #include "file.h"
 #include "font.h"
@@ -33,8 +34,8 @@ static void shutdown_engine ();
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
-static clock_t s_last_fps_poll_time;
-static clock_t s_last_frame_time;
+static double  s_last_fps_poll_time;
+static double  s_last_frame_time;
 static int     s_num_flips;
 static int     s_num_frames;
 static bool    s_show_fps = true;
@@ -47,6 +48,7 @@ ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
 int                  g_render_scale;
+bool                 g_skip_frame;
 ALLEGRO_CONFIG*      g_sys_conf;
 ALLEGRO_FONT*        g_sys_font  = NULL;
 int                  g_res_x, g_res_y;
@@ -145,6 +147,7 @@ main(int argc, char** argv)
 	// initialize JavaScript engine
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
+	init_bytearray_api();
 	init_color_api();
 	init_file_api();
 	init_font_api(g_duktape);
@@ -171,7 +174,7 @@ main(int argc, char** argv)
 	duk_pop(g_duktape);
 
 	// call game() function in script
-	s_last_frame_time = s_last_fps_poll_time = clock();
+	s_last_frame_time = s_last_fps_poll_time = al_get_time();
 	s_num_frames = s_num_flips = 0;
 	s_current_fps = s_current_game_fps = 0;
 	duk_push_global_object(g_duktape);
@@ -241,36 +244,36 @@ do_events(void)
 }
 
 bool
-end_frame(int framerate)
+begin_frame(int framerate)
 {
-	clock_t           current_time;
+	double            current_time;
 	char              filename[50];
 	char              fps_text[20];
-	clock_t           frame_ticks;
-	clock_t           next_frame_time;
+	double            frame_length;
+	double            next_frame_time;
 	char*             path;
 	ALLEGRO_BITMAP*   snapshot;
-	bool              skipping_frame = false;
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 	
 	if (framerate > 0) {
-		frame_ticks = CLOCKS_PER_SEC / framerate;
-		current_time = clock();
-		next_frame_time = s_last_frame_time + frame_ticks;
-		skipping_frame = s_frame_skips < MAX_FRAME_SKIPS && current_time > next_frame_time;
+		frame_length = 1.0 / framerate;
+		current_time = al_get_time();
+		next_frame_time = s_last_frame_time + frame_length;
+		g_skip_frame = s_frame_skips < MAX_FRAME_SKIPS && current_time > next_frame_time;
 		do {
 			if (!do_events()) return false;
-		} while (clock() < next_frame_time);
-		s_last_frame_time += frame_ticks;
+		} while (al_get_time() < next_frame_time);
+		s_last_frame_time += frame_length;
 	}
 	else {
+		g_skip_frame = false;
 		if (!do_events()) return false;
 	}
 	++s_num_frames;
-	if (!skipping_frame) {
+	if (!g_skip_frame) {
 		++s_num_flips;
-		s_last_frame_time = clock();
+		s_last_frame_time = al_get_time();
 		s_frame_skips = 0;
 		if (s_take_snapshot) {
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
@@ -300,7 +303,7 @@ end_frame(int framerate)
 	else {
 		++s_frame_skips;
 	}
-	if (s_last_frame_time >= s_last_fps_poll_time + CLOCKS_PER_SEC) {
+	if (s_last_frame_time >= s_last_fps_poll_time + 1.0) {
 		s_current_fps = s_num_flips;
 		s_current_game_fps = s_num_frames;
 		s_last_fps_poll_time = s_last_frame_time;

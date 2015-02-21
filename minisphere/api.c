@@ -152,9 +152,8 @@ duk_GetFrameRate(duk_context* ctx)
 duk_ret_t
 duk_GetTime(duk_context* ctx)
 {
-	clock_t c_ticks = clock();
-	double ms = (double)c_ticks / CLOCKS_PER_SEC * 1000;
-	duk_push_number(ctx, ms);
+	int ms = floor(al_get_time() * 1000);
+	duk_push_int(ctx, ms);
 	return 1;
 }
 
@@ -260,14 +259,14 @@ duk_ApplyColorMask(duk_context* ctx)
 	mask_color = duk_get_sphere_color(ctx, 0);
 	rect_w = al_get_display_width(g_display);
 	rect_h = al_get_display_height(g_display);
-	al_draw_filled_rectangle(0, 0, rect_w, rect_h, mask_color);
+	if (!g_skip_frame) al_draw_filled_rectangle(0, 0, rect_w, rect_h, mask_color);
 	return 0;
 }
 
 duk_ret_t
 duk_FlipScreen(duk_context* ctx)
 {
-	if (!end_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
+	if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 	return 0;
 }
 
@@ -325,7 +324,7 @@ duk_GradientCircle(duk_context* ctx)
 	inner_color = duk_get_sphere_color(ctx, 3);
 	outer_color = duk_get_sphere_color(ctx, 4);
 	// TODO: actually draw a gradient circle instead of a solid one
-	al_draw_filled_circle(x, y, radius, inner_color);
+	if (!g_skip_frame) al_draw_filled_circle(x, y, radius, inner_color);
 	return 0;
 }
 
@@ -343,13 +342,15 @@ duk_GradientRectangle(duk_context* ctx)
 	color_ur = duk_get_sphere_color(ctx, 5);
 	color_lr = duk_get_sphere_color(ctx, 6);
 	color_ll = duk_get_sphere_color(ctx, 7);
-	ALLEGRO_VERTEX verts[] = {
-		{ x1, y1, 0, 0, 0, color_ul },
-		{ x2, y1, 0, 0, 0, color_ur },
-		{ x1, y2, 0, 0, 0, color_ll },
-		{ x2, y2, 0, 0, 0, color_lr }
-	};
-	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	if (!g_skip_frame) {
+		ALLEGRO_VERTEX verts[] = {
+			{ x1, y1, 0, 0, 0, color_ul },
+			{ x2, y1, 0, 0, 0, color_ur },
+			{ x1, y2, 0, 0, 0, color_ll },
+			{ x2, y2, 0, 0, 0, color_lr }
+		};
+		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	}
 	return 0;
 }
 
@@ -364,7 +365,7 @@ duk_Line(duk_context* ctx)
 	x2 = duk_to_int(ctx, 2);
 	y2 = duk_to_int(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
-	al_draw_line(x1, y1, x2, y2, color, 1);
+	if (!g_skip_frame) al_draw_line(x1, y1, x2, y2, color, 1);
 	return 0;
 }
 
@@ -382,7 +383,7 @@ duk_OutlinedRectangle(duk_context* ctx)
 	y2 = y1 + duk_to_int(ctx, 3) - 1;
 	color = duk_get_sphere_color(ctx, 4);
 	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
-	al_draw_rectangle(x1, y1, x2, y2, color, thickness);
+	if (!g_skip_frame) al_draw_rectangle(x1, y1, x2, y2, color, thickness);
 	return 0;
 }
 
@@ -397,6 +398,6 @@ duk_Rectangle(duk_context* ctx)
 	w = duk_to_int(ctx, 2);
 	h = duk_to_int(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
-	al_draw_filled_rectangle(x, y, x + w, y + h, color);
+	if (!g_skip_frame) al_draw_filled_rectangle(x, y, x + w, y + h, color);
 	return 0;
 }
