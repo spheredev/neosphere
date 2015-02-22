@@ -25,6 +25,7 @@ static duk_ret_t duk_GetFileList(duk_context* ctx);
 static duk_ret_t duk_GradientCircle(duk_context* ctx);
 static duk_ret_t duk_GradientRectangle(duk_context* ctx);
 static duk_ret_t duk_Line(duk_context* ctx);
+static duk_ret_t duk_OutlinedCircle(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
 
@@ -56,6 +57,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
 	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
 	register_api_func(ctx, NULL, "Line", &duk_Line);
+	register_api_func(ctx, NULL, "OutlinedCircle", &duk_OutlinedCircle);
 	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
 	register_api_func(ctx, NULL, "Rectangle", &duk_Rectangle);
 	duk_push_global_stash(ctx);
@@ -366,6 +368,24 @@ duk_Line(duk_context* ctx)
 	y2 = duk_to_int(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
 	if (!g_skip_frame) al_draw_line(x1, y1, x2, y2, color, 1);
+	return 0;
+}
+
+static duk_ret_t
+duk_OutlinedCircle(duk_context* ctx)
+{
+	bool          antialiased = false;
+	ALLEGRO_COLOR color;
+	int           n_args;
+	int           x, y, radius;
+
+	n_args = duk_get_top(ctx);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	radius = duk_to_int(ctx, 2);
+	color = duk_get_sphere_color(ctx, 3);
+	if (n_args >= 5) antialiased = duk_require_boolean(ctx, 4);
+	if (!g_skip_frame) al_draw_circle(x, y, radius, color, 1);
 	return 0;
 }
 
