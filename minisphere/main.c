@@ -63,6 +63,7 @@ main(int argc, char** argv)
 	char*             icon_path;
 	char*             path;
 	ALLEGRO_TRANSFORM trans;
+	int               i;
 	
 	// initialize Allegro
 	al_init();
@@ -83,13 +84,25 @@ main(int argc, char** argv)
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
-	for (int i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
+	if (argc == 2) {
+		// only one argument passed, assume it's an .sgm file or game directory
+		al_destroy_path(g_game_path);
+		g_game_path = al_create_path(argv[1]);
+		if (strcmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
 			al_destroy_path(g_game_path);
-			g_game_path = al_create_path(argv[i + 1]);
-			if (strcmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
+			g_game_path = al_create_path_for_directory(argv[1]);
+		}
+	}
+	else {
+		// more than one argument, perform full commandline parsing
+		for (i = 1; i < argc; ++i) {
+			if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
 				al_destroy_path(g_game_path);
-				g_game_path = al_create_path_for_directory(argv[i + 1]);
+				g_game_path = al_create_path(argv[i + 1]);
+				if (strcmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
+					al_destroy_path(g_game_path);
+					g_game_path = al_create_path_for_directory(argv[i + 1]);
+				}
 			}
 		}
 	}
