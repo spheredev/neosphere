@@ -153,6 +153,21 @@ free_spriteset(spriteset_t* spriteset)
 	al_free(spriteset);
 }
 
+void
+draw_sprite(spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index)
+{
+	int                image_index;
+	spriteset_pose_t*  pose;
+	int                i;
+	
+	for (i = 0; i < spriteset->num_poses; ++i) {
+		pose = &spriteset->poses[i];
+		if (strcmp(pose_name, pose->name) == 0) break;
+	}
+	image_index = pose->frames[frame_index].image_idx;
+	al_draw_bitmap(spriteset->bitmaps[image_index], x, y, 0x0);
+}
+
 static char*
 _fread_string(ALLEGRO_FILE* file)
 {

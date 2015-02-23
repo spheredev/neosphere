@@ -1,3 +1,6 @@
+#ifndef MINISPHERE__SPRITESET_H__INCLUDED
+#define MINISPHERE__SPRITESET_H__INCLUDED
+
 typedef struct spriteset       spriteset_t;
 typedef struct spriteset_base  spriteset_base_t;
 typedef struct spriteset_pose  spriteset_pose_t;
@@ -33,4 +36,7 @@ struct spriteset
 
 extern spriteset_t* load_spriteset     (const char* path);
 extern void         free_spriteset     (spriteset_t* spriteset);
+extern void         draw_sprite        (spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index);
 extern void         init_spriteset_api (duk_context* ctx);
+
+#endif // MINISPHERE__SPRITESET_H__INCLUDED

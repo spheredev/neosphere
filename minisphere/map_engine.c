@@ -18,8 +18,12 @@ struct rmp_header
 	int8_t  start_direction;
 	int16_t num_strings;
 	int16_t num_zones;
-	uint8_t reserved[235];
+	uint8_t toric_map;
+	uint8_t reserved[234];
 };
+
+static void render_map_engine (void);
+static void update_map_engine (void);
 
 static duk_ret_t _js_MapEngine             (duk_context* ctx);
 static duk_ret_t _js_GetMapEngineFrameRate (duk_context* ctx);
@@ -29,11 +33,15 @@ static duk_ret_t _js_SetRenderScript       (duk_context* ctx);
 static duk_ret_t _js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t _js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t _js_AttachCamera          (duk_context* ctx);
+static duk_ret_t _js_AttachInput           (duk_context* ctx);
 
-static char* s_camera_person = NULL;
-static bool  s_exiting       = false;
-static int   s_framerate     = 0;
-static bool  s_running       = false;
+static person_t* s_camera_person = NULL;
+static int       s_cam_x         = 0;
+static int       s_cam_y         = 0;
+static bool      s_exiting       = false;
+static int       s_framerate     = 0;
+static person_t* s_input_person  = NULL;
+static bool      s_running       = false;
 
 enum mapscript
 {
@@ -82,6 +90,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetUpdateScript", &_js_SetUpdateScript);
 	register_api_func(ctx, NULL, "IsMapEngineRunning", &_js_IsMapEngineRunning);
 	register_api_func(ctx, NULL, "AttachCamera", &_js_AttachCamera);
+	register_api_func(ctx, NULL, "AttachInput", &_js_AttachInput);
 
 	// Map script types
 	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", 0);
@@ -93,6 +102,47 @@ init_map_engine_api(duk_context* ctx)
 
 	// initialize subcomponent APIs (persons, etc.)
 	init_person_api();
+}
+
+static void
+render_map_engine(void)
+{
+	render_persons(0, 0);
+	duk_push_global_stash(g_duktape);
+	duk_get_prop_string(g_duktape, -1, "render_script");
+	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
+	duk_pop_2(g_duktape);
+}
+
+static void
+update_map_engine(void)
+{
+	ALLEGRO_KEYBOARD_STATE kb_state;
+	
+	// check for player input
+	if (s_input_person != NULL) {
+		al_get_keyboard_state(&kb_state);
+		if (al_key_down(&kb_state, ALLEGRO_KEY_UP))
+			s_input_person->y -= s_input_person->speed;
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN))
+			s_input_person->y += s_input_person->speed;
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT))
+			s_input_person->x -= s_input_person->speed;
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT))
+			s_input_person->x += s_input_person->speed;
+	}
+	
+	// update camera
+	if (s_camera_person != NULL) {
+		s_cam_x = s_camera_person->x;
+		s_cam_y = s_camera_person->y;
+	}
+
+	// run update script
+	duk_push_global_stash(g_duktape);
+	duk_get_prop_string(g_duktape, -1, "update_script");
+	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
+	duk_pop_2(g_duktape);
 }
 
 static duk_ret_t
@@ -107,7 +157,9 @@ _js_MapEngine(duk_context* ctx)
 	s_framerate = duk_to_int(ctx, 1);
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
+		update_map_engine();
 		al_draw_text(g_sys_font, al_map_rgb(255, 255, 255), 160, 114, ALLEGRO_ALIGN_CENTER, filename);
+		render_map_engine();
 	}
 	s_running = false;
 	return 0;
@@ -197,9 +249,32 @@ _js_IsMapEngineRunning(duk_context* ctx)
 static duk_ret_t
 _js_AttachCamera(duk_context* ctx)
 {
-	const char* person_name;
-	
-	person_name = duk_to_string(ctx, 0);
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+	if ((person = find_person(name)) != NULL) {
+		s_camera_person = person;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "AttachCamera(): Person '%s' doesn't exist", name);
+	}
+	return 0;
+}
+
+static duk_ret_t
+_js_AttachInput(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+	if ((person = find_person(name)) != NULL) {
+		s_input_person = person;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
+	}
 	return 0;
 }
 
@@ -213,19 +288,13 @@ _js_ExitMapEngine(duk_context* ctx)
 static duk_ret_t
 _js_RenderMap(duk_context* ctx)
 {
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "render_script");
-	duk_call(ctx, 0);
-	duk_pop_2(ctx);
+	render_map_engine();
 	return 0;
 }
 
 static duk_ret_t
 _js_UpdateMapEngine(duk_context* ctx)
 {
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "update_script");
-	duk_call(ctx, 0);
-	duk_pop_2(ctx);
+	update_map_engine();
 	return 0;
 }

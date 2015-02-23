@@ -114,7 +114,7 @@ main(int argc, char** argv)
 	if (g_game_conf == NULL) {
 		al_show_native_message_box(NULL, "Unable to Load Game",
 			al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
-			"minisphere was unable to load game.sgm or it was not found. Check to make sure the above directory exists and contains a valid Sphere game.",
+			"minisphere was unable to load game.sgm or it was not found.  Check to make sure the above directory exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -214,7 +214,7 @@ on_js_error:
 		if (file_path != NULL) {
 			char* file_name = strrchr(file_path, '/');
 			file_name = file_name != NULL ? (file_name + 1) : file_path;
-			duk_push_sprintf(g_duktape, "%s (line %d)\n\n%s", file_name, (int)line_num, err_msg);
+			duk_push_sprintf(g_duktape, "%s (line: %i)\n\n%s", file_name, line_num, err_msg);
 		}
 		else {
 			duk_push_string(g_duktape, err_msg);
