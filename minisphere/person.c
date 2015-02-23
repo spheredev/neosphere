@@ -4,6 +4,20 @@
 
 #include "person.h"
 
+struct person
+{
+	char*        name;
+	int          anim_frames;
+	char*        direction;
+	int          frame;
+	int          layer;
+	int          revert_delay;
+	int          revert_frames;
+	float        speed;
+	spriteset_t* sprite;
+	float        x, y;
+};
+
 static duk_ret_t js_CreatePerson   (duk_context* ctx);
 static duk_ret_t js_DestroyPerson  (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer (duk_context* ctx);
@@ -59,6 +73,13 @@ init_person_api(void)
 	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
 	register_api_const(g_duktape, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
 	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
+}
+
+void
+get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width, int map_height)
+{
+	*out_x = fmod(person->x, map_width);
+	*out_y = fmod(person->y, map_height);
 }
 
 void

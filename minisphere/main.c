@@ -329,10 +329,8 @@ begin_frame(int framerate)
 void
 free_lstring(lstring_t* string)
 {
-	if (string != NULL) {
-		free(string->buffer);
-		free(string);
-	}
+	if (string != NULL) free(string->buffer);
+	free(string);
 }
 
 char*
