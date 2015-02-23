@@ -25,15 +25,18 @@ struct rmp_header
 static void render_map_engine (void);
 static void update_map_engine (void);
 
-static duk_ret_t _js_MapEngine             (duk_context* ctx);
-static duk_ret_t _js_GetMapEngineFrameRate (duk_context* ctx);
-static duk_ret_t _js_SetMapEngineFrameRate (duk_context* ctx);
-static duk_ret_t _js_SetDefaultMapScript   (duk_context* ctx);
-static duk_ret_t _js_SetRenderScript       (duk_context* ctx);
-static duk_ret_t _js_SetUpdateScript       (duk_context* ctx);
-static duk_ret_t _js_IsMapEngineRunning    (duk_context* ctx);
-static duk_ret_t _js_AttachCamera          (duk_context* ctx);
-static duk_ret_t _js_AttachInput           (duk_context* ctx);
+static duk_ret_t js_MapEngine             (duk_context* ctx);
+static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
+static duk_ret_t js_SetRenderScript       (duk_context* ctx);
+static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
+static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
+static duk_ret_t js_AttachCamera          (duk_context* ctx);
+static duk_ret_t js_AttachInput           (duk_context* ctx);
+static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
+static duk_ret_t js_RenderMap             (duk_context* ctx);
+static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 
 static person_t* s_camera_person = NULL;
 static int       s_cam_x         = 0;
@@ -82,15 +85,18 @@ on_error:
 void
 init_map_engine_api(duk_context* ctx)
 {
-	register_api_func(ctx, NULL, "MapEngine", &_js_MapEngine);
-	register_api_func(ctx, NULL, "GetMapEngineFrameRate", &_js_GetMapEngineFrameRate);
-	register_api_func(ctx, NULL, "SetMapEngineFrameRate", &_js_SetMapEngineFrameRate);
-	register_api_func(ctx, NULL, "SetDefaultMapScript", &_js_SetDefaultMapScript);
-	register_api_func(ctx, NULL, "SetRenderScript", &_js_SetRenderScript);
-	register_api_func(ctx, NULL, "SetUpdateScript", &_js_SetUpdateScript);
-	register_api_func(ctx, NULL, "IsMapEngineRunning", &_js_IsMapEngineRunning);
-	register_api_func(ctx, NULL, "AttachCamera", &_js_AttachCamera);
-	register_api_func(ctx, NULL, "AttachInput", &_js_AttachInput);
+	register_api_func(ctx, NULL, "MapEngine", &js_MapEngine);
+	register_api_func(ctx, NULL, "GetMapEngineFrameRate", &js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetMapEngineFrameRate", &js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetDefaultMapScript", &js_SetDefaultMapScript);
+	register_api_func(ctx, NULL, "SetRenderScript", &js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetUpdateScript", &js_SetUpdateScript);
+	register_api_func(ctx, NULL, "IsMapEngineRunning", &js_IsMapEngineRunning);
+	register_api_func(ctx, NULL, "AttachCamera", &js_AttachCamera);
+	register_api_func(ctx, NULL, "AttachInput", &js_AttachInput);
+	register_api_func(ctx, NULL, "ExitMapEngine", &js_ExitMapEngine);
+	register_api_func(ctx, NULL, "RenderMap", &js_RenderMap);
+	register_api_func(ctx, NULL, "UpdateMapEngine", &js_UpdateMapEngine);
 
 	// Map script types
 	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", 0);
@@ -119,17 +125,27 @@ update_map_engine(void)
 {
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	
+	update_persons();
+	
 	// check for player input
 	if (s_input_person != NULL) {
 		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, ALLEGRO_KEY_UP))
-			s_input_person->y -= s_input_person->speed;
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN))
-			s_input_person->y += s_input_person->speed;
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT))
-			s_input_person->x -= s_input_person->speed;
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT))
-			s_input_person->x += s_input_person->speed;
+		if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
+			command_person(s_input_person, COMMAND_FACE_NORTH);
+			command_person(s_input_person, COMMAND_MOVE_NORTH);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) {
+			command_person(s_input_person, COMMAND_FACE_EAST);
+			command_person(s_input_person, COMMAND_MOVE_EAST);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) {
+			command_person(s_input_person, COMMAND_FACE_SOUTH);
+			command_person(s_input_person, COMMAND_MOVE_SOUTH);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) {
+			command_person(s_input_person, COMMAND_FACE_WEST);
+			command_person(s_input_person, COMMAND_MOVE_WEST);
+		}
 	}
 	
 	// update camera
@@ -146,7 +162,7 @@ update_map_engine(void)
 }
 
 static duk_ret_t
-_js_MapEngine(duk_context* ctx)
+js_MapEngine(duk_context* ctx)
 {
 	const char* filename;
 	
@@ -166,21 +182,21 @@ _js_MapEngine(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GetMapEngineFrameRate(duk_context* ctx)
+js_GetMapEngineFrameRate(duk_context* ctx)
 {
 	duk_push_int(ctx, s_framerate);
 	return 1;
 }
 
 static duk_ret_t
-_js_SetMapEngineFrameRate(duk_context* ctx)
+js_SetMapEngineFrameRate(duk_context* ctx)
 {
 	s_framerate = duk_to_int(ctx, 0);
 	return 0;
 }
 
 static duk_ret_t
-_js_SetDefaultMapScript(duk_context* ctx)
+js_SetDefaultMapScript(duk_context* ctx)
 {
 	const char* script;
 	size_t      script_size;
@@ -210,7 +226,7 @@ _js_SetDefaultMapScript(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_SetRenderScript(duk_context* ctx)
+js_SetRenderScript(duk_context* ctx)
 {
 	const char* script;
 	size_t      script_size;
@@ -225,7 +241,7 @@ _js_SetRenderScript(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_SetUpdateScript(duk_context* ctx)
+js_SetUpdateScript(duk_context* ctx)
 {
 	const char* script;
 	size_t      script_size;
@@ -240,14 +256,14 @@ _js_SetUpdateScript(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_IsMapEngineRunning(duk_context* ctx)
+js_IsMapEngineRunning(duk_context* ctx)
 {
 	duk_push_boolean(ctx, s_running);
 	return 1;
 }
 
 static duk_ret_t
-_js_AttachCamera(duk_context* ctx)
+js_AttachCamera(duk_context* ctx)
 {
 	const char* name;
 	person_t*   person;
@@ -263,7 +279,7 @@ _js_AttachCamera(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_AttachInput(duk_context* ctx)
+js_AttachInput(duk_context* ctx)
 {
 	const char* name;
 	person_t*   person;
@@ -279,22 +295,37 @@ _js_AttachInput(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_ExitMapEngine(duk_context* ctx)
+js_ExitMapEngine(duk_context* ctx)
 {
-	s_exiting = true;
-	return 0;
+	if (s_running) {
+		s_exiting = true;
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "ExitMapEngine(): Operation requires map engine to be running");
+	}
 }
 
 static duk_ret_t
-_js_RenderMap(duk_context* ctx)
+js_RenderMap(duk_context* ctx)
 {
-	render_map_engine();
-	return 0;
+	if (s_running) {
+		render_map_engine();
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires map engine to be running");
+	}
 }
 
 static duk_ret_t
-_js_UpdateMapEngine(duk_context* ctx)
+js_UpdateMapEngine(duk_context* ctx)
 {
-	update_map_engine();
-	return 0;
+	if (s_running) {
+		update_map_engine();
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "UpdateMapEngine(): Operation requires map engine to be running");
+	}
 }

@@ -4,14 +4,14 @@
 
 #include "person.h"
 
-static duk_ret_t _js_CreatePerson   (duk_context* ctx);
-static duk_ret_t _js_DestroyPerson  (duk_context* ctx);
-static duk_ret_t _js_GetPersonLayer (duk_context* ctx);
-static duk_ret_t _js_GetPersonList  (duk_context* ctx);
-static duk_ret_t _js_GetPersonX     (duk_context* ctx);
-static duk_ret_t _js_GetPersonY     (duk_context* ctx);
-static duk_ret_t _js_SetPersonX     (duk_context* ctx);
-static duk_ret_t _js_SetPersonY     (duk_context* ctx);
+static duk_ret_t js_CreatePerson   (duk_context* ctx);
+static duk_ret_t js_DestroyPerson  (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer (duk_context* ctx);
+static duk_ret_t js_GetPersonList  (duk_context* ctx);
+static duk_ret_t js_GetPersonX     (duk_context* ctx);
+static duk_ret_t js_GetPersonY     (duk_context* ctx);
+static duk_ret_t js_SetPersonX     (duk_context* ctx);
+static duk_ret_t js_SetPersonY     (duk_context* ctx);
 
 static void      _add_person           (const char* name, const char* sprite_file, bool persist);
 static void      _delete_person        (const char* name);
@@ -24,20 +24,82 @@ static person_t* s_persons     = NULL;
 void
 init_person_api(void)
 {
-	register_api_func(g_duktape, NULL, "CreatePerson", &_js_CreatePerson);
-	register_api_func(g_duktape, NULL, "DestroyPerson", &_js_DestroyPerson);
-	register_api_func(g_duktape, NULL, "GetPersonLayer", _js_GetPersonLayer);
-	register_api_func(g_duktape, NULL, "GetPersonList", _js_GetPersonList);
-	register_api_func(g_duktape, NULL, "GetPersonX", _js_GetPersonX);
-	register_api_func(g_duktape, NULL, "GetPersonY", _js_GetPersonY);
-	register_api_func(g_duktape, NULL, "SetPersonX", _js_SetPersonX);
-	register_api_func(g_duktape, NULL, "SetPersonY", _js_SetPersonY);
+	register_api_func(g_duktape, NULL, "CreatePerson", &js_CreatePerson);
+	register_api_func(g_duktape, NULL, "DestroyPerson", &js_DestroyPerson);
+	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
+	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
+	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
+	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
+	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
 
+	// movement script specifier constants
 	register_api_const(g_duktape, "SCRIPT_ON_CREATE", 0);
 	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", 1);
 	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", 2);
 	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", 3);
 	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", 4);
+
+	// person movement commands
+	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
+	register_api_const(g_duktape, "COMMAND_ANIMATE", COMMAND_ANIMATE);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
+	register_api_const(g_duktape, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
+	register_api_const(g_duktape, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
+}
+
+void
+command_person(person_t* person, int command)
+{
+	switch (command) {
+	case COMMAND_ANIMATE:
+		if (--person->anim_frames <= 0) {
+			++person->frame;
+			person->anim_frames = 8;
+		}
+		break;
+	case COMMAND_FACE_NORTH: _set_person_direction(person, "north"); break;
+	case COMMAND_FACE_NORTHEAST: _set_person_direction(person, "northeast"); break;
+	case COMMAND_FACE_EAST: _set_person_direction(person, "east"); break;
+	case COMMAND_FACE_SOUTHEAST: _set_person_direction(person, "southeast"); break;
+	case COMMAND_FACE_SOUTH: _set_person_direction(person, "south"); break;
+	case COMMAND_FACE_SOUTHWEST: _set_person_direction(person, "southwest"); break;
+	case COMMAND_FACE_WEST: _set_person_direction(person, "west"); break;
+	case COMMAND_FACE_NORTHWEST: _set_person_direction(person, "northwest"); break;
+	case COMMAND_MOVE_NORTH:
+		command_person(person, COMMAND_ANIMATE);
+		person->y -= person->speed;
+		person->revert_frames = person->revert_delay;
+		break;
+	case COMMAND_MOVE_EAST:
+		command_person(person, COMMAND_ANIMATE);
+		person->x += person->speed;
+		person->revert_frames = person->revert_delay;
+		break;
+	case COMMAND_MOVE_SOUTH:
+		command_person(person, COMMAND_ANIMATE);
+		person->y += person->speed;
+		person->revert_frames = person->revert_delay;
+		break;
+	case COMMAND_MOVE_WEST:
+		command_person(person, COMMAND_ANIMATE);
+		person->x -= person->speed;
+		person->revert_frames = person->revert_delay;
+		break;
+	}
 }
 
 person_t*
@@ -61,139 +123,21 @@ render_persons(int cam_x, int cam_y)
 
 	for (i = 0; i < s_num_persons; ++i) {
 		sprite = s_persons[i].sprite;
-		x = s_persons[i].x - cam_x; y = s_persons[i].y - cam_y;
-		draw_sprite(sprite, s_persons[i].direction, x, y, 0);
+		x = (int)s_persons[i].x - cam_x; y = (int)s_persons[i].y - cam_y;
+		draw_sprite(sprite, s_persons[i].direction, x, y, s_persons[i].frame);
 	}
 }
 
-static duk_ret_t
-_js_CreatePerson(duk_context* ctx)
+void
+update_persons(void)
 {
-	const char* name;
-	const char* sprite_file;
-	bool        persist;
+	person_t* person;
+	int       i;
 
-	name = duk_to_string(ctx, 0);
-	sprite_file = duk_require_string(ctx, 1);
-	persist = duk_require_boolean(ctx, 2);
-	_add_person(name, sprite_file, persist);
-	return 0;
-}
-
-static duk_ret_t
-_js_DestroyPerson(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_to_string(ctx, 0);
-	if (find_person(name) != NULL) {
-		_delete_person(name);
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "DestroyPerson(): Person entity '%s' doesn't exist!", name);
-	}
-}
-
-static duk_ret_t
-_js_GetPersonDirection(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_to_string(ctx, 0);
-	person = find_person(name);
-	if (person != NULL) {
-		duk_push_string(ctx, person->direction);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person entity '%s' does not exist", name);
-	}
-}
-
-static duk_ret_t
-_js_GetPersonLayer(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_to_string(ctx, 0);
-	person = find_person(name);
-	if (person != NULL) {
-		duk_push_int(ctx, person->layer);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonLayer(): Person entity '%s' does not exist", name);
-	}
-}
-
-static duk_ret_t
-_js_GetPersonList(duk_context* ctx)
-{
-	int i;
-	
-	duk_push_array(ctx);
 	for (i = 0; i < s_num_persons; ++i) {
-		duk_push_string(ctx, s_persons[i].name);
-		duk_put_prop_index(ctx, -2, i);
+		person = &s_persons[i];
+		if (--person->revert_frames <= 0) person->frame = 0;
 	}
-	return 1;
-}
-
-static duk_ret_t
-_js_GetPersonX(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_to_string(ctx, 0);
-	person = find_person(name);
-	if (person != NULL) {
-		duk_push_number(ctx, person->x);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person entity '%s' does not exist", name);
-	}
-}
-
-static duk_ret_t
-_js_GetPersonY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_to_string(ctx, 0);
-	person = find_person(name);
-	if (person != NULL) {
-		duk_push_number(ctx, person->y);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person entity '%s' does not exist", name);
-	}
-}
-
-static duk_ret_t
-_js_SetPersonX(duk_context* ctx)
-{
-	person_t* person;
-
-	person = find_person(duk_to_string(ctx, 0));
-	if (person != NULL) person->x = duk_to_number(ctx, 1);
-	return 0;
-}
-
-static duk_ret_t
-_js_SetPersonY(duk_context* ctx)
-{
-	person_t* person;
-
-	person = find_person(duk_to_string(ctx, 0));
-	if (person != NULL) person->x = duk_to_number(ctx, 1);
-	return 0;
 }
 
 static void
@@ -201,7 +145,7 @@ _add_person(const char* name, const char* sprite_file, bool persist)
 {
 	char*     path;
 	person_t* person;
-	
+
 	++s_num_persons;
 	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t));
 	person = &s_persons[s_num_persons - 1];
@@ -213,6 +157,7 @@ _add_person(const char* name, const char* sprite_file, bool persist)
 	free(path);
 	person->x = 0; person->y = 0; person->layer = 0;
 	person->speed = 1.0;
+	person->revert_delay = 8;
 }
 
 static void
@@ -228,7 +173,7 @@ _delete_person(const char* name)
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
 		}
-			
+
 	}
 	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t));
 }
@@ -245,4 +190,134 @@ _set_person_name(person_t* person, const char* name)
 {
 	person->name = realloc(person->name, (strlen(name) + 1) * sizeof(char));
 	strcpy(person->name, name);
+}
+
+static duk_ret_t
+js_CreatePerson(duk_context* ctx)
+{
+	const char* name;
+	const char* sprite_file;
+	bool        persist;
+
+	name = duk_to_string(ctx, 0);
+	sprite_file = duk_require_string(ctx, 1);
+	persist = duk_require_boolean(ctx, 2);
+	_add_person(name, sprite_file, persist);
+	return 0;
+}
+
+static duk_ret_t
+js_DestroyPerson(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_to_string(ctx, 0);
+	if (find_person(name) != NULL) {
+		_delete_person(name);
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "DestroyPerson(): Person entity '%s' doesn't exist!", name);
+	}
+}
+
+static duk_ret_t
+js_GetPersonDirection(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+	person = find_person(name);
+	if (person != NULL) {
+		duk_push_string(ctx, person->direction);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person entity '%s' does not exist", name);
+	}
+}
+
+static duk_ret_t
+js_GetPersonLayer(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+	person = find_person(name);
+	if (person != NULL) {
+		duk_push_int(ctx, person->layer);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonLayer(): Person entity '%s' does not exist", name);
+	}
+}
+
+static duk_ret_t
+js_GetPersonList(duk_context* ctx)
+{
+	int i;
+	
+	duk_push_array(ctx);
+	for (i = 0; i < s_num_persons; ++i) {
+		duk_push_string(ctx, s_persons[i].name);
+		duk_put_prop_index(ctx, -2, i);
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonX(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+	person = find_person(name);
+	if (person != NULL) {
+		duk_push_number(ctx, person->x);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person entity '%s' does not exist", name);
+	}
+}
+
+static duk_ret_t
+js_GetPersonY(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+	person = find_person(name);
+	if (person != NULL) {
+		duk_push_number(ctx, person->y);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person entity '%s' does not exist", name);
+	}
+}
+
+static duk_ret_t
+js_SetPersonX(duk_context* ctx)
+{
+	person_t* person;
+
+	person = find_person(duk_to_string(ctx, 0));
+	if (person != NULL) person->x = duk_to_number(ctx, 1);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonY(duk_context* ctx)
+{
+	person_t* person;
+
+	person = find_person(duk_to_string(ctx, 0));
+	if (person != NULL) person->x = duk_to_number(ctx, 1);
+	return 0;
 }

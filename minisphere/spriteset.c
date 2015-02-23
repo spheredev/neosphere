@@ -28,8 +28,9 @@ struct v3_frame {
 	uint8_t reserved[4];
 };
 
+static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 static char*           _fread_string          (ALLEGRO_FILE* file);
-static void            _duk_push_spriteset    (duk_context* ctx, spriteset_t* spriteset);
+static void            duk_push_spriteset     (duk_context* ctx, spriteset_t* spriteset);
 static duk_ret_t       _js_LoadSpriteset      (duk_context* ctx);
 static duk_ret_t       _js_Spriteset_finalize (duk_context* ctx);
 
@@ -154,18 +155,41 @@ free_spriteset(spriteset_t* spriteset)
 }
 
 void
-draw_sprite(spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index)
+draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index)
 {
-	int                image_index;
-	spriteset_pose_t*  pose;
-	int                i;
+	int                      image_index;
+	const spriteset_pose_t*  pose;
 	
-	for (i = 0; i < spriteset->num_poses; ++i) {
-		pose = &spriteset->poses[i];
-		if (strcmp(pose_name, pose->name) == 0) break;
-	}
+	pose = find_sprite_pose(spriteset, pose_name);
+	frame_index = frame_index % pose->num_frames;
 	image_index = pose->frames[frame_index].image_idx;
 	al_draw_bitmap(spriteset->bitmaps[image_index], x, y, 0x0);
+}
+
+static const spriteset_pose_t*
+find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
+{
+	const char*             alt_names[2];
+	const char*             name_to_find;
+	const spriteset_pose_t* pose = NULL;
+	int                     i, j = 0;
+
+	if (strcmp(pose_name, "northeast") == 0) alt_names[0] = "north";
+	if (strcmp(pose_name, "southeast") == 0) alt_names[0] = "south";
+	if (strcmp(pose_name, "southwest") == 0) alt_names[0] = "south";
+	if (strcmp(pose_name, "northwest") == 0) alt_names[0] = "north";
+	alt_names[1] = "south";
+	name_to_find = pose_name;
+	do {
+		for (i = 0; i < spriteset->num_poses; ++i) {
+			if (strcmp(name_to_find, spriteset->poses[i].name) == 0) {
+				pose = &spriteset->poses[i];
+				break;
+			}
+		}
+		name_to_find = alt_names[j];
+	} while (pose == NULL && ++j < 2);
+	return pose;
 }
 
 static char*
@@ -185,7 +209,7 @@ on_error:
 }
 
 static void
-_duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
+duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 {
 	int i, j;
 	
@@ -239,7 +263,7 @@ _js_LoadSpriteset(duk_context* ctx)
 	if ((spriteset = load_spriteset(path)) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "LoadSpriteset(): Unable to load spriteset file '%s'", filename);
 	free(path);
-	_duk_push_spriteset(ctx, spriteset);
+	duk_push_spriteset(ctx, spriteset);
 	return 1;
 }
 
