@@ -433,6 +433,7 @@ al_fread_lstring(ALLEGRO_FILE* file)
 	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
 		goto on_error;
 	if (al_fread(file, &length, 2) != 2) goto on_error;
+	string->length = length;
 	if ((string->buffer = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
 	if (al_fread(file, string->buffer, length) != length) goto on_error;
 	return string;

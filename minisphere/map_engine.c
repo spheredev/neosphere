@@ -1,13 +1,22 @@
 #include "minisphere.h"
 #include "api.h"
 #include "person.h"
+#include "tileset.h"
 
 #include "map_engine.h"
 
 struct map
 {
-	int        width, height;
-	lstring_t* *scripts;
+	int              num_layers;
+	tileset_t*       tileset;
+	struct map_layer *layers;
+	lstring_t*       *scripts;
+};
+
+struct map_layer
+{
+	int  width, height;
+	int* tilemap;
 };
 
 static bool change_map        (const char* filename);
@@ -56,6 +65,20 @@ struct rmp_header
 	uint8_t toric_map;
 	uint8_t reserved[234];
 };
+
+struct rmp_layer_header
+{
+	int16_t  width;
+	int16_t  height;
+	uint16_t flags;
+	float    parallax_x;
+	float    parallax_y;
+	float    scrolling_x;
+	float    scrolling_y;
+	int32_t  num_segments;
+	uint8_t  reflective;
+	uint8_t  reserved[3];
+};
 #pragma pack(pop)
 
 enum mapscript
@@ -71,13 +94,26 @@ enum mapscript
 map_t*
 load_map(const char* path)
 {
-	bool              failed = false;
-	ALLEGRO_FILE*     file;
-	map_t*            map;
-	struct rmp_header rmp;
-	lstring_t*        *scripts;
+	// strings: 0 - tileset filename
+	//          1 - music filename
+	//          2 - script filename (obsolete, not used)
+	//          3 - entry script
+	//          4 - exit script
+	//          5 - exit north script
+	//          6 - exit east script
+	//          7 - exit south script
+	//          8 - exit west script
+	
+	bool                    failed = false;
+	ALLEGRO_FILE*           file;
+	struct rmp_layer_header layer_info;
+	map_t*                  map;
+	int                     num_tiles;
+	struct rmp_header       rmp;
+	int16_t*                tile_data = NULL;
+	lstring_t*              *scripts;
 
-	int i;
+	int i, j;
 	
 	if ((map = calloc(1, sizeof(map_t))) == NULL) goto on_error;
 	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
@@ -91,19 +127,40 @@ load_map(const char* path)
 		for (i = 0; i < rmp.num_strings; ++i)
 			failed = ((scripts[i] = al_fread_lstring(file)) == NULL) || failed;
 		if (failed) goto on_error;
+		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer*))) == NULL) goto on_error;
+		for (i = 0; i < rmp.num_layers; ++i) {
+			if (al_fread(file, &layer_info, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
+				goto on_error;
+			map->layers[i].width = layer_info.width;
+			map->layers[i].height = layer_info.height;
+			if ((map->layers[i].tilemap = malloc(layer_info.width * layer_info.height * sizeof(int))) == NULL)
+				goto on_error;
+			free_lstring(al_fread_lstring(file));  // <-- layer name, not used by minisphere
+			num_tiles = layer_info.width * layer_info.height;
+			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
+			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
+			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
+			free(tile_data);
+		}
+		map->num_layers = rmp.num_layers;
+		map->scripts = scripts;
 		break;
 	default:
 		goto on_error;
 		break;
 	}
-	map->scripts = scripts;
 	return map;
 
 on_error:
 	if (file != NULL) al_fclose(file);
+	free(tile_data);
 	if (scripts != NULL) {
 		for (i = 0; i < rmp.num_strings; ++i) free_lstring(scripts[i]);
 		free(scripts);
+	}
+	if (map->layers != NULL) {
+		for (i = 0; i < rmp.num_layers; ++i) free(map->layers[i].tilemap);
+		free(map->layers);
 	}
 	free(map);
 	return NULL;
@@ -174,12 +231,23 @@ change_map(const char* filename)
 static void
 render_map_engine(void)
 {
-	al_draw_text(g_sys_font, al_map_rgb(255, 255, 255), 160, 114, ALLEGRO_ALIGN_CENTER, s_map_filename);
+	struct map_layer* layer;
+	
+	int x, y, z;
+	
+	for (z = 0; z < s_map->num_layers; ++z) {
+		layer = &s_map->layers[z];
+		for (y = 0; y < layer->height; ++y) for (x = 0; x < layer->width; ++x) {
+			al_draw_filled_circle(x * 32 + 16, y * 32 + 16, 16, al_map_rgb(0, 128, 0));
+		}
+	}
 	render_persons(0, 0);
 	duk_push_global_stash(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "render_script");
 	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
 	duk_pop_2(g_duktape);
+	al_draw_text(g_sys_font, al_map_rgb(0, 0, 0), 316, 224, ALLEGRO_ALIGN_RIGHT, s_map_filename);
+	al_draw_text(g_sys_font, al_map_rgb(255, 255, 255), 315, 223, ALLEGRO_ALIGN_RIGHT, s_map_filename);
 }
 
 static void
@@ -213,7 +281,7 @@ update_map_engine(void)
 	
 	// update camera
 	if (s_camera_person != NULL) {
-		get_person_xy(s_camera_person, &x, &y, s_map->width, s_map->height);
+		get_person_xy(s_camera_person, &x, &y, s_map->layers[0].width, s_map->layers[0].height);
 		s_cam_x = x;
 		s_cam_y = y;
 	}

@@ -113,6 +113,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="api.c" />
     <ClCompile Include="spriteset.c" />
     <ClCompile Include="surface.c" />
+    <ClCompile Include="tileset.c" />
     <ClCompile Include="windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +134,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="sound.h" />
     <ClInclude Include="spriteset.h" />
     <ClInclude Include="surface.h" />
+    <ClInclude Include="tileset.h" />
     <ClInclude Include="windowstyle.h" />
   </ItemGroup>
   <ItemGroup>

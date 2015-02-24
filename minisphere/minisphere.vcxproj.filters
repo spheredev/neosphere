@@ -66,6 +66,9 @@
     <ClCompile Include="bytearray.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tileset.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -120,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="bytearray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
