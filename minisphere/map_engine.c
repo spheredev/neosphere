@@ -7,8 +7,10 @@
 
 struct map
 {
-	int              num_layers;
+	point3_t         origin;
+	bool             persistent;
 	tileset_t*       tileset;
+	int              num_layers;
 	struct map_layer *layers;
 	lstring_t*       *scripts;
 };
@@ -147,6 +149,9 @@ load_map(const char* path)
 		tile_path = get_asset_path(strings[0]->buffer, "maps", false);
 		if ((tileset = load_tileset(tile_path)) == NULL) goto on_error;
 		free(tile_path);
+		map->origin.x = rmp.start_x;
+		map->origin.y = rmp.start_y;
+		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
 		map->num_layers = rmp.num_layers;
 		map->scripts = strings;
@@ -201,6 +206,12 @@ init_map_engine_api(duk_context* ctx)
 	init_person_api();
 }
 
+point3_t
+get_map_origin(void)
+{
+	return s_map->origin;
+}
+
 static bool
 change_map(const char* filename)
 {
@@ -214,6 +225,7 @@ change_map(const char* filename)
 	if (map != NULL) {
 		s_map = map;
 		s_map_filename = strdup(filename);
+		reset_persons(s_map);
 		
 		// run default map entry script
 		duk_push_global_stash(g_duktape);

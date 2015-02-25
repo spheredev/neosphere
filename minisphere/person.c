@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "map_engine.h"
 #include "spriteset.h"
 
 #include "person.h"
@@ -10,6 +11,7 @@ struct person
 	int          anim_frames;
 	char*        direction;
 	int          frame;
+	bool         is_persistent;
 	int          layer;
 	int          revert_delay;
 	int          revert_frames;
@@ -27,13 +29,14 @@ static duk_ret_t js_GetPersonY     (duk_context* ctx);
 static duk_ret_t js_SetPersonX     (duk_context* ctx);
 static duk_ret_t js_SetPersonY     (duk_context* ctx);
 
-static void      _add_person           (const char* name, const char* sprite_file, bool persist);
-static void      _delete_person        (const char* name);
-static void      _set_person_direction (person_t* person, const char* direction);
-static void      _set_person_name      (person_t* person, const char* name);
+static void _add_person           (const char* name, const char* sprite_file, bool is_persistent);
+static void _delete_person        (const char* name);
+static void _free_person          (person_t* person);
+static void _set_person_direction (person_t* person, const char* direction);
+static void _set_person_name      (person_t* person, const char* name);
 
 static int       s_num_persons = 0;
-static person_t* s_persons     = NULL;
+static person_t* *s_persons    = NULL;
 
 void
 init_person_api(void)
@@ -129,8 +132,8 @@ find_person(const char* name)
 	int i;
 
 	for (i = 0; i < s_num_persons; ++i) {
-		if (strcmp(name, s_persons[i].name) == 0)
-			return &s_persons[i];
+		if (strcmp(name, s_persons[i]->name) == 0)
+			return s_persons[i];
 	}
 	return NULL;
 }
@@ -138,18 +141,42 @@ find_person(const char* name)
 void
 render_persons(int cam_x, int cam_y)
 {
-	int          off_x, off_y;
 	spriteset_t* sprite;
 	float        x, y;
 	int          i;
 
 	al_hold_bitmap_drawing(true);
 	for (i = 0; i < s_num_persons; ++i) {
-		sprite = s_persons[i].sprite;
-		x = (int)s_persons[i].x - cam_x; y = (int)s_persons[i].y - cam_y;
-		draw_sprite(sprite, s_persons[i].direction, x, y, s_persons[i].frame);
+		sprite = s_persons[i]->sprite;
+		x = (int)s_persons[i]->x - cam_x; y = (int)s_persons[i]->y - cam_y;
+		draw_sprite(sprite, s_persons[i]->direction, x, y, s_persons[i]->frame);
 	}
 	al_hold_bitmap_drawing(false);
+}
+
+void
+reset_persons(map_t* map)
+{
+	point3_t  map_origin;
+	person_t* person;
+	
+	int i, j;
+
+	map_origin = get_map_origin();
+	for (i = 0; i < s_num_persons; ++i) {
+		person = s_persons[i];
+		if (person->is_persistent) {
+			person->x = map_origin.x;
+			person->y = map_origin.y;
+			person->layer = map_origin.z;
+		}
+		else {
+			--s_num_persons;
+			for (j = i; j < s_num_persons; ++j) s_persons[j] = s_persons[j + 1];
+			--i;
+		}
+	}
+	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
 }
 
 void
@@ -159,29 +186,38 @@ update_persons(void)
 	int       i;
 
 	for (i = 0; i < s_num_persons; ++i) {
-		person = &s_persons[i];
+		person = s_persons[i];
 		if (--person->revert_frames <= 0) person->frame = 0;
 	}
 }
 
 static void
-_add_person(const char* name, const char* sprite_file, bool persist)
+_add_person(const char* name, const char* sprite_file, bool is_persistent)
 {
 	char*     path;
 	person_t* person;
 
 	++s_num_persons;
-	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t));
-	person = &s_persons[s_num_persons - 1];
-	memset(person, 0, sizeof(person_t));
+	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
+	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
 	_set_person_name(person, name);
 	_set_person_direction(person, "north");
 	path = get_asset_path(sprite_file, "spritesets", false);
 	person->sprite = load_spriteset(path);
 	free(path);
+	person->is_persistent = is_persistent;
 	person->x = 0; person->y = 0; person->layer = 0;
 	person->speed = 1.0;
 	person->revert_delay = 8;
+}
+
+static void
+_free_person(person_t* person)
+{
+	free_spriteset(person->sprite);
+	free(person->name);
+	free(person->direction);
+	free(person);
 }
 
 static void
@@ -190,16 +226,14 @@ _delete_person(const char* name)
 	int i, j;
 
 	for (i = 0; i < s_num_persons; ++i) {
-		if (strcmp(s_persons[i].name, name) == 0) {
-			free_spriteset(s_persons[i].sprite);
-			free(s_persons[i].name);
-			free(s_persons[i].direction);
+		if (strcmp(s_persons[i]->name, name) == 0) {
+			_free_person(s_persons[i]);
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
 		}
 
 	}
-	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t));
+	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
 }
 
 static void
@@ -219,14 +253,14 @@ _set_person_name(person_t* person, const char* name)
 static duk_ret_t
 js_CreatePerson(duk_context* ctx)
 {
+	bool        destroy_with_map;
 	const char* name;
 	const char* sprite_file;
-	bool        persist;
 
 	name = duk_to_string(ctx, 0);
 	sprite_file = duk_require_string(ctx, 1);
-	persist = duk_require_boolean(ctx, 2);
-	_add_person(name, sprite_file, persist);
+	destroy_with_map = duk_require_boolean(ctx, 2);
+	_add_person(name, sprite_file, !destroy_with_map);
 	return 0;
 }
 
@@ -286,7 +320,7 @@ js_GetPersonList(duk_context* ctx)
 	
 	duk_push_array(ctx);
 	for (i = 0; i < s_num_persons; ++i) {
-		duk_push_string(ctx, s_persons[i].name);
+		duk_push_string(ctx, s_persons[i]->name);
 		duk_put_prop_index(ctx, -2, i);
 	}
 	return 1;

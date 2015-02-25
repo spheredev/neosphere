@@ -51,7 +51,7 @@ load_tileset(const char* path)
 	ALLEGRO_FILE*        file;
 	struct rts_header    rts;
 	struct rts_tile_info tile_info;
-	struct tile*         tiles;
+	struct tile*         tiles = NULL;
 	tileset_t*           tileset;
 
 	int i;

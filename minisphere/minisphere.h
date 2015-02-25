@@ -33,8 +33,25 @@ struct lstring
 	char*        buffer;
 };
 
+struct point3
+{
+	int x;
+	int y;
+	int z;
+};
+
+struct rect
+{
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+};
+
 typedef struct key_queue key_queue_t;
 typedef struct lstring   lstring_t;
+typedef struct point3    point3_t;
+typedef struct rect      rect_t;
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;

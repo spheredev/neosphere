@@ -218,7 +218,7 @@ _js_ByteArray_slice(duk_context* ctx)
 	end_norm = end >= 0 ? end : size + end;
 	if (end_norm > start && end_norm < size) {
 		new_size = end_norm - start;
-		new_buffer = calloc(new_size, 1);
+		if ((new_buffer = calloc(new_size, 1)) == NULL) goto on_alloc_error;
 		memcpy(new_buffer, buffer + start, new_size);
 		duk_push_sphere_bytearray(ctx, new_buffer, new_size);
 		return 1;
@@ -226,4 +226,7 @@ _js_ByteArray_slice(duk_context* ctx)
 	else {
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "ByteArray:slice(): Start and/or end values out of bounds (start: %i, end: %i - size: %i)", start, end_norm, size);
 	}
+
+on_alloc_error:
+	duk_error(ctx, DUK_ERR_ALLOC_ERROR, "ByteArray:slice(): Unable to allocate memory for new ByteArray");
 }

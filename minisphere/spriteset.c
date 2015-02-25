@@ -3,6 +3,7 @@
 #include "image.h"
 #include "spriteset.h"
 
+#pragma pack(push, 1)
 struct rss_header {
 	uint8_t signature[4];
 	int16_t version;
@@ -27,6 +28,7 @@ struct v3_frame {
 	int16_t delay;
 	uint8_t reserved[4];
 };
+#pragma pack(pop)
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 static char*           _fread_string          (ALLEGRO_FILE* file);
@@ -154,6 +156,12 @@ free_spriteset(spriteset_t* spriteset)
 	al_free(spriteset);
 }
 
+rect_t
+get_sprite_base(const spriteset_t* spriteset)
+{
+	return spriteset->base;
+}
+
 void
 draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index)
 {
@@ -163,6 +171,8 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 	pose = find_sprite_pose(spriteset, pose_name);
 	frame_index = frame_index % pose->num_frames;
 	image_index = pose->frames[frame_index].image_idx;
+	x -= spriteset->base.x1 + (spriteset->base.x2 - spriteset->base.x1) / 2;
+	y -= spriteset->base.y1 + (spriteset->base.y2 - spriteset->base.y1) / 2;
 	al_draw_bitmap(spriteset->bitmaps[image_index], x, y, 0x0);
 }
 

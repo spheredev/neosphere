@@ -1,3 +1,4 @@
+#include "map_engine.h"
 #include "spriteset.h"
 
 typedef struct person person_t;
@@ -6,6 +7,7 @@ extern void      init_person_api (void);
 extern void      get_person_xy   (const person_t* person, float* out_x, float* out_y, int map_width, int map_height);
 extern void      command_person  (person_t* person, int command);
 extern person_t* find_person     (const char* name);
+extern void      reset_persons   (map_t* map);
 extern void      render_persons  (int cam_x, int cam_y);
 extern void      update_persons  (void);
 
