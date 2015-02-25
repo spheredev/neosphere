@@ -111,7 +111,9 @@ load_map(const char* path)
 	int                     num_tiles;
 	struct rmp_header       rmp;
 	int16_t*                tile_data = NULL;
-	lstring_t*              *scripts;
+	char*                   tile_path;
+	tileset_t*              tileset;
+	lstring_t*              *strings;
 
 	int i, j;
 	
@@ -122,12 +124,12 @@ load_map(const char* path)
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
 	switch (rmp.version) {
 	case 1:
-		if ((scripts = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
+		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
 			goto on_error;
 		for (i = 0; i < rmp.num_strings; ++i)
-			failed = ((scripts[i] = al_fread_lstring(file)) == NULL) || failed;
+			failed = ((strings[i] = al_fread_lstring(file)) == NULL) || failed;
 		if (failed) goto on_error;
-		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer*))) == NULL) goto on_error;
+		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (al_fread(file, &layer_info, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
 				goto on_error;
@@ -142,8 +144,12 @@ load_map(const char* path)
 			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
 			free(tile_data);
 		}
+		tile_path = get_asset_path(strings[0]->buffer, "maps", false);
+		if ((tileset = load_tileset(tile_path)) == NULL) goto on_error;
+		free(tile_path);
+		map->tileset = tileset;
 		map->num_layers = rmp.num_layers;
-		map->scripts = scripts;
+		map->scripts = strings;
 		break;
 	default:
 		goto on_error;
@@ -154,9 +160,9 @@ load_map(const char* path)
 on_error:
 	if (file != NULL) al_fclose(file);
 	free(tile_data);
-	if (scripts != NULL) {
-		for (i = 0; i < rmp.num_strings; ++i) free_lstring(scripts[i]);
-		free(scripts);
+	if (strings != NULL) {
+		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);
+		free(strings);
 	}
 	if (map->layers != NULL) {
 		for (i = 0; i < rmp.num_layers; ++i) free(map->layers[i].tilemap);
@@ -231,17 +237,32 @@ change_map(const char* filename)
 static void
 render_map_engine(void)
 {
+	int               first_tile_x, first_tile_y;
 	struct map_layer* layer;
+	int               map_w, map_h;
+	int               tile_w, tile_h;
+	int               off_x, off_y;
+	int               tile_index;
 	
 	int x, y, z;
 	
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	map_w = s_map->layers[0].width * tile_w;
+	map_h = s_map->layers[0].height * tile_h;
+	off_x = fmin(fmax(s_cam_x - g_res_x / 2, 0), map_w - g_res_x);
+	off_y = fmin(fmax(s_cam_y - g_res_y / 2, 0), map_h - g_res_y);
+	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
-		for (y = 0; y < layer->height; ++y) for (x = 0; x < layer->width; ++x) {
-			al_draw_filled_circle(x * 32 + 16, y * 32 + 16, 16, al_map_rgb(0, 128, 0));
+		first_tile_x = off_x / tile_w;
+		first_tile_y = off_y / tile_h;
+		for (y = 0; y < g_res_y / tile_h + 1; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
+			tile_index = layer->tilemap[(y + first_tile_y) * layer->width + (x + first_tile_x)];
+			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w), y * tile_h - (off_y % tile_h), tile_index);
 		}
 	}
-	render_persons(0, 0);
+	al_hold_bitmap_drawing(false);
+	render_persons(off_x, off_y);
 	duk_push_global_stash(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "render_script");
 	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
@@ -254,6 +275,8 @@ static void
 update_map_engine(void)
 {
 	ALLEGRO_KEYBOARD_STATE kb_state;
+	int                    map_w, map_h;
+	int                    tile_w, tile_h;
 	float                  x, y;
 	
 	update_persons();
@@ -281,7 +304,10 @@ update_map_engine(void)
 	
 	// update camera
 	if (s_camera_person != NULL) {
-		get_person_xy(s_camera_person, &x, &y, s_map->layers[0].width, s_map->layers[0].height);
+		get_tile_size(s_map->tileset, &tile_w, &tile_h);
+		map_w = s_map->layers[0].width * tile_w;
+		map_h = s_map->layers[0].height * tile_h;
+		get_person_xy(s_camera_person, &x, &y, map_w, map_h);
 		s_cam_x = x;
 		s_cam_y = y;
 	}

@@ -138,15 +138,18 @@ find_person(const char* name)
 void
 render_persons(int cam_x, int cam_y)
 {
+	int          off_x, off_y;
 	spriteset_t* sprite;
 	float        x, y;
 	int          i;
 
+	al_hold_bitmap_drawing(true);
 	for (i = 0; i < s_num_persons; ++i) {
 		sprite = s_persons[i].sprite;
 		x = (int)s_persons[i].x - cam_x; y = (int)s_persons[i].y - cam_y;
 		draw_sprite(sprite, s_persons[i].direction, x, y, s_persons[i].frame);
 	}
+	al_hold_bitmap_drawing(false);
 }
 
 void
