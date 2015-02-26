@@ -8,17 +8,24 @@
 struct map
 {
 	point3_t         origin;
-	bool             persistent;
 	tileset_t*       tileset;
 	int              num_layers;
+	int              num_zones;
 	struct map_layer *layers;
 	lstring_t*       *scripts;
+	struct map_zone  *zones;
 };
 
 struct map_layer
 {
 	int  width, height;
 	int* tilemap;
+};
+
+struct map_zone
+{
+	rect_t area;
+	int    steps;
 };
 
 static bool change_map        (const char* filename);
@@ -39,15 +46,16 @@ static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 
-static person_t* s_camera_person = NULL;
-static int       s_cam_x         = 0;
-static int       s_cam_y         = 0;
-static bool      s_exiting       = false;
-static int       s_framerate     = 0;
-static person_t* s_input_person  = NULL;
-static map_t*    s_map           = NULL;
-static char*     s_map_filename  = NULL;
-static bool      s_running       = false;
+static person_t*    s_camera_person = NULL;
+static int          s_cam_x         = 0;
+static int          s_cam_y         = 0;
+static bool         s_exiting       = false;
+static int          s_framerate     = 0;
+static unsigned int s_frames        = 0;
+static person_t*    s_input_person  = NULL;
+static map_t*       s_map           = NULL;
+static char*        s_map_filename  = NULL;
+static bool         s_running       = false;
 
 #pragma pack(push, 1)
 struct rmp_header
@@ -218,10 +226,15 @@ change_map(const char* filename)
 	map_t* map;
 	char*  path;
 
+	free(s_map_filename); s_map_filename = NULL;
+	if (s_map != NULL) {
+		free(s_map->layers);
+		free_tileset(s_map->tileset);
+		free(s_map);
+	}
 	path = get_asset_path(filename, "maps", false);
 	map = load_map(path);
 	free(path);
-	free(s_map_filename); s_map_filename = NULL;
 	if (map != NULL) {
 		s_map = map;
 		s_map_filename = strdup(filename);
@@ -239,6 +252,7 @@ change_map(const char* filename)
 		duk_compile_lstring(g_duktape, 0x0, s_map->scripts[3]->buffer, s_map->scripts[3]->length);
 		duk_call(g_duktape, 0); duk_pop(g_duktape);
 		
+		s_frames = 0;
 		return true;
 	}
 	else {
@@ -279,8 +293,6 @@ render_map_engine(void)
 	duk_get_prop_string(g_duktape, -1, "render_script");
 	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
 	duk_pop_2(g_duktape);
-	al_draw_text(g_sys_font, al_map_rgb(0, 0, 0), 316, 224, ALLEGRO_ALIGN_RIGHT, s_map_filename);
-	al_draw_text(g_sys_font, al_map_rgb(255, 255, 255), 315, 223, ALLEGRO_ALIGN_RIGHT, s_map_filename);
 }
 
 static void
@@ -291,6 +303,7 @@ update_map_engine(void)
 	int                    tile_w, tile_h;
 	float                  x, y;
 	
+	++s_frames;
 	update_persons();
 	
 	// check for player input

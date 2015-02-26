@@ -18,16 +18,19 @@ struct person
 	float        speed;
 	spriteset_t* sprite;
 	float        x, y;
+	int          num_commands;
+	int          *commands;
 };
 
-static duk_ret_t js_CreatePerson   (duk_context* ctx);
-static duk_ret_t js_DestroyPerson  (duk_context* ctx);
-static duk_ret_t js_GetPersonLayer (duk_context* ctx);
-static duk_ret_t js_GetPersonList  (duk_context* ctx);
-static duk_ret_t js_GetPersonX     (duk_context* ctx);
-static duk_ret_t js_GetPersonY     (duk_context* ctx);
-static duk_ret_t js_SetPersonX     (duk_context* ctx);
-static duk_ret_t js_SetPersonY     (duk_context* ctx);
+static duk_ret_t js_CreatePerson       (duk_context* ctx);
+static duk_ret_t js_DestroyPerson      (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer     (duk_context* ctx);
+static duk_ret_t js_GetPersonList      (duk_context* ctx);
+static duk_ret_t js_GetPersonX         (duk_context* ctx);
+static duk_ret_t js_GetPersonY         (duk_context* ctx);
+static duk_ret_t js_SetPersonX         (duk_context* ctx);
+static duk_ret_t js_SetPersonY         (duk_context* ctx);
+static duk_ret_t js_QueuePersonCommand (duk_context* ctx);
 
 static void _add_person           (const char* name, const char* sprite_file, bool is_persistent);
 static void _delete_person        (const char* name);
@@ -41,14 +44,15 @@ static person_t* *s_persons    = NULL;
 void
 init_person_api(void)
 {
-	register_api_func(g_duktape, NULL, "CreatePerson", &js_CreatePerson);
-	register_api_func(g_duktape, NULL, "DestroyPerson", &js_DestroyPerson);
+	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
+	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
+	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 
 	// movement script specifier constants
 	register_api_const(g_duktape, "SCRIPT_ON_CREATE", 0);
@@ -182,12 +186,19 @@ reset_persons(map_t* map)
 void
 update_persons(void)
 {
+	int       command;
 	person_t* person;
-	int       i;
+	
+	int i;
 
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
 		if (--person->revert_frames <= 0) person->frame = 0;
+		if (person->num_commands > 0) {
+			--person->num_commands;
+			command = person->commands[person->num_commands];
+			command_person(person, command);
+		}
 	}
 }
 
@@ -378,4 +389,30 @@ js_SetPersonY(duk_context* ctx)
 	person = find_person(duk_to_string(ctx, 0));
 	if (person != NULL) person->x = duk_to_number(ctx, 1);
 	return 0;
+}
+
+static duk_ret_t
+js_QueuePersonCommand(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int command = duk_require_int(ctx, 1);
+	bool immediate = duk_require_boolean(ctx, 2);
+	
+	person_t* person;
+
+	person = find_person(name);
+	if (person != NULL) {
+		if (!immediate) {
+			++person->num_commands;
+			person->commands = realloc(person->commands, person->num_commands * sizeof(int));
+			person->commands[person->num_commands - 1] = command;
+		}
+		else {
+			command_person(person, command);
+		}
+		return true;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "QueuePersonCommand(): Person entity '%s' does not exist", name);
+	}
 }
