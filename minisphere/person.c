@@ -189,14 +189,16 @@ update_persons(void)
 	int       command;
 	person_t* person;
 	
-	int i;
+	int i, j;
 
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
 		if (--person->revert_frames <= 0) person->frame = 0;
 		if (person->num_commands > 0) {
+			command = person->commands[0];
 			--person->num_commands;
-			command = person->commands[person->num_commands];
+			for (j = 0; j < person->num_commands; ++j)
+				person->commands[j] = person->commands[j + 1];
 			command_person(person, command);
 		}
 	}
