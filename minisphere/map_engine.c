@@ -263,7 +263,8 @@ change_map(const char* filename)
 static void
 render_map_engine(void)
 {
-	int               first_tile_x, first_tile_y;
+	int               cell_x, cell_y;
+	int               first_cell_x, first_cell_y;
 	struct map_layer* layer;
 	int               map_w, map_h;
 	int               tile_w, tile_h;
@@ -280,11 +281,14 @@ render_map_engine(void)
 	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
-		first_tile_x = off_x / tile_w;
-		first_tile_y = off_y / tile_h;
+		first_cell_x = off_x / tile_w;
+		first_cell_y = off_y / tile_h;
 		for (y = 0; y < g_res_y / tile_h + 1; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
-			tile_index = layer->tilemap[(y + first_tile_y) * layer->width + (x + first_tile_x)];
-			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w), y * tile_h - (off_y % tile_h), tile_index);
+			cell_x = x + first_cell_x; cell_y = y + first_cell_y;
+			if (cell_x >= 0 && cell_x < layer->width && cell_y >= 0 && cell_y < layer->height) {
+				tile_index = layer->tilemap[cell_x + cell_y * layer->width];
+				draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w), y * tile_h - (off_y % tile_h), tile_index);
+			}
 		}
 	}
 	al_hold_bitmap_drawing(false);
