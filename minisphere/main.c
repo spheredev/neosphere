@@ -29,7 +29,7 @@
 static const int MAX_FRAME_SKIPS = 5;
 
 static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
-static void shutdown_engine ();
+static void shutdown_engine (void);
 
 static int     s_current_fps;
 static int     s_current_game_fps;
@@ -48,7 +48,7 @@ ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
 int                  g_render_scale;
-bool                 g_skip_frame;
+bool                 g_skip_frame = false;
 ALLEGRO_CONFIG*      g_sys_conf;
 ALLEGRO_FONT*        g_sys_font  = NULL;
 int                  g_res_x, g_res_y;
@@ -262,6 +262,7 @@ begin_frame(int framerate)
 	double            current_time;
 	char              filename[50];
 	char              fps_text[20];
+	bool              is_backbuffer_valid;
 	double            frame_length;
 	double            next_frame_time;
 	char*             path;
@@ -269,6 +270,7 @@ begin_frame(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 	
+	is_backbuffer_valid = !g_skip_frame;
 	if (framerate > 0) {
 		frame_length = 1.0 / framerate;
 		current_time = al_get_time();
@@ -283,8 +285,7 @@ begin_frame(int framerate)
 		g_skip_frame = false;
 		if (!do_events()) return false;
 	}
-	++s_num_frames;
-	if (!g_skip_frame) {
+	if (is_backbuffer_valid) {
 		++s_num_flips;
 		s_last_frame_time = al_get_time();
 		s_frame_skips = 0;
@@ -299,7 +300,7 @@ begin_frame(int framerate)
 		}
 		if (s_show_fps) {
 			if (framerate > 0) sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
-				else sprintf(fps_text, "%i fps", s_current_fps);
+			else sprintf(fps_text, "%i fps", s_current_fps);
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			x = al_get_display_width(g_display) - 108;
@@ -316,6 +317,7 @@ begin_frame(int framerate)
 	else {
 		++s_frame_skips;
 	}
+	++s_num_frames;
 	if (s_last_frame_time >= s_last_fps_poll_time + 1.0) {
 		s_current_fps = s_num_flips;
 		s_current_game_fps = s_num_frames;

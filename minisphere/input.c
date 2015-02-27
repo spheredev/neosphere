@@ -125,8 +125,8 @@ _js_GetPlayerKey(duk_context* ctx)
 		case PLAYER_KEY_RIGHT: duk_push_int(ctx, ALLEGRO_KEY_RIGHT); break;
 		case PLAYER_KEY_A: duk_push_int(ctx, ALLEGRO_KEY_Z); break;
 		case PLAYER_KEY_B: duk_push_int(ctx, ALLEGRO_KEY_X); break;
-		case PLAYER_KEY_X: duk_push_int(ctx, ALLEGRO_KEY_C); break;
-		case PLAYER_KEY_Y: duk_push_int(ctx, ALLEGRO_KEY_V); break;
+		case PLAYER_KEY_X: duk_push_int(ctx, ALLEGRO_KEY_A); break;
+		case PLAYER_KEY_Y: duk_push_int(ctx, ALLEGRO_KEY_S); break;
 	}
 	return 1;
 }
