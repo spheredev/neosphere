@@ -7,6 +7,7 @@
 
 struct map
 {
+	bool             is_toric;
 	point3_t         origin;
 	tileset_t*       tileset;
 	int              num_layers;
@@ -42,6 +43,7 @@ static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
+static duk_ret_t js_ChangeMap             (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
@@ -157,6 +159,7 @@ load_map(const char* path)
 		tile_path = get_asset_path(strings[0]->buffer, "maps", false);
 		if ((tileset = load_tileset(tile_path)) == NULL) goto on_error;
 		free(tile_path);
+		map->is_toric = true;
 		map->origin.x = rmp.start_x;
 		map->origin.y = rmp.start_y;
 		map->origin.z = rmp.start_layer;
@@ -186,6 +189,20 @@ on_error:
 }
 
 void
+free_map(map_t* map)
+{
+	int i;
+	
+	if (map != NULL) {
+		for (i = 0; i < 9; ++i) free_lstring(map->scripts[i]);
+		free(map->scripts);
+		free(map->layers);
+		free_tileset(map->tileset);
+		free(map);
+	}
+}
+
+void
 init_map_engine_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "MapEngine", &js_MapEngine);
@@ -198,6 +215,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "IsMapEngineRunning", &js_IsMapEngineRunning);
 	register_api_func(ctx, NULL, "AttachCamera", &js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", &js_AttachInput);
+	register_api_func(ctx, NULL, "ChangeMap", &js_ChangeMap);
 	register_api_func(ctx, NULL, "ExitMapEngine", &js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", &js_RenderMap);
 	register_api_func(ctx, NULL, "UpdateMapEngine", &js_UpdateMapEngine);
@@ -226,18 +244,12 @@ change_map(const char* filename)
 	map_t* map;
 	char*  path;
 
-	free(s_map_filename); s_map_filename = NULL;
-	if (s_map != NULL) {
-		free(s_map->layers);
-		free_tileset(s_map->tileset);
-		free(s_map);
-	}
 	path = get_asset_path(filename, "maps", false);
 	map = load_map(path);
 	free(path);
 	if (map != NULL) {
-		s_map = map;
-		s_map_filename = strdup(filename);
+		free_map(s_map); free(s_map_filename);
+		s_map = map; s_map_filename = strdup(filename);
 		reset_persons(s_map);
 		
 		// run default map entry script
@@ -276,19 +288,22 @@ render_map_engine(void)
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->layers[0].width * tile_w;
 	map_h = s_map->layers[0].height * tile_h;
-	off_x = fmin(fmax(s_cam_x - g_res_x / 2, 0), map_w - g_res_x);
-	off_y = fmin(fmax(s_cam_y - g_res_y / 2, 0), map_h - g_res_y);
+	off_x = s_cam_x - g_res_x / 2;
+	off_y = s_cam_y - g_res_y / 2;
+	if (!s_map->is_toric) {
+		off_x = fmin(fmax(off_x, 0), map_w - g_res_x);
+		off_y = fmin(fmax(off_y, 0), map_h - g_res_y);
+	}
 	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
-		first_cell_x = off_x / tile_w;
-		first_cell_y = off_y / tile_h;
+		first_cell_x = floorf(off_x / (float)tile_w);
+		first_cell_y = floorf(off_y / (float)tile_h);
 		for (y = 0; y < g_res_y / tile_h + 1; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
-			cell_x = x + first_cell_x; cell_y = y + first_cell_y;
-			if (cell_x >= 0 && cell_x < layer->width && cell_y >= 0 && cell_y < layer->height) {
-				tile_index = layer->tilemap[cell_x + cell_y * layer->width];
-				draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w), y * tile_h - (off_y % tile_h), tile_index);
-			}
+			cell_x = (x + first_cell_x) % layer->width + (first_cell_x < 0 ? layer->width : 0);
+			cell_y = (y + first_cell_y) % layer->height + (first_cell_y < 0 ? layer->height : 0);
+			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
+			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - off_y % tile_h, tile_index);
 		}
 	}
 	al_hold_bitmap_drawing(false);
@@ -336,7 +351,7 @@ update_map_engine(void)
 		get_tile_size(s_map->tileset, &tile_w, &tile_h);
 		map_w = s_map->layers[0].width * tile_w;
 		map_h = s_map->layers[0].height * tile_h;
-		get_person_xy(s_camera_person, &x, &y, map_w, map_h);
+		get_person_xy(s_camera_person, &x, &y, map_w, map_h, false);
 		s_cam_x = x;
 		s_cam_y = y;
 	}
@@ -351,14 +366,14 @@ update_map_engine(void)
 static duk_ret_t
 js_MapEngine(duk_context* ctx)
 {
-	const char* filename;
+	const char* filename = duk_require_string(ctx, 0);
+	int framerate = duk_require_int(ctx, 1);
 	
-	filename = duk_to_string(ctx, 0);
 	s_running = true;
 	s_exiting = false;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	s_framerate = duk_to_int(ctx, 1);
-	change_map(filename);
+	s_framerate = framerate;
+	if (!change_map(filename)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 		update_map_engine();
@@ -376,7 +391,7 @@ js_GetCurrentMap(duk_context* ctx)
 		return 1;
 	}
 	else {
-		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Operation requires map engine to be running");
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Operation requires the map engine to be running");
 	}
 }
 
@@ -494,6 +509,21 @@ js_AttachInput(duk_context* ctx)
 }
 
 static duk_ret_t
+js_ChangeMap(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+	
+	if (s_running) {
+		if (!change_map(filename))
+			duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Failed to load map file '%s' into map engine", filename);
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Operation requires the map engine to be running");
+	}
+}
+
+static duk_ret_t
 js_ExitMapEngine(duk_context* ctx)
 {
 	if (s_running) {
@@ -501,7 +531,7 @@ js_ExitMapEngine(duk_context* ctx)
 		return 0;
 	}
 	else {
-		duk_error(ctx, DUK_ERR_ERROR, "ExitMapEngine(): Operation requires map engine to be running");
+		duk_error(ctx, DUK_ERR_ERROR, "ExitMapEngine(): Operation requires the map engine to be running");
 	}
 }
 
@@ -513,7 +543,7 @@ js_RenderMap(duk_context* ctx)
 		return 0;
 	}
 	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires map engine to be running");
+		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires the map engine to be running");
 	}
 }
 
@@ -525,6 +555,6 @@ js_UpdateMapEngine(duk_context* ctx)
 		return 0;
 	}
 	else {
-		duk_error(ctx, DUK_ERR_ERROR, "UpdateMapEngine(): Operation requires map engine to be running");
+		duk_error(ctx, DUK_ERR_ERROR, "UpdateMapEngine(): Operation requires the map engine to be running");
 	}
 }

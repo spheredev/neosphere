@@ -83,10 +83,16 @@ init_person_api(void)
 }
 
 void
-get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width, int map_height)
+get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width, int map_height, bool normalize)
 {
-	*out_x = fmod(person->x, map_width);
-	*out_y = fmod(person->y, map_height);
+	if (normalize) {
+		*out_x = fmod(person->x, map_width);
+		*out_y = fmod(person->y, map_height);
+	}
+	else {
+		*out_x = person->x;
+		*out_y = person->y;
+	}
 }
 
 void
