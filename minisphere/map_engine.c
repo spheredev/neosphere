@@ -154,7 +154,7 @@ load_map(const char* path)
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
 			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
-			free(tile_data);
+			free(tile_data); tile_data = NULL;
 		}
 		tile_path = get_asset_path(strings[0]->buffer, "maps", false);
 		if ((tileset = load_tileset(tile_path)) == NULL) goto on_error;
