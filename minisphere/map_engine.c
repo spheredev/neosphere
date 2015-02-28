@@ -299,11 +299,11 @@ render_map_engine(void)
 		layer = &s_map->layers[z];
 		first_cell_x = floorf(off_x / (float)tile_w);
 		first_cell_y = floorf(off_y / (float)tile_h);
-		for (y = 0; y < g_res_y / tile_h + 1; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
-			cell_x = (x + first_cell_x) % layer->width + (first_cell_x < 0 ? layer->width : 0);
-			cell_y = (y + first_cell_y) % layer->height + (first_cell_y < 0 ? layer->height : 0);
+		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
+			cell_x = (x + first_cell_x) % layer->width + ((x + first_cell_x) < 0 ? layer->width : 0);
+			cell_y = (y + first_cell_y) % layer->height + ((y + first_cell_y) < 0 ? layer->height : 0);
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
-			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - off_y % tile_h, tile_index);
+			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - (off_y % tile_h + tile_h), tile_index);
 		}
 	}
 	al_hold_bitmap_drawing(false);
