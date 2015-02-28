@@ -128,8 +128,9 @@ main(int argc, char** argv)
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	g_render_scale = (g_res_x < 400 && g_res_y < 300) ? 2 : 1;
-		// ^ default to 2x if resolution <= 400x300
+	g_render_scale = (g_res_x <= 320 && g_res_y <= 240) ? 3
+		: (g_res_x <= 400 && g_res_y <= 300) ? 2
+		: 1;
 	g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
 	al_identity_transform(&trans);
 	al_scale_transform(&trans, g_render_scale, g_render_scale);
