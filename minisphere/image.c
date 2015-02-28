@@ -195,7 +195,7 @@ _js_Image_blitMask(duk_context* ctx)
 	duk_get_prop_string(ctx, 2, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 2, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 2, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
+	if (!g_skip_frame) al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
 	return 1;
 }
 
@@ -214,7 +214,7 @@ _js_Image_rotateBlit(duk_context* ctx)
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
 	angle = duk_to_number(ctx, 2);
-	al_draw_rotated_bitmap(bitmap, w / 2, h / 2, x, y, angle, 0x0);
+	if (!g_skip_frame) al_draw_rotated_bitmap(bitmap, w / 2, h / 2, x, y, angle, 0x0);
 	return 1;
 }
 
@@ -235,7 +235,7 @@ _js_Image_rotateBlitMask(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	angle = duk_to_number(ctx, 2);
 	mask_color = duk_get_sphere_color(ctx, 3);
-	al_draw_tinted_rotated_bitmap(bitmap, mask_color, w / 2, h / 2, x, y, angle, 0x0);
+	if (!g_skip_frame) al_draw_tinted_rotated_bitmap(bitmap, mask_color, w / 2, h / 2, x, y, angle, 0x0);
 	return 1;
 }
 
@@ -263,6 +263,6 @@ _js_Image_transformBlit(duk_context* ctx)
 		{ x4, y4, 0, 0, h, vertex_color },
 		{ x3, y3, 0, w, h, vertex_color }
 	};
-	al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	if (!g_skip_frame) al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }

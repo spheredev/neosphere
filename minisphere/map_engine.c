@@ -377,7 +377,7 @@ js_MapEngine(duk_context* ctx)
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 		update_map_engine();
-		render_map_engine();
+		if (!g_skip_frame) render_map_engine();
 	}
 	s_running = false;
 	return 0;

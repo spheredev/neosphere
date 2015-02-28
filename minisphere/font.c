@@ -109,7 +109,7 @@ _js_Font_drawText(duk_context* ctx)
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
 	const char* text = duk_to_string(ctx, 2);
-	al_draw_text(font, mask, x, y, 0x0, text);
+	if (!g_skip_frame) al_draw_text(font, mask, x, y, 0x0, text);
 	return 0;
 }
 
