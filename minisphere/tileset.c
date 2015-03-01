@@ -48,16 +48,29 @@ struct rts_tile_info
 tileset_t*
 load_tileset(const char* path)
 {
-	ALLEGRO_FILE*        file;
+	ALLEGRO_FILE* file;
+	tileset_t*    tileset;
+
+	if ((file = al_fopen(path, "rb")) == NULL) return NULL;
+	tileset = load_tileset_f(file);
+	al_fclose(file);
+	return tileset;
+}
+
+tileset_t*
+load_tileset_f(ALLEGRO_FILE* file)
+{
+	int64_t              file_pos;
 	struct rts_header    rts;
 	struct rts_tile_info tile_info;
 	struct tile*         tiles = NULL;
 	tileset_t*           tileset;
 
 	int i;
-	
+
+	if (file == NULL) goto on_error;
+	file_pos = al_ftell(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
-	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
 	if (al_fread(file, &rts, sizeof(struct rts_header)) != sizeof(struct rts_header))
 		goto on_error;
 	if (memcmp(rts.signature, ".rts", 4) != 0 || rts.version < 1 || rts.version > 1)
@@ -81,7 +94,7 @@ load_tileset(const char* path)
 	return tileset;
 
 on_error:
-	if (file != NULL) al_fclose(file);
+	if (file != NULL) al_fseek(file, file_pos, ALLEGRO_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) al_destroy_bitmap(tiles[i].bitmap);
 		free(tileset->tiles);

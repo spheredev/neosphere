@@ -28,8 +28,10 @@ static duk_ret_t js_GetPersonLayer     (duk_context* ctx);
 static duk_ret_t js_GetPersonList      (duk_context* ctx);
 static duk_ret_t js_GetPersonX         (duk_context* ctx);
 static duk_ret_t js_GetPersonY         (duk_context* ctx);
+static duk_ret_t js_SetPersonScript    (duk_context* ctx);
 static duk_ret_t js_SetPersonX         (duk_context* ctx);
 static duk_ret_t js_SetPersonY         (duk_context* ctx);
+static duk_ret_t js_CallPersonScript   (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand (duk_context* ctx);
 
 static void _add_person           (const char* name, const char* sprite_file, bool is_persistent);
@@ -41,6 +43,15 @@ static void _set_person_name      (person_t* person, const char* name);
 static int       s_num_persons = 0;
 static person_t* *s_persons    = NULL;
 
+enum personscript
+{
+	PERSON_SCRIPT_ON_CREATE,
+	PERSON_SCRIPT_ON_DESTROY,
+	PERSON_SCRIPT_ON_ACT_TOUCH,
+	PERSON_SCRIPT_ON_ACT_TALK,
+	PERSON_SCRIPT_CMD_GEN
+};
+
 void
 init_person_api(void)
 {
@@ -50,16 +61,18 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
+	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
 	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 
 	// movement script specifier constants
-	register_api_const(g_duktape, "SCRIPT_ON_CREATE", 0);
-	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", 1);
-	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", 2);
-	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", 3);
-	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", 4);
+	register_api_const(g_duktape, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
+	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
+	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_ACT_TOUCH);
+	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_ACT_TALK);
+	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_CMD_GEN);
 
 	// person movement commands
 	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
@@ -386,6 +399,43 @@ js_GetPersonY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetPersonScript(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int type = duk_require_int(ctx, 1);
+	size_t script_size;
+	const char* script = duk_require_lstring(ctx, 2, &script_size);
+	
+	person_t*   person;
+	const char* script_name =
+		type == PERSON_SCRIPT_ON_CREATE ? "createscript"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "destroyscript"
+		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "touchscript"
+		: type == PERSON_SCRIPT_ON_ACT_TALK ? "talkscript"
+		: type == PERSON_SCRIPT_CMD_GEN ? "commandgen"
+		: NULL;
+	if (script_name != NULL) {
+		if ((person = find_person(name)) == NULL)
+			duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+		duk_push_global_stash(ctx);
+		if (!duk_get_prop_string(ctx, -1, script_name)) {
+			duk_pop(ctx);
+			duk_push_object(ctx);
+			duk_put_prop_string(ctx, -2, script_name);
+			duk_get_prop_string(ctx, -1, script_name);
+		}
+		duk_push_sprintf(ctx, "[%s:%s]", name, script_name);
+		duk_compile_lstring_filename(ctx, 0x0, script, script_size);
+		duk_put_prop_string(ctx, -2, get_person_name(person));
+		duk_pop_2(ctx);
+		return 0;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_API_ERROR, "SetPersonScript(): Caller passed invalid script type constant");
+	}
+}
+
+static duk_ret_t
 js_SetPersonX(duk_context* ctx)
 {
 	person_t* person;
@@ -406,12 +456,45 @@ js_SetPersonY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_CallPersonScript(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int type = duk_require_int(ctx, 1);
+	
+	person_t*   person;
+	const char* script_name;
+
+	person = find_person(name);
+	if (person == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): Person entity '%s' does not exist", name);
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "createscript"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "destroyscript"
+		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "touchscript"
+		: type == PERSON_SCRIPT_ON_ACT_TALK ? "talkscript"
+		: type == PERSON_SCRIPT_CMD_GEN ? "commandgen"
+		: NULL;
+	if (script_name == NULL)
+		duk_error(ctx, DUK_ERR_API_ERROR, "CallPersonScript(): Caller passed invalid script type constant");
+	duk_push_global_stash(ctx);
+	if (duk_get_prop_string(ctx, -1, script_name)) {
+		duk_get_prop_string(ctx, -1, get_person_name(person));
+		if (duk_is_callable(ctx, -1)) duk_call(ctx, 0);
+		duk_pop_2(ctx);
+	}
+	else {
+		duk_pop(ctx);
+	}
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
 js_QueuePersonCommand(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 	int command = duk_require_int(ctx, 1);
 	bool immediate = duk_require_boolean(ctx, 2);
-	
+
 	person_t* person;
 
 	person = find_person(name);

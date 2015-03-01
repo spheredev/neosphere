@@ -52,11 +52,13 @@ static duk_ret_t js_DetachCamera          (duk_context* ctx);
 static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
+static duk_ret_t js_SetDelayScript        (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 
 static person_t*    s_camera_person = NULL;
 static int          s_cam_x         = 0;
 static int          s_cam_y         = 0;
+static int          s_delay_frames  = -1;
 static bool         s_exiting       = false;
 static int          s_framerate     = 0;
 static unsigned int s_frames        = 0;
@@ -84,6 +86,15 @@ struct rmp_header
 	uint8_t reserved[234];
 };
 
+struct rmp_entity_header
+{
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+	uint16_t type;
+	uint8_t  reserved[8];
+};
+
 struct rmp_layer_header
 {
 	int16_t  width;
@@ -96,6 +107,17 @@ struct rmp_layer_header
 	int32_t  num_segments;
 	uint8_t  reflective;
 	uint8_t  reserved[3];
+};
+
+struct rmp_zone_header
+{
+	uint16_t x1;
+	uint16_t y1;
+	uint16_t x2;
+	uint16_t y2;
+	uint16_t z;
+	uint16_t num_steps;
+	uint8_t  reserved[4];
 };
 #pragma pack(pop)
 
@@ -122,16 +144,19 @@ load_map(const char* path)
 	//          7 - exit south script
 	//          8 - exit west script
 	
-	bool                    failed = false;
-	ALLEGRO_FILE*           file;
-	struct rmp_layer_header layer_info;
-	map_t*                  map;
-	int                     num_tiles;
-	struct rmp_header       rmp;
-	int16_t*                tile_data = NULL;
-	char*                   tile_path;
-	tileset_t*              tileset;
-	lstring_t*              *strings;
+	int                      count;
+	struct rmp_entity_header entity;
+	bool                     failed = false;
+	ALLEGRO_FILE*            file;
+	struct rmp_layer_header  layer_info;
+	map_t*                   map;
+	int                      num_tiles;
+	struct rmp_header        rmp;
+	int16_t*                 tile_data = NULL;
+	char*                    tile_path;
+	tileset_t*               tileset;
+	struct rmp_zone_header   zone;
+	lstring_t*               *strings;
 
 	int i, j;
 	
@@ -162,9 +187,32 @@ load_map(const char* path)
 			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
 			free(tile_data); tile_data = NULL;
 		}
+		for (i = 0; i < rmp.num_entities; ++i) {
+			al_fread(file, &entity, sizeof(struct rmp_entity_header));
+			switch (entity.type) {
+			case 1:  // person
+				free_lstring(al_fread_lstring(file));  // name
+				free_lstring(al_fread_lstring(file));  // spriteset file
+				al_fread(file, &count, 2);
+				for (j = 0; j < count; ++j) {
+					free_lstring(al_fread_lstring(file));
+				}
+				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
+				break;
+			case 2:  // trigger
+				free_lstring(al_fread_lstring(file));  // trigger script
+			default:
+				goto on_error;
+			}
+		}
+		for (i = 0; i < rmp.num_zones; ++i) {
+			al_fread(file, &zone, sizeof(struct rmp_zone_header));
+			free_lstring(al_fread_lstring(file));
+		}
 		tile_path = get_asset_path(strings[0]->buffer, "maps", false);
-		if ((tileset = load_tileset(tile_path)) == NULL) goto on_error;
+		tileset = strcmp(strings[0]->buffer, "") == 0 ? load_tileset_f(file) : load_tileset(tile_path);
 		free(tile_path);
+		if (tileset == NULL) goto on_error;
 		map->is_toric = true;
 		map->origin.x = rmp.start_x;
 		map->origin.y = rmp.start_y;
@@ -175,8 +223,8 @@ load_map(const char* path)
 		break;
 	default:
 		goto on_error;
-		break;
 	}
+	al_fclose(file);
 	return map;
 
 on_error:
@@ -229,6 +277,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "DetachInput", &js_DetachInput);
 	register_api_func(ctx, NULL, "ExitMapEngine", &js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", &js_RenderMap);
+	register_api_func(ctx, NULL, "SetDelayScript", &js_SetDelayScript);
 	register_api_func(ctx, NULL, "UpdateMapEngine", &js_UpdateMapEngine);
 
 	// Map script types
@@ -311,8 +360,8 @@ render_map_engine(void)
 		first_cell_x = floorf(off_x / (float)tile_w);
 		first_cell_y = floorf(off_y / (float)tile_h);
 		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
-			cell_x = (x + first_cell_x) % layer->width + ((x + first_cell_x) < 0 ? layer->width : 0);
-			cell_y = (y + first_cell_y) % layer->height + ((y + first_cell_y) < 0 ? layer->height : 0);
+			cell_x = (x + first_cell_x + abs(x + first_cell_x) * layer->width) % layer->width;
+			cell_y = (y + first_cell_y + abs(y + first_cell_y) * layer->height) % layer->height;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
 			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - (off_y % tile_h + tile_h), tile_index);
 		}
@@ -372,6 +421,14 @@ update_map_engine(void)
 	duk_get_prop_string(g_duktape, -1, "update_script");
 	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
 	duk_pop_2(g_duktape);
+
+	// run delay script, if applicable
+	if (s_delay_frames >= 0 && --s_delay_frames == -1) {
+		duk_push_global_stash(g_duktape);
+		duk_get_prop_string(g_duktape, -1, "map_delay_script");
+		duk_call(g_duktape, 0);
+		duk_pop_2(g_duktape);
+	}
 }
 
 static duk_ret_t
@@ -478,6 +535,24 @@ js_SetDefaultMapScript(duk_context* ctx)
 	else {
 		duk_error(ctx, DUK_ERR_ERROR, "SetDefaultMapScript(): Invalid map script constant");
 	}
+}
+
+static duk_ret_t
+js_SetDelayScript(duk_context* ctx)
+{
+	int frames = duk_require_int(ctx, 0);
+	size_t script_size;
+	const char* script = duk_require_lstring(ctx, 1, &script_size);
+
+	if (frames < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Number of delay frames cannot be negative");
+	duk_push_global_stash(ctx);
+	duk_push_string(ctx, "[delayscript]");
+	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
+	duk_put_prop_string(ctx, -2, "map_delay_script");
+	duk_pop(ctx);
+	s_delay_frames = frames;
+	return 0;
 }
 
 static duk_ret_t
