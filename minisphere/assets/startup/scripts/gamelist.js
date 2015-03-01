@@ -7,7 +7,7 @@
 	Contains both the SphereGameList and the SphereGameListItem objects.
 */
 
-const TITLE_AUTHOR_RATIO = 0.65;		// Adjust to taste (between 0 and 1 exclusive)
+var TITLE_AUTHOR_RATIO = 0.65;		// Adjust to taste (between 0 and 1 exclusive)
 var GAME_EVEN_BG = CreateColor(0, 0, 128, 64);	// Colours! Glorious colours!
 var GAME_ODD_BG = CreateColor(0, 0, 128, 128);
 var GAME_SELECTED_BG = CreateColor(0, 64, 192);	// Alpha ignored, doesn't work.

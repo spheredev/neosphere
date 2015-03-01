@@ -7,24 +7,25 @@
 
 static void      _apply_blend_mode             (int blend_mode);
 static void      _reset_blender                (void);
-static duk_ret_t _js_CreateSurface             (duk_context* ctx);
-static duk_ret_t _js_GrabSurface               (duk_context* ctx);
-static duk_ret_t _js_LoadSurface               (duk_context* ctx);
-static duk_ret_t _js_Surface_finalize          (duk_context* ctx);
-static duk_ret_t _js_Surface_setBlendMode      (duk_context* ctx);
-static duk_ret_t _js_Surface_blit              (duk_context* ctx);
-static duk_ret_t _js_Surface_blitMaskSurface   (duk_context* ctx);
-static duk_ret_t _js_Surface_blitSurface       (duk_context* ctx);
-static duk_ret_t _js_Surface_clone             (duk_context* ctx);
-static duk_ret_t _js_Surface_cloneSection      (duk_context* ctx);
-static duk_ret_t _js_Surface_createImage       (duk_context* ctx);
-static duk_ret_t _js_Surface_drawText          (duk_context* ctx);
-static duk_ret_t _js_Surface_gradientRectangle (duk_context* ctx);
-static duk_ret_t _js_Surface_line              (duk_context* ctx);
-static duk_ret_t _js_Surface_outlinedRectangle (duk_context* ctx);
-static duk_ret_t _js_Surface_rotate            (duk_context* ctx);
-static duk_ret_t _js_Surface_rectangle         (duk_context* ctx);
-static duk_ret_t _js_Surface_save              (duk_context* ctx);
+static duk_ret_t js_CreateSurface             (duk_context* ctx);
+static duk_ret_t js_GrabSurface               (duk_context* ctx);
+static duk_ret_t js_LoadSurface               (duk_context* ctx);
+static duk_ret_t js_Surface_finalize          (duk_context* ctx);
+static duk_ret_t js_Surface_setAlpha          (duk_context* ctx);
+static duk_ret_t js_Surface_setBlendMode      (duk_context* ctx);
+static duk_ret_t js_Surface_blit              (duk_context* ctx);
+static duk_ret_t js_Surface_blitMaskSurface   (duk_context* ctx);
+static duk_ret_t js_Surface_blitSurface       (duk_context* ctx);
+static duk_ret_t js_Surface_clone             (duk_context* ctx);
+static duk_ret_t js_Surface_cloneSection      (duk_context* ctx);
+static duk_ret_t js_Surface_createImage       (duk_context* ctx);
+static duk_ret_t js_Surface_drawText          (duk_context* ctx);
+static duk_ret_t js_Surface_gradientRectangle (duk_context* ctx);
+static duk_ret_t js_Surface_line              (duk_context* ctx);
+static duk_ret_t js_Surface_outlinedRectangle (duk_context* ctx);
+static duk_ret_t js_Surface_rotate            (duk_context* ctx);
+static duk_ret_t js_Surface_rectangle         (duk_context* ctx);
+static duk_ret_t js_Surface_save              (duk_context* ctx);
 
 static void _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap);
 
@@ -40,9 +41,9 @@ init_surface_api(void)
 	register_api_const(g_duktape, "MULTIPLY", BLEND_MULTIPLY);
 	register_api_const(g_duktape, "AVERAGE", BLEND_AVERAGE);
 	register_api_const(g_duktape, "INVERT", BLEND_INVERT);
-	register_api_func(g_duktape, NULL, "CreateSurface", &_js_CreateSurface);
-	register_api_func(g_duktape, NULL, "GrabSurface", &_js_GrabSurface);
-	register_api_func(g_duktape, NULL, "LoadSurface", &_js_LoadSurface);
+	register_api_func(g_duktape, NULL, "CreateSurface", &js_CreateSurface);
+	register_api_func(g_duktape, NULL, "GrabSurface", &js_GrabSurface);
+	register_api_func(g_duktape, NULL, "LoadSurface", &js_LoadSurface);
 }
 
 static void
@@ -75,21 +76,22 @@ _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
-	duk_push_c_function(ctx, &_js_Surface_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &_js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
-	duk_push_c_function(ctx, &_js_Surface_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
-	duk_push_c_function(ctx, &_js_Surface_blitMaskSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMaskSurface");
-	duk_push_c_function(ctx, &_js_Surface_blitSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitSurface");
-	duk_push_c_function(ctx, &_js_Surface_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
-	duk_push_c_function(ctx, &_js_Surface_cloneSection, DUK_VARARGS); duk_put_prop_string(ctx, -2, "cloneSection");
-	duk_push_c_function(ctx, &_js_Surface_createImage, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createImage");
-	duk_push_c_function(ctx, &_js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
-	duk_push_c_function(ctx, &_js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
-	duk_push_c_function(ctx, &_js_Surface_line, DUK_VARARGS); duk_put_prop_string(ctx, -2, "line");
-	duk_push_c_function(ctx, &_js_Surface_outlinedRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "outlinedRectangle");
-	duk_push_c_function(ctx, &_js_Surface_rotate, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotate");
-	duk_push_c_function(ctx, &_js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
-	duk_push_c_function(ctx, &_js_Surface_save, DUK_VARARGS); duk_put_prop_string(ctx, -2, "save");
+	duk_push_c_function(ctx, &js_Surface_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &js_Surface_setAlpha, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setAlpha");
+	duk_push_c_function(ctx, &js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
+	duk_push_c_function(ctx, &js_Surface_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
+	duk_push_c_function(ctx, &js_Surface_blitMaskSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMaskSurface");
+	duk_push_c_function(ctx, &js_Surface_blitSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitSurface");
+	duk_push_c_function(ctx, &js_Surface_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
+	duk_push_c_function(ctx, &js_Surface_cloneSection, DUK_VARARGS); duk_put_prop_string(ctx, -2, "cloneSection");
+	duk_push_c_function(ctx, &js_Surface_createImage, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createImage");
+	duk_push_c_function(ctx, &js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
+	duk_push_c_function(ctx, &js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
+	duk_push_c_function(ctx, &js_Surface_line, DUK_VARARGS); duk_put_prop_string(ctx, -2, "line");
+	duk_push_c_function(ctx, &js_Surface_outlinedRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "outlinedRectangle");
+	duk_push_c_function(ctx, &js_Surface_rotate, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotate");
+	duk_push_c_function(ctx, &js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
+	duk_push_c_function(ctx, &js_Surface_save, DUK_VARARGS); duk_put_prop_string(ctx, -2, "save");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
@@ -103,7 +105,7 @@ _duk_push_sphere_Surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
 }
 
 static duk_ret_t
-_js_CreateSurface(duk_context* ctx)
+js_CreateSurface(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             w, h;
@@ -116,7 +118,7 @@ _js_CreateSurface(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GrabSurface(duk_context* ctx)
+js_GrabSurface(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* backbuffer;
 	ALLEGRO_BITMAP* bitmap;
@@ -141,7 +143,7 @@ _js_GrabSurface(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_LoadSurface(duk_context* ctx)
+js_LoadSurface(duk_context* ctx)
 {
 	const char* filename = duk_to_string(ctx, 0);
 	char* path = get_asset_path(filename, "images", false);
@@ -157,7 +159,7 @@ _js_LoadSurface(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_finalize(duk_context* ctx)
+js_Surface_finalize(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	
@@ -167,7 +169,7 @@ _js_Surface_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_blit(duk_context* ctx)
+js_Surface_blit(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	float           x, y;
@@ -182,7 +184,7 @@ _js_Surface_blit(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_blitMaskSurface(duk_context* ctx)
+js_Surface_blitMaskSurface(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -209,7 +211,7 @@ _js_Surface_blitMaskSurface(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_blitSurface(duk_context* ctx)
+js_Surface_blitSurface(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -232,7 +234,7 @@ _js_Surface_blitSurface(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_clone(duk_context* ctx)
+js_Surface_clone(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_BITMAP* new_bitmap;
@@ -252,7 +254,7 @@ _js_Surface_clone(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_cloneSection(duk_context* ctx)
+js_Surface_cloneSection(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_BITMAP* new_bitmap;
@@ -274,7 +276,7 @@ _js_Surface_cloneSection(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_createImage(duk_context* ctx)
+js_Surface_createImage(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_BITMAP* new_bitmap;
@@ -293,7 +295,7 @@ _js_Surface_createImage(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_drawText(duk_context* ctx)
+js_Surface_drawText(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -320,7 +322,7 @@ _js_Surface_drawText(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_getPixel(duk_context* ctx)
+js_Surface_getPixel(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_COLOR   color;
@@ -337,7 +339,7 @@ _js_Surface_getPixel(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_gradientRectangle(duk_context* ctx)
+js_Surface_gradientRectangle(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -371,7 +373,7 @@ _js_Surface_gradientRectangle(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_line(duk_context* ctx)
+js_Surface_line(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -396,7 +398,7 @@ _js_Surface_line(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_outlinedRectangle(duk_context* ctx)
+js_Surface_outlinedRectangle(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -425,7 +427,7 @@ _js_Surface_outlinedRectangle(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_rotate(duk_context* ctx)
+js_Surface_rotate(duk_context* ctx)
 {
 	float           angle;
 	ALLEGRO_BITMAP* bitmap;
@@ -456,7 +458,7 @@ _js_Surface_rotate(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_rectangle(duk_context* ctx)
+js_Surface_rectangle(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             blend_mode;
@@ -481,7 +483,7 @@ _js_Surface_rectangle(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_save(duk_context* ctx)
+js_Surface_save(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	const char*     filename;
@@ -497,7 +499,18 @@ _js_Surface_save(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Surface_setBlendMode(duk_context* ctx)
+js_Surface_setAlpha(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_setBlendMode(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 

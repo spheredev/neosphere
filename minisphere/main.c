@@ -57,14 +57,16 @@ int                  g_res_x, g_res_y;
 int
 main(int argc, char** argv)
 {
-	duk_errcode_t     err_code;
-	duk_int_t         exec_result;
-	const char*       filename;
-	ALLEGRO_BITMAP*   icon;
-	char*             icon_path;
-	char*             path;
-	ALLEGRO_TRANSFORM trans;
-	int               i;
+	duk_errcode_t        err_code;
+	duk_int_t            exec_result;
+	ALLEGRO_FILECHOOSER* file_dlg;
+	const char*          filename;
+	ALLEGRO_BITMAP*      icon;
+	char*                icon_path;
+	char*                path;
+	ALLEGRO_TRANSFORM    trans;
+	
+	int i;
 	
 	// initialize Allegro
 	al_init();
@@ -113,11 +115,23 @@ main(int argc, char** argv)
 	g_game_conf = al_load_config_file(sgm_path);
 	free(sgm_path);
 	if (g_game_conf == NULL) {
-		al_show_native_message_box(NULL, "Unable to Load Game",
-			al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
-			"minisphere was unable to load game.sgm or it was not found.  Check to make sure the above directory exists and contains a valid Sphere game.",
-			NULL, ALLEGRO_MESSAGEBOX_ERROR);
-		return EXIT_FAILURE;
+		file_dlg = al_create_native_file_dialog(NULL, "Where is game.sgm?", "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		if (al_show_native_file_dialog(NULL, file_dlg)) {
+			al_destroy_path(g_game_path);
+			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
+		}
+		else {
+			return EXIT_SUCCESS;
+		}
+		g_game_conf = al_load_config_file(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		al_destroy_native_file_dialog(file_dlg);
+		if (g_game_conf == NULL) {
+			al_show_native_message_box(NULL, "Unable to Load Game",
+				al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
+				"minisphere was unable to load game.sgm or it was not found.  Check to make sure the above directory exists and contains a valid Sphere game.",
+				NULL, ALLEGRO_MESSAGEBOX_ERROR);
+			return EXIT_FAILURE;
+		}
 	}
 
 	// set up engine and create display window
@@ -307,7 +321,7 @@ begin_frame(int framerate)
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			x = al_get_display_width(g_display) - 108;
-			y = 8;
+			y = al_get_display_height(g_display) - 24;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
 			al_draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, ALLEGRO_ALIGN_CENTER, fps_text);
 			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, ALLEGRO_ALIGN_CENTER, fps_text);
@@ -368,7 +382,7 @@ get_sys_asset_path(const char* path, const char* base_dir)
 	bool is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
 	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
 	ALLEGRO_PATH* system_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(system_path, "system");
+	if (!is_homed) al_append_path_component(system_path, "system");
 	al_rebase_path(system_path, base_path);
 	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
 	bool is_absolute = al_get_path_num_components(asset_path) > 0

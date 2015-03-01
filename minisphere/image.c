@@ -4,17 +4,19 @@
 
 #include "image.h"
 
-static duk_ret_t _js_GetSystemArrow       (duk_context* ctx);
-static duk_ret_t _js_GetSystemDownArrow   (duk_context* ctx);
-static duk_ret_t _js_GetSystemUpArrow     (duk_context* ctx);
-static duk_ret_t _js_LoadImage            (duk_context* ctx);
-static duk_ret_t _js_GrabImage            (duk_context* ctx);
-static duk_ret_t _js_Image_finalize       (duk_context* ctx);
-static duk_ret_t _js_Image_blit           (duk_context* ctx);
-static duk_ret_t _js_Image_blitMask       (duk_context* ctx);
-static duk_ret_t _js_Image_rotateBlit     (duk_context* ctx);
-static duk_ret_t _js_Image_rotateBlitMask (duk_context* ctx);
-static duk_ret_t _js_Image_transformBlit  (duk_context* ctx);
+static duk_ret_t js_GetSystemArrow       (duk_context* ctx);
+static duk_ret_t js_GetSystemDownArrow   (duk_context* ctx);
+static duk_ret_t js_GetSystemUpArrow     (duk_context* ctx);
+static duk_ret_t js_LoadImage            (duk_context* ctx);
+static duk_ret_t js_GrabImage            (duk_context* ctx);
+static duk_ret_t js_Image_finalize       (duk_context* ctx);
+static duk_ret_t js_Image_blit           (duk_context* ctx);
+static duk_ret_t js_Image_blitMask       (duk_context* ctx);
+static duk_ret_t js_Image_rotateBlit     (duk_context* ctx);
+static duk_ret_t js_Image_rotateBlitMask (duk_context* ctx);
+static duk_ret_t js_Image_transformBlit  (duk_context* ctx);
+static duk_ret_t js_Image_zoomBlit       (duk_context* ctx);
+static duk_ret_t js_Image_zoomBlitMask   (duk_context* ctx);
 
 static ALLEGRO_BITMAP* s_sys_arrow    = NULL;
 static ALLEGRO_BITMAP* s_sys_dn_arrow = NULL;
@@ -43,11 +45,11 @@ init_image_api(duk_context* ctx)
 	}
 	
 	// register image API functions
-	register_api_func(ctx, NULL, "GetSystemArrow", &_js_GetSystemArrow);
-	register_api_func(ctx, NULL, "GetSystemDownArrow", &_js_GetSystemDownArrow);
-	register_api_func(ctx, NULL, "GetSystemUpArrow", &_js_GetSystemUpArrow);
-	register_api_func(ctx, NULL, "LoadImage", &_js_LoadImage);
-	register_api_func(ctx, NULL, "GrabImage", &_js_GrabImage);
+	register_api_func(ctx, NULL, "GetSystemArrow", &js_GetSystemArrow);
+	register_api_func(ctx, NULL, "GetSystemDownArrow", &js_GetSystemDownArrow);
+	register_api_func(ctx, NULL, "GetSystemUpArrow", &js_GetSystemUpArrow);
+	register_api_func(ctx, NULL, "LoadImage", &js_LoadImage);
+	register_api_func(ctx, NULL, "GrabImage", &js_GrabImage);
 }
 
 void
@@ -56,12 +58,14 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
-	duk_push_c_function(ctx, &_js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &_js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
-	duk_push_c_function(ctx, &_js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
-	duk_push_c_function(ctx, &_js_Image_rotateBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlit");
-	duk_push_c_function(ctx, &_js_Image_rotateBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlitMask");
-	duk_push_c_function(ctx, &_js_Image_transformBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlit");
+	duk_push_c_function(ctx, &js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
+	duk_push_c_function(ctx, &js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
+	duk_push_c_function(ctx, &js_Image_rotateBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlit");
+	duk_push_c_function(ctx, &js_Image_rotateBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlitMask");
+	duk_push_c_function(ctx, &js_Image_transformBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlit");
+	duk_push_c_function(ctx, &js_Image_zoomBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlit");
+	duk_push_c_function(ctx, &js_Image_zoomBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlitMask");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
@@ -75,7 +79,7 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 }
 
 static duk_ret_t
-_js_GetSystemArrow(duk_context* ctx)
+js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow != NULL) {
 		duk_push_sphere_Image(ctx, s_sys_arrow, false);
@@ -87,7 +91,7 @@ _js_GetSystemArrow(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GetSystemDownArrow(duk_context* ctx)
+js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow != NULL) {
 		duk_push_sphere_Image(ctx, s_sys_dn_arrow, false);
@@ -99,7 +103,7 @@ _js_GetSystemDownArrow(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GetSystemUpArrow(duk_context* ctx)
+js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow != NULL) {
 		duk_push_sphere_Image(ctx, s_sys_up_arrow, false);
@@ -111,7 +115,7 @@ _js_GetSystemUpArrow(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_LoadImage(duk_context* ctx)
+js_LoadImage(duk_context* ctx)
 {
 	const char* filename = duk_get_string(ctx, 0);
 	char* path = get_asset_path(filename, "images", false);
@@ -127,7 +131,7 @@ _js_LoadImage(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GrabImage(duk_context* ctx)
+js_GrabImage(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* backbuffer;
 	ALLEGRO_BITMAP* bitmap;
@@ -152,7 +156,7 @@ _js_GrabImage(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Image_finalize(duk_context* ctx)
+js_Image_finalize(duk_context* ctx)
 {
 	bool            allow_free;
 	ALLEGRO_BITMAP* bitmap;
@@ -166,7 +170,7 @@ _js_Image_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Image_blit(duk_context* ctx)
+js_Image_blit(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	float           x, y;
@@ -181,7 +185,7 @@ _js_Image_blit(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Image_blitMask(duk_context* ctx)
+js_Image_blitMask(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	float           x = (float)duk_get_number(ctx, 0);
@@ -200,7 +204,7 @@ _js_Image_blitMask(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Image_rotateBlit(duk_context* ctx)
+js_Image_rotateBlit(duk_context* ctx)
 {
 	float           angle;
 	ALLEGRO_BITMAP* bitmap;
@@ -219,7 +223,7 @@ _js_Image_rotateBlit(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Image_rotateBlitMask(duk_context* ctx)
+js_Image_rotateBlitMask(duk_context* ctx)
 {
 	float           angle;
 	ALLEGRO_BITMAP* bitmap;
@@ -240,7 +244,7 @@ _js_Image_rotateBlitMask(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Image_transformBlit(duk_context* ctx)
+js_Image_transformBlit(duk_context* ctx)
 {
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_COLOR   vertex_color;
@@ -265,4 +269,44 @@ _js_Image_transformBlit(duk_context* ctx)
 	};
 	if (!g_skip_frame) al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
+}
+
+static duk_ret_t
+js_Image_zoomBlit(duk_context* ctx)
+{
+	float x = duk_require_int(ctx, 0);
+	float y = duk_require_int(ctx, 1);
+	float scale = duk_require_number(ctx, 2);
+	
+	ALLEGRO_BITMAP* bitmap;
+	int             w, h;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	if (!g_skip_frame) al_draw_scaled_bitmap(bitmap, 0, 0, w, h, x, y, w * scale, h * scale, 0x0);
+	return 1;
+}
+
+static duk_ret_t
+js_Image_zoomBlitMask(duk_context* ctx)
+{
+	float x = duk_require_int(ctx, 0);
+	float y = duk_require_int(ctx, 1);
+	float scale = duk_require_number(ctx, 2);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 3);
+
+	ALLEGRO_BITMAP* bitmap;
+	int             w, h;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	if (!g_skip_frame)
+		al_draw_tinted_scaled_bitmap(bitmap, mask, 0, 0, w, h, x, y, w * scale, h * scale, 0x0);
+	return 1;
 }

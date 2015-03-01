@@ -22,12 +22,14 @@ static duk_ret_t duk_Exit(duk_context* ctx);
 static duk_ret_t duk_FlipScreen(duk_context* ctx);
 static duk_ret_t duk_GarbageCollect(duk_context* ctx);
 static duk_ret_t duk_GetFileList(duk_context* ctx);
+static duk_ret_t duk_GetGameList(duk_context* ctx);
 static duk_ret_t duk_GradientCircle(duk_context* ctx);
 static duk_ret_t duk_GradientRectangle(duk_context* ctx);
 static duk_ret_t duk_Line(duk_context* ctx);
 static duk_ret_t duk_OutlinedCircle(duk_context* ctx);
 static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
 static duk_ret_t duk_Rectangle(duk_context* ctx);
+static duk_ret_t duk_Triangle(duk_context* ctx);
 
 static int s_framerate = 0;
 
@@ -54,12 +56,14 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
 	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
 	register_api_func(ctx, NULL, "GetFileList", &duk_GetFileList);
+	register_api_func(ctx, NULL, "GetGameList", &duk_GetGameList);
 	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
 	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
 	register_api_func(ctx, NULL, "Line", &duk_Line);
 	register_api_func(ctx, NULL, "OutlinedCircle", &duk_OutlinedCircle);
 	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
 	register_api_func(ctx, NULL, "Rectangle", &duk_Rectangle);
+	register_api_func(ctx, NULL, "Triangle", &duk_Triangle);
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
@@ -287,22 +291,60 @@ duk_GetFileList(duk_context* ctx)
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
 	ALLEGRO_FS_ENTRY* fs;
-	int               n_args;
 	char*             path;
-	int               i;
+	
+	int i;
 
-	n_args = duk_get_top(ctx);
-	directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : NULL;
+	directory_name = duk_require_string(ctx, 0);
 	path = get_asset_path(directory_name, NULL, false);
 	fs = al_create_fs_entry(path);
 	free(path);
+	duk_push_array(ctx);
 	i = 0;
 	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
-		duk_push_array(ctx);
 		while (file_info = al_read_directory(fs)) {
 			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISFILE) {
 				file_path = al_create_path(al_get_fs_entry_name(file_info));
 				duk_push_string(ctx, al_get_path_filename(file_path)); duk_put_prop_index(ctx, -2, i);
+				al_destroy_path(file_path);
+				++i;
+			}
+		}
+	}
+	al_destroy_fs_entry(fs);
+	return 1;
+}
+
+static duk_ret_t
+duk_GetGameList(duk_context* ctx)
+{
+	ALLEGRO_FS_ENTRY* file_info;
+	ALLEGRO_PATH*     file_path;
+	ALLEGRO_FS_ENTRY* fs;
+	char*             path;
+	ALLEGRO_CONFIG*   sgm;
+	
+	int i;
+
+	path = get_sys_asset_path("~/games", NULL);
+	fs = al_create_fs_entry(path);
+	free(path);
+	duk_push_array(ctx);
+	i = 0;
+	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
+		while (file_info = al_read_directory(fs)) {
+			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISDIR) {
+				file_path = al_create_path_for_directory(al_get_fs_entry_name(file_info));
+				al_set_path_filename(file_path, "game.sgm");
+				if ((sgm = al_load_config_file(al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP))) != NULL) {
+					duk_push_object(ctx);
+					duk_push_string(ctx, al_get_path_component(file_path, -1)); duk_put_prop_string(ctx, -2, "directory");
+					duk_push_string(ctx, al_get_config_value(sgm, NULL, "name")); duk_put_prop_string(ctx, -2, "name");
+					duk_push_string(ctx, al_get_config_value(sgm, NULL, "author")); duk_put_prop_string(ctx, -2, "author");
+					duk_push_string(ctx, al_get_config_value(sgm, NULL, "description")); duk_put_prop_string(ctx, -2, "description");
+					duk_put_prop_index(ctx, -2, i);
+					al_destroy_config(sgm);
+				}
 				al_destroy_path(file_path);
 				++i;
 			}
@@ -419,5 +461,20 @@ duk_Rectangle(duk_context* ctx)
 	h = duk_to_int(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
 	if (!g_skip_frame) al_draw_filled_rectangle(x, y, x + w, y + h, color);
+	return 0;
+}
+
+duk_ret_t
+duk_Triangle(duk_context* ctx)
+{
+	int x1 = duk_require_int(ctx, 0);
+	int y1 = duk_require_int(ctx, 1);
+	int x2 = duk_require_int(ctx, 2);
+	int y2 = duk_require_int(ctx, 3);
+	int x3 = duk_require_int(ctx, 4);
+	int y3 = duk_require_int(ctx, 5);
+	ALLEGRO_COLOR color = duk_get_sphere_color(ctx, 6);
+
+	if (!g_skip_frame) al_draw_filled_triangle(x1, y1, x2, y2, x3, y3, color);
 	return 0;
 }
