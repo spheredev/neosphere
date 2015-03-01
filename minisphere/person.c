@@ -82,6 +82,12 @@ init_person_api(void)
 	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
+const char*
+get_person_name(const person_t* person)
+{
+	return person->name;
+}
+
 void
 get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width, int map_height, bool normalize)
 {

@@ -34,7 +34,10 @@ static void render_map_engine (void);
 static void update_map_engine (void);
 
 static duk_ret_t js_MapEngine             (duk_context* ctx);
+static duk_ret_t js_IsInputAttached       (duk_context* ctx);
+static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
 static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
+static duk_ret_t js_GetInputPerson        (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
@@ -43,7 +46,10 @@ static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
+static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ChangeMap             (duk_context* ctx);
+static duk_ret_t js_DetachCamera          (duk_context* ctx);
+static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
@@ -206,7 +212,10 @@ void
 init_map_engine_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "MapEngine", &js_MapEngine);
+	register_api_func(ctx, NULL, "IsInputAttached", &js_IsInputAttached);
+	register_api_func(ctx, NULL, "GetCameraPerson", &js_GetCameraPerson);
 	register_api_func(ctx, NULL, "GetCurrentMap", &js_GetCurrentMap);
+	register_api_func(ctx, NULL, "GetInputPerson", &js_GetInputPerson);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", &js_GetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", &js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetDefaultMapScript", &js_SetDefaultMapScript);
@@ -216,6 +225,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "AttachCamera", &js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", &js_AttachInput);
 	register_api_func(ctx, NULL, "ChangeMap", &js_ChangeMap);
+	register_api_func(ctx, NULL, "DetachCamera", &js_DetachCamera);
+	register_api_func(ctx, NULL, "DetachInput", &js_DetachInput);
 	register_api_func(ctx, NULL, "ExitMapEngine", &js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", &js_RenderMap);
 	register_api_func(ctx, NULL, "UpdateMapEngine", &js_UpdateMapEngine);
@@ -384,6 +395,27 @@ js_MapEngine(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsInputAttached(duk_context* ctx)
+{
+	if (s_running) {
+		duk_push_boolean(ctx, s_input_person != NULL);
+		return 1;
+	}
+	else {
+		duk_error(ctx, DUK_ERR_ERROR, "IsInputAttached(): Operation requires the map engine to be running");
+	}
+}
+
+static duk_ret_t
+js_GetCameraPerson(duk_context* ctx)
+{
+	if (s_camera_person == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCameraPerson(): Invalid operation, camera not attached");
+	duk_push_string(ctx, get_person_name(s_camera_person));
+	return 1;
+}
+
+static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
 	if (s_running) {
@@ -393,6 +425,15 @@ js_GetCurrentMap(duk_context* ctx)
 	else {
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Operation requires the map engine to be running");
 	}
+}
+
+static duk_ret_t
+js_GetInputPerson(duk_context* ctx)
+{
+	if (s_input_person == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "GetInputPerson(): Invalid operation, input not attached");
+	duk_push_string(ctx, get_person_name(s_input_person));
+	return 1;
 }
 
 static duk_ret_t
@@ -521,6 +562,20 @@ js_ChangeMap(duk_context* ctx)
 	else {
 		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Operation requires the map engine to be running");
 	}
+}
+
+static duk_ret_t
+js_DetachCamera(duk_context* ctx)
+{
+	s_camera_person = NULL;
+	return 0;
+}
+
+static duk_ret_t
+js_DetachInput(duk_context* ctx)
+{
+	s_input_person = NULL;
+	return 0;
 }
 
 static duk_ret_t
