@@ -3,8 +3,6 @@
 
 #include "bytearray.h"
 
-static void duk_push_sphere_bytearray (duk_context* ctx, uint8_t* buffer, int size);
-
 static duk_ret_t _js_CreateByteArray(duk_context* ctx);
 static duk_ret_t _js_CreateByteArrayFromString(duk_context* ctx);
 static duk_ret_t _js_CreateStringFromByteArray(duk_context* ctx);
@@ -24,7 +22,7 @@ init_bytearray_api(void)
 	register_api_func(g_duktape, NULL, "HashByteArray", _js_HashByteArray);
 }
 
-static void
+void
 duk_push_sphere_bytearray(duk_context* ctx, uint8_t* buffer, int size)
 {
 	duk_push_object(ctx);
@@ -104,7 +102,7 @@ _js_CreateStringFromByteArray(duk_context* ctx)
 static duk_ret_t
 _js_HashByteArray(duk_context* ctx)
 {
-	duk_push_string(ctx, "");
+	duk_push_null(ctx);
 	return 1;
 }
 

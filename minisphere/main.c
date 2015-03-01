@@ -9,6 +9,7 @@
 #include "input.h"
 #include "log.h"
 #include "map_engine.h"
+#include "rawfile.h"
 #include "rfn_handler.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -169,6 +170,7 @@ main(int argc, char** argv)
 	init_input_api(g_duktape);
 	init_log_api(g_duktape);
 	init_map_engine_api(g_duktape);
+	init_rawfile_api();
 	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);
 	init_surface_api();
