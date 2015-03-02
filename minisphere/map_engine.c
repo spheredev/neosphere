@@ -7,14 +7,18 @@
 
 struct map
 {
-	bool             is_toric;
-	point3_t         origin;
-	tileset_t*       tileset;
-	int              num_layers;
-	int              num_zones;
-	struct map_layer *layers;
-	lstring_t*       *scripts;
-	struct map_zone  *zones;
+	bool               is_toric;
+	point3_t           origin;
+	tileset_t*         tileset;
+	int                num_layers;
+	int                num_persons;
+	int                num_triggers;
+	int                num_zones;
+	struct map_layer   *layers;
+	struct map_person  *persons;
+	struct map_trigger *triggers;
+	lstring_t*         *scripts;
+	struct map_zone    *zones;
 };
 
 struct map_layer
@@ -23,23 +27,41 @@ struct map_layer
 	int* tilemap;
 };
 
+struct map_person
+{
+	lstring_t* name;
+	lstring_t* spriteset;
+	int        x, y, z;
+};
+
+struct map_trigger
+{
+	lstring_t* script;
+};
+
 struct map_zone
 {
 	rect_t area;
 	int    steps;
 };
 
-static bool change_map        (const char* filename);
+static bool change_map        (const char* filename, bool preserve_persons);
 static void render_map_engine (void);
 static void update_map_engine (void);
 
 static duk_ret_t js_MapEngine             (duk_context* ctx);
+static duk_ret_t js_AreZonesAt            (duk_context* ctx);
 static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
 static duk_ret_t js_IsInputAttached       (duk_context* ctx);
+static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
 static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
 static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
 static duk_ret_t js_GetInputPerson        (duk_context* ctx);
+static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
+static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_GetTileHeight         (duk_context* ctx);
+static duk_ret_t js_GetTileWidth          (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
@@ -66,7 +88,6 @@ static unsigned int s_frames        = 0;
 static person_t*    s_input_person  = NULL;
 static map_t*       s_map           = NULL;
 static char*        s_map_filename  = NULL;
-static bool         s_running       = false;
 
 #pragma pack(push, 1)
 struct rmp_header
@@ -132,6 +153,8 @@ enum mapscript
 	MAP_SCRIPT_ON_LEAVE_WEST
 };
 
+bool g_map_running = false;
+
 map_t*
 load_map(const char* path)
 {
@@ -152,10 +175,12 @@ load_map(const char* path)
 	struct rmp_layer_header  layer_info;
 	map_t*                   map;
 	int                      num_tiles;
+	struct map_person*       person;
 	struct rmp_header        rmp;
 	int16_t*                 tile_data = NULL;
 	char*                    tile_path;
 	tileset_t*               tileset;
+	struct map_trigger*      trigger;
 	struct rmp_zone_header   zone;
 	lstring_t*               *strings;
 
@@ -188,20 +213,32 @@ load_map(const char* path)
 			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
 			free(tile_data); tile_data = NULL;
 		}
+		map->persons = NULL; map->num_persons = 0;
+		map->triggers = NULL; map->num_triggers = 0;
 		for (i = 0; i < rmp.num_entities; ++i) {
 			al_fread(file, &entity, sizeof(struct rmp_entity_header));
 			switch (entity.type) {
 			case 1:  // person
-				free_lstring(al_fread_lstring(file));  // name
-				free_lstring(al_fread_lstring(file));  // spriteset file
-				al_fread(file, &count, 2);
-				for (j = 0; j < count; ++j) {
+				++map->num_persons;
+				map->persons = realloc(map->persons, map->num_persons * sizeof(struct map_person));
+				person = &map->persons[map->num_persons - 1];
+				memset(person, 0, sizeof(struct map_person));
+				if ((person->name = al_fread_lstring(file)) == NULL) goto on_error;
+				if ((person->spriteset = al_fread_lstring(file)) == NULL) goto on_error;
+				person->x = entity.x; person->y = entity.y; person->z = entity.z;
+				if (al_fread(file, &count, 2) != 2) goto on_error;
+				for (j = 0; j < 5; ++j) {
 					free_lstring(al_fread_lstring(file));
 				}
 				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // trigger
-				free_lstring(al_fread_lstring(file));  // trigger script
+				++map->num_triggers;
+				map->triggers = realloc(map->triggers, map->num_triggers * sizeof(struct map_trigger));
+				trigger = &map->triggers[map->num_triggers - 1];
+				memset(trigger, 0, sizeof(struct map_trigger));
+				trigger->script = al_fread_lstring(file);
+				break;
 			default:
 				goto on_error;
 			}
@@ -235,11 +272,21 @@ on_error:
 		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);
 		free(strings);
 	}
-	if (map->layers != NULL) {
-		for (i = 0; i < rmp.num_layers; ++i) free(map->layers[i].tilemap);
-		free(map->layers);
+	if (map != NULL) {
+		if (map->layers != NULL) {
+			for (i = 0; i < rmp.num_layers; ++i) free(map->layers[i].tilemap);
+			free(map->layers);
+		}
+		if (map->persons != NULL) {
+			for (i = 0; i < map->num_persons; ++i) {
+				free_lstring(map->persons[i].name);
+				free_lstring(map->persons[i].spriteset);
+			}
+			free(map->persons);
+		}
+		free(map->triggers);
+		free(map);
 	}
-	free(map);
 	return NULL;
 }
 
@@ -250,6 +297,15 @@ free_map(map_t* map)
 	
 	if (map != NULL) {
 		for (i = 0; i < 9; ++i) free_lstring(map->scripts[i]);
+		for (i = 0; i < map->num_persons; ++i) {
+			free_lstring(map->persons[i].name);
+			free_lstring(map->persons[i].spriteset);
+		}
+		for (i = 0; i < map->num_triggers; ++i) {
+			free_lstring(map->triggers[i].script);
+		}
+		free(map->triggers);
+		free(map->persons);
 		free(map->scripts);
 		free(map->layers);
 		free_tileset(map->tileset);
@@ -260,27 +316,33 @@ free_map(map_t* map)
 void
 init_map_engine_api(duk_context* ctx)
 {
-	register_api_func(ctx, NULL, "MapEngine", &js_MapEngine);
-	register_api_func(ctx, NULL, "IsCameraAttached", &js_IsCameraAttached);
-	register_api_func(ctx, NULL, "IsInputAttached", &js_IsInputAttached);
-	register_api_func(ctx, NULL, "GetCameraPerson", &js_GetCameraPerson);
-	register_api_func(ctx, NULL, "GetCurrentMap", &js_GetCurrentMap);
-	register_api_func(ctx, NULL, "GetInputPerson", &js_GetInputPerson);
-	register_api_func(ctx, NULL, "GetMapEngineFrameRate", &js_GetMapEngineFrameRate);
-	register_api_func(ctx, NULL, "SetMapEngineFrameRate", &js_SetMapEngineFrameRate);
-	register_api_func(ctx, NULL, "SetDefaultMapScript", &js_SetDefaultMapScript);
-	register_api_func(ctx, NULL, "SetRenderScript", &js_SetRenderScript);
-	register_api_func(ctx, NULL, "SetUpdateScript", &js_SetUpdateScript);
-	register_api_func(ctx, NULL, "IsMapEngineRunning", &js_IsMapEngineRunning);
-	register_api_func(ctx, NULL, "AttachCamera", &js_AttachCamera);
-	register_api_func(ctx, NULL, "AttachInput", &js_AttachInput);
-	register_api_func(ctx, NULL, "ChangeMap", &js_ChangeMap);
-	register_api_func(ctx, NULL, "DetachCamera", &js_DetachCamera);
-	register_api_func(ctx, NULL, "DetachInput", &js_DetachInput);
-	register_api_func(ctx, NULL, "ExitMapEngine", &js_ExitMapEngine);
-	register_api_func(ctx, NULL, "RenderMap", &js_RenderMap);
-	register_api_func(ctx, NULL, "SetDelayScript", &js_SetDelayScript);
-	register_api_func(ctx, NULL, "UpdateMapEngine", &js_UpdateMapEngine);
+	register_api_func(ctx, NULL, "MapEngine", js_MapEngine);
+	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
+	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
+	register_api_func(ctx, NULL, "IsInputAttached", js_IsInputAttached);
+	register_api_func(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
+	register_api_func(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
+	register_api_func(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
+	register_api_func(ctx, NULL, "GetInputPerson", js_GetInputPerson);
+	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
+	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
+	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
+	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
+	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
+	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
+	register_api_func(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
+	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
+	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
+	register_api_func(ctx, NULL, "ChangeMap", js_ChangeMap);
+	register_api_func(ctx, NULL, "DetachCamera", js_DetachCamera);
+	register_api_func(ctx, NULL, "DetachInput", js_DetachInput);
+	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
+	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
+	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
+	register_api_func(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	// Map script types
 	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
@@ -301,7 +363,7 @@ get_map_origin(void)
 }
 
 static bool
-change_map(const char* filename)
+change_map(const char* filename, bool preserve_persons)
 {
 	map_t* map;
 	char*  path;
@@ -312,7 +374,7 @@ change_map(const char* filename)
 	if (map != NULL) {
 		free_map(s_map); free(s_map_filename);
 		s_map = map; s_map_filename = strdup(filename);
-		reset_persons(s_map);
+		if (!preserve_persons) reset_persons(s_map);
 		
 		// run default map entry script
 		duk_push_global_stash(g_duktape);
@@ -439,18 +501,32 @@ js_MapEngine(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 	int framerate = duk_require_int(ctx, 1);
 	
-	s_running = true;
+	g_map_running = true;
 	s_exiting = false;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	s_framerate = framerate;
-	if (!change_map(filename)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
+	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
 		update_map_engine();
 		if (!g_skip_frame) render_map_engine();
 	}
-	s_running = false;
+	g_map_running = false;
 	return 0;
+}
+
+static duk_ret_t
+js_AreZonesAt(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int z = duk_require_int(ctx, 2);
+
+	if (z < 0 || z >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "AreZonesAt(): Invalid layer index; valid range is 0-%i, caller passed %i", s_map->num_layers - 1, z);
+	// TODO: test for zones at specified location
+	duk_push_false(ctx);
+	return 1;
 }
 
 static duk_ret_t
@@ -468,6 +544,20 @@ js_IsInputAttached(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsTriggerAt(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int z = duk_require_int(ctx, 2);
+	
+	if (z < 0 || z >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "IsTriggerAt(): Invalid layer index; valid range is 0-%i, caller passed %i", s_map->num_layers - 1, z);
+	duk_push_false(ctx);
+	// TODO: test for triggers at specified location
+	return 1;
+}
+
+static duk_ret_t
 js_GetCameraPerson(duk_context* ctx)
 {
 	if (s_camera_person == NULL)
@@ -479,7 +569,7 @@ js_GetCameraPerson(duk_context* ctx)
 static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
-	if (!s_running)
+	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Operation requires the map engine to be running");
 	duk_push_string(ctx, s_map_filename);
 	return 1;
@@ -495,9 +585,59 @@ js_GetInputPerson(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetLayerHeight(duk_context* ctx)
+{
+	int z = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerHeight(): Map engine must be running");
+	if (z < 0 || z > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerHeight(): Invalid layer index; valid range is 0-%i, called passed %i", s_map->num_layers, z);
+	duk_push_int(ctx, s_map->layers[z].height);
+	return 1;
+}
+
+static duk_ret_t
+js_GetLayerWidth(duk_context* ctx)
+{
+	int z = duk_require_int(ctx, 0);
+	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerWidth(): Map engine must be running");
+	if (z < 0 || z > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerWidth(): Invalid layer index; valid range is 0-%i, called passed %i", s_map->num_layers, z);
+	duk_push_int(ctx, s_map->layers[z].width);
+	return 1;
+}
+
+static duk_ret_t
 js_GetMapEngineFrameRate(duk_context* ctx)
 {
 	duk_push_int(ctx, s_framerate);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileHeight(duk_context* ctx)
+{
+	int w, h;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileHeight(): Map engine must be running");
+	get_tile_size(s_map->tileset, &w, &h);
+	duk_push_int(ctx, h);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileWidth(duk_context* ctx)
+{
+	int w, h;
+	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileWidth(): Map engine must be running");
+	get_tile_size(s_map->tileset, &w, &h);
+	duk_push_int(ctx, w);
 	return 1;
 }
 
@@ -542,7 +682,7 @@ js_SetDelayScript(duk_context* ctx)
 	size_t script_size;
 	const char* script = duk_require_lstring(ctx, 1, &script_size);
 
-	if (!s_running)
+	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Map engine is not running");
 	if (frames < 0)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Number of delay frames cannot be negative");
@@ -588,7 +728,7 @@ js_SetUpdateScript(duk_context* ctx)
 static duk_ret_t
 js_IsMapEngineRunning(duk_context* ctx)
 {
-	duk_push_boolean(ctx, s_running);
+	duk_push_boolean(ctx, g_map_running);
 	return 1;
 }
 
@@ -623,9 +763,9 @@ js_ChangeMap(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 	
-	if (!s_running)
+	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Map engine is not running");
-	if (!change_map(filename))
+	if (!change_map(filename, false))
 		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Failed to load map file '%s' into map engine", filename);
 	return 0;
 }
@@ -647,7 +787,7 @@ js_DetachInput(duk_context* ctx)
 static duk_ret_t
 js_ExitMapEngine(duk_context* ctx)
 {
-	if (!s_running)
+	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "ExitMapEngine(): Map engine is not running");
 	s_exiting = true;
 	return 0;
@@ -656,7 +796,7 @@ js_ExitMapEngine(duk_context* ctx)
 static duk_ret_t
 js_RenderMap(duk_context* ctx)
 {
-	if (!s_running)
+	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires the map engine to be running");
 	render_map_engine();
 	return 0;
@@ -665,7 +805,7 @@ js_RenderMap(duk_context* ctx)
 static duk_ret_t
 js_UpdateMapEngine(duk_context* ctx)
 {
-	if (!s_running)
+	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "UpdateMapEngine(): Operation requires the map engine to be running");
 	update_map_engine();
 	return 0;

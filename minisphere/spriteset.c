@@ -31,10 +31,10 @@ struct v3_frame {
 #pragma pack(pop)
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
-static char*           _fread_string          (ALLEGRO_FILE* file);
-static void            duk_push_spriteset     (duk_context* ctx, spriteset_t* spriteset);
-static duk_ret_t       _js_LoadSpriteset      (duk_context* ctx);
-static duk_ret_t       _js_Spriteset_finalize (duk_context* ctx);
+static char*                  _fread_string          (ALLEGRO_FILE* file);
+static void                   duk_push_spriteset     (duk_context* ctx, spriteset_t* spriteset);
+static duk_ret_t             _js_LoadSpriteset      (duk_context* ctx);
+static duk_ret_t             _js_Spriteset_finalize (duk_context* ctx);
 
 void
 init_spriteset_api(duk_context* ctx)

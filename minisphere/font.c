@@ -4,41 +4,43 @@
 
 #include "font.h"
 
-static duk_ret_t _js_LoadFont             (duk_context* ctx);
-static duk_ret_t _js_Font_finalize        (duk_context* ctx);
-static duk_ret_t _js_Font_getColorMask    (duk_context* ctx);
-static duk_ret_t _js_Font_getHeight       (duk_context* ctx);
-static duk_ret_t _js_Font_setColorMask    (duk_context* ctx);
-static duk_ret_t _js_Font_drawText        (duk_context* ctx);
-static duk_ret_t _js_Font_getStringHeight (duk_context* ctx);
-static duk_ret_t _js_Font_getStringWidth  (duk_context* ctx);
-static duk_ret_t _js_Font_wordWrapString  (duk_context* ctx);
+static duk_ret_t js_LoadFont             (duk_context* ctx);
+static duk_ret_t js_Font_finalize        (duk_context* ctx);
+static duk_ret_t js_Font_getColorMask    (duk_context* ctx);
+static duk_ret_t js_Font_getHeight       (duk_context* ctx);
+static duk_ret_t js_Font_setColorMask    (duk_context* ctx);
+static duk_ret_t js_Font_drawText        (duk_context* ctx);
+static duk_ret_t js_Font_drawTextBox     (duk_context* ctx);
+static duk_ret_t js_Font_getStringHeight (duk_context* ctx);
+static duk_ret_t js_Font_getStringWidth  (duk_context* ctx);
+static duk_ret_t js_Font_wordWrapString  (duk_context* ctx);
 
 void
 init_font_api(duk_context* ctx)
 {
-	register_api_func(ctx, NULL, "LoadFont", &_js_LoadFont);
+	register_api_func(ctx, NULL, "LoadFont", &js_LoadFont);
 }
 
 void
 duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 {
 	duk_push_object(ctx);
-	duk_push_c_function(ctx, &_js_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &_js_Font_getColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getColorMask");
-	duk_push_c_function(ctx, &_js_Font_getHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getHeight");
-	duk_push_c_function(ctx, &_js_Font_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
-	duk_push_c_function(ctx, &_js_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
-	duk_push_c_function(ctx, &_js_Font_getStringHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringHeight");
-	duk_push_c_function(ctx, &_js_Font_getStringWidth, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringWidth");
-	duk_push_c_function(ctx, &_js_Font_wordWrapString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "wordWrapString");
+	duk_push_c_function(ctx, js_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Font_getColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getColorMask");
+	duk_push_c_function(ctx, js_Font_getHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getHeight");
+	duk_push_c_function(ctx, js_Font_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
+	duk_push_c_function(ctx, js_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
+	duk_push_c_function(ctx, js_Font_drawTextBox, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawTextBox");
+	duk_push_c_function(ctx, js_Font_getStringHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringHeight");
+	duk_push_c_function(ctx, js_Font_getStringWidth, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringWidth");
+	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "wordWrapString");
 	
 	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_sphere_color(ctx, al_map_rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
 
 static duk_ret_t
-_js_LoadFont(duk_context* ctx)
+js_LoadFont(duk_context* ctx)
 {
 	const char* filename = duk_get_string(ctx, 0);
 	char* path = get_asset_path(filename, "fonts", false);
@@ -54,7 +56,7 @@ _js_LoadFont(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_finalize(duk_context* ctx)
+js_Font_finalize(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
@@ -63,7 +65,7 @@ _js_Font_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_getColorMask(duk_context* ctx)
+js_Font_getColorMask(duk_context* ctx)
 {
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
@@ -72,7 +74,7 @@ _js_Font_getColorMask(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_getHeight(duk_context* ctx)
+js_Font_getHeight(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 	
@@ -84,7 +86,7 @@ _js_Font_getHeight(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_setColorMask(duk_context* ctx)
+js_Font_setColorMask(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 
@@ -96,7 +98,7 @@ _js_Font_setColorMask(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_drawText(duk_context* ctx)
+js_Font_drawText(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 	ALLEGRO_COLOR mask;
@@ -114,20 +116,68 @@ _js_Font_drawText(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_getStringHeight(duk_context* ctx)
+js_Font_drawTextBox(duk_context* ctx)
 {
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	int pad = duk_require_int(ctx, 4);
+	const char* text = duk_to_string(ctx, 5);
+
 	ALLEGRO_FONT* font;
+	const char*   line_text;
+	ALLEGRO_COLOR mask;
+	int           num_lines;
+
+	int i;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!g_skip_frame) {
+		duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
+		duk_push_this(ctx);
+		duk_push_string(ctx, text);
+		duk_push_int(ctx, w - pad * 2);
+		duk_call_method(ctx, 2);
+		duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
+		for (i = 0; i < num_lines; ++i) {
+			duk_get_prop_index(ctx, -1, i); line_text = duk_get_string(ctx, -1); duk_pop(ctx);
+			al_draw_text(font, mask, x + pad, y, 0x0, line_text);
+			y += al_get_font_line_height(font);
+		}
+		duk_pop(ctx);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Font_getStringHeight(duk_context* ctx)
+{
+	const char* text = duk_require_string(ctx, 0);
+	int width = duk_require_int(ctx, 1);
+	
+	ALLEGRO_FONT* font;
+	int           num_lines;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	const char* text = duk_to_string(ctx, 0);
-	duk_push_int(ctx, al_get_font_line_height(font));
+	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
+	duk_push_this(ctx);
+	duk_push_string(ctx, text);
+	duk_push_int(ctx, width);
+	duk_call_method(ctx, 2);
+	duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_push_int(ctx, al_get_font_line_height(font) * num_lines);
 	return 1;
 }
 
 static duk_ret_t
-_js_Font_getStringWidth(duk_context* ctx)
+js_Font_getStringWidth(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 
@@ -140,7 +190,7 @@ _js_Font_getStringWidth(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Font_wordWrapString(duk_context* ctx)
+js_Font_wordWrapString(duk_context* ctx)
 {
 	ALLEGRO_FONT* font;
 	int           line_width;

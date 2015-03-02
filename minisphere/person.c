@@ -22,23 +22,27 @@ struct person
 	int          *commands;
 };
 
-static duk_ret_t js_CreatePerson       (duk_context* ctx);
-static duk_ret_t js_DestroyPerson      (duk_context* ctx);
-static duk_ret_t js_GetPersonLayer     (duk_context* ctx);
-static duk_ret_t js_GetPersonList      (duk_context* ctx);
-static duk_ret_t js_GetPersonX         (duk_context* ctx);
-static duk_ret_t js_GetPersonY         (duk_context* ctx);
-static duk_ret_t js_SetPersonScript    (duk_context* ctx);
-static duk_ret_t js_SetPersonX         (duk_context* ctx);
-static duk_ret_t js_SetPersonY         (duk_context* ctx);
-static duk_ret_t js_CallPersonScript   (duk_context* ctx);
-static duk_ret_t js_QueuePersonCommand (duk_context* ctx);
+static duk_ret_t js_CreatePerson         (duk_context* ctx);
+static duk_ret_t js_DestroyPerson        (duk_context* ctx);
+static duk_ret_t js_IsPersonObstructed   (duk_context* ctx);
+static duk_ret_t js_GetPersonDirection   (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer       (duk_context* ctx);
+static duk_ret_t js_GetPersonList        (duk_context* ctx);
+static duk_ret_t js_GetPersonX           (duk_context* ctx);
+static duk_ret_t js_GetPersonY           (duk_context* ctx);
+static duk_ret_t js_SetPersonDirection   (duk_context* ctx);
+static duk_ret_t js_SetPersonScript      (duk_context* ctx);
+static duk_ret_t js_SetPersonX           (duk_context* ctx);
+static duk_ret_t js_SetPersonY           (duk_context* ctx);
+static duk_ret_t js_CallPersonScript     (duk_context* ctx);
+static duk_ret_t js_GetObstructingPerson (duk_context* ctx);
+static duk_ret_t js_QueuePersonCommand   (duk_context* ctx);
 
-static void _add_person           (const char* name, const char* sprite_file, bool is_persistent);
-static void _delete_person        (const char* name);
-static void _free_person          (person_t* person);
-static void _set_person_direction (person_t* person, const char* direction);
-static void _set_person_name      (person_t* person, const char* name);
+static void create_person        (const char* name, const char* sprite_file, bool is_persistent);
+static void destroy_person       (const char* name);
+static void free_person          (person_t* person);
+static void set_person_direction (person_t* person, const char* direction);
+static void set_person_name      (person_t* person, const char* name);
 
 static int       s_num_persons = 0;
 static person_t* *s_persons    = NULL;
@@ -57,14 +61,18 @@ init_person_api(void)
 {
 	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
 	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
+	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
+	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
 	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
+	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 
 	// movement script specifier constants
@@ -124,14 +132,14 @@ command_person(person_t* person, int command)
 			person->anim_frames = 8;
 		}
 		break;
-	case COMMAND_FACE_NORTH: _set_person_direction(person, "north"); break;
-	case COMMAND_FACE_NORTHEAST: _set_person_direction(person, "northeast"); break;
-	case COMMAND_FACE_EAST: _set_person_direction(person, "east"); break;
-	case COMMAND_FACE_SOUTHEAST: _set_person_direction(person, "southeast"); break;
-	case COMMAND_FACE_SOUTH: _set_person_direction(person, "south"); break;
-	case COMMAND_FACE_SOUTHWEST: _set_person_direction(person, "southwest"); break;
-	case COMMAND_FACE_WEST: _set_person_direction(person, "west"); break;
-	case COMMAND_FACE_NORTHWEST: _set_person_direction(person, "northwest"); break;
+	case COMMAND_FACE_NORTH: set_person_direction(person, "north"); break;
+	case COMMAND_FACE_NORTHEAST: set_person_direction(person, "northeast"); break;
+	case COMMAND_FACE_EAST: set_person_direction(person, "east"); break;
+	case COMMAND_FACE_SOUTHEAST: set_person_direction(person, "southeast"); break;
+	case COMMAND_FACE_SOUTH: set_person_direction(person, "south"); break;
+	case COMMAND_FACE_SOUTHWEST: set_person_direction(person, "southwest"); break;
+	case COMMAND_FACE_WEST: set_person_direction(person, "west"); break;
+	case COMMAND_FACE_NORTHWEST: set_person_direction(person, "northwest"); break;
 	case COMMAND_MOVE_NORTH:
 		command_person(person, COMMAND_ANIMATE);
 		person->y -= person->speed;
@@ -230,7 +238,7 @@ update_persons(void)
 }
 
 static void
-_add_person(const char* name, const char* sprite_file, bool is_persistent)
+create_person(const char* name, const char* sprite_file, bool is_persistent)
 {
 	char*     path;
 	person_t* person;
@@ -238,8 +246,8 @@ _add_person(const char* name, const char* sprite_file, bool is_persistent)
 	++s_num_persons;
 	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
 	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
-	_set_person_name(person, name);
-	_set_person_direction(person, "north");
+	set_person_name(person, name);
+	set_person_direction(person, "north");
 	path = get_asset_path(sprite_file, "spritesets", false);
 	person->sprite = load_spriteset(path);
 	free(path);
@@ -250,7 +258,7 @@ _add_person(const char* name, const char* sprite_file, bool is_persistent)
 }
 
 static void
-_free_person(person_t* person)
+free_person(person_t* person)
 {
 	free_spriteset(person->sprite);
 	free(person->name);
@@ -259,13 +267,13 @@ _free_person(person_t* person)
 }
 
 static void
-_delete_person(const char* name)
+destroy_person(const char* name)
 {
 	int i, j;
 
 	for (i = 0; i < s_num_persons; ++i) {
 		if (strcmp(s_persons[i]->name, name) == 0) {
-			_free_person(s_persons[i]);
+			free_person(s_persons[i]);
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
 		}
@@ -275,14 +283,14 @@ _delete_person(const char* name)
 }
 
 static void
-_set_person_direction(person_t* person, const char* direction)
+set_person_direction(person_t* person, const char* direction)
 {
 	person->direction = realloc(person->direction, (strlen(direction) + 1) * sizeof(char));
 	strcpy(person->direction, direction);
 }
 
 static void
-_set_person_name(person_t* person, const char* name)
+set_person_name(person_t* person, const char* name)
 {
 	person->name = realloc(person->name, (strlen(name) + 1) * sizeof(char));
 	strcpy(person->name, name);
@@ -298,7 +306,7 @@ js_CreatePerson(duk_context* ctx)
 	name = duk_to_string(ctx, 0);
 	sprite_file = duk_require_string(ctx, 1);
 	destroy_with_map = duk_require_boolean(ctx, 2);
-	_add_person(name, sprite_file, !destroy_with_map);
+	create_person(name, sprite_file, !destroy_with_map);
 	return 0;
 }
 
@@ -309,7 +317,7 @@ js_DestroyPerson(duk_context* ctx)
 
 	name = duk_to_string(ctx, 0);
 	if (find_person(name) != NULL) {
-		_delete_person(name);
+		destroy_person(name);
 		return 0;
 	}
 	else {
@@ -318,20 +326,32 @@ js_DestroyPerson(duk_context* ctx)
 }
 
 static duk_ret_t
-js_GetPersonDirection(duk_context* ctx)
+js_IsPersonObstructed(duk_context* ctx)
 {
-	const char* name;
+	const char* name = duk_require_string(ctx, 0);
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+
 	person_t*   person;
 
-	name = duk_to_string(ctx, 0);
-	person = find_person(name);
-	if (person != NULL) {
-		duk_push_string(ctx, person->direction);
-		return 1;
-	}
-	else {
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person entity '%s' does not exist", name);
-	}
+	// TODO: implement collision detection
+	duk_push_false(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonDirection(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	
+	person_t*   person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person entity '%s' does not exist", name);
+	duk_push_string(ctx, person->direction);
+	return 1;
 }
 
 static duk_ret_t
@@ -370,15 +390,12 @@ js_GetPersonX(duk_context* ctx)
 	const char* name;
 	person_t*   person;
 
-	name = duk_to_string(ctx, 0);
+	name = duk_require_string(ctx, 0);
 	person = find_person(name);
-	if (person != NULL) {
-		duk_push_number(ctx, person->x);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person entity '%s' does not exist", name);
-	}
+	if (person == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person '%s' doesn't exist", name);
+	duk_push_number(ctx, person->x);
+	return 1;
 }
 
 static duk_ret_t
@@ -387,15 +404,26 @@ js_GetPersonY(duk_context* ctx)
 	const char* name;
 	person_t*   person;
 
-	name = duk_to_string(ctx, 0);
+	name = duk_require_string(ctx, 0);
 	person = find_person(name);
-	if (person != NULL) {
-		duk_push_number(ctx, person->y);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person entity '%s' does not exist", name);
-	}
+	if (person == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person '%s' doesn't exist", name);
+	duk_push_number(ctx, person->y);
+	return 1;
+}
+
+static duk_ret_t
+js_SetPersonDirection(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	const char* new_dir = duk_require_string(ctx, 1);
+
+	person_t*   person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person entity '%s' does not exist", name);
+	set_person_direction(person, new_dir);
+	return 0;
 }
 
 static duk_ret_t
@@ -486,6 +514,20 @@ js_CallPersonScript(duk_context* ctx)
 	}
 	duk_pop(ctx);
 	return 0;
+}
+
+static duk_ret_t
+js_GetObstructingPerson(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
+	// TODO: implement collision detection
+	duk_push_string(ctx, "");
+	return 1;
 }
 
 static duk_ret_t
