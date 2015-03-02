@@ -251,7 +251,7 @@ load_map(const char* path)
 		tileset = strcmp(strings[0]->buffer, "") == 0 ? load_tileset_f(file) : load_tileset(tile_path);
 		free(tile_path);
 		if (tileset == NULL) goto on_error;
-		map->is_toric = true;
+		map->is_toric = rmp.toric_map;
 		map->origin.x = rmp.start_x;
 		map->origin.y = rmp.start_y;
 		map->origin.z = rmp.start_layer;
@@ -365,8 +365,12 @@ get_map_origin(void)
 static bool
 change_map(const char* filename, bool preserve_persons)
 {
-	map_t* map;
-	char*  path;
+	map_t*             map;
+	char*              path;
+	person_t*          person;
+	struct map_person* person_info;
+
+	int i;
 
 	path = get_asset_path(filename, "maps", false);
 	map = load_map(path);
@@ -375,6 +379,13 @@ change_map(const char* filename, bool preserve_persons)
 		free_map(s_map); free(s_map_filename);
 		s_map = map; s_map_filename = strdup(filename);
 		if (!preserve_persons) reset_persons(s_map);
+
+		// populate persons
+		for (i = 0; i < s_map->num_persons; ++i) {
+			person_info = &s_map->persons[i];
+			person = create_person(person_info->name->buffer, person_info->spriteset->buffer, false);
+			set_person_xyz(person, person_info->x, person_info->y, person_info->z);
+		}
 		
 		// run default map entry script
 		duk_push_global_stash(g_duktape);

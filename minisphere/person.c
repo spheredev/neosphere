@@ -38,7 +38,6 @@ static duk_ret_t js_CallPersonScript     (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand   (duk_context* ctx);
 
-static void create_person        (const char* name, const char* sprite_file, bool is_persistent);
 static void destroy_person       (const char* name);
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
@@ -120,6 +119,12 @@ get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width,
 		*out_x = person->x;
 		*out_y = person->y;
 	}
+}
+
+void
+set_person_xyz(person_t* person, int x, int y, int z)
+{
+	person->x = x; person->y = y; person->layer = z;
 }
 
 void
@@ -237,7 +242,7 @@ update_persons(void)
 	}
 }
 
-static void
+person_t*
 create_person(const char* name, const char* sprite_file, bool is_persistent)
 {
 	char*     path;
@@ -255,6 +260,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->x = 0; person->y = 0; person->layer = 0;
 	person->speed = 1.0;
 	person->revert_delay = 8;
+	return person;
 }
 
 static void
@@ -466,20 +472,30 @@ js_SetPersonScript(duk_context* ctx)
 static duk_ret_t
 js_SetPersonX(duk_context* ctx)
 {
+	const char* name = duk_require_string(ctx, 0);
+	int x = duk_require_int(ctx, 1);
+
 	person_t* person;
 
-	person = find_person(duk_to_string(ctx, 0));
-	if (person != NULL) person->x = duk_to_number(ctx, 1);
+	person = find_person(name);
+	if (person == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonX(): Person '%s' doesn't exist", name);
+	person->x = x;
 	return 0;
 }
 
 static duk_ret_t
 js_SetPersonY(duk_context* ctx)
 {
+	const char* name = duk_require_string(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	
 	person_t* person;
 
-	person = find_person(duk_to_string(ctx, 0));
-	if (person != NULL) person->x = duk_to_number(ctx, 1);
+	person = find_person(name);
+	if (person == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonY(): Person '%s' doesn't exist", name);
+	person->y = y;
 	return 0;
 }
 

@@ -185,9 +185,10 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 	int                     i, j = 0;
 
 	if (strcmp(pose_name, "northeast") == 0) alt_names[0] = "north";
-	if (strcmp(pose_name, "southeast") == 0) alt_names[0] = "south";
-	if (strcmp(pose_name, "southwest") == 0) alt_names[0] = "south";
-	if (strcmp(pose_name, "northwest") == 0) alt_names[0] = "north";
+	else if (strcmp(pose_name, "southeast") == 0) alt_names[0] = "south";
+	else if (strcmp(pose_name, "southwest") == 0) alt_names[0] = "south";
+	else if (strcmp(pose_name, "northwest") == 0) alt_names[0] = "north";
+	else alt_names[0] = "";
 	alt_names[1] = "south";
 	name_to_find = pose_name;
 	do {
