@@ -3,14 +3,14 @@
 
 #include "file.h"
 
-static duk_ret_t _js_OpenFile        (duk_context* ctx);
-static duk_ret_t _js_File_finalize   (duk_context* ctx);
-static duk_ret_t _js_File_getKey     (duk_context* ctx);
-static duk_ret_t _js_File_getNumKeys (duk_context* ctx);
-static duk_ret_t _js_File_close      (duk_context* ctx);
-static duk_ret_t _js_File_flush      (duk_context* ctx);
-static duk_ret_t _js_File_read       (duk_context* ctx);
-static duk_ret_t _js_File_write      (duk_context* ctx);
+static duk_ret_t js_OpenFile        (duk_context* ctx);
+static duk_ret_t js_File_finalize   (duk_context* ctx);
+static duk_ret_t js_File_getKey     (duk_context* ctx);
+static duk_ret_t js_File_getNumKeys (duk_context* ctx);
+static duk_ret_t js_File_close      (duk_context* ctx);
+static duk_ret_t js_File_flush      (duk_context* ctx);
+static duk_ret_t js_File_read       (duk_context* ctx);
+static duk_ret_t js_File_write      (duk_context* ctx);
 
 static void duk_push_sphere_file (duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path);
 
@@ -19,7 +19,7 @@ void
 init_file_api(void)
 {
 	duk_push_global_object(g_duktape);
-	duk_push_c_function(g_duktape, _js_OpenFile, DUK_VARARGS); duk_put_prop_string(g_duktape, -2, "OpenFile");
+	duk_push_c_function(g_duktape, js_OpenFile, DUK_VARARGS); duk_put_prop_string(g_duktape, -2, "OpenFile");
 	duk_pop(g_duktape);
 }
 
@@ -29,17 +29,17 @@ duk_push_sphere_file(duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path)
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, conf); duk_put_prop_string(ctx, -2, "\xFF" "conf_ptr");
 	duk_push_pointer(ctx, (void*)path); duk_put_prop_string(ctx, -2, "\xFF" "path");
-	duk_push_c_function(ctx, _js_File_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, _js_File_getKey, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getKey");
-	duk_push_c_function(ctx, _js_File_getNumKeys, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getNumKeys");
-	duk_push_c_function(ctx, _js_File_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
-	duk_push_c_function(ctx, _js_File_flush, DUK_VARARGS); duk_put_prop_string(ctx, -2, "flush");
-	duk_push_c_function(ctx, _js_File_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
-	duk_push_c_function(ctx, _js_File_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
+	duk_push_c_function(ctx, js_File_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_File_getKey, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getKey");
+	duk_push_c_function(ctx, js_File_getNumKeys, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getNumKeys");
+	duk_push_c_function(ctx, js_File_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
+	duk_push_c_function(ctx, js_File_flush, DUK_VARARGS); duk_put_prop_string(ctx, -2, "flush");
+	duk_push_c_function(ctx, js_File_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
+	duk_push_c_function(ctx, js_File_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
 }
 
 static duk_ret_t
-_js_OpenFile(duk_context* ctx)
+js_OpenFile(duk_context* ctx)
 {
 	ALLEGRO_CONFIG* conf;
 	const char*     filename;
@@ -63,7 +63,7 @@ on_error:
 }
 
 static duk_ret_t
-_js_File_finalize(duk_context* ctx)
+js_File_finalize(duk_context* ctx)
 {
 	ALLEGRO_CONFIG* conf;
 	const char*     path;
@@ -75,7 +75,7 @@ _js_File_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_File_getKey(duk_context* ctx)
+js_File_getKey(duk_context* ctx)
 {
 	ALLEGRO_CONFIG*       conf;
 	ALLEGRO_CONFIG_ENTRY* conf_iter;
@@ -107,7 +107,7 @@ _js_File_getKey(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_File_getNumKeys(duk_context* ctx)
+js_File_getNumKeys(duk_context* ctx)
 {
 	ALLEGRO_CONFIG*       conf;
 	ALLEGRO_CONFIG_ENTRY* conf_iter;
@@ -133,7 +133,7 @@ _js_File_getNumKeys(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_File_flush (duk_context* ctx)
+js_File_flush (duk_context* ctx)
 {
 	ALLEGRO_CONFIG* conf;
 	const char*     path;
@@ -152,7 +152,7 @@ _js_File_flush (duk_context* ctx)
 }
 
 static duk_ret_t
-_js_File_close(duk_context* ctx)
+js_File_close(duk_context* ctx)
 {
 	ALLEGRO_CONFIG* conf;
 	const char*     path;
@@ -174,7 +174,7 @@ _js_File_close(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_File_read(duk_context* ctx)
+js_File_read(duk_context* ctx)
 {
 	ALLEGRO_CONFIG* conf;
 	bool            def_bool;
@@ -216,7 +216,7 @@ _js_File_read(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_File_write(duk_context* ctx)
+js_File_write(duk_context* ctx)
 {
 	ALLEGRO_CONFIG* conf;
 	const char*     key;

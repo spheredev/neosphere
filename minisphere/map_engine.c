@@ -34,6 +34,7 @@ static void render_map_engine (void);
 static void update_map_engine (void);
 
 static duk_ret_t js_MapEngine             (duk_context* ctx);
+static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
 static duk_ret_t js_IsInputAttached       (duk_context* ctx);
 static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
 static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
@@ -123,12 +124,12 @@ struct rmp_zone_header
 
 enum mapscript
 {
-	MAPSCRIPT_ON_ENTER,
-	MAPSCRIPT_ON_LEAVE,
-	MAPSCRIPT_ON_LEAVE_NORTH,
-	MAPSCRIPT_ON_LEAVE_EAST,
-	MAPSCRIPT_ON_LEAVE_SOUTH,
-	MAPSCRIPT_ON_LEAVE_WEST
+	MAP_SCRIPT_ON_ENTER,
+	MAP_SCRIPT_ON_LEAVE,
+	MAP_SCRIPT_ON_LEAVE_NORTH,
+	MAP_SCRIPT_ON_LEAVE_EAST,
+	MAP_SCRIPT_ON_LEAVE_SOUTH,
+	MAP_SCRIPT_ON_LEAVE_WEST
 };
 
 map_t*
@@ -260,6 +261,7 @@ void
 init_map_engine_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "MapEngine", &js_MapEngine);
+	register_api_func(ctx, NULL, "IsCameraAttached", &js_IsCameraAttached);
 	register_api_func(ctx, NULL, "IsInputAttached", &js_IsInputAttached);
 	register_api_func(ctx, NULL, "GetCameraPerson", &js_GetCameraPerson);
 	register_api_func(ctx, NULL, "GetCurrentMap", &js_GetCurrentMap);
@@ -281,12 +283,12 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "UpdateMapEngine", &js_UpdateMapEngine);
 
 	// Map script types
-	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", MAPSCRIPT_ON_ENTER);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP", MAPSCRIPT_ON_LEAVE);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_NORTH", MAPSCRIPT_ON_LEAVE_NORTH);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_EAST", MAPSCRIPT_ON_LEAVE_EAST);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAPSCRIPT_ON_LEAVE_SOUTH);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", MAPSCRIPT_ON_LEAVE_WEST);
+	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
 
 	// initialize subcomponent APIs (persons, etc.)
 	init_person_api();
@@ -452,15 +454,17 @@ js_MapEngine(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsCameraAttached(duk_context* ctx)
+{
+	duk_push_boolean(ctx, s_camera_person != NULL);
+	return 1;
+}
+
+static duk_ret_t
 js_IsInputAttached(duk_context* ctx)
 {
-	if (s_running) {
-		duk_push_boolean(ctx, s_input_person != NULL);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "IsInputAttached(): Operation requires the map engine to be running");
-	}
+	duk_push_boolean(ctx, s_input_person != NULL);
+	return 1;
 }
 
 static duk_ret_t
@@ -475,13 +479,10 @@ js_GetCameraPerson(duk_context* ctx)
 static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
-	if (s_running) {
-		duk_push_string(ctx, s_map_filename);
-		return 1;
-	}
-	else {
+	if (!s_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Operation requires the map engine to be running");
-	}
+	duk_push_string(ctx, s_map_filename);
+	return 1;
 }
 
 static duk_ret_t
@@ -517,24 +518,21 @@ js_SetDefaultMapScript(duk_context* ctx)
 
 	script_type = duk_require_int(ctx, 0);
 	script = duk_require_lstring(ctx, 1, &script_size);
-	script_name = (script_type == MAPSCRIPT_ON_ENTER) ? "map_def_enter_script"
-		: (script_type == MAPSCRIPT_ON_LEAVE) ? "map_def_leave_script"
-		: (script_type == MAPSCRIPT_ON_LEAVE_NORTH) ? "map_def_leave_north_script"
-		: (script_type == MAPSCRIPT_ON_LEAVE_EAST) ? "map_def_leave_east_script"
-		: (script_type == MAPSCRIPT_ON_LEAVE_SOUTH) ? "map_def_leave_south_script"
-		: (script_type == MAPSCRIPT_ON_LEAVE_WEST) ? "map_def_leave_west_script"
+	script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "map_def_enter_script"
+		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "map_def_leave_script"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "map_def_leave_north_script"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "map_def_leave_east_script"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "map_def_leave_south_script"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "map_def_leave_west_script"
 		: NULL;
-	if (script_name != NULL) {
-		duk_push_global_stash(ctx);
-		duk_push_string(ctx, "[def-mapscript]");
-		duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
-		duk_put_prop_string(ctx, -2, script_name);
-		duk_pop(ctx);
-		return 0;
-	}
-	else {
+	if (script_name == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "SetDefaultMapScript(): Invalid map script constant");
-	}
+	duk_push_global_stash(ctx);
+	duk_push_string(ctx, "[def-mapscript]");
+	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
+	duk_put_prop_string(ctx, -2, script_name);
+	duk_pop(ctx);
+	return 0;
 }
 
 static duk_ret_t
@@ -544,6 +542,8 @@ js_SetDelayScript(duk_context* ctx)
 	size_t script_size;
 	const char* script = duk_require_lstring(ctx, 1, &script_size);
 
+	if (!s_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Map engine is not running");
 	if (frames < 0)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Number of delay frames cannot be negative");
 	duk_push_global_stash(ctx);
@@ -599,12 +599,9 @@ js_AttachCamera(duk_context* ctx)
 	person_t*   person;
 
 	name = duk_to_string(ctx, 0);
-	if ((person = find_person(name)) != NULL) {
-		s_camera_person = person;
-	}
-	else {
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "AttachCamera(): Person '%s' doesn't exist", name);
-	}
+	s_camera_person = person;
 	return 0;
 }
 
@@ -615,12 +612,9 @@ js_AttachInput(duk_context* ctx)
 	person_t*   person;
 
 	name = duk_to_string(ctx, 0);
-	if ((person = find_person(name)) != NULL) {
-		s_input_person = person;
-	}
-	else {
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
-	}
+	s_input_person = person;
 	return 0;
 }
 
@@ -629,14 +623,11 @@ js_ChangeMap(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 	
-	if (s_running) {
-		if (!change_map(filename))
-			duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Failed to load map file '%s' into map engine", filename);
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Operation requires the map engine to be running");
-	}
+	if (!s_running)
+		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Map engine is not running");
+	if (!change_map(filename))
+		duk_error(ctx, DUK_ERR_ERROR, "ChangeMap(): Failed to load map file '%s' into map engine", filename);
+	return 0;
 }
 
 static duk_ret_t
@@ -656,35 +647,26 @@ js_DetachInput(duk_context* ctx)
 static duk_ret_t
 js_ExitMapEngine(duk_context* ctx)
 {
-	if (s_running) {
-		s_exiting = true;
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "ExitMapEngine(): Operation requires the map engine to be running");
-	}
+	if (!s_running)
+		duk_error(ctx, DUK_ERR_ERROR, "ExitMapEngine(): Map engine is not running");
+	s_exiting = true;
+	return 0;
 }
 
 static duk_ret_t
 js_RenderMap(duk_context* ctx)
 {
-	if (s_running) {
-		render_map_engine();
-		return 0;
-	}
-	else {
+	if (!s_running)
 		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires the map engine to be running");
-	}
+	render_map_engine();
+	return 0;
 }
 
 static duk_ret_t
 js_UpdateMapEngine(duk_context* ctx)
 {
-	if (s_running) {
-		update_map_engine();
-		return 0;
-	}
-	else {
+	if (!s_running)
 		duk_error(ctx, DUK_ERR_ERROR, "UpdateMapEngine(): Operation requires the map engine to be running");
-	}
+	update_map_engine();
+	return 0;
 }

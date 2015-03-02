@@ -34,14 +34,11 @@ js_HashRawFile(duk_context* ctx)
 	path = get_asset_path(filename, "other", false);
 	file = al_fopen(path, "rb");
 	free(path);
-	if (file != NULL) {
-		al_fclose(file);
-		duk_push_null(ctx);
-		return 1;
-	}
-	else {
+	if (file == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "HashRawFile(): Unable to open file '%s' for reading");
-	}
+	al_fclose(file);
+	duk_push_null(ctx);
+	return 1;
 }
 
 static duk_ret_t
