@@ -70,7 +70,7 @@ init_person_api(void)
 	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
 	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_ACT_TOUCH);
 	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_ACT_TALK);
-	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_CMD_GEN);
+	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
 
 	// person movement commands
 	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
@@ -121,7 +121,7 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
 		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "onTouchPerson"
 		: type == PERSON_SCRIPT_ON_ACT_TALK ? "onTalkToPerson"
-		: type == PERSON_SCRIPT_CMD_GEN ? "onGeneratePersonCommands"
+		: type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
 		: NULL;
 	if (script_name == NULL) return false;
 	duk_push_global_stash(g_duktape);
@@ -153,7 +153,7 @@ call_person_script(const person_t* person, int script_type)
 		: script_type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
 		: script_type == PERSON_SCRIPT_ON_ACT_TOUCH ? "onTouchPerson"
 		: script_type == PERSON_SCRIPT_ON_ACT_TALK ? "onTalkToPerson"
-		: script_type == PERSON_SCRIPT_CMD_GEN ? "onGeneratePersonCommands"
+		: script_type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
 		: NULL;
 	if (script_name == NULL) return false;
 	duk_push_global_stash(g_duktape);
@@ -277,6 +277,9 @@ update_persons(void)
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
 		if (--person->revert_frames <= 0) person->frame = 0;
+		if (person->num_commands == 0) {
+			call_person_script(person, PERSON_SCRIPT_GENERATOR);
+		}
 		if (person->num_commands > 0) {
 			command = person->commands[0];
 			--person->num_commands;
@@ -473,7 +476,7 @@ js_SetPersonDirection(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person entity '%s' does not exist", name);
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
 	set_person_direction(person, new_dir);
 	return 0;
 }

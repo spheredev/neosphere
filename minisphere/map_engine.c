@@ -399,7 +399,7 @@ change_map(const char* filename, bool preserve_persons)
 			set_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
 			set_person_script(person, PERSON_SCRIPT_ON_ACT_TOUCH, person_info->touch_script);
 			set_person_script(person, PERSON_SCRIPT_ON_ACT_TALK, person_info->talk_script);
-			set_person_script(person, PERSON_SCRIPT_CMD_GEN, person_info->command_script);
+			set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
 			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
 		}
 		
@@ -450,11 +450,11 @@ render_map_engine(void)
 		layer = &s_map->layers[z];
 		first_cell_x = floorf(off_x / (float)tile_w);
 		first_cell_y = floorf(off_y / (float)tile_h);
-		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 1; ++x) {
-			cell_x = (x + first_cell_x + abs(x + first_cell_x) * layer->width) % layer->width;
-			cell_y = (y + first_cell_y + abs(y + first_cell_y) * layer->height) % layer->height;
+		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
+			cell_x = ((x + first_cell_x) % layer->width + layer->width) % layer->width;
+			cell_y = ((y + first_cell_y) % layer->height + layer->height) % layer->height;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
-			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - (off_y % tile_h + tile_h), tile_index);
+			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - (off_y % tile_h + tile_h) % tile_h, tile_index);
 		}
 	}
 	al_hold_bitmap_drawing(false);
