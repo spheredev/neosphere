@@ -32,6 +32,11 @@ struct map_person
 	lstring_t* name;
 	lstring_t* spriteset;
 	int        x, y, z;
+	lstring_t* create_script;
+	lstring_t* destroy_script;
+	lstring_t* command_script;
+	lstring_t* talk_script;
+	lstring_t* touch_script;
 };
 
 struct map_trigger
@@ -168,7 +173,7 @@ load_map(const char* path)
 	//          7 - exit south script
 	//          8 - exit west script
 	
-	int                      count;
+	uint16_t                 count;
 	struct rmp_entity_header entity;
 	bool                     failed = false;
 	ALLEGRO_FILE*            file;
@@ -226,8 +231,13 @@ load_map(const char* path)
 				if ((person->name = al_fread_lstring(file)) == NULL) goto on_error;
 				if ((person->spriteset = al_fread_lstring(file)) == NULL) goto on_error;
 				person->x = entity.x; person->y = entity.y; person->z = entity.z;
-				if (al_fread(file, &count, 2) != 2) goto on_error;
-				for (j = 0; j < 5; ++j) {
+				if (al_fread(file, &count, 2) != 2 || count < 5) goto on_error;
+				person->create_script = al_fread_lstring(file);
+				person->destroy_script = al_fread_lstring(file);
+				person->touch_script = al_fread_lstring(file);
+				person->talk_script = al_fread_lstring(file);
+				person->command_script = al_fread_lstring(file);
+				for (j = 5; j < count; ++j) {
 					free_lstring(al_fread_lstring(file));
 				}
 				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
@@ -247,8 +257,8 @@ load_map(const char* path)
 			al_fread(file, &zone, sizeof(struct rmp_zone_header));
 			free_lstring(al_fread_lstring(file));
 		}
-		tile_path = get_asset_path(strings[0]->buffer, "maps", false);
-		tileset = strcmp(strings[0]->buffer, "") == 0 ? load_tileset_f(file) : load_tileset(tile_path);
+		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
+		tileset = strcmp(strings[0]->cstr, "") == 0 ? load_tileset_f(file) : load_tileset(tile_path);
 		free(tile_path);
 		if (tileset == NULL) goto on_error;
 		map->is_toric = rmp.toric_map;
@@ -378,13 +388,19 @@ change_map(const char* filename, bool preserve_persons)
 	if (map != NULL) {
 		free_map(s_map); free(s_map_filename);
 		s_map = map; s_map_filename = strdup(filename);
-		if (!preserve_persons) reset_persons(s_map);
+		reset_persons(s_map, preserve_persons);
 
 		// populate persons
 		for (i = 0; i < s_map->num_persons; ++i) {
 			person_info = &s_map->persons[i];
-			person = create_person(person_info->name->buffer, person_info->spriteset->buffer, false);
+			person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false);
 			set_person_xyz(person, person_info->x, person_info->y, person_info->z);
+			set_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
+			set_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
+			set_person_script(person, PERSON_SCRIPT_ON_ACT_TOUCH, person_info->touch_script);
+			set_person_script(person, PERSON_SCRIPT_ON_ACT_TALK, person_info->talk_script);
+			set_person_script(person, PERSON_SCRIPT_CMD_GEN, person_info->command_script);
+			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
 		}
 		
 		// run default map entry script
@@ -396,7 +412,7 @@ change_map(const char* filename, bool preserve_persons)
 		duk_pop(g_duktape);
 		
 		// run map entry script
-		duk_compile_lstring(g_duktape, 0x0, s_map->scripts[3]->buffer, s_map->scripts[3]->length);
+		duk_compile_lstring(g_duktape, 0x0, s_map->scripts[3]->cstr, s_map->scripts[3]->length);
 		duk_call(g_duktape, 0); duk_pop(g_duktape);
 		
 		s_frames = 0;

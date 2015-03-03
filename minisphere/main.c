@@ -143,9 +143,7 @@ main(int argc, char** argv)
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	g_render_scale = (g_res_x <= 320 && g_res_y <= 240) ? 3
-		: (g_res_x <= 400 && g_res_y <= 300) ? 2
-		: 1;
+	g_render_scale = (g_res_x <= 400 && g_res_y <= 300) ? 2 : 1;
 	g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
 	al_identity_transform(&trans);
 	al_scale_transform(&trans, g_render_scale, g_render_scale);
@@ -254,6 +252,9 @@ do_events(void)
 			return false;
 		case ALLEGRO_EVENT_KEY_CHAR:
 			switch (event.keyboard.keycode) {
+			case ALLEGRO_KEY_F10:
+				// TODO: implement fullscreen toggle
+				break;
 			case ALLEGRO_KEY_F11:
 				s_show_fps = !s_show_fps;
 				break;
@@ -345,10 +346,30 @@ begin_frame(int framerate)
 	return true;
 }
 
+lstring_t*
+new_lstring(size_t length, const char* buffer)
+{
+	lstring_t* lstring = NULL;
+
+	if ((lstring = malloc(sizeof(lstring_t))) == NULL) goto on_error;
+	if ((lstring->cstr = malloc(length + 1)) == NULL) goto on_error;
+	lstring->length = length;
+	memcpy(lstring->cstr, buffer, length);
+	lstring->cstr[length] = '\0';
+	return lstring;
+
+on_error:
+	if (lstring != NULL) {
+		free(lstring->cstr);
+		free(lstring);
+	}
+	return NULL;
+}
+
 void
 free_lstring(lstring_t* string)
 {
-	if (string != NULL) free(string->buffer);
+	if (string != NULL) free(string->cstr);
 	free(string);
 }
 
@@ -453,16 +474,26 @@ al_fread_lstring(ALLEGRO_FILE* file)
 		goto on_error;
 	if (al_fread(file, &length, 2) != 2) goto on_error;
 	string->length = length;
-	if ((string->buffer = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
-	if (al_fread(file, string->buffer, length) != length) goto on_error;
+	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
+	if (al_fread(file, string->cstr, length) != length) goto on_error;
 	return string;
 
 on_error:
 	if (string != NULL) {
-		free(string->buffer);
+		free(string->cstr);
 		free(string);
 	}
 	return NULL;
+}
+
+lstring_t*
+duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
+{
+	const char* buffer;
+	size_t      length;
+
+	buffer = duk_require_lstring(ctx, index, &length);
+	return new_lstring(length, buffer);
 }
 
 static void

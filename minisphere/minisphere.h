@@ -29,8 +29,8 @@ struct key_queue
 
 struct lstring
 {
-	unsigned int length;
-	char*        buffer;
+	size_t length;
+	char*  cstr;
 };
 
 struct point3
@@ -64,12 +64,14 @@ extern ALLEGRO_CONFIG*      g_sys_conf;
 extern ALLEGRO_FONT*        g_sys_font;
 extern int                  g_res_x, g_res_y;
 
-extern void            al_draw_tiled_bitmap (ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height);
-extern ALLEGRO_BITMAP* al_fread_bitmap      (ALLEGRO_FILE* file, int width, int height);
-extern lstring_t*      al_fread_lstring     (ALLEGRO_FILE* file);
+extern void            al_draw_tiled_bitmap  (ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height);
+extern ALLEGRO_BITMAP* al_fread_bitmap       (ALLEGRO_FILE* file, int width, int height);
+extern lstring_t*      al_fread_lstring      (ALLEGRO_FILE* file);
+extern lstring_t*      duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
 
-extern bool  begin_frame        (int framerate);
-extern bool  do_events          (void);
-extern void  free_lstring       (lstring_t* string);
-extern char* get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
-extern char* get_sys_asset_path (const char* path, const char* base_dir);
+extern bool       begin_frame        (int framerate);
+extern bool       do_events          (void);
+extern lstring_t* new_lstring        (size_t length, const char* buffer);
+extern void       free_lstring       (lstring_t* string);
+extern char*      get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
+extern char*      get_sys_asset_path (const char* path, const char* base_dir);

@@ -46,15 +46,6 @@ static void set_person_name      (person_t* person, const char* name);
 static int       s_num_persons = 0;
 static person_t* *s_persons    = NULL;
 
-enum personscript
-{
-	PERSON_SCRIPT_ON_CREATE,
-	PERSON_SCRIPT_ON_DESTROY,
-	PERSON_SCRIPT_ON_ACT_TOUCH,
-	PERSON_SCRIPT_ON_ACT_TALK,
-	PERSON_SCRIPT_CMD_GEN
-};
-
 void
 init_person_api(void)
 {
@@ -121,10 +112,61 @@ get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width,
 	}
 }
 
+bool
+set_person_script(person_t* person, int type, const lstring_t* script)
+{
+	const char* script_name;
+
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
+		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "onTouchPerson"
+		: type == PERSON_SCRIPT_ON_ACT_TALK ? "onTalkToPerson"
+		: type == PERSON_SCRIPT_CMD_GEN ? "onGeneratePersonCommands"
+		: NULL;
+	if (script_name == NULL) return false;
+	duk_push_global_stash(g_duktape);
+	if (!duk_get_prop_string(g_duktape, -1, script_name)) {
+		duk_pop(g_duktape);
+		duk_push_object(g_duktape);
+		duk_put_prop_string(g_duktape, -2, script_name);
+		duk_get_prop_string(g_duktape, -1, script_name);
+	}
+	duk_push_sprintf(g_duktape, "[%s.%s]", person->name, script_name);
+	duk_compile_lstring_filename(g_duktape, 0x0, script->cstr, script->length);
+	duk_put_prop_string(g_duktape, -2, get_person_name(person));
+	duk_pop_2(g_duktape);
+	return true;
+}
+
 void
 set_person_xyz(person_t* person, int x, int y, int z)
 {
 	person->x = x; person->y = y; person->layer = z;
+}
+
+bool
+call_person_script(const person_t* person, int script_type)
+{
+	const char* script_name;
+
+	script_name = script_type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
+		: script_type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
+		: script_type == PERSON_SCRIPT_ON_ACT_TOUCH ? "onTouchPerson"
+		: script_type == PERSON_SCRIPT_ON_ACT_TALK ? "onTalkToPerson"
+		: script_type == PERSON_SCRIPT_CMD_GEN ? "onGeneratePersonCommands"
+		: NULL;
+	if (script_name == NULL) return false;
+	duk_push_global_stash(g_duktape);
+	if (duk_get_prop_string(g_duktape, -1, script_name)) {
+		duk_get_prop_string(g_duktape, -1, get_person_name(person));
+		if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
+		duk_pop_2(g_duktape);
+	}
+	else {
+		duk_pop(g_duktape);
+	}
+	duk_pop(g_duktape);
+	return true;
 }
 
 void
@@ -197,7 +239,7 @@ render_persons(int cam_x, int cam_y)
 }
 
 void
-reset_persons(map_t* map)
+reset_persons(map_t* map, bool keep_existing)
 {
 	point3_t  map_origin;
 	person_t* person;
@@ -207,12 +249,15 @@ reset_persons(map_t* map)
 	map_origin = get_map_origin();
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
-		if (person->is_persistent) {
+		if (person->is_persistent || keep_existing) {
 			person->x = map_origin.x;
 			person->y = map_origin.y;
 			person->layer = map_origin.z;
+			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
 		}
 		else {
+			call_person_script(person, PERSON_SCRIPT_ON_DESTROY);
+			free_person(person);
 			--s_num_persons;
 			for (j = i; j < s_num_persons; ++j) s_persons[j] = s_persons[j + 1];
 			--i;
@@ -279,6 +324,7 @@ destroy_person(const char* name)
 
 	for (i = 0; i < s_num_persons; ++i) {
 		if (strcmp(s_persons[i]->name, name) == 0) {
+			call_person_script(s_persons[i], PERSON_SCRIPT_ON_DESTROY);
 			free_person(s_persons[i]);
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
@@ -437,36 +483,16 @@ js_SetPersonScript(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 	int type = duk_require_int(ctx, 1);
-	size_t script_size;
-	const char* script = duk_require_lstring(ctx, 2, &script_size);
+	lstring_t* script = duk_require_lstring_t(ctx, 2);
 	
-	person_t*   person;
-	const char* script_name =
-		type == PERSON_SCRIPT_ON_CREATE ? "createscript"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "destroyscript"
-		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "touchscript"
-		: type == PERSON_SCRIPT_ON_ACT_TALK ? "talkscript"
-		: type == PERSON_SCRIPT_CMD_GEN ? "commandgen"
-		: NULL;
-	if (script_name != NULL) {
-		if ((person = find_person(name)) == NULL)
-			duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
-		duk_push_global_stash(ctx);
-		if (!duk_get_prop_string(ctx, -1, script_name)) {
-			duk_pop(ctx);
-			duk_push_object(ctx);
-			duk_put_prop_string(ctx, -2, script_name);
-			duk_get_prop_string(ctx, -1, script_name);
-		}
-		duk_push_sprintf(ctx, "[%s:%s]", name, script_name);
-		duk_compile_lstring_filename(ctx, 0x0, script, script_size);
-		duk_put_prop_string(ctx, -2, get_person_name(person));
-		duk_pop_2(ctx);
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_API_ERROR, "SetPersonScript(): Caller passed invalid script type constant");
-	}
+	person_t*  person;
+	
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+	if (!set_person_script(person, type, script))
+		duk_error(ctx, DUK_ERR_API_ERROR, "SetPersonScript(): Failed to set person script; likely cause: invalid script type constant");
+	free_lstring(script);
+	return 0;
 }
 
 static duk_ret_t
@@ -506,29 +532,12 @@ js_CallPersonScript(duk_context* ctx)
 	int type = duk_require_int(ctx, 1);
 	
 	person_t*   person;
-	const char* script_name;
 
 	person = find_person(name);
 	if (person == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): Person entity '%s' does not exist", name);
-	script_name = type == PERSON_SCRIPT_ON_CREATE ? "createscript"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "destroyscript"
-		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "touchscript"
-		: type == PERSON_SCRIPT_ON_ACT_TALK ? "talkscript"
-		: type == PERSON_SCRIPT_CMD_GEN ? "commandgen"
-		: NULL;
-	if (script_name == NULL)
-		duk_error(ctx, DUK_ERR_API_ERROR, "CallPersonScript(): Caller passed invalid script type constant");
-	duk_push_global_stash(ctx);
-	if (duk_get_prop_string(ctx, -1, script_name)) {
-		duk_get_prop_string(ctx, -1, get_person_name(person));
-		if (duk_is_callable(ctx, -1)) duk_call(ctx, 0);
-		duk_pop_2(ctx);
-	}
-	else {
-		duk_pop(ctx);
-	}
-	duk_pop(ctx);
+	if (!call_person_script(person, type))
+		duk_error(ctx, DUK_ERR_ERROR, "CallPersonScript(): Failed to call person script, caller probably passed invalid script type constant");
 	return 0;
 }
 
