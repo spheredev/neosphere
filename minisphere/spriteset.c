@@ -168,7 +168,8 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 	int                      image_index;
 	const spriteset_pose_t*  pose;
 	
-	pose = find_sprite_pose(spriteset, pose_name);
+	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+		return;
 	frame_index = frame_index % pose->num_frames;
 	image_index = pose->frames[frame_index].image_idx;
 	x -= spriteset->base.x1 + (spriteset->base.x2 - spriteset->base.x1) / 2;
@@ -179,28 +180,27 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 static const spriteset_pose_t*
 find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 {
-	const char*             alt_names[2];
+	const char*             alt_name;
 	const char*             name_to_find;
 	const spriteset_pose_t* pose = NULL;
 	int                     i, j = 0;
 
-	if (strcmp(pose_name, "northeast") == 0) alt_names[0] = "north";
-	else if (strcmp(pose_name, "southeast") == 0) alt_names[0] = "south";
-	else if (strcmp(pose_name, "southwest") == 0) alt_names[0] = "south";
-	else if (strcmp(pose_name, "northwest") == 0) alt_names[0] = "north";
-	else alt_names[0] = "";
-	alt_names[1] = "south";
+	alt_name = strcasecmp(pose_name, "northeast") == 0 ? "north"
+		: strcasecmp(pose_name, "southeast") == 0 ? "south"
+		: strcasecmp(pose_name, "southwest") == 0 ? "south"
+		: strcasecmp(pose_name, "northwest") == 0 ? "north"
+		: "";
 	name_to_find = pose_name;
 	do {
 		for (i = 0; i < spriteset->num_poses; ++i) {
-			if (strcmp(name_to_find, spriteset->poses[i].name) == 0) {
+			if (strcasecmp(name_to_find, spriteset->poses[i].name) == 0) {
 				pose = &spriteset->poses[i];
 				break;
 			}
 		}
-		name_to_find = alt_names[j];
-	} while (pose == NULL && ++j < 2);
-	return pose;
+		name_to_find = alt_name;
+	} while (pose == NULL && name_to_find != alt_name);
+	return pose != NULL ? pose : &spriteset->poses[0];
 }
 
 static char*

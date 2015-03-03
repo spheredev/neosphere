@@ -442,23 +442,37 @@ render_map_engine(void)
 	off_x = s_cam_x - g_res_x / 2;
 	off_y = s_cam_y - g_res_y / 2;
 	if (!s_map->is_toric) {
+		// non-repeating map - clamp camera to map bounds
 		off_x = fmin(fmax(off_x, 0), map_w - g_res_x);
 		off_y = fmin(fmax(off_y, 0), map_h - g_res_y);
+	}
+	else {
+		// repeating map - wrap offset to map bounds (simplifies calculations)
+		off_x = (off_x % map_w + map_w) % map_w;
+		off_y = (off_y % map_h + map_h) % map_h;
 	}
 	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
-		first_cell_x = floorf(off_x / (float)tile_w);
-		first_cell_y = floorf(off_y / (float)tile_h);
+		first_cell_x = off_x / tile_w;
+		first_cell_y = off_y / tile_h;
 		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
-			cell_x = ((x + first_cell_x) % layer->width + layer->width) % layer->width;
-			cell_y = ((y + first_cell_y) % layer->height + layer->height) % layer->height;
+			cell_x = (x + first_cell_x) % layer->width;
+			cell_y = (y + first_cell_y) % layer->height;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
-			draw_tile(s_map->tileset, x * tile_w - (off_x % tile_w + tile_w) % tile_w, y * tile_h - (off_y % tile_h + tile_h) % tile_h, tile_index);
+			draw_tile(s_map->tileset, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
+		}
+		if (s_map->is_toric) {
+			// for small repeating maps, persons need to be repeated as well
+			for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x) {
+				render_persons(z, off_x - x * map_w, off_y - y * map_h, map_w, map_h);
+			}
+		}
+		else {
+			render_persons(z, off_x, off_y, map_w, map_h);
 		}
 	}
 	al_hold_bitmap_drawing(false);
-	render_persons(off_x, off_y);
 	duk_push_global_stash(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "render_script");
 	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);

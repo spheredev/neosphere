@@ -13,7 +13,7 @@ extern bool        call_person_script (const person_t* person, int script_type);
 extern void        command_person     (person_t* person, int command);
 extern person_t*   find_person        (const char* name);
 extern void        reset_persons      (map_t* map, bool keep_existing);
-extern void        render_persons     (int cam_x, int cam_y);
+extern void        render_persons     (int layer, int cam_x, int cam_y, int map_width, int map_height);
 extern void        update_persons     (void);
 
 enum person_cmd
