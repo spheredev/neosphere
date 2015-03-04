@@ -5,6 +5,67 @@
 
 #include "map_engine.h"
 
+bool g_map_running = false;
+
+enum map_script_type
+{
+	MAP_SCRIPT_ON_ENTER,
+	MAP_SCRIPT_ON_LEAVE,
+	MAP_SCRIPT_ON_LEAVE_NORTH,
+	MAP_SCRIPT_ON_LEAVE_EAST,
+	MAP_SCRIPT_ON_LEAVE_SOUTH,
+	MAP_SCRIPT_ON_LEAVE_WEST,
+	MAP_SCRIPT_MAX
+};
+
+static bool change_map        (const char* filename, bool preserve_persons);
+static void render_map_engine (void);
+static void update_map_engine (void);
+
+static duk_ret_t js_MapEngine             (duk_context* ctx);
+static duk_ret_t js_AreZonesAt            (duk_context* ctx);
+static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
+static duk_ret_t js_IsInputAttached       (duk_context* ctx);
+static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
+static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
+static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
+static duk_ret_t js_GetInputPerson        (duk_context* ctx);
+static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
+static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
+static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_GetTileHeight         (duk_context* ctx);
+static duk_ret_t js_GetTileWidth          (duk_context* ctx);
+static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
+static duk_ret_t js_SetRenderScript       (duk_context* ctx);
+static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
+static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
+static duk_ret_t js_AttachCamera          (duk_context* ctx);
+static duk_ret_t js_AttachInput           (duk_context* ctx);
+static duk_ret_t js_DetachInput           (duk_context* ctx);
+static duk_ret_t js_ChangeMap             (duk_context* ctx);
+static duk_ret_t js_DetachCamera          (duk_context* ctx);
+static duk_ret_t js_DetachInput           (duk_context* ctx);
+static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
+static duk_ret_t js_RenderMap             (duk_context* ctx);
+static duk_ret_t js_SetDelayScript        (duk_context* ctx);
+static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
+
+static person_t*    s_camera_person    = NULL;
+static int          s_cam_x            = 0;
+static int          s_cam_y            = 0;
+static int          s_def_scripts[MAP_SCRIPT_MAX];
+static int          s_delay_frames     = -1;
+static int          s_delay_script     = 0;
+static bool         s_exiting          = false;
+static int          s_framerate        = 0;
+static unsigned int s_frames           = 0;
+static person_t*    s_input_person     = NULL;
+static map_t*       s_map              = NULL;
+static char*        s_map_filename     = NULL;
+static int          s_render_script    = 0;
+static int          s_update_script    = 0;
+
 struct map
 {
 	bool               is_toric;
@@ -49,50 +110,6 @@ struct map_zone
 	rect_t area;
 	int    steps;
 };
-
-static bool change_map        (const char* filename, bool preserve_persons);
-static void render_map_engine (void);
-static void update_map_engine (void);
-
-static duk_ret_t js_MapEngine             (duk_context* ctx);
-static duk_ret_t js_AreZonesAt            (duk_context* ctx);
-static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
-static duk_ret_t js_IsInputAttached       (duk_context* ctx);
-static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
-static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
-static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
-static duk_ret_t js_GetInputPerson        (duk_context* ctx);
-static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
-static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
-static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
-static duk_ret_t js_GetTileHeight         (duk_context* ctx);
-static duk_ret_t js_GetTileWidth          (duk_context* ctx);
-static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
-static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
-static duk_ret_t js_SetRenderScript       (duk_context* ctx);
-static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
-static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
-static duk_ret_t js_AttachCamera          (duk_context* ctx);
-static duk_ret_t js_AttachInput           (duk_context* ctx);
-static duk_ret_t js_DetachInput           (duk_context* ctx);
-static duk_ret_t js_ChangeMap             (duk_context* ctx);
-static duk_ret_t js_DetachCamera          (duk_context* ctx);
-static duk_ret_t js_DetachInput           (duk_context* ctx);
-static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
-static duk_ret_t js_RenderMap             (duk_context* ctx);
-static duk_ret_t js_SetDelayScript        (duk_context* ctx);
-static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
-
-static person_t*    s_camera_person = NULL;
-static int          s_cam_x         = 0;
-static int          s_cam_y         = 0;
-static int          s_delay_frames  = -1;
-static bool         s_exiting       = false;
-static int          s_framerate     = 0;
-static unsigned int s_frames        = 0;
-static person_t*    s_input_person  = NULL;
-static map_t*       s_map           = NULL;
-static char*        s_map_filename  = NULL;
 
 #pragma pack(push, 1)
 struct rmp_header
@@ -147,18 +164,6 @@ struct rmp_zone_header
 	uint8_t  reserved[4];
 };
 #pragma pack(pop)
-
-enum mapscript
-{
-	MAP_SCRIPT_ON_ENTER,
-	MAP_SCRIPT_ON_LEAVE,
-	MAP_SCRIPT_ON_LEAVE_NORTH,
-	MAP_SCRIPT_ON_LEAVE_EAST,
-	MAP_SCRIPT_ON_LEAVE_SOUTH,
-	MAP_SCRIPT_ON_LEAVE_WEST
-};
-
-bool g_map_running = false;
 
 map_t*
 load_map(const char* path)
@@ -326,6 +331,8 @@ free_map(map_t* map)
 void
 init_map_engine_api(duk_context* ctx)
 {
+	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
+	
 	register_api_func(ctx, NULL, "MapEngine", js_MapEngine);
 	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
 	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
@@ -404,12 +411,7 @@ change_map(const char* filename, bool preserve_persons)
 		}
 		
 		// run default map entry script
-		duk_push_global_stash(g_duktape);
-		duk_get_prop_string(g_duktape, -1, "map_def_enter_script");
-		if (duk_is_callable(g_duktape, -1)) {
-			duk_call(g_duktape, 0); duk_pop(g_duktape);
-		}
-		duk_pop(g_duktape);
+		run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
 		
 		// run map entry script
 		duk_compile_lstring(g_duktape, 0x0, s_map->scripts[3]->cstr, s_map->scripts[3]->length);
@@ -473,10 +475,7 @@ render_map_engine(void)
 		}
 	}
 	al_hold_bitmap_drawing(false);
-	duk_push_global_stash(g_duktape);
-	duk_get_prop_string(g_duktape, -1, "render_script");
-	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
-	duk_pop_2(g_duktape);
+	run_script(s_render_script, false);
 }
 
 static void
@@ -521,19 +520,10 @@ update_map_engine(void)
 		s_cam_y = y;
 	}
 
-	// run update script
-	duk_push_global_stash(g_duktape);
-	duk_get_prop_string(g_duktape, -1, "update_script");
-	if (duk_is_callable(g_duktape, -1)) duk_call(g_duktape, 0);
-	duk_pop_2(g_duktape);
-
-	// run delay script, if applicable
-	if (s_delay_frames >= 0 && --s_delay_frames == -1) {
-		duk_push_global_stash(g_duktape);
-		duk_get_prop_string(g_duktape, -1, "map_delay_script");
-		duk_call(g_duktape, 0);
-		duk_pop_2(g_duktape);
-	}
+	// run update and delay scripts, if applicable
+	run_script(s_update_script, false);
+	if (s_delay_frames >= 0 && --s_delay_frames < 0)
+		run_script(s_delay_script, false);
 }
 
 static duk_ret_t
@@ -692,27 +682,25 @@ js_SetMapEngineFrameRate(duk_context* ctx)
 static duk_ret_t
 js_SetDefaultMapScript(duk_context* ctx)
 {
-	const char* script;
-	size_t      script_size;
-	const char* script_name;
-	int         script_type;
+	int script_type = duk_require_int(ctx, 0);
+	lstring_t* code = duk_require_lstring_t(ctx, 1);
 
-	script_type = duk_require_int(ctx, 0);
-	script = duk_require_lstring(ctx, 1, &script_size);
-	script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "map_def_enter_script"
-		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "map_def_leave_script"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "map_def_leave_north_script"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "map_def_leave_east_script"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "map_def_leave_south_script"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "map_def_leave_west_script"
-		: NULL;
-	if (script_name == NULL)
+	int         script_id;
+	const char* script_name;
+
+	if (script_type < 0 || script_type >= MAP_SCRIPT_MAX)
 		duk_error(ctx, DUK_ERR_ERROR, "SetDefaultMapScript(): Invalid map script constant");
-	duk_push_global_stash(ctx);
-	duk_push_string(ctx, "[def-mapscript]");
-	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
-	duk_put_prop_string(ctx, -2, script_name);
-	duk_pop(ctx);
+	script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "[default map enter script]"
+		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "[default map leave script]"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "[default map leave-north script]"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "[default map leave-east script]"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "[default map leave-south script]"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "[default map leave-west script]"
+		: NULL;
+	script_id = compile_script(code, script_name);
+	free_lstring(code);
+	free_script(s_def_scripts[script_type]);
+	s_def_scripts[script_type] = script_id;
 	return 0;
 }
 
@@ -739,30 +727,21 @@ js_SetDelayScript(duk_context* ctx)
 static duk_ret_t
 js_SetRenderScript(duk_context* ctx)
 {
-	const char* script;
-	size_t      script_size;
+	lstring_t* code = duk_require_lstring_t(ctx, 0);
 
-	script = duk_require_lstring(ctx, 0, &script_size);
-	duk_push_global_stash(ctx);
-	duk_push_string(ctx, "[renderscript]");
-	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
-	duk_put_prop_string(ctx, -2, "render_script");
-	duk_pop(ctx);
+	free_script(s_render_script);
+	s_render_script = compile_script(code, "[render script]");
+	free_lstring(code);
 	return 0;
 }
 
 static duk_ret_t
 js_SetUpdateScript(duk_context* ctx)
 {
-	const char* script;
-	size_t      script_size;
+	lstring_t* code = duk_require_lstring_t(ctx, 0);
 
-	script = duk_require_lstring(ctx, 0, &script_size);
-	duk_push_global_stash(ctx);
-	duk_push_string(ctx, "[updatescript]");
-	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
-	duk_put_prop_string(ctx, -2, "update_script");
-	duk_pop(ctx);
+	free_script(s_update_script);
+	s_update_script = compile_script(code, "[update script]");
 	return 0;
 }
 

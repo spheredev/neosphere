@@ -105,11 +105,13 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="image.c" />
     <ClCompile Include="input.c" />
     <ClCompile Include="log.c" />
+    <ClCompile Include="lstring.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
     <ClCompile Include="person.c" />
     <ClCompile Include="rawfile.c" />
     <ClCompile Include="rfn_handler.c" />
+    <ClCompile Include="script.c" />
     <ClCompile Include="sound.c" />
     <ClCompile Include="api.c" />
     <ClCompile Include="spriteset.c" />
@@ -126,6 +128,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="image.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="log.h" />
+    <ClInclude Include="lstring.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
     <ClInclude Include="person.h" />
@@ -133,6 +136,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="resource.h" />
     <ClInclude Include="rfn_handler.h" />
     <ClInclude Include="api.h" />
+    <ClInclude Include="script.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="spriteset.h" />
     <ClInclude Include="surface.h" />

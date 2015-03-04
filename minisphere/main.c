@@ -352,92 +352,6 @@ collide_rects(rect_t a, rect_t b)
 	return !(a.x1 >= b.x2 || a.x2 <= b.x1 || a.y1 >= b.y2 || a.y2 <= b.y1);
 }
 
-int
-compile_script(const lstring_t* script, const char* name)
-{
-	int index;
-
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape); duk_put_prop_string(g_duktape, -2, "scripts");
-		duk_get_prop_string(g_duktape, -1, "scripts");
-	}
-	duk_get_prop_string(g_duktape, -1, "length"); index = duk_get_int(g_duktape, -1); duk_pop(g_duktape);
-	duk_push_string(g_duktape, name);
-	duk_compile_lstring_filename(g_duktape, 0x0, script->cstr, script->length);
-	duk_put_prop_index(g_duktape, -2, index);
-	duk_pop_2(g_duktape);
-	return index + 1;
-}
-
-void
-free_script(int script_id)
-{
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape);
-	}
-	duk_push_null(g_duktape);
-	duk_put_prop_index(g_duktape, -2, script_id - 1);
-	duk_pop_2(g_duktape);
-}
-
-void
-run_script(int script_id, bool allow_reentry)
-{
-	bool is_in_use;
-	
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape);
-	}
-	duk_get_prop_index(g_duktape, -1, script_id - 1);
-	if (duk_is_callable(g_duktape, -1)) {
-		duk_get_prop_string(g_duktape, -1, "isInUse");
-		is_in_use = duk_to_boolean(g_duktape, -1);
-		duk_pop(g_duktape);
-		if (!is_in_use || allow_reentry) {
-			duk_push_true(g_duktape);
-			duk_put_prop_string(g_duktape, -2, "isInUse");
-			duk_call(g_duktape, 0);
-			duk_get_prop_index(g_duktape, -2, script_id - 1);
-			duk_push_boolean(g_duktape, is_in_use); duk_put_prop_string(g_duktape, -2, "isInUse");
-			duk_pop(g_duktape);
-		}
-	}
-	duk_pop_3(g_duktape);
-}
-
-lstring_t*
-new_lstring(size_t length, const char* buffer)
-{
-	lstring_t* lstring = NULL;
-
-	if ((lstring = malloc(sizeof(lstring_t))) == NULL) goto on_error;
-	if ((lstring->cstr = malloc(length + 1)) == NULL) goto on_error;
-	lstring->length = length;
-	memcpy(lstring->cstr, buffer, length);
-	lstring->cstr[length] = '\0';
-	return lstring;
-
-on_error:
-	if (lstring != NULL) {
-		free(lstring->cstr);
-		free(lstring);
-	}
-	return NULL;
-}
-
-void
-free_lstring(lstring_t* string)
-{
-	if (string != NULL) free(string->cstr);
-	free(string);
-}
-
 char*
 get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
 {
@@ -527,38 +441,6 @@ on_error:
 	if (lock != NULL) al_unlock_bitmap(bitmap);
 	if (bitmap != NULL) al_destroy_bitmap(bitmap);
 	return NULL;
-}
-
-lstring_t*
-al_fread_lstring(ALLEGRO_FILE* file)
-{
-	lstring_t* string = NULL;
-	uint16_t   length;
-
-	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
-		goto on_error;
-	if (al_fread(file, &length, 2) != 2) goto on_error;
-	string->length = length;
-	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
-	if (al_fread(file, string->cstr, length) != length) goto on_error;
-	return string;
-
-on_error:
-	if (string != NULL) {
-		free(string->cstr);
-		free(string);
-	}
-	return NULL;
-}
-
-lstring_t*
-duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
-{
-	const char* buffer;
-	size_t      length;
-
-	buffer = duk_require_lstring(ctx, index, &length);
-	return new_lstring(length, buffer);
 }
 
 static void
