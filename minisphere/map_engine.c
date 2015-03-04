@@ -397,8 +397,8 @@ change_map(const char* filename, bool preserve_persons)
 			set_person_xyz(person, person_info->x, person_info->y, person_info->z);
 			set_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
 			set_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
-			set_person_script(person, PERSON_SCRIPT_ON_ACT_TOUCH, person_info->touch_script);
-			set_person_script(person, PERSON_SCRIPT_ON_ACT_TALK, person_info->talk_script);
+			set_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
+			set_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
 			set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
 			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
 		}

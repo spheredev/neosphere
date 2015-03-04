@@ -24,6 +24,7 @@ struct person
 
 static duk_ret_t js_CreatePerson         (duk_context* ctx);
 static duk_ret_t js_DestroyPerson        (duk_context* ctx);
+static duk_ret_t js_IsCommandQueueEmpty  (duk_context* ctx);
 static duk_ret_t js_IsPersonObstructed   (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson     (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection   (duk_context* ctx);
@@ -37,10 +38,10 @@ static duk_ret_t js_SetPersonScript      (duk_context* ctx);
 static duk_ret_t js_SetPersonX           (duk_context* ctx);
 static duk_ret_t js_SetPersonY           (duk_context* ctx);
 static duk_ret_t js_CallPersonScript     (duk_context* ctx);
+static duk_ret_t js_ClearPersonCommands  (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand   (duk_context* ctx);
 
-static void destroy_person       (const char* name);
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
@@ -49,53 +50,79 @@ static const person_t* s_current_person = NULL;
 static int             s_num_persons    = 0;
 static person_t*       *s_persons       = NULL;
 
-void
-init_person_api(void)
+person_t*
+create_person(const char* name, const char* sprite_file, bool is_persistent)
 {
-	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
-	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
-	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
-	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
-	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
-	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
-	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
-	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
-	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
-	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
-	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
-	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
-	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
-	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
-	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
-	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
-	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
+	char*     path;
+	person_t* person;
 
-	// movement script specifier constants
-	register_api_const(g_duktape, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
-	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
-	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_ACT_TOUCH);
-	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_ACT_TALK);
-	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
+	++s_num_persons;
+	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
+	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
+	set_person_name(person, name);
+	path = get_asset_path(sprite_file, "spritesets", false);
+	person->sprite = load_spriteset(path);
+	free(path);
+	set_person_direction(person, person->sprite->poses[0].name);
+	person->is_persistent = is_persistent;
+	person->x = 0; person->y = 0; person->layer = 0;
+	person->speed = 1.0;
+	person->revert_delay = 8;
+	return person;
+}
 
-	// person movement commands
-	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
-	register_api_const(g_duktape, "COMMAND_ANIMATE", COMMAND_ANIMATE);
-	register_api_const(g_duktape, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
-	register_api_const(g_duktape, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
-	register_api_const(g_duktape, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
-	register_api_const(g_duktape, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
-	register_api_const(g_duktape, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
-	register_api_const(g_duktape, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
-	register_api_const(g_duktape, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
-	register_api_const(g_duktape, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
-	register_api_const(g_duktape, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
-	register_api_const(g_duktape, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
-	register_api_const(g_duktape, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
-	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
-	register_api_const(g_duktape, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
-	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
-	register_api_const(g_duktape, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
-	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
+void
+destroy_person(person_t* person)
+{
+	int i, j;
+
+	call_person_script(person, PERSON_SCRIPT_ON_DESTROY);
+	free_person(person);
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i] == person) {
+			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
+			--s_num_persons; --i;
+		}
+	}
+}
+
+bool
+is_person_obstructed_at(const person_t* person, float x, float y, person_t** out_obstructing_person)
+{
+	rect_t base1, base2;
+	bool   collision = false;
+
+	int i;
+	
+	if (out_obstructing_person) *out_obstructing_person = NULL;
+	base1 = get_person_base(person);
+	base1.x1 += x - person->x; base1.x2 += x - person->x;
+	base1.y1 += y - person->y; base1.y2 += y - person->y;
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i] == person)
+			continue;
+		base2 = get_person_base(s_persons[i]);
+		if (collide_rects(base1, base2)) {
+			if (out_obstructing_person) *out_obstructing_person = s_persons[i];
+			return true;
+		}
+	}
+	// TODO: implement person-tile collision
+	return false;
+}
+
+rect_t
+get_person_base(const person_t* person)
+{
+	rect_t base_rect;
+	int    offs_x, offs_y;
+
+	base_rect = person->sprite->base;
+	offs_x = person->x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
+	offs_y = person->y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
+	base_rect.x1 += offs_x; base_rect.x2 += offs_x;
+	base_rect.y1 += offs_y; base_rect.y2 += offs_y;
+	return base_rect;
 }
 
 const char*
@@ -124,8 +151,8 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 
 	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
 		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
-		: type == PERSON_SCRIPT_ON_ACT_TOUCH ? "onTouchPerson"
-		: type == PERSON_SCRIPT_ON_ACT_TALK ? "onTalkToPerson"
+		: type == PERSON_SCRIPT_ON_TOUCH ? "onTouchPerson"
+		: type == PERSON_SCRIPT_ON_TALK ? "onTalkToPerson"
 		: type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
 		: NULL;
 	if (script_name == NULL) return false;
@@ -156,8 +183,8 @@ call_person_script(const person_t* person, int script_type)
 
 	script_name = script_type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
 		: script_type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
-		: script_type == PERSON_SCRIPT_ON_ACT_TOUCH ? "onTouchPerson"
-		: script_type == PERSON_SCRIPT_ON_ACT_TALK ? "onTalkToPerson"
+		: script_type == PERSON_SCRIPT_ON_TOUCH ? "onTouchPerson"
+		: script_type == PERSON_SCRIPT_ON_TALK ? "onTalkToPerson"
 		: script_type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
 		: NULL;
 	if (script_name == NULL) return false;
@@ -181,6 +208,10 @@ call_person_script(const person_t* person, int script_type)
 void
 command_person(person_t* person, int command)
 {
+	float     new_x, new_y;
+	person_t* person_to_touch;
+	
+	new_x = person->x; new_y = person->y;
 	switch (command) {
 	case COMMAND_ANIMATE:
 		if (--person->anim_frames <= 0) {
@@ -188,34 +219,54 @@ command_person(person_t* person, int command)
 			person->anim_frames = 8;
 		}
 		break;
-	case COMMAND_FACE_NORTH: set_person_direction(person, "north"); break;
-	case COMMAND_FACE_NORTHEAST: set_person_direction(person, "northeast"); break;
-	case COMMAND_FACE_EAST: set_person_direction(person, "east"); break;
-	case COMMAND_FACE_SOUTHEAST: set_person_direction(person, "southeast"); break;
-	case COMMAND_FACE_SOUTH: set_person_direction(person, "south"); break;
-	case COMMAND_FACE_SOUTHWEST: set_person_direction(person, "southwest"); break;
-	case COMMAND_FACE_WEST: set_person_direction(person, "west"); break;
-	case COMMAND_FACE_NORTHWEST: set_person_direction(person, "northwest"); break;
+	case COMMAND_FACE_NORTH:
+		set_person_direction(person, "north");
+		break;
+	case COMMAND_FACE_NORTHEAST:
+		set_person_direction(person, "northeast");
+		break;
+	case COMMAND_FACE_EAST:
+		set_person_direction(person, "east");
+		break;
+	case COMMAND_FACE_SOUTHEAST:
+		set_person_direction(person, "southeast");
+		break;
+	case COMMAND_FACE_SOUTH:
+		set_person_direction(person, "south");
+		break;
+	case COMMAND_FACE_SOUTHWEST:
+		set_person_direction(person, "southwest");
+		break;
+	case COMMAND_FACE_WEST:
+		set_person_direction(person, "west");
+		break;
+	case COMMAND_FACE_NORTHWEST:
+		set_person_direction(person, "northwest");
+		break;
 	case COMMAND_MOVE_NORTH:
-		command_person(person, COMMAND_ANIMATE);
-		person->y -= person->speed;
-		person->revert_frames = person->revert_delay;
+		new_y = person->y - person->speed;
 		break;
 	case COMMAND_MOVE_EAST:
-		command_person(person, COMMAND_ANIMATE);
-		person->x += person->speed;
-		person->revert_frames = person->revert_delay;
+		new_x = person->x + person->speed;
 		break;
 	case COMMAND_MOVE_SOUTH:
-		command_person(person, COMMAND_ANIMATE);
-		person->y += person->speed;
-		person->revert_frames = person->revert_delay;
+		new_y = person->y + person->speed;
 		break;
 	case COMMAND_MOVE_WEST:
-		command_person(person, COMMAND_ANIMATE);
-		person->x -= person->speed;
-		person->revert_frames = person->revert_delay;
+		new_x = person->x - person->speed;
 		break;
+	}
+	if (new_x != person->x || new_y != person->y) {
+		// person is trying to move, make sure the path is clear of obstructions
+		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch)) {
+			command_person(person, COMMAND_ANIMATE);
+			person->x = new_x; person->y = new_y;
+			person->revert_frames = person->revert_delay;
+		}
+		else {
+			// if not, and we collided with a person, call that person's touch script
+			if (person_to_touch) call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH);
+		}
 	}
 }
 
@@ -300,25 +351,55 @@ update_persons(void)
 	}
 }
 
-person_t*
-create_person(const char* name, const char* sprite_file, bool is_persistent)
+void
+init_person_api(void)
 {
-	char*     path;
-	person_t* person;
+	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
+	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
+	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
+	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
+	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
+	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
+	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
+	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
+	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
+	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
+	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
+	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
+	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
+	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
+	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
+	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
+	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
+	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 
-	++s_num_persons;
-	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
-	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
-	set_person_name(person, name);
-	path = get_asset_path(sprite_file, "spritesets", false);
-	person->sprite = load_spriteset(path);
-	free(path);
-	set_person_direction(person, person->sprite->poses[0].name);
-	person->is_persistent = is_persistent;
-	person->x = 0; person->y = 0; person->layer = 0;
-	person->speed = 1.0;
-	person->revert_delay = 8;
-	return person;
+	// movement script specifier constants
+	register_api_const(g_duktape, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
+	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
+	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
+	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
+	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
+
+	// person movement commands
+	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
+	register_api_const(g_duktape, "COMMAND_ANIMATE", COMMAND_ANIMATE);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
+	register_api_const(g_duktape, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
+	register_api_const(g_duktape, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
 static void
@@ -328,23 +409,6 @@ free_person(person_t* person)
 	free(person->name);
 	free(person->direction);
 	free(person);
-}
-
-static void
-destroy_person(const char* name)
-{
-	int i, j;
-
-	for (i = 0; i < s_num_persons; ++i) {
-		if (strcmp(s_persons[i]->name, name) == 0) {
-			call_person_script(s_persons[i], PERSON_SCRIPT_ON_DESTROY);
-			free_person(s_persons[i]);
-			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
-			--s_num_persons; --i;
-		}
-
-	}
-	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
 }
 
 static void
@@ -378,16 +442,27 @@ js_CreatePerson(duk_context* ctx)
 static duk_ret_t
 js_DestroyPerson(duk_context* ctx)
 {
-	const char* name;
+	const char* name = duk_require_string(ctx, 0);
 
-	name = duk_to_string(ctx, 0);
-	if (find_person(name) != NULL) {
-		destroy_person(name);
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "DestroyPerson(): Person entity '%s' doesn't exist!", name);
-	}
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "DestroyPerson(): Person '%s' doesn't exist", name);
+	destroy_person(person);
+	return 0;
+}
+
+static duk_ret_t
+js_IsCommandQueueEmpty(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsCommandQueueEmpty(): Person '%s' doesn't exist", name);
+	duk_push_boolean(ctx, person->num_commands <= 0);
+	return 1;
 }
 
 static duk_ret_t
@@ -397,34 +472,11 @@ js_IsPersonObstructed(duk_context* ctx)
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 
-	rect_t    base1, base2;
-	int       base_off_x, base_off_y;
-	bool      is_collision = false;
 	person_t* person;
-
-	int i;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsPersonObstructed(): Person '%s' doesn't exist", name);
-	base1 = person->sprite->base;
-	base_off_x = base1.x1 + (base1.x2 - base1.x1) / 2;
-	base_off_y = base1.y1 + (base1.y2 - base1.y1) / 2;
-	base1.x1 += x - base_off_x; base1.x2 += x - base_off_x;
-	base1.y1 += y - base_off_y; base1.y2 += y - base_off_y;
-	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i] == person)
-			continue;
-		base2 = s_persons[i]->sprite->base;
-		base_off_x = base2.x1 + (base2.x2 - base2.x1 + 1) / 2;
-		base_off_y = base2.y1 + (base2.y2 - base2.y1 + 1) / 2;
-		base2.x1 += s_persons[i]->x - base_off_x; base2.x2 += s_persons[i]->x - base_off_x;
-		base2.y1 += s_persons[i]->y - base_off_y; base2.y2 += s_persons[i]->y - base_off_y;
-		if (collide_rects(base1, base2)) {
-			is_collision = true;
-			break;
-		}
-	}
-	duk_push_boolean(ctx, is_collision);
+	duk_push_boolean(ctx, is_person_obstructed_at(person, x, y, NULL));
 	return 1;
 }
 
@@ -432,7 +484,7 @@ static duk_ret_t
 js_GetCurrentPerson(duk_context* ctx)
 {
 	if (s_current_person == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentPerson(): Cannot be called outside of a person script");
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentPerson(): Must be called from a person script");
 	duk_push_string(ctx, s_current_person->name);
 	return 1;
 }
@@ -453,18 +505,14 @@ js_GetPersonDirection(duk_context* ctx)
 static duk_ret_t
 js_GetPersonLayer(duk_context* ctx)
 {
-	const char* name;
+	const char* name = duk_require_string(ctx, 0);
+	
 	person_t*   person;
 
-	name = duk_to_string(ctx, 0);
-	person = find_person(name);
-	if (person != NULL) {
-		duk_push_int(ctx, person->layer);
-		return 1;
-	}
-	else {
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonLayer(): Person '%s' doesn't exist", name);
-	}
+	duk_push_int(ctx, person->layer);
+	return 1;
 }
 
 static duk_ret_t
@@ -483,12 +531,11 @@ js_GetPersonList(duk_context* ctx)
 static duk_ret_t
 js_GetPersonX(duk_context* ctx)
 {
-	const char* name;
+	const char* name = duk_require_string(ctx, 0);
+	
 	person_t*   person;
 
-	name = duk_require_string(ctx, 0);
-	person = find_person(name);
-	if (person == NULL)
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person '%s' doesn't exist", name);
 	duk_push_number(ctx, person->x);
 	return 1;
@@ -497,12 +544,11 @@ js_GetPersonX(duk_context* ctx)
 static duk_ret_t
 js_GetPersonY(duk_context* ctx)
 {
-	const char* name;
+	const char* name = duk_require_string(ctx, 0);
+
 	person_t*   person;
 
-	name = duk_require_string(ctx, 0);
-	person = find_person(name);
-	if (person == NULL)
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person '%s' doesn't exist", name);
 	duk_push_number(ctx, person->y);
 	return 1;
@@ -561,8 +607,7 @@ js_SetPersonX(duk_context* ctx)
 
 	person_t* person;
 
-	person = find_person(name);
-	if (person == NULL)
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonX(): Person '%s' doesn't exist", name);
 	person->x = x;
 	return 0;
@@ -576,8 +621,7 @@ js_SetPersonY(duk_context* ctx)
 	
 	person_t* person;
 
-	person = find_person(name);
-	if (person == NULL)
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonY(): Person '%s' doesn't exist", name);
 	person->y = y;
 	return 0;
@@ -591,11 +635,25 @@ js_CallPersonScript(duk_context* ctx)
 	
 	person_t*   person;
 
-	person = find_person(name);
-	if (person == NULL)
+	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): Person '%s' doesn't exist", name);
 	if (!call_person_script(person, type))
 		duk_error(ctx, DUK_ERR_ERROR, "CallPersonScript(): Failed to call person script, caller probably passed invalid script type constant");
+	return 0;
+}
+
+static duk_ret_t
+js_ClearPersonCommands(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "ClearPersonCommands(): Person '%s' doesn't exist", name);
+	person->num_commands = 0;
+	free(person->commands);
+	person->commands = NULL;
 	return 0;
 }
 
@@ -609,19 +667,12 @@ js_GetObstructingPerson(duk_context* ctx)
 	person_t* obs_person = NULL;
 	person_t* person;
 	
-	int i;
-
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
-	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i] == person)
-			continue;
-		if (collide_rects(person->sprite->base, s_persons[i]->sprite->base))
-			obs_person = s_persons[i];
-	}
-	duk_push_string(ctx, obs_person != NULL ? obs_person->name : "");
+	is_person_obstructed_at(person, x, y, &obs_person);
+	duk_push_string(ctx, obs_person != NULL ? get_person_name(obs_person) : "");
 	return 1;
 }
 
