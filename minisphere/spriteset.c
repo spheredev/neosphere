@@ -59,8 +59,8 @@ load_spriteset(const char* path)
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
 	spriteset->base.x1 = rss.base_x1;
 	spriteset->base.y1 = rss.base_y1;
-	spriteset->base.x2 = rss.base_x2;
-	spriteset->base.y2 = rss.base_y2;
+	spriteset->base.x2 = rss.base_x2 + 1;
+	spriteset->base.y2 = rss.base_y2 + 1;
 	switch (rss.version) {
 	case 1:
 		spriteset->num_images = rss.num_images;

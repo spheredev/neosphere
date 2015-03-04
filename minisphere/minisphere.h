@@ -72,6 +72,7 @@ extern lstring_t*      al_fread_lstring      (ALLEGRO_FILE* file);
 extern lstring_t*      duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
 
 extern bool       begin_frame        (int framerate);
+extern bool       collide_rects      (rect_t a, rect_t b);
 extern bool       do_events          (void);
 extern lstring_t* new_lstring        (size_t length, const char* buffer);
 extern void       free_lstring       (lstring_t* string);

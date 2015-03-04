@@ -397,12 +397,34 @@ js_IsPersonObstructed(duk_context* ctx)
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 
-	person_t*   person;
+	rect_t    base1, base2;
+	int       base_off_x, base_off_y;
+	bool      is_collision = false;
+	person_t* person;
+
+	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
-	// TODO: implement collision detection
-	duk_push_false(ctx);
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsPersonObstructed(): Person '%s' doesn't exist", name);
+	base1 = person->sprite->base;
+	base_off_x = base1.x1 + (base1.x2 - base1.x1) / 2;
+	base_off_y = base1.y1 + (base1.y2 - base1.y1) / 2;
+	base1.x1 += x - base_off_x; base1.x2 += x - base_off_x;
+	base1.y1 += y - base_off_y; base1.y2 += y - base_off_y;
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i] == person)
+			continue;
+		base2 = s_persons[i]->sprite->base;
+		base_off_x = base2.x1 + (base2.x2 - base2.x1 + 1) / 2;
+		base_off_y = base2.y1 + (base2.y2 - base2.y1 + 1) / 2;
+		base2.x1 += s_persons[i]->x - base_off_x; base2.x2 += s_persons[i]->x - base_off_x;
+		base2.y1 += s_persons[i]->y - base_off_y; base2.y2 += s_persons[i]->y - base_off_y;
+		if (collide_rects(base1, base2)) {
+			is_collision = true;
+			break;
+		}
+	}
+	duk_push_boolean(ctx, is_collision);
 	return 1;
 }
 
@@ -584,10 +606,22 @@ js_GetObstructingPerson(duk_context* ctx)
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 
+	person_t* obs_person = NULL;
+	person_t* person;
+	
+	int i;
+
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
-	// TODO: implement collision detection
-	duk_push_string(ctx, "");
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i] == person)
+			continue;
+		if (collide_rects(person->sprite->base, s_persons[i]->sprite->base))
+			obs_person = s_persons[i];
+	}
+	duk_push_string(ctx, obs_person != NULL ? obs_person->name : "");
 	return 1;
 }
 
