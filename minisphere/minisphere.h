@@ -73,6 +73,9 @@ extern lstring_t*      duk_require_lstring_t (duk_context* ctx, duk_idx_t index)
 
 extern bool       begin_frame        (int framerate);
 extern bool       collide_rects      (rect_t a, rect_t b);
+extern int        compile_script     (const lstring_t* script, const char* name);
+extern void       free_script        (int script_id);
+extern void       run_script         (int script_id, bool allow_reentry);
 extern bool       do_events          (void);
 extern lstring_t* new_lstring        (size_t length, const char* buffer);
 extern void       free_lstring       (lstring_t* string);

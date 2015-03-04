@@ -15,6 +15,11 @@ struct person
 	int          layer;
 	int          revert_delay;
 	int          revert_frames;
+	int          script_create;
+	int          script_destroy;
+	int          script_generator;
+	int          script_talk;
+	int          script_touch;
 	float        speed;
 	spriteset_t* sprite;
 	float        x, y;
@@ -147,6 +152,7 @@ get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width,
 bool
 set_person_script(person_t* person, int type, const lstring_t* script)
 {
+	int         script_id;
 	const char* script_name;
 
 	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
@@ -156,17 +162,24 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 		: type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, script_name)) {
-		duk_pop(g_duktape);
-		duk_push_object(g_duktape);
-		duk_put_prop_string(g_duktape, -2, script_name);
-		duk_get_prop_string(g_duktape, -1, script_name);
+	script_id = compile_script(script, script_name);
+	switch (type) {
+	case PERSON_SCRIPT_ON_CREATE:
+		person->script_create = script_id;
+		break;
+	case PERSON_SCRIPT_ON_DESTROY:
+		person->script_destroy = script_id;
+		break;
+	case PERSON_SCRIPT_ON_TALK:
+		person->script_talk = script_id;
+		break;
+	case PERSON_SCRIPT_ON_TOUCH:
+		person->script_touch = script_id;
+		break;
+	case PERSON_SCRIPT_GENERATOR:
+		person->script_generator = script_id;
+		break;
 	}
-	duk_push_sprintf(g_duktape, "[%s.%s]", person->name, script_name);
-	duk_compile_lstring_filename(g_duktape, 0x0, script->cstr, script->length);
-	duk_put_prop_string(g_duktape, -2, get_person_name(person));
-	duk_pop_2(g_duktape);
 	return true;
 }
 
@@ -179,29 +192,25 @@ set_person_xyz(person_t* person, int x, int y, int z)
 bool
 call_person_script(const person_t* person, int script_type)
 {
-	const char* script_name;
-
-	script_name = script_type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
-		: script_type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
-		: script_type == PERSON_SCRIPT_ON_TOUCH ? "onTouchPerson"
-		: script_type == PERSON_SCRIPT_ON_TALK ? "onTalkToPerson"
-		: script_type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
-		: NULL;
-	if (script_name == NULL) return false;
-	duk_push_global_stash(g_duktape);
-	if (duk_get_prop_string(g_duktape, -1, script_name)) {
-		duk_get_prop_string(g_duktape, -1, get_person_name(person));
-		if (duk_is_callable(g_duktape, -1)) {
-			s_current_person = person;
-			duk_call(g_duktape, 0);
-			s_current_person = NULL;
-		}
-		duk_pop_2(g_duktape);
+	switch (script_type) {
+	case PERSON_SCRIPT_ON_CREATE:
+		run_script(person->script_create, false);
+		break;
+	case PERSON_SCRIPT_ON_DESTROY:
+		run_script(person->script_destroy, false);
+		break;
+	case PERSON_SCRIPT_ON_TOUCH:
+		run_script(person->script_touch, false);
+		break;
+	case PERSON_SCRIPT_ON_TALK:
+		run_script(person->script_talk, false);
+		break;
+	case PERSON_SCRIPT_GENERATOR:
+		run_script(person->script_generator, false);
+		break;
+	default:
+		return false;
 	}
-	else {
-		duk_pop(g_duktape);
-	}
-	duk_pop(g_duktape);
 	return true;
 }
 
