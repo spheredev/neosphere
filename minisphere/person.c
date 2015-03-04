@@ -15,11 +15,7 @@ struct person
 	int          layer;
 	int          revert_delay;
 	int          revert_frames;
-	int          script_create;
-	int          script_destroy;
-	int          script_generator;
-	int          script_talk;
-	int          script_touch;
+	int          scripts[PERSON_SCRIPT_MAX];
 	float        speed;
 	spriteset_t* sprite;
 	float        x, y;
@@ -155,31 +151,15 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 	int         script_id;
 	const char* script_name;
 
-	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreatePerson"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroyPerson"
-		: type == PERSON_SCRIPT_ON_TOUCH ? "onTouchPerson"
-		: type == PERSON_SCRIPT_ON_TALK ? "onTalkToPerson"
-		: type == PERSON_SCRIPT_GENERATOR ? "onGeneratePersonCommands"
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "[person create script]"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "[person destroy script]"
+		: type == PERSON_SCRIPT_ON_TOUCH ? "[person touch script]"
+		: type == PERSON_SCRIPT_ON_TALK ? "[person talk script]"
+		: type == PERSON_SCRIPT_GENERATOR ? "[command generator]"
 		: NULL;
 	if (script_name == NULL) return false;
 	script_id = compile_script(script, script_name);
-	switch (type) {
-	case PERSON_SCRIPT_ON_CREATE:
-		person->script_create = script_id;
-		break;
-	case PERSON_SCRIPT_ON_DESTROY:
-		person->script_destroy = script_id;
-		break;
-	case PERSON_SCRIPT_ON_TALK:
-		person->script_talk = script_id;
-		break;
-	case PERSON_SCRIPT_ON_TOUCH:
-		person->script_touch = script_id;
-		break;
-	case PERSON_SCRIPT_GENERATOR:
-		person->script_generator = script_id;
-		break;
-	}
+	person->scripts[type] = script_id;
 	return true;
 }
 
@@ -190,27 +170,9 @@ set_person_xyz(person_t* person, int x, int y, int z)
 }
 
 bool
-call_person_script(const person_t* person, int script_type)
+call_person_script(const person_t* person, int type)
 {
-	switch (script_type) {
-	case PERSON_SCRIPT_ON_CREATE:
-		run_script(person->script_create, false);
-		break;
-	case PERSON_SCRIPT_ON_DESTROY:
-		run_script(person->script_destroy, false);
-		break;
-	case PERSON_SCRIPT_ON_TOUCH:
-		run_script(person->script_touch, false);
-		break;
-	case PERSON_SCRIPT_ON_TALK:
-		run_script(person->script_talk, false);
-		break;
-	case PERSON_SCRIPT_GENERATOR:
-		run_script(person->script_generator, false);
-		break;
-	default:
-		return false;
-	}
+	run_script(person->scripts[type], false);
 	return true;
 }
 
@@ -600,10 +562,11 @@ js_SetPersonScript(duk_context* ctx)
 	
 	person_t*  person;
 	
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_ERROR, "SetPersonScript(): Invalid script type constant");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
-	if (!set_person_script(person, type, script))
-		duk_error(ctx, DUK_ERR_API_ERROR, "SetPersonScript(): Failed to set person script; likely cause: invalid script type constant");
+	set_person_script(person, type, script);
 	free_lstring(script);
 	return 0;
 }
@@ -644,10 +607,11 @@ js_CallPersonScript(duk_context* ctx)
 	
 	person_t*   person;
 
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_ERROR, "CallPersonScript(): Invalid script type constant");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): Person '%s' doesn't exist", name);
-	if (!call_person_script(person, type))
-		duk_error(ctx, DUK_ERR_ERROR, "CallPersonScript(): Failed to call person script, caller probably passed invalid script type constant");
+	call_person_script(person, type);
 	return 0;
 }
 
