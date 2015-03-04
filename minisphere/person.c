@@ -172,7 +172,12 @@ set_person_xyz(person_t* person, int x, int y, int z)
 bool
 call_person_script(const person_t* person, int type)
 {
+	const person_t* last_person;
+
+	last_person = s_current_person;
+	s_current_person = person;
 	run_script(person->scripts[type], false);
+	s_current_person = last_person;
 	return true;
 }
 
