@@ -346,12 +346,6 @@ begin_frame(int framerate)
 	return true;
 }
 
-bool
-collide_rects(rect_t a, rect_t b)
-{
-	return !(a.x1 >= b.x2 || a.x2 <= b.x1 || a.y1 >= b.y2 || a.y2 <= b.y1);
-}
-
 char*
 get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
 {

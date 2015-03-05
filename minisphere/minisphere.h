@@ -19,36 +19,19 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_ttf.h>
 #include "duktape.h"
+#include "geometry.h"
 #include "lstring.h"
 #include "script.h"
 
 static const char* SPHERE_API_VER = "v1.5";
 static const char* ENGINE_VER = "v0.0";
 
+typedef struct key_queue key_queue_t;
 struct key_queue
 {
 	int num_keys;
 	int keys[255];
 };
-
-struct point3
-{
-	int x;
-	int y;
-	int z;
-};
-
-struct rect
-{
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-};
-
-typedef struct key_queue key_queue_t;
-typedef struct point3    point3_t;
-typedef struct rect      rect_t;
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
@@ -65,7 +48,6 @@ extern void            al_draw_tiled_bitmap  (ALLEGRO_BITMAP* bitmap, float x, f
 extern ALLEGRO_BITMAP* al_fread_bitmap       (ALLEGRO_FILE* file, int width, int height);
 
 extern bool       begin_frame        (int framerate);
-extern bool       collide_rects      (rect_t a, rect_t b);
 extern bool       do_events          (void);
 extern char*      get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
 extern char*      get_sys_asset_path (const char* path, const char* base_dir);

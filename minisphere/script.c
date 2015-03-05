@@ -56,7 +56,10 @@ run_script(int script_id, bool allow_reentry)
 			duk_put_prop_string(g_duktape, -2, "isInUse");
 			duk_call(g_duktape, 0);
 			duk_get_prop_index(g_duktape, -2, script_id - 1);
-			duk_push_boolean(g_duktape, is_in_use); duk_put_prop_string(g_duktape, -2, "isInUse");
+			if (!duk_is_null(g_duktape, -1)) {
+				duk_push_boolean(g_duktape, is_in_use);
+				duk_put_prop_string(g_duktape, -2, "isInUse");
+			}
 			duk_pop(g_duktape);
 		}
 	}

@@ -18,9 +18,10 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static bool change_map        (const char* filename, bool preserve_persons);
-static void render_map_engine (void);
-static void update_map_engine (void);
+static bool                change_map        (const char* filename, bool preserve_persons);
+static struct map_trigger* get_trigger_at    (int x, int y, int z);
+static void                render_map_engine (void);
+static void                update_map_engine (void);
 
 static duk_ret_t js_MapEngine             (duk_context* ctx);
 static duk_ret_t js_AreZonesAt            (duk_context* ctx);
@@ -29,6 +30,8 @@ static duk_ret_t js_IsInputAttached       (duk_context* ctx);
 static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
 static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
+static duk_ret_t js_GetCameraX            (duk_context* ctx);
+static duk_ret_t js_GetCameraY            (duk_context* ctx);
 static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
 static duk_ret_t js_GetInputPerson        (duk_context* ctx);
 static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
@@ -36,6 +39,8 @@ static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
 static duk_ret_t js_GetTileWidth          (duk_context* ctx);
+static duk_ret_t js_SetCameraX            (duk_context* ctx);
+static duk_ret_t js_SetCameraY            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
@@ -46,6 +51,7 @@ static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ChangeMap             (duk_context* ctx);
 static duk_ret_t js_DetachCamera          (duk_context* ctx);
 static duk_ret_t js_DetachInput           (duk_context* ctx);
+static duk_ret_t js_ExecuteTrigger        (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
 static duk_ret_t js_SetDelayScript        (duk_context* ctx);
@@ -103,7 +109,8 @@ struct map_person
 
 struct map_trigger
 {
-	lstring_t* script;
+	int script_id;
+	int x, y, z;
 };
 
 struct map_zone
@@ -188,6 +195,7 @@ load_map(const char* path)
 	int                      num_tiles;
 	struct map_person*       person;
 	struct rmp_header        rmp;
+	lstring_t*               script;
 	int16_t*                 tile_data = NULL;
 	char*                    tile_path;
 	tileset_t*               tileset;
@@ -249,11 +257,17 @@ load_map(const char* path)
 				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // trigger
+				if ((script = al_fread_lstring(file)) == NULL)
+					goto on_error;
 				++map->num_triggers;
 				map->triggers = realloc(map->triggers, map->num_triggers * sizeof(struct map_trigger));
 				trigger = &map->triggers[map->num_triggers - 1];
 				memset(trigger, 0, sizeof(struct map_trigger));
-				trigger->script = al_fread_lstring(file);
+				trigger->x = entity.x;
+				trigger->y = entity.y;
+				trigger->z = entity.z;
+				trigger->script_id = compile_script(script, "[trigger script]");
+				free_lstring(script);
 				break;
 			default:
 				goto on_error;
@@ -318,7 +332,7 @@ free_map(map_t* map)
 			free_lstring(map->persons[i].spriteset);
 		}
 		for (i = 0; i < map->num_triggers; ++i) {
-			free_lstring(map->triggers[i].script);
+			free_script(map->triggers[i].script_id);
 		}
 		free(map->triggers);
 		free(map->persons);
@@ -338,8 +352,11 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
 	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
 	register_api_func(ctx, NULL, "IsInputAttached", js_IsInputAttached);
+	register_api_func(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
 	register_api_func(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
 	register_api_func(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
+	register_api_func(ctx, NULL, "GetCameraX", js_GetCameraX);
+	register_api_func(ctx, NULL, "GetCameraY", js_GetCameraY);
 	register_api_func(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
 	register_api_func(ctx, NULL, "GetInputPerson", js_GetInputPerson);
 	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
@@ -347,16 +364,18 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
 	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
-	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
+	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
+	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
-	register_api_func(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
 	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
 	register_api_func(ctx, NULL, "ChangeMap", js_ChangeMap);
 	register_api_func(ctx, NULL, "DetachCamera", js_DetachCamera);
 	register_api_func(ctx, NULL, "DetachInput", js_DetachInput);
+	register_api_func(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
 	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
 	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
@@ -439,6 +458,30 @@ change_map(const char* filename, bool preserve_persons)
 	}
 }
 
+static struct map_trigger*
+get_trigger_at(int x, int y, int z)
+{
+	rect_t              bounds;
+	int                 tile_w, tile_h;
+	struct map_trigger* trigger;
+
+	int i;
+
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	for (i = 0; i < s_map->num_triggers; ++i) {
+		trigger = &s_map->triggers[i];
+		//if (trigger->z != z)  // ignore triggers on a different layer
+			//continue;
+		bounds.x1 = trigger->x - tile_w / 2;
+		bounds.y1 = trigger->y - tile_h / 2;
+		bounds.x2 = bounds.x1 + tile_w;
+		bounds.y2 = bounds.y1 + tile_h;
+		if (is_point_in_rect(x, y, bounds))
+			return trigger;
+	}
+	return NULL;
+}
+
 static void
 render_map_engine(void)
 {
@@ -473,8 +516,10 @@ render_map_engine(void)
 		first_cell_x = off_x / tile_w;
 		first_cell_y = off_y / tile_h;
 		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
-			cell_x = (x + first_cell_x) % layer->width;
-			cell_y = (y + first_cell_y) % layer->height;
+			cell_x = s_map->is_toric ? (x + first_cell_x) % layer->width : x + first_cell_x;
+			cell_y = s_map->is_toric ? (y + first_cell_y) % layer->height : y + first_cell_y;
+			if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
+				continue;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
 			draw_tile(s_map->tileset, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
 		}
@@ -498,6 +543,7 @@ update_map_engine(void)
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	int                    map_w, map_h;
 	int                    tile_w, tile_h;
+	struct map_trigger*    trigger;
 	float                  x, y;
 	
 	++s_frames;
@@ -506,8 +552,7 @@ update_map_engine(void)
 	// check for player input
 	if (s_input_person != NULL) {
 		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, s_talk_key) && s_input_person != NULL) {
-			// player pressed talk key: check if anybody is within earshot
+		if (al_key_down(&kb_state, s_talk_key)) {
 			talk_person(s_input_person);
 		}
 		else if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
@@ -525,6 +570,11 @@ update_map_engine(void)
 		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) {
 			command_person(s_input_person, COMMAND_FACE_WEST);
 			command_person(s_input_person, COMMAND_MOVE_WEST);
+		}
+
+		get_person_xy(s_input_person, &x, &y, true);
+		if ((trigger = get_trigger_at(x, y, 0)) != NULL) {
+			run_script(trigger->script_id, false);
 		}
 	}
 	
@@ -593,6 +643,13 @@ js_IsInputAttached(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsMapEngineRunning(duk_context* ctx)
+{
+	duk_push_boolean(ctx, g_map_running);
+	return 1;
+}
+
+static duk_ret_t
 js_IsTriggerAt(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
@@ -601,8 +658,7 @@ js_IsTriggerAt(duk_context* ctx)
 	
 	if (z < 0 || z >= s_map->num_layers)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "IsTriggerAt(): Invalid layer index; valid range is 0-%i, caller passed %i", s_map->num_layers - 1, z);
-	duk_push_false(ctx);
-	// TODO: test for triggers at specified location
+	duk_push_boolean(ctx, get_trigger_at(x, y, z) != NULL);
 	return 1;
 }
 
@@ -616,10 +672,28 @@ js_GetCameraPerson(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetCameraX(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCameraX(): Map engine must be running");
+	duk_push_int(ctx, s_cam_x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCameraY(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCameraX(): Map engine must be running");
+	duk_push_int(ctx, s_cam_y);
+	return 1;
+}
+
+static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
 	if (!g_map_running)
-		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Operation requires the map engine to be running");
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Map engine not running");
 	duk_push_string(ctx, s_map_filename);
 	return 1;
 }
@@ -691,9 +765,24 @@ js_GetTileWidth(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SetMapEngineFrameRate(duk_context* ctx)
+js_SetCameraX(duk_context* ctx)
 {
-	s_framerate = duk_to_int(ctx, 0);
+	int new_x = duk_require_int(ctx, 0);
+	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetCameraX(): Map engine must be running");
+	s_cam_x = new_x;
+	return 0;
+}
+
+static duk_ret_t
+js_SetCameraY(duk_context* ctx)
+{
+	int new_y = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetCameraY(): Map engine must be running");
+	s_cam_y = new_y;
 	return 0;
 }
 
@@ -743,6 +832,13 @@ js_SetDelayScript(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetMapEngineFrameRate(duk_context* ctx)
+{
+	s_framerate = duk_to_int(ctx, 0);
+	return 0;
+}
+
+static duk_ret_t
 js_SetRenderScript(duk_context* ctx)
 {
 	lstring_t* code = duk_require_lstring_t(ctx, 0);
@@ -761,13 +857,6 @@ js_SetUpdateScript(duk_context* ctx)
 	free_script(s_update_script);
 	s_update_script = compile_script(code, "[update script]");
 	return 0;
-}
-
-static duk_ret_t
-js_IsMapEngineRunning(duk_context* ctx)
-{
-	duk_push_boolean(ctx, g_map_running);
-	return 1;
 }
 
 static duk_ret_t
@@ -819,6 +908,22 @@ static duk_ret_t
 js_DetachInput(duk_context* ctx)
 {
 	s_input_person = NULL;
+	return 0;
+}
+
+static duk_ret_t
+js_ExecuteTrigger(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int z = duk_require_int(ctx, 2);
+	
+	struct map_trigger* trigger;
+	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
+	trigger = get_trigger_at(x, y, z);
+	if (trigger != NULL) run_script(trigger->script_id, false);
 	return 0;
 }
 

@@ -27,14 +27,17 @@ static duk_ret_t js_CreatePerson         (duk_context* ctx);
 static duk_ret_t js_DestroyPerson        (duk_context* ctx);
 static duk_ret_t js_IsCommandQueueEmpty  (duk_context* ctx);
 static duk_ret_t js_IsPersonObstructed   (duk_context* ctx);
+static duk_ret_t js_DoesPersonExist      (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson     (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection   (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameRevert (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer       (duk_context* ctx);
 static duk_ret_t js_GetPersonList        (duk_context* ctx);
 static duk_ret_t js_GetPersonX           (duk_context* ctx);
 static duk_ret_t js_GetPersonY           (duk_context* ctx);
 static duk_ret_t js_GetTalkDistance      (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection   (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameRevert (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer       (duk_context* ctx);
 static duk_ret_t js_SetPersonScript      (duk_context* ctx);
 static duk_ret_t js_SetPersonX           (duk_context* ctx);
@@ -104,7 +107,7 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 	base1.x1 += x - person->x; base1.x2 += x - person->x;
 	base1.y1 += y - person->y; base1.y2 += y - person->y;
 	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i] == person)
+		if (s_persons[i] == person)  // these persons aren't going to obstruct themselves
 			continue;
 		base2 = get_person_base(s_persons[i]);
 		if (collide_rects(base1, base2)) {
@@ -120,13 +123,15 @@ rect_t
 get_person_base(const person_t* person)
 {
 	rect_t base_rect;
-	int    offs_x, offs_y;
+	int    base_x, base_y;
+	float  x, y;
 
 	base_rect = person->sprite->base;
-	offs_x = person->x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
-	offs_y = person->y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
-	base_rect.x1 += offs_x; base_rect.x2 += offs_x;
-	base_rect.y1 += offs_y; base_rect.y2 += offs_y;
+	get_person_xy(person, &x, &y, true);
+	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
+	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
+	base_rect.x1 += base_x; base_rect.x2 += base_x;
+	base_rect.y1 += base_y; base_rect.y2 += base_y;
 	return base_rect;
 }
 
@@ -320,6 +325,8 @@ talk_person(const person_t* person)
 	if (s_is_talking)
 		return;
 	map_rect = get_map_bounds();
+	
+	// check if anyone else is within earshot
 	get_person_xy(person, &talk_x, &talk_y, true);
 	if (strstr(person->direction, "north") != NULL) talk_y -= s_talk_distance;
 	if (strstr(person->direction, "east") != NULL) talk_x += s_talk_distance;
@@ -364,14 +371,17 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
 	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
 	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
+	register_api_func(g_duktape, NULL, "DoesPersonExist", js_DoesPersonExist);
 	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
+	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
+	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
@@ -440,7 +450,7 @@ js_CreatePerson(duk_context* ctx)
 	const char* name;
 	const char* sprite_file;
 
-	name = duk_to_string(ctx, 0);
+	name = duk_require_string(ctx, 0);
 	sprite_file = duk_require_string(ctx, 1);
 	destroy_with_map = duk_require_boolean(ctx, 2);
 	create_person(name, sprite_file, !destroy_with_map);
@@ -470,6 +480,15 @@ js_IsCommandQueueEmpty(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsCommandQueueEmpty(): Person '%s' doesn't exist", name);
 	duk_push_boolean(ctx, person->num_commands <= 0);
+	return 1;
+}
+
+static duk_ret_t
+js_DoesPersonExist(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	duk_push_boolean(ctx, find_person(name) != NULL);
 	return 1;
 }
 
@@ -507,6 +526,19 @@ js_GetPersonDirection(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
 	duk_push_string(ctx, person->direction);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFrameRevert(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*   person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonFrameRevert(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->revert_delay);
 	return 1;
 }
 
@@ -580,6 +612,22 @@ js_SetPersonDirection(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
 	set_person_direction(person, new_dir);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFrameRevert(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int frames = duk_require_int(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): Person '%s' doesn't exist", name);
+	if (frames < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonFrameRevert(): Negative delay not allowed (caller passed %i)", frames);
+	person->revert_delay = frames;
 	return 0;
 }
 
