@@ -104,15 +104,20 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 {
 	rect_t base1, base2;
 	bool   collision = false;
+	float  cur_x, cur_y;
+	int    layer;
 
 	int i;
 	
 	if (out_obstructing_person) *out_obstructing_person = NULL;
+	get_person_xyz(person, &cur_x, &cur_y, &layer, true);
 	base1 = get_person_base(person);
-	base1.x1 += x - person->x; base1.x2 += x - person->x;
-	base1.y1 += y - person->y; base1.y2 += y - person->y;
+	base1.x1 += x - cur_x; base1.x2 += x - cur_x;
+	base1.y1 += y - cur_y; base1.y2 += y - cur_y;
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person)  // these persons aren't going to obstruct themselves
+			continue;
+		if (s_persons[i]->layer != layer)  // ignore persons not on same layer
 			continue;
 		base2 = get_person_base(s_persons[i]);
 		if (collide_rects(base1, base2)) {
