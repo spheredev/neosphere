@@ -74,7 +74,7 @@ static map_t*              s_map              = NULL;
 static char*               s_map_filename     = NULL;
 static struct map_trigger* s_on_trigger       = NULL;
 static int                 s_render_script    = 0;
-static int                 s_talk_key         = ALLEGRO_KEY_Z;
+static int                 s_talk_key         = ALLEGRO_KEY_SPACE;
 static int                 s_update_script    = 0;
 
 struct map

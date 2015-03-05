@@ -43,6 +43,18 @@ init_input_api(duk_context* ctx)
 	register_api_const(ctx, "KEY_INSERT", ALLEGRO_KEY_INSERT);
 	register_api_const(ctx, "KEY_DELETE", ALLEGRO_KEY_DELETE);
 	register_api_const(ctx, "KEY_BACKSPACE", ALLEGRO_KEY_BACKSPACE);
+	register_api_const(ctx, "KEY_F1", ALLEGRO_KEY_F1);
+	register_api_const(ctx, "KEY_F2", ALLEGRO_KEY_F2);
+	register_api_const(ctx, "KEY_F3", ALLEGRO_KEY_F3);
+	register_api_const(ctx, "KEY_F4", ALLEGRO_KEY_F4);
+	register_api_const(ctx, "KEY_F5", ALLEGRO_KEY_F5);
+	register_api_const(ctx, "KEY_F6", ALLEGRO_KEY_F6);
+	register_api_const(ctx, "KEY_F7", ALLEGRO_KEY_F7);
+	register_api_const(ctx, "KEY_F8", ALLEGRO_KEY_F8);
+	register_api_const(ctx, "KEY_F9", ALLEGRO_KEY_F9);
+	register_api_const(ctx, "KEY_F10", ALLEGRO_KEY_F10);
+	register_api_const(ctx, "KEY_F11", ALLEGRO_KEY_F11);
+	register_api_const(ctx, "KEY_F12", ALLEGRO_KEY_F12);
 	register_api_const(ctx, "KEY_0", ALLEGRO_KEY_0);
 	register_api_const(ctx, "KEY_1", ALLEGRO_KEY_1);
 	register_api_const(ctx, "KEY_2", ALLEGRO_KEY_2);
