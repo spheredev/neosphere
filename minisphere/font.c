@@ -154,7 +154,7 @@ js_Font_drawTextBox(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	int w = duk_require_int(ctx, 2);
 	int h = duk_require_int(ctx, 3);
-	int pad = duk_require_int(ctx, 4);
+	int offset = duk_require_int(ctx, 4);
 	const char* text = duk_to_string(ctx, 5);
 
 	ALLEGRO_FONT* font;
@@ -172,12 +172,12 @@ js_Font_drawTextBox(duk_context* ctx)
 		duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
 		duk_push_this(ctx);
 		duk_push_string(ctx, text);
-		duk_push_int(ctx, w - pad * 2);
+		duk_push_int(ctx, w);
 		duk_call_method(ctx, 2);
 		duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
 		for (i = 0; i < num_lines; ++i) {
 			duk_get_prop_index(ctx, -1, i); line_text = duk_get_string(ctx, -1); duk_pop(ctx);
-			al_draw_text(font, mask, x + pad, y, 0x0, line_text);
+			al_draw_text(font, mask, x + offset, y, 0x0, line_text);
 			y += al_get_font_line_height(font);
 		}
 		duk_pop(ctx);

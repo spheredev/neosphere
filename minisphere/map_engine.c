@@ -37,6 +37,8 @@ static duk_ret_t js_GetInputPerson        (duk_context* ctx);
 static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_GetNumTiles           (duk_context* ctx);
+static duk_ret_t js_GetTile               (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
 static duk_ret_t js_GetTileWidth          (duk_context* ctx);
 static duk_ret_t js_SetCameraX            (duk_context* ctx);
@@ -44,6 +46,7 @@ static duk_ret_t js_SetCameraY            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
+static duk_ret_t js_SetTile               (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
@@ -363,6 +366,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
 	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
+	register_api_func(ctx, NULL, "GetTile", js_GetTile);
 	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
 	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
 	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
@@ -370,6 +375,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetTile", js_SetTile);
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
 	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
@@ -747,6 +753,36 @@ js_GetMapEngineFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetNumTiles(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetNumTiles(): Map engine must be running");
+	duk_push_int(ctx, get_tile_count(s_map->tileset));
+	return 1;
+}
+
+static duk_ret_t
+js_GetTile(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int layer = duk_require_int(ctx, 2);
+	int tile_index = duk_require_int(ctx, 3);
+
+	int layer_w, layer_h;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTile(): Map engine must be running");
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTile(): Invalid layer index (caller passed: %i)", layer);
+	layer_w = s_map->layers[layer].width;
+	layer_h = s_map->layers[layer].height;
+	int* tilemap = s_map->layers[layer].tilemap;
+	duk_push_int(ctx, tilemap[x + y * layer_w]);
+	return 1;
+}
+
+static duk_ret_t
 js_GetTileHeight(duk_context* ctx)
 {
 	int w, h;
@@ -852,6 +888,27 @@ js_SetRenderScript(duk_context* ctx)
 	free_script(s_render_script);
 	s_render_script = compile_script(code, "[render script]");
 	free_lstring(code);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTile(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int layer = duk_require_int(ctx, 2);
+	int tile_index = duk_require_int(ctx, 3);
+
+	int layer_w, layer_h;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetTile(): Map engine must be running");
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTile(): Invalid layer index (caller passed: %i)", layer);
+	layer_w = s_map->layers[layer].width;
+	layer_h = s_map->layers[layer].height;
+	int* tilemap = s_map->layers[layer].tilemap;
+	tilemap[x + y * layer_w] = tile_index;
 	return 0;
 }
 

@@ -115,6 +115,12 @@ free_tileset(tileset_t* tileset)
 	free(tileset);
 }
 
+int
+get_tile_count(const tileset_t* tileset)
+{
+	return tileset->num_tiles;
+}
+
 void
 get_tile_size(const tileset_t* tileset, int* out_w, int* out_h)
 {
