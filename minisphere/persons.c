@@ -3,7 +3,7 @@
 #include "map_engine.h"
 #include "spriteset.h"
 
-#include "person.h"
+#include "persons.h"
 
 struct person
 {
@@ -33,11 +33,13 @@ static duk_ret_t js_GetPersonLayer       (duk_context* ctx);
 static duk_ret_t js_GetPersonList        (duk_context* ctx);
 static duk_ret_t js_GetPersonX           (duk_context* ctx);
 static duk_ret_t js_GetPersonY           (duk_context* ctx);
+static duk_ret_t js_GetTalkDistance      (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection   (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer       (duk_context* ctx);
 static duk_ret_t js_SetPersonScript      (duk_context* ctx);
 static duk_ret_t js_SetPersonX           (duk_context* ctx);
 static duk_ret_t js_SetPersonY           (duk_context* ctx);
+static duk_ret_t js_SetTalkDistance      (duk_context* ctx);
 static duk_ret_t js_CallPersonScript     (duk_context* ctx);
 static duk_ret_t js_ClearPersonCommands  (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson (duk_context* ctx);
@@ -48,6 +50,8 @@ static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
 
 static const person_t* s_current_person = NULL;
+static bool            s_is_talking     = false;
+static int             s_talk_distance  = 8;
 static int             s_num_persons    = 0;
 static person_t*       *s_persons       = NULL;
 
@@ -133,11 +137,14 @@ get_person_name(const person_t* person)
 }
 
 void
-get_person_xy(const person_t* person, float* out_x, float* out_y, int map_width, int map_height, bool normalize)
+get_person_xy(const person_t* person, float* out_x, float* out_y, bool normalize)
 {
+	rect_t map_rect;
+	
 	if (normalize) {
-		*out_x = fmod(fmod(person->x, map_width) + map_width, map_width);
-		*out_y = fmod(fmod(person->y, map_height) + map_height, map_height);
+		map_rect = get_map_bounds();
+		*out_x = fmod(fmod(person->x, map_rect.x2) + map_rect.x2, map_rect.x2);
+		*out_y = fmod(fmod(person->y, map_rect.y2) + map_rect.y2, map_rect.y2);
 	}
 	else {
 		*out_x = person->x;
@@ -259,7 +266,7 @@ find_person(const char* name)
 }
 
 void
-render_persons(int layer, int cam_x, int cam_y, int map_width, int map_height)
+render_persons(int layer, int cam_x, int cam_y)
 {
 	spriteset_t* sprite;
 	float        x, y;
@@ -269,7 +276,7 @@ render_persons(int layer, int cam_x, int cam_y, int map_width, int map_height)
 		if (s_persons[i]->layer != layer)
 			continue;
 		sprite = s_persons[i]->sprite;
-		get_person_xy(s_persons[i], &x, &y, map_width, map_height, true);
+		get_person_xy(s_persons[i], &x, &y, true);
 		x -= cam_x; y -= cam_y;
 		draw_sprite(sprite, s_persons[i]->direction, x, y, s_persons[i]->frame);
 	}
@@ -301,6 +308,29 @@ reset_persons(map_t* map, bool keep_existing)
 		}
 	}
 	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
+}
+
+void
+talk_person(const person_t* person)
+{
+	rect_t    map_rect;
+	person_t* target_person;
+	float     talk_x, talk_y;
+
+	if (s_is_talking)
+		return;
+	map_rect = get_map_bounds();
+	get_person_xy(person, &talk_x, &talk_y, true);
+	if (strstr(person->direction, "north") != NULL) talk_y -= s_talk_distance;
+	if (strstr(person->direction, "east") != NULL) talk_x += s_talk_distance;
+	if (strstr(person->direction, "south") != NULL) talk_y += s_talk_distance;
+	if (strstr(person->direction, "west") != NULL) talk_x -= s_talk_distance;
+	is_person_obstructed_at(person, talk_x, talk_y, &target_person);
+	if (target_person != NULL) {
+		s_is_talking = true;
+		call_person_script(target_person, PERSON_SCRIPT_ON_TALK);
+		s_is_talking = false;
+	}
 }
 
 void
@@ -340,11 +370,13 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
+	register_api_func(g_duktape, NULL, "SetTalkDistance", js_SetTalkDistance);
 	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
 	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
@@ -531,6 +563,13 @@ js_GetPersonY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetTalkDistance(duk_context* ctx)
+{
+	duk_push_int(ctx, s_talk_distance);
+	return 1;
+}
+
+static duk_ret_t
 js_SetPersonDirection(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -601,6 +640,17 @@ js_SetPersonY(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonY(): Person '%s' doesn't exist", name);
 	person->y = y;
+	return 0;
+}
+
+static duk_ret_t
+js_SetTalkDistance(duk_context* ctx)
+{
+	int pixels = duk_require_int(ctx, 0);
+
+	if (pixels < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTalkDistance(): Negative distance not allowed (caller passed %i)", pixels);
+	s_talk_distance = pixels;
 	return 0;
 }
 

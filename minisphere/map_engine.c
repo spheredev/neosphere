@@ -1,6 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
-#include "person.h"
+#include "persons.h"
 #include "tileset.h"
 
 #include "map_engine.h"
@@ -26,6 +26,7 @@ static duk_ret_t js_MapEngine             (duk_context* ctx);
 static duk_ret_t js_AreZonesAt            (duk_context* ctx);
 static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
 static duk_ret_t js_IsInputAttached       (duk_context* ctx);
+static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
 static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
 static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
@@ -35,11 +36,10 @@ static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
 static duk_ret_t js_GetTileWidth          (duk_context* ctx);
-static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
+static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
-static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
 static duk_ret_t js_DetachInput           (duk_context* ctx);
@@ -64,6 +64,7 @@ static person_t*    s_input_person     = NULL;
 static map_t*       s_map              = NULL;
 static char*        s_map_filename     = NULL;
 static int          s_render_script    = 0;
+static int          s_talk_key         = ALLEGRO_KEY_SPACE;
 static int          s_update_script    = 0;
 
 struct map
@@ -373,6 +374,19 @@ init_map_engine_api(duk_context* ctx)
 	init_person_api();
 }
 
+rect_t
+get_map_bounds(void)
+{
+	rect_t bounds;
+	int    tile_w, tile_h;
+	
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	bounds.x1 = 0; bounds.y1 = 0;
+	bounds.x2 = s_map->layers[0].width * tile_w;
+	bounds.y2 = s_map->layers[0].height * tile_h;
+	return bounds;
+}
+
 point3_t
 get_map_origin(void)
 {
@@ -467,11 +481,11 @@ render_map_engine(void)
 		if (s_map->is_toric) {
 			// for small repeating maps, persons need to be repeated as well
 			for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x) {
-				render_persons(z, off_x - x * map_w, off_y - y * map_h, map_w, map_h);
+				render_persons(z, off_x - x * map_w, off_y - y * map_h);
 			}
 		}
 		else {
-			render_persons(z, off_x, off_y, map_w, map_h);
+			render_persons(z, off_x, off_y);
 		}
 	}
 	al_hold_bitmap_drawing(false);
@@ -492,7 +506,11 @@ update_map_engine(void)
 	// check for player input
 	if (s_input_person != NULL) {
 		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
+		if (al_key_down(&kb_state, s_talk_key) && s_input_person != NULL) {
+			// player pressed talk key: check if anybody is within earshot
+			talk_person(s_input_person);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
 			command_person(s_input_person, COMMAND_FACE_NORTH);
 			command_person(s_input_person, COMMAND_MOVE_NORTH);
 		}
@@ -515,7 +533,7 @@ update_map_engine(void)
 		get_tile_size(s_map->tileset, &tile_w, &tile_h);
 		map_w = s_map->layers[0].width * tile_w;
 		map_h = s_map->layers[0].height * tile_h;
-		get_person_xy(s_camera_person, &x, &y, map_w, map_h, false);
+		get_person_xy(s_camera_person, &x, &y, false);
 		s_cam_x = x;
 		s_cam_y = y;
 	}
