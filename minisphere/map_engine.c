@@ -19,7 +19,7 @@ enum map_script_type
 };
 
 static bool                change_map        (const char* filename, bool preserve_persons);
-static struct map_trigger* get_trigger_at    (int x, int y, int z);
+static struct map_trigger* get_trigger_at    (int x, int y, int layer);
 static void                render_map_engine (void);
 static void                update_map_engine (void);
 
@@ -57,21 +57,22 @@ static duk_ret_t js_RenderMap             (duk_context* ctx);
 static duk_ret_t js_SetDelayScript        (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 
-static person_t*    s_camera_person    = NULL;
-static int          s_cam_x            = 0;
-static int          s_cam_y            = 0;
-static int          s_def_scripts[MAP_SCRIPT_MAX];
-static int          s_delay_frames     = -1;
-static int          s_delay_script     = 0;
-static bool         s_exiting          = false;
-static int          s_framerate        = 0;
-static unsigned int s_frames           = 0;
-static person_t*    s_input_person     = NULL;
-static map_t*       s_map              = NULL;
-static char*        s_map_filename     = NULL;
-static int          s_render_script    = 0;
-static int          s_talk_key         = ALLEGRO_KEY_SPACE;
-static int          s_update_script    = 0;
+static person_t*           s_camera_person    = NULL;
+static int                 s_cam_x            = 0;
+static int                 s_cam_y            = 0;
+static int                 s_def_scripts[MAP_SCRIPT_MAX];
+static int                 s_delay_frames     = -1;
+static int                 s_delay_script     = 0;
+static bool                s_exiting          = false;
+static int                 s_framerate        = 0;
+static unsigned int        s_frames           = 0;
+static person_t*           s_input_person     = NULL;
+static map_t*              s_map              = NULL;
+static char*               s_map_filename     = NULL;
+static struct map_trigger* s_on_trigger       = NULL;
+static int                 s_render_script    = 0;
+static int                 s_talk_key         = ALLEGRO_KEY_SPACE;
+static int                 s_update_script    = 0;
 
 struct map
 {
@@ -409,7 +410,9 @@ get_map_bounds(void)
 point3_t
 get_map_origin(void)
 {
-	return s_map->origin;
+	point3_t empty_point = { 0, 0, 0 };
+	
+	return s_map ? s_map->origin : empty_point;
 }
 
 static bool
@@ -459,7 +462,7 @@ change_map(const char* filename, bool preserve_persons)
 }
 
 static struct map_trigger*
-get_trigger_at(int x, int y, int z)
+get_trigger_at(int x, int y, int layer)
 {
 	rect_t              bounds;
 	int                 tile_w, tile_h;
@@ -470,8 +473,8 @@ get_trigger_at(int x, int y, int z)
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	for (i = 0; i < s_map->num_triggers; ++i) {
 		trigger = &s_map->triggers[i];
-		//if (trigger->z != z)  // ignore triggers on a different layer
-			//continue;
+		if (false && trigger->z != layer)  // for full compatibility, ignore layer parameter
+			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
 		bounds.y1 = trigger->y - tile_h / 2;
 		bounds.x2 = bounds.x1 + tile_w;
@@ -541,6 +544,7 @@ static void
 update_map_engine(void)
 {
 	ALLEGRO_KEYBOARD_STATE kb_state;
+	int                    layer;
 	int                    map_w, map_h;
 	int                    tile_w, tile_h;
 	struct map_trigger*    trigger;
@@ -572,9 +576,11 @@ update_map_engine(void)
 			command_person(s_input_person, COMMAND_MOVE_WEST);
 		}
 
-		get_person_xy(s_input_person, &x, &y, true);
-		if ((trigger = get_trigger_at(x, y, 0)) != NULL) {
-			run_script(trigger->script_id, false);
+		get_person_xyz(s_input_person, &x, &y, &layer, true);
+		trigger = get_trigger_at(x, y, layer);
+		if (trigger != s_on_trigger) {
+			s_on_trigger = trigger;
+			if (trigger) run_script(trigger->script_id, true);
 		}
 	}
 	
@@ -923,7 +929,7 @@ js_ExecuteTrigger(duk_context* ctx)
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
 	trigger = get_trigger_at(x, y, z);
-	if (trigger != NULL) run_script(trigger->script_id, false);
+	if (trigger != NULL) run_script(trigger->script_id, true);
 	return 0;
 }
 

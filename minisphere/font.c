@@ -11,6 +11,7 @@ static duk_ret_t js_Font_getHeight       (duk_context* ctx);
 static duk_ret_t js_Font_setColorMask    (duk_context* ctx);
 static duk_ret_t js_Font_drawText        (duk_context* ctx);
 static duk_ret_t js_Font_drawTextBox     (duk_context* ctx);
+static duk_ret_t js_Font_drawZoomedText  (duk_context* ctx);
 static duk_ret_t js_Font_getStringHeight (duk_context* ctx);
 static duk_ret_t js_Font_getStringWidth  (duk_context* ctx);
 static duk_ret_t js_Font_wordWrapString  (duk_context* ctx);
@@ -31,6 +32,7 @@ duk_push_sphere_Font(duk_context* ctx, ALLEGRO_FONT* font)
 	duk_push_c_function(ctx, js_Font_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
 	duk_push_c_function(ctx, js_Font_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
 	duk_push_c_function(ctx, js_Font_drawTextBox, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawTextBox");
+	duk_push_c_function(ctx, js_Font_drawZoomedText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawZoomedText");
 	duk_push_c_function(ctx, js_Font_getStringHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringHeight");
 	duk_push_c_function(ctx, js_Font_getStringWidth, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getStringWidth");
 	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "wordWrapString");
@@ -112,6 +114,36 @@ js_Font_drawText(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	const char* text = duk_to_string(ctx, 2);
 	if (!g_skip_frame) al_draw_text(font, mask, x, y, 0x0, text);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_drawZoomedText(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	float scale = duk_require_number(ctx, 2);
+	const char* text = duk_to_string(ctx, 3);
+	
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_FONT*   font;
+	ALLEGRO_COLOR   mask;
+	int             text_w, text_h;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!g_skip_frame) {
+		text_w = al_get_text_width(font, text);
+		text_h = al_get_font_line_height(font);
+		bitmap = al_create_bitmap(text_w, text_h);
+		al_set_target_bitmap(bitmap);
+		al_draw_text(font, mask, 0, 0, 0x0, text);
+		al_set_target_backbuffer(g_display);
+		al_draw_scaled_bitmap(bitmap, 0, 0, text_w, text_h, x, y, text_w * scale, text_h * scale, 0x0);
+		al_destroy_bitmap(bitmap);
+	}
 	return 0;
 }
 

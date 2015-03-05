@@ -122,6 +122,7 @@ load_spriteset(const char* path)
 		goto on_error;
 	}
 	al_fclose(file);
+	spriteset->c_refs = 1;
 	return spriteset;
 
 on_error:
@@ -140,10 +141,18 @@ on_error:
 }
 
 void
+ref_spriteset(spriteset_t* spriteset)
+{
+	++spriteset->c_refs;
+}
+
+void
 free_spriteset(spriteset_t* spriteset)
 {
 	int i;
 	
+	if (spriteset == NULL || --spriteset->c_refs > 0)
+		return;
 	for (i = 0; i < spriteset->num_images; ++i) {
 		al_destroy_bitmap(spriteset->bitmaps[i]);
 	}

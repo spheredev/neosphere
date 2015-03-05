@@ -40,6 +40,7 @@ static duk_ret_t js_SetPersonDirection   (duk_context* ctx);
 static duk_ret_t js_SetPersonFrameRevert (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer       (duk_context* ctx);
 static duk_ret_t js_SetPersonScript      (duk_context* ctx);
+static duk_ret_t js_SetPersonSpriteset   (duk_context* ctx);
 static duk_ret_t js_SetPersonX           (duk_context* ctx);
 static duk_ret_t js_SetPersonY           (duk_context* ctx);
 static duk_ret_t js_SetTalkDistance      (duk_context* ctx);
@@ -51,6 +52,7 @@ static duk_ret_t js_QueuePersonCommand   (duk_context* ctx);
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
+static void set_person_spriteset (person_t* person, spriteset_t* spriteset);
 
 static const person_t* s_current_person = NULL;
 static bool            s_is_talking     = false;
@@ -61,6 +63,7 @@ static person_t*       *s_persons       = NULL;
 person_t*
 create_person(const char* name, const char* sprite_file, bool is_persistent)
 {
+	point3_t  map_origin = get_map_origin();
 	char*     path;
 	person_t* person;
 
@@ -73,7 +76,9 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	free(path);
 	set_person_direction(person, person->sprite->poses[0].name);
 	person->is_persistent = is_persistent;
-	person->x = 0; person->y = 0; person->layer = 0;
+	person->x = map_origin.x;
+	person->y = map_origin.y;
+	person->layer = map_origin.z;
 	person->speed = 1.0;
 	person->revert_delay = 8;
 	return person;
@@ -157,6 +162,23 @@ get_person_xy(const person_t* person, float* out_x, float* out_y, bool normalize
 	}
 }
 
+void
+get_person_xyz(const person_t* person, float* out_x, float* out_y, int* out_layer, bool normalize)
+{
+	rect_t map_rect;
+
+	*out_layer = person->layer;
+	if (normalize) {
+		map_rect = get_map_bounds();
+		*out_x = fmod(fmod(person->x, map_rect.x2) + map_rect.x2, map_rect.x2);
+		*out_y = fmod(fmod(person->y, map_rect.y2) + map_rect.y2, map_rect.y2);
+	}
+	else {
+		*out_x = person->x;
+		*out_y = person->y;
+	}
+}
+
 bool
 set_person_script(person_t* person, int type, const lstring_t* script)
 {
@@ -176,9 +198,9 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 }
 
 void
-set_person_xyz(person_t* person, int x, int y, int z)
+set_person_xyz(person_t* person, int x, int y, int layer)
 {
-	person->x = x; person->y = y; person->layer = z;
+	person->x = x; person->y = y; person->layer = layer;
 }
 
 bool
@@ -384,6 +406,7 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
+	register_api_func(g_duktape, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
 	register_api_func(g_duktape, NULL, "SetTalkDistance", js_SetTalkDistance);
@@ -441,6 +464,14 @@ set_person_name(person_t* person, const char* name)
 {
 	person->name = realloc(person->name, (strlen(name) + 1) * sizeof(char));
 	strcpy(person->name, name);
+}
+
+static void
+set_person_spriteset(person_t* person, spriteset_t* spriteset)
+{
+	free_spriteset(person->sprite);
+	ref_spriteset(spriteset);
+	person->sprite = spriteset;
 }
 
 static duk_ret_t
@@ -660,6 +691,21 @@ js_SetPersonScript(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
 	set_person_script(person, type, script);
 	free_lstring(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonSpriteset(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*    person;
+	spriteset_t* spriteset;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+	duk_get_prop_string(ctx, 1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	set_person_spriteset(person, spriteset);
 	return 0;
 }
 

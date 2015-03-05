@@ -10,8 +10,9 @@ extern bool        is_person_obstructed_at (const person_t* person, float x, flo
 extern rect_t      get_person_base         (const person_t* person);
 extern const char* get_person_name         (const person_t* person);
 extern void        get_person_xy           (const person_t* person, float* out_x, float* out_y, bool normalize);
+extern void        get_person_xyz          (const person_t* person, float* out_x, float* out_y, int* out_layer, bool normalize);
 extern bool        set_person_script       (person_t* person, int type, const lstring_t* script);
-extern void        set_person_xyz          (person_t* person, int x, int y, int z);
+extern void        set_person_xyz          (person_t* person, int x, int y, int layer);
 extern bool        call_person_script      (const person_t* person, int script_type);
 extern void        command_person          (person_t* person, int command);
 extern person_t*   find_person             (const char* name);

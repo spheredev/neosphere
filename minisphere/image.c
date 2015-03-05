@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include "surface.h"
 
 #include "image.h"
 
@@ -12,6 +13,7 @@ static duk_ret_t js_GrabImage            (duk_context* ctx);
 static duk_ret_t js_Image_finalize       (duk_context* ctx);
 static duk_ret_t js_Image_blit           (duk_context* ctx);
 static duk_ret_t js_Image_blitMask       (duk_context* ctx);
+static duk_ret_t js_Image_createSurface  (duk_context* ctx);
 static duk_ret_t js_Image_rotateBlit     (duk_context* ctx);
 static duk_ret_t js_Image_rotateBlitMask (duk_context* ctx);
 static duk_ret_t js_Image_transformBlit  (duk_context* ctx);
@@ -61,6 +63,7 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_c_function(ctx, &js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, &js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
+	duk_push_c_function(ctx, &js_Image_createSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createSurface");
 	duk_push_c_function(ctx, &js_Image_rotateBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlit");
 	duk_push_c_function(ctx, &js_Image_rotateBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlitMask");
 	duk_push_c_function(ctx, &js_Image_transformBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlit");
@@ -200,6 +203,18 @@ js_Image_blitMask(duk_context* ctx)
 	duk_get_prop_string(ctx, 2, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 2, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	if (!g_skip_frame) al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
+	return 1;
+}
+
+static duk_ret_t
+js_Image_createSurface(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_push_sphere_surface(ctx, al_clone_bitmap(bitmap));
 	return 1;
 }
 
