@@ -14,6 +14,8 @@ struct tile
 	ALLEGRO_BITMAP* bitmap;
 	int             delay;
 	struct tile*    next_tile;
+	int             num_obs_lines;
+	rect_t          *obsmap;
 };
 
 #pragma pack(push, 1)
@@ -37,7 +39,7 @@ struct rts_tile_info
 	int16_t  next_tile;
 	int16_t  delay;
 	uint8_t  unknown_2;
-	uint8_t  blocked;
+	uint8_t  obsmap_type;
 	uint16_t num_segments;
 	uint16_t name_length;
 	uint8_t terraformed;
@@ -66,7 +68,7 @@ load_tileset_f(ALLEGRO_FILE* file)
 	struct tile*         tiles = NULL;
 	tileset_t*           tileset;
 
-	int i;
+	int i, j;
 
 	if (file == NULL) goto on_error;
 	file_pos = al_ftell(file);
@@ -86,6 +88,13 @@ load_tileset_f(ALLEGRO_FILE* file)
 			goto on_error;
 		tiles[i].delay = tile_info.delay;
 		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
+		if (tile_info.obsmap_type == 2) {
+			tiles[i].num_obs_lines = tile_info.num_segments;
+			tiles[i].obsmap = calloc(tiles[i].num_obs_lines, sizeof(rect_t));
+			for (j = 0; j < tile_info.num_segments; ++i) {
+				if (!al_fread_rect(file, &tiles[i].obsmap[j])) goto on_error;
+			}
+		}
 	}
 	tileset->width = rts.tile_width;
 	tileset->height = rts.tile_height;
@@ -96,7 +105,10 @@ load_tileset_f(ALLEGRO_FILE* file)
 on_error:
 	if (file != NULL) al_fseek(file, file_pos, ALLEGRO_SEEK_SET);
 	if (tiles != NULL) {
-		for (i = 0; i < rts.num_tiles; ++i) al_destroy_bitmap(tiles[i].bitmap);
+		for (i = 0; i < rts.num_tiles; ++i) {
+			free(tiles[i].obsmap);
+			al_destroy_bitmap(tiles[i].bitmap);
+		}
 		free(tileset->tiles);
 	}
 	free(tileset);
@@ -110,6 +122,7 @@ free_tileset(tileset_t* tileset)
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		al_destroy_bitmap(tileset->tiles[i].bitmap);
+		free(tileset->tiles[i].obsmap);
 	}
 	free(tileset->tiles);
 	free(tileset);

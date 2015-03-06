@@ -21,4 +21,6 @@ struct rect
 extern bool is_point_in_rect (int x, int y, rect_t bounds);
 extern bool collide_rects    (rect_t a, rect_t b);
 
+extern bool al_fread_rect (ALLEGRO_FILE* file, rect_t* out_rect);
+
 #endif // MINISPHERE__GEOMETRY_H__INCLUDED
