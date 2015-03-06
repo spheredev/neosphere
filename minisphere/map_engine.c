@@ -50,7 +50,6 @@ static duk_ret_t js_SetTile               (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
-static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ChangeMap             (duk_context* ctx);
 static duk_ret_t js_DetachCamera          (duk_context* ctx);
 static duk_ret_t js_DetachInput           (duk_context* ctx);
@@ -81,6 +80,7 @@ struct map
 {
 	bool               is_toric;
 	point3_t           origin;
+	int                scripts[MAP_SCRIPT_MAX];
 	tileset_t*         tileset;
 	int                num_layers;
 	int                num_persons;
@@ -89,7 +89,6 @@ struct map
 	struct map_layer   *layers;
 	struct map_person  *persons;
 	struct map_trigger *triggers;
-	lstring_t*         *scripts;
 	struct map_zone    *zones;
 };
 
@@ -195,7 +194,7 @@ load_map(const char* path)
 	bool                     failed = false;
 	ALLEGRO_FILE*            file;
 	struct rmp_layer_header  layer_info;
-	map_t*                   map;
+	map_t*                   map = NULL;
 	int                      num_tiles;
 	struct map_person*       person;
 	struct rmp_header        rmp;
@@ -209,11 +208,13 @@ load_map(const char* path)
 
 	int i, j;
 	
-	if ((map = calloc(1, sizeof(map_t))) == NULL) goto on_error;
 	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
+	if ((map = calloc(1, sizeof(map_t))) == NULL) goto on_error;
 	if (al_fread(file, &rmp, sizeof(struct rmp_header)) != sizeof(struct rmp_header))
 		goto on_error;
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
+	if (rmp.num_strings != 3 && rmp.num_strings != 5 && rmp.num_strings < 9)
+		goto on_error;
 	switch (rmp.version) {
 	case 1:
 		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
@@ -291,7 +292,18 @@ load_map(const char* path)
 		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
 		map->num_layers = rmp.num_layers;
-		map->scripts = strings;
+		if (rmp.num_strings >= 5) {
+			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "[enter map script]");
+			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "[exit map script]");
+		}
+		if (rmp.num_strings >= 9) {
+			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "[leave map north script]");
+			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "[leave map east script]");
+			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "[leave map south script]");
+			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "[leave map west script]");
+		}
+		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);
+		free(strings);
 		break;
 	default:
 		goto on_error;
@@ -330,14 +342,19 @@ free_map(map_t* map)
 	int i;
 	
 	if (map != NULL) {
-		for (i = 0; i < 9; ++i) free_lstring(map->scripts[i]);
+		for (i = 0; i < MAP_SCRIPT_MAX; ++i)
+			free_script(map->scripts[i]);
 		for (i = 0; i < map->num_persons; ++i) {
 			free_lstring(map->persons[i].name);
 			free_lstring(map->persons[i].spriteset);
+			free_lstring(map->persons[i].create_script);
+			free_lstring(map->persons[i].destroy_script);
+			free_lstring(map->persons[i].command_script);
+			free_lstring(map->persons[i].talk_script);
+			free_lstring(map->persons[i].touch_script);
 		}
-		for (i = 0; i < map->num_triggers; ++i) {
+		for (i = 0; i < map->num_triggers; ++i)
 			free_script(map->triggers[i].script_id);
-		}
 		free(map->triggers);
 		free(map->persons);
 		free(map->scripts);
@@ -435,6 +452,11 @@ change_map(const char* filename, bool preserve_persons)
 	map = load_map(path);
 	free(path);
 	if (map != NULL) {
+		if (s_map != NULL) {
+			// run map exit scripts first, before loading new map
+			run_script(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
+			run_script(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
+		}
 		free_map(s_map); free(s_map_filename);
 		s_map = map; s_map_filename = strdup(filename);
 		reset_persons(s_map, preserve_persons);
@@ -452,12 +474,9 @@ change_map(const char* filename, bool preserve_persons)
 			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
 		}
 		
-		// run default map entry script
+		// run map entry scripts
 		run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
-		
-		// run map entry script
-		duk_compile_lstring(g_duktape, 0x0, s_map->scripts[3]->cstr, s_map->scripts[3]->length);
-		duk_call(g_duktape, 0); duk_pop(g_duktape);
+		run_script(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
 		
 		s_frames = 0;
 		return true;
@@ -552,6 +571,7 @@ update_map_engine(void)
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	int                    layer;
 	int                    map_w, map_h;
+	int                    script_type;
 	int                    tile_w, tile_h;
 	struct map_trigger*    trigger;
 	float                  x, y;
@@ -598,6 +618,20 @@ update_map_engine(void)
 		get_person_xy(s_camera_person, &x, &y, false);
 		s_cam_x = x;
 		s_cam_y = y;
+	}
+
+	// run edge scripts if player walked off map (n/a for repeating maps)
+	if (!s_map->is_toric && s_input_person != NULL) {
+		get_person_xy(s_input_person, &x, &y, false);
+		script_type = y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
+			: x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
+			: y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
+			: y < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
+			: MAP_SCRIPT_MAX;
+		if (script_type < MAP_SCRIPT_MAX) {
+			run_script(s_def_scripts[script_type], false);
+			run_script(s_map->scripts[script_type], false);
+		}
 	}
 
 	// run update and delay scripts, if applicable
