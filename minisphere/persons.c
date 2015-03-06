@@ -23,33 +23,35 @@ struct person
 	int          *commands;
 };
 
-static duk_ret_t js_CreatePerson         (duk_context* ctx);
-static duk_ret_t js_DestroyPerson        (duk_context* ctx);
-static duk_ret_t js_IsCommandQueueEmpty  (duk_context* ctx);
-static duk_ret_t js_IsPersonObstructed   (duk_context* ctx);
-static duk_ret_t js_DoesPersonExist      (duk_context* ctx);
-static duk_ret_t js_GetCurrentPerson     (duk_context* ctx);
-static duk_ret_t js_GetPersonDirection   (duk_context* ctx);
-static duk_ret_t js_GetPersonFrameRevert (duk_context* ctx);
-static duk_ret_t js_GetPersonLayer       (duk_context* ctx);
-static duk_ret_t js_GetPersonList        (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeed       (duk_context* ctx);
-static duk_ret_t js_GetPersonX           (duk_context* ctx);
-static duk_ret_t js_GetPersonY           (duk_context* ctx);
-static duk_ret_t js_GetTalkDistance      (duk_context* ctx);
-static duk_ret_t js_SetPersonDirection   (duk_context* ctx);
-static duk_ret_t js_SetPersonFrameRevert (duk_context* ctx);
-static duk_ret_t js_SetPersonLayer       (duk_context* ctx);
-static duk_ret_t js_SetPersonScript      (duk_context* ctx);
-static duk_ret_t js_SetPersonSpeed       (duk_context* ctx);
-static duk_ret_t js_SetPersonSpriteset   (duk_context* ctx);
-static duk_ret_t js_SetPersonX           (duk_context* ctx);
-static duk_ret_t js_SetPersonY           (duk_context* ctx);
-static duk_ret_t js_SetTalkDistance      (duk_context* ctx);
-static duk_ret_t js_CallPersonScript     (duk_context* ctx);
-static duk_ret_t js_ClearPersonCommands  (duk_context* ctx);
-static duk_ret_t js_GetObstructingPerson (duk_context* ctx);
-static duk_ret_t js_QueuePersonCommand   (duk_context* ctx);
+static duk_ret_t js_CreatePerson            (duk_context* ctx);
+static duk_ret_t js_DestroyPerson           (duk_context* ctx);
+static duk_ret_t js_IsCommandQueueEmpty     (duk_context* ctx);
+static duk_ret_t js_IsPersonObstructed      (duk_context* ctx);
+static duk_ret_t js_DoesPersonExist         (duk_context* ctx);
+static duk_ret_t js_GetCurrentPerson        (duk_context* ctx);
+static duk_ret_t js_GetPersonDirection      (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameRevert    (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer          (duk_context* ctx);
+static duk_ret_t js_GetPersonList           (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeed          (duk_context* ctx);
+static duk_ret_t js_GetPersonX              (duk_context* ctx);
+static duk_ret_t js_GetPersonY              (duk_context* ctx);
+static duk_ret_t js_GetTalkDistance         (duk_context* ctx);
+static duk_ret_t js_SetDefaultPersonScript  (duk_context* ctx);
+static duk_ret_t js_SetPersonDirection      (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameRevert    (duk_context* ctx);
+static duk_ret_t js_SetPersonLayer          (duk_context* ctx);
+static duk_ret_t js_SetPersonScript         (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeed          (duk_context* ctx);
+static duk_ret_t js_SetPersonSpriteset      (duk_context* ctx);
+static duk_ret_t js_SetPersonX              (duk_context* ctx);
+static duk_ret_t js_SetPersonY              (duk_context* ctx);
+static duk_ret_t js_SetTalkDistance         (duk_context* ctx);
+static duk_ret_t js_CallDefaultPersonScript (duk_context* ctx);
+static duk_ret_t js_CallPersonScript        (duk_context* ctx);
+static duk_ret_t js_ClearPersonCommands     (duk_context* ctx);
+static duk_ret_t js_GetObstructingPerson    (duk_context* ctx);
+static duk_ret_t js_QueuePersonCommand      (duk_context* ctx);
 
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
@@ -57,6 +59,7 @@ static void set_person_name      (person_t* person, const char* name);
 static void set_person_spriteset (person_t* person, spriteset_t* spriteset);
 
 static const person_t* s_current_person = NULL;
+static int             s_def_scripts[PERSON_SCRIPT_MAX];
 static bool            s_is_talking     = false;
 static int             s_talk_distance  = 8;
 static int             s_num_persons    = 0;
@@ -91,7 +94,7 @@ destroy_person(person_t* person)
 {
 	int i, j;
 
-	call_person_script(person, PERSON_SCRIPT_ON_DESTROY);
+	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	free_person(person);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person) {
@@ -206,6 +209,7 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 		: NULL;
 	if (script_name == NULL) return false;
 	script_id = compile_script(script, script_name);
+	free_script(person->scripts[type]);
 	person->scripts[type] = script_id;
 	return true;
 }
@@ -225,12 +229,14 @@ set_person_xyz(person_t* person, int x, int y, int layer)
 }
 
 bool
-call_person_script(const person_t* person, int type)
+call_person_script(const person_t* person, int type, bool use_default)
 {
 	const person_t* last_person;
 
 	last_person = s_current_person;
 	s_current_person = person;
+	if (use_default)
+		run_script(s_def_scripts[type], false);
 	run_script(person->scripts[type], false);
 	s_current_person = last_person;
 	return true;
@@ -296,7 +302,8 @@ command_person(person_t* person, int command)
 		}
 		else {
 			// if not, and we collided with a person, call that person's touch script
-			if (person_to_touch) call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH);
+			if (person_to_touch != NULL)
+				call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
 		}
 	}
 }
@@ -345,10 +352,10 @@ reset_persons(map_t* map, bool keep_existing)
 			person->x = map_origin.x;
 			person->y = map_origin.y;
 			person->layer = map_origin.z;
-			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
+			call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
 		}
 		else {
-			call_person_script(person, PERSON_SCRIPT_ON_DESTROY);
+			call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 			free_person(person);
 			--s_num_persons;
 			for (j = i; j < s_num_persons; ++j) s_persons[j] = s_persons[j + 1];
@@ -378,7 +385,7 @@ talk_person(const person_t* person)
 	is_person_obstructed_at(person, talk_x, talk_y, &target_person);
 	if (target_person != NULL) {
 		s_is_talking = true;
-		call_person_script(target_person, PERSON_SCRIPT_ON_TALK);
+		call_person_script(target_person, PERSON_SCRIPT_ON_TALK, true);
 		s_is_talking = false;
 	}
 }
@@ -395,7 +402,7 @@ update_persons(void)
 		person = s_persons[i];
 		if (--person->revert_frames <= 0) person->frame = 0;
 		if (person->num_commands == 0) {
-			call_person_script(person, PERSON_SCRIPT_GENERATOR);
+			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
 		}
 		if (person->num_commands > 0) {
 			command = person->commands[0];
@@ -410,6 +417,8 @@ update_persons(void)
 void
 init_person_api(void)
 {
+	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
+	
 	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
 	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
 	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
@@ -424,6 +433,7 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
+	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
@@ -433,6 +443,7 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
 	register_api_func(g_duktape, NULL, "SetTalkDistance", js_SetTalkDistance);
+	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
 	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
@@ -673,6 +684,20 @@ js_GetTalkDistance(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetDefaultPersonScript(duk_context* ctx)
+{
+	int type = duk_require_int(ctx, 0);
+	lstring_t* script = duk_require_lstring_t(ctx, 2);
+
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_ERROR, "SetDefaultPersonScript(): Invalid script type constant");
+	free_script(s_def_scripts[type]);
+	s_def_scripts[type] = compile_script(script, "[default person script]");
+	free_lstring(script);
+	return 0;
+}
+
+static duk_ret_t
 js_SetPersonDirection(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -803,6 +828,26 @@ js_SetTalkDistance(duk_context* ctx)
 }
 
 static duk_ret_t
+js_CallDefaultPersonScript(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int type = duk_require_int(ctx, 1);
+
+	const person_t* last_person;
+	person_t*       person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "CallDefaultPersonScript(): Person '%s' doesn't exist", name);
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_ERROR, "CallDefaultPersonScript(): Invalid script type constant");
+	last_person = s_current_person;
+	s_current_person = person;
+	run_script(s_def_scripts[type], false);
+	s_current_person = last_person;
+	return 0;
+}
+
+static duk_ret_t
 js_CallPersonScript(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -810,11 +855,11 @@ js_CallPersonScript(duk_context* ctx)
 	
 	person_t*   person;
 
-	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		duk_error(ctx, DUK_ERR_ERROR, "CallPersonScript(): Invalid script type constant");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): Person '%s' doesn't exist", name);
-	call_person_script(person, type);
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_ERROR, "CallPersonScript(): Invalid script type constant");
+	call_person_script(person, type, false);
 	return 0;
 }
 

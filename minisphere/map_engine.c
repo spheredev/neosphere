@@ -50,6 +50,8 @@ static duk_ret_t js_SetTile               (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
+static duk_ret_t js_CallDefaultMapScript  (duk_context* ctx);
+static duk_ret_t js_CallMapScript         (duk_context* ctx);
 static duk_ret_t js_ChangeMap             (duk_context* ctx);
 static duk_ret_t js_DetachCamera          (duk_context* ctx);
 static duk_ret_t js_DetachInput           (duk_context* ctx);
@@ -396,6 +398,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
 	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
+	register_api_func(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
+	register_api_func(ctx, NULL, "CallMapScript", js_CallMapScript);
 	register_api_func(ctx, NULL, "ChangeMap", js_ChangeMap);
 	register_api_func(ctx, NULL, "DetachCamera", js_DetachCamera);
 	register_api_func(ctx, NULL, "DetachInput", js_DetachInput);
@@ -471,7 +475,7 @@ change_map(const char* filename, bool preserve_persons)
 			set_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
 			set_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
 			set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
-			call_person_script(person, PERSON_SCRIPT_ON_CREATE);
+			call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
 		}
 		
 		// run map entry scripts
@@ -979,6 +983,32 @@ js_AttachInput(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
 	s_input_person = person;
+	return 0;
+}
+
+static duk_ret_t
+js_CallDefaultMapScript(duk_context* ctx)
+{
+	int type = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "CallDefaultMapScript(): Map engine is not running");
+	if (type < 0 || type >= MAP_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CallDefaultMapScript(): Invalid script type constant");
+	run_script(s_def_scripts[type], false);
+	return 0;
+}
+
+static duk_ret_t
+js_CallMapScript(duk_context* ctx)
+{
+	int type = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "CallMapScript(): Map engine is not running");
+	if (type < 0 || type >= MAP_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CallMapScript(): Invalid script type constant");
+	run_script(s_map->scripts[type], false);
 	return 0;
 }
 

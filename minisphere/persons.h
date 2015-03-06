@@ -15,7 +15,7 @@ extern void        get_person_xyz          (const person_t* person, float* out_x
 extern bool        set_person_script       (person_t* person, int type, const lstring_t* script);
 extern void        set_person_speed        (person_t* person, float speed);
 extern void        set_person_xyz          (person_t* person, int x, int y, int layer);
-extern bool        call_person_script      (const person_t* person, int script_type);
+extern bool        call_person_script      (const person_t* person, int type, bool use_default);
 extern void        command_person          (person_t* person, int command);
 extern person_t*   find_person             (const char* name);
 extern void        reset_persons           (map_t* map, bool keep_existing);

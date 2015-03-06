@@ -23,7 +23,7 @@
 #include "lstring.h"
 #include "script.h"
 
-static const char* SPHERE_API_VER = "v1.5";
+static const char* SPHERE_API_VER = "v1.6";
 static const char* ENGINE_VER = "v0.0";
 
 typedef struct key_queue key_queue_t;

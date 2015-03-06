@@ -101,7 +101,7 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 static duk_ret_t
 duk_GetVersion(duk_context* ctx)
 {
-	duk_push_number(ctx, 1.5);
+	duk_push_number(ctx, 1.6);
 	return 1;
 }
 
