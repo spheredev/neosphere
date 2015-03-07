@@ -56,10 +56,12 @@ static duk_ret_t js_CallPersonScript        (duk_context* ctx);
 static duk_ret_t js_ClearPersonCommands     (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand      (duk_context* ctx);
 
+static int  compare_persons      (const void* a, const void* b);
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
 static void set_person_spriteset (person_t* person, spriteset_t* spriteset);
+static void sort_persons         (void);
 
 static const person_t* s_current_person = NULL;
 static int             s_def_scripts[PERSON_SCRIPT_MAX];
@@ -90,6 +92,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->speed_x = 1.0;
 	person->speed_y = 1.0;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
+	sort_persons();
 	return person;
 }
 
@@ -106,6 +109,7 @@ destroy_person(person_t* person)
 			--s_num_persons; --i;
 		}
 	}
+	sort_persons();
 }
 
 bool
@@ -260,6 +264,7 @@ set_person_xyz(person_t* person, int x, int y, int layer)
 	person->x = x;
 	person->y = y;
 	person->layer = layer;
+	sort_persons();
 }
 
 bool
@@ -333,6 +338,7 @@ command_person(person_t* person, int command)
 			command_person(person, COMMAND_ANIMATE);
 			person->x = new_x; person->y = new_y;
 			person->revert_frames = person->revert_delay;
+			sort_persons();
 		}
 		else {
 			// if not, and we collided with a person, call that person's touch script
@@ -397,7 +403,7 @@ reset_persons(map_t* map, bool keep_existing)
 			--i;
 		}
 	}
-	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
+	sort_persons();
 }
 
 void
@@ -513,6 +519,15 @@ init_person_api(void)
 	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
+static int
+compare_persons(const void* a, const void* b)
+{
+	person_t* p1 = *(person_t**)a;
+	person_t* p2 = *(person_t**)b;
+
+	return (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
+}
+
 static void
 free_person(person_t* person)
 {
@@ -548,6 +563,12 @@ set_person_spriteset(person_t* person, spriteset_t* spriteset)
 	person->sprite = spriteset;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
 	person->frame = 0;
+}
+
+static void
+sort_persons(void)
+{
+	qsort(s_persons, s_num_persons, sizeof(person_t*), compare_persons);
 }
 
 static duk_ret_t
