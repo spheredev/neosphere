@@ -321,8 +321,8 @@ begin_frame(int framerate)
 			else sprintf(fps_text, "%i fps", s_current_fps);
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
-			x = al_get_display_width(g_display) / 2 - 50;
-			y = al_get_display_height(g_display) - 24;
+			x = al_get_display_width(g_display) - 108;
+			y = 8;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
 			al_draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, ALLEGRO_ALIGN_CENTER, fps_text);
 			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, ALLEGRO_ALIGN_CENTER, fps_text);
