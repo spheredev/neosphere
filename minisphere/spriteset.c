@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "image.h"
+
 #include "spriteset.h"
 
 #pragma pack(push, 1)
@@ -59,8 +60,8 @@ load_spriteset(const char* path)
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
 	spriteset->base.x1 = rss.base_x1;
 	spriteset->base.y1 = rss.base_y1;
-	spriteset->base.x2 = rss.base_x2 + 1;
-	spriteset->base.y2 = rss.base_y2 + 1;
+	spriteset->base.x2 = rss.base_x2;
+	spriteset->base.y2 = rss.base_y2;
 	switch (rss.version) {
 	case 1:
 		spriteset->num_images = rss.num_images;
@@ -171,6 +172,17 @@ get_sprite_base(const spriteset_t* spriteset)
 	return spriteset->base;
 }
 
+int
+get_sprite_frame_delay(const spriteset_t* spriteset, const char* pose_name, int frame_index)
+{
+	const spriteset_pose_t* pose;
+	
+	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+		return 0;
+	frame_index %= pose->num_frames;
+	return pose->frames[frame_index].delay;
+}
+
 void
 draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index)
 {
@@ -181,8 +193,8 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 		return;
 	frame_index = frame_index % pose->num_frames;
 	image_index = pose->frames[frame_index].image_idx;
-	x -= spriteset->base.x1 + (spriteset->base.x2 - spriteset->base.x1) / 2;
-	y -= spriteset->base.y1 + (spriteset->base.y2 - spriteset->base.y1) / 2;
+	x -= (spriteset->base.x1 + spriteset->base.x2) / 2;
+	y -= (spriteset->base.y1 + spriteset->base.y2) / 2;
 	al_draw_bitmap(spriteset->bitmaps[image_index], x, y, 0x0);
 }
 

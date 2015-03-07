@@ -17,9 +17,10 @@ struct person
 	int          revert_delay;
 	int          revert_frames;
 	int          scripts[PERSON_SCRIPT_MAX];
-	float        speed;
+	float        speed_x, speed_y;
 	spriteset_t* sprite;
 	float        x, y;
+	int          x_offset, y_offset;
 	int          num_commands;
 	int          *commands;
 };
@@ -85,8 +86,9 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->x = map_origin.x;
 	person->y = map_origin.y;
 	person->layer = map_origin.z;
-	person->speed = 1.0;
-	person->revert_delay = 8;
+	person->speed_x = 1.0;
+	person->speed_y = 1.0;
+	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
 	return person;
 }
 
@@ -189,7 +191,7 @@ get_person_name(const person_t* person)
 float
 get_person_speed(const person_t* person)
 {
-	return person->speed;
+	return sqrt(person->speed_x * person->speed_y);
 }
 
 void
@@ -247,7 +249,8 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 void
 set_person_speed(person_t* person, float speed)
 {
-	person->speed = speed;
+	person->speed_x = speed;
+	person->speed_y = speed;
 }
 
 void
@@ -281,9 +284,9 @@ command_person(person_t* person, int command)
 	new_x = person->x; new_y = person->y;
 	switch (command) {
 	case COMMAND_ANIMATE:
-		if (--person->anim_frames <= 0) {
+		if (person->anim_frames > 0 && --person->anim_frames == 0) {
 			++person->frame;
-			person->anim_frames = 8;
+			person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
 		}
 		break;
 	case COMMAND_FACE_NORTH:
@@ -311,16 +314,16 @@ command_person(person_t* person, int command)
 		set_person_direction(person, "northwest");
 		break;
 	case COMMAND_MOVE_NORTH:
-		new_y = person->y - person->speed;
+		new_y = person->y - person->speed_y;
 		break;
 	case COMMAND_MOVE_EAST:
-		new_x = person->x + person->speed;
+		new_x = person->x + person->speed_x;
 		break;
 	case COMMAND_MOVE_SOUTH:
-		new_y = person->y + person->speed;
+		new_y = person->y + person->speed_y;
 		break;
 	case COMMAND_MOVE_WEST:
-		new_x = person->x - person->speed;
+		new_x = person->x - person->speed_x;
 		break;
 	}
 	if (new_x != person->x || new_y != person->y) {
@@ -362,7 +365,8 @@ render_persons(int layer, int cam_x, int cam_y)
 			continue;
 		sprite = s_persons[i]->sprite;
 		get_person_xy(s_persons[i], &x, &y, true);
-		x -= cam_x; y -= cam_y;
+		x -= cam_x - s_persons[i]->x_offset;
+		y -= cam_y - s_persons[i]->y_offset;
 		draw_sprite(sprite, s_persons[i]->direction, x, y, s_persons[i]->frame);
 	}
 }
@@ -430,10 +434,10 @@ update_persons(void)
 
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
-		if (--person->revert_frames <= 0) person->frame = 0;
-		if (person->num_commands == 0) {
+		if (person->revert_delay > 0 && --person->revert_frames <= 0)
+			person->frame = 0;
+		if (person->num_commands == 0)
 			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
-		}
 		if (person->num_commands > 0) {
 			command = person->commands[0];
 			--person->num_commands;
@@ -540,6 +544,8 @@ set_person_spriteset(person_t* person, spriteset_t* spriteset)
 	free_spriteset(person->sprite);
 	ref_spriteset(spriteset);
 	person->sprite = spriteset;
+	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
+	person->frame = 0;
 }
 
 static duk_ret_t
