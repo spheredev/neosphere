@@ -81,6 +81,9 @@
     <ClCompile Include="geometry.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="obsmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -150,6 +153,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="obsmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

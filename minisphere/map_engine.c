@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "obsmap.h"
 #include "persons.h"
 #include "tileset.h"
 
@@ -96,8 +97,9 @@ struct map
 
 struct map_layer
 {
-	int  width, height;
-	int* tilemap;
+	int       width, height;
+	int*      tilemap;
+	obsmap_t* obsmap;
 };
 
 struct map_person
@@ -201,6 +203,7 @@ load_map(const char* path)
 	struct map_person*       person;
 	struct rmp_header        rmp;
 	lstring_t*               script;
+	rect_t                   segment;
 	int16_t*                 tile_data = NULL;
 	char*                    tile_path;
 	tileset_t*               tileset;
@@ -232,11 +235,16 @@ load_map(const char* path)
 			map->layers[i].height = layer_info.height;
 			if ((map->layers[i].tilemap = malloc(layer_info.width * layer_info.height * sizeof(int))) == NULL)
 				goto on_error;
+			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
 			free_lstring(al_fread_lstring(file));  // <-- layer name, not used by minisphere
 			num_tiles = layer_info.width * layer_info.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
 			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
+			for (j = 0; j < layer_info.num_segments; ++j) {
+				if (!al_fread_rect_32(file, &segment)) goto on_error;
+				add_obsmap_line(map->layers[i].obsmap, segment);
+			}
 			free(tile_data); tile_data = NULL;
 		}
 		map->persons = NULL; map->num_persons = 0;
@@ -322,7 +330,10 @@ on_error:
 	}
 	if (map != NULL) {
 		if (map->layers != NULL) {
-			for (i = 0; i < rmp.num_layers; ++i) free(map->layers[i].tilemap);
+			for (i = 0; i < rmp.num_layers; ++i) {
+				free(map->layers[i].tilemap);
+				free_obsmap(map->layers[i].obsmap);
+			}
 			free(map->layers);
 		}
 		if (map->persons != NULL) {
@@ -346,6 +357,10 @@ free_map(map_t* map)
 	if (map != NULL) {
 		for (i = 0; i < MAP_SCRIPT_MAX; ++i)
 			free_script(map->scripts[i]);
+		for (i = 0; i < map->num_layers; ++i) {
+			free(map->layers[i].tilemap);
+			free_obsmap(map->layers[i].obsmap);
+		}
 		for (i = 0; i < map->num_persons; ++i) {
 			free_lstring(map->persons[i].name);
 			free_lstring(map->persons[i].spriteset);
@@ -357,11 +372,11 @@ free_map(map_t* map)
 		}
 		for (i = 0; i < map->num_triggers; ++i)
 			free_script(map->triggers[i].script_id);
-		free(map->triggers);
+		free_tileset(map->tileset);
+		free(map->layers);
 		free(map->persons);
 		free(map->scripts);
-		free(map->layers);
-		free_tileset(map->tileset);
+		free(map->triggers);
 		free(map);
 	}
 }
@@ -432,6 +447,12 @@ get_map_bounds(void)
 	bounds.x2 = s_map->layers[0].width * tile_w;
 	bounds.y2 = s_map->layers[0].height * tile_h;
 	return bounds;
+}
+
+obsmap_t*
+get_map_layer_obsmap(int layer)
+{
+	return s_map->layers[layer].obsmap;
 }
 
 point3_t

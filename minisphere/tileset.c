@@ -92,7 +92,7 @@ load_tileset_f(ALLEGRO_FILE* file)
 			tiles[i].num_obs_lines = tile_info.num_segments;
 			tiles[i].obsmap = calloc(tiles[i].num_obs_lines, sizeof(rect_t));
 			for (j = 0; j < tile_info.num_segments; ++i) {
-				if (!al_fread_rect(file, &tiles[i].obsmap[j])) goto on_error;
+				if (!al_fread_rect_16(file, &tiles[i].obsmap[j])) goto on_error;
 			}
 		}
 	}

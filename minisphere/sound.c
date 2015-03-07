@@ -64,16 +64,13 @@ _js_LoadSound(duk_context* ctx)
 	duk_bool_t is_stream = n_args >= 2 ? duk_get_boolean(ctx, 1) : true;
 	ALLEGRO_AUDIO_STREAM* stream = al_load_audio_stream(sound_path, 4, 2048);
 	free(sound_path);
-	if (stream != NULL) {
-		al_set_audio_stream_playing(stream, false);
-		al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
-		al_set_audio_stream_gain(stream, 1.0);
-		_duk_push_sphere_Sound(ctx, stream);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "LoadSound(): Unable to load sound file '%s'", filename);
-	}
+	if (stream == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);
+	al_set_audio_stream_playing(stream, false);
+	al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
+	al_set_audio_stream_gain(stream, 1.0);
+	_duk_push_sphere_Sound(ctx, stream);
+	return 1;
 }
 
 static duk_ret_t

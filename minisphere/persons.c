@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "map_engine.h"
+#include "obsmap.h"
 #include "spriteset.h"
 
 #include "persons.h"
@@ -107,10 +108,11 @@ destroy_person(person_t* person)
 bool
 is_person_obstructed_at(const person_t* person, float x, float y, person_t** out_obstructing_person)
 {
-	rect_t base1, base2;
-	bool   collision = false;
-	float  cur_x, cur_y;
-	int    layer;
+	rect_t    base1, base2;
+	bool      collision = false;
+	float     cur_x, cur_y;
+	int       layer;
+	obsmap_t* obsmap;
 
 	int i;
 	
@@ -125,13 +127,13 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 		if (s_persons[i]->layer != layer)  // ignore persons not on same layer
 			continue;
 		base2 = get_person_base(s_persons[i]);
-		if (collide_rects(base1, base2)) {
+		if (do_rects_intersect(base1, base2)) {
 			if (out_obstructing_person) *out_obstructing_person = s_persons[i];
 			return true;
 		}
 	}
-	// TODO: implement person-tile collision
-	return false;
+	obsmap = get_map_layer_obsmap(layer);
+	return test_obsmap_rect(obsmap, base1);
 }
 
 rect_t
