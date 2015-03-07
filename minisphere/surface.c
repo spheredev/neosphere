@@ -287,13 +287,10 @@ js_Surface_createImage(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	new_bitmap = al_clone_bitmap(bitmap);
-	if (new_bitmap != NULL) {
-		duk_push_sphere_Image(ctx, new_bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:createImage() - Unable to create new bitmap");
-	}
+	if (new_bitmap == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:createImage() - Failed to create new bitmap");
+	duk_push_sphere_image(ctx, new_bitmap, true);
+	return 1;
 }
 
 static duk_ret_t

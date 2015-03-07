@@ -155,7 +155,8 @@ free_spriteset(spriteset_t* spriteset)
 	if (spriteset == NULL || --spriteset->c_refs > 0)
 		return;
 	for (i = 0; i < spriteset->num_images; ++i) {
-		al_destroy_bitmap(spriteset->bitmaps[i]);
+		// FIXME: intentional leak to prevent crashes - need to implement refcounted images
+		//al_destroy_bitmap(spriteset->bitmaps[i]);
 	}
 	al_free(spriteset->bitmaps);
 	for (i = 0; i < spriteset->num_poses; ++i) {
@@ -260,7 +261,7 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	// Spriteset:images
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_images; ++i) {
-		duk_push_sphere_Image(ctx, spriteset->bitmaps[i], false);
+		duk_push_sphere_image(ctx, spriteset->bitmaps[i], true);
 		duk_put_prop_index(ctx, -2, i);
 	}
 	duk_put_prop_string(ctx, -2, "images");
@@ -293,7 +294,7 @@ _js_LoadSpriteset(duk_context* ctx)
 	filename = duk_require_string(ctx, 0);
 	path = get_asset_path(filename, "spritesets", false);
 	if ((spriteset = load_spriteset(path)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "LoadSpriteset(): Unable to load spriteset file '%s'", filename);
+		duk_error(ctx, DUK_ERR_ERROR, "LoadSpriteset(): Failed to load spriteset file '%s'", filename);
 	free(path);
 	duk_push_spriteset(ctx, spriteset);
 	return 1;

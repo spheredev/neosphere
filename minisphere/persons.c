@@ -12,6 +12,8 @@ struct person
 	int          anim_frames;
 	char*        direction;
 	int          frame;
+	bool         ignore_persons;
+	bool         ignore_tiles;
 	bool         is_persistent;
 	int          layer;
 	int          revert_delay;
@@ -25,36 +27,40 @@ struct person
 	int          *commands;
 };
 
-static duk_ret_t js_CreatePerson            (duk_context* ctx);
-static duk_ret_t js_DestroyPerson           (duk_context* ctx);
-static duk_ret_t js_IsCommandQueueEmpty     (duk_context* ctx);
-static duk_ret_t js_IsPersonObstructed      (duk_context* ctx);
-static duk_ret_t js_DoesPersonExist         (duk_context* ctx);
-static duk_ret_t js_GetCurrentPerson        (duk_context* ctx);
-static duk_ret_t js_GetObstructingPerson    (duk_context* ctx);
-static duk_ret_t js_GetObstructingTile      (duk_context* ctx);
-static duk_ret_t js_GetPersonDirection      (duk_context* ctx);
-static duk_ret_t js_GetPersonFrameRevert    (duk_context* ctx);
-static duk_ret_t js_GetPersonLayer          (duk_context* ctx);
-static duk_ret_t js_GetPersonList           (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeed          (duk_context* ctx);
-static duk_ret_t js_GetPersonX              (duk_context* ctx);
-static duk_ret_t js_GetPersonY              (duk_context* ctx);
-static duk_ret_t js_GetTalkDistance         (duk_context* ctx);
-static duk_ret_t js_SetDefaultPersonScript  (duk_context* ctx);
-static duk_ret_t js_SetPersonDirection      (duk_context* ctx);
-static duk_ret_t js_SetPersonFrameRevert    (duk_context* ctx);
-static duk_ret_t js_SetPersonLayer          (duk_context* ctx);
-static duk_ret_t js_SetPersonScript         (duk_context* ctx);
-static duk_ret_t js_SetPersonSpeed          (duk_context* ctx);
-static duk_ret_t js_SetPersonSpriteset      (duk_context* ctx);
-static duk_ret_t js_SetPersonX              (duk_context* ctx);
-static duk_ret_t js_SetPersonY              (duk_context* ctx);
-static duk_ret_t js_SetTalkDistance         (duk_context* ctx);
-static duk_ret_t js_CallDefaultPersonScript (duk_context* ctx);
-static duk_ret_t js_CallPersonScript        (duk_context* ctx);
-static duk_ret_t js_ClearPersonCommands     (duk_context* ctx);
-static duk_ret_t js_QueuePersonCommand      (duk_context* ctx);
+static duk_ret_t js_CreatePerson             (duk_context* ctx);
+static duk_ret_t js_DestroyPerson            (duk_context* ctx);
+static duk_ret_t js_IsCommandQueueEmpty      (duk_context* ctx);
+static duk_ret_t js_IsPersonObstructed       (duk_context* ctx);
+static duk_ret_t js_DoesPersonExist          (duk_context* ctx);
+static duk_ret_t js_GetCurrentPerson         (duk_context* ctx);
+static duk_ret_t js_GetObstructingPerson     (duk_context* ctx);
+static duk_ret_t js_GetObstructingTile       (duk_context* ctx);
+static duk_ret_t js_GetPersonDirection       (duk_context* ctx);
+static duk_ret_t js_GetPersonFrame           (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameRevert     (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer           (duk_context* ctx);
+static duk_ret_t js_GetPersonList            (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeed           (duk_context* ctx);
+static duk_ret_t js_GetPersonX               (duk_context* ctx);
+static duk_ret_t js_GetPersonY               (duk_context* ctx);
+static duk_ret_t js_GetTalkDistance          (duk_context* ctx);
+static duk_ret_t js_SetDefaultPersonScript   (duk_context* ctx);
+static duk_ret_t js_SetPersonDirection       (duk_context* ctx);
+static duk_ret_t js_SetPersonFrame           (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameRevert     (duk_context* ctx);
+static duk_ret_t js_SetPersonLayer           (duk_context* ctx);
+static duk_ret_t js_SetPersonScript          (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeed           (duk_context* ctx);
+static duk_ret_t js_SetPersonSpriteset       (duk_context* ctx);
+static duk_ret_t js_SetPersonX               (duk_context* ctx);
+static duk_ret_t js_SetPersonY               (duk_context* ctx);
+static duk_ret_t js_SetTalkDistance          (duk_context* ctx);
+static duk_ret_t js_CallDefaultPersonScript  (duk_context* ctx);
+static duk_ret_t js_CallPersonScript         (duk_context* ctx);
+static duk_ret_t js_ClearPersonCommands      (duk_context* ctx);
+static duk_ret_t js_IgnorePersonObstructions (duk_context* ctx);
+static duk_ret_t js_IgnoreTileObstructions   (duk_context* ctx);
+static duk_ret_t js_QueuePersonCommand       (duk_context* ctx);
 
 static int  compare_persons      (const void* a, const void* b);
 static void free_person          (person_t* person);
@@ -133,16 +139,18 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 	my_base = translate_rect(get_person_base(person), x - cur_x, y - cur_y);
 
 	// check for obstructing persons
-	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i] == person)  // these persons aren't going to obstruct themselves
-			continue;
-		if (s_persons[i]->layer != layer)  // ignore persons not on same layer
-			continue;
-		base = get_person_base(s_persons[i]);
-		if (do_rects_intersect(my_base, base)) {
-			is_obstructed = true;
-			if (out_obstructing_person) *out_obstructing_person = s_persons[i];
-			break;
+	if (!person->ignore_persons) {
+		for (i = 0; i < s_num_persons; ++i) {
+			if (s_persons[i] == person)  // these persons aren't going to obstruct themselves
+				continue;
+			if (s_persons[i]->layer != layer)  // ignore persons not on same layer
+				continue;
+			base = get_person_base(s_persons[i]);
+			if (do_rects_intersect(my_base, base)) {
+				is_obstructed = true;
+				if (out_obstructing_person) *out_obstructing_person = s_persons[i];
+				break;
+			}
 		}
 	}
 
@@ -152,19 +160,21 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 		is_obstructed = true;
 	
 	// check for obstructing tiles; constrain search to immediate vicinity of sprite base
-	tileset = get_map_tileset();
-	get_tile_size(tileset, &tile_w, &tile_h);
-	area.x1 = my_base.x1 / tile_w;
-	area.y1 = my_base.y1 / tile_h;
-	area.x2 = area.x1 + (my_base.x2 - my_base.x1) / tile_w + 2;
-	area.y2 = area.y1 + (my_base.y2 - my_base.y1) / tile_h + 2;
-	for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
-		base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
-		obsmap = get_tile_obsmap(tileset, get_map_tile(i_x, i_y, layer));
-		if (obsmap != NULL && test_obsmap_rect(obsmap, base)) {
-			is_obstructed = true;
-			if (out_tile_index) *out_tile_index = get_map_tile(i_x, i_y, layer);
-			break;
+	if (!person->ignore_tiles) {
+		tileset = get_map_tileset();
+		get_tile_size(tileset, &tile_w, &tile_h);
+		area.x1 = my_base.x1 / tile_w;
+		area.y1 = my_base.y1 / tile_h;
+		area.x2 = area.x1 + (my_base.x2 - my_base.x1) / tile_w + 2;
+		area.y2 = area.y1 + (my_base.y2 - my_base.y1) / tile_h + 2;
+		for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
+			base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
+			obsmap = get_tile_obsmap(tileset, get_map_tile(i_x, i_y, layer));
+			if (obsmap != NULL && test_obsmap_rect(obsmap, base)) {
+				is_obstructed = true;
+				if (out_tile_index) *out_tile_index = get_map_tile(i_x, i_y, layer);
+				break;
+			}
 		}
 	}
 	
@@ -469,6 +479,7 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
+	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
@@ -478,6 +489,7 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
 	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
+	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
@@ -489,6 +501,8 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
 	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
+	register_api_func(g_duktape, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
+	register_api_func(g_duktape, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
 	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 
 	// movement script specifier constants
@@ -709,6 +723,19 @@ js_GetPersonFrameRevert(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonFrame(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->frame);
+	return 0;
+}
+
+static duk_ret_t
 js_GetPersonLayer(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -805,6 +832,22 @@ js_SetPersonDirection(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
 	set_person_direction(person, new_dir);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFrame(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int frame_index = duk_require_int(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
+	if (frame_index < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonFrame(): Invalid frame index or frame doesn't exist (caller passed %i)", frame_index);
+	person->frame = frame_index;
 	return 0;
 }
 
@@ -970,8 +1013,34 @@ js_ClearPersonCommands(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "ClearPersonCommands(): Person '%s' doesn't exist", name);
 	person->num_commands = 0;
-	free(person->commands);
-	person->commands = NULL;
+	return 0;
+}
+
+static duk_ret_t
+js_IgnorePersonObstructions(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	bool is_ignoring = duk_require_boolean(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IgnorePersonObstructions(): Person '%s' doesn't exist", name);
+	person->ignore_persons = is_ignoring;
+	return 0;
+}
+
+static duk_ret_t
+js_IgnoreTileObstructions(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	bool is_ignoring = duk_require_boolean(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IgnoreTileObstructions(): Person '%s' doesn't exist", name);
+	person->ignore_tiles = is_ignoring;
 	return 0;
 }
 

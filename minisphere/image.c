@@ -56,7 +56,7 @@ init_image_api(duk_context* ctx)
 }
 
 void
-duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
+duk_push_sphere_image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
@@ -87,7 +87,7 @@ static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow != NULL) {
-		duk_push_sphere_Image(ctx, s_sys_arrow, false);
+		duk_push_sphere_image(ctx, s_sys_arrow, false);
 		return 1;
 	}
 	else {
@@ -99,7 +99,7 @@ static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow != NULL) {
-		duk_push_sphere_Image(ctx, s_sys_dn_arrow, false);
+		duk_push_sphere_image(ctx, s_sys_dn_arrow, false);
 		return 1;
 	}
 	else {
@@ -111,7 +111,7 @@ static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow != NULL) {
-		duk_push_sphere_Image(ctx, s_sys_up_arrow, false);
+		duk_push_sphere_image(ctx, s_sys_up_arrow, false);
 		return 1;
 	}
 	else {
@@ -122,17 +122,18 @@ js_GetSystemUpArrow(duk_context* ctx)
 static duk_ret_t
 js_LoadImage(duk_context* ctx)
 {
-	const char* filename = duk_get_string(ctx, 0);
-	char* path = get_asset_path(filename, "images", false);
-	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
+	const char* filename = duk_require_string(ctx, 0);
+
+	ALLEGRO_BITMAP* bitmap;
+	char*           path;
+	
+	path = get_asset_path(filename, "images", false);
+	bitmap = al_load_bitmap(path);
 	free(path);
-	if (bitmap != NULL) {
-		duk_push_sphere_Image(ctx, bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Unable to load image file '%s'", filename);
-	}
+	if (bitmap == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Failed to load image file '%s'", filename);
+	duk_push_sphere_image(ctx, bitmap, true);
+	return 1;
 }
 
 static duk_ret_t
@@ -152,7 +153,7 @@ js_GrabImage(duk_context* ctx)
 		al_set_target_bitmap(bitmap);
 		al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 		al_set_target_backbuffer(g_display);
-		duk_push_sphere_Image(ctx, bitmap, true);
+		duk_push_sphere_image(ctx, bitmap, true);
 		return 1;
 	}
 	else {
@@ -168,9 +169,7 @@ js_Image_finalize(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "allow_free"); allow_free = duk_get_boolean(ctx, -1); duk_pop(ctx);
-	if (allow_free) {
-		al_destroy_bitmap(bitmap);
-	}
+	if (allow_free) al_destroy_bitmap(bitmap);
 	return 0;
 }
 

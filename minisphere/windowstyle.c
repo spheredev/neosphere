@@ -157,39 +157,6 @@ _duk_push_winstyle(duk_context* ctx, windowstyle_t* winstyle)
 	duk_push_c_function(ctx, &_js_WindowStyle_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &_js_WindowStyle_drawWindow, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawWindow");
 	duk_push_c_function(ctx, &_js_WindowStyle_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
-
-	/*// Spriteset:base
-	duk_push_object(ctx);
-	duk_push_int(ctx, spriteset->base.x1); duk_put_prop_string(ctx, -2, "x1");
-	duk_push_int(ctx, spriteset->base.y1); duk_put_prop_string(ctx, -2, "y1");
-	duk_push_int(ctx, spriteset->base.x2); duk_put_prop_string(ctx, -2, "x2");
-	duk_push_int(ctx, spriteset->base.y2); duk_put_prop_string(ctx, -2, "y2");
-	duk_put_prop_string(ctx, -2, "base");
-
-	// Spriteset:images
-	duk_push_array(ctx);
-	for (i = 0; i < spriteset->num_images; ++i) {
-		duk_push_sphere_Image(ctx, spriteset->bitmaps[i], false);
-		duk_put_prop_index(ctx, -2, i);
-	}
-	duk_put_prop_string(ctx, -2, "images");
-
-	// Spriteset:directions
-	duk_push_array(ctx);
-	for (i = 0; i < spriteset->num_poses; ++i) {
-		duk_push_object(ctx);
-		duk_push_string(ctx, spriteset->poses[i].name); duk_put_prop_string(ctx, -2, "name");
-		duk_push_array(ctx);
-		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
-			duk_push_object(ctx);
-			duk_push_int(ctx, spriteset->poses[i].frames[j].image_idx); duk_put_prop_string(ctx, -2, "index");
-			duk_push_int(ctx, spriteset->poses[i].frames[j].delay); duk_put_prop_string(ctx, -2, "delay");
-			duk_put_prop_index(ctx, -2, j);
-		}
-		duk_put_prop_string(ctx, -2, "frames");
-		duk_put_prop_index(ctx, -2, i);
-	}
-	duk_put_prop_string(ctx, -2, "directions");*/
 }
 
 static duk_ret_t
