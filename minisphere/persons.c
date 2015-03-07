@@ -31,6 +31,8 @@ static duk_ret_t js_IsCommandQueueEmpty     (duk_context* ctx);
 static duk_ret_t js_IsPersonObstructed      (duk_context* ctx);
 static duk_ret_t js_DoesPersonExist         (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson        (duk_context* ctx);
+static duk_ret_t js_GetObstructingPerson    (duk_context* ctx);
+static duk_ret_t js_GetObstructingTile      (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection      (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert    (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer          (duk_context* ctx);
@@ -52,7 +54,6 @@ static duk_ret_t js_SetTalkDistance         (duk_context* ctx);
 static duk_ret_t js_CallDefaultPersonScript (duk_context* ctx);
 static duk_ret_t js_CallPersonScript        (duk_context* ctx);
 static duk_ret_t js_ClearPersonCommands     (duk_context* ctx);
-static duk_ret_t js_GetObstructingPerson    (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand      (duk_context* ctx);
 
 static void free_person          (person_t* person);
@@ -459,6 +460,8 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
 	register_api_func(g_duktape, NULL, "DoesPersonExist", js_DoesPersonExist);
 	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
+	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
+	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
@@ -480,7 +483,6 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
 	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
-	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 
 	// movement script specifier constants
@@ -618,6 +620,44 @@ js_GetCurrentPerson(duk_context* ctx)
 	if (s_current_person == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentPerson(): Must be called from a person script");
 	duk_push_string(ctx, s_current_person->name);
+	return 1;
+}
+
+static duk_ret_t
+js_GetObstructingPerson(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+
+	person_t* obs_person = NULL;
+	person_t* person;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
+	is_person_obstructed_at(person, x, y, &obs_person, NULL);
+	duk_push_string(ctx, obs_person != NULL ? get_person_name(obs_person) : "");
+	return 1;
+}
+
+static duk_ret_t
+js_GetObstructingTile(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+
+	person_t* person;
+	int       tile_index;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingTile(): Map engine must be running");
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingTile(): Person '%s' doesn't exist", name);
+	is_person_obstructed_at(person, x, y, NULL, &tile_index);
+	duk_push_int(ctx, tile_index);
 	return 1;
 }
 
@@ -912,25 +952,6 @@ js_ClearPersonCommands(duk_context* ctx)
 	free(person->commands);
 	person->commands = NULL;
 	return 0;
-}
-
-static duk_ret_t
-js_GetObstructingPerson(duk_context* ctx)
-{
-	const char* name = duk_require_string(ctx, 0);
-	int x = duk_require_int(ctx, 1);
-	int y = duk_require_int(ctx, 2);
-
-	person_t* obs_person = NULL;
-	person_t* person;
-	
-	if (!g_map_running)
-		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
-	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
-	is_person_obstructed_at(person, x, y, &obs_person, NULL);
-	duk_push_string(ctx, obs_person != NULL ? get_person_name(obs_person) : "");
-	return 1;
 }
 
 static duk_ret_t

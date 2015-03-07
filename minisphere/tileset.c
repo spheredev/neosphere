@@ -93,9 +93,8 @@ load_tileset_f(ALLEGRO_FILE* file)
 		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
 		if (rts.has_obstructions) {
 			switch (tile_info.obsmap_type) {
-			case 1:  // pixel-perfect obstruction
-				// TODO: support pixel-perfect tile obstruction (maybe)
-				al_fseek(file, rts.tile_width * rts.tile_height, ALLEGRO_SEEK_CUR);  // for now, just skip over it
+			case 1:  // pixel-perfect obstruction (no longer supported)
+				al_fseek(file, rts.tile_width * rts.tile_height, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // line segment-based obstruction
 				tiles[i].num_obs_lines = tile_info.num_segments;
