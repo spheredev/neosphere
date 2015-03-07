@@ -42,6 +42,12 @@ is_point_in_rect(int x, int y, rect_t bounds)
 		&& y >= bounds.y1 && y < bounds.y2;
 }
 
+rect_t
+translate_rect(rect_t rect, int x_offset, int y_offset)
+{
+	return new_rect(rect.x1 + x_offset, rect.y1 + y_offset, rect.x2 + x_offset, rect.y2 + y_offset);
+}
+
 bool
 al_fread_rect_16(ALLEGRO_FILE* file, rect_t* out_rect)
 {

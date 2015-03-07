@@ -1,4 +1,5 @@
 #include "minisphere.h"
+#include "obsmap.h"
 
 #include "tileset.h"
 
@@ -15,7 +16,7 @@ struct tile
 	int             delay;
 	struct tile*    next_tile;
 	int             num_obs_lines;
-	rect_t          *obsmap;
+	obsmap_t*       obsmap;
 };
 
 #pragma pack(push, 1)
@@ -42,8 +43,8 @@ struct rts_tile_info
 	uint8_t  obsmap_type;
 	uint16_t num_segments;
 	uint16_t name_length;
-	uint8_t terraformed;
-	uint8_t reserved[19];
+	uint8_t  terraformed;
+	uint8_t  reserved[19];
 };
 #pragma pack(pop)
 
@@ -64,6 +65,7 @@ load_tileset_f(ALLEGRO_FILE* file)
 {
 	int64_t              file_pos;
 	struct rts_header    rts;
+	rect_t               segment;
 	struct rts_tile_info tile_info;
 	struct tile*         tiles = NULL;
 	tileset_t*           tileset;
@@ -90,9 +92,11 @@ load_tileset_f(ALLEGRO_FILE* file)
 		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
 		if (tile_info.obsmap_type == 2) {
 			tiles[i].num_obs_lines = tile_info.num_segments;
-			tiles[i].obsmap = calloc(tiles[i].num_obs_lines, sizeof(rect_t));
-			for (j = 0; j < tile_info.num_segments; ++i) {
-				if (!al_fread_rect_16(file, &tiles[i].obsmap[j])) goto on_error;
+			if ((tiles[i].obsmap = new_obsmap()) == NULL) goto on_error;
+			for (j = 0; j < tile_info.num_segments; ++j) {
+				if (!al_fread_rect_16(file, &segment))
+					goto on_error;
+				add_obsmap_line(tiles[i].obsmap, segment);
 			}
 		}
 	}
@@ -106,7 +110,7 @@ on_error:
 	if (file != NULL) al_fseek(file, file_pos, ALLEGRO_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
-			free(tiles[i].obsmap);
+			free_obsmap(tiles[i].obsmap);
 			al_destroy_bitmap(tiles[i].bitmap);
 		}
 		free(tileset->tiles);
@@ -122,7 +126,7 @@ free_tileset(tileset_t* tileset)
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		al_destroy_bitmap(tileset->tiles[i].bitmap);
-		free(tileset->tiles[i].obsmap);
+		free_obsmap(tileset->tiles[i].obsmap);
 	}
 	free(tileset->tiles);
 	free(tileset);
@@ -132,6 +136,12 @@ int
 get_tile_count(const tileset_t* tileset)
 {
 	return tileset->num_tiles;
+}
+
+const obsmap_t*
+get_tile_obsmap(const tileset_t* tileset, int tile_index)
+{
+	return tileset->tiles[tile_index].obsmap;
 }
 
 void

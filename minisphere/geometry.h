@@ -19,9 +19,10 @@ struct rect
 };
 
 extern rect_t new_rect           (int x1, int y1, int x2, int y2);
-extern bool   do_lines_intersect(rect_t a, rect_t b);
-extern bool   do_rects_intersect(rect_t a, rect_t b);
+extern bool   do_lines_intersect (rect_t a, rect_t b);
+extern bool   do_rects_intersect (rect_t a, rect_t b);
 extern bool   is_point_in_rect   (int x, int y, rect_t bounds);
+extern rect_t translate_rect     (rect_t rect, int x_offset, int y_offset);
 
 extern bool al_fread_rect_16 (ALLEGRO_FILE* file, rect_t* out_rect);
 extern bool al_fread_rect_32 (ALLEGRO_FILE* file, rect_t* out_rect);

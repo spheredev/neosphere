@@ -42,7 +42,7 @@ add_obsmap_line(obsmap_t* obsmap, rect_t line)
 }
 
 bool
-test_obsmap_line(obsmap_t* obsmap, rect_t line)
+test_obsmap_line(const obsmap_t* obsmap, rect_t line)
 {
 	int i;
 
@@ -54,7 +54,7 @@ test_obsmap_line(obsmap_t* obsmap, rect_t line)
 }
 
 bool
-test_obsmap_rect(obsmap_t* obsmap, rect_t rect)
+test_obsmap_rect(const obsmap_t* obsmap, rect_t rect)
 {
 	return test_obsmap_line(obsmap, new_rect(rect.x1, rect.y1, rect.x2, rect.y1))
 		|| test_obsmap_line(obsmap, new_rect(rect.x2, rect.y1, rect.x2, rect.y2))

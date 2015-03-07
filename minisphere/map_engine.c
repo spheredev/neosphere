@@ -449,7 +449,7 @@ get_map_bounds(void)
 	return bounds;
 }
 
-obsmap_t*
+const obsmap_t*
 get_map_layer_obsmap(int layer)
 {
 	return s_map->layers[layer].obsmap;
@@ -461,6 +461,23 @@ get_map_origin(void)
 	point3_t empty_point = { 0, 0, 0 };
 	
 	return s_map ? s_map->origin : empty_point;
+}
+
+int
+get_map_tile(int x, int y, int layer)
+{
+	int layer_h = s_map->layers[layer].height;
+	int layer_w = s_map->layers[layer].width;
+
+	x = (x % layer_w + layer_w) % layer_w;
+	y = (y % layer_h + layer_h) % layer_h;
+	return s_map->layers[layer].tilemap[x + y * layer_w];
+}
+
+const tileset_t*
+get_map_tileset(void)
+{
+	return s_map->tileset;
 }
 
 static bool

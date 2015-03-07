@@ -106,34 +106,62 @@ destroy_person(person_t* person)
 }
 
 bool
-is_person_obstructed_at(const person_t* person, float x, float y, person_t** out_obstructing_person)
+is_person_obstructed_at(const person_t* person, float x, float y, person_t** out_obstructing_person, int* out_tile_index)
 {
-	rect_t    base1, base2;
-	bool      collision = false;
-	float     cur_x, cur_y;
-	int       layer;
-	obsmap_t* obsmap;
+	rect_t           area;
+	rect_t           base, my_base;
+	bool             collision = false;
+	float            cur_x, cur_y;
+	bool             is_obstructed = false;
+	int              layer;
+	const obsmap_t*  obsmap;
+	int              tile_w, tile_h;
+	const tileset_t* tileset;
 
-	int i;
+	int i, i_x, i_y;
 	
 	if (out_obstructing_person) *out_obstructing_person = NULL;
+	if (out_tile_index) *out_tile_index = -1;
 	get_person_xyz(person, &cur_x, &cur_y, &layer, true);
-	base1 = get_person_base(person);
-	base1.x1 += x - cur_x; base1.x2 += x - cur_x;
-	base1.y1 += y - cur_y; base1.y2 += y - cur_y;
+	my_base = translate_rect(get_person_base(person), x - cur_x, y - cur_y);
+
+	// check for obstructing persons
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person)  // these persons aren't going to obstruct themselves
 			continue;
 		if (s_persons[i]->layer != layer)  // ignore persons not on same layer
 			continue;
-		base2 = get_person_base(s_persons[i]);
-		if (do_rects_intersect(base1, base2)) {
+		base = get_person_base(s_persons[i]);
+		if (do_rects_intersect(my_base, base)) {
+			is_obstructed = true;
 			if (out_obstructing_person) *out_obstructing_person = s_persons[i];
-			return true;
+			break;
 		}
 	}
+
+	// no obstructing person, check map-defined obstructions
 	obsmap = get_map_layer_obsmap(layer);
-	return test_obsmap_rect(obsmap, base1);
+	if (test_obsmap_rect(obsmap, my_base))
+		is_obstructed = true;
+	
+	// check for obstructing tiles; constrain search to immediate vicinity of sprite base
+	tileset = get_map_tileset();
+	get_tile_size(tileset, &tile_w, &tile_h);
+	area.x1 = my_base.x1 / tile_w;
+	area.y1 = my_base.y1 / tile_h;
+	area.x2 = area.x1 + (my_base.x2 - my_base.x1) / tile_w + 2;
+	area.y2 = area.y1 + (my_base.y2 - my_base.y1) / tile_h + 2;
+	for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
+		base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
+		obsmap = get_tile_obsmap(tileset, get_map_tile(i_x, i_y, layer));
+		if (test_obsmap_rect(obsmap, base)) {
+			is_obstructed = true;
+			if (out_tile_index) *out_tile_index = get_map_tile(i_x, i_y, layer);
+			break;
+		}
+	}
+	
+	return is_obstructed;
 }
 
 rect_t
@@ -297,7 +325,7 @@ command_person(person_t* person, int command)
 	}
 	if (new_x != person->x || new_y != person->y) {
 		// person is trying to move, make sure the path is clear of obstructions
-		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch)) {
+		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
 			command_person(person, COMMAND_ANIMATE);
 			person->x = new_x; person->y = new_y;
 			person->revert_frames = person->revert_delay;
@@ -384,7 +412,7 @@ talk_person(const person_t* person)
 	if (strstr(person->direction, "east") != NULL) talk_x += s_talk_distance;
 	if (strstr(person->direction, "south") != NULL) talk_y += s_talk_distance;
 	if (strstr(person->direction, "west") != NULL) talk_x -= s_talk_distance;
-	is_person_obstructed_at(person, talk_x, talk_y, &target_person);
+	is_person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
 	if (target_person != NULL) {
 		s_is_talking = true;
 		call_person_script(target_person, PERSON_SCRIPT_ON_TALK, true);
@@ -574,7 +602,7 @@ js_IsPersonObstructed(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsPersonObstructed(): Person '%s' doesn't exist", name);
-	duk_push_boolean(ctx, is_person_obstructed_at(person, x, y, NULL));
+	duk_push_boolean(ctx, is_person_obstructed_at(person, x, y, NULL, NULL));
 	return 1;
 }
 
@@ -894,7 +922,7 @@ js_GetObstructingPerson(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
-	is_person_obstructed_at(person, x, y, &obs_person);
+	is_person_obstructed_at(person, x, y, &obs_person, NULL);
 	duk_push_string(ctx, obs_person != NULL ? get_person_name(obs_person) : "");
 	return 1;
 }
