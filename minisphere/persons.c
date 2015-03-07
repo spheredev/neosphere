@@ -156,7 +156,7 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 	for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
 		base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
 		obsmap = get_tile_obsmap(tileset, get_map_tile(i_x, i_y, layer));
-		if (test_obsmap_rect(obsmap, base)) {
+		if (obsmap != NULL && test_obsmap_rect(obsmap, base)) {
 			is_obstructed = true;
 			if (out_tile_index) *out_tile_index = get_map_tile(i_x, i_y, layer);
 			break;

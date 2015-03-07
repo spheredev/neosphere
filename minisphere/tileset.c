@@ -88,15 +88,26 @@ load_tileset_f(ALLEGRO_FILE* file)
 	for (i = 0; i < rts.num_tiles; ++i) {
 		if (al_fread(file, &tile_info, sizeof(struct rts_tile_info)) != sizeof(struct rts_tile_info))
 			goto on_error;
+		al_fseek(file, tile_info.name_length, ALLEGRO_SEEK_CUR);  // TODO: load tile names
 		tiles[i].delay = tile_info.delay;
 		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
-		if (tile_info.obsmap_type == 2) {
-			tiles[i].num_obs_lines = tile_info.num_segments;
-			if ((tiles[i].obsmap = new_obsmap()) == NULL) goto on_error;
-			for (j = 0; j < tile_info.num_segments; ++j) {
-				if (!al_fread_rect_16(file, &segment))
-					goto on_error;
-				add_obsmap_line(tiles[i].obsmap, segment);
+		if (rts.has_obstructions) {
+			switch (tile_info.obsmap_type) {
+			case 1:  // pixel-perfect obstruction
+				// TODO: support pixel-perfect tile obstruction (maybe)
+				al_fseek(file, rts.tile_width * rts.tile_height, ALLEGRO_SEEK_CUR);  // for now, just skip over it
+				break;
+			case 2:  // line segment-based obstruction
+				tiles[i].num_obs_lines = tile_info.num_segments;
+				if ((tiles[i].obsmap = new_obsmap()) == NULL) goto on_error;
+				for (j = 0; j < tile_info.num_segments; ++j) {
+					if (!al_fread_rect_16(file, &segment))
+						goto on_error;
+					add_obsmap_line(tiles[i].obsmap, segment);
+				}
+				break;
+			default:
+				goto on_error;
 			}
 		}
 	}

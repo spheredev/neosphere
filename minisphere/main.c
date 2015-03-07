@@ -115,7 +115,7 @@ main(int argc, char** argv)
 	g_game_conf = al_load_config_file(sgm_path);
 	free(sgm_path);
 	if (g_game_conf == NULL) {
-		file_dlg = al_create_native_file_dialog(NULL, "Where is game.sgm?", "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		file_dlg = al_create_native_file_dialog(NULL, "minisphere - Where is game.sgm?", "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
