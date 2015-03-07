@@ -343,6 +343,7 @@ begin_frame(int framerate)
 		s_num_flips = 0;
 		s_num_frames = 0;
 	}
+	check_input();
 	return true;
 }
 
