@@ -375,7 +375,6 @@ free_map(map_t* map)
 		free_tileset(map->tileset);
 		free(map->layers);
 		free(map->persons);
-		free(map->scripts);
 		free(map->triggers);
 		free(map);
 	}
