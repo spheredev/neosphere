@@ -2,17 +2,26 @@
 #include "api.h"
 #include "input.h"
 
-static duk_ret_t _js_AreKeysLeft     (duk_context* ctx);
-static duk_ret_t _js_GetKey          (duk_context* ctx);
-static duk_ret_t _js_GetKeyString    (duk_context* ctx);
-static duk_ret_t _js_GetPlayerKey    (duk_context* ctx);
-static duk_ret_t _js_GetToggleState  (duk_context* ctx);
-static duk_ret_t _js_IsKeyPressed    (duk_context* ctx);
-static duk_ret_t _js_IsAnyKeyPressed (duk_context* ctx);
+static duk_ret_t js_AreKeysLeft     (duk_context* ctx);
+static duk_ret_t js_BindKey         (duk_context* ctx);
+static duk_ret_t js_GetKey          (duk_context* ctx);
+static duk_ret_t js_GetKeyString    (duk_context* ctx);
+static duk_ret_t js_GetPlayerKey    (duk_context* ctx);
+static duk_ret_t js_GetToggleState  (duk_context* ctx);
+static duk_ret_t js_IsKeyPressed    (duk_context* ctx);
+static duk_ret_t js_IsAnyKeyPressed (duk_context* ctx);
+
+static int  s_key_down_scripts[ALLEGRO_KEY_MAX];
+static int  s_key_up_scripts[ALLEGRO_KEY_MAX];
+static bool s_last_key_state[ALLEGRO_KEY_MAX];
 
 void
 init_input_api(duk_context* ctx)
 {
+	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
+	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
+	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+
 	register_api_const(ctx, "PLAYER_1", 0);
 	register_api_const(ctx, "PLAYER_2", 1);
 	register_api_const(ctx, "PLAYER_3", 2);
@@ -92,24 +101,55 @@ init_input_api(duk_context* ctx)
 	register_api_const(ctx, "KEY_Y", ALLEGRO_KEY_Y);
 	register_api_const(ctx, "KEY_Z", ALLEGRO_KEY_Z);
 
-	register_api_func(ctx, NULL, "AreKeysLeft", &_js_AreKeysLeft);
-	register_api_func(ctx, NULL, "GetKey", &_js_GetKey);
-	register_api_func(ctx, NULL, "GetKeyString", &_js_GetKeyString);
-	register_api_func(ctx, NULL, "GetPlayerKey", &_js_GetPlayerKey);
-	register_api_func(ctx, NULL, "GetToggleState", &_js_GetToggleState);
-	register_api_func(ctx, NULL, "IsKeyPressed", &_js_IsKeyPressed);
-	register_api_func(ctx, NULL, "IsAnyKeyPressed", &_js_IsAnyKeyPressed);
+	register_api_func(ctx, NULL, "AreKeysLeft", &js_AreKeysLeft);
+	register_api_func(ctx, NULL, "BindKey", &js_BindKey);
+	register_api_func(ctx, NULL, "GetKey", &js_GetKey);
+	register_api_func(ctx, NULL, "GetKeyString", &js_GetKeyString);
+	register_api_func(ctx, NULL, "GetPlayerKey", &js_GetPlayerKey);
+	register_api_func(ctx, NULL, "GetToggleState", &js_GetToggleState);
+	register_api_func(ctx, NULL, "IsKeyPressed", &js_IsKeyPressed);
+	register_api_func(ctx, NULL, "IsAnyKeyPressed", &js_IsAnyKeyPressed);
+}
+
+void
+check_input(void)
+{
+	bool                   is_down;
+	ALLEGRO_KEYBOARD_STATE kb_state;
+
+	int i;
+
+	al_get_keyboard_state(&kb_state);
+	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
+		is_down = al_key_down(&kb_state, i);
+		if (is_down && !s_last_key_state[i])
+			run_script(s_key_down_scripts[i], false);
+		else if (!is_down && s_last_key_state[i])
+			run_script(s_key_up_scripts[i], false);
+		s_last_key_state[i] = is_down;
+	}
 }
 
 static duk_ret_t
-_js_AreKeysLeft(duk_context* ctx)
+js_AreKeysLeft(duk_context* ctx)
 {
 	duk_push_boolean(ctx, g_key_queue.num_keys > 0);
 	return 1;
 }
 
+static js_BindKey(duk_context* ctx)
+{
+	int keycode = duk_require_int(ctx, 0);
+	lstring_t* key_down_script = duk_require_lstring_t(ctx, 1);
+	lstring_t* key_up_script = duk_require_lstring_t(ctx, 2);
+
+	s_key_down_scripts[keycode] = compile_script(key_down_script, "[key-down script]");
+	s_key_up_scripts[keycode] = compile_script(key_up_script, "[key-down script]");
+	return 0;
+}
+
 static duk_ret_t
-_js_GetKey(duk_context* ctx)
+js_GetKey(duk_context* ctx)
 {
 	int keycode;
 	
@@ -124,7 +164,7 @@ _js_GetKey(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GetKeyString(duk_context* ctx)
+js_GetKeyString(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
 	bool shift = duk_require_boolean(ctx, 1);
@@ -184,7 +224,7 @@ _js_GetKeyString(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GetPlayerKey(duk_context* ctx)
+js_GetPlayerKey(duk_context* ctx)
 {
 	int key_type;
 	int player;
@@ -206,21 +246,21 @@ _js_GetPlayerKey(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_GetToggleState(duk_context* ctx)
+js_GetToggleState(duk_context* ctx)
 {
 	duk_push_false(ctx);
 	return 1;
 }
 
 static duk_ret_t
-_js_IsAnyKeyPressed(duk_context* ctx)
+js_IsAnyKeyPressed(duk_context* ctx)
 {
 	duk_push_false(ctx);
 	return 1;
 }
 
 static duk_ret_t
-_js_IsKeyPressed(duk_context* ctx)
+js_IsKeyPressed(duk_context* ctx)
 {
 	int                    code;
 	ALLEGRO_KEYBOARD_STATE kb_state;

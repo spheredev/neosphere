@@ -5,20 +5,21 @@
 
 #include "image.h"
 
-static duk_ret_t js_GetSystemArrow       (duk_context* ctx);
-static duk_ret_t js_GetSystemDownArrow   (duk_context* ctx);
-static duk_ret_t js_GetSystemUpArrow     (duk_context* ctx);
-static duk_ret_t js_LoadImage            (duk_context* ctx);
-static duk_ret_t js_GrabImage            (duk_context* ctx);
-static duk_ret_t js_Image_finalize       (duk_context* ctx);
-static duk_ret_t js_Image_blit           (duk_context* ctx);
-static duk_ret_t js_Image_blitMask       (duk_context* ctx);
-static duk_ret_t js_Image_createSurface  (duk_context* ctx);
-static duk_ret_t js_Image_rotateBlit     (duk_context* ctx);
-static duk_ret_t js_Image_rotateBlitMask (duk_context* ctx);
-static duk_ret_t js_Image_transformBlit  (duk_context* ctx);
-static duk_ret_t js_Image_zoomBlit       (duk_context* ctx);
-static duk_ret_t js_Image_zoomBlitMask   (duk_context* ctx);
+static duk_ret_t js_GetSystemArrow           (duk_context* ctx);
+static duk_ret_t js_GetSystemDownArrow       (duk_context* ctx);
+static duk_ret_t js_GetSystemUpArrow         (duk_context* ctx);
+static duk_ret_t js_LoadImage                (duk_context* ctx);
+static duk_ret_t js_GrabImage                (duk_context* ctx);
+static duk_ret_t js_Image_finalize           (duk_context* ctx);
+static duk_ret_t js_Image_blit               (duk_context* ctx);
+static duk_ret_t js_Image_blitMask           (duk_context* ctx);
+static duk_ret_t js_Image_createSurface      (duk_context* ctx);
+static duk_ret_t js_Image_rotateBlit         (duk_context* ctx);
+static duk_ret_t js_Image_rotateBlitMask     (duk_context* ctx);
+static duk_ret_t js_Image_transformBlit      (duk_context* ctx);
+static duk_ret_t js_Image_transformBlitMask  (duk_context* ctx);
+static duk_ret_t js_Image_zoomBlit           (duk_context* ctx);
+static duk_ret_t js_Image_zoomBlitMask       (duk_context* ctx);
 
 static ALLEGRO_BITMAP* s_sys_arrow    = NULL;
 static ALLEGRO_BITMAP* s_sys_dn_arrow = NULL;
@@ -67,6 +68,7 @@ duk_push_sphere_Image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_c_function(ctx, &js_Image_rotateBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlit");
 	duk_push_c_function(ctx, &js_Image_rotateBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlitMask");
 	duk_push_c_function(ctx, &js_Image_transformBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlit");
+	duk_push_c_function(ctx, &js_Image_transformBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlitMask");
 	duk_push_c_function(ctx, &js_Image_zoomBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlit");
 	duk_push_c_function(ctx, &js_Image_zoomBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlitMask");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
@@ -276,6 +278,34 @@ js_Image_transformBlit(duk_context* ctx)
 	x3 = duk_to_int(ctx, 4); y3 = duk_to_int(ctx, 5);
 	x4 = duk_to_int(ctx, 6); y4 = duk_to_int(ctx, 7);
 	vertex_color = al_map_rgba(255, 255, 255, 255);
+	ALLEGRO_VERTEX v[] = {
+		{ x1, y1, 0, 0, 0, vertex_color },
+		{ x2, y2, 0, w, 0, vertex_color },
+		{ x4, y4, 0, 0, h, vertex_color },
+		{ x3, y3, 0, w, h, vertex_color }
+	};
+	if (!g_skip_frame) al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	return 0;
+}
+
+static duk_ret_t
+js_Image_transformBlitMask(duk_context* ctx)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_COLOR   vertex_color;
+	int             w, h;
+	float           x1, y1, x2, y2, x3, y3, x4, y4;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	x1 = duk_to_int(ctx, 0); y1 = duk_to_int(ctx, 1);
+	x2 = duk_to_int(ctx, 2); y2 = duk_to_int(ctx, 3);
+	x3 = duk_to_int(ctx, 4); y3 = duk_to_int(ctx, 5);
+	x4 = duk_to_int(ctx, 6); y4 = duk_to_int(ctx, 7);
+	vertex_color = duk_get_sphere_color(ctx, 8);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, vertex_color },
 		{ x2, y2, 0, w, 0, vertex_color },
