@@ -142,6 +142,12 @@ free_tileset(tileset_t* tileset)
 	free(tileset);
 }
 
+ALLEGRO_BITMAP*
+get_tile_bitmap(const tileset_t* tileset, int tile_index)
+{
+	return tileset->tiles[tile_index].bitmap;
+}
+
 int
 get_tile_count(const tileset_t* tileset)
 {

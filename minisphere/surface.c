@@ -47,10 +47,11 @@ init_surface_api(void)
 }
 
 void
-duk_push_sphere_surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap)
+duk_push_sphere_surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
+	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
 	duk_push_c_function(ctx, &js_Surface_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Surface_setAlpha, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setAlpha");
 	duk_push_c_function(ctx, &js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
@@ -115,7 +116,7 @@ js_CreateSurface(duk_context* ctx)
 	w = duk_to_number(ctx, 0);
 	h = duk_to_number(ctx, 1);
 	bitmap = al_create_bitmap(w, h);
-	duk_push_sphere_surface(ctx, bitmap);
+	duk_push_sphere_surface(ctx, bitmap, true);
 	return 1;
 }
 
@@ -136,7 +137,7 @@ js_GrabSurface(duk_context* ctx)
 		al_set_target_bitmap(bitmap);
 		al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 		al_set_target_backbuffer(g_display);
-		duk_push_sphere_surface(ctx, bitmap);
+		duk_push_sphere_surface(ctx, bitmap, true);
 		return 1;
 	}
 	else {
@@ -152,7 +153,7 @@ js_LoadSurface(duk_context* ctx)
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
 	free(path);
 	if (bitmap != NULL) {
-		duk_push_sphere_surface(ctx, bitmap);
+		duk_push_sphere_surface(ctx, bitmap, true);
 		return 1;
 	}
 	else {
@@ -163,10 +164,12 @@ js_LoadSurface(duk_context* ctx)
 static duk_ret_t
 js_Surface_finalize(duk_context* ctx)
 {
+	bool            allow_free;
 	ALLEGRO_BITMAP* bitmap;
 	
 	duk_get_prop_string(ctx, 0, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	al_destroy_bitmap(bitmap);
+	duk_get_prop_string(ctx, 0, "\xFF" "allow_free"); allow_free = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	if (allow_free) al_destroy_bitmap(bitmap);
 	return 0;
 }
 
@@ -246,7 +249,7 @@ js_Surface_clone(duk_context* ctx)
 	duk_pop(ctx);
 	new_bitmap = al_clone_bitmap(bitmap);
 	if (new_bitmap != NULL) {
-		duk_push_sphere_surface(ctx, new_bitmap);
+		duk_push_sphere_surface(ctx, new_bitmap, true);
 		return 1;
 	}
 	else {
@@ -273,7 +276,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	al_set_target_bitmap(new_bitmap);
 	al_draw_bitmap_region(bitmap, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
-	duk_push_sphere_surface(ctx, new_bitmap);
+	duk_push_sphere_surface(ctx, new_bitmap, true);
 	return 1;
 }
 

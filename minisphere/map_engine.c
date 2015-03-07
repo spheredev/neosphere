@@ -1,7 +1,9 @@
 #include "minisphere.h"
 #include "api.h"
+#include "image.h"
 #include "obsmap.h"
 #include "persons.h"
+#include "surface.h"
 #include "tileset.h"
 
 #include "map_engine.h"
@@ -41,6 +43,8 @@ static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_GetNumTiles           (duk_context* ctx);
 static duk_ret_t js_GetTile               (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
+static duk_ret_t js_GetTileImage          (duk_context* ctx);
+static duk_ret_t js_GetTileSurface        (duk_context* ctx);
 static duk_ret_t js_GetTileWidth          (duk_context* ctx);
 static duk_ret_t js_SetCameraX            (duk_context* ctx);
 static duk_ret_t js_SetCameraY            (duk_context* ctx);
@@ -401,7 +405,9 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
 	register_api_func(ctx, NULL, "GetTile", js_GetTile);
+	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
 	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
+	register_api_func(ctx, NULL, "GetTileSurface", js_GetTileSurface);
 	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
 	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
 	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
@@ -866,6 +872,38 @@ js_GetTileHeight(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileHeight(): Map engine must be running");
 	get_tile_size(s_map->tileset, &w, &h);
 	duk_push_int(ctx, h);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileImage(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+
+	int c_tiles;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileImage(): Map engine must be running");
+	c_tiles = get_tile_count(s_map->tileset);
+	if (tile_index < 0 || tile_index >= c_tiles)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileImage(): Tile index out of range (caller passed %i)", tile_index);
+	duk_push_sphere_image(ctx, get_tile_bitmap(s_map->tileset, tile_index), false);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileSurface(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+
+	int c_tiles;
+	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileSurface(): Map engine must be running");
+	c_tiles = get_tile_count(s_map->tileset);
+	if (tile_index < 0 || tile_index >= c_tiles)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileSurface(): Tile index out of range (caller passed %i)", tile_index);
+	duk_push_sphere_surface(ctx, get_tile_bitmap(s_map->tileset, tile_index), false);
 	return 1;
 }
 

@@ -215,7 +215,7 @@ js_Image_createSurface(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_push_sphere_surface(ctx, al_clone_bitmap(bitmap));
+	duk_push_sphere_surface(ctx, al_clone_bitmap(bitmap), true);
 	return 1;
 }
 

@@ -1,6 +1,6 @@
 void init_surface_api (void);
 
-extern void duk_push_sphere_surface (duk_context* ctx, ALLEGRO_BITMAP* bitmap);
+extern void duk_push_sphere_surface (duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free);
 
 enum BLEND_MODE
 {
