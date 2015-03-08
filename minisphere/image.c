@@ -44,8 +44,7 @@ create_image(int width, int height)
 		goto on_error;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	ref_image(image);
-	return image;
+	return ref_image(image);
 
 on_error:
 	free(image);
@@ -63,8 +62,7 @@ clone_image(const image_t* src_image)
 		goto on_error;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	ref_image(image);
-	return image;
+	return ref_image(image);
 
 on_error:
 	free(image);
@@ -82,8 +80,7 @@ load_image(const char* path)
 		goto on_error;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	ref_image(image);
-	return image;
+	return ref_image(image);
 
 on_error:
 	free(image);
@@ -117,8 +114,7 @@ read_image(ALLEGRO_FILE* file, int width, int height)
 	al_unlock_bitmap(image->bitmap);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	ref_image(image);
-	return image;
+	return ref_image(image);
 
 on_error:
 	al_fseek(file, old_file_pos, ALLEGRO_SEEK_SET);
@@ -130,10 +126,11 @@ on_error:
 	return NULL;
 }
 
-void
+image_t*
 ref_image(image_t* image)
 {
 	++image->c_refs;
+	return image;
 }
 
 void
@@ -198,6 +195,7 @@ duk_push_sphere_image(duk_context* ctx, image_t* image)
 {
 	ref_image(image);
 	duk_push_object(ctx);
+	duk_push_string(ctx, "image"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, &js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
@@ -219,6 +217,25 @@ duk_push_sphere_image(duk_context* ctx, image_t* image)
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
 		| DUK_DEFPROP_HAVE_VALUE);
+}
+
+image_t*
+duk_require_sphere_image(duk_context* ctx, duk_idx_t index)
+{
+	image_t*    image;
+	const char* type;
+
+	duk_require_object_coercible(ctx, index);
+	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
+		goto on_error;
+	type = duk_get_string(ctx, -1); duk_pop(ctx);
+	if (strcmp(type, "image") != 0) goto on_error;
+	duk_get_prop_string(ctx, index, "\xFF" "ptr");
+	image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	return image;
+
+on_error:
+	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere image");
 }
 
 static duk_ret_t

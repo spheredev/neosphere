@@ -51,6 +51,7 @@ duk_push_sphere_surface(duk_context* ctx, image_t* image)
 {
 	ref_image(image);
 	duk_push_object(ctx);
+	duk_push_string(ctx, "surface"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
 	duk_push_c_function(ctx, &js_Surface_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Surface_setAlpha, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setAlpha");
@@ -80,6 +81,25 @@ duk_push_sphere_surface(duk_context* ctx, image_t* image)
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
 		| DUK_DEFPROP_HAVE_VALUE);
+}
+
+image_t*
+duk_require_sphere_surface(duk_context* ctx, duk_idx_t index)
+{
+	image_t*    image;
+	const char* type;
+
+	duk_require_object_coercible(ctx, index);
+	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
+		goto on_error;
+	type = duk_get_string(ctx, -1); duk_pop(ctx);
+	if (strcmp(type, "surface") != 0) goto on_error;
+	duk_get_prop_string(ctx, index, "\xFF" "image_ptr");
+	image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	return image;
+
+on_error:
+	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere surface");
 }
 
 static void

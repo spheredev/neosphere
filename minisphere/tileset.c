@@ -143,16 +143,16 @@ free_tileset(tileset_t* tileset)
 	free(tileset);
 }
 
-image_t*
-get_tile_image(const tileset_t* tileset, int tile_index)
-{
-	return tileset->tiles[tile_index].image;
-}
-
 int
 get_tile_count(const tileset_t* tileset)
 {
 	return tileset->num_tiles;
+}
+
+image_t*
+get_tile_image(const tileset_t* tileset, int tile_index)
+{
+	return tileset->tiles[tile_index].image;
 }
 
 const obsmap_t*
@@ -166,6 +166,16 @@ get_tile_size(const tileset_t* tileset, int* out_w, int* out_h)
 {
 	*out_w = tileset->width;
 	*out_h = tileset->height;
+}
+
+void
+set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
+{
+	image_t* old_image;
+	
+	old_image = tileset->tiles[tile_index].image;
+	tileset->tiles[tile_index].image = ref_image(image);
+	free_image(old_image);
 }
 
 void

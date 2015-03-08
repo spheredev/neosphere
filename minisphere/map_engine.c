@@ -429,6 +429,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
 	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
+	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
+	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
 	register_api_func(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	// Map script types
@@ -899,13 +901,17 @@ js_GetTileSurface(duk_context* ctx)
 	int tile_index = duk_require_int(ctx, 0);
 
 	int      c_tiles;
-	
+	image_t* image;
+
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileSurface(): Map engine must be running");
 	c_tiles = get_tile_count(s_map->tileset);
 	if (tile_index < 0 || tile_index >= c_tiles)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileSurface(): Tile index out of range (caller passed %i)", tile_index);
-	duk_push_null(ctx);
+	if ((image = clone_image(get_tile_image(s_map->tileset, tile_index))) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileSurface(): Failed to create new surface image");
+	duk_push_sphere_surface(ctx, image);
+	free_image(image);
 	return 1;
 }
 
@@ -1024,6 +1030,58 @@ js_SetTile(duk_context* ctx)
 	layer_h = s_map->layers[layer].height;
 	int* tilemap = s_map->layers[layer].tilemap;
 	tilemap[x + y * layer_w] = tile_index;
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileImage(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+	image_t* image = duk_require_sphere_image(ctx, 1);
+
+	int c_tiles;
+	int image_w, image_h;
+	int tile_w, tile_h;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetTileImage(): Map engine must be running");
+	c_tiles = get_tile_count(s_map->tileset);
+	if (tile_index < 0 || tile_index >= c_tiles)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTileImage(): Tile index out of range (caller passed %i)", tile_index);
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	image_w = get_image_width(image);
+	image_h = get_image_height(image);
+	if (image_w != tile_w || image_h != tile_h)
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "SetTileImage(): Image dimensions (%ix%i) don't match tile dimensions (%ix%i)", image_w, image_h, tile_w, tile_h);
+	set_tile_image(s_map->tileset, tile_index, image);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileSurface(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+	image_t* image = duk_require_sphere_surface(ctx, 1);
+
+	int      c_tiles;
+	int      image_w, image_h;
+	image_t* new_image;
+	int      tile_w, tile_h;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetTileSurface(): Map engine must be running");
+	c_tiles = get_tile_count(s_map->tileset);
+	if (tile_index < 0 || tile_index >= c_tiles)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTileSurface(): Tile index out of range (caller passed %i)", tile_index);
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	image_w = get_image_width(image);
+	image_h = get_image_height(image);
+	if (image_w != tile_w || image_h != tile_h)
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "SetTileSurface(): Surface dimensions (%ix%i) don't match tile dimensions (%ix%i)", image_w, image_h, tile_w, tile_h);
+	if ((new_image = clone_image(image)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "SetTileSurface(): Failed to create new tile image");
+	set_tile_image(s_map->tileset, tile_index, new_image);
+	free_image(new_image);
 	return 0;
 }
 

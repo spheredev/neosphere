@@ -2,7 +2,8 @@
 
 void init_surface_api (void);
 
-extern void duk_push_sphere_surface (duk_context* ctx, image_t* image);
+extern void     duk_push_sphere_surface    (duk_context* ctx, image_t* image);
+extern image_t* duk_require_sphere_surface (duk_context* ctx, duk_idx_t index);
 
 enum BLEND_MODE
 {
