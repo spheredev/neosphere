@@ -643,6 +643,10 @@ update_map_engine(void)
 	float                  x, y;
 	
 	++s_frames;
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	map_w = s_map->layers[0].width * tile_w;
+	map_h = s_map->layers[0].height * tile_h;
+	
 	update_persons();
 	
 	// check for player input
@@ -678,12 +682,8 @@ update_map_engine(void)
 	
 	// update camera
 	if (s_camera_person != NULL) {
-		get_tile_size(s_map->tileset, &tile_w, &tile_h);
-		map_w = s_map->layers[0].width * tile_w;
-		map_h = s_map->layers[0].height * tile_h;
-		get_person_xy(s_camera_person, &x, &y, false);
-		s_cam_x = x;
-		s_cam_y = y;
+		get_person_xy(s_camera_person, &x, &y, true);
+		s_cam_x = x; s_cam_y = y;
 	}
 
 	// run edge scripts if player walked off map (n/a for repeating maps)
