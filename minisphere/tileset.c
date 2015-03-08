@@ -13,6 +13,7 @@ struct tileset
 
 struct tile
 {
+	lstring_t*      name;
 	image_t*        image;
 	int             delay;
 	struct tile*    next_tile;
@@ -89,7 +90,7 @@ read_tileset(ALLEGRO_FILE* file)
 	for (i = 0; i < rts.num_tiles; ++i) {
 		if (al_fread(file, &tile_info, sizeof(struct rts_tile_info)) != sizeof(struct rts_tile_info))
 			goto on_error;
-		al_fseek(file, tile_info.name_length, ALLEGRO_SEEK_CUR);  // TODO: load tile names
+		tiles[i].name = read_lstring_s(file, tile_info.name_length);
 		tiles[i].delay = tile_info.delay;
 		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
 		if (rts.has_obstructions) {
@@ -121,6 +122,7 @@ on_error:
 	if (file != NULL) al_fseek(file, file_pos, ALLEGRO_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
+			free_lstring(tiles[i].name);
 			free_obsmap(tiles[i].obsmap);
 			free_image(tiles[i].image);
 		}
@@ -136,6 +138,7 @@ free_tileset(tileset_t* tileset)
 	int i;
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
+		free_lstring(tileset->tiles[i].name);
 		free_image(tileset->tiles[i].image);
 		free_obsmap(tileset->tiles[i].obsmap);
 	}
@@ -155,6 +158,11 @@ get_tile_image(const tileset_t* tileset, int tile_index)
 	return tileset->tiles[tile_index].image;
 }
 
+const lstring_t*
+get_tile_name(const tileset_t* tileset, int tile_index)
+{
+	return tileset->tiles[tile_index].name;
+}
 const obsmap_t*
 get_tile_obsmap(const tileset_t* tileset, int tile_index)
 {

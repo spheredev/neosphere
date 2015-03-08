@@ -44,6 +44,7 @@ static duk_ret_t js_GetNumTiles           (duk_context* ctx);
 static duk_ret_t js_GetTile               (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
 static duk_ret_t js_GetTileImage          (duk_context* ctx);
+static duk_ret_t js_GetTileName           (duk_context* ctx);
 static duk_ret_t js_GetTileSurface        (duk_context* ctx);
 static duk_ret_t js_GetTileWidth          (duk_context* ctx);
 static duk_ret_t js_SetCameraX            (duk_context* ctx);
@@ -231,7 +232,7 @@ load_map(const char* path)
 		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
 			goto on_error;
 		for (i = 0; i < rmp.num_strings; ++i)
-			failed = ((strings[i] = al_fread_lstring(file)) == NULL) || failed;
+			failed = ((strings[i] = read_lstring(file)) == NULL) || failed;
 		if (failed) goto on_error;
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		for (i = 0; i < rmp.num_layers; ++i) {
@@ -242,7 +243,7 @@ load_map(const char* path)
 			if ((map->layers[i].tilemap = malloc(layer_info.width * layer_info.height * sizeof(int))) == NULL)
 				goto on_error;
 			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
-			free_lstring(al_fread_lstring(file));  // <-- layer name, not used by minisphere
+			free_lstring(read_lstring(file));  // <-- layer name, not used by minisphere
 			num_tiles = layer_info.width * layer_info.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
@@ -263,22 +264,22 @@ load_map(const char* path)
 				map->persons = realloc(map->persons, map->num_persons * sizeof(struct map_person));
 				person = &map->persons[map->num_persons - 1];
 				memset(person, 0, sizeof(struct map_person));
-				if ((person->name = al_fread_lstring(file)) == NULL) goto on_error;
-				if ((person->spriteset = al_fread_lstring(file)) == NULL) goto on_error;
+				if ((person->name = read_lstring(file)) == NULL) goto on_error;
+				if ((person->spriteset = read_lstring(file)) == NULL) goto on_error;
 				person->x = entity.x; person->y = entity.y; person->z = entity.z;
 				if (al_fread(file, &count, 2) != 2 || count < 5) goto on_error;
-				person->create_script = al_fread_lstring(file);
-				person->destroy_script = al_fread_lstring(file);
-				person->touch_script = al_fread_lstring(file);
-				person->talk_script = al_fread_lstring(file);
-				person->command_script = al_fread_lstring(file);
+				person->create_script = read_lstring(file);
+				person->destroy_script = read_lstring(file);
+				person->touch_script = read_lstring(file);
+				person->talk_script = read_lstring(file);
+				person->command_script = read_lstring(file);
 				for (j = 5; j < count; ++j) {
-					free_lstring(al_fread_lstring(file));
+					free_lstring(read_lstring(file));
 				}
 				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // trigger
-				if ((script = al_fread_lstring(file)) == NULL)
+				if ((script = read_lstring(file)) == NULL)
 					goto on_error;
 				++map->num_triggers;
 				map->triggers = realloc(map->triggers, map->num_triggers * sizeof(struct map_trigger));
@@ -296,7 +297,7 @@ load_map(const char* path)
 		}
 		for (i = 0; i < rmp.num_zones; ++i) {
 			al_fread(file, &zone, sizeof(struct rmp_zone_header));
-			free_lstring(al_fread_lstring(file));
+			free_lstring(read_lstring(file));
 		}
 		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
 		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
@@ -409,6 +410,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetTile", js_GetTile);
 	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
 	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
+	register_api_func(ctx, NULL, "GetTileName", js_GetTileName);
 	register_api_func(ctx, NULL, "GetTileSurface", js_GetTileSurface);
 	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
 	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
@@ -442,7 +444,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
 
 	// initialize subcomponent APIs (persons, etc.)
-	init_person_api();
+	init_persons_api();
 }
 
 rect_t
@@ -672,6 +674,7 @@ update_map_engine(void)
 			command_person(s_input_person, COMMAND_MOVE_WEST);
 		}
 
+		// check for trigger activation
 		get_person_xyz(s_input_person, &x, &y, &layer, true);
 		trigger = get_trigger_at(x, y, layer);
 		if (trigger != s_on_trigger) {
@@ -686,7 +689,7 @@ update_map_engine(void)
 		s_cam_x = x; s_cam_y = y;
 	}
 
-	// run edge scripts if player walked off map (n/a for repeating maps)
+	// run edge scripts if player walked off map (only for non-repeating map)
 	if (!s_map->is_toric && s_input_person != NULL) {
 		get_person_xy(s_input_person, &x, &y, false);
 		script_type = y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
@@ -907,6 +910,20 @@ js_GetTileImage(duk_context* ctx)
 	if (tile_index < 0 || tile_index >= c_tiles)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileImage(): Tile index out of range (caller passed %i)", tile_index);
 	duk_push_sphere_image(ctx, get_tile_image(s_map->tileset, tile_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileName(duk_context* ctx)
+{
+	int        tile_index = duk_require_int(ctx, 0);
+	
+	const lstring_t* tile_name;
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileName(): Map engine must be running");
+	tile_name = get_tile_name(s_map->tileset, tile_index);
+	duk_push_lstring(ctx, tile_name->cstr, tile_name->length);
 	return 1;
 }
 

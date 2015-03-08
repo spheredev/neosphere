@@ -160,6 +160,28 @@ get_image_width(const image_t* image)
 	return image->width;
 }
 
+bool
+apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256])
+{
+	ALLEGRO_BITMAP*        bitmap = get_image_bitmap(image);
+	uint8_t*               pixel;
+	ALLEGRO_LOCKED_REGION* lock;
+
+	int i_x, i_y;
+
+	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
+		return false;
+	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
+		pixel = (uint8_t*)lock->data + i_x * 4 + i_y * lock->pitch;
+		pixel[0] = red_lu[pixel[0]];
+		pixel[1] = green_lu[pixel[1]];
+		pixel[2] = blue_lu[pixel[2]];
+		pixel[3] = alpha_lu[pixel[3]];
+	}
+	al_unlock_bitmap(bitmap);
+	return true;
+}
+
 void
 init_image_api(duk_context* ctx)
 {
@@ -225,6 +247,7 @@ duk_require_sphere_image(duk_context* ctx, duk_idx_t index)
 	image_t*    image;
 	const char* type;
 
+	index = duk_require_normalize_index(ctx, index);
 	duk_require_object_coercible(ctx, index);
 	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
 		goto on_error;

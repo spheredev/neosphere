@@ -41,6 +41,7 @@ static duk_ret_t js_GetPersonFrameRevert     (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer           (duk_context* ctx);
 static duk_ret_t js_GetPersonList            (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeed           (duk_context* ctx);
+static duk_ret_t js_GetPersonSpriteset       (duk_context* ctx);
 static duk_ret_t js_GetPersonX               (duk_context* ctx);
 static duk_ret_t js_GetPersonY               (duk_context* ctx);
 static duk_ret_t js_GetTalkDistance          (duk_context* ctx);
@@ -66,7 +67,6 @@ static int  compare_persons      (const void* a, const void* b);
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
-static void set_person_spriteset (person_t* person, spriteset_t* spriteset);
 static void sort_persons         (void);
 
 static const person_t* s_current_person = NULL;
@@ -210,6 +210,12 @@ get_person_speed(const person_t* person)
 	return sqrt(person->speed_x * person->speed_y);
 }
 
+spriteset_t*
+get_person_spriteset(person_t* person)
+{
+	return person->sprite;
+}
+
 void
 get_person_xy(const person_t* person, float* out_x, float* out_y, bool want_normalize)
 {
@@ -253,6 +259,18 @@ set_person_speed(person_t* person, float speed)
 {
 	person->speed_x = speed;
 	person->speed_y = speed;
+}
+
+void
+set_person_spriteset(person_t* person, spriteset_t* spriteset)
+{
+	spriteset_t* old_spriteset;
+	
+	old_spriteset = person->sprite;
+	person->sprite = ref_spriteset(spriteset);
+	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
+	person->frame = 0;
+	free_spriteset(old_spriteset);
 }
 
 void
@@ -453,7 +471,7 @@ update_persons(void)
 }
 
 void
-init_person_api(void)
+init_persons_api(void)
 {
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	
@@ -471,6 +489,7 @@ init_person_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonSpeed", js_GetPersonSpeed);
+	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
@@ -554,16 +573,6 @@ set_person_name(person_t* person, const char* name)
 {
 	person->name = realloc(person->name, (strlen(name) + 1) * sizeof(char));
 	strcpy(person->name, name);
-}
-
-static void
-set_person_spriteset(person_t* person, spriteset_t* spriteset)
-{
-	free_spriteset(person->sprite);
-	ref_spriteset(spriteset);
-	person->sprite = spriteset;
-	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
-	person->frame = 0;
 }
 
 static void
@@ -749,6 +758,19 @@ js_GetPersonList(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonSpriteset(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*    person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+	duk_push_spriteset(ctx, get_person_spriteset(person));
+	return 0;
+}
+
+static duk_ret_t
 js_GetPersonSpeed(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -904,13 +926,12 @@ static duk_ret_t
 js_SetPersonSpriteset(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
+	spriteset_t* spriteset = duk_require_spriteset(ctx, 1);
 
 	person_t*    person;
-	spriteset_t* spriteset;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
-	duk_get_prop_string(ctx, 1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	set_person_spriteset(person, spriteset);
 	return 0;
 }

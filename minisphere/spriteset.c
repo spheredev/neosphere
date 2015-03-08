@@ -33,14 +33,13 @@ struct v3_frame {
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 static char*                  _fread_string          (ALLEGRO_FILE* file);
-static void                   duk_push_spriteset     (duk_context* ctx, spriteset_t* spriteset);
 static duk_ret_t             _js_LoadSpriteset      (duk_context* ctx);
 static duk_ret_t             _js_Spriteset_finalize (duk_context* ctx);
 
-void
-init_spriteset_api(duk_context* ctx)
+spriteset_t*
+clone_spriteset(const spriteset_t* spriteset)
 {
-	register_api_func(ctx, NULL, "LoadSpriteset", _js_LoadSpriteset);
+	return NULL;
 }
 
 spriteset_t*
@@ -141,10 +140,11 @@ on_error:
 	return NULL;
 }
 
-void
+spriteset_t*
 ref_spriteset(spriteset_t* spriteset)
 {
 	++spriteset->c_refs;
+	return spriteset;
 }
 
 void
@@ -198,6 +198,78 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 	al_draw_bitmap(get_image_bitmap(spriteset->images[image_index]), x, y, 0x0);
 }
 
+void
+init_spriteset_api(duk_context* ctx)
+{
+	register_api_func(ctx, NULL, "LoadSpriteset", _js_LoadSpriteset);
+}
+
+void
+duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
+{
+	int i, j;
+
+	ref_spriteset(spriteset);
+
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, "spriteset"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
+	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_c_function(ctx, &_js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+
+	// Spriteset:base
+	duk_push_object(ctx);
+	duk_push_int(ctx, spriteset->base.x1); duk_put_prop_string(ctx, -2, "x1");
+	duk_push_int(ctx, spriteset->base.y1); duk_put_prop_string(ctx, -2, "y1");
+	duk_push_int(ctx, spriteset->base.x2); duk_put_prop_string(ctx, -2, "x2");
+	duk_push_int(ctx, spriteset->base.y2); duk_put_prop_string(ctx, -2, "y2");
+	duk_put_prop_string(ctx, -2, "base");
+
+	// Spriteset:images
+	duk_push_array(ctx);
+	for (i = 0; i < spriteset->num_images; ++i) {
+		duk_push_sphere_image(ctx, spriteset->images[i]);
+		duk_put_prop_index(ctx, -2, i);
+	}
+	duk_put_prop_string(ctx, -2, "images");
+
+	// Spriteset:directions
+	duk_push_array(ctx);
+	for (i = 0; i < spriteset->num_poses; ++i) {
+		duk_push_object(ctx);
+		duk_push_string(ctx, spriteset->poses[i].name); duk_put_prop_string(ctx, -2, "name");
+		duk_push_array(ctx);
+		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
+			duk_push_object(ctx);
+			duk_push_int(ctx, spriteset->poses[i].frames[j].image_idx); duk_put_prop_string(ctx, -2, "index");
+			duk_push_int(ctx, spriteset->poses[i].frames[j].delay); duk_put_prop_string(ctx, -2, "delay");
+			duk_put_prop_index(ctx, -2, j);
+		}
+		duk_put_prop_string(ctx, -2, "frames");
+		duk_put_prop_index(ctx, -2, i);
+	}
+	duk_put_prop_string(ctx, -2, "directions");
+}
+
+spriteset_t*
+duk_require_spriteset(duk_context* ctx, duk_idx_t index)
+{
+	spriteset_t* spriteset;
+	const char*  type;
+
+	index = duk_require_normalize_index(ctx, index);
+	duk_require_object_coercible(ctx, index);
+	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
+		goto on_error;
+	type = duk_get_string(ctx, -1); duk_pop(ctx);
+	if (strcmp(type, "spriteset") != 0) goto on_error;
+	duk_get_prop_string(ctx, index, "\xFF" "ptr");
+	spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	return spriteset;
+
+on_error:
+	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere spriteset");
+}
+
 static const spriteset_pose_t*
 find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 {
@@ -240,49 +312,6 @@ on_error:
 	return NULL;
 }
 
-static void
-duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
-{
-	int i, j;
-	
-	duk_push_object(ctx);
-	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, &_js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	
-	// Spriteset:base
-	duk_push_object(ctx);
-	duk_push_int(ctx, spriteset->base.x1); duk_put_prop_string(ctx, -2, "x1");
-	duk_push_int(ctx, spriteset->base.y1); duk_put_prop_string(ctx, -2, "y1");
-	duk_push_int(ctx, spriteset->base.x2); duk_put_prop_string(ctx, -2, "x2");
-	duk_push_int(ctx, spriteset->base.y2); duk_put_prop_string(ctx, -2, "y2");
-	duk_put_prop_string(ctx, -2, "base");
-
-	// Spriteset:images
-	duk_push_array(ctx);
-	for (i = 0; i < spriteset->num_images; ++i) {
-		duk_push_sphere_image(ctx, spriteset->images[i]);
-		duk_put_prop_index(ctx, -2, i);
-	}
-	duk_put_prop_string(ctx, -2, "images");
-
-	// Spriteset:directions
-	duk_push_array(ctx);
-	for (i = 0; i < spriteset->num_poses; ++i) {
-		duk_push_object(ctx);
-		duk_push_string(ctx, spriteset->poses[i].name); duk_put_prop_string(ctx, -2, "name");
-		duk_push_array(ctx);
-		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
-			duk_push_object(ctx);
-			duk_push_int(ctx, spriteset->poses[i].frames[j].image_idx); duk_put_prop_string(ctx, -2, "index");
-			duk_push_int(ctx, spriteset->poses[i].frames[j].delay); duk_put_prop_string(ctx, -2, "delay");
-			duk_put_prop_index(ctx, -2, j);
-		}
-		duk_put_prop_string(ctx, -2, "frames");
-		duk_put_prop_index(ctx, -2, i);
-	}
-	duk_put_prop_string(ctx, -2, "directions");
-}
-
 static duk_ret_t
 _js_LoadSpriteset(duk_context* ctx)
 {
@@ -296,6 +325,7 @@ _js_LoadSpriteset(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "LoadSpriteset(): Failed to load spriteset file '%s'", filename);
 	free(path);
 	duk_push_spriteset(ctx, spriteset);
+	free_spriteset(spriteset);
 	return 1;
 }
 

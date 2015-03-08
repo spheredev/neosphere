@@ -32,11 +32,14 @@ struct spriteset
 };
 
 extern spriteset_t* load_spriteset         (const char* path);
-extern void         ref_spriteset          (spriteset_t* spriteset);
+extern spriteset_t* ref_spriteset          (spriteset_t* spriteset);
 extern void         free_spriteset         (spriteset_t* spriteset);
 extern rect_t       get_sprite_base        (const spriteset_t* spriteset);
 extern int          get_sprite_frame_delay (const spriteset_t* spriteset, const char* pose_name, int frame_index);
 extern void         draw_sprite            (const spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index);
-extern void         init_spriteset_api     (duk_context* ctx);
+
+extern void         init_spriteset_api    (duk_context* ctx);
+extern void         duk_push_spriteset    (duk_context* ctx, spriteset_t* spriteset);
+extern spriteset_t* duk_require_spriteset (duk_context* ctx, duk_idx_t index);
 
 #endif // MINISPHERE__SPRITESET_H__INCLUDED
