@@ -11,7 +11,7 @@ extern rect_t      get_person_base         (const person_t* person);
 extern const char* get_person_name         (const person_t* person);
 extern float       get_person_speed        (const person_t* person);
 extern void        get_person_xy           (const person_t* person, float* out_x, float* out_y, bool normalize);
-extern void        get_person_xyz          (const person_t* person, float* out_x, float* out_y, int* out_layer, bool normalize);
+extern void        get_person_xyz          (const person_t* person, float* out_x, float* out_y, int* out_layer, bool want_normalize);
 extern bool        set_person_script       (person_t* person, int type, const lstring_t* script);
 extern void        set_person_speed        (person_t* person, float speed);
 extern void        set_person_xyz          (person_t* person, int x, int y, int layer);

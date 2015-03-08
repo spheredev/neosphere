@@ -133,10 +133,11 @@ is_person_obstructed_at(const person_t* person, float x, float y, person_t** out
 
 	int i, i_x, i_y;
 	
-	if (out_obstructing_person) *out_obstructing_person = NULL;
-	if (out_tile_index) *out_tile_index = -1;
+	normalize_map_entity_xy(&x, &y, person->layer);
 	get_person_xyz(person, &cur_x, &cur_y, &layer, true);
 	my_base = translate_rect(get_person_base(person), x - cur_x, y - cur_y);
+	if (out_obstructing_person) *out_obstructing_person = NULL;
+	if (out_tile_index) *out_tile_index = -1;
 
 	// check for obstructing persons
 	if (!person->ignore_persons) {
@@ -210,36 +211,22 @@ get_person_speed(const person_t* person)
 }
 
 void
-get_person_xy(const person_t* person, float* out_x, float* out_y, bool normalize)
+get_person_xy(const person_t* person, float* out_x, float* out_y, bool want_normalize)
 {
-	rect_t map_rect;
-	
-	if (normalize) {
-		map_rect = get_map_bounds();
-		*out_x = fmod(fmod(person->x, map_rect.x2) + map_rect.x2, map_rect.x2);
-		*out_y = fmod(fmod(person->y, map_rect.y2) + map_rect.y2, map_rect.y2);
-	}
-	else {
-		*out_x = person->x;
-		*out_y = person->y;
-	}
+	*out_x = person->x;
+	*out_y = person->y;
+	if (want_normalize)
+		normalize_map_entity_xy(out_x, out_y, person->layer);
 }
 
 void
-get_person_xyz(const person_t* person, float* out_x, float* out_y, int* out_layer, bool normalize)
+get_person_xyz(const person_t* person, float* out_x, float* out_y, int* out_layer, bool want_normalize)
 {
-	rect_t map_rect;
-
+	*out_x = person->x;
+	*out_y = person->y;
 	*out_layer = person->layer;
-	if (normalize) {
-		map_rect = get_map_bounds();
-		*out_x = fmod(fmod(person->x, map_rect.x2) + map_rect.x2, map_rect.x2);
-		*out_y = fmod(fmod(person->y, map_rect.y2) + map_rect.y2, map_rect.y2);
-	}
-	else {
-		*out_x = person->x;
-		*out_y = person->y;
-	}
+	if (want_normalize)
+		normalize_map_entity_xy(out_x, out_y, *out_layer);
 }
 
 bool
