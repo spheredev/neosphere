@@ -1,6 +1,8 @@
 #ifndef MINISPHERE__SPRITESET_H__INCLUDED
 #define MINISPHERE__SPRITESET_H__INCLUDED
 
+#include "image.h"
+
 typedef struct spriteset       spriteset_t;
 typedef struct spriteset_base  spriteset_base_t;
 typedef struct spriteset_pose  spriteset_pose_t;
@@ -25,7 +27,7 @@ struct spriteset
 	rect_t           base;
 	int              num_images;
 	int              num_poses;
-	ALLEGRO_BITMAP*  *bitmaps;
+	image_t*         *images;
 	spriteset_pose_t *poses;
 };
 

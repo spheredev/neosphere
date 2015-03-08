@@ -5,6 +5,14 @@
 
 #include "image.h"
 
+struct image
+{
+	int             c_refs;
+	ALLEGRO_BITMAP* bitmap;
+	int             width;
+	int             height;
+};
+
 static duk_ret_t js_GetSystemArrow           (duk_context* ctx);
 static duk_ret_t js_GetSystemDownArrow       (duk_context* ctx);
 static duk_ret_t js_GetSystemUpArrow         (duk_context* ctx);
@@ -21,9 +29,139 @@ static duk_ret_t js_Image_transformBlitMask  (duk_context* ctx);
 static duk_ret_t js_Image_zoomBlit           (duk_context* ctx);
 static duk_ret_t js_Image_zoomBlitMask       (duk_context* ctx);
 
-static ALLEGRO_BITMAP* s_sys_arrow    = NULL;
-static ALLEGRO_BITMAP* s_sys_dn_arrow = NULL;
-static ALLEGRO_BITMAP* s_sys_up_arrow = NULL;
+static image_t* s_sys_arrow    = NULL;
+static image_t* s_sys_dn_arrow = NULL;
+static image_t* s_sys_up_arrow = NULL;
+
+image_t*
+create_image(int width, int height)
+{
+	image_t* image;
+
+	if ((image = calloc(1, sizeof(image_t))) == NULL)
+		goto on_error;
+	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
+		goto on_error;
+	image->width = al_get_bitmap_width(image->bitmap);
+	image->height = al_get_bitmap_height(image->bitmap);
+	ref_image(image);
+	return image;
+
+on_error:
+	free(image);
+	return NULL;
+}
+
+image_t*
+clone_image(const image_t* src_image)
+{
+	image_t* image;
+
+	if ((image = calloc(1, sizeof(image_t))) == NULL)
+		goto on_error;
+	if ((image->bitmap = al_clone_bitmap(src_image->bitmap)) == NULL)
+		goto on_error;
+	image->width = al_get_bitmap_width(image->bitmap);
+	image->height = al_get_bitmap_height(image->bitmap);
+	ref_image(image);
+	return image;
+
+on_error:
+	free(image);
+	return NULL;
+}
+
+image_t*
+load_image(const char* path)
+{
+	image_t* image;
+
+	if ((image = calloc(1, sizeof(image_t))) == NULL)
+		goto on_error;
+	if ((image->bitmap = al_load_bitmap(path)) == NULL)
+		goto on_error;
+	image->width = al_get_bitmap_width(image->bitmap);
+	image->height = al_get_bitmap_height(image->bitmap);
+	ref_image(image);
+	return image;
+
+on_error:
+	free(image);
+	return NULL;
+}
+
+image_t*
+read_image(ALLEGRO_FILE* file, int width, int height)
+{
+	image_t*               image;
+	uint8_t*               line_ptr;
+	size_t                 line_size;
+	ALLEGRO_LOCKED_REGION* lock = NULL;
+	int64_t                old_file_pos;
+
+	int i_y;
+
+	old_file_pos = al_ftell(file);
+	if ((image = calloc(1, sizeof(image_t))) == NULL)
+		goto on_error;
+	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
+		goto on_error;
+	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
+		goto on_error;
+	line_size = width * 4;
+	for (i_y = 0; i_y < height; ++i_y) {
+		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
+		if (al_fread(file, line_ptr, line_size) != line_size)
+			goto on_error;
+	}
+	al_unlock_bitmap(image->bitmap);
+	image->width = al_get_bitmap_width(image->bitmap);
+	image->height = al_get_bitmap_height(image->bitmap);
+	ref_image(image);
+	return image;
+
+on_error:
+	al_fseek(file, old_file_pos, ALLEGRO_SEEK_SET);
+	if (lock != NULL) al_unlock_bitmap(image->bitmap);
+	if (image != NULL) {
+		if (image->bitmap != NULL) al_destroy_bitmap(image->bitmap);
+		free(image);
+	}
+	return NULL;
+}
+
+void
+ref_image(image_t* image)
+{
+	++image->c_refs;
+}
+
+void
+free_image(image_t* image)
+{
+	if (image == NULL || --image->c_refs > 0)
+		return;
+	al_destroy_bitmap(image->bitmap);
+	free(image);
+}
+
+ALLEGRO_BITMAP*
+get_image_bitmap(const image_t* image)
+{
+	return image->bitmap;
+}
+
+int
+get_image_height(const image_t* image)
+{
+	return image->height;
+}
+
+int
+get_image_width(const image_t* image)
+{
+	return image->width;
+}
 
 void
 init_image_api(duk_context* ctx)
@@ -35,15 +173,15 @@ init_image_api(duk_context* ctx)
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Arrow");
 		path = get_sys_asset_path(filename, NULL);
-		s_sys_arrow = al_load_bitmap(path);
+		s_sys_arrow = load_image(path);
 		free(path);
 		filename = al_get_config_value(g_sys_conf, NULL, "UpArrow");
 		path = get_sys_asset_path(filename, NULL);
-		s_sys_up_arrow = al_load_bitmap(path);
+		s_sys_up_arrow = load_image(path);
 		free(path);
 		filename = al_get_config_value(g_sys_conf, NULL, "DownArrow");
 		path = get_sys_asset_path(filename, NULL);
-		s_sys_dn_arrow = al_load_bitmap(path);
+		s_sys_dn_arrow = load_image(path);
 		free(path);
 	}
 	
@@ -56,11 +194,11 @@ init_image_api(duk_context* ctx)
 }
 
 void
-duk_push_sphere_image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
+duk_push_sphere_image(duk_context* ctx, image_t* image)
 {
+	ref_image(image);
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
+	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, &js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, &js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
@@ -71,12 +209,12 @@ duk_push_sphere_image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 	duk_push_c_function(ctx, &js_Image_transformBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlitMask");
 	duk_push_c_function(ctx, &js_Image_zoomBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlit");
 	duk_push_c_function(ctx, &js_Image_zoomBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlitMask");
-	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
+	duk_push_string(ctx, "width"); duk_push_int(ctx, get_image_width(image));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
 		| DUK_DEFPROP_HAVE_VALUE);
-	duk_push_string(ctx, "height"); duk_push_int(ctx, al_get_bitmap_height(bitmap));
+	duk_push_string(ctx, "height"); duk_push_int(ctx, get_image_height(image));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
@@ -86,37 +224,28 @@ duk_push_sphere_image(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
 static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
-	if (s_sys_arrow != NULL) {
-		duk_push_sphere_image(ctx, s_sys_arrow, false);
-		return 1;
-	}
-	else {
+	if (s_sys_arrow == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "GetSystemArrow(): No system arrow image available");
-	}
+	duk_push_sphere_image(ctx, s_sys_arrow);
+	return 1;
 }
 
 static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
-	if (s_sys_dn_arrow != NULL) {
-		duk_push_sphere_image(ctx, s_sys_dn_arrow, false);
-		return 1;
-	}
-	else {
+	if (s_sys_dn_arrow == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "GetSystemDownArrow(): No system down arrow image available");
-	}
+	duk_push_sphere_image(ctx, s_sys_dn_arrow);
+	return 1;
 }
 
 static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
-	if (s_sys_up_arrow != NULL) {
-		duk_push_sphere_image(ctx, s_sys_up_arrow, false);
-		return 1;
-	}
-	else {
+	if (s_sys_up_arrow != NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "GetSystemUpArrow(): No system up arrow image available");
-	}
+	duk_push_sphere_image(ctx, s_sys_up_arrow);
+	return 1;
 }
 
 static duk_ret_t
@@ -124,233 +253,223 @@ js_LoadImage(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	ALLEGRO_BITMAP* bitmap;
-	char*           path;
+	image_t* image;
+	char*    path;
 	
 	path = get_asset_path(filename, "images", false);
-	bitmap = al_load_bitmap(path);
+	image = load_image(path);
 	free(path);
-	if (bitmap == NULL)
+	if (image == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "LoadImage(): Failed to load image file '%s'", filename);
-	duk_push_sphere_image(ctx, bitmap, true);
+	duk_push_sphere_image(ctx, image);
+	free_image(image);
 	return 1;
 }
 
 static duk_ret_t
 js_GrabImage(duk_context* ctx)
 {
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+
 	ALLEGRO_BITMAP* backbuffer;
-	ALLEGRO_BITMAP* bitmap;
-	int             x, y, w, h;
+	image_t*        image;
 
 	backbuffer = al_get_backbuffer(g_display);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	w = duk_to_int(ctx, 2);
-	h = duk_to_int(ctx, 3);
-	bitmap = al_create_bitmap(w, h);
-	if (bitmap != NULL) {
-		al_set_target_bitmap(bitmap);
-		al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
-		al_set_target_backbuffer(g_display);
-		duk_push_sphere_image(ctx, bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "GrabImage(): Unable to create new bitmap");
-	}
+	if ((image = create_image(w, h)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "GrabImage(): Failed to create image bitmap");
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
+	al_set_target_backbuffer(g_display);
+	duk_push_sphere_image(ctx, image);
+	free_image(image);
+	return 1;
 }
 
 static duk_ret_t
 js_Image_finalize(duk_context* ctx)
 {
-	bool            allow_free;
-	ALLEGRO_BITMAP* bitmap;
+	image_t* image;
 
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "allow_free"); allow_free = duk_get_boolean(ctx, -1); duk_pop(ctx);
-	if (allow_free) al_destroy_bitmap(bitmap);
+	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	free_image(image);
 	return 0;
 }
 
 static duk_ret_t
 js_Image_blit(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	float           x, y;
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	
+	image_t* image;
 	
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	if (!g_skip_frame) al_draw_bitmap(bitmap, x, y, 0x0);
-	return 1;
+	if (!g_skip_frame) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	return 0;
 }
 
 static duk_ret_t
 js_Image_blitMask(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	float           x = (float)duk_get_number(ctx, 0);
-	float           y = (float)duk_get_number(ctx, 1);
-	int             r, g, b, a;
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 2);
+
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 2, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	if (!g_skip_frame) al_draw_tinted_bitmap(bitmap, al_map_rgba(r, g, b, a), x, y, 0x0);
-	return 1;
+	if (!g_skip_frame) al_draw_tinted_bitmap(get_image_bitmap(image), mask, x, y, 0x0);
+	return 0;
 }
 
 static duk_ret_t
 js_Image_createSurface(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
+	image_t* image;
+	image_t* new_image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_push_sphere_surface(ctx, al_clone_bitmap(bitmap), true);
+	if ((new_image = clone_image(image)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
+	duk_push_sphere_surface(ctx, image);
+	free_image(image);
 	return 1;
 }
 
 static duk_ret_t
 js_Image_rotateBlit(duk_context* ctx)
 {
-	float           angle;
-	ALLEGRO_BITMAP* bitmap;
-	float           x, y, w, h;
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	float angle = duk_require_number(ctx, 2);
+
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	angle = duk_to_number(ctx, 2);
-	if (!g_skip_frame) al_draw_rotated_bitmap(bitmap, w / 2, h / 2, x, y, angle, 0x0);
-	return 1;
+	if (!g_skip_frame)
+		al_draw_rotated_bitmap(get_image_bitmap(image), image->width / 2, image->height / 2, x, y, angle, 0x0);
+	return 0;
 }
 
 static duk_ret_t
 js_Image_rotateBlitMask(duk_context* ctx)
 {
-	float           angle;
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_COLOR   mask_color;
-	float           x, y, w, h;
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	float angle = duk_require_number(ctx, 2);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 3);
+
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	angle = duk_to_number(ctx, 2);
-	mask_color = duk_get_sphere_color(ctx, 3);
-	if (!g_skip_frame) al_draw_tinted_rotated_bitmap(bitmap, mask_color, w / 2, h / 2, x, y, angle, 0x0);
-	return 1;
+	if (!g_skip_frame)
+		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), mask, image->width / 2, image->height / 2, x, y, angle, 0x0);
+	return 0;
 }
 
 static duk_ret_t
 js_Image_transformBlit(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_COLOR   vertex_color;
-	int             w, h;
-	float           x1, y1, x2, y2, x3, y3, x4, y4;
+	int x1 = duk_require_int(ctx, 0);
+	int y1 = duk_require_int(ctx, 1);
+	int x2 = duk_require_int(ctx, 2);
+	int y2 = duk_require_int(ctx, 3);
+	int x3 = duk_require_int(ctx, 4);
+	int y3 = duk_require_int(ctx, 5);
+	int x4 = duk_require_int(ctx, 6);
+	int y4 = duk_require_int(ctx, 7);
+
+	image_t*      image;
+	ALLEGRO_COLOR vertex_color;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
-	x1 = duk_to_int(ctx, 0); y1 = duk_to_int(ctx, 1);
-	x2 = duk_to_int(ctx, 2); y2 = duk_to_int(ctx, 3);
-	x3 = duk_to_int(ctx, 4); y3 = duk_to_int(ctx, 5);
-	x4 = duk_to_int(ctx, 6); y4 = duk_to_int(ctx, 7);
 	vertex_color = al_map_rgba(255, 255, 255, 255);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, vertex_color },
-		{ x2, y2, 0, w, 0, vertex_color },
-		{ x4, y4, 0, 0, h, vertex_color },
-		{ x3, y3, 0, w, h, vertex_color }
+		{ x2, y2, 0, image->width, 0, vertex_color },
+		{ x4, y4, 0, 0, image->height, vertex_color },
+		{ x3, y3, 0, image->width, image->height, vertex_color }
 	};
-	if (!g_skip_frame) al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	if (!g_skip_frame)
+		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
 
 static duk_ret_t
 js_Image_transformBlitMask(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_COLOR   vertex_color;
-	int             w, h;
-	float           x1, y1, x2, y2, x3, y3, x4, y4;
+	int x1 = duk_require_int(ctx, 0);
+	int y1 = duk_require_int(ctx, 1);
+	int x2 = duk_require_int(ctx, 2);
+	int y2 = duk_require_int(ctx, 3);
+	int x3 = duk_require_int(ctx, 4);
+	int y3 = duk_require_int(ctx, 5);
+	int x4 = duk_require_int(ctx, 6);
+	int y4 = duk_require_int(ctx, 7);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 8);
+
+	image_t*      image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
-	x1 = duk_to_int(ctx, 0); y1 = duk_to_int(ctx, 1);
-	x2 = duk_to_int(ctx, 2); y2 = duk_to_int(ctx, 3);
-	x3 = duk_to_int(ctx, 4); y3 = duk_to_int(ctx, 5);
-	x4 = duk_to_int(ctx, 6); y4 = duk_to_int(ctx, 7);
-	vertex_color = duk_get_sphere_color(ctx, 8);
 	ALLEGRO_VERTEX v[] = {
-		{ x1, y1, 0, 0, 0, vertex_color },
-		{ x2, y2, 0, w, 0, vertex_color },
-		{ x4, y4, 0, 0, h, vertex_color },
-		{ x3, y3, 0, w, h, vertex_color }
+		{ x1, y1, 0, 0, 0, mask },
+		{ x2, y2, 0, image->width, 0, mask },
+		{ x4, y4, 0, 0, image->height, mask },
+		{ x3, y3, 0, image->width, image->height, mask }
 	};
-	if (!g_skip_frame) al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	if (!g_skip_frame)
+		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
 
 static duk_ret_t
 js_Image_zoomBlit(duk_context* ctx)
 {
-	float x = duk_require_int(ctx, 0);
-	float y = duk_require_int(ctx, 1);
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
 	float scale = duk_require_number(ctx, 2);
 	
-	ALLEGRO_BITMAP* bitmap;
-	int             w, h;
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
-	if (!g_skip_frame) al_draw_scaled_bitmap(bitmap, 0, 0, w, h, x, y, w * scale, h * scale, 0x0);
-	return 1;
+	if (!g_skip_frame)
+		al_draw_scaled_bitmap(get_image_bitmap(image), 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
+	return 0;
 }
 
 static duk_ret_t
 js_Image_zoomBlitMask(duk_context* ctx)
 {
-	float x = duk_require_int(ctx, 0);
-	float y = duk_require_int(ctx, 1);
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
 	float scale = duk_require_number(ctx, 2);
 	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 3);
 
-	ALLEGRO_BITMAP* bitmap;
-	int             w, h;
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
 	if (!g_skip_frame)
-		al_draw_tinted_scaled_bitmap(bitmap, mask, 0, 0, w, h, x, y, w * scale, h * scale, 0x0);
-	return 1;
+		al_draw_tinted_scaled_bitmap(get_image_bitmap(image), mask, 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
+	return 0;
 }

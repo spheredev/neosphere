@@ -52,6 +52,8 @@ static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
 static duk_ret_t js_SetTile               (duk_context* ctx);
+static duk_ret_t js_SetTileImage          (duk_context* ctx);
+static duk_ret_t js_SetTileSurface        (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
 static duk_ret_t js_AttachCamera          (duk_context* ctx);
 static duk_ret_t js_AttachInput           (duk_context* ctx);
@@ -297,7 +299,7 @@ load_map(const char* path)
 			free_lstring(al_fread_lstring(file));
 		}
 		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
-		tileset = strcmp(strings[0]->cstr, "") == 0 ? load_tileset_f(file) : load_tileset(tile_path);
+		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
 		free(tile_path);
 		if (tileset == NULL) goto on_error;
 		map->is_toric = rmp.toric_map;
@@ -887,7 +889,7 @@ js_GetTileImage(duk_context* ctx)
 	c_tiles = get_tile_count(s_map->tileset);
 	if (tile_index < 0 || tile_index >= c_tiles)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileImage(): Tile index out of range (caller passed %i)", tile_index);
-	duk_push_sphere_image(ctx, get_tile_bitmap(s_map->tileset, tile_index), false);
+	duk_push_sphere_image(ctx, get_tile_image(s_map->tileset, tile_index));
 	return 1;
 }
 
@@ -896,14 +898,14 @@ js_GetTileSurface(duk_context* ctx)
 {
 	int tile_index = duk_require_int(ctx, 0);
 
-	int c_tiles;
+	int      c_tiles;
 	
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileSurface(): Map engine must be running");
 	c_tiles = get_tile_count(s_map->tileset);
 	if (tile_index < 0 || tile_index >= c_tiles)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileSurface(): Tile index out of range (caller passed %i)", tile_index);
-	duk_push_sphere_surface(ctx, get_tile_bitmap(s_map->tileset, tile_index), false);
+	duk_push_null(ctx);
 	return 1;
 }
 

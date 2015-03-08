@@ -1,4 +1,5 @@
 #include "minisphere.h"
+#include "image.h"
 #include "obsmap.h"
 
 #include "tileset.h"
@@ -12,7 +13,7 @@ struct tileset
 
 struct tile
 {
-	ALLEGRO_BITMAP* bitmap;
+	image_t*        image;
 	int             delay;
 	struct tile*    next_tile;
 	int             num_obs_lines;
@@ -55,13 +56,13 @@ load_tileset(const char* path)
 	tileset_t*    tileset;
 
 	if ((file = al_fopen(path, "rb")) == NULL) return NULL;
-	tileset = load_tileset_f(file);
+	tileset = read_tileset(file);
 	al_fclose(file);
 	return tileset;
 }
 
 tileset_t*
-load_tileset_f(ALLEGRO_FILE* file)
+read_tileset(ALLEGRO_FILE* file)
 {
 	int64_t              file_pos;
 	struct rts_header    rts;
@@ -82,7 +83,7 @@ load_tileset_f(ALLEGRO_FILE* file)
 	if (rts.tile_bpp != 32) goto on_error;
 	if ((tiles = calloc(rts.num_tiles, sizeof(struct tile))) == NULL) goto on_error;
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if ((tiles[i].bitmap = al_fread_bitmap(file, rts.tile_width, rts.tile_height)) == NULL)
+		if ((tiles[i].image = read_image(file, rts.tile_width, rts.tile_height)) == NULL)
 			goto on_error;
 	}
 	for (i = 0; i < rts.num_tiles; ++i) {
@@ -121,7 +122,7 @@ on_error:
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
 			free_obsmap(tiles[i].obsmap);
-			al_destroy_bitmap(tiles[i].bitmap);
+			free_image(tiles[i].image);
 		}
 		free(tileset->tiles);
 	}
@@ -135,17 +136,17 @@ free_tileset(tileset_t* tileset)
 	int i;
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
-		al_destroy_bitmap(tileset->tiles[i].bitmap);
+		free_image(tileset->tiles[i].image);
 		free_obsmap(tileset->tiles[i].obsmap);
 	}
 	free(tileset->tiles);
 	free(tileset);
 }
 
-ALLEGRO_BITMAP*
-get_tile_bitmap(const tileset_t* tileset, int tile_index)
+image_t*
+get_tile_image(const tileset_t* tileset, int tile_index)
 {
-	return tileset->tiles[tile_index].bitmap;
+	return tileset->tiles[tile_index].image;
 }
 
 int
@@ -170,5 +171,5 @@ get_tile_size(const tileset_t* tileset, int* out_w, int* out_h)
 void
 draw_tile(const tileset_t* tileset, float x, float y, int tile_index)
 {
-	al_draw_bitmap(tileset->tiles[tile_index].bitmap, x, y, 0x0);
+	al_draw_bitmap(get_image_bitmap(tileset->tiles[tile_index].image), x, y, 0x0);
 }

@@ -53,7 +53,7 @@ load_spriteset(const char* path)
 	spriteset_t*        spriteset = NULL;
 	int                 i, j;
 
-	if ((spriteset = al_calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
+	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
 	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
 	if (al_fread(file, &rss, sizeof(struct rss_header)) != sizeof(struct rss_header))
 		goto on_error;
@@ -66,7 +66,7 @@ load_spriteset(const char* path)
 	case 1:
 		spriteset->num_images = rss.num_images;
 		spriteset->num_poses = 8;
-		spriteset->poses = al_calloc(spriteset->num_poses, sizeof(spriteset_pose_t));
+		spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t));
 		spriteset->poses[0].name = strdup("north");
 		spriteset->poses[1].name = strdup("northeast");
 		spriteset->poses[2].name = strdup("east");
@@ -75,14 +75,14 @@ load_spriteset(const char* path)
 		spriteset->poses[5].name = strdup("southwest");
 		spriteset->poses[6].name = strdup("west");
 		spriteset->poses[7].name = strdup("northwest");
-		if ((spriteset->bitmaps = al_calloc(spriteset->num_images, sizeof(ALLEGRO_BITMAP*))) == NULL)
+		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
 		for (i = 0; i < spriteset->num_images; ++i) {
-			spriteset->bitmaps[i] = al_fread_bitmap(file, rss.frame_width, rss.frame_height);
-			if (spriteset->bitmaps[i] == NULL) goto on_error;
+			if ((spriteset->images[i] = read_image(file, rss.frame_width, rss.frame_height)) == NULL)
+				goto on_error;
 		}
 		for (i = 0; i < spriteset->num_poses; ++i) {
-			if ((spriteset->poses[i].frames = al_calloc(8, sizeof(spriteset_frame_t))) == NULL)
+			if ((spriteset->poses[i].frames = calloc(8, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
 			for (j = 0; j < 8; ++j) {
 				spriteset->poses[i].frames[j].image_idx = j + i * 8;
@@ -96,20 +96,20 @@ load_spriteset(const char* path)
 	case 3:
 		spriteset->num_images = rss.num_images;
 		spriteset->num_poses = rss.num_directions;
-		if ((spriteset->bitmaps = al_calloc(spriteset->num_images, sizeof(ALLEGRO_BITMAP*))) == NULL)
+		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
-		if ((spriteset->poses = al_calloc(spriteset->num_poses, sizeof(spriteset_pose_t))) == NULL)
+		if ((spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t))) == NULL)
 			goto on_error;
 		for (i = 0; i < rss.num_images; ++i) {
-			spriteset->bitmaps[i] = al_fread_bitmap(file, rss.frame_width, rss.frame_height);
-			if (spriteset->bitmaps[i] == NULL) goto on_error;
+			if ((spriteset->images[i] = read_image(file, rss.frame_width, rss.frame_height)) == NULL)
+				goto on_error;
 		}
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (al_fread(file, &direction, sizeof(struct v3_direction)) != sizeof(struct v3_direction))
 				goto on_error;
 			if ((spriteset->poses[i].name = _fread_string(file)) == NULL) goto on_error;
 			spriteset->poses[i].num_frames = direction.num_frames;
-			if ((spriteset->poses[i].frames = al_calloc(direction.num_frames, sizeof(spriteset_frame_t))) == NULL)
+			if ((spriteset->poses[i].frames = calloc(direction.num_frames, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
 			for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
 				if (al_fread(file, &frame, sizeof(struct v3_frame)) != sizeof(struct v3_frame))
@@ -131,12 +131,12 @@ on_error:
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
 			for (i = 0; i < spriteset->num_poses; ++i) {
-				al_free(spriteset->poses[i].frames);
+				free(spriteset->poses[i].frames);
 				free(spriteset->poses[i].name);
 			}
-			al_free(spriteset->poses);
+			free(spriteset->poses);
 		}
-		al_free(spriteset);
+		free(spriteset);
 	}
 	return NULL;
 }
@@ -155,16 +155,15 @@ free_spriteset(spriteset_t* spriteset)
 	if (spriteset == NULL || --spriteset->c_refs > 0)
 		return;
 	for (i = 0; i < spriteset->num_images; ++i) {
-		// FIXME: intentional leak to prevent crashes - need to implement refcounted images
-		//al_destroy_bitmap(spriteset->bitmaps[i]);
+		free_image(spriteset->images[i]);
 	}
-	al_free(spriteset->bitmaps);
+	free(spriteset->images);
 	for (i = 0; i < spriteset->num_poses; ++i) {
-		al_free(spriteset->poses[i].frames);
+		free(spriteset->poses[i].frames);
 		free(spriteset->poses[i].name);
 	}
-	al_free(spriteset->poses);
-	al_free(spriteset);
+	free(spriteset->poses);
+	free(spriteset);
 }
 
 rect_t
@@ -196,7 +195,7 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 	image_index = pose->frames[frame_index].image_idx;
 	x -= (spriteset->base.x1 + spriteset->base.x2) / 2;
 	y -= (spriteset->base.y1 + spriteset->base.y2) / 2;
-	al_draw_bitmap(spriteset->bitmaps[image_index], x, y, 0x0);
+	al_draw_bitmap(get_image_bitmap(spriteset->images[image_index]), x, y, 0x0);
 }
 
 static const spriteset_pose_t*
@@ -261,7 +260,7 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	// Spriteset:images
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_images; ++i) {
-		duk_push_sphere_image(ctx, spriteset->bitmaps[i], true);
+		duk_push_sphere_image(ctx, spriteset->images[i]);
 		duk_put_prop_index(ctx, -2, i);
 	}
 	duk_put_prop_string(ctx, -2, "images");

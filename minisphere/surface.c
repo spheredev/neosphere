@@ -47,11 +47,11 @@ init_surface_api(void)
 }
 
 void
-duk_push_sphere_surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_free)
+duk_push_sphere_surface(duk_context* ctx, image_t* image)
 {
+	ref_image(image);
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
-	duk_push_boolean(ctx, allow_free); duk_put_prop_string(ctx, -2, "\xFF" "allow_free");
+	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
 	duk_push_c_function(ctx, &js_Surface_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Surface_setAlpha, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setAlpha");
 	duk_push_c_function(ctx, &js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
@@ -70,12 +70,12 @@ duk_push_sphere_surface(duk_context* ctx, ALLEGRO_BITMAP* bitmap, bool allow_fre
 	duk_push_c_function(ctx, &js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
 	duk_push_c_function(ctx, &js_Surface_rescale, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rescale");
 	duk_push_c_function(ctx, &js_Surface_save, DUK_VARARGS); duk_put_prop_string(ctx, -2, "save");
-	duk_push_string(ctx, "width"); duk_push_int(ctx, al_get_bitmap_width(bitmap));
+	duk_push_string(ctx, "width"); duk_push_int(ctx, get_image_width(image));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
 		| DUK_DEFPROP_HAVE_VALUE);
-	duk_push_string(ctx, "height"); duk_push_int(ctx, al_get_bitmap_height(bitmap));
+	duk_push_string(ctx, "height"); duk_push_int(ctx, get_image_height(image));
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0
@@ -110,106 +110,101 @@ _reset_blender(void)
 static duk_ret_t
 js_CreateSurface(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	int             w, h;
+	int w = duk_require_int(ctx, 0);
+	int h = duk_require_int(ctx, 1);
 	
-	w = duk_to_number(ctx, 0);
-	h = duk_to_number(ctx, 1);
-	bitmap = al_create_bitmap(w, h);
-	duk_push_sphere_surface(ctx, bitmap, true);
+	image_t* image;
+	
+	if ((image = create_image(w, h)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "CreateSurface(): Failed to create surface bitmap");
+	duk_push_sphere_surface(ctx, image);
 	return 1;
 }
 
 static duk_ret_t
 js_GrabSurface(duk_context* ctx)
 {
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+
 	ALLEGRO_BITMAP* backbuffer;
-	ALLEGRO_BITMAP* bitmap;
-	int             x, y, w, h;
+	image_t*        image;
 
 	backbuffer = al_get_backbuffer(g_display);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	w = duk_to_int(ctx, 2);
-	h = duk_to_int(ctx, 3);
-	bitmap = al_create_bitmap(w, h);
-	if (bitmap != NULL) {
-		al_set_target_bitmap(bitmap);
-		al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
-		al_set_target_backbuffer(g_display);
-		duk_push_sphere_surface(ctx, bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Unable to create surface bitmap");
-	}
+	if ((image = create_image(w, h)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Failed to create surface bitmap");
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
+	al_set_target_backbuffer(g_display);
+	duk_push_sphere_surface(ctx, image);
+	free_image(image);
+	return 1;
 }
 
 static duk_ret_t
 js_LoadSurface(duk_context* ctx)
 {
-	const char* filename = duk_to_string(ctx, 0);
+	const char* filename = duk_require_string(ctx, 0);
+	
+	image_t* image;
+
 	char* path = get_asset_path(filename, "images", false);
-	ALLEGRO_BITMAP* bitmap = al_load_bitmap(path);
+	image = load_image(path);
 	free(path);
-	if (bitmap != NULL) {
-		duk_push_sphere_surface(ctx, bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "LoadSurface(): Unable to load image file '%s'", filename);
-	}
+	if (image == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "LoadSurface(): Failed to load image file '%s'", filename);
+	duk_push_sphere_surface(ctx, image);
+	free_image(image);
+	return 1;
 }
 
 static duk_ret_t
 js_Surface_finalize(duk_context* ctx)
 {
-	bool            allow_free;
-	ALLEGRO_BITMAP* bitmap;
+	image_t* image;
 	
-	duk_get_prop_string(ctx, 0, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "allow_free"); allow_free = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	if (allow_free) al_destroy_bitmap(bitmap);
+	duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	free_image(image);
 	return 0;
 }
 
 static duk_ret_t
 js_Surface_blit(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	float           x, y;
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	
+	image_t* image;
 	
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	if (!g_skip_frame) al_draw_bitmap(bitmap, x, y, 0x0);
+	if (!g_skip_frame) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
 static duk_ret_t
 js_Surface_blitMaskSurface(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	int             blend_mode;
-	ALLEGRO_COLOR   mask_color;
-	int             n_args;
-	ALLEGRO_BITMAP* src_bitmap;
-	int             x, y;
+	int c_args = duk_get_top(ctx);
+	image_t* src_image;
+		duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); src_image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 3);
+
+	int      blend_mode;
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	n_args = duk_get_top(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "bitmap_ptr"); src_bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	x = duk_to_int(ctx, 1);
-	y = duk_to_int(ctx, 2);
-	mask_color = duk_get_sphere_color(ctx, 3);
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
-	al_draw_tinted_bitmap(src_bitmap, mask_color, x, y, 0x0);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_tinted_bitmap(get_image_bitmap(src_image), mask, x, y, 0x0);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
 	return 0;
@@ -218,21 +213,22 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 static duk_ret_t
 js_Surface_blitSurface(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	int             blend_mode;
-	ALLEGRO_BITMAP* src_bitmap;
-	int             x, y;
+	int c_args = duk_get_top(ctx);
+	image_t* src_image;
+	duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); src_image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+
+	int      blend_mode;
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "bitmap_ptr"); src_bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	x = duk_to_int(ctx, 1);
-	y = duk_to_int(ctx, 2);
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
-	al_draw_bitmap(src_bitmap, x, y, 0x0);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_bitmap(get_image_bitmap(src_image), x, y, 0x0);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
 	return 0;
@@ -241,82 +237,79 @@ js_Surface_blitSurface(duk_context* ctx)
 static duk_ret_t
 js_Surface_clone(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_BITMAP* new_bitmap;
+	image_t* image;
+	image_t* new_image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	new_bitmap = al_clone_bitmap(bitmap);
-	if (new_bitmap != NULL) {
-		duk_push_sphere_surface(ctx, new_bitmap, true);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:clone() - Unable to create new bitmap");
-	}
+	if ((new_image = clone_image(image)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:clone() - Unable to create new surface image");
+	duk_push_sphere_surface(ctx, new_image);
+	free_image(new_image);
 	return 1;
 }
 
 static duk_ret_t
 js_Surface_cloneSection(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_BITMAP* new_bitmap;
-	float           x, y, w, h;
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+
+	image_t* image;
+	image_t* new_image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x = duk_to_number(ctx, 0);
-	y = duk_to_number(ctx, 1);
-	w = duk_to_number(ctx, 2);
-	h = duk_to_number(ctx, 3);
-	new_bitmap = al_create_bitmap(w, h);
-	al_set_target_bitmap(new_bitmap);
-	al_draw_bitmap_region(bitmap, x, y, w, h, 0, 0, 0x0);
+	if ((new_image = create_image(w, h)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:cloneSection() - Unable to create new surface image");
+	al_set_target_bitmap(get_image_bitmap(new_image));
+	al_draw_bitmap_region(get_image_bitmap(image), x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
-	duk_push_sphere_surface(ctx, new_bitmap, true);
+	duk_push_sphere_surface(ctx, new_image);
+	free_image(new_image);
 	return 1;
 }
 
 static duk_ret_t
 js_Surface_createImage(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_BITMAP* new_bitmap;
+	image_t* image;
+	image_t* new_image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	new_bitmap = al_clone_bitmap(bitmap);
-	if (new_bitmap == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:createImage() - Failed to create new bitmap");
-	duk_push_sphere_image(ctx, new_bitmap, true);
+	if ((new_image = clone_image(image)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:createImage() - Failed to create new image bitmap");
+	duk_push_sphere_image(ctx, new_image);
+	free_image(new_image);
 	return 1;
 }
 
 static duk_ret_t
 js_Surface_drawText(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
+	int x = duk_require_int(ctx, 1);
+	int y = duk_require_int(ctx, 2);
+	const char* text = duk_to_string(ctx, 3);
+	
 	int             blend_mode;
 	ALLEGRO_COLOR   color;
 	ALLEGRO_FONT*   font;
-	const char*     text;
-	int             x, y;
+	image_t*        image;
 
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
-	x = duk_to_int(ctx, 1);
-	y = duk_to_int(ctx, 2);
-	text = duk_to_string(ctx, 3);
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
+	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_text(font, color, x, y, 0x0, text);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
@@ -329,13 +322,13 @@ js_Surface_getPixel(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 	
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_COLOR   color;
+	ALLEGRO_COLOR color;
+	image_t*      image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	color = al_get_pixel(bitmap, x, y);
+	color = al_get_pixel(get_image_bitmap(image), x, y);
 	duk_push_sphere_color(ctx, color);
 	return 1;
 }
@@ -343,13 +336,13 @@ js_Surface_getPixel(duk_context* ctx)
 static duk_ret_t
 js_Surface_gradientRectangle(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	int             blend_mode;
-	ALLEGRO_COLOR   color_ul, color_ur, color_lr, color_ll;
-	float           x1, y1, x2, y2;
+	int           blend_mode;
+	ALLEGRO_COLOR color_ul, color_ur, color_lr, color_ll;
+	image_t*      image;
+	float         x1, y1, x2, y2;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	x1 = (float)duk_to_number(ctx, 0);
@@ -361,7 +354,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	color_lr = duk_get_sphere_color(ctx, 6);
 	color_ll = duk_get_sphere_color(ctx, 7);
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
+	al_set_target_bitmap(get_image_bitmap(image));
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, color_ul },
 		{ x2, y1, 0, 0, 0, color_ur },
@@ -377,13 +370,13 @@ js_Surface_gradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_Surface_line(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	int             blend_mode;
-	ALLEGRO_COLOR   color;
-	int             x1, y1, x2, y2;
+	int            blend_mode;
+	ALLEGRO_COLOR  color;
+	image_t*       image;
+	int            x1, y1, x2, y2;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	x1 = duk_to_int(ctx, 0);
@@ -392,7 +385,7 @@ js_Surface_line(duk_context* ctx)
 	y2 = duk_to_int(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
+	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_line(x1, y1, x2, y2, color, 1);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
@@ -402,15 +395,15 @@ js_Surface_line(duk_context* ctx)
 static duk_ret_t
 js_Surface_outlinedRectangle(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	int             blend_mode;
-	ALLEGRO_COLOR   color;
-	int             n_args;
-	float           thickness;
-	float           x1, y1, x2, y2;
+	int           blend_mode;
+	ALLEGRO_COLOR color;
+	image_t*      image;
+	int           n_args;
+	float         thickness;
+	float         x1, y1, x2, y2;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	n_args = duk_get_top(ctx);
@@ -421,7 +414,7 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	color = duk_get_sphere_color(ctx, 4);
 	thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
+	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_rectangle(x1, y1, x2, y2, color, thickness);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
@@ -434,67 +427,62 @@ js_Surface_rescale(duk_context* ctx)
 	int width = duk_require_int(ctx, 0);
 	int height = duk_require_int(ctx, 1);
 	
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_BITMAP* new_bitmap;
-	int             src_w, src_h;
+	image_t* image;
+	image_t* new_image;
+	int      src_w, src_h;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	src_w = al_get_bitmap_width(bitmap);
-	src_h = al_get_bitmap_height(bitmap);
-	if ((new_bitmap = al_create_bitmap(width, height)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:rescale() - Failed to create new bitmap");
-	al_set_target_bitmap(new_bitmap);
-	al_draw_scaled_bitmap(bitmap, 0, 0, src_w, src_h, 0, 0, width, height, 0x0);
+	src_w = get_image_width(image);
+	src_h = get_image_height(image);
+	if ((new_image = create_image(width, height)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:rescale() - Failed to create new surface bitmap");
+	al_set_target_bitmap(get_image_bitmap(new_image));
+	al_draw_scaled_bitmap(get_image_bitmap(image), 0, 0, src_w, src_h, 0, 0, width, height, 0x0);
 	al_set_target_backbuffer(g_display);
-	al_destroy_bitmap(bitmap);
 	duk_push_this(ctx);
-	duk_push_pointer(ctx, new_bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
-	return 1;
+	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
+	free_image(new_image);
+	return 0;
 }
 
 static duk_ret_t
 js_Surface_rotate(duk_context* ctx)
 {
-	float           angle;
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_BITMAP* new_bitmap;
-	int             w, h;
-	bool            want_resize;
+	float angle = duk_require_number(ctx, 0);
+	bool want_resize = duk_require_boolean(ctx, 1);
+	
+	image_t* image;
+	image_t* new_image;
+	int      w, h;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	angle = duk_get_number(ctx, 0);
-	want_resize = duk_require_boolean(ctx, 1);
-	w = al_get_bitmap_width(bitmap);
-	h = al_get_bitmap_height(bitmap);
-	new_bitmap = al_create_bitmap(w, h);
-	if (new_bitmap != NULL) {
-		al_set_target_bitmap(new_bitmap);
-		al_draw_rotated_bitmap(bitmap, (float)w / 2, (float)h / 2, (float)w / 2, (float)h / 2, angle, 0x0);
-		al_set_target_backbuffer(g_display);
-		al_destroy_bitmap(bitmap);
-		duk_push_this(ctx);
-		duk_push_pointer(ctx, new_bitmap); duk_put_prop_string(ctx, -2, "\xFF" "bitmap_ptr");
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:rotate() - Unable to create rotated bitmap");
-	}
+	w = get_image_width(image);
+	h = get_image_height(image);
+	if ((new_image = create_image(w, h)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:rotate() - Unable to create new surface bitmap");
+	al_set_target_bitmap(get_image_bitmap(new_image));
+	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)w / 2, (float)h / 2, angle, 0x0);
+	al_set_target_backbuffer(g_display);
+	duk_push_this(ctx);
+	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
+	free_image(new_image);
+	return 0;
 }
 
 static duk_ret_t
 js_Surface_rectangle(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
+	image_t* image;
 	int             blend_mode;
 	ALLEGRO_COLOR   color;
 	float           x, y, w, h;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	x = (float)duk_to_number(ctx, 0);
@@ -503,7 +491,7 @@ js_Surface_rectangle(duk_context* ctx)
 	h = (float)duk_to_number(ctx, 3);
 	color = duk_get_sphere_color(ctx, 4);
 	_apply_blend_mode(blend_mode);
-	al_set_target_bitmap(bitmap);
+	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_filled_rectangle(x, y, x + w, y + h, color);
 	al_set_target_backbuffer(g_display);
 	_reset_blender();
@@ -513,26 +501,27 @@ js_Surface_rectangle(duk_context* ctx)
 static duk_ret_t
 js_Surface_save(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-	const char*     filename;
-	const char*     path;
+	const char* filename = duk_require_string(ctx, 0);
+	
+	image_t* image;
+	char*    path;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	filename = duk_to_string(ctx, 0);
 	path = get_asset_path(filename, "images", true);
-	al_save_bitmap(path, bitmap);
+	al_save_bitmap(path, get_image_bitmap(image));
+	free(path);
 	return 1;
 }
 
 static duk_ret_t
 js_Surface_setAlpha(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
+	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	return 0;
 }
@@ -540,11 +529,6 @@ js_Surface_setAlpha(duk_context* ctx)
 static duk_ret_t
 js_Surface_setBlendMode(duk_context* ctx)
 {
-	ALLEGRO_BITMAP* bitmap;
-
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "bitmap_ptr"); bitmap = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
 	duk_push_this(ctx);
 	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "blend_mode");
 	duk_pop(ctx);
