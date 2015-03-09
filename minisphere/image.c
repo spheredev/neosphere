@@ -191,15 +191,15 @@ init_image_api(duk_context* ctx)
 	// load system-provided images
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Arrow");
-		path = get_sys_asset_path(filename, NULL);
+		path = get_sys_asset_path(filename, "system");
 		s_sys_arrow = load_image(path);
 		free(path);
 		filename = al_get_config_value(g_sys_conf, NULL, "UpArrow");
-		path = get_sys_asset_path(filename, NULL);
+		path = get_sys_asset_path(filename, "system");
 		s_sys_up_arrow = load_image(path);
 		free(path);
 		filename = al_get_config_value(g_sys_conf, NULL, "DownArrow");
-		path = get_sys_asset_path(filename, NULL);
+		path = get_sys_asset_path(filename, "system");
 		s_sys_dn_arrow = load_image(path);
 		free(path);
 	}

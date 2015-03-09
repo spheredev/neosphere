@@ -29,17 +29,20 @@
 
 static const int MAX_FRAME_SKIPS = 5;
 
-static void on_duk_fatal    (duk_context* ctx, duk_errcode_t code, const char* msg);
-static void shutdown_engine (void);
+static void initialize_engine (void);
+static void shutdown_engine   (void);
+
+static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
+static char*   s_last_game_path = NULL;
 static double  s_last_fps_poll_time;
 static double  s_last_frame_time;
 static int     s_num_flips;
 static int     s_num_frames;
-static bool    s_show_fps = true;
+static bool    s_show_fps = false;
 static bool    s_take_snapshot = false;
 
 ALLEGRO_DISPLAY*     g_display   = NULL;
@@ -67,22 +70,8 @@ main(int argc, char** argv)
 	ALLEGRO_TRANSFORM    trans;
 	
 	int i;
-	
-	// initialize Allegro
-	al_init();
-	al_init_native_dialog_addon();
-	al_init_primitives_addon();
-	al_init_image_addon();
-	al_init_font_addon();
-	al_init_ttf_addon();
-	al_install_audio();
-	al_init_acodec_addon();
-	al_install_keyboard();
 
-	// load system configuraton
-	path = get_sys_asset_path("system.ini", NULL);
-	g_sys_conf = al_load_config_file(path);
-	free(path);
+	initialize_engine();
 	
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
@@ -91,7 +80,7 @@ main(int argc, char** argv)
 		// only one argument passed, assume it's an .sgm file or game directory
 		al_destroy_path(g_game_path);
 		g_game_path = al_create_path(argv[1]);
-		if (strcmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
+		if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path_for_directory(argv[1]);
 		}
@@ -102,13 +91,15 @@ main(int argc, char** argv)
 			if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
 				al_destroy_path(g_game_path);
 				g_game_path = al_create_path(argv[i + 1]);
-				if (strcmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
+				if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
 					al_destroy_path(g_game_path);
 					g_game_path = al_create_path_for_directory(argv[i + 1]);
 				}
 			}
 		}
 	}
+	
+startup:
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
 	char* sgm_path = get_asset_path("game.sgm", NULL, false);
@@ -160,7 +151,7 @@ main(int argc, char** argv)
 	// attempt to locate and load system font
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Font");
-		path = get_sys_asset_path(filename, NULL);
+		path = get_sys_asset_path(filename, "system");
 		g_sys_font = al_load_font(path, 0, 0x0);
 		free(path);
 	}
@@ -171,23 +162,6 @@ main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	// initialize JavaScript engine
-	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
-	init_api(g_duktape);
-	init_bytearray_api();
-	init_color_api();
-	init_file_api();
-	init_font_api(g_duktape);
-	init_image_api(g_duktape);
-	init_input_api(g_duktape);
-	init_log_api(g_duktape);
-	init_map_engine_api(g_duktape);
-	init_rawfile_api();
-	init_sound_api(g_duktape);
-	init_spriteset_api(g_duktape);
-	init_surface_api();
-	init_windowstyle_api();
-	
 	duk_push_global_stash(g_duktape);
 	duk_push_sphere_Font(g_duktape, g_sys_font);
 	duk_put_prop_string(g_duktape, -2, "system_font");
@@ -212,7 +186,17 @@ main(int argc, char** argv)
 	duk_pop(g_duktape);
 	duk_pop(g_duktape);
 	
-	// teardown
+teardown:
+	// are we returning from an ExecuteGame() call?
+	if (s_last_game_path != NULL) {
+		shutdown_engine();
+		initialize_engine();
+		g_game_path = al_create_path_for_directory(s_last_game_path);
+		free(s_last_game_path); s_last_game_path = NULL;
+		goto startup;
+	}
+	
+	// otherwise shut down, we're done here
 	shutdown_engine();
 	return EXIT_SUCCESS;
 
@@ -220,7 +204,8 @@ on_js_error:
 	err_code = duk_get_error_code(g_duktape, -1);
 	duk_dup(g_duktape, -1);
 	const char* err_msg = duk_safe_to_string(g_duktape, -1);
-	if (err_code != DUK_ERR_ERROR || strcmp(err_msg, "Error: !exit") != 0) {
+	if (err_code != DUK_ERR_ERROR || strstr(err_msg, "Error: @") != err_msg) {
+		// This is a script error, handle accordingly
 		duk_get_prop_string(g_duktape, -2, "lineNumber");
 		duk_int_t line_num = duk_get_int(g_duktape, -1);
 		duk_pop(g_duktape);
@@ -236,8 +221,25 @@ on_js_error:
 		}
 		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
 	}
-	shutdown_engine();
-	return EXIT_FAILURE;
+	else if (strstr(err_msg, "Error: @exec ") == err_msg) {
+		// ExecuteGame() was called, clear and and prep for new session
+		s_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		filename = err_msg + 13;
+		path = get_sys_asset_path(filename, "games");
+		shutdown_engine();
+		initialize_engine();
+		g_game_path = al_create_path(path);
+		if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
+			al_destroy_path(g_game_path);
+			g_game_path = al_create_path_for_directory(path);
+		}
+		al_set_path_filename(g_game_path, NULL);
+		free(path);
+		goto startup;
+	}
+	
+	// exception was an intentional bailout (window close, Exit(), etc.), shut down normally
+	goto teardown;
 }
 
 bool
@@ -377,7 +379,6 @@ get_sys_asset_path(const char* path, const char* base_dir)
 	bool is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
 	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
 	ALLEGRO_PATH* system_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	if (!is_homed) al_append_path_component(system_path, "system");
 	al_rebase_path(system_path, base_path);
 	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
 	bool is_absolute = al_get_path_num_components(asset_path) > 0
@@ -439,11 +440,42 @@ on_error:
 }
 
 static void
-on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
+initialize_engine(void)
 {
-	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	shutdown_engine();
-	exit(0);
+	char* path;
+	
+	// initialize Allegro
+	al_init();
+	al_init_native_dialog_addon();
+	al_init_primitives_addon();
+	al_init_image_addon();
+	al_init_font_addon();
+	al_init_ttf_addon();
+	al_install_audio();
+	al_init_acodec_addon();
+	al_install_keyboard();
+
+	// load system configuraton
+	path = get_sys_asset_path("system.ini", "system");
+	g_sys_conf = al_load_config_file(path);
+	free(path);
+	
+	// initialize JavaScript API
+	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
+	init_api(g_duktape);
+	init_bytearray_api();
+	init_color_api();
+	init_file_api();
+	init_font_api(g_duktape);
+	init_image_api(g_duktape);
+	init_input_api(g_duktape);
+	init_log_api(g_duktape);
+	init_map_engine_api(g_duktape);
+	init_rawfile_api();
+	init_sound_api(g_duktape);
+	init_spriteset_api(g_duktape);
+	init_surface_api();
+	init_windowstyle_api();
 }
 
 static void
@@ -457,4 +489,12 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path);
 	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
 	al_uninstall_system();
+}
+
+static void
+on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
+{
+	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	shutdown_engine();
+	exit(0);
 }

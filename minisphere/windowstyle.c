@@ -138,7 +138,7 @@ init_windowstyle_api(void)
 	// load system window style
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "WindowStyle");
-		path = get_sys_asset_path(filename, NULL);
+		path = get_sys_asset_path(filename, "system");
 		s_sys_winstyle = load_windowstyle(path);
 		free(path);
 	}

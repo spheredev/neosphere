@@ -2,70 +2,70 @@
 #include "api.h"
 #include "color.h"
 
-static duk_ret_t duk_RequireSystemScript(duk_context* ctx);
-static duk_ret_t duk_RequireScript(duk_context* ctx);
-static duk_ret_t duk_EvaluateSystemScript(duk_context* ctx);
-static duk_ret_t duk_EvaluateScript(duk_context* ctx);
-static duk_ret_t duk_GetVersion(duk_context* ctx);
-static duk_ret_t duk_GetVersionString(duk_context* ctx);
-static duk_ret_t duk_GetClippingRectangle(duk_context* ctx);
-static duk_ret_t duk_GetFrameRate(duk_context* ctx);
-static duk_ret_t duk_GetScreenHeight(duk_context* ctx);
-static duk_ret_t duk_GetScreenWidth(duk_context* ctx);
-static duk_ret_t duk_GetSystemFont(duk_context* ctx);
-static duk_ret_t duk_GetTime(duk_context* ctx);
-static duk_ret_t duk_SetClippingRectangle(duk_context* ctx);
-static duk_ret_t duk_SetColorMask(duk_context* ctx);
-static duk_ret_t duk_SetFrameRate(duk_context* ctx);
-static duk_ret_t duk_Abort(duk_context* ctx);
-static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
-static duk_ret_t duk_Exit(duk_context* ctx);
-static duk_ret_t duk_FlipScreen(duk_context* ctx);
-static duk_ret_t duk_GarbageCollect(duk_context* ctx);
-static duk_ret_t duk_GetFileList(duk_context* ctx);
-static duk_ret_t duk_GetGameList(duk_context* ctx);
-static duk_ret_t duk_GradientCircle(duk_context* ctx);
-static duk_ret_t duk_GradientRectangle(duk_context* ctx);
-static duk_ret_t duk_Line(duk_context* ctx);
-static duk_ret_t duk_OutlinedCircle(duk_context* ctx);
-static duk_ret_t duk_OutlinedRectangle(duk_context* ctx);
-static duk_ret_t duk_Rectangle(duk_context* ctx);
-static duk_ret_t duk_Triangle(duk_context* ctx);
+static duk_ret_t js_RequireSystemScript(duk_context* ctx);
+static duk_ret_t js_RequireScript(duk_context* ctx);
+static duk_ret_t js_EvaluateSystemScript(duk_context* ctx);
+static duk_ret_t js_EvaluateScript(duk_context* ctx);
+static duk_ret_t js_GetVersion(duk_context* ctx);
+static duk_ret_t js_GetVersionString(duk_context* ctx);
+static duk_ret_t js_GetClippingRectangle(duk_context* ctx);
+static duk_ret_t js_GetFrameRate(duk_context* ctx);
+static duk_ret_t js_GetScreenHeight(duk_context* ctx);
+static duk_ret_t js_GetScreenWidth(duk_context* ctx);
+static duk_ret_t js_GetSystemFont(duk_context* ctx);
+static duk_ret_t js_GetTime(duk_context* ctx);
+static duk_ret_t js_SetClippingRectangle(duk_context* ctx);
+static duk_ret_t js_SetFrameRate(duk_context* ctx);
+static duk_ret_t js_Abort(duk_context* ctx);
+static duk_ret_t js_ApplyColorMask(duk_context* ctx);
+static duk_ret_t js_ExecuteGame(duk_context* ctx);
+static duk_ret_t js_Exit(duk_context* ctx);
+static duk_ret_t js_FlipScreen(duk_context* ctx);
+static duk_ret_t js_GarbageCollect(duk_context* ctx);
+static duk_ret_t js_GetFileList(duk_context* ctx);
+static duk_ret_t js_GetGameList(duk_context* ctx);
+static duk_ret_t js_GradientCircle(duk_context* ctx);
+static duk_ret_t js_GradientRectangle(duk_context* ctx);
+static duk_ret_t js_Line(duk_context* ctx);
+static duk_ret_t js_OutlinedCircle(duk_context* ctx);
+static duk_ret_t js_OutlinedRectangle(duk_context* ctx);
+static duk_ret_t js_Rectangle(duk_context* ctx);
+static duk_ret_t js_Triangle(duk_context* ctx);
 
 static int s_framerate = 0;
 
 void
 init_api(duk_context* ctx)
 {
-	register_api_func(ctx, NULL, "GetVersion", &duk_GetVersion);
-	register_api_func(ctx, NULL, "GetVersionString", &duk_GetVersionString);
-	register_api_func(ctx, NULL, "Abort", &duk_Abort);
-	register_api_func(ctx, NULL, "EvaluateScript", &duk_EvaluateScript);
-	register_api_func(ctx, NULL, "EvaluateSystemScript", &duk_EvaluateSystemScript);
-	register_api_func(ctx, NULL, "Exit", &duk_Exit);
-	register_api_func(ctx, NULL, "GetFrameRate", &duk_GetFrameRate);
-	register_api_func(ctx, NULL, "GetTime", &duk_GetTime);
-	register_api_func(ctx, NULL, "RequireScript", &duk_RequireScript);
-	register_api_func(ctx, NULL, "RequireSystemScript", &duk_RequireSystemScript);
-	register_api_func(ctx, NULL, "SetFrameRate", &duk_SetFrameRate);
-	register_api_func(ctx, NULL, "GetSystemFont", &duk_GetSystemFont);
-	register_api_func(ctx, NULL, "GetClippingRectangle", &duk_GetClippingRectangle);
-	register_api_func(ctx, NULL, "GetScreenHeight", &duk_GetScreenHeight);
-	register_api_func(ctx, NULL, "GetScreenWidth", &duk_GetScreenWidth);
-	register_api_func(ctx, NULL, "SetClippingRectangle", &duk_SetClippingRectangle);
-	register_api_func(ctx, NULL, "SetColorMask", &duk_SetColorMask);
-	register_api_func(ctx, NULL, "ApplyColorMask", &duk_ApplyColorMask);
-	register_api_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
-	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
-	register_api_func(ctx, NULL, "GetFileList", &duk_GetFileList);
-	register_api_func(ctx, NULL, "GetGameList", &duk_GetGameList);
-	register_api_func(ctx, NULL, "GradientCircle", &duk_GradientCircle);
-	register_api_func(ctx, NULL, "GradientRectangle", &duk_GradientRectangle);
-	register_api_func(ctx, NULL, "Line", &duk_Line);
-	register_api_func(ctx, NULL, "OutlinedCircle", &duk_OutlinedCircle);
-	register_api_func(ctx, NULL, "OutlinedRectangle", &duk_OutlinedRectangle);
-	register_api_func(ctx, NULL, "Rectangle", &duk_Rectangle);
-	register_api_func(ctx, NULL, "Triangle", &duk_Triangle);
+	register_api_func(ctx, NULL, "GetVersion", js_GetVersion);
+	register_api_func(ctx, NULL, "GetVersionString", js_GetVersionString);
+	register_api_func(ctx, NULL, "EvaluateScript", js_EvaluateScript);
+	register_api_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
+	register_api_func(ctx, NULL, "RequireScript", js_RequireScript);
+	register_api_func(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
+	register_api_func(ctx, NULL, "GetSystemFont", js_GetSystemFont);
+	register_api_func(ctx, NULL, "GetClippingRectangle", js_GetClippingRectangle);
+	register_api_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
+	register_api_func(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
+	register_api_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
+	register_api_func(ctx, NULL, "GetTime", js_GetTime);
+	register_api_func(ctx, NULL, "SetClippingRectangle", js_SetClippingRectangle);
+	register_api_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	register_api_func(ctx, NULL, "Abort", js_Abort);
+	register_api_func(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
+	register_api_func(ctx, NULL, "Exit", js_Exit);
+	register_api_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
+	register_api_func(ctx, NULL, "FlipScreen", js_FlipScreen);
+	register_api_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	register_api_func(ctx, NULL, "GetFileList", js_GetFileList);
+	register_api_func(ctx, NULL, "GetGameList", js_GetGameList);
+	register_api_func(ctx, NULL, "GradientCircle", js_GradientCircle);
+	register_api_func(ctx, NULL, "GradientRectangle", js_GradientRectangle);
+	register_api_func(ctx, NULL, "Line", js_Line);
+	register_api_func(ctx, NULL, "OutlinedCircle", js_OutlinedCircle);
+	register_api_func(ctx, NULL, "OutlinedRectangle", js_OutlinedRectangle);
+	register_api_func(ctx, NULL, "Rectangle", js_Rectangle);
+	register_api_func(ctx, NULL, "Triangle", js_Triangle);
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
@@ -101,21 +101,21 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 }
 
 static duk_ret_t
-duk_GetVersion(duk_context* ctx)
+js_GetVersion(duk_context* ctx)
 {
 	duk_push_number(ctx, 1.6);
 	return 1;
 }
 
 static duk_ret_t
-duk_GetVersionString(duk_context* ctx)
+js_GetVersionString(duk_context* ctx)
 {
-	duk_push_sprintf(ctx, "%s (compatible; minisphere %s)", SPHERE_API_VER, ENGINE_VER);
+	duk_push_sprintf(ctx, "v%s (compatible; minisphere %s)", SPHERE_COMPAT_VER, ENGINE_VER);
 	return 1;
 }
 
 static duk_ret_t
-duk_Abort(duk_context* ctx)
+js_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* err_msg = n_args > 0 ? duk_to_string(ctx, 0) : "Abort() called by script";
@@ -123,8 +123,8 @@ duk_Abort(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_EvaluateScript(duk_context* ctx)
+static duk_ret_t
+js_EvaluateScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
 	char* script_path = get_asset_path(script_file, "scripts", false);
@@ -133,40 +133,40 @@ duk_EvaluateScript(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_EvaluateSystemScript(duk_context* ctx)
+static duk_ret_t
+js_EvaluateSystemScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_sys_asset_path(script_file, "scripts");
+	char* script_path = get_sys_asset_path(script_file, "system/scripts");
 	duk_eval_file_noresult(ctx, script_path);
 	free(script_path);
 	return 0;
 }
 
-duk_ret_t
-duk_Exit(duk_context* ctx)
+static duk_ret_t
+js_Exit(duk_context* ctx)
 {
-	duk_error(ctx, DUK_ERR_ERROR, "!exit");
+	duk_error(ctx, DUK_ERR_ERROR, "@exit");
 	return 0;
 }
 
 static duk_ret_t
-duk_GetFrameRate(duk_context* ctx)
+js_GetFrameRate(duk_context* ctx)
 {
 	duk_push_int(ctx, s_framerate);
 	return 1;
 }
 
-duk_ret_t
-duk_GetTime(duk_context* ctx)
+static duk_ret_t
+js_GetTime(duk_context* ctx)
 {
 	int ms = floor(al_get_time() * 1000);
 	duk_push_int(ctx, ms);
 	return 1;
 }
 
-duk_ret_t
-duk_RequireScript(duk_context* ctx)
+static duk_ret_t
+js_RequireScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
 	char* script_path = get_asset_path(script_file, "scripts", false);
@@ -184,11 +184,11 @@ duk_RequireScript(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_RequireSystemScript(duk_context* ctx)
+static duk_ret_t
+js_RequireSystemScript(duk_context* ctx)
 {
 	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_sys_asset_path(script_file, "scripts");
+	char* script_path = get_sys_asset_path(script_file, "system/scripts");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, script_path);
@@ -204,14 +204,14 @@ duk_RequireSystemScript(duk_context* ctx)
 }
 
 static duk_ret_t
-duk_SetFrameRate(duk_context* ctx)
+js_SetFrameRate(duk_context* ctx)
 {
 	s_framerate = duk_to_int(ctx, 0);
 	return 0;
 }
 
-duk_ret_t
-duk_GetSystemFont(duk_context* ctx)
+static duk_ret_t
+js_GetSystemFont(duk_context* ctx)
 {
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "system_font");
@@ -219,8 +219,8 @@ duk_GetSystemFont(duk_context* ctx)
 	return 1;
 }
 
-duk_ret_t
-duk_GetClippingRectangle(duk_context* ctx)
+static duk_ret_t
+js_GetClippingRectangle(duk_context* ctx)
 {
 	int x, y, width, height;
 	al_get_clipping_rectangle(&x, &y, &width, &height);
@@ -232,41 +232,35 @@ duk_GetClippingRectangle(duk_context* ctx)
 	return 1;
 }
 
-duk_ret_t
-duk_GetScreenHeight(duk_context* ctx)
+static duk_ret_t
+js_GetScreenHeight(duk_context* ctx)
 {
 	duk_push_int(ctx, g_res_y);
 	return 1;
 }
 
-duk_ret_t
-duk_GetScreenWidth(duk_context* ctx)
+static duk_ret_t
+js_GetScreenWidth(duk_context* ctx)
 {
 	duk_push_int(ctx, g_res_x);
 	return 1;
 }
 
-duk_ret_t
-duk_SetClippingRectangle(duk_context* ctx)
+static duk_ret_t
+js_SetClippingRectangle(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int width = duk_to_int(ctx, 2);
-	int height = duk_to_int(ctx, 3);
-	// HACK: Allegro doesn't transform the clipping rect, so we have to scale it manually.
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int width = duk_require_int(ctx, 2);
+	int height = duk_require_int(ctx, 3);
+
+	// HACK: Allegro won't transform the clipping rect, so we have to scale it manually
 	al_set_clipping_rectangle(x * g_render_scale, y * g_render_scale, width * g_render_scale, height * g_render_scale);
 	return 0;
 }
 
-duk_ret_t
-duk_SetColorMask(duk_context* ctx)
-{
-	// TODO: implement SetColorMask()
-	return 0;
-}
-
-duk_ret_t
-duk_ApplyColorMask(duk_context* ctx)
+static duk_ret_t
+js_ApplyColorMask(duk_context* ctx)
 {
 	ALLEGRO_COLOR mask_color;
 	float         rect_w, rect_h;
@@ -278,15 +272,24 @@ duk_ApplyColorMask(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_FlipScreen(duk_context* ctx)
+static duk_ret_t
+js_ExecuteGame(duk_context* ctx)
 {
-	if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "!exit");
+	const char* path = duk_require_string(ctx, 0);
+	
+	duk_error(ctx, DUK_ERR_ERROR, "@exec %s", path);
 	return 0;
 }
 
 static duk_ret_t
-duk_GarbageCollect(duk_context* ctx)
+js_FlipScreen(duk_context* ctx)
+{
+	if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "@exit");
+	return 0;
+}
+
+static duk_ret_t
+js_GarbageCollect(duk_context* ctx)
 {
 	duk_gc(ctx, 0x0);
 	duk_gc(ctx, 0x0);
@@ -294,7 +297,7 @@ duk_GarbageCollect(duk_context* ctx)
 }
 
 static duk_ret_t
-duk_GetFileList(duk_context* ctx)
+js_GetFileList(duk_context* ctx)
 {
 	const char*       directory_name;
 	ALLEGRO_FS_ENTRY* file_info;
@@ -325,7 +328,7 @@ duk_GetFileList(duk_context* ctx)
 }
 
 static duk_ret_t
-duk_GetGameList(duk_context* ctx)
+js_GetGameList(duk_context* ctx)
 {
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
@@ -335,7 +338,7 @@ duk_GetGameList(duk_context* ctx)
 	
 	int i;
 
-	path = get_sys_asset_path("~/games", NULL);
+	path = get_sys_asset_path("games", NULL);
 	fs = al_create_fs_entry(path);
 	free(path);
 	duk_push_array(ctx);
@@ -363,8 +366,8 @@ duk_GetGameList(duk_context* ctx)
 	return 1;
 }
 
-duk_ret_t
-duk_GradientCircle(duk_context* ctx)
+static duk_ret_t
+js_GradientCircle(duk_context* ctx)
 {
 	ALLEGRO_COLOR inner_color;
 	ALLEGRO_COLOR outer_color;
@@ -381,8 +384,8 @@ duk_GradientCircle(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_GradientRectangle(duk_context* ctx)
+static duk_ret_t
+js_GradientRectangle(duk_context* ctx)
 {
 	ALLEGRO_COLOR color_ul, color_ur, color_lr, color_ll;
 	int           x1, y1, x2, y2;
@@ -407,8 +410,8 @@ duk_GradientRectangle(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_Line(duk_context* ctx)
+static duk_ret_t
+js_Line(duk_context* ctx)
 {
 	ALLEGRO_COLOR color;
 	int           x1, y1, x2, y2;
@@ -423,7 +426,7 @@ duk_Line(duk_context* ctx)
 }
 
 static duk_ret_t
-duk_OutlinedCircle(duk_context* ctx)
+js_OutlinedCircle(duk_context* ctx)
 {
 	bool          antialiased = false;
 	ALLEGRO_COLOR color;
@@ -440,8 +443,8 @@ duk_OutlinedCircle(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_OutlinedRectangle(duk_context* ctx)
+static duk_ret_t
+js_OutlinedRectangle(duk_context* ctx)
 {
 	ALLEGRO_COLOR color;
 	int           n_args;
@@ -458,8 +461,8 @@ duk_OutlinedRectangle(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_Rectangle(duk_context* ctx)
+static duk_ret_t
+js_Rectangle(duk_context* ctx)
 {
 	ALLEGRO_COLOR color;
 	int           x, y, w, h;
@@ -473,8 +476,8 @@ duk_Rectangle(duk_context* ctx)
 	return 0;
 }
 
-duk_ret_t
-duk_Triangle(duk_context* ctx)
+static duk_ret_t
+js_Triangle(duk_context* ctx)
 {
 	int x1 = duk_require_int(ctx, 0);
 	int y1 = duk_require_int(ctx, 1);
