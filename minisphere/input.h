@@ -13,4 +13,4 @@ enum PLAYER_KEY
 	PLAYER_KEY_Y
 };
 
-extern void check_input (void);
+extern void check_bound_keys (void);

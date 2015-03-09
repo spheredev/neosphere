@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "image.h"
+#include "input.h"
 #include "obsmap.h"
 #include "persons.h"
 #include "surface.h"
@@ -41,6 +42,7 @@ static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_GetNumTiles           (duk_context* ctx);
+static duk_ret_t js_GetTalkActivationKey  (duk_context* ctx);
 static duk_ret_t js_GetTile               (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
 static duk_ret_t js_GetTileImage          (duk_context* ctx);
@@ -52,6 +54,7 @@ static duk_ret_t js_SetCameraY            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
+static duk_ret_t js_SetTalkActivationKey  (duk_context* ctx);
 static duk_ret_t js_SetTile               (duk_context* ctx);
 static duk_ret_t js_SetTileImage          (duk_context* ctx);
 static duk_ret_t js_SetTileSurface        (duk_context* ctx);
@@ -79,7 +82,7 @@ static bool                s_exiting          = false;
 static int                 s_framerate        = 0;
 static unsigned int        s_frames           = 0;
 static person_t*           s_input_person     = NULL;
-static map_t*              s_map              = NULL;
+static map_t*              s_map = NULL;
 static char*               s_map_filename     = NULL;
 static struct map_trigger* s_on_trigger       = NULL;
 static int                 s_render_script    = 0;
@@ -410,6 +413,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
+	register_api_func(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
 	register_api_func(ctx, NULL, "GetTile", js_GetTile);
 	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
 	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
@@ -421,7 +425,10 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
 	register_api_func(ctx, NULL, "SetTile", js_SetTile);
+	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
+	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
 	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
@@ -434,8 +441,6 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
 	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
-	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
-	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
 	register_api_func(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	// Map script types
@@ -655,6 +660,7 @@ update_map_engine(void)
 	update_persons();
 	
 	// check for player input
+	check_bound_keys();
 	if (s_input_person != NULL) {
 		al_get_keyboard_state(&kb_state);
 		if (al_key_down(&kb_state, s_talk_key)) {
@@ -868,6 +874,13 @@ js_GetNumTiles(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetTalkActivationKey(duk_context* ctx)
+{
+	duk_push_int(ctx, s_talk_key);
+	return 1;
+}
+
+static duk_ret_t
 js_GetTile(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
@@ -1044,6 +1057,15 @@ js_SetRenderScript(duk_context* ctx)
 	free_script(s_render_script);
 	s_render_script = compile_script(code, "[render script]");
 	free_lstring(code);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTalkActivationKey(duk_context* ctx)
+{
+	int key = duk_require_int(ctx, 0);
+	
+	s_talk_key = key;
 	return 0;
 }
 
