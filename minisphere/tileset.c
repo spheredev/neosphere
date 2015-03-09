@@ -70,7 +70,7 @@ read_tileset(ALLEGRO_FILE* file)
 	rect_t               segment;
 	struct rts_tile_info tile_info;
 	struct tile*         tiles = NULL;
-	tileset_t*           tileset;
+	tileset_t*           tileset = NULL;
 
 	int i, j;
 
@@ -90,7 +90,7 @@ read_tileset(ALLEGRO_FILE* file)
 	for (i = 0; i < rts.num_tiles; ++i) {
 		if (al_fread(file, &tile_info, sizeof(struct rts_tile_info)) != sizeof(struct rts_tile_info))
 			goto on_error;
-		tiles[i].name = read_lstring_s(file, tile_info.name_length);
+		tiles[i].name = read_lstring_s(file, tile_info.name_length, true);
 		tiles[i].delay = tile_info.delay;
 		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
 		if (rts.has_obstructions) {

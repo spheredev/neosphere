@@ -104,9 +104,10 @@ struct map
 
 struct map_layer
 {
-	int       width, height;
-	int*      tilemap;
-	obsmap_t* obsmap;
+	lstring_t* name;
+	int        width, height;
+	int*       tilemap;
+	obsmap_t*  obsmap;
 };
 
 struct map_person
@@ -216,7 +217,7 @@ load_map(const char* path)
 	tileset_t*               tileset;
 	struct map_trigger*      trigger;
 	struct rmp_zone_header   zone;
-	lstring_t*               *strings;
+	lstring_t*               *strings = NULL;
 
 	int i, j;
 	
@@ -232,7 +233,7 @@ load_map(const char* path)
 		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
 			goto on_error;
 		for (i = 0; i < rmp.num_strings; ++i)
-			failed = ((strings[i] = read_lstring(file)) == NULL) || failed;
+			failed = ((strings[i] = read_lstring(file, true)) == NULL) || failed;
 		if (failed) goto on_error;
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		for (i = 0; i < rmp.num_layers; ++i) {
@@ -243,7 +244,7 @@ load_map(const char* path)
 			if ((map->layers[i].tilemap = malloc(layer_info.width * layer_info.height * sizeof(int))) == NULL)
 				goto on_error;
 			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
-			free_lstring(read_lstring(file));  // <-- layer name, not used by minisphere
+			map->layers[i].name = read_lstring(file, true);
 			num_tiles = layer_info.width * layer_info.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
@@ -264,22 +265,22 @@ load_map(const char* path)
 				map->persons = realloc(map->persons, map->num_persons * sizeof(struct map_person));
 				person = &map->persons[map->num_persons - 1];
 				memset(person, 0, sizeof(struct map_person));
-				if ((person->name = read_lstring(file)) == NULL) goto on_error;
-				if ((person->spriteset = read_lstring(file)) == NULL) goto on_error;
+				if ((person->name = read_lstring(file, true)) == NULL) goto on_error;
+				if ((person->spriteset = read_lstring(file, true)) == NULL) goto on_error;
 				person->x = entity.x; person->y = entity.y; person->z = entity.z;
 				if (al_fread(file, &count, 2) != 2 || count < 5) goto on_error;
-				person->create_script = read_lstring(file);
-				person->destroy_script = read_lstring(file);
-				person->touch_script = read_lstring(file);
-				person->talk_script = read_lstring(file);
-				person->command_script = read_lstring(file);
+				person->create_script = read_lstring(file, false);
+				person->destroy_script = read_lstring(file, false);
+				person->touch_script = read_lstring(file, false);
+				person->talk_script = read_lstring(file, false);
+				person->command_script = read_lstring(file, false);
 				for (j = 5; j < count; ++j) {
-					free_lstring(read_lstring(file));
+					free_lstring(read_lstring(file, true));
 				}
 				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // trigger
-				if ((script = read_lstring(file)) == NULL)
+				if ((script = read_lstring(file, false)) == NULL)
 					goto on_error;
 				++map->num_triggers;
 				map->triggers = realloc(map->triggers, map->num_triggers * sizeof(struct map_trigger));
@@ -297,7 +298,7 @@ load_map(const char* path)
 		}
 		for (i = 0; i < rmp.num_zones; ++i) {
 			al_fread(file, &zone, sizeof(struct rmp_zone_header));
-			free_lstring(read_lstring(file));
+			free_lstring(read_lstring(file, false));  // zone script - not implemented yet
 		}
 		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
 		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
@@ -338,6 +339,7 @@ on_error:
 	if (map != NULL) {
 		if (map->layers != NULL) {
 			for (i = 0; i < rmp.num_layers; ++i) {
+				free_lstring(map->layers[i].name);
 				free(map->layers[i].tilemap);
 				free_obsmap(map->layers[i].obsmap);
 			}
@@ -365,6 +367,7 @@ free_map(map_t* map)
 		for (i = 0; i < MAP_SCRIPT_MAX; ++i)
 			free_script(map->scripts[i]);
 		for (i = 0; i < map->num_layers; ++i) {
+			free_lstring(map->layers[i].name);
 			free(map->layers[i].tilemap);
 			free_obsmap(map->layers[i].obsmap);
 		}

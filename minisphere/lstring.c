@@ -3,7 +3,7 @@
 #include "lstring.h"
 
 lstring_t*
-new_lstring(size_t length, const char* buffer)
+lstring_from_buf(size_t length, const char* buffer)
 {
 	lstring_t* lstring = NULL;
 
@@ -23,14 +23,26 @@ on_error:
 }
 
 lstring_t*
-read_lstring(ALLEGRO_FILE* file)
+lstring_from_cstr(const char* cstr)
+{
+	return lstring_from_buf(strlen(cstr), cstr);
+}
+
+lstring_t*
+clone_lstring(const lstring_t* string)
+{
+	return lstring_from_buf(string->length, string->cstr);
+}
+
+lstring_t*
+read_lstring(ALLEGRO_FILE* file, bool trim_null)
 {
 	uint16_t   length;
 	int64_t    old_file_pos;
 
 	old_file_pos = al_ftell(file);
 	if (al_fread(file, &length, 2) != 2) goto on_error;
-	return read_lstring_s(file, length);
+	return read_lstring_s(file, length, trim_null);
 
 on_error:
 	al_fseek(file, old_file_pos, ALLEGRO_SEEK_CUR);
@@ -38,7 +50,7 @@ on_error:
 }
 
 lstring_t*
-read_lstring_s(ALLEGRO_FILE* file, size_t length)
+read_lstring_s(ALLEGRO_FILE* file, size_t length, bool trim_null)
 {
 	int64_t    old_file_pos;
 	lstring_t* string = NULL;
@@ -49,6 +61,7 @@ read_lstring_s(ALLEGRO_FILE* file, size_t length)
 	string->length = length;
 	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
 	if (al_fread(file, (char*)string->cstr, length) != length) goto on_error;
+	if (trim_null) string->length = strchr(string->cstr, '\0') - string->cstr;
 	return string;
 
 on_error:
@@ -74,5 +87,5 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 	size_t      length;
 
 	buffer = duk_require_lstring(ctx, index, &length);
-	return new_lstring(length, buffer);
+	return lstring_from_buf(length, buffer);
 }

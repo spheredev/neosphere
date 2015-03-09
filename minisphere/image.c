@@ -380,8 +380,8 @@ js_Image_createSurface(duk_context* ctx)
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
-	duk_push_sphere_surface(ctx, image);
-	free_image(image);
+	duk_push_sphere_surface(ctx, new_image);
+	free_image(new_image);
 	return 1;
 }
 

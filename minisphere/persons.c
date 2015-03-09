@@ -90,7 +90,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	path = get_asset_path(sprite_file, "spritesets", false);
 	person->sprite = load_spriteset(path);
 	free(path);
-	set_person_direction(person, person->sprite->poses[0].name);
+	set_person_direction(person, person->sprite->poses[0].name->cstr);
 	person->is_persistent = is_persistent;
 	person->x = map_origin.x;
 	person->y = map_origin.y;
@@ -765,9 +765,9 @@ js_GetPersonSpriteset(duk_context* ctx)
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpriteset(): Person '%s' doesn't exist", name);
 	duk_push_spriteset(ctx, get_person_spriteset(person));
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
@@ -931,7 +931,7 @@ js_SetPersonSpriteset(duk_context* ctx)
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonSpriteset(): Person '%s' doesn't exist", name);
 	set_person_spriteset(person, spriteset);
 	return 0;
 }

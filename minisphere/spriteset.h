@@ -16,8 +16,8 @@ struct spriteset_frame
 
 struct spriteset_pose
 {
+	lstring_t*        name;
 	int               num_frames;
-	char*             name;
 	spriteset_frame_t *frames;
 };
 
@@ -31,6 +31,7 @@ struct spriteset
 	spriteset_pose_t *poses;
 };
 
+extern spriteset_t* clone_spriteset        (const spriteset_t* spriteset);
 extern spriteset_t* load_spriteset         (const char* path);
 extern spriteset_t* ref_spriteset          (spriteset_t* spriteset);
 extern void         free_spriteset         (spriteset_t* spriteset);

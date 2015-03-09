@@ -31,14 +31,49 @@ struct v3_frame {
 };
 #pragma pack(pop)
 
+static duk_ret_t               js_LoadSpriteset      (duk_context* ctx);
+static duk_ret_t               js_Spriteset_finalize (duk_context* ctx);
+static duk_ret_t               js_Spriteset_clone    (duk_context* ctx);
+
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
-static char*                  _fread_string          (ALLEGRO_FILE* file);
-static duk_ret_t             _js_LoadSpriteset      (duk_context* ctx);
-static duk_ret_t             _js_Spriteset_finalize (duk_context* ctx);
 
 spriteset_t*
 clone_spriteset(const spriteset_t* spriteset)
 {
+	spriteset_t* clone = NULL;
+	
+	int i, j;
+
+	if ((clone = calloc(1, sizeof(spriteset_t))) == NULL)
+		goto on_error;
+	clone->num_images = spriteset->num_images;
+	clone->num_poses = spriteset->num_poses;
+	clone->images = calloc(clone->num_images, sizeof(image_t*));
+	clone->poses = calloc(clone->num_poses, sizeof(spriteset_pose_t));
+	if (clone->images == NULL || clone->poses == NULL) goto on_error;
+	for (i = 0; i < spriteset->num_images; ++i)
+		if ((clone->images[i] = clone_image(spriteset->images[i])) == NULL) goto on_error;
+	for (i = 0; i < spriteset->num_poses; ++i) {
+		if ((clone->poses[i].name = clone_lstring(spriteset->poses[i].name)) == NULL)
+			goto on_error;
+		clone->poses[i].num_frames = spriteset->poses[i].num_frames;
+		if ((clone->poses[i].frames = calloc(clone->poses[i].num_frames, sizeof(spriteset_frame_t))) == NULL)
+			goto on_error;
+		for (j = 0; j < spriteset->poses[i].num_frames; ++j)
+			clone->poses[i].frames[j] = spriteset->poses[i].frames[j];
+	}
+	return ref_spriteset(clone);
+
+on_error:
+	if (clone != NULL) {
+		for (i = 0; i < clone->num_images; ++i) free_image(clone->images[i]);
+		if (clone->poses != NULL)
+			for (i = 0; i < clone->num_poses; ++i) {
+				free_lstring(clone->poses[i].name);
+				free(clone->poses[i].frames);
+			}
+		free(clone);
+	}
 	return NULL;
 }
 
@@ -66,14 +101,14 @@ load_spriteset(const char* path)
 		spriteset->num_images = rss.num_images;
 		spriteset->num_poses = 8;
 		spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t));
-		spriteset->poses[0].name = strdup("north");
-		spriteset->poses[1].name = strdup("northeast");
-		spriteset->poses[2].name = strdup("east");
-		spriteset->poses[3].name = strdup("southeast");
-		spriteset->poses[4].name = strdup("south");
-		spriteset->poses[5].name = strdup("southwest");
-		spriteset->poses[6].name = strdup("west");
-		spriteset->poses[7].name = strdup("northwest");
+		spriteset->poses[0].name = lstring_from_cstr("north");
+		spriteset->poses[1].name = lstring_from_cstr("northeast");
+		spriteset->poses[2].name = lstring_from_cstr("east");
+		spriteset->poses[3].name = lstring_from_cstr("southeast");
+		spriteset->poses[4].name = lstring_from_cstr("south");
+		spriteset->poses[5].name = lstring_from_cstr("southwest");
+		spriteset->poses[6].name = lstring_from_cstr("west");
+		spriteset->poses[7].name = lstring_from_cstr("northwest");
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
 		for (i = 0; i < spriteset->num_images; ++i) {
@@ -106,7 +141,7 @@ load_spriteset(const char* path)
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (al_fread(file, &direction, sizeof(struct v3_direction)) != sizeof(struct v3_direction))
 				goto on_error;
-			if ((spriteset->poses[i].name = _fread_string(file)) == NULL) goto on_error;
+			if ((spriteset->poses[i].name = read_lstring(file, true)) == NULL) goto on_error;
 			spriteset->poses[i].num_frames = direction.num_frames;
 			if ((spriteset->poses[i].frames = calloc(direction.num_frames, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
@@ -122,16 +157,15 @@ load_spriteset(const char* path)
 		goto on_error;
 	}
 	al_fclose(file);
-	spriteset->c_refs = 1;
-	return spriteset;
+	return ref_spriteset(spriteset);
 
 on_error:
 	if (file != NULL) al_fclose(file);
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
 			for (i = 0; i < spriteset->num_poses; ++i) {
+				free_lstring(spriteset->poses[i].name);
 				free(spriteset->poses[i].frames);
-				free(spriteset->poses[i].name);
 			}
 			free(spriteset->poses);
 		}
@@ -160,7 +194,7 @@ free_spriteset(spriteset_t* spriteset)
 	free(spriteset->images);
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		free(spriteset->poses[i].frames);
-		free(spriteset->poses[i].name);
+		free_lstring(spriteset->poses[i].name);
 	}
 	free(spriteset->poses);
 	free(spriteset);
@@ -201,7 +235,7 @@ draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float 
 void
 init_spriteset_api(duk_context* ctx)
 {
-	register_api_func(ctx, NULL, "LoadSpriteset", _js_LoadSpriteset);
+	register_api_func(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
 }
 
 void
@@ -212,9 +246,10 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	ref_spriteset(spriteset);
 
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, "spriteset"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
+	duk_push_string(ctx, "spriteset"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, &_js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &js_Spriteset_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
 
 	// Spriteset:base
 	duk_push_object(ctx);
@@ -236,7 +271,8 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		duk_push_object(ctx);
-		duk_push_string(ctx, spriteset->poses[i].name); duk_put_prop_string(ctx, -2, "name");
+		duk_push_lstring(ctx, spriteset->poses[i].name->cstr, spriteset->poses[i].name->length);
+		duk_put_prop_string(ctx, -2, "name");
 		duk_push_array(ctx);
 		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
 			duk_push_object(ctx);
@@ -286,7 +322,7 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 	name_to_find = pose_name;
 	do {
 		for (i = 0; i < spriteset->num_poses; ++i) {
-			if (strcasecmp(name_to_find, spriteset->poses[i].name) == 0) {
+			if (strcasecmp(name_to_find, spriteset->poses[i].name->cstr) == 0) {
 				pose = &spriteset->poses[i];
 				break;
 			}
@@ -296,24 +332,8 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 	return pose != NULL ? pose : &spriteset->poses[0];
 }
 
-static char*
-_fread_string(ALLEGRO_FILE* file)
-{
-	uint16_t length;
-	char*    string = NULL;
-
-	if (al_fread(file, &length, 2) != 2) goto on_error;
-	if ((string = calloc(length, sizeof(char))) == NULL) goto on_error;
-	if (al_fread(file, string, length) != length) goto on_error;
-	return string;
-
-on_error:
-	free(string);
-	return NULL;
-}
-
 static duk_ret_t
-_js_LoadSpriteset(duk_context* ctx)
+js_LoadSpriteset(duk_context* ctx)
 {
 	const char*  filename  = NULL;
 	char*        path      = NULL;
@@ -330,11 +350,27 @@ _js_LoadSpriteset(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Spriteset_finalize(duk_context* ctx)
+js_Spriteset_finalize(duk_context* ctx)
 {
 	spriteset_t* spriteset;
 	
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	free_spriteset(spriteset);
 	return 0;
+}
+
+static duk_ret_t
+js_Spriteset_clone(duk_context* ctx)
+{
+	spriteset_t* new_spriteset;
+	spriteset_t* spriteset;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Spriteset:clone(): Failed to create new spriteset");
+	duk_push_spriteset(ctx, new_spriteset);
+	free_spriteset(new_spriteset);
+	return 1;
 }

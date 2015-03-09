@@ -15,6 +15,7 @@ static duk_ret_t duk_GetScreenWidth(duk_context* ctx);
 static duk_ret_t duk_GetSystemFont(duk_context* ctx);
 static duk_ret_t duk_GetTime(duk_context* ctx);
 static duk_ret_t duk_SetClippingRectangle(duk_context* ctx);
+static duk_ret_t duk_SetColorMask(duk_context* ctx);
 static duk_ret_t duk_SetFrameRate(duk_context* ctx);
 static duk_ret_t duk_Abort(duk_context* ctx);
 static duk_ret_t duk_ApplyColorMask(duk_context* ctx);
@@ -52,6 +53,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetScreenHeight", &duk_GetScreenHeight);
 	register_api_func(ctx, NULL, "GetScreenWidth", &duk_GetScreenWidth);
 	register_api_func(ctx, NULL, "SetClippingRectangle", &duk_SetClippingRectangle);
+	register_api_func(ctx, NULL, "SetColorMask", &duk_SetColorMask);
 	register_api_func(ctx, NULL, "ApplyColorMask", &duk_ApplyColorMask);
 	register_api_func(ctx, NULL, "FlipScreen", &duk_FlipScreen);
 	register_api_func(ctx, NULL, "GarbageCollect", &duk_GarbageCollect);
@@ -253,6 +255,13 @@ duk_SetClippingRectangle(duk_context* ctx)
 	int height = duk_to_int(ctx, 3);
 	// HACK: Allegro doesn't transform the clipping rect, so we have to scale it manually.
 	al_set_clipping_rectangle(x * g_render_scale, y * g_render_scale, width * g_render_scale, height * g_render_scale);
+	return 0;
+}
+
+duk_ret_t
+duk_SetColorMask(duk_context* ctx)
+{
+	// TODO: implement SetColorMask()
 	return 0;
 }
 

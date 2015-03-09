@@ -36,11 +36,11 @@ load_windowstyle(const char* path)
 	ALLEGRO_FILE*       file;
 	struct rws_header   rws;
 	int16_t             w, h;
-	windowstyle_t*      winstyle;
+	windowstyle_t*      winstyle = NULL;
 	int                 i;
 
-	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL) goto on_error;
 	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
+	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL) goto on_error;
 	if (al_fread(file, &rws, sizeof(struct rws_header)) != sizeof(struct rws_header))
 		goto on_error;
 	if (memcmp(rws.signature, ".rws", 4) != 0) goto on_error;
