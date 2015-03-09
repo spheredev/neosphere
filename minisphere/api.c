@@ -103,14 +103,14 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 static duk_ret_t
 js_GetVersion(duk_context* ctx)
 {
-	duk_push_number(ctx, 1.6);
+	duk_push_number(ctx, SPHERE_API_VERSION);
 	return 1;
 }
 
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_sprintf(ctx, "v%s (compatible; minisphere %s)", SPHERE_COMPAT_VER, ENGINE_VER);
+	duk_push_string(ctx, SPHERE_API_VERSION_STRING);
 	return 1;
 }
 
