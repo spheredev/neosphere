@@ -762,11 +762,15 @@ js_GetPersonSpriteset(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 
+	spriteset_t* new_spriteset;
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpriteset(): Person '%s' doesn't exist", name);
-	duk_push_spriteset(ctx, get_person_spriteset(person));
+	if ((new_spriteset = clone_spriteset(get_person_spriteset(person))) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "GetPersonSpriteset(): Failed to create new spriteset");
+	duk_push_spriteset(ctx, new_spriteset);
+	free_spriteset(new_spriteset);
 	return 1;
 }
 
@@ -928,11 +932,15 @@ js_SetPersonSpriteset(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 	spriteset_t* spriteset = duk_require_spriteset(ctx, 1);
 
+	spriteset_t* new_spriteset;
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonSpriteset(): Person '%s' doesn't exist", name);
-	set_person_spriteset(person, spriteset);
+	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "SetPersonSpriteset(): Failed to create new spriteset");
+	set_person_spriteset(person, new_spriteset);
+	free_spriteset(new_spriteset);
 	return 0;
 }
 

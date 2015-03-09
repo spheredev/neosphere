@@ -31,9 +31,11 @@ struct v3_frame {
 };
 #pragma pack(pop)
 
-static duk_ret_t               js_LoadSpriteset      (duk_context* ctx);
-static duk_ret_t               js_Spriteset_finalize (duk_context* ctx);
-static duk_ret_t               js_Spriteset_clone    (duk_context* ctx);
+static duk_ret_t               js_LoadSpriteset       (duk_context* ctx);
+static duk_ret_t               js_Spriteset_finalize  (duk_context* ctx);
+static duk_ret_t               js_Spriteset_clone     (duk_context* ctx);
+static duk_ret_t               js_Spriteset_get_image (duk_context* ctx);
+static duk_ret_t               js_Spriteset_set_image (duk_context* ctx);
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 
@@ -46,6 +48,7 @@ clone_spriteset(const spriteset_t* spriteset)
 
 	if ((clone = calloc(1, sizeof(spriteset_t))) == NULL)
 		goto on_error;
+	clone->base = spriteset->base;
 	clone->num_images = spriteset->num_images;
 	clone->num_poses = spriteset->num_poses;
 	clone->images = calloc(clone->num_images, sizeof(image_t*));
@@ -217,6 +220,22 @@ get_sprite_frame_delay(const spriteset_t* spriteset, const char* pose_name, int 
 	return pose->frames[frame_index].delay;
 }
 
+image_t*
+get_spriteset_image(const spriteset_t* spriteset, int image_index)
+{
+	return spriteset->images[image_index];
+}
+
+void
+set_spriteset_image(const spriteset_t* spriteset, int image_index, image_t* image)
+{
+	image_t* old_image;
+	
+	old_image = spriteset->images[image_index];
+	spriteset->images[image_index] = ref_image(image);
+	free_image(old_image);
+}
+
 void
 draw_sprite(const spriteset_t* spriteset, const char* pose_name, float x, float y, int frame_index)
 {
@@ -241,6 +260,8 @@ init_spriteset_api(duk_context* ctx)
 void
 duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 {
+	char      prop_name[20];
+	
 	int i, j;
 
 	ref_spriteset(spriteset);
@@ -262,8 +283,19 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	// Spriteset:images
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_images; ++i) {
-		duk_push_sphere_image(ctx, spriteset->images[i]);
-		duk_put_prop_index(ctx, -2, i);
+		duk_push_string(ctx, itoa(i, prop_name, 10));
+		duk_push_c_function(ctx, js_Spriteset_get_image, DUK_VARARGS);
+			duk_get_prop_string(ctx, -1, "bind"); duk_dup(ctx, -2);
+			duk_dup(ctx, -6);
+			duk_call_method(ctx, 1);
+			duk_remove(ctx, -2);
+		duk_push_c_function(ctx, js_Spriteset_set_image, DUK_VARARGS);
+			duk_get_prop_string(ctx, -1, "bind"); duk_dup(ctx, -2);
+			duk_dup(ctx, -7);
+			duk_call_method(ctx, 1);
+			duk_remove(ctx, -2);
+		duk_def_prop(ctx, -4, DUK_DEFPROP_HAVE_GETTER | DUK_DEFPROP_HAVE_SETTER
+			| DUK_DEFPROP_HAVE_ENUMERABLE | DUK_DEFPROP_ENUMERABLE);
 	}
 	duk_put_prop_string(ctx, -2, "images");
 
@@ -373,4 +405,33 @@ js_Spriteset_clone(duk_context* ctx)
 	duk_push_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;
+}
+
+static duk_ret_t
+js_Spriteset_get_image(duk_context* ctx)
+{
+	duk_uarridx_t index = duk_to_int(ctx, 0);
+	
+	spriteset_t* spriteset;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_push_sphere_image(ctx, get_spriteset_image(spriteset, index));
+	return 1;
+}
+
+static duk_ret_t
+js_Spriteset_set_image(duk_context* ctx)
+{
+	image_t* image = duk_require_sphere_image(ctx, 0);
+	duk_uarridx_t index = duk_to_int(ctx, 1);
+
+	spriteset_t* spriteset;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	set_spriteset_image(spriteset, index, image);
+	return 0;
 }
