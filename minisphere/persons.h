@@ -6,6 +6,7 @@ typedef struct person person_t;
 extern void         init_persons_api        (void);
 extern person_t*    create_person           (const char* name, const char* sprite_file, bool is_persistent);
 extern void         destroy_person          (person_t* person);
+extern bool         is_person_busy          (const person_t* person);
 extern bool         is_person_obstructed_at (const person_t* person, float x, float y, person_t** out_obstructing_person, int* out_tile_index);
 extern rect_t       get_person_base         (const person_t* person);
 extern const char*  get_person_name         (const person_t* person);

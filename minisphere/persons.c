@@ -119,6 +119,12 @@ destroy_person(person_t* person)
 }
 
 bool
+is_person_busy(const person_t* person)
+{
+	return person->num_commands > 0;
+}
+
+bool
 is_person_obstructed_at(const person_t* person, float x, float y, person_t** out_obstructing_person, int* out_tile_index)
 {
 	rect_t           area;

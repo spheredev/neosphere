@@ -24,6 +24,7 @@ enum map_script_type
 
 static bool                change_map        (const char* filename, bool preserve_persons);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
+static void                process_map_input (void);
 static void                render_map_engine (void);
 static void                update_map_engine (void);
 
@@ -574,7 +575,7 @@ get_trigger_at(int x, int y, int layer)
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	for (i = 0; i < s_map->num_triggers; ++i) {
 		trigger = &s_map->triggers[i];
-		if (false && trigger->z != layer)  // for full compatibility, ignore layer parameter
+		if (trigger->z != layer && false)  // layer ignored for compatibility reasons
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
 		bounds.y1 = trigger->y - tile_h / 2;
@@ -584,6 +585,53 @@ get_trigger_at(int x, int y, int layer)
 			return trigger;
 	}
 	return NULL;
+}
+
+static void
+process_map_input(void)
+{
+	int                    layer;
+	ALLEGRO_KEYBOARD_STATE kb_state;
+	struct map_trigger*    trigger;
+	float                  x, y;
+	
+	// keep key queue clear while in map engine
+	g_key_queue.num_keys = 0;
+
+	// check for bound key activation
+	check_bound_keys();
+	
+	// check for movement of input person, if there is one
+	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
+		al_get_keyboard_state(&kb_state);
+		if (al_key_down(&kb_state, s_talk_key)) {
+			talk_person(s_input_person);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
+			command_person(s_input_person, COMMAND_FACE_NORTH);
+			command_person(s_input_person, COMMAND_MOVE_NORTH);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) {
+			command_person(s_input_person, COMMAND_FACE_EAST);
+			command_person(s_input_person, COMMAND_MOVE_EAST);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) {
+			command_person(s_input_person, COMMAND_FACE_SOUTH);
+			command_person(s_input_person, COMMAND_MOVE_SOUTH);
+		}
+		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) {
+			command_person(s_input_person, COMMAND_FACE_WEST);
+			command_person(s_input_person, COMMAND_MOVE_WEST);
+		}
+		
+		// did we step on a trigger?
+		get_person_xyz(s_input_person, &x, &y, &layer, true);
+		trigger = get_trigger_at(x, y, layer);
+		if (trigger != s_on_trigger) {
+			s_on_trigger = trigger;
+			if (trigger) run_script(trigger->script_id, true);
+		}
+	}
 }
 
 static void
@@ -605,7 +653,7 @@ render_map_engine(void)
 	off_x = s_cam_x - g_res_x / 2;
 	off_y = s_cam_y - g_res_y / 2;
 	if (!s_map->is_toric) {
-		// non-repeating map - clamp camera to map bounds
+		// non-repeating map - clamp viewport to map bounds
 		off_x = fmin(fmax(off_x, 0), map_w - g_res_x);
 		off_y = fmin(fmax(off_y, 0), map_h - g_res_y);
 	}
@@ -644,13 +692,10 @@ render_map_engine(void)
 static void
 update_map_engine(void)
 {
-	ALLEGRO_KEYBOARD_STATE kb_state;
-	int                    layer;
-	int                    map_w, map_h;
-	int                    script_type;
-	int                    tile_w, tile_h;
-	struct map_trigger*    trigger;
-	float                  x, y;
+	int   map_w, map_h;
+	int   script_type;
+	int   tile_w, tile_h;
+	float x, y;
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -658,39 +703,6 @@ update_map_engine(void)
 	map_h = s_map->layers[0].height * tile_h;
 	
 	update_persons();
-	
-	// check for player input
-	check_bound_keys();
-	if (s_input_person != NULL) {
-		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, s_talk_key)) {
-			talk_person(s_input_person);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
-			command_person(s_input_person, COMMAND_FACE_NORTH);
-			command_person(s_input_person, COMMAND_MOVE_NORTH);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) {
-			command_person(s_input_person, COMMAND_FACE_EAST);
-			command_person(s_input_person, COMMAND_MOVE_EAST);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) {
-			command_person(s_input_person, COMMAND_FACE_SOUTH);
-			command_person(s_input_person, COMMAND_MOVE_SOUTH);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) {
-			command_person(s_input_person, COMMAND_FACE_WEST);
-			command_person(s_input_person, COMMAND_MOVE_WEST);
-		}
-
-		// check for trigger activation
-		get_person_xyz(s_input_person, &x, &y, &layer, true);
-		trigger = get_trigger_at(x, y, layer);
-		if (trigger != s_on_trigger) {
-			s_on_trigger = trigger;
-			if (trigger) run_script(trigger->script_id, true);
-		}
-	}
 	
 	// update camera
 	if (s_camera_person != NULL) {
@@ -731,6 +743,7 @@ js_MapEngine(duk_context* ctx)
 	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "@exit");
+		process_map_input();
 		update_map_engine();
 		if (!g_skip_frame) render_map_engine();
 	}
