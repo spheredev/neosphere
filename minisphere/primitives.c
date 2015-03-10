@@ -53,7 +53,7 @@ js_SetClippingRectangle(duk_context* ctx)
 	int height = duk_require_int(ctx, 3);
 
 	// HACK: Allegro doesn't transform the clipping rectangle, so we have to scale it manually
-	al_set_clipping_rectangle(x * g_render_scale, y * g_render_scale, width * g_render_scale, height * g_render_scale);
+	al_set_clipping_rectangle(x * g_scale_x, y * g_scale_y, width * g_scale_x, height * g_scale_y);
 	return 0;
 }
 

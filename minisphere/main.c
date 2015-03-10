@@ -32,12 +32,14 @@ static const int MAX_FRAME_SKIPS = 5;
 
 static void initialize_engine (void);
 static void shutdown_engine   (void);
+static void toggle_fullscreen (void);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
+static bool    s_is_fullscreen = true;
 static char*   s_last_game_path = NULL;
 static double  s_last_fps_poll_time;
 static double  s_last_frame_time;
@@ -46,16 +48,17 @@ static int     s_num_frames;
 static bool    s_show_fps = false;
 static bool    s_take_snapshot = false;
 
-ALLEGRO_DISPLAY*     g_display   = NULL;
-duk_context*         g_duktape   = NULL;
-ALLEGRO_EVENT_QUEUE* g_events    = NULL;
-ALLEGRO_CONFIG*      g_game_conf = NULL;
-ALLEGRO_PATH*        g_game_path = NULL;
+ALLEGRO_DISPLAY*     g_display    = NULL;
+duk_context*         g_duktape    = NULL;
+ALLEGRO_EVENT_QUEUE* g_events     = NULL;
+ALLEGRO_CONFIG*      g_game_conf  = NULL;
+ALLEGRO_PATH*        g_game_path  = NULL;
 key_queue_t          g_key_queue;
-float                g_render_scale = 1.0;
+float                g_scale_x    = 1.0;
+float                g_scale_y    = 1.0;
 bool                 g_skip_frame = false;
 ALLEGRO_CONFIG*      g_sys_conf;
-font_t*              g_sys_font  = NULL;
+font_t*              g_sys_font   = NULL;
 int                  g_res_x, g_res_y;
 
 int
@@ -77,8 +80,8 @@ main(int argc, char** argv)
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
-	if (argc == 2) {
-		// only one argument passed, assume it's an .sgm file or game directory
+	if (argc == 2 && argv[1][0] != '-') {
+		// single non-switch argument passed, assume it's an .sgm file or game directory
 		al_destroy_path(g_game_path);
 		g_game_path = al_create_path(argv[1]);
 		if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
@@ -96,6 +99,12 @@ main(int argc, char** argv)
 					al_destroy_path(g_game_path);
 					g_game_path = al_create_path_for_directory(argv[i + 1]);
 				}
+			}
+			else if (strcmp(argv[i], "-fullscreen") == 0) {
+				s_is_fullscreen = true;
+			}
+			else if (strcmp(argv[i], "-windowed") == 0) {
+				s_is_fullscreen = false;
 			}
 		}
 	}
@@ -135,10 +144,10 @@ startup:
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	g_render_scale = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
-	g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
+	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
+	g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
 	al_identity_transform(&trans);
-	al_scale_transform(&trans, g_render_scale, g_render_scale);
+	al_scale_transform(&trans, g_scale_x, g_scale_y);
 	al_use_transform(&trans);
 	if (icon != NULL) al_set_display_icon(g_display, icon);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
@@ -163,6 +172,9 @@ startup:
 		return EXIT_FAILURE;
 	}
 
+	// switch to fullscreen if necessary
+	if (s_is_fullscreen) toggle_fullscreen();
+	
 	// load startup script
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duktape, 0x0, path);
@@ -250,8 +262,15 @@ do_events(void)
 			return false;
 		case ALLEGRO_EVENT_KEY_CHAR:
 			switch (event.keyboard.keycode) {
+			case ALLEGRO_KEY_ENTER:
+				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
+				 || event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
+				{
+					toggle_fullscreen();
+				}
+				break;
 			case ALLEGRO_KEY_F10:
-				// TODO: implement fullscreen toggle
+				toggle_fullscreen();
 				break;
 			case ALLEGRO_KEY_F11:
 				s_show_fps = !s_show_fps;
@@ -324,7 +343,7 @@ begin_frame(int framerate)
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
 			draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
-			al_scale_transform(&trans, g_render_scale, g_render_scale);
+			al_scale_transform(&trans, g_scale_x, g_scale_y);
 			al_use_transform(&trans);
 		}
 		al_flip_display();
@@ -485,6 +504,38 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path);
 	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
 	al_uninstall_system();
+}
+
+static void
+toggle_fullscreen(void)
+{
+	int                  flags;
+	ALLEGRO_MONITOR_INFO monitor;
+	ALLEGRO_TRANSFORM    transform;
+	
+	flags = al_get_display_flags(g_display);
+	if (flags & ALLEGRO_FULLSCREEN_WINDOW) {
+		// switch from fullscreen to windowed, resizing the display manually to work
+		// around an Allegro bug
+		s_is_fullscreen = false;
+		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, false);
+		g_scale_x = g_scale_y = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
+		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
+		al_get_monitor_info(0, &monitor);
+		al_set_window_position(g_display,
+			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
+			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
+	}
+	else {
+		// switch from windowed to fullscreen
+		s_is_fullscreen = true;
+		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, true);
+		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
+		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
+	}
+	al_identity_transform(&transform);
+	al_scale_transform(&transform, g_scale_x, g_scale_y);
+	al_use_transform(&transform);
 }
 
 static void
