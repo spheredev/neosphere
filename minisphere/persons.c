@@ -40,10 +40,13 @@ static duk_ret_t js_GetPersonFrame           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert     (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer           (duk_context* ctx);
 static duk_ret_t js_GetPersonList            (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeed           (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeedX          (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeedY          (duk_context* ctx);
 static duk_ret_t js_GetPersonSpriteset       (duk_context* ctx);
 static duk_ret_t js_GetPersonX               (duk_context* ctx);
 static duk_ret_t js_GetPersonY               (duk_context* ctx);
+static duk_ret_t js_GetPersonXFloat          (duk_context* ctx);
+static duk_ret_t js_GetPersonYFloat          (duk_context* ctx);
 static duk_ret_t js_GetTalkDistance          (duk_context* ctx);
 static duk_ret_t js_SetDefaultPersonScript   (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection       (duk_context* ctx);
@@ -52,8 +55,10 @@ static duk_ret_t js_SetPersonFrameRevert     (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer           (duk_context* ctx);
 static duk_ret_t js_SetPersonScript          (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeed           (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeedXY         (duk_context* ctx);
 static duk_ret_t js_SetPersonSpriteset       (duk_context* ctx);
 static duk_ret_t js_SetPersonX               (duk_context* ctx);
+static duk_ret_t js_SetPersonXYFloat         (duk_context* ctx);
 static duk_ret_t js_SetPersonY               (duk_context* ctx);
 static duk_ret_t js_SetTalkDistance          (duk_context* ctx);
 static duk_ret_t js_CallDefaultPersonScript  (duk_context* ctx);
@@ -210,10 +215,11 @@ get_person_name(const person_t* person)
 	return person->name;
 }
 
-float
-get_person_speed(const person_t* person)
+void
+get_person_speed(const person_t* person, float* out_x_speed, float* out_y_speed)
 {
-	return sqrt(person->speed_x * person->speed_y);
+	if (out_x_speed) *out_x_speed = person->speed_x;
+	if (out_y_speed) *out_y_speed = person->speed_y;
 }
 
 spriteset_t*
@@ -244,27 +250,34 @@ get_person_xyz(const person_t* person, float* out_x, float* out_y, int* out_laye
 bool
 set_person_script(person_t* person, int type, const lstring_t* script)
 {
+	char*       full_name;
+	const char* person_name;
 	int         script_id;
 	const char* script_name;
 
-	script_name = type == PERSON_SCRIPT_ON_CREATE ? "[person create script]"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "[person destroy script]"
-		: type == PERSON_SCRIPT_ON_TOUCH ? "[person touch script]"
-		: type == PERSON_SCRIPT_ON_TALK ? "[person talk script]"
-		: type == PERSON_SCRIPT_GENERATOR ? "[command generator]"
+	person_name = get_person_name(person);
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreate"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroy"
+		: type == PERSON_SCRIPT_ON_TOUCH ? "onTouch"
+		: type == PERSON_SCRIPT_ON_TALK ? "onTalk"
+		: type == PERSON_SCRIPT_GENERATOR ? "generateCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	script_id = compile_script(script, script_name);
+	if ((full_name = malloc(strlen(person_name) + strlen(script_name) + 11)) == NULL)
+		return false;
+	printf(full_name, "[person %s]:%s", person_name, script_name);
+	script_id = compile_script(script, full_name);
 	free_script(person->scripts[type]);
 	person->scripts[type] = script_id;
+	free(full_name);
 	return true;
 }
 
 void
-set_person_speed(person_t* person, float speed)
+set_person_speed(person_t* person, float x_speed, float y_speed)
 {
-	person->speed_x = speed;
-	person->speed_y = speed;
+	person->speed_x = x_speed;
+	person->speed_y = y_speed;
 }
 
 void
@@ -494,10 +507,13 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
-	register_api_func(g_duktape, NULL, "GetPersonSpeed", js_GetPersonSpeed);
+	register_api_func(g_duktape, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
+	register_api_func(g_duktape, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
 	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
+	register_api_func(g_duktape, NULL, "GetPersonXFloat", js_GetPersonXFloat);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "GetPersonYFloat", js_GetPersonYFloat);
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
 	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
@@ -506,8 +522,10 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
+	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
 	register_api_func(g_duktape, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
+	register_api_func(g_duktape, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
 	register_api_func(g_duktape, NULL, "SetTalkDistance", js_SetTalkDistance);
 	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
@@ -781,15 +799,32 @@ js_GetPersonSpriteset(duk_context* ctx)
 }
 
 static duk_ret_t
-js_GetPersonSpeed(duk_context* ctx)
+js_GetPersonSpeedX(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 
 	person_t*  person;
+	float      x_speed;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeed(): Person '%s' doesn't exist", name);
-	duk_push_number(ctx, get_person_speed(person));
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedX(): Person '%s' doesn't exist", name);
+	get_person_speed(person, &x_speed, NULL);
+	duk_push_number(ctx, x_speed);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonSpeedY(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*  person;
+	float      y_speed;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedY(): Person '%s' doesn't exist", name);
+	get_person_speed(person, NULL, &y_speed);
+	duk_push_number(ctx, y_speed);
 	return 1;
 }
 
@@ -802,6 +837,19 @@ js_GetPersonX(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonXFloat(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*   person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonXFloat(): Person '%s' doesn't exist", name);
 	duk_push_number(ctx, person->x);
 	return 1;
 }
@@ -815,6 +863,19 @@ js_GetPersonY(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonYFloat(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*   person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonYFloat(): Person '%s' doesn't exist", name);
 	duk_push_number(ctx, person->y);
 	return 1;
 }
@@ -928,7 +989,22 @@ js_SetPersonSpeed(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonSpeed(): Person '%s' doesn't exist", name);
-	set_person_speed(person, speed);
+	set_person_speed(person, speed, speed);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonSpeedXY(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	float x_speed = duk_require_number(ctx, 1);
+	float y_speed = duk_require_number(ctx, 2);
+
+	person_t*  person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonSpeed(): Person '%s' doesn't exist", name);
+	set_person_speed(person, x_speed, y_speed);
 	return 0;
 }
 
@@ -961,6 +1037,21 @@ js_SetPersonX(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonX(): Person '%s' doesn't exist", name);
 	person->x = x;
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonXYFloat(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	float x = duk_require_number(ctx, 1);
+	float y = duk_require_number(ctx, 2);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonXYFloat(): Person '%s' doesn't exist", name);
+	person->x = x; person->y = y;
 	return 0;
 }
 

@@ -52,7 +52,7 @@ ALLEGRO_EVENT_QUEUE* g_events    = NULL;
 ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 key_queue_t          g_key_queue;
-int                  g_render_scale;
+float                g_render_scale = 1.0;
 bool                 g_skip_frame = false;
 ALLEGRO_CONFIG*      g_sys_conf;
 font_t*              g_sys_font  = NULL;
@@ -135,7 +135,7 @@ startup:
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
-	g_render_scale = (g_res_x <= 400 && g_res_y <= 300) ? 2 : 1;
+	g_render_scale = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	g_display = al_create_display(g_res_x * g_render_scale, g_res_y * g_render_scale);
 	al_identity_transform(&trans);
 	al_scale_transform(&trans, g_render_scale, g_render_scale);
@@ -316,7 +316,7 @@ begin_frame(int framerate)
 		}
 		if (s_show_fps) {
 			if (framerate > 0) sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
-			else sprintf(fps_text, "%i fps", s_current_fps);
+				else sprintf(fps_text, "%i fps", s_current_fps);
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			x = al_get_display_width(g_display) - 108;

@@ -39,7 +39,7 @@ extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
 extern int                  g_fps;
 extern key_queue_t          g_key_queue;
-extern int                  g_render_scale;
+extern float                g_render_scale;
 extern bool                 g_skip_frame;
 extern ALLEGRO_CONFIG*      g_sys_conf;
 extern font_t*              g_sys_font;
