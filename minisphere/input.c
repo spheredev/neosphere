@@ -177,7 +177,7 @@ js_GetKey(duk_context* ctx)
 	int keycode;
 
 	while (g_key_queue.num_keys <= 0) {
-		if (!do_events()) bail_out_script();
+		if (!do_events()) bail_out_game();
 	}
 	keycode = g_key_queue.keys[0];
 	--g_key_queue.num_keys;

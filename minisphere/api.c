@@ -2,25 +2,27 @@
 #include "api.h"
 #include "color.h"
 
-static duk_ret_t js_GetVersion(duk_context* ctx);
-static duk_ret_t js_GetVersionString(duk_context* ctx);
-static duk_ret_t js_RequireSystemScript(duk_context* ctx);
-static duk_ret_t js_RequireScript(duk_context* ctx);
-static duk_ret_t js_EvaluateSystemScript(duk_context* ctx);
-static duk_ret_t js_EvaluateScript(duk_context* ctx);
-static duk_ret_t js_GetFileList(duk_context* ctx);
-static duk_ret_t js_GetFrameRate(duk_context* ctx);
-static duk_ret_t js_GetGameList(duk_context* ctx);
-static duk_ret_t js_GetScreenHeight(duk_context* ctx);
-static duk_ret_t js_GetScreenWidth(duk_context* ctx);
-static duk_ret_t js_GetTime(duk_context* ctx);
-static duk_ret_t js_SetFrameRate(duk_context* ctx);
-static duk_ret_t js_Abort(duk_context* ctx);
-static duk_ret_t js_Delay(duk_context* ctx);
-static duk_ret_t js_ExecuteGame(duk_context* ctx);
-static duk_ret_t js_Exit(duk_context* ctx);
-static duk_ret_t js_FlipScreen(duk_context* ctx);
-static duk_ret_t js_GarbageCollect(duk_context* ctx);
+static duk_ret_t js_GetVersion           (duk_context* ctx);
+static duk_ret_t js_GetVersionString     (duk_context* ctx);
+static duk_ret_t js_GetExtensions        (duk_context* ctx);
+static duk_ret_t js_RequireSystemScript  (duk_context* ctx);
+static duk_ret_t js_RequireScript        (duk_context* ctx);
+static duk_ret_t js_EvaluateSystemScript (duk_context* ctx);
+static duk_ret_t js_EvaluateScript       (duk_context* ctx);
+static duk_ret_t js_GetFileList          (duk_context* ctx);
+static duk_ret_t js_GetFrameRate         (duk_context* ctx);
+static duk_ret_t js_GetGameList          (duk_context* ctx);
+static duk_ret_t js_GetScreenHeight      (duk_context* ctx);
+static duk_ret_t js_GetScreenWidth       (duk_context* ctx);
+static duk_ret_t js_GetTime              (duk_context* ctx);
+static duk_ret_t js_SetFrameRate         (duk_context* ctx);
+static duk_ret_t js_Abort                (duk_context* ctx);
+static duk_ret_t js_Alert                (duk_context* ctx);
+static duk_ret_t js_Delay                (duk_context* ctx);
+static duk_ret_t js_ExecuteGame          (duk_context* ctx);
+static duk_ret_t js_Exit                 (duk_context* ctx);
+static duk_ret_t js_FlipScreen           (duk_context* ctx);
+static duk_ret_t js_GarbageCollect       (duk_context* ctx);
 
 static int s_framerate = 0;
 
@@ -29,7 +31,7 @@ init_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "GetVersion", js_GetVersion);
 	register_api_func(ctx, NULL, "GetVersionString", js_GetVersionString);
-	register_api_func(ctx, NULL, "Abort", js_Abort);
+	register_api_func(ctx, NULL, "GetExtensions", js_GetExtensions);
 	register_api_func(ctx, NULL, "EvaluateScript", js_EvaluateScript);
 	register_api_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
 	register_api_func(ctx, NULL, "RequireScript", js_RequireScript);
@@ -41,6 +43,8 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
 	register_api_func(ctx, NULL, "GetTime", js_GetTime);
 	register_api_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	register_api_func(ctx, NULL, "Abort", js_Abort);
+	register_api_func(ctx, NULL, "Alert", js_Alert);
 	register_api_func(ctx, NULL, "Delay", js_Delay);
 	register_api_func(ctx, NULL, "Exit", js_Exit);
 	register_api_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
@@ -81,7 +85,7 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 }
 
 void
-bail_out_script(void)
+bail_out_game(void)
 {
 	duk_error(g_duktape, DUK_ERR_ERROR, "@exit");
 }
@@ -98,6 +102,26 @@ js_GetVersionString(duk_context* ctx)
 {
 	duk_push_string(ctx, SPHERE_API_VERSION_STRING);
 	return 1;
+}
+
+static duk_ret_t
+js_GetExtensions(duk_context* ctx)
+{
+	int i = 0;
+
+	duk_push_array(ctx);
+	duk_push_string(ctx, "sphere-legacy"); duk_put_prop_index(ctx, -2, i++);
+	duk_push_string(ctx, "minisphere"); duk_put_prop_index(ctx, -2, i++);
+	return 1;
+}
+
+static duk_ret_t
+js_Alert(duk_context* ctx)
+{
+	const char* text = duk_to_string(ctx, 0);
+
+	al_show_native_message_box(g_display, "Alert from Sphere game", "", text, NULL, 0x0);
+	return 0;
 }
 
 static duk_ret_t
@@ -284,7 +308,7 @@ js_Delay(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Delay(): Negative delay not allowed (%i)", millisecs);
 	start_time = al_get_time();
 	while (al_get_time() < start_time + millisecs / 1000) {
-		if (!do_events()) bail_out_script();
+		if (!do_events()) bail_out_game();
 	}
 	return 0;
 }
@@ -301,14 +325,14 @@ js_ExecuteGame(duk_context* ctx)
 static duk_ret_t
 js_Exit(duk_context* ctx)
 {
-	bail_out_script();
+	bail_out_game();
 	return 0;
 }
 
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	if (!begin_frame(s_framerate)) bail_out_script();
+	if (!begin_frame(s_framerate)) bail_out_game();
 	return 0;
 }
 

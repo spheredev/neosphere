@@ -742,7 +742,7 @@ js_MapEngine(duk_context* ctx)
 	s_framerate = framerate;
 	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
-		if (!begin_frame(s_framerate)) bail_out_script();
+		if (!begin_frame(s_framerate)) bail_out_game();
 		process_map_input();
 		update_map_engine();
 		if (!g_skip_frame) render_map_engine();
