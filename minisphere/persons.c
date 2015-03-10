@@ -256,16 +256,16 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 	const char* script_name;
 
 	person_name = get_person_name(person);
-	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreate"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroy"
-		: type == PERSON_SCRIPT_ON_TOUCH ? "onTouch"
-		: type == PERSON_SCRIPT_ON_TALK ? "onTalk"
-		: type == PERSON_SCRIPT_GENERATOR ? "generateCommands"
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "create script"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "destroy script"
+		: type == PERSON_SCRIPT_ON_TOUCH ? "touch script"
+		: type == PERSON_SCRIPT_ON_TALK ? "talk script"
+		: type == PERSON_SCRIPT_GENERATOR ? "command script"
 		: NULL;
 	if (script_name == NULL) return false;
 	if ((full_name = malloc(strlen(person_name) + strlen(script_name) + 11)) == NULL)
 		return false;
-	printf(full_name, "[person %s]:%s", person_name, script_name);
+	sprintf(full_name, "[%s : %s]", person_name, script_name);
 	script_id = compile_script(script, full_name);
 	free_script(person->scripts[type]);
 	person->scripts[type] = script_id;

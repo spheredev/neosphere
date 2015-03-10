@@ -726,8 +726,10 @@ update_map_engine(void)
 
 	// run update and delay scripts, if applicable
 	run_script(s_update_script, false);
-	if (s_delay_frames >= 0 && --s_delay_frames < 0)
+	if (s_delay_frames >= 0 && --s_delay_frames <= 0) {
 		run_script(s_delay_script, false);
+		free_script(s_delay_script);
+	}
 }
 
 static duk_ret_t
@@ -1039,18 +1041,16 @@ static duk_ret_t
 js_SetDelayScript(duk_context* ctx)
 {
 	int frames = duk_require_int(ctx, 0);
-	size_t script_size;
-	const char* script = duk_require_lstring(ctx, 1, &script_size);
+	lstring_t* script = duk_require_lstring_t(ctx, 1);
+
+	char script_name[100];
 
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Map engine is not running");
 	if (frames < 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Number of delay frames cannot be negative");
-	duk_push_global_stash(ctx);
-	duk_push_string(ctx, "[delayscript]");
-	duk_compile_lstring_filename(ctx, DUK_COMPILE_EVAL, script, script_size);
-	duk_put_prop_string(ctx, -2, "map_delay_script");
-	duk_pop(ctx);
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Delay frames cannot be negative");
+	sprintf(script_name, "[%i-frame delay script]", frames);
+	s_delay_script = compile_script(script, script_name);
 	s_delay_frames = frames;
 	return 0;
 }
