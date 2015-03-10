@@ -19,6 +19,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_ttf.h>
 #include "duktape.h"
+#include "font.h"
 #include "geometry.h"
 #include "lstring.h"
 #include "script.h"
@@ -41,7 +42,7 @@ extern key_queue_t          g_key_queue;
 extern int                  g_render_scale;
 extern bool                 g_skip_frame;
 extern ALLEGRO_CONFIG*      g_sys_conf;
-extern ALLEGRO_FONT*        g_sys_font;
+extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
 
 extern void            al_draw_tiled_bitmap  (ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height);

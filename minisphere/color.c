@@ -2,16 +2,16 @@
 #include "api.h"
 #include "color.h"
 
-static duk_ret_t _js_CreateColor(duk_context* ctx);
-static duk_ret_t _js_BlendColors(duk_context* ctx);
-static duk_ret_t _js_BlendColorsWeighted(duk_context* ctx);
+static duk_ret_t js_CreateColor(duk_context* ctx);
+static duk_ret_t js_BlendColors(duk_context* ctx);
+static duk_ret_t js_BlendColorsWeighted(duk_context* ctx);
 
 void
 init_color_api(void)
 {
-	register_api_func(g_duktape, NULL, "CreateColor", &_js_CreateColor);
-	register_api_func(g_duktape, NULL, "BlendColors", &_js_BlendColors);
-	register_api_func(g_duktape, NULL, "BlendColorsWeighted", &_js_BlendColorsWeighted);
+	register_api_func(g_duktape, NULL, "CreateColor", js_CreateColor);
+	register_api_func(g_duktape, NULL, "BlendColors", js_BlendColors);
+	register_api_func(g_duktape, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
 }
 
 ALLEGRO_COLOR
@@ -30,6 +30,7 @@ void
 duk_push_sphere_color(duk_context* ctx, ALLEGRO_COLOR color)
 {
 	duk_push_object(ctx);
+	duk_push_string(ctx, "color"); duk_put_prop_string(ctx, -2, "sphere_type");
 	duk_push_number(ctx, color.r * 255); duk_put_prop_string(ctx, -2, "red");
 	duk_push_number(ctx, color.g * 255); duk_put_prop_string(ctx, -2, "green");
 	duk_push_number(ctx, color.b * 255); duk_put_prop_string(ctx, -2, "blue");
@@ -37,7 +38,7 @@ duk_push_sphere_color(duk_context* ctx, ALLEGRO_COLOR color)
 }
 
 static duk_ret_t
-_js_CreateColor(duk_context* ctx)
+js_CreateColor(duk_context* ctx)
 {
 	ALLEGRO_COLOR color;
 	int           n_args;
@@ -52,7 +53,7 @@ _js_CreateColor(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_BlendColors(duk_context* ctx)
+js_BlendColors(duk_context* ctx)
 {
 	ALLEGRO_COLOR color1, color2;
 	ALLEGRO_COLOR result;
@@ -68,7 +69,7 @@ _js_BlendColors(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_BlendColorsWeighted(duk_context* ctx)
+js_BlendColorsWeighted(duk_context* ctx)
 {
 	ALLEGRO_COLOR color1, color2;
 	ALLEGRO_COLOR result;

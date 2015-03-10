@@ -84,6 +84,9 @@
     <ClCompile Include="obsmap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="primitives.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -156,6 +159,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="obsmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="primitives.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

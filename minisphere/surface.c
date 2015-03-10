@@ -14,8 +14,10 @@ static duk_ret_t js_CreateSurface             (duk_context* ctx);
 static duk_ret_t js_GrabSurface               (duk_context* ctx);
 static duk_ret_t js_LoadSurface               (duk_context* ctx);
 static duk_ret_t js_Surface_finalize          (duk_context* ctx);
+static duk_ret_t js_Surface_getPixel          (duk_context* ctx);
 static duk_ret_t js_Surface_setAlpha          (duk_context* ctx);
 static duk_ret_t js_Surface_setBlendMode      (duk_context* ctx);
+static duk_ret_t js_Surface_setPixel          (duk_context* ctx);
 static duk_ret_t js_Surface_applyLookup       (duk_context* ctx);
 static duk_ret_t js_Surface_blit              (duk_context* ctx);
 static duk_ret_t js_Surface_blitMaskSurface   (duk_context* ctx);
@@ -24,10 +26,10 @@ static duk_ret_t js_Surface_clone             (duk_context* ctx);
 static duk_ret_t js_Surface_cloneSection      (duk_context* ctx);
 static duk_ret_t js_Surface_createImage       (duk_context* ctx);
 static duk_ret_t js_Surface_drawText          (duk_context* ctx);
-static duk_ret_t js_Surface_getPixel          (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle (duk_context* ctx);
 static duk_ret_t js_Surface_line              (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedRectangle (duk_context* ctx);
+static duk_ret_t js_Surface_pointSeries       (duk_context* ctx);
 static duk_ret_t js_Surface_rotate            (duk_context* ctx);
 static duk_ret_t js_Surface_rectangle         (duk_context* ctx);
 static duk_ret_t js_Surface_rescale           (duk_context* ctx);
@@ -58,8 +60,10 @@ duk_push_sphere_surface(duk_context* ctx, image_t* image)
 	duk_push_string(ctx, "surface"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
 	duk_push_c_function(ctx, &js_Surface_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &js_Surface_getPixel, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPixel");
 	duk_push_c_function(ctx, &js_Surface_setAlpha, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setAlpha");
 	duk_push_c_function(ctx, &js_Surface_setBlendMode, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setBlendMode");
+	duk_push_c_function(ctx, &js_Surface_setPixel, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPixel");
 	duk_push_c_function(ctx, &js_Surface_applyLookup, DUK_VARARGS); duk_put_prop_string(ctx, -2, "applyLookup");
 	duk_push_c_function(ctx, &js_Surface_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, &js_Surface_blitMaskSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMaskSurface");
@@ -68,10 +72,10 @@ duk_push_sphere_surface(duk_context* ctx, image_t* image)
 	duk_push_c_function(ctx, &js_Surface_cloneSection, DUK_VARARGS); duk_put_prop_string(ctx, -2, "cloneSection");
 	duk_push_c_function(ctx, &js_Surface_createImage, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createImage");
 	duk_push_c_function(ctx, &js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
-	duk_push_c_function(ctx, &js_Surface_getPixel, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPixel");
 	duk_push_c_function(ctx, &js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
 	duk_push_c_function(ctx, &js_Surface_line, DUK_VARARGS); duk_put_prop_string(ctx, -2, "line");
 	duk_push_c_function(ctx, &js_Surface_outlinedRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "outlinedRectangle");
+	duk_push_c_function(ctx, &js_Surface_pointSeries, DUK_VARARGS); duk_put_prop_string(ctx, -2, "pointSeries");
 	duk_push_c_function(ctx, &js_Surface_rotate, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotate");
 	duk_push_c_function(ctx, &js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
 	duk_push_c_function(ctx, &js_Surface_rescale, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rescale");
@@ -212,6 +216,41 @@ js_Surface_finalize(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	free_image(image);
 	return 0;
+}
+
+static duk_ret_t
+js_Surface_setPixel(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	ALLEGRO_COLOR color = duk_get_sphere_color(ctx, 2);
+	
+	image_t* image;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_put_pixel(x, y, color);
+	al_set_target_backbuffer(g_display);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_getPixel(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+
+	ALLEGRO_COLOR color;
+	image_t*      image;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	color = al_get_pixel(get_image_bitmap(image), x, y);
+	duk_push_sphere_color(ctx, color);
+	return 1;
 }
 
 static duk_ret_t
@@ -359,44 +398,26 @@ js_Surface_createImage(duk_context* ctx)
 static duk_ret_t
 js_Surface_drawText(duk_context* ctx)
 {
+	font_t* font = duk_require_sphere_font(ctx, 0);
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 	const char* text = duk_to_string(ctx, 3);
 	
-	int             blend_mode;
-	ALLEGRO_COLOR   color;
-	ALLEGRO_FONT*   font;
-	image_t*        image;
-
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_text(font, color, x, y, 0x0, text);
-	al_set_target_backbuffer(g_display);
-	reset_blender();
-	return 0;
-}
-
-static duk_ret_t
-js_Surface_getPixel(duk_context* ctx)
-{
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	
+	int           blend_mode;
 	ALLEGRO_COLOR color;
 	image_t*      image;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	color = al_get_pixel(get_image_bitmap(image), x, y);
-	duk_push_sphere_color(ctx, color);
-	return 1;
+	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_text(get_font_object(font), color, x, y, 0x0, text);
+	al_set_target_backbuffer(g_display);
+	reset_blender();
+	return 0;
 }
 
 static duk_ret_t
@@ -455,6 +476,46 @@ js_Surface_line(duk_context* ctx)
 	al_draw_line(x1, y1, x2, y2, color, 1);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_pointSeries(duk_context* ctx)
+{
+	duk_require_object_coercible(ctx, 0);
+	ALLEGRO_COLOR color = duk_get_sphere_color(ctx, 1);
+	
+	int             blend_mode;
+	image_t*        image;
+	size_t          num_points;
+	int             x, y;
+	ALLEGRO_VERTEX* vertices;
+
+	unsigned int i;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!duk_is_array(ctx, 0))
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:pointSeries(): First argument must be an array");
+	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer");
+	for (i = 0; i < num_points; ++i) {
+		duk_get_prop_index(ctx, 0, i);
+		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_pop(ctx);
+		vertices[i].x = x; vertices[i].y = y;
+		vertices[i].color = color;
+	}
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+	al_set_target_backbuffer(g_display);
+	reset_blender();
+	free(vertices);
 	return 0;
 }
 

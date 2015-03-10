@@ -9,6 +9,7 @@
 #include "input.h"
 #include "log.h"
 #include "map_engine.h"
+#include "primitives.h"
 #include "rawfile.h"
 #include "rfn_handler.h"
 #include "sound.h"
@@ -54,7 +55,7 @@ key_queue_t          g_key_queue;
 int                  g_render_scale;
 bool                 g_skip_frame = false;
 ALLEGRO_CONFIG*      g_sys_conf;
-ALLEGRO_FONT*        g_sys_font  = NULL;
+font_t*              g_sys_font  = NULL;
 int                  g_res_x, g_res_y;
 
 int
@@ -152,7 +153,7 @@ startup:
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Font");
 		path = get_sys_asset_path(filename, "system");
-		g_sys_font = al_load_font(path, 0, 0x0);
+		g_sys_font = load_font(path, 8);
 		free(path);
 	}
 	if (g_sys_font == NULL) {
@@ -161,11 +162,6 @@ startup:
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
-
-	duk_push_global_stash(g_duktape);
-	duk_push_sphere_Font(g_duktape, g_sys_font);
-	duk_put_prop_string(g_duktape, -2, "system_font");
-	duk_pop(g_duktape);
 
 	// load startup script
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
@@ -326,8 +322,8 @@ begin_frame(int framerate)
 			x = al_get_display_width(g_display) - 108;
 			y = 8;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
-			al_draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, ALLEGRO_ALIGN_CENTER, fps_text);
-			al_draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, ALLEGRO_ALIGN_CENTER, fps_text);
+			draw_text(g_sys_font, al_map_rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
+			draw_text(g_sys_font, al_map_rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 			al_scale_transform(&trans, g_render_scale, g_render_scale);
 			al_use_transform(&trans);
 		}
@@ -470,6 +466,7 @@ initialize_engine(void)
 	init_input_api(g_duktape);
 	init_log_api(g_duktape);
 	init_map_engine_api(g_duktape);
+	init_primitives_api();
 	init_rawfile_api();
 	init_sound_api(g_duktape);
 	init_spriteset_api(g_duktape);

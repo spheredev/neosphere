@@ -92,7 +92,7 @@ static int                 s_update_script    = 0;
 
 struct map
 {
-	bool               is_toric;
+	bool               is_repeating;
 	point3_t           origin;
 	int                scripts[MAP_SCRIPT_MAX];
 	tileset_t*         tileset;
@@ -153,7 +153,7 @@ struct rmp_header
 	int8_t  start_direction;
 	int16_t num_strings;
 	int16_t num_zones;
-	uint8_t toric_map;
+	uint8_t repeat_map;
 	uint8_t reserved[234];
 };
 
@@ -308,7 +308,7 @@ load_map(const char* path)
 		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
 		free(tile_path);
 		if (tileset == NULL) goto on_error;
-		map->is_toric = rmp.toric_map;
+		map->is_repeating = rmp.repeat_map;
 		map->origin.x = rmp.start_x;
 		map->origin.y = rmp.start_y;
 		map->origin.z = rmp.start_layer;
@@ -506,7 +506,7 @@ normalize_map_entity_xy(float* inout_x, float* inout_y, int layer)
 	int tile_w, tile_h;
 	int layer_w, layer_h;
 	
-	if (!s_map->is_toric)
+	if (!s_map->is_repeating)
 		return;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
@@ -652,7 +652,7 @@ render_map_engine(void)
 	map_h = s_map->layers[0].height * tile_h;
 	off_x = s_cam_x - g_res_x / 2;
 	off_y = s_cam_y - g_res_y / 2;
-	if (!s_map->is_toric) {
+	if (!s_map->is_repeating) {
 		// non-repeating map - clamp viewport to map bounds
 		off_x = fmin(fmax(off_x, 0), map_w - g_res_x);
 		off_y = fmin(fmax(off_y, 0), map_h - g_res_y);
@@ -668,14 +668,14 @@ render_map_engine(void)
 		first_cell_x = off_x / tile_w;
 		first_cell_y = off_y / tile_h;
 		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
-			cell_x = s_map->is_toric ? (x + first_cell_x) % layer->width : x + first_cell_x;
-			cell_y = s_map->is_toric ? (y + first_cell_y) % layer->height : y + first_cell_y;
+			cell_x = s_map->is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
+			cell_y = s_map->is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
 			if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
 				continue;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
 			draw_tile(s_map->tileset, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
 		}
-		if (s_map->is_toric) {
+		if (s_map->is_repeating) {
 			// for small repeating maps, persons need to be repeated as well
 			for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x) {
 				render_persons(z, off_x - x * map_w, off_y - y * map_h);
@@ -711,7 +711,7 @@ update_map_engine(void)
 	}
 
 	// run edge scripts if player walked off map (only for non-repeating map)
-	if (!s_map->is_toric && s_input_person != NULL) {
+	if (!s_map->is_repeating && s_input_person != NULL) {
 		get_person_xy(s_input_person, &x, &y, false);
 		script_type = y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
 			: x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
@@ -742,7 +742,7 @@ js_MapEngine(duk_context* ctx)
 	s_framerate = framerate;
 	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
-		if (!begin_frame(s_framerate)) duk_error(ctx, DUK_ERR_ERROR, "@exit");
+		if (!begin_frame(s_framerate)) bail_out_script();
 		process_map_input();
 		update_map_engine();
 		if (!g_skip_frame) render_map_engine();
