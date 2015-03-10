@@ -422,16 +422,12 @@ get_sys_asset_path(const char* path, const char* base_dir)
 }
 
 void
-set_clip_rectangle(rect_t clip_rect)
+set_clip_rectangle(rect_t clip)
 {
-	s_clip_rect = clip_rect;
-	s_clip_rect.x1 *= g_scale_x;
-	s_clip_rect.y1 *= g_scale_y;
-	s_clip_rect.x2 *= g_scale_x;
-	s_clip_rect.y2 *= g_scale_y;
-	al_set_clipping_rectangle(s_clip_rect.x1, s_clip_rect.y1,
-		s_clip_rect.x2 - s_clip_rect.x1,
-		s_clip_rect.y2 - s_clip_rect.y1);
+	s_clip_rect = clip;
+	clip.x1 *= g_scale_x; clip.y1 *= g_scale_y;
+	clip.x2 *= g_scale_x; clip.y2 *= g_scale_y;
+	al_set_clipping_rectangle(clip.x1, clip.y1, clip.x2 - clip.x1, clip.y2 - clip.y1);
 }
 
 void
