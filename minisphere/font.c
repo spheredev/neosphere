@@ -301,7 +301,7 @@ js_Font_getStringHeight(duk_context* ctx)
 static duk_ret_t
 js_Font_getStringWidth(duk_context* ctx)
 {
-	const char* text = duk_require_string(ctx, 0);
+	const char* text = duk_to_string(ctx, 0);
 	
 	font_t* font;
 
