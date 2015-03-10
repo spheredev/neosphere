@@ -39,6 +39,7 @@ init_input_api(duk_context* ctx)
 	register_api_const(ctx, "KEY_SHIFT", ALLEGRO_KEY_LSHIFT);
 	register_api_const(ctx, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
 	register_api_const(ctx, "KEY_ALT", ALLEGRO_KEY_ALT);
+	register_api_const(ctx, "KEY_TAB", ALLEGRO_KEY_TAB);
 	register_api_const(ctx, "KEY_SPACE", ALLEGRO_KEY_SPACE);
 	register_api_const(ctx, "KEY_ENTER", ALLEGRO_KEY_ENTER);
 	register_api_const(ctx, "KEY_ESCAPE", ALLEGRO_KEY_ESCAPE);
