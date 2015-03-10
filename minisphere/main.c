@@ -36,6 +36,7 @@ static void toggle_fullscreen (void);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
+static rect_t  s_clip_rect;
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
@@ -172,9 +173,10 @@ startup:
 		return EXIT_FAILURE;
 	}
 
-	// switch to fullscreen if necessary
+	// switch to fullscreen if necessary and initialize clipping
 	if (s_is_fullscreen) toggle_fullscreen();
-	
+	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
+
 	// load startup script
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duktape, 0x0, path);
@@ -387,6 +389,12 @@ get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
 	return out_path;
 }
 
+rect_t
+get_clip_rectangle(void)
+{
+	return s_clip_rect;
+}
+
 char*
 get_sys_asset_path(const char* path, const char* base_dir)
 {
@@ -407,6 +415,19 @@ get_sys_asset_path(const char* path, const char* base_dir)
 	al_destroy_path(system_path);
 	al_destroy_path(base_path);
 	return out_path;
+}
+
+void
+set_clip_rectangle(rect_t clip_rect)
+{
+	s_clip_rect = clip_rect;
+	s_clip_rect.x1 *= g_scale_x;
+	s_clip_rect.y1 *= g_scale_y;
+	s_clip_rect.x2 *= g_scale_x;
+	s_clip_rect.y2 *= g_scale_y;
+	al_set_clipping_rectangle(s_clip_rect.x1, s_clip_rect.y1,
+		s_clip_rect.x2 - s_clip_rect.x1,
+		s_clip_rect.y2 - s_clip_rect.y1);
 }
 
 void

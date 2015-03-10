@@ -34,13 +34,14 @@ init_primitives_api(void)
 static duk_ret_t
 js_GetClippingRectangle(duk_context* ctx)
 {
-	int x, y, width, height;
-	al_get_clipping_rectangle(&x, &y, &width, &height);
+	rect_t clip;
+
+	clip = get_clip_rectangle();
 	duk_push_object(ctx);
-	duk_push_int(ctx, x); duk_put_prop_string(ctx, -2, "x");
-	duk_push_int(ctx, y); duk_put_prop_string(ctx, -2, "y");
-	duk_push_int(ctx, width); duk_put_prop_string(ctx, -2, "width");
-	duk_push_int(ctx, height); duk_put_prop_string(ctx, -2, "height");
+	duk_push_int(ctx, clip.x1); duk_put_prop_string(ctx, -2, "x");
+	duk_push_int(ctx, clip.y1); duk_put_prop_string(ctx, -2, "y");
+	duk_push_int(ctx, clip.x2 - clip.x1); duk_put_prop_string(ctx, -2, "width");
+	duk_push_int(ctx, clip.y2 - clip.y1); duk_put_prop_string(ctx, -2, "height");
 	return 1;
 }
 
@@ -52,8 +53,7 @@ js_SetClippingRectangle(duk_context* ctx)
 	int width = duk_require_int(ctx, 2);
 	int height = duk_require_int(ctx, 3);
 
-	// HACK: Allegro doesn't transform the clipping rectangle, so we have to scale it manually
-	al_set_clipping_rectangle(x * g_scale_x, y * g_scale_y, width * g_scale_x, height * g_scale_y);
+	set_clip_rectangle(new_rect(x, y, x + width, y + height));
 	return 0;
 }
 
