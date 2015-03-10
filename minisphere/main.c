@@ -201,15 +201,15 @@ on_js_error:
 	duk_dup(g_duktape, -1);
 	const char* err_msg = duk_safe_to_string(g_duktape, -1);
 	if (err_code != DUK_ERR_ERROR || strstr(err_msg, "Error: @") != err_msg) {
-		// This is a script error, handle accordingly
+		// this is an legitimate exception, handle accordingly
 		duk_get_prop_string(g_duktape, -2, "lineNumber");
 		duk_int_t line_num = duk_get_int(g_duktape, -1);
 		duk_pop(g_duktape);
 		duk_get_prop_string(g_duktape, -2, "fileName");
 		const char* file_path = duk_get_string(g_duktape, -1);
 		if (file_path != NULL) {
-			char* file_name = strrchr(file_path, '/');
-			file_name = file_name != NULL ? (file_name + 1) : file_path;
+			char* file_name = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
+			file_name = file_name != NULL ? file_name + 1 : file_path;
 			duk_push_sprintf(g_duktape, "%s (line: %i)\n\n%s", file_name, line_num, err_msg);
 		}
 		else {

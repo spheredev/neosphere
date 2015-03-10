@@ -119,8 +119,27 @@ static duk_ret_t
 js_Alert(duk_context* ctx)
 {
 	const char* text = duk_to_string(ctx, 0);
+	
+	const char* caller_info;
+	const char* filename;
+	int         line_number;
+	
+	// get filename and line number of Alert() call
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
+	duk_remove(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_pop_2(ctx);
 
-	al_show_native_message_box(g_display, "Alert from Sphere game", "", text, NULL, 0x0);
+	// show the message
+	caller_info =
+		duk_push_sprintf(ctx, "%s (line %i)", strrchr(filename, ALLEGRO_NATIVE_PATH_SEP) + 1, line_number),
+		duk_get_string(ctx, -1);
+	al_show_native_message_box(g_display, "Alert from Sphere game", caller_info, text, NULL, 0x0);
+	duk_pop(ctx);
 	return 0;
 }
 
@@ -128,9 +147,32 @@ static duk_ret_t
 js_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* err_msg = n_args > 0 ? duk_to_string(ctx, 0) : "Abort() called by script";
-	duk_error(ctx, DUK_ERR_ERROR, "%s", err_msg);
-	return 0;
+	const char* error_text = n_args >= 1 ? duk_to_string(ctx, 0)
+		: "Game terminated prematurely";
+	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+	
+	const char* filename;
+	int         line_number;
+	
+	if (stack_offset > 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
+	
+	// get filename and line number of Abort() call
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
+	if (!duk_is_object(ctx, -1)) {
+		duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
+	}
+	duk_remove(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_pop_2(ctx);
+	
+	// throw the exception
+	duk_error_raw(ctx, DUK_ERR_ERROR, filename, line_number, "%s", error_text);
 }
 
 static duk_ret_t
