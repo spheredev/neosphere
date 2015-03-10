@@ -40,7 +40,7 @@ static rect_t  s_clip_rect;
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
-static bool    s_is_fullscreen = true;
+static bool    s_is_fullscreen = false;
 static char*   s_last_game_path = NULL;
 static double  s_last_fps_poll_time;
 static double  s_last_frame_time;
@@ -307,6 +307,10 @@ begin_frame(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 	
+	// check for bound key activation
+	check_bound_keys();
+
+	// flip backbuffer
 	is_backbuffer_valid = !g_skip_frame;
 	if (framerate > 0) {
 		frame_length = 1.0 / framerate;

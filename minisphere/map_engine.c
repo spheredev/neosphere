@@ -598,9 +598,6 @@ process_map_input(void)
 	// keep key queue clear while in map engine
 	g_key_queue.num_keys = 0;
 
-	// check for bound key activation
-	check_bound_keys();
-	
 	// check for movement of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
 		al_get_keyboard_state(&kb_state);
