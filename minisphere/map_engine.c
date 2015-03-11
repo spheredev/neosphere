@@ -23,10 +23,11 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static bool                change_map        (const char* filename, bool preserve_persons);
+static bool                are_zones_at      (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
-static struct map_zone*    get_zone_at       (int x, int y, int layer);
-static void                process_map_input (void);
+static struct map_zone*    get_zone_at       (int x, int y, int layer, int index);
+static bool                change_map(const char* filename, bool preserve_persons);
+static void                process_map_input(void);
 static void                render_map_engine (void);
 static void                update_map_engine (void);
 
@@ -47,7 +48,10 @@ static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
 static duk_ret_t js_GetLayerMask          (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_GetNumLayers          (duk_context* ctx);
 static duk_ret_t js_GetNumTiles           (duk_context* ctx);
+static duk_ret_t js_GetNumTriggers        (duk_context* ctx);
+static duk_ret_t js_GetNumZones           (duk_context* ctx);
 static duk_ret_t js_GetTalkActivationKey  (duk_context* ctx);
 static duk_ret_t js_GetTile               (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
@@ -74,6 +78,7 @@ static duk_ret_t js_ChangeMap             (duk_context* ctx);
 static duk_ret_t js_DetachCamera          (duk_context* ctx);
 static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ExecuteTrigger        (duk_context* ctx);
+static duk_ret_t js_ExecuteZones          (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
 static duk_ret_t js_SetDelayScript        (duk_context* ctx);
@@ -94,11 +99,9 @@ static person_t*           s_input_person     = NULL;
 static map_t*              s_map = NULL;
 static char*               s_map_filename     = NULL;
 static struct map_trigger* s_on_trigger       = NULL;
-static struct map_zone*    s_on_zone          = NULL;
 static int                 s_render_script    = 0;
 static int                 s_talk_key         = ALLEGRO_KEY_SPACE;
 static int                 s_update_script    = 0;
-static int                 s_zone_steps       = 0;
 
 struct map
 {
@@ -145,8 +148,10 @@ struct map_trigger
 
 struct map_zone
 {
+	bool   is_active;
 	rect_t bounds;
 	int    step_interval;
+	int    steps_left;
 	int    layer;
 	int    script_id;
 };
@@ -446,7 +451,10 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetLayerMask", js_GetLayerMask);
 	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "GetNumLayers", js_GetNumLayers);
 	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
+	register_api_func(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
+	register_api_func(ctx, NULL, "GetNumZones", js_GetNumZones);
 	register_api_func(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
 	register_api_func(ctx, NULL, "GetTile", js_GetTile);
 	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
@@ -473,6 +481,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "DetachCamera", js_DetachCamera);
 	register_api_func(ctx, NULL, "DetachInput", js_DetachInput);
 	register_api_func(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
+	register_api_func(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
 	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
@@ -535,7 +544,7 @@ get_map_tileset(void)
 }
 
 void
-normalize_map_entity_xy(float* inout_x, float* inout_y, int layer)
+normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 {
 	int tile_w, tile_h;
 	int layer_w, layer_h;
@@ -597,6 +606,29 @@ change_map(const char* filename, bool preserve_persons)
 	}
 }
 
+static bool
+are_zones_at(int x, int y, int layer, int* out_count)
+{
+	int              count = 0;
+	struct map_zone* zone;
+	bool             zone_found;
+
+	int i;
+
+	zone_found = false;
+	for (i = 0; i < s_map->num_zones; ++i) {
+		zone = &s_map->zones[i];
+		if (zone->layer != layer && false)  // layer ignored for compatibility
+			continue;
+		if (is_point_in_rect(x, y, zone->bounds)) {
+			zone_found = true;
+			++count;
+		}
+	}
+	if (out_count) *out_count = count;
+	return zone_found;
+}
+
 static struct map_trigger*
 get_trigger_at(int x, int y, int layer)
 {
@@ -622,7 +654,7 @@ get_trigger_at(int x, int y, int layer)
 }
 
 static struct map_zone*
-get_zone_at(int x, int y, int layer)
+get_zone_at(int x, int y, int layer, int index)
 {
 	struct map_zone* zone;
 	
@@ -630,9 +662,9 @@ get_zone_at(int x, int y, int layer)
 
 	for (i = 0; i < s_map->num_zones; ++i) {
 		zone = &s_map->zones[i];
-		if (zone->layer != layer)
+		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
-		if (is_point_in_rect(x, y, zone->bounds))
+		if (is_point_in_rect(x, y, zone->bounds) && index-- == 0)
 			return zone;
 	}
 	return NULL;
@@ -644,8 +676,10 @@ process_map_input(void)
 	int                    layer;
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	struct map_trigger*    trigger;
-	float                  x, y;
+	double                 x, y;
 	struct map_zone*       zone;
+
+	int i;
 	
 	// keep key queue clear while in map engine
 	g_key_queue.num_keys = 0;
@@ -681,15 +715,15 @@ process_map_input(void)
 			if (trigger) run_script(trigger->script_id, false);
 		}
 
-		// are we inside a zone?
-		zone = get_zone_at(x, y, layer);
-		if (zone != s_on_zone) {
-			s_on_zone = zone;
-			if (zone) s_zone_steps = zone->step_interval;
-		}
-		else if (s_on_zone && has_person_moved(s_input_person) && --s_zone_steps == 0) {
-			run_script(s_on_zone->script_id, false);
-			s_zone_steps = s_on_zone->step_interval;
+		// if the player moved the input person, update any occupied zones
+		if (has_person_moved(s_input_person)) {
+			i = 0;
+			while (zone = get_zone_at(x, y, layer, i++)) {
+				if (zone->steps_left-- <= 0) {
+					zone->steps_left = zone->step_interval;
+					run_script(zone->script_id, true);
+				}
+			}
 		}
 	}
 }
@@ -752,10 +786,10 @@ render_map_engine(void)
 static void
 update_map_engine(void)
 {
-	int   map_w, map_h;
-	int   script_type;
-	int   tile_w, tile_h;
-	float x, y;
+	int    map_w, map_h;
+	int    script_type;
+	int    tile_w, tile_h;
+	double x, y;
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -822,7 +856,7 @@ js_AreZonesAt(duk_context* ctx)
 
 	if (z < 0 || z >= s_map->num_layers)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "AreZonesAt(): Invalid layer index (%i)", z);
-	duk_push_boolean(ctx, get_zone_at(x, y, z) != NULL);
+	duk_push_boolean(ctx, are_zones_at(x, y, z, NULL));
 	return 1;
 }
 
@@ -974,11 +1008,38 @@ js_GetMapEngineFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetNumLayers(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetNumLayers(): Map engine must be running");
+	duk_push_int(ctx, s_map->num_layers);
+	return 1;
+}
+
+static duk_ret_t
 js_GetNumTiles(duk_context* ctx)
 {
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetNumTiles(): Map engine must be running");
 	duk_push_int(ctx, get_tile_count(s_map->tileset));
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumTriggers(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetNumTriggers(): Map engine must be running");
+	duk_push_int(ctx, s_map->num_triggers);
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumZones(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetNumZones(): Map engine must be running");
+	duk_push_int(ctx, s_map->num_zones);
 	return 1;
 }
 
@@ -1360,6 +1421,22 @@ js_ExecuteTrigger(duk_context* ctx)
 	
 	struct map_trigger* trigger;
 	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
+	trigger = get_trigger_at(x, y, z);
+	if (trigger != NULL) run_script(trigger->script_id, true);
+	return 0;
+}
+
+static duk_ret_t
+js_ExecuteZones(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int z = duk_require_int(ctx, 2);
+
+	struct map_trigger* trigger;
+
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
 	trigger = get_trigger_at(x, y, z);

@@ -20,9 +20,9 @@ struct person
 	int          revert_delay;
 	int          revert_frames;
 	int          scripts[PERSON_SCRIPT_MAX];
-	float        speed_x, speed_y;
+	double       speed_x, speed_y;
 	spriteset_t* sprite;
-	float        x, y;
+	double       x, y;
 	int          x_offset, y_offset;
 	int          num_commands;
 	int          *commands;
@@ -141,12 +141,12 @@ is_person_busy(const person_t* person)
 }
 
 bool
-is_person_obstructed_at(const person_t* person, float x, float y, person_t** out_obstructing_person, int* out_tile_index)
+is_person_obstructed_at(const person_t* person, double x, double y, person_t** out_obstructing_person, int* out_tile_index)
 {
 	rect_t           area;
 	rect_t           base, my_base;
 	bool             collision = false;
-	float            cur_x, cur_y;
+	double           cur_x, cur_y;
 	bool             is_obstructed = false;
 	int              layer;
 	const obsmap_t*  obsmap;
@@ -209,7 +209,7 @@ get_person_base(const person_t* person)
 {
 	rect_t base_rect;
 	int    base_x, base_y;
-	float  x, y;
+	double x, y;
 
 	base_rect = person->sprite->base;
 	get_person_xy(person, &x, &y, true);
@@ -227,7 +227,7 @@ get_person_name(const person_t* person)
 }
 
 void
-get_person_speed(const person_t* person, float* out_x_speed, float* out_y_speed)
+get_person_speed(const person_t* person, double* out_x_speed, double* out_y_speed)
 {
 	if (out_x_speed) *out_x_speed = person->speed_x;
 	if (out_y_speed) *out_y_speed = person->speed_y;
@@ -240,7 +240,7 @@ get_person_spriteset(person_t* person)
 }
 
 void
-get_person_xy(const person_t* person, float* out_x, float* out_y, bool want_normalize)
+get_person_xy(const person_t* person, double* out_x, double* out_y, bool want_normalize)
 {
 	*out_x = person->x;
 	*out_y = person->y;
@@ -249,7 +249,7 @@ get_person_xy(const person_t* person, float* out_x, float* out_y, bool want_norm
 }
 
 void
-get_person_xyz(const person_t* person, float* out_x, float* out_y, int* out_layer, bool want_normalize)
+get_person_xyz(const person_t* person, double* out_x, double* out_y, int* out_layer, bool want_normalize)
 {
 	*out_x = person->x;
 	*out_y = person->y;
@@ -285,7 +285,7 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 }
 
 void
-set_person_speed(person_t* person, float x_speed, float y_speed)
+set_person_speed(person_t* person, double x_speed, double y_speed)
 {
 	person->speed_x = x_speed;
 	person->speed_y = y_speed;
@@ -304,7 +304,7 @@ set_person_spriteset(person_t* person, spriteset_t* spriteset)
 }
 
 void
-set_person_xyz(person_t* person, int x, int y, int layer)
+set_person_xyz(person_t* person, double x, double y, int layer)
 {
 	person->x = x;
 	person->y = y;
@@ -329,7 +329,7 @@ call_person_script(const person_t* person, int type, bool use_default)
 void
 command_person(person_t* person, int command)
 {
-	float     new_x, new_y;
+	double    new_x, new_y;
 	person_t* person_to_touch;
 	
 	new_x = person->x; new_y = person->y;
@@ -410,7 +410,7 @@ void
 render_persons(int layer, int cam_x, int cam_y)
 {
 	spriteset_t* sprite;
-	float        x, y;
+	double       x, y;
 	int          i;
 
 	for (i = 0; i < s_num_persons; ++i) {
@@ -457,7 +457,7 @@ talk_person(const person_t* person)
 {
 	rect_t    map_rect;
 	person_t* target_person;
-	float     talk_x, talk_y;
+	double    talk_x, talk_y;
 
 	if (s_is_talking)
 		return;
@@ -860,7 +860,7 @@ js_GetPersonSpeedX(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 
 	person_t*  person;
-	float      x_speed;
+	double     x_speed;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedX(): Person '%s' doesn't exist", name);
@@ -875,7 +875,7 @@ js_GetPersonSpeedY(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 
 	person_t*  person;
-	float      y_speed;
+	double     y_speed;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedY(): Person '%s' doesn't exist", name);
@@ -1092,7 +1092,7 @@ static duk_ret_t
 js_SetPersonSpeed(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	float speed = duk_require_number(ctx, 1);
+	double speed = duk_require_number(ctx, 1);
 
 	person_t*  person;
 
@@ -1106,8 +1106,8 @@ static duk_ret_t
 js_SetPersonSpeedXY(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	float x_speed = duk_require_number(ctx, 1);
-	float y_speed = duk_require_number(ctx, 2);
+	double x_speed = duk_require_number(ctx, 1);
+	double y_speed = duk_require_number(ctx, 2);
 
 	person_t*  person;
 
@@ -1153,8 +1153,8 @@ static duk_ret_t
 js_SetPersonXYFloat(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	float x = duk_require_number(ctx, 1);
-	float y = duk_require_number(ctx, 2);
+	double x = duk_require_number(ctx, 1);
+	double y = duk_require_number(ctx, 2);
 
 	person_t* person;
 
