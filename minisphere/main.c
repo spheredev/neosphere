@@ -32,6 +32,7 @@ static const int MAX_FRAME_SKIPS = 5;
 
 static void initialize_engine (void);
 static void shutdown_engine   (void);
+static void queue_key         (int keycode);
 static void toggle_fullscreen (void);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
@@ -256,7 +257,6 @@ bool
 do_events(void)
 {
 	ALLEGRO_EVENT event;
-	int           key_index;
 
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
@@ -270,6 +270,9 @@ do_events(void)
 				{
 					toggle_fullscreen();
 				}
+				else {
+					queue_key(event.keyboard.keycode);
+				}
 				break;
 			case ALLEGRO_KEY_F10:
 				toggle_fullscreen();
@@ -281,11 +284,7 @@ do_events(void)
 				s_take_snapshot = true;
 				break;
 			default:
-				if (g_key_queue.num_keys < 255) {
-					key_index = g_key_queue.num_keys;
-					++g_key_queue.num_keys;
-					g_key_queue.keys[key_index] = event.keyboard.keycode;
-				}
+				queue_key(event.keyboard.keycode);
 				break;
 			}
 		}
@@ -512,6 +511,18 @@ initialize_engine(void)
 	init_spriteset_api(g_duktape);
 	init_surface_api();
 	init_windowstyle_api();
+}
+
+static void
+queue_key(int keycode)
+{
+	int key_index;
+	
+	if (g_key_queue.num_keys < 255) {
+		key_index = g_key_queue.num_keys;
+		++g_key_queue.num_keys;
+		g_key_queue.keys[key_index] = keycode;
+	}
 }
 
 static void
