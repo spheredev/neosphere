@@ -86,14 +86,20 @@ static duk_ret_t js_DetachInput           (duk_context* ctx);
 static duk_ret_t js_ExecuteTrigger        (duk_context* ctx);
 static duk_ret_t js_ExecuteZones          (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
+static duk_ret_t js_MapToScreenX          (duk_context* ctx);
+static duk_ret_t js_MapToScreenY          (duk_context* ctx);
 static duk_ret_t js_RenderMap             (duk_context* ctx);
+static duk_ret_t js_ScreenToMapX          (duk_context* ctx);
+static duk_ret_t js_ScreenToMapY          (duk_context* ctx);
 static duk_ret_t js_SetDelayScript        (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 
 static person_t*           s_camera_person    = NULL;
 static int                 s_cam_x            = 0;
 static int                 s_cam_y            = 0;
-static int                 s_current_trigger  = -1;
+static int                 s_map_corner_x;
+static int                 s_map_corner_y;
+static int                 s_current_trigger = -1;
 static int                 s_current_zone     = -1;
 static int                 s_def_scripts[MAP_SCRIPT_MAX];
 static bool                s_exiting          = false;
@@ -490,7 +496,11 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
 	register_api_func(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
+	register_api_func(ctx, NULL, "MapToScreenX", js_MapToScreenX);
+	register_api_func(ctx, NULL, "MapToScreenY", js_MapToScreenY);
 	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
+	register_api_func(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
+	register_api_func(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
 	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
 	register_api_func(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
@@ -561,8 +571,8 @@ normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
 	layer_h = s_map->layers[layer].height * tile_h;
-	*inout_x = fmod(fmod(*inout_x, layer_w) + layer_w, layer_w);
-	*inout_y = fmod(fmod(*inout_y, layer_h) + layer_h, layer_h);
+	if (inout_x) *inout_x = fmod(fmod(*inout_x, layer_w) + layer_w, layer_w);
+	if (inout_y) *inout_y = fmod(fmod(*inout_y, layer_h) + layer_h, layer_h);
 }
 
 static bool
@@ -763,6 +773,8 @@ render_map_engine(void)
 		off_x = (off_x % map_w + map_w) % map_w;
 		off_y = (off_y % map_h + map_h) % map_h;
 	}
+	s_map_corner_x = off_x;
+	s_map_corner_y = off_y;
 	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
@@ -1476,12 +1488,60 @@ js_ExitMapEngine(duk_context* ctx)
 }
 
 static duk_ret_t
+js_MapToScreenX(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	double x = duk_require_int(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "MapToScreenX(): Map engine is not running");
+	normalize_map_entity_xy(&x, NULL, layer);
+	duk_push_int(ctx, x - s_map_corner_x);
+	return 1;
+}
+
+static duk_ret_t
+js_MapToScreenY(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	double y = duk_require_int(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "MapToScreenY(): Map engine is not running");
+	normalize_map_entity_xy(NULL, &y, layer);
+	duk_push_int(ctx, y - s_map_corner_y);
+	return 1;
+}
+
+static duk_ret_t
 js_RenderMap(duk_context* ctx)
 {
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires the map engine to be running");
 	render_map_engine();
 	return 0;
+}
+
+static duk_ret_t
+js_ScreenToMapX(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 1);
+	
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "ScreenToMapX(): Map engine is not running");
+	duk_push_int(ctx, x + s_map_corner_x);
+	return 1;
+}
+
+static duk_ret_t
+js_ScreenToMapY(duk_context* ctx)
+{
+	int y = duk_require_int(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "ScreenToMapY(): Map engine is not running");
+	duk_push_int(ctx, y + s_map_corner_y);
+	return 1;
 }
 
 static duk_ret_t

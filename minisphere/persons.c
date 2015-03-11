@@ -36,6 +36,7 @@ static duk_ret_t js_DoesPersonExist          (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson         (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson     (duk_context* ctx);
 static duk_ret_t js_GetObstructingTile       (duk_context* ctx);
+static duk_ret_t js_GetPersonBase            (duk_context* ctx);
 static duk_ret_t js_GetPersonData            (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection       (duk_context* ctx);
 static duk_ret_t js_GetPersonFrame           (duk_context* ctx);
@@ -521,6 +522,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
+	register_api_func(g_duktape, NULL, "GetPersonBase", js_GetPersonBase);
 	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
@@ -740,6 +742,25 @@ js_GetObstructingTile(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingTile(): Person '%s' doesn't exist", name);
 	is_person_obstructed_at(person, x, y, NULL, &tile_index);
 	duk_push_int(ctx, tile_index);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonBase(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	rect_t    base;
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
+	base = get_sprite_base(get_person_spriteset(person));
+	duk_push_object(ctx);
+	duk_push_int(ctx, base.x1); duk_put_prop_string(ctx, -2, "x1");
+	duk_push_int(ctx, base.y1); duk_put_prop_string(ctx, -2, "y1");
+	duk_push_int(ctx, base.x2); duk_put_prop_string(ctx, -2, "x2");
+	duk_push_int(ctx, base.y2); duk_put_prop_string(ctx, -2, "y2");
 	return 1;
 }
 
