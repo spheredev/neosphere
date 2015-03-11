@@ -187,7 +187,7 @@ set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 }
 
 void
-draw_tile(const tileset_t* tileset, float x, float y, int tile_index)
+draw_tile(const tileset_t* tileset, ALLEGRO_COLOR mask, float x, float y, int tile_index)
 {
-	al_draw_bitmap(get_image_bitmap(tileset->tiles[tile_index].image), x, y, 0x0);
+	al_draw_tinted_bitmap(get_image_bitmap(tileset->tiles[tile_index].image), mask, x, y, 0x0);
 }

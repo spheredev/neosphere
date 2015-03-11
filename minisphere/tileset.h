@@ -11,4 +11,4 @@ const lstring_t* get_tile_name   (const tileset_t* tileset, int tile_index);
 const obsmap_t*  get_tile_obsmap (const tileset_t* tileset, int tile_index);
 void             get_tile_size   (const tileset_t* tileset, int* out_w, int* out_h);
 void             set_tile_image  (tileset_t* tileset, int tile_index, image_t* image);
-void             draw_tile       (const tileset_t* tileset, float x, float y, int tile_index);
+void             draw_tile       (const tileset_t* tileset, ALLEGRO_COLOR mask, float x, float y, int tile_index);

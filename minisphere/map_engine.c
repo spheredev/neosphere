@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
 #include "image.h"
 #include "input.h"
 #include "obsmap.h"
@@ -43,6 +44,7 @@ static duk_ret_t js_GetCurrentTrigger     (duk_context* ctx);
 static duk_ret_t js_GetCurrentZone        (duk_context* ctx);
 static duk_ret_t js_GetInputPerson        (duk_context* ctx);
 static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
+static duk_ret_t js_GetLayerMask          (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_GetNumTiles           (duk_context* ctx);
@@ -56,6 +58,7 @@ static duk_ret_t js_GetTileWidth          (duk_context* ctx);
 static duk_ret_t js_SetCameraX            (duk_context* ctx);
 static duk_ret_t js_SetCameraY            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
+static duk_ret_t js_SetLayerMask          (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
 static duk_ret_t js_SetTalkActivationKey  (duk_context* ctx);
@@ -115,10 +118,11 @@ struct map
 
 struct map_layer
 {
-	lstring_t* name;
-	int        width, height;
-	int*       tilemap;
-	obsmap_t*  obsmap;
+	lstring_t*    name;
+	int           width, height;
+	int*          tilemap;
+	obsmap_t*     obsmap;
+	ALLEGRO_COLOR color_mask;
 };
 
 struct map_person
@@ -256,6 +260,7 @@ load_map(const char* path)
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (al_fread(file, &layer_hdr, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
 				goto on_error;
+			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
 			map->layers[i].width = layer_hdr.width;
 			map->layers[i].height = layer_hdr.height;
 			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(int))) == NULL)
@@ -438,6 +443,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
 	register_api_func(ctx, NULL, "GetInputPerson", js_GetInputPerson);
 	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
+	register_api_func(ctx, NULL, "GetLayerMask", js_GetLayerMask);
 	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
@@ -451,6 +457,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
 	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
+	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
 	register_api_func(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
@@ -726,7 +733,7 @@ render_map_engine(void)
 			if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
 				continue;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
-			draw_tile(s_map->tileset, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
+			draw_tile(s_map->tileset, layer->color_mask, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
 		}
 		if (s_map->is_repeating) {
 			// for small repeating maps, persons need to be repeated as well
@@ -934,6 +941,19 @@ js_GetLayerHeight(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetLayerMask(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerMask(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerMask(): Invalid layer index (%i)", layer);
+	duk_push_sphere_color(ctx, s_map->layers[layer].color_mask);
+	return 1;
+}
+
+static duk_ret_t
 js_GetLayerWidth(duk_context* ctx)
 {
 	int z = duk_require_int(ctx, 0);
@@ -1126,6 +1146,20 @@ js_SetDelayScript(duk_context* ctx)
 	sprintf(script_name, "[%i-frame delay script]", frames);
 	s_delay_script = compile_script(script, script_name);
 	s_delay_frames = frames;
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerMask(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerMask(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerMask(): Invalid layer index (%i)", layer);
+	s_map->layers[layer].color_mask = mask;
 	return 0;
 }
 
