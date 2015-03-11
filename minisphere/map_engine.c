@@ -24,6 +24,7 @@ enum map_script_type
 
 static bool                change_map        (const char* filename, bool preserve_persons);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
+static struct map_zone*    get_zone_at       (int x, int y, int layer);
 static void                process_map_input (void);
 static void                render_map_engine (void);
 static void                update_map_engine (void);
@@ -86,9 +87,11 @@ static person_t*           s_input_person     = NULL;
 static map_t*              s_map = NULL;
 static char*               s_map_filename     = NULL;
 static struct map_trigger* s_on_trigger       = NULL;
+static struct map_zone*    s_on_zone          = NULL;
 static int                 s_render_script    = 0;
 static int                 s_talk_key         = ALLEGRO_KEY_SPACE;
 static int                 s_update_script    = 0;
+static int                 s_zone_steps       = 0;
 
 struct map
 {
@@ -134,8 +137,10 @@ struct map_trigger
 
 struct map_zone
 {
-	rect_t area;
-	int    steps;
+	rect_t bounds;
+	int    step_interval;
+	int    layer;
+	int    script_id;
 };
 
 #pragma pack(push, 1)
@@ -186,8 +191,8 @@ struct rmp_zone_header
 	uint16_t y1;
 	uint16_t x2;
 	uint16_t y2;
-	uint16_t z;
-	uint16_t num_steps;
+	uint16_t layer;
+	uint16_t step_interval;
 	uint8_t  reserved[4];
 };
 #pragma pack(pop)
@@ -206,10 +211,10 @@ load_map(const char* path)
 	//          8 - exit west script
 	
 	uint16_t                 count;
-	struct rmp_entity_header entity;
-	bool                     failed = false;
+	struct rmp_entity_header entity_hdr;
 	ALLEGRO_FILE*            file;
-	struct rmp_layer_header  layer_info;
+	bool                     has_failed;
+	struct rmp_layer_header  layer_hdr;
 	map_t*                   map = NULL;
 	int                      num_tiles;
 	struct map_person*       person;
@@ -220,7 +225,7 @@ load_map(const char* path)
 	char*                    tile_path;
 	tileset_t*               tileset;
 	struct map_trigger*      trigger;
-	struct rmp_zone_header   zone;
+	struct rmp_zone_header   zone_hdr;
 	lstring_t*               *strings = NULL;
 
 	int i, j;
@@ -236,42 +241,45 @@ load_map(const char* path)
 	case 1:
 		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
 			goto on_error;
+		has_failed = false;
 		for (i = 0; i < rmp.num_strings; ++i)
-			failed = ((strings[i] = read_lstring(file, true)) == NULL) || failed;
-		if (failed) goto on_error;
+			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
+		if (has_failed) goto on_error;
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
+		if ((map->persons = calloc(rmp.num_entities, sizeof(struct map_person))) == NULL) goto on_error;
+		if ((map->triggers = calloc(rmp.num_entities, sizeof(struct map_trigger))) == NULL) goto on_error;
+		if ((map->zones = calloc(rmp.num_zones, sizeof(struct map_zone))) == NULL) goto on_error;
 		for (i = 0; i < rmp.num_layers; ++i) {
-			if (al_fread(file, &layer_info, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
+			if (al_fread(file, &layer_hdr, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
 				goto on_error;
-			map->layers[i].width = layer_info.width;
-			map->layers[i].height = layer_info.height;
-			if ((map->layers[i].tilemap = malloc(layer_info.width * layer_info.height * sizeof(int))) == NULL)
+			map->layers[i].width = layer_hdr.width;
+			map->layers[i].height = layer_hdr.height;
+			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(int))) == NULL)
 				goto on_error;
 			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
 			map->layers[i].name = read_lstring(file, true);
-			num_tiles = layer_info.width * layer_info.height;
+			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
 			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
-			for (j = 0; j < layer_info.num_segments; ++j) {
+			for (j = 0; j < layer_hdr.num_segments; ++j) {
 				if (!al_fread_rect_32(file, &segment)) goto on_error;
 				add_obsmap_line(map->layers[i].obsmap, segment);
 			}
 			free(tile_data); tile_data = NULL;
 		}
-		map->persons = NULL; map->num_persons = 0;
-		map->triggers = NULL; map->num_triggers = 0;
+		map->num_persons = 0;
+		map->num_triggers = 0;
 		for (i = 0; i < rmp.num_entities; ++i) {
-			al_fread(file, &entity, sizeof(struct rmp_entity_header));
-			switch (entity.type) {
+			al_fread(file, &entity_hdr, sizeof(struct rmp_entity_header));
+			switch (entity_hdr.type) {
 			case 1:  // person
 				++map->num_persons;
-				map->persons = realloc(map->persons, map->num_persons * sizeof(struct map_person));
 				person = &map->persons[map->num_persons - 1];
 				memset(person, 0, sizeof(struct map_person));
 				if ((person->name = read_lstring(file, true)) == NULL) goto on_error;
 				if ((person->spriteset = read_lstring(file, true)) == NULL) goto on_error;
-				person->x = entity.x; person->y = entity.y; person->z = entity.z;
+				person->x = entity_hdr.x; person->y = entity_hdr.y; person->z = entity_hdr.z;
 				if (al_fread(file, &count, 2) != 2 || count < 5) goto on_error;
 				person->create_script = read_lstring(file, false);
 				person->destroy_script = read_lstring(file, false);
@@ -284,15 +292,13 @@ load_map(const char* path)
 				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // trigger
-				if ((script = read_lstring(file, false)) == NULL)
-					goto on_error;
+				if ((script = read_lstring(file, false)) == NULL) goto on_error;
 				++map->num_triggers;
-				map->triggers = realloc(map->triggers, map->num_triggers * sizeof(struct map_trigger));
 				trigger = &map->triggers[map->num_triggers - 1];
 				memset(trigger, 0, sizeof(struct map_trigger));
-				trigger->x = entity.x;
-				trigger->y = entity.y;
-				trigger->z = entity.z;
+				trigger->x = entity_hdr.x;
+				trigger->y = entity_hdr.y;
+				trigger->z = entity_hdr.z;
 				trigger->script_id = compile_script(script, "[trigger script]");
 				free_lstring(script);
 				break;
@@ -301,19 +307,26 @@ load_map(const char* path)
 			}
 		}
 		for (i = 0; i < rmp.num_zones; ++i) {
-			al_fread(file, &zone, sizeof(struct rmp_zone_header));
-			free_lstring(read_lstring(file, false));  // zone script - not implemented yet
+			if (al_fread(file, &zone_hdr, sizeof(struct rmp_zone_header)) != sizeof(struct rmp_zone_header))
+				goto on_error;
+			if ((script = read_lstring(file, false)) == NULL) goto on_error;
+			map->zones[i].layer = zone_hdr.layer;
+			map->zones[i].bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
+			map->zones[i].step_interval = zone_hdr.step_interval;
+			map->zones[i].script_id = compile_script(script, "[zone script]");
+			free_lstring(script);
 		}
 		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
 		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
 		free(tile_path);
 		if (tileset == NULL) goto on_error;
+		map->num_layers = rmp.num_layers;
+		map->num_zones = rmp.num_zones;
 		map->is_repeating = rmp.repeat_map;
 		map->origin.x = rmp.start_x;
 		map->origin.y = rmp.start_y;
 		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
-		map->num_layers = rmp.num_layers;
 		if (rmp.num_strings >= 5) {
 			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "[enter map script]");
 			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "[exit map script]");
@@ -353,10 +366,16 @@ on_error:
 			for (i = 0; i < map->num_persons; ++i) {
 				free_lstring(map->persons[i].name);
 				free_lstring(map->persons[i].spriteset);
+				free_lstring(map->persons[i].create_script);
+				free_lstring(map->persons[i].destroy_script);
+				free_lstring(map->persons[i].command_script);
+				free_lstring(map->persons[i].talk_script);
+				free_lstring(map->persons[i].touch_script);
 			}
 			free(map->persons);
 		}
 		free(map->triggers);
+		free(map->zones);
 		free(map);
 	}
 	return NULL;
@@ -386,6 +405,8 @@ free_map(map_t* map)
 		}
 		for (i = 0; i < map->num_triggers; ++i)
 			free_script(map->triggers[i].script_id);
+		for (i = 0; i < map->num_zones; ++i)
+			free_script(map->zones[i].script_id);
 		free_tileset(map->tileset);
 		free(map->layers);
 		free(map->persons);
@@ -587,6 +608,23 @@ get_trigger_at(int x, int y, int layer)
 	return NULL;
 }
 
+static struct map_zone*
+get_zone_at(int x, int y, int layer)
+{
+	struct map_zone* zone;
+	
+	int i;
+
+	for (i = 0; i < s_map->num_zones; ++i) {
+		zone = &s_map->zones[i];
+		if (zone->layer != layer)
+			continue;
+		if (is_point_in_rect(x, y, zone->bounds))
+			return zone;
+	}
+	return NULL;
+}
+
 static void
 process_map_input(void)
 {
@@ -594,6 +632,7 @@ process_map_input(void)
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	struct map_trigger*    trigger;
 	float                  x, y;
+	struct map_zone*       zone;
 	
 	// keep key queue clear while in map engine
 	g_key_queue.num_keys = 0;
@@ -626,7 +665,18 @@ process_map_input(void)
 		trigger = get_trigger_at(x, y, layer);
 		if (trigger != s_on_trigger) {
 			s_on_trigger = trigger;
-			if (trigger) run_script(trigger->script_id, true);
+			if (trigger) run_script(trigger->script_id, false);
+		}
+
+		// are we inside a zone?
+		zone = get_zone_at(x, y, layer);
+		if (zone != s_on_zone) {
+			s_on_zone = zone;
+			if (zone) s_zone_steps = zone->step_interval;
+		}
+		else if (s_on_zone && has_person_moved(s_input_person) && --s_zone_steps == 0) {
+			run_script(s_on_zone->script_id, false);
+			s_zone_steps = s_on_zone->step_interval;
 		}
 	}
 }
@@ -758,9 +808,8 @@ js_AreZonesAt(duk_context* ctx)
 	int z = duk_require_int(ctx, 2);
 
 	if (z < 0 || z >= s_map->num_layers)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "AreZonesAt(): Invalid layer index; valid range is 0-%i, caller passed %i", s_map->num_layers - 1, z);
-	// TODO: test for zones at specified location
-	duk_push_false(ctx);
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "AreZonesAt(): Invalid layer index (%i)", z);
+	duk_push_boolean(ctx, get_zone_at(x, y, z) != NULL);
 	return 1;
 }
 

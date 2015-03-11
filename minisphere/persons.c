@@ -12,6 +12,7 @@ struct person
 	int          anim_frames;
 	char*        direction;
 	int          frame;
+	bool         has_moved;
 	bool         ignore_persons;
 	bool         ignore_tiles;
 	bool         is_persistent;
@@ -121,6 +122,12 @@ destroy_person(person_t* person)
 		}
 	}
 	sort_persons();
+}
+
+bool
+has_person_moved(const person_t* person)
+{
+	return person->has_moved;
 }
 
 bool
@@ -372,6 +379,7 @@ command_person(person_t* person, int command)
 			command_person(person, COMMAND_ANIMATE);
 			person->x = new_x; person->y = new_y;
 			person->revert_frames = person->revert_delay;
+			person->has_moved = true;
 			sort_persons();
 		}
 		else {
@@ -458,6 +466,8 @@ talk_person(const person_t* person)
 	if (strstr(person->direction, "south") != NULL) talk_y += s_talk_distance;
 	if (strstr(person->direction, "west") != NULL) talk_x -= s_talk_distance;
 	is_person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
+	
+	// if so, call their talk script
 	if (target_person != NULL) {
 		s_is_talking = true;
 		call_person_script(target_person, PERSON_SCRIPT_ON_TALK, true);
@@ -475,6 +485,7 @@ update_persons(void)
 
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
+		person->has_moved = false;
 		if (person->revert_delay > 0 && --person->revert_frames <= 0)
 			person->frame = 0;
 		if (person->num_commands == 0)
