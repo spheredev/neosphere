@@ -1,5 +1,6 @@
 #include "minisphere.h"
 
+#pragma pack(push, 1)
 typedef struct rfn_header {
 	char signature[4];
 	int16_t version;
@@ -12,15 +13,18 @@ typedef struct {
 	int16_t height;
 	char reserved[28];
 } rfn_glyph_header_t;
+#pragma pack(pop)
 
 typedef struct {
 	rfn_glyph_header_t header;
-	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_BITMAP*    bitmap;
 } rfn_glyph_t;
 
 typedef struct {
-	rfn_header_t header;
-	rfn_glyph_t* glyphs;
+	ALLEGRO_BITMAP* atlas;
+	rfn_header_t    header;
+	rfn_glyph_t*    glyphs;
+	int             pitch;
 } rfn_font_t;
 
 static int  rfn_get_height          (const ALLEGRO_FONT* f);
@@ -49,9 +53,13 @@ static ALLEGRO_FONT_VTABLE rfn_font_vtable =
 ALLEGRO_FONT*
 al_load_rfn_font(const char* filename, int size, int flags)
 {
+	int                    atlas_size_x, atlas_size_y;
 	ALLEGRO_LOCKED_REGION* bitmap_lock;
 	ALLEGRO_FILE*          file;
 	ALLEGRO_FONT*          font = NULL;
+	int64_t                glyph_start;
+	int                    max_x = 0, max_y = 0;
+	int64_t                n_glyphs_per_row;
 	size_t                 pixel_size;
 	rfn_font_t*            rfn = NULL;
 	uint8_t                *src_ptr, *dest_ptr;
@@ -64,15 +72,37 @@ al_load_rfn_font(const char* filename, int size, int flags)
 	pixel_size = (rfn->header.version == 1) ? 1 : 4;
 	if ((rfn->glyphs = calloc(rfn->header.num_chars, sizeof(rfn_glyph_t))) == NULL)
 		goto on_error;
+	
+	// pass 1: load glyph headers and find largest glyph
+	glyph_start = al_ftell(file);
 	for (i = 0; i < rfn->header.num_chars; ++i) {
 		rfn_glyph_t* glyph = &rfn->glyphs[i];
 		if (al_fread(file, &glyph->header, sizeof(rfn_glyph_header_t)) != sizeof(rfn_glyph_header_t))
 			goto on_error;
+		al_fseek(file, glyph->header.width * glyph->header.height * pixel_size, ALLEGRO_SEEK_CUR);
+		max_x = fmax(rfn->glyphs[i].header.width, max_x);
+		max_y = fmax(rfn->glyphs[i].header.height, max_y);
+	}
+	
+	// create glyph atlas
+	n_glyphs_per_row = ceil(sqrt(rfn->header.num_chars));
+	atlas_size_x = max_x * n_glyphs_per_row;
+	atlas_size_y = max_y * n_glyphs_per_row;
+	if ((rfn->atlas = al_create_bitmap(atlas_size_x, atlas_size_y)) == NULL)
+		goto on_error;
+
+	// pass 2: load glyph data
+	al_fseek(file, glyph_start, ALLEGRO_SEEK_SET);
+	for (i = 0; i < rfn->header.num_chars; ++i) {
+		rfn_glyph_t* glyph = &rfn->glyphs[i];
+		al_fseek(file, sizeof(rfn_glyph_header_t), ALLEGRO_SEEK_CUR); // already have glyph header from pass 1
 		size_t data_size = glyph->header.width * glyph->header.height * pixel_size;
 		void* data = malloc(data_size);
 		if (al_fread(file, data, data_size) != data_size) goto on_error;
-		if ((glyph->bitmap = al_create_bitmap(glyph->header.width, glyph->header.height)) == NULL)
-			goto on_error;
+		glyph->bitmap = al_create_sub_bitmap(rfn->atlas,
+			i % n_glyphs_per_row * max_x, i / n_glyphs_per_row * max_y,
+			glyph->header.width, glyph->header.height);
+		if (glyph->bitmap == NULL) goto on_error;
 		if ((bitmap_lock = al_lock_bitmap(glyph->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
 			goto on_error;
 		src_ptr = data; dest_ptr = bitmap_lock->data;
@@ -115,6 +145,7 @@ on_error:
 			if (rfn->glyphs[i].bitmap != NULL) al_destroy_bitmap(rfn->glyphs[i].bitmap);
 		}
 		al_free(rfn->glyphs);
+		if (rfn->atlas != NULL) al_destroy_bitmap(rfn->atlas);
 		al_free(rfn);
 	}
 	return NULL;
@@ -188,6 +219,7 @@ void rfn_destroy_font(ALLEGRO_FONT* f)
 		al_destroy_bitmap(rfn->glyphs[i].bitmap);
 	}
 	free(rfn->glyphs);
+	al_destroy_bitmap(rfn->atlas);
 	free(f->data);
 	al_free(f);
 }
