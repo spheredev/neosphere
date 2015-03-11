@@ -1450,13 +1450,13 @@ js_ExecuteTrigger(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
-	int z = duk_require_int(ctx, 2);
+	int layer = duk_require_int(ctx, 2);
 	
 	struct map_trigger* trigger;
 	
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
-	trigger = get_trigger_at(x, y, z);
+	trigger = get_trigger_at(x, y, layer);
 	if (trigger != NULL) run_script(trigger->script_id, true);
 	return 0;
 }
@@ -1466,14 +1466,17 @@ js_ExecuteZones(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
-	int z = duk_require_int(ctx, 2);
+	int layer = duk_require_int(ctx, 2);
 
-	struct map_trigger* trigger;
+	struct map_zone* zone;
+
+	int i;
 
 	if (!g_map_running)
-		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
-	trigger = get_trigger_at(x, y, z);
-	if (trigger != NULL) run_script(trigger->script_id, true);
+		duk_error(ctx, DUK_ERR_ERROR, "ExecuteZones(): Map engine is not running");
+	i = 0;
+	while (zone = get_zone_at(x, y, layer, i++))
+		run_script(zone->script_id, true);
 	return 0;
 }
 
