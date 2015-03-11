@@ -690,57 +690,32 @@ get_zone_at(int x, int y, int layer, int index)
 static void
 process_map_input(void)
 {
-	int                    layer;
 	ALLEGRO_KEYBOARD_STATE kb_state;
-	struct map_trigger*    trigger;
-	double                 x, y;
-	struct map_zone*       zone;
 
-	int i;
-	
 	// keep key queue clear while in map engine
 	g_key_queue.num_keys = 0;
 
-	// check for movement of input person, if there is one
+	// check for player control of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
 		al_get_keyboard_state(&kb_state);
 		if (al_key_down(&kb_state, s_talk_key)) {
 			talk_person(s_input_person);
 		}
 		else if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
-			command_person(s_input_person, COMMAND_FACE_NORTH);
-			command_person(s_input_person, COMMAND_MOVE_NORTH);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTH, true);
+			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
 		}
 		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) {
-			command_person(s_input_person, COMMAND_FACE_EAST);
-			command_person(s_input_person, COMMAND_MOVE_EAST);
+			queue_person_command(s_input_person, COMMAND_FACE_EAST, true);
+			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
 		}
 		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) {
-			command_person(s_input_person, COMMAND_FACE_SOUTH);
-			command_person(s_input_person, COMMAND_MOVE_SOUTH);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTH, true);
+			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
 		}
 		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) {
-			command_person(s_input_person, COMMAND_FACE_WEST);
-			command_person(s_input_person, COMMAND_MOVE_WEST);
-		}
-		
-		// did we step on a trigger?
-		get_person_xyz(s_input_person, &x, &y, &layer, true);
-		trigger = get_trigger_at(x, y, layer);
-		if (trigger != s_on_trigger) {
-			s_on_trigger = trigger;
-			if (trigger) run_script(trigger->script_id, false);
-		}
-
-		// if the player moved the input person, update zone counters
-		if (has_person_moved(s_input_person)) {
-			i = 0;
-			while (zone = get_zone_at(x, y, layer, i++)) {
-				if (zone->steps_left-- <= 0) {
-					zone->steps_left = zone->step_interval;
-					run_script(zone->script_id, true);
-				}
-			}
+			queue_person_command(s_input_person, COMMAND_FACE_WEST, true);
+			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
 		}
 	}
 }
@@ -805,10 +780,13 @@ render_map_engine(void)
 static void
 update_map_engine(void)
 {
-	int    map_w, map_h;
-	int    script_type;
-	int    tile_w, tile_h;
-	double x, y;
+	int                 layer;
+	int                 map_w, map_h;
+	int                 script_type;
+	int                 tile_w, tile_h;
+	struct map_trigger* trigger;
+	double              x, y;
+	struct map_zone*    zone;
 
 	int i, j;
 	
@@ -818,7 +796,6 @@ update_map_engine(void)
 	map_h = s_map->layers[0].height * tile_h;
 	
 	update_persons();
-	run_script(s_update_script, false);
 
 	// update camera
 	if (s_camera_person != NULL) {
@@ -840,6 +817,28 @@ update_map_engine(void)
 		}
 	}
 
+	// if the player moved the input person, process zones and triggers
+	if (s_input_person != NULL && has_person_moved(s_input_person)) {
+		// did we step on a trigger or move to a new one?
+		get_person_xyz(s_input_person, &x, &y, &layer, true);
+		trigger = get_trigger_at(x, y, layer);
+		if (trigger != s_on_trigger) {
+			s_on_trigger = trigger;
+			if (trigger) run_script(trigger->script_id, false);
+		}
+
+		// update any occupied zones
+		i = 0;
+		while (zone = get_zone_at(x, y, layer, i++)) {
+			if (zone->steps_left-- <= 0) {
+				zone->steps_left = zone->step_interval;
+				run_script(zone->script_id, true);
+			}
+		}
+	}
+	
+	run_script(s_update_script, false);
+	
 	// run delay scripts, if applicable
 	for (i = 0; i < s_num_delay_scripts; ++i) {
 		if (s_delay_scripts[i].frames_left-- <= 0) {
@@ -865,8 +864,8 @@ js_MapEngine(duk_context* ctx)
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) bail_out_game();
 		process_map_input();
-		update_map_engine();
 		if (!g_skip_frame) render_map_engine();
+		update_map_engine();
 	}
 	g_map_running = false;
 	return 0;

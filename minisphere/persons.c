@@ -8,24 +8,32 @@
 
 struct person
 {
-	char*        name;
-	int          anim_frames;
-	char*        direction;
-	int          frame;
-	bool         has_moved;
-	bool         ignore_persons;
-	bool         ignore_tiles;
-	bool         is_persistent;
-	int          layer;
-	int          revert_delay;
-	int          revert_frames;
-	int          scripts[PERSON_SCRIPT_MAX];
-	double       speed_x, speed_y;
-	spriteset_t* sprite;
-	double       x, y;
-	int          x_offset, y_offset;
-	int          num_commands;
-	int          *commands;
+	char*          name;
+	int            anim_frames;
+	char*          direction;
+	int            frame;
+	bool           has_moved;
+	bool           ignore_persons;
+	bool           ignore_tiles;
+	bool           is_persistent;
+	int            layer;
+	int            revert_delay;
+	int            revert_frames;
+	int            scripts[PERSON_SCRIPT_MAX];
+	double         speed_x, speed_y;
+	spriteset_t*   sprite;
+	double         x, y;
+	int            x_offset, y_offset;
+	int            num_commands;
+	int            max_commands;
+	struct command *commands;
+};
+
+struct command
+{
+	int type;
+	bool is_immediate;
+	int script_id;
 };
 
 static duk_ret_t js_CreatePerson             (duk_context* ctx);
@@ -74,6 +82,7 @@ static duk_ret_t js_IgnorePersonObstructions (duk_context* ctx);
 static duk_ret_t js_IgnoreTileObstructions   (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand       (duk_context* ctx);
 
+static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
 static void free_person          (person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
@@ -327,74 +336,6 @@ call_person_script(const person_t* person, int type, bool use_default)
 	return true;
 }
 
-void
-command_person(person_t* person, int command)
-{
-	double    new_x, new_y;
-	person_t* person_to_touch;
-	
-	new_x = person->x; new_y = person->y;
-	switch (command) {
-	case COMMAND_ANIMATE:
-		if (person->anim_frames > 0 && --person->anim_frames == 0) {
-			++person->frame;
-			person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
-		}
-		break;
-	case COMMAND_FACE_NORTH:
-		set_person_direction(person, "north");
-		break;
-	case COMMAND_FACE_NORTHEAST:
-		set_person_direction(person, "northeast");
-		break;
-	case COMMAND_FACE_EAST:
-		set_person_direction(person, "east");
-		break;
-	case COMMAND_FACE_SOUTHEAST:
-		set_person_direction(person, "southeast");
-		break;
-	case COMMAND_FACE_SOUTH:
-		set_person_direction(person, "south");
-		break;
-	case COMMAND_FACE_SOUTHWEST:
-		set_person_direction(person, "southwest");
-		break;
-	case COMMAND_FACE_WEST:
-		set_person_direction(person, "west");
-		break;
-	case COMMAND_FACE_NORTHWEST:
-		set_person_direction(person, "northwest");
-		break;
-	case COMMAND_MOVE_NORTH:
-		new_y = person->y - person->speed_y;
-		break;
-	case COMMAND_MOVE_EAST:
-		new_x = person->x + person->speed_x;
-		break;
-	case COMMAND_MOVE_SOUTH:
-		new_y = person->y + person->speed_y;
-		break;
-	case COMMAND_MOVE_WEST:
-		new_x = person->x - person->speed_x;
-		break;
-	}
-	if (new_x != person->x || new_y != person->y) {
-		// person is trying to move, make sure the path is clear of obstructions
-		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
-			command_person(person, COMMAND_ANIMATE);
-			person->x = new_x; person->y = new_y;
-			person->revert_frames = person->revert_delay;
-			person->has_moved = true;
-			sort_persons();
-		}
-		else {
-			// if not, and we collided with a person, call that person's touch script
-			if (person_to_touch != NULL)
-				call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
-		}
-	}
-}
-
 person_t*
 find_person(const char* name)
 {
@@ -405,6 +346,21 @@ find_person(const char* name)
 			return s_persons[i];
 	}
 	return NULL;
+}
+
+bool
+queue_person_command(person_t* person, int command, bool is_immediate)
+{
+	++person->num_commands;
+	if (person->num_commands > person->max_commands) {
+		if (!(person->commands = realloc(person->commands, person->num_commands * sizeof(struct command))))
+			return false;
+		person->max_commands = person->num_commands;
+	}
+	person->commands[person->num_commands - 1].type = command;
+	person->commands[person->num_commands - 1].is_immediate = is_immediate;
+	person->commands[person->num_commands - 1].script_id = 0;
+	return true;
 }
 
 void
@@ -483,10 +439,11 @@ talk_person(const person_t* person)
 void
 update_persons(void)
 {
-	int       command;
-	person_t* person;
+	struct command command;
+	bool           is_finished;
+	person_t*      person;
 	
-	int i, j;
+	int i, j, k;
 
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
@@ -495,12 +452,17 @@ update_persons(void)
 			person->frame = 0;
 		if (person->num_commands == 0)
 			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
-		if (person->num_commands > 0) {
-			command = person->commands[0];
+		
+		// run through the command queue, stopping after the first non-immediate command
+		is_finished = person->num_commands == 0;
+		j = 0;
+		while (!is_finished) {
+			command = person->commands[j++];
 			--person->num_commands;
-			for (j = 0; j < person->num_commands; ++j)
-				person->commands[j] = person->commands[j + 1];
-			command_person(person, command);
+			for (k = 0; k < person->num_commands; ++k)
+				person->commands[k] = person->commands[k + 1];
+			command_person(person, command.type);
+			is_finished = !command.is_immediate || person->num_commands == 0;
 		}
 	}
 }
@@ -622,6 +584,74 @@ set_person_name(person_t* person, const char* name)
 {
 	person->name = realloc(person->name, (strlen(name) + 1) * sizeof(char));
 	strcpy(person->name, name);
+}
+
+static void
+command_person(person_t* person, int command)
+{
+	double    new_x, new_y;
+	person_t* person_to_touch;
+
+	new_x = person->x; new_y = person->y;
+	switch (command) {
+	case COMMAND_ANIMATE:
+		if (person->anim_frames > 0 && --person->anim_frames == 0) {
+			++person->frame;
+			person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
+		}
+		break;
+	case COMMAND_FACE_NORTH:
+		set_person_direction(person, "north");
+		break;
+	case COMMAND_FACE_NORTHEAST:
+		set_person_direction(person, "northeast");
+		break;
+	case COMMAND_FACE_EAST:
+		set_person_direction(person, "east");
+		break;
+	case COMMAND_FACE_SOUTHEAST:
+		set_person_direction(person, "southeast");
+		break;
+	case COMMAND_FACE_SOUTH:
+		set_person_direction(person, "south");
+		break;
+	case COMMAND_FACE_SOUTHWEST:
+		set_person_direction(person, "southwest");
+		break;
+	case COMMAND_FACE_WEST:
+		set_person_direction(person, "west");
+		break;
+	case COMMAND_FACE_NORTHWEST:
+		set_person_direction(person, "northwest");
+		break;
+	case COMMAND_MOVE_NORTH:
+		new_y = person->y - person->speed_y;
+		break;
+	case COMMAND_MOVE_EAST:
+		new_x = person->x + person->speed_x;
+		break;
+	case COMMAND_MOVE_SOUTH:
+		new_y = person->y + person->speed_y;
+		break;
+	case COMMAND_MOVE_WEST:
+		new_x = person->x - person->speed_x;
+		break;
+	}
+	if (new_x != person->x || new_y != person->y) {
+		// person is trying to move, make sure the path is clear of obstructions
+		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
+			command_person(person, COMMAND_ANIMATE);
+			person->x = new_x; person->y = new_y;
+			person->revert_frames = person->revert_delay;
+			person->has_moved = true;
+			sort_persons();
+		}
+		else {
+			// if not, and we collided with a person, call that person's touch script
+			if (person_to_touch != NULL)
+				call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
+		}
+	}
 }
 
 static void
@@ -1292,23 +1322,13 @@ js_QueuePersonCommand(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 	int command = duk_require_int(ctx, 1);
-	bool immediate = duk_require_boolean(ctx, 2);
+	bool is_immediate = duk_require_boolean(ctx, 2);
 
 	person_t* person;
 
-	person = find_person(name);
-	if (person != NULL) {
-		if (!immediate) {
-			++person->num_commands;
-			person->commands = realloc(person->commands, person->num_commands * sizeof(int));
-			person->commands[person->num_commands - 1] = command;
-		}
-		else {
-			command_person(person, command);
-		}
-		return true;
-	}
-	else {
+	if (!(person = find_person(name)))
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "QueuePersonCommand(): Person '%s' doesn't exist", name);
-	}
+	if (!queue_person_command(person, command, is_immediate))
+		duk_error(ctx, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to enlarge person's command queue (internal error)");
+	return 0;
 }

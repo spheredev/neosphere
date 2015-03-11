@@ -20,8 +20,8 @@ extern void         set_person_speed        (person_t* person, double x_speed, d
 extern void         set_person_spriteset    (person_t* person, spriteset_t* spriteset);
 extern void         set_person_xyz          (person_t* person, double x, double y, int layer);
 extern bool         call_person_script      (const person_t* person, int type, bool use_default);
-extern void         command_person          (person_t* person, int command);
 extern person_t*    find_person             (const char* name);
+extern bool         queue_person_command    (person_t* person, int command, bool is_immediate);
 extern void         reset_persons           (map_t* map, bool keep_existing);
 extern void         render_persons          (int layer, int cam_x, int cam_y);
 extern void         talk_person             (const person_t* person);
