@@ -692,9 +692,9 @@ process_map_input(void)
 {
 	ALLEGRO_KEYBOARD_STATE kb_state;
 
-	// keep key queue clear while in map engine
+	// clear out excess keys from key queue
 	g_key_queue.num_keys = 0;
-
+	
 	// check for player control of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
 		al_get_keyboard_state(&kb_state);
@@ -863,9 +863,9 @@ js_MapEngine(duk_context* ctx)
 	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
 		if (!begin_frame(s_framerate)) bail_out_game();
-		process_map_input();
 		if (!g_skip_frame) render_map_engine();
 		update_map_engine();
+		process_map_input();
 	}
 	g_map_running = false;
 	return 0;
