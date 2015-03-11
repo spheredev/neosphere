@@ -220,10 +220,38 @@ get_sprite_frame_delay(const spriteset_t* spriteset, const char* pose_name, int 
 	return pose->frames[frame_index].delay;
 }
 
+void
+get_sprite_size(const spriteset_t* spriteset, int* out_width, int* out_height)
+{
+	image_t* image;
+	
+	image = spriteset->images[0];
+	if (out_width) *out_width = get_image_width(image);
+	if (out_height) *out_height = get_image_height(image);
+}
+
+void
+get_spriteset_info(const spriteset_t* spriteset, int* out_num_images, int* out_num_poses)
+{
+	if (out_num_images) *out_num_images = spriteset->num_images;
+	if (out_num_poses) *out_num_poses = spriteset->num_poses;
+}
+
 image_t*
 get_spriteset_image(const spriteset_t* spriteset, int image_index)
 {
 	return spriteset->images[image_index];
+}
+
+bool
+get_spriteset_pose_info(const spriteset_t* spriteset, const char* pose_name, int* out_num_frames)
+{
+	const spriteset_pose_t* pose;
+
+	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+		return false;
+	*out_num_frames = pose->num_frames;
+	return true;
 }
 
 void

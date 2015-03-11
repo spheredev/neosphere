@@ -39,6 +39,8 @@ static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
 static duk_ret_t js_GetCameraX            (duk_context* ctx);
 static duk_ret_t js_GetCameraY            (duk_context* ctx);
 static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
+static duk_ret_t js_GetCurrentTrigger     (duk_context* ctx);
+static duk_ret_t js_GetCurrentZone        (duk_context* ctx);
 static duk_ret_t js_GetInputPerson        (duk_context* ctx);
 static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
@@ -77,6 +79,8 @@ static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 static person_t*           s_camera_person    = NULL;
 static int                 s_cam_x            = 0;
 static int                 s_cam_y            = 0;
+static int                 s_current_trigger  = -1;
+static int                 s_current_zone     = -1;
 static int                 s_def_scripts[MAP_SCRIPT_MAX];
 static int                 s_delay_frames     = -1;
 static int                 s_delay_script     = 0;
@@ -430,6 +434,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetCameraX", js_GetCameraX);
 	register_api_func(ctx, NULL, "GetCameraY", js_GetCameraY);
 	register_api_func(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
+	register_api_func(ctx, NULL, "GetCurrentTrigger", js_GetCurrentTrigger);
+	register_api_func(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
 	register_api_func(ctx, NULL, "GetInputPerson", js_GetInputPerson);
 	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
 	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
@@ -880,6 +886,28 @@ js_GetCurrentMap(duk_context* ctx)
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentMap(): Map engine not running");
 	duk_push_string(ctx, s_map_filename);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCurrentTrigger(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentTrigger(): Map engine not running");
+	if (!s_current_trigger == -1)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentTrigger(): Cannot be called outside of a trigger script");
+	duk_push_int(ctx, s_current_trigger);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCurrentZone(duk_context* ctx)
+{
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentZone(): Map engine not running");
+	if (!s_current_zone == -1)
+		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentZone(): Cannot be called outside of a zone script");
+	duk_push_int(ctx, s_current_zone);
 	return 1;
 }
 

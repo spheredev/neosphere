@@ -36,6 +36,7 @@ static duk_ret_t js_DoesPersonExist          (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson         (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson     (duk_context* ctx);
 static duk_ret_t js_GetObstructingTile       (duk_context* ctx);
+static duk_ret_t js_GetPersonData            (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection       (duk_context* ctx);
 static duk_ret_t js_GetPersonFrame           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert     (duk_context* ctx);
@@ -44,12 +45,14 @@ static duk_ret_t js_GetPersonList            (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeedX          (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeedY          (duk_context* ctx);
 static duk_ret_t js_GetPersonSpriteset       (duk_context* ctx);
+static duk_ret_t js_GetPersonValue           (duk_context* ctx);
 static duk_ret_t js_GetPersonX               (duk_context* ctx);
 static duk_ret_t js_GetPersonY               (duk_context* ctx);
 static duk_ret_t js_GetPersonXFloat          (duk_context* ctx);
 static duk_ret_t js_GetPersonYFloat          (duk_context* ctx);
 static duk_ret_t js_GetTalkDistance          (duk_context* ctx);
 static duk_ret_t js_SetDefaultPersonScript   (duk_context* ctx);
+static duk_ret_t js_SetPersonData            (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection       (duk_context* ctx);
 static duk_ret_t js_SetPersonFrame           (duk_context* ctx);
 static duk_ret_t js_SetPersonFrameRevert     (duk_context* ctx);
@@ -58,6 +61,7 @@ static duk_ret_t js_SetPersonScript          (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeed           (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeedXY         (duk_context* ctx);
 static duk_ret_t js_SetPersonSpriteset       (duk_context* ctx);
+static duk_ret_t js_SetPersonValue           (duk_context* ctx);
 static duk_ret_t js_SetPersonX               (duk_context* ctx);
 static duk_ret_t js_SetPersonXYFloat         (duk_context* ctx);
 static duk_ret_t js_SetPersonY               (duk_context* ctx);
@@ -505,6 +509,10 @@ init_persons_api(void)
 {
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	
+	duk_push_global_stash(g_duktape);
+	duk_push_object(g_duktape); duk_put_prop_string(g_duktape, -2, "person_data");
+	duk_pop(g_duktape);
+
 	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
 	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
 	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
@@ -513,6 +521,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
+	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
@@ -521,12 +530,14 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
 	register_api_func(g_duktape, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
 	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
+	register_api_func(g_duktape, NULL, "GetPersonValue", js_GetPersonValue);
 	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
 	register_api_func(g_duktape, NULL, "GetPersonXFloat", js_GetPersonXFloat);
 	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
 	register_api_func(g_duktape, NULL, "GetPersonYFloat", js_GetPersonYFloat);
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
 	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
+	register_api_func(g_duktape, NULL, "SetPersonData", js_SetPersonData);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
@@ -535,6 +546,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
 	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
 	register_api_func(g_duktape, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
+	register_api_func(g_duktape, NULL, "SetPersonValue", js_SetPersonValue);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
@@ -627,6 +639,10 @@ js_CreatePerson(duk_context* ctx)
 	sprite_file = duk_require_string(ctx, 1);
 	destroy_with_map = duk_require_boolean(ctx, 2);
 	create_person(name, sprite_file, !destroy_with_map);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "person_data");
+	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
+	duk_pop_2(ctx);
 	return 0;
 }
 
@@ -724,6 +740,35 @@ js_GetObstructingTile(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingTile(): Person '%s' doesn't exist", name);
 	is_person_obstructed_at(person, x, y, NULL, &tile_index);
 	duk_push_int(ctx, tile_index);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonData(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	int          num_directions;
+	int          num_frames;
+	person_t*    person;
+	spriteset_t* spriteset;
+	int          width, height;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonData(): Person '%s' doesn't exist", name);
+	spriteset = person->sprite;
+	get_sprite_size(spriteset, &width, &height);
+	get_spriteset_info(spriteset, NULL, &num_directions);
+	get_spriteset_pose_info(spriteset, person->direction, &num_frames);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "person_data");
+	duk_get_prop_string(ctx, -1, name);
+	duk_push_int(ctx, num_frames); duk_put_prop_string(ctx, -2, "num_frames");
+	duk_push_int(ctx, num_directions); duk_put_prop_string(ctx, -2, "num_directions");
+	duk_push_int(ctx, width); duk_put_prop_string(ctx, -2, "width");
+	duk_push_int(ctx, height); duk_put_prop_string(ctx, -2, "height");
+	duk_push_string(ctx, ""); duk_put_prop_string(ctx, -2, "leader");
+	duk_remove(ctx, -2); duk_remove(ctx, -2);
 	return 1;
 }
 
@@ -840,6 +885,24 @@ js_GetPersonSpeedY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonValue(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	const char* key = duk_require_string(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonValue(): Person '%s' doesn't exist", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "person_data");
+	duk_get_prop_string(ctx, -1, name);
+	duk_get_prop_string(ctx, -1, key);
+	duk_remove(ctx, -2); duk_remove(ctx, -2); duk_remove(ctx, -2);
+	return 1;
+}
+
+static duk_ret_t
 js_GetPersonX(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -913,6 +976,41 @@ js_SetDefaultPersonScript(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetPersonData(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	duk_require_object_coercible(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonData(): Person '%s' doesn't exist", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "person_data");
+	duk_dup(ctx, 1); duk_put_prop_string(ctx, -2, name);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonValue(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	const char* key = duk_require_string(ctx, 1);
+	duk_require_valid_index(ctx, 2);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): Person '%s' doesn't exist", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "person_data");
+	duk_get_prop_string(ctx, -1, name);
+	duk_dup(ctx, 2); duk_put_prop_string(ctx, -2, key);
+	duk_pop_2(ctx);
+	return 0;
+}
+
+static duk_ret_t
 js_SetPersonDirection(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -921,7 +1019,7 @@ js_SetPersonDirection(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonDirection(): Person '%s' doesn't exist", name);
 	set_person_direction(person, new_dir);
 	return 0;
 }
