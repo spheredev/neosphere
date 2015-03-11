@@ -23,6 +23,12 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
+struct delay_script
+{
+	int script_id;
+	int frames_left;
+};
+
 static bool                are_zones_at      (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
 static struct map_zone*    get_zone_at       (int x, int y, int layer, int index);
@@ -90,8 +96,6 @@ static int                 s_cam_y            = 0;
 static int                 s_current_trigger  = -1;
 static int                 s_current_zone     = -1;
 static int                 s_def_scripts[MAP_SCRIPT_MAX];
-static int                 s_delay_frames     = -1;
-static int                 s_delay_script     = 0;
 static bool                s_exiting          = false;
 static int                 s_framerate        = 0;
 static unsigned int        s_frames           = 0;
@@ -102,6 +106,9 @@ static struct map_trigger* s_on_trigger       = NULL;
 static int                 s_render_script    = 0;
 static int                 s_talk_key         = ALLEGRO_KEY_SPACE;
 static int                 s_update_script    = 0;
+static int                 s_num_delay_scripts = 0;
+static int                 s_max_delay_scripts = 0;
+static struct delay_script *s_delay_scripts    = NULL;
 
 struct map
 {
@@ -715,7 +722,7 @@ process_map_input(void)
 			if (trigger) run_script(trigger->script_id, false);
 		}
 
-		// if the player moved the input person, update any occupied zones
+		// if the player moved the input person, update zone counters
 		if (has_person_moved(s_input_person)) {
 			i = 0;
 			while (zone = get_zone_at(x, y, layer, i++)) {
@@ -790,6 +797,8 @@ update_map_engine(void)
 	int    script_type;
 	int    tile_w, tile_h;
 	double x, y;
+
+	int i, j;
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -797,7 +806,8 @@ update_map_engine(void)
 	map_h = s_map->layers[0].height * tile_h;
 	
 	update_persons();
-	
+	run_script(s_update_script, false);
+
 	// update camera
 	if (s_camera_person != NULL) {
 		get_person_xy(s_camera_person, &x, &y, true);
@@ -818,11 +828,14 @@ update_map_engine(void)
 		}
 	}
 
-	// run update and delay scripts, if applicable
-	run_script(s_update_script, false);
-	if (s_delay_frames >= 0 && --s_delay_frames <= 0) {
-		run_script(s_delay_script, false);
-		free_script(s_delay_script);
+	// run delay scripts, if applicable
+	for (i = 0; i < s_num_delay_scripts; ++i) {
+		if (s_delay_scripts[i].frames_left-- <= 0) {
+			run_script(s_delay_scripts[i].script_id, false);
+			free_script(s_delay_scripts[i].script_id);
+			for (j = i; j < s_num_delay_scripts - 1; ++j) s_delay_scripts[j] = s_delay_scripts[j + 1];
+			--s_num_delay_scripts; --i;
+		}
 	}
 }
 
@@ -1198,15 +1211,24 @@ js_SetDelayScript(duk_context* ctx)
 	int frames = duk_require_int(ctx, 0);
 	lstring_t* script = duk_require_lstring_t(ctx, 1);
 
-	char script_name[100];
+	struct delay_script* delay;
+	char                 script_name[100];
 
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Map engine is not running");
 	if (frames < 0)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Delay frames cannot be negative");
+	++s_num_delay_scripts;
+	if (s_num_delay_scripts > s_max_delay_scripts) {
+		if (!(s_delay_scripts = realloc(s_delay_scripts, s_num_delay_scripts * sizeof(struct delay_script))))
+			duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Failed to allocate new delay script (internal error)");
+		s_max_delay_scripts = s_num_delay_scripts;
+	}
+	delay = &s_delay_scripts[s_num_delay_scripts - 1];
 	sprintf(script_name, "[%i-frame delay script]", frames);
-	s_delay_script = compile_script(script, script_name);
-	s_delay_frames = frames;
+	delay->script_id = compile_script(script, script_name);
+	delay->frames_left = frames;
+	free_lstring(script);
 	return 0;
 }
 
