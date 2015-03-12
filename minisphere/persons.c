@@ -448,7 +448,7 @@ update_persons(void)
 	bool           is_finished;
 	person_t*      person;
 	
-	int i, j, k;
+	int i, j;
 
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
@@ -460,12 +460,11 @@ update_persons(void)
 		
 		// run through the command queue, stopping after the first non-immediate command
 		is_finished = person->num_commands == 0;
-		j = 0;
 		while (!is_finished) {
-			command = person->commands[j++];
+			command = person->commands[0];
 			--person->num_commands;
-			for (k = 0; k < person->num_commands; ++k)
-				person->commands[k] = person->commands[k + 1];
+			for (j = 0; j < person->num_commands; ++j)
+				person->commands[j] = person->commands[j + 1];
 			command_person(person, command.type);
 			is_finished = !command.is_immediate || person->num_commands == 0;
 		}

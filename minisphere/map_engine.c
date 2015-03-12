@@ -732,6 +732,7 @@ static void
 process_map_input(void)
 {
 	ALLEGRO_KEYBOARD_STATE kb_state;
+	int                    mv_x = 0, mv_y = 0;
 
 	// clear out excess keys from key queue
 	g_key_queue.num_keys = 0;
@@ -742,21 +743,47 @@ process_map_input(void)
 		if (al_key_down(&kb_state, s_talk_key)) {
 			talk_person(s_input_person);
 		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) {
-			queue_person_command(s_input_person, COMMAND_FACE_NORTH, true);
+		if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) mv_y = -1;
+		if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) mv_x = 1;
+		if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) mv_y = 1;
+		if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) mv_x = -1;
+		switch (mv_x + mv_y * 3) {
+		case -3: // north
 			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) {
-			queue_person_command(s_input_person, COMMAND_FACE_EAST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTH, false);
+			break;
+		case -2: // northeast
+			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
 			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) {
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTH, true);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTHEAST, false);
+			break;
+		case 1: // east
+			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_EAST, false);
+			break;
+		case 4: // southeast
 			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
-		}
-		else if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) {
-			queue_person_command(s_input_person, COMMAND_FACE_WEST, true);
+			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTHEAST, false);
+			break;
+		case 3: // south
+			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTH, false);
+			break;
+		case 2: // southwest
+			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
 			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTHWEST, false);
+			break;
+		case -1: // west
+			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_WEST, false);
+			break;
+		case -4: // northwest
+			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
+			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTHWEST, false);
+			break;
 		}
 	}
 }
