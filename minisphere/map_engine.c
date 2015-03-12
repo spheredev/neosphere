@@ -35,6 +35,8 @@ static duk_ret_t js_MapEngine             (duk_context* ctx);
 static duk_ret_t js_AreZonesAt            (duk_context* ctx);
 static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
 static duk_ret_t js_IsInputAttached       (duk_context* ctx);
+static duk_ret_t js_IsLayerReflective     (duk_context* ctx);
+static duk_ret_t js_IsLayerVisible        (duk_context* ctx);
 static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
 static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
 static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
@@ -65,6 +67,8 @@ static duk_ret_t js_SetCameraX            (duk_context* ctx);
 static duk_ret_t js_SetCameraY            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetLayerMask          (duk_context* ctx);
+static duk_ret_t js_SetLayerReflective    (duk_context* ctx);
+static duk_ret_t js_SetLayerVisible       (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
 static duk_ret_t js_SetNextAnimatedTile   (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
@@ -139,11 +143,13 @@ struct map
 struct map_layer
 {
 	lstring_t*       name;
+	bool             is_parallax;
+	bool             is_reflective;
+	bool             is_visible;
 	int              width, height;
 	struct map_tile* tilemap;
 	obsmap_t*        obsmap;
 	ALLEGRO_COLOR    color_mask;
-	bool             is_reflective;
 };
 
 struct map_person
@@ -295,8 +301,10 @@ load_map(const char* path)
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (al_fread(file, &layer_hdr, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
 				goto on_error;
-			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
+			map->layers[i].is_parallax = (layer_hdr.flags & 2) != 0x0;
 			map->layers[i].is_reflective = layer_hdr.is_reflective;
+			map->layers[i].is_visible = (layer_hdr.flags & 1) == 0x0;
+			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
 			map->layers[i].width = layer_hdr.width;
 			map->layers[i].height = layer_hdr.height;
 			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))) == NULL)
@@ -488,6 +496,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
 	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
 	register_api_func(ctx, NULL, "IsInputAttached", js_IsInputAttached);
+	register_api_func(ctx, NULL, "IsLayerReflective", js_IsLayerReflective);
+	register_api_func(ctx, NULL, "IsLayerVisible", js_IsLayerVisible);
 	register_api_func(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
 	register_api_func(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
 	register_api_func(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
@@ -518,6 +528,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
+	register_api_func(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
+	register_api_func(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
@@ -651,6 +663,10 @@ change_map(const char* filename, bool preserve_persons)
 			set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
 			call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
 		}
+		
+		// set camera over starting position
+		s_cam_x = s_map->origin.x;
+		s_cam_y = s_map->origin.y;
 		
 		// run map entry scripts
 		run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
@@ -821,6 +837,8 @@ render_map_engine(void)
 	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
+		if (!layer->is_visible)
+			continue;
 		if (layer->is_reflective) {
 			if (s_map->is_repeating) {
 				// for small repeating maps, persons need to be repeated as well
@@ -977,6 +995,32 @@ js_IsInputAttached(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsLayerReflective(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "IsLayerReflective(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "IsLayerReflective(): Invalid layer index (%i)", layer);
+	duk_push_boolean(ctx, s_map->layers[layer].is_reflective);
+	return 1;
+}
+
+static duk_ret_t
+js_IsLayerVisible(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "IsLayerVisible(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "IsLayerVisible(): Invalid layer index (%i)", layer);
+	duk_push_boolean(ctx, s_map->layers[layer].is_visible);
+	return 1;
+}
+
+static duk_ret_t
 js_IsMapEngineRunning(duk_context* ctx)
 {
 	duk_push_boolean(ctx, g_map_running);
@@ -1066,13 +1110,13 @@ js_GetInputPerson(duk_context* ctx)
 static duk_ret_t
 js_GetLayerHeight(duk_context* ctx)
 {
-	int z = duk_require_int(ctx, 0);
+	int layer = duk_require_int(ctx, 0);
 
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetLayerHeight(): Map engine must be running");
-	if (z < 0 || z > s_map->num_layers)
-		duk_error(ctx, DUK_ERR_ERROR, "GetLayerHeight(): Invalid layer index; valid range is 0-%i, called passed %i", s_map->num_layers, z);
-	duk_push_int(ctx, s_map->layers[z].height);
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerHeight(): Invalid layer index (%i)", layer);
+	duk_push_int(ctx, s_map->layers[layer].height);
 	return 1;
 }
 
@@ -1090,15 +1134,28 @@ js_GetLayerMask(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetLayerName(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerName(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerName(): Invalid layer index (%i)", layer);
+	duk_push_lstring(ctx, s_map->layers[layer].name->cstr, s_map->layers[layer].name->length);
+	return 1;
+}
+
+static duk_ret_t
 js_GetLayerWidth(duk_context* ctx)
 {
-	int z = duk_require_int(ctx, 0);
+	int layer = duk_require_int(ctx, 0);
 	
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetLayerWidth(): Map engine must be running");
-	if (z < 0 || z > s_map->num_layers)
-		duk_error(ctx, DUK_ERR_ERROR, "GetLayerWidth(): Invalid layer index; valid range is 0-%i, called passed %i", s_map->num_layers, z);
-	duk_push_int(ctx, s_map->layers[z].width);
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "GetLayerWidth(): Invalid layer index (%i)", layer);
+	duk_push_int(ctx, s_map->layers[layer].width);
 	return 1;
 }
 
@@ -1353,6 +1410,34 @@ js_SetLayerMask(duk_context* ctx)
 	if (layer < 0 || layer > s_map->num_layers)
 		duk_error(ctx, DUK_ERR_ERROR, "SetLayerMask(): Invalid layer index (%i)", layer);
 	s_map->layers[layer].color_mask = mask;
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerReflective(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	bool is_reflective = duk_require_boolean(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerReflective(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerReflective(): Invalid layer index (%i)", layer);
+	s_map->layers[layer].is_reflective = is_reflective;
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerVisible(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	bool is_visible = duk_require_boolean(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerVisible(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerVisible(): Invalid layer index (%i)", layer);
+	s_map->layers[layer].is_visible = is_visible;
 	return 0;
 }
 
