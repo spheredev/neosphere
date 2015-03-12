@@ -5,6 +5,7 @@
 struct obsmap
 {
 	int    num_lines;
+	int    max_lines;
 	rect_t *lines;
 };
 
@@ -15,6 +16,7 @@ new_obsmap(void)
 
 	if ((obsmap = calloc(1, sizeof(obsmap_t))) == NULL)
 		return NULL;
+	obsmap->max_lines = 0;
 	obsmap->num_lines = 0;
 	return obsmap;
 }
@@ -31,11 +33,16 @@ free_obsmap(obsmap_t* obsmap)
 bool
 add_obsmap_line(obsmap_t* obsmap, rect_t line)
 {
+	int    new_size;
 	rect_t *line_list;
 	
-	if ((line_list = realloc(obsmap->lines, (obsmap->num_lines + 1) * sizeof(rect_t))) == NULL)
-		return false;
-	obsmap->lines = line_list;
+	if (obsmap->num_lines + 1 > obsmap->max_lines) {
+		new_size = (obsmap->num_lines + 1) * 2;
+		if ((line_list = realloc(obsmap->lines, new_size * sizeof(rect_t))) == NULL)
+			return false;
+		obsmap->max_lines = new_size;
+		obsmap->lines = line_list;
+	}
 	obsmap->lines[obsmap->num_lines] = line;
 	++obsmap->num_lines;
 	return true;

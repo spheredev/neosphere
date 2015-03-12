@@ -92,24 +92,24 @@ static duk_ret_t js_ScreenToMapY          (duk_context* ctx);
 static duk_ret_t js_SetDelayScript        (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
 
-static person_t*           s_camera_person    = NULL;
-static int                 s_cam_x            = 0;
-static int                 s_cam_y            = 0;
+static person_t*           s_camera_person     = NULL;
+static int                 s_cam_x             = 0;
+static int                 s_cam_y             = 0;
 static int                 s_map_corner_x;
 static int                 s_map_corner_y;
-static int                 s_current_trigger = -1;
-static int                 s_current_zone     = -1;
+static int                 s_current_trigger   = -1;
+static int                 s_current_zone      = -1;
 static int                 s_def_scripts[MAP_SCRIPT_MAX];
-static bool                s_exiting          = false;
-static int                 s_framerate        = 0;
-static unsigned int        s_frames           = 0;
-static person_t*           s_input_person     = NULL;
-static map_t*              s_map = NULL;
-static char*               s_map_filename     = NULL;
-static struct map_trigger* s_on_trigger       = NULL;
-static int                 s_render_script    = 0;
-static int                 s_talk_key         = ALLEGRO_KEY_SPACE;
-static int                 s_update_script    = 0;
+static bool                s_exiting           = false;
+static int                 s_framerate         = 0;
+static unsigned int        s_frames            = 0;
+static person_t*           s_input_person      = NULL;
+static map_t*              s_map               = NULL;
+static char*               s_map_filename      = NULL;
+static struct map_trigger* s_on_trigger        = NULL;
+static int                 s_render_script     = 0;
+static int                 s_talk_key          = ALLEGRO_KEY_SPACE;
+static int                 s_update_script     = 0;
 static int                 s_num_delay_scripts = 0;
 static int                 s_max_delay_scripts = 0;
 static struct delay_script *s_delay_scripts    = NULL;
@@ -285,7 +285,7 @@ load_map(const char* path)
 			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
 		if (has_failed) goto on_error;
 		
-		// pre-allocate structures; this way if an allocation fails we don't waste time reading the rest of the file
+		// pre-allocate map structures; if an allocation fails we won't waste time reading the rest of the file
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		if ((map->persons = calloc(rmp.num_entities, sizeof(struct map_person))) == NULL) goto on_error;
 		if ((map->triggers = calloc(rmp.num_entities, sizeof(struct map_trigger))) == NULL) goto on_error;
@@ -794,6 +794,16 @@ render_map_engine(void)
 	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
+		if (layer->is_reflective) {
+			if (s_map->is_repeating) {
+				// for small repeating maps, persons need to be repeated as well
+				for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x)
+					render_persons(z, true, off_x - x * map_w, off_y - y * map_h);
+			}
+			else {
+				render_persons(z, true, off_x, off_y);
+			}
+		}
 		first_cell_x = off_x / tile_w;
 		first_cell_y = off_y / tile_h;
 		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
@@ -806,12 +816,11 @@ render_map_engine(void)
 		}
 		if (s_map->is_repeating) {
 			// for small repeating maps, persons need to be repeated as well
-			for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x) {
-				render_persons(z, off_x - x * map_w, off_y - y * map_h);
-			}
+			for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x)
+				render_persons(z, false, off_x - x * map_w, off_y - y * map_h);
 		}
 		else {
-			render_persons(z, off_x, off_y);
+			render_persons(z, false, off_x, off_y);
 		}
 	}
 	al_hold_bitmap_drawing(false);
@@ -1293,11 +1302,10 @@ js_SetDelayScript(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Map engine is not running");
 	if (frames < 0)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetDelayScript(): Delay frames cannot be negative");
-	++s_num_delay_scripts;
-	if (s_num_delay_scripts > s_max_delay_scripts) {
-		if (!(s_delay_scripts = realloc(s_delay_scripts, s_num_delay_scripts * sizeof(struct delay_script))))
-			duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Failed to allocate new delay script (internal error)");
-		s_max_delay_scripts = s_num_delay_scripts;
+	if (++s_num_delay_scripts > s_max_delay_scripts) {
+		s_max_delay_scripts = s_num_delay_scripts * 2;
+		if (!(s_delay_scripts = realloc(s_delay_scripts, s_max_delay_scripts * sizeof(struct delay_script))))
+			duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Failed to resize delay script array (internal error)");
 	}
 	delay = &s_delay_scripts[s_num_delay_scripts - 1];
 	sprintf(script_name, "[%i-frame delay script]", frames);

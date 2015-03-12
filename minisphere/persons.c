@@ -105,7 +105,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person_t* person;
 
 	if (++s_num_persons > s_max_persons) {
-		s_max_persons = s_num_persons;
+		s_max_persons = s_num_persons * 2;
 		s_persons = realloc(s_persons, s_max_persons * sizeof(person_t*));
 	}
 	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
@@ -367,9 +367,10 @@ queue_person_command(person_t* person, int command, bool is_immediate)
 }
 
 void
-render_persons(int layer, int cam_x, int cam_y)
+render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 {
 	spriteset_t* sprite;
+	int          w, h;
 	double       x, y;
 	int          i;
 
@@ -377,10 +378,11 @@ render_persons(int layer, int cam_x, int cam_y)
 		if (s_persons[i]->layer != layer)
 			continue;
 		sprite = s_persons[i]->sprite;
+		get_sprite_size(sprite, &w, &h);
 		get_person_xy(s_persons[i], &x, &y, true);
 		x -= cam_x - s_persons[i]->x_offset;
 		y -= cam_y - s_persons[i]->y_offset;
-		draw_sprite(sprite, s_persons[i]->direction, x, y, s_persons[i]->frame);
+		draw_sprite(sprite, is_flipped, s_persons[i]->direction, x, y, s_persons[i]->frame);
 	}
 }
 
