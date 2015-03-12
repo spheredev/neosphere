@@ -32,8 +32,8 @@ struct delay_script
 static bool                are_zones_at      (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
 static struct map_zone*    get_zone_at       (int x, int y, int layer, int index);
-static bool                change_map(const char* filename, bool preserve_persons);
-static void                process_map_input(void);
+static bool                change_map        (const char* filename, bool preserve_persons);
+static void                process_map_input (void);
 static void                render_map_engine (void);
 static void                update_map_engine (void);
 
@@ -134,11 +134,11 @@ struct map
 
 struct map_layer
 {
-	lstring_t*    name;
-	int           width, height;
-	int*          tilemap;
-	obsmap_t*     obsmap;
-	ALLEGRO_COLOR color_mask;
+	lstring_t*       name;
+	int              width, height;
+	struct map_tile* tilemap;
+	obsmap_t*        obsmap;
+	ALLEGRO_COLOR    color_mask;
 };
 
 struct map_person
@@ -151,6 +151,12 @@ struct map_person
 	lstring_t* command_script;
 	lstring_t* talk_script;
 	lstring_t* touch_script;
+};
+
+struct map_tile
+{
+	int tile_index;
+	int frames_left;
 };
 
 struct map_trigger
@@ -240,6 +246,7 @@ load_map(const char* path)
 	struct rmp_entity_header entity_hdr;
 	ALLEGRO_FILE*            file;
 	bool                     has_failed;
+	struct map_layer*        layer;
 	struct rmp_layer_header  layer_hdr;
 	map_t*                   map = NULL;
 	int                      num_tiles;
@@ -254,7 +261,7 @@ load_map(const char* path)
 	struct rmp_zone_header   zone_hdr;
 	lstring_t*               *strings = NULL;
 
-	int i, j;
+	int i, j, x, y, z;
 	
 	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
 	if ((map = calloc(1, sizeof(map_t))) == NULL) goto on_error;
@@ -265,36 +272,44 @@ load_map(const char* path)
 		goto on_error;
 	switch (rmp.version) {
 	case 1:
+		// load strings (resource filenames, scripts, etc.)
 		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
 			goto on_error;
 		has_failed = false;
 		for (i = 0; i < rmp.num_strings; ++i)
 			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
 		if (has_failed) goto on_error;
+		
+		// pre-allocate memory for this stuff; if allocation fails we don't waste time reading the rest of the file
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		if ((map->persons = calloc(rmp.num_entities, sizeof(struct map_person))) == NULL) goto on_error;
 		if ((map->triggers = calloc(rmp.num_entities, sizeof(struct map_trigger))) == NULL) goto on_error;
 		if ((map->zones = calloc(rmp.num_zones, sizeof(struct map_zone))) == NULL) goto on_error;
+		
+		// load layer maps
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (al_fread(file, &layer_hdr, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
 				goto on_error;
 			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
 			map->layers[i].width = layer_hdr.width;
 			map->layers[i].height = layer_hdr.height;
-			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(int))) == NULL)
+			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))) == NULL)
 				goto on_error;
 			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
 			map->layers[i].name = read_lstring(file, true);
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
-			for (j = 0; j < num_tiles; ++j) map->layers[i].tilemap[j] = tile_data[j];
+			for (j = 0; j < num_tiles; ++j)
+				map->layers[i].tilemap[j].tile_index = tile_data[j];
 			for (j = 0; j < layer_hdr.num_segments; ++j) {
 				if (!al_fread_rect_32(file, &segment)) goto on_error;
 				add_obsmap_line(map->layers[i].obsmap, segment);
 			}
 			free(tile_data); tile_data = NULL;
 		}
+		
+		// load entities
 		map->num_persons = 0;
 		map->num_triggers = 0;
 		for (i = 0; i < rmp.num_entities; ++i) {
@@ -333,6 +348,8 @@ load_map(const char* path)
 				goto on_error;
 			}
 		}
+
+		// load zones
 		for (i = 0; i < rmp.num_zones; ++i) {
 			if (al_fread(file, &zone_hdr, sizeof(struct rmp_zone_header)) != sizeof(struct rmp_zone_header))
 				goto on_error;
@@ -343,10 +360,24 @@ load_map(const char* path)
 			map->zones[i].script_id = compile_script(script, "[zone script]");
 			free_lstring(script);
 		}
+		
+		// load tileset
 		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
 		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
 		free(tile_path);
 		if (tileset == NULL) goto on_error;
+
+		// initialize tile animation
+		for (z = 0; z < rmp.num_layers; ++z) {
+			layer = &map->layers[z];
+			for (x = 0; x < layer->width; ++x) for (y = 0; y < layer->height; ++y) {
+				i = x * layer->width + y;
+				map->layers[z].tilemap[i].frames_left =
+					get_tile_delay(tileset, map->layers[z].tilemap[i].tile_index);
+			}
+		}
+		
+		// wrap things up
 		map->num_layers = rmp.num_layers;
 		map->num_zones = rmp.num_zones;
 		map->is_repeating = rmp.repeat_map;
@@ -551,7 +582,7 @@ get_map_tile(int x, int y, int layer)
 
 	x = (x % layer_w + layer_w) % layer_w;
 	y = (y % layer_h + layer_h) % layer_h;
-	return s_map->layers[layer].tilemap[x + y * layer_w];
+	return s_map->layers[layer].tilemap[x + y * layer_w].tile_index;
 }
 
 const tileset_t*
@@ -760,7 +791,7 @@ render_map_engine(void)
 			cell_y = s_map->is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
 			if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
 				continue;
-			tile_index = layer->tilemap[cell_x + cell_y * layer->width];
+			tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
 			draw_tile(s_map->tileset, layer->color_mask, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
 		}
 		if (s_map->is_repeating) {
@@ -781,14 +812,16 @@ static void
 update_map_engine(void)
 {
 	int                 layer;
+	int                 layer_w, layer_h;
 	int                 map_w, map_h;
 	int                 script_type;
+	struct map_tile*    tile;
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
 	double              x, y;
 	struct map_zone*    zone;
 
-	int i, j;
+	int i, j, i_x, i_y, i_layer;
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -796,6 +829,19 @@ update_map_engine(void)
 	map_h = s_map->layers[0].height * tile_h;
 	
 	update_persons();
+
+	// process map tile animation
+	// TODO: optimize tile animation to use a lookup table, maybe
+	for (i_layer = 0; i_layer < s_map->num_layers; ++i_layer) {
+		layer_w = s_map->layers[i_layer].width;
+		layer_h = s_map->layers[i_layer].height;
+		for (i_y = 0; i_y < layer_h; ++i_y) for (i_x = 0; i_x < layer_w; ++i_x) {
+			tile = &s_map->layers[i_layer].tilemap[i_x * layer_w + i_y];
+			if (--tile->frames_left == 0) {
+				animate_tile(s_map->tileset, &tile->tile_index, &tile->frames_left);
+			}
+		}
+	}
 
 	// update camera
 	if (s_camera_person != NULL) {
@@ -1090,8 +1136,8 @@ js_GetTile(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTile(): Invalid layer index (caller passed: %i)", layer);
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;
-	int* tilemap = s_map->layers[layer].tilemap;
-	duk_push_int(ctx, tilemap[x + y * layer_w]);
+	struct map_tile* tilemap = s_map->layers[layer].tilemap;
+	duk_push_int(ctx, tilemap[x + y * layer_w].tile_index);
 	return 1;
 }
 
@@ -1300,8 +1346,9 @@ js_SetTile(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTile(): Invalid layer index (caller passed: %i)", layer);
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;
-	int* tilemap = s_map->layers[layer].tilemap;
-	tilemap[x + y * layer_w] = tile_index;
+	struct map_tile* tilemap = s_map->layers[layer].tilemap;
+	tilemap[x + y * layer_w].tile_index = tile_index;
+	tilemap[x + y * layer_w].frames_left = get_tile_delay(s_map->tileset, tile_index);
 	return 0;
 }
 

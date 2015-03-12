@@ -13,12 +13,12 @@ struct tileset
 
 struct tile
 {
-	lstring_t*      name;
-	image_t*        image;
-	int             delay;
-	struct tile*    next_tile;
-	int             num_obs_lines;
-	obsmap_t*       obsmap;
+	lstring_t* name;
+	image_t*   image;
+	int        delay;
+	int        next_index;
+	int        num_obs_lines;
+	obsmap_t*  obsmap;
 };
 
 #pragma pack(push, 1)
@@ -91,8 +91,8 @@ read_tileset(ALLEGRO_FILE* file)
 		if (al_fread(file, &tile_info, sizeof(struct rts_tile_info)) != sizeof(struct rts_tile_info))
 			goto on_error;
 		tiles[i].name = read_lstring_s(file, tile_info.name_length, true);
-		tiles[i].delay = tile_info.delay;
-		tiles[i].next_tile = tile_info.animated ? &tiles[tile_info.next_tile] : NULL;
+		tiles[i].next_index = tile_info.animated ? tile_info.next_tile : i;
+		tiles[i].delay = tile_info.animated ? tile_info.delay : 0;
 		if (rts.has_obstructions) {
 			switch (tile_info.obsmap_type) {
 			case 1:  // pixel-perfect obstruction (no longer supported)
@@ -152,6 +152,12 @@ get_tile_count(const tileset_t* tileset)
 	return tileset->num_tiles;
 }
 
+int
+get_tile_delay(const tileset_t* tileset, int tile_index)
+{
+	return tileset->tiles[tile_index].delay;
+}
+
 image_t*
 get_tile_image(const tileset_t* tileset, int tile_index)
 {
@@ -184,6 +190,16 @@ set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 	old_image = tileset->tiles[tile_index].image;
 	tileset->tiles[tile_index].image = ref_image(image);
 	free_image(old_image);
+}
+
+void
+animate_tile(const tileset_t* tileset, int* inout_tile_index, int* out_delay)
+{
+	int next_tile;
+
+	next_tile = tileset->tiles[*inout_tile_index].next_index;
+	if (out_delay) *out_delay = tileset->tiles[next_tile].delay;
+	*inout_tile_index = next_tile;
 }
 
 void
