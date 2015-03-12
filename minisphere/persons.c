@@ -93,6 +93,7 @@ static const person_t* s_current_person = NULL;
 static int             s_def_scripts[PERSON_SCRIPT_MAX];
 static bool            s_is_talking     = false;
 static int             s_talk_distance  = 8;
+static int             s_max_persons    = 0;
 static int             s_num_persons    = 0;
 static person_t*       *s_persons       = NULL;
 
@@ -103,8 +104,10 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	char*     path;
 	person_t* person;
 
-	++s_num_persons;
-	s_persons = realloc(s_persons, s_num_persons * sizeof(person_t*));
+	if (++s_num_persons > s_max_persons) {
+		s_max_persons = s_num_persons;
+		s_persons = realloc(s_persons, s_max_persons * sizeof(person_t*));
+	}
 	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
 	set_person_name(person, name);
 	path = get_asset_path(sprite_file, "spritesets", false);

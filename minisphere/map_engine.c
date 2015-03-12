@@ -25,7 +25,7 @@ enum map_script_type
 
 static bool                are_zones_at      (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
-static struct map_zone*    get_zone_at       (int x, int y, int layer, int index);
+static struct map_zone*    get_zone_at       (int x, int y, int layer, int which);
 static bool                change_map        (const char* filename, bool preserve_persons);
 static void                process_map_input (void);
 static void                render_map_engine (void);
@@ -712,7 +712,7 @@ get_trigger_at(int x, int y, int layer)
 }
 
 static struct map_zone*
-get_zone_at(int x, int y, int layer, int index)
+get_zone_at(int x, int y, int layer, int which)
 {
 	struct map_zone* zone;
 	
@@ -722,7 +722,7 @@ get_zone_at(int x, int y, int layer, int index)
 		zone = &s_map->zones[i];
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
-		if (is_point_in_rect(x, y, zone->bounds) && index-- == 0)
+		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0)
 			return zone;
 	}
 	return NULL;
