@@ -14,6 +14,8 @@ struct tileset
 struct tile
 {
 	lstring_t* name;
+	int        animate_index;
+	int        frames_left;
 	image_t*   image;
 	int        delay;
 	int        next_index;
@@ -93,6 +95,8 @@ read_tileset(ALLEGRO_FILE* file)
 		tiles[i].name = read_lstring_s(file, tile_info.name_length, true);
 		tiles[i].next_index = tile_info.animated ? tile_info.next_tile : i;
 		tiles[i].delay = tile_info.animated ? tile_info.delay : 0;
+		tiles[i].animate_index = i;
+		tiles[i].frames_left = tiles[i].delay;
 		if (rts.has_obstructions) {
 			switch (tile_info.obsmap_type) {
 			case 1:  // pixel-perfect obstruction (no longer supported)
@@ -147,6 +151,12 @@ free_tileset(tileset_t* tileset)
 }
 
 int
+get_next_tile(const tileset_t* tileset, int tile_index)
+{
+	return tileset->tiles[tile_index].next_index;
+}
+
+int
 get_tile_count(const tileset_t* tileset)
 {
 	return tileset->num_tiles;
@@ -183,6 +193,18 @@ get_tile_size(const tileset_t* tileset, int* out_w, int* out_h)
 }
 
 void
+set_next_tile(tileset_t* tileset, int tile_index, int next_index)
+{
+	tileset->tiles[tile_index].next_index = next_index;
+}
+
+void
+set_tile_delay(tileset_t* tileset, int tile_index, int delay)
+{
+	tileset->tiles[tile_index].delay = delay;
+}
+
+void
 set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 {
 	image_t* old_image;
@@ -193,17 +215,24 @@ set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 }
 
 void
-animate_tile(const tileset_t* tileset, int* inout_tile_index, int* out_delay)
+animate_tileset(tileset_t* tileset)
 {
-	int next_tile;
+	struct tile* tile;
+	
+	int i;
 
-	next_tile = tileset->tiles[*inout_tile_index].next_index;
-	if (out_delay) *out_delay = tileset->tiles[next_tile].delay;
-	*inout_tile_index = next_tile;
+	for (i = 0; i < tileset->num_tiles; ++i) {
+		tile = &tileset->tiles[i];
+		if (tile->frames_left > 0 && --tile->frames_left == 0) {
+			tile->animate_index = get_next_tile(tileset, tile->animate_index);
+			tile->frames_left = get_tile_delay(tileset, tile->animate_index);
+		}
+	}
 }
 
 void
 draw_tile(const tileset_t* tileset, ALLEGRO_COLOR mask, float x, float y, int tile_index)
 {
+	tile_index = tileset->tiles[tile_index].animate_index;
 	al_draw_tinted_bitmap(get_image_bitmap(tileset->tiles[tile_index].image), mask, x, y, 0x0);
 }

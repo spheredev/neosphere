@@ -23,12 +23,6 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-struct delay_script
-{
-	int script_id;
-	int frames_left;
-};
-
 static bool                are_zones_at      (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at    (int x, int y, int layer);
 static struct map_zone*    get_zone_at       (int x, int y, int layer, int index);
@@ -54,12 +48,14 @@ static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
 static duk_ret_t js_GetLayerMask          (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_GetNextAnimatedTile   (duk_context* ctx);
 static duk_ret_t js_GetNumLayers          (duk_context* ctx);
 static duk_ret_t js_GetNumTiles           (duk_context* ctx);
 static duk_ret_t js_GetNumTriggers        (duk_context* ctx);
 static duk_ret_t js_GetNumZones           (duk_context* ctx);
 static duk_ret_t js_GetTalkActivationKey  (duk_context* ctx);
 static duk_ret_t js_GetTile               (duk_context* ctx);
+static duk_ret_t js_GetTileDelay          (duk_context* ctx);
 static duk_ret_t js_GetTileHeight         (duk_context* ctx);
 static duk_ret_t js_GetTileImage          (duk_context* ctx);
 static duk_ret_t js_GetTileName           (duk_context* ctx);
@@ -70,9 +66,11 @@ static duk_ret_t js_SetCameraY            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
 static duk_ret_t js_SetLayerMask          (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
+static duk_ret_t js_SetNextAnimatedTile   (duk_context* ctx);
 static duk_ret_t js_SetRenderScript       (duk_context* ctx);
 static duk_ret_t js_SetTalkActivationKey  (duk_context* ctx);
 static duk_ret_t js_SetTile               (duk_context* ctx);
+static duk_ret_t js_SetTileDelay          (duk_context* ctx);
 static duk_ret_t js_SetTileImage          (duk_context* ctx);
 static duk_ret_t js_SetTileSurface        (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
@@ -116,6 +114,12 @@ static int                 s_num_delay_scripts = 0;
 static int                 s_max_delay_scripts = 0;
 static struct delay_script *s_delay_scripts    = NULL;
 
+struct delay_script
+{
+	int script_id;
+	int frames_left;
+};
+
 struct map
 {
 	bool               is_repeating;
@@ -139,6 +143,7 @@ struct map_layer
 	struct map_tile* tilemap;
 	obsmap_t*        obsmap;
 	ALLEGRO_COLOR    color_mask;
+	bool             is_reflective;
 };
 
 struct map_person
@@ -213,7 +218,7 @@ struct rmp_layer_header
 	float    scrolling_x;
 	float    scrolling_y;
 	int32_t  num_segments;
-	uint8_t  reflective;
+	uint8_t  is_reflective;
 	uint8_t  reserved[3];
 };
 
@@ -280,17 +285,18 @@ load_map(const char* path)
 			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
 		if (has_failed) goto on_error;
 		
-		// pre-allocate memory for this stuff; if allocation fails we don't waste time reading the rest of the file
+		// pre-allocate structures; this way if an allocation fails we don't waste time reading the rest of the file
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		if ((map->persons = calloc(rmp.num_entities, sizeof(struct map_person))) == NULL) goto on_error;
 		if ((map->triggers = calloc(rmp.num_entities, sizeof(struct map_trigger))) == NULL) goto on_error;
 		if ((map->zones = calloc(rmp.num_zones, sizeof(struct map_zone))) == NULL) goto on_error;
 		
-		// load layer maps
+		// load layers
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (al_fread(file, &layer_hdr, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
 				goto on_error;
 			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
+			map->layers[i].is_reflective = layer_hdr.is_reflective;
 			map->layers[i].width = layer_hdr.width;
 			map->layers[i].height = layer_hdr.height;
 			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))) == NULL)
@@ -371,7 +377,7 @@ load_map(const char* path)
 		for (z = 0; z < rmp.num_layers; ++z) {
 			layer = &map->layers[z];
 			for (x = 0; x < layer->width; ++x) for (y = 0; y < layer->height; ++y) {
-				i = x * layer->width + y;
+				i = x + y * layer->width;
 				map->layers[z].tilemap[i].frames_left =
 					get_tile_delay(tileset, map->layers[z].tilemap[i].tile_index);
 			}
@@ -495,12 +501,14 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetLayerMask", js_GetLayerMask);
 	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
 	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "GetNextAnimatedTile", js_GetNextAnimatedTile);
 	register_api_func(ctx, NULL, "GetNumLayers", js_GetNumLayers);
 	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
 	register_api_func(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
 	register_api_func(ctx, NULL, "GetNumZones", js_GetNumZones);
 	register_api_func(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
 	register_api_func(ctx, NULL, "GetTile", js_GetTile);
+	register_api_func(ctx, NULL, "GetTileDelay", js_GetTileDelay);
 	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
 	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
 	register_api_func(ctx, NULL, "GetTileName", js_GetTileName);
@@ -511,9 +519,11 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
 	register_api_func(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
 	register_api_func(ctx, NULL, "SetTile", js_SetTile);
+	register_api_func(ctx, NULL, "SetTileDelay", js_SetTileDelay);
 	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
 	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
@@ -812,16 +822,14 @@ static void
 update_map_engine(void)
 {
 	int                 layer;
-	int                 layer_w, layer_h;
 	int                 map_w, map_h;
 	int                 script_type;
-	struct map_tile*    tile;
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
 	double              x, y;
 	struct map_zone*    zone;
 
-	int i, j, i_x, i_y, i_layer;
+	int i, j;
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -829,19 +837,7 @@ update_map_engine(void)
 	map_h = s_map->layers[0].height * tile_h;
 	
 	update_persons();
-
-	// process map tile animation
-	// TODO: optimize tile animation to use a lookup table, maybe
-	for (i_layer = 0; i_layer < s_map->num_layers; ++i_layer) {
-		layer_w = s_map->layers[i_layer].width;
-		layer_h = s_map->layers[i_layer].height;
-		for (i_y = 0; i_y < layer_h; ++i_y) for (i_x = 0; i_x < layer_w; ++i_x) {
-			tile = &s_map->layers[i_layer].tilemap[i_x * layer_w + i_y];
-			if (--tile->frames_left == 0) {
-				animate_tile(s_map->tileset, &tile->tile_index, &tile->frames_left);
-			}
-		}
-	}
+	animate_tileset(s_map->tileset);
 
 	// update camera
 	if (s_camera_person != NULL) {
@@ -1078,6 +1074,19 @@ js_GetMapEngineFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetNextAnimatedTile(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetNextAnimatedTile(): Map engine must be running");
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetNextAnimatedTile(): Invalid tile index (%i)", tile_index);
+	duk_push_int(ctx, get_next_tile(s_map->tileset, tile_index));
+	return 1;
+}
+
+static duk_ret_t
 js_GetNumLayers(duk_context* ctx)
 {
 	if (!g_map_running)
@@ -1126,7 +1135,6 @@ js_GetTile(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 	int layer = duk_require_int(ctx, 2);
-	int tile_index = duk_require_int(ctx, 3);
 
 	int layer_w, layer_h;
 
@@ -1138,6 +1146,19 @@ js_GetTile(duk_context* ctx)
 	layer_h = s_map->layers[layer].height;
 	struct map_tile* tilemap = s_map->layers[layer].tilemap;
 	duk_push_int(ctx, tilemap[x + y * layer_w].tile_index);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileDelay(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "GetTileDelay(): Map engine must be running");
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileDelay(): Invalid tile index (%i)", tile_index);
+	duk_push_int(ctx, get_tile_delay(s_map->tileset, tile_index));
 	return 1;
 }
 
@@ -1158,13 +1179,10 @@ js_GetTileImage(duk_context* ctx)
 {
 	int tile_index = duk_require_int(ctx, 0);
 
-	int c_tiles;
-
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileImage(): Map engine must be running");
-	c_tiles = get_tile_count(s_map->tileset);
-	if (tile_index < 0 || tile_index >= c_tiles)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileImage(): Tile index out of range (caller passed %i)", tile_index);
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileImage(): Tile index out of range (%i)", tile_index);
 	duk_push_sphere_image(ctx, get_tile_image(s_map->tileset, tile_index));
 	return 1;
 }
@@ -1178,6 +1196,8 @@ js_GetTileName(duk_context* ctx)
 
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileName(): Map engine must be running");
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileName(): Tile index out of range (%i)", tile_index);
 	tile_name = get_tile_name(s_map->tileset, tile_index);
 	duk_push_lstring(ctx, tile_name->cstr, tile_name->length);
 	return 1;
@@ -1188,14 +1208,12 @@ js_GetTileSurface(duk_context* ctx)
 {
 	int tile_index = duk_require_int(ctx, 0);
 
-	int      c_tiles;
 	image_t* image;
 
 	if (!g_map_running)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileSurface(): Map engine must be running");
-	c_tiles = get_tile_count(s_map->tileset);
-	if (tile_index < 0 || tile_index >= c_tiles)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileSurface(): Tile index out of range (caller passed %i)", tile_index);
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetTileSurface(): Tile index out of range (%i)", tile_index);
 	if ((image = clone_image(get_tile_image(s_map->tileset, tile_index))) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileSurface(): Failed to create new surface image");
 	duk_push_sphere_surface(ctx, image);
@@ -1311,6 +1329,22 @@ js_SetMapEngineFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetNextAnimatedTile(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+	int next_index = duk_require_int(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetNextAnimatedTile(): Map engine must be running");
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetNextAnimatedTile(): Invalid tile index (%i)", tile_index);
+	if (next_index < 0 || next_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetNextAnimatedTile(): Invalid tile index for next tile (%i)", tile_index);
+	set_next_tile(s_map->tileset, tile_index, next_index);
+	return 0;
+}
+
+static duk_ret_t
 js_SetRenderScript(duk_context* ctx)
 {
 	lstring_t* code = duk_require_lstring_t(ctx, 0);
@@ -1349,6 +1383,22 @@ js_SetTile(duk_context* ctx)
 	struct map_tile* tilemap = s_map->layers[layer].tilemap;
 	tilemap[x + y * layer_w].tile_index = tile_index;
 	tilemap[x + y * layer_w].frames_left = get_tile_delay(s_map->tileset, tile_index);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileDelay(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+	int delay = duk_require_int(ctx, 1);
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetTileDelay(): Map engine must be running");
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTileDelay(): Invalid tile index (%i)", tile_index);
+	if (delay < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetTileDelay(): Delay cannot be negative (%i)", delay);
+	set_tile_delay(s_map->tileset, tile_index, delay);
 	return 0;
 }
 
