@@ -153,7 +153,11 @@ free_tileset(tileset_t* tileset)
 int
 get_next_tile(const tileset_t* tileset, int tile_index)
 {
-	return tileset->tiles[tile_index].next_index;
+	int next_index;
+	
+	next_index = tileset->tiles[tile_index].next_index;
+	return next_index >= 0 && next_index < tileset->num_tiles
+		? next_index : tile_index;
 }
 
 int
