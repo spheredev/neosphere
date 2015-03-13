@@ -105,7 +105,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="geometry.c" />
     <ClCompile Include="image.c" />
     <ClCompile Include="input.c" />
-    <ClCompile Include="log.c" />
+    <ClCompile Include="logger.c" />
     <ClCompile Include="lstring.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
@@ -131,7 +131,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="geometry.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="input.h" />
-    <ClInclude Include="log.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="lstring.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />

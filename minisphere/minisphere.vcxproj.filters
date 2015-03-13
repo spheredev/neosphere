@@ -42,9 +42,6 @@
     <ClCompile Include="image.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="log.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="font.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,6 +84,9 @@
     <ClCompile Include="primitives.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="logger.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -114,9 +114,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="font.h">
@@ -162,6 +159,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="primitives.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
