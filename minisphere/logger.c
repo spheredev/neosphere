@@ -102,9 +102,9 @@ write_log_line(logger_t* logger, const char* prefix, const char* text)
 }
 
 void
-init_logging_api(duk_context* ctx)
+init_logging_api(void)
 {
-	register_api_func(ctx, NULL, "OpenLog", &js_OpenLog);
+	register_api_func(g_duktape, NULL, "OpenLog", &js_OpenLog);
 }
 
 static void

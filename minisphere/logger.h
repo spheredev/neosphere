@@ -7,4 +7,4 @@ extern bool      begin_log_block (logger_t* logger, const char* title);
 extern void      end_log_block   (logger_t* logger);
 extern void      write_log_line  (logger_t* logger, const char* prefix, const char* text);
 
-extern void init_logging_api (duk_context* ctx);
+extern void init_logging_api (void);

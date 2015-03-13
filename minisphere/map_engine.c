@@ -126,6 +126,7 @@ struct delay_script
 
 struct map
 {
+	int                width, height;
 	bool               is_repeating;
 	point3_t           origin;
 	int                scripts[MAP_SCRIPT_MAX];
@@ -307,6 +308,10 @@ load_map(const char* path)
 			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
 			map->layers[i].width = layer_hdr.width;
 			map->layers[i].height = layer_hdr.height;
+			if (!map->layers[i].is_parallax) {
+				map->width = fmax(map->width, map->layers[i].width);
+				map->height = fmax(map->height, map->layers[i].height);
+			}
 			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))) == NULL)
 				goto on_error;
 			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
@@ -322,6 +327,9 @@ load_map(const char* path)
 			}
 			free(tile_data); tile_data = NULL;
 		}
+
+		// if either dimension is zero, the map has no non-parallax layers and is thus malformed
+		if (map->width == 0 || map->height == 0) goto on_error;
 		
 		// load entities
 		map->num_persons = 0;
@@ -577,8 +585,8 @@ get_map_bounds(void)
 	
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	bounds.x1 = 0; bounds.y1 = 0;
-	bounds.x2 = s_map->layers[0].width * tile_w;
-	bounds.y2 = s_map->layers[0].height * tile_h;
+	bounds.x2 = s_map->width * tile_w;
+	bounds.y2 = s_map->height * tile_h;
 	return bounds;
 }
 
@@ -818,10 +826,8 @@ render_map_engine(void)
 	int x, y, z;
 	
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
-	map_w = s_map->layers[0].width * tile_w;
-	map_h = s_map->layers[0].height * tile_h;
-	off_x = s_cam_x - g_res_x / 2;
-	off_y = s_cam_y - g_res_y / 2;
+	map_w = s_map->width * tile_w; map_h = s_map->height * tile_h;
+	off_x = s_cam_x - g_res_x / 2; off_y = s_cam_y - g_res_y / 2;
 	if (!s_map->is_repeating) {
 		// non-repeating map - clamp viewport to map bounds
 		off_x = fmin(fmax(off_x, 0), map_w - g_res_x);
@@ -887,8 +893,8 @@ update_map_engine(void)
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
-	map_w = s_map->layers[0].width * tile_w;
-	map_h = s_map->layers[0].height * tile_h;
+	map_w = s_map->width * tile_w;
+	map_h = s_map->height * tile_h;
 	
 	update_persons();
 	animate_tileset(s_map->tileset);

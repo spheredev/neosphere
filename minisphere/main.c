@@ -503,11 +503,11 @@ initialize_engine(void)
 	init_font_api(g_duktape);
 	init_image_api(g_duktape);
 	init_input_api(g_duktape);
-	init_logging_api(g_duktape);
+	init_logging_api();
 	init_map_engine_api(g_duktape);
 	init_primitives_api();
 	init_rawfile_api();
-	init_sound_api(g_duktape);
+	init_sound_api();
 	init_spriteset_api(g_duktape);
 	init_surface_api();
 	init_windowstyle_api();

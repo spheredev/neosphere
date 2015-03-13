@@ -1,1 +1,1 @@
-extern void init_sound_api (duk_context* ctx);
+extern void init_sound_api (void);

@@ -1,62 +1,62 @@
 #include "minisphere.h"
 #include "api.h"
 
-static duk_ret_t _js_LoadSound(duk_context* ctx);
-static duk_ret_t _js_Sound_finalize(duk_context* ctx);
-static duk_ret_t _js_Sound_isPlaying(duk_context* ctx);
-static duk_ret_t _js_Sound_isSeekable(duk_context* ctx);
-static duk_ret_t _js_Sound_getLength(duk_context* ctx);
-static duk_ret_t _js_Sound_getPan(duk_context* ctx);
-static duk_ret_t _js_Sound_getPitch(duk_context* ctx);
-static duk_ret_t _js_Sound_getPosition(duk_context* ctx);
-static duk_ret_t _js_Sound_getRepeat(duk_context* ctx);
-static duk_ret_t _js_Sound_getVolume(duk_context* ctx);
-static duk_ret_t _js_Sound_setPan(duk_context* ctx);
-static duk_ret_t _js_Sound_setPitch(duk_context* ctx);
-static duk_ret_t _js_Sound_setPosition(duk_context* ctx);
-static duk_ret_t _js_Sound_setRepeat(duk_context* ctx);
-static duk_ret_t _js_Sound_setVolume(duk_context* ctx);
-static duk_ret_t _js_Sound_clone(duk_context* ctx);
-static duk_ret_t _js_Sound_pause(duk_context* ctx);
-static duk_ret_t _js_Sound_play(duk_context* ctx);
-static duk_ret_t _js_Sound_reset(duk_context* ctx);
-static duk_ret_t _js_Sound_stop(duk_context* ctx);
+static duk_ret_t js_LoadSound         (duk_context* ctx);
+static duk_ret_t js_Sound_finalize    (duk_context* ctx);
+static duk_ret_t js_Sound_isPlaying   (duk_context* ctx);
+static duk_ret_t js_Sound_isSeekable  (duk_context* ctx);
+static duk_ret_t js_Sound_getLength   (duk_context* ctx);
+static duk_ret_t js_Sound_getPan      (duk_context* ctx);
+static duk_ret_t js_Sound_getPitch    (duk_context* ctx);
+static duk_ret_t js_Sound_getPosition (duk_context* ctx);
+static duk_ret_t js_Sound_getRepeat   (duk_context* ctx);
+static duk_ret_t js_Sound_getVolume   (duk_context* ctx);
+static duk_ret_t js_Sound_setPan      (duk_context* ctx);
+static duk_ret_t js_Sound_setPitch    (duk_context* ctx);
+static duk_ret_t js_Sound_setPosition (duk_context* ctx);
+static duk_ret_t js_Sound_setRepeat   (duk_context* ctx);
+static duk_ret_t js_Sound_setVolume   (duk_context* ctx);
+static duk_ret_t js_Sound_clone       (duk_context* ctx);
+static duk_ret_t js_Sound_pause       (duk_context* ctx);
+static duk_ret_t js_Sound_play        (duk_context* ctx);
+static duk_ret_t js_Sound_reset       (duk_context* ctx);
+static duk_ret_t js_Sound_stop        (duk_context* ctx);
 
-static void _duk_push_sphere_Sound (duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream);
+static void duk_push_sphere_sound (duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream);
 
 void
-init_sound_api(duk_context* ctx)
+init_sound_api()
 {
-	register_api_func(ctx, NULL, "LoadSound", &_js_LoadSound);
+	register_api_func(g_duktape, NULL, "LoadSound", &js_LoadSound);
 }
 
 static void
-_duk_push_sphere_Sound(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream)
+duk_push_sphere_sound(duk_context* ctx, ALLEGRO_AUDIO_STREAM* stream)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, stream); duk_put_prop_string(ctx, -2, "\xFF" "stream_ptr");
-	duk_push_c_function(ctx, &_js_Sound_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &_js_Sound_isPlaying, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isPlaying");
-	duk_push_c_function(ctx, &_js_Sound_isSeekable, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isSeekable");
-	duk_push_c_function(ctx, &_js_Sound_getLength, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getLength");
-	duk_push_c_function(ctx, &_js_Sound_getPan, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPan");
-	duk_push_c_function(ctx, &_js_Sound_getPitch, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPitch");
-	duk_push_c_function(ctx, &_js_Sound_getPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPosition");
-	duk_push_c_function(ctx, &_js_Sound_getRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRepeat");
-	duk_push_c_function(ctx, &_js_Sound_getVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getVolume");
-	duk_push_c_function(ctx, &_js_Sound_setPan, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPan");
-	duk_push_c_function(ctx, &_js_Sound_setPitch, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPitch");
-	duk_push_c_function(ctx, &_js_Sound_setPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPosition");
-	duk_push_c_function(ctx, &_js_Sound_setRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setRepeat");
-	duk_push_c_function(ctx, &_js_Sound_setVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setVolume");
-	duk_push_c_function(ctx, &_js_Sound_pause, DUK_VARARGS); duk_put_prop_string(ctx, -2, "pause");
-	duk_push_c_function(ctx, &_js_Sound_play, DUK_VARARGS); duk_put_prop_string(ctx, -2, "play");
-	duk_push_c_function(ctx, &_js_Sound_reset, DUK_VARARGS); duk_put_prop_string(ctx, -2, "reset");
-	duk_push_c_function(ctx, &_js_Sound_stop, DUK_VARARGS); duk_put_prop_string(ctx, -2, "stop");
+	duk_push_c_function(ctx, &js_Sound_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, &js_Sound_isPlaying, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isPlaying");
+	duk_push_c_function(ctx, &js_Sound_isSeekable, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isSeekable");
+	duk_push_c_function(ctx, &js_Sound_getLength, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getLength");
+	duk_push_c_function(ctx, &js_Sound_getPan, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPan");
+	duk_push_c_function(ctx, &js_Sound_getPitch, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPitch");
+	duk_push_c_function(ctx, &js_Sound_getPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPosition");
+	duk_push_c_function(ctx, &js_Sound_getRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRepeat");
+	duk_push_c_function(ctx, &js_Sound_getVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getVolume");
+	duk_push_c_function(ctx, &js_Sound_setPan, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPan");
+	duk_push_c_function(ctx, &js_Sound_setPitch, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPitch");
+	duk_push_c_function(ctx, &js_Sound_setPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPosition");
+	duk_push_c_function(ctx, &js_Sound_setRepeat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setRepeat");
+	duk_push_c_function(ctx, &js_Sound_setVolume, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setVolume");
+	duk_push_c_function(ctx, &js_Sound_pause, DUK_VARARGS); duk_put_prop_string(ctx, -2, "pause");
+	duk_push_c_function(ctx, &js_Sound_play, DUK_VARARGS); duk_put_prop_string(ctx, -2, "play");
+	duk_push_c_function(ctx, &js_Sound_reset, DUK_VARARGS); duk_put_prop_string(ctx, -2, "reset");
+	duk_push_c_function(ctx, &js_Sound_stop, DUK_VARARGS); duk_put_prop_string(ctx, -2, "stop");
 }
 
 static duk_ret_t
-_js_LoadSound(duk_context* ctx)
+js_LoadSound(duk_context* ctx)
 {
 	duk_int_t n_args = duk_get_top(ctx);
 	const char* filename = duk_get_string(ctx, 0);
@@ -69,12 +69,12 @@ _js_LoadSound(duk_context* ctx)
 	al_set_audio_stream_playing(stream, false);
 	al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
 	al_set_audio_stream_gain(stream, 1.0);
-	_duk_push_sphere_Sound(ctx, stream);
+	duk_push_sphere_sound(ctx, stream);
 	return 1;
 }
 
 static duk_ret_t
-_js_Sound_finalize(duk_context* ctx)
+js_Sound_finalize(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_get_prop_string(ctx, 0, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
@@ -85,7 +85,7 @@ _js_Sound_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_isPlaying(duk_context* ctx)
+js_Sound_isPlaying(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
@@ -96,14 +96,14 @@ _js_Sound_isPlaying(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_isSeekable(duk_context* ctx)
+js_Sound_isSeekable(duk_context* ctx)
 {
 	duk_push_true(ctx);
 	return 1;
 }
 
 static duk_ret_t
-_js_Sound_getLength(duk_context* ctx)
+js_Sound_getLength(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	
@@ -115,7 +115,7 @@ _js_Sound_getLength(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_getPan(duk_context* ctx)
+js_Sound_getPan(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 
@@ -127,7 +127,7 @@ _js_Sound_getPan(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_getPitch(duk_context* ctx)
+js_Sound_getPitch(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 
@@ -139,7 +139,7 @@ _js_Sound_getPitch(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_getPosition(duk_context* ctx)
+js_Sound_getPosition(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	
@@ -151,7 +151,7 @@ _js_Sound_getPosition(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_getRepeat(duk_context* ctx)
+js_Sound_getRepeat(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
@@ -162,7 +162,7 @@ _js_Sound_getRepeat(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_getVolume(duk_context* ctx)
+js_Sound_getVolume(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
@@ -173,7 +173,7 @@ _js_Sound_getVolume(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_setPan(duk_context* ctx)
+js_Sound_setPan(duk_context* ctx)
 {
 	int                   new_pan;
 	ALLEGRO_AUDIO_STREAM* stream;
@@ -187,7 +187,7 @@ _js_Sound_setPan(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_setPitch(duk_context* ctx)
+js_Sound_setPitch(duk_context* ctx)
 {
 	double                new_pitch;
 	ALLEGRO_AUDIO_STREAM* stream;
@@ -201,7 +201,7 @@ _js_Sound_setPitch(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_setPosition(duk_context* ctx)
+js_Sound_setPosition(duk_context* ctx)
 {
 	double                new_pos;
 	ALLEGRO_AUDIO_STREAM* stream;
@@ -215,7 +215,7 @@ _js_Sound_setPosition(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_setRepeat(duk_context* ctx)
+js_Sound_setRepeat(duk_context* ctx)
 {
 	bool                  is_looped;
 	ALLEGRO_PLAYMODE      play_mode;
@@ -231,7 +231,7 @@ _js_Sound_setRepeat(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_setVolume(duk_context* ctx)
+js_Sound_setVolume(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
@@ -243,7 +243,7 @@ _js_Sound_setVolume(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_pause(duk_context* ctx)
+js_Sound_pause(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
@@ -254,7 +254,7 @@ _js_Sound_pause(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_play(duk_context* ctx)
+js_Sound_play(duk_context* ctx)
 {
 	int                   n_args;
 	ALLEGRO_AUDIO_STREAM* stream;
@@ -275,7 +275,7 @@ _js_Sound_play(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_reset(duk_context* ctx)
+js_Sound_reset(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
@@ -287,7 +287,7 @@ _js_Sound_reset(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_Sound_stop(duk_context* ctx)
+js_Sound_stop(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
 	duk_push_this(ctx);
