@@ -169,8 +169,8 @@ update_input(void)
 	int i;
 
 	al_get_mouse_state(&mouse);
-	if (mouse.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
-	if (mouse.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
+	if (mouse.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
+	if (mouse.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
 	s_last_wheel_pos = mouse.z;
 	al_get_keyboard_state(&keyboard);
 	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
