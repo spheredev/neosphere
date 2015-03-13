@@ -1,6 +1,4 @@
-extern void init_input_api (duk_context* ctx);
-
-enum PLAYER_KEY
+enum player_key
 {
 	PLAYER_KEY_MENU,
 	PLAYER_KEY_UP,
@@ -13,4 +11,6 @@ enum PLAYER_KEY
 	PLAYER_KEY_Y
 };
 
-extern void check_bound_keys (void);
+extern void update_input (void);
+
+extern void init_input_api (void);

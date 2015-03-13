@@ -12,6 +12,7 @@ static duk_ret_t js_GradientRectangle    (duk_context* ctx);
 static duk_ret_t js_Line                 (duk_context* ctx);
 static duk_ret_t js_OutlinedCircle       (duk_context* ctx);
 static duk_ret_t js_OutlinedRectangle    (duk_context* ctx);
+static duk_ret_t js_Point                (duk_context* ctx);
 static duk_ret_t js_PointSeries          (duk_context* ctx);
 static duk_ret_t js_Rectangle            (duk_context* ctx);
 static duk_ret_t js_Triangle             (duk_context* ctx);
@@ -27,6 +28,8 @@ init_primitives_api(void)
 	register_api_func(g_duktape, NULL, "Line", js_Line);
 	register_api_func(g_duktape, NULL, "OutlinedCircle", js_OutlinedCircle);
 	register_api_func(g_duktape, NULL, "OutlinedRectangle", js_OutlinedRectangle);
+	register_api_func(g_duktape, NULL, "Point", js_Point);
+	register_api_func(g_duktape, NULL, "PointSeries", js_PointSeries);
 	register_api_func(g_duktape, NULL, "Rectangle", js_Rectangle);
 	register_api_func(g_duktape, NULL, "Triangle", js_Triangle);
 }
@@ -166,6 +169,17 @@ js_OutlinedRectangle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Point(duk_context* ctx)
+{
+	float x = duk_require_int(ctx, 0) + 0.5;
+	float y = duk_require_int(ctx, 1) + 0.5;
+	ALLEGRO_COLOR color = duk_get_sphere_color(ctx, 2);
+	
+	if (!g_skip_frame) al_draw_pixel(x, y, color);
+	return 0;
+}
+
+static duk_ret_t
 js_PointSeries(duk_context* ctx)
 {
 	duk_require_object_coercible(ctx, 0);
@@ -181,7 +195,7 @@ js_PointSeries(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "PointSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer");
+		duk_error(ctx, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer (internal error)");
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);

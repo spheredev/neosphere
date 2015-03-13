@@ -2,139 +2,191 @@
 #include "api.h"
 #include "input.h"
 
+enum mouse_button
+{
+	MOUSE_BUTTON_LEFT = 1,
+	MOUSE_BUTTON_RIGHT,
+	MOUSE_BUTTON_MIDDLE
+};
+
+enum mouse_wheel_event
+{
+	MOUSE_WHEEL_UP,
+	MOUSE_WHEEL_DOWN
+};
+
 static duk_ret_t js_AreKeysLeft             (duk_context* ctx);
 static duk_ret_t js_IsAnyKeyPressed         (duk_context* ctx);
 static duk_ret_t js_IsJoystickButtonPressed (duk_context* ctx);
 static duk_ret_t js_IsKeyPressed            (duk_context* ctx);
+static duk_ret_t js_IsMouseButtonPressed    (duk_context* ctx);
 static duk_ret_t js_GetKey                  (duk_context* ctx);
 static duk_ret_t js_GetKeyString            (duk_context* ctx);
+static duk_ret_t js_GetMouseWheelEvent      (duk_context* ctx);
+static duk_ret_t js_GetMouseX               (duk_context* ctx);
+static duk_ret_t js_GetMouseY               (duk_context* ctx);
 static duk_ret_t js_GetNumJoysticks         (duk_context* ctx);
+static duk_ret_t js_GetNumMouseWheelEvents  (duk_context* ctx);
 static duk_ret_t js_GetPlayerKey            (duk_context* ctx);
 static duk_ret_t js_GetToggleState          (duk_context* ctx);
+static duk_ret_t js_SetMousePosition        (duk_context* ctx);
 static duk_ret_t js_BindKey                 (duk_context* ctx);
 static duk_ret_t js_UnbindKey               (duk_context* ctx);
+
+static void queue_wheel_event (int event);
 
 static int  s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int  s_key_up_scripts[ALLEGRO_KEY_MAX];
 static bool s_last_key_state[ALLEGRO_KEY_MAX];
+static int  s_last_wheel_pos;
+static int  s_num_wheel_events = 0;
+static int  s_wheel_queue[255];
 
 void
-init_input_api(duk_context* ctx)
+init_input_api(void)
 {
+	ALLEGRO_MOUSE_STATE mouse;
+	
 	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
 	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
 	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+	al_get_mouse_state(&mouse); s_last_wheel_pos = mouse.z;
 
-	register_api_const(ctx, "PLAYER_1", 0);
-	register_api_const(ctx, "PLAYER_2", 1);
-	register_api_const(ctx, "PLAYER_3", 2);
-	register_api_const(ctx, "PLAYER_4", 3);
-	register_api_const(ctx, "PLAYER_KEY_MENU", PLAYER_KEY_MENU);
-	register_api_const(ctx, "PLAYER_KEY_UP", PLAYER_KEY_UP);
-	register_api_const(ctx, "PLAYER_KEY_DOWN", PLAYER_KEY_DOWN);
-	register_api_const(ctx, "PLAYER_KEY_LEFT", PLAYER_KEY_LEFT);
-	register_api_const(ctx, "PLAYER_KEY_RIGHT", PLAYER_KEY_RIGHT);
-	register_api_const(ctx, "PLAYER_KEY_A", PLAYER_KEY_A);
-	register_api_const(ctx, "PLAYER_KEY_B", PLAYER_KEY_B);
-	register_api_const(ctx, "PLAYER_KEY_X", PLAYER_KEY_X);
-	register_api_const(ctx, "PLAYER_KEY_Y", PLAYER_KEY_Y);
-	register_api_const(ctx, "KEY_SHIFT", ALLEGRO_KEY_LSHIFT);
-	register_api_const(ctx, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
-	register_api_const(ctx, "KEY_ALT", ALLEGRO_KEY_ALT);
-	register_api_const(ctx, "KEY_TAB", ALLEGRO_KEY_TAB);
-	register_api_const(ctx, "KEY_SPACE", ALLEGRO_KEY_SPACE);
-	register_api_const(ctx, "KEY_ENTER", ALLEGRO_KEY_ENTER);
-	register_api_const(ctx, "KEY_ESCAPE", ALLEGRO_KEY_ESCAPE);
-	register_api_const(ctx, "KEY_UP", ALLEGRO_KEY_UP);
-	register_api_const(ctx, "KEY_DOWN", ALLEGRO_KEY_DOWN);
-	register_api_const(ctx, "KEY_LEFT", ALLEGRO_KEY_LEFT);
-	register_api_const(ctx, "KEY_RIGHT", ALLEGRO_KEY_RIGHT);
-	register_api_const(ctx, "KEY_PAGEUP", ALLEGRO_KEY_PGUP);
-	register_api_const(ctx, "KEY_PAGEDOWN", ALLEGRO_KEY_PGDN);
-	register_api_const(ctx, "KEY_HOME", ALLEGRO_KEY_HOME);
-	register_api_const(ctx, "KEY_END", ALLEGRO_KEY_END);
-	register_api_const(ctx, "KEY_INSERT", ALLEGRO_KEY_INSERT);
-	register_api_const(ctx, "KEY_DELETE", ALLEGRO_KEY_DELETE);
-	register_api_const(ctx, "KEY_BACKSPACE", ALLEGRO_KEY_BACKSPACE);
-	register_api_const(ctx, "KEY_TILDE", ALLEGRO_KEY_TILDE);
-	register_api_const(ctx, "KEY_F1", ALLEGRO_KEY_F1);
-	register_api_const(ctx, "KEY_F2", ALLEGRO_KEY_F2);
-	register_api_const(ctx, "KEY_F3", ALLEGRO_KEY_F3);
-	register_api_const(ctx, "KEY_F4", ALLEGRO_KEY_F4);
-	register_api_const(ctx, "KEY_F5", ALLEGRO_KEY_F5);
-	register_api_const(ctx, "KEY_F6", ALLEGRO_KEY_F6);
-	register_api_const(ctx, "KEY_F7", ALLEGRO_KEY_F7);
-	register_api_const(ctx, "KEY_F8", ALLEGRO_KEY_F8);
-	register_api_const(ctx, "KEY_F9", ALLEGRO_KEY_F9);
-	register_api_const(ctx, "KEY_F10", ALLEGRO_KEY_F10);
-	register_api_const(ctx, "KEY_F11", ALLEGRO_KEY_F11);
-	register_api_const(ctx, "KEY_F12", ALLEGRO_KEY_F12);
-	register_api_const(ctx, "KEY_0", ALLEGRO_KEY_0);
-	register_api_const(ctx, "KEY_1", ALLEGRO_KEY_1);
-	register_api_const(ctx, "KEY_2", ALLEGRO_KEY_2);
-	register_api_const(ctx, "KEY_3", ALLEGRO_KEY_3);
-	register_api_const(ctx, "KEY_4", ALLEGRO_KEY_4);
-	register_api_const(ctx, "KEY_5", ALLEGRO_KEY_5);
-	register_api_const(ctx, "KEY_6", ALLEGRO_KEY_6);
-	register_api_const(ctx, "KEY_7", ALLEGRO_KEY_7);
-	register_api_const(ctx, "KEY_8", ALLEGRO_KEY_8);
-	register_api_const(ctx, "KEY_9", ALLEGRO_KEY_9);
-	register_api_const(ctx, "KEY_A", ALLEGRO_KEY_A);
-	register_api_const(ctx, "KEY_B", ALLEGRO_KEY_B);
-	register_api_const(ctx, "KEY_C", ALLEGRO_KEY_C);
-	register_api_const(ctx, "KEY_D", ALLEGRO_KEY_D);
-	register_api_const(ctx, "KEY_E", ALLEGRO_KEY_E);
-	register_api_const(ctx, "KEY_F", ALLEGRO_KEY_F);
-	register_api_const(ctx, "KEY_G", ALLEGRO_KEY_G);
-	register_api_const(ctx, "KEY_H", ALLEGRO_KEY_H);
-	register_api_const(ctx, "KEY_I", ALLEGRO_KEY_I);
-	register_api_const(ctx, "KEY_J", ALLEGRO_KEY_J);
-	register_api_const(ctx, "KEY_K", ALLEGRO_KEY_K);
-	register_api_const(ctx, "KEY_L", ALLEGRO_KEY_L);
-	register_api_const(ctx, "KEY_M", ALLEGRO_KEY_M);
-	register_api_const(ctx, "KEY_N", ALLEGRO_KEY_N);
-	register_api_const(ctx, "KEY_O", ALLEGRO_KEY_O);
-	register_api_const(ctx, "KEY_P", ALLEGRO_KEY_P);
-	register_api_const(ctx, "KEY_Q", ALLEGRO_KEY_Q);
-	register_api_const(ctx, "KEY_R", ALLEGRO_KEY_R);
-	register_api_const(ctx, "KEY_S", ALLEGRO_KEY_S);
-	register_api_const(ctx, "KEY_T", ALLEGRO_KEY_T);
-	register_api_const(ctx, "KEY_U", ALLEGRO_KEY_U);
-	register_api_const(ctx, "KEY_V", ALLEGRO_KEY_V);
-	register_api_const(ctx, "KEY_W", ALLEGRO_KEY_W);
-	register_api_const(ctx, "KEY_X", ALLEGRO_KEY_X);
-	register_api_const(ctx, "KEY_Y", ALLEGRO_KEY_Y);
-	register_api_const(ctx, "KEY_Z", ALLEGRO_KEY_Z);
+	register_api_const(g_duktape, "PLAYER_1", 0);
+	register_api_const(g_duktape, "PLAYER_2", 1);
+	register_api_const(g_duktape, "PLAYER_3", 2);
+	register_api_const(g_duktape, "PLAYER_4", 3);
+	register_api_const(g_duktape, "PLAYER_KEY_MENU", PLAYER_KEY_MENU);
+	register_api_const(g_duktape, "PLAYER_KEY_UP", PLAYER_KEY_UP);
+	register_api_const(g_duktape, "PLAYER_KEY_DOWN", PLAYER_KEY_DOWN);
+	register_api_const(g_duktape, "PLAYER_KEY_LEFT", PLAYER_KEY_LEFT);
+	register_api_const(g_duktape, "PLAYER_KEY_RIGHT", PLAYER_KEY_RIGHT);
+	register_api_const(g_duktape, "PLAYER_KEY_A", PLAYER_KEY_A);
+	register_api_const(g_duktape, "PLAYER_KEY_B", PLAYER_KEY_B);
+	register_api_const(g_duktape, "PLAYER_KEY_X", PLAYER_KEY_X);
+	register_api_const(g_duktape, "PLAYER_KEY_Y", PLAYER_KEY_Y);
+	register_api_const(g_duktape, "KEY_SHIFT", ALLEGRO_KEY_LSHIFT);
+	register_api_const(g_duktape, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
+	register_api_const(g_duktape, "KEY_ALT", ALLEGRO_KEY_ALT);
+	register_api_const(g_duktape, "KEY_TAB", ALLEGRO_KEY_TAB);
+	register_api_const(g_duktape, "KEY_SPACE", ALLEGRO_KEY_SPACE);
+	register_api_const(g_duktape, "KEY_ENTER", ALLEGRO_KEY_ENTER);
+	register_api_const(g_duktape, "KEY_ESCAPE", ALLEGRO_KEY_ESCAPE);
+	register_api_const(g_duktape, "KEY_UP", ALLEGRO_KEY_UP);
+	register_api_const(g_duktape, "KEY_DOWN", ALLEGRO_KEY_DOWN);
+	register_api_const(g_duktape, "KEY_LEFT", ALLEGRO_KEY_LEFT);
+	register_api_const(g_duktape, "KEY_RIGHT", ALLEGRO_KEY_RIGHT);
+	register_api_const(g_duktape, "KEY_PAGEUP", ALLEGRO_KEY_PGUP);
+	register_api_const(g_duktape, "KEY_PAGEDOWN", ALLEGRO_KEY_PGDN);
+	register_api_const(g_duktape, "KEY_HOME", ALLEGRO_KEY_HOME);
+	register_api_const(g_duktape, "KEY_END", ALLEGRO_KEY_END);
+	register_api_const(g_duktape, "KEY_INSERT", ALLEGRO_KEY_INSERT);
+	register_api_const(g_duktape, "KEY_DELETE", ALLEGRO_KEY_DELETE);
+	register_api_const(g_duktape, "KEY_BACKSPACE", ALLEGRO_KEY_BACKSPACE);
+	register_api_const(g_duktape, "KEY_TILDE", ALLEGRO_KEY_TILDE);
+	register_api_const(g_duktape, "KEY_F1", ALLEGRO_KEY_F1);
+	register_api_const(g_duktape, "KEY_F2", ALLEGRO_KEY_F2);
+	register_api_const(g_duktape, "KEY_F3", ALLEGRO_KEY_F3);
+	register_api_const(g_duktape, "KEY_F4", ALLEGRO_KEY_F4);
+	register_api_const(g_duktape, "KEY_F5", ALLEGRO_KEY_F5);
+	register_api_const(g_duktape, "KEY_F6", ALLEGRO_KEY_F6);
+	register_api_const(g_duktape, "KEY_F7", ALLEGRO_KEY_F7);
+	register_api_const(g_duktape, "KEY_F8", ALLEGRO_KEY_F8);
+	register_api_const(g_duktape, "KEY_F9", ALLEGRO_KEY_F9);
+	register_api_const(g_duktape, "KEY_F10", ALLEGRO_KEY_F10);
+	register_api_const(g_duktape, "KEY_F11", ALLEGRO_KEY_F11);
+	register_api_const(g_duktape, "KEY_F12", ALLEGRO_KEY_F12);
+	register_api_const(g_duktape, "KEY_0", ALLEGRO_KEY_0);
+	register_api_const(g_duktape, "KEY_1", ALLEGRO_KEY_1);
+	register_api_const(g_duktape, "KEY_2", ALLEGRO_KEY_2);
+	register_api_const(g_duktape, "KEY_3", ALLEGRO_KEY_3);
+	register_api_const(g_duktape, "KEY_4", ALLEGRO_KEY_4);
+	register_api_const(g_duktape, "KEY_5", ALLEGRO_KEY_5);
+	register_api_const(g_duktape, "KEY_6", ALLEGRO_KEY_6);
+	register_api_const(g_duktape, "KEY_7", ALLEGRO_KEY_7);
+	register_api_const(g_duktape, "KEY_8", ALLEGRO_KEY_8);
+	register_api_const(g_duktape, "KEY_9", ALLEGRO_KEY_9);
+	register_api_const(g_duktape, "KEY_A", ALLEGRO_KEY_A);
+	register_api_const(g_duktape, "KEY_B", ALLEGRO_KEY_B);
+	register_api_const(g_duktape, "KEY_C", ALLEGRO_KEY_C);
+	register_api_const(g_duktape, "KEY_D", ALLEGRO_KEY_D);
+	register_api_const(g_duktape, "KEY_E", ALLEGRO_KEY_E);
+	register_api_const(g_duktape, "KEY_F", ALLEGRO_KEY_F);
+	register_api_const(g_duktape, "KEY_G", ALLEGRO_KEY_G);
+	register_api_const(g_duktape, "KEY_H", ALLEGRO_KEY_H);
+	register_api_const(g_duktape, "KEY_I", ALLEGRO_KEY_I);
+	register_api_const(g_duktape, "KEY_J", ALLEGRO_KEY_J);
+	register_api_const(g_duktape, "KEY_K", ALLEGRO_KEY_K);
+	register_api_const(g_duktape, "KEY_L", ALLEGRO_KEY_L);
+	register_api_const(g_duktape, "KEY_M", ALLEGRO_KEY_M);
+	register_api_const(g_duktape, "KEY_N", ALLEGRO_KEY_N);
+	register_api_const(g_duktape, "KEY_O", ALLEGRO_KEY_O);
+	register_api_const(g_duktape, "KEY_P", ALLEGRO_KEY_P);
+	register_api_const(g_duktape, "KEY_Q", ALLEGRO_KEY_Q);
+	register_api_const(g_duktape, "KEY_R", ALLEGRO_KEY_R);
+	register_api_const(g_duktape, "KEY_S", ALLEGRO_KEY_S);
+	register_api_const(g_duktape, "KEY_T", ALLEGRO_KEY_T);
+	register_api_const(g_duktape, "KEY_U", ALLEGRO_KEY_U);
+	register_api_const(g_duktape, "KEY_V", ALLEGRO_KEY_V);
+	register_api_const(g_duktape, "KEY_W", ALLEGRO_KEY_W);
+	register_api_const(g_duktape, "KEY_X", ALLEGRO_KEY_X);
+	register_api_const(g_duktape, "KEY_Y", ALLEGRO_KEY_Y);
+	register_api_const(g_duktape, "KEY_Z", ALLEGRO_KEY_Z);
 
-	register_api_func(ctx, NULL, "AreKeysLeft", js_AreKeysLeft);
-	register_api_func(ctx, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
-	register_api_func(ctx, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
-	register_api_func(ctx, NULL, "IsKeyPressed", js_IsKeyPressed);
-	register_api_func(ctx, NULL, "GetKey", js_GetKey);
-	register_api_func(ctx, NULL, "GetKeyString", js_GetKeyString);
-	register_api_func(ctx, NULL, "GetNumJoysticks", js_GetNumJoysticks);
-	register_api_func(ctx, NULL, "GetPlayerKey", js_GetPlayerKey);
-	register_api_func(ctx, NULL, "GetToggleState", js_GetToggleState);
-	register_api_func(ctx, NULL, "BindKey", js_BindKey);
-	register_api_func(ctx, NULL, "UnbindKey", js_UnbindKey);
+	register_api_const(g_duktape, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
+	register_api_const(g_duktape, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
+	register_api_const(g_duktape, "MOUSE_MIDDLE", MOUSE_BUTTON_MIDDLE);
+	register_api_const(g_duktape, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
+	register_api_const(g_duktape, "MOUSE_WHEEL_UP", MOUSE_WHEEL_UP);
+	register_api_const(g_duktape, "MOUSE_WHEEL_DOWN", MOUSE_WHEEL_DOWN);
+
+	register_api_func(g_duktape, NULL, "AreKeysLeft", js_AreKeysLeft);
+	register_api_func(g_duktape, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
+	register_api_func(g_duktape, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
+	register_api_func(g_duktape, NULL, "IsKeyPressed", js_IsKeyPressed);
+	register_api_func(g_duktape, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
+	register_api_func(g_duktape, NULL, "GetKey", js_GetKey);
+	register_api_func(g_duktape, NULL, "GetKeyString", js_GetKeyString);
+	register_api_func(g_duktape, NULL, "GetMouseWheelEvent", js_GetMouseWheelEvent);
+	register_api_func(g_duktape, NULL, "GetMouseX", js_GetMouseX);
+	register_api_func(g_duktape, NULL, "GetMouseY", js_GetMouseY);
+	register_api_func(g_duktape, NULL, "GetNumJoysticks", js_GetNumJoysticks);
+	register_api_func(g_duktape, NULL, "GetNumMouseWheelEvents", js_GetNumMouseWheelEvents);
+	register_api_func(g_duktape, NULL, "GetPlayerKey", js_GetPlayerKey);
+	register_api_func(g_duktape, NULL, "GetToggleState", js_GetToggleState);
+	register_api_func(g_duktape, NULL, "SetMousePosition", js_SetMousePosition);
+	register_api_func(g_duktape, NULL, "BindKey", js_BindKey);
+	register_api_func(g_duktape, NULL, "UnbindKey", js_UnbindKey);
 }
 
 void
-check_bound_keys(void)
+update_input(void)
 {
 	bool                   is_down;
-	ALLEGRO_KEYBOARD_STATE kb_state;
+	ALLEGRO_KEYBOARD_STATE keyboard;
+	ALLEGRO_MOUSE_STATE    mouse;
 
 	int i;
 
-	al_get_keyboard_state(&kb_state);
+	al_get_mouse_state(&mouse);
+	if (mouse.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
+	if (mouse.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
+	s_last_wheel_pos = mouse.z;
+	al_get_keyboard_state(&keyboard);
 	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
-		is_down = al_key_down(&kb_state, i);
-		if (is_down && !s_last_key_state[i])
-			run_script(s_key_down_scripts[i], false);
-		else if (!is_down && s_last_key_state[i])
-			run_script(s_key_up_scripts[i], false);
+		is_down = al_key_down(&keyboard, i);
+		if (is_down && !s_last_key_state[i]) run_script(s_key_down_scripts[i], false);
+		if (!is_down && s_last_key_state[i]) run_script(s_key_up_scripts[i], false);
 		s_last_key_state[i] = is_down;
+	}
+}
+
+static void
+queue_wheel_event(int event)
+{
+	if (s_num_wheel_events < 255) {
+		s_wheel_queue[s_num_wheel_events] = event;
+		++s_num_wheel_events;
 	}
 }
 
@@ -174,12 +226,25 @@ static duk_ret_t
 js_IsKeyPressed(duk_context* ctx)
 {
 	int                    code;
-	ALLEGRO_KEYBOARD_STATE kb_state;
+	ALLEGRO_KEYBOARD_STATE keyboard;
 
 	code = duk_require_int(ctx, 0);
-	al_get_keyboard_state(&kb_state);
-	duk_push_boolean(ctx, kb_state.display == g_display
-		&& al_key_down(&kb_state, code));
+	al_get_keyboard_state(&keyboard);
+	duk_push_boolean(ctx, keyboard.display == g_display
+		&& al_key_down(&keyboard, code));
+	return 1;
+}
+
+static duk_ret_t
+js_IsMouseButtonPressed(duk_context* ctx)
+{
+	int button = duk_require_int(ctx, 0);
+
+	ALLEGRO_MOUSE_STATE mouse;
+	
+	al_get_mouse_state(&mouse);
+	duk_push_boolean(ctx, mouse.display == g_display
+		&& al_mouse_button_down(&mouse, button));
 	return 1;
 }
 
@@ -231,30 +296,71 @@ js_GetKeyString(duk_context* ctx)
 	case ALLEGRO_KEY_X: duk_push_string(ctx, shift ? "X" : "x"); break;
 	case ALLEGRO_KEY_Y: duk_push_string(ctx, shift ? "Y" : "y"); break;
 	case ALLEGRO_KEY_Z: duk_push_string(ctx, shift ? "Z" : "z"); break;
-	case ALLEGRO_KEY_1: duk_push_string(ctx, shift ? "1" : "!"); break;
-	case ALLEGRO_KEY_2: duk_push_string(ctx, shift ? "2" : "@"); break;
-	case ALLEGRO_KEY_3: duk_push_string(ctx, shift ? "3" : "#"); break;
-	case ALLEGRO_KEY_4: duk_push_string(ctx, shift ? "4" : "$"); break;
-	case ALLEGRO_KEY_5: duk_push_string(ctx, shift ? "5" : "%"); break;
-	case ALLEGRO_KEY_6: duk_push_string(ctx, shift ? "6" : "^"); break;
-	case ALLEGRO_KEY_7: duk_push_string(ctx, shift ? "7" : "&"); break;
-	case ALLEGRO_KEY_8: duk_push_string(ctx, shift ? "8" : "*"); break;
-	case ALLEGRO_KEY_9: duk_push_string(ctx, shift ? "9" : "("); break;
-	case ALLEGRO_KEY_0: duk_push_string(ctx, shift ? "0" : ")"); break;
-	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shift ? "\\" : "|"); break;
-	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shift ? "." : ">"); break;
-	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shift ? "," : "<"); break;
-	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shift ? "=" : "+"); break;
-	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shift ? "-" : "_"); break;
-	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shift ? "'" : "\""); break;
-	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shift ? ";" : ":"); break;
-	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shift ? "/" : "?"); break;
+	case ALLEGRO_KEY_1: duk_push_string(ctx, shift ? "!" : "1"); break;
+	case ALLEGRO_KEY_2: duk_push_string(ctx, shift ? "@" : "2"); break;
+	case ALLEGRO_KEY_3: duk_push_string(ctx, shift ? "#" : "3"); break;
+	case ALLEGRO_KEY_4: duk_push_string(ctx, shift ? "$" : "4"); break;
+	case ALLEGRO_KEY_5: duk_push_string(ctx, shift ? "%" : "5"); break;
+	case ALLEGRO_KEY_6: duk_push_string(ctx, shift ? "^" : "6"); break;
+	case ALLEGRO_KEY_7: duk_push_string(ctx, shift ? "&" : "7"); break;
+	case ALLEGRO_KEY_8: duk_push_string(ctx, shift ? "*" : "8"); break;
+	case ALLEGRO_KEY_9: duk_push_string(ctx, shift ? "(" : "9"); break;
+	case ALLEGRO_KEY_0: duk_push_string(ctx, shift ? ")" : "0"); break;
+	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shift ? "|" : "\\"); break;
+	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shift ? ">" : "."); break;
+	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shift ? "}" : "]"); break;
+	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shift ? "<" : ","); break;
+	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shift ? "+" : "="); break;
+	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shift ? "_" : "-"); break;
+	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shift ? "\"" : "'"); break;
+	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shift ? "{" : "["); break;
+	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shift ? ":" : ";"); break;
+	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shift ? "?" : "/"); break;
 	case ALLEGRO_KEY_SPACE: duk_push_string(ctx, " "); break;
 	case ALLEGRO_KEY_TAB: duk_push_string(ctx, "\t"); break;
-	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shift ? "`" : "~"); break;
+	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shift ? "~" : "`"); break;
 	default:
 		duk_push_string(ctx, "");
 	}
+	return 1;
+}
+
+static duk_ret_t
+js_GetMouseWheelEvent(duk_context* ctx)
+{
+	int event;
+
+	int i;
+	
+	while (s_num_wheel_events == 0) {
+		if (!do_events()) bail_out_game();
+	}
+	if (s_num_wheel_events > 0) {
+		event = s_wheel_queue[0];
+		--s_num_wheel_events;
+		for (i = 0; i < s_num_wheel_events; ++i) s_wheel_queue[i] = s_wheel_queue[i + 1];
+	}
+	duk_push_int(ctx, event);
+	return 1;
+}
+
+static duk_ret_t
+js_GetMouseX(duk_context* ctx)
+{
+	ALLEGRO_MOUSE_STATE mouse;
+	
+	al_get_mouse_state(&mouse);
+	duk_push_int(ctx, mouse.x / g_scale_x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetMouseY(duk_context* ctx)
+{
+	ALLEGRO_MOUSE_STATE mouse;
+
+	al_get_mouse_state(&mouse);
+	duk_push_int(ctx, mouse.y / g_scale_y);
 	return 1;
 }
 
@@ -263,6 +369,13 @@ js_GetNumJoysticks(duk_context* ctx)
 {
 	// TODO: implement joystick support
 	duk_push_int(ctx, 0);
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumMouseWheelEvents(duk_context* ctx)
+{
+	duk_push_int(ctx, s_num_wheel_events);
 	return 1;
 }
 
@@ -293,6 +406,16 @@ js_GetToggleState(duk_context* ctx)
 {
 	duk_push_false(ctx);
 	return 1;
+}
+
+static duk_ret_t
+js_SetMousePosition(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	
+	al_set_mouse_xy(g_display, x * g_scale_x, y * g_scale_y);
+	return 0;
 }
 
 static js_BindKey(duk_context* ctx)

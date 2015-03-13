@@ -258,6 +258,10 @@ do_events(void)
 {
 	ALLEGRO_EVENT event;
 
+	// update global input state
+	update_input();
+
+	// process Allegro events
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
@@ -306,9 +310,6 @@ begin_frame(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 	
-	// check for bound key activation
-	check_bound_keys();
-
 	// flip backbuffer
 	is_backbuffer_valid = !g_skip_frame;
 	if (framerate > 0) {
@@ -488,6 +489,7 @@ initialize_engine(void)
 	al_install_audio();
 	al_init_acodec_addon();
 	al_install_keyboard();
+	al_install_mouse();
 
 	// load system configuraton
 	path = get_sys_asset_path("system.ini", "system");
@@ -502,7 +504,7 @@ initialize_engine(void)
 	init_file_api();
 	init_font_api(g_duktape);
 	init_image_api(g_duktape);
-	init_input_api(g_duktape);
+	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duktape);
 	init_primitives_api();
