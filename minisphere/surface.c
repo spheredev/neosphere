@@ -26,6 +26,8 @@ static duk_ret_t js_Surface_clone             (duk_context* ctx);
 static duk_ret_t js_Surface_cloneSection      (duk_context* ctx);
 static duk_ret_t js_Surface_createImage       (duk_context* ctx);
 static duk_ret_t js_Surface_drawText          (duk_context* ctx);
+static duk_ret_t js_Surface_flipHorizontally  (duk_context* ctx);
+static duk_ret_t js_Surface_flipVertically    (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle (duk_context* ctx);
 static duk_ret_t js_Surface_line              (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedRectangle (duk_context* ctx);
@@ -72,6 +74,8 @@ duk_push_sphere_surface(duk_context* ctx, image_t* image)
 	duk_push_c_function(ctx, &js_Surface_cloneSection, DUK_VARARGS); duk_put_prop_string(ctx, -2, "cloneSection");
 	duk_push_c_function(ctx, &js_Surface_createImage, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createImage");
 	duk_push_c_function(ctx, &js_Surface_drawText, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawText");
+	duk_push_c_function(ctx, &js_Surface_flipHorizontally, DUK_VARARGS); duk_put_prop_string(ctx, -2, "flipHorizontally");
+	duk_push_c_function(ctx, &js_Surface_flipVertically, DUK_VARARGS); duk_put_prop_string(ctx, -2, "flipVertically");
 	duk_push_c_function(ctx, &js_Surface_gradientRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "gradientRectangle");
 	duk_push_c_function(ctx, &js_Surface_line, DUK_VARARGS); duk_put_prop_string(ctx, -2, "line");
 	duk_push_c_function(ctx, &js_Surface_outlinedRectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "outlinedRectangle");
@@ -417,6 +421,30 @@ js_Surface_drawText(duk_context* ctx)
 	al_draw_text(get_font_object(font), color, x, y, 0x0, text);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_flipHorizontally(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	flip_image(image, true, false);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_flipVertically(duk_context* ctx)
+{
+	image_t* image;
+	
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	flip_image(image, false, true);
 	return 0;
 }
 

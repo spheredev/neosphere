@@ -2,15 +2,17 @@
 #include "api.h"
 #include "input.h"
 
-static duk_ret_t js_AreKeysLeft     (duk_context* ctx);
-static duk_ret_t js_IsAnyKeyPressed (duk_context* ctx);
-static duk_ret_t js_IsKeyPressed    (duk_context* ctx);
-static duk_ret_t js_GetKey          (duk_context* ctx);
-static duk_ret_t js_GetKeyString    (duk_context* ctx);
-static duk_ret_t js_GetPlayerKey    (duk_context* ctx);
-static duk_ret_t js_GetToggleState  (duk_context* ctx);
-static duk_ret_t js_BindKey         (duk_context* ctx);
-static duk_ret_t js_UnbindKey       (duk_context* ctx);
+static duk_ret_t js_AreKeysLeft             (duk_context* ctx);
+static duk_ret_t js_IsAnyKeyPressed         (duk_context* ctx);
+static duk_ret_t js_IsJoystickButtonPressed (duk_context* ctx);
+static duk_ret_t js_IsKeyPressed            (duk_context* ctx);
+static duk_ret_t js_GetKey                  (duk_context* ctx);
+static duk_ret_t js_GetKeyString            (duk_context* ctx);
+static duk_ret_t js_GetNumJoysticks         (duk_context* ctx);
+static duk_ret_t js_GetPlayerKey            (duk_context* ctx);
+static duk_ret_t js_GetToggleState          (duk_context* ctx);
+static duk_ret_t js_BindKey                 (duk_context* ctx);
+static duk_ret_t js_UnbindKey               (duk_context* ctx);
 
 static int  s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int  s_key_up_scripts[ALLEGRO_KEY_MAX];
@@ -106,9 +108,11 @@ init_input_api(duk_context* ctx)
 
 	register_api_func(ctx, NULL, "AreKeysLeft", js_AreKeysLeft);
 	register_api_func(ctx, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
+	register_api_func(ctx, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
 	register_api_func(ctx, NULL, "IsKeyPressed", js_IsKeyPressed);
 	register_api_func(ctx, NULL, "GetKey", js_GetKey);
 	register_api_func(ctx, NULL, "GetKeyString", js_GetKeyString);
+	register_api_func(ctx, NULL, "GetNumJoysticks", js_GetNumJoysticks);
 	register_api_func(ctx, NULL, "GetPlayerKey", js_GetPlayerKey);
 	register_api_func(ctx, NULL, "GetToggleState", js_GetToggleState);
 	register_api_func(ctx, NULL, "BindKey", js_BindKey);
@@ -155,6 +159,13 @@ js_IsAnyKeyPressed(duk_context* ctx)
 			return 1;
 		}
 	}
+	duk_push_false(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_IsJoystickButtonPressed(duk_context* ctx)
+{
 	duk_push_false(ctx);
 	return 1;
 }
@@ -244,6 +255,14 @@ js_GetKeyString(duk_context* ctx)
 	default:
 		duk_push_string(ctx, "");
 	}
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumJoysticks(duk_context* ctx)
+{
+	// TODO: implement joystick support
+	duk_push_int(ctx, 0);
 	return 1;
 }
 

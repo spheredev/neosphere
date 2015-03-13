@@ -25,7 +25,7 @@
 #include "script.h"
 
 static double      const SPHERE_API_VERSION        = 1.5;
-static const char* const SPHERE_API_VERSION_STRING = "v1.5 (compatible; minisphere v1.0-b1)";
+static const char* const SPHERE_API_VERSION_STRING = "v1.5 (compatible; minisphere 1.0b2)";
 
 typedef struct key_queue key_queue_t;
 struct key_queue

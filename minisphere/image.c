@@ -183,6 +183,12 @@ apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 }
 
 void
+flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
+{
+	// TODO: implement in-place image mirroring
+}
+
+void
 init_image_api(duk_context* ctx)
 {
 	const char* filename;
