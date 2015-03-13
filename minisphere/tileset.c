@@ -67,7 +67,10 @@ load_tileset(const char* path)
 tileset_t*
 read_tileset(ALLEGRO_FILE* file)
 {
+	image_t*             atlas;
+	int                  atlas_w, atlas_h;
 	int64_t              file_pos;
+	int                  n_tiles_per_row;
 	struct rts_header    rts;
 	rect_t               segment;
 	struct rts_tile_info tile_info;
@@ -85,10 +88,22 @@ read_tileset(ALLEGRO_FILE* file)
 		goto on_error;
 	if (rts.tile_bpp != 32) goto on_error;
 	if ((tiles = calloc(rts.num_tiles, sizeof(struct tile))) == NULL) goto on_error;
+	
+	// prepare the tile atlas
+	n_tiles_per_row = ceil(sqrt(rts.num_tiles));
+	atlas_w = rts.tile_width * n_tiles_per_row;
+	atlas_h = rts.tile_height * n_tiles_per_row;
+	if (!(atlas = create_image(atlas_w, atlas_h))) goto on_error;
+
+	// read in tile bitmaps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if ((tiles[i].image = read_image(file, rts.tile_width, rts.tile_height)) == NULL)
-			goto on_error;
+		tiles[i].image = read_subimage(file, atlas,
+			i % n_tiles_per_row * rts.tile_width, i / n_tiles_per_row * rts.tile_height,
+			rts.tile_width, rts.tile_height);
+		if (tiles[i].image == NULL) goto on_error;
 	}
+
+	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
 		if (al_fread(file, &tile_info, sizeof(struct rts_tile_info)) != sizeof(struct rts_tile_info))
 			goto on_error;
@@ -116,13 +131,16 @@ read_tileset(ALLEGRO_FILE* file)
 			}
 		}
 	}
+
+	// wrap things up
+	free_image(atlas);
 	tileset->width = rts.tile_width;
 	tileset->height = rts.tile_height;
 	tileset->num_tiles = rts.num_tiles;
 	tileset->tiles = tiles;
 	return tileset;
 
-on_error:
+on_error:  // oh no!
 	if (file != NULL) al_fseek(file, file_pos, ALLEGRO_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
@@ -132,6 +150,7 @@ on_error:
 		}
 		free(tileset->tiles);
 	}
+	if (atlas != NULL) free_image(atlas);
 	free(tileset);
 	return NULL;
 }

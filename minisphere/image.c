@@ -11,6 +11,7 @@ struct image
 	ALLEGRO_BITMAP* bitmap;
 	int             width;
 	int             height;
+	image_t*        parent;
 };
 
 static duk_ret_t js_GetSystemArrow           (duk_context* ctx);
@@ -44,6 +45,24 @@ create_image(int width, int height)
 		goto on_error;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	return ref_image(image);
+
+on_error:
+	free(image);
+	return NULL;
+}
+
+image_t*
+create_subimage(image_t* parent, int x, int y, int width, int height)
+{
+	image_t* image;
+
+	if ((image = calloc(1, sizeof(image_t))) == NULL) goto on_error;
+	if ((image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)) == NULL)
+		goto on_error;
+	image->width = al_get_bitmap_width(image->bitmap);
+	image->height = al_get_bitmap_height(image->bitmap);
+	image->parent = ref_image(parent);
 	return ref_image(image);
 
 on_error:
@@ -127,6 +146,37 @@ on_error:
 }
 
 image_t*
+read_subimage(ALLEGRO_FILE* file, image_t* parent, int x, int y, int width, int height)
+{
+	image_t*               image;
+	uint8_t*               line_ptr;
+	size_t                 line_size;
+	ALLEGRO_LOCKED_REGION* lock = NULL;
+	int64_t                old_file_pos;
+
+	int i_y;
+
+	old_file_pos = al_ftell(file);
+	if (!(image = create_subimage(parent, x, y, width, height))) goto on_error;
+	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
+		goto on_error;
+	line_size = width * 4;
+	for (i_y = 0; i_y < height; ++i_y) {
+		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
+		if (al_fread(file, line_ptr, line_size) != line_size)
+			goto on_error;
+	}
+	al_unlock_bitmap(image->bitmap);
+	return image;
+
+on_error:
+	al_fseek(file, old_file_pos, ALLEGRO_SEEK_SET);
+	if (lock != NULL) al_unlock_bitmap(image->bitmap);
+	free_image(image);
+	return NULL;
+}
+
+image_t*
 ref_image(image_t* image)
 {
 	++image->c_refs;
@@ -139,6 +189,7 @@ free_image(image_t* image)
 	if (image == NULL || --image->c_refs > 0)
 		return;
 	al_destroy_bitmap(image->bitmap);
+	free_image(image->parent);
 	free(image);
 }
 
