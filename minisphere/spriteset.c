@@ -95,6 +95,10 @@ on_error:
 spriteset_t*
 load_spriteset(const char* path)
 {
+	// HERE BE DRAGONS!
+	// the Sphere .rss spriteset format is a nightmare; this function ended up being way
+	// more massive than it has any right to be.
+	
 	const char* const def_dir_names[8] = {
 		"north", "northeast", "east", "southeast",
 		"south", "southwest", "west", "northwest"
@@ -123,18 +127,12 @@ load_spriteset(const char* path)
 	spriteset->base.x2 = rss.base_x2;
 	spriteset->base.y2 = rss.base_y2;
 	switch (rss.version) {
-	case 1:
+	case 1: // RSSv1, very simple
 		spriteset->num_images = rss.num_images;
 		spriteset->num_poses = 8;
 		spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t));
-		spriteset->poses[0].name = lstring_from_cstr("north");
-		spriteset->poses[1].name = lstring_from_cstr("northeast");
-		spriteset->poses[2].name = lstring_from_cstr("east");
-		spriteset->poses[3].name = lstring_from_cstr("southeast");
-		spriteset->poses[4].name = lstring_from_cstr("south");
-		spriteset->poses[5].name = lstring_from_cstr("southwest");
-		spriteset->poses[6].name = lstring_from_cstr("west");
-		spriteset->poses[7].name = lstring_from_cstr("northwest");
+		for (i = 0; i < spriteset->num_poses; ++i)
+			spriteset->poses[i].name = lstring_from_cstr(def_dir_names[i]);
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
 		for (i = 0; i < spriteset->num_images; ++i) {
@@ -150,7 +148,7 @@ load_spriteset(const char* path)
 			}
 		}
 		break;
-	case 2:  // note: requires 2 passes
+	case 2: // RSSv2, requires 2 passes
 		spriteset->num_poses = rss.num_directions;
 		if (!(spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t))))
 			goto on_error;
@@ -197,7 +195,7 @@ load_spriteset(const char* path)
 			}
 		}
 		break;
-	case 3:
+	case 3: // RSSv3, can be done in a single pass thankfully
 		spriteset->num_images = rss.num_images;
 		spriteset->num_poses = rss.num_directions;
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
@@ -223,7 +221,7 @@ load_spriteset(const char* path)
 			}
 		}
 		break;
-	default:  // unsupported version number
+	default: // invalid RSS version
 		goto on_error;
 	}
 	al_fclose(file);
