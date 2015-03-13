@@ -19,12 +19,24 @@ struct rss_header {
 	uint8_t reserved[106];
 };
 
-struct v3_direction {
+struct rss_dir_v2 {
+	int16_t num_frames;
+	uint8_t reserved[62];
+};
+
+struct rss_dir_v3 {
 	int16_t num_frames;
 	uint8_t reserved[6];
 };
 
-struct v3_frame {
+struct rss_frame_v2 {
+	int16_t width;
+	int16_t height;
+	int16_t delay;
+	uint8_t reserved[26];
+};
+
+struct rss_frame_v3 {
 	int16_t image_idx;
 	int16_t delay;
 	uint8_t reserved[4];
@@ -83,11 +95,22 @@ on_error:
 spriteset_t*
 load_spriteset(const char* path)
 {
-	struct v3_direction direction;
-	struct v3_frame     frame;
+	const char* const def_dir_names[8] = {
+		"north", "northeast", "east", "southeast",
+		"south", "southwest", "west", "northwest"
+	};
+	
+	struct rss_dir_v2   dir_v2;
+	struct rss_dir_v3   dir_v3;
+	char                extra_v2_dir_name[32];
+	struct rss_frame_v2 frame_v2;
+	struct rss_frame_v3 frame_v3;
 	ALLEGRO_FILE*       file = NULL;
+	int                 image_index;
 	struct rss_header   rss;
+	int64_t             skip_size;
 	spriteset_t*        spriteset = NULL;
+	int64_t             v2_data_offset;
 	int                 i, j;
 
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
@@ -127,8 +150,52 @@ load_spriteset(const char* path)
 			}
 		}
 		break;
-	case 2:
-		goto on_error;
+	case 2:  // note: requires 2 passes
+		spriteset->num_poses = rss.num_directions;
+		if (!(spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t))))
+			goto on_error;
+
+		// pass 1 - prepare structures, calculate number of images
+		v2_data_offset = al_ftell(file);
+		spriteset->num_images = 0;
+		for (i = 0; i < rss.num_directions; ++i) {
+			if (al_fread(file, &dir_v2, sizeof(struct rss_dir_v2)) != sizeof(struct rss_dir_v2))
+				goto on_error;
+			spriteset->num_images += dir_v2.num_frames;
+			sprintf(extra_v2_dir_name, "extra %i", i);
+			spriteset->poses[i].name = lstring_from_cstr(i < 8 ? def_dir_names[i] : extra_v2_dir_name);
+			spriteset->poses[i].num_frames = dir_v2.num_frames;
+			if (!(spriteset->poses[i].frames = calloc(dir_v2.num_frames, sizeof(spriteset_frame_t))))
+				goto on_error;
+			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
+				if (al_fread(file, &frame_v2, sizeof(struct rss_frame_v2)) != sizeof(struct rss_frame_v2))
+					goto on_error;
+				skip_size = (rss.frame_width != 0 ? rss.frame_width : frame_v2.width)
+					* (rss.frame_height != 0 ? rss.frame_height : frame_v2.height)
+					* 4;
+				al_fseek(file, skip_size, ALLEGRO_SEEK_CUR);
+			}
+		}
+		if (!(spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))))
+			goto on_error;
+
+		// pass 2 - read images and frame data
+		al_fseek(file, v2_data_offset, ALLEGRO_SEEK_SET);
+		image_index = 0;
+		for (i = 0; i < rss.num_directions; ++i) {
+			if (al_fread(file, &dir_v2, sizeof(struct rss_dir_v2)) != sizeof(struct rss_dir_v2))
+				goto on_error;
+			for (j = 0; j < dir_v2.num_frames; ++j) {
+				if (al_fread(file, &frame_v2, sizeof(struct rss_frame_v2)) != sizeof(struct rss_frame_v2))
+					goto on_error;
+				spriteset->images[image_index] = read_image(file,
+					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
+					rss.frame_height != 0 ? rss.frame_height : frame_v2.height);
+				spriteset->poses[i].frames[j].image_idx = image_index;
+				spriteset->poses[i].frames[j].delay = frame_v2.delay;
+				++image_index;
+			}
+		}
 		break;
 	case 3:
 		spriteset->num_images = rss.num_images;
@@ -142,21 +209,21 @@ load_spriteset(const char* path)
 				goto on_error;
 		}
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (al_fread(file, &direction, sizeof(struct v3_direction)) != sizeof(struct v3_direction))
+			if (al_fread(file, &dir_v3, sizeof(struct rss_dir_v3)) != sizeof(struct rss_dir_v3))
 				goto on_error;
 			if ((spriteset->poses[i].name = read_lstring(file, true)) == NULL) goto on_error;
-			spriteset->poses[i].num_frames = direction.num_frames;
-			if ((spriteset->poses[i].frames = calloc(direction.num_frames, sizeof(spriteset_frame_t))) == NULL)
+			spriteset->poses[i].num_frames = dir_v3.num_frames;
+			if ((spriteset->poses[i].frames = calloc(dir_v3.num_frames, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
 			for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
-				if (al_fread(file, &frame, sizeof(struct v3_frame)) != sizeof(struct v3_frame))
+				if (al_fread(file, &frame_v3, sizeof(struct rss_frame_v3)) != sizeof(struct rss_frame_v3))
 					goto on_error;
-				spriteset->poses[i].frames[j].image_idx = frame.image_idx;
-				spriteset->poses[i].frames[j].delay = frame.delay;
+				spriteset->poses[i].frames[j].image_idx = frame_v3.image_idx;
+				spriteset->poses[i].frames[j].delay = frame_v3.delay;
 			}
 		}
 		break;
-	default:  // invalid version number
+	default:  // unsupported version number
 		goto on_error;
 	}
 	al_fclose(file);
