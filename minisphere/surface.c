@@ -176,10 +176,10 @@ js_CreateSurface(duk_context* ctx)
 static duk_ret_t
 js_GrabSurface(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_require_int(ctx, 0) * g_scale_x;
+	int y = duk_require_int(ctx, 1) * g_scale_y;
+	int w = duk_require_int(ctx, 2) * g_scale_x;
+	int h = duk_require_int(ctx, 3) * g_scale_y;
 
 	ALLEGRO_BITMAP* backbuffer;
 	image_t*        image;
@@ -190,6 +190,8 @@ js_GrabSurface(duk_context* ctx)
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
+	if (!rescale_image(image, (float)g_res_x / get_image_width(image), (float)g_res_y / get_image_height(image)))
+		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Failed to rescale grabbed image (internal error)");
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
 	return 1;

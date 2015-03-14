@@ -197,6 +197,8 @@ init_input_api(void)
 	register_api_const(g_duktape, "KEY_DELETE", ALLEGRO_KEY_DELETE);
 	register_api_const(g_duktape, "KEY_BACKSPACE", ALLEGRO_KEY_BACKSPACE);
 	register_api_const(g_duktape, "KEY_TILDE", ALLEGRO_KEY_TILDE);
+	register_api_const(g_duktape, "KEY_PERIOD", ALLEGRO_KEY_FULLSTOP);
+	register_api_const(g_duktape, "KEY_COMMA", ALLEGRO_KEY_COMMA);
 	register_api_const(g_duktape, "KEY_F1", ALLEGRO_KEY_F1);
 	register_api_const(g_duktape, "KEY_F2", ALLEGRO_KEY_F2);
 	register_api_const(g_duktape, "KEY_F3", ALLEGRO_KEY_F3);

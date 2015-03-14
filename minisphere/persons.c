@@ -16,6 +16,7 @@ struct person
 	bool           ignore_persons;
 	bool           ignore_tiles;
 	bool           is_persistent;
+	bool           is_visible;
 	int            layer;
 	int            revert_delay;
 	int            revert_frames;
@@ -40,6 +41,7 @@ static duk_ret_t js_CreatePerson             (duk_context* ctx);
 static duk_ret_t js_DestroyPerson            (duk_context* ctx);
 static duk_ret_t js_IsCommandQueueEmpty      (duk_context* ctx);
 static duk_ret_t js_IsPersonObstructed       (duk_context* ctx);
+static duk_ret_t js_IsPersonVisible          (duk_context* ctx);
 static duk_ret_t js_DoesPersonExist          (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson         (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson     (duk_context* ctx);
@@ -71,6 +73,7 @@ static duk_ret_t js_SetPersonSpeed           (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeedXY         (duk_context* ctx);
 static duk_ret_t js_SetPersonSpriteset       (duk_context* ctx);
 static duk_ret_t js_SetPersonValue           (duk_context* ctx);
+static duk_ret_t js_SetPersonVisible         (duk_context* ctx);
 static duk_ret_t js_SetPersonX               (duk_context* ctx);
 static duk_ret_t js_SetPersonXYFloat         (duk_context* ctx);
 static duk_ret_t js_SetPersonY               (duk_context* ctx);
@@ -115,6 +118,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	free(path);
 	set_person_direction(person, person->sprite->poses[0].name->cstr);
 	person->is_persistent = is_persistent;
+	person->is_visible = true;
 	person->x = map_origin.x;
 	person->y = map_origin.y;
 	person->layer = map_origin.z;
@@ -375,7 +379,7 @@ render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 	int          i;
 
 	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i]->layer != layer)
+		if (!s_persons[i]->is_visible || s_persons[i]->layer != layer)
 			continue;
 		sprite = s_persons[i]->sprite;
 		get_sprite_size(sprite, &w, &h);
@@ -484,6 +488,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
 	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
 	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
+	register_api_func(g_duktape, NULL, "IsPersonVisible", js_IsPersonVisible);
 	register_api_func(g_duktape, NULL, "DoesPersonExist", js_DoesPersonExist);
 	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
@@ -515,6 +520,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
 	register_api_func(g_duktape, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
 	register_api_func(g_duktape, NULL, "SetPersonValue", js_SetPersonValue);
+	register_api_func(g_duktape, NULL, "SetPersonVisible", js_SetPersonVisible);
 	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
 	register_api_func(g_duktape, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
 	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
@@ -729,6 +735,19 @@ js_IsPersonObstructed(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsPersonObstructed(): Person '%s' doesn't exist", name);
 	duk_push_boolean(ctx, is_person_obstructed_at(person, x, y, NULL, NULL));
+	return 1;
+}
+
+static duk_ret_t
+js_IsPersonVisible(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonVisible(): Person '%s' doesn't exist", name);
+	duk_push_boolean(ctx, person->is_visible);
 	return 1;
 }
 
@@ -1047,25 +1066,6 @@ js_SetPersonData(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SetPersonValue(duk_context* ctx)
-{
-	const char* name = duk_require_string(ctx, 0);
-	const char* key = duk_require_string(ctx, 1);
-	duk_require_valid_index(ctx, 2);
-
-	person_t* person;
-
-	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): Person '%s' doesn't exist", name);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "person_data");
-	duk_get_prop_string(ctx, -1, name);
-	duk_dup(ctx, 2); duk_put_prop_string(ctx, -2, key);
-	duk_pop_2(ctx);
-	return 0;
-}
-
-static duk_ret_t
 js_SetPersonDirection(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -1187,6 +1187,39 @@ js_SetPersonSpriteset(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "SetPersonSpriteset(): Failed to create new spriteset");
 	set_person_spriteset(person, new_spriteset);
 	free_spriteset(new_spriteset);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonValue(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	const char* key = duk_require_string(ctx, 1);
+	duk_require_valid_index(ctx, 2);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): Person '%s' doesn't exist", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "person_data");
+	duk_get_prop_string(ctx, -1, name);
+	duk_dup(ctx, 2); duk_put_prop_string(ctx, -2, key);
+	duk_pop_2(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonVisible(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	bool is_visible = duk_require_boolean(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonVisible(): Person '%s' doesn't exist", name);
+	person->is_visible = is_visible;
 	return 0;
 }
 
