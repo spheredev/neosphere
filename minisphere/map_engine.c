@@ -31,70 +31,72 @@ static void                process_map_input (void);
 static void                render_map_engine (void);
 static void                update_map_engine (void);
 
-static duk_ret_t js_MapEngine             (duk_context* ctx);
-static duk_ret_t js_AreZonesAt            (duk_context* ctx);
-static duk_ret_t js_IsCameraAttached      (duk_context* ctx);
-static duk_ret_t js_IsInputAttached       (duk_context* ctx);
-static duk_ret_t js_IsLayerReflective     (duk_context* ctx);
-static duk_ret_t js_IsLayerVisible        (duk_context* ctx);
-static duk_ret_t js_IsMapEngineRunning    (duk_context* ctx);
-static duk_ret_t js_IsTriggerAt           (duk_context* ctx);
-static duk_ret_t js_GetCameraPerson       (duk_context* ctx);
-static duk_ret_t js_GetCameraX            (duk_context* ctx);
-static duk_ret_t js_GetCameraY            (duk_context* ctx);
-static duk_ret_t js_GetCurrentMap         (duk_context* ctx);
-static duk_ret_t js_GetCurrentTrigger     (duk_context* ctx);
-static duk_ret_t js_GetCurrentZone        (duk_context* ctx);
-static duk_ret_t js_GetInputPerson        (duk_context* ctx);
-static duk_ret_t js_GetLayerHeight        (duk_context* ctx);
-static duk_ret_t js_GetLayerMask          (duk_context* ctx);
-static duk_ret_t js_GetLayerWidth         (duk_context* ctx);
-static duk_ret_t js_GetMapEngineFrameRate (duk_context* ctx);
-static duk_ret_t js_GetNextAnimatedTile   (duk_context* ctx);
-static duk_ret_t js_GetNumLayers          (duk_context* ctx);
-static duk_ret_t js_GetNumTiles           (duk_context* ctx);
-static duk_ret_t js_GetNumTriggers        (duk_context* ctx);
-static duk_ret_t js_GetNumZones           (duk_context* ctx);
-static duk_ret_t js_GetTalkActivationKey  (duk_context* ctx);
-static duk_ret_t js_GetTile               (duk_context* ctx);
-static duk_ret_t js_GetTileDelay          (duk_context* ctx);
-static duk_ret_t js_GetTileHeight         (duk_context* ctx);
-static duk_ret_t js_GetTileImage          (duk_context* ctx);
-static duk_ret_t js_GetTileName           (duk_context* ctx);
-static duk_ret_t js_GetTileSurface        (duk_context* ctx);
-static duk_ret_t js_GetTileWidth          (duk_context* ctx);
-static duk_ret_t js_SetCameraX            (duk_context* ctx);
-static duk_ret_t js_SetCameraY            (duk_context* ctx);
-static duk_ret_t js_SetDefaultMapScript   (duk_context* ctx);
-static duk_ret_t js_SetLayerMask          (duk_context* ctx);
-static duk_ret_t js_SetLayerReflective    (duk_context* ctx);
-static duk_ret_t js_SetLayerVisible       (duk_context* ctx);
-static duk_ret_t js_SetMapEngineFrameRate (duk_context* ctx);
-static duk_ret_t js_SetNextAnimatedTile   (duk_context* ctx);
-static duk_ret_t js_SetRenderScript       (duk_context* ctx);
-static duk_ret_t js_SetTalkActivationKey  (duk_context* ctx);
-static duk_ret_t js_SetTile               (duk_context* ctx);
-static duk_ret_t js_SetTileDelay          (duk_context* ctx);
-static duk_ret_t js_SetTileImage          (duk_context* ctx);
-static duk_ret_t js_SetTileSurface        (duk_context* ctx);
-static duk_ret_t js_SetUpdateScript       (duk_context* ctx);
-static duk_ret_t js_AttachCamera          (duk_context* ctx);
-static duk_ret_t js_AttachInput           (duk_context* ctx);
-static duk_ret_t js_CallDefaultMapScript  (duk_context* ctx);
-static duk_ret_t js_CallMapScript         (duk_context* ctx);
-static duk_ret_t js_ChangeMap             (duk_context* ctx);
-static duk_ret_t js_DetachCamera          (duk_context* ctx);
-static duk_ret_t js_DetachInput           (duk_context* ctx);
-static duk_ret_t js_ExecuteTrigger        (duk_context* ctx);
-static duk_ret_t js_ExecuteZones          (duk_context* ctx);
-static duk_ret_t js_ExitMapEngine         (duk_context* ctx);
-static duk_ret_t js_MapToScreenX          (duk_context* ctx);
-static duk_ret_t js_MapToScreenY          (duk_context* ctx);
-static duk_ret_t js_RenderMap             (duk_context* ctx);
-static duk_ret_t js_ScreenToMapX          (duk_context* ctx);
-static duk_ret_t js_ScreenToMapY          (duk_context* ctx);
-static duk_ret_t js_SetDelayScript        (duk_context* ctx);
-static duk_ret_t js_UpdateMapEngine       (duk_context* ctx);
+static duk_ret_t js_MapEngine               (duk_context* ctx);
+static duk_ret_t js_AreZonesAt              (duk_context* ctx);
+static duk_ret_t js_IsCameraAttached        (duk_context* ctx);
+static duk_ret_t js_IsInputAttached         (duk_context* ctx);
+static duk_ret_t js_IsLayerReflective       (duk_context* ctx);
+static duk_ret_t js_IsLayerVisible          (duk_context* ctx);
+static duk_ret_t js_IsMapEngineRunning      (duk_context* ctx);
+static duk_ret_t js_IsTriggerAt             (duk_context* ctx);
+static duk_ret_t js_GetCameraPerson         (duk_context* ctx);
+static duk_ret_t js_GetCameraX              (duk_context* ctx);
+static duk_ret_t js_GetCameraY              (duk_context* ctx);
+static duk_ret_t js_GetCurrentMap           (duk_context* ctx);
+static duk_ret_t js_GetCurrentTrigger       (duk_context* ctx);
+static duk_ret_t js_GetCurrentZone          (duk_context* ctx);
+static duk_ret_t js_GetInputPerson          (duk_context* ctx);
+static duk_ret_t js_GetLayerHeight          (duk_context* ctx);
+static duk_ret_t js_GetLayerMask            (duk_context* ctx);
+static duk_ret_t js_GetLayerWidth           (duk_context* ctx);
+static duk_ret_t js_GetMapEngineFrameRate   (duk_context* ctx);
+static duk_ret_t js_GetNextAnimatedTile     (duk_context* ctx);
+static duk_ret_t js_GetNumLayers            (duk_context* ctx);
+static duk_ret_t js_GetNumTiles             (duk_context* ctx);
+static duk_ret_t js_GetNumTriggers          (duk_context* ctx);
+static duk_ret_t js_GetNumZones             (duk_context* ctx);
+static duk_ret_t js_GetTalkActivationButton (duk_context* ctx);
+static duk_ret_t js_GetTalkActivationKey    (duk_context* ctx);
+static duk_ret_t js_GetTile                 (duk_context* ctx);
+static duk_ret_t js_GetTileDelay            (duk_context* ctx);
+static duk_ret_t js_GetTileHeight           (duk_context* ctx);
+static duk_ret_t js_GetTileImage            (duk_context* ctx);
+static duk_ret_t js_GetTileName             (duk_context* ctx);
+static duk_ret_t js_GetTileSurface          (duk_context* ctx);
+static duk_ret_t js_GetTileWidth            (duk_context* ctx);
+static duk_ret_t js_SetCameraX              (duk_context* ctx);
+static duk_ret_t js_SetCameraY              (duk_context* ctx);
+static duk_ret_t js_SetDefaultMapScript     (duk_context* ctx);
+static duk_ret_t js_SetLayerMask            (duk_context* ctx);
+static duk_ret_t js_SetLayerReflective      (duk_context* ctx);
+static duk_ret_t js_SetLayerVisible         (duk_context* ctx);
+static duk_ret_t js_SetMapEngineFrameRate   (duk_context* ctx);
+static duk_ret_t js_SetNextAnimatedTile     (duk_context* ctx);
+static duk_ret_t js_SetRenderScript         (duk_context* ctx);
+static duk_ret_t js_SetTalkActivationButton (duk_context* ctx);
+static duk_ret_t js_SetTalkActivationKey    (duk_context* ctx);
+static duk_ret_t js_SetTile                 (duk_context* ctx);
+static duk_ret_t js_SetTileDelay            (duk_context* ctx);
+static duk_ret_t js_SetTileImage            (duk_context* ctx);
+static duk_ret_t js_SetTileSurface          (duk_context* ctx);
+static duk_ret_t js_SetUpdateScript         (duk_context* ctx);
+static duk_ret_t js_AttachCamera            (duk_context* ctx);
+static duk_ret_t js_AttachInput             (duk_context* ctx);
+static duk_ret_t js_CallDefaultMapScript    (duk_context* ctx);
+static duk_ret_t js_CallMapScript           (duk_context* ctx);
+static duk_ret_t js_ChangeMap               (duk_context* ctx);
+static duk_ret_t js_DetachCamera            (duk_context* ctx);
+static duk_ret_t js_DetachInput             (duk_context* ctx);
+static duk_ret_t js_ExecuteTrigger          (duk_context* ctx);
+static duk_ret_t js_ExecuteZones            (duk_context* ctx);
+static duk_ret_t js_ExitMapEngine           (duk_context* ctx);
+static duk_ret_t js_MapToScreenX            (duk_context* ctx);
+static duk_ret_t js_MapToScreenY            (duk_context* ctx);
+static duk_ret_t js_RenderMap               (duk_context* ctx);
+static duk_ret_t js_ScreenToMapX            (duk_context* ctx);
+static duk_ret_t js_ScreenToMapY            (duk_context* ctx);
+static duk_ret_t js_SetDelayScript          (duk_context* ctx);
+static duk_ret_t js_UpdateMapEngine         (duk_context* ctx);
 
 static person_t*           s_camera_person     = NULL;
 static int                 s_cam_x             = 0;
@@ -112,6 +114,7 @@ static map_t*              s_map               = NULL;
 static char*               s_map_filename      = NULL;
 static struct map_trigger* s_on_trigger        = NULL;
 static int                 s_render_script     = 0;
+static int                 s_talk_button       = 0;
 static int                 s_talk_key          = ALLEGRO_KEY_SPACE;
 static int                 s_update_script     = 0;
 static int                 s_num_delay_scripts = 0;
@@ -524,6 +527,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
 	register_api_func(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
 	register_api_func(ctx, NULL, "GetNumZones", js_GetNumZones);
+	register_api_func(ctx, NULL, "GetTalkActivationButton", js_GetTalkActivationButton);
 	register_api_func(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
 	register_api_func(ctx, NULL, "GetTile", js_GetTile);
 	register_api_func(ctx, NULL, "GetTileDelay", js_GetTileDelay);
@@ -541,6 +545,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
 	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
 	register_api_func(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
 	register_api_func(ctx, NULL, "SetTile", js_SetTile);
 	register_api_func(ctx, NULL, "SetTileDelay", js_SetTileDelay);
@@ -764,7 +769,7 @@ process_map_input(void)
 	// check for player control of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
 		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, s_talk_key)) {
+		if (al_key_down(&kb_state, s_talk_key) || is_joy_button_down(0, s_talk_button)) {
 			talk_person(s_input_person);
 		}
 		if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) mv_y = -1;
@@ -1222,6 +1227,13 @@ js_GetNumZones(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetTalkActivationButton(duk_context* ctx)
+{
+	duk_push_int(ctx, s_talk_button);
+	return 1;
+}
+
+static duk_ret_t
 js_GetTalkActivationKey(duk_context* ctx)
 {
 	duk_push_int(ctx, s_talk_key);
@@ -1478,6 +1490,15 @@ js_SetRenderScript(duk_context* ctx)
 	free_script(s_render_script);
 	s_render_script = compile_script(code, "[render script]");
 	free_lstring(code);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTalkActivationButton(duk_context* ctx)
+{
+	int button = duk_require_int(ctx, 0);
+
+	s_talk_button = button;
 	return 0;
 }
 

@@ -20,35 +20,148 @@ static duk_ret_t js_IsAnyKeyPressed         (duk_context* ctx);
 static duk_ret_t js_IsJoystickButtonPressed (duk_context* ctx);
 static duk_ret_t js_IsKeyPressed            (duk_context* ctx);
 static duk_ret_t js_IsMouseButtonPressed    (duk_context* ctx);
+static duk_ret_t js_GetJoystickAxis         (duk_context* ctx);
 static duk_ret_t js_GetKey                  (duk_context* ctx);
 static duk_ret_t js_GetKeyString            (duk_context* ctx);
+static duk_ret_t js_GetNumMouseWheelEvents  (duk_context* ctx);
 static duk_ret_t js_GetMouseWheelEvent      (duk_context* ctx);
 static duk_ret_t js_GetMouseX               (duk_context* ctx);
 static duk_ret_t js_GetMouseY               (duk_context* ctx);
 static duk_ret_t js_GetNumJoysticks         (duk_context* ctx);
+static duk_ret_t js_GetNumJoystickAxes      (duk_context* ctx);
+static duk_ret_t js_GetNumJoystickButtons   (duk_context* ctx);
 static duk_ret_t js_GetNumMouseWheelEvents  (duk_context* ctx);
 static duk_ret_t js_GetPlayerKey            (duk_context* ctx);
 static duk_ret_t js_GetToggleState          (duk_context* ctx);
 static duk_ret_t js_SetMousePosition        (duk_context* ctx);
 static duk_ret_t js_BindKey                 (duk_context* ctx);
+static duk_ret_t js_BindJoystickButton      (duk_context* ctx);
 static duk_ret_t js_UnbindKey               (duk_context* ctx);
+static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 
 static void queue_wheel_event (int event);
 
+static int  s_is_button_bound[4][32];
+static int  s_is_key_bound[ALLEGRO_KEY_MAX];
+static int  s_button_down_scripts[4][32];
+static int  s_button_up_scripts[4][32];
 static int  s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int  s_key_up_scripts[ALLEGRO_KEY_MAX];
+static bool s_last_button_state[4][32];
 static bool s_last_key_state[ALLEGRO_KEY_MAX];
 static int  s_last_wheel_pos;
 static int  s_num_wheel_events = 0;
 static int  s_wheel_queue[255];
+
+bool
+is_joy_button_down(int joy_index, int button)
+{
+	ALLEGRO_JOYSTICK*      joystick;
+	ALLEGRO_JOYSTICK_STATE state;
+	
+	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return false;
+	if (!(joystick = al_get_joystick(joy_index))) return false;
+	if (button < 0 || button >= al_get_joystick_num_buttons(joystick)) return false;
+	al_get_joystick_state(joystick, &state);
+	return state.button[button] > 0;
+}
+
+float
+get_joy_axis(int joy_index, int axis_index)
+{
+	ALLEGRO_JOYSTICK*      joystick;
+	int                    n_stick_axes;
+	int                    n_sticks;
+	ALLEGRO_JOYSTICK_STATE state;
+
+	int i;
+
+	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return 0.0;
+	if (axis_index < 0 || axis_index >= get_joy_axis_count(joy_index)) return 0.0;
+	if (!(joystick = al_get_joystick(joy_index))) return 0.0;
+	al_get_joystick_state(joystick, &state);
+	n_sticks = al_get_joystick_num_sticks(joystick);
+	for (i = 0; i < n_sticks; ++i) {
+		n_stick_axes = al_get_joystick_num_axes(joystick, i);
+		if (axis_index < n_stick_axes)
+			return state.stick[i].axis[axis_index];
+		axis_index -= n_stick_axes;
+	}
+	return 0.0;
+}
+
+int
+get_joy_axis_count(int joy_index)
+{
+	ALLEGRO_JOYSTICK* joystick;
+	int               n_axes;
+	int               n_sticks;
+
+	int i;
+	
+	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return 0;
+	if (!(joystick = al_get_joystick(joy_index))) return 0;
+	n_sticks = al_get_joystick_num_sticks(joystick);
+	n_axes = 0;
+	for (i = 0; i < n_sticks; ++i)
+		n_axes += al_get_joystick_num_axes(joystick, i);
+	return n_axes;
+}
+
+int
+get_joy_button_count(int joy_index)
+{
+	ALLEGRO_JOYSTICK* joystick;
+
+	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return 0;
+	if (!(joystick = al_get_joystick(joy_index))) return 0;
+	return al_get_joystick_num_buttons(joystick);
+}
+
+void
+update_input(void)
+{
+	bool                   is_down;
+	ALLEGRO_KEYBOARD_STATE keyboard;
+	ALLEGRO_MOUSE_STATE    mouse;
+
+	int i, j;
+
+	al_get_mouse_state(&mouse);
+	if (mouse.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
+	if (mouse.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
+	s_last_wheel_pos = mouse.z;
+	al_get_keyboard_state(&keyboard);
+	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
+		if (!s_is_key_bound[i])
+			continue;
+		is_down = al_key_down(&keyboard, i);
+		if (is_down && !s_last_key_state[i]) run_script(s_key_down_scripts[i], false);
+		if (!is_down && s_last_key_state[i]) run_script(s_key_up_scripts[i], false);
+		s_last_key_state[i] = is_down;
+	}
+	for (i = 0; i < 4; ++i) for (j = 0; j < 32; ++j) {
+		if (!s_is_button_bound[i][j])
+			continue;
+		is_down = is_joy_button_down(i, j);
+		if (is_down && !s_last_button_state[i][j]) run_script(s_button_down_scripts[i][j], false);
+		if (!is_down && s_last_button_state[i][j]) run_script(s_button_up_scripts[i][j], false);
+		s_last_button_state[i][j] = is_down;
+	}
+}
 
 void
 init_input_api(void)
 {
 	ALLEGRO_MOUSE_STATE mouse;
 	
+	memset(s_is_button_bound, 0, 4 * 32 * sizeof(bool));
+	memset(s_is_key_bound, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+	memset(s_button_down_scripts, 0, 4 * 32 * sizeof(int));
+	memset(s_button_up_scripts, 0, 4 * 32 * sizeof(int));
 	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
 	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
+	memset(s_last_button_state, 0, 4 * 32 * sizeof(bool));
 	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
 	al_get_mouse_state(&mouse); s_last_wheel_pos = mouse.z;
 
@@ -140,45 +253,33 @@ init_input_api(void)
 	register_api_const(g_duktape, "MOUSE_WHEEL_UP", MOUSE_WHEEL_UP);
 	register_api_const(g_duktape, "MOUSE_WHEEL_DOWN", MOUSE_WHEEL_DOWN);
 
+	register_api_const(g_duktape, "JOYSTICK_AXIS_X", 0);
+	register_api_const(g_duktape, "JOYSTICK_AXIS_Y", 1);
+	register_api_const(g_duktape, "JOYSTICK_AXIS_Z", 2);
+	register_api_const(g_duktape, "JOYSTICK_AXIS_R", 3);
+
 	register_api_func(g_duktape, NULL, "AreKeysLeft", js_AreKeysLeft);
 	register_api_func(g_duktape, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
 	register_api_func(g_duktape, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
 	register_api_func(g_duktape, NULL, "IsKeyPressed", js_IsKeyPressed);
 	register_api_func(g_duktape, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
+	register_api_func(g_duktape, NULL, "GetJoystickAxis", js_GetJoystickAxis);
 	register_api_func(g_duktape, NULL, "GetKey", js_GetKey);
 	register_api_func(g_duktape, NULL, "GetKeyString", js_GetKeyString);
 	register_api_func(g_duktape, NULL, "GetMouseWheelEvent", js_GetMouseWheelEvent);
 	register_api_func(g_duktape, NULL, "GetMouseX", js_GetMouseX);
 	register_api_func(g_duktape, NULL, "GetMouseY", js_GetMouseY);
 	register_api_func(g_duktape, NULL, "GetNumJoysticks", js_GetNumJoysticks);
+	register_api_func(g_duktape, NULL, "GetNumJoystickAxes", js_GetNumJoystickAxes);
+	register_api_func(g_duktape, NULL, "GetNumJoystickButtons", js_GetNumJoystickButtons);
 	register_api_func(g_duktape, NULL, "GetNumMouseWheelEvents", js_GetNumMouseWheelEvents);
 	register_api_func(g_duktape, NULL, "GetPlayerKey", js_GetPlayerKey);
 	register_api_func(g_duktape, NULL, "GetToggleState", js_GetToggleState);
 	register_api_func(g_duktape, NULL, "SetMousePosition", js_SetMousePosition);
+	register_api_func(g_duktape, NULL, "BindJoystickButton", js_BindJoystickButton);
 	register_api_func(g_duktape, NULL, "BindKey", js_BindKey);
+	register_api_func(g_duktape, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
 	register_api_func(g_duktape, NULL, "UnbindKey", js_UnbindKey);
-}
-
-void
-update_input(void)
-{
-	bool                   is_down;
-	ALLEGRO_KEYBOARD_STATE keyboard;
-	ALLEGRO_MOUSE_STATE    mouse;
-
-	int i;
-
-	al_get_mouse_state(&mouse);
-	if (mouse.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
-	if (mouse.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
-	s_last_wheel_pos = mouse.z;
-	al_get_keyboard_state(&keyboard);
-	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
-		is_down = al_key_down(&keyboard, i);
-		if (is_down && !s_last_key_state[i]) run_script(s_key_down_scripts[i], false);
-		if (!is_down && s_last_key_state[i]) run_script(s_key_up_scripts[i], false);
-		s_last_key_state[i] = is_down;
-	}
 }
 
 static void
@@ -218,7 +319,10 @@ js_IsAnyKeyPressed(duk_context* ctx)
 static duk_ret_t
 js_IsJoystickButtonPressed(duk_context* ctx)
 {
-	duk_push_false(ctx);
+	int joy_index = duk_require_int(ctx, 0);
+	int button = duk_require_int(ctx, 1);
+	
+	duk_push_boolean(ctx, is_joy_button_down(joy_index, button));
 	return 1;
 }
 
@@ -245,6 +349,16 @@ js_IsMouseButtonPressed(duk_context* ctx)
 	al_get_mouse_state(&mouse);
 	duk_push_boolean(ctx, mouse.display == g_display
 		&& al_mouse_button_down(&mouse, button));
+	return 1;
+}
+
+static duk_ret_t
+js_GetJoystickAxis(duk_context* ctx)
+{
+	int joy_index = duk_require_int(ctx, 0);
+	int axis_index = duk_require_int(ctx, 1);
+
+	duk_push_number(ctx, get_joy_axis(joy_index, axis_index));
 	return 1;
 }
 
@@ -367,8 +481,25 @@ js_GetMouseY(duk_context* ctx)
 static duk_ret_t
 js_GetNumJoysticks(duk_context* ctx)
 {
-	// TODO: implement joystick support
-	duk_push_int(ctx, 0);
+	duk_push_int(ctx, al_get_num_joysticks());
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumJoystickAxes(duk_context* ctx)
+{
+	int joy_index = duk_require_int(ctx, 0);
+	
+	duk_push_int(ctx, get_joy_axis_count(joy_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumJoystickButtons(duk_context* ctx)
+{
+	int joy_index = duk_require_int(ctx, 0);
+
+	duk_push_int(ctx, get_joy_button_count(joy_index));
 	return 1;
 }
 
@@ -418,6 +549,27 @@ js_SetMousePosition(duk_context* ctx)
 	return 0;
 }
 
+static js_BindJoystickButton(duk_context* ctx)
+{
+	int joy_index = duk_require_int(ctx, 0);
+	int button = duk_require_int(ctx, 1);
+	lstring_t* down_script = !duk_is_null(ctx, 2) ? duk_require_lstring_t(ctx, 2) : lstring_from_cstr("");
+	lstring_t* up_script = !duk_is_null(ctx, 3) ? duk_require_lstring_t(ctx, 3) : lstring_from_cstr("");
+
+	if (joy_index < 0 || joy_index >= 4)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
+	if (button < 0 || joy_index >= 32)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range for binding", button);
+	free_script(s_button_down_scripts[joy_index][button]);
+	free_script(s_button_up_scripts[joy_index][button]);
+	s_button_down_scripts[joy_index][button] = compile_script(down_script, "[button-down script]");
+	s_button_up_scripts[joy_index][button] = compile_script(up_script, "[button-up script]");
+	free_lstring(down_script);
+	free_lstring(up_script);
+	s_is_button_bound[joy_index][button] = true;
+	return 0;
+}
+
 static js_BindKey(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
@@ -428,10 +580,31 @@ static js_BindKey(duk_context* ctx)
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "BindKey(): Invalid key constant");
+	free_script(s_key_down_scripts[keycode]);
+	free_script(s_key_up_scripts[keycode]);
 	s_key_down_scripts[keycode] = compile_script(key_down_script, "[key-down script]");
 	s_key_up_scripts[keycode] = compile_script(key_up_script, "[key-down script]");
 	free_lstring(key_down_script);
 	free_lstring(key_up_script);
+	s_is_key_bound[keycode] = true;
+	return 0;
+}
+
+static duk_ret_t
+js_UnbindJoystickButton(duk_context* ctx)
+{
+	int joy_index = duk_require_int(ctx, 0);
+	int button = duk_require_int(ctx, 1);
+
+	if (joy_index < 0 || joy_index >= 4)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "UnbindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
+	if (button < 0 || joy_index >= 32)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "UnbindJoystickButton(): Button index out of range for binding", button);
+	free_script(s_button_down_scripts[joy_index][button]);
+	free_script(s_button_up_scripts[joy_index][button]);
+	s_button_down_scripts[joy_index][button] = 0;
+	s_button_up_scripts[joy_index][button] = 0;
+	s_is_button_bound[joy_index][button] = false;
 	return 0;
 }
 
@@ -446,5 +619,6 @@ js_UnbindKey(duk_context* ctx)
 	free_script(s_key_up_scripts[keycode]);
 	s_key_down_scripts[keycode] = 0;
 	s_key_up_scripts[keycode] = 0;
+	s_is_key_bound[keycode] = false;
 	return 0;
 }

@@ -134,7 +134,7 @@ al_load_rfn_font(const char* filename, int size, int flags)
 	if ((font = al_calloc(1, sizeof *font)) == NULL) goto on_error;
 	font->vtable = &rfn_font_vtable;
 	font->data = rfn;
-	font->height = rfn->glyphs[0].header.height;
+	font->height = max_y;
 	al_fclose(file);
 	return font;
 

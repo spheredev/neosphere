@@ -490,6 +490,7 @@ initialize_engine(void)
 	al_init_acodec_addon();
 	al_install_keyboard();
 	al_install_mouse();
+	al_install_joystick();
 
 	// load system configuraton
 	path = get_sys_asset_path("system.ini", "system");
