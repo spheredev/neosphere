@@ -343,10 +343,8 @@ flip_screen(int framerate)
 	}
 	if (framerate > 0) {
 		g_skip_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
+		al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
 		do {
-			if (s_next_frame_time - al_get_time() > 1.0)
-				bail_out_game();
-			al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
 			if (!do_events()) return false;
 		} while (al_get_time() < s_next_frame_time);
 		s_next_frame_time += 1.0 / framerate;
