@@ -344,6 +344,8 @@ flip_screen(int framerate)
 	if (framerate > 0) {
 		g_skip_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
 		do {
+			if (s_next_frame_time - al_get_time() > 1.0)
+				bail_out_game();
 			al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
 			if (!do_events()) return false;
 		} while (al_get_time() < s_next_frame_time);
@@ -353,6 +355,8 @@ flip_screen(int framerate)
 		g_skip_frame = false;
 		if (!do_events()) return false;
 	}
+	if (!is_backbuffer_valid && !g_skip_frame)  // did we just finish skipping frames?
+		s_next_frame_time = al_get_time() + 1.0 / framerate;
 	++s_num_frames;
 	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
@@ -360,7 +364,6 @@ flip_screen(int framerate)
 		s_num_flips = 0;
 		s_num_frames = 0;
 		s_next_fps_poll_time = al_get_time() + 1.0;
-		s_next_frame_time = al_get_time() + 1.0 / framerate;
 	}
 	return true;
 }
