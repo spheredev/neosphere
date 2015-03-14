@@ -16,7 +16,7 @@ extern int             get_image_height   (const image_t* image);
 extern int             get_image_width    (const image_t* image);
 extern bool            apply_image_lookup (image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256]);
 extern bool            flip_image         (image_t* image, bool is_h_flip, bool is_v_flip);
-extern bool            rescale_image      (image_t* image, float x_scale, float y_scale);
+extern bool            rescale_image      (image_t* image, int width, int height);
 
 extern void init_image_api (duk_context* ctx);
 

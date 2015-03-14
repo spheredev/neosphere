@@ -236,25 +236,36 @@ apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 bool
 flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 {
-	// TODO: implement in-place image mirroring
+	int             draw_flags = 0x0;
+	ALLEGRO_BITMAP* new_bitmap;
+	ALLEGRO_BITMAP* old_target;
+
+	if (!is_h_flip && !is_v_flip)  // this really shouldn't happen...
+		return true;
+	if (!(new_bitmap = al_create_bitmap(image->width, image->height))) return false;
+	old_target = al_get_target_bitmap();
+	al_set_target_bitmap(new_bitmap);
+	if (is_h_flip) draw_flags &= ALLEGRO_FLIP_HORIZONTAL;
+	if (is_v_flip) draw_flags &= ALLEGRO_FLIP_VERTICAL;
+	al_draw_bitmap(image->bitmap, 0, 0, draw_flags);
+	al_set_target_bitmap(old_target);
+	al_destroy_bitmap(image->bitmap);
+	image->bitmap = new_bitmap;
 	return true;
 }
 
 bool
-rescale_image(image_t* image, float x_scale, float y_scale)
+rescale_image(image_t* image, int width, int height)
 {
 	ALLEGRO_BITMAP* new_bitmap;
 	ALLEGRO_BITMAP* old_target;
-	int             scale_w, scale_h;
 
-	if (x_scale == 1.0 && y_scale == 1.0)
+	if (width == image->width && height == image->height)
 		return true;
-	scale_w = image->width * x_scale;
-	scale_h = image->height * y_scale;
-	if (!(new_bitmap = al_create_bitmap(scale_w, scale_h))) return false;
+	if (!(new_bitmap = al_create_bitmap(width, height))) return false;
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(new_bitmap);
-	al_draw_scaled_bitmap(image->bitmap, 0, 0, image->width, image->height, 0, 0, scale_w, scale_h, 0x0);
+	al_draw_scaled_bitmap(image->bitmap, 0, 0, image->width, image->height, 0, 0, width, height, 0x0);
 	al_set_target_bitmap(old_target);
 	al_destroy_bitmap(image->bitmap);
 	image->bitmap = new_bitmap;
@@ -404,7 +415,7 @@ js_GrabImage(duk_context* ctx)
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
-	if (!rescale_image(image, (float)g_res_x / get_image_width(image), (float)g_res_y / get_image_height(image)))
+	if (!rescale_image(image, g_res_x, g_res_y))
 		duk_error(ctx, DUK_ERR_ERROR, "GrabImage(): Failed to rescale grabbed image (internal error)");
 	duk_push_sphere_image(ctx, image);
 	free_image(image);

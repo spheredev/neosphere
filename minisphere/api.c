@@ -9,6 +9,7 @@ static duk_ret_t js_RequireSystemScript  (duk_context* ctx);
 static duk_ret_t js_RequireScript        (duk_context* ctx);
 static duk_ret_t js_EvaluateSystemScript (duk_context* ctx);
 static duk_ret_t js_EvaluateScript       (duk_context* ctx);
+static duk_ret_t js_IsSkippedFrame       (duk_context* ctx);
 static duk_ret_t js_GetFileList          (duk_context* ctx);
 static duk_ret_t js_GetFrameRate         (duk_context* ctx);
 static duk_ret_t js_GetGameList          (duk_context* ctx);
@@ -36,6 +37,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
 	register_api_func(ctx, NULL, "RequireScript", js_RequireScript);
 	register_api_func(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
+	register_api_func(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
 	register_api_func(ctx, NULL, "GetFileList", js_GetFileList);
 	register_api_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
 	register_api_func(ctx, NULL, "GetGameList", js_GetGameList);
@@ -246,6 +248,13 @@ js_RequireSystemScript(duk_context* ctx)
 	duk_pop_2(ctx);
 	free(script_path);
 	return 0;
+}
+
+static duk_ret_t
+js_IsSkippedFrame(duk_context* ctx)
+{
+	duk_push_boolean(ctx, g_skip_frame);
+	return 1;
 }
 
 static duk_ret_t

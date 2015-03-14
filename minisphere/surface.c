@@ -190,7 +190,7 @@ js_GrabSurface(duk_context* ctx)
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
-	if (!rescale_image(image, (float)g_res_x / get_image_width(image), (float)g_res_y / get_image_height(image)))
+	if (!rescale_image(image, g_res_x, g_res_y))
 		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Failed to rescale grabbed image (internal error)");
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
