@@ -36,6 +36,7 @@ static duk_ret_t js_GetToggleState          (duk_context* ctx);
 static duk_ret_t js_SetMousePosition        (duk_context* ctx);
 static duk_ret_t js_BindKey                 (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton      (duk_context* ctx);
+static duk_ret_t js_ClearKeyQueue           (duk_context* ctx);
 static duk_ret_t js_UnbindKey               (duk_context* ctx);
 static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 
@@ -280,6 +281,7 @@ init_input_api(void)
 	register_api_func(g_duktape, NULL, "SetMousePosition", js_SetMousePosition);
 	register_api_func(g_duktape, NULL, "BindJoystickButton", js_BindJoystickButton);
 	register_api_func(g_duktape, NULL, "BindKey", js_BindKey);
+	register_api_func(g_duktape, NULL, "ClearKeyQueue", js_ClearKeyQueue);
 	register_api_func(g_duktape, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
 	register_api_func(g_duktape, NULL, "UnbindKey", js_UnbindKey);
 }
@@ -589,6 +591,13 @@ static js_BindKey(duk_context* ctx)
 	free_lstring(key_down_script);
 	free_lstring(key_up_script);
 	s_is_key_bound[keycode] = true;
+	return 0;
+}
+
+static duk_ret_t
+js_ClearKeyQueue(duk_context* ctx)
+{
+	g_key_queue.num_keys = 0;
 	return 0;
 }
 

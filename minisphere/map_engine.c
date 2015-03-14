@@ -830,6 +830,8 @@ render_map_engine(void)
 	
 	int x, y, z;
 	
+	if (g_skip_frame)
+		return;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->width * tile_w; map_h = s_map->height * tile_h;
 	off_x = s_cam_x - g_res_x / 2; off_y = s_cam_y - g_res_y / 2;
@@ -969,10 +971,10 @@ js_MapEngine(duk_context* ctx)
 	s_framerate = framerate;
 	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
-		if (!begin_frame(s_framerate)) bail_out_game();
-		if (!g_skip_frame) render_map_engine();
 		update_map_engine();
 		process_map_input();
+		render_map_engine();
+		if (!flip_screen(s_framerate)) bail_out_game();
 	}
 	g_map_running = false;
 	return 0;

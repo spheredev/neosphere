@@ -43,8 +43,9 @@ static int     s_current_game_fps;
 static int     s_frame_skips;
 static bool    s_is_fullscreen = false;
 static char*   s_last_game_path = NULL;
-static double  s_last_fps_poll_time;
-static double  s_last_frame_time;
+static double  s_last_flip_time;
+static double  s_next_fps_poll_time;
+static double  s_next_frame_time;
 static int     s_num_flips;
 static int     s_num_frames;
 static bool    s_show_fps = false;
@@ -187,7 +188,7 @@ startup:
 	duk_pop(g_duktape);
 
 	// call game() function in script
-	s_last_frame_time = s_last_fps_poll_time = al_get_time();
+	s_next_fps_poll_time = al_get_time() + 1.0;
 	s_num_frames = s_num_flips = 0;
 	s_current_fps = s_current_game_fps = 0;
 	duk_push_global_object(g_duktape);
@@ -297,39 +298,19 @@ do_events(void)
 }
 
 bool
-begin_frame(int framerate)
+flip_screen(int framerate)
 {
-	double            current_time;
 	char              filename[50];
 	char              fps_text[20];
 	bool              is_backbuffer_valid;
-	double            frame_length;
-	double            next_frame_time;
 	char*             path;
 	ALLEGRO_BITMAP*   snapshot;
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 	
-	// flip backbuffer
 	is_backbuffer_valid = !g_skip_frame;
-	if (framerate > 0) {
-		frame_length = 1.0 / framerate;
-		current_time = al_get_time();
-		next_frame_time = s_last_frame_time + frame_length;
-		g_skip_frame = s_frame_skips < MAX_FRAME_SKIPS && current_time > next_frame_time;
-		do {
-			if (!do_events()) return false;
-		} while (al_get_time() < next_frame_time);
-		s_last_frame_time += frame_length;
-	}
-	else {
-		g_skip_frame = false;
-		if (!do_events()) return false;
-	}
 	if (is_backbuffer_valid) {
 		++s_num_flips;
-		s_last_frame_time = al_get_time();
-		s_frame_skips = 0;
 		if (s_take_snapshot) {
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			sprintf(filename, "snapshot-%li.png", (long)time(NULL));
@@ -353,18 +334,33 @@ begin_frame(int framerate)
 			al_use_transform(&trans);
 		}
 		al_flip_display();
+		s_last_flip_time = al_get_time();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+		s_frame_skips = 0;
 	}
 	else {
 		++s_frame_skips;
 	}
+	if (framerate > 0) {
+		g_skip_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
+		do {
+			al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
+			if (!do_events()) return false;
+		} while (al_get_time() < s_next_frame_time);
+		s_next_frame_time += 1.0 / framerate;
+	}
+	else {
+		g_skip_frame = false;
+		if (!do_events()) return false;
+	}
 	++s_num_frames;
-	if (s_last_frame_time >= s_last_fps_poll_time + 1.0) {
+	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
 		s_current_game_fps = s_num_frames;
-		s_last_fps_poll_time = s_last_frame_time;
 		s_num_flips = 0;
 		s_num_frames = 0;
+		s_next_fps_poll_time = al_get_time() + 1.0;
+		s_next_frame_time = al_get_time() + 1.0 / framerate;
 	}
 	return true;
 }

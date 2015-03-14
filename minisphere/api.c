@@ -389,7 +389,7 @@ js_Exit(duk_context* ctx)
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	if (!begin_frame(s_framerate)) bail_out_game();
+	if (!flip_screen(s_framerate)) bail_out_game();
 	return 0;
 }
 
