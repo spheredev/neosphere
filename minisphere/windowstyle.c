@@ -4,20 +4,10 @@
 
 #include "windowstyle.h"
 
-struct rws_bgra
+struct windowstyle
 {
-	uint8_t b, g, r, a;
-};
-
-struct rws_header
-{
-	uint8_t         signature[4];
-	int16_t         version;
-	uint8_t         edge_width;
-	uint8_t         background_mode;
-	struct rws_bgra corner_colors[4];
-	uint8_t         edge_offsets[4];
-	uint8_t         reserved[36];
+	int             bg_style;
+	ALLEGRO_BITMAP* bitmaps[9];
 };
 
 static void            _duk_push_winstyle           (duk_context* ctx, windowstyle_t* winstyle);
@@ -28,6 +18,33 @@ static duk_ret_t       _js_WindowStyle_drawWindow   (duk_context* ctx);
 static duk_ret_t       _js_WindowStyle_setColorMask (duk_context* ctx);
 
 static windowstyle_t* s_sys_winstyle = NULL;
+
+enum wstyle_bg_type
+{
+	WSTYLE_BG_TILE,
+	WSTYLE_BG_STRETCH,
+	WSTYLE_BG_GRADIENT,
+	WSTYLE_BG_TILE_GRADIENT,
+	WSTYLE_BG_STRETCH_GRADIENT
+};
+
+#pragma pack(push, 1)
+struct rws_rgba
+{
+	uint8_t r, g, b, a;
+};
+
+struct rws_header
+{
+	uint8_t         signature[4];
+	int16_t         version;
+	uint8_t         edge_width;
+	uint8_t         background_mode;
+	struct rws_rgba corner_colors[4];
+	uint8_t         edge_offsets[4];
+	uint8_t         reserved[36];
+};
+#pragma pack(pop)
 
 windowstyle_t*
 load_windowstyle(const char* path)
@@ -91,7 +108,7 @@ free_windowstyle(windowstyle_t* winstyle)
 }
 
 void
-draw_window(windowstyle_t* winstyle, int x, int y, int width, int height)
+draw_window(windowstyle_t* winstyle, ALLEGRO_COLOR mask, int x, int y, int width, int height)
 {
 	int w[9], h[9];
 	int i;
@@ -113,20 +130,20 @@ draw_window(windowstyle_t* winstyle, int x, int y, int width, int height)
 	
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
-		al_draw_tiled_bitmap(winstyle->bitmaps[8], x, y, width, height);
+		al_draw_tinted_tiled_bitmap(winstyle->bitmaps[8], mask, x, y, width, height);
 		break;
 	case WSTYLE_BG_STRETCH:
-		al_draw_scaled_bitmap(winstyle->bitmaps[8], 0, 0, w[8], h[8], x, y, width, height, 0x0);
+		al_draw_tinted_scaled_bitmap(winstyle->bitmaps[8], mask, 0, 0, w[8], h[8], x, y, width, height, 0x0);
 		break;
 	}
-	al_draw_bitmap(winstyle->bitmaps[0], x - w[0], y - h[0], 0x0);
-	al_draw_bitmap(winstyle->bitmaps[2], x + width, y - h[2], 0x0);
-	al_draw_bitmap(winstyle->bitmaps[4], x + width, y + height, 0x0);
-	al_draw_bitmap(winstyle->bitmaps[6], x - w[6], y + height, 0x0);
-	al_draw_tiled_bitmap(winstyle->bitmaps[1], x, y - h[1], width, h[1]);
-	al_draw_tiled_bitmap(winstyle->bitmaps[3], x + width, y, w[3], height);
-	al_draw_tiled_bitmap(winstyle->bitmaps[5], x, y + height, width, h[5]);
-	al_draw_tiled_bitmap(winstyle->bitmaps[7], x - w[7], y, w[7], height);
+	al_draw_tinted_bitmap(winstyle->bitmaps[0], mask, x - w[0], y - h[0], 0x0);
+	al_draw_tinted_bitmap(winstyle->bitmaps[2], mask, x + width, y - h[2], 0x0);
+	al_draw_tinted_bitmap(winstyle->bitmaps[4], mask, x + width, y + height, 0x0);
+	al_draw_tinted_bitmap(winstyle->bitmaps[6], mask, x - w[6], y + height, 0x0);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[1], mask, x, y - h[1], width, h[1]);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[3], mask, x + width, y, w[3], height);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[5], mask, x, y + height, width, h[5]);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[7], mask, x - w[7], y, w[7], height);
 }
 
 void
@@ -212,7 +229,7 @@ _js_WindowStyle_drawWindow(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); winstyle = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); color_mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	draw_window(winstyle, x, y, w, h);
+	draw_window(winstyle, color_mask, x, y, w, h);
 	return 0;
 }
 

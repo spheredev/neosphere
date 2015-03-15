@@ -428,16 +428,13 @@ set_clip_rectangle(rect_t clip)
 }
 
 void
-al_draw_tiled_bitmap(ALLEGRO_BITMAP* bitmap, float x, float y, float width, float height)
+al_draw_tinted_tiled_bitmap(ALLEGRO_BITMAP* bitmap, ALLEGRO_COLOR tint, float x, float y, float width, float height)
 {
-	ALLEGRO_COLOR vertex_color;
-	
-	vertex_color = al_map_rgba(255, 255, 255, 255);
 	ALLEGRO_VERTEX v[] = {
-		{ x, y, 0, 0, 0, vertex_color },
-		{ x + width, y, 0, width, 0, vertex_color },
-		{ x, y + height, 0, 0, height, vertex_color },
-		{ x + width, y + height, 0, width, height, vertex_color }
+		{ x, y, 0, 0, 0, tint },
+		{ x + width, y, 0, width, 0, tint },
+		{ x, y + height, 0, 0, height, tint },
+		{ x + width, y + height, 0, width, height, tint }
 	};
 	int w = al_get_bitmap_width(bitmap);
 	int h = al_get_bitmap_height(bitmap);
