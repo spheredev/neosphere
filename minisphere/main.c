@@ -335,7 +335,6 @@ flip_screen(int framerate)
 		}
 		al_flip_display();
 		s_last_flip_time = al_get_time();
-		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		s_frame_skips = 0;
 	}
 	else {
@@ -363,6 +362,7 @@ flip_screen(int framerate)
 		s_num_frames = 0;
 		s_next_fps_poll_time = al_get_time() + 1.0;
 	}
+	if (!g_skip_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	return true;
 }
 
