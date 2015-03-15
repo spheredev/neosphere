@@ -770,7 +770,7 @@ js_GetObstructingPerson(duk_context* ctx)
 	person_t* obs_person = NULL;
 	person_t* person;
 
-	if (!g_map_running)
+	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
@@ -789,7 +789,7 @@ js_GetObstructingTile(duk_context* ctx)
 	person_t* person;
 	int       tile_index;
 
-	if (!g_map_running)
+	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "GetObstructingTile(): Map engine must be running");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetObstructingTile(): Person '%s' doesn't exist", name);
