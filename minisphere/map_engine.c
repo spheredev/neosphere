@@ -69,6 +69,7 @@ static duk_ret_t js_SetCameraY              (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript     (duk_context* ctx);
 static duk_ret_t js_SetLayerMask            (duk_context* ctx);
 static duk_ret_t js_SetLayerReflective      (duk_context* ctx);
+static duk_ret_t js_SetLayerRenderer        (duk_context* ctx);
 static duk_ret_t js_SetLayerVisible         (duk_context* ctx);
 static duk_ret_t js_SetMapEngineFrameRate   (duk_context* ctx);
 static duk_ret_t js_SetNextAnimatedTile     (duk_context* ctx);
@@ -154,6 +155,7 @@ struct map_layer
 	struct map_tile* tilemap;
 	obsmap_t*        obsmap;
 	ALLEGRO_COLOR    color_mask;
+	int              render_script;
 };
 
 struct map_person
@@ -541,6 +543,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
 	register_api_func(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
+	register_api_func(ctx, NULL, "SetLayerRenderer", js_SetLayerRenderer);
 	register_api_func(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
 	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	register_api_func(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
@@ -847,11 +850,11 @@ render_map_engine(void)
 	}
 	s_map_corner_x = off_x;
 	s_map_corner_y = off_y;
-	al_hold_bitmap_drawing(true);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
 		if (!layer->is_visible)
 			continue;
+		al_hold_bitmap_drawing(true);
 		if (layer->is_reflective) {
 			if (s_map->is_repeating) {
 				// for small repeating maps, persons need to be repeated as well
@@ -880,8 +883,9 @@ render_map_engine(void)
 		else {
 			render_persons(z, false, off_x, off_y);
 		}
+		al_hold_bitmap_drawing(false);
+		run_script(layer->render_script, false);
 	}
-	al_hold_bitmap_drawing(false);
 	run_script(s_render_script, false);
 }
 
@@ -1444,6 +1448,25 @@ js_SetLayerReflective(duk_context* ctx)
 	if (layer < 0 || layer > s_map->num_layers)
 		duk_error(ctx, DUK_ERR_ERROR, "SetLayerReflective(): Invalid layer index (%i)", layer);
 	s_map->layers[layer].is_reflective = is_reflective;
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerRenderer(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	lstring_t* script = duk_require_lstring_t(ctx, 1);
+
+	char script_name[50];
+
+	if (!g_map_running)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerRenderer(): Map engine must be running");
+	if (layer < 0 || layer > s_map->num_layers)
+		duk_error(ctx, DUK_ERR_ERROR, "SetLayerRenderer(): Invalid layer index (%i)", layer);
+	sprintf(script_name, "[layer %i render script]");
+	free_script(s_map->layers[layer].render_script);
+	s_map->layers[layer].render_script = compile_script(script, script_name);
+	free_lstring(script);
 	return 0;
 }
 
