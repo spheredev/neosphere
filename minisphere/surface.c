@@ -585,48 +585,42 @@ js_Surface_rescale(duk_context* ctx)
 	int height = duk_require_int(ctx, 1);
 	
 	image_t* image;
-	image_t* new_image;
-	int      src_w, src_h;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	src_w = get_image_width(image);
-	src_h = get_image_height(image);
-	if ((new_image = create_image(width, height)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:rescale() - Failed to create new surface bitmap");
-	al_set_target_bitmap(get_image_bitmap(new_image));
-	al_draw_scaled_bitmap(get_image_bitmap(image), 0, 0, src_w, src_h, 0, 0, width, height, 0x0);
-	al_set_target_backbuffer(g_display);
-	duk_push_this(ctx);
-	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
-	free_image(new_image);
+	if (!rescale_image(image, width, height))
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:rescale() - Failed to rescale image (internal error)");
 	return 0;
 }
 
 static duk_ret_t
 js_Surface_rotate(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	float angle = duk_require_number(ctx, 0);
-	bool want_resize = duk_require_boolean(ctx, 1);
+	bool want_resize = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
 	
 	image_t* image;
 	image_t* new_image;
+	int      new_w, new_h;
 	int      w, h;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	w = get_image_width(image);
-	h = get_image_height(image);
-	if ((new_image = create_image(w, h)) == NULL)
+	w = new_w = get_image_width(image);
+	h = new_h = get_image_height(image);
+	if (want_resize) {
+		// TODO: implement in-place resizing for Surface:rotate()
+	}
+	if ((new_image = create_image(new_w, new_h)) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Surface:rotate() - Unable to create new surface bitmap");
 	al_set_target_bitmap(get_image_bitmap(new_image));
-	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)w / 2, (float)h / 2, angle, 0x0);
+	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
 	al_set_target_backbuffer(g_display);
 	duk_push_this(ctx);
 	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
-	free_image(new_image);
 	return 0;
 }
 
