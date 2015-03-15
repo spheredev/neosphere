@@ -839,12 +839,14 @@ render_map_engine(void)
 	map_w = s_map->width * tile_w; map_h = s_map->height * tile_h;
 	off_x = s_cam_x - g_res_x / 2; off_y = s_cam_y - g_res_y / 2;
 	if (!s_map->is_repeating) {
-		// non-repeating map - clamp viewport to map bounds
-		off_x = fmin(fmax(off_x, 0), map_w - g_res_x);
-		off_y = fmin(fmax(off_y, 0), map_h - g_res_y);
+		// map is non-repeating, clamp viewport to map bounds (windowbox if needed)
+		off_x = map_w > g_res_x ? fmin(fmax(off_x, 0), map_w - g_res_x)
+			: -(g_res_x - map_w) / 2;
+		off_y = map_h > g_res_y ? fmin(fmax(off_y, 0), map_h - g_res_y)
+			: -(g_res_y - map_h) / 2;
 	}
 	else {
-		// repeating map - wrap offset to map bounds (simplifies calculations)
+		// map is repeating, wrap offset to map bounds (simplifies calculations)
 		off_x = (off_x % map_w + map_w) % map_w;
 		off_y = (off_y % map_h + map_h) % map_h;
 	}
