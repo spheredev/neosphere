@@ -44,6 +44,7 @@
     <IncludePath>C:\allegro-5.0.10-msvc-11.0\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\allegro-5.0.10-msvc-11.0\lib;$(LibraryPath)</LibraryPath>
     <TargetName>engine</TargetName>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

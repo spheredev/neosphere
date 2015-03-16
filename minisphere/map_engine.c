@@ -1470,7 +1470,7 @@ js_SetLayerRenderer(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "SetLayerRenderer(): Map engine must be running");
 	if (layer < 0 || layer > s_map->num_layers)
 		duk_error(ctx, DUK_ERR_ERROR, "SetLayerRenderer(): Invalid layer index (%i)", layer);
-	sprintf(script_name, "[layer %i render script]");
+	sprintf(script_name, "[layer %i render script]", layer);
 	free_script(s_map->layers[layer].render_script);
 	s_map->layers[layer].render_script = compile_script(script, script_name);
 	free_lstring(script);

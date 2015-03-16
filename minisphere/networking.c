@@ -199,6 +199,7 @@ js_OpenAddress(duk_context* ctx)
 {
 	const char* ip = duk_require_string(ctx, 0);
 	int port = duk_require_int(ctx, 1);
+	
 	socket_t* socket;
 
 	socket = connect_to_host(ip, port, 1048576);
@@ -285,7 +286,7 @@ js_Socket_write(duk_context* ctx)
 {
 	duk_require_object_coercible(ctx, 0);
 	uint8_t* data; duk_get_prop_string(ctx, 0, "\xFF" "buffer"); data = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	int length; duk_get_prop_string(ctx, 0, "\xFF" "length"); length = duk_get_int(ctx, -1); duk_pop(ctx);
+	int length = duk_get_length(ctx, 0);
 
 	socket_t* socket;
 
@@ -295,5 +296,5 @@ js_Socket_write(duk_context* ctx)
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Tried to use socket after it was closed");
 	write_socket(socket, data, length);
-	return 1;
+	return 0;
 }

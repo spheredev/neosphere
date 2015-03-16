@@ -76,13 +76,14 @@ js_CreateByteArrayFromString(duk_context* ctx)
 
 	string = duk_require_lstring(ctx, 0, &str_len);
 	if (str_len <= INT_MAX) {
-		buffer = malloc(str_len);
+		if (!(buffer = malloc(str_len)))
+			duk_error(ctx, DUK_ERR_ERROR, "CreateByteArrayFromString(): Failed to allocate buffer for byte array (internal error)");
 		memcpy(buffer, string, str_len);
 		duk_push_sphere_bytearray(ctx, buffer, (int)str_len);
 		return 1;
 	}
 	else {
-		duk_error(ctx, DUK_ERR_ALLOC_ERROR, "CreateByteArrayFromString(): Input string too large, size of ByteArray cannot exceed 2 GB");
+		duk_error(ctx, DUK_ERR_ALLOC_ERROR, "CreateByteArrayFromString(): Input string too large, size of byte array cannot exceed 2 GB");
 	}
 }
 
@@ -96,7 +97,7 @@ js_CreateStringFromByteArray(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "buffer"); buffer = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "size"); size = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_push_lstring(ctx, (char*)buffer, size);
+	duk_push_lstring(ctx, buffer, size);
 	return 1;
 }
 
@@ -113,7 +114,7 @@ js_ByteArray_finalize(duk_context* ctx)
 	uint8_t* buffer;
 	
 	duk_get_prop_string(ctx, 0, "\xFF" "buffer"); buffer = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	free(buffer);
+	//free(buffer);
 	return 0;
 }
 

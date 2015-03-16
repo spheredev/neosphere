@@ -535,8 +535,8 @@ queue_key(int keycode)
 static void
 shutdown_engine(void)
 {
-	dyad_shutdown();
 	duk_destroy_heap(g_duktape);
+	dyad_shutdown();
 	al_uninstall_audio();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
