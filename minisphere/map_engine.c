@@ -1420,7 +1420,7 @@ js_SetDelayScript(duk_context* ctx)
 	if (++s_num_delay_scripts > s_max_delay_scripts) {
 		s_max_delay_scripts = s_num_delay_scripts * 2;
 		if (!(s_delay_scripts = realloc(s_delay_scripts, s_max_delay_scripts * sizeof(struct delay_script))))
-			duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Failed to resize delay script array (internal error)");
+			duk_error(ctx, DUK_ERR_ERROR, "SetDelayScript(): Failed to enlarge delay script queue (internal error)");
 	}
 	delay = &s_delay_scripts[s_num_delay_scripts - 1];
 	sprintf(script_name, "[%i-frame delay script]", frames);

@@ -104,6 +104,7 @@ load_spriteset(const char* path)
 		"south", "southwest", "west", "northwest"
 	};
 	
+	char*               base_path;
 	struct rss_dir_v2   dir_v2;
 	struct rss_dir_v3   dir_v3;
 	char                extra_v2_dir_name[32];
@@ -225,7 +226,10 @@ load_spriteset(const char* path)
 		goto on_error;
 	}
 	al_fclose(file);
-	spriteset->filename = lstring_from_cstr(strrchr(path, ALLEGRO_NATIVE_PATH_SEP) + 1);
+	base_path = get_asset_path("~/", NULL, false);
+	path += strstr(path, base_path) ? strlen(base_path) : 0;
+	spriteset->filename = lstring_from_cstr(path);
+	free(base_path);
 	return ref_spriteset(spriteset);
 
 on_error:
@@ -368,7 +372,11 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, &js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Spriteset_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
-	duk_push_string(ctx, "filename"); duk_push_lstring(ctx, spriteset->filename->cstr, spriteset->filename->length);
+	duk_push_string(ctx, "filename");
+	if (spriteset->filename != NULL)
+		duk_push_lstring(ctx, spriteset->filename->cstr, spriteset->filename->length);
+	else
+		duk_push_string(ctx, "");
 	duk_def_prop(ctx, -3,
 		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
 		| DUK_DEFPROP_HAVE_WRITABLE | 0

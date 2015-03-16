@@ -17,6 +17,7 @@ lstring_format(const char* fmt, ...)
 	if (!(output_str = malloc(buf_size))) goto on_error;
 	va_start(ap, fmt);
 	vsnprintf(output_str, buf_size, fmt, ap);
+	output_str[buf_size] = '\0';
 	lstring->cstr = output_str;
 	lstring->length = buf_size - 1;
 	return lstring;
