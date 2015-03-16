@@ -22,6 +22,7 @@ struct socket
 {
 	int          refcount;
 	dyad_Stream* stream;
+	bool         is_data_lost;
 	bool         is_live;
 	uint8_t*     buffer;
 	size_t       buffer_size;
@@ -95,31 +96,31 @@ free_socket(socket_t* socket)
 }
 
 bool
+is_socket_data_lost(socket_t* socket)
+{
+	return socket->is_data_lost;
+}
+
+bool
 is_socket_live(socket_t* socket)
 {
 	return socket->is_live;
 }
 
 size_t
-get_socket_buffer_size(socket_t* socket)
+read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 {
-	return 0;
-}
-
-size_t
-read_socket(socket_t* socket, void* buffer, size_t length)
-{
-	length = length <= socket->pend_size ? length : socket->pend_size;
-	memcpy(buffer, socket->buffer, length);
-	memmove(socket->buffer, socket->buffer + length, socket->pend_size - length);
-	socket->pend_size -= length;
-	return length;
+	n_bytes = n_bytes <= socket->pend_size ? n_bytes : socket->pend_size;
+	memcpy(buffer, socket->buffer, n_bytes);
+	memmove(socket->buffer, socket->buffer + n_bytes, socket->pend_size - n_bytes);
+	socket->pend_size -= n_bytes;
+	return n_bytes;
 }
 
 void
-write_socket(socket_t* socket, void* data, size_t length)
+write_socket(socket_t* socket, uint8_t* data, size_t n_bytes)
 {
-	dyad_write(socket->stream, data, length);
+	dyad_write(socket->stream, data, n_bytes);
 }
 
 void
@@ -157,10 +158,20 @@ on_dyad_connect(dyad_Event* e)
 static void
 on_dyad_receive(dyad_Event* e)
 {
+	uint8_t*  new_buffer;
 	size_t    new_pend_size;
 	socket_t* socket = e->udata;
 
 	new_pend_size = socket->pend_size + e->size;
+	if (new_pend_size > socket->buffer_size) {
+		if (new_buffer = realloc(socket->buffer, new_pend_size * 2)) {
+			socket->buffer = new_buffer;
+			socket->buffer_size = new_pend_size * 2;
+		}
+		else {
+			socket->is_data_lost = true;
+		}
+	}
 	if (new_pend_size <= socket->buffer_size) {
 		memcpy(socket->buffer, e->data + socket->pend_size, e->size);
 		socket->pend_size += e->size;
@@ -188,7 +199,7 @@ js_ListenOnPort(duk_context* ctx)
 	
 	socket_t* socket;
 
-	socket = listen_on_port(port, 1048576);
+	socket = listen_on_port(port, 1024);
 	duk_push_sphere_socket(ctx, socket);
 	free_socket(socket);
 	return 1;
@@ -202,7 +213,7 @@ js_OpenAddress(duk_context* ctx)
 	
 	socket_t* socket;
 
-	socket = connect_to_host(ip, port, 1048576);
+	socket = connect_to_host(ip, port, 1024);
 	duk_push_sphere_socket(ctx, socket);
 	free_socket(socket);
 	return 1;
@@ -228,6 +239,8 @@ js_Socket_isConnected(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Tried to use socket after it was closed");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
 	duk_push_boolean(ctx, is_socket_live(socket));
 	return 1;
 }
@@ -242,6 +255,8 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Tried to use socket after it was closed");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
 	duk_push_uint(ctx, socket->pend_size);
 	return 1;
 }
@@ -256,7 +271,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:close(): Tried to use socket after it was closed");
 	free_socket(socket);
 	return 1;
 }
@@ -274,6 +289,8 @@ js_Socket_read(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Tried to use socket after it was closed");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket has dropped incoming data due to allocation failure (internal error)");
 	if (!(buffer = malloc(length)))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer (internal error)");
 	read_socket(socket, buffer, length);
@@ -295,6 +312,8 @@ js_Socket_write(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Tried to use socket after it was closed");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket has dropped incoming data due to allocation failure (internal error)");
 	write_socket(socket, data, length);
 	return 0;
 }
