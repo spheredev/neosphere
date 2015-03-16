@@ -64,7 +64,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>allegro-5.0.10-monolith-mt-debug.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.0.10-monolith-mt-debug.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
@@ -89,7 +89,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro-5.0.10-static-mt.lib;allegro_acodec-5.0.10-static-mt.lib;allegro_audio-5.0.10-static-mt.lib;libvorbisfile-1.3.2-static-mt.lib;libvorbis-1.3.2-static-mt.lib;allegro_color-5.0.10-static-mt.lib;allegro_dialog-5.0.10-static-mt.lib;allegro_font-5.0.10-static-mt.lib;allegro_image-5.0.10-static-mt.lib;allegro_primitives-5.0.10-static-mt.lib;allegro_ttf-5.0.10-static-mt.lib;dumb-0.9.3-static-mt.lib;libFLAC-1.2.1-static-mt.lib;freetype-2.4.8-static-mt.lib;libogg-1.2.1-static-mt.lib;zlib-1.2.5-static-mt.lib;openal-1.14-static-mt.lib;winmm.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.0.10-static-mt.lib;allegro_acodec-5.0.10-static-mt.lib;allegro_audio-5.0.10-static-mt.lib;libvorbisfile-1.3.2-static-mt.lib;libvorbis-1.3.2-static-mt.lib;allegro_color-5.0.10-static-mt.lib;allegro_dialog-5.0.10-static-mt.lib;allegro_font-5.0.10-static-mt.lib;allegro_image-5.0.10-static-mt.lib;allegro_primitives-5.0.10-static-mt.lib;allegro_ttf-5.0.10-static-mt.lib;dumb-0.9.3-static-mt.lib;libFLAC-1.2.1-static-mt.lib;freetype-2.4.8-static-mt.lib;libogg-1.2.1-static-mt.lib;zlib-1.2.5-static-mt.lib;openal-1.14-static-mt.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
@@ -100,6 +100,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="bytearray.c" />
     <ClCompile Include="color.c" />
     <ClCompile Include="duktape.c" />
+    <ClCompile Include="dyad.c" />
     <ClCompile Include="file.c" />
     <ClCompile Include="font.c" />
     <ClCompile Include="geometry.c" />
@@ -109,6 +110,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="lstring.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
+    <ClCompile Include="networking.c" />
     <ClCompile Include="obsmap.c" />
     <ClCompile Include="persons.c" />
     <ClCompile Include="primitives.c" />
@@ -126,6 +128,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="bytearray.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="duktape.h" />
+    <ClInclude Include="dyad.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="geometry.h" />
@@ -135,6 +138,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="lstring.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
+    <ClInclude Include="networking.h" />
     <ClInclude Include="obsmap.h" />
     <ClInclude Include="persons.h" />
     <ClInclude Include="primitives.h" />

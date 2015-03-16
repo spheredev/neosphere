@@ -9,6 +9,7 @@
 #include "input.h"
 #include "logger.h"
 #include "map_engine.h"
+#include "networking.h"
 #include "primitives.h"
 #include "rawfile.h"
 #include "rfn_handler.h"
@@ -259,6 +260,8 @@ do_events(void)
 {
 	ALLEGRO_EVENT event;
 
+	dyad_update();
+	
 	// update global input state
 	update_input();
 
@@ -342,7 +345,9 @@ flip_screen(int framerate)
 	}
 	if (framerate > 0) {
 		g_skip_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
-		al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
+		if (s_next_frame_time > al_get_time()) {
+			al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
+		}
 		do {
 			if (!do_events()) return false;
 		} while (al_get_time() < s_next_frame_time);
@@ -491,6 +496,10 @@ initialize_engine(void)
 	g_sys_conf = al_load_config_file(path);
 	free(path);
 	
+	// initialize networking
+	dyad_init();
+	dyad_setUpdateTimeout(0.001);
+	
 	// initialize JavaScript API
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
@@ -502,6 +511,7 @@ initialize_engine(void)
 	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duktape);
+	init_networking_api();
 	init_primitives_api();
 	init_rawfile_api();
 	init_sound_api();
@@ -525,6 +535,7 @@ queue_key(int keycode)
 static void
 shutdown_engine(void)
 {
+	dyad_shutdown();
 	duk_destroy_heap(g_duktape);
 	al_uninstall_audio();
 	al_destroy_display(g_display);

@@ -26,6 +26,7 @@ void
 duk_push_sphere_bytearray(duk_context* ctx, uint8_t* buffer, int size)
 {
 	duk_push_object(ctx);
+	duk_push_string(ctx, "bytearray"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, buffer); duk_put_prop_string(ctx, -2, "\xFF" "buffer");
 	duk_push_int(ctx, size); duk_put_prop_string(ctx, -2, "\xFF" "size");
 	duk_push_c_function(ctx, js_ByteArray_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);

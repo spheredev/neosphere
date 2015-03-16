@@ -19,6 +19,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_ttf.h>
 #include "duktape.h"
+#include "dyad.h"
 #include "font.h"
 #include "geometry.h"
 #include "lstring.h"
