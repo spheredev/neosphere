@@ -3,6 +3,30 @@
 #include "lstring.h"
 
 lstring_t*
+lstring_format(const char* fmt, ...)
+{
+	va_list ap;
+
+	int        buf_size;
+	lstring_t* lstring;
+	char*      output_str = NULL;
+	
+	if ((lstring = malloc(sizeof(lstring_t))) == NULL) goto on_error;
+	va_start(ap, fmt);
+	buf_size = vsnprintf(NULL, 0, fmt, ap) + 1;
+	if (!(output_str = malloc(buf_size))) goto on_error;
+	va_start(ap, fmt);
+	vsnprintf(output_str, buf_size, fmt, ap);
+	lstring->cstr = output_str;
+	lstring->length = buf_size - 1;
+	return lstring;
+
+on_error:
+	free(output_str);
+	return NULL;
+}
+
+lstring_t*
 lstring_from_buf(size_t length, const char* buffer)
 {
 	lstring_t* lstring = NULL;

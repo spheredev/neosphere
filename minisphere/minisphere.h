@@ -3,9 +3,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #define strcasecmp stricmp
+#define snprintf _snprintf
 #endif
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

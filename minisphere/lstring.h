@@ -8,6 +8,7 @@ struct lstring
 	const char* cstr;
 };
 
+extern lstring_t* lstring_format    (const char* fmt, ...);
 extern lstring_t* lstring_from_buf  (size_t length, const char* buffer);
 extern lstring_t* lstring_from_cstr (const char* cstr);
 extern lstring_t* clone_lstring     (const lstring_t* string);

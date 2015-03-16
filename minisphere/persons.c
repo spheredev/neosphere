@@ -90,6 +90,7 @@ static duk_ret_t js_ClearPersonCommands          (duk_context* ctx);
 static duk_ret_t js_IgnorePersonObstructions     (duk_context* ctx);
 static duk_ret_t js_IgnoreTileObstructions       (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand           (duk_context* ctx);
+static duk_ret_t js_QueuePersonScript            (duk_context* ctx);
 
 static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
@@ -393,6 +394,26 @@ queue_person_command(person_t* person, int command, bool is_immediate)
 	return true;
 }
 
+bool
+queue_person_script(person_t* person, lstring_t* script, bool is_immediate)
+{
+	lstring_t* script_name;
+	
+	++person->num_commands;
+	if (person->num_commands > person->max_commands) {
+		if (!(person->commands = realloc(person->commands, person->num_commands * sizeof(struct command))))
+			return false;
+		person->max_commands = person->num_commands;
+	}
+	if ((script_name = malloc(strlen(person->name) + 19)) == NULL)
+		return false;
+	script_name = lstring_format("[%s : queued script]", person->name);
+	person->commands[person->num_commands - 1].type = COMMAND_RUN_SCRIPT;
+	person->commands[person->num_commands - 1].is_immediate = is_immediate;
+	person->commands[person->num_commands - 1].script_id = compile_script(script, script_name->cstr);
+	return true;
+}
+
 void
 render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 {
@@ -471,9 +492,10 @@ talk_person(const person_t* person)
 void
 update_persons(void)
 {
-	struct command command;
-	bool           is_finished;
-	person_t*      person;
+	struct command  command;
+	bool            is_finished;
+	const person_t* last_person;
+	person_t*       person;
 	
 	int i, j;
 
@@ -492,7 +514,14 @@ update_persons(void)
 			--person->num_commands;
 			for (j = 0; j < person->num_commands; ++j)
 				person->commands[j] = person->commands[j + 1];
-			command_person(person, command.type);
+			last_person = s_current_person;
+			s_current_person = person;
+			if (command.type != COMMAND_RUN_SCRIPT)
+				command_person(person, command.type);
+			else
+				run_script(command.script_id, false);
+			s_current_person = last_person;
+			free_script(command.script_id);
 			is_finished = !command.is_immediate || person->num_commands == 0;
 		}
 	}
@@ -557,6 +586,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
 	register_api_func(g_duktape, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
 	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
+	register_api_func(g_duktape, NULL, "QueuePersonScript", js_QueuePersonScript);
 
 	// movement script specifier constants
 	register_api_const(g_duktape, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
@@ -1465,7 +1495,26 @@ js_QueuePersonCommand(duk_context* ctx)
 
 	if (!(person = find_person(name)))
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "QueuePersonCommand(): Person '%s' doesn't exist", name);
+	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "QueuePersonCommand(): Invalid command type constant");
 	if (!queue_person_command(person, command, is_immediate))
 		duk_error(ctx, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to enlarge person's command queue (internal error)");
+	return 0;
+}
+
+static duk_ret_t
+js_QueuePersonScript(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	lstring_t* script = duk_require_lstring_t(ctx, 1);
+	bool is_immediate = duk_require_boolean(ctx, 2);
+
+	person_t* person;
+
+	if (!(person = find_person(name)))
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): Person '%s' doesn't exist", name);
+	if (!queue_person_script(person, script, is_immediate))
+		duk_error(ctx, DUK_ERR_ERROR, "QueuePersonScript(): Failed to enqueue script (internal error)");
+	free_lstring(script);
 	return 0;
 }
