@@ -8,6 +8,7 @@ extern person_t*    create_person           (const char* name, const char* sprit
 extern void         destroy_person          (person_t* person);
 extern bool         has_person_moved        (const person_t* person);
 extern bool         is_person_busy          (const person_t* person);
+extern bool         is_person_ignored       (const person_t* person, const person_t* by_person);
 extern bool         is_person_obstructed_at (const person_t* person, double x, double y, person_t** out_obstructing_person, int* out_tile_index);
 extern rect_t       get_person_base         (const person_t* person);
 extern const char*  get_person_name         (const person_t* person);

@@ -13,8 +13,8 @@ struct person
 	char*          direction;
 	int            frame;
 	bool           has_moved;
-	bool           ignore_persons;
-	bool           ignore_tiles;
+	bool           ignore_all_persons;
+	bool           ignore_all_tiles;
 	bool           is_persistent;
 	bool           is_visible;
 	int            layer;
@@ -25,9 +25,11 @@ struct person
 	spriteset_t*   sprite;
 	double         x, y;
 	int            x_offset, y_offset;
-	int            num_commands;
 	int            max_commands;
+	int            num_ignores;
+	int            num_commands;
 	struct command *commands;
+	char*          *ignores;
 };
 
 struct command
@@ -37,53 +39,57 @@ struct command
 	int script_id;
 };
 
-static duk_ret_t js_CreatePerson             (duk_context* ctx);
-static duk_ret_t js_DestroyPerson            (duk_context* ctx);
-static duk_ret_t js_IsCommandQueueEmpty      (duk_context* ctx);
-static duk_ret_t js_IsPersonObstructed       (duk_context* ctx);
-static duk_ret_t js_IsPersonVisible          (duk_context* ctx);
-static duk_ret_t js_DoesPersonExist          (duk_context* ctx);
-static duk_ret_t js_GetCurrentPerson         (duk_context* ctx);
-static duk_ret_t js_GetObstructingPerson     (duk_context* ctx);
-static duk_ret_t js_GetObstructingTile       (duk_context* ctx);
-static duk_ret_t js_GetPersonBase            (duk_context* ctx);
-static duk_ret_t js_GetPersonData            (duk_context* ctx);
-static duk_ret_t js_GetPersonDirection       (duk_context* ctx);
-static duk_ret_t js_GetPersonFrame           (duk_context* ctx);
-static duk_ret_t js_GetPersonFrameRevert     (duk_context* ctx);
-static duk_ret_t js_GetPersonLayer           (duk_context* ctx);
-static duk_ret_t js_GetPersonList            (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeedX          (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeedY          (duk_context* ctx);
-static duk_ret_t js_GetPersonSpriteset       (duk_context* ctx);
-static duk_ret_t js_GetPersonValue           (duk_context* ctx);
-static duk_ret_t js_GetPersonX               (duk_context* ctx);
-static duk_ret_t js_GetPersonY               (duk_context* ctx);
-static duk_ret_t js_GetPersonXFloat          (duk_context* ctx);
-static duk_ret_t js_GetPersonYFloat          (duk_context* ctx);
-static duk_ret_t js_GetTalkDistance          (duk_context* ctx);
-static duk_ret_t js_SetDefaultPersonScript   (duk_context* ctx);
-static duk_ret_t js_SetPersonData            (duk_context* ctx);
-static duk_ret_t js_SetPersonDirection       (duk_context* ctx);
-static duk_ret_t js_SetPersonFrame           (duk_context* ctx);
-static duk_ret_t js_SetPersonFrameRevert     (duk_context* ctx);
-static duk_ret_t js_SetPersonLayer           (duk_context* ctx);
-static duk_ret_t js_SetPersonScript          (duk_context* ctx);
-static duk_ret_t js_SetPersonSpeed           (duk_context* ctx);
-static duk_ret_t js_SetPersonSpeedXY         (duk_context* ctx);
-static duk_ret_t js_SetPersonSpriteset       (duk_context* ctx);
-static duk_ret_t js_SetPersonValue           (duk_context* ctx);
-static duk_ret_t js_SetPersonVisible         (duk_context* ctx);
-static duk_ret_t js_SetPersonX               (duk_context* ctx);
-static duk_ret_t js_SetPersonXYFloat         (duk_context* ctx);
-static duk_ret_t js_SetPersonY               (duk_context* ctx);
-static duk_ret_t js_SetTalkDistance          (duk_context* ctx);
-static duk_ret_t js_CallDefaultPersonScript  (duk_context* ctx);
-static duk_ret_t js_CallPersonScript         (duk_context* ctx);
-static duk_ret_t js_ClearPersonCommands      (duk_context* ctx);
-static duk_ret_t js_IgnorePersonObstructions (duk_context* ctx);
-static duk_ret_t js_IgnoreTileObstructions   (duk_context* ctx);
-static duk_ret_t js_QueuePersonCommand       (duk_context* ctx);
+static duk_ret_t js_CreatePerson                 (duk_context* ctx);
+static duk_ret_t js_DestroyPerson                (duk_context* ctx);
+static duk_ret_t js_IsCommandQueueEmpty          (duk_context* ctx);
+static duk_ret_t js_IsIgnoringPersonObstructions (duk_context* ctx);
+static duk_ret_t js_IsIgnoringTileObstructions   (duk_context* ctx);
+static duk_ret_t js_IsPersonVisible              (duk_context* ctx);
+static duk_ret_t js_IsPersonObstructed           (duk_context* ctx);
+static duk_ret_t js_IsPersonVisible              (duk_context* ctx);
+static duk_ret_t js_DoesPersonExist              (duk_context* ctx);
+static duk_ret_t js_GetCurrentPerson             (duk_context* ctx);
+static duk_ret_t js_GetObstructingPerson         (duk_context* ctx);
+static duk_ret_t js_GetObstructingTile           (duk_context* ctx);
+static duk_ret_t js_GetPersonBase                (duk_context* ctx);
+static duk_ret_t js_GetPersonData                (duk_context* ctx);
+static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
+static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
+static duk_ret_t js_GetPersonList                (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeedX              (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeedY              (duk_context* ctx);
+static duk_ret_t js_GetPersonSpriteset           (duk_context* ctx);
+static duk_ret_t js_GetPersonValue               (duk_context* ctx);
+static duk_ret_t js_GetPersonX                   (duk_context* ctx);
+static duk_ret_t js_GetPersonY                   (duk_context* ctx);
+static duk_ret_t js_GetPersonXFloat              (duk_context* ctx);
+static duk_ret_t js_GetPersonYFloat              (duk_context* ctx);
+static duk_ret_t js_GetTalkDistance              (duk_context* ctx);
+static duk_ret_t js_SetDefaultPersonScript       (duk_context* ctx);
+static duk_ret_t js_SetPersonData                (duk_context* ctx);
+static duk_ret_t js_SetPersonDirection           (duk_context* ctx);
+static duk_ret_t js_SetPersonFrame               (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
+static duk_ret_t js_SetPersonIgnoreList          (duk_context* ctx);
+static duk_ret_t js_SetPersonLayer               (duk_context* ctx);
+static duk_ret_t js_SetPersonScript              (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeed               (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeedXY             (duk_context* ctx);
+static duk_ret_t js_SetPersonSpriteset           (duk_context* ctx);
+static duk_ret_t js_SetPersonValue               (duk_context* ctx);
+static duk_ret_t js_SetPersonVisible             (duk_context* ctx);
+static duk_ret_t js_SetPersonX                   (duk_context* ctx);
+static duk_ret_t js_SetPersonXYFloat             (duk_context* ctx);
+static duk_ret_t js_SetPersonY                   (duk_context* ctx);
+static duk_ret_t js_SetTalkDistance              (duk_context* ctx);
+static duk_ret_t js_CallDefaultPersonScript      (duk_context* ctx);
+static duk_ret_t js_CallPersonScript             (duk_context* ctx);
+static duk_ret_t js_ClearPersonCommands          (duk_context* ctx);
+static duk_ret_t js_IgnorePersonObstructions     (duk_context* ctx);
+static duk_ret_t js_IgnoreTileObstructions       (duk_context* ctx);
+static duk_ret_t js_QueuePersonCommand           (duk_context* ctx);
 
 static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
@@ -158,6 +164,24 @@ is_person_busy(const person_t* person)
 }
 
 bool
+is_person_ignored(const person_t* person, const person_t* by_person)
+{
+	// note: commutative; if either person ignores the other, the function should return true
+
+	bool is_ignored = false;
+	
+	int i;
+
+	if (by_person->ignore_all_persons || person->ignore_all_persons)
+		return true;
+	for (i = 0; i < by_person->num_ignores; ++i)
+		if (strcmp(by_person->ignores[i], person->name) == 0) return true;
+	for (i = 0; i < person->num_ignores; ++i)
+		if (strcmp(person->ignores[i], by_person->name) == 0) return true;
+	return false;
+}
+
+bool
 is_person_obstructed_at(const person_t* person, double x, double y, person_t** out_obstructing_person, int* out_tile_index)
 {
 	rect_t           area;
@@ -179,12 +203,11 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 	if (out_tile_index) *out_tile_index = -1;
 
 	// check for obstructing persons
-	if (!person->ignore_persons) {
+	if (!person->ignore_all_persons) {
 		for (i = 0; i < s_num_persons; ++i) {
-			if (s_persons[i] == person)  // these persons aren't going to obstruct themselves
-				continue;
-			if (s_persons[i]->layer != layer)  // ignore persons not on same layer
-				continue;
+			if (s_persons[i] == person) continue;  // these persons aren't going to obstruct themselves
+			if (s_persons[i]->layer != layer) continue;  // ignore persons not on the same layer
+			if (is_person_ignored(person, s_persons[i])) continue;
 			base = get_person_base(s_persons[i]);
 			if (do_rects_intersect(my_base, base)) {
 				is_obstructed = true;
@@ -200,7 +223,7 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 		is_obstructed = true;
 	
 	// check for obstructing tiles; constrain search to immediate vicinity of sprite base
-	if (!person->ignore_tiles) {
+	if (!person->ignore_all_tiles) {
 		tileset = get_map_tileset();
 		get_tile_size(tileset, &tile_w, &tile_h);
 		area.x1 = my_base.x1 / tile_w;
@@ -487,6 +510,8 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
 	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
 	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
+	register_api_func(g_duktape, NULL, "IsIgnoringPersonObstructions", js_IsIgnoringPersonObstructions);
+	register_api_func(g_duktape, NULL, "IsIgnoringTileObstructions", js_IsIgnoringTileObstructions);
 	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
 	register_api_func(g_duktape, NULL, "IsPersonVisible", js_IsPersonVisible);
 	register_api_func(g_duktape, NULL, "DoesPersonExist", js_DoesPersonExist);
@@ -514,6 +539,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
+	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
@@ -715,6 +741,32 @@ js_IsCommandQueueEmpty(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsIgnoringPersonObstructions(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsIgnoringPersonObstructions(): Person '%s' doesn't exist", name);
+	duk_push_boolean(ctx, person->ignore_all_persons);
+	return 1;
+}
+
+static duk_ret_t
+js_IsIgnoringTileObstructions(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IsIgnoringTileObstructions(): Person '%s' doesn't exist", name);
+	duk_push_boolean(ctx, person->ignore_all_tiles);
+	return 1;
+}
+
+static duk_ret_t
 js_DoesPersonExist(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -883,6 +935,25 @@ js_GetPersonFrame(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
 	duk_push_int(ctx, person->frame);
 	return 0;
+}
+
+static duk_ret_t
+js_GetPersonIgnoreList(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	int i;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonIgnoreList(): Person '%s' doesn't exist", name);
+	duk_push_array(ctx);
+	for (i = 0; i < person->num_ignores; ++i) {
+		duk_push_string(ctx, person->ignores[i]);
+		duk_put_prop_index(ctx, -2, i);
+	}
+	return 1;
 }
 
 static duk_ret_t
@@ -1112,6 +1183,35 @@ js_SetPersonFrameRevert(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetPersonIgnoreList(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	duk_require_object_coercible(ctx, 1);
+
+	int       list_size;
+	person_t* person;
+
+	int i;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonIgnoreList(): Person '%s' doesn't exist", name);
+	if (!duk_is_array(ctx, 1))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): ignore_list argument must be an array");
+	list_size = duk_get_length(ctx, 1);
+	for (i = 0; i < person->num_ignores; ++i) {
+		free(person->ignores[i]);
+	}
+	person->ignores = realloc(person->ignores, list_size * sizeof(char*));
+	person->num_ignores = list_size;
+	for (i = 0; i < list_size; ++i) {
+		duk_get_prop_index(ctx, 1, i);
+		person->ignores[i] = strdup(duk_require_string(ctx, -1));
+		duk_pop(ctx);
+	}
+	return 0;
+}
+
+static duk_ret_t
 js_SetPersonLayer(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -1336,7 +1436,7 @@ js_IgnorePersonObstructions(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IgnorePersonObstructions(): Person '%s' doesn't exist", name);
-	person->ignore_persons = is_ignoring;
+	person->ignore_all_persons = is_ignoring;
 	return 0;
 }
 
@@ -1350,7 +1450,7 @@ js_IgnoreTileObstructions(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "IgnoreTileObstructions(): Person '%s' doesn't exist", name);
-	person->ignore_tiles = is_ignoring;
+	person->ignore_all_tiles = is_ignoring;
 	return 0;
 }
 

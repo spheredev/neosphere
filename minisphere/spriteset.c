@@ -225,6 +225,7 @@ load_spriteset(const char* path)
 		goto on_error;
 	}
 	al_fclose(file);
+	spriteset->filename = lstring_from_cstr(strrchr(path, ALLEGRO_NATIVE_PATH_SEP) + 1);
 	return ref_spriteset(spriteset);
 
 on_error:
@@ -265,6 +266,7 @@ free_spriteset(spriteset_t* spriteset)
 		free_lstring(spriteset->poses[i].name);
 	}
 	free(spriteset->poses);
+	free_lstring(spriteset->filename);
 	free(spriteset);
 }
 
@@ -366,6 +368,11 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, &js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, &js_Spriteset_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
+	duk_push_string(ctx, "filename"); duk_push_lstring(ctx, spriteset->filename->cstr, spriteset->filename->length);
+	duk_def_prop(ctx, -3,
+		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
+		| DUK_DEFPROP_HAVE_WRITABLE | 0
+		| DUK_DEFPROP_HAVE_VALUE);
 
 	// Spriteset:base
 	duk_push_object(ctx);

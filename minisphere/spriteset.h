@@ -25,6 +25,7 @@ struct spriteset
 {
 	int              c_refs;
 	rect_t           base;
+	lstring_t*       filename;
 	int              num_images;
 	int              num_poses;
 	image_t*         *images;
