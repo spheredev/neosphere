@@ -22,9 +22,12 @@ struct person
 	ALLEGRO_COLOR  mask;
 	int            revert_delay;
 	int            revert_frames;
+	double         scale_x;
+	double         scale_y;
 	int            scripts[PERSON_SCRIPT_MAX];
 	double         speed_x, speed_y;
 	spriteset_t*   sprite;
+	double         theta;
 	double         x, y;
 	int            x_offset, y_offset;
 	int            max_commands;
@@ -53,6 +56,7 @@ static duk_ret_t js_DoesPersonExist              (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson             (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson         (duk_context* ctx);
 static duk_ret_t js_GetObstructingTile           (duk_context* ctx);
+static duk_ret_t js_GetPersonAngle               (duk_context* ctx);
 static duk_ret_t js_GetPersonBase                (duk_context* ctx);
 static duk_ret_t js_GetPersonData                (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
@@ -71,6 +75,7 @@ static duk_ret_t js_GetPersonXFloat              (duk_context* ctx);
 static duk_ret_t js_GetPersonYFloat              (duk_context* ctx);
 static duk_ret_t js_GetTalkDistance              (duk_context* ctx);
 static duk_ret_t js_SetDefaultPersonScript       (duk_context* ctx);
+static duk_ret_t js_SetPersonAngle               (duk_context* ctx);
 static duk_ret_t js_SetPersonData                (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection           (duk_context* ctx);
 static duk_ret_t js_SetPersonFrame               (duk_context* ctx);
@@ -78,6 +83,8 @@ static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_SetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer               (duk_context* ctx);
 static duk_ret_t js_SetPersonMask                (duk_context* ctx);
+static duk_ret_t js_SetPersonScaleAbsolute       (duk_context* ctx);
+static duk_ret_t js_SetPersonScaleFactor         (duk_context* ctx);
 static duk_ret_t js_SetPersonScript              (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeed               (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeedXY             (duk_context* ctx);
@@ -137,6 +144,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->speed_y = 1.0;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
 	person->mask = al_map_rgba(255, 255, 255, 255);
+	person->scale_x = person->scale_y = 1.0;
 	sort_persons();
 	return person;
 }
@@ -250,6 +258,12 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 	return is_obstructed;
 }
 
+double
+get_person_angle(const person_t* person)
+{
+	return person->theta;
+}
+
 rect_t
 get_person_base(const person_t* person)
 {
@@ -257,7 +271,7 @@ get_person_base(const person_t* person)
 	int    base_x, base_y;
 	double x, y;
 
-	base_rect = person->sprite->base;
+	base_rect = zoom_rect(person->sprite->base, person->scale_x, person->scale_y);
 	get_person_xy(person, &x, &y, true);
 	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
 	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
@@ -276,6 +290,13 @@ const char*
 get_person_name(const person_t* person)
 {
 	return person->name;
+}
+
+void
+get_person_scale(const person_t* person, double* out_scale_x, double* out_scale_y)
+{
+	*out_scale_x = person->scale_x;
+	*out_scale_y = person->scale_y;
 }
 
 void
@@ -311,9 +332,22 @@ get_person_xyz(const person_t* person, double* out_x, double* out_y, int* out_la
 }
 
 void
+set_person_angle(person_t* person, double theta)
+{
+	person->theta = theta;
+}
+
+void
 set_person_mask(person_t* person, ALLEGRO_COLOR mask)
 {
 	person->mask = mask;
+}
+
+void
+set_person_scale(person_t* person, double scale_x, double scale_y)
+{
+	person->scale_x = scale_x;
+	person->scale_y = scale_y;
 }
 
 bool
@@ -434,20 +468,23 @@ queue_person_script(person_t* person, lstring_t* script, bool is_immediate)
 void
 render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 {
+	person_t*    person;
 	spriteset_t* sprite;
 	int          w, h;
 	double       x, y;
 	int          i;
 
 	for (i = 0; i < s_num_persons; ++i) {
-		if (!s_persons[i]->is_visible || s_persons[i]->layer != layer)
+		person = s_persons[i];
+		if (!person->is_visible || person->layer != layer)
 			continue;
-		sprite = s_persons[i]->sprite;
+		sprite = person->sprite;
 		get_sprite_size(sprite, &w, &h);
-		get_person_xy(s_persons[i], &x, &y, true);
-		x -= cam_x - s_persons[i]->x_offset;
-		y -= cam_y - s_persons[i]->y_offset;
-		draw_sprite(sprite, s_persons[i]->mask, is_flipped, s_persons[i]->direction, x, y, s_persons[i]->frame);
+		get_person_xy(person, &x, &y, true);
+		x -= cam_x - person->x_offset;
+		y -= cam_y - person->y_offset;
+		draw_sprite(sprite, person->mask, is_flipped, person->theta, person->scale_x, person->scale_y,
+			person->direction, x, y, person->frame);
 	}
 }
 
@@ -564,6 +601,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
+	register_api_func(g_duktape, NULL, "GetPersonAngle", js_GetPersonAngle);
 	register_api_func(g_duktape, NULL, "GetPersonBase", js_GetPersonBase);
 	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
@@ -582,6 +620,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonYFloat", js_GetPersonYFloat);
 	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
 	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
+	register_api_func(g_duktape, NULL, "SetPersonAngle", js_SetPersonAngle);
 	register_api_func(g_duktape, NULL, "SetPersonData", js_SetPersonData);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
@@ -589,6 +628,8 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonMask", js_SetPersonMask);
+	register_api_func(g_duktape, NULL, "SetPersonScaleAbsolute", js_SetPersonScaleAbsolute);
+	register_api_func(g_duktape, NULL, "SetPersonScaleFactor", js_SetPersonScaleFactor);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
 	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
@@ -900,6 +941,19 @@ js_GetObstructingTile(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonAngle(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonAngle(): Person '%s' doesn't exist", name);
+	duk_push_number(ctx, get_person_angle(person));
+	return 1;
+}
+
+static duk_ret_t
 js_GetPersonBase(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -1183,6 +1237,20 @@ js_SetDefaultPersonScript(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetPersonAngle(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	double theta = duk_require_number(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonAngle(): Person '%s' doesn't exist", name);
+	set_person_angle(person, theta);
+	return 0;
+}
+
+static duk_ret_t
 js_SetPersonData(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -1298,6 +1366,40 @@ js_SetPersonMask(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonMask(): Person '%s' doesn't exist", name);
 	set_person_mask(person, mask);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonScaleAbsolute(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int width = duk_require_int(ctx, 1);
+	int height = duk_require_int(ctx, 2);
+
+	person_t* person;
+	int       sprite_w, sprite_h;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleAbsolute(): Person '%s' doesn't exist", name);
+	if (width <= 0 || height <= 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonScaleAbsolute(): Width and height cannot be zero or negative ({ w: %i, h: %i })", width, height);
+	get_sprite_size(get_person_spriteset(person), &sprite_w, &sprite_h);
+	set_person_scale(person, width / sprite_w, height / sprite_h);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonScaleFactor(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	double scale_x = duk_require_number(ctx, 1);
+	double scale_y = duk_require_number(ctx, 2);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleFactor(): Person '%s' doesn't exist", name);
+	set_person_scale(person, scale_x, scale_y);
 	return 0;
 }
 

@@ -336,9 +336,11 @@ set_spriteset_image(const spriteset_t* spriteset, int image_index, image_t* imag
 }
 
 void
-draw_sprite(const spriteset_t* spriteset, ALLEGRO_COLOR mask, bool is_flipped, const char* pose_name, float x, float y, int frame_index)
+draw_sprite(const spriteset_t* spriteset, ALLEGRO_COLOR mask, bool is_flipped, double theta, double scale_x, double scale_y, const char* pose_name, float x, float y, int frame_index)
 {
+	image_t*                 image;
 	int                      image_index;
+	int                      image_w, image_h;
 	const spriteset_pose_t*  pose;
 	
 	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
@@ -348,8 +350,12 @@ draw_sprite(const spriteset_t* spriteset, ALLEGRO_COLOR mask, bool is_flipped, c
 	x -= (spriteset->base.x1 + spriteset->base.x2) / 2;
 	if (!is_flipped)
 		y -= (spriteset->base.y1 + spriteset->base.y2) / 2;
-	al_draw_tinted_bitmap(get_image_bitmap(spriteset->images[image_index]), mask,
-		x, y, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
+	image = spriteset->images[image_index];
+	image_w = get_image_width(image);
+	image_h = get_image_height(image);
+	al_draw_tinted_scaled_rotated_bitmap(get_image_bitmap(image), mask,
+		(float)image_w / 2, (float)image_h / 2, x + (float)image_w / 2, y + (float)image_h / 2,
+		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }
 
 void
