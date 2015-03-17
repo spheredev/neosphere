@@ -24,6 +24,7 @@ static duk_ret_t js_ExecuteGame          (duk_context* ctx);
 static duk_ret_t js_Exit                 (duk_context* ctx);
 static duk_ret_t js_FlipScreen           (duk_context* ctx);
 static duk_ret_t js_GarbageCollect       (duk_context* ctx);
+static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
 static int s_framerate = 0;
 
@@ -52,6 +53,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
 	register_api_func(ctx, NULL, "FlipScreen", js_FlipScreen);
 	register_api_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	register_api_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
@@ -253,7 +255,7 @@ js_RequireSystemScript(duk_context* ctx)
 static duk_ret_t
 js_IsSkippedFrame(duk_context* ctx)
 {
-	duk_push_boolean(ctx, g_skip_frame);
+	duk_push_boolean(ctx, is_skipped_frame());
 	return 1;
 }
 
@@ -399,6 +401,13 @@ static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
 	if (!flip_screen(s_framerate)) bail_out_game();
+	return 0;
+}
+
+static duk_ret_t
+js_UnskipFrame(duk_context* ctx)
+{
+	unskip_frame();
 	return 0;
 }
 

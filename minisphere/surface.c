@@ -277,7 +277,7 @@ js_Surface_applyLookup(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:applyLookup(): Failed to apply lookup transformation");
+		duk_error(ctx, DUK_ERR_ERROR, "Surface:applyLookup(): Failed to apply lookup transformation (internal error)");
 	return 0;
 }
 
@@ -292,7 +292,7 @@ js_Surface_blit(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	if (!is_skipped_frame()) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 

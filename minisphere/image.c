@@ -443,7 +443,7 @@ js_Image_blit(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	if (!is_skipped_frame()) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
@@ -459,7 +459,7 @@ js_Image_blitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame) al_draw_tinted_bitmap(get_image_bitmap(image), mask, x, y, 0x0);
+	if (!is_skipped_frame()) al_draw_tinted_bitmap(get_image_bitmap(image), mask, x, y, 0x0);
 	return 0;
 }
 
@@ -491,7 +491,7 @@ js_Image_rotateBlit(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame)
+	if (!is_skipped_frame())
 		al_draw_rotated_bitmap(get_image_bitmap(image), image->width / 2, image->height / 2, x, y, angle, 0x0);
 	return 0;
 }
@@ -509,7 +509,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame)
+	if (!is_skipped_frame())
 		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), mask, image->width / 2, image->height / 2, x, y, angle, 0x0);
 	return 0;
 }
@@ -539,7 +539,7 @@ js_Image_transformBlit(duk_context* ctx)
 		{ x4, y4, 0, 0, image->height, vertex_color },
 		{ x3, y3, 0, image->width, image->height, vertex_color }
 	};
-	if (!g_skip_frame)
+	if (!is_skipped_frame())
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
@@ -568,7 +568,7 @@ js_Image_transformBlitMask(duk_context* ctx)
 		{ x4, y4, 0, 0, image->height, mask },
 		{ x3, y3, 0, image->width, image->height, mask }
 	};
-	if (!g_skip_frame)
+	if (!is_skipped_frame())
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
@@ -585,7 +585,7 @@ js_Image_zoomBlit(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame)
+	if (!is_skipped_frame())
 		al_draw_scaled_bitmap(get_image_bitmap(image), 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
 	return 0;
 }
@@ -603,7 +603,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!g_skip_frame)
+	if (!is_skipped_frame())
 		al_draw_tinted_scaled_bitmap(get_image_bitmap(image), mask, 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
 	return 0;
 }

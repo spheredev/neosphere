@@ -838,7 +838,7 @@ render_map_engine(void)
 	
 	int x, y, z;
 	
-	if (g_skip_frame)
+	if (is_skipped_frame())
 		return;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->width * tile_w; map_h = s_map->height * tile_h;
