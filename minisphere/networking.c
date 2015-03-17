@@ -4,7 +4,7 @@
 
 #include "networking.h"
 
-static void on_dyad_connect (dyad_Event* e);
+static void on_dyad_accept  (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
 
 static duk_ret_t js_GetLocalName              (duk_context* ctx);
@@ -23,7 +23,6 @@ struct socket
 	int          refcount;
 	dyad_Stream* stream;
 	bool         is_data_lost;
-	bool         is_live;
 	uint8_t*     buffer;
 	size_t       buffer_size;
 	size_t       pend_size;
@@ -40,7 +39,6 @@ connect_to_host(const char* hostname, int port, size_t buffer_size)
 	socket->buffer_size = buffer_size;
 	if (!(socket->stream = dyad_newStream())) goto on_error;
 	dyad_setNoDelay(socket->stream, true);
-	dyad_addListener(socket->stream, DYAD_EVENT_CONNECT, on_dyad_connect, socket);
 	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
 	dyad_connect(socket->stream, hostname, port);
 	return ref_socket(socket);
@@ -65,8 +63,7 @@ listen_on_port(int port, size_t buffer_size)
 	socket->buffer_size = buffer_size;
 	if (!(socket->stream = dyad_newStream())) goto on_error;
 	dyad_setNoDelay(socket->stream, true);
-	dyad_addListener(socket->stream, DYAD_EVENT_CONNECT, on_dyad_connect, socket);
-	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	dyad_addListener(socket->stream, DYAD_EVENT_ACCEPT, on_dyad_accept, socket);
 	dyad_listen(socket->stream, port);
 	return ref_socket(socket);
 
@@ -104,7 +101,7 @@ is_socket_data_lost(socket_t* socket)
 bool
 is_socket_live(socket_t* socket)
 {
-	return socket->is_live;
+	return dyad_getState(socket->stream) == DYAD_STATE_CONNECTED;
 }
 
 size_t
@@ -148,11 +145,13 @@ init_networking_api(void)
 }
 
 static void
-on_dyad_connect(dyad_Event* e)
+on_dyad_accept(dyad_Event* e)
 {
 	socket_t* socket = e->udata;
 
-	socket->is_live = true;
+	dyad_addListener(e->remote, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	dyad_end(socket->stream);
+	socket->stream = e->remote;
 }
 
 static void
