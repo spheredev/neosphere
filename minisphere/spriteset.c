@@ -336,7 +336,7 @@ set_spriteset_image(const spriteset_t* spriteset, int image_index, image_t* imag
 }
 
 void
-draw_sprite(const spriteset_t* spriteset, bool is_flipped, const char* pose_name, float x, float y, int frame_index)
+draw_sprite(const spriteset_t* spriteset, ALLEGRO_COLOR mask, bool is_flipped, const char* pose_name, float x, float y, int frame_index)
 {
 	int                      image_index;
 	const spriteset_pose_t*  pose;
@@ -348,8 +348,8 @@ draw_sprite(const spriteset_t* spriteset, bool is_flipped, const char* pose_name
 	x -= (spriteset->base.x1 + spriteset->base.x2) / 2;
 	if (!is_flipped)
 		y -= (spriteset->base.y1 + spriteset->base.y2) / 2;
-	al_draw_bitmap(get_image_bitmap(spriteset->images[image_index]), x, y,
-		is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
+	al_draw_tinted_bitmap(get_image_bitmap(spriteset->images[image_index]), mask,
+		x, y, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }
 
 void

@@ -4,6 +4,7 @@
 #include "file.h"
 
 static duk_ret_t js_OpenFile        (duk_context* ctx);
+static duk_ret_t js_RemoveFile      (duk_context* ctx);
 static duk_ret_t js_File_finalize   (duk_context* ctx);
 static duk_ret_t js_File_getKey     (duk_context* ctx);
 static duk_ret_t js_File_getNumKeys (duk_context* ctx);
@@ -18,9 +19,8 @@ static void duk_push_sphere_file (duk_context* ctx, ALLEGRO_CONFIG* conf, const 
 void
 init_file_api(void)
 {
-	duk_push_global_object(g_duktape);
-	duk_push_c_function(g_duktape, js_OpenFile, DUK_VARARGS); duk_put_prop_string(g_duktape, -2, "OpenFile");
-	duk_pop(g_duktape);
+	register_api_func(g_duktape, NULL, "OpenFile", js_OpenFile);
+	register_api_func(g_duktape, NULL, "RemoveFile", js_RemoveFile);
 }
 
 static void
@@ -60,6 +60,22 @@ js_OpenFile(duk_context* ctx)
 
 on_error:
 	duk_error(ctx, DUK_ERR_ERROR, "OpenFile(): Unable to open or create file '%s'", filename);
+}
+
+static duk_ret_t
+js_RemoveFile(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+	
+	char* path;
+
+	path = get_asset_path(filename, "save", true);
+	if (!al_filename_exists(path))
+		duk_error(ctx, DUK_ERR_ERROR, "RemoveFile(): File '%s' doesn't exist", filename);
+	if (!al_remove_filename(path))
+		duk_error(ctx, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s', may be read-only", filename);
+	free(path);
+	return 0;
 }
 
 static duk_ret_t

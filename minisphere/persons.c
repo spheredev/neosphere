@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
 #include "map_engine.h"
 #include "obsmap.h"
 #include "spriteset.h"
@@ -18,6 +19,7 @@ struct person
 	bool           is_persistent;
 	bool           is_visible;
 	int            layer;
+	ALLEGRO_COLOR  mask;
 	int            revert_delay;
 	int            revert_frames;
 	int            scripts[PERSON_SCRIPT_MAX];
@@ -58,6 +60,7 @@ static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
 static duk_ret_t js_GetPersonList                (duk_context* ctx);
+static duk_ret_t js_GetPersonMask                (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeedX              (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeedY              (duk_context* ctx);
 static duk_ret_t js_GetPersonSpriteset           (duk_context* ctx);
@@ -74,6 +77,7 @@ static duk_ret_t js_SetPersonFrame               (duk_context* ctx);
 static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_SetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer               (duk_context* ctx);
+static duk_ret_t js_SetPersonMask                (duk_context* ctx);
 static duk_ret_t js_SetPersonScript              (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeed               (duk_context* ctx);
 static duk_ret_t js_SetPersonSpeedXY             (duk_context* ctx);
@@ -132,6 +136,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->speed_x = 1.0;
 	person->speed_y = 1.0;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
+	person->mask = al_map_rgba(255, 255, 255, 255);
 	sort_persons();
 	return person;
 }
@@ -261,6 +266,12 @@ get_person_base(const person_t* person)
 	return base_rect;
 }
 
+ALLEGRO_COLOR
+get_person_mask(const person_t* person)
+{
+	return person->mask;
+}
+
 const char*
 get_person_name(const person_t* person)
 {
@@ -297,6 +308,12 @@ get_person_xyz(const person_t* person, double* out_x, double* out_y, int* out_la
 	*out_layer = person->layer;
 	if (want_normalize)
 		normalize_map_entity_xy(out_x, out_y, *out_layer);
+}
+
+void
+set_person_mask(person_t* person, ALLEGRO_COLOR mask)
+{
+	person->mask = mask;
 }
 
 bool
@@ -430,7 +447,7 @@ render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 		get_person_xy(s_persons[i], &x, &y, true);
 		x -= cam_x - s_persons[i]->x_offset;
 		y -= cam_y - s_persons[i]->y_offset;
-		draw_sprite(sprite, is_flipped, s_persons[i]->direction, x, y, s_persons[i]->frame);
+		draw_sprite(sprite, s_persons[i]->mask, is_flipped, s_persons[i]->direction, x, y, s_persons[i]->frame);
 	}
 }
 
@@ -554,6 +571,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
+	register_api_func(g_duktape, NULL, "GetPersonMask", js_GetPersonMask);
 	register_api_func(g_duktape, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
 	register_api_func(g_duktape, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
 	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
@@ -570,6 +588,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
+	register_api_func(g_duktape, NULL, "SetPersonMask", js_SetPersonMask);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
 	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
 	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
@@ -1000,6 +1019,19 @@ js_GetPersonLayer(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonMask(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonMask(): Person '%s' doesn't exist", name);
+	duk_push_sphere_color(ctx, get_person_mask(person));
+	return 0;
+}
+
+static duk_ret_t
 js_GetPersonList(duk_context* ctx)
 {
 	int i;
@@ -1252,6 +1284,20 @@ js_SetPersonLayer(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonLayer(): Person '%s' doesn't exist", name);
 	person->layer = z;
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonMask(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonMask(): Person '%s' doesn't exist", name);
+	set_person_mask(person, mask);
 	return 0;
 }
 
