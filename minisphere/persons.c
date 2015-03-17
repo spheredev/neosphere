@@ -65,6 +65,8 @@ static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
 static duk_ret_t js_GetPersonList                (duk_context* ctx);
 static duk_ret_t js_GetPersonMask                (duk_context* ctx);
+static duk_ret_t js_GetPersonOffsetX             (duk_context* ctx);
+static duk_ret_t js_GetPersonOffsetY             (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeedX              (duk_context* ctx);
 static duk_ret_t js_GetPersonSpeedY              (duk_context* ctx);
 static duk_ret_t js_GetPersonSpriteset           (duk_context* ctx);
@@ -83,6 +85,8 @@ static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_SetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer               (duk_context* ctx);
 static duk_ret_t js_SetPersonMask                (duk_context* ctx);
+static duk_ret_t js_SetPersonOffsetX             (duk_context* ctx);
+static duk_ret_t js_SetPersonOffsetY             (duk_context* ctx);
 static duk_ret_t js_SetPersonScaleAbsolute       (duk_context* ctx);
 static duk_ret_t js_SetPersonScaleFactor         (duk_context* ctx);
 static duk_ret_t js_SetPersonScript              (duk_context* ctx);
@@ -610,6 +614,8 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonMask", js_GetPersonMask);
+	register_api_func(g_duktape, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
+	register_api_func(g_duktape, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
 	register_api_func(g_duktape, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
 	register_api_func(g_duktape, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
 	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
@@ -628,6 +634,8 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
 	register_api_func(g_duktape, NULL, "SetPersonMask", js_SetPersonMask);
+	register_api_func(g_duktape, NULL, "SetPersonOffsetX", js_SetPersonOffsetX);
+	register_api_func(g_duktape, NULL, "SetPersonOffsetY", js_SetPersonOffsetY);
 	register_api_func(g_duktape, NULL, "SetPersonScaleAbsolute", js_SetPersonScaleAbsolute);
 	register_api_func(g_duktape, NULL, "SetPersonScaleFactor", js_SetPersonScaleFactor);
 	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
@@ -1082,7 +1090,33 @@ js_GetPersonMask(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonMask(): Person '%s' doesn't exist", name);
 	duk_push_sphere_color(ctx, get_person_mask(person));
-	return 0;
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonOffsetX(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonOffsetX(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->x_offset);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonOffsetY(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonOffsetY(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->y_offset);
+	return 1;
 }
 
 static duk_ret_t
@@ -1370,6 +1404,34 @@ js_SetPersonMask(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetPersonOffsetX(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int offset = duk_require_int(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonOffsetX(): Person '%s' doesn't exist", name);
+	person->x_offset = offset;
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonOffsetY(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int offset = duk_require_int(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonOffsetY(): Person '%s' doesn't exist", name);
+	person->y_offset = offset;
+	return 0;
+}
+
+static duk_ret_t
 js_SetPersonScaleAbsolute(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -1381,8 +1443,8 @@ js_SetPersonScaleAbsolute(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleAbsolute(): Person '%s' doesn't exist", name);
-	if (width <= 0 || height <= 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonScaleAbsolute(): Width and height cannot be zero or negative ({ w: %i, h: %i })", width, height);
+	if (width < 0 || height < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonScaleAbsolute(): Scale dimensions cannot be negative ({ w: %i, h: %i })", width, height);
 	get_sprite_size(get_person_spriteset(person), &sprite_w, &sprite_h);
 	set_person_scale(person, width / sprite_w, height / sprite_h);
 	return 0;
@@ -1399,6 +1461,8 @@ js_SetPersonScaleFactor(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleFactor(): Person '%s' doesn't exist", name);
+	if (scale_x < 0.0 || scale_y < 0.0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetPersonScaleFactor(): Scaling factors cannot be negative ({ scale_x: %f, scale_y: %f })", scale_x, scale_y);
 	set_person_scale(person, scale_x, scale_y);
 	return 0;
 }
@@ -1412,10 +1476,10 @@ js_SetPersonScript(duk_context* ctx)
 	
 	person_t*  person;
 	
-	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		duk_error(ctx, DUK_ERR_ERROR, "SetPersonScript(): Invalid script type constant");
 	if ((person = find_person(name)) == NULL)
 		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error(ctx, DUK_ERR_ERROR, "SetPersonScript(): Invalid script type constant");
 	set_person_script(person, type, script);
 	free_lstring(script);
 	return 0;
