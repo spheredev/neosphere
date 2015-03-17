@@ -68,6 +68,7 @@ int                  g_res_x, g_res_y;
 int
 main(int argc, char** argv)
 {
+	ALLEGRO_USTR*        dialog_name;
 	duk_errcode_t        err_code;
 	duk_int_t            exec_result;
 	ALLEGRO_FILECHOOSER* file_dlg;
@@ -120,7 +121,8 @@ startup:
 	g_game_conf = al_load_config_file(sgm_path);
 	free(sgm_path);
 	if (g_game_conf == NULL) {
-		file_dlg = al_create_native_file_dialog(NULL, "minisphere - Where is game.sgm?", "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		dialog_name = al_ustr_newf("%s - Where is game.sgm?", ENGINE_VERSION_NAME);
+		file_dlg = al_create_native_file_dialog(NULL, al_cstr(dialog_name), "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
@@ -128,8 +130,9 @@ startup:
 		else {
 			return EXIT_SUCCESS;
 		}
-		g_game_conf = al_load_config_file(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		al_destroy_native_file_dialog(file_dlg);
+		al_ustr_free(dialog_name);
+		g_game_conf = al_load_config_file(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		if (g_game_conf == NULL) {
 			al_show_native_message_box(NULL, "Unable to Load Game",
 				al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),

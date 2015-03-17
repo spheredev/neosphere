@@ -28,8 +28,9 @@
 #include "lstring.h"
 #include "script.h"
 
+static const char* const ENGINE_VERSION_NAME       = "minisphere 1.0rc1";
 static double      const SPHERE_API_VERSION        = 1.5;
-static const char* const SPHERE_API_VERSION_STRING = "v1.5 (compatible; minisphere 1.0b2)";
+static const char* const SPHERE_API_VERSION_STRING = "v1.5 (compatible; minisphere 1.0rc1)";
 
 typedef struct key_queue key_queue_t;
 struct key_queue
