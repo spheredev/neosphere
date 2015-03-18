@@ -710,8 +710,8 @@ void dyad_update(void) {
   }
 
   /* Init timeout value and do select */
-  tv.tv_sec = dyad_updateTimeout;
-  tv.tv_usec = (dyad_updateTimeout - tv.tv_sec) * 1e6;
+  tv.tv_sec = (long)dyad_updateTimeout;
+  tv.tv_usec = (long)((dyad_updateTimeout - tv.tv_sec) * 1e6);
 
   select(dyad_selectSet.maxfd + 1,
          dyad_selectSet.fds[DYAD_SET_READ],
@@ -946,7 +946,7 @@ int dyad_listenEx(
 
   /* Get addrinfo */
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
+  hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
   err = getaddrinfo(host, dyad_intToStr(port), &hints, &ai);

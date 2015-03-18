@@ -150,7 +150,8 @@ on_dyad_accept(dyad_Event* e)
 	socket_t* socket = e->udata;
 
 	dyad_addListener(e->remote, DYAD_EVENT_DATA, on_dyad_receive, socket);
-	dyad_end(socket->stream);
+	dyad_removeAllListeners(socket->stream, DYAD_EVENT_ACCEPT);
+	dyad_close(socket->stream);
 	socket->stream = e->remote;
 }
 
