@@ -62,6 +62,7 @@ static duk_ret_t js_GetPersonData                (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
+static duk_ret_t js_GetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
 static duk_ret_t js_GetPersonList                (duk_context* ctx);
 static duk_ret_t js_GetPersonMask                (duk_context* ctx);
@@ -611,6 +612,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
+	register_api_func(g_duktape, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonMask", js_GetPersonMask);
@@ -1058,7 +1060,7 @@ js_GetPersonIgnoreList(duk_context* ctx)
 	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "SetPersonIgnoreList(): Person '%s' doesn't exist", name);
+		duk_error(ctx, DUK_ERR_REFERENCE_ERROR, "GetPersonIgnoreList(): Person '%s' doesn't exist", name);
 	duk_push_array(ctx);
 	for (i = 0; i < person->num_ignores; ++i) {
 		duk_push_string(ctx, person->ignores[i]);
