@@ -22,8 +22,8 @@ enum map_script_type
 };
 
 static bool                are_zones_at      (int x, int y, int layer, int* out_count);
-static struct map_trigger* get_trigger_at    (int x, int y, int layer);
-static struct map_zone*    get_zone_at       (int x, int y, int layer, int which);
+static struct map_trigger* get_trigger_at    (int x, int y, int layer, int* out_index);
+static struct map_zone*    get_zone_at       (int x, int y, int layer, int which, int* out_index);
 static bool                change_map        (const char* filename, bool preserve_persons);
 static void                process_map_input (void);
 static void                render_map_engine (void);
@@ -64,6 +64,7 @@ static duk_ret_t js_GetTileSurface          (duk_context* ctx);
 static duk_ret_t js_GetTileWidth            (duk_context* ctx);
 static duk_ret_t js_SetCameraX              (duk_context* ctx);
 static duk_ret_t js_SetCameraY              (duk_context* ctx);
+static duk_ret_t js_SetColorMask            (duk_context* ctx);
 static duk_ret_t js_SetDefaultMapScript     (duk_context* ctx);
 static duk_ret_t js_SetLayerMask            (duk_context* ctx);
 static duk_ret_t js_SetLayerReflective      (duk_context* ctx);
@@ -100,6 +101,11 @@ static duk_ret_t js_UpdateMapEngine         (duk_context* ctx);
 static person_t*           s_camera_person     = NULL;
 static int                 s_cam_x             = 0;
 static int                 s_cam_y             = 0;
+static ALLEGRO_COLOR       s_color_mask;
+static ALLEGRO_COLOR       s_fade_color_from;
+static ALLEGRO_COLOR       s_fade_color_to;
+static int                 s_fade_frames;
+static int                 s_fade_progress;
 static int                 s_map_corner_x;
 static int                 s_map_corner_y;
 static int                 s_current_trigger   = -1;
@@ -539,6 +545,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
 	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
 	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
+	register_api_func(ctx, NULL, "SetColorMask", js_SetColorMask);
 	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
 	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
 	register_api_func(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
@@ -725,9 +732,10 @@ are_zones_at(int x, int y, int layer, int* out_count)
 }
 
 static struct map_trigger*
-get_trigger_at(int x, int y, int layer)
+get_trigger_at(int x, int y, int layer, int* out_index)
 {
 	rect_t              bounds;
+	struct map_trigger* found_item = NULL;
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
 
@@ -742,15 +750,19 @@ get_trigger_at(int x, int y, int layer)
 		bounds.y1 = trigger->y - tile_h / 2;
 		bounds.x2 = bounds.x1 + tile_w;
 		bounds.y2 = bounds.y1 + tile_h;
-		if (is_point_in_rect(x, y, bounds))
-			return trigger;
+		if (is_point_in_rect(x, y, bounds)) {
+			found_item = trigger;
+			if (out_index) *out_index = i;
+			break;
+		}
 	}
-	return NULL;
+	return found_item;
 }
 
 static struct map_zone*
-get_zone_at(int x, int y, int layer, int which)
+get_zone_at(int x, int y, int layer, int which, int* out_index)
 {
+	struct map_zone* found_item = NULL;
 	struct map_zone* zone;
 	
 	int i;
@@ -759,10 +771,13 @@ get_zone_at(int x, int y, int layer, int which)
 		zone = &s_map->zones[i];
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
-		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0)
-			return zone;
+		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0) {
+			found_item = zone;
+			if (out_index) *out_index = i;
+			break;
+		}
 	}
-	return NULL;
+	return found_item;
 }
 
 static void
@@ -893,12 +908,16 @@ render_map_engine(void)
 		al_hold_bitmap_drawing(false);
 		run_script(layer->render_script, false);
 	}
+	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, s_color_mask);
 	run_script(s_render_script, false);
 }
 
 static void
 update_map_engine(void)
 {
+	int                 index;
+	int                 last_trigger;
+	int                 last_zone;
 	int                 layer;
 	int                 map_w, map_h;
 	int                 script_type;
@@ -917,6 +936,13 @@ update_map_engine(void)
 	update_persons();
 	animate_tileset(s_map->tileset);
 
+	// update color mask fade level
+	if (s_fade_progress < s_fade_frames) {
+		++s_fade_progress;
+		s_color_mask = blend_colors(s_fade_color_to, s_fade_color_from,
+			s_fade_progress, s_fade_frames - s_fade_progress);
+	}
+	
 	// update camera
 	if (s_camera_person != NULL) {
 		get_person_xy(s_camera_person, &x, &y, true);
@@ -941,18 +967,24 @@ update_map_engine(void)
 	if (s_input_person != NULL && has_person_moved(s_input_person)) {
 		// did we step on a trigger or move to a new one?
 		get_person_xyz(s_input_person, &x, &y, &layer, true);
-		trigger = get_trigger_at(x, y, layer);
+		trigger = get_trigger_at(x, y, layer, &index);
 		if (trigger != s_on_trigger) {
+			last_trigger = s_current_trigger;
+			s_current_trigger = index;
 			s_on_trigger = trigger;
 			if (trigger) run_script(trigger->script_id, false);
+			s_current_trigger = last_trigger;
 		}
 
 		// update any occupied zones
 		i = 0;
-		while (zone = get_zone_at(x, y, layer, i++)) {
+		while (zone = get_zone_at(x, y, layer, i++, &index)) {
 			if (zone->steps_left-- <= 0) {
+				last_zone = s_current_zone;
+				s_current_zone = index;
 				zone->steps_left = zone->step_interval;
 				run_script(zone->script_id, true);
+				s_current_zone = last_zone;
 			}
 		}
 	}
@@ -978,6 +1010,9 @@ js_MapEngine(duk_context* ctx)
 	
 	s_is_map_running = true;
 	s_exiting = false;
+	s_color_mask = al_map_rgba(0, 0, 0, 0);
+	s_fade_color_to = s_fade_color_from = s_color_mask;
+	s_fade_progress = s_fade_frames = 0;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	s_framerate = framerate;
 	if (!change_map(filename, true)) duk_error(ctx, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
@@ -1060,7 +1095,7 @@ js_IsTriggerAt(duk_context* ctx)
 	
 	if (z < 0 || z >= s_map->num_layers)
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "IsTriggerAt(): Invalid layer index; valid range is 0-%i, caller passed %i", s_map->num_layers - 1, z);
-	duk_push_boolean(ctx, get_trigger_at(x, y, z) != NULL);
+	duk_push_boolean(ctx, get_trigger_at(x, y, z, NULL) != NULL);
 	return 1;
 }
 
@@ -1376,6 +1411,31 @@ js_SetCameraY(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "SetCameraY(): Map engine must be running");
 	s_cam_y = new_y;
+	return 0;
+}
+
+static duk_ret_t
+js_SetColorMask(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	ALLEGRO_COLOR new_mask = duk_get_sphere_color(ctx, 0);
+	int frames = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "SetColorMask(): Map engine must be running");
+	if (frames < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetColorMask(): Frame count cannot be negative");
+	if (frames > 0) {
+		s_fade_color_to = new_mask;
+		s_fade_color_from = s_color_mask;
+		s_fade_frames = frames;
+		s_fade_progress = 0;
+	}
+	else {
+		s_color_mask = new_mask;
+		s_fade_color_to = s_fade_color_from = new_mask;
+		s_fade_progress = s_fade_frames = 0;
+	}
 	return 0;
 }
 
@@ -1728,12 +1788,18 @@ js_ExecuteTrigger(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	int layer = duk_require_int(ctx, 2);
 	
+	int                 index;
+	int                 last_trigger;
 	struct map_trigger* trigger;
 	
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "ExecuteTrigger(): Map engine is not running");
-	trigger = get_trigger_at(x, y, layer);
-	if (trigger != NULL) run_script(trigger->script_id, true);
+	if (trigger = get_trigger_at(x, y, layer, &index)) {
+		last_trigger = s_current_trigger;
+		s_current_trigger = index;
+		run_script(trigger->script_id, true);
+		s_current_trigger = last_trigger;
+	}
 	return 0;
 }
 
@@ -1744,6 +1810,8 @@ js_ExecuteZones(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	int layer = duk_require_int(ctx, 2);
 
+	int              index;
+	int              last_zone;
 	struct map_zone* zone;
 
 	int i;
@@ -1751,8 +1819,12 @@ js_ExecuteZones(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "ExecuteZones(): Map engine is not running");
 	i = 0;
-	while (zone = get_zone_at(x, y, layer, i++))
+	while (zone = get_zone_at(x, y, layer, i++, &index)) {
+		last_zone = s_current_zone;
+		s_current_zone = index;
 		run_script(zone->script_id, true);
+		s_current_zone = last_zone;
+	}
 	return 0;
 }
 

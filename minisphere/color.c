@@ -6,6 +6,20 @@ static duk_ret_t js_CreateColor(duk_context* ctx);
 static duk_ret_t js_BlendColors(duk_context* ctx);
 static duk_ret_t js_BlendColorsWeighted(duk_context* ctx);
 
+ALLEGRO_COLOR
+blend_colors(ALLEGRO_COLOR color1, ALLEGRO_COLOR color2, float w1, float w2)
+{
+	ALLEGRO_COLOR blend;
+	float         sigma;
+	
+	sigma = w1 + w2;
+	blend.r = (color1.r * w1 + color2.r * w2) / sigma;
+	blend.g = (color1.g * w1 + color2.g * w2) / sigma;
+	blend.b = (color1.b * w1 + color2.b * w2) / sigma;
+	blend.a = (color1.a * w1 + color2.a * w2) / sigma;
+	return blend;
+}
+
 void
 init_color_api(void)
 {
@@ -55,36 +69,23 @@ js_CreateColor(duk_context* ctx)
 static duk_ret_t
 js_BlendColors(duk_context* ctx)
 {
-	ALLEGRO_COLOR color1, color2;
-	ALLEGRO_COLOR result;
+	ALLEGRO_COLOR color1 = duk_get_sphere_color(ctx, 0);
+	ALLEGRO_COLOR color2 = duk_get_sphere_color(ctx, 1);
 	
-	color1 = duk_get_sphere_color(ctx, 0);
-	color2 = duk_get_sphere_color(ctx, 1);
-	result.r = (color1.r + color2.r) / 2;
-	result.g = (color1.g + color2.g) / 2;
-	result.b = (color1.b + color2.b) / 2;
-	result.a = (color1.a + color2.a) / 2;
-	duk_push_sphere_color(ctx, result);
+	duk_push_sphere_color(ctx, blend_colors(color1, color2, 1, 1));
 	return 1;
 }
 
 static duk_ret_t
 js_BlendColorsWeighted(duk_context* ctx)
 {
-	ALLEGRO_COLOR color1, color2;
-	ALLEGRO_COLOR result;
-	float         sigma;
-	float         w1, w2;
-
-	color1 = duk_get_sphere_color(ctx, 0);
-	color2 = duk_get_sphere_color(ctx, 1);
-	w1 = duk_to_number(ctx, 2);
-	w2 = duk_to_number(ctx, 3);
-	sigma = w1 + w2;
-	result.r = (color1.r * w1 + color2.r * w2) / sigma;
-	result.g = (color1.g * w1 + color2.g * w2) / sigma;
-	result.b = (color1.b * w1 + color2.b * w2) / sigma;
-	result.a = (color1.a * w1 + color2.a * w2) / sigma;
-	duk_push_sphere_color(ctx, result);
+	ALLEGRO_COLOR color1 = duk_get_sphere_color(ctx, 0);
+	ALLEGRO_COLOR color2 = duk_get_sphere_color(ctx, 1);
+	float w1 = duk_require_number(ctx, 2);
+	float w2 = duk_require_number(ctx, 3);
+	
+	if (w1 < 0.0 || w2 < 0.0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
+	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
 	return 1;
 }
