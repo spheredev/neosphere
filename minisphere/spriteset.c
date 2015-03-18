@@ -108,6 +108,7 @@ load_spriteset(const char* path)
 	struct rss_dir_v2   dir_v2;
 	struct rss_dir_v3   dir_v3;
 	char                extra_v2_dir_name[32];
+	ALLEGRO_PATH*       filename_path;
 	struct rss_frame_v2 frame_v2;
 	struct rss_frame_v3 frame_v3;
 	ALLEGRO_FILE*       file = NULL;
@@ -226,10 +227,15 @@ load_spriteset(const char* path)
 		goto on_error;
 	}
 	al_fclose(file);
+	
+	// get spriteset path relative to game directory
 	base_path = get_asset_path("~/", NULL, false);
 	path += strstr(path, base_path) ? strlen(base_path) : 0;
-	spriteset->filename = lstring_from_cstr(path);
+	filename_path = al_create_path(path);
+	spriteset->filename = lstring_from_cstr(al_path_cstr(filename_path, '/'));
+	al_destroy_path(filename_path);
 	free(base_path);
+	
 	return ref_spriteset(spriteset);
 
 on_error:

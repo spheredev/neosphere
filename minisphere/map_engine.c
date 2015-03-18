@@ -21,13 +21,14 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static bool                are_zones_at      (int x, int y, int layer, int* out_count);
-static struct map_trigger* get_trigger_at    (int x, int y, int layer, int* out_index);
-static struct map_zone*    get_zone_at       (int x, int y, int layer, int which, int* out_index);
-static bool                change_map        (const char* filename, bool preserve_persons);
-static void                process_map_input (void);
-static void                render_map_engine (void);
-static void                update_map_engine (void);
+static bool                are_zones_at        (int x, int y, int layer, int* out_count);
+static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
+static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
+static bool                change_map          (const char* filename, bool preserve_persons);
+static void                map_screen_to_layer (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                process_map_input   (void);
+static void                render_map_engine   (void);
+static void                update_map_engine   (void);
 
 static duk_ret_t js_MapEngine               (duk_context* ctx);
 static duk_ret_t js_AreZonesAt              (duk_context* ctx);
@@ -62,6 +63,11 @@ static duk_ret_t js_GetTileImage            (duk_context* ctx);
 static duk_ret_t js_GetTileName             (duk_context* ctx);
 static duk_ret_t js_GetTileSurface          (duk_context* ctx);
 static duk_ret_t js_GetTileWidth            (duk_context* ctx);
+static duk_ret_t js_GetZoneHeight           (duk_context* ctx);
+static duk_ret_t js_GetZoneLayer            (duk_context* ctx);
+static duk_ret_t js_GetZoneWidth            (duk_context* ctx);
+static duk_ret_t js_GetZoneX                (duk_context* ctx);
+static duk_ret_t js_GetZoneY                (duk_context* ctx);
 static duk_ret_t js_SetCameraX              (duk_context* ctx);
 static duk_ret_t js_SetCameraY              (duk_context* ctx);
 static duk_ret_t js_SetColorMask            (duk_context* ctx);
@@ -80,6 +86,7 @@ static duk_ret_t js_SetTileDelay            (duk_context* ctx);
 static duk_ret_t js_SetTileImage            (duk_context* ctx);
 static duk_ret_t js_SetTileSurface          (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript         (duk_context* ctx);
+static duk_ret_t js_SetZoneLayer            (duk_context* ctx);
 static duk_ret_t js_AttachCamera            (duk_context* ctx);
 static duk_ret_t js_AttachInput             (duk_context* ctx);
 static duk_ret_t js_CallDefaultMapScript    (duk_context* ctx);
@@ -93,6 +100,7 @@ static duk_ret_t js_ExitMapEngine           (duk_context* ctx);
 static duk_ret_t js_MapToScreenX            (duk_context* ctx);
 static duk_ret_t js_MapToScreenY            (duk_context* ctx);
 static duk_ret_t js_RenderMap               (duk_context* ctx);
+static duk_ret_t js_ReplaceTilesOnLayer     (duk_context* ctx);
 static duk_ret_t js_ScreenToMapX            (duk_context* ctx);
 static duk_ret_t js_ScreenToMapY            (duk_context* ctx);
 static duk_ret_t js_SetDelayScript          (duk_context* ctx);
@@ -543,6 +551,11 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetTileName", js_GetTileName);
 	register_api_func(ctx, NULL, "GetTileSurface", js_GetTileSurface);
 	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
+	register_api_func(ctx, NULL, "GetZoneHeight", js_GetZoneHeight);
+	register_api_func(ctx, NULL, "GetZoneLayer", js_GetZoneLayer);
+	register_api_func(ctx, NULL, "GetZoneWidth", js_GetZoneWidth);
+	register_api_func(ctx, NULL, "GetZoneX", js_GetZoneX);
+	register_api_func(ctx, NULL, "GetZoneY", js_GetZoneY);
 	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
 	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
 	register_api_func(ctx, NULL, "SetColorMask", js_SetColorMask);
@@ -561,6 +574,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
 	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
+	register_api_func(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
 	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
 	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
 	register_api_func(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
@@ -573,6 +587,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	register_api_func(ctx, NULL, "MapToScreenX", js_MapToScreenX);
 	register_api_func(ctx, NULL, "MapToScreenY", js_MapToScreenY);
+	register_api_func(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
 	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
 	register_api_func(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
 	register_api_func(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
@@ -781,6 +796,37 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 }
 
 static void
+map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
+{
+	int layer_w, layer_h;
+	int tile_w, tile_h;
+	int x_offset, y_offset;
+	
+	// get layer dimensions
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	layer_w = s_map->layers[layer].width * tile_w;
+	layer_h = s_map->layers[layer].height * tile_h;
+	
+	// map screen coordinates to map coordinates
+	x_offset = s_cam_x - g_res_x / 2;
+	y_offset = s_cam_y - g_res_y / 2;
+	if (!s_map->is_repeating) {
+		// map is non-repeating, clamp viewport to map bounds (windowbox if needed)
+		x_offset = layer_w > g_res_x ? fmin(fmax(x_offset, 0), layer_w - g_res_x)
+			: -(g_res_x - layer_w) / 2;
+		y_offset = layer_h > g_res_y ? fmin(fmax(y_offset, 0), layer_h - g_res_y)
+			: -(g_res_y - layer_h) / 2;
+	}
+	else {
+		// map is repeating, wrap offset to map bounds (simplifies calculations)
+		x_offset = (x_offset % layer_w + layer_w) % layer_w;
+		y_offset = (y_offset % layer_h + layer_h) % layer_h;
+	}
+	if (inout_x) *inout_x += x_offset;
+	if (inout_y) *inout_y += y_offset;
+}
+
+static void
 process_map_input(void)
 {
 	ALLEGRO_KEYBOARD_STATE kb_state;
@@ -846,7 +892,7 @@ render_map_engine(void)
 	int               cell_x, cell_y;
 	int               first_cell_x, first_cell_y;
 	struct map_layer* layer;
-	int               map_w, map_h;
+	int               layer_w, layer_h;
 	int               tile_w, tile_h;
 	int               off_x, off_y;
 	int               tile_index;
@@ -856,32 +902,20 @@ render_map_engine(void)
 	if (is_skipped_frame())
 		return;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
-	map_w = s_map->width * tile_w; map_h = s_map->height * tile_h;
-	off_x = s_cam_x - g_res_x / 2; off_y = s_cam_y - g_res_y / 2;
-	if (!s_map->is_repeating) {
-		// map is non-repeating, clamp viewport to map bounds (windowbox if needed)
-		off_x = map_w > g_res_x ? fmin(fmax(off_x, 0), map_w - g_res_x)
-			: -(g_res_x - map_w) / 2;
-		off_y = map_h > g_res_y ? fmin(fmax(off_y, 0), map_h - g_res_y)
-			: -(g_res_y - map_h) / 2;
-	}
-	else {
-		// map is repeating, wrap offset to map bounds (simplifies calculations)
-		off_x = (off_x % map_w + map_w) % map_w;
-		off_y = (off_y % map_h + map_h) % map_h;
-	}
-	s_map_corner_x = off_x;
-	s_map_corner_y = off_y;
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
 		if (!layer->is_visible)
 			continue;
+		layer_w = layer->width * tile_w;
+		layer_h = layer->height * tile_h;
+		off_x = 0; off_y = 0;
+		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
 		al_hold_bitmap_drawing(true);
 		if (layer->is_reflective) {
 			if (s_map->is_repeating) {
 				// for small repeating maps, persons need to be repeated as well
-				for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x)
-					render_persons(z, true, off_x - x * map_w, off_y - y * map_h);
+				for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
+					render_persons(z, true, off_x - x * layer_w, off_y - y * layer_h);
 			}
 			else {
 				render_persons(z, true, off_x, off_y);
@@ -899,8 +933,8 @@ render_map_engine(void)
 		}
 		if (s_map->is_repeating) {
 			// for small repeating maps, persons need to be repeated as well
-			for (y = 0; y < g_res_y / map_h + 2; ++y) for (x = 0; x < g_res_x / map_w + 2; ++x)
-				render_persons(z, false, off_x - x * map_w, off_y - y * map_h);
+			for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
+				render_persons(z, false, off_x - x * layer_w, off_y - y * layer_h);
 		}
 		else {
 			render_persons(z, false, off_x, off_y);
@@ -1140,7 +1174,7 @@ js_GetCurrentTrigger(duk_context* ctx)
 {
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentTrigger(): Map engine not running");
-	if (!s_current_trigger == -1)
+	if (s_current_trigger == -1)
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentTrigger(): Cannot be called outside of a trigger script");
 	duk_push_int(ctx, s_current_trigger);
 	return 1;
@@ -1151,7 +1185,7 @@ js_GetCurrentZone(duk_context* ctx)
 {
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentZone(): Map engine not running");
-	if (!s_current_zone == -1)
+	if (s_current_zone == -1)
 		duk_error(ctx, DUK_ERR_ERROR, "GetCurrentZone(): Cannot be called outside of a zone script");
 	duk_push_int(ctx, s_current_zone);
 	return 1;
@@ -1389,6 +1423,71 @@ js_GetTileWidth(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "GetTileWidth(): Map engine must be running");
 	get_tile_size(s_map->tileset, &w, &h);
 	duk_push_int(ctx, w);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneHeight(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "GetZoneHeight(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetZoneHeight(): Invalid zone index (%i)", zone_index);
+	duk_push_int(ctx, s_map->zones[zone_index].bounds.y2 - s_map->zones[zone_index].bounds.y1);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneLayer(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "GetZoneLayer(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetZoneLayer(): Invalid zone index (%i)", zone_index);
+	duk_push_int(ctx, s_map->zones[zone_index].layer);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneWidth(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "GetZoneWidth(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetZoneWidth(): Invalid zone index (%i)", zone_index);
+	duk_push_int(ctx, s_map->zones[zone_index].bounds.x2 - s_map->zones[zone_index].bounds.x1);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneX(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "GetZoneX(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetZoneX(): Invalid zone index (%i)", zone_index);
+	duk_push_int(ctx, s_map->zones[zone_index].bounds.x1);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneY(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "GetZoneY(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "GetZoneY(): Invalid zone index (%i)", zone_index);
+	duk_push_int(ctx, s_map->zones[zone_index].bounds.y1);
 	return 1;
 }
 
@@ -1704,6 +1803,22 @@ js_SetUpdateScript(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetZoneLayer(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+	int layer = duk_require_int(ctx, 1);
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "SetZoneLayer(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): Invalid zone index (%i)", zone_index);
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): Invalid layer index (%i)", layer);
+	s_map->zones[zone_index].layer = layer;
+	return 0;
+}
+
+static duk_ret_t
 js_AttachCamera(duk_context* ctx)
 {
 	const char* name;
@@ -1843,10 +1958,16 @@ js_MapToScreenX(duk_context* ctx)
 	int layer = duk_require_int(ctx, 0);
 	double x = duk_require_int(ctx, 1);
 
+	int offset_x;
+
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "MapToScreenX(): Map engine is not running");
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "MapToScreenX(): Layer index out of range (%i)", layer);
 	normalize_map_entity_xy(&x, NULL, layer);
-	duk_push_int(ctx, x - s_map_corner_x);
+	offset_x = 0;
+	map_screen_to_layer(layer, s_cam_x, s_cam_y, &offset_x, NULL);
+	duk_push_int(ctx, x - offset_x);
 	return 1;
 }
 
@@ -1856,10 +1977,16 @@ js_MapToScreenY(duk_context* ctx)
 	int layer = duk_require_int(ctx, 0);
 	double y = duk_require_int(ctx, 1);
 
+	int offset_y;
+
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "MapToScreenY(): Map engine is not running");
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "MapToScreenY(): Layer index out of range (%i)", layer);
 	normalize_map_entity_xy(NULL, &y, layer);
-	duk_push_int(ctx, y - s_map_corner_y);
+	offset_y = 0;
+	map_screen_to_layer(layer, s_cam_x, s_cam_y, NULL, &offset_y);
+	duk_push_int(ctx, y - offset_y);
 	return 1;
 }
 
@@ -1867,30 +1994,65 @@ static duk_ret_t
 js_RenderMap(duk_context* ctx)
 {
 	if (!is_map_engine_running())
-		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Operation requires the map engine to be running");
+		duk_error(ctx, DUK_ERR_ERROR, "RenderMap(): Map engine is not running");
 	render_map_engine();
+	return 0;
+}
+
+static duk_ret_t
+js_ReplaceTilesOnLayer(duk_context* ctx)
+{
+	int layer = duk_require_int(ctx, 0);
+	int old_index = duk_require_int(ctx, 1);
+	int new_index = duk_require_int(ctx, 2);
+
+	int              layer_w, layer_h;
+	struct map_tile* p_tile;
+
+	int i_x, i_y;
+
+	if (!is_map_engine_running())
+		duk_error(ctx, DUK_ERR_ERROR, "ReplaceTilesOnLayer(): Map engine is not running");
+	if (old_index < 0 || old_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "ReplaceTilesOnLayer(): Old tile index out of range (%i)", old_index);
+	if (new_index < 0 || new_index >= get_tile_count(s_map->tileset))
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "ReplaceTilesOnLayer(): New tile index out of range (%i)", new_index);
+	layer_w = s_map->layers[layer].width;
+	layer_h = s_map->layers[layer].height;
+	for (i_x = 0; i_x < layer_w; ++i_x) for (i_y = 0; i_y < layer_h; ++i_y) {
+		p_tile = &s_map->layers[layer].tilemap[i_x + i_y * layer_w];
+		if (p_tile->tile_index == old_index) p_tile->tile_index = new_index;
+	}
 	return 0;
 }
 
 static duk_ret_t
 js_ScreenToMapX(duk_context* ctx)
 {
+	int layer = duk_require_int(ctx, 0);
 	int x = duk_require_int(ctx, 1);
 	
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "ScreenToMapX(): Map engine is not running");
-	duk_push_int(ctx, x + s_map_corner_x);
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "ScreenToMapX(): Layer index out of range (%i)", layer);
+	map_screen_to_layer(layer, s_cam_x, s_cam_y, &x, NULL);
+	duk_push_int(ctx, x);
 	return 1;
 }
 
 static duk_ret_t
 js_ScreenToMapY(duk_context* ctx)
 {
+	int layer = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "ScreenToMapY(): Map engine is not running");
-	duk_push_int(ctx, y + s_map_corner_y);
+	if (layer < 0 || layer >= s_map->num_layers)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "ScreenToMapY(): Layer index out of range (%i)", layer);
+	map_screen_to_layer(layer, s_cam_x, s_cam_y, NULL, &y);
+	duk_push_int(ctx, y);
 	return 1;
 }
 
