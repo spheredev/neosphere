@@ -179,6 +179,8 @@ startup:
 		return EXIT_FAILURE;
 	}
 
+	al_hide_mouse_cursor(g_display);
+	
 	// switch to fullscreen if necessary and initialize clipping
 	if (s_is_fullscreen) toggle_fullscreen();
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
@@ -222,6 +224,7 @@ on_js_error:
 	const char* err_msg = duk_safe_to_string(g_duktape, -1);
 	if (err_code != DUK_ERR_ERROR || strstr(err_msg, "Error: @") != err_msg) {
 		// this is an legitimate exception, handle accordingly
+		al_show_mouse_cursor(g_display);
 		duk_get_prop_string(g_duktape, -2, "lineNumber");
 		duk_int_t line_num = duk_get_int(g_duktape, -1);
 		duk_pop(g_duktape);
