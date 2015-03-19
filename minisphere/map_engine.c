@@ -21,7 +21,9 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static bool                are_zones_at        (int x, int y, int layer, int* out_count);
+static map_t*              load_map            (const char* path);
+static void                free_map            (map_t* map);
+static bool                are_zones_at(int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
 static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
 static bool                change_map          (const char* filename, bool preserve_persons);
@@ -259,7 +261,38 @@ struct rmp_zone_header
 };
 #pragma pack(pop)
 
-map_t*
+void
+init_map_engine(void)
+{
+	init_persons_manager();
+	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
+	s_map = NULL; s_map_filename = NULL;
+	s_input_person = s_camera_person = NULL;
+	s_current_trigger = -1;
+	s_current_zone = -1;
+	s_render_script = 0;
+	s_update_script = 0;
+	s_num_delay_scripts = s_max_delay_scripts = 0;
+	s_delay_scripts = NULL;
+	s_talk_key = ALLEGRO_KEY_SPACE;
+	s_talk_button = 0;
+	s_is_map_running = false;
+	s_color_mask = al_map_rgba(0, 0, 0, 0);
+	s_on_trigger = NULL;
+}
+
+void
+shutdown_map_engine(void)
+{
+	int i;
+
+	for (i = 0; i < s_num_delay_scripts; ++i) free_script(s_delay_scripts[i].script_id);
+	free(s_delay_scripts);
+	free_map(s_map);
+	shutdown_persons_manager();
+}
+
+static map_t*
 load_map(const char* path)
 {
 	// strings: 0 - tileset filename
@@ -479,7 +512,7 @@ on_error:
 	return NULL;
 }
 
-void
+static void
 free_map(map_t* map)
 {
 	int i;
@@ -516,8 +549,6 @@ free_map(map_t* map)
 void
 init_map_engine_api(duk_context* ctx)
 {
-	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
-	
 	register_api_func(ctx, NULL, "MapEngine", js_MapEngine);
 	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
 	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);

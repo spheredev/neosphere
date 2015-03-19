@@ -73,6 +73,7 @@ main(int argc, char** argv)
 	duk_int_t            exec_result;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
+	char*                game_path;
 	ALLEGRO_BITMAP*      icon;
 	char*                icon_path;
 	char*                path;
@@ -193,10 +194,13 @@ startup:
 	if (duk_pcall(g_duktape, 0) != DUK_EXEC_SUCCESS) goto on_js_error;
 	duk_pop(g_duktape);
 
-	// call game() function in script
+	// initialize timing variables
 	s_next_fps_poll_time = al_get_time() + 1.0;
 	s_num_frames = s_num_flips = 0;
 	s_current_fps = s_current_game_fps = 0;
+	s_next_frame_time = s_last_flip_time = al_get_time();
+
+	// call game() function in script
 	duk_push_global_object(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "game");
 	if (duk_pcall(g_duktape, 0) != DUK_EXEC_SUCCESS)
@@ -239,6 +243,15 @@ on_js_error:
 			duk_push_string(g_duktape, err_msg);
 		}
 		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
+	}
+	else if (strstr(err_msg, "Error: @restart") == err_msg) {
+		// RestartGame() was called, reset engine and start again
+		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		shutdown_engine();
+		initialize_engine();
+		g_game_path = al_create_path(game_path);
+		free(game_path);
+		goto startup;
 	}
 	else if (strstr(err_msg, "Error: @exec ") == err_msg) {
 		// ExecuteGame() was called, clear and and prep for new session
@@ -537,6 +550,8 @@ initialize_engine(void)
 	init_spriteset_api(g_duktape);
 	init_surface_api();
 	init_windowstyle_api();
+	
+	init_map_engine();
 }
 
 static void
@@ -554,6 +569,7 @@ queue_key(int keycode)
 static void
 shutdown_engine(void)
 {
+	shutdown_map_engine();
 	duk_destroy_heap(g_duktape);
 	dyad_shutdown();
 	al_uninstall_audio();

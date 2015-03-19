@@ -123,6 +123,27 @@ static int             s_max_persons    = 0;
 static int             s_num_persons    = 0;
 static person_t*       *s_persons       = NULL;
 
+void
+init_persons_manager(void)
+{
+	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
+	s_is_talking = false;
+	s_num_persons = s_max_persons = 0;
+	s_persons = NULL;
+	s_talk_distance = 8;
+	s_current_person = NULL;
+}
+
+void
+shutdown_persons_manager(void)
+{
+	int i;
+	
+	for (i = 0; i < s_num_persons; ++i)
+		free_person(s_persons[i]);
+	free(s_persons);
+}
+
 person_t*
 create_person(const char* name, const char* sprite_file, bool is_persistent)
 {
@@ -589,8 +610,6 @@ update_persons(void)
 void
 init_persons_api(void)
 {
-	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
-	
 	duk_push_global_stash(g_duktape);
 	duk_push_object(g_duktape); duk_put_prop_string(g_duktape, -2, "person_data");
 	duk_pop(g_duktape);

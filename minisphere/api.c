@@ -19,11 +19,13 @@ static duk_ret_t js_GetTime              (duk_context* ctx);
 static duk_ret_t js_SetFrameRate         (duk_context* ctx);
 static duk_ret_t js_Abort                (duk_context* ctx);
 static duk_ret_t js_Alert                (duk_context* ctx);
+static duk_ret_t js_CreateStringFromCode (duk_context* ctx);
 static duk_ret_t js_Delay                (duk_context* ctx);
 static duk_ret_t js_ExecuteGame          (duk_context* ctx);
 static duk_ret_t js_Exit                 (duk_context* ctx);
 static duk_ret_t js_FlipScreen           (duk_context* ctx);
 static duk_ret_t js_GarbageCollect       (duk_context* ctx);
+static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
 static int s_framerate = 0;
@@ -48,11 +50,13 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
 	register_api_func(ctx, NULL, "Abort", js_Abort);
 	register_api_func(ctx, NULL, "Alert", js_Alert);
+	register_api_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	register_api_func(ctx, NULL, "Delay", js_Delay);
 	register_api_func(ctx, NULL, "Exit", js_Exit);
 	register_api_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
 	register_api_func(ctx, NULL, "FlipScreen", js_FlipScreen);
 	register_api_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	register_api_func(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
@@ -117,81 +121,6 @@ js_GetExtensions(duk_context* ctx)
 	duk_push_string(ctx, "sphere-legacy"); duk_put_prop_index(ctx, -2, i++);
 	duk_push_string(ctx, "minisphere"); duk_put_prop_index(ctx, -2, i++);
 	return 1;
-}
-
-static duk_ret_t
-js_Alert(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* text = n_args >= 1 && !duk_is_null_or_undefined(ctx, 0)
-		? duk_to_string(ctx, 0) : "It's 8:12... do you know where the pig is?\n\nIt's...\n\n\n\n\n\n\nBEHIND YOU! *MUNCH*";
-	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
-
-	const char* caller_info;
-	const char* filename;
-	int         line_number;
-	const char* full_path;
-	
-	if (stack_offset > 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
-
-	// get filename and line number of Alert() call
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-	if (!duk_is_object(ctx, -1)) {
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-	}
-	duk_remove(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
-	duk_pop_2(ctx);
-
-	// show the message
-	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
-	filename = filename != NULL ? filename + 1 : full_path;
-	caller_info =
-		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
-		duk_get_string(ctx, -1);
-	al_show_native_message_box(g_display, "Alert from Sphere game", caller_info, text, NULL, 0x0);
-	duk_pop(ctx);
-	return 0;
-}
-
-static duk_ret_t
-js_Abort(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* error_text = n_args >= 1 ? duk_to_string(ctx, 0) : "Game terminated prematurely";
-	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
-	
-	const char* filename;
-	int         line_number;
-	const char* full_path;
-	
-	if (stack_offset > 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
-	
-	// get filename and line number of Abort() call
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-	if (!duk_is_object(ctx, -1)) {
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-	}
-	duk_remove(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
-	duk_pop_2(ctx);
-	
-	// throw the exception
-	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
-	filename = filename != NULL ? filename + 1 : full_path;
-	duk_error_raw(ctx, DUK_ERR_ERROR, filename, line_number, "%s", error_text);
 }
 
 static duk_ret_t
@@ -366,6 +295,95 @@ js_SetFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Alert(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* text = n_args >= 1 && !duk_is_null_or_undefined(ctx, 0)
+		? duk_to_string(ctx, 0) : "It's 8:12... do you know where the pig is?\n\nIt's...\n\n\n\n\n\n\nBEHIND YOU! *MUNCH*";
+	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+
+	const char* caller_info;
+	const char* filename;
+	int         line_number;
+	const char* full_path;
+
+	if (stack_offset > 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
+
+	// get filename and line number of Alert() call
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
+	if (!duk_is_object(ctx, -1)) {
+		duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
+	}
+	duk_remove(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_pop_2(ctx);
+
+	// show the message
+	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
+	filename = filename != NULL ? filename + 1 : full_path;
+	caller_info =
+		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
+		duk_get_string(ctx, -1);
+	al_show_native_message_box(g_display, "Alert from Sphere game", caller_info, text, NULL, 0x0);
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_Abort(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* error_text = n_args >= 1 ? duk_to_string(ctx, 0) : "Game terminated prematurely";
+	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+
+	const char* filename;
+	int         line_number;
+	const char* full_path;
+
+	if (stack_offset > 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
+
+	// get filename and line number of Abort() call
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
+	if (!duk_is_object(ctx, -1)) {
+		duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
+	}
+	duk_remove(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_pop_2(ctx);
+
+	// throw the exception
+	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
+	filename = filename != NULL ? filename + 1 : full_path;
+	duk_error_raw(ctx, DUK_ERR_ERROR, filename, line_number, "%s", error_text);
+}
+
+static duk_ret_t
+js_CreateStringFromCode(duk_context* ctx)
+{
+	int code = duk_require_int(ctx, 0);
+
+	char cstr[2];
+
+	if (code < 0 || code > 255)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CreateStringFromCode(): Character code out of ASCII range (%i)", code);
+	cstr[0] = (char)code; cstr[1] = '\0';
+	duk_push_string(ctx, cstr);
+	return 1;
+}
+
+static duk_ret_t
 js_Delay(duk_context* ctx)
 {
 	double millisecs = floor(duk_require_number(ctx, 0));
@@ -387,7 +405,6 @@ js_ExecuteGame(duk_context* ctx)
 	const char* path = duk_require_string(ctx, 0);
 	
 	duk_error(ctx, DUK_ERR_ERROR, "@exec %s", path);
-	return 0;
 }
 
 static duk_ret_t
@@ -405,16 +422,22 @@ js_FlipScreen(duk_context* ctx)
 }
 
 static duk_ret_t
-js_UnskipFrame(duk_context* ctx)
-{
-	unskip_frame();
-	return 0;
-}
-
-static duk_ret_t
 js_GarbageCollect(duk_context* ctx)
 {
 	duk_gc(ctx, 0x0);
 	duk_gc(ctx, 0x0);
+	return 0;
+}
+
+static duk_ret_t
+js_RestartGame(duk_context* ctx)
+{
+	duk_error(ctx, DUK_ERR_ERROR, "@restart");
+}
+
+static duk_ret_t
+js_UnskipFrame(duk_context* ctx)
+{
+	unskip_frame();
 	return 0;
 }

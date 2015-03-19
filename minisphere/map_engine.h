@@ -6,6 +6,8 @@
 
 typedef struct map map_t;
 
+extern void             init_map_engine         (void);
+extern void             shutdown_map_engine     (void);
 extern bool             is_map_engine_running   (void);
 extern rect_t           get_map_bounds          (void);
 extern const obsmap_t*  get_map_layer_obsmap    (int layer);
