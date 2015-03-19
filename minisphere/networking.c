@@ -14,6 +14,7 @@ static duk_ret_t js_OpenAddress               (duk_context* ctx);
 static duk_ret_t js_Socket_finalize           (duk_context* ctx);
 static duk_ret_t js_Socket_isConnected        (duk_context* ctx);
 static duk_ret_t js_Socket_getPendingReadSize (duk_context* ctx);
+static duk_ret_t js_Socket_acceptNext         (duk_context* ctx);
 static duk_ret_t js_Socket_close              (duk_context* ctx);
 static duk_ret_t js_Socket_read               (duk_context* ctx);
 static duk_ret_t js_Socket_write              (duk_context* ctx);
@@ -26,6 +27,9 @@ struct socket
 	uint8_t*     buffer;
 	size_t       buffer_size;
 	size_t       pend_size;
+	int          num_backlog;
+	int          max_backlog;
+	dyad_Stream* *backlog;
 };
 
 socket_t*
@@ -53,13 +57,16 @@ on_error:
 }
 
 socket_t*
-listen_on_port(int port, size_t buffer_size)
+listen_on_port(int port, size_t buffer_size, int max_backlog)
 {
 	socket_t*    socket = NULL;
 	dyad_Stream* stream = NULL;
 
 	if (!(socket = calloc(1, sizeof(socket_t)))) goto on_error;
-	if (!(socket->buffer = malloc(buffer_size))) goto on_error;
+	if (max_backlog == 0 && !(socket->buffer = malloc(buffer_size))) goto on_error;
+	if (max_backlog > 0 && !(socket->backlog = malloc(max_backlog * sizeof(dyad_Stream*))))
+		goto on_error;
+	socket->max_backlog = max_backlog;
 	socket->buffer_size = buffer_size;
 	if (!(socket->stream = dyad_newStream())) goto on_error;
 	dyad_setNoDelay(socket->stream, true);
@@ -69,8 +76,9 @@ listen_on_port(int port, size_t buffer_size)
 
 on_error:
 	if (socket != NULL) {
-		if (socket->stream != NULL) dyad_close(stream);
+		free(socket->backlog);
 		free(socket->buffer);
+		if (socket->stream != NULL) dyad_close(stream);
 		free(socket);
 	}
 	return NULL;
@@ -86,8 +94,12 @@ ref_socket(socket_t* socket)
 void
 free_socket(socket_t* socket)
 {
+	int i;
+	
 	if (socket == NULL || --socket->refcount)
 		return;
+	for (i = 0; i < socket->num_backlog; ++i)
+		dyad_end(socket->backlog[i]);
 	dyad_end(socket->stream);
 	free(socket);
 }
@@ -102,6 +114,38 @@ bool
 is_socket_live(socket_t* socket)
 {
 	return dyad_getState(socket->stream) == DYAD_STATE_CONNECTED;
+}
+
+bool
+is_socket_server(socket_t* socket)
+{
+	return dyad_getState(socket->stream) == DYAD_STATE_LISTENING;
+}
+
+socket_t*
+accept_next_socket(socket_t* listener)
+{
+	socket_t*    socket;
+
+	int i;
+
+	if (listener->num_backlog == 0)
+		return NULL;
+	if (!(socket = calloc(1, sizeof(socket_t)))) goto on_error;
+	if (!(socket->buffer = malloc(listener->buffer_size))) goto on_error;
+	socket->buffer_size = listener->buffer_size;
+	socket->stream = listener->backlog[0];
+	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	--listener->num_backlog;
+	for (i = 0; i < listener->num_backlog; ++i) listener->backlog[i] = listener->backlog[i + 1];
+	return ref_socket(socket);
+
+on_error:
+	if (socket != NULL) {
+		free(socket->buffer);
+		free(socket);
+	}
+	return NULL;
 }
 
 size_t
@@ -128,6 +172,7 @@ duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
 	duk_push_string(ctx, "socket"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, socket); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, js_Socket_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Socket_acceptNext, DUK_VARARGS); duk_put_prop_string(ctx, -2, "acceptNext");
 	duk_push_c_function(ctx, js_Socket_isConnected, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isConnected");
 	duk_push_c_function(ctx, js_Socket_getPendingReadSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPendingReadSize");
 	duk_push_c_function(ctx, js_Socket_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
@@ -147,12 +192,35 @@ init_networking_api(void)
 static void
 on_dyad_accept(dyad_Event* e)
 {
+	int          new_backlog_len;
+	dyad_Stream* *backlog;
+
 	socket_t* socket = e->udata;
 
-	dyad_addListener(e->remote, DYAD_EVENT_DATA, on_dyad_receive, socket);
-	dyad_removeAllListeners(socket->stream, DYAD_EVENT_ACCEPT);
-	dyad_close(socket->stream);
-	socket->stream = e->remote;
+	if (socket->max_backlog > 0) {
+		// BSD-style socket with backlog: listener stays open, game must accept new sockets
+		new_backlog_len = socket->num_backlog + 1;
+		backlog = socket->backlog;
+		if (new_backlog_len > socket->max_backlog) {
+			if (!(backlog = realloc(backlog, new_backlog_len * 2 * sizeof(dyad_Stream*))))
+				goto on_error;
+			socket->backlog = backlog;
+			socket->max_backlog = new_backlog_len * 2;
+		}
+		socket->backlog[socket->num_backlog] = e->remote;
+		++socket->num_backlog;
+	}
+	else {
+		// no backlog: listener closes on first connection (legacy socket)
+		dyad_removeAllListeners(socket->stream, DYAD_EVENT_ACCEPT);
+		dyad_close(socket->stream);
+		socket->stream = e->remote;
+		dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	}
+	return;
+
+on_error:
+	dyad_close(e->remote);
 }
 
 static void
@@ -195,11 +263,13 @@ js_GetLocalName(duk_context* ctx)
 static duk_ret_t
 js_ListenOnPort(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	int port = duk_require_int(ctx, 0);
+	int max_backlog = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 	
 	socket_t* socket;
 
-	socket = listen_on_port(port, 1024);
+	socket = listen_on_port(port, 1024, max_backlog);
 	duk_push_sphere_socket(ctx, socket);
 	free_socket(socket);
 	return 1;
@@ -239,6 +309,8 @@ js_Socket_isConnected(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
 	duk_push_boolean(ctx, is_socket_live(socket));
@@ -255,9 +327,35 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
 	duk_push_uint(ctx, socket->pend_size);
+	return 1;
+}
+
+static duk_ret_t
+js_Socket_acceptNext(duk_context* ctx)
+{
+	socket_t* new_socket;
+	socket_t* socket;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Tried to use socket after it was closed");
+	if (!is_socket_server(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Not valid on non-listening socket");
+	new_socket = accept_next_socket(socket);
+	if (new_socket) {
+		duk_push_sphere_socket(ctx, new_socket);
+		free_socket(new_socket);
+	}
+	else {
+		duk_push_null(ctx);
+	}
 	return 1;
 }
 
@@ -289,6 +387,10 @@ js_Socket_read(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Not valid on listen-only sockets");
+	if (!is_socket_live(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket has dropped incoming data due to allocation failure (internal error)");
 	if (!(buffer = malloc(length)))
@@ -312,6 +414,10 @@ js_Socket_write(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Not valid on listen-only sockets");
+	if (!is_socket_live(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket has dropped incoming data due to allocation failure (internal error)");
 	write_socket(socket, data, length);
