@@ -20,6 +20,7 @@ static duk_ret_t js_GetSystemUpArrow         (duk_context* ctx);
 static duk_ret_t js_LoadImage                (duk_context* ctx);
 static duk_ret_t js_GrabImage                (duk_context* ctx);
 static duk_ret_t js_Image_finalize           (duk_context* ctx);
+static duk_ret_t js_Image_toString           (duk_context* ctx);
 static duk_ret_t js_Image_blit               (duk_context* ctx);
 static duk_ret_t js_Image_blitMask           (duk_context* ctx);
 static duk_ret_t js_Image_createSurface      (duk_context* ctx);
@@ -312,6 +313,7 @@ duk_push_sphere_image(duk_context* ctx, image_t* image)
 	duk_push_string(ctx, "image"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Image_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 	duk_push_c_function(ctx, js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
 	duk_push_c_function(ctx, js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
 	duk_push_c_function(ctx, js_Image_createSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createSurface");
@@ -433,6 +435,13 @@ js_Image_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Image_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object image]");
+	return 1;
+}
+
+static duk_ret_t
 js_Image_blit(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
@@ -452,7 +461,7 @@ js_Image_blitMask(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
-	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 2);
+	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 2);
 
 	image_t* image;
 
@@ -502,7 +511,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 	float angle = duk_require_number(ctx, 2);
-	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 3);
+	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 3);
 
 	image_t* image;
 
@@ -555,7 +564,7 @@ js_Image_transformBlitMask(duk_context* ctx)
 	int y3 = duk_require_int(ctx, 5);
 	int x4 = duk_require_int(ctx, 6);
 	int y4 = duk_require_int(ctx, 7);
-	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 8);
+	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 8);
 
 	image_t*      image;
 
@@ -596,7 +605,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 	float scale = duk_require_number(ctx, 2);
-	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 3);
+	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 3);
 
 	image_t* image;
 

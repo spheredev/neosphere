@@ -10,12 +10,13 @@ struct windowstyle
 	ALLEGRO_BITMAP* bitmaps[9];
 };
 
-static void            _duk_push_winstyle           (duk_context* ctx, windowstyle_t* winstyle);
-static duk_ret_t       _js_GetSystemWindowStyle     (duk_context* ctx);
-static duk_ret_t       _js_LoadWindowStyle          (duk_context* ctx);
-static duk_ret_t       _js_WindowStyle_finalize     (duk_context* ctx);
-static duk_ret_t       _js_WindowStyle_drawWindow   (duk_context* ctx);
-static duk_ret_t       _js_WindowStyle_setColorMask (duk_context* ctx);
+static void            _duk_push_winstyle          (duk_context* ctx, windowstyle_t* winstyle);
+static duk_ret_t       js_GetSystemWindowStyle     (duk_context* ctx);
+static duk_ret_t       js_LoadWindowStyle          (duk_context* ctx);
+static duk_ret_t       js_WindowStyle_finalize     (duk_context* ctx);
+static duk_ret_t       js_WindowStyle_toString     (duk_context* ctx);
+static duk_ret_t       js_WindowStyle_drawWindow   (duk_context* ctx);
+static duk_ret_t       js_WindowStyle_setColorMask (duk_context* ctx);
 
 static windowstyle_t* s_sys_winstyle = NULL;
 
@@ -161,8 +162,8 @@ init_windowstyle_api(void)
 	}
 
 	// register windowstyle API functions
-	register_api_func(g_duktape, NULL, "GetSystemWindowStyle", _js_GetSystemWindowStyle);
-	register_api_func(g_duktape, NULL, "LoadWindowStyle", _js_LoadWindowStyle);
+	register_api_func(g_duktape, NULL, "GetSystemWindowStyle", js_GetSystemWindowStyle);
+	register_api_func(g_duktape, NULL, "LoadWindowStyle", js_LoadWindowStyle);
 }
 
 static void
@@ -171,13 +172,14 @@ _duk_push_winstyle(duk_context* ctx, windowstyle_t* winstyle)
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, winstyle); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_sphere_color(ctx, al_map_rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_push_c_function(ctx, &_js_WindowStyle_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &_js_WindowStyle_drawWindow, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawWindow");
-	duk_push_c_function(ctx, &_js_WindowStyle_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
+	duk_push_c_function(ctx, js_WindowStyle_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_WindowStyle_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_WindowStyle_drawWindow, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawWindow");
+	duk_push_c_function(ctx, js_WindowStyle_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
 }
 
 static duk_ret_t
-_js_GetSystemWindowStyle(duk_context* ctx)
+js_GetSystemWindowStyle(duk_context* ctx)
 {
 	if (s_sys_winstyle != NULL) {
 		_duk_push_winstyle(ctx, s_sys_winstyle);
@@ -189,7 +191,7 @@ _js_GetSystemWindowStyle(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_LoadWindowStyle(duk_context* ctx)
+js_LoadWindowStyle(duk_context* ctx)
 {
 	const char*    filename = NULL;
 	char*          path = NULL;
@@ -205,7 +207,7 @@ _js_LoadWindowStyle(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_WindowStyle_finalize(duk_context* ctx)
+js_WindowStyle_finalize(duk_context* ctx)
 {
 	windowstyle_t* winstyle;
 
@@ -215,7 +217,14 @@ _js_WindowStyle_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-_js_WindowStyle_drawWindow(duk_context* ctx)
+js_WindowStyle_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object windowstyle]");
+	return 1;
+}
+
+static duk_ret_t
+js_WindowStyle_drawWindow(duk_context* ctx)
 {
 	ALLEGRO_COLOR  color_mask;
 	windowstyle_t* winstyle;
@@ -227,14 +236,14 @@ _js_WindowStyle_drawWindow(duk_context* ctx)
 	h = duk_to_int(ctx, 3);
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); winstyle = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); color_mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); color_mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	draw_window(winstyle, color_mask, x, y, w, h);
 	return 0;
 }
 
 static duk_ret_t
-_js_WindowStyle_setColorMask(duk_context* ctx)
+js_WindowStyle_setColorMask(duk_context* ctx)
 {
 	duk_push_this(ctx);
 	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");

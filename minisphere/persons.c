@@ -1414,7 +1414,7 @@ static duk_ret_t
 js_SetPersonMask(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 1);
+	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 1);
 
 	person_t* person;
 

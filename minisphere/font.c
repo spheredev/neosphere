@@ -13,6 +13,7 @@ struct font
 static duk_ret_t js_GetSystemFont        (duk_context* ctx);
 static duk_ret_t js_LoadFont             (duk_context* ctx);
 static duk_ret_t js_Font_finalize        (duk_context* ctx);
+static duk_ret_t js_Font_toString        (duk_context* ctx);
 static duk_ret_t js_Font_getColorMask    (duk_context* ctx);
 static duk_ret_t js_Font_getHeight       (duk_context* ctx);
 static duk_ret_t js_Font_setColorMask    (duk_context* ctx);
@@ -87,6 +88,7 @@ duk_push_sphere_font(duk_context* ctx, font_t* font)
 	
 	duk_push_object(ctx);
 	duk_push_c_function(ctx, js_Font_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Font_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 	duk_push_c_function(ctx, js_Font_getColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getColorMask");
 	duk_push_c_function(ctx, js_Font_getHeight, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getHeight");
 	duk_push_c_function(ctx, js_Font_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
@@ -157,6 +159,13 @@ js_Font_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Font_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object font]");
+	return 1;
+}
+
+static duk_ret_t
 js_Font_getColorMask(duk_context* ctx)
 {
 	duk_push_this(ctx);
@@ -198,7 +207,7 @@ js_Font_drawText(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
@@ -222,7 +231,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!is_skipped_frame()) {
 		text_w = al_get_text_width(font->font_obj, text);
@@ -256,7 +265,7 @@ js_Font_drawTextBox(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_get_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!is_skipped_frame()) {
 		duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);

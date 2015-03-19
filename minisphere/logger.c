@@ -18,11 +18,12 @@ struct log_block
 	lstring_t* name;
 };
 
-static duk_ret_t js_OpenLog        (duk_context* ctx);
-static duk_ret_t js_Log_finalize   (duk_context* ctx);
-static duk_ret_t js_Log_beginBlock (duk_context* ctx);
-static duk_ret_t js_Log_endBlock   (duk_context* ctx);
-static duk_ret_t js_Log_write      (duk_context* ctx);
+static duk_ret_t js_OpenLog           (duk_context* ctx);
+static duk_ret_t js_Logger_finalize   (duk_context* ctx);
+static duk_ret_t js_Logger_toString   (duk_context* ctx);
+static duk_ret_t js_Logger_beginBlock (duk_context* ctx);
+static duk_ret_t js_Logger_endBlock   (duk_context* ctx);
+static duk_ret_t js_Logger_write      (duk_context* ctx);
 
 static void duk_push_sphere_logger (duk_context* ctx, logger_t* log);
 
@@ -126,7 +127,7 @@ write_log_line(logger_t* logger, const char* prefix, const char* text)
 void
 init_logging_api(void)
 {
-	register_api_func(g_duktape, NULL, "OpenLog", &js_OpenLog);
+	register_api_func(g_duktape, NULL, "OpenLog", js_OpenLog);
 }
 
 static void
@@ -136,10 +137,11 @@ duk_push_sphere_logger(duk_context* ctx, logger_t* logger)
 	
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, logger); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, &js_Log_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &js_Log_beginBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "beginBlock");
-	duk_push_c_function(ctx, &js_Log_endBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "endBlock");
-	duk_push_c_function(ctx, &js_Log_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
+	duk_push_c_function(ctx, js_Logger_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Logger_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_Logger_beginBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "beginBlock");
+	duk_push_c_function(ctx, js_Logger_endBlock, DUK_VARARGS); duk_put_prop_string(ctx, -2, "endBlock");
+	duk_push_c_function(ctx, js_Logger_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
 }
 
 static duk_ret_t
@@ -158,7 +160,7 @@ js_OpenLog(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Log_finalize(duk_context* ctx)
+js_Logger_finalize(duk_context* ctx)
 {
 	logger_t* logger;
 
@@ -168,7 +170,14 @@ js_Log_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Log_beginBlock(duk_context* ctx)
+js_Logger_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object log]");
+	return 1;
+}
+
+static duk_ret_t
+js_Logger_beginBlock(duk_context* ctx)
 {
 	const char* title = duk_to_string(ctx, 0);
 	
@@ -182,7 +191,7 @@ js_Log_beginBlock(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Log_endBlock(duk_context* ctx)
+js_Logger_endBlock(duk_context* ctx)
 {
 	logger_t* logger;
 
@@ -193,7 +202,7 @@ js_Log_endBlock(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Log_write(duk_context* ctx)
+js_Logger_write(duk_context* ctx)
 {
 	const char* text = duk_to_string(ctx, 0);
 	

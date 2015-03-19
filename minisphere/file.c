@@ -6,6 +6,7 @@
 static duk_ret_t js_OpenFile        (duk_context* ctx);
 static duk_ret_t js_RemoveFile      (duk_context* ctx);
 static duk_ret_t js_File_finalize   (duk_context* ctx);
+static duk_ret_t js_File_toString   (duk_context* ctx);
 static duk_ret_t js_File_getKey     (duk_context* ctx);
 static duk_ret_t js_File_getNumKeys (duk_context* ctx);
 static duk_ret_t js_File_close      (duk_context* ctx);
@@ -14,7 +15,6 @@ static duk_ret_t js_File_read       (duk_context* ctx);
 static duk_ret_t js_File_write      (duk_context* ctx);
 
 static void duk_push_sphere_file (duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path);
-
 
 void
 init_file_api(void)
@@ -30,6 +30,7 @@ duk_push_sphere_file(duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path)
 	duk_push_pointer(ctx, conf); duk_put_prop_string(ctx, -2, "\xFF" "conf_ptr");
 	duk_push_pointer(ctx, (void*)path); duk_put_prop_string(ctx, -2, "\xFF" "path");
 	duk_push_c_function(ctx, js_File_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_File_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 	duk_push_c_function(ctx, js_File_getKey, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getKey");
 	duk_push_c_function(ctx, js_File_getNumKeys, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getNumKeys");
 	duk_push_c_function(ctx, js_File_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
@@ -88,6 +89,13 @@ js_File_finalize(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "path"); path = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	if (conf != NULL) al_save_config_file(path, conf);
 	return 0;
+}
+
+static duk_ret_t
+js_File_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object file]");
+	return 1;
 }
 
 static duk_ret_t

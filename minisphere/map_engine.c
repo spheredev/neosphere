@@ -1548,7 +1548,7 @@ static duk_ret_t
 js_SetColorMask(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	ALLEGRO_COLOR new_mask = duk_get_sphere_color(ctx, 0);
+	ALLEGRO_COLOR new_mask = duk_require_sphere_color(ctx, 0);
 	int frames = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	if (!is_map_engine_running())
@@ -1624,7 +1624,7 @@ static duk_ret_t
 js_SetLayerMask(duk_context* ctx)
 {
 	int layer = duk_require_int(ctx, 0);
-	ALLEGRO_COLOR mask = duk_get_sphere_color(ctx, 1);
+	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 1);
 
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "SetLayerMask(): Map engine must be running");

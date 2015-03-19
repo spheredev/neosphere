@@ -4,15 +4,16 @@
 
 #include "rawfile.h"
 
-static duk_ret_t js_HashRawFile(duk_context* ctx);
-static duk_ret_t js_OpenRawFile(duk_context* ctx);
-static duk_ret_t js_RawFile_finalize(duk_context* ctx);
-static duk_ret_t js_RawFile_getPosition(duk_context* ctx);
-static duk_ret_t js_RawFile_getSize(duk_context* ctx);
-static duk_ret_t js_RawFile_setPosition(duk_context* ctx);
-static duk_ret_t js_RawFile_close(duk_context* ctx);
-static duk_ret_t js_RawFile_read(duk_context* ctx);
-static duk_ret_t js_RawFile_write(duk_context* ctx);
+static duk_ret_t js_HashRawFile         (duk_context* ctx);
+static duk_ret_t js_OpenRawFile         (duk_context* ctx);
+static duk_ret_t js_RawFile_finalize    (duk_context* ctx);
+static duk_ret_t js_RawFile_toString    (duk_context* ctx);
+static duk_ret_t js_RawFile_getPosition (duk_context* ctx);
+static duk_ret_t js_RawFile_getSize     (duk_context* ctx);
+static duk_ret_t js_RawFile_setPosition (duk_context* ctx);
+static duk_ret_t js_RawFile_close       (duk_context* ctx);
+static duk_ret_t js_RawFile_read        (duk_context* ctx);
+static duk_ret_t js_RawFile_write       (duk_context* ctx);
 
 void
 init_rawfile_api(void)
@@ -58,6 +59,7 @@ js_OpenRawFile(duk_context* ctx)
 		duk_push_object(ctx);
 		duk_push_pointer(ctx, file); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
 		duk_push_c_function(ctx, js_RawFile_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+		duk_push_c_function(ctx, js_RawFile_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 		duk_push_c_function(ctx, js_RawFile_getPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPosition");
 		duk_push_c_function(ctx, js_RawFile_getSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getSize");
 		duk_push_c_function(ctx, js_RawFile_setPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPosition");
@@ -81,6 +83,13 @@ js_RawFile_finalize(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	if (file != NULL) al_fclose(file);
 	return 0;
+}
+
+static duk_ret_t
+js_RawFile_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object rawfile]");
+	return 1;
 }
 
 static duk_ret_t

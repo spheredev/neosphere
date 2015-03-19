@@ -43,11 +43,12 @@ struct rss_frame_v3 {
 };
 #pragma pack(pop)
 
-static duk_ret_t               js_LoadSpriteset       (duk_context* ctx);
-static duk_ret_t               js_Spriteset_finalize  (duk_context* ctx);
-static duk_ret_t               js_Spriteset_clone     (duk_context* ctx);
-static duk_ret_t               js_Spriteset_get_image (duk_context* ctx);
-static duk_ret_t               js_Spriteset_set_image (duk_context* ctx);
+static duk_ret_t js_LoadSpriteset       (duk_context* ctx);
+static duk_ret_t js_Spriteset_finalize  (duk_context* ctx);
+static duk_ret_t js_Spriteset_toString  (duk_context* ctx);
+static duk_ret_t js_Spriteset_clone     (duk_context* ctx);
+static duk_ret_t js_Spriteset_get_image (duk_context* ctx);
+static duk_ret_t js_Spriteset_set_image (duk_context* ctx);
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 
@@ -382,8 +383,9 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_push_object(ctx);
 	duk_push_string(ctx, "spriteset"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, &js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, &js_Spriteset_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
+	duk_push_c_function(ctx, js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Spriteset_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_Spriteset_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
 	duk_push_string(ctx, "filename");
 	if (spriteset->filename != NULL)
 		duk_push_lstring(ctx, spriteset->filename->cstr, spriteset->filename->length);
@@ -511,6 +513,13 @@ js_Spriteset_finalize(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	free_spriteset(spriteset);
 	return 0;
+}
+
+static duk_ret_t
+js_Spriteset_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object spriteset]");
+	return 1;
 }
 
 static duk_ret_t

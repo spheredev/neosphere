@@ -12,6 +12,7 @@ static duk_ret_t js_GetLocalAddress           (duk_context* ctx);
 static duk_ret_t js_ListenOnPort              (duk_context* ctx);
 static duk_ret_t js_OpenAddress               (duk_context* ctx);
 static duk_ret_t js_Socket_finalize           (duk_context* ctx);
+static duk_ret_t js_Socket_toString           (duk_context* ctx);
 static duk_ret_t js_Socket_isConnected        (duk_context* ctx);
 static duk_ret_t js_Socket_getPendingReadSize (duk_context* ctx);
 static duk_ret_t js_Socket_getRemoteAddress   (duk_context* ctx);
@@ -170,6 +171,15 @@ write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 }
 
 void
+init_sockets_api(void)
+{
+	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
+	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
+	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
+	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
+}
+
+void
 duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
 {
 	ref_socket(socket);
@@ -177,6 +187,7 @@ duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
 	duk_push_string(ctx, "socket"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, socket); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, js_Socket_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Socket_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 	duk_push_c_function(ctx, js_Socket_acceptNext, DUK_VARARGS); duk_put_prop_string(ctx, -2, "acceptNext");
 	duk_push_c_function(ctx, js_Socket_isConnected, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isConnected");
 	duk_push_c_function(ctx, js_Socket_getPendingReadSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPendingReadSize");
@@ -186,15 +197,6 @@ duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
 	duk_push_c_function(ctx, js_Socket_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
 	duk_push_c_function(ctx, js_Socket_readString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "readString");
 	duk_push_c_function(ctx, js_Socket_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
-}
-
-void
-init_sockets_api(void)
-{
-	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
-	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
-	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
-	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
 }
 
 static void
@@ -314,6 +316,13 @@ js_Socket_finalize(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	free_socket(socket);
+	return 1;
+}
+
+static duk_ret_t
+js_Socket_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object socket]");
 	return 1;
 }
 

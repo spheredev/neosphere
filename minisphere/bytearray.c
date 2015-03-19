@@ -3,15 +3,16 @@
 
 #include "bytearray.h"
 
-static duk_ret_t js_CreateByteArray(duk_context* ctx);
-static duk_ret_t js_CreateByteArrayFromString(duk_context* ctx);
-static duk_ret_t js_CreateStringFromByteArray(duk_context* ctx);
-static duk_ret_t js_HashByteArray(duk_context* ctx);
-static duk_ret_t js_ByteArray_finalize(duk_context* ctx);
-static duk_ret_t js_ByteArray_getProp(duk_context* ctx);
-static duk_ret_t js_ByteArray_setProp(duk_context* ctx);
-static duk_ret_t js_ByteArray_concat(duk_context* ctx);
-static duk_ret_t js_ByteArray_slice(duk_context* ctx);
+static duk_ret_t js_CreateByteArray           (duk_context* ctx);
+static duk_ret_t js_CreateByteArrayFromString (duk_context* ctx);
+static duk_ret_t js_CreateStringFromByteArray (duk_context* ctx);
+static duk_ret_t js_HashByteArray             (duk_context* ctx);
+static duk_ret_t js_ByteArray_finalize        (duk_context* ctx);
+static duk_ret_t js_ByteArray_toString        (duk_context* ctx);
+static duk_ret_t js_ByteArray_getProp         (duk_context* ctx);
+static duk_ret_t js_ByteArray_setProp         (duk_context* ctx);
+static duk_ret_t js_ByteArray_concat          (duk_context* ctx);
+static duk_ret_t js_ByteArray_slice           (duk_context* ctx);
 
 void
 init_bytearray_api(void)
@@ -30,6 +31,7 @@ duk_push_sphere_bytearray(duk_context* ctx, uint8_t* buffer, int size)
 	duk_push_pointer(ctx, buffer); duk_put_prop_string(ctx, -2, "\xFF" "buffer");
 	duk_push_int(ctx, size); duk_put_prop_string(ctx, -2, "\xFF" "size");
 	duk_push_c_function(ctx, js_ByteArray_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_ByteArray_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 	duk_push_c_function(ctx, js_ByteArray_concat, DUK_VARARGS); duk_put_prop_string(ctx, -2, "concat");
 	duk_push_c_function(ctx, js_ByteArray_slice, DUK_VARARGS); duk_put_prop_string(ctx, -2, "slice");
 	duk_push_string(ctx, "length"); duk_push_int(ctx, size);
@@ -77,14 +79,11 @@ js_CreateByteArray(duk_context* ctx)
 	int      size;
 
 	size = duk_to_int(ctx, 0);
-	if (size > 0) {
-		buffer = calloc(size, 1);
-		duk_push_sphere_bytearray(ctx, buffer, size);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CreateByteArray(): Size must not be zero or negative (caller passed %i)", size);
-	}
+	if (size < 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CreateByteArray(): Size cannot be negative (%i)", size);
+	buffer = calloc(size, 1);
+	duk_push_sphere_bytearray(ctx, buffer, size);
+	return 1;
 }
 
 static duk_ret_t
@@ -136,6 +135,13 @@ js_ByteArray_finalize(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "buffer"); buffer = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	//free(buffer);
 	return 0;
+}
+
+static duk_ret_t
+js_ByteArray_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object byte_array]");
+	return 1;
 }
 
 static duk_ret_t
