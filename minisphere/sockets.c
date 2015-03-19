@@ -313,13 +313,16 @@ js_Socket_isConnected(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Tried to use socket after it was closed");
-	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Not valid on listen-only sockets");
-	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
-	duk_push_boolean(ctx, is_socket_live(socket));
+	if (socket != NULL) {
+		if (is_socket_server(socket) && socket->max_backlog > 0)
+			duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Not valid on listen-only sockets");
+		if (is_socket_data_lost(socket))
+			duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_push_boolean(ctx, is_socket_live(socket));
+	}
+	else {
+		duk_push_false(ctx);
+	}
 	return 1;
 }
 
