@@ -47,13 +47,14 @@ connect_to_host(const char* hostname, int port, size_t buffer_size)
 	if (!(socket->stream = dyad_newStream())) goto on_error;
 	dyad_setNoDelay(socket->stream, true);
 	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
-	dyad_connect(socket->stream, hostname, port);
+	if (dyad_connect(socket->stream, hostname, port) == -1)
+		goto on_error;
 	return ref_socket(socket);
 
 on_error:
 	if (socket != NULL) {
-		if (socket->stream != NULL) dyad_close(stream);
 		free(socket->buffer);
+		if (socket->stream != NULL) dyad_close(stream);
 		free(socket);
 	}
 	return NULL;
@@ -74,7 +75,8 @@ listen_on_port(int port, size_t buffer_size, int max_backlog)
 	if (!(socket->stream = dyad_newStream())) goto on_error;
 	dyad_setNoDelay(socket->stream, true);
 	dyad_addListener(socket->stream, DYAD_EVENT_ACCEPT, on_dyad_accept, socket);
-	dyad_listen(socket->stream, port);
+	if (dyad_listen(socket->stream, port) == -1)
+		goto on_error;
 	return ref_socket(socket);
 
 on_error:
@@ -275,10 +277,15 @@ js_ListenOnPort(duk_context* ctx)
 	
 	socket_t* socket;
 
-	socket = listen_on_port(port, 1024, max_backlog);
-	duk_push_sphere_socket(ctx, socket);
-	free_socket(socket);
-	return 1;
+	if (socket = listen_on_port(port, 1024, max_backlog)) {
+		duk_push_sphere_socket(ctx, socket);
+		free_socket(socket);
+		return 1;
+	}
+	else {
+		duk_push_null(ctx);
+		return 1;
+	}
 }
 
 static duk_ret_t
@@ -289,10 +296,15 @@ js_OpenAddress(duk_context* ctx)
 	
 	socket_t* socket;
 
-	socket = connect_to_host(ip, port, 1024);
-	duk_push_sphere_socket(ctx, socket);
-	free_socket(socket);
-	return 1;
+	if (socket = connect_to_host(ip, port, 1024)) {
+		duk_push_sphere_socket(ctx, socket);
+		free_socket(socket);
+		return 1;
+	}
+	else {
+		duk_push_null(ctx);
+		return 1;
+	}
 }
 
 static duk_ret_t
