@@ -111,7 +111,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClCompile Include="lstring.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
-    <ClCompile Include="networking.c" />
+    <ClCompile Include="sockets.c" />
     <ClCompile Include="obsmap.c" />
     <ClCompile Include="persons.c" />
     <ClCompile Include="primitives.c" />
@@ -139,7 +139,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
     <ClInclude Include="lstring.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
-    <ClInclude Include="networking.h" />
+    <ClInclude Include="sockets.h" />
     <ClInclude Include="obsmap.h" />
     <ClInclude Include="persons.h" />
     <ClInclude Include="primitives.h" />

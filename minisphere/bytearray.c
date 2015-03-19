@@ -50,6 +50,26 @@ duk_push_sphere_bytearray(duk_context* ctx, uint8_t* buffer, int size)
 	duk_remove(ctx, -2);
 }
 
+uint8_t*
+duk_require_sphere_bytearray(duk_context* ctx, duk_idx_t index, int* out_size)
+{
+	uint8_t*    buffer;
+	const char* type;
+
+	index = duk_require_normalize_index(ctx, index);
+	duk_require_object_coercible(ctx, index);
+	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
+		goto on_error;
+	type = duk_get_string(ctx, -1); duk_pop(ctx);
+	if (strcmp(type, "bytearray") != 0) goto on_error;
+	duk_get_prop_string(ctx, index, "\xFF" "ptr"); buffer = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "\xFF" "size"); *out_size = duk_get_int(ctx, -1); duk_pop(ctx);
+	return buffer;
+
+on_error:
+	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere byte array");
+}
+
 static duk_ret_t
 js_CreateByteArray(duk_context* ctx)
 {

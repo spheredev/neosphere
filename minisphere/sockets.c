@@ -2,7 +2,7 @@
 #include "api.h"
 #include "bytearray.h"
 
-#include "networking.h"
+#include "sockets.h"
 
 static void on_dyad_accept  (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
@@ -19,6 +19,7 @@ static duk_ret_t js_Socket_getRemotePort      (duk_context* ctx);
 static duk_ret_t js_Socket_acceptNext         (duk_context* ctx);
 static duk_ret_t js_Socket_close              (duk_context* ctx);
 static duk_ret_t js_Socket_read               (duk_context* ctx);
+static duk_ret_t js_Socket_readString         (duk_context* ctx);
 static duk_ret_t js_Socket_write              (duk_context* ctx);
 
 struct socket
@@ -29,8 +30,8 @@ struct socket
 	uint8_t*     buffer;
 	size_t       buffer_size;
 	size_t       pend_size;
-	int          num_backlog;
 	int          max_backlog;
+	int          num_backlog;
 	dyad_Stream* *backlog;
 };
 
@@ -161,9 +162,9 @@ read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 }
 
 void
-write_socket(socket_t* socket, uint8_t* data, size_t n_bytes)
+write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 {
-	dyad_write(socket->stream, data, n_bytes);
+	dyad_write(socket->stream, (void*)data, n_bytes);
 }
 
 void
@@ -181,11 +182,12 @@ duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
 	duk_push_c_function(ctx, js_Socket_getRemotePort, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemotePort");
 	duk_push_c_function(ctx, js_Socket_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
 	duk_push_c_function(ctx, js_Socket_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
+	duk_push_c_function(ctx, js_Socket_readString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "readString");
 	duk_push_c_function(ctx, js_Socket_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
 }
 
 void
-init_networking_api(void)
+init_sockets_api(void)
 {
 	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
 	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
@@ -445,17 +447,45 @@ js_Socket_read(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Socket_write(duk_context* ctx)
+js_Socket_readString(duk_context* ctx)
 {
-	duk_require_object_coercible(ctx, 0);
-	uint8_t* data; duk_get_prop_string(ctx, 0, "\xFF" "buffer"); data = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	int length = duk_get_length(ctx, 0);
+	size_t length = duk_require_uint(ctx, 0);
 
+	uint8_t*  buffer;
 	socket_t* socket;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Not valid on listen-only sockets");
+	if (!is_socket_live(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Socket has dropped incoming data due to allocation failure (internal error)");
+	if (!(buffer = malloc(length)))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer (internal error)");
+	read_socket(socket, buffer, length);
+	duk_push_lstring(ctx, buffer, length);
+	free(buffer);
+	return 1;
+}
+
+static duk_ret_t
+js_Socket_write(duk_context* ctx)
+{
+	const uint8_t* payload;
+	socket_t*      socket;
+	size_t         write_size;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	payload = duk_is_string(ctx, 0)
+		? duk_get_lstring(ctx, 0, &write_size)
+		: duk_require_sphere_bytearray(ctx, 0, &write_size);
 	if (socket == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Tried to use socket after it was closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
@@ -464,6 +494,6 @@ js_Socket_write(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket has dropped incoming data due to allocation failure (internal error)");
-	write_socket(socket, data, length);
+	write_socket(socket, payload, write_size);
 	return 0;
 }

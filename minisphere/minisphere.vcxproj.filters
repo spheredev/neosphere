@@ -87,10 +87,10 @@
     <ClCompile Include="logger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="networking.c">
+    <ClCompile Include="dyad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dyad.c">
+    <ClCompile Include="sockets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -170,10 +170,10 @@
     <ClInclude Include="logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="networking.h">
+    <ClInclude Include="dyad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dyad.h">
+    <ClInclude Include="sockets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

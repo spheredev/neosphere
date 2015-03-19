@@ -9,10 +9,10 @@
 #include "input.h"
 #include "logger.h"
 #include "map_engine.h"
-#include "networking.h"
 #include "primitives.h"
 #include "rawfile.h"
 #include "rfn_handler.h"
+#include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
 #include "surface.h"
@@ -530,9 +530,9 @@ initialize_engine(void)
 	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duktape);
-	init_networking_api();
 	init_primitives_api();
 	init_rawfile_api();
+	init_sockets_api();
 	init_sound_api();
 	init_spriteset_api(g_duktape);
 	init_surface_api();
