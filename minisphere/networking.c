@@ -14,6 +14,8 @@ static duk_ret_t js_OpenAddress               (duk_context* ctx);
 static duk_ret_t js_Socket_finalize           (duk_context* ctx);
 static duk_ret_t js_Socket_isConnected        (duk_context* ctx);
 static duk_ret_t js_Socket_getPendingReadSize (duk_context* ctx);
+static duk_ret_t js_Socket_getRemoteAddress   (duk_context* ctx);
+static duk_ret_t js_Socket_getRemotePort      (duk_context* ctx);
 static duk_ret_t js_Socket_acceptNext         (duk_context* ctx);
 static duk_ret_t js_Socket_close              (duk_context* ctx);
 static duk_ret_t js_Socket_read               (duk_context* ctx);
@@ -175,6 +177,8 @@ duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
 	duk_push_c_function(ctx, js_Socket_acceptNext, DUK_VARARGS); duk_put_prop_string(ctx, -2, "acceptNext");
 	duk_push_c_function(ctx, js_Socket_isConnected, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isConnected");
 	duk_push_c_function(ctx, js_Socket_getPendingReadSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPendingReadSize");
+	duk_push_c_function(ctx, js_Socket_getRemoteAddress, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemoteAddress");
+	duk_push_c_function(ctx, js_Socket_getRemotePort, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemotePort");
 	duk_push_c_function(ctx, js_Socket_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
 	duk_push_c_function(ctx, js_Socket_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
 	duk_push_c_function(ctx, js_Socket_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
@@ -332,6 +336,46 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
 	duk_push_uint(ctx, socket->pend_size);
+	return 1;
+}
+
+static duk_ret_t
+js_Socket_getRemoteAddress(duk_context* ctx)
+{
+	socket_t* socket;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Not valid on listen-only sockets");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has dropped incoming data due to allocation failure (internal error)");
+	if (!is_socket_live(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket is not connected");
+	duk_push_string(ctx, dyad_getAddress(socket->stream));
+	return 1;
+}
+
+static duk_ret_t
+js_Socket_getRemotePort(duk_context* ctx)
+{
+	socket_t* socket;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Tried to use socket after it was closed");
+	if (is_socket_server(socket) && socket->max_backlog > 0)
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Not valid on listen-only sockets");
+	if (is_socket_data_lost(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has dropped incoming data due to allocation failure (internal error)");
+	if (!is_socket_live(socket))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket is not connected");
+	duk_push_int(ctx, dyad_getPort(socket->stream));
 	return 1;
 }
 
