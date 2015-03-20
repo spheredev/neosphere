@@ -372,7 +372,7 @@ js_Font_getHeight(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	duk_push_int(ctx, font->height);
+	duk_push_int(ctx, get_font_line_height(font));
 	return 1;
 }
 
@@ -406,17 +406,17 @@ js_Font_setColorMask(duk_context* ctx)
 static duk_ret_t
 js_Font_drawText(duk_context* ctx)
 {
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	const char* text = duk_to_string(ctx, 2);
+	
 	font_t*       font;
 	ALLEGRO_COLOR mask;
-	int           x, y;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	const char* text = duk_to_string(ctx, 2);
 	if (!is_skipped_frame()) draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
 	return 0;
 }
