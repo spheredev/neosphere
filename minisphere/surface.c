@@ -59,6 +59,7 @@ void
 duk_push_sphere_surface(duk_context* ctx, image_t* image)
 {
 	ref_image(image);
+
 	duk_push_object(ctx);
 	duk_push_string(ctx, "surface"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "image_ptr");
@@ -164,14 +165,18 @@ reset_blender(void)
 static duk_ret_t
 js_CreateSurface(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	int w = duk_require_int(ctx, 0);
 	int h = duk_require_int(ctx, 1);
+	ALLEGRO_COLOR color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : al_map_rgba(0, 0, 0, 0);
 	
 	image_t* image;
 	
 	if ((image = create_image(w, h)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "CreateSurface(): Failed to create surface bitmap");
+		duk_error(ctx, DUK_ERR_ERROR, "CreateSurface(): Failed to create image for surface (internal error)");
+	fill_image(image, color);
 	duk_push_sphere_surface(ctx, image);
+	free_image(image);
 	return 1;
 }
 

@@ -234,6 +234,21 @@ apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 	return true;
 }
 
+void
+fill_image(image_t* image, ALLEGRO_COLOR color)
+{
+	int             clip_x, clip_y, clip_w, clip_h;
+	ALLEGRO_BITMAP* last_target;
+
+	al_get_clipping_rectangle(&clip_x, &clip_y, &clip_w, &clip_h);
+	al_reset_clipping_rectangle();
+	last_target = al_get_target_bitmap();
+	al_set_target_bitmap(image->bitmap);
+	al_clear_to_color(color);
+	al_set_target_bitmap(last_target);
+	al_set_clipping_rectangle(clip_x, clip_y, clip_w, clip_h);
+}
+
 bool
 flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 {
