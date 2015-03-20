@@ -1,11 +1,11 @@
 /*
- *  Duktape public API for Duktape 1.1.1.
+ *  Duktape public API for Duktape 1.1.2.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 49166395c646968fd6187d675f0040bb4dbc9437 (v1.1.1).
+ *  Git commit eb523a027d3d9658a0c0e2150b29e6d87f81860c (v1.1.2).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -2610,6 +2610,12 @@ typedef FILE duk_file;
 #undef DUK_USE_NONSTD_JSON_ESC_U2028_U2029
 #endif
 
+/* Allow 32-bit codepoints in String.fromCharCode. */
+#define DUK_USE_NONSTD_STRING_FROMCHARCODE_32BIT
+#if defined(DUK_OPT_NO_NONSTD_STRING_FROMCHARCODE_32BIT)
+#undef DUK_USE_NONSTD_STRING_FROMCHARCODE_32BIT
+#endif
+
 /*
  *  Tailcalls
  */
@@ -2650,6 +2656,11 @@ typedef FILE duk_file;
 #define DUK_USE_ESBC_LIMITS
 #define DUK_USE_ESBC_MAX_LINENUMBER  0x7fff0000L
 #define DUK_USE_ESBC_MAX_BYTES       0x7fff0000L
+
+#undef DUK_USE_SHUFFLE_TORTURE
+#if defined(DUK_OPT_SHUFFLE_TORTURE)
+#define DUK_USE_SHUFFLE_TORTURE
+#endif
 
 /*
  *  User panic handler, panic exit behavior for default panic handler
@@ -2998,13 +3009,13 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10101L
+#define DUK_VERSION                       10102L
 
 /* Git describe for Duktape build.  Useful for non-official snapshot builds
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.1.1"
+#define DUK_GIT_DESCRIBE                  "v1.1.2"
 
 /* Used to represent invalid index; if caller uses this without checking,
  * this index will map to a non-existent stack entry.  Also used in some

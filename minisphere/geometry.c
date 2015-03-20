@@ -15,12 +15,6 @@ new_rect(int x1, int y1, int x2, int y2)
 }
 
 bool
-do_rects_intersect(rect_t a, rect_t b)
-{
-	return !(a.x1 >= b.x2 || a.x2 <= b.x1 || a.y1 >= b.y2 || a.y2 <= b.y1);
-}
-
-bool
 do_lines_intersect(rect_t a, rect_t b)
 {
 	float d, q, r, s;
@@ -33,6 +27,12 @@ do_lines_intersect(rect_t a, rect_t b)
 	q = (a.y1 - b.y1) * (a.x2 - a.x1) - (a.x1 - b.x1) * (a.y2 - a.y1);
 	s = q / d;
 	return !(r < 0 || r > 1 || s < 0 || s > 1);
+}
+
+bool
+do_rects_intersect(rect_t a, rect_t b)
+{
+	return !(a.x1 >= b.x2 || a.x2 <= b.x1 || a.y1 >= b.y2 || a.y2 <= b.y1);
 }
 
 bool

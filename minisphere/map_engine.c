@@ -23,7 +23,7 @@ enum map_script_type
 
 static map_t*              load_map            (const char* path);
 static void                free_map            (map_t* map);
-static bool                are_zones_at(int x, int y, int layer, int* out_count);
+static bool                are_zones_at        (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
 static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
 static bool                change_map          (const char* filename, bool preserve_persons);
