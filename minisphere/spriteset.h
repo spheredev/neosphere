@@ -23,7 +23,7 @@ struct spriteset_pose
 
 struct spriteset
 {
-	int              c_refs;
+	int              refcount;
 	rect_t           base;
 	lstring_t*       filename;
 	int              num_images;

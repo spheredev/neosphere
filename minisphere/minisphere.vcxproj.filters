@@ -21,9 +21,6 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rfn_handler.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sound.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,9 +96,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="minisphere.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rfn_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="api.h">

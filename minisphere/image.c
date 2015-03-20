@@ -7,7 +7,7 @@
 
 struct image
 {
-	int             c_refs;
+	int             refcount;
 	ALLEGRO_BITMAP* bitmap;
 	int             width;
 	int             height;
@@ -180,14 +180,14 @@ on_error:
 image_t*
 ref_image(image_t* image)
 {
-	++image->c_refs;
+	++image->refcount;
 	return image;
 }
 
 void
 free_image(image_t* image)
 {
-	if (image == NULL || --image->c_refs > 0)
+	if (image == NULL || --image->refcount > 0)
 		return;
 	al_destroy_bitmap(image->bitmap);
 	free_image(image->parent);
@@ -232,6 +232,18 @@ apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 	}
 	al_unlock_bitmap(bitmap);
 	return true;
+}
+
+void
+draw_image(image_t* image, int x, int y)
+{
+	al_draw_bitmap(image->bitmap, x, y, 0x0);
+}
+
+void
+draw_image_masked(image_t* image, ALLEGRO_COLOR mask, int x, int y)
+{
+	al_draw_tinted_bitmap(image->bitmap, mask, x, y, 0x0);
 }
 
 void

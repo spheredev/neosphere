@@ -257,7 +257,7 @@ on_error:
 spriteset_t*
 ref_spriteset(spriteset_t* spriteset)
 {
-	++spriteset->c_refs;
+	++spriteset->refcount;
 	return spriteset;
 }
 
@@ -266,7 +266,7 @@ free_spriteset(spriteset_t* spriteset)
 {
 	int i;
 	
-	if (spriteset == NULL || --spriteset->c_refs > 0)
+	if (spriteset == NULL || --spriteset->refcount > 0)
 		return;
 	for (i = 0; i < spriteset->num_images; ++i) {
 		free_image(spriteset->images[i]);

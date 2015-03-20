@@ -434,7 +434,7 @@ js_Surface_drawText(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_text(get_font_object(font), color, x, y, 0x0, text);
+	draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;

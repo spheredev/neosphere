@@ -11,7 +11,6 @@
 #include "map_engine.h"
 #include "primitives.h"
 #include "rawfile.h"
-#include "rfn_handler.h"
 #include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -147,7 +146,6 @@ startup:
 	icon_path = get_asset_path("game-icon.png", NULL, false);
 	icon = al_load_bitmap(icon_path);
 	free(icon_path);
-	al_register_font_loader(".rfn", &al_load_rfn_font);
 	al_reserve_samples(8);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
@@ -170,7 +168,7 @@ startup:
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Font");
 		path = get_sys_asset_path(filename, "system");
-		g_sys_font = load_font(path, 8);
+		g_sys_font = load_font(path);
 		free(path);
 	}
 	if (g_sys_font == NULL) {
