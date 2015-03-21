@@ -403,7 +403,7 @@ js_GetSystemDownArrow(duk_context* ctx)
 static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
-	if (s_sys_up_arrow != NULL)
+	if (s_sys_up_arrow == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "GetSystemUpArrow(): No system up arrow image available");
 	duk_push_sphere_image(ctx, s_sys_up_arrow);
 	return 1;
