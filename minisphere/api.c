@@ -139,18 +139,16 @@ js_error(js_error_t type, int stack_offset, const char* fmt, ...)
 	va_end(ap);
 }
 
-static duk_ret_t
-js_GetVersion(duk_context* ctx)
+static js_retval_t
+js_GetVersion(_JS_C_FUNC_ARGS_)
 {
-	duk_push_number(ctx, SPHERE_API_VERSION);
-	return 1;
+	js_return_number(SPHERE_API_VERSION);
 }
 
-static duk_ret_t
-js_GetVersionString(duk_context* ctx)
+static js_retval_t
+js_GetVersionString(_JS_C_FUNC_ARGS_)
 {
-	duk_push_string(ctx, SPHERE_API_VERSION_STRING);
-	return 1;
+	js_return_cstr(SPHERE_API_VERSION_STRING);
 }
 
 static duk_ret_t

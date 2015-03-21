@@ -2,10 +2,10 @@
 #include "api.h"
 #include "color.h"
 
-static js_retval_t js_CreateColor         (_JS_C_FUNC_ARG_LIST_);
-static js_retval_t js_BlendColors         (_JS_C_FUNC_ARG_LIST_);
-static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARG_LIST_);
-static js_retval_t js_Color_toString      (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_CreateColor         (_JS_C_FUNC_ARGS_);
+static js_retval_t js_BlendColors         (_JS_C_FUNC_ARGS_);
+static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARGS_);
+static js_retval_t js_Color_toString      (_JS_C_FUNC_ARGS_);
 
 ALLEGRO_COLOR
 blend_colors(ALLEGRO_COLOR color1, ALLEGRO_COLOR color2, float w1, float w2)
@@ -64,7 +64,7 @@ duk_push_sphere_color(duk_context* ctx, ALLEGRO_COLOR color)
 }
 
 static js_retval_t
-js_CreateColor(_JS_C_FUNC_ARG_LIST_)
+js_CreateColor(_JS_C_FUNC_ARGS_)
 {
 	js_begin_api_func("CreateColor");
 	js_require_num_args(3);
@@ -81,7 +81,7 @@ js_CreateColor(_JS_C_FUNC_ARG_LIST_)
 }
 
 static js_retval_t
-js_BlendColors(_JS_C_FUNC_ARG_LIST_)
+js_BlendColors(_JS_C_FUNC_ARGS_)
 {
 	ALLEGRO_COLOR color1 = duk_require_sphere_color(ctx, 0);
 	ALLEGRO_COLOR color2 = duk_require_sphere_color(ctx, 1);
@@ -90,7 +90,7 @@ js_BlendColors(_JS_C_FUNC_ARG_LIST_)
 }
 
 static js_retval_t
-js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
+js_BlendColorsWeighted(_JS_C_FUNC_ARGS_)
 {
 	ALLEGRO_COLOR color1 = duk_require_sphere_color(ctx, 0);
 	ALLEGRO_COLOR color2 = duk_require_sphere_color(ctx, 1);
@@ -104,7 +104,7 @@ js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
 }
 
 static js_retval_t
-js_Color_toString(_JS_C_FUNC_ARG_LIST_)
+js_Color_toString(_JS_C_FUNC_ARGS_)
 {
 	js_return_cstr("[object color]");
 }

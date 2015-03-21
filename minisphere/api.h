@@ -6,7 +6,7 @@ extern void register_api_func  (duk_context* ctx, const char* ctor_name, const c
 extern void bail_out_game      (void);
 extern void js_error           (js_error_t type, int stack_offset, const char* fmt, ...);
 
-#define _JS_C_FUNC_ARG_LIST_ duk_context* ctx
+#define _JS_C_FUNC_ARGS_ duk_context* ctx
 
 #define js_retval_t duk_ret_t
 
@@ -26,6 +26,7 @@ extern void js_error           (js_error_t type, int stack_offset, const char* f
 #define js_return return 0
 #define js_return_cstr(cstr) return duk_push_string(ctx, cstr), 1
 #define js_return_int(val) return duk_push_int(ctx, val), 1
+#define js_return_number(val) return duk_push_number(ctx, val), 1
 #define js_return_sphereobj(typename, object_ptr) return \
 	duk_push_sphere_##typename(ctx, object_ptr), 1
 

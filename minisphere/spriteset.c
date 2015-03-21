@@ -372,7 +372,7 @@ init_spriteset_api(duk_context* ctx)
 }
 
 void
-duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
+duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 {
 	char      prop_name[20];
 	
@@ -443,7 +443,7 @@ duk_push_spriteset(duk_context* ctx, spriteset_t* spriteset)
 }
 
 spriteset_t*
-duk_require_spriteset(duk_context* ctx, duk_idx_t index)
+duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
 {
 	spriteset_t* spriteset;
 	const char*  type;
@@ -500,7 +500,7 @@ js_LoadSpriteset(duk_context* ctx)
 	if ((spriteset = load_spriteset(path)) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "LoadSpriteset(): Failed to load spriteset file '%s'", filename);
 	free(path);
-	duk_push_spriteset(ctx, spriteset);
+	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;
 }
@@ -533,7 +533,7 @@ js_Spriteset_clone(duk_context* ctx)
 	duk_pop(ctx);
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Spriteset:clone(): Failed to create new spriteset");
-	duk_push_spriteset(ctx, new_spriteset);
+	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;
 }
