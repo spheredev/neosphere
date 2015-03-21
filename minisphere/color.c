@@ -2,10 +2,10 @@
 #include "api.h"
 #include "color.h"
 
-static js_return_t js_CreateColor         (_JS_C_FUNC_ARG_LIST_);
-static js_return_t js_BlendColors         (_JS_C_FUNC_ARG_LIST_);
-static js_return_t js_BlendColorsWeighted (_JS_C_FUNC_ARG_LIST_);
-static js_return_t js_Color_toString      (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_CreateColor         (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_BlendColors         (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_Color_toString      (_JS_C_FUNC_ARG_LIST_);
 
 ALLEGRO_COLOR
 blend_colors(ALLEGRO_COLOR color1, ALLEGRO_COLOR color2, float w1, float w2)
@@ -63,21 +63,24 @@ duk_push_sphere_color(duk_context* ctx, ALLEGRO_COLOR color)
 	duk_push_number(ctx, color.a * 255); duk_put_prop_string(ctx, -2, "alpha");
 }
 
-static js_return_t
+static js_retval_t
 js_CreateColor(_JS_C_FUNC_ARG_LIST_)
 {
-	ALLEGRO_COLOR color;
-	int           n_args;
-	
-	n_args = duk_get_top(ctx);
-	color.r = duk_to_int(ctx, 0) / 255.0; color.r = fmin(fmax(color.r, 0.0), 1.0);
-	color.g = duk_to_int(ctx, 1) / 255.0; color.g = fmin(fmax(color.g, 0.0), 1.0);
-	color.b = duk_to_int(ctx, 2) / 255.0; color.b = fmin(fmax(color.b, 0.0), 1.0);
-	color.a = n_args > 3 ? duk_to_int(ctx, 3) / 255.0 : 1.0; color.a = fmin(fmax(color.a, 0.0), 1.0);
-	js_return_sphereobj(color, color);
+	js_begin_api_func("CreateColor");
+	js_require_num_args(3);
+	js_int_arg(1, r_val);
+	js_int_arg(2, g_val);
+	js_int_arg(3, b_val);
+	js_maybe_int_arg(4, a_val, 255);
+
+	r_val = fmin(fmax(r_val, 0), 255);
+	g_val = fmin(fmax(g_val, 0), 255);
+	b_val = fmin(fmax(b_val, 0), 255);
+	a_val = fmin(fmax(a_val, 0), 255);
+	js_return_sphereobj(color, al_map_rgba(r_val, g_val, b_val, a_val));
 }
 
-static js_return_t
+static js_retval_t
 js_BlendColors(_JS_C_FUNC_ARG_LIST_)
 {
 	ALLEGRO_COLOR color1 = duk_require_sphere_color(ctx, 0);
@@ -86,7 +89,7 @@ js_BlendColors(_JS_C_FUNC_ARG_LIST_)
 	js_return_sphereobj(color, blend_colors(color1, color2, 1, 1));
 }
 
-static js_return_t
+static js_retval_t
 js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
 {
 	ALLEGRO_COLOR color1 = duk_require_sphere_color(ctx, 0);
@@ -100,7 +103,7 @@ js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
 	js_return_sphereobj(color, blend_colors(color1, color2, w1, w2));
 }
 
-static js_return_t
+static js_retval_t
 js_Color_toString(_JS_C_FUNC_ARG_LIST_)
 {
 	js_return_cstr("[object color]");
