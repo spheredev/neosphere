@@ -98,6 +98,47 @@ bail_out_game(void)
 	duk_error(g_duktape, DUK_ERR_ERROR, "@exit");
 }
 
+void
+js_error(js_error_t type, int stack_offset, const char* fmt, ...)
+{
+	va_list ap;
+	
+	duk_errcode_t err_code;
+	const char*   filename = NULL;
+	int           line_number;
+	const char*   full_path;
+
+	// get filename and line number from JS call stack
+	duk_push_global_object(g_duktape);
+	duk_get_prop_string(g_duktape, -1, "Duktape");
+	duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2 + stack_offset); duk_call(g_duktape, 1);
+	if (!duk_is_object(g_duktape, -1)) {
+		duk_pop(g_duktape);
+		duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2); duk_call(g_duktape, 1);
+	}
+	duk_remove(g_duktape, -2);
+	duk_get_prop_string(g_duktape, -1, "lineNumber"); line_number = duk_to_int(g_duktape, -1); duk_pop(g_duktape);
+	duk_get_prop_string(g_duktape, -1, "function");
+	duk_get_prop_string(g_duktape, -1, "fileName"); full_path = duk_safe_to_string(g_duktape, -1); duk_pop(g_duktape);
+	duk_pop_2(g_duktape);
+
+	// strip directory path from filename
+	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
+	filename = filename != NULL ? filename + 1 : full_path;
+
+	// throw the exception
+	err_code = type == JS_ERROR ? DUK_ERR_ERROR
+		: type == JS_EVAL_ERROR ? DUK_ERR_EVAL_ERROR
+		: type == JS_RANGE_ERROR ? DUK_ERR_RANGE_ERROR
+		: type == JS_REF_ERROR ? DUK_ERR_REFERENCE_ERROR
+		: type == JS_TYPE_ERROR ? DUK_ERR_TYPE_ERROR
+		: type == JS_URI_ERROR ? DUK_ERR_URI_ERROR
+		: DUK_ERR_ERROR;
+	va_start(ap, fmt);
+	duk_error_va_raw(g_duktape, err_code, filename, line_number, fmt, ap);
+	va_end(ap);
+}
+
 static duk_ret_t
 js_GetVersion(duk_context* ctx)
 {
@@ -308,7 +349,7 @@ js_Alert(duk_context* ctx)
 	const char* full_path;
 
 	if (stack_offset > 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
+		js_error(JS_RANGE_ERROR, -1, "Alert(): Stack offset cannot be positive");
 
 	// get filename and line number of Alert() call
 	duk_push_global_object(ctx);
@@ -339,34 +380,12 @@ static duk_ret_t
 js_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* error_text = n_args >= 1 ? duk_to_string(ctx, 0) : "Game terminated prematurely";
+	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n\n\n\n...and you*munch*";
 	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
-	const char* filename;
-	int         line_number;
-	const char* full_path;
-
 	if (stack_offset > 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
-
-	// get filename and line number of Abort() call
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-	if (!duk_is_object(ctx, -1)) {
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-	}
-	duk_remove(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
-	duk_pop_2(ctx);
-
-	// throw the exception
-	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
-	filename = filename != NULL ? filename + 1 : full_path;
-	duk_error_raw(ctx, DUK_ERR_ERROR, filename, line_number, "%s", error_text);
+		js_error(JS_RANGE_ERROR, -1, "Abort(): Stack offset cannot be positive");
+	js_error(JS_ERROR, -1 + stack_offset, message);
 }
 
 static duk_ret_t
@@ -377,7 +396,7 @@ js_CreateStringFromCode(duk_context* ctx)
 	char cstr[2];
 
 	if (code < 0 || code > 255)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CreateStringFromCode(): Character code out of ASCII range (%i)", code);
+		js_error(JS_RANGE_ERROR, -1, "CreateStringFromCode(): Character code is out of ASCII range (%i)", code);
 	cstr[0] = (char)code; cstr[1] = '\0';
 	duk_push_string(ctx, cstr);
 	return 1;
@@ -391,7 +410,7 @@ js_Delay(duk_context* ctx)
 	double start_time;
 
 	if (millisecs < 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "Delay(): Negative delay not allowed (%i)", millisecs);
+		js_error(JS_RANGE_ERROR, -1, "Delay(): Negative delay not allowed (%i)", millisecs);
 	start_time = al_get_time();
 	while (al_get_time() < start_time + millisecs / 1000) {
 		if (!do_events()) bail_out_game();

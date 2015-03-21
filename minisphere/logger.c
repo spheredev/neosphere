@@ -25,8 +25,6 @@ static duk_ret_t js_Logger_beginBlock (duk_context* ctx);
 static duk_ret_t js_Logger_endBlock   (duk_context* ctx);
 static duk_ret_t js_Logger_write      (duk_context* ctx);
 
-static void duk_push_sphere_logger (duk_context* ctx, logger_t* log);
-
 logger_t*
 open_log_file(const char* path)
 {
@@ -130,7 +128,7 @@ init_logging_api(void)
 	register_api_func(g_duktape, NULL, "OpenLog", js_OpenLog);
 }
 
-static void
+void
 duk_push_sphere_logger(duk_context* ctx, logger_t* logger)
 {
 	ref_logger(logger);

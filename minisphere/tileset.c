@@ -37,7 +37,7 @@ struct rts_header
 	uint8_t  reserved[240];
 };
 
-struct rts_tile_info
+struct rts_tile_header
 {
 	uint8_t  unknown_1;
 	uint8_t  animated;
@@ -67,15 +67,15 @@ load_tileset(const char* path)
 tileset_t*
 read_tileset(ALLEGRO_FILE* file)
 {
-	image_t*             atlas;
-	int                  atlas_w, atlas_h;
-	int64_t              file_pos;
-	int                  n_tiles_per_row;
-	struct rts_header    rts;
-	rect_t               segment;
-	struct rts_tile_info tile_info;
-	struct tile*         tiles = NULL;
-	tileset_t*           tileset = NULL;
+	image_t*               atlas;
+	int                    atlas_w, atlas_h;
+	int64_t                file_pos;
+	int                    n_tiles_per_row;
+	struct rts_header      rts;
+	rect_t                 segment;
+	struct rts_tile_header tilehdr;
+	struct tile*           tiles = NULL;
+	tileset_t*             tileset = NULL;
 
 	int i, j;
 
@@ -105,22 +105,22 @@ read_tileset(ALLEGRO_FILE* file)
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if (al_fread(file, &tile_info, sizeof(struct rts_tile_info)) != sizeof(struct rts_tile_info))
+		if (al_fread(file, &tilehdr, sizeof(struct rts_tile_header)) != sizeof(struct rts_tile_header))
 			goto on_error;
-		tiles[i].name = read_lstring_s(file, tile_info.name_length, true);
-		tiles[i].next_index = tile_info.animated ? tile_info.next_tile : i;
-		tiles[i].delay = tile_info.animated ? tile_info.delay : 0;
+		tiles[i].name = read_lstring_s(file, tilehdr.name_length, true);
+		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
+		tiles[i].delay = tilehdr.animated ? tilehdr.delay : 0;
 		tiles[i].animate_index = i;
 		tiles[i].frames_left = tiles[i].delay;
 		if (rts.has_obstructions) {
-			switch (tile_info.obsmap_type) {
+			switch (tilehdr.obsmap_type) {
 			case 1:  // pixel-perfect obstruction (no longer supported)
 				al_fseek(file, rts.tile_width * rts.tile_height, ALLEGRO_SEEK_CUR);
 				break;
 			case 2:  // line segment-based obstruction
-				tiles[i].num_obs_lines = tile_info.num_segments;
+				tiles[i].num_obs_lines = tilehdr.num_segments;
 				if ((tiles[i].obsmap = new_obsmap()) == NULL) goto on_error;
-				for (j = 0; j < tile_info.num_segments; ++j) {
+				for (j = 0; j < tilehdr.num_segments; ++j) {
 					if (!al_fread_rect_16(file, &segment))
 						goto on_error;
 					add_obsmap_line(tiles[i].obsmap, segment);
