@@ -2,10 +2,10 @@
 #include "api.h"
 #include "color.h"
 
-static duk_ret_t js_CreateColor         (duk_context* ctx);
-static duk_ret_t js_BlendColors         (duk_context* ctx);
-static duk_ret_t js_BlendColorsWeighted (duk_context* ctx);
-static duk_ret_t js_Color_toString      (duk_context* ctx);
+static js_return_t js_CreateColor         (_JS_C_FUNC_ARG_LIST_);
+static js_return_t js_BlendColors         (_JS_C_FUNC_ARG_LIST_);
+static js_return_t js_BlendColorsWeighted (_JS_C_FUNC_ARG_LIST_);
+static js_return_t js_Color_toString      (_JS_C_FUNC_ARG_LIST_);
 
 ALLEGRO_COLOR
 blend_colors(ALLEGRO_COLOR color1, ALLEGRO_COLOR color2, float w1, float w2)
@@ -48,7 +48,7 @@ duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 	return color;
 
 on_error:
-	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere color object");
+	js_error(JS_TYPE_ERROR, -1, "Object is not a Sphere color");
 }
 
 void
@@ -63,8 +63,8 @@ duk_push_sphere_color(duk_context* ctx, ALLEGRO_COLOR color)
 	duk_push_number(ctx, color.a * 255); duk_put_prop_string(ctx, -2, "alpha");
 }
 
-static duk_ret_t
-js_CreateColor(duk_context* ctx)
+static js_return_t
+js_CreateColor(_JS_C_FUNC_ARG_LIST_)
 {
 	ALLEGRO_COLOR color;
 	int           n_args;
@@ -74,22 +74,20 @@ js_CreateColor(duk_context* ctx)
 	color.g = duk_to_int(ctx, 1) / 255.0; color.g = fmin(fmax(color.g, 0.0), 1.0);
 	color.b = duk_to_int(ctx, 2) / 255.0; color.b = fmin(fmax(color.b, 0.0), 1.0);
 	color.a = n_args > 3 ? duk_to_int(ctx, 3) / 255.0 : 1.0; color.a = fmin(fmax(color.a, 0.0), 1.0);
-	duk_push_sphere_color(ctx, color);
-	return 1;
+	js_return_sphereobj(color, color);
 }
 
-static duk_ret_t
-js_BlendColors(duk_context* ctx)
+static js_return_t
+js_BlendColors(_JS_C_FUNC_ARG_LIST_)
 {
 	ALLEGRO_COLOR color1 = duk_require_sphere_color(ctx, 0);
 	ALLEGRO_COLOR color2 = duk_require_sphere_color(ctx, 1);
 	
-	duk_push_sphere_color(ctx, blend_colors(color1, color2, 1, 1));
-	return 1;
+	js_return_sphereobj(color, blend_colors(color1, color2, 1, 1));
 }
 
-static duk_ret_t
-js_BlendColorsWeighted(duk_context* ctx)
+static js_return_t
+js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
 {
 	ALLEGRO_COLOR color1 = duk_require_sphere_color(ctx, 0);
 	ALLEGRO_COLOR color2 = duk_require_sphere_color(ctx, 1);
@@ -97,14 +95,13 @@ js_BlendColorsWeighted(duk_context* ctx)
 	float w2 = duk_require_number(ctx, 3);
 	
 	if (w1 < 0.0 || w2 < 0.0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
-	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
-	return 1;
+		js_error(JS_RANGE_ERROR, -1, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
+	
+	js_return_sphereobj(color, blend_colors(color1, color2, w1, w2));
 }
 
-static duk_ret_t
-js_Color_toString(duk_context* ctx)
+static js_return_t
+js_Color_toString(_JS_C_FUNC_ARG_LIST_)
 {
-	duk_push_string(ctx, "[object color]");
-	return 1;
+	js_return_cstr("[object color]");
 }
