@@ -331,7 +331,11 @@ js_GetTime(duk_context* ctx)
 static duk_ret_t
 js_SetFrameRate(duk_context* ctx)
 {
-	s_framerate = duk_to_int(ctx, 0);
+	int framerate = duk_require_int(ctx, 0);
+	
+	if (framerate < 0)
+		js_error(JS_RANGE_ERROR, -1, "SetFrameRate(): Frame rate cannot be negative (%i)", framerate);
+	s_framerate = framerate;
 	return 0;
 }
 
