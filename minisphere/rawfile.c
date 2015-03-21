@@ -175,50 +175,43 @@ js_RawFile_read(duk_context* ctx)
 {
 	int num_bytes = duk_require_int(ctx, 0);
 
-	uint8_t*      buffer;
+	bytearray_t*  array;
+	void*         read_buffer;
 	ALLEGRO_FILE* file;
 
-	if (num_bytes <= 0) {
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB; caller requested %i bytes", num_bytes);
-	}
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (file != NULL) {
-		if ((buffer = malloc(num_bytes)) == NULL) {
-			duk_error(ctx, DUK_ERR_ALLOC_ERROR, "RawFile:read(): Failed to allocate buffer for RawFile read");
-		}
-		num_bytes = al_fread(file, buffer, num_bytes);
-		duk_push_sphere_bytearray(ctx, buffer, num_bytes);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): Attempt to use RawFile object after file has been closed");
-	}
+	if (num_bytes <= 0)
+		duk_error(ctx, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB; caller requested %i bytes", num_bytes);
+	if (file == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
+	if (!(read_buffer = malloc(num_bytes)))
+		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
+	num_bytes = al_fread(file, read_buffer, num_bytes);
+	if (!(array = bytearray_from_buffer(read_buffer, num_bytes)))
+		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array (internal error)");
+	duk_push_sphere_bytearray(ctx, array);
+	return 1;
 }
 
 static duk_ret_t
 js_RawFile_write(duk_context* ctx)
 {
-	uint8_t*      buffer;
-	int           buf_size;
+	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
+	
+	const void*  data;
 	ALLEGRO_FILE* file;
-
-	duk_require_object_coercible(ctx, 0);
+	size_t        write_size;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (file != NULL) {
-		duk_get_prop_string(ctx, 0, "\xFF" "buffer"); buffer = duk_get_pointer(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "\xFF" "size"); buf_size = duk_get_int(ctx, -1); duk_pop(ctx);
-		if (buffer == NULL || buf_size <= 0)
-			duk_error(ctx, DUK_ERR_TYPE_ERROR, "RawFile:write(): Expected a ByteArray as argument, caller passed something else");
-		if (al_fwrite(file, buffer, buf_size) != buf_size)
-			duk_error(ctx, DUK_ERR_ERROR, "RawFile:write(): Write error. The RawFile may be read-only.");
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:write(): Attempt to use RawFile object after file has been closed");
-	}
+	if (file == NULL)
+		duk_error(ctx, DUK_ERR_ERROR, "RawFile:write(): File has already been closed");
+	data = get_bytearray_buffer(array);
+	write_size = get_bytearray_size(array);
+	if (al_fwrite(file, data, write_size) != write_size)
+		duk_error(ctx, DUK_ERR_ERROR, "RawFile:write(): Write error. The file may be read-only.");
+	return 0;
 }

@@ -356,7 +356,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
@@ -374,7 +374,7 @@ js_Socket_getRemoteAddress(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
@@ -394,7 +394,7 @@ js_Socket_getRemotePort(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
@@ -415,7 +415,7 @@ js_Socket_acceptNext(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Socket has already been closed");
 	if (!is_socket_server(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Not valid on non-listening socket");
 	new_socket = accept_next_socket(socket);
@@ -439,7 +439,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:close(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:close(): Socket has already been closed");
 	free_socket(socket);
 	return 1;
 }
@@ -449,24 +449,27 @@ js_Socket_read(duk_context* ctx)
 {
 	size_t length = duk_require_uint(ctx, 0);
 
-	uint8_t*  buffer;
-	socket_t* socket;
+	bytearray_t* array;
+	void*        read_buffer;
+	socket_t*    socket;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Not valid on listen-only sockets");
 	if (!is_socket_live(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket has dropped incoming data due to allocation failure (internal error)");
-	if (!(buffer = malloc(length)))
+	if (!(read_buffer = malloc(length)))
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer (internal error)");
-	read_socket(socket, buffer, length);
-	duk_push_sphere_bytearray(ctx, buffer, length);
+	read_socket(socket, read_buffer, length);
+	if (!(array = bytearray_from_buffer(read_buffer, length)))
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Failed to create byte array (internal error)");
+	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
 
@@ -482,7 +485,7 @@ js_Socket_readString(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Not valid on listen-only sockets");
 	if (!is_socket_live(socket))
@@ -500,6 +503,7 @@ js_Socket_readString(duk_context* ctx)
 static duk_ret_t
 js_Socket_write(duk_context* ctx)
 {
+	bytearray_t*   array;
 	const uint8_t* payload;
 	socket_t*      socket;
 	size_t         write_size;
@@ -507,11 +511,15 @@ js_Socket_write(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	payload = duk_is_string(ctx, 0)
-		? duk_get_lstring(ctx, 0, &write_size)
-		: duk_require_sphere_bytearray(ctx, 0, &write_size);
+	if (duk_is_string(ctx, 0))
+		payload = duk_get_lstring(ctx, 0, &write_size);
+	else {
+		array = duk_require_sphere_bytearray(ctx, 0);
+		payload = get_bytearray_buffer(array);
+		write_size = get_bytearray_size(array);
+	}
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Tried to use socket after it was closed");
+		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Not valid on listen-only sockets");
 	if (!is_socket_live(socket))

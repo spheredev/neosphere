@@ -119,7 +119,7 @@ load_font(const char* path)
 			goto on_error;
 		src_ptr = data; dest_ptr = bitmap_lock->data;
 		switch (rfn.version) {
-		case 1: // version 1: 8-bit grayscale glyphs
+		case 1: // RFN v1: 8-bit grayscale glyphs
 			for (y = 0; y < glyph_hdr.height; ++y) {
 				for (x = 0; x < glyph_hdr.width; ++x) {
 					dest_ptr[x] = src_ptr[x];
@@ -132,7 +132,7 @@ load_font(const char* path)
 				src_ptr += glyph_hdr.width;
 			}
 			break;
-		case 2: // version 2: 32-bit truecolor glyphs
+		case 2: // RFN v2: 32-bit truecolor glyphs
 			for (y = 0; y < glyph_hdr.height; ++y) {
 				memcpy(dest_ptr, src_ptr, glyph_hdr.width * 4);
 				dest_ptr += bitmap_lock->pitch;
