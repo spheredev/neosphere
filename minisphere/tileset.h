@@ -3,7 +3,7 @@
 typedef struct tileset tileset_t;
 
 tileset_t*       load_tileset    (const char* path);
-tileset_t*       read_tileset    (ALLEGRO_FILE* file);
+tileset_t*       read_tileset    (FILE* file);
 void             free_tileset    (tileset_t* tileset);
 int              get_next_tile   (const tileset_t* tileset, int tile_index);
 int              get_tile_count  (const tileset_t* tileset);

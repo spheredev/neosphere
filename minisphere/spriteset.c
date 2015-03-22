@@ -112,17 +112,17 @@ load_spriteset(const char* path)
 	ALLEGRO_PATH*       filename_path;
 	struct rss_frame_v2 frame_v2;
 	struct rss_frame_v3 frame_v3;
-	ALLEGRO_FILE*       file = NULL;
+	FILE*               file = NULL;
 	int                 image_index;
 	struct rss_header   rss;
-	int64_t             skip_size;
+	long                skip_size;
 	spriteset_t*        spriteset = NULL;
-	int64_t             v2_data_offset;
+	long                v2_data_offset;
 	int                 i, j;
 
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
-	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
-	if (al_fread(file, &rss, sizeof(struct rss_header)) != sizeof(struct rss_header))
+	if (!(file = fopen(path, "rb"))) goto on_error;
+	if (fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
 	spriteset->base.x1 = rss.base_x1;
@@ -157,10 +157,10 @@ load_spriteset(const char* path)
 			goto on_error;
 
 		// pass 1 - prepare structures, calculate number of images
-		v2_data_offset = al_ftell(file);
+		v2_data_offset = ftell(file);
 		spriteset->num_images = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (al_fread(file, &dir_v2, sizeof(struct rss_dir_v2)) != sizeof(struct rss_dir_v2))
+			if (fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			spriteset->num_images += dir_v2.num_frames;
 			sprintf(extra_v2_dir_name, "extra %i", i);
@@ -169,25 +169,25 @@ load_spriteset(const char* path)
 			if (!(spriteset->poses[i].frames = calloc(dir_v2.num_frames, sizeof(spriteset_frame_t))))
 				goto on_error;
 			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
-				if (al_fread(file, &frame_v2, sizeof(struct rss_frame_v2)) != sizeof(struct rss_frame_v2))
+				if (fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
 				skip_size = (rss.frame_width != 0 ? rss.frame_width : frame_v2.width)
 					* (rss.frame_height != 0 ? rss.frame_height : frame_v2.height)
 					* 4;
-				al_fseek(file, skip_size, ALLEGRO_SEEK_CUR);
+				fseek(file, skip_size, SEEK_CUR);
 			}
 		}
 		if (!(spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))))
 			goto on_error;
 
 		// pass 2 - read images and frame data
-		al_fseek(file, v2_data_offset, ALLEGRO_SEEK_SET);
+		fseek(file, v2_data_offset, SEEK_SET);
 		image_index = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (al_fread(file, &dir_v2, sizeof(struct rss_dir_v2)) != sizeof(struct rss_dir_v2))
+			if (fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			for (j = 0; j < dir_v2.num_frames; ++j) {
-				if (al_fread(file, &frame_v2, sizeof(struct rss_frame_v2)) != sizeof(struct rss_frame_v2))
+				if (fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
 				spriteset->images[image_index] = read_image(file,
 					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
@@ -210,14 +210,14 @@ load_spriteset(const char* path)
 				goto on_error;
 		}
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (al_fread(file, &dir_v3, sizeof(struct rss_dir_v3)) != sizeof(struct rss_dir_v3))
+			if (fread(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
 				goto on_error;
 			if ((spriteset->poses[i].name = read_lstring(file, true)) == NULL) goto on_error;
 			spriteset->poses[i].num_frames = dir_v3.num_frames;
 			if ((spriteset->poses[i].frames = calloc(dir_v3.num_frames, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
 			for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
-				if (al_fread(file, &frame_v3, sizeof(struct rss_frame_v3)) != sizeof(struct rss_frame_v3))
+				if (fread(&frame_v3, sizeof(struct rss_frame_v3), 1, file) != 1)
 					goto on_error;
 				spriteset->poses[i].frames[j].image_idx = frame_v3.image_idx;
 				spriteset->poses[i].frames[j].delay = frame_v3.delay;
@@ -227,7 +227,7 @@ load_spriteset(const char* path)
 	default: // invalid RSS version
 		goto on_error;
 	}
-	al_fclose(file);
+	fclose(file);
 	
 	// get spriteset path relative to game directory
 	base_path = get_asset_path("~/", NULL, false);
@@ -240,7 +240,7 @@ load_spriteset(const char* path)
 	return ref_spriteset(spriteset);
 
 on_error:
-	if (file != NULL) al_fclose(file);
+	if (file != NULL) fclose(file);
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
 			for (i = 0; i < spriteset->num_poses; ++i) {

@@ -108,27 +108,25 @@ on_error:
 }
 
 image_t*
-read_image(ALLEGRO_FILE* file, int width, int height)
+read_image(FILE* file, int width, int height)
 {
+	long                   file_pos;
 	image_t*               image;
 	uint8_t*               line_ptr;
 	size_t                 line_size;
 	ALLEGRO_LOCKED_REGION* lock = NULL;
-	int64_t                old_file_pos;
 
 	int i_y;
 
-	old_file_pos = al_ftell(file);
-	if ((image = calloc(1, sizeof(image_t))) == NULL)
-		goto on_error;
-	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
-		goto on_error;
+	file_pos = ftell(file);
+	if ((image = calloc(1, sizeof(image_t))) == NULL) goto on_error;
+	if ((image->bitmap = al_create_bitmap(width, height)) == NULL) goto on_error;
 	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
 		goto on_error;
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
 		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
-		if (al_fread(file, line_ptr, line_size) != line_size)
+		if (fread(line_ptr, line_size, 1, file) != 1)
 			goto on_error;
 	}
 	al_unlock_bitmap(image->bitmap);
@@ -137,7 +135,7 @@ read_image(ALLEGRO_FILE* file, int width, int height)
 	return ref_image(image);
 
 on_error:
-	al_fseek(file, old_file_pos, ALLEGRO_SEEK_SET);
+	fseek(file, file_pos, SEEK_SET);
 	if (lock != NULL) al_unlock_bitmap(image->bitmap);
 	if (image != NULL) {
 		if (image->bitmap != NULL) al_destroy_bitmap(image->bitmap);
@@ -147,31 +145,31 @@ on_error:
 }
 
 image_t*
-read_subimage(ALLEGRO_FILE* file, image_t* parent, int x, int y, int width, int height)
+read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
 {
+	long                   file_pos;
 	image_t*               image;
 	uint8_t*               line_ptr;
 	size_t                 line_size;
 	ALLEGRO_LOCKED_REGION* lock = NULL;
-	int64_t                old_file_pos;
 
 	int i_y;
 
-	old_file_pos = al_ftell(file);
+	file_pos = ftell(file);
 	if (!(image = create_subimage(parent, x, y, width, height))) goto on_error;
 	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
 		goto on_error;
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
 		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
-		if (al_fread(file, line_ptr, line_size) != line_size)
+		if (fread(line_ptr, line_size, 1, file) != 1)
 			goto on_error;
 	}
 	al_unlock_bitmap(image->bitmap);
 	return image;
 
 on_error:
-	al_fseek(file, old_file_pos, ALLEGRO_SEEK_SET);
+	fseek(file, file_pos, SEEK_SET);
 	if (lock != NULL) al_unlock_bitmap(image->bitmap);
 	free_image(image);
 	return NULL;
@@ -244,6 +242,42 @@ void
 draw_image_masked(image_t* image, color_t mask, int x, int y)
 {
 	al_draw_tinted_bitmap(image->bitmap, al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
+}
+
+void
+draw_image_scaled(image_t* image, int x, int y, int width, int height)
+{
+	al_draw_scaled_bitmap(image->bitmap,
+		0, 0, al_get_bitmap_width(image->bitmap), al_get_bitmap_height(image->bitmap),
+		x, y, width, height, 0x0);
+}
+
+void
+draw_image_scaled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
+{
+	al_draw_tinted_scaled_bitmap(image->bitmap, to_native_color(mask),
+		0, 0, al_get_bitmap_width(image->bitmap), al_get_bitmap_height(image->bitmap),
+		x, y, width, height, 0x0);
+}
+
+void
+draw_image_tiled(image_t* image, int x, int y, int width, int height)
+{
+	draw_image_tiled_masked(image, rgba(255, 255, 255, 255), x, y, width, height);
+}
+
+void
+draw_image_tiled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
+{
+	ALLEGRO_COLOR vtx_color = to_native_color(mask);
+
+	ALLEGRO_VERTEX vbuf[] = {
+		{ x, y, 0, 0, 0, vtx_color },
+		{ x + width, y, 0, width, 0, vtx_color },
+		{ x, y + height, 0, 0, height, vtx_color },
+		{ x + width, y + height, 0, width, height, vtx_color }
+	};
+	al_draw_prim(vbuf, NULL, image->bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 }
 
 void

@@ -65,28 +65,28 @@ zoom_rect(rect_t rect, double scale_x, double scale_y)
 }
 
 bool
-al_fread_rect_16(ALLEGRO_FILE* file, rect_t* out_rect)
+fread_rect_16(FILE* file, rect_t* out_rect)
 {
 	int16_t x1, y1, x2, y2;
 
-	if (al_fread(file, &x1, 2) != 2) return false;
-	if (al_fread(file, &y1, 2) != 2) return false;
-	if (al_fread(file, &x2, 2) != 2) return false;
-	if (al_fread(file, &y2, 2) != 2) return false;
+	if (fread(&x1, 2, 1, file) != 1) return false;
+	if (fread(&y1, 2, 1, file) != 1) return false;
+	if (fread(&x2, 2, 1, file) != 1) return false;
+	if (fread(&y2, 2, 1, file) != 1) return false;
 	out_rect->x1 = x1; out_rect->y1 = y1;
 	out_rect->x2 = x2; out_rect->y2 = y2;
 	return true;
 }
 
 bool
-al_fread_rect_32(ALLEGRO_FILE* file, rect_t* out_rect)
+fread_rect_32(FILE* file, rect_t* out_rect)
 {
 	int32_t x1, y1, x2, y2;
 
-	if (al_fread(file, &x1, 4) != 4) return false;
-	if (al_fread(file, &y1, 4) != 4) return false;
-	if (al_fread(file, &x2, 4) != 4) return false;
-	if (al_fread(file, &y2, 4) != 4) return false;
+	if (fread(&x1, 4, 1, file) != 1) return false;
+	if (fread(&y1, 4, 1, file) != 1) return false;
+	if (fread(&x2, 4, 1, file) != 1) return false;
+	if (fread(&y2, 4, 1, file) != 1) return false;
 	out_rect->x1 = x1; out_rect->y1 = y1;
 	out_rect->x2 = x2; out_rect->y2 = y2;
 	return true;

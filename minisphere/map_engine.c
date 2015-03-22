@@ -307,7 +307,7 @@ load_map(const char* path)
 	
 	uint16_t                 count;
 	struct rmp_entity_header entity_hdr;
-	ALLEGRO_FILE*            file;
+	FILE*                    file;
 	bool                     has_failed;
 	struct map_layer*        layer;
 	struct rmp_layer_header  layer_hdr;
@@ -326,9 +326,9 @@ load_map(const char* path)
 
 	int i, j, x, y, z;
 	
-	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
-	if ((map = calloc(1, sizeof(map_t))) == NULL) goto on_error;
-	if (al_fread(file, &rmp, sizeof(struct rmp_header)) != sizeof(struct rmp_header))
+	if (!(file = fopen(path, "rb"))) goto on_error;
+	if (!(map = calloc(1, sizeof(map_t)))) goto on_error;
+	if (fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
 	if (rmp.num_strings != 3 && rmp.num_strings != 5 && rmp.num_strings < 9)
@@ -351,7 +351,7 @@ load_map(const char* path)
 		
 		// load layers
 		for (i = 0; i < rmp.num_layers; ++i) {
-			if (al_fread(file, &layer_hdr, sizeof(struct rmp_layer_header)) != sizeof(struct rmp_layer_header))
+			if (fread(&layer_hdr, sizeof(struct rmp_layer_header), 1, file) != 1)
 				goto on_error;
 			map->layers[i].is_parallax = (layer_hdr.flags & 2) != 0x0;
 			map->layers[i].is_reflective = layer_hdr.is_reflective;
@@ -363,17 +363,17 @@ load_map(const char* path)
 				map->width = fmax(map->width, map->layers[i].width);
 				map->height = fmax(map->height, map->layers[i].height);
 			}
-			if ((map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))) == NULL)
+			if (!(map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))))
 				goto on_error;
 			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
 			map->layers[i].name = read_lstring(file, true);
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
-			if (al_fread(file, tile_data, num_tiles * 2) != num_tiles * 2) goto on_error;
+			if (fread(tile_data, 2, num_tiles, file) != num_tiles) goto on_error;
 			for (j = 0; j < num_tiles; ++j)
 				map->layers[i].tilemap[j].tile_index = tile_data[j];
 			for (j = 0; j < layer_hdr.num_segments; ++j) {
-				if (!al_fread_rect_32(file, &segment)) goto on_error;
+				if (!fread_rect_32(file, &segment)) goto on_error;
 				add_obsmap_line(map->layers[i].obsmap, segment);
 			}
 			free(tile_data); tile_data = NULL;
@@ -386,7 +386,8 @@ load_map(const char* path)
 		map->num_persons = 0;
 		map->num_triggers = 0;
 		for (i = 0; i < rmp.num_entities; ++i) {
-			al_fread(file, &entity_hdr, sizeof(struct rmp_entity_header));
+			if (fread(&entity_hdr, sizeof(struct rmp_entity_header), 1, file) != 1)
+				goto on_error;
 			switch (entity_hdr.type) {
 			case 1:  // person
 				++map->num_persons;
@@ -395,7 +396,7 @@ load_map(const char* path)
 				if ((person->name = read_lstring(file, true)) == NULL) goto on_error;
 				if ((person->spriteset = read_lstring(file, true)) == NULL) goto on_error;
 				person->x = entity_hdr.x; person->y = entity_hdr.y; person->z = entity_hdr.z;
-				if (al_fread(file, &count, 2) != 2 || count < 5) goto on_error;
+				if (fread(&count, 2, 1, file) != 1 || count < 5) goto on_error;
 				person->create_script = read_lstring(file, false);
 				person->destroy_script = read_lstring(file, false);
 				person->touch_script = read_lstring(file, false);
@@ -404,7 +405,7 @@ load_map(const char* path)
 				for (j = 5; j < count; ++j) {
 					free_lstring(read_lstring(file, true));
 				}
-				al_fseek(file, 16, ALLEGRO_SEEK_CUR);
+				fseek(file, 16, SEEK_CUR);
 				break;
 			case 2:  // trigger
 				if ((script = read_lstring(file, false)) == NULL) goto on_error;
@@ -424,7 +425,7 @@ load_map(const char* path)
 
 		// load zones
 		for (i = 0; i < rmp.num_zones; ++i) {
-			if (al_fread(file, &zone_hdr, sizeof(struct rmp_zone_header)) != sizeof(struct rmp_zone_header))
+			if (fread(&zone_hdr, sizeof(struct rmp_zone_header), 1, file) != 1)
 				goto on_error;
 			if ((script = read_lstring(file, false)) == NULL) goto on_error;
 			map->zones[i].layer = zone_hdr.layer;
@@ -474,11 +475,11 @@ load_map(const char* path)
 	default:
 		goto on_error;
 	}
-	al_fclose(file);
+	fclose(file);
 	return map;
 
 on_error:
-	if (file != NULL) al_fclose(file);
+	if (file != NULL) fclose(file);
 	free(tile_data);
 	if (strings != NULL) {
 		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);

@@ -465,7 +465,7 @@ unskip_frame(void)
 void
 al_draw_tinted_tiled_bitmap(ALLEGRO_BITMAP* bitmap, ALLEGRO_COLOR tint, float x, float y, float width, float height)
 {
-	ALLEGRO_VERTEX v[] = {
+	ALLEGRO_VERTEX vbuf[] = {
 		{ x, y, 0, 0, 0, tint },
 		{ x + width, y, 0, width, 0, tint },
 		{ x, y + height, 0, 0, height, tint },
@@ -473,34 +473,7 @@ al_draw_tinted_tiled_bitmap(ALLEGRO_BITMAP* bitmap, ALLEGRO_COLOR tint, float x,
 	};
 	int w = al_get_bitmap_width(bitmap);
 	int h = al_get_bitmap_height(bitmap);
-	al_draw_prim(v, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-}
-
-ALLEGRO_BITMAP*
-al_fread_bitmap(ALLEGRO_FILE* file, int width, int height)
-{
-	ALLEGRO_BITMAP*        bitmap = NULL;
-	uint8_t*               line_ptr;
-	ALLEGRO_LOCKED_REGION* lock = NULL;
-	int                    y;
-
-	if ((bitmap = al_create_bitmap(width, height)) == NULL)
-		goto on_error;
-	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
-		goto on_error;
-	size_t line_size = width * 4;
-	for (y = 0; y < height; ++y) {
-		line_ptr = (uint8_t*)lock->data + y * lock->pitch;
-		if (al_fread(file, line_ptr, line_size) != line_size)
-			goto on_error;
-	}
-	al_unlock_bitmap(bitmap);
-	return bitmap;
-
-on_error:
-	if (lock != NULL) al_unlock_bitmap(bitmap);
-	if (bitmap != NULL) al_destroy_bitmap(bitmap);
-	return NULL;
+	al_draw_prim(vbuf, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 }
 
 static void

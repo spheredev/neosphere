@@ -60,37 +60,37 @@ clone_lstring(const lstring_t* string)
 }
 
 lstring_t*
-read_lstring(ALLEGRO_FILE* file, bool trim_null)
+read_lstring(FILE* file, bool trim_null)
 {
-	uint16_t   length;
-	int64_t    old_file_pos;
+	long     file_pos;
+	uint16_t length;
 
-	old_file_pos = al_ftell(file);
-	if (al_fread(file, &length, 2) != 2) goto on_error;
+	file_pos = ftell(file);
+	if (fread(&length, 2, 1, file) != 1) goto on_error;
 	return read_lstring_s(file, length, trim_null);
 
 on_error:
-	al_fseek(file, old_file_pos, ALLEGRO_SEEK_CUR);
+	fseek(file, file_pos, SEEK_CUR);
 	return NULL;
 }
 
 lstring_t*
-read_lstring_s(ALLEGRO_FILE* file, size_t length, bool trim_null)
+read_lstring_s(FILE* file, size_t length, bool trim_null)
 {
-	int64_t    old_file_pos;
+	long       file_pos;
 	lstring_t* string = NULL;
 
-	old_file_pos = al_ftell(file);
+	file_pos = ftell(file);
 	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
 		goto on_error;
 	string->length = length;
 	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
-	if (al_fread(file, (char*)string->cstr, length) != length) goto on_error;
+	if (fread((char*)string->cstr, 1, length, file) != length) goto on_error;
 	if (trim_null) string->length = strchr(string->cstr, '\0') - string->cstr;
 	return string;
 
 on_error:
-	al_fseek(file, old_file_pos, ALLEGRO_SEEK_CUR);
+	fseek(file, file_pos, SEEK_CUR);
 	if (string != NULL) {
 		free((char*)string->cstr);
 		free(string);

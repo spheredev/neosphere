@@ -51,7 +51,7 @@ windowstyle_t*
 load_windowstyle(const char* path)
 {
 	image_t*          atlas = NULL;
-	ALLEGRO_FILE*     file;
+	FILE*             file;
 	image_t*          image;
 	int16_t           max_w = 0, max_h = 0;
 	struct rws_header rws;
@@ -59,9 +59,9 @@ load_windowstyle(const char* path)
 	windowstyle_t*    winstyle = NULL;
 	int               i;
 
-	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
+	if (!(file = fopen(path, "rb"))) goto on_error;
 	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL) goto on_error;
-	if (al_fread(file, &rws, sizeof(struct rws_header)) != sizeof(struct rws_header))
+	if (fread(&rws, sizeof(struct rws_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rws.signature, ".rws", 4) != 0) goto on_error;
 	switch (rws.version) {
@@ -77,23 +77,22 @@ load_windowstyle(const char* path)
 		break;
 	case 2:
 		for (i = 0; i < 9; ++i) {
-			if (al_fread(file, &w, 2) != 2 || al_fread(file, &h, 2) != 2)
+			if (fread(&w, 2, 1, file) != 1 || fread(&h, 2, 1, file) != 1)
 				goto on_error;
-			if ((image = read_image(file, w, h)) == NULL)
-				goto on_error;
+			if ((image = read_image(file, w, h)) == NULL) goto on_error;
 			winstyle->images[i] = image;
 		}
 		break;
 	default:  // invalid version number
 		goto on_error;
 	}
-	al_fclose(file);
+	fclose(file);
 	winstyle->bg_style = rws.background_mode;
 	free_image(atlas);
 	return winstyle;
 
 on_error:
-	if (file != NULL) al_fclose(file);
+	if (file != NULL) fclose(file);
 	if (winstyle != NULL) {
 		for (i = 0; i < 9; ++i)
 			free_image(winstyle->images[i]);
@@ -117,8 +116,6 @@ free_windowstyle(windowstyle_t* winstyle)
 void
 draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height)
 {
-	ALLEGRO_BITMAP* bitmaps[9];
-	ALLEGRO_COLOR   native_mask = to_native_color(mask);
 	int             w[9], h[9];
 	
 	int i;
@@ -134,27 +131,26 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 	// 8 - background
 
 	for (i = 0; i < 9; ++i) {
-		bitmaps[i] = get_image_bitmap(winstyle->images[i]);
 		w[i] = get_image_width(winstyle->images[i]);
 		h[i] = get_image_height(winstyle->images[i]);
 	}
 	
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
-		al_draw_tinted_tiled_bitmap(bitmaps[8], native_mask, x, y, width, height);
+		draw_image_tiled_masked(winstyle->images[8], mask, x, y, width, height);
 		break;
 	case WSTYLE_BG_STRETCH:
-		al_draw_tinted_scaled_bitmap(bitmaps[8], native_mask, 0, 0, w[8], h[8], x, y, width, height, 0x0);
+		draw_image_scaled_masked(winstyle->images[8], mask, x, y, width, height);
 		break;
 	}
-	al_draw_tinted_bitmap(bitmaps[0], native_mask, x - w[0], y - h[0], 0x0);
-	al_draw_tinted_bitmap(bitmaps[2], native_mask, x + width, y - h[2], 0x0);
-	al_draw_tinted_bitmap(bitmaps[4], native_mask, x + width, y + height, 0x0);
-	al_draw_tinted_bitmap(bitmaps[6], native_mask, x - w[6], y + height, 0x0);
-	al_draw_tinted_tiled_bitmap(bitmaps[1], native_mask, x, y - h[1], width, h[1]);
-	al_draw_tinted_tiled_bitmap(bitmaps[3], native_mask, x + width, y, w[3], height);
-	al_draw_tinted_tiled_bitmap(bitmaps[5], native_mask, x, y + height, width, h[5]);
-	al_draw_tinted_tiled_bitmap(bitmaps[7], native_mask, x - w[7], y, w[7], height);
+	draw_image_masked(winstyle->images[0], mask, x - w[0], y - h[0]);
+	draw_image_masked(winstyle->images[2], mask, x + width, y - h[2]);
+	draw_image_masked(winstyle->images[4], mask, x + width, y + height);
+	draw_image_masked(winstyle->images[6], mask, x - w[6], y + height);
+	draw_image_tiled_masked(winstyle->images[1], mask, x, y - h[1], width, h[1]);
+	draw_image_tiled_masked(winstyle->images[3], mask, x + width, y, w[3], height);
+	draw_image_tiled_masked(winstyle->images[5], mask, x, y + height, width, h[5]);
+	draw_image_tiled_masked(winstyle->images[7], mask, x - w[7], y, w[7], height);
 }
 
 void

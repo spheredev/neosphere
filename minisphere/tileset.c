@@ -55,21 +55,21 @@ struct rts_tile_header
 tileset_t*
 load_tileset(const char* path)
 {
-	ALLEGRO_FILE* file;
-	tileset_t*    tileset;
+	FILE*      file;
+	tileset_t* tileset;
 
-	if ((file = al_fopen(path, "rb")) == NULL) return NULL;
+	if ((file = fopen(path, "rb")) == NULL) return NULL;
 	tileset = read_tileset(file);
-	al_fclose(file);
+	fclose(file);
 	return tileset;
 }
 
 tileset_t*
-read_tileset(ALLEGRO_FILE* file)
+read_tileset(FILE* file)
 {
 	image_t*               atlas;
 	int                    atlas_w, atlas_h;
-	int64_t                file_pos;
+	long                   file_pos;
 	int                    n_tiles_per_row;
 	struct rts_header      rts;
 	rect_t                 segment;
@@ -80,14 +80,14 @@ read_tileset(ALLEGRO_FILE* file)
 	int i, j;
 
 	if (file == NULL) goto on_error;
-	file_pos = al_ftell(file);
+	file_pos = ftell(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
-	if (al_fread(file, &rts, sizeof(struct rts_header)) != sizeof(struct rts_header))
+	if (fread(&rts, sizeof(struct rts_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rts.signature, ".rts", 4) != 0 || rts.version < 1 || rts.version > 1)
 		goto on_error;
 	if (rts.tile_bpp != 32) goto on_error;
-	if ((tiles = calloc(rts.num_tiles, sizeof(struct tile))) == NULL) goto on_error;
+	if (!(tiles = calloc(rts.num_tiles, sizeof(struct tile)))) goto on_error;
 	
 	// prepare the tile atlas
 	n_tiles_per_row = ceil(sqrt(rts.num_tiles));
@@ -105,7 +105,7 @@ read_tileset(ALLEGRO_FILE* file)
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if (al_fread(file, &tilehdr, sizeof(struct rts_tile_header)) != sizeof(struct rts_tile_header))
+		if (fread(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
 			goto on_error;
 		tiles[i].name = read_lstring_s(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
@@ -115,13 +115,13 @@ read_tileset(ALLEGRO_FILE* file)
 		if (rts.has_obstructions) {
 			switch (tilehdr.obsmap_type) {
 			case 1:  // pixel-perfect obstruction (no longer supported)
-				al_fseek(file, rts.tile_width * rts.tile_height, ALLEGRO_SEEK_CUR);
+				fseek(file, rts.tile_width * rts.tile_height, SEEK_CUR);
 				break;
 			case 2:  // line segment-based obstruction
 				tiles[i].num_obs_lines = tilehdr.num_segments;
 				if ((tiles[i].obsmap = new_obsmap()) == NULL) goto on_error;
 				for (j = 0; j < tilehdr.num_segments; ++j) {
-					if (!al_fread_rect_16(file, &segment))
+					if (!fread_rect_16(file, &segment))
 						goto on_error;
 					add_obsmap_line(tiles[i].obsmap, segment);
 				}
@@ -141,7 +141,7 @@ read_tileset(ALLEGRO_FILE* file)
 	return tileset;
 
 on_error:  // oh no!
-	if (file != NULL) al_fseek(file, file_pos, ALLEGRO_SEEK_SET);
+	if (file != NULL) fseek(file, file_pos, SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
 			free_lstring(tiles[i].name);

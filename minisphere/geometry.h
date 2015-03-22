@@ -25,7 +25,7 @@ extern bool   is_point_in_rect   (int x, int y, rect_t bounds);
 extern rect_t translate_rect     (rect_t rect, int x_offset, int y_offset);
 extern rect_t zoom_rect          (rect_t rect, double scale_x, double scale_y);
 
-extern bool al_fread_rect_16 (ALLEGRO_FILE* file, rect_t* out_rect);
-extern bool al_fread_rect_32 (ALLEGRO_FILE* file, rect_t* out_rect);
+extern bool fread_rect_16 (FILE* file, rect_t* out_rect);
+extern bool fread_rect_32 (FILE* file, rect_t* out_rect);
 
 #endif // MINISPHERE__GEOMETRY_H__INCLUDED
