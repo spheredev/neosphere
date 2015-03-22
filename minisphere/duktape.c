@@ -21949,7 +21949,14 @@ DUK_INTERNAL duk_ret_t duk_bi_duktape_object_act(duk_context *ctx) {
 	duk_push_tval(ctx, &act->tv_func);
 
 	pc = (duk_uint_fast32_t) act->pc;
-	duk_push_uint(ctx, (duk_uint_t) pc);
+	if (pc > 0) {
+		/* Relevant PC is just before current one because PC is
+		 * post-decremented.  This should match what error augment
+		 * code does.
+		 */
+		pc--;
+	}
+	duk_push_uint(ctx, (duk_uint_t)pc);
 
 #if defined(DUK_USE_PC2LINE)
 	line = duk_hobject_pc2line_query(ctx, -2, pc);
