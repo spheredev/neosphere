@@ -59,10 +59,10 @@ duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 		goto on_error;
 	type = duk_get_string(ctx, -1); duk_pop(ctx);
 	if (strcmp(type, "color") != 0) goto on_error;
-	duk_get_prop_string(ctx, index, "red"); color.r = duk_get_number(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "green"); color.g = duk_get_number(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "blue"); color.b = duk_get_number(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "alpha"); color.alpha = duk_get_number(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "red"); color.r = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "green"); color.g = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "blue"); color.b = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "alpha"); color.alpha = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
 	return color;
 
 on_error:
