@@ -462,20 +462,6 @@ unskip_frame(void)
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
-void
-al_draw_tinted_tiled_bitmap(ALLEGRO_BITMAP* bitmap, ALLEGRO_COLOR tint, float x, float y, float width, float height)
-{
-	ALLEGRO_VERTEX vbuf[] = {
-		{ x, y, 0, 0, 0, tint },
-		{ x + width, y, 0, width, 0, tint },
-		{ x, y + height, 0, 0, height, tint },
-		{ x + width, y + height, 0, width, height, tint }
-	};
-	int w = al_get_bitmap_width(bitmap);
-	int h = al_get_bitmap_height(bitmap);
-	al_draw_prim(vbuf, NULL, bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-}
-
 static void
 initialize_engine(void)
 {

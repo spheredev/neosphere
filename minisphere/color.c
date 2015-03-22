@@ -7,12 +7,6 @@ static js_retval_t js_BlendColors         (_JS_C_FUNC_ARGS_);
 static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARGS_);
 static js_retval_t js_Color_toString      (_JS_C_FUNC_ARGS_);
 
-ALLEGRO_COLOR
-to_native_color(color_t color)
-{
-	return al_map_rgba(color.r, color.g, color.b, color.alpha);
-}
-
 color_t
 rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
 {
@@ -23,6 +17,12 @@ rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
 	color.b = b;
 	color.alpha = alpha;
 	return color;
+}
+
+ALLEGRO_COLOR
+nativecolor(color_t color)
+{
+	return al_map_rgba(color.r, color.g, color.b, color.alpha);
 }
 
 color_t

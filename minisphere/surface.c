@@ -251,7 +251,7 @@ js_Surface_setPixel(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_put_pixel(x, y, to_native_color(color));
+	al_put_pixel(x, y, nativecolor(color));
 	al_set_target_backbuffer(g_display);
 	return 0;
 }
@@ -331,7 +331,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_tinted_bitmap(get_image_bitmap(src_image), to_native_color(mask), x, y, 0x0);
+	al_draw_tinted_bitmap(get_image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -489,10 +489,10 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	al_set_target_bitmap(get_image_bitmap(image));
 	
 	ALLEGRO_VERTEX verts[] = {
-		{ x1, y1, 0, 0, 0, to_native_color(color_ul) },
-		{ x2, y1, 0, 0, 0, to_native_color(color_ur) },
-		{ x1, y2, 0, 0, 0, to_native_color(color_ll) },
-		{ x2, y2, 0, 0, 0, to_native_color(color_lr) }
+		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
+		{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
+		{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
+		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	al_set_target_backbuffer(g_display);
@@ -518,7 +518,7 @@ js_Surface_line(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_line(x1, y1, x2, y2, to_native_color(color), 1);
+	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -548,7 +548,7 @@ js_Surface_pointSeries(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer");
-	vtx_color = to_native_color(color);
+	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
@@ -586,7 +586,7 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_rectangle(x1, y1, x2, y2, to_native_color(color), thickness);
+	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -656,7 +656,7 @@ js_Surface_rectangle(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_filled_rectangle(x, y, x + w, y + h, to_native_color(color));
+	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;

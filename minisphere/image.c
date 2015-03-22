@@ -255,7 +255,7 @@ draw_image_scaled(image_t* image, int x, int y, int width, int height)
 void
 draw_image_scaled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
 {
-	al_draw_tinted_scaled_bitmap(image->bitmap, to_native_color(mask),
+	al_draw_tinted_scaled_bitmap(image->bitmap, nativecolor(mask),
 		0, 0, al_get_bitmap_width(image->bitmap), al_get_bitmap_height(image->bitmap),
 		x, y, width, height, 0x0);
 }
@@ -269,7 +269,7 @@ draw_image_tiled(image_t* image, int x, int y, int width, int height)
 void
 draw_image_tiled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
 {
-	ALLEGRO_COLOR vtx_color = to_native_color(mask);
+	ALLEGRO_COLOR vtx_color = nativecolor(mask);
 
 	ALLEGRO_VERTEX vbuf[] = {
 		{ x, y, 0, 0, 0, vtx_color },

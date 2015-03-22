@@ -49,8 +49,6 @@ extern ALLEGRO_CONFIG*      g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
 
-extern void al_draw_tinted_tiled_bitmap (ALLEGRO_BITMAP* bitmap, ALLEGRO_COLOR tint, float x, float y, float width, float height);
-
 extern bool   is_skipped_frame   (void);
 extern char*  get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
 extern rect_t get_clip_rectangle (void);
