@@ -16,4 +16,4 @@ void             set_next_tile   (tileset_t* tileset, int tile_index, int next_i
 void             set_tile_delay  (tileset_t* tileset, int tile_index, int delay);
 void             set_tile_image  (tileset_t* tileset, int tile_index, image_t* image);
 void             animate_tileset (tileset_t* tileset);
-void             draw_tile       (const tileset_t* tileset, ALLEGRO_COLOR mask, float x, float y, int tile_index);
+void             draw_tile       (const tileset_t* tileset, color_t mask, float x, float y, int tile_index);

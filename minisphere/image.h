@@ -16,8 +16,8 @@ extern int             get_image_height   (const image_t* image);
 extern int             get_image_width    (const image_t* image);
 extern bool            apply_image_lookup (image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256]);
 extern void            draw_image         (image_t* image, int x, int y);
-extern void            draw_image_masked  (image_t* image, ALLEGRO_COLOR mask, int x, int y);
-extern void            fill_image         (image_t* image, ALLEGRO_COLOR color);
+extern void            draw_image_masked  (image_t* image, color_t mask, int x, int y);
+extern void            fill_image         (image_t* image, color_t color);
 extern bool            flip_image         (image_t* image, bool is_h_flip, bool is_v_flip);
 extern bool            rescale_image      (image_t* image, int width, int height);
 

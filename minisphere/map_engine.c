@@ -111,9 +111,9 @@ static duk_ret_t js_UpdateMapEngine         (duk_context* ctx);
 static person_t*           s_camera_person     = NULL;
 static int                 s_cam_x             = 0;
 static int                 s_cam_y             = 0;
-static ALLEGRO_COLOR       s_color_mask;
-static ALLEGRO_COLOR       s_fade_color_from;
-static ALLEGRO_COLOR       s_fade_color_to;
+static color_t             s_color_mask;
+static color_t             s_fade_color_from;
+static color_t             s_fade_color_to;
 static int                 s_fade_frames;
 static int                 s_fade_progress;
 static int                 s_map_corner_x;
@@ -169,7 +169,7 @@ struct map_layer
 	int              width, height;
 	struct map_tile* tilemap;
 	obsmap_t*        obsmap;
-	ALLEGRO_COLOR    color_mask;
+	color_t          color_mask;
 	int              render_script;
 };
 
@@ -277,7 +277,7 @@ init_map_engine(void)
 	s_talk_key = ALLEGRO_KEY_SPACE;
 	s_talk_button = 0;
 	s_is_map_running = false;
-	s_color_mask = al_map_rgba(0, 0, 0, 0);
+	s_color_mask = rgba(0, 0, 0, 0);
 	s_on_trigger = NULL;
 }
 
@@ -356,7 +356,7 @@ load_map(const char* path)
 			map->layers[i].is_parallax = (layer_hdr.flags & 2) != 0x0;
 			map->layers[i].is_reflective = layer_hdr.is_reflective;
 			map->layers[i].is_visible = (layer_hdr.flags & 1) == 0x0;
-			map->layers[i].color_mask = al_map_rgba(255, 255, 255, 255);
+			map->layers[i].color_mask = rgba(255, 255, 255, 255);
 			map->layers[i].width = layer_hdr.width;
 			map->layers[i].height = layer_hdr.height;
 			if (!map->layers[i].is_parallax) {
@@ -924,6 +924,7 @@ render_map_engine(void)
 	int               first_cell_x, first_cell_y;
 	struct map_layer* layer;
 	int               layer_w, layer_h;
+	ALLEGRO_COLOR     overlay_color;
 	int               tile_w, tile_h;
 	int               off_x, off_y;
 	int               tile_index;
@@ -973,7 +974,8 @@ render_map_engine(void)
 		al_hold_bitmap_drawing(false);
 		run_script(layer->render_script, false);
 	}
-	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, s_color_mask);
+	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.alpha);
+	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
 	run_script(s_render_script, false);
 }
 
@@ -1075,7 +1077,7 @@ js_MapEngine(duk_context* ctx)
 	
 	s_is_map_running = true;
 	s_exiting = false;
-	s_color_mask = al_map_rgba(0, 0, 0, 0);
+	s_color_mask = rgba(0, 0, 0, 0);
 	s_fade_color_to = s_fade_color_from = s_color_mask;
 	s_fade_progress = s_fade_frames = 0;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -1548,7 +1550,7 @@ static duk_ret_t
 js_SetColorMask(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	ALLEGRO_COLOR new_mask = duk_require_sphere_color(ctx, 0);
+	color_t new_mask = duk_require_sphere_color(ctx, 0);
 	int frames = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	if (!is_map_engine_running())
@@ -1624,7 +1626,7 @@ static duk_ret_t
 js_SetLayerMask(duk_context* ctx)
 {
 	int layer = duk_require_int(ctx, 0);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 1);
+	color_t mask = duk_require_sphere_color(ctx, 1);
 
 	if (!is_map_engine_running())
 		duk_error(ctx, DUK_ERR_ERROR, "SetLayerMask(): Map engine must be running");

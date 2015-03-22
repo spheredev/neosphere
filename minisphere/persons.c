@@ -19,7 +19,7 @@ struct person
 	bool           is_persistent;
 	bool           is_visible;
 	int            layer;
-	ALLEGRO_COLOR  mask;
+	color_t        mask;
 	int            revert_delay;
 	int            revert_frames;
 	double         scale_x;
@@ -169,7 +169,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->speed_x = 1.0;
 	person->speed_y = 1.0;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
-	person->mask = al_map_rgba(255, 255, 255, 255);
+	person->mask = rgba(255, 255, 255, 255);
 	person->scale_x = person->scale_y = 1.0;
 	sort_persons();
 	return person;
@@ -306,7 +306,7 @@ get_person_base(const person_t* person)
 	return base_rect;
 }
 
-ALLEGRO_COLOR
+color_t
 get_person_mask(const person_t* person)
 {
 	return person->mask;
@@ -364,7 +364,7 @@ set_person_angle(person_t* person, double theta)
 }
 
 void
-set_person_mask(person_t* person, ALLEGRO_COLOR mask)
+set_person_mask(person_t* person, color_t mask)
 {
 	person->mask = mask;
 }
@@ -1414,7 +1414,7 @@ static duk_ret_t
 js_SetPersonMask(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 1);
+	color_t mask = duk_require_sphere_color(ctx, 1);
 
 	person_t* person;
 

@@ -254,8 +254,9 @@ animate_tileset(tileset_t* tileset)
 }
 
 void
-draw_tile(const tileset_t* tileset, ALLEGRO_COLOR mask, float x, float y, int tile_index)
+draw_tile(const tileset_t* tileset, color_t mask, float x, float y, int tile_index)
 {
 	tile_index = tileset->tiles[tile_index].animate_index;
-	al_draw_tinted_bitmap(get_image_bitmap(tileset->tiles[tile_index].image), mask, x, y, 0x0);
+	al_draw_tinted_bitmap(get_image_bitmap(tileset->tiles[tile_index].image),
+		al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 }

@@ -217,7 +217,7 @@ set_glyph_image(font_t* font, int codepoint, image_t* image)
 }
 
 void
-draw_text(const font_t* font, ALLEGRO_COLOR mask, int x, int y, text_align_t alignment, const char* text)
+draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
 	bool is_draw_held;
 	int  cp;
@@ -229,7 +229,7 @@ draw_text(const font_t* font, ALLEGRO_COLOR mask, int x, int y, text_align_t ali
 	is_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
 	while ((cp = *text++) != '\0') {
-		draw_image_masked(font->glyphs[cp].image, mask, x, y);
+		draw_image_masked(font->glyphs[cp].image, color, x, y);
 		x += font->glyphs[cp].width;
 	}
 	al_hold_bitmap_drawing(is_draw_held);
@@ -265,7 +265,7 @@ duk_push_sphere_font(duk_context* ctx, font_t* font)
 	
 	duk_push_string(ctx, "font"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, font); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_sphere_color(ctx, al_map_rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_push_sphere_color(ctx, rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
 
 font_t*
@@ -410,8 +410,8 @@ js_Font_drawText(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	const char* text = duk_to_string(ctx, 2);
 	
-	font_t*       font;
-	ALLEGRO_COLOR mask;
+	font_t* font;
+	color_t mask;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
@@ -431,7 +431,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 	
 	ALLEGRO_BITMAP* bitmap;
 	font_t*         font;
-	ALLEGRO_COLOR   mask;
+	color_t         mask;
 	int             text_w, text_h;
 
 	duk_push_this(ctx);
@@ -461,11 +461,11 @@ js_Font_drawTextBox(duk_context* ctx)
 	int offset = duk_require_int(ctx, 4);
 	const char* text = duk_to_string(ctx, 5);
 
-	font_t*       font;
-	int           line_height;
-	const char*   line_text;
-	ALLEGRO_COLOR mask;
-	int           num_lines;
+	font_t*     font;
+	int         line_height;
+	const char* line_text;
+	color_t     mask;
+	int         num_lines;
 
 	int i;
 

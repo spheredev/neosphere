@@ -109,9 +109,11 @@ free_windowstyle(windowstyle_t* winstyle)
 }
 
 void
-draw_window(windowstyle_t* winstyle, ALLEGRO_COLOR mask, int x, int y, int width, int height)
+draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height)
 {
-	int w[9], h[9];
+	ALLEGRO_COLOR native_mask = to_native_color(mask);
+	int           w[9], h[9];
+	
 	int i;
 	
 	// 0 - upper left
@@ -131,20 +133,20 @@ draw_window(windowstyle_t* winstyle, ALLEGRO_COLOR mask, int x, int y, int width
 	
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
-		al_draw_tinted_tiled_bitmap(winstyle->bitmaps[8], mask, x, y, width, height);
+		al_draw_tinted_tiled_bitmap(winstyle->bitmaps[8], native_mask, x, y, width, height);
 		break;
 	case WSTYLE_BG_STRETCH:
-		al_draw_tinted_scaled_bitmap(winstyle->bitmaps[8], mask, 0, 0, w[8], h[8], x, y, width, height, 0x0);
+		al_draw_tinted_scaled_bitmap(winstyle->bitmaps[8], native_mask, 0, 0, w[8], h[8], x, y, width, height, 0x0);
 		break;
 	}
-	al_draw_tinted_bitmap(winstyle->bitmaps[0], mask, x - w[0], y - h[0], 0x0);
-	al_draw_tinted_bitmap(winstyle->bitmaps[2], mask, x + width, y - h[2], 0x0);
-	al_draw_tinted_bitmap(winstyle->bitmaps[4], mask, x + width, y + height, 0x0);
-	al_draw_tinted_bitmap(winstyle->bitmaps[6], mask, x - w[6], y + height, 0x0);
-	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[1], mask, x, y - h[1], width, h[1]);
-	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[3], mask, x + width, y, w[3], height);
-	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[5], mask, x, y + height, width, h[5]);
-	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[7], mask, x - w[7], y, w[7], height);
+	al_draw_tinted_bitmap(winstyle->bitmaps[0], native_mask, x - w[0], y - h[0], 0x0);
+	al_draw_tinted_bitmap(winstyle->bitmaps[2], native_mask, x + width, y - h[2], 0x0);
+	al_draw_tinted_bitmap(winstyle->bitmaps[4], native_mask, x + width, y + height, 0x0);
+	al_draw_tinted_bitmap(winstyle->bitmaps[6], native_mask, x - w[6], y + height, 0x0);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[1], native_mask, x, y - h[1], width, h[1]);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[3], native_mask, x + width, y, w[3], height);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[5], native_mask, x, y + height, width, h[5]);
+	al_draw_tinted_tiled_bitmap(winstyle->bitmaps[7], native_mask, x - w[7], y, w[7], height);
 }
 
 void
@@ -171,7 +173,7 @@ _duk_push_winstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, winstyle); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_sphere_color(ctx, al_map_rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_push_sphere_color(ctx, rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 	duk_push_c_function(ctx, js_WindowStyle_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
 	duk_push_c_function(ctx, js_WindowStyle_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
 	duk_push_c_function(ctx, js_WindowStyle_drawWindow, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawWindow");
@@ -226,7 +228,7 @@ js_WindowStyle_toString(duk_context* ctx)
 static duk_ret_t
 js_WindowStyle_drawWindow(duk_context* ctx)
 {
-	ALLEGRO_COLOR  color_mask;
+	color_t        color_mask;
 	windowstyle_t* winstyle;
 	int            x, y, w, h;
 

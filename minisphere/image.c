@@ -241,13 +241,13 @@ draw_image(image_t* image, int x, int y)
 }
 
 void
-draw_image_masked(image_t* image, ALLEGRO_COLOR mask, int x, int y)
+draw_image_masked(image_t* image, color_t mask, int x, int y)
 {
-	al_draw_tinted_bitmap(image->bitmap, mask, x, y, 0x0);
+	al_draw_tinted_bitmap(image->bitmap, al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 }
 
 void
-fill_image(image_t* image, ALLEGRO_COLOR color)
+fill_image(image_t* image, color_t color)
 {
 	int             clip_x, clip_y, clip_w, clip_h;
 	ALLEGRO_BITMAP* last_target;
@@ -256,7 +256,7 @@ fill_image(image_t* image, ALLEGRO_COLOR color)
 	al_reset_clipping_rectangle();
 	last_target = al_get_target_bitmap();
 	al_set_target_bitmap(image->bitmap);
-	al_clear_to_color(color);
+	al_clear_to_color(al_map_rgba(color.r, color.g, color.b, color.alpha));
 	al_set_target_bitmap(last_target);
 	al_set_clipping_rectangle(clip_x, clip_y, clip_w, clip_h);
 }
@@ -488,14 +488,14 @@ js_Image_blitMask(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 2);
+	color_t mask = duk_require_sphere_color(ctx, 2);
 
 	image_t* image;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) al_draw_tinted_bitmap(get_image_bitmap(image), mask, x, y, 0x0);
+	if (!is_skipped_frame()) al_draw_tinted_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 	return 0;
 }
 
@@ -538,7 +538,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 	float angle = duk_require_number(ctx, 2);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 3);
+	color_t mask = duk_require_sphere_color(ctx, 3);
 
 	image_t* image;
 
@@ -546,7 +546,8 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
-		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), mask, image->width / 2, image->height / 2, x, y, angle, 0x0);
+		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
+			image->width / 2, image->height / 2, x, y, angle, 0x0);
 	return 0;
 }
 
@@ -591,18 +592,20 @@ js_Image_transformBlitMask(duk_context* ctx)
 	int y3 = duk_require_int(ctx, 5);
 	int x4 = duk_require_int(ctx, 6);
 	int y4 = duk_require_int(ctx, 7);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 8);
+	color_t mask = duk_require_sphere_color(ctx, 8);
 
+	ALLEGRO_COLOR vtx_color;
 	image_t*      image;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
+	vtx_color = al_map_rgba(mask.r, mask.g, mask.b, mask.alpha);
 	ALLEGRO_VERTEX v[] = {
-		{ x1, y1, 0, 0, 0, mask },
-		{ x2, y2, 0, image->width, 0, mask },
-		{ x4, y4, 0, 0, image->height, mask },
-		{ x3, y3, 0, image->width, image->height, mask }
+		{ x1, y1, 0, 0, 0, vtx_color },
+		{ x2, y2, 0, image->width, 0, vtx_color },
+		{ x4, y4, 0, 0, image->height, vtx_color },
+		{ x3, y3, 0, image->width, image->height, vtx_color }
 	};
 	if (!is_skipped_frame())
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
@@ -632,7 +635,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 	float scale = duk_require_number(ctx, 2);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 3);
+	color_t mask = duk_require_sphere_color(ctx, 3);
 
 	image_t* image;
 
@@ -640,6 +643,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
-		al_draw_tinted_scaled_bitmap(get_image_bitmap(image), mask, 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
+		al_draw_tinted_scaled_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
+			0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
 	return 0;
 }

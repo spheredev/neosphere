@@ -168,11 +168,11 @@ js_CreateSurface(duk_context* ctx)
 	int n_args = duk_get_top(ctx);
 	int w = duk_require_int(ctx, 0);
 	int h = duk_require_int(ctx, 1);
-	ALLEGRO_COLOR color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : al_map_rgba(0, 0, 0, 0);
+	color_t color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : rgba(0, 0, 0, 0);
 	
 	image_t* image;
 	
-	if ((image = create_image(w, h)) == NULL)
+	if (!(image = create_image(w, h)))
 		duk_error(ctx, DUK_ERR_ERROR, "CreateSurface(): Failed to create image for surface (internal error)");
 	fill_image(image, color);
 	duk_push_sphere_surface(ctx, image);
@@ -243,7 +243,7 @@ js_Surface_setPixel(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
-	ALLEGRO_COLOR color = duk_require_sphere_color(ctx, 2);
+	color_t color = duk_require_sphere_color(ctx, 2);
 	
 	image_t* image;
 
@@ -251,7 +251,7 @@ js_Surface_setPixel(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_put_pixel(x, y, color);
+	al_put_pixel(x, y, to_native_color(color));
 	al_set_target_backbuffer(g_display);
 	return 0;
 }
@@ -262,14 +262,16 @@ js_Surface_getPixel(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 
-	ALLEGRO_COLOR color;
 	image_t*      image;
+	ALLEGRO_COLOR pixel;
+	uint8_t       r, g, b, alpha;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	color = al_get_pixel(get_image_bitmap(image), x, y);
-	duk_push_sphere_color(ctx, color);
+	pixel = al_get_pixel(get_image_bitmap(image), x, y);
+	al_unmap_rgba(pixel, &r, &g, &b, &alpha);
+	duk_push_sphere_color(ctx, rgba(r, g, b, alpha));
 	return 1;
 }
 
@@ -318,7 +320,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 		duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); src_image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
-	ALLEGRO_COLOR mask = duk_require_sphere_color(ctx, 3);
+	color_t mask = duk_require_sphere_color(ctx, 3);
 
 	int      blend_mode;
 	image_t* image;
@@ -329,7 +331,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_tinted_bitmap(get_image_bitmap(src_image), mask, x, y, 0x0);
+	al_draw_tinted_bitmap(get_image_bitmap(src_image), to_native_color(mask), x, y, 0x0);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -423,9 +425,9 @@ js_Surface_drawText(duk_context* ctx)
 	int y = duk_require_int(ctx, 2);
 	const char* text = duk_to_string(ctx, 3);
 	
-	int           blend_mode;
-	ALLEGRO_COLOR color;
-	image_t*      image;
+	int      blend_mode;
+	color_t  color;
+	image_t* image;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
@@ -467,30 +469,30 @@ js_Surface_flipVertically(duk_context* ctx)
 static duk_ret_t
 js_Surface_gradientRectangle(duk_context* ctx)
 {
+	int x1 = duk_require_int(ctx, 0);
+	int y1 = duk_require_int(ctx, 1);
+	int x2 = x1 + duk_require_int(ctx, 2);
+	int y2 = y1 + duk_require_int(ctx, 3);
+	color_t color_ul = duk_require_sphere_color(ctx, 4);
+	color_t color_ur = duk_require_sphere_color(ctx, 5);
+	color_t color_lr = duk_require_sphere_color(ctx, 6);
+	color_t color_ll = duk_require_sphere_color(ctx, 7);
+	
 	int           blend_mode;
-	ALLEGRO_COLOR color_ul, color_ur, color_lr, color_ll;
 	image_t*      image;
-	float         x1, y1, x2, y2;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x1 = (float)duk_to_number(ctx, 0);
-	y1 = (float)duk_to_number(ctx, 1);
-	x2 = x1 + (float)duk_to_number(ctx, 2);
-	y2 = y1 + (float)duk_to_number(ctx, 3);
-	color_ul = duk_require_sphere_color(ctx, 4);
-	color_ur = duk_require_sphere_color(ctx, 5);
-	color_lr = duk_require_sphere_color(ctx, 6);
-	color_ll = duk_require_sphere_color(ctx, 7);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
+	
 	ALLEGRO_VERTEX verts[] = {
-		{ x1, y1, 0, 0, 0, color_ul },
-		{ x2, y1, 0, 0, 0, color_ur },
-		{ x1, y2, 0, 0, 0, color_ll },
-		{ x2, y2, 0, 0, 0, color_lr }
+		{ x1, y1, 0, 0, 0, to_native_color(color_ul) },
+		{ x2, y1, 0, 0, 0, to_native_color(color_ur) },
+		{ x1, y2, 0, 0, 0, to_native_color(color_ll) },
+		{ x2, y2, 0, 0, 0, to_native_color(color_lr) }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	al_set_target_backbuffer(g_display);
@@ -501,23 +503,22 @@ js_Surface_gradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_Surface_line(duk_context* ctx)
 {
-	int            blend_mode;
-	ALLEGRO_COLOR  color;
-	image_t*       image;
-	int            x1, y1, x2, y2;
+	int x1 = duk_require_int(ctx, 0);
+	int y1 = duk_require_int(ctx, 1);
+	int x2 = duk_require_int(ctx, 2);
+	int y2 = duk_require_int(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+	
+	int      blend_mode;
+	image_t* image;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x1 = duk_to_int(ctx, 0);
-	y1 = duk_to_int(ctx, 1);
-	x2 = duk_to_int(ctx, 2);
-	y2 = duk_to_int(ctx, 3);
-	color = duk_require_sphere_color(ctx, 4);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_line(x1, y1, x2, y2, color, 1);
+	al_draw_line(x1, y1, x2, y2, to_native_color(color), 1);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -527,13 +528,14 @@ static duk_ret_t
 js_Surface_pointSeries(duk_context* ctx)
 {
 	duk_require_object_coercible(ctx, 0);
-	ALLEGRO_COLOR color = duk_require_sphere_color(ctx, 1);
+	color_t color = duk_require_sphere_color(ctx, 1);
 	
 	int             blend_mode;
 	image_t*        image;
 	size_t          num_points;
 	int             x, y;
 	ALLEGRO_VERTEX* vertices;
+	ALLEGRO_COLOR   vtx_color;
 
 	unsigned int i;
 
@@ -546,13 +548,14 @@ js_Surface_pointSeries(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
 		duk_error(ctx, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer");
+	vtx_color = to_native_color(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x; vertices[i].y = y;
-		vertices[i].color = color;
+		vertices[i].color = vtx_color;
 	}
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -566,27 +569,24 @@ js_Surface_pointSeries(duk_context* ctx)
 static duk_ret_t
 js_Surface_outlinedRectangle(duk_context* ctx)
 {
-	int           blend_mode;
-	ALLEGRO_COLOR color;
-	image_t*      image;
-	int           n_args;
-	float         thickness;
-	float         x1, y1, x2, y2;
+	int n_args = duk_get_top(ctx);
+	float x1 = duk_require_int(ctx, 0) + 0.5;
+	float y1 = duk_require_int(ctx, 1) + 0.5;
+	float x2 = x1 + duk_require_int(ctx, 2);
+	float y2 = y1 + duk_require_int(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
+
+	int      blend_mode;
+	image_t* image;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	n_args = duk_get_top(ctx);
-	x1 = duk_to_int(ctx, 0) + 0.5;
-	y1 = duk_to_int(ctx, 1) + 0.5;
-	x2 = x1 + duk_to_int(ctx, 2);
-	y2 = y1 + duk_to_int(ctx, 3);
-	color = duk_require_sphere_color(ctx, 4);
-	thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_rectangle(x1, y1, x2, y2, color, thickness);
+	al_draw_rectangle(x1, y1, x2, y2, to_native_color(color), thickness);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -641,23 +641,22 @@ js_Surface_rotate(duk_context* ctx)
 static duk_ret_t
 js_Surface_rectangle(duk_context* ctx)
 {
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+	
 	image_t* image;
-	int             blend_mode;
-	ALLEGRO_COLOR   color;
-	float           x, y, w, h;
+	int      blend_mode;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	x = (float)duk_to_number(ctx, 0);
-	y = (float)duk_to_number(ctx, 1);
-	w = (float)duk_to_number(ctx, 2);
-	h = (float)duk_to_number(ctx, 3);
-	color = duk_require_sphere_color(ctx, 4);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_filled_rectangle(x, y, x + w, y + h, color);
+	al_draw_filled_rectangle(x, y, x + w, y + h, to_native_color(color));
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;

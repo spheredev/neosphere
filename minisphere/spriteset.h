@@ -41,7 +41,7 @@ extern int          get_sprite_frame_delay  (const spriteset_t* spriteset, const
 extern void         get_sprite_size         (const spriteset_t* spriteset, int* out_width, int* out_height);
 extern void         get_spriteset_info      (const spriteset_t* spriteset, int* out_num_images, int* out_num_poses);
 extern bool         get_spriteset_pose_info (const spriteset_t* spriteset, const char* pose_name, int* out_num_frames);
-extern void         draw_sprite             (const spriteset_t* spriteset, ALLEGRO_COLOR mask, bool is_flipped, double theta, double scale_x, double scale_y, const char* pose_name, float x, float y, int frame_index);
+extern void         draw_sprite             (const spriteset_t* spriteset, color_t mask, bool is_flipped, double theta, double scale_x, double scale_y, const char* pose_name, float x, float y, int frame_index);
 
 extern void         init_spriteset_api           (duk_context* ctx);
 extern void         duk_push_sphere_spriteset    (duk_context* ctx, spriteset_t* spriteset);
