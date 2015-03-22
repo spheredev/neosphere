@@ -67,10 +67,10 @@ load_windowstyle(const char* path)
 	switch (rws.version) {
 	case 1:
 		max_w = rws.edge_w_h; max_h = rws.edge_w_h;
-		if (!(atlas = create_image(rws.edge_w_h * 3, rws.edge_w_h * 3)))
+		if (!(atlas = create_image(max_w * 3, max_h * 3)))
 			goto on_error;
 		for (i = 0; i < 9; ++i) {
-			if (!(image = read_image(file, rws.edge_w_h, rws.edge_w_h)))
+			if (!(image = read_subimage(file, atlas, i % 3 * max_w, i / 3 * max_h, rws.edge_w_h, rws.edge_w_h)))
 				goto on_error;
 			winstyle->images[i] = image;
 		}
