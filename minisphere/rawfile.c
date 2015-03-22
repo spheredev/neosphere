@@ -29,16 +29,16 @@ js_HashRawFile(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	ALLEGRO_FILE* file;
-	char*         path;
+	FILE* file;
+	char* path;
 
 	path = get_asset_path(filename, "other", false);
-	file = al_fopen(path, "rb");
+	file = fopen(path, "rb");
 	free(path);
 	if (file == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "HashRawFile(): Unable to open file '%s' for reading");
-	al_fclose(file);
-	duk_push_null(ctx);
+		js_error(JS_ERROR, -1, "HashRawFile(): Failed to open file '%s' for reading");
+	fclose(file);
+	duk_push_string(ctx, "");
 	return 1;
 }
 
@@ -49,11 +49,11 @@ js_OpenRawFile(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 	bool writable = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
 
-	ALLEGRO_FILE* file;
-	char*         path;
+	FILE* file;
+	char* path;
 
 	path = get_asset_path(filename, "other", writable);
-	file = al_fopen(path, writable ? "w+b" : "rb");
+	file = fopen(path, writable ? "w+b" : "rb");
 	free(path);
 	if (file != NULL) {
 		duk_push_object(ctx);
@@ -78,10 +78,10 @@ js_OpenRawFile(duk_context* ctx)
 static duk_ret_t
 js_RawFile_finalize(duk_context* ctx)
 {
-	ALLEGRO_FILE* file;
+	FILE* file;
 
 	duk_get_prop_string(ctx, 0, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	if (file != NULL) al_fclose(file);
+	if (file != NULL) fclose(file);
 	return 0;
 }
 
@@ -95,13 +95,13 @@ js_RawFile_toString(duk_context* ctx)
 static duk_ret_t
 js_RawFile_getPosition(duk_context* ctx)
 {
-	ALLEGRO_FILE* file;
+	FILE* file;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file != NULL) {
-		duk_push_int(ctx, al_ftell(file));
+		duk_push_int(ctx, ftell(file));
 		return 1;
 	}
 	else {
@@ -112,22 +112,19 @@ js_RawFile_getPosition(duk_context* ctx)
 static duk_ret_t
 js_RawFile_getSize(duk_context* ctx)
 {
-	ALLEGRO_FILE* file;
-	int64_t       cur_pos;
+	FILE* file;
+	long  file_pos;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (file != NULL) {
-		cur_pos = al_ftell(file);
-		al_fseek(file, 0, ALLEGRO_SEEK_END);
-		duk_push_int(ctx, al_ftell(file));
-		al_fseek(file, cur_pos, ALLEGRO_SEEK_SET);
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:getPosition(): Attempt to use RawFile object after file has been closed");
-	}
+	if (file == NULL)
+		js_error(JS_ERROR, -1, "RawFile:getPosition(): File has already been closed");
+	file_pos = ftell(file);
+	fseek(file, 0, SEEK_END);
+	duk_push_int(ctx, ftell(file));
+	fseek(file, file_pos, SEEK_SET);
+	return 1;
 }
 
 static duk_ret_t
@@ -135,31 +132,28 @@ js_RawFile_setPosition(duk_context* ctx)
 {
 	int new_pos = duk_require_int(ctx, 0);
 	
-	ALLEGRO_FILE* file;
+	FILE* file;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (file != NULL) {
-		if (!al_fseek(file, new_pos, ALLEGRO_SEEK_SET))
-			duk_error(ctx, DUK_ERR_ERROR, "RawFile:setPosition(): Failed to set RawFile read/write position");
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:setPosition(): Attempt to use RawFile object after file has been closed");
-	}
+	if (file != NULL)
+		js_error(JS_ERROR, -1, "RawFile:setPosition(): File has already been closed");
+	if (!fseek(file, new_pos, SEEK_SET))
+		js_error(JS_ERROR, -1, "RawFile:setPosition(): Failed to set read/write position (internal error)");
+	return 0;
 }
 
 static duk_ret_t
 js_RawFile_close(duk_context* ctx)
 {
-	ALLEGRO_FILE* file;
+	FILE* file;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file != NULL) {
-		al_fclose(file);
+		fclose(file);
 		duk_push_this(ctx);
 		duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
 		duk_pop(ctx);
@@ -176,21 +170,21 @@ js_RawFile_read(duk_context* ctx)
 	int num_bytes = duk_require_int(ctx, 0);
 
 	bytearray_t*  array;
+	FILE*         file;
 	void*         read_buffer;
-	ALLEGRO_FILE* file;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (num_bytes <= 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB; caller requested %i bytes", num_bytes);
+		js_error(JS_RANGE_ERROR, -1, "RawFile:read(): Must read at least 1 byte and less than 2GB; user requested %i bytes", num_bytes);
 	if (file == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
+		js_error(JS_ERROR, -1, "RawFile:read(): File has already been closed");
 	if (!(read_buffer = malloc(num_bytes)))
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
-	num_bytes = al_fread(file, read_buffer, num_bytes);
+		js_error(JS_ERROR, -1, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
+	num_bytes = fread(read_buffer, 1, num_bytes, file);
 	if (!(array = bytearray_from_buffer(read_buffer, num_bytes)))
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array (internal error)");
+		js_error(JS_ERROR, -1, "RawFile:read(): Failed to create byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -200,18 +194,18 @@ js_RawFile_write(duk_context* ctx)
 {
 	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
 	
-	const void*  data;
-	ALLEGRO_FILE* file;
-	size_t        write_size;
+	const void* data;
+	FILE*       file;
+	size_t      write_size;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:write(): File has already been closed");
+		js_error(JS_ERROR, -1, "RawFile:write(): File has already been closed");
 	data = get_bytearray_buffer(array);
 	write_size = get_bytearray_size(array);
-	if (al_fwrite(file, data, write_size) != write_size)
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:write(): Write error. The file may be read-only.");
+	if (fwrite(data, 1, write_size, file) != write_size)
+		js_error(JS_ERROR, -1, "RawFile:write(): Write error. The file may be read-only.");
 	return 0;
 }

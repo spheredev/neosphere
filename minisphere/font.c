@@ -60,11 +60,11 @@ load_font(const char* path)
 	image_t*                atlas;
 	int                     atlas_size_x, atlas_size_y;
 	ALLEGRO_LOCKED_REGION*  bitmap_lock;
-	ALLEGRO_FILE*           file;
+	FILE*                   file;
 	font_t*                 font = NULL;
 	struct font_glyph*      glyph;
 	struct rfn_glyph_header glyph_hdr;
-	int64_t                 glyph_start;
+	long                    glyph_start;
 	int                     max_x = 0, max_y = 0;
 	int64_t                 n_glyphs_per_row;
 	size_t                  pixel_size;
@@ -73,21 +73,21 @@ load_font(const char* path)
 
 	int i, x, y;
 
-	if ((file = al_fopen(path, "rb")) == NULL) goto on_error;
-	if ((font = calloc(1, sizeof(font_t))) == NULL) goto on_error;
-	if (al_fread(file, &rfn, sizeof(struct rfn_header)) != sizeof(struct rfn_header))
+	if ((file = fopen(path, "rb")) == NULL) goto on_error;
+	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
+	if (fread(&rfn, sizeof(struct rfn_header), 1, file) != 1)
 		goto on_error;
 	pixel_size = (rfn.version == 1) ? 1 : 4;
 	if (!(font->glyphs = calloc(rfn.num_chars, sizeof(struct font_glyph))))
 		goto on_error;
 
 	// pass 1: load glyph headers and find largest glyph
-	glyph_start = al_ftell(file);
+	glyph_start = ftell(file);
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
-		if (al_fread(file, &glyph_hdr, sizeof(struct rfn_glyph_header)) != sizeof(struct rfn_glyph_header))
+		if (fread(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
 			goto on_error;
-		al_fseek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, ALLEGRO_SEEK_CUR);
+		fseek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, SEEK_CUR);
 		max_x = fmax(glyph_hdr.width, max_x);
 		max_y = fmax(glyph_hdr.height, max_y);
 		glyph->width = glyph_hdr.width;
@@ -103,14 +103,14 @@ load_font(const char* path)
 		goto on_error;
 
 	// pass 2: load glyph data
-	al_fseek(file, glyph_start, ALLEGRO_SEEK_SET);
+	fseek(file, glyph_start, SEEK_SET);
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
-		if (al_fread(file, &glyph_hdr, sizeof(struct rfn_glyph_header)) != sizeof(struct rfn_glyph_header))
+		if (fread(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
 			goto on_error;
 		size_t data_size = glyph_hdr.width * glyph_hdr.height * pixel_size;
 		void* data = malloc(data_size);
-		if (al_fread(file, data, data_size) != data_size) goto on_error;
+		if (fread(data, 1, data_size, file) != data_size) goto on_error;
 		glyph->image = create_subimage(atlas,
 			i % n_glyphs_per_row * max_x, i / n_glyphs_per_row * max_y,
 			glyph_hdr.width, glyph_hdr.height);
@@ -143,7 +143,7 @@ load_font(const char* path)
 		al_unlock_bitmap(get_image_bitmap(glyph->image));
 		free(data);
 	}
-	al_fclose(file);
+	fclose(file);
 	free_image(atlas);
 	return ref_font(font);
 

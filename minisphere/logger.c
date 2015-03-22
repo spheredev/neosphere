@@ -7,7 +7,7 @@
 struct logger
 {
 	int               refcount;
-	ALLEGRO_FILE*     file;
+	FILE*             file;
 	int               num_blocks;
 	int               max_blocks;
 	struct log_block* blocks;
@@ -33,12 +33,13 @@ open_log_file(const char* path)
 	time_t     now;
 	char       timestamp[100];
 
+	if (path == NULL) return NULL;
 	if (!(logger = calloc(1, sizeof(logger_t)))) goto on_error;
-	if (!(logger->file = al_fopen(path, "a"))) goto on_error;
+	if (!(logger->file = fopen(path, "a"))) goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstring_format("LOG OPENED: %s\n", timestamp);
-	al_fputs(logger->file, log_entry->cstr);
+	fputs(log_entry->cstr, logger->file);
 	free_lstring(log_entry);
 	return ref_logger(logger);
 
@@ -65,9 +66,9 @@ free_logger(logger_t* logger)
 		return;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstring_format("LOG CLOSED: %s\n\n", timestamp);
-	al_fputs(logger->file, log_entry->cstr);
+	fputs(log_entry->cstr, logger->file);
 	free_lstring(log_entry);
-	al_fclose(logger->file);
+	fclose(logger->file);
 	free(logger);
 }
 
@@ -112,14 +113,14 @@ write_log_line(logger_t* logger, const char* prefix, const char* text)
 	
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S -- ", localtime(&now));
-	al_fputs(logger->file, timestamp);
-	for (i = 0; i < logger->num_blocks; ++i) al_fputc(logger->file, '\t');
+	fputs(timestamp, logger->file);
+	for (i = 0; i < logger->num_blocks; ++i) fputc('\t', logger->file);
 	if (prefix != NULL) {
-		al_fputs(logger->file, prefix);
-		al_fputc(logger->file, ' ');
+		fputs(prefix, logger->file);
+		fputc(' ', logger->file);
 	}
-	al_fputs(logger->file, text);
-	al_fputc(logger->file, '\n');
+	fputs(text, logger->file);
+	fputc('\n', logger->file);
 }
 
 void
