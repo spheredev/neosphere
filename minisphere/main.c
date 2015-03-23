@@ -117,8 +117,7 @@ main(int argc, char** argv)
 	}
 	
 	// set up jump points for script bailout
-	if (setjmp(g_jmp_exit)) {
-		// user closed window, script called Exit(), etc.
+	if (setjmp(g_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
@@ -134,8 +133,7 @@ main(int argc, char** argv)
 			return EXIT_SUCCESS;
 		}
 	}
-	if (setjmp(g_jmp_restart)) {
-		// script called RestartGame() or ExecuteGame()
+	if (setjmp(g_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
 		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		shutdown_engine();
 		initialize_engine();

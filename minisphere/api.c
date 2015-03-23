@@ -2,6 +2,8 @@
 #include "api.h"
 #include "color.h"
 
+static duk_ret_t duk_on_create_error (duk_context* ctx);
+
 static duk_ret_t js_GetVersion           (duk_context* ctx);
 static duk_ret_t js_GetVersionString     (duk_context* ctx);
 static duk_ret_t js_GetExtensions        (duk_context* ctx);
@@ -61,6 +63,12 @@ init_api(duk_context* ctx)
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
+
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_push_c_function(ctx, duk_on_create_error, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "errCreate");
+	duk_pop_2(ctx);
 }
 
 void
@@ -133,6 +141,37 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	va_start(ap, fmt);
 	duk_error_va_raw(g_duktape, err_code, filename, line_number, fmt, ap);
 	va_end(ap);
+}
+
+static duk_ret_t
+duk_on_create_error(duk_context* ctx)
+{
+	const char* filename;
+	int         line;
+	const char* message;
+	
+	if (!duk_is_error(ctx, 0)) return 1;
+	duk_get_prop_string(ctx, 0, "message"); message = duk_get_string(ctx, -1); duk_pop(ctx);
+	if (strstr(message, "not ") != message)
+		return 1;
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
+	duk_get_prop_string(ctx, -1, "lineNumber"); line = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_pop_n(ctx, 4);
+	duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
+	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
+		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
+		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+	duk_push_string(ctx, "lineNumber"); duk_push_int(ctx, line);
+	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
+		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
+		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+	return 1;
 }
 
 static duk_ret_t
