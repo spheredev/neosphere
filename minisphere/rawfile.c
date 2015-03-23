@@ -36,7 +36,7 @@ js_HashRawFile(duk_context* ctx)
 	file = fopen(path, "rb");
 	free(path);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "HashRawFile(): Failed to open file '%s' for reading");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Failed to open file '%s' for reading");
 	fclose(file);
 	duk_push_string(ctx, "");
 	return 1;
@@ -56,7 +56,7 @@ js_OpenRawFile(duk_context* ctx)
 	file = fopen(path, writable ? "w+b" : "rb");
 	free(path);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "OpenRawFile(): Failed to open file '%s' for %s", filename, writable ? "writing" : "reading");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): Failed to open file '%s' for %s", filename, writable ? "writing" : "reading");
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, file); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
 	duk_push_c_function(ctx, js_RawFile_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
@@ -96,7 +96,7 @@ js_RawFile_getPosition(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "RawFile:getPosition(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:getPosition(): File has already been closed");
 	duk_push_int(ctx, ftell(file));
 	return 1;
 }
@@ -111,7 +111,7 @@ js_RawFile_getSize(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "RawFile:getPosition(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:getPosition(): File has already been closed");
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
 	duk_push_int(ctx, ftell(file));
@@ -130,9 +130,9 @@ js_RawFile_setPosition(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "RawFile:setPosition(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): File has already been closed");
 	if (!fseek(file, new_pos, SEEK_SET))
-		js_error(JS_ERROR, -1, "RawFile:setPosition(): Failed to set read/write position (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): Failed to set read/write position (internal error)");
 	return 0;
 }
 
@@ -146,7 +146,7 @@ js_RawFile_close(duk_context* ctx)
 	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
 	duk_pop(ctx);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "RawFile:close(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has already been closed");
 	fclose(file);
 	return 0;
 }
@@ -164,14 +164,14 @@ js_RawFile_read(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (num_bytes <= 0)
-		js_error(JS_RANGE_ERROR, -1, "RawFile:read(): Must read at least 1 byte and less than 2GB; user requested %i bytes", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB; user requested %i bytes", num_bytes);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "RawFile:read(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
 	if (!(read_buffer = malloc(num_bytes)))
-		js_error(JS_ERROR, -1, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
 	num_bytes = fread(read_buffer, 1, num_bytes, file);
 	if (!(array = bytearray_from_buffer(read_buffer, num_bytes)))
-		js_error(JS_ERROR, -1, "RawFile:read(): Failed to create byte array (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -189,10 +189,10 @@ js_RawFile_write(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (file == NULL)
-		js_error(JS_ERROR, -1, "RawFile:write(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): File has already been closed");
 	data = get_bytearray_buffer(array);
 	write_size = get_bytearray_size(array);
 	if (fwrite(data, 1, write_size, file) != write_size)
-		js_error(JS_ERROR, -1, "RawFile:write(): Write error. The file may be read-only.");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): Write error. The file may be read-only.");
 	return 0;
 }

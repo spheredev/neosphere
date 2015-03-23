@@ -67,7 +67,7 @@ js_LoadSound(duk_context* ctx)
 	ALLEGRO_AUDIO_STREAM* stream = al_load_audio_stream(sound_path, 4, 2048);
 	free(sound_path);
 	if (stream == NULL)
-		js_error(JS_ERROR, -1, "LoadSound(): Failed to load sound file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);
 	al_set_audio_stream_playing(stream, false);
 	al_attach_audio_stream_to_mixer(stream, al_get_default_mixer());
 	al_set_audio_stream_gain(stream, 1.0);

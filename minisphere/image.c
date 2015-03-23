@@ -413,14 +413,14 @@ duk_require_sphere_image(duk_context* ctx, duk_idx_t index)
 	return image;
 
 on_error:
-	js_error(JS_TYPE_ERROR, -1, "Object is not a Sphere image");
+	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Object is not a Sphere image");
 }
 
 static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow == NULL)
-		js_error(JS_REF_ERROR, -1, "GetSystemArrow(): No system arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): No system arrow image available");
 	duk_push_sphere_image(ctx, s_sys_arrow);
 	return 1;
 }
@@ -429,7 +429,7 @@ static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow == NULL)
-		js_error(JS_REF_ERROR, -1, "GetSystemDownArrow(): No system down arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): No system down arrow image available");
 	duk_push_sphere_image(ctx, s_sys_dn_arrow);
 	return 1;
 }
@@ -438,7 +438,7 @@ static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow == NULL)
-		js_error(JS_REF_ERROR, -1, "GetSystemUpArrow(): No system up arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): No system up arrow image available");
 	duk_push_sphere_image(ctx, s_sys_up_arrow);
 	return 1;
 }
@@ -455,7 +455,7 @@ js_LoadImage(duk_context* ctx)
 	image = load_image(path);
 	free(path);
 	if (image == NULL)
-		js_error(JS_ERROR, -1, "LoadImage(): Failed to load image file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadImage(): Failed to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -474,12 +474,12 @@ js_GrabImage(duk_context* ctx)
 
 	backbuffer = al_get_backbuffer(g_display);
 	if ((image = create_image(w, h)) == NULL)
-		js_error(JS_ERROR, -1, "GrabImage(): Failed to create image bitmap");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to create image bitmap");
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
 	if (!rescale_image(image, g_res_x, g_res_y))
-		js_error(JS_ERROR, -1, "GrabImage(): Failed to rescale grabbed image (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to rescale grabbed image (internal error)");
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -543,7 +543,7 @@ js_Image_createSurface(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
-		js_error(JS_ERROR, -1, "Image:createSurface(): Failed to create new surface image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
 	duk_push_sphere_surface(ctx, new_image);
 	free_image(new_image);
 	return 1;

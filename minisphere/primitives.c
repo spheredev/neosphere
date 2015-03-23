@@ -194,10 +194,10 @@ js_PointSeries(duk_context* ctx)
 	unsigned int i;
 
 	if (!duk_is_array(ctx, 0))
-		js_error(JS_ERROR, -1, "PointSeries(): First argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		js_error(JS_ERROR, -1, "PointSeries(): Failed to allocate vertex buffer (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer (internal error)");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);

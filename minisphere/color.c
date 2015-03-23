@@ -2,10 +2,10 @@
 #include "api.h"
 #include "color.h"
 
-static js_retval_t js_CreateColor         (_JS_C_FUNC_ARG_LIST_);
-static js_retval_t js_BlendColors         (_JS_C_FUNC_ARG_LIST_);
-static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARG_LIST_);
-static js_retval_t js_Color_toString      (_JS_C_FUNC_ARG_LIST_);
+static duk_ret_t js_CreateColor         (duk_context* ctx);
+static duk_ret_t js_BlendColors         (duk_context* ctx);
+static duk_ret_t js_BlendColorsWeighted (duk_context* ctx);
+static duk_ret_t js_Color_toString      (duk_context* ctx);
 
 color_t
 rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
@@ -66,7 +66,7 @@ duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 	return color;
 
 on_error:
-	js_error(JS_TYPE_ERROR, -1, "Object is not a Sphere color");
+	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Object is not a Sphere color");
 }
 
 void
@@ -81,33 +81,35 @@ duk_push_sphere_color(duk_context* ctx, color_t color)
 	duk_push_number(ctx, color.alpha); duk_put_prop_string(ctx, -2, "alpha");
 }
 
-static js_retval_t
-js_CreateColor(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_CreateColor(duk_context* ctx)
 {
-	js_begin_api_func("CreateColor", 3);
-	js_int_arg(1, r);
-	js_int_arg(2, g);
-	js_int_arg(3, b);
-	js_maybe_int_arg(4, alpha, 255);
+	int n_args = duk_get_top(ctx);
+	int r = duk_require_int(ctx, 0);
+	int g = duk_require_int(ctx, 1);
+	int b = duk_require_int(ctx, 2);
+	int alpha = n_args >= 4 ? duk_require_int(ctx, 3) : 255;
 
 	r = fmin(fmax(r, 0), 255);
 	g = fmin(fmax(g, 0), 255);
 	b = fmin(fmax(b, 0), 255);
 	alpha = fmin(fmax(alpha, 0), 255);
-	js_return_sphereobj(color, rgba(r, g, b, alpha));
+	duk_push_sphere_color(ctx, rgba(r, g, b, alpha));
+	return 1;
 }
 
-static js_retval_t
-js_BlendColors(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_BlendColors(duk_context* ctx)
 {
 	color_t color1 = duk_require_sphere_color(ctx, 0);
 	color_t color2 = duk_require_sphere_color(ctx, 1);
 	
-	js_return_sphereobj(color, blend_colors(color1, color2, 1, 1));
+	duk_push_sphere_color(ctx, blend_colors(color1, color2, 1, 1));
+	return 1;
 }
 
-static js_retval_t
-js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_BlendColorsWeighted(duk_context* ctx)
 {
 	color_t color1 = duk_require_sphere_color(ctx, 0);
 	color_t color2 = duk_require_sphere_color(ctx, 1);
@@ -115,12 +117,14 @@ js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
 	float w2 = duk_require_number(ctx, 3);
 	
 	if (w1 < 0.0 || w2 < 0.0)
-		js_error(JS_RANGE_ERROR, -1, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
-	js_return_sphereobj(color, blend_colors(color1, color2, w1, w2));
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
+	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
+	return 1;
 }
 
-static js_retval_t
-js_Color_toString(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_Color_toString(duk_context* ctx)
 {
-	js_return_cstr("[object color]");
+	duk_push_string(ctx, "[object color]");
+	return 1;
 }

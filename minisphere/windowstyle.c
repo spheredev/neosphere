@@ -188,7 +188,7 @@ static duk_ret_t
 js_GetSystemWindowStyle(duk_context* ctx)
 {
 	if (s_sys_winstyle == NULL)
-		js_error(JS_REF_ERROR, -1, "GetSystemWindowStyle(): No system window style available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemWindowStyle(): No system window style available");
 	duk_push_sphere_windowstyle(ctx, s_sys_winstyle);
 	return 1;
 }
@@ -203,7 +203,7 @@ js_LoadWindowStyle(duk_context* ctx)
 
 	path = get_asset_path(filename, "windowstyles", false);
 	if (!(winstyle = load_windowstyle(path)))
-		js_error(JS_ERROR, -1, "LoadWindowStyle(): Failed to load windowstyle file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): Failed to load windowstyle file '%s'", filename);
 	free(path);
 	duk_push_sphere_windowstyle(ctx, winstyle);
 	return 1;

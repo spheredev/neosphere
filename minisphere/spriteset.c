@@ -459,7 +459,7 @@ duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
 	return spriteset;
 
 on_error:
-	js_error(JS_TYPE_ERROR, -1, "Object is not a Sphere spriteset");
+	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Object is not a Sphere spriteset");
 }
 
 static const spriteset_pose_t*
@@ -498,7 +498,7 @@ js_LoadSpriteset(duk_context* ctx)
 	filename = duk_require_string(ctx, 0);
 	path = get_asset_path(filename, "spritesets", false);
 	if ((spriteset = load_spriteset(path)) == NULL)
-		js_error(JS_ERROR, -1, "LoadSpriteset(): Failed to load spriteset file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSpriteset(): Failed to load spriteset file '%s'", filename);
 	free(path);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
@@ -532,7 +532,7 @@ js_Spriteset_clone(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		js_error(JS_ERROR, -1, "Spriteset:clone(): Failed to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): Failed to create new spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;

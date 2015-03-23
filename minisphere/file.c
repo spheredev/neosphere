@@ -60,7 +60,7 @@ js_OpenFile(duk_context* ctx)
 	return 1;
 
 on_error:
-	js_error(JS_ERROR, -1, "OpenFile(): Failed to open or create file '%s'", filename);
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to open or create file '%s'", filename);
 }
 
 static duk_ret_t
@@ -72,9 +72,9 @@ js_RemoveFile(duk_context* ctx)
 
 	path = get_asset_path(filename, "save", true);
 	if (!al_filename_exists(path))
-		js_error(JS_ERROR, -1, "RemoveFile(): File '%s' doesn't exist", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): File '%s' doesn't exist", filename);
 	if (!al_remove_filename(path))
-		js_error(JS_ERROR, -1, "RemoveFile(): Failed to delete file '%s'; may be read-only", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s'; may be read-only", filename);
 	free(path);
 	return 0;
 }
@@ -111,7 +111,7 @@ js_File_getKey(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (conf == NULL)
-		js_error(JS_ERROR, -1, "File:getKey(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has already been closed");
 	index = duk_to_int(ctx, 0);
 	i = 0;
 	key = al_get_first_config_entry(conf, NULL, &conf_iter);
@@ -139,7 +139,7 @@ js_File_getNumKeys(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (conf == NULL)
-		js_error(JS_ERROR, -1, "File:getNumKeys(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has already been closed");
 	count = 0;
 	key = al_get_first_config_entry(conf, NULL, &conf_iter);
 	while (key != NULL) {
@@ -161,7 +161,7 @@ js_File_flush (duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "path"); path = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (conf == NULL)
-		js_error(JS_ERROR, -1, "File:flush(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): File has already been closed");
 	al_save_config_file(path, conf);
 	return 0;
 }
@@ -177,7 +177,7 @@ js_File_close(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "path"); path = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (conf == NULL)
-		js_error(JS_ERROR, -1, "File:close(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:close(): File has already been closed");
 	al_save_config_file(path, conf);
 	duk_push_this(ctx);
 	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "conf_ptr");
@@ -199,7 +199,7 @@ js_File_read(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (conf == NULL)
-		js_error(JS_ERROR, -1, "File:read(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): File has already been closed");
 	key = duk_to_string(ctx, 0);
 	value_raw = al_get_config_value(conf, NULL, key);
 	switch (duk_get_type(ctx, 1)) {
@@ -235,7 +235,7 @@ js_File_write(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (conf == NULL)
-		js_error(JS_ERROR, -1, "File:write(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has already been closed");
 	key = duk_to_string(ctx, 0);
 	value_str = duk_to_string(ctx, 1);
 	al_set_config_value(conf, NULL, key, value_str);

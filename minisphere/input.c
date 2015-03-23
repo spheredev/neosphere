@@ -394,12 +394,12 @@ js_GetKey(duk_context* ctx)
 	return 1;
 }
 
-static js_retval_t
-js_GetKeyString(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_GetKeyString(duk_context* ctx)
 {
-	js_begin_api_func("GetKeyString", 1);
-	js_int_arg(1, keycode);
-	js_maybe_bool_arg(2, shift, false);
+	int n_args = duk_get_top(ctx);
+	int keycode = duk_require_int(ctx, 0);
+	bool shift = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
 
 	switch (keycode) {
 	case ALLEGRO_KEY_A: duk_push_string(ctx, shift ? "A" : "a"); break;
@@ -569,9 +569,9 @@ static js_BindJoystickButton(duk_context* ctx)
 	lstring_t* up_script = !duk_is_null(ctx, 3) ? duk_require_lstring_t(ctx, 3) : lstring_from_cstr("");
 
 	if (joy_index < 0 || joy_index >= 4)
-		js_error(JS_RANGE_ERROR, -1, "BindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
 	if (button < 0 || joy_index >= 32)
-		js_error(JS_RANGE_ERROR, -1, "BindJoystickButton(): Button index out of range for binding", button);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range for binding", button);
 	free_script(s_button_down_scripts[joy_index][button]);
 	free_script(s_button_up_scripts[joy_index][button]);
 	s_button_down_scripts[joy_index][button] = compile_script(down_script, "[button-down script]");
@@ -591,7 +591,7 @@ static js_BindKey(duk_context* ctx)
 		? duk_require_lstring_t(ctx, 2) : lstring_from_cstr("");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		js_error(JS_RANGE_ERROR, -1, "BindKey(): Invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): Invalid key constant");
 	free_script(s_key_down_scripts[keycode]);
 	free_script(s_key_up_scripts[keycode]);
 	s_key_down_scripts[keycode] = compile_script(key_down_script, "[key-down script]");
@@ -616,9 +616,9 @@ js_UnbindJoystickButton(duk_context* ctx)
 	int button = duk_require_int(ctx, 1);
 
 	if (joy_index < 0 || joy_index >= 4)
-		js_error(JS_RANGE_ERROR, -1, "UnbindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
 	if (button < 0 || joy_index >= 32)
-		js_error(JS_RANGE_ERROR, -1, "UnbindJoystickButton(): Button index out of range for binding", button);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindJoystickButton(): Button index out of range for binding", button);
 	free_script(s_button_down_scripts[joy_index][button]);
 	free_script(s_button_up_scripts[joy_index][button]);
 	s_button_down_scripts[joy_index][button] = 0;
@@ -633,7 +633,7 @@ js_UnbindKey(duk_context* ctx)
 	int keycode = duk_require_int(ctx, 0);
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		js_error(JS_RANGE_ERROR, -1, "UnbindKey(): Invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindKey(): Invalid key constant");
 	free_script(s_key_down_scripts[keycode]);
 	free_script(s_key_up_scripts[keycode]);
 	s_key_down_scripts[keycode] = 0;

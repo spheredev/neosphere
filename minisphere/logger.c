@@ -152,7 +152,7 @@ js_OpenLog(duk_context* ctx)
 	logger_t* logger = open_log_file(path);
 	free(path);
 	if (logger == NULL)
-		js_error(JS_ERROR, -1, "OpenLog(): Failed to open file for logging '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_logger(ctx, logger);
 	free_logger(logger);
 	return 1;
@@ -185,7 +185,7 @@ js_Logger_beginBlock(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); logger = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	if (!begin_log_block(logger, title))
-		js_error(JS_ERROR, -1, "Log:beginBlock(): Failed to create new log block (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): Failed to create new log block (internal error)");
 	return 0;
 }
 

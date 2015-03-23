@@ -95,23 +95,22 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 void
 bail_out_game(void)
 {
-	js_error(JS_ERROR, 0, "@exit");
+	duk_error_ni(g_duktape, 0, DUK_ERR_ERROR, "@exit");
 }
 
 void
-js_error(js_error_t type, int stack_offset, const char* fmt, ...)
+duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
 	
-	duk_errcode_t err_code;
 	const char*   filename = NULL;
 	int           line_number;
 	const char*   full_path;
 
-	// get filename and line number from JS call stack
+	// get filename and line number from Duktape call stack
 	duk_push_global_object(g_duktape);
 	duk_get_prop_string(g_duktape, -1, "Duktape");
-	duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2 + stack_offset); duk_call(g_duktape, 1);
+	duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2 + blame_offset); duk_call(g_duktape, 1);
 	if (!duk_is_object(g_duktape, -1)) {
 		duk_pop(g_duktape);
 		duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2); duk_call(g_duktape, 1);
@@ -127,28 +126,23 @@ js_error(js_error_t type, int stack_offset, const char* fmt, ...)
 	filename = filename != NULL ? filename + 1 : full_path;
 
 	// throw the exception
-	err_code = type == JS_ERROR ? DUK_ERR_ERROR
-		: type == JS_EVAL_ERROR ? DUK_ERR_EVAL_ERROR
-		: type == JS_RANGE_ERROR ? DUK_ERR_RANGE_ERROR
-		: type == JS_REF_ERROR ? DUK_ERR_REFERENCE_ERROR
-		: type == JS_TYPE_ERROR ? DUK_ERR_TYPE_ERROR
-		: type == JS_URI_ERROR ? DUK_ERR_URI_ERROR
-		: DUK_ERR_ERROR;
 	va_start(ap, fmt);
 	duk_error_va_raw(g_duktape, err_code, filename, line_number, fmt, ap);
 	va_end(ap);
 }
 
-static js_retval_t
-js_GetVersion(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_GetVersion(duk_context* ctx)
 {
-	js_return_number(SPHERE_API_VERSION);
+	duk_push_number(ctx, SPHERE_API_VERSION);
+	return 1;
 }
 
-static js_retval_t
-js_GetVersionString(_JS_C_FUNC_ARG_LIST_)
+static duk_ret_t
+js_GetVersionString(duk_context* ctx)
 {
-	js_return_cstr(SPHERE_API_VERSION_STRING);
+	duk_push_string(ctx, SPHERE_API_VERSION_STRING);
+	return 1;
 }
 
 static duk_ret_t
@@ -332,7 +326,7 @@ js_SetFrameRate(duk_context* ctx)
 	int framerate = duk_require_int(ctx, 0);
 	
 	if (framerate < 0)
-		js_error(JS_RANGE_ERROR, -1, "SetFrameRate(): Frame rate cannot be negative (%i)", framerate);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): Frame rate cannot be negative (%i)", framerate);
 	s_framerate = framerate;
 	return 0;
 }
@@ -351,7 +345,7 @@ js_Alert(duk_context* ctx)
 	const char* full_path;
 
 	if (stack_offset > 0)
-		js_error(JS_RANGE_ERROR, -1, "Alert(): Stack offset cannot be positive");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
 
 	// get filename and line number of Alert() call
 	duk_push_global_object(ctx);
@@ -386,8 +380,8 @@ js_Abort(duk_context* ctx)
 	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	if (stack_offset > 0)
-		js_error(JS_RANGE_ERROR, -1, "Abort(): Stack offset cannot be positive");
-	js_error(JS_ERROR, -1 + stack_offset, message);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
+	duk_error_ni(ctx, DUK_ERR_ERROR, -1 + stack_offset, message);
 }
 
 static duk_ret_t
@@ -398,7 +392,7 @@ js_CreateStringFromCode(duk_context* ctx)
 	char cstr[2];
 
 	if (code < 0 || code > 255)
-		js_error(JS_RANGE_ERROR, -1, "CreateStringFromCode(): Character code is out of ASCII range (%i)", code);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "CreateStringFromCode(): Character code is out of ASCII range (%i)", code);
 	cstr[0] = (char)code; cstr[1] = '\0';
 	duk_push_string(ctx, cstr);
 	return 1;
@@ -412,7 +406,7 @@ js_Delay(duk_context* ctx)
 	double start_time;
 
 	if (millisecs < 0)
-		js_error(JS_RANGE_ERROR, -1, "Delay(): Negative delay not allowed (%i)", millisecs);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Negative delay not allowed (%i)", millisecs);
 	start_time = al_get_time();
 	while (al_get_time() < start_time + millisecs / 1000) {
 		if (!do_events()) bail_out_game();
@@ -425,7 +419,7 @@ js_ExecuteGame(duk_context* ctx)
 {
 	const char* path = duk_require_string(ctx, 0);
 	
-	js_error(JS_ERROR, 0, "@exec %s", path);
+	duk_error_ni(ctx, 0, DUK_ERR_ERROR, "@exec %s", path);
 }
 
 static duk_ret_t
@@ -453,7 +447,7 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
-	js_error(JS_ERROR, 0, "@restart");
+	duk_error_ni(ctx, 0, DUK_ERR_ERROR, "@restart");
 }
 
 static duk_ret_t
