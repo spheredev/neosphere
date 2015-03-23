@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include <setjmp.h>
 #include <time.h>
 
 #include <allegro5/allegro.h>
@@ -43,6 +45,11 @@ extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duktape;
 extern int                  g_fps;
+extern ALLEGRO_PATH*        g_game_path;
+extern jmp_buf              g_jmp_exec_game;
+extern jmp_buf              g_jmp_exit;
+extern jmp_buf              g_jmp_restart;
+extern char*                g_last_game_path;
 extern key_queue_t          g_key_queue;
 extern float                g_scale_x, g_scale_y;
 extern ALLEGRO_CONFIG*      g_sys_conf;

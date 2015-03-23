@@ -385,7 +385,7 @@ js_GetKey(duk_context* ctx)
 	int keycode;
 
 	while (g_key_queue.num_keys <= 0) {
-		if (!do_events()) bail_out_game();
+		if (!do_events()) bail_out_game(true);
 	}
 	keycode = g_key_queue.keys[0];
 	--g_key_queue.num_keys;
@@ -465,7 +465,7 @@ js_GetMouseWheelEvent(duk_context* ctx)
 	int i;
 	
 	while (s_num_wheel_events == 0) {
-		if (!do_events()) bail_out_game();
+		if (!do_events()) bail_out_game(true);
 	}
 	if (s_num_wheel_events > 0) {
 		event = s_wheel_queue[0];

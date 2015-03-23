@@ -93,9 +93,13 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 }
 
 void
-bail_out_game(void)
+bail_out_game(bool force_exit)
 {
-	duk_error_ni(g_duktape, 0, DUK_ERR_ERROR, "@exit");
+	if (force_exit) {
+		free(g_last_game_path);
+		g_last_game_path = NULL;
+	}
+	longjmp(g_jmp_exit, 1);
 }
 
 void
@@ -409,7 +413,7 @@ js_Delay(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Negative delay not allowed (%i)", millisecs);
 	start_time = al_get_time();
 	while (al_get_time() < start_time + millisecs / 1000) {
-		if (!do_events()) bail_out_game();
+		if (!do_events()) bail_out_game(true);
 	}
 	return 0;
 }
@@ -417,22 +421,36 @@ js_Delay(duk_context* ctx)
 static duk_ret_t
 js_ExecuteGame(duk_context* ctx)
 {
-	const char* path = duk_require_string(ctx, 0);
+	const char* filename = duk_require_string(ctx, 0);
+
+	char* path;
 	
-	duk_error_ni(ctx, 0, DUK_ERR_ERROR, "@exec %s", path);
+	if (!(path = get_sys_asset_path(filename, "games")))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Unable to execute game '%s'", filename);
+	if (!(g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP))))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Failed to save last game path (internal error)");
+	al_destroy_path(g_game_path);
+	g_game_path = al_create_path(path);
+	if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
+		al_destroy_path(g_game_path);
+		g_game_path = al_create_path_for_directory(path);
+	}
+	al_set_path_filename(g_game_path, NULL);
+	free(path);
+	longjmp(g_jmp_restart, 1);
 }
 
 static duk_ret_t
 js_Exit(duk_context* ctx)
 {
-	bail_out_game();
+	bail_out_game(false);
 	return 0;
 }
 
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	if (!flip_screen(s_framerate)) bail_out_game();
+	if (!flip_screen(s_framerate)) bail_out_game(true);
 	return 0;
 }
 
@@ -447,7 +465,7 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
-	duk_error_ni(ctx, 0, DUK_ERR_ERROR, "@restart");
+	longjmp(g_jmp_restart, 1);
 }
 
 static duk_ret_t

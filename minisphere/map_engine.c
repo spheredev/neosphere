@@ -1085,7 +1085,7 @@ js_MapEngine(duk_context* ctx)
 		update_map_engine();
 		process_map_input();
 		render_map_engine();
-		if (!flip_screen(s_framerate)) bail_out_game();
+		if (!flip_screen(s_framerate)) bail_out_game(true);
 	}
 	s_is_map_running = false;
 	return 0;

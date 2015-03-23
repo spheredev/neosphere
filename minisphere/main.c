@@ -42,7 +42,6 @@ static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
 static bool    s_is_fullscreen = false;
-static char*   s_last_game_path = NULL;
 static double  s_last_flip_time;
 static double  s_next_fps_poll_time;
 static double  s_next_frame_time;
@@ -57,8 +56,11 @@ duk_context*         g_duktape    = NULL;
 ALLEGRO_EVENT_QUEUE* g_events     = NULL;
 ALLEGRO_CONFIG*      g_game_conf  = NULL;
 ALLEGRO_PATH*        g_game_path  = NULL;
+jmp_buf              g_jmp_exit;
+jmp_buf              g_jmp_restart;
 key_queue_t          g_key_queue;
-float                g_scale_x    = 1.0;
+char*                g_last_game_path = NULL;
+float                g_scale_x = 1.0;
 float                g_scale_y    = 1.0;
 ALLEGRO_CONFIG*      g_sys_conf;
 font_t*              g_sys_font   = NULL;
@@ -114,7 +116,34 @@ main(int argc, char** argv)
 		}
 	}
 	
-startup:
+	// set up jump points for script bailout
+	if (setjmp(g_jmp_exit)) {
+		// user closed window, script called Exit(), etc.
+		shutdown_engine();
+		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
+			initialize_engine();
+			g_game_path = al_create_path(g_last_game_path);
+			if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
+				al_destroy_path(g_game_path);
+				g_game_path = al_create_path_for_directory(g_last_game_path);
+			}
+			free(g_last_game_path);
+			g_last_game_path = NULL;
+		}
+		else {
+			return EXIT_SUCCESS;
+		}
+	}
+	if (setjmp(g_jmp_restart)) {
+		// script called RestartGame() or ExecuteGame()
+		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		shutdown_engine();
+		initialize_engine();
+		g_game_path = al_create_path(game_path);
+		free(game_path);
+	}
+
+	// locate game.sgm
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
 	char* sgm_path = get_asset_path("game.sgm", NULL, false);
@@ -206,16 +235,6 @@ startup:
 	duk_pop(g_duktape);
 	duk_pop(g_duktape);
 	
-teardown:
-	// are we returning from an ExecuteGame() call?
-	if (s_last_game_path != NULL) {
-		shutdown_engine();
-		initialize_engine();
-		g_game_path = al_create_path_for_directory(s_last_game_path);
-		free(s_last_game_path); s_last_game_path = NULL;
-		goto startup;
-	}
-	
 	// otherwise shut down, we're done here
 	shutdown_engine();
 	return EXIT_SUCCESS;
@@ -224,52 +243,21 @@ on_js_error:
 	err_code = duk_get_error_code(g_duktape, -1);
 	duk_dup(g_duktape, -1);
 	const char* err_msg = duk_safe_to_string(g_duktape, -1);
-	if (err_code != DUK_ERR_ERROR || strstr(err_msg, "Error: @") != err_msg) {
-		// this is an legitimate exception, handle accordingly
-		al_show_mouse_cursor(g_display);
-		duk_get_prop_string(g_duktape, -2, "lineNumber");
-		duk_int_t line_num = duk_get_int(g_duktape, -1);
-		duk_pop(g_duktape);
-		duk_get_prop_string(g_duktape, -2, "fileName");
-		const char* file_path = duk_get_string(g_duktape, -1);
-		if (file_path != NULL) {
-			char* file_name = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
-			file_name = file_name != NULL ? file_name + 1 : file_path;
-			duk_push_sprintf(g_duktape, "%s (line: %i)\n\n%s", file_name, line_num, err_msg);
-		}
-		else {
-			duk_push_string(g_duktape, err_msg);
-		}
-		duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
+	al_show_mouse_cursor(g_display);
+	duk_get_prop_string(g_duktape, -2, "lineNumber");
+	duk_int_t line_num = duk_get_int(g_duktape, -1);
+	duk_pop(g_duktape);
+	duk_get_prop_string(g_duktape, -2, "fileName");
+	const char* file_path = duk_get_string(g_duktape, -1);
+	if (file_path != NULL) {
+		char* file_name = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
+		file_name = file_name != NULL ? file_name + 1 : file_path;
+		duk_push_sprintf(g_duktape, "%s (line: %i)\n\n%s", file_name, line_num, err_msg);
 	}
-	else if (strstr(err_msg, "Error: @restart") == err_msg) {
-		// RestartGame() was called, reset engine and start again
-		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-		shutdown_engine();
-		initialize_engine();
-		g_game_path = al_create_path(game_path);
-		free(game_path);
-		goto startup;
+	else {
+		duk_push_string(g_duktape, err_msg);
 	}
-	else if (strstr(err_msg, "Error: @exec ") == err_msg) {
-		// ExecuteGame() was called, clear and and prep for new session
-		s_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-		filename = err_msg + 13;
-		path = get_sys_asset_path(filename, "games");
-		shutdown_engine();
-		initialize_engine();
-		g_game_path = al_create_path(path);
-		if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
-			al_destroy_path(g_game_path);
-			g_game_path = al_create_path_for_directory(path);
-		}
-		al_set_path_filename(g_game_path, NULL);
-		free(path);
-		goto startup;
-	}
-	
-	// exception was an intentional bailout (window close, Exit(), etc.), shut down normally
-	goto teardown;
+	duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
 }
 
 bool
