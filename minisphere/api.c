@@ -140,13 +140,13 @@ js_error(js_error_t type, int stack_offset, const char* fmt, ...)
 }
 
 static js_retval_t
-js_GetVersion(_JS_C_FUNC_ARGS_)
+js_GetVersion(_JS_C_FUNC_ARG_LIST_)
 {
 	js_return_number(SPHERE_API_VERSION);
 }
 
 static js_retval_t
-js_GetVersionString(_JS_C_FUNC_ARGS_)
+js_GetVersionString(_JS_C_FUNC_ARG_LIST_)
 {
 	js_return_cstr(SPHERE_API_VERSION_STRING);
 }

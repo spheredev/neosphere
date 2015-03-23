@@ -394,12 +394,12 @@ js_GetKey(duk_context* ctx)
 	return 1;
 }
 
-static duk_ret_t
-js_GetKeyString(duk_context* ctx)
+static js_retval_t
+js_GetKeyString(_JS_C_FUNC_ARG_LIST_)
 {
-	int n_args = duk_get_top(ctx);
-	int keycode = duk_require_int(ctx, 0);
-	bool shift = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
+	js_begin_api_func("GetKeyString", 1);
+	js_int_arg(1, keycode);
+	js_maybe_bool_arg(2, shift, false);
 
 	switch (keycode) {
 	case ALLEGRO_KEY_A: duk_push_string(ctx, shift ? "A" : "a"); break;

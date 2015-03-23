@@ -2,10 +2,10 @@
 #include "api.h"
 #include "color.h"
 
-static js_retval_t js_CreateColor         (_JS_C_FUNC_ARGS_);
-static js_retval_t js_BlendColors         (_JS_C_FUNC_ARGS_);
-static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARGS_);
-static js_retval_t js_Color_toString      (_JS_C_FUNC_ARGS_);
+static js_retval_t js_CreateColor         (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_BlendColors         (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_BlendColorsWeighted (_JS_C_FUNC_ARG_LIST_);
+static js_retval_t js_Color_toString      (_JS_C_FUNC_ARG_LIST_);
 
 color_t
 rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
@@ -82,10 +82,9 @@ duk_push_sphere_color(duk_context* ctx, color_t color)
 }
 
 static js_retval_t
-js_CreateColor(_JS_C_FUNC_ARGS_)
+js_CreateColor(_JS_C_FUNC_ARG_LIST_)
 {
-	js_begin_api_func("CreateColor");
-	js_require_num_args(3);
+	js_begin_api_func("CreateColor", 3);
 	js_int_arg(1, r);
 	js_int_arg(2, g);
 	js_int_arg(3, b);
@@ -99,7 +98,7 @@ js_CreateColor(_JS_C_FUNC_ARGS_)
 }
 
 static js_retval_t
-js_BlendColors(_JS_C_FUNC_ARGS_)
+js_BlendColors(_JS_C_FUNC_ARG_LIST_)
 {
 	color_t color1 = duk_require_sphere_color(ctx, 0);
 	color_t color2 = duk_require_sphere_color(ctx, 1);
@@ -108,7 +107,7 @@ js_BlendColors(_JS_C_FUNC_ARGS_)
 }
 
 static js_retval_t
-js_BlendColorsWeighted(_JS_C_FUNC_ARGS_)
+js_BlendColorsWeighted(_JS_C_FUNC_ARG_LIST_)
 {
 	color_t color1 = duk_require_sphere_color(ctx, 0);
 	color_t color2 = duk_require_sphere_color(ctx, 1);
@@ -121,7 +120,7 @@ js_BlendColorsWeighted(_JS_C_FUNC_ARGS_)
 }
 
 static js_retval_t
-js_Color_toString(_JS_C_FUNC_ARGS_)
+js_Color_toString(_JS_C_FUNC_ARG_LIST_)
 {
 	js_return_cstr("[object color]");
 }
