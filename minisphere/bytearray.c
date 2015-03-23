@@ -178,7 +178,7 @@ duk_require_sphere_bytearray(duk_context* ctx, duk_idx_t index)
 	return array;
 
 on_error:
-	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere byte array");
+	js_error(JS_TYPE_ERROR, -1, "Not a Sphere byte array");
 }
 
 static duk_ret_t
@@ -189,9 +189,9 @@ js_CreateByteArray(duk_context* ctx)
 	bytearray_t* array;
 
 	if (size < 0)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "CreateByteArray(): Size cannot be negative (%i)", size);
+		js_error(JS_RANGE_ERROR, -1, "CreateByteArray(): Size cannot be negative (%i)", size);
 	if (!(array = new_bytearray(size)))
-		duk_error(ctx, DUK_ERR_ERROR, "CreateByteArray(): Failed to create new byte array (internal error)");
+		js_error(JS_ERROR, -1, "CreateByteArray(): Failed to create new byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -204,9 +204,9 @@ js_CreateByteArrayFromString(duk_context* ctx)
 	bytearray_t* array;
 	
 	if (string->length > INT_MAX)
-		duk_error(ctx, DUK_ERR_ALLOC_ERROR, "CreateByteArrayFromString(): Input string too large, size of byte array cannot exceed 2 GB");
+		js_error(JS_RANGE_ERROR, -1, "CreateByteArrayFromString(): Input string too large, size of byte array cannot exceed 2 GB");
 	if (!(array = bytearray_from_lstring(string)))
-		duk_error(ctx, DUK_ERR_ERROR, "CreateByteArrayFromString(): Failed to create byte array from string (internal error)");
+		js_error(JS_ERROR, -1, "CreateByteArrayFromString(): Failed to create byte array from string (internal error)");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -256,7 +256,7 @@ js_ByteArray_getProp(duk_context* ctx)
 		index = duk_to_int(ctx, 1);
 		size = get_bytearray_size(array);
 		if (index < 0 || index >= size)
-			duk_error(ctx, DUK_ERR_RANGE_ERROR, "ByteArray[]: Index is out of bounds (%i - size: %i)", index, size);
+			js_error(JS_RANGE_ERROR, -1, "ByteArray[]: Index is out of bounds (%i - size: %i)", index, size);
 		duk_push_uint(ctx, get_byte(array, index));
 		return 1;
 	}
@@ -279,7 +279,7 @@ js_ByteArray_setProp(duk_context* ctx)
 		index = duk_to_int(ctx, 1);
 		size = get_bytearray_size(array);
 		if (index < 0 || index >= size)
-			duk_error(ctx, DUK_ERR_RANGE_ERROR, "ByteArray[]: Index is out of bounds (%i - size: %i)", index, size);
+			js_error(JS_RANGE_ERROR, -1, "ByteArray[]: Index is out of bounds (%i - size: %i)", index, size);
 		set_byte(array, index, duk_require_uint(ctx, 2));
 		return 0;
 	}
@@ -303,9 +303,9 @@ js_ByteArray_concat(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); array = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (array->size + array2->size > INT_MAX)
-		duk_error(ctx, DUK_ERR_ALLOC_ERROR, "ByteArray:concat(): Unable to concatenate, final size would exceed 2 GB (size1: %u, size2: %u)", array->size, array2->size);
+		js_error(JS_RANGE_ERROR, -1, "ByteArray:concat(): Unable to concatenate, final size would exceed 2 GB (size1: %u, size2: %u)", array->size, array2->size);
 	if (!(new_array = concat_bytearrays(array, array2)))
-		duk_error(ctx, DUK_ERR_ALLOC_ERROR, "ByteArray:concat(): Failed to create concatenated byte array (internal error)");
+		js_error(JS_ERROR, -1, "ByteArray:concat(): Failed to create concatenated byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -326,9 +326,9 @@ js_ByteArray_slice(duk_context* ctx)
 	duk_pop(ctx);
 	end_norm = fmin(end >= 0 ? end : array->size + end, array->size);
 	if (end_norm < start || end_norm > array->size)
-		duk_error(ctx, DUK_ERR_RANGE_ERROR, "ByteArray:slice(): Start and/or end values out of bounds (start: %i, end: %i - size: %i)", start, end_norm, array->size);
+		js_error(JS_RANGE_ERROR, -1, "ByteArray:slice(): Start and/or end values out of bounds (start: %i, end: %i - size: %i)", start, end_norm, array->size);
 	if (!(new_array = slice_bytearray(array, start, end_norm - start)))
-		duk_error(ctx, DUK_ERR_ERROR, "ByteArray:slice(): Failed to create sliced byte array (internal error)");
+		js_error(JS_ERROR, -1, "ByteArray:slice(): Failed to create sliced byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }

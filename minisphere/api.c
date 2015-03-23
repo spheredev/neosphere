@@ -95,7 +95,7 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 void
 bail_out_game(void)
 {
-	duk_error(g_duktape, DUK_ERR_ERROR, "@exit");
+	js_error(JS_ERROR, 0, "@exit");
 }
 
 void
@@ -425,7 +425,7 @@ js_ExecuteGame(duk_context* ctx)
 {
 	const char* path = duk_require_string(ctx, 0);
 	
-	duk_error(ctx, DUK_ERR_ERROR, "@exec %s", path);
+	js_error(JS_ERROR, 0, "@exec %s", path);
 }
 
 static duk_ret_t
@@ -453,7 +453,7 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
-	duk_error(ctx, DUK_ERR_ERROR, "@restart");
+	js_error(JS_ERROR, 0, "@restart");
 }
 
 static duk_ret_t

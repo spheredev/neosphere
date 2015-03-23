@@ -284,7 +284,7 @@ duk_require_sphere_font(duk_context* ctx, duk_idx_t index)
 	return font;
 
 on_error:
-	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere font");
+	js_error(JS_TYPE_ERROR, -1, "Object is not a Sphere font");
 }
 
 static duk_ret_t
@@ -305,7 +305,7 @@ js_LoadFont(duk_context* ctx)
 	font = load_font(path);
 	free(path);
 	if (font == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "LoadFont(): Failed to load font file '%s'", filename);
+		js_error(JS_ERROR, -1, "LoadFont(): Failed to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
 	return 1;

@@ -116,7 +116,7 @@ duk_require_sphere_surface(duk_context* ctx, duk_idx_t index)
 	return image;
 
 on_error:
-	duk_error(ctx, DUK_ERR_TYPE_ERROR, "Not a Sphere surface");
+	js_error(JS_TYPE_ERROR, -1, "Object is not a Sphere surface");
 }
 
 static void
@@ -173,7 +173,7 @@ js_CreateSurface(duk_context* ctx)
 	image_t* image;
 	
 	if (!(image = create_image(w, h)))
-		duk_error(ctx, DUK_ERR_ERROR, "CreateSurface(): Failed to create image for surface (internal error)");
+		js_error(JS_ERROR, -1, "CreateSurface(): Failed to create image for surface (internal error)");
 	fill_image(image, color);
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
@@ -193,12 +193,12 @@ js_GrabSurface(duk_context* ctx)
 
 	backbuffer = al_get_backbuffer(g_display);
 	if ((image = create_image(w, h)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Failed to create surface bitmap");
+		js_error(JS_ERROR, -1, "GrabSurface(): Failed to create surface bitmap");
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
 	if (!rescale_image(image, g_res_x, g_res_y))
-		duk_error(ctx, DUK_ERR_ERROR, "GrabSurface(): Failed to rescale grabbed image (internal error)");
+		js_error(JS_ERROR, -1, "GrabSurface(): Failed to rescale grabbed image (internal error)");
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
 	return 1;
@@ -215,7 +215,7 @@ js_LoadSurface(duk_context* ctx)
 	image = load_image(path);
 	free(path);
 	if (image == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "LoadSurface(): Failed to load image file '%s'", filename);
+		js_error(JS_ERROR, -1, "LoadSurface(): Failed to load image file '%s'", filename);
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
 	return 1;
@@ -293,7 +293,7 @@ js_Surface_applyLookup(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:applyLookup(): Failed to apply lookup transformation (internal error)");
+		js_error(JS_ERROR, -1, "Surface:applyLookup(): Failed to apply lookup transformation (internal error)");
 	return 0;
 }
 
@@ -371,7 +371,7 @@ js_Surface_clone(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:clone() - Unable to create new surface image");
+		js_error(JS_ERROR, -1, "Surface:clone() - Unable to create new surface image");
 	duk_push_sphere_surface(ctx, new_image);
 	free_image(new_image);
 	return 1;
@@ -392,7 +392,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if ((new_image = create_image(w, h)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:cloneSection() - Unable to create new surface image");
+		js_error(JS_ERROR, -1, "Surface:cloneSection() - Unable to create new surface image");
 	al_set_target_bitmap(get_image_bitmap(new_image));
 	al_draw_bitmap_region(get_image_bitmap(image), x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
@@ -411,7 +411,7 @@ js_Surface_createImage(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:createImage() - Failed to create new image bitmap");
+		js_error(JS_ERROR, -1, "Surface:createImage() - Failed to create new image bitmap");
 	duk_push_sphere_image(ctx, new_image);
 	free_image(new_image);
 	return 1;
@@ -544,10 +544,10 @@ js_Surface_pointSeries(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!duk_is_array(ctx, 0))
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:pointSeries(): First argument must be an array");
+		js_error(JS_ERROR, -1, "Surface:pointSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer");
+		js_error(JS_ERROR, -1, "Surface:pointSeries(): Failed to allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
@@ -604,7 +604,7 @@ js_Surface_rescale(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!rescale_image(image, width, height))
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:rescale() - Failed to rescale image (internal error)");
+		js_error(JS_ERROR, -1, "Surface:rescale() - Failed to rescale image (internal error)");
 	return 0;
 }
 
@@ -629,7 +629,7 @@ js_Surface_rotate(duk_context* ctx)
 		// TODO: implement in-place resizing for Surface:rotate()
 	}
 	if ((new_image = create_image(new_w, new_h)) == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Surface:rotate() - Unable to create new surface bitmap");
+		js_error(JS_ERROR, -1, "Surface:rotate() - Unable to create new surface bitmap");
 	al_set_target_bitmap(get_image_bitmap(new_image));
 	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
 	al_set_target_backbuffer(g_display);

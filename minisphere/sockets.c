@@ -336,9 +336,9 @@ js_Socket_isConnected(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket != NULL) {
 		if (is_socket_server(socket) && socket->max_backlog > 0)
-			duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Not valid on listen-only sockets");
+			js_error(JS_ERROR, -1, "Socket:isConnected(): Not valid on listen-only sockets");
 		if (is_socket_data_lost(socket))
-			duk_error(ctx, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
+			js_error(JS_ERROR, -1, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
 		duk_push_boolean(ctx, is_socket_live(socket));
 	}
 	else {
@@ -356,11 +356,11 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:getPendingReadSize(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Not valid on listen-only sockets");
+		js_error(JS_ERROR, -1, "Socket:getPendingReadSize(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
+		js_error(JS_ERROR, -1, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
 	duk_push_uint(ctx, socket->pend_size);
 	return 1;
 }
@@ -374,13 +374,13 @@ js_Socket_getRemoteAddress(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:getRemoteAddress(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Not valid on listen-only sockets");
+		js_error(JS_ERROR, -1, "Socket:getRemoteAddress(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has dropped incoming data due to allocation failure (internal error)");
+		js_error(JS_ERROR, -1, "Socket:getRemoteAddress(): Socket has dropped incoming data due to allocation failure (internal error)");
 	if (!is_socket_live(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket is not connected");
+		js_error(JS_ERROR, -1, "Socket:getRemoteAddress(): Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
 	return 1;
 }
@@ -394,13 +394,13 @@ js_Socket_getRemotePort(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:getRemotePort(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Not valid on listen-only sockets");
+		js_error(JS_ERROR, -1, "Socket:getRemotePort(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has dropped incoming data due to allocation failure (internal error)");
+		js_error(JS_ERROR, -1, "Socket:getRemotePort(): Socket has dropped incoming data due to allocation failure (internal error)");
 	if (!is_socket_live(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket is not connected");
+		js_error(JS_ERROR, -1, "Socket:getRemotePort(): Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
 	return 1;
 }
@@ -415,9 +415,9 @@ js_Socket_acceptNext(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:acceptNext(): Socket has already been closed");
 	if (!is_socket_server(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:acceptNext(): Not valid on non-listening socket");
+		js_error(JS_ERROR, -1, "Socket:acceptNext(): Not valid on non-listening socket");
 	new_socket = accept_next_socket(socket);
 	if (new_socket) {
 		duk_push_sphere_socket(ctx, new_socket);
@@ -439,7 +439,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:close(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:close(): Socket has already been closed");
 	free_socket(socket);
 	return 1;
 }
@@ -457,18 +457,18 @@ js_Socket_read(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:read(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Not valid on listen-only sockets");
+		js_error(JS_ERROR, -1, "Socket:read(): Not valid on listen-only sockets");
 	if (!is_socket_live(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
+		js_error(JS_ERROR, -1, "Socket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Socket has dropped incoming data due to allocation failure (internal error)");
+		js_error(JS_ERROR, -1, "Socket:read(): Socket has dropped incoming data due to allocation failure (internal error)");
 	if (!(read_buffer = malloc(length)))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer (internal error)");
+		js_error(JS_ERROR, -1, "Socket:read(): Failed to allocate read buffer (internal error)");
 	read_socket(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:read(): Failed to create byte array (internal error)");
+		js_error(JS_ERROR, -1, "Socket:read(): Failed to create byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -485,15 +485,15 @@ js_Socket_readString(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:readString(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Not valid on listen-only sockets");
+		js_error(JS_ERROR, -1, "Socket:readString(): Not valid on listen-only sockets");
 	if (!is_socket_live(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
+		js_error(JS_ERROR, -1, "Socket:readString(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Socket has dropped incoming data due to allocation failure (internal error)");
+		js_error(JS_ERROR, -1, "Socket:readString(): Socket has dropped incoming data due to allocation failure (internal error)");
 	if (!(buffer = malloc(length)))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer (internal error)");
+		js_error(JS_ERROR, -1, "Socket:readString(): Failed to allocate read buffer (internal error)");
 	read_socket(socket, buffer, length);
 	duk_push_lstring(ctx, buffer, length);
 	free(buffer);
@@ -519,13 +519,13 @@ js_Socket_write(duk_context* ctx)
 		write_size = get_bytearray_size(array);
 	}
 	if (socket == NULL)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket has already been closed");
+		js_error(JS_ERROR, -1, "Socket:write(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Not valid on listen-only sockets");
+		js_error(JS_ERROR, -1, "Socket:write(): Not valid on listen-only sockets");
 	if (!is_socket_live(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
+		js_error(JS_ERROR, -1, "Socket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error(ctx, DUK_ERR_ERROR, "Socket:write(): Socket has dropped incoming data due to allocation failure (internal error)");
+		js_error(JS_ERROR, -1, "Socket:write(): Socket has dropped incoming data due to allocation failure (internal error)");
 	write_socket(socket, payload, write_size);
 	return 0;
 }

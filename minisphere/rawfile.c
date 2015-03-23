@@ -55,24 +55,19 @@ js_OpenRawFile(duk_context* ctx)
 	path = get_asset_path(filename, "other", writable);
 	file = fopen(path, writable ? "w+b" : "rb");
 	free(path);
-	if (file != NULL) {
-		duk_push_object(ctx);
-		duk_push_pointer(ctx, file); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
-		duk_push_c_function(ctx, js_RawFile_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-		duk_push_c_function(ctx, js_RawFile_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-		duk_push_c_function(ctx, js_RawFile_getPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPosition");
-		duk_push_c_function(ctx, js_RawFile_getSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getSize");
-		duk_push_c_function(ctx, js_RawFile_setPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPosition");
-		duk_push_c_function(ctx, js_RawFile_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
-		duk_push_c_function(ctx, js_RawFile_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
-		duk_push_c_function(ctx, js_RawFile_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "OpenRawFile(): Unable to open file '%s' for %s",
-			filename,
-			writable ? "writing" : "reading");
-	}
+	if (file == NULL)
+		js_error(JS_ERROR, -1, "OpenRawFile(): Failed to open file '%s' for %s", filename, writable ? "writing" : "reading");
+	duk_push_object(ctx);
+	duk_push_pointer(ctx, file); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
+	duk_push_c_function(ctx, js_RawFile_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_RawFile_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_RawFile_getPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPosition");
+	duk_push_c_function(ctx, js_RawFile_getSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getSize");
+	duk_push_c_function(ctx, js_RawFile_setPosition, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setPosition");
+	duk_push_c_function(ctx, js_RawFile_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
+	duk_push_c_function(ctx, js_RawFile_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
+	duk_push_c_function(ctx, js_RawFile_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
+	return 1;
 }
 
 static duk_ret_t
@@ -100,13 +95,10 @@ js_RawFile_getPosition(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (file != NULL) {
-		duk_push_int(ctx, ftell(file));
-		return 1;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:getPosition(): Attempt to use RawFile object after file has been closed");
-	}
+	if (file == NULL)
+		js_error(JS_ERROR, -1, "RawFile:getPosition(): File has already been closed");
+	duk_push_int(ctx, ftell(file));
+	return 1;
 }
 
 static duk_ret_t
@@ -137,7 +129,7 @@ js_RawFile_setPosition(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (file != NULL)
+	if (file == NULL)
 		js_error(JS_ERROR, -1, "RawFile:setPosition(): File has already been closed");
 	if (!fseek(file, new_pos, SEEK_SET))
 		js_error(JS_ERROR, -1, "RawFile:setPosition(): Failed to set read/write position (internal error)");
@@ -151,17 +143,12 @@ js_RawFile_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
 	duk_pop(ctx);
-	if (file != NULL) {
-		fclose(file);
-		duk_push_this(ctx);
-		duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
-		duk_pop(ctx);
-		return 0;
-	}
-	else {
-		duk_error(ctx, DUK_ERR_ERROR, "RawFile:close(): Attempt to use RawFile object after file has been closed");
-	}
+	if (file == NULL)
+		js_error(JS_ERROR, -1, "RawFile:close(): File has already been closed");
+	fclose(file);
+	return 0;
 }
 
 static duk_ret_t
