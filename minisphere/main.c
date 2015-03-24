@@ -67,7 +67,7 @@ font_t*              g_sys_font   = NULL;
 int                  g_res_x, g_res_y;
 
 int
-main(int argc, char** argv)
+main(int argc, char* argv[])
 {
 	ALLEGRO_USTR*        dialog_name;
 	duk_errcode_t        err_code;

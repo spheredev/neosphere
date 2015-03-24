@@ -4,18 +4,20 @@
 
 #include "primitives.h"
 
-static duk_ret_t js_GetClippingRectangle (duk_context* ctx);
-static duk_ret_t js_SetClippingRectangle (duk_context* ctx);
-static duk_ret_t js_ApplyColorMask       (duk_context* ctx);
-static duk_ret_t js_GradientCircle       (duk_context* ctx);
-static duk_ret_t js_GradientRectangle    (duk_context* ctx);
-static duk_ret_t js_Line                 (duk_context* ctx);
-static duk_ret_t js_OutlinedCircle       (duk_context* ctx);
-static duk_ret_t js_OutlinedRectangle    (duk_context* ctx);
-static duk_ret_t js_Point                (duk_context* ctx);
-static duk_ret_t js_PointSeries          (duk_context* ctx);
-static duk_ret_t js_Rectangle            (duk_context* ctx);
-static duk_ret_t js_Triangle             (duk_context* ctx);
+static duk_ret_t js_GetClippingRectangle   (duk_context* ctx);
+static duk_ret_t js_SetClippingRectangle   (duk_context* ctx);
+static duk_ret_t js_ApplyColorMask         (duk_context* ctx);
+static duk_ret_t js_GradientCircle         (duk_context* ctx);
+static duk_ret_t js_GradientRectangle      (duk_context* ctx);
+static duk_ret_t js_Line                   (duk_context* ctx);
+static duk_ret_t js_OutlinedCircle         (duk_context* ctx);
+static duk_ret_t js_OutlinedRectangle      (duk_context* ctx);
+static duk_ret_t js_OutlinedRoundRectangle (duk_context* ctx);
+static duk_ret_t js_Point                  (duk_context* ctx);
+static duk_ret_t js_PointSeries            (duk_context* ctx);
+static duk_ret_t js_Rectangle              (duk_context* ctx);
+static duk_ret_t js_RoundRectangle         (duk_context* ctx);
+static duk_ret_t js_Triangle               (duk_context* ctx);
 
 void
 init_primitives_api(void)
@@ -28,9 +30,11 @@ init_primitives_api(void)
 	register_api_func(g_duktape, NULL, "Line", js_Line);
 	register_api_func(g_duktape, NULL, "OutlinedCircle", js_OutlinedCircle);
 	register_api_func(g_duktape, NULL, "OutlinedRectangle", js_OutlinedRectangle);
+	register_api_func(g_duktape, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
 	register_api_func(g_duktape, NULL, "Point", js_Point);
 	register_api_func(g_duktape, NULL, "PointSeries", js_PointSeries);
 	register_api_func(g_duktape, NULL, "Rectangle", js_Rectangle);
+	register_api_func(g_duktape, NULL, "RoundRectangle", js_RoundRectangle);
 	register_api_func(g_duktape, NULL, "Triangle", js_Triangle);
 }
 
@@ -169,6 +173,23 @@ js_OutlinedRectangle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_OutlinedRoundRectangle(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	float x = duk_require_int(ctx, 0) + 0.5;
+	float y = duk_require_int(ctx, 1) + 0.5;
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	float radius = duk_require_number(ctx, 4);
+	color_t color = duk_require_sphere_color(ctx, 5);
+	int thickness = n_args >= 7 ? duk_require_int(ctx, 6) : 1;
+
+	if (!is_skipped_frame())
+		al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
+	return 0;
+}
+
+static duk_ret_t
 js_Point(duk_context* ctx)
 {
 	float x = duk_require_int(ctx, 0) + 0.5;
@@ -223,6 +244,21 @@ js_Rectangle(duk_context* ctx)
 
 	if (!is_skipped_frame())
 		al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
+	return 0;
+}
+
+static duk_ret_t
+js_RoundRectangle(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	float radius = duk_require_number(ctx, 4);
+	color_t color = duk_require_sphere_color(ctx, 5);
+
+	if (!is_skipped_frame())
+		al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
 	return 0;
 }
 
