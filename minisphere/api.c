@@ -414,7 +414,7 @@ js_Abort(duk_context* ctx)
 
 	if (stack_offset > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
-	duk_error_ni(ctx, DUK_ERR_ERROR, -1 + stack_offset, message);
+	duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, message);
 }
 
 static duk_ret_t
