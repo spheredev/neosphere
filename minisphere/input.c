@@ -2,6 +2,9 @@
 #include "api.h"
 #include "input.h"
 
+#define MAX_JOYSTICKS    4
+#define MAX_JOY_BUTTONS  32
+
 enum mouse_button
 {
 	MOUSE_BUTTON_LEFT = 1,
@@ -42,14 +45,15 @@ static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 
 static void queue_wheel_event (int event);
 
-static int                    s_is_button_bound[4][32];
+static int                    s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static int                    s_is_key_bound[ALLEGRO_KEY_MAX];
-static int                    s_button_down_scripts[4][32];
-static int                    s_button_up_scripts[4][32];
+static int                    s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static int                    s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static int                    s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int                    s_key_up_scripts[ALLEGRO_KEY_MAX];
+static ALLEGRO_JOYSTICK_STATE s_joy_state[MAX_JOYSTICKS];
 static ALLEGRO_KEYBOARD_STATE s_keyboard_state;
-static bool                   s_last_button_state[4][32];
+static bool                   s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static bool                   s_last_key_state[ALLEGRO_KEY_MAX];
 static ALLEGRO_MOUSE_STATE    s_mouse_state;
 static int                    s_last_wheel_pos;
@@ -59,35 +63,24 @@ static int                    s_wheel_queue[255];
 bool
 is_joy_button_down(int joy_index, int button)
 {
-	ALLEGRO_JOYSTICK*      joystick;
-	ALLEGRO_JOYSTICK_STATE state;
-	
-	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return false;
-	if (!(joystick = al_get_joystick(joy_index))) return false;
-	if (button < 0 || button >= al_get_joystick_num_buttons(joystick)) return false;
-	al_get_joystick_state(joystick, &state);
-	return state.button[button] > 0;
+	return s_joy_state[joy_index].button[button] > 0;
 }
 
 float
 get_joy_axis(int joy_index, int axis_index)
 {
-	ALLEGRO_JOYSTICK*      joystick;
-	int                    n_stick_axes;
-	int                    n_sticks;
-	ALLEGRO_JOYSTICK_STATE state;
+	ALLEGRO_JOYSTICK* joystick;
+	int               n_stick_axes;
+	int               n_sticks;
 
 	int i;
 
-	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return 0.0;
-	if (axis_index < 0 || axis_index >= get_joy_axis_count(joy_index)) return 0.0;
 	if (!(joystick = al_get_joystick(joy_index))) return 0.0;
-	al_get_joystick_state(joystick, &state);
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	for (i = 0; i < n_sticks; ++i) {
 		n_stick_axes = al_get_joystick_num_axes(joystick, i);
 		if (axis_index < n_stick_axes)
-			return state.stick[i].axis[axis_index];
+			return s_joy_state[joy_index].stick[i].axis[axis_index];
 		axis_index -= n_stick_axes;
 	}
 	return 0.0;
@@ -102,7 +95,6 @@ get_joy_axis_count(int joy_index)
 
 	int i;
 	
-	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return 0;
 	if (!(joystick = al_get_joystick(joy_index))) return 0;
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	n_axes = 0;
@@ -116,7 +108,6 @@ get_joy_button_count(int joy_index)
 {
 	ALLEGRO_JOYSTICK* joystick;
 
-	if (joy_index < 0 || joy_index >= al_get_num_joysticks()) return 0;
 	if (!(joystick = al_get_joystick(joy_index))) return 0;
 	return al_get_joystick_num_buttons(joystick);
 }
@@ -124,12 +115,19 @@ get_joy_button_count(int joy_index)
 void
 update_input(void)
 {
-	bool is_down;
+	bool              is_down;
+	ALLEGRO_JOYSTICK* joystick;
 
 	int i, j;
 
 	al_get_keyboard_state(&s_keyboard_state);
 	al_get_mouse_state(&s_mouse_state);
+	for (i = 0; i < MAX_JOYSTICKS; i++) {
+		if (joystick = al_get_joystick(i))
+			al_get_joystick_state(joystick, &s_joy_state[i]);
+		else
+			memset(&s_joy_state[i], 0, sizeof(ALLEGRO_JOYSTICK_STATE));
+	}
 	if (s_mouse_state.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
 	if (s_mouse_state.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
 	s_last_wheel_pos = s_mouse_state.z;
@@ -141,7 +139,7 @@ update_input(void)
 		if (!is_down && s_last_key_state[i]) run_script(s_key_up_scripts[i], false);
 		s_last_key_state[i] = is_down;
 	}
-	for (i = 0; i < 4; ++i) for (j = 0; j < 32; ++j) {
+	for (i = 0; i < MAX_JOYSTICKS; ++i) for (j = 0; j < MAX_JOY_BUTTONS; ++j) {
 		if (!s_is_button_bound[i][j])
 			continue;
 		is_down = is_joy_button_down(i, j);
@@ -154,13 +152,15 @@ update_input(void)
 void
 init_input_api(void)
 {
-	memset(s_is_button_bound, 0, 4 * 32 * sizeof(bool));
+	int c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
+	
+	memset(s_is_button_bound, 0, c_buttons * sizeof(bool));
 	memset(s_is_key_bound, 0, ALLEGRO_KEY_MAX * sizeof(bool));
-	memset(s_button_down_scripts, 0, 4 * 32 * sizeof(int));
-	memset(s_button_up_scripts, 0, 4 * 32 * sizeof(int));
+	memset(s_button_down_scripts, 0, c_buttons * sizeof(int));
+	memset(s_button_up_scripts, 0, c_buttons * sizeof(int));
 	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
 	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
-	memset(s_last_button_state, 0, 4 * 32 * sizeof(bool));
+	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
 	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
 	al_get_keyboard_state(&s_keyboard_state);
 	al_get_mouse_state(&s_mouse_state); s_last_wheel_pos = s_mouse_state.z;
@@ -568,10 +568,10 @@ static js_BindJoystickButton(duk_context* ctx)
 	lstring_t* down_script = !duk_is_null(ctx, 2) ? duk_require_lstring_t(ctx, 2) : lstring_from_cstr("");
 	lstring_t* up_script = !duk_is_null(ctx, 3) ? duk_require_lstring_t(ctx, 3) : lstring_from_cstr("");
 
-	if (joy_index < 0 || joy_index >= 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
-	if (button < 0 || joy_index >= 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range for binding", button);
+	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
+	if (button < 0 || button >= MAX_JOY_BUTTONS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
 	free_script(s_button_down_scripts[joy_index][button]);
 	free_script(s_button_up_scripts[joy_index][button]);
 	s_button_down_scripts[joy_index][button] = compile_script(down_script, "[button-down script]");
@@ -615,10 +615,10 @@ js_UnbindJoystickButton(duk_context* ctx)
 	int joy_index = duk_require_int(ctx, 0);
 	int button = duk_require_int(ctx, 1);
 
-	if (joy_index < 0 || joy_index >= 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindJoystickButton(): Joystick index out of range for binding (%i)", joy_index);
-	if (button < 0 || joy_index >= 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindJoystickButton(): Button index out of range for binding", button);
+	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
+	if (button < 0 || button >= MAX_JOY_BUTTONS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
 	free_script(s_button_down_scripts[joy_index][button]);
 	free_script(s_button_up_scripts[joy_index][button]);
 	s_button_down_scripts[joy_index][button] = 0;
