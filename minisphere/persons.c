@@ -1400,13 +1400,13 @@ static duk_ret_t
 js_SetPersonLayer(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	int z = duk_require_int(ctx, 1);
+	int layer = duk_require_map_layer(ctx, 1);
 
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonLayer(): Person '%s' doesn't exist", name);
-	person->layer = z;
+	person->layer = layer;
 	return 0;
 }
 

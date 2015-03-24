@@ -16,6 +16,7 @@ extern int              get_map_tile            (int x, int y, int layer);
 extern const tileset_t* get_map_tileset         (void);
 extern void             normalize_map_entity_xy (double* inout_x, double* inout_y, int layer);
 
-extern void             init_map_engine_api (duk_context* ctx);
+extern void             init_map_engine_api   (duk_context* ctx);
+extern int              duk_require_map_layer (duk_context* ctx, duk_idx_t index);
 
 #endif // MINISPHERE__MAP_ENGINE_H__INCLUDED
