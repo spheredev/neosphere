@@ -101,16 +101,6 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 }
 
 void
-bail_out_game(bool force_exit)
-{
-	if (force_exit) {
-		free(g_last_game_path);
-		g_last_game_path = NULL;
-	}
-	longjmp(g_jmp_exit, 1);
-}
-
-void
 duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
@@ -452,7 +442,7 @@ js_Delay(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Negative delay not allowed (%i)", millisecs);
 	start_time = al_get_time();
 	while (al_get_time() < start_time + millisecs / 1000) {
-		if (!do_events()) bail_out_game(true);
+		do_events();
 	}
 	return 0;
 }
@@ -476,20 +466,20 @@ js_ExecuteGame(duk_context* ctx)
 	}
 	al_set_path_filename(g_game_path, NULL);
 	free(path);
-	longjmp(g_jmp_restart, 1);
+	restart_engine();
 }
 
 static duk_ret_t
 js_Exit(duk_context* ctx)
 {
-	bail_out_game(false);
+	exit_game(false);
 	return 0;
 }
 
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	if (!flip_screen(s_framerate)) bail_out_game(true);
+	flip_screen(s_framerate);
 	return 0;
 }
 
@@ -504,7 +494,7 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
-	longjmp(g_jmp_restart, 1);
+	restart_engine();
 }
 
 static duk_ret_t

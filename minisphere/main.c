@@ -42,6 +42,8 @@ static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
 static bool    s_is_fullscreen = false;
+static jmp_buf s_jmp_exit;
+static jmp_buf s_jmp_restart;
 static double  s_last_flip_time;
 static double  s_next_fps_poll_time;
 static double  s_next_frame_time;
@@ -56,8 +58,6 @@ duk_context*         g_duktape    = NULL;
 ALLEGRO_EVENT_QUEUE* g_events     = NULL;
 ALLEGRO_CONFIG*      g_game_conf  = NULL;
 ALLEGRO_PATH*        g_game_path  = NULL;
-jmp_buf              g_jmp_exit;
-jmp_buf              g_jmp_restart;
 key_queue_t          g_key_queue;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
@@ -117,7 +117,7 @@ main(int argc, char** argv)
 	}
 	
 	// set up jump points for script bailout
-	if (setjmp(g_jmp_exit)) {  // user closed window, script called Exit(), etc.
+	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
@@ -133,7 +133,7 @@ main(int argc, char** argv)
 			return EXIT_SUCCESS;
 		}
 	}
-	if (setjmp(g_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
+	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
 		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		shutdown_engine();
 		initialize_engine();
@@ -325,7 +325,17 @@ set_clip_rectangle(rect_t clip)
 	al_set_clipping_rectangle(clip.x1, clip.y1, clip.x2 - clip.x1, clip.y2 - clip.y1);
 }
 
-bool
+void
+exit_game(bool is_shutdown)
+{
+	if (is_shutdown) {
+		free(g_last_game_path);
+		g_last_game_path = NULL;
+	}
+	longjmp(s_jmp_exit, 1);
+}
+
+void
 do_events(void)
 {
 	ALLEGRO_EVENT event;
@@ -339,7 +349,7 @@ do_events(void)
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			return false;
+			exit_game(true);
 		case ALLEGRO_EVENT_KEY_CHAR:
 			switch (event.keyboard.keycode) {
 			case ALLEGRO_KEY_ENTER:
@@ -367,10 +377,9 @@ do_events(void)
 			}
 		}
 	}
-	return true;
 }
 
-bool
+void
 flip_screen(int framerate)
 {
 	char              filename[50];
@@ -418,14 +427,12 @@ flip_screen(int framerate)
 		if (s_next_frame_time > al_get_time()) {
 			al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
 		}
-		do {
-			if (!do_events()) return false;
-		} while (al_get_time() < s_next_frame_time);
+		do do_events(); while (al_get_time() < s_next_frame_time);
 		s_next_frame_time += 1.0 / framerate;
 	}
 	else {
 		s_skipping_frame = false;
-		if (!do_events()) return false;
+		do_events();
 	}
 	if (!is_backbuffer_valid && !s_skipping_frame)  // did we just finish skipping frames?
 		s_next_frame_time = al_get_time() + 1.0 / framerate;
@@ -438,7 +445,12 @@ flip_screen(int framerate)
 		s_next_fps_poll_time = al_get_time() + 1.0;
 	}
 	if (!s_skipping_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	return true;
+}
+
+void
+restart_engine(void)
+{
+	longjmp(s_jmp_restart, 1);
 }
 
 void
