@@ -51,6 +51,7 @@ static int                    s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTO
 static int                    s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static int                    s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int                    s_key_up_scripts[ALLEGRO_KEY_MAX];
+static ALLEGRO_JOYSTICK*      s_joy_handles[MAX_JOYSTICKS];
 static ALLEGRO_JOYSTICK_STATE s_joy_state[MAX_JOYSTICKS];
 static ALLEGRO_KEYBOARD_STATE s_keyboard_state;
 static bool                   s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
@@ -59,6 +60,30 @@ static ALLEGRO_MOUSE_STATE    s_mouse_state;
 static int                    s_last_wheel_pos;
 static int                    s_num_wheel_events = 0;
 static int                    s_wheel_queue[255];
+
+void
+initialize_input(void)
+{
+	int c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
+
+	int i;
+
+	memset(s_is_button_bound, 0, c_buttons * sizeof(bool));
+	memset(s_is_key_bound, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+	memset(s_button_down_scripts, 0, c_buttons * sizeof(int));
+	memset(s_button_up_scripts, 0, c_buttons * sizeof(int));
+	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
+	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
+	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
+	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+	
+	for (i = 0; i < MAX_JOYSTICKS; ++i) {
+		s_joy_handles[i] = al_get_joystick(i);
+	}
+	al_get_keyboard_state(&s_keyboard_state);
+	al_get_mouse_state(&s_mouse_state);
+	s_last_wheel_pos = s_mouse_state.z;
+}
 
 bool
 is_joy_button_down(int joy_index, int button)
@@ -75,7 +100,7 @@ get_joy_axis(int joy_index, int axis_index)
 
 	int i;
 
-	if (!(joystick = al_get_joystick(joy_index))) return 0.0;
+	if (!(joystick = s_joy_handles[joy_index])) return 0.0;
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	for (i = 0; i < n_sticks; ++i) {
 		n_stick_axes = al_get_joystick_num_axes(joystick, i);
@@ -95,7 +120,7 @@ get_joy_axis_count(int joy_index)
 
 	int i;
 	
-	if (!(joystick = al_get_joystick(joy_index))) return 0;
+	if (!(joystick = s_joy_handles[joy_index])) return 0;
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	n_axes = 0;
 	for (i = 0; i < n_sticks; ++i)
@@ -108,7 +133,7 @@ get_joy_button_count(int joy_index)
 {
 	ALLEGRO_JOYSTICK* joystick;
 
-	if (!(joystick = al_get_joystick(joy_index))) return 0;
+	if (!(joystick = s_joy_handles[joy_index])) return 0;
 	return al_get_joystick_num_buttons(joystick);
 }
 
@@ -123,7 +148,7 @@ update_input(void)
 	al_get_keyboard_state(&s_keyboard_state);
 	al_get_mouse_state(&s_mouse_state);
 	for (i = 0; i < MAX_JOYSTICKS; i++) {
-		if (joystick = al_get_joystick(i))
+		if (joystick = s_joy_handles[i])
 			al_get_joystick_state(joystick, &s_joy_state[i]);
 		else
 			memset(&s_joy_state[i], 0, sizeof(ALLEGRO_JOYSTICK_STATE));
@@ -152,19 +177,8 @@ update_input(void)
 void
 init_input_api(void)
 {
-	int c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
+	initialize_input();
 	
-	memset(s_is_button_bound, 0, c_buttons * sizeof(bool));
-	memset(s_is_key_bound, 0, ALLEGRO_KEY_MAX * sizeof(bool));
-	memset(s_button_down_scripts, 0, c_buttons * sizeof(int));
-	memset(s_button_up_scripts, 0, c_buttons * sizeof(int));
-	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
-	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
-	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
-	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
-	al_get_keyboard_state(&s_keyboard_state);
-	al_get_mouse_state(&s_mouse_state); s_last_wheel_pos = s_mouse_state.z;
-
 	register_api_const(g_duktape, "PLAYER_1", 0);
 	register_api_const(g_duktape, "PLAYER_2", 1);
 	register_api_const(g_duktape, "PLAYER_3", 2);
