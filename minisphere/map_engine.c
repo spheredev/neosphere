@@ -168,6 +168,10 @@ struct map_layer
 	bool             is_reflective;
 	bool             is_visible;
 	int              width, height;
+	float            autoscroll_x;
+	float            autoscroll_y;
+	float            parallax_x;
+	float            parallax_y;
 	struct map_tile* tilemap;
 	obsmap_t*        obsmap;
 	color_t          color_mask;
@@ -354,28 +358,33 @@ load_map(const char* path)
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (fread(&layer_hdr, sizeof(struct rmp_layer_header), 1, file) != 1)
 				goto on_error;
-			map->layers[i].is_parallax = (layer_hdr.flags & 2) != 0x0;
-			map->layers[i].is_reflective = layer_hdr.is_reflective;
-			map->layers[i].is_visible = (layer_hdr.flags & 1) == 0x0;
-			map->layers[i].color_mask = rgba(255, 255, 255, 255);
-			map->layers[i].width = layer_hdr.width;
-			map->layers[i].height = layer_hdr.height;
-			if (!map->layers[i].is_parallax) {
-				map->width = fmax(map->width, map->layers[i].width);
-				map->height = fmax(map->height, map->layers[i].height);
+			layer = &map->layers[i];
+			layer->is_parallax = (layer_hdr.flags & 2) != 0x0;
+			layer->is_reflective = layer_hdr.is_reflective;
+			layer->is_visible = (layer_hdr.flags & 1) == 0x0;
+			layer->color_mask = rgba(255, 255, 255, 255);
+			layer->width = layer_hdr.width;
+			layer->height = layer_hdr.height;
+			layer->autoscroll_x = layer->is_parallax ? layer_hdr.scrolling_x : 0.0;
+			layer->autoscroll_y = layer->is_parallax ? layer_hdr.scrolling_y : 0.0;
+			layer->parallax_x = layer->is_parallax ? layer_hdr.parallax_x : 1.0;
+			layer->parallax_y = layer->is_parallax ? layer_hdr.parallax_y : 1.0;
+			if (!layer->is_parallax) {
+				map->width = fmax(map->width, layer->width);
+				map->height = fmax(map->height, layer->height);
 			}
-			if (!(map->layers[i].tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))))
+			if (!(layer->tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))))
 				goto on_error;
-			if ((map->layers[i].obsmap = new_obsmap()) == NULL) goto on_error;
-			map->layers[i].name = read_lstring(file, true);
+			if ((layer->obsmap = new_obsmap()) == NULL) goto on_error;
+			layer->name = read_lstring(file, true);
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (fread(tile_data, 2, num_tiles, file) != num_tiles) goto on_error;
 			for (j = 0; j < num_tiles; ++j)
-				map->layers[i].tilemap[j].tile_index = tile_data[j];
+				layer->tilemap[j].tile_index = tile_data[j];
 			for (j = 0; j < layer_hdr.num_segments; ++j) {
 				if (!fread_rect_32(file, &segment)) goto on_error;
-				add_obsmap_line(map->layers[i].obsmap, segment);
+				add_obsmap_line(layer->obsmap, segment);
 			}
 			free(tile_data); tile_data = NULL;
 		}
@@ -712,7 +721,7 @@ normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 	int tile_w, tile_h;
 	int layer_w, layer_h;
 	
-	if (!s_map->is_repeating)
+	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax)
 		return;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
@@ -856,9 +865,10 @@ find_layer(const char* name)
 static void
 map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
-	int layer_w, layer_h;
-	int tile_w, tile_h;
-	int x_offset, y_offset;
+	int   layer_w, layer_h;
+	float plax_offset_x = 0.0, plax_offset_y = 0.0;
+	int   tile_w, tile_h;
+	int   x_offset, y_offset;
 	
 	// get layer dimensions
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -866,9 +876,13 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	layer_h = s_map->layers[layer].height * tile_h;
 	
 	// remap screen coordinates to layer coordinates
-	x_offset = s_cam_x - g_res_x / 2;
-	y_offset = s_cam_y - g_res_y / 2;
-	if (!s_map->is_repeating) {
+	plax_offset_x = s_frames * s_map->layers[layer].autoscroll_x
+		- s_cam_x * (s_map->layers[layer].parallax_x - 1.0);
+	plax_offset_y = s_frames * s_map->layers[layer].autoscroll_y
+		- s_cam_y * (s_map->layers[layer].parallax_y - 1.0);
+	x_offset = s_cam_x - g_res_x / 2 - plax_offset_x;
+	y_offset = s_cam_y - g_res_y / 2 - plax_offset_y;
+	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
 		// non-repeating map: clamp viewport to map bounds (windowbox if needed)
 		x_offset = layer_w > g_res_x ? fmin(fmax(x_offset, 0), layer_w - g_res_x)
 			: -(g_res_x - layer_w) / 2;
@@ -876,7 +890,8 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 			: -(g_res_y - layer_h) / 2;
 	}
 	else {
-		// repeating map: pre-wrap to layer dimensions (simplifies rendering calculations)
+		// repeating map or parallax layer: pre-wrap to layer dimensions
+		// (simplifies rendering calculations)
 		x_offset = (x_offset % layer_w + layer_w) % layer_w;
 		y_offset = (y_offset % layer_h + layer_h) % layer_h;
 	}
@@ -949,6 +964,7 @@ render_map(void)
 {
 	int               cell_x, cell_y;
 	int               first_cell_x, first_cell_y;
+	bool              is_repeating;
 	struct map_layer* layer;
 	int               layer_w, layer_h;
 	ALLEGRO_COLOR     overlay_color;
@@ -965,13 +981,14 @@ render_map(void)
 		layer = &s_map->layers[z];
 		if (!layer->is_visible)
 			continue;
+		is_repeating = s_map->is_repeating || layer->is_parallax;
 		layer_w = layer->width * tile_w;
 		layer_h = layer->height * tile_h;
 		off_x = 0; off_y = 0;
 		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
 		al_hold_bitmap_drawing(true);
 		if (layer->is_reflective) {
-			if (s_map->is_repeating) {
+			if (is_repeating) {
 				// for small repeating maps, persons need to be repeated as well
 				for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
 					render_persons(z, true, off_x - x * layer_w, off_y - y * layer_h);
@@ -983,14 +1000,14 @@ render_map(void)
 		first_cell_x = off_x / tile_w;
 		first_cell_y = off_y / tile_h;
 		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
-			cell_x = s_map->is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
-			cell_y = s_map->is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
+			cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
+			cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
 			if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
 				continue;
 			tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
 			draw_tile(s_map->tileset, layer->color_mask, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
 		}
-		if (s_map->is_repeating) {
+		if (is_repeating) {
 			// for small repeating maps, persons need to be repeated as well
 			for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
 				render_persons(z, false, off_x - x * layer_w, off_y - y * layer_h);
