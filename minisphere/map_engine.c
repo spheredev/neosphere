@@ -865,18 +865,18 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	layer_w = s_map->layers[layer].width * tile_w;
 	layer_h = s_map->layers[layer].height * tile_h;
 	
-	// map screen coordinates to map coordinates
+	// remap screen coordinates to layer coordinates
 	x_offset = s_cam_x - g_res_x / 2;
 	y_offset = s_cam_y - g_res_y / 2;
 	if (!s_map->is_repeating) {
-		// map is non-repeating, clamp viewport to map bounds (windowbox if needed)
+		// non-repeating map: clamp viewport to map bounds (windowbox if needed)
 		x_offset = layer_w > g_res_x ? fmin(fmax(x_offset, 0), layer_w - g_res_x)
 			: -(g_res_x - layer_w) / 2;
 		y_offset = layer_h > g_res_y ? fmin(fmax(y_offset, 0), layer_h - g_res_y)
 			: -(g_res_y - layer_h) / 2;
 	}
 	else {
-		// map is repeating, wrap offset to map bounds (simplifies calculations)
+		// repeating map: pre-wrap to layer dimensions (simplifies rendering calculations)
 		x_offset = (x_offset % layer_w + layer_w) % layer_w;
 		y_offset = (y_offset % layer_h + layer_h) % layer_h;
 	}
