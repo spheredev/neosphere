@@ -906,7 +906,7 @@ process_map_input(void)
 	int                    mv_x = 0, mv_y = 0;
 
 	// clear out excess keys from key queue
-	g_key_queue.num_keys = 0;
+	clear_key_queue();
 	
 	// check for player control of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {

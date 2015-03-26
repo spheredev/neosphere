@@ -5,6 +5,12 @@
 #define MAX_JOYSTICKS    4
 #define MAX_JOY_BUTTONS  32
 
+struct key_queue
+{
+	int num_keys;
+	int keys[255];
+};
+
 enum mouse_button
 {
 	MOUSE_BUTTON_LEFT = 1,
@@ -43,16 +49,19 @@ static duk_ret_t js_ClearKeyQueue           (duk_context* ctx);
 static duk_ret_t js_UnbindKey               (duk_context* ctx);
 static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 
+static void queue_key         (int keycode);
 static void queue_wheel_event (int event);
 
 static int                    s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static int                    s_is_key_bound[ALLEGRO_KEY_MAX];
 static int                    s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static int                    s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static ALLEGRO_EVENT_QUEUE*   s_events;
 static int                    s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int                    s_key_up_scripts[ALLEGRO_KEY_MAX];
 static ALLEGRO_JOYSTICK*      s_joy_handles[MAX_JOYSTICKS];
 static ALLEGRO_JOYSTICK_STATE s_joy_state[MAX_JOYSTICKS];
+static struct key_queue       s_key_queue;
 static ALLEGRO_KEYBOARD_STATE s_keyboard_state;
 static bool                   s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static bool                   s_last_key_state[ALLEGRO_KEY_MAX];
@@ -68,6 +77,17 @@ initialize_input(void)
 
 	int i;
 
+	al_install_keyboard();
+	al_install_mouse();
+	al_install_joystick();
+	s_events = al_create_event_queue();
+	al_register_event_source(s_events, al_get_keyboard_event_source());
+	al_register_event_source(s_events, al_get_mouse_event_source());
+	al_register_event_source(s_events, al_get_joystick_event_source());
+	for (i = 0; i < MAX_JOYSTICKS; ++i) {
+		s_joy_handles[i] = al_get_joystick(i);
+	}
+
 	memset(s_is_button_bound, 0, c_buttons * sizeof(bool));
 	memset(s_is_key_bound, 0, ALLEGRO_KEY_MAX * sizeof(bool));
 	memset(s_button_down_scripts, 0, c_buttons * sizeof(int));
@@ -77,12 +97,18 @@ initialize_input(void)
 	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
 	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
 	
-	for (i = 0; i < MAX_JOYSTICKS; ++i) {
-		s_joy_handles[i] = al_get_joystick(i);
-	}
 	al_get_keyboard_state(&s_keyboard_state);
 	al_get_mouse_state(&s_mouse_state);
 	s_last_wheel_pos = s_mouse_state.z;
+}
+
+void
+shutdown_input(void)
+{
+	al_destroy_event_queue(s_events);
+	al_uninstall_joystick();
+	al_uninstall_mouse();
+	al_uninstall_keyboard();
 }
 
 bool
@@ -138,13 +164,51 @@ get_joy_button_count(int joy_index)
 }
 
 void
+clear_key_queue(void)
+{
+	s_key_queue.num_keys = 0;
+}
+
+void
 update_input(void)
 {
+	ALLEGRO_EVENT     event;
 	bool              is_down;
 	ALLEGRO_JOYSTICK* joystick;
 
 	int i, j;
 
+	// process Allegro events
+	while (al_get_next_event(s_events, &event)) {
+		switch (event.type) {
+		case ALLEGRO_EVENT_KEY_CHAR:
+			switch (event.keyboard.keycode) {
+			case ALLEGRO_KEY_ENTER:
+				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
+					|| event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
+				{
+					toggle_fullscreen();
+				}
+				else {
+					queue_key(event.keyboard.keycode);
+				}
+				break;
+			case ALLEGRO_KEY_F10:
+				toggle_fullscreen();
+				break;
+			case ALLEGRO_KEY_F11:
+				toggle_fps_display();
+				break;
+			case ALLEGRO_KEY_F12:
+				take_screenshot();
+				break;
+			default:
+				queue_key(event.keyboard.keycode);
+				break;
+			}
+		}
+	}
+	
 	al_get_keyboard_state(&s_keyboard_state);
 	al_get_mouse_state(&s_mouse_state);
 	for (i = 0; i < MAX_JOYSTICKS; i++) {
@@ -323,6 +387,18 @@ init_input_api(void)
 }
 
 static void
+queue_key(int keycode)
+{
+	int key_index;
+
+	if (s_key_queue.num_keys < 255) {
+		key_index = s_key_queue.num_keys;
+		++s_key_queue.num_keys;
+		s_key_queue.keys[key_index] = keycode;
+	}
+}
+
+static void
 queue_wheel_event(int event)
 {
 	if (s_num_wheel_events < 255) {
@@ -334,7 +410,7 @@ queue_wheel_event(int event)
 static duk_ret_t
 js_AreKeysLeft(duk_context* ctx)
 {
-	duk_push_boolean(ctx, g_key_queue.num_keys > 0);
+	duk_push_boolean(ctx, s_key_queue.num_keys > 0);
 	return 1;
 }
 
@@ -398,12 +474,12 @@ js_GetKey(duk_context* ctx)
 {
 	int keycode;
 
-	while (g_key_queue.num_keys == 0) {
+	while (s_key_queue.num_keys == 0) {
 		do_events();
 	}
-	keycode = g_key_queue.keys[0];
-	--g_key_queue.num_keys;
-	memmove(g_key_queue.keys, &g_key_queue.keys[1], sizeof(int) * g_key_queue.num_keys);
+	keycode = s_key_queue.keys[0];
+	--s_key_queue.num_keys;
+	memmove(s_key_queue.keys, &s_key_queue.keys[1], sizeof(int) * s_key_queue.num_keys);
 	duk_push_int(ctx, keycode);
 	return 1;
 }
@@ -619,7 +695,7 @@ static js_BindKey(duk_context* ctx)
 static duk_ret_t
 js_ClearKeyQueue(duk_context* ctx)
 {
-	g_key_queue.num_keys = 0;
+	s_key_queue.num_keys = 0;
 	return 0;
 }
 

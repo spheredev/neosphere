@@ -32,8 +32,6 @@ static const int MAX_FRAME_SKIPS = 5;
 
 static void initialize_engine (void);
 static void shutdown_engine   (void);
-static void queue_key         (int keycode);
-static void toggle_fullscreen (void);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
@@ -58,7 +56,6 @@ duk_context*         g_duktape    = NULL;
 ALLEGRO_EVENT_QUEUE* g_events     = NULL;
 ALLEGRO_CONFIG*      g_game_conf  = NULL;
 ALLEGRO_PATH*        g_game_path  = NULL;
-key_queue_t          g_key_queue;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
 float                g_scale_y    = 1.0;
@@ -187,7 +184,6 @@ main(int argc, char* argv[])
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
-	al_register_event_source(g_events, al_get_keyboard_event_source());
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 	al_flip_display();
 
@@ -350,31 +346,6 @@ do_events(void)
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			exit_game(true);
-		case ALLEGRO_EVENT_KEY_CHAR:
-			switch (event.keyboard.keycode) {
-			case ALLEGRO_KEY_ENTER:
-				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
-					|| event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
-				{
-					toggle_fullscreen();
-				}
-				else {
-					queue_key(event.keyboard.keycode);
-				}
-				break;
-			case ALLEGRO_KEY_F10:
-				toggle_fullscreen();
-				break;
-			case ALLEGRO_KEY_F11:
-				s_show_fps = !s_show_fps;
-				break;
-			case ALLEGRO_KEY_F12:
-				s_take_snapshot = true;
-				break;
-			default:
-				queue_key(event.keyboard.keycode);
-				break;
-			}
 		}
 	}
 }
@@ -454,6 +425,50 @@ restart_engine(void)
 }
 
 void
+take_screenshot(void)
+{
+	s_take_snapshot = true;
+}
+
+void
+toggle_fps_display(void)
+{
+	s_show_fps = !s_show_fps;
+}
+
+void
+toggle_fullscreen(void)
+{
+	int                  flags;
+	ALLEGRO_MONITOR_INFO monitor;
+	ALLEGRO_TRANSFORM    transform;
+
+	flags = al_get_display_flags(g_display);
+	if (flags & ALLEGRO_FULLSCREEN_WINDOW) {
+		// switch from fullscreen to windowed, resizing the display manually to work
+		// around an Allegro bug
+		s_is_fullscreen = false;
+		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, false);
+		g_scale_x = g_scale_y = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
+		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
+		al_get_monitor_info(0, &monitor);
+		al_set_window_position(g_display,
+			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
+			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
+	}
+	else {
+		// switch from windowed to fullscreen
+		s_is_fullscreen = true;
+		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, true);
+		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
+		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
+	}
+	al_identity_transform(&transform);
+	al_scale_transform(&transform, g_scale_x, g_scale_y);
+	al_use_transform(&transform);
+}
+
+void
 unskip_frame(void)
 {
 	s_skipping_frame = false;
@@ -474,9 +489,7 @@ initialize_engine(void)
 	al_init_ttf_addon();
 	al_install_audio();
 	al_init_acodec_addon();
-	al_install_keyboard();
-	al_install_mouse();
-	al_install_joystick();
+	initialize_input();
 
 	// load system configuraton
 	path = get_sys_asset_path("system.ini", "system");
@@ -510,23 +523,12 @@ initialize_engine(void)
 }
 
 static void
-queue_key(int keycode)
-{
-	int key_index;
-	
-	if (g_key_queue.num_keys < 255) {
-		key_index = g_key_queue.num_keys;
-		++g_key_queue.num_keys;
-		g_key_queue.keys[key_index] = keycode;
-	}
-}
-
-static void
 shutdown_engine(void)
 {
 	shutdown_map_engine();
 	duk_destroy_heap(g_duktape);
 	dyad_shutdown();
+	shutdown_input();
 	al_uninstall_audio();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
@@ -534,38 +536,6 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path);
 	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
 	al_uninstall_system();
-}
-
-static void
-toggle_fullscreen(void)
-{
-	int                  flags;
-	ALLEGRO_MONITOR_INFO monitor;
-	ALLEGRO_TRANSFORM    transform;
-	
-	flags = al_get_display_flags(g_display);
-	if (flags & ALLEGRO_FULLSCREEN_WINDOW) {
-		// switch from fullscreen to windowed, resizing the display manually to work
-		// around an Allegro bug
-		s_is_fullscreen = false;
-		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, false);
-		g_scale_x = g_scale_y = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
-		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
-		al_get_monitor_info(0, &monitor);
-		al_set_window_position(g_display,
-			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
-			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
-	}
-	else {
-		// switch from windowed to fullscreen
-		s_is_fullscreen = true;
-		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, true);
-		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
-		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
-	}
-	al_identity_transform(&transform);
-	al_scale_transform(&transform, g_scale_x, g_scale_y);
-	al_use_transform(&transform);
 }
 
 static void
