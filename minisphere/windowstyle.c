@@ -218,6 +218,7 @@ js_LoadWindowStyle(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): Failed to load windowstyle file '%s'", filename);
 	free(path);
 	duk_push_sphere_windowstyle(ctx, winstyle);
+	free_windowstyle(winstyle);
 	return 1;
 }
 
