@@ -25,6 +25,7 @@ enum wstyle_bg_type
 
 struct windowstyle
 {
+	int      refcount;
 	int      bg_style;
 	image_t* images[9];
 };
@@ -89,7 +90,7 @@ load_windowstyle(const char* path)
 	fclose(file);
 	winstyle->bg_style = rws.background_mode;
 	free_image(atlas);
-	return winstyle;
+	return ref_windowstyle(winstyle);
 
 on_error:
 	if (file != NULL) fclose(file);
@@ -102,11 +103,20 @@ on_error:
 	return NULL;
 }
 
+windowstyle_t*
+ref_windowstyle(windowstyle_t* winstyle)
+{
+	++winstyle->refcount;
+	return winstyle;
+}
+
 void
 free_windowstyle(windowstyle_t* winstyle)
 {
 	int i;
 
+	if (winstyle == NULL || --winstyle->refcount > 0)
+		return;
 	for (i = 0; i < 9; ++i) {
 		free_image(winstyle->images[i]);
 	}
@@ -175,6 +185,8 @@ init_windowstyle_api(void)
 static void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
+	ref_windowstyle(winstyle);
+	
 	duk_push_object(ctx);
 	duk_push_pointer(ctx, winstyle); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_sphere_color(ctx, rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");

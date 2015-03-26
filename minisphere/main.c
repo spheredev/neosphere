@@ -488,7 +488,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 		goto show_error_box;
 	num_lines = get_wraptext_line_count(error_info);
 	
-	// show error on black screen, Sphere style
+	// show error in-engine, Sphere 1.x style
 	unskip_frame();
 	is_finished = false;
 	while (!is_finished) {
@@ -519,8 +519,8 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	
 show_error_box:
 	// failed to allocate wraptext for error, show message box instead
-	al_show_native_message_box(g_display, "Crash!",
-		"The engine encountered an error and will now close.", 
+	al_show_native_message_box(g_display, "*munch*",
+		"A hunger-pig just devoured your game.", 
 		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(EXIT_SUCCESS);
