@@ -28,7 +28,17 @@
     "language='*'\"")
 #endif
 
-static const int MAX_FRAME_SKIPS = 5;
+ALLEGRO_DISPLAY*     g_display = NULL;
+duk_context*         g_duktape = NULL;
+ALLEGRO_EVENT_QUEUE* g_events = NULL;
+ALLEGRO_CONFIG*      g_game_conf = NULL;
+ALLEGRO_PATH*        g_game_path = NULL;
+char*                g_last_game_path = NULL;
+float                g_scale_x = 1.0;
+float                g_scale_y = 1.0;
+ALLEGRO_CONFIG*      g_sys_conf;
+font_t*              g_sys_font = NULL;
+int                  g_res_x, g_res_y;
 
 static void initialize_engine (void);
 static void shutdown_engine   (void);
@@ -51,17 +61,13 @@ bool           s_skipping_frame = false;
 static bool    s_show_fps = false;
 static bool    s_take_snapshot = false;
 
-ALLEGRO_DISPLAY*     g_display    = NULL;
-duk_context*         g_duktape    = NULL;
-ALLEGRO_EVENT_QUEUE* g_events     = NULL;
-ALLEGRO_CONFIG*      g_game_conf  = NULL;
-ALLEGRO_PATH*        g_game_path  = NULL;
-char*                g_last_game_path = NULL;
-float                g_scale_x = 1.0;
-float                g_scale_y    = 1.0;
-ALLEGRO_CONFIG*      g_sys_conf;
-font_t*              g_sys_font   = NULL;
-int                  g_res_x, g_res_y;
+static const int MAX_FRAME_SKIPS = 5;
+static const char* ERROR_TEXT[][2] = {
+	{ "*munch*", "A hunger-pig just devoured your game." },
+	{ "*CRASH!*", "It's an 812-car pile-up!" },
+	{ "Um...", "A funny thing happened on the way to the boss..." },
+	{ "Here's the deal.", "The game encountered an error." }
+};
 
 int
 main(int argc, char* argv[])
@@ -477,6 +483,9 @@ static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
 	wraptext_t*            error_info;
+	const char*            title;
+	int                    title_index;
+	const char*            subtitle;
 	bool                   is_finished;
 	const char*            line_text;
 	ALLEGRO_KEYBOARD_STATE keyboard;
@@ -484,6 +493,11 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 
 	int i;
 	
+	title_index = rand() % (sizeof(ERROR_TEXT) / sizeof(const char*) / 2);
+	title = ERROR_TEXT[title_index][0];
+	subtitle = ERROR_TEXT[title_index][1];
+	
+	// create wraptext from error message
 	if (!(error_info = word_wrap_text(g_sys_font, msg, g_res_x - 84)))
 		goto show_error_box;
 	num_lines = get_wraptext_line_count(error_info);
@@ -492,26 +506,25 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	unskip_frame();
 	is_finished = false;
 	while (!is_finished) {
-		al_clear_to_color(al_map_rgba(32, 32, 32, 255));
-		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 10, 10, al_map_rgba(0, 0, 0, 128));
-		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, "*munch*");
-		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, "*munch*");
-		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, "A hunger-pig just devoured your game.");
-		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, "A hunger-pig just devoured your game.");
+		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
+		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
+		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
 			line_text = get_wraptext_line(error_info, i);
 			draw_text(g_sys_font, rgba(0, 0, 0, 255),
 				g_res_x / 2 + 1, 59 + i * get_font_line_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
-			draw_text(g_sys_font, rgba(255, 192, 192, 255),
+			draw_text(g_sys_font, rgba(192, 192, 192, 255),
 				g_res_x / 2, 58 + i * get_font_line_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
-			TEXT_ALIGN_CENTER, "Press [Enter] to close.");
+			TEXT_ALIGN_CENTER, "Press [Esc] to close.");
 		flip_screen(30);
 		al_get_keyboard_state(&keyboard);
-		is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ENTER);
+		is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE);
 	}
 	free_wraptext(error_info);
 	shutdown_engine();
@@ -530,6 +543,8 @@ static void
 initialize_engine(void)
 {
 	char* path;
+	
+	srand(time(NULL));
 	
 	// initialize Allegro
 	al_init();
