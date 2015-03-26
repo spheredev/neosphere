@@ -30,9 +30,9 @@
 #include "lstring.h"
 #include "script.h"
 
-static const char* const ENGINE_VERSION_NAME       = "minisphere 1.0b4";
+static const char* const ENGINE_VERSION_NAME       = "minisphere 1.0b5";
 static double      const SPHERE_API_VERSION        = 1.5;
-static const char* const SPHERE_API_VERSION_STRING = "v1.5 (compatible; minisphere 1.0b4)";
+static const char* const SPHERE_API_VERSION_STRING = "v1.5 (compatible; minisphere 1.0b5)";
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
