@@ -184,7 +184,7 @@ main(int argc, char* argv[])
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
-	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	al_flip_display();
 
 	// attempt to locate and load system font
@@ -229,9 +229,7 @@ main(int argc, char* argv[])
 	duk_pop(g_duktape);
 	duk_pop(g_duktape);
 	
-	// otherwise shut down, we're done here
-	shutdown_engine();
-	return EXIT_SUCCESS;
+	exit_game(false);
 
 on_js_error:
 	err_code = duk_get_error_code(g_duktape, -1);
@@ -246,7 +244,7 @@ on_js_error:
 	if (file_path != NULL) {
 		char* file_name = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		file_name = file_name != NULL ? file_name + 1 : file_path;
-		duk_push_sprintf(g_duktape, "%s (line: %i)\n\n%s", file_name, line_num, err_msg);
+		duk_push_sprintf(g_duktape, "`%s`, line: %i | %s", file_name, line_num, err_msg);
 	}
 	else {
 		duk_push_string(g_duktape, err_msg);
@@ -476,6 +474,59 @@ unskip_frame(void)
 }
 
 static void
+on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
+{
+	wraptext_t*            error_info;
+	bool                   is_finished;
+	const char*            line_text;
+	ALLEGRO_KEYBOARD_STATE keyboard;
+	int                    num_lines;
+
+	int i;
+	
+	if (!(error_info = word_wrap_text(g_sys_font, msg, g_res_x - 84)))
+		goto show_error_box;
+	num_lines = get_wraptext_line_count(error_info);
+	
+	// show error on black screen, Sphere style
+	unskip_frame();
+	is_finished = false;
+	while (!is_finished) {
+		al_clear_to_color(al_map_rgba(32, 32, 32, 255));
+		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 10, 10, al_map_rgba(0, 0, 0, 128));
+		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, "*munch*");
+		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, "*munch*");
+		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, "A hunger-pig just devoured your game.");
+		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, "A hunger-pig just devoured your game.");
+		for (i = 0; i < num_lines; ++i) {
+			line_text = get_wraptext_line(error_info, i);
+			draw_text(g_sys_font, rgba(0, 0, 0, 255),
+				g_res_x / 2 + 1, 59 + i * get_font_line_height(g_sys_font),
+				TEXT_ALIGN_CENTER, line_text);
+			draw_text(g_sys_font, rgba(255, 192, 192, 255),
+				g_res_x / 2, 58 + i * get_font_line_height(g_sys_font),
+				TEXT_ALIGN_CENTER, line_text);
+		}
+		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
+			TEXT_ALIGN_CENTER, "Press [Enter] to close.");
+		flip_screen(30);
+		al_get_keyboard_state(&keyboard);
+		is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ENTER);
+	}
+	free_wraptext(error_info);
+	shutdown_engine();
+	exit(EXIT_SUCCESS);
+	
+show_error_box:
+	// failed to allocate wraptext for error, show message box instead
+	al_show_native_message_box(g_display, "Crash!",
+		"The engine encountered an error and will now close.", 
+		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	shutdown_engine();
+	exit(EXIT_SUCCESS);
+}
+
+static void
 initialize_engine(void)
 {
 	char* path;
@@ -489,17 +540,19 @@ initialize_engine(void)
 	al_init_ttf_addon();
 	al_install_audio();
 	al_init_acodec_addon();
-	initialize_input();
+
+	// initialize networking
+	dyad_init();
+	dyad_setUpdateTimeout(0.001);
 
 	// load system configuraton
 	path = get_sys_asset_path("system.ini", "system");
 	g_sys_conf = al_load_config_file(path);
 	free(path);
-	
-	// initialize networking
-	dyad_init();
-	dyad_setUpdateTimeout(0.001);
-	
+
+	initialize_input();
+	initialize_map_engine();
+
 	// initialize JavaScript API
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
 	init_api(g_duktape);
@@ -518,8 +571,6 @@ initialize_engine(void)
 	init_spriteset_api(g_duktape);
 	init_surface_api();
 	init_windowstyle_api();
-	
-	init_map_engine();
 }
 
 static void
@@ -536,12 +587,4 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path);
 	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
 	al_uninstall_system();
-}
-
-static void
-on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
-{
-	al_show_native_message_box(g_display, "Script Error", msg, NULL, NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	shutdown_engine();
-	exit(0);
 }

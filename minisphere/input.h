@@ -13,6 +13,7 @@ enum player_key
 
 extern void  initialize_input     (void);
 extern void  shutdown_input       (void);
+extern bool  is_any_key_down      (void);
 extern bool  is_joy_button_down   (int joy_index, int button);
 extern float get_joy_axis         (int joy_index, int axis_index);
 extern int   get_joy_axis_count   (int joy_index);

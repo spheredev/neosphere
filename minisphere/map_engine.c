@@ -267,7 +267,7 @@ struct rmp_zone_header
 #pragma pack(pop)
 
 void
-init_map_engine(void)
+initialize_map_engine(void)
 {
 	init_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));

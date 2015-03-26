@@ -112,6 +112,18 @@ shutdown_input(void)
 }
 
 bool
+is_any_key_down(void)
+{
+	int i_key;
+
+	for (i_key = 0; i_key < ALLEGRO_KEY_MAX; ++i_key) {
+		if (al_key_down(&s_keyboard_state, i_key))
+			return true;
+	}
+	return false;
+}
+
+bool
 is_joy_button_down(int joy_index, int button)
 {
 	return s_joy_state[joy_index].button[button] > 0;
