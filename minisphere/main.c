@@ -65,7 +65,7 @@ static const int MAX_FRAME_SKIPS = 5;
 static const char* ERROR_TEXT[][2] = {
 	{ "*munch*", "A hunger-pig just devoured your game." },
 	{ "*CRASH!*", "It's an 812-car pile-up!" },
-	{ "Um...", "A funny thing happened on the way to the boss..." },
+	{ "So, um... a funny thing happened...", "...on the way to the boss..." },
 	{ "Here's the deal.", "The game encountered an error." }
 };
 

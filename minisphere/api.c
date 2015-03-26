@@ -436,12 +436,13 @@ js_Delay(duk_context* ctx)
 {
 	double millisecs = floor(duk_require_number(ctx, 0));
 	
-	double start_time;
+	double end_time;
 
 	if (millisecs < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Negative delay not allowed (%i)", millisecs);
-	start_time = al_get_time();
-	while (al_get_time() < start_time + millisecs / 1000) {
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Time cannot be negative (%.0f)", millisecs);
+	end_time = al_get_time() + millisecs / 1000;
+	while (al_get_time() < end_time) {
+		al_wait_for_event_timed(g_events, NULL, end_time - al_get_time());
 		do_events();
 	}
 	return 0;
