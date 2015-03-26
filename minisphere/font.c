@@ -26,6 +26,8 @@ struct font
 {
 	int                refcount;
 	int                height;
+	int                min_width;
+	int                max_width;
 	int                pitch;
 	int                num_glyphs;
 	struct font_glyph* glyphs;
@@ -35,6 +37,13 @@ struct font_glyph
 {
 	int      width, height;
 	image_t* image;
+};
+
+struct wraptext
+{
+	int    num_lines;
+	char*  buffer;
+	size_t pitch;
 };
 
 #pragma pack(push, 1)
@@ -66,6 +75,7 @@ load_font(const char* path)
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
 	int                     max_x = 0, max_y = 0;
+	int                     min_width;
 	int64_t                 n_glyphs_per_row;
 	size_t                  pixel_size;
 	struct rfn_header       rfn;
@@ -90,9 +100,15 @@ load_font(const char* path)
 		fseek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, SEEK_CUR);
 		max_x = fmax(glyph_hdr.width, max_x);
 		max_y = fmax(glyph_hdr.height, max_y);
+		if (i == 0)
+			min_width = glyph_hdr.width;
+		else
+			min_width = fmin(min_width, glyph_hdr.width);
 		glyph->width = glyph_hdr.width;
 		glyph->height = glyph_hdr.height;
 	}
+	font->min_width = min_width;
+	font->max_width = max_x;
 	font->height = max_y;
 
 	// create glyph atlas
@@ -178,6 +194,13 @@ free_font(font_t* font)
 	free(font);
 }
 
+void
+get_font_glyph_width(const font_t* font, int* out_min_width, int* out_max_width)
+{
+	if (out_min_width) *out_min_width = font->min_width;
+	if (out_max_width) *out_max_width = font->max_width;
+}
+
 int
 get_font_line_height(const font_t* font)
 {
@@ -233,6 +256,86 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 		x += font->glyphs[cp].width;
 	}
 	al_hold_bitmap_drawing(is_draw_held);
+}
+
+wraptext_t*
+word_wrap_text(const font_t* font, const char* text, int width)
+{
+	char*       buffer;
+	int         glyph_width;
+	int         line_idx;
+	int         line_width;
+	int         max_lines = 10;
+	char*       line_buffer;
+	char*       new_buffer;
+	size_t      pitch;
+	int         space_width = get_text_width(font, " ");
+	char*       string;
+	char*       word;
+	wraptext_t* wraptext;
+
+	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
+	
+	// allocate initial buffer
+	get_font_glyph_width(font, &glyph_width, NULL);
+	pitch = width / glyph_width + 2;
+	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
+	
+	// run through string one word at a time, wrapping as necessary
+	line_buffer = buffer; line_buffer[0] = '\0';
+	line_idx = 0; line_width = 0;
+	string = strdup(text);
+	word = strtok(string, " ");
+	while (word != NULL) {
+		line_width += get_text_width(font, word);
+		if (line_width > width) {  // time for a new line?
+			if (++line_idx >= max_lines) {  // enlarge the buffer?
+				max_lines *= 2;
+				if (!(new_buffer = realloc(buffer, max_lines * pitch)))
+					goto on_error;
+				buffer = new_buffer;
+				line_buffer = buffer + line_idx * pitch;
+			}
+			else
+				line_buffer += pitch;
+			line_width = get_text_width(font, word);
+			line_buffer[0] = '\0';
+		}
+		strcat(line_buffer, word);
+		word = strtok(NULL, " ");
+		if (word != NULL) {
+			strcat(line_buffer, " ");
+			line_width += space_width;
+		}
+	}
+	free(string);
+	wraptext->num_lines = line_idx + 1;
+	wraptext->buffer = buffer;
+	wraptext->pitch = pitch;
+	return wraptext;
+
+on_error:
+	free(buffer);
+	return NULL;
+}
+
+void
+free_wraptext(wraptext_t* wraptext)
+{
+	free(wraptext->buffer);
+	free(wraptext);
+}
+
+const char*
+get_wraptext_line(const wraptext_t* wraptext, int line_index)
+{
+	return wraptext->buffer + line_index * wraptext->pitch;
+}
+
+int
+get_wraptext_line_count(const wraptext_t* wraptext)
+{
+	return wraptext->num_lines;
 }
 
 void
@@ -531,46 +634,25 @@ js_Font_getStringWidth(duk_context* ctx)
 static duk_ret_t
 js_Font_wordWrapString(duk_context* ctx)
 {
-	char* text = strdup(duk_to_string(ctx, 0));
-	int   width = duk_require_int(ctx, 1);
+	const char* text = duk_to_string(ctx, 0);
+	int         width = duk_require_int(ctx, 1);
 	
-	font_t* font;
-	int     line_width;
-	int     line_idx;
-	int     num_words;
-	int     space_width;
-	char*   word;
+	font_t*     font;
+	int         num_lines;
+	wraptext_t* wraptext;
+
+	int i;
 
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); font = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	space_width = get_text_width(font, " ");
+	wraptext = word_wrap_text(font, text, width);
+	num_lines = get_wraptext_line_count(wraptext);
 	duk_push_array(ctx);
-	line_idx = 0;
-	line_width = 0;
-	num_words = 0;
-	text = strdup(text);
-	word = strtok(text, " ");
-	while (word != NULL) {
-		line_width += get_text_width(font, word);
-		if (line_width > width) {
-			duk_concat(ctx, num_words);
-			duk_put_prop_index(ctx, -2, line_idx);
-			line_width = get_text_width(font, word);
-			num_words = 0;
-			++line_idx;
-		}
-		++num_words;
-		duk_push_string(ctx, word);
-		word = strtok(NULL, " ");
-		if (word != NULL) {
-			duk_push_string(ctx, " ");
-			line_width += space_width;
-			++num_words;
-		}
+	for (i = 0; i < num_lines; ++i) {
+		duk_push_string(ctx, get_wraptext_line(wraptext, i));
+		duk_put_prop_index(ctx, -2, i);
 	}
-	duk_concat(ctx, num_words);
-	duk_put_prop_index(ctx, -2, line_idx);
-	free(text);
+	free_wraptext(wraptext);
 	return 1;
 }
