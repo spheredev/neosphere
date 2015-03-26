@@ -63,10 +63,13 @@ static bool    s_take_snapshot = false;
 
 static const int MAX_FRAME_SKIPS = 5;
 static const char* ERROR_TEXT[][2] = {
-	{ "*munch*", "A hunger-pig just devoured your game." },
-	{ "*CRASH!*", "It's an 812-car pile-up!" },
+	{ "*munch*", "A hunger-pig just devoured your game!" },
+	{ "*CRASH!*", "It's an 812-car pileup!" },
 	{ "So, um... a funny thing happened...", "...on the way to the boss..." },
-	{ "Here's the deal.", "The game encountered an error." }
+	{ "Here's the deal.", "The game encountered an error." },
+	{ "This game sucks!", "Or maybe it's just the programmer..." },
+	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
+	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." }
 };
 
 int
@@ -508,7 +511,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	while (!is_finished) {
 		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
 		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
-		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, rgba(255, 255, 192, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
 		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
 		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
@@ -521,10 +524,11 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
-			TEXT_ALIGN_CENTER, "Press [Esc] to close.");
+			TEXT_ALIGN_CENTER, "Press space bar or [Esc] to close.");
 		flip_screen(30);
 		al_get_keyboard_state(&keyboard);
-		is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE);
+		is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
+			|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
 	}
 	free_wraptext(error_info);
 	shutdown_engine();
