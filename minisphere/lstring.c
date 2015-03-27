@@ -3,7 +3,7 @@
 #include "lstring.h"
 
 lstring_t*
-lstring_format(const char* fmt, ...)
+new_lstring(const char* fmt, ...)
 {
 	va_list ap;
 

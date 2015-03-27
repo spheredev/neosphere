@@ -69,7 +69,8 @@ static const char* ERROR_TEXT[][2] = {
 	{ "Here's the deal.", "The game encountered an error." },
 	{ "This game sucks!", "Or maybe it's just the programmer..." },
 	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
-	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." }
+	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
+	{ "Sorry. It's just...", "...well, this is a trainwreck of a game." }
 };
 
 int

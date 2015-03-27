@@ -484,7 +484,7 @@ queue_person_script(person_t* person, lstring_t* script, bool is_immediate)
 	}
 	if ((script_name = malloc(strlen(person->name) + 19)) == NULL)
 		return false;
-	script_name = lstring_format("[%s : queued script]", person->name);
+	script_name = new_lstring("[%s : queued script]", person->name);
 	person->commands[person->num_commands - 1].type = COMMAND_RUN_SCRIPT;
 	person->commands[person->num_commands - 1].is_immediate = is_immediate;
 	person->commands[person->num_commands - 1].script_id = compile_script(script, script_name->cstr);

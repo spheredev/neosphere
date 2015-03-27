@@ -5,7 +5,8 @@
 #include "spriteset.h"
 
 #pragma pack(push, 1)
-struct rss_header {
+struct rss_header
+{
 	uint8_t signature[4];
 	int16_t version;
 	int16_t num_images;
@@ -19,24 +20,28 @@ struct rss_header {
 	uint8_t reserved[106];
 };
 
-struct rss_dir_v2 {
+struct rss_dir_v2
+{
 	int16_t num_frames;
 	uint8_t reserved[62];
 };
 
-struct rss_dir_v3 {
+struct rss_dir_v3
+{
 	int16_t num_frames;
 	uint8_t reserved[6];
 };
 
-struct rss_frame_v2 {
+struct rss_frame_v2
+{
 	int16_t width;
 	int16_t height;
 	int16_t delay;
 	uint8_t reserved[26];
 };
 
-struct rss_frame_v3 {
+struct rss_frame_v3
+{
 	int16_t image_idx;
 	int16_t delay;
 	uint8_t reserved[4];

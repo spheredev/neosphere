@@ -38,7 +38,7 @@ open_log_file(const char* path)
 	if (!(logger->file = fopen(path, "a"))) goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-	log_entry = lstring_format("LOG OPENED: %s\n", timestamp);
+	log_entry = new_lstring("LOG OPENED: %s\n", timestamp);
 	fputs(log_entry->cstr, logger->file);
 	free_lstring(log_entry);
 	return ref_logger(logger);
@@ -65,7 +65,7 @@ free_logger(logger_t* logger)
 	if (logger == NULL || --logger->refcount > 0)
 		return;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-	log_entry = lstring_format("LOG CLOSED: %s\n\n", timestamp);
+	log_entry = new_lstring("LOG CLOSED: %s\n\n", timestamp);
 	fputs(log_entry->cstr, logger->file);
 	free_lstring(log_entry);
 	fclose(logger->file);
