@@ -278,7 +278,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	
 	// allocate initial buffer
 	get_font_glyph_width(font, &glyph_width, NULL);
-	pitch = width / glyph_width + 2;
+	pitch = glyph_width > 0 ? width / glyph_width + 2 : width;
 	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
 	
 	// run through string one word at a time, wrapping as necessary
