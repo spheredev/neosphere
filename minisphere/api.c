@@ -445,14 +445,17 @@ js_Delay(duk_context* ctx)
 	double millisecs = floor(duk_require_number(ctx, 0));
 	
 	double end_time;
+	double time_left;
 
 	if (millisecs < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Time cannot be negative (%.0f)", millisecs);
 	end_time = al_get_time() + millisecs / 1000;
-	while (al_get_time() < end_time) {
-		al_wait_for_event_timed(g_events, NULL, end_time - al_get_time());
+	do {
+		time_left = al_get_time() - end_time;
+		if (time_left > 0.001)  // engine may stall with < 1ms timeout
+			al_wait_for_event_timed(g_events, NULL, time_left);
 		do_events();
-	}
+	} while (al_get_time() < end_time);
 	return 0;
 }
 

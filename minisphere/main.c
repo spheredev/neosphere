@@ -366,6 +366,7 @@ flip_screen(int framerate)
 	bool              is_backbuffer_valid;
 	char*             path;
 	ALLEGRO_BITMAP*   snapshot;
+	double            time_left;
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 
@@ -403,10 +404,12 @@ flip_screen(int framerate)
 	}
 	if (framerate > 0) {
 		s_skipping_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
-		if (s_next_frame_time > al_get_time()) {
-			al_wait_for_event_timed(g_events, NULL, s_next_frame_time - al_get_time());
-		}
-		do do_events(); while (al_get_time() < s_next_frame_time);
+		do {
+			time_left = s_next_frame_time - al_get_time();
+			if (time_left > 0.001)  // engine may stall with < 1ms timeout
+				al_wait_for_event_timed(g_events, NULL, time_left);
+			do_events();
+		} while (al_get_time() < s_next_frame_time);
 		s_next_frame_time += 1.0 / framerate;
 	}
 	else {
