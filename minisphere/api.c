@@ -15,10 +15,12 @@ static duk_ret_t js_IsSkippedFrame       (duk_context* ctx);
 static duk_ret_t js_GetFileList          (duk_context* ctx);
 static duk_ret_t js_GetFrameRate         (duk_context* ctx);
 static duk_ret_t js_GetGameList          (duk_context* ctx);
+static duk_ret_t js_GetMaxFrameSkips     (duk_context* ctx);
 static duk_ret_t js_GetScreenHeight      (duk_context* ctx);
 static duk_ret_t js_GetScreenWidth       (duk_context* ctx);
 static duk_ret_t js_GetTime              (duk_context* ctx);
 static duk_ret_t js_SetFrameRate         (duk_context* ctx);
+static duk_ret_t js_SetMaxFrameSkips     (duk_context* ctx);
 static duk_ret_t js_Abort                (duk_context* ctx);
 static duk_ret_t js_Alert                (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode (duk_context* ctx);
@@ -46,10 +48,12 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetFileList", js_GetFileList);
 	register_api_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
 	register_api_func(ctx, NULL, "GetGameList", js_GetGameList);
+	register_api_func(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
 	register_api_func(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
 	register_api_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
 	register_api_func(ctx, NULL, "GetTime", js_GetTime);
 	register_api_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	register_api_func(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
 	register_api_func(ctx, NULL, "Abort", js_Abort);
 	register_api_func(ctx, NULL, "Alert", js_Alert);
 	register_api_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
@@ -345,6 +349,13 @@ js_GetGameList(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetMaxFrameSkips(duk_context* ctx)
+{
+	duk_push_int(ctx, get_max_frameskip());
+	return 1;
+}
+
+static duk_ret_t
 js_GetScreenHeight(duk_context* ctx)
 {
 	duk_push_int(ctx, g_res_y);
@@ -374,6 +385,17 @@ js_SetFrameRate(duk_context* ctx)
 	if (framerate < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): Frame rate cannot be negative (%i)", framerate);
 	s_framerate = framerate;
+	return 0;
+}
+
+static duk_ret_t
+js_SetMaxFrameSkips(duk_context* ctx)
+{
+	int max_skips = duk_require_int(ctx, 0);
+
+	if (max_skips < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetMaxFrameSkips(): Value cannot be negative (%i)", max_skips);
+	set_max_frameskip(max_skips);
 	return 0;
 }
 
@@ -422,7 +444,7 @@ static duk_ret_t
 js_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n\n\n\n...and you*munch*";
+	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game! ......................and you*munch*";
 	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	if (stack_offset > 0)

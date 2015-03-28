@@ -1,0 +1,71 @@
+minisphere 1.0   (c) 2015 Fat Cerberus
+Release Date: Sunday, March 28, 2015
+
+minisphere is a drop-in replacement for the Sphere game engine written
+from the ground up in C.  It boasts high compatibility with most games
+written for Sphere 1.x, but with better performance and some new
+functionality.
+
+Command Line Options
+====================
+
+* --game <path>   - Loads the Sphere game at <path>. If not provided,
+                    minisphere will open a file dialog allowing the user
+                    to locate the desired game manually. For
+                    compatibility reasons, this can also be specified as
+                    `-game <path>` (with only one dash).
+* --fullscreen    - Starts the engine in full screen mode.
+* --windowed      - Starts the engine in windowed mode.
+* --frameskip <x> - Sets the initial frameskip limit to <x>. Note that
+                    if the game calls `SetMaxFrameSkips()`, that value
+                    overrides this one. The default frameskip limit is
+                    5.
+* --no-throttle   - Disables interframe throttling. This may improve
+                    performance on slower machines at the cost of maxing
+                    out at least one processor core.
+
+Potential Compatibility Issues
+==============================
+
+`GrabImage()` and `GrabSurface()`
+---------------------------------
+
+These functions create a copy of the contents of the backbuffer and
+return either an image or surface from it. In minisphere, however, this
+may not work as expected due to the engine's advanced frame skipping
+algorithm which prevents anything from being written to the backbuffer
+during a frameskip.
+
+When writing a game specifically targetting minisphere, the correct
+solution is to call `UnskipFrame()`, render what you need, then use
+`GrabImage()`/`GrabSurface()` to save the render. If you absolutely
+_must_ grab a backbuffer image every frame (for advanced rendering
+effects, etc.), you can place `SetMaxFrameSkips(0);` at the beginning
+of your game to prevent any frames from being skipped.
+
+Note that as a last resort when running older games, you can also pass
+`--frameskip 0` to engine.exe on the command line to disable frame
+skipping.
+
+Interframe Throttling
+---------------------
+
+minisphere attempts to minimize its CPU utilization by going to sleep
+while it waits for the next frame to start. This improves battery life
+on laptops and prevents the engine from heating up the CPU
+unnecessarily. In most cases this causes no adverse effects; however on
+slower computers or more demanding games, it may cause more frames to be
+skipped than necessary.
+
+If you want to disable this feature, run engine.exe with the
+`--no-throttle` commandline option.
+
+Stricter Type Checking on API Function Parameters
+-------------------------------------------------
+
+Sphere 1.x, in general, silently coerces most wrong-type values passed
+to API calls. minisphere, however, is a lot stricter about this and will
+throw an error if, for example, you pass a string to a function
+expecting a number value. This may prevent some poorly-written Sphere
+games from running under minisphere. There is currently no workaround
+other than to edit the scripts by hand.

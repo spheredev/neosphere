@@ -54,6 +54,7 @@ static bool    s_is_fullscreen = false;
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
 static double  s_last_flip_time;
+static int     s_max_frameskip = 5;
 static double  s_next_fps_poll_time;
 static double  s_next_frame_time;
 static int     s_num_flips;
@@ -62,7 +63,6 @@ bool           s_skipping_frame = false;
 static bool    s_show_fps = false;
 static bool    s_take_snapshot = false;
 
-static const int MAX_FRAME_SKIPS = 5;
 static const char* ERROR_TEXT[][2] = {
 	{ "*munch*", "A hunger-pig just devoured your game!" },
 	{ "*CRASH!*", "It's an 812-car pileup!" },
@@ -85,6 +85,8 @@ main(int argc, char* argv[])
 	char*                game_path;
 	ALLEGRO_BITMAP*      icon;
 	char*                icon_path;
+	int                  max_skips;
+	char*                p_strtol;
 	char*                path;
 	ALLEGRO_TRANSFORM    trans;
 	
@@ -96,10 +98,10 @@ main(int argc, char* argv[])
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
 	if (argc == 2 && argv[1][0] != '-') {
-		// single non-switch argument passed, assume it's an .sgm file or game directory
+		// single non-switch argument passed, assume it's a game.sgm path or game directory
 		al_destroy_path(g_game_path);
 		g_game_path = al_create_path(argv[1]);
-		if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
+		if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path_for_directory(argv[1]);
 		}
@@ -107,18 +109,26 @@ main(int argc, char* argv[])
 	else {
 		// more than one argument, perform full commandline parsing
 		for (i = 1; i < argc; ++i) {
-			if (strcmp(argv[i], "-game") == 0 && i < argc - 1) {
+			if (strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "--game") == 0 && i < argc - 1) {
 				al_destroy_path(g_game_path);
 				g_game_path = al_create_path(argv[i + 1]);
-				if (strcasecmp(al_get_path_extension(g_game_path), ".sgm") != 0) {
+				if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
 					al_destroy_path(g_game_path);
 					g_game_path = al_create_path_for_directory(argv[i + 1]);
 				}
 			}
-			else if (strcmp(argv[i], "-fullscreen") == 0) {
+			if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
+				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
+				if (errno != ERANGE && *p_strtol == '\0')
+					set_max_frameskip(max_skips);
+			}
+			else if (strcmp(argv[i], "--no-throttle") == 0) {
+				s_conserve_cpu = false;
+			}
+			else if (strcmp(argv[i], "--fullscreen") == 0) {
 				s_is_fullscreen = true;
 			}
-			else if (strcmp(argv[i], "-windowed") == 0) {
+			else if (strcmp(argv[i], "--windowed") == 0) {
 				s_is_fullscreen = false;
 			}
 		}
@@ -299,6 +309,12 @@ get_clip_rectangle(void)
 	return s_clip_rect;
 }
 
+int
+get_max_frameskip(void)
+{
+	return s_max_frameskip;
+}
+
 char*
 get_sys_asset_path(const char* path, const char* base_dir)
 {
@@ -328,6 +344,12 @@ set_clip_rectangle(rect_t clip)
 	clip.x1 *= g_scale_x; clip.y1 *= g_scale_y;
 	clip.x2 *= g_scale_x; clip.y2 *= g_scale_y;
 	al_set_clipping_rectangle(clip.x1, clip.y1, clip.x2 - clip.x1, clip.y2 - clip.y1);
+}
+
+void
+set_max_frameskip(int frames)
+{
+	s_max_frameskip = frames >= 0 ? frames : 0;
 }
 
 void
@@ -404,7 +426,7 @@ flip_screen(int framerate)
 		++s_frame_skips;
 	}
 	if (framerate > 0) {
-		s_skipping_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
+		s_skipping_frame = s_frame_skips < s_max_frameskip && s_last_flip_time > s_next_frame_time;
 		do {
 			time_left = s_next_frame_time - al_get_time();
 			if (s_conserve_cpu && time_left > 0.001)  // engine may stall with < 1ms timeout
