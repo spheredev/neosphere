@@ -297,6 +297,71 @@ shutdown_map_engine(void)
 	shutdown_persons_manager();
 }
 
+bool
+is_map_engine_running(void)
+{
+	return s_is_map_running;
+}
+
+rect_t
+get_map_bounds(void)
+{
+	rect_t bounds;
+	int    tile_w, tile_h;
+	
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	bounds.x1 = 0; bounds.y1 = 0;
+	bounds.x2 = s_map->width * tile_w;
+	bounds.y2 = s_map->height * tile_h;
+	return bounds;
+}
+
+point3_t
+get_map_origin(void)
+{
+	point3_t empty_point = { 0, 0, 0 };
+	
+	return s_map ? s_map->origin : empty_point;
+}
+
+int
+get_map_tile(int x, int y, int layer)
+{
+	int layer_h = s_map->layers[layer].height;
+	int layer_w = s_map->layers[layer].width;
+
+	x = (x % layer_w + layer_w) % layer_w;
+	y = (y % layer_h + layer_h) % layer_h;
+	return s_map->layers[layer].tilemap[x + y * layer_w].tile_index;
+}
+
+const tileset_t*
+get_map_tileset(void)
+{
+	return s_map->tileset;
+}
+
+const obsmap_t*
+get_map_layer_obsmap(int layer)
+{
+	return s_map->layers[layer].obsmap;
+}
+
+void
+normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
+{
+	int tile_w, tile_h;
+	int layer_w, layer_h;
+	
+	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax)
+		return;
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	layer_w = s_map->layers[layer].width * tile_w;
+	layer_h = s_map->layers[layer].height * tile_h;
+	if (inout_x) *inout_x = fmod(fmod(*inout_x, layer_w) + layer_w, layer_w);
+	if (inout_y) *inout_y = fmod(fmod(*inout_y, layer_h) + layer_h, layer_h);
+}
+
 static map_t*
 load_map(const char* path)
 {
@@ -309,7 +374,7 @@ load_map(const char* path)
 	//          6 - exit east script
 	//          7 - exit south script
 	//          8 - exit west script
-	
+
 	uint16_t                 count;
 	struct rmp_entity_header entity_hdr;
 	FILE*                    file;
@@ -330,7 +395,7 @@ load_map(const char* path)
 	lstring_t*               *strings = NULL;
 
 	int i, j, x, y, z;
-	
+
 	if (!(file = fopen(path, "rb"))) goto on_error;
 	if (!(map = calloc(1, sizeof(map_t)))) goto on_error;
 	if (fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
@@ -347,13 +412,13 @@ load_map(const char* path)
 		for (i = 0; i < rmp.num_strings; ++i)
 			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
 		if (has_failed) goto on_error;
-		
+
 		// pre-allocate map structures; if an allocation fails we won't waste time reading the rest of the file
 		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
 		if ((map->persons = calloc(rmp.num_entities, sizeof(struct map_person))) == NULL) goto on_error;
 		if ((map->triggers = calloc(rmp.num_entities, sizeof(struct map_trigger))) == NULL) goto on_error;
 		if ((map->zones = calloc(rmp.num_zones, sizeof(struct map_zone))) == NULL) goto on_error;
-		
+
 		// load layers
 		for (i = 0; i < rmp.num_layers; ++i) {
 			if (fread(&layer_hdr, sizeof(struct rmp_layer_header), 1, file) != 1)
@@ -391,7 +456,7 @@ load_map(const char* path)
 
 		// if either dimension is zero, the map has no non-parallax layers and is thus malformed
 		if (map->width == 0 || map->height == 0) goto on_error;
-		
+
 		// load entities
 		map->num_persons = 0;
 		map->num_triggers = 0;
@@ -444,7 +509,7 @@ load_map(const char* path)
 			map->zones[i].script_id = compile_script(script, "[zone script]");
 			free_lstring(script);
 		}
-		
+
 		// load tileset
 		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
 		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
@@ -460,7 +525,7 @@ load_map(const char* path)
 					get_tile_delay(tileset, map->layers[z].tilemap[i].tile_index);
 			}
 		}
-		
+
 		// wrap things up
 		map->num_layers = rmp.num_layers;
 		map->num_zones = rmp.num_zones;
@@ -527,7 +592,7 @@ static void
 free_map(map_t* map)
 {
 	int i;
-	
+
 	if (map != NULL) {
 		for (i = 0; i < MAP_SCRIPT_MAX; ++i)
 			free_script(map->scripts[i]);
@@ -555,227 +620,6 @@ free_map(map_t* map)
 		free(map->triggers);
 		free(map);
 	}
-}
-
-void
-init_map_engine_api(duk_context* ctx)
-{
-	register_api_func(ctx, NULL, "MapEngine", js_MapEngine);
-	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
-	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
-	register_api_func(ctx, NULL, "IsInputAttached", js_IsInputAttached);
-	register_api_func(ctx, NULL, "IsLayerReflective", js_IsLayerReflective);
-	register_api_func(ctx, NULL, "IsLayerVisible", js_IsLayerVisible);
-	register_api_func(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
-	register_api_func(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
-	register_api_func(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
-	register_api_func(ctx, NULL, "GetCameraX", js_GetCameraX);
-	register_api_func(ctx, NULL, "GetCameraY", js_GetCameraY);
-	register_api_func(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
-	register_api_func(ctx, NULL, "GetCurrentTrigger", js_GetCurrentTrigger);
-	register_api_func(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
-	register_api_func(ctx, NULL, "GetInputPerson", js_GetInputPerson);
-	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
-	register_api_func(ctx, NULL, "GetLayerMask", js_GetLayerMask);
-	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
-	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
-	register_api_func(ctx, NULL, "GetNextAnimatedTile", js_GetNextAnimatedTile);
-	register_api_func(ctx, NULL, "GetNumLayers", js_GetNumLayers);
-	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
-	register_api_func(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
-	register_api_func(ctx, NULL, "GetNumZones", js_GetNumZones);
-	register_api_func(ctx, NULL, "GetTalkActivationButton", js_GetTalkActivationButton);
-	register_api_func(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
-	register_api_func(ctx, NULL, "GetTile", js_GetTile);
-	register_api_func(ctx, NULL, "GetTileDelay", js_GetTileDelay);
-	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
-	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
-	register_api_func(ctx, NULL, "GetTileName", js_GetTileName);
-	register_api_func(ctx, NULL, "GetTileSurface", js_GetTileSurface);
-	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
-	register_api_func(ctx, NULL, "GetZoneHeight", js_GetZoneHeight);
-	register_api_func(ctx, NULL, "GetZoneLayer", js_GetZoneLayer);
-	register_api_func(ctx, NULL, "GetZoneWidth", js_GetZoneWidth);
-	register_api_func(ctx, NULL, "GetZoneX", js_GetZoneX);
-	register_api_func(ctx, NULL, "GetZoneY", js_GetZoneY);
-	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
-	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
-	register_api_func(ctx, NULL, "SetColorMask", js_SetColorMask);
-	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
-	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
-	register_api_func(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
-	register_api_func(ctx, NULL, "SetLayerRenderer", js_SetLayerRenderer);
-	register_api_func(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
-	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
-	register_api_func(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
-	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
-	register_api_func(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
-	register_api_func(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
-	register_api_func(ctx, NULL, "SetTile", js_SetTile);
-	register_api_func(ctx, NULL, "SetTileDelay", js_SetTileDelay);
-	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
-	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
-	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
-	register_api_func(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
-	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
-	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
-	register_api_func(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
-	register_api_func(ctx, NULL, "CallMapScript", js_CallMapScript);
-	register_api_func(ctx, NULL, "ChangeMap", js_ChangeMap);
-	register_api_func(ctx, NULL, "DetachCamera", js_DetachCamera);
-	register_api_func(ctx, NULL, "DetachInput", js_DetachInput);
-	register_api_func(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
-	register_api_func(ctx, NULL, "ExecuteZones", js_ExecuteZones);
-	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
-	register_api_func(ctx, NULL, "MapToScreenX", js_MapToScreenX);
-	register_api_func(ctx, NULL, "MapToScreenY", js_MapToScreenY);
-	register_api_func(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
-	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
-	register_api_func(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
-	register_api_func(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
-	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
-	register_api_func(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
-
-	// Map script types
-	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
-	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
-
-	// initialize subcomponent APIs (persons, etc.)
-	init_persons_api();
-}
-
-int
-duk_require_map_layer(duk_context* ctx, duk_idx_t index)
-{
-	int         layer;
-	const char* name;
-	
-	duk_require_type_mask(ctx, index, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
-	if (duk_is_number(ctx, index))
-		return duk_get_int(ctx, index);
-	else {
-		name = duk_get_string(ctx, index);
-		if ((layer = find_layer(name)) == -1)
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "layer named '%s' doesn't exist", name);
-		return layer;
-	}
-}
-
-bool
-is_map_engine_running(void)
-{
-	return s_is_map_running;
-}
-
-rect_t
-get_map_bounds(void)
-{
-	rect_t bounds;
-	int    tile_w, tile_h;
-	
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
-	bounds.x1 = 0; bounds.y1 = 0;
-	bounds.x2 = s_map->width * tile_w;
-	bounds.y2 = s_map->height * tile_h;
-	return bounds;
-}
-
-const obsmap_t*
-get_map_layer_obsmap(int layer)
-{
-	return s_map->layers[layer].obsmap;
-}
-
-point3_t
-get_map_origin(void)
-{
-	point3_t empty_point = { 0, 0, 0 };
-	
-	return s_map ? s_map->origin : empty_point;
-}
-
-int
-get_map_tile(int x, int y, int layer)
-{
-	int layer_h = s_map->layers[layer].height;
-	int layer_w = s_map->layers[layer].width;
-
-	x = (x % layer_w + layer_w) % layer_w;
-	y = (y % layer_h + layer_h) % layer_h;
-	return s_map->layers[layer].tilemap[x + y * layer_w].tile_index;
-}
-
-const tileset_t*
-get_map_tileset(void)
-{
-	return s_map->tileset;
-}
-
-void
-normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
-{
-	int tile_w, tile_h;
-	int layer_w, layer_h;
-	
-	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax)
-		return;
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
-	layer_w = s_map->layers[layer].width * tile_w;
-	layer_h = s_map->layers[layer].height * tile_h;
-	if (inout_x) *inout_x = fmod(fmod(*inout_x, layer_w) + layer_w, layer_w);
-	if (inout_y) *inout_y = fmod(fmod(*inout_y, layer_h) + layer_h, layer_h);
-}
-
-static bool
-change_map(const char* filename, bool preserve_persons)
-{
-	map_t*             map;
-	char*              path;
-	person_t*          person;
-	struct map_person* person_info;
-
-	int i;
-
-	path = get_asset_path(filename, "maps", false);
-	map = load_map(path);
-	free(path);
-	if (map == NULL) return false;
-	if (s_map != NULL) {
-		// run map exit scripts first, before loading new map
-		run_script(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
-		run_script(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
-	}
-	free_map(s_map); free(s_map_filename);
-	s_map = map; s_map_filename = strdup(filename);
-	reset_persons(s_map, preserve_persons);
-
-	// populate persons
-	for (i = 0; i < s_map->num_persons; ++i) {
-		person_info = &s_map->persons[i];
-		person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false);
-		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
-		set_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
-		set_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
-		set_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
-		set_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
-		set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
-		call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
-	}
-		
-	// set camera over starting position
-	s_cam_x = s_map->origin.x;
-	s_cam_y = s_map->origin.y;
-		
-	// run map entry scripts
-	run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
-	run_script(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
-		
-	s_frames = 0;
-	return true;
 }
 
 static bool
@@ -850,6 +694,54 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 	return found_item;
 }
 
+static bool
+change_map(const char* filename, bool preserve_persons)
+{
+	map_t*             map;
+	char*              path;
+	person_t*          person;
+	struct map_person* person_info;
+
+	int i;
+
+	path = get_asset_path(filename, "maps", false);
+	map = load_map(path);
+	free(path);
+	if (map == NULL) return false;
+	if (s_map != NULL) {
+		// run map exit scripts first, before loading new map
+		run_script(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
+		run_script(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
+	}
+	free_map(s_map); free(s_map_filename);
+	s_map = map; s_map_filename = strdup(filename);
+	reset_persons(s_map, preserve_persons);
+
+	// populate persons
+	for (i = 0; i < s_map->num_persons; ++i) {
+		person_info = &s_map->persons[i];
+		person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false);
+		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
+		set_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
+		set_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
+		set_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
+		set_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
+		set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
+		call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
+	}
+
+	// set camera over starting position
+	s_cam_x = s_map->origin.x;
+	s_cam_y = s_map->origin.y;
+
+	// run map entry scripts
+	run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
+	run_script(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
+
+	s_frames = 0;
+	return true;
+}
+
 static int
 find_layer(const char* name)
 {
@@ -866,7 +758,7 @@ static void
 map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
 	int   layer_w, layer_h;
-	float plax_offset_x = 0.0, plax_offset_y = 0.0;
+	float plx_offset_x = 0.0, plx_offset_y = 0.0;
 	int   tile_w, tile_h;
 	int   x_offset, y_offset;
 	
@@ -876,12 +768,12 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	layer_h = s_map->layers[layer].height * tile_h;
 	
 	// remap screen coordinates to layer coordinates
-	plax_offset_x = s_frames * s_map->layers[layer].autoscroll_x
+	plx_offset_x = s_frames * s_map->layers[layer].autoscroll_x
 		- s_cam_x * (s_map->layers[layer].parallax_x - 1.0);
-	plax_offset_y = s_frames * s_map->layers[layer].autoscroll_y
+	plx_offset_y = s_frames * s_map->layers[layer].autoscroll_y
 		- s_cam_y * (s_map->layers[layer].parallax_y - 1.0);
-	x_offset = s_cam_x - g_res_x / 2 - plax_offset_x;
-	y_offset = s_cam_y - g_res_y / 2 - plax_offset_y;
+	x_offset = s_cam_x - g_res_x / 2 - plx_offset_x;
+	y_offset = s_cam_y - g_res_y / 2 - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
 		// non-repeating map: clamp viewport to map bounds (windowbox if needed)
 		x_offset = layer_w > g_res_x ? fmin(fmax(x_offset, 0), layer_w - g_res_x)
@@ -1110,6 +1002,114 @@ update_map_engine(void)
 			for (j = i; j < s_num_delay_scripts - 1; ++j) s_delay_scripts[j] = s_delay_scripts[j + 1];
 			--s_num_delay_scripts; --i;
 		}
+	}
+}
+
+void
+init_map_engine_api(duk_context* ctx)
+{
+	register_api_func(ctx, NULL, "MapEngine", js_MapEngine);
+	register_api_func(ctx, NULL, "AreZonesAt", js_AreZonesAt);
+	register_api_func(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
+	register_api_func(ctx, NULL, "IsInputAttached", js_IsInputAttached);
+	register_api_func(ctx, NULL, "IsLayerReflective", js_IsLayerReflective);
+	register_api_func(ctx, NULL, "IsLayerVisible", js_IsLayerVisible);
+	register_api_func(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
+	register_api_func(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
+	register_api_func(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
+	register_api_func(ctx, NULL, "GetCameraX", js_GetCameraX);
+	register_api_func(ctx, NULL, "GetCameraY", js_GetCameraY);
+	register_api_func(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
+	register_api_func(ctx, NULL, "GetCurrentTrigger", js_GetCurrentTrigger);
+	register_api_func(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
+	register_api_func(ctx, NULL, "GetInputPerson", js_GetInputPerson);
+	register_api_func(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
+	register_api_func(ctx, NULL, "GetLayerMask", js_GetLayerMask);
+	register_api_func(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
+	register_api_func(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "GetNextAnimatedTile", js_GetNextAnimatedTile);
+	register_api_func(ctx, NULL, "GetNumLayers", js_GetNumLayers);
+	register_api_func(ctx, NULL, "GetNumTiles", js_GetNumTiles);
+	register_api_func(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
+	register_api_func(ctx, NULL, "GetNumZones", js_GetNumZones);
+	register_api_func(ctx, NULL, "GetTalkActivationButton", js_GetTalkActivationButton);
+	register_api_func(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
+	register_api_func(ctx, NULL, "GetTile", js_GetTile);
+	register_api_func(ctx, NULL, "GetTileDelay", js_GetTileDelay);
+	register_api_func(ctx, NULL, "GetTileImage", js_GetTileImage);
+	register_api_func(ctx, NULL, "GetTileHeight", js_GetTileHeight);
+	register_api_func(ctx, NULL, "GetTileName", js_GetTileName);
+	register_api_func(ctx, NULL, "GetTileSurface", js_GetTileSurface);
+	register_api_func(ctx, NULL, "GetTileWidth", js_GetTileWidth);
+	register_api_func(ctx, NULL, "GetZoneHeight", js_GetZoneHeight);
+	register_api_func(ctx, NULL, "GetZoneLayer", js_GetZoneLayer);
+	register_api_func(ctx, NULL, "GetZoneWidth", js_GetZoneWidth);
+	register_api_func(ctx, NULL, "GetZoneX", js_GetZoneX);
+	register_api_func(ctx, NULL, "GetZoneY", js_GetZoneY);
+	register_api_func(ctx, NULL, "SetCameraX", js_SetCameraX);
+	register_api_func(ctx, NULL, "SetCameraY", js_SetCameraY);
+	register_api_func(ctx, NULL, "SetColorMask", js_SetColorMask);
+	register_api_func(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
+	register_api_func(ctx, NULL, "SetLayerMask", js_SetLayerMask);
+	register_api_func(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
+	register_api_func(ctx, NULL, "SetLayerRenderer", js_SetLayerRenderer);
+	register_api_func(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
+	register_api_func(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
+	register_api_func(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
+	register_api_func(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	register_api_func(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
+	register_api_func(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
+	register_api_func(ctx, NULL, "SetTile", js_SetTile);
+	register_api_func(ctx, NULL, "SetTileDelay", js_SetTileDelay);
+	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
+	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
+	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
+	register_api_func(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
+	register_api_func(ctx, NULL, "AttachCamera", js_AttachCamera);
+	register_api_func(ctx, NULL, "AttachInput", js_AttachInput);
+	register_api_func(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
+	register_api_func(ctx, NULL, "CallMapScript", js_CallMapScript);
+	register_api_func(ctx, NULL, "ChangeMap", js_ChangeMap);
+	register_api_func(ctx, NULL, "DetachCamera", js_DetachCamera);
+	register_api_func(ctx, NULL, "DetachInput", js_DetachInput);
+	register_api_func(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
+	register_api_func(ctx, NULL, "ExecuteZones", js_ExecuteZones);
+	register_api_func(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
+	register_api_func(ctx, NULL, "MapToScreenX", js_MapToScreenX);
+	register_api_func(ctx, NULL, "MapToScreenY", js_MapToScreenY);
+	register_api_func(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
+	register_api_func(ctx, NULL, "RenderMap", js_RenderMap);
+	register_api_func(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
+	register_api_func(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
+	register_api_func(ctx, NULL, "SetDelayScript", js_SetDelayScript);
+	register_api_func(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
+
+	// Map script types
+	register_api_const(ctx, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
+	register_api_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
+
+	// initialize subcomponent APIs (persons, etc.)
+	init_persons_api();
+}
+
+int
+duk_require_map_layer(duk_context* ctx, duk_idx_t index)
+{
+	int         layer;
+	const char* name;
+
+	duk_require_type_mask(ctx, index, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
+	if (duk_is_number(ctx, index))
+		return duk_get_int(ctx, index);
+	else {
+		name = duk_get_string(ctx, index);
+		if ((layer = find_layer(name)) == -1)
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "layer named '%s' doesn't exist", name);
+		return layer;
 	}
 }
 

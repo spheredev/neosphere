@@ -10,6 +10,7 @@ static duk_ret_t js_ApplyColorMask         (duk_context* ctx);
 static duk_ret_t js_GradientCircle         (duk_context* ctx);
 static duk_ret_t js_GradientRectangle      (duk_context* ctx);
 static duk_ret_t js_Line                   (duk_context* ctx);
+static duk_ret_t js_LineSeries             (duk_context* ctx);
 static duk_ret_t js_OutlinedCircle         (duk_context* ctx);
 static duk_ret_t js_OutlinedRectangle      (duk_context* ctx);
 static duk_ret_t js_OutlinedRoundRectangle (duk_context* ctx);
@@ -18,6 +19,13 @@ static duk_ret_t js_PointSeries            (duk_context* ctx);
 static duk_ret_t js_Rectangle              (duk_context* ctx);
 static duk_ret_t js_RoundRectangle         (duk_context* ctx);
 static duk_ret_t js_Triangle               (duk_context* ctx);
+
+enum line_series_type
+{
+	LINE_MULTIPLE,
+	LINE_STRIP,
+	LINE_LOOP
+};
 
 void
 init_primitives_api(void)
@@ -28,6 +36,7 @@ init_primitives_api(void)
 	register_api_func(g_duktape, NULL, "GradientCircle", js_GradientCircle);
 	register_api_func(g_duktape, NULL, "GradientRectangle", js_GradientRectangle);
 	register_api_func(g_duktape, NULL, "Line", js_Line);
+	register_api_func(g_duktape, NULL, "LineSeries", js_LineSeries);
 	register_api_func(g_duktape, NULL, "OutlinedCircle", js_OutlinedCircle);
 	register_api_func(g_duktape, NULL, "OutlinedRectangle", js_OutlinedRectangle);
 	register_api_func(g_duktape, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
@@ -36,6 +45,11 @@ init_primitives_api(void)
 	register_api_func(g_duktape, NULL, "Rectangle", js_Rectangle);
 	register_api_func(g_duktape, NULL, "RoundRectangle", js_RoundRectangle);
 	register_api_func(g_duktape, NULL, "Triangle", js_Triangle);
+
+	// line series types
+	register_api_const(g_duktape, "LINE_MULTIPLE", LINE_MULTIPLE);
+	register_api_const(g_duktape, "LINE_STRIP", LINE_STRIP);
+	register_api_const(g_duktape, "LINE_LOOP", LINE_LOOP);
 }
 
 static duk_ret_t
@@ -136,6 +150,46 @@ js_Line(duk_context* ctx)
 }
 
 static duk_ret_t
+js_LineSeries(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	duk_require_object_coercible(ctx, 0);
+	color_t color = duk_require_sphere_color(ctx, 1);
+	int type = n_args >= 3 ? duk_require_int(ctx, 2) : LINE_MULTIPLE;
+
+	size_t          num_points;
+	int             x, y;
+	ALLEGRO_VERTEX* vertices;
+	ALLEGRO_COLOR   vtx_color;
+
+	unsigned int i;
+
+	if (!duk_is_array(ctx, 0))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): First argument must be an array");
+	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	if (num_points < 2)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): Two or more vertices required");
+	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): Failed to allocate vertex buffer (internal error)");
+	vtx_color = nativecolor(color);
+	for (i = 0; i < num_points; ++i) {
+		duk_get_prop_index(ctx, 0, i);
+		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_pop(ctx);
+		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		vertices[i].color = vtx_color;
+	}
+	al_draw_prim(vertices, NULL, NULL, 0, num_points,
+		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
+			: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+			: ALLEGRO_PRIM_LINE_LIST
+		);
+	free(vertices);
+	return 0;
+}
+
+static duk_ret_t
 js_OutlinedCircle(duk_context* ctx)
 {
 	bool    antialiased = false;
@@ -217,6 +271,8 @@ js_PointSeries(duk_context* ctx)
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	if (num_points < 1)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): One or more vertices required");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer (internal error)");
 	vtx_color = nativecolor(color);
@@ -225,7 +281,7 @@ js_PointSeries(duk_context* ctx)
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
-		vertices[i].x = x; vertices[i].y = y;
+		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
 	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
