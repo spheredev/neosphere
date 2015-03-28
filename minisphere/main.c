@@ -456,11 +456,13 @@ toggle_fullscreen(void)
 
 	flags = al_get_display_flags(g_display);
 	if (flags & ALLEGRO_FULLSCREEN_WINDOW) {
-		// switch from fullscreen to windowed, resizing the display manually to work
-		// around an Allegro bug
+		// switch from fullscreen to windowed
 		s_is_fullscreen = false;
 		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, false);
 		g_scale_x = g_scale_y = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
+		
+		// we have to resize and reposition manually because Allegro is bugged
+		// and gives us a 0x0 window when switching out of fullscreen
 		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
 		al_get_monitor_info(0, &monitor);
 		al_set_window_position(g_display,
@@ -539,9 +541,9 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	exit(EXIT_SUCCESS);
 	
 show_error_box:
-	// failed to allocate wraptext for error, show message box instead
-	al_show_native_message_box(g_display, "*munch*",
-		"A hunger-pig just devoured your game.", 
+	// use a native message box only as a last resort
+	al_show_native_message_box(g_display, "Script Error",
+		"minisphere encountered an error during game execution.", 
 		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(EXIT_SUCCESS);

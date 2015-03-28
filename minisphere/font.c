@@ -195,10 +195,11 @@ free_font(font_t* font)
 }
 
 void
-get_font_glyph_width(const font_t* font, int* out_min_width, int* out_max_width)
+get_font_metrics(const font_t* font, int* out_min_width, int* out_max_width, int* out_line_height)
 {
 	if (out_min_width) *out_min_width = font->min_width;
 	if (out_max_width) *out_max_width = font->max_width;
+	if (out_line_height) *out_line_height = font->height;
 }
 
 int
@@ -277,7 +278,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
 	
 	// allocate initial buffer
-	get_font_glyph_width(font, &glyph_width, NULL);
+	get_font_metrics(font, &glyph_width, NULL, NULL);
 	pitch = glyph_width > 0 ? width / glyph_width + 2 : width;
 	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
 	
