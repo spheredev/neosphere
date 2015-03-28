@@ -370,6 +370,7 @@ void
 duk_push_sphere_image(duk_context* ctx, image_t* image)
 {
 	ref_image(image);
+
 	duk_push_object(ctx);
 	duk_push_string(ctx, "image"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "ptr");

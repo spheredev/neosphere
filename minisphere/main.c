@@ -330,16 +330,6 @@ set_clip_rectangle(rect_t clip)
 }
 
 void
-exit_game(bool is_shutdown)
-{
-	if (is_shutdown) {
-		free(g_last_game_path);
-		g_last_game_path = NULL;
-	}
-	longjmp(s_jmp_exit, 1);
-}
-
-void
 do_events(void)
 {
 	ALLEGRO_EVENT event;
@@ -356,6 +346,16 @@ do_events(void)
 			exit_game(true);
 		}
 	}
+}
+
+void
+exit_game(bool is_shutdown)
+{
+	if (is_shutdown) {
+		free(g_last_game_path);
+		g_last_game_path = NULL;
+	}
+	longjmp(s_jmp_exit, 1);
 }
 
 void

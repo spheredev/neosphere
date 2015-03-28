@@ -182,7 +182,7 @@ init_windowstyle_api(void)
 	register_api_func(g_duktape, NULL, "LoadWindowStyle", js_LoadWindowStyle);
 }
 
-static void
+void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
 	ref_windowstyle(winstyle);

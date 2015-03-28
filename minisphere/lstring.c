@@ -67,7 +67,7 @@ read_lstring(FILE* file, bool trim_null)
 
 	file_pos = ftell(file);
 	if (fread(&length, 2, 1, file) != 1) goto on_error;
-	return read_lstring_s(file, length, trim_null);
+	return read_lstring_raw(file, length, trim_null);
 
 on_error:
 	fseek(file, file_pos, SEEK_CUR);
@@ -75,7 +75,7 @@ on_error:
 }
 
 lstring_t*
-read_lstring_s(FILE* file, size_t length, bool trim_null)
+read_lstring_raw(FILE* file, size_t length, bool trim_null)
 {
 	long       file_pos;
 	lstring_t* string = NULL;

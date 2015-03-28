@@ -124,7 +124,7 @@ static int             s_num_persons    = 0;
 static person_t*       *s_persons       = NULL;
 
 void
-init_persons_manager(void)
+initialize_persons_manager(void)
 {
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	s_is_talking = false;

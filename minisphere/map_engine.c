@@ -269,7 +269,7 @@ struct rmp_zone_header
 void
 initialize_map_engine(void)
 {
-	init_persons_manager();
+	initialize_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
 	s_map = NULL; s_map_filename = NULL;
 	s_input_person = s_camera_person = NULL;

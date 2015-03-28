@@ -107,7 +107,7 @@ read_tileset(FILE* file)
 	for (i = 0; i < rts.num_tiles; ++i) {
 		if (fread(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
 			goto on_error;
-		tiles[i].name = read_lstring_s(file, tilehdr.name_length, true);
+		tiles[i].name = read_lstring_raw(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
 		tiles[i].delay = tilehdr.animated ? tilehdr.delay : 0;
 		tiles[i].animate_index = i;
@@ -202,6 +202,7 @@ get_tile_name(const tileset_t* tileset, int tile_index)
 {
 	return tileset->tiles[tile_index].name;
 }
+
 const obsmap_t*
 get_tile_obsmap(const tileset_t* tileset, int tile_index)
 {

@@ -194,18 +194,18 @@ free_font(font_t* font)
 	free(font);
 }
 
+int
+get_font_line_height(const font_t* font)
+{
+	return font->height;
+}
+
 void
 get_font_metrics(const font_t* font, int* out_min_width, int* out_max_width, int* out_line_height)
 {
 	if (out_min_width) *out_min_width = font->min_width;
 	if (out_max_width) *out_max_width = font->max_width;
 	if (out_line_height) *out_line_height = font->height;
-}
-
-int
-get_font_line_height(const font_t* font)
-{
-	return font->height;
 }
 
 image_t*

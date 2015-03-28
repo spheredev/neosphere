@@ -170,35 +170,6 @@ write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 	dyad_write(socket->stream, (void*)data, n_bytes);
 }
 
-void
-init_sockets_api(void)
-{
-	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
-	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
-	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
-	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
-}
-
-void
-duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
-{
-	ref_socket(socket);
-	duk_push_object(ctx);
-	duk_push_string(ctx, "socket"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
-	duk_push_pointer(ctx, socket); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, js_Socket_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, js_Socket_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_Socket_acceptNext, DUK_VARARGS); duk_put_prop_string(ctx, -2, "acceptNext");
-	duk_push_c_function(ctx, js_Socket_isConnected, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isConnected");
-	duk_push_c_function(ctx, js_Socket_getPendingReadSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPendingReadSize");
-	duk_push_c_function(ctx, js_Socket_getRemoteAddress, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemoteAddress");
-	duk_push_c_function(ctx, js_Socket_getRemotePort, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemotePort");
-	duk_push_c_function(ctx, js_Socket_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
-	duk_push_c_function(ctx, js_Socket_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
-	duk_push_c_function(ctx, js_Socket_readString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "readString");
-	duk_push_c_function(ctx, js_Socket_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
-}
-
 static void
 on_dyad_accept(dyad_Event* e)
 {
@@ -254,6 +225,35 @@ on_dyad_receive(dyad_Event* e)
 		memcpy(socket->buffer, e->data + socket->pend_size, e->size);
 		socket->pend_size += e->size;
 	}
+}
+
+void
+init_sockets_api(void)
+{
+	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
+	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
+	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
+	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
+}
+
+void
+duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
+{
+	ref_socket(socket);
+	duk_push_object(ctx);
+	duk_push_string(ctx, "socket"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
+	duk_push_pointer(ctx, socket); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_c_function(ctx, js_Socket_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
+	duk_push_c_function(ctx, js_Socket_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_Socket_acceptNext, DUK_VARARGS); duk_put_prop_string(ctx, -2, "acceptNext");
+	duk_push_c_function(ctx, js_Socket_isConnected, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isConnected");
+	duk_push_c_function(ctx, js_Socket_getPendingReadSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPendingReadSize");
+	duk_push_c_function(ctx, js_Socket_getRemoteAddress, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemoteAddress");
+	duk_push_c_function(ctx, js_Socket_getRemotePort, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemotePort");
+	duk_push_c_function(ctx, js_Socket_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
+	duk_push_c_function(ctx, js_Socket_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
+	duk_push_c_function(ctx, js_Socket_readString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "readString");
+	duk_push_c_function(ctx, js_Socket_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
 }
 
 static duk_ret_t
