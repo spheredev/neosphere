@@ -1,31 +1,37 @@
-minisphere 1.0   (c) 2015 Fat Cerberus
-Release Date: Sunday, March 28, 2015
+minisphere 1.0
+==============
+
+*Sunday, March 28, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written
 from the ground up in C.  It boasts high compatibility with most games
 written for Sphere 1.x, but with better performance and some new
 functionality.
 
-Command Line Options
-====================
 
-* --game <path>   - Loads the Sphere game at <path>. If not provided,
-                    minisphere will open a file dialog allowing the user
-                    to locate the desired game manually. For
-                    compatibility reasons, this can also be specified as
-                    `-game <path>` (with only one dash).
-* --fullscreen    - Starts the engine in full screen mode.
-* --windowed      - Starts the engine in windowed mode.
-* --frameskip <x> - Sets the initial frameskip limit to <x>. Note that
-                    if the game calls `SetMaxFrameSkips()`, that value
-                    overrides this one. The default frameskip limit is
-                    5.
-* --no-throttle   - Disables interframe throttling. This may improve
-                    performance on slower machines at the cost of maxing
-                    out at least one processor core.
+Command Line Options
+--------------------
+
+* `--game <path>`: Loads the Sphere game at `<path>`. If not provided,
+  minisphere will open a file dialog allowing the user to locate a
+  desired game manually. For compatibility reasons, this can also be
+  specified as `-game <path>` (with only one dash).
+
+* `--fullscreen`: Starts the engine in full screen mode.
+
+* `--windowed`: Starts the engine in windowed mode.
+
+* `--frameskip <x>`: Sets the initial frameskip limit to `<x>`. Note
+  that if the game calls `SetMaxFrameSkips()`, that value overrides this
+  one.  The default frameskip limit is 5.
+
+* `--no-throttle`: Disables interframe throttling. This may improve
+  performance on slower machines at the cost of maxing out at least one
+  processor core.
+
 
 Potential Compatibility Issues
-==============================
+------------------------------
 
 `GrabImage()` and `GrabSurface()`
 ---------------------------------
@@ -39,7 +45,7 @@ during a frameskip.
 When writing a game specifically targetting minisphere, the correct
 solution is to call `UnskipFrame()`, render what you need, then use
 `GrabImage()`/`GrabSurface()` to save the render. If you absolutely
-_must_ grab a backbuffer image every frame (for advanced rendering
+*must* grab a backbuffer image every frame (for advanced rendering
 effects, etc.), you can place `SetMaxFrameSkips(0);` at the beginning
 of your game to prevent any frames from being skipped.
 
