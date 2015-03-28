@@ -174,18 +174,23 @@ js_GetVersion(duk_context* ctx)
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_string(ctx, SPHERE_API_VERSION_STRING);
+	duk_push_string(ctx, SPHERE_USERAGENT);
 	return 1;
 }
 
 static duk_ret_t
 js_GetExtensions(duk_context* ctx)
 {
-	int i = 0;
+	int num_extensions;
+	
+	int i;
 
+	num_extensions = sizeof(EXTENSIONS) / sizeof(EXTENSIONS[0]);
 	duk_push_array(ctx);
-	duk_push_string(ctx, "sphere-legacy"); duk_put_prop_index(ctx, -2, i++);
-	duk_push_string(ctx, "minisphere"); duk_put_prop_index(ctx, -2, i++);
+	for (i = 0; i < num_extensions; ++i) {
+		duk_push_string(ctx, EXTENSIONS[i]);
+		duk_put_prop_index(ctx, -2, i);
+	}
 	return 1;
 }
 

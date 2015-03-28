@@ -46,6 +46,7 @@ static void shutdown_engine   (void);
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
 static rect_t  s_clip_rect;
+static bool    s_conserve_cpu = true;
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
@@ -155,7 +156,7 @@ main(int argc, char* argv[])
 	g_game_conf = al_load_config_file(sgm_path);
 	free(sgm_path);
 	if (g_game_conf == NULL) {
-		dialog_name = al_ustr_newf("%s - Where is game.sgm?", ENGINE_VERSION_NAME);
+		dialog_name = al_ustr_newf("%s - Where is game.sgm?", ENGINE_NAME);
 		file_dlg = al_create_native_file_dialog(NULL, al_cstr(dialog_name), "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
@@ -406,7 +407,7 @@ flip_screen(int framerate)
 		s_skipping_frame = s_frame_skips < MAX_FRAME_SKIPS && s_last_flip_time > s_next_frame_time;
 		do {
 			time_left = s_next_frame_time - al_get_time();
-			if (time_left > 0.001)  // engine may stall with < 1ms timeout
+			if (s_conserve_cpu && time_left > 0.001)  // engine may stall with < 1ms timeout
 				al_wait_for_event_timed(g_events, NULL, time_left);
 			do_events();
 		} while (al_get_time() < s_next_frame_time);
