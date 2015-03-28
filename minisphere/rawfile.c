@@ -38,8 +38,8 @@ js_HashRawFile(duk_context* ctx)
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Failed to open file '%s' for reading");
 	fclose(file);
-	duk_push_string(ctx, "");
-	return 1;
+	// TODO: implement raw file hashing
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Function is not yet implemented");
 }
 
 static duk_ret_t

@@ -223,8 +223,8 @@ js_CreateStringFromByteArray(duk_context* ctx)
 static duk_ret_t
 js_HashByteArray(duk_context* ctx)
 {
-	duk_push_null(ctx);
-	return 1;
+	// TODO: implement byte array hashing
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashByteArray(): Function is not yet implemented");
 }
 
 static duk_ret_t
