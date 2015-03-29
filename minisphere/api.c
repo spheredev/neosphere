@@ -12,6 +12,7 @@ static duk_ret_t js_RequireScript        (duk_context* ctx);
 static duk_ret_t js_EvaluateSystemScript (duk_context* ctx);
 static duk_ret_t js_EvaluateScript       (duk_context* ctx);
 static duk_ret_t js_IsSkippedFrame       (duk_context* ctx);
+static duk_ret_t js_GetDirectoryList     (duk_context* ctx);
 static duk_ret_t js_GetFileList          (duk_context* ctx);
 static duk_ret_t js_GetFrameRate         (duk_context* ctx);
 static duk_ret_t js_GetGameList          (duk_context* ctx);
@@ -45,6 +46,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "RequireScript", js_RequireScript);
 	register_api_func(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
 	register_api_func(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
+	register_api_func(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
 	register_api_func(ctx, NULL, "GetFileList", js_GetFileList);
 	register_api_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
 	register_api_func(ctx, NULL, "GetGameList", js_GetGameList);
@@ -268,6 +270,37 @@ static duk_ret_t
 js_IsSkippedFrame(duk_context* ctx)
 {
 	duk_push_boolean(ctx, is_skipped_frame());
+	return 1;
+}
+
+static duk_ret_t
+js_GetDirectoryList(duk_context* ctx)
+{
+	const char*       directory_name;
+	ALLEGRO_FS_ENTRY* file_info;
+	ALLEGRO_PATH*     file_path;
+	ALLEGRO_FS_ENTRY* fs;
+	char*             path;
+
+	int i;
+
+	directory_name = duk_require_string(ctx, 0);
+	path = get_asset_path(directory_name, NULL, false);
+	fs = al_create_fs_entry(path);
+	free(path);
+	duk_push_array(ctx);
+	i = 0;
+	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
+		while (file_info = al_read_directory(fs)) {
+			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISDIR) {
+				file_path = al_create_path(al_get_fs_entry_name(file_info));
+				duk_push_string(ctx, al_get_path_filename(file_path)); duk_put_prop_index(ctx, -2, i);
+				al_destroy_path(file_path);
+				++i;
+			}
+		}
+	}
+	al_destroy_fs_entry(fs);
 	return 1;
 }
 
