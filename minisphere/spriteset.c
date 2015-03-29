@@ -379,7 +379,7 @@ init_spriteset_api(duk_context* ctx)
 void
 duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 {
-	char      prop_name[20];
+	char prop_name[20];
 	
 	int i, j;
 
