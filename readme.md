@@ -1,5 +1,5 @@
-minisphere 1.0
-==============
+minisphere 1.0.1
+================
 
 *Sunday, March 28, 2015*
 
@@ -91,5 +91,5 @@ other than to edit the scripts by hand.
 
 Duktape, the JavaScript engine that powers minisphere, is highly
 ES5 compliant and will throw a syntax error if the `const` keyword is
-encountered. If you want the try running the game in minisphere, you
-will have to manually replace all instances of `const` with `var`.
+encountered. If you want to try running the game in minisphere, you will
+have to manually replace all instances of `const` with `var`.
