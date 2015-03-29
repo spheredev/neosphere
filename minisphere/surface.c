@@ -132,7 +132,11 @@ duk_require_rgba_lut(duk_context* ctx, duk_idx_t index, uint8_t *out_lut)
 	for (i = 0; i < 256; ++i) out_lut[i] = i;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(ctx, index, i);
-		out_lut[i] = min(max(duk_require_int(ctx, -1), 0), 255);
+		out_lut[i] = duk_require_int(ctx, -1);
+		if (out_lut[i]<0)
+			out_lut[i] = 0;
+		else if (out_lut[i]>255)
+			out_lut[i] = 255;
 		duk_pop(ctx);
 	}
 }
