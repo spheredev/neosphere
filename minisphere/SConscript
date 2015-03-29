@@ -1,0 +1,45 @@
+
+minisphere_files = [
+    "api.c",
+    "bytearray.c",
+    "color.c",
+    "duktape.c",
+    "dyad.c",
+    "file.c",
+    "font.c",
+    "geometry.c",
+    "image.c",
+    "input.c",
+    "logger.c",
+    "lstring.c",
+    "main.c",
+    "map_engine.c",
+    "obsmap.c",
+    "persons.c",
+    "primitives.c",
+    "rawfile.c",
+    "script.c",
+    "sockets.c",
+    "sound.c",
+    "spriteset.c",
+    "surface.c",
+    "tileset.c",
+    "windowstyle.c"
+]
+
+allegro_libs = [
+    "allegro", 
+    "allegro_audio", 
+    "allegro_acodec",
+    "allegro_color",
+    "allegro_dialog",
+    "allegro_font",
+    "allegro_image",
+    "allegro_primitives",
+    "allegro_ttf",
+    "allegro_main",
+]
+
+minisphere = Program("msphere", minisphere_files, LIBS = allegro_libs)
+
+Return("minisphere")
