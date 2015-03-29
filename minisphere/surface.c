@@ -140,7 +140,6 @@ duk_require_rgba_lut(duk_context* ctx, duk_idx_t index, uint8_t *out_lut)
 			out_lut[i] = 255;
 		else
 			out_lut[i] = out;
-		
 		duk_pop(ctx);
 	}
 }
