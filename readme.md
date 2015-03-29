@@ -53,7 +53,7 @@ Note that as a last resort when running older games, you can also pass
 `--frameskip 0` to engine.exe on the command line to disable frame
 skipping.
 
-Interframe Throttling
+Interframe throttling
 ---------------------
 
 minisphere attempts to minimize its CPU utilization by going to sleep
@@ -66,8 +66,18 @@ skipped than necessary.
 If you want to disable this feature, run engine.exe with the
 `--no-throttle` commandline option.
 
-Stricter Type Checking on API Function Parameters
--------------------------------------------------
+Aggressive frame skipping
+-------------------------
+
+minisphere's frameskip algorithm is very aggressive and many things that
+usually happen every frame won't happen if the frame is skipped. For
+example, the map engine doesn't call the render script for skipped
+frames. This can cause issues if a game does anything other than
+rendering in a render script and can be worked around by passing
+`--frameskip 0` on the command line.
+
+Stricter type checking in API functions
+---------------------------------------
 
 Sphere 1.x, in general, silently coerces most wrong-type values passed
 to API calls. minisphere, however, is a lot stricter about this and will
@@ -75,3 +85,11 @@ throw an error if, for example, you pass a string to a function
 expecting a number value. This may prevent some poorly-written Sphere
 games from running under minisphere. There is currently no workaround
 other than to edit the scripts by hand.
+
+`const` will cause a syntax error
+---------------------------------
+
+Duktape, the JavaScript engine that powers minisphere, is highly
+ES5 compliant and will throw a syntax error if the `const` keyword is
+encountered. If you want the try running the game in minisphere, you
+will have to manually replace all instances of `const` with `var`.

@@ -433,14 +433,16 @@ flip_screen(int framerate)
 				al_wait_for_event_timed(g_events, NULL, time_left);
 			do_events();
 		} while (al_get_time() < s_next_frame_time);
-		s_next_frame_time += 1.0 / framerate;
+		if (!is_backbuffer_valid && !s_skipping_frame)  // did we just finish skipping frames?
+			s_next_frame_time = al_get_time() + 1.0 / framerate;
+		else
+			s_next_frame_time += 1.0 / framerate;
 	}
 	else {
 		s_skipping_frame = false;
 		do_events();
+		s_next_frame_time = al_get_time();
 	}
-	if (!is_backbuffer_valid && !s_skipping_frame)  // did we just finish skipping frames?
-		s_next_frame_time = al_get_time() + 1.0 / framerate;
 	++s_num_frames;
 	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
