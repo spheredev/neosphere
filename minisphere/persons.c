@@ -117,7 +117,6 @@ static void sort_persons         (void);
 
 static const person_t* s_current_person = NULL;
 static int             s_def_scripts[PERSON_SCRIPT_MAX];
-static bool            s_is_talking     = false;
 static int             s_talk_distance  = 8;
 static int             s_max_persons    = 0;
 static int             s_num_persons    = 0;
@@ -127,7 +126,6 @@ void
 initialize_persons_manager(void)
 {
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
-	s_is_talking = false;
 	s_num_persons = s_max_persons = 0;
 	s_persons = NULL;
 	s_talk_distance = 8;
@@ -549,8 +547,6 @@ talk_person(const person_t* person)
 	person_t* target_person;
 	double    talk_x, talk_y;
 
-	if (s_is_talking)
-		return;
 	map_rect = get_map_bounds();
 	
 	// check if anyone else is within earshot
@@ -562,11 +558,8 @@ talk_person(const person_t* person)
 	is_person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
 	
 	// if so, call their talk script
-	if (target_person != NULL) {
-		s_is_talking = true;
+	if (target_person != NULL)
 		call_person_script(target_person, PERSON_SCRIPT_ON_TALK, true);
-		s_is_talking = false;
-	}
 }
 
 void

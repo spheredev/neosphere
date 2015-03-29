@@ -190,7 +190,7 @@ update_input(void)
 
 	int i, j;
 
-	// process Allegro events
+	// process Allegro input events
 	while (al_get_next_event(s_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_KEY_CHAR:

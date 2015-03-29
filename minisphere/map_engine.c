@@ -126,6 +126,7 @@ static bool                s_exiting           = false;
 static int                 s_framerate         = 0;
 static unsigned int        s_frames            = 0;
 static person_t*           s_input_person      = NULL;
+static bool                s_is_talk_allowed   = true;
 static bool                s_is_map_running    = false;
 static map_t*              s_map = NULL;
 static char*               s_map_filename      = NULL;
@@ -804,8 +805,11 @@ process_map_input(void)
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
 		al_get_keyboard_state(&kb_state);
 		if (al_key_down(&kb_state, s_talk_key) || is_joy_button_down(0, s_talk_button)) {
-			talk_person(s_input_person);
+			if (s_is_talk_allowed) talk_person(s_input_person);
+			s_is_talk_allowed = false;
 		}
+		else // allow talking again only after key is released
+			s_is_talk_allowed = true;
 		if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) mv_y = -1;
 		if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) mv_x = 1;
 		if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) mv_y = 1;
