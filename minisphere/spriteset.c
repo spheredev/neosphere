@@ -412,7 +412,7 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	// Spriteset:images
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_images; ++i) {
-                sprintf(prop_name, "%i");
+		sprintf(prop_name, "%i");
 		duk_push_string(ctx, prop_name);
 		duk_push_c_function(ctx, js_Spriteset_get_image, DUK_VARARGS);
 			duk_get_prop_string(ctx, -1, "bind"); duk_dup(ctx, -2);
