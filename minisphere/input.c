@@ -60,13 +60,10 @@ static ALLEGRO_EVENT_QUEUE*   s_events;
 static int                    s_key_down_scripts[ALLEGRO_KEY_MAX];
 static int                    s_key_up_scripts[ALLEGRO_KEY_MAX];
 static ALLEGRO_JOYSTICK*      s_joy_handles[MAX_JOYSTICKS];
-static ALLEGRO_JOYSTICK_STATE s_joy_state[MAX_JOYSTICKS];
 static struct key_queue       s_key_queue;
-static ALLEGRO_KEYBOARD_STATE s_keyboard_state;
 static bool                   s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static bool                   s_last_key_state[ALLEGRO_KEY_MAX];
-static ALLEGRO_MOUSE_STATE    s_mouse_state;
-static int                    s_last_wheel_pos;
+static int                    s_last_wheel_pos = 0;
 static int                    s_num_wheel_events = 0;
 static int                    s_wheel_queue[255];
 
@@ -96,10 +93,6 @@ initialize_input(void)
 	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
 	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
 	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
-	
-	al_get_keyboard_state(&s_keyboard_state);
-	al_get_mouse_state(&s_mouse_state);
-	s_last_wheel_pos = s_mouse_state.z;
 }
 
 void
@@ -114,36 +107,44 @@ shutdown_input(void)
 bool
 is_any_key_down(void)
 {
+	ALLEGRO_KEYBOARD_STATE kb_state;
+
 	int i_key;
 
-	for (i_key = 0; i_key < ALLEGRO_KEY_MAX; ++i_key) {
-		if (al_key_down(&s_keyboard_state, i_key))
-			return true;
-	}
+	al_get_keyboard_state(&kb_state);
+	for (i_key = 0; i_key < ALLEGRO_KEY_MAX; ++i_key)
+		if (al_key_down(&kb_state, i_key)) return true;
 	return false;
 }
 
 bool
 is_joy_button_down(int joy_index, int button)
 {
-	return s_joy_state[joy_index].button[button] > 0;
+	ALLEGRO_JOYSTICK_STATE joy_state;
+	ALLEGRO_JOYSTICK*      joystick;
+
+	if (!(joystick = s_joy_handles[joy_index])) return 0.0;
+	al_get_joystick_state(joystick, &joy_state);
+	return joy_state.button[button] > 0;
 }
 
 float
 get_joy_axis(int joy_index, int axis_index)
 {
-	ALLEGRO_JOYSTICK* joystick;
-	int               n_stick_axes;
-	int               n_sticks;
+	ALLEGRO_JOYSTICK_STATE joy_state;
+	ALLEGRO_JOYSTICK*      joystick;
+	int                    n_stick_axes;
+	int                    n_sticks;
 
 	int i;
 
 	if (!(joystick = s_joy_handles[joy_index])) return 0.0;
+	al_get_joystick_state(joystick, &joy_state);
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	for (i = 0; i < n_sticks; ++i) {
 		n_stick_axes = al_get_joystick_num_axes(joystick, i);
 		if (axis_index < n_stick_axes)
-			return s_joy_state[joy_index].stick[i].axis[axis_index];
+			return joy_state.stick[i].axis[axis_index];
 		axis_index -= n_stick_axes;
 	}
 	return 0.0;
@@ -184,9 +185,10 @@ clear_key_queue(void)
 void
 update_input(void)
 {
-	ALLEGRO_EVENT     event;
-	bool              is_down;
-	ALLEGRO_JOYSTICK* joystick;
+	ALLEGRO_EVENT          event;
+	bool                   is_down;
+	ALLEGRO_KEYBOARD_STATE kb_state;
+	ALLEGRO_MOUSE_STATE    mouse_state;
 
 	int i, j;
 
@@ -221,21 +223,15 @@ update_input(void)
 		}
 	}
 	
-	al_get_keyboard_state(&s_keyboard_state);
-	al_get_mouse_state(&s_mouse_state);
-	for (i = 0; i < MAX_JOYSTICKS; i++) {
-		if (joystick = s_joy_handles[i])
-			al_get_joystick_state(joystick, &s_joy_state[i]);
-		else
-			memset(&s_joy_state[i], 0, sizeof(ALLEGRO_JOYSTICK_STATE));
-	}
-	if (s_mouse_state.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
-	if (s_mouse_state.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
-	s_last_wheel_pos = s_mouse_state.z;
+	al_get_mouse_state(&mouse_state);
+	if (mouse_state.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
+	if (mouse_state.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
+	s_last_wheel_pos = mouse_state.z;
+	al_get_keyboard_state(&kb_state);
 	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
 		if (!s_is_key_bound[i])
 			continue;
-		is_down = al_key_down(&s_keyboard_state, i);
+		is_down = al_key_down(&kb_state, i);
 		if (is_down && !s_last_key_state[i]) run_script(s_key_down_scripts[i], false);
 		if (!is_down && s_last_key_state[i]) run_script(s_key_up_scripts[i], false);
 		s_last_key_state[i] = is_down;
@@ -429,15 +425,7 @@ js_AreKeysLeft(duk_context* ctx)
 static duk_ret_t
 js_IsAnyKeyPressed(duk_context* ctx)
 {
-	int i_key;
-	
-	for (i_key = 0; i_key < ALLEGRO_KEY_MAX; ++i_key) {
-		if (al_key_down(&s_keyboard_state, i_key)) {
-			duk_push_true(ctx);
-			return 1;
-		}
-	}
-	duk_push_false(ctx);
+	duk_push_boolean(ctx, is_any_key_down());
 	return 1;
 }
 
@@ -456,8 +444,10 @@ js_IsKeyPressed(duk_context* ctx)
 {
 	int code = duk_require_int(ctx, 0);
 
-	duk_push_boolean(ctx, s_keyboard_state.display == g_display
-		&& al_key_down(&s_keyboard_state, code));
+	ALLEGRO_KEYBOARD_STATE kb_state;
+
+	al_get_keyboard_state(&kb_state);
+	duk_push_boolean(ctx, kb_state.display == g_display && al_key_down(&kb_state, code));
 	return 1;
 }
 
@@ -466,8 +456,10 @@ js_IsMouseButtonPressed(duk_context* ctx)
 {
 	int button = duk_require_int(ctx, 0);
 
-	duk_push_boolean(ctx, s_mouse_state.display == g_display
-		&& al_mouse_button_down(&s_mouse_state, button));
+	ALLEGRO_MOUSE_STATE mouse_state;
+
+	al_get_mouse_state(&mouse_state);
+	duk_push_boolean(ctx, mouse_state.display == g_display && al_mouse_button_down(&mouse_state, button));
 	return 1;
 }
 
@@ -579,14 +571,20 @@ js_GetMouseWheelEvent(duk_context* ctx)
 static duk_ret_t
 js_GetMouseX(duk_context* ctx)
 {
-	duk_push_int(ctx, s_mouse_state.x / g_scale_x);
+	ALLEGRO_MOUSE_STATE mouse_state;
+	
+	al_get_mouse_state(&mouse_state);
+	duk_push_int(ctx, mouse_state.x / g_scale_x);
 	return 1;
 }
 
 static duk_ret_t
 js_GetMouseY(duk_context* ctx)
 {
-	duk_push_int(ctx, s_mouse_state.y / g_scale_y);
+	ALLEGRO_MOUSE_STATE mouse_state;
+
+	al_get_mouse_state(&mouse_state);
+	duk_push_int(ctx, mouse_state.y / g_scale_y);
 	return 1;
 }
 
