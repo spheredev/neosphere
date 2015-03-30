@@ -216,7 +216,7 @@ js_CreateStringFromByteArray(duk_context* ctx)
 {
 	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
 
-	duk_push_lstring(ctx, array->buffer, array->size);
+	duk_push_lstring(ctx, (char*)array->buffer, array->size);
 	return 1;
 }
 

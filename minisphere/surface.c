@@ -315,9 +315,7 @@ js_Surface_blit(duk_context* ctx)
 static duk_ret_t
 js_Surface_blitMaskSurface(duk_context* ctx)
 {
-	int c_args = duk_get_top(ctx);
-	image_t* src_image;
-		duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); src_image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image_t* src_image = duk_require_sphere_surface(ctx, 0);
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 	color_t mask = duk_require_sphere_color(ctx, 3);
@@ -340,9 +338,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 static duk_ret_t
 js_Surface_blitSurface(duk_context* ctx)
 {
-	int c_args = duk_get_top(ctx);
-	image_t* src_image;
-	duk_get_prop_string(ctx, 0, "\xFF" "image_ptr"); src_image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image_t* src_image = duk_require_sphere_surface(ctx, 0);
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 

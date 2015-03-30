@@ -474,7 +474,8 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 	const char*             alt_name;
 	const char*             name_to_find;
 	const spriteset_pose_t* pose = NULL;
-	int                     i, j = 0;
+	
+	int i;
 
 	alt_name = strcasecmp(pose_name, "northeast") == 0 ? "north"
 		: strcasecmp(pose_name, "southeast") == 0 ? "south"

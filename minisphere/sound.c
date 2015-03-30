@@ -61,9 +61,10 @@ static duk_ret_t
 js_LoadSound(duk_context* ctx)
 {
 	duk_int_t n_args = duk_get_top(ctx);
-	const char* filename = duk_get_string(ctx, 0);
+	const char* filename = duk_require_string(ctx, 0);
+	duk_bool_t is_stream = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
+
 	char* sound_path = get_asset_path(filename, "sounds", false);
-	duk_bool_t is_stream = n_args >= 2 ? duk_get_boolean(ctx, 1) : true;
 	ALLEGRO_AUDIO_STREAM* stream = al_load_audio_stream(sound_path, 4, 2048);
 	free(sound_path);
 	if (stream == NULL)

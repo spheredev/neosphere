@@ -30,7 +30,17 @@
 #include "lstring.h"
 #include "script.h"
 
-static const char* const ENGINE_NAME        = "minisphere 1.0.1";
+#if defined(__GNUC__)
+#define noreturn __attribute__((noreturn)) void
+#elif defined(__clang__)
+#define noreturn __attribute__((noreturn)) void
+#elif defined(_MSC_VER)
+#define noreturn __declspec(noreturn) void
+#else
+#define noreturn void
+#endif
+
+static const char* const ENGINE_NAME = "minisphere 1.0.1";
 static double      const SPHERE_API_VERSION = 1.5;
 static const char* const SPHERE_USERAGENT   = "v1.5 (compatible; minisphere 1.0.1)";
 
@@ -51,18 +61,18 @@ extern ALLEGRO_CONFIG*      g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
 
-extern bool   is_skipped_frame   (void);
-extern char*  get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
-extern rect_t get_clip_rectangle (void);
-extern int    get_max_frameskip  (void);
-extern char*  get_sys_asset_path (const char* path, const char* base_dir);
-extern void   set_clip_rectangle (rect_t clip_rect);
-extern void   set_max_frameskip  (int frames);
-extern void   do_events          (void);
-extern void   exit_game          (bool is_shutdown);
-extern void   flip_screen        (int framerate);
-extern void   restart_engine     (void);
-extern void   take_screenshot    (void);
-extern void   toggle_fps_display (void);
-extern void   toggle_fullscreen  (void);
-extern void   unskip_frame       (void);
+extern bool     is_skipped_frame   (void);
+extern char*    get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);
+extern rect_t   get_clip_rectangle (void);
+extern int      get_max_frameskip  (void);
+extern char*    get_sys_asset_path (const char* path, const char* base_dir);
+extern void     set_clip_rectangle (rect_t clip_rect);
+extern void     set_max_frameskip  (int frames);
+extern void     do_events          (void);
+extern noreturn exit_game          (bool is_shutdown);
+extern void     flip_screen        (int framerate);
+extern noreturn restart_engine     (void);
+extern void     take_screenshot    (void);
+extern void     toggle_fps_display (void);
+extern void     toggle_fullscreen  (void);
+extern void     unskip_frame       (void);

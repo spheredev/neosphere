@@ -569,11 +569,9 @@ js_GetMouseWheelEvent(duk_context* ctx)
 	while (s_num_wheel_events == 0) {
 		do_events();
 	}
-	if (s_num_wheel_events > 0) {
-		event = s_wheel_queue[0];
-		--s_num_wheel_events;
-		for (i = 0; i < s_num_wheel_events; ++i) s_wheel_queue[i] = s_wheel_queue[i + 1];
-	}
+	event = s_wheel_queue[0];
+	--s_num_wheel_events;
+	for (i = 0; i < s_num_wheel_events; ++i) s_wheel_queue[i] = s_wheel_queue[i + 1];
 	duk_push_int(ctx, event);
 	return 1;
 }
@@ -663,7 +661,8 @@ js_SetMousePosition(duk_context* ctx)
 	return 0;
 }
 
-static js_BindJoystickButton(duk_context* ctx)
+static duk_ret_t
+js_BindJoystickButton(duk_context* ctx)
 {
 	int joy_index = duk_require_int(ctx, 0);
 	int button = duk_require_int(ctx, 1);
@@ -684,7 +683,8 @@ static js_BindJoystickButton(duk_context* ctx)
 	return 0;
 }
 
-static js_BindKey(duk_context* ctx)
+static duk_ret_t
+js_BindKey(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
 	lstring_t* key_down_script = !duk_is_null(ctx, 1)
@@ -707,7 +707,7 @@ static js_BindKey(duk_context* ctx)
 static duk_ret_t
 js_ClearKeyQueue(duk_context* ctx)
 {
-	s_key_queue.num_keys = 0;
+	clear_key_queue();
 	return 0;
 }
 

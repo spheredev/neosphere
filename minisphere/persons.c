@@ -206,8 +206,6 @@ is_person_ignored(const person_t* person, const person_t* by_person)
 {
 	// note: commutative; if either person ignores the other, the function should return true
 
-	bool is_ignored = false;
-	
 	int i;
 
 	if (by_person->ignore_all_persons || person->ignore_all_persons)
@@ -224,7 +222,6 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 {
 	rect_t           area;
 	rect_t           base, my_base;
-	bool             collision = false;
 	double           cur_x, cur_y;
 	bool             is_obstructed = false;
 	int              layer;
@@ -513,7 +510,7 @@ render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 }
 
 void
-reset_persons(map_t* map, bool keep_existing)
+reset_persons(bool keep_existing)
 {
 	point3_t  map_origin;
 	person_t* person;

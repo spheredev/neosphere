@@ -106,7 +106,7 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 	duk_pop(ctx);
 }
 
-void
+noreturn
 duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
@@ -135,8 +135,7 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 
 	// throw the exception
 	va_start(ap, fmt);
-	duk_error_va_raw(g_duktape, err_code, filename, line_number, fmt, ap);
-	va_end(ap);
+	duk_error_va_raw(ctx, err_code, filename, line_number, fmt, ap);
 }
 
 static duk_ret_t
@@ -545,7 +544,6 @@ static duk_ret_t
 js_Exit(duk_context* ctx)
 {
 	exit_game(false);
-	return 0;
 }
 
 static duk_ret_t

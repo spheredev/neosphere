@@ -397,6 +397,8 @@ load_map(const char* path)
 
 	int i, j, x, y, z;
 
+	memset(&rmp, 0, sizeof(struct rmp_header));
+	
 	if (!(file = fopen(path, "rb"))) goto on_error;
 	if (!(map = calloc(1, sizeof(map_t)))) goto on_error;
 	if (fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
@@ -716,7 +718,7 @@ change_map(const char* filename, bool preserve_persons)
 	}
 	free_map(s_map); free(s_map_filename);
 	s_map = map; s_map_filename = strdup(filename);
-	reset_persons(s_map, preserve_persons);
+	reset_persons(preserve_persons);
 
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
@@ -770,11 +772,11 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	
 	// remap screen coordinates to layer coordinates
 	plx_offset_x = s_frames * s_map->layers[layer].autoscroll_x
-		- s_cam_x * (s_map->layers[layer].parallax_x - 1.0);
+		- camera_x * (s_map->layers[layer].parallax_x - 1.0);
 	plx_offset_y = s_frames * s_map->layers[layer].autoscroll_y
-		- s_cam_y * (s_map->layers[layer].parallax_y - 1.0);
-	x_offset = s_cam_x - g_res_x / 2 - plx_offset_x;
-	y_offset = s_cam_y - g_res_y / 2 - plx_offset_y;
+		- camera_y * (s_map->layers[layer].parallax_y - 1.0);
+	x_offset = camera_x - g_res_x / 2 - plx_offset_x;
+	y_offset = camera_y - g_res_y / 2 - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
 		// non-repeating map: clamp viewport to map bounds (windowbox if needed)
 		x_offset = layer_w > g_res_x ? fmin(fmax(x_offset, 0), layer_w - g_res_x)

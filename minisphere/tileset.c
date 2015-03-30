@@ -67,7 +67,7 @@ load_tileset(const char* path)
 tileset_t*
 read_tileset(FILE* file)
 {
-	image_t*               atlas;
+	image_t*               atlas = NULL;
 	int                    atlas_w, atlas_h;
 	long                   file_pos;
 	int                    n_tiles_per_row;
@@ -79,6 +79,8 @@ read_tileset(FILE* file)
 
 	int i, j;
 
+	memset(&rts, 0, sizeof(struct rts_header));
+	
 	if (file == NULL) goto on_error;
 	file_pos = ftell(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
@@ -150,7 +152,7 @@ on_error:  // oh no!
 		}
 		free(tileset->tiles);
 	}
-	if (atlas != NULL) free_image(atlas);
+	free_image(atlas);
 	free(tileset);
 	return NULL;
 }

@@ -371,7 +371,7 @@ do_events(void)
 	}
 }
 
-void
+noreturn
 exit_game(bool is_shutdown)
 {
 	if (is_shutdown) {
@@ -454,7 +454,7 @@ flip_screen(int framerate)
 	if (!s_skipping_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
-void
+noreturn
 restart_engine(void)
 {
 	longjmp(s_jmp_restart, 1);

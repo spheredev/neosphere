@@ -298,7 +298,7 @@ js_OpenAddress(duk_context* ctx)
 	
 	socket_t* socket;
 
-	if (socket = connect_to_host(ip, port, 1024)) {
+	if ((socket = connect_to_host(ip, port, 1024)) != NULL) {
 		duk_push_sphere_socket(ctx, socket);
 		free_socket(socket);
 		return 1;
@@ -495,7 +495,7 @@ js_Socket_readString(duk_context* ctx)
 	if (!(buffer = malloc(length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer (internal error)");
 	read_socket(socket, buffer, length);
-	duk_push_lstring(ctx, buffer, length);
+	duk_push_lstring(ctx, (char*)buffer, length);
 	free(buffer);
 	return 1;
 }
@@ -512,7 +512,7 @@ js_Socket_write(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (duk_is_string(ctx, 0))
-		payload = duk_get_lstring(ctx, 0, &write_size);
+		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
 	else {
 		array = duk_require_sphere_bytearray(ctx, 0);
 		payload = get_bytearray_buffer(array);

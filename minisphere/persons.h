@@ -30,7 +30,7 @@ extern void         set_person_xyz             (person_t* person, double x, doub
 extern bool         call_person_script         (const person_t* person, int type, bool use_default);
 extern person_t*    find_person                (const char* name);
 extern bool         queue_person_command       (person_t* person, int command, bool is_immediate);
-extern void         reset_persons              (map_t* map, bool keep_existing);
+extern void         reset_persons              (bool keep_existing);
 extern void         render_persons             (int layer, bool is_flipped, int cam_x, int cam_y);
 extern void         talk_person                (const person_t* person);
 extern void         update_persons             (void);

@@ -66,7 +66,7 @@ struct rfn_glyph_header
 font_t*
 load_font(const char* path)
 {
-	image_t*                atlas;
+	image_t*                atlas = NULL;
 	int                     atlas_size_x, atlas_size_y;
 	ALLEGRO_LOCKED_REGION*  bitmap_lock;
 	FILE*                   file;
@@ -75,13 +75,15 @@ load_font(const char* path)
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
 	int                     max_x = 0, max_y = 0;
-	int                     min_width;
+	int                     min_width = INT_MAX;
 	int64_t                 n_glyphs_per_row;
 	size_t                  pixel_size;
 	struct rfn_header       rfn;
 	uint8_t                 *src_ptr, *dest_ptr;
 
 	int i, x, y;
+
+	memset(&rfn, 0, sizeof(struct rfn_header));
 
 	if ((file = fopen(path, "rb")) == NULL) goto on_error;
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
@@ -100,10 +102,7 @@ load_font(const char* path)
 		fseek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, SEEK_CUR);
 		max_x = fmax(glyph_hdr.width, max_x);
 		max_y = fmax(glyph_hdr.height, max_y);
-		if (i == 0)
-			min_width = glyph_hdr.width;
-		else
-			min_width = fmin(min_width, glyph_hdr.width);
+		min_width = fmin(min_width, glyph_hdr.width);
 		glyph->width = glyph_hdr.width;
 		glyph->height = glyph_hdr.height;
 	}
@@ -262,7 +261,7 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 wraptext_t*
 word_wrap_text(const font_t* font, const char* text, int width)
 {
-	char*       buffer;
+	char*       buffer = NULL;
 	int         glyph_width;
 	int         line_idx;
 	int         line_width;
@@ -271,7 +270,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	char*       new_buffer;
 	size_t      pitch;
 	int         space_width = get_text_width(font, " ");
-	char*       string;
+	char*       string = NULL;
 	char*       word;
 	wraptext_t* wraptext;
 
@@ -316,7 +315,9 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	return wraptext;
 
 on_error:
+	free(string);
 	free(buffer);
+	free(wraptext);
 	return NULL;
 }
 
