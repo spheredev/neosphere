@@ -31,7 +31,7 @@ static int                 find_layer          (const char* name);
 static void                map_screen_to_layer (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
 static void                process_map_input   (void);
 static void                render_map          (void);
-static void                update_map_engine   (void);
+static void                update_map_engine   (bool is_main_loop);
 
 static duk_ret_t js_MapEngine               (duk_context* ctx);
 static duk_ret_t js_AreZonesAt              (duk_context* ctx);
@@ -922,7 +922,7 @@ render_map(void)
 }
 
 static void
-update_map_engine(void)
+update_map_engine(bool is_main_loop)
 {
 	int                 index;
 	int                 last_trigger;
@@ -958,9 +958,10 @@ update_map_engine(void)
 		s_cam_x = x; s_cam_y = y;
 	}
 
-	// run edge scripts if player walked off map (only for non-repeating map)
-	if (!s_map->is_repeating && s_input_person != NULL) {
-		get_person_xy(s_input_person, &x, &y, false);
+	// run edge script if the person with camera focus walked off the map
+	// note: only applies for non-repeating maps
+	if (is_main_loop && s_camera_person != NULL && !s_map->is_repeating) {
+		get_person_xy(s_camera_person, &x, &y, false);
 		script_type = y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
 			: x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
 			: y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
@@ -1135,7 +1136,7 @@ js_MapEngine(duk_context* ctx)
 	if (!change_map(filename, true))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
-		update_map_engine();
+		update_map_engine(true);
 		process_map_input();
 		render_map();
 		flip_screen(s_framerate);
@@ -2145,6 +2146,6 @@ js_UpdateMapEngine(duk_context* ctx)
 {
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "UpdateMapEngine(): Operation requires the map engine to be running");
-	update_map_engine();
+	update_map_engine(false);
 	return 0;
 }
