@@ -129,7 +129,7 @@ duk_require_rgba_lut(duk_context* ctx, duk_idx_t index, uint8_t *out_lut)
 	index = duk_require_normalize_index(ctx, index);
 	duk_require_object_coercible(ctx, index);
 	length = fmin(duk_get_length(ctx, index), 256);
-	for (i = 0; i < 256; ++i) out_lut[i] = i;
+	for (i = length; i < 256; ++i) out_lut[i] = i;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(ctx, index, i);
 		out_lut[i] = fmin(fmax(duk_require_int(ctx, -1), 0), 255);

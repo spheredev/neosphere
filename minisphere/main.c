@@ -79,12 +79,15 @@ main(int argc, char* argv[])
 {
 	ALLEGRO_USTR*        dialog_name;
 	duk_errcode_t        err_code;
+	const char*          err_msg;
 	duk_int_t            exec_result;
 	ALLEGRO_FILECHOOSER* file_dlg;
+	const char*          file_path;
 	const char*          filename;
 	char*                game_path;
 	ALLEGRO_BITMAP*      icon;
 	char*                icon_path;
+	int                  line_num;
 	int                  max_skips;
 	char*                p_strtol;
 	char*                path;
@@ -255,17 +258,17 @@ main(int argc, char* argv[])
 on_js_error:
 	err_code = duk_get_error_code(g_duktape, -1);
 	duk_dup(g_duktape, -1);
-	const char* err_msg = duk_safe_to_string(g_duktape, -1);
+	err_msg = duk_safe_to_string(g_duktape, -1);
 	al_show_mouse_cursor(g_display);
 	duk_get_prop_string(g_duktape, -2, "lineNumber");
-	duk_int_t line_num = duk_get_int(g_duktape, -1);
+	line_num = duk_get_int(g_duktape, -1);
 	duk_pop(g_duktape);
 	duk_get_prop_string(g_duktape, -2, "fileName");
-	const char* file_path = duk_get_string(g_duktape, -1);
+	file_path = duk_get_string(g_duktape, -1);
 	if (file_path != NULL) {
-		char* file_name = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
-		file_name = file_name != NULL ? file_name + 1 : file_path;
-		duk_push_sprintf(g_duktape, "`%s`, line: %i | %s", file_name, line_num, err_msg);
+		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
+		filename = filename != NULL ? filename + 1 : file_path;
+		duk_push_sprintf(g_duktape, "`%s`, line: %i | %s", filename, line_num, err_msg);
 	}
 	else {
 		duk_push_string(g_duktape, err_msg);
