@@ -1,23 +1,23 @@
-minisphere Coding Conventions
-=============================
+minisphere Coding Conventions and Etiquette
+===========================================
 
-You don't HAVE to follow these guidelines, but if you don't, do note
-that I have OCD and will almost assuredly edit your code mercilessly
-afterwards! :o) 
+You don't *have* to follow these guidelines, but if you don't, do note
+that I suffer from OCD and will almost assuredly edit your code
+mercilessly afterwards! :o) 
 
 Indentation
 -----------
 Use tabs for indentation, not spaces. OCD aside, I'm not one of those
-coders who obsesses over the 'correct' number of spaces to use for
+coders who obsesses over the "correct" number of spaces to use for
 indentation. Best to use tabs and let everyone choose their own
 preferred indent size.
 
 Variable Declarations
 ---------------------
 Declare all variables at the top of a function. No exceptions. Okay,
-well, there is ONE exception: If you need to pass an impromptu array to
-function (as with al_draw_prim, for example), you can declare it inline,
-as filling it in afterwards would be ugly.
+well, there is ONE exception: If you need to pass an impromptu array or
+struct to a function (as with, e.g. `al_draw_prim()`), you can declare
+it inline, as filling it in afterwards would be ugly.
 
 Casts
 -----
@@ -26,9 +26,24 @@ of shutting up an implicit-conversion warning. A clean compile is nice,
 but not at the expense of making the code harder to read. There's a
 reason minisphere is coded in C and not C++!
 
+`const` Correctness
+-------------------
+Try to maintain const correctness at all times, and keep in mind that
+it is almost always the wrong solution to cast away constness. If a
+function returns a const pointer, it's const for a reason--fail to
+respect that and things may just blow up in your face!
+
 Pull Requests
 -------------
-Opening pull requests on GitHub for minisphere is allowed and
+Forking minisphere and opening pull requests on GitHub is allowed and
 encouraged; however, as mentioned at the top of this document, be
 prepared to have your code edited for style before the changes are
 merged in.
+
+Commit Etiquette
+----------------
+Try not to create commits in the git repository with only non-functional
+changes. Too many of these make bisection (using `git bisect`) harder as
+it adds extra noise to the process. Again, I will edit pull requests for
+style before merging them, so extra commits to fix whitespace, etc. are
+entirely redundant.

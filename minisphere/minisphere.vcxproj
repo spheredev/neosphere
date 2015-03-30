@@ -56,11 +56,12 @@
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>ALLEGRO_HAVE_STDBOOL_H;DUK_OPT_DEBUG;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -75,7 +76,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
@@ -84,6 +85,7 @@ xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dl
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;ALLEGRO_HAVE_STDBOOL_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
