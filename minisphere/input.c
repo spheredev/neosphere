@@ -52,20 +52,20 @@ static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 static void queue_key         (int keycode);
 static void queue_wheel_event (int event);
 
-static int                    s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static int                    s_is_key_bound[ALLEGRO_KEY_MAX];
-static int                    s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static int                    s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static ALLEGRO_EVENT_QUEUE*   s_events;
-static int                    s_key_down_scripts[ALLEGRO_KEY_MAX];
-static int                    s_key_up_scripts[ALLEGRO_KEY_MAX];
-static ALLEGRO_JOYSTICK*      s_joy_handles[MAX_JOYSTICKS];
-static struct key_queue       s_key_queue;
-static bool                   s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static bool                   s_last_key_state[ALLEGRO_KEY_MAX];
-static int                    s_last_wheel_pos = 0;
-static int                    s_num_wheel_events = 0;
-static int                    s_wheel_queue[255];
+static int                  s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static int                  s_is_key_bound[ALLEGRO_KEY_MAX];
+static int                  s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static int                  s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static ALLEGRO_EVENT_QUEUE* s_events;
+static int                  s_key_down_scripts[ALLEGRO_KEY_MAX];
+static int                  s_key_up_scripts[ALLEGRO_KEY_MAX];
+static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
+static struct key_queue     s_key_queue;
+static bool                 s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static bool                 s_last_key_state[ALLEGRO_KEY_MAX];
+static int                  s_last_wheel_pos = 0;
+static int                  s_num_wheel_events = 0;
+static int                  s_wheel_queue[255];
 
 void
 initialize_input(void)
