@@ -650,12 +650,20 @@ shutdown_engine(void)
 static void
 draw_status_message(const char* text)
 {
-	int height = get_font_line_height(g_sys_font) + 10;
-	int width = get_text_width(g_sys_font, text) + 20;
+	ALLEGRO_TRANSFORM old_transform;
+	ALLEGRO_TRANSFORM transform;
+	int               width = get_text_width(g_sys_font, text) + 20;
+	int               height = get_font_line_height(g_sys_font) + 10;
+	int               w_screen = al_get_display_width(g_display);
+	int               h_screen = al_get_display_height(g_display);
 
+	al_copy_transform(&old_transform, al_get_current_transform());
+	al_identity_transform(&transform);
+	al_use_transform(&transform);
 	al_draw_filled_rounded_rectangle(
-		(g_res_x - width) / 2, (g_res_y - height) / 2, (g_res_x + width) / 2, (g_res_y + height) / 2,
+		(w_screen - width) / 2, (h_screen - height) / 2, (w_screen + width) / 2, (h_screen + height) / 2,
 		4, 4, al_map_rgba(32, 32, 32, 255));
-	draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, (g_res_y - (height / 2)) / 2 + 1, TEXT_ALIGN_CENTER, text);
-	draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, (g_res_y - (height / 2)) / 2, TEXT_ALIGN_CENTER, text);
+	draw_text(g_sys_font, rgba(0, 0, 0, 255), w_screen / 2 + 1, (h_screen - (height / 2)) / 2 + 1, TEXT_ALIGN_CENTER, text);
+	draw_text(g_sys_font, rgba(255, 255, 255, 255), w_screen / 2, (h_screen - (height / 2)) / 2, TEXT_ALIGN_CENTER, text);
+	al_use_transform(&old_transform);
 }
