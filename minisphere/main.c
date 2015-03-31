@@ -40,8 +40,9 @@ ALLEGRO_CONFIG*      g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
-static void initialize_engine (void);
-static void shutdown_engine   (void);
+static void initialize_engine   (void);
+static void shutdown_engine     (void);
+static void draw_status_message (const char* text);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
@@ -208,9 +209,7 @@ main(int argc, char* argv[])
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	al_flip_display();
-
+	
 	// attempt to locate and load system font
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Font");
@@ -225,12 +224,18 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	al_hide_mouse_cursor(g_display);
-	
+	// display loading message, scripts may take a bit to compile
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	draw_status_message("loading...");
+	al_flip_display();
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+
 	// switch to fullscreen if necessary and initialize clipping
 	if (s_is_fullscreen) toggle_fullscreen();
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
 
+	al_hide_mouse_cursor(g_display);
+	
 	// load startup script
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duktape, 0x0, path);
@@ -640,4 +645,17 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path);
 	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
 	al_uninstall_system();
+}
+
+static void
+draw_status_message(const char* text)
+{
+	int height = get_font_line_height(g_sys_font) + 10;
+	int width = get_text_width(g_sys_font, text) + 20;
+
+	al_draw_filled_rounded_rectangle(
+		(g_res_x - width) / 2, (g_res_y - height) / 2, (g_res_x + width) / 2, (g_res_y + height) / 2,
+		4, 4, al_map_rgba(32, 32, 32, 255));
+	draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, (g_res_y - (height / 2)) / 2 + 1, TEXT_ALIGN_CENTER, text);
+	draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, (g_res_y - (height / 2)) / 2, TEXT_ALIGN_CENTER, text);
 }
