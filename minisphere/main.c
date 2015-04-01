@@ -662,7 +662,7 @@ draw_status_message(const char* text)
 	al_use_transform(&transform);
 	al_draw_filled_rounded_rectangle(
 		w_screen - 16 - width, h_screen - 16 - height, w_screen - 16, h_screen - 16,
-		4, 4, al_map_rgba(32, 32, 32, 255));
+		4, 4, al_map_rgba(16, 16, 16, 255));
 	draw_text(g_sys_font, rgba(0, 0, 0, 255), w_screen - 16 - width / 2 + 1, h_screen - 16 - height + 6, TEXT_ALIGN_CENTER, text);
 	draw_text(g_sys_font, rgba(255, 255, 255, 255), w_screen - 16 - width / 2, h_screen - 16 - height + 5, TEXT_ALIGN_CENTER, text);
 	al_use_transform(&old_transform);

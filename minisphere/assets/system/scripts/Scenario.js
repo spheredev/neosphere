@@ -1,5 +1,5 @@
 /**
- * Scenario 3.8.1 for Sphere - (c) 2008-2015 Bruce Pascoe
+ * Scenario 3.8.2 for Sphere - (c) 2008-2015 Bruce Pascoe
  * An advanced scene manager that allows you to coordinate complex sequences using multiple
  * timelines and cooperative threading.
 **/
@@ -217,7 +217,7 @@ function Scenario(isLooping)
 	
 	this.throwError = function(component, name, message)
 	{
-		Abort(component + " - error: " + name + "\n" + message);
+		Abort(component + " - error: " + name + "\n" + message, -1);
 	};
 	
 	this.update = function()
