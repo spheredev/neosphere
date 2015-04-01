@@ -1,11 +1,11 @@
-minisphere 1.0.1
+minisphere 1.0.3
 ================
 
-*Sunday, March 28, 2015*
+*Sunday, April 1, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written
 from the ground up in C.  It boasts high compatibility with most games
-written for Sphere 1.x, but with better performance and some new
+written for Sphere 1.x, but with better performance and even some new
 functionality.
 
 
@@ -89,7 +89,7 @@ other than to edit the scripts by hand.
 `const` will cause a syntax error
 ---------------------------------
 
-Duktape, the JavaScript engine that powers minisphere, is highly
-ES5 compliant and will throw a syntax error if the `const` keyword is
+Duktape, the JavaScript engine that powers minisphere, is highly ES5
+compliant and will throw a syntax error if the `const` keyword is
 encountered. If you want to try running the game in minisphere, you will
-have to manually replace all instances of `const` with `var`.
+need to manually replace all instances of `const` with `var`.

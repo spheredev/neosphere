@@ -42,8 +42,16 @@ merged in.
 
 Commit Etiquette
 ----------------
-Try not to create commits in the git repository with only non-functional
-changes. Too many of these make bisection (using `git bisect`) harder as
-it adds extra noise to the process. Again, I will edit pull requests for
-style before merging them, so extra commits to fix whitespace, etc. are
-entirely redundant.
+* Commit titles should be written in the imperative ("Fix the hunger-pig
+bug") and, if possible, descriptions in the simple present tense ("Fixes
+a bug where a hunger-pig eats you in 2 seconds". The idea is, if someone
+has a copy of the repository and applies a commit, the commit message
+should describe what will happen to their copy. Past-tense commits (e.g.
+"Fixed X bug") suggest retroactivity and are thus more confusing to work
+with. Avoid them.
+
+* Avoid creating commits with only non-functional changes. Too many of
+these make bisection (using `git bisect`) harder as it adds extra noise
+to the process. Again, I will edit pull requests for style before
+merging them, so extra commits to fix whitespace, etc. are entirely
+redundant.
