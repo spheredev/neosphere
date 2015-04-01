@@ -6,6 +6,7 @@ static duk_ret_t js_CreateColor         (duk_context* ctx);
 static duk_ret_t js_BlendColors         (duk_context* ctx);
 static duk_ret_t js_BlendColorsWeighted (duk_context* ctx);
 static duk_ret_t js_Color_toString      (duk_context* ctx);
+static duk_ret_t js_Color_clone         (duk_context* ctx);
 
 color_t
 rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
@@ -75,6 +76,7 @@ duk_push_sphere_color(duk_context* ctx, color_t color)
 	duk_push_object(ctx);
 	duk_push_string(ctx, "color"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_c_function(ctx, js_Color_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_Color_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
 	duk_push_number(ctx, color.r); duk_put_prop_string(ctx, -2, "red");
 	duk_push_number(ctx, color.g); duk_put_prop_string(ctx, -2, "green");
 	duk_push_number(ctx, color.b); duk_put_prop_string(ctx, -2, "blue");
@@ -126,5 +128,17 @@ static duk_ret_t
 js_Color_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object color]");
+	return 1;
+}
+
+static duk_ret_t
+js_Color_clone(duk_context* ctx)
+{
+	color_t color;
+
+	duk_push_this(ctx);
+	color = duk_require_sphere_color(ctx, -1);
+	duk_pop(ctx);
+	duk_push_sphere_color(ctx, color);
 	return 1;
 }
