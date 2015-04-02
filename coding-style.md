@@ -12,6 +12,15 @@ coders who obsesses over the "correct" number of spaces to use for
 indentation. Best to use tabs and let everyone choose their own
 preferred indent size.
 
+Naming Convention
+-----------------
+Names of variables, functions, etc. should use the typical C naming
+convention of all lowercase with words separated by underscores, e.g.
+`big_fat_pig`. Global variables should be prefixed with `g_` and static
+variables (including those at file scope) with `s_`. There is one
+exception: conversion functions with no side effects should have no
+word separator, e.g. `nativecolor()`.
+
 Variable Declarations
 ---------------------
 Declare all variables at the top of a function. No exceptions. Okay,
