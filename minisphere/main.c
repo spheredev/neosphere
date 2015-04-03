@@ -401,9 +401,15 @@ flip_screen(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 
+	if (al_get_time() >= s_next_fps_poll_time) {
+		s_current_fps = s_num_flips;
+		s_current_game_fps = s_num_frames;
+		s_num_flips = 0;
+		s_num_frames = 0;
+		s_next_fps_poll_time = al_get_time() + 1.0;
+	}
 	is_backbuffer_valid = !s_skipping_frame;
 	if (is_backbuffer_valid) {
-		++s_num_flips;
 		if (s_take_snapshot) {
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			sprintf(filename, "snapshot-%li.png", (long)time(NULL));
@@ -429,6 +435,7 @@ flip_screen(int framerate)
 		al_flip_display();
 		s_last_flip_time = al_get_time();
 		s_frame_skips = 0;
+		++s_num_flips;
 	}
 	else {
 		++s_frame_skips;
@@ -452,13 +459,6 @@ flip_screen(int framerate)
 		s_next_frame_time = al_get_time();
 	}
 	++s_num_frames;
-	if (al_get_time() >= s_next_fps_poll_time) {
-		s_current_fps = s_num_flips;
-		s_current_game_fps = s_num_frames;
-		s_num_flips = 0;
-		s_num_frames = 0;
-		s_next_fps_poll_time = al_get_time() + 1.0;
-	}
 	if (!s_skipping_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 

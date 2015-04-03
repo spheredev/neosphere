@@ -406,6 +406,8 @@ load_map(const char* path)
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
 	if (rmp.num_strings != 3 && rmp.num_strings != 5 && rmp.num_strings < 9)
 		goto on_error;
+	if (rmp.start_layer < 0 || rmp.start_layer >= rmp.num_layers)
+		rmp.start_layer = 0;  // being nice here, this really should fail outright
 	switch (rmp.version) {
 	case 1:
 		// load strings (resource filenames, scripts, etc.)
@@ -466,6 +468,8 @@ load_map(const char* path)
 		for (i = 0; i < rmp.num_entities; ++i) {
 			if (fread(&entity_hdr, sizeof(struct rmp_entity_header), 1, file) != 1)
 				goto on_error;
+			if (entity_hdr.z < 0 || entity_hdr.z >= rmp.num_layers)
+				entity_hdr.z = 0;
 			switch (entity_hdr.type) {
 			case 1:  // person
 				++map->num_persons;
@@ -506,6 +510,8 @@ load_map(const char* path)
 			if (fread(&zone_hdr, sizeof(struct rmp_zone_header), 1, file) != 1)
 				goto on_error;
 			if ((script = read_lstring(file, false)) == NULL) goto on_error;
+			if (zone_hdr.layer < 0 || zone_hdr.layer >= rmp.num_layers)
+				zone_hdr.layer = 0;
 			map->zones[i].layer = zone_hdr.layer;
 			map->zones[i].bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			map->zones[i].step_interval = zone_hdr.step_interval;
