@@ -184,9 +184,11 @@ ref_font(font_t* font)
 void
 free_font(font_t* font)
 {
+	int i;
+	
 	if (font == NULL || --font->refcount > 0)
 		return;
-	for (int i = 0; i < font->num_glyphs; ++i) {
+	for (i = 0; i < font->num_glyphs; ++i) {
 		free_image(font->glyphs[i].image);
 	}
 	free(font->glyphs);

@@ -105,6 +105,12 @@ free_lstring(lstring_t* string)
 	free(string);
 }
 
+const char*
+lstring_cstr(const lstring_t* string)
+{
+	return string->cstr;
+}
+
 lstring_t*
 duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 {
