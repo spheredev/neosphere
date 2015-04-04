@@ -1,11 +1,11 @@
-minisphere 1.0.3
+minisphere 1.0.4
 ================
 
-*Sunday, April 1, 2015*
+*Saturday, April 4, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written
 from the ground up in C.  It boasts high compatibility with most games
-written for Sphere 1.x, but with better performance and even some new
+written for Sphere 1.x, but with better performance and new
 functionality.
 
 
@@ -17,7 +17,7 @@ Command Line Options
   desired game manually. For compatibility reasons, this can also be
   specified as `-game <path>` (with only one dash).
 
-* `--fullscreen`: Starts the engine in full screen mode.
+* `--fullscreen`: Starts the engine in full-screen mode.
 
 * `--windowed`: Starts the engine in windowed mode.
 
@@ -26,8 +26,8 @@ Command Line Options
   one.  The default frameskip limit is 5.
 
 * `--no-throttle`: Disables interframe throttling. This may improve
-  performance on slower machines at the cost of maxing out at least one
-  processor core.
+  performance on slower machines at the cost of maxing out a processor
+  core.
 
 
 Potential Compatibility Issues
@@ -63,15 +63,15 @@ unnecessarily. In most cases this causes no adverse effects; however on
 slower computers or more demanding games, it may cause more frames to be
 skipped than necessary.
 
-If you want to disable this feature, run engine.exe with the
-`--no-throttle` commandline option.
+If you want to temporarily disable this feature, run engine.exe with the
+`--no-throttle` command line option.
 
 Aggressive frame skipping
 -------------------------
 
-minisphere's frameskip algorithm is very aggressive and many things that
-usually happen every frame won't happen if the frame is skipped. For
-example, the map engine doesn't call the render script for skipped
+minisphere's frame skipping algorithm is very aggressive and many things
+that usually happen every frame won't happen if the frame is skipped.
+For example, the map engine doesn't call the render script for skipped
 frames. This can cause issues if a game does anything other than
 rendering in a render script and can be worked around by passing
 `--frameskip 0` on the command line.
@@ -89,7 +89,8 @@ other than to edit the scripts by hand.
 `const` will cause a syntax error
 ---------------------------------
 
-Duktape, the JavaScript engine that powers minisphere, is highly ES5
+Duktape, the JavaScript engine that powers minisphere, is fully ES5
 compliant and will throw a syntax error if the `const` keyword is
 encountered. If you want to try running the game in minisphere, you will
-need to manually replace all instances of `const` with `var`.
+need to manually replace all instances of `const` in the game's scripts
+with `var`.
