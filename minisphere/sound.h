@@ -21,4 +21,5 @@ extern void     play_sound        (sound_t* sound);
 extern void     seek_sound        (sound_t* sound, int position);
 extern void     stop_sound        (sound_t* sound, bool rewind);
 
-extern void init_sound_api (void);
+extern void init_sound_api        (void);
+extern void duk_push_sphere_sound (duk_context* ctx, sound_t* sound);

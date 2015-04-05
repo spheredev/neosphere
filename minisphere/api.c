@@ -38,6 +38,13 @@ static int s_framerate = 0;
 void
 init_api(duk_context* ctx)
 {
+	// inject __defineGetter__/__defineSetter__ polyfills
+	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
+		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");
+	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
+		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
+	
+	// register core API functions
 	register_api_func(ctx, NULL, "GetVersion", js_GetVersion);
 	register_api_func(ctx, NULL, "GetVersionString", js_GetVersionString);
 	register_api_func(ctx, NULL, "GetExtensions", js_GetExtensions);
@@ -66,10 +73,13 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
 	register_api_func(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
+	
+	// RequireScript() inclusion tracking object
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
+	// register error callback (adds filename and line number to duk_require_xxx() errors)
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
 	duk_push_c_function(ctx, duk_on_create_error, DUK_VARARGS);
@@ -147,7 +157,7 @@ duk_on_create_error(duk_context* ctx)
 	
 	if (!duk_is_error(ctx, 0)) return 1;
 	duk_get_prop_string(ctx, 0, "message"); message = duk_get_string(ctx, -1); duk_pop(ctx);
-	if (strstr(message, "not ") != message)
+	if (strstr(message, "not ") != message || strcmp(message, "not callable") == 0)
 		return 1;
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");

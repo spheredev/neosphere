@@ -28,8 +28,6 @@ static duk_ret_t js_Sound_play        (duk_context* ctx);
 static duk_ret_t js_Sound_reset       (duk_context* ctx);
 static duk_ret_t js_Sound_stop        (duk_context* ctx);
 
-static void duk_push_sphere_sound (duk_context* ctx, sound_t* sound);
-
 struct sound
 {
 	int                   refcount;
@@ -181,7 +179,7 @@ init_sound_api()
 	register_api_func(g_duktape, NULL, "LoadSound", js_LoadSound);
 }
 
-static void
+void
 duk_push_sphere_sound(duk_context* ctx, sound_t* sound)
 {
 	ref_sound(sound);
