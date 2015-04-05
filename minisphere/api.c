@@ -285,7 +285,9 @@ js_IsSkippedFrame(duk_context* ctx)
 static duk_ret_t
 js_GetDirectoryList(duk_context* ctx)
 {
-	const char*       directory_name;
+	int n_args = duk_get_top(ctx);
+	const char* directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : "";
+
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
 	ALLEGRO_FS_ENTRY* fs;
@@ -293,7 +295,6 @@ js_GetDirectoryList(duk_context* ctx)
 
 	int i;
 
-	directory_name = duk_require_string(ctx, 0);
 	path = get_asset_path(directory_name, NULL, false);
 	fs = al_create_fs_entry(path);
 	free(path);
@@ -316,7 +317,9 @@ js_GetDirectoryList(duk_context* ctx)
 static duk_ret_t
 js_GetFileList(duk_context* ctx)
 {
-	const char*       directory_name;
+	int n_args = duk_get_top(ctx);
+	const char* directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : "save";
+	
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
 	ALLEGRO_FS_ENTRY* fs;
@@ -324,7 +327,6 @@ js_GetFileList(duk_context* ctx)
 
 	int i;
 
-	directory_name = duk_require_string(ctx, 0);
 	path = get_asset_path(directory_name, NULL, false);
 	fs = al_create_fs_entry(path);
 	free(path);
