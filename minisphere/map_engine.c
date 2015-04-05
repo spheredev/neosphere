@@ -389,7 +389,7 @@ load_map(const char* path)
 	lstring_t*               script;
 	rect_t                   segment;
 	int16_t*                 tile_data = NULL;
-	char*                    tile_path;
+	ALLEGRO_PATH*            tileset_path;
 	tileset_t*               tileset;
 	struct map_trigger*      trigger;
 	struct rmp_zone_header   zone_hdr;
@@ -520,9 +520,15 @@ load_map(const char* path)
 		}
 
 		// load tileset
-		tile_path = get_asset_path(strings[0]->cstr, "maps", false);
-		tileset = strcmp(strings[0]->cstr, "") == 0 ? read_tileset(file) : load_tileset(tile_path);
-		free(tile_path);
+		if (strcmp(lstring_cstr(strings[0]), "") != 0) {
+			tileset_path = al_create_path(path);
+			al_set_path_filename(tileset_path, lstring_cstr(strings[0]));
+			tileset = load_tileset(al_path_cstr(tileset_path, ALLEGRO_NATIVE_PATH_SEP));
+			al_destroy_path(tileset_path);
+		}
+		else {
+			tileset = read_tileset(file);
+		}
 		if (tileset == NULL) goto on_error;
 
 		// initialize tile animation
