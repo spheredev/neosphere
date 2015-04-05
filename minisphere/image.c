@@ -317,6 +317,37 @@ flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 }
 
 bool
+replace_image_color(image_t* image, color_t color, color_t new_color)
+{
+	ALLEGRO_BITMAP*        bitmap = get_image_bitmap(image);
+	uint8_t*               pixel;
+	ALLEGRO_LOCKED_REGION* lock;
+	int                    w, h;
+
+	int i_x, i_y;
+
+	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
+		return false;
+	w = al_get_bitmap_width(bitmap);
+	h = al_get_bitmap_height(bitmap);
+	for (i_x = 0; i_x < w; ++i_x) for (i_y = 0; i_y < h; ++i_y) {
+		pixel = (uint8_t*)lock->data + i_x * 4 + i_y * lock->pitch;
+		if (pixel[0] == color.r &&
+		    pixel[1] == color.g &&
+		    pixel[2] == color.b &&
+		    pixel[3] == color.alpha)
+		{
+			pixel[0] = new_color.r;
+			pixel[1] = new_color.g;
+			pixel[2] = new_color.b;
+			pixel[3] = new_color.alpha;
+		}
+	}
+	al_unlock_bitmap(bitmap);
+	return true;
+}
+
+bool
 rescale_image(image_t* image, int width, int height)
 {
 	ALLEGRO_BITMAP* new_bitmap;

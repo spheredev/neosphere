@@ -23,6 +23,7 @@ extern void            draw_image_tiled         (image_t* image, int x, int y, i
 extern void            draw_image_tiled_masked  (image_t* image, color_t mask, int x, int y, int width, int height);
 extern void            fill_image               (image_t* image, color_t color);
 extern bool            flip_image               (image_t* image, bool is_h_flip, bool is_v_flip);
+extern bool            replace_image_color      (image_t* image, color_t color, color_t new_color);
 extern bool            rescale_image            (image_t* image, int width, int height);
 
 extern void init_image_api (duk_context* ctx);

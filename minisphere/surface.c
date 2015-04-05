@@ -35,6 +35,7 @@ static duk_ret_t js_Surface_outlinedRectangle (duk_context* ctx);
 static duk_ret_t js_Surface_pointSeries       (duk_context* ctx);
 static duk_ret_t js_Surface_rotate            (duk_context* ctx);
 static duk_ret_t js_Surface_rectangle         (duk_context* ctx);
+static duk_ret_t js_Surface_replaceColor      (duk_context* ctx);
 static duk_ret_t js_Surface_rescale           (duk_context* ctx);
 static duk_ret_t js_Surface_save              (duk_context* ctx);
 
@@ -85,6 +86,7 @@ duk_push_sphere_surface(duk_context* ctx, image_t* image)
 	duk_push_c_function(ctx, js_Surface_pointSeries, DUK_VARARGS); duk_put_prop_string(ctx, -2, "pointSeries");
 	duk_push_c_function(ctx, js_Surface_rotate, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotate");
 	duk_push_c_function(ctx, js_Surface_rectangle, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rectangle");
+	duk_push_c_function(ctx, js_Surface_replaceColor, DUK_VARARGS); duk_put_prop_string(ctx, -2, "replaceColor");
 	duk_push_c_function(ctx, js_Surface_rescale, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rescale");
 	duk_push_c_function(ctx, js_Surface_save, DUK_VARARGS); duk_put_prop_string(ctx, -2, "save");
 	duk_push_string(ctx, "width"); duk_push_int(ctx, get_image_width(image));
@@ -585,6 +587,22 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_replaceColor(duk_context* ctx)
+{
+	color_t color = duk_require_sphere_color(ctx, 0);
+	color_t new_color = duk_require_sphere_color(ctx, 1);
+
+	image_t* image;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "image_ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!replace_image_color(image, color, new_color))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:replaceColor() - Failed to perform replacement (internal error)");
 	return 0;
 }
 
