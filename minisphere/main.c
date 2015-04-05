@@ -195,8 +195,6 @@ main(int argc, char* argv[])
 	icon_path = get_asset_path("game-icon.png", NULL, false);
 	icon = al_load_bitmap(icon_path);
 	free(icon_path);
-	al_reserve_samples(8);
-	al_set_mixer_gain(al_get_default_mixer(), 1.0);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
@@ -366,9 +364,8 @@ do_events(void)
 	ALLEGRO_EVENT event;
 
 	dyad_update();
-
-	// update global input state
 	update_input();
+	update_sounds();
 
 	// process Allegro events
 	while (al_get_next_event(g_events, &event)) {
@@ -605,8 +602,6 @@ initialize_engine(void)
 	al_init_image_addon();
 	al_init_font_addon();
 	al_init_ttf_addon();
-	al_install_audio();
-	al_init_acodec_addon();
 
 	// initialize networking
 	dyad_init();
@@ -619,6 +614,7 @@ initialize_engine(void)
 
 	initialize_input();
 	initialize_map_engine();
+	initialize_sound();
 
 	// initialize JavaScript API
 	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
@@ -646,8 +642,8 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	duk_destroy_heap(g_duktape);
 	dyad_shutdown();
+	shutdown_sound();
 	shutdown_input();
-	al_uninstall_audio();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_config(g_game_conf);
