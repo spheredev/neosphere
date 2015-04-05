@@ -64,8 +64,11 @@ js_LoadSound(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 	duk_bool_t is_stream = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
 
-	char* sound_path = get_asset_path(filename, "sounds", false);
-	ALLEGRO_AUDIO_STREAM* stream = al_load_audio_stream(sound_path, 4, 2048);
+	char*                 sound_path;
+	ALLEGRO_AUDIO_STREAM* stream;
+
+	sound_path = get_asset_path(filename, "sounds", false);
+	stream = al_load_audio_stream(sound_path, 4, 2048);
 	free(sound_path);
 	if (stream == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);
@@ -80,6 +83,7 @@ static duk_ret_t
 js_Sound_finalize(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_get_prop_string(ctx, 0, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	al_set_audio_stream_playing(stream, false);
 	al_detach_audio_stream(stream);
@@ -165,6 +169,7 @@ static duk_ret_t
 js_Sound_getRepeat(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -176,6 +181,7 @@ static duk_ret_t
 js_Sound_getVolume(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -245,6 +251,7 @@ static duk_ret_t
 js_Sound_setVolume(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -257,6 +264,7 @@ static duk_ret_t
 js_Sound_pause(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -267,15 +275,16 @@ js_Sound_pause(duk_context* ctx)
 static duk_ret_t
 js_Sound_play(duk_context* ctx)
 {
-	int                   n_args;
+	int n_args = duk_get_top(ctx);
+
+	ALLEGRO_PLAYMODE      play_mode;
 	ALLEGRO_AUDIO_STREAM* stream;
 
-	n_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (n_args >= 1) {
-		ALLEGRO_PLAYMODE play_mode = duk_get_boolean(ctx, 0)
+		play_mode = duk_get_boolean(ctx, 0)
 			? ALLEGRO_PLAYMODE_LOOP
 			: ALLEGRO_PLAYMODE_ONCE;
 		al_seek_audio_stream_secs(stream, 0.0);
@@ -289,6 +298,7 @@ static duk_ret_t
 js_Sound_reset(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -301,6 +311,7 @@ static duk_ret_t
 js_Sound_stop(duk_context* ctx)
 {
 	ALLEGRO_AUDIO_STREAM* stream;
+
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "stream_ptr"); stream = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);

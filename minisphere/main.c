@@ -525,13 +525,14 @@ static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
 	wraptext_t*            error_info;
+	bool                   is_finished;
+	int                    frames_till_close;
+	ALLEGRO_KEYBOARD_STATE keyboard;
+	const char*            line_text;
+	int                    num_lines;
+	const char*            subtitle;
 	const char*            title;
 	int                    title_index;
-	const char*            subtitle;
-	bool                   is_finished;
-	const char*            line_text;
-	ALLEGRO_KEYBOARD_STATE keyboard;
-	int                    num_lines;
 
 	int i;
 	
@@ -547,6 +548,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	// show error in-engine, Sphere 1.x style
 	unskip_frame();
 	is_finished = false;
+	frames_till_close = 30;
 	while (!is_finished) {
 		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
 		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
@@ -562,12 +564,19 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 				g_res_x / 2, 58 + i * get_font_line_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
 		}
-		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
-			TEXT_ALIGN_CENTER, "Press space bar or [Esc] to close.");
+		if (frames_till_close <= 0) {
+			draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
+				TEXT_ALIGN_CENTER, "Press space bar or [Esc] to close.");
+		}
 		flip_screen(30);
-		al_get_keyboard_state(&keyboard);
-		is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
-			|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
+		if (frames_till_close <= 0) {
+			al_get_keyboard_state(&keyboard);
+			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
+				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
+		}
+		else {
+			--frames_till_close;
+		}
 	}
 	free_wraptext(error_info);
 	shutdown_engine();
