@@ -13,7 +13,7 @@ struct key_queue
 
 enum mouse_button
 {
-	MOUSE_BUTTON_LEFT = 1,
+	MOUSE_BUTTON_LEFT,
 	MOUSE_BUTTON_RIGHT,
 	MOUSE_BUTTON_MIDDLE
 };
@@ -456,10 +456,14 @@ js_IsMouseButtonPressed(duk_context* ctx)
 {
 	int button = duk_require_int(ctx, 0);
 
+	int                 button_id;
 	ALLEGRO_MOUSE_STATE mouse_state;
 
+	button_id = button == MOUSE_BUTTON_RIGHT ? 2
+		: button == MOUSE_BUTTON_MIDDLE ? 3
+		: 1;
 	al_get_mouse_state(&mouse_state);
-	duk_push_boolean(ctx, mouse_state.display == g_display && al_mouse_button_down(&mouse_state, button));
+	duk_push_boolean(ctx, mouse_state.display == g_display && al_mouse_button_down(&mouse_state, button_id));
 	return 1;
 }
 
