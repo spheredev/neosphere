@@ -331,8 +331,12 @@ get_map_tile(int x, int y, int layer)
 	int layer_h = s_map->layers[layer].height;
 	int layer_w = s_map->layers[layer].width;
 
-	x = (x % layer_w + layer_w) % layer_w;
-	y = (y % layer_h + layer_h) % layer_h;
+	if (s_map->is_repeating || s_map->layers[layer].is_parallax) {
+		x = (x % layer_w + layer_w) % layer_w;
+		y = (y % layer_h + layer_h) % layer_h;
+	}
+	if (x < 0 || y < 0 || x >= layer_w || y >= layer_h)
+		return -1;
 	return s_map->layers[layer].tilemap[x + y * layer_w].tile_index;
 }
 

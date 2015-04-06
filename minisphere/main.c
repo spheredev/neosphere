@@ -72,7 +72,9 @@ static const char* ERROR_TEXT[][2] = {
 	{ "This game sucks!", "Or maybe it's just the programmer..." },
 	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
 	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
-	{ "Sorry. It's just...", "...well, this is a trainwreck of a game." }
+	{ "Sorry. It's just...", "...well, this is a trainwreck of a game." },
+	{ "You better run, and you better hide...", "...cuz a big fat hawk just ate that guy!" },
+	{ "An exception was thrown.", "minisphere takes exception to crappy games." }
 };
 
 int
