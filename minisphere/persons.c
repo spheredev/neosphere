@@ -1193,8 +1193,9 @@ js_GetPersonSpeedY(duk_context* ctx)
 static duk_ret_t
 js_GetPersonValue(duk_context* ctx)
 {
+	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
 	const char* name = duk_require_string(ctx, 0);
-	const char* key = duk_require_string(ctx, 1);
+	const char* key = duk_to_string(ctx, 1);
 
 	person_t* person;
 
@@ -1546,8 +1547,9 @@ js_SetPersonSpriteset(duk_context* ctx)
 static duk_ret_t
 js_SetPersonValue(duk_context* ctx)
 {
+	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
 	const char* name = duk_require_string(ctx, 0);
-	const char* key = duk_require_string(ctx, 1);
+	const char* key = duk_to_string(ctx, 1);
 	duk_require_valid_index(ctx, 2);
 
 	person_t* person;

@@ -69,7 +69,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
-xcopy /y /d "C:\allegro-5.0.10-msvc-11.0\bin\allegro-5.0.10-monolith-mt-debug.dll" "$(OutDir)"
+xcopy /y /d "C:\allegro-5.0.10-msvc-9.0\bin\allegro-5.0.10-monolith-mt-debug.dll" "$(OutDir)"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
