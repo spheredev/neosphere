@@ -1203,7 +1203,12 @@ js_GetPersonValue(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonValue(): Person '%s' doesn't exist", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
-	duk_get_prop_string(ctx, -1, name);
+	if (!duk_get_prop_string(ctx, -1, name)) {
+		duk_pop(ctx);
+		duk_push_object(ctx);
+		duk_put_prop_string(ctx, -2, name);
+		duk_get_prop_string(ctx, -1, name);
+	}
 	duk_get_prop_string(ctx, -1, key);
 	duk_remove(ctx, -2); duk_remove(ctx, -2); duk_remove(ctx, -2);
 	return 1;
@@ -1558,7 +1563,12 @@ js_SetPersonValue(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): Person '%s' doesn't exist", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
-	duk_get_prop_string(ctx, -1, name);
+	if (!duk_get_prop_string(ctx, -1, name)) {
+		duk_pop(ctx);
+		duk_push_object(ctx);
+		duk_put_prop_string(ctx, -2, name);
+		duk_get_prop_string(ctx, -1, name);
+	}
 	duk_dup(ctx, 2); duk_put_prop_string(ctx, -2, key);
 	duk_pop_2(ctx);
 	return 0;
