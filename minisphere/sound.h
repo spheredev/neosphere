@@ -18,6 +18,7 @@ extern void     set_sound_looping (sound_t* sound, bool is_looping);
 extern void     set_sound_pan     (sound_t* sound, float pan);
 extern void     set_sound_pitch   (sound_t* sound, float pitch);
 extern void     play_sound        (sound_t* sound);
+extern bool     reload_sound      (sound_t* sound);
 extern void     seek_sound        (sound_t* sound, int position);
 extern void     stop_sound        (sound_t* sound, bool rewind);
 

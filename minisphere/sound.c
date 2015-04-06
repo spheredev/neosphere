@@ -31,6 +31,7 @@ static duk_ret_t js_Sound_stop        (duk_context* ctx);
 struct sound
 {
 	int                   refcount;
+	char*                 path;
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
@@ -60,14 +61,16 @@ load_sound(const char* path, bool streaming)
 	sound_t* sound;
 
 	if (!(sound = calloc(1, sizeof(sound_t)))) goto on_error;
-	if (!(sound->stream = al_load_audio_stream(path, 4, 2048))) goto on_error;
-	al_set_audio_stream_gain(sound->stream, 1.0);
-	al_attach_audio_stream_to_mixer(sound->stream, al_get_default_mixer());
-	al_set_audio_stream_playing(sound->stream, false);
+	if (!(sound->path = strdup(path))) goto on_error;
+	if (!reload_sound(sound))
+		goto on_error;
 	return ref_sound(sound);
 
 on_error:
-	free(sound);
+	if (sound != NULL) {
+		free(sound->path);
+		free(sound);
+	}
 	return NULL;
 }
 
@@ -84,6 +87,7 @@ free_sound(sound_t* sound)
 	if (sound == NULL || --sound->refcount > 0)
 		return;
 	al_destroy_audio_stream(sound->stream);
+	free(sound->path);
 }
 
 bool
@@ -157,6 +161,22 @@ void
 play_sound(sound_t* sound)
 {
 	al_set_audio_stream_playing(sound->stream, true);
+}
+
+bool
+reload_sound(sound_t* sound)
+{
+	ALLEGRO_AUDIO_STREAM* new_stream;
+
+	if (!(new_stream = al_load_audio_stream(sound->path, 4, 1024)))
+		return false;
+	if (sound->stream != NULL)
+		al_destroy_audio_stream(sound->stream);
+	sound->stream = new_stream;
+	al_set_audio_stream_gain(sound->stream, 1.0);
+	al_attach_audio_stream_to_mixer(sound->stream, al_get_default_mixer());
+	al_set_audio_stream_playing(sound->stream, false);
+	return true;
 }
 
 void
@@ -429,8 +449,8 @@ js_Sound_play(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (n_args >= 1) {
+		reload_sound(sound);
 		is_looping = duk_require_boolean(ctx, 0);
-		seek_sound(sound, 0);
 		set_sound_looping(sound, is_looping);
 	}
 	play_sound(sound);
