@@ -1,10 +1,9 @@
-
-minisphere_files = [
+msphere_sources = [
+    "duktape.c",
+    "dyad.c",
     "api.c",
     "bytearray.c",
     "color.c",
-    "duktape.c",
-    "dyad.c",
     "file.c",
     "font.c",
     "geometry.c",
@@ -25,11 +24,12 @@ minisphere_files = [
     "surface.c",
     "tileset.c",
     "windowstyle.c"
+
 ]
 
-allegro_libs = [
-    "allegro", 
-    "allegro_audio", 
+msphere_libs = [
+    "allegro",
+    "allegro_audio",
     "allegro_acodec",
     "allegro_color",
     "allegro_dialog",
@@ -38,8 +38,9 @@ allegro_libs = [
     "allegro_primitives",
     "allegro_ttf",
     "allegro_main",
+    "m"
 ]
 
-minisphere = Program("msphere", minisphere_files, LIBS = allegro_libs)
+minisphere = Program("msphere", msphere_files, LIBS = msphere_libs)
 
 Return("minisphere")
