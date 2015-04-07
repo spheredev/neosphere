@@ -177,7 +177,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="sphere.ico">
+    <Image Include="engine.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

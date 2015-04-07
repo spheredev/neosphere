@@ -156,7 +156,7 @@
     <ResourceCompile Include="minisphere.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="sphere.ico" />
+    <Image Include="engine.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
