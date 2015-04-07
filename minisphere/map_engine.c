@@ -616,6 +616,7 @@ free_map(map_t* map)
 		for (i = 0; i < MAP_SCRIPT_MAX; ++i)
 			free_script(map->scripts[i]);
 		for (i = 0; i < map->num_layers; ++i) {
+			free_script(map->layers[i].render_script);
 			free_lstring(map->layers[i].name);
 			free(map->layers[i].tilemap);
 			free_obsmap(map->layers[i].obsmap);
@@ -732,7 +733,12 @@ change_map(const char* filename, bool preserve_persons)
 		run_script(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
 		run_script(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
 	}
+	
+	// close out old map and prep for new one
 	free_map(s_map); free(s_map_filename);
+	for (i = 0; i < s_num_delay_scripts; ++i)
+		free_script(s_delay_scripts[i].script_id);
+	s_num_delay_scripts = 0;
 	s_map = map; s_map_filename = strdup(filename);
 	reset_persons(preserve_persons);
 
@@ -1022,7 +1028,8 @@ update_map_engine(bool is_main_loop)
 		if (s_delay_scripts[i].frames_left-- <= 0) {
 			run_script(s_delay_scripts[i].script_id, false);
 			free_script(s_delay_scripts[i].script_id);
-			for (j = i; j < s_num_delay_scripts - 1; ++j) s_delay_scripts[j] = s_delay_scripts[j + 1];
+			for (j = i; j < s_num_delay_scripts - 1; ++j)
+				s_delay_scripts[j] = s_delay_scripts[j + 1];
 			--s_num_delay_scripts; --i;
 		}
 	}
@@ -1157,6 +1164,7 @@ js_MapEngine(duk_context* ctx)
 		render_map();
 		flip_screen(s_framerate);
 	}
+	reset_persons(false);
 	s_is_map_running = false;
 	return 0;
 }

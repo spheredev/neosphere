@@ -520,11 +520,11 @@ reset_persons(bool keep_existing)
 	map_origin = get_map_origin();
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
+		person->num_commands = 0;
 		if (person->is_persistent || keep_existing) {
 			person->x = map_origin.x;
 			person->y = map_origin.y;
 			person->layer = map_origin.z;
-			call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
 		}
 		else {
 			call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
