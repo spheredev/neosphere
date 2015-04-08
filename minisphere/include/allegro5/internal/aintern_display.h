@@ -128,7 +128,8 @@ struct ALLEGRO_DISPLAY
    ALLEGRO_EXTRA_DISPLAY_SETTINGS extra_settings;
    struct ALLEGRO_OGL_EXTRAS *ogl_extras;
 
-   _AL_VECTOR bitmaps; /* A list of bitmaps created for this display. */
+   /* A list of bitmaps created for this display, sub-bitmaps not included. */
+   _AL_VECTOR bitmaps;
 
    int num_cache_vertices;
    bool cache_enabled;
@@ -154,8 +155,6 @@ void _al_fill_display_settings(ALLEGRO_EXTRA_DISPLAY_SETTINGS *eds);
 void _al_set_color_components(int format, ALLEGRO_EXTRA_DISPLAY_SETTINGS *eds, int importance);
 int  _al_deduce_color_format(ALLEGRO_EXTRA_DISPLAY_SETTINGS *eds);
 int  _al_display_settings_sorter(const void *p0, const void *p1);
-
-void _al_destroy_display_bitmaps(ALLEGRO_DISPLAY *d);
 
 /* This is called from the primitives addon and for shaders. */
 AL_FUNC(void, _al_add_display_invalidated_callback, (ALLEGRO_DISPLAY *display,
