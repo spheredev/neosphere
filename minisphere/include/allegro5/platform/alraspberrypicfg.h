@@ -8,25 +8,22 @@
  *                                           /\____/
  *                                           \_/__/
  *
- *      Inline functions (generic C).
+ *      Configuration defines for use on Raspberry Pi platforms.
  *
- *      By Shawn Hargreaves.
+ *      By Trent Gamblin.
  *
  *      See readme.txt for copyright information.
  */
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
 
-#include "allegro5/inline/gfx.inl"
+/* Describe this platform.  */
+#define ALLEGRO_PLATFORM_STR  "RaspberryPi"
 
-#include "allegro5/inline/color.inl"
+#define ALLEGRO_EXTRA_HEADER "allegro5/platform/alraspberrypi.h"
+#define ALLEGRO_INTERNAL_HEADER "allegro5/platform/aintraspberrypi.h"
+#define ALLEGRO_INTERNAL_THREAD_HEADER "allegro5/platform/aintuthr.h"
 
-#include "allegro5/inline/draw.inl"
-
-#include "allegro5/inline/fmaths.inl"
-
-#include "allegro5/inline/3dmaths.inl"
-
-#include "allegro5/inline/matrix.inl"
-
-/* alcompat.h includes some inline functions */
-#include "allegro5/alcompat.h"
+#define ALLEGRO_EXCLUDE_GLX

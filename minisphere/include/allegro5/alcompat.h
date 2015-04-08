@@ -11,6 +11,7 @@
 
 #define al_current_time()                 (al_get_time())
 #define al_event_queue_is_empty(q)        (al_is_event_queue_empty(q))
+#define al_toggle_display_flag(d, f, o)   (al_set_display_flag((d), (f), (o)))
 
 
 #ifdef __cplusplus

@@ -51,10 +51,8 @@ struct rws_header
 windowstyle_t*
 load_windowstyle(const char* path)
 {
-	image_t*          atlas = NULL;
 	FILE*             file;
 	image_t*          image;
-	int16_t           max_w = 0, max_h = 0;
 	struct rws_header rws;
 	int16_t           w, h;
 	windowstyle_t*    winstyle = NULL;
@@ -67,11 +65,8 @@ load_windowstyle(const char* path)
 	if (memcmp(rws.signature, ".rws", 4) != 0) goto on_error;
 	switch (rws.version) {
 	case 1:
-		max_w = rws.edge_w_h; max_h = rws.edge_w_h;
-		if (!(atlas = create_image(max_w * 3, max_h * 3)))
-			goto on_error;
 		for (i = 0; i < 9; ++i) {
-			if (!(image = read_subimage(file, atlas, i % 3 * max_w, i / 3 * max_h, rws.edge_w_h, rws.edge_w_h)))
+			if (!(image = read_image(file, rws.edge_w_h, rws.edge_w_h)))
 				goto on_error;
 			winstyle->images[i] = image;
 		}
@@ -89,7 +84,6 @@ load_windowstyle(const char* path)
 	}
 	fclose(file);
 	winstyle->bg_style = rws.background_mode;
-	free_image(atlas);
 	return ref_windowstyle(winstyle);
 
 on_error:
@@ -99,7 +93,6 @@ on_error:
 			free_image(winstyle->images[i]);
 		free(winstyle);
 	}
-	free_image(atlas);
 	return NULL;
 }
 

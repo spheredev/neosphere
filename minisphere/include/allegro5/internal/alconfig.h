@@ -41,8 +41,14 @@
    #include "allegro5/platform/aliphonecfg.h"
 #elif defined ALLEGRO_MACOSX
    #include "allegro5/platform/alosxcfg.h"
+#elif defined ALLEGRO_ANDROID
+   #include "allegro5/platform/alandroidcfg.h"
+#elif defined ALLEGRO_RASPBERRYPI
+   #include "allegro5/platform/alraspberrypicfg.h"
 #elif defined ALLEGRO_UNIX
    #include "allegro5/platform/alucfg.h"
+#elif defined ALLEGRO_SDL
+   #include "allegro5/platform/allegro_sdl_config.h"
 #else
    #error platform not supported
 #endif
@@ -255,11 +261,6 @@
 #define bmp_read32(addr)            (*((uint32_t *)(addr)))
 
 
-
-/* default random function definition */
-#ifndef AL_RAND
-   #define AL_RAND()       (rand())
-#endif
 
 #ifdef __cplusplus
    }
