@@ -9,6 +9,7 @@
 
 struct person
 {
+	unsigned int   id;
 	char*          name;
 	int            anim_frames;
 	char*          direction;
@@ -119,6 +120,7 @@ static const person_t* s_current_person = NULL;
 static int             s_def_scripts[PERSON_SCRIPT_MAX];
 static int             s_talk_distance  = 8;
 static int             s_max_persons    = 0;
+static unsigned int    s_next_person_id = 0;
 static int             s_num_persons    = 0;
 static person_t*       *s_persons       = NULL;
 
@@ -154,6 +156,7 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 		s_persons = realloc(s_persons, s_max_persons * sizeof(person_t*));
 	}
 	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
+	person->id = s_next_person_id++;
 	set_person_name(person, name);
 	path = get_asset_path(sprite_file, "spritesets", false);
 	person->sprite = load_spriteset(path);
@@ -473,16 +476,16 @@ queue_person_script(person_t* person, lstring_t* script, bool is_immediate)
 	
 	++person->num_commands;
 	if (person->num_commands > person->max_commands) {
-		if (!(person->commands = realloc(person->commands, person->num_commands * sizeof(struct command))))
+		person->max_commands = person->num_commands * 2;
+		if (!(person->commands = realloc(person->commands, person->max_commands * sizeof(struct command))))
 			return false;
-		person->max_commands = person->num_commands;
 	}
-	if ((script_name = malloc(strlen(person->name) + 19)) == NULL)
+	if (!(script_name = new_lstring("[%s : queued script]", person->name)))
 		return false;
-	script_name = new_lstring("[%s : queued script]", person->name);
 	person->commands[person->num_commands - 1].type = COMMAND_RUN_SCRIPT;
 	person->commands[person->num_commands - 1].is_immediate = is_immediate;
-	person->commands[person->num_commands - 1].script_id = compile_script(script, script_name->cstr);
+	person->commands[person->num_commands - 1].script_id = compile_script(script, lstring_cstr(script_name));
+	free_lstring(script_name);
 	return true;
 }
 
@@ -520,7 +523,8 @@ reset_persons(bool keep_existing)
 	map_origin = get_map_origin();
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
-		person->num_commands = 0;
+		if (!keep_existing)
+			person->num_commands = 0;
 		if (person->is_persistent || keep_existing) {
 			person->x = map_origin.x;
 			person->y = map_origin.y;
