@@ -30,6 +30,7 @@ static duk_ret_t js_ExecuteGame          (duk_context* ctx);
 static duk_ret_t js_Exit                 (duk_context* ctx);
 static duk_ret_t js_FlipScreen           (duk_context* ctx);
 static duk_ret_t js_GarbageCollect       (duk_context* ctx);
+static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
@@ -71,6 +72,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
 	register_api_func(ctx, NULL, "FlipScreen", js_FlipScreen);
 	register_api_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	register_api_func(ctx, NULL, "Print", js_Print);
 	register_api_func(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 	
@@ -570,6 +572,15 @@ js_GarbageCollect(duk_context* ctx)
 {
 	duk_gc(ctx, 0x0);
 	duk_gc(ctx, 0x0);
+	return 0;
+}
+
+static duk_ret_t
+js_Print(duk_context* ctx)
+{
+	const char* text = duk_safe_to_string(ctx, 0);
+	
+	printf("%s\n", text);
 	return 0;
 }
 
