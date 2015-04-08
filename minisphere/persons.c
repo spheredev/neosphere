@@ -109,11 +109,12 @@ static duk_ret_t js_IgnoreTileObstructions       (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand           (duk_context* ctx);
 static duk_ret_t js_QueuePersonScript            (duk_context* ctx);
 
+static bool does_person_exist    (unsigned int person_id);
+static void set_person_direction (person_t* person, const char* direction);
+static void set_person_name      (person_t* person, const char* name);
 static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
 static void free_person          (person_t* person);
-static void set_person_direction (person_t* person, const char* direction);
-static void set_person_name      (person_t* person, const char* name);
 static void sort_persons         (void);
 
 static const person_t* s_current_person = NULL;
@@ -387,7 +388,7 @@ set_person_script(person_t* person, int type, const lstring_t* script)
 		: type == PERSON_SCRIPT_ON_DESTROY ? "destroy script"
 		: type == PERSON_SCRIPT_ON_TOUCH ? "touch script"
 		: type == PERSON_SCRIPT_ON_TALK ? "talk script"
-		: type == PERSON_SCRIPT_GENERATOR ? "command script"
+		: type == PERSON_SCRIPT_GENERATOR ? "command generator"
 		: NULL;
 	if (script_name == NULL) return false;
 	if ((full_name = malloc(strlen(person_name) + strlen(script_name) + 11)) == NULL)
@@ -570,17 +571,18 @@ update_persons(void)
 	bool            is_finished;
 	const person_t* last_person;
 	person_t*       person;
+	unsigned int    person_id;
 	
 	int i, j;
 
 	for (i = 0; i < s_num_persons; ++i) {
-		person = s_persons[i];
+		person = s_persons[i]; person_id = person->id;
 		person->has_moved = false;
 		if (person->revert_delay > 0 && --person->revert_frames <= 0)
 			person->frame = 0;
 		if (person->num_commands == 0)
 			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
-		
+
 		// run through the command queue, stopping after the first non-immediate command
 		is_finished = person->num_commands == 0;
 		while (!is_finished) {
@@ -596,7 +598,8 @@ update_persons(void)
 				run_script(command.script_id, false);
 			s_current_person = last_person;
 			free_script(command.script_id);
-			is_finished = !command.is_immediate || person->num_commands == 0;
+			is_finished = !does_person_exist(person_id)  // stop if person was destroyed
+				|| !command.is_immediate || person->num_commands == 0;
 		}
 	}
 }
@@ -699,26 +702,14 @@ init_persons_api(void)
 	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
-static int
-compare_persons(const void* a, const void* b)
-{
-	person_t* p1 = *(person_t**)a;
-	person_t* p2 = *(person_t**)b;
-
-	return (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
-}
-
-static void
-free_person(person_t* person)
+static bool
+does_person_exist(unsigned int person_id)
 {
 	int i;
 
-	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
-		free_script(person->scripts[i]);
-	free_spriteset(person->sprite);
-	free(person->name);
-	free(person->direction);
-	free(person);
+	for (i = 0; i < s_num_persons; ++i)
+		if (person_id == s_persons[i]->id) return true;
+	return false;
 }
 
 static void
@@ -801,6 +792,28 @@ command_person(person_t* person, int command)
 				call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
 		}
 	}
+}
+
+static int
+compare_persons(const void* a, const void* b)
+{
+	person_t* p1 = *(person_t**)a;
+	person_t* p2 = *(person_t**)b;
+
+	return (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
+}
+
+static void
+free_person(person_t* person)
+{
+	int i;
+
+	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
+		free_script(person->scripts[i]);
+	free_spriteset(person->sprite);
+	free(person->name);
+	free(person->direction);
+	free(person);
 }
 
 static void
