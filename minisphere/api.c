@@ -418,8 +418,7 @@ js_GetScreenWidth(duk_context* ctx)
 static duk_ret_t
 js_GetTime(duk_context* ctx)
 {
-	int ms = floor(al_get_time() * 1000);
-	duk_push_int(ctx, ms);
+	duk_push_number(ctx, floor(al_get_time() * 1000));
 	return 1;
 }
 

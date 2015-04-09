@@ -238,7 +238,7 @@ js_LoadSound(duk_context* ctx)
 	char*    sound_path;
 
 	sound_path = get_asset_path(filename, "sounds", false);
-	sound = load_sound(sound_path, true);
+	sound = load_sound(sound_path, is_stream);
 	free(sound_path);
 	if (sound == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);

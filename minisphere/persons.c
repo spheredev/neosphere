@@ -578,7 +578,7 @@ update_persons(void)
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i]; person_id = person->id;
 		person->has_moved = false;
-		if (person->revert_delay > 0 && --person->revert_frames <= 0)
+		if (person->revert_frames > 0 && --person->revert_frames <= 0)
 			person->frame = 0;
 		if (person->num_commands == 0)
 			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
@@ -1051,6 +1051,21 @@ js_GetPersonDirection(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonFrame(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	int       num_frames;
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): Person '%s' doesn't exist", name);
+	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
+	duk_push_int(ctx, person->frame % num_frames);
+	return 1;
+}
+
+static duk_ret_t
 js_GetPersonFrameRevert(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -1061,19 +1076,6 @@ js_GetPersonFrameRevert(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrameRevert(): Person '%s' doesn't exist", name);
 	duk_push_int(ctx, person->revert_delay);
 	return 1;
-}
-
-static duk_ret_t
-js_GetPersonFrame(duk_context* ctx)
-{
-	const char* name = duk_require_string(ctx, 0);
-
-	person_t* person;
-
-	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
-	duk_push_int(ctx, person->frame);
-	return 0;
 }
 
 static duk_ret_t
@@ -1354,12 +1356,14 @@ js_SetPersonFrame(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 	int frame_index = duk_require_int(ctx, 1);
 
+	int       num_frames;
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
-	if (frame_index < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrame(): Invalid frame index or frame doesn't exist (caller passed %i)", frame_index);
+	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
+	if (frame_index < 0 || frame_index >= num_frames)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrame(): Invalid frame index or frame doesn't exist (%i)", frame_index);
 	person->frame = frame_index;
 	return 0;
 }
