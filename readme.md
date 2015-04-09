@@ -1,7 +1,7 @@
-minisphere 1.0.4
+minisphere 1.0.7
 ================
 
-*Saturday, April 4, 2015*
+*Saturday, April 9, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written
 from the ground up in C.  It boasts high compatibility with most games
@@ -32,6 +32,14 @@ Command Line Options
 
 Potential Compatibility Issues
 ------------------------------
+
+No mp3 support in minisphere
+----------------------------
+
+minisphere is based on Allegro, which doesn't include mp3 support due
+to licensing issues. Therefore games using mp3 audio won't run in
+minisphere unless the tracks are converted to another format such as
+Ogg Vorbis (.ogg).
 
 `GrabImage()` and `GrabSurface()`
 ---------------------------------
