@@ -194,7 +194,7 @@ main(int argc, char* argv[])
 	}
 
 	// set up engine and create display window
-	icon_path = get_asset_path("game-icon.png", NULL, false);
+	icon_path = get_asset_path("icon.png", NULL, false);
 	icon = al_load_bitmap(icon_path);
 	free(icon_path);
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
