@@ -41,10 +41,10 @@ static double      const SPHERE_API_VERSION = 1.5;
 static const char* const SPHERE_USERAGENT   = "v1.5 (compatible; minisphere 1.0.8)";
 
 static const char* const EXTENSIONS[] = {
-	"sphere-legacy",
+	"sphere-legacy-api",
 	"minisphere",
-	"set-script-function",
 	"frameskip-api",
+	"set-script-function"
 };
 
 extern ALLEGRO_DISPLAY*     g_display;
