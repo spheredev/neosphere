@@ -18,8 +18,8 @@ Names of variables, functions, etc. should use the typical C naming
 convention of all lowercase with words separated by underscores, e.g.
 `big_fat_pig`. Global variables should be prefixed with `g_` and static
 variables (including those at file scope) with `s_`. There is one
-exception: conversion functions with no side effects should have no
-word separator, e.g. `nativecolor()`.
+exception: utility functions with no side effects should have no word
+separator, e.g. `nativecolor()`.
 
 Variable Declarations
 ---------------------

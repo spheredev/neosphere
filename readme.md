@@ -1,12 +1,18 @@
-minisphere 1.0.7
+minisphere 1.0.8
 ================
 
-*Saturday, April 9, 2015*
+*Friday, April 10, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written
 from the ground up in C.  It boasts high compatibility with most games
 written for Sphere 1.x, but with better performance and new
 functionality.
+
+minisphere is also very small, living up to its name: The engine in its
+entirety consists of a single executable less than 2MB in size, plus
+around 200KB or so for the system assets. This makes it very easy to
+distribute compared to Sphere 1.x, which depends on about 7 DLL files
+and won't run at all if any of them are left out.
 
 
 Command Line Options
