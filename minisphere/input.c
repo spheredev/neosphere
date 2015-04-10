@@ -668,8 +668,8 @@ js_BindJoystickButton(duk_context* ctx)
 {
 	int joy_index = duk_require_int(ctx, 0);
 	int button = duk_require_int(ctx, 1);
-	lstring_t* down_script = !duk_is_null(ctx, 2) ? duk_require_lstring_t(ctx, 2) : lstring_from_cstr("");
-	lstring_t* up_script = !duk_is_null(ctx, 3) ? duk_require_lstring_t(ctx, 3) : lstring_from_cstr("");
+	int down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
+	int up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
@@ -677,10 +677,8 @@ js_BindJoystickButton(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
 	free_script(s_button_down_scripts[joy_index][button]);
 	free_script(s_button_up_scripts[joy_index][button]);
-	s_button_down_scripts[joy_index][button] = compile_script(down_script, "[button-down script]");
-	s_button_up_scripts[joy_index][button] = compile_script(up_script, "[button-up script]");
-	free_lstring(down_script);
-	free_lstring(up_script);
+	s_button_down_scripts[joy_index][button] = down_script;
+	s_button_up_scripts[joy_index][button] = up_script;
 	s_is_button_bound[joy_index][button] = true;
 	return 0;
 }
@@ -689,19 +687,15 @@ static duk_ret_t
 js_BindKey(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
-	lstring_t* key_down_script = !duk_is_null(ctx, 1)
-		? duk_require_lstring_t(ctx, 1) : lstring_from_cstr("");
-	lstring_t* key_up_script = !duk_is_null(ctx, 2)
-		? duk_require_lstring_t(ctx, 2) : lstring_from_cstr("");
+	int key_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
+	int key_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): Invalid key constant");
 	free_script(s_key_down_scripts[keycode]);
 	free_script(s_key_up_scripts[keycode]);
-	s_key_down_scripts[keycode] = compile_script(key_down_script, "[key-down script]");
-	s_key_up_scripts[keycode] = compile_script(key_up_script, "[key-down script]");
-	free_lstring(key_down_script);
-	free_lstring(key_up_script);
+	s_key_down_scripts[keycode] = key_down_script;
+	s_key_up_scripts[keycode] = key_up_script;
 	s_is_key_bound[keycode] = true;
 	return 0;
 }

@@ -117,13 +117,13 @@ static int  compare_persons      (const void* a, const void* b);
 static void free_person          (person_t* person);
 static void sort_persons         (void);
 
-static const person_t* s_current_person = NULL;
-static int             s_def_scripts[PERSON_SCRIPT_MAX];
-static int             s_talk_distance  = 8;
-static int             s_max_persons    = 0;
-static unsigned int    s_next_person_id = 0;
-static int             s_num_persons    = 0;
-static person_t*       *s_persons       = NULL;
+static const person_t*   s_current_person = NULL;
+static int               s_def_scripts[PERSON_SCRIPT_MAX];
+static int               s_talk_distance  = 8;
+static int               s_max_persons    = 0;
+static unsigned int      s_next_person_id = 0;
+static int               s_num_persons    = 0;
+static person_t*         *s_persons       = NULL;
 
 void
 initialize_persons_manager(void)
@@ -375,30 +375,11 @@ set_person_scale(person_t* person, double scale_x, double scale_y)
 	person->scale_y = scale_y;
 }
 
-bool
-set_person_script(person_t* person, int type, const lstring_t* script)
+void
+set_person_script(person_t* person, int type, int script_id)
 {
-	char*       full_name;
-	const char* person_name;
-	int         script_id;
-	const char* script_name;
-
-	person_name = get_person_name(person);
-	script_name = type == PERSON_SCRIPT_ON_CREATE ? "create script"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "destroy script"
-		: type == PERSON_SCRIPT_ON_TOUCH ? "touch script"
-		: type == PERSON_SCRIPT_ON_TALK ? "talk script"
-		: type == PERSON_SCRIPT_GENERATOR ? "command generator"
-		: NULL;
-	if (script_name == NULL) return false;
-	if ((full_name = malloc(strlen(person_name) + strlen(script_name) + 11)) == NULL)
-		return false;
-	sprintf(full_name, "[%s : %s]", person_name, script_name);
-	script_id = compile_script(script, full_name);
 	free_script(person->scripts[type]);
 	person->scripts[type] = script_id;
-	free(full_name);
-	return true;
 }
 
 void
@@ -440,6 +421,31 @@ call_person_script(const person_t* person, int type, bool use_default)
 		run_script(s_def_scripts[type], false);
 	run_script(person->scripts[type], false);
 	s_current_person = last_person;
+	return true;
+}
+
+bool
+compile_person_script(person_t* person, int type, const lstring_t* codestring)
+{
+	char*       full_name;
+	const char* person_name;
+	int         script_id;
+	const char* script_name;
+
+	person_name = get_person_name(person);
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "create script"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "destroy script"
+		: type == PERSON_SCRIPT_ON_TOUCH ? "touch script"
+		: type == PERSON_SCRIPT_ON_TALK ? "talk script"
+		: type == PERSON_SCRIPT_GENERATOR ? "command generator"
+		: NULL;
+	if (script_name == NULL) return false;
+	if ((full_name = malloc(strlen(person_name) + strlen(script_name) + 11)) == NULL)
+		return false;
+	sprintf(full_name, "[%s : %s]", person_name, script_name);
+	script_id = compile_script(codestring, full_name);
+	set_person_script(person, type, script_id);
+	free(full_name);
 	return true;
 }
 
@@ -1296,13 +1302,18 @@ static duk_ret_t
 js_SetDefaultPersonScript(duk_context* ctx)
 {
 	int type = duk_require_int(ctx, 0);
-	lstring_t* script = duk_require_lstring_t(ctx, 2);
+	const char* script_name = (type == PERSON_SCRIPT_ON_CREATE) ? "[default create person script]"
+		: (type == PERSON_SCRIPT_ON_DESTROY) ? "[default destroy person script]"
+		: (type == PERSON_SCRIPT_ON_TALK) ? "[default talk script]"
+		: (type == PERSON_SCRIPT_ON_TOUCH) ? "[default touch person script]"
+		: (type == PERSON_SCRIPT_GENERATOR) ? "[default command generator]"
+		: NULL;
+	int script_id = duk_require_sphere_script(ctx, 1, script_name);
 
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDefaultPersonScript(): Invalid script type constant");
 	free_script(s_def_scripts[type]);
-	s_def_scripts[type] = compile_script(script, "[default person script]");
-	free_lstring(script);
+	s_def_scripts[type] = script_id;
 	return 0;
 }
 
@@ -1510,16 +1521,24 @@ js_SetPersonScript(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 	int type = duk_require_int(ctx, 1);
-	lstring_t* script = duk_require_lstring_t(ctx, 2);
 	
+	lstring_t* codestring;
 	person_t*  person;
+	int        script_id;
 	
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonScript(): Invalid script type constant");
-	set_person_script(person, type, script);
-	free_lstring(script);
+	if (duk_is_string(ctx, 2)) {
+		codestring = duk_require_lstring_t(ctx, 2);
+		compile_person_script(person, type, codestring);
+		free_lstring(codestring);
+	}
+	else {
+		script_id = duk_require_sphere_script(ctx, 2, "[person script]");
+		set_person_script(ctx, type, script_id);
+	}
 	return 0;
 }
 

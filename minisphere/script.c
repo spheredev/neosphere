@@ -1,22 +1,23 @@
 #include "minisphere.h"
+#include "api.h"
 
 int
-compile_script(const lstring_t* script, const char* name)
+compile_script(const lstring_t* codestring, const char* name)
 {
-	int index;
-
+	int script_id;
+	
 	duk_push_global_stash(g_duktape);
 	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
 		duk_pop(g_duktape);
 		duk_push_array(g_duktape); duk_put_prop_string(g_duktape, -2, "scripts");
 		duk_get_prop_string(g_duktape, -1, "scripts");
 	}
-	duk_get_prop_string(g_duktape, -1, "length"); index = duk_get_int(g_duktape, -1); duk_pop(g_duktape);
+	duk_get_prop_string(g_duktape, -1, "length"); script_id = duk_get_int(g_duktape, -1) + 1; duk_pop(g_duktape);
 	duk_push_string(g_duktape, name);
-	duk_compile_lstring_filename(g_duktape, 0x0, script->cstr, script->length);
-	duk_put_prop_index(g_duktape, -2, index);
+	duk_compile_lstring_filename(g_duktape, 0x0, codestring->cstr, codestring->length);
+	duk_put_prop_index(g_duktape, -2, script_id - 1);
 	duk_pop_2(g_duktape);
-	return index + 1;
+	return script_id;
 }
 
 void
@@ -64,4 +65,40 @@ run_script(int script_id, bool allow_reentry)
 		}
 	}
 	duk_pop_3(g_duktape);
+}
+
+int
+duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
+{
+	lstring_t* codestring;
+	int        script_id;
+
+	index = duk_require_normalize_index(ctx, index);
+
+	if (duk_is_callable(ctx, index)) {
+		// caller passed function directly
+		duk_push_global_stash(g_duktape);
+		if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
+			duk_pop(g_duktape);
+			duk_push_array(g_duktape); duk_put_prop_string(g_duktape, -2, "scripts");
+			duk_get_prop_string(g_duktape, -1, "scripts");
+		}
+		duk_get_prop_string(g_duktape, -1, "length"); script_id = duk_get_int(g_duktape, -1) + 1; duk_pop(g_duktape);
+		duk_dup(ctx, index);
+		duk_put_prop_index(g_duktape, -2, script_id - 1);
+		duk_pop_2(g_duktape);
+	}
+	else if (duk_is_string(ctx, index)) {
+		// caller passed code string, compile it
+		codestring = duk_require_lstring_t(ctx, index);
+		script_id = compile_script(codestring, name);
+		free_lstring(codestring);
+	}
+	else if (duk_is_null(ctx, index))
+		return 0;
+	else {
+		duk_pop_2(ctx);
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Script argument must be a string or function, or null");
+	}
+	return script_id;
 }

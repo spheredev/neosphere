@@ -747,11 +747,11 @@ change_map(const char* filename, bool preserve_persons)
 		person_info = &s_map->persons[i];
 		person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false);
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
-		set_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
-		set_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
-		set_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
-		set_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
-		set_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
+		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
+		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
+		compile_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
+		compile_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
+		compile_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
 		call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
 	}
 
@@ -1651,22 +1651,17 @@ static duk_ret_t
 js_SetDefaultMapScript(duk_context* ctx)
 {
 	int script_type = duk_require_int(ctx, 0);
-	lstring_t* code = duk_require_lstring_t(ctx, 1);
-
-	int         script_id;
-	const char* script_name;
-
-	if (script_type < 0 || script_type >= MAP_SCRIPT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDefaultMapScript(): Invalid map script constant");
-	script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "[default map enter script]"
+	const char* script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "[default map enter script]"
 		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "[default map leave script]"
 		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "[default map leave-north script]"
 		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "[default map leave-east script]"
 		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "[default map leave-south script]"
 		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "[default map leave-west script]"
 		: NULL;
-	script_id = compile_script(code, script_name);
-	free_lstring(code);
+	int script_id = duk_require_sphere_script(ctx, 1, script_name);
+
+	if (script_type < 0 || script_type >= MAP_SCRIPT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDefaultMapScript(): Invalid map script constant");
 	free_script(s_def_scripts[script_type]);
 	s_def_scripts[script_type] = script_id;
 	return 0;
@@ -1676,10 +1671,9 @@ static duk_ret_t
 js_SetDelayScript(duk_context* ctx)
 {
 	int frames = duk_require_int(ctx, 0);
-	lstring_t* script = duk_require_lstring_t(ctx, 1);
+	int script_id = duk_require_sphere_script(ctx, 1, "[delay script]");
 
 	struct delay_script* delay;
-	char                 script_name[100];
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDelayScript(): Map engine is not running");
@@ -1691,10 +1685,8 @@ js_SetDelayScript(duk_context* ctx)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDelayScript(): Failed to enlarge delay script queue (internal error)");
 	}
 	delay = &s_delay_scripts[s_num_delay_scripts - 1];
-	sprintf(script_name, "[%i-frame delay script]", frames);
-	delay->script_id = compile_script(script, script_name);
+	delay->script_id = script_id;
 	delay->frames_left = frames;
-	free_lstring(script);
 	return 0;
 }
 
@@ -1730,18 +1722,15 @@ static duk_ret_t
 js_SetLayerRenderer(duk_context* ctx)
 {
 	int layer = duk_require_map_layer(ctx, 0);
-	lstring_t* script = duk_require_lstring_t(ctx, 1);
-
-	char script_name[50];
+	char script_name[50]; sprintf(script_name, "[layer %i render script]", layer);
+	int script_id = duk_require_sphere_script(ctx, 1, script_name);
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetLayerRenderer(): Map engine must be running");
 	if (layer < 0 || layer > s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetLayerRenderer(): Invalid layer index (%i)", layer);
-	sprintf(script_name, "[layer %i render script]", layer);
 	free_script(s_map->layers[layer].render_script);
-	s_map->layers[layer].render_script = compile_script(script, script_name);
-	free_lstring(script);
+	s_map->layers[layer].render_script = script_id;
 	return 0;
 }
 
@@ -1785,11 +1774,10 @@ js_SetNextAnimatedTile(duk_context* ctx)
 static duk_ret_t
 js_SetRenderScript(duk_context* ctx)
 {
-	lstring_t* code = duk_require_lstring_t(ctx, 0);
+	int script_id = duk_require_sphere_script(ctx, 0, "[render script]");
 
 	free_script(s_render_script);
-	s_render_script = compile_script(code, "[render script]");
-	free_lstring(code);
+	s_render_script = script_id;
 	return 0;
 }
 
@@ -1904,10 +1892,10 @@ js_SetTileSurface(duk_context* ctx)
 static duk_ret_t
 js_SetUpdateScript(duk_context* ctx)
 {
-	lstring_t* code = duk_require_lstring_t(ctx, 0);
+	int script_id = duk_require_sphere_script(ctx, 0, "[render script]");
 
 	free_script(s_update_script);
-	s_update_script = compile_script(code, "[update script]");
+	s_update_script = script_id;
 	return 0;
 }
 
