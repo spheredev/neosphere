@@ -220,6 +220,17 @@ is_person_busy(const person_t* person)
 }
 
 bool
+is_person_following(const person_t* person, const person_t* leader)
+{
+	const person_t* node;
+
+	node = person;
+	while (node = node->leader)
+		if (node == leader) return true;
+	return false;
+}
+
+bool
 is_person_ignored(const person_t* person, const person_t* by_person)
 {
 	// note: commutative; if either person ignores the other, the function should return true
@@ -261,7 +272,7 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 			if (s_persons[i] == person)  // these persons aren't going to obstruct themselves!
 				continue;
 			if (s_persons[i]->layer != layer) continue;  // ignore persons not on the same layer
-			if (s_persons[i]->leader != NULL) continue;  // ignore follower persons
+			if (is_person_following(s_persons[i], person)) continue;  // ignore own followers
 			if (is_person_ignored(person, s_persons[i])) continue;
 			base = get_person_base(s_persons[i]);
 			if (do_rects_intersect(my_base, base)) {
@@ -808,6 +819,7 @@ command_person(person_t* person, int command)
 	new_x = person->x; new_y = person->y;
 	switch (command) {
 	case COMMAND_ANIMATE:
+		person->revert_frames = person->revert_delay;
 		if (person->anim_frames > 0 && --person->anim_frames == 0) {
 			++person->frame;
 			person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
@@ -855,7 +867,6 @@ command_person(person_t* person, int command)
 		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
 			command_person(person, COMMAND_ANIMATE);
 			person->x = new_x; person->y = new_y;
-			person->revert_frames = person->revert_delay;
 			person->has_moved = true;
 		}
 		else {
