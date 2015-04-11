@@ -9,40 +9,51 @@
 
 struct person
 {
-	unsigned int   id;
-	char*          name;
-	int            anim_frames;
-	char*          direction;
-	int            frame;
-	bool           has_moved;
-	bool           ignore_all_persons;
-	bool           ignore_all_tiles;
-	bool           is_persistent;
-	bool           is_visible;
-	int            layer;
-	color_t        mask;
-	int            revert_delay;
-	int            revert_frames;
-	double         scale_x;
-	double         scale_y;
-	int            scripts[PERSON_SCRIPT_MAX];
-	double         speed_x, speed_y;
-	spriteset_t*   sprite;
-	double         theta;
-	double         x, y;
-	int            x_offset, y_offset;
-	int            max_commands;
-	int            num_ignores;
-	int            num_commands;
-	struct command *commands;
-	char*          *ignores;
+	unsigned int    id;
+	char*           name;
+	int             anim_frames;
+	char*           direction;
+	int             follow_distance;
+	int             frame;
+	bool            has_moved;
+	bool            ignore_all_persons;
+	bool            ignore_all_tiles;
+	bool            is_persistent;
+	bool            is_visible;
+	int             layer;
+	const person_t* leader;
+	color_t         mask;
+	int             revert_delay;
+	int             revert_frames;
+	double          scale_x;
+	double          scale_y;
+	int             scripts[PERSON_SCRIPT_MAX];
+	double          speed_x, speed_y;
+	spriteset_t*    sprite;
+	double          theta;
+	double          x, y;
+	int             x_offset, y_offset;
+	int             max_commands;
+	int             max_history;
+	int             num_commands;
+	int             num_ignores;
+	struct command  *commands;
+	char*           *ignores;
+	struct step     *steps;
+};
+
+struct step
+{
+	bool       is_valid;
+	double     x, y;
+	lstring_t* direction;
 };
 
 struct command
 {
-	int type;
+	int  type;
 	bool is_immediate;
-	int script_id;
+	int  script_id;
 };
 
 static duk_ret_t js_CreatePerson                 (duk_context* ctx);
@@ -104,6 +115,7 @@ static duk_ret_t js_SetTalkDistance              (duk_context* ctx);
 static duk_ret_t js_CallDefaultPersonScript      (duk_context* ctx);
 static duk_ret_t js_CallPersonScript             (duk_context* ctx);
 static duk_ret_t js_ClearPersonCommands          (duk_context* ctx);
+static duk_ret_t js_FollowPerson                 (duk_context* ctx);
 static duk_ret_t js_IgnorePersonObstructions     (duk_context* ctx);
 static duk_ret_t js_IgnoreTileObstructions       (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand           (duk_context* ctx);
@@ -114,7 +126,9 @@ static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
 static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
+static bool follow_person        (person_t* person, person_t* leader, int distance);
 static void free_person          (person_t* person);
+static void record_step          (person_t* person);
 static void sort_persons         (void);
 
 static const person_t*   s_current_person = NULL;
@@ -244,8 +258,10 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 	// check for obstructing persons
 	if (!person->ignore_all_persons) {
 		for (i = 0; i < s_num_persons; ++i) {
-			if (s_persons[i] == person) continue;  // these persons aren't going to obstruct themselves
+			if (s_persons[i] == person)  // these persons aren't going to obstruct themselves!
+				continue;
 			if (s_persons[i]->layer != layer) continue;  // ignore persons not on the same layer
+			if (s_persons[i]->leader != NULL) continue;  // ignore follower persons
 			if (is_person_ignored(person, s_persons[i])) continue;
 			base = get_person_base(s_persons[i]);
 			if (do_rects_intersect(my_base, base)) {
@@ -462,6 +478,30 @@ find_person(const char* name)
 }
 
 bool
+follow_person(person_t* person, person_t* leader, int distance)
+{
+	const person_t* node;
+	
+	// prevent circular follower chains from forming
+	node = leader;
+	do
+		if (node == person) return false;
+	while (node = node->leader);
+	
+	// add the person as a follower
+	if (distance > leader->max_history) {
+		leader->steps = realloc(leader->steps, distance * sizeof(struct step));
+		leader->max_history = distance;
+	}
+	memset(leader->steps, 0x0, leader->max_history * sizeof(struct step));
+	person->leader = leader;
+	person->follow_distance = distance;
+	set_person_xyz(person, person->leader->x, person->leader->y, person->leader->layer);
+	set_person_direction(person, person->leader->direction);
+	return true;
+}
+
+bool
 queue_person_command(person_t* person, int command, bool is_immediate)
 {
 	++person->num_commands;
@@ -578,36 +618,62 @@ update_persons(void)
 	const person_t* last_person;
 	person_t*       person;
 	unsigned int    person_id;
+	bool            is_sort_needed;
+	struct step     step;
 	
 	int i, j;
 
+	is_sort_needed = false;
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i]; person_id = person->id;
 		person->has_moved = false;
 		if (person->revert_frames > 0 && --person->revert_frames <= 0)
 			person->frame = 0;
-		if (person->num_commands == 0)
-			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
+		if (person->leader == NULL) {  // no leader; use command queue
+			// call the command generator if the queue is empty
+			if (person->num_commands == 0)
+				call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
 
-		// run through the command queue, stopping after the first non-immediate command
-		is_finished = person->num_commands == 0;
-		while (!is_finished) {
-			command = person->commands[0];
-			--person->num_commands;
-			for (j = 0; j < person->num_commands; ++j)
-				person->commands[j] = person->commands[j + 1];
-			last_person = s_current_person;
-			s_current_person = person;
-			if (command.type != COMMAND_RUN_SCRIPT)
-				command_person(person, command.type);
-			else
-				run_script(command.script_id, false);
-			s_current_person = last_person;
-			free_script(command.script_id);
-			is_finished = !does_person_exist(person_id)  // stop if person was destroyed
-				|| !command.is_immediate || person->num_commands == 0;
+			// run through the queue, stopping after the first non-immediate command
+			is_finished = person->num_commands == 0;
+			while (!is_finished) {
+				command = person->commands[0];
+				--person->num_commands;
+				for (j = 0; j < person->num_commands; ++j)
+					person->commands[j] = person->commands[j + 1];
+				last_person = s_current_person;
+				s_current_person = person;
+				if (command.type != COMMAND_RUN_SCRIPT)
+					command_person(person, command.type);
+				else
+					run_script(command.script_id, false);
+				s_current_person = last_person;
+				free_script(command.script_id);
+				is_finished = !does_person_exist(person_id)  // stop if person was destroyed
+					|| !command.is_immediate || person->num_commands == 0;
+			}
+		}
+		else {  // leader set; follow the leader!
+			step = person->leader->steps[person->follow_distance - 1];
+			if (step.is_valid) {
+				person->has_moved = step.x != person->x || step.y != person->y;
+				if (person->has_moved)
+					command_person(person, COMMAND_ANIMATE);
+				person->x = step.x;
+				person->y = step.y;
+				person->layer = person->leader->layer;
+				set_person_direction(person, lstring_cstr(step.direction));
+			}
+		}
+		
+		// if the person's position changed, record it in their step history
+		if (person->has_moved) {
+			is_sort_needed = true;
+			record_step(person);
 		}
 	}
+
+	if (is_sort_needed) sort_persons();
 }
 
 void
@@ -675,6 +741,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
 	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
 	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
+	register_api_func(g_duktape, NULL, "FollowPerson", js_FollowPerson);
 	register_api_func(g_duktape, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
 	register_api_func(g_duktape, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
 	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
@@ -790,7 +857,6 @@ command_person(person_t* person, int command)
 			person->x = new_x; person->y = new_y;
 			person->revert_frames = person->revert_delay;
 			person->has_moved = true;
-			sort_persons();
 		}
 		else {
 			// if not, and we collided with a person, call that person's touch script
@@ -820,6 +886,22 @@ free_person(person_t* person)
 	free(person->name);
 	free(person->direction);
 	free(person);
+}
+
+static void
+record_step(person_t* person)
+{
+	struct step* p_step;
+	
+	if (person->max_history <= 0)
+		return;
+	free_lstring(person->steps[person->max_history - 1].direction);
+	memmove(&person->steps[1], &person->steps[0], (person->max_history - 1) * sizeof(struct step));
+	p_step = &person->steps[0];
+	p_step->is_valid = true;
+	p_step->x = person->x;
+	p_step->y = person->y;
+	p_step->direction = lstring_from_cstr(person->direction);
 }
 
 static void
@@ -1728,6 +1810,27 @@ js_ClearPersonCommands(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "ClearPersonCommands(): Person '%s' doesn't exist", name);
 	person->num_commands = 0;
+	return 0;
+}
+
+static duk_ret_t
+js_FollowPerson(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	const char* leader_name = duk_require_string(ctx, 1);
+	int distance = duk_require_int(ctx, 2);
+
+	person_t* leader;
+	person_t* person;
+
+	if (!(person = find_person(name)))
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): Person '%s' doesn't exist", name);
+	if (!(leader = find_person(leader_name)))
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): Person '%s' doesn't exist", leader_name);
+	if (distance <= 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FollowPerson(): Distance must be greater than zero (%i)", distance);
+	if (!follow_person(person, leader, distance))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FollowPerson(): Circular chain is not allowed");
 	return 0;
 }
 
