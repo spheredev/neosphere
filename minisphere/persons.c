@@ -199,6 +199,8 @@ destroy_person(person_t* person)
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	free_person(person);
 	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i]->leader == person)
+			s_persons[i]->leader = NULL;
 		if (s_persons[i] == person) {
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
@@ -494,21 +496,25 @@ follow_person(person_t* person, person_t* leader, int distance)
 	const person_t* node;
 	
 	// prevent circular follower chains from forming
-	node = leader;
-	do
-		if (node == person) return false;
-	while (node = node->leader);
-	
-	// add the person as a follower
-	if (distance > leader->max_history) {
-		leader->steps = realloc(leader->steps, distance * sizeof(struct step));
-		leader->max_history = distance;
+	if (leader != NULL) {
+		node = leader;
+		do
+			if (node == person) return false;
+		while (node = node->leader);
 	}
-	memset(leader->steps, 0x0, leader->max_history * sizeof(struct step));
+	
+	// add the person as a follower (sever existing link if leader is null)
 	person->leader = leader;
-	person->follow_distance = distance;
-	set_person_xyz(person, person->leader->x, person->leader->y, person->leader->layer);
-	set_person_direction(person, person->leader->direction);
+	if (person->leader != NULL) {
+		if (distance > leader->max_history) {
+			leader->steps = realloc(leader->steps, distance * sizeof(struct step));
+			leader->max_history = distance;
+		}
+		memset(leader->steps, 0x0, leader->max_history * sizeof(struct step));
+		person->follow_distance = distance;
+		set_person_xyz(person, person->leader->x, person->leader->y, person->leader->layer);
+		set_person_direction(person, person->leader->direction);
+	}
 	return true;
 }
 
@@ -1828,17 +1834,17 @@ static duk_ret_t
 js_FollowPerson(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	const char* leader_name = duk_require_string(ctx, 1);
-	int distance = duk_require_int(ctx, 2);
+	const char* leader_name = duk_is_null(ctx, 1) ? "" : duk_require_string(ctx, 1);
+	int distance = leader_name[0] != '\0' ? duk_require_int(ctx, 2) : 0;
 
-	person_t* leader;
+	person_t* leader = NULL;
 	person_t* person;
 
 	if (!(person = find_person(name)))
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): Person '%s' doesn't exist", name);
-	if (!(leader = find_person(leader_name)))
+	if (!(leader_name[0] == '\0' || (leader = find_person(leader_name))))
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): Person '%s' doesn't exist", leader_name);
-	if (distance <= 0)
+	if (distance <= 0 && leader_name[0] != '\0')
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FollowPerson(): Distance must be greater than zero (%i)", distance);
 	if (!follow_person(person, leader, distance))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FollowPerson(): Circular chain is not allowed");
