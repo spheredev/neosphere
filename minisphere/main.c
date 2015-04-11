@@ -40,7 +40,7 @@ ALLEGRO_CONFIG*      g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
-static void initialize_engine   (void);
+static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static void draw_status_message (const char* text);
 
@@ -98,7 +98,8 @@ main(int argc, char* argv[])
 	
 	int i;
 
-	initialize_engine();
+	if (!initialize_engine())
+		return EXIT_FAILURE;
 	
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
@@ -200,11 +201,17 @@ main(int argc, char* argv[])
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
-	g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
+	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
+		al_show_native_message_box(NULL, "Unable to Create Display", "minisphere was unable to create a display window.",
+			"A display window is required for rendering. The engine cannot run without it and will now close.",
+			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+		return EXIT_FAILURE;
+	}
 	al_identity_transform(&trans);
 	al_scale_transform(&trans, g_scale_x, g_scale_y);
 	al_use_transform(&trans);
-	if (icon != NULL) al_set_display_icon(g_display, icon);
+	if (icon != NULL)
+		al_set_display_icon(g_display, icon);
 	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
@@ -231,7 +238,8 @@ main(int argc, char* argv[])
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 
 	// switch to fullscreen if necessary and initialize clipping
-	if (s_is_fullscreen) toggle_fullscreen();
+	if (s_is_fullscreen)
+		toggle_fullscreen();
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
 
 	al_hide_mouse_cursor(g_display);
@@ -590,7 +598,7 @@ show_error_box:
 	exit(EXIT_SUCCESS);
 }
 
-static void
+static bool
 initialize_engine(void)
 {
 	char* path;
@@ -598,10 +606,11 @@ initialize_engine(void)
 	srand(time(NULL));
 	
 	// initialize Allegro
-	al_init();
-	al_init_native_dialog_addon();
-	al_init_primitives_addon();
-	al_init_image_addon();
+	if (!al_init())
+		goto on_error;
+	if (!al_init_native_dialog_addon()) goto on_error;
+	if (!al_init_primitives_addon()) goto on_error;
+	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
 	dyad_init();
@@ -617,7 +626,8 @@ initialize_engine(void)
 	initialize_sound();
 
 	// initialize JavaScript API
-	g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal);
+	if (!(g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
+		goto on_error;
 	init_api(g_duktape);
 	init_bytearray_api();
 	init_color_api();
@@ -634,6 +644,13 @@ initialize_engine(void)
 	init_spriteset_api(g_duktape);
 	init_surface_api();
 	init_windowstyle_api();
+	return true;
+
+on_error:
+	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
+		"One or more engine components failed to initialize properly. minisphere cannot continue in this state and will now close.",
+		NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	return false;
 }
 
 static void
