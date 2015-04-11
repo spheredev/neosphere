@@ -980,14 +980,13 @@ update_map_engine(bool is_main_loop)
 		s_cam_x = x; s_cam_y = y;
 	}
 
-	// run edge script if the person with camera focus walked off the map
+	// run edge script if the camera has moved past the edge of the map
 	// note: only applies for non-repeating maps
-	if (is_main_loop && s_camera_person != NULL && !s_map->is_repeating) {
-		get_person_xy(s_camera_person, &x, &y, false);
-		script_type = y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
-			: x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
-			: y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
-			: y < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
+	if (is_main_loop && !s_map->is_repeating) {
+		script_type = s_cam_y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
+			: s_cam_x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
+			: s_cam_y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
+			: s_cam_x < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
 			: MAP_SCRIPT_MAX;
 		if (script_type < MAP_SCRIPT_MAX) {
 			run_script(s_def_scripts[script_type], false);
