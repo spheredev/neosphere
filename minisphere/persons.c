@@ -21,7 +21,7 @@ struct person
 	bool            is_persistent;
 	bool            is_visible;
 	int             layer;
-	const person_t* leader;
+	person_t*       leader;
 	color_t         mask;
 	int             revert_delay;
 	int             revert_frames;
@@ -130,6 +130,7 @@ static bool follow_person        (person_t* person, person_t* leader, int distan
 static void free_person          (person_t* person);
 static void record_step          (person_t* person);
 static void sort_persons         (void);
+static void update_person        (person_t* person);
 
 static const person_t*   s_current_person = NULL;
 static int               s_def_scripts[PERSON_SCRIPT_MAX];
@@ -197,7 +198,6 @@ destroy_person(person_t* person)
 	int i, j;
 
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
-	free_person(person);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader == person)
 			s_persons[i]->leader = NULL;
@@ -206,6 +206,7 @@ destroy_person(person_t* person)
 			--s_num_persons; --i;
 		}
 	}
+	free_person(person);
 	sort_persons();
 }
 
@@ -630,166 +631,17 @@ talk_person(const person_t* person)
 void
 update_persons(void)
 {
-	struct command  command;
-	bool            is_finished;
-	const person_t* last_person;
-	person_t*       person;
-	unsigned int    person_id;
-	bool            is_sort_needed;
-	struct step     step;
+	bool is_sort_needed = false;
 	
-	int i, j;
+	int i;
 
-	is_sort_needed = false;
 	for (i = 0; i < s_num_persons; ++i) {
-		person = s_persons[i]; person_id = person->id;
-		person->has_moved = false;
-		if (person->revert_frames > 0 && --person->revert_frames <= 0)
-			person->frame = 0;
-		if (person->leader == NULL) {  // no leader; use command queue
-			// call the command generator if the queue is empty
-			if (person->num_commands == 0)
-				call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
-
-			// run through the queue, stopping after the first non-immediate command
-			is_finished = person->num_commands == 0;
-			while (!is_finished) {
-				command = person->commands[0];
-				--person->num_commands;
-				for (j = 0; j < person->num_commands; ++j)
-					person->commands[j] = person->commands[j + 1];
-				last_person = s_current_person;
-				s_current_person = person;
-				if (command.type != COMMAND_RUN_SCRIPT)
-					command_person(person, command.type);
-				else
-					run_script(command.script_id, false);
-				s_current_person = last_person;
-				free_script(command.script_id);
-				is_finished = !does_person_exist(person_id)  // stop if person was destroyed
-					|| !command.is_immediate || person->num_commands == 0;
-			}
-		}
-		else {  // leader set; follow the leader!
-			step = person->leader->steps[person->follow_distance - 1];
-			if (step.is_valid) {
-				person->has_moved = step.x != person->x || step.y != person->y;
-				if (person->has_moved)
-					command_person(person, COMMAND_ANIMATE);
-				person->x = step.x;
-				person->y = step.y;
-				person->layer = person->leader->layer;
-				set_person_direction(person, lstring_cstr(step.direction));
-			}
-		}
-		
-		// if the person's position changed, record it in their step history
-		if (person->has_moved) {
-			record_step(person);
-			is_sort_needed = true;
-		}
+		if (s_persons[i]->leader != NULL)
+			continue;  // skip followers for now
+		update_person(s_persons[i]);
+		is_sort_needed |= has_person_moved(s_persons[i]);
 	}
-
 	if (is_sort_needed) sort_persons();
-}
-
-void
-init_persons_api(void)
-{
-	duk_push_global_stash(g_duktape);
-	duk_push_object(g_duktape); duk_put_prop_string(g_duktape, -2, "person_data");
-	duk_pop(g_duktape);
-
-	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
-	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
-	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
-	register_api_func(g_duktape, NULL, "IsIgnoringPersonObstructions", js_IsIgnoringPersonObstructions);
-	register_api_func(g_duktape, NULL, "IsIgnoringTileObstructions", js_IsIgnoringTileObstructions);
-	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
-	register_api_func(g_duktape, NULL, "IsPersonVisible", js_IsPersonVisible);
-	register_api_func(g_duktape, NULL, "DoesPersonExist", js_DoesPersonExist);
-	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
-	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
-	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
-	register_api_func(g_duktape, NULL, "GetPersonAngle", js_GetPersonAngle);
-	register_api_func(g_duktape, NULL, "GetPersonBase", js_GetPersonBase);
-	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
-	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
-	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
-	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
-	register_api_func(g_duktape, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
-	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
-	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
-	register_api_func(g_duktape, NULL, "GetPersonMask", js_GetPersonMask);
-	register_api_func(g_duktape, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
-	register_api_func(g_duktape, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
-	register_api_func(g_duktape, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
-	register_api_func(g_duktape, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
-	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
-	register_api_func(g_duktape, NULL, "GetPersonValue", js_GetPersonValue);
-	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
-	register_api_func(g_duktape, NULL, "GetPersonXFloat", js_GetPersonXFloat);
-	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
-	register_api_func(g_duktape, NULL, "GetPersonYFloat", js_GetPersonYFloat);
-	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
-	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
-	register_api_func(g_duktape, NULL, "SetPersonAngle", js_SetPersonAngle);
-	register_api_func(g_duktape, NULL, "SetPersonData", js_SetPersonData);
-	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
-	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
-	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
-	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
-	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
-	register_api_func(g_duktape, NULL, "SetPersonMask", js_SetPersonMask);
-	register_api_func(g_duktape, NULL, "SetPersonOffsetX", js_SetPersonOffsetX);
-	register_api_func(g_duktape, NULL, "SetPersonOffsetY", js_SetPersonOffsetY);
-	register_api_func(g_duktape, NULL, "SetPersonScaleAbsolute", js_SetPersonScaleAbsolute);
-	register_api_func(g_duktape, NULL, "SetPersonScaleFactor", js_SetPersonScaleFactor);
-	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
-	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
-	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
-	register_api_func(g_duktape, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
-	register_api_func(g_duktape, NULL, "SetPersonValue", js_SetPersonValue);
-	register_api_func(g_duktape, NULL, "SetPersonVisible", js_SetPersonVisible);
-	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
-	register_api_func(g_duktape, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
-	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
-	register_api_func(g_duktape, NULL, "SetTalkDistance", js_SetTalkDistance);
-	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
-	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
-	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
-	register_api_func(g_duktape, NULL, "FollowPerson", js_FollowPerson);
-	register_api_func(g_duktape, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
-	register_api_func(g_duktape, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
-	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
-	register_api_func(g_duktape, NULL, "QueuePersonScript", js_QueuePersonScript);
-
-	// movement script specifier constants
-	register_api_const(g_duktape, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
-	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
-	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
-	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
-	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
-
-	// person movement commands
-	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
-	register_api_const(g_duktape, "COMMAND_ANIMATE", COMMAND_ANIMATE);
-	register_api_const(g_duktape, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
-	register_api_const(g_duktape, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
-	register_api_const(g_duktape, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
-	register_api_const(g_duktape, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
-	register_api_const(g_duktape, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
-	register_api_const(g_duktape, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
-	register_api_const(g_duktape, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
-	register_api_const(g_duktape, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
-	register_api_const(g_duktape, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
-	register_api_const(g_duktape, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
-	register_api_const(g_duktape, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
-	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
-	register_api_const(g_duktape, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
-	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
-	register_api_const(g_duktape, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
-	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
 static bool
@@ -889,8 +741,9 @@ compare_persons(const void* a, const void* b)
 	person_t* p1 = *(person_t**)a;
 	person_t* p2 = *(person_t**)b;
 
-	int y_delta = (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
-		
+	int y_delta;
+
+	y_delta = (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
 	if (y_delta != 0)
 		return y_delta;
 	else if (is_person_following(p1, p2))
@@ -918,7 +771,7 @@ static void
 record_step(person_t* person)
 {
 	struct step* p_step;
-	
+
 	if (person->max_history <= 0)
 		return;
 	free_lstring(person->steps[person->max_history - 1].direction);
@@ -934,6 +787,170 @@ static void
 sort_persons(void)
 {
 	qsort(s_persons, s_num_persons, sizeof(person_t*), compare_persons);
+}
+
+static void
+update_person(person_t* person)
+{
+	struct command  command;
+	bool            is_finished;
+	const person_t* last_person;
+	unsigned int    person_id;
+	struct step     step;
+
+	int i;
+
+	person_id = person->id;
+	person->has_moved = false;
+	if (person->revert_frames > 0 && --person->revert_frames <= 0)
+		person->frame = 0;
+	if (person->leader == NULL) {  // no leader; use command queue
+		// call the command generator if the queue is empty
+		if (person->num_commands == 0)
+			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
+
+		// run through the queue, stopping after the first non-immediate command
+		is_finished = person->num_commands == 0;
+		while (!is_finished) {
+			command = person->commands[0];
+			--person->num_commands;
+			for (i = 0; i < person->num_commands; ++i)
+				person->commands[i] = person->commands[i + 1];
+			last_person = s_current_person;
+			s_current_person = person;
+			if (command.type != COMMAND_RUN_SCRIPT)
+				command_person(person, command.type);
+			else
+				run_script(command.script_id, false);
+			s_current_person = last_person;
+			free_script(command.script_id);
+			is_finished = !does_person_exist(person_id)  // stop if person was destroyed
+				|| !command.is_immediate || person->num_commands == 0;
+		}
+	}
+	else {  // leader set; follow the leader!
+		step = person->leader->steps[person->follow_distance - 1];
+		if (step.is_valid) {
+			person->has_moved = step.x != person->x || step.y != person->y;
+			if (person->has_moved)
+				command_person(person, COMMAND_ANIMATE);
+			person->x = step.x;
+			person->y = step.y;
+			person->layer = person->leader->layer;
+			set_person_direction(person, lstring_cstr(step.direction));
+		}
+	}
+
+	// if the person's position changed, record it in their step history
+	if (person->has_moved) {
+		record_step(person);
+	}
+
+	// recursively update follower chain
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i]->leader != person)
+			continue;
+		update_person(s_persons[i]);
+	}
+}
+
+void
+init_persons_api(void)
+{
+	duk_push_global_stash(g_duktape);
+	duk_push_object(g_duktape); duk_put_prop_string(g_duktape, -2, "person_data");
+	duk_pop(g_duktape);
+
+	register_api_func(g_duktape, NULL, "CreatePerson", js_CreatePerson);
+	register_api_func(g_duktape, NULL, "DestroyPerson", js_DestroyPerson);
+	register_api_func(g_duktape, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
+	register_api_func(g_duktape, NULL, "IsIgnoringPersonObstructions", js_IsIgnoringPersonObstructions);
+	register_api_func(g_duktape, NULL, "IsIgnoringTileObstructions", js_IsIgnoringTileObstructions);
+	register_api_func(g_duktape, NULL, "IsPersonObstructed", js_IsPersonObstructed);
+	register_api_func(g_duktape, NULL, "IsPersonVisible", js_IsPersonVisible);
+	register_api_func(g_duktape, NULL, "DoesPersonExist", js_DoesPersonExist);
+	register_api_func(g_duktape, NULL, "GetCurrentPerson", js_GetCurrentPerson);
+	register_api_func(g_duktape, NULL, "GetObstructingPerson", js_GetObstructingPerson);
+	register_api_func(g_duktape, NULL, "GetObstructingTile", js_GetObstructingTile);
+	register_api_func(g_duktape, NULL, "GetPersonAngle", js_GetPersonAngle);
+	register_api_func(g_duktape, NULL, "GetPersonBase", js_GetPersonBase);
+	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
+	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
+	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
+	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
+	register_api_func(g_duktape, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
+	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
+	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
+	register_api_func(g_duktape, NULL, "GetPersonMask", js_GetPersonMask);
+	register_api_func(g_duktape, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
+	register_api_func(g_duktape, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
+	register_api_func(g_duktape, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
+	register_api_func(g_duktape, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
+	register_api_func(g_duktape, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
+	register_api_func(g_duktape, NULL, "GetPersonValue", js_GetPersonValue);
+	register_api_func(g_duktape, NULL, "GetPersonX", js_GetPersonX);
+	register_api_func(g_duktape, NULL, "GetPersonXFloat", js_GetPersonXFloat);
+	register_api_func(g_duktape, NULL, "GetPersonY", js_GetPersonY);
+	register_api_func(g_duktape, NULL, "GetPersonYFloat", js_GetPersonYFloat);
+	register_api_func(g_duktape, NULL, "GetTalkDistance", js_GetTalkDistance);
+	register_api_func(g_duktape, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
+	register_api_func(g_duktape, NULL, "SetPersonAngle", js_SetPersonAngle);
+	register_api_func(g_duktape, NULL, "SetPersonData", js_SetPersonData);
+	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
+	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
+	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
+	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
+	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
+	register_api_func(g_duktape, NULL, "SetPersonMask", js_SetPersonMask);
+	register_api_func(g_duktape, NULL, "SetPersonOffsetX", js_SetPersonOffsetX);
+	register_api_func(g_duktape, NULL, "SetPersonOffsetY", js_SetPersonOffsetY);
+	register_api_func(g_duktape, NULL, "SetPersonScaleAbsolute", js_SetPersonScaleAbsolute);
+	register_api_func(g_duktape, NULL, "SetPersonScaleFactor", js_SetPersonScaleFactor);
+	register_api_func(g_duktape, NULL, "SetPersonScript", js_SetPersonScript);
+	register_api_func(g_duktape, NULL, "SetPersonSpeed", js_SetPersonSpeed);
+	register_api_func(g_duktape, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
+	register_api_func(g_duktape, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
+	register_api_func(g_duktape, NULL, "SetPersonValue", js_SetPersonValue);
+	register_api_func(g_duktape, NULL, "SetPersonVisible", js_SetPersonVisible);
+	register_api_func(g_duktape, NULL, "SetPersonX", js_SetPersonX);
+	register_api_func(g_duktape, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
+	register_api_func(g_duktape, NULL, "SetPersonY", js_SetPersonY);
+	register_api_func(g_duktape, NULL, "SetTalkDistance", js_SetTalkDistance);
+	register_api_func(g_duktape, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
+	register_api_func(g_duktape, NULL, "CallPersonScript", js_CallPersonScript);
+	register_api_func(g_duktape, NULL, "ClearPersonCommands", js_ClearPersonCommands);
+	register_api_func(g_duktape, NULL, "FollowPerson", js_FollowPerson);
+	register_api_func(g_duktape, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
+	register_api_func(g_duktape, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
+	register_api_func(g_duktape, NULL, "QueuePersonCommand", js_QueuePersonCommand);
+	register_api_func(g_duktape, NULL, "QueuePersonScript", js_QueuePersonScript);
+
+	// movement script specifier constants
+	register_api_const(g_duktape, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
+	register_api_const(g_duktape, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
+	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
+	register_api_const(g_duktape, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
+	register_api_const(g_duktape, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
+
+	// person movement commands
+	register_api_const(g_duktape, "COMMAND_WAIT", COMMAND_WAIT);
+	register_api_const(g_duktape, "COMMAND_ANIMATE", COMMAND_ANIMATE);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
+	register_api_const(g_duktape, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
+	register_api_const(g_duktape, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
+	register_api_const(g_duktape, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
+	register_api_const(g_duktape, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
+	register_api_const(g_duktape, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
+	register_api_const(g_duktape, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
 static duk_ret_t
