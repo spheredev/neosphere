@@ -66,6 +66,7 @@ static bool                 s_last_key_state[ALLEGRO_KEY_MAX];
 static int                  s_last_wheel_pos = 0;
 static int                  s_num_wheel_events = 0;
 static int                  s_wheel_queue[255];
+static int                  s_num_joysticks = 0;
 
 void
 initialize_input(void)
@@ -81,7 +82,9 @@ initialize_input(void)
 	al_register_event_source(s_events, al_get_keyboard_event_source());
 	al_register_event_source(s_events, al_get_mouse_event_source());
 	al_register_event_source(s_events, al_get_joystick_event_source());
-	for (i = 0; i < MAX_JOYSTICKS; ++i) {
+
+	s_num_joysticks = fmin(MAX_JOYSTICKS, al_get_num_joysticks());
+	for (i = 0; i < s_num_joysticks; ++i) {
 		s_joy_handles[i] = al_get_joystick(i);
 	}
 
@@ -236,7 +239,7 @@ update_input(void)
 		if (!is_down && s_last_key_state[i]) run_script(s_key_up_scripts[i], false);
 		s_last_key_state[i] = is_down;
 	}
-	for (i = 0; i < MAX_JOYSTICKS; ++i) for (j = 0; j < MAX_JOY_BUTTONS; ++j) {
+	for (i = 0; i < s_num_joysticks; ++i) for (j = 0; j < MAX_JOY_BUTTONS; ++j) {
 		if (!s_is_button_bound[i][j])
 			continue;
 		is_down = is_joy_button_down(i, j);
@@ -595,7 +598,7 @@ js_GetMouseY(duk_context* ctx)
 static duk_ret_t
 js_GetNumJoysticks(duk_context* ctx)
 {
-	duk_push_int(ctx, al_get_num_joysticks());
+	duk_push_int(ctx, s_num_joysticks);
 	return 1;
 }
 
@@ -671,7 +674,7 @@ js_BindJoystickButton(duk_context* ctx)
 	int down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
 	int up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
-	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
+	if (joy_index < 0 || joy_index >= s_num_joysticks)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
@@ -713,7 +716,7 @@ js_UnbindJoystickButton(duk_context* ctx)
 	int joy_index = duk_require_int(ctx, 0);
 	int button = duk_require_int(ctx, 1);
 
-	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
+	if (joy_index < 0 || joy_index >= s_num_joysticks)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
