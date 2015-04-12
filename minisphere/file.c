@@ -193,6 +193,7 @@ js_File_read(duk_context* ctx)
 	double          def_num;
 	const char*     def_string;
 	const char*     key;
+	const char*     to_string;
 	const char*     value_raw;
 
 	duk_push_this(ctx);
@@ -205,19 +206,27 @@ js_File_read(duk_context* ctx)
 	switch (duk_get_type(ctx, 1)) {
 	case DUK_TYPE_BOOLEAN:
 		def_bool = duk_get_boolean(ctx, 1);
+		to_string = duk_to_string(ctx, 1);
 		if (value_raw != NULL)
 			duk_push_boolean(ctx, strcmp(value_raw, "True") == 0
 				|| strcmp(value_raw, "true") == 0
 				|| strcmp(value_raw, "TRUE") == 0);
-		else
+		else {
+			al_set_config_value(conf, NULL, key, to_string);
 			duk_push_boolean(ctx, def_bool);
+		}
 		break;
 	case DUK_TYPE_NUMBER:
 		def_num = duk_get_number(ctx, 1);
+		to_string = duk_to_string(ctx, 1);
+		if (value_raw == NULL)
+			al_set_config_value(conf, NULL, key, to_string);
 		duk_push_number(ctx, value_raw != NULL ? atof(value_raw) : def_num);
 		break;
-	case DUK_TYPE_STRING:
-		def_string = duk_get_string(ctx, 1);
+	default:
+		def_string = duk_to_string(ctx, 1);
+		if (value_raw == NULL)
+			al_set_config_value(conf, NULL, key, def_string);
 		duk_push_string(ctx, value_raw != NULL ? value_raw : def_string);
 		break;
 	}
