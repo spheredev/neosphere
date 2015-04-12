@@ -685,8 +685,8 @@ update_persons(void)
 		
 		// if the person's position changed, record it in their step history
 		if (person->has_moved) {
-			is_sort_needed = true;
 			record_step(person);
+			is_sort_needed = true;
 		}
 	}
 
@@ -889,7 +889,16 @@ compare_persons(const void* a, const void* b)
 	person_t* p1 = *(person_t**)a;
 	person_t* p2 = *(person_t**)b;
 
-	return (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
+	int y_delta = (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
+		
+	if (y_delta != 0)
+		return y_delta;
+	else if (is_person_following(p1, p2))
+		return -1;
+	else if (is_person_following(p2, p1))
+		return 1;
+	else
+		return p1->id - p2->id;
 }
 
 static void
