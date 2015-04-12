@@ -170,8 +170,10 @@ reload_sound(sound_t* sound)
 
 	if (!(new_stream = al_load_audio_stream(sound->path, 4, 1024)))
 		return false;
-	if (sound->stream != NULL)
+	if (sound->stream != NULL) {
+		al_set_audio_stream_playing(sound->stream, false);
 		al_destroy_audio_stream(sound->stream);
+	}
 	sound->stream = new_stream;
 	al_set_audio_stream_gain(sound->stream, 1.0);
 	al_attach_audio_stream_to_mixer(sound->stream, al_get_default_mixer());
