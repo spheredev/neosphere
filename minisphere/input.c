@@ -132,6 +132,32 @@ is_joy_button_down(int joy_index, int button)
 	return joy_state.button[button] > 0;
 }
 
+bool
+is_key_down(int keycode)
+{
+	bool                   is_pressed;
+	ALLEGRO_KEYBOARD_STATE kb_state;
+
+	al_get_keyboard_state(&kb_state);
+	switch (keycode) {
+	case ALLEGRO_KEY_LSHIFT:
+		is_pressed = al_key_down(&kb_state, ALLEGRO_KEY_LSHIFT)
+			|| al_key_down(&kb_state, ALLEGRO_KEY_RSHIFT);
+		break;
+	case ALLEGRO_KEY_LCTRL:
+		is_pressed = al_key_down(&kb_state, ALLEGRO_KEY_LCTRL)
+			|| al_key_down(&kb_state, ALLEGRO_KEY_RCTRL);
+		break;
+	case ALLEGRO_KEY_ALT:
+		is_pressed = al_key_down(&kb_state, ALLEGRO_KEY_ALT)
+			|| al_key_down(&kb_state, ALLEGRO_KEY_ALTGR);
+		break;
+	default:
+		is_pressed = al_key_down(&kb_state, keycode);
+	}
+	return is_pressed && kb_state.display == g_display;
+}
+
 float
 get_joy_axis(int joy_index, int axis_index)
 {
@@ -453,12 +479,9 @@ js_IsJoystickButtonPressed(duk_context* ctx)
 static duk_ret_t
 js_IsKeyPressed(duk_context* ctx)
 {
-	int code = duk_require_int(ctx, 0);
+	int keycode = duk_require_int(ctx, 0);
 
-	ALLEGRO_KEYBOARD_STATE kb_state;
-
-	al_get_keyboard_state(&kb_state);
-	duk_push_boolean(ctx, kb_state.display == g_display && al_key_down(&kb_state, code));
+	duk_push_boolean(ctx, is_key_down(keycode));
 	return 1;
 }
 
