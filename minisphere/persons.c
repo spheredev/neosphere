@@ -494,6 +494,7 @@ find_person(const char* name)
 bool
 follow_person(person_t* person, person_t* leader, int distance)
 {
+	struct step*    new_steps;
 	const person_t* node;
 	
 	// prevent circular follower chains from forming
@@ -504,18 +505,21 @@ follow_person(person_t* person, person_t* leader, int distance)
 		while (node = node->leader);
 	}
 	
-	// add the person as a follower (sever existing link if leader is null)
-	person->leader = leader;
-	if (person->leader != NULL) {
+	// add the person as a follower (or sever existing link if leader==NULL)
+	if (leader != NULL) {
 		if (distance > leader->max_history) {
-			leader->steps = realloc(leader->steps, distance * sizeof(struct step));
+			if (!(new_steps = realloc(leader->steps, distance * sizeof(struct step))))
+				return false;
+			leader->steps = new_steps;
 			leader->max_history = distance;
 		}
 		memset(leader->steps, 0x0, leader->max_history * sizeof(struct step));
+		person->leader = leader;
 		person->follow_distance = distance;
 		set_person_xyz(person, person->leader->x, person->leader->y, person->leader->layer);
 		set_person_direction(person, person->leader->direction);
 	}
+	person->leader = leader;
 	return true;
 }
 
@@ -759,6 +763,7 @@ free_person(person_t* person)
 {
 	int i;
 
+	free(person->steps);
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
 		free_script(person->scripts[i]);
 	free_spriteset(person->sprite);
