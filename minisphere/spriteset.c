@@ -483,15 +483,18 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 		: strcasecmp(pose_name, "northwest") == 0 ? "north"
 		: "";
 	name_to_find = pose_name;
-	do {
+	while (pose == NULL) {
 		for (i = 0; i < spriteset->num_poses; ++i) {
 			if (strcasecmp(name_to_find, spriteset->poses[i].name->cstr) == 0) {
 				pose = &spriteset->poses[i];
 				break;
 			}
 		}
-		name_to_find = alt_name;
-	} while (pose == NULL && name_to_find != alt_name);
+		if (name_to_find != alt_name)
+			name_to_find = alt_name;
+		else
+			break;
+	}
 	return pose != NULL ? pose : &spriteset->poses[0];
 }
 
