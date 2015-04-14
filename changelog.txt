@@ -1,7 +1,7 @@
 minisphere Changelog
 --------------------
 
-v1.0.10
+v1.0.10 - 
 
 - Fixes IsKeyPressed() not recognizing modifier keys on right side of
   keyboard (#20)
@@ -10,3 +10,4 @@ v1.0.10
 - Fixes joystick assert error when running minisphere in OS X. (#19)
 - Fixes wrong direction being rendered for 4-direction person sprites
   moving diagonally
+- Fixes random deadlocks when playing sounds
