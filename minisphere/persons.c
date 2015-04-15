@@ -1504,6 +1504,8 @@ js_SetPersonFrame(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
 	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
 	person->frame = (frame_index % num_frames + num_frames) % num_frames;
+	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
+	person->revert_frames = person->revert_delay;
 	return 0;
 }
 
@@ -1518,8 +1520,9 @@ js_SetPersonFrameRevert(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): Person '%s' doesn't exist", name);
 	if (frames < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameRevert(): Negative delay not allowed (caller passed %i)", frames);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameRevert(): Negative delay not allowed (%i)", frames);
 	person->revert_delay = frames;
+	person->revert_frames = person->revert_delay;
 	return 0;
 }
 
