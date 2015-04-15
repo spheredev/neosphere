@@ -1503,9 +1503,7 @@ js_SetPersonFrame(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
 	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
-	if (frame_index < 0 || frame_index >= num_frames)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrame(): Invalid frame index or frame doesn't exist (%i)", frame_index);
-	person->frame = frame_index;
+	person->frame = (frame_index % num_frames + num_frames) % num_frames;
 	return 0;
 }
 
