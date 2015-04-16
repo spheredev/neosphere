@@ -73,6 +73,7 @@ static duk_ret_t js_GetPersonBase                (duk_context* ctx);
 static duk_ret_t js_GetPersonData                (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameNext           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_GetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
@@ -94,6 +95,7 @@ static duk_ret_t js_SetPersonAngle               (duk_context* ctx);
 static duk_ret_t js_SetPersonData                (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection           (duk_context* ctx);
 static duk_ret_t js_SetPersonFrame               (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameNext           (duk_context* ctx);
 static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_SetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_SetPersonLayer               (duk_context* ctx);
@@ -882,6 +884,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
+	register_api_func(g_duktape, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
@@ -903,6 +906,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonData", js_SetPersonData);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
 	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
+	register_api_func(g_duktape, NULL, "SetPersonFrameNext", js_SetPersonFrameNext);
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "SetPersonLayer", js_SetPersonLayer);
@@ -1198,6 +1202,19 @@ js_GetPersonFrame(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): Person '%s' doesn't exist", name);
 	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
 	duk_push_int(ctx, person->frame % num_frames);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFrameNext(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): Person '%s' doesn't exist", name);
+	duk_push_int(ctx, person->anim_frames);
 	return 1;
 }
 
@@ -1505,6 +1522,23 @@ js_SetPersonFrame(duk_context* ctx)
 	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
 	person->frame = (frame_index % num_frames + num_frames) % num_frames;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
+	person->revert_frames = person->revert_delay;
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFrameNext(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int frames = duk_require_int(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): Person '%s' doesn't exist", name);
+	if (frames < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameNext(): Negative delay not allowed (%i)", frames);
+	person->anim_frames = frames;
 	person->revert_frames = person->revert_delay;
 	return 0;
 }
