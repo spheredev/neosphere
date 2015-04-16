@@ -36,9 +36,9 @@
 #define noreturn void
 #endif
 
-static const char* const ENGINE_NAME        = "minisphere 1.0.9";
+static const char* const ENGINE_NAME        = "minisphere 1.1";
 static double      const SPHERE_API_VERSION = 1.5;
-static const char* const SPHERE_USERAGENT   = "v1.5 (compatible; minisphere 1.0.9)";
+static const char* const SPHERE_USERAGENT   = "v1.5 (compatible; minisphere 1.1)";
 
 static const char* const EXTENSIONS[] = {
 	"sphere-legacy-api",
