@@ -3,8 +3,12 @@
 
 #include "file.h"
 
-static duk_ret_t js_OpenFile        (duk_context* ctx);
+static duk_ret_t js_DoesFileExist   (duk_context* ctx);
+static duk_ret_t js_CreateDirectory (duk_context* ctx);
+static duk_ret_t js_RemoveDirectory (duk_context* ctx);
 static duk_ret_t js_RemoveFile      (duk_context* ctx);
+static duk_ret_t js_Rename          (duk_context* ctx);
+static duk_ret_t js_OpenFile        (duk_context* ctx);
 static duk_ret_t js_File_finalize   (duk_context* ctx);
 static duk_ret_t js_File_toString   (duk_context* ctx);
 static duk_ret_t js_File_getKey     (duk_context* ctx);
@@ -19,8 +23,12 @@ static void duk_push_sphere_file (duk_context* ctx, ALLEGRO_CONFIG* conf, const 
 void
 init_file_api(void)
 {
+	register_api_func(g_duktape, NULL, "DoesFileExist", js_DoesFileExist);
+	register_api_func(g_duktape, NULL, "CreateDirectory", js_CreateDirectory);
+	register_api_func(g_duktape, NULL, "RemoveDirectory", js_RemoveDirectory);
 	register_api_func(g_duktape, NULL, "OpenFile", js_OpenFile);
 	register_api_func(g_duktape, NULL, "RemoveFile", js_RemoveFile);
+	register_api_func(g_duktape, NULL, "Rename", js_Rename);
 }
 
 static void
@@ -37,6 +45,83 @@ duk_push_sphere_file(duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path)
 	duk_push_c_function(ctx, js_File_flush, DUK_VARARGS); duk_put_prop_string(ctx, -2, "flush");
 	duk_push_c_function(ctx, js_File_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
 	duk_push_c_function(ctx, js_File_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
+}
+
+static duk_ret_t
+js_DoesFileExist(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+
+	char* path;
+
+	path = get_asset_path(filename, "save", true);
+	duk_push_boolean(ctx, al_filename_exists(path));
+	free(path);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateDirectory(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	char* path;
+
+	path = get_asset_path(name, "save", true);
+	if (!al_make_directory(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): Failed to create directory '%s'", name);
+	free(path);
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveDirectory(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	char* path;
+
+	path = get_asset_path(name, "save", true);
+	if (rmdir(path) == -1)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveDirectory(): Failed to remove directory '%s'", name);
+	free(path);
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveFile(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+	
+	char* path;
+
+	path = get_asset_path(filename, "save", true);
+	if (!al_filename_exists(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): File '%s' doesn't exist", filename);
+	if (!al_remove_filename(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s'; may be read-only", filename);
+	free(path);
+	return 0;
+}
+
+static duk_ret_t
+js_Rename(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+	const char* new_filename = duk_require_string(ctx, 1);
+
+	char* path;
+	char* new_path;
+
+	path = get_asset_path(filename, "save", true);
+	new_path = get_asset_path(new_filename, "save", true);
+	if (!al_filename_exists(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): File '%s' doesn't exist", filename);
+	if (rename(path, new_path) == -1)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): Failed to rename file '%s' to '%s'", filename, new_filename);
+	free(new_path);
+	free(path);
+	return 0;
 }
 
 static duk_ret_t
@@ -61,22 +146,6 @@ js_OpenFile(duk_context* ctx)
 
 on_error:
 	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to open or create file '%s'", filename);
-}
-
-static duk_ret_t
-js_RemoveFile(duk_context* ctx)
-{
-	const char* filename = duk_require_string(ctx, 0);
-	
-	char* path;
-
-	path = get_asset_path(filename, "save", true);
-	if (!al_filename_exists(path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): File '%s' doesn't exist", filename);
-	if (!al_remove_filename(path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s'; may be read-only", filename);
-	free(path);
-	return 0;
 }
 
 static duk_ret_t
