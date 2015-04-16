@@ -3,11 +3,14 @@ minisphere Changelog
 
 v1.0.10 - 
 
+- Adds experimental 64-bit engine (needs testing)
 - Fixes IsKeyPressed() not recognizing modifier keys on right side of
   keyboard (#20)
 - Improves SetPersonFrame compatibility (out-of-range frame is now
   wrapped instead of throwing an error)
+- Fixes SetPersonFrame not resetting frame delay timer
 - Fixes joystick assert error when running minisphere in OS X. (#19)
 - Fixes wrong direction being rendered for 4-direction person sprites
   moving diagonally
 - Fixes random deadlocks when playing sounds
+- Adds some API functions from Sphere 1.6+

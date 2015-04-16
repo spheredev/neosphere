@@ -36,13 +36,13 @@
 #define noreturn void
 #endif
 
-static const char* const ENGINE_NAME        = "minisphere 1.1";
+static const char* const ENGINE_NAME        = "minisphere 1.0.10";
 static double      const SPHERE_API_VERSION = 1.5;
 
 #if defined(__x86_64__) || defined(_M_X64)
-static const char* const SPHERE_USERAGENT   = "v1.5 (compatible; minisphere 1.1 x64)";
+static const char* const SPHERE_USERAGENT   = "v1.5 (compatible; minisphere 1.0.10 x64)";
 #else
-static const char* const SPHERE_USERAGENT = "v1.5 (compatible; minisphere 1.1)";
+static const char* const SPHERE_USERAGENT = "v1.5 (compatible; minisphere 1.0.10)";
 #endif
 
 
