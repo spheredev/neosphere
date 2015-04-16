@@ -162,25 +162,27 @@ js_LineSeries(duk_context* ctx)
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
 
-	unsigned int i;
+	size_t i;
 
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points < 2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): Two or more vertices required");
+	if (num_points > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): Too many vertices (internal error)");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): Failed to allocate vertex buffer (internal error)");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
-		duk_get_prop_index(ctx, 0, i);
+		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
-	al_draw_prim(vertices, NULL, NULL, 0, num_points,
+	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
 			: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
 			: ALLEGRO_PRIM_LINE_LIST
@@ -266,25 +268,27 @@ js_PointSeries(duk_context* ctx)
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
 
-	unsigned int i;
+	size_t i;
 
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points < 1)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): One or more vertices required");
+	if (num_points > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): Too many vertices (internal error)");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer (internal error)");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
-		duk_get_prop_index(ctx, 0, i);
+		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
-	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	free(vertices);
 	return 0;
 }

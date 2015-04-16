@@ -544,8 +544,10 @@ js_Surface_pointSeries(duk_context* ctx)
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): First argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	if (num_points > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:pointSeries(): Too many vertices (%u)", num_points);
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer (internal error)");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
@@ -557,7 +559,7 @@ js_Surface_pointSeries(duk_context* ctx)
 	}
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	free(vertices);

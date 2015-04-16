@@ -167,7 +167,7 @@ read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 void
 write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 {
-	dyad_write(socket->stream, (void*)data, n_bytes);
+	dyad_write(socket->stream, (void*)data, (int)n_bytes);
 }
 
 static void
@@ -213,7 +213,9 @@ on_dyad_receive(dyad_Event* e)
 
 	new_pend_size = socket->pend_size + e->size;
 	if (new_pend_size > socket->buffer_size) {
-		if (new_buffer = realloc(socket->buffer, new_pend_size * 2)) {
+		if (new_pend_size <= UINT_MAX
+			&& (new_buffer = realloc(socket->buffer, new_pend_size * 2)))
+		{
 			socket->buffer = new_buffer;
 			socket->buffer_size = new_pend_size * 2;
 		}
@@ -361,7 +363,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
-	duk_push_uint(ctx, socket->pend_size);
+	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
 	return 1;
 }
 
@@ -447,7 +449,7 @@ js_Socket_close(duk_context* ctx)
 static duk_ret_t
 js_Socket_read(duk_context* ctx)
 {
-	size_t length = duk_require_uint(ctx, 0);
+	int length = duk_require_int(ctx, 0);
 
 	bytearray_t* array;
 	void*        read_buffer;
@@ -456,6 +458,8 @@ js_Socket_read(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
+	if (length <= 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): At least 1 byte must be read (%i)", length);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has already been closed");
 	if (is_socket_server(socket) && socket->max_backlog > 0)

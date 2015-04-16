@@ -36,10 +36,11 @@ preferred indent size.
 
 Use of Casts
 ------------
-Keep casts to a minimum, and try not to add a cast for the sole purpose
-of shutting up an implicit-conversion warning. A clean compile is nice,
-but not at the expense of making the code harder to read. There's a
-reason minisphere is coded in C and not C++!
+Keep casts to a minimum. If the compiler warns you about storing the
+value of a wider type into a narrower one (int64_t > int, for instance),
+it might be worth rethinking your approach.  Don't just blindly add
+casts to shut the compiler up; not only does that make the code more
+difficult to follow later, but it may hide bugs.
 
 `const` Correctness
 -------------------

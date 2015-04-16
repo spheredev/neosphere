@@ -1532,7 +1532,7 @@ js_SetPersonIgnoreList(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 	duk_require_object_coercible(ctx, 1);
 
-	int       list_size;
+	size_t    list_size;
 	person_t* person;
 
 	int i;
@@ -1542,13 +1542,15 @@ js_SetPersonIgnoreList(duk_context* ctx)
 	if (!duk_is_array(ctx, 1))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): ignore_list argument must be an array");
 	list_size = duk_get_length(ctx, 1);
+	if (list_size > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): List too large (internal error)");
 	for (i = 0; i < person->num_ignores; ++i) {
 		free(person->ignores[i]);
 	}
 	person->ignores = realloc(person->ignores, list_size * sizeof(char*));
-	person->num_ignores = list_size;
-	for (i = 0; i < list_size; ++i) {
-		duk_get_prop_index(ctx, 1, i);
+	person->num_ignores = (int)list_size;
+	for (i = 0; i < (int)list_size; ++i) {
+		duk_get_prop_index(ctx, 1, (duk_uarridx_t)i);
 		person->ignores[i] = strdup(duk_require_string(ctx, -1));
 		duk_pop(ctx);
 	}

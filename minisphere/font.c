@@ -77,7 +77,7 @@ load_font(const char* path)
 	int                     max_x = 0, max_y = 0;
 	int                     min_width = INT_MAX;
 	int64_t                 n_glyphs_per_row;
-	size_t                  pixel_size;
+	int                     pixel_size;
 	struct rfn_header       rfn;
 	uint8_t                 *src_ptr, *dest_ptr;
 

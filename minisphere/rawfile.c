@@ -154,7 +154,7 @@ js_RawFile_close(duk_context* ctx)
 static duk_ret_t
 js_RawFile_read(duk_context* ctx)
 {
-	int num_bytes = duk_require_int(ctx, 0);
+	size_t num_bytes = duk_require_uint(ctx, 0);
 
 	bytearray_t*  array;
 	FILE*         file;
@@ -163,14 +163,14 @@ js_RawFile_read(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "file_ptr"); file = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (num_bytes <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB; user requested %i bytes", num_bytes);
+	if (num_bytes <= 0 || num_bytes > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB (requested: ~%i MB)", num_bytes / 1048576);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
 	if (!(read_buffer = malloc(num_bytes)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
 	num_bytes = fread(read_buffer, 1, num_bytes, file);
-	if (!(array = bytearray_from_buffer(read_buffer, num_bytes)))
+	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array (internal error)");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;

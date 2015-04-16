@@ -53,7 +53,9 @@ bytearray_from_lstring(const lstring_t* string)
 {
 	bytearray_t* array;
 
-	if (!(array = new_bytearray(string->length)))
+	if (string->length > INT_MAX)
+		return NULL;
+	if (!(array = new_bytearray((int)string->length)))
 		return NULL;
 	memcpy(array->buffer, string->cstr, string->length);
 	return array;
