@@ -15,7 +15,6 @@ struct person
 	char*           direction;
 	int             follow_distance;
 	int             frame;
-	bool            has_moved;
 	bool            ignore_all_persons;
 	bool            ignore_all_tiles;
 	bool            is_persistent;
@@ -23,6 +22,7 @@ struct person
 	int             layer;
 	person_t*       leader;
 	color_t         mask;
+	int             mv_x, mv_y;
 	int             revert_delay;
 	int             revert_frames;
 	double          scale_x;
@@ -44,9 +44,7 @@ struct person
 
 struct step
 {
-	bool       is_valid;
-	double     x, y;
-	lstring_t* direction;
+	double x, y;
 };
 
 struct command
@@ -215,7 +213,7 @@ destroy_person(person_t* person)
 bool
 has_person_moved(const person_t* person)
 {
-	return person->has_moved;
+	return person->mv_x != 0 || person->mv_y != 0;
 }
 
 bool
@@ -498,6 +496,8 @@ follow_person(person_t* person, person_t* leader, int distance)
 {
 	struct step*    new_steps;
 	const person_t* node;
+
+	int i;
 	
 	// prevent circular follower chains from forming
 	if (leader != NULL) {
@@ -510,16 +510,18 @@ follow_person(person_t* person, person_t* leader, int distance)
 	// add the person as a follower (or sever existing link if leader==NULL)
 	if (leader != NULL) {
 		if (distance > leader->max_history) {
+			// allocate or enlarge step history buffer
 			if (!(new_steps = realloc(leader->steps, distance * sizeof(struct step))))
 				return false;
+			for (i = leader->max_history; i < distance; ++i) {
+				new_steps[i].x = leader->x;
+				new_steps[i].y = leader->y;
+			}
 			leader->steps = new_steps;
 			leader->max_history = distance;
 		}
-		memset(leader->steps, 0x0, leader->max_history * sizeof(struct step));
 		person->leader = leader;
 		person->follow_distance = distance;
-		set_person_xyz(person, person->leader->x, person->leader->y, person->leader->layer);
-		set_person_direction(person, person->leader->direction);
 	}
 	person->leader = leader;
 	return true;
@@ -730,8 +732,11 @@ command_person(person_t* person, int command)
 		// person is trying to move, make sure the path is clear of obstructions
 		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
 			command_person(person, COMMAND_ANIMATE);
+			if (new_x != person->x)
+				person->mv_x = new_x > person->x ? 1 : -1;
+			if (new_y != person->y)
+				person->mv_y = new_y > person->y ? 1 : -1;
 			person->x = new_x; person->y = new_y;
-			person->has_moved = true;
 		}
 		else {
 			// if not, and we collided with a person, call that person's touch script
@@ -781,13 +786,10 @@ record_step(person_t* person)
 
 	if (person->max_history <= 0)
 		return;
-	free_lstring(person->steps[person->max_history - 1].direction);
 	memmove(&person->steps[1], &person->steps[0], (person->max_history - 1) * sizeof(struct step));
 	p_step = &person->steps[0];
-	p_step->is_valid = true;
 	p_step->x = person->x;
 	p_step->y = person->y;
-	p_step->direction = lstring_from_cstr(person->direction);
 }
 
 static void
@@ -800,15 +802,18 @@ static void
 update_person(person_t* person)
 {
 	struct command  command;
+	double          delta_x, delta_y;
+	int             facing;
 	bool            is_finished;
 	const person_t* last_person;
 	unsigned int    person_id;
 	struct step     step;
+	int             vector;
 
 	int i;
 
 	person_id = person->id;
-	person->has_moved = false;
+	person->mv_x = 0; person->mv_y = 0;
 	if (person->revert_frames > 0 && --person->revert_frames <= 0)
 		person->frame = 0;
 	if (person->leader == NULL) {  // no leader; use command queue
@@ -837,19 +842,27 @@ update_person(person_t* person)
 	}
 	else {  // leader set; follow the leader!
 		step = person->leader->steps[person->follow_distance - 1];
-		if (step.is_valid) {
-			person->has_moved = step.x != person->x || step.y != person->y;
-			if (person->has_moved)
-				command_person(person, COMMAND_ANIMATE);
-			person->x = step.x;
-			person->y = step.y;
-			person->layer = person->leader->layer;
-			set_person_direction(person, lstring_cstr(step.direction));
-		}
+		delta_x = step.x - person->x;
+		delta_y = step.y - person->y;
+		if (fabs(delta_x) > person->speed_x)
+			command_person(person, delta_x > 0 ? COMMAND_MOVE_EAST : COMMAND_MOVE_WEST);
+		if (fabs(delta_y) > person->speed_y)
+			command_person(person, delta_y > 0 ? COMMAND_MOVE_SOUTH : COMMAND_MOVE_NORTH);
+		vector = person->mv_x + person->mv_y * 3;
+		facing = vector == -3 ? COMMAND_FACE_NORTH
+			: vector == -2 ? COMMAND_FACE_NORTHEAST
+			: vector == 1 ? COMMAND_FACE_EAST
+			: vector == 4 ? COMMAND_FACE_SOUTHEAST
+			: vector == 3 ? COMMAND_FACE_SOUTH
+			: vector == 2 ? COMMAND_FACE_SOUTHWEST
+			: vector == -1 ? COMMAND_FACE_WEST
+			: vector == -4 ? COMMAND_FACE_NORTHWEST
+			: COMMAND_WAIT;
+		command_person(person, facing);
 	}
 
 	// if the person's position changed, record it in their step history
-	if (person->has_moved) {
+	if (has_person_moved(person)) {
 		record_step(person);
 	}
 
