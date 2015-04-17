@@ -1704,7 +1704,7 @@ js_SetPersonScript(duk_context* ctx)
 	}
 	else {
 		script_id = duk_require_sphere_script(ctx, 2, "[person script]");
-		set_person_script(ctx, type, script_id);
+		set_person_script(person, type, script_id);
 	}
 	return 0;
 }
