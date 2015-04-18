@@ -509,13 +509,18 @@ follow_person(person_t* person, person_t* leader, int distance)
 	
 	// add the person as a follower (or sever existing link if leader==NULL)
 	if (leader != NULL) {
-		if (distance > leader->max_history) {
-			// allocate or enlarge step history buffer
+		if (distance > leader->max_history) {  // do we need to enlarge the step history?
 			if (!(new_steps = realloc(leader->steps, distance * sizeof(struct step))))
 				return false;
+			// when enlarging the history buffer, we fill the new slots with pastmost values
+			// (kind of like sign extension)
 			for (i = leader->max_history; i < distance; ++i) {
-				new_steps[i].x = leader->x;
-				new_steps[i].y = leader->y;
+				new_steps[i].x = leader->steps != NULL
+					? leader->steps[leader->max_history - 1].x
+					: leader->x;
+				new_steps[i].y = leader->steps != NULL
+					? leader->steps[leader->max_history - 1].y
+					: leader->y;
 			}
 			leader->steps = new_steps;
 			leader->max_history = distance;
