@@ -70,6 +70,7 @@ static duk_ret_t js_GetPersonAngle               (duk_context* ctx);
 static duk_ret_t js_GetPersonBase                (duk_context* ctx);
 static duk_ret_t js_GetPersonData                (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
+static duk_ret_t js_GetPersonFollowDistance      (duk_context* ctx);
 static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameNext           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
@@ -902,6 +903,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonBase", js_GetPersonBase);
 	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
+	register_api_func(g_duktape, NULL, "GetPersonFollowDistance", js_GetPersonFollowDistance);
 	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
 	register_api_func(g_duktape, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
@@ -1207,6 +1209,21 @@ js_GetPersonDirection(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
 	duk_push_string(ctx, person->direction);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFollowDistance(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFollowDistance(): Person '%s' doesn't exist", name);
+	if (person->leader == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "GetPersonFollowDistance(): Person '%s' is not following anyone", name);
+	duk_push_int(ctx, person->follow_distance);
 	return 1;
 }
 
