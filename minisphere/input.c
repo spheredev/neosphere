@@ -52,13 +52,13 @@ static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 static void queue_key         (int keycode);
 static void queue_wheel_event (int event);
 
-static int                  s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static int                  s_is_key_bound[ALLEGRO_KEY_MAX];
-static int                  s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static int                  s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static bool                 s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static bool                 s_is_key_bound[ALLEGRO_KEY_MAX];
+static script_t*            s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static script_t*            s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
 static ALLEGRO_EVENT_QUEUE* s_events;
-static int                  s_key_down_scripts[ALLEGRO_KEY_MAX];
-static int                  s_key_up_scripts[ALLEGRO_KEY_MAX];
+static script_t*            s_key_down_scripts[ALLEGRO_KEY_MAX];
+static script_t*            s_key_up_scripts[ALLEGRO_KEY_MAX];
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
 static struct key_queue     s_key_queue;
 static bool                 s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
@@ -702,8 +702,8 @@ js_BindJoystickButton(duk_context* ctx)
 {
 	int joy_index = duk_require_int(ctx, 0);
 	int button = duk_require_int(ctx, 1);
-	int down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
-	int up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
+	script_t* down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
+	script_t* up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
@@ -721,8 +721,8 @@ static duk_ret_t
 js_BindKey(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
-	int key_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
-	int key_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
+	script_t* key_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
+	script_t* key_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): Invalid key constant");

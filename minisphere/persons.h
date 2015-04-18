@@ -24,7 +24,7 @@ extern void         get_person_xyz             (const person_t* person, double* 
 extern void         set_person_angle           (person_t* person, double theta);
 extern void         set_person_mask            (person_t* person, color_t mask);
 extern void         set_person_scale           (person_t*, double scale_x, double scale_y);
-extern void         set_person_script          (person_t* person, int type, int script_id);
+extern void         set_person_script          (person_t* person, int type, script_t* script);
 extern void         set_person_speed           (person_t* person, double x_speed, double y_speed);
 extern void         set_person_spriteset       (person_t* person, spriteset_t* spriteset);
 extern void         set_person_xyz             (person_t* person, double x, double y, int layer);
