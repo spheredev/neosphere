@@ -200,7 +200,7 @@ destroy_person(person_t* person)
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader == person)
-			s_persons[i]->leader = NULL;
+			s_persons[i]->leader = person->leader;
 		if (s_persons[i] == person) {
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
