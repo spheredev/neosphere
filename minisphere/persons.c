@@ -203,7 +203,8 @@ destroy_person(person_t* person)
 	int i, j;
 
 	// call person's destroy script before renouncing leadership
-	// the destroy script may want to reassign followers, so the order is important.
+	// the destroy script may want to reassign followers (they will be orphaned otherwise), so
+	// the order is important.
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader == person) s_persons[i]->leader = NULL;

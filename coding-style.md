@@ -67,7 +67,7 @@ Commit Etiquette
   X bug") suggest retroactivity and are thus more confusing to work
   with. Avoid them.
 
-* Avoid creating commits with only non-functional changes. Too many of
+* Avoid logging commits with only non-functional changes. Too many of
   these make bisection (using `git bisect`) harder as it adds extra
   noise to the process. Again, I will edit pull requests for style
   before merging them, so extra commits to fix whitespace, etc. are

@@ -1,0 +1,32 @@
+minisphere 1.1 API Documentation
+================================
+
+minisphere uses JavaScript for game logic. This is similar to the Sphere
+engine, which minisphere is designed to be compatible with.  In fact,
+the vast majority of the API is identical to Sphere's, with a handful of
+backwards-compatible enhancements.
+
+This file documents the functions exposed by minisphere for use in game
+scripts.
+
+Engine Identification APIs
+--------------------------
+
+* `GetVersion()`
+  Returns the Sphere API version level as a floating point number. When
+  called in minisphere 1.1, this function returns `1.5`, indicating API
+  compatibility with Sphere 1.5.
+
+* `GetVersionString()`
+  Returns the engine's version identification string. minisphere 1.1
+  identifies as:
+  - 32-bit engine: `v1.5 (compatible; minisphere 1.1)`
+  - 64-bit engine: `v1.5 (compatible; minisphere 1.1 x64)`
+
+* `GetExtensions()`
+  Returns an array of strings representing the engine's built-in
+  capabilities. minisphere currently supports the following extensions:
+  - `sphere-legacy-api` - Sphere 1.x API support
+  - `minisphere` - minisphere-specific API extensions
+  - `frameskip-api` - Standardized APIs for managing frame skipping
+  - `set-script-function` - Functions can be passed to SetxxxScript()
