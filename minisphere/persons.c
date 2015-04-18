@@ -75,6 +75,7 @@ static duk_ret_t js_GetPersonFrameNext           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
 static duk_ret_t js_GetPersonIgnoreList          (duk_context* ctx);
 static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
+static duk_ret_t js_GetPersonLeader              (duk_context* ctx);
 static duk_ret_t js_GetPersonList                (duk_context* ctx);
 static duk_ret_t js_GetPersonMask                (duk_context* ctx);
 static duk_ret_t js_GetPersonOffsetX             (duk_context* ctx);
@@ -906,6 +907,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
 	register_api_func(g_duktape, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
 	register_api_func(g_duktape, NULL, "GetPersonLayer", js_GetPersonLayer);
+	register_api_func(g_duktape, NULL, "GetPersonLeader", js_GetPersonLeader);
 	register_api_func(g_duktape, NULL, "GetPersonList", js_GetPersonList);
 	register_api_func(g_duktape, NULL, "GetPersonMask", js_GetPersonMask);
 	register_api_func(g_duktape, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
@@ -1190,7 +1192,7 @@ js_GetPersonData(duk_context* ctx)
 	duk_push_int(ctx, num_directions); duk_put_prop_string(ctx, -2, "num_directions");
 	duk_push_int(ctx, width); duk_put_prop_string(ctx, -2, "width");
 	duk_push_int(ctx, height); duk_put_prop_string(ctx, -2, "height");
-	duk_push_string(ctx, ""); duk_put_prop_string(ctx, -2, "leader");
+	duk_push_string(ctx, person->leader ? person->leader->name : ""); duk_put_prop_string(ctx, -2, "leader");
 	duk_remove(ctx, -2); duk_remove(ctx, -2);
 	return 1;
 }
@@ -1278,6 +1280,19 @@ js_GetPersonLayer(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonLayer(): Person '%s' doesn't exist", name);
 	duk_push_int(ctx, person->layer);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonLeader(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	person_t*   person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonLeader(): Person '%s' doesn't exist", name);
+	duk_push_string(ctx, person->leader != NULL ? person->leader->name : "");
 	return 1;
 }
 
