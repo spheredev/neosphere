@@ -71,6 +71,7 @@ static duk_ret_t js_GetPersonBase                (duk_context* ctx);
 static duk_ret_t js_GetPersonData                (duk_context* ctx);
 static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
 static duk_ret_t js_GetPersonFollowDistance      (duk_context* ctx);
+static duk_ret_t js_GetPersonFollowers           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameNext           (duk_context* ctx);
 static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
@@ -94,6 +95,7 @@ static duk_ret_t js_SetDefaultPersonScript       (duk_context* ctx);
 static duk_ret_t js_SetPersonAngle               (duk_context* ctx);
 static duk_ret_t js_SetPersonData                (duk_context* ctx);
 static duk_ret_t js_SetPersonDirection           (duk_context* ctx);
+static duk_ret_t js_SetPersonFollowDistance      (duk_context* ctx);
 static duk_ret_t js_SetPersonFrame               (duk_context* ctx);
 static duk_ret_t js_SetPersonFrameNext           (duk_context* ctx);
 static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
@@ -128,6 +130,7 @@ static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
 static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
+static bool enlarge_step_history (person_t* person, int new_size);
 static bool follow_person        (person_t* person, person_t* leader, int distance);
 static void free_person          (person_t* person);
 static void record_step          (person_t* person);
@@ -199,15 +202,21 @@ destroy_person(person_t* person)
 {
 	int i, j;
 
+	// call person's destroy script before renouncing leadership
+	// the destroy script may want to reassign followers, so the order is important.
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i]->leader == person)
-			s_persons[i]->leader = person->leader;
+		if (s_persons[i]->leader == person) s_persons[i]->leader = NULL;
+	}
+
+	// remove person from the persons list
+	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person) {
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
 			--s_num_persons; --i;
 		}
 	}
+	
 	free_person(person);
 	sort_persons();
 }
@@ -496,11 +505,8 @@ find_person(const char* name)
 bool
 follow_person(person_t* person, person_t* leader, int distance)
 {
-	struct step*    new_steps;
 	const person_t* node;
 
-	int i;
-	
 	// prevent circular follower chains from forming
 	if (leader != NULL) {
 		node = leader;
@@ -511,22 +517,8 @@ follow_person(person_t* person, person_t* leader, int distance)
 	
 	// add the person as a follower (or sever existing link if leader==NULL)
 	if (leader != NULL) {
-		if (distance > leader->max_history) {  // do we need to enlarge the step history?
-			if (!(new_steps = realloc(leader->steps, distance * sizeof(struct step))))
-				return false;
-			// when enlarging the history buffer, we fill the new slots with pastmost values
-			// (kind of like sign extension)
-			for (i = leader->max_history; i < distance; ++i) {
-				new_steps[i].x = leader->steps != NULL
-					? leader->steps[leader->max_history - 1].x
-					: leader->x;
-				new_steps[i].y = leader->steps != NULL
-					? leader->steps[leader->max_history - 1].y
-					: leader->y;
-			}
-			leader->steps = new_steps;
-			leader->max_history = distance;
-		}
+		if (!enlarge_step_history(leader, distance))
+			return false;
 		person->leader = leader;
 		person->follow_distance = distance;
 	}
@@ -799,6 +791,34 @@ record_step(person_t* person)
 	p_step->y = person->y;
 }
 
+static bool
+enlarge_step_history(person_t* person, int new_size)
+{
+	struct step *new_steps;
+
+	int i;
+	
+	if (new_size > person->max_history) {
+		if (!(new_steps = realloc(person->steps, new_size * sizeof(struct step))))
+			return false;
+
+		// when enlarging the history buffer, we fill new slots with pastmost values
+		// (kind of like sign extension)
+		for (i = person->max_history; i < new_size; ++i) {
+			new_steps[i].x = person->steps != NULL
+				? person->steps[person->max_history - 1].x
+				: person->x;
+			new_steps[i].y = person->steps != NULL
+				? person->steps[person->max_history - 1].y
+				: person->y;
+		}
+		person->steps = new_steps;
+		person->max_history = new_size;
+	}
+	
+	return true;
+}
+
 static void
 sort_persons(void)
 {
@@ -904,6 +924,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "GetPersonData", js_GetPersonData);
 	register_api_func(g_duktape, NULL, "GetPersonDirection", js_GetPersonDirection);
 	register_api_func(g_duktape, NULL, "GetPersonFollowDistance", js_GetPersonFollowDistance);
+	register_api_func(g_duktape, NULL, "GetPersonFollowers", js_GetPersonFollowers);
 	register_api_func(g_duktape, NULL, "GetPersonFrame", js_GetPersonFrame);
 	register_api_func(g_duktape, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
 	register_api_func(g_duktape, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
@@ -927,6 +948,7 @@ init_persons_api(void)
 	register_api_func(g_duktape, NULL, "SetPersonAngle", js_SetPersonAngle);
 	register_api_func(g_duktape, NULL, "SetPersonData", js_SetPersonData);
 	register_api_func(g_duktape, NULL, "SetPersonDirection", js_SetPersonDirection);
+	register_api_func(g_duktape, NULL, "SetPersonFollowDistance", js_SetPersonFollowDistance);
 	register_api_func(g_duktape, NULL, "SetPersonFrame", js_SetPersonFrame);
 	register_api_func(g_duktape, NULL, "SetPersonFrameNext", js_SetPersonFrameNext);
 	register_api_func(g_duktape, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
@@ -1224,6 +1246,28 @@ js_GetPersonFollowDistance(duk_context* ctx)
 	if (person->leader == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "GetPersonFollowDistance(): Person '%s' is not following anyone", name);
 	duk_push_int(ctx, person->follow_distance);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFollowers(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+
+	duk_uarridx_t index = 0;
+	person_t*     person;
+
+	int i;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFollowers(): Person '%s' doesn't exist", name);
+	duk_push_array(ctx);
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i]->leader == person) {
+			duk_push_string(ctx, s_persons[i]->name);
+			duk_put_prop_index(ctx, -2, index++);
+		}
+	}
 	return 1;
 }
 
@@ -1555,6 +1599,26 @@ js_SetPersonDirection(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonDirection(): Person '%s' doesn't exist", name);
 	set_person_direction(person, new_dir);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFollowDistance(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int distance = duk_require_int(ctx, 1);
+
+	person_t* person;
+
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFollowDistance(): Person '%s' doesn't exist", name);
+	if (person->leader == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetPersonFollowDistance(): Person '%s' is not following anyone", name);
+	if (distance <= 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFollowDistance(): Distance must be greater than zero (%i)", distance);
+	if (!enlarge_step_history(person->leader, distance))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): Failed to enlarge leader's tracking buffer (internal error)");
+	person->follow_distance = distance;
 	return 0;
 }
 
