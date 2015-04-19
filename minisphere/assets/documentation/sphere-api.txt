@@ -9,24 +9,124 @@ backwards-compatible enhancements.
 This file documents the functions exposed by minisphere for use in game
 scripts.
 
-Engine Identification APIs
---------------------------
 
-* `GetVersion()`
+Engine Identification
+---------------------
+
+The functions below can be used to determine, at a broad level, the
+engine's level of support for various features.
+
+GetVersion()
+
   Returns the Sphere API version level as a floating point number. When
   called in minisphere 1.1, this function returns `1.5`, indicating API
   compatibility with Sphere 1.5.
 
-* `GetVersionString()`
+GetVersionString()
+
   Returns the engine's version identification string. minisphere 1.1
   identifies as:
-  - 32-bit engine: `v1.5 (compatible; minisphere 1.1)`
-  - 64-bit engine: `v1.5 (compatible; minisphere 1.1 x64)`
+    o 32-bit engine: `v1.5 (compatible; minisphere 1.1)`
+    o 64-bit engine: `v1.5 (compatible; minisphere 1.1 x64)`
 
-* `GetExtensions()`
+GetExtensions()
+
   Returns an array of strings representing the engine's built-in
   capabilities. minisphere currently supports the following extensions:
-  - `sphere-legacy-api` - Sphere 1.x API support
-  - `minisphere` - minisphere-specific API extensions
-  - `frameskip-api` - Standardized APIs for managing frame skipping
-  - `set-script-function` - Functions can be passed to SetxxxScript()
+    o `sphere-legacy-api` - Sphere 1.x API support
+    o `minisphere` - minisphere-specific API extensions
+    o `frameskip-api` - Standardized APIs for managing frame skipping
+    o `set-script-function` - Functions can be passed to SetxxxScript()
+    
+
+Basic Debugging
+---------------
+
+minisphere doesn't include a stepping debugger, so these may come in
+handy!
+
+Abort(message[, stack_offset])
+
+  Forces the engine to close, displaying a specified error message. The
+  error is normally said to originate at the location of the Abort()
+  call; you may pass an optional negative stack offset to blame it on a
+  function earlier in the call chain. For example, the following code
+  will report an error at the point PassTheBuck() is called instead of
+  at the Abort() call:
+  
+  function PassTheBuck()
+  {
+      Abort("PassTheBuck() says: It's not my fault!", -1);
+  }
+  PassTheBuck();
+
+Alert(message[, stack_offset])
+
+  Similar to Abort(), except the message is displayed in a dialog box
+  and the game continues running as normal afterwards. Useful for
+  examining variables at runtime when debugging.
+
+
+Dependency Management
+---------------------
+
+Outside of very simple one-off games, most projects will consist of
+multiple script files. You will need to know how to use the functions
+below if you expect to get very far!
+
+RequireScript(filename)
+EvaluateScript(filename)
+
+  Evaluates the contents of `filename`, as if the code contained within
+  were part of the script containing the call. If you've ever worked in
+  C or C++, this is a bit like including a header file. The filename is
+  assumed to be relative to [game.sgm root]/scripts.
+  
+  Note: RequireScript only executes a given script once, regardless
+  of how many RequireScript() calls specifying it are encountered. This
+  is generally preferable to EvaluateScript(), which always executes the
+  script.
+
+RequireSystemScript(filename)
+EvaluateSystemScript(filename)
+
+  Same as above, except the filename is relative to
+  [engine root]/system/scripts instead of the game directory. This
+  allows you to use scripts included with the engine.
+
+
+Execution Control and Game Management
+-------------------------------------
+
+Most of these are only useful for startup games, which can be
+distributed with the engine and allow the user to choose a game to play.
+For these functions to work, a `games` directory must be placed in the
+same directory as the engine, alongside the `system` directory,
+with subdirectories for each game.
+
+GetGameList()
+
+  Returns an array of objects, each representing a game directory found
+  in [engine root]/games. Each object has the following properties:
+    .name:        The game's title, taken from game.sgm.
+    .directory:   The directory the game was found in, relative to
+                  [engine root]/games.
+    .author:      The game's author, taken from game.sgm.
+    .description: A short description of the game, taken from game.sgm.
+
+ExecuteGame(directory)
+
+  Replaces the currently running game with the one found in the
+  specified directory. The directory is assumed to be relative to
+  [engine root]/games.
+  
+RestartGame()
+
+  Restarts the current game. All game state is cleared the the game()
+  function is called again, as if the game was just started.
+
+Exit()
+  
+  Exits the current game and shuts down the engine. If the current game
+  was started by via ExecuteGame(), the original game will be restarted
+  following the Exit() call.
