@@ -5,7 +5,7 @@ typedef struct person person_t;
 
 extern void         initialize_persons_manager (void);
 extern void         shutdown_persons_manager   (void);
-extern person_t*    create_person              (const char* name, const char* sprite_file, bool is_persistent);
+extern person_t*    create_person              (const char* name, const char* sprite_file, bool is_persistent, script_t* create_script);
 extern void         destroy_person             (person_t* person);
 extern bool         has_person_moved           (const person_t* person);
 extern bool         is_person_busy             (const person_t* person);

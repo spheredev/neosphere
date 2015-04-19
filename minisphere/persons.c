@@ -166,7 +166,7 @@ shutdown_persons_manager(void)
 }
 
 person_t*
-create_person(const char* name, const char* sprite_file, bool is_persistent)
+create_person(const char* name, const char* sprite_file, bool is_persistent, script_t* create_script)
 {
 	point3_t  map_origin = get_map_origin();
 	char*     path;
@@ -193,6 +193,8 @@ create_person(const char* name, const char* sprite_file, bool is_persistent)
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
 	person->mask = rgba(255, 255, 255, 255);
 	person->scale_x = person->scale_y = 1.0;
+	person->scripts[PERSON_SCRIPT_ON_CREATE] = create_script;
+	call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
 	sort_persons();
 	return person;
 }
@@ -1012,12 +1014,14 @@ js_CreatePerson(duk_context* ctx)
 {
 	bool        destroy_with_map;
 	const char* name;
+	person_t*   person;
 	const char* sprite_file;
 
 	name = duk_require_string(ctx, 0);
 	sprite_file = duk_require_string(ctx, 1);
 	destroy_with_map = duk_require_boolean(ctx, 2);
-	create_person(name, sprite_file, !destroy_with_map);
+	if (!(person = create_person(name, sprite_file, !destroy_with_map, NULL)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to create person (internal error)");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);

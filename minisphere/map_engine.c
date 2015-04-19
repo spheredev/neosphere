@@ -748,14 +748,18 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false);
+		person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false, NULL);
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
 		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
 		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
 		compile_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
 		compile_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
 		compile_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
-		call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
+		
+		// normally this is handled by create_person(), but since in this case the
+		// person-specific create script isn't compiled until after the person is created,
+		// the map engine gets the responsibility.
+		call_person_script(person, PERSON_SCRIPT_ON_CREATE, false);
 	}
 
 	// set camera over starting position
