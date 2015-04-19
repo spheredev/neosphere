@@ -1,7 +1,10 @@
+typedef struct person person_t;
+
+#ifndef MINISPHERE__PERSONS_H__INCLUDED
+#define MINISPHERE__PERSONS_H__INCLUDED
+
 #include "map_engine.h"
 #include "spriteset.h"
-
-typedef struct person person_t;
 
 extern void         initialize_persons_manager (void);
 extern void         shutdown_persons_manager   (void);
@@ -71,3 +74,5 @@ enum person_script_type
 	PERSON_SCRIPT_GENERATOR,
 	PERSON_SCRIPT_MAX
 };
+
+#endif // MINISPHERE__PERSONS_H__INCLUDED

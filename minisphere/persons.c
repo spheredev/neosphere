@@ -212,7 +212,8 @@ destroy_person(person_t* person)
 		if (s_persons[i]->leader == person) s_persons[i]->leader = NULL;
 	}
 
-	// remove person from the persons list
+	// remove the person from the engine
+	detach_person(person);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person) {
 			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];

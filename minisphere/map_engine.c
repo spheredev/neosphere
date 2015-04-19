@@ -22,8 +22,8 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static map_t*              load_map            (const char* path);
-static void                free_map            (map_t* map);
+static struct map*         load_map            (const char* path);
+static void                free_map            (struct map* map);
 static bool                are_zones_at        (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
 static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
@@ -130,7 +130,7 @@ static unsigned int        s_frames            = 0;
 static person_t*           s_input_person      = NULL;
 static bool                s_is_talk_allowed   = true;
 static bool                s_is_map_running    = false;
-static map_t*              s_map = NULL;
+static struct map*         s_map = NULL;
 static char*               s_map_filename      = NULL;
 static struct map_trigger* s_on_trigger        = NULL;
 static script_t*           s_render_script     = 0;
@@ -356,6 +356,15 @@ get_map_layer_obsmap(int layer)
 }
 
 void
+detach_person(const person_t* person)
+{
+	if (s_camera_person == person)
+		s_camera_person = NULL;
+	if (s_input_person == person)
+		s_input_person = NULL;
+}
+
+void
 normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 {
 	int tile_w, tile_h;
@@ -370,7 +379,7 @@ normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 	if (inout_y) *inout_y = fmod(fmod(*inout_y, layer_h) + layer_h, layer_h);
 }
 
-static map_t*
+static struct map*
 load_map(const char* path)
 {
 	// strings: 0 - tileset filename
@@ -389,7 +398,7 @@ load_map(const char* path)
 	bool                     has_failed;
 	struct map_layer*        layer;
 	struct rmp_layer_header  layer_hdr;
-	map_t*                   map = NULL;
+	struct map*              map = NULL;
 	int                      num_tiles;
 	struct map_person*       person;
 	struct rmp_header        rmp;
@@ -407,7 +416,7 @@ load_map(const char* path)
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
 	if (!(file = fopen(path, "rb"))) goto on_error;
-	if (!(map = calloc(1, sizeof(map_t)))) goto on_error;
+	if (!(map = calloc(1, sizeof(struct map)))) goto on_error;
 	if (fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
@@ -611,7 +620,7 @@ on_error:
 }
 
 static void
-free_map(map_t* map)
+free_map(struct map* map)
 {
 	int i;
 
@@ -720,7 +729,7 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 static bool
 change_map(const char* filename, bool preserve_persons)
 {
-	map_t*             map;
+	struct map*        map;
 	char*              path;
 	person_t*          person;
 	struct map_person* person_info;
