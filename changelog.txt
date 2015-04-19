@@ -1,7 +1,20 @@
 minisphere Changelog
 --------------------
 
-v1.0.10 - 
+v1.1 - TBD
+
+- Fixes a bunch of bugs discovered since the release of
+  minisphere 1.0.10, including a SetPersonScript() crash when passing
+  functions
+- API documentation now included in the default distribution
+- Improved FollowPerson algorithm: Followers move under their own power
+  and are affected by obstructions, making the overall effect much more
+  realistic.
+- New API functions to manage persons with followers:
+  GetPersonLeader(), GetPersonFollowers(), GetPersonFollowDistance(),
+  SetPersonFollowDistance()
+
+v1.0.10 - April 16, 2015
 
 - Adds experimental 64-bit engine (needs testing)
 - Fixes IsKeyPressed() not recognizing modifier keys on right side of
