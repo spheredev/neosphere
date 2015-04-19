@@ -281,7 +281,10 @@ on_js_error:
 	if (file_path != NULL) {
 		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		filename = filename != NULL ? filename + 1 : file_path;
-		duk_push_sprintf(g_duktape, "`%s`, line: %i | %s", filename, line_num, err_msg);
+		if (err_msg[strlen(err_msg) - 1] != '\n')
+			duk_push_sprintf(g_duktape, "`%s`, line: %i | %s", filename, line_num, err_msg);
+		else
+			duk_push_string(g_duktape, err_msg);
 	}
 	else {
 		duk_push_string(g_duktape, err_msg);
