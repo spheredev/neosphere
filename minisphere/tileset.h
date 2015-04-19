@@ -15,5 +15,6 @@ void             get_tile_size   (const tileset_t* tileset, int* out_w, int* out
 void             set_next_tile   (tileset_t* tileset, int tile_index, int next_index);
 void             set_tile_delay  (tileset_t* tileset, int tile_index, int delay);
 void             set_tile_image  (tileset_t* tileset, int tile_index, image_t* image);
+bool             set_tile_name   (tileset_t* tileset, int tile_index, const lstring_t* name);
 void             animate_tileset (tileset_t* tileset);
 void             draw_tile       (const tileset_t* tileset, color_t mask, float x, float y, int tile_index);

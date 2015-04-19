@@ -243,6 +243,18 @@ set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 	free_image(old_image);
 }
 
+bool
+set_tile_name(tileset_t* tileset, int tile_index, const lstring_t* name)
+{
+	lstring_t* new_name;
+	
+	if (!(new_name = clone_lstring(name)))
+		return false;
+	free_lstring(tileset->tiles[tile_index].name);
+	tileset->tiles[tile_index].name = new_name;
+	return true;
+}
+
 void
 animate_tileset(tileset_t* tileset)
 {

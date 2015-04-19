@@ -88,6 +88,7 @@ static duk_ret_t js_SetTalkActivationKey    (duk_context* ctx);
 static duk_ret_t js_SetTile                 (duk_context* ctx);
 static duk_ret_t js_SetTileDelay            (duk_context* ctx);
 static duk_ret_t js_SetTileImage            (duk_context* ctx);
+static duk_ret_t js_SetTileName             (duk_context* ctx);
 static duk_ret_t js_SetTileSurface          (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript         (duk_context* ctx);
 static duk_ret_t js_SetZoneLayer            (duk_context* ctx);
@@ -1093,6 +1094,7 @@ init_map_engine_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "SetTile", js_SetTile);
 	register_api_func(ctx, NULL, "SetTileDelay", js_SetTileDelay);
 	register_api_func(ctx, NULL, "SetTileImage", js_SetTileImage);
+	register_api_func(ctx, NULL, "SetTileName", js_SetTileName);
 	register_api_func(ctx, NULL, "SetTileSurface", js_SetTileSurface);
 	register_api_func(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
 	register_api_func(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
@@ -1859,6 +1861,22 @@ js_SetTileImage(duk_context* ctx)
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): Image dimensions (%ix%i) don't match tile dimensions (%ix%i)", image_w, image_h, tile_w, tile_h);
 	set_tile_image(s_map->tileset, tile_index, image);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileName(duk_context* ctx)
+{
+	int tile_index = duk_require_int(ctx, 0);
+	lstring_t* name = duk_require_lstring_t(ctx, 1);
+
+	if (!is_map_engine_running())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileName(): Map engine must be running");
+	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileName(): Tile index out of range (%i)", tile_index);
+	if (!set_tile_name(s_map->tileset, tile_index, name))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileName(): Failed to set tile name (internal error)");
+	free_lstring(name);
 	return 0;
 }
 
