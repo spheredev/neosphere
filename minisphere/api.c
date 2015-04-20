@@ -122,6 +122,42 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 	duk_pop(ctx);
 }
 
+void
+register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
+{
+	duk_uint_t flags;
+	int        obj_index;
+	
+	duk_push_global_object(ctx);
+	if (ctor_name != NULL) {
+		duk_get_prop_string(ctx, -1, ctor_name);
+		if (!(duk_get_prop_string(ctx, -1, "prototype"))) {
+			duk_pop(ctx);
+			duk_push_object(ctx); duk_dup(ctx, -1);
+			duk_put_prop_string(ctx, -3, "prototype");
+		}
+	}
+	obj_index = duk_normalize_index(ctx, -1);
+
+	duk_push_string(ctx, name);
+	flags = DUK_DEFPROP_HAVE_ENUMERABLE | 0
+		| DUK_DEFPROP_CONFIGURABLE | 0;
+	if (getter != NULL) {
+		duk_push_c_function(ctx, getter, DUK_VARARGS);
+		flags |= DUK_DEFPROP_HAVE_GETTER;
+	}
+	if (setter != NULL) {
+		duk_push_c_function(ctx, setter, DUK_VARARGS);
+		flags |= DUK_DEFPROP_HAVE_SETTER;
+	}
+	duk_def_prop(g_duktape, obj_index, flags);
+	
+	if (ctor_name != NULL) {
+		duk_pop_2(ctx);
+	}
+	duk_pop(ctx);
+}
+
 noreturn
 duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {

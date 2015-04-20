@@ -50,6 +50,7 @@ static const char* const EXTENSIONS[] = {
 	"sphere-legacy-api",
 	"minisphere",
 	"sphere-obj-constructors",
+	"sphere-obj-props",
 	"set-script-function",
 	"frameskip-api"
 };
