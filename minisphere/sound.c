@@ -171,7 +171,6 @@ reload_sound(sound_t* sound)
 	if (!(new_stream = al_load_audio_stream(sound->path, 4, 1024)))
 		return false;
 	if (sound->stream != NULL) {
-		al_drain_audio_stream(sound->stream);
 		al_destroy_audio_stream(sound->stream);
 	}
 	sound->stream = new_stream;
