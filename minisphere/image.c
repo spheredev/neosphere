@@ -19,8 +19,11 @@ static duk_ret_t js_GetSystemDownArrow       (duk_context* ctx);
 static duk_ret_t js_GetSystemUpArrow         (duk_context* ctx);
 static duk_ret_t js_LoadImage                (duk_context* ctx);
 static duk_ret_t js_GrabImage                (duk_context* ctx);
+static duk_ret_t js_new_Image                (duk_context* ctx);
 static duk_ret_t js_Image_finalize           (duk_context* ctx);
 static duk_ret_t js_Image_toString           (duk_context* ctx);
+static duk_ret_t js_Image_get_height         (duk_context* ctx);
+static duk_ret_t js_Image_get_width          (duk_context* ctx);
 static duk_ret_t js_Image_blit               (duk_context* ctx);
 static duk_ret_t js_Image_blitMask           (duk_context* ctx);
 static duk_ret_t js_Image_createSurface      (duk_context* ctx);
@@ -395,6 +398,21 @@ init_image_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetSystemUpArrow", js_GetSystemUpArrow);
 	register_api_func(ctx, NULL, "LoadImage", js_LoadImage);
 	register_api_func(ctx, NULL, "GrabImage", js_GrabImage);
+
+	// register Image methods and properties
+	register_api_func(ctx, NULL, "Image", js_new_Image);
+	register_api_prop(ctx, "Image", "height", js_Image_get_height, NULL);
+	register_api_prop(ctx, "Image", "width", js_Image_get_width, NULL);
+	register_api_func(ctx, "Image", "toString", js_Image_toString);
+	register_api_func(ctx, "Image", "blit", js_Image_blit);
+	register_api_func(ctx, "Image", "blitMask", js_Image_blitMask);
+	register_api_func(ctx, "Image", "createSurface", js_Image_createSurface);
+	register_api_func(ctx, "Image", "rotateBlit", js_Image_rotateBlit);
+	register_api_func(ctx, "Image", "rotateBlitMask", js_Image_rotateBlitMask);
+	register_api_func(ctx, "Image", "transformBlit", js_Image_transformBlit);
+	register_api_func(ctx, "Image", "transformBlitMask", js_Image_transformBlitMask);
+	register_api_func(ctx, "Image", "zoomBlit", js_Image_zoomBlit);
+	register_api_func(ctx, "Image", "zoomBlitMask", js_Image_zoomBlitMask);
 }
 
 void
@@ -402,30 +420,10 @@ duk_push_sphere_image(duk_context* ctx, image_t* image)
 {
 	ref_image(image);
 
-	duk_push_object(ctx);
+	duk_push_sphere_object(ctx, "Image");
 	duk_push_string(ctx, "image"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
 	duk_push_pointer(ctx, image); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_push_c_function(ctx, js_Image_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, js_Image_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_Image_blit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blit");
-	duk_push_c_function(ctx, js_Image_blitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "blitMask");
-	duk_push_c_function(ctx, js_Image_createSurface, DUK_VARARGS); duk_put_prop_string(ctx, -2, "createSurface");
-	duk_push_c_function(ctx, js_Image_rotateBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlit");
-	duk_push_c_function(ctx, js_Image_rotateBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "rotateBlitMask");
-	duk_push_c_function(ctx, js_Image_transformBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlit");
-	duk_push_c_function(ctx, js_Image_transformBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "transformBlitMask");
-	duk_push_c_function(ctx, js_Image_zoomBlit, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlit");
-	duk_push_c_function(ctx, js_Image_zoomBlitMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "zoomBlitMask");
-	duk_push_string(ctx, "width"); duk_push_int(ctx, get_image_width(image));
-	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
-		| DUK_DEFPROP_HAVE_WRITABLE | 0
-		| DUK_DEFPROP_HAVE_VALUE);
-	duk_push_string(ctx, "height"); duk_push_int(ctx, get_image_height(image));
-	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
-		| DUK_DEFPROP_HAVE_WRITABLE | 0
-		| DUK_DEFPROP_HAVE_VALUE);
 }
 
 image_t*
@@ -445,14 +443,14 @@ duk_require_sphere_image(duk_context* ctx, duk_idx_t index)
 	return image;
 
 on_error:
-	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Object is not a Sphere image");
+	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "object is not a Sphere image");
 }
 
 static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): No system arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): no system arrow image available");
 	duk_push_sphere_image(ctx, s_sys_arrow);
 	return 1;
 }
@@ -461,7 +459,7 @@ static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): No system down arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): no system down arrow image available");
 	duk_push_sphere_image(ctx, s_sys_dn_arrow);
 	return 1;
 }
@@ -470,7 +468,7 @@ static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): No system up arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): no system up arrow image available");
 	duk_push_sphere_image(ctx, s_sys_up_arrow);
 	return 1;
 }
@@ -487,7 +485,7 @@ js_LoadImage(duk_context* ctx)
 	image = load_image(path);
 	free(path);
 	if (image == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadImage(): Failed to load image file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadImage(): failed to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -506,12 +504,30 @@ js_GrabImage(duk_context* ctx)
 
 	backbuffer = al_get_backbuffer(g_display);
 	if ((image = create_image(w, h)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to create image bitmap");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): failed to create image bitmap");
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
 	if (!rescale_image(image, g_res_x, g_res_y))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to rescale grabbed image (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): failed to rescale grabbed image (internal error)");
+	duk_push_sphere_image(ctx, image);
+	free_image(image);
+	return 1;
+}
+
+static duk_ret_t
+js_new_Image(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+
+	image_t* image;
+	char*    path;
+
+	path = get_asset_path(filename, "images", false);
+	image = load_image(path);
+	free(path);
+	if (image == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): failed to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -525,6 +541,30 @@ js_Image_finalize(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	free_image(image);
 	return 0;
+}
+
+static duk_ret_t
+js_Image_get_height(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_push_int(ctx, get_image_height(image));
+	return 1;
+}
+
+static duk_ret_t
+js_Image_get_width(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_push_int(ctx, get_image_width(image));
+	return 1;
 }
 
 static duk_ret_t

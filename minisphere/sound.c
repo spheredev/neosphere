@@ -6,28 +6,28 @@
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
 
-static duk_ret_t js_LoadSound            (duk_context* ctx);
-static duk_ret_t js_new_Sound            (duk_context* ctx);
-static duk_ret_t js_Sound_finalize       (duk_context* ctx);
-static duk_ret_t js_Sound_toString       (duk_context* ctx);
-static duk_ret_t js_Sound_get_isPlaying  (duk_context* ctx);
-static duk_ret_t js_Sound_get_isSeekable (duk_context* ctx);
-static duk_ret_t js_Sound_get_Length     (duk_context* ctx);
-static duk_ret_t js_Sound_get_Pan        (duk_context* ctx);
-static duk_ret_t js_Sound_get_Pitch      (duk_context* ctx);
-static duk_ret_t js_Sound_get_Position   (duk_context* ctx);
-static duk_ret_t js_Sound_get_Repeat     (duk_context* ctx);
-static duk_ret_t js_Sound_get_Volume     (duk_context* ctx);
-static duk_ret_t js_Sound_set_Pan        (duk_context* ctx);
-static duk_ret_t js_Sound_set_Pitch      (duk_context* ctx);
-static duk_ret_t js_Sound_set_Position   (duk_context* ctx);
-static duk_ret_t js_Sound_set_Repeat     (duk_context* ctx);
-static duk_ret_t js_Sound_set_Volume     (duk_context* ctx);
-static duk_ret_t js_Sound_clone          (duk_context* ctx);
-static duk_ret_t js_Sound_pause          (duk_context* ctx);
-static duk_ret_t js_Sound_play           (duk_context* ctx);
-static duk_ret_t js_Sound_reset          (duk_context* ctx);
-static duk_ret_t js_Sound_stop           (duk_context* ctx);
+static duk_ret_t js_LoadSound          (duk_context* ctx);
+static duk_ret_t js_new_Sound          (duk_context* ctx);
+static duk_ret_t js_Sound_finalize     (duk_context* ctx);
+static duk_ret_t js_Sound_toString     (duk_context* ctx);
+static duk_ret_t js_Sound_isPlaying    (duk_context* ctx);
+static duk_ret_t js_Sound_isSeekable   (duk_context* ctx);
+static duk_ret_t js_Sound_get_Length   (duk_context* ctx);
+static duk_ret_t js_Sound_get_Pan      (duk_context* ctx);
+static duk_ret_t js_Sound_get_Pitch    (duk_context* ctx);
+static duk_ret_t js_Sound_get_Position (duk_context* ctx);
+static duk_ret_t js_Sound_get_Repeat   (duk_context* ctx);
+static duk_ret_t js_Sound_get_Volume   (duk_context* ctx);
+static duk_ret_t js_Sound_set_Pan      (duk_context* ctx);
+static duk_ret_t js_Sound_set_Pitch    (duk_context* ctx);
+static duk_ret_t js_Sound_set_Position (duk_context* ctx);
+static duk_ret_t js_Sound_set_Repeat   (duk_context* ctx);
+static duk_ret_t js_Sound_set_Volume   (duk_context* ctx);
+static duk_ret_t js_Sound_clone        (duk_context* ctx);
+static duk_ret_t js_Sound_pause        (duk_context* ctx);
+static duk_ret_t js_Sound_play         (duk_context* ctx);
+static duk_ret_t js_Sound_reset        (duk_context* ctx);
+static duk_ret_t js_Sound_stop         (duk_context* ctx);
 
 struct sound
 {
@@ -202,8 +202,8 @@ init_sound_api()
 	register_api_func(g_duktape, NULL, "LoadSound", js_LoadSound);
 	register_api_func(g_duktape, NULL, "Sound", js_new_Sound);
 	register_api_func(g_duktape, "Sound", "toString", js_Sound_toString);
-	register_api_func(g_duktape, "Sound", "isPlaying", js_Sound_get_isPlaying);
-	register_api_func(g_duktape, "Sound", "isSeekable", js_Sound_get_isSeekable);
+	register_api_func(g_duktape, "Sound", "isPlaying", js_Sound_isPlaying);
+	register_api_func(g_duktape, "Sound", "isSeekable", js_Sound_isSeekable);
 	register_api_func(g_duktape, "Sound", "getLength", js_Sound_get_Length);
 	register_api_func(g_duktape, "Sound", "getPan", js_Sound_get_Pan);
 	register_api_func(g_duktape, "Sound", "getPitch", js_Sound_get_Pitch);
@@ -221,8 +221,6 @@ init_sound_api()
 	register_api_func(g_duktape, "Sound", "stop", js_Sound_stop);
 	
 	// register Sound object properties
-	register_api_prop(g_duktape, "Sound", "isPlaying", js_Sound_get_isPlaying, NULL);
-	register_api_prop(g_duktape, "Sound", "isSeekable", js_Sound_get_isSeekable, NULL);
 	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_Length, NULL);
 	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_Pan, js_Sound_set_Pan);
 	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_Pitch, js_Sound_set_Pitch);
@@ -289,7 +287,7 @@ js_Sound_toString(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_get_isPlaying(duk_context* ctx)
+js_Sound_isPlaying(duk_context* ctx)
 {
 	sound_t* sound;
 
@@ -301,7 +299,7 @@ js_Sound_get_isPlaying(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_get_isSeekable(duk_context* ctx)
+js_Sound_isSeekable(duk_context* ctx)
 {
 	duk_push_true(ctx);
 	return 1;

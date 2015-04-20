@@ -190,6 +190,17 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	duk_error_va_raw(ctx, err_code, filename, line_number, fmt, ap);
 }
 
+void
+duk_push_sphere_object(duk_context* ctx, const char* ctor_name)
+{
+	duk_push_object(ctx);
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, ctor_name);
+	duk_get_prop_string(ctx, -1, "prototype");
+	duk_set_prototype(ctx, -4);
+	duk_pop_2(ctx);
+}
+
 static duk_ret_t
 duk_on_create_error(duk_context* ctx)
 {
