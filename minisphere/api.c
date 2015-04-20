@@ -103,22 +103,29 @@ register_api_const(duk_context* ctx, const char* name, double value)
 }
 
 void
+register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn)
+{
+	duk_push_global_object(ctx);
+	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_dup(ctx, -1);
+	duk_put_prop_string(ctx, -3, name);
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "prototype");
+	duk_pop_2(ctx);
+}
+
+void
 register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
 		duk_get_prop_string(ctx, -1, ctor_name);
-		if (!duk_get_prop_string(ctx, -1, "prototype")) {
-			duk_pop(ctx);
-			duk_push_object(ctx); duk_dup(ctx, -1);
-			duk_put_prop_string(ctx, -3, "prototype");
-		}
+		duk_get_prop_string(ctx, -1, "prototype");
 	}
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, name);
-	if (ctor_name != NULL) {
+	if (ctor_name != NULL)
 		duk_pop_2(ctx);
-	}
 	duk_pop(ctx);
 }
 
@@ -131,14 +138,9 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
 		duk_get_prop_string(ctx, -1, ctor_name);
-		if (!(duk_get_prop_string(ctx, -1, "prototype"))) {
-			duk_pop(ctx);
-			duk_push_object(ctx); duk_dup(ctx, -1);
-			duk_put_prop_string(ctx, -3, "prototype");
-		}
+		duk_get_prop_string(ctx, -1, "prototype");
 	}
 	obj_index = duk_normalize_index(ctx, -1);
-
 	duk_push_string(ctx, name);
 	flags = DUK_DEFPROP_HAVE_ENUMERABLE | 0
 		| DUK_DEFPROP_CONFIGURABLE | 0;
@@ -151,10 +153,8 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 		flags |= DUK_DEFPROP_HAVE_SETTER;
 	}
 	duk_def_prop(g_duktape, obj_index, flags);
-	
-	if (ctor_name != NULL) {
+	if (ctor_name != NULL)
 		duk_pop_2(ctx);
-	}
 	duk_pop(ctx);
 }
 

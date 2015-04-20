@@ -198,9 +198,17 @@ stop_sound(sound_t* sound, bool rewind)
 void
 init_sound_api()
 {
-	// register Sound object constructor and methods
+	// register sound API functions
 	register_api_func(g_duktape, NULL, "LoadSound", js_LoadSound);
-	register_api_func(g_duktape, NULL, "Sound", js_new_Sound);
+
+	// register Sound properties and methods
+	register_api_ctor(g_duktape, "Sound", js_new_Sound);
+	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_Length, NULL);
+	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_Pan, js_Sound_set_Pan);
+	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_Pitch, js_Sound_set_Pitch);
+	register_api_prop(g_duktape, "Sound", "position", js_Sound_get_Position, js_Sound_set_Position);
+	register_api_prop(g_duktape, "Sound", "repeat", js_Sound_get_Repeat, js_Sound_set_Repeat);
+	register_api_prop(g_duktape, "Sound", "volume", js_Sound_get_Volume, js_Sound_set_Volume);
 	register_api_func(g_duktape, "Sound", "toString", js_Sound_toString);
 	register_api_func(g_duktape, "Sound", "isPlaying", js_Sound_isPlaying);
 	register_api_func(g_duktape, "Sound", "isSeekable", js_Sound_isSeekable);
@@ -219,14 +227,6 @@ init_sound_api()
 	register_api_func(g_duktape, "Sound", "play", js_Sound_play);
 	register_api_func(g_duktape, "Sound", "reset", js_Sound_reset);
 	register_api_func(g_duktape, "Sound", "stop", js_Sound_stop);
-	
-	// register Sound object properties
-	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_Length, NULL);
-	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_Pan, js_Sound_set_Pan);
-	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_Pitch, js_Sound_set_Pitch);
-	register_api_prop(g_duktape, "Sound", "position", js_Sound_get_Position, js_Sound_set_Position);
-	register_api_prop(g_duktape, "Sound", "repeat", js_Sound_get_Repeat, js_Sound_set_Repeat);
-	register_api_prop(g_duktape, "Sound", "volume", js_Sound_get_Volume, js_Sound_set_Volume);
 }
 
 static duk_ret_t

@@ -47,7 +47,22 @@ init_color_api(void)
 	register_api_func(g_duktape, NULL, "BlendColors", js_BlendColors);
 	register_api_func(g_duktape, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
 	register_api_func(g_duktape, NULL, "CreateColor", js_CreateColor);
-	register_api_func(g_duktape, NULL, "Color", js_new_Color);
+	
+	// register Color methods and properties
+	register_api_ctor(g_duktape, "Color", js_new_Color);
+}
+
+void
+duk_push_sphere_color(duk_context* ctx, color_t color)
+{
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Color");
+	duk_push_number(ctx, color.r);
+	duk_push_number(ctx, color.g);
+	duk_push_number(ctx, color.b);
+	duk_push_number(ctx, color.alpha);
+	duk_new(ctx, 4);
+	duk_remove(ctx, -2);
 }
 
 color_t
@@ -72,19 +87,6 @@ on_error:
 	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Object is not a Sphere color");
 }
 
-void
-duk_push_sphere_color(duk_context* ctx, color_t color)
-{
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Color");
-	duk_push_number(ctx, color.r);
-	duk_push_number(ctx, color.g);
-	duk_push_number(ctx, color.b);
-	duk_push_number(ctx, color.alpha);
-	duk_new(ctx, 4);
-	duk_remove(ctx, -2);
-}
-
 static duk_ret_t
 js_BlendColors(duk_context* ctx)
 {
@@ -104,7 +106,7 @@ js_BlendColorsWeighted(duk_context* ctx)
 	float w2 = duk_require_number(ctx, 3);
 
 	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
 	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
 	return 1;
 }
