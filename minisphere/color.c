@@ -2,9 +2,10 @@
 #include "api.h"
 #include "color.h"
 
-static duk_ret_t js_CreateColor         (duk_context* ctx);
 static duk_ret_t js_BlendColors         (duk_context* ctx);
 static duk_ret_t js_BlendColorsWeighted (duk_context* ctx);
+static duk_ret_t js_CreateColor         (duk_context* ctx);
+static duk_ret_t js_new_Color           (duk_context* ctx);
 static duk_ret_t js_Color_toString      (duk_context* ctx);
 static duk_ret_t js_Color_clone         (duk_context* ctx);
 
@@ -43,9 +44,10 @@ blend_colors(color_t color1, color_t color2, float w1, float w2)
 void
 init_color_api(void)
 {
-	register_api_func(g_duktape, NULL, "CreateColor", js_CreateColor);
 	register_api_func(g_duktape, NULL, "BlendColors", js_BlendColors);
 	register_api_func(g_duktape, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
+	register_api_func(g_duktape, NULL, "CreateColor", js_CreateColor);
+	register_api_func(g_duktape, NULL, "Color", js_new_Color);
 }
 
 color_t
@@ -73,14 +75,38 @@ on_error:
 void
 duk_push_sphere_color(duk_context* ctx, color_t color)
 {
-	duk_push_object(ctx);
-	duk_push_string(ctx, "color"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
-	duk_push_c_function(ctx, js_Color_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_Color_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
-	duk_push_number(ctx, color.r); duk_put_prop_string(ctx, -2, "red");
-	duk_push_number(ctx, color.g); duk_put_prop_string(ctx, -2, "green");
-	duk_push_number(ctx, color.b); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_number(ctx, color.alpha); duk_put_prop_string(ctx, -2, "alpha");
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Color");
+	duk_push_number(ctx, color.r);
+	duk_push_number(ctx, color.g);
+	duk_push_number(ctx, color.b);
+	duk_push_number(ctx, color.alpha);
+	duk_new(ctx, 4);
+	duk_remove(ctx, -2);
+}
+
+static duk_ret_t
+js_BlendColors(duk_context* ctx)
+{
+	color_t color1 = duk_require_sphere_color(ctx, 0);
+	color_t color2 = duk_require_sphere_color(ctx, 1);
+
+	duk_push_sphere_color(ctx, blend_colors(color1, color2, 1, 1));
+	return 1;
+}
+
+static duk_ret_t
+js_BlendColorsWeighted(duk_context* ctx)
+{
+	color_t color1 = duk_require_sphere_color(ctx, 0);
+	color_t color2 = duk_require_sphere_color(ctx, 1);
+	float w1 = duk_require_number(ctx, 2);
+	float w2 = duk_require_number(ctx, 3);
+
+	if (w1 < 0.0 || w2 < 0.0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
+	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
+	return 1;
 }
 
 static duk_ret_t
@@ -101,27 +127,34 @@ js_CreateColor(duk_context* ctx)
 }
 
 static duk_ret_t
-js_BlendColors(duk_context* ctx)
+js_new_Color(duk_context* ctx)
 {
-	color_t color1 = duk_require_sphere_color(ctx, 0);
-	color_t color2 = duk_require_sphere_color(ctx, 1);
-	
-	duk_push_sphere_color(ctx, blend_colors(color1, color2, 1, 1));
-	return 1;
-}
+	int n_args = duk_get_top(ctx);
+	int r = duk_require_int(ctx, 0);
+	int g = duk_require_int(ctx, 1);
+	int b = duk_require_int(ctx, 2);
+	int alpha = n_args >= 4 ? duk_require_int(ctx, 3) : 255;
 
-static duk_ret_t
-js_BlendColorsWeighted(duk_context* ctx)
-{
-	color_t color1 = duk_require_sphere_color(ctx, 0);
-	color_t color2 = duk_require_sphere_color(ctx, 1);
-	float w1 = duk_require_number(ctx, 2);
-	float w2 = duk_require_number(ctx, 3);
+	if (!duk_is_constructor_call(ctx))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Color(): Object constructor must be called via 'new'");
+
+	// clamp components to 8-bit [0-255]
+	r = fmin(fmax(r, 0), 255);
+	g = fmin(fmax(g, 0), 255);
+	b = fmin(fmax(b, 0), 255);
+	alpha = fmin(fmax(alpha, 0), 255);
 	
-	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): Weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
-	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
-	return 1;
+	// construct a Color object
+	duk_push_this(ctx);
+	duk_push_string(ctx, "color"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
+	duk_push_c_function(ctx, js_Color_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
+	duk_push_c_function(ctx, js_Color_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
+	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "red");
+	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "green");
+	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "blue");
+	duk_push_int(ctx, alpha); duk_put_prop_string(ctx, -2, "alpha");
+	duk_pop(ctx);
+	return 0;
 }
 
 static duk_ret_t

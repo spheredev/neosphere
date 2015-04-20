@@ -49,8 +49,9 @@ static const char* const SPHERE_USERAGENT = "v1.5 (compatible; minisphere 1.0.10
 static const char* const EXTENSIONS[] = {
 	"sphere-legacy-api",
 	"minisphere",
-	"frameskip-api",
-	"set-script-function"
+	"sphere-obj-constructors",
+	"set-script-function",
+	"frameskip-api"
 };
 
 extern ALLEGRO_DISPLAY*     g_display;
