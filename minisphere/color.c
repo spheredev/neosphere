@@ -136,7 +136,7 @@ js_new_Color(duk_context* ctx)
 	int alpha = n_args >= 4 ? duk_require_int(ctx, 3) : 255;
 
 	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Color(): Object constructor must be called via 'new'");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Color(): constructor must be used with 'new'");
 
 	// clamp components to 8-bit [0-255]
 	r = fmin(fmax(r, 0), 255);

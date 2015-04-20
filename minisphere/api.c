@@ -108,7 +108,11 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
 		duk_get_prop_string(ctx, -1, ctor_name);
-		duk_get_prop_string(ctx, -1, "prototype");
+		if (!duk_get_prop_string(ctx, -1, "prototype")) {
+			duk_pop(ctx);
+			duk_push_object(ctx); duk_dup(ctx, -1);
+			duk_put_prop_string(ctx, -3, "prototype");
+		}
 	}
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, name);
