@@ -424,21 +424,13 @@ duk_push_sphere_image(duk_context* ctx, image_t* image)
 image_t*
 duk_require_sphere_image(duk_context* ctx, duk_idx_t index)
 {
-	image_t*    image;
-	const char* type;
+	image_t* image;
 
-	index = duk_require_normalize_index(ctx, index);
-	duk_require_object_coercible(ctx, index);
-	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
-		goto on_error;
-	type = duk_get_string(ctx, -1); duk_pop(ctx);
-	if (strcmp(type, "image") != 0) goto on_error;
+	if (!duk_is_sphere_obj(ctx, index, "Image"))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "not a Sphere image");
 	duk_get_prop_string(ctx, index, "\xFF" "ptr");
 	image = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	return image;
-
-on_error:
-	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "object is not a Sphere image");
 }
 
 static duk_ret_t
