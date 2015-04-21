@@ -1,7 +1,5 @@
 typedef struct socket socket_t;
 
-void duk_push_sphere_socket(duk_context* ctx, socket_t* socket);
-
 extern socket_t* connect_to_host     (const char* hostname, int port, size_t buffer_size);
 extern socket_t* listen_on_port      (int port, size_t buffer_size, int max_backlog);
 extern socket_t* ref_socket          (socket_t* socket);

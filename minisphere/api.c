@@ -37,7 +37,7 @@ static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 static int s_framerate = 0;
 
 void
-init_api(duk_context* ctx)
+initialize_api(duk_context* ctx)
 {
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"

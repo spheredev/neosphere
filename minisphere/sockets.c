@@ -11,6 +11,7 @@ static duk_ret_t js_GetLocalName              (duk_context* ctx);
 static duk_ret_t js_GetLocalAddress           (duk_context* ctx);
 static duk_ret_t js_ListenOnPort              (duk_context* ctx);
 static duk_ret_t js_OpenAddress               (duk_context* ctx);
+static duk_ret_t js_new_Socket                (duk_context* ctx);
 static duk_ret_t js_Socket_finalize           (duk_context* ctx);
 static duk_ret_t js_Socket_toString           (duk_context* ctx);
 static duk_ret_t js_Socket_isConnected        (duk_context* ctx);
@@ -232,30 +233,24 @@ on_dyad_receive(dyad_Event* e)
 void
 init_sockets_api(void)
 {
+	// core Sockets API functions
 	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
 	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
+	
+	// Socket object
 	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
 	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
-}
-
-void
-duk_push_sphere_socket(duk_context* ctx, socket_t* socket)
-{
-	ref_socket(socket);
-	duk_push_object(ctx);
-	duk_push_string(ctx, "socket"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
-	duk_push_pointer(ctx, socket); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, js_Socket_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, js_Socket_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_Socket_acceptNext, DUK_VARARGS); duk_put_prop_string(ctx, -2, "acceptNext");
-	duk_push_c_function(ctx, js_Socket_isConnected, DUK_VARARGS); duk_put_prop_string(ctx, -2, "isConnected");
-	duk_push_c_function(ctx, js_Socket_getPendingReadSize, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getPendingReadSize");
-	duk_push_c_function(ctx, js_Socket_getRemoteAddress, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemoteAddress");
-	duk_push_c_function(ctx, js_Socket_getRemotePort, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getRemotePort");
-	duk_push_c_function(ctx, js_Socket_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
-	duk_push_c_function(ctx, js_Socket_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
-	duk_push_c_function(ctx, js_Socket_readString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "readString");
-	duk_push_c_function(ctx, js_Socket_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
+	register_api_ctor(g_duktape, "Socket", js_new_Socket, js_Socket_finalize);
+	register_api_func(g_duktape, "Socket", "toString", js_Socket_toString);
+	register_api_func(g_duktape, "Socket", "acceptNext", js_Socket_acceptNext);
+	register_api_func(g_duktape, "Socket", "isConnected", js_Socket_isConnected);
+	register_api_func(g_duktape, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	register_api_func(g_duktape, "Socket", "getRemoteAddress", js_Socket_getRemoteAddress);
+	register_api_func(g_duktape, "Socket", "getRemotePort", js_Socket_getRemotePort);
+	register_api_func(g_duktape, "Socket", "close", js_Socket_close);
+	register_api_func(g_duktape, "Socket", "read", js_Socket_read);
+	register_api_func(g_duktape, "Socket", "readString", js_Socket_readString);
+	register_api_func(g_duktape, "Socket", "write", js_Socket_write);
 }
 
 static duk_ret_t
@@ -276,39 +271,56 @@ static duk_ret_t
 js_ListenOnPort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int port = duk_require_int(ctx, 0);
-	int max_backlog = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+	duk_require_int(ctx, 0);
+	if (n_args >= 2)
+		duk_require_int(ctx, 1);
+	else
+		duk_push_int(ctx, 0);
 	
-	socket_t* socket;
-
-	if (socket = listen_on_port(port, 1024, max_backlog)) {
-		duk_push_sphere_socket(ctx, socket);
-		free_socket(socket);
-		return 1;
-	}
-	else {
-		duk_push_null(ctx);
-		return 1;
-	}
+	js_new_Socket(ctx);
+	return 1;
 }
 
 static duk_ret_t
 js_OpenAddress(duk_context* ctx)
 {
-	const char* ip = duk_require_string(ctx, 0);
-	int port = duk_require_int(ctx, 1);
+	duk_require_string(ctx, 0);
+	duk_require_int(ctx, 1);
 	
-	socket_t* socket;
+	js_new_Socket(ctx);
+	return 1;
+}
 
-	if ((socket = connect_to_host(ip, port, 1024)) != NULL) {
-		duk_push_sphere_socket(ctx, socket);
-		free_socket(socket);
-		return 1;
+static duk_ret_t
+js_new_Socket(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	
+	const char* ip;
+	int         max_backlog;
+	int         port;
+	socket_t*   socket;
+
+	if (duk_is_number(ctx, 0)) {
+		port = duk_require_int(ctx, 0);
+		max_backlog = n_args >= 2 ? duk_require_int(ctx, 1) : 16;
+
+		socket_t* socket;
+
+		if (socket = listen_on_port(port, 1024, max_backlog))
+			duk_push_sphere_obj(ctx, "Socket", socket);
+		else
+			duk_push_null(ctx);
 	}
 	else {
-		duk_push_null(ctx);
-		return 1;
+		ip = duk_require_string(ctx, 0);
+		port = duk_require_int(ctx, 1);
+		if ((socket = connect_to_host(ip, port, 1024)) != NULL)
+			duk_push_sphere_obj(ctx, "Socket", socket);
+		else
+			duk_push_null(ctx);
 	}
+	return 1;
 }
 
 static duk_ret_t
@@ -316,7 +328,7 @@ js_Socket_finalize(duk_context* ctx)
 {
 	socket_t* socket;
 
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, 0, "Socket");
 	free_socket(socket);
 	return 1;
 }
@@ -334,7 +346,7 @@ js_Socket_isConnected(duk_context* ctx)
 	socket_t* socket;
 	
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket != NULL) {
 		if (is_socket_server(socket) && socket->max_backlog > 0)
@@ -355,7 +367,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has already been closed");
@@ -373,7 +385,7 @@ js_Socket_getRemoteAddress(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has already been closed");
@@ -393,7 +405,7 @@ js_Socket_getRemotePort(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has already been closed");
@@ -414,7 +426,7 @@ js_Socket_acceptNext(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:acceptNext(): Socket has already been closed");
@@ -422,8 +434,7 @@ js_Socket_acceptNext(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:acceptNext(): Not valid on non-listening socket");
 	new_socket = accept_next_socket(socket);
 	if (new_socket) {
-		duk_push_sphere_socket(ctx, new_socket);
-		free_socket(new_socket);
+		duk_push_sphere_obj(ctx, "Socket", new_socket);
 	}
 	else {
 		duk_push_null(ctx);
@@ -437,7 +448,7 @@ js_Socket_close(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_pop(ctx);
 	if (socket == NULL)
@@ -456,7 +467,7 @@ js_Socket_read(duk_context* ctx)
 	socket_t*    socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (length <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): At least 1 byte must be read (%i)", length);
@@ -486,7 +497,7 @@ js_Socket_readString(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has already been closed");
@@ -513,7 +524,7 @@ js_Socket_write(duk_context* ctx)
 	size_t         write_size;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); socket = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (duk_is_string(ctx, 0))
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);

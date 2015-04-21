@@ -631,7 +631,7 @@ initialize_engine(void)
 	// initialize JavaScript API
 	if (!(g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	init_api(g_duktape);
+	initialize_api(g_duktape);
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();
