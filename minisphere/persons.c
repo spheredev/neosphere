@@ -204,7 +204,7 @@ destroy_person(person_t* person)
 {
 	int i, j;
 
-	// call person's destroy script *before* renouncing leadership
+	// call the person's destroy script *before* renouncing leadership
 	// the destroy script may want to reassign followers (they will be orphaned otherwise), so
 	// we want to give it a chance to do so.
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
@@ -594,14 +594,16 @@ render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 void
 reset_persons(bool keep_existing)
 {
-	point3_t  map_origin;
-	person_t* person;
+	unsigned int id;
+	point3_t     map_origin;
+	person_t*    person;
 	
 	int i, j;
 
 	map_origin = get_map_origin();
 	for (i = 0; i < s_num_persons; ++i) {
 		person = s_persons[i];
+		id = person->id;
 		if (!keep_existing)
 			person->num_commands = 0;
 		if (person->is_persistent || keep_existing) {
@@ -856,7 +858,7 @@ update_person(person_t* person)
 			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
 
 		// run through the queue, stopping after the first non-immediate command
-		is_finished = person->num_commands == 0;
+		is_finished = person->num_commands == 0 || !does_person_exist(person_id);
 		while (!is_finished) {
 			command = person->commands[0];
 			--person->num_commands;
@@ -895,12 +897,16 @@ update_person(person_t* person)
 		command_person(person, facing);
 	}
 
+	// check that the person didn't mysteriously disappear...
+	if (!does_person_exist(person_id))
+		return;  // they probably got eaten by a hunger-pig or something.
+
 	// if the person's position changed, record it in their step history
 	if (has_person_moved(person)) {
 		record_step(person);
 	}
 
-	// recursively update follower chain
+	// recursively update the follower chain
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader != person)
 			continue;
