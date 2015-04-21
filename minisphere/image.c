@@ -424,20 +424,14 @@ duk_push_sphere_image(duk_context* ctx, image_t* image)
 image_t*
 duk_require_sphere_image(duk_context* ctx, duk_idx_t index)
 {
-	image_t* image;
-
-	if (!duk_is_sphere_obj(ctx, index, "Image"))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "not a Sphere image");
-	duk_get_prop_string(ctx, index, "\xFF" "ptr");
-	image = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	return image;
+	return duk_require_sphere_obj(ctx, index, "Image");
 }
 
 static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): no system arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): No system arrow image available");
 	duk_push_sphere_image(ctx, s_sys_arrow);
 	return 1;
 }
@@ -446,7 +440,7 @@ static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): no system down arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): No system down arrow image available");
 	duk_push_sphere_image(ctx, s_sys_dn_arrow);
 	return 1;
 }
@@ -455,7 +449,7 @@ static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): no system up arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): No system up arrow image available");
 	duk_push_sphere_image(ctx, s_sys_up_arrow);
 	return 1;
 }
@@ -483,12 +477,12 @@ js_GrabImage(duk_context* ctx)
 
 	backbuffer = al_get_backbuffer(g_display);
 	if ((image = create_image(w, h)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): failed to create new image (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to create new image");
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
 	al_set_target_backbuffer(g_display);
 	if (!rescale_image(image, g_res_x, g_res_y))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): failed to rescale grabbed image (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to rescale grabbed image");
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -497,6 +491,8 @@ js_GrabImage(duk_context* ctx)
 static duk_ret_t
 js_new_Image(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
+	
 	const char* filename;
 	color_t     fill_color;
 	image_t*    image;
@@ -504,28 +500,26 @@ js_new_Image(duk_context* ctx)
 	char*       path;
 	int         width, height;
 
-	if (duk_is_string(ctx, 0)) {
-		filename = duk_get_string(ctx, 0);
-		path = get_asset_path(filename, "images", false);
-		image = load_image(path);
-		free(path);
-		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): failed to load image file '%s'", filename);
-	}
-	else if (duk_is_sphere_obj(ctx, 0, "Surface")) {
-		src_image = duk_require_sphere_surface(ctx, 0);
-		if (!(image = clone_image(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): failed to create image from surface (internal error)");
-		duk_push_sphere_image(ctx, image);
-		free_image(image);
-	}
-	else {
+	if (n_args >= 3) {
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		fill_color = duk_require_sphere_color(ctx, 2);
 		if (!(image = create_image(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): failed to create new image (internal error)");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to create new image");
 		fill_image(image, fill_color);
+	}
+	else if (duk_is_sphere_obj(ctx, 0, "Surface")) {
+		src_image = duk_require_sphere_surface(ctx, 0);
+		if (!(image = clone_image(src_image)))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to create image from surface");
+	}
+	else {
+		filename = duk_require_string(ctx, 0);
+		path = get_asset_path(filename, "images", false);
+		image = load_image(path);
+		free(path);
+		if (image == NULL)
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	}
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
@@ -537,7 +531,7 @@ js_Image_finalize(duk_context* ctx)
 {
 	image_t* image;
 
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, 0);
 	free_image(image);
 	return 0;
 }
@@ -548,7 +542,7 @@ js_Image_get_height(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	duk_push_int(ctx, get_image_height(image));
 	return 1;
@@ -560,7 +554,7 @@ js_Image_get_width(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	duk_push_int(ctx, get_image_width(image));
 	return 1;
@@ -582,7 +576,7 @@ js_Image_blit(duk_context* ctx)
 	image_t* image;
 	
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame()) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
@@ -598,7 +592,7 @@ js_Image_blitMask(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame()) al_draw_tinted_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 	return 0;
@@ -611,7 +605,7 @@ js_Image_createSurface(duk_context* ctx)
 	image_t* new_image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
@@ -630,7 +624,7 @@ js_Image_rotateBlit(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
 		al_draw_rotated_bitmap(get_image_bitmap(image), image->width / 2, image->height / 2, x, y, angle, 0x0);
@@ -648,7 +642,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
 		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
@@ -672,7 +666,7 @@ js_Image_transformBlit(duk_context* ctx)
 	ALLEGRO_COLOR vertex_color;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	vertex_color = al_map_rgba(255, 255, 255, 255);
 	ALLEGRO_VERTEX v[] = {
@@ -703,7 +697,7 @@ js_Image_transformBlitMask(duk_context* ctx)
 	image_t*      image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	vtx_color = al_map_rgba(mask.r, mask.g, mask.b, mask.alpha);
 	ALLEGRO_VERTEX v[] = {
@@ -727,7 +721,7 @@ js_Image_zoomBlit(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
 		al_draw_scaled_bitmap(get_image_bitmap(image), 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
@@ -745,7 +739,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); image = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
 		al_draw_tinted_scaled_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),

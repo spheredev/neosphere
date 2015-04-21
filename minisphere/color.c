@@ -72,8 +72,7 @@ duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 {
 	color_t color;
 	
-	if (!duk_is_sphere_obj(ctx, index, "Color"))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "not a Sphere color");
+	duk_require_sphere_obj(ctx, index, "Color");
 	duk_get_prop_string(ctx, index, "red"); color.r = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "green"); color.g = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "blue"); color.b = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);

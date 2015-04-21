@@ -185,7 +185,7 @@ js_Logger_beginBlock(duk_context* ctx)
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); logger = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	if (!begin_log_block(logger, title))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): Failed to create new log block (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): Failed to create new log block");
 	return 0;
 }
 

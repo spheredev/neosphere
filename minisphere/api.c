@@ -211,7 +211,7 @@ void
 duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata, duk_c_function finalizer)
 {
 	duk_push_object(ctx);
-	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (finalizer != NULL) {
 		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
 		duk_set_finalizer(ctx, -2);
@@ -221,6 +221,18 @@ duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata, duk_c_
 	duk_get_prop_string(ctx, -1, "prototype");
 	duk_set_prototype(ctx, -4);
 	duk_pop_2(ctx);
+}
+
+void*
+duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+{
+	void* udata;
+
+	index = duk_require_normalize_index(ctx, index);
+	if (!duk_is_sphere_obj(ctx, index, ctor_name))
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "not a Sphere %s", ctor_name);
+	duk_get_prop_string(ctx, index, "\xFF" "udata"); udata = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	return udata;
 }
 
 static duk_ret_t
@@ -614,7 +626,7 @@ js_ExecuteGame(duk_context* ctx)
 	if (!(path = get_sys_asset_path(filename, "games")))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Unable to execute game '%s'", filename);
 	if (!(g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP))))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Failed to save last game path (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Failed to save last game path");
 	al_destroy_path(g_game_path);
 	g_game_path = al_create_path(path);
 	if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {

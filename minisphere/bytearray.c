@@ -193,7 +193,7 @@ js_CreateByteArray(duk_context* ctx)
 	if (size < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "CreateByteArray(): Size cannot be negative (%i)", size);
 	if (!(array = new_bytearray(size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateByteArray(): Failed to create new byte array (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateByteArray(): Failed to create new byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -208,7 +208,7 @@ js_CreateByteArrayFromString(duk_context* ctx)
 	if (string->length > INT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "CreateByteArrayFromString(): Input string too large, size of byte array cannot exceed 2 GB");
 	if (!(array = bytearray_from_lstring(string)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateByteArrayFromString(): Failed to create byte array from string (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateByteArrayFromString(): Failed to create byte array from string");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -307,7 +307,7 @@ js_ByteArray_concat(duk_context* ctx)
 	if (array->size + array2->size > INT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:concat(): Unable to concatenate, final size would exceed 2 GB (size1: %u, size2: %u)", array->size, array2->size);
 	if (!(new_array = concat_bytearrays(array, array2)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:concat(): Failed to create concatenated byte array (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:concat(): Failed to create concatenated byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -330,7 +330,7 @@ js_ByteArray_slice(duk_context* ctx)
 	if (end_norm < start || end_norm > array->size)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:slice(): Start and/or end values out of bounds (start: %i, end: %i - size: %i)", start, end_norm, array->size);
 	if (!(new_array = slice_bytearray(array, start, end_norm - start)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:slice(): Failed to create sliced byte array (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:slice(): Failed to create sliced byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }

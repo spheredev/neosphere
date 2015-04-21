@@ -132,7 +132,7 @@ js_RawFile_setPosition(duk_context* ctx)
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): File has already been closed");
 	if (!fseek(file, new_pos, SEEK_SET))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): Failed to set read/write position (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): Failed to set read/write position");
 	return 0;
 }
 
@@ -168,10 +168,10 @@ js_RawFile_read(duk_context* ctx)
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
 	if (!(read_buffer = malloc(num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
 	num_bytes = fread(read_buffer, 1, num_bytes, file);
 	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }

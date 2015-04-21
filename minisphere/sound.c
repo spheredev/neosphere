@@ -264,7 +264,7 @@ js_Sound_finalize(duk_context* ctx)
 {
 	sound_t* sound;
 
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, 0, "Sound");
 	free_sound(sound);
 	return 0;
 }
@@ -282,7 +282,7 @@ js_Sound_isPlaying(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_boolean(ctx, is_sound_playing(sound));
 	return 1;
@@ -301,7 +301,7 @@ js_Sound_get_Length(duk_context* ctx)
 	sound_t* sound;
 	
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_int(ctx, get_sound_length(sound));
 	return 1;
@@ -313,7 +313,7 @@ js_Sound_get_Pan(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_int(ctx, get_sound_pan(sound) * 255);
 	return 1;
@@ -325,7 +325,7 @@ js_Sound_get_Pitch(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_number(ctx, get_sound_pitch(sound));
 	return 1;
@@ -337,7 +337,7 @@ js_Sound_get_Position(duk_context* ctx)
 	sound_t* sound;
 	
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_int(ctx, get_sound_seek(sound));
 	return 1;
@@ -349,7 +349,7 @@ js_Sound_get_Repeat(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_boolean(ctx, is_sound_looping(sound));
 	return 1;
@@ -361,7 +361,7 @@ js_Sound_get_Volume(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	duk_push_int(ctx, get_sound_gain(sound) * 255);
 	return 1;
@@ -375,7 +375,7 @@ js_Sound_set_Pan(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	set_sound_pan(sound, (float)new_pan / 255);
 	return 0;
@@ -389,7 +389,7 @@ js_Sound_set_Pitch(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	set_sound_pitch(sound, new_pitch);
 	return 0;
@@ -403,7 +403,7 @@ js_Sound_set_Position(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	seek_sound(sound, new_pos);
 	return 0;
@@ -417,7 +417,7 @@ js_Sound_set_Repeat(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	set_sound_looping(sound, is_looped);
 	return 0;
@@ -431,7 +431,7 @@ js_Sound_set_Volume(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	set_sound_gain(sound, (float)new_gain / 255);
 	return 0;
@@ -443,7 +443,7 @@ js_Sound_pause(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	stop_sound(sound, false);
 	return 0;
@@ -458,7 +458,7 @@ js_Sound_play(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	if (n_args >= 1) {
 		reload_sound(sound);
@@ -475,7 +475,7 @@ js_Sound_reset(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	seek_sound(sound, 0);
 	play_sound(sound);
@@ -488,7 +488,7 @@ js_Sound_stop(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); sound = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	stop_sound(sound, true);
 	return 0;

@@ -340,7 +340,7 @@ js_Socket_isConnected(duk_context* ctx)
 		if (is_socket_server(socket) && socket->max_backlog > 0)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:isConnected(): Not valid on listen-only sockets");
 		if (is_socket_data_lost(socket))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure (internal error)");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:isConnected(): Socket has dropped incoming data due to allocation failure");
 		duk_push_boolean(ctx, is_socket_live(socket));
 	}
 	else {
@@ -362,7 +362,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has dropped incoming data due to allocation failure");
 	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
 	return 1;
 }
@@ -380,7 +380,7 @@ js_Socket_getRemoteAddress(duk_context* ctx)
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket has dropped incoming data due to allocation failure");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemoteAddress(): Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
@@ -400,7 +400,7 @@ js_Socket_getRemotePort(duk_context* ctx)
 	if (is_socket_server(socket) && socket->max_backlog > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemotePort(): Not valid on listen-only sockets");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket has dropped incoming data due to allocation failure");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getRemotePort(): Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
@@ -467,12 +467,12 @@ js_Socket_read(duk_context* ctx)
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has dropped incoming data due to allocation failure");
 	if (!(read_buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer");
 	read_socket(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to create byte array (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -495,9 +495,9 @@ js_Socket_readString(duk_context* ctx)
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has dropped incoming data due to allocation failure");
 	if (!(buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer");
 	read_socket(socket, buffer, length);
 	duk_push_lstring(ctx, (char*)buffer, length);
 	free(buffer);
@@ -529,7 +529,7 @@ js_Socket_write(duk_context* ctx)
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has dropped incoming data due to allocation failure (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has dropped incoming data due to allocation failure");
 	write_socket(socket, payload, write_size);
 	return 0;
 }

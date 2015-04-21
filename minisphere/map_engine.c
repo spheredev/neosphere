@@ -1698,7 +1698,7 @@ js_SetDelayScript(duk_context* ctx)
 	if (++s_num_delay_scripts > s_max_delay_scripts) {
 		s_max_delay_scripts = s_num_delay_scripts * 2;
 		if (!(s_delay_scripts = realloc(s_delay_scripts, s_max_delay_scripts * sizeof(struct delay_script))))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDelayScript(): Failed to enlarge delay script queue (internal error)");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetDelayScript(): Failed to enlarge delay script queue");
 	}
 	delay = &s_delay_scripts[s_num_delay_scripts - 1];
 	delay->script = script;
@@ -1888,7 +1888,7 @@ js_SetTileName(duk_context* ctx)
 	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileName(): Tile index out of range (%i)", tile_index);
 	if (!set_tile_name(s_map->tileset, tile_index, name))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileName(): Failed to set tile name (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileName(): Failed to set tile name");
 	free_lstring(name);
 	return 0;
 }
