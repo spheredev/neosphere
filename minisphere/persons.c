@@ -459,12 +459,15 @@ bool
 call_person_script(const person_t* person, int type, bool use_default)
 {
 	const person_t* last_person;
+	int             person_id;
 
+	person_id = person->id;
 	last_person = s_current_person;
 	s_current_person = person;
 	if (use_default)
 		run_script(s_def_scripts[type], false);
-	run_script(person->scripts[type], false);
+	if (does_person_exist(person_id))
+		run_script(person->scripts[type], false);
 	s_current_person = last_person;
 	return true;
 }
