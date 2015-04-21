@@ -143,7 +143,7 @@ init_bytearray_api(void)
 	// ByteArray object
 	register_api_func(g_duktape, NULL, "CreateByteArray", js_CreateByteArray);
 	register_api_func(g_duktape, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
-	register_api_ctor(g_duktape, "ByteArray", js_new_ByteArray);
+	register_api_ctor(g_duktape, "ByteArray", js_new_ByteArray, js_ByteArray_finalize);
 	register_api_prop(g_duktape, "ByteArray", "length", js_ByteArray_get_length, NULL);
 	register_api_func(g_duktape, "ByteArray", "toString", js_ByteArray_toString);
 	register_api_func(g_duktape, "ByteArray", "concat", js_ByteArray_concat);
@@ -153,7 +153,7 @@ init_bytearray_api(void)
 void
 duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 {
-	duk_push_sphere_obj(ctx, "ByteArray", ref_bytearray(array), js_ByteArray_finalize);
+	duk_push_sphere_obj(ctx, "ByteArray", ref_bytearray(array));
 
 	// return proxy object so we can catch array accesses
 	// note: this breaks `instanceof` for ByteArray objects, unfortunately.

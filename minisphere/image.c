@@ -400,7 +400,7 @@ init_image_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GrabImage", js_GrabImage);
 
 	// register Image properties and methods
-	register_api_ctor(ctx, "Image", js_new_Image);
+	register_api_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
 	register_api_prop(ctx, "Image", "height", js_Image_get_height, NULL);
 	register_api_prop(ctx, "Image", "width", js_Image_get_width, NULL);
 	register_api_func(ctx, "Image", "toString", js_Image_toString);
@@ -418,7 +418,7 @@ init_image_api(duk_context* ctx)
 void
 duk_push_sphere_image(duk_context* ctx, image_t* image)
 {
-	duk_push_sphere_obj(ctx, "Image", ref_image(image), js_Image_finalize);
+	duk_push_sphere_obj(ctx, "Image", ref_image(image));
 }
 
 image_t*

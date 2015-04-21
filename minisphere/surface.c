@@ -62,7 +62,7 @@ init_surface_api(void)
 	// register Surface methods and properties
 	register_api_func(g_duktape, NULL, "CreateSurface", js_CreateSurface);
 	register_api_func(g_duktape, NULL, "LoadSurface", js_LoadSurface);
-	register_api_ctor(g_duktape, "Surface", js_new_Surface);
+	register_api_ctor(g_duktape, "Surface", js_new_Surface, js_Surface_finalize);
 	register_api_prop(g_duktape, "Surface", "height", js_Surface_get_height, NULL);
 	register_api_prop(g_duktape, "Surface", "width", js_Surface_get_width, NULL);
 	register_api_func(g_duktape, "Surface", "toString", js_Surface_toString);
@@ -94,7 +94,7 @@ init_surface_api(void)
 void
 duk_push_sphere_surface(duk_context* ctx, image_t* image)
 {
-	duk_push_sphere_obj(ctx, "Surface", ref_image(image), js_Surface_finalize);
+	duk_push_sphere_obj(ctx, "Surface", ref_image(image));
 }
 
 image_t*

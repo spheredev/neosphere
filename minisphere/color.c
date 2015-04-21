@@ -49,7 +49,7 @@ init_color_api(void)
 	register_api_func(g_duktape, NULL, "CreateColor", js_CreateColor);
 	
 	// register Color methods and properties
-	register_api_ctor(g_duktape, "Color", js_new_Color);
+	register_api_ctor(g_duktape, "Color", js_new_Color, NULL);
 	register_api_func(g_duktape, "Color", "toString", js_Color_toString);
 	register_api_func(g_duktape, "Color", "clone", js_Color_clone);
 }
@@ -137,7 +137,7 @@ js_new_Color(duk_context* ctx)
 	alpha = fmin(fmax(alpha, 0), 255);
 	
 	// construct a Color object
-	duk_push_sphere_obj(ctx, "Color", NULL, NULL);
+	duk_push_sphere_obj(ctx, "Color", NULL);
 	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "red");
 	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "green");
 	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "blue");

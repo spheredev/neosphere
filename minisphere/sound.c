@@ -202,7 +202,7 @@ init_sound_api()
 	register_api_func(g_duktape, NULL, "LoadSound", js_LoadSound);
 
 	// register Sound properties and methods
-	register_api_ctor(g_duktape, "Sound", js_new_Sound);
+	register_api_ctor(g_duktape, "Sound", js_new_Sound, js_Sound_finalize);
 	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_Length, NULL);
 	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_Pan, js_Sound_set_Pan);
 	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_Pitch, js_Sound_set_Pitch);
@@ -255,7 +255,7 @@ js_new_Sound(duk_context* ctx)
 	free(sound_path);
 	if (sound == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): failed to load sound file '%s'", filename);
-	duk_push_sphere_obj(ctx, "Sound", sound, js_Sound_finalize);
+	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
 

@@ -103,12 +103,16 @@ register_api_const(duk_context* ctx, const char* name, double value)
 }
 
 void
-register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn)
+register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
 {
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_push_object(ctx);
 	duk_push_string(ctx, name); duk_put_prop_string(ctx, -2, "\xFF" "ctor");
+	if (finalizer != NULL) {
+		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
+		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
+	}
 	duk_put_prop_string(ctx, -2, "prototype");
 	duk_put_prop_string(ctx, -2, name);
 	duk_pop(ctx);
@@ -208,18 +212,21 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 }
 
 void
-duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata, duk_c_function finalizer)
+duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
 {
-	duk_push_object(ctx);
+	duk_idx_t index;
+	
+	duk_push_object(ctx); index = duk_normalize_index(ctx, -1);
 	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	if (finalizer != NULL) {
-		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
-		duk_set_finalizer(ctx, -2);
-	}
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, ctor_name);
 	duk_get_prop_string(ctx, -1, "prototype");
-	duk_set_prototype(ctx, -4);
+	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor")) {
+		duk_set_finalizer(ctx, index);
+	}
+	else
+		duk_pop(ctx);
+	duk_set_prototype(ctx, index);
 	duk_pop_2(ctx);
 }
 
