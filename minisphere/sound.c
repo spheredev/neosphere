@@ -233,14 +233,10 @@ static duk_ret_t
 js_LoadSound(duk_context* ctx)
 {
 	duk_int_t n_args = duk_get_top(ctx);
-	const char* filename = duk_require_string(ctx, 0);
-	duk_bool_t is_stream = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
-
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Sound");
-	duk_push_string(ctx, filename);
-	duk_push_boolean(ctx, is_stream);
-	duk_new(ctx, 2);
+	duk_require_string(ctx, 0);
+	if (n_args >= 2) duk_require_boolean(ctx, 1);
+	if (duk_safe_call(ctx, js_new_Sound, 0, 1) != 0)
+		duk_throw(ctx);
 	return 1;
 }
 
@@ -254,19 +250,13 @@ js_new_Sound(duk_context* ctx)
 	sound_t* sound;
 	char*    sound_path;
 
-	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Sound(): constructor must be used with 'new'");
-	
 	sound_path = get_asset_path(filename, "sounds", false);
 	sound = load_sound(sound_path, is_stream);
 	free(sound_path);
 	if (sound == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): failed to load sound file '%s'", filename);
-	
-	duk_push_this(ctx);
-	duk_push_pointer(ctx, sound); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, js_Sound_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	return 0;
+	duk_push_sphere_obj(ctx, "Sound", sound, js_Sound_finalize);
+	return 1;
 }
 
 static duk_ret_t
