@@ -361,11 +361,11 @@ js_Socket_get_remoteAddress(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Socket has been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemoteAddress: Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
 	return 1;
 }
@@ -379,11 +379,11 @@ js_Socket_get_remotePort(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Socket has been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
 	return 1;
 }
@@ -619,11 +619,11 @@ js_IOSocket_get_remoteAddress(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress: Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress - Socket has been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress: Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress: Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress - Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
 	return 1;
 }
@@ -637,11 +637,11 @@ js_IOSocket_get_remotePort(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort: Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort - Socket has been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort: Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort: Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort - Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
 	return 1;
 }

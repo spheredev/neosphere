@@ -114,7 +114,7 @@ js_RawFile_get_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:getPosition(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has already been closed");
 	duk_push_int(ctx, ftell(file));
 	return 1;
 }
@@ -130,9 +130,9 @@ js_RawFile_set_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has already been closed");
 	if (!fseek(file, new_pos, SEEK_SET))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:setPosition(): Failed to set read/write position");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - Failed to set read/write position");
 	return 0;
 }
 
@@ -146,7 +146,7 @@ js_RawFile_get_size(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:getPosition(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size - File has already been closed");
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
 	duk_push_int(ctx, ftell(file));
