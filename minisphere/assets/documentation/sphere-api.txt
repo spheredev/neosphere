@@ -33,10 +33,30 @@ GetExtensions()
 
   Returns an array of strings representing the engine's built-in
   capabilities. minisphere currently supports the following extensions:
-    o `sphere-legacy-api` - Sphere 1.x API support
-    o `minisphere` - minisphere-specific API extensions
-    o `frameskip-api` - Standardized APIs for managing frame skipping
-    o `set-script-function` - Functions can be passed to SetxxxScript()
+  
+    * `sphere-legacy-api`
+      Sphere 1.x API support
+    
+    * `minisphere`
+      minisphere-specific API extensions
+      
+    * `sphere-obj-constructors`
+      Sphere objects can be created via `new`, e.g.
+      var sound = new Sound("munch.wav");
+      
+    * `sphere-obj-props`
+      Sphere objects include virtual properties, e.g.:
+      sound_obj.volume = 0.5;
+      
+    * `sphere-new-sockets`
+      Support for IOSocket and ListeningSocket objects
+    
+    * `frameskip-api`
+      API functions for managing frame skipping
+      
+    * `set-script-function`
+      Engine allows passing JavaScript functions to SetxxxScript(), e.g.
+      SetUpdateScript(function() { Threads.updateAll(); });
     
 
 Basic Debugging
@@ -67,8 +87,8 @@ Alert(message[, stack_offset])
   examining variables at runtime when debugging.
 
 
-Dependency Management
----------------------
+Script Management
+-----------------
 
 Outside of very simple one-off games, most projects will consist of
 multiple script files. You will need to know how to use the functions
@@ -108,6 +128,7 @@ GetGameList()
 
   Returns an array of objects, each representing a game directory found
   in [engine root]/games. Each object has the following properties:
+    
     .name:        The game's title, taken from game.sgm.
     .directory:   The directory the game was found in, relative to
                   [engine root]/games.
@@ -130,3 +151,97 @@ Exit()
   Exits the current game and shuts down the engine. If the current game
   was started by via ExecuteGame(), the original game will be restarted
   following the Exit() call.
+
+
+Map Engine
+----------
+
+minisphere's map engine is fully compatible with the one found in
+Sphere 1.5 and very powerful.  It's also very easy to get up and
+running.
+
+MapEngine(map_file, framerate);
+
+  Starts the map engine, loading `map_file` as the initial map.
+  `framerate` specifies the framerate the map engine will run at; a
+  framerate of 0 will run unthrottled, which may be useful for
+  benchmarks but is generally useless otherwise.
+  
+  `map_file` is assumed to be relative to the "maps" directory in the
+  game.sgm root.
+
+ExitMapEngine()
+  
+  Tells the map engine to shut down at the start of the next frame.
+
+ChangeMap(map_file)
+
+  Loads `map_file` into the map engine. This destroys any transient
+  persons automatically. Transient persons are those defined in the map
+  file as well as any created by passing `true` as the third argument
+  to CreatePerson().
+
+AttachCamera(person)
+  
+  Attaches the camera to `person`. The camera will remain centered on
+  whichever person it's attached to as they move about the map.
+
+AttachInput(person)
+  
+  Grants the player control of `person`.
+
+UpdateMapEngine()
+  
+  Updates the map engine the next frame. Used to keep the map engine
+  operating when running a tight loop.
+
+RenderMap()
+  
+  Renders the current map and set of persons to the backbuffer. Used
+  along with UpdateMapEngine() to keep the map engine operating when
+  running a tight loop.
+
+
+Persons Management
+------------------
+
+Persons are the Sphere term for what most RPG map engines call
+'entities'.  They are so named for their typical use case--representing
+persons on a map. Typically you create one or more persistent persons
+to represent your player characters, and the rest are transient, to be
+destroyed when a new map is loaded.
+
+CreatePerson(name, spriteset_file, destroy_with_map)
+  
+  Creates a person using the spriteset stored in `spriteset_file`.
+  If `destroy_with_map` is true, the person is transient and will be
+  automatically destroyed (deleted) when a new map is loaded via
+  ChangeMap().
+
+DestroyPerson(name)
+  
+  Destroys the person, removing it from play. This works on persons
+  created manually via CreatePerson() as well as those created during
+  map load, so be careful!
+
+GetPersonList()
+  
+  Returns an array of person names representing all the persons that
+  currently exist.
+
+DoesPersonExist(name)
+  
+  Returns true if a person named `name` currently exists, otherwise
+  returns false.
+
+FollowPerson(name, leader_name, distance)
+  
+  Makes a person follow another person at a distance specified by
+  `distance`. Note that the distance is not absolute and the actual
+  trailing distance depends on the leader's speed. Faster leaders will
+  put more distance between themselves and their followers.
+  
+  To detach a follower and make them independent again, call the
+  function again like this:
+    
+    FollowPerson("<name>", null, 0);
