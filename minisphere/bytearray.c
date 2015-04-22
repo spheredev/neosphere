@@ -153,17 +153,21 @@ init_bytearray_api(void)
 void
 duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 {
+	duk_idx_t obj_index;
+	
 	duk_push_sphere_obj(ctx, "ByteArray", ref_bytearray(array));
+	obj_index = duk_normalize_index(ctx, -1);
 
 	// return proxy object so we can catch array accesses
-	// note: this breaks `instanceof` for ByteArray objects, unfortunately.
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Proxy");
-	duk_dup(ctx, -3);
+	duk_dup(ctx, obj_index);
 	duk_push_object(ctx);
 	duk_push_c_function(ctx, js_ByteArray_getProp, DUK_VARARGS); duk_put_prop_string(ctx, -2, "get");
 	duk_push_c_function(ctx, js_ByteArray_setProp, DUK_VARARGS); duk_put_prop_string(ctx, -2, "set");
 	duk_new(ctx, 2);
+	duk_get_prototype(ctx, obj_index);
+	duk_set_prototype(ctx, -2);
 	duk_remove(ctx, -2);
 	duk_remove(ctx, -2);
 }
