@@ -51,8 +51,9 @@ static const char* const EXTENSIONS[] = {
 	"minisphere",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
-	"set-script-function",
-	"frameskip-api"
+	"sphere-new-sockets",
+	"frameskip-api",
+	"set-script-function"
 };
 
 extern ALLEGRO_DISPLAY*     g_display;
