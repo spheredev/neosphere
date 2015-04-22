@@ -48,12 +48,14 @@ struct rss_frame_v3
 };
 #pragma pack(pop)
 
-static duk_ret_t js_LoadSpriteset       (duk_context* ctx);
-static duk_ret_t js_Spriteset_finalize  (duk_context* ctx);
-static duk_ret_t js_Spriteset_toString  (duk_context* ctx);
-static duk_ret_t js_Spriteset_clone     (duk_context* ctx);
-static duk_ret_t js_Spriteset_get_image (duk_context* ctx);
-static duk_ret_t js_Spriteset_set_image (duk_context* ctx);
+static duk_ret_t js_LoadSpriteset          (duk_context* ctx);
+static duk_ret_t js_new_Spriteset          (duk_context* ctx);
+static duk_ret_t js_Spriteset_finalize     (duk_context* ctx);
+static duk_ret_t js_Spriteset_get_filename (duk_context* ctx);
+static duk_ret_t js_Spriteset_toString     (duk_context* ctx);
+static duk_ret_t js_Spriteset_clone        (duk_context* ctx);
+static duk_ret_t js_Spriteset_get_image    (duk_context* ctx);
+static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 
@@ -370,10 +372,44 @@ draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double 
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }
 
+static const spriteset_pose_t*
+find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
+{
+	const char*             alt_name;
+	const char*             name_to_find;
+	const spriteset_pose_t* pose = NULL;
+
+	int i;
+
+	alt_name = strcasecmp(pose_name, "northeast") == 0 ? "north"
+		: strcasecmp(pose_name, "southeast") == 0 ? "south"
+		: strcasecmp(pose_name, "southwest") == 0 ? "south"
+		: strcasecmp(pose_name, "northwest") == 0 ? "north"
+		: "";
+	name_to_find = pose_name;
+	while (pose == NULL) {
+		for (i = 0; i < spriteset->num_poses; ++i) {
+			if (strcasecmp(name_to_find, spriteset->poses[i].name->cstr) == 0) {
+				pose = &spriteset->poses[i];
+				break;
+			}
+		}
+		if (name_to_find != alt_name)
+			name_to_find = alt_name;
+		else
+			break;
+	}
+	return pose != NULL ? pose : &spriteset->poses[0];
+}
+
 void
 init_spriteset_api(duk_context* ctx)
 {
 	register_api_func(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
+	register_api_ctor(ctx, "Spriteset", js_new_Spriteset, js_Spriteset_finalize);
+	register_api_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
+	register_api_func(ctx, "Spriteset", "toString", js_Spriteset_toString);
+	register_api_func(ctx, "Spriteset", "clone", js_Spriteset_clone);
 }
 
 void
@@ -383,23 +419,7 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	
 	int i, j;
 
-	ref_spriteset(spriteset);
-
-	duk_push_object(ctx);
-	duk_push_string(ctx, "spriteset"); duk_put_prop_string(ctx, -2, "\xFF" "sphere_type");
-	duk_push_pointer(ctx, spriteset); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
-	duk_push_c_function(ctx, js_Spriteset_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, js_Spriteset_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_Spriteset_clone, DUK_VARARGS); duk_put_prop_string(ctx, -2, "clone");
-	duk_push_string(ctx, "filename");
-	if (spriteset->filename != NULL)
-		duk_push_lstring(ctx, spriteset->filename->cstr, spriteset->filename->length);
-	else
-		duk_push_string(ctx, "");
-	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
-		| DUK_DEFPROP_HAVE_WRITABLE | 0
-		| DUK_DEFPROP_HAVE_VALUE);
+	duk_push_sphere_obj(ctx, "Spriteset", ref_spriteset(spriteset));
 
 	// Spriteset:base
 	duk_push_object(ctx);
@@ -448,67 +468,26 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_put_prop_string(ctx, -2, "directions");
 }
 
-spriteset_t*
-duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
-{
-	spriteset_t* spriteset;
-	const char*  type;
-
-	index = duk_require_normalize_index(ctx, index);
-	duk_require_object_coercible(ctx, index);
-	if (!duk_get_prop_string(ctx, index, "\xFF" "sphere_type"))
-		goto on_error;
-	type = duk_get_string(ctx, -1); duk_pop(ctx);
-	if (strcmp(type, "spriteset") != 0) goto on_error;
-	duk_get_prop_string(ctx, index, "\xFF" "ptr");
-	spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	return spriteset;
-
-on_error:
-	duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Object is not a Sphere spriteset");
-}
-
-static const spriteset_pose_t*
-find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
-{
-	const char*             alt_name;
-	const char*             name_to_find;
-	const spriteset_pose_t* pose = NULL;
-	
-	int i;
-
-	alt_name = strcasecmp(pose_name, "northeast") == 0 ? "north"
-		: strcasecmp(pose_name, "southeast") == 0 ? "south"
-		: strcasecmp(pose_name, "southwest") == 0 ? "south"
-		: strcasecmp(pose_name, "northwest") == 0 ? "north"
-		: "";
-	name_to_find = pose_name;
-	while (pose == NULL) {
-		for (i = 0; i < spriteset->num_poses; ++i) {
-			if (strcasecmp(name_to_find, spriteset->poses[i].name->cstr) == 0) {
-				pose = &spriteset->poses[i];
-				break;
-			}
-		}
-		if (name_to_find != alt_name)
-			name_to_find = alt_name;
-		else
-			break;
-	}
-	return pose != NULL ? pose : &spriteset->poses[0];
-}
-
 static duk_ret_t
 js_LoadSpriteset(duk_context* ctx)
 {
-	const char*  filename  = NULL;
-	char*        path      = NULL;
-	spriteset_t* spriteset = NULL;
+	duk_require_string(ctx, 0);
+	
+	js_new_Spriteset(ctx);
+	return 1;
+}
 
-	filename = duk_require_string(ctx, 0);
+static duk_ret_t
+js_new_Spriteset(duk_context* ctx)
+{
+	const char*  filename = duk_require_string(ctx, 0);
+
+	char*        path;
+	spriteset_t* spriteset;
+
 	path = get_asset_path(filename, "spritesets", false);
 	if ((spriteset = load_spriteset(path)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSpriteset(): Failed to load spriteset file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
 	free(path);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
@@ -520,9 +499,21 @@ js_Spriteset_finalize(duk_context* ctx)
 {
 	spriteset_t* spriteset;
 	
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	spriteset = duk_require_sphere_obj(ctx, 0, "Spriteset");
 	free_spriteset(spriteset);
 	return 0;
+}
+
+static duk_ret_t
+js_Spriteset_get_filename(duk_context* ctx)
+{
+	spriteset_t* spriteset;
+
+	duk_push_this(ctx);
+	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
+	duk_pop(ctx);
+	duk_push_string(ctx, lstring_cstr(spriteset->filename));
+	return 1;
 }
 
 static duk_ret_t
@@ -539,7 +530,7 @@ js_Spriteset_clone(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): Failed to create new spriteset");
@@ -556,7 +547,7 @@ js_Spriteset_get_image(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
 	duk_push_sphere_image(ctx, get_spriteset_image(spriteset, index));
 	return 1;
@@ -571,7 +562,7 @@ js_Spriteset_set_image(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); spriteset = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
 	set_spriteset_image(spriteset, index, image);
 	return 0;

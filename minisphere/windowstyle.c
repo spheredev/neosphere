@@ -5,12 +5,14 @@
 
 #include "windowstyle.h"
 
-static duk_ret_t js_GetSystemWindowStyle(duk_context* ctx);
-static duk_ret_t js_LoadWindowStyle          (duk_context* ctx);
-static duk_ret_t js_WindowStyle_finalize     (duk_context* ctx);
-static duk_ret_t js_WindowStyle_toString     (duk_context* ctx);
-static duk_ret_t js_WindowStyle_drawWindow   (duk_context* ctx);
-static duk_ret_t js_WindowStyle_setColorMask (duk_context* ctx);
+static duk_ret_t js_GetSystemWindowStyle      (duk_context* ctx);
+static duk_ret_t js_LoadWindowStyle           (duk_context* ctx);
+static duk_ret_t js_new_WindowStyle           (duk_context* ctx);
+static duk_ret_t js_WindowStyle_finalize      (duk_context* ctx);
+static duk_ret_t js_WindowStyle_get_colorMask (duk_context* ctx);
+static duk_ret_t js_WindowStyle_set_colorMask (duk_context* ctx);
+static duk_ret_t js_WindowStyle_toString      (duk_context* ctx);
+static duk_ret_t js_WindowStyle_drawWindow    (duk_context* ctx);
 
 static windowstyle_t* s_sys_winstyle = NULL;
 
@@ -170,23 +172,24 @@ init_windowstyle_api(void)
 		free(path);
 	}
 
-	// register windowstyle API functions
+	// WindowStyle API functions
 	register_api_func(g_duktape, NULL, "GetSystemWindowStyle", js_GetSystemWindowStyle);
+	
+	// WindowStyle object
 	register_api_func(g_duktape, NULL, "LoadWindowStyle", js_LoadWindowStyle);
+	register_api_ctor(g_duktape, "WindowStyle", js_new_WindowStyle, js_WindowStyle_finalize);
+	register_api_prop(g_duktape, "WindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
+	register_api_func(g_duktape, "WindowStyle", "toString", js_WindowStyle_toString);
+	register_api_func(g_duktape, "WindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
+	register_api_func(g_duktape, "WindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
+	register_api_func(g_duktape, "WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
 }
 
 void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
-	ref_windowstyle(winstyle);
-	
-	duk_push_object(ctx);
-	duk_push_pointer(ctx, winstyle); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_sphere_obj(ctx, "WindowStyle", ref_windowstyle(winstyle));
 	duk_push_sphere_color(ctx, rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_push_c_function(ctx, js_WindowStyle_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, js_WindowStyle_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_WindowStyle_drawWindow, DUK_VARARGS); duk_put_prop_string(ctx, -2, "drawWindow");
-	duk_push_c_function(ctx, js_WindowStyle_setColorMask, DUK_VARARGS); duk_put_prop_string(ctx, -2, "setColorMask");
 }
 
 static duk_ret_t
@@ -200,6 +203,15 @@ js_GetSystemWindowStyle(duk_context* ctx)
 
 static duk_ret_t
 js_LoadWindowStyle(duk_context* ctx)
+{
+	duk_require_string(ctx, 0);
+
+	js_new_WindowStyle(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_new_WindowStyle(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
@@ -220,7 +232,7 @@ js_WindowStyle_finalize(duk_context* ctx)
 {
 	windowstyle_t* winstyle;
 
-	duk_get_prop_string(ctx, 0, "\xFF" "ptr"); winstyle = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	winstyle = duk_require_sphere_obj(ctx, 0, "WindowStyle");
 	free_windowstyle(winstyle);
 	return 0;
 }
@@ -230,6 +242,29 @@ js_WindowStyle_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object windowstyle]");
 	return 1;
+}
+
+static duk_ret_t
+js_WindowStyle_get_colorMask(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "WindowStyle");
+	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_remove(ctx, -2);
+	return 1;
+}
+
+static duk_ret_t
+js_WindowStyle_set_colorMask(duk_context* ctx)
+{
+	color_t mask = duk_require_sphere_color(ctx, 0);
+	
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "WindowStyle");
+	duk_push_sphere_color(ctx, mask);
+	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_pop(ctx);
+	return 0;
 }
 
 static duk_ret_t
@@ -244,18 +279,9 @@ js_WindowStyle_drawWindow(duk_context* ctx)
 	windowstyle_t* winstyle;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "ptr"); winstyle = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	winstyle = duk_require_sphere_obj(ctx, -1, "WindowStyle");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	draw_window(winstyle, mask, x, y, w, h);
-	return 0;
-}
-
-static duk_ret_t
-js_WindowStyle_setColorMask(duk_context* ctx)
-{
-	duk_push_this(ctx);
-	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_pop(ctx);
 	return 0;
 }

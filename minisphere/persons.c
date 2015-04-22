@@ -1862,7 +1862,7 @@ static duk_ret_t
 js_SetPersonSpriteset(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	spriteset_t* spriteset = duk_require_sphere_spriteset(ctx, 1);
+	spriteset_t* spriteset = duk_require_sphere_obj(ctx, 1, "Spriteset");
 
 	spriteset_t* new_spriteset;
 	person_t*    person;
