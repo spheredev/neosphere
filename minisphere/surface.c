@@ -448,7 +448,7 @@ js_Surface_createImage(duk_context* ctx)
 static duk_ret_t
 js_Surface_drawText(duk_context* ctx)
 {
-	font_t* font = duk_require_sphere_font(ctx, 0);
+	font_t* font = duk_require_sphere_obj(ctx, 0, "Font");
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 	const char* text = duk_to_string(ctx, 3);
