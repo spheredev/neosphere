@@ -19,6 +19,7 @@ static duk_ret_t js_GetGameList          (duk_context* ctx);
 static duk_ret_t js_GetMaxFrameSkips     (duk_context* ctx);
 static duk_ret_t js_GetScreenHeight      (duk_context* ctx);
 static duk_ret_t js_GetScreenWidth       (duk_context* ctx);
+static duk_ret_t js_GetSeconds           (duk_context* ctx);
 static duk_ret_t js_GetTime              (duk_context* ctx);
 static duk_ret_t js_SetFrameRate         (duk_context* ctx);
 static duk_ret_t js_SetMaxFrameSkips     (duk_context* ctx);
@@ -61,6 +62,7 @@ init_api(duk_context* ctx)
 	register_api_func(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
 	register_api_func(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
 	register_api_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
+	register_api_func(ctx, NULL, "GetSeconds", js_GetSeconds);
 	register_api_func(ctx, NULL, "GetTime", js_GetTime);
 	register_api_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
 	register_api_func(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
@@ -412,6 +414,13 @@ static duk_ret_t
 js_GetScreenWidth(duk_context* ctx)
 {
 	duk_push_int(ctx, g_res_x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetSeconds(duk_context* ctx)
+{
+	duk_push_number(ctx, al_get_time());
 	return 1;
 }
 
