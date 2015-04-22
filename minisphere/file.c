@@ -9,6 +9,7 @@ static duk_ret_t js_RemoveDirectory (duk_context* ctx);
 static duk_ret_t js_RemoveFile      (duk_context* ctx);
 static duk_ret_t js_Rename          (duk_context* ctx);
 static duk_ret_t js_OpenFile        (duk_context* ctx);
+static duk_ret_t js_new_File        (duk_context* ctx);
 static duk_ret_t js_File_finalize   (duk_context* ctx);
 static duk_ret_t js_File_toString   (duk_context* ctx);
 static duk_ret_t js_File_getKey     (duk_context* ctx);
@@ -18,33 +19,172 @@ static duk_ret_t js_File_flush      (duk_context* ctx);
 static duk_ret_t js_File_read       (duk_context* ctx);
 static duk_ret_t js_File_write      (duk_context* ctx);
 
-static void duk_push_sphere_file (duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path);
+struct file
+{
+	ALLEGRO_CONFIG* conf;
+	char*           path;
+};
+
+file_t*
+open_file(const char* path)
+{
+	file_t* file;
+	
+	if (!(file = calloc(1, sizeof(file_t))))
+		goto on_error;
+	if (al_filename_exists(path)) {
+		if (!(file->conf = al_load_config_file(path)))
+			goto on_error;
+	}
+	else {
+		if ((file->conf = al_create_config()) == NULL)
+			goto on_error;
+		if (!al_save_config_file(path, file->conf)) goto on_error;
+	}
+	file->path = strdup(path);
+	return file;
+
+on_error:
+	if (file != NULL) {
+		if (file->conf != NULL)
+			al_destroy_config(file->conf);
+		free(file);
+	}
+	return NULL;
+}
+
+void
+close_file(file_t* file)
+{
+	al_save_config_file(file->path, file->conf);
+	al_destroy_config(file->conf);
+	free(file);
+}
+
+int
+get_record_count(file_t* file)
+{
+	ALLEGRO_CONFIG_ENTRY* iter;
+	const char*           key;
+	int                   sum;
+
+	sum = 0;
+	key = al_get_first_config_entry(file->conf, NULL, &iter);
+	while (key != NULL) {
+		++sum;
+		key = al_get_next_config_entry(&iter);
+	}
+	return sum;
+}
+
+const char*
+get_record_name(file_t* file, int index)
+{
+	ALLEGRO_CONFIG_ENTRY* iter;
+	const char*           name;
+
+	int i = 0;
+
+	name = al_get_first_config_entry(file->conf, NULL, &iter);
+	while (name != NULL) {
+		if (i == index)
+			return name;
+		++i;
+		name = al_get_next_config_entry(&iter);
+	}
+	return NULL;
+}
+
+bool
+read_bool_rec(file_t* file, const char* key, bool def_value)
+{
+	char* string;
+	bool  value;
+
+	string = read_string_rec(file, key, def_value ? "true" : "false");
+	value = strcasecmp(string, "true") == 0;
+	write_bool_rec(file, key, value);
+	free(string);
+	return value;
+}
+
+double
+read_number_rec(file_t* file, const char* key, double def_value)
+{
+	char   def_string[500];
+	char*  string;
+	double value;
+
+	sprintf(def_string, "%f", def_value);
+	string = read_string_rec(file, key, def_string);
+	value = atof(string);
+	write_number_rec(file, key, value);
+	free(string);
+	return value;
+}
+
+char*
+read_string_rec(file_t* file, const char* key, const char* def_value)
+{
+	const char* read_value;
+	char*       value;
+	
+	if (!(read_value = al_get_config_value(file->conf, NULL, key)))
+		read_value = def_value;
+	value = strdup(read_value);
+	write_string_rec(file, key, value);
+	return value;
+}
+
+void
+save_file(file_t* file)
+{
+	al_save_config_file(file->path, file->conf);
+	al_destroy_config(file->conf);
+	free(file);
+}
+
+void
+write_bool_rec(file_t* file, const char* key, bool value)
+{
+	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
+}
+
+void
+write_number_rec(file_t* file, const char* key, double value)
+{
+	char string[500];
+
+	sprintf(string, "%f", value);
+	al_set_config_value(file->conf, NULL, key, string);
+}
+
+void
+write_string_rec(file_t* file, const char* key, const char* value)
+{
+	al_set_config_value(file->conf, NULL, key, value);
+}
 
 void
 init_file_api(void)
 {
+	// File API function
 	register_api_func(g_duktape, NULL, "DoesFileExist", js_DoesFileExist);
 	register_api_func(g_duktape, NULL, "CreateDirectory", js_CreateDirectory);
 	register_api_func(g_duktape, NULL, "RemoveDirectory", js_RemoveDirectory);
-	register_api_func(g_duktape, NULL, "OpenFile", js_OpenFile);
 	register_api_func(g_duktape, NULL, "RemoveFile", js_RemoveFile);
 	register_api_func(g_duktape, NULL, "Rename", js_Rename);
-}
 
-static void
-duk_push_sphere_file(duk_context* ctx, ALLEGRO_CONFIG* conf, const char* path)
-{
-	duk_push_object(ctx);
-	duk_push_pointer(ctx, conf); duk_put_prop_string(ctx, -2, "\xFF" "conf_ptr");
-	duk_push_pointer(ctx, (void*)path); duk_put_prop_string(ctx, -2, "\xFF" "path");
-	duk_push_c_function(ctx, js_File_finalize, DUK_VARARGS); duk_set_finalizer(ctx, -2);
-	duk_push_c_function(ctx, js_File_toString, DUK_VARARGS); duk_put_prop_string(ctx, -2, "toString");
-	duk_push_c_function(ctx, js_File_getKey, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getKey");
-	duk_push_c_function(ctx, js_File_getNumKeys, DUK_VARARGS); duk_put_prop_string(ctx, -2, "getNumKeys");
-	duk_push_c_function(ctx, js_File_close, DUK_VARARGS); duk_put_prop_string(ctx, -2, "close");
-	duk_push_c_function(ctx, js_File_flush, DUK_VARARGS); duk_put_prop_string(ctx, -2, "flush");
-	duk_push_c_function(ctx, js_File_read, DUK_VARARGS); duk_put_prop_string(ctx, -2, "read");
-	duk_push_c_function(ctx, js_File_write, DUK_VARARGS); duk_put_prop_string(ctx, -2, "write");
+	// File object
+	register_api_func(g_duktape, NULL, "OpenFile", js_OpenFile);
+	register_api_ctor(g_duktape, "File", js_new_File, js_File_finalize);
+	register_api_func(g_duktape, "File", "toString", js_File_toString);
+	register_api_func(g_duktape, "File", "getKey", js_File_getKey);
+	register_api_func(g_duktape, "File", "getNumKeys", js_File_getNumKeys);
+	register_api_func(g_duktape, "File", "close", js_File_close);
+	register_api_func(g_duktape, "File", "flush", js_File_flush);
+	register_api_func(g_duktape, "File", "read", js_File_read);
+	register_api_func(g_duktape, "File", "write", js_File_write);
 }
 
 static duk_ret_t
@@ -127,36 +267,34 @@ js_Rename(duk_context* ctx)
 static duk_ret_t
 js_OpenFile(duk_context* ctx)
 {
-	ALLEGRO_CONFIG* conf;
-	const char*     filename;
-	char*           path;
-
-	filename = duk_require_string(ctx, 0);
-	path = get_asset_path(filename, "save", true);
-	if (al_filename_exists(path)) {
-		conf = al_load_config_file(path);
-		if (conf == NULL) goto on_error;
-	}
-	else {
-		if ((conf = al_create_config()) == NULL) goto on_error;
-		if (!al_save_config_file(path, conf)) goto on_error;
-	}
-	duk_push_sphere_file(ctx, conf, path);
+	duk_require_string(ctx, 0);
+	
+	js_new_File(ctx);
 	return 1;
+}
 
-on_error:
-	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to open or create file '%s'", filename);
+static duk_ret_t
+js_new_File(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+	
+	file_t* file;
+	char*   path;
+
+	path = get_asset_path(filename, "save", true);
+	if (!(file = open_file(path)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
+	duk_push_sphere_obj(ctx, "File", file);
+	return 1;
 }
 
 static duk_ret_t
 js_File_finalize(duk_context* ctx)
 {
-	ALLEGRO_CONFIG* conf;
-	const char*     path;
+	file_t* file;
 
-	duk_get_prop_string(ctx, 0, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, 0, "\xFF" "path"); path = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	if (conf != NULL) al_save_config_file(path, conf);
+	file = duk_require_sphere_obj(ctx, 0, "File");
+	close_file(file);
 	return 0;
 }
 
@@ -170,86 +308,65 @@ js_File_toString(duk_context* ctx)
 static duk_ret_t
 js_File_getKey(duk_context* ctx)
 {
-	ALLEGRO_CONFIG*       conf;
-	ALLEGRO_CONFIG_ENTRY* conf_iter;
-	int                   index;
-	const char*           key;
-	int                   i;
+	int index = duk_require_int(ctx, 0);
+	
+	file_t*     file;
+	const char* key;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (conf == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has already been closed");
-	index = duk_to_int(ctx, 0);
-	i = 0;
-	key = al_get_first_config_entry(conf, NULL, &conf_iter);
-	while (key != NULL) {
-		if (i == index) {
-			duk_push_string(ctx, key);
-			return 1;
-		}
-		++i;
-		key = al_get_next_config_entry(&conf_iter);
-	}
-	duk_push_null(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has been closed");
+	if (key = get_record_name(file, index))
+		duk_push_string(ctx, key);
+	else
+		duk_push_null(ctx);
 	return 1;
 }
 
 static duk_ret_t
 js_File_getNumKeys(duk_context* ctx)
 {
-	ALLEGRO_CONFIG*       conf;
-	ALLEGRO_CONFIG_ENTRY* conf_iter;
-	int                   count;
-	const char*           key;
+	file_t* file;
+	int index = duk_require_int(ctx, 0);
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (conf == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has already been closed");
-	count = 0;
-	key = al_get_first_config_entry(conf, NULL, &conf_iter);
-	while (key != NULL) {
-		++count;
-		key = al_get_next_config_entry(&conf_iter);
-	}
-	duk_push_int(ctx, count);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has been closed");
+	duk_push_int(ctx, get_record_count(file));
 	return 1;
 }
 
 static duk_ret_t
-js_File_flush (duk_context* ctx)
+js_File_flush(duk_context* ctx)
 {
-	ALLEGRO_CONFIG* conf;
-	const char*     path;
+	file_t* file;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "path"); path = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (conf == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): File has already been closed");
-	al_save_config_file(path, conf);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): File has been closed");
+	save_file(file);
 	return 0;
 }
 
 static duk_ret_t
 js_File_close(duk_context* ctx)
 {
-	ALLEGRO_CONFIG* conf;
-	const char*     path;
+	file_t* file;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "path"); path = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (conf == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:close(): File has already been closed");
-	al_save_config_file(path, conf);
+	if (file == NULL)
+		return 0;
+	close_file(file);
 	duk_push_this(ctx);
-	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "conf_ptr");
+	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	return 0;
 }
@@ -257,46 +374,33 @@ js_File_close(duk_context* ctx)
 static duk_ret_t
 js_File_read(duk_context* ctx)
 {
-	ALLEGRO_CONFIG* conf;
-	bool            def_bool;
-	double          def_num;
-	const char*     def_string;
-	const char*     key;
-	const char*     to_string;
-	const char*     value_raw;
+	file_t* file;
+	const char* key = duk_to_string(ctx, 0);
+	
+	bool        def_bool;
+	double      def_num;
+	const char* def_string;
+	char*       value;
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (conf == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): File has already been closed");
-	key = duk_to_string(ctx, 0);
-	value_raw = al_get_config_value(conf, NULL, key);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): File has been closed");
 	switch (duk_get_type(ctx, 1)) {
 	case DUK_TYPE_BOOLEAN:
 		def_bool = duk_get_boolean(ctx, 1);
-		to_string = duk_to_string(ctx, 1);
-		if (value_raw != NULL)
-			duk_push_boolean(ctx, strcmp(value_raw, "True") == 0
-				|| strcmp(value_raw, "true") == 0
-				|| strcmp(value_raw, "TRUE") == 0);
-		else {
-			al_set_config_value(conf, NULL, key, to_string);
-			duk_push_boolean(ctx, def_bool);
-		}
+		duk_push_boolean(ctx, read_bool_rec(file, key, def_bool));
 		break;
 	case DUK_TYPE_NUMBER:
 		def_num = duk_get_number(ctx, 1);
-		to_string = duk_to_string(ctx, 1);
-		if (value_raw == NULL)
-			al_set_config_value(conf, NULL, key, to_string);
-		duk_push_number(ctx, value_raw != NULL ? atof(value_raw) : def_num);
+		duk_push_number(ctx, read_number_rec(file, key, def_num));
 		break;
 	default:
 		def_string = duk_to_string(ctx, 1);
-		if (value_raw == NULL)
-			al_set_config_value(conf, NULL, key, def_string);
-		duk_push_string(ctx, value_raw != NULL ? value_raw : def_string);
+		value = read_string_rec(file, key, def_string);
+		duk_push_string(ctx, value);
+		free(value);
 		break;
 	}
 	return 1;
@@ -305,17 +409,14 @@ js_File_read(duk_context* ctx)
 static duk_ret_t
 js_File_write(duk_context* ctx)
 {
-	ALLEGRO_CONFIG* conf;
-	const char*     key;
-	const char*     value_str;
+	file_t* file;
+	const char* key = duk_to_string(ctx, 0);
 
 	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "conf_ptr"); conf = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (conf == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has already been closed");
-	key = duk_to_string(ctx, 0);
-	value_str = duk_to_string(ctx, 1);
-	al_set_config_value(conf, NULL, key, value_str);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has been closed");
+	write_string_rec(file, key, duk_to_string(ctx, 1));
 	return 0;
 }
