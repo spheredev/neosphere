@@ -361,7 +361,7 @@ js_Socket_get_remoteAddress(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Allocation failure while receiving data");
 	if (!is_socket_live(socket))
@@ -379,7 +379,7 @@ js_Socket_get_remotePort(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Allocation failure while receiving data");
 	if (!is_socket_live(socket))
@@ -423,7 +423,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Allocation failure while receiving data");
 	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
@@ -437,11 +437,10 @@ js_Socket_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
-	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
+	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:close(): Socket has already been closed");
-	free_socket(socket);
+	if (socket != NULL)
+		free_socket(socket);
 	return 1;
 }
 
@@ -460,7 +459,7 @@ js_Socket_read(duk_context* ctx)
 	if (length <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): At least 1 byte must be read (%i)", length);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
@@ -486,7 +485,7 @@ js_Socket_readString(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
 	if (is_socket_data_lost(socket))
@@ -518,7 +517,7 @@ js_Socket_write(duk_context* ctx)
 		write_size = get_bytearray_size(array);
 	}
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
@@ -563,7 +562,7 @@ js_ListeningSocket_acceptNext(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "ListeningSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:acceptNext(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:acceptNext(): Socket has been closed");
 	new_socket = accept_next_socket(socket);
 	if (new_socket)
 		duk_push_sphere_obj(ctx, "IOSocket", new_socket);
@@ -579,10 +578,10 @@ js_ListeningSocket_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "ListeningSocket");
+	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:close(): Socket has already been closed");
-	free_socket(socket);
+	if (socket != NULL)
+		free_socket(socket);
 	return 0;
 }
 
@@ -620,7 +619,7 @@ js_IOSocket_get_remoteAddress(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress: Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress: Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress: Allocation failure while receiving data");
 	if (!is_socket_live(socket))
@@ -638,7 +637,7 @@ js_IOSocket_get_remotePort(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort: Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort: Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort: Allocation failure while receiving data");
 	if (!is_socket_live(socket))
@@ -675,7 +674,7 @@ js_IOSocket_getPendingReadSize(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:getPendingReadSize(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:getPendingReadSize(): Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:getPendingReadSize(): Allocation failure while receiving data");
 	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
@@ -689,10 +688,10 @@ js_IOSocket_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
+	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:close(): Socket has already been closed");
-	free_socket(socket);
+	if (socket != NULL)
+		free_socket(socket);
 	return 0;
 }
 
@@ -711,7 +710,7 @@ js_IOSocket_read(duk_context* ctx)
 	if (length <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IOSocket:read(): At least 1 byte must be read (%i)", length);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
@@ -737,7 +736,7 @@ js_IOSocket_readString(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket is not connected");
 	if (is_socket_data_lost(socket))
@@ -769,7 +768,7 @@ js_IOSocket_write(duk_context* ctx)
 		write_size = get_bytearray_size(array);
 	}
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
