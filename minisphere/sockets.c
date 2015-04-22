@@ -11,17 +11,17 @@ static duk_ret_t js_GetLocalName                    (duk_context* ctx);
 static duk_ret_t js_GetLocalAddress                 (duk_context* ctx);
 static duk_ret_t js_ListenOnPort                    (duk_context* ctx);
 static duk_ret_t js_OpenAddress                     (duk_context* ctx);
-static duk_ret_t js_new_LegacySocket                (duk_context* ctx);
-static duk_ret_t js_LegacySocket_finalize           (duk_context* ctx);
-static duk_ret_t js_LegacySocket_get_remoteAddress  (duk_context* ctx);
-static duk_ret_t js_LegacySocket_get_remotePort     (duk_context* ctx);
-static duk_ret_t js_LegacySocket_toString           (duk_context* ctx);
-static duk_ret_t js_LegacySocket_isConnected        (duk_context* ctx);
-static duk_ret_t js_LegacySocket_getPendingReadSize (duk_context* ctx);
-static duk_ret_t js_LegacySocket_close              (duk_context* ctx);
-static duk_ret_t js_LegacySocket_read               (duk_context* ctx);
-static duk_ret_t js_LegacySocket_readString         (duk_context* ctx);
-static duk_ret_t js_LegacySocket_write              (duk_context* ctx);
+static duk_ret_t js_new_Socket                      (duk_context* ctx);
+static duk_ret_t js_Socket_finalize                 (duk_context* ctx);
+static duk_ret_t js_Socket_get_remoteAddress        (duk_context* ctx);
+static duk_ret_t js_Socket_get_remotePort           (duk_context* ctx);
+static duk_ret_t js_Socket_toString                 (duk_context* ctx);
+static duk_ret_t js_Socket_isConnected              (duk_context* ctx);
+static duk_ret_t js_Socket_getPendingReadSize       (duk_context* ctx);
+static duk_ret_t js_Socket_close                    (duk_context* ctx);
+static duk_ret_t js_Socket_read                     (duk_context* ctx);
+static duk_ret_t js_Socket_readString               (duk_context* ctx);
+static duk_ret_t js_Socket_write                    (duk_context* ctx);
 static duk_ret_t js_new_ListeningSocket             (duk_context* ctx);
 static duk_ret_t js_ListeningSocket_finalize        (duk_context* ctx);
 static duk_ret_t js_ListeningSocket_close           (duk_context* ctx);
@@ -250,19 +250,19 @@ init_sockets_api(void)
 	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
 	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
 	
-	// LegacySocket object (Sphere 1.5-style socket)
+	// Socket object (Sphere 1.5-style socket)
 	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
 	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
-	register_api_ctor(g_duktape, "LegacySocket", js_new_LegacySocket, js_LegacySocket_finalize);
-	register_api_prop(g_duktape, "LegacySocket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
-	register_api_prop(g_duktape, "LegacySocket", "remotePort", js_IOSocket_get_remotePort, NULL);
-	register_api_func(g_duktape, "LegacySocket", "toString", js_LegacySocket_toString);
-	register_api_func(g_duktape, "LegacySocket", "isConnected", js_LegacySocket_isConnected);
-	register_api_func(g_duktape, "LegacySocket", "getPendingReadSize", js_LegacySocket_getPendingReadSize);
-	register_api_func(g_duktape, "LegacySocket", "close", js_LegacySocket_close);
-	register_api_func(g_duktape, "LegacySocket", "read", js_LegacySocket_read);
-	register_api_func(g_duktape, "LegacySocket", "readString", js_LegacySocket_readString);
-	register_api_func(g_duktape, "LegacySocket", "write", js_LegacySocket_write);
+	register_api_ctor(g_duktape, "Socket", js_new_Socket, js_Socket_finalize);
+	register_api_prop(g_duktape, "Socket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
+	register_api_prop(g_duktape, "Socket", "remotePort", js_IOSocket_get_remotePort, NULL);
+	register_api_func(g_duktape, "Socket", "toString", js_Socket_toString);
+	register_api_func(g_duktape, "Socket", "isConnected", js_Socket_isConnected);
+	register_api_func(g_duktape, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	register_api_func(g_duktape, "Socket", "close", js_Socket_close);
+	register_api_func(g_duktape, "Socket", "read", js_Socket_read);
+	register_api_func(g_duktape, "Socket", "readString", js_Socket_readString);
+	register_api_func(g_duktape, "Socket", "write", js_Socket_write);
 
 	// ListeningSocket object
 	register_api_ctor(g_duktape, "ListeningSocket", js_new_ListeningSocket, js_ListeningSocket_finalize);
@@ -300,7 +300,7 @@ js_ListenOnPort(duk_context* ctx)
 {
 	duk_require_int(ctx, 0);
 	
-	js_new_LegacySocket(ctx);
+	js_new_Socket(ctx);
 	return 1;
 }
 
@@ -310,12 +310,12 @@ js_OpenAddress(duk_context* ctx)
 	duk_require_string(ctx, 0);
 	duk_require_int(ctx, 1);
 	
-	js_new_LegacySocket(ctx);
+	js_new_Socket(ctx);
 	return 1;
 }
 
 static duk_ret_t
-js_new_LegacySocket(duk_context* ctx)
+js_new_Socket(duk_context* ctx)
 {
 	const char* ip;
 	int         port;
@@ -327,7 +327,7 @@ js_new_LegacySocket(duk_context* ctx)
 		socket_t* socket;
 
 		if (socket = listen_on_port(port, 1024, 0))
-			duk_push_sphere_obj(ctx, "LegacySocket", socket);
+			duk_push_sphere_obj(ctx, "Socket", socket);
 		else
 			duk_push_null(ctx);
 	}
@@ -335,7 +335,7 @@ js_new_LegacySocket(duk_context* ctx)
 		ip = duk_require_string(ctx, 0);
 		port = duk_require_int(ctx, 1);
 		if ((socket = connect_to_host(ip, port, 1024)) != NULL)
-			duk_push_sphere_obj(ctx, "LegacySocket", socket);
+			duk_push_sphere_obj(ctx, "Socket", socket);
 		else
 			duk_push_null(ctx);
 	}
@@ -343,69 +343,69 @@ js_new_LegacySocket(duk_context* ctx)
 }
 
 static duk_ret_t
-js_LegacySocket_finalize(duk_context* ctx)
+js_Socket_finalize(duk_context* ctx)
 {
 	socket_t* socket;
 
-	socket = duk_require_sphere_obj(ctx, 0, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, 0, "Socket");
 	free_socket(socket);
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_get_remoteAddress(duk_context* ctx)
+js_Socket_get_remoteAddress(duk_context* ctx)
 {
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:get_remoteAddress: Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Socket has already been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:get_remoteAddress: Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_remoteAddress: Allocation failure while receiving data");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:get_RemoteAddress: Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemoteAddress: Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_get_remotePort(duk_context* ctx)
+js_Socket_get_remotePort(duk_context* ctx)
 {
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:get_RemotePort: Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Socket has already been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:get_RemotePort: Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Allocation failure while receiving data");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:get_RemotePort: Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:get_RemotePort: Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_toString(duk_context* ctx)
+js_Socket_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object socket]");
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_isConnected(duk_context* ctx)
+js_Socket_isConnected(duk_context* ctx)
 {
 	socket_t* socket;
 	
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket != NULL) {
 		if (is_socket_data_lost(socket))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:isConnected(): Allocation failure while receiving data");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:isConnected(): Allocation failure while receiving data");
 		duk_push_boolean(ctx, is_socket_live(socket));
 	}
 	else {
@@ -415,38 +415,38 @@ js_LegacySocket_isConnected(duk_context* ctx)
 }
 
 static duk_ret_t
-js_LegacySocket_getPendingReadSize(duk_context* ctx)
+js_Socket_getPendingReadSize(duk_context* ctx)
 {
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:getPendingReadSize(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has already been closed");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:getPendingReadSize(): Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Allocation failure while receiving data");
 	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_close(duk_context* ctx)
+js_Socket_close(duk_context* ctx)
 {
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "ptr");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:close(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:close(): Socket has already been closed");
 	free_socket(socket);
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_read(duk_context* ctx)
+js_Socket_read(duk_context* ctx)
 {
 	int length = duk_require_int(ctx, 0);
 
@@ -455,27 +455,27 @@ js_LegacySocket_read(duk_context* ctx)
 	socket_t*    socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (length <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LegacySocket:read(): At least 1 byte must be read (%i)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): At least 1 byte must be read (%i)", length);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:read(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has already been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:read(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:read(): Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Allocation failure while receiving data");
 	if (!(read_buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:read(): Failed to allocate read buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer");
 	read_socket(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:read(): Failed to create byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
 
 static duk_ret_t
-js_LegacySocket_readString(duk_context* ctx)
+js_Socket_readString(duk_context* ctx)
 {
 	size_t length = duk_require_uint(ctx, 0);
 
@@ -483,16 +483,16 @@ js_LegacySocket_readString(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:readString(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has already been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:readString(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:readString(): Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Allocation failure while receiving data");
 	if (!(buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:readString(): Failed to allocate read buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer");
 	read_socket(socket, buffer, length);
 	duk_push_lstring(ctx, (char*)buffer, length);
 	free(buffer);
@@ -500,7 +500,7 @@ js_LegacySocket_readString(duk_context* ctx)
 }
 
 static duk_ret_t
-js_LegacySocket_write(duk_context* ctx)
+js_Socket_write(duk_context* ctx)
 {
 	bytearray_t*   array;
 	const uint8_t* payload;
@@ -508,7 +508,7 @@ js_LegacySocket_write(duk_context* ctx)
 	size_t         write_size;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (duk_is_string(ctx, 0))
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
@@ -518,11 +518,11 @@ js_LegacySocket_write(duk_context* ctx)
 		write_size = get_bytearray_size(array);
 	}
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:write(): Socket has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has already been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:write(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
 	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:write(): Allocation failure while receiving data");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Allocation failure while receiving data");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
