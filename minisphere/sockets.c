@@ -431,29 +431,6 @@ js_LegacySocket_getPendingReadSize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_LegacySocket_acceptNext(duk_context* ctx)
-{
-	socket_t* new_socket;
-	socket_t* socket;
-
-	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "LegacySocket");
-	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:acceptNext(): Socket has already been closed");
-	if (!is_socket_server(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LegacySocket:acceptNext(): Not valid on non-listening socket");
-	new_socket = accept_next_socket(socket);
-	if (new_socket) {
-		duk_push_sphere_obj(ctx, "LegacySocket", new_socket);
-	}
-	else {
-		duk_push_null(ctx);
-	}
-	return 1;
-}
-
-static duk_ret_t
 js_LegacySocket_close(duk_context* ctx)
 {
 	socket_t* socket;
