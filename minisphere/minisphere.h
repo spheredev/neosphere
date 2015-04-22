@@ -49,6 +49,9 @@ static const char* const SPHERE_USERAGENT = "v1.5 (compatible; minisphere 1.0.10
 static const char* const EXTENSIONS[] = {
 	"sphere-legacy-api",
 	"minisphere",
+	"sphere-obj-constructors",
+	"sphere-obj-props",
+	"sphere-new-sockets",
 	"frameskip-api",
 	"set-script-function"
 };

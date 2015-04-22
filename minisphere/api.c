@@ -38,7 +38,7 @@ static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 static int s_framerate = 0;
 
 void
-init_api(duk_context* ctx)
+initialize_api(duk_context* ctx)
 {
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
@@ -105,6 +105,22 @@ register_api_const(duk_context* ctx, const char* name, double value)
 }
 
 void
+register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
+{
+	duk_push_global_object(ctx);
+	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_object(ctx);
+	duk_push_string(ctx, name); duk_put_prop_string(ctx, -2, "\xFF" "ctor");
+	if (finalizer != NULL) {
+		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
+		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
+	}
+	duk_put_prop_string(ctx, -2, "prototype");
+	duk_put_prop_string(ctx, -2, name);
+	duk_pop(ctx);
+}
+
+void
 register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
@@ -114,10 +130,55 @@ register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk
 	}
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, name);
-	if (ctor_name != NULL) {
+	if (ctor_name != NULL)
 		duk_pop_2(ctx);
-	}
 	duk_pop(ctx);
+}
+
+void
+register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
+{
+	duk_uint_t flags;
+	int        obj_index;
+	
+	duk_push_global_object(ctx);
+	if (ctor_name != NULL) {
+		duk_get_prop_string(ctx, -1, ctor_name);
+		duk_get_prop_string(ctx, -1, "prototype");
+	}
+	obj_index = duk_normalize_index(ctx, -1);
+	duk_push_string(ctx, name);
+	flags = DUK_DEFPROP_HAVE_ENUMERABLE | 0
+		| DUK_DEFPROP_CONFIGURABLE | 0;
+	if (getter != NULL) {
+		duk_push_c_function(ctx, getter, DUK_VARARGS);
+		flags |= DUK_DEFPROP_HAVE_GETTER;
+	}
+	if (setter != NULL) {
+		duk_push_c_function(ctx, setter, DUK_VARARGS);
+		flags |= DUK_DEFPROP_HAVE_SETTER;
+	}
+	duk_def_prop(g_duktape, obj_index, flags);
+	if (ctor_name != NULL)
+		duk_pop_2(ctx);
+	duk_pop(ctx);
+}
+
+duk_bool_t
+duk_is_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+{
+	const char* obj_ctor_name;
+	duk_bool_t  result;
+
+	index = duk_require_normalize_index(ctx, index);
+	if (!duk_is_object_coercible(ctx, index))
+		return 0;
+
+	duk_get_prop_string(ctx, index, "\xFF" "ctor");
+	obj_ctor_name = duk_safe_to_string(ctx, -1);
+	result = strcmp(obj_ctor_name, ctor_name) == 0;
+	duk_pop(ctx);
+	return result;
 }
 
 noreturn
@@ -150,6 +211,37 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	// throw the exception
 	va_start(ap, fmt);
 	duk_error_va_raw(ctx, err_code, filename, line_number, fmt, ap);
+}
+
+void
+duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
+{
+	duk_idx_t index;
+	
+	duk_push_object(ctx); index = duk_normalize_index(ctx, -1);
+	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, ctor_name);
+	duk_get_prop_string(ctx, -1, "prototype");
+	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor")) {
+		duk_set_finalizer(ctx, index);
+	}
+	else
+		duk_pop(ctx);
+	duk_set_prototype(ctx, index);
+	duk_pop_2(ctx);
+}
+
+void*
+duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+{
+	void* udata;
+
+	index = duk_require_normalize_index(ctx, index);
+	if (!duk_is_sphere_obj(ctx, index, ctor_name))
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "not a Sphere %s", ctor_name);
+	duk_get_prop_string(ctx, index, "\xFF" "udata"); udata = duk_get_pointer(ctx, -1); duk_pop(ctx);
+	return udata;
 }
 
 static duk_ret_t
@@ -550,7 +642,7 @@ js_ExecuteGame(duk_context* ctx)
 	if (!(path = get_sys_asset_path(filename, "games")))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Unable to execute game '%s'", filename);
 	if (!(g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP))))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Failed to save last game path (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Failed to save last game path");
 	al_destroy_path(g_game_path);
 	g_game_path = al_create_path(path);
 	if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {

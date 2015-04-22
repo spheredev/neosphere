@@ -170,9 +170,9 @@ js_LineSeries(duk_context* ctx)
 	if (num_points < 2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): Two or more vertices required");
 	if (num_points > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): Too many vertices (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): Too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): Failed to allocate vertex buffer (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): Failed to allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
@@ -276,9 +276,9 @@ js_PointSeries(duk_context* ctx)
 	if (num_points < 1)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): One or more vertices required");
 	if (num_points > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): Too many vertices (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): Too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): Failed to allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);

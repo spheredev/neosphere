@@ -25,7 +25,6 @@ int         get_wraptext_line_count (const wraptext_t* wraptext);
 
 extern void    init_font_api           (duk_context* ctx);
 extern void    duk_push_sphere_font    (duk_context* ctx, font_t* font);
-extern font_t* duk_require_sphere_font (duk_context* ctx, duk_idx_t index);
 
 enum text_align
 {

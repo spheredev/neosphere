@@ -1031,7 +1031,7 @@ js_CreatePerson(duk_context* ctx)
 	sprite_file = duk_require_string(ctx, 1);
 	destroy_with_map = duk_require_boolean(ctx, 2);
 	if (!(person = create_person(name, sprite_file, !destroy_with_map, NULL)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to create person (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to create person");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
@@ -1632,7 +1632,7 @@ js_SetPersonFollowDistance(duk_context* ctx)
 	if (distance <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFollowDistance(): Distance must be greater than zero (%i)", distance);
 	if (!enlarge_step_history(person->leader, distance))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): Failed to enlarge leader's tracking buffer (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): Failed to enlarge leader's tracking buffer");
 	person->follow_distance = distance;
 	return 0;
 }
@@ -1706,7 +1706,7 @@ js_SetPersonIgnoreList(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): ignore_list argument must be an array");
 	list_size = duk_get_length(ctx, 1);
 	if (list_size > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): List too large (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): List too large");
 	for (i = 0; i < person->num_ignores; ++i) {
 		free(person->ignores[i]);
 	}
@@ -1871,7 +1871,7 @@ static duk_ret_t
 js_SetPersonSpriteset(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	spriteset_t* spriteset = duk_require_sphere_spriteset(ctx, 1);
+	spriteset_t* spriteset = duk_require_sphere_obj(ctx, 1, "Spriteset");
 
 	spriteset_t* new_spriteset;
 	person_t*    person;
@@ -2090,7 +2090,7 @@ js_QueuePersonCommand(duk_context* ctx)
 	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "QueuePersonCommand(): Invalid command type constant");
 	if (!queue_person_command(person, command, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to enlarge person's command queue (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to enlarge person's command queue");
 	return 0;
 }
 
@@ -2106,7 +2106,7 @@ js_QueuePersonScript(duk_context* ctx)
 	if (!(person = find_person(name)))
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): Person '%s' doesn't exist", name);
 	if (!queue_person_script(person, script, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): Failed to enqueue script (internal error)");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): Failed to enqueue script");
 	free_lstring(script);
 	return 0;
 }
