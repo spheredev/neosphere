@@ -63,9 +63,9 @@ init_surface_api(void)
 	register_api_func(g_duktape, NULL, "CreateSurface", js_CreateSurface);
 	register_api_func(g_duktape, NULL, "LoadSurface", js_LoadSurface);
 	register_api_ctor(g_duktape, "Surface", js_new_Surface, js_Surface_finalize);
+	register_api_func(g_duktape, "Surface", "toString", js_Surface_toString);
 	register_api_prop(g_duktape, "Surface", "height", js_Surface_get_height, NULL);
 	register_api_prop(g_duktape, "Surface", "width", js_Surface_get_width, NULL);
-	register_api_func(g_duktape, "Surface", "toString", js_Surface_toString);
 	register_api_func(g_duktape, "Surface", "getPixel", js_Surface_getPixel);
 	register_api_func(g_duktape, "Surface", "setAlpha", js_Surface_setAlpha);
 	register_api_func(g_duktape, "Surface", "setBlendMode", js_Surface_setBlendMode);

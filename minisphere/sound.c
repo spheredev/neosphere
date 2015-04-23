@@ -10,19 +10,19 @@ static duk_ret_t js_LoadSound          (duk_context* ctx);
 static duk_ret_t js_new_Sound          (duk_context* ctx);
 static duk_ret_t js_Sound_finalize     (duk_context* ctx);
 static duk_ret_t js_Sound_toString     (duk_context* ctx);
+static duk_ret_t js_Sound_get_length   (duk_context* ctx);
+static duk_ret_t js_Sound_get_pan      (duk_context* ctx);
+static duk_ret_t js_Sound_set_pan      (duk_context* ctx);
+static duk_ret_t js_Sound_get_pitch    (duk_context* ctx);
+static duk_ret_t js_Sound_set_pitch    (duk_context* ctx);
+static duk_ret_t js_Sound_get_position (duk_context* ctx);
+static duk_ret_t js_Sound_set_position (duk_context* ctx);
+static duk_ret_t js_Sound_get_repeat   (duk_context* ctx);
+static duk_ret_t js_Sound_set_repeat   (duk_context* ctx);
+static duk_ret_t js_Sound_get_seekable (duk_context* ctx);
+static duk_ret_t js_Sound_get_volume   (duk_context* ctx);
+static duk_ret_t js_Sound_set_volume   (duk_context* ctx);
 static duk_ret_t js_Sound_isPlaying    (duk_context* ctx);
-static duk_ret_t js_Sound_isSeekable   (duk_context* ctx);
-static duk_ret_t js_Sound_get_Length   (duk_context* ctx);
-static duk_ret_t js_Sound_get_Pan      (duk_context* ctx);
-static duk_ret_t js_Sound_get_Pitch    (duk_context* ctx);
-static duk_ret_t js_Sound_get_Position (duk_context* ctx);
-static duk_ret_t js_Sound_get_Repeat   (duk_context* ctx);
-static duk_ret_t js_Sound_get_Volume   (duk_context* ctx);
-static duk_ret_t js_Sound_set_Pan      (duk_context* ctx);
-static duk_ret_t js_Sound_set_Pitch    (duk_context* ctx);
-static duk_ret_t js_Sound_set_Position (duk_context* ctx);
-static duk_ret_t js_Sound_set_Repeat   (duk_context* ctx);
-static duk_ret_t js_Sound_set_Volume   (duk_context* ctx);
 static duk_ret_t js_Sound_clone        (duk_context* ctx);
 static duk_ret_t js_Sound_pause        (duk_context* ctx);
 static duk_ret_t js_Sound_play         (duk_context* ctx);
@@ -198,31 +198,32 @@ stop_sound(sound_t* sound, bool rewind)
 void
 init_sound_api()
 {
-	// register sound API functions
+	// Sound API functions
 	register_api_func(g_duktape, NULL, "LoadSound", js_LoadSound);
 
-	// register Sound properties and methods
+	// Sound object
 	register_api_ctor(g_duktape, "Sound", js_new_Sound, js_Sound_finalize);
-	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_Length, NULL);
-	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_Pan, js_Sound_set_Pan);
-	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_Pitch, js_Sound_set_Pitch);
-	register_api_prop(g_duktape, "Sound", "position", js_Sound_get_Position, js_Sound_set_Position);
-	register_api_prop(g_duktape, "Sound", "repeat", js_Sound_get_Repeat, js_Sound_set_Repeat);
-	register_api_prop(g_duktape, "Sound", "volume", js_Sound_get_Volume, js_Sound_set_Volume);
 	register_api_func(g_duktape, "Sound", "toString", js_Sound_toString);
+	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_length, NULL);
+	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
+	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
+	register_api_prop(g_duktape, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
+	register_api_prop(g_duktape, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
+	register_api_prop(g_duktape, "Sound", "seekable", js_Sound_get_seekable, NULL);
+	register_api_prop(g_duktape, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
 	register_api_func(g_duktape, "Sound", "isPlaying", js_Sound_isPlaying);
-	register_api_func(g_duktape, "Sound", "isSeekable", js_Sound_isSeekable);
-	register_api_func(g_duktape, "Sound", "getLength", js_Sound_get_Length);
-	register_api_func(g_duktape, "Sound", "getPan", js_Sound_get_Pan);
-	register_api_func(g_duktape, "Sound", "getPitch", js_Sound_get_Pitch);
-	register_api_func(g_duktape, "Sound", "getPosition", js_Sound_get_Position);
-	register_api_func(g_duktape, "Sound", "getRepeat", js_Sound_get_Repeat);
-	register_api_func(g_duktape, "Sound", "getVolume", js_Sound_get_Volume);
-	register_api_func(g_duktape, "Sound", "setPan", js_Sound_set_Pan);
-	register_api_func(g_duktape, "Sound", "setPitch", js_Sound_set_Pitch);
-	register_api_func(g_duktape, "Sound", "setPosition", js_Sound_set_Position);
-	register_api_func(g_duktape, "Sound", "setRepeat", js_Sound_set_Repeat);
-	register_api_func(g_duktape, "Sound", "setVolume", js_Sound_set_Volume);
+	register_api_func(g_duktape, "Sound", "isSeekable", js_Sound_get_seekable);
+	register_api_func(g_duktape, "Sound", "getLength", js_Sound_get_length);
+	register_api_func(g_duktape, "Sound", "getPan", js_Sound_get_pan);
+	register_api_func(g_duktape, "Sound", "getPitch", js_Sound_get_pitch);
+	register_api_func(g_duktape, "Sound", "getPosition", js_Sound_get_position);
+	register_api_func(g_duktape, "Sound", "getRepeat", js_Sound_get_repeat);
+	register_api_func(g_duktape, "Sound", "getVolume", js_Sound_get_volume);
+	register_api_func(g_duktape, "Sound", "setPan", js_Sound_set_pan);
+	register_api_func(g_duktape, "Sound", "setPitch", js_Sound_set_pitch);
+	register_api_func(g_duktape, "Sound", "setPosition", js_Sound_set_position);
+	register_api_func(g_duktape, "Sound", "setRepeat", js_Sound_set_repeat);
+	register_api_func(g_duktape, "Sound", "setVolume", js_Sound_set_volume);
 	register_api_func(g_duktape, "Sound", "pause", js_Sound_pause);
 	register_api_func(g_duktape, "Sound", "play", js_Sound_play);
 	register_api_func(g_duktape, "Sound", "reset", js_Sound_reset);
@@ -277,26 +278,7 @@ js_Sound_toString(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_isPlaying(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
-	duk_pop(ctx);
-	duk_push_boolean(ctx, is_sound_playing(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_isSeekable(duk_context* ctx)
-{
-	duk_push_true(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_get_Length(duk_context* ctx)
+js_Sound_get_length(duk_context* ctx)
 {
 	sound_t* sound;
 	
@@ -308,7 +290,7 @@ js_Sound_get_Length(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_get_Pan(duk_context* ctx)
+js_Sound_get_pan(duk_context* ctx)
 {
 	sound_t* sound;
 
@@ -320,55 +302,7 @@ js_Sound_get_Pan(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_get_Pitch(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
-	duk_pop(ctx);
-	duk_push_number(ctx, get_sound_pitch(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_get_Position(duk_context* ctx)
-{
-	sound_t* sound;
-	
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
-	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_seek(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_get_Repeat(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
-	duk_pop(ctx);
-	duk_push_boolean(ctx, is_sound_looping(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_get_Volume(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
-	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_gain(sound) * 255);
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_set_Pan(duk_context* ctx)
+js_Sound_set_pan(duk_context* ctx)
 {
 	int new_pan = duk_require_int(ctx, 0);
 
@@ -382,7 +316,19 @@ js_Sound_set_Pan(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_set_Pitch(duk_context* ctx)
+js_Sound_get_pitch(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_number(ctx, get_sound_pitch(sound));
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_set_pitch(duk_context* ctx)
 {
 	float new_pitch = duk_require_number(ctx, 0);
 
@@ -396,7 +342,19 @@ js_Sound_set_Pitch(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_set_Position(duk_context* ctx)
+js_Sound_get_position(duk_context* ctx)
+{
+	sound_t* sound;
+	
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_int(ctx, get_sound_seek(sound));
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_set_position(duk_context* ctx)
 {
 	int new_pos = duk_require_int(ctx, 0);
 
@@ -410,10 +368,22 @@ js_Sound_set_Position(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_set_Repeat(duk_context* ctx)
+js_Sound_get_repeat(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_boolean(ctx, is_sound_looping(sound));
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_set_repeat(duk_context* ctx)
 {
 	bool is_looped = duk_require_boolean(ctx, 0);
-	
+
 	sound_t* sound;
 
 	duk_push_this(ctx);
@@ -424,7 +394,26 @@ js_Sound_set_Repeat(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_set_Volume(duk_context* ctx)
+js_Sound_get_seekable(duk_context* ctx)
+{
+	duk_push_true(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_get_volume(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_int(ctx, get_sound_gain(sound) * 255);
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_set_volume(duk_context* ctx)
 {
 	float new_gain = duk_require_int(ctx, 0);
 	
@@ -435,6 +424,18 @@ js_Sound_set_Volume(duk_context* ctx)
 	duk_pop(ctx);
 	set_sound_gain(sound, (float)new_gain / 255);
 	return 0;
+}
+
+static duk_ret_t
+js_Sound_isPlaying(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_boolean(ctx, is_sound_playing(sound));
+	return 1;
 }
 
 static duk_ret_t

@@ -401,9 +401,9 @@ init_image_api(duk_context* ctx)
 
 	// register Image properties and methods
 	register_api_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
+	register_api_func(ctx, "Image", "toString", js_Image_toString);
 	register_api_prop(ctx, "Image", "height", js_Image_get_height, NULL);
 	register_api_prop(ctx, "Image", "width", js_Image_get_width, NULL);
-	register_api_func(ctx, "Image", "toString", js_Image_toString);
 	register_api_func(ctx, "Image", "blit", js_Image_blit);
 	register_api_func(ctx, "Image", "blitMask", js_Image_blitMask);
 	register_api_func(ctx, "Image", "createSurface", js_Image_createSurface);
