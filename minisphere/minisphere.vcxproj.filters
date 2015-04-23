@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Documentation Files">
+      <UniqueIdentifier>{4e1bb65e-6cd0-47be-ba23-f33ae2175384}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="duktape.c">
@@ -180,5 +183,11 @@
     <Image Include="engine.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\changelog.txt" />
+    <Text Include="assets\documentation\sphere-api.txt">
+      <Filter>Documentation Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

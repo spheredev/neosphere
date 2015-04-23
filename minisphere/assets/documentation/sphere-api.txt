@@ -170,32 +170,32 @@ MapEngine(map_file, framerate);
   `map_file` is assumed to be relative to the "maps" directory in the
   game.sgm root.
 
-ExitMapEngine()
+ExitMapEngine();
   
   Tells the map engine to shut down at the start of the next frame.
 
-ChangeMap(map_file)
+ChangeMap(map_file);
 
   Loads `map_file` into the map engine. This destroys any transient
   persons automatically. Transient persons are those defined in the map
   file as well as any created by passing `true` as the third argument
   to CreatePerson().
 
-AttachCamera(person)
+AttachCamera(person);
   
   Attaches the camera to `person`. The camera will remain centered on
   whichever person it's attached to as they move about the map.
 
-AttachInput(person)
+AttachInput(person);
   
   Grants the player control of `person`.
 
-UpdateMapEngine()
+UpdateMapEngine();
   
   Updates the map engine the next frame. Used to keep the map engine
   operating when running a tight loop.
 
-RenderMap()
+RenderMap();
   
   Renders the current map and set of persons to the backbuffer. Used
   along with UpdateMapEngine() to keep the map engine operating when
@@ -211,30 +211,29 @@ persons on a map. Typically you create one or more persistent persons
 to represent your player characters, and the rest are transient, to be
 destroyed when a new map is loaded.
 
-CreatePerson(name, spriteset_file, destroy_with_map)
+CreatePerson(name, spriteset_file, transient);
   
   Creates a person using the spriteset stored in `spriteset_file`.
-  If `destroy_with_map` is true, the person is transient and will be
-  automatically destroyed (deleted) when a new map is loaded via
-  ChangeMap().
+  If `transient` true, the person is transient and will automatically be
+  destroyed (deleted) when a new map is loaded via ChangeMap().
 
-DestroyPerson(name)
+DestroyPerson(name);
   
   Destroys the person, removing it from play. This works on persons
   created manually via CreatePerson() as well as those created during
   map load, so be careful!
 
-GetPersonList()
+GetPersonList();
   
   Returns an array of person names representing all the persons that
   currently exist.
 
-DoesPersonExist(name)
+DoesPersonExist(name);
   
   Returns true if a person named `name` currently exists, otherwise
   returns false.
 
-FollowPerson(name, leader_name, distance)
+FollowPerson(name, leader_name, distance);
   
   Makes a person follow another person at a distance specified by
   `distance`. Note that the distance is not absolute and the actual
@@ -245,3 +244,8 @@ FollowPerson(name, leader_name, distance)
   function again like this:
     
     FollowPerson("<name>", null, 0);
+
+GetPersonLeader(name)
+  
+  Gets the person `name` is currently following. If no leader exists
+  (the person is independent), returns an empty string ("").

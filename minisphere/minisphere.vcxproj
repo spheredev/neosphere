@@ -252,6 +252,14 @@
   <ItemGroup>
     <Image Include="engine.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\changelog.txt">
+      <DeploymentContent>false</DeploymentContent>
+    </Text>
+    <Text Include="assets\documentation\sphere-api.txt">
+      <DeploymentContent>false</DeploymentContent>
+    </Text>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
