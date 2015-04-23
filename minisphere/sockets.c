@@ -247,38 +247,38 @@ void
 init_sockets_api(void)
 {
 	// core Sockets API functions
-	register_api_func(g_duktape, NULL, "GetLocalAddress", js_GetLocalAddress);
-	register_api_func(g_duktape, NULL, "GetLocalName", js_GetLocalName);
+	register_api_func(g_duk, NULL, "GetLocalAddress", js_GetLocalAddress);
+	register_api_func(g_duk, NULL, "GetLocalName", js_GetLocalName);
 	
 	// Socket object (Sphere 1.5-style socket)
-	register_api_func(g_duktape, NULL, "ListenOnPort", js_ListenOnPort);
-	register_api_func(g_duktape, NULL, "OpenAddress", js_OpenAddress);
-	register_api_ctor(g_duktape, "Socket", js_new_Socket, js_Socket_finalize);
-	register_api_prop(g_duktape, "Socket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
-	register_api_prop(g_duktape, "Socket", "remotePort", js_IOSocket_get_remotePort, NULL);
-	register_api_func(g_duktape, "Socket", "toString", js_Socket_toString);
-	register_api_func(g_duktape, "Socket", "isConnected", js_Socket_isConnected);
-	register_api_func(g_duktape, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
-	register_api_func(g_duktape, "Socket", "close", js_Socket_close);
-	register_api_func(g_duktape, "Socket", "read", js_Socket_read);
-	register_api_func(g_duktape, "Socket", "readString", js_Socket_readString);
-	register_api_func(g_duktape, "Socket", "write", js_Socket_write);
+	register_api_func(g_duk, NULL, "ListenOnPort", js_ListenOnPort);
+	register_api_func(g_duk, NULL, "OpenAddress", js_OpenAddress);
+	register_api_ctor(g_duk, "Socket", js_new_Socket, js_Socket_finalize);
+	register_api_prop(g_duk, "Socket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
+	register_api_prop(g_duk, "Socket", "remotePort", js_IOSocket_get_remotePort, NULL);
+	register_api_func(g_duk, "Socket", "toString", js_Socket_toString);
+	register_api_func(g_duk, "Socket", "isConnected", js_Socket_isConnected);
+	register_api_func(g_duk, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	register_api_func(g_duk, "Socket", "close", js_Socket_close);
+	register_api_func(g_duk, "Socket", "read", js_Socket_read);
+	register_api_func(g_duk, "Socket", "readString", js_Socket_readString);
+	register_api_func(g_duk, "Socket", "write", js_Socket_write);
 
 	// ListeningSocket object
-	register_api_ctor(g_duktape, "ListeningSocket", js_new_ListeningSocket, js_ListeningSocket_finalize);
-	register_api_func(g_duktape, "ListeningSocket", "close", js_ListeningSocket_close);
-	register_api_func(g_duktape, "ListeningSocket", "acceptNext", js_ListeningSocket_acceptNext);
+	register_api_ctor(g_duk, "ListeningSocket", js_new_ListeningSocket, js_ListeningSocket_finalize);
+	register_api_func(g_duk, "ListeningSocket", "close", js_ListeningSocket_close);
+	register_api_func(g_duk, "ListeningSocket", "acceptNext", js_ListeningSocket_acceptNext);
 	
 	// IOSocket object
-	register_api_ctor(g_duktape, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
-	register_api_prop(g_duktape, "IOSocket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
-	register_api_prop(g_duktape, "IOSocket", "remotePort", js_IOSocket_get_remotePort, NULL);
-	register_api_func(g_duktape, "IOSocket", "isConnected", js_IOSocket_isConnected);
-	register_api_func(g_duktape, "IOSocket", "getPendingReadSize", js_IOSocket_getPendingReadSize);
-	register_api_func(g_duktape, "IOSocket", "close", js_IOSocket_close);
-	register_api_func(g_duktape, "IOSocket", "read", js_IOSocket_read);
-	register_api_func(g_duktape, "IOSocket", "readString", js_IOSocket_readString);
-	register_api_func(g_duktape, "IOSocket", "write", js_IOSocket_write);
+	register_api_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
+	register_api_prop(g_duk, "IOSocket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
+	register_api_prop(g_duk, "IOSocket", "remotePort", js_IOSocket_get_remotePort, NULL);
+	register_api_func(g_duk, "IOSocket", "isConnected", js_IOSocket_isConnected);
+	register_api_func(g_duk, "IOSocket", "getPendingReadSize", js_IOSocket_getPendingReadSize);
+	register_api_func(g_duk, "IOSocket", "close", js_IOSocket_close);
+	register_api_func(g_duk, "IOSocket", "read", js_IOSocket_read);
+	register_api_func(g_duk, "IOSocket", "readString", js_IOSocket_readString);
+	register_api_func(g_duk, "IOSocket", "write", js_IOSocket_write);
 }
 
 static duk_ret_t

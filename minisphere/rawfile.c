@@ -21,22 +21,22 @@ void
 init_rawfile_api(void)
 {
 	// RawFile API functions
-	register_api_func(g_duktape, NULL, "HashRawFile", js_HashRawFile);
+	register_api_func(g_duk, NULL, "HashRawFile", js_HashRawFile);
 	
 	// RawFile object
-	register_api_func(g_duktape, NULL, "OpenRawFile", js_OpenRawFile);
-	register_api_ctor(g_duktape, "RawFile", js_new_RawFile, js_RawFile_finalize);
-	register_api_func(g_duktape, "RawFile", "toString", js_RawFile_toString);
-	register_api_prop(g_duktape, "RawFile", "length", js_RawFile_get_size, NULL);
-	register_api_prop(g_duktape, "RawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
-	register_api_prop(g_duktape, "RawFile", "size", js_RawFile_get_size, NULL);
-	register_api_func(g_duktape, "RawFile", "getPosition", js_RawFile_get_position);
-	register_api_func(g_duktape, "RawFile", "setPosition", js_RawFile_set_position);
-	register_api_func(g_duktape, "RawFile", "getSize", js_RawFile_get_size);
-	register_api_func(g_duktape, "RawFile", "close", js_RawFile_close);
-	register_api_func(g_duktape, "RawFile", "read", js_RawFile_read);
-	register_api_func(g_duktape, "RawFile", "readString", js_RawFile_readString);
-	register_api_func(g_duktape, "RawFile", "write", js_RawFile_write);
+	register_api_func(g_duk, NULL, "OpenRawFile", js_OpenRawFile);
+	register_api_ctor(g_duk, "RawFile", js_new_RawFile, js_RawFile_finalize);
+	register_api_func(g_duk, "RawFile", "toString", js_RawFile_toString);
+	register_api_prop(g_duk, "RawFile", "length", js_RawFile_get_size, NULL);
+	register_api_prop(g_duk, "RawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
+	register_api_prop(g_duk, "RawFile", "size", js_RawFile_get_size, NULL);
+	register_api_func(g_duk, "RawFile", "getPosition", js_RawFile_get_position);
+	register_api_func(g_duk, "RawFile", "setPosition", js_RawFile_set_position);
+	register_api_func(g_duk, "RawFile", "getSize", js_RawFile_get_size);
+	register_api_func(g_duk, "RawFile", "close", js_RawFile_close);
+	register_api_func(g_duk, "RawFile", "read", js_RawFile_read);
+	register_api_func(g_duk, "RawFile", "readString", js_RawFile_readString);
+	register_api_func(g_duk, "RawFile", "write", js_RawFile_write);
 }
 
 static duk_ret_t

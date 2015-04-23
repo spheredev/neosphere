@@ -205,6 +205,7 @@
     <ClCompile Include="lstring.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="map_engine.c" />
+    <ClCompile Include="sapphire.c" />
     <ClCompile Include="sockets.c" />
     <ClCompile Include="obsmap.c" />
     <ClCompile Include="persons.c" />
@@ -232,6 +233,7 @@
     <ClInclude Include="lstring.h" />
     <ClInclude Include="map_engine.h" />
     <ClInclude Include="minisphere.h" />
+    <ClInclude Include="sapphire.h" />
     <ClInclude Include="sockets.h" />
     <ClInclude Include="obsmap.h" />
     <ClInclude Include="persons.h" />

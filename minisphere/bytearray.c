@@ -137,17 +137,17 @@ void
 init_bytearray_api(void)
 {
 	// core ByteArray API
-	register_api_func(g_duktape, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
-	register_api_func(g_duktape, NULL, "HashByteArray", js_HashByteArray);
+	register_api_func(g_duk, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
+	register_api_func(g_duk, NULL, "HashByteArray", js_HashByteArray);
 
 	// ByteArray object
-	register_api_func(g_duktape, NULL, "CreateByteArray", js_CreateByteArray);
-	register_api_func(g_duktape, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
-	register_api_ctor(g_duktape, "ByteArray", js_new_ByteArray, js_ByteArray_finalize);
-	register_api_prop(g_duktape, "ByteArray", "length", js_ByteArray_get_length, NULL);
-	register_api_func(g_duktape, "ByteArray", "toString", js_ByteArray_toString);
-	register_api_func(g_duktape, "ByteArray", "concat", js_ByteArray_concat);
-	register_api_func(g_duktape, "ByteArray", "slice", js_ByteArray_slice);
+	register_api_func(g_duk, NULL, "CreateByteArray", js_CreateByteArray);
+	register_api_func(g_duk, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
+	register_api_ctor(g_duk, "ByteArray", js_new_ByteArray, js_ByteArray_finalize);
+	register_api_prop(g_duk, "ByteArray", "length", js_ByteArray_get_length, NULL);
+	register_api_func(g_duk, "ByteArray", "toString", js_ByteArray_toString);
+	register_api_func(g_duk, "ByteArray", "concat", js_ByteArray_concat);
+	register_api_func(g_duk, "ByteArray", "slice", js_ByteArray_slice);
 }
 
 void
