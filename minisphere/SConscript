@@ -17,6 +17,7 @@ msphere_sources = [
 	"persons.c",
 	"primitives.c",
 	"rawfile.c",
+	"sapphire.c",
 	"script.c",
 	"sockets.c",
 	"sound.c",
