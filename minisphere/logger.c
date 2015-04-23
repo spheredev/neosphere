@@ -128,12 +128,12 @@ void
 init_logging_api(void)
 {
 	// Logger object
-	register_api_func(g_duktape, NULL, "OpenLog", js_OpenLog);
-	register_api_ctor(g_duktape, "Logger", js_new_Logger, js_Logger_finalize);
-	register_api_func(g_duktape, "Logger", "toString", js_Logger_toString);
-	register_api_func(g_duktape, "Logger", "beginBlock", js_Logger_toString);
-	register_api_func(g_duktape, "Logger", "endBlock", js_Logger_toString);
-	register_api_func(g_duktape, "Logger", "write", js_Logger_toString);
+	register_api_func(g_duk, NULL, "OpenLog", js_OpenLog);
+	register_api_ctor(g_duk, "Logger", js_new_Logger, js_Logger_finalize);
+	register_api_func(g_duk, "Logger", "toString", js_Logger_toString);
+	register_api_func(g_duk, "Logger", "beginBlock", js_Logger_toString);
+	register_api_func(g_duk, "Logger", "endBlock", js_Logger_toString);
+	register_api_func(g_duk, "Logger", "write", js_Logger_toString);
 }
 
 static duk_ret_t

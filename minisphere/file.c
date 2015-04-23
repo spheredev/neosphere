@@ -169,22 +169,22 @@ void
 init_file_api(void)
 {
 	// File API function
-	register_api_func(g_duktape, NULL, "DoesFileExist", js_DoesFileExist);
-	register_api_func(g_duktape, NULL, "CreateDirectory", js_CreateDirectory);
-	register_api_func(g_duktape, NULL, "RemoveDirectory", js_RemoveDirectory);
-	register_api_func(g_duktape, NULL, "RemoveFile", js_RemoveFile);
-	register_api_func(g_duktape, NULL, "Rename", js_Rename);
+	register_api_func(g_duk, NULL, "DoesFileExist", js_DoesFileExist);
+	register_api_func(g_duk, NULL, "CreateDirectory", js_CreateDirectory);
+	register_api_func(g_duk, NULL, "RemoveDirectory", js_RemoveDirectory);
+	register_api_func(g_duk, NULL, "RemoveFile", js_RemoveFile);
+	register_api_func(g_duk, NULL, "Rename", js_Rename);
 
 	// File object
-	register_api_func(g_duktape, NULL, "OpenFile", js_OpenFile);
-	register_api_ctor(g_duktape, "File", js_new_File, js_File_finalize);
-	register_api_func(g_duktape, "File", "toString", js_File_toString);
-	register_api_func(g_duktape, "File", "getKey", js_File_getKey);
-	register_api_func(g_duktape, "File", "getNumKeys", js_File_getNumKeys);
-	register_api_func(g_duktape, "File", "close", js_File_close);
-	register_api_func(g_duktape, "File", "flush", js_File_flush);
-	register_api_func(g_duktape, "File", "read", js_File_read);
-	register_api_func(g_duktape, "File", "write", js_File_write);
+	register_api_func(g_duk, NULL, "OpenFile", js_OpenFile);
+	register_api_ctor(g_duk, "File", js_new_File, js_File_finalize);
+	register_api_func(g_duk, "File", "toString", js_File_toString);
+	register_api_func(g_duk, "File", "getKey", js_File_getKey);
+	register_api_func(g_duk, "File", "getNumKeys", js_File_getNumKeys);
+	register_api_func(g_duk, "File", "close", js_File_close);
+	register_api_func(g_duk, "File", "flush", js_File_flush);
+	register_api_func(g_duk, "File", "read", js_File_read);
+	register_api_func(g_duk, "File", "write", js_File_write);
 }
 
 static duk_ret_t

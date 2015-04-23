@@ -93,6 +93,9 @@
     <ClCompile Include="sockets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sapphire.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="duktape.h">
@@ -171,6 +174,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sockets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sapphire.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

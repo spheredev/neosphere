@@ -11,6 +11,7 @@
 #include "map_engine.h"
 #include "primitives.h"
 #include "rawfile.h"
+#include "sapphire.h"
 #include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -29,7 +30,7 @@
 #endif
 
 ALLEGRO_DISPLAY*     g_display = NULL;
-duk_context*         g_duktape = NULL;
+duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 ALLEGRO_CONFIG*      g_game_conf = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
@@ -246,11 +247,11 @@ main(int argc, char* argv[])
 	
 	// load startup script
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
-	exec_result = duk_pcompile_file(g_duktape, 0x0, path);
+	exec_result = duk_pcompile_file(g_duk, 0x0, path);
 	free(path);
 	if (exec_result != DUK_EXEC_SUCCESS) goto on_js_error;
-	if (duk_pcall(g_duktape, 0) != DUK_EXEC_SUCCESS) goto on_js_error;
-	duk_pop(g_duktape);
+	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS) goto on_js_error;
+	duk_pop(g_duk);
 
 	// initialize timing variables
 	s_next_fps_poll_time = al_get_time() + 1.0;
@@ -259,37 +260,37 @@ main(int argc, char* argv[])
 	s_next_frame_time = s_last_flip_time = al_get_time();
 
 	// call game() function in script
-	duk_push_global_object(g_duktape);
-	duk_get_prop_string(g_duktape, -1, "game");
-	if (duk_pcall(g_duktape, 0) != DUK_EXEC_SUCCESS)
+	duk_push_global_object(g_duk);
+	duk_get_prop_string(g_duk, -1, "game");
+	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_js_error;
-	duk_pop(g_duktape);
-	duk_pop(g_duktape);
+	duk_pop(g_duk);
+	duk_pop(g_duk);
 	
 	exit_game(false);
 
 on_js_error:
-	err_code = duk_get_error_code(g_duktape, -1);
-	duk_dup(g_duktape, -1);
-	err_msg = duk_safe_to_string(g_duktape, -1);
+	err_code = duk_get_error_code(g_duk, -1);
+	duk_dup(g_duk, -1);
+	err_msg = duk_safe_to_string(g_duk, -1);
 	al_show_mouse_cursor(g_display);
-	duk_get_prop_string(g_duktape, -2, "lineNumber");
-	line_num = duk_get_int(g_duktape, -1);
-	duk_pop(g_duktape);
-	duk_get_prop_string(g_duktape, -2, "fileName");
-	file_path = duk_get_string(g_duktape, -1);
+	duk_get_prop_string(g_duk, -2, "lineNumber");
+	line_num = duk_get_int(g_duk, -1);
+	duk_pop(g_duk);
+	duk_get_prop_string(g_duk, -2, "fileName");
+	file_path = duk_get_string(g_duk, -1);
 	if (file_path != NULL) {
 		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		filename = filename != NULL ? filename + 1 : file_path;
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duktape, "`%s`, line: %i | %s", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "`%s`, line: %i | %s", filename, line_num, err_msg);
 		else
-			duk_push_string(g_duktape, err_msg);
+			duk_push_string(g_duk, err_msg);
 	}
 	else {
-		duk_push_string(g_duktape, err_msg);
+		duk_push_string(g_duk, err_msg);
 	}
-	duk_fatal(g_duktape, err_code, duk_get_string(g_duktape, -1));
+	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
 }
 
 bool
@@ -629,22 +630,23 @@ initialize_engine(void)
 	initialize_sound();
 
 	// initialize JavaScript API
-	if (!(g_duktape = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
+	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	initialize_api(g_duktape);
+	initialize_api(g_duk);
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();
-	init_font_api(g_duktape);
-	init_image_api(g_duktape);
+	init_font_api(g_duk);
+	init_image_api(g_duk);
 	init_input_api();
 	init_logging_api();
-	init_map_engine_api(g_duktape);
+	init_map_engine_api(g_duk);
 	init_primitives_api();
 	init_rawfile_api();
+	init_sapphire_api();
 	init_sockets_api();
 	init_sound_api();
-	init_spriteset_api(g_duktape);
+	init_spriteset_api(g_duk);
 	init_surface_api();
 	init_windowstyle_api();
 	return true;
@@ -660,7 +662,7 @@ static void
 shutdown_engine(void)
 {
 	shutdown_map_engine();
-	duk_destroy_heap(g_duktape);
+	duk_destroy_heap(g_duk);
 	dyad_shutdown();
 	shutdown_sound();
 	shutdown_input();

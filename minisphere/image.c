@@ -181,7 +181,8 @@ on_error:
 image_t*
 ref_image(image_t* image)
 {
-	++image->refcount;
+	if (image != NULL)
+		++image->refcount;
 	return image;
 }
 

@@ -22,17 +22,17 @@ compile_script(const lstring_t* codestring, const char* name)
 	// this wouldn't be necessary if Duktape duk_get_heapptr() would give us a strong reference, but alas,
 	// we're stuck with this ugliness where we store the compiled function in the global stash so it doesn't
 	// get garbage collected.
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape); duk_put_prop_string(g_duktape, -2, "scripts");
-		duk_get_prop_string(g_duktape, -1, "scripts");
+	duk_push_global_stash(g_duk);
+	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
+		duk_pop(g_duk);
+		duk_push_array(g_duk); duk_put_prop_string(g_duk, -2, "scripts");
+		duk_get_prop_string(g_duk, -1, "scripts");
 	}
 	script->id = s_next_id++;
-	duk_push_string(g_duktape, name);
-	duk_compile_lstring_filename(g_duktape, 0x0, codestring->cstr, codestring->length);
-	duk_put_prop_index(g_duktape, -2, script->id);
-	duk_pop_2(g_duktape);
+	duk_push_string(g_duk, name);
+	duk_compile_lstring_filename(g_duk, 0x0, codestring->cstr, codestring->length);
+	duk_put_prop_index(g_duk, -2, script->id);
+	duk_pop_2(g_duk);
 
 	return script;
 }
@@ -44,13 +44,13 @@ free_script(script_t* script)
 		return;
 	
 	// unstash the compiled function, it's now safe to GC
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape);
+	duk_push_global_stash(g_duk);
+	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
+		duk_pop(g_duk);
+		duk_push_array(g_duk);
 	}
-	duk_del_prop_index(g_duktape, -1, script->id);
-	duk_pop_2(g_duktape);
+	duk_del_prop_index(g_duk, -1, script->id);
+	duk_pop_2(g_duk);
 
 	free(script);
 }
@@ -69,19 +69,19 @@ run_script(script_t* script, bool allow_reentry)
 	was_in_use = script->is_in_use;
 
 	// retrieve the compiled script from the stash (so ugly...)
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape);
+	duk_push_global_stash(g_duk);
+	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
+		duk_pop(g_duk);
+		duk_push_array(g_duk);
 	}
-	duk_get_prop_index(g_duktape, -1, script->id);
+	duk_get_prop_index(g_duk, -1, script->id);
 	
 	// execute the script
-	duk_call(g_duktape, 0);
-	duk_pop(g_duktape);
+	duk_call(g_duk, 0);
+	duk_pop(g_duk);
 	
 	script->is_in_use = was_in_use;
-	duk_pop_2(g_duktape);
+	duk_pop_2(g_duk);
 }
 
 script_t*
@@ -119,16 +119,16 @@ script_from_js_function(void* heapptr)
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
 
-	duk_push_global_stash(g_duktape);
-	if (!duk_get_prop_string(g_duktape, -1, "scripts")) {
-		duk_pop(g_duktape);
-		duk_push_array(g_duktape); duk_put_prop_string(g_duktape, -2, "scripts");
-		duk_get_prop_string(g_duktape, -1, "scripts");
+	duk_push_global_stash(g_duk);
+	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
+		duk_pop(g_duk);
+		duk_push_array(g_duk); duk_put_prop_string(g_duk, -2, "scripts");
+		duk_get_prop_string(g_duk, -1, "scripts");
 	}
 	script->id = s_next_id++;
-	duk_push_heapptr(g_duktape, heapptr);
-	duk_put_prop_index(g_duktape, -2, script->id);
-	duk_pop_2(g_duktape);
+	duk_push_heapptr(g_duk, heapptr);
+	duk_put_prop_index(g_duk, -2, script->id);
+	duk_pop_2(g_duk);
 
 	return script;
 }

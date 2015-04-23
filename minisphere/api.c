@@ -158,7 +158,7 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 		duk_push_c_function(ctx, setter, DUK_VARARGS);
 		flags |= DUK_DEFPROP_HAVE_SETTER;
 	}
-	duk_def_prop(g_duktape, obj_index, flags);
+	duk_def_prop(g_duk, obj_index, flags);
 	if (ctor_name != NULL)
 		duk_pop_2(ctx);
 	duk_pop(ctx);
@@ -191,18 +191,18 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	const char*   full_path;
 
 	// get filename and line number from Duktape call stack
-	duk_push_global_object(g_duktape);
-	duk_get_prop_string(g_duktape, -1, "Duktape");
-	duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2 + blame_offset); duk_call(g_duktape, 1);
-	if (!duk_is_object(g_duktape, -1)) {
-		duk_pop(g_duktape);
-		duk_get_prop_string(g_duktape, -1, "act"); duk_push_int(g_duktape, -2); duk_call(g_duktape, 1);
+	duk_push_global_object(g_duk);
+	duk_get_prop_string(g_duk, -1, "Duktape");
+	duk_get_prop_string(g_duk, -1, "act"); duk_push_int(g_duk, -2 + blame_offset); duk_call(g_duk, 1);
+	if (!duk_is_object(g_duk, -1)) {
+		duk_pop(g_duk);
+		duk_get_prop_string(g_duk, -1, "act"); duk_push_int(g_duk, -2); duk_call(g_duk, 1);
 	}
-	duk_remove(g_duktape, -2);
-	duk_get_prop_string(g_duktape, -1, "lineNumber"); line_number = duk_to_int(g_duktape, -1); duk_pop(g_duktape);
-	duk_get_prop_string(g_duktape, -1, "function");
-	duk_get_prop_string(g_duktape, -1, "fileName"); full_path = duk_safe_to_string(g_duktape, -1); duk_pop(g_duktape);
-	duk_pop_2(g_duktape);
+	duk_remove(g_duk, -2);
+	duk_get_prop_string(g_duk, -1, "lineNumber"); line_number = duk_to_int(g_duk, -1); duk_pop(g_duk);
+	duk_get_prop_string(g_duk, -1, "function");
+	duk_get_prop_string(g_duk, -1, "fileName"); full_path = duk_safe_to_string(g_duk, -1); duk_pop(g_duk);
+	duk_pop_2(g_duk);
 
 	// strip directory path from filename
 	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);

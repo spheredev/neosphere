@@ -53,12 +53,13 @@ static const char* const EXTENSIONS[] = {
 	"sphere-obj-props",
 	"sphere-new-sockets",
 	"frameskip-api",
-	"set-script-function"
+	"sapphire-api",
+	"set-script-function",
 };
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
-extern duk_context*         g_duktape;
+extern duk_context*         g_duk;
 extern int                  g_fps;
 extern ALLEGRO_PATH*        g_game_path;
 extern char*                g_last_game_path;

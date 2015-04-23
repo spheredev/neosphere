@@ -199,35 +199,35 @@ void
 init_sound_api()
 {
 	// Sound API functions
-	register_api_func(g_duktape, NULL, "LoadSound", js_LoadSound);
+	register_api_func(g_duk, NULL, "LoadSound", js_LoadSound);
 
 	// Sound object
-	register_api_ctor(g_duktape, "Sound", js_new_Sound, js_Sound_finalize);
-	register_api_func(g_duktape, "Sound", "toString", js_Sound_toString);
-	register_api_prop(g_duktape, "Sound", "length", js_Sound_get_length, NULL);
-	register_api_prop(g_duktape, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
-	register_api_prop(g_duktape, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
-	register_api_prop(g_duktape, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
-	register_api_prop(g_duktape, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
-	register_api_prop(g_duktape, "Sound", "seekable", js_Sound_get_seekable, NULL);
-	register_api_prop(g_duktape, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
-	register_api_func(g_duktape, "Sound", "isPlaying", js_Sound_isPlaying);
-	register_api_func(g_duktape, "Sound", "isSeekable", js_Sound_get_seekable);
-	register_api_func(g_duktape, "Sound", "getLength", js_Sound_get_length);
-	register_api_func(g_duktape, "Sound", "getPan", js_Sound_get_pan);
-	register_api_func(g_duktape, "Sound", "getPitch", js_Sound_get_pitch);
-	register_api_func(g_duktape, "Sound", "getPosition", js_Sound_get_position);
-	register_api_func(g_duktape, "Sound", "getRepeat", js_Sound_get_repeat);
-	register_api_func(g_duktape, "Sound", "getVolume", js_Sound_get_volume);
-	register_api_func(g_duktape, "Sound", "setPan", js_Sound_set_pan);
-	register_api_func(g_duktape, "Sound", "setPitch", js_Sound_set_pitch);
-	register_api_func(g_duktape, "Sound", "setPosition", js_Sound_set_position);
-	register_api_func(g_duktape, "Sound", "setRepeat", js_Sound_set_repeat);
-	register_api_func(g_duktape, "Sound", "setVolume", js_Sound_set_volume);
-	register_api_func(g_duktape, "Sound", "pause", js_Sound_pause);
-	register_api_func(g_duktape, "Sound", "play", js_Sound_play);
-	register_api_func(g_duktape, "Sound", "reset", js_Sound_reset);
-	register_api_func(g_duktape, "Sound", "stop", js_Sound_stop);
+	register_api_ctor(g_duk, "Sound", js_new_Sound, js_Sound_finalize);
+	register_api_func(g_duk, "Sound", "toString", js_Sound_toString);
+	register_api_prop(g_duk, "Sound", "length", js_Sound_get_length, NULL);
+	register_api_prop(g_duk, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
+	register_api_prop(g_duk, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
+	register_api_prop(g_duk, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
+	register_api_prop(g_duk, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
+	register_api_prop(g_duk, "Sound", "seekable", js_Sound_get_seekable, NULL);
+	register_api_prop(g_duk, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
+	register_api_func(g_duk, "Sound", "isPlaying", js_Sound_isPlaying);
+	register_api_func(g_duk, "Sound", "isSeekable", js_Sound_get_seekable);
+	register_api_func(g_duk, "Sound", "getLength", js_Sound_get_length);
+	register_api_func(g_duk, "Sound", "getPan", js_Sound_get_pan);
+	register_api_func(g_duk, "Sound", "getPitch", js_Sound_get_pitch);
+	register_api_func(g_duk, "Sound", "getPosition", js_Sound_get_position);
+	register_api_func(g_duk, "Sound", "getRepeat", js_Sound_get_repeat);
+	register_api_func(g_duk, "Sound", "getVolume", js_Sound_get_volume);
+	register_api_func(g_duk, "Sound", "setPan", js_Sound_set_pan);
+	register_api_func(g_duk, "Sound", "setPitch", js_Sound_set_pitch);
+	register_api_func(g_duk, "Sound", "setPosition", js_Sound_set_position);
+	register_api_func(g_duk, "Sound", "setRepeat", js_Sound_set_repeat);
+	register_api_func(g_duk, "Sound", "setVolume", js_Sound_set_volume);
+	register_api_func(g_duk, "Sound", "pause", js_Sound_pause);
+	register_api_func(g_duk, "Sound", "play", js_Sound_play);
+	register_api_func(g_duk, "Sound", "reset", js_Sound_reset);
+	register_api_func(g_duk, "Sound", "stop", js_Sound_stop);
 }
 
 static duk_ret_t
