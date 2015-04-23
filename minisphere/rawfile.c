@@ -114,7 +114,7 @@ js_RawFile_get_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has been closed");
 	duk_push_int(ctx, ftell(file));
 	return 1;
 }
@@ -130,7 +130,7 @@ js_RawFile_set_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has been closed");
 	if (!fseek(file, new_pos, SEEK_SET))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - Failed to set read/write position");
 	return 0;
@@ -146,7 +146,7 @@ js_RawFile_get_size(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size - File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size - File has been closed");
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
 	duk_push_int(ctx, ftell(file));
@@ -164,7 +164,7 @@ js_RawFile_close(duk_context* ctx)
 	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has been closed");
 	fclose(file);
 	return 0;
 }
@@ -172,22 +172,31 @@ js_RawFile_close(duk_context* ctx)
 static duk_ret_t
 js_RawFile_read(duk_context* ctx)
 {
-	size_t num_bytes = duk_require_uint(ctx, 0);
-
+	int n_args = duk_get_top(ctx);
+	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+	
 	bytearray_t* array;
 	FILE*        file;
+	long         pos;
 	void*        read_buffer;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
-	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Must read at least 1 byte and less than 2GB (requested: ~%i MB)", num_bytes / 1048576);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has been closed");
+	if (n_args < 1) {  // if no arguments, read entire file back to front
+		pos = ftell(file);
+		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
+		fseek(file, 0, SEEK_SET);
+	}
+	if (num_bytes <= 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Read size out of range (%u)", num_bytes);
 	if (!(read_buffer = malloc(num_bytes)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
-	num_bytes = fread(read_buffer, 1, num_bytes, file);
+	num_bytes = (long)fread(read_buffer, 1, num_bytes, file);
+	if (n_args < 1)  // reset file position after whole-file read
+		fseek(file, pos, SEEK_SET);
 	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
@@ -208,7 +217,7 @@ js_RawFile_readString(duk_context* ctx)
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Read size out of range (%i)", num_bytes / 1048576);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has been closed");
 	if (!(read_buffer = malloc(num_bytes)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
 	num_bytes = fread(read_buffer, 1, num_bytes, file);
@@ -228,7 +237,7 @@ js_RawFile_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): File has already been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): File has been closed");
 	if (duk_is_string(ctx, 0))
 		data = duk_get_lstring(ctx, 0, &write_size);
 	else {
