@@ -53,8 +53,8 @@ static const char* const EXTENSIONS[] = {
 	"sphere-obj-props",
 	"sphere-new-sockets",
 	"frameskip-api",
-	"sapphire-api"
-	"set-script-function"
+	"sapphire-api",
+	"set-script-function",
 };
 
 extern ALLEGRO_DISPLAY*     g_display;

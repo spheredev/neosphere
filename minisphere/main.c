@@ -11,6 +11,7 @@
 #include "map_engine.h"
 #include "primitives.h"
 #include "rawfile.h"
+#include "sapphire.h"
 #include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -642,6 +643,7 @@ initialize_engine(void)
 	init_map_engine_api(g_duk);
 	init_primitives_api();
 	init_rawfile_api();
+	init_sapphire_api();
 	init_sockets_api();
 	init_sound_api();
 	init_spriteset_api(g_duk);
