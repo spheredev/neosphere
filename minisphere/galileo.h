@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__SAPPHIRE_H__INCLUDED
-#define MINISPHERE__SAPPHIRE_H__INCLUDED
+#ifndef MINISPHERE__GALILEO_H__INCLUDED
+#define MINISPHERE__GALILEO_H__INCLUDED
 
 typedef struct vertex vertex_t;
 typedef struct shape  shape_t;
@@ -19,6 +19,6 @@ extern void     free_group (group_t* group);
 extern bool     add_shape  (group_t* group, shape_t* shape);
 extern void     draw_group (group_t* group);
 
-extern void init_sapphire_api (void);
+extern void init_galileo_api (void);
 
-#endif // MINISPHERE__SAPPHIRE_H__INCLUDED
+#endif // MINISPHERE__GALILEO_H__INCLUDED

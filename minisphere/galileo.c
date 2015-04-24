@@ -1,7 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 
-#include "sapphire.h"
+#include "galileo.h"
 
 static duk_ret_t js_GetDefaultShaderProgram (duk_context* ctx);
 static duk_ret_t js_new_Group               (duk_context* ctx);
@@ -201,9 +201,9 @@ draw_group(group_t* group)
 }
 
 void
-init_sapphire_api(void)
+init_galileo_api(void)
 {
-	// Sapphire API functions
+	// Galileo API functions
 	register_api_func(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
 	
 	// Shape object

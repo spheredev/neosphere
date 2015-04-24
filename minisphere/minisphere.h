@@ -51,9 +51,9 @@ static const char* const EXTENSIONS[] = {
 	"minisphere",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
+	"sphere-galileo",
 	"sphere-new-sockets",
 	"frameskip-api",
-	"sapphire-api",
 	"set-script-function",
 };
 
