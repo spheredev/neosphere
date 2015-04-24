@@ -342,8 +342,8 @@ js_RequireScript(duk_context* ctx)
 	bool is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
-		duk_eval_file_noresult(ctx, script_path);
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
+		duk_eval_file_noresult(ctx, script_path);
 	}
 	duk_pop_2(ctx);
 	free(script_path);
@@ -363,8 +363,8 @@ js_RequireSystemScript(duk_context* ctx)
 	bool is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
-		duk_eval_file_noresult(ctx, script_path);
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
+		duk_eval_file_noresult(ctx, script_path);
 	}
 	duk_pop_2(ctx);
 	free(script_path);

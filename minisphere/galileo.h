@@ -12,12 +12,14 @@ extern image_t* get_shape_texture (shape_t* shape);
 extern void     set_shape_texture (shape_t* shape, image_t* texture);
 extern bool     add_vertex        (shape_t* shape, vertex_t vertex);
 extern void     draw_shape        (shape_t* shape, float x, float y);
+extern void     remove_vertex     (shape_t* shape, int index);
 
-extern group_t* new_group  (void);
-extern group_t* ref_group  (group_t* group);
-extern void     free_group (group_t* group);
-extern bool     add_shape  (group_t* group, shape_t* shape);
-extern void     draw_group (group_t* group);
+extern group_t* new_group    (void);
+extern group_t* ref_group    (group_t* group);
+extern void     free_group   (group_t* group);
+extern bool     add_shape    (group_t* group, shape_t* shape);
+extern void     draw_group   (group_t* group);
+extern void     remove_shape (group_t* group, int index);
 
 extern void init_galileo_api (void);
 
