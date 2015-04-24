@@ -6,14 +6,24 @@
 static duk_ret_t js_GetDefaultShaderProgram (duk_context* ctx);
 static duk_ret_t js_new_Group               (duk_context* ctx);
 static duk_ret_t js_Group_finalize          (duk_context* ctx);
-static duk_ret_t js_Group_get_shaderProgram (duk_context* ctx);
-static duk_ret_t js_Group_set_shaderProgram (duk_context* ctx);
+static duk_ret_t js_Group_get_angle         (duk_context* ctx);
+static duk_ret_t js_Group_get_rotX          (duk_context* ctx);
+static duk_ret_t js_Group_get_rotY          (duk_context* ctx);
+static duk_ret_t js_Group_get_shader        (duk_context* ctx);
+static duk_ret_t js_Group_get_x             (duk_context* ctx);
+static duk_ret_t js_Group_get_y             (duk_context* ctx);
+static duk_ret_t js_Group_set_angle         (duk_context* ctx);
+static duk_ret_t js_Group_set_rotX          (duk_context* ctx);
+static duk_ret_t js_Group_set_rotY          (duk_context* ctx);
+static duk_ret_t js_Group_set_shader        (duk_context* ctx);
+static duk_ret_t js_Group_set_x             (duk_context* ctx);
+static duk_ret_t js_Group_set_y             (duk_context* ctx);
 static duk_ret_t js_Group_draw              (duk_context* ctx);
 static duk_ret_t js_new_ShaderProgram       (duk_context* ctx);
 static duk_ret_t js_new_Shape               (duk_context* ctx);
 static duk_ret_t js_Shape_finalize          (duk_context* ctx);
-static duk_ret_t js_Shape_get_texture       (duk_context* ctx);
-static duk_ret_t js_Shape_set_texture       (duk_context* ctx);
+static duk_ret_t js_Shape_get_image         (duk_context* ctx);
+static duk_ret_t js_Shape_set_image         (duk_context* ctx);
 
 struct vertex
 {
@@ -79,6 +89,18 @@ get_shape_texture(shape_t* shape)
 	return shape->texture;
 }
 
+vertex_t
+get_shape_vertex(shape_t* shape, int index)
+{
+	return shape->vertices[index];
+}
+
+void
+set_shape_vertex(shape_t* shape, int index, vertex_t vertex)
+{
+	shape->vertices[index] = vertex;
+}
+
 void
 set_shape_texture(shape_t* shape, image_t* texture)
 {
@@ -105,6 +127,16 @@ add_vertex(shape_t* shape, vertex_t vertex)
 	++shape->num_vertices;
 	shape->vertices[shape->num_vertices - 1] = vertex;
 	return true;
+}
+
+void
+remove_vertex(shape_t* shape, int index)
+{
+	int i;
+
+	--shape->num_vertices;
+	for (i = index; i < shape->num_vertices; ++i)
+		shape->vertices[i] = shape->vertices[i + 1];
 }
 
 void
@@ -172,6 +204,22 @@ free_group(group_t* group)
 	free(group);
 }
 
+shape_t*
+get_group_shape(group_t* group, int index)
+{
+	return group->shapes[index];
+}
+
+void
+set_group_shape(group_t* group, int index, shape_t* shape)
+{
+	shape_t* old_shape;
+	
+	old_shape = group->shapes[index];
+	group->shapes[index] = ref_shape(shape);
+	free_shape(old_shape);
+}
+
 bool
 add_shape(group_t* group, shape_t* shape)
 {
@@ -191,6 +239,16 @@ add_shape(group_t* group, shape_t* shape)
 }
 
 void
+remove_shape(group_t* group, int index)
+{
+	int i;
+	
+	--group->num_shapes;
+	for (i = index; i < group->num_shapes; ++i)
+		group->shapes[i] = group->shapes[i + 1];
+}
+
+void
 draw_group(group_t* group)
 {
 	int i;
@@ -203,20 +261,210 @@ draw_group(group_t* group)
 void
 init_galileo_api(void)
 {
-	// Galileo API functions
-	register_api_func(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
-	
 	// Shape object
 	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
-	register_api_prop(g_duk, "Shape", "image", js_Shape_get_texture, js_Shape_set_texture);
-	register_api_prop(g_duk, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
+	register_api_prop(g_duk, "Shape", "image", js_Shape_get_image, js_Shape_set_image);
 
 	// ShaderProgram object
+	register_api_func(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
 	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, NULL);
 	
 	// Group object
 	register_api_ctor(g_duk, "Group", js_new_Group, js_Group_finalize);
+	register_api_prop(g_duk, "Group", "angle", js_Group_get_angle, js_Group_set_angle);
+	register_api_prop(g_duk, "Group", "rotX", js_Group_get_rotX, js_Group_set_rotX);
+	register_api_prop(g_duk, "Group", "rotY", js_Group_get_rotY, js_Group_set_rotY);
+	register_api_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
+	register_api_prop(g_duk, "Group", "x", js_Group_get_x, js_Group_set_x);
+	register_api_prop(g_duk, "Group", "y", js_Group_get_y, js_Group_set_y);
 	register_api_func(g_duk, "Group", "draw", js_Group_draw);
+}
+
+static duk_ret_t
+js_new_Group(duk_context* ctx)
+{
+	duk_require_object_coercible(ctx, 0);
+	if (!duk_is_array(ctx, 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
+	duk_require_sphere_obj(ctx, 1, "ShaderProgram");
+
+	size_t    num_shapes;
+	group_t*  group;
+	shape_t*  shape;
+
+	duk_uarridx_t i;
+
+	if (!(group = new_group()))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Failed to create group object");
+	num_shapes = duk_get_length(ctx, 0);
+	for (i = 0; i < num_shapes; ++i) {
+		duk_get_prop_index(ctx, 0, i);
+		shape = duk_require_sphere_obj(ctx, -1, "Shape");
+		if (!add_shape(group, shape))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Shape list allocation failure");
+	}
+	duk_push_sphere_obj(ctx, "Group", group);
+	return 1;
+}
+
+static duk_ret_t
+js_Group_finalize(duk_context* ctx)
+{
+	group_t* group;
+
+	group = duk_require_sphere_obj(ctx, 0, "Group");
+	free_group(group);
+	return 0;
+}
+
+static
+js_Group_get_angle(duk_context* ctx)
+{
+	group_t* group;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	duk_push_number(ctx, group->theta);
+	return 1;
+}
+
+static
+js_Group_set_angle(duk_context* ctx)
+{
+	group_t* group;
+	double theta = duk_require_number(ctx, 0);
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	group->theta = theta;
+	return 0;
+}
+
+static duk_ret_t
+js_Group_get_shader(duk_context* ctx)
+{
+	duk_push_sphere_obj(ctx, "ShaderProgram", NULL);
+	return 1;
+}
+
+static duk_ret_t
+js_Group_set_shader(duk_context* ctx)
+{
+	return 0;
+}
+
+static
+js_Group_get_rotX(duk_context* ctx)
+{
+	group_t* group;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	duk_push_number(ctx, group->rot_x);
+	return 1;
+}
+
+static
+js_Group_set_rotX(duk_context* ctx)
+{
+	group_t* group;
+	double value = duk_require_number(ctx, 0);
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	group->rot_x = value;
+	return 0;
+}
+
+static
+js_Group_get_rotY(duk_context* ctx)
+{
+	group_t* group;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	duk_push_number(ctx, group->rot_y);
+	return 1;
+}
+
+static
+js_Group_set_rotY(duk_context* ctx)
+{
+	group_t* group;
+	double value = duk_require_number(ctx, 0);
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	group->rot_y = value;
+	return 0;
+}
+
+static
+js_Group_get_x(duk_context* ctx)
+{
+	group_t* group;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	duk_push_number(ctx, group->x);
+	return 1;
+}
+
+static
+js_Group_set_x(duk_context* ctx)
+{
+	group_t* group;
+	double value = duk_require_number(ctx, 0);
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	group->x = value;
+	return 0;
+}
+
+static
+js_Group_get_y(duk_context* ctx)
+{
+	group_t* group;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	duk_push_number(ctx, group->y);
+	return 1;
+}
+
+static
+js_Group_set_y(duk_context* ctx)
+{
+	group_t* group;
+	double value = duk_require_number(ctx, 0);
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	group->y = value;
+	return 0;
+}
+
+static duk_ret_t
+js_Group_draw(duk_context* ctx)
+{
+	group_t* group;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	duk_pop(ctx);
+	draw_group(group);
+	return 0;
 }
 
 static duk_ret_t
@@ -224,6 +472,12 @@ js_GetDefaultShaderProgram(duk_context* ctx)
 {
 	duk_push_sphere_obj(ctx, "ShaderProgram", NULL);
 	return 1;
+}
+
+static duk_ret_t
+js_new_ShaderProgram(duk_context* ctx)
+{
+	return 0;
 }
 
 static duk_ret_t
@@ -272,7 +526,7 @@ js_Shape_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Shape_get_texture(duk_context* ctx)
+js_Shape_get_image(duk_context* ctx)
 {
 	shape_t* shape;
 
@@ -284,7 +538,7 @@ js_Shape_get_texture(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Shape_set_texture(duk_context* ctx)
+js_Shape_set_image(duk_context* ctx)
 {
 	shape_t* shape;
 	image_t* texture = duk_require_sphere_obj(ctx, 0, "Image");
@@ -293,60 +547,5 @@ js_Shape_set_texture(duk_context* ctx)
 	shape = duk_require_sphere_obj(ctx, -1, "Shape");
 	duk_pop(ctx);
 	set_shape_texture(shape, texture);
-	return 0;
-}
-
-static duk_ret_t
-js_new_ShaderProgram(duk_context* ctx)
-{
-	return 0;
-}
-
-static duk_ret_t
-js_new_Group(duk_context* ctx)
-{
-	duk_require_object_coercible(ctx, 0);
-	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
-	duk_require_sphere_obj(ctx, 1, "ShaderProgram");
-
-	size_t    num_shapes;
-	group_t*  group;
-	shape_t*  shape;
-
-	duk_uarridx_t i;
-
-	if (!(group = new_group()))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Failed to create group object");
-	num_shapes = duk_get_length(ctx, 0);
-	for (i = 0; i < num_shapes; ++i) {
-		duk_get_prop_index(ctx, 0, i);
-		shape = duk_require_sphere_obj(ctx, -1, "Shape");
-		if (!add_shape(group, shape))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Shape list allocation failure");
-	}
-	duk_push_sphere_obj(ctx, "Group", group);
-	return 1;
-}
-
-static duk_ret_t
-js_Group_finalize(duk_context* ctx)
-{
-	group_t* group;
-
-	group = duk_require_sphere_obj(ctx, 0, "Group");
-	free_group(group);
-	return 0;
-}
-
-static duk_ret_t
-js_Group_draw(duk_context* ctx)
-{
-	group_t* group;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	duk_pop(ctx);
-	draw_group(group);
 	return 0;
 }
