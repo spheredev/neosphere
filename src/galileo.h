@@ -18,6 +18,7 @@ extern group_t* new_group    (void);
 extern group_t* ref_group    (group_t* group);
 extern void     free_group   (group_t* group);
 extern bool     add_shape    (group_t* group, shape_t* shape);
+extern void     clear_group  (group_t* group);
 extern void     draw_group   (group_t* group);
 extern void     remove_shape (group_t* group, int index);
 

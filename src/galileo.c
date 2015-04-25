@@ -249,6 +249,16 @@ remove_shape(group_t* group, int index)
 }
 
 void
+clear_group(group_t* group)
+{
+	int i;
+	
+	for (i = 0; i < group->num_shapes; ++i)
+		free_shape(group->shapes[i]);
+	group->num_shapes = 0;
+}
+
+void
 draw_group(group_t* group)
 {
 	int i;

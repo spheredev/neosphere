@@ -15,6 +15,7 @@ static duk_ret_t js_Sound_get_pan      (duk_context* ctx);
 static duk_ret_t js_Sound_set_pan      (duk_context* ctx);
 static duk_ret_t js_Sound_get_pitch    (duk_context* ctx);
 static duk_ret_t js_Sound_set_pitch    (duk_context* ctx);
+static duk_ret_t js_Sound_get_playing  (duk_context* ctx);
 static duk_ret_t js_Sound_get_position (duk_context* ctx);
 static duk_ret_t js_Sound_set_position (duk_context* ctx);
 static duk_ret_t js_Sound_get_repeat   (duk_context* ctx);
@@ -22,7 +23,6 @@ static duk_ret_t js_Sound_set_repeat   (duk_context* ctx);
 static duk_ret_t js_Sound_get_seekable (duk_context* ctx);
 static duk_ret_t js_Sound_get_volume   (duk_context* ctx);
 static duk_ret_t js_Sound_set_volume   (duk_context* ctx);
-static duk_ret_t js_Sound_isPlaying    (duk_context* ctx);
 static duk_ret_t js_Sound_clone        (duk_context* ctx);
 static duk_ret_t js_Sound_pause        (duk_context* ctx);
 static duk_ret_t js_Sound_play         (duk_context* ctx);
@@ -207,11 +207,12 @@ init_sound_api()
 	register_api_prop(g_duk, "Sound", "length", js_Sound_get_length, NULL);
 	register_api_prop(g_duk, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
 	register_api_prop(g_duk, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
+	register_api_prop(g_duk, "Sound", "playing", js_Sound_get_playing, NULL);
 	register_api_prop(g_duk, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
 	register_api_prop(g_duk, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
 	register_api_prop(g_duk, "Sound", "seekable", js_Sound_get_seekable, NULL);
 	register_api_prop(g_duk, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
-	register_api_function(g_duk, "Sound", "isPlaying", js_Sound_isPlaying);
+	register_api_function(g_duk, "Sound", "isPlaying", js_Sound_get_playing);
 	register_api_function(g_duk, "Sound", "isSeekable", js_Sound_get_seekable);
 	register_api_function(g_duk, "Sound", "getLength", js_Sound_get_length);
 	register_api_function(g_duk, "Sound", "getPan", js_Sound_get_pan);
@@ -342,6 +343,18 @@ js_Sound_set_pitch(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Sound_get_playing(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_boolean(ctx, is_sound_playing(sound));
+	return 1;
+}
+
+static duk_ret_t
 js_Sound_get_position(duk_context* ctx)
 {
 	sound_t* sound;
@@ -424,18 +437,6 @@ js_Sound_set_volume(duk_context* ctx)
 	duk_pop(ctx);
 	set_sound_gain(sound, (float)new_gain / 255);
 	return 0;
-}
-
-static duk_ret_t
-js_Sound_isPlaying(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
-	duk_pop(ctx);
-	duk_push_boolean(ctx, is_sound_playing(sound));
-	return 1;
 }
 
 static duk_ret_t
