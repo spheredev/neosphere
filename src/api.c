@@ -47,36 +47,36 @@ initialize_api(duk_context* ctx)
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
 	
 	// register core API functions
-	register_api_func(ctx, NULL, "GetVersion", js_GetVersion);
-	register_api_func(ctx, NULL, "GetVersionString", js_GetVersionString);
-	register_api_func(ctx, NULL, "GetExtensions", js_GetExtensions);
-	register_api_func(ctx, NULL, "EvaluateScript", js_EvaluateScript);
-	register_api_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
-	register_api_func(ctx, NULL, "RequireScript", js_RequireScript);
-	register_api_func(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
-	register_api_func(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
-	register_api_func(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
-	register_api_func(ctx, NULL, "GetFileList", js_GetFileList);
-	register_api_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
-	register_api_func(ctx, NULL, "GetGameList", js_GetGameList);
-	register_api_func(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
-	register_api_func(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
-	register_api_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
-	register_api_func(ctx, NULL, "GetSeconds", js_GetSeconds);
-	register_api_func(ctx, NULL, "GetTime", js_GetTime);
-	register_api_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
-	register_api_func(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
-	register_api_func(ctx, NULL, "Abort", js_Abort);
-	register_api_func(ctx, NULL, "Alert", js_Alert);
-	register_api_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
-	register_api_func(ctx, NULL, "Delay", js_Delay);
-	register_api_func(ctx, NULL, "Exit", js_Exit);
-	register_api_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
-	register_api_func(ctx, NULL, "FlipScreen", js_FlipScreen);
-	register_api_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
-	register_api_func(ctx, NULL, "Print", js_Print);
-	register_api_func(ctx, NULL, "RestartGame", js_RestartGame);
-	register_api_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
+	register_api_function(ctx, NULL, "GetVersion", js_GetVersion);
+	register_api_function(ctx, NULL, "GetVersionString", js_GetVersionString);
+	register_api_function(ctx, NULL, "GetExtensions", js_GetExtensions);
+	register_api_function(ctx, NULL, "EvaluateScript", js_EvaluateScript);
+	register_api_function(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
+	register_api_function(ctx, NULL, "RequireScript", js_RequireScript);
+	register_api_function(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
+	register_api_function(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
+	register_api_function(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
+	register_api_function(ctx, NULL, "GetFileList", js_GetFileList);
+	register_api_function(ctx, NULL, "GetFrameRate", js_GetFrameRate);
+	register_api_function(ctx, NULL, "GetGameList", js_GetGameList);
+	register_api_function(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
+	register_api_function(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
+	register_api_function(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
+	register_api_function(ctx, NULL, "GetSeconds", js_GetSeconds);
+	register_api_function(ctx, NULL, "GetTime", js_GetTime);
+	register_api_function(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	register_api_function(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
+	register_api_function(ctx, NULL, "Abort", js_Abort);
+	register_api_function(ctx, NULL, "Alert", js_Alert);
+	register_api_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
+	register_api_function(ctx, NULL, "Delay", js_Delay);
+	register_api_function(ctx, NULL, "Exit", js_Exit);
+	register_api_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
+	register_api_function(ctx, NULL, "FlipScreen", js_FlipScreen);
+	register_api_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	register_api_function(ctx, NULL, "Print", js_Print);
+	register_api_function(ctx, NULL, "RestartGame", js_RestartGame);
+	register_api_function(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 	
 	// RequireScript() inclusion tracking object
 	duk_push_global_stash(ctx);
@@ -121,7 +121,7 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 }
 
 void
-register_api_func(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
+register_api_function(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {

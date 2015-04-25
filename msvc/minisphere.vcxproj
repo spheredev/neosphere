@@ -68,31 +68,37 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>include;$(IncludePath)</IncludePath>
+    <LibraryPath>lib\x86;$(LibraryPath)</LibraryPath>
     <TargetName>engine</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <OutDir>debug\</OutDir>
+    <IntDir>obj\x86\debug\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>include;$(IncludePath)</IncludePath>
+    <LibraryPath>lib\x64;$(LibraryPath)</LibraryPath>
     <TargetName>engine64</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>debug\</OutDir>
+    <IntDir>obj\x64\debug\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>include;$(IncludePath)</IncludePath>
+    <LibraryPath>lib\x86;$(LibraryPath)</LibraryPath>
     <TargetName>engine</TargetName>
+    <OutDir>..\bin\</OutDir>
+    <IntDir>obj\x86\release\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>include;$(IncludePath)</IncludePath>
+    <LibraryPath>lib\x64;$(LibraryPath)</LibraryPath>
     <TargetName>engine64</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>..\bin\</OutDir>
+    <IntDir>obj\x64\release\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,8 +117,8 @@
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
-</Command>
+      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -133,8 +139,8 @@
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
-</Command>
+      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -160,8 +166,8 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
-</Command>
+      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -187,80 +193,76 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e "$(ProjectDir)assets\*.*" "$(OutDir)"
-</Command>
+      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bytearray.c" />
-    <ClCompile Include="color.c" />
-    <ClCompile Include="duktape.c" />
-    <ClCompile Include="dyad.c" />
-    <ClCompile Include="file.c" />
-    <ClCompile Include="font.c" />
-    <ClCompile Include="geometry.c" />
-    <ClCompile Include="image.c" />
-    <ClCompile Include="input.c" />
-    <ClCompile Include="logger.c" />
-    <ClCompile Include="lstring.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="map_engine.c" />
-    <ClCompile Include="galileo.c" />
-    <ClCompile Include="sockets.c" />
-    <ClCompile Include="obsmap.c" />
-    <ClCompile Include="persons.c" />
-    <ClCompile Include="primitives.c" />
-    <ClCompile Include="rawfile.c" />
-    <ClCompile Include="script.c" />
-    <ClCompile Include="sound.c" />
-    <ClCompile Include="api.c" />
-    <ClCompile Include="spriteset.c" />
-    <ClCompile Include="surface.c" />
-    <ClCompile Include="tileset.c" />
-    <ClCompile Include="windowstyle.c" />
+    <ClCompile Include="..\src\api.c" />
+    <ClCompile Include="..\src\bytearray.c" />
+    <ClCompile Include="..\src\color.c" />
+    <ClCompile Include="..\src\duktape.c" />
+    <ClCompile Include="..\src\dyad.c" />
+    <ClCompile Include="..\src\file.c" />
+    <ClCompile Include="..\src\font.c" />
+    <ClCompile Include="..\src\geometry.c" />
+    <ClCompile Include="..\src\image.c" />
+    <ClCompile Include="..\src\input.c" />
+    <ClCompile Include="..\src\logger.c" />
+    <ClCompile Include="..\src\lstring.c" />
+    <ClCompile Include="..\src\main.c" />
+    <ClCompile Include="..\src\map_engine.c" />
+    <ClCompile Include="..\src\galileo.c" />
+    <ClCompile Include="..\src\sockets.c" />
+    <ClCompile Include="..\src\obsmap.c" />
+    <ClCompile Include="..\src\persons.c" />
+    <ClCompile Include="..\src\primitives.c" />
+    <ClCompile Include="..\src\rawfile.c" />
+    <ClCompile Include="..\src\script.c" />
+    <ClCompile Include="..\src\sound.c" />
+    <ClCompile Include="..\src\spriteset.c" />
+    <ClCompile Include="..\src\surface.c" />
+    <ClCompile Include="..\src\tileset.c" />
+    <ClCompile Include="..\src\windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bytearray.h" />
-    <ClInclude Include="color.h" />
-    <ClInclude Include="duktape.h" />
-    <ClInclude Include="dyad.h" />
-    <ClInclude Include="file.h" />
-    <ClInclude Include="font.h" />
-    <ClInclude Include="geometry.h" />
-    <ClInclude Include="image.h" />
-    <ClInclude Include="input.h" />
-    <ClInclude Include="logger.h" />
-    <ClInclude Include="lstring.h" />
-    <ClInclude Include="map_engine.h" />
-    <ClInclude Include="minisphere.h" />
-    <ClInclude Include="galileo.h" />
-    <ClInclude Include="sockets.h" />
-    <ClInclude Include="obsmap.h" />
-    <ClInclude Include="persons.h" />
-    <ClInclude Include="primitives.h" />
-    <ClInclude Include="rawfile.h" />
+    <ClInclude Include="..\src\api.h" />
+    <ClInclude Include="..\src\bytearray.h" />
+    <ClInclude Include="..\src\color.h" />
+    <ClInclude Include="..\src\duktape.h" />
+    <ClInclude Include="..\src\dyad.h" />
+    <ClInclude Include="..\src\file.h" />
+    <ClInclude Include="..\src\font.h" />
+    <ClInclude Include="..\src\geometry.h" />
+    <ClInclude Include="..\src\image.h" />
+    <ClInclude Include="..\src\input.h" />
+    <ClInclude Include="..\src\logger.h" />
+    <ClInclude Include="..\src\lstring.h" />
+    <ClInclude Include="..\src\map_engine.h" />
+    <ClInclude Include="..\src\minisphere.h" />
+    <ClInclude Include="..\src\galileo.h" />
+    <ClInclude Include="..\src\sockets.h" />
+    <ClInclude Include="..\src\obsmap.h" />
+    <ClInclude Include="..\src\persons.h" />
+    <ClInclude Include="..\src\primitives.h" />
+    <ClInclude Include="..\src\rawfile.h" />
+    <ClInclude Include="..\src\script.h" />
+    <ClInclude Include="..\src\sound.h" />
+    <ClInclude Include="..\src\spriteset.h" />
+    <ClInclude Include="..\src\surface.h" />
+    <ClInclude Include="..\src\tileset.h" />
+    <ClInclude Include="..\src\windowstyle.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="api.h" />
-    <ClInclude Include="script.h" />
-    <ClInclude Include="sound.h" />
-    <ClInclude Include="spriteset.h" />
-    <ClInclude Include="surface.h" />
-    <ClInclude Include="tileset.h" />
-    <ClInclude Include="windowstyle.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="minisphere.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="engine.ico" />
+    <Image Include="sphere.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="assets\changelog.txt">
-      <DeploymentContent>false</DeploymentContent>
-    </Text>
-    <Text Include="assets\documentation\sphere-api.txt">
-      <DeploymentContent>false</DeploymentContent>
-    </Text>
+    <Text Include="..\changelog.txt" />
+    <Text Include="..\distro\documentation\sphere-api.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

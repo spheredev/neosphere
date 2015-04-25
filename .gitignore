@@ -24,8 +24,9 @@ $RECYCLE.BIN/
 # Visual Studio build cruft
 # ==========================
 
-[Rr]elease
-[Dd]ebug
+msvc/obj
+msvc/debug
+bin/
 *.sdf
 *.opensdf
 *.suo

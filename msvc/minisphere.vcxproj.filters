@@ -18,166 +18,166 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="duktape.c">
+    <ClCompile Include="..\src\duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.c">
+    <ClCompile Include="..\src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sound.c">
+    <ClCompile Include="..\src\sound.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="api.c">
+    <ClCompile Include="..\src\api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="spriteset.c">
+    <ClCompile Include="..\src\spriteset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input.c">
+    <ClCompile Include="..\src\input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="map_engine.c">
+    <ClCompile Include="..\src\map_engine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="image.c">
+    <ClCompile Include="..\src\image.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="font.c">
+    <ClCompile Include="..\src\font.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="surface.c">
+    <ClCompile Include="..\src\surface.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="color.c">
+    <ClCompile Include="..\src\color.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="windowstyle.c">
+    <ClCompile Include="..\src\windowstyle.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="file.c">
+    <ClCompile Include="..\src\file.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bytearray.c">
+    <ClCompile Include="..\src\bytearray.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tileset.c">
+    <ClCompile Include="..\src\tileset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rawfile.c">
+    <ClCompile Include="..\src\rawfile.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="script.c">
+    <ClCompile Include="..\src\script.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lstring.c">
+    <ClCompile Include="..\src\lstring.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="persons.c">
+    <ClCompile Include="..\src\persons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="geometry.c">
+    <ClCompile Include="..\src\geometry.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="obsmap.c">
+    <ClCompile Include="..\src\obsmap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="primitives.c">
+    <ClCompile Include="..\src\primitives.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="logger.c">
+    <ClCompile Include="..\src\logger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dyad.c">
+    <ClCompile Include="..\src\dyad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sockets.c">
+    <ClCompile Include="..\src\sockets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="galileo.c">
+    <ClCompile Include="..\src\galileo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="duktape.h">
+    <ClInclude Include="..\src\duktape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="minisphere.h">
+    <ClInclude Include="..\src\minisphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="api.h">
+    <ClInclude Include="..\src\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="spriteset.h">
+    <ClInclude Include="..\src\spriteset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input.h">
+    <ClInclude Include="..\src\input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sound.h">
+    <ClInclude Include="..\src\sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="map_engine.h">
+    <ClInclude Include="..\src\map_engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="image.h">
+    <ClInclude Include="..\src\image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="font.h">
+    <ClInclude Include="..\src\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="surface.h">
+    <ClInclude Include="..\src\surface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="color.h">
+    <ClInclude Include="..\src\color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="windowstyle.h">
+    <ClInclude Include="..\src\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\bytearray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tileset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\rawfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\script.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lstring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\persons.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\obsmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dyad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sockets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\galileo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\windowstyle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="file.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bytearray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tileset.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rawfile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="script.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="lstring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="persons.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="geometry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="obsmap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="primitives.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sockets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="galileo.h">
-      <Filter>Header Files</Filter>
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -186,13 +186,15 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="engine.ico">
+    <Image Include="sphere.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="assets\changelog.txt" />
-    <Text Include="assets\documentation\sphere-api.txt">
+    <Text Include="..\changelog.txt">
+      <Filter>Documentation Files</Filter>
+    </Text>
+    <Text Include="..\distro\documentation\sphere-api.txt">
       <Filter>Documentation Files</Filter>
     </Text>
   </ItemGroup>

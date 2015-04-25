@@ -44,14 +44,14 @@ blend_colors(color_t color1, color_t color2, float w1, float w2)
 void
 init_color_api(void)
 {
-	register_api_func(g_duk, NULL, "BlendColors", js_BlendColors);
-	register_api_func(g_duk, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
-	register_api_func(g_duk, NULL, "CreateColor", js_CreateColor);
+	register_api_function(g_duk, NULL, "BlendColors", js_BlendColors);
+	register_api_function(g_duk, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
+	register_api_function(g_duk, NULL, "CreateColor", js_CreateColor);
 	
 	// register Color methods and properties
 	register_api_ctor(g_duk, "Color", js_new_Color, NULL);
-	register_api_func(g_duk, "Color", "toString", js_Color_toString);
-	register_api_func(g_duk, "Color", "clone", js_Color_clone);
+	register_api_function(g_duk, "Color", "toString", js_Color_toString);
+	register_api_function(g_duk, "Color", "clone", js_Color_clone);
 }
 
 void

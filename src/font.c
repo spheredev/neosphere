@@ -347,26 +347,26 @@ void
 init_font_api(duk_context* ctx)
 {
 	// Font API functions
-	register_api_func(ctx, NULL, "GetSystemFont", js_GetSystemFont);
+	register_api_function(ctx, NULL, "GetSystemFont", js_GetSystemFont);
 	
 	// Font object
-	register_api_func(ctx, NULL, "LoadFont", js_LoadFont);
+	register_api_function(ctx, NULL, "LoadFont", js_LoadFont);
 	register_api_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
 	register_api_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
 	register_api_prop(ctx, "Font", "height", js_Font_get_height, NULL);
-	register_api_func(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
-	register_api_func(ctx, "Font", "getColorMask", js_Font_get_colorMask);
-	register_api_func(ctx, "Font", "getHeight", js_Font_get_height);
-	register_api_func(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
-	register_api_func(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
-	register_api_func(ctx, "Font", "setCharacterImage", js_Font_setCharacterImage);
-	register_api_func(ctx, "Font", "setColorMask", js_Font_set_colorMask);
-	register_api_func(ctx, "Font", "toString", js_Font_toString);
-	register_api_func(ctx, "Font", "clone", js_Font_clone);
-	register_api_func(ctx, "Font", "drawText", js_Font_drawText);
-	register_api_func(ctx, "Font", "drawTextBox", js_Font_drawTextBox);
-	register_api_func(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
-	register_api_func(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
+	register_api_function(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
+	register_api_function(ctx, "Font", "getColorMask", js_Font_get_colorMask);
+	register_api_function(ctx, "Font", "getHeight", js_Font_get_height);
+	register_api_function(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
+	register_api_function(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
+	register_api_function(ctx, "Font", "setCharacterImage", js_Font_setCharacterImage);
+	register_api_function(ctx, "Font", "setColorMask", js_Font_set_colorMask);
+	register_api_function(ctx, "Font", "toString", js_Font_toString);
+	register_api_function(ctx, "Font", "clone", js_Font_clone);
+	register_api_function(ctx, "Font", "drawText", js_Font_drawText);
+	register_api_function(ctx, "Font", "drawTextBox", js_Font_drawTextBox);
+	register_api_function(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
+	register_api_function(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
 }
 
 void

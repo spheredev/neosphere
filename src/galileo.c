@@ -266,7 +266,7 @@ init_galileo_api(void)
 	register_api_prop(g_duk, "Shape", "image", js_Shape_get_image, js_Shape_set_image);
 
 	// ShaderProgram object
-	register_api_func(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
+	register_api_function(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
 	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, NULL);
 	
 	// Group object
@@ -277,7 +277,7 @@ init_galileo_api(void)
 	register_api_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
 	register_api_prop(g_duk, "Group", "x", js_Group_get_x, js_Group_set_x);
 	register_api_prop(g_duk, "Group", "y", js_Group_get_y, js_Group_set_y);
-	register_api_func(g_duk, "Group", "draw", js_Group_draw);
+	register_api_function(g_duk, "Group", "draw", js_Group_draw);
 }
 
 static duk_ret_t

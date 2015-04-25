@@ -1,16 +1,15 @@
 import os
 import shutil
 
-system_dir = os.path.join(os.getcwd(), "system")
-minisphere_src_dir = os.path.join(os.getcwd(), "minisphere")
+msphere_src_dir = os.path.join(os.getcwd(), "src")
+out_dir = os.path.join(os.getcwd(), "bin")
 
-minisphere = SConscript(dirs=[minisphere_src_dir])
+minisphere = SConscript(dirs=[msphere_src_dir], variant_dir="obj")
 
-msphere_install = Install(os.getcwd(), minisphere)
+if not os.path.exists(out_dir):
+  os.makedirs(out_dir)
 
-if not os.path.exists(system_dir):
-  os.makedirs(system_dir)
-
-sys_install = Install(os.getcwd(), os.path.join(minisphere_src_dir, "assets/system"))
-
-Depends(minisphere, sys_install)
+Install(out_dir, minisphere)
+Install(out_dir, os.path.join(os.getcwd(), "distro/system"))
+Install(out_dir, os.path.join(os.getcwd(), "distro/documentation"))
+Install(out_dir, os.path.join(os.getcwd(), "changelog.txt"))
