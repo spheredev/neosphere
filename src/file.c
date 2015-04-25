@@ -37,8 +37,7 @@ open_file(const char* path)
 			goto on_error;
 	}
 	else {
-		if ((file->conf = al_create_config()) == NULL)
-			goto on_error;
+		if ((file->conf = al_create_config()) == NULL) goto on_error;
 		if (!al_save_config_file(path, file->conf)) goto on_error;
 	}
 	file->path = strdup(path);
@@ -56,7 +55,9 @@ on_error:
 void
 close_file(file_t* file)
 {
-	al_save_config_file(file->path, file->conf);
+	if (file == NULL)
+		return;
+	save_file(file);
 	al_destroy_config(file->conf);
 	free(file);
 }
@@ -140,8 +141,6 @@ void
 save_file(file_t* file)
 {
 	al_save_config_file(file->path, file->conf);
-	al_destroy_config(file->conf);
-	free(file);
 }
 
 void
@@ -362,8 +361,6 @@ js_File_close(duk_context* ctx)
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
-	if (file == NULL)
-		return 0;
 	close_file(file);
 	duk_push_this(ctx);
 	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
