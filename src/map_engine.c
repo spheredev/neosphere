@@ -1053,6 +1053,8 @@ update_map_engine(bool is_main_loop)
 void
 init_map_engine_api(duk_context* ctx)
 {
+	register_api_extension("sphere-map-engine");
+	
 	register_api_function(ctx, NULL, "MapEngine", js_MapEngine);
 	register_api_function(ctx, NULL, "AreZonesAt", js_AreZonesAt);
 	register_api_function(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);

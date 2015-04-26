@@ -36,26 +36,7 @@
 #define noreturn void
 #endif
 
-static const char* const ENGINE_NAME        = "minisphere 1.1b1";
-static double      const SPHERE_API_VERSION = 2.0;
-
-#if defined(__x86_64__) || defined(_M_X64)
-static const char* const SPHERE_USERAGENT = "v2.0 (compatible; minisphere 1.1b1 x64)";
-#else
-static const char* const SPHERE_USERAGENT = "v2.0 (compatible; minisphere 1.1b1)";
-#endif
-
-
-static const char* const EXTENSIONS[] = {
-	"minisphere",
-	"sphere-legacy-api",
-	"sphere-map-engine",
-	"sphere-obj-constructors",
-	"sphere-obj-props",
-	"sphere-galileo",
-	"frameskip-api",
-	"set-script-function",
-};
+static const char* const ENGINE_NAME = "minisphere 1.1b1";
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
