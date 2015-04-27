@@ -5,6 +5,15 @@ typedef struct vertex vertex_t;
 typedef struct shape  shape_t;
 typedef struct group  group_t;
 
+struct vertex
+{
+	float   x, y;
+	float   u, v;
+	color_t color;
+};
+
+extern vertex_t vertex (float x, float y, float u, float v, color_t color);
+
 extern shape_t* new_shape         (image_t* texture);
 extern shape_t* ref_shape         (shape_t* shape);
 extern void     free_shape        (shape_t* shape);

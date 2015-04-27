@@ -26,13 +26,6 @@ static duk_ret_t js_Shape_finalize          (duk_context* ctx);
 static duk_ret_t js_Shape_get_image         (duk_context* ctx);
 static duk_ret_t js_Shape_set_image         (duk_context* ctx);
 
-struct vertex
-{
-	float   x, y;
-	float   u, v;
-	color_t color;
-};
-
 struct shape
 {
 	unsigned int refcount;
@@ -49,6 +42,17 @@ struct group
 	double       theta;
 	vector_t*    shapes;
 };
+
+vertex_t
+vertex(float x, float y, float u, float v, color_t color)
+{
+	vertex_t vertex;
+
+	vertex.x = x; vertex.y = y;
+	vertex.u = u; vertex.v = v;
+	vertex.color = color;
+	return vertex;
+}
 
 group_t*
 new_group(void)
@@ -239,6 +243,7 @@ remove_vertex(shape_t* shape, int index)
 void
 draw_shape(shape_t* shape, float x, float y)
 {
+	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
 	ALLEGRO_VERTEX* vbuf;
 	int             w_texture;
@@ -250,8 +255,9 @@ draw_shape(shape_t* shape, float x, float y)
 		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
 		: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
 		: ALLEGRO_PRIM_TRIANGLE_STRIP;
-	w_texture = get_image_width(shape->texture);
-	h_texture = get_image_height(shape->texture);
+	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+	w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
+	h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
 	if (!(vbuf = calloc(shape->num_vertices, sizeof(ALLEGRO_VERTEX))))
 		return;
 	for (i = 0; i < shape->num_vertices; ++i) {
@@ -261,8 +267,7 @@ draw_shape(shape_t* shape, float x, float y)
 		vbuf[i].v = shape->vertices[i].v * h_texture;
 		vbuf[i].color = nativecolor(shape->vertices[i].color);
 	}
-	al_draw_prim(vbuf, NULL, get_image_bitmap(shape->texture),
-		0, shape->num_vertices, draw_mode);
+	al_draw_prim(vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
 	free(vbuf);
 }
 
