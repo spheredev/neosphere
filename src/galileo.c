@@ -274,8 +274,6 @@ draw_shape(shape_t* shape, float x, float y)
 void
 init_galileo_api(void)
 {
-	register_api_extension("sphere-galileo");
-	
 	// Shape object
 	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
 	register_api_prop(g_duk, "Shape", "image", js_Shape_get_image, js_Shape_set_image);

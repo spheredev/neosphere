@@ -13,6 +13,9 @@ SPHERE_EXTENSIONS[] =
 	"sphere-legacy-api",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
+	"sphere-map-engine",
+	"sphere-galileo",
+	"minisphere-new-sockets",
 	"frameskip-api",
 	"set-script-function",
 };
