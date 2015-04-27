@@ -147,8 +147,10 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	printf("Maximum consecutive frame skips: %i\n", s_max_frameskip);
-	printf("CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	printf("Finished parsing command line\n");
+	printf("  SGM path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	printf("  Maximum consecutive frame skips: %i\n", s_max_frameskip);
+	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	
 	// set up jump points for script bailout
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
@@ -295,7 +297,7 @@ on_js_error:
 	if (file_path != NULL) {
 		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		filename = filename != NULL ? filename + 1 : file_path;
-		fprintf(stderr, "JS Error <%s:%i>: %s", filename, line_num, err_msg);
+		fprintf(stderr, "JS Error: %s:%i - %s", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "`%s`, line: %i | %s", filename, line_num, err_msg);
 		else

@@ -32,9 +32,12 @@ static duk_ret_t js_Sound_stop         (duk_context* ctx);
 struct sound
 {
 	int                   refcount;
+	unsigned int          id;
 	char*                 path;
 	ALLEGRO_AUDIO_STREAM* stream;
 };
+
+static unsigned int s_next_sound_id = 0;
 
 void
 initialize_sound(void)
@@ -43,6 +46,7 @@ initialize_sound(void)
 	al_init_acodec_addon();
 	al_reserve_samples(10);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
+	printf("Initialized audio\n");
 }
 
 void
@@ -65,6 +69,8 @@ load_sound(const char* path, bool streaming)
 	if (!(sound->path = strdup(path))) goto on_error;
 	if (!reload_sound(sound))
 		goto on_error;
+	sound->id = s_next_sound_id++;
+	printf("Loaded sound %u: %s\n", sound->id, strrchr(path, ALLEGRO_NATIVE_PATH_SEP) + 1);
 	return ref_sound(sound);
 
 on_error:
@@ -88,6 +94,7 @@ free_sound(sound_t* sound)
 	if (sound == NULL || --sound->refcount > 0)
 		return;
 	al_destroy_audio_stream(sound->stream);
+	printf("Unloaded sound %u\n", sound->id);
 	free(sound->path);
 }
 
