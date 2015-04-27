@@ -18,7 +18,7 @@
 #include "surface.h"
 #include "windowstyle.h"
 
-// enable visual styles (VC++)
+// enable Windows visual styles (MSVC)
 #ifdef _MSC_VER
 #pragma comment(linker, \
     "\"/manifestdependency:type='Win32' "\
@@ -28,6 +28,12 @@
     "publicKeyToken='6595b64144ccf1df' "\
     "language='*'\"")
 #endif
+
+static bool initialize_engine   (void);
+static void shutdown_engine     (void);
+static void draw_status_message (const char* text);
+
+static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
 ALLEGRO_DISPLAY*     g_display = NULL;
 duk_context*         g_duk = NULL;
@@ -40,12 +46,6 @@ float                g_scale_y = 1.0;
 ALLEGRO_CONFIG*      g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
-
-static bool initialize_engine   (void);
-static void shutdown_engine     (void);
-static void draw_status_message (const char* text);
-
-static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
 static rect_t  s_clip_rect;
 static bool    s_conserve_cpu = true;
@@ -65,7 +65,8 @@ bool           s_skipping_frame = false;
 static bool    s_show_fps = false;
 static bool    s_take_snapshot = false;
 
-static const char* ERROR_TEXT[][2] = {
+static const char* const ERROR_TEXT[][2] =
+{
 	{ "*munch*", "A hunger-pig just devoured your game!" },
 	{ "*CRASH!*", "It's an 812-car pileup!" },
 	{ "So, um... a funny thing happened...", "...on the way to the boss..." },
@@ -99,6 +100,9 @@ main(int argc, char* argv[])
 	
 	int i;
 
+	printf("%s (%i-bit)\n", ENGINE_NAME, sizeof(void*) * 8);
+	printf("A lightweight Sphere-compatible game engine\n\n");
+	
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 	
@@ -142,6 +146,10 @@ main(int argc, char* argv[])
 		}
 	}
 	
+	// print out options
+	printf("Maximum consecutive frame skips: %i\n", s_max_frameskip);
+	printf("CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	
 	// set up jump points for script bailout
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
@@ -168,6 +176,7 @@ main(int argc, char* argv[])
 	}
 
 	// locate game.sgm
+	printf("Searching for SGM file...\n");
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
 	char* sgm_path = get_asset_path("game.sgm", NULL, false);
@@ -194,6 +203,7 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
+	printf("Found SGM: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
 	icon_path = get_asset_path("icon.png", NULL, false);
@@ -217,6 +227,7 @@ main(int argc, char* argv[])
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
+	printf("Created render window\n");
 	
 	// attempt to locate and load system font
 	if (g_sys_conf != NULL) {
@@ -231,6 +242,7 @@ main(int argc, char* argv[])
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
+	printf("Loaded system font\n");
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -246,6 +258,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
+	printf("Starting up...\n");
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duk, 0x0, path);
 	free(path);
@@ -282,12 +295,14 @@ on_js_error:
 	if (file_path != NULL) {
 		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		filename = filename != NULL ? filename + 1 : file_path;
+		fprintf(stderr, "JS Error <%s:%i>: %s", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "`%s`, line: %i | %s", filename, line_num, err_msg);
 		else
 			duk_push_string(g_duk, err_msg);
 	}
 	else {
+		fprintf(stderr, "JS Error: %s", err_msg);
 		duk_push_string(g_duk, err_msg);
 	}
 	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
@@ -632,6 +647,7 @@ initialize_engine(void)
 	// initialize JavaScript API
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
+	printf("Created Duktape context\n");
 	initialize_api(g_duk);
 	init_bytearray_api();
 	init_color_api();
@@ -649,6 +665,7 @@ initialize_engine(void)
 	init_spriteset_api(g_duk);
 	init_surface_api();
 	init_windowstyle_api();
+	printf("Initialized Sphere API\n");
 	return true;
 
 on_error:
