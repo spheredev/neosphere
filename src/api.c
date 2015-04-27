@@ -1,8 +1,23 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include "vector.h"
 
-static duk_ret_t duk_on_create_error (duk_context* ctx);
+static double const
+SPHERE_API_VERSION = 1.5;
+
+static const char* const
+SPHERE_EXTENSIONS[] =
+{
+	"minisphere",
+	"sphere-legacy-api",
+	"sphere-obj-constructors",
+	"sphere-obj-props",
+	"frameskip-api",
+	"set-script-function",
+};
+
+static duk_ret_t duk_on_create_error(duk_context* ctx);
 
 static duk_ret_t js_GetVersion           (duk_context* ctx);
 static duk_ret_t js_GetVersionString     (duk_context* ctx);
@@ -35,17 +50,30 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static int s_framerate = 0;
+static vector_t* s_extensions;
+static int       s_framerate = 0;
 
 void
 initialize_api(duk_context* ctx)
 {
+	int num_extensions;
+
+	int i;
+
+	s_extensions = new_vector(sizeof(char*));
+
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
 	
+	// register extensions
+	num_extensions = sizeof(SPHERE_EXTENSIONS) / sizeof(SPHERE_EXTENSIONS[0]);
+	for (i = 0; i < num_extensions; ++i) {
+		register_api_extension(SPHERE_EXTENSIONS[i]);
+	}
+
 	// register core API functions
 	register_api_function(ctx, NULL, "GetVersion", js_GetVersion);
 	register_api_function(ctx, NULL, "GetVersionString", js_GetVersionString);
@@ -78,7 +106,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_function(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 	
-	// RequireScript() inclusion tracking object
+	// set up RequireScript() inclusion tracking table
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
@@ -118,6 +146,17 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 	duk_put_prop_string(ctx, -2, "prototype");
 	duk_put_prop_string(ctx, -2, name);
 	duk_pop(ctx);
+}
+
+bool
+register_api_extension(const char* designation)
+{
+	char* string;
+
+	if (!(string = strdup(designation))) return false;
+	if (!push_back_vector(s_extensions, &string))
+		return false;
+	return true;
 }
 
 void
@@ -285,22 +324,24 @@ js_GetVersion(duk_context* ctx)
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_string(ctx, SPHERE_USERAGENT);
+	duk_push_sprintf(ctx, "v%.1f (compatible; %s)", SPHERE_API_VERSION, ENGINE_NAME);
 	return 1;
 }
 
 static duk_ret_t
 js_GetExtensions(duk_context* ctx)
 {
-	int num_extensions;
-	
+	char*   designation;
+	iter_t* iter;
+
 	int i;
 
-	num_extensions = sizeof(EXTENSIONS) / sizeof(EXTENSIONS[0]);
+	iter = iterate_vector(s_extensions);
 	duk_push_array(ctx);
-	for (i = 0; i < num_extensions; ++i) {
-		duk_push_string(ctx, EXTENSIONS[i]);
-		duk_put_prop_index(ctx, -2, i);
+	i = 0;
+	while (next_vector_item(s_extensions, &iter, &designation)) {
+		duk_push_string(ctx, designation);
+		duk_put_prop_index(ctx, -2, i++);
 	}
 	return 1;
 }

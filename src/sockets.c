@@ -246,6 +246,8 @@ on_dyad_receive(dyad_Event* e)
 void
 init_sockets_api(void)
 {
+	register_api_extension("minisphere-new-sockets");
+	
 	// core Sockets API functions
 	register_api_function(g_duk, NULL, "GetLocalAddress", js_GetLocalAddress);
 	register_api_function(g_duk, NULL, "GetLocalName", js_GetLocalName);

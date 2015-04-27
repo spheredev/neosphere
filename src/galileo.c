@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "vector.h"
 
 #include "galileo.h"
 
@@ -46,10 +47,106 @@ struct group
 	unsigned int refcount;
 	float        x, y, rot_x, rot_y;
 	double       theta;
-	int          max_shapes;
-	int          num_shapes;
-	shape_t*     *shapes;
+	vector_t*    shapes;
 };
+
+group_t*
+new_group(void)
+{
+	group_t* group;
+
+	if (!(group = calloc(1, sizeof(group_t))))
+		goto on_error;
+	group->shapes = new_vector(sizeof(shape_t*));
+	return ref_group(group);
+
+on_error:
+	free(group);
+	return NULL;
+}
+
+group_t*
+ref_group(group_t* group)
+{
+	if (group != NULL)
+		++group->refcount;
+	return group;
+}
+
+void
+free_group(group_t* group)
+{
+	iter_t*  iter;
+	shape_t* i_shape;
+
+	if (group == NULL || --group->refcount > 0)
+		return;
+
+	iter = iterate_vector(group->shapes);
+	while (next_vector_item(group->shapes, &iter, &i_shape))
+		free_shape(i_shape);
+	free_vector(group->shapes);
+	free(group);
+}
+
+shape_t*
+get_group_shape(group_t* group, int index)
+{
+	shape_t* shape;
+
+	get_vector_item(group->shapes, index, &shape);
+	return shape;
+}
+
+void
+set_group_shape(group_t* group, int index, shape_t* shape)
+{
+	shape_t* old_shape;
+
+	shape = ref_shape(shape);
+	get_vector_item(group->shapes, index, &old_shape);
+	set_vector_item(group->shapes, index, &shape);
+	free_shape(old_shape);
+}
+
+bool
+add_shape(group_t* group, shape_t* shape)
+{
+	shape = ref_shape(shape);
+	push_back_vector(group->shapes, &shape);
+	return true;
+}
+
+void
+remove_shape(group_t* group, int index)
+{
+	remove_vector_item(group->shapes, index);
+}
+
+void
+clear_group(group_t* group)
+{
+	shape_t* shape;
+
+	iter_t* iter;
+
+	iter = iterate_vector(group->shapes);
+	while (next_vector_item(group->shapes, &iter, &shape))
+		free_shape(shape);
+	clear_vector(group->shapes);
+}
+
+void
+draw_group(group_t* group)
+{
+	shape_t* shape;
+
+	iter_t* iter;
+
+	iter = iterate_vector(group->shapes);
+	while (next_vector_item(group->shapes, &iter, &shape))
+		draw_shape(shape, group->x, group->y);
+}
 
 shape_t*
 new_shape(image_t* texture)
@@ -169,108 +266,11 @@ draw_shape(shape_t* shape, float x, float y)
 	free(vbuf);
 }
 
-group_t*
-new_group(void)
-{
-	group_t* group;
-
-	if (!(group = calloc(1, sizeof(group_t))))
-		goto on_error;
-	return ref_group(group);
-
-on_error:
-	free(group);
-	return NULL;
-}
-
-group_t*
-ref_group(group_t* group)
-{
-	if (group != NULL)
-		++group->refcount;
-	return group;
-}
-
-void
-free_group(group_t* group)
-{
-	int i;
-
-	if (group == NULL || --group->refcount > 0)
-		return;
-	for (i = 0; i < group->num_shapes; ++i)
-		free_shape(group->shapes[i]);
-	free(group->shapes);
-	free(group);
-}
-
-shape_t*
-get_group_shape(group_t* group, int index)
-{
-	return group->shapes[index];
-}
-
-void
-set_group_shape(group_t* group, int index, shape_t* shape)
-{
-	shape_t* old_shape;
-	
-	old_shape = group->shapes[index];
-	group->shapes[index] = ref_shape(shape);
-	free_shape(old_shape);
-}
-
-bool
-add_shape(group_t* group, shape_t* shape)
-{
-	int       new_max;
-	shape_t*  *new_array;
-
-	if (group->num_shapes + 1 > group->max_shapes) {
-		new_max = (group->num_shapes + 1) * 2;
-		if (!(new_array = realloc(group->shapes, new_max * sizeof(shape_t*))))
-			return false;
-		group->max_shapes = new_max;
-		group->shapes = new_array;
-	}
-	++group->num_shapes;
-	group->shapes[group->num_shapes - 1] = ref_shape(shape);
-	return true;
-}
-
-void
-remove_shape(group_t* group, int index)
-{
-	int i;
-	
-	--group->num_shapes;
-	for (i = index; i < group->num_shapes; ++i)
-		group->shapes[i] = group->shapes[i + 1];
-}
-
-void
-clear_group(group_t* group)
-{
-	int i;
-	
-	for (i = 0; i < group->num_shapes; ++i)
-		free_shape(group->shapes[i]);
-	group->num_shapes = 0;
-}
-
-void
-draw_group(group_t* group)
-{
-	int i;
-
-	for (i = 0; i < group->num_shapes; ++i) {
-		draw_shape(group->shapes[i], group->x, group->y);
-	}
-}
-
 void
 init_galileo_api(void)
 {
+	register_api_extension("sphere-galileo");
+	
 	// Shape object
 	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
 	register_api_prop(g_duk, "Shape", "image", js_Shape_get_image, js_Shape_set_image);
