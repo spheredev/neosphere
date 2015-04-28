@@ -3,11 +3,10 @@ minisphere Changelog
 
 v1.1 - TBD
 
-- Fixes a bunch of bugs discovered since the release of
-  minisphere 1.0.10, including a SetPersonScript() crash when passing
-  JS functions.
+- Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
+  including a SetPersonScript() crash when passing JS functions.
 - Native 64-bit support with included 64-bit engine! (engine64.exe)
-- Constructors and properties for all Sphere engine objects:
+- Constructors and properties for all core Sphere objects:
       var sound = new Sound("munch.wav");
       sound.volume = 128;
       sound.play(false);
@@ -15,7 +14,7 @@ v1.1 - TBD
   composed ahead of time using Shape and Group objects
 - TurboSphere-inspired Sockets API, with separate ListeningSocket and
   IOSocket objects (legacy sockets are still supported!)
-- API documentation now included in the default distribution
+- API documentation is now included in the default distribution
 - Overhauled FollowPerson algorithm: Followers move under their own
   power and are affected by obstructions, making the overall effect much
   more pleasing.
@@ -24,6 +23,7 @@ v1.1 - TBD
      GetPersonFollowers()
      GetPersonFollowDistance()
      SetPersonFollowDistance()
+- Microsecond precision when seeking in Sounds
 
 v1.0.10 - April 16, 2015
 
