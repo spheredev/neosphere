@@ -893,6 +893,8 @@ process_map_input(void)
 			break;
 		}
 	}
+	
+	update_bound_keys();
 }
 
 static void

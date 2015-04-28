@@ -216,14 +216,44 @@ clear_key_queue(void)
 }
 
 void
+update_bound_keys(void)
+{
+	bool                   is_down;
+	ALLEGRO_KEYBOARD_STATE kb_state;
+	
+	int i, j;
+	
+	// check bound keys
+	al_get_keyboard_state(&kb_state);
+	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
+		if (!s_is_key_bound[i])
+			continue;
+		is_down = al_key_down(&kb_state, i);
+		if (is_down && !s_last_key_state[i])
+			run_script(s_key_down_scripts[i], false);
+		if (!is_down && s_last_key_state[i])
+			run_script(s_key_up_scripts[i], false);
+		s_last_key_state[i] = is_down;
+	}
+
+	// check bound joystick buttons
+	for (i = 0; i < MAX_JOYSTICKS; ++i) for (j = 0; j < MAX_JOY_BUTTONS; ++j) {
+		if (!s_is_button_bound[i][j])
+			continue;
+		is_down = is_joy_button_down(i, j);
+		if (is_down && !s_last_button_state[i][j])
+			run_script(s_button_down_scripts[i][j], false);
+		if (!is_down && s_last_button_state[i][j])
+			run_script(s_button_up_scripts[i][j], false);
+		s_last_button_state[i][j] = is_down;
+	}
+}
+
+void
 update_input(void)
 {
 	ALLEGRO_EVENT          event;
-	bool                   is_down;
-	ALLEGRO_KEYBOARD_STATE kb_state;
 	ALLEGRO_MOUSE_STATE    mouse_state;
-
-	int i, j;
 
 	// process Allegro input events
 	while (al_get_next_event(s_events, &event)) {
@@ -232,7 +262,7 @@ update_input(void)
 			switch (event.keyboard.keycode) {
 			case ALLEGRO_KEY_ENTER:
 				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
-					|| event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
+				 || event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
 				{
 					toggle_fullscreen();
 				}
@@ -256,31 +286,13 @@ update_input(void)
 		}
 	}
 	
+	// check whether mouse wheel moved since last update
 	al_get_mouse_state(&mouse_state);
-	if (mouse_state.z > s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_UP);
-	if (mouse_state.z < s_last_wheel_pos) queue_wheel_event(MOUSE_WHEEL_DOWN);
+	if (mouse_state.z > s_last_wheel_pos)
+		queue_wheel_event(MOUSE_WHEEL_UP);
+	if (mouse_state.z < s_last_wheel_pos)
+		queue_wheel_event(MOUSE_WHEEL_DOWN);
 	s_last_wheel_pos = mouse_state.z;
-	al_get_keyboard_state(&kb_state);
-	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
-		if (!s_is_key_bound[i])
-			continue;
-		is_down = al_key_down(&kb_state, i);
-		if (is_down && !s_last_key_state[i])
-			run_script(s_key_down_scripts[i], false);
-		if (!is_down && s_last_key_state[i])
-			run_script(s_key_up_scripts[i], false);
-		s_last_key_state[i] = is_down;
-	}
-	for (i = 0; i < MAX_JOYSTICKS; ++i) for (j = 0; j < MAX_JOY_BUTTONS; ++j) {
-		if (!s_is_button_bound[i][j])
-			continue;
-		is_down = is_joy_button_down(i, j);
-		if (is_down && !s_last_button_state[i][j])
-			run_script(s_button_down_scripts[i][j], false);
-		if (!is_down && s_last_button_state[i][j])
-			run_script(s_button_up_scripts[i][j], false);
-		s_last_button_state[i][j] = is_down;
-	}
 }
 
 void

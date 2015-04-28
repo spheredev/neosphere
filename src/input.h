@@ -20,6 +20,7 @@ extern float get_joy_axis         (int joy_index, int axis_index);
 extern int   get_joy_axis_count   (int joy_index);
 extern int   get_joy_button_count (int joy_index);
 extern void  clear_key_queue      (void);
+extern void  update_bound_keys    (void);
 extern void  update_input         (void);
 
 extern void init_input_api (void);
