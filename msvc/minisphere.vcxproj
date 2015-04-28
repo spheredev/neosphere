@@ -162,6 +162,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -184,6 +185,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -211,6 +213,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -239,6 +242,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -266,6 +270,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -294,6 +299,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
+xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
