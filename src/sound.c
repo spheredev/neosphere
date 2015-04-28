@@ -46,7 +46,6 @@ initialize_sound(void)
 	al_init_acodec_addon();
 	al_reserve_samples(10);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
-	printf("Initialized audio\n");
 }
 
 void
@@ -70,7 +69,6 @@ load_sound(const char* path, bool streaming)
 	if (!reload_sound(sound))
 		goto on_error;
 	sound->id = s_next_sound_id++;
-	printf("Loaded sound %u: %s\n", sound->id, strrchr(path, ALLEGRO_NATIVE_PATH_SEP) + 1);
 	return ref_sound(sound);
 
 on_error:
@@ -94,7 +92,6 @@ free_sound(sound_t* sound)
 	if (sound == NULL || --sound->refcount > 0)
 		return;
 	al_destroy_audio_stream(sound->stream);
-	printf("Unloaded sound %u\n", sound->id);
 	free(sound->path);
 }
 
@@ -116,10 +113,10 @@ get_sound_gain(sound_t* sound)
 	return al_get_audio_stream_gain(sound->stream);
 }
 
-int
+long long
 get_sound_length(sound_t* sound)
 {
-	return al_get_audio_stream_length_secs(sound->stream) * 1000;
+	return al_get_audio_stream_length_secs(sound->stream) * 1000000;
 }
 
 float
@@ -134,10 +131,10 @@ get_sound_pitch(sound_t* sound)
 	return al_get_audio_stream_speed(sound->stream);
 }
 
-int
+long long
 get_sound_seek(sound_t* sound)
 {
-	return al_get_audio_stream_position_secs(sound->stream) * 1000;
+	return al_get_audio_stream_position_secs(sound->stream) * 1000000;
 }
 
 void
@@ -189,9 +186,9 @@ reload_sound(sound_t* sound)
 }
 
 void
-seek_sound(sound_t* sound, int position)
+seek_sound(sound_t* sound, long long position)
 {
-	al_seek_audio_stream_secs(sound->stream, (double)position / 1000);
+	al_seek_audio_stream_secs(sound->stream, (double)position / 1000000);
 }
 
 void
@@ -293,7 +290,7 @@ js_Sound_get_length(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_length(sound));
+	duk_push_number(ctx, get_sound_length(sound));
 	return 1;
 }
 
@@ -369,14 +366,14 @@ js_Sound_get_position(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_seek(sound));
+	duk_push_number(ctx, get_sound_seek(sound));
 	return 1;
 }
 
 static duk_ret_t
 js_Sound_set_position(duk_context* ctx)
 {
-	int new_pos = duk_require_int(ctx, 0);
+	long long new_pos = duk_require_number(ctx, 0);
 
 	sound_t* sound;
 
