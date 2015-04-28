@@ -77,11 +77,10 @@ run_script(script_t* script, bool allow_reentry)
 	duk_get_prop_index(g_duk, -1, script->id);
 	
 	// execute the script
+	script->is_in_use = true;
 	duk_call(g_duk, 0);
-	duk_pop(g_duk);
-	
+	duk_pop_3(g_duk);
 	script->is_in_use = was_in_use;
-	duk_pop_2(g_duk);
 }
 
 script_t*
