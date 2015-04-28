@@ -4,7 +4,7 @@ minisphere Changelog
 v1.1 - TBD
 
 - Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
-  including a SetPersonScript() crash when passing JS functions.
+  including a SetPersonScript() crash when passing JS functions
 - Native 64-bit support with included 64-bit engine! (engine64.exe)
 - Constructors and properties for all core Sphere objects:
       var sound = new Sound("munch.wav");
