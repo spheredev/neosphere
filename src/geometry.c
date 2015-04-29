@@ -14,6 +14,18 @@ new_rect(int x1, int y1, int x2, int y2)
 	return rectangle;
 }
 
+float_rect_t
+new_float_rect(float x1, float y1, float x2, float y2)
+{
+	float_rect_t rectangle;
+
+	rectangle.x1 = x1;
+	rectangle.y1 = y1;
+	rectangle.x2 = x2;
+	rectangle.y2 = y2;
+	return rectangle;
+}
+
 bool
 do_lines_intersect(rect_t a, rect_t b)
 {
@@ -42,10 +54,28 @@ is_point_in_rect(int x, int y, rect_t bounds)
 		&& y >= bounds.y1 && y < bounds.y2;
 }
 
+float_rect_t
+scale_float_rect(float_rect_t rect, float x_scale, float y_scale)
+{
+	return new_float_rect(
+		rect.x1 * x_scale, rect.y1 * y_scale,
+		rect.x2 * x_scale, rect.y2 * y_scale);
+}
+
 rect_t
 translate_rect(rect_t rect, int x_offset, int y_offset)
 {
-	return new_rect(rect.x1 + x_offset, rect.y1 + y_offset, rect.x2 + x_offset, rect.y2 + y_offset);
+	return new_rect(
+		rect.x1 + x_offset, rect.y1 + y_offset,
+		rect.x2 + x_offset, rect.y2 + y_offset);
+}
+
+float_rect_t
+translate_float_rect(float_rect_t rect, float x_offset, float y_offset)
+{
+	return new_float_rect(
+		rect.x1 + x_offset, rect.y1 + y_offset,
+		rect.x2 + x_offset, rect.y2 + y_offset);
 }
 
 rect_t

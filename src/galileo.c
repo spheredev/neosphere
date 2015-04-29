@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "color.h"
 #include "vector.h"
 
 #include "galileo.h"
@@ -25,6 +26,9 @@ static duk_ret_t js_new_Shape               (duk_context* ctx);
 static duk_ret_t js_Shape_finalize          (duk_context* ctx);
 static duk_ret_t js_Shape_get_image         (duk_context* ctx);
 static duk_ret_t js_Shape_set_image         (duk_context* ctx);
+static duk_ret_t js_new_Vertex              (duk_context* ctx);
+
+static void assign_default_uv (shape_t* shape);
 
 struct shape
 {
@@ -94,7 +98,7 @@ free_group(group_t* group)
 }
 
 shape_t*
-get_group_shape(group_t* group, int index)
+get_group_shape(const group_t* group, int index)
 {
 	shape_t* shape;
 
@@ -114,7 +118,7 @@ set_group_shape(group_t* group, int index, shape_t* shape)
 }
 
 bool
-add_shape(group_t* group, shape_t* shape)
+add_group_shape(group_t* group, shape_t* shape)
 {
 	shape = ref_shape(shape);
 	push_back_vector(group->shapes, &shape);
@@ -122,7 +126,7 @@ add_shape(group_t* group, shape_t* shape)
 }
 
 void
-remove_shape(group_t* group, int index)
+remove_group_shape(group_t* group, int index)
 {
 	remove_vector_item(group->shapes, index);
 }
@@ -141,7 +145,7 @@ clear_group(group_t* group)
 }
 
 void
-draw_group(group_t* group)
+draw_group(const group_t* group)
 {
 	shape_t* shape;
 
@@ -184,8 +188,29 @@ free_shape(shape_t* shape)
 	free(shape);
 }
 
+float_rect_t
+get_shape_bounds(const shape_t* shape)
+{
+	float_rect_t bounds;
+
+	int i;
+
+	if (shape->num_vertices < 1)
+		return new_float_rect(0.0, 0.0, 0.0, 0.0);
+	bounds = new_float_rect(
+		shape->vertices[0].x, shape->vertices[0].y,
+		shape->vertices[0].x, shape->vertices[0].y);
+	for (i = 1; i < shape->num_vertices; ++i) {
+		bounds.x1 = fmin(shape->vertices[i].x, bounds.x1);
+		bounds.y1 = fmin(shape->vertices[i].y, bounds.y1);
+		bounds.x2 = fmax(shape->vertices[i].x, bounds.x2);
+		bounds.y2 = fmax(shape->vertices[i].y, bounds.y2);
+	}
+	return bounds;
+}
+
 image_t*
-get_shape_texture(shape_t* shape)
+get_shape_texture(const shape_t* shape)
 {
 	return shape->texture;
 }
@@ -213,10 +238,10 @@ set_shape_texture(shape_t* shape, image_t* texture)
 }
 
 bool
-add_vertex(shape_t* shape, vertex_t vertex)
+add_shape_vertex(shape_t* shape, vertex_t vertex)
 {
-	int       new_max;
-	vertex_t  *new_buffer;
+	int      new_max;
+	vertex_t *new_buffer;
 
 	if (shape->num_vertices + 1 > shape->max_vertices) {
 		new_max = (shape->num_vertices + 1) * 2;
@@ -231,7 +256,7 @@ add_vertex(shape_t* shape, vertex_t vertex)
 }
 
 void
-remove_vertex(shape_t* shape, int index)
+remove_shape_vertex(shape_t* shape, int index)
 {
 	int i;
 
@@ -241,7 +266,7 @@ remove_vertex(shape_t* shape, int index)
 }
 
 void
-draw_shape(shape_t* shape, float x, float y)
+draw_shape(const shape_t* shape, float x, float y)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
@@ -271,9 +296,32 @@ draw_shape(shape_t* shape, float x, float y)
 	free(vbuf);
 }
 
+static void
+assign_default_uv(shape_t* shape)
+{
+	float_rect_t bounds;
+	float        delta_x, delta_y;
+	float        width, height;
+
+	int i;
+
+	bounds = get_shape_bounds(shape);
+	width = bounds.x2 - bounds.x1;
+	height = bounds.y2 - bounds.y1;
+	for (i = 0; i < shape->num_vertices; ++i) {
+		delta_x = shape->vertices[i].x - bounds.x1;
+		delta_y = shape->vertices[i].y - bounds.y1;
+		shape->vertices[i].u = width > 0 ? delta_x / width : 0.0;
+		shape->vertices[i].v = height > 0 ? delta_y / height : 1.0;
+	}
+}
+
 void
 init_galileo_api(void)
 {
+	// Vertex object
+	register_api_ctor(g_duk, "Vertex", js_new_Vertex, NULL);
+	
 	// Shape object
 	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
 	register_api_prop(g_duk, "Shape", "image", js_Shape_get_image, js_Shape_set_image);
@@ -313,7 +361,7 @@ js_new_Group(duk_context* ctx)
 	for (i = 0; i < num_shapes; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		shape = duk_require_sphere_obj(ctx, -1, "Shape");
-		if (!add_shape(group, shape))
+		if (!add_group_shape(group, shape))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Shape list allocation failure");
 	}
 	duk_push_sphere_obj(ctx, "Group", group);
@@ -521,9 +569,10 @@ js_new_Shape(duk_context* ctx)
 			? duk_require_sphere_color(ctx, -1)
 			: rgba(255, 255, 255, 255);
 		duk_pop_n(ctx, 6);
-		if (!add_vertex(shape, vertex))
+		if (!add_shape_vertex(shape, vertex))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Vertex buffer allocation failure");
 	}
+	assign_default_uv(shape);
 	duk_push_sphere_obj(ctx, "Shape", shape);
 	return 1;
 }
@@ -560,5 +609,25 @@ js_Shape_set_image(duk_context* ctx)
 	shape = duk_require_sphere_obj(ctx, -1, "Shape");
 	duk_pop(ctx);
 	set_shape_texture(shape, texture);
+	return 0;
+}
+
+static duk_ret_t
+js_new_Vertex(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	float x = duk_require_number(ctx, 0);
+	float y = duk_require_number(ctx, 1);
+	color_t color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : rgba(255, 255, 255, 255);
+	float u = n_args >= 4 ? duk_require_number(ctx, 3) : 0.0;
+	float v = n_args >= 4 ? duk_require_number(ctx, 4) : 0.0;
+
+	duk_push_this(ctx);
+	duk_push_number(ctx, x); duk_put_prop_string(ctx, -2, "x");
+	duk_push_number(ctx, y); duk_put_prop_string(ctx, -2, "y");
+	duk_push_sphere_color(ctx, color); duk_put_prop_string(ctx, -2, "color");
+	duk_push_number(ctx, u); duk_put_prop_string(ctx, -2, "u");
+	duk_push_number(ctx, v); duk_put_prop_string(ctx, -2, "v");
+	duk_pop(ctx);
 	return 0;
 }
