@@ -642,6 +642,7 @@ initialize_engine(void)
 	g_sys_conf = al_load_config_file(path);
 	free(path);
 
+	initialize_galileo();
 	initialize_input();
 	initialize_map_engine();
 	initialize_sound();
@@ -685,6 +686,7 @@ shutdown_engine(void)
 	dyad_shutdown();
 	shutdown_sound();
 	shutdown_input();
+	shutdown_galileo();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_config(g_game_conf);

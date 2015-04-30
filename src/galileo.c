@@ -28,15 +28,17 @@ static duk_ret_t js_Shape_get_image         (duk_context* ctx);
 static duk_ret_t js_Shape_set_image         (duk_context* ctx);
 static duk_ret_t js_new_Vertex              (duk_context* ctx);
 
-static void assign_default_uv (shape_t* shape);
+static void assign_default_uv  (shape_t* shape);
+static void refresh_shape_vbuf (shape_t* shape);
 
 struct shape
 {
-	unsigned int refcount;
-	image_t*     texture;
-	int          max_vertices;
-	int          num_vertices;
-	vertex_t     *vertices;
+	unsigned int           refcount;
+	image_t*               texture;
+	ALLEGRO_VERTEX_BUFFER* vbuf;
+	int                    max_vertices;
+	int                    num_vertices;
+	vertex_t               *vertices;
 };
 
 struct group
@@ -46,6 +48,24 @@ struct group
 	double       theta;
 	vector_t*    shapes;
 };
+
+static int             s_max_vertices;
+static ALLEGRO_VERTEX* s_soft_vbuf;
+
+void
+initialize_galileo(void)
+{
+	s_soft_vbuf = NULL;
+	s_max_vertices = 0;
+	printf("Initialized Galileo");
+}
+
+void
+shutdown_galileo(void)
+{
+	free(s_soft_vbuf);
+	printf("Shut down Galileo");
+}
 
 vertex_t
 vertex(float x, float y, float u, float v, color_t color)
@@ -270,7 +290,7 @@ draw_shape(const shape_t* shape, float x, float y)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
-	ALLEGRO_VERTEX* vbuf;
+	ALLEGRO_VERTEX* new_vbuf;
 	int             w_texture;
 	int             h_texture;
 
@@ -278,30 +298,39 @@ draw_shape(const shape_t* shape, float x, float y)
 
 	draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
-		: ALLEGRO_PRIM_TRIANGLE_FAN;
+		: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
+		: ALLEGRO_PRIM_TRIANGLE_STRIP;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
-	w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
-	h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
-	if (!(vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
-		return;
-	for (i = 0; i < shape->num_vertices; ++i) {
-		vbuf[i].x = shape->vertices[i].x + x;
-		vbuf[i].y = shape->vertices[i].y + y;
-		vbuf[i].z = 0;
-		vbuf[i].u = shape->vertices[i].u * w_texture;
-		vbuf[i].v = shape->vertices[i].v * h_texture;
-		vbuf[i].color = nativecolor(shape->vertices[i].color);
+	if (shape->vbuf != NULL)
+		al_draw_vertex_buffer(shape->vbuf, bitmap, 0, shape->num_vertices, draw_mode);
+	else {
+		w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
+		h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
+		if (shape->num_vertices > s_max_vertices) {
+			if (!(new_vbuf = realloc(s_soft_vbuf, shape->num_vertices * 2 * sizeof(ALLEGRO_VERTEX))))
+				return;
+			s_soft_vbuf = new_vbuf;
+			s_max_vertices = shape->num_vertices * 2;
+		}
+		for (i = 0; i < shape->num_vertices; ++i) {
+			s_soft_vbuf[i].x = shape->vertices[i].x + x;
+			s_soft_vbuf[i].y = shape->vertices[i].y + y;
+			s_soft_vbuf[i].z = 0;
+			s_soft_vbuf[i].u = shape->vertices[i].u * w_texture;
+			s_soft_vbuf[i].v = shape->vertices[i].v * h_texture;
+			s_soft_vbuf[i].color = nativecolor(shape->vertices[i].color);
+		}
+		al_draw_prim(s_soft_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
 	}
-	al_draw_prim(vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
-	free(vbuf);
 }
 
 static void
 assign_default_uv(shape_t* shape)
 {
 	// this assigns default UV coordinates to a shape's vertices. note that clockwise
-	// winding is assumed--if the shape is wound counterclockwise, the texture will
-	// be applied upside down.
+	// winding from top left is assumed; if the shape is wound any other way, the
+	// texture will be rotated accordingly. if this is not what you want, explicit U/V
+	// coordinates should be supplied.
 	
 	double phi;
 
@@ -312,8 +341,38 @@ assign_default_uv(shape_t* shape)
 		// the circumcircle is rotated 135 degrees counterclockwise, which ensures
 		// that the top-left corner of a clockwise quad is mapped to (0,0).
 		phi = 2 * M_PI * i / shape->num_vertices - M_PI_4 * 3;
-		shape->vertices[i].u = (cos(phi) * M_SQRT2 + 1.0) / 2.0;
-		shape->vertices[i].v = (sin(phi) * M_SQRT2 + 1.0) / 2.0;
+		shape->vertices[i].u = cos(phi) * M_SQRT1_2 + 0.5;
+		shape->vertices[i].v = sin(phi) * M_SQRT1_2 + 0.5;
+	}
+}
+
+static void
+refresh_shape_vbuf(shape_t* shape)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_VERTEX* vertices;
+	int             w_texture, h_texture;
+
+	int i;
+	
+	if (shape->vbuf != NULL)
+		al_destroy_vertex_buffer(shape->vbuf);
+	shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC);
+	if (shape->vbuf != NULL) {
+		bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+		w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
+		h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
+		if (!(vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY)))
+			return;
+		for (i = 0; i < shape->num_vertices; ++i) {
+			vertices[i].x = shape->vertices[i].x;
+			vertices[i].y = shape->vertices[i].y;
+			vertices[i].z = 0;
+			vertices[i].color = nativecolor(shape->vertices[i].color);
+			vertices[i].u = shape->vertices[i].u * w_texture;
+			vertices[i].v = shape->vertices[i].v * h_texture;
+		}
+		al_unlock_vertex_buffer(shape->vbuf);
 	}
 }
 
@@ -550,9 +609,10 @@ js_new_Shape(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
 	image_t* texture = duk_is_null(ctx, 1) ? NULL : duk_require_sphere_obj(ctx, 1, "Image");
 
-	duk_idx_t stack_idx;
+	bool      is_missing_uv = false;
 	size_t    num_vertices;
 	shape_t*  shape;
+	duk_idx_t stack_idx;
 	vertex_t  vertex;
 
 	duk_uarridx_t i;
@@ -564,16 +624,24 @@ js_new_Shape(duk_context* ctx)
 		duk_get_prop_index(ctx, 0, i); stack_idx = duk_normalize_index(ctx, -1);
 		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0f;
 		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0f;
-		vertex.u = duk_get_prop_string(ctx, stack_idx, "u") ? duk_require_number(ctx, -1) : 0.0f;
-		vertex.v = duk_get_prop_string(ctx, stack_idx, "v") ? duk_require_number(ctx, -1) : 0.0f;
+		if (duk_get_prop_string(ctx, stack_idx, "u"))
+			vertex.u = duk_require_number(ctx, -1);
+		else
+			is_missing_uv = true;
+		if (duk_get_prop_string(ctx, stack_idx, "v"))
+			vertex.v = duk_require_number(ctx, -1);
+		else
+			is_missing_uv = true;
 		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
 			? duk_require_sphere_color(ctx, -1)
 			: rgba(255, 255, 255, 255);
 		duk_pop_n(ctx, 6);
 		if (!add_shape_vertex(shape, vertex))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Vertex buffer allocation failure");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Vertex list allocation failure");
 	}
-	assign_default_uv(shape);
+	if (is_missing_uv)
+		assign_default_uv(shape);
+	refresh_shape_vbuf(shape);
 	duk_push_sphere_obj(ctx, "Shape", shape);
 	return 1;
 }
@@ -617,18 +685,27 @@ static duk_ret_t
 js_new_Vertex(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
+	bool has_color = n_args >= 3;
+	bool has_uv = n_args >= 4;
 	float x = duk_require_number(ctx, 0);
 	float y = duk_require_number(ctx, 1);
-	color_t color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : rgba(255, 255, 255, 255);
-	float u = n_args >= 4 ? duk_require_number(ctx, 3) : 0.0;
-	float v = n_args >= 4 ? duk_require_number(ctx, 4) : 0.0;
-
+	color_t color = has_color ? duk_require_sphere_color(ctx, 2) : rgba(255, 255, 255, 255);
+	float u = has_uv ? duk_require_number(ctx, 3) : 0.0;
+	float v = has_uv ? duk_require_number(ctx, 4) : 0.0;
+	
 	duk_push_this(ctx);
 	duk_push_number(ctx, x); duk_put_prop_string(ctx, -2, "x");
 	duk_push_number(ctx, y); duk_put_prop_string(ctx, -2, "y");
-	duk_push_sphere_color(ctx, color); duk_put_prop_string(ctx, -2, "color");
-	duk_push_number(ctx, u); duk_put_prop_string(ctx, -2, "u");
-	duk_push_number(ctx, v); duk_put_prop_string(ctx, -2, "v");
+	if (has_color) {
+		duk_push_sphere_color(ctx, color);
+		duk_put_prop_string(ctx, -2, "color");
+	}
+	if (has_uv) {
+		duk_push_number(ctx, u);
+		duk_push_number(ctx, v);
+		duk_put_prop_string(ctx, -3, "v");
+		duk_put_prop_string(ctx, -2, "u");
+	}
 	duk_pop(ctx);
 	return 0;
 }

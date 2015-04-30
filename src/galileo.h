@@ -12,6 +12,9 @@ struct vertex
 	color_t color;
 };
 
+extern void initialize_galileo (void);
+extern void shutdown_galileo   (void);
+
 extern vertex_t vertex (float x, float y, float u, float v, color_t color);
 
 extern group_t* new_group          (void);
