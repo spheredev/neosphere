@@ -26,20 +26,20 @@ GetVersionString()
 
   Returns the engine's version identification string. minisphere 1.1
   identifies as:
-    o 32-bit engine: `v1.5 (compatible; minisphere 1.1)`
-    o 64-bit engine: `v1.5 (compatible; minisphere 1.1 x64)`
+    
+    `v1.5 (compatible; minisphere 1.1)`
 
 GetExtensions()
 
   Returns an array of strings representing the engine's built-in
   capabilities. minisphere currently supports the following extensions:
   
-    * `sphere-legacy-api`
-      Sphere 1.x API support
-    
     * `minisphere`
       minisphere-specific API extensions
       
+    * `sphere-legacy-api`
+      Sphere 1.x API support
+    
     * `sphere-obj-constructors`
       Sphere objects can be created via `new`, e.g.
       var sound = new Sound("munch.wav");
@@ -47,9 +47,15 @@ GetExtensions()
     * `sphere-obj-props`
       Sphere objects include virtual properties, e.g.:
       sound_obj.volume = 0.5;
+    
+    * `sphere-map-engine`
+      Sphere 1.x compatible map engine included
+    
+    * `sphere-galileo`
+      Sphere 2.0 `Galileo` graphics API
       
-    * `sphere-new-sockets`
-      Support for IOSocket and ListeningSocket objects
+    * `minisphere-new-sockets`
+      Support for minisphere IOSocket and ListeningSocket objects
     
     * `frameskip-api`
       API functions for managing frame skipping
@@ -151,6 +157,92 @@ Exit()
   Exits the current game and shuts down the engine. If the current game
   was started by via ExecuteGame(), the original game will be restarted
   following the Exit() call.
+
+
+Graphics Primitives
+-------------------
+
+All the old-school primitives provided by Sphere 1.5 are still available
+in minisphere. However, there's a newer, much more modern way: the Shape
+and Group objects.  With these, you precompose a complex object out of a
+set of vertices and textures which are then uploaded to the GPU to save
+time during the main render loop.
+
+GetDefaultShaderProgram()
+  
+  Gets the default shader program for drawing Groups (see below). This
+  is required by the Galileo specification and is the only way to get a
+  ShaderProgram object. minisphere does not currently support shaders.
+
+new Vertex(x, y[, color[, u, v]]);
+  
+  Constructs an object describing a vertex of a shape. x and y specify
+  the location of the vertex relative to the shape's origin. The color,
+  if specified, is multiplied with the texture at that point in the
+  shape to "tint" the vertex.  U/V are texture coordinates ranging from
+  0 to 1 describing the part of the texture which will be mapped to that
+  vertex.
+
+new Shape(vertices, image[, primitive_type]);
+
+  Constructs a primitive shape out of the provided array of vertices
+  textured with the Image object specified by `image`. `primitive_type`
+  is optional and can be one of the following:
+    
+    SHAPE_AUTO - Primitive type is determined automatically based on the
+                 number of vertices. This is the default.
+    
+    SHAPE_POINT_LIST - A point list. Each vertex represents a single
+                       point to be rendered. Useful for particle
+                       effects.
+  
+    SHAPE_LINE_LIST - A line list. Each pair of vertices represents a
+                      line segment.
+    
+    SHAPE_TRIANGLE_LIST - A triangle will be drawn for every 3 vertices.
+    
+    SHAPE_TRIANGLE_STRIP - A triangle strip. The first 3 vertices
+                           represent a complete triangle, and each
+                           subsequent vertex is combined with the
+                           previous two to form another. Number of
+                           triangles drawn is equal to (num_verts - 2).
+    
+    SHAPE_TRIANGLE_FAN - A series of triangles is drawn, all sharing the
+                         first vertex. As with a strip, the number of
+                         triangles is equal to (num_verts - 2).
+
+new Group(shapes, shader);
+  
+  Constructs a Group out of the provided array of Shape objects.
+  `shader` specifies the ShaderProgram to use when rendering the group;
+  currently the only way to retrieve a ShaderProgram object is by
+  calling GetDefaultShaderProgram().
+
+Group:draw();
+  
+  Renders the group to the backbuffer. Any transformations specified for
+  the group (see below for properties) are applied as if the entire
+  group were a single primitive.
+
+Group:x (read/write)
+Group:y (read/write)
+  
+  Sets the location the Group will be drawn at. When using default
+  shaders, these are in raster coordinates where +X is right and +Y is
+  down. Note that the translation described by these values is applied
+  *after* rotation. To apply translation before rotation, use the `rotX`
+  and `rotY` properties (see below).
+
+Group:angle (read/write)
+  
+  The entire Group is rotated by this angle when rendered.
+
+Group:rotX (read/write)
+Group:rotY (read/write)
+  
+  Specifies the amount by which to translate before rotation is applied.
+  The shapes in the group will revolve about the origin at a distance
+  determined by these values.
 
 
 Map Engine
