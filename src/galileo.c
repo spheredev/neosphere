@@ -306,7 +306,7 @@ draw_shape(const shape_t* shape)
 		draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
 		: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
-		: ALLEGRO_PRIM_TRIANGLE_FAN;
+		: ALLEGRO_PRIM_TRIANGLE_STRIP;
 	else
 		draw_mode = shape->type == SHAPE_LINE_LIST ? ALLEGRO_PRIM_LINE_LIST
 		: shape->type == SHAPE_TRIANGLE_LIST ? ALLEGRO_PRIM_TRIANGLE_LIST
@@ -381,6 +381,14 @@ refresh_shape_vbuf(shape_t* shape)
 void
 init_galileo_api(void)
 {
+	// Galileo core API constants
+	register_api_const(g_duk, "SHAPE_AUTO", SHAPE_AUTO);
+	register_api_const(g_duk, "SHAPE_POINT_LIST", SHAPE_POINT_LIST);
+	register_api_const(g_duk, "SHAPE_LINE_LIST", SHAPE_LINE_LIST);
+	register_api_const(g_duk, "SHAPE_TRIANGLE_LIST", SHAPE_TRIANGLE_LIST);
+	register_api_const(g_duk, "SHAPE_TRIANGLE_STRIP", SHAPE_TRIANGLE_STRIP);
+	register_api_const(g_duk, "SHAPE_TRIANGLE_FAN", SHAPE_TRIANGLE_FAN);
+
 	// Vertex object
 	register_api_ctor(g_duk, "Vertex", js_new_Vertex, NULL);
 	
@@ -606,10 +614,12 @@ js_new_ShaderProgram(duk_context* ctx)
 static duk_ret_t
 js_new_Shape(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	duk_require_object_coercible(ctx, 0);
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
 	image_t* texture = duk_is_null(ctx, 1) ? NULL : duk_require_sphere_obj(ctx, 1, "Image");
+	shape_type_t type = n_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
 
 	bool      is_missing_uv = false;
 	size_t    num_vertices;
@@ -619,7 +629,9 @@ js_new_Shape(duk_context* ctx)
 
 	duk_uarridx_t i;
 
-	if (!(shape = new_shape(SHAPE_AUTO, texture)))
+	if (type < 0 || type >= SHAPE_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Shape(): Invalid shape type constant");
+	if (!(shape = new_shape(type, texture)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Failed to create shape object");
 	num_vertices = duk_get_length(ctx, 0);
 	for (i = 0; i < num_vertices; ++i) {
