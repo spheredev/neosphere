@@ -35,6 +35,8 @@ struct shape
 {
 	unsigned int           refcount;
 	image_t*               texture;
+	shape_type_t           type;
+	ALLEGRO_VERTEX*        sw_vbuf;
 	ALLEGRO_VERTEX_BUFFER* vbuf;
 	int                    max_vertices;
 	int                    num_vertices;
@@ -49,21 +51,15 @@ struct group
 	vector_t*    shapes;
 };
 
-static int             s_max_vertices;
-static ALLEGRO_VERTEX* s_soft_vbuf;
-
 void
 initialize_galileo(void)
 {
-	s_soft_vbuf = NULL;
-	s_max_vertices = 0;
 	printf("Initialized Galileo");
 }
 
 void
 shutdown_galileo(void)
 {
-	free(s_soft_vbuf);
 	printf("Shut down Galileo");
 }
 
@@ -187,13 +183,14 @@ draw_group(const group_t* group)
 }
 
 shape_t*
-new_shape(image_t* texture)
+new_shape(shape_type_t type, image_t* texture)
 {
 	shape_t* shape;
 	
 	if (!(shape = calloc(1, sizeof(shape_t))))
 		goto on_error;
 	shape->texture = ref_image(texture);
+	shape->type = type;
 	return ref_shape(shape);
 
 on_error:
@@ -217,6 +214,7 @@ free_shape(shape_t* shape)
 	free_image(shape->texture);
 	if (shape->vbuf != NULL)
 		al_destroy_vertex_buffer(shape->vbuf);
+	free(shape->sw_vbuf);
 	free(shape);
 }
 
@@ -267,6 +265,7 @@ set_shape_texture(shape_t* shape, image_t* texture)
 	old_texture = shape->texture;
 	shape->texture = ref_image(texture);
 	free_image(old_texture);
+	refresh_shape_vbuf(shape);
 }
 
 bool
@@ -302,38 +301,23 @@ draw_shape(const shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
-	ALLEGRO_VERTEX* new_vbuf;
-	int             w_texture;
-	int             h_texture;
 
-	int i;
-
-	draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
+	if (shape->type == SHAPE_AUTO)
+		draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
 		: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
-		: ALLEGRO_PRIM_TRIANGLE_STRIP;
+		: ALLEGRO_PRIM_TRIANGLE_FAN;
+	else
+		draw_mode = shape->type == SHAPE_LINE_LIST ? ALLEGRO_PRIM_LINE_LIST
+		: shape->type == SHAPE_TRIANGLE_LIST ? ALLEGRO_PRIM_TRIANGLE_LIST
+		: shape->type == SHAPE_TRIANGLE_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
+		: shape->type == SHAPE_TRIANGLE_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
+		: ALLEGRO_PRIM_POINT_LIST;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
 	if (shape->vbuf != NULL)
 		al_draw_vertex_buffer(shape->vbuf, bitmap, 0, shape->num_vertices, draw_mode);
-	else {
-		w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
-		h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
-		if (shape->num_vertices > s_max_vertices) {
-			if (!(new_vbuf = realloc(s_soft_vbuf, shape->num_vertices * 2 * sizeof(ALLEGRO_VERTEX))))
-				return;
-			s_soft_vbuf = new_vbuf;
-			s_max_vertices = shape->num_vertices * 2;
-		}
-		for (i = 0; i < shape->num_vertices; ++i) {
-			s_soft_vbuf[i].x = shape->vertices[i].x;
-			s_soft_vbuf[i].y = shape->vertices[i].y;
-			s_soft_vbuf[i].z = 0;
-			s_soft_vbuf[i].u = shape->vertices[i].u * w_texture;
-			s_soft_vbuf[i].v = shape->vertices[i].v * h_texture;
-			s_soft_vbuf[i].color = nativecolor(shape->vertices[i].color);
-		}
-		al_draw_prim(s_soft_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
-	}
+	else
+		al_draw_prim(shape->sw_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
 }
 
 static void
@@ -362,30 +346,36 @@ static void
 refresh_shape_vbuf(shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_VERTEX* vertices;
+	ALLEGRO_VERTEX* vertices = NULL;
 	int             w_texture, h_texture;
 
 	int i;
 	
 	if (shape->vbuf != NULL)
 		al_destroy_vertex_buffer(shape->vbuf);
-	shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC);
-	if (shape->vbuf != NULL) {
-		bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
-		w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
-		h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
-		if (!(vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY)))
+	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
+	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+	w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
+	h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
+	if (shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
+		vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY);
+	if (vertices == NULL) {
+		if (!(shape->sw_vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
 			return;
-		for (i = 0; i < shape->num_vertices; ++i) {
-			vertices[i].x = shape->vertices[i].x;
-			vertices[i].y = shape->vertices[i].y;
-			vertices[i].z = 0;
-			vertices[i].color = nativecolor(shape->vertices[i].color);
-			vertices[i].u = shape->vertices[i].u * w_texture;
-			vertices[i].v = shape->vertices[i].v * h_texture;
-		}
-		al_unlock_vertex_buffer(shape->vbuf);
+		vertices = shape->sw_vbuf;
 	}
+	for (i = 0; i < shape->num_vertices; ++i) {
+		vertices[i].x = shape->vertices[i].x;
+		vertices[i].y = shape->vertices[i].y;
+		vertices[i].z = 0;
+		vertices[i].color = nativecolor(shape->vertices[i].color);
+		vertices[i].u = shape->vertices[i].u * w_texture;
+		vertices[i].v = shape->vertices[i].v * h_texture;
+	}
+	if (vertices != shape->sw_vbuf)
+		al_unlock_vertex_buffer(shape->vbuf);
+	else if (shape->vbuf != NULL)
+		al_destroy_vertex_buffer(shape->vbuf);
 }
 
 void
@@ -629,7 +619,7 @@ js_new_Shape(duk_context* ctx)
 
 	duk_uarridx_t i;
 
-	if (!(shape = new_shape(texture)))
+	if (!(shape = new_shape(SHAPE_AUTO, texture)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Failed to create shape object");
 	num_vertices = duk_get_length(ctx, 0);
 	for (i = 0; i < num_vertices; ++i) {
