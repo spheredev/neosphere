@@ -167,13 +167,23 @@ clear_group(group_t* group)
 void
 draw_group(const group_t* group)
 {
-	shape_t* shape;
+	ALLEGRO_TRANSFORM matrix;
+	ALLEGRO_TRANSFORM old_matrix;
+	shape_t*          shape;
 
 	iter_t* iter;
 
+	al_copy_transform(&old_matrix, al_get_current_transform());
+	al_identity_transform(&matrix);
+	al_translate_transform(&matrix, group->rot_x, group->rot_y);
+	al_rotate_transform(&matrix, group->theta);
+	al_translate_transform(&matrix, group->x, group->y);
+	al_scale_transform(&matrix, g_scale_x, g_scale_y);
+	al_use_transform(&matrix);
 	iter = iterate_vector(group->shapes);
 	while (next_vector_item(group->shapes, &iter, &shape))
-		draw_shape(shape, group->x, group->y);
+		draw_shape(shape);
+	al_use_transform(&old_matrix);
 }
 
 shape_t*
@@ -205,6 +215,8 @@ free_shape(shape_t* shape)
 	if (shape == NULL || --shape->refcount > 0)
 		return;
 	free_image(shape->texture);
+	if (shape->vbuf != NULL)
+		al_destroy_vertex_buffer(shape->vbuf);
 	free(shape);
 }
 
@@ -286,7 +298,7 @@ remove_shape_vertex(shape_t* shape, int index)
 }
 
 void
-draw_shape(const shape_t* shape, float x, float y)
+draw_shape(const shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
@@ -313,8 +325,8 @@ draw_shape(const shape_t* shape, float x, float y)
 			s_max_vertices = shape->num_vertices * 2;
 		}
 		for (i = 0; i < shape->num_vertices; ++i) {
-			s_soft_vbuf[i].x = shape->vertices[i].x + x;
-			s_soft_vbuf[i].y = shape->vertices[i].y + y;
+			s_soft_vbuf[i].x = shape->vertices[i].x;
+			s_soft_vbuf[i].y = shape->vertices[i].y;
 			s_soft_vbuf[i].z = 0;
 			s_soft_vbuf[i].u = shape->vertices[i].u * w_texture;
 			s_soft_vbuf[i].v = shape->vertices[i].v * h_texture;
