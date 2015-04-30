@@ -153,6 +153,8 @@ initialize_persons_manager(void)
 	s_persons = NULL;
 	s_talk_distance = 8;
 	s_current_person = NULL;
+
+	printf("Initialized persons manager\n");
 }
 
 void
@@ -163,6 +165,8 @@ shutdown_persons_manager(void)
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);
 	free(s_persons);
+
+	printf("Shut down persons manager\n");
 }
 
 person_t*

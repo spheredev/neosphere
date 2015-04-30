@@ -260,7 +260,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	printf("Starting up...\n");
+	printf("Calling game() function...\n");
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duk, 0x0, path);
 	free(path);

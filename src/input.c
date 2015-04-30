@@ -96,6 +96,8 @@ initialize_input(void)
 	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
 	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
 	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+
+	printf("Initialized input\n");
 }
 
 void
@@ -105,6 +107,8 @@ shutdown_input(void)
 	al_uninstall_joystick();
 	al_uninstall_mouse();
 	al_uninstall_keyboard();
+
+	printf("Shut down input\n");
 }
 
 bool
@@ -298,8 +302,6 @@ update_input(void)
 void
 init_input_api(void)
 {
-	initialize_input();
-	
 	register_api_const(g_duk, "PLAYER_1", 0);
 	register_api_const(g_duk, "PLAYER_2", 1);
 	register_api_const(g_duk, "PLAYER_3", 2);

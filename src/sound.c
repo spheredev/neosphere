@@ -46,12 +46,16 @@ initialize_sound(void)
 	al_init_acodec_addon();
 	al_reserve_samples(10);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
+
+	printf("Initialized audio\n");
 }
 
 void
 shutdown_sound(void)
 {
 	al_uninstall_audio();
+
+	printf("Shut down audio\n");
 }
 
 void

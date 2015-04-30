@@ -287,6 +287,8 @@ initialize_map_engine(void)
 	s_is_map_running = false;
 	s_color_mask = rgba(0, 0, 0, 0);
 	s_on_trigger = NULL;
+
+	printf("Initialized map engine\n");
 }
 
 void
@@ -299,6 +301,8 @@ shutdown_map_engine(void)
 	free(s_delay_scripts);
 	free_map(s_map);
 	shutdown_persons_manager();
+	
+	printf("Shut down map engine\n");
 }
 
 bool
