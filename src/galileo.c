@@ -278,16 +278,16 @@ draw_shape(const shape_t* shape, float x, float y)
 
 	draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
-		: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
-		: ALLEGRO_PRIM_TRIANGLE_STRIP;
+		: ALLEGRO_PRIM_TRIANGLE_FAN;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
 	w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
 	h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
-	if (!(vbuf = calloc(shape->num_vertices, sizeof(ALLEGRO_VERTEX))))
+	if (!(vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
 		return;
 	for (i = 0; i < shape->num_vertices; ++i) {
 		vbuf[i].x = shape->vertices[i].x + x;
 		vbuf[i].y = shape->vertices[i].y + y;
+		vbuf[i].z = 0;
 		vbuf[i].u = shape->vertices[i].u * w_texture;
 		vbuf[i].v = shape->vertices[i].v * h_texture;
 		vbuf[i].color = nativecolor(shape->vertices[i].color);
@@ -299,20 +299,21 @@ draw_shape(const shape_t* shape, float x, float y)
 static void
 assign_default_uv(shape_t* shape)
 {
-	float_rect_t bounds;
-	float        delta_x, delta_y;
-	float        width, height;
+	// this assigns default UV coordinates to a shape's vertices. note that clockwise
+	// winding is assumed--if the shape is wound counterclockwise, the texture will
+	// be applied upside down.
+	
+	double phi;
 
 	int i;
 
-	bounds = get_shape_bounds(shape);
-	width = bounds.x2 - bounds.x1;
-	height = bounds.y2 - bounds.y1;
 	for (i = 0; i < shape->num_vertices; ++i) {
-		delta_x = shape->vertices[i].x - bounds.x1;
-		delta_y = shape->vertices[i].y - bounds.y1;
-		shape->vertices[i].u = width > 0 ? delta_x / width : 0.0;
-		shape->vertices[i].v = height > 0 ? delta_y / height : 1.0;
+		// circumscribe the UV coordinate space.
+		// the circumcircle is rotated 135 degrees counterclockwise, which ensures
+		// that the top-left corner of a clockwise quad is mapped to (0,0).
+		phi = 2 * M_PI * i / shape->num_vertices - M_PI_4 * 3;
+		shape->vertices[i].u = (cos(phi) * M_SQRT2 + 1.0) / 2.0;
+		shape->vertices[i].v = (sin(phi) * M_SQRT2 + 1.0) / 2.0;
 	}
 }
 
@@ -547,7 +548,7 @@ js_new_Shape(duk_context* ctx)
 	duk_require_object_coercible(ctx, 0);
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
-	image_t* texture = duk_require_sphere_obj(ctx, 1, "Image");
+	image_t* texture = duk_is_null(ctx, 1) ? NULL : duk_require_sphere_obj(ctx, 1, "Image");
 
 	duk_idx_t stack_idx;
 	size_t    num_vertices;
