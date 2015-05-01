@@ -9,8 +9,9 @@ The solution includes x86 and x64 debug and release builds. Here is
 where the engine will be built relative to the directory containing
 `src`:
 
-* Release: `bin/`
+* Console: `bin/`
 * Debug:   `msvc/debug/`
+* Release: `bin/`
 
 
 *NOTE:* As building Allegro and its dependencies on Windows is extremely

@@ -333,14 +333,13 @@ static duk_ret_t
 js_GetExtensions(duk_context* ctx)
 {
 	char**  i_string;
-	iter_t* iter;
 
-	int i;
+	iter_t iter;
+	int    i;
 
-	iter = iterate_vector(s_extensions);
 	duk_push_array(ctx);
-	i = 0;
-	while (i_string = next_vector_item(s_extensions, &iter)) {
+	iter = iterate_vector(s_extensions); i = 0;
+	while (i_string = next_vector_item(&iter)) {
 		duk_push_string(ctx, *i_string);
 		duk_put_prop_index(ctx, -2, i++);
 	}

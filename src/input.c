@@ -114,25 +114,26 @@ initialize_input(void)
 void
 shutdown_input(void)
 {
-	iter_t* iter;
 	struct bound_button* i_button;
 	struct bound_key*    i_key;
+	
+	iter_t iter;
 
 	printf("Shutting down input\n");
 
 	// free bound key scripts
 	iter = iterate_vector(s_bound_buttons);
-	while (i_button = next_vector_item(s_bound_buttons, &iter)) {
+	while (i_button = next_vector_item(&iter)) {
 		free_script(i_button->on_down_script);
 		free_script(i_button->on_up_script);
 	}
 	iter = iterate_vector(s_bound_keys);
-	while (i_key = next_vector_item(s_bound_keys, &iter)) {
+	while (i_key = next_vector_item(&iter)) {
 		free_script(i_key->on_down_script);
 		free_script(i_key->on_up_script);
 	}
 	iter = iterate_vector(s_bound_map_keys);
-	while (i_key = next_vector_item(s_bound_map_keys, &iter)) {
+	while (i_key = next_vector_item(&iter)) {
 		free_script(i_key->on_down_script);
 		free_script(i_key->on_up_script);
 	}
@@ -263,13 +264,13 @@ update_bound_keys(bool use_map_keys)
 	bool                   is_down;
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	
-	iter_t* iter;
+	iter_t iter;
 
 	// check bound keyboad keys
 	al_get_keyboard_state(&kb_state);
 	if (use_map_keys) {
 		iter = iterate_vector(s_bound_map_keys);
-		while (key = next_vector_item(s_bound_map_keys, &iter)) {
+		while (key = next_vector_item(&iter)) {
 			is_down = al_key_down(&kb_state, key->keycode);
 			if (is_down && !key->is_pressed)
 				run_script(key->on_down_script, false);
@@ -279,7 +280,7 @@ update_bound_keys(bool use_map_keys)
 		}
 	}
 	iter = iterate_vector(s_bound_keys);
-	while (key = next_vector_item(s_bound_keys, &iter)) {
+	while (key = next_vector_item(&iter)) {
 		is_down = al_key_down(&kb_state, key->keycode);
 		if (is_down && !key->is_pressed)
 			run_script(key->on_down_script, false);
@@ -290,7 +291,7 @@ update_bound_keys(bool use_map_keys)
 
 	// check bound joystick buttons
 	iter = iterate_vector(s_bound_buttons);
-	while (button = next_vector_item(s_bound_buttons, &iter)) {
+	while (button = next_vector_item(&iter)) {
 		is_down = is_joy_button_down(button->joystick_id, button->button);
 		if (is_down && !button->is_pressed)
 			run_script(button->on_down_script, false);
@@ -355,7 +356,7 @@ bind_button(vector_t* bindings, int joy_index, int button, script_t* on_down_scr
 	script_t*            old_down_script;
 	script_t*            old_up_script;
 
-	iter_t* iter;
+	iter_t iter;
 
 	new_binding.joystick_id = joy_index;
 	new_binding.button = button;
@@ -363,7 +364,7 @@ bind_button(vector_t* bindings, int joy_index, int button, script_t* on_down_scr
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
 	iter = iterate_vector(bindings);
-	while (bound = next_vector_item(bindings, &iter)) {
+	while (bound = next_vector_item(&iter)) {
 		if (bound->joystick_id == joy_index && bound->button == button) {
 			bound->is_pressed = false;
 			old_down_script = bound->on_down_script;
@@ -389,14 +390,14 @@ bind_key(vector_t* bindings, int keycode, script_t* on_down_script, script_t* on
 	script_t*         old_down_script;
 	script_t*         old_up_script;
 
-	iter_t* iter;
+	iter_t iter;
 
 	new_binding.keycode = keycode;
 	new_binding.is_pressed = false;
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
 	iter = iterate_vector(bindings);
-	while (key = next_vector_item(bindings, &iter)) {
+	while (key = next_vector_item(&iter)) {
 		if (key->keycode == keycode) {
 			key->is_pressed = false;
 			old_down_script = key->on_down_script;

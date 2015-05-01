@@ -126,7 +126,7 @@
     <LibraryPath>lib\x86;$(LibraryPath)</LibraryPath>
     <TargetName>console</TargetName>
     <OutDir>..\bin\</OutDir>
-    <IntDir>obj\x86\release\</IntDir>
+    <IntDir>obj\x86\console\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -142,7 +142,7 @@
     <LibraryPath>lib\x64;$(LibraryPath)</LibraryPath>
     <TargetName>console64</TargetName>
     <OutDir>..\bin\</OutDir>
-    <IntDir>obj\x64\release\</IntDir>
+    <IntDir>obj\x64\console\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

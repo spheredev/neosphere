@@ -66,28 +66,6 @@ clear_vector(vector_t* vector)
 	maybe_resize_vector(vector, 0);
 }
 
-iter_t*
-iterate_vector(const vector_t* vector)
-{
-	return (iter_t*)vector->buffer;
-}
-
-void*
-next_vector_item(const vector_t* vector, iter_t** inout_iter)
-{
-	unsigned char* p_current;
-	unsigned char* p_tail;
-
-	p_tail = vector->buffer + vector->num_items * vector->pitch;
-	p_current = (unsigned char*)*inout_iter;
-	if (p_current == NULL || p_current >= p_tail) {
-		*inout_iter = NULL;
-		return false;
-	}
-	*inout_iter = (iter_t*)(p_current + vector->pitch);
-	return p_current;
-}
-
 bool
 push_back_vector(vector_t* vector, const void* in_object)
 {
@@ -109,6 +87,33 @@ remove_vector_item(vector_t* vector, size_t index)
 	p = vector->buffer + index * vector->pitch;
 	memmove(p, p + vector->pitch, move_size);
 	maybe_resize_vector(vector, vector->num_items);
+}
+
+iter_t
+iterate_vector(const vector_t* vector)
+{
+	iter_t iter;
+
+	iter.vector = vector;
+	iter.ptr = vector->buffer;
+	return iter;
+}
+
+void*
+next_vector_item(iter_t* iter)
+{
+	void*           pcurrent;
+	void*           ptail;
+	const vector_t* vector;
+
+	vector = iter->vector;
+	ptail = vector->buffer + vector->num_items * vector->pitch;
+	pcurrent = iter->ptr < ptail ? iter->ptr : NULL;
+	if (pcurrent != NULL)
+		iter->ptr = (char*)pcurrent + vector->pitch;
+	else
+		iter->ptr = NULL;
+	return pcurrent;
 }
 
 static bool
