@@ -211,6 +211,12 @@ new Shape(vertices, image[, primitive_type]);
                          first vertex. As with a strip, the number of
                          triangles is equal to (num_verts - 2).
 
+Shape:image (read/write)
+  
+  The Image to be used when texturing the shape. This can be null, in
+  which case the vertex colors alone will determine the rendered shape's
+  appearance.
+
 new Group(shapes, shader);
   
   Constructs a Group out of the provided array of Shape objects.
