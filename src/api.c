@@ -51,8 +51,9 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static vector_t* s_extensions;
-static int       s_framerate = 0;
+static vector_t*  s_extensions;
+static int        s_framerate = 0;
+static lstring_t* s_user_agent;
 
 void
 initialize_api(duk_context* ctx)
@@ -61,7 +62,18 @@ initialize_api(duk_context* ctx)
 
 	int i;
 
+	printf("Initializing Sphere API\n");
+
+	s_user_agent = new_lstring("v%.1f (compatible; %s)", SPHERE_API_VERSION, ENGINE_NAME);
+	printf("  Sphere %s\n", lstring_cstr(s_user_agent));
+
+	// register API extensions
 	s_extensions = new_vector(sizeof(char*));
+	num_extensions = sizeof(SPHERE_EXTENSIONS) / sizeof(SPHERE_EXTENSIONS[0]);
+	for (i = 0; i < num_extensions; ++i) {
+		printf("  %s\n", SPHERE_EXTENSIONS[i]);
+		register_api_extension(SPHERE_EXTENSIONS[i]);
+	}
 
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
@@ -69,12 +81,6 @@ initialize_api(duk_context* ctx)
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
 	
-	// register extensions
-	num_extensions = sizeof(SPHERE_EXTENSIONS) / sizeof(SPHERE_EXTENSIONS[0]);
-	for (i = 0; i < num_extensions; ++i) {
-		register_api_extension(SPHERE_EXTENSIONS[i]);
-	}
-
 	// register core API functions
 	register_api_function(ctx, NULL, "GetVersion", js_GetVersion);
 	register_api_function(ctx, NULL, "GetVersionString", js_GetVersionString);
@@ -118,6 +124,14 @@ initialize_api(duk_context* ctx)
 	duk_push_c_function(ctx, duk_on_create_error, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "errCreate");
 	duk_pop_2(ctx);
+}
+
+void
+shutdown_api(void)
+{
+	printf("Shutting down Sphere API\n");
+
+	free_lstring(s_user_agent);
 }
 
 void
@@ -325,7 +339,7 @@ js_GetVersion(duk_context* ctx)
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_sprintf(ctx, "v%.1f (compatible; %s)", SPHERE_API_VERSION, ENGINE_NAME);
+	duk_push_string(ctx, lstring_cstr(s_user_agent));
 	return 1;
 }
 

@@ -656,7 +656,6 @@ initialize_engine(void)
 	printf("Creating Duktape context\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	printf("Initializing Sphere API\n");
 	initialize_api(g_duk);
 	init_bytearray_api();
 	init_color_api();
