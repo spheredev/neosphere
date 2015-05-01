@@ -42,20 +42,20 @@ static unsigned int s_next_sound_id = 0;
 void
 initialize_sound(void)
 {
+	printf("Initializing audio\n");
+	
 	al_install_audio();
 	al_init_acodec_addon();
 	al_reserve_samples(10);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
-
-	printf("Initialized audio\n");
 }
 
 void
 shutdown_sound(void)
 {
+	printf("Shutting down audio\n");
+	
 	al_uninstall_audio();
-
-	printf("Shut down audio\n");
 }
 
 void

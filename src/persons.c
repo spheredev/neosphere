@@ -148,13 +148,13 @@ static person_t*         *s_persons       = NULL;
 void
 initialize_persons_manager(void)
 {
+	printf("Initializing persons manager\n");
+	
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	s_num_persons = s_max_persons = 0;
 	s_persons = NULL;
 	s_talk_distance = 8;
 	s_current_person = NULL;
-
-	printf("Initialized persons manager\n");
 }
 
 void
@@ -162,11 +162,11 @@ shutdown_persons_manager(void)
 {
 	int i;
 	
+	printf("Shutting down persons manager\n");
+	
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);
 	free(s_persons);
-
-	printf("Shut down persons manager\n");
 }
 
 person_t*

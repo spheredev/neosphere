@@ -109,6 +109,7 @@ main(int argc, char* argv[])
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
+	printf("Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game.sgm path or game directory
 		al_destroy_path(g_game_path);
@@ -148,11 +149,12 @@ main(int argc, char* argv[])
 	
 	// print out options
 	printf("Finished parsing command line\n");
-	printf("  SGM path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	printf("  Game path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	printf("  Maximum consecutive frame skips: %i\n", s_max_frameskip);
 	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	
 	// set up jump points for script bailout
+	printf("Setting up jump points for longjmp\n");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
@@ -178,7 +180,7 @@ main(int argc, char* argv[])
 	}
 
 	// locate game.sgm
-	printf("Searching for SGM file...\n");
+	printf("Searching for SGM file\n");
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
 	char* sgm_path = get_asset_path("game.sgm", NULL, false);
@@ -205,9 +207,10 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	printf("Found SGM: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	printf("Found SGM at: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
+	printf("Creating render window\n");
 	icon_path = get_asset_path("icon.png", NULL, false);
 	icon = al_load_bitmap(icon_path);
 	free(icon_path);
@@ -229,9 +232,9 @@ main(int argc, char* argv[])
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
-	printf("Created render window\n");
 	
 	// attempt to locate and load system font
+	printf("Loading system font\n");
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Font");
 		path = get_sys_asset_path(filename, "system");
@@ -244,7 +247,6 @@ main(int argc, char* argv[])
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
-	printf("Loaded system font\n");
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -260,7 +262,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	printf("Calling game() function...\n");
+	printf("Calling game() function\n");
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duk, 0x0, path);
 	free(path);
@@ -297,14 +299,14 @@ on_js_error:
 	if (file_path != NULL) {
 		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		filename = filename != NULL ? filename + 1 : file_path;
-		fprintf(stderr, "JS Error: %s:%i - %s", filename, line_num, err_msg);
+		fprintf(stderr, "JS Error: %s:%i - %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "`%s`, line: %i | %s", filename, line_num, err_msg);
 		else
 			duk_push_string(g_duk, err_msg);
 	}
 	else {
-		fprintf(stderr, "JS Error: %s", err_msg);
+		fprintf(stderr, "JS Error: %s\n", err_msg);
 		duk_push_string(g_duk, err_msg);
 	}
 	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
@@ -627,6 +629,7 @@ initialize_engine(void)
 	srand(time(NULL));
 	
 	// initialize Allegro
+	printf("Initializing Allegro\n");
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon()) goto on_error;
@@ -634,10 +637,12 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
+	printf("Initializing Dyad\n");
 	dyad_init();
 	dyad_setUpdateTimeout(0.001);
 
 	// load system configuraton
+	printf("Loading system configuration\n");
 	path = get_sys_asset_path("system.ini", "system");
 	g_sys_conf = al_load_config_file(path);
 	free(path);
@@ -648,9 +653,10 @@ initialize_engine(void)
 	initialize_sound();
 
 	// initialize JavaScript API
+	printf("Creating Duktape context\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	printf("Created Duktape context\n");
+	printf("Initializing Sphere API\n");
 	initialize_api(g_duk);
 	init_bytearray_api();
 	init_color_api();
@@ -668,7 +674,6 @@ initialize_engine(void)
 	init_spriteset_api(g_duk);
 	init_surface_api();
 	init_windowstyle_api();
-	printf("Initialized Sphere API\n");
 	return true;
 
 on_error:
@@ -682,11 +687,18 @@ static void
 shutdown_engine(void)
 {
 	shutdown_map_engine();
-	shutdown_sound();
 	shutdown_input();
-	shutdown_galileo();
+	
+	printf("Shutting down Duktape\n");
 	duk_destroy_heap(g_duk);
+	
+	printf("Shutting down Dyad\n");
 	dyad_shutdown();
+	
+	shutdown_galileo();
+	shutdown_sound();
+	
+	printf("Shutting down Allegro\n");
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_config(g_game_conf);

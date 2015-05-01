@@ -54,13 +54,13 @@ struct group
 void
 initialize_galileo(void)
 {
-	printf("Initialized Galileo\n");
+	printf("Initializing Galileo\n");
 }
 
 void
 shutdown_galileo(void)
 {
-	printf("Shut down Galileo\n");
+	printf("Shutting down Galileo\n");
 }
 
 vertex_t

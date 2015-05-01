@@ -272,6 +272,8 @@ struct rmp_zone_header
 void
 initialize_map_engine(void)
 {
+	printf("Initializing map engine\n");
+	
 	initialize_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
 	s_map = NULL; s_map_filename = NULL;
@@ -287,8 +289,6 @@ initialize_map_engine(void)
 	s_is_map_running = false;
 	s_color_mask = rgba(0, 0, 0, 0);
 	s_on_trigger = NULL;
-
-	printf("Initialized map engine\n");
 }
 
 void
@@ -296,13 +296,13 @@ shutdown_map_engine(void)
 {
 	int i;
 
+	printf("Shutting down map engine\n");
+	
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
 	free(s_delay_scripts);
 	free_map(s_map);
 	shutdown_persons_manager();
-	
-	printf("Shut down map engine\n");
 }
 
 bool
