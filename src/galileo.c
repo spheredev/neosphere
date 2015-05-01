@@ -100,15 +100,15 @@ ref_group(group_t* group)
 void
 free_group(group_t* group)
 {
-	iter_t*  iter;
-	shape_t* i_shape;
+	iter_t* iter;
+	shape_t** i_shape;
 
 	if (group == NULL || --group->refcount > 0)
 		return;
 
 	iter = iterate_vector(group->shapes);
-	while (next_vector_item(group->shapes, &iter, &i_shape))
-		free_shape(i_shape);
+	while (i_shape = next_vector_item(group->shapes, &iter))
+		free_shape(*i_shape);
 	free_vector(group->shapes);
 	free(group);
 }
@@ -150,13 +150,12 @@ remove_group_shape(group_t* group, int index)
 void
 clear_group(group_t* group)
 {
-	shape_t* shape;
-
 	iter_t* iter;
+	shape_t** i_shape;
 
 	iter = iterate_vector(group->shapes);
-	while (next_vector_item(group->shapes, &iter, &shape))
-		free_shape(shape);
+	while (i_shape = next_vector_item(group->shapes, &iter))
+		free_shape(*i_shape);
 	clear_vector(group->shapes);
 }
 
@@ -165,9 +164,9 @@ draw_group(const group_t* group)
 {
 	ALLEGRO_TRANSFORM matrix;
 	ALLEGRO_TRANSFORM old_matrix;
-	shape_t*          shape;
 
 	iter_t* iter;
+	shape_t** i_shape;
 
 	al_copy_transform(&old_matrix, al_get_current_transform());
 	al_identity_transform(&matrix);
@@ -177,8 +176,8 @@ draw_group(const group_t* group)
 	al_scale_transform(&matrix, g_scale_x, g_scale_y);
 	al_use_transform(&matrix);
 	iter = iterate_vector(group->shapes);
-	while (next_vector_item(group->shapes, &iter, &shape))
-		draw_shape(shape);
+	while (i_shape = next_vector_item(group->shapes, &iter))
+		draw_shape(*i_shape);
 	al_use_transform(&old_matrix);
 }
 

@@ -11,7 +11,7 @@ void      set_vector_item    (vector_t* vector, size_t index, const void* in_obj
 size_t    get_vector_size    (const vector_t* vector);
 void      clear_vector       (vector_t* vector);
 iter_t*   iterate_vector     (const vector_t* vector);
-bool      next_vector_item   (const vector_t* vector, iter_t** inout_iter, void* out_object);
+void*     next_vector_item   (const vector_t* vector, iter_t** inout_iter);
 bool      push_back_vector   (vector_t* vector, const void* in_object);
 void      remove_vector_item (vector_t* vector, size_t index);
 

@@ -72,8 +72,8 @@ iterate_vector(const vector_t* vector)
 	return (iter_t*)vector->buffer;
 }
 
-bool
-next_vector_item(const vector_t* vector, iter_t** inout_iter, void* out_object)
+void*
+next_vector_item(const vector_t* vector, iter_t** inout_iter)
 {
 	unsigned char* p_current;
 	unsigned char* p_tail;
@@ -84,9 +84,8 @@ next_vector_item(const vector_t* vector, iter_t** inout_iter, void* out_object)
 		*inout_iter = NULL;
 		return false;
 	}
-	memcpy(out_object, p_current, vector->pitch);
 	*inout_iter = (iter_t*)(p_current + vector->pitch);
-	return true;
+	return p_current;
 }
 
 bool

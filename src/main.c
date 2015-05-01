@@ -682,11 +682,11 @@ static void
 shutdown_engine(void)
 {
 	shutdown_map_engine();
-	duk_destroy_heap(g_duk);
-	dyad_shutdown();
 	shutdown_sound();
 	shutdown_input();
 	shutdown_galileo();
+	duk_destroy_heap(g_duk);
+	dyad_shutdown();
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_config(g_game_conf);

@@ -898,7 +898,7 @@ process_map_input(void)
 		}
 	}
 	
-	update_bound_keys();
+	update_bound_keys(true);
 }
 
 static void

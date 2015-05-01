@@ -332,7 +332,7 @@ js_GetVersionString(duk_context* ctx)
 static duk_ret_t
 js_GetExtensions(duk_context* ctx)
 {
-	char*   designation;
+	char**  i_string;
 	iter_t* iter;
 
 	int i;
@@ -340,8 +340,8 @@ js_GetExtensions(duk_context* ctx)
 	iter = iterate_vector(s_extensions);
 	duk_push_array(ctx);
 	i = 0;
-	while (next_vector_item(s_extensions, &iter, &designation)) {
-		duk_push_string(ctx, designation);
+	while (i_string = next_vector_item(s_extensions, &iter)) {
+		duk_push_string(ctx, *i_string);
 		duk_put_prop_index(ctx, -2, i++);
 	}
 	return 1;

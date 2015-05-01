@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "input.h"
+#include "vector.h"
 
 #define MAX_JOYSTICKS   (4)
 #define MAX_JOY_BUTTONS (32)
@@ -49,24 +50,38 @@ static duk_ret_t js_ClearKeyQueue           (duk_context* ctx);
 static duk_ret_t js_UnbindKey               (duk_context* ctx);
 static duk_ret_t js_UnbindJoystickButton    (duk_context* ctx);
 
+static void bind_button       (vector_t* bindings, int joy_index, int button, script_t* on_down_script, script_t* on_up_script);
+static void bind_key          (vector_t* bindings, int keycode, script_t* on_down_script, script_t* on_up_script);
 static void queue_key         (int keycode);
 static void queue_wheel_event (int event);
 
-static bool                 s_is_button_bound[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static bool                 s_is_key_bound[ALLEGRO_KEY_MAX];
-static script_t*            s_button_down_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static script_t*            s_button_up_scripts[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
+static vector_t*            s_bound_buttons;
+static vector_t*            s_bound_keys;
+static vector_t*            s_bound_map_keys;
 static ALLEGRO_EVENT_QUEUE* s_events;
-static script_t*            s_key_down_scripts[ALLEGRO_KEY_MAX];
-static script_t*            s_key_up_scripts[ALLEGRO_KEY_MAX];
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
 static struct key_queue     s_key_queue;
-static bool                 s_last_button_state[MAX_JOYSTICKS][MAX_JOY_BUTTONS];
-static bool                 s_last_key_state[ALLEGRO_KEY_MAX];
 static int                  s_last_wheel_pos = 0;
 static int                  s_num_joysticks = 0;
 static int                  s_num_wheel_events = 0;
 static int                  s_wheel_queue[255];
+
+struct bound_button
+{
+	int       joystick_id;
+	int       button;
+	bool      is_pressed;
+	script_t* on_down_script;
+	script_t* on_up_script;
+};
+
+struct bound_key
+{
+	int       keycode;
+	bool      is_pressed;
+	script_t* on_down_script;
+	script_t* on_up_script;
+};
 
 void
 initialize_input(void)
@@ -75,6 +90,8 @@ initialize_input(void)
 
 	int i;
 
+	printf("Initializing input\n");
+	
 	al_install_keyboard();
 	al_install_mouse();
 	al_install_joystick();
@@ -83,32 +100,51 @@ initialize_input(void)
 	al_register_event_source(s_events, al_get_mouse_event_source());
 	al_register_event_source(s_events, al_get_joystick_event_source());
 
+	// look for active joysticks
 	s_num_joysticks = fmin(MAX_JOYSTICKS, al_get_num_joysticks());
-	for (i = 0; i < MAX_JOYSTICKS; ++i) {
+	for (i = 0; i < MAX_JOYSTICKS; ++i)
 		s_joy_handles[i] = i < s_num_joysticks ? al_get_joystick(i) : NULL;
-	}
 
-	memset(s_is_button_bound, 0, c_buttons * sizeof(bool));
-	memset(s_is_key_bound, 0, ALLEGRO_KEY_MAX * sizeof(bool));
-	memset(s_button_down_scripts, 0, c_buttons * sizeof(int));
-	memset(s_button_up_scripts, 0, c_buttons * sizeof(int));
-	memset(s_key_down_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
-	memset(s_key_up_scripts, 0, ALLEGRO_KEY_MAX * sizeof(int));
-	memset(s_last_button_state, 0, c_buttons * sizeof(bool));
-	memset(s_last_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
-
-	printf("Initialized input\n");
+	// create bound key vectors
+	s_bound_buttons = new_vector(sizeof(struct bound_button));
+	s_bound_keys = new_vector(sizeof(struct bound_key));
+	s_bound_map_keys = new_vector(sizeof(struct bound_key));
 }
 
 void
 shutdown_input(void)
 {
+	iter_t* iter;
+	struct bound_button* i_button;
+	struct bound_key*    i_key;
+
+	printf("Shutting down input\n");
+
+	// free bound key scripts
+	iter = iterate_vector(s_bound_buttons);
+	while (i_button = next_vector_item(s_bound_buttons, &iter)) {
+		free_script(i_button->on_down_script);
+		free_script(i_button->on_up_script);
+	}
+	iter = iterate_vector(s_bound_keys);
+	while (i_key = next_vector_item(s_bound_keys, &iter)) {
+		free_script(i_key->on_down_script);
+		free_script(i_key->on_up_script);
+	}
+	iter = iterate_vector(s_bound_map_keys);
+	while (i_key = next_vector_item(s_bound_map_keys, &iter)) {
+		free_script(i_key->on_down_script);
+		free_script(i_key->on_up_script);
+	}
+	free_vector(s_bound_buttons);
+	free_vector(s_bound_keys);
+	free_vector(s_bound_map_keys);
+
+	// shut down Allegro input
 	al_destroy_event_queue(s_events);
 	al_uninstall_joystick();
 	al_uninstall_mouse();
 	al_uninstall_keyboard();
-
-	printf("Shut down input\n");
 }
 
 bool
@@ -220,36 +256,47 @@ clear_key_queue(void)
 }
 
 void
-update_bound_keys(void)
+update_bound_keys(bool use_map_keys)
 {
+	struct bound_button*   button;
+	struct bound_key*      key;
 	bool                   is_down;
 	ALLEGRO_KEYBOARD_STATE kb_state;
 	
-	int i, j;
-	
-	// check bound keys
+	iter_t* iter;
+
+	// check bound keyboad keys
 	al_get_keyboard_state(&kb_state);
-	for (i = 0; i < ALLEGRO_KEY_MAX; ++i) {
-		if (!s_is_key_bound[i])
-			continue;
-		is_down = al_key_down(&kb_state, i);
-		if (is_down && !s_last_key_state[i])
-			run_script(s_key_down_scripts[i], false);
-		if (!is_down && s_last_key_state[i])
-			run_script(s_key_up_scripts[i], false);
-		s_last_key_state[i] = is_down;
+	if (use_map_keys) {
+		iter = iterate_vector(s_bound_map_keys);
+		while (key = next_vector_item(s_bound_map_keys, &iter)) {
+			is_down = al_key_down(&kb_state, key->keycode);
+			if (is_down && !key->is_pressed)
+				run_script(key->on_down_script, false);
+			if (!is_down && key->is_pressed)
+				run_script(key->on_up_script, false);
+			key->is_pressed = is_down;
+		}
+	}
+	iter = iterate_vector(s_bound_keys);
+	while (key = next_vector_item(s_bound_keys, &iter)) {
+		is_down = al_key_down(&kb_state, key->keycode);
+		if (is_down && !key->is_pressed)
+			run_script(key->on_down_script, false);
+		if (!is_down && key->is_pressed)
+			run_script(key->on_up_script, false);
+		key->is_pressed = is_down;
 	}
 
 	// check bound joystick buttons
-	for (i = 0; i < MAX_JOYSTICKS; ++i) for (j = 0; j < MAX_JOY_BUTTONS; ++j) {
-		if (!s_is_button_bound[i][j])
-			continue;
-		is_down = is_joy_button_down(i, j);
-		if (is_down && !s_last_button_state[i][j])
-			run_script(s_button_down_scripts[i][j], false);
-		if (!is_down && s_last_button_state[i][j])
-			run_script(s_button_up_scripts[i][j], false);
-		s_last_button_state[i][j] = is_down;
+	iter = iterate_vector(s_bound_buttons);
+	while (button = next_vector_item(s_bound_buttons, &iter)) {
+		is_down = is_joy_button_down(button->joystick_id, button->button);
+		if (is_down && !button->is_pressed)
+			run_script(button->on_down_script, false);
+		if (!is_down && button->is_pressed)
+			run_script(button->on_up_script, false);
+		button->is_pressed = is_down;
 	}
 }
 
@@ -297,6 +344,73 @@ update_input(void)
 	if (mouse_state.z < s_last_wheel_pos)
 		queue_wheel_event(MOUSE_WHEEL_DOWN);
 	s_last_wheel_pos = mouse_state.z;
+}
+
+static void
+bind_button(vector_t* bindings, int joy_index, int button, script_t* on_down_script, script_t* on_up_script)
+{
+	bool                 is_new_entry = true;
+	struct bound_button* bound;
+	struct bound_button  new_binding;
+	script_t*            old_down_script;
+	script_t*            old_up_script;
+
+	iter_t* iter;
+
+	new_binding.joystick_id = joy_index;
+	new_binding.button = button;
+	new_binding.is_pressed = false;
+	new_binding.on_down_script = on_down_script;
+	new_binding.on_up_script = on_up_script;
+	iter = iterate_vector(bindings);
+	while (bound = next_vector_item(bindings, &iter)) {
+		if (bound->joystick_id == joy_index && bound->button == button) {
+			bound->is_pressed = false;
+			old_down_script = bound->on_down_script;
+			old_up_script = bound->on_up_script;
+			memcpy(bound, &new_binding, sizeof(struct bound_button));
+			if (old_down_script != bound->on_down_script)
+				free_script(old_down_script);
+			if (old_up_script != bound->on_up_script)
+				free_script(old_up_script);
+			is_new_entry = false;
+		}
+	}
+	if (is_new_entry)
+		push_back_vector(bindings, &new_binding);
+}
+
+static void
+bind_key(vector_t* bindings, int keycode, script_t* on_down_script, script_t* on_up_script)
+{
+	bool              is_new_key = true;
+	struct bound_key* key;
+	struct bound_key  new_binding;
+	script_t*         old_down_script;
+	script_t*         old_up_script;
+
+	iter_t* iter;
+
+	new_binding.keycode = keycode;
+	new_binding.is_pressed = false;
+	new_binding.on_down_script = on_down_script;
+	new_binding.on_up_script = on_up_script;
+	iter = iterate_vector(bindings);
+	while (key = next_vector_item(bindings, &iter)) {
+		if (key->keycode == keycode) {
+			key->is_pressed = false;
+			old_down_script = key->on_down_script;
+			old_up_script = key->on_up_script;
+			memcpy(key, &new_binding, sizeof(struct bound_key));
+			if (old_down_script != key->on_down_script)
+				free_script(old_down_script);
+			if (old_up_script != key->on_up_script)
+				free_script(old_up_script);
+			is_new_key = false;
+		}
+	}
+	if (is_new_key)
+		push_back_vector(bindings, &new_binding);
 }
 
 void
@@ -716,18 +830,14 @@ js_BindJoystickButton(duk_context* ctx)
 {
 	int joy_index = duk_require_int(ctx, 0);
 	int button = duk_require_int(ctx, 1);
-	script_t* down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
-	script_t* up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
+	script_t* on_down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
+	script_t* on_up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
-	free_script(s_button_down_scripts[joy_index][button]);
-	free_script(s_button_up_scripts[joy_index][button]);
-	s_button_down_scripts[joy_index][button] = down_script;
-	s_button_up_scripts[joy_index][button] = up_script;
-	s_is_button_bound[joy_index][button] = true;
+	bind_button(s_bound_buttons, joy_index, button, on_down_script, on_up_script);
 	return 0;
 }
 
@@ -735,16 +845,12 @@ static duk_ret_t
 js_BindKey(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
-	script_t* key_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
-	script_t* key_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
+	script_t* on_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
+	script_t* on_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): Invalid key constant");
-	free_script(s_key_down_scripts[keycode]);
-	free_script(s_key_up_scripts[keycode]);
-	s_key_down_scripts[keycode] = key_down_script;
-	s_key_up_scripts[keycode] = key_up_script;
-	s_is_key_bound[keycode] = true;
+	bind_key(s_bound_map_keys, keycode, on_down_script, on_up_script);
 	return 0;
 }
 
@@ -765,11 +871,7 @@ js_UnbindJoystickButton(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
-	free_script(s_button_down_scripts[joy_index][button]);
-	free_script(s_button_up_scripts[joy_index][button]);
-	s_button_down_scripts[joy_index][button] = 0;
-	s_button_up_scripts[joy_index][button] = 0;
-	s_is_button_bound[joy_index][button] = false;
+	bind_button(s_bound_buttons, joy_index, button, NULL, NULL);
 	return 0;
 }
 
@@ -780,10 +882,6 @@ js_UnbindKey(duk_context* ctx)
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindKey(): Invalid key constant");
-	free_script(s_key_down_scripts[keycode]);
-	free_script(s_key_up_scripts[keycode]);
-	s_key_down_scripts[keycode] = 0;
-	s_key_up_scripts[keycode] = 0;
-	s_is_key_bound[keycode] = false;
+	bind_key(s_bound_map_keys, keycode, NULL, NULL);
 	return 0;
 }
