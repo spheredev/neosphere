@@ -115,7 +115,8 @@ write_log_line(logger_t* logger, const char* prefix, const char* text)
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S -- ", localtime(&now));
 	fputs(timestamp, logger->file);
-	for (i = 0; i < logger->num_blocks; ++i) fputc('\t', logger->file);
+	for (i = 0; i < logger->num_blocks; ++i)
+		fputc('\t', logger->file);
 	if (prefix != NULL) {
 		fputs(prefix, logger->file);
 		fputc(' ', logger->file);
@@ -131,9 +132,9 @@ init_logging_api(void)
 	register_api_function(g_duk, NULL, "OpenLog", js_OpenLog);
 	register_api_ctor(g_duk, "Logger", js_new_Logger, js_Logger_finalize);
 	register_api_function(g_duk, "Logger", "toString", js_Logger_toString);
-	register_api_function(g_duk, "Logger", "beginBlock", js_Logger_toString);
-	register_api_function(g_duk, "Logger", "endBlock", js_Logger_toString);
-	register_api_function(g_duk, "Logger", "write", js_Logger_toString);
+	register_api_function(g_duk, "Logger", "beginBlock", js_Logger_beginBlock);
+	register_api_function(g_duk, "Logger", "endBlock", js_Logger_endBlock);
+	register_api_function(g_duk, "Logger", "write", js_Logger_write);
 }
 
 static duk_ret_t
