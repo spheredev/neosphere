@@ -101,7 +101,8 @@ main(int argc, char* argv[])
 	int i;
 
 	printf("%s (%i-bit)\n", ENGINE_NAME, sizeof(void*) * 8);
-	printf("A lightweight Sphere-compatible game engine\n\n");
+	printf("A lightweight Sphere-compatible game engine\n");
+	printf("(c) 2015 Bruce Pascoe\n\n");
 	
 	if (!initialize_engine())
 		return EXIT_FAILURE;
@@ -262,7 +263,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	printf("Calling game() function\n");
+	printf("Calling game()\n");
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duk, 0x0, path);
 	free(path);
