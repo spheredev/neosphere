@@ -3,6 +3,7 @@
 
 #include "rng.h"
 
+static duk_ret_t js_RNG_seed       (duk_context* ctx);
 static duk_ret_t js_RNG_chance     (duk_context* ctx);
 static duk_ret_t js_RNG_fromArray  (duk_context* ctx);
 static duk_ret_t js_RNG_fromNormal (duk_context* ctx);
@@ -76,6 +77,8 @@ init_rng_api(void)
 {
 	duk_push_global_object(g_duk);
 	duk_push_object(g_duk);
+	duk_push_c_function(g_duk, js_RNG_seed, DUK_VARARGS);
+	duk_put_prop_string(g_duk, -2, "seed");
 	duk_push_c_function(g_duk, js_RNG_chance, DUK_VARARGS);
 	duk_put_prop_string(g_duk, -2, "chance");
 	duk_push_c_function(g_duk, js_RNG_fromArray, DUK_VARARGS);
@@ -88,6 +91,15 @@ init_rng_api(void)
 	duk_put_prop_string(g_duk, -2, "vary");
 	duk_put_prop_string(g_duk, -2, "RNG");
 	duk_pop(g_duk);
+}
+
+static duk_ret_t
+js_RNG_seed(duk_context* ctx)
+{
+	unsigned long seed = duk_require_number(ctx, 0);
+
+	seed_rng(seed);
+	return 0;
 }
 
 static duk_ret_t
