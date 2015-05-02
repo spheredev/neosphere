@@ -319,6 +319,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClCompile Include="..\src\main.c" />
     <ClCompile Include="..\src\map_engine.c" />
     <ClCompile Include="..\src\galileo.c" />
+    <ClCompile Include="..\src\mt19937ar.c" />
+    <ClCompile Include="..\src\rng.c" />
     <ClCompile Include="..\src\sockets.c" />
     <ClCompile Include="..\src\obsmap.c" />
     <ClCompile Include="..\src\persons.c" />
@@ -348,6 +350,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClInclude Include="..\src\map_engine.h" />
     <ClInclude Include="..\src\minisphere.h" />
     <ClInclude Include="..\src\galileo.h" />
+    <ClInclude Include="..\src\mt19937ar.h" />
+    <ClInclude Include="..\src\rng.h" />
     <ClInclude Include="..\src\sockets.h" />
     <ClInclude Include="..\src\obsmap.h" />
     <ClInclude Include="..\src\persons.h" />

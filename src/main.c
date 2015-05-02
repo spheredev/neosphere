@@ -12,6 +12,7 @@
 #include "map_engine.h"
 #include "primitives.h"
 #include "rawfile.h"
+#include "rng.h"
 #include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -648,6 +649,7 @@ initialize_engine(void)
 	g_sys_conf = al_load_config_file(path);
 	free(path);
 
+	initialize_rng();
 	initialize_galileo();
 	initialize_input();
 	initialize_map_engine();
@@ -669,6 +671,7 @@ initialize_engine(void)
 	init_map_engine_api(g_duk);
 	init_primitives_api();
 	init_rawfile_api();
+	init_rng_api();
 	init_sockets_api();
 	init_sound_api();
 	init_spriteset_api(g_duk);

@@ -99,6 +99,12 @@
     <ClCompile Include="..\src\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\mt19937ar.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rng.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -183,6 +189,12 @@
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mt19937ar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\rng.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

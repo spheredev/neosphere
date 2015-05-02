@@ -26,6 +26,7 @@
 #include "font.h"
 #include "geometry.h"
 #include "lstring.h"
+#include "mt19937ar.h"
 #include "script.h"
 
 #if defined(__GNUC__)

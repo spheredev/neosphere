@@ -14,6 +14,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-map-engine",
 	"sphere-galileo",
 	"minisphere-new-sockets",
+	"minisphere-rng-object",
 	"frameskip-api",
 	"set-script-function",
 };

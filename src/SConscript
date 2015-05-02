@@ -14,10 +14,12 @@ msphere_sources = [
 	"lstring.c",
 	"main.c",
 	"map_engine.c",
+	"mt19937ar.c",
 	"obsmap.c",
 	"persons.c",
 	"primitives.c",
 	"rawfile.c",
+	"rng.c",
 	"script.c",
 	"sockets.c",
 	"sound.c",
@@ -41,6 +43,6 @@ msphere_libs = [
 	"m"
 ]
 
-minisphere = Program("msphere", msphere_sources, LIBS = msphere_libs)
+minisphere = Program("engine", msphere_sources, LIBS = msphere_libs)
 
 Return("minisphere")
