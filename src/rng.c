@@ -3,12 +3,12 @@
 
 #include "rng.h"
 
-static duk_ret_t js_RNG_seed       (duk_context* ctx);
-static duk_ret_t js_RNG_chance     (duk_context* ctx);
-static duk_ret_t js_RNG_fromArray  (duk_context* ctx);
-static duk_ret_t js_RNG_fromNormal (duk_context* ctx);
-static duk_ret_t js_RNG_fromRange  (duk_context* ctx);
-static duk_ret_t js_RNG_vary       (duk_context* ctx);
+static duk_ret_t js_RNG_seed   (duk_context* ctx);
+static duk_ret_t js_RNG_chance (duk_context* ctx);
+static duk_ret_t js_RNG_normal (duk_context* ctx);
+static duk_ret_t js_RNG_range  (duk_context* ctx);
+static duk_ret_t js_RNG_sample (duk_context* ctx);
+static duk_ret_t js_RNG_vary   (duk_context* ctx);
 
 void
 initialize_rng(void)
@@ -54,7 +54,7 @@ rng_normal(double mean, double sigma)
 		x = s_y;
 		s_have_y = false;
 	}
-	return mean + sigma * x;
+	return mean + x * sigma;
 }
 
 long
@@ -81,12 +81,12 @@ init_rng_api(void)
 	duk_put_prop_string(g_duk, -2, "seed");
 	duk_push_c_function(g_duk, js_RNG_chance, DUK_VARARGS);
 	duk_put_prop_string(g_duk, -2, "chance");
-	duk_push_c_function(g_duk, js_RNG_fromArray, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "fromArray");
-	duk_push_c_function(g_duk, js_RNG_fromNormal, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "fromNormal");
-	duk_push_c_function(g_duk, js_RNG_fromRange, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "fromRange");
+	duk_push_c_function(g_duk, js_RNG_normal, DUK_VARARGS);
+	duk_put_prop_string(g_duk, -2, "normal");
+	duk_push_c_function(g_duk, js_RNG_range, DUK_VARARGS);
+	duk_put_prop_string(g_duk, -2, "range");
+	duk_push_c_function(g_duk, js_RNG_sample, DUK_VARARGS);
+	duk_put_prop_string(g_duk, -2, "sample");
 	duk_push_c_function(g_duk, js_RNG_vary, DUK_VARARGS);
 	duk_put_prop_string(g_duk, -2, "vary");
 	duk_put_prop_string(g_duk, -2, "RNG");
@@ -112,21 +112,7 @@ js_RNG_chance(duk_context* ctx)
 }
 
 static duk_ret_t
-js_RNG_fromArray(duk_context* ctx)
-{
-	duk_require_object_coercible(ctx, 0);
-
-	duk_uarridx_t index;
-	long          length;
-
-	length = (long)duk_get_length(ctx, 0);
-	index = rng_ranged(0, length - 1);
-	duk_get_prop_index(ctx, 0, index);
-	return 1;
-}
-
-static duk_ret_t
-js_RNG_fromNormal(duk_context* ctx)
+js_RNG_normal(duk_context* ctx)
 {
 	double mean = duk_require_number(ctx, 0);
 	double sigma = duk_require_number(ctx, 1);
@@ -136,12 +122,26 @@ js_RNG_fromNormal(duk_context* ctx)
 }
 
 static duk_ret_t
-js_RNG_fromRange(duk_context* ctx)
+js_RNG_range(duk_context* ctx)
 {
 	long lower = duk_require_number(ctx, 0);
 	long upper = duk_require_number(ctx, 1);
 
 	duk_push_number(ctx, rng_ranged(lower, upper));
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_sample(duk_context* ctx)
+{
+	duk_require_object_coercible(ctx, 0);
+
+	duk_uarridx_t index;
+	long          length;
+
+	length = (long)duk_get_length(ctx, 0);
+	index = rng_ranged(0, length - 1);
+	duk_get_prop_index(ctx, 0, index);
 	return 1;
 }
 

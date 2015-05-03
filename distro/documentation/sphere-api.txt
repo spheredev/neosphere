@@ -163,17 +163,16 @@ Random Number Generation
 ------------------------
 
 Many games have need of a good random number generator, particularly
-RPGs. All JavaScript engines have a built-in generator exposed as the
-Math.random() function, however this is generally considered subpar.
+RPGs. All JavaScript engines have a built-in generator in the form of
+the Math.random() function, however this is generally considered subpar.
 minisphere provides the RNG object, which uses the MT19937 (Mersenne
-Twister) algorithm to generate random values and allows explicit
-seeding.
+Twister) algorithm to generate random values and allows manual seeding.
 
-RNG.reseed(seed);
+RNG.seed(seed);
 
 Seeds the random number generator with `seed`. If the seed is floating
-point, it will be truncated to an integer; a seed of 812.5, for example,
-has the same effect as passing 812.\
+point, it will be truncated to an integer; using a seed of 812.88, for
+example, has the same effect as 812.
 
 RNG.chance(odds);
 
@@ -181,25 +180,25 @@ Tests a percentage chance. Returns true if the chance succeeds, false
 otherwise. `odds` is a value between 0 and 1; for example, 0.75 will
 return true 75% of the time.
 
-RNG.fromRange(min, max);
+RNG.normal(mean, sigma);
+
+Returns a random floating point value normally distributed around `mean`
+with a standard deviation specified by `sigma`. The probability
+distribution of this function is sometimes termed a "bell curve."
+
+RNG.range(min, max);
 
 Returns a random integer in the range [min,max] with equal probability.
 
-RNG.fromNormal(mean, sigma);
+RNG.sample(array);
 
-Returns a random floating point value normally distributed around `mean`
-with a standard deviation specified by `sigma`. The resulting
-distribution is sometimes called a "bell curve."
+Returns a single randomly-chosen item from `array`.
 
 RNG.vary(mean, variance);
 
 Returns a random floating point value uniformly distributed around
 `mean` with a maximum deviation specified by `variance`.
 
-RNG.seed (read-only property)
-
-Gets an integer which can later be passed to RNG.reseed() to resume the
-current random sequence. May be useful when saving a game.
 
 Graphics Primitives
 -------------------
