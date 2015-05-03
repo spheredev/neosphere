@@ -4,16 +4,18 @@ minisphere Changelog
 v1.1 - TBD
 
 - Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
-  including a SetPersonScript() crash when passing JS functions
+  including a SetPersonScript() crash when passing JS functions.
 - Native 64-bit support with included 64-bit engine! (engine64.exe)
 - Constructors and properties for all core Sphere objects:
       var sound = new Sound("munch.wav");
       sound.volume = 128;
       sound.play(false);
 - TurboSphere-inspired "Galileo" graphics API allowing scenes to be
-  composed ahead of time using Shape and Group objects
+  composed ahead of time using Shape and Group objects.
+- New RNG object for advanced random number generation, including a
+  method to generate normally-distributed random values.
 - TurboSphere-inspired Sockets API, with separate ListeningSocket and
-  IOSocket objects (legacy sockets are still supported!)
+  IOSocket objects. (Legacy sockets are still supported!)
 - API documentation is now included in the default distribution
 - Overhauled FollowPerson algorithm: Followers move under their own
   power and are affected by obstructions, making the overall effect much
@@ -23,18 +25,18 @@ v1.1 - TBD
      GetPersonFollowers()
      GetPersonFollowDistance()
      SetPersonFollowDistance()
-- Microsecond precision when seeking in Sounds
+- Microsecond precision when seeking in Sounds.
 
 v1.0.10 - April 16, 2015
 
-- Experimental 64-bit engine (needs testing)
+- Experimental 64-bit engine (needs testing).
 - Fixes IsKeyPressed() not recognizing modifier keys on right side of
-  keyboard (#20)
+  keyboard (#20).
 - Improves SetPersonFrame compatibility (out-of-range frame is now
-  wrapped instead of throwing an error)
-- Fixes SetPersonFrame not resetting frame delay timer
-- Fixes joystick assert error when running minisphere in OS X. (#19)
+  wrapped instead of throwing an error).
+- Fixes SetPersonFrame not resetting frame delay timer.
+- Fixes a joystick assert error when running minisphere in OS X. (#19)
 - Fixes wrong direction being rendered for 4-direction person sprites
-  moving diagonally
-- Fixes random deadlocks when playing sounds
-- Adds some API functions from Sphere 1.6+
+  moving diagonally.
+- Fixes random deadlocks when playing sounds.
+- Adds some API functions from Sphere 1.6+.
