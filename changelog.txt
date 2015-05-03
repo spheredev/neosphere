@@ -1,42 +1,58 @@
 minisphere Changelog
---------------------
+====================
 
 v1.1 - TBD
+----------
 
-- Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
+This is an absolutely MASSIVE release! :D
+
+* Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
   including a SetPersonScript() crash when passing JS functions.
-- Native 64-bit support with included 64-bit engine! (engine64.exe)
-- Constructors and properties for all core Sphere objects:
+* Native 64-bit support with included 64-bit engine! (engine64.exe)
+* New "Console" builds of minisphere (console.exe and console64.exe) for
+  Windows. This version of the engine displays a console window like a
+  debug build (enabling minisphere's Print() function to work), but is
+  fully optimized!
+* API documentation is now included in the default distribution.
+* New system scripts:
+      o minidelegate (mini/delegate.js)
+        Provides a constructor (MultiDelegate) and methods for multicast
+        delegates, used for event-based programming.
+      o minithreads (mini/threads.js)
+        Thread manager with pthreads-like API, meant to be used in place
+        of SetUpdateScript() and SetRenderScript().
+* Constructors and properties for all core Sphere objects:
       var sound = new Sound("munch.wav");
       sound.volume = 128;
       sound.play(false);
-- TurboSphere-inspired "Galileo" graphics API allowing scenes to be
+* Built-in MT19937-based random number generator, including a method
+  (`RNG.normal`) to generate normally-distributed random values.
+* TurboSphere-inspired "Galileo" graphics API, which allows scenes to be
   composed ahead of time using Shape and Group objects.
-- New RNG object for advanced random number generation, including a
-  method to generate normally-distributed random values.
-- TurboSphere-inspired Sockets API, with separate ListeningSocket and
+* TurboSphere-inspired Sockets API, with separate ListeningSocket and
   IOSocket objects. (Legacy sockets are still supported!)
-- API documentation is now included in the default distribution
-- Overhauled FollowPerson algorithm: Followers move under their own
+* Playback position in Sounds can be set with microsecond precision.
+* Overhauled FollowPerson() algorithm: Followers move under their own
   power and are affected by obstructions, making the overall effect much
   more pleasing.
-- New API functions to manage persons with followers:
-     GetPersonLeader()
-     GetPersonFollowers()
-     GetPersonFollowDistance()
-     SetPersonFollowDistance()
-- Microsecond precision when seeking in Sounds.
+* New API functions to manage persons with followers:
+      GetPersonLeader()
+      GetPersonFollowers()
+      GetPersonFollowDistance()
+      SetPersonFollowDistance()
+
 
 v1.0.10 - April 16, 2015
+------------------------
 
-- Experimental 64-bit engine (needs testing).
-- Fixes IsKeyPressed() not recognizing modifier keys on right side of
+* Experimental 64-bit engine (needs testing).
+* Fixes IsKeyPressed() not recognizing modifier keys on right side of
   keyboard (#20).
-- Improves SetPersonFrame compatibility (out-of-range frame is now
+* Improves SetPersonFrame compatibility (out-of-range frame is now
   wrapped instead of throwing an error).
-- Fixes SetPersonFrame not resetting frame delay timer.
-- Fixes a joystick assert error when running minisphere in OS X. (#19)
-- Fixes wrong direction being rendered for 4-direction person sprites
+* Fixes SetPersonFrame not resetting frame delay timer.
+* Fixes a joystick assert error when running minisphere in OS X. (#19)
+* Fixes wrong direction being rendered for 4-direction person sprites
   moving diagonally.
-- Fixes random deadlocks when playing sounds.
-- Adds some API functions from Sphere 1.6+.
+* Fixes random deadlocks when playing sounds.
+* Adds some API functions from Sphere 1.6+.

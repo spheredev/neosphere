@@ -13,7 +13,7 @@ static duk_ret_t js_RNG_vary   (duk_context* ctx);
 void
 initialize_rng(void)
 {
-	printf("Initializing random number generator\n");
+	printf("Seeding random number generator\n");
 
 	init_genrand(time(NULL));
 }

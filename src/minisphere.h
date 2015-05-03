@@ -39,7 +39,7 @@
 #define noreturn void
 #endif
 
-static const char* const ENGINE_NAME = "minisphere 1.1b2";
+static const char* const ENGINE_NAME = "minisphere 1.1b3";
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;

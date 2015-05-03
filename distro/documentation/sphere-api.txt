@@ -186,9 +186,16 @@ Returns a random floating point value normally distributed around `mean`
 with a standard deviation specified by `sigma`. The probability
 distribution of this function is sometimes termed a "bell curve."
 
+RNG.random();
+
+Returns a floating point value in the range [0,1). This is the basic
+method of random number generation, and a direct, drop-in replacement
+for Math.random().
+
 RNG.range(min, max);
 
-Returns a random integer in the range [min,max] with equal probability.
+Returns a random integer uniformly distributed within the range
+[min,max].
 
 RNG.sample(array);
 
@@ -311,7 +318,10 @@ MapEngine(map_file, framerate);
 
 ExitMapEngine();
   
-  Tells the map engine to shut down at the start of the next frame.
+  Tells the map engine to shut down at the start of the next frame. If
+  the map engine is presently held up in an UpdateMapEngine() loop (see
+  below), this call will not take effect until control returns to the
+  map engine proper.
 
 ChangeMap(map_file);
 
@@ -372,6 +382,20 @@ DoesPersonExist(name);
   Returns true if a person named `name` currently exists, otherwise
   returns false.
 
+GetPersonX(name);
+GetPersonY(name);
+SetPersonX(name, new_x);
+SetPersonY(name, new_y);
+
+Gets or sets a person's position relative to the current map.
+
+GetPersonXFloat(name);
+GetPersonYFloat(name);
+SetPersonXYFloat(name, new_x, new_y);
+
+Gets or sets a person's position relative to the current map, with
+subpixel precision.
+
 FollowPerson(name, leader_name, distance);
   
   Makes a person follow another person at a distance specified by
@@ -384,7 +408,17 @@ FollowPerson(name, leader_name, distance);
     
     FollowPerson("<name>", null, 0);
 
-GetPersonLeader(name)
+GetPersonLeader(name);
   
   Gets the person `name` is currently following. If no leader exists
   (the person is independent), returns an empty string ("").
+
+GetPersonFollowers(name);
+
+  Gets an array of names of persons following a specified person.
+
+GetPersonFollowDistance(name);
+SetPersonFollowDistance(name);
+  
+  Gets or sets the named person's follow distance. Throws an error if
+  the person is not following anyone.
