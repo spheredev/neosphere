@@ -71,11 +71,12 @@ clone_spriteset(const spriteset_t* spriteset)
 	clone->base = spriteset->base;
 	clone->num_images = spriteset->num_images;
 	clone->num_poses = spriteset->num_poses;
-	clone->images = calloc(clone->num_images, sizeof(image_t*));
-	clone->poses = calloc(clone->num_poses, sizeof(spriteset_pose_t));
-	if (clone->images == NULL || clone->poses == NULL) goto on_error;
+	if (!(clone->images = calloc(clone->num_images, sizeof(image_t*))))
+		goto on_error;
 	for (i = 0; i < spriteset->num_images; ++i)
-		if ((clone->images[i] = clone_image(spriteset->images[i])) == NULL) goto on_error;
+		clone->images[i] = ref_image(spriteset->images[i]);
+	if (!(clone->poses = calloc(clone->num_poses, sizeof(spriteset_pose_t))))
+		goto on_error;
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		if ((clone->poses[i].name = clone_lstring(spriteset->poses[i].name)) == NULL)
 			goto on_error;
