@@ -571,6 +571,8 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	title_index = rand() % (sizeof(ERROR_TEXT) / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];
 	subtitle = ERROR_TEXT[title_index][1];
+	if (g_sys_font == NULL)
+		goto show_error_box;
 	
 	// create wraptext from error message
 	if (!(error_info = word_wrap_text(g_sys_font, msg, g_res_x - 84)))
