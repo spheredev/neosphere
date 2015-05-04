@@ -308,8 +308,15 @@ duk_on_create_error(duk_context* ctx)
 	
 	if (!duk_is_error(ctx, 0)) return 1;
 	duk_get_prop_string(ctx, 0, "message"); message = duk_get_string(ctx, -1); duk_pop(ctx);
-	if (strstr(message, "not ") != message || strcmp(message, "not callable") == 0)
+	if (strstr(message, "not ") != message
+	    || strcmp(message, "not callable") == 0
+	    || strcmp(message, "not configurable") == 0
+	    || strcmp(message, "not constructable") == 0
+	    || strcmp(message, "not extensible") == 0
+	    || strcmp(message, "not writable") == 0)
+	{
 		return 1;
+	}
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
 	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
