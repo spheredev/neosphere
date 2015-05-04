@@ -364,66 +364,86 @@ js_GetExtensions(duk_context* ctx)
 static duk_ret_t
 js_EvaluateScript(duk_context* ctx)
 {
-	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_asset_path(script_file, "scripts", false);
-	if (!al_filename_exists(script_path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): Script file not found '%s'", script_file);
-	duk_eval_file_noresult(ctx, script_path);
-	free(script_path);
+	const char* filename = duk_require_string(ctx, 0);
+
+	char* path;
+
+	path = get_asset_path(filename, "scripts", false);
+	if (!al_filename_exists(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): Script file not found '%s'", filename);
+	duk_eval_file_noresult(ctx, path);
+	free(path);
 	return 0;
 }
 
 static duk_ret_t
 js_EvaluateSystemScript(duk_context* ctx)
 {
-	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_sys_asset_path(script_file, "system/scripts");
-	if (!al_filename_exists(script_path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", script_file);
-	duk_eval_file_noresult(ctx, script_path);
-	free(script_path);
+	const char* filename = duk_require_string(ctx, 0);
+
+	char* path;
+	
+	path = get_asset_path(filename, "scripts/lib", false);
+	if (!al_filename_exists(path)) {
+		free(path);
+		path = get_sys_asset_path(filename, "system/scripts");
+	}
+	if (!al_filename_exists(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", filename);
+	duk_eval_file_noresult(ctx, path);
+	free(path);
 	return 0;
 }
 
 static duk_ret_t
 js_RequireScript(duk_context* ctx)
 {
-	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_asset_path(script_file, "scripts", false);
-	if (!al_filename_exists(script_path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): Script file not found '%s'", script_file);
+	const char* filename = duk_require_string(ctx, 0);
+
+	char* path;
+
+	path = get_asset_path(filename, "scripts", false);
+	if (!al_filename_exists(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): Script file not found '%s'", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
-	duk_get_prop_string(ctx, -1, script_path);
+	duk_get_prop_string(ctx, -1, path);
 	bool is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
-		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
-		duk_eval_file_noresult(ctx, script_path);
+		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
+		duk_eval_file_noresult(ctx, path);
 	}
 	duk_pop_2(ctx);
-	free(script_path);
+	free(path);
 	return 0;
 }
 
 static duk_ret_t
 js_RequireSystemScript(duk_context* ctx)
 {
-	const char* script_file = duk_get_string(ctx, 0);
-	char* script_path = get_sys_asset_path(script_file, "system/scripts");
-	if (!al_filename_exists(script_path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): System script not found '%s'", script_file);
+	const char* filename = duk_require_string(ctx, 0);
+
+	char* path;
+
+	path = get_asset_path(filename, "scripts/lib", false);
+	if (!al_filename_exists(path)) {
+		free(path);
+		path = get_sys_asset_path(filename, "system/scripts");
+	}
+	if (!al_filename_exists(path))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): System script not found '%s'", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
-	duk_get_prop_string(ctx, -1, script_path);
+	duk_get_prop_string(ctx, -1, path);
 	bool is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
-		duk_push_true(ctx); duk_put_prop_string(ctx, -2, script_path);
-		duk_eval_file_noresult(ctx, script_path);
+		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
+		duk_eval_file_noresult(ctx, path);
 	}
 	duk_pop_2(ctx);
-	free(script_path);
+	free(path);
 	return 0;
 }
 

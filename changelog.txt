@@ -13,6 +13,7 @@ This is an absolutely MASSIVE release! :D
   Windows. This version of the engine displays a console window like a
   debug build (enabling minisphere's Print() function to work), but is
   fully optimized!
+* Engine now searches <game_dir>/scripts/lib for system scripts.
 * API documentation is now included in the default distribution.
 * New system scripts:
       o minidelegate (mini/delegate.js)
