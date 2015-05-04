@@ -11,9 +11,11 @@ extern image_t*        read_image               (FILE* file, int width, int heig
 extern image_t*        read_subimage            (FILE* file, image_t* parent, int x, int y, int width, int height);
 extern image_t*        ref_image                (image_t* image);
 extern void            free_image               (image_t* image);
-extern ALLEGRO_BITMAP* get_image_bitmap         (const image_t* image);
+extern ALLEGRO_BITMAP* get_image_bitmap         (image_t* image);
 extern int             get_image_height         (const image_t* image);
+extern color_t         get_image_pixel          (image_t* image, int x, int y);
 extern int             get_image_width          (const image_t* image);
+extern void            set_image_pixel          (image_t* image, int x, int y, color_t color);
 extern bool            apply_image_lookup       (image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256]);
 extern void            draw_image               (image_t* image, int x, int y);
 extern void            draw_image_masked        (image_t* image, color_t mask, int x, int y);

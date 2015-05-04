@@ -282,9 +282,7 @@ js_Surface_setPixel(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
-	al_set_target_bitmap(get_image_bitmap(image));
-	al_put_pixel(x, y, nativecolor(color));
-	al_set_target_backbuffer(g_display);
+	set_image_pixel(image, x, y, color);
 	return 0;
 }
 
@@ -294,16 +292,14 @@ js_Surface_getPixel(duk_context* ctx)
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
 
-	image_t*      image;
-	ALLEGRO_COLOR pixel;
-	uint8_t       r, g, b, alpha;
+	image_t* image;
+	color_t  pixel;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
-	pixel = al_get_pixel(get_image_bitmap(image), x, y);
-	al_unmap_rgba(pixel, &r, &g, &b, &alpha);
-	duk_push_sphere_color(ctx, rgba(r, g, b, alpha));
+	pixel = get_image_pixel(image, x, y);
+	duk_push_sphere_color(ctx, pixel);
 	return 1;
 }
 

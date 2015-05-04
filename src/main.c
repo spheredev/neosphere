@@ -101,9 +101,9 @@ main(int argc, char* argv[])
 	
 	int i;
 
-	printf("%s (%i-bit)\n", ENGINE_NAME, sizeof(void*) * 8);
+	printf("%s %s\n", ENGINE_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("A lightweight Sphere-compatible game engine\n");
-	printf("(c) 2015 Bruce Pascoe\n\n");
+	printf("(c) 2015 Fat Cerberus\n\n");
 	
 	if (!initialize_engine())
 		return EXIT_FAILURE;

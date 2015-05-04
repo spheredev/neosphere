@@ -9,6 +9,7 @@ struct image
 {
 	int             refcount;
 	ALLEGRO_BITMAP* bitmap;
+	uint32_t*       pixel_cache;
 	int             width;
 	int             height;
 	image_t*        parent;
@@ -33,6 +34,9 @@ static duk_ret_t js_Image_transformBlit     (duk_context* ctx);
 static duk_ret_t js_Image_transformBlitMask (duk_context* ctx);
 static duk_ret_t js_Image_zoomBlit          (duk_context* ctx);
 static duk_ret_t js_Image_zoomBlitMask      (duk_context* ctx);
+
+static void cache_pixels   (image_t* image);
+static void uncache_pixels (image_t* image);
 
 static image_t* s_sys_arrow    = NULL;
 static image_t* s_sys_dn_arrow = NULL;
@@ -197,8 +201,9 @@ free_image(image_t* image)
 }
 
 ALLEGRO_BITMAP*
-get_image_bitmap(const image_t* image)
+get_image_bitmap(image_t* image)
 {
+	uncache_pixels(image);
 	return image->bitmap;
 }
 
@@ -208,10 +213,44 @@ get_image_height(const image_t* image)
 	return image->height;
 }
 
+color_t
+get_image_pixel(image_t* image, int x, int y)
+{
+	uint32_t      pixel;
+	unsigned char r, g, b, alpha;
+	
+	cache_pixels(image);
+	if (image->pixel_cache == NULL) {
+		al_unmap_rgba(al_get_pixel(image->bitmap, x, y),
+			&r, &g, &b, &alpha);
+	}
+	else {
+		// note: AA BB GG RR
+		pixel = image->pixel_cache[x + y * image->width];
+		r = pixel >> 16 & 0xFF;
+		g = pixel >> 8 & 0xFF;
+		b = pixel & 0xFF;
+		alpha = pixel >> 24 & 0xFF;
+	}
+	return rgba(r, g, b, alpha);
+}
+
 int
 get_image_width(const image_t* image)
 {
 	return image->width;
+}
+
+void
+set_image_pixel(image_t* image, int x, int y, color_t color)
+{
+	ALLEGRO_BITMAP* old_target;
+
+	uncache_pixels(image);
+	old_target = al_get_target_bitmap();
+	al_set_target_bitmap(image->bitmap);
+	al_put_pixel(x, y, nativecolor(color));
+	al_set_target_bitmap(old_target);
 }
 
 bool
@@ -225,6 +264,7 @@ apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 
 	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
 		return false;
+	uncache_pixels(image);
 	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
 		pixel = (uint8_t*)lock->data + i_x * 4 + i_y * lock->pitch;
 		pixel[0] = red_lu[pixel[0]];
@@ -290,6 +330,7 @@ fill_image(image_t* image, color_t color)
 	int             clip_x, clip_y, clip_w, clip_h;
 	ALLEGRO_BITMAP* last_target;
 
+	uncache_pixels(image);
 	al_get_clipping_rectangle(&clip_x, &clip_y, &clip_w, &clip_h);
 	al_reset_clipping_rectangle();
 	last_target = al_get_target_bitmap();
@@ -308,6 +349,7 @@ flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 
 	if (!is_h_flip && !is_v_flip)  // this really shouldn't happen...
 		return true;
+	uncache_pixels(image);
 	if (!(new_bitmap = al_create_bitmap(image->width, image->height))) return false;
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(new_bitmap);
@@ -332,6 +374,7 @@ replace_image_color(image_t* image, color_t color, color_t new_color)
 
 	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
 		return false;
+	uncache_pixels(image);
 	w = al_get_bitmap_width(bitmap);
 	h = al_get_bitmap_height(bitmap);
 	for (i_x = 0; i_x < w; ++i_x) for (i_y = 0; i_y < h; ++i_y) {
@@ -360,6 +403,7 @@ rescale_image(image_t* image, int width, int height)
 	if (width == image->width && height == image->height)
 		return true;
 	if (!(new_bitmap = al_create_bitmap(width, height))) return false;
+	uncache_pixels(image);
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(new_bitmap);
 	al_draw_scaled_bitmap(image->bitmap, 0, 0, image->width, image->height, 0, 0, width, height, 0x0);
@@ -369,6 +413,45 @@ rescale_image(image_t* image, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	return true;
+}
+
+static void
+cache_pixels(image_t* image)
+{
+	uint32_t*              cache;
+	ALLEGRO_LOCKED_REGION* lock;
+	void                   *psrc, *pdest;
+
+	int i;
+
+	if (image->pixel_cache == NULL) {
+		if (!(lock = al_lock_bitmap(image->bitmap,
+			ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READONLY)))
+		{
+			goto on_error;
+		}
+		if (!(cache = malloc(image->width * image->height * 4)))
+			goto on_error;
+		for (i = 0; i < image->height; ++i) {
+			psrc = (uint8_t*)lock->data + i * lock->pitch;
+			pdest = cache + i * image->width;
+			memcpy(pdest, psrc, image->width * 4);
+		}
+		image->pixel_cache = cache;
+		al_unlock_bitmap(image->bitmap);
+	}
+	return;
+	
+on_error:
+	if (lock != NULL)
+		al_unlock_bitmap(image->bitmap);
+}
+
+static void
+uncache_pixels(image_t* image)
+{
+	free(image->pixel_cache);
+	image->pixel_cache = NULL;
 }
 
 void
@@ -628,7 +711,9 @@ js_Image_rotateBlit(duk_context* ctx)
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if (!is_skipped_frame())
-		al_draw_rotated_bitmap(get_image_bitmap(image), image->width / 2, image->height / 2, x, y, angle, 0x0);
+		al_draw_rotated_bitmap(get_image_bitmap(image),
+			image->width / 2, image->height / 2, x + image->width / 2, y + image->height / 2,
+			angle, 0x0);
 	return 0;
 }
 
@@ -647,7 +732,8 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	duk_pop(ctx);
 	if (!is_skipped_frame())
 		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
-			image->width / 2, image->height / 2, x, y, angle, 0x0);
+			image->width / 2, image->height / 2, x + image->width / 2, y + image->height / 2,
+			angle, 0x0);
 	return 0;
 }
 
