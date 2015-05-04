@@ -1,11 +1,17 @@
 /**
- * miniRNG 1.1b3 - (c) 2015 Bruce Pascoe
+ * minisphere Runtime 1.1b3 - (c) 2015 Fat Cerberus
+ * A set of system scripts providing advanced, high-level functionality not
+ * available in the engine itself.
+ *
+ * [mini/RNG.js]
  * A polyfill for minisphere's built-in RNG object which can be used
  * in any JavaScript environment.
 **/
 
-// note: this uses the JS standard Math.random(), which cannot be manually seeded.
-//       RNG.seed() is included, but is a no-op with this implementation.
+// note: This uses JavaScript's Math.random(), which cannot be manually seeded.
+// As a result, RNG.seed() is included, but is a no-op with this implementation.
+
+RequireSystemScript('mini/Core.js');
 
 if (typeof RNG === 'undefined')
 {
@@ -16,7 +22,7 @@ if (typeof RNG === 'undefined')
 		this.nextND = null;
 	})();
 	
-	// .seed() method
+	// RNG.seed()
 	// Seeds the random number generator. As there is no way to supply a seed
 	// for Math.random(), this method actually does nothing.
 	// Arguments:
@@ -26,7 +32,7 @@ if (typeof RNG === 'undefined')
 		// no-op
 	};
 	
-	// .chance() method
+	// RNG.chance()
 	// Tests a percentage chance.
 	// Arguments:
 	//     odds: The odds of the chance passing, specified as a decimal from 0 to 1.
@@ -36,7 +42,7 @@ if (typeof RNG === 'undefined')
 		return odds > Math.random();
 	};
 	
-	// .normal() method
+	// RNG.normal()
 	// Returns a random value from a normal probability distribution, sometimes
 	// called a "bell curve."
 	// Arguments:
@@ -62,7 +68,7 @@ if (typeof RNG === 'undefined')
 		}
 	};
 	
-	// .range() method
+	// RNG.range()
 	// Returns a random integer uniformly distributed within a specified range.
 	// Arguments:
 	//     min: The minimum value.
@@ -73,14 +79,14 @@ if (typeof RNG === 'undefined')
 		return min + Math.min(Math.floor(Math.random() * size), size - 1);
 	};
 	
-	// .random() method
+	// RNG.random()
 	// The basic generation method, returns a value in the range [0,1).
 	RNG.random = function()
 	{
 		return Math.random();
 	}
 	
-	// .sample() method
+	// RNG.sample()
 	// Returns a random entry selected from an array.
 	// Arguments:
 	//     array: An array of items to choose from.
@@ -90,7 +96,7 @@ if (typeof RNG === 'undefined')
 		return array[index];
 	};
 	
-	// .vary() method
+	// RNG.vary()
 	// Applies uniform random variance to a specified value.
 	// Arguments:
 	//     mean:     The mean value around which to apply variance.

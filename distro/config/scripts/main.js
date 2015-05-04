@@ -1,14 +1,13 @@
 // miniconfig 1.1: Configuration Utility for minisphere
 // Copyright (C) 2015 Fat Cerberus
 
-RequireSystemScript('link.js');
-RequireSystemScript('Scenario.js');
+RequireSystemScript('mini/Link.js');
+RequireSystemScript('mini/Scenes.js');
 
 function game()
 {
+	mini.initialize();
 	SetFrameRate(60);
-	
-	Scenario.initialize();
 	
 	var font = GetSystemFont();
 	var res = { x: GetScreenWidth(), y: GetScreenHeight() };
