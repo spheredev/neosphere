@@ -3,6 +3,7 @@
 
 struct script
 {
+	unsigned int  refcount;
 	bool          is_in_use;
 	duk_uarridx_t id;
 };
@@ -34,13 +35,20 @@ compile_script(const lstring_t* codestring, const char* name)
 	duk_put_prop_index(g_duk, -2, script->id);
 	duk_pop_2(g_duk);
 
+	return ref_script(script);
+}
+
+script_t*
+ref_script(script_t* script)
+{
+	++script->refcount;
 	return script;
 }
 
 void
 free_script(script_t* script)
 {
-	if (script == NULL)
+	if (script == NULL || --script->refcount > 0)
 		return;
 	
 	// unstash the compiled function, it's now safe to GC
@@ -68,6 +76,8 @@ run_script(script_t* script, bool allow_reentry)
 		return;  // do nothing if an instance is already running
 	was_in_use = script->is_in_use;
 
+	ref_script(script);
+	
 	// retrieve the compiled script from the stash (so ugly...)
 	duk_push_global_stash(g_duk);
 	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
@@ -81,6 +91,8 @@ run_script(script_t* script, bool allow_reentry)
 	duk_call(g_duk, 0);
 	duk_pop_3(g_duk);
 	script->is_in_use = was_in_use;
+
+	free_script(script);
 }
 
 script_t*

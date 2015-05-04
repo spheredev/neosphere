@@ -4,6 +4,7 @@
 typedef struct script script_t;
 
 extern script_t* compile_script (const lstring_t* script, const char* name);
+extern script_t* ref_script     (script_t* script);
 extern void      free_script    (script_t* script);
 extern void      run_script     (script_t* script, bool allow_reentry);
 
