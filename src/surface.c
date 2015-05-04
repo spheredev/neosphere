@@ -158,7 +158,7 @@ js_GrabSurface(duk_context* ctx)
 	image_t*        image;
 
 	backbuffer = al_get_backbuffer(g_display);
-	if ((image = create_image(w, h)) == NULL)
+	if ((image = create_surface(w, h)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): Failed to create surface bitmap");
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, w, h, 0, 0, 0x0);
@@ -207,7 +207,7 @@ js_new_Surface(duk_context* ctx)
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		fill_color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : rgba(0, 0, 0, 255);
-		if (!(image = create_image(width, height)))
+		if (!(image = create_surface(width, height)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to create new surface");
 		fill_image(image, fill_color);
 	}
@@ -415,7 +415,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
-	if ((new_image = create_image(w, h)) == NULL)
+	if ((new_image = create_surface(w, h)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection() - Failed to create new surface");
 	al_set_target_bitmap(get_image_bitmap(new_image));
 	al_draw_bitmap_region(get_image_bitmap(image), x, y, w, h, 0, 0, 0x0);
@@ -670,7 +670,7 @@ js_Surface_rotate(duk_context* ctx)
 	if (want_resize) {
 		// TODO: implement in-place resizing for Surface:rotate()
 	}
-	if ((new_image = create_image(new_w, new_h)) == NULL)
+	if ((new_image = create_surface(new_w, new_h)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rotate() - Failed to create new surface bitmap");
 	al_set_target_bitmap(get_image_bitmap(new_image));
 	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);

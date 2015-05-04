@@ -28,6 +28,9 @@ extern bool            flip_image               (image_t* image, bool is_h_flip,
 extern bool            replace_image_color      (image_t* image, color_t color, color_t new_color);
 extern bool            rescale_image            (image_t* image, int width, int height);
 
+extern image_t* create_surface (int width, int height);
+extern image_t* clone_surface  (const image_t* image);
+
 extern void init_image_api (duk_context* ctx);
 
 extern void     duk_push_sphere_image    (duk_context* ctx, image_t* image);

@@ -85,6 +85,19 @@ on_error:
 }
 
 image_t*
+create_surface(int width, int height)
+{
+	image_t* image;
+	int      bitmap_flags;
+	
+	bitmap_flags = al_get_new_bitmap_flags();
+	al_set_new_bitmap_flags(bitmap_flags & ALLEGRO_MEMORY_BITMAP);
+	image = create_image(width, height);
+	al_set_new_bitmap_flags(bitmap_flags);
+	return image;
+}
+
+image_t*
 clone_image(const image_t* src_image)
 {
 	image_t* image;
@@ -100,6 +113,31 @@ clone_image(const image_t* src_image)
 	return ref_image(image);
 
 on_error:
+	free(image);
+	return NULL;
+}
+
+image_t*
+clone_surface(const image_t* src_image)
+{
+	int      bitmap_flags;
+	image_t* image;
+
+	bitmap_flags = al_get_new_bitmap_flags();
+	if ((image = calloc(1, sizeof(image_t))) == NULL)
+		goto on_error;
+	al_set_new_bitmap_flags(bitmap_flags & ALLEGRO_MEMORY_BITMAP);
+	if ((image->bitmap = al_clone_bitmap(src_image->bitmap)) == NULL)
+		goto on_error;
+	al_set_new_bitmap_flags(bitmap_flags);
+	image->id = s_next_image_id++;
+	image->width = al_get_bitmap_width(image->bitmap);
+	image->height = al_get_bitmap_height(image->bitmap);
+	printf("[image %u] Created %i x %i image via clone\n", image->id, image->width, image->height);
+	return ref_image(image);
+
+on_error:
+	al_set_new_bitmap_flags(bitmap_flags);
 	free(image);
 	return NULL;
 }
@@ -233,14 +271,12 @@ get_image_pixel(image_t* image, int x, int y)
 	unsigned char r, g, b, alpha;
 	
 	if (image->pixel_cache == NULL) {
-		printf("[image %u] Cache miss! (get_image_pixel)\n", image->id);
 		al_unmap_rgba(al_get_pixel(image->bitmap, x, y),
 			&r, &g, &b, &alpha);
 		cache_pixels(image);
 	}
 	else {
 		// note: AA BB GG RR
-		printf("[image %u] Using pixel cache (get_image_pixel)\n", image->id);
 		pixel = image->pixel_cache[x + y * image->width];
 		r = pixel >> 16 & 0xFF;
 		g = pixel >> 8 & 0xFF;
@@ -447,7 +483,7 @@ cache_pixels(image_t* image)
 	}
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;
-	printf("[image %u] Creating new pixel cache\n", image->id);
+	printf("[image %u] Creating pixel cache\n", image->id);
 	for (i = 0; i < image->height; ++i) {
 		psrc = (uint8_t*)lock->data + i * lock->pitch;
 		pdest = cache + i * image->width;
@@ -467,7 +503,7 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
-	printf("[image %u] Dropped pixel cache\n", image->id);
+	printf("[image %u] Pixel cache invalidated\n", image->id);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
 }
@@ -709,7 +745,7 @@ js_Image_createSurface(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if ((new_image = clone_image(image)) == NULL)
+	if ((new_image = clone_surface(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
 	duk_push_sphere_surface(ctx, new_image);
 	free_image(new_image);
