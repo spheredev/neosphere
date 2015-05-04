@@ -553,22 +553,17 @@ queue_person_command(person_t* person, int command, bool is_immediate)
 }
 
 bool
-queue_person_script(person_t* person, lstring_t* script, bool is_immediate)
+queue_person_script(person_t* person, script_t* script, bool is_immediate)
 {
-	lstring_t* script_name;
-	
 	++person->num_commands;
 	if (person->num_commands > person->max_commands) {
 		person->max_commands = person->num_commands * 2;
 		if (!(person->commands = realloc(person->commands, person->max_commands * sizeof(struct command))))
 			return false;
 	}
-	if (!(script_name = new_lstring("[%s : queued script]", person->name)))
-		return false;
 	person->commands[person->num_commands - 1].type = COMMAND_RUN_SCRIPT;
 	person->commands[person->num_commands - 1].is_immediate = is_immediate;
-	person->commands[person->num_commands - 1].script = compile_script(script, lstring_cstr(script_name));
-	free_lstring(script_name);
+	person->commands[person->num_commands - 1].script = script;
 	return true;
 }
 
@@ -2102,7 +2097,9 @@ static duk_ret_t
 js_QueuePersonScript(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	lstring_t* script = duk_require_lstring_t(ctx, 1);
+	lstring_t* script_name = new_lstring("[%s : queued script]", name);
+	script_t* script = duk_require_sphere_script(ctx, 1, lstring_cstr(script_name));
+	free_lstring(script_name);
 	bool is_immediate = duk_require_boolean(ctx, 2);
 
 	person_t* person;
@@ -2111,6 +2108,5 @@ js_QueuePersonScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): Person '%s' doesn't exist", name);
 	if (!queue_person_script(person, script, is_immediate))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): Failed to enqueue script");
-	free_lstring(script);
 	return 0;
 }

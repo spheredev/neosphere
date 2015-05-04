@@ -35,6 +35,7 @@ extern bool         call_person_script         (const person_t* person, int type
 extern bool         compile_person_script      (person_t* person, int type, const lstring_t* codestring);
 extern person_t*    find_person                (const char* name);
 extern bool         queue_person_command       (person_t* person, int command, bool is_immediate);
+extern bool         queue_person_script        (person_t* person, script_t* script, bool is_immediate);
 extern void         reset_persons              (bool keep_existing);
 extern void         render_persons             (int layer, bool is_flipped, int cam_x, int cam_y);
 extern void         talk_person                (const person_t* person);

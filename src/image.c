@@ -232,14 +232,15 @@ get_image_pixel(image_t* image, int x, int y)
 	uint32_t      pixel;
 	unsigned char r, g, b, alpha;
 	
-	cache_pixels(image);
 	if (image->pixel_cache == NULL) {
+		printf("[image %u] Cache miss! (get_image_pixel)\n", image->id);
 		al_unmap_rgba(al_get_pixel(image->bitmap, x, y),
 			&r, &g, &b, &alpha);
+		cache_pixels(image);
 	}
 	else {
 		// note: AA BB GG RR
-		printf("[image %u] get_image_pixel() using pixel cache\n", image->id);
+		printf("[image %u] Using pixel cache (get_image_pixel)\n", image->id);
 		pixel = image->pixel_cache[x + y * image->width];
 		r = pixel >> 16 & 0xFF;
 		g = pixel >> 8 & 0xFF;
@@ -438,24 +439,22 @@ cache_pixels(image_t* image)
 
 	int i;
 
-	if (image->pixel_cache == NULL) {
-		printf("[image %u] Cache miss!\n", image->id);
-		if (!(lock = al_lock_bitmap(image->bitmap,
-			ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READONLY)))
-		{
-			goto on_error;
-		}
-		if (!(cache = malloc(image->width * image->height * 4)))
-			goto on_error;
-		printf("[image %u] Creating new pixel cache\n", image->id);
-		for (i = 0; i < image->height; ++i) {
-			psrc = (uint8_t*)lock->data + i * lock->pitch;
-			pdest = cache + i * image->width;
-			memcpy(pdest, psrc, image->width * 4);
-		}
-		image->pixel_cache = cache;
-		al_unlock_bitmap(image->bitmap);
+	free(image->pixel_cache); image->pixel_cache = NULL;
+	if (!(lock = al_lock_bitmap(image->bitmap,
+		ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READONLY)))
+	{
+		goto on_error;
 	}
+	if (!(cache = malloc(image->width * image->height * 4)))
+		goto on_error;
+	printf("[image %u] Creating new pixel cache\n", image->id);
+	for (i = 0; i < image->height; ++i) {
+		psrc = (uint8_t*)lock->data + i * lock->pitch;
+		pdest = cache + i * image->width;
+		memcpy(pdest, psrc, image->width * 4);
+	}
+	image->pixel_cache = cache;
+	al_unlock_bitmap(image->bitmap);
 	return;
 	
 on_error:
