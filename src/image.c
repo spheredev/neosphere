@@ -8,6 +8,7 @@
 struct image
 {
 	int             refcount;
+	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
 	uint32_t*       pixel_cache;
 	int             width;
@@ -38,9 +39,10 @@ static duk_ret_t js_Image_zoomBlitMask      (duk_context* ctx);
 static void cache_pixels   (image_t* image);
 static void uncache_pixels (image_t* image);
 
-static image_t* s_sys_arrow    = NULL;
-static image_t* s_sys_dn_arrow = NULL;
-static image_t* s_sys_up_arrow = NULL;
+static unsigned int s_next_image_id = 0;
+static image_t*     s_sys_arrow = NULL;
+static image_t*     s_sys_dn_arrow = NULL;
+static image_t*     s_sys_up_arrow = NULL;
 
 image_t*
 create_image(int width, int height)
@@ -51,8 +53,10 @@ create_image(int width, int height)
 		goto on_error;
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
+	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	printf("[image %u] Created %i x %i image\n", image->id, image->width, image->height);
 	return ref_image(image);
 
 on_error:
@@ -68,9 +72,11 @@ create_subimage(image_t* parent, int x, int y, int width, int height)
 	if ((image = calloc(1, sizeof(image_t))) == NULL) goto on_error;
 	if ((image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)) == NULL)
 		goto on_error;
+	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = ref_image(parent);
+	printf("[image %u] Created %i x %i subimage\n", image->id, image->width, image->height);
 	return ref_image(image);
 
 on_error:
@@ -87,8 +93,10 @@ clone_image(const image_t* src_image)
 		goto on_error;
 	if ((image->bitmap = al_clone_bitmap(src_image->bitmap)) == NULL)
 		goto on_error;
+	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	printf("[image %u] Created %i x %i image via clone\n", image->id, image->width, image->height);
 	return ref_image(image);
 
 on_error:
@@ -105,8 +113,10 @@ load_image(const char* path)
 		goto on_error;
 	if ((image->bitmap = al_load_bitmap(path)) == NULL)
 		goto on_error;
+	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	printf("[image %u] Loaded %i x %i image\n", image->id, image->width, image->height);
 	return ref_image(image);
 
 on_error:
@@ -137,8 +147,10 @@ read_image(FILE* file, int width, int height)
 			goto on_error;
 	}
 	al_unlock_bitmap(image->bitmap);
+	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	printf("[image %u] Read %i x %i image from file\n", image->id, image->width, image->height);
 	return ref_image(image);
 
 on_error:
@@ -195,6 +207,7 @@ free_image(image_t* image)
 {
 	if (image == NULL || --image->refcount > 0)
 		return;
+	printf("[image %u] refcount 0, freeing image\n", image->id);
 	al_destroy_bitmap(image->bitmap);
 	free_image(image->parent);
 	free(image);
@@ -226,6 +239,7 @@ get_image_pixel(image_t* image, int x, int y)
 	}
 	else {
 		// note: AA BB GG RR
+		printf("[image %u] get_image_pixel() using pixel cache\n", image->id);
 		pixel = image->pixel_cache[x + y * image->width];
 		r = pixel >> 16 & 0xFF;
 		g = pixel >> 8 & 0xFF;
@@ -425,6 +439,7 @@ cache_pixels(image_t* image)
 	int i;
 
 	if (image->pixel_cache == NULL) {
+		printf("[image %u] Cache miss!\n", image->id);
 		if (!(lock = al_lock_bitmap(image->bitmap,
 			ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READONLY)))
 		{
@@ -432,6 +447,7 @@ cache_pixels(image_t* image)
 		}
 		if (!(cache = malloc(image->width * image->height * 4)))
 			goto on_error;
+		printf("[image %u] Creating new pixel cache\n", image->id);
 		for (i = 0; i < image->height; ++i) {
 			psrc = (uint8_t*)lock->data + i * lock->pitch;
 			pdest = cache + i * image->width;
@@ -450,6 +466,9 @@ on_error:
 static void
 uncache_pixels(image_t* image)
 {
+	if (image->pixel_cache == NULL)
+		return;
+	printf("[image %u] Dropped pixel cache\n", image->id);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
 }
