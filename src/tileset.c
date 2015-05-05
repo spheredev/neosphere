@@ -69,15 +69,18 @@ read_tileset(FILE* file)
 {
 	image_t*               atlas = NULL;
 	int                    atlas_w, atlas_h;
+	int                    atlas_x, atlas_y;
 	long                   file_pos;
+	ALLEGRO_LOCKED_REGION* lock;
 	int                    n_tiles_per_row;
 	struct rts_header      rts;
 	rect_t                 segment;
 	struct rts_tile_header tilehdr;
 	struct tile*           tiles = NULL;
 	tileset_t*             tileset = NULL;
+	void                   *pdest;
 
-	int i, j;
+	int i, j, i_y;
 
 	memset(&rts, 0, sizeof(struct rts_header));
 	
@@ -96,14 +99,25 @@ read_tileset(FILE* file)
 	atlas_w = rts.tile_width * n_tiles_per_row;
 	atlas_h = rts.tile_height * n_tiles_per_row;
 	if (!(atlas = create_image(atlas_w, atlas_h))) goto on_error;
+	if (!(lock = al_lock_bitmap(get_image_bitmap(atlas), ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY)))
+		goto on_error;
 
 	// read in tile bitmaps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		tiles[i].image = read_subimage(file, atlas,
-			i % n_tiles_per_row * rts.tile_width, i / n_tiles_per_row * rts.tile_height,
-			rts.tile_width, rts.tile_height);
-		if (tiles[i].image == NULL) goto on_error;
+		atlas_x = i % n_tiles_per_row * rts.tile_width;
+		atlas_y = i / n_tiles_per_row * rts.tile_height;
+		if (!(tiles[i].image = create_subimage(atlas, atlas_x, atlas_y, rts.tile_width, rts.tile_height)))
+			goto on_error;
+		for (i_y = 0; i_y < rts.tile_height; ++i_y) {
+			pdest = (uint8_t*)lock->data
+				+ atlas_x * 4
+				+ (i_y + atlas_y) * lock->pitch;
+			if (fread(pdest, rts.tile_width * 4, 1, file) != 1)
+				goto on_error;
+		}
 	}
+
+	al_unlock_bitmap(get_image_bitmap(atlas));
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
@@ -152,6 +166,8 @@ on_error:  // oh no!
 		}
 		free(tileset->tiles);
 	}
+	if (lock != NULL)
+		al_unlock_bitmap(get_image_bitmap(atlas));
 	free_image(atlas);
 	free(tileset);
 	return NULL;
