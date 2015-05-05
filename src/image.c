@@ -10,6 +10,8 @@ struct image
 	int             refcount;
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
+	imagelock_t     lock;
+	unsigned int    lock_count;
 	uint32_t*       pixel_cache;
 	int             width;
 	int             height;
@@ -204,30 +206,31 @@ on_error:
 image_t*
 read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
 {
-	long                   file_pos;
-	image_t*               image;
-	uint8_t*               line_ptr;
-	size_t                 line_size;
-	ALLEGRO_LOCKED_REGION* lock = NULL;
+	long        file_pos;
+	image_t*    image;
+	bool        is_locked;
+	color_t*    line_ptr;
+	size_t      line_size;
+	imagelock_t lock;
 
 	int i_y;
 
 	file_pos = ftell(file);
 	if (!(image = create_subimage(parent, x, y, width, height))) goto on_error;
-	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
-		goto on_error;
+	if (!(is_locked = lock_image(parent, &lock))) goto on_error;
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
-		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
+		line_ptr = lock.pixels + x + (i_y + y) * lock.pitch;
 		if (fread(line_ptr, line_size, 1, file) != 1)
 			goto on_error;
 	}
-	al_unlock_bitmap(image->bitmap);
+	unlock_image(parent, lock);
 	return image;
 
 on_error:
 	fseek(file, file_pos, SEEK_SET);
-	if (lock != NULL) al_unlock_bitmap(image->bitmap);
+	if (is_locked)
+		unlock_image(parent, lock);
 	free_image(image);
 	return NULL;
 }
@@ -411,6 +414,34 @@ flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 	al_destroy_bitmap(image->bitmap);
 	image->bitmap = new_bitmap;
 	return true;
+}
+
+bool
+lock_image(image_t* image, imagelock_t* out_lock)
+{
+	ALLEGRO_LOCKED_REGION* lock;
+
+	if (image->lock_count == 0) {
+		if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY)))
+			goto on_error;
+		image->lock.pixels = lock->data;
+		image->lock.pitch = lock->pitch / 4;
+	}
+	++image->lock_count;
+	if (out_lock) *out_lock = image->lock;
+	return true;
+
+on_error:
+	return false;
+}
+
+void
+unlock_image(image_t* image, imagelock_t lock)
+{
+	if (image->lock_count == 0 || --image->lock_count > 0)
+		return;
+	al_unlock_bitmap(image->bitmap);
+	image->lock.pixels = NULL;
 }
 
 bool

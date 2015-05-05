@@ -70,18 +70,20 @@ load_font(const char* path)
 	image_t*                atlas = NULL;
 	int                     atlas_x, atlas_y;
 	int                     atlas_size_x, atlas_size_y;
-	ALLEGRO_LOCKED_REGION*  bitmap_lock;
 	FILE*                   file;
 	font_t*                 font = NULL;
 	struct font_glyph*      glyph;
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
+	uint8_t*                grayscale;
+	imagelock_t             lock;
 	int                     max_x = 0, max_y = 0;
 	int                     min_width = INT_MAX;
 	int64_t                 n_glyphs_per_row;
 	int                     pixel_size;
 	struct rfn_header       rfn;
-	uint8_t                 *psrc, *pdest;
+	uint8_t                 *psrc;
+	color_t                 *pdest;
 
 	int i, x, y;
 
@@ -121,50 +123,37 @@ load_font(const char* path)
 
 	// pass 2: load glyph data
 	fseek(file, glyph_start, SEEK_SET);
-	if ((bitmap_lock = al_lock_bitmap(get_image_bitmap(atlas), ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY)) == NULL)
-		goto on_error;
+	lock_image(atlas, &lock);
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
 		if (fread(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
 			goto on_error;
-		size_t data_size = glyph_hdr.width * glyph_hdr.height * pixel_size;
-		void* data = malloc(data_size);
-		if (fread(data, 1, data_size, file) != data_size) goto on_error;
 		atlas_x = i % n_glyphs_per_row * max_x;
 		atlas_y = i / n_glyphs_per_row * max_y;
-		if (!(glyph->image = create_subimage(atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
-			goto on_error;
-		psrc = data;
-		pdest = (uint8_t*)bitmap_lock->data
-			+ atlas_x * 4
-			+ atlas_y * bitmap_lock->pitch;
 		switch (rfn.version) {
 		case 1: // RFN v1: 8-bit grayscale glyphs
+			if (!(glyph->image = create_subimage(atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
+				goto on_error;
+			grayscale = malloc(glyph_hdr.width * glyph_hdr.height);
+			if (fread(grayscale, glyph_hdr.width * glyph_hdr.height, 1, file) != 1)
+				goto on_error;
+			psrc = grayscale;
+			pdest = lock.pixels + atlas_x + atlas_y * lock.pitch;
 			for (y = 0; y < glyph_hdr.height; ++y) {
-				for (x = 0; x < glyph_hdr.width; ++x) {
-					pdest[x] = psrc[x];
-					pdest[x + 1] = psrc[x];
-					pdest[x + 2] = psrc[x];
-					pdest[x + 3] = 255;
-					pdest += 4;
-				}
-				pdest += bitmap_lock->pitch - (glyph_hdr.width * 4);
+				for (x = 0; x < glyph_hdr.width; ++x)
+					pdest[x] = rgba(psrc[x], psrc[x], psrc[x], 255);
+				pdest += lock.pitch;
 				psrc += glyph_hdr.width;
 			}
 			break;
 		case 2: // RFN v2: 32-bit truecolor glyphs
-			for (y = 0; y < glyph_hdr.height; ++y) {
-				memcpy(pdest, psrc, glyph_hdr.width * 4);
-				pdest += bitmap_lock->pitch;
-				psrc += glyph_hdr.width * pixel_size;
-			}
+			if (!(glyph->image = read_subimage(file, atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
+				goto on_error;
 			break;
 		}
-		free(data);
 	}
-	al_unlock_bitmap(get_image_bitmap(atlas));
+	unlock_image(atlas, lock);
 	fclose(file);
-	al_get_bitmap_flags(get_image_bitmap(atlas));
 	free_image(atlas);
 	return ref_font(font);
 

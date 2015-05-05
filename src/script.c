@@ -76,6 +76,8 @@ run_script(script_t* script, bool allow_reentry)
 		return;  // do nothing if an instance is already running
 	was_in_use = script->is_in_use;
 
+	// we need to ref the script in case it gets freed during execution,
+	// as the owner may be destroyed in the process.
 	ref_script(script);
 	
 	// retrieve the compiled script from the stash (so ugly...)
