@@ -11,9 +11,9 @@ struct image
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
 	unsigned int    cache_hits;
-	imagelock_t     lock;
+	image_lock_t    lock;
 	unsigned int    lock_count;
-	uint32_t*       pixel_cache;
+	color_t*        pixel_cache;
 	int             width;
 	int             height;
 	image_t*        parent;
@@ -207,22 +207,19 @@ on_error:
 image_t*
 read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
 {
-	long        file_pos;
-	image_t*    image;
-	bool        is_locked;
-	color_t*    line_ptr;
-	size_t      line_size;
-	imagelock_t lock;
+	long          file_pos;
+	image_t*      image;
+	image_lock_t* lock;
+	color_t       *pline;
 
 	int i_y;
 
 	file_pos = ftell(file);
 	if (!(image = create_subimage(parent, x, y, width, height))) goto on_error;
-	if (!(is_locked = lock_image(parent, &lock))) goto on_error;
-	line_size = width * 4;
+	if (!(lock = lock_image(parent))) goto on_error;
 	for (i_y = 0; i_y < height; ++i_y) {
-		line_ptr = lock.pixels + x + (i_y + y) * lock.pitch;
-		if (fread(line_ptr, line_size, 1, file) != 1)
+		pline = lock->pixels + x + (i_y + y) * lock->pitch;
+		if (fread(pline, width * 4, 1, file) != 1)
 			goto on_error;
 	}
 	unlock_image(parent, lock);
@@ -230,7 +227,7 @@ read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
 
 on_error:
 	fseek(file, file_pos, SEEK_SET);
-	if (is_locked)
+	if (lock != NULL)
 		unlock_image(parent, lock);
 	free_image(image);
 	return NULL;
@@ -272,24 +269,13 @@ get_image_height(const image_t* image)
 color_t
 get_image_pixel(image_t* image, int x, int y)
 {
-	uint32_t      pixel;
-	unsigned char r, g, b, alpha;
-	
 	if (image->pixel_cache == NULL) {
-		al_unmap_rgba(al_get_pixel(image->bitmap, x, y),
-			&r, &g, &b, &alpha);
+		printf("[image %u] get_image_pixel() cache miss!\n", image->id);
 		cache_pixels(image);
 	}
-	else {
-		// note: AA BB GG RR
-		pixel = image->pixel_cache[x + y * image->width];
-		r = pixel >> 16 & 0xFF;
-		g = pixel >> 8 & 0xFF;
-		b = pixel & 0xFF;
-		alpha = pixel >> 24 & 0xFF;
+	else
 		++image->cache_hits;
-	}
-	return rgba(r, g, b, alpha);
+	return image->pixel_cache[x + y * image->width];
 }
 
 int
@@ -419,32 +405,20 @@ flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 	return true;
 }
 
-bool
-lock_image(image_t* image, imagelock_t* out_lock)
+image_lock_t*
+lock_image(image_t* image)
 {
-	ALLEGRO_LOCKED_REGION* lock;
+	ALLEGRO_LOCKED_REGION* ll_lock;
 
 	if (image->lock_count == 0) {
-		if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE)))
-			goto on_error;
-		image->lock.pixels = lock->data;
-		image->lock.pitch = lock->pitch / 4;
+		if (!(ll_lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE)))
+			return NULL;
+		ref_image(image);
+		image->lock.pixels = ll_lock->data;
+		image->lock.pitch = ll_lock->pitch / 4;
 	}
 	++image->lock_count;
-	if (out_lock) *out_lock = image->lock;
-	return true;
-
-on_error:
-	return false;
-}
-
-void
-unlock_image(image_t* image, imagelock_t lock)
-{
-	if (image->lock_count == 0 || --image->lock_count > 0)
-		return;
-	al_unlock_bitmap(image->bitmap);
-	image->lock.pixels = NULL;
+	return &image->lock;
 }
 
 bool
@@ -500,30 +474,40 @@ rescale_image(image_t* image, int width, int height)
 	return true;
 }
 
+void
+unlock_image(image_t* image, image_lock_t* lock)
+{
+	// if the caller provides the wrong lock pointer, the image
+	// won't be unlocked. this prevents accidental unlocking.
+	if (lock != &image->lock) return;
+
+	if (image->lock_count == 0 || --image->lock_count > 0)
+		return;
+	al_unlock_bitmap(image->bitmap);
+	free_image(image);
+}
+
 static void
 cache_pixels(image_t* image)
 {
-	uint32_t*              cache;
-	ALLEGRO_LOCKED_REGION* lock;
-	void                   *psrc, *pdest;
+	color_t*      cache;
+	image_lock_t* lock;
+	void          *psrc, *pdest;
 
 	int i;
 
 	free(image->pixel_cache); image->pixel_cache = NULL;
-	if (!(lock = al_lock_bitmap(image->bitmap,
-		ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READONLY)))
-	{
+	if (!(lock = lock_image(image)))
 		goto on_error;
-	}
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;
 	printf("[image %u] Creating pixel cache\n", image->id);
 	for (i = 0; i < image->height; ++i) {
-		psrc = (uint8_t*)lock->data + i * lock->pitch;
+		psrc = lock->pixels + i * lock->pitch;
 		pdest = cache + i * image->width;
 		memcpy(pdest, psrc, image->width * 4);
 	}
-	al_unlock_bitmap(image->bitmap);
+	unlock_image(image, lock);
 	image->pixel_cache = cache;
 	image->cache_hits = 0;
 	return;
@@ -538,9 +522,9 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
-	printf("[image %u] Pixel cache freed, hits: %u\n", image->id, image->cache_hits);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
+	printf("[image %u] Pixel cache freed, hits: %u\n", image->id, image->cache_hits);
 }
 
 void

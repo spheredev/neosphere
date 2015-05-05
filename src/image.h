@@ -1,8 +1,8 @@
 #ifndef MINISPHERE__IMAGE_H__INCLUDED
 #define MINISPHERE__IMAGE_H__INCLUDED
 
-typedef struct image image_t;
-typedef struct imagelock imagelock_t;
+typedef struct image      image_t;
+typedef struct image_lock image_lock_t;
 
 extern image_t*        create_image             (int width, int height);
 extern image_t*        create_subimage          (image_t* parent, int x, int y, int width, int height);
@@ -26,10 +26,10 @@ extern void            draw_image_tiled         (image_t* image, int x, int y, i
 extern void            draw_image_tiled_masked  (image_t* image, color_t mask, int x, int y, int width, int height);
 extern void            fill_image               (image_t* image, color_t color);
 extern bool            flip_image               (image_t* image, bool is_h_flip, bool is_v_flip);
-extern bool            lock_image               (image_t* image, imagelock_t* out_lock);
+extern image_lock_t*   lock_image               (image_t* image);
 extern bool            replace_image_color      (image_t* image, color_t color, color_t new_color);
 extern bool            rescale_image            (image_t* image, int width, int height);
-extern void            unlock_image             (image_t* image, imagelock_t lock);
+extern void            unlock_image             (image_t* image, image_lock_t* lock);
 
 extern image_t* create_surface (int width, int height);
 extern image_t* clone_surface  (const image_t* image);
@@ -39,7 +39,7 @@ extern void init_image_api (duk_context* ctx);
 extern void     duk_push_sphere_image    (duk_context* ctx, image_t* image);
 extern image_t* duk_require_sphere_image (duk_context* ctx, duk_idx_t index);
 
-struct imagelock
+struct image_lock
 {
 	color_t*  pixels;
 	ptrdiff_t pitch;

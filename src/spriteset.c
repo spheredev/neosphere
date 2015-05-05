@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "atlas.h"
 #include "image.h"
 
 #include "spriteset.h"
@@ -57,7 +58,7 @@ static duk_ret_t js_Spriteset_clone        (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_image    (duk_context* ctx);
 static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 
-static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
+static const spriteset_pose_t* find_sprite_pose    (const spriteset_t* spriteset, const char* pose_name);
 
 spriteset_t*
 clone_spriteset(const spriteset_t* spriteset)
@@ -113,6 +114,7 @@ load_spriteset(const char* path)
 		"south", "southwest", "west", "northwest"
 	};
 	
+	atlas_t*            atlas = NULL;
 	char*               base_path;
 	struct rss_dir_v2   dir_v2;
 	struct rss_dir_v3   dir_v3;
@@ -122,6 +124,7 @@ load_spriteset(const char* path)
 	struct rss_frame_v3 frame_v3;
 	FILE*               file = NULL;
 	int                 image_index;
+	int                 max_width = 0, max_height = 0;
 	struct rss_header   rss;
 	long                skip_size;
 	spriteset_t*        spriteset = NULL;
@@ -146,10 +149,15 @@ load_spriteset(const char* path)
 			spriteset->poses[i].name = lstring_from_cstr(def_dir_names[i]);
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
+		if (!(atlas = create_atlas(spriteset->num_images, rss.frame_width, rss.frame_height)))
+			goto on_error;
+		lock_atlas(atlas);
 		for (i = 0; i < spriteset->num_images; ++i) {
-			if ((spriteset->images[i] = read_image(file, rss.frame_width, rss.frame_height)) == NULL)
+			if (!(spriteset->images[i] = read_atlas_image(atlas, file, i, rss.frame_width, rss.frame_height)))
 				goto on_error;
 		}
+		unlock_atlas(atlas);
+		free_atlas(atlas);
 		for (i = 0; i < spriteset->num_poses; ++i) {
 			if ((spriteset->poses[i].frames = calloc(8, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
@@ -179,6 +187,8 @@ load_spriteset(const char* path)
 			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
 				if (fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
+				max_width = fmax(rss.frame_width != 0 ? rss.frame_width : frame_v2.width, max_width);
+				max_height = fmax(rss.frame_height != 0 ? rss.frame_height : frame_v2.height, max_height);
 				skip_size = (rss.frame_width != 0 ? rss.frame_width : frame_v2.width)
 					* (rss.frame_height != 0 ? rss.frame_height : frame_v2.height)
 					* 4;
@@ -189,15 +199,18 @@ load_spriteset(const char* path)
 			goto on_error;
 
 		// pass 2 - read images and frame data
+		if (!(atlas = create_atlas(spriteset->num_images, max_width, max_height)))
+			goto on_error;
 		fseek(file, v2_data_offset, SEEK_SET);
 		image_index = 0;
+		lock_atlas(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			for (j = 0; j < dir_v2.num_frames; ++j) {
 				if (fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
-				spriteset->images[image_index] = read_image(file,
+				spriteset->images[image_index] = read_atlas_image(atlas, file, image_index,
 					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
 					rss.frame_height != 0 ? rss.frame_height : frame_v2.height);
 				spriteset->poses[i].frames[j].image_idx = image_index;
@@ -205,6 +218,8 @@ load_spriteset(const char* path)
 				++image_index;
 			}
 		}
+		unlock_atlas(atlas);
+		free_atlas(atlas);
 		break;
 	case 3: // RSSv3, can be done in a single pass thankfully
 		spriteset->num_images = rss.num_images;
@@ -213,10 +228,15 @@ load_spriteset(const char* path)
 			goto on_error;
 		if ((spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t))) == NULL)
 			goto on_error;
+		if (!(atlas = create_atlas(spriteset->num_images, rss.frame_width, rss.frame_height)))
+			goto on_error;
+		lock_atlas(atlas);
 		for (i = 0; i < rss.num_images; ++i) {
-			if ((spriteset->images[i] = read_image(file, rss.frame_width, rss.frame_height)) == NULL)
+			if (!(spriteset->images[i] = read_atlas_image(atlas, file, i, rss.frame_width, rss.frame_height)))
 				goto on_error;
 		}
+		unlock_atlas(atlas);
+		free_atlas(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (fread(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
 				goto on_error;
@@ -258,6 +278,10 @@ on_error:
 			free(spriteset->poses);
 		}
 		free(spriteset);
+	}
+	if (atlas != NULL) {
+		unlock_atlas(atlas);
+		free_atlas(atlas);
 	}
 	return NULL;
 }

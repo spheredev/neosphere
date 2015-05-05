@@ -76,7 +76,7 @@ load_font(const char* path)
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
 	uint8_t*                grayscale;
-	imagelock_t             lock;
+	image_lock_t*           lock;
 	int                     max_x = 0, max_y = 0;
 	int                     min_width = INT_MAX;
 	int64_t                 n_glyphs_per_row;
@@ -123,7 +123,7 @@ load_font(const char* path)
 
 	// pass 2: load glyph data
 	fseek(file, glyph_start, SEEK_SET);
-	lock_image(atlas, &lock);
+	if (!(lock = lock_image(atlas))) goto on_error;
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
 		if (fread(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
@@ -138,11 +138,11 @@ load_font(const char* path)
 			if (fread(grayscale, glyph_hdr.width * glyph_hdr.height, 1, file) != 1)
 				goto on_error;
 			psrc = grayscale;
-			pdest = lock.pixels + atlas_x + atlas_y * lock.pitch;
+			pdest = lock->pixels + atlas_x + atlas_y * lock->pitch;
 			for (y = 0; y < glyph_hdr.height; ++y) {
 				for (x = 0; x < glyph_hdr.width; ++x)
 					pdest[x] = rgba(psrc[x], psrc[x], psrc[x], 255);
-				pdest += lock.pitch;
+				pdest += lock->pitch;
 				psrc += glyph_hdr.width;
 			}
 			break;
@@ -165,6 +165,7 @@ on_error:
 		free(font->glyphs);
 		free(font);
 	}
+	if (lock != NULL) unlock_image(atlas, lock);
 	if (atlas != NULL) free_image(atlas);
 	return NULL;
 }

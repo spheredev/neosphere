@@ -2,6 +2,7 @@ msphere_sources = [
 	"duktape.c",
 	"dyad.c",
 	"api.c",
+	"atlas.c",
 	"bytearray.c",
 	"color.c",
 	"file.c",
@@ -26,6 +27,7 @@ msphere_sources = [
 	"spriteset.c",
 	"surface.c",
 	"tileset.c",
+	"vector.c",
 	"windowstyle.c"
 ]
 
