@@ -733,10 +733,15 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 static bool
 change_map(const char* filename, bool preserve_persons)
 {
+	// note: if an error is detected during a map change, change_map() will return false, but
+	//       the map engine may be left in an inconsistent state. it is therefore probably wise
+	//       to consider such a situation unrecoverable.
+	
 	struct map*        map;
 	char*              path;
 	person_t*          person;
 	struct map_person* person_info;
+	spriteset_t*       spriteset;
 
 	int i;
 
@@ -761,7 +766,12 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		person = create_person(person_info->name->cstr, person_info->spriteset->cstr, false, NULL);
+		path = get_asset_path(lstring_cstr(person_info->spriteset), "spritesets", false);
+		if (!(spriteset = load_spriteset(path)))
+			goto on_error;
+		free(path);
+		if (!(person = create_person(person_info->name->cstr, spriteset, false, NULL)))
+			goto on_error;
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
 		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
 		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
@@ -785,6 +795,10 @@ change_map(const char* filename, bool preserve_persons)
 
 	s_frames = 0;
 	return true;
+
+on_error:
+	free_map(s_map);
+	return false;
 }
 
 static int

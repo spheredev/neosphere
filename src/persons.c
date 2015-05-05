@@ -170,10 +170,9 @@ shutdown_persons_manager(void)
 }
 
 person_t*
-create_person(const char* name, const char* sprite_file, bool is_persistent, script_t* create_script)
+create_person(const char* name, spriteset_t* spriteset, bool is_persistent, script_t* create_script)
 {
 	point3_t  map_origin = get_map_origin();
-	char*     path;
 	person_t* person;
 
 	if (++s_num_persons > s_max_persons) {
@@ -182,10 +181,8 @@ create_person(const char* name, const char* sprite_file, bool is_persistent, scr
 	}
 	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
 	person->id = s_next_person_id++;
+	person->sprite = ref_spriteset(spriteset);
 	set_person_name(person, name);
-	path = get_asset_path(sprite_file, "spritesets", false);
-	person->sprite = load_spriteset(path);
-	free(path);
 	set_person_direction(person, person->sprite->poses[0].name->cstr);
 	person->is_persistent = is_persistent;
 	person->is_visible = true;
@@ -1021,16 +1018,30 @@ init_persons_api(void)
 static duk_ret_t
 js_CreatePerson(duk_context* ctx)
 {
-	bool        destroy_with_map;
-	const char* name;
-	person_t*   person;
-	const char* sprite_file;
+	const char* name = duk_require_string(ctx, 0);
+	spriteset_t* spriteset;
+	bool destroy_with_map = duk_require_boolean(ctx, 2);
 
-	name = duk_require_string(ctx, 0);
-	sprite_file = duk_require_string(ctx, 1);
-	destroy_with_map = duk_require_boolean(ctx, 2);
-	if (!(person = create_person(name, sprite_file, !destroy_with_map, NULL)))
+	const char* filename;
+	char*       path;
+	person_t*   person;
+
+	if (duk_is_sphere_obj(ctx, 1, "Spriteset"))
+		// ref the spriteset so we can safely free it later. this avoids
+		// having to check the argument type again.
+		spriteset = ref_spriteset(duk_require_sphere_obj(ctx, 1, "Spriteset"));
+	else {
+		filename = duk_require_string(ctx, 1);
+		path = get_asset_path(filename, "spritesets", false);
+		if (!(spriteset = load_spriteset(path)))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to load sprite file '%s'", filename);
+		free(path);
+	}
+
+	// create the person and its JS-side data object
+	if (!(person = create_person(name, spriteset, !destroy_with_map, NULL)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to create person");
+	free_spriteset(spriteset);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
