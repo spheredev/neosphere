@@ -10,6 +10,7 @@ struct image
 	int             refcount;
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
+	unsigned int    cache_hits;
 	imagelock_t     lock;
 	unsigned int    lock_count;
 	uint32_t*       pixel_cache;
@@ -249,6 +250,7 @@ free_image(image_t* image)
 	if (image == NULL || --image->refcount > 0)
 		return;
 	printf("[image %u] refcount 0, freeing image\n", image->id);
+	uncache_pixels(image);
 	al_destroy_bitmap(image->bitmap);
 	free_image(image->parent);
 	free(image);
@@ -285,6 +287,7 @@ get_image_pixel(image_t* image, int x, int y)
 		g = pixel >> 8 & 0xFF;
 		b = pixel & 0xFF;
 		alpha = pixel >> 24 & 0xFF;
+		++image->cache_hits;
 	}
 	return rgba(r, g, b, alpha);
 }
@@ -422,7 +425,7 @@ lock_image(image_t* image, imagelock_t* out_lock)
 	ALLEGRO_LOCKED_REGION* lock;
 
 	if (image->lock_count == 0) {
-		if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY)))
+		if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE)))
 			goto on_error;
 		image->lock.pixels = lock->data;
 		image->lock.pitch = lock->pitch / 4;
@@ -520,8 +523,9 @@ cache_pixels(image_t* image)
 		pdest = cache + i * image->width;
 		memcpy(pdest, psrc, image->width * 4);
 	}
-	image->pixel_cache = cache;
 	al_unlock_bitmap(image->bitmap);
+	image->pixel_cache = cache;
+	image->cache_hits = 0;
 	return;
 	
 on_error:
@@ -534,7 +538,7 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
-	printf("[image %u] Pixel cache invalidated\n", image->id);
+	printf("[image %u] Pixel cache freed, hits: %u\n", image->id, image->cache_hits);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
 }
