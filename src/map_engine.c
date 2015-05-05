@@ -495,8 +495,8 @@ load_map(const char* path)
 				++map->num_persons;
 				person = &map->persons[map->num_persons - 1];
 				memset(person, 0, sizeof(struct map_person));
-				if ((person->name = read_lstring(file, true)) == NULL) goto on_error;
-				if ((person->spriteset = read_lstring(file, true)) == NULL) goto on_error;
+				if (!(person->name = read_lstring(file, true))) goto on_error;
+				if (!(person->spriteset = read_lstring(file, true))) goto on_error;
 				person->x = entity_hdr.x; person->y = entity_hdr.y; person->z = entity_hdr.z;
 				if (fread(&count, 2, 1, file) != 1 || count < 5) goto on_error;
 				person->create_script = read_lstring(file, false);

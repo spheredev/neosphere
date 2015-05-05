@@ -77,7 +77,7 @@ load_windowstyle(const char* path)
 		for (i = 0; i < 9; ++i) {
 			if (fread(&w, 2, 1, file) != 1 || fread(&h, 2, 1, file) != 1)
 				goto on_error;
-			if ((image = read_image(file, w, h)) == NULL) goto on_error;
+			if (!(image = read_image(file, w, h))) goto on_error;
 			winstyle->images[i] = image;
 		}
 		break;

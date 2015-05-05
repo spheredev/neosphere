@@ -35,13 +35,10 @@ free_vector(vector_t* vector)
 	free(vector);
 }
 
-void
-get_vector_item(const vector_t* vector, size_t index, void* out_object)
+void*
+get_vector_item(const vector_t* vector, size_t index)
 {
-	unsigned char* p;
-
-	p = vector->buffer + index * vector->pitch;
-	memcpy(out_object, p, vector->pitch);
+	return vector->buffer + index * vector->pitch;
 }
 
 void

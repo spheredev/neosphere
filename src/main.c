@@ -654,6 +654,7 @@ initialize_engine(void)
 	initialize_rng();
 	initialize_galileo();
 	initialize_input();
+	initialize_spritesets();
 	initialize_map_engine();
 	initialize_sound();
 
@@ -700,6 +701,7 @@ shutdown_engine(void)
 	printf("Shutting down Dyad\n");
 	dyad_shutdown();
 	
+	shutdown_spritesets();
 	shutdown_galileo();
 	shutdown_sound();
 	

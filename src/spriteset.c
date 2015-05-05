@@ -2,6 +2,7 @@
 #include "api.h"
 #include "atlas.h"
 #include "image.h"
+#include "vector.h"
 
 #include "spriteset.h"
 
@@ -60,6 +61,30 @@ static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 
 static const spriteset_pose_t* find_sprite_pose    (const spriteset_t* spriteset, const char* pose_name);
 
+static vector_t* s_load_cache;
+
+void
+initialize_spritesets(void)
+{
+	printf("Initializing spriteset manager\n");
+	s_load_cache = new_vector(sizeof(spriteset_t*));
+}
+
+void
+shutdown_spritesets(void)
+{
+	iter_t        iter;
+	spriteset_t** pspriteset;
+	
+	printf("Shutting down spriteset manager\n");
+	if (s_load_cache != NULL) {
+		iter = iterate_vector(s_load_cache);
+		while (pspriteset = next_vector_item(&iter))
+			free_spriteset(*pspriteset);
+		free_vector(s_load_cache);
+	}
+}
+
 spriteset_t*
 clone_spriteset(const spriteset_t* spriteset)
 {
@@ -115,11 +140,9 @@ load_spriteset(const char* path)
 	};
 	
 	atlas_t*            atlas = NULL;
-	char*               base_path;
 	struct rss_dir_v2   dir_v2;
 	struct rss_dir_v3   dir_v3;
 	char                extra_v2_dir_name[32];
-	ALLEGRO_PATH*       filename_path;
 	struct rss_frame_v2 frame_v2;
 	struct rss_frame_v3 frame_v3;
 	FILE*               file = NULL;
@@ -129,13 +152,32 @@ load_spriteset(const char* path)
 	long                skip_size;
 	spriteset_t*        spriteset = NULL;
 	long                v2_data_offset;
-	int                 i, j;
+	spriteset_t*        *pspriteset;
+	
+	iter_t iter;
+	int i, j;
 
+	// check load cache to see if we loaded this file once already
+	if (s_load_cache != NULL) {
+		iter = iterate_vector(s_load_cache);
+		while (pspriteset = next_vector_item(&iter)) {
+			if (strcmp(path, (*pspriteset)->path) == 0) {
+				printf("In cache: %s\n", path);
+				return clone_spriteset(*pspriteset);
+			}
+		}
+	}
+	else
+		s_load_cache = new_vector(sizeof(spriteset_t*));
+	
+	// filename not in load pool, load the spriteset
+	printf("Cache miss! %s\n", path);
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
 	if (!(file = fopen(path, "rb"))) goto on_error;
 	if (fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
+	if (!(spriteset->path = strdup(path))) goto on_error;
 	spriteset->base.x1 = rss.base_x1;
 	spriteset->base.y1 = rss.base_y1;
 	spriteset->base.x2 = rss.base_x2;
@@ -257,14 +299,10 @@ load_spriteset(const char* path)
 	}
 	fclose(file);
 	
-	// get spriteset path relative to game directory
-	base_path = get_asset_path("~/", NULL, false);
-	path += strstr(path, base_path) ? strlen(base_path) : 0;
-	filename_path = al_create_path(path);
-	spriteset->filename = lstring_from_cstr(al_path_cstr(filename_path, '/'));
-	al_destroy_path(filename_path);
-	free(base_path);
-	
+	if (s_load_cache != NULL) {
+		ref_spriteset(spriteset);
+		push_back_vector(s_load_cache, &spriteset);
+	}
 	return ref_spriteset(spriteset);
 
 on_error:
@@ -309,7 +347,7 @@ free_spriteset(spriteset_t* spriteset)
 		free_lstring(spriteset->poses[i].name);
 	}
 	free(spriteset->poses);
-	free_lstring(spriteset->filename);
+	free(spriteset->path);
 	free(spriteset);
 }
 
@@ -532,12 +570,20 @@ js_Spriteset_finalize(duk_context* ctx)
 static duk_ret_t
 js_Spriteset_get_filename(duk_context* ctx)
 {
-	spriteset_t* spriteset;
+	char*         base_path;
+	const char*   filename;
+	spriteset_t*  spriteset;
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
-	duk_push_string(ctx, lstring_cstr(spriteset->filename));
+	
+	// get spriteset path relative to game directory
+	filename = spriteset->path;
+	base_path = get_asset_path("~/", NULL, false);
+	filename += strstr(filename, base_path) ? strlen(base_path) : 0;
+	free(base_path);
+	duk_push_string(ctx, filename);
 	return 1;
 }
 

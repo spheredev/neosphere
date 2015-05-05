@@ -6,7 +6,7 @@ typedef struct iter   iter_t;
 
 vector_t* new_vector         (size_t pitch);
 void      free_vector        (vector_t* vector);
-void      get_vector_item    (const vector_t* vector, size_t index, void* out_object);
+void*     get_vector_item    (const vector_t* vector, size_t index);
 void      set_vector_item    (vector_t* vector, size_t index, const void* in_object);
 size_t    get_vector_size    (const vector_t* vector);
 void      clear_vector       (vector_t* vector);

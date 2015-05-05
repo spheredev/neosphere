@@ -25,13 +25,15 @@ struct spriteset
 {
 	int              refcount;
 	rect_t           base;
-	lstring_t*       filename;
+	char*            path;
 	int              num_images;
 	int              num_poses;
 	image_t*         *images;
 	spriteset_pose_t *poses;
 };
 
+extern void         initialize_spritesets   (void);
+extern void         shutdown_spritesets     (void);
 extern spriteset_t* clone_spriteset         (const spriteset_t* spriteset);
 extern spriteset_t* load_spriteset          (const char* path);
 extern spriteset_t* ref_spriteset           (spriteset_t* spriteset);
