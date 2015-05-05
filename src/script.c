@@ -143,5 +143,5 @@ script_from_js_function(void* heapptr)
 	duk_put_prop_index(g_duk, -2, script->id);
 	duk_pop_2(g_duk);
 
-	return script;
+	return ref_script(script);
 }
