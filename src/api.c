@@ -66,7 +66,7 @@ initialize_api(duk_context* ctx)
 	console_log(0, "Initializing Sphere API\n");
 
 	s_user_agent = new_lstring("v%.1f (compatible; %s)", SPHERE_API_VERSION, ENGINE_NAME);
-	console_log(1, "  Sphere %s\n", lstring_cstr(s_user_agent));
+	console_log(0, "  %s\n", lstring_cstr(s_user_agent));
 
 	// register API extensions
 	s_extensions = new_vector(sizeof(char*));
@@ -763,7 +763,7 @@ js_Print(duk_context* ctx)
 {
 	const char* text = duk_safe_to_string(ctx, 0);
 	
-	printf("%s\n", text);
+	console_log(0, "%s\n", text);
 	return 0;
 }
 

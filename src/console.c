@@ -15,6 +15,19 @@ void
 shutdown_console(void)
 {
 	printf("Shutting down console logger\n");
+	s_log_level = -1;
+}
+
+int
+get_log_level(void)
+{
+	return s_log_level;
+}
+
+void
+set_log_level(int log_level)
+{
+	s_log_level = log_level;
 }
 
 void

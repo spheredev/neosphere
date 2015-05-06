@@ -68,7 +68,7 @@ static unsigned int s_num_cache_hits = 0;
 void
 initialize_spritesets(void)
 {
-	console_log(0, "Initializing spriteset manager\n");
+	console_log(1, "Initializing spriteset manager\n");
 	s_load_cache = new_vector(sizeof(spriteset_t*));
 }
 
@@ -78,9 +78,9 @@ shutdown_spritesets(void)
 	iter_t        iter;
 	spriteset_t** p_spriteset;
 	
-	console_log(0, "Shutting down spriteset manager\n");
-	console_log(1, "  Objects created: %u\n", s_next_id);
-	console_log(1, "  Cache hits: %u\n", s_num_cache_hits);
+	console_log(1, "Shutting down spriteset manager\n");
+	console_log(2, "  Objects created: %u\n", s_next_id);
+	console_log(2, "  Cache hits: %u\n", s_num_cache_hits);
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter))
@@ -167,7 +167,7 @@ load_spriteset(const char* path)
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter)) {
 			if (strcmp(path, (*p_spriteset)->path) == 0) {
-				console_log(2, "In cache: %s\n", path);
+				console_log(2, "engine: Spriteset in cache: %s\n", path);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
@@ -177,7 +177,7 @@ load_spriteset(const char* path)
 		s_load_cache = new_vector(sizeof(spriteset_t*));
 	
 	// filename not in load pool, load the spriteset
-	console_log(2, "Cache miss! %s\n", path);
+	console_log(2, "engine: Loading spriteset %s\n", path);
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
 	if (!(file = fopen(path, "rb"))) goto on_error;
 	if (fread(&rss, sizeof(struct rss_header), 1, file) != 1)

@@ -59,7 +59,7 @@ create_image(int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(2, "[image %u] Created %i x %i image\n", image->id, image->width, image->height);
+	console_log(3, "engine: Created new %i*%i image [%u]\n", image->width, image->height, image->id);
 	return ref_image(image);
 
 on_error:
@@ -79,7 +79,7 @@ create_subimage(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = ref_image(parent);
-	console_log(2, "[image %u] Created %i x %i subimage\n", image->id, image->width, image->height);
+	console_log(3, "engine: Created %i*%i subimage [%u -> %u]\n", image->width, image->height, parent->id, image->id);
 	return ref_image(image);
 
 on_error:
@@ -112,7 +112,7 @@ clone_image(const image_t* src_image)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(2, "[image %u] Created %i x %i image via clone\n", image->id, image->width, image->height);
+	console_log(3, "engine: Created %i*%i image via clone [%u -> %u]\n", image->width, image->height, src_image->id, image->id);
 	return ref_image(image);
 
 on_error:
@@ -136,7 +136,7 @@ clone_surface(const image_t* src_image)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(2, "[image %u] Created %i x %i image via clone\n", image->id, image->width, image->height);
+	console_log(3, "engine: Created %i*%i surface via clone [%u -> %u]\n", image->width, image->height, src_image->id, image->id);
 	return ref_image(image);
 
 on_error:
@@ -157,7 +157,7 @@ load_image(const char* path)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(2, "[image %u] Loaded %i x %i image\n", image->id, image->width, image->height);
+	console_log(2, "engine: Loaded %i*%i image %s [%u]\n", image->width, image->height, path, image->id);
 	return ref_image(image);
 
 on_error:
@@ -191,7 +191,7 @@ read_image(FILE* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(2, "[image %u] Read %i x %i image from file\n", image->id, image->width, image->height);
+	console_log(3, "engine: Read %i*%i image from open file [%u]\n", image->width, image->height, image->id);
 	return ref_image(image);
 
 on_error:
@@ -246,7 +246,7 @@ free_image(image_t* image)
 {
 	if (image == NULL || --image->refcount > 0)
 		return;
-	console_log(2, "[image %u] Freeing image (refcount == 0)\n", image->id);
+	console_log(3, "image %u: No more references, freeing image\n", image->id);
 	uncache_pixels(image);
 	al_destroy_bitmap(image->bitmap);
 	free_image(image->parent);
@@ -270,7 +270,7 @@ color_t
 get_image_pixel(image_t* image, int x, int y)
 {
 	if (image->pixel_cache == NULL) {
-		console_log(2, "[image %u] get_image_pixel() cache miss!\n", image->id);
+		console_log(4, "image %u: get_image_pixel() cache miss!\n", image->id);
 		cache_pixels(image);
 	}
 	else
@@ -501,7 +501,7 @@ cache_pixels(image_t* image)
 		goto on_error;
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;
-	console_log(2, "[image %u] Creating pixel cache\n", image->id);
+	console_log(4, "image %u: Creating new pixel cache\n", image->id);
 	for (i = 0; i < image->height; ++i) {
 		psrc = lock->pixels + i * lock->pitch;
 		pdest = cache + i * image->width;
@@ -522,9 +522,9 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
+	console_log(4, "image %u: Pixel cache invalidated, hits: %u\n", image->id, image->cache_hits);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
-	console_log(2, "[image %u] Pixel cache freed, hits: %u\n", image->id, image->cache_hits);
 }
 
 void

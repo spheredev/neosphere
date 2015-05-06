@@ -90,7 +90,7 @@ initialize_input(void)
 
 	int i;
 
-	printf("Initializing input\n");
+	console_log(1, "Initializing input\n");
 	
 	al_install_keyboard();
 	al_install_mouse();
@@ -119,7 +119,7 @@ shutdown_input(void)
 	
 	iter_t iter;
 
-	printf("Shutting down input\n");
+	console_log(1, "Shutting down input\n");
 
 	// free bound key scripts
 	iter = iterate_vector(s_bound_buttons);

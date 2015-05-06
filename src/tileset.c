@@ -1,4 +1,5 @@
 #include "minisphere.h"
+#include "atlas.h"
 #include "image.h"
 #include "obsmap.h"
 
@@ -6,9 +7,10 @@
 
 struct tileset
 {
-	int         width, height;
-	int         num_tiles;
-	struct tile *tiles;
+	unsigned int id;
+	int          width, height;
+	int          num_tiles;
+	struct tile  *tiles;
 };
 
 struct tile
@@ -52,6 +54,8 @@ struct rts_tile_header
 };
 #pragma pack(pop)
 
+static unsigned int s_next_object_id = 0;
+
 tileset_t*
 load_tileset(const char* path)
 {
@@ -61,26 +65,22 @@ load_tileset(const char* path)
 	if ((file = fopen(path, "rb")) == NULL) return NULL;
 	tileset = read_tileset(file);
 	fclose(file);
+	console_log(2, "engine: Loaded tileset %s [%u]\n", path, tileset->id);
 	return tileset;
 }
 
 tileset_t*
 read_tileset(FILE* file)
 {
-	image_t*               atlas = NULL;
-	int                    atlas_w, atlas_h;
-	int                    atlas_x, atlas_y;
+	atlas_t*               atlas = NULL;
 	long                   file_pos;
-	ALLEGRO_LOCKED_REGION* lock;
-	int                    n_tiles_per_row;
 	struct rts_header      rts;
 	rect_t                 segment;
 	struct rts_tile_header tilehdr;
 	struct tile*           tiles = NULL;
 	tileset_t*             tileset = NULL;
-	void                   *pdest;
 
-	int i, j, i_y;
+	int i, j;
 
 	memset(&rts, 0, sizeof(struct rts_header));
 	
@@ -94,30 +94,15 @@ read_tileset(FILE* file)
 	if (rts.tile_bpp != 32) goto on_error;
 	if (!(tiles = calloc(rts.num_tiles, sizeof(struct tile)))) goto on_error;
 	
-	// prepare the tile atlas
-	n_tiles_per_row = ceil(sqrt(rts.num_tiles));
-	atlas_w = rts.tile_width * n_tiles_per_row;
-	atlas_h = rts.tile_height * n_tiles_per_row;
-	if (!(atlas = create_image(atlas_w, atlas_h))) goto on_error;
-	if (!(lock = al_lock_bitmap(get_image_bitmap(atlas), ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY)))
+	// read in all the tile bitmaps (use atlasing)
+	if (!(atlas = create_atlas(rts.num_tiles, rts.tile_width, rts.tile_height)))
 		goto on_error;
-
-	// read in tile bitmaps
-	for (i = 0; i < rts.num_tiles; ++i) {
-		atlas_x = i % n_tiles_per_row * rts.tile_width;
-		atlas_y = i / n_tiles_per_row * rts.tile_height;
-		if (!(tiles[i].image = create_subimage(atlas, atlas_x, atlas_y, rts.tile_width, rts.tile_height)))
+	lock_atlas(atlas);
+	for (i = 0; i < rts.num_tiles; ++i)
+		if (!(tiles[i].image = read_atlas_image(atlas, file, i, rts.tile_width, rts.tile_height)))
 			goto on_error;
-		for (i_y = 0; i_y < rts.tile_height; ++i_y) {
-			pdest = (uint8_t*)lock->data
-				+ atlas_x * 4
-				+ (i_y + atlas_y) * lock->pitch;
-			if (fread(pdest, rts.tile_width * 4, 1, file) != 1)
-				goto on_error;
-		}
-	}
-
-	al_unlock_bitmap(get_image_bitmap(atlas));
+	unlock_atlas(atlas);
+	free_atlas(atlas);
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
@@ -149,11 +134,12 @@ read_tileset(FILE* file)
 	}
 
 	// wrap things up
-	free_image(atlas);
+	tileset->id = s_next_object_id++;
 	tileset->width = rts.tile_width;
 	tileset->height = rts.tile_height;
 	tileset->num_tiles = rts.num_tiles;
 	tileset->tiles = tiles;
+	console_log(3, "engine: Read %i tiles from file [%u]\n", tileset->num_tiles, tileset->id);
 	return tileset;
 
 on_error:  // oh no!
@@ -166,9 +152,7 @@ on_error:  // oh no!
 		}
 		free(tileset->tiles);
 	}
-	if (lock != NULL)
-		al_unlock_bitmap(get_image_bitmap(atlas));
-	free_image(atlas);
+	free_atlas(atlas);
 	free(tileset);
 	return NULL;
 }
@@ -178,6 +162,7 @@ free_tileset(tileset_t* tileset)
 {
 	int i;
 
+	console_log(3, "tileset %u: Freeing tileset", tileset->id);
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		free_lstring(tileset->tiles[i].name);
 		free_image(tileset->tiles[i].image);

@@ -94,12 +94,11 @@ main(int argc, char* argv[])
 	ALLEGRO_BITMAP*      icon;
 	char*                icon_path;
 	int                  line_num;
-	int                  log_level = 0;
+	int                  log_level;
 	int                  max_skips;
 	char*                p_strtol;
 	char*                path;
 	ALLEGRO_TRANSFORM    trans;
-	int                  value;
 	
 	int i;
 
@@ -107,13 +106,15 @@ main(int argc, char* argv[])
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
+	initialize_console(1);
+	
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 	
 	// determine location of game.sgm and try to load it
 	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 	al_append_path_component(g_game_path, "startup");
-	printf("Parsing command line\n");
+	console_log(0, "Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game.sgm path or game directory
 		al_destroy_path(g_game_path);
@@ -137,9 +138,9 @@ main(int argc, char* argv[])
 				}
 			}
 			if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
-				errno = 0; value = strtol(argv[i + 1], &p_strtol, 10);
+				errno = 0; log_level = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
-					log_level = value;
+					set_log_level(fmax(log_level, 0));
 			}
 			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
 				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
@@ -159,14 +160,13 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	printf("Finished parsing command line\n");
-	printf("  Game path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-	printf("  Maximum consecutive frame skips: %i\n", s_max_frameskip);
-	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	printf("  Console verbosity level: %i\n", log_level);
+	console_log(1, "  Game path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	console_log(1, "  Maximum consecutive frame skips: %i\n", s_max_frameskip);
+	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	console_log(1, "  Console verbosity level: %i\n", get_log_level());
 
 	// set up jump points for script bailout
-	printf("Setting up jump points for longjmp\n");
+	console_log(1, "Setting up jump points for longjmp\n");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
@@ -191,10 +191,8 @@ main(int argc, char* argv[])
 		free(game_path);
 	}
 
-	initialize_console(log_level);
-
 	// locate game.sgm
-	printf("Searching for SGM file\n");
+	console_log(0, "Searching for SGM file\n");
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
 	char* sgm_path = get_asset_path("game.sgm", NULL, false);
@@ -221,10 +219,10 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	printf("Found SGM at: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	console_log(1, "Found SGM at: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
-	printf("Creating render window\n");
+	console_log(1, "Creating render window\n");
 	icon_path = get_asset_path("icon.png", NULL, false);
 	icon = al_load_bitmap(icon_path);
 	free(icon_path);
@@ -248,7 +246,7 @@ main(int argc, char* argv[])
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
 	
 	// attempt to locate and load system font
-	printf("Loading system font\n");
+	console_log(1, "Loading system font\n");
 	if (g_sys_conf != NULL) {
 		filename = al_get_config_value(g_sys_conf, NULL, "Font");
 		path = get_sys_asset_path(filename, "system");
@@ -276,7 +274,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	printf("Calling game()\n");
+	console_log(0, "\nCalling game()\n");
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
 	exec_result = duk_pcompile_file(g_duk, 0x0, path);
 	free(path);
@@ -645,7 +643,7 @@ initialize_engine(void)
 	srand(time(NULL));
 	
 	// initialize Allegro
-	printf("Initializing Allegro\n");
+	console_log(0, "Initializing Allegro\n");
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon()) goto on_error;
@@ -653,12 +651,12 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
-	printf("Initializing Dyad\n");
+	console_log(0, "Initializing Dyad\n");
 	dyad_init();
 	dyad_setUpdateTimeout(0.001);
 
 	// load system configuraton
-	printf("Loading system configuration\n");
+	console_log(1, "Loading system configuration\n");
 	path = get_sys_asset_path("system.ini", "system");
 	g_sys_conf = al_load_config_file(path);
 	free(path);
@@ -671,7 +669,7 @@ initialize_engine(void)
 	initialize_sound();
 
 	// initialize JavaScript API
-	printf("Creating Duktape context\n");
+	console_log(0, "Creating Duktape context\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
 	initialize_api(g_duk);
@@ -707,17 +705,17 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	shutdown_input();
 	
-	printf("Shutting down Duktape\n");
+	console_log(0, "Shutting down Duktape\n");
 	duk_destroy_heap(g_duk);
 	
-	printf("Shutting down Dyad\n");
+	console_log(0, "Shutting down Dyad\n");
 	dyad_shutdown();
 	
 	shutdown_spritesets();
 	shutdown_galileo();
 	shutdown_sound();
 	
-	printf("Shutting down Allegro\n");
+	console_log(0, "Shutting down Allegro\n");
 	al_destroy_display(g_display);
 	al_destroy_event_queue(g_events);
 	al_destroy_config(g_game_conf);
