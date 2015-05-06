@@ -117,21 +117,21 @@ free_group(group_t* group)
 shape_t*
 get_group_shape(const group_t* group, int index)
 {
-	shape_t* *pshape;
+	shape_t* *p_shape;
 
-	pshape = get_vector_item(group->shapes, index);
-	return *pshape;
+	p_shape = get_vector_item(group->shapes, index);
+	return *p_shape;
 }
 
 void
 set_group_shape(group_t* group, int index, shape_t* shape)
 {
-	shape_t* *pold;
+	shape_t* *p_old_shape;
 
 	shape = ref_shape(shape);
-	pold = get_vector_item(group->shapes, index);
+	p_old_shape = get_vector_item(group->shapes, index);
 	set_vector_item(group->shapes, index, &shape);
-	free_shape(*pold);
+	free_shape(*p_old_shape);
 }
 
 bool

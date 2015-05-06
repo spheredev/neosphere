@@ -74,13 +74,13 @@ void
 shutdown_spritesets(void)
 {
 	iter_t        iter;
-	spriteset_t** pspriteset;
+	spriteset_t** p_spriteset;
 	
 	printf("Shutting down spriteset manager\n");
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
-		while (pspriteset = next_vector_item(&iter))
-			free_spriteset(*pspriteset);
+		while (p_spriteset = next_vector_item(&iter))
+			free_spriteset(*p_spriteset);
 		free_vector(s_load_cache);
 	}
 }
@@ -152,7 +152,7 @@ load_spriteset(const char* path)
 	long                skip_size;
 	spriteset_t*        spriteset = NULL;
 	long                v2_data_offset;
-	spriteset_t*        *pspriteset;
+	spriteset_t*        *p_spriteset;
 	
 	iter_t iter;
 	int i, j;
@@ -160,10 +160,10 @@ load_spriteset(const char* path)
 	// check load cache to see if we loaded this file once already
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
-		while (pspriteset = next_vector_item(&iter)) {
-			if (strcmp(path, (*pspriteset)->path) == 0) {
+		while (p_spriteset = next_vector_item(&iter)) {
+			if (strcmp(path, (*p_spriteset)->path) == 0) {
 				printf("In cache: %s\n", path);
-				return clone_spriteset(*pspriteset);
+				return clone_spriteset(*p_spriteset);
 			}
 		}
 	}
@@ -300,6 +300,11 @@ load_spriteset(const char* path)
 	fclose(file);
 	
 	if (s_load_cache != NULL) {
+		while (get_vector_size(s_load_cache) >= 10) {
+			p_spriteset = get_vector_item(s_load_cache, 0);
+			free_spriteset(*p_spriteset);
+			remove_vector_item(s_load_cache, 0);
+		}
 		ref_spriteset(spriteset);
 		push_back_vector(s_load_cache, &spriteset);
 	}
