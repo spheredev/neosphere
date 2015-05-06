@@ -308,6 +308,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClCompile Include="..\src\atlas.c" />
     <ClCompile Include="..\src\bytearray.c" />
     <ClCompile Include="..\src\color.c" />
+    <ClCompile Include="..\src\console.c" />
     <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\src\dyad.c" />
     <ClCompile Include="..\src\file.c" />
@@ -340,6 +341,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClInclude Include="..\src\atlas.h" />
     <ClInclude Include="..\src\bytearray.h" />
     <ClInclude Include="..\src\color.h" />
+    <ClInclude Include="..\src\console.h" />
     <ClInclude Include="..\src\duktape.h" />
     <ClInclude Include="..\src\dyad.h" />
     <ClInclude Include="..\src\file.h" />

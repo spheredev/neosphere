@@ -23,6 +23,7 @@
 #include <allegro5/allegro_primitives.h>
 #include "duktape.h"
 #include "dyad.h"
+#include "console.h"
 #include "font.h"
 #include "geometry.h"
 #include "lstring.h"

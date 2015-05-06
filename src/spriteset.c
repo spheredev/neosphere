@@ -61,12 +61,14 @@ static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 
 static const spriteset_pose_t* find_sprite_pose    (const spriteset_t* spriteset, const char* pose_name);
 
-static vector_t* s_load_cache;
+static vector_t*    s_load_cache;
+static unsigned int s_next_id = 0;
+static unsigned int s_num_cache_hits = 0;
 
 void
 initialize_spritesets(void)
 {
-	printf("Initializing spriteset manager\n");
+	console_log(0, "Initializing spriteset manager\n");
 	s_load_cache = new_vector(sizeof(spriteset_t*));
 }
 
@@ -76,7 +78,9 @@ shutdown_spritesets(void)
 	iter_t        iter;
 	spriteset_t** p_spriteset;
 	
-	printf("Shutting down spriteset manager\n");
+	console_log(0, "Shutting down spriteset manager\n");
+	console_log(1, "  Objects created: %u\n", s_next_id);
+	console_log(1, "  Cache hits: %u\n", s_num_cache_hits);
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter))
@@ -112,6 +116,7 @@ clone_spriteset(const spriteset_t* spriteset)
 		for (j = 0; j < spriteset->poses[i].num_frames; ++j)
 			clone->poses[i].frames[j] = spriteset->poses[i].frames[j];
 	}
+	clone->id = s_next_id++;
 	return ref_spriteset(clone);
 
 on_error:
@@ -162,7 +167,8 @@ load_spriteset(const char* path)
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter)) {
 			if (strcmp(path, (*p_spriteset)->path) == 0) {
-				printf("In cache: %s\n", path);
+				console_log(2, "In cache: %s\n", path);
+				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
 		}
@@ -171,7 +177,7 @@ load_spriteset(const char* path)
 		s_load_cache = new_vector(sizeof(spriteset_t*));
 	
 	// filename not in load pool, load the spriteset
-	printf("Cache miss! %s\n", path);
+	console_log(2, "Cache miss! %s\n", path);
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
 	if (!(file = fopen(path, "rb"))) goto on_error;
 	if (fread(&rss, sizeof(struct rss_header), 1, file) != 1)
@@ -308,6 +314,7 @@ load_spriteset(const char* path)
 		ref_spriteset(spriteset);
 		push_back_vector(s_load_cache, &spriteset);
 	}
+	spriteset->id = s_next_id++;
 	return ref_spriteset(spriteset);
 
 on_error:

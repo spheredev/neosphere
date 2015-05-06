@@ -5,6 +5,7 @@ msphere_sources = [
 	"atlas.c",
 	"bytearray.c",
 	"color.c",
+	"console.c",
 	"file.c",
 	"font.c",
 	"galileo.c",

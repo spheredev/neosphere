@@ -11,4 +11,4 @@ void     lock_atlas       (atlas_t* atlas);
 void     unlock_atlas     (atlas_t* atlas);
 image_t* read_atlas_image (atlas_t* atlas, FILE* file, int index, int width, int height);
 
-#endif
+#endif // MINISPHERE__ATLAS_H__INCLUDED

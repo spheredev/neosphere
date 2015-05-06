@@ -94,10 +94,12 @@ main(int argc, char* argv[])
 	ALLEGRO_BITMAP*      icon;
 	char*                icon_path;
 	int                  line_num;
+	int                  log_level = 0;
 	int                  max_skips;
 	char*                p_strtol;
 	char*                path;
 	ALLEGRO_TRANSFORM    trans;
+	int                  value;
 	
 	int i;
 
@@ -124,7 +126,9 @@ main(int argc, char* argv[])
 	else {
 		// more than one argument, perform full commandline parsing
 		for (i = 1; i < argc; ++i) {
-			if (strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "--game") == 0 && i < argc - 1) {
+			if ((strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "--game") == 0)
+				&& i < argc - 1)
+			{
 				al_destroy_path(g_game_path);
 				g_game_path = al_create_path(argv[i + 1]);
 				if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
@@ -132,7 +136,12 @@ main(int argc, char* argv[])
 					g_game_path = al_create_path_for_directory(argv[i + 1]);
 				}
 			}
-			if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
+			if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
+				errno = 0; value = strtol(argv[i + 1], &p_strtol, 10);
+				if (errno != ERANGE && *p_strtol == '\0')
+					log_level = value;
+			}
+			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
 				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
 					set_max_frameskip(max_skips);
@@ -154,7 +163,8 @@ main(int argc, char* argv[])
 	printf("  Game path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	printf("  Maximum consecutive frame skips: %i\n", s_max_frameskip);
 	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	
+	printf("  Console verbosity level: %i\n", log_level);
+
 	// set up jump points for script bailout
 	printf("Setting up jump points for longjmp\n");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
@@ -180,6 +190,8 @@ main(int argc, char* argv[])
 		g_game_path = al_create_path(game_path);
 		free(game_path);
 	}
+
+	initialize_console(log_level);
 
 	// locate game.sgm
 	printf("Searching for SGM file\n");

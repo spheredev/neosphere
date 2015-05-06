@@ -63,16 +63,16 @@ initialize_api(duk_context* ctx)
 
 	int i;
 
-	printf("Initializing Sphere API\n");
+	console_log(0, "Initializing Sphere API\n");
 
 	s_user_agent = new_lstring("v%.1f (compatible; %s)", SPHERE_API_VERSION, ENGINE_NAME);
-	printf("  Sphere %s\n", lstring_cstr(s_user_agent));
+	console_log(1, "  Sphere %s\n", lstring_cstr(s_user_agent));
 
 	// register API extensions
 	s_extensions = new_vector(sizeof(char*));
 	num_extensions = sizeof(SPHERE_EXTENSIONS) / sizeof(SPHERE_EXTENSIONS[0]);
 	for (i = 0; i < num_extensions; ++i) {
-		printf("  %s\n", SPHERE_EXTENSIONS[i]);
+		console_log(1, "  %s\n", SPHERE_EXTENSIONS[i]);
 		register_api_extension(SPHERE_EXTENSIONS[i]);
 	}
 
@@ -130,7 +130,7 @@ initialize_api(duk_context* ctx)
 void
 shutdown_api(void)
 {
-	printf("Shutting down Sphere API\n");
+	console_log(0, "Shutting down Sphere API\n");
 
 	free_lstring(s_user_agent);
 }

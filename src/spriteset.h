@@ -24,6 +24,7 @@ struct spriteset_pose
 struct spriteset
 {
 	int              refcount;
+	unsigned int     id;
 	rect_t           base;
 	char*            path;
 	int              num_images;

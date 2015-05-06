@@ -42,7 +42,7 @@ static unsigned int s_next_sound_id = 0;
 void
 initialize_sound(void)
 {
-	printf("Initializing audio\n");
+	console_log(0, "Initializing audio\n");
 	
 	al_install_audio();
 	al_init_acodec_addon();
@@ -53,7 +53,7 @@ initialize_sound(void)
 void
 shutdown_sound(void)
 {
-	printf("Shutting down audio\n");
+	console_log(0, "Shutting down audio\n");
 	
 	al_uninstall_audio();
 }

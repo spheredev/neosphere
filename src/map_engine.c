@@ -272,7 +272,7 @@ struct rmp_zone_header
 void
 initialize_map_engine(void)
 {
-	printf("Initializing map engine\n");
+	console_log(0, "Initializing map engine\n");
 	
 	initialize_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
@@ -296,7 +296,7 @@ shutdown_map_engine(void)
 {
 	int i;
 
-	printf("Shutting down map engine\n");
+	console_log(0, "Shutting down map engine\n");
 	
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
