@@ -1,5 +1,5 @@
 /**
- * minisphere Runtime 1.1b3 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
@@ -19,7 +19,7 @@ if (typeof IsSkippedFrame === 'undefined') {
 }
 
 // mini.Scenelet()
-// Registers a new miniscenes scenelet.
+// Registers a new scenelet.
 // Arguments:
 //     name: The name of the command. This should be a valid JavaScript identifier (alphanumeric, no spaces).
 //     code: An object defining the command's callback functions:
@@ -55,10 +55,10 @@ mini.Scenelet = function(name, code)
 };
 
 // initializer registration
-// Initializes Scenes when the user calls mini.initialize().
-mini.startup.add(mini.Scenes, function(params)
+// Initializes miniscenes when the user calls mini.initialize().
+mini.onStartUp.add(mini.Scenes, function(params)
 {
-	Print("mini: Initializing mini.Scenes");
+	Print("mini: Initializing miniscenes");
 	
 	this.activeScenes = [];
 	this.screenMask = new Color(0, 0, 0, 0);

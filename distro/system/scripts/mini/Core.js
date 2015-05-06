@@ -1,5 +1,5 @@
 /**
- * minisphere Runtime 1.1b3 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
@@ -71,10 +71,12 @@ mini.initialize = function(params)
 {
     Print("mini: Initializing minisphere Runtime");
     params = typeof params !== 'undefined' ? params : {};
-    mini.startup.invoke(params);
+    mini.onStartUp.invoke(params);
 }
 
-// mini.startup
+// mini.onStartUp
 // Invoked when the runtime is initialized. This is used by runtime
 // component scripts to provide encapsulation.
-mini.startup = new mini.Delegate();
+// Arguments:
+//     params: The `params` object which was passed to mini.initialize().
+mini.onStartUp = new mini.Delegate();

@@ -1,5 +1,5 @@
 /**
- * minisphere Runtime 1.1b3 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
@@ -80,14 +80,14 @@ if (typeof RNG === 'undefined')
 	};
 	
 	// RNG.random()
-	// The basic generation method, returns a value in the range [0,1).
+	// The basic generation method; returns a value in the range [0,1).
 	RNG.random = function()
 	{
 		return Math.random();
 	}
 	
 	// RNG.sample()
-	// Returns a random entry selected from an array.
+	// Returns a random item selected from an array.
 	// Arguments:
 	//     array: An array of items to choose from.
 	RNG.sample = function(array)

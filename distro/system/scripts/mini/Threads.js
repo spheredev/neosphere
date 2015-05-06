@@ -1,10 +1,10 @@
 /**
- * minisphere Runtime 1.1b3 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
  * [mini/Threads.js]
- * A cooperative threader with a similar API to pthreads, which replaces
+ * A cooperative threader with an API similar to pthreads, which replaces
  * Sphere's update and render scripts with a much more robust solution.
 **/
 
@@ -24,9 +24,9 @@ mini.Threads = new (function()
 
 // initializer registration
 // Initializes Threads when the user calls mini.initialize().
-mini.startup.add(mini.Threads, function(params)
+mini.onStartUp.add(mini.Threads, function(params)
 {
-	Print("mini: Initializing mini.Threads");
+	Print("mini: Initializing minithreads");
 	
 	this.threadSorter = function(a, b) {
 		return a.priority != b.priority ?
@@ -151,7 +151,7 @@ mini.Threads.doFrame = function()
 // Remarks:
 //     If .join() is called during an update of another thread, the blocking
 //     thread will not be updated until .join() returns. However, any other threads
-//     will continue to update as normal. This enables easy threading without
+//     will continue to update as normal. This enables easy thread coordination without
 //     having to worry about the intricacies of cooperative threading--minithreads
 //     handles it for you.
 mini.Threads.join = function(threadIDs)
@@ -253,7 +253,7 @@ mini.Threads.updateAll = function()
 	if (!this.isInitialized)
 		Abort("mini.Threads.updateAll(): must call mini.initialize() first", -1);
 	var threadsEnding = [];
-	mini.Link(this.threads)
+	mini.Link(mini.Link(this.threads).toArray())
 		.where(function(thread) { return thread.isValid })
 		.where(function(thread) { return !thread.isUpdating })
 		.where(function(thread) { return !thread.isPaused })
