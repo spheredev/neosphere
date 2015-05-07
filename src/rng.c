@@ -36,8 +36,8 @@ rng_normal(double mean, double sigma)
 	static bool   s_have_y = false;
 	static double s_y;
 
-	int u, v, w;
-	int x;
+	double u, v, w;
+	double x;
 
 	if (!s_have_y) {
 		do {
