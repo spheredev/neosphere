@@ -1034,13 +1034,13 @@ js_CreatePerson(duk_context* ctx)
 		filename = duk_require_string(ctx, 1);
 		path = get_asset_path(filename, "spritesets", false);
 		if (!(spriteset = load_spriteset(path)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to load sprite file '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): failed to load sprite file '%s'", filename);
 		free(path);
 	}
 
 	// create the person and its JS-side data object
 	if (!(person = create_person(name, spriteset, !destroy_with_map, NULL)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to create person");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): failed to create person");
 	free_spriteset(spriteset);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
@@ -1057,7 +1057,7 @@ js_DestroyPerson(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DestroyPerson(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DestroyPerson(): no such person '%s'", name);
 	destroy_person(person);
 	return 0;
 }
@@ -1070,7 +1070,7 @@ js_IsCommandQueueEmpty(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsCommandQueueEmpty(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsCommandQueueEmpty(): no such person '%s'", name);
 	duk_push_boolean(ctx, person->num_commands <= 0);
 	return 1;
 }
@@ -1083,7 +1083,7 @@ js_IsIgnoringPersonObstructions(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsIgnoringPersonObstructions(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsIgnoringPersonObstructions(): no such person '%s'", name);
 	duk_push_boolean(ctx, person->ignore_all_persons);
 	return 1;
 }
@@ -1096,7 +1096,7 @@ js_IsIgnoringTileObstructions(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsIgnoringTileObstructions(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsIgnoringTileObstructions(): no such person '%s'", name);
 	duk_push_boolean(ctx, person->ignore_all_tiles);
 	return 1;
 }
@@ -1120,7 +1120,7 @@ js_IsPersonObstructed(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsPersonObstructed(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsPersonObstructed(): no such person '%s'", name);
 	duk_push_boolean(ctx, is_person_obstructed_at(person, x, y, NULL, NULL));
 	return 1;
 }
@@ -1133,7 +1133,7 @@ js_IsPersonVisible(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonVisible(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonVisible(): no such person '%s'", name);
 	duk_push_boolean(ctx, person->is_visible);
 	return 1;
 }
@@ -1160,7 +1160,7 @@ js_GetObstructingPerson(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetObstructingPerson(): Map engine must be running");
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetObstructingPerson(): no such person '%s'", name);
 	is_person_obstructed_at(person, x, y, &obs_person, NULL);
 	duk_push_string(ctx, obs_person != NULL ? get_person_name(obs_person) : "");
 	return 1;
@@ -1179,7 +1179,7 @@ js_GetObstructingTile(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetObstructingTile(): Map engine must be running");
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetObstructingTile(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetObstructingTile(): no such person '%s'", name);
 	is_person_obstructed_at(person, x, y, NULL, &tile_index);
 	duk_push_int(ctx, tile_index);
 	return 1;
@@ -1193,7 +1193,7 @@ js_GetPersonAngle(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonAngle(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonAngle(): no such person '%s'", name);
 	duk_push_number(ctx, get_person_angle(person));
 	return 1;
 }
@@ -1207,7 +1207,7 @@ js_GetPersonBase(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): no such person '%s'", name);
 	base = get_sprite_base(get_person_spriteset(person));
 	duk_push_object(ctx);
 	duk_push_int(ctx, base.x1); duk_put_prop_string(ctx, -2, "x1");
@@ -1229,7 +1229,7 @@ js_GetPersonData(duk_context* ctx)
 	int          width, height;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonData(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonData(): no such person '%s'", name);
 	spriteset = person->sprite;
 	get_sprite_size(spriteset, &width, &height);
 	get_spriteset_info(spriteset, NULL, &num_directions);
@@ -1254,7 +1254,7 @@ js_GetPersonDirection(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonDirection(): no such person '%s'", name);
 	duk_push_string(ctx, person->direction);
 	return 1;
 }
@@ -1267,7 +1267,7 @@ js_GetPersonFollowDistance(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFollowDistance(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFollowDistance(): no such person '%s'", name);
 	if (person->leader == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "GetPersonFollowDistance(): Person '%s' is not following anyone", name);
 	duk_push_int(ctx, person->follow_distance);
@@ -1285,7 +1285,7 @@ js_GetPersonFollowers(duk_context* ctx)
 	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFollowers(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFollowers(): no such person '%s'", name);
 	duk_push_array(ctx);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader == person) {
@@ -1305,7 +1305,7 @@ js_GetPersonFrame(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): no such person '%s'", name);
 	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
 	duk_push_int(ctx, person->frame % num_frames);
 	return 1;
@@ -1319,7 +1319,7 @@ js_GetPersonFrameNext(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrame(): no such person '%s'", name);
 	duk_push_int(ctx, person->anim_frames);
 	return 1;
 }
@@ -1332,7 +1332,7 @@ js_GetPersonFrameRevert(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrameRevert(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonFrameRevert(): no such person '%s'", name);
 	duk_push_int(ctx, person->revert_delay);
 	return 1;
 }
@@ -1347,7 +1347,7 @@ js_GetPersonIgnoreList(duk_context* ctx)
 	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonIgnoreList(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonIgnoreList(): no such person '%s'", name);
 	duk_push_array(ctx);
 	for (i = 0; i < person->num_ignores; ++i) {
 		duk_push_string(ctx, person->ignores[i]);
@@ -1364,7 +1364,7 @@ js_GetPersonLayer(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonLayer(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonLayer(): no such person '%s'", name);
 	duk_push_int(ctx, person->layer);
 	return 1;
 }
@@ -1377,7 +1377,7 @@ js_GetPersonLeader(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonLeader(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonLeader(): no such person '%s'", name);
 	duk_push_string(ctx, person->leader != NULL ? person->leader->name : "");
 	return 1;
 }
@@ -1390,7 +1390,7 @@ js_GetPersonMask(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonMask(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonMask(): no such person '%s'", name);
 	duk_push_sphere_color(ctx, get_person_mask(person));
 	return 1;
 }
@@ -1403,7 +1403,7 @@ js_GetPersonOffsetX(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonOffsetX(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonOffsetX(): no such person '%s'", name);
 	duk_push_int(ctx, person->x_offset);
 	return 1;
 }
@@ -1416,7 +1416,7 @@ js_GetPersonOffsetY(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonOffsetY(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonOffsetY(): no such person '%s'", name);
 	duk_push_int(ctx, person->y_offset);
 	return 1;
 }
@@ -1443,9 +1443,9 @@ js_GetPersonSpriteset(duk_context* ctx)
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpriteset(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpriteset(): no such person '%s'", name);
 	if ((new_spriteset = clone_spriteset(get_person_spriteset(person))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetPersonSpriteset(): Failed to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetPersonSpriteset(): failed to create new spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;
@@ -1460,7 +1460,7 @@ js_GetPersonSpeedX(duk_context* ctx)
 	double     x_speed;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedX(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedX(): no such person '%s'", name);
 	get_person_speed(person, &x_speed, NULL);
 	duk_push_number(ctx, x_speed);
 	return 1;
@@ -1475,7 +1475,7 @@ js_GetPersonSpeedY(duk_context* ctx)
 	double     y_speed;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedY(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpeedY(): no such person '%s'", name);
 	get_person_speed(person, NULL, &y_speed);
 	duk_push_number(ctx, y_speed);
 	return 1;
@@ -1491,7 +1491,7 @@ js_GetPersonValue(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonValue(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonValue(): no such person '%s'", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	if (!duk_get_prop_string(ctx, -1, name)) {
@@ -1513,7 +1513,7 @@ js_GetPersonX(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): no such person '%s'", name);
 	duk_push_int(ctx, person->x);
 	return 1;
 }
@@ -1526,7 +1526,7 @@ js_GetPersonXFloat(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonXFloat(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonXFloat(): no such person '%s'", name);
 	duk_push_number(ctx, person->x);
 	return 1;
 }
@@ -1539,7 +1539,7 @@ js_GetPersonY(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): no such person '%s'", name);
 	duk_push_int(ctx, person->y);
 	return 1;
 }
@@ -1552,7 +1552,7 @@ js_GetPersonYFloat(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonYFloat(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonYFloat(): no such person '%s'", name);
 	duk_push_number(ctx, person->y);
 	return 1;
 }
@@ -1592,7 +1592,7 @@ js_SetPersonAngle(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonAngle(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonAngle(): no such person '%s'", name);
 	set_person_angle(person, theta);
 	return 0;
 }
@@ -1606,7 +1606,7 @@ js_SetPersonData(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonData(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonData(): no such person '%s'", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	duk_dup(ctx, 1); duk_put_prop_string(ctx, -2, name);
@@ -1622,7 +1622,7 @@ js_SetPersonDirection(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonDirection(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonDirection(): no such person '%s'", name);
 	set_person_direction(person, new_dir);
 	return 0;
 }
@@ -1636,13 +1636,13 @@ js_SetPersonFollowDistance(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFollowDistance(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFollowDistance(): no such person '%s'", name);
 	if (person->leader == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetPersonFollowDistance(): Person '%s' is not following anyone", name);
 	if (distance <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFollowDistance(): Distance must be greater than zero (%i)", distance);
 	if (!enlarge_step_history(person->leader, distance))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): Failed to enlarge leader's tracking buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): failed to enlarge leader's tracking buffer");
 	person->follow_distance = distance;
 	return 0;
 }
@@ -1657,7 +1657,7 @@ js_SetPersonFrame(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrame(): no such person '%s'", name);
 	get_spriteset_pose_info(person->sprite, person->direction, &num_frames);
 	person->frame = (frame_index % num_frames + num_frames) % num_frames;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, person->frame);
@@ -1674,7 +1674,7 @@ js_SetPersonFrameNext(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): no such person '%s'", name);
 	if (frames < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameNext(): Negative delay not allowed (%i)", frames);
 	person->anim_frames = frames;
@@ -1691,7 +1691,7 @@ js_SetPersonFrameRevert(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): no such person '%s'", name);
 	if (frames < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameRevert(): Negative delay not allowed (%i)", frames);
 	person->revert_delay = frames;
@@ -1711,7 +1711,7 @@ js_SetPersonIgnoreList(duk_context* ctx)
 	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonIgnoreList(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonIgnoreList(): no such person '%s'", name);
 	if (!duk_is_array(ctx, 1))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): ignore_list argument must be an array");
 	list_size = duk_get_length(ctx, 1);
@@ -1739,7 +1739,7 @@ js_SetPersonLayer(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonLayer(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonLayer(): no such person '%s'", name);
 	person->layer = layer;
 	return 0;
 }
@@ -1753,7 +1753,7 @@ js_SetPersonMask(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonMask(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonMask(): no such person '%s'", name);
 	set_person_mask(person, mask);
 	return 0;
 }
@@ -1767,7 +1767,7 @@ js_SetPersonOffsetX(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonOffsetX(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonOffsetX(): no such person '%s'", name);
 	person->x_offset = offset;
 	return 0;
 }
@@ -1781,7 +1781,7 @@ js_SetPersonOffsetY(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonOffsetY(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonOffsetY(): no such person '%s'", name);
 	person->y_offset = offset;
 	return 0;
 }
@@ -1797,7 +1797,7 @@ js_SetPersonScaleAbsolute(duk_context* ctx)
 	int       sprite_w, sprite_h;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleAbsolute(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleAbsolute(): no such person '%s'", name);
 	if (width < 0 || height < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonScaleAbsolute(): Scale dimensions cannot be negative ({ w: %i, h: %i })", width, height);
 	get_sprite_size(get_person_spriteset(person), &sprite_w, &sprite_h);
@@ -1815,7 +1815,7 @@ js_SetPersonScaleFactor(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleFactor(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleFactor(): no such person '%s'", name);
 	if (scale_x < 0.0 || scale_y < 0.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonScaleFactor(): Scaling factors cannot be negative ({ scale_x: %f, scale_y: %f })", scale_x, scale_y);
 	set_person_scale(person, scale_x, scale_y);
@@ -1833,7 +1833,7 @@ js_SetPersonScript(duk_context* ctx)
 	script_t*  script;
 	
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScript(): no such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonScript(): Invalid script type constant");
 	if (duk_is_string(ctx, 2)) {
@@ -1857,7 +1857,7 @@ js_SetPersonSpeed(duk_context* ctx)
 	person_t*  person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpeed(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpeed(): no such person '%s'", name);
 	set_person_speed(person, speed, speed);
 	return 0;
 }
@@ -1872,7 +1872,7 @@ js_SetPersonSpeedXY(duk_context* ctx)
 	person_t*  person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpeed(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpeed(): no such person '%s'", name);
 	set_person_speed(person, x_speed, y_speed);
 	return 0;
 }
@@ -1887,9 +1887,9 @@ js_SetPersonSpriteset(duk_context* ctx)
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpriteset(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpriteset(): no such person '%s'", name);
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonSpriteset(): Failed to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonSpriteset(): failed to create new spriteset");
 	set_person_spriteset(person, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 0;
@@ -1906,7 +1906,7 @@ js_SetPersonValue(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): no such person '%s'", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	if (!duk_get_prop_string(ctx, -1, name)) {
@@ -1929,7 +1929,7 @@ js_SetPersonVisible(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonVisible(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonVisible(): no such person '%s'", name);
 	person->is_visible = is_visible;
 	return 0;
 }
@@ -1943,7 +1943,7 @@ js_SetPersonX(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonX(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonX(): no such person '%s'", name);
 	person->x = x;
 	return 0;
 }
@@ -1958,7 +1958,7 @@ js_SetPersonXYFloat(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonXYFloat(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonXYFloat(): no such person '%s'", name);
 	person->x = x; person->y = y;
 	return 0;
 }
@@ -1972,7 +1972,7 @@ js_SetPersonY(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonY(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonY(): no such person '%s'", name);
 	person->y = y;
 	return 0;
 }
@@ -1998,7 +1998,7 @@ js_CallDefaultPersonScript(duk_context* ctx)
 	person_t*       person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "CallDefaultPersonScript(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "CallDefaultPersonScript(): no such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CallDefaultPersonScript(): Invalid script type constant");
 	last_person = s_current_person;
@@ -2017,7 +2017,7 @@ js_CallPersonScript(duk_context* ctx)
 	person_t*   person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "CallPersonScript(): no such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CallPersonScript(): Invalid script type constant");
 	call_person_script(person, type, false);
@@ -2032,7 +2032,7 @@ js_ClearPersonCommands(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "ClearPersonCommands(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "ClearPersonCommands(): no such person '%s'", name);
 	person->num_commands = 0;
 	return 0;
 }
@@ -2048,9 +2048,9 @@ js_FollowPerson(duk_context* ctx)
 	person_t* person;
 
 	if (!(person = find_person(name)))
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): no such person '%s'", name);
 	if (!(leader_name[0] == '\0' || (leader = find_person(leader_name))))
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): Person '%s' doesn't exist", leader_name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "FollowPerson(): no such person '%s'", leader_name);
 	if (distance <= 0 && leader_name[0] != '\0')
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FollowPerson(): Distance must be greater than zero (%i)", distance);
 	if (!follow_person(person, leader, distance))
@@ -2067,7 +2067,7 @@ js_IgnorePersonObstructions(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IgnorePersonObstructions(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IgnorePersonObstructions(): no such person '%s'", name);
 	person->ignore_all_persons = is_ignoring;
 	return 0;
 }
@@ -2081,7 +2081,7 @@ js_IgnoreTileObstructions(duk_context* ctx)
 	person_t* person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IgnoreTileObstructions(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IgnoreTileObstructions(): no such person '%s'", name);
 	person->ignore_all_tiles = is_ignoring;
 	return 0;
 }
@@ -2096,11 +2096,11 @@ js_QueuePersonCommand(duk_context* ctx)
 	person_t* person;
 
 	if (!(person = find_person(name)))
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonCommand(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonCommand(): no such person '%s'", name);
 	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "QueuePersonCommand(): Invalid command type constant");
 	if (!queue_person_command(person, command, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to enlarge person's command queue");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): failed to enlarge person's command queue");
 	return 0;
 }
 
@@ -2116,8 +2116,8 @@ js_QueuePersonScript(duk_context* ctx)
 	person_t* person;
 
 	if (!(person = find_person(name)))
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): no such person '%s'", name);
 	if (!queue_person_script(person, script, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): Failed to enqueue script");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): failed to enqueue script");
 	return 0;
 }

@@ -15,23 +15,41 @@ RequireSystemScript('mini/Threads.js');
 mini.BGM = new (function()
 {
 	this.adjuster = null;
-	this.currentTrack = null;
-	this.defaultTrack = null;
-	this.isOverridden = false;
-	this.oldStream = null;
 	this.stream = null;
 	this.volume = 1.0;
+	this.stack = [];
 })();
 	
-// initializer registration
-// Start up the BGM manager when the user calls mini.initialize()
+// miniBGM initializer
+// Prepares miniBGM for use when the user calls mini.initialize().
 mini.onStartUp.add(mini.BGM, function()
 {
+	Print("mini: Initializing miniBGM");
 	mini.Threads.create(this);
 });
 	
-// mini.BGM.adjustVolume() method
-// Smoothly adjusts the volume of the BGM.
+// mini.BGM.update()
+// Updates the BGM thread per frame.
+mini.BGM.update = function()
+{
+	if (this.stream != null) {
+		this.stream.setVolume(this.volume * 255);
+	}
+	if (this.oldStream != null) {
+		this.oldStream.setVolume(this.volume * 255);
+	}
+	return true;
+};
+
+// mini.BGM.isAdjusting()
+// Returns whether or not the volume level is being adjusted.
+mini.BGM.isAdjusting = function()
+{
+	return this.adjuster != null && this.adjuster.isRunning();
+};
+
+// mini.BGM.adjust()
+// Smoothly adjusts the volume of the current BGM.
 // Arguments:
 //     newVolume: The new volume level, between 0.0 and 1.0 inclusive.
 //     duration:  Optional. The length of time, in seconds, over which to perform the adjustment.
@@ -56,113 +74,55 @@ mini.BGM.adjust = function(newVolume, duration)
 	}
 };
 
-// .change() method
-// Changes the current default BGM.
+// .play() method
+// Changes the BGM in place, bypassing the stack.
 // Arguments:
-//     trackName: The file name of the BGM track to play, minus extension.
-// Remarks:
-//     This has no immediate effect if an override is active; however, the change is still acknowledged
-//     and the specified track will be played when .reset() is called.
-mini.BGM.change = function(trackName)
-{
-	if (!this.isOverridden) {
-		if (trackName != this.currentTrack) {
-			this.defaultTrack = trackName;
-			this.currentTrack = this.defaultTrack;
-			this.playTrack(this.currentTrack);
-		}
-	} else {
-		this.defaultTrack = trackName;
-		if (this.oldStream != null) {
-			this.oldStream.stop();
-			this.oldStream = null;
-		}
-	}
-}
-
-// .isAdjusting() method
-// Determines whether or not the BGM volume level is being adjusted.
-// Returns:
-//     true if the volume level is actively being adjusted; false otherwise.
-mini.BGM.isAdjusting = function()
-{
-	return this.adjuster != null && this.adjuster.isRunning();
-};
-
-// .override() method
-// Overrides the BGM with the specified track. The default BGM can be restored by
-// calling .reset().
-// Arguments:
-//     trackName: The file name of the BGM track to play, minus extension.
-mini.BGM.override = function(trackName)
-{
-	if (!this.isOverridden) {
-		this.isOverridden = true;
-		this.oldStream = this.stream;
-		if (this.oldStream !== null) {
-			this.oldStream.pause();
-		}
-		this.currentTrack = trackName;
-		this.playTrack(this.currentTrack);
-	} else {
-		if (this.currentTrack !== trackName) {
-			this.currentTrack = trackName;
-			this.playTrack(this.currentTrack);
-		}
-	}
-};
-
-// .playTrack() method
-// Loads and plays a specified BGM track.
-// Arguments:
-//     trackName: The file name, minus extension, of the BGM to play.
-// Remarks:
-//     The track to play must be in Ogg Vorbis format and stored in the
-//     sounds/BGM subdirectory.
-mini.BGM.playTrack = function(trackName)
+//     path: The path to the sound file to play, relative to <game_dir>/sounds. This
+//           can be null, in which case the BGM is silenced.
+mini.BGM.play = function(path)
 {
 	if (this.stream !== null) {
 		this.stream.stop();
 	}
-	if (trackName !== null) {
-		mini.Console.writeLine("Playing BGM " + trackName);
-		mini.Console.append("vol: ~" + Math.floor(this.volume * 100) + "%");
-		this.stream = LoadSound("BGM/" + trackName + ".ogg", true);
+	if (path !== null) {
+		this.stream = new Sound(path, true);
 		this.stream.setVolume(this.volume * 255);
 		this.stream.play(true);
 	} else {
-		mini.Console.writeLine("BGM has been stopped");
 		this.stream = null;
 	}
 };
 
-// .reset() method
-// Restarts the default BGM after an override.
-mini.BGM.reset = function()
+// .push() method
+// Pushes the current BGM onto the stack and begins playing another track. The
+// previous BGM can be resumed via .pop().
+// Arguments:
+//     path: The path to the sound file to play, relative to <game_dir>/sounds.
+mini.BGM.push = function(path)
 {
-	if (!this.isOverridden) {
-		return;
+	var oldStream = this.stream;
+	if (oldStream !== null) {
+		oldStream.pause();
 	}
-	this.isOverridden = false;
-	this.currentTrack = this.defaultTrack;
-	if (this.oldStream === null) {
-		this.playTrack(this.currentTrack);
-	} else {
-		this.stream.stop();
-		this.oldStream.play();
-		this.stream = this.oldStream;
-	}
+	this.stream = null;
+	this.play(path);
+	this.stack.push({
+		stream: oldStream
+	});
 };
 
-// .update() method
-// Updates the BGM manager for the next frame.
-mini.BGM.update = function()
+// .pop() method
+// Pops the previous BGM off the stack and resumes it.
+// Remarks:
+//     This does nothing if the BGM stack is empty.
+mini.BGM.pop = function()
 {
-	if (this.stream != null) {
+	if (this.stack.length == 0) return;
+	this.stream.stop();
+	var oldBGM = this.stack.pop();
+	this.stream = oldBGM.stream;
+	if (this.stream !== null) {
 		this.stream.setVolume(this.volume * 255);
+		this.stream.play();
 	}
-	if (this.oldStream != null) {
-		this.oldStream.setVolume(this.volume * 255);
-	}
-	return true;
-};
+}

@@ -103,7 +103,7 @@ mini.Scenes.update = function()
 // mini.Scene()
 // Constructs a scene definition.
 // Arguments:
-//     isLooping: If true, the Scene loops endlessly until .stop() is called.
+//     isLooping: If true, the scene will loop endlessly until .stop() is called.
 //                (default: false)
 mini.Scene = function(isLooping)
 {
@@ -119,7 +119,6 @@ mini.Scene = function(isLooping)
 	this.openBlockTypes = [];
 	this.queueToFill = [];
 	this.threads = [];
-	this.vars = {};
 	
 	this.createThread = function(context, updater, renderer, inputHandler)
 	{
@@ -371,6 +370,15 @@ mini.Scene.prototype.isRunning = function()
 	return this.isThreadRunning(this.mainThread);
 };
 
+// mini.Scene:restart()
+// Restarts the scene from the beginning. This has the same effect as calling
+// .stop() and .run() back to back.
+mini.Scene.prototype.restart = function()
+{
+	this.stop();
+	this.run();
+};
+
 // mini.Scene:run()
 // Runs the scene.
 // Arguments:
@@ -415,7 +423,7 @@ mini.Scene.prototype.run = function(waitUntilDone)
 // mini.Scene:stop()
 // Immediately halts execution of the scene. Has no effect if the scene isn't running.
 // Remarks:
-//     After calling this method, calling run() afterwards will start the scene over from the
+//     After calling this method, calling .run() afterwards will start the scene over from the
 //     beginning.
 mini.Scene.prototype.stop = function()
 {
