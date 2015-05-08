@@ -42,6 +42,7 @@ static duk_ret_t js_SetFrameRate         (duk_context* ctx);
 static duk_ret_t js_SetMaxFrameSkips     (duk_context* ctx);
 static duk_ret_t js_Abort                (duk_context* ctx);
 static duk_ret_t js_Alert                (duk_context* ctx);
+static duk_ret_t js_Assert               (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode (duk_context* ctx);
 static duk_ret_t js_Delay                (duk_context* ctx);
 static duk_ret_t js_ExecuteGame          (duk_context* ctx);
@@ -104,6 +105,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
 	register_api_function(ctx, NULL, "Abort", js_Abort);
 	register_api_function(ctx, NULL, "Alert", js_Alert);
+	register_api_function(ctx, NULL, "Assert", js_Assert);
 	register_api_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	register_api_function(ctx, NULL, "Delay", js_Delay);
 	register_api_function(ctx, NULL, "Exit", js_Exit);
@@ -679,6 +681,50 @@ js_Abort(duk_context* ctx)
 	if (stack_offset > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
 	duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
+}
+
+static duk_ret_t
+js_Assert(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	bool result = duk_to_boolean(ctx, 0);
+	const char* message = duk_require_string(ctx, 1);
+	int stack_offset = n_args >= 3 ? duk_require_int(ctx, 2) : 0;
+
+	const char* filename;
+	int         line_number;
+	const char* full_path;
+	lstring_t*  text;
+
+	if (stack_offset > 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
+	if (!result) {
+		duk_push_global_object(ctx);
+		duk_get_prop_string(ctx, -1, "Duktape");
+		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
+		if (!duk_is_object(ctx, -1)) {
+			duk_pop(ctx);
+			duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
+		}
+		duk_remove(ctx, -2);
+		duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "function");
+		duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
+		duk_pop_2(ctx);
+		filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
+		filename = filename != NULL ? filename + 1 : full_path;
+		
+		printf("ASSERT: %s:%i - %s\n", filename, line_number, message);
+		text = new_lstring("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
+		if (!al_show_native_message_box(g_display, "Script Error", "An Assert() condition failed.",
+			lstring_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
+		{
+			exit_game(true);
+		}
+		free_lstring(text);
+	}
+	duk_dup(ctx, 0);
+	return 1;
 }
 
 static duk_ret_t
