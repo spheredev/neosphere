@@ -111,6 +111,9 @@
     <ClCompile Include="..\src\console.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\async.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -207,6 +210,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\async.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

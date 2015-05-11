@@ -1,6 +1,7 @@
 #include "minisphere.h"
 
 #include "api.h"
+#include "async.h"
 #include "bytearray.h"
 #include "color.h"
 #include "file.h"
@@ -443,6 +444,7 @@ flip_screen(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 
+	update_async();
 	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
 		s_current_game_fps = s_num_frames;
@@ -661,6 +663,7 @@ initialize_engine(void)
 	g_sys_conf = al_load_config_file(path);
 	free(path);
 
+	initialize_async();
 	initialize_rng();
 	initialize_galileo();
 	initialize_input();
@@ -673,6 +676,7 @@ initialize_engine(void)
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
 	initialize_api(g_duk);
+	init_async_api();
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();

@@ -2,6 +2,7 @@ msphere_sources = [
 	"duktape.c",
 	"dyad.c",
 	"api.c",
+	"async.c",
 	"atlas.c",
 	"bytearray.c",
 	"color.c",
@@ -46,6 +47,6 @@ msphere_libs = [
 	"m"
 ]
 
-minisphere = Program("engine", msphere_sources, LIBS = msphere_libs)
+minisphere = Program("msphere", msphere_sources, LIBS = msphere_libs)
 
 Return("minisphere")

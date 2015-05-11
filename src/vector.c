@@ -125,7 +125,7 @@ maybe_resize_vector(vector_t* vector, size_t min_items)
 	else if (min_items < vector->max_items / 4)  // if item count drops below 1/4 of peak size, shrink the buffer
 		new_max = min_items * 2;
 	if (new_max != vector->max_items) {
-		if (!(new_buffer = realloc(vector->buffer, new_max * vector->pitch)))
+		if (!(new_buffer = realloc(vector->buffer, new_max * vector->pitch)) && new_max > 0)
 			return false;
 		vector->buffer = new_buffer;
 		vector->max_items = new_max;

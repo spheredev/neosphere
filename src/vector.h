@@ -20,6 +20,7 @@ struct iter
 {
 	const vector_t* vector;
 	void*           ptr;
+	size_t          index;
 };
 
 #endif // MINISPHERE__VECTOR_H__INCLUDED

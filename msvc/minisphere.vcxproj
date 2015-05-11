@@ -305,6 +305,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\api.c" />
+    <ClCompile Include="..\src\async.c" />
     <ClCompile Include="..\src\atlas.c" />
     <ClCompile Include="..\src\bytearray.c" />
     <ClCompile Include="..\src\color.c" />
@@ -338,6 +339,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\api.h" />
+    <ClInclude Include="..\src\async.h" />
     <ClInclude Include="..\src\atlas.h" />
     <ClInclude Include="..\src\bytearray.h" />
     <ClInclude Include="..\src\color.h" />
