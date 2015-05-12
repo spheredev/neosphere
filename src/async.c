@@ -5,7 +5,7 @@
 
 #include "async.h"
 
-static duk_ret_t js_DoAsync (duk_context* ctx);
+static duk_ret_t js_Async (duk_context* ctx);
 
 static vector_t* s_scripts;
 
@@ -55,15 +55,15 @@ queue_async_script(script_t* script)
 void
 init_async_api(void)
 {
-	register_api_function(g_duk, NULL, "DoAsync", js_DoAsync);
+	register_api_function(g_duk, NULL, "Async", js_Async);
 }
 
 static duk_ret_t
-js_DoAsync(duk_context* ctx)
+js_Async(duk_context* ctx)
 {
 	script_t* script = duk_require_sphere_script(ctx, 0, "[async script]");
 
 	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DoAsync(): Failed to queue async script");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Async(): Failed to queue async script");
 	return 0;
 }
