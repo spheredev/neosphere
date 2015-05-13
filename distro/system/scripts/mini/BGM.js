@@ -32,11 +32,8 @@ mini.onStartUp.add(mini.BGM, function()
 // Updates the BGM thread per frame.
 mini.BGM.update = function()
 {
-	if (this.stream != null) {
+	if (this.stream !== null) {
 		this.stream.setVolume(this.volume * 255);
-	}
-	if (this.oldStream != null) {
-		this.oldStream.setVolume(this.volume * 255);
 	}
 	return true;
 };
@@ -77,10 +74,13 @@ mini.BGM.adjust = function(newVolume, duration)
 // .play() method
 // Changes the BGM in place, bypassing the stack.
 // Arguments:
-//     path: The path to the sound file to play, relative to <game_dir>/sounds. This
-//           can be null, in which case the BGM is silenced.
-mini.BGM.play = function(path)
+//     path:     The path to the sound file to play, relative to <game_dir>/sounds. This
+//               can be null, in which case the BGM is silenced.
+//     fadeTime: Optional. The amount of crossfdae to apply, in seconds. (default: 0.0)
+mini.BGM.play = function(path, fadeTime)
 {
+	if (fadeTime === undefined) fadeTime = 0.0;
+	
 	if (this.stream !== null) {
 		this.stream.stop();
 	}
@@ -97,9 +97,12 @@ mini.BGM.play = function(path)
 // Pushes the current BGM onto the stack and begins playing another track. The
 // previous BGM can be resumed via .pop().
 // Arguments:
-//     path: The path to the sound file to play, relative to <game_dir>/sounds.
-mini.BGM.push = function(path)
+//     path:     The path to the sound file to play, relative to <game_dir>/sounds.
+//     fadeTime: Optional. The amount of crossfade to apply, in seconds. (default: 0.0)
+mini.BGM.push = function(path, fadeTime)
 {
+	if (fadeTime === undefined) fadeTime = 0.0;
+	
 	var oldStream = this.stream;
 	if (oldStream !== null) {
 		oldStream.pause();
@@ -113,10 +116,14 @@ mini.BGM.push = function(path)
 
 // .pop() method
 // Pops the previous BGM off the stack and resumes it.
+// Arguments:
+//     fadeTime: Optional. The amount of crossfade to apply, in seconds. (default: 0.0)
 // Remarks:
-//     This does nothing if the BGM stack is empty.
-mini.BGM.pop = function()
+//     If the BGM stack is empty, this is a no-op.
+mini.BGM.pop = function(fadeTime)
 {
+	if (fadeTime === undefined) fadeTime = 0.0;
+	
 	if (this.stack.length == 0) return;
 	this.stream.stop();
 	var oldBGM = this.stack.pop();

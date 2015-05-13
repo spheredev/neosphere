@@ -135,7 +135,7 @@ static bool follow_person        (person_t* person, person_t* leader, int distan
 static void free_person          (person_t* person);
 static void record_step          (person_t* person);
 static void sort_persons         (void);
-static void update_person        (person_t* person);
+static void update_person        (person_t* person, bool* out_has_moved);
 
 static const person_t*   s_current_person = NULL;
 static script_t*         s_def_scripts[PERSON_SCRIPT_MAX];
@@ -643,6 +643,7 @@ talk_person(const person_t* person)
 void
 update_persons(void)
 {
+	bool has_moved;
 	bool is_sort_needed = false;
 	
 	int i;
@@ -650,8 +651,8 @@ update_persons(void)
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader != NULL)
 			continue;  // skip followers for now
-		update_person(s_persons[i]);
-		is_sort_needed |= has_person_moved(s_persons[i]);
+		update_person(s_persons[i], &has_moved);
+		is_sort_needed |= has_moved;
 	}
 	if (is_sort_needed) sort_persons();
 }
@@ -831,11 +832,12 @@ sort_persons(void)
 }
 
 static void
-update_person(person_t* person)
+update_person(person_t* person, bool* out_has_moved)
 {
 	struct command  command;
 	double          delta_x, delta_y;
 	int             facing;
+	bool            has_moved;
 	bool            is_finished;
 	const person_t* last_person;
 	unsigned int    person_id;
@@ -898,15 +900,16 @@ update_person(person_t* person)
 		return;  // they probably got eaten by a hunger-pig or something.
 
 	// if the person's position changed, record it in their step history
-	if (has_person_moved(person)) {
+	*out_has_moved = has_person_moved(person);
+	if (*out_has_moved)
 		record_step(person);
-	}
 
 	// recursively update the follower chain
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader != person)
 			continue;
-		update_person(s_persons[i]);
+		update_person(s_persons[i], &has_moved);
+		*out_has_moved |= has_moved;
 	}
 }
 

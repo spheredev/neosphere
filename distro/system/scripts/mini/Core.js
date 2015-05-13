@@ -39,7 +39,7 @@ mini.Delegate.prototype.add = function(o, method)
 //     .add() must already have been called with the same arguments.
 mini.Delegate.prototype.remove = function(o, method)
 {
-	for (var i = 0; i < this.invokeList.length; ++i) {
+	for (var i = this.invokeList.length - 1; i >= 0; --i) {
 		if (o == this.invokeList[i].o && method == this.invokeList[i].method) {
 			this.invokeList.splice(i, 1);
 			break;
@@ -58,6 +58,7 @@ mini.Delegate.prototype.invoke = function()
 		var method = this.invokeList[i].method;
 		result = method.apply(o, arguments);
 	}
+	
 	// Return result of last method call
 	return result;
 };

@@ -13,11 +13,6 @@ RequireSystemScript('mini/Threads.js');
 
 mini.Scenes = mini.Scenes || {};
 
-// IsSkippedFrame() is a minisphere feature and may not be available.
-if (typeof IsSkippedFrame === 'undefined') {
-	IsSkippedFrame = function() { return false; };
-}
-
 // mini.Scenelet()
 // Registers a new scenelet.
 // Arguments:
@@ -29,8 +24,8 @@ if (typeof IsSkippedFrame === 'undefined') {
 //                               provided, Scenes immediately moves on to the next command after calling start().
 //                               This function should return true to keep the operation running, or false to
 //                               terminate it.
-//           .getInput(scene):   Optional. A function to be called once per frame while the command has the input
-//                               focus to check for player input and update state data accordingly.
+//           .getInput(scene):   Optional. A function to be called once per frame to check for player input and
+//                               update state data accordingly.
 //           .render(scene):     Optional. A function to be called once per frame to perform any rendering
 //                               related to the command (e.g. text boxes).
 //           .finish(scene):     Optional. Called after command execution ends, just before Scenes executes
@@ -60,201 +55,162 @@ mini.onStartUp.add(mini.Scenes, function(params)
 {
 	Print("mini: Initializing miniscenes");
 	
-	this.activeScenes = [];
 	this.screenMask = new Color(0, 0, 0, 0);
-	var priority = 'scenePriority' in params
-		? params.scenePriority : 0;
-	mini.Threads.create(this, priority);
+	this.priority = 'scenePriority' in params ? params.scenePriority : 0;
+	this.threadID = mini.Threads.create(this, this.priority);
 });
 
+// mini.Scenes.update()
+// Updates miniscenes per frame.
+mini.Scenes.update = function()
+{
+	return true;
+};
+
 // mini.Scenes.render()
-// Renders running Scenes.
+// Performs rendering for miniscenes per frame.
 mini.Scenes.render = function()
 {
-	if (IsSkippedFrame())
-		return;
 	if (this.screenMask.alpha > 0) {
 		ApplyColorMask(this.screenMask);
 	}
-	for (var i = 0; i < this.activeScenes.length; ++i) {
-		this.activeScenes[i].render();
-	}
-};
-
-// mini.Scenes.update()
-// Updates running Scenes for the next frame.
-mini.Scenes.update = function()
-{
-	for (var i = 0; i < this.activeScenes.length; ++i) {
-		var scene = this.activeScenes[i];
-		scene.update();
-		if (!scene.isRunning()) {
-			if (scene.isLooping) {
-				scene.run(false);
-			}
-			this.activeScenes.splice(i, 1);
-			--i;
-		}
-	}
-	mini.Scenes.hasUpdated = true;
-	return true;
 };
 
 // mini.Scene()
 // Constructs a scene definition.
-// Arguments:
-//     isLooping: If true, the scene will loop endlessly until .stop() is called.
-//                (default: false)
-mini.Scene = function(isLooping)
+mini.Scene = function()
 {
-	isLooping = isLooping !== undefined ? isLooping : false;
-	
-	this.activeThread = null;
-	this.focusThreadStack = [];
-	this.focusThread = null;
+	this.activation = null;
 	this.forkedQueues = [];
-	this.isLooping = isLooping;
 	this.jumpsToFix = [];
-	this.nextThreadID = 1;
+	this.mainThread = 0;
 	this.openBlockTypes = [];
 	this.queueToFill = [];
-	this.threads = [];
+	this.tasks = [];
 	
-	this.createThread = function(context, updater, renderer, inputHandler)
+	this.runTimeline = function(ctx)
 	{
-		renderer = renderer !== undefined ? renderer : null;
-		inputHandler = inputHandler !== undefined ? inputHandler : null;
-		
-		var threadObject = {
-			id: this.nextThreadID,
-			context: context,
-			inputHandler: inputHandler,
-			renderer: renderer,
-			updater: updater
-		};
-		this.threads.push(threadObject);
-		if (inputHandler != null) {
-			this.focusThreadStack.push(this.focusThread);
-			this.focusThread = threadObject.id;
+		if ('opThread' in ctx) {
+			if (mini.Threads.isRunning(ctx.opThread))
+				return true;
+			else {
+				mini.Link(this.tasks)
+					.where(function(thread) { return ctx.opThread == thread })
+					.remove();
+				delete ctx.opThread;
+				this.activation = ctx;
+				if (typeof ctx.op.finish === 'function')
+					ctx.op.finish.call(ctx.opctx, this);
+				this.activation = null;
+			}
 		}
-		++this.nextThreadID;
-		return threadObject.id;
+		if (ctx.pc < ctx.instructions.length) {
+			ctx.op = ctx.instructions[ctx.pc++];
+			ctx.opctx = {};
+			if (typeof ctx.op.start === 'function') {
+				var arglist = [ this ];
+				for (i = 0; i < ctx.op.arguments.length; ++i)
+					arglist.push(ctx.op.arguments[i]);
+				this.activation = ctx;
+				ctx.op.start.apply(ctx.opctx, arglist);
+				this.activation = null;
+			}
+			if (ctx.op.update != null) {
+				ctx.opThread = mini.Threads.createEx(ctx.opctx, {
+					update: ctx.op.update.bind(ctx.opctx, this),
+					render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
+					getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
+					priority: mini.Scenes.priority,
+				});
+				this.tasks.push(ctx.opThread);
+			} else {
+				ctx.opThread = 0;
+			}
+			return true;
+		} else {
+			if (mini.Link(ctx.forks)
+				.where(function(thread) { return mini.Threads.isRunning(thread); })
+				.length() == 0)
+			{
+				var self = mini.Threads.self();
+				mini.Link(this.tasks)
+					.where(function(thread) { return self == thread })
+					.remove();
+				return false;
+			} else {
+				return true;
+			}
+		}
 	};
 	
 	this.enqueue = function(command)
 	{
+		if (this.isRunning())
+			Abort("Attempt to modify scene definition during playback", -2);
 		this.queueToFill.push(command);
 	};
 	
-	this.forkUpdater = function(scene)
+	this.goTo = function(address)
 	{
-		for (var i = 0; i < this.forkThreads.length; ++i) {
-			if (!scene.isThreadRunning(this.forkThreads[i])) {
-				this.forkThreads.splice(i, 1);
-				--i;
-			}
-		}
-		if (scene.isThreadRunning(this.currentCommandThread)) {
-			return true;
-		}
-		if (this.counter >= this.instructions.length && this.forkThreads.length === 0) {
-			return false;
-		}
-		if (this.counter < this.instructions.length) {
-			var command = this.instructions[this.counter];
-			++this.counter;
-			var commandContext = {};
-			if (command.start != null) {
-				var parameters = [];
-				parameters.push(scene);
-				for (i = 0; i < command.arguments.length; ++i) {
-					parameters.push(command.arguments[i]);
-				}
-				command.start.apply(commandContext, parameters);
-			}
-			if (command.update != null) {
-				var updateShim = function(scene) {
-					var isActive = command.update.call(this, scene);
-					if (!isActive && command.finish != null) {
-						command.finish.call(this, scene);
-					}
-					return isActive;
-				};
-				this.currentCommandThread = scene.createThread(commandContext, updateShim, command.render, command.getInput);
-			} else if (command.finish != null) {
-				command.finish.call(command.context, scene);
-			}
-		}
-		return true;
-	};
-	
-	this.goTo = function(commandID)
-	{
-		this.activeThread.context.counter = commandID;
-	};
-	
-	this.isThreadRunning = function(id)
-	{
-		if (id == 0) {
-			return false;
-		}
-		for (var i = 0; i < this.threads.length; ++i) {
-			if (id == this.threads[i].id) {
-				return true;
-			}
-		}
-		return false;
-	};
-	
-	this.killThread = function(id)
-	{
-		for (var i = 0; i < this.threads.length; ++i) {
-			if (id == this.threads[i].id) {
-				this.threads.splice(i, 1);
-				--i;
-			}
-		}
-	};
-	
-	this.render = function()
-	{
-		for (var i = 0; i < this.threads.length; ++i) {
-			var renderer = this.threads[i].renderer;
-			var context = this.threads[i].context;
-			if (renderer != null) {
-				renderer.call(context, this);
-			}
-		}
-	};
-	
-	this.throwError = function(component, name, message)
-	{
-		Abort(component + " - error: " + name + "\n" + message, -1);
-	};
-	
-	this.update = function()
-	{
-		for (var i = 0; i < this.threads.length; ++i) {
-			this.activeThread = this.threads[i];
-			var id = this.threads[i].id;
-			var updater = this.threads[i].updater;
-			var inputHandler = this.threads[i].inputHandler;
-			var context = this.threads[i].context;
-			if (updater == null) continue;
-			if (this.focusThread == id) {
-				inputHandler.call(context, this);
-			}
-			if (!updater.call(context, this)) {
-				if (this.focusThread == id) {
-					this.focusThread = this.focusThreadStack.pop();
-				}
-				this.threads.splice(i, 1);
-				--i;
-			}
-		}
-		this.activeThread = null;
+		this.activation.pc = address;
 	};
 }
+
+// mini.Scene:isPlaying()
+// Determines whether a scene is currently playing.
+// Returns:
+//     true if the scenario is still executing commands; false otherwise.
+mini.Scene.prototype.isRunning = function()
+{
+	return mini.Threads.isRunning(this.mainThread);
+};
+
+// mini.Scene:play()
+// Plays back the scene.
+// Arguments:
+//     waitUntilDone: If true, blocks until the playback has finished.
+mini.Scene.prototype.run = function(waitUntilDone)
+{
+	if (this.openBlockTypes.length > 0)
+		Abort("Unclosed block in scene definition", -1);
+	if (this.isRunning()) return;
+	this.frameRate = IsMapEngineRunning() ? GetMapEngineFrameRate() : GetFrameRate();
+	var ctx = {
+		instructions: this.queueToFill,
+		pc: 0,
+		forks: [],
+	};
+	this.mainThread = mini.Threads.createEx(this, {
+		update: this.runTimeline.bind(this, ctx)
+	});
+	this.tasks.push(this.mainThread);
+	if (waitUntilDone)
+		mini.Threads.join(this.mainThread);
+	return this;
+};
+
+// mini.Scene:stop()
+// Immediately halts scene playback. Has no effect if the scene isn't playing.
+// Remarks:
+//     After calling this method, calling .play() afterwards will start from the
+//     beginning.
+mini.Scene.prototype.stop = function()
+{
+	mini.Link(this.tasks)
+		.each(function(thread)
+	{
+		mini.Threads.kill(thread);
+	});
+};
+
+// mini.Scene:restart()
+// Restarts the scene from the beginning. This has the same effect as calling
+// .stop() and .play() back-to-back.
+mini.Scene.prototype.restart = function()
+{
+	this.stop();
+	this.run();
+};
 
 // mini.Scene:doIf()
 // During scene execution, executes a block of commands only if a specified condition is met.
@@ -302,27 +258,39 @@ mini.Scene.prototype.doWhile = function(conditional)
 	return this;
 };
 
+// mini.Scene:fork()
+// During scene execution, forks the timeline, allowing a block to run simultaneously with
+// the instructions after the block.
+mini.Scene.prototype.fork = function()
+{
+	this.forkedQueues.push(this.queueToFill);
+	this.queueToFill = [];
+	this.openBlockTypes.push('fork');
+	return this;
+};
+
 // mini.Scene:end()
 // Marks the end of a block of commands.
 mini.Scene.prototype.end = function()
 {
-	if (this.openBlockTypes.length == 0) {
-		this.throwError("Scene:end()", "Malformed scene", "Mismatched end() - there are no blocks currently open.");
-	}
+	if (this.openBlockTypes.length == 0)
+		Abort("Mismatched end() in scene definition", -1);
 	var blockType = this.openBlockTypes.pop();
 	switch (blockType) {
 		case 'fork':
 			var command = {
 				arguments: [ this.queueToFill ],
 				start: function(scene, instructions) {
-					var forkContext = {
-						counter: 0,
-						currentCommandThread: null,
-						forkThreads: [],
-						instructions: instructions
+					var ctx = {
+						instructions: instructions,
+						pc: 0,
+						forks: [],
 					};
-					var thread = scene.createThread(forkContext, scene.forkUpdater);
-					scene.activeThread.context.forkThreads.push(thread);
+					var tid = mini.Threads.createEx(scene, {
+						update: scene.runTimeline.bind(scene, ctx)
+					});
+					scene.tasks.push(tid);
+					scene.activation.forks.push(tid);
 				}
 			};
 			this.queueToFill = this.forkedQueues.pop();
@@ -344,107 +312,28 @@ mini.Scene.prototype.end = function()
 			jump.ifDone = this.queueToFill.length;
 			break;
 		default:
-			this.throwError("Scene:end()", "Internal error", "The type of the open block is unknown.");
+			Abort("miniscenes internal error (unknown block type)", -1);
 			break;
 	}
 	return this;
 };
 
-// mini.Scene:fork()
-// During scene execution, forks the timeline, allowing a block to run simultaneously with
-// the instructions after the block.
-mini.Scene.prototype.fork = function()
-{
-	this.forkedQueues.push(this.queueToFill);
-	this.queueToFill = [];
-	this.openBlockTypes.push('fork');
-	return this;
-};
-
-// mini.Scene:isRunning()
-// Determines whether a scenario is still running.
-// Returns:
-//     true if the scenario is still executing commands; false otherwise.
-mini.Scene.prototype.isRunning = function()
-{
-	return this.isThreadRunning(this.mainThread);
-};
-
-// mini.Scene:restart()
-// Restarts the scene from the beginning. This has the same effect as calling
-// .stop() and .run() back to back.
-mini.Scene.prototype.restart = function()
-{
-	this.stop();
-	this.run();
-};
-
-// mini.Scene:run()
-// Runs the scene.
-// Arguments:
-//     waitUntilDone: Optional. If true, prevents .run() from returning until the scenario has finished executing.
-//                    Otherwise, .run() returns immediately. (default: false)
-mini.Scene.prototype.run = function(waitUntilDone)
-{
-	waitUntilDone = waitUntilDone !== undefined ? waitUntilDone : false;
-	
-	if (this.openBlockTypes.length > 0) {
-		this.throwError("Scene:run()", "Malformed scene", "Caller attempted to run a scene with unclosed blocks.");
-	}
-	if (this.isLooping && waitUntilDone) {
-		this.throwError("Scene:run()", "Invalid argument", "Caller attempted to wait on a looping scene. This would have created an infinite loop and has been prevented.");
-	}
-	
-	if (this.isRunning()) {
-		return;
-	}
-	var mainForkContext = {
-		counter: 0,
-		currentCommandThread: null,
-		forkThreads: [],
-		instructions: this.queueToFill
-	};
-	this.frameRate = IsMapEngineRunning() ? GetMapEngineFrameRate() : GetFrameRate();
-	this.mainThread = this.createThread(mainForkContext, this.forkUpdater);
-	mini.Scenes.activeScenes.push(this);
-	if (waitUntilDone) {
-		var currentFPS = GetFrameRate();
-		if (IsMapEngineRunning()) {
-			SetFrameRate(GetMapEngineFrameRate());
-		}
-		mini.Threads.join(mini.Threads.createEx(this, {
-			update: this.isThreadRunning.bind(this, this.mainThread)
-		}));
-		SetFrameRate(currentFPS);
-	}
-	return this;
-};
-
-// mini.Scene:stop()
-// Immediately halts execution of the scene. Has no effect if the scene isn't running.
+// 'resync' scenelet
+// During a scene, suspends the current timeline until all of its forks have run to
+// completion.
 // Remarks:
-//     After calling this method, calling .run() afterwards will start the scene over from the
-//     beginning.
-mini.Scene.prototype.stop = function()
+//     There is an implicit resync at the end of a timeline.
+mini.Scenelet('resync',
 {
-	this.killThread(this.mainThread);
-};
-
-// .synchronize() scenelet
-// During a scene, suspends the current timeline until all its forks have finished executing.
-mini.Scene.prototype.synchronize = function()
-{
-	var command = {};
-	command.arguments = [];
-	command.start = function(scene) {
-		this.forkThreads = scene.activeThread.context.forkThreads;
-	};
-	command.update = function(scene) {
-		return this.forkThreads.length != 0;
-	};
-	this.enqueue(command);
-	return this;
-};
+	start: function(scene) {
+		this.forks = scene.activation.forks;
+	},
+	update: function(scene) {
+		return mini.Link(this.forks)
+			.where(function(thread) { return mini.Threads.isRunning(thread); })
+			.length() > 0;
+	}
+});
 
 // .call() scenelet
 // Calls a function during scene execution.

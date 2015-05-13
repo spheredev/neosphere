@@ -38,9 +38,10 @@ mini.onStartUp.add(mini.Console, function(params)
 	this.wasKeyDown = false;
 	
 	var numLines = 'consoleLines' in params ? params.consoleLines
-		: Math.floor((GetScreenHeight() - 10) / this.font.getHeight()) - 2;
+		: Math.floor((GetScreenHeight() - 32) / this.font.getHeight());
 	var bufferSize = 'consoleBuffer' in params ? params.consoleBuffer : 1000;
 	var filename = 'logFile' in params ? params.logFile : null;
+	var prompt = 'consolePrompt' in params ? params.consolePrompt : "command:";
 	
 	if (typeof filename === 'string')
 		this.log = OpenLog(params.logFile);
@@ -50,18 +51,20 @@ mini.onStartUp.add(mini.Console, function(params)
 	this.buffer = [];
 	this.bufferSize = bufferSize;
 	this.commands = [];
+	this.prompt = prompt;
 	this.entry = "";
 	this.cursorColor = new Color(255, 255, 128, 255);
-	new mini.Scene(true)
-		.tween(this.cursorColor, 0.25, 'easeInSine', { alpha: 255 })
-		.tween(this.cursorColor, 0.25, 'easeOutSine', { alpha: 0 })
+	new mini.Scene()
+		.doWhile(function() { return true; })
+			.tween(this.cursorColor, 0.25, 'easeInSine', { alpha: 255 })
+			.tween(this.cursorColor, 0.25, 'easeOutSine', { alpha: 64 })
+		.end()
 		.run();
 	mini.Threads.create(this, 101);
 	
-	this.write("minisphere Runtime 1.1b4 (miniconsole)");
+	this.write("minisphere Runtime 1.1 Console");
 	this.write("Sphere " + GetVersionString());
 	this.write("");
-	this.write("Initialized miniconsole");
 });
 
 // mini.Console.update()
@@ -78,14 +81,22 @@ mini.Console.update = function() {
 mini.Console.render = function() {
 	if (this.fadeness <= 0.0)
 		return;
-	var boxY = -16 * (1.0 - this.fadeness);
-	Rectangle(0, boxY, GetScreenWidth(), 16, new Color(0, 0, 0, this.fadeness * 224));
+	
+	// draw command prompt
+	var boxY = -22 * (1.0 - this.fadeness);
+	Rectangle(0, boxY, GetScreenWidth(), 22, new Color(0, 0, 0, this.fadeness * 224));
+	var promptWidth = this.font.getStringWidth(this.prompt + " ");
 	this.font.setColorMask(new Color(0, 0, 0, this.fadeness * 255));
-	this.font.drawText(6, 3 + boxY, this.entry);
+	this.font.drawText(6, 6 + boxY, this.prompt);
+	this.font.setColorMask(new Color(128, 128, 128, this.fadeness * 255));
+	this.font.drawText(5, 5 + boxY, this.prompt);
+	this.font.setColorMask(new Color(0, 0, 0, this.fadeness * 255));
+	this.font.drawText(6 + promptWidth, 6 + boxY, this.entry);
 	this.font.setColorMask(new Color(255, 255, 128, this.fadeness * 255));
-	this.font.drawText(5, 2 + boxY, this.entry);
+	this.font.drawText(5 + promptWidth, 5 + boxY, this.entry);
 	this.font.setColorMask(this.cursorColor);
-	this.font.drawText(5 + this.font.getStringWidth(this.entry), 2 + boxY, "_");
+	this.font.drawText(5 + promptWidth + this.font.getStringWidth(this.entry), 5 + boxY, "_");
+	
 	var boxHeight = this.numLines * this.font.getHeight() + 10;
 	var boxY = GetScreenHeight() - boxHeight * this.fadeness;
 	Rectangle(0, boxY, GetScreenWidth(), boxHeight, new Color(0, 0, 0, this.fadeness * 192));
@@ -170,7 +181,7 @@ mini.Console.execute = function(command)
 	// parse arguments
 	for (var i = 2; i < tokens.length; ++i) {
 		var maybeNumber = parseFloat(tokens[i]);
-		tokens[i] = isNaN(maybeNumber) ? tokens[i] : maybeNumber;
+		tokens[i] = !isNaN(maybeNumber) ? maybeNumber : tokens[i];
 	}
 	
 	// execute the command
@@ -182,13 +193,7 @@ mini.Console.execute = function(command)
 		mini.Console.write("Executing '" + command + "'");
 		mini.Threads.createEx(desc, {
 			update: function() {
-				try {
-					this.method.apply(this.that, tokens.slice(2));
-				}
-				catch(e) {
-					mini.Console.write("JS: " + e.message);
-					mini.Console.write("Error executing '" + desc.entity + " " + desc.instruction + "'");
-				}
+				this.method.apply(this.that, tokens.slice(2));
 			}
 		});
 	});
@@ -235,7 +240,7 @@ mini.Console.getInput = function()
 mini.Console.hide = function()
 {
 	new mini.Scene()
-		.tween(this, 0.25, 'easeInQuad', { fadeness: 0.0 })
+		.tween(this, 0.125, 'easeInQuad', { fadeness: 0.0 })
 		.call(function() { this.isVisible = false; this.entry = ""; }.bind(this))
 		.run();
 };
@@ -276,7 +281,7 @@ mini.Console.unregister = function(name)
 mini.Console.show = function()
 {
 	new mini.Scene()
-		.tween(this, 0.25, 'easeOutQuad', { fadeness: 1.0 })
+		.tween(this, 0.125, 'easeOutQuad', { fadeness: 1.0 })
 		.call(function() { this.isVisible = true; }.bind(this))
 		.run();
 }

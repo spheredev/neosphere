@@ -294,10 +294,15 @@ js_Surface_getPixel(duk_context* ctx)
 
 	image_t* image;
 	color_t  pixel;
+	int      w, h;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
+	w = get_image_width(image);
+	h = get_image_height(image);
+	if (x < 0 || x >= w || y < 0 || y >= h)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, w, h);
 	pixel = get_image_pixel(image, x, y);
 	duk_push_sphere_color(ctx, pixel);
 	return 1;
