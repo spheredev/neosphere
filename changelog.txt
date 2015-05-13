@@ -14,19 +14,24 @@ v1.1 - TBD
       var sound = new Sound("munch.wav");
       sound.volume = 128;
       sound.play(false);
+* Massive performance improvements, both to rendering as well as resource
+  loading. Most assets load lightning fast!
+* Assert(), a useful debugging tool. Throws an error if the asserted condition
+  fails, a no-op otherwise. In the Console build, also gives you the option to
+  ignore the failed assert and continue.
+* Async(), queues a script to run on the next FlipScreen(). Similar to what
+  setTimeout() does in a browser and required for, e.g. compliance with the
+  Promises/A+ spec.
 * TurboSphere-inspired "Galileo" graphics API, which allows scenes to be
   composed ahead of time using Shape and Group objects.
 * TurboSphere-inspired Sockets API, with separate ListeningSocket and
   IOSocket objects. (Legacy sockets are still supported!)
 * Built-in MT19937-based random number generator, including a method
   (`RNG.normal`) to generate normally-distributed random values.
-* New unified set of system scripts, the minisphere Runtime, including a
-  cooperative threading engine, cutscene engine, the Link query library, and a
-  full-featured console, among other goodies!
-* Async() function, queues a script to run on the next FlipScreen(). Similar to
-  what setTimeout() does in a browser and required for, e.g. compliance with the
-  Promises/A+ spec.
-* minisphere now searches <game_dir>/scripts/lib for system scripts.
+* minisphere Runtime, a unified set of system scripts including a cooperative
+  threading engine, cutscene engine, the Link query library, and a full-featured
+  console, among other goodies!
+* The engine now searches <game_dir>/scripts/lib for system scripts.
 * API documentation is included in the default distribution.
 * Playback position in Sounds can be set with microsecond precision.
 * Overhauled FollowPerson() algorithm: Followers move under their own

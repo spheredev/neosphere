@@ -50,8 +50,8 @@ mini.onStartUp.add(mini.Threads, function(params)
 // Updates all active threads for the next frame.
 mini.Threads.updateAll = function(threadID)
 {
-	if (!this.isInitialized)
-		Abort("mini.Threads.updateAll(): must call mini.initialize() first", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
+	
 	var threadsEnding = [];
 	mini.Link(mini.Link(this.threads).toArray())
 		.where(function(thread) { return thread.isValid; })
@@ -80,8 +80,8 @@ mini.Threads.updateAll = function(threadID)
 // Renders the current frame by calling all active threads' renderers.
 mini.Threads.renderAll = function()
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first!", -1);
+	
 	if (IsSkippedFrame()) return;
 	mini.Link(mini.Link(this.threads).sort(this.threadSorter))
 		.where(function(thread) { return thread.isValid; })
@@ -102,10 +102,8 @@ mini.Threads.renderAll = function()
 //               later in a frame than lower-priority ones. Ignored if no renderer is provided. (default: 0)
 mini.Threads.create = function(entity, priority)
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
-	if (!(entity instanceof Object) || entity === null)
-		Abort("create() argument must be a valid object", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
+	Assert(entity instanceof Object || entity === null, "create() argument must be a valid object", -1);
 	
 	priority = priority !== undefined ? priority : 0;
 	
@@ -136,10 +134,8 @@ mini.Threads.create = function(entity, priority)
 //     Threads.create() or Threads.doWith() instead.
 mini.Threads.createEx = function(that, threadDesc)
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
-	if (arguments.length < 2)
-		Abort("mini.Threads.createEx() expects 3 arguments", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
+	Assert(arguments.length >= 2, "mini.Threads.createEx() expects 2 arguments", -1);
 	
 	var update = threadDesc.update.bind(that);
 	var render = typeof threadDesc.render === 'function'
@@ -168,8 +164,7 @@ mini.Threads.createEx = function(that, threadDesc)
 //     threadID: The ID of the thread to check.
 mini.Threads.isRunning = function(threadID)
 {
-	if (!this.isInitialized)
-		Abort("must call mini.initialize() first", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
 	
 	if (threadID == 0) return false;
 	for (var i = 0; i < this.threads.length; ++i) {
@@ -187,8 +182,7 @@ mini.Threads.isRunning = function(threadID)
 //     user code is not recommended.
 mini.Threads.doFrame = function()
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
 	
 	if (IsMapEngineRunning()) RenderMap();
 		else this.renderAll();
@@ -211,8 +205,7 @@ mini.Threads.doFrame = function()
 //               ID will cause an error to be thrown.
 mini.Threads.join = function(threadIDs)
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
 	
 	threadIDs = threadIDs instanceof Array ? threadIDs : [ threadIDs ];
 	while (mini.Link(this.threads)
@@ -229,8 +222,7 @@ mini.Threads.join = function(threadIDs)
 //     threadID: The ID of the thread to terminate.
 mini.Threads.kill = function(threadID)
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
 	
 	mini.Link(this.threads)
 		.where(function(thread) { return thread.id == threadID })
@@ -247,8 +239,7 @@ mini.Threads.kill = function(threadID)
 //     call, it will return 0 (the ID of the main thread).
 mini.Threads.self = function()
 {
-	if (!this.isInitialized)
-		Abort("mini.initialize() must be called first!", -1);
+	Assert(this.isInitialized, "mini.initialize() must be called first", -1);
 	
 	return this.currentSelf;
 };

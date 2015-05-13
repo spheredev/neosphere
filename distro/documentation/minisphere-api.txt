@@ -7,7 +7,9 @@ the vast majority of the API is identical to Sphere's, with a handful of
 backwards-compatible enhancements.
 
 This file documents the functions exposed by minisphere for use in game
-scripts.
+scripts. This list is not yet exhaustive; see the included Sphere 1.5 API
+reference for the full list of legacy functions (a few may not be supported,
+however).
 
 
 Engine Identification
@@ -19,50 +21,33 @@ engine's level of support for various features.
 GetVersion()
 
   Returns the Sphere API version level as a floating point number. When
-  called in minisphere 1.1, this function returns `1.5`, indicating API
+  called in minisphere 1.1, this function returns 1.5, indicating API
   compatibility with Sphere 1.5.
 
 GetVersionString()
 
-  Returns the engine's version identification string. minisphere 1.1
-  identifies as:
+    Returns the engine's version identification string. minisphere 1.1
+    identifies as:
     
-    `v1.5 (compatible; minisphere 1.1)`
+      v1.5 (compatible; minisphere 1.1)
 
 GetExtensions()
 
   Returns an array of strings representing the engine's built-in
-  capabilities. minisphere currently supports the following extensions:
+  capabilities. minisphere currently supports the following extensions (most of
+  these should be self-explanatory):
   
-    * `minisphere`
-      minisphere-specific API extensions
-      
-    * `sphere-legacy-api`
-      Sphere 1.x API support
-    
-    * `sphere-obj-constructors`
-      Sphere objects can be created via `new`, e.g.
-      var sound = new Sound("munch.wav");
-      
-    * `sphere-obj-props`
-      Sphere objects include virtual properties, e.g.:
-      sound_obj.volume = 0.5;
-    
-    * `sphere-map-engine`
-      Sphere 1.x compatible map engine included
-    
-    * `sphere-galileo`
-      Sphere 2.0 `Galileo` graphics API
-      
-    * `minisphere-new-sockets`
-      Support for minisphere IOSocket and ListeningSocket objects
-    
-    * `frameskip-api`
-      API functions for managing frame skipping
-      
-    * `set-script-function`
-      Engine allows passing JavaScript functions to SetxxxScript(), e.g.
-      SetUpdateScript(function() { Threads.updateAll(); });
+    * minisphere
+    * sphere-legacy-api
+    * sphere-obj-constructors
+    * sphere-obj-props
+    * sphere-map-engine
+    * sphere-galileo (Sphere 2.0 Galileo graphics API)
+    * minisphere-async-api
+    * minisphere-new-sockets
+    * minisphere-rng-object
+    * frameskip-api
+    * set-script-function
     
 
 Basic Debugging
@@ -91,6 +76,12 @@ Alert(message[, stack_offset])
   Similar to Abort(), except the message is displayed in a dialog box
   and the game continues running as normal afterwards. Useful for
   examining variables at runtime when debugging.
+
+Assert(condition, error_message[, stack_offset]);
+  
+  If `condition` evaluates to true, does nothing. Otherwise an error is thrown
+  with the error text set to `error_message`. In the Console engine, the error
+  is shown in a dialog box with the option to ignore it.
 
 
 Script Management
@@ -157,6 +148,11 @@ Exit()
   Exits the current game and shuts down the engine. If the current game
   was started by via ExecuteGame(), the original game will be restarted
   following the Exit() call.
+  
+Async(script);
+  
+  Queues a script or function to be executed on the next FlipScreen() call. This
+  is similar to setTimeout(func, 0); in the browser.
 
 
 Random Number Generation
@@ -170,122 +166,116 @@ Twister) algorithm to generate random values and allows manual seeding.
 
 RNG.seed(seed);
 
-Seeds the random number generator with `seed`. If the seed is floating
-point, it will be truncated to an integer; using a seed of 812.88, for
-example, has the same effect as 812.
+  Seeds the random number generator with `seed`. If the seed is floating point,
+  it will be truncated to an integer; using a seed of 812.88, for example, has
+  the same effect as 812.
 
 RNG.chance(odds);
 
-Tests a percentage chance. Returns true if the chance succeeds, false
-otherwise. `odds` is a value between 0 and 1; for example, 0.75 will
-return true 75% of the time.
+  Tests a percentage chance. Returns true if the chance succeeds, false
+  otherwise. `odds` is a value between 0 and 1; for example, 0.75 will return
+  true 75% of the time.
 
 RNG.normal(mean, sigma);
 
-Returns a random floating point value normally distributed around `mean`
-with a standard deviation specified by `sigma`. The probability
-distribution of this function is sometimes termed a "bell curve."
+  Returns a random floating point value normally distributed around `mean` with
+  a standard deviation specified by `sigma`. The probability distribution of
+  this function is sometimes termed a "bell curve."
 
 RNG.random();
 
-Returns a floating point value in the range [0,1). This is the basic
-method of random number generation, and a direct, drop-in replacement
-for Math.random().
+  Returns a floating point value in the range [0,1). This is the basic method of
+  random number generation, and a direct, drop-in replacement for Math.random().
 
 RNG.range(min, max);
 
-Returns a random integer uniformly distributed within the range
-[min,max].
+  Returns a random integer uniformly distributed within the range [min,max].
 
 RNG.sample(array);
 
-Returns a single randomly-chosen item from `array`.
+  Returns a single randomly-chosen item from `array`.
 
 RNG.vary(mean, variance);
 
-Returns a random floating point value uniformly distributed around
-`mean` with a maximum deviation specified by `variance`.
+  Returns a random floating point value uniformly distributed around `mean` with
+  a maximum deviation specified by `variance`.
 
 
 Graphics Primitives
 -------------------
 
-All the old-school primitives provided by Sphere 1.5 are still available
-in minisphere. However, there's a newer, much more modern way: the Shape
-and Group objects.  With these, you precompose a complex object out of a
-set of vertices and textures which are then uploaded to the GPU to save
-time during the main render loop.
+All the old-school primitives provided by Sphere 1.5 are still available in
+minisphere. However, there's a newer, much more modern way: the Shape and Group
+objects.  With these, you precompose a complex object out of a set of vertices
+and textures which are then uploaded to the GPU to save time during the main
+render loop.
 
 GetDefaultShaderProgram()
   
-  Gets the default shader program for drawing Groups (see below). This
-  is required by the Galileo specification and is the only way to get a
+  Gets the default shader program for drawing Groups (see below). This is
+  required by the Galileo specification and is the only way to get a
   ShaderProgram object. minisphere does not currently support shaders.
-
 new Vertex(x, y[, color[, u, v]]);
   
-  Constructs an object describing a vertex of a shape. x and y specify
-  the location of the vertex relative to the shape's origin. The color,
-  if specified, is multiplied with the texture at that point in the
-  shape to "tint" the vertex.  U/V are texture coordinates ranging from
-  0 to 1 describing the part of the texture which will be mapped to that
-  vertex.
+  Constructs an object describing a vertex of a shape. x and y specify the
+  location of the vertex relative to the shape's origin. The color, if
+  specified, is multiplied with the texture at that point in the shape to "tint"
+  the vertex.  U/V are texture coordinates ranging from 0 to 1 describing the
+  part of the texture which will be mapped to that vertex.
 
 new Shape(vertices, image[, primitive_type]);
 
-  Constructs a primitive shape out of the provided array of vertices
-  textured with the Image object specified by `image`. `primitive_type`
-  is optional and can be one of the following:
+  Constructs a primitive shape out of the provided array of vertices textured
+  with the Image object specified by `image`. `primitive_type` is optional and
+  can be one of the following:
     
-    SHAPE_AUTO - Primitive type is determined automatically based on the
-                 number of vertices. This is the default.
+    SHAPE_AUTO - Primitive type is determined automatically based on the number
+                 of vertices. This is the default.
     
-    SHAPE_POINT_LIST - A point list. Each vertex represents a single
-                       point to be rendered. Useful for particle
-                       effects.
+    SHAPE_POINT_LIST - A point list. Each vertex represents a single point to be
+                       rendered. Useful for particle effects.
   
-    SHAPE_LINE_LIST - A line list. Each pair of vertices represents a
-                      line segment.
+    SHAPE_LINE_LIST - A line list. Each pair of vertices represents a line
+                      segment.
     
     SHAPE_TRIANGLE_LIST - A triangle will be drawn for every 3 vertices.
     
-    SHAPE_TRIANGLE_STRIP - A triangle strip. The first 3 vertices
-                           represent a complete triangle, and each
-                           subsequent vertex is combined with the
-                           previous two to form another. Number of
-                           triangles drawn is equal to (num_verts - 2).
+    SHAPE_TRIANGLE_STRIP - A triangle strip. The first 3 vertices represent a
+                           complete triangle, and each subsequent vertex is
+                           combined with the previous two to form another.
+                           Number of triangles drawn is equal to
+                           (num_verts - 2).
     
-    SHAPE_TRIANGLE_FAN - A series of triangles is drawn, all sharing the
-                         first vertex. As with a strip, the number of
-                         triangles is equal to (num_verts - 2).
+    SHAPE_TRIANGLE_FAN - A series of triangles is drawn, all sharing the first
+                         vertex. As with a strip, the number of triangles is
+                         equal to (num_verts - 2).
 
 Shape:image (read/write)
   
-  The Image to be used when texturing the shape. This can be null, in
-  which case the vertex colors alone will determine the rendered shape's
-  appearance.
+  The Image to be used when texturing the shape. This can be null, in which case
+  the vertex colors alone will determine the rendered shape's appearance.
 
 new Group(shapes, shader);
   
-  Constructs a Group out of the provided array of Shape objects.
-  `shader` specifies the ShaderProgram to use when rendering the group;
-  currently the only way to retrieve a ShaderProgram object is by
-  calling GetDefaultShaderProgram().
+  Constructs a Group out of the provided array of Shape objects. `shader`
+  specifies the ShaderProgram to use when rendering the group; currently the
+  only way to retrieve a ShaderProgram object is by calling
+  GetDefaultShaderProgram().
 
 Group:draw();
   
-  Renders the group to the backbuffer. Any transformations specified for
-  the group (see below for properties) are applied as if the entire
-  group were a single primitive.
+  Renders the group to the backbuffer. Any transformations specified for the
+  group (see below for properties) are applied as if the entire group were a
+  single primitive.
 
 Group:x (read/write)
 Group:y (read/write)
   
-  Sets the location the Group will be drawn at. When using default
-  shaders, these are in raster coordinates where +X is right and +Y is
-  down. Note that the translation described by these values is applied
-  *after* rotation. To apply translation before rotation, use the `rotX`
-  and `rotY` properties (see below).
+  Sets the location the Group will be drawn at. When using default shaders,
+  these are in raster coordinates where +X is right and +Y is down. Note that
+  the translation described by these values is applied *after* rotation. To
+  apply translation before rotation, use the `rotX` and `rotY` properties (see
+  below).
 
 Group:angle (read/write)
   
@@ -294,27 +284,26 @@ Group:angle (read/write)
 Group:rotX (read/write)
 Group:rotY (read/write)
   
-  Specifies the amount by which to translate before rotation is applied.
-  The shapes in the group will revolve about the origin at a distance
-  determined by these values.
+  Specifies the amount by which to translate before rotation is applied. The
+  shapes in the group will revolve about the origin at a distance determined by
+  these values.
 
 
 Map Engine
 ----------
 
-minisphere's map engine is fully compatible with the one found in
-Sphere 1.5 and very powerful.  It's also very easy to get up and
-running.
+minisphere's map engine is fully compatible with the one found in Sphere 1.5 and
+very powerful.  It's also very easy to get up and running.
 
 MapEngine(map_file, framerate);
 
-  Starts the map engine, loading `map_file` as the initial map.
-  `framerate` specifies the framerate the map engine will run at; a
-  framerate of 0 will run unthrottled, which may be useful for
-  benchmarks but is generally useless otherwise.
+  Starts the map engine, loading `map_file` as the initial map. `framerate`
+  specifies the framerate the map engine will run at; a framerate of 0 will run
+  unthrottled, which may be useful for benchmarks but is generally useless
+  otherwise.
   
-  `map_file` is assumed to be relative to the "maps" directory in the
-  game.sgm root.
+  `map_file` is assumed to be relative to the "maps" directory in the game.sgm
+  root.
 
 ExitMapEngine();
   
@@ -360,11 +349,12 @@ persons on a map. Typically you create one or more persistent persons
 to represent your player characters, and the rest are transient, to be
 destroyed when a new map is loaded.
 
-CreatePerson(name, spriteset_file, transient);
+CreatePerson(name, spriteset, transient);
   
-  Creates a person using the spriteset stored in `spriteset_file`.
-  If `transient` true, the person is transient and will automatically be
-  destroyed (deleted) when a new map is loaded via ChangeMap().
+  Creates a person using the spriteset specified by `spriteset`. This can either
+  be an .rss spriteset path (relative to <game_dir>/spritesets) or a Spriteset
+  object. If `transient` true, the person is transient and will automatically be
+  destroyed when a new map is loaded via ChangeMap().
 
 DestroyPerson(name);
   
@@ -387,14 +377,14 @@ GetPersonY(name);
 SetPersonX(name, new_x);
 SetPersonY(name, new_y);
 
-Gets or sets a person's position relative to the current map.
+  Gets or sets a person's position relative to the current map.
 
 GetPersonXFloat(name);
 GetPersonYFloat(name);
 SetPersonXYFloat(name, new_x, new_y);
 
-Gets or sets a person's position relative to the current map, with
-subpixel precision.
+  Gets or sets a person's position relative to the current map, with
+  subpixel precision.
 
 FollowPerson(name, leader_name, distance);
   

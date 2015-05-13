@@ -1,6 +1,6 @@
 author=Fat Cerberus
 description=A configuration utility for minisphere.
 name=miniconfig 1.1
-screen_height=480
-screen_width=640
+screen_height=240
+screen_width=320
 script=main.js
