@@ -46,6 +46,7 @@ extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duk;
 extern int                  g_fps;
+extern ALLEGRO_CONFIG*      g_game_conf;
 extern ALLEGRO_PATH*        g_game_path;
 extern char*                g_last_game_path;
 extern float                g_scale_x, g_scale_y;

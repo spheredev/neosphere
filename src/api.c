@@ -31,6 +31,7 @@ static duk_ret_t js_IsSkippedFrame       (duk_context* ctx);
 static duk_ret_t js_GetDirectoryList     (duk_context* ctx);
 static duk_ret_t js_GetFileList          (duk_context* ctx);
 static duk_ret_t js_GetFrameRate         (duk_context* ctx);
+static duk_ret_t js_GetGameInformation   (duk_context* ctx);
 static duk_ret_t js_GetGameList          (duk_context* ctx);
 static duk_ret_t js_GetMaxFrameSkips     (duk_context* ctx);
 static duk_ret_t js_GetScreenHeight      (duk_context* ctx);
@@ -96,6 +97,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
 	register_api_function(ctx, NULL, "GetFileList", js_GetFileList);
 	register_api_function(ctx, NULL, "GetFrameRate", js_GetFrameRate);
+	register_api_function(ctx, NULL, "GetGameInformation", js_GetGameInformation);
 	register_api_function(ctx, NULL, "GetGameList", js_GetGameList);
 	register_api_function(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
 	register_api_function(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
@@ -532,6 +534,17 @@ static duk_ret_t
 js_GetFrameRate(duk_context* ctx)
 {
 	duk_push_int(ctx, s_framerate);
+	return 1;
+}
+
+static duk_ret_t
+js_GetGameInformation(duk_context* ctx)
+{
+	duk_push_object(ctx);
+	duk_push_string(ctx, al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP)); duk_put_prop_string(ctx, -2, "directory");
+	duk_push_string(ctx, al_get_config_value(g_game_conf, NULL, "name")); duk_put_prop_string(ctx, -2, "name");
+	duk_push_string(ctx, al_get_config_value(g_game_conf, NULL, "author")); duk_put_prop_string(ctx, -2, "author");
+	duk_push_string(ctx, al_get_config_value(g_game_conf, NULL, "description")); duk_put_prop_string(ctx, -2, "description");
 	return 1;
 }
 

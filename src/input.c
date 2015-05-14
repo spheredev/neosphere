@@ -59,6 +59,8 @@ static vector_t*            s_bound_buttons;
 static vector_t*            s_bound_keys;
 static vector_t*            s_bound_map_keys;
 static ALLEGRO_EVENT_QUEUE* s_events;
+static bool                 s_have_joystick;
+static bool                 s_have_mouse;
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
 static struct key_queue     s_key_queue;
 static int                  s_last_wheel_pos = 0;
@@ -93,17 +95,24 @@ initialize_input(void)
 	console_log(1, "Initializing input\n");
 	
 	al_install_keyboard();
-	al_install_mouse();
-	al_install_joystick();
+	if (s_have_mouse = al_install_mouse())
+		console_log(1, "  Mouse enabled\n");
+	if (s_have_joystick = al_install_joystick())
+		console_log(1, "  Joystick enabled\n");
+	
 	s_events = al_create_event_queue();
 	al_register_event_source(s_events, al_get_keyboard_event_source());
-	al_register_event_source(s_events, al_get_mouse_event_source());
-	al_register_event_source(s_events, al_get_joystick_event_source());
+	if (s_have_mouse)
+		al_register_event_source(s_events, al_get_mouse_event_source());
+	if (s_have_joystick)
+		al_register_event_source(s_events, al_get_joystick_event_source());
 
 	// look for active joysticks
-	s_num_joysticks = fmin(MAX_JOYSTICKS, al_get_num_joysticks());
-	for (i = 0; i < MAX_JOYSTICKS; ++i)
-		s_joy_handles[i] = i < s_num_joysticks ? al_get_joystick(i) : NULL;
+	if (s_have_joystick) {
+		s_num_joysticks = fmin(MAX_JOYSTICKS, al_get_num_joysticks());
+		for (i = 0; i < MAX_JOYSTICKS; ++i)
+			s_joy_handles[i] = i < s_num_joysticks ? al_get_joystick(i) : NULL;
+	}
 
 	// create bound key vectors
 	s_bound_buttons = new_vector(sizeof(struct bound_button));
@@ -167,6 +176,8 @@ is_joy_button_down(int joy_index, int button)
 	ALLEGRO_JOYSTICK_STATE joy_state;
 	ALLEGRO_JOYSTICK*      joystick;
 
+	if (!s_have_joystick)
+		return false;
 	if (!(joystick = s_joy_handles[joy_index]))
 		return 0.0;
 	al_get_joystick_state(joystick, &joy_state);
@@ -209,7 +220,7 @@ get_joy_axis(int joy_index, int axis_index)
 
 	int i;
 
-	if (!(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
 		return 0.0;
 	al_get_joystick_state(joystick, &joy_state);
 	n_sticks = al_get_joystick_num_sticks(joystick);
@@ -231,7 +242,7 @@ get_joy_axis_count(int joy_index)
 
 	int i;
 	
-	if (!(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
 		return 0;
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	n_axes = 0;
@@ -245,7 +256,7 @@ get_joy_button_count(int joy_index)
 {
 	ALLEGRO_JOYSTICK* joystick;
 
-	if (!(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
 		return 0;
 	return al_get_joystick_num_buttons(joystick);
 }
@@ -266,7 +277,7 @@ update_bound_keys(bool use_map_keys)
 	
 	iter_t iter;
 
-	// check bound keyboad keys
+	// check bound keyboard keys
 	al_get_keyboard_state(&kb_state);
 	if (use_map_keys) {
 		iter = iterate_vector(s_bound_map_keys);
@@ -339,12 +350,14 @@ update_input(void)
 	}
 	
 	// check whether mouse wheel moved since last update
-	al_get_mouse_state(&mouse_state);
-	if (mouse_state.z > s_last_wheel_pos)
-		queue_wheel_event(MOUSE_WHEEL_UP);
-	if (mouse_state.z < s_last_wheel_pos)
-		queue_wheel_event(MOUSE_WHEEL_DOWN);
-	s_last_wheel_pos = mouse_state.z;
+	if (s_have_mouse) {
+		al_get_mouse_state(&mouse_state);
+		if (mouse_state.z > s_last_wheel_pos)
+			queue_wheel_event(MOUSE_WHEEL_UP);
+		if (mouse_state.z < s_last_wheel_pos)
+			queue_wheel_event(MOUSE_WHEEL_DOWN);
+		s_last_wheel_pos = mouse_state.z;
+	}
 }
 
 static void
