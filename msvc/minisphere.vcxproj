@@ -380,7 +380,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\changelog.txt" />
-    <Text Include="..\distro\documentation\sphere-api.txt" />
+    <Text Include="..\distro\documentation\minisphere-api.txt" />
+    <Text Include="..\distro\documentation\sphere-legacy-api.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

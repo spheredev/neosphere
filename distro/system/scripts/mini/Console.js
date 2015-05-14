@@ -190,7 +190,6 @@ mini.Console.execute = function(command)
 		.filterBy('entity', entity)
 		.each(function(desc)
 	{
-		mini.Console.write("Executing '" + command + "'");
 		mini.Threads.createEx(desc, {
 			update: function() {
 				this.method.apply(this.that, tokens.slice(2));

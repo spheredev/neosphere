@@ -230,7 +230,10 @@
     <Text Include="..\changelog.txt">
       <Filter>Documentation Files</Filter>
     </Text>
-    <Text Include="..\distro\documentation\sphere-api.txt">
+    <Text Include="..\distro\documentation\minisphere-api.txt">
+      <Filter>Documentation Files</Filter>
+    </Text>
+    <Text Include="..\distro\documentation\sphere-legacy-api.txt">
       <Filter>Documentation Files</Filter>
     </Text>
   </ItemGroup>
