@@ -157,7 +157,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>allegro-5.1.9d-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.1.10-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
@@ -180,7 +180,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>allegro-5.1.9d-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.1.10-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
@@ -208,7 +208,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro-5.1.9-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.1.10-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
@@ -237,7 +237,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro-5.1.9-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.1.10-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
@@ -265,7 +265,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro-5.1.9-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.1.10-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
@@ -294,7 +294,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro-5.1.9-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro-5.1.10-static.lib;libvorbisfile-1.3.5-static.lib;libvorbis-1.3.5-static.lib;dumb-0.9.3-static.lib;freetype-2.5.5-static.lib;libFLAC-1.3.1-static.lib;libogg-1.3.2-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
