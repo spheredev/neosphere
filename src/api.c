@@ -20,8 +20,6 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"set-script-function",
 };
 
-static duk_ret_t duk_on_create_error(duk_context* ctx);
-
 static duk_ret_t js_GetVersion           (duk_context* ctx);
 static duk_ret_t js_GetVersionString     (duk_context* ctx);
 static duk_ret_t js_GetExtensions        (duk_context* ctx);
@@ -53,6 +51,8 @@ static duk_ret_t js_GarbageCollect       (duk_context* ctx);
 static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
+
+static duk_ret_t duk_on_create_error (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static int        s_framerate = 0;
