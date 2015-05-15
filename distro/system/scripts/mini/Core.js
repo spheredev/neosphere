@@ -1,5 +1,5 @@
 /**
- * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
@@ -70,8 +70,11 @@ mini.Delegate.prototype.invoke = function()
 //             be passed to each registered initializer.
 mini.initialize = function(params)
 {
-    Print("mini: Initializing minisphere Runtime");
     params = typeof params !== 'undefined' ? params : {};
+    
+	Print("mini: Initializing minisphere Runtime");
+	var frameRate = 'frameRate' in params ? params.frameRate : 0;
+	SetFrameRate(frameRate);
     mini.onStartUp.invoke(params);
 }
 

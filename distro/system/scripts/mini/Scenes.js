@@ -1,5 +1,5 @@
 /**
- * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *

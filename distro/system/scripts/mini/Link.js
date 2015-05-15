@@ -1,15 +1,18 @@
 /**
-* Script: Link.js
-* Written by: Andrew Helenius
-* Updated: May/11/2015
-* Version: 0.3.0
-* Desc: Link.js is a very fast general-purpose functional programming library.
-		Still somewhat experimental, and still under construction.
+ * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
+ * A set of system scripts providing advanced, high-level functionality not
+ * available in the engine itself.
+ *
+ * [mini/Link.js]
+ * A powerful functional programming library which is used like .NET LINQ to
+ * perform complex queries on JS arrays. Originally based on Link 0.3.0 by
+ * Andrew Helenius.
 **/
 
 RequireSystemScript('mini/Core.js');
 
-mini.Link = (function(undefined) {
+mini.Link = (function(undefined)
+{
 	"use strict";
 	
 	var _slice = [].slice;
@@ -585,6 +588,17 @@ mini.Link = (function(undefined) {
 
 	function EachPoint(fn) { this.exec = fn; }
 	
+	function ExecutePoint(fn) {
+		this.next = null;
+		this.env  = null;
+		this.func = fn;
+	}
+	
+	ExecutePoint.prototype.exec = function(item, i) {
+		this.func(item, i);
+		this.next.exec(item, i);
+	}
+	
 	function AveragePoint() { // end point
 		this.env   = null;
 		this.next  = null;
@@ -892,6 +906,11 @@ mini.Link = (function(undefined) {
 	
 	function Each(fn) {
 		this.run(new EachPoint(fn));
+	}
+	
+	function Execute(fn) {
+		this.pushPoint(new ExecutePoint(fn));
+		return this;
 	}
 		
 	function Run(point) {
@@ -1296,6 +1315,7 @@ mini.Link = (function(undefined) {
 		drop      : Skip,
 		each      : Each,
 		every     : Every,
+		execute   : Execute,
 		exists    : Contains,
 		expand    : Expand,
 		expandInto: Expand,

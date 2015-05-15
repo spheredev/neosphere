@@ -1,5 +1,5 @@
 /**
- * minisphere Runtime 1.1b4 - (c) 2015 Fat Cerberus
+ * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
@@ -226,9 +226,7 @@ mini.Threads.kill = function(threadID)
 	
 	mini.Link(this.threads)
 		.where(function(thread) { return thread.id == threadID })
-		.each(function(thread) { thread.isValid = false; });
-	mini.Link(this.threads)
-		.where(function(thread) { return thread.id == threadID })
+		.execute(function(thread) { thread.isValid = false; })
 		.remove();
 };
 

@@ -25,7 +25,7 @@ static duk_ret_t js_Socket_write                    (duk_context* ctx);
 static duk_ret_t js_new_ListeningSocket             (duk_context* ctx);
 static duk_ret_t js_ListeningSocket_finalize        (duk_context* ctx);
 static duk_ret_t js_ListeningSocket_close           (duk_context* ctx);
-static duk_ret_t js_ListeningSocket_acceptNext      (duk_context* ctx);
+static duk_ret_t js_ListeningSocket_accept          (duk_context* ctx);
 static duk_ret_t js_new_IOSocket                    (duk_context* ctx);
 static duk_ret_t js_IOSocket_finalize               (duk_context* ctx);
 static duk_ret_t js_IOSocket_get_remoteAddress      (duk_context* ctx);
@@ -267,7 +267,7 @@ init_sockets_api(void)
 	// ListeningSocket object
 	register_api_ctor(g_duk, "ListeningSocket", js_new_ListeningSocket, js_ListeningSocket_finalize);
 	register_api_function(g_duk, "ListeningSocket", "close", js_ListeningSocket_close);
-	register_api_function(g_duk, "ListeningSocket", "acceptNext", js_ListeningSocket_acceptNext);
+	register_api_function(g_duk, "ListeningSocket", "acceptNext", js_ListeningSocket_accept);
 	
 	// IOSocket object
 	register_api_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
@@ -553,7 +553,7 @@ js_ListeningSocket_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ListeningSocket_acceptNext(duk_context* ctx)
+js_ListeningSocket_accept(duk_context* ctx)
 {
 	socket_t* new_socket;
 	socket_t* socket;

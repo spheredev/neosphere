@@ -237,10 +237,15 @@ RNG.vary(mean, variance);
 Graphics Routines
 -----------------
 
-minisphere, like Sphere, uses double-buffered renderering. In this scheme, all
-rendering is done to a backbuffer, which is not visible to the user, and
-then "flipped" once per frame, so that the player only sees the final rendering
+minisphere, like Sphere, uses double-buffered rendering. In this scheme, all
+drawing is done to a backbuffer, which is not visible to the user, and then
+"flipped" once per frame, so that the player only sees the final rendering
 output.
+
+FlipScreen();
+
+  Flips the backbuffer. Note that this also performs event loop processing, so
+  if it is not called regularly, the engine will stop responding.
 
 SetFrameRate(fps);
 GetFrameRate();
@@ -254,11 +259,6 @@ GetScreenWidth();
 GetScreenHeight();
 
   Gets the current screen resolution width and height.
-
-FlipScreen();
-
-  Flips the backbuffer. Note that this also performs event loop processing, so
-  if it is not called regularly, the engine will stop responding.
 
 SetClippingRectangle(x, y, width, height);
 GetClippingRectangle();
@@ -293,6 +293,7 @@ GetDefaultShaderProgram()
   Gets the default shader program for drawing Groups (see below). This is
   required by the Galileo specification and is the only way to get a
   ShaderProgram object. minisphere does not currently support shaders.
+  
 new Vertex(x, y[, color[, u, v]]);
   
   Constructs an object describing a vertex of a shape. x and y specify the
@@ -383,16 +384,81 @@ GetLocalAddress();
 
   Returns the calling machine's local IP address.
 
-new ListeningSocket(port);
+new ListeningSocket(port[, backlog_size]);
   
-  Constructs a new listening socket which listens for connectiosn on `port`.
+  Constructs a new listening socket which listens for connections on `port`.
+  `backlog_size` specifies the size of the backlog. If the backlog fills, new
+  connections will be dropped.
 
+ListeningSocket:accept();
+
+  If one or more connections are waiting in the backlog, accepts one of them and
+  returns an IOSocket object representing the connection. Otherwise, returns
+  null. This should be called regularly to prevent the backlog from filling up.
+
+ListeningSocket:close();
+  
+  Disconnects the socket. Any sockets in the backlog will be purged and no new
+  connections can be made unless a new ListeningSocket is created.
+
+new IOSocket(hostname, port);
+  
+  Connects to `hostname` on `port` and constructs an IOSocket representing the
+  connection. The hostname can either be a named address (e.g. google.com) or an
+  IP address (e.g. 127.0.0.1). As this operation is non-blocking, a valid socket
+  will be returned even if the connection can be not be made; you must call
+  IOSocket:isConnected() to find out when the connection has opened.
+
+IOSocket:remoteAddress (read-only)
+  
+  Gets the IP address of the upstream end of the socket. Throws an error if
+  accessed before a connection has been established.
+
+IOSocket:remotePort (read-only)
+  
+  Gets the port that the remote machine is using for the connection. Generally
+  not a useful statistic, but it's there if you need it. Throws an error if
+  accessed before a connection is established.
+
+IOSocket:isConnected();
+  
+  Returns true if the a connection has been established. As long as this returns
+  false, you cannot call any other methods on the socket object. Doing so will
+  cause an error to be thrown.
+
+IOSocket:getPendingReadSize();
+  
+  Gets the amount of data, in bytes, currently in the receive buffer. Call
+  IOSocket:read() or :readString() to retrieve this data.
+
+IOSocket:read(bytes);
+  
+  Reads up to `bytes` bytes from the socket and returns a ByteArray containing
+  the data received.
+
+IOSocket:readString(bytes);
+  
+  Same as IOSocket:read(), but returns a string instead of a ByteArray. This may
+  be more convenient, depending on your use case.
+
+IOSocket:write(data);
+
+  Writes data to the socket, which can be read at the other end. `data` can be
+  either a ByteArray or a string.
+
+IOSocket:close();
+
+  Disconnects the socket. Note that a socket object cannot be reused after it
+  has been closed; a new one must be created.
+  
 
 Map Engine
 ----------
 
 minisphere's map engine is fully compatible with the one found in Sphere 1.5 and
-very powerful.  It's also very easy to get up and running.
+very powerful.  It's also very easy to get up and running. This section is
+incomplete; the APIs below are only the basics. See the included Sphere 1.5 API
+documentation for the full set of map functions.
 
 MapEngine(map_file, framerate);
 
@@ -404,12 +470,9 @@ MapEngine(map_file, framerate);
   `map_file` is assumed to be relative to the "maps" directory in the game.sgm
   root.
 
-ExitMapEngine();
+IsMapEngineRunning();
   
-  Tells the map engine to shut down at the start of the next frame. If
-  the map engine is presently held up in an UpdateMapEngine() loop (see
-  below), this call will not take effect until control returns to the
-  map engine proper.
+  Returns true if the map engine is currently running.
 
 ChangeMap(map_file);
 
@@ -418,19 +481,63 @@ ChangeMap(map_file);
   file as well as any created by passing `true` as the third argument
   to CreatePerson().
 
-AttachCamera(person);
-  
-  Attaches the camera to `person`. The camera will remain centered on
-  whichever person it's attached to as they move about the map.
+MapToScreenX(layer, x);
+MapToScreenY(layer, y);
+ScreenToMapX(layer, x);
+ScreenToMapY(layer, y);
 
-AttachInput(person);
+  Converts between map and screen coordinates.
+
+SetUpdateScript(fn);
+SetRenderScript(fn);
   
-  Grants the player control of `person`.
+  Sets a function `fn` to be called once per map engine frame. Game state should
+  be updated in the update script, while drawing is done in the render script.
+  The distinction is important, as render calls can be skipped to minimize lag.
+  Note: You shouldn't call these functions when using the minisphere Runtime.
+  The runtime uses them internally and changing them out will break things.
+
+SetMapEngineFrameRate(fps);
+GetMapEngineFrameRate();
+
+  Gets or sets the map engine framerate. Set it to 0 to run the map engine
+  unthrottled (not generally useful outside of benchmarks).
+
+GetCurrentMap();
+  
+  Gets the filename of the current map, relative to <game_dir>/maps.
+
+AttachInput(name);
+DetachInput();
+IsInputAttached();
+GetInputPerson();
+  
+  Attaches, detaches or gets the input focus. The player will have control of
+  the person with input focus. `name` is the name of the person as passed to
+  CreatePerson().
+
+AttachCamera(name);
+DetachCamera();
+IsCameraAttached();
+GetCameraPerson();
+  
+  Attaches, detaches, or gets the camera focus. The camera will remain centered
+  on whichever person it's attached to as they move about the map. `name` is the
+  name of the person as passed to CreatePerson().
+
+SetCameraX();
+SetCameraY();
+GetCameraX();
+GetCameraY();
+
+Gets or sets the camera position. Note: If the camera is placed beyond the edge
+of a non-repeating map, the map's corresponding edge script will be called.
 
 UpdateMapEngine();
   
-  Updates the map engine the next frame. Used to keep the map engine
-  operating when running a tight loop.
+  Updates the map engine per frame. Used to keep the map engine operating in
+  the background when running a tight loop. Note that map input will not be
+  accepted during an UpdateMapEngine() loop.
 
 RenderMap();
   
@@ -438,15 +545,22 @@ RenderMap();
   along with UpdateMapEngine() to keep the map engine operating when
   running a tight loop.
 
+ExitMapEngine();
+  
+  Tells the map engine to shut down at the start of the next frame. If
+  the map engine is presently held up in an UpdateMapEngine() loop (see
+  below), this call will not take effect until control returns to the
+  map engine proper.
+
 
 Persons Management
 ------------------
 
-Persons are the Sphere term for what most RPG map engines call
-'entities'.  They are so named for their typical use case--representing
-persons on a map. Typically you create one or more persistent persons
-to represent your player characters, and the rest are transient, to be
-destroyed when a new map is loaded.
+Persons are the Sphere term for what most RPG map engines call 'entities'.  They
+are so named for their typical use case--representing persons on a map.
+Typically you create one or more persistent persons to represent your player
+characters, and the rest are transient, to be destroyed when a new map is
+loaded.
 
 CreatePerson(name, spriteset, transient);
   
