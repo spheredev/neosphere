@@ -42,13 +42,41 @@ GetExtensions()
     * sphere-obj-constructors
     * sphere-obj-props
     * sphere-map-engine
-    * sphere-galileo (Sphere 2.0 Galileo graphics API)
+    * sphere-galileo
     * minisphere-async-api
     * minisphere-new-sockets
     * minisphere-rng-object
     * frameskip-api
     * set-script-function
     
+
+Script Management
+-----------------
+
+Outside of very simple one-off games, most projects will consist of
+multiple script files. You will need to know how to use the functions
+below if you expect to get very far!
+
+RequireScript(filename)
+EvaluateScript(filename)
+
+  Evaluates the contents of `filename`, as if the code contained within
+  were part of the script containing the call. If you've ever worked in
+  C or C++, this is a bit like including a header file. The filename is
+  assumed to be relative to [game.sgm root]/scripts.
+  
+  Note: RequireScript only executes a given script once, regardless
+  of how many RequireScript() calls specifying it are encountered. This
+  is generally preferable to EvaluateScript(), which always executes the
+  script.
+
+RequireSystemScript(filename)
+EvaluateSystemScript(filename)
+
+  Same as above, except the filename is relative to
+  [engine root]/system/scripts instead of the game directory. This
+  allows you to use scripts included with the engine.
+
 
 Basic Debugging
 ---------------
@@ -84,32 +112,32 @@ Assert(condition, error_message[, stack_offset]);
   is shown in a dialog box with the option to ignore it.
 
 
-Script Management
------------------
+Logging
+-------
 
-Outside of very simple one-off games, most projects will consist of
-multiple script files. You will need to know how to use the functions
-below if you expect to get very far!
+Logging is another useful debugging tool. When trying to diagnose a stubborn
+bug, it often helps to be able to see a detailed summary of everything that
+happened when the issue surfaced. Of course, this requires some vigilance on the
+part of the developer to add enough log entries!
 
-RequireScript(filename)
-EvaluateScript(filename)
+new Logger(filename)
 
-  Evaluates the contents of `filename`, as if the code contained within
-  were part of the script containing the call. If you've ever worked in
-  C or C++, this is a bit like including a header file. The filename is
-  assumed to be relative to [game.sgm root]/scripts.
+  Opens a file for logging and constructs an object you can use to access the
+  log. `filename` is relative to <game dir>/logs. An error will be thrown if the
+  file cannot be opened for writing.
+
+Logger:write(text)
   
-  Note: RequireScript only executes a given script once, regardless
-  of how many RequireScript() calls specifying it are encountered. This
-  is generally preferable to EvaluateScript(), which always executes the
-  script.
+  Logs a line with the specified `text` at the current indent level.
 
-RequireSystemScript(filename)
-EvaluateSystemScript(filename)
+Logger:beginBlock(name)
+  
+  Opens a block with the heading `name` and increases the indent level. Blocks
+  can be nested and are useful to group related log entries.
 
-  Same as above, except the filename is relative to
-  [engine root]/system/scripts instead of the game directory. This
-  allows you to use scripts included with the engine.
+Logger:endBlock()
+  
+  Closes the innermost block and decreases the indent level.
 
 
 Execution Control and Game Management
@@ -121,10 +149,15 @@ For these functions to work, a `games` directory must be placed in the
 same directory as the engine, alongside the `system` directory,
 with subdirectories for each game.
 
+GetGameInformation()
+  
+  Returns an object describing the currently running game. The object is of the
+  same form as those returned by GetGameList() (see below).
+
 GetGameList()
 
-  Returns an array of objects, each representing a game directory found
-  in [engine root]/games. Each object has the following properties:
+  Returns an array of objects, one for each Sphere game found in
+  [engine root]/games. Each object has the following properties:
     
     .name:        The game's title, taken from game.sgm.
     .directory:   The directory the game was found in, relative to
@@ -140,7 +173,7 @@ ExecuteGame(directory)
   
 RestartGame()
 
-  Restarts the current game. All game state is cleared the the game()
+  Restarts the current game. All game state is cleared and the game()
   function is called again, as if the game was just started.
 
 Exit()
@@ -158,11 +191,11 @@ Async(script);
 Random Number Generation
 ------------------------
 
-Many games have need of a good random number generator, particularly
-RPGs. All JavaScript engines have a built-in generator in the form of
-the Math.random() function, however this is generally considered subpar.
-minisphere provides the RNG object, which uses the MT19937 (Mersenne
-Twister) algorithm to generate random values and allows manual seeding.
+Many games have need of a good random number generator, particularly RPGs. All
+JavaScript engines have a built-in generator in the form of the Math.random()
+function, however this is generally considered subpar. minisphere provides the
+RNG object, which uses the MT19937 (Mersenne Twister) algorithm to generate
+random values and allows manual seeding.
 
 RNG.seed(seed);
 
@@ -201,8 +234,53 @@ RNG.vary(mean, variance);
   a maximum deviation specified by `variance`.
 
 
-Graphics Primitives
--------------------
+Graphics Routines
+-----------------
+
+minisphere, like Sphere, uses double-buffered renderering. In this scheme, all
+rendering is done to a backbuffer, which is not visible to the user, and
+then "flipped" once per frame, so that the player only sees the final rendering
+output.
+
+SetFrameRate(fps);
+GetFrameRate();
+
+Gets or sets the current target frame rate. Your game will be automatically
+throttled to match this framerate. If `fps` is zero, the game will be
+unthrottled, which may be useful for benchmarks but otherwise is usually a waste
+of CPU resources.
+
+GetScreenWidth();
+GetScreenHeight();
+
+  Gets the current screen resolution width and height.
+
+FlipScreen();
+
+  Flips the backbuffer. Note that this also performs event loop processing, so
+  if it is not called regularly, the engine will stop responding.
+
+SetClippingRectangle(x, y, width, height);
+GetClippingRectangle();
+  
+  Gets or sets the clipping rectangle. All rendering done to the backbuffer is
+  constrained to this rectangle. Note that GetClippingRectangle() returns the
+  current clipping rectangle as an object describing it, with `x`, `y`, `width`
+  and `height` properties.
+
+ApplyColorMask(color);
+  
+  Applies a full-screen color mask. The color passed in is multiplied with the
+  pixels of the backbuffer to tint the screen. This may be used for, e.g.
+  day/night effects.
+
+
+Galileo Graphics Primitives
+---------------------------
+
+Wondered what that `sphere-galileo` extension was above? This is it! It's a
+more modern approach to graphics rendering based on precomposing scenes from
+groups of shapes which can then be transformed and rendered as a unit.
 
 All the old-school primitives provided by Sphere 1.5 are still available in
 minisphere. However, there's a newer, much more modern way: the Shape and Group
@@ -287,6 +365,27 @@ Group:rotY (read/write)
   Specifies the amount by which to translate before rotation is applied. The
   shapes in the group will revolve about the origin at a distance determined by
   these values.
+
+
+Networking (Sockets)
+--------------------
+
+minisphere includes an advanced sockets API which is more flexible than the one
+Sphere provides. The old routines are still available, but should be considered
+deprecated. Under minisphere, sockets are divided into two types: Listening
+sockets, used for servers, and I/O sockets, for clients.
+
+GetLocalName();
+  
+  Returns the calling machine's network name.
+
+GetLocalAddress();
+
+  Returns the calling machine's local IP address.
+
+new ListeningSocket(port);
+  
+  Constructs a new listening socket which listens for connectiosn on `port`.
 
 
 Map Engine
