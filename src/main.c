@@ -334,23 +334,58 @@ is_skipped_frame(void)
 char*
 get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
 {
-	bool is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
-	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
+	ALLEGRO_PATH* asset_path;
+	ALLEGRO_PATH* base_path;
+	const char*   dir_path;
+	bool          is_absolute;
+	bool          is_homed;
+	char*         out_path = NULL;
+
+	is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
+	base_path = al_create_path_for_directory(base_dir);
 	al_rebase_path(g_game_path, base_path);
 	if (allow_mkdir) {
-		const char* dir_path = al_path_cstr(base_path, ALLEGRO_NATIVE_PATH_SEP);
+		dir_path = al_path_cstr(base_path, ALLEGRO_NATIVE_PATH_SEP);
 		al_make_directory(dir_path);
 	}
-	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
-	bool is_absolute = al_get_path_num_components(asset_path) > 0
+	asset_path = al_create_path(is_homed ? &path[2] : path);
+	is_absolute = al_get_path_num_components(asset_path) > 0
 		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
-	char* out_path = NULL;
 	if (!is_absolute) {
 		al_rebase_path(is_homed ? g_game_path : base_path, asset_path);
 		al_make_path_canonical(asset_path);
 		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
 	}
 	al_destroy_path(asset_path);
+	al_destroy_path(base_path);
+	return out_path;
+}
+
+char*
+get_sys_asset_path(const char* path, const char* base_dir)
+{
+	ALLEGRO_PATH* asset_path;
+	ALLEGRO_PATH* base_path;
+	bool          is_absolute;
+	bool          is_homed;
+	char*         out_path;
+	ALLEGRO_PATH* system_path;
+	
+	is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
+	base_path = al_create_path_for_directory(base_dir);
+	system_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_rebase_path(system_path, base_path);
+	asset_path = al_create_path(is_homed ? &path[2] : path);
+	is_absolute = al_get_path_num_components(asset_path) > 0
+		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
+	out_path = NULL;
+	if (!is_absolute) {
+		al_rebase_path(is_homed ? system_path : base_path, asset_path);
+		al_make_path_canonical(asset_path);
+		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
+	}
+	al_destroy_path(asset_path);
+	al_destroy_path(system_path);
 	al_destroy_path(base_path);
 	return out_path;
 }
@@ -365,28 +400,6 @@ int
 get_max_frameskip(void)
 {
 	return s_max_frameskip;
-}
-
-char*
-get_sys_asset_path(const char* path, const char* base_dir)
-{
-	bool is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
-	ALLEGRO_PATH* base_path = al_create_path_for_directory(base_dir);
-	ALLEGRO_PATH* system_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_rebase_path(system_path, base_path);
-	ALLEGRO_PATH* asset_path = al_create_path(is_homed ? &path[2] : path);
-	bool is_absolute = al_get_path_num_components(asset_path) > 0
-		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
-	char* out_path = NULL;
-	if (!is_absolute) {
-		al_rebase_path(is_homed ? system_path : base_path, asset_path);
-		al_make_path_canonical(asset_path);
-		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
-	}
-	al_destroy_path(asset_path);
-	al_destroy_path(system_path);
-	al_destroy_path(base_path);
-	return out_path;
 }
 
 void
