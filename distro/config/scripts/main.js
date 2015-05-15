@@ -32,11 +32,10 @@ var DEFAULT_KEY_MAP = [
 		menu: KEY_ESCAPE },
 ]
 
-var engine = this;
+var keyMap = [ {}, {}, {}, {} ];
 
 function LoadKeyMap()
 {
-	var keyMap = [ {}, {}, {}, {} ];
 	var file = new File("minisphere.cfg");
 	
 	mini.Link(DEFAULT_KEY_MAP)
@@ -86,6 +85,10 @@ function game()
 	{
 		'set': function(handle, keyName, playerID)
 		{
+			if (arguments.length < 2) {
+				mini.Console.write("`key set` expects 2-3 arguments");
+				return;
+			}
 			handle = handle.toUpperCase();
 			keyName = keyName.toUpperCase();
 			if (!mini.Link(VKEY_NAMES).contains(handle.toLowerCase())) {

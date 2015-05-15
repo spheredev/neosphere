@@ -62,6 +62,7 @@ static ALLEGRO_EVENT_QUEUE* s_events;
 static bool                 s_have_joystick;
 static bool                 s_have_mouse;
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
+static int                  s_key_map[4][PLAYER_KEY_MAX];
 static struct key_queue     s_key_queue;
 static int                  s_last_wheel_pos = 0;
 static int                  s_num_joysticks = 0;
@@ -118,6 +119,18 @@ initialize_input(void)
 	s_bound_buttons = new_vector(sizeof(struct bound_button));
 	s_bound_keys = new_vector(sizeof(struct bound_key));
 	s_bound_map_keys = new_vector(sizeof(struct bound_key));
+
+	// fill in default key map
+	memset(s_key_map, 0, sizeof(s_key_map));
+	s_key_map[0][PLAYER_KEY_UP] = ALLEGRO_KEY_UP;
+	s_key_map[0][PLAYER_KEY_DOWN] = ALLEGRO_KEY_DOWN;
+	s_key_map[0][PLAYER_KEY_LEFT] = ALLEGRO_KEY_LEFT;
+	s_key_map[0][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_RIGHT;
+	s_key_map[0][PLAYER_KEY_A] = ALLEGRO_KEY_Z;
+	s_key_map[0][PLAYER_KEY_B] = ALLEGRO_KEY_X;
+	s_key_map[0][PLAYER_KEY_X] = ALLEGRO_KEY_C;
+	s_key_map[0][PLAYER_KEY_Y] = ALLEGRO_KEY_V;
+	s_key_map[0][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
 }
 
 void
@@ -259,6 +272,18 @@ get_joy_button_count(int joy_index)
 	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
 		return 0;
 	return al_get_joystick_num_buttons(joystick);
+}
+
+int
+get_player_key(int player, player_key_t vkey)
+{
+	return s_key_map[player][vkey];
+}
+
+void
+set_player_key(int player, player_key_t vkey, int key)
+{
+	s_key_map[player][vkey] = key;
 }
 
 void
@@ -803,22 +828,10 @@ js_GetNumMouseWheelEvents(duk_context* ctx)
 static duk_ret_t
 js_GetPlayerKey(duk_context* ctx)
 {
-	int key_type;
-	int player;
+	int player = duk_require_int(ctx, 0);
+	int key_type = duk_require_int(ctx, 1);
 
-	player = duk_require_int(ctx, 0);
-	key_type = duk_require_int(ctx, 1);
-	switch (key_type) {
-	case PLAYER_KEY_MENU: duk_push_int(ctx, ALLEGRO_KEY_ESCAPE); break;
-	case PLAYER_KEY_UP: duk_push_int(ctx, ALLEGRO_KEY_UP); break;
-	case PLAYER_KEY_DOWN: duk_push_int(ctx, ALLEGRO_KEY_DOWN); break;
-	case PLAYER_KEY_LEFT: duk_push_int(ctx, ALLEGRO_KEY_LEFT); break;
-	case PLAYER_KEY_RIGHT: duk_push_int(ctx, ALLEGRO_KEY_RIGHT); break;
-	case PLAYER_KEY_A: duk_push_int(ctx, ALLEGRO_KEY_Z); break;
-	case PLAYER_KEY_B: duk_push_int(ctx, ALLEGRO_KEY_X); break;
-	case PLAYER_KEY_X: duk_push_int(ctx, ALLEGRO_KEY_C); break;
-	case PLAYER_KEY_Y: duk_push_int(ctx, ALLEGRO_KEY_V); break;
-	}
+	duk_push_int(ctx, get_player_key(player, key_type));
 	return 1;
 }
 
