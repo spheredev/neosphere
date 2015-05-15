@@ -7,14 +7,12 @@ static int s_log_level = -1;
 void
 initialize_console(int log_level)
 {
-	printf("Initializing console logger\n");
 	s_log_level = log_level;
 }
 
 void
 shutdown_console(void)
 {
-	printf("Shutting down console logger\n");
 	s_log_level = -1;
 }
 

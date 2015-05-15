@@ -34,16 +34,13 @@ msphere_sources = [
 ]
 
 msphere_libs = [
-	"allegro",
-	"allegro_audio",
 	"allegro_acodec",
+	"allegro_audio",
 	"allegro_color",
 	"allegro_dialog",
-	"allegro_font",
 	"allegro_image",
 	"allegro_primitives",
-	"allegro_ttf",
-	"allegro_main",
+	"allegro",
 	"m"
 ]
 
