@@ -245,6 +245,7 @@ main(int argc, char* argv[])
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
+	load_key_map();
 	
 	// attempt to locate and load system font
 	console_log(1, "Loading system font\n");
@@ -736,6 +737,8 @@ on_error:
 static void
 shutdown_engine(void)
 {
+	save_key_map();
+	
 	shutdown_map_engine();
 	shutdown_input();
 	

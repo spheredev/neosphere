@@ -22,6 +22,7 @@ static duk_ret_t js_File_write      (duk_context* ctx);
 struct file
 {
 	ALLEGRO_CONFIG* conf;
+	bool            is_dirty;
 	char*           path;
 };
 
@@ -37,8 +38,8 @@ open_file(const char* path)
 			goto on_error;
 	}
 	else {
-		if ((file->conf = al_create_config()) == NULL) goto on_error;
-		if (!al_save_config_file(path, file->conf)) goto on_error;
+		if ((file->conf = al_create_config()) == NULL)
+			goto on_error;
 	}
 	file->path = strdup(path);
 	return file;
@@ -57,7 +58,7 @@ close_file(file_t* file)
 {
 	if (file == NULL)
 		return;
-	save_file(file);
+	if (file->is_dirty) save_file(file);
 	al_destroy_config(file->conf);
 	free(file);
 }
@@ -104,7 +105,6 @@ read_bool_rec(file_t* file, const char* key, bool def_value)
 
 	string = read_string_rec(file, key, def_value ? "true" : "false");
 	value = strcasecmp(string, "true") == 0;
-	write_bool_rec(file, key, value);
 	free(string);
 	return value;
 }
@@ -119,7 +119,6 @@ read_number_rec(file_t* file, const char* key, double def_value)
 	sprintf(def_string, "%f", def_value);
 	string = read_string_rec(file, key, def_string);
 	value = atof(string);
-	write_number_rec(file, key, value);
 	free(string);
 	return value;
 }
@@ -133,7 +132,6 @@ read_string_rec(file_t* file, const char* key, const char* def_value)
 	if (!(read_value = al_get_config_value(file->conf, NULL, key)))
 		read_value = def_value;
 	value = strdup(read_value);
-	write_string_rec(file, key, value);
 	return value;
 }
 
@@ -147,6 +145,7 @@ void
 write_bool_rec(file_t* file, const char* key, bool value)
 {
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
+	file->is_dirty = true;
 }
 
 void
@@ -156,12 +155,14 @@ write_number_rec(file_t* file, const char* key, double value)
 
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
+	file->is_dirty = true;
 }
 
 void
 write_string_rec(file_t* file, const char* key, const char* value)
 {
 	al_set_config_value(file->conf, NULL, key, value);
+	file->is_dirty = true;
 }
 
 void

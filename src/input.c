@@ -64,11 +64,13 @@ static ALLEGRO_EVENT_QUEUE* s_events;
 static bool                 s_have_joystick;
 static bool                 s_have_mouse;
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
+static int                  s_default_key_map[4][PLAYER_KEY_MAX];
 static int                  s_key_map[4][PLAYER_KEY_MAX];
 static struct key_queue     s_key_queue;
 static int                  s_last_wheel_pos = 0;
 static int                  s_num_joysticks = 0;
 static int                  s_num_wheel_events = 0;
+static bool                 s_has_keymap_changed = false;
 static int                  s_wheel_queue[255];
 
 struct bound_button
@@ -91,13 +93,9 @@ struct bound_key
 void
 initialize_input(void)
 {
-	int         c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
-	file_t*     file;
-	const char* key_name;
-	char*       path;
-	lstring_t*  setting;
+	int c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
 
-	int i, j;
+	int i;
 
 	console_log(1, "Initializing input\n");
 	
@@ -128,84 +126,38 @@ initialize_input(void)
 
 	// fill in default player key map
 	memset(s_key_map, 0, sizeof(s_key_map));
-	s_key_map[0][PLAYER_KEY_UP] = ALLEGRO_KEY_UP;
-	s_key_map[0][PLAYER_KEY_DOWN] = ALLEGRO_KEY_DOWN;
-	s_key_map[0][PLAYER_KEY_LEFT] = ALLEGRO_KEY_LEFT;
-	s_key_map[0][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_RIGHT;
-	s_key_map[0][PLAYER_KEY_A] = ALLEGRO_KEY_Z;
-	s_key_map[0][PLAYER_KEY_B] = ALLEGRO_KEY_X;
-	s_key_map[0][PLAYER_KEY_X] = ALLEGRO_KEY_C;
-	s_key_map[0][PLAYER_KEY_Y] = ALLEGRO_KEY_V;
-	s_key_map[0][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
-	s_key_map[1][PLAYER_KEY_UP] = ALLEGRO_KEY_W;
-	s_key_map[1][PLAYER_KEY_DOWN] = ALLEGRO_KEY_S;
-	s_key_map[1][PLAYER_KEY_LEFT] = ALLEGRO_KEY_A;
-	s_key_map[1][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_D;
-	s_key_map[1][PLAYER_KEY_A] = ALLEGRO_KEY_1;
-	s_key_map[1][PLAYER_KEY_B] = ALLEGRO_KEY_2;
-	s_key_map[1][PLAYER_KEY_X] = ALLEGRO_KEY_3;
-	s_key_map[1][PLAYER_KEY_Y] = ALLEGRO_KEY_4;
-	s_key_map[1][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
+	s_default_key_map[0][PLAYER_KEY_UP] = ALLEGRO_KEY_UP;
+	s_default_key_map[0][PLAYER_KEY_DOWN] = ALLEGRO_KEY_DOWN;
+	s_default_key_map[0][PLAYER_KEY_LEFT] = ALLEGRO_KEY_LEFT;
+	s_default_key_map[0][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_RIGHT;
+	s_default_key_map[0][PLAYER_KEY_A] = ALLEGRO_KEY_Z;
+	s_default_key_map[0][PLAYER_KEY_B] = ALLEGRO_KEY_X;
+	s_default_key_map[0][PLAYER_KEY_X] = ALLEGRO_KEY_C;
+	s_default_key_map[0][PLAYER_KEY_Y] = ALLEGRO_KEY_V;
+	s_default_key_map[0][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
+	s_default_key_map[1][PLAYER_KEY_UP] = ALLEGRO_KEY_W;
+	s_default_key_map[1][PLAYER_KEY_DOWN] = ALLEGRO_KEY_S;
+	s_default_key_map[1][PLAYER_KEY_LEFT] = ALLEGRO_KEY_A;
+	s_default_key_map[1][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_D;
+	s_default_key_map[1][PLAYER_KEY_A] = ALLEGRO_KEY_1;
+	s_default_key_map[1][PLAYER_KEY_B] = ALLEGRO_KEY_2;
+	s_default_key_map[1][PLAYER_KEY_X] = ALLEGRO_KEY_3;
+	s_default_key_map[1][PLAYER_KEY_Y] = ALLEGRO_KEY_4;
+	s_default_key_map[1][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
 
-	// load global custom player key mappings
-	if (path = get_sys_asset_path("minisphere.cfg", NULL)) {
-		file = open_file(path);
-		for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
-			key_name = j == PLAYER_KEY_UP ? "UP"
-				: j == PLAYER_KEY_DOWN ? "DOWN"
-				: j == PLAYER_KEY_LEFT ? "LEFT"
-				: j == PLAYER_KEY_RIGHT ? "RIGHT"
-				: j == PLAYER_KEY_A ? "A"
-				: j == PLAYER_KEY_B ? "B"
-				: j == PLAYER_KEY_X ? "X"
-				: j == PLAYER_KEY_Y ? "Y"
-				: j == PLAYER_KEY_MENU ? "MENU"
-				: "8:12";
-			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
-			set_player_key(i, j, read_number_rec(file, lstring_cstr(setting), s_key_map[i][j]));
-			free_lstring(setting);
-		}
-		close_file(file);
-	}
+	// load global key mappings
+	load_key_map();
 }
 
 void
 shutdown_input(void)
 {
-	file_t*     file;
-	const char* key_name;
-	char*       path;
-	lstring_t*  setting;
-	
 	struct bound_button* pbutton;
 	struct bound_key*    pkey;
 	
 	iter_t iter;
-	int i, j;
 
 	// save player key mappings
-	console_log(0, "Saving player key mappings\n");
-	if (path = get_sys_asset_path("minisphere.cfg", NULL)) {
-		file = open_file(path);
-		for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
-			key_name = j == PLAYER_KEY_UP ? "UP"
-				: j == PLAYER_KEY_DOWN ? "DOWN"
-				: j == PLAYER_KEY_LEFT ? "LEFT"
-				: j == PLAYER_KEY_RIGHT ? "RIGHT"
-				: j == PLAYER_KEY_A ? "A"
-				: j == PLAYER_KEY_B ? "B"
-				: j == PLAYER_KEY_X ? "X"
-				: j == PLAYER_KEY_Y ? "Y"
-				: j == PLAYER_KEY_MENU ? "MENU"
-				: "8:12";
-			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
-			write_number_rec(file, lstring_cstr(setting), s_key_map[i][j]);
-			free_lstring(setting);
-		}
-		close_file(file);
-		free(path);
-	}
-	
 	console_log(1, "Shutting down input\n");
 
 	// free bound key scripts
@@ -349,12 +301,82 @@ void
 set_player_key(int player, player_key_t vkey, int keycode)
 {
 	s_key_map[player][vkey] = keycode;
+	s_has_keymap_changed = g_game_path != NULL;
 }
 
 void
 clear_key_queue(void)
 {
 	s_key_queue.num_keys = 0;
+}
+
+void
+load_key_map(void)
+{
+	file_t*     file;
+	const char* key_name;
+	char*       path;
+	lstring_t*  setting;
+
+	int i, j;
+
+	if (g_game_path != NULL)
+		path = get_asset_path("keymap.mini", "save", false);
+	else
+		path = get_sys_asset_path("keymap.mini", NULL);
+	if (path == NULL || !(file = open_file(path)))
+		return;
+	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+		key_name = j == PLAYER_KEY_UP ? "UP"
+			: j == PLAYER_KEY_DOWN ? "DOWN"
+			: j == PLAYER_KEY_LEFT ? "LEFT"
+			: j == PLAYER_KEY_RIGHT ? "RIGHT"
+			: j == PLAYER_KEY_A ? "A"
+			: j == PLAYER_KEY_B ? "B"
+			: j == PLAYER_KEY_X ? "X"
+			: j == PLAYER_KEY_Y ? "Y"
+			: j == PLAYER_KEY_MENU ? "MENU"
+			: "8:12";
+		setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
+		s_key_map[i][j] = read_number_rec(file, lstring_cstr(setting), s_default_key_map[i][j]);
+		free_lstring(setting);
+	}
+	close_file(file);
+}
+
+void
+save_key_map(void)
+{
+	file_t*     file;
+	const char* key_name;
+	char*       path;
+	lstring_t*  setting;
+	
+	int i, j;
+
+	if (!s_has_keymap_changed || g_game_path == NULL)
+		return;
+	console_log(0, "Saving player key mappings\n");
+	if (path = get_asset_path("keymap.mini", "save", true)) {
+		file = open_file(path);
+		for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+			key_name = j == PLAYER_KEY_UP ? "UP"
+				: j == PLAYER_KEY_DOWN ? "DOWN"
+				: j == PLAYER_KEY_LEFT ? "LEFT"
+				: j == PLAYER_KEY_RIGHT ? "RIGHT"
+				: j == PLAYER_KEY_A ? "A"
+				: j == PLAYER_KEY_B ? "B"
+				: j == PLAYER_KEY_X ? "X"
+				: j == PLAYER_KEY_Y ? "Y"
+				: j == PLAYER_KEY_MENU ? "MENU"
+				: "8:12";
+			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
+			write_number_rec(file, lstring_cstr(setting), s_key_map[i][j]);
+			free_lstring(setting);
+		}
+		close_file(file);
+		free(path);
+	}
 }
 
 void

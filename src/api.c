@@ -79,6 +79,11 @@ initialize_api(duk_context* ctx)
 		register_api_extension(SPHERE_EXTENSIONS[i]);
 	}
 
+	// register global object (`Sphere`)
+	duk_push_global_object(ctx);
+	duk_dup(ctx, -1); duk_put_prop_string(ctx, -2, "Sphere");
+	duk_pop(ctx);
+	
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");

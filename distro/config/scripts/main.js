@@ -20,7 +20,7 @@ function LoadKeyMap()
 {
 	keyMap = mini.Link.create(4, VKEYS.length, undefined);
 	
-	var file = new File("#~/../minisphere.cfg");
+	var file = new File("#~/../keymap.mini");
 	for (var i = 0; i < 4; ++i) {
 		for (var j = 0; j < VKEYS.length; ++j) {
 			keyMap[i][j] = file.read("keymap_Player" + (i + 1) + "_" + VKEY_NAMES[j].toUpperCase(),
@@ -34,7 +34,7 @@ function LoadKeyMap()
 
 function SaveKeyMap(keyMap)
 {
-	var file = new File("#~/../minisphere.cfg");
+	var file = new File("#~/../keymap.mini");
 	for (var i = 0; i < 4; ++i) {
 		for (var j = 0; j < VKEYS.length; ++j) {
 			file.write("keymap_Player" + (i + 1) + "_" + VKEY_NAMES[j].toUpperCase(), keyMap[i][j]);
