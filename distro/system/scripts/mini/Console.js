@@ -64,9 +64,25 @@ mini.onStartUp.add(mini.Console, function(params)
 	
 	var game = GetGameInformation();
 	this.write(game.name + " Console");
-	this.write(game.directory);
 	this.write("Sphere " + GetVersionString());
 	this.write("");
+	
+	this.register('keymap', this, {
+		'set': function(playerKey, keyName, playerID) {
+			if (arguments.length < 2)
+				return this.write("keymap set: 2+ arguments expected");
+			playerID = playerID !== undefined ? playerID : 1;
+			if (playerID < 1 || playerID > 4)
+				return this.write("keymap set: Player ID out of range (" + playerID + ")");
+			var keyConst, playerKeyConst;
+			if ((keyConst = Sphere["KEY_" + keyName.toUpperCase()]) == undefined)
+				return this.write("keymap set: Invalid key name `" + keyName.toUpperCase() + "`");
+			if ((playerKeyConst = Sphere["PLAYER_KEY_" + playerKey.toUpperCase()]) == undefined)
+				return this.write("keymap set: Unknown player key `" + keyName.toUpperCase() + "`");
+			SetPlayerKey(playerID - 1, playerKeyConst, keyConst);
+			this.write("PLAYER_KEY_" + playerKey.toUpperCase() + " mapped to KEY_" + keyName.toUpperCase());
+		}
+	});
 });
 
 // mini.Console.update()
@@ -88,13 +104,13 @@ mini.Console.render = function() {
 	var boxY = -22 * (1.0 - this.fadeness);
 	Rectangle(0, boxY, GetScreenWidth(), 22, new Color(0, 0, 0, this.fadeness * 224));
 	var promptWidth = this.font.getStringWidth(this.prompt + " ");
-	this.font.setColorMask(new Color(0, 0, 0, this.fadeness * 255));
+	this.font.setColorMask(new Color(0, 0, 0, this.fadeness * 192));
 	this.font.drawText(6, 6 + boxY, this.prompt);
-	this.font.setColorMask(new Color(128, 128, 128, this.fadeness * 255));
+	this.font.setColorMask(new Color(128, 128, 128, this.fadeness * 192));
 	this.font.drawText(5, 5 + boxY, this.prompt);
-	this.font.setColorMask(new Color(0, 0, 0, this.fadeness * 255));
+	this.font.setColorMask(new Color(0, 0, 0, this.fadeness * 192));
 	this.font.drawText(6 + promptWidth, 6 + boxY, this.entry);
-	this.font.setColorMask(new Color(255, 255, 128, this.fadeness * 255));
+	this.font.setColorMask(new Color(255, 255, 128, this.fadeness * 192));
 	this.font.drawText(5 + promptWidth, 5 + boxY, this.entry);
 	this.font.setColorMask(this.cursorColor);
 	this.font.drawText(5 + promptWidth + this.font.getStringWidth(this.entry), 5 + boxY, "_");
@@ -204,7 +220,7 @@ mini.Console.execute = function(command)
 };
 
 // mini.Console.getInput()
-// Checks for input and updates the console accordingly.
+// Checks for input and updates accordingly.
 mini.Console.getInput = function()
 {
 	var consoleKey = GetPlayerKey(PLAYER_1, PLAYER_KEY_MENU);
@@ -225,9 +241,8 @@ mini.Console.getInput = function()
 		}
 		var keycode = AreKeysLeft() ? GetKey() : null;
 		switch (keycode) {
-			case consoleKey: break;
 			case KEY_ENTER:
-				this.write("Command entered was '" + this.entry + "'");
+				this.write("Command entered: '" + this.entry + "'");
 				this.execute(this.entry);
 				this.entry = "";
 				break;

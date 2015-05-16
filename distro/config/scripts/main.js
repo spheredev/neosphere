@@ -25,6 +25,7 @@ function LoadKeyMap()
 		for (var j = 0; j < VKEYS.length; ++j) {
 			keyMap[i][j] = file.read("keymap_Player" + (i + 1) + "_" + VKEY_NAMES[j].toUpperCase(),
 				GetPlayerKey(i, VKEYS[j]));
+			SetPlayerKey(i, j, keyMap[i][j]);
 		}
 	}
 	file.close();
