@@ -323,7 +323,7 @@ load_key_map(void)
 	if (g_game_path != NULL)
 		path = get_asset_path("keymap.mini", "save", false);
 	else
-		path = get_sys_asset_path("keymap.mini", NULL);
+		path = get_sys_asset_path("minisphere.conf", NULL);
 	if (path == NULL || !(file = open_file(path)))
 		return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
