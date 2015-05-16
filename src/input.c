@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "file.h"
 #include "input.h"
 #include "vector.h"
 
@@ -44,6 +45,7 @@ static duk_ret_t js_GetNumMouseWheelEvents  (duk_context* ctx);
 static duk_ret_t js_GetPlayerKey            (duk_context* ctx);
 static duk_ret_t js_GetToggleState          (duk_context* ctx);
 static duk_ret_t js_SetMousePosition        (duk_context* ctx);
+static duk_ret_t js_SetPlayerKey            (duk_context* ctx);
 static duk_ret_t js_BindKey                 (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton      (duk_context* ctx);
 static duk_ret_t js_ClearKeyQueue           (duk_context* ctx);
@@ -89,9 +91,13 @@ struct bound_key
 void
 initialize_input(void)
 {
-	int c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
+	int         c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
+	file_t*     file;
+	const char* key_name;
+	char*       path;
+	lstring_t*  setting;
 
-	int i;
+	int i, j;
 
 	console_log(1, "Initializing input\n");
 	
@@ -120,7 +126,7 @@ initialize_input(void)
 	s_bound_keys = new_vector(sizeof(struct bound_key));
 	s_bound_map_keys = new_vector(sizeof(struct bound_key));
 
-	// fill in default key map
+	// fill in default player key map
 	memset(s_key_map, 0, sizeof(s_key_map));
 	s_key_map[0][PLAYER_KEY_UP] = ALLEGRO_KEY_UP;
 	s_key_map[0][PLAYER_KEY_DOWN] = ALLEGRO_KEY_DOWN;
@@ -131,33 +137,92 @@ initialize_input(void)
 	s_key_map[0][PLAYER_KEY_X] = ALLEGRO_KEY_C;
 	s_key_map[0][PLAYER_KEY_Y] = ALLEGRO_KEY_V;
 	s_key_map[0][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
+	s_key_map[1][PLAYER_KEY_UP] = ALLEGRO_KEY_W;
+	s_key_map[1][PLAYER_KEY_DOWN] = ALLEGRO_KEY_S;
+	s_key_map[1][PLAYER_KEY_LEFT] = ALLEGRO_KEY_A;
+	s_key_map[1][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_D;
+	s_key_map[1][PLAYER_KEY_A] = ALLEGRO_KEY_1;
+	s_key_map[1][PLAYER_KEY_B] = ALLEGRO_KEY_2;
+	s_key_map[1][PLAYER_KEY_X] = ALLEGRO_KEY_3;
+	s_key_map[1][PLAYER_KEY_Y] = ALLEGRO_KEY_4;
+	s_key_map[1][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
+
+	// load global custom player key mappings
+	if (path = get_sys_asset_path("minisphere.cfg", NULL)) {
+		file = open_file(path);
+		for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+			key_name = j == PLAYER_KEY_UP ? "UP"
+				: j == PLAYER_KEY_DOWN ? "DOWN"
+				: j == PLAYER_KEY_LEFT ? "LEFT"
+				: j == PLAYER_KEY_RIGHT ? "RIGHT"
+				: j == PLAYER_KEY_A ? "A"
+				: j == PLAYER_KEY_B ? "B"
+				: j == PLAYER_KEY_X ? "X"
+				: j == PLAYER_KEY_Y ? "Y"
+				: j == PLAYER_KEY_MENU ? "MENU"
+				: "8:12";
+			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
+			set_player_key(i, j, read_number_rec(file, lstring_cstr(setting), s_key_map[i][j]));
+			free_lstring(setting);
+		}
+		close_file(file);
+	}
 }
 
 void
 shutdown_input(void)
 {
-	struct bound_button* i_button;
-	struct bound_key*    i_key;
+	file_t*     file;
+	const char* key_name;
+	char*       path;
+	lstring_t*  setting;
+	
+	struct bound_button* pbutton;
+	struct bound_key*    pkey;
 	
 	iter_t iter;
+	int i, j;
 
+	// save player key mappings
+	console_log(0, "Saving player key mappings\n");
+	if (path = get_sys_asset_path("minisphere.cfg", NULL)) {
+		file = open_file(path);
+		for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+			key_name = j == PLAYER_KEY_UP ? "UP"
+				: j == PLAYER_KEY_DOWN ? "DOWN"
+				: j == PLAYER_KEY_LEFT ? "LEFT"
+				: j == PLAYER_KEY_RIGHT ? "RIGHT"
+				: j == PLAYER_KEY_A ? "A"
+				: j == PLAYER_KEY_B ? "B"
+				: j == PLAYER_KEY_X ? "X"
+				: j == PLAYER_KEY_Y ? "Y"
+				: j == PLAYER_KEY_MENU ? "MENU"
+				: "8:12";
+			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
+			write_number_rec(file, lstring_cstr(setting), s_key_map[i][j]);
+			free_lstring(setting);
+		}
+		close_file(file);
+		free(path);
+	}
+	
 	console_log(1, "Shutting down input\n");
 
 	// free bound key scripts
 	iter = iterate_vector(s_bound_buttons);
-	while (i_button = next_vector_item(&iter)) {
-		free_script(i_button->on_down_script);
-		free_script(i_button->on_up_script);
+	while (pbutton = next_vector_item(&iter)) {
+		free_script(pbutton->on_down_script);
+		free_script(pbutton->on_up_script);
 	}
 	iter = iterate_vector(s_bound_keys);
-	while (i_key = next_vector_item(&iter)) {
-		free_script(i_key->on_down_script);
-		free_script(i_key->on_up_script);
+	while (pkey = next_vector_item(&iter)) {
+		free_script(pkey->on_down_script);
+		free_script(pkey->on_up_script);
 	}
 	iter = iterate_vector(s_bound_map_keys);
-	while (i_key = next_vector_item(&iter)) {
-		free_script(i_key->on_down_script);
-		free_script(i_key->on_up_script);
+	while (pkey = next_vector_item(&iter)) {
+		free_script(pkey->on_down_script);
+		free_script(pkey->on_up_script);
 	}
 	free_vector(s_bound_buttons);
 	free_vector(s_bound_keys);
@@ -281,9 +346,9 @@ get_player_key(int player, player_key_t vkey)
 }
 
 void
-set_player_key(int player, player_key_t vkey, int key)
+set_player_key(int player, player_key_t vkey, int keycode)
 {
-	s_key_map[player][vkey] = key;
+	s_key_map[player][vkey] = keycode;
 }
 
 void
@@ -591,6 +656,7 @@ init_input_api(void)
 	register_api_function(g_duk, NULL, "GetPlayerKey", js_GetPlayerKey);
 	register_api_function(g_duk, NULL, "GetToggleState", js_GetToggleState);
 	register_api_function(g_duk, NULL, "SetMousePosition", js_SetMousePosition);
+	register_api_function(g_duk, NULL, "SetPlayerKey", js_SetPlayerKey);
 	register_api_function(g_duk, NULL, "BindJoystickButton", js_BindJoystickButton);
 	register_api_function(g_duk, NULL, "BindKey", js_BindKey);
 	register_api_function(g_duk, NULL, "ClearKeyQueue", js_ClearKeyQueue);
@@ -831,6 +897,10 @@ js_GetPlayerKey(duk_context* ctx)
 	int player = duk_require_int(ctx, 0);
 	int key_type = duk_require_int(ctx, 1);
 
+	if (player < 0 || player >= 4)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): Player index out of range");
+	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): Invalid key type constant");
 	duk_push_int(ctx, get_player_key(player, key_type));
 	return 1;
 }
@@ -849,6 +919,23 @@ js_SetMousePosition(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	
 	al_set_mouse_xy(g_display, x * g_scale_x, y * g_scale_y);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPlayerKey(duk_context* ctx)
+{
+	int player = duk_require_int(ctx, 0);
+	int key_type = duk_require_int(ctx, 1);
+	int keycode = duk_require_int(ctx, 2);
+
+	if (player < 0 || player >= 4)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): Player index out of range");
+	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): Invalid key type constant");
+	if (keycode < 0 || key_type >= ALLEGRO_KEY_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): Invalid key constant");
+	set_player_key(player, key_type, keycode);
 	return 0;
 }
 

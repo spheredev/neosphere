@@ -9,7 +9,7 @@ extern float get_joy_axis         (int joy_index, int axis_index);
 extern int   get_joy_axis_count   (int joy_index);
 extern int   get_joy_button_count (int joy_index);
 extern int   get_player_key       (int player, player_key_t vkey);
-extern void  set_player_key       (int player, player_key_t vkey, int key);
+extern void  set_player_key       (int player, player_key_t vkey, int keycode);
 extern void  clear_key_queue      (void);
 extern void  update_bound_keys    (bool use_map_keys);
 extern void  update_input         (void);

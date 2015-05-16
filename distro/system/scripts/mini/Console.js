@@ -207,13 +207,14 @@ mini.Console.execute = function(command)
 // Checks for input and updates the console accordingly.
 mini.Console.getInput = function()
 {
-	if (!this.wasKeyDown && IsKeyPressed(KEY_TAB)) {
+	var consoleKey = GetPlayerKey(PLAYER_1, PLAYER_KEY_MENU);
+	if (!this.wasKeyDown && IsKeyPressed(consoleKey)) {
 		if (!this.isOpen())
 			this.show();
 		else
 			this.hide();
 	}
-	this.wasKeyDown = IsKeyPressed(KEY_TAB);
+	this.wasKeyDown = IsKeyPressed(consoleKey);
 	if (this.isOpen()) {
 		var wheelKey = GetNumMouseWheelEvents() > 0 ? GetMouseWheelEvent() : null;
 		var speed = wheelKey != null ? 1.0 : 0.5;
@@ -224,6 +225,7 @@ mini.Console.getInput = function()
 		}
 		var keycode = AreKeysLeft() ? GetKey() : null;
 		switch (keycode) {
+			case consoleKey: break;
 			case KEY_ENTER:
 				this.write("Command entered was '" + this.entry + "'");
 				this.execute(this.entry);
