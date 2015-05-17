@@ -3,13 +3,16 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/Threads.js]
+ * [mini/miniThreads.js]
  * A cooperative threader with an API similar to pthreads, which replaces
  * Sphere's update and render scripts with a much more robust solution.
 **/
 
-RequireSystemScript('mini/Core.js');
-RequireSystemScript('mini/Link.js');
+if (typeof mini === 'undefined') {
+    Abort("miniRT component script; use miniRT.js instead", -2);
+}
+
+RequireSystemScript('mini/miniLink.js');
 
 // Threads object
 // Encapsulates the thread manager.

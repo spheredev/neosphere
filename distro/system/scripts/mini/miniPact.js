@@ -3,10 +3,14 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/Promises.js]
+ * [mini/miniPact.js]
  * A promise implementation for minisphere, based on the Promises/A+
  * specification. The implementation is fully compliant.
 **/
+
+if (typeof mini === 'undefined') {
+    Abort("miniRT component script; use miniRT.js instead", -2);
+}
 
 mini.Promise = (function(undefined)
 {

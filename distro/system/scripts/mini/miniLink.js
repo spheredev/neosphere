@@ -3,13 +3,15 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/Link.js]
+ * [mini/miniLink.js]
  * A powerful functional programming library which is used like .NET LINQ to
  * perform complex queries on JS arrays. Originally based on Link 0.3.0 by
  * Andrew Helenius.
 **/
 
-RequireSystemScript('mini/Core.js');
+if (typeof mini === 'undefined') {
+    Abort("miniRT component script; use miniRT.js instead", -2);
+}
 
 mini.Link = (function(undefined)
 {

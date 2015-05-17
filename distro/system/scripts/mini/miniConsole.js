@@ -3,14 +3,17 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/Console.js]
+ * [mini/miniConsole.js]
  * An easy-to-use output console which optionally logs output to disk.
 **/
 
-RequireSystemScript('mini/Core.js');
-RequireSystemScript('mini/Link.js');
-RequireSystemScript('mini/Scenes.js');
-RequireSystemScript('mini/Threads.js');
+if (typeof mini === 'undefined') {
+    Abort("miniRT component script; use miniRT.js instead", -2);
+}
+
+RequireSystemScript('mini/miniLink.js');
+RequireSystemScript('mini/miniScenes.js');
+RequireSystemScript('mini/miniThreads.js');
 
 // mini.Console
 // Encapsulates the console.

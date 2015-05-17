@@ -3,12 +3,15 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/BGM.js]
+ * [mini/miniBGM.js]
  * A stack-based solution for managing background music.
 **/
 
-RequireSystemScript('mini/Core.js');
-RequireSystemScript('mini/Threads.js');
+if (typeof mini === 'undefined') {
+    Abort("miniRT component script; use miniRT.js instead", -2);
+}
+
+RequireSystemScript('mini/miniThreads.js');
 
 // mini.BGM
 // Encapsulates the BGM manager.

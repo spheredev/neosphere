@@ -3,13 +3,17 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/Scenes.js]
+ * [mini/miniScenes.js]
  * An advanced scene manager that allows you to coordinate complex sequences
  * using multiple timelines and cooperative threading. Based on Scenario.
 **/
 
-RequireSystemScript('mini/Core.js');
-RequireSystemScript('mini/Threads.js');
+if (typeof mini === 'undefined') {
+    Abort("miniRT component script; use miniRT.js instead", -2);
+}
+
+RequireSystemScript('mini/miniLink.js');
+RequireSystemScript('mini/miniThreads.js');
 
 mini.Scenes = mini.Scenes || {};
 

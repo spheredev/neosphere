@@ -3,8 +3,9 @@
  * A set of system scripts providing advanced, high-level functionality not
  * available in the engine itself.
  *
- * [mini/Core.js]
- * Provides basic functionality used throughout the runtime.
+ * [mini/miniRT.js]
+ * The main script for the minisphere Runtime script. Requiring this script
+ * is sufficient to use any component of the runtime.
 **/
 
 // mini object
@@ -84,3 +85,10 @@ mini.initialize = function(params)
 // Arguments:
 //     params: The `params` object which was passed to mini.initialize().
 mini.onStartUp = new mini.Delegate();
+
+RequireSystemScript('mini/miniLink.js');
+RequireSystemScript('mini/miniBGM.js');
+RequireSystemScript('mini/miniConsole.js');
+RequireSystemScript('mini/miniPact.js');
+RequireSystemScript('mini/miniScenes.js');
+RequireSystemScript('mini/miniThreads.js');
