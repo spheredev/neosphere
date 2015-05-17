@@ -1,10 +1,10 @@
 minisphere Changelog
 ====================
 
-v1.1 - TBD
-----------
+v1.1 - May 17, 2015
+-------------------
 
-This is an absolutely MASSIVE release!  Note: minisphere is now BSD-licensed.
+This is an absolutely MASSIVE release.  Note: minisphere is now BSD-licensed.
 This basically gives you absolute freedom to do with the engine and associated
 source code what you wish, so long as you don't misrepresent yourself as the
 author.
@@ -12,11 +12,11 @@ author.
 * Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
   including a SetPersonScript() crash when passing JS functions.
 * Now using Allegro 5.1.10.
-* Native 64-bit support with the included 64-bit engine! (engine64.exe)
+* Native 64-bit engine included (engine64.exe).
 * New "Console" builds of minisphere (console.exe and console64.exe) for
   Windows. This version of the engine displays a console window like a debug
   build (enabling minisphere's Print() function to work), but is fully
-  optimized!
+  optimized.
 * Constructors and properties for all core Sphere objects:
       var sound = new Sound("munch.wav");
       sound.volume = 128;
@@ -35,14 +35,17 @@ author.
 * TurboSphere-inspired "Galileo" graphics API, which allows scenes to be
   composed ahead of time using Shape and Group objects.
 * TurboSphere-inspired Sockets API, with separate ListeningSocket and
-  IOSocket objects. (Legacy sockets are still supported!)
+  IOSocket objects. Sphere 1.5 sockets are still supported.
 * Built-in MT19937-based random number generator, including a method
   (`RNG.normal`) to generate normally-distributed random values.
-* minisphere Runtime, a unified set of system scripts including a cooperative
+* Includes miniRT, a unified set of system scripts including a cooperative
   threading engine, cutscene engine, the Link query library, and a full-featured
-  console, among other goodies!
-* The engine now searches <game_dir>/scripts/lib for system scripts.
-* API documentation is included in the default distribution.
+  console, among other goodies. Simply add this to the top of your main script:
+      RequireSystemScript('mini/miniRT.js');
+* The engine now searches <game_dir>/scripts/lib for system scripts before
+  looking in the system directory.
+* API documentation is included in the default distribution. It may be somewhat
+  incomplete, however...
 * Playback position in Sounds can be set with microsecond precision.
 * Overhauled FollowPerson() algorithm: Followers move under their own
   power and are affected by obstructions, making the overall effect much

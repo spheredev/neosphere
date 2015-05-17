@@ -494,8 +494,8 @@ SetRenderScript(fn);
   Sets a function `fn` to be called once per map engine frame. Game state should
   be updated in the update script, while drawing is done in the render script.
   The distinction is important, as render calls can be skipped to minimize lag.
-  Note: You shouldn't call these functions when using the minisphere Runtime.
-  The runtime uses them internally and changing them out will break things.
+  Note: You shouldn't call these functions when using miniRT. The runtime uses
+  them internally and changing them out will break things.
 
 SetMapEngineFrameRate(fps);
 GetMapEngineFrameRate();

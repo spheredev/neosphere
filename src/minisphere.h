@@ -7,6 +7,8 @@
 #define snprintf _snprintf
 #endif
 
+#define ENGINE_NAME "minisphere 1.1"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -39,8 +41,6 @@
 #else
 #define noreturn void
 #endif
-
-static const char* const ENGINE_NAME = "minisphere 1.1b5";
 
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
