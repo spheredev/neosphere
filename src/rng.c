@@ -5,6 +5,7 @@
 
 static duk_ret_t js_RNG_seed   (duk_context* ctx);
 static duk_ret_t js_RNG_chance (duk_context* ctx);
+static duk_ret_t js_RNG_name   (duk_context* ctx);
 static duk_ret_t js_RNG_normal (duk_context* ctx);
 static duk_ret_t js_RNG_range  (duk_context* ctx);
 static duk_ret_t js_RNG_sample (duk_context* ctx);
@@ -77,18 +78,13 @@ init_rng_api(void)
 {
 	duk_push_global_object(g_duk);
 	duk_push_object(g_duk);
-	duk_push_c_function(g_duk, js_RNG_seed, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "seed");
-	duk_push_c_function(g_duk, js_RNG_chance, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "chance");
-	duk_push_c_function(g_duk, js_RNG_normal, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "normal");
-	duk_push_c_function(g_duk, js_RNG_range, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "range");
-	duk_push_c_function(g_duk, js_RNG_sample, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "sample");
-	duk_push_c_function(g_duk, js_RNG_vary, DUK_VARARGS);
-	duk_put_prop_string(g_duk, -2, "vary");
+	duk_push_c_function(g_duk, js_RNG_seed, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "seed");
+	duk_push_c_function(g_duk, js_RNG_chance, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "chance");
+	duk_push_c_function(g_duk, js_RNG_name, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "name");
+	duk_push_c_function(g_duk, js_RNG_normal, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "normal");
+	duk_push_c_function(g_duk, js_RNG_range, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "range");
+	duk_push_c_function(g_duk, js_RNG_sample, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "sample");
+	duk_push_c_function(g_duk, js_RNG_vary, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "vary");
 	duk_put_prop_string(g_duk, -2, "RNG");
 	duk_pop(g_duk);
 }
@@ -108,6 +104,28 @@ js_RNG_chance(duk_context* ctx)
 	double odds = duk_require_number(ctx, 0);
 
 	duk_push_boolean(ctx, rng_chance(odds));
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_name(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int length = n_args >= 1 ? duk_require_number(ctx, 0) : 10;
+
+	char* name;
+
+	int i;
+
+	if (length < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): Length must be greater than zero");
+	if (!(name = malloc(length + 1)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RNG.name(): Failed to allocate buffer");
+	for (i = 0; i < length; ++i)
+		name[i] = rng_chance(0.5) ? rng_ranged('A', 'Z') : rng_ranged('a', 'z');
+	name[length - 1] = '\0';
+	duk_push_string(ctx, name);
+	free(name);
 	return 1;
 }
 
