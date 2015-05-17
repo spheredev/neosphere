@@ -4,7 +4,14 @@ minisphere Changelog
 v1.1 - TBD
 ----------
 
-* minisphere 1.1 is officially BSD licensed!
+This is an absolutely MASSIVE release!  Note: minisphere is now BSD-licensed.
+This basically gives you absolute freedom to do with the engine and associated
+source code what you wish, so long as you don't misrepresent yourself as the
+author.
+
+* Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
+  including a SetPersonScript() crash when passing JS functions.
+* Now using Allegro 5.1.10.
 * Native 64-bit support with the included 64-bit engine! (engine64.exe)
 * New "Console" builds of minisphere (console.exe and console64.exe) for
   Windows. This version of the engine displays a console window like a debug
@@ -16,6 +23,9 @@ v1.1 - TBD
       sound.play(false);
 * Massive performance improvements, both to rendering as well as resource
   loading. Most assets load lightning fast!
+* Key mappings for GetPlayerKey() can now be set programmatically via the new
+  SetPlayerKey() API; these changes will be saved per-game and loaded along with
+  that game's game.sgm.
 * Assert(), a useful debugging tool. Throws an error if the asserted condition
   fails, a no-op otherwise. In the Console build, also gives you the option to
   ignore the failed assert and continue.
@@ -42,8 +52,8 @@ v1.1 - TBD
       GetPersonFollowers()
       GetPersonFollowDistance()
       SetPersonFollowDistance()
-* Fixes a ton of bugs discovered since the release of minisphere 1.0.10,
-  including a SetPersonScript() crash when passing JS functions.
+* New path escape: `#~/path/to/file` specifies a path which is relative to the
+  engine's system directory.
 
 
 v1.0.10 - April 16, 2015
