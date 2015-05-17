@@ -20,12 +20,11 @@ function LoadKeyMap()
 {
 	keyMap = mini.Link.create(4, VKEYS.length, undefined);
 	
-	var file = new File("#~/../minisphere.conf");
+	var file = new File('#~/../minisphere.conf');
 	for (var i = 0; i < 4; ++i) {
 		for (var j = 0; j < VKEYS.length; ++j) {
 			keyMap[i][j] = file.read("keymap_Player" + (i + 1) + "_" + VKEY_NAMES[j].toUpperCase(),
 				GetPlayerKey(i, VKEYS[j]));
-			SetPlayerKey(i, j, keyMap[i][j]);
 		}
 	}
 	file.close();
@@ -35,7 +34,7 @@ function LoadKeyMap()
 
 function SaveKeyMap(keyMap)
 {
-	var file = new File("#~/../minisphere.conf");
+	var file = new File('#~/../minisphere.conf');
 	for (var i = 0; i < 4; ++i) {
 		for (var j = 0; j < VKEYS.length; ++j) {
 			file.write("keymap_Player" + (i + 1) + "_" + VKEY_NAMES[j].toUpperCase(), keyMap[i][j]);
@@ -61,7 +60,9 @@ function game()
 		consolePrompt: "miniconfig:",
 	});
 	
-	mini.Console.register('key', null,
+	mini.Console.unregister('keymap');
+	
+	mini.Console.register('keymap', null,
 	{
 		'set': function(handle, keyName, playerID)
 		{
@@ -86,7 +87,6 @@ function game()
 			// map the key
 			var keyID = engine["PLAYER_KEY_" + handle];
 			keyMap[playerNum][keyID] = engine[keyConstName];
-			SetPlayerKey(playerNum, keyID, engine[keyConstName]);
 			mini.Console.write([ "Player ", playerNum + 1, "'s button ", handle, " mapped to ", keyConstName ].join(""));
 			SaveKeyMap(keyMap);
 		},
