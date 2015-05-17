@@ -555,6 +555,7 @@ init_input_api(void)
 	register_api_const(g_duk, "PLAYER_KEY_B", PLAYER_KEY_B);
 	register_api_const(g_duk, "PLAYER_KEY_X", PLAYER_KEY_X);
 	register_api_const(g_duk, "PLAYER_KEY_Y", PLAYER_KEY_Y);
+	register_api_const(g_duk, "KEY_NONE", 0);
 	register_api_const(g_duk, "KEY_SHIFT", ALLEGRO_KEY_LSHIFT);
 	register_api_const(g_duk, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
 	register_api_const(g_duk, "KEY_ALT", ALLEGRO_KEY_ALT);

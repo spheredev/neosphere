@@ -135,7 +135,7 @@ static char*               s_map_filename      = NULL;
 static struct map_trigger* s_on_trigger        = NULL;
 static script_t*           s_render_script     = 0;
 static int                 s_talk_button       = 0;
-static int                 s_talk_key          = ALLEGRO_KEY_SPACE;
+static int                 s_talk_key          = 0;
 static script_t*           s_update_script     = 0;
 static int                 s_num_delay_scripts = 0;
 static int                 s_max_delay_scripts = 0;
@@ -284,7 +284,7 @@ initialize_map_engine(void)
 	s_update_script = 0;
 	s_num_delay_scripts = s_max_delay_scripts = 0;
 	s_delay_scripts = NULL;
-	s_talk_key = ALLEGRO_KEY_SPACE;
+	s_talk_key = 0;
 	s_talk_button = 0;
 	s_is_map_running = false;
 	s_color_mask = rgba(0, 0, 0, 0);
@@ -862,16 +862,19 @@ process_map_input(void)
 	// check for player control of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
 		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, s_talk_key) || is_joy_button_down(0, s_talk_button)) {
+		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_A))
+			|| al_key_down(&kb_state, s_talk_key)
+			|| is_joy_button_down(0, s_talk_button))
+		{
 			if (s_is_talk_allowed) talk_person(s_input_person);
 			s_is_talk_allowed = false;
 		}
 		else // allow talking again only after key is released
 			s_is_talk_allowed = true;
-		if (al_key_down(&kb_state, ALLEGRO_KEY_UP)) mv_y = -1;
-		if (al_key_down(&kb_state, ALLEGRO_KEY_RIGHT)) mv_x = 1;
-		if (al_key_down(&kb_state, ALLEGRO_KEY_DOWN)) mv_y = 1;
-		if (al_key_down(&kb_state, ALLEGRO_KEY_LEFT)) mv_x = -1;
+		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_UP))) mv_y = -1;
+		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_RIGHT))) mv_x = 1;
+		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_DOWN))) mv_y = 1;
+		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_LEFT))) mv_x = -1;
 		switch (mv_x + mv_y * 3) {
 		case -3: // north
 			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
