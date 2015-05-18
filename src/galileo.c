@@ -134,6 +134,13 @@ set_group_shape(group_t* group, int index, shape_t* shape)
 	free_shape(*p_old_shape);
 }
 
+void
+set_group_xy(group_t* group, float x, float y)
+{
+	group->x = x;
+	group->y = y;
+}
+
 bool
 add_group_shape(group_t* group, shape_t* shape)
 {
@@ -299,11 +306,13 @@ remove_shape_vertex(shape_t* shape, int index)
 }
 
 void
-draw_shape(const shape_t* shape)
+draw_shape(shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
 
+	if (shape->vbuf == NULL && shape->sw_vbuf == NULL)
+		refresh_shape_vbuf(shape);
 	if (shape->type == SHAPE_AUTO)
 		draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST

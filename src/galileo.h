@@ -22,6 +22,7 @@ extern vertex_t vertex (float x, float y, float u, float v, color_t color);
 extern group_t* new_group          (void);
 extern group_t* ref_group          (group_t* group);
 extern void     free_group         (group_t* group);
+extern void     set_group_xy       (group_t* group, float x, float y);
 extern bool     add_group_shape    (group_t* group, shape_t* shape);
 extern void     remove_group_shape (group_t* group, int index);
 extern void     clear_group        (group_t* group);
@@ -35,7 +36,7 @@ extern image_t*     get_shape_texture   (const shape_t* shape);
 extern void         set_shape_texture   (shape_t* shape, image_t* texture);
 extern bool         add_shape_vertex    (shape_t* shape, vertex_t vertex);
 extern void         remove_shape_vertex (shape_t* shape, int index);
-extern void         draw_shape          (const shape_t* shape);
+extern void         draw_shape          (shape_t* shape);
 
 extern void init_galileo_api (void);
 

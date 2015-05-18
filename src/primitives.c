@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include "galileo.h"
 
 #include "primitives.h"
 
@@ -95,19 +96,33 @@ js_ApplyColorMask(duk_context* ctx)
 static duk_ret_t
 js_GradientCircle(duk_context* ctx)
 {
-	color_t inner_color;
-	color_t outer_color;
-	float   radius;
-	float   x, y;
+	int x = duk_require_number(ctx, 0);
+	int y = duk_require_number(ctx, 1);
+	int radius = duk_require_number(ctx, 2);
+	color_t in_color = duk_require_sphere_color(ctx, 3);
+	color_t out_color = duk_require_sphere_color(ctx, 4);
 
-	x = (float)duk_require_number(ctx, 0);
-	y = (float)duk_require_number(ctx, 1);
-	radius = (float)duk_require_number(ctx, 2);
-	inner_color = duk_require_sphere_color(ctx, 3);
-	outer_color = duk_require_sphere_color(ctx, 4);
-	// TODO: actually draw a gradient circle instead of a solid one
-	if (!is_skipped_frame())
-		al_draw_filled_circle(x, y, radius, nativecolor(inner_color));
+	group_t* group;
+	double   phi;
+	shape_t* shape;
+
+	int i;
+
+	if (is_skipped_frame())
+		return 0;
+	shape = new_shape(SHAPE_TRIANGLE_FAN, NULL);
+	add_shape_vertex(shape, vertex(0, 0, 0, 0, in_color));
+	for (i = 0; i < radius; ++i) {
+		phi = M_PI * 2 * i / radius;
+		add_shape_vertex(shape, vertex(cos(phi) * radius, sin(phi) * radius, 0, 0, out_color));
+	}
+	add_shape_vertex(shape, vertex(cos(0) * radius, sin(0) * radius, 0, 0, out_color));
+	group = new_group();
+	add_group_shape(group, shape);
+	set_group_xy(group, x, y);
+	draw_group(group);
+	free_shape(shape);
+	free_group(group);
 	return 0;
 }
 

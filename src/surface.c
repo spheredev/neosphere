@@ -30,10 +30,13 @@ static duk_ret_t js_Surface_clone             (duk_context* ctx);
 static duk_ret_t js_Surface_cloneSection      (duk_context* ctx);
 static duk_ret_t js_Surface_createImage       (duk_context* ctx);
 static duk_ret_t js_Surface_drawText          (duk_context* ctx);
+static duk_ret_t js_Surface_filledCircle      (duk_context* ctx);
 static duk_ret_t js_Surface_flipHorizontally  (duk_context* ctx);
 static duk_ret_t js_Surface_flipVertically    (duk_context* ctx);
+static duk_ret_t js_Surface_gradientCircle    (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle (duk_context* ctx);
 static duk_ret_t js_Surface_line              (duk_context* ctx);
+static duk_ret_t js_Surface_outlinedCircle    (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedRectangle (duk_context* ctx);
 static duk_ret_t js_Surface_pointSeries       (duk_context* ctx);
 static duk_ret_t js_Surface_rotate            (duk_context* ctx);
@@ -78,10 +81,13 @@ init_surface_api(void)
 	register_api_function(g_duk, "Surface", "cloneSection", js_Surface_cloneSection);
 	register_api_function(g_duk, "Surface", "createImage", js_Surface_createImage);
 	register_api_function(g_duk, "Surface", "drawText", js_Surface_drawText);
+	register_api_function(g_duk, "Surface", "filledCircle", js_Surface_filledCircle);
 	register_api_function(g_duk, "Surface", "flipHorizontally", js_Surface_flipHorizontally);
 	register_api_function(g_duk, "Surface", "flipVertically", js_Surface_flipVertically);
+	register_api_function(g_duk, "Surface", "gradientCircle", js_Surface_gradientCircle);
 	register_api_function(g_duk, "Surface", "gradientRectangle", js_Surface_gradientRectangle);
 	register_api_function(g_duk, "Surface", "line", js_Surface_line);
+	register_api_function(g_duk, "Surface", "outlinedCircle", js_Surface_outlinedCircle);
 	register_api_function(g_duk, "Surface", "outlinedRectangle", js_Surface_outlinedRectangle);
 	register_api_function(g_duk, "Surface", "pointSeries", js_Surface_pointSeries);
 	register_api_function(g_duk, "Surface", "rotate", js_Surface_rotate);
@@ -472,6 +478,31 @@ js_Surface_drawText(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_filledCircle(duk_context* ctx)
+{	
+	int n_args = duk_get_top(ctx);
+	int x = duk_require_number(ctx, 0);
+	int y = duk_require_number(ctx, 1);
+	int radius = duk_require_number(ctx, 2);
+	color_t color = duk_require_sphere_color(ctx, 3);
+	bool use_aa = n_args >= 5 ? duk_require_boolean(ctx, 4) : false;
+
+	int      blend_mode;
+	image_t* image;
+	
+	duk_push_this(ctx);
+	image = duk_require_sphere_surface(ctx, -1);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_filled_circle(x, y, radius, nativecolor(color));
+	al_set_target_backbuffer(g_display);
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
 js_Surface_flipHorizontally(duk_context* ctx)
 {
 	image_t* image;
@@ -492,6 +523,32 @@ js_Surface_flipVertically(duk_context* ctx)
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
 	flip_image(image, false, true);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_gradientCircle(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int x = duk_require_number(ctx, 0);
+	int y = duk_require_number(ctx, 1);
+	int radius = duk_require_number(ctx, 2);
+	color_t in_color = duk_require_sphere_color(ctx, 3);
+	color_t out_color = duk_require_sphere_color(ctx, 4);
+	bool use_aa = n_args >= 6 ? duk_require_boolean(ctx, 5) : false;
+
+	int      blend_mode;
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_surface(ctx, -1);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_filled_circle(x, y, radius, nativecolor(in_color));
+	al_set_target_backbuffer(g_display);
+	reset_blender();
 	return 0;
 }
 
@@ -548,6 +605,31 @@ js_Surface_line(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
+	al_set_target_backbuffer(g_display);
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_outlinedCircle(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int x = duk_require_number(ctx, 0);
+	int y = duk_require_number(ctx, 1);
+	int radius = duk_require_number(ctx, 2);
+	color_t color = duk_require_sphere_color(ctx, 3);
+	bool use_aa = n_args >= 5 ? duk_require_boolean(ctx, 4) : false;
+
+	int      blend_mode;
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_surface(ctx, -1);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(get_image_bitmap(image));
+	al_draw_circle(x, y, radius, nativecolor(color), 1);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;
@@ -652,7 +734,8 @@ js_Surface_rescale(duk_context* ctx)
 	duk_pop(ctx);
 	if (!rescale_image(image, width, height))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rescale() - Failed to rescale image");
-	return 0;
+	duk_push_this(ctx);
+	return 1;
 }
 
 static duk_ret_t
@@ -686,7 +769,7 @@ js_Surface_rotate(duk_context* ctx)
 	free_image(image);
 	duk_push_this(ctx);
 	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
