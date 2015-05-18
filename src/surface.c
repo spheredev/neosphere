@@ -529,16 +529,20 @@ js_Surface_flipVertically(duk_context* ctx)
 static duk_ret_t
 js_Surface_gradientCircle(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
+	static ALLEGRO_VERTEX s_vbuf[128];
+
 	int x = duk_require_number(ctx, 0);
 	int y = duk_require_number(ctx, 1);
 	int radius = duk_require_number(ctx, 2);
 	color_t in_color = duk_require_sphere_color(ctx, 3);
 	color_t out_color = duk_require_sphere_color(ctx, 4);
-	bool use_aa = n_args >= 6 ? duk_require_boolean(ctx, 5) : false;
 
 	int      blend_mode;
 	image_t* image;
+	double   phi;
+	int      vcount;
+
+	int i;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
@@ -546,7 +550,21 @@ js_Surface_gradientCircle(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_filled_circle(x, y, radius, nativecolor(in_color));
+	vcount = fmin(radius, 126);
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(in_color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * radius;
+		s_vbuf[i + 1].y = y - sin(phi) * radius;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(out_color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * radius;
+	s_vbuf[i + 1].y = y - sin(0) * radius;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(out_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	al_set_target_backbuffer(g_display);
 	reset_blender();
 	return 0;

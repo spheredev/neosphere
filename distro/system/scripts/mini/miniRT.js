@@ -65,7 +65,7 @@ mini.Delegate.prototype.invoke = function()
 };
 
 // mini.initialize()
-// Initializes the minisphere Runtime and all registered components.
+// Initializes miniRT and all registered components.
 // Arguments:
 //     params: An object specifying initialization parameters. This object will
 //             be passed to each registered initializer.
@@ -73,7 +73,7 @@ mini.initialize = function(params)
 {
     params = typeof params !== 'undefined' ? params : {};
     
-	Print("mini: Initializing minisphere Runtime");
+	Print("miniRT: Initializing miniRT core");
 	var frameRate = 'frameRate' in params ? params.frameRate : 0;
 	SetFrameRate(frameRate);
     mini.onStartUp.invoke(params);

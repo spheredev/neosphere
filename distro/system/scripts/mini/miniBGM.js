@@ -27,7 +27,7 @@ mini.BGM = new (function()
 // Prepares miniBGM for use when the user calls mini.initialize().
 mini.onStartUp.add(mini.BGM, function()
 {
-	Print("mini: Initializing miniBGM");
+	Print("miniRT: Initializing miniBGM");
 	mini.Threads.create(this);
 });
 	

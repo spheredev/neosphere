@@ -2,6 +2,7 @@
 #include "api.h"
 #include "color.h"
 #include "galileo.h"
+#include "vector.h"
 
 #include "primitives.h"
 
@@ -96,33 +97,36 @@ js_ApplyColorMask(duk_context* ctx)
 static duk_ret_t
 js_GradientCircle(duk_context* ctx)
 {
+	static ALLEGRO_VERTEX s_vbuf[128];
+	
 	int x = duk_require_number(ctx, 0);
 	int y = duk_require_number(ctx, 1);
 	int radius = duk_require_number(ctx, 2);
 	color_t in_color = duk_require_sphere_color(ctx, 3);
 	color_t out_color = duk_require_sphere_color(ctx, 4);
 
-	group_t* group;
-	double   phi;
-	shape_t* shape;
+	double phi;
+	int    vcount;
 
 	int i;
 
 	if (is_skipped_frame())
 		return 0;
-	shape = new_shape(SHAPE_TRIANGLE_FAN, NULL);
-	add_shape_vertex(shape, vertex(0, 0, 0, 0, in_color));
-	for (i = 0; i < radius; ++i) {
-		phi = M_PI * 2 * i / radius;
-		add_shape_vertex(shape, vertex(cos(phi) * radius, sin(phi) * radius, 0, 0, out_color));
+	vcount = fmin(radius, 126);
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(in_color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * radius;
+		s_vbuf[i + 1].y = y - sin(phi) * radius;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(out_color);
 	}
-	add_shape_vertex(shape, vertex(cos(0) * radius, sin(0) * radius, 0, 0, out_color));
-	group = new_group();
-	add_group_shape(group, shape);
-	set_group_xy(group, x, y);
-	draw_group(group);
-	free_shape(shape);
-	free_group(group);
+	s_vbuf[i + 1].x = x + cos(0) * radius;
+	s_vbuf[i + 1].y = y - sin(0) * radius;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(out_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
 

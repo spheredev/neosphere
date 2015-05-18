@@ -25,7 +25,7 @@ mini.Threads = new (function()
 // Initializes Threads when the user calls mini.initialize().
 mini.onStartUp.add(mini.Threads, function(params)
 {
-	Print("mini: Initializing minithreads");
+	Print("miniRT: Initializing miniThreads");
 	
 	try {
 		this.isInitialized = true;

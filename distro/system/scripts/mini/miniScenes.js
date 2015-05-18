@@ -57,7 +57,7 @@ mini.Scenelet = function(name, code)
 // Initializes miniscenes when the user calls mini.initialize().
 mini.onStartUp.add(mini.Scenes, function(params)
 {
-	Print("mini: Initializing miniscenes");
+	Print("miniRT: Initializing miniScenes");
 	
 	this.screenMask = new Color(0, 0, 0, 0);
 	this.priority = 'scenePriority' in params ? params.scenePriority : 0;
