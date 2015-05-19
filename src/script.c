@@ -71,7 +71,6 @@ run_script(script_t* script, bool allow_reentry)
 	if (script == NULL)  // NULL is allowed, it's a no-op
 		return;
 	
-	// is the script currently in use?
 	if (script->is_in_use && !allow_reentry)
 		return;  // do nothing if an instance is already running
 	was_in_use = script->is_in_use;
@@ -119,7 +118,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 		return 0;
 	else {
 		duk_pop_2(ctx);
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "script must be string, function, or null");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Script must be string, function, or null");
 	}
 	return script;
 }

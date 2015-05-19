@@ -1,6 +1,7 @@
 #include "minisphere.h"
 
 #include "api.h"
+#include "animation.h"
 #include "async.h"
 #include "bytearray.h"
 #include "color.h"
@@ -707,6 +708,7 @@ initialize_engine(void)
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
 	initialize_api(g_duk);
+	init_animation_api();
 	init_async_api();
 	init_bytearray_api();
 	init_color_api();

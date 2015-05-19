@@ -1,6 +1,7 @@
 msphere_sources = [
 	"duktape.c",
 	"dyad.c",
+	"animation.c",
 	"api.c",
 	"async.c",
 	"atlas.c",

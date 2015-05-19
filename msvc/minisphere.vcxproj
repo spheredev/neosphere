@@ -304,6 +304,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\animation.c" />
     <ClCompile Include="..\src\api.c" />
     <ClCompile Include="..\src\async.c" />
     <ClCompile Include="..\src\atlas.c" />
@@ -338,6 +339,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClCompile Include="..\src\windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\animation.h" />
     <ClInclude Include="..\src\api.h" />
     <ClInclude Include="..\src\async.h" />
     <ClInclude Include="..\src\atlas.h" />
