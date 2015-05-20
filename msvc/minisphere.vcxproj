@@ -157,7 +157,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb_static.lib;libFLAC_static.lib;libogg_static.lib;libvorbis_static.lib;libvorbisfile_static.lib;libmng_static.lib;zlibstatic.lib;lcms2_static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -181,7 +181,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb_static.lib;libFLAC_static.lib;libogg_static.lib;libvorbis_static.lib;libvorbisfile_static.lib;libmng_static.lib;zlibstatic.lib;lcms2_static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -196,13 +196,12 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat />
     </ClCompile>
@@ -210,7 +209,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb_static.lib;libFLAC_static.lib;libogg_static.lib;libvorbis_static.lib;libvorbisfile_static.lib;libmng_static.lib;zlibstatic.lib;lcms2_static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -225,13 +224,12 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>
       </DebugInformationFormat>
@@ -240,7 +238,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb_static.lib;libFLAC_static.lib;libogg_static.lib;libvorbis_static.lib;libvorbisfile_static.lib;libmng_static.lib;zlibstatic.lib;lcms2_static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -255,13 +253,12 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat />
     </ClCompile>
@@ -269,7 +266,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb_static.lib;libFLAC_static.lib;libogg_static.lib;libvorbis_static.lib;libvorbisfile_static.lib;libmng_static.lib;zlibstatic.lib;lcms2_static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -284,13 +281,12 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <SDLCheck>false</SDLCheck>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>
       </DebugInformationFormat>
@@ -299,7 +295,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb_static.lib;libFLAC_static.lib;libogg_static.lib;libvorbis_static.lib;libvorbisfile_static.lib;libmng_static.lib;zlibstatic.lib;lcms2_static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>

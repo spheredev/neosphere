@@ -96,7 +96,7 @@
 
 #ifndef MNG_NO_INCLUDE_JNG
 #ifdef MNG_SUPPORT_FULL                /* full support includes JNG */
-#define MNG_SUPPORT_IJG6B
+/* #define MNG_SUPPORT_IJG6B */
 #endif
 
 #ifndef MNG_SUPPORT_IJG6B
@@ -160,9 +160,9 @@
 /* if you want your own app (or the OS) to handle color-management
    select MNG_APP_CMS */
 
-#define MNG_GAMMA_ONLY
+/* #define MNG_GAMMA_ONLY */
 /* #define MNG_FULL_CMS */
-/* #define MNG_APP_CMS */
+#define MNG_APP_CMS
 
 /* ************************************************************************** */
 

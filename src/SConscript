@@ -42,6 +42,9 @@ msphere_libs = [
 	"allegro_image",
 	"allegro_primitives",
 	"allegro",
+	"mng",
+	"jpeg",
+	"z",
 	"m"
 ]
 
