@@ -1,6 +1,17 @@
 minisphere Changelog
 ====================
 
+v1.1.1 - May 20, 2015
+---------------------
+
+* Fixes an issue where windowstyles with component images smaller than 16x16
+  weren't tiled properly, due to an Allegro limitation.
+* Full MNG animation support.  No FLIC though.  That's an ancient format anyway
+  though, not really worth supporting.
+* Fixes GradientCircle (finally!) and adds missing circle methods to Surfaces.
+* New RNG.name() API: Generates a random string of letters which you can use
+  internally to differentiate objects.
+
 v1.1 - May 17, 2015
 -------------------
 
