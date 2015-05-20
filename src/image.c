@@ -356,15 +356,37 @@ draw_image_tiled(image_t* image, int x, int y, int width, int height)
 void
 draw_image_tiled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
 {
-	ALLEGRO_COLOR vtx_color = nativecolor(mask);
+	ALLEGRO_COLOR native_mask = nativecolor(mask);
+	int           img_w, img_h;
+	bool          is_drawing_held;
+	int           tile_w, tile_h;
 
-	ALLEGRO_VERTEX vbuf[] = {
-		{ x, y, 0, 0, 0, vtx_color },
-		{ x + width, y, 0, width, 0, vtx_color },
-		{ x, y + height, 0, 0, height, vtx_color },
-		{ x + width, y + height, 0, width, height, vtx_color }
-	};
-	al_draw_prim(vbuf, NULL, image->bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	int i_x, i_y;
+
+	img_w = image->width; img_h = image->height;
+	if (img_w >= 16 && img_h >= 16) {
+		// tile in hardware whenever possible
+		ALLEGRO_VERTEX vbuf[] = {
+			{ x, y, 0, 0, 0, native_mask },
+			{ x + width, y, 0, width, 0, native_mask },
+			{ x, y + height, 0, 0, height, native_mask },
+			{ x + width, y + height, 0, width, height, native_mask }
+		};
+		al_draw_prim(vbuf, NULL, image->bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	}
+	else {
+		// texture smaller than 16x16, tile it in software (Allegro pads it)
+		is_drawing_held = al_is_bitmap_drawing_held();
+		al_hold_bitmap_drawing(true);
+		for (i_x = width / img_w; i_x >= 0; --i_x) for (i_y = height / img_h; i_y >= 0; --i_y) {
+			tile_w = i_x == width / img_w ? width % img_w : img_w;
+			tile_h = i_y == height / img_h ? height % img_h : img_h;
+			al_draw_tinted_bitmap_region(image->bitmap, native_mask,
+				0, 0, tile_w, tile_h,
+				x + i_x * img_w, y + i_y * img_h, 0x0);
+		}
+		al_hold_bitmap_drawing(is_drawing_held);
+	}
 }
 
 void
