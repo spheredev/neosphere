@@ -25,6 +25,7 @@ msphere_sources = [
 	"rawfile.c",
 	"rng.c",
 	"script.c",
+	"shader.c",
 	"sockets.c",
 	"sound.c",
 	"spriteset.c",

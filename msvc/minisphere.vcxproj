@@ -323,6 +323,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClCompile Include="..\src\galileo.c" />
     <ClCompile Include="..\src\mt19937ar.c" />
     <ClCompile Include="..\src\rng.c" />
+    <ClCompile Include="..\src\shader.c" />
     <ClCompile Include="..\src\sockets.c" />
     <ClCompile Include="..\src\obsmap.c" />
     <ClCompile Include="..\src\persons.c" />
@@ -358,6 +359,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClInclude Include="..\src\galileo.h" />
     <ClInclude Include="..\src\mt19937ar.h" />
     <ClInclude Include="..\src\rng.h" />
+    <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\sockets.h" />
     <ClInclude Include="..\src\obsmap.h" />
     <ClInclude Include="..\src\persons.h" />

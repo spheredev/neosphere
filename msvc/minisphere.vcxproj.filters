@@ -117,6 +117,9 @@
     <ClCompile Include="..\src\animation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -219,6 +222,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\animation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

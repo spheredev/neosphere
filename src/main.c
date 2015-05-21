@@ -15,6 +15,7 @@
 #include "primitives.h"
 #include "rawfile.h"
 #include "rng.h"
+#include "shader.h"
 #include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
@@ -86,7 +87,6 @@ int
 main(int argc, char* argv[])
 {
 	ALLEGRO_USTR*        dialog_name;
-	int                  display_flags = 0x0;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
 	duk_int_t            exec_result;
@@ -152,9 +152,6 @@ main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--no-throttle") == 0) {
 				s_conserve_cpu = false;
-			}
-			else if (strcmp(argv[i], "--force-opengl") == 0) {
-				display_flags |= ALLEGRO_OPENGL;
 			}
 			else if (strcmp(argv[i], "--fullscreen") == 0) {
 				s_is_fullscreen = true;
@@ -235,7 +232,7 @@ main(int argc, char* argv[])
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
-	al_set_new_display_flags(display_flags | al_get_new_display_flags());
+	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
 		al_show_native_message_box(NULL, "Unable to Create Display", "minisphere was unable to create a display window.",
 			"A display window is required for rendering. The engine cannot run without it and will now close.",
