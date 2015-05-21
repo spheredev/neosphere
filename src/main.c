@@ -249,7 +249,7 @@ main(int argc, char* argv[])
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
 	load_key_map();
-	
+
 	// attempt to locate and load system font
 	console_log(1, "Loading system font\n");
 	if (g_sys_conf != NULL) {
@@ -724,6 +724,7 @@ initialize_engine(void)
 	init_primitives_api();
 	init_rawfile_api();
 	init_rng_api();
+	init_shader_api();
 	init_sockets_api();
 	init_sound_api();
 	init_spriteset_api(g_duk);

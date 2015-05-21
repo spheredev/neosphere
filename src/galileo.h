@@ -1,23 +1,24 @@
 #ifndef MINISPHERE__GALILEO_H__INCLUDED
 #define MINISPHERE__GALILEO_H__INCLUDED
 
-typedef struct vertex vertex_t;
-typedef struct shape  shape_t;
-typedef struct group  group_t;
+#include "shader.h"
+
+typedef struct vertex    vertex_t;
+typedef struct shape     shape_t;
+typedef struct group     group_t;
+typedef struct shaderset shaderset_t;
 
 typedef enum shape_type shape_type_t;
-
-struct vertex
-{
-	float   x, y;
-	float   u, v;
-	color_t color;
-};
 
 extern void initialize_galileo (void);
 extern void shutdown_galileo   (void);
 
 extern vertex_t vertex (float x, float y, float u, float v, color_t color);
+
+extern shaderset_t* new_shaderset   (shader_t* pixel_shader, shader_t* vertex_shader);
+extern shaderset_t* ref_shaderset   (shaderset_t* shaderset);
+extern void         free_shaderset  (shaderset_t* shaderset);
+extern void         apply_shaderset (shaderset_t* shaderset);
 
 extern group_t* new_group          (void);
 extern group_t* ref_group          (group_t* group);
@@ -39,6 +40,13 @@ extern void         remove_shape_vertex (shape_t* shape, int index);
 extern void         draw_shape          (shape_t* shape);
 
 extern void init_galileo_api (void);
+
+struct vertex
+{
+	float   x, y;
+	float   u, v;
+	color_t color;
+};
 
 enum shape_type
 {
