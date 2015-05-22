@@ -6,7 +6,6 @@
 typedef struct vertex    vertex_t;
 typedef struct shape     shape_t;
 typedef struct group     group_t;
-typedef struct shaderset shaderset_t;
 
 typedef enum shape_type shape_type_t;
 
@@ -14,11 +13,6 @@ extern void initialize_galileo (void);
 extern void shutdown_galileo   (void);
 
 extern vertex_t vertex (float x, float y, float u, float v, color_t color);
-
-extern shaderset_t* new_shaderset   (shader_t* pixel_shader, shader_t* vertex_shader);
-extern shaderset_t* ref_shaderset   (shaderset_t* shaderset);
-extern void         free_shaderset  (shaderset_t* shaderset);
-extern void         apply_shaderset (shaderset_t* shaderset);
 
 extern group_t* new_group          (void);
 extern group_t* ref_group          (group_t* group);

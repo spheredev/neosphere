@@ -7,8 +7,6 @@
 #include "galileo.h"
 
 static duk_ret_t js_GetDefaultShaderProgram (duk_context* ctx);
-static duk_ret_t js_new_ShaderProgram       (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_finalize  (duk_context* ctx);
 static duk_ret_t js_new_Group               (duk_context* ctx);
 static duk_ret_t js_Group_finalize          (duk_context* ctx);
 static duk_ret_t js_Group_get_angle         (duk_context* ctx);
@@ -33,13 +31,6 @@ static duk_ret_t js_new_Vertex              (duk_context* ctx);
 static void assign_default_uv  (shape_t* shape);
 static void refresh_shape_vbuf (shape_t* shape);
 
-struct shaderset
-{
-	unsigned int refcount;
-	shader_t*    pixel_shader;
-	shader_t*    vertex_shader;
-};
-
 struct shape
 {
 	unsigned int           refcount;
@@ -57,7 +48,7 @@ struct group
 	unsigned int refcount;
 	float        x, y, rot_x, rot_y;
 	double       theta;
-	shaderset_t* shaderset;
+	shader_t*    shader;
 	vector_t*    shapes;
 };
 
@@ -82,54 +73,6 @@ vertex(float x, float y, float u, float v, color_t color)
 	vertex.u = u; vertex.v = v;
 	vertex.color = color;
 	return vertex;
-}
-
-shaderset_t*
-new_shaderset(shader_t* pixel_shader, shader_t* vertex_shader)
-{
-	shaderset_t* shaderset;
-	
-	if (!(shaderset = calloc(1, sizeof(shaderset_t))))
-		goto on_error;
-	shaderset->pixel_shader = ref_shader(pixel_shader);
-	shaderset->vertex_shader = ref_shader(vertex_shader);
-	return ref_shaderset(shaderset);
-
-on_error:
-	if (shaderset != NULL) {
-		free_shader(shaderset->pixel_shader);
-		free_shader(shaderset->vertex_shader);
-		free(shaderset);
-	}
-	return NULL;
-}
-
-shaderset_t*
-ref_shaderset(shaderset_t* shaderset)
-{
-	++shaderset->refcount;
-	return shaderset;
-}
-
-void
-free_shaderset(shaderset_t* shaderset)
-{
-	if (shaderset == NULL || --shaderset->refcount > 0)
-		return;
-	free_shader(shaderset->pixel_shader);
-	free_shader(shaderset->vertex_shader);
-	free(shaderset);
-}
-
-void
-apply_shaderset(shaderset_t* shaderset)
-{
-	if (shaderset != NULL) {
-		apply_shader(shaderset->pixel_shader);
-		apply_shader(shaderset->vertex_shader);
-	}
-	else
-		reset_shaders();
 }
 
 group_t*
@@ -236,7 +179,7 @@ draw_group(const group_t* group)
 	
 	iter_t iter;
 
-	apply_shaderset(group->shaderset);
+	apply_shader(group->shader);
 	al_copy_transform(&old_matrix, al_get_current_transform());
 	al_identity_transform(&matrix);
 	al_translate_transform(&matrix, group->rot_x, group->rot_y);
@@ -248,7 +191,7 @@ draw_group(const group_t* group)
 	while (i_shape = next_vector_item(&iter))
 		draw_shape(*i_shape);
 	al_use_transform(&old_matrix);
-	reset_shaders();
+	reset_shader();
 }
 
 shape_t*
@@ -469,7 +412,6 @@ init_galileo_api(void)
 
 	// ShaderProgram object
 	register_api_function(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
-	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
 	
 	// Group object
 	register_api_ctor(g_duk, "Group", js_new_Group, js_Group_finalize);
@@ -488,7 +430,7 @@ js_new_Group(duk_context* ctx)
 	duk_require_object_coercible(ctx, 0);
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
-	shaderset_t* shaderset = duk_require_sphere_obj(ctx, 1, "ShaderProgram");
+	shader_t* shader = duk_require_sphere_obj(ctx, 1, "ShaderProgram");
 
 	size_t    num_shapes;
 	group_t*  group;
@@ -505,7 +447,7 @@ js_new_Group(duk_context* ctx)
 		if (!add_group_shape(group, shape))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Shape list allocation failure");
 	}
-	group->shaderset = ref_shaderset(shaderset);
+	group->shader = ref_shader(shader);
 	duk_push_sphere_obj(ctx, "Group", group);
 	return 1;
 }
@@ -553,7 +495,7 @@ js_Group_get_shader(duk_context* ctx)
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 	duk_pop(ctx);
-	duk_push_sphere_obj(ctx, "ShaderProgram", ref_shaderset(group->shaderset));
+	duk_push_sphere_obj(ctx, "ShaderProgram", ref_shader(group->shader));
 	return 1;
 }
 
@@ -561,16 +503,16 @@ static duk_ret_t
 js_Group_set_shader(duk_context* ctx)
 {
 	group_t* group;
-	shaderset_t* shaderset = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
+	shader_t* shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
 
-	shaderset_t* old_shader;
+	shader_t* old_shader;
 	
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 	duk_pop(ctx);
-	old_shader = group->shaderset;
-	group->shaderset = ref_shaderset(shaderset);
-	free_shaderset(old_shader);
+	old_shader = group->shader;
+	group->shader = ref_shader(shader);
+	free_shader(old_shader);
 	return 0;
 }
 
@@ -691,25 +633,6 @@ js_GetDefaultShaderProgram(duk_context* ctx)
 {
 	duk_push_sphere_obj(ctx, "ShaderProgram", NULL);
 	return 1;
-}
-
-static duk_ret_t
-js_new_ShaderProgram(duk_context* ctx)
-{
-	shaderset_t* shaderset;
-	shader_t* pixel_shader = duk_require_sphere_obj(ctx, 0, "PixelShader");
-	shader_t* vertex_shader = duk_require_sphere_obj(ctx, 1, "VertexShader");
-
-	if (!(shaderset = new_shaderset(pixel_shader, vertex_shader)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to create shader set");
-	duk_push_sphere_obj(ctx, "ShaderProgram", shaderset);
-	return 1;
-}
-
-static duk_ret_t
-js_ShaderProgram_finalize(duk_context* ctx)
-{
-	return 0;
 }
 
 static duk_ret_t
