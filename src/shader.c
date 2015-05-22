@@ -16,15 +16,21 @@ shader_t*
 create_shader(const char* pixel_path, const char* vertex_path)
 {
 	shader_t* shader;
-
 	if (!(shader = calloc(1, sizeof(shader_t)))) goto on_error;
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
 		goto on_error;
-	if (!al_attach_shader_source_file(shader->program, ALLEGRO_PIXEL_SHADER, pixel_path))
+	if (!al_attach_shader_source_file(shader->program, ALLEGRO_PIXEL_SHADER, pixel_path)) {
+		fprintf(stderr, "\nFragment shader compile log:\n%s", al_get_shader_log(shader->program));
 		goto on_error;
-	if (!al_attach_shader_source_file(shader->program, ALLEGRO_VERTEX_SHADER, vertex_path))
+	}
+	if (!al_attach_shader_source_file(shader->program, ALLEGRO_VERTEX_SHADER, vertex_path)) {
+		fprintf(stderr, "\nVertex shader compile log:\n%s", al_get_shader_log(shader->program));
 		goto on_error;
-	if (!al_build_shader(shader->program)) goto on_error;
+	}
+	if (!al_build_shader(shader->program)) {
+		fprintf(stderr, "\nError linking new shader program:\n%s", al_get_shader_log(shader->program));
+		goto on_error;
+	}
 	return ref_shader(shader);
 
 on_error:
@@ -99,7 +105,7 @@ js_new_ShaderProgram(duk_context* ctx)
 	duk_pop(ctx);
 	path_vertex = get_asset_path(filename_vertex, "shaders", false);
 	if (!(shader = create_shader(path_frag, path_vertex)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", filename_frag, filename_vertex);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to create shader program from '%s', '%s'", filename_frag, filename_vertex);
 	free(path_frag);
 	free(path_vertex);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
