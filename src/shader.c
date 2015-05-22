@@ -5,10 +5,6 @@
 
 static duk_ret_t js_new_ShaderProgram      (duk_context* ctx);
 static duk_ret_t js_ShaderProgram_finalize (duk_context* ctx);
-static duk_ret_t js_new_PixelShader        (duk_context* ctx);
-static duk_ret_t js_PixelShader_finalize   (duk_context* ctx);
-static duk_ret_t js_new_VertexShader       (duk_context* ctx);
-static duk_ret_t js_VertexShader_finalize  (duk_context* ctx);
 
 struct shader
 {
@@ -43,6 +39,8 @@ on_error:
 shader_t*
 ref_shader(shader_t* shader)
 {
+	if (shader == NULL)
+		return shader;
 	++shader->refcount;
 	return shader;
 }
@@ -59,7 +57,7 @@ free_shader(shader_t* shader)
 bool
 apply_shader(shader_t* shader)
 {
-	return al_use_shader(shader->program);
+	return al_use_shader(shader != NULL ? shader->program : NULL);
 }
 
 void
@@ -73,24 +71,36 @@ init_shader_api(void)
 {
 	// ShaderProgram object
 	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
-
 }
 
 static duk_ret_t
 js_new_ShaderProgram(duk_context* ctx)
 {
-	const char* pixel_filename = duk_require_string(ctx, 0);
-	const char* vertex_filename = duk_require_string(ctx, 1);
+	const char* filename_frag;
+	const char* filename_vertex;
+	char*       path_frag;
+	char*       path_vertex;
+	shader_t*   shader;
 
-	char*     path_pixel;
-	char*     path_vertex;
-	shader_t* shader;
-
-	path_pixel = get_asset_path(pixel_filename, "shaders", false);
-	path_vertex = get_asset_path(vertex_filename, "shaders", false);
-	if (!(shader = create_shader(path_pixel, path_vertex)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", pixel_filename, vertex_filename);
-	free(path_pixel);
+	if (!duk_is_object(ctx, 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): JS object expected as argument");
+	if (duk_get_prop_string(ctx, 0, "fragment"), !duk_is_string(ctx, -1))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): 'fragment' property, string required");
+	if (duk_get_prop_string(ctx, 0, "vertex"), !duk_is_string(ctx, -1))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): 'vertex' property, string required");
+	duk_pop_2(ctx);
+	
+	duk_get_prop_string(ctx, 0, "fragment");
+	filename_frag = duk_require_string(ctx, -1);
+	duk_pop(ctx);
+	path_frag = get_asset_path(filename_frag, "shaders", false);
+	duk_get_prop_string(ctx, 0, "vertex");
+	filename_vertex = duk_require_string(ctx, -1);
+	duk_pop(ctx);
+	path_vertex = get_asset_path(filename_vertex, "shaders", false);
+	if (!(shader = create_shader(path_frag, path_vertex)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", filename_frag, filename_vertex);
+	free(path_frag);
 	free(path_vertex);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
 	return 1;
