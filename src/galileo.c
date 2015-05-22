@@ -112,6 +112,7 @@ free_group(group_t* group)
 	while (i_shape = next_vector_item(&iter))
 		free_shape(*i_shape);
 	free_vector(group->shapes);
+	free_shader(group->shader);
 	free(group);
 }
 
