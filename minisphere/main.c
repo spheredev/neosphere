@@ -201,6 +201,7 @@ main(int argc, char* argv[])
 	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
 	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
+	al_set_new_display_flags(ALLEGRO_OPENGL);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
 		al_show_native_message_box(NULL, "Unable to Create Display", "minisphere was unable to create a display window.",
 			"A display window is required for rendering. The engine cannot run without it and will now close.",
