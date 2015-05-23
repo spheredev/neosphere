@@ -249,6 +249,10 @@ main(int argc, char* argv[])
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
 	load_key_map();
+	
+	// not sure why this is necessary, but without it, you often get a black screen
+	// on startup. it seems Allegro forgets to set up its shaders or something.
+	al_use_shader(NULL);
 
 	// attempt to locate and load system font
 	console_log(1, "Loading system font\n");

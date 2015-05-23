@@ -1,7 +1,7 @@
-minisphere 1.1.1
+minisphere 1.1.2
 ================
 
-*Sunday, May 20, 2015*
+*Sunday, May 23, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written from the
 ground up in C.  It boasts high compatibility with most games written for

@@ -1,6 +1,15 @@
 minisphere Changelog
 ====================
 
+v1.1.2 - May 23, 2015
+---------------------
+
+* GLSL shader support! Shaders are loaded from <game_dir>/shaders by default.
+  To use:
+    var shader = new ShaderProgram({ vertex: 'vs.glsl', fragment: 'fs.glsl');
+    var group = new Group(shapeList, shader);
+    // work with Group object as before
+
 v1.1.1 - May 20, 2015
 ---------------------
 

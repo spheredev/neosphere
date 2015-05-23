@@ -288,11 +288,21 @@ objects.  With these, you precompose a complex object out of a set of vertices
 and textures which are then uploaded to the GPU to save time during the main
 render loop.
 
-GetDefaultShaderProgram()
+GetDefaultShaderProgram();
   
-  Gets the default shader program for drawing Groups (see below). This is
-  required by the Galileo specification and is the only way to get a
-  ShaderProgram object. minisphere does not currently support shaders.
+  Gets the default Galileo shader program. This is a very barebones shader which
+  uses screen coordinates for vertices and performs only basic texture mapping
+  in the fragment shader.
+
+new ShaderProgram(shader_files);
+  
+  Constructs a ShaderProgram from a set of shader sources. `shader_files` should
+  be an object with the following properties:
+    
+    vertex:   The filename of the source for the vertex shader.
+    fragment: The filename of the source for the fragment shader.
+
+  Note: Shader filenames are relative to <game_dir>/shaders.
   
 new Vertex(x, y[, color[, u, v]]);
   
@@ -336,10 +346,9 @@ Shape:image (read/write)
 
 new Group(shapes, shader);
   
-  Constructs a Group out of the provided array of Shape objects. `shader`
-  specifies the ShaderProgram to use when rendering the group; currently the
-  only way to retrieve a ShaderProgram object is by calling
-  GetDefaultShaderProgram().
+  Constructs a Group out of the provided array of Shape objects. `shader` is the
+  shader program to use when rendering the group, obtained by calling either the
+  ShaderProgram constructor or GetDefaultShaderProgram().
 
 Group:draw();
   
