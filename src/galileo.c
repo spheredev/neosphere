@@ -31,6 +31,8 @@ static duk_ret_t js_new_Vertex              (duk_context* ctx);
 static void assign_default_uv  (shape_t* shape);
 static void refresh_shape_vbuf (shape_t* shape);
 
+static shader_t* s_def_shader = NULL;
+
 struct shape
 {
 	unsigned int           refcount;
@@ -62,6 +64,28 @@ void
 shutdown_galileo(void)
 {
 	console_log(1, "Shutting down Galileo\n");
+	free_shader(s_def_shader);
+}
+
+shader_t*
+get_default_shader(void)
+{
+	const char* fs_filename;
+	char*       fs_path;
+	const char* vs_filename;
+	char*       vs_path;
+
+	if (s_def_shader == NULL) {
+		console_log(3, "engine: Building default shader program");
+		vs_filename = al_get_config_value(g_sys_conf, NULL, "VertexShader");
+		fs_filename = al_get_config_value(g_sys_conf, NULL, "FragmentShader");
+		vs_path = get_sys_asset_path(vs_filename, "system");
+		fs_path = get_sys_asset_path(fs_filename, "system");
+		s_def_shader = create_shader(vs_path, fs_path);
+		free(vs_path);
+		free(fs_path);
+	}
+	return s_def_shader;
 }
 
 vertex_t
@@ -76,13 +100,14 @@ vertex(float x, float y, float u, float v, color_t color)
 }
 
 group_t*
-new_group(void)
+new_group(shader_t* shader)
 {
 	group_t* group;
 
 	if (!(group = calloc(1, sizeof(group_t))))
 		goto on_error;
 	group->shapes = new_vector(sizeof(shape_t*));
+	group->shader = ref_shader(shader);
 	return ref_group(group);
 
 on_error:
@@ -180,7 +205,7 @@ draw_group(const group_t* group)
 	
 	iter_t iter;
 
-	apply_shader(group->shader);
+	apply_shader(group->shader != NULL ? group->shader : s_def_shader);
 	al_copy_transform(&old_matrix, al_get_current_transform());
 	al_identity_transform(&matrix);
 	al_translate_transform(&matrix, group->rot_x, group->rot_y);
@@ -353,7 +378,7 @@ assign_default_uv(shape_t* shape)
 		// that the top-left corner of a clockwise quad is mapped to (0,0).
 		phi = 2 * M_PI * i / shape->num_vertices - M_PI_4 * 3;
 		shape->vertices[i].u = cos(phi) * M_SQRT1_2 + 0.5;
-		shape->vertices[i].v = sin(phi) * M_SQRT1_2 + 0.5;
+		shape->vertices[i].v = sin(phi) * -M_SQRT1_2 + 0.5;
 	}
 }
 
@@ -362,7 +387,6 @@ refresh_shape_vbuf(shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
 	ALLEGRO_VERTEX* vertices = NULL;
-	int             w_texture, h_texture;
 
 	int i;
 	
@@ -370,8 +394,6 @@ refresh_shape_vbuf(shape_t* shape)
 		al_destroy_vertex_buffer(shape->vbuf);
 	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
-	w_texture = bitmap != NULL ? al_get_bitmap_width(bitmap) : 0;
-	h_texture = bitmap != NULL ? al_get_bitmap_height(bitmap) : 0;
 	if (shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
 		vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY);
 	if (vertices == NULL) {
@@ -384,8 +406,8 @@ refresh_shape_vbuf(shape_t* shape)
 		vertices[i].y = shape->vertices[i].y;
 		vertices[i].z = 0;
 		vertices[i].color = nativecolor(shape->vertices[i].color);
-		vertices[i].u = shape->vertices[i].u * w_texture;
-		vertices[i].v = shape->vertices[i].v * h_texture;
+		vertices[i].u = shape->vertices[i].u;
+		vertices[i].v = shape->vertices[i].v;
 	}
 	if (vertices != shape->sw_vbuf)
 		al_unlock_vertex_buffer(shape->vbuf);
@@ -439,7 +461,7 @@ js_new_Group(duk_context* ctx)
 
 	duk_uarridx_t i;
 
-	if (!(group = new_group()))
+	if (!(group = new_group(shader)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Failed to create group object");
 	num_shapes = duk_get_length(ctx, 0);
 	for (i = 0; i < num_shapes; ++i) {
@@ -448,7 +470,6 @@ js_new_Group(duk_context* ctx)
 		if (!add_group_shape(group, shape))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Shape list allocation failure");
 	}
-	group->shader = ref_shader(shader);
 	duk_push_sphere_obj(ctx, "Group", group);
 	return 1;
 }
@@ -632,7 +653,11 @@ js_Group_draw(duk_context* ctx)
 static duk_ret_t
 js_GetDefaultShaderProgram(duk_context* ctx)
 {
-	duk_push_sphere_obj(ctx, "ShaderProgram", NULL);
+	shader_t* shader;
+	
+	if (!(shader = get_default_shader()))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetDefaultShaderProgram(): No default shader available or shader couldn't be built");
+	duk_push_sphere_obj(ctx, "ShaderProgram", ref_shader(shader));
 	return 1;
 }
 

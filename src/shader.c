@@ -13,22 +13,22 @@ struct shader
 };
 
 shader_t*
-create_shader(const char* pixel_path, const char* vertex_path)
+create_shader(const char* vs_path, const char* fs_path)
 {
 	shader_t* shader;
 	if (!(shader = calloc(1, sizeof(shader_t)))) goto on_error;
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
 		goto on_error;
-	if (!al_attach_shader_source_file(shader->program, ALLEGRO_VERTEX_SHADER, vertex_path)) {
-		fprintf(stderr, "\nVertex shader compile log:\n%s", al_get_shader_log(shader->program));
+	if (!al_attach_shader_source_file(shader->program, ALLEGRO_VERTEX_SHADER, vs_path)) {
+		fprintf(stderr, "\nVertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
-	if (!al_attach_shader_source_file(shader->program, ALLEGRO_PIXEL_SHADER, pixel_path)) {
-		fprintf(stderr, "\nFragment shader compile log:\n%s", al_get_shader_log(shader->program));
+	if (!al_attach_shader_source_file(shader->program, ALLEGRO_PIXEL_SHADER, fs_path)) {
+		fprintf(stderr, "\nFragment shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
 	if (!al_build_shader(shader->program)) {
-		fprintf(stderr, "\nError building shader program:\n%s", al_get_shader_log(shader->program));
+		fprintf(stderr, "\nError building shader program:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
 	return ref_shader(shader);
@@ -63,7 +63,7 @@ free_shader(shader_t* shader)
 bool
 apply_shader(shader_t* shader)
 {
-	return al_use_shader(shader != NULL ? shader->program : NULL);
+	return al_use_shader(shader->program);
 }
 
 void
@@ -82,10 +82,10 @@ init_shader_api(void)
 static duk_ret_t
 js_new_ShaderProgram(duk_context* ctx)
 {
-	const char* filename_frag;
-	const char* filename_vertex;
-	char*       path_frag;
-	char*       path_vertex;
+	const char* fs_filename;
+	char*       fs_path;
+	const char* vs_filename;
+	char*       vs_path;
 	shader_t*   shader;
 
 	if (!duk_is_object(ctx, 0))
@@ -96,18 +96,18 @@ js_new_ShaderProgram(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): 'fragment' property, string required");
 	duk_pop_2(ctx);
 	
-	duk_get_prop_string(ctx, 0, "fragment");
-	filename_frag = duk_require_string(ctx, -1);
-	duk_pop(ctx);
-	path_frag = get_asset_path(filename_frag, "shaders", false);
 	duk_get_prop_string(ctx, 0, "vertex");
-	filename_vertex = duk_require_string(ctx, -1);
+	vs_filename = duk_require_string(ctx, -1);
 	duk_pop(ctx);
-	path_vertex = get_asset_path(filename_vertex, "shaders", false);
-	if (!(shader = create_shader(path_frag, path_vertex)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", filename_frag, filename_vertex);
-	free(path_frag);
-	free(path_vertex);
+	vs_path = get_asset_path(vs_filename, "shaders", false);
+	duk_get_prop_string(ctx, 0, "fragment");
+	fs_filename = duk_require_string(ctx, -1);
+	duk_pop(ctx);
+	fs_path = get_asset_path(fs_filename, "shaders", false);
+	if (!(shader = create_shader(vs_path, fs_path)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", vs_filename, fs_filename);
+	free(vs_path);
+	free(fs_path);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
 	return 1;
 }

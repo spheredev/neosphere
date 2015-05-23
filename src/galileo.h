@@ -9,12 +9,13 @@ typedef struct group     group_t;
 
 typedef enum shape_type shape_type_t;
 
-extern void initialize_galileo (void);
-extern void shutdown_galileo   (void);
+extern void      initialize_galileo (void);
+extern void      shutdown_galileo   (void);
+extern shader_t* get_default_shader (void);
 
 extern vertex_t vertex (float x, float y, float u, float v, color_t color);
 
-extern group_t* new_group          (void);
+extern group_t* new_group          (shader_t* shader);
 extern group_t* ref_group          (group_t* group);
 extern void     free_group         (group_t* group);
 extern void     set_group_xy       (group_t* group, float x, float y);
