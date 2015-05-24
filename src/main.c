@@ -318,8 +318,7 @@ on_js_error:
 	duk_get_prop_string(g_duk, -2, "fileName");
 	file_path = duk_get_string(g_duk, -1);
 	if (file_path != NULL) {
-		filename = strrchr(file_path, ALLEGRO_NATIVE_PATH_SEP);
-		filename = filename != NULL ? filename + 1 : file_path;
+		filename = relativepath(file_path, "scripts");
 		fprintf(stderr, "JS Error: %s:%i - %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "`%s`, line: %i | %s", filename, line_num, err_msg);
@@ -542,6 +541,23 @@ flip_screen(int framerate)
 	}
 	++s_num_frames;
 	if (!s_skipping_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+}
+
+const char*
+relativepath(const char* path, const char* base_dir)
+{
+	static char retval[SPHERE_PATH_MAX];
+	
+	char* base_path;
+
+	base_path = get_asset_path("", base_dir, false);
+	if (strstr(path, base_path) == path)
+		strncpy(retval, path + strlen(base_path), SPHERE_PATH_MAX);
+	else
+		strncpy(retval, path, SPHERE_PATH_MAX);
+	if (retval[SPHERE_PATH_MAX - 1] != '\0')
+		return NULL;
+	return retval;
 }
 
 noreturn

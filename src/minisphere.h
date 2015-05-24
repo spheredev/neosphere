@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <limits.h>
 #include <math.h>
 #include <setjmp.h>
 #include <time.h>
@@ -42,6 +43,12 @@
 #define noreturn void
 #endif
 
+#if defined(PATH_MAX)
+#define SPHERE_PATH_MAX PATH_MAX
+#else
+#define SPHERE_PATH_MAX 1024
+#endif
+
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duk;
@@ -53,6 +60,8 @@ extern float                g_scale_x, g_scale_y;
 extern ALLEGRO_CONFIG*      g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
+
+extern const char* relativepath (const char* path, const char* base_dir);
 
 extern bool     is_skipped_frame   (void);
 extern char*    get_asset_path     (const char* path, const char* base_dir, bool allow_mkdir);

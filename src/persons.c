@@ -476,23 +476,19 @@ call_person_script(const person_t* person, int type, bool use_default)
 bool
 compile_person_script(person_t* person, int type, const lstring_t* codestring)
 {
-	lstring_t*  full_name;
 	const char* person_name;
 	script_t*   script;
 	const char* script_name;
 
 	person_name = get_person_name(person);
-	script_name = type == PERSON_SCRIPT_ON_CREATE ? "create script"
-		: type == PERSON_SCRIPT_ON_DESTROY ? "destroy script"
-		: type == PERSON_SCRIPT_ON_TOUCH ? "touch script"
-		: type == PERSON_SCRIPT_ON_TALK ? "talk script"
-		: type == PERSON_SCRIPT_GENERATOR ? "command generator"
+	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreate"
+		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroy"
+		: type == PERSON_SCRIPT_ON_TOUCH ? "onTouch"
+		: type == PERSON_SCRIPT_ON_TALK ? "onTalk"
+		: type == PERSON_SCRIPT_GENERATOR ? "genCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	if (!(full_name = new_lstring("%s ['%s' %s]", get_map_name(), person_name, script_name)))
-		return false;
-	script = compile_script(codestring, lstring_cstr(full_name));
-	free_lstring(full_name);
+	script = compile_script(codestring, "%s '%s' %s", get_map_name(), person_name, script_name);
 	set_person_script(person, type, script);
 	return true;
 }

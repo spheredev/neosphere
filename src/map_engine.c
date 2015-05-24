@@ -27,6 +27,7 @@ static void                free_map            (struct map* map);
 static bool                are_zones_at        (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
 static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
+static script_t*           compile_map_script  (lstring_t* source, int script_type, const char* map_name);
 static bool                change_map          (const char* filename, bool preserve_persons);
 static int                 find_layer          (const char* name);
 static void                map_screen_to_layer (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
@@ -405,6 +406,7 @@ load_map(const char* path)
 	uint16_t                 count;
 	struct rmp_entity_header entity_hdr;
 	FILE*                    file;
+	const char*              filename;
 	bool                     has_failed;
 	struct map_layer*        layer;
 	struct rmp_layer_header  layer_hdr;
@@ -424,6 +426,8 @@ load_map(const char* path)
 	int i, j, x, y, z;
 
 	memset(&rmp, 0, sizeof(struct rmp_header));
+	if (!(filename = relativepath(path, "maps")))
+		goto on_error;
 	
 	if (!(file = fopen(path, "rb"))) goto on_error;
 	if (!(map = calloc(1, sizeof(struct map)))) goto on_error;
@@ -523,7 +527,7 @@ load_map(const char* path)
 				trigger->x = entity_hdr.x;
 				trigger->y = entity_hdr.y;
 				trigger->z = entity_hdr.z;
-				trigger->script = compile_script(script, "[trigger script]");
+				trigger->script = compile_script(script, "%s onTrigger", filename);
 				free_lstring(script);
 				break;
 			default:
@@ -541,7 +545,7 @@ load_map(const char* path)
 			map->zones[i].layer = zone_hdr.layer;
 			map->zones[i].bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			map->zones[i].step_interval = zone_hdr.step_interval;
-			map->zones[i].script = compile_script(script, "[zone script]");
+			map->zones[i].script = compile_script(script, "%s onZone", filename);
 			free_lstring(script);
 		}
 
@@ -576,14 +580,14 @@ load_map(const char* path)
 		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
 		if (rmp.num_strings >= 5) {
-			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "[enter map script]");
-			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "[exit map script]");
+			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "%s onEnter", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "%s onLeave", filename);
 		}
 		if (rmp.num_strings >= 9) {
-			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "[leave map north script]");
-			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "[leave map east script]");
-			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "[leave map south script]");
-			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "[leave map west script]");
+			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "%s onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "%s onLeaveEast", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "%s onLeaveSouth", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "%s onLeaveWest", filename);
 		}
 		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);
 		free(strings);

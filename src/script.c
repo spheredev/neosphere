@@ -13,8 +13,10 @@ static script_t* script_from_js_function (void* heapptr);
 static int s_next_id = 0;
 
 script_t*
-compile_script(const lstring_t* codestring, const char* name)
+compile_script(const lstring_t* codestring, const char* fmt_name, ...)
 {
+	va_list ap;
+	
 	script_t* script;
 	
 	if (!(script = calloc(1, sizeof(script_t))))
@@ -30,7 +32,9 @@ compile_script(const lstring_t* codestring, const char* name)
 		duk_get_prop_string(g_duk, -1, "scripts");
 	}
 	script->id = s_next_id++;
-	duk_push_string(g_duk, name);
+	va_start(ap, fmt_name);
+	duk_push_vsprintf(g_duk, fmt_name, ap);
+	va_end(ap);
 	duk_compile_lstring_filename(g_duk, 0x0, codestring->cstr, codestring->length);
 	duk_put_prop_index(g_duk, -2, script->id);
 	duk_pop_2(g_duk);
