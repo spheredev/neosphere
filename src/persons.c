@@ -476,7 +476,7 @@ call_person_script(const person_t* person, int type, bool use_default)
 bool
 compile_person_script(person_t* person, int type, const lstring_t* codestring)
 {
-	char*       full_name;
+	lstring_t*  full_name;
 	const char* person_name;
 	script_t*   script;
 	const char* script_name;
@@ -489,12 +489,11 @@ compile_person_script(person_t* person, int type, const lstring_t* codestring)
 		: type == PERSON_SCRIPT_GENERATOR ? "command generator"
 		: NULL;
 	if (script_name == NULL) return false;
-	if ((full_name = malloc(strlen(person_name) + strlen(script_name) + 11)) == NULL)
+	if (!(full_name = new_lstring("%s ['%s' %s]", get_map_name(), person_name, script_name)))
 		return false;
-	sprintf(full_name, "[%s : %s]", person_name, script_name);
-	script = compile_script(codestring, full_name);
+	script = compile_script(codestring, lstring_cstr(full_name));
+	free_lstring(full_name);
 	set_person_script(person, type, script);
-	free(full_name);
 	return true;
 }
 

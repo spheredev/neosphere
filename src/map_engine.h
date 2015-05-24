@@ -10,6 +10,7 @@ extern void             shutdown_map_engine     (void);
 extern bool             is_map_engine_running   (void);
 extern rect_t           get_map_bounds          (void);
 extern const obsmap_t*  get_map_layer_obsmap    (int layer);
+extern const char*      get_map_name            (void);
 extern point3_t         get_map_origin          (void);
 extern int              get_map_tile            (int x, int y, int layer);
 extern const tileset_t* get_map_tileset         (void);

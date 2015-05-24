@@ -324,6 +324,12 @@ get_map_bounds(void)
 	return bounds;
 }
 
+const char*
+get_map_name(void)
+{
+	return s_map ? s_map_filename : NULL;
+}
+
 point3_t
 get_map_origin(void)
 {
