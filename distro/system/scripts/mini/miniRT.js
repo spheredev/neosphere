@@ -1,11 +1,11 @@
 /**
- * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
- * A set of system scripts providing advanced, high-level functionality not
- * available in the engine itself.
+ * miniRT 1.1.3  (c) 2015 Fat Cerberus
+ * A set of system scripts for minisphere providing advanced, high-level
+ * functionality not available in the engine itself.
  *
  * [mini/miniRT.js]
- * The main script for the minisphere Runtime script. Requiring this script
- * is sufficient to use any component of the runtime.
+ * The main script for miniRT. Inclusion of this script is required in order
+ * to use any miniRT component.
 **/
 
 // mini object
@@ -86,6 +86,9 @@ mini.initialize = function(params)
 //     params: The `params` object which was passed to mini.initialize().
 mini.onStartUp = new mini.Delegate();
 
+
+// now that everything is in order, we can pull in all the miniRT
+// component scripts.
 RequireSystemScript('mini/miniLink.js');
 RequireSystemScript('mini/miniBGM.js');
 RequireSystemScript('mini/miniConsole.js');

@@ -1,7 +1,7 @@
 /**
- * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
- * A set of system scripts providing advanced, high-level functionality not
- * available in the engine itself.
+ * miniRT 1.1.3  (c) 2015 Fat Cerberus
+ * A set of system scripts for minisphere providing advanced, high-level
+ * functionality not available in the engine itself.
  *
  * [mini/miniLink.js]
  * A powerful functional programming library which is used like .NET LINQ to

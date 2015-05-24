@@ -1,7 +1,7 @@
 /**
- * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
- * A set of system scripts providing advanced, high-level functionality not
- * available in the engine itself.
+ * miniRT 1.1.3  (c) 2015 Fat Cerberus
+ * A set of system scripts for minisphere providing advanced, high-level
+ * functionality not available in the engine itself.
  *
  * [mini/miniScenes.js]
  * An advanced scene manager that allows you to coordinate complex sequences
@@ -520,6 +520,24 @@ mini.Scenelet('marquee',
 	}
 });
 
+// .maskPerson() scenelet
+mini.Scenelet('maskPerson',
+{
+	start: function(scene, name, newMask, duration) {
+		duration = duration !== undefined ? duration : 0.25;
+		
+		this.name = name;
+		this.mask = GetPersonMask(this.name);
+		this.fade = new mini.Scene()
+			.tween(this.mask, duration, 'easeInOutSine', newMask)
+			.run();
+	},
+	update: function(scene) {
+		SetPersonMask(this.name, this.mask);
+		return this.fade.isRunning();
+	}
+});
+
 // .movePerson() scenelet
 // Instructs a map entity to move a specified distance.
 // Arguments:
@@ -668,6 +686,15 @@ mini.Scenelet('showPerson',
 	start: function(scene, person) {
 		SetPersonVisible(person, true);
 		IgnorePersonObstructions(person, false);
+	}
+});
+
+// .spriteset() scenelet
+mini.Scenelet('setSprite',
+{
+	start: function(scene, name, spriteFile) {
+		var spriteset = new Spriteset(spriteFile);
+		SetPersonSpriteset(name, spriteset);
 	}
 });
 

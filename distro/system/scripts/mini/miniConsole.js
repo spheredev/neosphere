@@ -1,7 +1,7 @@
 /**
- * minisphere Runtime 1.1 - (c) 2015 Fat Cerberus
- * A set of system scripts providing advanced, high-level functionality not
- * available in the engine itself.
+ * miniRT 1.1.3  (c) 2015 Fat Cerberus
+ * A set of system scripts for minisphere providing advanced, high-level
+ * functionality not available in the engine itself.
  *
  * [mini/miniConsole.js]
  * An easy-to-use output console which optionally logs output to disk.
@@ -174,6 +174,7 @@ mini.Console.execute = function(command)
 {
 	// tokenize the command string
 	var tokens = command.match(/'.*?'|".*?"|\S+/g);
+	if (tokens == null) return;
 	for (var i = 0; i < tokens.length; ++i) {
 		tokens[i] = tokens[i].replace(/'(.*)'/, "$1");
 		tokens[i] = tokens[i].replace(/"(.*)"/, "$1");
