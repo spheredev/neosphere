@@ -60,13 +60,15 @@ static void queue_wheel_event (int event);
 static vector_t*            s_bound_buttons;
 static vector_t*            s_bound_keys;
 static vector_t*            s_bound_map_keys;
+static int                  s_default_key_map[4][PLAYER_KEY_MAX];
 static ALLEGRO_EVENT_QUEUE* s_events;
 static bool                 s_have_joystick;
 static bool                 s_have_mouse;
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
-static int                  s_default_key_map[4][PLAYER_KEY_MAX];
 static int                  s_key_map[4][PLAYER_KEY_MAX];
 static struct key_queue     s_key_queue;
+static bool                 s_key_state[ALLEGRO_KEY_MAX];
+static int                  s_keymod_state;
 static int                  s_last_wheel_pos = 0;
 static int                  s_num_joysticks = 0;
 static int                  s_num_wheel_events = 0;
@@ -190,13 +192,10 @@ shutdown_input(void)
 bool
 is_any_key_down(void)
 {
-	ALLEGRO_KEYBOARD_STATE kb_state;
-
 	int i_key;
 
-	al_get_keyboard_state(&kb_state);
 	for (i_key = 0; i_key < ALLEGRO_KEY_MAX; ++i_key)
-		if (al_key_down(&kb_state, i_key)) return true;
+		if (s_key_state[i_key]) return true;
 	return false;
 }
 
@@ -217,27 +216,25 @@ is_joy_button_down(int joy_index, int button)
 bool
 is_key_down(int keycode)
 {
-	bool                   is_pressed;
-	ALLEGRO_KEYBOARD_STATE kb_state;
-
-	al_get_keyboard_state(&kb_state);
+	bool is_pressed;
+	
 	switch (keycode) {
 	case ALLEGRO_KEY_LSHIFT:
-		is_pressed = al_key_down(&kb_state, ALLEGRO_KEY_LSHIFT)
-			|| al_key_down(&kb_state, ALLEGRO_KEY_RSHIFT);
+		is_pressed = s_key_state[ALLEGRO_KEY_LSHIFT]
+			|| s_key_state[ALLEGRO_KEY_RSHIFT];
 		break;
 	case ALLEGRO_KEY_LCTRL:
-		is_pressed = al_key_down(&kb_state, ALLEGRO_KEY_LCTRL)
-			|| al_key_down(&kb_state, ALLEGRO_KEY_RCTRL);
+		is_pressed = s_key_state[ALLEGRO_KEY_LCTRL]
+			|| s_key_state[ALLEGRO_KEY_RCTRL];
 		break;
 	case ALLEGRO_KEY_ALT:
-		is_pressed = al_key_down(&kb_state, ALLEGRO_KEY_ALT)
-			|| al_key_down(&kb_state, ALLEGRO_KEY_ALTGR);
+		is_pressed = s_key_state[ALLEGRO_KEY_ALT]
+			|| s_key_state[ALLEGRO_KEY_ALTGR];
 		break;
 	default:
-		is_pressed = al_key_down(&kb_state, keycode);
+		is_pressed = s_key_state[keycode];
 	}
-	return is_pressed && kb_state.display == g_display;
+	return is_pressed;
 }
 
 float
@@ -295,6 +292,12 @@ int
 get_player_key(int player, player_key_t vkey)
 {
 	return s_key_map[player][vkey];
+}
+
+void
+attach_input_display(void)
+{
+	al_register_event_source(s_events, al_get_display_event_source(g_display));
 }
 
 void
@@ -382,19 +385,17 @@ save_key_map(void)
 void
 update_bound_keys(bool use_map_keys)
 {
-	struct bound_button*   button;
-	struct bound_key*      key;
-	bool                   is_down;
-	ALLEGRO_KEYBOARD_STATE kb_state;
+	struct bound_button* button;
+	struct bound_key*    key;
+	bool                 is_down;
 	
 	iter_t iter;
 
 	// check bound keyboard keys
-	al_get_keyboard_state(&kb_state);
 	if (use_map_keys) {
 		iter = iterate_vector(s_bound_map_keys);
 		while (key = next_vector_item(&iter)) {
-			is_down = al_key_down(&kb_state, key->keycode);
+			is_down = s_key_state[key->keycode];
 			if (is_down && !key->is_pressed)
 				run_script(key->on_down_script, false);
 			if (!is_down && key->is_pressed)
@@ -404,7 +405,7 @@ update_bound_keys(bool use_map_keys)
 	}
 	iter = iterate_vector(s_bound_keys);
 	while (key = next_vector_item(&iter)) {
-		is_down = al_key_down(&kb_state, key->keycode);
+		is_down = s_key_state[key->keycode];
 		if (is_down && !key->is_pressed)
 			run_script(key->on_down_script, false);
 		if (!is_down && key->is_pressed)
@@ -429,11 +430,23 @@ update_input(void)
 {
 	ALLEGRO_EVENT          event;
 	ALLEGRO_MOUSE_STATE    mouse_state;
-
+	
 	// process Allegro input events
 	while (al_get_next_event(s_events, &event)) {
 		switch (event.type) {
+		case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+			// Alt+Tabbing out can cause keys to get "stuck", this works around it
+			// by clearing the states when switching away.
+			memset(s_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
+			break;
+		case ALLEGRO_EVENT_KEY_DOWN:
+			s_key_state[event.keyboard.keycode] = true;
+			break;
+		case ALLEGRO_EVENT_KEY_UP:
+			s_key_state[event.keyboard.keycode] = false;
+			break;
 		case ALLEGRO_EVENT_KEY_CHAR:
+			s_keymod_state = event.keyboard.modifiers;
 			switch (event.keyboard.keycode) {
 			case ALLEGRO_KEY_ENTER:
 				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
@@ -931,7 +944,21 @@ js_GetPlayerKey(duk_context* ctx)
 static duk_ret_t
 js_GetToggleState(duk_context* ctx)
 {
-	duk_push_false(ctx);
+	int keycode = duk_require_int(ctx, 0);
+
+	int flag;
+	
+	if (keycode != ALLEGRO_KEY_CAPSLOCK
+		&& keycode != ALLEGRO_KEY_NUMLOCK
+		&& keycode != ALLEGRO_KEY_SCROLLLOCK)
+	{
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetToggleState(): Invalid toggle key constant");
+	}
+	flag = keycode == ALLEGRO_KEY_CAPSLOCK ? ALLEGRO_KEYMOD_CAPSLOCK
+		: keycode == ALLEGRO_KEY_NUMLOCK ? ALLEGRO_KEYMOD_NUMLOCK
+		: keycode == ALLEGRO_KEY_SCROLLLOCK ? ALLEGRO_KEYMOD_SCROLLLOCK
+		: 0x0;
+	duk_push_boolean(ctx, (s_keymod_state & flag) != 0);
 	return 1;
 }
 
