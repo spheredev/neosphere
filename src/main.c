@@ -551,13 +551,18 @@ relativepath(const char* path, const char* base_dir)
 	
 	char* base_path;
 
+	size_t i, length;
+
 	base_path = get_asset_path("", base_dir, false);
 	if (strstr(path, base_path) == path)
 		strncpy(retval, path + strlen(base_path), SPHERE_PATH_MAX);
 	else
 		strncpy(retval, path, SPHERE_PATH_MAX);
+	free(base_path);
 	if (retval[SPHERE_PATH_MAX - 1] != '\0')
 		return NULL;
+	for (i = 0, length = strlen(retval); i < length; ++i)
+		if (retval[i] == ALLEGRO_NATIVE_PATH_SEP) retval[i] = '/';
 	return retval;
 }
 

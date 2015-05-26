@@ -681,8 +681,7 @@ js_Alert(duk_context* ctx)
 	duk_pop_2(ctx);
 
 	// show the message
-	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
-	filename = filename != NULL ? filename + 1 : full_path;
+	filename = relativepath(full_path, "scripts");
 	caller_info =
 		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
 		duk_get_string(ctx, -1);
@@ -732,8 +731,7 @@ js_Assert(duk_context* ctx)
 		duk_get_prop_string(ctx, -1, "function");
 		duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
 		duk_pop_2(ctx);
-		filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
-		filename = filename != NULL ? filename + 1 : full_path;
+		filename = relativepath(full_path, "scripts");
 		fprintf(stderr, "ASSERT: `%s:%i` %s\n", filename, line_number, message);
 
 		#if defined(MINI_NONFATAL_ASSERT)

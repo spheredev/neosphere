@@ -582,20 +582,12 @@ js_Spriteset_finalize(duk_context* ctx)
 static duk_ret_t
 js_Spriteset_get_filename(duk_context* ctx)
 {
-	char*         base_path;
-	const char*   filename;
-	spriteset_t*  spriteset;
+	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
-	
-	// get spriteset path relative to game directory
-	filename = spriteset->path;
-	base_path = get_asset_path("~/", NULL, false);
-	filename += strstr(filename, base_path) ? strlen(base_path) : 0;
-	free(base_path);
-	duk_push_string(ctx, filename);
+	duk_push_string(ctx, relativepath(spriteset->path, NULL));
 	return 1;
 }
 
