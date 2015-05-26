@@ -249,7 +249,7 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 		x -= get_text_width(font, text);
 	is_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
-	while ((cp = *text++) != '\0') {
+	while ((cp = (unsigned char)*text++) != '\0') {
 		draw_image_masked(font->glyphs[cp].image, color, x, y);
 		x += font->glyphs[cp].width;
 	}
@@ -260,7 +260,10 @@ wraptext_t*
 word_wrap_text(const font_t* font, const char* text, int width)
 {
 	char*       buffer = NULL;
+	char        ch;
 	int         glyph_width;
+	bool        is_line_end = false;
+	bool        is_word_end = false;
 	int         line_idx;
 	int         line_width;
 	int         max_lines = 10;
@@ -268,9 +271,10 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	char*       new_buffer;
 	size_t      pitch;
 	int         space_width = get_text_width(font, " ");
-	char*       string = NULL;
 	char*       word;
+	size_t      word_length;
 	wraptext_t* wraptext;
+	const char  *p;
 
 	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
 	
@@ -278,42 +282,70 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	get_font_metrics(font, &glyph_width, NULL, NULL);
 	pitch = glyph_width > 0 ? width / glyph_width + 2 : width;
 	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
-	
+	if (!(word = calloc(1, pitch + 1))) goto on_error;
+
 	// run through string one word at a time, wrapping as necessary
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0;
-	string = strdup(text);
-	word = strtok(string, " ");
-	while (word != NULL) {
-		line_width += get_text_width(font, word);
-		if (line_width > width) {  // time for a new line?
-			if (++line_idx >= max_lines) {  // enlarge the buffer?
-				max_lines *= 2;
-				if (!(new_buffer = realloc(buffer, max_lines * pitch)))
-					goto on_error;
-				buffer = new_buffer;
-				line_buffer = buffer + line_idx * pitch;
+	word[0] = '\0'; word_length = 0;
+	p = text;
+	do {
+		switch (ch = *p++) {
+		case '\n': case '\r':
+			if (ch == '\r' && *p == '\n') ++p;
+			is_line_end = true;
+			break;
+		case ' ': case '\0':
+			is_word_end = true;
+			is_line_end = ch == '\0';
+			break;
+		default:
+			is_word_end = false; is_line_end = false;
+			word[word_length++] = ch;
+			is_word_end = word_length >= pitch;
+		}
+		if (is_word_end || is_line_end) {
+			line_width += get_text_width(font, word);
+			if (line_width > width) {  // time for a new line?
+				if (++line_idx >= max_lines) {  // enlarge the buffer?
+					max_lines *= 2;
+					if (!(new_buffer = realloc(buffer, max_lines * pitch)))
+						goto on_error;
+					buffer = new_buffer;
+					line_buffer = buffer + line_idx * pitch;
+				}
+				else
+					line_buffer += pitch;
+				line_width = get_text_width(font, word);
+				line_buffer[0] = '\0';
 			}
-			else
-				line_buffer += pitch;
-			line_width = get_text_width(font, word);
-			line_buffer[0] = '\0';
+			strcat(line_buffer, word);
+			memset(word, 0, pitch + 1); word_length = 0;
+			if (!is_line_end) {
+				strcat(line_buffer, " ");
+				line_width += get_text_width(font, " ");
+			}
+			else {
+				if (++line_idx >= max_lines) {  // enlarge the buffer?
+					max_lines *= 2;
+					if (!(new_buffer = realloc(buffer, max_lines * pitch)))
+						goto on_error;
+					buffer = new_buffer;
+					line_buffer = buffer + line_idx * pitch;
+				}
+				else
+					line_buffer += pitch;
+				line_width = 0;
+				line_buffer[0] = '\0';
+			}
 		}
-		strcat(line_buffer, word);
-		word = strtok(NULL, " ");
-		if (word != NULL) {
-			strcat(line_buffer, " ");
-			line_width += space_width;
-		}
-	}
-	free(string);
-	wraptext->num_lines = line_idx + 1;
+	} while (ch != '\0');
+	wraptext->num_lines = line_idx;
 	wraptext->buffer = buffer;
 	wraptext->pitch = pitch;
 	return wraptext;
 
 on_error:
-	free(string);
 	free(buffer);
 	free(wraptext);
 	return NULL;

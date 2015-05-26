@@ -322,7 +322,7 @@ on_js_error:
 		filename = relativepath(file_path, "scripts");
 		fprintf(stderr, "JS Error: %s:%i - %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "`%s`, line: %i | %s", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "`%s`:%i | Script Error\n\n%s", filename, line_num, err_msg);
 		else
 			duk_push_string(g_duk, err_msg);
 	}

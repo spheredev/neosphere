@@ -4,9 +4,9 @@
 #include "color.h"
 #include "image.h"
 
-typedef struct font     font_t;
-typedef enum text_align text_align_t;
-typedef struct wraptext wraptext_t;
+typedef struct font       font_t;
+typedef enum   text_align text_align_t;
+typedef struct wraptext   wraptext_t;
 
 font_t*     load_font            (const char* path);
 font_t*     ref_font             (font_t* font);

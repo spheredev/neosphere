@@ -694,7 +694,7 @@ static duk_ret_t
 js_Abort(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game! ......................and you*munch*";
+	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
 	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	if (stack_offset > 0)
