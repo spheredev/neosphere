@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "utility.h"
 
 struct script
 {
@@ -13,7 +14,7 @@ static script_t* script_from_js_function (void* heapptr);
 static int s_next_id = 0;
 
 script_t*
-compile_script(const lstring_t* codestring, const char* fmt_name, ...)
+compile_script(const lstring_t* codestring, bool is_cp1252, const char* fmt_name, ...)
 {
 	va_list ap;
 	
@@ -32,10 +33,14 @@ compile_script(const lstring_t* codestring, const char* fmt_name, ...)
 		duk_get_prop_string(g_duk, -1, "scripts");
 	}
 	script->id = s_next_id++;
+	if (is_cp1252)
+		duk_push_cstr_to_utf8(g_duk, lstring_cstr(codestring));
+	else
+		duk_push_lstring(g_duk, codestring->cstr, codestring->length);
 	va_start(ap, fmt_name);
 	duk_push_vsprintf(g_duk, fmt_name, ap);
 	va_end(ap);
-	duk_compile_lstring_filename(g_duk, 0x0, codestring->cstr, codestring->length);
+	duk_compile(g_duk, 0x0);
 	duk_put_prop_index(g_duk, -2, script->id);
 	duk_pop_2(g_duk);
 
@@ -115,7 +120,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else if (duk_is_string(ctx, index)) {
 		// caller passed code string, compile it
 		codestring = duk_require_lstring_t(ctx, index);
-		script = compile_script(codestring, name);
+		script = compile_script(codestring, false, "%s", name);
 		free_lstring(codestring);
 	}
 	else if (duk_is_null_or_undefined(ctx, index))

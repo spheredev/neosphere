@@ -334,6 +334,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClCompile Include="..\src\spriteset.c" />
     <ClCompile Include="..\src\surface.c" />
     <ClCompile Include="..\src\tileset.c" />
+    <ClCompile Include="..\src\utility.c" />
     <ClCompile Include="..\src\vector.c" />
     <ClCompile Include="..\src\windowstyle.c" />
   </ItemGroup>
@@ -370,6 +371,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <ClInclude Include="..\src\spriteset.h" />
     <ClInclude Include="..\src\surface.h" />
     <ClInclude Include="..\src\tileset.h" />
+    <ClInclude Include="..\src\utility.h" />
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\windowstyle.h" />
     <ClInclude Include="resource.h" />

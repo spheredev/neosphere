@@ -32,7 +32,7 @@ extern void         set_person_speed           (person_t* person, double x_speed
 extern void         set_person_spriteset       (person_t* person, spriteset_t* spriteset);
 extern void         set_person_xyz             (person_t* person, double x, double y, int layer);
 extern bool         call_person_script         (const person_t* person, int type, bool use_default);
-extern bool         compile_person_script      (person_t* person, int type, const lstring_t* codestring);
+extern bool         compile_person_script      (person_t* person, int type, const lstring_t* codestring, bool is_cp1252);
 extern person_t*    find_person                (const char* name);
 extern bool         queue_person_command       (person_t* person, int command, bool is_immediate);
 extern bool         queue_person_script        (person_t* person, script_t* script, bool is_immediate);

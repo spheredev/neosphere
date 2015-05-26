@@ -527,7 +527,7 @@ load_map(const char* path)
 				trigger->x = entity_hdr.x;
 				trigger->y = entity_hdr.y;
 				trigger->z = entity_hdr.z;
-				trigger->script = compile_script(script, "%s onTrigger", filename);
+				trigger->script = compile_script(script, true, "%s onTrigger", filename);
 				free_lstring(script);
 				break;
 			default:
@@ -545,7 +545,7 @@ load_map(const char* path)
 			map->zones[i].layer = zone_hdr.layer;
 			map->zones[i].bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			map->zones[i].step_interval = zone_hdr.step_interval;
-			map->zones[i].script = compile_script(script, "%s onZone", filename);
+			map->zones[i].script = compile_script(script, true, "%s onZone", filename);
 			free_lstring(script);
 		}
 
@@ -580,14 +580,14 @@ load_map(const char* path)
 		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
 		if (rmp.num_strings >= 5) {
-			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "%s onEnter", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "%s onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], true, "%s onEnter", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], true, "%s onLeave", filename);
 		}
 		if (rmp.num_strings >= 9) {
-			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "%s onLeave", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "%s onLeaveEast", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "%s onLeaveSouth", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "%s onLeaveWest", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], true, "%s onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], true, "%s onLeaveEast", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], true, "%s onLeaveSouth", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], true, "%s onLeaveWest", filename);
 		}
 		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);
 		free(strings);
@@ -783,11 +783,11 @@ change_map(const char* filename, bool preserve_persons)
 		if (!(person = create_person(person_info->name->cstr, spriteset, false, NULL)))
 			goto on_error;
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
-		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
-		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
-		compile_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
-		compile_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
-		compile_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
+		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script, true);
+		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script, true);
+		compile_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script, true);
+		compile_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script, true);
+		compile_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script, true);
 		
 		// normally this is handled by create_person(), but since in this case the
 		// person-specific create script isn't compiled until after the person is created,
