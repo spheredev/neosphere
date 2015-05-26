@@ -389,7 +389,7 @@ js_EvaluateScript(duk_context* ctx)
 	path = get_asset_path(filename, "scripts", false);
 	if (!al_filename_exists(path))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): Script file not found '%s'", filename);
-	duk_eval_file_noresult(ctx, path);
+	if (!try_evaluate_file(path)) duk_throw(ctx);
 	free(path);
 	return 0;
 }
@@ -408,7 +408,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 	}
 	if (!al_filename_exists(path))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", filename);
-	duk_eval_file_noresult(ctx, path);
+	if (!try_evaluate_file(path)) duk_throw(ctx);
 	free(path);
 	return 0;
 }
@@ -430,9 +430,9 @@ js_RequireScript(duk_context* ctx)
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
-		duk_eval_file_noresult(ctx, path);
+		if (!try_evaluate_file(path)) duk_throw(ctx);
 	}
-	duk_pop_2(ctx);
+	duk_pop_3(ctx);
 	free(path);
 	return 0;
 }
@@ -458,7 +458,7 @@ js_RequireSystemScript(duk_context* ctx)
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
-		duk_eval_file_noresult(ctx, path);
+		if (!try_evaluate_file(path)) duk_throw(ctx);
 	}
 	duk_pop_2(ctx);
 	free(path);

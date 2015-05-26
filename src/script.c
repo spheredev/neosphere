@@ -13,6 +13,50 @@ static script_t* script_from_js_function (void* heapptr);
 
 static int s_next_id = 0;
 
+bool
+try_evaluate_file(const char* path)
+{
+	const char* err_msg;
+	FILE*       file = NULL;
+	char*       source = NULL;
+	size_t      size;
+
+	duk_peval_file(g_duk, path);
+	if (duk_is_error(g_duk, -1)) {
+		duk_dup(g_duk, -1);
+		err_msg = duk_to_string(g_duk, -1);
+		if (strstr(err_msg, "char decode failed") == NULL) {
+			duk_pop(g_duk);
+			return false;
+		}
+		else {
+			duk_pop(g_duk);
+			if (!(file = fopen(path, "rb"))) goto on_error;
+			fseek(file, 0, SEEK_END); size = ftell(file);
+			fseek(file, 0, SEEK_SET);
+			if (!(source = malloc(size + 1))) goto on_error;
+			fread(source, 1, size, file); source[size] = '\0';
+			fclose(file);
+			duk_pop(g_duk);
+			duk_push_cstr_to_utf8(g_duk, source);
+			duk_push_string(g_duk, path);
+			free(source); source = NULL;
+			if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+				goto on_error;
+			if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+				goto on_error;
+		}
+	}
+	return true;
+
+on_error:
+	if (file != NULL) fclose(file);
+	free(source);
+	if (!duk_is_error(g_duk, -1))
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "internal error");
+	return false;
+}
+
 script_t*
 compile_script(const lstring_t* codestring, bool is_cp1252, const char* fmt_name, ...)
 {

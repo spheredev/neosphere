@@ -89,7 +89,6 @@ main(int argc, char* argv[])
 	ALLEGRO_USTR*        dialog_name;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
-	duk_int_t            exec_result;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          file_path;
 	const char*          filename;
@@ -286,10 +285,8 @@ main(int argc, char* argv[])
 	// load startup script
 	console_log(0, "\nCalling game()\n");
 	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
-	exec_result = duk_pcompile_file(g_duk, 0x0, path);
+	if (!try_evaluate_file(path)) goto on_js_error;
 	free(path);
-	if (exec_result != DUK_EXEC_SUCCESS) goto on_js_error;
-	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS) goto on_js_error;
 	duk_pop(g_duk);
 
 	// initialize timing variables
