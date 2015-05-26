@@ -1,5 +1,5 @@
 /**
- * miniRT 1.1.3  (c) 2015 Fat Cerberus
+ * miniRT 1.1.4  (c) 2015 Fat Cerberus
  * A set of system scripts for minisphere providing advanced, high-level
  * functionality not available in the engine itself.
  *
@@ -256,7 +256,9 @@ mini.Console.getInput = function()
 			case KEY_TAB: break;
 			case null: break;
 			default:
-				this.entry += GetKeyString(keycode, IsKeyPressed(KEY_SHIFT));
+				var ch = GetKeyString(keycode, IsKeyPressed(KEY_SHIFT));
+				ch = GetToggleState(KEY_CAPSLOCK) ? ch.toUpperCase() : ch;
+				this.entry += ch;
 		}
 	}
 };
