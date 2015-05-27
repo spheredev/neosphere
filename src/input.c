@@ -194,6 +194,7 @@ is_any_key_down(void)
 {
 	int i_key;
 
+	update_input();
 	for (i_key = 0; i_key < ALLEGRO_KEY_MAX; ++i_key)
 		if (s_key_state[i_key]) return true;
 	return false;
@@ -218,6 +219,7 @@ is_key_down(int keycode)
 {
 	bool is_pressed;
 	
+	update_input();
 	switch (keycode) {
 	case ALLEGRO_KEY_LSHIFT:
 		is_pressed = s_key_state[ALLEGRO_KEY_LSHIFT]
