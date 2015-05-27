@@ -546,6 +546,7 @@ load_map(const char* path)
 			map->zones[i].bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			map->zones[i].step_interval = zone_hdr.step_interval;
 			map->zones[i].script = compile_script(script, true, "%s onZone", filename);
+			normalize_rect(&map->zones[i].bounds);
 			free_lstring(script);
 		}
 

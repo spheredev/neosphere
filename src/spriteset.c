@@ -188,6 +188,7 @@ load_spriteset(const char* path)
 	spriteset->base.y1 = rss.base_y1;
 	spriteset->base.x2 = rss.base_x2;
 	spriteset->base.y2 = rss.base_y2;
+	normalize_rect(&spriteset->base);
 	switch (rss.version) {
 	case 1: // RSSv1, very simple
 		spriteset->num_images = rss.num_images;

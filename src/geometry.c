@@ -54,6 +54,23 @@ is_point_in_rect(int x, int y, rect_t bounds)
 		&& y >= bounds.y1 && y < bounds.y2;
 }
 
+void
+normalize_rect(rect_t* inout_rect)
+{
+	int tmp;
+	
+	if (inout_rect->x1 > inout_rect->x2) {
+		tmp = inout_rect->x1;
+		inout_rect->x1 = inout_rect->x2;
+		inout_rect->x2 = tmp;
+	}
+	if (inout_rect->y1 > inout_rect->y2) {
+		tmp = inout_rect->y1;
+		inout_rect->y1 = inout_rect->y2;
+		inout_rect->y2 = tmp;
+	}
+}
+
 float_rect_t
 scale_float_rect(float_rect_t rect, float x_scale, float y_scale)
 {
