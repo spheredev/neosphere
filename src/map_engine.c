@@ -1050,10 +1050,8 @@ update_map_engine(bool is_main_loop)
 		}
 	}
 
-	// if the input person has moved since last frame, process zones and triggers
-	if (s_input_person != NULL
-		&& (has_person_moved(s_input_person) || s_input_person != last_input_person))
-	{
+	// if there is an input person, check for trigger activation
+	if (s_input_person != NULL) {
 		// did we step on a trigger or move to a new one?
 		get_person_xyz(s_input_person, &x, &y, &layer, true);
 		trigger = get_trigger_at(x, y, layer, &index);
@@ -1067,6 +1065,8 @@ update_map_engine(bool is_main_loop)
 	}
 
 	// update any occupied zones
+	// note: a zone's step count is in reality a pixel count, so a zone
+	//       may be updated multiple times in a single frame.
 	if (s_input_person != NULL) {
 		get_person_xy(s_input_person, &x, &y, false);
 		px = abs(x - start_x);
@@ -1086,7 +1086,8 @@ update_map_engine(bool is_main_loop)
 		}
 	}
 	
-	// run delay scripts, if applicable
+	// check if there are any delay scripts due to run this frame
+	// and run the ones that are
 	for (i = 0; i < s_num_delay_scripts; ++i) {
 		if (s_delay_scripts[i].frames_left-- <= 0) {
 			script_to_run = s_delay_scripts[i].script;
