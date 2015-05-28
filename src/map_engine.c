@@ -864,17 +864,15 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 static void
 process_map_input(void)
 {
-	ALLEGRO_KEYBOARD_STATE kb_state;
-	int                    mv_x = 0, mv_y = 0;
+	int mv_x = 0, mv_y = 0;
 
 	// clear out excess keys from key queue
 	clear_key_queue();
 	
 	// check for player control of input person, if there is one
 	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
-		al_get_keyboard_state(&kb_state);
-		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_A))
-			|| al_key_down(&kb_state, s_talk_key)
+		if (is_key_down(get_player_key(0, PLAYER_KEY_A))
+			|| is_key_down(s_talk_key)
 			|| is_joy_button_down(0, s_talk_button))
 		{
 			if (s_is_talk_allowed) talk_person(s_input_person);
@@ -882,10 +880,10 @@ process_map_input(void)
 		}
 		else // allow talking again only after key is released
 			s_is_talk_allowed = true;
-		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_UP))) mv_y = -1;
-		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_RIGHT))) mv_x = 1;
-		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_DOWN))) mv_y = 1;
-		if (al_key_down(&kb_state, get_player_key(0, PLAYER_KEY_LEFT))) mv_x = -1;
+		if (is_key_down(get_player_key(0, PLAYER_KEY_UP))) mv_y = -1;
+		if (is_key_down(get_player_key(0, PLAYER_KEY_RIGHT))) mv_x = 1;
+		if (is_key_down(get_player_key(0, PLAYER_KEY_DOWN))) mv_y = 1;
+		if (is_key_down(get_player_key(0, PLAYER_KEY_LEFT))) mv_x = -1;
 		switch (mv_x + mv_y * 3) {
 		case -3: // north
 			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
