@@ -995,7 +995,6 @@ static void
 update_map_engine(bool is_main_loop)
 {
 	int                 index;
-	person_t*           last_input_person;
 	int                 last_trigger;
 	int                 last_zone;
 	int                 layer;
@@ -1018,7 +1017,6 @@ update_map_engine(bool is_main_loop)
 	
 	animate_tileset(s_map->tileset);
 
-	last_input_person = s_input_person;
 	if (s_input_person != NULL)
 		get_person_xy(s_input_person, &start_x, &start_y, false);
 	update_persons();
@@ -1064,7 +1062,7 @@ update_map_engine(bool is_main_loop)
 		}
 	}
 
-	// update any occupied zones
+	// update any zones occupied by the input person
 	// note: a zone's step count is in reality a pixel count, so a zone
 	//       may be updated multiple times in a single frame.
 	if (s_input_person != NULL) {

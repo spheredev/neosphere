@@ -1,6 +1,21 @@
 minisphere Changelog
 ====================
 
+v1.1.5 - May 28, 2015
+---------------------
+
+* Improved zone and trigger handling. Triggers will now fire even if input is
+  attached after the trigger is stepped on. This fixes triggers in Kefka's
+  Revenge.
+* Fixes a bug where the input person can be moved while following another
+  person.
+* Proper handling of degenerate rects in spritesets and zones, which caused
+  collision checks to fail.
+* Fixes a regression where calling IsKeyPressed() in a loop to wait for key
+  release would lock up the engine (yes, again).
+* Updates the map engine to use the new input routines, to take advantage of the
+  sticky-keys fix in v1.1.3.
+
 v1.1.4 - May 26, 2015
 ---------------------
 
