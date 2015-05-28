@@ -125,7 +125,7 @@ static duk_ret_t js_IgnoreTileObstructions       (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand           (duk_context* ctx);
 static duk_ret_t js_QueuePersonScript            (duk_context* ctx);
 
-static bool does_person_exist    (unsigned int person_id);
+static bool does_person_exist    (const person_t* person);
 static void set_person_direction (person_t* person, const char* direction);
 static void set_person_name      (person_t* person, const char* name);
 static void command_person       (person_t* person, int command);
@@ -460,14 +460,12 @@ bool
 call_person_script(const person_t* person, int type, bool use_default)
 {
 	const person_t* last_person;
-	int             person_id;
 
-	person_id = person->id;
 	last_person = s_current_person;
 	s_current_person = person;
 	if (use_default)
 		run_script(s_def_scripts[type], false);
-	if (does_person_exist(person_id))
+	if (does_person_exist(person))
 		run_script(person->scripts[type], false);
 	s_current_person = last_person;
 	return true;
@@ -653,12 +651,12 @@ update_persons(void)
 }
 
 static bool
-does_person_exist(unsigned int person_id)
+does_person_exist(const person_t* person)
 {
 	int i;
 
 	for (i = 0; i < s_num_persons; ++i)
-		if (person_id == s_persons[i]->id) return true;
+		if (person == s_persons[i]) return true;
 	return false;
 }
 
@@ -835,13 +833,11 @@ update_person(person_t* person, bool* out_has_moved)
 	bool            has_moved;
 	bool            is_finished;
 	const person_t* last_person;
-	unsigned int    person_id;
 	struct step     step;
 	int             vector;
 
 	int i;
 
-	person_id = person->id;
 	person->mv_x = 0; person->mv_y = 0;
 	if (person->revert_frames > 0 && --person->revert_frames <= 0)
 		person->frame = 0;
@@ -851,7 +847,7 @@ update_person(person_t* person, bool* out_has_moved)
 			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
 
 		// run through the queue, stopping after the first non-immediate command
-		is_finished = person->num_commands == 0 || !does_person_exist(person_id);
+		is_finished = !does_person_exist(person) || person->num_commands == 0;
 		while (!is_finished) {
 			command = person->commands[0];
 			--person->num_commands;
@@ -865,7 +861,7 @@ update_person(person_t* person, bool* out_has_moved)
 				run_script(command.script, false);
 			s_current_person = last_person;
 			free_script(command.script);
-			is_finished = !does_person_exist(person_id)  // stop if person was destroyed
+			is_finished = !does_person_exist(person)  // stop if person was destroyed
 				|| !command.is_immediate || person->num_commands == 0;
 		}
 	}
@@ -891,7 +887,7 @@ update_person(person_t* person, bool* out_has_moved)
 	}
 
 	// check that the person didn't mysteriously disappear...
-	if (!does_person_exist(person_id))
+	if (!does_person_exist(person))
 		return;  // they probably got eaten by a hunger-pig or something.
 
 	// if the person's position changed, record it in their step history

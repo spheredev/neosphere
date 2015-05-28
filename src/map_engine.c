@@ -1000,11 +1000,13 @@ update_map_engine(bool is_main_loop)
 	int                 last_zone;
 	int                 layer;
 	int                 map_w, map_h;
+	int                 num_zone_steps;
 	script_t*           script_to_run;
 	int                 script_type;
+	double              start_x, start_y;
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
-	double              x, y;
+	double              x, y, px, py;
 	struct map_zone*    zone;
 
 	int i, j;
@@ -1014,10 +1016,12 @@ update_map_engine(bool is_main_loop)
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
 	
-	last_input_person = s_input_person;
-	
-	update_persons();
 	animate_tileset(s_map->tileset);
+
+	last_input_person = s_input_person;
+	if (s_input_person != NULL)
+		get_person_xy(s_input_person, &start_x, &start_y, false);
+	update_persons();
 
 	// update color mask fade level
 	if (s_fade_progress < s_fade_frames) {
@@ -1060,16 +1064,24 @@ update_map_engine(bool is_main_loop)
 			if (trigger) run_script(trigger->script, false);
 			s_current_trigger = last_trigger;
 		}
+	}
 
-		// update any occupied zones
-		i = 0;
-		while (zone = get_zone_at(x, y, layer, i++, &index)) {
-			if (zone->steps_left-- <= 0) {
-				last_zone = s_current_zone;
-				s_current_zone = index;
-				zone->steps_left = zone->step_interval;
-				run_script(zone->script, true);
-				s_current_zone = last_zone;
+	// update any occupied zones
+	if (s_input_person != NULL) {
+		get_person_xy(s_input_person, &x, &y, false);
+		px = abs(x - start_x);
+		py = abs(y - start_y);
+		num_zone_steps = px > py ? px : py;
+		for (i = 0; i < num_zone_steps; ++i) {
+			j = 0;
+			while (zone = get_zone_at(x, y, layer, j++, &index)) {
+				if (zone->steps_left-- <= 0) {
+					last_zone = s_current_zone;
+					s_current_zone = index;
+					zone->steps_left = zone->step_interval;
+					run_script(zone->script, true);
+					s_current_zone = last_zone;
+				}
 			}
 		}
 	}
