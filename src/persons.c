@@ -235,7 +235,7 @@ has_person_moved(const person_t* person)
 bool
 is_person_busy(const person_t* person)
 {
-	return person->num_commands > 0;
+	return person->num_commands > 0 || person->leader != NULL;
 }
 
 bool
