@@ -997,10 +997,12 @@ static void
 update_map_engine(bool is_main_loop)
 {
 	int                 index;
+	person_t*           last_input_person;
 	int                 last_trigger;
 	int                 last_zone;
 	int                 layer;
 	int                 map_w, map_h;
+	script_t*           script_to_run;
 	int                 script_type;
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
@@ -1013,6 +1015,8 @@ update_map_engine(bool is_main_loop)
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
+	
+	last_input_person = s_input_person;
 	
 	update_persons();
 	animate_tileset(s_map->tileset);
@@ -1044,8 +1048,10 @@ update_map_engine(bool is_main_loop)
 		}
 	}
 
-	// if the player moved the input person, process zones and triggers
-	if (s_input_person != NULL && has_person_moved(s_input_person)) {
+	// if the input person has moved since last frame, process zones and triggers
+	if (s_input_person != NULL
+		&& (has_person_moved(s_input_person) || s_input_person != last_input_person))
+	{
 		// did we step on a trigger or move to a new one?
 		get_person_xyz(s_input_person, &x, &y, &layer, true);
 		trigger = get_trigger_at(x, y, layer, &index);
@@ -1070,18 +1076,21 @@ update_map_engine(bool is_main_loop)
 		}
 	}
 	
-	run_script(s_update_script, false);
-	
 	// run delay scripts, if applicable
 	for (i = 0; i < s_num_delay_scripts; ++i) {
 		if (s_delay_scripts[i].frames_left-- <= 0) {
-			run_script(s_delay_scripts[i].script, false);
-			free_script(s_delay_scripts[i].script);
+			script_to_run = s_delay_scripts[i].script;
 			for (j = i; j < s_num_delay_scripts - 1; ++j)
 				s_delay_scripts[j] = s_delay_scripts[j + 1];
 			--s_num_delay_scripts; --i;
+			run_script(script_to_run, false);
+			free_script(script_to_run);
 		}
 	}
+	
+	// now that everything else is in order, we can run the
+	// update script!
+	run_script(s_update_script, false);
 }
 
 void
