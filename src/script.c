@@ -58,7 +58,7 @@ on_error:
 }
 
 script_t*
-compile_script(const lstring_t* codestring, bool is_cp1252, const char* fmt_name, ...)
+compile_script(const lstring_t* source, bool is_cp1252, const char* fmt_name, ...)
 {
 	va_list ap;
 	
@@ -78,9 +78,9 @@ compile_script(const lstring_t* codestring, bool is_cp1252, const char* fmt_name
 	}
 	script->id = s_next_id++;
 	if (is_cp1252)
-		duk_push_cstr_to_utf8(g_duk, lstring_cstr(codestring));
+		duk_push_cstr_to_utf8(g_duk, lstring_cstr(source));
 	else
-		duk_push_lstring(g_duk, codestring->cstr, codestring->length);
+		duk_push_lstring(g_duk, source->cstr, source->length);
 	va_start(ap, fmt_name);
 	duk_push_vsprintf(g_duk, fmt_name, ap);
 	va_end(ap);

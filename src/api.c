@@ -16,7 +16,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"minisphere-async-api",
 	"minisphere-new-sockets",
 	"minisphere-rng-object",
-	"minisphere-galileo-shaders"
+	"minisphere-galileo-shaders",
 	"frameskip-api",
 	"set-script-function",
 };
