@@ -1,6 +1,18 @@
 minisphere Changelog
 ====================
 
+v1.1.6 - May 31, 2015
+---------------------
+
+* The third argument ('is_immediate') to the QueuePersonCommand() and
+  QueuePersonScript() APIs is now optional. If not provided, the default is
+  false.
+* Fixes a startup crash when XInput is not found or fails to initialize.
+* Fixes a startup crash on systems with no sound support.
+* Fixes some extension strings having been coalesced due to a missing comma in
+  the source. Seriously, who ever thought coalescing string literals was a good
+  idea?
+
 v1.1.5 - May 28, 2015
 ---------------------
 

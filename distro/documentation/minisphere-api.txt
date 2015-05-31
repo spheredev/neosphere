@@ -44,6 +44,7 @@ GetExtensions()
     * sphere-map-engine
     * sphere-galileo
     * minisphere-async-api
+    * minisphere-galileo-shaders
     * minisphere-new-sockets
     * minisphere-rng-object
     * frameskip-api
@@ -594,22 +595,34 @@ DoesPersonExist(name);
   Returns true if a person named `name` currently exists, otherwise
   returns false.
 
-GetPersonX(name);
-GetPersonY(name);
 SetPersonX(name, new_x);
 SetPersonY(name, new_y);
+SetPersonLayer(name, layer);
+GetPersonX(name);
+GetPersonY(name);
+GetPersonLayer(name);
 
-  Gets or sets a person's position relative to the current map.
+  Gets or sets a person's position relative to the current map. `layer` can be
+  either a 0-based layer index or a layer name. Note: For compatibility reasons,
+  GetPersonLayer() always returns the index.
 
+SetPersonXYFloat(name, new_x, new_y);
 GetPersonXFloat(name);
 GetPersonYFloat(name);
-SetPersonXYFloat(name, new_x, new_y);
 
   Gets or sets a person's position relative to the current map, with
   subpixel precision.
 
+SetPersonDirection(name, new_dir);
+GetPersonDirection(name);
+
+  Gets or sets a person's current "direction". The "direction" is actually the
+  name of a pose as defined in the spriteset file. Note: A spriteset is required
+  to have a pose for at least each of the 4 cardinal directions (north, east,
+  south and west).
+
 FollowPerson(name, leader_name, distance);
-  
+
   Makes a person follow another person at a distance specified by
   `distance`. Note that the distance is not absolute and the actual
   trailing distance depends on the leader's speed. Faster leaders will
@@ -634,3 +647,102 @@ SetPersonFollowDistance(name);
   
   Gets or sets the named person's follow distance. Throws an error if
   the person is not following anyone.
+
+IsPersonVisible()
+SetPersonVisible(is_visible)
+
+  Gets or sets the person's visibility status. 'true' if visible, 'false' if
+  not.
+
+IsPersonObstructed(name, x, y);
+  
+  Checks whether the person would be obstructed at a given location. Useful for
+  pathfinding.
+
+GetObstructingPerson(name, x, y);
+  
+  If the person named `name` is obstructed by a person at the given location,
+  returns the offending person's name. Otherwise, returns an empty string ("").
+
+GetObstructingTile(name, x, y);
+  
+  If the person named `name` is obstructed by a map tile at the given location,
+  returns the tile index. Otherwise, returns -1.
+
+SetPersonSpeed(name, speed);
+SetPersonSpeedXY(name, new_speed_x, new_speed_y);
+GetPersonSpeedX(name);
+GetPersonSpeedY(name);
+
+  Gets or sets the person's speed in two dimensions. SetPersonSpeed(name, speed)
+  is shorthand for SetPersonSpeedXY(name, speed, speed).
+
+SetPersonSpriteset(name, spriteset);
+GetPersonSpriteset(name);
+
+  Gets the person's current spriteset as a Spriteset object.
+
+IsIgnoringPersonObstructions(name);
+IgnorePersonObstructions(name, ignore);
+
+  Gets or sets whether the person is ignoring other persons. Ignored persons
+  do not affect collision and cannot be talked to. Note that ignoring is mutual
+  between persons.
+
+IsIgnoringTileObstructions(name);
+IgnoreTileObstructions(name, ignore);
+
+  Gets or sets whether the person is ignoring tile obstructions. As with ignored
+  persons, this disables tile collision.
+
+QueuePersonCommand(name, command[, is_immediate]);
+
+  Adds a command to the person's command queue. If `is_immediate` is true, the
+  engine will immediately execute the next command in the queue. Otherwise,
+  execution will halt until the next frame. The default is false. The following
+  commands are supported:
+    
+    COMMAND_WAIT - do nothing, useful as a non-immediate command to delay for 
+                   a frame.
+    
+    COMMAND_ANIMATE - advances the person's animation state by one frame. Queue
+                      these continuously to animate the sprite.
+    
+    COMMAND_FACE_NORTH
+    COMMAND_FACE_NORTHEAST
+    COMMAND_FACE_EAST
+    COMMAND_FACE_SOUTHEAST
+    COMMAND_FACE_SOUTH
+    COMMAND_FACE_SOUTHWEST
+    COMMAND_FACE_WEST
+    COMMAND_FACE_NORTHWEST
+      
+      Changes the person's facing direction. If the specified direction isn't
+      available in the person's spriteset, the engine will use the closest
+      match.
+    
+    COMMAND_MOVE_NORTH
+    COMMAND_MOVE_NORTHEAST
+    COMMAND_MOVE_EAST
+    COMMAND_MOVE_SOUTHEAST
+    COMMAND_MOVE_SOUTH
+    COMMAND_MOVE_SOUTHWEST
+    COMMAND_MOVE_WEST
+    COMMAND_MOVE_NORTHWEST
+      
+      Moves the person a number of pixels determined by their speed. See
+      SetPersonSpeed() above.
+
+QueuePersonScript(name, script[, is_immediate]);
+  
+  Adds a script to the person's command queue. `is_immediate` has the same
+  meaning and semantics as in QueuePersonCommand() above. `script` can be either
+  a JavaScript source string or a function.
+
+IsCommandQueueEmpty(name);
+  
+  Returns true if the person's command queue is empty, false otherwise.
+
+ClearCommandQueue(name);
+  
+  Removes all commands and scripts from the person's command queue.

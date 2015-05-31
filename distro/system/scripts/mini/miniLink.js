@@ -1,5 +1,5 @@
 /**
- * miniRT 1.1.5  (c) 2015 Fat Cerberus
+ * miniRT 1.1.6  (c) 2015 Fat Cerberus
  * A set of system scripts for minisphere providing advanced, high-level
  * functionality not available in the engine itself.
  *

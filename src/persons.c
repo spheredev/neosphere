@@ -59,7 +59,6 @@ static duk_ret_t js_DestroyPerson                (duk_context* ctx);
 static duk_ret_t js_IsCommandQueueEmpty          (duk_context* ctx);
 static duk_ret_t js_IsIgnoringPersonObstructions (duk_context* ctx);
 static duk_ret_t js_IsIgnoringTileObstructions   (duk_context* ctx);
-static duk_ret_t js_IsPersonVisible              (duk_context* ctx);
 static duk_ret_t js_IsPersonObstructed           (duk_context* ctx);
 static duk_ret_t js_IsPersonVisible              (duk_context* ctx);
 static duk_ret_t js_DoesPersonExist              (duk_context* ctx);
@@ -2083,9 +2082,10 @@ js_IgnoreTileObstructions(duk_context* ctx)
 static duk_ret_t
 js_QueuePersonCommand(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
 	int command = duk_require_int(ctx, 1);
-	bool is_immediate = duk_require_boolean(ctx, 2);
+	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	person_t* person;
 
@@ -2101,11 +2101,12 @@ js_QueuePersonCommand(duk_context* ctx)
 static duk_ret_t
 js_QueuePersonScript(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
 	lstring_t* script_name = new_lstring("[%s : queued script]", name);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstring_cstr(script_name));
 	free_lstring(script_name);
-	bool is_immediate = duk_require_boolean(ctx, 2);
+	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	person_t* person;
 
