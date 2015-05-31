@@ -76,7 +76,7 @@ get_default_shader(void)
 	char*       vs_path;
 
 	if (s_def_shader == NULL) {
-		console_log(3, "engine: Building default shader program");
+		console_log(3, "engine: Compiling default shaders");
 		vs_filename = al_get_config_value(g_sys_conf, NULL, "VertexShader");
 		fs_filename = al_get_config_value(g_sys_conf, NULL, "FragmentShader");
 		vs_path = get_sys_asset_path(vs_filename, "system");
