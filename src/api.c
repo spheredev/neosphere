@@ -389,8 +389,8 @@ duk_handle_require(duk_context* ctx)
 	fread(source, 1, file_size, file);
 	duk_push_lstring(ctx, source, file_size);
 	free(source);
-	console_log(1, "script: Loaded %sJavaScript module `%s`\n",
-		is_sys_module ? "system " : "", id);
+	console_log(1, "script: Loaded %sCommonJS module `%s`\n",
+		is_sys_module ? "" : "local ", id);
 	console_log(2, "  Path: %s\n", path);
 	free(path);
 	return 1;
