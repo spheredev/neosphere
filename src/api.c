@@ -54,7 +54,8 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static duk_ret_t duk_on_create_error (duk_context* ctx);
+static duk_ret_t duk_handle_create_error (duk_context* ctx);
+static duk_ret_t duk_handle_require      (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static int        s_framerate = 0;
@@ -130,10 +131,17 @@ initialize_api(duk_context* ctx)
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
+	// register module search callback
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_push_c_function(ctx, duk_handle_require, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "modSearch");
+	duk_pop_2(ctx);
+
 	// register error callback (adds filename and line number to duk_require_xxx() errors)
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_push_c_function(ctx, duk_on_create_error, DUK_VARARGS);
+	duk_push_c_function(ctx, duk_handle_create_error, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "errCreate");
 	duk_pop_2(ctx);
 }
@@ -311,7 +319,7 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 }
 
 static duk_ret_t
-duk_on_create_error(duk_context* ctx)
+duk_handle_create_error(duk_context* ctx)
 {
 	const char* filename;
 	int         line;
@@ -345,6 +353,46 @@ duk_on_create_error(duk_context* ctx)
 		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
 		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
 		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+	return 1;
+}
+
+static duk_ret_t
+duk_handle_require(duk_context* ctx)
+{
+	const char* id = duk_get_string(ctx, 0);
+
+	char  filename[SPHERE_PATH_MAX];
+	FILE* file;
+	long  file_size;
+	bool  is_sys_module = false;
+	char* path;
+	char* source;
+
+	if (snprintf(filename, SPHERE_PATH_MAX, "%s.js", id) >= SPHERE_PATH_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
+	if (!(path = get_asset_path(filename, "modules", false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Error building file path for module");
+	if (!(file = fopen(path, "rb"))) {
+		is_sys_module = true;
+		free(path);
+		if (!(path = get_sys_asset_path(filename, "system/modules")))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Error building file path for module");
+		if (!(file = fopen(path, "rb")))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to open module script '%s'", filename);
+	}
+	file_size = (fseek(file, 0, SEEK_END), ftell(file));
+	fseek(file, 0, SEEK_SET);
+	if (!(source = malloc(file_size))) {
+		fclose(file);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to allocate buffer for module code");
+	}
+	fread(source, 1, file_size, file);
+	duk_push_lstring(ctx, source, file_size);
+	free(source);
+	console_log(1, "script: Loaded %sJavaScript module `%s`\n",
+		is_sys_module ? "system " : "", id);
+	console_log(2, "  Path: %s\n", path);
+	free(path);
 	return 1;
 }
 
