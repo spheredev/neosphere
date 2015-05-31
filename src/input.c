@@ -103,9 +103,9 @@ initialize_input(void)
 	
 	al_install_keyboard();
 	if (!(s_have_mouse = al_install_mouse()))
-		console_log(1, "  Mouse disabled");
+		console_log(1, "  Mouse initialization failed");
 	if (!(s_have_joystick = al_install_joystick()))
-		console_log(1, "  Joystick disabled");
+		console_log(1, "  Joystick initialization failed");
 
 	s_events = al_create_event_queue();
 	al_register_event_source(s_events, al_get_keyboard_event_source());

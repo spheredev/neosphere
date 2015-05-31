@@ -37,6 +37,7 @@ struct sound
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
+static bool         s_have_sound = false;
 static unsigned int s_next_sound_id = 0;
 
 void
@@ -44,7 +45,10 @@ initialize_sound(void)
 {
 	console_log(1, "Initializing audio\n");
 	
-	al_install_audio();
+	if (!(s_have_sound = al_install_audio())) {
+		console_log(1, "  Audio initialization failed\n");
+		return;
+	}
 	al_init_acodec_addon();
 	al_reserve_samples(10);
 	al_set_mixer_gain(al_get_default_mixer(), 1.0);
@@ -55,7 +59,8 @@ shutdown_sound(void)
 {
 	console_log(1, "Shutting down audio\n");
 	
-	al_uninstall_audio();
+	if (s_have_sound)
+		al_uninstall_audio();
 }
 
 void
@@ -95,108 +100,143 @@ free_sound(sound_t* sound)
 {
 	if (sound == NULL || --sound->refcount > 0)
 		return;
-	al_destroy_audio_stream(sound->stream);
+	if (sound->stream != NULL)
+		al_destroy_audio_stream(sound->stream);
 	free(sound->path);
 }
 
 bool
 is_sound_looping(sound_t* sound)
 {
-	return al_get_audio_stream_playmode(sound->stream) == ALLEGRO_PLAYMODE_LOOP;
+	if (sound->stream != NULL)
+		return al_get_audio_stream_playmode(sound->stream) == ALLEGRO_PLAYMODE_LOOP;
+	else
+		return false;
+
 }
 
 bool
 is_sound_playing(sound_t* sound)
 {
-	return al_get_audio_stream_playing(sound->stream);
+	if (sound->stream != NULL)
+		return al_get_audio_stream_playing(sound->stream);
+	else
+		return false;
 }
 
 float
 get_sound_gain(sound_t* sound)
 {
-	return al_get_audio_stream_gain(sound->stream);
+	if (sound->stream != NULL)
+		return al_get_audio_stream_gain(sound->stream);
+	else
+		return 1.0;
 }
 
 long long
 get_sound_length(sound_t* sound)
 {
-	return al_get_audio_stream_length_secs(sound->stream) * 1000000;
+	if (sound->stream != NULL)
+		return al_get_audio_stream_length_secs(sound->stream) * 1000000;
+	else
+		return 0.0;
 }
 
 float
 get_sound_pan(sound_t* sound)
 {
-	return al_get_audio_stream_pan(sound->stream);
+	if (sound->stream != NULL)
+		return al_get_audio_stream_pan(sound->stream);
+	else
+		return 0.0;
 }
 
 float
 get_sound_pitch(sound_t* sound)
 {
-	return al_get_audio_stream_speed(sound->stream);
+	if (sound->stream != NULL)
+		return al_get_audio_stream_speed(sound->stream);
+	else
+		return 1.0;
 }
 
 long long
 get_sound_seek(sound_t* sound)
 {
-	return al_get_audio_stream_position_secs(sound->stream) * 1000000;
+	if (sound->stream != NULL)
+		return al_get_audio_stream_position_secs(sound->stream) * 1000000;
+	else
+		return 0.0;
 }
 
 void
 set_sound_gain(sound_t* sound, float gain)
 {
-	al_set_audio_stream_gain(sound->stream, gain);
+	if (sound->stream != NULL)
+		al_set_audio_stream_gain(sound->stream, gain);
 }
 
 void
 set_sound_looping(sound_t* sound, bool is_looping)
 {
-	al_set_audio_stream_playmode(sound->stream,
-		is_looping ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE);
+	int play_mode;
+	
+	play_mode = is_looping ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE;
+	if (sound->stream != NULL)
+		al_set_audio_stream_playmode(sound->stream, play_mode);
 }
 
 void
 set_sound_pan(sound_t* sound, float pan)
 {
-	al_set_audio_stream_pan(sound->stream, pan);
+	if (sound->stream != NULL)
+		al_set_audio_stream_pan(sound->stream, pan);
 }
 
 void
 set_sound_pitch(sound_t* sound, float pitch)
 {
-	al_set_audio_stream_speed(sound->stream, pitch);
+	if (sound->stream != NULL)
+		al_set_audio_stream_speed(sound->stream, pitch);
 }
 
 void
 play_sound(sound_t* sound)
 {
-	al_set_audio_stream_playing(sound->stream, true);
+	if (sound->stream != NULL)
+		al_set_audio_stream_playing(sound->stream, true);
 }
 
 bool
 reload_sound(sound_t* sound)
 {
-	ALLEGRO_AUDIO_STREAM* new_stream;
+	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
 
-	if (!(new_stream = al_load_audio_stream(sound->path, 4, 1024)))
+	new_stream = s_have_sound ? al_load_audio_stream(sound->path, 4, 1024) : NULL;
+	if (s_have_sound && new_stream == NULL)
 		return false;
 	if (sound->stream != NULL)
 		al_destroy_audio_stream(sound->stream);
-	sound->stream = new_stream;
-	al_set_audio_stream_gain(sound->stream, 1.0);
-	al_attach_audio_stream_to_mixer(sound->stream, al_get_default_mixer());
-	al_set_audio_stream_playing(sound->stream, false);
+	if ((sound->stream = new_stream) != NULL) {
+		al_set_audio_stream_gain(sound->stream, 1.0);
+		al_attach_audio_stream_to_mixer(sound->stream, al_get_default_mixer());
+		al_set_audio_stream_playing(sound->stream, false);
+	}
 	return true;
 }
 
 void
 seek_sound(sound_t* sound, long long position)
 {
-	al_seek_audio_stream_secs(sound->stream, (double)position / 1000000);
+	if (sound->stream != NULL)
+		al_seek_audio_stream_secs(sound->stream, (double)position / 1000000);
 }
 
 void
 stop_sound(sound_t* sound, bool rewind)
 {
+	if (sound->stream == NULL)
+		return;
 	al_set_audio_stream_playing(sound->stream, false);
 	if (rewind)
 		al_rewind_audio_stream(sound->stream);
