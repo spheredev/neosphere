@@ -3,7 +3,7 @@
 #include "color.h"
 #include "vector.h"
 
-static double const SPHERE_API_VERSION = 1.5;
+static double const SPHERE_API_VERSION = 2.0;
 
 static const char* const SPHERE_EXTENSIONS[] =
 {
