@@ -1,5 +1,5 @@
 /**
- * miniRT 1.1.6  (c) 2015 Fat Cerberus
+ * miniRT  (c) 2015 Fat Cerberus
  * A set of system scripts for minisphere providing advanced, high-level
  * functionality not available in the engine itself.
  *
@@ -72,6 +72,13 @@ mini.BGM.adjust = function(newVolume, duration)
 			this.stream.setVolume(this.volume * 255);
 		}
 	}
+};
+
+// .override() method
+// Overrides the BGM with a given song. Push, pop and play operations
+// will be deferred until the BGM is reset by calling BGM.reset().
+mini.BGM.override = function(path, fadeTime)
+{
 };
 
 // .play() method
