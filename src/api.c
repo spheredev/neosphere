@@ -13,6 +13,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-obj-props",
 	"sphere-map-engine",
 	"sphere-galileo",
+	"sphere-commonjs",
 	"minisphere-async-api",
 	"minisphere-new-sockets",
 	"minisphere-rng-object",

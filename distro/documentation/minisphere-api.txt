@@ -1,4 +1,4 @@
-minisphere 1.1 API Documentation
+minisphere 1.2 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
@@ -79,6 +79,27 @@ EvaluateSystemScript(filename)
   allows you to use scripts included with the engine.
 
 
+CommonJS
+--------
+
+In addition to the classic script management functions described above,
+minisphere also supports CommonJS modules.  To load these, the built-in
+require() function is provided.
+
+require(module_id);
+
+  Loads a CommonJS module and returns its export table. `module_id` is an
+  abstract path identifying the module to load, with the same semantics as in,
+  e.g. Node.js. If the module cannot be found, an error will be thrown.
+  minisphere will look for modules in the following locations:
+  
+    [game root]/cjs_modules
+    [engine root]/system/cjs_modules
+  
+  If require() is called inside of a module and the ID provided is prefixed with
+  either './' or '../', this specifies a path relative to the calling module.
+
+
 Basic Debugging
 ---------------
 
@@ -119,7 +140,7 @@ Logging
 Logging is another useful debugging tool. When trying to diagnose a stubborn
 bug, it often helps to be able to see a detailed summary of everything that
 happened when the issue surfaced. Of course, this requires some vigilance on the
-part of the developer to add enough log entries!
+part of the developer to output enough log entries!
 
 new Logger(filename)
 
@@ -153,7 +174,8 @@ with subdirectories for each game.
 GetGameInformation()
   
   Returns an object describing the currently running game. The object is of the
-  same form as those returned by GetGameList() (see below).
+  same form as those returned by GetGameList() (see below), with the caveat that
+  the directory path returned is absolute instead of relative.
 
 GetGameList()
 
@@ -303,7 +325,7 @@ new ShaderProgram(shader_files);
     vertex:   The filename of the source for the vertex shader.
     fragment: The filename of the source for the fragment shader.
 
-  Note: Shader filenames are relative to <game_dir>/shaders.
+  Note: Shader filenames are relative to [game root]/shaders.
   
 new Vertex(x, y[, color[, u, v]]);
   
@@ -515,7 +537,7 @@ GetMapEngineFrameRate();
 
 GetCurrentMap();
   
-  Gets the filename of the current map, relative to <game_dir>/maps.
+  Gets the filename of the current map, relative to [game root]/maps.
 
 AttachInput(name);
 DetachInput();
@@ -575,7 +597,7 @@ loaded.
 CreatePerson(name, spriteset, transient);
   
   Creates a person using the spriteset specified by `spriteset`. This can either
-  be an .rss spriteset path (relative to <game_dir>/spritesets) or a Spriteset
+  be an .rss spriteset path (relative to [game root]/spritesets) or a Spriteset
   object. If `transient` true, the person is transient and will automatically be
   destroyed when a new map is loaded via ChangeMap().
 
@@ -616,10 +638,10 @@ GetPersonYFloat(name);
 SetPersonDirection(name, new_dir);
 GetPersonDirection(name);
 
-  Gets or sets a person's current "direction". The "direction" is actually the
-  name of a pose as defined in the spriteset file. Note: A spriteset is required
-  to have a pose for at least each of the 4 cardinal directions (north, east,
-  south and west).
+  Gets or sets a person's current direction. The "direction" is actually the
+  name of a pose as defined in the person's spriteset. Note: A spriteset is
+  required to have a pose for at least each of the 4 cardinal directions (north,
+  east, south and west).
 
 FollowPerson(name, leader_name, distance);
 
