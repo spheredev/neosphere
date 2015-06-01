@@ -781,11 +781,13 @@ shutdown_engine(void)
 	shutdown_sound();
 	
 	console_log(0, "Shutting down Allegro\n");
-	al_destroy_display(g_display);
-	al_destroy_event_queue(g_events);
-	al_destroy_config(g_game_conf);
-	al_destroy_path(g_game_path);
-	if (g_sys_conf != NULL) al_destroy_config(g_sys_conf);
+	al_destroy_display(g_display); g_display = NULL;
+	al_destroy_event_queue(g_events); g_events = NULL;
+	al_destroy_config(g_game_conf); g_game_conf = NULL;
+	al_destroy_path(g_game_path); g_game_path = NULL;
+	if (g_sys_conf != NULL)
+		al_destroy_config(g_sys_conf);
+	g_sys_conf = NULL;
 	al_uninstall_system();
 }
 
