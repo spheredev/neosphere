@@ -1,6 +1,11 @@
 minisphere Changelog
 ====================
 
+v1.1.7 - June 1, 2015
+---------------------
+
+* Fixes an occasional crash when calling ExecuteGame().
+
 v1.1.6 - May 31, 2015
 ---------------------
 
