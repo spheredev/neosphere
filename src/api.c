@@ -369,6 +369,8 @@ duk_handle_require(duk_context* ctx)
 	char* path;
 	char* source;
 
+	if (id[0] == '~')
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): Escaped path not allowed for module ID");
 	if (snprintf(filename, SPHERE_PATH_MAX, "%s.js", id) >= SPHERE_PATH_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
 	if (!(path = get_asset_path(filename, "cjs_modules", false)))
