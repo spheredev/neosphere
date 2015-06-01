@@ -370,12 +370,12 @@ duk_handle_require(duk_context* ctx)
 
 	if (snprintf(filename, SPHERE_PATH_MAX, "%s.js", id) >= SPHERE_PATH_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
-	if (!(path = get_asset_path(filename, "modules", false)))
+	if (!(path = get_asset_path(filename, "cjs_modules", false)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Error building file path for module");
 	if (!(file = fopen(path, "rb"))) {
 		is_sys_module = true;
 		free(path);
-		if (!(path = get_sys_asset_path(filename, "system/modules")))
+		if (!(path = get_sys_asset_path(filename, "system/cjs_modules")))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Error building file path for module");
 		if (!(file = fopen(path, "rb")))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to open module script '%s'", filename);
@@ -384,7 +384,7 @@ duk_handle_require(duk_context* ctx)
 	fseek(file, 0, SEEK_SET);
 	if (!(source = malloc(file_size))) {
 		fclose(file);
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to allocate buffer for module code");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to allocate source buffer for module");
 	}
 	fread(source, 1, file_size, file);
 	duk_push_lstring(ctx, source, file_size);
