@@ -6,6 +6,18 @@ v1.1.7 - June 1, 2015
 
 * Fixes an occasional crash when calling ExecuteGame().
 
+v1.1.8 - June 2, 2015
+---------------------
+
+* Fixes too-fast animation when persons are moved diagonally.
+* Fixes a long-standing bug where queueing diagonal movement commands has no
+  effect.
+
+v1.1.7 - June 1, 2015
+---------------------
+
+* Fixes an occasional crash when calling ExecuteGame().
+
 v1.1.6 - May 31, 2015
 ---------------------
 
