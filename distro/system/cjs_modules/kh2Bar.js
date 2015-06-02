@@ -26,7 +26,7 @@ var kh2Bar =
         return -(end - start) / 2 * (Math.cos(Math.PI * time / duration) - 1) + start;
     }
 	
-    // HPGauge() constructor
+    // kh2Bar() constructor
     // Creates a Kingdom Hearts-style segmented HP gauge.
     // Arguments:
     //     capacity:   The largest HP value representable by the gauge.
@@ -36,7 +36,7 @@ var kh2Bar =
     //     maxSectors: Optional. The maximum number of sectors the gauge can display. If this is not specified or
     //                 is null, the gauge will be rendered as it would be in Kingdom Hearts 2, with the maximum number
     //                 of sectors determined by the width and height of the gauge.
-    function HPGauge(capacity, sectorSize, color, maxSectors)
+    function kh2Bar(capacity, sectorSize, color, maxSectors)
     {
         if (arguments.length < 1) {
             Abort("kh2Bar(): 1 or more arguments expected, got " + arguments.length, -1);
@@ -72,7 +72,7 @@ var kh2Bar =
     // .beginCombo() method
     // Begins a combo. Damage displayed on the gauge will accumulate without fading out until
     // the combo is ended by calling .endCombo().
-    HPGauge.prototype.beginCombo = function()
+    kh2Bar.prototype.beginCombo = function()
     {
         ++this.numCombosRunning;
     };
@@ -83,7 +83,7 @@ var kh2Bar =
     //     color:    The color to change the gauge to.
     //     duration: Optional. The length of time over which to ease in the new color. A duration of 0
     //               means no easing (immediate). (default: 0.0)
-    HPGauge.prototype.changeColor = function(color, duration)
+    kh2Bar.prototype.changeColor = function(color, duration)
     {
         duration = duration !== undefined ? duration : 0.0;
         
@@ -104,7 +104,7 @@ var kh2Bar =
     //     y:       The Y coordinate of the top left corner of the gauge, in pixels.
     //     width:   The width of the gauge, in pixels.
     //     height:  The height of the gauge, in pixels.
-    HPGauge.prototype.draw = function(x, y, width, height)
+    kh2Bar.prototype.draw = function(x, y, width, height)
     {
         if (arguments.length < 4) {
             Abort("kh2Bar:draw(): Wrong number of arguments\n" +
@@ -172,7 +172,7 @@ var kh2Bar =
 	
     // .endCombo() method
     // Ends a combo, causing all damage sustained since .beginCombo() was called to fade out.
-    HPGauge.prototype.endCombo = function()
+    kh2Bar.prototype.endCombo = function()
     {
         --this.numCombosRunning;
         if (this.numCombosRunning < 0) {
@@ -184,7 +184,7 @@ var kh2Bar =
     // Hides the gauge.
     // Arguments:
     //     duration: Optional. The duration of the hide animation, in seconds. (default: 0.0)
-    HPGauge.prototype.hide = function(duration)
+    kh2Bar.prototype.hide = function(duration)
     {
         duration = duration !== undefined ? duration : 0.0;
         
@@ -198,7 +198,7 @@ var kh2Bar =
 	
     // .set() method
     // Sets the gauge's current HP reading.
-    HPGauge.prototype.set = function(value)
+    kh2Bar.prototype.set = function(value)
     {
         if (arguments.length < 1) {
             Abort("kh2Bar:set(): Wrong number of arguments\n" +
@@ -224,7 +224,7 @@ var kh2Bar =
     // Displays the gauge.
     // Arguments:
     //     duration: Optional. The duration of the show animation, in seconds. (default: 0.0)
-    HPGauge.prototype.show = function(duration)
+    kh2Bar.prototype.show = function(duration)
     {
         duration = duration !== undefined ? duration : 0.0;
         
@@ -238,7 +238,7 @@ var kh2Bar =
 	
     // .update() method
     // Updates the gauge for the next frame.
-    HPGauge.prototype.update = function()
+    kh2Bar.prototype.update = function()
     {
         var frameRate = IsMapEngineRunning() ? GetMapEngineFrameRate() : GetFrameRate();
         this.colorFadeTimer += 1.0 / frameRate;
@@ -267,13 +267,12 @@ var kh2Bar =
         }
     };
     
-    return {
-        HPGauge: HPGauge
-    };
+    return kh2Bar;
 })();
 
-// populate CommonJS export table
+// CommonJS export table
+// Allows this script to be loaded as a CJS module.
 if (typeof exports !== 'undefined')
 {
-    exports.HPGauge = kh2Bar.HPGauge;
+    exports.kh2Bar = kh2Bar;
 }
