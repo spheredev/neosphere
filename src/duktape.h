@@ -1,11 +1,11 @@
 /*
- *  Duktape public API for Duktape 1.2.1.
+ *  Duktape public API for Duktape 1.2.2.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 74bd1c845e5198b5e2d6cb7c98e54c3af1d6c0e4 (v1.2.1).
+ *  Git commit 5f4302c732d21b3b721db3d3473db32e4eb92470 (v1.2.2).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -3174,13 +3174,13 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10201L
+#define DUK_VERSION                       10202L
 
 /* Git describe for Duktape build.  Useful for non-official snapshot builds
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.2.1"
+#define DUK_GIT_DESCRIBE                  "v1.2.2"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
