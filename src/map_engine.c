@@ -887,39 +887,43 @@ process_map_input(void)
 		switch (mv_x + mv_y * 3) {
 		case -3: // north
 			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
-			queue_person_command(s_input_person, COMMAND_FACE_NORTH, false);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTH, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case -2: // northeast
-			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
-			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_NORTHEAST, false);
+			queue_person_command(s_input_person, COMMAND_MOVE_NORTHEAST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTHEAST, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case 1: // east
 			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_EAST, false);
+			queue_person_command(s_input_person, COMMAND_FACE_EAST, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case 4: // southeast
-			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
-			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTHEAST, false);
+			queue_person_command(s_input_person, COMMAND_MOVE_SOUTHEAST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTHEAST, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case 3: // south
 			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTH, false);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTH, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case 2: // southwest
-			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
-			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTHWEST, false);
+			queue_person_command(s_input_person, COMMAND_MOVE_SOUTHWEST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_SOUTHWEST, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case -1: // west
 			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_WEST, false);
+			queue_person_command(s_input_person, COMMAND_FACE_WEST, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		case -4: // northwest
-			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
-			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_NORTHWEST, false);
+			queue_person_command(s_input_person, COMMAND_MOVE_NORTHWEST, true);
+			queue_person_command(s_input_person, COMMAND_FACE_NORTHWEST, true);
+			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
 			break;
 		}
 	}

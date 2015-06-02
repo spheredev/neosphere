@@ -251,7 +251,7 @@ is_person_following(const person_t* person, const person_t* leader)
 bool
 is_person_ignored(const person_t* person, const person_t* by_person)
 {
-	// note: commutative; if either person ignores the other, the function should return true
+	// note: commutative; if either person ignores the other, the function will return true
 
 	int i;
 
@@ -529,25 +529,25 @@ follow_person(person_t* person, person_t* leader, int distance)
 bool
 queue_person_command(person_t* person, int command, bool is_immediate)
 {
-	bool is_queued = true;
+	bool is_aok = true;
 	
 	switch (command) {
 	case COMMAND_MOVE_NORTHEAST:
-		is_queued &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
-		is_queued &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
-		return is_queued;
+		is_aok &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
+		is_aok &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
+		return is_aok;
 	case COMMAND_MOVE_SOUTHEAST:
-		is_queued &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
-		is_queued &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
-		return is_queued;
+		is_aok &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
+		is_aok &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
+		return is_aok;
 	case COMMAND_MOVE_SOUTHWEST:
-		is_queued &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
-		is_queued &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
-		return is_queued;
+		is_aok &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
+		is_aok &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
+		return is_aok;
 	case COMMAND_MOVE_NORTHWEST:
-		is_queued &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
-		is_queued &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
-		return is_queued;
+		is_aok &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
+		is_aok &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
+		return is_aok;
 	default:
 		++person->num_commands;
 		if (person->num_commands > person->max_commands) {
@@ -749,7 +749,6 @@ command_person(person_t* person, int command)
 	if (new_x != person->x || new_y != person->y) {
 		// person is trying to move, make sure the path is clear of obstructions
 		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
-			command_person(person, COMMAND_ANIMATE);
 			if (new_x != person->x)
 				person->mv_x = new_x > person->x ? 1 : -1;
 			if (new_y != person->y)
@@ -889,6 +888,8 @@ update_person(person_t* person, bool* out_has_moved)
 		step = person->leader->steps[person->follow_distance - 1];
 		delta_x = step.x - person->x;
 		delta_y = step.y - person->y;
+		if (delta_x != 0.0 && delta_y != 0.0)
+			command_person(person, COMMAND_ANIMATE);
 		if (fabs(delta_x) > person->speed_x)
 			command_person(person, delta_x > 0 ? COMMAND_MOVE_EAST : COMMAND_MOVE_WEST);
 		if (fabs(delta_y) > person->speed_y)
@@ -2114,8 +2115,12 @@ js_QueuePersonCommand(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonCommand(): no such person '%s'", name);
 	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "QueuePersonCommand(): Invalid command type constant");
+	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
+		if (!queue_person_command(person, COMMAND_ANIMATE, true))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to queue command");
+	}
 	if (!queue_person_command(person, command, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): failed to enlarge person's command queue");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): Failed to queue command");
 	return 0;
 }
 
