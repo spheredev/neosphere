@@ -529,16 +529,37 @@ follow_person(person_t* person, person_t* leader, int distance)
 bool
 queue_person_command(person_t* person, int command, bool is_immediate)
 {
-	++person->num_commands;
-	if (person->num_commands > person->max_commands) {
-		if (!(person->commands = realloc(person->commands, person->num_commands * sizeof(struct command))))
-			return false;
-		person->max_commands = person->num_commands;
+	bool is_queued = true;
+	
+	switch (command) {
+	case COMMAND_MOVE_NORTHEAST:
+		is_queued &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
+		is_queued &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
+		return is_queued;
+	case COMMAND_MOVE_SOUTHEAST:
+		is_queued &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
+		is_queued &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
+		return is_queued;
+	case COMMAND_MOVE_SOUTHWEST:
+		is_queued &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
+		is_queued &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
+		return is_queued;
+	case COMMAND_MOVE_NORTHWEST:
+		is_queued &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
+		is_queued &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
+		return is_queued;
+	default:
+		++person->num_commands;
+		if (person->num_commands > person->max_commands) {
+			if (!(person->commands = realloc(person->commands, person->num_commands * sizeof(struct command))))
+				return false;
+			person->max_commands = person->num_commands;
+		}
+		person->commands[person->num_commands - 1].type = command;
+		person->commands[person->num_commands - 1].is_immediate = is_immediate;
+		person->commands[person->num_commands - 1].script = NULL;
+		return true;
 	}
-	person->commands[person->num_commands - 1].type = command;
-	person->commands[person->num_commands - 1].is_immediate = is_immediate;
-	person->commands[person->num_commands - 1].script = NULL;
-	return true;
 }
 
 bool
