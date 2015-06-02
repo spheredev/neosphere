@@ -888,8 +888,6 @@ update_person(person_t* person, bool* out_has_moved)
 		step = person->leader->steps[person->follow_distance - 1];
 		delta_x = step.x - person->x;
 		delta_y = step.y - person->y;
-		if (delta_x != 0.0 && delta_y != 0.0)
-			command_person(person, COMMAND_ANIMATE);
 		if (fabs(delta_x) > person->speed_x)
 			command_person(person, delta_x > 0 ? COMMAND_MOVE_EAST : COMMAND_MOVE_WEST);
 		if (fabs(delta_y) > person->speed_y)
@@ -904,6 +902,8 @@ update_person(person_t* person, bool* out_has_moved)
 			: vector == -1 ? COMMAND_FACE_WEST
 			: vector == -4 ? COMMAND_FACE_NORTHWEST
 			: COMMAND_WAIT;
+		if (facing != COMMAND_WAIT)
+			command_person(person, COMMAND_ANIMATE);
 		command_person(person, facing);
 	}
 
