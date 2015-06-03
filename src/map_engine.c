@@ -100,8 +100,8 @@ static duk_ret_t js_SetTriggerLayer         (duk_context* ctx);
 static duk_ret_t js_SetTriggerScript        (duk_context* ctx);
 static duk_ret_t js_SetTriggerXY            (duk_context* ctx);
 static duk_ret_t js_SetUpdateScript         (duk_context* ctx);
-static duk_ret_t js_SetZoneDimensions       (duk_context* ctx);
 static duk_ret_t js_SetZoneLayer            (duk_context* ctx);
+static duk_ret_t js_SetZoneMetrics          (duk_context* ctx);
 static duk_ret_t js_SetZoneScript           (duk_context* ctx);
 static duk_ret_t js_SetZoneSteps            (duk_context* ctx);
 static duk_ret_t js_AddTrigger              (duk_context* ctx);
@@ -1341,8 +1341,8 @@ init_map_engine_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "SetTriggerScript", js_SetTriggerScript);
 	register_api_function(ctx, NULL, "SetTriggerXY", js_SetTriggerXY);
 	register_api_function(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
-	register_api_function(ctx, NULL, "SetZoneDimensions", js_SetZoneDimensions);
 	register_api_function(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
+	register_api_function(ctx, NULL, "SetZoneMetrics", js_SetZoneMetrics);
 	register_api_function(ctx, NULL, "SetZoneScript", js_SetZoneScript);
 	register_api_function(ctx, NULL, "SetZoneSteps", js_SetZoneSteps);
 	register_api_function(ctx, NULL, "AddTrigger", js_AddTrigger);
@@ -2296,7 +2296,21 @@ js_SetUpdateScript(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SetZoneDimensions(duk_context* ctx)
+js_SetZoneLayer(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+	int layer = duk_require_map_layer(ctx, 1);
+
+	if (!is_map_engine_running())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneLayer(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= (int)get_vector_size(s_map->zones))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): Invalid zone index (%i)", zone_index);
+	set_zone_layer(zone_index, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetZoneMetrics(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int zone_index = duk_require_int(ctx, 0);
@@ -2320,20 +2334,6 @@ js_SetZoneDimensions(duk_context* ctx)
 	set_zone_bounds(zone_index, new_rect(x, y, x + width, y + height));
 	if (layer >= 0)
 		set_zone_layer(zone_index, layer);
-	return 0;
-}
-
-static duk_ret_t
-js_SetZoneLayer(duk_context* ctx)
-{
-	int zone_index = duk_require_int(ctx, 0);
-	int layer = duk_require_map_layer(ctx, 1);
-
-	if (!is_map_engine_running())
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneLayer(): Map engine must be running");
-	if (zone_index < 0 || zone_index >= (int)get_vector_size(s_map->zones))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): Invalid zone index (%i)", zone_index);
-	set_zone_layer(zone_index, layer);
 	return 0;
 }
 

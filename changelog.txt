@@ -5,15 +5,16 @@ v1.2 - TBD
 ----------
 
 * CommonJS module support.
+* New Zone and Trigger management APIs.
 * Included kh2Bar can now be used as both a module and with a traditional
   RequireSystemScript() call.
+* More complete API documentation.
 
 v1.1.8 - June 2, 2015
 ---------------------
 
 * Fixes too-fast animation when persons are moved diagonally.
-* Fixes a long-standing bug where queueing diagonal movement commands has no
-  effect.
+* Fixes a bug where queueing diagonal movement commands has no effect.
 
 v1.1.7 - June 1, 2015
 ---------------------

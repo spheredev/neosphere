@@ -42,6 +42,7 @@ GetExtensions()
     * sphere-obj-constructors
     * sphere-obj-props
     * sphere-map-engine
+    * sphere-commonjs
     * sphere-galileo
     * minisphere-async-api
     * minisphere-galileo-shaders
@@ -51,12 +52,12 @@ GetExtensions()
     * set-script-function
     
 
-Script Management
------------------
+Dependency Management
+---------------------
 
-Outside of very simple one-off games, most projects will consist of
-multiple script files. You will need to know how to use the functions
-below if you expect to get very far!
+Outside of very simple one-off games, most projects will consist of multiple
+script files. You will need to know how to use the functions below if you expect
+to get very far!
 
 RequireScript(filename)
 EvaluateScript(filename)
@@ -82,16 +83,16 @@ EvaluateSystemScript(filename)
 CommonJS
 --------
 
-In addition to the classic script management functions described above,
+In addition to the classic dependency management functions described above,
 minisphere also supports CommonJS modules.  To load these, the built-in
 require() function is provided.
 
 require(module_id);
 
   Loads a CommonJS module and returns its export table. `module_id` is an
-  abstract path identifying the module to load, with the same semantics as in,
-  e.g. Node.js. If the module cannot be found, an error will be thrown.
-  minisphere will look for modules in the following locations:
+  abstract path (a string) identifying the module to load, with the same
+  semantics as in, e.g. Node.js. If the module cannot be found, an error will be
+  thrown. minisphere will look for modules in the following locations:
   
     [game root]/cjs_modules
     [engine root]/system/cjs_modules
@@ -165,11 +166,10 @@ Logger:endBlock()
 Execution Control and Game Management
 -------------------------------------
 
-Most of these are only useful for startup games, which can be
-distributed with the engine and allow the user to choose a game to play.
-For these functions to work, a `games` directory must be placed in the
-same directory as the engine, alongside the `system` directory,
-with subdirectories for each game.
+Most of these are only useful for startup games, which can be distributed with
+the engine and allow the user to choose a game to play. For these functions to
+work, a `games` directory must be placed in the same directory as the engine,
+alongside the `system` directory, with subdirectories for each game.
 
 GetGameInformation()
   
@@ -218,7 +218,7 @@ Many games have need of a good random number generator, particularly RPGs. All
 JavaScript engines have a built-in generator in the form of the Math.random()
 function, however this is generally considered subpar. minisphere provides the
 RNG object, which uses the MT19937 (Mersenne Twister) algorithm to generate
-random values and allows manual seeding.
+high-quality random values and allows manual seeding.
 
 RNG.seed(seed);
 
@@ -585,6 +585,119 @@ ExitMapEngine();
   map engine proper.
 
 
+Trigger Management
+------------------
+
+A trigger is an entity overlayed on a tile which automatically executes custom
+code when stepped on by the player. This is useful for triggering events when
+the player reaches a certain point while exploring, as well as implementing warp
+points between maps.
+
+Note that trigger modifications at runtime are transient. This means they will
+need to be redone if the map is reloaded. Persistent modifications require the
+trigger to be edited in the map file itself.
+
+GetCurrentTrigger();
+  
+  When called in a trigger script, returns the trigger ID of the executing
+  trigger. Calling this in any other context will throw an error.
+
+AddTrigger(x, y, layer, script);
+  
+  Adds a trigger to the current map and returns its trigger ID. 'script' can be
+  either a code string or a function. Triggers created this way are transient
+  and will need to be recreated if the map is reloaded. For compatibility
+  reasons, the layer is ignored by the engine when processing triggers.
+
+RemoveTrigger(trigger_id);
+
+  Removes the trigger with the specified trigger ID from the map. As with
+  AddTrigger(), the modification is transient.
+
+GetNumTriggers();
+  
+  Gets the number of triggers on the current map.
+
+GetTriggerX(trigger_id);
+GetTriggerY(trigger_id);
+GetTriggerLayer(trigger_id);
+SetTriggerXY(trigger_id, x, y);
+SetTriggerLayer(trigger_id, layer);
+
+  Gets or sets the location of a trigger on the map, in pixels.
+
+SetTriggerScript(trigger_id, script);
+  
+  Sets the specified trigger's script. Like most trigger modifications, this is
+  transient.
+
+IsTriggerAt(x, y, layer);
+  
+  Returns true if there is a trigger at the specified location, false otherwise.
+  'layer' is required, but ignored for compatibility reasons.
+
+ExecuteTrigger(x, y, layer);
+  
+  Fires the trigger at the specified location, if one exists. As above, 'layer'
+  is required but ignored.
+  
+
+Zone Management
+---------------
+
+Zones are similar to triggers, except they can cover more than one tile and run
+their associated scripts periodically as long as the player is moving and
+remains inside the zone. A potential use for these is implementing random
+battles. They have other uses as well, as demonstrated in the Lithonite demo
+included with the engine.
+
+As with triggers, all zone modifications at runtime are transient.
+
+GetCurrentZone();
+  
+  When called in a zone script, returns the zone ID of the executing zones.
+  Calling this in any other context will throw an error.
+
+AddZone(x, y, width, height, layer, script);
+
+  Adds a zone to the current map. 'script' can be either a code string or a
+  function. As with triggers, the layer is ignored by the engine when processing
+  zones.
+
+RemoveZone(zone_id);
+
+  Removes the zone with the specified zone ID from the map.
+
+GetNumZones();
+  
+  Returns the number of zones on the current map.
+
+GetZoneX(zone_id);
+GetZoneY(zone_id);
+GetZoneWidth(zone_id);
+GetZoneHeight(zone_id);
+GetZoneLayer(zone_id);
+SetZoneMetrics(zone_id, x, y, width, height[, layer]);
+
+  Gets or sets the location and size of a zone, in pixels.
+
+GetZoneSteps(zone_id);
+SetZoneSteps(zone_id);
+  
+  Gets or sets the zone's step count. The zone script will execute every time
+  the input character takes this number of steps while inside the zone.
+
+AreZonesAt(x, y, layer);
+  
+  Returns true if the specified point is inside of a zone, or false otherwise.
+  'layer' is required, but ignored for compatibility reasons.
+
+ExecuteZones(x, y, layer);
+  
+  Executes the scripts of all zones straddling the specified point, if any. As
+  above, 'layer' is required but ignored.
+
+
 Persons Management
 ------------------
 
@@ -768,3 +881,40 @@ IsCommandQueueEmpty(name);
 ClearCommandQueue(name);
   
   Removes all commands and scripts from the person's command queue.
+
+
+Tileset Management
+------------------
+
+These functions aren't generally needed for most use cases. They are used to
+modify the current map's tileset. As with most map modifications, these are
+transient and must be redone if the map is reloaded.
+
+GetNumTiles();
+
+  Returns the number of the tiles in the current map's tileset.
+
+GetTileDelay(tile_id);
+SetTileDelay(tile_id, frames);
+
+  Gets or sets a tile's animation delay. This is the number of frames which
+  must elapsed before the tile switches to the next one in its animation
+  sequence.
+
+GetNextAnimatedTile(tile_id);
+SetNextAnimatedTile(tile_id, next_tile_id);
+
+  Gets or sets the next tile in the tile animation sequence.
+
+GetTileImage(tile_id);
+SetTileImage(tile_id, image);
+
+  Gets or sets the Image associated with a tile. The dimensions of the Image
+  must match the tile dimensions, or an error will be thrown.
+
+GetTileSurface(tile_id);
+SetTileSurface(tile_id, surface);
+
+  Like Get/SetTileImage(), but uses Surface objects instead. Note: Drawing to
+  the Surface after calling either of these functions will not modify the tile.
+
