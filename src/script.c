@@ -69,7 +69,7 @@ compile_script(const lstring_t* source, bool is_cp1252, const char* fmt_name, ..
 	
 	// this wouldn't be necessary if Duktape duk_get_heapptr() would give us a strong reference, but alas,
 	// we're stuck with this ugliness where we store the compiled function in the global stash so it doesn't
-	// get garbage collected.
+	// get eaten by the garbage collector.
 	duk_push_global_stash(g_duk);
 	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
 		duk_pop(g_duk);
