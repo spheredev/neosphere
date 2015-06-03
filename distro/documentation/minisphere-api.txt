@@ -270,13 +270,13 @@ FlipScreen();
   Flips the backbuffer. Note that this also performs event loop processing, so
   if it is not called regularly, the engine will stop responding.
 
-SetFrameRate(fps);
 GetFrameRate();
+SetFrameRate(fps);
 
-Gets or sets the current target frame rate. Your game will be automatically
-throttled to match this framerate. If `fps` is zero, the game will be
-unthrottled, which may be useful for benchmarks but otherwise is usually a waste
-of CPU resources.
+  Gets or sets the current target frame rate. Your game will be automatically
+  throttled to match this framerate. If `fps` is zero, the game will be
+  unthrottled, which may be useful for benchmarks but otherwise is usually a
+  waste of CPU resources.
 
 GetScreenWidth();
 GetScreenHeight();
@@ -296,6 +296,37 @@ ApplyColorMask(color);
   Applies a full-screen color mask. The color passed in is multiplied with the
   pixels of the backbuffer to tint the screen. This may be used for, e.g.
   day/night effects.
+
+
+Frame Skipping
+--------------
+
+minisphere has an aggressive frame skipping algorithm which avoids rendering
+to the backbuffer if it determines that a frame will be late. This helps keep
+the engine running at full speed even on lower-end computers. The following
+functions are provided to manage frame skipping.
+
+IsSkippedFrame();
+  
+  Returns true if the engine has marked the current frame for skipping. Useful
+  to avoid performing extra rendering calculations when nothing is going to be
+  rendered anyway.
+
+GetMaxFrameSkips();
+SetMaxFrameSkips(max_skips);
+
+  Gets or sets the maximum number of consecutive frames the engine is allowed
+  to skip. The default is 5 frames. If your game uses GrabImage or GrabSurface
+  pervasively, it may be useful to set this to zero. This will almost certainly
+  lead to lag, however.
+  
+UnskipFrame();
+
+  Instructs the engine to re-enable rendering for the current frame if it has
+  been marked for skipping. This also clears the backbuffer. This function can
+  be used in lieu of SetMaxFrameSkips(0) during sections which make heavy use of
+  GrabImage or GrabSurface without impacting performance for the rest of the
+  game.
 
 
 Galileo Graphics Primitives
@@ -730,12 +761,12 @@ DoesPersonExist(name);
   Returns true if a person named `name` currently exists, otherwise
   returns false.
 
-SetPersonX(name, new_x);
-SetPersonY(name, new_y);
-SetPersonLayer(name, layer);
 GetPersonX(name);
 GetPersonY(name);
 GetPersonLayer(name);
+SetPersonX(name, new_x);
+SetPersonY(name, new_y);
+SetPersonLayer(name, layer);
 
   Gets or sets a person's position relative to the current map. `layer` can be
   either a 0-based layer index or a layer name. Note: For compatibility reasons,
