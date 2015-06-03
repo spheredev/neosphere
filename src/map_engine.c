@@ -111,6 +111,7 @@ static duk_ret_t js_ExecuteZones            (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine           (duk_context* ctx);
 static duk_ret_t js_MapToScreenX            (duk_context* ctx);
 static duk_ret_t js_MapToScreenY            (duk_context* ctx);
+static duk_ret_t js_RemoveZone              (duk_context* ctx);
 static duk_ret_t js_RenderMap               (duk_context* ctx);
 static duk_ret_t js_ReplaceTilesOnLayer     (duk_context* ctx);
 static duk_ret_t js_ScreenToMapX            (duk_context* ctx);
@@ -441,7 +442,7 @@ set_zone_steps(int zone_index, int step_interval)
 }
 
 bool
-add_zone(rect_t bounds, int layer, script_t* script, int step_interval)
+add_zone(rect_t bounds, int layer, script_t* script, int steps)
 {
 	struct map_zone zone;
 
@@ -449,7 +450,7 @@ add_zone(rect_t bounds, int layer, script_t* script, int step_interval)
 	zone.bounds = bounds;
 	zone.layer = layer;
 	zone.script = ref_script(script);
-	zone.step_interval = step_interval;
+	zone.step_interval = steps;
 	zone.steps_left = zone.step_interval;
 	if (push_back_vector(s_map->zones, &zone)) {
 		++s_map->num_zones;
@@ -481,6 +482,13 @@ normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 	layer_h = s_map->layers[layer].height * tile_h;
 	if (inout_x) *inout_x = fmod(fmod(*inout_x, layer_w) + layer_w, layer_w);
 	if (inout_y) *inout_y = fmod(fmod(*inout_y, layer_h) + layer_h, layer_h);
+}
+
+void
+remove_zone(int zone_index)
+{
+	remove_vector_item(s_map->zones, zone_index);
+	--s_map->num_zones;
 }
 
 static struct map*
@@ -1286,8 +1294,9 @@ init_map_engine_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	register_api_function(ctx, NULL, "MapToScreenX", js_MapToScreenX);
 	register_api_function(ctx, NULL, "MapToScreenY", js_MapToScreenY);
-	register_api_function(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
+	register_api_function(ctx, NULL, "RemoveZone", js_RemoveZone);
 	register_api_function(ctx, NULL, "RenderMap", js_RenderMap);
+	register_api_function(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
 	register_api_function(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
 	register_api_function(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
 	register_api_function(ctx, NULL, "SetDelayScript", js_SetDelayScript);
@@ -2292,6 +2301,19 @@ js_ChangeMap(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): Map engine is not running");
 	if (!change_map(filename, false))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): Failed to load map file '%s' into map engine", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveZone(duk_context* ctx)
+{
+	int zone_index = duk_require_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneLayer(): Map engine must be running");
+	if (zone_index < 0 || zone_index >= s_map->num_zones)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): Invalid zone index (%i)", zone_index);
+	remove_zone(zone_index);
 	return 0;
 }
 

@@ -20,8 +20,10 @@ extern int              get_zone_steps          (int zone_index);
 extern void             set_zone_bounds         (int zone_index, rect_t bounds);
 extern void             set_zone_script         (int zone_index, script_t* script);
 extern void             set_zone_steps          (int zone_index, int steps);
+extern bool             add_zone                (rect_t bounds, int layer, script_t* script, int steps);
 extern void             detach_person           (const person_t* person);
 extern void             normalize_map_entity_xy (double* inout_x, double* inout_y, int layer);
+extern void             remove_zone             (int zone_index);
 
 extern void             init_map_engine_api   (duk_context* ctx);
 extern int              duk_require_map_layer (duk_context* ctx, duk_idx_t index);
