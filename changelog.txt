@@ -4,10 +4,15 @@ minisphere Changelog
 v1.2 - TBD
 ----------
 
-* CommonJS module support.
+* CommonJS module support!
 * New Zone and Trigger management APIs.
 * Included kh2Bar can now be used as both a module and with a traditional
   RequireSystemScript() call.
+* Font:clone() now works correctly.
+* Fixes crashes under rare circumstances in Font:wordWrapString(). Also properly
+  wraps long stretches of characters with no whitespace.
+* Fixes a bug where replacing a glyph image fails to update the font metrics,
+  causing rendering issues.
 * More complete API documentation.
 
 v1.1.8 - June 2, 2015

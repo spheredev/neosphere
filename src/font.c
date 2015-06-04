@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "atlas.h"
 #include "color.h"
 #include "image.h"
 
@@ -31,7 +32,6 @@ struct font
 	int                height;
 	int                min_width;
 	int                max_width;
-	int                pitch;
 	int                num_glyphs;
 	struct font_glyph* glyphs;
 };
@@ -170,6 +170,46 @@ on_error:
 	}
 	if (lock != NULL) unlock_image(atlas, lock);
 	if (atlas != NULL) free_image(atlas);
+	return NULL;
+}
+
+font_t*
+clone_font(const font_t* src_font)
+{
+	font_t*                  font = NULL;
+	int                      max_x = 0, max_y = 0;
+	int                      min_width = INT_MAX;
+	const struct font_glyph* src_glyph;
+
+	int i;
+
+	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
+	if (!(font->glyphs = calloc(src_font->num_glyphs, sizeof(struct font_glyph))))
+		goto on_error;
+	font->num_glyphs = src_font->num_glyphs;
+
+	// perform the clone
+	get_font_metrics(src_font, &min_width, &max_x, &max_y);
+	font->height = max_y;
+	font->min_width = min_width;
+	font->max_width = max_x;
+	for (i = 0; i < src_font->num_glyphs; ++i) {
+		src_glyph = &src_font->glyphs[i];
+		font->glyphs[i].image = ref_image(src_glyph->image);
+		font->glyphs[i].width = src_glyph->width;
+		font->glyphs[i].height = src_glyph->height;
+	}
+	return ref_font(font);
+
+on_error:
+	if (font != NULL) {
+		for (i = 0; i < font->num_glyphs; ++i) {
+			if (font->glyphs[i].image != NULL)
+				free_image(font->glyphs[i].image);
+		}
+		free(font->glyphs);
+		free(font);
+	}
 	return NULL;
 }
 
@@ -532,13 +572,15 @@ js_Font_setCharacterImage(duk_context* ctx)
 static duk_ret_t
 js_Font_clone(duk_context* ctx)
 {
+	font_t* dolly_font;
 	font_t* font;
 
 	duk_push_this(ctx);
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_pop(ctx);
-	// TODO: actually clone font in Font:clone()
-	duk_push_sphere_font(ctx, font);
+	if (!(dolly_font = clone_font(font)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font:clone(): Failed to clone font");
+	duk_push_sphere_font(ctx, dolly_font);
 	return 1;
 }
 

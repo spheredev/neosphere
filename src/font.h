@@ -9,6 +9,7 @@ typedef enum   text_align text_align_t;
 typedef struct wraptext   wraptext_t;
 
 font_t*     load_font            (const char* path);
+font_t*     clone_font           (const font_t* src_font);
 font_t*     ref_font             (font_t* font);
 void        free_font            (font_t* font);
 int         get_font_line_height (const font_t* font);
