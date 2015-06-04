@@ -20,16 +20,16 @@ engine's level of support for various features.
 
 GetVersion()
 
-  Returns the Sphere API version level as a floating point number. When
-  called in minisphere 1.1, this function returns 1.5, indicating API
-  compatibility with Sphere 1.5.
+  Returns the Sphere API version level as a floating point number. When called
+  under minisphere 1.2, this function returns 2.0, indicating Sphere API version
+  2 (Pegasus).
 
 GetVersionString()
 
-    Returns the engine's version identification string. minisphere 1.1
-    identifies as:
-    
-      v1.5 (compatible; minisphere 1.1)
+    Returns the engine's version identification string. For minisphere 1.2, this
+    string is:
+      
+      v2.0 (compatible; minisphere 1.2)
 
 GetExtensions()
 
@@ -431,6 +431,47 @@ Group:rotY (read/write)
   these values.
 
 
+Byte Arrays
+-----------
+
+A byte array is a buffer containing raw data. Byte arrays are used for both
+networking as well as in binary file I/O. See the sections below for more
+information about those.  Byte arrays can be used like any other array, via the
+indexing operator [], however values written to the array must be numeric and
+are automatically coerced to 8-bit integers (range 0-255).
+
+new ByteArray([num_bytes]);
+  
+  Constructs a byte array which can hold 'num_bytes' of data. Note that a byte
+  array cannot be resized after it is created, so you will have to plan ahead
+  to choose the right size. Note that byte arrays start out empty, with all
+  bytes set to zero.
+
+ByteArray:length (read-only)
+
+  Gets the size of the byte array buffer, in bytes.
+
+ByteArray:concat(byte_array);
+
+  Returns a new byte array which is the result of appending 'byte_array' to the
+  end of the one this method is called for.
+
+ByteArray:slice(start[, end])
+  
+  Returns a new byte array which is the result of copying all bytes between
+  start and end, exclusive. If 'end' is negative, it is relative to the end of
+  the byte array; if it is omitted, the entirety of the array from 'start'
+  onwards is taken.
+
+CreateStringFromByteArray(byte_array);
+  
+  Builds a string from the bytes in 'byte_array'.
+
+CreateByteArrayFromString(string);
+
+  Constructs a ByteArray from the specified string.
+  
+
 Networking (Sockets)
 --------------------
 
@@ -513,6 +554,120 @@ IOSocket:close();
 
   Disconnects the socket. Note that a socket object cannot be reused after it
   has been closed; a new one must be created.
+  
+
+File and Directory Management
+-----------------------------
+
+These functions allow you to manage the file system. For all of these functions,
+file and directory names are relative to the game's 'save' directory.
+
+DoesFileExist(filename);
+
+  Returns true if the specified file exists, false otherwise.
+
+CreateDirectory(dirname);
+
+  Recursively creates a directory. It is safe to call this function if the
+  directory already exists. In that case, nothing happens.
+
+RemoveDirectory(dirname);
+  
+  Removes the specified directory from the file system. The directory must be
+  empty, otherwise an error will be thrown.
+
+RemoveFile(filename);
+  
+  Deletes a file from the file system. If the file cannot be deleted, an error
+  will be thrown.
+
+Rename(filename, new_filename);
+  
+  Renames a file on the file system. If the file cannot be renamed, an error
+  will be thrown.
+
+
+File I/O
+--------
+
+When developing a game, at some point you will need to be able to read and write
+data to a file, whether to save and load game progress or something else.
+
+new File(filename);
+
+  Opens a file. The file format used for the File object is similar to a Windows
+  INI file, containing key/value pairs separated by an equals sign, for
+  instance:
+    
+    playerName=maggie
+    playtime=812:00:00
+    currentMap=foodville.rmp
+    # etc.
+
+File:read(key, defval);
+  
+  Reads a value from the file. If the key doesn't exist in the file, 'defval'
+  is returned. Note that the return type depends on the type of 'defval', either
+  boolean (true/false), number, or string.
+
+File:write(key, value);
+  
+  Writes a value to the file under a specified key. If the key already exists,
+  it will be overwritten. Note that writes are cached, and not written to the
+  file until it flushed, either by calling File:flush() or automatically when
+  it is closed.
+
+File:flush()
+
+  Flushes the file. All pending changes will be written out to the file system.
+  The file will remain open afterwards.
+
+File:close()
+  
+  Closes the file, writing any changes out to the file system in the process.
+  You should not call any other methods on the object after this (it is safe to
+  call File:close() more than once, however). Doing so will throw an error.
+  
+new RawFile(filename[, is_writable]);
+  
+  Opens a binary file, allowing raw data to be read and/or written. If
+  'is_writable' is false, the file must exist and will be opened for reading
+  only. Otherwise, the file is overwritten (be careful!) and opened for writing.
+  If it cannot be opened for writing, an error will be thrown.
+
+RawFile:position (read/write)
+  
+  Gets or sets the current file position. This determines where the next read
+  or write operation will start.
+
+RawFile:size (read-only)
+  
+  Gets the current size of the file in bytes. Can also be specified as
+  RawFile:length.
+
+RawFile:read([num_bytes]);
+  
+  Reads data from the file and advances the file position. 'num_bytes' specifies
+  the amount of data to read; it can be omitted to read the entire file at once
+  (the file position will not change in this case). Returns a ByteArray.
+
+RawFile:readString([num_bytes]);
+  
+  Like RawFile:read(), but returns a UTF-8 string instead of a ByteArray. This
+  may be more convenient in some cases.
+
+RawFile:write(data);
+  
+  Writes data to the file and advances the file position. The file must be
+  opened for writing or an error will be thrown. 'data' can be either a
+  ByteArray or a string. Strings are written as UTF-8.
+
+RawFile:close();
+  
+  Closes the file. You should not call any other methods on the object after
+  this (it is safe to call RawFile:close() more than once, however). Doing so
+  will throw an error.
+
   
 
 Map Engine
@@ -619,14 +774,14 @@ ExitMapEngine();
 Trigger Management
 ------------------
 
-A trigger is an entity overlayed on a tile which automatically executes custom
-code when stepped on by the player. This is useful for triggering events when
-the player reaches a certain point while exploring, as well as implementing warp
-points between maps.
+A trigger is a non-obstructing entity which automatically executes custom code
+when stepped on by a player-controlled person. This is useful for triggering
+events when the player reaches a certain point while exploring, as well as
+implementing warp points between maps.
 
 Note that trigger modifications at runtime are transient. This means they will
-need to be redone if the map is reloaded. Persistent modifications require the
-trigger to be edited in the map file itself.
+need to be redone if the map is reloaded. Persistent modifications require
+triggers to be edited in the map file itself.
 
 GetCurrentTrigger();
   
