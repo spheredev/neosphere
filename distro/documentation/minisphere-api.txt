@@ -298,6 +298,66 @@ ApplyColorMask(color);
   day/night effects.
 
 
+Fonts and Text Rendering
+------------------------
+
+A common task in a game engine, at some point you will probably want to get text
+on the screen.  In minisphere, you use a Font object to do this.
+
+GetSystemFont();
+  
+  Returns a Font object for the engine's built-in default font. This can be used
+  in lieu of the Font constructor for prototyping--or even if you just prefer
+  the default font.
+
+new Font(filename);
+  
+  Constructs a Font object. 'filename' is relative to the game's "fonts"
+  directory and must be in Sphere .rfn format.
+
+Font:clone();
+  
+  Creates a new Font object by copying everything from this one. Modifications
+  to the cloned font then won't affect the original.
+
+Font:colorMask (read/write)
+  
+  Gets or sets the color mask, which is blended with the font bitmaps when text
+  is rendered using the font.
+
+Font:height (read-only)
+
+  Gets the line height, in pixels, for text rendered using this font.
+
+Font:getCharacterImage(cp);
+  
+  Gets an Image object for a specified character glyph. 'cp' is an integer in
+  range [0-255] specifying the ASCII character code.
+
+Font:setCharacterImage(cp, image);
+  
+  Sets the glyph image for a specified character. 'cp' has the same meaning as
+  above and 'image' is the replacement Image object.
+
+Font:getStringWidth(string);
+
+  Gets the width, in pixels, of 'string' if it were rendered using this font.
+
+Font:getStringHeight(string, wrap_width);
+  
+  Gets the height, in pixels, of the string if it were rendered using using
+  Font:drawTextBox(), passing 'wrap_width'.
+
+Font:drawText(x, y, text);
+
+  Renders 'text' at (x,y) using this font. The text is not wrapped.
+
+Font:drawTextBox(x, y, width, height, x_offset, text);
+  
+  Renders 'text' at (x,y) wrapped and constrained to a box of the specified
+  width and height. 'x_offset' is added to the X coordinate to offset the text.
+
+
 Frame Skipping
 --------------
 

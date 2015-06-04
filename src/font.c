@@ -598,7 +598,8 @@ js_Font_drawText(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
+	if (!is_skipped_frame())
+		draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
 	return 0;
 }
 
