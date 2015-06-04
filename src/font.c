@@ -52,17 +52,17 @@ struct wraptext
 #pragma pack(push, 1)
 struct rfn_header
 {
-	char signature[4];
-	int16_t version;
-	int16_t num_chars;
-	char reserved[248];
+	char     signature[4];
+	uint16_t version;
+	uint16_t num_chars;
+	char     reserved[248];
 };
 
 struct rfn_glyph_header
 {
-	int16_t width;
-	int16_t height;
-	char reserved[28];
+	uint16_t width;
+	uint16_t height;
+	char     reserved[28];
 };
 #pragma pack(pop)
 
@@ -112,6 +112,7 @@ load_font(const char* path)
 		glyph->width = glyph_hdr.width;
 		glyph->height = glyph_hdr.height;
 	}
+	font->num_glyphs = rfn.num_chars;
 	font->min_width = min_width;
 	font->max_width = max_x;
 	font->height = max_y;
@@ -214,6 +215,12 @@ get_glyph_image(const font_t* font, int codepoint)
 }
 
 int
+get_glyph_width(const font_t* font, int codepoint)
+{
+	return font->glyphs[codepoint].width;
+}
+
+int
 get_text_width(const font_t* font, const char* text)
 {
 	int cp;
@@ -270,12 +277,12 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	int         line_idx;
 	int         line_width;
 	int         max_lines = 10;
+	char*		last_word;
 	char*       line_buffer;
+	size_t      line_length;
 	char*       new_buffer;
 	size_t      pitch;
-	int         space_width = get_text_width(font, " ");
 	char*       word;
-	size_t      word_length;
 	wraptext_t* wraptext;
 	const char  *p;
 
@@ -283,14 +290,13 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	
 	// allocate initial buffer
 	get_font_metrics(font, &glyph_width, NULL, NULL);
-	pitch = glyph_width > 0 ? width / glyph_width + 2 : width;
-	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
-	if (!(word = calloc(1, pitch + 1))) goto on_error;
+	pitch = glyph_width > 0 ? width / glyph_width + 3 : width;
+	if (!(buffer = calloc(1, max_lines * pitch))) goto on_error;
+	if (!(last_word = malloc(pitch))) goto on_error;
 
-	// run through string one word at a time, wrapping as necessary
+	// run through string one character at a time, wrapping as necessary
 	line_buffer = buffer; line_buffer[0] = '\0';
-	line_idx = 0; line_width = 0;
-	word[0] = '\0'; word_length = 0;
+	line_idx = 0; line_width = 0; line_length = 0;
 	p = text;
 	do {
 		switch (ch = *p++) {
@@ -298,51 +304,35 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			if (ch == '\r' && *p == '\n') ++p;
 			is_line_end = true;
 			break;
-		case ' ': case '\0':
-			is_word_end = true;
-			is_line_end = ch == '\0';
-			break;
 		default:
-			is_word_end = false; is_line_end = false;
-			word[word_length++] = ch;
-			is_word_end = word_length >= pitch;
+			line_buffer[line_length++] = ch;
+			line_width += get_glyph_width(font, ch);
+			is_line_end = ch == '\0' && line_length > 0;
 		}
-		if (is_word_end || is_line_end) {
-			line_width += get_text_width(font, word);
-			if (line_width > width) {  // time for a new line?
-				if (++line_idx >= max_lines) {  // enlarge the buffer?
-					max_lines *= 2;
-					if (!(new_buffer = realloc(buffer, max_lines * pitch)))
-						goto on_error;
-					buffer = new_buffer;
-					line_buffer = buffer + line_idx * pitch;
-				}
-				else
-					line_buffer += pitch;
-				line_width = get_text_width(font, word);
-				line_buffer[0] = '\0';
+		if (line_width > width || line_length >= pitch - 1) {
+			is_line_end = true;
+			if (word = strrchr(line_buffer, ' '))
+				strcpy(last_word, word + 1);
+			else
+				sprintf(last_word, "%c", line_buffer[line_length - 1]);
+			line_buffer[line_length - strlen(last_word)] = '\0';
+		}
+		if (is_line_end) {
+			if (++line_idx >= max_lines) {  // enlarge the buffer?
+				max_lines *= 2;
+				if (!(new_buffer = realloc(buffer, max_lines * pitch)))
+					goto on_error;
+				buffer = new_buffer;
+				line_buffer = buffer + line_idx * pitch;
 			}
-			strcat(line_buffer, word);
-			memset(word, 0, pitch + 1); word_length = 0;
-			if (!is_line_end) {
-				strcat(line_buffer, " ");
-				line_width += get_text_width(font, " ");
-			}
-			else {
-				if (++line_idx >= max_lines) {  // enlarge the buffer?
-					max_lines *= 2;
-					if (!(new_buffer = realloc(buffer, max_lines * pitch)))
-						goto on_error;
-					buffer = new_buffer;
-					line_buffer = buffer + line_idx * pitch;
-				}
-				else
-					line_buffer += pitch;
-				line_width = 0;
-				line_buffer[0] = '\0';
-			}
+			else
+				line_buffer += pitch;
+			line_width = get_text_width(font, last_word);
+			line_length = strlen(last_word);
+			strcpy(line_buffer, last_word);
 		}
 	} while (ch != '\0');
+	free(last_word);
 	wraptext->num_lines = line_idx;
 	wraptext->buffer = buffer;
 	wraptext->pitch = pitch;

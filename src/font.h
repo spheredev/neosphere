@@ -14,6 +14,7 @@ void        free_font            (font_t* font);
 int         get_font_line_height (const font_t* font);
 void        get_font_metrics     (const font_t* font, int* min_width, int* max_width, int* out_line_height);
 image_t*    get_glyph_image      (const font_t* font, int codepoint);
+int         get_glyph_width      (const font_t* font, int codepoint);
 int         get_text_width       (const font_t* font, const char* text);
 void        set_glyph_image      (font_t* font, int codepoint, image_t* image);
 void        draw_text            (const font_t* font, color_t mask, int x, int y, text_align_t alignment, const char* text);
