@@ -349,6 +349,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			line_width += get_glyph_width(font, ch);
 			is_line_end = ch == '\0' && line_length > 0;
 		}
+		if (is_line_end) last_word[0] = '\0';
 		if (line_width > width || line_length >= pitch - 1) {
 			is_line_end = true;
 			if (word = strrchr(line_buffer, ' '))
