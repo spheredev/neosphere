@@ -23,6 +23,8 @@ static duk_ret_t js_Font_drawTextBox       (duk_context* ctx);
 static duk_ret_t js_Font_drawZoomedText    (duk_context* ctx);
 static duk_ret_t js_Font_wordWrapString    (duk_context* ctx);
 
+static void update_font_metrics (font_t* font);
+
 struct font
 {
 	int                refcount;
@@ -234,6 +236,7 @@ set_glyph_image(font_t* font, int codepoint, image_t* image)
 	p_glyph->image = ref_image(image);
 	p_glyph->width = get_image_width(image);
 	p_glyph->height = get_image_height(image);
+	update_font_metrics(font);
 	free_image(old_image);
 }
 
@@ -368,6 +371,26 @@ int
 get_wraptext_line_count(const wraptext_t* wraptext)
 {
 	return wraptext->num_lines;
+}
+
+static void
+update_font_metrics(font_t* font)
+{
+	int max_x = 0, max_y = 0;
+	int min_width = INT_MAX;
+
+	int i;
+
+	for (i = 0; i < font->num_glyphs; ++i) {
+		font->glyphs[i].width = get_image_width(font->glyphs[i].image);
+		font->glyphs[i].height = get_image_height(font->glyphs[i].image);
+		min_width = fmin(font->glyphs[i].width, min_width);
+		max_x = fmax(font->glyphs[i].width, max_x);
+		max_y = fmax(font->glyphs[i].height, max_y);
+	}
+	font->min_width = min_width;
+	font->max_width = max_x;
+	font->height = max_y;
 }
 
 void
