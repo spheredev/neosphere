@@ -5,6 +5,12 @@ v1.2 - TBD
 ----------
 
 * CommonJS module support!
+* The global object is now accessible as the Sphere object, allowing global
+  variables to be created in strict mode code, where it would normally be
+  flagged as an error. This is similar to the 'window' object in a browser:
+      Sphere.myVar = 812;
+      Sphere.GetKey();
+      // etc.
 * New Zone and Trigger management APIs.
 * Included kh2Bar can now be used as both a module and with a traditional
   RequireSystemScript() call.
