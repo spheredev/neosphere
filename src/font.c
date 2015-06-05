@@ -310,6 +310,7 @@ wraptext_t*
 word_wrap_text(const font_t* font, const char* text, int width)
 {
 	char*       buffer = NULL;
+	char*		carry;
 	char        ch;
 	int         glyph_width;
 	bool        is_line_end = false;
@@ -317,7 +318,6 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	int         line_idx;
 	int         line_width;
 	int         max_lines = 10;
-	char*		last_word;
 	char*       line_buffer;
 	size_t      line_length;
 	char*       new_buffer;
@@ -332,34 +332,36 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	get_font_metrics(font, &glyph_width, NULL, NULL);
 	pitch = glyph_width > 0 ? width / glyph_width + 3 : width;
 	if (!(buffer = calloc(1, max_lines * pitch))) goto on_error;
-	if (!(last_word = malloc(pitch))) goto on_error;
+	if (!(carry = malloc(pitch))) goto on_error;
 
-	// run through string one character at a time, wrapping as necessary
+	// run through one character at a time, carrying as necessary
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
 	p = text;
 	do {
 		switch (ch = *p++) {
-		case '\n': case '\r':
-			if (ch == '\r' && *p == '\n') ++p;
+		case '\n': case '\r':  // explicit newline
+			if (ch == '\r' && *p == '\n') ++p;  // CRLF
 			is_line_end = true;
 			break;
-		default:
+		default:  // default case, copy character as-is
 			line_buffer[line_length++] = ch;
 			line_width += get_glyph_width(font, ch);
-			is_line_end = ch == '\0' && line_length > 0;
+			is_line_end = ch == '\0' && line_length > 0;  // commit last line on EOT
 		}
-		if (is_line_end) last_word[0] = '\0';
+		if (is_line_end) carry[0] = '\0';
 		if (line_width > width || line_length >= pitch - 1) {
+			// wrap width exceeded, carry current word to next line
 			is_line_end = true;
 			if (word = strrchr(line_buffer, ' '))
-				strcpy(last_word, word + 1);
-			else
-				sprintf(last_word, "%c", line_buffer[line_length - 1]);
-			line_buffer[line_length - strlen(last_word)] = '\0';
+				strcpy(carry, word + 1);
+			else  // no word break, so just carry last character
+				sprintf(carry, "%c", line_buffer[line_length - 1]);
+			line_buffer[line_length - strlen(carry)] = '\0';
 		}
 		if (is_line_end) {
-			if (++line_idx >= max_lines) {  // enlarge the buffer?
+			// do we need to enlarge the buffer?
+			if (++line_idx >= max_lines) {
 				max_lines *= 2;
 				if (!(new_buffer = realloc(buffer, max_lines * pitch)))
 					goto on_error;
@@ -368,12 +370,14 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			}
 			else
 				line_buffer += pitch;
-			line_width = get_text_width(font, last_word);
-			line_length = strlen(last_word);
-			strcpy(line_buffer, last_word);
+			
+			// copy carry text into new line
+			line_width = get_text_width(font, carry);
+			line_length = strlen(carry);
+			strcpy(line_buffer, carry);
 		}
 	} while (ch != '\0');
-	free(last_word);
+	free(carry);
 	wraptext->num_lines = line_idx;
 	wraptext->buffer = buffer;
 	wraptext->pitch = pitch;
