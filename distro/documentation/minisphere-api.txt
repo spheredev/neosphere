@@ -211,6 +211,176 @@ Async(script);
   is similar to setTimeout(func, 0); in the browser.
 
 
+Keyboard Routines
+-----------------
+
+What would a game be without the ability for the player to control it? This set
+of functions allows your game to accept input via the keyboard, the most common
+input method for a PC game. First of all, the available keycodes:
+
+  KEY_ESCAPE     
+  KEY_F1         
+  KEY_F2         
+  KEY_F3         
+  KEY_F4         
+  KEY_F5         
+  KEY_F6         
+  KEY_F7         
+  KEY_F8         
+  KEY_F9         
+  KEY_F10        
+  KEY_F11        
+  KEY_F12        
+  KEY_TILDE      
+  KEY_0          
+  KEY_1          
+  KEY_2          
+  KEY_3          
+  KEY_4          
+  KEY_5          
+  KEY_6          
+  KEY_7          
+  KEY_8          
+  KEY_9          
+  KEY_MINUS      
+  KEY_EQUALS     
+  KEY_BACKSPACE  
+  KEY_TAB        
+  KEY_A          
+  KEY_B          
+  KEY_C          
+  KEY_D          
+  KEY_E          
+  KEY_F          
+  KEY_G          
+  KEY_H          
+  KEY_I          
+  KEY_J          
+  KEY_K          
+  KEY_L          
+  KEY_M          
+  KEY_N          
+  KEY_O          
+  KEY_P          
+  KEY_Q          
+  KEY_R          
+  KEY_S          
+  KEY_T          
+  KEY_U          
+  KEY_V          
+  KEY_W          
+  KEY_X          
+  KEY_Y          
+  KEY_Z          
+  KEY_SHIFT      
+  KEY_CTRL       
+  KEY_ALT        
+  KEY_SPACE      
+  KEY_OPENBRACE  
+  KEY_CLOSEBRACE 
+  KEY_SEMICOLON  
+  KEY_APOSTROPHE 
+  KEY_COMMA      
+  KEY_PERIOD     
+  KEY_SLASH      
+  KEY_BACKSLASH  
+  KEY_ENTER      
+  KEY_INSERT     
+  KEY_DELETE     
+  KEY_HOME       
+  KEY_END        
+  KEY_PAGEUP     
+  KEY_PAGEDOWN   
+  KEY_UP         
+  KEY_RIGHT      
+  KEY_DOWN       
+  KEY_LEFT       
+  KEY_NUM_0
+  KEY_NUM_1
+  KEY_NUM_2
+  KEY_NUM_3
+  KEY_NUM_4
+  KEY_NUM_5
+  KEY_NUM_6
+  KEY_NUM_7
+  KEY_NUM_8
+  KEY_NUM_9
+  KEY_CAPSLOCK
+  KEY_NUMLOCK
+  KEY_SCROLLLOCK
+
+GetPlayerKey(player, button);
+SetPlayerKey(player, button, keycode);
+
+  Gets or sets the keycode mapped to a specified playerkey. Playerkeys mirror
+  the layout of a Super NES controller. GetPlayerKey() should be used in place
+  of hardcoded keys whenever possible, in order to allow the player to customize
+  the mappings. 'player' can be one of the following values:
+    
+    PLAYER_1
+    PLAYER_2
+    PLAYER_3
+    PLAYER_4
+  
+  'button' can be one of the following:
+    
+    PLAYER_KEY_UP
+    PLAYER_KEY_RIGHT
+    PLAYER_KEY_DOWN
+    PLAYER_KEY_LEFT
+    PLAYER_KEY_MENU
+    PLAYER_KEY_A
+    PLAYER_KEY_B
+    PLAYER_KEY_X
+    PLAYER_KEY_Y
+  
+  Modifications made by SetPlayerKey() are persistent; the new mapping will be
+  saved to your game's "save" directory when the engine exits and reloaded when
+  the game is started again. Key mappings for other games are not affected.
+  
+  See key-mapping.txt for more information on these functions and an easy way
+  you can allow your players to change the key mappings.
+
+IsKeyPressed(keycode);
+IsAnyKeyPressed();
+
+  Returns true if the user is currently pressing either a specified key, or any
+  key on the keyboard, respectively.
+
+GetToggleState(keycode);
+
+  Gets the state of the specified toggle key, which should be one of the
+  following:
+  
+    KEY_CAPSLOCK
+    KEY_NUMLOCK
+    KEY_SCROLLLOCK
+
+  Passing any other keycode will throw an error.
+
+AreKeysLeft();
+GetKey();
+  
+  GetKey() returns the keycode of the next key in the keyboard queue. If the
+  queue is empty, it will wait until the user presses a key. AreKeysLeft()
+  returns true if keys are pending, and should be used to avoid delays if such
+  behavior is undesirable.
+
+ClearKeyQueue();
+  
+  Removes all keys from the keyboard queue.
+
+BindKey(keycode, on_down_script, on_up_script);
+UnbindKey(keycode);
+
+  BindKey() executes a script whenever the player presses or releases a
+  specified key. The scripts can be either functions, source code strings, or
+  null/undefined (to do nothing).  Note that bound keys are only honored during
+  the main loop of a MapEngine() call.
+  
+  UnbindKey() removes a binding created by BindKey().
+
+
 Random Number Generation
 ------------------------
 
@@ -226,6 +396,11 @@ RNG.seed(seed);
   it will be truncated to an integer; using a seed of 812.88, for example, has
   the same effect as 812.
 
+RNG.random();
+
+  Returns a floating point value in the range [0,1). This is the basic method of
+  random number generation, and a direct, drop-in replacement for Math.random().
+
 RNG.chance(odds);
 
   Tests a percentage chance. Returns true if the chance succeeds, false
@@ -237,11 +412,6 @@ RNG.normal(mean, sigma);
   Returns a random floating point value normally distributed around `mean` with
   a standard deviation specified by `sigma`. The probability distribution of
   this function is sometimes termed a "bell curve."
-
-RNG.random();
-
-  Returns a floating point value in the range [0,1). This is the basic method of
-  random number generation, and a direct, drop-in replacement for Math.random().
 
 RNG.range(min, max);
 
@@ -296,66 +466,6 @@ ApplyColorMask(color);
   Applies a full-screen color mask. The color passed in is multiplied with the
   pixels of the backbuffer to tint the screen. This may be used for, e.g.
   day/night effects.
-
-
-Fonts and Text Rendering
-------------------------
-
-A common task in a game engine, at some point you will probably want to get text
-on the screen.  In minisphere, you use a Font object to do this.
-
-GetSystemFont();
-  
-  Returns a Font object for the engine's built-in default font. This can be used
-  in lieu of the Font constructor for prototyping--or even if you just prefer
-  the default font.
-
-new Font(filename);
-  
-  Constructs a Font object. 'filename' is relative to the game's "fonts"
-  directory and must be in Sphere .rfn format.
-
-Font:clone();
-  
-  Creates a new Font object by copying everything from this one. Modifications
-  to the cloned font then won't affect the original.
-
-Font:colorMask (read/write)
-  
-  Gets or sets the color mask, which is blended with the font bitmaps when text
-  is rendered using the font.
-
-Font:height (read-only)
-
-  Gets the line height, in pixels, for text rendered using this font.
-
-Font:getCharacterImage(cp);
-  
-  Gets an Image object for a specified character glyph. 'cp' is an integer in
-  range [0-255] specifying the ASCII character code.
-
-Font:setCharacterImage(cp, image);
-  
-  Sets the glyph image for a specified character. 'cp' has the same meaning as
-  above and 'image' is the replacement Image object.
-
-Font:getStringWidth(string);
-
-  Gets the width, in pixels, of 'string' if it were rendered using this font.
-
-Font:getStringHeight(string, wrap_width);
-  
-  Gets the height, in pixels, of the string if it were rendered using using
-  Font:drawTextBox(), passing 'wrap_width'.
-
-Font:drawText(x, y, text);
-
-  Renders 'text' at (x,y) using this font. The text is not wrapped.
-
-Font:drawTextBox(x, y, width, height, x_offset, text);
-  
-  Renders 'text' at (x,y) wrapped and constrained to a box of the specified
-  width and height. 'x_offset' is added to the X coordinate to offset the text.
 
 
 Frame Skipping
@@ -418,6 +528,18 @@ new ShaderProgram(shader_files);
 
   Note: Shader filenames are relative to [game root]/shaders.
   
+new Image(filename);
+
+  Constructs a new Image object from an image file. 'filename' will be relative
+  to your game's "images" directory. Images can be used as textures for
+  Shape objects or drawn directly using the legacy method Image:blit(). Images
+  are read-only. If you need a writable image, you should use a Surface object.
+
+Image:width (read-only)
+Image:height (read-only)
+
+  Gets the width or height of the image, in pixels.
+
 new Vertex(x, y[, color[, u, v]]);
   
   Constructs an object describing a vertex of a shape. x and y specify the
@@ -489,6 +611,153 @@ Group:rotY (read/write)
   Specifies the amount by which to translate before rotation is applied. The
   shapes in the group will revolve about the origin at a distance determined by
   these values.
+
+
+Fonts and Text Rendering
+------------------------
+
+A common task in a game engine, at some point you will probably want to get text
+on the screen.  In minisphere, you use a Font object to do this.
+
+GetSystemFont();
+  
+  Returns a Font object for the engine's built-in default font. This can be used
+  in lieu of the Font constructor for prototyping--or even if you just prefer
+  the default font.
+
+new Font(filename);
+  
+  Constructs a Font object. 'filename' is relative to the game's "fonts"
+  directory and must be in Sphere .rfn format.
+
+Font:clone();
+  
+  Creates a new Font object by copying everything from this one. Modifications
+  to the cloned font then won't affect the original.
+
+Font:colorMask (read/write)
+  
+  Gets or sets the color mask, which is blended with the font bitmaps when text
+  is rendered using the font.
+
+Font:height (read-only)
+
+  Gets the line height, in pixels, for text rendered using this font.
+
+Font:getCharacterImage(cp);
+  
+  Gets an Image object for a specified character glyph. 'cp' is an integer in
+  range [0-255] specifying the ASCII character code.
+
+Font:setCharacterImage(cp, image);
+  
+  Sets the glyph image for a specified character. 'cp' has the same meaning as
+  above and 'image' is the replacement Image object. Note that replacing glyph
+  images requires the font metrics to be recalculated, which may cause
+  performance issues if overused.
+
+Font:getStringWidth(string);
+
+  Gets the width, in pixels, of 'string' if it were rendered using this font.
+
+Font:getStringHeight(string, wrap_width);
+  
+  Gets the height, in pixels, of the string if it were rendered using using
+  Font:drawTextBox(), passing 'wrap_width'.
+
+Font:wordWrapString(text, wrap_width);
+
+  Wraps 'text' as if it were drawn with Font:drawTextBox() with the specified
+  wrap width. Returns an array of strings, representing the lines of the wrapped
+  string.
+
+Font:drawText(x, y, text);
+
+  Renders 'text' at (x,y) using this font. The text is not wrapped.
+
+Font:drawZoomedText(x, y, scale, text);
+  
+  Renders 'text' at (x,Y0 using this font, scaled according to 'scale'. For
+  example, a scale of 2.0 is double size. As with Font:drawText(), the text is
+  not wrapped.
+
+Font:drawTextBox(x, y, width, height, x_offset, text);
+  
+  Renders 'text' at (x,y) wrapped and constrained to a box of the specified
+  width and height. 'x_offset' is added to the X coordinate to offset the text.
+
+
+Sound Routines
+--------------
+
+Playing sounds and music are both handled in minisphere by the Sound object.
+
+new Sound(filename);
+
+  Constructs a Sound object from the specified sound of music file. 'filename'
+  is relative to the game's "sounds" directory. The sound will be streamed from
+  the file system. Valid sound formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT,
+  and FLAC. minisphere does not support mp3 or MIDI.
+
+Sound:playing (read-only)
+
+  true if the sound is currently playing, false otherwise.
+
+Sound:length (read-only)
+  
+  Gets the length of the sound in microseconds.
+
+Sound:pan (read/write)
+
+  Gets or sets the currently pan (balance). 0.0 is dead center, -1.0 is full
+  left and 1.0 is full right.
+
+Sound:pitch (read/write)
+
+  Gets the current relative pitch of the sound. 1.0 is normal. Note that this
+  is not a true pitch adjustment: the playback speed will be altered.
+
+Sound:position (read/write)
+  
+  Gets or sets the playback position within the sound, in microseconds.
+
+Sound:repeat (read/write)
+
+  Gets or sets whether the sound will automatically repeat when it reaches the
+  end.
+
+Sound:seekable (read-only)
+ 
+  Gets or sets whether the sound is seekable. Currently all supported formats
+  are seekable, so this will always be true.
+
+Sound:volume (read/write)
+  
+  Gets or sets the current volume of the sound, range [0-255].
+
+Sound:pause();
+  
+  Pauses the sound. If it is already paused, this has no effect.
+
+Sound:play([is_looping]);
+  
+  Begins or resumes sound playback. The semantics of this function are a bit
+  counterintuitive, but match the behavior of Sphere 1.5. When called with no
+  arguments, Sound:play() resumes a paused sound. Otherwise, the sound is
+  restarted from the beginning (even if it was already playing). If 'is_looping'
+  is true, the sound will automatically repeat when playback ends.
+
+Sound:reset();
+  
+  Seeks to the beginning of the stream. Playback state is not altered; if the
+  sound is playing at the time of this call, it simply starts over from the
+  beginning. Essentially, this has the same effect as setting Sound:position to
+  zero.
+
+Sound:stop();
+  
+  Stops the sound. The playback position will be reset to the beginning, even if
+  the sound was not playing.
 
 
 Byte Arrays

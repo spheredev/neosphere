@@ -598,6 +598,7 @@ init_input_api(void)
 	register_api_const(g_duk, "KEY_PAGEUP", ALLEGRO_KEY_PGUP);
 	register_api_const(g_duk, "KEY_PERIOD", ALLEGRO_KEY_FULLSTOP);
 	register_api_const(g_duk, "KEY_SCROLLOCK", ALLEGRO_KEY_SCROLLLOCK);
+	register_api_const(g_duk, "KEY_SCROLLLOCK", ALLEGRO_KEY_SCROLLLOCK);
 	register_api_const(g_duk, "KEY_SEMICOLON", ALLEGRO_KEY_SEMICOLON);
 	register_api_const(g_duk, "KEY_SPACE", ALLEGRO_KEY_SPACE);
 	register_api_const(g_duk, "KEY_SLASH", ALLEGRO_KEY_SLASH);
