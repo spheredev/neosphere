@@ -527,7 +527,6 @@ js_Sound_reset(duk_context* ctx)
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	seek_sound(sound, 0);
-	play_sound(sound);
 	return 0;
 }
 
