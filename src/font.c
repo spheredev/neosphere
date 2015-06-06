@@ -337,7 +337,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	// run through one character at a time, carrying as necessary
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
-	memset(line_buffer, 0, pitch);
+	memset(line_buffer, 0, pitch);  // fill line with NULs
 	p = text;
 	do {
 		switch (ch = *p++) {
@@ -372,7 +372,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			else
 				line_buffer += pitch;
 			
-			memset(line_buffer, 0, pitch);
+			memset(line_buffer, 0, pitch);  // fill line with NULs
 
 			// copy carry text into new line
 			line_width = get_text_width(font, carry);
