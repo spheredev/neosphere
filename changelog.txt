@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v1.2 - TBD
-----------
+v1.2 - June 6, 2015
+-------------------
 
 * CommonJS module support!
 * Globals are now accessible via the Sphere object. With this, global variables
