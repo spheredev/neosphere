@@ -5,9 +5,9 @@ v1.2 - TBD
 ----------
 
 * CommonJS module support!
-* The global object is now accessible as the Sphere object, allowing global
-  variables to be created in strict mode code, where it would normally be
-  flagged as an error. This is similar to the 'window' object in a browser:
+* Globals are now accessible via the Sphere object. With this, global variables
+  can be created from strict mode code, where it would normally be flagged as an
+  error. This is similar to the 'window' object in a browser:
       Sphere.myVar = 812;
       Sphere.GetKey();
       // etc.

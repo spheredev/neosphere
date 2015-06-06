@@ -550,6 +550,8 @@ relativepath(const char* path, const char* base_dir)
 
 	size_t i, length;
 
+	if (g_game_path == NULL)
+		return path;
 	base_path = get_asset_path("", base_dir, false);
 	if (strstr(path, base_path) == path)
 		strncpy(retval, path + strlen(base_path), SPHERE_PATH_MAX);
