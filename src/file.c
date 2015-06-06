@@ -21,10 +21,13 @@ static duk_ret_t js_File_write      (duk_context* ctx);
 
 struct file
 {
+	unsigned int    id;
 	ALLEGRO_CONFIG* conf;
 	bool            is_dirty;
 	char*           path;
 };
+
+static unsigned int s_next_file_id = 0;
 
 file_t*
 open_file(const char* path)
@@ -42,6 +45,9 @@ open_file(const char* path)
 			goto on_error;
 	}
 	file->path = strdup(path);
+	file->id = s_next_file_id++;
+	console_log(2, "engine: Opened KVP file from file system [file %u]", file->id);
+	console_log(2, "  Path: %s", relativepath(path, NULL));
 	return file;
 
 on_error:
@@ -58,8 +64,10 @@ close_file(file_t* file)
 {
 	if (file == NULL)
 		return;
-	if (file->is_dirty) save_file(file);
+	if (file->is_dirty)
+		save_file(file);
 	al_destroy_config(file->conf);
+	console_log(2, "file %u: Closed file", file->id);
 	free(file);
 }
 
@@ -132,13 +140,17 @@ read_string_rec(file_t* file, const char* key, const char* def_value)
 	if (!(read_value = al_get_config_value(file->conf, NULL, key)))
 		read_value = def_value;
 	value = strdup(read_value);
+	console_log(3, "file %u: Read value \"%f\" from key '%s'", file->id, value, key);
 	return value;
 }
 
-void
+bool
 save_file(file_t* file)
 {
-	al_save_config_file(file->path, file->conf);
+	if (!al_save_config_file(file->path, file->conf))
+		return false;
+	console_log(3, "file %u: Saved file to file system", file->id);
+	return true;
 }
 
 void
@@ -146,6 +158,8 @@ write_bool_rec(file_t* file, const char* key, bool value)
 {
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
+	console_log(3, "file %u: Wrote boolean value '%s' under key '%s'", file->id,
+		value ? "true" : "false", key);
 }
 
 void
@@ -156,6 +170,7 @@ write_number_rec(file_t* file, const char* key, double value)
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
 	file->is_dirty = true;
+	console_log(3, "file %u: Wrote number value %f under key '%s'", file->id, value, key);
 }
 
 void
@@ -163,6 +178,7 @@ write_string_rec(file_t* file, const char* key, const char* value)
 {
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
+	console_log(3, "file %u: Wrote string value \"%s\" under key '%s'", file->id, value, key);
 }
 
 void
