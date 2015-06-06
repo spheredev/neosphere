@@ -22,10 +22,13 @@ static duk_ret_t js_ByteArray_slice           (duk_context* ctx);
 
 struct bytearray
 {
-	int      refcount;
-	uint8_t* buffer;
-	int      size;
+	int          refcount;
+	unsigned int id;
+	uint8_t*     buffer;
+	int          size;
 };
+
+static unsigned int s_next_array_id = 0;
 
 bytearray_t*
 new_bytearray(int size)
@@ -36,6 +39,8 @@ new_bytearray(int size)
 		goto on_error;
 	if (!(array->buffer = calloc(size, 1))) goto on_error;
 	array->size = size;
+	array->id = s_next_array_id++;
+	console_log(3, "engine: Created %u-byte bytearray [bytearray %u]", array->size, array->id);
 	return ref_bytearray(array);
 	
 on_error:
@@ -51,6 +56,8 @@ bytearray_from_buffer(const void* buffer, int size)
 	if (!(array = new_bytearray(size)))
 		return NULL;
 	memcpy(array->buffer, buffer, size);
+	array->id = s_next_array_id++;
+	console_log(3, "engine: Created %u-byte bytearray from buffer [bytearray %u]", array->size, array->id);
 	return array;
 }
 
@@ -64,6 +71,10 @@ bytearray_from_lstring(const lstring_t* string)
 	if (!(array = new_bytearray((int)string->length)))
 		return NULL;
 	memcpy(array->buffer, string->cstr, string->length);
+	array->id = s_next_array_id++;
+	console_log(3, "engine: Created bytearray from %u-byte string [bytearray %u]", string->length, array->id);
+	if (string->length <= 65)  // log short strings only
+		console_log(4, "  string: \"%s\"", string->cstr);
 	return array;
 }
 
@@ -79,6 +90,7 @@ free_bytearray(bytearray_t* array)
 {
 	if (array == NULL || --array->refcount > 0)
 		return;
+	console_log(3, "bytearray %u: Freeing bytearray, refcount is 0");
 	free(array->buffer);
 	free(array);
 }
@@ -119,6 +131,7 @@ concat_bytearrays(bytearray_t* array1, bytearray_t* array2)
 		return NULL;
 	memcpy(new_array->buffer, array1->buffer, array1->size);
 	memcpy(new_array->buffer + array1->size, array2->buffer, array2->size);
+	console_log(3, "bytearray %u: Concatenated from bytearrays %u, %u", new_array->id, array1->id, array2->id);
 	return new_array;
 }
 
@@ -130,6 +143,7 @@ slice_bytearray(bytearray_t* array, int start, int length)
 	if (!(new_array = new_bytearray(length)))
 		return NULL;
 	memcpy(new_array->buffer, array->buffer + start, length);
+	console_log(3, "bytearray %u: Sliced from bytearray %u", new_array->id, array->id);
 	return new_array;
 }
 
