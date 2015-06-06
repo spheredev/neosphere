@@ -331,12 +331,13 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	// allocate initial buffer
 	get_font_metrics(font, &glyph_width, NULL, NULL);
 	pitch = glyph_width > 0 ? width / glyph_width + 3 : width;
-	if (!(buffer = calloc(1, max_lines * pitch))) goto on_error;
+	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
 	if (!(carry = malloc(pitch))) goto on_error;
 
 	// run through one character at a time, carrying as necessary
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
+	memset(line_buffer, 0, pitch);
 	p = text;
 	do {
 		switch (ch = *p++) {
@@ -371,6 +372,8 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			else
 				line_buffer += pitch;
 			
+			memset(line_buffer, 0, pitch);
+
 			// copy carry text into new line
 			line_width = get_text_width(font, carry);
 			line_length = strlen(carry);
