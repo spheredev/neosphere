@@ -664,9 +664,8 @@ init_input_api(void)
 	register_api_const(g_duk, "KEY_NUM_0", ALLEGRO_KEY_PAD_0);
 
 	register_api_const(g_duk, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
-	register_api_const(g_duk, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
 	register_api_const(g_duk, "MOUSE_MIDDLE", MOUSE_BUTTON_MIDDLE);
-	register_api_const(g_duk, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
+	register_api_const(g_duk, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
 	register_api_const(g_duk, "MOUSE_WHEEL_UP", MOUSE_WHEEL_UP);
 	register_api_const(g_duk, "MOUSE_WHEEL_DOWN", MOUSE_WHEEL_DOWN);
 

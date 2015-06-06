@@ -50,7 +50,27 @@ GetExtensions()
     * minisphere-rng-object
     * frameskip-api
     * set-script-function
-    
+
+
+Filename Escapes
+----------------
+
+All functions accepting filenames treat them as relative to a certain directory,
+generally a subdirectory below the current game. To get around this and load
+files from a different location, you can escape the filename. minisphere 1.2
+recognizes the following filename escapes:
+
+  ~/:  A filename beginning with a tilde followed by a forward slash is relative
+       to the directory containing the current game's game.sgm file.
+  ~#/: A tilde and numeral sign followed by a forward slash indicates a path
+       which is relative to the engine's 'system' directory. This may be used to
+       access built-in engine assets.
+       
+By way of example, the following will open the file settings.cfg from the
+calling game's "config" subdirectory:
+  
+  var file = new File("~/config/settings.cfg");
+
 
 Dependency Management
 ---------------------
@@ -403,6 +423,73 @@ UnbindKey(keycode);
   the main loop of a MapEngine() call.
   
   UnbindKey() removes a binding created by BindKey().
+
+
+Joystick Routines
+-----------------
+
+These functions allow your game to accept joystick and gamepad input for a more
+console-like experience.
+
+GetNumJoysticks();
+
+  Returns the number of joysticks currently available for use.
+
+GetNumJoystickAxes(joystick);
+GetJoystickAxis(joystick, axis);
+
+  Gets the current position of a joystick axis. 'joystick' and 'axis' are zero-
+  based indices whose exact meaning depends on the device and system. Return
+  value ranges from -1.0 to 1.0, with zero indicating dead center. Call
+  GetNumJoystickAxes() to get the number of available axes.
+  
+  Note: Joystick indices are not set in stone, even on the same system, and can
+  change, e.g. after a reboot.
+
+GetNumJoystickButtons(joystick);
+IsJoystickButtonPressed(joystick, button);
+
+  Returns true if a specified joystick button is pressed. 'button' is a zero-
+  based index whose exact mapping depends on the device in question. Call
+  GetNumJoystickButtons() to get the number of available buttons.
+
+BindJoystickButton(joystick, button, on_down_script, on_up_script);
+UnbindJoystickButton(joystick, button);
+
+  Like BindKey() and UnbindKey() above, but binds a joystick button instead of
+  a keyboard key. As with BindKey(), bound joystick buttons are only honored in
+  the main MapEngine() loop.
+
+
+Mouse Input Routines
+--------------------
+
+Rounding out the input routines are the mouse functions. Most games don't need
+mouse support, but it's available if you do need it.
+
+GetMouseX();
+GetMouseY();
+SetMousePosition(x, y);
+
+  Gets or sets the location of the mouse cursor, in pixels, relative to the game
+  screen.
+  
+IsMouseButtonPressed(button);
+
+  Returns true if the player is pressing the specified mouse button. 'button'
+  can be one of the following:
+  
+    MOUSE_LEFT:   Left button
+    MOUSE_MIDDLE: Middle or wheel button
+    MOUSE_RIGHT:  Right button
+
+GetNumMouseWheelEvents();
+GetMouseWheelEvent();
+
+  GetMouseWheelEvent() returns the next mouse wheel event in the wheel queue. If
+  the queue is empty, waits until the player moves the wheel. If this behavior
+  is undesirable, call GetNumMouseWheelEvents() first to make sure the queue
+  isn't empty.
 
 
 Random Number Generation
