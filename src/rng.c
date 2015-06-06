@@ -14,15 +14,20 @@ static duk_ret_t js_RNG_vary   (duk_context* ctx);
 void
 initialize_rng(void)
 {
-	console_log(1, "Seeding random number generator\n");
+	unsigned long seed;
+	
+	seed = (unsigned long)time(NULL);
+	console_log(1, "Initializing random number generator\n");
+	console_log(2, "  Seed value: %ul", seed);
 
-	init_genrand(time(NULL));
+	init_genrand(seed);
 }
 
 void
 seed_rng(unsigned long seed)
 {
 	init_genrand(seed);
+	console_log(2, "engine: RNG reseeded with value %ul", seed);
 }
 
 bool
