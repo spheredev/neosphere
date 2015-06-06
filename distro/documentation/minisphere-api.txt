@@ -62,10 +62,11 @@ to get very far!
 RequireScript(filename)
 EvaluateScript(filename)
 
+  'filename' is relative to ~/scripts unless escaped.
+  
   Evaluates the contents of `filename`, as if the code contained within
   were part of the script containing the call. If you've ever worked in
-  C or C++, this is a bit like including a header file. The filename is
-  assumed to be relative to [game.sgm root]/scripts.
+  C or C++, this is a bit like including a header file.
   
   Note: RequireScript only executes a given script once, regardless
   of how many RequireScript() calls specifying it are encountered. This
@@ -74,10 +75,11 @@ EvaluateScript(filename)
 
 RequireSystemScript(filename)
 EvaluateSystemScript(filename)
-
-  Same as above, except the filename is relative to
-  [engine root]/system/scripts instead of the game directory. This
-  allows you to use scripts included with the engine.
+  
+  'filename' is relative to ~#/scripts. Path escapes will not work.
+  
+  Same as above, except the script is loaded from the engine's system directory.
+  These are used to import scripts included with the engine.
 
 
 CommonJS
@@ -145,9 +147,10 @@ part of the developer to output enough log entries!
 
 new Logger(filename)
 
+  'filename' is relative to ~/logs unless escaped.
+  
   Opens a file for logging and constructs an object you can use to access the
-  log. `filename` is relative to <game dir>/logs. An error will be thrown if the
-  file cannot be opened for writing.
+  log. An error will be thrown if the file cannot be opened for writing.
 
 Logger:write(text)
   
@@ -161,6 +164,27 @@ Logger:beginBlock(name)
 Logger:endBlock()
   
   Closes the innermost block and decreases the indent level.
+
+
+Timing Functions
+----------------
+
+These are used to measure elapsed time during gameplay and coordinate timed
+events.
+
+GetTime();
+
+  Returns the number of milliseconds elapsed since some arbitrary point in time
+  (usually engine start). If you need more precision, use GetSeconds() instead.
+
+GetSeconds();
+
+  Returns the amount of time in seconds, in floating point, since some arbitrary
+  point in time. Precision is guaranteed to be < 1µs.
+
+Delay(ms);
+  
+  Suspends game execution for 'ms' milliseconds.
 
 
 Execution Control and Game Management
@@ -499,8 +523,8 @@ UnskipFrame();
   game.
 
 
-Galileo Graphics Primitives
----------------------------
+Galileo Graphics API
+--------------------
 
 Wondered what that `sphere-galileo` extension was above? This is it! It's a
 more modern approach to graphics rendering based on precomposing scenes from
@@ -512,28 +536,49 @@ objects.  With these, you precompose a complex object out of a set of vertices
 and textures which are then uploaded to the GPU to save time during the main
 render loop.
 
-GetDefaultShaderProgram();
+new Color(red, green, blue[, alpha]);
   
-  Gets the default Galileo shader program. This is a very barebones shader which
-  uses screen coordinates for vertices and performs only basic texture mapping
-  in the fragment shader.
+  Constructs a new Color object. Color objects are used to specify the color of
+  elements such as vertices and primitives. Color components should be in the
+  range [0-255] and out-of-range values will be silently clamped. 'alpha'
+  specifies opacity and defaults to 255 if not provided.
 
-new ShaderProgram(shader_files);
+Color:clone();
   
-  Constructs a ShaderProgram from a set of shader sources. `shader_files` should
-  be an object with the following properties:
-    
-    vertex:   The filename of the source for the vertex shader.
-    fragment: The filename of the source for the fragment shader.
+  Copies this Color object to a new one. Changes to the new object will not
+  affect the original.
 
-  Note: Shader filenames are relative to [game root]/shaders.
+Color:red (read/write)
+Color:green (read/write)
+Color:blue (read/write)
+Color:alpha (read/write)
+
+  Gets or sets the individual components of the color. Values outside the range
+  of [0-255] are accepted, but the engine will automatically clamp them during
+  rendering.
+
+BlendColors(color1, color2);
   
+  Averages two colors and returns the new Color object from the result.
+
+BlendColorsWeighted(color1, color2, w1, w2);
+
+  Returns a new Color object which is a weighted average of the two passed in.
+  'w1' and 'w2' are the relative weights of the two colors.
+
 new Image(filename);
-
+  
+  'filename' is relative to ~/images unless escaped.
+  
   Constructs a new Image object from an image file. 'filename' will be relative
   to your game's "images" directory. Images can be used as textures for
   Shape objects or drawn directly using the legacy method Image:blit(). Images
   are read-only. If you need a writable image, you should use a Surface object.
+
+new Image(surface);
+  
+  Creates an Image object with the contents of a specified surface. This can be
+  used to regain rendering performance after composing the surface.
 
 Image:width (read-only)
 Image:height (read-only)
@@ -584,7 +629,8 @@ new Group(shapes, shader);
   
   Constructs a Group out of the provided array of Shape objects. `shader` is the
   shader program to use when rendering the group, obtained by calling either the
-  ShaderProgram constructor or GetDefaultShaderProgram().
+  ShaderProgram constructor or GetDefaultShaderProgram(). See below for more
+  information on shaders.
 
 Group:draw();
   
@@ -612,6 +658,99 @@ Group:rotY (read/write)
   shapes in the group will revolve about the origin at a distance determined by
   these values.
 
+Group:shader (read/write);
+
+  Gets or sets the ShaderProgram used when rendering this Group.
+
+GetDefaultShaderProgram();
+  
+  Gets the default Galileo shader program. This is a very barebones shader which
+  uses screen coordinates for vertices and performs only basic texture mapping
+  in the fragment shader.
+
+new ShaderProgram(shader_files);
+  
+  Constructs a ShaderProgram from a set of shader sources. `shader_files` should
+  be an object with the following properties:
+    
+    vertex:   The filename of the source for the vertex shader.
+    fragment: The filename of the source for the fragment shader.
+
+  Note: Shader filenames are relative to ~/shaders unless escaped.
+
+
+Surfaces
+--------
+
+A surface is a writable image which you can render primitives, images and other
+surfaces to to compose an image behind-the-scenes and later render it all at
+once. Surfaces are allocated from main memory, which allows fast manipulation
+at the expense of direct rendering performance.
+
+new Surface(width, height[, fill_color]);
+
+  Constructs a new surface with the specified width and height, optionally
+  filled with 'fill_color'. If a fill color is not provided, the created surface
+  will be filled with transparent pixels.
+
+new Surface(filename);
+  
+  'filename' is relative to ~/images unless escaped.
+
+GrabSurface(x, y, width, height);
+  
+  Creates a surface with the contents of the specified portion of the
+  backbuffer. If this called during a skipped frame, the content of the created
+  surface is undefined. See the documentation for the Frameskip API above for
+  information on how to mitigate this.
+
+Surface:width (read-only)
+Surface:height (read-only)
+
+  Gets the width or height of the surface, in pixels.
+
+Surface:clone();
+
+  Creates a new surface from the contents of this one. Modifications to the new
+  surface will not affect the original.
+
+Surface:save(filename);
+
+  'filename' is relative to ~/images unless escaped.
+  
+  Saves the contents of the surface to an image file. The filename extension
+  determines the format of the saved image. Supported formats are PNG, BMP and
+  JPG.
+
+
+Windowstyles
+------------
+
+Windowstyles are used add flair to menus and text boxes, especially in RPGs.
+You can create as many windowstyle objects as you want, so they provide a
+standardized way to allow the player to customize the style of such elements in
+a game.
+
+new WindowStyle(filename);
+
+  'filename' is relative to ~/windowstyles unless escaped.
+  
+  Constructs a WindowStyle object from a windowstyle file. The file must be in
+  Sphere RWS format.
+  
+WindowStyle:colorMask (read/write)
+
+  Gets or sets the windowstyle color mask. This is the color that is combined
+  with the windowstyle images to tint the rendered window. If this is not
+  modified, the default color is #FFFFFFFF and the windowstyle will be rendered
+  as-is.
+
+WindowStyle:drawWindow(x, y, width, height);
+
+  Renders a window to the backbuffer using this windowstyle. Note that the
+  dimensions provided include the window border, so you will need to make it a
+  bit larger than your content.
+
 
 Fonts and Text Rendering
 ------------------------
@@ -627,8 +766,10 @@ GetSystemFont();
 
 new Font(filename);
   
-  Constructs a Font object. 'filename' is relative to the game's "fonts"
-  directory and must be in Sphere .rfn format.
+  'filename' is relative to ~/fonts unless escaped.
+  
+  Constructs a Font object from a font file. The file must be in Sphere RFN
+  format.
 
 Font:clone();
   
@@ -693,11 +834,12 @@ Sound Routines
 Playing sounds and music are both handled in minisphere by the Sound object.
 
 new Sound(filename);
-
-  Constructs a Sound object from the specified sound of music file. 'filename'
-  is relative to the game's "sounds" directory. The sound will be streamed from
-  the file system. Valid sound formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT,
-  and FLAC. minisphere does not support mp3 or MIDI.
+  
+  'filename' is relative to ~/sounds unless escaped.
+  
+  Constructs a Sound object from the specified sound or music file. The sound
+  will be streamed from the file system. Supported sound formats are Ogg Vorbis
+  (.ogg), WAV, MOD, S3M, IT, and FLAC. minisphere does not support mp3 or MIDI.
 
 Sound:playing (read-only)
 
@@ -889,7 +1031,22 @@ File and Directory Management
 -----------------------------
 
 These functions allow you to manage the file system. For all of these functions,
-file and directory names are relative to the game's 'save' directory.
+file and directory names are relative to ~/save.
+
+GetFileList([dirname]);
+  
+  'dirname' is relative to ~/ unless escaped.
+  
+  Returns an array of strings naming files found in the specified directory. If
+  'dirname' is not provided, ~/save is assumed.
+
+GetDirectoryList([dirname]);
+  
+  'dirname' is relative to ~/ unless escaped.
+  
+  Returns an array of strings naming subdirectories found in the specified
+  directory. If 'dirname' is not provided, ~/ is assumed. This is inconsistent
+  with GetFileList(), but is compatible with Sphere 1.5.
 
 DoesFileExist(filename);
 
@@ -959,6 +1116,8 @@ File:close()
   
 new RawFile(filename[, is_writable]);
   
+  'filename' is relative to ~/other unless escaped.
+  
   Opens a binary file, allowing raw data to be read and/or written. If
   'is_writable' is false, the file must exist and will be opened for reading
   only. Otherwise, the file is overwritten (be careful!) and opened for writing.
@@ -1007,26 +1166,26 @@ very powerful.  It's also very easy to get up and running. This section is
 incomplete; the APIs below are only the basics. See the included Sphere 1.5 API
 documentation for the full set of map functions.
 
-MapEngine(map_file, framerate);
+MapEngine(filename, framerate);
 
+  'filename' is relative to ~/maps unless escaped.
+  
   Starts the map engine, loading `map_file` as the initial map. `framerate`
   specifies the framerate the map engine will run at; a framerate of 0 will run
   unthrottled, which may be useful for benchmarks but is generally useless
   otherwise.
   
-  `map_file` is assumed to be relative to the "maps" directory in the game.sgm
-  root.
-
 IsMapEngineRunning();
   
   Returns true if the map engine is currently running.
 
-ChangeMap(map_file);
+ChangeMap(filename);
 
-  Loads `map_file` into the map engine. This destroys any transient
-  persons automatically. Transient persons are those defined in the map
-  file as well as any created by passing `true` as the third argument
-  to CreatePerson().
+  'filename' is relative to ~/maps unless escaped.
+  
+  Loads a new map into the map engine. This destroys any transient persons
+  automatically. Transient persons are those defined in the map file as well as
+  any created by passing `true` as the third argument to CreatePerson().
 
 MapToScreenX(layer, x);
 MapToScreenY(layer, y);
@@ -1052,7 +1211,7 @@ GetMapEngineFrameRate();
 
 GetCurrentMap();
   
-  Gets the filename of the current map, relative to [game root]/maps.
+  Gets the filename of the current map, relative to ~/maps.
 
 AttachInput(name);
 DetachInput();
@@ -1225,8 +1384,8 @@ loaded.
 CreatePerson(name, spriteset, transient);
   
   Creates a person using the spriteset specified by `spriteset`. This can either
-  be an .rss spriteset path (relative to [game root]/spritesets) or a Spriteset
-  object. If `transient` true, the person is transient and will automatically be
+  be an .rss spriteset path (relative to ~/spritesets) or a Spriteset object.
+  If `transient` true, the person is transient and will automatically be
   destroyed when a new map is loaded via ChangeMap().
 
 DestroyPerson(name);
