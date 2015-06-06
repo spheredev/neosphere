@@ -345,10 +345,13 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			if (ch == '\r' && *p == '\n') ++p;  // CRLF
 			is_line_end = true;
 			break;
+		case '\0':  // NUL terminator
+			is_line_end = line_length > 0;  // commit last line on EOT
+			break;
 		default:  // default case, copy character as-is
 			line_buffer[line_length++] = ch;
 			line_width += get_glyph_width(font, ch);
-			is_line_end = ch == '\0' && line_length > 0;  // commit last line on EOT
+			is_line_end = false;
 		}
 		if (is_line_end) carry[0] = '\0';
 		if (line_width > width || line_length >= pitch - 1) {
