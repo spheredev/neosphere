@@ -1005,33 +1005,39 @@ find_layer(const char* name)
 static void
 map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
+	int   center_x, center_y;
 	int   layer_w, layer_h;
 	float plx_offset_x = 0.0, plx_offset_y = 0.0;
 	int   tile_w, tile_h;
 	int   x_offset, y_offset;
 	
-	// get layer dimensions
+	// get layer and screen metrics
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
 	layer_h = s_map->layers[layer].height * tile_h;
-	
+	center_x = g_res_x / 2;
+	center_y = g_res_y / 2;
+
+	// initial camera correction
+	if (!s_map->is_repeating) {
+		camera_x = fmin(fmax(camera_x, center_x), layer_w - center_x);
+		camera_y = fmin(fmax(camera_y, center_y), layer_h - center_y);
+	}
+
 	// remap screen coordinates to layer coordinates
 	plx_offset_x = s_frames * s_map->layers[layer].autoscroll_x
 		- camera_x * (s_map->layers[layer].parallax_x - 1.0);
 	plx_offset_y = s_frames * s_map->layers[layer].autoscroll_y
 		- camera_y * (s_map->layers[layer].parallax_y - 1.0);
-	x_offset = camera_x - g_res_x / 2 - plx_offset_x;
-	y_offset = camera_y - g_res_y / 2 - plx_offset_y;
+	x_offset = camera_x - center_x - plx_offset_x;
+	y_offset = camera_y - center_y - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
-		// non-repeating map: clamp viewport to map bounds (windowbox if needed)
-		x_offset = layer_w > g_res_x ? fmin(fmax(x_offset, 0), layer_w - g_res_x)
-			: -(g_res_x - layer_w) / 2;
-		y_offset = layer_h > g_res_y ? fmin(fmax(y_offset, 0), layer_h - g_res_y)
-			: -(g_res_y - layer_h) / 2;
+		// if the map is smaller than the screen, windowbox it
+		if (layer_w < g_res_x) x_offset = -(g_res_x - layer_w) / 2;
+		if (layer_h < g_res_y) y_offset = -(g_res_y - layer_h) / 2;
 	}
 	else {
-		// repeating map or parallax layer: pre-wrap to layer dimensions
-		// (simplifies rendering calculations)
+		// pre-wrap coordinates to layer dimensions. this simplifies rendering calculations.
 		x_offset = (x_offset % layer_w + layer_w) % layer_w;
 		y_offset = (y_offset % layer_h + layer_h) % layer_h;
 	}
