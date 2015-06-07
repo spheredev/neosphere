@@ -93,6 +93,7 @@ iterate_vector(const vector_t* vector)
 
 	iter.vector = vector;
 	iter.ptr = vector->buffer;
+	iter.index = 0;
 	return iter;
 }
 
@@ -110,6 +111,8 @@ next_vector_item(iter_t* iter)
 		iter->ptr = (char*)pcurrent + vector->pitch;
 	else
 		iter->ptr = NULL;
+	if (pcurrent > (void*)vector->buffer)
+		++iter->index;
 	return pcurrent;
 }
 
