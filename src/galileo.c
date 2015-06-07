@@ -394,13 +394,18 @@ refresh_shape_vbuf(shape_t* shape)
 		al_destroy_vertex_buffer(shape->vbuf);
 	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+	
+	// create a vertex buffer
 	if (shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
 		vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY);
 	if (vertices == NULL) {
+		// hardware buffer couldn't be created, fall back to software
 		if (!(shape->sw_vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
 			return;
 		vertices = shape->sw_vbuf;
 	}
+	
+	// upload vertices
 	for (i = 0; i < shape->num_vertices; ++i) {
 		vertices[i].x = shape->vertices[i].x;
 		vertices[i].y = shape->vertices[i].y;
@@ -409,6 +414,8 @@ refresh_shape_vbuf(shape_t* shape)
 		vertices[i].u = shape->vertices[i].u;
 		vertices[i].v = shape->vertices[i].v;
 	}
+	
+	// unlock hardware buffer, if applicable
 	if (vertices != shape->sw_vbuf)
 		al_unlock_vertex_buffer(shape->vbuf);
 	else if (shape->vbuf != NULL)
