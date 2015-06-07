@@ -1,6 +1,15 @@
 minisphere Changelog
 ====================
 
+v1.2.1 - June 7, 2015
+---------------------
+
+* Fixes a regression in GetCurrentZone() and GetCurrentTrigger() where an
+  index is returned.
+* Fixes out-of-sync scrolling issues with parallax layers on non-repeating maps.
+* Fixes a bug in Font:wordWrapString() where text ending on a wrap boundary can
+  cause the last word to be lost.
+
 v1.2 - June 6, 2015
 -------------------
 
