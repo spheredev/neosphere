@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.2.2 - June 8, 2015
+---------------------
+
+* Fixes map-defined BGM not playing--by implementing the feature. Nobody can say
+  I'm not dedicated to compatibility!
+
 v1.2.1 - June 7, 2015
 ---------------------
 

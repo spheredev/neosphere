@@ -164,7 +164,9 @@
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
+xcopy /y /d /f "..\readme.md" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -188,7 +190,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
+xcopy /y /d /f "..\readme.md" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -215,7 +219,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
+xcopy /y /d /f "..\readme.md" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -243,7 +249,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
+xcopy /y /d /f "..\readme.md" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -270,7 +278,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
+xcopy /y /d /f "..\readme.md" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
@@ -298,7 +308,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"</Command>
+xcopy /y /d /f "..\readme.md" "$(OutDir)"
+xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
