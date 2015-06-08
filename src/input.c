@@ -431,6 +431,7 @@ void
 update_input(void)
 {
 	ALLEGRO_EVENT          event;
+	int                    keycode;
 	ALLEGRO_MOUSE_STATE    mouse_state;
 	
 	// process Allegro input events
@@ -442,7 +443,22 @@ update_input(void)
 			memset(s_key_state, 0, ALLEGRO_KEY_MAX * sizeof(bool));
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
-			s_key_state[event.keyboard.keycode] = true;
+			keycode = event.keyboard.keycode;
+			s_key_state[keycode] = true;
+			
+			// queue Ctrl/Alt/Shift keys (Sphere compatibility hack)
+			if (keycode == ALLEGRO_KEY_LCTRL || keycode == ALLEGRO_KEY_RCTRL
+				|| keycode == ALLEGRO_KEY_ALT || keycode == ALLEGRO_KEY_ALTGR
+				|| keycode == ALLEGRO_KEY_LSHIFT || keycode == ALLEGRO_KEY_RSHIFT)
+			{
+				if (keycode == ALLEGRO_KEY_LCTRL || keycode == ALLEGRO_KEY_RCTRL)
+					queue_key(ALLEGRO_KEY_LCTRL);
+				if (keycode == ALLEGRO_KEY_ALT || keycode == ALLEGRO_KEY_ALTGR)
+					queue_key(ALLEGRO_KEY_ALT);
+				if (keycode == ALLEGRO_KEY_LSHIFT || keycode == ALLEGRO_KEY_RSHIFT)
+					queue_key(ALLEGRO_KEY_LSHIFT);
+			}
+			
 			break;
 		case ALLEGRO_EVENT_KEY_UP:
 			s_key_state[event.keyboard.keycode] = false;
