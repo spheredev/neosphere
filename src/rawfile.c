@@ -161,7 +161,8 @@ js_RawFile_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
-	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "file_ptr");
+	duk_push_pointer(ctx, NULL);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has been closed");
