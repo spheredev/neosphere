@@ -106,10 +106,19 @@ free_lstring(lstring_t* string)
 }
 
 const char*
-lstring_cstr(const lstring_t* string)
+lstr_cstr(const lstring_t* string)
 {
 	return string->cstr;
 }
+
+int
+lstr_cmp(const lstring_t* string1, const lstring_t* string2)
+{
+	// TODO: make this work with strings containing NULs
+	// that is, assuming I don't end up replacing this with something like bstrlib...
+	return strcmp(string1->cstr, string2->cstr);
+}
+
 
 lstring_t*
 duk_require_lstring_t(duk_context* ctx, duk_idx_t index)

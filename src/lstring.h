@@ -15,7 +15,9 @@ extern lstring_t*  clone_lstring     (const lstring_t* string);
 extern lstring_t*  read_lstring      (FILE* file, bool trim_null);
 extern lstring_t*  read_lstring_raw  (FILE* file, size_t length, bool trim_null);
 extern void        free_lstring      (lstring_t* string);
-extern const char* lstring_cstr      (const lstring_t* string);
+
+extern const char* lstr_cstr (const lstring_t* string);
+extern int         lstr_cmp  (const lstring_t* string1, const lstring_t* string2);
 
 extern lstring_t* duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
 

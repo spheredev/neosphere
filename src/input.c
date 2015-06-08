@@ -343,7 +343,7 @@ load_key_map(void)
 			: j == PLAYER_KEY_MENU ? "MENU"
 			: "8:12";
 		setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
-		s_key_map[i][j] = read_number_rec(file, lstring_cstr(setting), s_default_key_map[i][j]);
+		s_key_map[i][j] = read_number_rec(file, lstr_cstr(setting), s_default_key_map[i][j]);
 		free_lstring(setting);
 	}
 	close_file(file);
@@ -376,7 +376,7 @@ save_key_map(void)
 				: j == PLAYER_KEY_MENU ? "MENU"
 				: "8:12";
 			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
-			write_number_rec(file, lstring_cstr(setting), s_key_map[i][j]);
+			write_number_rec(file, lstr_cstr(setting), s_key_map[i][j]);
 			free_lstring(setting);
 		}
 		close_file(file);

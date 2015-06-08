@@ -72,7 +72,7 @@ initialize_api(duk_context* ctx)
 	console_log(0, "Initializing Sphere API\n");
 
 	s_user_agent = new_lstring("v%.1f (compatible; %s)", SPHERE_API_VERSION, ENGINE_NAME);
-	console_log(0, "  %s\n", lstring_cstr(s_user_agent));
+	console_log(0, "  %s\n", lstr_cstr(s_user_agent));
 
 	// register API extensions
 	s_extensions = new_vector(sizeof(char*));
@@ -409,7 +409,7 @@ js_GetVersion(duk_context* ctx)
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_string(ctx, lstring_cstr(s_user_agent));
+	duk_push_string(ctx, lstr_cstr(s_user_agent));
 	return 1;
 }
 
@@ -789,7 +789,7 @@ js_Assert(duk_context* ctx)
 
 		text = new_lstring("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
 		if (!al_show_native_message_box(g_display, "Script Error", "An Assert() condition failed.",
-			lstring_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
+			lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
 		{
 			exit_game(true);
 		}

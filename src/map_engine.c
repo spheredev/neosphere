@@ -6,6 +6,7 @@
 #include "obsmap.h"
 #include "persons.h"
 #include "script.h"
+#include "sound.h"
 #include "surface.h"
 #include "tileset.h"
 #include "vector.h"
@@ -146,8 +147,10 @@ static unsigned int        s_frames            = 0;
 static person_t*           s_input_person      = NULL;
 static bool                s_is_talk_allowed   = true;
 static bool                s_is_map_running    = false;
+static lstring_t*          s_last_bgm_file     = NULL;
 static struct map*         s_map = NULL;
 static char*               s_map_filename      = NULL;
+static sound_t*            s_map_bgm_stream    = NULL;
 static struct map_trigger* s_on_trigger        = NULL;
 static script_t*           s_render_script     = 0;
 static int                 s_talk_button       = 0;
@@ -168,6 +171,7 @@ struct map
 	int                width, height;
 	bool               is_repeating;
 	point3_t           origin;
+	lstring_t*         bgm_file;
 	script_t*          scripts[MAP_SCRIPT_MAX];
 	tileset_t*         tileset;
 	vector_t*          triggers;
@@ -720,9 +724,9 @@ load_map(const char* path)
 		}
 
 		// load tileset
-		if (strcmp(lstring_cstr(strings[0]), "") != 0) {
+		if (strcmp(lstr_cstr(strings[0]), "") != 0) {
 			tileset_path = al_create_path(path);
-			al_set_path_filename(tileset_path, lstring_cstr(strings[0]));
+			al_set_path_filename(tileset_path, lstr_cstr(strings[0]));
 			tileset = load_tileset(al_path_cstr(tileset_path, ALLEGRO_NATIVE_PATH_SEP));
 			al_destroy_path(tileset_path);
 		}
@@ -742,6 +746,8 @@ load_map(const char* path)
 		}
 
 		// wrap things up
+		map->bgm_file = strcmp(lstr_cstr(strings[1]), "") != 0
+			? clone_lstring(strings[1]) : NULL;
 		map->num_layers = rmp.num_layers;
 		map->is_repeating = rmp.repeat_map;
 		map->origin.x = rmp.start_x;
@@ -758,7 +764,8 @@ load_map(const char* path)
 			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], true, "%s onLeaveSouth", filename);
 			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], true, "%s onLeaveWest", filename);
 		}
-		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);
+		for (i = 0; i < rmp.num_strings; ++i)
+			free_lstring(strings[i]);
 		free(strings);
 		break;
 	default:
@@ -811,37 +818,38 @@ free_map(struct map* map)
 	iter_t iter;
 	int    i;
 
-	if (map != NULL) {
-		for (i = 0; i < MAP_SCRIPT_MAX; ++i)
-			free_script(map->scripts[i]);
-		for (i = 0; i < map->num_layers; ++i) {
-			free_script(map->layers[i].render_script);
-			free_lstring(map->layers[i].name);
-			free(map->layers[i].tilemap);
-			free_obsmap(map->layers[i].obsmap);
-		}
-		for (i = 0; i < map->num_persons; ++i) {
-			free_lstring(map->persons[i].name);
-			free_lstring(map->persons[i].spriteset);
-			free_lstring(map->persons[i].create_script);
-			free_lstring(map->persons[i].destroy_script);
-			free_lstring(map->persons[i].command_script);
-			free_lstring(map->persons[i].talk_script);
-			free_lstring(map->persons[i].touch_script);
-		}
-		iter = iterate_vector(s_map->triggers);
-		while (trigger = next_vector_item(&iter))
-			free_script(trigger->script);
-		iter = iterate_vector(s_map->zones);
-		while (zone = next_vector_item(&iter))
-			free_script(zone->script);
-		free_tileset(map->tileset);
-		free(map->layers);
-		free(map->persons);
-		free_vector(map->triggers);
-		free_vector(map->zones);
-		free(map);
+	if (map == NULL)
+		return;
+	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
+		free_script(map->scripts[i]);
+	for (i = 0; i < map->num_layers; ++i) {
+		free_script(map->layers[i].render_script);
+		free_lstring(map->layers[i].name);
+		free(map->layers[i].tilemap);
+		free_obsmap(map->layers[i].obsmap);
 	}
+	for (i = 0; i < map->num_persons; ++i) {
+		free_lstring(map->persons[i].name);
+		free_lstring(map->persons[i].spriteset);
+		free_lstring(map->persons[i].create_script);
+		free_lstring(map->persons[i].destroy_script);
+		free_lstring(map->persons[i].command_script);
+		free_lstring(map->persons[i].talk_script);
+		free_lstring(map->persons[i].touch_script);
+	}
+	iter = iterate_vector(s_map->triggers);
+	while (trigger = next_vector_item(&iter))
+		free_script(trigger->script);
+	iter = iterate_vector(s_map->zones);
+	while (zone = next_vector_item(&iter))
+		free_script(zone->script);
+	free_lstring(s_map->bgm_file);
+	free_tileset(map->tileset);
+	free(map->layers);
+	free(map->persons);
+	free_vector(map->triggers);
+	free_vector(map->zones);
+	free(map);
 }
 
 static bool
@@ -924,6 +932,7 @@ change_map(const char* filename, bool preserve_persons)
 	//       the map engine may be left in an inconsistent state. it is therefore probably wise
 	//       to consider such a situation unrecoverable.
 	
+	char*              bgm_path;
 	struct map*        map;
 	char*              path;
 	person_t*          person;
@@ -953,7 +962,7 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		path = get_asset_path(lstring_cstr(person_info->spriteset), "spritesets", false);
+		path = get_asset_path(lstr_cstr(person_info->spriteset), "spritesets", false);
 		if (!(spriteset = load_spriteset(path)))
 			goto on_error;
 		free(path);
@@ -975,6 +984,27 @@ change_map(const char* filename, bool preserve_persons)
 	// set camera over starting position
 	s_cam_x = s_map->origin.x;
 	s_cam_y = s_map->origin.y;
+
+	// start up map BGM (if same as previous, leave alone)
+	if (s_map->bgm_file == NULL && s_map_bgm_stream != NULL) {
+		free_sound(s_map_bgm_stream);
+		free_lstring(s_last_bgm_file);
+		s_map_bgm_stream = NULL;
+		s_last_bgm_file = NULL;
+	}
+	else if (s_map->bgm_file != NULL
+		&& (s_last_bgm_file == NULL || lstr_cmp(s_map->bgm_file, s_last_bgm_file) != 0))
+	{
+		free_sound(s_map_bgm_stream);
+		free_lstring(s_last_bgm_file);
+		s_last_bgm_file = clone_lstring(s_map->bgm_file);
+		bgm_path = get_asset_path(lstr_cstr(s_map->bgm_file), "sounds", false);
+		if (s_map_bgm_stream = load_sound(bgm_path, true)) {
+			set_sound_looping(s_map_bgm_stream, true);
+			play_sound(s_map_bgm_stream);
+		}
+		free(bgm_path);
+	}
 
 	// run map entry scripts
 	run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
@@ -2279,7 +2309,7 @@ js_SetTriggerScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTriggerScript(): Invalid trigger index (%i)", trigger_index);
 	if (!(script_name = new_lstring("%s T:%i", get_map_name(), trigger_index)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTriggerScript(): Error compiling trigger script");
-	script = duk_require_sphere_script(ctx, 1, lstring_cstr(script_name));
+	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	free_lstring(script_name);
 	set_trigger_script(trigger_index, script);
 	free_script(script);
@@ -2367,7 +2397,7 @@ js_SetZoneScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneScript(): Invalid zone index (%i)", zone_index);
 	if (!(script_name = new_lstring("%s Z:%i", get_map_name(), zone_index)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): Error compiling zone script");
-	script = duk_require_sphere_script(ctx, 1, lstring_cstr(script_name));
+	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	free_lstring(script_name);
 	set_zone_script(zone_index, script);
 	free_script(script);
@@ -2408,7 +2438,7 @@ js_AddTrigger(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddTrigger(): Trigger must be inside map (%i,%i)", x, y);
 	if (!(script_name = new_lstring("%s T:%i", get_map_name(), get_vector_size(s_map->triggers))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddTrigger(): Failed to compile trigger script");
-	script = duk_require_sphere_script(ctx, 3, lstring_cstr(script_name));
+	script = duk_require_sphere_script(ctx, 3, lstr_cstr(script_name));
 	free_lstring(script_name);
 	if (!add_trigger(x, y, layer, script))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddTrigger(): Failed to add trigger to map");
@@ -2438,7 +2468,7 @@ js_AddZone(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Zone cannot extend outside map (%i,%i,%i,%i)", x, y, width, height);
 	if (!(script_name = new_lstring("%s Z:%i", get_map_name(), get_vector_size(s_map->zones))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddZone(): Failed to compile zone script");
-	script = duk_require_sphere_script(ctx, 5, lstring_cstr(script_name));
+	script = duk_require_sphere_script(ctx, 5, lstr_cstr(script_name));
 	free_lstring(script_name);
 	if (!add_zone(new_rect(x, y, width, height), layer, script, 8))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddZone(): Failed to add zone to map");
