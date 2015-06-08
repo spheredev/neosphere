@@ -292,16 +292,23 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 {
 	bool is_draw_held;
 	int  cp;
+	int  tab_width;
 	
 	if (alignment == TEXT_ALIGN_CENTER)
 		x -= get_text_width(font, text) / 2;
 	else if (alignment == TEXT_ALIGN_RIGHT)
 		x -= get_text_width(font, text);
+	
+	tab_width = font->glyphs[' '].width * 3;
 	is_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
 	while ((cp = (unsigned char)*text++) != '\0') {
-		draw_image_masked(font->glyphs[cp].image, color, x, y);
-		x += font->glyphs[cp].width;
+		if (cp != '\t') {
+			draw_image_masked(font->glyphs[cp].image, color, x, y);
+			x += font->glyphs[cp].width;
+		}
+		else
+			x += tab_width;
 	}
 	al_hold_bitmap_drawing(is_draw_held);
 }
@@ -318,11 +325,13 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	int         line_idx;
 	int         line_width;
 	int         max_lines = 10;
+	char*       last_break;
+	char*       last_space;
+	char*       last_tab;
 	char*       line_buffer;
 	size_t      line_length;
 	char*       new_buffer;
 	size_t      pitch;
-	char*       word;
 	wraptext_t* wraptext;
 	const char  *p;
 
@@ -345,6 +354,11 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			if (ch == '\r' && *p == '\n') ++p;  // CRLF
 			is_line_end = true;
 			break;
+		case '\t':  // tab
+			line_buffer[line_length++] = ch;
+			line_width += get_text_width(font, "   ");
+			is_line_end = false;
+			break;
 		case '\0':  // NUL terminator
 			is_line_end = line_length > 0;  // commit last line on EOT
 			break;
@@ -357,8 +371,11 @@ word_wrap_text(const font_t* font, const char* text, int width)
 		if (line_width > width || line_length >= pitch - 1) {
 			// wrap width exceeded, carry current word to next line
 			is_line_end = true;
-			if (word = strrchr(line_buffer, ' '))
-				strcpy(carry, word + 1);
+			last_space = strrchr(line_buffer, ' ');
+			last_tab = strrchr(line_buffer, '\t');
+			last_break = last_space > last_tab ? last_space : last_tab;
+			if (last_break != NULL)  // word break (space or tab) found
+				strcpy(carry, last_break + 1);
 			else  // no word break, so just carry last character
 				sprintf(carry, "%c", line_buffer[line_length - 1]);
 			line_buffer[line_length - strlen(carry)] = '\0';
