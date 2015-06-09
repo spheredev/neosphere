@@ -31,6 +31,7 @@ msphere_sources = [
 	"spriteset.c",
 	"surface.c",
 	"tileset.c",
+	"unicode.c",
 	"utility.c",
 	"vector.c",
 	"windowstyle.c"
