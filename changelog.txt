@@ -1,6 +1,17 @@
 minisphere Changelog
 ====================
 
+v1.2.3 - TBD
+------------
+
+* Fixes a bug where calling RawFile:close() may cause a crash when the RawFile
+  object is later GC'd due a double fclose(). Affected Linux and possibly other
+  platforms as well.
+* Allows GetKey() to detect Ctrl, Alt, and Shift key presses.
+* Fixes incorrect handling of tab characters during text rendering.
+* Persons positioned on a hidden layer will no longer be hidden. This matches
+  the behavior of Sphere 1.5.
+
 v1.2.2 - June 8, 2015
 ---------------------
 
@@ -35,6 +46,7 @@ v1.2 - June 6, 2015
 * Fixes a bug where replacing a glyph image fails to update the font metrics,
   causing rendering issues.
 * More complete API documentation.
+
 
 v1.1.8 - June 2, 2015
 ---------------------
@@ -168,7 +180,6 @@ author.
       SetPersonFollowDistance()
 * New path escape: `#~/path/to/file` specifies a path which is relative to the
   engine's system directory.
-
 
 v1.0.10 - April 16, 2015
 ------------------------
