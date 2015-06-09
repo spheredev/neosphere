@@ -306,7 +306,7 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 	al_hold_bitmap_drawing(true);
 	for (;;) {
 		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, *text++));
+		while (utf8decode(&utf8state, &cp, *text++) > UTF8_REJECT);
 		cp = utf8state == UTF8_ACCEPT
 			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
@@ -358,7 +358,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	memset(line_buffer, 0, pitch);  // fill line with NULs
 	do {
 		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, *text++));
+		while (utf8decode(&utf8state, &cp, *text++) > UTF8_REJECT);
 		cp = utf8state == UTF8_ACCEPT
 			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
