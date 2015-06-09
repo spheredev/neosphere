@@ -3,7 +3,7 @@
 #include "atlas.h"
 #include "color.h"
 #include "image.h"
-#include "utility.h"
+#include "unicode.h"
 
 #include "font.h"
 
@@ -294,7 +294,7 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 	bool     is_draw_held;
 	uint32_t cp;
 	int      tab_width;
-	uint32_t utf8;
+	uint32_t utf8state;
 	
 	if (alignment == TEXT_ALIGN_CENTER)
 		x -= get_text_width(font, text) / 2;
@@ -304,18 +304,20 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 	tab_width = font->glyphs[' '].width * 3;
 	is_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
-	while (true) {
-		utf8 = UTF8_ACCEPT;
-		while (utf8decode(&utf8, &cp, *(unsigned char*)text++))
-			if (utf8 == UTF8_REJECT) { cp = 0xFF; break; }
-		if ((cp = cp <= (uint32_t)font->num_glyphs ? cp : 0xFF) == '\0')
+	for (;;) {
+		utf8state = UTF8_ACCEPT;
+		while (utf8decode(&utf8state, &cp, *text++));
+		cp = utf8state == UTF8_ACCEPT
+			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
+			: 0x1A;
+		if (cp == '\0')
 			break;
-		if (cp != '\t') {
+		else if (cp == '\t')
+			x += tab_width;
+		else {
 			draw_image_masked(font->glyphs[cp].image, color, x, y);
 			x += font->glyphs[cp].width;
 		}
-		else
-			x += tab_width;
 	}
 	al_hold_bitmap_drawing(is_draw_held);
 }
@@ -339,7 +341,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	size_t      line_length;
 	char*       new_buffer;
 	size_t      pitch;
-	uint32_t    utf8;
+	uint32_t    utf8state;
 	wraptext_t* wraptext;
 
 	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
@@ -355,10 +357,11 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	line_idx = 0; line_width = 0; line_length = 0;
 	memset(line_buffer, 0, pitch);  // fill line with NULs
 	do {
-		utf8 = UTF8_ACCEPT;
-		while (utf8decode(&utf8, &cp, *(unsigned char*)text++))
-			if (utf8 == UTF8_REJECT) { cp = 0xFF; break; }
-		cp = cp <= (uint32_t)font->num_glyphs ? cp : 0xFF;
+		utf8state = UTF8_ACCEPT;
+		while (utf8decode(&utf8state, &cp, *text++));
+		cp = utf8state == UTF8_ACCEPT
+			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
+			: 0x1A;
 		switch (cp) {
 		case '\n': case '\r':  // explicit newline
 			if (cp == '\r' && *text == '\n') ++text;  // CRLF
