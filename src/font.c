@@ -3,6 +3,7 @@
 #include "atlas.h"
 #include "color.h"
 #include "image.h"
+#include "utility.h"
 
 #include "font.h"
 
@@ -32,7 +33,7 @@ struct font
 	int                height;
 	int                min_width;
 	int                max_width;
-	int                num_glyphs;
+	uint32_t           num_glyphs;
 	struct font_glyph* glyphs;
 };
 
@@ -181,7 +182,7 @@ clone_font(const font_t* src_font)
 	int                      min_width = INT_MAX;
 	const struct font_glyph* src_glyph;
 
-	int i;
+	uint32_t i;
 
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
 	if (!(font->glyphs = calloc(src_font->num_glyphs, sizeof(struct font_glyph))))
@@ -223,7 +224,7 @@ ref_font(font_t* font)
 void
 free_font(font_t* font)
 {
-	int i;
+	uint32_t i;
 	
 	if (font == NULL || --font->refcount > 0)
 		return;
@@ -290,9 +291,10 @@ set_glyph_image(font_t* font, int codepoint, image_t* image)
 void
 draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
-	bool is_draw_held;
-	int  cp;
-	int  tab_width;
+	bool     is_draw_held;
+	uint32_t cp;
+	int      tab_width;
+	uint32_t utf8;
 	
 	if (alignment == TEXT_ALIGN_CENTER)
 		x -= get_text_width(font, text) / 2;
@@ -302,7 +304,12 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 	tab_width = font->glyphs[' '].width * 3;
 	is_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
-	while ((cp = (unsigned char)*text++) != '\0') {
+	while (true) {
+		utf8 = UTF8_ACCEPT;
+		while (utf8decode(&utf8, &cp, *(unsigned char*)text++))
+			if (utf8 == UTF8_REJECT) { cp = 0xFF; break; }
+		if ((cp = cp <= (uint32_t)font->num_glyphs ? cp : 0xFF) == '\0')
+			break;
 		if (cp != '\t') {
 			draw_image_masked(font->glyphs[cp].image, color, x, y);
 			x += font->glyphs[cp].width;
@@ -318,7 +325,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 {
 	char*       buffer = NULL;
 	char*		carry;
-	char        ch;
+	uint32_t    cp;
 	int         glyph_width;
 	bool        is_line_end = false;
 	bool        is_word_end = false;
@@ -332,8 +339,8 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	size_t      line_length;
 	char*       new_buffer;
 	size_t      pitch;
+	uint32_t    utf8;
 	wraptext_t* wraptext;
-	const char  *p;
 
 	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
 	
@@ -347,15 +354,18 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
 	memset(line_buffer, 0, pitch);  // fill line with NULs
-	p = text;
 	do {
-		switch (ch = *p++) {
+		utf8 = UTF8_ACCEPT;
+		while (utf8decode(&utf8, &cp, *(unsigned char*)text++))
+			if (utf8 == UTF8_REJECT) { cp = 0xFF; break; }
+		cp = cp <= (uint32_t)font->num_glyphs ? cp : 0xFF;
+		switch (cp) {
 		case '\n': case '\r':  // explicit newline
-			if (ch == '\r' && *p == '\n') ++p;  // CRLF
+			if (cp == '\r' && *text == '\n') ++text;  // CRLF
 			is_line_end = true;
 			break;
 		case '\t':  // tab
-			line_buffer[line_length++] = ch;
+			line_buffer[line_length++] = cp;
 			line_width += get_text_width(font, "   ");
 			is_line_end = false;
 			break;
@@ -363,8 +373,8 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			is_line_end = line_length > 0;  // commit last line on EOT
 			break;
 		default:  // default case, copy character as-is
-			line_buffer[line_length++] = ch;
-			line_width += get_glyph_width(font, ch);
+			line_buffer[line_length++] = cp;
+			line_width += get_glyph_width(font, cp);
 			is_line_end = false;
 		}
 		if (is_line_end) carry[0] = '\0';
@@ -399,7 +409,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			line_length = strlen(carry);
 			strcpy(line_buffer, carry);
 		}
-	} while (ch != '\0');
+	} while (cp != '\0');
 	free(carry);
 	wraptext->num_lines = line_idx;
 	wraptext->buffer = buffer;
@@ -437,7 +447,7 @@ update_font_metrics(font_t* font)
 	int max_x = 0, max_y = 0;
 	int min_width = INT_MAX;
 
-	int i;
+	uint32_t i;
 
 	for (i = 0; i < font->num_glyphs; ++i) {
 		font->glyphs[i].width = get_image_width(font->glyphs[i].image);
