@@ -264,10 +264,17 @@ get_glyph_width(const font_t* font, int codepoint)
 int
 get_text_width(const font_t* font, const char* text)
 {
-	int cp;
-	int width = 0;
+	uint32_t cp;
+	uint32_t utf8state;
+	int      width = 0;
 	
-	while ((cp = *text++) != '\0') {
+	for (;;) {
+		utf8state = UTF8_ACCEPT;
+		while (utf8decode(&utf8state, &cp, *text++) > UTF8_REJECT);
+		cp = utf8state == UTF8_ACCEPT
+			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
+			: 0x1A;
+		if (cp == '\0') break;
 		width += font->glyphs[cp].width;
 	}
 	return width;
@@ -327,6 +334,7 @@ word_wrap_text(const font_t* font, const char* text, int width)
 {
 	char*       buffer = NULL;
 	char*		carry;
+	size_t      ch_size;
 	uint32_t    cp;
 	int         glyph_width;
 	bool        is_line_end = false;
@@ -343,12 +351,13 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	size_t      pitch;
 	uint32_t    utf8state;
 	wraptext_t* wraptext;
+	const char  *p, *start;
 
 	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
 	
 	// allocate initial buffer
 	get_font_metrics(font, &glyph_width, NULL, NULL);
-	pitch = glyph_width > 0 ? width / glyph_width + 3 : width;
+	pitch = 4 * (glyph_width > 0 ? width / glyph_width : width) + 3;
 	if (!(buffer = malloc(max_lines * pitch))) goto on_error;
 	if (!(carry = malloc(pitch))) goto on_error;
 
@@ -356,15 +365,17 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
 	memset(line_buffer, 0, pitch);  // fill line with NULs
+	p = text;
 	do {
-		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, *text++) > UTF8_REJECT);
+		utf8state = UTF8_ACCEPT; start = p;
+		while (utf8decode(&utf8state, &cp, *p++) > UTF8_REJECT);
+		ch_size = p - start;
 		cp = utf8state == UTF8_ACCEPT
 			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		switch (cp) {
 		case '\n': case '\r':  // explicit newline
-			if (cp == '\r' && *text == '\n') ++text;  // CRLF
+			if (cp == '\r' && *p == '\n') ++text;  // CRLF
 			is_line_end = true;
 			break;
 		case '\t':  // tab
@@ -376,7 +387,8 @@ word_wrap_text(const font_t* font, const char* text, int width)
 			is_line_end = line_length > 0;  // commit last line on EOT
 			break;
 		default:  // default case, copy character as-is
-			line_buffer[line_length++] = cp;
+			memcpy(line_buffer + line_length, start, ch_size);
+			line_length += ch_size;
 			line_width += get_glyph_width(font, cp);
 			is_line_end = false;
 		}
