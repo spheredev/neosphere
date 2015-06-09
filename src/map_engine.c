@@ -1162,20 +1162,21 @@ render_map(void)
 	
 	if (is_skipped_frame())
 		return;
+	
+	// render map layers from bottom to top (+Z = up)
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
-		if (!layer->is_visible)
-			continue;
 		is_repeating = s_map->is_repeating || layer->is_parallax;
 		layer_w = layer->width * tile_w;
 		layer_h = layer->height * tile_h;
 		off_x = 0; off_y = 0;
 		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
 		al_hold_bitmap_drawing(true);
+		
+		// render person reflections if layer is reflective
 		if (layer->is_reflective) {
-			if (is_repeating) {
-				// for small repeating maps, persons need to be repeated as well
+			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
 				for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
 					render_persons(z, true, off_x - x * layer_w, off_y - y * layer_h);
 			}
@@ -1183,24 +1184,30 @@ render_map(void)
 				render_persons(z, true, off_x, off_y);
 			}
 		}
-		first_cell_x = off_x / tile_w;
-		first_cell_y = off_y / tile_h;
-		for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
-			cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
-			cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
-			if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
-				continue;
-			tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
-			draw_tile(s_map->tileset, layer->color_mask, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
+		
+		// render tiles, but only if layer is visible
+		if (layer->is_visible) {
+			first_cell_x = off_x / tile_w;
+			first_cell_y = off_y / tile_h;
+			for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
+				cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
+				cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
+				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
+					continue;
+				tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
+				draw_tile(s_map->tileset, layer->color_mask, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
+			}
 		}
-		if (is_repeating) {
-			// for small repeating maps, persons need to be repeated as well
+		
+		// render persons
+		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
 			for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
 				render_persons(z, false, off_x - x * layer_w, off_y - y * layer_h);
 		}
 		else {
 			render_persons(z, false, off_x, off_y);
 		}
+
 		al_hold_bitmap_drawing(false);
 		run_script(layer->render_script, false);
 	}
