@@ -132,6 +132,12 @@ initialize_api(duk_context* ctx)
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
+	// create prototype stash (allows shadowing of constructors)
+	duk_push_global_stash(ctx);
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "prototypes");
+	duk_pop(ctx);
+
 	// register module search callback
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
@@ -179,6 +185,15 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
 		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
 	}
+	
+	// save prototype in prototype stash
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "prototypes");
+	duk_dup(ctx, -3);
+	duk_put_prop_string(ctx, -2, name);
+	duk_pop_2(ctx);
+	
+	// attach prototype to constructor
 	duk_put_prop_string(ctx, -2, "prototype");
 	duk_put_prop_string(ctx, -2, name);
 	duk_pop(ctx);
@@ -200,13 +215,14 @@ register_api_function(duk_context* ctx, const char* ctor_name, const char* name,
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
+		duk_push_global_stash(ctx);
+		duk_get_prop_string(ctx, -1, "prototypes");
 		duk_get_prop_string(ctx, -1, ctor_name);
-		duk_get_prop_string(ctx, -1, "prototype");
 	}
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, name);
 	if (ctor_name != NULL)
-		duk_pop_2(ctx);
+		duk_pop_3(ctx);
 	duk_pop(ctx);
 }
 
@@ -218,8 +234,9 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
+		duk_push_global_stash(ctx);
+		duk_get_prop_string(ctx, -1, "prototypes");
 		duk_get_prop_string(ctx, -1, ctor_name);
-		duk_get_prop_string(ctx, -1, "prototype");
 	}
 	obj_index = duk_normalize_index(ctx, -1);
 	duk_push_string(ctx, name);
@@ -235,7 +252,7 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	}
 	duk_def_prop(g_duk, obj_index, flags);
 	if (ctor_name != NULL)
-		duk_pop_2(ctx);
+		duk_pop_3(ctx);
 	duk_pop(ctx);
 }
 
@@ -295,9 +312,9 @@ duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
 	
 	duk_push_object(ctx); index = duk_normalize_index(ctx, -1);
 	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	duk_push_global_object(ctx);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "prototypes");
 	duk_get_prop_string(ctx, -1, ctor_name);
-	duk_get_prop_string(ctx, -1, "prototype");
 	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor")) {
 		duk_set_finalizer(ctx, index);
 	}
