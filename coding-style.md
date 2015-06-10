@@ -26,6 +26,21 @@ Variable Declarations
   unnecessary and complicates debugging as it can hide the use of improperly
   initialized variables.
 
+Multiline Expressions
+---------------------
+
+Splitting overlong expressions across multiple lines is encouraged. When
+continuing an expression on the next line, always try to start the continuation
+line with an operator. This goes double for multiline ternary expressions:
+
+```c
+script_type = s_cam_y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
+    : s_cam_x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
+    : s_cam_y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
+    : s_cam_x < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
+    : MAP_SCRIPT_MAX;
+```
+
 Indentation
 -----------
 Use tabs for indentation, not spaces. OCD aside, I'm not one of those coders who
