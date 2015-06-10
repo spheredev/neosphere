@@ -264,15 +264,18 @@ get_glyph_width(const font_t* font, int codepoint)
 int
 get_text_width(const font_t* font, const char* text)
 {
+	uint8_t  ch_byte;
 	uint32_t cp;
 	uint32_t utf8state;
 	int      width = 0;
 	
 	for (;;) {
 		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, *text++) > UTF8_REJECT);
+		while (utf8decode(&utf8state, &cp, ch_byte = *text++) > UTF8_REJECT);
+		if (utf8state == UTF8_REJECT && ch_byte == '\0')
+			--text;  // don't eat NUL terminator
 		cp = utf8state == UTF8_ACCEPT
-			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
+			? cp < (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		if (cp == '\0') break;
 		width += font->glyphs[cp].width;
@@ -299,6 +302,7 @@ void
 draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
 	bool     is_draw_held;
+	uint8_t  ch_byte;
 	uint32_t cp;
 	int      tab_width;
 	uint32_t utf8state;
@@ -313,9 +317,11 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 	al_hold_bitmap_drawing(true);
 	for (;;) {
 		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, *text++) > UTF8_REJECT);
+		while (utf8decode(&utf8state, &cp, ch_byte = *text++) > UTF8_REJECT);
+		if (utf8state == UTF8_REJECT && ch_byte == '\0')
+			--text;  // don't eat NUL terminator
 		cp = utf8state == UTF8_ACCEPT
-			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
+			? cp < (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		if (cp == '\0')
 			break;
@@ -333,6 +339,7 @@ wraptext_t*
 word_wrap_text(const font_t* font, const char* text, int width)
 {
 	char*       buffer = NULL;
+	uint8_t     ch_byte;
 	char*		carry;
 	size_t      ch_size;
 	uint32_t    cp;
@@ -368,10 +375,12 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	p = text;
 	do {
 		utf8state = UTF8_ACCEPT; start = p;
-		while (utf8decode(&utf8state, &cp, *p++) > UTF8_REJECT);
+		while (utf8decode(&utf8state, &cp, ch_byte = *p++) > UTF8_REJECT);
+		if (utf8state == UTF8_REJECT && ch_byte == '\0')
+			--p;  // don't eat NUL terminator
 		ch_size = p - start;
 		cp = utf8state == UTF8_ACCEPT
-			? cp <= (uint32_t)font->num_glyphs ? cp : 0x1A
+			? cp < (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		switch (cp) {
 		case '\n': case '\r':  // explicit newline
