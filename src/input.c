@@ -4,8 +4,8 @@
 #include "input.h"
 #include "vector.h"
 
-#define MAX_JOYSTICKS   (4)
-#define MAX_JOY_BUTTONS (32)
+#define MAX_JOYSTICKS   4
+#define MAX_JOY_BUTTONS 32
 
 struct key_queue
 {

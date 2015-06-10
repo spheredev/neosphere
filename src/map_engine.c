@@ -13,6 +13,8 @@
 
 #include "map_engine.h"
 
+#define MAX_PLAYERS 4
+
 enum map_script_type
 {
 	MAP_SCRIPT_ON_ENTER,
@@ -109,11 +111,13 @@ static duk_ret_t js_AddTrigger              (duk_context* ctx);
 static duk_ret_t js_AddZone                 (duk_context* ctx);
 static duk_ret_t js_AttachCamera            (duk_context* ctx);
 static duk_ret_t js_AttachInput             (duk_context* ctx);
+static duk_ret_t js_AttachPlayerInput       (duk_context* ctx);
 static duk_ret_t js_CallDefaultMapScript    (duk_context* ctx);
 static duk_ret_t js_CallMapScript           (duk_context* ctx);
 static duk_ret_t js_ChangeMap               (duk_context* ctx);
 static duk_ret_t js_DetachCamera            (duk_context* ctx);
 static duk_ret_t js_DetachInput             (duk_context* ctx);
+static duk_ret_t js_DetachPlayerInput       (duk_context* ctx);
 static duk_ret_t js_ExecuteTrigger          (duk_context* ctx);
 static duk_ret_t js_ExecuteZones            (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine           (duk_context* ctx);
@@ -144,17 +148,15 @@ static script_t*           s_def_scripts[MAP_SCRIPT_MAX];
 static bool                s_exiting           = false;
 static int                 s_framerate         = 0;
 static unsigned int        s_frames            = 0;
-static person_t*           s_input_person      = NULL;
-static bool                s_is_talk_allowed   = true;
 static bool                s_is_map_running    = false;
 static lstring_t*          s_last_bgm_file     = NULL;
 static struct map*         s_map = NULL;
 static char*               s_map_filename      = NULL;
 static sound_t*            s_map_bgm_stream    = NULL;
 static struct map_trigger* s_on_trigger        = NULL;
+static struct player*      s_players;
 static script_t*           s_render_script     = 0;
-static int                 s_talk_button       = 0;
-static int                 s_talk_key          = 0;
+static int                 s_talk_button = 0;
 static script_t*           s_update_script     = 0;
 static int                 s_num_delay_scripts = 0;
 static int                 s_max_delay_scripts = 0;
@@ -233,6 +235,13 @@ struct map_zone
 	script_t* script;
 };
 
+struct player
+{
+	bool      is_talk_allowed;
+	person_t* person;
+	int       talk_key;
+};
+
 #pragma pack(push, 1)
 struct rmp_header
 {
@@ -290,19 +299,23 @@ struct rmp_zone_header
 void
 initialize_map_engine(void)
 {
+	int i;
+	
 	console_log(1, "Initializing map engine\n");
 	
 	initialize_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
 	s_map = NULL; s_map_filename = NULL;
-	s_input_person = s_camera_person = NULL;
+	s_camera_person = NULL;
+	s_players = calloc(MAX_PLAYERS, sizeof(struct player));
+	for (i = 0; i < MAX_PLAYERS; ++i)
+		s_players[i].is_talk_allowed = true;
 	s_current_trigger = -1;
 	s_current_zone = -1;
 	s_render_script = 0;
 	s_update_script = 0;
 	s_num_delay_scripts = s_max_delay_scripts = 0;
 	s_delay_scripts = NULL;
-	s_talk_key = 0;
 	s_talk_button = 0;
 	s_is_map_running = false;
 	s_color_mask = rgba(0, 0, 0, 0);
@@ -320,6 +333,7 @@ shutdown_map_engine(void)
 		free_script(s_delay_scripts[i].script);
 	free(s_delay_scripts);
 	free_map(s_map);
+	free(s_players);
 	shutdown_persons_manager();
 }
 
@@ -529,10 +543,12 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 void
 detach_person(const person_t* person)
 {
+	int i;
+	
 	if (s_camera_person == person)
 		s_camera_person = NULL;
-	if (s_input_person == person)
-		s_input_person = NULL;
+	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person == person)
+		s_players[i].person = NULL;
 }
 
 void
@@ -1078,70 +1094,77 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 static void
 process_map_input(void)
 {
-	int mv_x = 0, mv_y = 0;
+	int       mv_x, mv_y;
+	person_t* person;
+
+	int i;
 
 	// clear out excess keys from key queue
 	clear_key_queue();
 	
 	// check for player control of input person, if there is one
-	if (s_input_person != NULL && !is_person_busy(s_input_person)) {
-		if (is_key_down(get_player_key(0, PLAYER_KEY_A))
-			|| is_key_down(s_talk_key)
-			|| is_joy_button_down(0, s_talk_button))
-		{
-			if (s_is_talk_allowed) talk_person(s_input_person);
-			s_is_talk_allowed = false;
-		}
-		else // allow talking again only after key is released
-			s_is_talk_allowed = true;
-		if (is_key_down(get_player_key(0, PLAYER_KEY_UP))) mv_y = -1;
-		if (is_key_down(get_player_key(0, PLAYER_KEY_RIGHT))) mv_x = 1;
-		if (is_key_down(get_player_key(0, PLAYER_KEY_DOWN))) mv_y = 1;
-		if (is_key_down(get_player_key(0, PLAYER_KEY_LEFT))) mv_x = -1;
-		switch (mv_x + mv_y * 3) {
-		case -3: // north
-			queue_person_command(s_input_person, COMMAND_MOVE_NORTH, true);
-			queue_person_command(s_input_person, COMMAND_FACE_NORTH, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case -2: // northeast
-			queue_person_command(s_input_person, COMMAND_MOVE_NORTHEAST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_NORTHEAST, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case 1: // east
-			queue_person_command(s_input_person, COMMAND_MOVE_EAST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_EAST, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case 4: // southeast
-			queue_person_command(s_input_person, COMMAND_MOVE_SOUTHEAST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTHEAST, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case 3: // south
-			queue_person_command(s_input_person, COMMAND_MOVE_SOUTH, true);
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTH, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case 2: // southwest
-			queue_person_command(s_input_person, COMMAND_MOVE_SOUTHWEST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_SOUTHWEST, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case -1: // west
-			queue_person_command(s_input_person, COMMAND_MOVE_WEST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_WEST, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
-		case -4: // northwest
-			queue_person_command(s_input_person, COMMAND_MOVE_NORTHWEST, true);
-			queue_person_command(s_input_person, COMMAND_FACE_NORTHWEST, true);
-			queue_person_command(s_input_person, COMMAND_ANIMATE, false);
-			break;
+	for (i = 0; i < MAX_PLAYERS; ++i) {
+		person = s_players[i].person;
+		if (person != NULL && person) {
+			if (is_key_down(get_player_key(i, PLAYER_KEY_A))
+				|| is_key_down(s_players[i].talk_key)
+				|| is_joy_button_down(i, s_talk_button))
+			{
+				if (s_players[i].is_talk_allowed) talk_person(person);
+				s_players[i].is_talk_allowed = false;
+			}
+			else // allow talking again only after key is released
+				s_players[i].is_talk_allowed = true;
+			mv_x = 0; mv_y = 0;
+			if (is_key_down(get_player_key(i, PLAYER_KEY_UP))) mv_y = -1;
+			if (is_key_down(get_player_key(i, PLAYER_KEY_RIGHT))) mv_x = 1;
+			if (is_key_down(get_player_key(i, PLAYER_KEY_DOWN))) mv_y = 1;
+			if (is_key_down(get_player_key(i, PLAYER_KEY_LEFT))) mv_x = -1;
+			switch (mv_x + mv_y * 3) {
+			case -3: // north
+				queue_person_command(person, COMMAND_MOVE_NORTH, true);
+				queue_person_command(person, COMMAND_FACE_NORTH, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case -2: // northeast
+				queue_person_command(person, COMMAND_MOVE_NORTHEAST, true);
+				queue_person_command(person, COMMAND_FACE_NORTHEAST, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case 1: // east
+				queue_person_command(person, COMMAND_MOVE_EAST, true);
+				queue_person_command(person, COMMAND_FACE_EAST, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case 4: // southeast
+				queue_person_command(person, COMMAND_MOVE_SOUTHEAST, true);
+				queue_person_command(person, COMMAND_FACE_SOUTHEAST, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case 3: // south
+				queue_person_command(person, COMMAND_MOVE_SOUTH, true);
+				queue_person_command(person, COMMAND_FACE_SOUTH, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case 2: // southwest
+				queue_person_command(person, COMMAND_MOVE_SOUTHWEST, true);
+				queue_person_command(person, COMMAND_FACE_SOUTHWEST, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case -1: // west
+				queue_person_command(person, COMMAND_MOVE_WEST, true);
+				queue_person_command(person, COMMAND_FACE_WEST, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			case -4: // northwest
+				queue_person_command(person, COMMAND_MOVE_NORTHWEST, true);
+				queue_person_command(person, COMMAND_FACE_NORTHWEST, true);
+				queue_person_command(person, COMMAND_ANIMATE, false);
+				break;
+			}
 		}
 	}
-	
+
 	update_bound_keys(true);
 }
 
@@ -1227,13 +1250,14 @@ update_map_engine(bool is_main_loop)
 	int                 num_zone_steps;
 	script_t*           script_to_run;
 	int                 script_type;
-	double              start_x, start_y;
+	double              start_x[MAX_PLAYERS];
+	double              start_y[MAX_PLAYERS];
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
 	double              x, y, px, py;
 	struct map_zone*    zone;
 
-	int i, j;
+	int i, j, k;
 	
 	++s_frames;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -1242,8 +1266,8 @@ update_map_engine(bool is_main_loop)
 	
 	animate_tileset(s_map->tileset);
 
-	if (s_input_person != NULL)
-		get_person_xy(s_input_person, &start_x, &start_y, false);
+	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL)
+		get_person_xy(s_players[i].person, &start_x[i], &start_y[i], false);
 	update_persons();
 
 	// update color mask fade level
@@ -1273,10 +1297,10 @@ update_map_engine(bool is_main_loop)
 		}
 	}
 
-	// if there is an input person, check for trigger activation
-	if (s_input_person != NULL) {
+	// if there are any input persons, check for trigger activation
+	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL) {
 		// did we step on a trigger or move to a new one?
-		get_person_xyz(s_input_person, &x, &y, &layer, true);
+		get_person_xyz(s_players[i].person, &x, &y, &layer, true);
 		trigger = get_trigger_at(x, y, layer, &index);
 		if (trigger != s_on_trigger) {
 			last_trigger = s_current_trigger;
@@ -1290,10 +1314,10 @@ update_map_engine(bool is_main_loop)
 	// update any zones occupied by the input person
 	// note: a zone's step count is in reality a pixel count, so a zone
 	//       may be updated multiple times in a single frame.
-	if (s_input_person != NULL) {
-		get_person_xy(s_input_person, &x, &y, false);
-		px = abs(x - start_x);
-		py = abs(y - start_y);
+	for (k = 0; k < MAX_PLAYERS; ++k) if (s_players[k].person != NULL) {
+		get_person_xy(s_players[k].person, &x, &y, false);
+		px = abs(x - start_x[k]);
+		py = abs(y - start_y[k]);
 		num_zone_steps = px > py ? px : py;
 		for (i = 0; i < num_zone_steps; ++i) {
 			j = 0;
@@ -1402,11 +1426,13 @@ init_map_engine_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "AddZone", js_AddZone);
 	register_api_function(ctx, NULL, "AttachCamera", js_AttachCamera);
 	register_api_function(ctx, NULL, "AttachInput", js_AttachInput);
+	register_api_function(ctx, NULL, "AttachPlayerInput", js_AttachPlayerInput);
 	register_api_function(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
 	register_api_function(ctx, NULL, "CallMapScript", js_CallMapScript);
 	register_api_function(ctx, NULL, "ChangeMap", js_ChangeMap);
 	register_api_function(ctx, NULL, "DetachCamera", js_DetachCamera);
 	register_api_function(ctx, NULL, "DetachInput", js_DetachInput);
+	register_api_function(ctx, NULL, "DetachPlayerInput", js_DetachPlayerInput);
 	register_api_function(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
 	register_api_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	register_api_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
@@ -1502,7 +1528,28 @@ js_IsCameraAttached(duk_context* ctx)
 static duk_ret_t
 js_IsInputAttached(duk_context* ctx)
 {
-	duk_push_boolean(ctx, s_input_person != NULL);
+	const char* name;
+	person_t*   person;
+	int         player;
+
+	int i;
+
+	if (duk_get_top(ctx) < 1)
+		player = 0;
+	else if (duk_is_string(ctx, 0)) {
+		name = duk_get_string(ctx, 0);
+		if (!(person = find_person(name)))
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsInputAttached(): Person '%s' doesn't exist", name);
+		player = -1;
+		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
+			player = s_players[i].person == person ? i : player;
+		if (player == -1) return duk_push_false(ctx), 1;
+	}
+	else if (duk_is_number(ctx, 0))
+		player = duk_get_int(ctx, 0);
+	if (player < 0 || player >= MAX_PLAYERS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IsInputAttached(): Player number out of range (%i)", player);
+	duk_push_boolean(ctx, s_players[player].person != NULL);
 	return 1;
 }
 
@@ -1613,9 +1660,14 @@ js_GetCurrentZone(duk_context* ctx)
 static duk_ret_t
 js_GetInputPerson(duk_context* ctx)
 {
-	if (s_input_person == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetInputPerson(): Invalid operation, input not attached");
-	duk_push_string(ctx, get_person_name(s_input_person));
+	int n_args = duk_get_top(ctx);
+	int player = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+	
+	if (player < 0 || player >= MAX_PLAYERS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetInputPerson(): Player number out of range (%i)", player);
+	if (s_players[player].person == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetInputPerson(): Input not attached for player %i", player + 1);
+	duk_push_string(ctx, get_person_name(s_players[player].person));
 	return 1;
 }
 
@@ -1737,7 +1789,12 @@ js_GetTalkActivationButton(duk_context* ctx)
 static duk_ret_t
 js_GetTalkActivationKey(duk_context* ctx)
 {
-	duk_push_int(ctx, s_talk_key);
+	int n_args = duk_get_top(ctx);
+	int player = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	if (player < 0 || player >= MAX_PLAYERS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTalkActivationKey(): Player number out of range (%i)", player);
+	duk_push_int(ctx, s_players[player].talk_key);
 	return 1;
 }
 
@@ -2176,9 +2233,13 @@ js_SetTalkActivationButton(duk_context* ctx)
 static duk_ret_t
 js_SetTalkActivationKey(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	int key = duk_require_int(ctx, 0);
+	int player = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 	
-	s_talk_key = key;
+	if (player < 0 || player >= MAX_PLAYERS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTalkActivationKey(): Player number out of range (%i)", player);
+	s_players[player].talk_key = key;
 	return 0;
 }
 
@@ -2499,13 +2560,33 @@ js_AttachCamera(duk_context* ctx)
 static duk_ret_t
 js_AttachInput(duk_context* ctx)
 {
-	const char* name;
+	const char* name = duk_require_string(ctx, 0);
+	
 	person_t*   person;
 
-	name = duk_to_string(ctx, 0);
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
-	s_input_person = person;
+	s_players[0].person = person;
+	return 0;
+}
+
+static duk_ret_t
+js_AttachPlayerInput(duk_context* ctx)
+{
+	const char* name = duk_require_string(ctx, 0);
+	int player = duk_require_int(ctx, 1);
+
+	person_t*   person;
+
+	int i;
+
+	if (player < 0 || player >= MAX_PLAYERS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AttachPlayerInput(): Player number out of range (%i)", player);
+	if ((person = find_person(name)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
+	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
+		if (s_players[i].person == person) s_players[i].person = NULL;
+	s_players[player].person = person;
 	return 0;
 }
 
@@ -2583,7 +2664,38 @@ js_DetachCamera(duk_context* ctx)
 static duk_ret_t
 js_DetachInput(duk_context* ctx)
 {
-	s_input_person = NULL;
+	s_players[0].person = NULL;
+	return 0;
+}
+
+static duk_ret_t
+js_DetachPlayerInput(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	int         player;
+
+	int i;
+
+	if (duk_get_top(ctx) < 1)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DetachPlayerInput(): Player number or string expected as argument");
+	else if (duk_is_string(ctx, 0)) {
+		name = duk_get_string(ctx, 0);
+		if (!(person = find_person(name)))
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DetachPlayerInput(): Person '%s' doesn't exist", name);
+		player = -1;
+		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
+			player = s_players[i].person == person ? i : player;
+		if (player == -1)
+			return 0;
+	}
+	else if (duk_is_number(ctx, 0))
+		player = duk_get_int(ctx, 0);
+	else
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DetachPlayerInput(): Player number or string expected as argument");
+	if (player < 0 || player >= MAX_PLAYERS)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DetachPlayerInput(): Player number out of range (%i)", player);
+	s_players[player].person = NULL;
 	return 0;
 }
 
