@@ -206,7 +206,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat />
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -236,7 +238,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <DebugInformationFormat>
       </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -265,7 +269,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat />
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -295,7 +301,9 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <DebugInformationFormat>
       </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -593,7 +593,7 @@ load_map(const char* path)
 
 	uint16_t                 count;
 	struct rmp_entity_header entity_hdr;
-	FILE*                    file;
+	FILE*                    file = NULL;
 	const char*              filename;
 	bool                     has_failed;
 	struct map_layer*        layer;
@@ -1547,6 +1547,8 @@ js_IsInputAttached(duk_context* ctx)
 	}
 	else if (duk_is_number(ctx, 0))
 		player = duk_get_int(ctx, 0);
+	else
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "IsInputAttached(): Player number or string expected");
 	if (player < 0 || player >= MAX_PLAYERS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IsInputAttached(): Player number out of range (%i)", player);
 	duk_push_boolean(ctx, s_players[player].person != NULL);

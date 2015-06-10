@@ -298,6 +298,6 @@ duk_push_cstr_to_utf8(duk_context *ctx, const char* cstr)
 			*p++ = (unsigned char)(0x80 + (cp & 0x3f));
 		}
 	}
-	duk_push_lstring(ctx, tmp, p - tmp);
+	duk_push_lstring(ctx, (char*)tmp, p - tmp);
 	duk_remove(ctx, -2);
 }

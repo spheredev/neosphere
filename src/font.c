@@ -79,7 +79,7 @@ load_font(const char* path)
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
 	uint8_t*                grayscale;
-	image_lock_t*           lock;
+	image_lock_t*           lock = NULL;
 	int                     max_x = 0, max_y = 0;
 	int                     min_width = INT_MAX;
 	int64_t                 n_glyphs_per_row;
@@ -345,7 +345,6 @@ word_wrap_text(const font_t* font, const char* text, int width)
 	uint32_t    cp;
 	int         glyph_width;
 	bool        is_line_end = false;
-	bool        is_word_end = false;
 	int         line_idx;
 	int         line_width;
 	int         max_lines = 10;

@@ -95,8 +95,6 @@ struct bound_key
 void
 initialize_input(void)
 {
-	int c_buttons = MAX_JOY_BUTTONS * MAX_JOYSTICKS;
-
 	int i;
 
 	console_log(1, "Initializing input\n");

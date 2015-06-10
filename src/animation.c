@@ -60,7 +60,6 @@ animation_t*
 load_animation(const char* path)
 {
 	animation_t* anim;
-	mng_handle   stream = NULL;
 
 	if (!(anim = calloc(1, sizeof(animation_t))))
 		goto on_error;
@@ -148,8 +147,6 @@ mng_cb_openstream(mng_handle stream)
 static mng_bool
 mng_cb_closestream(mng_handle stream)
 {
-	animation_t* anim = mng_get_userdata(stream);
-
 	return MNG_TRUE;
 }
 
@@ -196,8 +193,6 @@ mng_cb_readdata(mng_handle stream, mng_ptr buf, mng_uint32 n_bytes, mng_uint32p 
 static mng_bool
 mng_cb_refresh(mng_handle stream, mng_uint32 x, mng_uint32 y, mng_uint32 width, mng_uint32 height)
 {
-	animation_t* anim = mng_get_userdata(stream);
-
 	return MNG_TRUE;
 }
 

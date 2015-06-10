@@ -209,7 +209,7 @@ read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
 {
 	long          file_pos;
 	image_t*      image;
-	image_lock_t* lock;
+	image_lock_t* lock = NULL;
 	color_t       *pline;
 
 	int i_y;

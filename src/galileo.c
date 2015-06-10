@@ -491,7 +491,7 @@ js_Group_finalize(duk_context* ctx)
 	return 0;
 }
 
-static
+static duk_ret_t
 js_Group_get_angle(duk_context* ctx)
 {
 	group_t* group;
@@ -503,7 +503,7 @@ js_Group_get_angle(duk_context* ctx)
 	return 1;
 }
 
-static
+static duk_ret_t
 js_Group_set_angle(duk_context* ctx)
 {
 	group_t* group;
@@ -545,7 +545,7 @@ js_Group_set_shader(duk_context* ctx)
 	return 0;
 }
 
-static
+static duk_ret_t
 js_Group_get_rotX(duk_context* ctx)
 {
 	group_t* group;
@@ -557,7 +557,7 @@ js_Group_get_rotX(duk_context* ctx)
 	return 1;
 }
 
-static
+static duk_ret_t
 js_Group_set_rotX(duk_context* ctx)
 {
 	group_t* group;
@@ -570,7 +570,7 @@ js_Group_set_rotX(duk_context* ctx)
 	return 0;
 }
 
-static
+static duk_ret_t
 js_Group_get_rotY(duk_context* ctx)
 {
 	group_t* group;
@@ -582,7 +582,7 @@ js_Group_get_rotY(duk_context* ctx)
 	return 1;
 }
 
-static
+static duk_ret_t
 js_Group_set_rotY(duk_context* ctx)
 {
 	group_t* group;
@@ -595,7 +595,7 @@ js_Group_set_rotY(duk_context* ctx)
 	return 0;
 }
 
-static
+static duk_ret_t
 js_Group_get_x(duk_context* ctx)
 {
 	group_t* group;
@@ -607,7 +607,7 @@ js_Group_get_x(duk_context* ctx)
 	return 1;
 }
 
-static
+static duk_ret_t
 js_Group_set_x(duk_context* ctx)
 {
 	group_t* group;
@@ -620,7 +620,7 @@ js_Group_set_x(duk_context* ctx)
 	return 0;
 }
 
-static
+static duk_ret_t
 js_Group_get_y(duk_context* ctx)
 {
 	group_t* group;
@@ -632,7 +632,7 @@ js_Group_get_y(duk_context* ctx)
 	return 1;
 }
 
-static
+static duk_ret_t
 js_Group_set_y(duk_context* ctx)
 {
 	group_t* group;
