@@ -203,10 +203,10 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat />
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -232,11 +232,11 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -262,10 +262,10 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat />
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -291,11 +291,11 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -7,7 +7,7 @@
 #define snprintf _snprintf
 #endif
 
-#define ENGINE_NAME "minisphere 1.2.3"
+#define ENGINE_NAME "minisphere 1.3a"
 
 #include <stdlib.h>
 #include <stdarg.h>

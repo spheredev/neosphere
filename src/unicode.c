@@ -41,7 +41,7 @@ utf8decode(uint32_t* state, uint32_t* codep, uint8_t byte)
 }
 
 size_t
-utf8len(const char* str)
+utf8len(const char* string)
 {
 	uint8_t  byte;
 	uint32_t cp;
@@ -49,7 +49,7 @@ utf8len(const char* str)
 	uint32_t utf8state;
 
 	utf8state = UTF8_ACCEPT;
-	while ((byte = *str++) != '\0') {
+	while ((byte = *string++) != '\0') {
 		while (utf8decode(&utf8state, &cp, byte));
 		if (utf8state == UTF8_REJECT)
 			utf8state = UTF8_ACCEPT;

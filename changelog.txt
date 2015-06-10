@@ -1,6 +1,11 @@
 minisphere Changelog
 ====================
 
+v1.3 - TBD
+----------
+
+* 4-player support in map engine (AttachPlayerInput() et al.)
+
 v1.2.3 - June 10, 2015
 ----------------------
 
