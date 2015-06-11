@@ -18,6 +18,8 @@ static duk_ret_t js_ByteArray_toString        (duk_context* ctx);
 static duk_ret_t js_ByteArray_getProp         (duk_context* ctx);
 static duk_ret_t js_ByteArray_setProp         (duk_context* ctx);
 static duk_ret_t js_ByteArray_concat          (duk_context* ctx);
+static duk_ret_t js_ByteArray_deflate         (duk_context* ctx);
+static duk_ret_t js_ByteArray_inflate         (duk_context* ctx);
 static duk_ret_t js_ByteArray_slice           (duk_context* ctx);
 
 struct bytearray
@@ -40,7 +42,7 @@ new_bytearray(int size)
 	if (!(array->buffer = calloc(size, 1))) goto on_error;
 	array->size = size;
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created %u-byte bytearray [bytearray %u]", array->size, array->id);
+	console_log(3, "engine: Created %u-byte bytearray [bytearray %u]\n", array->size, array->id);
 	return ref_bytearray(array);
 	
 on_error:
@@ -57,7 +59,7 @@ bytearray_from_buffer(const void* buffer, int size)
 		return NULL;
 	memcpy(array->buffer, buffer, size);
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created %u-byte bytearray from buffer [bytearray %u]", array->size, array->id);
+	console_log(3, "engine: Created %u-byte bytearray from buffer [bytearray %u]\n", array->size, array->id);
 	return array;
 }
 
@@ -72,7 +74,7 @@ bytearray_from_lstring(const lstring_t* string)
 		return NULL;
 	memcpy(array->buffer, string->cstr, string->length);
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created bytearray from %u-byte string [bytearray %u]", string->length, array->id);
+	console_log(3, "engine: Created bytearray from %u-byte string [bytearray %u]\n", string->length, array->id);
 	if (string->length <= 65)  // log short strings only
 		console_log(4, "  string: \"%s\"", string->cstr);
 	return array;
@@ -90,7 +92,7 @@ free_bytearray(bytearray_t* array)
 {
 	if (array == NULL || --array->refcount > 0)
 		return;
-	console_log(3, "bytearray %u: Freeing bytearray, refcount is 0");
+	console_log(3, "bytearray %u: Freeing bytearray, refcount is 0\n");
 	free(array->buffer);
 	free(array);
 }
@@ -131,8 +133,109 @@ concat_bytearrays(bytearray_t* array1, bytearray_t* array2)
 		return NULL;
 	memcpy(new_array->buffer, array1->buffer, array1->size);
 	memcpy(new_array->buffer + array1->size, array2->buffer, array2->size);
-	console_log(3, "bytearray %u: Concatenated from bytearrays %u, %u", new_array->id, array1->id, array2->id);
+	console_log(3, "bytearray %u: Concatenated from bytearrays %u, %u\n", new_array->id, array1->id, array2->id);
 	return new_array;
+}
+
+bytearray_t*
+deflate_bytearray(bytearray_t* array, int level)
+{
+	static const int CHUNK_SIZE = 65536;
+	
+	uint8_t*     buffer = NULL;
+	int          flush_flag;
+	int          result;
+	bytearray_t* new_array;
+	uint8_t*     new_buffer;
+	int          n_chunks = 0;
+	size_t       out_size;
+	z_stream     z;
+
+	memset(&z, 0, sizeof(z_stream));
+	z.next_in = (Bytef*)array->buffer;
+	z.avail_in = array->size;
+	if (deflateInit(&z, level) != Z_OK)
+		goto on_error;
+	flush_flag = Z_NO_FLUSH;
+	do {
+		if (z.avail_out == 0) {
+			if (!(new_buffer = realloc(buffer, ++n_chunks * CHUNK_SIZE)))  // resize buffer
+				goto on_error;
+			z.next_out = new_buffer + (n_chunks - 1) * CHUNK_SIZE;
+			z.avail_out = CHUNK_SIZE;
+			buffer = new_buffer;
+		}
+		result = deflate(&z, flush_flag);
+		if (z.avail_out > 0)
+			flush_flag = Z_FINISH;
+	} while (result != Z_STREAM_END);
+	if ((out_size = CHUNK_SIZE * n_chunks - z.avail_out) > INT_MAX)
+		goto on_error;
+	deflateEnd(&z);
+
+	// create a byte array from the deflated data
+	if (!(new_array = calloc(1, sizeof(bytearray_t))))
+		goto on_error;
+	new_array->id = s_next_array_id++;
+	new_array->buffer = buffer;
+	new_array->size = (int)out_size;
+	return ref_bytearray(new_array);
+
+on_error:
+	deflateEnd(&z);
+	free(buffer);
+	return NULL;
+}
+
+bytearray_t*
+inflate_bytearray(bytearray_t* array)
+{
+	static const int CHUNK_SIZE = 65536;
+	
+	uint8_t*     buffer = NULL;
+	int          flush_flag;
+	int          result;
+	bytearray_t* new_array;
+	uint8_t*     new_buffer;
+	int          n_chunks = 0;
+	size_t       out_size;
+	z_stream     z;
+
+	memset(&z, 0, sizeof(z_stream));
+	z.next_in = (Bytef*)array->buffer;
+	z.avail_in = array->size;
+	if (inflateInit(&z) != Z_OK)
+		goto on_error;
+	flush_flag = Z_NO_FLUSH;
+	do {
+		if (z.avail_out == 0) {
+			if (!(new_buffer = realloc(buffer, ++n_chunks * CHUNK_SIZE)))  // resize buffer
+				goto on_error;
+			z.next_out = new_buffer + (n_chunks - 1) * CHUNK_SIZE;
+			z.avail_out = CHUNK_SIZE;
+			buffer = new_buffer;
+		}
+		if ((result = inflate(&z, flush_flag)) == Z_DATA_ERROR)
+			goto on_error;
+		if (z.avail_out > 0)
+			flush_flag = Z_FINISH;
+	} while (result != Z_STREAM_END);
+	if ((out_size = CHUNK_SIZE * n_chunks - z.avail_out) > INT_MAX)
+		goto on_error;
+	inflateEnd(&z);
+
+	// create a byte array from the deflated data
+	if (!(new_array = calloc(1, sizeof(bytearray_t))))
+		goto on_error;
+	new_array->id = s_next_array_id++;
+	new_array->buffer = buffer;
+	new_array->size = (int)out_size;
+	return ref_bytearray(new_array);
+
+on_error:
+	inflateEnd(&z);
+	free(buffer);
+	return NULL;
 }
 
 bytearray_t*
@@ -143,7 +246,7 @@ slice_bytearray(bytearray_t* array, int start, int length)
 	if (!(new_array = new_bytearray(length)))
 		return NULL;
 	memcpy(new_array->buffer, array->buffer + start, length);
-	console_log(3, "bytearray %u: Sliced from bytearray %u", new_array->id, array->id);
+	console_log(3, "bytearray %u: Sliced from bytearray %u\n", new_array->id, array->id);
 	return new_array;
 }
 
@@ -159,8 +262,11 @@ init_bytearray_api(void)
 	register_api_function(g_duk, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
 	register_api_ctor(g_duk, "ByteArray", js_new_ByteArray, js_ByteArray_finalize);
 	register_api_prop(g_duk, "ByteArray", "length", js_ByteArray_get_length, NULL);
+	register_api_prop(g_duk, "ByteArray", "size", js_ByteArray_get_length, NULL);
 	register_api_function(g_duk, "ByteArray", "toString", js_ByteArray_toString);
 	register_api_function(g_duk, "ByteArray", "concat", js_ByteArray_concat);
+	register_api_function(g_duk, "ByteArray", "deflate", js_ByteArray_deflate);
+	register_api_function(g_duk, "ByteArray", "inflate", js_ByteArray_inflate);
 	register_api_function(g_duk, "ByteArray", "slice", js_ByteArray_slice);
 }
 
@@ -346,6 +452,43 @@ js_ByteArray_concat(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:concat(): Unable to concatenate, final size would exceed 2 GB (size1: %u, size2: %u)", array->size, array2->size);
 	if (!(new_array = concat_bytearrays(array, array2)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:concat(): Failed to create concatenated byte array");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_deflate(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int level = n_args >= 1 ? duk_require_int(ctx, 0) : 6;
+	
+	bytearray_t* array;
+	bytearray_t* new_array;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_bytearray(ctx, -1);
+	duk_pop(ctx);
+	if ((level < 0 || level > 9) && n_args >= 1)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): Compression level is out of range (%i)", level);
+	if (!(new_array = deflate_bytearray(array, level)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:deflate(): Failed to deflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_inflate(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+
+	bytearray_t* array;
+	bytearray_t* new_array;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_bytearray(ctx, -1);
+	duk_pop(ctx);
+	if (!(new_array = inflate_bytearray(array)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): Failed to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }

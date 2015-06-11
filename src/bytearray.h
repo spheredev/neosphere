@@ -10,6 +10,8 @@ extern const uint8_t* get_bytearray_buffer   (bytearray_t* array);
 extern int            get_bytearray_size     (bytearray_t* array);
 extern void           set_byte               (bytearray_t* array, int index, uint8_t value);
 extern bytearray_t*   concat_bytearrays      (bytearray_t* array1, bytearray_t* array2);
+extern bytearray_t*   deflate_bytearray      (bytearray_t* array, int level);
+extern bytearray_t*   inflate_bytearray      (bytearray_t* array);
 extern bytearray_t*   slice_bytearray        (bytearray_t* array, int start, int length);
 
 extern void         init_bytearray_api           (void);

@@ -24,6 +24,7 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
+#include <zlib.h>
 #include "duktape.h"
 #include "dyad.h"
 #include "console.h"
