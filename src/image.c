@@ -318,7 +318,12 @@ apply_color_matrix(image_t* image, colormatrix_t matrix, int x, int y, int width
 bool
 apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int w, int h)
 {
-	int           i1, i2, i3;
+	// this function might be difficult to understand at first. nonetheless, this
+	// implementation is much more concise than the one in Sphere. basically what
+	// it boils down to is bilinear interpolation, but with matrices. surprisingly, it's
+	// much more straightforward than it sounds.
+	
+	int           i1, i2;
 	image_lock_t* lock;
 	colormatrix_t mat_1, mat_2, mat_3;
 	color_t*      pixel;
@@ -328,54 +333,24 @@ apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat,
 	if (!(lock = lock_image(image)))
 		return false;
 	uncache_pixels(image);
-	
-	// process the transformation
-	#define INTERP(mat, cell, src1, src2) \
-		mat.cell = (src1.cell * i1 + src2.cell * i2) / i3
 	for (i_y = y; i_y < y + h; ++i_y) {
-		
-		// phase 1: calculate the matrices for the current line.
-		// this gives us two color matrices which will be interpolated to transform the
-		// pixels on this line. essentially what we're doing is just bilinear interpolation,
-		// but with matrices. it looks more complicated than it is.
+		// thankfully, we don't have to a full bilinear interpolation every frame.
+		// we do half of the work in the outer loop, giving us two color matrices we
+		// can interpolate within a line to transform the individual pixels.
 		i1 = y + h - 1 - i_y;
 		i2 = i_y - y;
-		i3 = h - 1;
-		INTERP(mat_1, rn, ul_mat, ll_mat); INTERP(mat_2, rn, ur_mat, lr_mat);
-		INTERP(mat_1, rr, ul_mat, ll_mat); INTERP(mat_2, rr, ur_mat, lr_mat);
-		INTERP(mat_1, rg, ul_mat, ll_mat); INTERP(mat_2, rg, ur_mat, lr_mat);
-		INTERP(mat_1, rb, ul_mat, ll_mat); INTERP(mat_2, rb, ur_mat, lr_mat);
-		INTERP(mat_1, gn, ul_mat, ll_mat); INTERP(mat_2, gn, ur_mat, lr_mat);
-		INTERP(mat_1, gr, ul_mat, ll_mat); INTERP(mat_2, gr, ur_mat, lr_mat);
-		INTERP(mat_1, gg, ul_mat, ll_mat); INTERP(mat_2, gg, ur_mat, lr_mat);
-		INTERP(mat_1, gb, ul_mat, ll_mat); INTERP(mat_2, gb, ur_mat, lr_mat);
-		INTERP(mat_1, bn, ul_mat, ll_mat); INTERP(mat_2, bn, ur_mat, lr_mat);
-		INTERP(mat_1, br, ul_mat, ll_mat); INTERP(mat_2, br, ur_mat, lr_mat);
-		INTERP(mat_1, bg, ul_mat, ll_mat); INTERP(mat_2, bg, ur_mat, lr_mat);
-		INTERP(mat_1, bb, ul_mat, ll_mat); INTERP(mat_2, bb, ur_mat, lr_mat);
-
+		mat_1 = blend_color_matrices(ul_mat, ll_mat, i1, i2);
+		mat_2 = blend_color_matrices(ul_mat, ll_mat, i1, i2);
 		for (i_x = x; i_x < x + w; ++i_x) {
-			
-			// phase 2: apply the pixel transformation.
-			// the two matrices calculated above are interpolated as we move from
-			// left to right. this gives us a final matrix we can use to transform
-			// the pixel.
+			// calculate the final matrix for this pixel and transform it
 			i1 = x + w - 1 - i_x;
 			i2 = i_x - x;
-			i3 = w - 1;
-			INTERP(mat_3, rn, mat_1, mat_2); INTERP(mat_3, gn, mat_1, mat_2); INTERP(mat_3, bn, mat_1, mat_2);
-			INTERP(mat_3, rr, mat_1, mat_2); INTERP(mat_3, gr, mat_1, mat_2); INTERP(mat_3, br, mat_1, mat_2);
-			INTERP(mat_3, rg, mat_1, mat_2); INTERP(mat_3, gg, mat_1, mat_2); INTERP(mat_3, bg, mat_1, mat_2);
-			INTERP(mat_3, rb, mat_1, mat_2); INTERP(mat_3, gb, mat_1, mat_2); INTERP(mat_3, bb, mat_1, mat_2);
-			
-			// finally, we can transform the pixel!
+			mat_3 = blend_color_matrices(mat_1, mat_2, i1, i2);
 			pixel = &lock->pixels[i_x + i_y * lock->pitch];
 			*pixel = transform_pixel(*pixel, mat_3);
 
 		}
 	}
-	#undef INTERP
-
 	unlock_image(image, lock);
 	return true;
 }

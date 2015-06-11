@@ -8,10 +8,9 @@ extern color_t       rgba         (uint8_t r, uint8_t g, uint8_t b, uint8_t alph
 extern ALLEGRO_COLOR nativecolor  (color_t color);
 extern color_t       blend_colors (color_t color1, color_t color2, float w1, float w2);
 
-extern colormatrix_t colormatrix     (uint8_t rn, uint8_t rr, uint8_t rg, uint8_t rb,
-                                      uint8_t gn, uint8_t gr, uint8_t gg, uint8_t gb,
-                                      uint8_t bn, uint8_t br, uint8_t bg, uint8_t bb);
-extern color_t       transform_pixel (color_t pixel, colormatrix_t matrix);
+extern colormatrix_t colormatrix          (int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb);
+extern colormatrix_t blend_color_matrices (colormatrix_t mat1, colormatrix_t mat2, int w1, int w2);
+extern color_t       transform_pixel      (color_t pixel, colormatrix_t matrix);
 
 extern void          init_color_api (void);
 
@@ -29,9 +28,9 @@ struct color
 
 struct colormatrix
 {
-	uint8_t rn, rr, rg, rb;
-	uint8_t gn, gr, gg, gb;
-	uint8_t bn, br, bg, bb;
+	int rn, rr, rg, rb;
+	int gn, gr, gg, gb;
+	int bn, br, bg, bb;
 };
 
 #endif // MINISPHERE__COLOR_H__INCLUDED
