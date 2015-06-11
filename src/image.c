@@ -334,13 +334,13 @@ apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat,
 		mat.cell = (src1.cell * i1 + src2.cell * i2) / i3
 	for (i_y = y; i_y < y + h; ++i_y) {
 		
-		// phase 1: calculate the color matrices for the current line.
-		// this gives us 2 color matrices which will be interpolated to transform the
+		// phase 1: calculate the matrices for the current line.
+		// this gives us two color matrices which will be interpolated to transform the
 		// pixels on this line. essentially what we're doing is just bilinear interpolation,
 		// but with matrices. it looks more complicated than it is.
-		i1 = y + h - i_y;
+		i1 = y + h - 1 - i_y;
 		i2 = i_y - y;
-		i3 = h;
+		i3 = h - 1;
 		INTERP(mat_1, rn, ul_mat, ll_mat); INTERP(mat_2, rn, ur_mat, lr_mat);
 		INTERP(mat_1, rr, ul_mat, ll_mat); INTERP(mat_2, rr, ur_mat, lr_mat);
 		INTERP(mat_1, rg, ul_mat, ll_mat); INTERP(mat_2, rg, ur_mat, lr_mat);
@@ -357,16 +357,18 @@ apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat,
 		for (i_x = x; i_x < x + w; ++i_x) {
 			
 			// phase 2: apply the pixel transformation.
-			// the 2 matrices calculated above are interpolated as we move from
+			// the two matrices calculated above are interpolated as we move from
 			// left to right. this gives us a final matrix we can use to transform
 			// the pixel.
-			i2 = (i_x - x) * 256 / w;
-			i1 = 256 - i2;
-			i3 = 1;
+			i1 = x + w - 1 - i_x;
+			i2 = i_x - x;
+			i3 = w - 1;
 			INTERP(mat_3, rn, mat_1, mat_2); INTERP(mat_3, gn, mat_1, mat_2); INTERP(mat_3, bn, mat_1, mat_2);
 			INTERP(mat_3, rr, mat_1, mat_2); INTERP(mat_3, gr, mat_1, mat_2); INTERP(mat_3, br, mat_1, mat_2);
 			INTERP(mat_3, rg, mat_1, mat_2); INTERP(mat_3, gg, mat_1, mat_2); INTERP(mat_3, bg, mat_1, mat_2);
 			INTERP(mat_3, rb, mat_1, mat_2); INTERP(mat_3, gb, mat_1, mat_2); INTERP(mat_3, bb, mat_1, mat_2);
+			
+			// finally, we can transform the pixel!
 			pixel = &lock->pixels[i_x + i_y * lock->pitch];
 			*pixel = transform_pixel(*pixel, mat_3);
 
