@@ -297,6 +297,25 @@ set_image_pixel(image_t* image, int x, int y, color_t color)
 }
 
 bool
+apply_color_matrix(image_t* image, colormatrix_t matrix, int x, int y, int width, int height)
+{
+	image_lock_t* lock;
+	color_t*      pixel;
+
+	int i_x, i_y;
+
+	if (!(lock = lock_image(image)))
+		return false;
+	uncache_pixels(image);
+	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
+		pixel = &lock->pixels[i_x + i_y * lock->pitch];
+		*pixel = transform_pixel(*pixel, matrix);
+	}
+	unlock_image(image, lock);
+	return true;
+}
+
+bool
 apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256])
 {
 	ALLEGRO_BITMAP*        bitmap = get_image_bitmap(image);

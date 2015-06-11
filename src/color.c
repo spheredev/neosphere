@@ -2,12 +2,15 @@
 #include "api.h"
 #include "color.h"
 
-static duk_ret_t js_BlendColors         (duk_context* ctx);
-static duk_ret_t js_BlendColorsWeighted (duk_context* ctx);
-static duk_ret_t js_CreateColor         (duk_context* ctx);
-static duk_ret_t js_new_Color           (duk_context* ctx);
-static duk_ret_t js_Color_toString      (duk_context* ctx);
-static duk_ret_t js_Color_clone         (duk_context* ctx);
+static duk_ret_t js_BlendColors           (duk_context* ctx);
+static duk_ret_t js_BlendColorsWeighted   (duk_context* ctx);
+static duk_ret_t js_CreateColor           (duk_context* ctx);
+static duk_ret_t js_new_Color             (duk_context* ctx);
+static duk_ret_t js_Color_toString        (duk_context* ctx);
+static duk_ret_t js_Color_clone           (duk_context* ctx);
+static duk_ret_t js_CreateColorMatrix     (duk_context* ctx);
+static duk_ret_t js_new_ColorMatrix       (duk_context* ctx);
+static duk_ret_t js_ColorMatrix_toString  (duk_context* ctx);
 
 color_t
 rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
@@ -19,6 +22,19 @@ rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
 	color.b = b;
 	color.alpha = alpha;
 	return color;
+}
+
+colormatrix_t
+colormatrix(uint8_t rn, uint8_t rr, uint8_t rg, uint8_t rb,
+            uint8_t gn, uint8_t gr, uint8_t gg, uint8_t gb,
+			uint8_t bn, uint8_t br, uint8_t bg, uint8_t bb)
+{
+	colormatrix_t matrix = {
+		rn, rr, rg, rb,
+		gn, gr, gg, gb,
+		bn, br, bg, bb,
+	};
+	return matrix;
 }
 
 ALLEGRO_COLOR
@@ -41,17 +57,32 @@ blend_colors(color_t color1, color_t color2, float w1, float w2)
 	return blend;
 }
 
+color_t
+transform_pixel(color_t pixel, colormatrix_t matrix)
+{
+	return rgba(
+		matrix.rn + (matrix.rr * pixel.r + matrix.rg * pixel.g + matrix.rb * pixel.b) / 255,
+		matrix.gn + (matrix.gr * pixel.r + matrix.gg * pixel.g + matrix.gb * pixel.b) / 255,
+		matrix.bn + (matrix.br * pixel.r + matrix.bg * pixel.g + matrix.bb * pixel.b) / 255,
+		pixel.alpha);
+}
+
 void
 init_color_api(void)
 {
 	register_api_function(g_duk, NULL, "BlendColors", js_BlendColors);
 	register_api_function(g_duk, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
 	register_api_function(g_duk, NULL, "CreateColor", js_CreateColor);
-	
+	register_api_function(g_duk, NULL, "CreateColorMatrix", js_CreateColorMatrix);
+
 	// register Color methods and properties
 	register_api_ctor(g_duk, "Color", js_new_Color, NULL);
 	register_api_function(g_duk, "Color", "toString", js_Color_toString);
 	register_api_function(g_duk, "Color", "clone", js_Color_clone);
+	
+	// register ColorMatrix methods and properties
+	register_api_ctor(g_duk, "ColorMatrix", js_new_ColorMatrix, NULL);
+	register_api_function(g_duk, "ColorMatrix", "toString", js_ColorMatrix_toString);
 }
 
 void
@@ -78,6 +109,27 @@ duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 	duk_get_prop_string(ctx, index, "blue"); color.b = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "alpha"); color.alpha = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
 	return color;
+}
+
+colormatrix_t
+duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
+{
+	colormatrix_t matrix;
+
+	duk_require_sphere_obj(ctx, index, "ColorMatrix");
+	duk_get_prop_string(ctx, index, "rn"); matrix.rn = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "rr"); matrix.rr = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "rg"); matrix.rg = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "rb"); matrix.rb = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gn"); matrix.gn = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gr"); matrix.gr = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gg"); matrix.gg = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gb"); matrix.gb = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "bn"); matrix.bn = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "br"); matrix.br = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "bg"); matrix.bg = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "bb"); matrix.bb = fmin(fmax(duk_get_number(ctx, -1), 0), 255); duk_pop(ctx);
+	return matrix;
 }
 
 static duk_ret_t
@@ -107,18 +159,7 @@ js_BlendColorsWeighted(duk_context* ctx)
 static duk_ret_t
 js_CreateColor(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int r = duk_require_int(ctx, 0);
-	int g = duk_require_int(ctx, 1);
-	int b = duk_require_int(ctx, 2);
-	int alpha = n_args >= 4 ? duk_require_int(ctx, 3) : 255;
-
-	r = fmin(fmax(r, 0), 255);
-	g = fmin(fmax(g, 0), 255);
-	b = fmin(fmax(b, 0), 255);
-	alpha = fmin(fmax(alpha, 0), 255);
-	duk_push_sphere_color(ctx, rgba(r, g, b, alpha));
-	return 1;
+	return js_new_Color(ctx);
 }
 
 static duk_ret_t
@@ -161,5 +202,65 @@ js_Color_clone(duk_context* ctx)
 	color = duk_require_sphere_color(ctx, -1);
 	duk_pop(ctx);
 	duk_push_sphere_color(ctx, color);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateColorMatrix(duk_context* ctx)
+{
+	return js_new_ColorMatrix(ctx);
+}
+
+static duk_ret_t
+js_new_ColorMatrix(duk_context* ctx)
+{
+	int rn = duk_require_int(ctx, 0);
+	int rr = duk_require_int(ctx, 1);
+	int rg = duk_require_int(ctx, 2);
+	int rb = duk_require_int(ctx, 3);
+	int gn = duk_require_int(ctx, 4);
+	int gr = duk_require_int(ctx, 5);
+	int gg = duk_require_int(ctx, 6);
+	int gb = duk_require_int(ctx, 7);
+	int bn = duk_require_int(ctx, 8);
+	int br = duk_require_int(ctx, 9);
+	int bg = duk_require_int(ctx, 10);
+	int bb = duk_require_int(ctx, 11);
+
+	// clamp entries to 8-bit [0-255]
+	rn = fmin(fmax(rn, 0), 255);
+	rr = fmin(fmax(rr, 0), 255);
+	rg = fmin(fmax(rg, 0), 255);
+	rb = fmin(fmax(rb, 0), 255);
+	gn = fmin(fmax(gn, 0), 255);
+	gr = fmin(fmax(gr, 0), 255);
+	gg = fmin(fmax(gg, 0), 255);
+	gb = fmin(fmax(gb, 0), 255);
+	bn = fmin(fmax(bn, 0), 255);
+	br = fmin(fmax(br, 0), 255);
+	bg = fmin(fmax(bg, 0), 255);
+	bb = fmin(fmax(bb, 0), 255);
+
+	// construct a ColorMatrix object
+	duk_push_sphere_obj(ctx, "ColorMatrix", NULL);
+	duk_push_int(ctx, rn); duk_put_prop_string(ctx, -2, "rn");
+	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
+	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
+	duk_push_int(ctx, rb); duk_put_prop_string(ctx, -2, "rb");
+	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gn");
+	duk_push_int(ctx, gr); duk_put_prop_string(ctx, -2, "gr");
+	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gg");
+	duk_push_int(ctx, gb); duk_put_prop_string(ctx, -2, "gb");
+	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bn");
+	duk_push_int(ctx, br); duk_put_prop_string(ctx, -2, "br");
+	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bg");
+	duk_push_int(ctx, bb); duk_put_prop_string(ctx, -2, "bb");
+	return 1;
+}
+
+static duk_ret_t
+js_ColorMatrix_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object colormatrix]");
 	return 1;
 }

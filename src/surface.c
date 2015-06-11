@@ -22,6 +22,7 @@ static duk_ret_t js_Surface_getPixel          (duk_context* ctx);
 static duk_ret_t js_Surface_setAlpha          (duk_context* ctx);
 static duk_ret_t js_Surface_setBlendMode      (duk_context* ctx);
 static duk_ret_t js_Surface_setPixel          (duk_context* ctx);
+static duk_ret_t js_Surface_applyColorFX      (duk_context* ctx);
 static duk_ret_t js_Surface_applyLookup       (duk_context* ctx);
 static duk_ret_t js_Surface_blit              (duk_context* ctx);
 static duk_ret_t js_Surface_blitMaskSurface   (duk_context* ctx);
@@ -73,6 +74,7 @@ init_surface_api(void)
 	register_api_function(g_duk, "Surface", "setAlpha", js_Surface_setAlpha);
 	register_api_function(g_duk, "Surface", "setBlendMode", js_Surface_setBlendMode);
 	register_api_function(g_duk, "Surface", "setPixel", js_Surface_setPixel);
+	register_api_function(g_duk, "Surface", "applyColorFX", js_Surface_applyColorFX);
 	register_api_function(g_duk, "Surface", "applyLookup", js_Surface_applyLookup);
 	register_api_function(g_duk, "Surface", "blit", js_Surface_blit);
 	register_api_function(g_duk, "Surface", "blitMaskSurface", js_Surface_blitMaskSurface);
@@ -315,6 +317,27 @@ js_Surface_getPixel(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_applyColorFX(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	colormatrix_t matrix = duk_require_sphere_colormatrix(ctx, 4);
+
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_surface(ctx, -1);
+	duk_pop(ctx);
+	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Specified area extends outside image (%i,%i,%i,%i)", x, y, w, h);
+	if (!apply_color_matrix(image, matrix, x, y, w, h))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): Failed to apply color matrix");
+	return 0;
+}
+
+static duk_ret_t
 js_Surface_applyLookup(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
@@ -331,6 +354,8 @@ js_Surface_applyLookup(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
+	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Specified area extends outside image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyLookup(): Failed to apply lookup transformation");
 	return 0;
