@@ -11,6 +11,8 @@ static duk_ret_t js_CreateStringFromByteArray (duk_context* ctx);
 static duk_ret_t js_HashByteArray             (duk_context* ctx);
 static duk_ret_t js_CreateByteArray           (duk_context* ctx);
 static duk_ret_t js_CreateByteArrayFromString (duk_context* ctx);
+static duk_ret_t js_DeflateByteArray          (duk_context* ctx);
+static duk_ret_t js_InflateByteArray          (duk_context* ctx);
 static duk_ret_t js_new_ByteArray             (duk_context* ctx);
 static duk_ret_t js_ByteArray_finalize        (duk_context* ctx);
 static duk_ret_t js_ByteArray_get_length      (duk_context* ctx);
@@ -179,6 +181,9 @@ deflate_bytearray(bytearray_t* array, int level)
 	new_array->id = s_next_array_id++;
 	new_array->buffer = buffer;
 	new_array->size = (int)out_size;
+
+	console_log(3, "engine: Created %i-byte bytearray via deflation [%u -> %u]\n", new_array->size,
+		array->id, new_array->id);
 	return ref_bytearray(new_array);
 
 on_error:
@@ -230,6 +235,9 @@ inflate_bytearray(bytearray_t* array)
 	new_array->id = s_next_array_id++;
 	new_array->buffer = buffer;
 	new_array->size = (int)out_size;
+
+	console_log(3, "engine: Created %i-byte bytearray via inflation [%u -> %u]\n", new_array->size,
+		array->id, new_array->id);
 	return ref_bytearray(new_array);
 
 on_error:
@@ -308,12 +316,42 @@ js_CreateStringFromByteArray(duk_context* ctx)
 }
 
 static duk_ret_t
+js_DeflateByteArray(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
+	int level = n_args >= 2 ? duk_require_int(ctx, 1) : -1;
+
+	bytearray_t* new_array;
+
+	if ((level < 0 || level > 9) && n_args >= 2)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DeflateByteArray(): Compression level is out of range (%i)", level);
+	if (!(new_array = deflate_bytearray(array, level)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DeflateByteArray(): Failed to deflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
 js_HashByteArray(duk_context* ctx)
 {
 	duk_require_sphere_bytearray(ctx, 0);
 	
 	// TODO: implement byte array hashing
 	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashByteArray(): Function is not yet implemented");
+}
+
+static duk_ret_t
+js_InflateByteArray(duk_context* ctx)
+{
+	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
+
+	bytearray_t* new_array;
+
+	if (!(new_array = inflate_bytearray(array)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): Failed to inflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
 }
 
 static duk_ret_t
@@ -460,7 +498,7 @@ static duk_ret_t
 js_ByteArray_deflate(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int level = n_args >= 1 ? duk_require_int(ctx, 0) : 6;
+	int level = n_args >= 1 ? duk_require_int(ctx, 0) : -1;
 	
 	bytearray_t* array;
 	bytearray_t* new_array;
@@ -479,8 +517,6 @@ js_ByteArray_deflate(duk_context* ctx)
 static duk_ret_t
 js_ByteArray_inflate(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-
 	bytearray_t* array;
 	bytearray_t* new_array;
 
