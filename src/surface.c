@@ -23,6 +23,7 @@ static duk_ret_t js_Surface_setAlpha          (duk_context* ctx);
 static duk_ret_t js_Surface_setBlendMode      (duk_context* ctx);
 static duk_ret_t js_Surface_setPixel          (duk_context* ctx);
 static duk_ret_t js_Surface_applyColorFX      (duk_context* ctx);
+static duk_ret_t js_Surface_applyColorFX4     (duk_context* ctx);
 static duk_ret_t js_Surface_applyLookup       (duk_context* ctx);
 static duk_ret_t js_Surface_blit              (duk_context* ctx);
 static duk_ret_t js_Surface_blitMaskSurface   (duk_context* ctx);
@@ -75,6 +76,7 @@ init_surface_api(void)
 	register_api_function(g_duk, "Surface", "setBlendMode", js_Surface_setBlendMode);
 	register_api_function(g_duk, "Surface", "setPixel", js_Surface_setPixel);
 	register_api_function(g_duk, "Surface", "applyColorFX", js_Surface_applyColorFX);
+	register_api_function(g_duk, "Surface", "applyColorFX4", js_Surface_applyColorFX4);
 	register_api_function(g_duk, "Surface", "applyLookup", js_Surface_applyLookup);
 	register_api_function(g_duk, "Surface", "blit", js_Surface_blit);
 	register_api_function(g_duk, "Surface", "blitMaskSurface", js_Surface_blitMaskSurface);
@@ -331,9 +333,33 @@ js_Surface_applyColorFX(duk_context* ctx)
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
 	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Specified area extends outside image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Box extends outside image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_color_matrix(image, matrix, x, y, w, h))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): Failed to apply color matrix");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): Failed to apply transformation");
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_applyColorFX4(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	colormatrix_t ul_mat = duk_require_sphere_colormatrix(ctx, 4);
+	colormatrix_t ur_mat = duk_require_sphere_colormatrix(ctx, 5);
+	colormatrix_t ll_mat = duk_require_sphere_colormatrix(ctx, 6);
+	colormatrix_t lr_mat = duk_require_sphere_colormatrix(ctx, 7);
+
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_surface(ctx, -1);
+	duk_pop(ctx);
+	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): Box extends outside image (%i,%i,%i,%i)", x, y, w, h);
+	if (!apply_color_matrix_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX4(): Failed to apply transformation");
 	return 0;
 }
 

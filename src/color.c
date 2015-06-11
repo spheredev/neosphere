@@ -61,9 +61,9 @@ color_t
 transform_pixel(color_t pixel, colormatrix_t matrix)
 {
 	return rgba(
-		matrix.rn + (matrix.rr * pixel.r + matrix.rg * pixel.g + matrix.rb * pixel.b) / 255,
-		matrix.gn + (matrix.gr * pixel.r + matrix.gg * pixel.g + matrix.gb * pixel.b) / 255,
-		matrix.bn + (matrix.br * pixel.r + matrix.bg * pixel.g + matrix.bb * pixel.b) / 255,
+		fmin(fmax(matrix.rn + ((matrix.rr * pixel.r + matrix.rg * pixel.g + matrix.rb * pixel.b) / 255), 0), 255),
+		fmin(fmax(matrix.gn + ((matrix.gr * pixel.r + matrix.gg * pixel.g + matrix.gb * pixel.b) / 255), 0), 255),
+		fmin(fmax(matrix.bn + ((matrix.br * pixel.r + matrix.bg * pixel.g + matrix.bb * pixel.b) / 255), 0), 255),
 		pixel.alpha);
 }
 
@@ -247,11 +247,11 @@ js_new_ColorMatrix(duk_context* ctx)
 	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
 	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
 	duk_push_int(ctx, rb); duk_put_prop_string(ctx, -2, "rb");
-	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gn");
+	duk_push_int(ctx, gn); duk_put_prop_string(ctx, -2, "gn");
 	duk_push_int(ctx, gr); duk_put_prop_string(ctx, -2, "gr");
 	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gg");
 	duk_push_int(ctx, gb); duk_put_prop_string(ctx, -2, "gb");
-	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bn");
+	duk_push_int(ctx, bn); duk_put_prop_string(ctx, -2, "bn");
 	duk_push_int(ctx, br); duk_put_prop_string(ctx, -2, "br");
 	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bg");
 	duk_push_int(ctx, bb); duk_put_prop_string(ctx, -2, "bb");
