@@ -5,6 +5,10 @@ v1.3 - TBD
 ----------
 
 * 4-player support in map engine (AttachPlayerInput() et al.)
+* Support for Sphere ColorMatrix objects.
+* Fixes mysterious "invalid base value" errors when a built-in constructor is
+  shadowed by a global variable.
+
 
 v1.2.3 - June 10, 2015
 ----------------------
