@@ -318,10 +318,10 @@ apply_color_matrix(image_t* image, colormatrix_t matrix, int x, int y, int width
 bool
 apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int w, int h)
 {
-	// this function might be difficult to understand at first. nonetheless, this
-	// implementation is much more concise than the one in Sphere. basically what
-	// it boils down to is bilinear interpolation, but with matrices. surprisingly, it's
-	// much more straightforward than it sounds.
+	// this function might be difficult to understand at first. the implementation
+	// is, however, much easier to follow than the one in Sphere. basically what it
+	// boils down to is bilinear interpolation, but with matrices. it's much more
+	// straightforward than it sounds.
 	
 	int           i1, i2;
 	image_lock_t* lock;
@@ -334,13 +334,14 @@ apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat,
 		return false;
 	uncache_pixels(image);
 	for (i_y = y; i_y < y + h; ++i_y) {
-		// thankfully, we don't have to a full bilinear interpolation every frame.
-		// we do half of the work in the outer loop, giving us two color matrices we
-		// can interpolate within a line to transform the individual pixels.
+		// thankfully, we don't have to do a full bilinear interpolation every frame.
+		// two thirds of the work is done in the outer loop, giving us two color matrices
+		// which we then use in the inner loop to calculate the transforms for individual
+		// pixels.
 		i1 = y + h - 1 - i_y;
 		i2 = i_y - y;
 		mat_1 = blend_color_matrices(ul_mat, ll_mat, i1, i2);
-		mat_2 = blend_color_matrices(ul_mat, ll_mat, i1, i2);
+		mat_2 = blend_color_matrices(ur_mat, lr_mat, i1, i2);
 		for (i_x = x; i_x < x + w; ++i_x) {
 			// calculate the final matrix for this pixel and transform it
 			i1 = x + w - 1 - i_x;

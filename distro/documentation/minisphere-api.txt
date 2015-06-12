@@ -1019,17 +1019,23 @@ information about those.  Byte arrays can be used like any other array, via the
 indexing operator [], however values written to the array must be numeric and
 are automatically coerced to 8-bit integers (range 0-255).
 
-new ByteArray([num_bytes]);
+new ByteArray(num_bytes);
   
-  Constructs a byte array which can hold 'num_bytes' of data. Note that a byte
-  array cannot be resized after it is created, so you will have to plan ahead
-  to choose the right size. Note that byte arrays start out empty, with all
-  bytes set to zero.
+  Constructs a byte array which can hold 'num_bytes' of data. A byte array
+  cannot be resized after it is created, so you will have to plan ahead to
+  choose the right size. Note that byte arrays start out empty, with all bytes
+  set to zero.
+
+new ByteArray(string);
+  
+  Constructs a byte array from the bytes of the provided string. The size of
+  the created byte array will be the number of bytes in the string (which may
+  be greater than the string length!).
 
 ByteArray:length (read-only)
 ByteArray:size (read-only)
 
-  Gets the size of the byte array buffer, in bytes.
+  Gets the size of the byte array, in bytes.
 
 ByteArray:concat(byte_array);
 
@@ -1040,8 +1046,8 @@ ByteArray:deflate([level]);
   
   Compresses the data in the byte array using the zlib deflate algorithm and
   returns a new ByteArray containing the compressed data. 'level' specifies the
-  relative compression level and ranges [0-9]. If not provided, a default level
-  is used (usually 6).
+  relative compression level in the range [0-9]. If not provided, a default
+  level is used (usually 6).
 
 ByteArray:inflate([max_size]);
   
@@ -1051,7 +1057,8 @@ ByteArray:inflate([max_size]);
   is omitted, the inflate buffer will be dynamically sized to fit the data.
   
   Important: It is recommended to provide a maximum buffer size to inflate()
-             whenever possible. Doing so protects against inflation bombs.
+             whenever possible. Not doing so leaves the engine vulnerable to an
+             inflation bomb attack.
   
 ByteArray:slice(start[, end])
   
