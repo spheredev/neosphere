@@ -193,11 +193,10 @@ on_error:
 }
 
 bytearray_t*
-inflate_bytearray(bytearray_t* array)
+inflate_bytearray(bytearray_t* array, int max_size)
 {
-	static const int CHUNK_SIZE = 65536;
-	
 	uint8_t*     buffer = NULL;
+	size_t       chunk_size;
 	int          flush_flag;
 	int          result;
 	bytearray_t* new_array;
@@ -212,12 +211,15 @@ inflate_bytearray(bytearray_t* array)
 	if (inflateInit(&z) != Z_OK)
 		goto on_error;
 	flush_flag = Z_NO_FLUSH;
+	chunk_size = max_size != 0 ? max_size : 65536;
 	do {
 		if (z.avail_out == 0) {
-			if (!(new_buffer = realloc(buffer, ++n_chunks * CHUNK_SIZE)))  // resize buffer
+			if (buffer != NULL && max_size != 0)
 				goto on_error;
-			z.next_out = new_buffer + (n_chunks - 1) * CHUNK_SIZE;
-			z.avail_out = CHUNK_SIZE;
+			if (!(new_buffer = realloc(buffer, ++n_chunks * chunk_size)))  // resize buffer
+				goto on_error;
+			z.next_out = new_buffer + (n_chunks - 1) * chunk_size;
+			z.avail_out = (uInt)chunk_size;
 			buffer = new_buffer;
 		}
 		if ((result = inflate(&z, flush_flag)) == Z_DATA_ERROR)
@@ -225,7 +227,7 @@ inflate_bytearray(bytearray_t* array)
 		if (z.avail_out > 0)
 			flush_flag = Z_FINISH;
 	} while (result != Z_STREAM_END);
-	if ((out_size = CHUNK_SIZE * n_chunks - z.avail_out) > INT_MAX)
+	if ((out_size = chunk_size * n_chunks - z.avail_out) > INT_MAX)
 		goto on_error;
 	inflateEnd(&z);
 
@@ -344,11 +346,15 @@ js_HashByteArray(duk_context* ctx)
 static duk_ret_t
 js_InflateByteArray(duk_context* ctx)
 {
+	int n_args = duk_get_top(ctx);
 	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
+	int max_size = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	bytearray_t* new_array;
 
-	if (!(new_array = inflate_bytearray(array)))
+	if (max_size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "InflateByteArray(): Buffer size cannot be negative");
+	if (!(new_array = inflate_bytearray(array, max_size)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): Failed to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -520,10 +526,15 @@ js_ByteArray_inflate(duk_context* ctx)
 	bytearray_t* array;
 	bytearray_t* new_array;
 
+	int n_args = duk_get_top(ctx);
+	int max_size = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+	
 	duk_push_this(ctx);
 	array = duk_require_sphere_bytearray(ctx, -1);
 	duk_pop(ctx);
-	if (!(new_array = inflate_bytearray(array)))
+	if (max_size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): Buffer size cannot be negative");
+	if (!(new_array = inflate_bytearray(array, max_size)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): Failed to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
