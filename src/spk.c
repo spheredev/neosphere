@@ -176,6 +176,8 @@ on_error:
 void
 spk_fclose(spk_file_t* file)
 {
+	if (file == NULL)
+		return;
 	free(file->buffer);
 	free_spk(file->spk);
 	free(file);

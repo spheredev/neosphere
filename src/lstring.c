@@ -11,7 +11,8 @@ new_lstring(const char* fmt, ...)
 	lstring_t* lstring;
 	char*      output_str = NULL;
 	
-	if ((lstring = malloc(sizeof(lstring_t))) == NULL) goto on_error;
+	if ((lstring = malloc(sizeof(lstring_t))) == NULL)
+		goto on_error;
 	va_start(ap, fmt);
 	buf_size = vsnprintf(NULL, 0, fmt, ap) + 1;
 	if (!(output_str = malloc(buf_size))) goto on_error;

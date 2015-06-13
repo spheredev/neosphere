@@ -22,6 +22,7 @@
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
 #include <zlib.h>
@@ -33,7 +34,7 @@
 #include "lstring.h"
 #include "mt19937ar.h"
 #include "script.h"
-#include "spk.h"
+#include "spherefs.h"
 
 #if defined(__GNUC__)
 #define noreturn __attribute__((noreturn)) void

@@ -132,6 +132,9 @@
     <ClCompile Include="..\src\spk.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\spherefs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -249,6 +252,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\spk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\spherefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

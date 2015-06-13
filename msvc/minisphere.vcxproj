@@ -352,6 +352,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClCompile Include="..\src\rawfile.c" />
     <ClCompile Include="..\src\script.c" />
     <ClCompile Include="..\src\sound.c" />
+    <ClCompile Include="..\src\spherefs.c" />
     <ClCompile Include="..\src\spk.c" />
     <ClCompile Include="..\src\spriteset.c" />
     <ClCompile Include="..\src\surface.c" />
@@ -392,6 +393,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClInclude Include="..\src\rawfile.h" />
     <ClInclude Include="..\src\script.h" />
     <ClInclude Include="..\src\sound.h" />
+    <ClInclude Include="..\src\spherefs.h" />
     <ClInclude Include="..\src\spk.h" />
     <ClInclude Include="..\src\spriteset.h" />
     <ClInclude Include="..\src\surface.h" />
