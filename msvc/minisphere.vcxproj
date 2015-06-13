@@ -342,6 +342,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClCompile Include="..\src\map_engine.c" />
     <ClCompile Include="..\src\galileo.c" />
     <ClCompile Include="..\src\mt19937ar.c" />
+    <ClCompile Include="..\src\particles.c" />
     <ClCompile Include="..\src\rng.c" />
     <ClCompile Include="..\src\shader.c" />
     <ClCompile Include="..\src\sockets.c" />
@@ -351,6 +352,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClCompile Include="..\src\rawfile.c" />
     <ClCompile Include="..\src\script.c" />
     <ClCompile Include="..\src\sound.c" />
+    <ClCompile Include="..\src\spk.c" />
     <ClCompile Include="..\src\spriteset.c" />
     <ClCompile Include="..\src\surface.c" />
     <ClCompile Include="..\src\tileset.c" />
@@ -380,6 +382,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClInclude Include="..\src\minisphere.h" />
     <ClInclude Include="..\src\galileo.h" />
     <ClInclude Include="..\src\mt19937ar.h" />
+    <ClInclude Include="..\src\particles.h" />
     <ClInclude Include="..\src\rng.h" />
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\sockets.h" />
@@ -389,6 +392,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClInclude Include="..\src\rawfile.h" />
     <ClInclude Include="..\src\script.h" />
     <ClInclude Include="..\src\sound.h" />
+    <ClInclude Include="..\src\spk.h" />
     <ClInclude Include="..\src\spriteset.h" />
     <ClInclude Include="..\src\surface.h" />
     <ClInclude Include="..\src\tileset.h" />

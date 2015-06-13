@@ -9,6 +9,12 @@ v1.3 - TBD
 * Support for zlib compression and decompression of ByteArrays.
 
 
+v1.2.4 - June 11, 2015
+----------------------
+
+* Fixes mysterious "invalid base value" errors when a built-in constructor is
+  shadowed by a global variable with the same name.
+
 v1.2.3 - June 10, 2015
 ----------------------
 

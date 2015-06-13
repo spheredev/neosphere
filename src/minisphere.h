@@ -7,7 +7,7 @@
 #define snprintf _snprintf
 #endif
 
-#define ENGINE_NAME "minisphere 1.3a"
+#define ENGINE_NAME "minisphere 1.3"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -33,6 +33,7 @@
 #include "lstring.h"
 #include "mt19937ar.h"
 #include "script.h"
+#include "spk.h"
 
 #if defined(__GNUC__)
 #define noreturn __attribute__((noreturn)) void

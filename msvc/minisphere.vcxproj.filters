@@ -126,6 +126,12 @@
     <ClCompile Include="..\src\unicode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\particles.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\spk.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -237,6 +243,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\unicode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\particles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\spk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

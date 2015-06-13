@@ -12,6 +12,7 @@
 #include "input.h"
 #include "logger.h"
 #include "map_engine.h"
+#include "particles.h"
 #include "primitives.h"
 #include "rawfile.h"
 #include "rng.h"
@@ -746,6 +747,7 @@ initialize_engine(void)
 	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duk);
+	init_particle_api();
 	init_primitives_api();
 	init_rawfile_api();
 	init_rng_api();
