@@ -13,9 +13,9 @@ struct spherefs
 	};
 };
 
-struct sphere_file
+struct sfs_file
 {
-	spherefs_t* fs;
+	int fs_type;
 	union {
 		FILE*       fs_file;
 		spk_file_t* spk_file;
@@ -27,6 +27,31 @@ enum fs_type
 	SPHEREFS_SANDBOX,
 	SPHEREFS_SPK
 };
+
+spherefs_t*
+create_sandbox_fs(const char* path)
+{
+	spherefs_t*   fs;
+	ALLEGRO_PATH* sgm_path = NULL;
+
+	if (!(fs = calloc(1, sizeof(spherefs_t))))
+		goto on_error;
+	fs->type = SPHEREFS_SANDBOX;
+
+	fs->fs_root = al_create_path_for_directory(path);
+	sgm_path = al_clone_path(fs->fs_root);
+	al_set_path_filename(sgm_path, "game.sgm");
+	if (!(fs->sgm = al_load_config_file(al_path_cstr(sgm_path, ALLEGRO_NATIVE_PATH_SEP))))
+		goto on_error;
+	al_destroy_path(sgm_path);
+	return fs;
+
+on_error:
+	if (sgm_path != NULL)
+		al_destroy_path(sgm_path);
+	free(fs);
+	return NULL;
+}
 
 spherefs_t*
 create_spk_fs(const char* path)
@@ -52,6 +77,7 @@ create_spk_fs(const char* path)
 	if (!(fs->sgm = al_load_config_file_f(al_file)))
 		goto on_error;
 	al_fclose(al_file);
+	free(sgm_text);
 	return fs;
 		
 on_error:
@@ -73,30 +99,43 @@ free_fs(spherefs_t* fs)
 		return;
 	al_destroy_config(fs->sgm);
 	switch (fs->type) {
+	case SPHEREFS_SANDBOX:
+		al_destroy_path(fs->fs_root);
 	case SPHEREFS_SPK:
 		free_spk(fs->spk);
 	}
 	free(fs);
 }
 
-sphere_file_t*
-sphere_fopen(spherefs_t* fs, const char* path)
+sfs_file_t*
+sfs_fopen(spherefs_t* fs, const char* filename, const char* base_dir, const char* mode)
 {
-	sphere_file_t* file;
+	ALLEGRO_PATH* origin;
+	sfs_file_t*   file;
+	ALLEGRO_PATH* file_path;
+	const char*   path;
 
-	if (!(file = calloc(1, sizeof(sphere_file_t))))
+	if (!(file = calloc(1, sizeof(sfs_file_t))))
 		goto on_error;
-	file->fs = fs;
-	switch (file->fs->type) {
+	origin = al_create_path_for_directory(base_dir);
+	file_path = al_create_path(filename);
+	al_rebase_path(origin, file_path);
+	file->fs_type = fs->type;
+	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
+		al_rebase_path(fs->fs_root, file_path);
+		path = al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		if (!(file->fs_file = fopen(path, "rb")))
 			goto on_error;
 		break;
 	case SPHEREFS_SPK:
+		path = al_path_cstr(file_path, '/');
 		if (!(file->spk_file = spk_fopen(fs->spk, path)))
 			goto on_error;
 		break;
 	}
+	al_destroy_path(file_path);
+	al_destroy_path(origin);
 	return file;
 
 on_error:
@@ -105,11 +144,11 @@ on_error:
 }
 
 void
-sphere_fclose(sphere_file_t* file)
+sfs_fclose(sfs_file_t* file)
 {
 	if (file == NULL)
 		return;
-	switch (file->fs->type) {
+	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
 		fclose(file->fs_file);
 		break;
@@ -121,11 +160,11 @@ sphere_fclose(sphere_file_t* file)
 }
 
 long
-sphere_fread(sphere_file_t* file, void* buf, long size)
+sfs_fread(sfs_file_t* file, void* buf, long size)
 {
 	long read_size;
 	
-	switch (file->fs->type) {
+	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
 		read_size = (long)fread(buf, 1, size, file->fs_file);
 		break;
@@ -136,13 +175,26 @@ sphere_fread(sphere_file_t* file, void* buf, long size)
 	return read_size;
 }
 
-long
-sphere_ftell(sphere_file_t* file)
+bool
+sfs_fseek(sfs_file_t* file, long offset, int origin)
 {
-	switch (file->fs->type) {
+	switch (file->fs_type) {
+	case SPHEREFS_SANDBOX:
+		return fseek(file->fs_file, offset, origin) == 0;
+	case SPHEREFS_SPK:
+		return spk_fseek(file->spk_file, offset, origin);
+	}
+	return false;
+}
+
+long
+sfs_ftell(sfs_file_t* file)
+{
+	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
 		return ftell(file->fs_file);
 	case SPHEREFS_SPK:
 		return spk_ftell(file->spk_file);
 	}
+	return -1;
 }
