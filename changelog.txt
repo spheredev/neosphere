@@ -4,6 +4,9 @@ minisphere Changelog
 v1.3 - TBD
 ----------
 
+* SphereFS support! This provides new directory aliases (~usr/, ~sys/, ~sgm/)
+  with more predictable semantics than the classic ~/ alias, which is of course
+  maintained for backwards compatibility.
 * 4-player support in map engine (AttachPlayerInput() et al.)
 * Support for Sphere ColorMatrix objects.
 * Support for zlib compression and decompression of ByteArrays.

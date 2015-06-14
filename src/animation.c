@@ -33,7 +33,7 @@ struct animation
 	unsigned int  refcount;
 	unsigned int  id;
 	unsigned int  delay;
-	FILE*         file;
+	sfs_file_t*   file;
 	image_t*      frame;
 	bool          is_frame_ready;
 	image_lock_t* lock;
@@ -73,7 +73,8 @@ load_animation(const char* path)
 	mng_setcb_readdata(anim->stream, mng_cb_readdata);
 	mng_setcb_refresh(anim->stream, mng_cb_refresh);
 	mng_setcb_settimer(anim->stream, mng_cb_settimer);
-	if (!(anim->file = fopen(path, "rb"))) goto on_error;
+	if (!(anim->file = sfs_fopen(g_fs, path, "animations", "rb")))
+		goto on_error;
 	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
 	anim->id = s_next_animation_id++;
 	
@@ -86,7 +87,7 @@ load_animation(const char* path)
 on_error:
 	if (anim != NULL) {
 		if (anim->stream != NULL) mng_cleanup(&anim->stream);
-		if (anim->file != NULL) fclose(anim->file);
+		if (anim->file != NULL) sfs_fclose(anim->file);
 		if (anim->frame != NULL) {
 			free_image(anim->frame);
 		}
@@ -108,7 +109,7 @@ free_animation(animation_t* animation)
 	if (animation == NULL || --animation->refcount > 0)
 		return;
 	mng_cleanup(&animation->stream);
-	fclose(animation->file);
+	sfs_fclose(animation->file);
 	free_image(animation->frame);
 	free(animation);
 }
@@ -186,7 +187,7 @@ mng_cb_readdata(mng_handle stream, mng_ptr buf, mng_uint32 n_bytes, mng_uint32p 
 {
 	animation_t* anim = mng_get_userdata(stream);
 
-	*p_readsize = (mng_uint32) fread(buf, 1, n_bytes, anim->file);
+	*p_readsize = (mng_uint32)sfs_fread(buf, 1, n_bytes, anim->file);
 	return MNG_TRUE;
 }
 
