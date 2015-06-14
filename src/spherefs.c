@@ -30,13 +30,17 @@ enum fs_type
 sandbox_t*
 new_fs_sandbox(const char* path)
 {
-	sandbox_t*   fs;
+	const char*   extension;
+	sandbox_t*    fs;
 	ALLEGRO_PATH* sgm_path = NULL;
 
+	extension = strrchr(path, '.');
+	if (extension != NULL && strcmp(extension, ".spk") == 0)
+		return new_spk_sandbox(path);
+	
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
 	fs->type = SPHEREFS_SANDBOX;
-
 	fs->fs_root = al_create_path_for_directory(path);
 	sgm_path = al_clone_path(fs->fs_root);
 	al_set_path_filename(sgm_path, "game.sgm");
@@ -56,22 +60,17 @@ sandbox_t*
 new_spk_sandbox(const char* path)
 {
 	ALLEGRO_FILE* al_file = NULL;
-	sandbox_t*   fs;
-	spk_file_t*   file = NULL;
-	long          sgm_size;
-	char*         sgm_text = NULL;
+	sandbox_t*    fs;
+	size_t        sgm_size;
+	void*         sgm_text = NULL;
 
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
 	fs->type = SPHEREFS_SPK;
 	if (!(fs->spk = open_spk(path))) goto on_error;
 	
-	if (!(file = spk_fopen(fs->spk, "game.sgm")))
+	if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
 		goto on_error;
-	sgm_size = (spk_fseek(file, 0, SPK_SEEK_END), spk_ftell(file));
-	if (!(sgm_text = malloc(sgm_size))) goto on_error;
-	spk_fread(sgm_text, 1, sgm_size, file);
-	spk_fclose(file);
 	al_file = al_open_memfile(sgm_text, sgm_size, "rb");
 	if (!(fs->sgm = al_load_config_file_f(al_file)))
 		goto on_error;
@@ -82,7 +81,6 @@ new_spk_sandbox(const char* path)
 on_error:
 	if (al_file != NULL)
 		al_fclose(al_file);
-	spk_fclose(file);
 	free(sgm_text);
 	if (fs != NULL) {
 		free_spk(fs->spk);
@@ -235,7 +233,7 @@ sfs_fslurp(sandbox_t* fs, const char* filename, const char* base_dir, size_t *ou
 		al_fclose(file);
 		break;
 	case SPHEREFS_SPK:
-		if (!(slurp = spk_fslurp(fs->spk, filename, out_size)))
+		if (!(slurp = spk_fslurp(fs->spk, al_path_cstr(file_path, '/'), out_size)))
 			goto on_error;
 		break;
 	}

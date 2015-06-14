@@ -201,7 +201,7 @@ main(int argc, char* argv[])
 	g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
 		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
-		file_dlg = al_create_native_file_dialog(NULL, al_cstr(dialog_name), "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		file_dlg = al_create_native_file_dialog(NULL, al_cstr(dialog_name), "game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
