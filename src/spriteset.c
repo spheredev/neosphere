@@ -150,7 +150,7 @@ load_spriteset(const char* path)
 	char                extra_v2_dir_name[32];
 	struct rss_frame_v2 frame_v2;
 	struct rss_frame_v3 frame_v3;
-	FILE*               file = NULL;
+	sfs_file_t*         file = NULL;
 	int                 image_index;
 	int                 max_width = 0, max_height = 0;
 	struct rss_header   rss;
@@ -179,8 +179,8 @@ load_spriteset(const char* path)
 	// filename not in load pool, load the spriteset
 	console_log(2, "engine: Loading spriteset %s\n", path);
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
-	if (!(file = fopen(path, "rb"))) goto on_error;
-	if (fread(&rss, sizeof(struct rss_header), 1, file) != 1)
+	if (!(file = sfs_fopen(g_fs, path, "spritesets", "rb"))) goto on_error;
+	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
 	if (!(spriteset->path = strdup(path))) goto on_error;
@@ -222,10 +222,10 @@ load_spriteset(const char* path)
 			goto on_error;
 
 		// pass 1 - prepare structures, calculate number of images
-		v2_data_offset = ftell(file);
+		v2_data_offset = sfs_ftell(file);
 		spriteset->num_images = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
+			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			spriteset->num_images += dir_v2.num_frames;
 			sprintf(extra_v2_dir_name, "extra %i", i);
@@ -234,14 +234,14 @@ load_spriteset(const char* path)
 			if (!(spriteset->poses[i].frames = calloc(dir_v2.num_frames, sizeof(spriteset_frame_t))))
 				goto on_error;
 			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
-				if (fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
+				if (sfs_fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
 				max_width = fmax(rss.frame_width != 0 ? rss.frame_width : frame_v2.width, max_width);
 				max_height = fmax(rss.frame_height != 0 ? rss.frame_height : frame_v2.height, max_height);
 				skip_size = (rss.frame_width != 0 ? rss.frame_width : frame_v2.width)
 					* (rss.frame_height != 0 ? rss.frame_height : frame_v2.height)
 					* 4;
-				fseek(file, skip_size, SEEK_CUR);
+				sfs_fseek(file, skip_size, SFS_SEEK_CUR);
 			}
 		}
 		if (!(spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))))
@@ -250,14 +250,14 @@ load_spriteset(const char* path)
 		// pass 2 - read images and frame data
 		if (!(atlas = create_atlas(spriteset->num_images, max_width, max_height)))
 			goto on_error;
-		fseek(file, v2_data_offset, SEEK_SET);
+		sfs_fseek(file, v2_data_offset, SFS_SEEK_SET);
 		image_index = 0;
 		lock_atlas(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
+			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			for (j = 0; j < dir_v2.num_frames; ++j) {
-				if (fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
+				if (sfs_fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
 				spriteset->images[image_index] = read_atlas_image(atlas, file, image_index,
 					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
@@ -287,14 +287,14 @@ load_spriteset(const char* path)
 		unlock_atlas(atlas);
 		free_atlas(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (fread(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
+			if (sfs_fread(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
 				goto on_error;
 			if ((spriteset->poses[i].name = read_lstring(file, true)) == NULL) goto on_error;
 			spriteset->poses[i].num_frames = dir_v3.num_frames;
 			if ((spriteset->poses[i].frames = calloc(dir_v3.num_frames, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
 			for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
-				if (fread(&frame_v3, sizeof(struct rss_frame_v3), 1, file) != 1)
+				if (sfs_fread(&frame_v3, sizeof(struct rss_frame_v3), 1, file) != 1)
 					goto on_error;
 				spriteset->poses[i].frames[j].image_idx = frame_v3.image_idx;
 				spriteset->poses[i].frames[j].delay = frame_v3.delay;
@@ -304,7 +304,7 @@ load_spriteset(const char* path)
 	default: // invalid RSS version
 		goto on_error;
 	}
-	fclose(file);
+	sfs_fclose(file);
 	
 	if (s_load_cache != NULL) {
 		while (get_vector_size(s_load_cache) >= 10) {
@@ -319,7 +319,7 @@ load_spriteset(const char* path)
 	return ref_spriteset(spriteset);
 
 on_error:
-	if (file != NULL) fclose(file);
+	if (file != NULL) sfs_fclose(file);
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
 			for (i = 0; i < spriteset->num_poses; ++i) {

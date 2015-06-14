@@ -43,7 +43,7 @@ static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg)
 ALLEGRO_DISPLAY*     g_display = NULL;
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
-ALLEGRO_CONFIG*      g_game_conf = NULL;
+sandbox_t*           g_fs = NULL;
 ALLEGRO_PATH*        g_game_path = NULL;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
@@ -198,11 +198,9 @@ main(int argc, char* argv[])
 	console_log(0, "Searching for SGM file\n");
 	al_set_path_filename(g_game_path, NULL);
 	al_make_path_canonical(g_game_path);
-	char* sgm_path = get_asset_path("game.sgm", NULL, false);
-	g_game_conf = al_load_config_file(sgm_path);
-	free(sgm_path);
-	if (g_game_conf == NULL) {
-		dialog_name = al_ustr_newf("%s - Where is game.sgm?", ENGINE_NAME);
+	g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	if (g_fs == NULL) {
+		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
 		file_dlg = al_create_native_file_dialog(NULL, al_cstr(dialog_name), "game.sgm", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
@@ -213,8 +211,8 @@ main(int argc, char* argv[])
 		}
 		al_destroy_native_file_dialog(file_dlg);
 		al_ustr_free(dialog_name);
-		g_game_conf = al_load_config_file(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-		if (g_game_conf == NULL) {
+		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		if (g_fs == NULL) {
 			al_show_native_message_box(NULL, "Unable to Load Game",
 				al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
 				"minisphere was unable to load game.sgm or it was not found.  Check to make sure the above directory exists and contains a valid Sphere game.",
@@ -223,14 +221,14 @@ main(int argc, char* argv[])
 		}
 	}
 	console_log(1, "Found SGM at: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	al_set_path_filename(g_game_path, NULL);
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");
 	icon_path = get_asset_path("icon.png", NULL, false);
 	icon = al_load_bitmap(icon_path);
 	free(icon_path);
-	g_res_x = atoi(al_get_config_value(g_game_conf, NULL, "screen_width"));
-	g_res_y = atoi(al_get_config_value(g_game_conf, NULL, "screen_height"));
+	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
@@ -244,7 +242,7 @@ main(int argc, char* argv[])
 	al_use_transform(&trans);
 	if (icon != NULL)
 		al_set_display_icon(g_display, icon);
-	al_set_window_title(g_display, al_get_config_value(g_game_conf, NULL, "name"));
+	al_set_window_title(g_display, get_sgm_name(g_fs));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
@@ -285,9 +283,8 @@ main(int argc, char* argv[])
 	
 	// load startup script
 	console_log(0, "\nCalling game()\n");
-	path = get_asset_path(al_get_config_value(g_game_conf, NULL, "script"), "scripts", false);
-	if (!try_evaluate_file(path)) goto on_js_error;
-	free(path);
+	if (!try_evaluate_file(get_sgm_script(g_fs)))
+		goto on_js_error;
 	duk_pop(g_duk);
 
 	// initialize timing variables
@@ -340,48 +337,7 @@ is_skipped_frame(void)
 char*
 get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
 {
-	ALLEGRO_PATH* asset_path;
-	ALLEGRO_PATH* base_path;
-	const char*   dir_path;
-	bool          is_absolute;
-	ALLEGRO_PATH* origin_path;
-	char*         out_path = NULL;
-
-	base_path = al_create_path_for_directory(base_dir);
-	al_rebase_path(g_game_path, base_path);
-	
-	// resolve escaped paths
-	if (strstr(path, "~/") == path || strstr(path, "~\\") == path) {
-		// relative to game directory (~/...)
-		origin_path = al_clone_path(g_game_path);
-		path += 2;
-	}
-	else if (strstr(path, "#~/") == path || strstr(path, "#~\\") == path) {
-		// relative to system directory (#~/...)
-		origin_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-		al_append_path_component(origin_path, "system");
-		path += 3;
-	}
-	else {
-		// unescaped path or unknown escape, treat as relative
-		origin_path = base_path;
-	}
-	
-	if (allow_mkdir) {
-		dir_path = al_path_cstr(origin_path, ALLEGRO_NATIVE_PATH_SEP);
-		al_make_directory(dir_path);
-	}
-	asset_path = al_create_path(path);
-	is_absolute = al_get_path_num_components(asset_path) > 0
-		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
-	if (!is_absolute) {
-		al_rebase_path(origin_path, asset_path);
-		al_make_path_canonical(asset_path);
-		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
-	}
-	al_destroy_path(asset_path);
-	al_destroy_path(origin_path);
-	return out_path;
+	return strdup(path);
 }
 
 char*
@@ -787,7 +743,6 @@ shutdown_engine(void)
 	console_log(0, "Shutting down Allegro\n");
 	al_destroy_display(g_display); g_display = NULL;
 	al_destroy_event_queue(g_events); g_events = NULL;
-	al_destroy_config(g_game_conf); g_game_conf = NULL;
 	al_destroy_path(g_game_path); g_game_path = NULL;
 	if (g_sys_conf != NULL)
 		al_destroy_config(g_sys_conf);

@@ -60,50 +60,50 @@ clone_lstring(const lstring_t* string)
 	return lstring_from_buf(string->length, string->cstr);
 }
 
-lstring_t*
-read_lstring(FILE* file, bool trim_null)
-{
-	long     file_pos;
-	uint16_t length;
-
-	file_pos = ftell(file);
-	if (fread(&length, 2, 1, file) != 1) goto on_error;
-	return read_lstring_raw(file, length, trim_null);
-
-on_error:
-	fseek(file, file_pos, SEEK_CUR);
-	return NULL;
-}
-
-lstring_t*
-read_lstring_raw(FILE* file, size_t length, bool trim_null)
-{
-	long       file_pos;
-	lstring_t* string = NULL;
-
-	file_pos = ftell(file);
-	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
-		goto on_error;
-	string->length = length;
-	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
-	if (fread((char*)string->cstr, 1, length, file) != length) goto on_error;
-	if (trim_null) string->length = strchr(string->cstr, '\0') - string->cstr;
-	return string;
-
-on_error:
-	fseek(file, file_pos, SEEK_CUR);
-	if (string != NULL) {
-		free((char*)string->cstr);
-		free(string);
-	}
-	return NULL;
-}
-
 void
 free_lstring(lstring_t* string)
 {
 	if (string != NULL) free((char*)string->cstr);
 	free(string);
+}
+
+lstring_t*
+read_lstring(sfs_file_t* file, bool trim_null)
+{
+	long     file_pos;
+	uint16_t length;
+
+	file_pos = sfs_ftell(file);
+	if (sfs_fread(&length, 2, 1, file) != 1) goto on_error;
+	return read_lstring_raw(file, length, trim_null);
+
+on_error:
+	sfs_fseek(file, file_pos, SEEK_CUR);
+	return NULL;
+}
+
+lstring_t*
+read_lstring_raw(sfs_file_t* file, size_t length, bool trim_null)
+{
+	long       file_pos;
+	lstring_t* string = NULL;
+
+	file_pos = sfs_ftell(file);
+	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
+		goto on_error;
+	string->length = length;
+	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
+	if (sfs_fread((char*)string->cstr, 1, length, file) != length) goto on_error;
+	if (trim_null) string->length = strchr(string->cstr, '\0') - string->cstr;
+	return string;
+
+on_error:
+	sfs_fseek(file, file_pos, SEEK_CUR);
+	if (string != NULL) {
+		free((char*)string->cstr);
+		free(string);
+	}
+	return NULL;
 }
 
 const char*

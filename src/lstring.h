@@ -12,8 +12,8 @@ extern lstring_t*  new_lstring       (const char* fmt, ...);
 extern lstring_t*  lstring_from_buf  (size_t length, const char* buffer);
 extern lstring_t*  lstring_from_cstr (const char* cstr);
 extern lstring_t*  clone_lstring     (const lstring_t* string);
-extern lstring_t*  read_lstring      (FILE* file, bool trim_null);
-extern lstring_t*  read_lstring_raw  (FILE* file, size_t length, bool trim_null);
+extern lstring_t*  read_lstring      (sfs_file_t* file, bool trim_null);
+extern lstring_t*  read_lstring_raw  (sfs_file_t* file, size_t length, bool trim_null);
 extern void        free_lstring      (lstring_t* string);
 
 extern const char* lstr_cstr (const lstring_t* string);

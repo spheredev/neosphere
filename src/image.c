@@ -148,12 +148,20 @@ on_error:
 image_t*
 load_image(const char* path)
 {
-	image_t* image;
+	ALLEGRO_FILE* al_file;
+	size_t        file_size;
+	image_t*      image;
+	void*         slurp = NULL;
 
 	if ((image = calloc(1, sizeof(image_t))) == NULL)
 		goto on_error;
-	if ((image->bitmap = al_load_bitmap(path)) == NULL)
+	if (!(slurp = sfs_fslurp(g_fs, path, "images", &file_size)))
 		goto on_error;
+	al_file = al_open_memfile(slurp, file_size, "rb");
+	if (!(image->bitmap = al_load_bitmap_f(al_file, strchr(path, '.'))))
+		goto on_error;
+	al_fclose(al_file);
+	free(slurp);
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
@@ -161,12 +169,14 @@ load_image(const char* path)
 	return ref_image(image);
 
 on_error:
+	al_fclose(al_file);
+	free(slurp);
 	free(image);
 	return NULL;
 }
 
 image_t*
-read_image(FILE* file, int width, int height)
+read_image(sfs_file_t* file, int width, int height)
 {
 	long                   file_pos;
 	image_t*               image;
@@ -176,7 +186,7 @@ read_image(FILE* file, int width, int height)
 
 	int i_y;
 
-	file_pos = ftell(file);
+	file_pos = sfs_ftell(file);
 	if ((image = calloc(1, sizeof(image_t))) == NULL) goto on_error;
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL) goto on_error;
 	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
@@ -184,7 +194,7 @@ read_image(FILE* file, int width, int height)
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
 		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
-		if (fread(line_ptr, line_size, 1, file) != 1)
+		if (sfs_fread(line_ptr, line_size, 1, file) != 1)
 			goto on_error;
 	}
 	al_unlock_bitmap(image->bitmap);
@@ -195,7 +205,7 @@ read_image(FILE* file, int width, int height)
 	return ref_image(image);
 
 on_error:
-	fseek(file, file_pos, SEEK_SET);
+	sfs_fseek(file, file_pos, SEEK_SET);
 	if (lock != NULL) al_unlock_bitmap(image->bitmap);
 	if (image != NULL) {
 		if (image->bitmap != NULL) al_destroy_bitmap(image->bitmap);
@@ -205,7 +215,7 @@ on_error:
 }
 
 image_t*
-read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
+read_subimage(sfs_file_t* file, image_t* parent, int x, int y, int width, int height)
 {
 	long          file_pos;
 	image_t*      image;
@@ -214,19 +224,19 @@ read_subimage(FILE* file, image_t* parent, int x, int y, int width, int height)
 
 	int i_y;
 
-	file_pos = ftell(file);
+	file_pos = sfs_ftell(file);
 	if (!(image = create_subimage(parent, x, y, width, height))) goto on_error;
 	if (!(lock = lock_image(parent))) goto on_error;
 	for (i_y = 0; i_y < height; ++i_y) {
 		pline = lock->pixels + x + (i_y + y) * lock->pitch;
-		if (fread(pline, width * 4, 1, file) != 1)
+		if (sfs_fread(pline, width * 4, 1, file) != 1)
 			goto on_error;
 	}
 	unlock_image(parent, lock);
 	return image;
 
 on_error:
-	fseek(file, file_pos, SEEK_SET);
+	sfs_fseek(file, file_pos, SEEK_SET);
 	if (lock != NULL)
 		unlock_image(parent, lock);
 	free_image(image);

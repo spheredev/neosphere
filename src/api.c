@@ -452,13 +452,10 @@ js_EvaluateScript(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	char* path;
-
-	path = get_asset_path(filename, "scripts", false);
-	if (!al_filename_exists(path))
+	if (!sfs_fexist(g_fs, filename, "scripts"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): Script file not found '%s'", filename);
-	if (!try_evaluate_file(path)) duk_throw(ctx);
-	free(path);
+	if (!try_evaluate_file(filename))
+		duk_throw(ctx);
 	return 0;
 }
 
@@ -467,17 +464,15 @@ js_EvaluateSystemScript(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	char* path;
-	
-	path = get_asset_path(filename, "scripts/lib", false);
-	if (!al_filename_exists(path)) {
-		free(path);
-		path = get_sys_asset_path(filename, "system/scripts");
-	}
-	if (!al_filename_exists(path))
+	char path[SPHERE_PATH_MAX];
+
+	sprintf(path, "lib/%s", filename);
+	if (!sfs_fexist(g_fs, path, "scripts"))
+		sprintf(path, "~sys/scripts/%s", filename);
+	if (!sfs_fexist(g_fs, path, "scripts"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", filename);
-	if (!try_evaluate_file(path)) duk_throw(ctx);
-	free(path);
+	if (!try_evaluate_file(path))
+		duk_throw(ctx);
 	return 0;
 }
 
@@ -486,22 +481,19 @@ js_RequireScript(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	char* path;
-
-	path = get_asset_path(filename, "scripts", false);
-	if (!al_filename_exists(path))
+	if (!sfs_fexist(g_fs, filename, "scripts"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): Script file not found '%s'", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
-	duk_get_prop_string(ctx, -1, path);
+	duk_get_prop_string(ctx, -1, filename);
 	bool is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
-		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
-		if (!try_evaluate_file(path)) duk_throw(ctx);
+		duk_push_true(ctx); duk_put_prop_string(ctx, -2, filename);
+		if (!try_evaluate_file(filename))
+			duk_throw(ctx);
 	}
 	duk_pop_3(ctx);
-	free(path);
 	return 0;
 }
 
@@ -510,15 +502,14 @@ js_RequireSystemScript(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	char* path;
+	char path[SPHERE_PATH_MAX];
 
-	path = get_asset_path(filename, "scripts/lib", false);
-	if (!al_filename_exists(path)) {
-		free(path);
-		path = get_sys_asset_path(filename, "system/scripts");
-	}
-	if (!al_filename_exists(path))
+	sprintf(path, "lib/%s", filename);
+	if (!sfs_fexist(g_fs, path, "scripts"))
+		sprintf(path, "~sys/scripts/%s", filename);
+	if (!sfs_fexist(g_fs, path, "scripts"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): System script not found '%s'", filename);
+
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, path);
@@ -526,10 +517,10 @@ js_RequireSystemScript(duk_context* ctx)
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
-		if (!try_evaluate_file(path)) duk_throw(ctx);
+		if (!try_evaluate_file(path))
+			duk_throw(ctx);
 	}
 	duk_pop_2(ctx);
-	free(path);
 	return 0;
 }
 
@@ -578,29 +569,20 @@ js_GetFileList(duk_context* ctx)
 	int n_args = duk_get_top(ctx);
 	const char* directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : "save";
 	
-	ALLEGRO_FS_ENTRY* file_info;
-	ALLEGRO_PATH*     file_path;
-	ALLEGRO_FS_ENTRY* fs;
-	char*             path;
+	vector_t*  list;
+	lstring_t* *p_filename;
 
-	int i;
+	iter_t iter;
 
-	path = get_asset_path(directory_name, NULL, false);
-	fs = al_create_fs_entry(path);
-	free(path);
+	list = list_filenames(g_fs, directory_name, NULL);
 	duk_push_array(ctx);
-	i = 0;
-	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
-		while (file_info = al_read_directory(fs)) {
-			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISFILE) {
-				file_path = al_create_path(al_get_fs_entry_name(file_info));
-				duk_push_string(ctx, al_get_path_filename(file_path)); duk_put_prop_index(ctx, -2, i);
-				al_destroy_path(file_path);
-				++i;
-			}
-		}
+	iter = iterate_vector(list);
+	while (p_filename = next_vector_item(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		free_lstring(*p_filename);
 	}
-	al_destroy_fs_entry(fs);
+	free_vector(list);
 	return 1;
 }
 
@@ -616,9 +598,9 @@ js_GetGameInformation(duk_context* ctx)
 {
 	duk_push_object(ctx);
 	duk_push_string(ctx, al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP)); duk_put_prop_string(ctx, -2, "directory");
-	duk_push_string(ctx, al_get_config_value(g_game_conf, NULL, "name")); duk_put_prop_string(ctx, -2, "name");
-	duk_push_string(ctx, al_get_config_value(g_game_conf, NULL, "author")); duk_put_prop_string(ctx, -2, "author");
-	duk_push_string(ctx, al_get_config_value(g_game_conf, NULL, "description")); duk_put_prop_string(ctx, -2, "description");
+	duk_push_string(ctx, get_sgm_name(g_fs)); duk_put_prop_string(ctx, -2, "name");
+	duk_push_string(ctx, get_sgm_author(g_fs)); duk_put_prop_string(ctx, -2, "author");
+	duk_push_string(ctx, get_sgm_summary(g_fs)); duk_put_prop_string(ctx, -2, "description");
 	return 1;
 }
 

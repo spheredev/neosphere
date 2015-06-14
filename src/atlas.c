@@ -58,7 +58,7 @@ unlock_atlas(atlas_t* atlas)
 }
 
 image_t*
-read_atlas_image(atlas_t* atlas, FILE* file, int index, int width, int height)
+read_atlas_image(atlas_t* atlas, sfs_file_t* file, int index, int width, int height)
 {
 	int off_x, off_y;
 	

@@ -59,18 +59,19 @@ static unsigned int s_next_object_id = 0;
 tileset_t*
 load_tileset(const char* path)
 {
-	FILE*      file;
-	tileset_t* tileset;
+	sfs_file_t* file;
+	tileset_t*  tileset;
 
-	if ((file = fopen(path, "rb")) == NULL) return NULL;
+	if ((file = sfs_fopen(g_fs, path, "maps", "rb")) == NULL)
+		return NULL;
 	tileset = read_tileset(file);
-	fclose(file);
+	sfs_fclose(file);
 	console_log(2, "engine: Loaded tileset %s [%u]\n", path, tileset->id);
 	return tileset;
 }
 
 tileset_t*
-read_tileset(FILE* file)
+read_tileset(sfs_file_t* file)
 {
 	atlas_t*               atlas = NULL;
 	long                   file_pos;
@@ -85,9 +86,9 @@ read_tileset(FILE* file)
 	memset(&rts, 0, sizeof(struct rts_header));
 	
 	if (file == NULL) goto on_error;
-	file_pos = ftell(file);
+	file_pos = sfs_ftell(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
-	if (fread(&rts, sizeof(struct rts_header), 1, file) != 1)
+	if (sfs_fread(&rts, sizeof(struct rts_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rts.signature, ".rts", 4) != 0 || rts.version < 1 || rts.version > 1)
 		goto on_error;
@@ -106,7 +107,7 @@ read_tileset(FILE* file)
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if (fread(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
+		if (sfs_fread(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
 			goto on_error;
 		tiles[i].name = read_lstring_raw(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
@@ -116,7 +117,7 @@ read_tileset(FILE* file)
 		if (rts.has_obstructions) {
 			switch (tilehdr.obsmap_type) {
 			case 1:  // pixel-perfect obstruction (no longer supported)
-				fseek(file, rts.tile_width * rts.tile_height, SEEK_CUR);
+				sfs_fseek(file, rts.tile_width * rts.tile_height, SFS_SEEK_CUR);
 				break;
 			case 2:  // line segment-based obstruction
 				tiles[i].num_obs_lines = tilehdr.num_segments;
@@ -143,7 +144,7 @@ read_tileset(FILE* file)
 	return tileset;
 
 on_error:  // oh no!
-	if (file != NULL) fseek(file, file_pos, SEEK_SET);
+	if (file != NULL) sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
 			free_lstring(tiles[i].name);

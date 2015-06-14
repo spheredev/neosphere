@@ -32,6 +32,8 @@ static duk_ret_t js_Sound_stop         (duk_context* ctx);
 struct sound
 {
 	int                   refcount;
+	void*                 file_data;
+	size_t                file_size;
 	unsigned int          id;
 	char*                 path;
 	ALLEGRO_AUDIO_STREAM* stream;
@@ -75,6 +77,8 @@ load_sound(const char* path, bool streaming)
 
 	if (!(sound = calloc(1, sizeof(sound_t)))) goto on_error;
 	if (!(sound->path = strdup(path))) goto on_error;
+	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, "sounds", &sound->file_size)))
+		goto on_error;
 	if (!reload_sound(sound))
 		goto on_error;
 	sound->id = s_next_sound_id++;
@@ -100,6 +104,7 @@ free_sound(sound_t* sound)
 {
 	if (sound == NULL || --sound->refcount > 0)
 		return;
+	free(sound->file_data);
 	if (sound->stream != NULL)
 		al_destroy_audio_stream(sound->stream);
 	free(sound->path);
@@ -210,9 +215,15 @@ play_sound(sound_t* sound)
 bool
 reload_sound(sound_t* sound)
 {
+	ALLEGRO_FILE*         memfile;
 	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
 
-	new_stream = s_have_sound ? al_load_audio_stream(sound->path, 4, 1024) : NULL;
+	new_stream = NULL;
+	if (s_have_sound) {
+		memfile = al_open_memfile(sound->file_data, sound->file_size, "rb");
+		if (!(new_stream = al_load_audio_stream_f(memfile, strchr(sound->path, '.'), 4, 1024)))
+			goto on_error;
+	}
 	if (s_have_sound && new_stream == NULL)
 		return false;
 	if (sound->stream != NULL)
@@ -223,6 +234,9 @@ reload_sound(sound_t* sound)
 		al_set_audio_stream_playing(sound->stream, false);
 	}
 	return true;
+
+on_error:
+	return false;
 }
 
 void

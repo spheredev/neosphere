@@ -53,16 +53,16 @@ struct rws_header
 windowstyle_t*
 load_windowstyle(const char* path)
 {
-	FILE*             file;
+	sfs_file_t*       file;
 	image_t*          image;
 	struct rws_header rws;
 	int16_t           w, h;
 	windowstyle_t*    winstyle = NULL;
 	int               i;
 
-	if (!(file = fopen(path, "rb"))) goto on_error;
+	if (!(file = sfs_fopen(g_fs, path, "windowstyles", "rb"))) goto on_error;
 	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL) goto on_error;
-	if (fread(&rws, sizeof(struct rws_header), 1, file) != 1)
+	if (sfs_fread(&rws, sizeof(struct rws_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rws.signature, ".rws", 4) != 0) goto on_error;
 	switch (rws.version) {
@@ -75,7 +75,7 @@ load_windowstyle(const char* path)
 		break;
 	case 2:
 		for (i = 0; i < 9; ++i) {
-			if (fread(&w, 2, 1, file) != 1 || fread(&h, 2, 1, file) != 1)
+			if (sfs_fread(&w, 2, 1, file) != 1 || sfs_fread(&h, 2, 1, file) != 1)
 				goto on_error;
 			if (!(image = read_image(file, w, h))) goto on_error;
 			winstyle->images[i] = image;
@@ -84,12 +84,12 @@ load_windowstyle(const char* path)
 	default:  // invalid version number
 		goto on_error;
 	}
-	fclose(file);
+	sfs_fclose(file);
 	winstyle->bg_style = rws.background_mode;
 	return ref_windowstyle(winstyle);
 
 on_error:
-	if (file != NULL) fclose(file);
+	if (file != NULL) sfs_fclose(file);
 	if (winstyle != NULL) {
 		for (i = 0; i < 9; ++i)
 			free_image(winstyle->images[i]);

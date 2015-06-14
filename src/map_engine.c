@@ -593,7 +593,7 @@ load_map(const char* path)
 
 	uint16_t                 count;
 	struct rmp_entity_header entity_hdr;
-	FILE*                    file = NULL;
+	sfs_file_t*              file = NULL;
 	const char*              filename;
 	bool                     has_failed;
 	struct map_layer*        layer;
@@ -618,9 +618,9 @@ load_map(const char* path)
 	if (!(filename = relativepath(path, "maps")))
 		goto on_error;
 	
-	if (!(file = fopen(path, "rb"))) goto on_error;
+	if (!(file = sfs_fopen(g_fs, path, "maps", "rb"))) goto on_error;
 	if (!(map = calloc(1, sizeof(struct map)))) goto on_error;
-	if (fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
+	if (sfs_fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
 	if (rmp.num_strings != 3 && rmp.num_strings != 5 && rmp.num_strings < 9)
@@ -645,7 +645,7 @@ load_map(const char* path)
 
 		// load layers
 		for (i = 0; i < rmp.num_layers; ++i) {
-			if (fread(&layer_hdr, sizeof(struct rmp_layer_header), 1, file) != 1)
+			if (sfs_fread(&layer_hdr, sizeof(struct rmp_layer_header), 1, file) != 1)
 				goto on_error;
 			layer = &map->layers[i];
 			layer->is_parallax = (layer_hdr.flags & 2) != 0x0;
@@ -668,7 +668,7 @@ load_map(const char* path)
 			layer->name = read_lstring(file, true);
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
-			if (fread(tile_data, 2, num_tiles, file) != num_tiles) goto on_error;
+			if (sfs_fread(tile_data, 2, num_tiles, file) != num_tiles) goto on_error;
 			for (j = 0; j < num_tiles; ++j)
 				layer->tilemap[j].tile_index = tile_data[j];
 			for (j = 0; j < layer_hdr.num_segments; ++j) {
@@ -684,7 +684,7 @@ load_map(const char* path)
 		// load entities
 		map->num_persons = 0;
 		for (i = 0; i < rmp.num_entities; ++i) {
-			if (fread(&entity_hdr, sizeof(struct rmp_entity_header), 1, file) != 1)
+			if (sfs_fread(&entity_hdr, sizeof(struct rmp_entity_header), 1, file) != 1)
 				goto on_error;
 			if (entity_hdr.z < 0 || entity_hdr.z >= rmp.num_layers)
 				entity_hdr.z = 0;
@@ -696,7 +696,7 @@ load_map(const char* path)
 				if (!(person->name = read_lstring(file, true))) goto on_error;
 				if (!(person->spriteset = read_lstring(file, true))) goto on_error;
 				person->x = entity_hdr.x; person->y = entity_hdr.y; person->z = entity_hdr.z;
-				if (fread(&count, 2, 1, file) != 1 || count < 5) goto on_error;
+				if (sfs_fread(&count, 2, 1, file) != 1 || count < 5) goto on_error;
 				person->create_script = read_lstring(file, false);
 				person->destroy_script = read_lstring(file, false);
 				person->touch_script = read_lstring(file, false);
@@ -704,7 +704,7 @@ load_map(const char* path)
 				person->command_script = read_lstring(file, false);
 				for (j = 5; j < count; ++j)
 					free_lstring(read_lstring(file, true));
-				fseek(file, 16, SEEK_CUR);
+				sfs_fseek(file, 16, SFS_SEEK_CUR);
 				break;
 			case 2:  // trigger
 				if ((script = read_lstring(file, false)) == NULL) goto on_error;
@@ -724,7 +724,7 @@ load_map(const char* path)
 
 		// load zones
 		for (i = 0; i < rmp.num_zones; ++i) {
-			if (fread(&zone_hdr, sizeof(struct rmp_zone_header), 1, file) != 1)
+			if (sfs_fread(&zone_hdr, sizeof(struct rmp_zone_header), 1, file) != 1)
 				goto on_error;
 			if ((script = read_lstring(file, false)) == NULL) goto on_error;
 			if (zone_hdr.layer < 0 || zone_hdr.layer >= rmp.num_layers)
@@ -787,11 +787,11 @@ load_map(const char* path)
 	default:
 		goto on_error;
 	}
-	fclose(file);
+	sfs_fclose(file);
 	return map;
 
 on_error:
-	if (file != NULL) fclose(file);
+	if (file != NULL) sfs_fclose(file);
 	free(tile_data);
 	if (strings != NULL) {
 		for (i = 0; i < rmp.num_strings; ++i) free_lstring(strings[i]);

@@ -16,8 +16,8 @@ extern rect_t       translate_rect       (rect_t rect, int x_offset, int y_offse
 extern float_rect_t translate_float_rect (float_rect_t rect, float x_offset, float y_offset);
 extern rect_t       zoom_rect            (rect_t rect, double scale_x, double scale_y);
 
-extern bool fread_rect_16 (FILE* file, rect_t* out_rect);
-extern bool fread_rect_32 (FILE* file, rect_t* out_rect);
+extern bool fread_rect_16 (sfs_file_t* file, rect_t* out_rect);
+extern bool fread_rect_32 (sfs_file_t* file, rect_t* out_rect);
 
 struct point3
 {

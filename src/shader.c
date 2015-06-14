@@ -16,6 +16,7 @@ shader_t*
 create_shader(const char* vs_path, const char* fs_path)
 {
 	shader_t* shader;
+
 	if (!(shader = calloc(1, sizeof(shader_t)))) goto on_error;
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
 		goto on_error;
