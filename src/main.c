@@ -94,8 +94,7 @@ main(int argc, char* argv[])
 	const char*          file_path;
 	const char*          filename;
 	char*                game_path;
-	ALLEGRO_BITMAP*      icon;
-	char*                icon_path;
+	image_t*             icon;
 	int                  line_num;
 	int                  log_level;
 	int                  max_skips;
@@ -122,10 +121,6 @@ main(int argc, char* argv[])
 		// single non-switch argument passed, assume it's a game.sgm path or game directory
 		al_destroy_path(g_game_path);
 		g_game_path = al_create_path(argv[1]);
-		if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
-			al_destroy_path(g_game_path);
-			g_game_path = al_create_path_for_directory(argv[1]);
-		}
 	}
 	else {
 		// more than one argument, perform full commandline parsing
@@ -135,10 +130,6 @@ main(int argc, char* argv[])
 			{
 				al_destroy_path(g_game_path);
 				g_game_path = al_create_path(argv[i + 1]);
-				if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
-					al_destroy_path(g_game_path);
-					g_game_path = al_create_path_for_directory(argv[i + 1]);
-				}
 			}
 			if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
 				errno = 0; log_level = strtol(argv[i + 1], &p_strtol, 10);
@@ -175,10 +166,6 @@ main(int argc, char* argv[])
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
 			g_game_path = al_create_path(g_last_game_path);
-			if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
-				al_destroy_path(g_game_path);
-				g_game_path = al_create_path_for_directory(g_last_game_path);
-			}
 			free(g_last_game_path);
 			g_last_game_path = NULL;
 		}
@@ -223,9 +210,7 @@ main(int argc, char* argv[])
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");
-	icon_path = get_asset_path("icon.png", NULL, false);
-	icon = al_load_bitmap(icon_path);
-	free(icon_path);
+	icon = load_image("~sgm/icon.png");
 	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
@@ -239,7 +224,8 @@ main(int argc, char* argv[])
 	al_scale_transform(&trans, g_scale_x, g_scale_y);
 	al_use_transform(&trans);
 	if (icon != NULL)
-		al_set_display_icon(g_display, icon);
+		al_set_display_icon(g_display, get_image_bitmap(icon));
+	free_image(icon);
 	al_set_window_title(g_display, get_sgm_name(g_fs));
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
