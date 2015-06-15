@@ -148,7 +148,7 @@ on_error:
 image_t*
 load_image(const char* path)
 {
-	ALLEGRO_FILE* al_file;
+	ALLEGRO_FILE* al_file = NULL;
 	size_t        file_size;
 	image_t*      image;
 	void*         slurp = NULL;
@@ -169,7 +169,8 @@ load_image(const char* path)
 	return ref_image(image);
 
 on_error:
-	al_fclose(al_file);
+	if (al_file != NULL)
+		al_fclose(al_file);
 	free(slurp);
 	free(image);
 	return NULL;

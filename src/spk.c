@@ -236,7 +236,9 @@ list_spk_filenames(spk_t* spk, const char* dirname)
 	iter = iterate_vector(spk->index);
 	while (p_entry = next_vector_item(&iter)) {
 		match = strstr(p_entry->file_path, dirname);
-		maybe_filename = match + strlen(dirname) + 1;
+		maybe_filename = match + strlen(dirname);
+		if (dirname[strlen(dirname) - 1] != '/')
+			++maybe_filename;  // account for directory separator
 		if (match == p_entry->file_path && strchr(maybe_filename, '/') == NULL) {
 			filename = lstring_from_cstr(maybe_filename);
 			push_back_vector(list, &filename);
