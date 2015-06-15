@@ -164,6 +164,9 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir)
 		}
 		al_destroy_fs_entry(fse);
 		break;
+	case SPHEREFS_SPK:
+		list = list_spk_filenames(fs->spk, al_path_cstr(dir_path, '/'));
+		break;
 	}
 	al_destroy_path(dir_path);
 	return list;
@@ -324,7 +327,13 @@ sfs_ftell(sfs_file_t* file)
 static bool
 resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, int *out_fs_type)
 {
+	// the path resolver is the core of SphereFS. it handles all canonization of paths
+	// so that the game doesn't have to care whether it's running from a local directory,
+	// Sphere SPK package, etc.
+	
 	ALLEGRO_PATH* origin = NULL;
+
+	int i;
 
 	*out_path = al_create_path(filename);
 
@@ -367,11 +376,23 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 	else {  // default case, relative path
 		origin = al_create_path_for_directory(base_dir);
 		al_rebase_path(origin, *out_path);
-		if (fs->type == SPHEREFS_SANDBOX)
+		if (fs->type == SPHEREFS_SANDBOX)  // canonize to absolute
 			al_rebase_path(fs->fs_root, *out_path);
+		else {
+			// SPK requires a fully canonized path, so we have to collapse
+			// any '..' prior to returning the path.
+			for (i = 0; i < al_get_path_num_components(*out_path); ++i) {
+				if (strcmp(al_get_path_component(*out_path, i), "..") == 0) {
+					al_remove_path_component(*out_path, i--);
+					if (i >= 0)
+						al_remove_path_component(*out_path, i);
+				}
+			}
+		}
 		al_destroy_path(origin);
 		*out_fs_type = fs->type;
 	}
+	
 	return true;
 
 on_error:

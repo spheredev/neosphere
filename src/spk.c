@@ -113,7 +113,7 @@ spk_file_t*
 spk_fopen(spk_t* spk, const char* path)
 {
 	void*       buffer;
-	spk_file_t* file;
+	spk_file_t* file = NULL;
 	size_t      file_size;
 
 	if (!(buffer = spk_fslurp(spk, path, &file_size)))
@@ -219,4 +219,28 @@ on_error:
 	free(packdata);
 	free(unpacked);
 	return NULL;
+}
+
+vector_t*
+list_spk_filenames(spk_t* spk, const char* dirname)
+{
+	lstring_t*        filename;
+	vector_t*         list;
+	const char*       maybe_filename;
+	const char*       match;
+	struct spk_entry* p_entry;
+	
+	iter_t iter;
+	
+	list = new_vector(sizeof(lstring_t*));
+	iter = iterate_vector(spk->index);
+	while (p_entry = next_vector_item(&iter)) {
+		match = strstr(p_entry->file_path, dirname);
+		maybe_filename = match + strlen(dirname) + 1;
+		if (match == p_entry->file_path && strchr(maybe_filename, '/') == NULL) {
+			filename = lstring_from_cstr(maybe_filename);
+			push_back_vector(list, &filename);
+		}
+	}
+	return list;
 }
