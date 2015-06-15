@@ -6,6 +6,7 @@
 struct spk
 {
 	unsigned int  refcount;
+	ALLEGRO_PATH* path;
 	FILE*         file;
 	vector_t*     index;
 };
@@ -20,10 +21,9 @@ struct spk_entry
 
 struct spk_file
 {
-	spk_t*   spk;
-	size_t   size;
-	uint8_t* buffer;
-	uint8_t* ptr;
+	spk_t*        spk;
+	uint8_t*      buffer;
+	ALLEGRO_FILE* handle;
 };
 
 #pragma pack(push, 1)
@@ -57,6 +57,9 @@ open_spk(const char* path)
 	uint32_t i;
 
 	if (!(spk = calloc(1, sizeof(spk_t)))) goto on_error;
+	if (!(spk->path = al_create_path(path)))
+		goto on_error;
+	
 	if (!(spk->file = fopen(path, "rb"))) goto on_error;
 	if (fread(&spk_hdr, sizeof(struct spk_header), 1, spk->file) != 1)
 		goto on_error;
@@ -83,10 +86,10 @@ open_spk(const char* path)
 
 on_error:
 	if (spk != NULL) {
+		al_destroy_path(spk->path);
 		if (spk->file != NULL)
 			fclose(spk->file);
-		if (spk->index != NULL)
-			free_vector(spk->index);
+		free_vector(spk->index);
 		free(spk);
 	}
 	return NULL;
@@ -110,23 +113,78 @@ free_spk(spk_t* spk)
 }
 
 spk_file_t*
-spk_fopen(spk_t* spk, const char* path)
+spk_fopen(spk_t* spk, const char* path, const char* mode)
 {
-	void*       buffer;
-	spk_file_t* file = NULL;
-	size_t      file_size;
+	ALLEGRO_FILE* al_file = NULL;
+	void*         buffer = NULL;
+	spk_file_t*   file = NULL;
+	size_t        file_size;
+	ALLEGRO_PATH* home_path;
+	const char*   local_filename;
+	ALLEGRO_PATH* local_dir_path;
+	ALLEGRO_PATH* local_path = NULL;
 
-	if (!(buffer = spk_fslurp(spk, path, &file_size)))
-		goto on_error;
+	// get path to local cache file
+	home_path = al_get_standard_path(ALLEGRO_USER_HOME_PATH);
+	al_append_path_component(home_path, "Sphere");
+	al_append_path_component(home_path, ".spk");
+	al_append_path_component(home_path, al_get_path_filename(spk->path));
+	local_path = al_create_path(path);
+	al_rebase_path(home_path, local_path);
+	al_destroy_path(home_path);
+	
+	// ensure all subdirectories exist
+	local_filename = al_path_cstr(local_path, ALLEGRO_NATIVE_PATH_SEP);
+	if (mode[0] == 'w' || mode[0] == 'a' || strchr(mode, '+')) {
+		local_dir_path = al_clone_path(local_path);
+		al_set_path_filename(local_dir_path, NULL);
+		al_make_directory(al_path_cstr(local_dir_path, ALLEGRO_NATIVE_PATH_SEP));
+		al_destroy_path(local_dir_path);
+	}
+
 	if (!(file = calloc(1, sizeof(spk_file_t))))
 		goto on_error;
+	
+	if (al_filename_exists(local_filename)) {
+		// local cache file already exists, open it	directly	
+		if (!(al_file = al_fopen(local_filename, mode)))
+			goto on_error;
+	}
+	else {
+		if (!(buffer = spk_fslurp(spk, path, &file_size)) && mode[0] == 'r')
+			goto on_error;
+		if (strcmp(mode, "r") != 0 && strcmp(mode, "rb") != 0) {
+			if (buffer != NULL && mode[0] != 'w') {
+				// if a game requests write access to an existing file,
+				// we extract it. this ensures file operations originating from
+				// inside an SPK are transparent to the game.
+				if (!(al_file = al_fopen(local_filename, "w")))
+					goto on_error;
+				al_fwrite(al_file, buffer, file_size);
+				al_fclose(al_file);
+			}
+			free(buffer); buffer = NULL;
+			if (!(al_file = al_fopen(local_filename, mode)))
+				goto on_error;
+		}
+		else {
+			// read-only: access unpacked file from memory (performance)
+			if (!(al_file = al_open_memfile(buffer, file_size, mode)))
+				goto on_error;
+		}
+	}
+
+	al_destroy_path(local_path);
+	
 	file->buffer = buffer;
-	file->size = file_size;
-	file->ptr = file->buffer;
+	file->handle = al_file;
 	file->spk = ref_spk(spk);
 	return file;
 
 on_error:
+	al_destroy_path(local_path);
+	if (al_file != NULL)
+		al_fclose(al_file);
 	free(buffer);
 	free(file);
 	return NULL;
@@ -137,45 +195,46 @@ spk_fclose(spk_file_t* file)
 {
 	if (file == NULL)
 		return;
+	al_fclose(file->handle);
 	free(file->buffer);
 	free_spk(file->spk);
 	free(file);
 }
 
-size_t
-spk_fread(void* buf, size_t count, size_t size, spk_file_t* file)
+int
+spk_fputc(int ch, spk_file_t* file)
 {
-	size_t bytes_left;
-	size_t num_bytes;
-	
-	bytes_left = file->size - (file->ptr - file->buffer);
-	num_bytes = count * size;
-	if (num_bytes > bytes_left)
-		num_bytes = bytes_left;
-	memcpy(buf, file->ptr, num_bytes);
-	file->ptr += num_bytes;
-	return num_bytes / size;
+	return al_fputc(file->handle, ch);
+}
+
+int
+spk_fputs(const char* string, spk_file_t* file)
+{
+	return al_fputs(file->handle, string);
+}
+
+size_t
+spk_fread(void* buf, size_t size, size_t count, spk_file_t* file)
+{
+	return al_fread(file->handle, buf, size * count) / size;
 }
 
 bool
 spk_fseek(spk_file_t* file, long offset, spk_seek_origin_t origin)
 {
-	uint8_t* new_ptr;
-
-	new_ptr = origin == SPK_SEEK_SET ? file->buffer + offset
-		: origin == SPK_SEEK_CUR ? file->ptr + offset
-		: origin == SPK_SEEK_END ? file->buffer + file->size + offset
-		: NULL;
-	if (new_ptr < file->buffer || new_ptr > file->buffer + file->size)
-		return false;
-	file->ptr = new_ptr;
-	return true;
+	return al_fseek(file->handle, offset, origin);
 }
 
 long
 spk_ftell(spk_file_t* file)
 {
-	return file->ptr - file->buffer;
+	return al_ftell(file->handle);
+}
+
+size_t
+spk_fwrite(const void* buf, size_t size, size_t count, spk_file_t* file)
+{
+	return al_fwrite(file->handle, buf, size * count) / size;
 }
 
 void*

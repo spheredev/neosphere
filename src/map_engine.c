@@ -517,8 +517,8 @@ add_trigger(int x, int y, int layer, script_t* script)
 	trigger.script = ref_script(script);
 	if (!push_back_vector(s_map->triggers, &trigger))
 		return false;
-	console_log(2, "map: Created transient trigger on map '%s' [%i]", s_map_filename, get_vector_size(s_map->triggers));
-	console_log(3, "  Location: '%s' @ (%i,%i)", s_map->layers[trigger.z].name->cstr, trigger.x, trigger.y);
+	console_log(2, "map: Created transient trigger on map '%s' [%i]\n", s_map_filename, get_vector_size(s_map->triggers));
+	console_log(3, "  Location: '%s' @ (%i,%i)\n", s_map->layers[trigger.z].name->cstr, trigger.x, trigger.y);
 	return true;
 }
 
@@ -535,8 +535,8 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 	zone.steps_left = zone.step_interval;
 	if (!push_back_vector(s_map->zones, &zone))
 		return false;
-	console_log(2, "map: Created %u-step transient zone on map '%s' [%i]", zone.step_interval, s_map_filename, get_vector_size(s_map->zones));
-	console_log(3, "  Bounds: (%i,%i)-(%i,%i)", zone.bounds.x1, zone.bounds.y1, zone.bounds.x2, zone.bounds.y2);
+	console_log(2, "map: Created %u-step transient zone on map '%s' [%i]\n", zone.step_interval, s_map_filename, get_vector_size(s_map->zones));
+	console_log(3, "  Bounds: (%i,%i)-(%i,%i)\n", zone.bounds.x1, zone.bounds.y1, zone.bounds.x2, zone.bounds.y2);
 	return true;
 }
 
@@ -1028,7 +1028,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	s_frames = 0;
 	
-	console_log(2, "engine: Changed current map to '%s'", s_map_filename);
+	console_log(2, "engine: Changed current map to '%s'\n", s_map_filename);
 	return true;
 
 on_error:

@@ -31,6 +31,8 @@ new_vector(size_t pitch)
 void
 free_vector(vector_t* vector)
 {
+	if (vector == NULL)
+		return;
 	free(vector->buffer);
 	free(vector);
 }

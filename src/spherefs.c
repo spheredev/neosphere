@@ -210,10 +210,8 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 			goto on_error;
 		break;
 	case SPHEREFS_SPK:
-		if (strcmp(mode, "rb") != 0)
-			goto on_error;  // SPK FS not currently writable
 		path = al_path_cstr(file_path, '/');
-		if (!(file->spk_file = spk_fopen(fs->spk, path)))
+		if (!(file->spk_file = spk_fopen(fs->spk, path, mode)))
 			goto on_error;
 		break;
 	}
@@ -296,20 +294,20 @@ sfs_fputc(int ch, sfs_file_t* file)
 	case SPHEREFS_SANDBOX:
 		return fputc(ch, file->fs_file);
 	case SPHEREFS_SPK:
-		return EOF;
+		return spk_fputc(ch, file->spk_file);
 	default:
 		return EOF;
 	}
 }
 
-bool
+int
 sfs_fputs(const char* string, sfs_file_t* file)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		return fputs(string, file->fs_file) != EOF;
+		return fputs(string, file->fs_file);
 	case SPHEREFS_SPK:
-		return false;
+		return spk_fputs(string, file->spk_file);
 	default:
 		return false;
 	}
@@ -322,7 +320,7 @@ sfs_fread(void* buf, size_t size, size_t count, sfs_file_t* file)
 	case SPHEREFS_SANDBOX:
 		return fread(buf, size, count, file->fs_file);
 	case SPHEREFS_SPK:
-		return spk_fread(buf, count, size, file->spk_file);
+		return spk_fread(buf, size, count, file->spk_file);
 	default:
 		return 0;
 	}
@@ -335,14 +333,14 @@ sfs_fwrite(const void* buf, size_t size, size_t count, sfs_file_t* file)
 	case SPHEREFS_SANDBOX:
 		return fwrite(buf, size, count, file->fs_file);
 	case SPHEREFS_SPK:
-		return 0;
+		return spk_fwrite(buf, size, count, file->spk_file);
 	default:
 		return 0;
 	}
 }
 
 bool
-sfs_fseek(sfs_file_t* file, long offset, int origin)
+sfs_fseek(sfs_file_t* file, long offset, sfs_seek_t origin)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
