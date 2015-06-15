@@ -379,40 +379,35 @@ duk_handle_require(duk_context* ctx)
 {
 	const char* id = duk_get_string(ctx, 0);
 
-	char  filename[SPHERE_PATH_MAX];
-	FILE* file;
-	long  file_size;
-	bool  is_sys_module = false;
-	char* path;
-	char* source;
+	char        filename[SPHERE_PATH_MAX];
+	sfs_file_t* file;
+	long        file_size;
+	bool        is_sys_module = false;
+	char*       source;
 
 	if (id[0] == '~')
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): Escaped path not allowed for module ID");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefix not allowed");
 	if (snprintf(filename, SPHERE_PATH_MAX, "%s.js", id) >= SPHERE_PATH_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
-	if (!(path = get_asset_path(filename, "cjs_modules", false)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Error building file path for module");
-	if (!(file = fopen(path, "rb"))) {
+	if (!(file = sfs_fopen(g_fs, filename, "modules", "rb"))) {
 		is_sys_module = true;
-		free(path);
-		if (!(path = get_sys_asset_path(filename, "system/cjs_modules")))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Error building file path for module");
-		if (!(file = fopen(path, "rb")))
+		if (snprintf(filename, SPHERE_PATH_MAX, "~sys/modules/%s.js", id) >= SPHERE_PATH_MAX)
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
+		if (!(file = sfs_fopen(g_fs, filename, "modules", "rb")))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to open module script '%s'", filename);
 	}
-	file_size = (fseek(file, 0, SEEK_END), ftell(file));
-	fseek(file, 0, SEEK_SET);
+	file_size = (sfs_fseek(file, 0, SFS_SEEK_END), sfs_ftell(file));
+	sfs_fseek(file, 0, SFS_SEEK_SET);
 	if (!(source = malloc(file_size))) {
-		fclose(file);
+		sfs_fclose(file);
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to allocate source buffer for module");
 	}
-	fread(source, 1, file_size, file);
+	sfs_fread(source, 1, file_size, file);
 	duk_push_lstring(ctx, source, file_size);
 	free(source);
 	console_log(1, "script: Loaded %sCommonJS module `%s`\n",
 		is_sys_module ? "" : "local ", id);
-	console_log(2, "  Path: %s\n", path);
-	free(path);
+	console_log(2, "  Path: %s\n", filename);
 	return 1;
 }
 
@@ -535,31 +530,22 @@ static duk_ret_t
 js_GetDirectoryList(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : "";
+	const char* dirname = n_args >= 1 ? duk_require_string(ctx, 0) : "";
 
-	ALLEGRO_FS_ENTRY* file_info;
-	ALLEGRO_PATH*     file_path;
-	ALLEGRO_FS_ENTRY* fs;
-	char*             path;
+	vector_t*  list;
+	lstring_t* *p_filename;
 
-	int i;
+	iter_t iter;
 
-	path = get_asset_path(directory_name, NULL, false);
-	fs = al_create_fs_entry(path);
-	free(path);
+	list = list_filenames(g_fs, dirname, NULL, true);
 	duk_push_array(ctx);
-	i = 0;
-	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
-		while (file_info = al_read_directory(fs)) {
-			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISDIR) {
-				file_path = al_create_path(al_get_fs_entry_name(file_info));
-				duk_push_string(ctx, al_get_path_filename(file_path)); duk_put_prop_index(ctx, -2, i);
-				al_destroy_path(file_path);
-				++i;
-			}
-		}
+	iter = iterate_vector(list);
+	while (p_filename = next_vector_item(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		free_lstring(*p_filename);
 	}
-	al_destroy_fs_entry(fs);
+	free_vector(list);
 	return 1;
 }
 
@@ -574,7 +560,7 @@ js_GetFileList(duk_context* ctx)
 
 	iter_t iter;
 
-	list = list_filenames(g_fs, directory_name, NULL);
+	list = list_filenames(g_fs, directory_name, NULL, false);
 	duk_push_array(ctx);
 	iter = iterate_vector(list);
 	while (p_filename = next_vector_item(&iter)) {

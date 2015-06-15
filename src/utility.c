@@ -264,19 +264,17 @@ unsigned int cp1252[256] =
 };
 
 void
-duk_push_cstr_to_utf8(duk_context *ctx, const char* cstr)
+duk_push_cstr_to_utf8(duk_context *ctx, const char* string, size_t length)
 {
 	// courtesy of Sami Vaarala, adapted to match minisphere coding style
 	
 	unsigned int   cp;
-	size_t         length;
 	unsigned char* tmp;
 	size_t         tmp_size;
 	unsigned char  *p;
 
 	size_t i;
 	
-	length = strlen(cstr);
 	tmp_size = length * 3;  // max expansion is 1 input byte -> 3 output bytes
 	if (tmp_size < length)  // did tmp_size overflow?
 		duk_error(ctx, DUK_ERR_RANGE_ERROR, "input string too long");
@@ -284,7 +282,7 @@ duk_push_cstr_to_utf8(duk_context *ctx, const char* cstr)
 	tmp = (unsigned char*)duk_push_fixed_buffer(ctx, tmp_size);
 	p = tmp;
 	for (i = 0; i < length; i++) {
-		cp = cp1252[(unsigned char)cstr[i]] & 0xffffUL;
+		cp = cp1252[(unsigned char)string[i]] & 0xffffUL;
 		if (cp < 0x80UL) {
 			*p++ = (unsigned char)cp;
 		}

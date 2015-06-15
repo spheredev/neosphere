@@ -195,8 +195,7 @@ main(int argc, char* argv[])
 	}
 
 	// locate game.sgm
-	console_log(0, "Searching for SGM file\n");
-	al_set_path_filename(g_game_path, NULL);
+	console_log(0, "Searching for a game\n");
 	al_make_path_canonical(g_game_path);
 	g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
@@ -220,8 +219,7 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	console_log(1, "Found SGM at: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-	al_set_path_filename(g_game_path, NULL);
+	console_log(1, "  Game: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");

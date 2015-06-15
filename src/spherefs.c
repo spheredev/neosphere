@@ -41,7 +41,11 @@ new_fs_sandbox(const char* path)
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
 	fs->type = SPHEREFS_SANDBOX;
-	fs->fs_root = al_create_path_for_directory(path);
+	if (extension != NULL && strcmp(extension, ".sgm") == 0)
+		fs->fs_root = al_create_path(path);
+	else
+		fs->fs_root = al_create_path_for_directory(path);
+	al_set_path_filename(fs->fs_root, NULL);
 	sgm_path = al_clone_path(fs->fs_root);
 	al_set_path_filename(sgm_path, "game.sgm");
 	if (!(fs->sgm = al_load_config_file(al_path_cstr(sgm_path, ALLEGRO_NATIVE_PATH_SEP))))
@@ -136,12 +140,13 @@ get_sgm_summary(sandbox_t* fs)
 }
 
 vector_t*
-list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir)
+list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs)
 {
 	ALLEGRO_PATH*     dir_path;
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
 	lstring_t*        filename;
+	int               flag;
 	int               fs_type;
 	ALLEGRO_FS_ENTRY* fse = NULL;
 	vector_t*         list = NULL;
@@ -152,12 +157,13 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir)
 		goto on_error;
 	switch (fs_type) {
 	case SPHEREFS_SANDBOX:
+		flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
 		fse = al_create_fs_entry(al_path_cstr(dir_path, ALLEGRO_NATIVE_PATH_SEP));
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				file_path = al_create_path(al_get_fs_entry_name(file_info));
 				filename = lstring_from_cstr(al_get_path_filename(file_path));
-				if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISFILE)
+				if (al_get_fs_entry_mode(file_info) & flag)
 					push_back_vector(list, &filename);
 				al_destroy_path(file_path);
 			}
@@ -181,6 +187,7 @@ on_error:
 sfs_file_t*
 sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char* mode)
 {
+	ALLEGRO_PATH* dir_path;
 	sfs_file_t*   file;
 	ALLEGRO_PATH* file_path;
 	const char*   path;
@@ -191,12 +198,20 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 		goto on_error;
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
+		if (strchr(mode, 'w') || strchr(mode, '+') || strchr(mode, 'a')) {
+			// write access requested, ensure directory exists
+			dir_path = al_clone_path(file_path);
+			al_set_path_filename(dir_path, NULL);
+			al_make_directory(al_path_cstr(dir_path, ALLEGRO_NATIVE_PATH_SEP));
+			al_destroy_path(dir_path);
+		}
 		path = al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP);
 		if (!(file->fs_file = fopen(path, mode)))
 			goto on_error;
 		break;
 	case SPHEREFS_SPK:
-		if (strcmp(mode, "rb") != 0) goto on_error;
+		if (strcmp(mode, "rb") != 0)
+			goto on_error;  // SPK FS not currently writable
 		path = al_path_cstr(file_path, '/');
 		if (!(file->spk_file = spk_fopen(fs->spk, path)))
 			goto on_error;
@@ -225,7 +240,7 @@ sfs_fslurp(sandbox_t* fs, const char* filename, const char* base_dir, size_t *ou
 	switch (fs_type) {
 	case SPHEREFS_SANDBOX:
 		path = al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP);
-		if (!(file = al_fopen(al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP), "rb")))
+		if (!(file = al_fopen(path, "rb")))
 			goto on_error;
 		al_fseek(file, 0, ALLEGRO_SEEK_END);
 		if ((file_size = al_ftell(file)) > SIZE_MAX)
@@ -272,6 +287,32 @@ sfs_fexist(sandbox_t* fs, const char* filename, const char* base_dir)
 		return false;
 	sfs_fclose(file);
 	return true;
+}
+
+int
+sfs_fputc(int ch, sfs_file_t* file)
+{
+	switch (file->fs_type) {
+	case SPHEREFS_SANDBOX:
+		return fputc(ch, file->fs_file);
+	case SPHEREFS_SPK:
+		return EOF;
+	default:
+		return EOF;
+	}
+}
+
+bool
+sfs_fputs(const char* string, sfs_file_t* file)
+{
+	switch (file->fs_type) {
+	case SPHEREFS_SANDBOX:
+		return fputs(string, file->fs_file) != EOF;
+	case SPHEREFS_SPK:
+		return false;
+	default:
+		return false;
+	}
 }
 
 size_t
@@ -340,7 +381,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 	if (filename[0] == '/' || filename[1] == ':') {  // absolute path
 		*out_fs_type = SPHEREFS_SANDBOX;
 	}
-	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {  // BC ~/ alias
+	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {  // BC ~/ prefix
 		// ~/ has complex semantics. usually it aliases the location containing game.sgm,
 		// but in certain cases it may refer elsewhere.
 		al_destroy_path(*out_path);
@@ -349,7 +390,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 			al_rebase_path(fs->fs_root, *out_path);
 		*out_fs_type = fs->type;
 	}
-	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS alias
+	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS prefix
 		al_destroy_path(*out_path);
 		*out_path = al_create_path(&filename[5]);
 		if (memcmp(filename, "~sgm/", 5) == 0) {  // game.sgm root
@@ -366,6 +407,8 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 		}
 		else if (memcmp(filename, "~usr/", 5) == 0) {  // user profile
 			origin = al_get_standard_path(ALLEGRO_USER_HOME_PATH);
+			al_append_path_component(origin, "Sphere");
+			al_make_directory(al_path_cstr(origin, ALLEGRO_NATIVE_PATH_SEP));
 			al_rebase_path(origin, *out_path);
 			al_destroy_path(origin);
 			*out_fs_type = SPHEREFS_SANDBOX;

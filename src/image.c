@@ -158,7 +158,7 @@ load_image(const char* path)
 	if (!(slurp = sfs_fslurp(g_fs, path, "images", &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
-	if (!(image->bitmap = al_load_bitmap_f(al_file, strchr(path, '.'))))
+	if (!(image->bitmap = al_load_bitmap_f(al_file, strrchr(path, '.'))))
 		goto on_error;
 	al_fclose(al_file);
 	free(slurp);

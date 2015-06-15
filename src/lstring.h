@@ -18,6 +18,7 @@ extern void        free_lstring      (lstring_t* string);
 
 extern const char* lstr_cstr (const lstring_t* string);
 extern int         lstr_cmp  (const lstring_t* string1, const lstring_t* string2);
+extern size_t      lstr_len  (const lstring_t* string);
 
 extern lstring_t* duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
 

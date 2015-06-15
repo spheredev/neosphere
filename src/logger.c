@@ -7,7 +7,7 @@
 struct logger
 {
 	int               refcount;
-	FILE*             file;
+	sfs_file_t*       file;
 	int               num_blocks;
 	int               max_blocks;
 	struct log_block* blocks;
@@ -36,11 +36,12 @@ open_log_file(const char* path)
 
 	if (path == NULL) return NULL;
 	if (!(logger = calloc(1, sizeof(logger_t)))) goto on_error;
-	if (!(logger->file = fopen(path, "a"))) goto on_error;
+	if (!(logger->file = sfs_fopen(g_fs, path, "logs", "a")))
+		goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = new_lstring("LOG OPENED: %s\n", timestamp);
-	fputs(lstr_cstr(log_entry), logger->file);
+	sfs_fputs(lstr_cstr(log_entry), logger->file);
 	free_lstring(log_entry);
 	return ref_logger(logger);
 
@@ -67,9 +68,9 @@ free_logger(logger_t* logger)
 		return;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = new_lstring("LOG CLOSED: %s\n\n", timestamp);
-	fputs(lstr_cstr(log_entry), logger->file);
+	sfs_fputs(lstr_cstr(log_entry), logger->file);
 	free_lstring(log_entry);
-	fclose(logger->file);
+	sfs_fclose(logger->file);
 	free(logger);
 }
 
@@ -114,15 +115,15 @@ write_log_line(logger_t* logger, const char* prefix, const char* text)
 	
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S -- ", localtime(&now));
-	fputs(timestamp, logger->file);
+	sfs_fputs(timestamp, logger->file);
 	for (i = 0; i < logger->num_blocks; ++i)
-		fputc('\t', logger->file);
+		sfs_fputc('\t', logger->file);
 	if (prefix != NULL) {
-		fputs(prefix, logger->file);
-		fputc(' ', logger->file);
+		sfs_fputs(prefix, logger->file);
+		sfs_fputc(' ', logger->file);
 	}
-	fputs(text, logger->file);
-	fputc('\n', logger->file);
+	sfs_fputs(text, logger->file);
+	sfs_fputc('\n', logger->file);
 }
 
 void

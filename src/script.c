@@ -22,11 +22,26 @@ try_evaluate_file(const char* path)
 
 	if (!(source = sfs_fslurp(g_fs, path, "scripts", &size)))
 		goto on_error;
+	
+	// compile the script
 	duk_push_lstring(g_duk, source, size);
 	duk_push_string(g_duk, path);
-	free(source); source = NULL;
-	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
-		goto on_error;
+	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
+		duk_dup(g_duk, -1);  // may be a legitimate error, don't clobber it
+		if (strstr(duk_to_string(g_duk, -1), "char decode failed")) {
+			// UTF-8 decode failure, convert source to UTF-8 and try again
+			duk_pop(g_duk);
+			duk_push_cstr_to_utf8(g_duk, source, size);
+			duk_replace(g_duk, -2);
+			duk_push_string(g_duk, path);
+			if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+				goto on_error;  // actual compile error
+		}
+		else {
+			duk_pop(g_duk);
+			goto on_error;  // actual compile error
+		}
+	}
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	return true;
@@ -34,7 +49,7 @@ try_evaluate_file(const char* path)
 on_error:
 	free(source);
 	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "internal error");
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "*munch*");
 	return false;
 }
 
@@ -59,7 +74,7 @@ compile_script(const lstring_t* source, bool is_cp1252, const char* fmt_name, ..
 	}
 	script->id = s_next_id++;
 	if (is_cp1252)
-		duk_push_cstr_to_utf8(g_duk, lstr_cstr(source));
+		duk_push_cstr_to_utf8(g_duk, lstr_cstr(source), lstr_len(source));
 	else
 		duk_push_lstring(g_duk, source->cstr, source->length);
 	va_start(ap, fmt_name);

@@ -115,11 +115,15 @@ lstr_cstr(const lstring_t* string)
 int
 lstr_cmp(const lstring_t* string1, const lstring_t* string2)
 {
-	// TODO: make this work with strings containing NULs
-	// that is, assuming I don't end up replacing this with something like bstrlib...
+	// TODO: make lstr_cmp() work with embedded NULs
 	return strcmp(string1->cstr, string2->cstr);
 }
 
+size_t
+lstr_len(const lstring_t* string)
+{
+	return string->length;
+}
 
 lstring_t*
 duk_require_lstring_t(duk_context* ctx, duk_idx_t index)

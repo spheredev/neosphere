@@ -16,16 +16,18 @@ void        get_sgm_metrics (sandbox_t* fs, int *out_x_res, int *out_y_res);
 const char* get_sgm_name    (sandbox_t* fs);
 const char* get_sgm_script  (sandbox_t* fs);
 const char* get_sgm_summary (sandbox_t* fs);
-vector_t*   list_filenames  (sandbox_t* fs, const char* dirname, const char* base_dir);
+vector_t*   list_filenames  (sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
 
-sfs_file_t* sfs_fopen         (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
-void        sfs_fclose        (sfs_file_t* file);
-bool        sfs_fexist        (sandbox_t* fs, const char* filename, const char* base_dir);
-size_t      sfs_fread         (void* buf, size_t size, size_t count, sfs_file_t* file);
-void*       sfs_fslurp        (sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size);
-size_t      sfs_fwrite        (const void* buf, size_t size, size_t count, sfs_file_t* file);
-bool        sfs_fseek         (sfs_file_t* file, long offset, sfs_seek_t origin);
-long        sfs_ftell         (sfs_file_t* file);
+sfs_file_t* sfs_fopen  (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
+void        sfs_fclose (sfs_file_t* file);
+bool        sfs_fexist (sandbox_t* fs, const char* filename, const char* base_dir);
+int         sfs_fputc  (int ch, sfs_file_t* file);
+bool        sfs_fputs  (const char* string, sfs_file_t* file);
+size_t      sfs_fread  (void* buf, size_t size, size_t count, sfs_file_t* file);
+void*       sfs_fslurp (sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size);
+size_t      sfs_fwrite (const void* buf, size_t size, size_t count, sfs_file_t* file);
+bool        sfs_fseek  (sfs_file_t* file, long offset, sfs_seek_t origin);
+long        sfs_ftell  (sfs_file_t* file);
 
 enum sfs_seek
 {

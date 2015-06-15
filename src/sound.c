@@ -221,7 +221,7 @@ reload_sound(sound_t* sound)
 	new_stream = NULL;
 	if (s_have_sound) {
 		memfile = al_open_memfile(sound->file_data, sound->file_size, "rb");
-		if (!(new_stream = al_load_audio_stream_f(memfile, strchr(sound->path, '.'), 4, 1024)))
+		if (!(new_stream = al_load_audio_stream_f(memfile, strrchr(sound->path, '.'), 4, 1024)))
 			goto on_error;
 	}
 	if (s_have_sound && new_stream == NULL)
