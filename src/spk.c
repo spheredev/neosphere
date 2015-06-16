@@ -220,12 +220,12 @@ spk_fread(void* buf, size_t size, size_t count, spk_file_t* file)
 }
 
 bool
-spk_fseek(spk_file_t* file, long offset, spk_seek_origin_t origin)
+spk_fseek(spk_file_t* file, long long offset, spk_seek_origin_t origin)
 {
 	return al_fseek(file->handle, offset, origin);
 }
 
-long
+long long
 spk_ftell(spk_file_t* file)
 {
 	return al_ftell(file->handle);
