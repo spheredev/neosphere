@@ -7,7 +7,7 @@ struct spk
 {
 	unsigned int  refcount;
 	ALLEGRO_PATH* path;
-	FILE*         file;
+	ALLEGRO_FILE* file;
 	vector_t*     index;
 };
 
@@ -60,8 +60,8 @@ open_spk(const char* path)
 	if (!(spk->path = al_create_path(path)))
 		goto on_error;
 	
-	if (!(spk->file = fopen(path, "rb"))) goto on_error;
-	if (fread(&spk_hdr, sizeof(struct spk_header), 1, spk->file) != 1)
+	if (!(spk->file = al_fopen(path, "rb"))) goto on_error;
+	if (al_fread(spk->file, &spk_hdr, sizeof(struct spk_header)) != sizeof(struct spk_header))
 		goto on_error;
 	if (memcmp(spk_hdr.signature, ".spk", 4) != 0) goto on_error;
 	if (spk_hdr.version != 1) goto on_error;
@@ -69,15 +69,15 @@ open_spk(const char* path)
 	// load the package index
 	if (!(spk->index = new_vector(sizeof(struct spk_entry))))
 		goto on_error;
-	fseek(spk->file, spk_hdr.index_offset, SEEK_SET);
+	al_fseek(spk->file, spk_hdr.index_offset, ALLEGRO_SEEK_SET);
 	for (i = 0; i < spk_hdr.num_files; ++i) {
-		if (fread(&spk_entry_hdr, sizeof(struct spk_entry_hdr), 1, spk->file) != 1)
+		if (al_fread(spk->file, &spk_entry_hdr, sizeof(struct spk_entry_hdr)) != sizeof(struct spk_entry_hdr))
 			goto on_error;
 		if (spk_entry_hdr.version != 1) goto on_error;
 		spk_entry.pack_size = spk_entry_hdr.compress_size;
 		spk_entry.file_size = spk_entry_hdr.file_size;
 		spk_entry.offset = spk_entry_hdr.offset;
-		fread(spk_entry.file_path, spk_entry_hdr.filename_size, 1, spk->file);
+		al_fread(spk->file, spk_entry.file_path, spk_entry_hdr.filename_size);
 		spk_entry.file_path[spk_entry_hdr.filename_size] = '\0';
 		if (!push_back_vector(spk->index, &spk_entry)) goto on_error;
 	}
@@ -88,7 +88,7 @@ on_error:
 	if (spk != NULL) {
 		al_destroy_path(spk->path);
 		if (spk->file != NULL)
-			fclose(spk->file);
+			al_fclose(spk->file);
 		free_vector(spk->index);
 		free(spk);
 	}
@@ -108,7 +108,7 @@ free_spk(spk_t* spk)
 	if (spk == NULL || --spk->refcount > 0)
 		return;
 	free_vector(spk->index);
-	fclose(spk->file);
+	al_fclose(spk->file);
 	free(spk);
 }
 
@@ -256,11 +256,10 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 	if (p_entry == NULL) goto on_error;
 	if (!(packdata = malloc(p_entry->pack_size)))
 		goto on_error;
-	fseek(spk->file, p_entry->offset, SEEK_SET);
-	if (fread(packdata, 1, p_entry->pack_size, spk->file) < p_entry->pack_size)
+	al_fseek(spk->file, p_entry->offset, ALLEGRO_SEEK_SET);
+	if (al_fread(spk->file, packdata, p_entry->pack_size) < p_entry->pack_size)
 		goto on_error;
-	if (!(unpacked = malloc(p_entry->file_size)))
-		goto on_error;
+	if (!(unpacked = malloc(p_entry->file_size))) goto on_error;
 	z.avail_in = (uInt)p_entry->pack_size;
 	z.next_in = packdata;
 	z.avail_out = (uInt)p_entry->file_size;

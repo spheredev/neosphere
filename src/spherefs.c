@@ -16,8 +16,8 @@ struct sandbox
 
 struct sfs_file
 {
-	ALLEGRO_FILE* fs_file;
 	int           fs_type;
+	ALLEGRO_FILE* handle;
 	spk_file_t*   spk_file;
 };
 
@@ -206,7 +206,7 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 			al_destroy_path(dir_path);
 		}
 		path = al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP);
-		if (!(file->fs_file = al_fopen(path, mode)))
+		if (!(file->handle = al_fopen(path, mode)))
 			goto on_error;
 		break;
 	case SPHEREFS_SPK:
@@ -230,7 +230,7 @@ sfs_fclose(sfs_file_t* file)
 		return;
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		al_fclose(file->fs_file);
+		al_fclose(file->handle);
 		break;
 	case SPHEREFS_SPK:
 		spk_fclose(file->spk_file);
@@ -255,7 +255,7 @@ sfs_fputc(int ch, sfs_file_t* file)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		return al_fputc(file->fs_file, ch);
+		return al_fputc(file->handle, ch);
 	case SPHEREFS_SPK:
 		return spk_fputc(ch, file->spk_file);
 	default:
@@ -268,7 +268,7 @@ sfs_fputs(const char* string, sfs_file_t* file)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		return al_fputs(file->fs_file, string);
+		return al_fputs(file->handle, string);
 	case SPHEREFS_SPK:
 		return spk_fputs(string, file->spk_file);
 	default:
@@ -281,7 +281,7 @@ sfs_fread(void* buf, size_t size, size_t count, sfs_file_t* file)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		return al_fread(file->fs_file, buf, size * count) / size;
+		return al_fread(file->handle, buf, size * count) / size;
 	case SPHEREFS_SPK:
 		return spk_fread(buf, size, count, file->spk_file);
 	default:
@@ -323,25 +323,12 @@ sfs_fspew(sandbox_t* fs, const char* filename, const char* base_dir, void* buf, 
 	return true;
 }
 
-size_t
-sfs_fwrite(const void* buf, size_t size, size_t count, sfs_file_t* file)
-{
-	switch (file->fs_type) {
-	case SPHEREFS_SANDBOX:
-		return al_fwrite(file->fs_file, buf, size * count) / size;
-	case SPHEREFS_SPK:
-		return spk_fwrite(buf, size, count, file->spk_file);
-	default:
-		return 0;
-	}
-}
-
 bool
 sfs_fseek(sfs_file_t* file, long long offset, sfs_seek_t origin)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		return al_fseek(file->fs_file, offset, origin) == 0;
+		return al_fseek(file->handle, offset, origin) == 0;
 	case SPHEREFS_SPK:
 		return spk_fseek(file->spk_file, offset, origin);
 	}
@@ -353,11 +340,24 @@ sfs_ftell(sfs_file_t* file)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_SANDBOX:
-		return al_ftell(file->fs_file);
+		return al_ftell(file->handle);
 	case SPHEREFS_SPK:
 		return spk_ftell(file->spk_file);
 	}
 	return -1;
+}
+
+size_t
+sfs_fwrite(const void* buf, size_t size, size_t count, sfs_file_t* file)
+{
+	switch (file->fs_type) {
+	case SPHEREFS_SANDBOX:
+		return al_fwrite(file->handle, buf, size * count) / size;
+	case SPHEREFS_SPK:
+		return spk_fwrite(buf, size, count, file->spk_file);
+	default:
+		return 0;
+	}
 }
 
 static bool
