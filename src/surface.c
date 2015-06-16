@@ -210,7 +210,6 @@ js_new_Surface(duk_context* ctx)
 	color_t     fill_color;
 	image_t*    image;
 	image_t*    src_image;
-	char*       path;
 	int         width, height;
 
 	if (n_args >= 2) {
@@ -228,9 +227,7 @@ js_new_Surface(duk_context* ctx)
 	}
 	else {
 		filename = duk_require_string(ctx, 0);
-		path = get_asset_path(filename, "images", false);
-		image = load_image(path);
-		free(path);
+		image = load_image(filename);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to load image file '%s'", filename);
 	}
@@ -871,14 +868,11 @@ js_Surface_save(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 	
 	image_t* image;
-	char*    path;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
-	path = get_asset_path(filename, "images", true);
-	al_save_bitmap(path, get_image_bitmap(image));
-	free(path);
+	save_image(image, filename);
 	return 1;
 }
 

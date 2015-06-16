@@ -31,6 +31,7 @@ extern bool            flip_image               (image_t* image, bool is_h_flip,
 extern image_lock_t*   lock_image               (image_t* image);
 extern bool            replace_image_color      (image_t* image, color_t color, color_t new_color);
 extern bool            rescale_image            (image_t* image, int width, int height);
+extern bool            save_image               (image_t* image, const char* filename);
 extern void            unlock_image             (image_t* image, image_lock_t* lock);
 
 extern image_t* create_surface (int width, int height);
