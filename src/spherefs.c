@@ -146,10 +146,10 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
 	lstring_t*        filename;
-	int               flag;
 	int               fs_type;
 	ALLEGRO_FS_ENTRY* fse = NULL;
 	vector_t*         list = NULL;
+	int               type_flag;
 
 	if (!resolve_path(fs, dirname, base_dir, &dir_path, &fs_type))
 		goto on_error;
@@ -157,13 +157,13 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 		goto on_error;
 	switch (fs_type) {
 	case SPHEREFS_SANDBOX:
-		flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
+		type_flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
 		fse = al_create_fs_entry(al_path_cstr(dir_path, ALLEGRO_NATIVE_PATH_SEP));
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				file_path = al_create_path(al_get_fs_entry_name(file_info));
 				filename = lstring_from_cstr(al_get_path_filename(file_path));
-				if (al_get_fs_entry_mode(file_info) & flag)
+				if (al_get_fs_entry_mode(file_info) & type_flag)
 					push_back_vector(list, &filename);
 				al_destroy_path(file_path);
 			}
@@ -171,7 +171,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 		al_destroy_fs_entry(fse);
 		break;
 	case SPHEREFS_SPK:
-		list = list_spk_filenames(fs->spk, al_path_cstr(dir_path, '/'));
+		list = list_spk_filenames(fs->spk, al_path_cstr(dir_path, '/'), want_dirs);
 		break;
 	}
 	al_destroy_path(dir_path);
@@ -372,6 +372,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 	int i;
 
 	*out_path = al_create_path(filename);
+	al_make_path_canonical(*out_path);
 
 	if (filename[0] == '/' || filename[1] == ':') {  // absolute path
 		*out_fs_type = SPHEREFS_SANDBOX;

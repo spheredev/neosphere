@@ -95,6 +95,8 @@ main(int argc, char* argv[])
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          file_path;
 	const char*          filename;
+	ALLEGRO_FS_ENTRY*    games_dir;
+	const char*          games_dirname;
 	char*                game_path;
 	image_t*             icon;
 	int                  line_num;
@@ -189,9 +191,16 @@ main(int argc, char* argv[])
 	if (g_fs == NULL) {
 		browse_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 		al_append_path_component(browse_path, "games");
+		games_dirname = al_path_cstr(browse_path, ALLEGRO_NATIVE_PATH_SEP);
+		games_dir = al_create_fs_entry(games_dirname);
+		if (!al_open_directory(games_dir))
+			games_dirname = NULL;
+		al_close_directory(games_dir);
+		al_destroy_fs_entry(games_dir);
 		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
-		file_dlg = al_create_native_file_dialog(al_path_cstr(browse_path, ALLEGRO_NATIVE_PATH_SEP), 
-			al_cstr(dialog_name), "game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		file_dlg = al_create_native_file_dialog(games_dirname, al_cstr(dialog_name),
+			"game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		al_destroy_path(browse_path);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
@@ -200,7 +209,6 @@ main(int argc, char* argv[])
 			return EXIT_SUCCESS;
 		}
 		al_destroy_native_file_dialog(file_dlg);
-		al_destroy_path(browse_path);
 		al_ustr_free(dialog_name);
 		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		if (g_fs == NULL) {

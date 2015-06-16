@@ -250,7 +250,7 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 	memset(&z, 0, sizeof(z_stream));
 	iter = iterate_vector(spk->index);
 	while (p_entry = next_vector_item(&iter)) {
-		if (strcmp(path, p_entry->file_path) == 0)
+		if (strcasecmp(path, p_entry->file_path) == 0)
 			break;
 	}
 	if (p_entry == NULL) goto on_error;
@@ -280,26 +280,73 @@ on_error:
 }
 
 vector_t*
-list_spk_filenames(spk_t* spk, const char* dirname)
+list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 {
+	// HERE BE DRAGONS!
+	// this function is kind of a monstrosity because SPK doesn't actually have
+	// any real concept of a directory - each asset is stored with its full path
+	// as its filename.  this means we have to do some ugly parsing and de-duplication
+	// to differentiate file and directory names.
+	
 	lstring_t*        filename;
+	char*             found_dirname;
+	bool              is_in_set;
 	vector_t*         list;
+	const char*       maybe_dirname;
 	const char*       maybe_filename;
 	const char*       match;
 	struct spk_entry* p_entry;
 	
-	iter_t iter;
+	iter_t iter, iter2;
+	lstring_t** item;
 	
 	list = new_vector(sizeof(lstring_t*));
 	iter = iterate_vector(spk->index);
 	while (p_entry = next_vector_item(&iter)) {
-		match = strstr(p_entry->file_path, dirname);
-		maybe_filename = match + strlen(dirname);
-		if (dirname[strlen(dirname) - 1] != '/')
-			++maybe_filename;  // account for directory separator
-		if (match == p_entry->file_path && strchr(maybe_filename, '/') == NULL) {
+		if (!want_dirs) {  // list files
+			if (!(match = strstr(p_entry->file_path, dirname)))
+				continue;
+			if (match != p_entry->file_path) continue;
+			maybe_filename = match + strlen(dirname);
+			if (dirname[strlen(dirname) - 1] != '/') {
+				if (maybe_filename[0] != '/')
+					continue;  // oops, matched a partial file name
+				++maybe_filename;  // account for directory separator
+			}
+			if (strchr(maybe_filename, '/'))
+				continue;  // ignore files in subdirectories
+			
+			// if we got to this point, we have a valid filename
 			filename = lstring_from_cstr(maybe_filename);
 			push_back_vector(list, &filename);
+		}
+		else {  // list directories
+			if (!(match = strstr(p_entry->file_path, dirname)))
+				continue;
+			if (match != p_entry->file_path) continue;
+			maybe_dirname = match + strlen(dirname);
+			if (dirname[strlen(dirname) - 1] != '/') {
+				if (maybe_dirname[0] != '/')
+					continue;  // oops, matched a partial file name
+				++maybe_dirname;  // account for directory separator
+			}
+			if (!(maybe_filename = strchr(maybe_dirname, '/')))
+				continue;  // ignore files
+			if (strchr(++maybe_filename, '/'))
+				continue;  // ignore subdirectories
+
+			// if we got to this point, we have a valid directory name
+			found_dirname = strdup(maybe_dirname);
+			*strchr(found_dirname, '/') = '\0';
+			filename = lstring_from_cstr(found_dirname);
+			iter2 = iterate_vector(list);
+			is_in_set = false;
+			while (item = next_vector_item(&iter2)) {
+				is_in_set |= lstr_cmp(filename, *item) == 0;
+			}
+			if (!is_in_set)  // avoid duplicate listings
+				push_back_vector(list, &filename);
+			free(found_dirname);
 		}
 	}
 	return list;
