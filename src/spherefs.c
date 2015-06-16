@@ -223,28 +223,6 @@ on_error:
 	return NULL;
 }
 
-void*
-sfs_fslurp(sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size)
-{
-	sfs_file_t* file = NULL;
-	void*       slurp;
-	
-	if (!(file = sfs_fopen(fs, filename, base_dir, "rb")))
-		goto on_error;
-	sfs_fseek(file, 0, SFS_SEEK_END);
-	*out_size = sfs_ftell(file);
-	if (!(slurp = malloc(*out_size)))
-		goto on_error;
-	sfs_fseek(file, 0, SFS_SEEK_SET);
-	sfs_fread(slurp, *out_size, 1, file);
-	sfs_fclose(file);
-	return slurp;
-
-on_error:
-	sfs_fclose(file);
-	return NULL;
-}
-
 void
 sfs_fclose(sfs_file_t* file)
 {
@@ -309,6 +287,28 @@ sfs_fread(void* buf, size_t size, size_t count, sfs_file_t* file)
 	default:
 		return 0;
 	}
+}
+
+void*
+sfs_fslurp(sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size)
+{
+	sfs_file_t* file = NULL;
+	void*       slurp;
+
+	if (!(file = sfs_fopen(fs, filename, base_dir, "rb")))
+		goto on_error;
+	sfs_fseek(file, 0, SFS_SEEK_END);
+	*out_size = sfs_ftell(file);
+	if (!(slurp = malloc(*out_size)))
+		goto on_error;
+	sfs_fseek(file, 0, SFS_SEEK_SET);
+	sfs_fread(slurp, *out_size, 1, file);
+	sfs_fclose(file);
+	return slurp;
+
+on_error:
+	sfs_fclose(file);
+	return NULL;
 }
 
 bool

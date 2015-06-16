@@ -32,13 +32,18 @@ static unsigned int s_next_file_id = 0;
 file_t*
 open_file(const char* path)
 {
-	file_t* file;
+	file_t*       file;
+	ALLEGRO_FILE* memfile = NULL;
+	void*         slurp;
+	size_t        slurp_size;
 	
 	if (!(file = calloc(1, sizeof(file_t))))
 		goto on_error;
-	if (al_filename_exists(path)) {
-		if (!(file->conf = al_load_config_file(path)))
+	if (slurp = sfs_fslurp(g_fs, path, "save", &slurp_size)) {
+		memfile = al_open_memfile(slurp, slurp_size, "rb");
+		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
+		al_fclose(memfile);
 	}
 	else {
 		if ((file->conf = al_create_config()) == NULL)
@@ -47,12 +52,13 @@ open_file(const char* path)
 	file->path = strdup(path);
 	file->id = s_next_file_id++;
 	if (g_game_path != NULL) {
-		console_log(2, "engine: Opened KVP file from file system [file %u]", file->id);
+		console_log(2, "engine: Opened K/V file [file %u]", file->id);
 		console_log(2, "  Path: %s", relativepath(path, NULL));
 	}
 	return file;
 
 on_error:
+	if (memfile != NULL) al_fclose(memfile);
 	if (file != NULL) {
 		if (file->conf != NULL)
 			al_destroy_config(file->conf);
@@ -151,11 +157,38 @@ read_string_rec(file_t* file, const char* key, const char* def_value)
 bool
 save_file(file_t* file)
 {
-	if (!al_save_config_file(file->path, file->conf))
-		return false;
+	void*         buffer = NULL;
+	size_t        file_size;
+	bool          is_aok = false;
+	ALLEGRO_FILE* memfile;
+	size_t        next_buf_size;
+	sfs_file_t*   sfs_file = NULL;
+
+	next_buf_size = 4096;
+	while (!is_aok) {
+		buffer = realloc(buffer, next_buf_size);
+		memfile = al_open_memfile(buffer, next_buf_size, "wb");
+		next_buf_size *= 2;
+		al_save_config_file_f(memfile, file->conf);
+		is_aok = !al_feof(memfile);
+		file_size = al_ftell(memfile);
+		al_fclose(memfile);
+	}
+	if (!(sfs_file = sfs_fopen(g_fs, file->path, "save", "wt")))
+		goto on_error;
+	sfs_fwrite(buffer, file_size, 1, sfs_file);
+	sfs_fclose(sfs_file);
+	free(buffer);
 	if (g_game_path != NULL)
-		console_log(3, "file %u: Saved file to file system", file->id);
+		console_log(3, "file %u: Saved out K/V file", file->id);
 	return true;
+
+on_error:
+	if (memfile != NULL)
+		al_fclose(memfile);
+	sfs_fclose(sfs_file);
+	free(buffer);
+	return false;
 }
 
 void

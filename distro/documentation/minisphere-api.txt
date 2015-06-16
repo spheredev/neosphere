@@ -44,6 +44,7 @@ GetExtensions()
     * sphere-map-engine
     * sphere-commonjs
     * sphere-galileo
+    * sphere-spherefs
     * minisphere-async-api
     * minisphere-galileo-shaders
     * minisphere-new-sockets
@@ -61,16 +62,18 @@ directory by default, generally a subdirectory below the current game's
 game.sgm. To get around this and load files from a different location, you can
 use one of the following SphereFS prefixes:
 
-  ~/:  A filename beginning with a tilde followed by a forward slash is relative
-       to the directory containing the current game's game.sgm file.
-  ~#/: A tilde and numeral sign followed by a forward slash indicates a path
-       which is relative to the engine's 'system' directory. This may be used to
-       access built-in engine assets.
-       
+  ~usr/: The current user's local home directory. This may be used to store
+         save files and other such data where the user can easily access it.
+         Guaranteed to be writable on all systems.
+  ~sgm/: The directory containing game.sgm. For backwards compatibility, this
+         may also be specified as ~/. You should not assume this is writable.
+  ~sys/: minisphere's "system" directory. May be used to access assets included
+         with the engine. Not likely to be writable.
+
 By way of example, the following will open the file settings.cfg from the
 calling game's "config" subdirectory:
   
-  var file = new File("~/config/settings.cfg");
+  var file = new File("~sgm/config/settings.cfg");
 
 
 Dependency Management

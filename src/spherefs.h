@@ -24,6 +24,7 @@ bool        sfs_fexist (sandbox_t* fs, const char* filename, const char* base_di
 int         sfs_fputc  (int ch, sfs_file_t* file);
 int         sfs_fputs  (const char* string, sfs_file_t* file);
 size_t      sfs_fread  (void* buf, size_t size, size_t count, sfs_file_t* file);
+bool        sfs_fspew  (sandbox_t* fs, const char* filename, const char* base_dir, void* buf, size_t size);
 void*       sfs_fslurp (sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size);
 size_t      sfs_fwrite (const void* buf, size_t size, size_t count, sfs_file_t* file);
 bool        sfs_fseek  (sfs_file_t* file, long long offset, sfs_seek_t origin);
