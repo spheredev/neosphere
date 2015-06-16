@@ -37,6 +37,7 @@
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static void draw_status_message (const char* text);
+static bool find_startup_game   (ALLEGRO_PATH* *out_path);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
@@ -87,6 +88,7 @@ static const char* const ERROR_TEXT[][2] =
 int
 main(int argc, char* argv[])
 {
+	ALLEGRO_PATH*        browse_path;
 	ALLEGRO_USTR*        dialog_name;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
@@ -114,11 +116,10 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	
 	// determine location of game.sgm and try to load it
-	g_game_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(g_game_path, "startup");
+	find_startup_game(&g_game_path);
 	console_log(0, "Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
-		// single non-switch argument passed, assume it's a game.sgm path or game directory
+		// single non-switch argument passed, assume it's a game path
 		al_destroy_path(g_game_path);
 		g_game_path = al_create_path(argv[1]);
 	}
@@ -154,7 +155,7 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	console_log(1, "  Game path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none found>");
 	console_log(1, "  Maximum consecutive frame skips: %i\n", s_max_frameskip);
 	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	console_log(1, "  Console verbosity level: %i\n", get_log_level());
@@ -183,11 +184,14 @@ main(int argc, char* argv[])
 
 	// locate game.sgm
 	console_log(0, "Searching for a game\n");
-	al_make_path_canonical(g_game_path);
-	g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	if (g_game_path != NULL)
+		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
+		browse_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+		al_append_path_component(browse_path, "games");
 		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
-		file_dlg = al_create_native_file_dialog(NULL, al_cstr(dialog_name), "game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		file_dlg = al_create_native_file_dialog(al_path_cstr(browse_path, ALLEGRO_NATIVE_PATH_SEP), 
+			al_cstr(dialog_name), "game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		if (al_show_native_file_dialog(NULL, file_dlg)) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
@@ -196,6 +200,7 @@ main(int argc, char* argv[])
 			return EXIT_SUCCESS;
 		}
 		al_destroy_native_file_dialog(file_dlg);
+		al_destroy_path(browse_path);
 		al_ustr_free(dialog_name);
 		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		if (g_fs == NULL) {
@@ -728,6 +733,7 @@ shutdown_engine(void)
 	al_destroy_display(g_display); g_display = NULL;
 	al_destroy_event_queue(g_events); g_events = NULL;
 	al_destroy_path(g_game_path); g_game_path = NULL;
+	free_sandbox(g_fs); g_fs = NULL;
 	if (g_sys_conf != NULL)
 		al_destroy_config(g_sys_conf);
 	g_sys_conf = NULL;
@@ -753,4 +759,43 @@ draw_status_message(const char* text)
 	draw_text(g_sys_font, rgba(0, 0, 0, 255), w_screen - 16 - width / 2 + 1, h_screen - 16 - height + 6, TEXT_ALIGN_CENTER, text);
 	draw_text(g_sys_font, rgba(255, 255, 255, 255), w_screen - 16 - width / 2, h_screen - 16 - height + 5, TEXT_ALIGN_CENTER, text);
 	al_use_transform(&old_transform);
+}
+
+static bool
+find_startup_game(ALLEGRO_PATH* *out_path)
+{
+	ALLEGRO_FS_ENTRY* engine_dir;
+	const char*       file_ext;
+	const char*       filename;
+	ALLEGRO_FS_ENTRY* fse;
+	int               n_spk_files = 0;
+	
+	// prefer startup game if one exists
+	*out_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(*out_path, "startup");
+	al_set_path_filename(*out_path, "game.sgm");
+	if (al_filename_exists(al_path_cstr(*out_path, ALLEGRO_NATIVE_PATH_SEP)))
+		return true;
+	al_destroy_path(*out_path);
+	*out_path = NULL;
+	
+	// check for single SPK package alongside engine
+	*out_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	engine_dir = al_create_fs_entry(al_path_cstr(*out_path, ALLEGRO_NATIVE_PATH_SEP));
+	al_open_directory(engine_dir);
+	while (fse = al_read_directory(engine_dir)) {
+		filename = al_get_fs_entry_name(fse);
+		file_ext = strrchr(filename, '.');
+		if (file_ext != NULL && strcmp(file_ext, ".spk") == 0) {
+			if (++n_spk_files == 1)
+				*out_path = al_create_path(filename);
+		}
+		al_destroy_fs_entry(fse);
+	}
+	al_close_directory(engine_dir);
+	if (n_spk_files == 1)
+		return true;
+	al_destroy_path(*out_path);
+	*out_path = NULL;
+	return false;
 }
