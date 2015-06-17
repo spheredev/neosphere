@@ -15,28 +15,22 @@ struct shader
 shader_t*
 create_shader(const char* vs_filename, const char* fs_filename)
 {
-	lstring_t* fs_source;
-	lstring_t* vs_source;
+	char*      fs_source;
+	char*      vs_source;
 	shader_t*  shader;
-	void*      slurp;
-	size_t     slurp_size;
 
-	if (!(shader = calloc(1, sizeof(shader_t)))) goto on_error;
-	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
+	if (!(shader = calloc(1, sizeof(shader_t))))
 		goto on_error;
-	if (!(slurp = sfs_fslurp(g_fs, vs_filename, "shaders", &slurp_size)))
-		goto on_error;
-	vs_source = lstring_from_buf(slurp_size, slurp);
-	free(slurp);
-	if (!(slurp = sfs_fslurp(g_fs, fs_filename, "shaders", &slurp_size)))
-		goto on_error;
-	fs_source = lstring_from_buf(slurp_size, slurp);
-	free(slurp);
-	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, lstr_cstr(vs_source))) {
+	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
+	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, "shaders", NULL))) goto on_error;
+	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, "shaders", NULL))) goto on_error;
+	free(vs_source);
+	free(fs_source);
+	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
 		fprintf(stderr, "\nVertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
-	if (!al_attach_shader_source(shader->program, ALLEGRO_PIXEL_SHADER, lstr_cstr(fs_source))) {
+	if (!al_attach_shader_source(shader->program, ALLEGRO_PIXEL_SHADER, fs_source)) {
 		fprintf(stderr, "\nFragment shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}

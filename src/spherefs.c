@@ -285,17 +285,21 @@ void*
 sfs_fslurp(sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size)
 {
 	sfs_file_t* file = NULL;
+	size_t      data_size;
 	void*       slurp;
 
 	if (!(file = sfs_fopen(fs, filename, base_dir, "rb")))
 		goto on_error;
 	sfs_fseek(file, 0, SFS_SEEK_END);
-	*out_size = sfs_ftell(file);
-	if (!(slurp = malloc(*out_size)))
+	data_size = sfs_ftell(file);
+	if (!(slurp = malloc(data_size + 1)))
 		goto on_error;
 	sfs_fseek(file, 0, SFS_SEEK_SET);
-	sfs_fread(slurp, *out_size, 1, file);
+	sfs_fread(slurp, data_size, 1, file);
 	sfs_fclose(file);
+	*((char*)slurp + data_size) = '\0';  // nifty NUL terminator
+	
+	if (out_size) *out_size = data_size;
 	return slurp;
 
 on_error:

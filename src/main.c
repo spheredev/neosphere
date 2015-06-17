@@ -82,7 +82,8 @@ static const char* const ERROR_TEXT[][2] =
 	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
 	{ "Sorry. It's just...", "...well, this is a trainwreck of a game." },
 	{ "You better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
-	{ "An exception was thrown.", "minisphere takes exception to crappy games." }
+	{ "An exception was thrown.", "minisphere takes exception to sucky games." },
+	{ "honk. HONK. honk. HONK. :o)", "There's a clown behind you." },
 };
 
 int
@@ -94,7 +95,6 @@ main(int argc, char* argv[])
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
-	lstring_t*           font_path;
 	ALLEGRO_FS_ENTRY*    games_dir;
 	const char*          games_dirname;
 	char*                game_path;
@@ -116,7 +116,7 @@ main(int argc, char* argv[])
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 	
-	// determine location of game.sgm and try to load it
+	// startup processing (command line parsing, etc.)
 	find_startup_game(&g_game_path);
 	console_log(0, "Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
@@ -156,7 +156,7 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none found>");
+	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none>");
 	console_log(1, "  Maximum consecutive frame skips: %i\n", s_max_frameskip);
 	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	console_log(1, "  Console verbosity level: %i\n", get_log_level());
@@ -184,7 +184,7 @@ main(int argc, char* argv[])
 	}
 
 	// locate game.sgm
-	console_log(0, "Searching for a game\n");
+	console_log(0, "Looking for a Sphere game to launch\n");
 	if (g_game_path != NULL)
 		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
@@ -218,7 +218,7 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	console_log(1, "  Game: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	console_log(1, "  Path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");
@@ -253,9 +253,7 @@ main(int argc, char* argv[])
 	console_log(1, "Loading system font\n");
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
-		font_path = new_lstring("~sys/%s", filename);
-		g_sys_font = load_font(lstr_cstr(font_path));
-		free_lstring(font_path);
+		g_sys_font = load_font(syspath(filename));
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
