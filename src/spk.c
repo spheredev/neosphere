@@ -259,7 +259,8 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 	al_fseek(spk->file, p_entry->offset, ALLEGRO_SEEK_SET);
 	if (al_fread(spk->file, packdata, p_entry->pack_size) < p_entry->pack_size)
 		goto on_error;
-	if (!(unpacked = malloc(p_entry->file_size))) goto on_error;
+	if (!(unpacked = malloc(p_entry->file_size + 1)))
+		goto on_error;
 	z.avail_in = (uInt)p_entry->pack_size;
 	z.next_in = packdata;
 	z.avail_out = (uInt)p_entry->file_size;
@@ -269,6 +270,8 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 		goto on_error;
 	inflateEnd(&z);
 	free(packdata);
+	*((char*)unpacked + p_entry->file_size) = '\0';
+	
 	*out_size = p_entry->file_size;
 	return unpacked;
 
