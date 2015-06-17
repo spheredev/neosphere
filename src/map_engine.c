@@ -1040,11 +1040,12 @@ find_layer(const char* name)
 static void
 map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
-	int   center_x, center_y;
-	int   layer_w, layer_h;
-	float plx_offset_x = 0.0, plx_offset_y = 0.0;
-	int   tile_w, tile_h;
-	int   x_offset, y_offset;
+	rect_t bounds;
+	int    center_x, center_y;
+	int    layer_w, layer_h;
+	float  plx_offset_x = 0.0, plx_offset_y = 0.0;
+	int    tile_w, tile_h;
+	int    x_offset, y_offset;
 	
 	// get layer and screen metrics
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
@@ -1055,8 +1056,9 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 
 	// initial camera correction
 	if (!s_map->is_repeating) {
-		camera_x = fmin(fmax(camera_x, center_x), layer_w - center_x);
-		camera_y = fmin(fmax(camera_y, center_y), layer_h - center_y);
+		bounds = get_map_bounds();
+		camera_x = fmin(fmax(camera_x, bounds.x1 + center_x), bounds.x2 - center_x);
+		camera_y = fmin(fmax(camera_y, bounds.y1 + center_y), bounds.y2 - center_y);
 	}
 
 	// remap screen coordinates to layer coordinates
@@ -1064,6 +1066,7 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 		- camera_x * (s_map->layers[layer].parallax_x - 1.0);
 	plx_offset_y = s_frames * s_map->layers[layer].autoscroll_y
 		- camera_y * (s_map->layers[layer].parallax_y - 1.0);
+	//plx_offset_x = 0; plx_offset_y = 0;
 	x_offset = camera_x - center_x - plx_offset_x;
 	y_offset = camera_y - center_y - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
