@@ -825,11 +825,18 @@ js_Delay(duk_context* ctx)
 static duk_ret_t
 js_ExecuteGame(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
+	const char*   filename = duk_require_string(ctx, 0);
+	
+	ALLEGRO_PATH* exe_path;
 
 	g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	al_destroy_path(g_game_path);
 	g_game_path = al_create_path(filename);
+	exe_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(exe_path, "games");
+	al_rebase_path(exe_path, g_game_path);
+	al_destroy_path(exe_path);
+	
 	restart_engine();
 }
 
