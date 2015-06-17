@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "color.h"
+#include "spk.h"
 #include "vector.h"
 
 static double const SPHERE_API_VERSION = 2.0;
@@ -596,7 +597,7 @@ js_GetGameList(duk_context* ctx)
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_FS_ENTRY* fse;
 	ALLEGRO_PATH*     path;
-	ALLEGRO_CONFIG*   sgm;
+	sandbox_t*        sandbox;
 
 	int i;
 
@@ -608,21 +609,18 @@ js_GetGameList(duk_context* ctx)
 	i = 0;
 	if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 		while (file_info = al_read_directory(fse)) {
-			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISDIR) {
-				path = al_create_path_for_directory(al_get_fs_entry_name(file_info));
-				al_set_path_filename(path, "game.sgm");
-				if ((sgm = al_load_config_file(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) != NULL) {
-					duk_push_object(ctx);
-					duk_push_string(ctx, al_get_path_component(path, -1)); duk_put_prop_string(ctx, -2, "directory");
-					duk_push_string(ctx, al_get_config_value(sgm, NULL, "name")); duk_put_prop_string(ctx, -2, "name");
-					duk_push_string(ctx, al_get_config_value(sgm, NULL, "author")); duk_put_prop_string(ctx, -2, "author");
-					duk_push_string(ctx, al_get_config_value(sgm, NULL, "description")); duk_put_prop_string(ctx, -2, "description");
-					duk_put_prop_index(ctx, -2, i);
-					al_destroy_config(sgm);
-				}
-				al_destroy_path(path);
-				++i;
+			path = al_create_path(al_get_fs_entry_name(file_info));
+			if (sandbox = new_fs_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
+				duk_push_object(ctx);
+				duk_push_string(ctx, al_get_path_filename(path)); duk_put_prop_string(ctx, -2, "directory");
+				duk_push_string(ctx, get_sgm_name(sandbox)); duk_put_prop_string(ctx, -2, "name");
+				duk_push_string(ctx, get_sgm_author(sandbox)); duk_put_prop_string(ctx, -2, "author");
+				duk_push_string(ctx, get_sgm_summary(sandbox)); duk_put_prop_string(ctx, -2, "description");
+				duk_put_prop_index(ctx, -2, i);
+				free_sandbox(sandbox);
 			}
+			al_destroy_path(path);
+			++i;
 		}
 	}
 	al_destroy_fs_entry(fse);

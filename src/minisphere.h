@@ -38,6 +38,8 @@
 #include "script.h"
 #include "utility.h"
 
+#define SPHERE_PATH_MAX 1024
+
 #if defined(__GNUC__)
 #define noreturn __attribute__((noreturn)) void
 #elif defined(__clang__)
@@ -46,12 +48,6 @@
 #define noreturn __declspec(noreturn) void
 #else
 #define noreturn void
-#endif
-
-#if defined(PATH_MAX)
-#define SPHERE_PATH_MAX PATH_MAX
-#else
-#define SPHERE_PATH_MAX 1024
 #endif
 
 extern ALLEGRO_DISPLAY*     g_display;
