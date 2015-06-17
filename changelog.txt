@@ -1,12 +1,13 @@
 minisphere Changelog
 ====================
 
-v1.3 - TBD
-----------
+v1.3.0 - June 17, 2015
+----------------------
 
 * SphereFS support! This provides new directory aliases (~usr/, ~sys/, ~sgm/)
   with more predictable semantics than the classic ~/ alias, which is of course
   maintained for backwards compatibility.
+* Sphere Package format (.spk) support!
 * 4-player support in map engine (AttachPlayerInput() et al.)
 * Support for Sphere ColorMatrix objects.
 * Support for zlib compression and decompression of ByteArrays.
@@ -48,8 +49,8 @@ v1.2.1 - June 7, 2015
 * Fixes a bug in Font:wordWrapString() where text ending on a wrap boundary can
   cause the last word to be lost.
 
-v1.2 - June 6, 2015
--------------------
+v1.2.0 - June 6, 2015
+---------------------
 
 * CommonJS module support!
 * Globals are now accessible via the Sphere object. With this, global variables
@@ -145,8 +146,8 @@ v1.1.1 - May 20, 2015
 * New RNG.name() API: Generates a random string of letters which you can use
   internally to differentiate objects.
 
-v1.1 - May 17, 2015
--------------------
+v1.1.0 - May 17, 2015
+---------------------
 
 This is an absolutely MASSIVE release.  Note: minisphere is now BSD-licensed.
 This basically gives you absolute freedom to do with the engine and associated
