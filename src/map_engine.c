@@ -579,7 +579,7 @@ remove_zone(int zone_index)
 }
 
 static struct map*
-load_map(const char* path)
+load_map(const char* filename)
 {
 	// strings: 0 - tileset filename
 	//          1 - music filename
@@ -594,7 +594,6 @@ load_map(const char* path)
 	uint16_t                 count;
 	struct rmp_entity_header entity_hdr;
 	sfs_file_t*              file = NULL;
-	const char*              filename;
 	bool                     has_failed;
 	struct map_layer*        layer;
 	struct rmp_layer_header  layer_hdr;
@@ -615,10 +614,8 @@ load_map(const char* path)
 	int i, j, x, y, z;
 
 	memset(&rmp, 0, sizeof(struct rmp_header));
-	if (!(filename = relativepath(path, "maps")))
-		goto on_error;
 	
-	if (!(file = sfs_fopen(g_fs, path, "maps", "rb"))) goto on_error;
+	if (!(file = sfs_fopen(g_fs, filename, "maps", "rb"))) goto on_error;
 	if (!(map = calloc(1, sizeof(struct map)))) goto on_error;
 	if (sfs_fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
 		goto on_error;
@@ -741,7 +738,7 @@ load_map(const char* path)
 
 		// load tileset
 		if (strcmp(lstr_cstr(strings[0]), "") != 0) {
-			tileset_path = al_create_path(path);
+			tileset_path = al_create_path(filename);
 			al_set_path_filename(tileset_path, lstr_cstr(strings[0]));
 			tileset = load_tileset(al_path_cstr(tileset_path, ALLEGRO_NATIVE_PATH_SEP));
 			al_destroy_path(tileset_path);
@@ -948,18 +945,14 @@ change_map(const char* filename, bool preserve_persons)
 	//       the map engine may be left in an inconsistent state. it is therefore probably wise
 	//       to consider such a situation unrecoverable.
 	
-	char*              bgm_path;
 	struct map*        map;
-	char*              path;
 	person_t*          person;
 	struct map_person* person_info;
 	spriteset_t*       spriteset;
 
 	int i;
 
-	path = get_asset_path(filename, "maps", false);
-	map = load_map(path);
-	free(path);
+	map = load_map(filename);
 	if (map == NULL) return false;
 	if (s_map != NULL) {
 		// run map exit scripts first, before loading new map
@@ -978,10 +971,8 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		path = get_asset_path(lstr_cstr(person_info->spriteset), "spritesets", false);
-		if (!(spriteset = load_spriteset(path)))
+		if (!(spriteset = load_spriteset(lstr_cstr(person_info->spriteset))))
 			goto on_error;
-		free(path);
 		if (!(person = create_person(person_info->name->cstr, spriteset, false, NULL)))
 			goto on_error;
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
@@ -1014,12 +1005,10 @@ change_map(const char* filename, bool preserve_persons)
 		free_sound(s_map_bgm_stream);
 		free_lstring(s_last_bgm_file);
 		s_last_bgm_file = clone_lstring(s_map->bgm_file);
-		bgm_path = get_asset_path(lstr_cstr(s_map->bgm_file), "sounds", false);
-		if (s_map_bgm_stream = load_sound(bgm_path, true)) {
+		if (s_map_bgm_stream = load_sound(lstr_cstr(s_map->bgm_file), true)) {
 			set_sound_looping(s_map_bgm_stream, true);
 			play_sound(s_map_bgm_stream);
 		}
-		free(bgm_path);
 	}
 
 	// run map entry scripts

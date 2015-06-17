@@ -1038,7 +1038,6 @@ js_CreatePerson(duk_context* ctx)
 	bool destroy_with_map = duk_require_boolean(ctx, 2);
 
 	const char* filename;
-	char*       path;
 	person_t*   person;
 
 	if (duk_is_sphere_obj(ctx, 1, "Spriteset"))
@@ -1047,10 +1046,8 @@ js_CreatePerson(duk_context* ctx)
 		spriteset = ref_spriteset(duk_require_sphere_obj(ctx, 1, "Spriteset"));
 	else {
 		filename = duk_require_string(ctx, 1);
-		path = get_asset_path(filename, "spritesets", false);
-		if (!(spriteset = load_spriteset(path)))
+		if (!(spriteset = load_spriteset(filename)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to load spriteset file '%s'", filename);
-		free(path);
 	}
 
 	// create the person and its JS-side data object

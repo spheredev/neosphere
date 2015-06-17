@@ -299,3 +299,13 @@ duk_push_cstr_to_utf8(duk_context *ctx, const char* string, size_t length)
 	duk_push_lstring(ctx, (char*)tmp, p - tmp);
 	duk_remove(ctx, -2);
 }
+
+const char*
+syspath(const char* filename)
+{
+	static char retval[SPHERE_PATH_MAX];
+
+	retval[SPHERE_PATH_MAX - 1] = '\0';
+	snprintf(retval, SPHERE_PATH_MAX - 1, "~sys/%s", filename);
+	return retval;
+}

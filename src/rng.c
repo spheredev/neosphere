@@ -36,6 +36,19 @@ rng_chance(double odds)
 	return odds > genrand_real2();
 }
 
+const char*
+rng_name(int length)
+{
+	static char name[256];
+
+	int i;
+	
+	for (i = 0; i < length; ++i)
+		name[i] = rng_chance(0.5) ? rng_ranged('A', 'Z') : rng_ranged('a', 'z');
+	name[length - 1] = '\0';
+	return name;
+}
+
 double
 rng_normal(double mean, double sigma)
 {
@@ -118,19 +131,9 @@ js_RNG_name(duk_context* ctx)
 	int n_args = duk_get_top(ctx);
 	int length = n_args >= 1 ? duk_require_number(ctx, 0) : 10;
 
-	char* name;
-
-	int i;
-
-	if (length < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): Length must be greater than zero");
-	if (!(name = malloc(length + 1)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RNG.name(): Failed to allocate buffer");
-	for (i = 0; i < length; ++i)
-		name[i] = rng_chance(0.5) ? rng_ranged('A', 'Z') : rng_ranged('a', 'z');
-	name[length - 1] = '\0';
-	duk_push_string(ctx, name);
-	free(name);
+	if (length < 1 || length > 255)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): Length must be in [1-255] range (%i)", length);
+	duk_push_string(ctx, rng_name(length));
 	return 1;
 }
 

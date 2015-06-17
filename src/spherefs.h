@@ -3,10 +3,12 @@
 
 #include "vector.h"
 
-typedef struct sandbox  sandbox_t;
-typedef struct sfs_file sfs_file_t;
-typedef struct sfs_list sfs_list_t;
-typedef enum   sfs_seek sfs_seek_t;
+typedef struct sandbox   sandbox_t;
+typedef struct sfs_file  sfs_file_t;
+typedef struct sfs_list  sfs_list_t;
+
+typedef enum fs_type     fs_type_t;
+typedef enum sfs_whence  sfs_whence_t;
 
 sandbox_t*  new_fs_sandbox  (const char* path);
 sandbox_t*  new_spk_sandbox (const char* path);
@@ -17,6 +19,7 @@ const char* get_sgm_name    (sandbox_t* fs);
 const char* get_sgm_script  (sandbox_t* fs);
 const char* get_sgm_summary (sandbox_t* fs);
 vector_t*   list_filenames  (sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
+extern bool resolve_path    (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, fs_type_t *out_fs_type);
 
 sfs_file_t* sfs_fopen  (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
 void        sfs_fclose (sfs_file_t* file);
@@ -24,13 +27,24 @@ bool        sfs_fexist (sandbox_t* fs, const char* filename, const char* base_di
 int         sfs_fputc  (int ch, sfs_file_t* file);
 int         sfs_fputs  (const char* string, sfs_file_t* file);
 size_t      sfs_fread  (void* buf, size_t size, size_t count, sfs_file_t* file);
+bool        sfs_fseek  (sfs_file_t* file, long long offset, sfs_whence_t whence);
 bool        sfs_fspew  (sandbox_t* fs, const char* filename, const char* base_dir, void* buf, size_t size);
 void*       sfs_fslurp (sandbox_t* fs, const char* filename, const char* base_dir, size_t *out_size);
-size_t      sfs_fwrite (const void* buf, size_t size, size_t count, sfs_file_t* file);
-bool        sfs_fseek  (sfs_file_t* file, long long offset, sfs_seek_t origin);
 long long   sfs_ftell  (sfs_file_t* file);
+size_t      sfs_fwrite (const void* buf, size_t size, size_t count, sfs_file_t* file);
+bool        sfs_mkdir  (sandbox_t* fs, const char* dirname, const char* base_dir);
+bool        sfs_rmdir  (sandbox_t* fs, const char* dirname, const char* base_dir);
+bool        sfs_rename (sandbox_t* fs, const char* filename1, const char* filename2, const char* base_dir);
+bool        sfs_unlink (sandbox_t* fs, const char* filename, const char* base_dir);
 
-enum sfs_seek
+enum fs_type
+{
+	SPHEREFS_UNKNOWN,
+	SPHEREFS_LOCAL,
+	SPHEREFS_SPK,
+};
+
+enum sfs_whence
 {
 	SFS_SEEK_SET,
 	SFS_SEEK_CUR,

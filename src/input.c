@@ -318,17 +318,13 @@ load_key_map(void)
 {
 	file_t*     file;
 	const char* key_name;
-	char*       path;
+	char*       filename;
 	lstring_t*  setting;
 
 	int i, j;
 
-	if (g_game_path != NULL)
-		path = get_asset_path("keymap.mini", "save", false);
-	else
-		path = get_sys_asset_path("minisphere.conf", NULL);
-	if (path == NULL || !(file = open_file(path)))
-		return;
+	filename = g_game_path != NULL ? "keymap.mini" : "~sys/../minisphere.conf";
+	if (!(file = open_file(filename))) return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"
 			: j == PLAYER_KEY_DOWN ? "DOWN"
@@ -352,7 +348,6 @@ save_key_map(void)
 {
 	file_t*     file;
 	const char* key_name;
-	char*       path;
 	lstring_t*  setting;
 	
 	int i, j;
@@ -360,26 +355,23 @@ save_key_map(void)
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
 	console_log(0, "Saving player key mappings\n");
-	if (path = get_asset_path("keymap.mini", "save", true)) {
-		file = open_file(path);
-		for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
-			key_name = j == PLAYER_KEY_UP ? "UP"
-				: j == PLAYER_KEY_DOWN ? "DOWN"
-				: j == PLAYER_KEY_LEFT ? "LEFT"
-				: j == PLAYER_KEY_RIGHT ? "RIGHT"
-				: j == PLAYER_KEY_A ? "A"
-				: j == PLAYER_KEY_B ? "B"
-				: j == PLAYER_KEY_X ? "X"
-				: j == PLAYER_KEY_Y ? "Y"
-				: j == PLAYER_KEY_MENU ? "MENU"
-				: "8:12";
-			setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
-			write_number_rec(file, lstr_cstr(setting), s_key_map[i][j]);
-			free_lstring(setting);
-		}
-		close_file(file);
-		free(path);
+	file = open_file("keymap.mini");
+	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+		key_name = j == PLAYER_KEY_UP ? "UP"
+			: j == PLAYER_KEY_DOWN ? "DOWN"
+			: j == PLAYER_KEY_LEFT ? "LEFT"
+			: j == PLAYER_KEY_RIGHT ? "RIGHT"
+			: j == PLAYER_KEY_A ? "A"
+			: j == PLAYER_KEY_B ? "B"
+			: j == PLAYER_KEY_X ? "X"
+			: j == PLAYER_KEY_Y ? "Y"
+			: j == PLAYER_KEY_MENU ? "MENU"
+			: "8:12";
+		setting = new_lstring("keymap_Player%i_%s", i + 1, key_name);
+		write_number_rec(file, lstr_cstr(setting), s_key_map[i][j]);
+		free_lstring(setting);
 	}
+	close_file(file);
 }
 
 void

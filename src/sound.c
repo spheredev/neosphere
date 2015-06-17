@@ -311,11 +311,8 @@ js_new_Sound(duk_context* ctx)
 	duk_bool_t is_stream = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
 
 	sound_t* sound;
-	char*    sound_path;
 
-	sound_path = get_asset_path(filename, "sounds", false);
-	sound = load_sound(sound_path, is_stream);
-	free(sound_path);
+	sound = load_sound(filename, is_stream);
 	if (sound == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): failed to load sound file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);

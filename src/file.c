@@ -23,14 +23,14 @@ struct file
 {
 	unsigned int    id;
 	ALLEGRO_CONFIG* conf;
+	char*           filename;
 	bool            is_dirty;
-	char*           path;
 };
 
 static unsigned int s_next_file_id = 0;
 
 file_t*
-open_file(const char* path)
+open_file(const char* filename)
 {
 	file_t*       file;
 	ALLEGRO_FILE* memfile = NULL;
@@ -39,7 +39,7 @@ open_file(const char* path)
 	
 	if (!(file = calloc(1, sizeof(file_t))))
 		goto on_error;
-	if (slurp = sfs_fslurp(g_fs, path, "save", &slurp_size)) {
+	if (slurp = sfs_fslurp(g_fs, filename, "save", &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
@@ -49,11 +49,11 @@ open_file(const char* path)
 		if ((file->conf = al_create_config()) == NULL)
 			goto on_error;
 	}
-	file->path = strdup(path);
+	file->filename = strdup(filename);
 	file->id = s_next_file_id++;
 	if (g_game_path != NULL) {
 		console_log(2, "engine: Opened K/V file [file %u]", file->id);
-		console_log(2, "  Path: %s", relativepath(path, NULL));
+		console_log(2, "  Filename: %s", file->filename);
 	}
 	return file;
 
@@ -117,40 +117,36 @@ get_record_name(file_t* file, int index)
 bool
 read_bool_rec(file_t* file, const char* key, bool def_value)
 {
-	char* string;
-	bool  value;
+	const char* string;
+	bool        value;
 
 	string = read_string_rec(file, key, def_value ? "true" : "false");
 	value = strcasecmp(string, "true") == 0;
-	free(string);
 	return value;
 }
 
 double
 read_number_rec(file_t* file, const char* key, double def_value)
 {
-	char   def_string[500];
-	char*  string;
-	double value;
+	char        def_string[500];
+	const char* string;
+	double      value;
 
 	sprintf(def_string, "%f", def_value);
 	string = read_string_rec(file, key, def_string);
 	value = atof(string);
-	free(string);
 	return value;
 }
 
-char*
+const char*
 read_string_rec(file_t* file, const char* key, const char* def_value)
 {
-	const char* read_value;
-	char*       value;
+	const char* value;
 	
-	if (!(read_value = al_get_config_value(file->conf, NULL, key)))
-		read_value = def_value;
-	value = strdup(read_value);
+	if (!(value = al_get_config_value(file->conf, NULL, key)))
+		value = def_value;
 	if (g_game_path != NULL)
-		console_log(3, "file %u: Read value \"%f\" from key '%s'", file->id, value, key);
+		console_log(3, "file %u: Read string \"%s\" from key '%s'", file->id, value, key);
 	return value;
 }
 
@@ -174,7 +170,7 @@ save_file(file_t* file)
 		file_size = al_ftell(memfile);
 		al_fclose(memfile);
 	}
-	if (!(sfs_file = sfs_fopen(g_fs, file->path, "save", "wt")))
+	if (!(sfs_file = sfs_fopen(g_fs, file->filename, "save", "wt")))
 		goto on_error;
 	sfs_fwrite(buffer, file_size, 1, sfs_file);
 	sfs_fclose(sfs_file);
@@ -250,11 +246,7 @@ js_DoesFileExist(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	char* path;
-
-	path = get_asset_path(filename, "save", true);
-	duk_push_boolean(ctx, al_filename_exists(path));
-	free(path);
+	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
 	return 1;
 }
 
@@ -263,12 +255,8 @@ js_CreateDirectory(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 
-	char* path;
-
-	path = get_asset_path(name, "save", true);
-	if (!al_make_directory(path))
+	if (!sfs_mkdir(g_fs, name, "save"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): Failed to create directory '%s'", name);
-	free(path);
 	return 0;
 }
 
@@ -277,12 +265,8 @@ js_RemoveDirectory(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 
-	char* path;
-
-	path = get_asset_path(name, "save", true);
-	if (rmdir(path) == -1)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveDirectory(): Failed to remove directory '%s'", name);
-	free(path);
+	if (!sfs_rmdir(g_fs, name, "save"))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): Failed to create directory '%s'", name);
 	return 0;
 }
 
@@ -291,34 +275,19 @@ js_RemoveFile(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 	
-	char* path;
-
-	path = get_asset_path(filename, "save", true);
-	if (!al_filename_exists(path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): File '%s' doesn't exist", filename);
-	if (!al_remove_filename(path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s'; may be read-only", filename);
-	free(path);
+	if (!sfs_unlink(g_fs, filename, "save"))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s'", filename);
 	return 0;
 }
 
 static duk_ret_t
 js_Rename(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
-	const char* new_filename = duk_require_string(ctx, 1);
+	const char* filename1 = duk_require_string(ctx, 0);
+	const char* filename2 = duk_require_string(ctx, 1);
 
-	char* path;
-	char* new_path;
-
-	path = get_asset_path(filename, "save", true);
-	new_path = get_asset_path(new_filename, "save", true);
-	if (!al_filename_exists(path))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): File '%s' doesn't exist", filename);
-	if (rename(path, new_path) == -1)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): Failed to rename file '%s' to '%s'", filename, new_filename);
-	free(new_path);
-	free(path);
+	if (!sfs_rename(g_fs, filename1, filename2, "save"))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): Failed to rename file '%s' to '%s'", filename1, filename2);
 	return 0;
 }
 
@@ -337,10 +306,8 @@ js_new_File(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 	
 	file_t* file;
-	char*   path;
 
-	path = get_asset_path(filename, "save", true);
-	if (!(file = open_file(path)))
+	if (!(file = open_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "File", file);
 	return 1;
@@ -436,7 +403,7 @@ js_File_read(duk_context* ctx)
 	bool        def_bool;
 	double      def_num;
 	const char* def_string;
-	char*       value;
+	const char* value;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
@@ -456,7 +423,6 @@ js_File_read(duk_context* ctx)
 		def_string = duk_to_string(ctx, 1);
 		value = read_string_rec(file, key, def_string);
 		duk_push_string(ctx, value);
-		free(value);
 		break;
 	}
 	return 1;

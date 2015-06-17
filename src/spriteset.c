@@ -166,7 +166,7 @@ load_spriteset(const char* path)
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter)) {
-			if (strcmp(path, (*p_spriteset)->path) == 0) {
+			if (strcmp(path, (*p_spriteset)->filename) == 0) {
 				console_log(2, "engine: Spriteset in cache: %s\n", path);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
@@ -183,7 +183,7 @@ load_spriteset(const char* path)
 	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
-	if (!(spriteset->path = strdup(path))) goto on_error;
+	if (!(spriteset->filename = strdup(path))) goto on_error;
 	spriteset->base.x1 = rss.base_x1;
 	spriteset->base.y1 = rss.base_y1;
 	spriteset->base.x2 = rss.base_x2;
@@ -360,7 +360,7 @@ free_spriteset(spriteset_t* spriteset)
 		free_lstring(spriteset->poses[i].name);
 	}
 	free(spriteset->poses);
-	free(spriteset->path);
+	free(spriteset->filename);
 	free(spriteset);
 }
 
@@ -558,13 +558,10 @@ js_new_Spriteset(duk_context* ctx)
 {
 	const char*  filename = duk_require_string(ctx, 0);
 
-	char*        path;
 	spriteset_t* spriteset;
 
-	path = get_asset_path(filename, "spritesets", false);
-	if ((spriteset = load_spriteset(path)) == NULL)
+	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
-	free(path);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;
@@ -588,7 +585,7 @@ js_Spriteset_get_filename(duk_context* ctx)
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
-	duk_push_string(ctx, relativepath(spriteset->path, NULL));
+	duk_push_string(ctx, spriteset->filename);
 	return 1;
 }
 

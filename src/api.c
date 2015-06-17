@@ -594,38 +594,38 @@ static duk_ret_t
 js_GetGameList(duk_context* ctx)
 {
 	ALLEGRO_FS_ENTRY* file_info;
-	ALLEGRO_PATH*     file_path;
-	ALLEGRO_FS_ENTRY* fs;
-	char*             path;
+	ALLEGRO_FS_ENTRY* fse;
+	ALLEGRO_PATH*     path;
 	ALLEGRO_CONFIG*   sgm;
 
 	int i;
 
-	path = get_sys_asset_path("games", NULL);
-	fs = al_create_fs_entry(path);
-	free(path);
+	path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(path, "games");
+	fse = al_create_fs_entry(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
+	al_destroy_path(path);
 	duk_push_array(ctx);
 	i = 0;
-	if (al_get_fs_entry_mode(fs) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fs)) {
-		while (file_info = al_read_directory(fs)) {
+	if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
+		while (file_info = al_read_directory(fse)) {
 			if (al_get_fs_entry_mode(file_info) & ALLEGRO_FILEMODE_ISDIR) {
-				file_path = al_create_path_for_directory(al_get_fs_entry_name(file_info));
-				al_set_path_filename(file_path, "game.sgm");
-				if ((sgm = al_load_config_file(al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP))) != NULL) {
+				path = al_create_path_for_directory(al_get_fs_entry_name(file_info));
+				al_set_path_filename(path, "game.sgm");
+				if ((sgm = al_load_config_file(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) != NULL) {
 					duk_push_object(ctx);
-					duk_push_string(ctx, al_get_path_component(file_path, -1)); duk_put_prop_string(ctx, -2, "directory");
+					duk_push_string(ctx, al_get_path_component(path, -1)); duk_put_prop_string(ctx, -2, "directory");
 					duk_push_string(ctx, al_get_config_value(sgm, NULL, "name")); duk_put_prop_string(ctx, -2, "name");
 					duk_push_string(ctx, al_get_config_value(sgm, NULL, "author")); duk_put_prop_string(ctx, -2, "author");
 					duk_push_string(ctx, al_get_config_value(sgm, NULL, "description")); duk_put_prop_string(ctx, -2, "description");
 					duk_put_prop_index(ctx, -2, i);
 					al_destroy_config(sgm);
 				}
-				al_destroy_path(file_path);
+				al_destroy_path(path);
 				++i;
 			}
 		}
 	}
-	al_destroy_fs_entry(fs);
+	al_destroy_fs_entry(fse);
 	return 1;
 }
 
@@ -697,7 +697,6 @@ js_Alert(duk_context* ctx)
 	const char* caller_info;
 	const char* filename;
 	int         line_number;
-	const char* full_path;
 
 	if (stack_offset > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
@@ -713,11 +712,10 @@ js_Alert(duk_context* ctx)
 	duk_remove(ctx, -2);
 	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
 	duk_pop_2(ctx);
 
 	// show the message
-	filename = relativepath(full_path, "scripts");
 	caller_info =
 		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
 		duk_get_string(ctx, -1);
@@ -748,7 +746,6 @@ js_Assert(duk_context* ctx)
 
 	const char* filename;
 	int         line_number;
-	const char* full_path;
 	lstring_t*  text;
 
 	if (stack_offset > 0)
@@ -765,9 +762,8 @@ js_Assert(duk_context* ctx)
 		duk_remove(ctx, -2);
 		duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
 		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName"); full_path = duk_get_string(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
 		duk_pop_2(ctx);
-		filename = relativepath(full_path, "scripts");
 		fprintf(stderr, "ASSERT: `%s:%i` %s\n", filename, line_number, message);
 
 		#if defined(MINI_NONFATAL_ASSERT)
@@ -831,20 +827,9 @@ js_ExecuteGame(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
-	char* path;
-	
-	if (!(path = get_sys_asset_path(filename, "games")))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Unable to execute game '%s'", filename);
-	if (!(g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP))))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ExecuteGame(): Failed to save last game path");
+	g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	al_destroy_path(g_game_path);
-	g_game_path = al_create_path(path);
-	if (strcasecmp(al_get_path_filename(g_game_path), "game.sgm") != 0) {
-		al_destroy_path(g_game_path);
-		g_game_path = al_create_path_for_directory(path);
-	}
-	al_set_path_filename(g_game_path, NULL);
-	free(path);
+	g_game_path = al_create_path(filename);
 	restart_engine();
 }
 

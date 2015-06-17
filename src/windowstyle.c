@@ -161,15 +161,12 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 void
 init_windowstyle_api(void)
 {
-	const char*    filename;
-	char*          path;
+	const char* filename;
 	
 	// load system window style
 	if (g_sys_conf != NULL) {
-		filename = al_get_config_value(g_sys_conf, NULL, "WindowStyle");
-		path = get_sys_asset_path(filename, "system");
-		s_sys_winstyle = load_windowstyle(path);
-		free(path);
+		filename = read_string_rec(g_sys_conf, "WindowStyle", "system.rws");
+		s_sys_winstyle = load_windowstyle(syspath(filename));
 	}
 
 	// WindowStyle API functions
@@ -218,10 +215,8 @@ js_new_WindowStyle(duk_context* ctx)
 	char*          path = NULL;
 	windowstyle_t* winstyle = NULL;
 
-	path = get_asset_path(filename, "windowstyles", false);
-	if (!(winstyle = load_windowstyle(path)))
+	if (!(winstyle = load_windowstyle(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): Failed to load windowstyle file '%s'", filename);
-	free(path);
 	duk_push_sphere_windowstyle(ctx, winstyle);
 	free_windowstyle(winstyle);
 	return 1;

@@ -235,12 +235,9 @@ js_new_Animation(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 
 	animation_t* anim;
-	char*        path;
 
-	path = get_asset_path(filename, "animations", false);
-	if (!(anim = load_animation(path)))
+	if (!(anim = load_animation(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): Failed to load animation file '%s'", filename);
-	free(path);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
 }

@@ -152,9 +152,7 @@ js_new_Logger(duk_context* ctx)
 {
 	const char* filename = duk_get_string(ctx, 0);
 
-	char* path = get_asset_path(filename, "logs", true);
-	logger_t* logger = open_log_file(path);
-	free(path);
+	logger_t* logger = open_log_file(filename);
 	if (logger == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);

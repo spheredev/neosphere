@@ -26,7 +26,7 @@ struct spriteset
 	int              refcount;
 	unsigned int     id;
 	rect_t           base;
-	char*            path;
+	char*            filename;
 	int              num_images;
 	int              num_poses;
 	image_t*         *images;

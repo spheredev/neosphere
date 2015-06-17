@@ -649,22 +649,15 @@ void
 init_image_api(duk_context* ctx)
 {
 	const char* filename;
-	char*       path;
 	
 	// load system-provided images
 	if (g_sys_conf != NULL) {
-		filename = al_get_config_value(g_sys_conf, NULL, "Arrow");
-		path = get_sys_asset_path(filename, "system");
-		s_sys_arrow = load_image(path);
-		free(path);
-		filename = al_get_config_value(g_sys_conf, NULL, "UpArrow");
-		path = get_sys_asset_path(filename, "system");
-		s_sys_up_arrow = load_image(path);
-		free(path);
-		filename = al_get_config_value(g_sys_conf, NULL, "DownArrow");
-		path = get_sys_asset_path(filename, "system");
-		s_sys_dn_arrow = load_image(path);
-		free(path);
+		filename = read_string_rec(g_sys_conf, "Arrow", "pointer.png");
+		s_sys_arrow = load_image(syspath(filename));
+		filename = read_string_rec(g_sys_conf, "UpArrow", "up_arrow.png");
+		s_sys_up_arrow = load_image(syspath(filename));
+		filename = read_string_rec(g_sys_conf, "DownArrow", "down_arrow.png");
+		s_sys_dn_arrow = load_image(syspath(filename));
 	}
 	
 	// register image API functions
@@ -772,7 +765,6 @@ js_new_Image(duk_context* ctx)
 	color_t     fill_color;
 	image_t*    image;
 	image_t*    src_image;
-	char*       path;
 	int         width, height;
 
 	if (n_args >= 3) {
@@ -790,9 +782,7 @@ js_new_Image(duk_context* ctx)
 	}
 	else {
 		filename = duk_require_string(ctx, 0);
-		path = get_asset_path(filename, "images", false);
-		image = load_image(path);
-		free(path);
+		image = load_image(filename);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	}

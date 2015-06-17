@@ -542,9 +542,7 @@ js_new_Font(duk_context* ctx)
 
 	font_t* font;
 
-	char* path = get_asset_path(filename, "fonts", false);
-	font = load_font(path);
-	free(path);
+	font = load_font(filename);
 	if (font == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): Failed to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);

@@ -71,19 +71,13 @@ shader_t*
 get_default_shader(void)
 {
 	const char* fs_filename;
-	char*       fs_path;
 	const char* vs_filename;
-	char*       vs_path;
 
 	if (s_def_shader == NULL) {
 		console_log(3, "engine: Compiling default shaders");
-		vs_filename = al_get_config_value(g_sys_conf, NULL, "VertexShader");
-		fs_filename = al_get_config_value(g_sys_conf, NULL, "FragmentShader");
-		vs_path = get_sys_asset_path(vs_filename, "system");
-		fs_path = get_sys_asset_path(fs_filename, "system");
-		s_def_shader = create_shader(vs_path, fs_path);
-		free(vs_path);
-		free(fs_path);
+		vs_filename = read_string_rec(g_sys_conf, "VertexShader", "minisphere.vs.glsl");
+		fs_filename = read_string_rec(g_sys_conf, "FragmentShader", "minisphere.fs.glsl");
+		s_def_shader = create_shader(syspath(vs_filename), syspath(fs_filename));
 	}
 	return s_def_shader;
 }

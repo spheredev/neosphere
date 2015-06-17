@@ -49,7 +49,7 @@ ALLEGRO_PATH*        g_game_path = NULL;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
 float                g_scale_y = 1.0;
-ALLEGRO_CONFIG*      g_sys_conf;
+file_t*              g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
@@ -69,7 +69,7 @@ static int     s_num_flips;
 static int     s_num_frames;
 bool           s_skipping_frame = false;
 static bool    s_show_fps = false;
-static bool    s_take_snapshot = false;
+static bool    s_want_snapshot = false;
 
 static const char* const ERROR_TEXT[][2] =
 {
@@ -93,8 +93,8 @@ main(int argc, char* argv[])
 	duk_errcode_t        err_code;
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
-	const char*          file_path;
 	const char*          filename;
+	lstring_t*           font_path;
 	ALLEGRO_FS_ENTRY*    games_dir;
 	const char*          games_dirname;
 	char*                game_path;
@@ -103,7 +103,6 @@ main(int argc, char* argv[])
 	int                  log_level;
 	int                  max_skips;
 	char*                p_strtol;
-	char*                path;
 	ALLEGRO_TRANSFORM    trans;
 	
 	int i;
@@ -253,10 +252,10 @@ main(int argc, char* argv[])
 	// attempt to locate and load system font
 	console_log(1, "Loading system font\n");
 	if (g_sys_conf != NULL) {
-		filename = al_get_config_value(g_sys_conf, NULL, "Font");
-		path = get_sys_asset_path(filename, "system");
-		g_sys_font = load_font(path);
-		free(path);
+		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
+		font_path = new_lstring("~sys/%s", filename);
+		g_sys_font = load_font(lstr_cstr(font_path));
+		free_lstring(font_path);
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
@@ -309,9 +308,8 @@ on_js_error:
 	line_num = duk_get_int(g_duk, -1);
 	duk_pop(g_duk);
 	duk_get_prop_string(g_duk, -2, "fileName");
-	file_path = duk_get_string(g_duk, -1);
-	if (file_path != NULL) {
-		filename = relativepath(file_path, "scripts");
+	filename = duk_get_string(g_duk, -1);
+	if (filename != NULL) {
 		fprintf(stderr, "JS Error: %s:%i - %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "'%s' (line: %i)\n\n%s", filename, line_num, err_msg);
@@ -329,41 +327,6 @@ bool
 is_skipped_frame(void)
 {
 	return s_skipping_frame;
-}
-
-char*
-get_asset_path(const char* path, const char* base_dir, bool allow_mkdir)
-{
-	return strdup(path);
-}
-
-char*
-get_sys_asset_path(const char* path, const char* base_dir)
-{
-	ALLEGRO_PATH* asset_path;
-	ALLEGRO_PATH* base_path;
-	bool          is_absolute;
-	bool          is_homed;
-	char*         out_path;
-	ALLEGRO_PATH* system_path;
-	
-	is_homed = (strstr(path, "~/") == path || strstr(path, "~\\") == path);
-	base_path = al_create_path_for_directory(base_dir);
-	system_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_rebase_path(system_path, base_path);
-	asset_path = al_create_path(is_homed ? &path[2] : path);
-	is_absolute = al_get_path_num_components(asset_path) > 0
-		&& strcmp(al_get_path_component(asset_path, 0), "") == 0;
-	out_path = NULL;
-	if (!is_absolute) {
-		al_rebase_path(is_homed ? system_path : base_path, asset_path);
-		al_make_path_canonical(asset_path);
-		out_path = strdup(al_path_cstr(asset_path, ALLEGRO_NATIVE_PATH_SEP));
-	}
-	al_destroy_path(asset_path);
-	al_destroy_path(system_path);
-	al_destroy_path(base_path);
-	return out_path;
 }
 
 rect_t
@@ -427,7 +390,8 @@ flip_screen(int framerate)
 	char              filename[50];
 	char              fps_text[20];
 	bool              is_backbuffer_valid;
-	char*             path;
+	ALLEGRO_PATH*     path;
+	const char*       pathstr;
 	ALLEGRO_BITMAP*   snapshot;
 	double            time_left;
 	ALLEGRO_TRANSFORM trans;
@@ -443,14 +407,19 @@ flip_screen(int framerate)
 	}
 	is_backbuffer_valid = !s_skipping_frame;
 	if (is_backbuffer_valid) {
-		if (s_take_snapshot) {
+		if (s_want_snapshot) {
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
-			sprintf(filename, "snapshot-%li.png", (long)time(NULL));
-			path = get_asset_path(filename, "snapshots", true);
-			al_save_bitmap(path, snapshot);
+			path = al_get_standard_path(ALLEGRO_USER_HOME_PATH);
+			al_append_path_component(path, "Sphere");
+			do {
+				sprintf(filename, "snap_%s.png", rng_name(10));
+				al_set_path_filename(path, filename);
+				pathstr = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP);
+			} while (al_filename_exists(pathstr));
+			al_save_bitmap(pathstr, snapshot);
 			al_destroy_bitmap(snapshot);
-			free(path);
-			s_take_snapshot = false;
+			al_destroy_path(path);
+			s_want_snapshot = false;
 		}
 		if (s_show_fps) {
 			if (framerate > 0) sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
@@ -495,30 +464,6 @@ flip_screen(int framerate)
 	if (!s_skipping_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
-const char*
-relativepath(const char* path, const char* base_dir)
-{
-	static char retval[SPHERE_PATH_MAX];
-	
-	char* base_path;
-
-	size_t i, length;
-
-	if (g_game_path == NULL)
-		return path;
-	base_path = get_asset_path("", base_dir, false);
-	if (strstr(path, base_path) == path)
-		strncpy(retval, path + strlen(base_path), SPHERE_PATH_MAX);
-	else
-		strncpy(retval, path, SPHERE_PATH_MAX);
-	free(base_path);
-	if (retval[SPHERE_PATH_MAX - 1] != '\0')
-		return NULL;
-	for (i = 0, length = strlen(retval); i < length; ++i)
-		if (retval[i] == ALLEGRO_NATIVE_PATH_SEP) retval[i] = '/';
-	return retval;
-}
-
 noreturn
 restart_engine(void)
 {
@@ -528,7 +473,7 @@ restart_engine(void)
 void
 take_screenshot(void)
 {
-	s_take_snapshot = true;
+	s_want_snapshot = true;
 }
 
 void
@@ -653,8 +598,6 @@ show_error_box:
 static bool
 initialize_engine(void)
 {
-	char* path;
-	
 	srand(time(NULL));
 	
 	// initialize Allegro
@@ -672,9 +615,7 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "Loading system configuration\n");
-	path = get_sys_asset_path("system.ini", "system");
-	g_sys_conf = al_load_config_file(path);
-	free(path);
+	g_sys_conf = open_file("~sys/system.ini");
 
 	initialize_async();
 	initialize_rng();
@@ -743,7 +684,7 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path); g_game_path = NULL;
 	free_sandbox(g_fs); g_fs = NULL;
 	if (g_sys_conf != NULL)
-		al_destroy_config(g_sys_conf);
+		close_file(g_sys_conf);
 	g_sys_conf = NULL;
 	al_uninstall_system();
 }
