@@ -17,44 +17,32 @@ bool
 try_evaluate_file(const char* path)
 {
 	sfs_file_t* file = NULL;
-	char*       source = NULL;
+	lstring_t*  source;
+	char*       slurp;
 	size_t      size;
 
-	if (!(source = sfs_fslurp(g_fs, path, "scripts", &size)))
+	// load the source text from the script file
+	if (!(slurp = sfs_fslurp(g_fs, path, "scripts", &size)))
 		goto on_error;
+	source = lstring_from_buf(size, slurp);
+	lstr_make_utf8(source);
+	free(slurp);
 	
-	// compile the script
-	duk_push_lstring(g_duk, source, size);
+	// ready for launch in T-10...9...*munch*
+	duk_push_lstring(g_duk, lstr_cstr(source), lstr_len(source));
 	duk_push_string(g_duk, path);
-	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
-		duk_dup(g_duk, -1);  // may be a legitimate error, don't clobber it
-		if (strstr(duk_to_string(g_duk, -1), "char decode failed")) {
-			// UTF-8 decode failure, convert source to UTF-8 and try again
-			duk_pop(g_duk);
-			duk_push_cstr_to_utf8(g_duk, source, size);
-			duk_replace(g_duk, -2);
-			duk_push_string(g_duk, path);
-			if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
-				goto on_error;  // actual compile error
-		}
-		else {
-			duk_pop(g_duk);
-			goto on_error;  // actual compile error
-		}
-	}
+	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+		goto on_error;
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	return true;
 
 on_error:
-	free(source);
-	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "*munch*");
 	return false;
 }
 
 script_t*
-compile_script(const lstring_t* source, bool is_cp1252, const char* fmt_name, ...)
+compile_script(const lstring_t* source, const char* fmt_name, ...)
 {
 	va_list ap;
 	
@@ -73,10 +61,7 @@ compile_script(const lstring_t* source, bool is_cp1252, const char* fmt_name, ..
 		duk_get_prop_string(g_duk, -1, "scripts");
 	}
 	script->id = s_next_id++;
-	if (is_cp1252)
-		duk_push_cstr_to_utf8(g_duk, lstr_cstr(source), lstr_len(source));
-	else
-		duk_push_lstring(g_duk, source->cstr, source->length);
+	duk_push_lstring(g_duk, lstr_cstr(source), lstr_len(source));
 	va_start(ap, fmt_name);
 	duk_push_vsprintf(g_duk, fmt_name, ap);
 	va_end(ap);

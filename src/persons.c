@@ -471,7 +471,7 @@ call_person_script(const person_t* person, int type, bool use_default)
 }
 
 bool
-compile_person_script(person_t* person, int type, const lstring_t* codestring, bool is_cp1252)
+compile_person_script(person_t* person, int type, const lstring_t* codestring)
 {
 	const char* person_name;
 	script_t*   script;
@@ -485,7 +485,7 @@ compile_person_script(person_t* person, int type, const lstring_t* codestring, b
 		: type == PERSON_SCRIPT_GENERATOR ? "genCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	script = compile_script(codestring, is_cp1252, "%s '%s' %s", get_map_name(), person_name, script_name);
+	script = compile_script(codestring, "%s '%s' %s", get_map_name(), person_name, script_name);
 	set_person_script(person, type, script);
 	return true;
 }
@@ -1850,7 +1850,7 @@ js_SetPersonScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonScript(): Invalid script type constant");
 	if (duk_is_string(ctx, 2)) {
 		codestring = duk_require_lstring_t(ctx, 2);
-		compile_person_script(person, type, codestring, false);
+		compile_person_script(person, type, codestring);
 		free_lstring(codestring);
 	}
 	else {
