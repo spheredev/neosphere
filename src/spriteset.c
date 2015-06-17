@@ -176,7 +176,7 @@ load_spriteset(const char* path)
 	else
 		s_load_cache = new_vector(sizeof(spriteset_t*));
 	
-	// filename not in load pool, load the spriteset
+	// filename not in load cache, load the spriteset
 	console_log(2, "engine: Loading spriteset %s\n", path);
 	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
 	if (!(file = sfs_fopen(g_fs, path, "spritesets", "rb"))) goto on_error;
