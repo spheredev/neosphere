@@ -901,8 +901,10 @@ update_person(person_t* person, bool* out_has_moved)
 		delta_y = step.y - person->y;
 		if (fabs(delta_x) > person->speed_x)
 			command_person(person, delta_x > 0 ? COMMAND_MOVE_EAST : COMMAND_MOVE_WEST);
+		if (!does_person_exist(person)) return;
 		if (fabs(delta_y) > person->speed_y)
 			command_person(person, delta_y > 0 ? COMMAND_MOVE_SOUTH : COMMAND_MOVE_NORTH);
+		if (!does_person_exist(person)) return;
 		vector = person->mv_x + person->mv_y * 3;
 		facing = vector == -3 ? COMMAND_FACE_NORTH
 			: vector == -2 ? COMMAND_FACE_NORTHEAST
@@ -915,6 +917,7 @@ update_person(person_t* person, bool* out_has_moved)
 			: COMMAND_WAIT;
 		if (facing != COMMAND_WAIT)
 			command_person(person, COMMAND_ANIMATE);
+		if (!does_person_exist(person)) return;
 		command_person(person, facing);
 	}
 
