@@ -290,6 +290,11 @@ main(int argc, char* argv[])
 	// call game() function in script
 	duk_push_global_object(g_duk);
 	duk_get_prop_string(g_duk, -1, "game");
+	if (!duk_is_callable(g_duk, -1)) {
+		duk_push_error_object_raw(g_duk, DUK_ERR_SYNTAX_ERROR,
+			get_sgm_script(g_fs), 0, "game() not defined");
+		goto on_js_error;
+	}
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_js_error;
 	duk_pop(g_duk);
