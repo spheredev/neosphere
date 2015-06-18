@@ -1,6 +1,11 @@
 minisphere Changelog
 ====================
 
+v1.3.1 - TBD
+------------
+
+* Fixes parallax camera sync issues, for reals this time!
+
 v1.3.0 - June 17, 2015
 ----------------------
 
@@ -202,6 +207,7 @@ author.
       SetPersonFollowDistance()
 * New path escape: `#~/path/to/file` specifies a path which is relative to the
   engine's system directory.
+
 
 v1.0.10 - April 16, 2015
 ------------------------

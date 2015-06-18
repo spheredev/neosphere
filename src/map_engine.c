@@ -1066,7 +1066,6 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 		- camera_x * (s_map->layers[layer].parallax_x - 1.0);
 	plx_offset_y = s_frames * s_map->layers[layer].autoscroll_y
 		- camera_y * (s_map->layers[layer].parallax_y - 1.0);
-	//plx_offset_x = 0; plx_offset_y = 0;
 	x_offset = camera_x - center_x - plx_offset_x;
 	y_offset = camera_y - center_y - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
@@ -1487,10 +1486,10 @@ js_MapEngine(duk_context* ctx)
 	if (!change_map(filename, true))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
-		update_map_engine(true);
-		process_map_input();
 		render_map();
 		flip_screen(s_framerate);
+		update_map_engine(true);
+		process_map_input();
 	}
 	reset_persons(false);
 	s_is_map_running = false;

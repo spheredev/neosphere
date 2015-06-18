@@ -62,6 +62,7 @@ static duk_ret_t js_IsIgnoringTileObstructions   (duk_context* ctx);
 static duk_ret_t js_IsPersonObstructed           (duk_context* ctx);
 static duk_ret_t js_IsPersonVisible              (duk_context* ctx);
 static duk_ret_t js_DoesPersonExist              (duk_context* ctx);
+static duk_ret_t js_GetActivePerson              (duk_context* ctx);
 static duk_ret_t js_GetCurrentPerson             (duk_context* ctx);
 static duk_ret_t js_GetObstructingPerson         (duk_context* ctx);
 static duk_ret_t js_GetObstructingTile           (duk_context* ctx);
@@ -136,6 +137,7 @@ static void record_step          (person_t* person);
 static void sort_persons         (void);
 static void update_person        (person_t* person, bool* out_has_moved);
 
+static const person_t*   s_active_person;
 static const person_t*   s_current_person = NULL;
 static script_t*         s_def_scripts[PERSON_SCRIPT_MAX];
 static int               s_talk_distance  = 8;
@@ -153,6 +155,7 @@ initialize_persons_manager(void)
 	s_num_persons = s_max_persons = 0;
 	s_persons = NULL;
 	s_talk_distance = 8;
+	s_active_person = NULL;
 	s_current_person = NULL;
 }
 
@@ -634,9 +637,10 @@ reset_persons(bool keep_existing)
 void
 talk_person(const person_t* person)
 {
-	rect_t    map_rect;
-	person_t* target_person;
-	double    talk_x, talk_y;
+	const person_t* last_active;
+	rect_t          map_rect;
+	person_t*       target_person;
+	double          talk_x, talk_y;
 
 	map_rect = get_map_bounds();
 	
@@ -649,8 +653,11 @@ talk_person(const person_t* person)
 	is_person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
 	
 	// if so, call their talk script
+	last_active = s_active_person;
+	s_active_person = person;
 	if (target_person != NULL)
 		call_person_script(target_person, PERSON_SCRIPT_ON_TALK, true);
+	s_active_person = last_active;
 }
 
 void
@@ -697,8 +704,9 @@ set_person_name(person_t* person, const char* name)
 static void
 command_person(person_t* person, int command)
 {
-	double    new_x, new_y;
-	person_t* person_to_touch;
+	const person_t* last_active;
+	double          new_x, new_y;
+	person_t*       person_to_touch;
 
 	new_x = person->x; new_y = person->y;
 	switch (command) {
@@ -757,8 +765,11 @@ command_person(person_t* person, int command)
 		}
 		else {
 			// if not, and we collided with a person, call that person's touch script
+			last_active = s_active_person;
+			s_active_person = person;
 			if (person_to_touch != NULL)
 				call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
+			s_active_person = last_active;
 		}
 	}
 }
@@ -940,6 +951,7 @@ init_persons_api(void)
 	register_api_function(g_duk, NULL, "IsPersonObstructed", js_IsPersonObstructed);
 	register_api_function(g_duk, NULL, "IsPersonVisible", js_IsPersonVisible);
 	register_api_function(g_duk, NULL, "DoesPersonExist", js_DoesPersonExist);
+	register_api_function(g_duk, NULL, "GetActivePerson", js_GetActivePerson);
 	register_api_function(g_duk, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	register_api_function(g_duk, NULL, "GetObstructingPerson", js_GetObstructingPerson);
 	register_api_function(g_duk, NULL, "GetObstructingTile", js_GetObstructingTile);
@@ -1151,11 +1163,20 @@ js_IsPersonVisible(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetActivePerson(duk_context* ctx)
+{
+	if (s_active_person == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetActivePerson(): Must be called from a person activation script (touch/talk)");
+	duk_push_string(ctx, get_person_name(s_active_person));
+	return 1;
+}
+
+static duk_ret_t
 js_GetCurrentPerson(duk_context* ctx)
 {
 	if (s_current_person == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetCurrentPerson(): Must be called from a person script");
-	duk_push_string(ctx, s_current_person->name);
+	duk_push_string(ctx, get_person_name(s_current_person));
 	return 1;
 }
 
