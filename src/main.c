@@ -407,10 +407,11 @@ flip_screen(int framerate)
 	if (is_backbuffer_valid) {
 		if (s_want_snapshot) {
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
-			path = al_get_standard_path(ALLEGRO_USER_HOME_PATH);
-			al_append_path_component(path, "Sphere");
+			path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
+			al_append_path_component(path, "Sphere Files");
+			al_append_path_component(path, "Screenshots");
 			do {
-				sprintf(filename, "snap_%s.png", rng_name(10));
+				sprintf(filename, "SS_%s.png", rng_name(10));
 				al_set_path_filename(path, filename);
 				pathstr = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP);
 			} while (al_filename_exists(pathstr));

@@ -479,8 +479,8 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 			*out_fs_type = SPHEREFS_LOCAL;
 		}
 		else if (memcmp(filename, "~usr/", 5) == 0) {  // user profile
-			origin = al_get_standard_path(ALLEGRO_USER_HOME_PATH);
-			al_append_path_component(origin, "Sphere");
+			origin = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
+			al_append_path_component(origin, "Sphere Files");
 			al_make_directory(al_path_cstr(origin, ALLEGRO_NATIVE_PATH_SEP));
 			al_rebase_path(origin, *out_path);
 			al_destroy_path(origin);
