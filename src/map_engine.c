@@ -229,7 +229,7 @@ struct map_zone
 {
 	bool      is_active;
 	rect_t    bounds;
-	int       step_interval;
+	int       interval;
 	int       steps_left;
 	int       layer;
 	script_t* script;
@@ -291,7 +291,7 @@ struct rmp_zone_header
 	uint16_t x2;
 	uint16_t y2;
 	uint16_t layer;
-	uint16_t step_interval;
+	uint16_t interval;
 	uint8_t  reserved[4];
 };
 #pragma pack(pop)
@@ -432,7 +432,7 @@ get_zone_steps(int zone_index)
 	struct map_zone* zone;
 
 	zone = get_vector_item(s_map->zones, zone_index);
-	return zone->step_interval;
+	return zone->interval;
 }
 
 void
@@ -498,13 +498,13 @@ set_zone_script(int zone_index, script_t* script)
 }
 
 void
-set_zone_steps(int zone_index, int step_interval)
+set_zone_steps(int zone_index, int interval)
 {
 	struct map_zone* zone;
 
 	zone = get_vector_item(s_map->zones, zone_index);
-	zone->step_interval = step_interval;
-	zone->steps_left = zone->step_interval;
+	zone->interval = interval;
+	zone->steps_left = 0;
 }
 
 bool
@@ -531,11 +531,11 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 	zone.bounds = bounds;
 	zone.layer = layer;
 	zone.script = ref_script(script);
-	zone.step_interval = steps;
-	zone.steps_left = zone.step_interval;
+	zone.interval = steps;
+	zone.steps_left = 0;
 	if (!push_back_vector(s_map->zones, &zone))
 		return false;
-	console_log(2, "map: Created %u-step transient zone on map '%s' [%i]\n", zone.step_interval, s_map_filename, get_vector_size(s_map->zones));
+	console_log(2, "map: Created %u-step transient zone on map '%s' [%i]\n", zone.interval, s_map_filename, get_vector_size(s_map->zones));
 	console_log(3, "  Bounds: (%i,%i)-(%i,%i)\n", zone.bounds.x1, zone.bounds.y1, zone.bounds.x2, zone.bounds.y2);
 	return true;
 }
@@ -728,8 +728,8 @@ load_map(const char* filename)
 				zone_hdr.layer = 0;
 			zone.layer = zone_hdr.layer;
 			zone.bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
-			zone.step_interval = zone_hdr.step_interval;
-			zone.steps_left = zone.step_interval;
+			zone.interval = zone_hdr.interval;
+			zone.steps_left = 0;
 			zone.script = compile_script(script, "%s Z:%i", filename, get_vector_size(map->zones));
 			normalize_rect(&zone.bounds);
 			if (!push_back_vector(map->zones, &zone))
@@ -1321,7 +1321,7 @@ update_map_engine(bool is_main_loop)
 				if (zone->steps_left-- <= 0) {
 					last_zone = s_current_zone;
 					s_current_zone = index;
-					zone->steps_left = zone->step_interval;
+					zone->steps_left = zone->interval;
 					run_script(zone->script, true);
 					s_current_zone = last_zone;
 				}
@@ -2562,8 +2562,12 @@ js_AttachInput(duk_context* ctx)
 	
 	person_t*   person;
 
+	int i;
+
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
+	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
+		if (s_players[i].person == person) s_players[i].person = NULL;
 	s_players[0].person = person;
 	return 0;
 }
