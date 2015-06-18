@@ -144,6 +144,24 @@ initialize_input(void)
 	s_default_key_map[1][PLAYER_KEY_X] = ALLEGRO_KEY_3;
 	s_default_key_map[1][PLAYER_KEY_Y] = ALLEGRO_KEY_4;
 	s_default_key_map[1][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
+	s_default_key_map[2][PLAYER_KEY_UP] = ALLEGRO_KEY_PAD_8;
+	s_default_key_map[2][PLAYER_KEY_DOWN] = ALLEGRO_KEY_PAD_2;
+	s_default_key_map[2][PLAYER_KEY_LEFT] = ALLEGRO_KEY_PAD_4;
+	s_default_key_map[2][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_PAD_6;
+	s_default_key_map[2][PLAYER_KEY_A] = ALLEGRO_KEY_PAD_PLUS;
+	s_default_key_map[2][PLAYER_KEY_B] = ALLEGRO_KEY_PAD_MINUS;
+	s_default_key_map[2][PLAYER_KEY_X] = ALLEGRO_KEY_PAD_0;
+	s_default_key_map[2][PLAYER_KEY_Y] = ALLEGRO_KEY_PAD_DELETE;
+	s_default_key_map[2][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
+	s_default_key_map[3][PLAYER_KEY_UP] = ALLEGRO_KEY_I;
+	s_default_key_map[3][PLAYER_KEY_DOWN] = ALLEGRO_KEY_K;
+	s_default_key_map[3][PLAYER_KEY_LEFT] = ALLEGRO_KEY_J;
+	s_default_key_map[3][PLAYER_KEY_RIGHT] = ALLEGRO_KEY_L;
+	s_default_key_map[3][PLAYER_KEY_A] = ALLEGRO_KEY_7;
+	s_default_key_map[3][PLAYER_KEY_B] = ALLEGRO_KEY_8;
+	s_default_key_map[3][PLAYER_KEY_X] = ALLEGRO_KEY_9;
+	s_default_key_map[3][PLAYER_KEY_Y] = ALLEGRO_KEY_0;
+	s_default_key_map[3][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
 
 	// load global key mappings
 	load_key_map();

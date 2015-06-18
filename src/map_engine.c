@@ -729,6 +729,7 @@ load_map(const char* filename)
 			zone.layer = zone_hdr.layer;
 			zone.bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			zone.step_interval = zone_hdr.step_interval;
+			zone.steps_left = zone.step_interval;
 			zone.script = compile_script(script, "%s Z:%i", filename, get_vector_size(map->zones));
 			normalize_rect(&zone.bounds);
 			if (!push_back_vector(map->zones, &zone))
@@ -1101,7 +1102,8 @@ process_map_input(void)
 				|| is_key_down(s_players[i].talk_key)
 				|| is_joy_button_down(i, s_talk_button))
 			{
-				if (s_players[i].is_talk_allowed) talk_person(person);
+				if (s_players[i].is_talk_allowed)
+					talk_person(person);
 				s_players[i].is_talk_allowed = false;
 			}
 			else // allow talking again only after key is released
@@ -1297,7 +1299,8 @@ update_map_engine(bool is_main_loop)
 			last_trigger = s_current_trigger;
 			s_current_trigger = index;
 			s_on_trigger = trigger;
-			if (trigger) run_script(trigger->script, false);
+			if (trigger)
+				run_script(trigger->script, false);
 			s_current_trigger = last_trigger;
 		}
 	}
