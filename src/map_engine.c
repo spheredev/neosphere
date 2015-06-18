@@ -1094,10 +1094,10 @@ process_map_input(void)
 	// clear out excess keys from key queue
 	clear_key_queue();
 	
-	// check for player control of input person, if there is one
+	// check for player control of input persons, if there are any
 	for (i = 0; i < MAX_PLAYERS; ++i) {
 		person = s_players[i].person;
-		if (person != NULL && !is_person_busy(person)) {
+		if (person != NULL) {
 			if (is_key_down(get_player_key(i, PLAYER_KEY_A))
 				|| is_key_down(s_players[i].talk_key)
 				|| is_joy_button_down(i, s_talk_button))
@@ -1109,10 +1109,12 @@ process_map_input(void)
 			else // allow talking again only after key is released
 				s_players[i].is_talk_allowed = true;
 			mv_x = 0; mv_y = 0;
-			if (is_key_down(get_player_key(i, PLAYER_KEY_UP))) mv_y = -1;
-			if (is_key_down(get_player_key(i, PLAYER_KEY_RIGHT))) mv_x = 1;
-			if (is_key_down(get_player_key(i, PLAYER_KEY_DOWN))) mv_y = 1;
-			if (is_key_down(get_player_key(i, PLAYER_KEY_LEFT))) mv_x = -1;
+			if (!is_person_busy(person)) {  // allow player control only if input person is idle
+				if (is_key_down(get_player_key(i, PLAYER_KEY_UP))) mv_y = -1;
+				if (is_key_down(get_player_key(i, PLAYER_KEY_RIGHT))) mv_x = 1;
+				if (is_key_down(get_player_key(i, PLAYER_KEY_DOWN))) mv_y = 1;
+				if (is_key_down(get_player_key(i, PLAYER_KEY_LEFT))) mv_x = -1;
+			}
 			switch (mv_x + mv_y * 3) {
 			case -3: // north
 				queue_person_command(person, COMMAND_MOVE_NORTH, true);
