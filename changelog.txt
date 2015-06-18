@@ -1,10 +1,22 @@
 minisphere Changelog
 ====================
 
-v1.3.1 - TBD
-------------
+v1.3.1 - June 18, 2015
+----------------------
 
 * Fixes parallax camera sync issues, for reals this time!
+* Adds a new API, GetActivePerson(), which can be called inside a talk or touch
+  script to get the name of the person responsible for triggering the event.
+* Fixes an engine crash when a person under the control of FollowPerson is
+  destroyed in the middle of a diagonal movement.
+* Changes target of the SphereFS ~usr/ prefix to <UserDocuments>/Sphere Files.
+  This makes it easily accessible under Windows and ensures more sane placement
+  when the engine is run under Wine.
+* Fixes a regression introduced in 1.3.0 where player input is accepted even
+  though the input person's command queue is not empty.
+* Fixes a bug where zones loaded from a map file may randomly not fire.
+* Fixes a bug where talk scripts won't run if commands were queued for the input
+  person on the same frame the talk key is pressed.
 
 v1.3.0 - June 17, 2015
 ----------------------
