@@ -1096,7 +1096,7 @@ process_map_input(void)
 	// check for player control of input person, if there is one
 	for (i = 0; i < MAX_PLAYERS; ++i) {
 		person = s_players[i].person;
-		if (person != NULL && person) {
+		if (person != NULL && !is_person_busy(person)) {
 			if (is_key_down(get_player_key(i, PLAYER_KEY_A))
 				|| is_key_down(s_players[i].talk_key)
 				|| is_joy_button_down(i, s_talk_button))
