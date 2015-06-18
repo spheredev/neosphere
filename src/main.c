@@ -186,7 +186,7 @@ main(int argc, char* argv[])
 	// locate game.sgm
 	console_log(0, "Looking for a Sphere game to launch\n");
 	if (g_game_path != NULL)
-		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
 		browse_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
 		al_append_path_component(browse_path, "games");
@@ -209,7 +209,7 @@ main(int argc, char* argv[])
 		}
 		al_destroy_native_file_dialog(file_dlg);
 		al_ustr_free(dialog_name);
-		g_fs = new_fs_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		if (g_fs == NULL) {
 			al_show_native_message_box(NULL, "Unable to Load Game",
 				al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),

@@ -4,6 +4,8 @@
 
 #include "spherefs.h"
 
+static bool resolve_path (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, fs_type_t *out_fs_type);
+
 struct sandbox
 {
 	ALLEGRO_PATH*   fs_root;
@@ -20,64 +22,52 @@ struct sfs_file
 };
 
 sandbox_t*
-new_fs_sandbox(const char* path)
+new_sandbox(const char* path)
 {
+	ALLEGRO_FILE* al_file = NULL;
 	const char*   extension;
 	sandbox_t*    fs;
 	ALLEGRO_PATH* sgm_path = NULL;
-
-	extension = strrchr(path, '.');
-	if (extension != NULL && strcmp(extension, ".spk") == 0)
-		return new_spk_sandbox(path);
-	
-	if (!(fs = calloc(1, sizeof(sandbox_t))))
-		goto on_error;
-	fs->type = SPHEREFS_LOCAL;
-	if (extension != NULL && strcmp(extension, ".sgm") == 0)
-		fs->fs_root = al_create_path(path);
-	else
-		fs->fs_root = al_create_path_for_directory(path);
-	al_set_path_filename(fs->fs_root, NULL);
-	sgm_path = al_clone_path(fs->fs_root);
-	al_set_path_filename(sgm_path, "game.sgm");
-	if (!(fs->sgm = al_load_config_file(al_path_cstr(sgm_path, ALLEGRO_NATIVE_PATH_SEP))))
-		goto on_error;
-	al_destroy_path(sgm_path);
-	return fs;
-
-on_error:
-	if (sgm_path != NULL)
-		al_destroy_path(sgm_path);
-	free(fs);
-	return NULL;
-}
-
-sandbox_t*
-new_spk_sandbox(const char* path)
-{
-	ALLEGRO_FILE* al_file = NULL;
-	sandbox_t*    fs;
 	size_t        sgm_size;
 	void*         sgm_text = NULL;
+	spk_t*        spk;
 
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
-	fs->type = SPHEREFS_SPK;
-	if (!(fs->spk = open_spk(path))) goto on_error;
-	
-	if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
-		goto on_error;
-	al_file = al_open_memfile(sgm_text, sgm_size, "rb");
-	if (!(fs->sgm = al_load_config_file_f(al_file)))
-		goto on_error;
-	al_fclose(al_file);
-	free(sgm_text);
+	extension = strrchr(path, '.');
+	if (spk = open_spk(path)) {  // Sphere Package (.spk)
+		fs->type = SPHEREFS_SPK;
+		fs->spk = spk;
+		if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
+			goto on_error;
+		al_file = al_open_memfile(sgm_text, sgm_size, "rb");
+		if (!(fs->sgm = al_load_config_file_f(al_file)))
+			goto on_error;
+		al_fclose(al_file);
+		free(sgm_text);
+		return fs;
+	}
+	else {  // default case, unpacked game folder
+		fs->type = SPHEREFS_LOCAL;
+		if (extension != NULL && strcmp(extension, ".sgm") == 0)
+			fs->fs_root = al_create_path(path);
+		else
+			fs->fs_root = al_create_path_for_directory(path);
+		al_set_path_filename(fs->fs_root, NULL);
+		sgm_path = al_clone_path(fs->fs_root);
+		al_set_path_filename(sgm_path, "game.sgm");
+		if (!(fs->sgm = al_load_config_file(al_path_cstr(sgm_path, ALLEGRO_NATIVE_PATH_SEP))))
+			goto on_error;
+		al_destroy_path(sgm_path);
+	}
 	return fs;
-		
+
 on_error:
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(sgm_text);
+	if (sgm_path != NULL)
+		al_destroy_path(sgm_path);
 	if (fs != NULL) {
 		free_spk(fs->spk);
 		free(fs);
@@ -462,7 +452,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 			al_rebase_path(fs->fs_root, *out_path);
 		*out_fs_type = fs->type;
 	}
-	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // new SphereFS prefix
+	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS ~xxx/ prefix
 		al_destroy_path(*out_path);
 		*out_path = al_create_path(filename + 5);
 		if (memcmp(filename, "~sgm/", 5) == 0) {  // game.sgm root
@@ -486,7 +476,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 			al_destroy_path(origin);
 			*out_fs_type = SPHEREFS_LOCAL;
 		}
-		else  // unknown alias
+		else  // unrecognized prefix
 			goto on_error;
 	}
 	else {  // default case: assume relative path

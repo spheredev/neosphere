@@ -10,8 +10,7 @@ typedef struct sfs_list  sfs_list_t;
 typedef enum fs_type     fs_type_t;
 typedef enum sfs_whence  sfs_whence_t;
 
-sandbox_t*  new_fs_sandbox  (const char* path);
-sandbox_t*  new_spk_sandbox (const char* path);
+sandbox_t*  new_sandbox     (const char* path);
 void        free_sandbox    (sandbox_t* fs);
 const char* get_sgm_author  (sandbox_t* fs);
 void        get_sgm_metrics (sandbox_t* fs, int *out_x_res, int *out_y_res);
@@ -19,7 +18,6 @@ const char* get_sgm_name    (sandbox_t* fs);
 const char* get_sgm_script  (sandbox_t* fs);
 const char* get_sgm_summary (sandbox_t* fs);
 vector_t*   list_filenames  (sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
-extern bool resolve_path    (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, fs_type_t *out_fs_type);
 
 sfs_file_t* sfs_fopen  (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
 void        sfs_fclose (sfs_file_t* file);

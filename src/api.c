@@ -610,7 +610,7 @@ js_GetGameList(duk_context* ctx)
 	if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 		while (file_info = al_read_directory(fse)) {
 			path = al_create_path(al_get_fs_entry_name(file_info));
-			if (sandbox = new_fs_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
+			if (sandbox = new_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
 				duk_push_object(ctx);
 				duk_push_string(ctx, al_get_path_filename(path)); duk_put_prop_string(ctx, -2, "directory");
 				duk_push_string(ctx, get_sgm_name(sandbox)); duk_put_prop_string(ctx, -2, "name");
