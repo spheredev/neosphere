@@ -185,7 +185,7 @@ create_person(const char* name, spriteset_t* spriteset, bool is_persistent, scri
 	person->id = s_next_person_id++;
 	person->sprite = ref_spriteset(spriteset);
 	set_person_name(person, name);
-	set_person_direction(person, person->sprite->poses[0].name->cstr);
+	set_person_direction(person, lstr_cstr(person->sprite->poses[0].name));
 	person->is_persistent = is_persistent;
 	person->is_visible = true;
 	person->x = map_origin.x;
@@ -1886,7 +1886,7 @@ js_SetPersonScript(duk_context* ctx)
 	if (duk_is_string(ctx, 2)) {
 		codestring = duk_require_lstring_t(ctx, 2);
 		compile_person_script(person, type, codestring);
-		free_lstring(codestring);
+		lstr_free(codestring);
 	}
 	else {
 		script = duk_require_sphere_script(ctx, 2, "[person script]");
@@ -2161,9 +2161,9 @@ js_QueuePersonScript(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
-	lstring_t* script_name = new_lstring("[%s : queued script]", name);
+	lstring_t* script_name = lstr_new("[%s : queued script]", name);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
-	free_lstring(script_name);
+	lstr_free(script_name);
 	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	person_t* person;

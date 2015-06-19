@@ -144,7 +144,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				file_path = al_create_path(al_get_fs_entry_name(file_info));
-				filename = lstring_from_cstr(al_get_path_filename(file_path));
+				filename = lstr_new("%s", al_get_path_filename(file_path));
 				if (al_get_fs_entry_mode(file_info) & type_flag)
 					push_back_vector(list, &filename);
 				al_destroy_path(file_path);

@@ -70,15 +70,15 @@ bytearray_from_lstring(const lstring_t* string)
 {
 	bytearray_t* array;
 
-	if (string->length > INT_MAX)
+	if (lstr_len(string) > INT_MAX)
 		return NULL;
-	if (!(array = new_bytearray((int)string->length)))
+	if (!(array = new_bytearray((int)lstr_len(string))))
 		return NULL;
-	memcpy(array->buffer, string->cstr, string->length);
+	memcpy(array->buffer, lstr_cstr(string), lstr_len(string));
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created bytearray from %u-byte string [bytearray %u]\n", string->length, array->id);
-	if (string->length <= 65)  // log short strings only
-		console_log(4, "  string: \"%s\"", string->cstr);
+	console_log(3, "engine: Created bytearray from %u-byte string [bytearray %u]\n", lstr_len(string), array->id);
+	if (lstr_len(string) <= 65)  // log short strings only
+		console_log(4, "  string: \"%s\"", lstr_cstr(string));
 	return array;
 }
 
@@ -387,11 +387,11 @@ js_new_ByteArray(duk_context* ctx)
 
 	if (duk_is_string(ctx, 0)) {
 		string = duk_require_lstring_t(ctx, 0);
-		if (string->length > INT_MAX)
+		if (lstr_len(string) > INT_MAX)
 			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): Input string is too long");
 		if (!(array = bytearray_from_lstring(string)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): Failed to create byte array from string");
-		free_lstring(string);
+		lstr_free(string);
 	}
 	else {
 		size = duk_require_int(ctx, 0);

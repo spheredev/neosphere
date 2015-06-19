@@ -147,7 +147,7 @@ on_error:  // oh no!
 	if (file != NULL) sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
-			free_lstring(tiles[i].name);
+			lstr_free(tiles[i].name);
 			free_obsmap(tiles[i].obsmap);
 			free_image(tiles[i].image);
 		}
@@ -165,7 +165,7 @@ free_tileset(tileset_t* tileset)
 
 	console_log(3, "tileset %u: Freeing tileset", tileset->id);
 	for (i = 0; i < tileset->num_tiles; ++i) {
-		free_lstring(tileset->tiles[i].name);
+		lstr_free(tileset->tiles[i].name);
 		free_image(tileset->tiles[i].image);
 		free_obsmap(tileset->tiles[i].obsmap);
 	}
@@ -250,9 +250,9 @@ set_tile_name(tileset_t* tileset, int tile_index, const lstring_t* name)
 {
 	lstring_t* new_name;
 	
-	if (!(new_name = clone_lstring(name)))
+	if (!(new_name = lstr_dup(name)))
 		return false;
-	free_lstring(tileset->tiles[tile_index].name);
+	lstr_free(tileset->tiles[tile_index].name);
 	tileset->tiles[tile_index].name = new_name;
 	return true;
 }

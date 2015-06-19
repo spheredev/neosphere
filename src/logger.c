@@ -40,9 +40,9 @@ open_log_file(const char* path)
 		goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-	log_entry = new_lstring("LOG OPENED: %s\n", timestamp);
+	log_entry = lstr_new("LOG OPENED: %s\n", timestamp);
 	sfs_fputs(lstr_cstr(log_entry), logger->file);
-	free_lstring(log_entry);
+	lstr_free(log_entry);
 	return ref_logger(logger);
 
 on_error: // oh no!
@@ -67,9 +67,9 @@ free_logger(logger_t* logger)
 	if (logger == NULL || --logger->refcount > 0)
 		return;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-	log_entry = new_lstring("LOG CLOSED: %s\n\n", timestamp);
+	log_entry = lstr_new("LOG CLOSED: %s\n\n", timestamp);
 	sfs_fputs(lstr_cstr(log_entry), logger->file);
-	free_lstring(log_entry);
+	lstr_free(log_entry);
 	sfs_fclose(logger->file);
 	free(logger);
 }
@@ -87,7 +87,7 @@ begin_log_block(logger_t* logger, const char* title)
 		logger->blocks = blocks;
 		logger->max_blocks = new_count * 2;
 	}
-	if (!(block_name = lstring_from_cstr(title))) return false;
+	if (!(block_name = lstr_new("%s", title))) return false;
 	write_log_line(logger, "BEGIN", lstr_cstr(block_name));
 	logger->blocks[logger->num_blocks].name = block_name;
 	++logger->num_blocks;
@@ -102,7 +102,7 @@ end_log_block(logger_t* logger)
 	--logger->num_blocks;
 	block_name = logger->blocks[logger->num_blocks].name;
 	write_log_line(logger, "END", lstr_cstr(block_name));
-	free_lstring(block_name);
+	lstr_free(block_name);
 }
 
 void

@@ -108,7 +108,7 @@ clone_spriteset(const spriteset_t* spriteset)
 	if (!(clone->poses = calloc(clone->num_poses, sizeof(spriteset_pose_t))))
 		goto on_error;
 	for (i = 0; i < spriteset->num_poses; ++i) {
-		if ((clone->poses[i].name = clone_lstring(spriteset->poses[i].name)) == NULL)
+		if ((clone->poses[i].name = lstr_dup(spriteset->poses[i].name)) == NULL)
 			goto on_error;
 		clone->poses[i].num_frames = spriteset->poses[i].num_frames;
 		if ((clone->poses[i].frames = calloc(clone->poses[i].num_frames, sizeof(spriteset_frame_t))) == NULL)
@@ -124,7 +124,7 @@ on_error:
 		for (i = 0; i < clone->num_images; ++i) free_image(clone->images[i]);
 		if (clone->poses != NULL)
 			for (i = 0; i < clone->num_poses; ++i) {
-				free_lstring(clone->poses[i].name);
+				lstr_free(clone->poses[i].name);
 				free(clone->poses[i].frames);
 			}
 		free(clone);
@@ -195,7 +195,7 @@ load_spriteset(const char* path)
 		spriteset->num_poses = 8;
 		spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t));
 		for (i = 0; i < spriteset->num_poses; ++i)
-			spriteset->poses[i].name = lstring_from_cstr(def_dir_names[i]);
+			spriteset->poses[i].name = lstr_new("%s", def_dir_names[i]);
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
 		if (!(atlas = create_atlas(spriteset->num_images, rss.frame_width, rss.frame_height)))
@@ -229,7 +229,7 @@ load_spriteset(const char* path)
 				goto on_error;
 			spriteset->num_images += dir_v2.num_frames;
 			sprintf(extra_v2_dir_name, "extra %i", i);
-			spriteset->poses[i].name = lstring_from_cstr(i < 8 ? def_dir_names[i] : extra_v2_dir_name);
+			spriteset->poses[i].name = lstr_new("%s", i < 8 ? def_dir_names[i] : extra_v2_dir_name);
 			spriteset->poses[i].num_frames = dir_v2.num_frames;
 			if (!(spriteset->poses[i].frames = calloc(dir_v2.num_frames, sizeof(spriteset_frame_t))))
 				goto on_error;
@@ -323,7 +323,7 @@ on_error:
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
 			for (i = 0; i < spriteset->num_poses; ++i) {
-				free_lstring(spriteset->poses[i].name);
+				lstr_free(spriteset->poses[i].name);
 				free(spriteset->poses[i].frames);
 			}
 			free(spriteset->poses);
@@ -357,7 +357,7 @@ free_spriteset(spriteset_t* spriteset)
 	free(spriteset->images);
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		free(spriteset->poses[i].frames);
-		free_lstring(spriteset->poses[i].name);
+		lstr_free(spriteset->poses[i].name);
 	}
 	free(spriteset->poses);
 	free(spriteset->filename);
@@ -465,7 +465,7 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 	name_to_find = pose_name;
 	while (pose == NULL) {
 		for (i = 0; i < spriteset->num_poses; ++i) {
-			if (strcasecmp(name_to_find, spriteset->poses[i].name->cstr) == 0) {
+			if (strcasecmp(name_to_find, lstr_cstr(spriteset->poses[i].name)) == 0) {
 				pose = &spriteset->poses[i];
 				break;
 			}
@@ -529,7 +529,7 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		duk_push_object(ctx);
-		duk_push_lstring(ctx, spriteset->poses[i].name->cstr, spriteset->poses[i].name->length);
+		duk_push_lstring(ctx, lstr_cstr(spriteset->poses[i].name), lstr_len(spriteset->poses[i].name));
 		duk_put_prop_string(ctx, -2, "name");
 		duk_push_array(ctx);
 		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {

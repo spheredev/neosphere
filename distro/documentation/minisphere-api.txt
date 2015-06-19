@@ -21,15 +21,15 @@ engine's level of support for various features.
 GetVersion()
 
   Returns the Sphere API version level as a floating point number. When called
-  under minisphere 1.2, this function returns 2.0, indicating Sphere API version
+  under minisphere 1.3, this function returns 2.0, indicating Sphere API version
   2 (Pegasus).
 
 GetVersionString()
 
-    Returns the engine's version identification string. For minisphere 1.2, this
+    Returns the engine's version identification string. For minisphere 1.3, this
     string is:
       
-      v2.0 (compatible; minisphere 1.2)
+      v2.0 (compatible; minisphere 1.3.0)
 
 GetExtensions()
 
@@ -232,7 +232,8 @@ GetGameList()
     
     .name:        The game's title, taken from game.sgm.
     .directory:   The directory the game was found in, relative to
-                  [engine root]/games.
+                  [engine root]/games. For packaged games, this will be the
+                  name of the package file instead of a directory name.
     .author:      The game's author, taken from game.sgm.
     .description: A short description of the game, taken from game.sgm.
 
@@ -241,7 +242,7 @@ ExecuteGame(directory)
   Replaces the currently running game with the one found in the
   specified directory. The directory is assumed to be relative to
   [engine root]/games.
-  
+
 RestartGame()
 
   Restarts the current game. All game state is cleared and the game()

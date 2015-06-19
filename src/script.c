@@ -24,8 +24,7 @@ try_evaluate_file(const char* path)
 	// load the source text from the script file
 	if (!(slurp = sfs_fslurp(g_fs, path, "scripts", &size)))
 		goto on_error;
-	source = lstring_from_buf(size, slurp);
-	lstr_make_utf8(source);
+	source = lstr_from_buf(slurp, size);
 	free(slurp);
 	
 	// ready for launch in T-10...9...*munch*
@@ -146,7 +145,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 		// caller passed code string, compile it
 		codestring = duk_require_lstring_t(ctx, index);
 		script = compile_script(codestring, false, "%s", name);
-		free_lstring(codestring);
+		lstr_free(codestring);
 	}
 	else if (duk_is_null_or_undefined(ctx, index))
 		return 0;

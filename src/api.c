@@ -72,7 +72,7 @@ initialize_api(duk_context* ctx)
 
 	console_log(0, "Initializing Sphere API\n");
 
-	s_user_agent = new_lstring("v%.1f (%s)", SPHERE_API_VERSION, ENGINE_NAME);
+	s_user_agent = lstr_new("v%.1f (%s)", SPHERE_API_VERSION, ENGINE_NAME);
 	console_log(0, "  %s\n", lstr_cstr(s_user_agent));
 
 	// register API extensions
@@ -159,7 +159,7 @@ shutdown_api(void)
 {
 	console_log(0, "Shutting down Sphere API\n");
 
-	free_lstring(s_user_agent);
+	lstr_free(s_user_agent);
 }
 
 void
@@ -544,7 +544,7 @@ js_GetDirectoryList(duk_context* ctx)
 	while (p_filename = next_vector_item(&iter)) {
 		duk_push_string(ctx, lstr_cstr(*p_filename));
 		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		free_lstring(*p_filename);
+		lstr_free(*p_filename);
 	}
 	free_vector(list);
 	return 1;
@@ -567,7 +567,7 @@ js_GetFileList(duk_context* ctx)
 	while (p_filename = next_vector_item(&iter)) {
 		duk_push_string(ctx, lstr_cstr(*p_filename));
 		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		free_lstring(*p_filename);
+		lstr_free(*p_filename);
 	}
 	free_vector(list);
 	return 1;
@@ -766,13 +766,13 @@ js_Assert(duk_context* ctx)
 
 		#if defined(MINI_NONFATAL_ASSERT)
 
-		text = new_lstring("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
+		text = lstr_new("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
 		if (!al_show_native_message_box(g_display, "Script Error", "An Assert() condition failed.",
 			lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
 		{
 			exit_game(true);
 		}
-		free_lstring(text);
+		lstr_free(text);
 
 		#else
 		

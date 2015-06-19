@@ -2,24 +2,17 @@
 #define MINISPHERE__LSTRING_H__INCLUDED
 
 typedef struct lstring lstring_t;
-struct lstring
-{
-	size_t      length;
-	const char* cstr;
-};
 
-extern lstring_t*  new_lstring       (const char* fmt, ...);
-extern lstring_t*  lstring_from_buf  (size_t length, const char* buffer);
-extern lstring_t*  lstring_from_cstr (const char* cstr);
-extern lstring_t*  clone_lstring     (const lstring_t* string);
-extern lstring_t*  read_lstring      (sfs_file_t* file, bool trim_null);
-extern lstring_t*  read_lstring_raw  (sfs_file_t* file, size_t length, bool trim_null);
-extern void        free_lstring      (lstring_t* string);
+extern lstring_t*  lstr_new      (const char* fmt, ...);
+extern lstring_t*  lstr_from_buf (const char* buffer, size_t length);
+extern void        lstr_free     (lstring_t* string);
+extern const char* lstr_cstr     (const lstring_t* string);
+extern int         lstr_cmp      (const lstring_t* string1, const lstring_t* string2);
+extern lstring_t*  lstr_dup      (const lstring_t* string);
+extern size_t      lstr_len      (const lstring_t* string);
 
-extern const char* lstr_cstr      (const lstring_t* string);
-extern int         lstr_cmp       (const lstring_t* string1, const lstring_t* string2);
-extern size_t      lstr_len       (const lstring_t* string);
-extern void        lstr_make_utf8 (lstring_t* string);
+extern lstring_t* read_lstring     (sfs_file_t* file, bool trim_null);
+extern lstring_t* read_lstring_raw (sfs_file_t* file, size_t length, bool trim_null);
 
 extern lstring_t* duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
 
