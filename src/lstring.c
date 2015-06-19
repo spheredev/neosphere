@@ -3,8 +3,6 @@
 
 #include "lstring.h"
 
-static void make_lstr_utf8 (lstring_t* string);
-
 struct lstring
 {
 	size_t length;
@@ -277,60 +275,90 @@ lstr_new(const char* fmt, ...)
 {
 	va_list ap;
 
+	char*      buffer;
 	int        buf_size;
-	lstring_t* lstring;
+	lstring_t* string = NULL;
 	
-	if (!(lstring = malloc(sizeof(lstring_t))))
-		goto on_error;
 	va_start(ap, fmt);
 	buf_size = vsnprintf(NULL, 0, fmt, ap) + 1;
 	va_end(ap);
-	if (!(lstring->cstr = malloc(buf_size)))
+	if (!(buffer = malloc(buf_size)))
 		goto on_error;
 	va_start(ap, fmt);
-	vsnprintf(lstring->cstr, buf_size, fmt, ap);
+	vsnprintf(buffer, buf_size, fmt, ap);
 	va_end(ap);
-	lstring->cstr[buf_size - 1] = '\0';
-	lstring->length = buf_size - 1;
-	make_lstr_utf8(lstring);
-	return lstring;
+	string = lstr_from_buf(buffer, buf_size - 1);
+	free(buffer);
+	return string;
 
 on_error:
-	if (lstring != NULL) {
-		free(lstring->cstr);
-		free(lstring);
-	}
+	free(buffer);
+	free(string);
 	return NULL;
 }
 
 lstring_t*
 lstr_from_buf(const char* buffer, size_t length)
 {
-	lstring_t* lstring = NULL;
+	// courtesy of Sami Vaarala, adapted for use in minisphere
 
-	if (!(lstring = malloc(sizeof(lstring_t))))
-		goto on_error;
-	if (!(lstring->cstr = malloc(length + 1))) goto on_error;
-	memcpy(lstring->cstr, buffer, length);
-	lstring->cstr[length] = '\0';
-	lstring->length = length;
-	make_lstr_utf8(lstring);
-	return lstring;
+	uint32_t            cp;
+	unsigned char*      out_buf;
+	lstring_t*          string;
+	uint32_t            utf8state = UTF8_ACCEPT;
+	unsigned char       *p;
+	const unsigned char *p_src;
 
-on_error:
-	if (lstring != NULL) {
-		free(lstring->cstr);
-		free(lstring);
+	size_t i;
+
+	// check that the string isn't already UTF-8
+	p_src = buffer;
+	for (i = 0; i < length; ++i) {
+		if (utf8decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
+			break;
 	}
-	return NULL;
+
+	if (utf8state != UTF8_ACCEPT) {
+		// note: UTF-8 conversion may expand the string by up to 3x
+		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
+			return NULL;
+		out_buf = (char*)string + sizeof(lstring_t);
+		p = out_buf;
+		p_src = buffer;
+		for (i = 0; i < length; ++i) {
+			cp = cp1252[*p_src++] & 0xffffUL;
+			if (cp < 0x80)
+				*p++ = cp;
+			else if (cp < 0x800UL) {
+				*p++ = (unsigned char)(0xc0 + ((cp >> 6) & 0x1f));
+				*p++ = (unsigned char)(0x80 + (cp & 0x3f));
+			}
+			else {
+				*p++ = (unsigned char)(0xe0 + ((cp >> 12) & 0x0f));
+				*p++ = (unsigned char)(0x80 + ((cp >> 6) & 0x3f));
+				*p++ = (unsigned char)(0x80 + (cp & 0x3f));
+			}
+		}
+		*p = '\0';  // tack on NUL terminator
+		length = p - out_buf;
+	}
+	else {
+		// string is already UTF-8, copy buffer as-is
+		if (!(string = malloc(sizeof(lstring_t) + length + 1)))
+			return NULL;
+		out_buf = (char*)string + sizeof(lstring_t);
+		memcpy(out_buf, buffer, length);
+		out_buf[length] = '\0';  // tack on NUL terminator
+	}
+
+	string->cstr = out_buf;
+	string->length = length;
+	return string;
 }
 
 void
 lstr_free(lstring_t* string)
 {
-	if (string == NULL)
-		return;
-	free(string->cstr);
 	free(string);
 }
 
@@ -381,26 +409,30 @@ on_error:
 lstring_t*
 read_lstring_raw(sfs_file_t* file, size_t length, bool trim_null)
 {
+	char*      buffer = NULL;
 	long       file_pos;
-	lstring_t* string = NULL;
+	lstring_t* string;
 
 	file_pos = sfs_ftell(file);
-	if ((string = calloc(1, sizeof(lstring_t))) == NULL)
-		goto on_error;
-	string->length = length;
-	if ((string->cstr = calloc(length + 1, sizeof(char))) == NULL) goto on_error;
-	if (sfs_fread(string->cstr, 1, length, file) != length) goto on_error;
-	if (trim_null) string->length = strchr(string->cstr, '\0') - string->cstr;
-	make_lstr_utf8(string);
+	if (!(buffer = malloc(length + 1))) goto on_error;
+	if (sfs_fread(buffer, 1, length, file) != length) goto on_error;
+	buffer[length] = '\0';
+	if (trim_null)
+		length = strchr(buffer, '\0') - buffer;
+	string = lstr_from_buf(buffer, length);
+	free(buffer);
 	return string;
 
 on_error:
+	free(buffer);
 	sfs_fseek(file, file_pos, SEEK_CUR);
-	if (string != NULL) {
-		free(string->cstr);
-		free(string);
-	}
 	return NULL;
+}
+
+void
+duk_push_lstring_t(duk_context* ctx, const lstring_t* string)
+{
+	duk_push_lstring(ctx, string->cstr, string->length);
 }
 
 lstring_t*
@@ -411,50 +443,4 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 
 	buffer = duk_require_lstring(ctx, index, &length);
 	return lstr_from_buf(buffer, length);
-}
-
-static void
-make_lstr_utf8(lstring_t* string)
-{
-	// courtesy of Sami Vaarala, adapted for general use
-
-	uint32_t            cp;
-	bool                is_a_go = false;
-	unsigned char*      tmp;
-	uint32_t            utf8state = UTF8_ACCEPT;
-	unsigned char       *p;
-	const unsigned char *p_src;
-
-	size_t i;
-
-	// check that the string isn't already UTF-8
-	p_src = string->cstr;
-	for (i = 0; i < string->length; ++i) {
-		if (utf8decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
-			break;
-	}
-	if (utf8state == UTF8_ACCEPT)
-		return;  // nothing to do, string is already UTF-8
-
-	// UTF-8 conversion may expand the string by up to 3x
-	tmp = malloc(string->length * 3 + 1);
-	p = tmp; p_src = string->cstr;
-	for (i = 0; i < string->length; ++i) {
-		cp = cp1252[*p_src++] & 0xffffUL;
-		if (cp < 0x80)
-			*p++ = cp;
-		else if (cp < 0x800UL) {
-			*p++ = (unsigned char)(0xc0 + ((cp >> 6) & 0x1f));
-			*p++ = (unsigned char)(0x80 + (cp & 0x3f));
-		}
-		else {
-			*p++ = (unsigned char)(0xe0 + ((cp >> 12) & 0x0f));
-			*p++ = (unsigned char)(0x80 + ((cp >> 6) & 0x3f));
-			*p++ = (unsigned char)(0x80 + (cp & 0x3f));
-		}
-	}
-	*p = '\0';  // tack on NUL terminator
-	free(string->cstr);
-	string->cstr = tmp;
-	string->length = p - tmp;
 }

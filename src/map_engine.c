@@ -1704,7 +1704,7 @@ js_GetLayerName(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetLayerName(): Map engine must be running");
 	if (layer < 0 || layer > s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetLayerName(): Invalid layer index (%i)", layer);
-	duk_push_lstring(ctx, lstr_cstr(s_map->layers[layer].name), lstr_len(s_map->layers[layer].name));
+	duk_push_lstring_t(ctx, s_map->layers[layer].name);
 	return 1;
 }
 
@@ -1866,7 +1866,7 @@ js_GetTileName(duk_context* ctx)
 	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileName(): Tile index out of range (%i)", tile_index);
 	tile_name = get_tile_name(s_map->tileset, tile_index);
-	duk_push_lstring(ctx, lstr_cstr(tile_name), lstr_len(tile_name));
+	duk_push_lstring_t(ctx, tile_name);
 	return 1;
 }
 

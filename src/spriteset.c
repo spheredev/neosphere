@@ -529,7 +529,7 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		duk_push_object(ctx);
-		duk_push_lstring(ctx, lstr_cstr(spriteset->poses[i].name), lstr_len(spriteset->poses[i].name));
+		duk_push_lstring_t(ctx, spriteset->poses[i].name);
 		duk_put_prop_string(ctx, -2, "name");
 		duk_push_array(ctx);
 		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {

@@ -28,7 +28,7 @@ try_evaluate_file(const char* path)
 	free(slurp);
 	
 	// ready for launch in T-10...9...*munch*
-	duk_push_lstring(g_duk, lstr_cstr(source), lstr_len(source));
+	duk_push_lstring_t(g_duk, source);
 	duk_push_string(g_duk, path);
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 		goto on_error;
@@ -60,7 +60,7 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 		duk_get_prop_string(g_duk, -1, "scripts");
 	}
 	script->id = s_next_id++;
-	duk_push_lstring(g_duk, lstr_cstr(source), lstr_len(source));
+	duk_push_lstring_t(g_duk, source);
 	va_start(ap, fmt_name);
 	duk_push_vsprintf(g_duk, fmt_name, ap);
 	va_end(ap);
