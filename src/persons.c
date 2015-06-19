@@ -780,9 +780,12 @@ compare_persons(const void* a, const void* b)
 	person_t* p1 = *(person_t**)a;
 	person_t* p2 = *(person_t**)b;
 
-	int y_delta;
+	double x, y_p1, y_p2;
+	int    y_delta;
 
-	y_delta = (p1->y + p1->y_offset) - (p2->y + p2->y_offset);
+	get_person_xy(p1, &x, &y_p1, true);
+	get_person_xy(p2, &x, &y_p2, true);
+	y_delta = (y_p1 + p1->y_offset) - (y_p2 + p2->y_offset);
 	if (y_delta != 0)
 		return y_delta;
 	else if (is_person_following(p1, p2))
@@ -1547,10 +1550,12 @@ js_GetPersonX(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 	
 	person_t*   person;
+	double      x, y;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonX(): No such person '%s'", name);
-	duk_push_int(ctx, person->x);
+	get_person_xy(person, &x, &y, true);
+	duk_push_int(ctx, x);
 	return 1;
 }
 
@@ -1560,10 +1565,12 @@ js_GetPersonXFloat(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 
 	person_t*   person;
+	double      x, y;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonXFloat(): No such person '%s'", name);
-	duk_push_number(ctx, person->x);
+	get_person_xy(person, &x, &y, true);
+	duk_push_number(ctx, x);
 	return 1;
 }
 
@@ -1573,10 +1580,12 @@ js_GetPersonY(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 
 	person_t*   person;
+	double      x, y;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonY(): No such person '%s'", name);
-	duk_push_int(ctx, person->y);
+	get_person_xy(person, &x, &y, true);
+	duk_push_int(ctx, y);
 	return 1;
 }
 
@@ -1586,10 +1595,12 @@ js_GetPersonYFloat(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 
 	person_t*   person;
+	double      x, y;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonYFloat(): No such person '%s'", name);
-	duk_push_number(ctx, person->y);
+	get_person_xy(person, &x, &y, true);
+	duk_push_number(ctx, y);
 	return 1;
 }
 
