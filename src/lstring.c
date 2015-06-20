@@ -373,6 +373,8 @@ lstr_cmp(const lstring_t* string1, const lstring_t* string2)
 {
 	size_t length;
 	
+	// the fake NUL terminator comes in REALLY handy here, as we can just
+	// include it in the comparison, saving us an extra check at the end.
 	length = string1->length < string2->length
 		? string1->length + 1
 		: string2->length + 1;

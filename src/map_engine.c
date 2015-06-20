@@ -557,6 +557,8 @@ normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 	int tile_w, tile_h;
 	int layer_w, layer_h;
 	
+	if (s_map == NULL)
+		return;  // can't normalize if no map loaded
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax)
 		return;
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
