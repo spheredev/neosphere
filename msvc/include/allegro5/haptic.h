@@ -213,7 +213,7 @@ AL_FUNC(ALLEGRO_HAPTIC *, al_get_haptic_from_touch_input, (ALLEGRO_TOUCH_INPUT *
 
 AL_FUNC(bool, al_release_haptic, (ALLEGRO_HAPTIC *));
 
-AL_FUNC(bool, al_get_haptic_active, (ALLEGRO_HAPTIC *));
+AL_FUNC(bool, al_is_haptic_active, (ALLEGRO_HAPTIC *));
 AL_FUNC(int, al_get_haptic_capabilities, (ALLEGRO_HAPTIC *));
 AL_FUNC(bool, al_is_haptic_capable, (ALLEGRO_HAPTIC *, int));
 
@@ -224,11 +224,11 @@ AL_FUNC(bool, al_set_haptic_autocenter, (ALLEGRO_HAPTIC *, double));
 AL_FUNC(double, al_get_haptic_autocenter, (ALLEGRO_HAPTIC *));
 
 
-AL_FUNC(int, al_get_num_haptic_effects, (ALLEGRO_HAPTIC *));
+AL_FUNC(int, al_get_max_haptic_effects, (ALLEGRO_HAPTIC *));
 AL_FUNC(bool, al_is_haptic_effect_ok, (ALLEGRO_HAPTIC *, ALLEGRO_HAPTIC_EFFECT *));
 AL_FUNC(bool, al_upload_haptic_effect, (ALLEGRO_HAPTIC *, ALLEGRO_HAPTIC_EFFECT *, ALLEGRO_HAPTIC_EFFECT_ID *));
 AL_FUNC(bool, al_play_haptic_effect, (ALLEGRO_HAPTIC_EFFECT_ID *, int));
-AL_FUNC(bool, al_upload_and_play_haptic_effect, (ALLEGRO_HAPTIC *, ALLEGRO_HAPTIC_EFFECT *, int, ALLEGRO_HAPTIC_EFFECT_ID *));
+AL_FUNC(bool, al_upload_and_play_haptic_effect, (ALLEGRO_HAPTIC *, ALLEGRO_HAPTIC_EFFECT *, ALLEGRO_HAPTIC_EFFECT_ID *, int));
 AL_FUNC(bool, al_stop_haptic_effect, (ALLEGRO_HAPTIC_EFFECT_ID *));
 AL_FUNC(bool, al_is_haptic_effect_playing, (ALLEGRO_HAPTIC_EFFECT_ID *));
 AL_FUNC(bool, al_release_haptic_effect, (ALLEGRO_HAPTIC_EFFECT_ID *));

@@ -157,10 +157,10 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none>");
-	console_log(1, "  Maximum consecutive frame skips: %i\n", s_max_frameskip);
-	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	console_log(1, "  Console verbosity level: %i\n", get_log_level());
+	console_log(1, "  Game Path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none>");
+	console_log(1, "  Frameskip Limit: %i\n", s_max_frameskip);
+	console_log(1, "  CPU Throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	console_log(1, "  Console Verbosity: %i\n", get_log_level());
 
 	// set up jump points for script bailout
 	console_log(1, "Setting up jump points for longjmp\n");
@@ -177,15 +177,17 @@ main(int argc, char* argv[])
 		}
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
+		console_log(0, "Reset requested\n");
 		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		shutdown_engine();
+		printf("\n");
 		initialize_engine();
 		g_game_path = al_create_path(game_path);
 		free(game_path);
 	}
 
 	// locate game.sgm
-	console_log(0, "Looking for a Sphere game to launch\n");
+	console_log(0, "Looking for a game to launch\n");
 	if (g_game_path != NULL)
 		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
@@ -219,7 +221,7 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	console_log(1, "  Path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	console_log(1, "  %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");

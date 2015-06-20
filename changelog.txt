@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v1.3.3 - TBD
+------------
+
+* The engine and all dependencies have been recompiled optimizing for speed.
+  This slightly increases the size of the engine but greatly improves
+  performance for CPU-bound tasks such as ColorMatrix application.
+
 v1.3.2 - June 20, 2015
 ----------------------
 
