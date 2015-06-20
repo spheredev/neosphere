@@ -1,6 +1,16 @@
 minisphere Changelog
 ====================
 
+v1.3.2 - June 20, 2015
+----------------------
+
+* More informative error message when game() function doesn't exist, no more
+  vague "not callable" errors!
+* Zone scripts are now fired once immediately on the first step inside the zone,
+  regardless of the step count set. This matches Sphere 1.5 behavior.
+* Fixes Z-ordering glitches after looping around a repeating map.
+* GetPersonX(), GetPersonY() are now properly normalized on repeating maps.
+
 v1.3.1 - June 18, 2015
 ----------------------
 
