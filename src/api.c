@@ -10,12 +10,12 @@ static const char* const SPHERE_EXTENSIONS[] =
 {
 	"minisphere",
 	"sphere-legacy-api",
+	"sphere-map-engine",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
-	"sphere-map-engine",
 	"sphere-spherefs",
-	"sphere-galileo",
 	"sphere-commonjs",
+	"sphere-galileo",
 	"minisphere-async-api",
 	"minisphere-new-sockets",
 	"minisphere-rng-object",
@@ -32,8 +32,6 @@ static duk_ret_t js_RequireScript        (duk_context* ctx);
 static duk_ret_t js_EvaluateSystemScript (duk_context* ctx);
 static duk_ret_t js_EvaluateScript       (duk_context* ctx);
 static duk_ret_t js_IsSkippedFrame       (duk_context* ctx);
-static duk_ret_t js_GetDirectoryList     (duk_context* ctx);
-static duk_ret_t js_GetFileList          (duk_context* ctx);
 static duk_ret_t js_GetFrameRate         (duk_context* ctx);
 static duk_ret_t js_GetGameInformation   (duk_context* ctx);
 static duk_ret_t js_GetGameList          (duk_context* ctx);
@@ -78,7 +76,7 @@ initialize_api(duk_context* ctx)
 
 	// register API extensions
 	s_extensions = new_vector(sizeof(char*));
-	num_extensions = sizeof(SPHERE_EXTENSIONS) / sizeof(SPHERE_EXTENSIONS[0]);
+	num_extensions = sizeof SPHERE_EXTENSIONS / sizeof SPHERE_EXTENSIONS[0];
 	for (i = 0; i < num_extensions; ++i) {
 		console_log(1, "  %s\n", SPHERE_EXTENSIONS[i]);
 		register_api_extension(SPHERE_EXTENSIONS[i]);
@@ -104,8 +102,6 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "RequireScript", js_RequireScript);
 	register_api_function(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
 	register_api_function(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
-	register_api_function(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
-	register_api_function(ctx, NULL, "GetFileList", js_GetFileList);
 	register_api_function(ctx, NULL, "GetFrameRate", js_GetFrameRate);
 	register_api_function(ctx, NULL, "GetGameInformation", js_GetGameInformation);
 	register_api_function(ctx, NULL, "GetGameList", js_GetGameList);
@@ -525,52 +521,6 @@ static duk_ret_t
 js_IsSkippedFrame(duk_context* ctx)
 {
 	duk_push_boolean(ctx, is_skipped_frame());
-	return 1;
-}
-
-static duk_ret_t
-js_GetDirectoryList(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* dirname = n_args >= 1 ? duk_require_string(ctx, 0) : "";
-
-	vector_t*  list;
-	lstring_t* *p_filename;
-
-	iter_t iter;
-
-	list = list_filenames(g_fs, dirname, NULL, true);
-	duk_push_array(ctx);
-	iter = iterate_vector(list);
-	while (p_filename = next_vector_item(&iter)) {
-		duk_push_string(ctx, lstr_cstr(*p_filename));
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		lstr_free(*p_filename);
-	}
-	free_vector(list);
-	return 1;
-}
-
-static duk_ret_t
-js_GetFileList(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : "save";
-	
-	vector_t*  list;
-	lstring_t* *p_filename;
-
-	iter_t iter;
-
-	list = list_filenames(g_fs, directory_name, NULL, false);
-	duk_push_array(ctx);
-	iter = iterate_vector(list);
-	while (p_filename = next_vector_item(&iter)) {
-		duk_push_string(ctx, lstr_cstr(*p_filename));
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		lstr_free(*p_filename);
-	}
-	free_vector(list);
 	return 1;
 }
 

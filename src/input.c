@@ -334,7 +334,7 @@ clear_key_queue(void)
 void
 load_key_map(void)
 {
-	file_t*     file;
+	kv_file_t*     file;
 	const char* key_name;
 	char*       filename;
 	lstring_t*  setting;
@@ -364,7 +364,7 @@ load_key_map(void)
 void
 save_key_map(void)
 {
-	file_t*     file;
+	kv_file_t*     file;
 	const char* key_name;
 	lstring_t*  setting;
 	

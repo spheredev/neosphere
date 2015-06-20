@@ -60,9 +60,6 @@
     <ClCompile Include="..\src\tileset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\rawfile.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\script.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -177,9 +174,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\tileset.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\rawfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\script.h">

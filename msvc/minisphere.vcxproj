@@ -349,7 +349,6 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClCompile Include="..\src\obsmap.c" />
     <ClCompile Include="..\src\persons.c" />
     <ClCompile Include="..\src\primitives.c" />
-    <ClCompile Include="..\src\rawfile.c" />
     <ClCompile Include="..\src\script.c" />
     <ClCompile Include="..\src\sound.c" />
     <ClCompile Include="..\src\spherefs.c" />
@@ -390,7 +389,6 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClInclude Include="..\src\obsmap.h" />
     <ClInclude Include="..\src\persons.h" />
     <ClInclude Include="..\src\primitives.h" />
-    <ClInclude Include="..\src\rawfile.h" />
     <ClInclude Include="..\src\script.h" />
     <ClInclude Include="..\src\sound.h" />
     <ClInclude Include="..\src\spherefs.h" />

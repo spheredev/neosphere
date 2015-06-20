@@ -1,25 +1,42 @@
 #include "minisphere.h"
 #include "api.h"
+#include "bytearray.h"
 
 #include "file.h"
 
-static duk_ret_t js_DoesFileExist   (duk_context* ctx);
-static duk_ret_t js_CreateDirectory (duk_context* ctx);
-static duk_ret_t js_RemoveDirectory (duk_context* ctx);
-static duk_ret_t js_RemoveFile      (duk_context* ctx);
-static duk_ret_t js_Rename          (duk_context* ctx);
-static duk_ret_t js_OpenFile        (duk_context* ctx);
-static duk_ret_t js_new_File        (duk_context* ctx);
-static duk_ret_t js_File_finalize   (duk_context* ctx);
-static duk_ret_t js_File_toString   (duk_context* ctx);
-static duk_ret_t js_File_getKey     (duk_context* ctx);
-static duk_ret_t js_File_getNumKeys (duk_context* ctx);
-static duk_ret_t js_File_close      (duk_context* ctx);
-static duk_ret_t js_File_flush      (duk_context* ctx);
-static duk_ret_t js_File_read       (duk_context* ctx);
-static duk_ret_t js_File_write      (duk_context* ctx);
+static duk_ret_t js_DoesFileExist    (duk_context* ctx);
+static duk_ret_t js_GetDirectoryList (duk_context* ctx);
+static duk_ret_t js_GetFileList      (duk_context* ctx);
+static duk_ret_t js_CreateDirectory  (duk_context* ctx);
+static duk_ret_t js_HashRawFile      (duk_context* ctx);
+static duk_ret_t js_RemoveDirectory  (duk_context* ctx);
+static duk_ret_t js_RemoveFile       (duk_context* ctx);
+static duk_ret_t js_Rename           (duk_context* ctx);
 
-struct file
+static duk_ret_t js_OpenFile         (duk_context* ctx);
+static duk_ret_t js_new_File         (duk_context* ctx);
+static duk_ret_t js_File_finalize    (duk_context* ctx);
+static duk_ret_t js_File_toString    (duk_context* ctx);
+static duk_ret_t js_File_getKey      (duk_context* ctx);
+static duk_ret_t js_File_getNumKeys  (duk_context* ctx);
+static duk_ret_t js_File_close       (duk_context* ctx);
+static duk_ret_t js_File_flush       (duk_context* ctx);
+static duk_ret_t js_File_read        (duk_context* ctx);
+static duk_ret_t js_File_write       (duk_context* ctx);
+
+static duk_ret_t js_OpenRawFile(duk_context* ctx);
+static duk_ret_t js_new_RawFile(duk_context* ctx);
+static duk_ret_t js_RawFile_finalize(duk_context* ctx);
+static duk_ret_t js_RawFile_toString(duk_context* ctx);
+static duk_ret_t js_RawFile_get_position(duk_context* ctx);
+static duk_ret_t js_RawFile_set_position(duk_context* ctx);
+static duk_ret_t js_RawFile_get_size(duk_context* ctx);
+static duk_ret_t js_RawFile_close(duk_context* ctx);
+static duk_ret_t js_RawFile_read(duk_context* ctx);
+static duk_ret_t js_RawFile_readString(duk_context* ctx);
+static duk_ret_t js_RawFile_write(duk_context* ctx);
+
+struct kv_file
 {
 	unsigned int    id;
 	ALLEGRO_CONFIG* conf;
@@ -29,15 +46,15 @@ struct file
 
 static unsigned int s_next_file_id = 0;
 
-file_t*
+kv_file_t*
 open_file(const char* filename)
 {
-	file_t*       file;
+	kv_file_t*    file;
 	ALLEGRO_FILE* memfile = NULL;
 	void*         slurp;
 	size_t        slurp_size;
 	
-	if (!(file = calloc(1, sizeof(file_t))))
+	if (!(file = calloc(1, sizeof(kv_file_t))))
 		goto on_error;
 	if (slurp = sfs_fslurp(g_fs, filename, "save", &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
@@ -68,7 +85,7 @@ on_error:
 }
 
 void
-close_file(file_t* file)
+close_file(kv_file_t* file)
 {
 	if (file == NULL)
 		return;
@@ -81,7 +98,7 @@ close_file(file_t* file)
 }
 
 int
-get_record_count(file_t* file)
+get_record_count(kv_file_t* file)
 {
 	ALLEGRO_CONFIG_ENTRY* iter;
 	const char*           key;
@@ -97,7 +114,7 @@ get_record_count(file_t* file)
 }
 
 const char*
-get_record_name(file_t* file, int index)
+get_record_name(kv_file_t* file, int index)
 {
 	ALLEGRO_CONFIG_ENTRY* iter;
 	const char*           name;
@@ -115,7 +132,7 @@ get_record_name(file_t* file, int index)
 }
 
 bool
-read_bool_rec(file_t* file, const char* key, bool def_value)
+read_bool_rec(kv_file_t* file, const char* key, bool def_value)
 {
 	const char* string;
 	bool        value;
@@ -126,7 +143,7 @@ read_bool_rec(file_t* file, const char* key, bool def_value)
 }
 
 double
-read_number_rec(file_t* file, const char* key, double def_value)
+read_number_rec(kv_file_t* file, const char* key, double def_value)
 {
 	char        def_string[500];
 	const char* string;
@@ -139,7 +156,7 @@ read_number_rec(file_t* file, const char* key, double def_value)
 }
 
 const char*
-read_string_rec(file_t* file, const char* key, const char* def_value)
+read_string_rec(kv_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
@@ -151,7 +168,7 @@ read_string_rec(file_t* file, const char* key, const char* def_value)
 }
 
 bool
-save_file(file_t* file)
+save_file(kv_file_t* file)
 {
 	void*         buffer = NULL;
 	size_t        file_size;
@@ -188,7 +205,7 @@ on_error:
 }
 
 void
-write_bool_rec(file_t* file, const char* key, bool value)
+write_bool_rec(kv_file_t* file, const char* key, bool value)
 {
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
@@ -199,7 +216,7 @@ write_bool_rec(file_t* file, const char* key, bool value)
 }
 
 void
-write_number_rec(file_t* file, const char* key, double value)
+write_number_rec(kv_file_t* file, const char* key, double value)
 {
 	char string[500];
 
@@ -211,7 +228,7 @@ write_number_rec(file_t* file, const char* key, double value)
 }
 
 void
-write_string_rec(file_t* file, const char* key, const char* value)
+write_string_rec(kv_file_t* file, const char* key, const char* value)
 {
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
@@ -222,9 +239,12 @@ write_string_rec(file_t* file, const char* key, const char* value)
 void
 init_file_api(void)
 {
-	// File API function
+	// File API functions
 	register_api_function(g_duk, NULL, "DoesFileExist", js_DoesFileExist);
+	register_api_function(g_duk, NULL, "GetDirectoryList", js_GetDirectoryList);
+	register_api_function(g_duk, NULL, "GetFileList", js_GetFileList);
 	register_api_function(g_duk, NULL, "CreateDirectory", js_CreateDirectory);
+	register_api_function(g_duk, NULL, "HashRawFile", js_HashRawFile);
 	register_api_function(g_duk, NULL, "RemoveDirectory", js_RemoveDirectory);
 	register_api_function(g_duk, NULL, "RemoveFile", js_RemoveFile);
 	register_api_function(g_duk, NULL, "Rename", js_Rename);
@@ -239,6 +259,21 @@ init_file_api(void)
 	register_api_function(g_duk, "File", "flush", js_File_flush);
 	register_api_function(g_duk, "File", "read", js_File_read);
 	register_api_function(g_duk, "File", "write", js_File_write);
+
+	// RawFile object
+	register_api_function(g_duk, NULL, "OpenRawFile", js_OpenRawFile);
+	register_api_ctor(g_duk, "RawFile", js_new_RawFile, js_RawFile_finalize);
+	register_api_function(g_duk, "RawFile", "toString", js_RawFile_toString);
+	register_api_prop(g_duk, "RawFile", "length", js_RawFile_get_size, NULL);
+	register_api_prop(g_duk, "RawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
+	register_api_prop(g_duk, "RawFile", "size", js_RawFile_get_size, NULL);
+	register_api_function(g_duk, "RawFile", "getPosition", js_RawFile_get_position);
+	register_api_function(g_duk, "RawFile", "setPosition", js_RawFile_set_position);
+	register_api_function(g_duk, "RawFile", "getSize", js_RawFile_get_size);
+	register_api_function(g_duk, "RawFile", "close", js_RawFile_close);
+	register_api_function(g_duk, "RawFile", "read", js_RawFile_read);
+	register_api_function(g_duk, "RawFile", "readString", js_RawFile_readString);
+	register_api_function(g_duk, "RawFile", "write", js_RawFile_write);
 }
 
 static duk_ret_t
@@ -251,6 +286,52 @@ js_DoesFileExist(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetDirectoryList(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* dirname = n_args >= 1 ? duk_require_string(ctx, 0) : "";
+
+	vector_t*  list;
+	lstring_t* *p_filename;
+
+	iter_t iter;
+
+	list = list_filenames(g_fs, dirname, NULL, true);
+	duk_push_array(ctx);
+	iter = iterate_vector(list);
+	while (p_filename = next_vector_item(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		lstr_free(*p_filename);
+	}
+	free_vector(list);
+	return 1;
+}
+
+static duk_ret_t
+js_GetFileList(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* directory_name = n_args >= 1 ? duk_require_string(ctx, 0) : "save";
+
+	vector_t*  list;
+	lstring_t* *p_filename;
+
+	iter_t iter;
+
+	list = list_filenames(g_fs, directory_name, NULL, false);
+	duk_push_array(ctx);
+	iter = iterate_vector(list);
+	while (p_filename = next_vector_item(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		lstr_free(*p_filename);
+	}
+	free_vector(list);
+	return 1;
+}
+
+static duk_ret_t
 js_CreateDirectory(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
@@ -258,6 +339,21 @@ js_CreateDirectory(duk_context* ctx)
 	if (!sfs_mkdir(g_fs, name, "save"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): Failed to create directory '%s'", name);
 	return 0;
+}
+
+static duk_ret_t
+js_HashRawFile(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+
+	sfs_file_t* file;
+
+	file = sfs_fopen(g_fs, filename, "other", "rb");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Failed to open file '%s' for reading");
+	sfs_fclose(file);
+	// TODO: implement raw file hashing
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Function is not yet implemented");
 }
 
 static duk_ret_t
@@ -305,7 +401,7 @@ js_new_File(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 	
-	file_t* file;
+	kv_file_t* file;
 
 	if (!(file = open_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
@@ -316,7 +412,7 @@ js_new_File(duk_context* ctx)
 static duk_ret_t
 js_File_finalize(duk_context* ctx)
 {
-	file_t* file;
+	kv_file_t* file;
 
 	file = duk_require_sphere_obj(ctx, 0, "File");
 	close_file(file);
@@ -335,7 +431,7 @@ js_File_getKey(duk_context* ctx)
 {
 	int index = duk_require_int(ctx, 0);
 	
-	file_t*     file;
+	kv_file_t*  file;
 	const char* key;
 
 	duk_push_this(ctx);
@@ -353,8 +449,9 @@ js_File_getKey(duk_context* ctx)
 static duk_ret_t
 js_File_getNumKeys(duk_context* ctx)
 {
-	file_t* file;
 	int index = duk_require_int(ctx, 0);
+	
+	kv_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
@@ -368,7 +465,7 @@ js_File_getNumKeys(duk_context* ctx)
 static duk_ret_t
 js_File_flush(duk_context* ctx)
 {
-	file_t* file;
+	kv_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
@@ -382,7 +479,7 @@ js_File_flush(duk_context* ctx)
 static duk_ret_t
 js_File_close(duk_context* ctx)
 {
-	file_t* file;
+	kv_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
@@ -397,12 +494,12 @@ js_File_close(duk_context* ctx)
 static duk_ret_t
 js_File_read(duk_context* ctx)
 {
-	file_t* file;
 	const char* key = duk_to_string(ctx, 0);
 	
 	bool        def_bool;
 	double      def_num;
 	const char* def_string;
+	kv_file_t*  file;
 	const char* value;
 
 	duk_push_this(ctx);
@@ -431,8 +528,9 @@ js_File_read(duk_context* ctx)
 static duk_ret_t
 js_File_write(duk_context* ctx)
 {
-	file_t* file;
 	const char* key = duk_to_string(ctx, 0);
+	
+	kv_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
@@ -440,5 +538,205 @@ js_File_write(duk_context* ctx)
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has been closed");
 	write_string_rec(file, key, duk_to_string(ctx, 1));
+	return 0;
+}
+
+static duk_ret_t
+js_OpenRawFile(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	duk_require_string(ctx, 0);
+	if (n_args >= 2) duk_require_boolean(ctx, 1);
+
+	js_new_RawFile(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_new_RawFile(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* filename = duk_require_string(ctx, 0);
+	bool writable = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
+
+	sfs_file_t* file;
+
+	file = sfs_fopen(g_fs, filename, "other", writable ? "w+b" : "rb");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): Failed to open file '%s' for %s",
+			filename, writable ? "writing" : "reading");
+	duk_push_sphere_obj(ctx, "RawFile", file);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_finalize(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	file = duk_require_sphere_obj(ctx, 0, "RawFile");
+	if (file != NULL) sfs_fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object rawfile]");
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_get_position(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has been closed");
+	duk_push_int(ctx, sfs_ftell(file));
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_set_position(duk_context* ctx)
+{
+	int new_pos = duk_require_int(ctx, 0);
+
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has been closed");
+	if (!sfs_fseek(file, new_pos, SEEK_SET))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - Failed to set read/write position");
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_get_size(duk_context* ctx)
+{
+	sfs_file_t* file;
+	long  file_pos;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size - File has been closed");
+	file_pos = sfs_ftell(file);
+	sfs_fseek(file, 0, SEEK_END);
+	duk_push_int(ctx, sfs_ftell(file));
+	sfs_fseek(file, file_pos, SEEK_SET);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_close(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_push_pointer(ctx, NULL);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has been closed");
+	sfs_fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_read(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	bytearray_t* array;
+	sfs_file_t*        file;
+	long         pos;
+	void*        read_buffer;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has been closed");
+	if (n_args < 1) {  // if no arguments, read entire file back to front
+		pos = sfs_ftell(file);
+		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
+		sfs_fseek(file, 0, SEEK_SET);
+	}
+	if (num_bytes <= 0 || num_bytes > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Read size out of range (%u)", num_bytes);
+	if (!(read_buffer = malloc(num_bytes)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
+	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
+	if (n_args < 1)  // reset file position after whole-file read
+		sfs_fseek(file, pos, SEEK_SET);
+	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array");
+	duk_push_sphere_bytearray(ctx, array);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_readString(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	sfs_file_t* file;
+	long  pos;
+	void* read_buffer;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has been closed");
+	if (n_args < 1) {  // if no arguments, read entire file back to front
+		pos = sfs_ftell(file);
+		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
+		sfs_fseek(file, 0, SEEK_SET);
+	}
+	if (num_bytes <= 0 || num_bytes > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Read size out of range (%i)", num_bytes);
+	if (!(read_buffer = malloc(num_bytes)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
+	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
+	if (n_args < 1)  // reset file position after whole-file read
+		sfs_fseek(file, pos, SEEK_SET);
+	duk_push_lstring(ctx, read_buffer, num_bytes);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_write(duk_context* ctx)
+{
+	bytearray_t* array;
+	const void*  data;
+	sfs_file_t*  file;
+	size_t       write_size;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): File has been closed");
+	if (duk_is_string(ctx, 0))
+		data = duk_get_lstring(ctx, 0, &write_size);
+	else {
+		array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+		data = get_bytearray_buffer(array);
+		write_size = get_bytearray_size(array);
+	}
+	if (sfs_fwrite(data, 1, write_size, file) != write_size)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): Write error. The file may be read-only.");
 	return 0;
 }

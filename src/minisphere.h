@@ -58,7 +58,7 @@ extern sandbox_t*           g_fs;
 extern ALLEGRO_PATH*        g_game_path;
 extern char*                g_last_game_path;
 extern float                g_scale_x, g_scale_y;
-extern file_t*              g_sys_conf;
+extern kv_file_t*           g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
 

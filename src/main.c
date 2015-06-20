@@ -14,7 +14,6 @@
 #include "map_engine.h"
 #include "particles.h"
 #include "primitives.h"
-#include "rawfile.h"
 #include "rng.h"
 #include "shader.h"
 #include "sockets.h"
@@ -49,7 +48,7 @@ ALLEGRO_PATH*        g_game_path = NULL;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
 float                g_scale_y = 1.0;
-file_t*              g_sys_conf;
+kv_file_t*           g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
@@ -650,7 +649,6 @@ initialize_engine(void)
 	init_map_engine_api(g_duk);
 	init_particle_api();
 	init_primitives_api();
-	init_rawfile_api();
 	init_rng_api();
 	init_shader_api();
 	init_sockets_api();

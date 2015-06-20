@@ -23,7 +23,6 @@ msphere_sources = [
 	"particles.c",
 	"persons.c",
 	"primitives.c",
-	"rawfile.c",
 	"rng.c",
 	"script.c",
 	"shader.c",
