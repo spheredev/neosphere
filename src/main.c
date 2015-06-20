@@ -127,7 +127,8 @@ main(int argc, char* argv[])
 	else {
 		// more than one argument, perform full commandline parsing
 		for (i = 1; i < argc; ++i) {
-			if ((strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "--game") == 0)
+			if ((strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "--game") == 0
+				|| strcmp(argv[i], "-package") == 0)
 				&& i < argc - 1)
 			{
 				al_destroy_path(g_game_path);
