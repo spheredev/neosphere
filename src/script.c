@@ -37,6 +37,8 @@ try_evaluate_file(const char* path)
 	return true;
 
 on_error:
+	if (!duk_is_error(g_duk, -1))
+		duk_push_error_object_raw(g_duk, DUK_ERR_ERROR, "", 0, "game.sgm: Script '%s' not found");
 	return false;
 }
 
@@ -50,9 +52,9 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
 	
-	// this wouldn't be necessary if Duktape duk_get_heapptr() would give us a strong reference, but alas,
-	// we're stuck with this ugliness where we store the compiled function in the global stash so it doesn't
-	// get eaten by the garbage collector.
+	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
+	// alas, we're stuck with this ugliness where the compiled function is stored in the
+	// global stash so it doesn't get eaten by the garbage collector.
 	duk_push_global_stash(g_duk);
 	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
 		duk_pop(g_duk);
@@ -86,10 +88,7 @@ free_script(script_t* script)
 	
 	// unstash the compiled function, it's now safe to GC
 	duk_push_global_stash(g_duk);
-	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
-		duk_pop(g_duk);
-		duk_push_array(g_duk);
-	}
+	duk_get_prop_string(g_duk, -1, "scripts");
 	duk_del_prop_index(g_duk, -1, script->id);
 	duk_pop_2(g_duk);
 
@@ -108,20 +107,15 @@ run_script(script_t* script, bool allow_reentry)
 		return;  // do nothing if an instance is already running
 	was_in_use = script->is_in_use;
 
-	// we need to ref the script in case it gets freed during execution,
-	// as the owner may be destroyed in the process.
+	// ref the script in case it gets freed during execution. the owner
+	// may be destroyed in the process and we don't want to crash.
 	ref_script(script);
 	
-	// retrieve the compiled script from the stash (so ugly...)
-	duk_push_global_stash(g_duk);
-	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
-		duk_pop(g_duk);
-		duk_push_array(g_duk);
-	}
-	duk_get_prop_index(g_duk, -1, script->id);
-	
-	// execute the script
+	// get the compiled script from the stash and run it
 	script->is_in_use = true;
+	duk_push_global_stash(g_duk);
+	duk_get_prop_string(g_duk, -1, "scripts");
+	duk_get_prop_index(g_duk, -1, script->id);
 	duk_call(g_duk, 0);
 	duk_pop_3(g_duk);
 	script->is_in_use = was_in_use;
@@ -148,11 +142,9 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 		lstr_free(codestring);
 	}
 	else if (duk_is_null_or_undefined(ctx, index))
-		return 0;
-	else {
-		duk_pop_2(ctx);
+		return NULL;
+	else
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Script must be string, function, or null/undefined");
-	}
 	return script;
 }
 
