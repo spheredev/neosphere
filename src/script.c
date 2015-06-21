@@ -11,11 +11,34 @@ struct script
 
 static script_t* script_from_js_function (void* heapptr);
 
-static int s_next_id = 0;
+static bool s_have_coffeescript = false;
+static int  s_next_id = 0;
+
+void
+initialize_scripts(void)
+{
+	duk_push_global_stash(g_duk);
+	duk_push_array(g_duk);
+	duk_put_prop_string(g_duk, -2, "scripts");
+	duk_pop(g_duk);
+
+	// load CoffeeScript compiler if it exists
+	console_log(1, "Initializing CoffeeScript\n");
+	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
+		if (!try_evaluate_file("~sys/coffee-script.js"))
+			duk_throw(g_duk);
+		s_have_coffeescript = true;
+	}
+	else {
+		console_log(1, "~sys/coffee-script.js not found");
+		s_have_coffeescript = false;
+	}
+}
 
 bool
 try_evaluate_file(const char* path)
 {
+	const char* extension;
 	sfs_file_t* file = NULL;
 	lstring_t*  source;
 	char*       slurp;
@@ -26,9 +49,28 @@ try_evaluate_file(const char* path)
 		goto on_error;
 	source = lstr_from_buf(slurp, size);
 	free(slurp);
+
+	// is it a CoffeeScript file?
+	extension = strrchr(path, '.');
+	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
+		if (!s_have_coffeescript) {
+			duk_push_error_object(g_duk, DUK_ERR_ERROR,
+				"No CoffeeScript support, unable to compile '%s'\n", path);
+			goto on_error;
+		}
+		duk_push_global_object(g_duk);
+		duk_get_prop_string(g_duk, -1, "CoffeeScript");
+		duk_get_prop_string(g_duk, -1, "compile");
+		duk_push_lstring_t(g_duk, source);
+		if (duk_pcall(g_duk, 1) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_remove(g_duk, -2);
+		duk_remove(g_duk, -2);
+	}
+	else
+		duk_push_lstring_t(g_duk, source);
 	
 	// ready for launch in T-10...9...*munch*
-	duk_push_lstring_t(g_duk, source);
 	duk_push_string(g_duk, path);
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 		goto on_error;
@@ -38,7 +80,7 @@ try_evaluate_file(const char* path)
 
 on_error:
 	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object_raw(g_duk, DUK_ERR_ERROR, "", 0, "game.sgm: Script '%s' not found");
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "Script '%s' not found\n", path);
 	return false;
 }
 
@@ -52,24 +94,19 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
 	
-	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
-	// alas, we're stuck with this ugliness where the compiled function is stored in the
-	// global stash so it doesn't get eaten by the garbage collector.
+	// duk_get_heapptr() doesn't give us a strong reference, so we stash
+	// the compiled script to avoid garbage collection mishaps.
 	duk_push_global_stash(g_duk);
-	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
-		duk_pop(g_duk);
-		duk_push_array(g_duk); duk_put_prop_string(g_duk, -2, "scripts");
-		duk_get_prop_string(g_duk, -1, "scripts");
-	}
-	script->id = s_next_id++;
+	duk_get_prop_string(g_duk, -1, "scripts");
 	duk_push_lstring_t(g_duk, source);
 	va_start(ap, fmt_name);
 	duk_push_vsprintf(g_duk, fmt_name, ap);
 	va_end(ap);
 	duk_compile(g_duk, 0x0);
-	duk_put_prop_index(g_duk, -2, script->id);
+	duk_put_prop_index(g_duk, -2, s_next_id);
 	duk_pop_2(g_duk);
 
+	script->id = s_next_id++;
 	return ref_script(script);
 }
 

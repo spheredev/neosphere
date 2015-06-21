@@ -233,8 +233,8 @@ main(int argc, char* argv[])
 	attach_input_display();
 	load_key_map();
 	
-	// not sure why this is necessary, but without it, you often get a black screen
-	// on startup. it seems Allegro forgets to set up its shaders or something.
+	// not sure why this is necessary, but without it, you get a black screen on
+	// startup. it seems Allegro forgets to set up its shaders or something.
 	al_use_shader(NULL);
 
 	// attempt to locate and load system font
@@ -264,7 +264,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	console_log(0, "\nCalling game()\n");
+	console_log(0, "Calling game()\n\n");
 	if (!try_evaluate_file(get_sgm_script(g_fs)))
 		goto on_js_error;
 	duk_pop(g_duk);
@@ -280,7 +280,7 @@ main(int argc, char* argv[])
 	duk_get_prop_string(g_duk, -1, "game");
 	if (!duk_is_callable(g_duk, -1)) {
 		duk_push_error_object_raw(g_duk, DUK_ERR_SYNTAX_ERROR,
-			get_sgm_script(g_fs), 0, "game() not defined");
+			get_sgm_script(g_fs), 0, "game() is not defined");
 		goto on_js_error;
 	}
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
@@ -621,8 +621,9 @@ initialize_engine(void)
 	console_log(0, "Creating Duktape context\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	
+
 	// initialize Sphere API
+	initialize_scripts();
 	initialize_api(g_duk);
 	
 	return true;
