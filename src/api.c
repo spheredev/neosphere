@@ -417,35 +417,58 @@ duk_handle_require(duk_context* ctx)
 {
 	const char* id = duk_get_string(ctx, 0);
 
-	char        filename[SPHERE_PATH_MAX];
-	sfs_file_t* file;
-	long        file_size;
+	vector_t*   filenames;
+	lstring_t*  filename;
+	size_t      file_size;
+	bool        is_cs;
 	bool        is_sys_module = false;
 	char*       source;
 
+	iter_t     iter;
+	lstring_t* *p;
+
 	if (id[0] == '~')
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefix not allowed");
-	if (snprintf(filename, SPHERE_PATH_MAX, "%s.js", id) >= SPHERE_PATH_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
-	if (!(file = sfs_fopen(g_fs, filename, "modules", "rb"))) {
-		is_sys_module = true;
-		if (snprintf(filename, SPHERE_PATH_MAX, "~sys/modules/%s.js", id) >= SPHERE_PATH_MAX)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "require(): Module path is too long (%s)", id);
-		if (!(file = sfs_fopen(g_fs, filename, "modules", "rb")))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to open module script '%s'", filename);
+	filenames = new_vector(sizeof(lstring_t*));
+	filename = lstr_new("%s.js", id); push_back_vector(filenames, &filename);
+	filename = lstr_new("%s.coffee", id); push_back_vector(filenames, &filename);
+	filename = lstr_new("~sys/modules/%s.js", id); push_back_vector(filenames, &filename);
+	filename = lstr_new("~sys/modules/%s.coffee", id); push_back_vector(filenames, &filename);
+	filename = NULL;
+	iter = iterate_vector(filenames);
+	while (p = next_vector_item(&iter)) {
+		if (sfs_fexist(g_fs, lstr_cstr(*p), "modules"))
+			filename = *p;
+		else
+			lstr_free(*p);
 	}
-	file_size = (sfs_fseek(file, 0, SFS_SEEK_END), sfs_ftell(file));
-	sfs_fseek(file, 0, SFS_SEEK_SET);
-	if (!(source = malloc(file_size))) {
-		sfs_fclose(file);
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to allocate source buffer for module");
+	free_vector(filenames);
+	if (filename == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "require(): '%s' module not found", id);
+	is_cs = strcasecmp(strrchr(lstr_cstr(filename), '.'), ".coffee") == 0;
+	is_sys_module = strstr(lstr_cstr(filename), "~sys/") == lstr_cstr(filename);
+	if (!(source = sfs_fslurp(g_fs, lstr_cstr(filename), "modules", &file_size)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to read script '%s'", lstr_cstr(filename));
+	if (!is_cs)
+		duk_push_lstring(ctx, source, file_size);
+	else {
+		duk_push_global_object(ctx);
+		if (!duk_get_prop_string(ctx, -1, "CoffeeScript"))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): CoffeeScript compiler missing (%s)", lstr_cstr(filename));
+		duk_get_prop_string(ctx, -1, "compile");
+		duk_push_lstring(ctx, source, file_size);
+		duk_push_object(ctx);
+		duk_push_string(ctx, lstr_cstr(filename));
+		duk_put_prop_string(ctx, -2, "filename");
+		if (duk_pcall(ctx, 2) != DUK_EXEC_SUCCESS)
+			duk_throw(ctx);
+		duk_remove(ctx, -2);
+		duk_remove(ctx, -2);
 	}
-	sfs_fread(source, 1, file_size, file);
-	duk_push_lstring(ctx, source, file_size);
 	free(source);
-	console_log(1, "script: Loaded %sCommonJS module `%s`\n",
-		is_sys_module ? "" : "local ", id);
+	console_log(1, "script: Loaded CommonJS module `%s`\n");
 	console_log(2, "  Path: %s\n", filename);
+	lstr_free(filename);
 	return 1;
 }
 
