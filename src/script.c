@@ -11,7 +11,6 @@ struct script
 
 static script_t* script_from_js_function (void* heapptr);
 
-static bool s_have_coffeescript;
 static int  s_next_script_id = 0;
 
 void
@@ -24,7 +23,6 @@ initialize_scripts(void)
 
 	// load the CoffeeScript compiler into the JS context, if it exists
 	console_log(1, "Initializing CoffeeScript\n");
-	s_have_coffeescript = false;
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
 		if (!try_evaluate_file("~sys/coffee-script.js")) {
 			console_log(1, "  Error evaluating compiler script");
@@ -32,9 +30,7 @@ initialize_scripts(void)
 			duk_pop(g_duk);
 		}
 		duk_push_global_object(g_duk);
-		if (duk_get_prop_string(g_duk, -1, "CoffeeScript"))
-			s_have_coffeescript = true;
-		else
+		if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
 			console_log(1, "'CoffeeScript' not defined");
 		duk_pop(g_duk);
 	}
@@ -61,13 +57,9 @@ try_evaluate_file(const char* path)
 	// now, Monster drinks on the other hand...
 	extension = strrchr(path, '.');
 	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
-		if (!s_have_coffeescript) {
-			duk_push_error_object(g_duk, DUK_ERR_ERROR,
-				"No CoffeeScript compiler, unable to compile '%s'\n", path);
-			goto on_error;
-		}
 		duk_push_global_object(g_duk);
-		duk_get_prop_string(g_duk, -1, "CoffeeScript");
+		if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
+			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "CoffeeScript compiler is missing (%s)", path);
 		duk_get_prop_string(g_duk, -1, "compile");
 		duk_push_lstring_t(g_duk, source);
 		duk_push_object(g_duk);

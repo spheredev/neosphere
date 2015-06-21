@@ -1,9 +1,10 @@
 minisphere Changelog
 ====================
 
-v1.3.3 - TBD
+v1.4.0 - June 21, 2015
 ------------
 
+* CoffeeScript support!
 * The engine and all dependencies have been recompiled optimizing for speed.
   This slightly increases the size of the engine but greatly improves
   performance for CPU-bound tasks such as ColorMatrix application.

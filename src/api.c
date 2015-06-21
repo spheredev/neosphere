@@ -31,9 +31,10 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-map-engine",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
-	"sphere-spherefs",
+	"sphere-coffeescript",
 	"sphere-commonjs",
 	"sphere-galileo",
+	"sphere-spherefs",
 	"minisphere-async-api",
 	"minisphere-new-sockets",
 	"minisphere-rng-object",
@@ -454,7 +455,7 @@ duk_handle_require(duk_context* ctx)
 	else {
 		duk_push_global_object(ctx);
 		if (!duk_get_prop_string(ctx, -1, "CoffeeScript"))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): CoffeeScript compiler missing (%s)", lstr_cstr(filename));
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): CoffeeScript compiler is missing (%s)", lstr_cstr(filename));
 		duk_get_prop_string(ctx, -1, "compile");
 		duk_push_lstring(ctx, source, file_size);
 		duk_push_object(ctx);
@@ -466,7 +467,7 @@ duk_handle_require(duk_context* ctx)
 		duk_remove(ctx, -2);
 	}
 	free(source);
-	console_log(1, "script: Loaded CommonJS module `%s`\n");
+	console_log(1, "script: Loaded CommonJS module `%s`\n", id);
 	console_log(2, "  Path: %s\n", filename);
 	lstr_free(filename);
 	return 1;
