@@ -132,7 +132,7 @@ js_RNG_name(duk_context* ctx)
 	int length = n_args >= 1 ? duk_require_number(ctx, 0) : 10;
 
 	if (length < 1 || length > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): Length must be in [1-255] range (%i)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): Length must be between 1-255 inclusive (%i)", length);
 	duk_push_string(ctx, rng_name(length));
 	return 1;
 }

@@ -11,8 +11,8 @@ struct script
 
 static script_t* script_from_js_function (void* heapptr);
 
-static bool s_have_coffeescript = false;
-static int  s_next_id = 0;
+static bool s_have_coffeescript;
+static int  s_next_script_id = 0;
 
 void
 initialize_scripts(void)
@@ -22,17 +22,24 @@ initialize_scripts(void)
 	duk_put_prop_string(g_duk, -2, "scripts");
 	duk_pop(g_duk);
 
-	// load CoffeeScript compiler if it exists
+	// load the CoffeeScript compiler into the JS context, if it exists
 	console_log(1, "Initializing CoffeeScript\n");
+	s_have_coffeescript = false;
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
-		if (!try_evaluate_file("~sys/coffee-script.js"))
-			duk_throw(g_duk);
-		s_have_coffeescript = true;
+		if (!try_evaluate_file("~sys/coffee-script.js")) {
+			console_log(1, "  Error evaluating compiler script");
+			console_log(1, "  %s", duk_to_string(g_duk, -1));
+			duk_pop(g_duk);
+		}
+		duk_push_global_object(g_duk);
+		if (duk_get_prop_string(g_duk, -1, "CoffeeScript"))
+			s_have_coffeescript = true;
+		else
+			console_log(1, "'CoffeeScript' not defined");
+		duk_pop(g_duk);
 	}
-	else {
-		console_log(1, "~sys/coffee-script.js not found");
-		s_have_coffeescript = false;
-	}
+	else
+		console_log(1, "'~sys/coffee-script.js' missing");
 }
 
 bool
@@ -50,19 +57,23 @@ try_evaluate_file(const char* path)
 	source = lstr_from_buf(slurp, size);
 	free(slurp);
 
-	// is it a CoffeeScript file?
+	// is it a CoffeeScript file? you know, I don't even like coffee.
+	// now, Monster drinks on the other hand...
 	extension = strrchr(path, '.');
 	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
 		if (!s_have_coffeescript) {
 			duk_push_error_object(g_duk, DUK_ERR_ERROR,
-				"No CoffeeScript support, unable to compile '%s'\n", path);
+				"No CoffeeScript compiler, unable to compile '%s'\n", path);
 			goto on_error;
 		}
 		duk_push_global_object(g_duk);
 		duk_get_prop_string(g_duk, -1, "CoffeeScript");
 		duk_get_prop_string(g_duk, -1, "compile");
 		duk_push_lstring_t(g_duk, source);
-		if (duk_pcall(g_duk, 1) != DUK_EXEC_SUCCESS)
+		duk_push_object(g_duk);
+		duk_push_string(g_duk, path);
+		duk_put_prop_string(g_duk, -2, "filename");
+		if (duk_pcall(g_duk, 2) != DUK_EXEC_SUCCESS)
 			goto on_error;
 		duk_remove(g_duk, -2);
 		duk_remove(g_duk, -2);
@@ -94,8 +105,9 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
 	
-	// duk_get_heapptr() doesn't give us a strong reference, so we stash
-	// the compiled script to avoid garbage collection mishaps.
+	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
+	// instead we get this ugliness where the compiled function is saved in the global stash
+	// so it doesn't get eaten by the garbage collector.
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "scripts");
 	duk_push_lstring_t(g_duk, source);
@@ -103,10 +115,10 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	duk_push_vsprintf(g_duk, fmt_name, ap);
 	va_end(ap);
 	duk_compile(g_duk, 0x0);
-	duk_put_prop_index(g_duk, -2, s_next_id);
+	duk_put_prop_index(g_duk, -2, s_next_script_id);
 	duk_pop_2(g_duk);
 
-	script->id = s_next_id++;
+	script->id = s_next_script_id++;
 	return ref_script(script);
 }
 
@@ -145,10 +157,10 @@ run_script(script_t* script, bool allow_reentry)
 	was_in_use = script->is_in_use;
 
 	// ref the script in case it gets freed during execution. the owner
-	// may be destroyed in the process and we don't want to crash.
+	// may be destroyed in the process and we don't want to end up crashing.
 	ref_script(script);
 	
-	// get the compiled script from the stash and run it
+	// get the compiled script from the stash and run it. so dumb...
 	script->is_in_use = true;
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "scripts");
@@ -181,7 +193,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else if (duk_is_null_or_undefined(ctx, index))
 		return NULL;
 	else
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Script must be string, function, or null/undefined");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Script must be a string, function, or null/undefined");
 	return script;
 }
 
@@ -194,15 +206,11 @@ script_from_js_function(void* heapptr)
 		return NULL;
 
 	duk_push_global_stash(g_duk);
-	if (!duk_get_prop_string(g_duk, -1, "scripts")) {
-		duk_pop(g_duk);
-		duk_push_array(g_duk); duk_put_prop_string(g_duk, -2, "scripts");
-		duk_get_prop_string(g_duk, -1, "scripts");
-	}
-	script->id = s_next_id++;
+	duk_get_prop_string(g_duk, -1, "scripts");
 	duk_push_heapptr(g_duk, heapptr);
-	duk_put_prop_index(g_duk, -2, script->id);
+	duk_put_prop_index(g_duk, -2, s_next_script_id);
 	duk_pop_2(g_duk);
 
+	script->id = s_next_script_id++;
 	return ref_script(script);
 }

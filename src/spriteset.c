@@ -136,8 +136,9 @@ spriteset_t*
 load_spriteset(const char* path)
 {
 	// HERE BE DRAGONS!
-	// the Sphere .rss spriteset format is a nightmare; this function ended up being way
-	// more massive than it has any right to be.
+	// the Sphere .rss spriteset format is a nightmare. there are 3 different versions
+	// and RSSv2 is the worst, requiring 2 passes to load properly. as a result this
+	// function ended up being way more massive than it has any right to be.
 	
 	const char* const def_dir_names[8] = {
 		"north", "northeast", "east", "southeast",
