@@ -1,26 +1,12 @@
 #include "minisphere.h"
-
 #include "api.h"
-#include "animation.h"
 #include "async.h"
-#include "bytearray.h"
-#include "color.h"
-#include "file.h"
-#include "font.h"
 #include "galileo.h"
-#include "image.h"
 #include "input.h"
-#include "logger.h"
 #include "map_engine.h"
-#include "particles.h"
-#include "primitives.h"
 #include "rng.h"
-#include "shader.h"
-#include "sockets.h"
 #include "sound.h"
 #include "spriteset.h"
-#include "surface.h"
-#include "windowstyle.h"
 
 // enable Windows visual styles (MSVC)
 #ifdef _MSC_VER
@@ -631,31 +617,14 @@ initialize_engine(void)
 	initialize_map_engine();
 	initialize_sound();
 
-	// initialize JavaScript API
+	// initialize Duktape
 	console_log(0, "Creating Duktape context\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
+	
+	// initialize Sphere API
 	initialize_api(g_duk);
-	init_animation_api();
-	init_async_api();
-	init_bytearray_api();
-	init_color_api();
-	init_file_api();
-	init_font_api(g_duk);
-	init_galileo_api();
-	init_image_api(g_duk);
-	init_input_api();
-	init_logging_api();
-	init_map_engine_api(g_duk);
-	init_particle_api();
-	init_primitives_api();
-	init_rng_api();
-	init_shader_api();
-	init_sockets_api();
-	init_sound_api();
-	init_spriteset_api(g_duk);
-	init_surface_api();
-	init_windowstyle_api();
+	
 	return true;
 
 on_error:

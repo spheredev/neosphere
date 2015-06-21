@@ -1,8 +1,26 @@
 #include "minisphere.h"
-#include "api.h"
+#include "animation.h"
+#include "async.h"
+#include "bytearray.h"
 #include "color.h"
-#include "spk.h"
-#include "vector.h"
+#include "file.h"
+#include "font.h"
+#include "galileo.h"
+#include "image.h"
+#include "input.h"
+#include "logger.h"
+#include "map_engine.h"
+#include "particles.h"
+#include "primitives.h"
+#include "rng.h"
+#include "shader.h"
+#include "sockets.h"
+#include "sound.h"
+#include "spriteset.h"
+#include "surface.h"
+#include "windowstyle.h"
+
+#include "api.h"
 
 static double const SPHERE_API_VERSION = 2.0;
 
@@ -69,7 +87,7 @@ initialize_api(duk_context* ctx)
 
 	int i;
 
-	console_log(0, "Initializing Sphere API\n");
+	console_log(1, "Initializing Sphere API\n");
 
 	s_user_agent = lstr_new("v%.1f (%s)", SPHERE_API_VERSION, ENGINE_NAME);
 	console_log(0, "  %s\n", lstr_cstr(s_user_agent));
@@ -93,6 +111,31 @@ initialize_api(duk_context* ctx)
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
 	
+	// set up RequireScript() inclusion tracking table
+	duk_push_global_stash(ctx);
+	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
+	duk_pop(ctx);
+
+	// register module search callback
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_push_c_function(ctx, duk_handle_require, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "modSearch");
+	duk_pop_2(ctx);
+
+	// register error callback (adds filename and line number to duk_require_xxx() errors)
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_push_c_function(ctx, duk_handle_create_error, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "errCreate");
+	duk_pop_2(ctx);
+
+	// create prototype stash (allows shadowing of constructors)
+	duk_push_global_stash(ctx);
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "prototypes");
+	duk_pop(ctx);
+
 	// register core API functions
 	register_api_function(ctx, NULL, "GetVersion", js_GetVersion);
 	register_api_function(ctx, NULL, "GetVersionString", js_GetVersionString);
@@ -124,31 +167,28 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "Print", js_Print);
 	register_api_function(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_function(ctx, NULL, "UnskipFrame", js_UnskipFrame);
-	
-	// set up RequireScript() inclusion tracking table
-	duk_push_global_stash(ctx);
-	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
-	duk_pop(ctx);
 
-	// create prototype stash (allows shadowing of constructors)
-	duk_push_global_stash(ctx);
-	duk_push_object(ctx);
-	duk_put_prop_string(ctx, -2, "prototypes");
-	duk_pop(ctx);
-
-	// register module search callback
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_push_c_function(ctx, duk_handle_require, DUK_VARARGS);
-	duk_put_prop_string(ctx, -2, "modSearch");
-	duk_pop_2(ctx);
-
-	// register error callback (adds filename and line number to duk_require_xxx() errors)
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_push_c_function(ctx, duk_handle_create_error, DUK_VARARGS);
-	duk_put_prop_string(ctx, -2, "errCreate");
-	duk_pop_2(ctx);
+	// initialize subsystem APIs
+	init_animation_api();
+	init_async_api();
+	init_bytearray_api();
+	init_color_api();
+	init_file_api();
+	init_font_api(g_duk);
+	init_galileo_api();
+	init_image_api(g_duk);
+	init_input_api();
+	init_logging_api();
+	init_map_engine_api(g_duk);
+	init_particle_api();
+	init_primitives_api();
+	init_rng_api();
+	init_shader_api();
+	init_sockets_api();
+	init_sound_api();
+	init_spriteset_api(g_duk);
+	init_surface_api();
+	init_windowstyle_api();
 }
 
 void

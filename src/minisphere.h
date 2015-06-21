@@ -28,8 +28,8 @@
 #include <zlib.h>
 #include "duktape.h"
 #include "dyad.h"
-#include "spherefs.h"
 #include "console.h"
+#include "spherefs.h"
 #include "file.h"
 #include "font.h"
 #include "geometry.h"
@@ -37,6 +37,7 @@
 #include "mt19937ar.h"
 #include "script.h"
 #include "utility.h"
+#include "vector.h"
 
 #define SPHERE_PATH_MAX 1024
 
