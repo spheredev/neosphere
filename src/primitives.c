@@ -157,14 +157,14 @@ js_GradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_Line(duk_context* ctx)
 {
-	int x1 = duk_require_int(ctx, 0);
-	int y1 = duk_require_int(ctx, 1);
-	int x2 = duk_require_int(ctx, 2);
-	int y2 = duk_require_int(ctx, 3);
+	float x1 = duk_require_int(ctx, 0) + 0.5;
+	float y1 = duk_require_int(ctx, 1) + 0.5;
+	float x2 = duk_require_int(ctx, 2) + 0.5;
+	float y2 = duk_require_int(ctx, 3) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 4);
 
 	if (!is_skipped_frame())
-		al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
+		al_draw_line(x1, y1, x2, y2, nativecolor(color), 0);
 	return 0;
 }
 
@@ -213,35 +213,29 @@ js_LineSeries(duk_context* ctx)
 static duk_ret_t
 js_OutlinedCircle(duk_context* ctx)
 {
-	bool    antialiased = false;
-	color_t color;
-	int     n_args;
-	int     x, y, radius;
+	int n_args = duk_get_top(ctx);
+	float x = duk_require_int(ctx, 0) + 0.5;
+	float y = duk_require_int(ctx, 1) + 0.5;
+	float radius = duk_require_int(ctx, 2);
+	color_t color = duk_require_sphere_color(ctx, 3);
+	bool antialiased = n_args >= 5 ? duk_require_boolean(ctx, 4) : false;
 
-	n_args = duk_get_top(ctx);
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	radius = duk_to_int(ctx, 2);
-	color = duk_require_sphere_color(ctx, 3);
-	if (n_args >= 5) antialiased = duk_require_boolean(ctx, 4);
-	if (!is_skipped_frame()) al_draw_circle(x, y, radius, nativecolor(color), 1);
+	if (!is_skipped_frame())
+		al_draw_circle(x, y, radius, nativecolor(color), 1);
 	return 0;
 }
 
 static duk_ret_t
 js_OutlinedRectangle(duk_context* ctx)
 {
-	color_t color;
-	int     n_args;
-	float   x1, y1, x2, y2;
-
-	n_args = duk_get_top(ctx);
-	x1 = duk_to_int(ctx, 0) + 0.5;
-	y1 = duk_to_int(ctx, 1) + 0.5;
-	x2 = x1 + duk_to_int(ctx, 2) - 1;
-	y2 = y1 + duk_to_int(ctx, 3) - 1;
-	color = duk_require_sphere_color(ctx, 4);
-	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
+	int n_args = duk_get_top(ctx);
+	float x1 = duk_require_int(ctx, 0) + 0.5;
+	float y1 = duk_require_int(ctx, 1) + 0.5;
+	float x2 = x1 + duk_require_int(ctx, 2) - 1;
+	float y2 = y1 + duk_require_int(ctx, 3) - 1;
+	color_t color = duk_require_sphere_color(ctx, 4);
+	int thickness = n_args >= 6 ? duk_require_int(ctx, 5) : 1;
+	
 	if (!is_skipped_frame())
 		al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
 	return 0;

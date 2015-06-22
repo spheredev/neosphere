@@ -655,12 +655,13 @@ js_Surface_gradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_Surface_line(duk_context* ctx)
 {
-	int x1 = duk_require_int(ctx, 0);
-	int y1 = duk_require_int(ctx, 1);
-	int x2 = duk_require_int(ctx, 2);
-	int y2 = duk_require_int(ctx, 3);
+	float x1 = duk_require_int(ctx, 0) + 0.5;
+	float y1 = duk_require_int(ctx, 1) + 0.5;
+	float x2 = duk_require_int(ctx, 2) + 0.5;
+	float y2 = duk_require_int(ctx, 3) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 4);
-	
+	printf("%f", x1);
+
 	int      blend_mode;
 	image_t* image;
 
@@ -725,15 +726,14 @@ js_Surface_pointSeries(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points > INT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:pointSeries(): Too many vertices (%u)", num_points);
-	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): Failed to allocate vertex buffer");
+	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
-		vertices[i].x = x; vertices[i].y = y;
+		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
 	apply_blend_mode(blend_mode);
@@ -751,10 +751,10 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	int n_args = duk_get_top(ctx);
 	float x1 = duk_require_int(ctx, 0) + 0.5;
 	float y1 = duk_require_int(ctx, 1) + 0.5;
-	float x2 = x1 + duk_require_int(ctx, 2);
-	float y2 = y1 + duk_require_int(ctx, 3);
+	float x2 = x1 + duk_require_int(ctx, 2) - 1;
+	float y2 = y1 + duk_require_int(ctx, 3) - 1;
 	color_t color = duk_require_sphere_color(ctx, 4);
-	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
+	int thickness = n_args >= 6 ? duk_require_int(ctx, 5) : 1;
 
 	int      blend_mode;
 	image_t* image;
