@@ -1,8 +1,16 @@
 minisphere Changelog
 ====================
 
+v1.4.1 - June 22, 2015
+----------------------
+
+* Fixes a bug where top-level variables defined in a CoffeeScript script were
+  not available from outside when using RequireScript().
+* Fixes off-by-one rendering issues for a few graphics primitives, such as
+  Line().
+
 v1.4.0 - June 21, 2015
-------------
+----------------------
 
 * CoffeeScript support!
 * The engine and all dependencies have been recompiled optimizing for speed.
