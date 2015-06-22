@@ -461,6 +461,8 @@ duk_handle_require(duk_context* ctx)
 		duk_push_object(ctx);
 		duk_push_string(ctx, lstr_cstr(filename));
 		duk_put_prop_string(ctx, -2, "filename");
+		duk_push_true(g_duk);
+		duk_put_prop_string(g_duk, -2, "bare");
 		if (duk_pcall(ctx, 2) != DUK_EXEC_SUCCESS)
 			duk_throw(ctx);
 		duk_remove(ctx, -2);

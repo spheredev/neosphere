@@ -65,6 +65,8 @@ try_evaluate_file(const char* path)
 		duk_push_object(g_duk);
 		duk_push_string(g_duk, path);
 		duk_put_prop_string(g_duk, -2, "filename");
+		duk_push_true(g_duk);
+		duk_put_prop_string(g_duk, -2, "bare");
 		if (duk_pcall(g_duk, 2) != DUK_EXEC_SUCCESS)
 			goto on_error;
 		duk_remove(g_duk, -2);
@@ -72,7 +74,7 @@ try_evaluate_file(const char* path)
 	}
 	else
 		duk_push_lstring_t(g_duk, source);
-	
+
 	// ready for launch in T-10...9...*munch*
 	duk_push_string(g_duk, path);
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
@@ -144,8 +146,11 @@ run_script(script_t* script, bool allow_reentry)
 	if (script == NULL)  // NULL is allowed, it's a no-op
 		return;
 	
+	// check whether an instance of the script is already running.
+	// if it is, but the script is reentrant, allow it. otherwise, return early
+	// to prevent multiple invocation.
 	if (script->is_in_use && !allow_reentry)
-		return;  // do nothing if an instance is already running
+		return;
 	was_in_use = script->is_in_use;
 
 	// ref the script in case it gets freed during execution. the owner
