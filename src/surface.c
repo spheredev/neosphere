@@ -669,7 +669,6 @@ js_Surface_line(duk_context* ctx)
 	float x2 = duk_require_int(ctx, 2) + 0.5;
 	float y2 = duk_require_int(ctx, 3) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 4);
-	printf("%f", x1);
 
 	int      blend_mode;
 	image_t* image;
