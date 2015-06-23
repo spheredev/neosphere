@@ -750,6 +750,7 @@ queue_wheel_event(int event)
 static duk_ret_t
 js_AreKeysLeft(duk_context* ctx)
 {
+	update_input();
 	duk_push_boolean(ctx, s_key_queue.num_keys > 0);
 	return 1;
 }
