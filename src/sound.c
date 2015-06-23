@@ -32,10 +32,14 @@ static duk_ret_t js_Sound_stop         (duk_context* ctx);
 struct sound
 {
 	int                   refcount;
+	unsigned int          id;
 	void*                 file_data;
 	size_t                file_size;
-	unsigned int          id;
+	float                 gain;
+	bool                  is_looping;
 	char*                 path;
+	float                 pan;
+	float                 pitch;
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
@@ -79,6 +83,9 @@ load_sound(const char* path, bool streaming)
 	if (!(sound->path = strdup(path))) goto on_error;
 	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, "sounds", &sound->file_size)))
 		goto on_error;
+	sound->gain = 1.0;
+	sound->pan = 0.0;
+	sound->pitch = 1.0;
 	if (!reload_sound(sound))
 		goto on_error;
 	sound->id = s_next_sound_id++;
@@ -179,6 +186,7 @@ set_sound_gain(sound_t* sound, float gain)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_gain(sound->stream, gain);
+	sound->gain = gain;
 }
 
 void
@@ -189,6 +197,7 @@ set_sound_looping(sound_t* sound, bool is_looping)
 	play_mode = is_looping ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE;
 	if (sound->stream != NULL)
 		al_set_audio_stream_playmode(sound->stream, play_mode);
+	sound->is_looping = is_looping;
 }
 
 void
@@ -196,6 +205,7 @@ set_sound_pan(sound_t* sound, float pan)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_pan(sound->stream, pan);
+	sound->pan = pan;
 }
 
 void
@@ -203,6 +213,7 @@ set_sound_pitch(sound_t* sound, float pitch)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_speed(sound->stream, pitch);
+	sound->pitch = pitch;
 }
 
 void
@@ -217,6 +228,7 @@ reload_sound(sound_t* sound)
 {
 	ALLEGRO_FILE*         memfile;
 	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
+	int                   play_mode;
 
 	new_stream = NULL;
 	if (s_have_sound) {
@@ -229,7 +241,11 @@ reload_sound(sound_t* sound)
 	if (sound->stream != NULL)
 		al_destroy_audio_stream(sound->stream);
 	if ((sound->stream = new_stream) != NULL) {
-		al_set_audio_stream_gain(sound->stream, 1.0);
+		play_mode = sound->is_looping ? ALLEGRO_PLAYMODE_LOOP : ALLEGRO_PLAYMODE_ONCE;
+		al_set_audio_stream_gain(sound->stream, sound->gain);
+		al_set_audio_stream_pan(sound->stream, sound->pan);
+		al_set_audio_stream_speed(sound->stream, sound->pitch);
+		al_set_audio_stream_playmode(sound->stream, play_mode);
 		al_attach_audio_stream_to_mixer(sound->stream, al_get_default_mixer());
 		al_set_audio_stream_playing(sound->stream, false);
 	}
