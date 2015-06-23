@@ -887,11 +887,31 @@ js_Surface_save(duk_context* ctx)
 static duk_ret_t
 js_Surface_setAlpha(duk_context* ctx)
 {
-	image_t* image;
+	int n_args = duk_get_top(ctx);
+	int alpha = duk_require_int(ctx, 0);
+	bool want_all = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
+	
+	image_t*      image;
+	image_lock_t* lock;
+	color_t*      pixel;
+	int           w, h;
+
+	int i_x, i_y;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
+	if (!(lock = lock_image(image)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): Failed to lock surface");
+	w = get_image_width(image);
+	h = get_image_height(image);
+	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
+	for (i_y = h - 1; i_y >= 0; --i_y) for (i_x = w - 1; i_x >= 0; --i_x) {
+		pixel = &lock->pixels[i_x + i_y * lock->pitch];
+		pixel->alpha = want_all || pixel->alpha != 0
+			? alpha : pixel->alpha;
+	}
+	unlock_image(image, lock);
 	return 0;
 }
 

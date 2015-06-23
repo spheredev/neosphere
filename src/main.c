@@ -357,7 +357,7 @@ do_events(void)
 	update_sounds();
 
 	// process Allegro events
-	while (al_get_next_event(g_events, &event)) {
+	if (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			exit_game(true);
