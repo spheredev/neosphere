@@ -136,7 +136,8 @@ apply_blend_mode(int blend_mode)
 {
 	switch (blend_mode) {
 	case BLEND_BLEND:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+		al_set_separate_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
+			ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
 		break;
 	case BLEND_REPLACE:
 		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
@@ -146,6 +147,14 @@ apply_blend_mode(int blend_mode)
 		break;
 	case BLEND_SUBTRACT:
 		al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
+		break;
+	case BLEND_MULTIPLY:
+		al_set_separate_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO,
+			ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
+		break;
+	case BLEND_INVERT:
+		al_set_separate_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_INVERSE_SRC_COLOR,
+			ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
 		break;
 	}
 }

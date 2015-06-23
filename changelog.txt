@@ -1,6 +1,16 @@
 minisphere Changelog
 ====================
 
+v1.4.2 - TBD
+------------
+
+* Fixes a bug where changes to a Sound's pitch, volume, etc. are lost between
+  play() calls.
+* Fixes a bug in Delay() causing it to hog the CPU.
+* Fixes several blend modes not working properly when rendering to Surfaces.
+* Now uses Allegro 5.1.11.
+
+
 v1.4.1 - June 22, 2015
 ----------------------
 

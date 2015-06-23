@@ -938,10 +938,10 @@ js_Image_transformBlit(duk_context* ctx)
 	duk_pop(ctx);
 	vertex_color = al_map_rgba(255, 255, 255, 255);
 	ALLEGRO_VERTEX v[] = {
-		{ x1, y1, 0, 0, 0, vertex_color },
-		{ x2, y2, 0, image->width, 0, vertex_color },
-		{ x4, y4, 0, 0, image->height, vertex_color },
-		{ x3, y3, 0, image->width, image->height, vertex_color }
+		{ x1 + 0.5, y1 + 0.5, 0, 0, 0, vertex_color },
+		{ x2 + 0.5, y2 + 0.5, 0, image->width, 0, vertex_color },
+		{ x4 + 0.5, y4 + 0.5, 0, 0, image->height, vertex_color },
+		{ x3 + 0.5, y3 + 0.5, 0, image->width, image->height, vertex_color }
 	};
 	if (!is_skipped_frame())
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
@@ -969,10 +969,10 @@ js_Image_transformBlitMask(duk_context* ctx)
 	duk_pop(ctx);
 	vtx_color = al_map_rgba(mask.r, mask.g, mask.b, mask.alpha);
 	ALLEGRO_VERTEX v[] = {
-		{ x1, y1, 0, 0, 0, vtx_color },
-		{ x2, y2, 0, image->width, 0, vtx_color },
-		{ x4, y4, 0, 0, image->height, vtx_color },
-		{ x3, y3, 0, image->width, image->height, vtx_color }
+		{ x1 + 0.5, y1 + 0.5, 0, 0, 0, vtx_color },
+		{ x2 + 0.5, y2 + 0.5, 0, image->width, 0, vtx_color },
+		{ x4 + 0.5, y4 + 0.5, 0, 0, image->height, vtx_color },
+		{ x3 + 0.5, y3 + 0.5, 0, image->width, image->height, vtx_color }
 	};
 	if (!is_skipped_frame())
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
