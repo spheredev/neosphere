@@ -829,7 +829,7 @@ js_Delay(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Time cannot be negative (%.0f)", millisecs);
 	end_time = al_get_time() + millisecs / 1000;
 	do {
-		time_left = al_get_time() - end_time;
+		time_left = end_time - al_get_time();
 		if (time_left > 0.001)  // engine may stall with < 1ms timeout
 			al_wait_for_event_timed(g_events, NULL, time_left);
 		do_events();
