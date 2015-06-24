@@ -14,7 +14,7 @@ struct shader
 
 static shader_t* s_sys_shader = NULL;
 
-bool
+void
 initialize_shaders(void)
 {
 	char* fs_filename;
@@ -24,10 +24,10 @@ initialize_shaders(void)
 	vs_filename = strdup(syspath(read_string_rec(g_sys_conf, "SystemVertShader", "shaders/system.vs.glsl")));
 	fs_filename = strdup(syspath(read_string_rec(g_sys_conf, "SystemFragShader", "shaders/system.fs.glsl")));
 	if (!(s_sys_shader = create_shader(vs_filename, fs_filename)))
-		console_log(0, "  No system shader available\n");
+		console_log(0, "  System shaders not found\n");
 	free(vs_filename);
 	free(fs_filename);
-	return s_sys_shader != NULL;
+	apply_shader(s_sys_shader);
 }
 
 void
@@ -101,7 +101,7 @@ free_shader(shader_t* shader)
 bool
 apply_shader(shader_t* shader)
 {
-	return al_use_shader(shader->program);
+	return al_use_shader(shader != NULL ? shader->program : NULL);
 }
 
 void

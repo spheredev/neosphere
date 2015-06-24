@@ -233,14 +233,8 @@ main(int argc, char* argv[])
 	attach_input_display();
 	load_key_map();
 
-	// initialize shader manager and bind the system shader
-	if (!initialize_shaders()) {
-		al_show_native_message_box(g_display, "No System Shaders Available", "The Sphere system shaders are missing.",
-			"minisphere was unable to locate the system shaders or they failed to compile.  As a usable set of shaders is necessary for correct operation, minisphere will now close.",
-			NULL, ALLEGRO_MESSAGEBOX_ERROR);
-		return EXIT_FAILURE;
-	}
-	apply_shader(get_system_shader());
+	// initialize shader support
+	initialize_shaders();
 	
 	// attempt to locate and load system font
 	console_log(1, "Loading system font\n");
