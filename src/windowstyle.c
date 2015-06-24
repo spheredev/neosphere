@@ -27,9 +27,10 @@ enum wstyle_bg_type
 
 struct windowstyle
 {
-	int      refcount;
-	int      bg_style;
-	image_t* images[9];
+	int       refcount;
+	int       bg_style;
+	color_t   gradient[4];
+	image_t*  images[9];
 };
 
 #pragma pack(push, 1)
@@ -86,6 +87,13 @@ load_windowstyle(const char* path)
 	}
 	sfs_fclose(file);
 	winstyle->bg_style = rws.background_mode;
+	for (i = 0; i < 4; ++i) {
+		winstyle->gradient[i] = rgba(
+			rws.corner_colors[i].r,
+			rws.corner_colors[i].g,
+			rws.corner_colors[i].b,
+			rws.corner_colors[i].a);
+	}
 	return ref_windowstyle(winstyle);
 
 on_error:
@@ -121,7 +129,8 @@ free_windowstyle(windowstyle_t* winstyle)
 void
 draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height)
 {
-	int             w[9], h[9];
+	color_t gradient[4];
+	int     w[9], h[9];
 	
 	int i;
 	
@@ -139,6 +148,18 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 		w[i] = get_image_width(winstyle->images[i]);
 		h[i] = get_image_height(winstyle->images[i]);
 	}
+	for (i = 0; i < 4; ++i) {
+		gradient[i].r = mask.r * winstyle->gradient[i].r / 255;
+		gradient[i].g = mask.g * winstyle->gradient[i].g / 255;
+		gradient[i].b = mask.b * winstyle->gradient[i].b / 255;
+		gradient[i].alpha = mask.alpha * winstyle->gradient[i].alpha / 255;
+	}
+	ALLEGRO_VERTEX verts[] = {
+		{ x, y, 0, 0, 0, nativecolor(gradient[0]) },
+		{ x + width, y, 0, 0, 0, nativecolor(gradient[1]) },
+		{ x, y + height, 0, 0, 0, nativecolor(gradient[2]) },
+		{ x + width, y + height, 0, 0, 0, nativecolor(gradient[3]) },
+	};
 	
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
@@ -146,6 +167,17 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 		break;
 	case WSTYLE_BG_STRETCH:
 		draw_image_scaled_masked(winstyle->images[8], mask, x, y, width, height);
+		break;
+	case WSTYLE_BG_GRADIENT:
+		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+		break;
+	case WSTYLE_BG_TILE_GRADIENT:
+		draw_image_tiled_masked(winstyle->images[8], mask, x, y, width, height);
+		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+		break;
+	case WSTYLE_BG_STRETCH_GRADIENT:
+		draw_image_scaled_masked(winstyle->images[8], mask, x, y, width, height);
+		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	}
 	draw_image_masked(winstyle->images[0], mask, x - w[0], y - h[0]);

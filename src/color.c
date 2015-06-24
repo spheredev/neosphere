@@ -54,8 +54,6 @@ blend_colors(color_t color1, color_t color2, float w1, float w2)
 	blend.b = (color1.b * w1 + color2.b * w2) / sigma;
 	blend.alpha = (color1.alpha * w1 + color2.alpha * w2) / sigma;
 	return blend;
-
-	#undef INTERP
 }
 
 colormatrix_t
