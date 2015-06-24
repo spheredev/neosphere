@@ -164,7 +164,7 @@ js_Line(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 4);
 
 	if (!is_skipped_frame())
-		al_draw_line(x1, y1, x2, y2, nativecolor(color), 0);
+		al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	return 0;
 }
 
