@@ -232,11 +232,16 @@ main(int argc, char* argv[])
 	al_register_event_source(g_events, al_get_display_event_source(g_display));
 	attach_input_display();
 	load_key_map();
-	
-	// not sure why this is necessary, but without it, you get a black screen on
-	// startup. it seems Allegro forgets to set up its shaders or something.
-	al_use_shader(NULL);
 
+	// initialize shader manager and bind the system shader
+	if (!initialize_shaders()) {
+		al_show_native_message_box(g_display, "No System Shaders Available", "The Sphere system shaders are missing.",
+			"minisphere was unable to locate the system shaders or they failed to compile.  As a usable set of shaders is necessary for correct operation, minisphere will now close.",
+			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+		return EXIT_FAILURE;
+	}
+	apply_shader(get_system_shader());
+	
 	// attempt to locate and load system font
 	console_log(1, "Loading system font\n");
 	if (g_sys_conf != NULL) {
@@ -245,7 +250,7 @@ main(int argc, char* argv[])
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
-			"minisphere was unable to locate the system font or it failed to load.  As a usable font is necessary for proper operation of the engine, minisphere will now close.",
+			"minisphere was unable to locate the system font or it failed to load.  As a usable font is necessary for correct operation, minisphere will now close.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -630,7 +635,7 @@ initialize_engine(void)
 
 on_error:
 	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
-		"One or more engine components failed to initialize properly. minisphere cannot continue in this state and will now close.",
+		"One or more components failed to initialize properly. minisphere cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
 }

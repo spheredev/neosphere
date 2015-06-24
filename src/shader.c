@@ -12,20 +12,49 @@ struct shader
 	ALLEGRO_SHADER* program;
 };
 
+static shader_t* s_sys_shader = NULL;
+
+bool
+initialize_shaders(void)
+{
+	char* fs_filename;
+	char* vs_filename;
+
+	console_log(0, "Initializing shader manager\n");
+	vs_filename = strdup(syspath(read_string_rec(g_sys_conf, "SystemVertShader", "shaders/system.vs.glsl")));
+	fs_filename = strdup(syspath(read_string_rec(g_sys_conf, "SystemFragShader", "shaders/system.fs.glsl")));
+	if (!(s_sys_shader = create_shader(vs_filename, fs_filename)))
+		console_log(0, "  No system shader available\n");
+	free(vs_filename);
+	free(fs_filename);
+	return s_sys_shader != NULL;
+}
+
+void
+shutdown_shaders(void)
+{
+	console_log(0, "Shutting down shader manager\n");
+	free_shader(s_sys_shader);
+}
+
+shader_t*
+get_system_shader(void)
+{
+	return s_sys_shader;
+}
+
 shader_t*
 create_shader(const char* vs_filename, const char* fs_filename)
 {
-	char*      fs_source;
-	char*      vs_source;
+	char*      fs_source = NULL;
+	char*      vs_source = NULL;
 	shader_t*  shader;
 
-	if (!(shader = calloc(1, sizeof(shader_t))))
-		goto on_error;
-	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
+	shader = calloc(1, sizeof(shader_t));
+	
 	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, "shaders", NULL))) goto on_error;
 	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, "shaders", NULL))) goto on_error;
-	free(vs_source);
-	free(fs_source);
+	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
 	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
 		fprintf(stderr, "\nVertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
@@ -38,14 +67,16 @@ create_shader(const char* vs_filename, const char* fs_filename)
 		fprintf(stderr, "\nError building shader program:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
+	free(vs_source);
+	free(fs_source);
 	return ref_shader(shader);
 
 on_error:
-	if (shader != NULL) {
-		if (shader->program != NULL)
-			al_destroy_shader(shader->program);
-		free(shader);
-	}
+	free(vs_source);
+	free(fs_source);
+	if (shader->program != NULL)
+		al_destroy_shader(shader->program);
+	free(shader);
 	return NULL;
 }
 

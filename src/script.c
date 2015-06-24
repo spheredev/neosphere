@@ -11,7 +11,7 @@ struct script
 
 static script_t* script_from_js_function (void* heapptr);
 
-static int  s_next_script_id = 0;
+static int s_next_script_id = 0;
 
 void
 initialize_scripts(void)

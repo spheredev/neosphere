@@ -31,8 +31,6 @@ static duk_ret_t js_new_Vertex              (duk_context* ctx);
 static void assign_default_uv  (shape_t* shape);
 static void refresh_shape_vbuf (shape_t* shape);
 
-static shader_t* s_def_shader = NULL;
-
 struct shape
 {
 	unsigned int           refcount;
@@ -54,6 +52,8 @@ struct group
 	vector_t*    shapes;
 };
 
+static shader_t* s_def_shader = NULL;
+
 void
 initialize_galileo(void)
 {
@@ -74,9 +74,9 @@ get_default_shader(void)
 	const char* vs_filename;
 
 	if (s_def_shader == NULL) {
-		console_log(3, "engine: Compiling default shaders");
-		vs_filename = read_string_rec(g_sys_conf, "VertexShader", "minisphere.vs.glsl");
-		fs_filename = read_string_rec(g_sys_conf, "FragmentShader", "minisphere.fs.glsl");
+		console_log(3, "engine: Compiling default Galileo shader");
+		vs_filename = read_string_rec(g_sys_conf, "GalileoVertShader", "shaders/galileo.vs.glsl");
+		fs_filename = read_string_rec(g_sys_conf, "GalileoFragShader", "shaders/galileo.fs.glsl");
 		s_def_shader = create_shader(syspath(vs_filename), syspath(fs_filename));
 	}
 	return s_def_shader;
@@ -199,7 +199,7 @@ draw_group(const group_t* group)
 	
 	iter_t iter;
 
-	apply_shader(group->shader != NULL ? group->shader : s_def_shader);
+	apply_shader(group->shader != NULL ? group->shader : get_default_shader());
 	al_copy_transform(&old_matrix, al_get_current_transform());
 	al_identity_transform(&matrix);
 	al_translate_transform(&matrix, group->rot_x, group->rot_y);
