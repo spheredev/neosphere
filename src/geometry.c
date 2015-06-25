@@ -44,7 +44,7 @@ do_lines_intersect(rect_t a, rect_t b)
 bool
 do_rects_intersect(rect_t a, rect_t b)
 {
-	return !(a.x1 >= b.x2 || a.x2 <= b.x1 || a.y1 >= b.y2 || a.y2 <= b.y1);
+	return !(a.x1 > b.x2 || a.x2 < b.x1 || a.y1 > b.y2 || a.y2 < b.y1);
 }
 
 bool

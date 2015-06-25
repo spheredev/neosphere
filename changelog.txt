@@ -12,7 +12,13 @@ v1.4.2 - TBD
 * Fixes broken rendering of windowstyles with gradients.
 * Fixes a bug where the engine would lock up if AreKeysLeft() is used in a loop
   to wait for a keypress.
-* Properly implements surface.setAlpha().
+* Fixes surface.setAlpha() not actually doing anything.
+* Fixes surface.flipHorizontally/Vertically() not flipping the surface.
+* Fixes surface.setPixel() unconditionally writing black pixels.
+* Fixes MapToScreenX/Y() returning incorrect values for maps with parallax
+  layers.
+* Fixes a minor inaccuracy in person-person obstruction causing issues in games
+  with tile-based movement.
 
 
 v1.4.1 - June 22, 2015
