@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v1.4.2 - TBD
-------------
+v1.4.2 - June 25, 2015
+----------------------
 
 * Fixes a bug where changes to a Sound's pitch, volume, etc. are lost between
   play() calls.
