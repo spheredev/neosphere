@@ -35,6 +35,7 @@ static script_t*           compile_map_script  (lstring_t* source, int script_ty
 static bool                change_map          (const char* filename, bool preserve_persons);
 static int                 find_layer          (const char* name);
 static void                map_screen_to_layer (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                map_screen_to_map   (int camera_x, int camera_y, int* inout_x, int* inout_y);
 static void                process_map_input   (void);
 static void                render_map          (void);
 static void                update_map_engine   (bool is_main_loop);
@@ -1076,13 +1077,55 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 		if (layer_w < g_res_x) x_offset = -(g_res_x - layer_w) / 2;
 		if (layer_h < g_res_y) y_offset = -(g_res_y - layer_h) / 2;
 	}
-	else {
-		// pre-wrap coordinates to layer dimensions. this simplifies rendering calculations.
-		x_offset = (x_offset % layer_w + layer_w) % layer_w;
-		y_offset = (y_offset % layer_h + layer_h) % layer_h;
+	if (inout_x) *inout_x += x_offset;
+	if (inout_y) *inout_y += y_offset;
+
+	// normalize coordinates. this simplifies rendering calculations.
+	if (s_map->is_repeating || s_map->layers[layer].is_parallax) {
+		if (inout_x) *inout_x = (*inout_x % layer_w + layer_w) % layer_w;
+		if (inout_y) *inout_y = (*inout_y % layer_h + layer_h) % layer_h;
+	}
+}
+
+static void
+map_screen_to_map(int camera_x, int camera_y, int* inout_x, int* inout_y)
+{
+	rect_t bounds;
+	int    center_x, center_y;
+	int    map_w, map_h;
+	int    tile_w, tile_h;
+	int    x_offset, y_offset;
+
+	// get layer and screen metrics
+	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	map_w = s_map->width * tile_w;
+	map_h = s_map->height * tile_h;
+	center_x = g_res_x / 2;
+	center_y = g_res_y / 2;
+
+	// initial camera correction
+	if (!s_map->is_repeating) {
+		bounds = get_map_bounds();
+		camera_x = fmin(fmax(camera_x, bounds.x1 + center_x), bounds.x2 - center_x);
+		camera_y = fmin(fmax(camera_y, bounds.y1 + center_y), bounds.y2 - center_y);
+	}
+
+	// remap screen coordinates to map coordinates
+	x_offset = camera_x - center_x;
+	y_offset = camera_y - center_y;
+	if (!s_map->is_repeating) {
+		// if the map is smaller than the screen, windowbox it
+		if (map_w < g_res_x) x_offset = -(g_res_x - map_w) / 2;
+		if (map_h < g_res_y) y_offset = -(g_res_y - map_h) / 2;
 	}
 	if (inout_x) *inout_x += x_offset;
 	if (inout_y) *inout_y += y_offset;
+	
+	// normalize coordinates
+	if (s_map->is_repeating) {
+		if (inout_x) *inout_x = (*inout_x % map_w + map_w) % map_w;
+		if (inout_y) *inout_y = (*inout_y % map_h + map_h) % map_h;
+	}
 }
 
 static void
@@ -2771,9 +2814,8 @@ js_MapToScreenX(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapToScreenX(): Map engine is not running");
 	if (layer < 0 || layer >= s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "MapToScreenX(): Layer index out of range (%i)", layer);
-	normalize_map_entity_xy(&x, NULL, layer);
 	offset_x = 0;
-	map_screen_to_layer(layer, s_cam_x, s_cam_y, &offset_x, NULL);
+	map_screen_to_map(s_cam_x, s_cam_y, &offset_x, NULL);
 	duk_push_int(ctx, x - offset_x);
 	return 1;
 }
@@ -2790,9 +2832,8 @@ js_MapToScreenY(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapToScreenY(): Map engine is not running");
 	if (layer < 0 || layer >= s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "MapToScreenY(): Layer index out of range (%i)", layer);
-	normalize_map_entity_xy(NULL, &y, layer);
 	offset_y = 0;
-	map_screen_to_layer(layer, s_cam_x, s_cam_y, NULL, &offset_y);
+	map_screen_to_map(s_cam_x, s_cam_y, NULL, &offset_y);
 	duk_push_int(ctx, y - offset_y);
 	return 1;
 }
@@ -2843,7 +2884,7 @@ js_ScreenToMapX(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ScreenToMapX(): Map engine is not running");
 	if (layer < 0 || layer >= s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ScreenToMapX(): Layer index out of range (%i)", layer);
-	map_screen_to_layer(layer, s_cam_x, s_cam_y, &x, NULL);
+	map_screen_to_map(s_cam_x, s_cam_y, &x, NULL);
 	duk_push_int(ctx, x);
 	return 1;
 }
@@ -2858,7 +2899,7 @@ js_ScreenToMapY(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ScreenToMapY(): Map engine is not running");
 	if (layer < 0 || layer >= s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ScreenToMapY(): Layer index out of range (%i)", layer);
-	map_screen_to_layer(layer, s_cam_x, s_cam_y, NULL, &y);
+	map_screen_to_map(s_cam_x, s_cam_y, NULL, &y);
 	duk_push_int(ctx, y);
 	return 1;
 }
