@@ -34,9 +34,6 @@ extern bool            rescale_image            (image_t* image, int width, int 
 extern bool            save_image               (image_t* image, const char* filename);
 extern void            unlock_image             (image_t* image, image_lock_t* lock);
 
-extern image_t* create_surface (int width, int height);
-extern image_t* clone_surface  (const image_t* image);
-
 extern void init_image_api (duk_context* ctx);
 
 extern void     duk_push_sphere_image    (duk_context* ctx, image_t* image);

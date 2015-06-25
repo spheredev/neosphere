@@ -88,19 +88,6 @@ on_error:
 }
 
 image_t*
-create_surface(int width, int height)
-{
-	image_t* image;
-	int      bitmap_flags;
-	
-	bitmap_flags = al_get_new_bitmap_flags();
-	al_set_new_bitmap_flags(bitmap_flags & ALLEGRO_MEMORY_BITMAP);
-	image = create_image(width, height);
-	al_set_new_bitmap_flags(bitmap_flags);
-	return image;
-}
-
-image_t*
 clone_image(const image_t* src_image)
 {
 	image_t* image;
@@ -116,31 +103,6 @@ clone_image(const image_t* src_image)
 	return ref_image(image);
 
 on_error:
-	free(image);
-	return NULL;
-}
-
-image_t*
-clone_surface(const image_t* src_image)
-{
-	int      bitmap_flags;
-	image_t* image;
-
-	bitmap_flags = al_get_new_bitmap_flags();
-	if ((image = calloc(1, sizeof(image_t))) == NULL)
-		goto on_error;
-	al_set_new_bitmap_flags(bitmap_flags & ALLEGRO_MEMORY_BITMAP);
-	if ((image->bitmap = al_clone_bitmap(src_image->bitmap)) == NULL)
-		goto on_error;
-	al_set_new_bitmap_flags(bitmap_flags);
-	image->id = s_next_image_id++;
-	image->width = al_get_bitmap_width(image->bitmap);
-	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(3, "engine: Created %i*%i surface via clone [%u -> %u]\n", image->width, image->height, src_image->id, image->id);
-	return ref_image(image);
-
-on_error:
-	al_set_new_bitmap_flags(bitmap_flags);
 	free(image);
 	return NULL;
 }
@@ -489,8 +451,8 @@ flip_image(image_t* image, bool is_h_flip, bool is_v_flip)
 	if (!(new_bitmap = al_create_bitmap(image->width, image->height))) return false;
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(new_bitmap);
-	if (is_h_flip) draw_flags &= ALLEGRO_FLIP_HORIZONTAL;
-	if (is_v_flip) draw_flags &= ALLEGRO_FLIP_VERTICAL;
+	if (is_h_flip) draw_flags |= ALLEGRO_FLIP_HORIZONTAL;
+	if (is_v_flip) draw_flags |= ALLEGRO_FLIP_VERTICAL;
 	al_draw_bitmap(image->bitmap, 0, 0, draw_flags);
 	al_set_target_bitmap(old_target);
 	al_destroy_bitmap(image->bitmap);
@@ -872,7 +834,7 @@ js_Image_createSurface(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if ((new_image = clone_surface(image)) == NULL)
+	if ((new_image = clone_image(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
 	duk_push_sphere_surface(ctx, new_image);
 	free_image(new_image);
