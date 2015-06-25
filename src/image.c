@@ -303,7 +303,7 @@ set_image_pixel(image_t* image, int x, int y, color_t color)
 	uncache_pixels(image);
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(image->bitmap);
-	al_put_pixel(x, y, nativecolor(color));
+	al_draw_pixel(x + 0.5, y + 0.5, nativecolor(color));
 	al_set_target_bitmap(old_target);
 }
 
