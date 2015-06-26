@@ -1,9 +1,31 @@
 #ifndef MINISPHERE__GEOMETRY_H__INCLUDED
 #define MINISPHERE__GEOMETRY_H__INCLUDED
 
-typedef struct point3     point3_t;
-typedef struct rect       rect_t;
-typedef struct float_rect float_rect_t;
+typedef
+struct point3
+{
+	int x;
+	int y;
+	int z;
+} point3_t;
+
+typedef
+struct rect
+{
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+} rect_t;
+
+typedef
+struct float_rect
+{
+	float x1;
+	float y1;
+	float x2;
+	float y2;
+} float_rect_t;
 
 extern rect_t       new_rect             (int x1, int y1, int x2, int y2);
 extern float_rect_t new_float_rect       (float x1, float y1, float x2, float y2);
@@ -18,28 +40,5 @@ extern rect_t       zoom_rect            (rect_t rect, double scale_x, double sc
 
 extern bool fread_rect_16 (sfs_file_t* file, rect_t* out_rect);
 extern bool fread_rect_32 (sfs_file_t* file, rect_t* out_rect);
-
-struct point3
-{
-	int x;
-	int y;
-	int z;
-};
-
-struct rect
-{
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-};
-
-struct float_rect
-{
-	float x1;
-	float y1;
-	float x2;
-	float y2;
-};
 
 #endif // MINISPHERE__GEOMETRY_H__INCLUDED

@@ -1,8 +1,14 @@
 #ifndef MINISPHERE__IMAGE_H__INCLUDED
 #define MINISPHERE__IMAGE_H__INCLUDED
 
-typedef struct image      image_t;
-typedef struct image_lock image_lock_t;
+typedef struct image image_t;
+
+typedef
+struct image_lock
+{
+	color_t*  pixels;
+	ptrdiff_t pitch;
+} image_lock_t;
 
 extern image_t*        create_image             (int width, int height);
 extern image_t*        create_subimage          (image_t* parent, int x, int y, int width, int height);
@@ -38,11 +44,5 @@ extern void init_image_api (duk_context* ctx);
 
 extern void     duk_push_sphere_image    (duk_context* ctx, image_t* image);
 extern image_t* duk_require_sphere_image (duk_context* ctx, duk_idx_t index);
-
-struct image_lock
-{
-	color_t*  pixels;
-	ptrdiff_t pitch;
-};
 
 #endif // MINISPHERE__IMAGE_H__INCLUDED

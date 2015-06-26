@@ -1,3 +1,6 @@
+#ifndef MINISPHERE__BYTEARRAY_H__INCLUDED
+#define MINISPHERE__BYTEARRAY_H__INCLUDED
+
 typedef struct bytearray bytearray_t;
 
 extern bytearray_t*   new_bytearray          (int size);
@@ -17,3 +20,5 @@ extern bytearray_t*   slice_bytearray        (bytearray_t* array, int start, int
 extern void         init_bytearray_api           (void);
 extern void         duk_push_sphere_bytearray    (duk_context* ctx, bytearray_t* array);
 extern bytearray_t* duk_require_sphere_bytearray (duk_context* ctx, duk_idx_t index);
+
+#endif // MINISPHERE__BYTEARRAY_H__INCLUDED

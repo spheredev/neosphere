@@ -4,9 +4,16 @@
 #include "color.h"
 #include "image.h"
 
-typedef struct font       font_t;
-typedef enum   text_align text_align_t;
-typedef struct wraptext   wraptext_t;
+typedef struct font     font_t;
+typedef struct wraptext wraptext_t;
+
+typedef
+enum text_align
+{
+	TEXT_ALIGN_LEFT,
+	TEXT_ALIGN_CENTER,
+	TEXT_ALIGN_RIGHT
+} text_align_t;
 
 font_t*     load_font            (const char* path);
 font_t*     clone_font           (const font_t* src_font);
@@ -25,14 +32,7 @@ void        free_wraptext           (wraptext_t* wraptext);
 const char* get_wraptext_line       (const wraptext_t* wraptext, int line_index);
 int         get_wraptext_line_count (const wraptext_t* wraptext);
 
-extern void    init_font_api           (duk_context* ctx);
-extern void    duk_push_sphere_font    (duk_context* ctx, font_t* font);
-
-enum text_align
-{
-	TEXT_ALIGN_LEFT,
-	TEXT_ALIGN_CENTER,
-	TEXT_ALIGN_RIGHT
-};
+extern void init_font_api        (duk_context* ctx);
+extern void duk_push_sphere_font (duk_context* ctx, font_t* font);
 
 #endif // MINISPHERE__FONT_H__INCLUDED

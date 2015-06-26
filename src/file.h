@@ -1,3 +1,6 @@
+#ifndef MINISPHERE__FILE_H__INCLUDED
+#define MINISPHERE__FILE_H__INCLUDED
+
 typedef struct kv_file kv_file_t;
 
 extern kv_file_t*  open_file        (const char* filename);
@@ -13,3 +16,5 @@ extern void        write_number_rec (kv_file_t* file, const char* key, double va
 extern void        write_string_rec (kv_file_t* file, const char* key, const char* value);
 
 extern void init_file_api (void);
+
+#endif // MINISPHERE__FILE_H__INCLUDED

@@ -1,4 +1,20 @@
-typedef enum player_key player_key_t;
+#ifndef MINISPHERE__INPUT_H__INCLUDED
+#define MINISPHERE__INPUT_H__INCLUDED
+
+typedef
+enum player_key
+{
+	PLAYER_KEY_MENU,
+	PLAYER_KEY_UP,
+	PLAYER_KEY_DOWN,
+	PLAYER_KEY_LEFT,
+	PLAYER_KEY_RIGHT,
+	PLAYER_KEY_A,
+	PLAYER_KEY_B,
+	PLAYER_KEY_X,
+	PLAYER_KEY_Y,
+	PLAYER_KEY_MAX
+} player_key_t;
 
 extern void  initialize_input     (void);
 extern void  shutdown_input       (void);
@@ -19,16 +35,4 @@ extern void  update_input         (void);
 
 extern void init_input_api (void);
 
-enum player_key
-{
-	PLAYER_KEY_MENU,
-	PLAYER_KEY_UP,
-	PLAYER_KEY_DOWN,
-	PLAYER_KEY_LEFT,
-	PLAYER_KEY_RIGHT,
-	PLAYER_KEY_A,
-	PLAYER_KEY_B,
-	PLAYER_KEY_X,
-	PLAYER_KEY_Y,
-	PLAYER_KEY_MAX
-};
+#endif // MINISPHERE__INPUT_H__INCLUDED

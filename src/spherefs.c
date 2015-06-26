@@ -4,7 +4,12 @@
 
 #include "spherefs.h"
 
-static bool resolve_path (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, fs_type_t *out_fs_type);
+enum fs_type
+{
+	SPHEREFS_UNKNOWN,
+	SPHEREFS_LOCAL,
+	SPHEREFS_SPK,
+};
 
 struct sandbox
 {
@@ -16,10 +21,12 @@ struct sandbox
 
 struct sfs_file
 {
-	fs_type_t     fs_type;
+	enum fs_type  fs_type;
 	ALLEGRO_FILE* handle;
 	spk_file_t*   spk_file;
 };
+
+static bool resolve_path (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
 
 sandbox_t*
 new_sandbox(const char* path)
@@ -128,7 +135,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_PATH*     file_path;
 	lstring_t*        filename;
-	fs_type_t         fs_type;
+	enum fs_type      fs_type;
 	ALLEGRO_FS_ENTRY* fse = NULL;
 	vector_t*         list = NULL;
 	int               type_flag;
@@ -349,7 +356,7 @@ sfs_fwrite(const void* buf, size_t size, size_t count, sfs_file_t* file)
 bool
 sfs_mkdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 {
-	fs_type_t     fs_type;
+	enum fs_type  fs_type;
 	ALLEGRO_PATH* path;
 	
 	if (!resolve_path(fs, dirname, base_dir, &path, &fs_type))
@@ -367,7 +374,7 @@ sfs_mkdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 bool
 sfs_rmdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 {
-	fs_type_t     fs_type;
+	enum fs_type  fs_type;
 	ALLEGRO_PATH* path;
 
 	if (!resolve_path(fs, dirname, base_dir, &path, &fs_type))
@@ -385,7 +392,7 @@ sfs_rmdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 bool
 sfs_rename(sandbox_t* fs, const char* name1, const char* name2, const char* base_dir)
 {
-	fs_type_t     fs_type;
+	enum fs_type  fs_type;
 	ALLEGRO_PATH* path1;
 	ALLEGRO_PATH* path2;
 	int           result;
@@ -410,7 +417,7 @@ sfs_rename(sandbox_t* fs, const char* name1, const char* name2, const char* base
 bool
 sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 {
-	fs_type_t     fs_type;
+	enum fs_type  fs_type;
 	ALLEGRO_PATH* path;
 
 	if (!resolve_path(fs, filename, base_dir, &path, &fs_type))
@@ -426,7 +433,7 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 }
 
 static bool
-resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, fs_type_t *out_fs_type)
+resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type)
 {
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,

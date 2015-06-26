@@ -3,11 +3,28 @@
 
 #include "shader.h"
 
-typedef struct vertex    vertex_t;
-typedef struct shape     shape_t;
-typedef struct group     group_t;
+typedef struct shape shape_t;
+typedef struct group group_t;
 
-typedef enum shape_type shape_type_t;
+typedef
+enum shape_type
+{
+	SHAPE_AUTO,
+	SHAPE_POINT_LIST,
+	SHAPE_LINE_LIST,
+	SHAPE_TRIANGLE_LIST,
+	SHAPE_TRIANGLE_FAN,
+	SHAPE_TRIANGLE_STRIP,
+	SHAPE_MAX
+} shape_type_t;
+
+typedef
+struct vertex
+{
+	float   x, y;
+	float   u, v;
+	color_t color;
+} vertex_t;
 
 extern void      initialize_galileo (void);
 extern void      shutdown_galileo   (void);
@@ -35,23 +52,5 @@ extern void         remove_shape_vertex (shape_t* shape, int index);
 extern void         draw_shape          (shape_t* shape);
 
 extern void init_galileo_api (void);
-
-struct vertex
-{
-	float   x, y;
-	float   u, v;
-	color_t color;
-};
-
-enum shape_type
-{
-	SHAPE_AUTO,
-	SHAPE_POINT_LIST,
-	SHAPE_LINE_LIST,
-	SHAPE_TRIANGLE_LIST,
-	SHAPE_TRIANGLE_FAN,
-	SHAPE_TRIANGLE_STRIP,
-	SHAPE_MAX
-};
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED

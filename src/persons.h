@@ -1,3 +1,6 @@
+// the declaration below has been deliberately hoisted outside of the
+// include guard; as there is a mutual dependency between the map engine
+// and persons manager, the engine won't compile otherwise.
 typedef struct person person_t;
 
 #ifndef MINISPHERE__PERSONS_H__INCLUDED
@@ -6,7 +9,42 @@ typedef struct person person_t;
 #include "map_engine.h"
 #include "spriteset.h"
 
-extern void         initialize_persons_manager (void);
+typedef
+enum command_op
+{
+	COMMAND_WAIT,
+	COMMAND_ANIMATE,
+	COMMAND_FACE_NORTH,
+	COMMAND_FACE_NORTHEAST,
+	COMMAND_FACE_EAST,
+	COMMAND_FACE_SOUTHEAST,
+	COMMAND_FACE_SOUTH,
+	COMMAND_FACE_SOUTHWEST,
+	COMMAND_FACE_WEST,
+	COMMAND_FACE_NORTHWEST,
+	COMMAND_MOVE_NORTH,
+	COMMAND_MOVE_NORTHEAST,
+	COMMAND_MOVE_EAST,
+	COMMAND_MOVE_SOUTHEAST,
+	COMMAND_MOVE_SOUTH,
+	COMMAND_MOVE_SOUTHWEST,
+	COMMAND_MOVE_WEST,
+	COMMAND_MOVE_NORTHWEST,
+	COMMAND_RUN_SCRIPT
+} command_op_t;
+
+typedef
+enum person_script
+{
+	PERSON_SCRIPT_ON_CREATE,
+	PERSON_SCRIPT_ON_DESTROY,
+	PERSON_SCRIPT_ON_TOUCH,
+	PERSON_SCRIPT_ON_TALK,
+	PERSON_SCRIPT_GENERATOR,
+	PERSON_SCRIPT_MAX
+} person_script_t;
+
+extern void         initialize_persons_manager(void);
 extern void         shutdown_persons_manager   (void);
 extern person_t*    create_person              (const char* name, spriteset_t* spriteset, bool is_persistent, script_t* create_script);
 extern void         destroy_person             (person_t* person);
@@ -42,38 +80,5 @@ extern void         talk_person                (const person_t* person);
 extern void         update_persons             (void);
 
 extern void init_persons_api (void);
-
-enum person_cmd
-{
-	COMMAND_WAIT,
-	COMMAND_ANIMATE,
-	COMMAND_FACE_NORTH,
-	COMMAND_FACE_NORTHEAST,
-	COMMAND_FACE_EAST,
-	COMMAND_FACE_SOUTHEAST,
-	COMMAND_FACE_SOUTH,
-	COMMAND_FACE_SOUTHWEST,
-	COMMAND_FACE_WEST,
-	COMMAND_FACE_NORTHWEST,
-	COMMAND_MOVE_NORTH,
-	COMMAND_MOVE_NORTHEAST,
-	COMMAND_MOVE_EAST,
-	COMMAND_MOVE_SOUTHEAST,
-	COMMAND_MOVE_SOUTH,
-	COMMAND_MOVE_SOUTHWEST,
-	COMMAND_MOVE_WEST,
-	COMMAND_MOVE_NORTHWEST,
-	COMMAND_RUN_SCRIPT
-};
-
-enum person_script_type
-{
-	PERSON_SCRIPT_ON_CREATE,
-	PERSON_SCRIPT_ON_DESTROY,
-	PERSON_SCRIPT_ON_TOUCH,
-	PERSON_SCRIPT_ON_TALK,
-	PERSON_SCRIPT_GENERATOR,
-	PERSON_SCRIPT_MAX
-};
 
 #endif // MINISPHERE__PERSONS_H__INCLUDED

@@ -1,8 +1,22 @@
 #ifndef MINISPHERE__COLOR_H__INCLUDED
 #define MINISPHERE__COLOR_H__INCLUDED
 
-typedef struct color       color_t;
-typedef struct colormatrix colormatrix_t;
+typedef
+struct color
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	uint8_t alpha;
+} color_t;
+
+typedef
+struct colormatrix
+{
+	int rn, rr, rg, rb;
+	int gn, gr, gg, gb;
+	int bn, br, bg, bb;
+} colormatrix_t;
 
 extern color_t       rgba         (uint8_t r, uint8_t g, uint8_t b, uint8_t alpha);
 extern ALLEGRO_COLOR nativecolor  (color_t color);
@@ -17,20 +31,5 @@ extern void          init_color_api (void);
 extern void          duk_push_sphere_color          (duk_context* ctx, color_t color);
 extern color_t       duk_require_sphere_color       (duk_context* ctx, duk_idx_t index);
 extern colormatrix_t duk_require_sphere_colormatrix (duk_context* ctx, duk_idx_t index);
-
-struct color
-{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-	uint8_t alpha;
-};
-
-struct colormatrix
-{
-	int rn, rr, rg, rb;
-	int gn, gr, gg, gb;
-	int bn, br, bg, bb;
-};
 
 #endif // MINISPHERE__COLOR_H__INCLUDED

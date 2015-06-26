@@ -2,10 +2,8 @@
 
 void init_surface_api (void);
 
-extern void     duk_push_sphere_surface    (duk_context* ctx, image_t* image);
-extern image_t* duk_require_sphere_surface (duk_context* ctx, duk_idx_t index);
-
-enum BLEND_MODE
+typedef
+enum blend_mode
 {
 	BLEND_BLEND,
 	BLEND_REPLACE,
@@ -15,5 +13,9 @@ enum BLEND_MODE
 	BLEND_SUBTRACT,
 	BLEND_MULTIPLY,
 	BLEND_AVERAGE,
-	BLEND_INVERT
-};
+	BLEND_INVERT,
+	BLEND_MAX
+} blend_mode_t;
+
+extern void     duk_push_sphere_surface    (duk_context* ctx, image_t* image);
+extern image_t* duk_require_sphere_surface (duk_context* ctx, duk_idx_t index);
