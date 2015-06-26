@@ -267,7 +267,7 @@ init_sockets_api(void)
 	// ListeningSocket object
 	register_api_ctor(g_duk, "ListeningSocket", js_new_ListeningSocket, js_ListeningSocket_finalize);
 	register_api_function(g_duk, "ListeningSocket", "close", js_ListeningSocket_close);
-	register_api_function(g_duk, "ListeningSocket", "acceptNext", js_ListeningSocket_accept);
+	register_api_function(g_duk, "ListeningSocket", "accept", js_ListeningSocket_accept);
 	
 	// IOSocket object
 	register_api_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
@@ -562,7 +562,7 @@ js_ListeningSocket_accept(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "ListeningSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:acceptNext(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:accept(): Socket has been closed");
 	new_socket = accept_next_socket(socket);
 	if (new_socket)
 		duk_push_sphere_obj(ctx, "IOSocket", new_socket);
