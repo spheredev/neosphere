@@ -1,0 +1,11 @@
+language: c
+compiler:
+  - clang
+  - gcc
+before_install:
+  - sudo add-apt-repository ppa:allegro/5.1
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install -qq allegro5
+  - sudo apt-get install -qq libmng-dev
+script: scons
