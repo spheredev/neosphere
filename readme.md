@@ -1,7 +1,7 @@
-minisphere 1.4.2
+minisphere 1.4.3
 ================
 
-*Thursday, June 25, 2015*
+*Saturday, June 27, 2015*
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)](https://travis-ci.org/fatcerberus/minisphere)
 

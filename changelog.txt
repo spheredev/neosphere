@@ -1,6 +1,11 @@
 minisphere Changelog
 ====================
 
+v1.4.3 - June 27, 2015
+----------------------
+
+* Fixes a "not callable" error when attempting to call Socket:accept().
+
 v1.4.2 - June 25, 2015
 ----------------------
 
@@ -19,7 +24,6 @@ v1.4.2 - June 25, 2015
   layers.
 * Fixes a minor inaccuracy in person-person obstruction causing issues in games
   with tile-based movement.
-
 
 v1.4.1 - June 22, 2015
 ----------------------
