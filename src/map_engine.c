@@ -1848,7 +1848,8 @@ js_GetTile(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	int layer = duk_require_map_layer(ctx, 2);
 
-	int layer_w, layer_h;
+	int              layer_w, layer_h;
+	struct map_tile* tilemap;
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTile(): Map engine must be running");
@@ -1856,7 +1857,7 @@ js_GetTile(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTile(): Invalid layer index (caller passed: %i)", layer);
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;
-	struct map_tile* tilemap = s_map->layers[layer].tilemap;
+	tilemap = s_map->layers[layer].tilemap;
 	duk_push_int(ctx, tilemap[x + y * layer_w].tile_index);
 	return 1;
 }
@@ -2205,11 +2206,14 @@ static duk_ret_t
 js_SetLayerRenderer(duk_context* ctx)
 {
 	int layer = duk_require_map_layer(ctx, 0);
-	char script_name[50]; sprintf(script_name, "[layer %i render script]", layer);
-	script_t* script = duk_require_sphere_script(ctx, 1, script_name);
-
+	
+	char      script_name[50];
+	script_t* script;
+	
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetLayerRenderer(): Map engine must be running");
+	sprintf(script_name, "[layer %i render script]", layer);
+	script = duk_require_sphere_script(ctx, 1, script_name);
 	if (layer < 0 || layer > s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetLayerRenderer(): Invalid layer index (%i)", layer);
 	free_script(s_map->layers[layer].render_script);
@@ -2294,7 +2298,8 @@ js_SetTile(duk_context* ctx)
 	int layer = duk_require_map_layer(ctx, 2);
 	int tile_index = duk_require_int(ctx, 3);
 
-	int layer_w, layer_h;
+	int              layer_w, layer_h;
+	struct map_tile* tilemap;
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTile(): Map engine must be running");
@@ -2302,7 +2307,7 @@ js_SetTile(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTile(): Invalid layer index (caller passed: %i)", layer);
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;
-	struct map_tile* tilemap = s_map->layers[layer].tilemap;
+	tilemap = s_map->layers[layer].tilemap;
 	tilemap[x + y * layer_w].tile_index = tile_index;
 	tilemap[x + y * layer_w].frames_left = get_tile_delay(s_map->tileset, tile_index);
 	return 0;

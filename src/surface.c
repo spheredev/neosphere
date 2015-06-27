@@ -5,7 +5,7 @@
 
 #include "surface.h"
 
-static void duk_require_rgba_lut (duk_context* ctx, duk_idx_t index, uint8_t *out_lut);
+static uint8_t* duk_require_rgba_lut (duk_context* ctx, duk_idx_t index);
 
 static void apply_blend_mode (int blend_mode);
 static void reset_blender    (void);
@@ -113,22 +113,25 @@ duk_require_sphere_surface(duk_context* ctx, duk_idx_t index)
 	return duk_require_sphere_obj(ctx, index, "Surface");
 }
 
-static void
-duk_require_rgba_lut(duk_context* ctx, duk_idx_t index, uint8_t *out_lut)
+static uint8_t*
+duk_require_rgba_lut(duk_context* ctx, duk_idx_t index)
 {
-	int length;
+	uint8_t* lut;
+	int      length;
 
 	int i;
 	
 	index = duk_require_normalize_index(ctx, index);
 	duk_require_object_coercible(ctx, index);
+	lut = malloc(sizeof(uint8_t) * 256);
 	length = fmin(duk_get_length(ctx, index), 256);
-	for (i = length; i < 256; ++i) out_lut[i] = i;
+	for (i = length; i < 256; ++i) lut[i] = i;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(ctx, index, i);
-		out_lut[i] = fmin(fmax(duk_require_int(ctx, -1), 0), 255);
+		lut[i] = fmin(fmax(duk_require_int(ctx, -1), 0), 255);
 		duk_pop(ctx);
 	}
+	return lut;
 }
 
 static void
@@ -192,13 +195,7 @@ js_GrabSurface(duk_context* ctx)
 static duk_ret_t
 js_CreateSurface(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int w = duk_require_int(ctx, 0);
-	int h = duk_require_int(ctx, 1);
-	if (n_args >= 3) duk_require_sphere_color(ctx, 2);
-
-	js_new_Surface(ctx);
-	return 1;
+	return js_new_Surface(ctx);
 }
 
 static duk_ret_t
@@ -376,10 +373,10 @@ js_Surface_applyLookup(duk_context* ctx)
 	int y = duk_require_int(ctx, 1);
 	int w = duk_require_int(ctx, 2);
 	int h = duk_require_int(ctx, 3);
-	uint8_t red_lu[256]; duk_require_rgba_lut(ctx, 4, red_lu);
-	uint8_t green_lu[256]; duk_require_rgba_lut(ctx, 5, green_lu);
-	uint8_t blue_lu[256]; duk_require_rgba_lut(ctx, 6, blue_lu);
-	uint8_t alpha_lu[256]; duk_require_rgba_lut(ctx, 7, alpha_lu);
+	uint8_t* red_lu = duk_require_rgba_lut(ctx, 4);
+	uint8_t* green_lu = duk_require_rgba_lut(ctx, 5);
+	uint8_t* blue_lu = duk_require_rgba_lut(ctx, 6);
+	uint8_t* alpha_lu = duk_require_rgba_lut(ctx, 7);
 
 	image_t* image;
 
@@ -390,6 +387,10 @@ js_Surface_applyLookup(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Specified area extends outside image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyLookup(): Failed to apply lookup transformation");
+	free(red_lu);
+	free(green_lu);
+	free(blue_lu);
+	free(alpha_lu);
 	return 0;
 }
 
@@ -421,7 +422,8 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -443,7 +445,8 @@ js_Surface_blitSurface(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -523,7 +526,8 @@ js_Surface_drawText(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	apply_blend_mode(blend_mode);
@@ -537,19 +541,18 @@ js_Surface_drawText(duk_context* ctx)
 static duk_ret_t
 js_Surface_filledCircle(duk_context* ctx)
 {	
-	int n_args = duk_get_top(ctx);
 	int x = duk_require_number(ctx, 0);
 	int y = duk_require_number(ctx, 1);
 	int radius = duk_require_number(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
-	bool use_aa = n_args >= 5 ? duk_require_boolean(ctx, 4) : false;
 
 	int      blend_mode;
 	image_t* image;
 	
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -603,7 +606,8 @@ js_Surface_gradientCircle(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -644,7 +648,8 @@ js_Surface_gradientRectangle(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -675,7 +680,8 @@ js_Surface_line(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -688,19 +694,18 @@ js_Surface_line(duk_context* ctx)
 static duk_ret_t
 js_Surface_outlinedCircle(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
 	int x = duk_require_number(ctx, 0);
 	int y = duk_require_number(ctx, 1);
 	int radius = duk_require_number(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
-	bool use_aa = n_args >= 5 ? duk_require_boolean(ctx, 4) : false;
 
 	int      blend_mode;
 	image_t* image;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -713,7 +718,6 @@ js_Surface_outlinedCircle(duk_context* ctx)
 static duk_ret_t
 js_Surface_pointSeries(duk_context* ctx)
 {
-	duk_require_object_coercible(ctx, 0);
 	color_t color = duk_require_sphere_color(ctx, 1);
 	
 	int             blend_mode;
@@ -727,7 +731,8 @@ js_Surface_pointSeries(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): First argument must be an array");
@@ -769,7 +774,8 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -860,7 +866,8 @@ js_Surface_rectangle(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
-	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode"); blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));

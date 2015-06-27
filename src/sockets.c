@@ -323,9 +323,6 @@ js_new_Socket(duk_context* ctx)
 
 	if (duk_is_number(ctx, 0)) {
 		port = duk_require_int(ctx, 0);
-
-		socket_t* socket;
-
 		if (socket = listen_on_port(port, 1024, 0))
 			duk_push_sphere_obj(ctx, "Socket", socket);
 		else

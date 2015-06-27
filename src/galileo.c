@@ -452,8 +452,6 @@ static duk_ret_t
 js_new_Group(duk_context* ctx)
 {
 	duk_require_object_coercible(ctx, 0);
-	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
 	shader_t* shader = duk_require_sphere_obj(ctx, 1, "ShaderProgram");
 
 	size_t    num_shapes;
@@ -462,6 +460,8 @@ js_new_Group(duk_context* ctx)
 
 	duk_uarridx_t i;
 
+	if (!duk_is_array(ctx, 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
 	if (!(group = new_group(shader)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Failed to create group object");
 	num_shapes = duk_get_length(ctx, 0);
@@ -668,8 +668,6 @@ js_new_Shape(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	duk_require_object_coercible(ctx, 0);
-	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
 	image_t* texture = duk_is_null(ctx, 1) ? NULL : duk_require_sphere_obj(ctx, 1, "Image");
 	shape_type_t type = n_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
 
@@ -681,6 +679,8 @@ js_new_Shape(duk_context* ctx)
 
 	duk_uarridx_t i;
 
+	if (!duk_is_array(ctx, 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
 	if (type < 0 || type >= SHAPE_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Shape(): Invalid shape type constant");
 	if (!(shape = new_shape(type, texture)))

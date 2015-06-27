@@ -185,7 +185,7 @@ save_file(kv_file_t* file)
 		al_save_config_file_f(memfile, file->conf);
 		is_aok = !al_feof(memfile);
 		file_size = al_ftell(memfile);
-		al_fclose(memfile);
+		al_fclose(memfile); memfile = NULL;
 	}
 	if (!(sfs_file = sfs_fopen(g_fs, file->filename, "save", "wt")))
 		goto on_error;
@@ -449,15 +449,13 @@ js_File_getKey(duk_context* ctx)
 static duk_ret_t
 js_File_getNumKeys(duk_context* ctx)
 {
-	int index = duk_require_int(ctx, 0);
-	
 	kv_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "File");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has been closed");
 	duk_push_int(ctx, get_record_count(file));
 	return 1;
 }

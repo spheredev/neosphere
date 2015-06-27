@@ -160,11 +160,10 @@ js_RNG_range(duk_context* ctx)
 static duk_ret_t
 js_RNG_sample(duk_context* ctx)
 {
-	duk_require_object_coercible(ctx, 0);
-
 	duk_uarridx_t index;
 	long          length;
 
+	duk_require_object_coercible(ctx, 0);
 	length = (long)duk_get_length(ctx, 0);
 	index = rng_ranged(0, length - 1);
 	duk_get_prop_index(ctx, 0, index);

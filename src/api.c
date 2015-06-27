@@ -540,12 +540,14 @@ js_RequireScript(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
+	bool is_required;
+
 	if (!sfs_fexist(g_fs, filename, "scripts"))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): Script file not found '%s'", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, filename);
-	bool is_required = duk_get_boolean(ctx, -1);
+	is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, filename);
@@ -561,6 +563,7 @@ js_RequireSystemScript(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 
+	bool is_required;
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "lib/%s", filename);
@@ -572,7 +575,7 @@ js_RequireSystemScript(duk_context* ctx)
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, path);
-	bool is_required = duk_get_boolean(ctx, -1);
+	is_required = duk_get_boolean(ctx, -1);
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);

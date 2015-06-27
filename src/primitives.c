@@ -172,7 +172,6 @@ static duk_ret_t
 js_LineSeries(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	duk_require_object_coercible(ctx, 0);
 	color_t color = duk_require_sphere_color(ctx, 1);
 	int type = n_args >= 3 ? duk_require_int(ctx, 2) : LINE_MULTIPLE;
 
@@ -213,12 +212,10 @@ js_LineSeries(duk_context* ctx)
 static duk_ret_t
 js_OutlinedCircle(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
 	float x = duk_require_int(ctx, 0) + 0.5;
 	float y = duk_require_int(ctx, 1) + 0.5;
 	float radius = duk_require_int(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
-	bool antialiased = n_args >= 5 ? duk_require_boolean(ctx, 4) : false;
 
 	if (!is_skipped_frame())
 		al_draw_circle(x, y, radius, nativecolor(color), 1);
@@ -273,7 +270,6 @@ js_Point(duk_context* ctx)
 static duk_ret_t
 js_PointSeries(duk_context* ctx)
 {
-	duk_require_object_coercible(ctx, 0);
 	color_t color = duk_require_sphere_color(ctx, 1);
 
 	size_t          num_points;

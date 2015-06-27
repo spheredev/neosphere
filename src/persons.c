@@ -1523,12 +1523,12 @@ js_GetPersonSpeedY(duk_context* ctx)
 static duk_ret_t
 js_GetPersonValue(duk_context* ctx)
 {
-	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
 	const char* name = duk_require_string(ctx, 0);
 	const char* key = duk_to_string(ctx, 1);
 
 	person_t* person;
 
+	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonValue(): No such person '%s'", name);
 	duk_push_global_stash(ctx);
@@ -1648,10 +1648,10 @@ static duk_ret_t
 js_SetPersonData(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	duk_require_object_coercible(ctx, 1);
 
 	person_t* person;
 
+	duk_require_object_coercible(ctx, 1);
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonData(): No such person '%s'", name);
 	duk_push_global_stash(ctx);
@@ -1750,13 +1750,13 @@ static duk_ret_t
 js_SetPersonIgnoreList(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	duk_require_object_coercible(ctx, 1);
 
 	size_t    list_size;
 	person_t* person;
 
 	int i;
 
+	duk_require_object_coercible(ctx, 1);
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonIgnoreList(): No such person '%s'", name);
 	if (!duk_is_array(ctx, 1))
@@ -1945,13 +1945,13 @@ js_SetPersonSpriteset(duk_context* ctx)
 static duk_ret_t
 js_SetPersonValue(duk_context* ctx)
 {
-	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
 	const char* name = duk_require_string(ctx, 0);
 	const char* key = duk_to_string(ctx, 1);
-	duk_require_valid_index(ctx, 2);
 
 	person_t* person;
 
+	duk_require_valid_index(ctx, 2);
+	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonValue(): No such person '%s'", name);
 	duk_push_global_stash(ctx);
@@ -2163,11 +2163,11 @@ js_QueuePersonScript(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 	lstring_t* script_name = lstr_new("[%s : queued script]", name);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
-	lstr_free(script_name);
 	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	person_t* person;
 
+	lstr_free(script_name);
 	if (!(person = find_person(name)))
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): No such person '%s'", name);
 	if (!queue_person_script(person, script, is_immediate))

@@ -144,7 +144,8 @@ read_tileset(sfs_file_t* file)
 	return tileset;
 
 on_error:  // oh no!
-	if (file != NULL) sfs_fseek(file, file_pos, SFS_SEEK_SET);
+	if (file != NULL)
+		sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
 			lstr_free(tiles[i].name);
