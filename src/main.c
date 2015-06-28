@@ -402,6 +402,7 @@ flip_screen(int framerate)
 			path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
 			al_append_path_component(path, "Sphere Files");
 			al_append_path_component(path, "Screenshots");
+			al_make_directory(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
 			do {
 				sprintf(filename, "SS_%s.png", rng_name(10));
 				al_set_path_filename(path, filename);
