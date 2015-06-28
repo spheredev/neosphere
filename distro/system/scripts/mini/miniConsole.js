@@ -253,6 +253,17 @@ mini.Console.getInput = function()
 			case KEY_BACKSPACE:
 				this.entry = this.entry.slice(0, -1);
 				break;
+			case KEY_HOME:
+				var newLineOffset = this.buffer.length - this.numLines;
+				new mini.Scene()
+					.tween(this, 0.125, 'easeOut', { lineOffset: newLineOffset })
+					.run();
+				break;
+			case KEY_END:
+				new mini.Scene()
+					.tween(this, 0.125, 'easeOut', { lineOffset: 0 })
+					.run();
+				break;
 			case KEY_TAB: break;
 			case null: break;
 			default:

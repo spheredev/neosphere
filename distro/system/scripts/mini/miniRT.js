@@ -89,9 +89,9 @@ mini.onStartUp = new mini.Delegate();
 
 // now that everything is in order, we can pull in all the miniRT
 // component scripts.
-RequireSystemScript('mini/miniLink.js');
 RequireSystemScript('mini/miniBGM.js');
 RequireSystemScript('mini/miniConsole.js');
+RequireSystemScript('mini/miniLink.js');
 RequireSystemScript('mini/miniPact.js');
 RequireSystemScript('mini/miniScenes.js');
 RequireSystemScript('mini/miniThreads.js');
