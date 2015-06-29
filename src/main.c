@@ -102,7 +102,6 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	
 	// startup processing (command line parsing, etc.)
-	find_startup_game(&g_game_path);
 	console_log(0, "Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game path
@@ -142,10 +141,10 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	console_log(1, "  Game Path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none>");
-	console_log(1, "  Frameskip Limit: %i\n", s_max_frameskip);
-	console_log(1, "  CPU Throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	console_log(1, "  Console Verbosity: %i\n", get_log_level());
+	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none specified>");
+	console_log(1, "  Frameskipping limit: %i\n", s_max_frameskip);
+	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	console_log(1, "  Console verbosity: %i\n", get_log_level());
 
 	// set up jump points for script bailout
 	console_log(1, "Setting up jump points for longjmp\n");
@@ -173,6 +172,8 @@ main(int argc, char* argv[])
 
 	// locate game.sgm
 	console_log(0, "Looking for a game to launch\n");
+	if (g_game_path == NULL)
+		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
 		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
@@ -206,12 +207,15 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	console_log(1, "  %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
+	console_log(1, "  Title: %s\n", get_sgm_name(g_fs));
+	console_log(1, "  Author: %s\n", get_sgm_author(g_fs));
+	console_log(1, "  Resolution: %ix%i\n", g_res_x, g_res_y);
+	console_log(2, "  Path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");
 	icon = load_image("~sgm/icon.png");
-	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
