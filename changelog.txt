@@ -1,7 +1,13 @@
 minisphere Changelog
 ====================
 
-v1.4.4 - June 29, 2015
+v1.4.5 - June 29, 2015
+----------------------
+
+* Now logs game information (title, author, resolution) on startup.  Log
+  level 2 or higher will also log the game path.
+
+v1.4.4 - June 28, 2015
 ----------------------
 
 * Fixes a bug where pressing F12 to take a screenshot won't create a
