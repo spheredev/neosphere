@@ -54,7 +54,5 @@ msphere_libs = [
 	"m"
 ]
 
-minisphere = Program("engine", msphere_sources,
-	LIBS = msphere_libs,
-	CFLAGS = [ "-pedantic", "-Wno-comment" ])
+minisphere = Program("engine", msphere_sources, LIBS = msphere_libs)
 Return("minisphere")

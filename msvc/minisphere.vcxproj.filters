@@ -258,11 +258,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="sphere.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="..\changelog.txt">
       <Filter>Documentation Files</Filter>
     </Text>
@@ -272,5 +267,10 @@
     <Text Include="..\distro\documentation\sphere-legacy-api.txt">
       <Filter>Documentation Files</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="minisphere.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

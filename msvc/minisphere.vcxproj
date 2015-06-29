@@ -166,7 +166,7 @@
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /f "..\readme.md" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-</Command>
+del "$(OutDir)startup.spk"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -192,7 +192,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
 xcopy /y /d /f "..\license.txt" "$(OutDir)"
 xcopy /y /d /f "..\readme.md" "$(OutDir)"
 xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-</Command>
+del "$(OutDir)startup.spk"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -204,7 +204,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
@@ -215,7 +216,6 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
@@ -235,7 +235,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
@@ -246,7 +247,6 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
@@ -266,7 +266,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
@@ -277,7 +278,6 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
@@ -297,7 +297,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
@@ -308,7 +309,6 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
@@ -404,7 +404,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ResourceCompile Include="minisphere.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="sphere.ico" />
+    <Image Include="minisphere.ico" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\changelog.txt" />

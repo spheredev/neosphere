@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v1.4.4 - June 29, 2015
+----------------------
+
+* Fixes a bug where pressing F12 to take a screenshot won't create a
+  Screenshots directory, and thus can't save the screenshot.
+* miniConsole now responds accordingly to the Home and End keys.
+
 v1.4.3 - June 27, 2015
 ----------------------
 
