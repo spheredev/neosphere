@@ -2,18 +2,21 @@
 ; (C) 2015 Fat Cerberus
 ; Inno Setup 5.5 or later with ISPP is required.
 ;
-; before compiling the installer, you must build the engine in bin/
-; using Visual Studio or MSBuild. the installer will be created in
-; setup/.
-;
+; This will build an installer for minisphere. Before compiling the
+; installer, you must first build the engine in bin/ using Visual Studio
+; or MSBuild.
+
 ; the installer can optionally be built with Sphere Studio included.
 ; to create such a package, you will need to place the Sphere Studio
 ; binaries in bin/sphereStudio before compiling the installer.
-
 #ifexist "..\bin\sphereStudio\Sphere Studio.exe"
-	#define WANT_SPHERE_STUDIO
-	#define SphereStudioVersion "1.2.0"
+#define WANT_SPHERE_STUDIO
+#define SphereStudioVersion "1.2.0"
 #endif
+
+; after copying the sphereStudio binaries into bin/, you can still build
+; an installer without them by uncommenting the line below.
+;#undef WANT_SPHERE_STUDIO
 
 #define AppName "minisphere"
 #define AppVersion "1.4.4"
@@ -26,7 +29,11 @@
 #define AppExeName2_64 "console64.exe"
 
 [Setup]
+#ifdef WANT_SPHERE_STUDIO
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
+#else
+AppId={{79895E2D-DF9D-4534-9DB8-B3CD2AA92A7A}
+#endif
 AppName={#AppName}
 AppVersion={#AppFullVersion}
 AppVerName={#AppName} {#AppVersion}
@@ -36,7 +43,11 @@ DefaultDirName={pf}\{#AppName}
 DefaultGroupName={#AppName}
 SetupIconFile=..\msvc\minisphere.ico
 InfoBeforeFile=D:\minisphere\bin\changelog.txt
-OutputBaseFilename=minisphere-{#AppVersion}
+#ifdef WANT_SPHERE_STUDIO
+OutputBaseFilename=minisphere-{#AppVersion}-dev
+#else
+OutputBaseFilename=minisphere-{#AppVersion}-redist
+#endif
 OutputDir=.
 Compression=lzma
 SolidCompression=yes
