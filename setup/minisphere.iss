@@ -117,8 +117,10 @@ Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; Valu
 #endif
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\engine.exe"
-Name: "{group}\{#AppName} Console"; Filename: "{app}\console.exe"; Flags: createonlyiffileexists
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName_64}"; Check: IsWin64
+Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2}"
+Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2_64}"; Check: IsWin64
 Name: "{group}\Documentation\JS API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Flags: createonlyiffileexists
 Name: "{group}\Documentation\License"; Filename: "{app}\license.txt"
 #ifdef WANT_SPHERE_STUDIO
