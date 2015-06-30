@@ -240,43 +240,36 @@ spk_fwrite(const void* buf, size_t size, size_t count, spk_file_t* file)
 void*
 spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 {
+	struct spk_entry* fileinfo;
 	void*             packdata = NULL;
 	void*             unpacked = NULL;
-	z_stream          z;
-	struct spk_entry* p_entry;
+	uLong             unpack_size;
 
 	iter_t iter;
 
-	memset(&z, 0, sizeof(z_stream));
 	iter = iterate_vector(spk->index);
-	while (p_entry = next_vector_item(&iter)) {
-		if (strcasecmp(path, p_entry->file_path) == 0)
+	while (fileinfo = next_vector_item(&iter)) {
+		if (strcasecmp(path, fileinfo->file_path) == 0)
 			break;
 	}
-	if (p_entry == NULL) goto on_error;
-	if (!(packdata = malloc(p_entry->pack_size)))
+	if (fileinfo == NULL) goto on_error;
+	if (!(packdata = malloc(fileinfo->pack_size)))
 		goto on_error;
-	al_fseek(spk->file, p_entry->offset, ALLEGRO_SEEK_SET);
-	if (al_fread(spk->file, packdata, p_entry->pack_size) < p_entry->pack_size)
+	al_fseek(spk->file, fileinfo->offset, ALLEGRO_SEEK_SET);
+	if (al_fread(spk->file, packdata, fileinfo->pack_size) < fileinfo->pack_size)
 		goto on_error;
-	if (!(unpacked = malloc(p_entry->file_size + 1)))
+	if (!(unpacked = malloc(fileinfo->file_size + 1)))
 		goto on_error;
-	z.avail_in = (uInt)p_entry->pack_size;
-	z.next_in = packdata;
-	z.avail_out = (uInt)p_entry->file_size;
-	z.next_out = unpacked;
-	if (inflateInit(&z) != Z_OK) goto on_error;
-	if (inflate(&z, Z_FINISH) != Z_STREAM_END)
+	unpack_size = (uLong)fileinfo->file_size;
+	if (uncompress(unpacked, &unpack_size, packdata, (uLong)fileinfo->pack_size) != Z_OK)
 		goto on_error;
-	inflateEnd(&z);
+	*((char*)unpacked + unpack_size) = '\0';
 	free(packdata);
-	*((char*)unpacked + p_entry->file_size) = '\0';
 	
-	*out_size = p_entry->file_size;
+	*out_size = unpack_size;
 	return unpacked;
 
 on_error:
-	inflateEnd(&z);
 	free(packdata);
 	free(unpacked);
 	return NULL;
