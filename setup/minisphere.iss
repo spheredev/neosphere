@@ -2,19 +2,27 @@
 ; (C) 2015 Fat Cerberus
 ; Inno Setup 5.5 or later with ISPP is required.
 ;
-; This will build an installer for minisphere. Before compiling the
-; installer, you must first build the engine in bin/ using Visual Studio
-; or MSBuild.
+; This will build a Windows installer for minisphere. Before compiling the
+; installer, you must first build the engine using Visual Studio or MSBuild.
+; For a GDK installer, you will also need to build the Console engine and
+; place the binaries for Sphere Studio in bin/sphereStudio.
+;
+; To build the engine, enter the following commands from the directory where
+; you checked out the source:
+;     MSBuild msvc/minisphere.sln /p:Configuration=Release /p:Platform=Win32
+;     MSBuild msvc/minisphere.sln /p:Configuration=Release /p:Platform=x64
+;
+; And for minisphere Console:
+;     MSBuild msvc/minisphere.sln /p:Configuration=Console /p:Platform=Win32
+;     MSBuild msvc/minisphere.sln /p:Configuration=Console /p:Platform=x64
 
-; the installer can optionally be built with Sphere Studio included.
-; to create such a package, you will need to place the Sphere Studio
-; binaries in bin/sphereStudio before compiling the installer.
 #ifexist "..\bin\sphereStudio\Sphere Studio.exe"
 #define WANT_GDK
 #endif
 
-; after copying the sphereStudio binaries into bin/, you can still build
-; a redistributable installer without them by uncommenting the line below.
+; after copying the Sphere Studio binaries into bin/sphereStudio, you can
+; still build a non-GDK redistributable installer by uncommenting the line
+; below:
 ;#undef WANT_GDK
 
 #define AppName "minisphere"
