@@ -1,12 +1,28 @@
-# Windows image file caches
+*.log
+bin/
+msvc/obj
+msvc/debug
+setup/*.exe
+
+# Windows cruft
+Desktop.ini
 Thumbs.db
 ehthumbs.db
-
-# Folder config file
-Desktop.ini
-
-# Recycle Bin used on file shares
 $RECYCLE.BIN/
+*.lnk
+
+# OS X cruft
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
 # Windows Installer files
 *.cab
@@ -14,19 +30,7 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
-# Windows shortcuts
-*.lnk
-
-# Log files
-*.log
-
-# ==========================
 # Visual Studio build cruft
-# ==========================
-
-msvc/obj
-msvc/debug
-bin/
 *.sdf
 *.opensdf
 *.suo
@@ -34,33 +38,5 @@ bin/
 *.aps
 *.obj
 
-# =========================
 # SCons build cruft
-# =========================
-
 *.dblite
-
-# =========================
-# Operating System Files
-# =========================
-
-# OSX
-# =========================
-
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Thumbnails
-._*
-
-# Files that might appear on external disk
-.Spotlight-V100
-.Trashes
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
