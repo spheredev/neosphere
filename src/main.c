@@ -388,6 +388,7 @@ flip_screen(int framerate)
 	char              filename[50];
 	char              fps_text[20];
 	bool              is_backbuffer_valid;
+	ALLEGRO_STATE     old_state;
 	ALLEGRO_PATH*     path;
 	const char*       pathstr;
 	ALLEGRO_BITMAP*   snapshot;
@@ -406,7 +407,10 @@ flip_screen(int framerate)
 	is_backbuffer_valid = !s_skipping_frame;
 	if (is_backbuffer_valid) {
 		if (s_want_snapshot) {
+			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
+			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGB_888);
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
+			al_restore_state(&old_state);
 			path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
 			al_append_path_component(path, "Sphere Files");
 			al_append_path_component(path, "Screenshots");

@@ -8,6 +8,8 @@ v1.4.6 - TBD
   with no icon.png provided.
 * Scaling of taskbar icons (icon.png) has been improved to allow images
   larger than 32x32 with less distortion.
+* Fixes a bug where screenshots taken with F12 would sometimes come out with
+  washed-out colors.
 
 v1.4.5 - June 29, 2015
 ----------------------
