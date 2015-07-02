@@ -142,9 +142,9 @@ main(int argc, char* argv[])
 	
 	// print out options
 	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none specified>");
-	console_log(1, "  Frameskipping limit: %i\n", s_max_frameskip);
+	console_log(1, "  Frameskip limit: %i frames\n", s_max_frameskip);
 	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	console_log(1, "  Console verbosity: %i\n", get_log_level());
+	console_log(1, "  Console verbosity: L%i\n", get_log_level());
 
 	// set up jump points for script bailout
 	console_log(1, "Setting up jump points for longjmp\n");

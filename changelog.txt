@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.4.6 - TBD
+------------
+
+* Displays a default taskbar icon (the Spherical icon) when running a game
+  with no icon.png provided.
+
 v1.4.5 - June 29, 2015
 ----------------------
 
@@ -53,6 +59,7 @@ v1.4.0 - June 21, 2015
 * The engine and all dependencies have been recompiled optimizing for speed.
   This slightly increases the size of the engine but greatly improves
   performance for CPU-bound tasks such as ColorMatrix application.
+
 
 v1.3.2 - June 20, 2015
 ----------------------
