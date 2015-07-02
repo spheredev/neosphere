@@ -215,7 +215,8 @@ main(int argc, char* argv[])
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");
-	icon = load_image("~sgm/icon.png");
+	if (!(icon = load_image("~sgm/icon.png")))
+		icon = load_image("~sys/icon.png");
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {

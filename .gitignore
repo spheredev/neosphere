@@ -37,6 +37,9 @@ Temporary Items
 *.user
 *.aps
 *.obj
+*.idb
+*.pdb
+*.tlog
 
 # SCons build cruft
 *.dblite
