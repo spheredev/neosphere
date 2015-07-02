@@ -516,12 +516,15 @@ rescale_image(image_t* image, int width, int height)
 
 	if (width == image->width && height == image->height)
 		return true;
-	if (!(new_bitmap = al_create_bitmap(width, height))) return false;
+	if (!(new_bitmap = al_create_bitmap(width, height)))
+		return false;
 	uncache_pixels(image);
 	old_target = al_get_target_bitmap();
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
 	al_set_target_bitmap(new_bitmap);
 	al_draw_scaled_bitmap(image->bitmap, 0, 0, image->width, image->height, 0, 0, width, height, 0x0);
 	al_set_target_bitmap(old_target);
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	al_destroy_bitmap(image->bitmap);
 	image->bitmap = new_bitmap;
 	image->width = al_get_bitmap_width(image->bitmap);
