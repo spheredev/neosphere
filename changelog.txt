@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v1.4.6 - TBD
-------------
+v1.4.6 - July 2, 2015
+---------------------
 
 * Displays a default taskbar icon (the Spherical icon) when running a game
   with no icon.png provided.
