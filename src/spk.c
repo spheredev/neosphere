@@ -126,7 +126,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 
 	// get path to local cache file
 	home_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
-	al_append_path_component(home_path, "Sphere Files");
+	al_append_path_component(home_path, "minisphere");
 	al_append_path_component(home_path, ".spkcache");
 	al_append_path_component(home_path, al_get_path_filename(spk->path));
 	local_path = al_create_path(path);
