@@ -98,17 +98,9 @@ translate_float_rect(float_rect_t rect, float x_offset, float y_offset)
 rect_t
 zoom_rect(rect_t rect, double scale_x, double scale_y)
 {
-	int old_width, old_height;
-	int width, height;
-	int x, y;
-	
-	if (scale_x == 1.0 && scale_y == 1.0)
-		return rect;
-	old_width = rect.x2 - rect.x1; old_height = rect.y2 - rect.y1;
-	width = old_width * scale_x; height = old_height * scale_y;
-	x = rect.x1 - (width - old_width) / 2;
-	y = rect.y1 - (height - old_height) / 2;
-	return new_rect(x, y, x + width, y + height);
+	return new_rect(
+		rect.x1 * scale_x, rect.y1 * scale_y,
+		rect.x2 * scale_x, rect.y2 * scale_y);
 }
 
 bool

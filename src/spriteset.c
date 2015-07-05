@@ -434,6 +434,7 @@ draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double 
 	int                      image_index;
 	int                      image_w, image_h;
 	const spriteset_pose_t*  pose;
+	float                    scale_w, scale_h;
 	
 	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
 		return;
@@ -446,8 +447,10 @@ draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double 
 	image = spriteset->images[image_index];
 	image_w = get_image_width(image);
 	image_h = get_image_height(image);
+	scale_w = image_w * scale_x;
+	scale_h = image_h * scale_y;
 	al_draw_tinted_scaled_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
-		(float)image_w / 2, (float)image_h / 2, x + (float)image_w / 2, y + (float)image_h / 2,
+		(float)image_w / 2, (float)image_h / 2, x + scale_w / 2, y + scale_h / 2,
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }
 
