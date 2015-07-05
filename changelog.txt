@@ -1,6 +1,17 @@
 minisphere Changelog
 ====================
 
+v1.4.7 - July 5, 2015
+---------------------
+
+* SphereFS '~usr/' target directory changed from '<home>/Sphere Files' to
+  '<home>/minisphere'.
+* Fixes a bug where switching out of fullscreen mode can get the display stuck
+  in limbo, not quite windowed but not quite fullscreen either. This prevented
+  Alt+Tab from working whenever it happened, as well.
+* Fixes a bug where the hitbox for scaled persons falls out of alignment with
+  the sprite as it gets bigger.
+
 v1.4.6 - July 2, 2015
 ---------------------
 

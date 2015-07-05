@@ -23,11 +23,11 @@
 ; after copying the Sphere Studio binaries into bin/sphereStudio, you can
 ; still build a non-GDK redistributable installer by uncommenting the line
 ; below:
-;#undef WANT_GDK
+#undef WANT_GDK
 
 #define AppName "minisphere"
-#define AppVersion "1.4.5"
-#define AppBuildNumber "705"
+#define AppVersion "1.4.7"
+#define AppBuildNumber "720"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"
@@ -122,10 +122,12 @@ Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "sphere64_path"; String: "{app}\{#AppExeName_64}"; Components: studio; Check: IsWin64
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "plugins"; String: "FontEditPlugin,ImageEditPlugin,MapEditPlugin,ScriptEditPlugin,SoundTestPlugin,SPKPackerPlugin,SpritesetEditPlugin,TaskListPlugin,WindowstyleEditPlugin"; Flags: createkeyifdoesntexist; Components: studio
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "style"; String: "Dark"; Flags: createkeyifdoesntexist; Components: studio
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "def_editor"; String: "Script Editor"; Flags: createkeyifdoesntexist; Components: studio
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "sphere_path"; String: "{app}\{#AppExeName2}"; Components: studio and console
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "sphere64_path"; String: "{app}\{#AppExeName2_64}"; Components: studio and console; Check: IsWin64
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "plugins"; String: "FontEditPlugin,ImageEditPlugin,MapEditPlugin,ScriptEditPlugin,SoundTestPlugin,SPKPackerPlugin,SpritesetEditPlugin,TaskListPlugin,WindowstyleEditPlugin"; Flags: createkeyifdoesntexist; Components: studio and console
 Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "style"; String: "Dark"; Flags: createkeyifdoesntexist; Components: studio and console
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "def_editor"; String: "Script Editor"; Flags: createkeyifdoesntexist; Components: studio and console
 Filename: "{userdocs}\Sphere Studio\Settings\editor.ini"; Section: "Sphere Studio"; Key: "last_preset"; String: "minisphere"; Components: studio
 Filename: "{userdocs}\Sphere Studio\Settings\editor.ini"; Section: "Sphere Studio"; Key: "last_preset"; String: "minisphere Console"; Components: studio and console
 #endif
