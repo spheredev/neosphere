@@ -507,6 +507,10 @@ toggle_fullscreen(void)
 		al_set_window_position(g_display,
 			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
 			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
+		
+		// strange but true: this fixes an Allegro bug where OpenGL displays get
+		// stuck in limbo when switching out of fullscreen.
+		al_destroy_bitmap(al_clone_bitmap(al_get_backbuffer(g_display)));
 	}
 	else {
 		// switch from windowed to fullscreen
