@@ -429,6 +429,7 @@ set_spriteset_image(const spriteset_t* spriteset, int image_index, image_t* imag
 void
 draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double theta, double scale_x, double scale_y, const char* pose_name, float x, float y, int frame_index)
 {
+	rect_t                   base;
 	image_t*                 image;
 	int                      image_index;
 	int                      image_w, image_h;
@@ -438,9 +439,10 @@ draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double 
 		return;
 	frame_index = frame_index % pose->num_frames;
 	image_index = pose->frames[frame_index].image_idx;
-	x -= (spriteset->base.x1 + spriteset->base.x2) / 2;
+	base = zoom_rect(spriteset->base, scale_x, scale_y);
+	x -= (base.x1 + base.x2) / 2;
 	if (!is_flipped)
-		y -= (spriteset->base.y1 + spriteset->base.y2) / 2;
+		y -= (base.y1 + base.y2) / 2;
 	image = spriteset->images[image_index];
 	image_w = get_image_width(image);
 	image_h = get_image_height(image);

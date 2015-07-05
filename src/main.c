@@ -408,7 +408,7 @@ flip_screen(int framerate)
 	if (is_backbuffer_valid) {
 		if (s_want_snapshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
-			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGB_888);
+			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			al_restore_state(&old_state);
 			path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
