@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "async.h"
+#include "audial.h"
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
@@ -360,7 +361,9 @@ do_events(void)
 	ALLEGRO_EVENT event;
 
 	dyad_update();
+	update_async();
 	update_input();
+	update_audial();
 	update_sounds();
 
 	// process Allegro events
@@ -396,7 +399,6 @@ flip_screen(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 
-	update_async();
 	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
 		s_current_game_fps = s_num_frames;
@@ -628,6 +630,7 @@ initialize_engine(void)
 	initialize_async();
 	initialize_rng();
 	initialize_galileo();
+	initialize_audial();
 	initialize_input();
 	initialize_spritesets();
 	initialize_map_engine();

@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "animation.h"
 #include "async.h"
+#include "audial.h"
 #include "bytearray.h"
 #include "color.h"
 #include "file.h"
@@ -31,6 +32,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-map-engine",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
+	"sphere-audial",
 	"sphere-coffeescript",
 	"sphere-commonjs",
 	"sphere-galileo",
@@ -172,6 +174,7 @@ initialize_api(duk_context* ctx)
 	// initialize subsystem APIs
 	init_animation_api();
 	init_async_api();
+	init_audial_api();
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();

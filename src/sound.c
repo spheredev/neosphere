@@ -3,9 +3,6 @@
 
 #include "sound.h"
 
-#include <allegro5/allegro_audio.h>
-#include <allegro5/allegro_acodec.h>
-
 static duk_ret_t js_LoadSound          (duk_context* ctx);
 static duk_ret_t js_new_Sound          (duk_context* ctx);
 static duk_ret_t js_Sound_finalize     (duk_context* ctx);

@@ -324,6 +324,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClCompile Include="..\src\api.c" />
     <ClCompile Include="..\src\async.c" />
     <ClCompile Include="..\src\atlas.c" />
+    <ClCompile Include="..\src\audial.c" />
     <ClCompile Include="..\src\bytearray.c" />
     <ClCompile Include="..\src\color.c" />
     <ClCompile Include="..\src\console.c" />
@@ -364,6 +365,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClInclude Include="..\src\api.h" />
     <ClInclude Include="..\src\async.h" />
     <ClInclude Include="..\src\atlas.h" />
+    <ClInclude Include="..\src\audial.h" />
     <ClInclude Include="..\src\bytearray.h" />
     <ClInclude Include="..\src\color.h" />
     <ClInclude Include="..\src\console.h" />

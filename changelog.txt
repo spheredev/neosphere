@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v1.5.0 - TBD
+------------
+
+* NEW! Audial API: Feed audio data directly to the audio system using the new
+  'SoundStream' and 'Mixer' objects!
+
+
 v1.4.7 - July 5, 2015
 ---------------------
 
