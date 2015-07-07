@@ -2,11 +2,11 @@
 #include "api.h"
 #include "bytearray.h"
 
-#include "audial.h"
+#include "audialis.h"
 
-static duk_ret_t js_new_Stream      (duk_context* ctx);
-static duk_ret_t js_Stream_finalize (duk_context* ctx);
-static duk_ret_t js_Stream_feed     (duk_context* ctx);
+static duk_ret_t js_new_SoundStream      (duk_context* ctx);
+static duk_ret_t js_SoundStream_finalize (duk_context* ctx);
+static duk_ret_t js_SoundStream_feed     (duk_context* ctx);
 
 static void update_stream (stream_t* stream);
 
@@ -22,21 +22,21 @@ struct stream
 static vector_t* s_streams;
 
 void
-initialize_audial(void)
+initialize_audialis(void)
 {
-	console_log(1, "Initializing Audial\n");
+	console_log(1, "Initializing Audialis\n");
 	s_streams = new_vector(sizeof(stream_t*));
 }
 
 void
-shutdown_audial(void)
+shutdown_audialis(void)
 {
-	console_log(1, "Shutting down Audial\n");
+	console_log(1, "Shutting down Audialis\n");
 	free_vector(s_streams);
 }
 
 void
-update_audial(void)
+update_audialis(void)
 {
 	stream_t* *p_stream;
 	
@@ -114,14 +114,14 @@ update_stream(stream_t* stream)
 }
 
 void
-init_audial_api(void)
+init_audialis_api(void)
 {
-	register_api_ctor(g_duk, "Stream", js_new_Stream, js_Stream_finalize);
-	register_api_function(g_duk, "Stream", "feed", js_Stream_feed);
+	register_api_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
+	register_api_function(g_duk, "SoundStream", "feed", js_SoundStream_feed);
 }
 
 static duk_ret_t
-js_new_Stream(duk_context* ctx)
+js_new_SoundStream(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 44100;
@@ -130,25 +130,25 @@ js_new_Stream(duk_context* ctx)
 	stream_t* stream;
 
 	if (bits != 8 && bits != 16 && bits != 24)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Stream(): Invalid bit depth (%i)", bits);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): Invalid bit depth (%i)", bits);
 	if (!(stream = create_stream(frequency, bits)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Stream(): Stream creation failed");
-	duk_push_sphere_obj(ctx, "Stream", stream);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): Stream creation failed");
+	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
 }
 
 static duk_ret_t
-js_Stream_finalize(duk_context* ctx)
+js_SoundStream_finalize(duk_context* ctx)
 {
 	stream_t* stream;
 	
-	stream = duk_require_sphere_obj(ctx, 0, "Stream");
+	stream = duk_require_sphere_obj(ctx, 0, "SoundStream");
 	free_stream(stream);
 	return 0;
 }
 
 static duk_ret_t
-js_Stream_feed(duk_context* ctx)
+js_SoundStream_feed(duk_context* ctx)
 {
 	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
 
@@ -157,7 +157,7 @@ js_Stream_feed(duk_context* ctx)
 	stream_t*   stream;
 
 	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "Stream");
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
 	buffer = get_bytearray_buffer(array);
 	size = get_bytearray_size(array);

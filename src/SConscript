@@ -4,7 +4,7 @@ msphere_sources = [
 	"animation.c",
 	"api.c",
 	"async.c",
-	"audial.c",
+	"audialis.c",
 	"atlas.c",
 	"bytearray.c",
 	"color.c",

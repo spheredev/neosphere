@@ -132,7 +132,7 @@
     <ClCompile Include="..\src\spherefs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\audial.c">
+    <ClCompile Include="..\src\audialis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -254,7 +254,7 @@
     <ClInclude Include="..\src\spherefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\audial.h">
+    <ClInclude Include="..\src\audialis.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

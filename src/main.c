@@ -1,7 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "async.h"
-#include "audial.h"
+#include "audialis.h"
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
@@ -363,7 +363,7 @@ do_events(void)
 	dyad_update();
 	update_async();
 	update_input();
-	update_audial();
+	update_audialis();
 	update_sounds();
 
 	// process Allegro events
@@ -630,7 +630,7 @@ initialize_engine(void)
 	initialize_async();
 	initialize_rng();
 	initialize_galileo();
-	initialize_audial();
+	initialize_audialis();
 	initialize_input();
 	initialize_spritesets();
 	initialize_map_engine();
