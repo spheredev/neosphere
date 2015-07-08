@@ -4,7 +4,7 @@ minisphere Changelog
 v1.5.0 - TBD
 ------------
 
-* NEW! Audial API: Feed audio data directly to the audio system using the new
+* NEW! Audialis API: Feed audio data directly to the audio system using the new
   'SoundStream' and 'Mixer' objects!
 
 
