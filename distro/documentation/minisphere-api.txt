@@ -1,4 +1,4 @@
-minisphere 1.4 API Documentation
+minisphere 1.5 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
@@ -26,10 +26,10 @@ GetVersion()
 
 GetVersionString()
 
-    Returns the engine's version identification string. For minisphere 1.4, this
+    Returns the engine's version identification string. For minisphere 1.5, this
     string is:
       
-      v2.0 (compatible; minisphere 1.4.0)
+      v2.0 (compatible; minisphere 1.5.0)
 
 GetExtensions()
 
@@ -41,9 +41,10 @@ GetExtensions()
     * sphere-legacy-api
     * sphere-obj-constructors
     * sphere-obj-props
-    * sphere-map-engine
+    * sphere-audialis
     * sphere-commonjs
     * sphere-galileo
+    * sphere-map-engine
     * sphere-spherefs
     * minisphere-async-api
     * minisphere-galileo-shaders

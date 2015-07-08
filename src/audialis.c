@@ -86,7 +86,7 @@ ref_stream(stream_t* stream)
 void
 free_stream(stream_t* stream)
 {
-	stream_t** p_stream;
+	stream_t* *p_stream;
 	
 	iter_t iter;
 	
