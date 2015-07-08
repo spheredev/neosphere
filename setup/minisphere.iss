@@ -23,11 +23,11 @@
 ; after copying the Sphere Studio binaries into bin/sphereStudio, you can
 ; still build a non-GDK redistributable installer by uncommenting the line
 ; below:
-#undef WANT_GDK
+;#undef WANT_GDK
 
 #define AppName "minisphere"
-#define AppVersion "1.4.7"
-#define AppBuildNumber "720"
+#define AppVersion "1.5.0"
+#define AppBuildNumber "0"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"

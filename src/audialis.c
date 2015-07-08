@@ -53,11 +53,11 @@ create_stream(int frequency, int bits)
 	ALLEGRO_AUDIO_DEPTH depth_flag;
 	stream_t*           stream;
 
-	depth_flag = bits == 8 ? ALLEGRO_AUDIO_DEPTH_INT8
+	depth_flag = bits == 8 ? ALLEGRO_AUDIO_DEPTH_UINT8
 		: bits == 24 ? ALLEGRO_AUDIO_DEPTH_INT24
 		: ALLEGRO_AUDIO_DEPTH_INT16;
 	stream = calloc(1, sizeof(stream_t));
-	stream->al_stream = al_create_audio_stream(4, 1024, frequency, depth_flag, ALLEGRO_CHANNEL_CONF_2);
+	stream->al_stream = al_create_audio_stream(4, 1024, frequency, depth_flag, ALLEGRO_CHANNEL_CONF_1);
 	al_attach_audio_stream_to_mixer(stream->al_stream, al_get_default_mixer());
 	push_back_vector(s_streams, &stream);
 	return ref_stream(stream);
@@ -102,14 +102,17 @@ feed_stream(stream_t* stream, const void* data, size_t size)
 static void
 update_stream(stream_t* stream)
 {
-	void* buffer;
-	
-	if (stream->feed_size <= 2048) return;
+	const size_t buffer_size = 1024;
+
+	void*  buffer;
+
+	if (stream->feed_size <= buffer_size)
+		return;
 	if (!(buffer = al_get_audio_stream_fragment(stream->al_stream)))
 		return;
-	memcpy(buffer, stream->buffer, 2048);
-	stream->feed_size -= 2048;
-	memmove(stream->buffer, stream->buffer + 2048, stream->feed_size);
+	memcpy(buffer, stream->buffer, buffer_size);
+	stream->feed_size -= buffer_size;
+	memmove(stream->buffer, stream->buffer + buffer_size, stream->feed_size);
 	al_set_audio_stream_fragment(stream->al_stream, buffer);
 }
 
@@ -124,14 +127,11 @@ static duk_ret_t
 js_new_SoundStream(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 44100;
-	int bits = n_args >= 2 ? duk_require_int(ctx, 1) : 16;
+	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 22050;
 
 	stream_t* stream;
 
-	if (bits != 8 && bits != 16 && bits != 24)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): Invalid bit depth (%i)", bits);
-	if (!(stream = create_stream(frequency, bits)))
+	if (!(stream = create_stream(frequency, 8)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): Stream creation failed");
 	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
