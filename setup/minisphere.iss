@@ -118,18 +118,17 @@ Source: "..\bin\sphereStudio\*"; DestDir: "{app}\sphereStudio"; Flags: ignorever
 
 [INI]
 #ifdef WANT_GDK
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "sphere_path"; String: "{app}\{#AppExeName}"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "sphere64_path"; String: "{app}\{#AppExeName_64}"; Components: studio; Check: IsWin64
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "plugins"; String: "FontEditPlugin,ImageEditPlugin,MapEditPlugin,ScriptEditPlugin,SoundTestPlugin,SPKPackerPlugin,SpritesetEditPlugin,TaskListPlugin,WindowstyleEditPlugin"; Flags: createkeyifdoesntexist; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "style"; String: "Dark"; Flags: createkeyifdoesntexist; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Sphere Studio"; Key: "def_editor"; String: "Script Editor"; Flags: createkeyifdoesntexist; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "sphere_path"; String: "{app}\{#AppExeName2}"; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "sphere64_path"; String: "{app}\{#AppExeName2_64}"; Components: studio and console; Check: IsWin64
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "plugins"; String: "FontEditPlugin,ImageEditPlugin,MapEditPlugin,ScriptEditPlugin,SoundTestPlugin,SPKPackerPlugin,SpritesetEditPlugin,TaskListPlugin,WindowstyleEditPlugin"; Flags: createkeyifdoesntexist; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "style"; String: "Dark"; Flags: createkeyifdoesntexist; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Sphere Studio"; Key: "def_editor"; String: "Script Editor"; Flags: createkeyifdoesntexist; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Settings\editor.ini"; Section: "Sphere Studio"; Key: "last_preset"; String: "minisphere"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Settings\editor.ini"; Section: "Sphere Studio"; Key: "last_preset"; String: "minisphere Console"; Components: studio and console
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "enginePath"; String: "{app}\{#AppExeName}"; Components: studio
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "enginePath64"; String: "{app}\{#AppExeName_64}"; Components: studio; Check: IsWin64
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "plugins"; String: "FontEditPlugin,ImageEditPlugin,MapEditPlugin,ScriptEditPlugin,SoundTestPlugin,SPKPackerPlugin,SpritesetEditPlugin,TaskListPlugin,WindowstyleEditPlugin"; Flags: createkeyifdoesntexist; Components: studio
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "defaultEditor"; String: "Script Editor"; Flags: createkeyifdoesntexist; Components: studio
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "enginePath"; String: "{app}\{#AppExeName2}"; Components: studio and console
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "enginePath64"; String: "{app}\{#AppExeName2_64}"; Components: studio and console; Check: IsWin64
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "plugins"; String: "FontEditPlugin,ImageEditPlugin,MapEditPlugin,ScriptEditPlugin,SoundTestPlugin,SPKPackerPlugin,SpritesetEditPlugin,TaskListPlugin,WindowstyleEditPlugin"; Flags: createkeyifdoesntexist; Components: studio and console
+Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "defaultEditor"; String: "Script Editor"; Flags: createkeyifdoesntexist; Components: studio and console
+Filename: "{userdocs}\Sphere Studio\Settings\Sphere Studio.ini"; Section: "Sphere Studio"; Key: "setupComplete"; String: "True"; Components: studio
+Filename: "{userdocs}\Sphere Studio\Settings\Sphere Studio.ini"; Section: "Sphere Studio"; Key: "preset"; String: "minisphere"; Components: studio
+Filename: "{userdocs}\Sphere Studio\Settings\Sphere Studio.ini"; Section: "Sphere Studio"; Key: "preset"; String: "minisphere Console"; Components: studio and console
 #endif
 
 [Registry]
