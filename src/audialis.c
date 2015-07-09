@@ -4,12 +4,13 @@
 
 #include "audialis.h"
 
-static duk_ret_t js_new_SoundStream      (duk_context* ctx);
-static duk_ret_t js_SoundStream_finalize (duk_context* ctx);
-static duk_ret_t js_SoundStream_buffer   (duk_context* ctx);
-static duk_ret_t js_SoundStream_play     (duk_context* ctx);
-static duk_ret_t js_SoundStream_pause    (duk_context* ctx);
-static duk_ret_t js_SoundStream_stop     (duk_context* ctx);
+static duk_ret_t js_new_SoundStream            (duk_context* ctx);
+static duk_ret_t js_SoundStream_finalize       (duk_context* ctx);
+static duk_ret_t js_SoundStream_get_bufferSize (duk_context* ctx);
+static duk_ret_t js_SoundStream_buffer         (duk_context* ctx);
+static duk_ret_t js_SoundStream_play           (duk_context* ctx);
+static duk_ret_t js_SoundStream_pause          (duk_context* ctx);
+static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
 
 static void update_stream (stream_t* stream);
 
@@ -19,6 +20,7 @@ struct stream
 	ALLEGRO_AUDIO_STREAM* al_stream;
 	size_t                fragment_size;
 	unsigned char*        buffer;
+	size_t                buffer_size;
 	size_t                feed_size;
 };
 
@@ -59,15 +61,21 @@ create_stream(int frequency, int bits)
 
 	stream = calloc(1, sizeof(stream_t));
 	
+	// create the underlying Allegro stream
 	depth_flag = bits == 8 ? ALLEGRO_AUDIO_DEPTH_UINT8
 		: bits == 24 ? ALLEGRO_AUDIO_DEPTH_INT24
 		: ALLEGRO_AUDIO_DEPTH_INT16;
 	if (!(stream->al_stream = al_create_audio_stream(4, 1024, frequency, depth_flag, ALLEGRO_CHANNEL_CONF_1)))
 		goto on_error;
 	al_set_audio_stream_playing(stream->al_stream, false);
+	al_attach_audio_stream_to_mixer(stream->al_stream, al_get_default_mixer());
+
+	// allocate an initial stream buffer
 	sample_size = bits == 8 ? 1 : bits == 16 ? 2 : bits == 24 ? 3 : 0;
 	stream->fragment_size = 1024 * sample_size;
-	al_attach_audio_stream_to_mixer(stream->al_stream, al_get_default_mixer());
+	stream->buffer_size = frequency * sample_size;  // 1 second
+	stream->buffer = malloc(stream->buffer_size);
+	
 	push_back_vector(s_streams, &stream);
 	return ref_stream(stream);
 
@@ -108,7 +116,15 @@ free_stream(stream_t* stream)
 void
 feed_stream(stream_t* stream, const void* data, size_t size)
 {
-	stream->buffer = realloc(stream->buffer, stream->feed_size + size);
+	size_t needed_size;
+	
+	needed_size = stream->feed_size + size;
+	if (needed_size > stream->buffer_size) {
+		// buffer is too small, double size until large enough
+		while (needed_size > stream->buffer_size)
+			stream->buffer_size *= 2;
+		stream->buffer = realloc(stream->buffer, stream->buffer_size);
+	}
 	memcpy(stream->buffer + stream->feed_size, data, size);
 	stream->feed_size += size;
 }
@@ -179,6 +195,18 @@ js_SoundStream_finalize(duk_context* ctx)
 	stream = duk_require_sphere_obj(ctx, 0, "SoundStream");
 	free_stream(stream);
 	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_get_bufferSize(duk_context* ctx)
+{
+	stream_t*    stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	duk_push_number(ctx, stream->feed_size);
+	return 1;
 }
 
 static duk_ret_t
