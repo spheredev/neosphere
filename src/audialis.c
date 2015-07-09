@@ -167,6 +167,7 @@ void
 init_audialis_api(void)
 {
 	register_api_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
+	register_api_prop(g_duk, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
 	register_api_function(g_duk, "SoundStream", "buffer", js_SoundStream_buffer);
 	register_api_function(g_duk, "SoundStream", "pause", js_SoundStream_pause);
 	register_api_function(g_duk, "SoundStream", "play", js_SoundStream_play);
