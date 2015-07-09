@@ -16,7 +16,6 @@
 #include "rng.h"
 #include "shader.h"
 #include "sockets.h"
-#include "sound.h"
 #include "spriteset.h"
 #include "surface.h"
 #include "windowstyle.h"
@@ -189,7 +188,6 @@ initialize_api(duk_context* ctx)
 	init_rng_api();
 	init_shader_api();
 	init_sockets_api();
-	init_sound_api();
 	init_spriteset_api(g_duk);
 	init_surface_api();
 	init_windowstyle_api();

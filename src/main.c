@@ -6,7 +6,6 @@
 #include "input.h"
 #include "map_engine.h"
 #include "rng.h"
-#include "sound.h"
 #include "spriteset.h"
 
 // enable Windows visual styles (MSVC)
@@ -364,7 +363,6 @@ do_events(void)
 	update_async();
 	update_input();
 	update_audialis();
-	update_sounds();
 
 	// process Allegro events
 	if (al_get_next_event(g_events, &event)) {
@@ -634,7 +632,6 @@ initialize_engine(void)
 	initialize_input();
 	initialize_spritesets();
 	initialize_map_engine();
-	initialize_sound();
 
 	// initialize Duktape
 	console_log(0, "Creating Duktape context\n");
@@ -669,8 +666,8 @@ shutdown_engine(void)
 	dyad_shutdown();
 	
 	shutdown_spritesets();
+	shutdown_audialis();
 	shutdown_galileo();
-	shutdown_sound();
 	
 	console_log(0, "Shutting down Allegro\n");
 	al_destroy_display(g_display); g_display = NULL;
