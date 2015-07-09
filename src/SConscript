@@ -28,7 +28,6 @@ msphere_sources = [
 	"script.c",
 	"shader.c",
 	"sockets.c",
-	"sound.c",
 	"spherefs.c",
 	"spk.c",
 	"spriteset.c",
