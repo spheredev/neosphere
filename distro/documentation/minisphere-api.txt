@@ -942,18 +942,42 @@ Font:drawTextBox(x, y, width, height, x_offset, text);
   width and height. 'x_offset' is added to the X coordinate to offset the text.
 
 
-Sound Routines
---------------
+Audialis Sound Routines
+-----------------------
 
-Playing sounds and music are both handled in minisphere by the Sound object.
+Playing sounds and music are both handled in minisphere by Audialis, the
+evolution of Sphere 1.x's audio subsystem. Audialis allows you to create mixers
+which can be used to adjust certain parameters across all sounds associated with
+that mixer. This is useful for implementing global volume controls, for example.
 
-new Sound(filename);
+GetDefaultMixer();
+  
+  Gets the default Audialis mixer. This is a 44100 16-bit mixer with two
+  channels, i.e. CD quality.
+
+new Mixer(frequency, bits[, channels]);
+
+  Constructs a new Mixer object. Any sounds played through the mixer will use
+  the format specified by the parameters above. 'frequency' is the sample rate,
+  'bits' specifies the bit depth (allowed values are 8, 16 and 24), and
+  'channels' is the number of channels, ranging [1-7]. Note that channel counts
+  of 5 or higher imply an additional low-frequency channel (i.e. 5.1, 6.1, 7.1).
+
+Mixer:volume (read/write)
+  
+  Gets or sets the output volume of the mixer. This will affect the volume of
+  any sounds played through the mixer.
+
+new Sound(filename[, mixer]);
   
   'filename' is relative to ~/sounds unless escaped.
   
   Constructs a Sound object from the specified sound or music file. The sound
   will be streamed from the file system. Supported sound formats are Ogg Vorbis
   (.ogg), WAV, MOD, S3M, IT, and FLAC. minisphere does not support mp3 or MIDI.
+  
+  'mixer', if provided, specifies the mixer which will be used to play the
+  sound. If no mixer is specified, a built-in default stereo mixer will be used.
 
 Sound:playing (read-only)
 
@@ -962,6 +986,10 @@ Sound:playing (read-only)
 Sound:length (read-only)
   
   Gets the length of the sound in microseconds.
+
+Sound:mixer (read/write)
+  
+  Gets or sets the mixer used to play the sound.
 
 Sound:pan (read/write)
 
@@ -1014,6 +1042,55 @@ Sound:stop();
   
   Stops the sound. The playback position will be reset to the beginning, even if
   the sound was not playing.
+
+new SoundStream([frequency[, channels]]);
+  
+  Constructs a sound stream, which plays arbitrary sound data provided by the
+  game at runtime. This may be used, for example, to generate sound procedurally
+  or add support for an unsupported audio format in script. 'frequency'
+  specifies the stream's sample rate and 'channels' the number of audio
+  channels, between 1 and 7. Note that channel counts of 5 and higher will
+  add an additional low-frequency channel.
+  
+  The default stream format is 22050 Hz with 1 channel (mono).
+
+  Currently, Audialis streams are limited to 8-bit unsigned integer samples.
+  As ByteArrays are used to feed the stream, this is the easiest format to work
+  with.
+
+SoundStream:bufferSize (read-only)
+  
+  Gets the total number of samples in the stream's buffer.
+  
+SoundStream:mixer (read/write)
+  
+  Gets or sets the mixer used to play the stream.
+
+SoundStream:buffer(data);
+  
+  Feeds audio data into the stream. 'data' is the data to buffer, encapsulated
+  in a ByteArray. Note that data must be fed into a stream continuously while it
+  is playing to prevent interruption.
+
+SoundStream:play(mixer);
+  
+  Starts the stream playing. Ideally, some audio should be pre-buffered into the
+  stream (see SoundStream:buffer() above) first to minimize the risk of buffer
+  underrun.
+  
+  'mixer' specifies the mixer used to play the stream. Unlike with Sounds above,
+  a mixer must be explicitly provided. If you want to use the default stereo
+  mixer anyway, call GetDefaultMixer().
+
+SoundStream:pause();
+
+  Temporarily pauses playback of the stream.
+
+SoundStream:stop();
+
+  Stops playback of the stream and frees its buffer. This should be called when
+  you are done using a stream. The stream may be reused after a stop() call, but
+  you will have to feed new audio data.
 
 
 Byte Arrays

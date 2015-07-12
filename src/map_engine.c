@@ -1009,7 +1009,7 @@ change_map(const char* filename, bool preserve_persons)
 		free_sound(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
-		if (s_map_bgm_stream = load_sound(lstr_cstr(s_map->bgm_file), true)) {
+		if (s_map_bgm_stream = load_sound(lstr_cstr(s_map->bgm_file), get_default_mixer())) {
 			set_sound_looping(s_map_bgm_stream, true);
 			play_sound(s_map_bgm_stream);
 		}
