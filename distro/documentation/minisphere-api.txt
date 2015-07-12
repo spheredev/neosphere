@@ -962,6 +962,10 @@ new Mixer(frequency, bits[, channels]);
   'bits' specifies the bit depth (allowed values are 8, 16 and 24), and
   'channels' is the number of channels, ranging [1-7]. Note that channel counts
   of 5 or higher imply an additional low-frequency channel (i.e. 5.1, 6.1, 7.1).
+  
+  Do note that this creates a _hardware_ mixer. If the requested format is not
+  supported by the sound hardware and OS configuration, an error will be thrown
+  ("Failed to create hardware mixer").
 
 Mixer:volume (read/write)
   

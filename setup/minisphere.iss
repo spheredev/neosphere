@@ -23,11 +23,11 @@
 ; after copying the Sphere Studio binaries into bin/sphereStudio, you can
 ; still build a non-GDK redistributable installer by uncommenting the line
 ; below:
-;#undef WANT_GDK
+#undef WANT_GDK
 
 #define AppName "minisphere"
 #define AppVersion "1.5.0"
-#define AppBuildNumber "0"
+#define AppBuildNumber "736"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"
@@ -105,13 +105,13 @@ Source: "..\bin\console64.exe"; DestDir: "{app}"; Flags: ignoreversion; Componen
 Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
 #endif
-Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\bin\license.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\bin\readme.md"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\bin\changelog.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: engine
-Source: "..\bin\games\*"; DestDir: "{app}\games"; Flags: ignoreversion; Components: games
 #ifdef WANT_GDK
+Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
+Source: "..\bin\games\*"; DestDir: "{app}\games"; Flags: ignoreversion; Components: games
 Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs\api
 Source: "..\bin\sphereStudio\*"; DestDir: "{app}\sphereStudio"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
 #endif

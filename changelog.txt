@@ -1,11 +1,11 @@
 minisphere Changelog
 ====================
 
-v1.5.0 - TBD
-------------
+v1.5.0 - July 12, 2015
+----------------------
 
-* NEW! Audialis API: Feed audio data directly to the audio system using the new
-  'SoundStream' and 'Mixer' objects!
+* NEW! Audialis API: Use Mixers to group related sounds and feed audio data
+  directly to the audio system using the new SoundStream object.
 
 
 v1.4.7 - July 5, 2015
