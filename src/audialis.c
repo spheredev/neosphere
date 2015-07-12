@@ -611,7 +611,7 @@ js_new_Mixer(duk_context* ctx)
 	if (channels < 1 || channels > 7)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): Invalid channel count for mixer (%i)", channels);
 	if (!(mixer = create_mixer(freq, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): Mixer creation failed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): Failed to create hardware mixer");
 	duk_push_sphere_obj(ctx, "Mixer", mixer);
 	return 1;
 }
@@ -788,7 +788,9 @@ js_new_Sound(duk_context* ctx)
 {
 	duk_int_t n_args = duk_get_top(ctx);
 	const char* filename = duk_require_string(ctx, 0);
-	mixer_t* mixer = !duk_is_boolean(ctx, 1) ? duk_require_sphere_obj(ctx, 1, "Mixer") : s_def_mixer;
+	mixer_t* mixer = n_args >= 2 && !duk_is_boolean(ctx, 1)
+		? duk_require_sphere_obj(ctx, 1, "Mixer")
+		: s_def_mixer;
 	
 	sound_t* sound;
 
