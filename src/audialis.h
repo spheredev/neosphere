@@ -10,9 +10,11 @@ void      shutdown_audialis   (void);
 void      update_audialis     (void);
 mixer_t*  get_default_mixer   (void);
 
-extern mixer_t* create_mixer (int frequency, int bits, int channels);
-extern mixer_t* ref_mixer    (mixer_t* mixer);
-extern void     free_mixer   (mixer_t* mixer);
+extern mixer_t* create_mixer   (int frequency, int bits, int channels);
+extern mixer_t* ref_mixer      (mixer_t* mixer);
+extern void     free_mixer     (mixer_t* mixer);
+extern float    get_mixer_gain (mixer_t* mixer);
+extern void     set_mixer_gain (mixer_t* mixer, float gain);
 
 extern stream_t* create_stream (int frequency, int bits);
 extern stream_t* ref_stream    (stream_t* stream);
