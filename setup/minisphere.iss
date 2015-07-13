@@ -54,7 +54,7 @@ OutputBaseFilename=minisphere-{#AppVersion}
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion}
 DefaultDirName={pf}\{#AppName}
-DefaultGroupName={#AppName}
+DisableProgramGroupPage=yes
 UninstallDisplayName={#AppName} {#AppVersion}
 #endif
 AppVersion={#AppVersion}.{#AppBuildNumber}
@@ -74,14 +74,13 @@ UninstallDisplayIcon={app}\engine.exe,0
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Components]
-Name: "engine"; Description: "{#AppName} {#AppVersion} (required)"; Types: full compact custom; Flags: fixed
 #ifdef WANT_GDK
+Name: "engine"; Description: "{#AppName} {#AppVersion} (required)"; Types: full compact custom; Flags: fixed
 Name: "console"; Description: "{#AppName} Console {#AppVersion} (recommended)"; Types: full
 Name: "studio"; Description: "Sphere Studio {#SphereStudioVersion}"; Types: full
 Name: "docs"; Description: "{#AppName} Documentation"; Types: full compact
 Name: "docs\api"; Description: "API Reference"; Types: full compact
 #endif
-Name: "games"; Description: "Sample Games"; Types: full
 
 [Tasks]
 Name: "assoc_spk"; Description: "Associate .spk (game packages) with {#AppName}"; GroupDescription: "Automatically open Sphere file types:"
@@ -97,21 +96,19 @@ Name: "desktop"; Description: "Create a desktop icon for Sphere Studio"; GroupDe
 ; don't mind the preprocessor mess here, these are arranged to maximize compression.
 ; reordering them will likely make the installer larger.
 #ifdef WANT_GDK
-Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
+Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\console.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: console
-Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
+Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
 Source: "..\bin\console64.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: console; Check: IsWin64
 #else
-Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
+Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
 #endif
-Source: "..\bin\license.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\bin\readme.md"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\bin\changelog.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: engine
+Source: "..\bin\license.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\readme.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\changelog.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifdef WANT_GDK
-Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\bin\games\*"; DestDir: "{app}\games"; Flags: ignoreversion; Components: games
 Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs\api
 Source: "..\bin\sphereStudio\*"; DestDir: "{app}\sphereStudio"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
 #endif
@@ -151,16 +148,15 @@ Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; Valu
 #endif
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName_64}"; Check: IsWin64
-Name: "{group}\Documentation\License"; Filename: "{app}\license.txt"
+Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName_64}"; Check: IsWin64
 #ifdef WANT_GDK
 Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2}"; Components: console
 Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2_64}"; Components: console; Check: IsWin64
-Name: "{group}\Sphere Studio"; Filename: "{app}\sphereStudio\Sphere Studio.exe"; Flags: createonlyiffileexists
-Name: "{group}\Documentation\JS API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Flags: createonlyiffileexists
-Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\sphereStudio\Sphere Studio.exe"; Flags: createonlyiffileexists
-Name: "{commondesktop}\Sphere Studio"; Filename: "{app}\sphereStudio\Sphere Studio.exe"; Tasks: desktop
+Name: "{group}\License"; Filename: "{app}\license.txt"
+Name: "{group}\JS API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Components: docs\api
+Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\sphereStudio\Sphere Studio.exe"; Components: studio
+Name: "{commondesktop}\Sphere Studio"; Filename: "{app}\sphereStudio\Sphere Studio.exe"; Components: studio; Tasks: desktop
 #endif
 
 [Run]

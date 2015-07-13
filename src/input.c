@@ -443,7 +443,7 @@ update_input(void)
 	ALLEGRO_MOUSE_STATE    mouse_state;
 	
 	// process Allegro input events
-	if (al_get_next_event(s_events, &event)) {
+	while (al_get_next_event(s_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
 			// Alt+Tabbing out can cause keys to get "stuck", this works around it

@@ -365,7 +365,7 @@ do_events(void)
 	update_audialis();
 
 	// process Allegro events
-	if (al_get_next_event(g_events, &event)) {
+	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			exit_game(true);
