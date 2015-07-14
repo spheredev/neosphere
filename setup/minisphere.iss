@@ -16,18 +16,19 @@
 ;     MSBuild msvc/minisphere.sln /p:Configuration=Console /p:Platform=Win32
 ;     MSBuild msvc/minisphere.sln /p:Configuration=Console /p:Platform=x64
 
+
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-;#define WANT_GDK_SETUP
+#define WANT_GDK_SETUP
 
 #ifnexist "..\bin\spherestudio\Sphere Studio.exe"
 #undef WANT_GDK_SETUP
 #endif
 
 #define AppName "minisphere"
-#define AppVersion "1.5.0"
-#define AppBuildNumber "736"
+#define AppVersion "1.5.1"
+#define AppBuildNumber "740"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"
@@ -162,8 +163,8 @@ Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName_64}"; Check: 
 #ifdef WANT_GDK_SETUP
 Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2}"; Components: console
 Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2_64}"; Components: console; Check: IsWin64
-Name: "{group}\License"; Filename: "{app}\license.txt"
-Name: "{group}\JS API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Components: docs\api
+Name: "{group}\Documentation\JS API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Components: docs\api
+Name: "{group}\Documentation\License"; Filename: "{app}\license.txt"
 Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\spherestudio\Sphere Studio.exe"; Components: studio
 Name: "{commondesktop}\Sphere Studio"; Filename: "{app}\spherestudio\Sphere Studio.exe"; Components: studio; Tasks: desktop
 #endif

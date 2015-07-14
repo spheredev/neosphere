@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.5.1 - July 14, 2015
+----------------------
+
+* Fixes an issue where attempting to create an 8-bit mixer will fail with
+  a "cannot create hardware mixer" error.
+
 v1.5.0 - July 12, 2015
 ----------------------
 
