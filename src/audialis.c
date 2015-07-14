@@ -79,10 +79,12 @@ struct sound
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
-static bool           s_have_sound;
-static mixer_t*       s_def_mixer;
-static unsigned int   s_next_sound_id = 0;
-static vector_t*      s_streams;
+static bool                 s_have_sound;
+static ALLEGRO_AUDIO_DEPTH  s_bit_depth;
+static ALLEGRO_CHANNEL_CONF s_channel_conf;
+static mixer_t*             s_def_mixer;
+static unsigned int         s_next_sound_id = 0;
+static vector_t*            s_streams;
 
 void
 initialize_audialis(void)
@@ -352,7 +354,7 @@ create_mixer(int frequency, int bits, int channels)
 		: ALLEGRO_AUDIO_DEPTH_UINT8;
 	if (!(mixer->voice = al_create_voice(frequency, depth, conf)))
 		goto on_error;
-	if (!(mixer->ptr = al_create_mixer(frequency, depth, conf)))
+	if (!(mixer->ptr = al_create_mixer(frequency, ALLEGRO_AUDIO_DEPTH_FLOAT32, conf)))
 		goto on_error;
 	al_attach_mixer_to_voice(mixer->ptr, mixer->voice);
 	al_set_mixer_gain(mixer->ptr, 1.0);
@@ -611,7 +613,7 @@ js_new_Mixer(duk_context* ctx)
 	if (channels < 1 || channels > 7)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): Invalid channel count for mixer (%i)", channels);
 	if (!(mixer = create_mixer(freq, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): Failed to create hardware mixer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): Unable to create %i-bit %ich voice", bits, channels);
 	duk_push_sphere_obj(ctx, "Mixer", mixer);
 	return 1;
 }
