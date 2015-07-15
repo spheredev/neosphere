@@ -18,8 +18,9 @@ RequireSystemScript('mini/miniThreads.js');
 mini.BGM = new (function()
 {
 	this.adjuster = null;
-	this.stream = null;
-	this.stack = [];
+	this.currentSound = null;
+	this.oldSounds = [];
+	this.activeSounds = [];
 })();
 	
 // miniBGM initializer
@@ -28,8 +29,22 @@ mini.onStartUp.add(mini.BGM, function()
 {
 	Print("miniRT: Initializing miniBGM");
 	this.mixer = new Mixer(44100, 16, 2);
+	mini.Threads.create(this);
 });
 	
+mini.BGM.update = function()
+{
+	for (var i = this.activeSounds.length - 1; i >= 0; --i) {
+		if (this.activeSounds[i].volume <= 0.0
+		    && this.activeSounds[i] != this.currentSound
+		    && !mini.Link(this.oldSounds).contains(this.activeSounds[i]))
+		{
+			this.activeSounds.splice(i, 1);
+		}
+	}
+	return true;
+};
+
 // mini.BGM.isAdjusting()
 // Returns whether or not the volume level is being adjusted.
 mini.BGM.isAdjusting = function()
@@ -72,19 +87,26 @@ mini.BGM.override = function(path, fadeTime)
 // Arguments:
 //     path:     The path to the sound file to play, relative to <game_dir>/sounds. This
 //               can be null, in which case the BGM is silenced.
-//     fadeTime: Optional. The amount of crossfdae to apply, in seconds. (default: 0.0)
+//     fadeTime: Optional. The amount of crossfade to apply, in seconds. (default: 0.0)
 mini.BGM.play = function(path, fadeTime)
 {
 	if (fadeTime === undefined) fadeTime = 0.0;
 	
-	if (this.stream !== null) {
-		this.stream.stop();
+	if (this.currentSound != null) {
+		this.currentSound.fader.stop();
+		this.currentSound.fader = new mini.Scene()
+			.tween(this.currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
+			.run();
 	}
 	if (path !== null) {
-		this.stream = new Sound(path, this.mixer);
-		this.stream.play(true);
-	} else {
-		this.stream = null;
+		var stream = new Sound(path, this.mixer);
+		stream.volume = 0.0;
+		stream.play(true);
+		var fader = new mini.Scene()
+			.tween(stream, fadeTime, 'linear', { volume: 1.0 })
+			.run();
+		this.currentSound = { stream: stream, fader: fader };
+		this.activeSounds.push(this.currentSound);
 	}
 };
 
@@ -96,17 +118,9 @@ mini.BGM.play = function(path, fadeTime)
 //     fadeTime: Optional. The amount of crossfade to apply, in seconds. (default: 0.0)
 mini.BGM.push = function(path, fadeTime)
 {
-	if (fadeTime === undefined) fadeTime = 0.0;
-	
-	var oldStream = this.stream;
-	if (oldStream !== null) {
-		oldStream.pause();
-	}
-	this.stream = null;
-	this.play(path);
-	this.stack.push({
-		stream: oldStream
-	});
+	var oldSound = this.currentSound;
+	this.play(path, fadeTime);
+	this.oldSounds.push(oldSound);
 };
 
 // .pop() method
@@ -119,11 +133,19 @@ mini.BGM.pop = function(fadeTime)
 {
 	if (fadeTime === undefined) fadeTime = 0.0;
 	
-	if (this.stack.length == 0) return;
-	this.stream.stop();
-	var oldBGM = this.stack.pop();
-	this.stream = oldBGM.stream;
-	if (this.stream !== null) {
-		this.stream.play();
+	if (this.oldSounds.length == 0) return;
+	this.currentSound.fader.stop();
+	this.currentSound.fader = new mini.Scene()
+		.tween(this.currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
+		.run();
+	var oldSound = this.oldSounds.pop();
+	this.currentSound = oldSound;
+	if (this.currentSound !== null) {
+		this.currentSound.stream.volume = 0.0;
+		this.currentSound.stream.play();
+		this.currentSound.fader.stop();
+		this.currentSound.fader = new mini.Scene()
+			.tween(this.currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
+			.run();
 	}
 }
