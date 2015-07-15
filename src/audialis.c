@@ -13,6 +13,8 @@ static duk_ret_t js_LoadSound                  (duk_context* ctx);
 static duk_ret_t js_new_Sound                  (duk_context* ctx);
 static duk_ret_t js_Sound_finalize             (duk_context* ctx);
 static duk_ret_t js_Sound_toString             (duk_context* ctx);
+static duk_ret_t js_Sound_getVolume            (duk_context* ctx);
+static duk_ret_t js_Sound_setVolume            (duk_context* ctx);
 static duk_ret_t js_Sound_get_length           (duk_context* ctx);
 static duk_ret_t js_Sound_get_mixer            (duk_context* ctx);
 static duk_ret_t js_Sound_set_mixer            (duk_context* ctx);
@@ -579,12 +581,12 @@ init_audialis_api(void)
 	register_api_function(g_duk, "Sound", "getPitch", js_Sound_get_pitch);
 	register_api_function(g_duk, "Sound", "getPosition", js_Sound_get_position);
 	register_api_function(g_duk, "Sound", "getRepeat", js_Sound_get_repeat);
-	register_api_function(g_duk, "Sound", "getVolume", js_Sound_get_volume);
+	register_api_function(g_duk, "Sound", "getVolume", js_Sound_getVolume);
 	register_api_function(g_duk, "Sound", "setPan", js_Sound_set_pan);
 	register_api_function(g_duk, "Sound", "setPitch", js_Sound_set_pitch);
 	register_api_function(g_duk, "Sound", "setPosition", js_Sound_set_position);
 	register_api_function(g_duk, "Sound", "setRepeat", js_Sound_set_repeat);
-	register_api_function(g_duk, "Sound", "setVolume", js_Sound_set_volume);
+	register_api_function(g_duk, "Sound", "setVolume", js_Sound_setVolume);
 	register_api_function(g_duk, "Sound", "pause", js_Sound_pause);
 	register_api_function(g_duk, "Sound", "play", js_Sound_play);
 	register_api_function(g_duk, "Sound", "reset", js_Sound_reset);
@@ -821,6 +823,33 @@ js_Sound_toString(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Sound_getVolume(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	duk_push_int(ctx, get_sound_gain(sound) * 255);
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_setVolume(duk_context* ctx)
+{
+	int volume = duk_require_int(ctx, 0);
+
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	duk_pop(ctx);
+	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
+	set_sound_gain(sound, (float)volume / 255);
+	return 0;
+}
+
+static duk_ret_t
 js_Sound_get_length(duk_context* ctx)
 {
 	sound_t* sound;
@@ -989,21 +1018,21 @@ js_Sound_get_volume(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_gain(sound) * 255);
+	duk_push_number(ctx, get_sound_gain(sound));
 	return 1;
 }
 
 static duk_ret_t
 js_Sound_set_volume(duk_context* ctx)
 {
-	float new_gain = duk_require_int(ctx, 0);
+	float volume = duk_require_number(ctx, 0);
 
 	sound_t* sound;
 
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	set_sound_gain(sound, (float)new_gain / 255);
+	set_sound_gain(sound, volume);
 	return 0;
 }
 
