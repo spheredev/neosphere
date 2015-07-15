@@ -19,7 +19,6 @@ mini.BGM = new (function()
 {
 	this.adjuster = null;
 	this.stream = null;
-	this.volume = 1.0;
 	this.stack = [];
 })();
 	
@@ -28,19 +27,9 @@ mini.BGM = new (function()
 mini.onStartUp.add(mini.BGM, function()
 {
 	Print("miniRT: Initializing miniBGM");
-	mini.Threads.create(this);
+	this.mixer = new Mixer(44100, 16, 2);
 });
 	
-// mini.BGM.update()
-// Updates the BGM thread per frame.
-mini.BGM.update = function()
-{
-	if (this.stream !== null) {
-		this.stream.setVolume(this.volume * 255);
-	}
-	return true;
-};
-
 // mini.BGM.isAdjusting()
 // Returns whether or not the volume level is being adjusted.
 mini.BGM.isAdjusting = function()
@@ -64,13 +53,10 @@ mini.BGM.adjust = function(newVolume, duration)
 	}
 	if (duration > 0.0) {
 		this.adjuster = new mini.Scene()
-			.tween(this, duration, 'linear', { volume: newVolume })
+			.tween(this.mixer, duration, 'linear', { volume: newVolume })
 			.run();
 	} else {
-		this.volume = newVolume;
-		if (this.stream != null) {
-			this.stream.setVolume(this.volume * 255);
-		}
+		this.mixer.volume = newVolume;
 	}
 };
 
@@ -95,8 +81,7 @@ mini.BGM.play = function(path, fadeTime)
 		this.stream.stop();
 	}
 	if (path !== null) {
-		this.stream = new Sound(path, true);
-		this.stream.setVolume(this.volume * 255);
+		this.stream = new Sound(path, this.mixer);
 		this.stream.play(true);
 	} else {
 		this.stream = null;
@@ -139,7 +124,6 @@ mini.BGM.pop = function(fadeTime)
 	var oldBGM = this.stack.pop();
 	this.stream = oldBGM.stream;
 	if (this.stream !== null) {
-		this.stream.setVolume(this.volume * 255);
 		this.stream.play();
 	}
 }
