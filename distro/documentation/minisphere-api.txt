@@ -952,8 +952,8 @@ that mixer. This is useful for implementing global volume controls, for example.
 
 GetDefaultMixer();
   
-  Gets the default Audialis mixer. This is a 44100 16-bit mixer with two
-  channels, i.e. CD quality.
+  Gets the default Audialis mixer. The default mixer outputs 44.1 kHz 16-bit
+  sound with two channels, i.e. CD quality.
 
 new Mixer(frequency, bits[, channels]);
 
@@ -961,11 +961,10 @@ new Mixer(frequency, bits[, channels]);
   the format specified by the parameters above. 'frequency' is the sample rate,
   'bits' specifies the bit depth (allowed values are 8, 16 and 24), and
   'channels' is the number of channels, ranging [1-7]. Note that channel counts
-  of 5 or higher imply an additional low-frequency channel (i.e. 5.1, 6.1, 7.1).
+  of 5 or higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
   
   Do note that this creates a _hardware_ mixer. If the requested format is not
-  supported by the sound hardware and OS configuration, an error will be thrown
-  ("Failed to create hardware mixer").
+  supported by the system, an error will be thrown ("Unable to create voice").
 
 Mixer:volume (read/write)
   
@@ -976,12 +975,13 @@ new Sound(filename[, mixer]);
   
   'filename' is relative to ~/sounds unless escaped.
   
-  Constructs a Sound object from the specified sound or music file. The sound
-  will be streamed from the file system. Supported sound formats are Ogg Vorbis
-  (.ogg), WAV, MOD, S3M, IT, and FLAC. minisphere does not support mp3 or MIDI.
+  Constructs a Sound object from the specified audio file. Supported sound
+  formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC. minisphere does
+  not support mp3 or MIDI.
   
   'mixer', if provided, specifies the mixer which will be used to play the
-  sound. If no mixer is specified, a built-in default stereo mixer will be used.
+  sound. If no mixer is specified, the built-in stereo mixer will be used. See
+  GetDefaultMixer() above.
 
 Sound:playing (read-only)
 
@@ -997,8 +997,8 @@ Sound:mixer (read/write)
 
 Sound:pan (read/write)
 
-  Gets or sets the currently pan (balance). 0.0 is dead center, -1.0 is full
-  left and 1.0 is full right.
+  Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full left,
+  and 1.0 is full right.
 
 Sound:pitch (read/write)
 
@@ -1021,7 +1021,9 @@ Sound:seekable (read-only)
 
 Sound:volume (read/write)
   
-  Gets or sets the current volume of the sound, range [0-255].
+  Gets or sets the current volume of the sound. 0.0 is silent, 1.0 is full
+  volume. Higher values are allowed, but may introduce distortion due to
+  clipping.
 
 Sound:pause();
   
@@ -1053,8 +1055,8 @@ new SoundStream([frequency[, channels]]);
   game at runtime. This may be used, for example, to generate sound procedurally
   or add support for an unsupported audio format in script. 'frequency'
   specifies the stream's sample rate and 'channels' the number of audio
-  channels, between 1 and 7. Note that channel counts of 5 and higher will
-  add an additional low-frequency channel.
+  channels, between 1 and 7. Note that channel counts of 5 and higher imply an
+  additional LFE (subwoofer) channel.
   
   The default stream format is 22050 Hz with 1 channel (mono).
 

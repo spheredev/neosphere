@@ -50,6 +50,7 @@ static void update_stream (stream_t* stream);
 struct mixer
 {
 	unsigned int   refcount;
+	unsigned int   id;
 	ALLEGRO_MIXER* ptr;
 	ALLEGRO_VOICE* voice;
 	float          gain;
@@ -85,6 +86,7 @@ static bool                 s_have_sound;
 static ALLEGRO_AUDIO_DEPTH  s_bit_depth;
 static ALLEGRO_CHANNEL_CONF s_channel_conf;
 static mixer_t*             s_def_mixer;
+static unsigned int         s_next_mixer_id = 0;
 static unsigned int         s_next_sound_id = 0;
 static vector_t*            s_streams;
 
@@ -364,6 +366,9 @@ create_mixer(int frequency, int bits, int channels)
 	al_set_mixer_playing(mixer->ptr, true);
 	
 	mixer->gain = al_get_mixer_gain(mixer->ptr);
+	mixer->id = s_next_mixer_id++;
+	console_log(2, "engine: Created mixer @ %i-bit, %i kHz, %ich [mixer %u]",
+		bits, frequency / 1000, channels, mixer->id);
 	return ref_mixer(mixer);
 
 on_error:

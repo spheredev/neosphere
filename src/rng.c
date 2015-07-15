@@ -17,8 +17,8 @@ initialize_rng(void)
 	unsigned long seed;
 	
 	seed = (unsigned long)time(NULL);
-	console_log(1, "Initializing random number generator\n");
-	console_log(2, "  Seed value: %ul", seed);
+	console_log(1, "Initializing MT19937\n");
+	console_log(2, "  Seed: %ul", seed);
 
 	init_genrand(seed);
 }
