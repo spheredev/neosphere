@@ -72,7 +72,7 @@ new_sandbox(const char* path)
 	get_sgm_metrics(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s\n", get_sgm_name(fs));
 	console_log(1, "  Author: %s\n", get_sgm_author(fs));
-	console_log(1, "  Resolution: %i x %i\n", res_x, res_y);
+	console_log(1, "  Resolution: %ix%i\n", res_x, res_y);
 	return fs;
 
 on_error:

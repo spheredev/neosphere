@@ -143,8 +143,8 @@ create_mixer(int frequency, int bits, int channels)
 	ALLEGRO_AUDIO_DEPTH  depth;
 	mixer_t*             mixer;
 
-	console_log(2, "Creating mixer %u with format %ich %i kHz, %i-bit\n", s_next_mixer_id,
-		channels, frequency / 1000, bits);
+	console_log(2, "Creating %i kHz Audialis mixer %u\n", frequency / 1000, s_next_mixer_id);
+	console_log(3, "  Format: %ich %i Hz, %i-bit", channels, frequency, bits);
 
 	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
 		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3

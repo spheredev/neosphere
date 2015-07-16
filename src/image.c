@@ -154,6 +154,7 @@ load_image(const char* path)
 	return ref_image(image);
 
 on_error:
+	console_log(2, "  Failed to load image %u", s_next_image_id);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(slurp);
