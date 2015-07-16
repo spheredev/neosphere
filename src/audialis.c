@@ -98,7 +98,7 @@ initialize_audialis(void)
 	s_have_sound = true;
 	if (!al_install_audio() || !(s_def_mixer = create_mixer(44100, 16, 2))) {
 		s_have_sound = false;
-		console_log(1, "  Failed, sound disabled\n");
+		console_log(1, "  Sound not available\n");
 		return;
 	}
 	al_init_acodec_addon();
@@ -132,6 +132,83 @@ mixer_t*
 get_default_mixer(void)
 {
 	return s_def_mixer;
+}
+
+mixer_t*
+create_mixer(int frequency, int bits, int channels)
+{
+	ALLEGRO_CHANNEL_CONF conf;
+	ALLEGRO_AUDIO_DEPTH  depth;
+	mixer_t*             mixer;
+
+	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
+		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3
+		: channels == 4 ? ALLEGRO_CHANNEL_CONF_4
+		: channels == 5 ? ALLEGRO_CHANNEL_CONF_5_1
+		: channels == 6 ? ALLEGRO_CHANNEL_CONF_6_1
+		: channels == 7 ? ALLEGRO_CHANNEL_CONF_7_1
+		: ALLEGRO_CHANNEL_CONF_1;
+	depth = bits == 16 ? ALLEGRO_AUDIO_DEPTH_INT16
+		: bits == 24 ? ALLEGRO_AUDIO_DEPTH_INT24
+		: ALLEGRO_AUDIO_DEPTH_UINT8;
+
+	console_log(2, "Creating mixer %u @ %i-bit, %i kHz, %ich\n",
+		s_next_mixer_id, bits, frequency / 1000, channels);
+	mixer = calloc(1, sizeof(mixer_t));
+	if (!(mixer->voice = al_create_voice(frequency, depth, conf)))
+		goto on_error;
+	if (!(mixer->ptr = al_create_mixer(frequency, ALLEGRO_AUDIO_DEPTH_FLOAT32, conf)))
+		goto on_error;
+	al_attach_mixer_to_voice(mixer->ptr, mixer->voice);
+	al_set_mixer_gain(mixer->ptr, 1.0);
+	al_set_voice_playing(mixer->voice, true);
+	al_set_mixer_playing(mixer->ptr, true);
+
+	mixer->gain = al_get_mixer_gain(mixer->ptr);
+	mixer->id = s_next_mixer_id++;
+	return ref_mixer(mixer);
+
+on_error:
+	if (mixer->ptr != NULL)
+		al_destroy_mixer(mixer->ptr);
+	if (mixer->voice != NULL)
+		al_destroy_voice(mixer->voice);
+	free(mixer);
+	return NULL;
+}
+
+mixer_t*
+ref_mixer(mixer_t* mixer)
+{
+	console_log(4, "Incrementing mixer %u refcount, new: %u\n",
+		mixer->id, mixer->refcount + 1);
+	++mixer->refcount;
+	return mixer;
+}
+
+void
+free_mixer(mixer_t* mixer)
+{
+	if (mixer == NULL) return;
+	console_log(4, "Decrementing mixer %u refcount, new: %u\n", mixer->id, mixer->refcount - 1);
+	if (--mixer->refcount == 0) {
+		console_log(3, "Mixer %u no longer in use, releasing\n", mixer->id);
+		al_destroy_mixer(mixer->ptr);
+		free(mixer);
+	}
+}
+
+float
+get_mixer_gain(mixer_t* mixer)
+{
+	return mixer->gain;
+}
+
+void
+set_mixer_gain(mixer_t* mixer, float gain)
+{
+	al_set_mixer_gain(mixer->ptr, gain);
+	mixer->gain = gain;
 }
 
 sound_t*
@@ -335,78 +412,6 @@ stop_sound(sound_t* sound, bool rewind)
 	al_set_audio_stream_playing(sound->stream, false);
 	if (rewind)
 		al_rewind_audio_stream(sound->stream);
-}
-
-mixer_t*
-create_mixer(int frequency, int bits, int channels)
-{
-	ALLEGRO_CHANNEL_CONF conf;
-	ALLEGRO_AUDIO_DEPTH  depth;
-	mixer_t*             mixer;
-
-	mixer = calloc(1, sizeof(mixer_t));
-
-	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
-		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3
-		: channels == 4 ? ALLEGRO_CHANNEL_CONF_4
-		: channels == 5 ? ALLEGRO_CHANNEL_CONF_5_1
-		: channels == 6 ? ALLEGRO_CHANNEL_CONF_6_1
-		: channels == 7 ? ALLEGRO_CHANNEL_CONF_7_1
-		: ALLEGRO_CHANNEL_CONF_1;
-	depth = bits == 16 ? ALLEGRO_AUDIO_DEPTH_INT16
-		: bits == 24 ? ALLEGRO_AUDIO_DEPTH_INT24
-		: ALLEGRO_AUDIO_DEPTH_UINT8;
-	if (!(mixer->voice = al_create_voice(frequency, depth, conf)))
-		goto on_error;
-	if (!(mixer->ptr = al_create_mixer(frequency, ALLEGRO_AUDIO_DEPTH_FLOAT32, conf)))
-		goto on_error;
-	al_attach_mixer_to_voice(mixer->ptr, mixer->voice);
-	al_set_mixer_gain(mixer->ptr, 1.0);
-	al_set_voice_playing(mixer->voice, true);
-	al_set_mixer_playing(mixer->ptr, true);
-	
-	mixer->gain = al_get_mixer_gain(mixer->ptr);
-	mixer->id = s_next_mixer_id++;
-	console_log(2, "engine: Created mixer @ %i-bit, %i kHz, %ich [mixer %u]",
-		bits, frequency / 1000, channels, mixer->id);
-	return ref_mixer(mixer);
-
-on_error:
-	if (mixer->ptr != NULL)
-		al_destroy_mixer(mixer->ptr);
-	if (mixer->voice != NULL)
-		al_destroy_voice(mixer->voice);
-	free(mixer);
-	return NULL;
-}
-
-mixer_t*
-ref_mixer(mixer_t* mixer)
-{
-	++mixer->refcount;
-	return mixer;
-}
-
-void
-free_mixer(mixer_t* mixer)
-{
-	if (mixer == NULL || --mixer->refcount > 0)
-		return;
-	al_destroy_mixer(mixer->ptr);
-	free(mixer);
-}
-
-float
-get_mixer_gain(mixer_t* mixer)
-{
-	return mixer->gain;
-}
-
-void
-set_mixer_gain(mixer_t* mixer, float gain)
-{
-	al_set_mixer_gain(mixer->ptr, gain);
-	mixer->gain = gain;
 }
 
 stream_t*

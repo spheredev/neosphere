@@ -54,8 +54,8 @@ open_file(const char* filename)
 	void*         slurp;
 	size_t        slurp_size;
 	
-	if (!(file = calloc(1, sizeof(kv_file_t))))
-		goto on_error;
+	console_log(2, "Opening file %u as '%s'\n", s_next_file_id, filename);
+	file = calloc(1, sizeof(kv_file_t));
 	if (slurp = sfs_fslurp(g_fs, filename, "save", &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
@@ -68,19 +68,14 @@ open_file(const char* filename)
 	}
 	file->filename = strdup(filename);
 	file->id = s_next_file_id++;
-	if (g_game_path != NULL) {
-		console_log(2, "engine: Opened K/V file [file %u]", file->id);
-		console_log(2, "  Filename: %s", file->filename);
-	}
 	return file;
 
 on_error:
+	console_log(2, "  Failed!\n");
 	if (memfile != NULL) al_fclose(memfile);
-	if (file != NULL) {
-		if (file->conf != NULL)
-			al_destroy_config(file->conf);
-		free(file);
-	}
+	if (file->conf != NULL)
+		al_destroy_config(file->conf);
+	free(file);
 	return NULL;
 }
 
@@ -89,11 +84,11 @@ close_file(kv_file_t* file)
 {
 	if (file == NULL)
 		return;
+	
+	console_log(2, "File %u no longer in use, releasing\n", file->id);
 	if (file->is_dirty)
 		save_file(file);
 	al_destroy_config(file->conf);
-	if (g_game_path != NULL)
-		console_log(2, "file %u: Closed file", file->id);
 	free(file);
 }
 
@@ -160,10 +155,9 @@ read_string_rec(kv_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
+	console_log(2, "Reading key '%s' from file %u\n", key, file->id);
 	if (!(value = al_get_config_value(file->conf, NULL, key)))
 		value = def_value;
-	if (g_game_path != NULL)
-		console_log(3, "file %u: Read string \"%s\" from key '%s'", file->id, value, key);
 	return value;
 }
 
@@ -177,6 +171,7 @@ save_file(kv_file_t* file)
 	size_t        next_buf_size;
 	sfs_file_t*   sfs_file = NULL;
 
+	console_log(3, "Saving file %u as '%s'\n", file->id, file->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
 		buffer = realloc(buffer, next_buf_size);
@@ -192,8 +187,6 @@ save_file(kv_file_t* file)
 	sfs_fwrite(buffer, file_size, 1, sfs_file);
 	sfs_fclose(sfs_file);
 	free(buffer);
-	if (g_game_path != NULL)
-		console_log(3, "file %u: Saved out K/V file", file->id);
 	return true;
 
 on_error:
@@ -207,12 +200,9 @@ on_error:
 void
 write_bool_rec(kv_file_t* file, const char* key, bool value)
 {
+	console_log(3, "Writing boolean to file %u, key '%s'\n", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
-	if (g_game_path != NULL) {
-		console_log(3, "file %u: Wrote boolean value '%s' under key '%s'", 
-			file->id, value ? "true" : "false", key);
-	}
 }
 
 void
@@ -220,20 +210,18 @@ write_number_rec(kv_file_t* file, const char* key, double value)
 {
 	char string[500];
 
+	console_log(3, "Writing number to file %u, key '%s'\n", file->id, key);
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
 	file->is_dirty = true;
-	if (g_game_path != NULL)
-		console_log(3, "file %u: Wrote number value %f under key '%s'", file->id, value, key);
 }
 
 void
 write_string_rec(kv_file_t* file, const char* key, const char* value)
 {
+	console_log(3, "Writing string to file %u, key '%s'\n", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
-	if (g_game_path != NULL)
-		console_log(3, "file %u: Wrote string value \"%s\" under key '%s'", file->id, value, key);
 }
 
 void

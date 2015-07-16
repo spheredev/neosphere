@@ -634,7 +634,7 @@ initialize_engine(void)
 	initialize_map_engine();
 
 	// initialize Duktape
-	console_log(0, "Creating Duktape context\n");
+	console_log(0, "Initializing Duktape\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
 
