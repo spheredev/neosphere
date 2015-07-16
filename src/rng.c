@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "mt19937ar.h"
 
 #include "rng.h"
 
@@ -14,20 +15,15 @@ static duk_ret_t js_RNG_vary   (duk_context* ctx);
 void
 initialize_rng(void)
 {
-	unsigned long seed;
-	
-	seed = (unsigned long)time(NULL);
 	console_log(1, "Initializing Mersenne Twister\n");
-	console_log(2, "  Seed: %ul", seed);
-
-	init_genrand(seed);
+	seed_rng((unsigned long)time(NULL));
 }
 
 void
 seed_rng(unsigned long seed)
 {
+	console_log(2, "Seeding MT19937 with value %ul", seed);
 	init_genrand(seed);
-	console_log(2, "engine: RNG reseeded with value %ul", seed);
 }
 
 bool

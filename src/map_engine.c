@@ -513,13 +513,14 @@ add_trigger(int x, int y, int layer, script_t* script)
 {
 	struct map_trigger trigger;
 
+	console_log(2, "Creating trigger %i on map '%s'\n", get_vector_size(s_map->triggers), s_map_filename);
+	console_log(3, "  Location: '%s' @ (%i,%i)\n", lstr_cstr(s_map->layers[layer].name), x, y);
+	
 	trigger.x = x; trigger.y = y;
 	trigger.z = layer;
 	trigger.script = ref_script(script);
 	if (!push_back_vector(s_map->triggers, &trigger))
 		return false;
-	console_log(2, "map: Created transient trigger on map '%s' [%i]\n", s_map_filename, get_vector_size(s_map->triggers));
-	console_log(3, "  Location: '%s' @ (%i,%i)\n", lstr_cstr(s_map->layers[trigger.z].name), trigger.x, trigger.y);
 	return true;
 }
 
@@ -528,6 +529,9 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 {
 	struct map_zone zone;
 
+	console_log(2, "Creating %u-step zone %i on map '%s'\n", steps, get_vector_size(s_map->zones), s_map_filename);
+	console_log(3, "  Bounds: (%i,%i)-(%i,%i)\n", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
+	
 	memset(&zone, 0, sizeof(struct map_zone));
 	zone.bounds = bounds;
 	zone.layer = layer;
@@ -536,8 +540,6 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 	zone.steps_left = 0;
 	if (!push_back_vector(s_map->zones, &zone))
 		return false;
-	console_log(2, "map: Created %u-step transient zone on map '%s' [%i]\n", zone.interval, s_map_filename, get_vector_size(s_map->zones));
-	console_log(3, "  Bounds: (%i,%i)-(%i,%i)\n", zone.bounds.x1, zone.bounds.y1, zone.bounds.x2, zone.bounds.y2);
 	return true;
 }
 
@@ -616,6 +618,8 @@ load_map(const char* filename)
 
 	int i, j, x, y, z;
 
+	console_log(2, "Loading map as '%s'\n", filename);
+	
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
 	if (!(file = sfs_fopen(g_fs, filename, "maps", "rb"))) goto on_error;
@@ -956,6 +960,8 @@ change_map(const char* filename, bool preserve_persons)
 
 	int i;
 
+	console_log(2, "Changing current map to '%s'\n", filename);
+	
 	map = load_map(filename);
 	if (map == NULL) return false;
 	if (s_map != NULL) {
@@ -1020,8 +1026,6 @@ change_map(const char* filename, bool preserve_persons)
 	run_script(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
 
 	s_frames = 0;
-	
-	console_log(2, "engine: Changed current map to '%s'\n", s_map_filename);
 	return true;
 
 on_error:

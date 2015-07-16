@@ -208,10 +208,6 @@ main(int argc, char* argv[])
 		}
 	}
 	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
-	console_log(1, "  Title: %s\n", get_sgm_name(g_fs));
-	console_log(1, "  Author: %s\n", get_sgm_author(g_fs));
-	console_log(1, "  Resolution: %ix%i\n", g_res_x, g_res_y);
-	console_log(2, "  Path: %s\n", al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 
 	// set up engine and create display window
 	console_log(1, "Creating render window\n");

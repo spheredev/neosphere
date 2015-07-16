@@ -34,6 +34,7 @@ new_sandbox(const char* path)
 	ALLEGRO_FILE* al_file = NULL;
 	const char*   extension;
 	sandbox_t*    fs;
+	int           res_x, res_y;
 	ALLEGRO_PATH* sgm_path = NULL;
 	size_t        sgm_size;
 	void*         sgm_text = NULL;
@@ -43,6 +44,7 @@ new_sandbox(const char* path)
 		goto on_error;
 	extension = strrchr(path, '.');
 	if (spk = open_spk(path)) {  // Sphere Package (.spk)
+		console_log(1, "Opening game package '%s'\n", path);
 		fs->type = SPHEREFS_SPK;
 		fs->spk = spk;
 		if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
@@ -52,9 +54,9 @@ new_sandbox(const char* path)
 			goto on_error;
 		al_fclose(al_file);
 		free(sgm_text);
-		return fs;
 	}
 	else {  // default case, unpacked game folder
+		console_log(1, "Opening game '%s'\n", path);
 		fs->type = SPHEREFS_LOCAL;
 		if (extension != NULL && strcmp(extension, ".sgm") == 0)
 			fs->fs_root = al_create_path(path);
@@ -67,6 +69,10 @@ new_sandbox(const char* path)
 			goto on_error;
 		al_destroy_path(sgm_path);
 	}
+	get_sgm_metrics(fs, &res_x, &res_y);
+	console_log(1, "  Title: %s\n", get_sgm_name(fs));
+	console_log(1, "  Author: %s\n", get_sgm_author(fs));
+	console_log(1, "  Resolution: %i x %i\n", res_x, res_y);
 	return fs;
 
 on_error:
