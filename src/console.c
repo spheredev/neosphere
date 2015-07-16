@@ -2,19 +2,7 @@
 
 #include "console.h"
 
-static int s_log_level = -1;
-
-void
-initialize_console(int log_level)
-{
-	s_log_level = log_level;
-}
-
-void
-shutdown_console(void)
-{
-	s_log_level = -1;
-}
+static int s_log_level = 1;
 
 int
 get_log_level(void)

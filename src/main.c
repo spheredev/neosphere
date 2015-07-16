@@ -82,7 +82,7 @@ main(int argc, char* argv[])
 	const char*          filename;
 	ALLEGRO_FS_ENTRY*    games_dir;
 	const char*          games_dirname;
-	char*                game_path;
+	char*                game_path = NULL;
 	image_t*             icon;
 	int                  line_num;
 	int                  log_level;
@@ -96,17 +96,11 @@ main(int argc, char* argv[])
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
-	initialize_console(1);
-	
-	if (!initialize_engine())
-		return EXIT_FAILURE;
-	
 	// startup processing (command line parsing, etc.)
-	console_log(0, "Parsing command line\n");
+	printf("Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game path
-		al_destroy_path(g_game_path);
-		g_game_path = al_create_path(argv[1]);
+		game_path = strdup(argv[1]);
 	}
 	else {
 		// more than one argument, perform full commandline parsing
@@ -115,8 +109,8 @@ main(int argc, char* argv[])
 				|| strcmp(argv[i], "-package") == 0)
 				&& i < argc - 1)
 			{
-				al_destroy_path(g_game_path);
-				g_game_path = al_create_path(argv[i + 1]);
+				free(game_path);
+				game_path = strdup(argv[i + 1]);
 			}
 			if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
 				errno = 0; log_level = strtol(argv[i + 1], &p_strtol, 10);
@@ -141,10 +135,13 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	console_log(1, "  Game path: %s\n", g_game_path != NULL ? al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP) : "<none specified>");
+	console_log(1, "  Game path: %s\n", game_path != NULL ? game_path : "<none provided>");
 	console_log(1, "  Frameskip limit: %i frames\n", s_max_frameskip);
 	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	console_log(1, "  Console verbosity: L%i\n", get_log_level());
+	console_log(1, "  Console verbosity: L%i\n\n", get_log_level());
+
+	if (!initialize_engine())
+		return EXIT_FAILURE;
 
 	// set up jump points for script bailout
 	console_log(1, "Setting up jump points for longjmp\n");
@@ -172,6 +169,7 @@ main(int argc, char* argv[])
 
 	// locate game.sgm
 	console_log(0, "Looking for a game to launch\n");
+	g_game_path = game_path != NULL ? al_create_path(game_path) : NULL;
 	if (g_game_path == NULL)
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)

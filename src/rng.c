@@ -22,7 +22,7 @@ initialize_rng(void)
 void
 seed_rng(unsigned long seed)
 {
-	console_log(2, "Seeding MT19937 with value %ul", seed);
+	console_log(2, "Seeding MT19937 (%u)\n", seed);
 	init_genrand(seed);
 }
 
