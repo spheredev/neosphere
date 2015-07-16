@@ -85,7 +85,7 @@ close_file(kv_file_t* file)
 	if (file == NULL)
 		return;
 	
-	console_log(2, "File %u no longer in use, deallocating\n", file->id);
+	console_log(3, "File %u no longer in use, deallocating\n", file->id);
 	if (file->is_dirty)
 		save_file(file);
 	al_destroy_config(file->conf);
