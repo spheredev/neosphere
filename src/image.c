@@ -52,14 +52,13 @@ create_image(int width, int height)
 {
 	image_t* image;
 
-	if ((image = calloc(1, sizeof(image_t))) == NULL)
-		goto on_error;
+	console_log(3, "Creating image %u at %ix%i\n", s_next_image_id, width, height);
+	image = calloc(1, sizeof(image_t));
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(3, "engine: Created new %i*%i image [%u]\n", image->width, image->height, image->id);
 	return ref_image(image);
 
 on_error:
@@ -72,14 +71,14 @@ create_subimage(image_t* parent, int x, int y, int width, int height)
 {
 	image_t* image;
 
-	if ((image = calloc(1, sizeof(image_t))) == NULL) goto on_error;
-	if ((image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)) == NULL)
+	console_log(3, "Creating image %u as %ix%i subimage of image %u\n", s_next_image_id, width, height, parent->id);
+	image = calloc(1, sizeof(image_t));
+	if (!(image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)))
 		goto on_error;
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = ref_image(parent);
-	console_log(3, "engine: Created %i*%i subimage [%u -> %u]\n", image->width, image->height, parent->id, image->id);
 	return ref_image(image);
 
 on_error:
@@ -118,14 +117,13 @@ clone_image(const image_t* src_image)
 {
 	image_t* image;
 
-	if ((image = calloc(1, sizeof(image_t))) == NULL)
-		goto on_error;
-	if ((image->bitmap = al_clone_bitmap(src_image->bitmap)) == NULL)
+	console_log(3, "Creating image %u via clone from image %u\n", s_next_image_id, src_image->id);
+	image = calloc(1, sizeof(image_t));
+	if (!(image->bitmap = al_clone_bitmap(src_image->bitmap)))
 		goto on_error;
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(3, "engine: Created %i*%i image via clone [%u -> %u]\n", image->width, image->height, src_image->id, image->id);
 	return ref_image(image);
 
 on_error:
@@ -141,8 +139,8 @@ load_image(const char* path)
 	image_t*      image;
 	void*         slurp = NULL;
 
-	if ((image = calloc(1, sizeof(image_t))) == NULL)
-		goto on_error;
+	console_log(2, "Loading image %u as '%s'\n", s_next_image_id, path);
+	image = calloc(1, sizeof(image_t));
 	if (!(slurp = sfs_fslurp(g_fs, path, "images", &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
@@ -153,7 +151,6 @@ load_image(const char* path)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(2, "engine: Loaded %i*%i image %s [%u]\n", image->width, image->height, path, image->id);
 	return ref_image(image);
 
 on_error:
@@ -175,10 +172,11 @@ read_image(sfs_file_t* file, int width, int height)
 
 	int i_y;
 
+	console_log(3, "Reading %ix%i image %u from open file\n", width, height, s_next_image_id);
+	image = calloc(1, sizeof(image_t));
 	file_pos = sfs_ftell(file);
-	if ((image = calloc(1, sizeof(image_t))) == NULL) goto on_error;
-	if ((image->bitmap = al_create_bitmap(width, height)) == NULL) goto on_error;
-	if ((lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)) == NULL)
+	if (!(image->bitmap = al_create_bitmap(width, height))) goto on_error;
+	if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)))
 		goto on_error;
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
@@ -190,10 +188,10 @@ read_image(sfs_file_t* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	console_log(3, "engine: Read %i*%i image from open file [%u]\n", image->width, image->height, image->id);
 	return ref_image(image);
 
 on_error:
+	console_log(3, "  Failed!\n");
 	sfs_fseek(file, file_pos, SEEK_SET);
 	if (lock != NULL) al_unlock_bitmap(image->bitmap);
 	if (image != NULL) {
@@ -245,7 +243,7 @@ free_image(image_t* image)
 {
 	if (image == NULL || --image->refcount > 0)
 		return;
-	console_log(3, "image %u: No more references, freeing image\n", image->id);
+	console_log(3, "Image %u no longer in use, deallocating\n", image->id);
 	uncache_pixels(image);
 	al_destroy_bitmap(image->bitmap);
 	free_image(image->parent);
@@ -269,7 +267,7 @@ color_t
 get_image_pixel(image_t* image, int x, int y)
 {
 	if (image->pixel_cache == NULL) {
-		console_log(4, "image %u: get_image_pixel() cache miss!\n", image->id);
+		console_log(4, "get_image_pixel() cache miss on image %u\n", image->id);
 		cache_pixels(image);
 	}
 	else
@@ -610,7 +608,7 @@ cache_pixels(image_t* image)
 		goto on_error;
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;
-	console_log(4, "image %u: Creating new pixel cache\n", image->id);
+	console_log(4, "Creating new pixel cache for image %u\n", image->id);
 	for (i = 0; i < image->height; ++i) {
 		psrc = lock->pixels + i * lock->pitch;
 		pdest = cache + i * image->width;
@@ -631,7 +629,7 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
-	console_log(4, "image %u: Pixel cache invalidated, hits: %u\n", image->id, image->cache_hits);
+	console_log(4, "Pixel cache invalidated for image %u, hits: %u\n", image->id, image->cache_hits);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
 }

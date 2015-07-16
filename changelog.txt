@@ -1,6 +1,16 @@
 minisphere Changelog
 ====================
 
+v1.5.2 - TBD
+------------
+
+* mini.BGM now supports crossfading.
+* The Sound:volume accessor property now expects a floating-point value
+  instead of an integer [0-255]. Sound:get/SetVolume() retain backwards
+  compatibility.
+* Log messages are now emitted preemptively, making it easier to find
+  the source of an issue.
+
 v1.5.1 - July 14, 2015
 ----------------------
 

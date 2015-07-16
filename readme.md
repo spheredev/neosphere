@@ -1,5 +1,8 @@
-minisphere 1.5.1 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)](https://travis-ci.org/fatcerberus/minisphere)
-================================================================================================================================================
+minisphere 1.5.1
+================
+
+[![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
+(https://travis-ci.org/fatcerberus/minisphere)
 
 *Sunday, July 14, 2015*
 

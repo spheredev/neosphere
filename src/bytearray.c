@@ -39,12 +39,13 @@ new_bytearray(int size)
 {
 	bytearray_t* array;
 	
-	if (!(array = calloc(1, sizeof(bytearray_t))))
+	console_log(3, "Creating %i-byte bytearray %u\n", size, s_next_array_id);
+
+	array = calloc(1, sizeof(bytearray_t));
+	if (!(array->buffer = calloc(size, 1)))
 		goto on_error;
-	if (!(array->buffer = calloc(size, 1))) goto on_error;
 	array->size = size;
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created %u-byte bytearray [bytearray %u]\n", array->size, array->id);
 	return ref_bytearray(array);
 	
 on_error:
@@ -57,11 +58,12 @@ bytearray_from_buffer(const void* buffer, int size)
 {
 	bytearray_t* array;
 
+	console_log(3, "Creating bytearray from %i-byte buffer\n", size);
+
 	if (!(array = new_bytearray(size)))
 		return NULL;
 	memcpy(array->buffer, buffer, size);
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created %u-byte bytearray from buffer [bytearray %u]\n", array->size, array->id);
 	return array;
 }
 
@@ -70,15 +72,15 @@ bytearray_from_lstring(const lstring_t* string)
 {
 	bytearray_t* array;
 
-	if (lstr_len(string) > INT_MAX)
-		return NULL;
+	console_log(3, "Creating bytearray from %u-byte string\n", lstr_len(string));
+
+	if (lstr_len(string) <= 65)  // log short strings only
+		console_log(4, "  string: \"%s\"", lstr_cstr(string));
+	if (lstr_len(string) > INT_MAX) return NULL;
 	if (!(array = new_bytearray((int)lstr_len(string))))
 		return NULL;
 	memcpy(array->buffer, lstr_cstr(string), lstr_len(string));
 	array->id = s_next_array_id++;
-	console_log(3, "engine: Created bytearray from %u-byte string [bytearray %u]\n", lstr_len(string), array->id);
-	if (lstr_len(string) <= 65)  // log short strings only
-		console_log(4, "  string: \"%s\"", lstr_cstr(string));
 	return array;
 }
 
@@ -94,7 +96,7 @@ free_bytearray(bytearray_t* array)
 {
 	if (array == NULL || --array->refcount > 0)
 		return;
-	console_log(3, "bytearray %u: Freeing bytearray, refcount is 0\n");
+	console_log(3, "Bytearray %u no longer in use, deallocating\n", array->id);
 	free(array->buffer);
 	free(array);
 }
@@ -130,12 +132,13 @@ concat_bytearrays(bytearray_t* array1, bytearray_t* array2)
 	bytearray_t* new_array;
 	int          new_size;
 
+	console_log(3, "Creating bytearray via concat from bytearrays %u, %u\n", array1->id, array2->id);
+
 	new_size = array1->size + array2->size;
 	if (!(new_array = new_bytearray(new_size)))
 		return NULL;
 	memcpy(new_array->buffer, array1->buffer, array1->size);
 	memcpy(new_array->buffer + array1->size, array2->buffer, array2->size);
-	console_log(3, "bytearray %u: Concatenated from bytearrays %u, %u\n", new_array->id, array1->id, array2->id);
 	return new_array;
 }
 
@@ -153,6 +156,9 @@ deflate_bytearray(bytearray_t* array, int level)
 	size_t       out_size;
 	z_stream     z;
 
+	console_log(3, "Creating bytearray %u via deflation from bytearray %u\n",
+		s_next_array_id, array->id);
+	
 	memset(&z, 0, sizeof(z_stream));
 	z.next_in = (Bytef*)array->buffer;
 	z.avail_in = array->size;
@@ -181,9 +187,6 @@ deflate_bytearray(bytearray_t* array, int level)
 	new_array->id = s_next_array_id++;
 	new_array->buffer = buffer;
 	new_array->size = (int)out_size;
-
-	console_log(3, "engine: Created %i-byte bytearray via deflation [%u -> %u]\n", new_array->size,
-		array->id, new_array->id);
 	return ref_bytearray(new_array);
 
 on_error:
@@ -205,6 +208,9 @@ inflate_bytearray(bytearray_t* array, int max_size)
 	size_t       out_size;
 	z_stream     z;
 
+	console_log(3, "Creating bytearray %u via inflation from bytearray %u\n",
+		s_next_array_id, array->id);
+	
 	memset(&z, 0, sizeof(z_stream));
 	z.next_in = (Bytef*)array->buffer;
 	z.avail_in = array->size;
@@ -237,9 +243,6 @@ inflate_bytearray(bytearray_t* array, int max_size)
 	new_array->id = s_next_array_id++;
 	new_array->buffer = buffer;
 	new_array->size = (int)out_size;
-
-	console_log(3, "engine: Created %i-byte bytearray via inflation [%u -> %u]\n", new_array->size,
-		array->id, new_array->id);
 	return ref_bytearray(new_array);
 
 on_error:
@@ -253,10 +256,12 @@ slice_bytearray(bytearray_t* array, int start, int length)
 {
 	bytearray_t* new_array;
 
+	console_log(3, "Creating bytearray %u via %i-byte slice from bytearray %u\n",
+		s_next_array_id, length, array->id);
+	
 	if (!(new_array = new_bytearray(length)))
 		return NULL;
 	memcpy(new_array->buffer, array->buffer + start, length);
-	console_log(3, "bytearray %u: Sliced from bytearray %u\n", new_array->id, array->id);
 	return new_array;
 }
 

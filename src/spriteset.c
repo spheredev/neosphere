@@ -62,7 +62,7 @@ static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 static const spriteset_pose_t* find_sprite_pose    (const spriteset_t* spriteset, const char* pose_name);
 
 static vector_t*    s_load_cache;
-static unsigned int s_next_id = 0;
+static unsigned int s_next_spriteset_id = 0;
 static unsigned int s_num_cache_hits = 0;
 
 void
@@ -79,7 +79,7 @@ shutdown_spritesets(void)
 	spriteset_t** p_spriteset;
 	
 	console_log(1, "Shutting down spriteset manager\n");
-	console_log(2, "  Objects created: %u\n", s_next_id);
+	console_log(2, "  Objects created: %u\n", s_next_spriteset_id);
 	console_log(2, "  Cache hits: %u\n", s_num_cache_hits);
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
@@ -116,7 +116,7 @@ clone_spriteset(const spriteset_t* spriteset)
 		for (j = 0; j < spriteset->poses[i].num_frames; ++j)
 			clone->poses[i].frames[j] = spriteset->poses[i].frames[j];
 	}
-	clone->id = s_next_id++;
+	clone->id = s_next_spriteset_id++;
 	return ref_spriteset(clone);
 
 on_error:
@@ -168,7 +168,7 @@ load_spriteset(const char* path)
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter)) {
 			if (strcmp(path, (*p_spriteset)->filename) == 0) {
-				console_log(2, "engine: Spriteset in cache: %s\n", path);
+				console_log(2, "Using spriteset %u from cache for '%s'\n", (*p_spriteset)->id, path);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
@@ -178,9 +178,10 @@ load_spriteset(const char* path)
 		s_load_cache = new_vector(sizeof(spriteset_t*));
 	
 	// filename not in load cache, load the spriteset
-	console_log(2, "engine: Loading spriteset %s\n", path);
-	if ((spriteset = calloc(1, sizeof(spriteset_t))) == NULL) goto on_error;
-	if (!(file = sfs_fopen(g_fs, path, "spritesets", "rb"))) goto on_error;
+	console_log(2, "Loading spriteset %u as '%s'\n", s_next_spriteset_id, path);
+	spriteset = calloc(1, sizeof(spriteset_t));
+	if (!(file = sfs_fopen(g_fs, path, "spritesets", "rb")))
+		goto on_error;
 	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
@@ -316,10 +317,11 @@ load_spriteset(const char* path)
 		ref_spriteset(spriteset);
 		push_back_vector(s_load_cache, &spriteset);
 	}
-	spriteset->id = s_next_id++;
+	spriteset->id = s_next_spriteset_id++;
 	return ref_spriteset(spriteset);
 
 on_error:
+	console_log(2, "Failed to load spriteset %u\n", s_next_spriteset_id);
 	if (file != NULL) sfs_fclose(file);
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
@@ -341,6 +343,9 @@ on_error:
 spriteset_t*
 ref_spriteset(spriteset_t* spriteset)
 {
+	console_log(4, "Incrementing spriteset %u refcount, new: %u\n",
+		spriteset->id, spriteset->refcount + 1);
+	
 	++spriteset->refcount;
 	return spriteset;
 }
@@ -352,6 +357,7 @@ free_spriteset(spriteset_t* spriteset)
 	
 	if (spriteset == NULL || --spriteset->refcount > 0)
 		return;
+	console_log(3, "Spriteset %u no longer in use, deallocating\n", spriteset->id);
 	for (i = 0; i < spriteset->num_images; ++i) {
 		free_image(spriteset->images[i]);
 	}

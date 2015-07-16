@@ -29,7 +29,7 @@ mini.Console = {};
 //                    to. Can be null, in which case no log file is created. (default: null)
 mini.onStartUp.add(mini.Console, function(params)
 {
-	Print("miniRT: Initializing miniConsole");
+	Print("Initializing miniRT console");
 	
 	this.fadeness = 0.0;
 	this.font = GetSystemFont();

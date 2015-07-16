@@ -192,7 +192,7 @@ free_mixer(mixer_t* mixer)
 	if (mixer == NULL) return;
 	console_log(4, "Decrementing mixer %u refcount, new: %u\n", mixer->id, mixer->refcount - 1);
 	if (--mixer->refcount == 0) {
-		console_log(3, "Mixer %u no longer in use, releasing\n", mixer->id);
+		console_log(3, "Mixer %u no longer in use, deallocating\n", mixer->id);
 		al_destroy_mixer(mixer->ptr);
 		free(mixer);
 	}
@@ -667,126 +667,6 @@ js_Mixer_set_volume(duk_context* ctx)
 }
 
 static duk_ret_t
-js_new_SoundStream(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 22050;
-	int channels = n_args >= 2 ? duk_require_int(ctx, 1) : 1;
-
-	stream_t* stream;
-
-	if (!(stream = create_stream(frequency, 8, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): Stream creation failed");
-	duk_push_sphere_obj(ctx, "SoundStream", stream);
-	return 1;
-}
-
-static duk_ret_t
-js_SoundStream_finalize(duk_context* ctx)
-{
-	stream_t* stream;
-
-	stream = duk_require_sphere_obj(ctx, 0, "SoundStream");
-	free_stream(stream);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_get_bufferSize(duk_context* ctx)
-{
-	stream_t*    stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	duk_push_number(ctx, stream->feed_size);
-	return 1;
-}
-
-static duk_ret_t
-js_SoundStream_get_mixer(duk_context* ctx)
-{
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	duk_push_sphere_obj(ctx, "Mixer", ref_mixer(get_stream_mixer(stream)));
-	return 1;
-}
-
-static duk_ret_t
-js_SoundStream_set_mixer(duk_context* ctx)
-{
-	mixer_t* mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
-	
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	set_stream_mixer(stream, mixer);
-	return 1;
-}
-
-static duk_ret_t
-js_SoundStream_buffer(duk_context* ctx)
-{
-	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
-
-	const void* buffer;
-	size_t      size;
-	stream_t*   stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	buffer = get_bytearray_buffer(array);
-	size = get_bytearray_size(array);
-	feed_stream(stream, buffer, size);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_pause(duk_context* ctx)
-{
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	pause_stream(stream);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_play(duk_context* ctx)
-{
-	mixer_t* mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
-	
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	set_stream_mixer(stream, mixer);
-	play_stream(stream);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_stop(duk_context* ctx)
-{
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	stop_stream(stream);
-	return 0;
-}
-
-static duk_ret_t
 js_LoadSound(duk_context* ctx)
 {
 	duk_int_t n_args = duk_get_top(ctx);
@@ -1099,5 +979,125 @@ js_Sound_stop(duk_context* ctx)
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	stop_sound(sound, true);
+	return 0;
+}
+
+static duk_ret_t
+js_new_SoundStream(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 22050;
+	int channels = n_args >= 2 ? duk_require_int(ctx, 1) : 1;
+
+	stream_t* stream;
+
+	if (!(stream = create_stream(frequency, 8, channels)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): Stream creation failed");
+	duk_push_sphere_obj(ctx, "SoundStream", stream);
+	return 1;
+}
+
+static duk_ret_t
+js_SoundStream_finalize(duk_context* ctx)
+{
+	stream_t* stream;
+
+	stream = duk_require_sphere_obj(ctx, 0, "SoundStream");
+	free_stream(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_get_bufferSize(duk_context* ctx)
+{
+	stream_t*    stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	duk_push_number(ctx, stream->feed_size);
+	return 1;
+}
+
+static duk_ret_t
+js_SoundStream_get_mixer(duk_context* ctx)
+{
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	duk_push_sphere_obj(ctx, "Mixer", ref_mixer(get_stream_mixer(stream)));
+	return 1;
+}
+
+static duk_ret_t
+js_SoundStream_set_mixer(duk_context* ctx)
+{
+	mixer_t* mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
+
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	set_stream_mixer(stream, mixer);
+	return 1;
+}
+
+static duk_ret_t
+js_SoundStream_buffer(duk_context* ctx)
+{
+	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
+
+	const void* buffer;
+	size_t      size;
+	stream_t*   stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	buffer = get_bytearray_buffer(array);
+	size = get_bytearray_size(array);
+	feed_stream(stream, buffer, size);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_pause(duk_context* ctx)
+{
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	pause_stream(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_play(duk_context* ctx)
+{
+	mixer_t* mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
+
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	set_stream_mixer(stream, mixer);
+	play_stream(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_stop(duk_context* ctx)
+{
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	stop_stream(stream);
 	return 0;
 }

@@ -54,7 +54,7 @@ struct rts_tile_header
 };
 #pragma pack(pop)
 
-static unsigned int s_next_object_id = 0;
+static unsigned int s_next_tileset_id = 0;
 
 tileset_t*
 load_tileset(const char* path)
@@ -62,11 +62,12 @@ load_tileset(const char* path)
 	sfs_file_t* file;
 	tileset_t*  tileset;
 
+	console_log(2, "Loading tileset as '%s'\n", path);
+
 	if ((file = sfs_fopen(g_fs, path, "maps", "rb")) == NULL)
 		return NULL;
 	tileset = read_tileset(file);
 	sfs_fclose(file);
-	console_log(2, "engine: Loaded tileset %s [%u]\n", path, tileset->id);
 	return tileset;
 }
 
@@ -85,6 +86,8 @@ read_tileset(sfs_file_t* file)
 
 	memset(&rts, 0, sizeof(struct rts_header));
 	
+	console_log(2, "Reading tileset %u from open file\n", s_next_tileset_id);
+
 	if (file == NULL) goto on_error;
 	file_pos = sfs_ftell(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
@@ -135,15 +138,15 @@ read_tileset(sfs_file_t* file)
 	}
 
 	// wrap things up
-	tileset->id = s_next_object_id++;
+	tileset->id = s_next_tileset_id++;
 	tileset->width = rts.tile_width;
 	tileset->height = rts.tile_height;
 	tileset->num_tiles = rts.num_tiles;
 	tileset->tiles = tiles;
-	console_log(3, "engine: Read %i tiles from file [%u]\n", tileset->num_tiles, tileset->id);
 	return tileset;
 
 on_error:  // oh no!
+	console_log(2, "Failed to load tileset %u\n", s_next_tileset_id);
 	if (file != NULL)
 		sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {
@@ -164,7 +167,8 @@ free_tileset(tileset_t* tileset)
 {
 	int i;
 
-	console_log(3, "tileset %u: Freeing tileset", tileset->id);
+	console_log(3, "Tileset %u no longer in use, deallocating\n", tileset->id);
+
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);
 		free_image(tileset->tiles[i].image);
