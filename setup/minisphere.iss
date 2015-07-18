@@ -27,8 +27,8 @@
 #endif
 
 #define AppName "minisphere"
-#define AppVersion "1.5.2"
-#define AppBuildNumber "751"
+#define AppVersion "1.5.3"
+#define AppBuildNumber "753"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"
@@ -50,9 +50,6 @@ InfoAfterFile=..\bin\readme.md
 AppName={#AppName} GDK
 AppVerName={#AppName} GDK {#AppVersion}
 DefaultDirName={pf}\{#AppName} GDK
-DefaultGroupName={#AppName} GDK
-DisableProgramGroupPage=auto
-AlwaysShowGroupOnReadyPage=yes
 UninstallDisplayName={#AppName} GDK {#AppVersion}
 UninstallDisplayIcon={app}\spherestudio.ico,0
 #else
@@ -62,7 +59,6 @@ SetupIconFile=..\bin\spherical.ico
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion}
 DefaultDirName={pf}\{#AppName}
-DisableProgramGroupPage=yes
 UninstallDisplayName={#AppName} {#AppVersion}
 UninstallDisplayIcon={app}\spherical.ico,0
 #endif
@@ -73,6 +69,7 @@ OutputDir=.
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
+DisableProgramGroupPage=yes
 DisableDirPage=auto
 AlwaysShowDirOnReadyPage=yes
 ChangesAssociations=yes
@@ -113,6 +110,7 @@ Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 #endif
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\license.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\readme.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\changelog.txt"; DestDir: "{app}"; Flags: ignoreversion
@@ -161,12 +159,10 @@ Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; Valu
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName_64}"; Check: IsWin64
 #ifdef WANT_GDK_SETUP
-Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2}"; Components: console
-Name: "{group}\{#AppName} Console"; Filename: "{app}\{#AppExeName2_64}"; Components: console; Check: IsWin64
-Name: "{group}\Documentation\JS API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Components: docs\api
-Name: "{group}\Documentation\License"; Filename: "{app}\license.txt"
 Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\spherestudio\Sphere Studio.exe"; Components: studio
 Name: "{commondesktop}\Sphere Studio"; Filename: "{app}\spherestudio\Sphere Studio.exe"; Components: studio; Tasks: desktop
+Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName2}"; Components: console
+Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName2_64}"; Components: console; Check: IsWin64
 #endif
 
 [Run]

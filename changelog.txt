@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.5.3 - July 18, 2015
+----------------------
+
+* GetGameList() will now search, in addition to the engine directory,
+  `~/Sphere Games` for usable games (game.sgm files and SPKs).
+
 v1.5.2 - July 16, 2015
 ----------------------
 

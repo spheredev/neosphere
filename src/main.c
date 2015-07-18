@@ -175,9 +175,10 @@ main(int argc, char* argv[])
 	if (g_game_path != NULL)
 		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	if (g_fs == NULL) {
-		browse_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-		al_append_path_component(browse_path, "games");
+		browse_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
+		al_append_path_component(browse_path, "Sphere Games");
 		games_dirname = al_path_cstr(browse_path, ALLEGRO_NATIVE_PATH_SEP);
+		al_make_directory(games_dirname);
 		games_dir = al_create_fs_entry(games_dirname);
 		if (!al_open_directory(games_dir))
 			games_dirname = NULL;

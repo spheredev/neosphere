@@ -1,10 +1,10 @@
-minisphere 1.5.2
+minisphere 1.5.3
 ================
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
 (https://travis-ci.org/fatcerberus/minisphere)
 
-*Sunday, July 16, 2015*
+*Sunday, July 18, 2015*
 
 minisphere is a drop-in replacement for the Sphere game engine written from the
 ground up in C.  It boasts high compatibility with most games written for
