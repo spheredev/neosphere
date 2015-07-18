@@ -87,12 +87,12 @@ Name: "docs\api"; Description: "API Reference"; Types: full compact
 #endif
 
 [Tasks]
-Name: "assoc_spk"; Description: "Associate .spk (game packages) with {#AppName}"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc_sgm"; Description: "Associate .sgm (Sphere projects) with:"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc_spk"; Description: "Associate .spk (game package) with {#AppName}"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc_sgm"; Description: "Associate .sgm (unpackaged game) with:"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc_sgm\engine"; Description: "{#AppName}"; Flags: exclusive
 #ifdef WANT_GDK_SETUP
 Name: "assoc_sgm\console"; Description: "{#AppName} Console"; Flags: exclusive; Components: console
-Name: "assoc_sgm\studio"; Description: "Sphere Studio"; Flags: exclusive; Components: studio
+Name: "assoc_sgm\studio"; Description: "Sphere Studio"; Flags: exclusive unchecked; Components: studio
 Name: "desktop"; Description: "Create a desktop icon for Sphere Studio"; GroupDescription: "{cm:AdditionalIcons}"; Components: studio
 #endif
 
@@ -143,16 +143,19 @@ Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: 
 Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc_spk
 Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName_64}"" ""%1"""; Tasks: assoc_spk; Check: IsWin64
 Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc_sgm
-Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Tasks: assoc_sgm
+Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Definition"; Flags: uninsdeletekey; Tasks: assoc_sgm
 Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc_sgm
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc_sgm\engine
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName_64}"" ""%1"""; Tasks: assoc_sgm\engine; Check: IsWin64
 #ifdef WANT_GDK_SETUP
-Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName2},0"; Tasks: assoc_sgm
+Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"",0"; Components: studio; Tasks: assoc_sgm\studio
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName2}"" ""%1"""; Tasks: assoc_sgm\console
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName2_64}"" ""%1"""; Tasks: assoc_sgm\console; Check: IsWin64
-Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"",0"; Tasks: assoc_sgm\studio
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"" ""%1"""; Tasks: assoc_sgm\studio
+Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "minisphere.ssproj"; Flags: uninsdeletevalue; Components: studio
+Root: HKCR; Subkey: "minisphere.ssproj"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Components: studio
+Root: HKCR; Subkey: "minisphere.ssproj\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"",0"; Components: studio
+Root: HKCR; Subkey: "minisphere.ssproj\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"" ""%1"""; Components: studio
 #endif
 
 [Icons]
