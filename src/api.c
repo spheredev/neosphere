@@ -617,34 +617,40 @@ js_GetGameList(duk_context* ctx)
 {
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_FS_ENTRY* fse;
-	ALLEGRO_PATH*     path;
+	ALLEGRO_PATH*     path = NULL;
+	ALLEGRO_PATH*     paths[2];
 	sandbox_t*        sandbox;
 
-	int i;
+	int i, j = 0;
 
-	path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(path, "games");
-	fse = al_create_fs_entry(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
-	al_destroy_path(path);
+	// build search paths
+	paths[0] = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(paths[0], "games");
+	paths[1] = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
+	al_append_path_component(paths[1], "Sphere Games");
+	
+	// search for supported games
 	duk_push_array(ctx);
-	i = 0;
-	if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
-		while (file_info = al_read_directory(fse)) {
-			path = al_create_path(al_get_fs_entry_name(file_info));
-			if (sandbox = new_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
-				duk_push_object(ctx);
-				duk_push_string(ctx, al_get_path_filename(path)); duk_put_prop_string(ctx, -2, "directory");
-				duk_push_string(ctx, get_sgm_name(sandbox)); duk_put_prop_string(ctx, -2, "name");
-				duk_push_string(ctx, get_sgm_author(sandbox)); duk_put_prop_string(ctx, -2, "author");
-				duk_push_string(ctx, get_sgm_summary(sandbox)); duk_put_prop_string(ctx, -2, "description");
-				duk_put_prop_index(ctx, -2, i);
-				free_sandbox(sandbox);
+	for (i = sizeof paths / sizeof(ALLEGRO_PATH*) - 1; i >= 0; --i) {
+		fse = al_create_fs_entry(al_path_cstr(paths[i], ALLEGRO_NATIVE_PATH_SEP));
+		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
+			while (file_info = al_read_directory(fse)) {
+				path = al_create_path(al_get_fs_entry_name(file_info));
+				if (sandbox = new_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
+					duk_push_object(ctx);
+					duk_push_string(ctx, al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)); duk_put_prop_string(ctx, -2, "directory");
+					duk_push_string(ctx, get_sgm_name(sandbox)); duk_put_prop_string(ctx, -2, "name");
+					duk_push_string(ctx, get_sgm_author(sandbox)); duk_put_prop_string(ctx, -2, "author");
+					duk_push_string(ctx, get_sgm_summary(sandbox)); duk_put_prop_string(ctx, -2, "description");
+					duk_put_prop_index(ctx, -2, j++);
+					free_sandbox(sandbox);
+				}
+				al_destroy_path(path);
 			}
-			al_destroy_path(path);
-			++i;
 		}
+		al_destroy_fs_entry(fse);
+		al_destroy_path(paths[i]);
 	}
-	al_destroy_fs_entry(fse);
 	return 1;
 }
 
