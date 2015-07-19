@@ -37,9 +37,9 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-map-engine",
 	"sphere-spherefs",
 	"minisphere-async-api",
+	"minisphere-galileo-shaders",
 	"minisphere-new-sockets",
 	"minisphere-rng-object",
-	"minisphere-galileo-shaders",
 	"frameskip-api",
 	"set-script-function",
 };
@@ -516,7 +516,7 @@ js_EvaluateScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): Script file not found '%s'", filename);
 	if (!try_evaluate_file(filename))
 		duk_throw(ctx);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
@@ -533,7 +533,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", filename);
 	if (!try_evaluate_file(path))
 		duk_throw(ctx);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
