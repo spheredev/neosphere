@@ -7,9 +7,6 @@ uniform bool al_use_tex;
 varying vec4 varying_color;
 varying vec2 varying_texcoord;
 
-uniform uint blend_mode;
-uniform uint mask_mode;
-
 void main()
 {
 	if (al_use_tex)
