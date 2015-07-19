@@ -45,11 +45,11 @@ msphere_libs = [
 	"allegro_color",
 	"allegro_dialog",
 	"allegro_image",
+	"allegro_main",
 	"allegro_memfile",
 	"allegro_primitives",
 	"allegro",
 	"mng",
-	"jpeg",
 	"z",
 	"m"
 ]

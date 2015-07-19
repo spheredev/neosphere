@@ -11,9 +11,8 @@ enum shader_type
 	SHADER_TYPE_MAX
 } shader_type_t;
 
-extern void      initialize_shaders(void);
+extern void      initialize_shaders (void);
 extern void      shutdown_shaders   (void);
-extern shader_t* get_system_shader  (void);
 extern shader_t* create_shader      (const char* vs_path, const char* fs_path);
 extern shader_t* ref_shader         (shader_t* shader);
 extern void      free_shader        (shader_t* shader);

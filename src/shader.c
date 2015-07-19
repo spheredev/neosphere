@@ -12,35 +12,17 @@ struct shader
 	ALLEGRO_SHADER* program;
 };
 
-static shader_t* s_sys_shader = NULL;
-
 void
 initialize_shaders(void)
 {
-	char* fs_filename;
-	char* vs_filename;
-
-	console_log(0, "Initializing shader manager\n");
-	vs_filename = strdup(syspath(read_string_rec(g_sys_conf, "SystemVertShader", "shaders/system.vs.glsl")));
-	fs_filename = strdup(syspath(read_string_rec(g_sys_conf, "SystemFragShader", "shaders/system.fs.glsl")));
-	if (!(s_sys_shader = create_shader(vs_filename, fs_filename)))
-		console_log(0, "  System shaders not found\n");
-	free(vs_filename);
-	free(fs_filename);
-	apply_shader(s_sys_shader);
+	console_log(0, "Initializing shader support\n");
+	reset_shader();
 }
 
 void
 shutdown_shaders(void)
 {
 	console_log(0, "Shutting down shader manager\n");
-	free_shader(s_sys_shader);
-}
-
-shader_t*
-get_system_shader(void)
-{
-	return s_sys_shader;
 }
 
 shader_t*
