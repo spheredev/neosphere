@@ -187,8 +187,9 @@ main(int argc, char* argv[])
 		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
 		file_dlg = al_create_native_file_dialog(games_dirname, al_cstr(dialog_name),
 			"game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+		al_show_native_file_dialog(NULL, file_dlg);
 		al_destroy_path(browse_path);
-		if (al_show_native_file_dialog(NULL, file_dlg)) {
+		if (al_get_native_file_dialog_count(file_dlg) > 0) {
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
 		}
