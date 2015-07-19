@@ -22,18 +22,22 @@ initialize_scripts(void)
 	duk_pop(g_duk);
 
 	// load the CoffeeScript compiler into the JS context, if it exists
-	console_log(1, "Initializing CoffeeScript\n");
+	console_log(0, "Initializing CoffeeScript\n");
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
 		if (try_evaluate_file("~sys/coffee-script.js")) {
 			duk_push_global_object(g_duk);
-			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
+			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript")) {
 				console_log(1, "  'CoffeeScript' not defined\n");
-			duk_pop(g_duk);
+				console_log(0, "  CoffeeScript support not enabled\n");
+			}
+			duk_get_prop_string(g_duk, -1, "VERSION");
+			console_log(1, "  Compiler v%s\n", duk_get_string(g_duk, -1));
+			duk_pop_2(g_duk);
 		}
 		else {
 			console_log(1, "  Error evaluating compiler script\n");
 			console_log(1, "  %s\n", duk_to_string(g_duk, -1));
-			console_log(1, "  CoffeeScript support not enabled\n");
+			console_log(0, "  CoffeeScript support not enabled\n");
 		}
 		duk_pop(g_duk);
 	}
