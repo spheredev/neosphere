@@ -629,13 +629,14 @@ initialize_engine(void)
 	initialize_spritesets();
 	initialize_map_engine();
 
-	// initialize Duktape
-	console_log(0, "Initializing Duktape\n");
+	// initialize JavaScript
+	console_log(0, "Initializing JavaScript\n");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
+	console_log(1, "  Duktape %s\n", DUK_GIT_DESCRIBE);
+	initialize_scripts();
 
 	// initialize Sphere API
-	initialize_scripts();
 	initialize_api(g_duk);
 	
 	return true;
