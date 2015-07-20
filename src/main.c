@@ -97,7 +97,7 @@ main(int argc, char* argv[])
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
 	// startup processing (command line parsing, etc.)
-	printf("Parsing command line\n");
+	console_log(0, "Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game path
 		game_path = strdup(argv[1]);

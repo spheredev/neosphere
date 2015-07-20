@@ -144,7 +144,7 @@ create_mixer(int frequency, int bits, int channels)
 	mixer_t*             mixer;
 
 	console_log(2, "Creating new Mixer %u at %i kHz\n", s_next_mixer_id, frequency / 1000);
-	console_log(3, "  Format: %ich %i Hz, %i-bit", channels, frequency, bits);
+	console_log(3, "  Format: %ich %i Hz, %i-bit\n", channels, frequency, bits);
 
 	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
 		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3
