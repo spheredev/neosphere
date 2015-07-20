@@ -54,7 +54,7 @@ open_file(const char* filename)
 	void*         slurp;
 	size_t        slurp_size;
 	
-	console_log(2, "Opening file %u as '%s'\n", s_next_file_id, filename);
+	console_log(2, "Opening File %u as '%s'\n", s_next_file_id, filename);
 	file = calloc(1, sizeof(kv_file_t));
 	if (slurp = sfs_fslurp(g_fs, filename, "save", &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
@@ -155,7 +155,7 @@ read_string_rec(kv_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
-	console_log(2, "Reading key '%s' from file %u\n", key, file->id);
+	console_log(2, "Reading key '%s' from File %u\n", key, file->id);
 	if (!(value = al_get_config_value(file->conf, NULL, key)))
 		value = def_value;
 	return value;
@@ -171,7 +171,7 @@ save_file(kv_file_t* file)
 	size_t        next_buf_size;
 	sfs_file_t*   sfs_file = NULL;
 
-	console_log(3, "Saving file %u as '%s'\n", file->id, file->filename);
+	console_log(3, "Saving File %u as '%s'\n", file->id, file->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
 		buffer = realloc(buffer, next_buf_size);
@@ -200,7 +200,7 @@ on_error:
 void
 write_bool_rec(kv_file_t* file, const char* key, bool value)
 {
-	console_log(3, "Writing boolean to file %u, key '%s'\n", file->id, key);
+	console_log(3, "Writing boolean to File %u, key '%s'\n", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
 }
@@ -210,7 +210,7 @@ write_number_rec(kv_file_t* file, const char* key, double value)
 {
 	char string[500];
 
-	console_log(3, "Writing number to file %u, key '%s'\n", file->id, key);
+	console_log(3, "Writing number to File %u, key '%s'\n", file->id, key);
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
 	file->is_dirty = true;
@@ -219,7 +219,7 @@ write_number_rec(kv_file_t* file, const char* key, double value)
 void
 write_string_rec(kv_file_t* file, const char* key, const char* value)
 {
-	console_log(3, "Writing string to file %u, key '%s'\n", file->id, key);
+	console_log(3, "Writing string to File %u, key '%s'\n", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
 }

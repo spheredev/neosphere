@@ -29,7 +29,8 @@ static void update_font_metrics (font_t* font);
 
 struct font
 {
-	int                refcount;
+	unsigned int       refcount;
+	unsigned int       id;
 	int                height;
 	int                min_width;
 	int                max_width;
@@ -67,8 +68,10 @@ struct rfn_glyph_header
 };
 #pragma pack(pop)
 
+static unsigned int s_next_font_id = 0;
+
 font_t*
-load_font(const char* path)
+load_font(const char* filename)
 {
 	image_t*                atlas = NULL;
 	int                     atlas_x, atlas_y;
@@ -89,10 +92,12 @@ load_font(const char* path)
 	color_t                 *pdest;
 
 	int i, x, y;
-
+	
+	console_log(2, "Loading Font %u as '%s'\n", s_next_font_id, filename);
+	
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
-	if ((file = sfs_fopen(g_fs, path, "fonts", "rb")) == NULL) goto on_error;
+	if ((file = sfs_fopen(g_fs, filename, "fonts", "rb")) == NULL) goto on_error;
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
 	if (sfs_fread(&rfn, sizeof(struct rfn_header), 1, file) != 1)
 		goto on_error;
@@ -159,9 +164,12 @@ load_font(const char* path)
 	unlock_image(atlas, lock);
 	sfs_fclose(file);
 	free_image(atlas);
+	
+	font->id = s_next_font_id++;
 	return ref_font(font);
 
 on_error:
+	console_log(2, "Failed to load Font %u\n", s_next_font_id++);
 	sfs_fclose(file);
 	if (font != NULL) {
 		for (i = 0; i < rfn.num_chars; ++i) {
@@ -185,6 +193,8 @@ clone_font(const font_t* src_font)
 
 	uint32_t i;
 
+	console_log(2, "Cloning Font %u from source Font %u\n", s_next_font_id, src_font->id);
+	
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
 	if (!(font->glyphs = calloc(src_font->num_glyphs, sizeof(struct font_glyph))))
 		goto on_error;
@@ -201,6 +211,8 @@ clone_font(const font_t* src_font)
 		font->glyphs[i].width = src_glyph->width;
 		font->glyphs[i].height = src_glyph->height;
 	}
+
+	font->id = s_next_font_id++;
 	return ref_font(font);
 
 on_error:
@@ -218,6 +230,8 @@ on_error:
 font_t*
 ref_font(font_t* font)
 {
+	console_log(4, "Incrementing Font %u refcount, new: %u\n",
+		font->id, font->refcount + 1);
 	++font->refcount;
 	return font;
 }
@@ -227,13 +241,17 @@ free_font(font_t* font)
 {
 	uint32_t i;
 	
-	if (font == NULL || --font->refcount > 0)
-		return;
-	for (i = 0; i < font->num_glyphs; ++i) {
-		free_image(font->glyphs[i].image);
+	if (font == NULL) return;
+	
+	console_log(4, "Decrementing Font %u refcount, new: %u\n", font->id, font->refcount - 1);
+	if (--font->refcount == 0) {
+		console_log(3, "Font %u no longer in use, deallocating\n", font->id);
+		for (i = 0; i < font->num_glyphs; ++i) {
+			free_image(font->glyphs[i].image);
+		}
+		free(font->glyphs);
+		free(font);
 	}
-	free(font->glyphs);
-	free(font);
 }
 
 int
