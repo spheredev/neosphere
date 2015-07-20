@@ -43,24 +43,13 @@ struct animation
 
 static unsigned int s_next_animation_id = 0;
 
-bool
-initialize_animation(void)
-{
-	console_log(1, "Initializing animation");
-	return true;
-}
-
-void
-shutdown_animation(void)
-{
-	console_log(1, "Shutting down animation");
-}
-
 animation_t*
 load_animation(const char* path)
 {
 	animation_t* anim;
 
+	console_log(2, "Loading Animation %u as '%s'\n", s_next_animation_id, path);
+	
 	if (!(anim = calloc(1, sizeof(animation_t))))
 		goto on_error;
 	if (!(anim->stream = mng_initialize(anim, mng_cb_malloc, mng_cb_free, NULL)))
@@ -81,7 +70,6 @@ load_animation(const char* path)
 	if (!update_animation(anim))
 		goto on_error;
 	
-	console_log(3, "[anim %u] Loaded %u*%u animation %s\n", anim->id, anim->w, anim->h, path);
 	return ref_animation(anim);
 
 on_error:
@@ -99,6 +87,9 @@ on_error:
 animation_t*
 ref_animation(animation_t* animation)
 {
+	console_log(4, "Incrementing Animation %u refcount, new: %u\n",
+		animation->id, animation->refcount);
+
 	++animation->refcount;
 	return animation;
 }
@@ -106,12 +97,18 @@ ref_animation(animation_t* animation)
 void
 free_animation(animation_t* animation)
 {
-	if (animation == NULL || --animation->refcount > 0)
-		return;
-	mng_cleanup(&animation->stream);
-	sfs_fclose(animation->file);
-	free_image(animation->frame);
-	free(animation);
+	if (animation == NULL) return;
+	
+	console_log(4, "Decrementing Animation %u refcount, new: %u\n",
+		animation->id, animation->refcount - 1);
+	
+	if (--animation->refcount == 0) {
+		console_log(3, "Animation %u no longer in use, deallocating\n", animation->id);
+		mng_cleanup(&animation->stream);
+		sfs_fclose(animation->file);
+		free_image(animation->frame);
+		free(animation);
+	}
 }
 
 bool

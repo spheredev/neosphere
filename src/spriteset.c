@@ -96,8 +96,10 @@ clone_spriteset(const spriteset_t* spriteset)
 	
 	int i, j;
 
-	if ((clone = calloc(1, sizeof(spriteset_t))) == NULL)
-		goto on_error;
+	console_log(2, "Cloning Spriteset %u from source Spriteset %u\n",
+		s_next_spriteset_id, spriteset->id);
+	
+	clone = calloc(1, sizeof(spriteset_t));
 	clone->base = spriteset->base;
 	clone->num_images = spriteset->num_images;
 	clone->num_poses = spriteset->num_poses;
@@ -117,6 +119,7 @@ clone_spriteset(const spriteset_t* spriteset)
 			clone->poses[i].frames[j] = spriteset->poses[i].frames[j];
 	}
 	clone->id = s_next_spriteset_id++;
+	
 	return ref_spriteset(clone);
 
 on_error:
@@ -168,7 +171,7 @@ load_spriteset(const char* path)
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter)) {
 			if (strcmp(path, (*p_spriteset)->filename) == 0) {
-				console_log(2, "Using spriteset %u from cache for '%s'\n", (*p_spriteset)->id, path);
+				console_log(2, "Using cached Spriteset %u for '%s'\n", (*p_spriteset)->id, path);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
@@ -178,7 +181,7 @@ load_spriteset(const char* path)
 		s_load_cache = new_vector(sizeof(spriteset_t*));
 	
 	// filename not in load cache, load the spriteset
-	console_log(2, "Loading spriteset %u as '%s'\n", s_next_spriteset_id, path);
+	console_log(2, "Loading Spriteset %u as '%s'\n", s_next_spriteset_id, path);
 	spriteset = calloc(1, sizeof(spriteset_t));
 	if (!(file = sfs_fopen(g_fs, path, "spritesets", "rb")))
 		goto on_error;
@@ -321,7 +324,7 @@ load_spriteset(const char* path)
 	return ref_spriteset(spriteset);
 
 on_error:
-	console_log(2, "Failed to load spriteset %u\n", s_next_spriteset_id);
+	console_log(2, "Failed to load Spriteset %u\n", s_next_spriteset_id);
 	if (file != NULL) sfs_fclose(file);
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
@@ -343,7 +346,7 @@ on_error:
 spriteset_t*
 ref_spriteset(spriteset_t* spriteset)
 {
-	console_log(4, "Incrementing spriteset %u refcount, new: %u\n",
+	console_log(4, "Incrementing Spriteset %u refcount, new: %u\n",
 		spriteset->id, spriteset->refcount + 1);
 	
 	++spriteset->refcount;
@@ -354,21 +357,23 @@ void
 free_spriteset(spriteset_t* spriteset)
 {
 	int i;
+
+	if (spriteset == NULL) return;
 	
-	if (spriteset == NULL || --spriteset->refcount > 0)
-		return;
-	console_log(3, "Spriteset %u no longer in use, deallocating\n", spriteset->id);
-	for (i = 0; i < spriteset->num_images; ++i) {
-		free_image(spriteset->images[i]);
+	console_log(4, "Decrementing Spriteset %u refcount, new: %u\n", spriteset->refcount - 1);
+	if (--spriteset->refcount == 0) {
+		console_log(3, "Spriteset %u no longer in use, deallocating\n", spriteset->id);
+		for (i = 0; i < spriteset->num_images; ++i)
+			free_image(spriteset->images[i]);
+		free(spriteset->images);
+		for (i = 0; i < spriteset->num_poses; ++i) {
+			free(spriteset->poses[i].frames);
+			lstr_free(spriteset->poses[i].name);
+		}
+		free(spriteset->poses);
+		free(spriteset->filename);
+		free(spriteset);
 	}
-	free(spriteset->images);
-	for (i = 0; i < spriteset->num_poses; ++i) {
-		free(spriteset->poses[i].frames);
-		lstr_free(spriteset->poses[i].name);
-	}
-	free(spriteset->poses);
-	free(spriteset->filename);
-	free(spriteset);
 }
 
 rect_t

@@ -6,7 +6,8 @@
 
 struct logger
 {
-	int               refcount;
+	unsigned int      refcount;
+	unsigned int      id;
 	sfs_file_t*       file;
 	int               num_blocks;
 	int               max_blocks;
@@ -26,26 +27,32 @@ static duk_ret_t js_Logger_beginBlock (duk_context* ctx);
 static duk_ret_t js_Logger_endBlock   (duk_context* ctx);
 static duk_ret_t js_Logger_write      (duk_context* ctx);
 
+static unsigned int s_next_logger_id = 0;
+
 logger_t*
-open_log_file(const char* path)
+open_log_file(const char* filename)
 {
 	lstring_t* log_entry;
 	logger_t*  logger = NULL;
 	time_t     now;
 	char       timestamp[100];
 
-	if (path == NULL) return NULL;
-	if (!(logger = calloc(1, sizeof(logger_t)))) goto on_error;
-	if (!(logger->file = sfs_fopen(g_fs, path, "logs", "a")))
+	console_log(2, "Creating Logger %u for '%s'\n", s_next_logger_id, filename);
+	
+	logger = calloc(1, sizeof(logger_t));
+	if (!(logger->file = sfs_fopen(g_fs, filename, "logs", "a")))
 		goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_new("LOG OPENED: %s\n", timestamp);
 	sfs_fputs(lstr_cstr(log_entry), logger->file);
 	lstr_free(log_entry);
+	
+	logger->id = s_next_logger_id++;
 	return ref_logger(logger);
 
 on_error: // oh no!
+	console_log(2, "  Failed to create Logger %u\n", s_next_logger_id);
 	free(logger);
 	return NULL;
 }
@@ -53,6 +60,9 @@ on_error: // oh no!
 logger_t*
 ref_logger(logger_t* logger)
 {
+	console_log(4, "Incrementing Logger %u refcount, new: %u\n",
+		logger->id, logger->refcount + 1);
+	
 	++logger->refcount;
 	return logger;
 }
@@ -64,14 +74,20 @@ free_logger(logger_t* logger)
 	time_t     now;
 	char       timestamp[100];
 
-	if (logger == NULL || --logger->refcount > 0)
-		return;
-	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-	log_entry = lstr_new("LOG CLOSED: %s\n\n", timestamp);
-	sfs_fputs(lstr_cstr(log_entry), logger->file);
-	lstr_free(log_entry);
-	sfs_fclose(logger->file);
-	free(logger);
+	if (logger == NULL) return;
+
+	console_log(4, "Decrementing Logger %u refcount, new: %u\n",
+		logger->id, logger->refcount - 1);
+	
+	if (--logger->refcount == 0) {
+		console_log(3, "Logger %u no longer in use, deallocating\n", logger->id);
+		time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
+		log_entry = lstr_new("LOG CLOSED: %s\n\n", timestamp);
+		sfs_fputs(lstr_cstr(log_entry), logger->file);
+		lstr_free(log_entry);
+		sfs_fclose(logger->file);
+		free(logger);
+	}
 }
 
 bool
@@ -130,7 +146,7 @@ void
 init_logging_api(void)
 {
 	// Logger object
-	register_api_function(g_duk, NULL, "OpenLog", js_OpenLog);
+	register_api_function(g_duk, NULL, "OpenLog", js_new_Logger);
 	register_api_ctor(g_duk, "Logger", js_new_Logger, js_Logger_finalize);
 	register_api_function(g_duk, "Logger", "toString", js_Logger_toString);
 	register_api_function(g_duk, "Logger", "beginBlock", js_Logger_beginBlock);
@@ -139,18 +155,9 @@ init_logging_api(void)
 }
 
 static duk_ret_t
-js_OpenLog(duk_context* ctx)
-{
-	duk_require_string(ctx, 0);
-	
-	js_new_Logger(ctx);
-	return 1;
-}
-
-static duk_ret_t
 js_new_Logger(duk_context* ctx)
 {
-	const char* filename = duk_get_string(ctx, 0);
+	const char* filename = duk_require_string(ctx, 0);
 
 	logger_t* logger = open_log_file(filename);
 	if (logger == NULL)

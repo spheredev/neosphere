@@ -70,7 +70,7 @@ struct stream
 
 struct sound
 {
-	int                   refcount;
+	unsigned int          refcount;
 	unsigned int          id;
 	void*                 file_data;
 	size_t                file_size;
@@ -143,7 +143,7 @@ create_mixer(int frequency, int bits, int channels)
 	ALLEGRO_AUDIO_DEPTH  depth;
 	mixer_t*             mixer;
 
-	console_log(2, "Creating %i kHz Audialis mixer %u\n", frequency / 1000, s_next_mixer_id);
+	console_log(2, "Creating new Mixer %u at %i kHz\n", s_next_mixer_id, frequency / 1000);
 	console_log(3, "  Format: %ich %i Hz, %i-bit", channels, frequency, bits);
 
 	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
@@ -172,7 +172,7 @@ create_mixer(int frequency, int bits, int channels)
 	return ref_mixer(mixer);
 
 on_error:
-	console_log(2, "Failed to create mixer %u", s_next_mixer_id);
+	console_log(2, "Failed to create Mixer %u", s_next_mixer_id);
 	if (mixer->ptr != NULL)
 		al_destroy_mixer(mixer->ptr);
 	if (mixer->voice != NULL)
@@ -184,7 +184,7 @@ on_error:
 mixer_t*
 ref_mixer(mixer_t* mixer)
 {
-	console_log(4, "Incrementing mixer %u refcount, new: %u\n",
+	console_log(4, "Incrementing Mixer %u refcount, new: %u\n",
 		mixer->id, mixer->refcount + 1);
 	++mixer->refcount;
 	return mixer;
@@ -194,7 +194,7 @@ void
 free_mixer(mixer_t* mixer)
 {
 	if (mixer == NULL) return;
-	console_log(4, "Decrementing mixer %u refcount, new: %u\n", mixer->id, mixer->refcount - 1);
+	console_log(4, "Decrementing Mixer %u refcount, new: %u\n", mixer->id, mixer->refcount - 1);
 	if (--mixer->refcount == 0) {
 		console_log(3, "Mixer %u no longer in use, deallocating\n", mixer->id);
 		al_destroy_mixer(mixer->ptr);
@@ -220,7 +220,7 @@ load_sound(const char* path, mixer_t* mixer)
 {
 	sound_t* sound;
 
-	console_log(2, "Loading sound %u as '%s'\n", s_next_sound_id, path);
+	console_log(2, "Loading Sound %u as '%s'\n", s_next_sound_id, path);
 	
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);
@@ -236,7 +236,7 @@ load_sound(const char* path, mixer_t* mixer)
 	return ref_sound(sound);
 
 on_error:
-	console_log(2, "  Failed to load sound %u\n", s_next_sound_id);
+	console_log(2, "  Failed to load Sound %u\n", s_next_sound_id);
 	if (sound != NULL) {
 		free(sound->path);
 		free(sound);
@@ -247,7 +247,7 @@ on_error:
 sound_t*
 ref_sound(sound_t* sound)
 {
-	console_log(4, "Incrementing sound %u refcount, new: %u\n",
+	console_log(4, "Incrementing Sound %u refcount, new: %u\n",
 		sound->id, sound->refcount + 1);
 
 	++sound->refcount;
@@ -257,13 +257,15 @@ ref_sound(sound_t* sound)
 void
 free_sound(sound_t* sound)
 {
-	if (sound == NULL || --sound->refcount > 0)
-		return;
-	console_log(3, "Sound %u no longer in use, deallocating\n", sound->id);
-	free(sound->file_data);
-	if (sound->stream != NULL)
-		al_destroy_audio_stream(sound->stream);
-	free(sound->path);
+	if (sound == NULL) return;
+	console_log(4, "Decrementing Sound %u refcount, new: %u\n", sound->id, sound->refcount - 1);
+	if (--sound->refcount == 0) {
+		console_log(3, "Sound %u no longer in use, deallocating\n", sound->id);
+		free(sound->file_data);
+		if (sound->stream != NULL)
+			al_destroy_audio_stream(sound->stream);
+		free(sound->path);
+	}
 }
 
 bool
@@ -372,7 +374,7 @@ set_sound_pitch(sound_t* sound, float pitch)
 void
 play_sound(sound_t* sound)
 {
-	console_log(2, "Playing sound %u on mixer %u\n", sound->id, sound->mixer->id);
+	console_log(2, "Playing Sound %u on Mixer %u\n", sound->id, sound->mixer->id);
 	if (sound->stream != NULL)
 		al_set_audio_stream_playing(sound->stream, true);
 }
@@ -384,7 +386,7 @@ reload_sound(sound_t* sound)
 	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
 	int                   play_mode;
 
-	console_log(4, "Recreating stream for sound %u\n", sound->id);
+	console_log(4, "Reloading Sound %u\n", sound->id);
 
 	new_stream = NULL;
 	if (s_have_sound) {
@@ -421,7 +423,7 @@ seek_sound(sound_t* sound, long long position)
 void
 stop_sound(sound_t* sound, bool rewind)
 {
-	console_log(3, "Stopping sound %u %s\n", sound->id, rewind ? "and rewinding" : "");
+	console_log(3, "Stopping Sound %u %s\n", sound->id, rewind ? "and rewinding" : "");
 	if (sound->stream == NULL)
 		return;
 	al_set_audio_stream_playing(sound->stream, false);
@@ -437,7 +439,7 @@ create_stream(int frequency, int bits, int channels)
 	size_t               sample_size;
 	stream_t*            stream;
 
-	console_log(2, "Creating %i kHz Audialis stream %u\n", frequency, s_next_stream_id);
+	console_log(2, "Creating new Stream %u at %i kHz\n", s_next_stream_id, frequency / 1000);
 	console_log(3, "  Format: %ich %i Hz, %i-bit\n", channels, frequency, bits);
 	
 	stream = calloc(1, sizeof(stream_t));
@@ -470,7 +472,7 @@ create_stream(int frequency, int bits, int channels)
 	return ref_stream(stream);
 
 on_error:
-	console_log(2, "Failed to create stream %u\n", s_next_stream_id);
+	console_log(2, "Failed to create Stream %u\n", s_next_stream_id);
 	free(stream);
 	return NULL;
 }
@@ -478,9 +480,8 @@ on_error:
 stream_t*
 ref_stream(stream_t* stream)
 {
-	console_log(4, "Incrementing stream %u refcount, new: %u\n",
+	console_log(4, "Incrementing Stream %u refcount, new: %u\n",
 		stream->id, stream->refcount + 1);
-
 	++stream->refcount;
 	return stream;
 }
@@ -492,19 +493,21 @@ free_stream(stream_t* stream)
 	
 	iter_t iter;
 	
-	if (stream == NULL || --stream->refcount > 0)
-		return;
-	console_log(3, "Stream %u no longer in use, deallocating\n", stream->id);
-	al_drain_audio_stream(stream->ptr);
-	al_destroy_audio_stream(stream->ptr);
-	free_mixer(stream->mixer);
-	free(stream->buffer);
-	free(stream);
-	iter = iterate_vector(s_streams);
-	while (p_stream = next_vector_item(&iter)) {
-		if (*p_stream == stream) {
-			remove_vector_item(s_streams, iter.index);
-			break;
+	if (stream == NULL) return;
+	console_log(4, "Decrementing Stream %u refcount, new: %u\n", stream->id, stream->refcount);
+	if (--stream->refcount == 0) {
+		console_log(3, "Stream %u no longer in use, deallocating\n", stream->id);
+		al_drain_audio_stream(stream->ptr);
+		al_destroy_audio_stream(stream->ptr);
+		free_mixer(stream->mixer);
+		free(stream->buffer);
+		free(stream);
+		iter = iterate_vector(s_streams);
+		while (p_stream = next_vector_item(&iter)) {
+			if (*p_stream == stream) {
+				remove_vector_item(s_streams, iter.index);
+				break;
+			}
 		}
 	}
 }
@@ -531,7 +534,7 @@ feed_stream(stream_t* stream, const void* data, size_t size)
 {
 	size_t needed_size;
 	
-	console_log(4, "Buffering %z bytes into stream %u\n", size, stream->id);
+	console_log(4, "Buffering %z bytes into Stream %u\n", size, stream->id);
 	
 	needed_size = stream->feed_size + size;
 	if (needed_size > stream->buffer_size) {

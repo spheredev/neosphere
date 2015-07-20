@@ -86,7 +86,7 @@ read_tileset(sfs_file_t* file)
 
 	memset(&rts, 0, sizeof(struct rts_header));
 	
-	console_log(2, "Reading tileset %u from open file\n", s_next_tileset_id);
+	console_log(2, "Reading Tileset %u from open file\n", s_next_tileset_id);
 
 	if (file == NULL) goto on_error;
 	file_pos = sfs_ftell(file);
@@ -146,7 +146,7 @@ read_tileset(sfs_file_t* file)
 	return tileset;
 
 on_error:  // oh no!
-	console_log(2, "Failed to load tileset %u\n", s_next_tileset_id);
+	console_log(2, "Failed to load Tileset %u\n", s_next_tileset_id);
 	if (file != NULL)
 		sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {

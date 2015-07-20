@@ -52,7 +52,7 @@ create_image(int width, int height)
 {
 	image_t* image;
 
-	console_log(3, "Creating image %u at %ix%i\n", s_next_image_id, width, height);
+	console_log(3, "Creating Image %u at %ix%i\n", s_next_image_id, width, height);
 	image = calloc(1, sizeof(image_t));
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
@@ -71,7 +71,7 @@ create_subimage(image_t* parent, int x, int y, int width, int height)
 {
 	image_t* image;
 
-	console_log(3, "Creating image %u as %ix%i subimage of image %u\n", s_next_image_id, width, height, parent->id);
+	console_log(3, "Creating Image %u as %ix%i subimage of Image %u\n", s_next_image_id, width, height, parent->id);
 	image = calloc(1, sizeof(image_t));
 	if (!(image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)))
 		goto on_error;
@@ -117,13 +117,16 @@ clone_image(const image_t* src_image)
 {
 	image_t* image;
 
-	console_log(3, "Creating image %u via clone from image %u\n", s_next_image_id, src_image->id);
+	console_log(3, "Cloning Image %u from source Image %u\n",
+		s_next_image_id, src_image->id);
+	
 	image = calloc(1, sizeof(image_t));
 	if (!(image->bitmap = al_clone_bitmap(src_image->bitmap)))
 		goto on_error;
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	
 	return ref_image(image);
 
 on_error:
@@ -139,7 +142,7 @@ load_image(const char* path)
 	image_t*      image;
 	void*         slurp = NULL;
 
-	console_log(2, "Loading image %u as '%s'\n", s_next_image_id, path);
+	console_log(2, "Loading Image %u as '%s'\n", s_next_image_id, path);
 	image = calloc(1, sizeof(image_t));
 	if (!(slurp = sfs_fslurp(g_fs, path, "images", &file_size)))
 		goto on_error;
@@ -154,7 +157,7 @@ load_image(const char* path)
 	return ref_image(image);
 
 on_error:
-	console_log(2, "  Failed to load image %u", s_next_image_id);
+	console_log(2, "  Failed to load Image %u", s_next_image_id);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(slurp);
@@ -173,7 +176,7 @@ read_image(sfs_file_t* file, int width, int height)
 
 	int i_y;
 
-	console_log(3, "Reading %ix%i image %u from open file\n", width, height, s_next_image_id);
+	console_log(3, "Reading %ix%i Image %u from open file\n", width, height, s_next_image_id);
 	image = calloc(1, sizeof(image_t));
 	file_pos = sfs_ftell(file);
 	if (!(image->bitmap = al_create_bitmap(width, height))) goto on_error;
@@ -242,13 +245,18 @@ ref_image(image_t* image)
 void
 free_image(image_t* image)
 {
-	if (image == NULL || --image->refcount > 0)
-		return;
-	console_log(3, "Image %u no longer in use, deallocating\n", image->id);
-	uncache_pixels(image);
-	al_destroy_bitmap(image->bitmap);
-	free_image(image->parent);
-	free(image);
+	if (image == NULL) return;
+	
+	console_log(4, "Decrementing Image %u refcount, new: %u\n",
+		image->id, image->refcount - 1);
+	
+	if (--image->refcount == 0) {
+		console_log(3, "Image %u no longer in use, deallocating\n", image->id);
+		uncache_pixels(image);
+		al_destroy_bitmap(image->bitmap);
+		free_image(image->parent);
+		free(image);
+	}
 }
 
 ALLEGRO_BITMAP*
@@ -268,7 +276,7 @@ color_t
 get_image_pixel(image_t* image, int x, int y)
 {
 	if (image->pixel_cache == NULL) {
-		console_log(4, "get_image_pixel() cache miss on image %u\n", image->id);
+		console_log(4, "get_image_pixel() cache miss on Image %u\n", image->id);
 		cache_pixels(image);
 	}
 	else
@@ -609,7 +617,7 @@ cache_pixels(image_t* image)
 		goto on_error;
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;
-	console_log(4, "Creating new pixel cache for image %u\n", image->id);
+	console_log(4, "Creating new pixel cache for Image %u\n", image->id);
 	for (i = 0; i < image->height; ++i) {
 		psrc = lock->pixels + i * lock->pitch;
 		pdest = cache + i * image->width;
@@ -630,7 +638,7 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
-	console_log(4, "Pixel cache invalidated for image %u, hits: %u\n", image->id, image->cache_hits);
+	console_log(4, "Pixel cache invalidated for Image %u, hits: %u\n", image->id, image->cache_hits);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
 }
