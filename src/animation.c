@@ -73,6 +73,7 @@ load_animation(const char* path)
 	return ref_animation(anim);
 
 on_error:
+	console_log(2, "Failed to load Animation %u\n", s_next_animation_id++);
 	if (anim != NULL) {
 		if (anim->stream != NULL) mng_cleanup(&anim->stream);
 		if (anim->file != NULL) sfs_fclose(anim->file);
@@ -103,7 +104,7 @@ free_animation(animation_t* animation)
 		animation->id, animation->refcount - 1);
 	
 	if (--animation->refcount == 0) {
-		console_log(3, "Animation %u no longer in use, deallocating\n", animation->id);
+		console_log(3, "Disposing Animation %u as it is no longer in use\n", animation->id);
 		mng_cleanup(&animation->stream);
 		sfs_fclose(animation->file);
 		free_image(animation->frame);

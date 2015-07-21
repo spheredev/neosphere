@@ -7,7 +7,7 @@
 
 struct image
 {
-	int             refcount;
+	unsigned int    refcount;
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
 	unsigned int    cache_hits;
@@ -143,6 +143,7 @@ load_image(const char* path)
 	void*         slurp = NULL;
 
 	console_log(2, "Loading Image %u as '%s'\n", s_next_image_id, path);
+	
 	image = calloc(1, sizeof(image_t));
 	if (!(slurp = sfs_fslurp(g_fs, path, "images", &file_size)))
 		goto on_error;
@@ -151,13 +152,14 @@ load_image(const char* path)
 		goto on_error;
 	al_fclose(al_file);
 	free(slurp);
-	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	
+	image->id = s_next_image_id++;
 	return ref_image(image);
 
 on_error:
-	console_log(2, "  Failed to load Image %u", s_next_image_id);
+	console_log(2, "  Failed to load Image %u\n", s_next_image_id++);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(slurp);
@@ -237,8 +239,12 @@ on_error:
 image_t*
 ref_image(image_t* image)
 {
-	if (image != NULL)
+	
+	if (image != NULL) {
+		console_log(4, "Incrementing Image %u refcount, new: %u",
+			image->refcount + 1);
 		++image->refcount;
+	}
 	return image;
 }
 
@@ -251,7 +257,7 @@ free_image(image_t* image)
 		image->id, image->refcount - 1);
 	
 	if (--image->refcount == 0) {
-		console_log(3, "Image %u no longer in use, deallocating\n", image->id);
+		console_log(3, "Disposing Image %u as it is no longer in use\n", image->id);
 		uncache_pixels(image);
 		al_destroy_bitmap(image->bitmap);
 		free_image(image->parent);

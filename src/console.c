@@ -1,8 +1,9 @@
 #include "minisphere.h"
+#include "logger.h"
 
 #include "console.h"
 
-static int s_log_level = 1;
+static int s_log_level = 4;
 
 int
 get_log_level(void)

@@ -196,7 +196,7 @@ free_mixer(mixer_t* mixer)
 	if (mixer == NULL) return;
 	console_log(4, "Decrementing Mixer %u refcount, new: %u\n", mixer->id, mixer->refcount - 1);
 	if (--mixer->refcount == 0) {
-		console_log(3, "Mixer %u no longer in use, deallocating\n", mixer->id);
+		console_log(3, "Disposing Mixer %u as it is no longer in use\n", mixer->id);
 		al_destroy_mixer(mixer->ptr);
 		free(mixer);
 	}
@@ -260,7 +260,7 @@ free_sound(sound_t* sound)
 	if (sound == NULL) return;
 	console_log(4, "Decrementing Sound %u refcount, new: %u\n", sound->id, sound->refcount - 1);
 	if (--sound->refcount == 0) {
-		console_log(3, "Sound %u no longer in use, deallocating\n", sound->id);
+		console_log(3, "Disposing Sound %u as it is no longer in use\n", sound->id);
 		free(sound->file_data);
 		if (sound->stream != NULL)
 			al_destroy_audio_stream(sound->stream);
@@ -496,7 +496,7 @@ free_stream(stream_t* stream)
 	if (stream == NULL) return;
 	console_log(4, "Decrementing Stream %u refcount, new: %u\n", stream->id, stream->refcount);
 	if (--stream->refcount == 0) {
-		console_log(3, "Stream %u no longer in use, deallocating\n", stream->id);
+		console_log(3, "Disposing Stream %u as it is no longer in use\n", stream->id);
 		al_drain_audio_stream(stream->ptr);
 		al_destroy_audio_stream(stream->ptr);
 		free_mixer(stream->mixer);

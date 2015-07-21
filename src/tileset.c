@@ -167,7 +167,7 @@ free_tileset(tileset_t* tileset)
 {
 	int i;
 
-	console_log(3, "Tileset %u no longer in use, deallocating\n", tileset->id);
+	console_log(3, "Disposing Tileset %u as it is no longer in use\n", tileset->id);
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);

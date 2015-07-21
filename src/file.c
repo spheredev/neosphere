@@ -63,7 +63,8 @@ open_file(const char* filename)
 		al_fclose(memfile);
 	}
 	else {
-		if ((file->conf = al_create_config()) == NULL)
+		console_log(3, "  '%s' doesn't exist\n");
+		if (!(file->conf = al_create_config()))
 			goto on_error;
 	}
 	file->filename = strdup(filename);
@@ -71,7 +72,7 @@ open_file(const char* filename)
 	return file;
 
 on_error:
-	console_log(2, "  Failed!\n");
+	console_log(2, "  Failed to open File %u\n", s_next_file_id++);
 	if (memfile != NULL) al_fclose(memfile);
 	if (file->conf != NULL)
 		al_destroy_config(file->conf);
@@ -85,7 +86,7 @@ close_file(kv_file_t* file)
 	if (file == NULL)
 		return;
 	
-	console_log(3, "File %u no longer in use, deallocating\n", file->id);
+	console_log(3, "Disposing File %u as it is no longer in use\n", file->id);
 	if (file->is_dirty)
 		save_file(file);
 	al_destroy_config(file->conf);

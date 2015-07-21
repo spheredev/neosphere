@@ -362,7 +362,7 @@ free_spriteset(spriteset_t* spriteset)
 	
 	console_log(4, "Decrementing Spriteset %u refcount, new: %u\n", spriteset->refcount - 1);
 	if (--spriteset->refcount == 0) {
-		console_log(3, "Spriteset %u no longer in use, deallocating\n", spriteset->id);
+		console_log(3, "Disposing Spriteset %u as it is no longer in use\n", spriteset->id);
 		for (i = 0; i < spriteset->num_images; ++i)
 			free_image(spriteset->images[i]);
 		free(spriteset->images);

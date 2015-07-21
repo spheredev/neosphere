@@ -80,7 +80,7 @@ free_logger(logger_t* logger)
 		logger->id, logger->refcount - 1);
 	
 	if (--logger->refcount == 0) {
-		console_log(3, "Logger %u no longer in use, deallocating\n", logger->id);
+		console_log(3, "Disposing Logger %u as it is no longer in use\n", logger->id);
 		time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 		log_entry = lstr_new("LOG CLOSED: %s\n\n", timestamp);
 		sfs_fputs(lstr_cstr(log_entry), logger->file);

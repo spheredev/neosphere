@@ -103,7 +103,7 @@ free_bytearray(bytearray_t* array)
 	console_log(4, "Decrementing ByteArray %u refcount, new: %u",
 		array->id, array->refcount - 1);
 	if (--array->refcount == 0) {
-		console_log(3, "Bytearray %u no longer in use, deallocating\n", array->id);
+		console_log(3, "Disposing Bytearray %u as it is no longer in use\n", array->id);
 		free(array->buffer);
 		free(array);
 	}

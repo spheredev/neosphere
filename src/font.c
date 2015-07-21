@@ -245,7 +245,7 @@ free_font(font_t* font)
 	
 	console_log(4, "Decrementing Font %u refcount, new: %u\n", font->id, font->refcount - 1);
 	if (--font->refcount == 0) {
-		console_log(3, "Font %u no longer in use, deallocating\n", font->id);
+		console_log(3, "Disposing Font %u as it is no longer in use\n", font->id);
 		for (i = 0; i < font->num_glyphs; ++i) {
 			free_image(font->glyphs[i].image);
 		}
