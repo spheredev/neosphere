@@ -2,9 +2,6 @@
 #define _CRT_NONSTDC_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #define _USE_MATH_DEFINES
-
-#define strcasecmp stricmp
-#define snprintf _snprintf
 #endif
 
 #define ENGINE_NAME "minisphere 1.5.3"
@@ -39,6 +36,11 @@
 #include "script.h"
 #include "utility.h"
 #include "vector.h"
+
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#define snprintf _snprintf
+#endif
 
 #define SPHERE_PATH_MAX 1024
 
