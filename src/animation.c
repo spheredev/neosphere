@@ -48,7 +48,7 @@ load_animation(const char* path)
 {
 	animation_t* anim;
 
-	console_log(2, "Loading Animation %u as '%s'\n", s_next_animation_id, path);
+	console_log(2, "Loading Animation %u as '%s'", s_next_animation_id, path);
 	
 	if (!(anim = calloc(1, sizeof(animation_t))))
 		goto on_error;
@@ -73,7 +73,7 @@ load_animation(const char* path)
 	return ref_animation(anim);
 
 on_error:
-	console_log(2, "Failed to load Animation %u\n", s_next_animation_id++);
+	console_log(2, "Failed to load Animation %u", s_next_animation_id++);
 	if (anim != NULL) {
 		if (anim->stream != NULL) mng_cleanup(&anim->stream);
 		if (anim->file != NULL) sfs_fclose(anim->file);
@@ -88,7 +88,7 @@ on_error:
 animation_t*
 ref_animation(animation_t* animation)
 {
-	console_log(4, "Incrementing Animation %u refcount, new: %u\n",
+	console_log(4, "Incrementing Animation %u refcount, new: %u",
 		animation->id, animation->refcount);
 
 	++animation->refcount;
@@ -100,11 +100,11 @@ free_animation(animation_t* animation)
 {
 	if (animation == NULL) return;
 	
-	console_log(4, "Decrementing Animation %u refcount, new: %u\n",
+	console_log(4, "Decrementing Animation %u refcount, new: %u",
 		animation->id, animation->refcount - 1);
 	
 	if (--animation->refcount == 0) {
-		console_log(3, "Disposing Animation %u as it is no longer in use\n", animation->id);
+		console_log(3, "Disposing Animation %u as it is no longer in use", animation->id);
 		mng_cleanup(&animation->stream);
 		sfs_fclose(animation->file);
 		free_image(animation->frame);

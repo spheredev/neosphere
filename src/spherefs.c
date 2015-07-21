@@ -44,7 +44,7 @@ new_sandbox(const char* path)
 		goto on_error;
 	extension = strrchr(path, '.');
 	if (spk = open_spk(path)) {  // Sphere Package (.spk)
-		console_log(1, "Opening game package '%s'\n", path);
+		console_log(1, "Opening game package '%s'", path);
 		fs->type = SPHEREFS_SPK;
 		fs->spk = spk;
 		if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
@@ -56,7 +56,7 @@ new_sandbox(const char* path)
 		free(sgm_text);
 	}
 	else {  // default case, unpacked game folder
-		console_log(1, "Opening game '%s'\n", path);
+		console_log(1, "Opening game '%s'", path);
 		fs->type = SPHEREFS_LOCAL;
 		if (extension != NULL && strcmp(extension, ".sgm") == 0)
 			fs->fs_root = al_create_path(path);
@@ -70,9 +70,9 @@ new_sandbox(const char* path)
 		al_destroy_path(sgm_path);
 	}
 	get_sgm_metrics(fs, &res_x, &res_y);
-	console_log(1, "  Title: %s\n", get_sgm_name(fs));
-	console_log(1, "  Author: %s\n", get_sgm_author(fs));
-	console_log(1, "  Resolution: %ix%i\n", res_x, res_y);
+	console_log(1, "  Title: %s", get_sgm_name(fs));
+	console_log(1, "  Author: %s", get_sgm_author(fs));
+	console_log(1, "  Resolution: %ix%i", res_x, res_y);
 	return fs;
 
 on_error:

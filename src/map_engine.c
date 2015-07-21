@@ -302,7 +302,7 @@ initialize_map_engine(void)
 {
 	int i;
 	
-	console_log(1, "Initializing map engine\n");
+	console_log(1, "Initializing map engine");
 	
 	initialize_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
@@ -328,7 +328,7 @@ shutdown_map_engine(void)
 {
 	int i;
 
-	console_log(1, "Shutting down map engine\n");
+	console_log(1, "Shutting down map engine");
 	
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
@@ -513,8 +513,8 @@ add_trigger(int x, int y, int layer, script_t* script)
 {
 	struct map_trigger trigger;
 
-	console_log(2, "Creating trigger %i on map '%s'\n", get_vector_size(s_map->triggers), s_map_filename);
-	console_log(3, "  Location: '%s' @ (%i,%i)\n", lstr_cstr(s_map->layers[layer].name), x, y);
+	console_log(2, "Creating trigger %i on map '%s'", get_vector_size(s_map->triggers), s_map_filename);
+	console_log(3, "  Location: '%s' @ (%i,%i)", lstr_cstr(s_map->layers[layer].name), x, y);
 	
 	trigger.x = x; trigger.y = y;
 	trigger.z = layer;
@@ -529,8 +529,8 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 {
 	struct map_zone zone;
 
-	console_log(2, "Creating %u-step zone %i on map '%s'\n", steps, get_vector_size(s_map->zones), s_map_filename);
-	console_log(3, "  Bounds: (%i,%i)-(%i,%i)\n", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
+	console_log(2, "Creating %u-step zone %i on map '%s'", steps, get_vector_size(s_map->zones), s_map_filename);
+	console_log(3, "  Bounds: (%i,%i)-(%i,%i)", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
 	
 	memset(&zone, 0, sizeof(struct map_zone));
 	zone.bounds = bounds;
@@ -618,7 +618,7 @@ load_map(const char* filename)
 
 	int i, j, x, y, z;
 
-	console_log(2, "Loading map as '%s'\n", filename);
+	console_log(2, "Loading map as '%s'", filename);
 	
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
@@ -960,7 +960,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	int i;
 
-	console_log(2, "Changing current map to '%s'\n", filename);
+	console_log(2, "Changing current map to '%s'", filename);
 	
 	map = load_map(filename);
 	if (map == NULL) return false;

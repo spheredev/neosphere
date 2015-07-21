@@ -93,7 +93,7 @@ load_font(const char* filename)
 
 	int i, x, y;
 	
-	console_log(2, "Loading Font %u as '%s'\n", s_next_font_id, filename);
+	console_log(2, "Loading Font %u as '%s'", s_next_font_id, filename);
 	
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
@@ -169,7 +169,7 @@ load_font(const char* filename)
 	return ref_font(font);
 
 on_error:
-	console_log(2, "Failed to load Font %u\n", s_next_font_id++);
+	console_log(2, "Failed to load Font %u", s_next_font_id++);
 	sfs_fclose(file);
 	if (font != NULL) {
 		for (i = 0; i < rfn.num_chars; ++i) {
@@ -193,7 +193,7 @@ clone_font(const font_t* src_font)
 
 	uint32_t i;
 
-	console_log(2, "Cloning Font %u from source Font %u\n", s_next_font_id, src_font->id);
+	console_log(2, "Cloning Font %u from source Font %u", s_next_font_id, src_font->id);
 	
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
 	if (!(font->glyphs = calloc(src_font->num_glyphs, sizeof(struct font_glyph))))
@@ -230,7 +230,7 @@ on_error:
 font_t*
 ref_font(font_t* font)
 {
-	console_log(4, "Incrementing Font %u refcount, new: %u\n",
+	console_log(4, "Incrementing Font %u refcount, new: %u",
 		font->id, font->refcount + 1);
 	++font->refcount;
 	return font;
@@ -243,9 +243,9 @@ free_font(font_t* font)
 	
 	if (font == NULL) return;
 	
-	console_log(4, "Decrementing Font %u refcount, new: %u\n", font->id, font->refcount - 1);
+	console_log(4, "Decrementing Font %u refcount, new: %u", font->id, font->refcount - 1);
 	if (--font->refcount == 0) {
-		console_log(3, "Disposing Font %u as it is no longer in use\n", font->id);
+		console_log(3, "Disposing Font %u as it is no longer in use", font->id);
 		for (i = 0; i < font->num_glyphs; ++i) {
 			free_image(font->glyphs[i].image);
 		}

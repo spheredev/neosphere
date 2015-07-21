@@ -54,7 +54,7 @@ open_file(const char* filename)
 	void*         slurp;
 	size_t        slurp_size;
 	
-	console_log(2, "Opening File %u as '%s'\n", s_next_file_id, filename);
+	console_log(2, "Opening File %u as '%s'", s_next_file_id, filename);
 	file = calloc(1, sizeof(kv_file_t));
 	if (slurp = sfs_fslurp(g_fs, filename, "save", &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
@@ -63,7 +63,7 @@ open_file(const char* filename)
 		al_fclose(memfile);
 	}
 	else {
-		console_log(3, "  '%s' doesn't exist\n");
+		console_log(3, "  '%s' doesn't exist", filename);
 		if (!(file->conf = al_create_config()))
 			goto on_error;
 	}
@@ -72,7 +72,7 @@ open_file(const char* filename)
 	return file;
 
 on_error:
-	console_log(2, "  Failed to open File %u\n", s_next_file_id++);
+	console_log(2, "  Failed to open File %u", s_next_file_id++);
 	if (memfile != NULL) al_fclose(memfile);
 	if (file->conf != NULL)
 		al_destroy_config(file->conf);
@@ -86,7 +86,7 @@ close_file(kv_file_t* file)
 	if (file == NULL)
 		return;
 	
-	console_log(3, "Disposing File %u as it is no longer in use\n", file->id);
+	console_log(3, "Disposing File %u as it is no longer in use", file->id);
 	if (file->is_dirty)
 		save_file(file);
 	al_destroy_config(file->conf);
@@ -156,7 +156,7 @@ read_string_rec(kv_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
-	console_log(2, "Reading key '%s' from File %u\n", key, file->id);
+	console_log(2, "Reading key '%s' from File %u", key, file->id);
 	if (!(value = al_get_config_value(file->conf, NULL, key)))
 		value = def_value;
 	return value;
@@ -172,7 +172,7 @@ save_file(kv_file_t* file)
 	size_t        next_buf_size;
 	sfs_file_t*   sfs_file = NULL;
 
-	console_log(3, "Saving File %u as '%s'\n", file->id, file->filename);
+	console_log(3, "Saving File %u as '%s'", file->id, file->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
 		buffer = realloc(buffer, next_buf_size);
@@ -201,7 +201,7 @@ on_error:
 void
 write_bool_rec(kv_file_t* file, const char* key, bool value)
 {
-	console_log(3, "Writing boolean to File %u, key '%s'\n", file->id, key);
+	console_log(3, "Writing boolean to File %u, key '%s'", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
 }
@@ -211,7 +211,7 @@ write_number_rec(kv_file_t* file, const char* key, double value)
 {
 	char string[500];
 
-	console_log(3, "Writing number to File %u, key '%s'\n", file->id, key);
+	console_log(3, "Writing number to File %u, key '%s'", file->id, key);
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
 	file->is_dirty = true;
@@ -220,7 +220,7 @@ write_number_rec(kv_file_t* file, const char* key, double value)
 void
 write_string_rec(kv_file_t* file, const char* key, const char* value)
 {
-	console_log(3, "Writing string to File %u, key '%s'\n", file->id, key);
+	console_log(3, "Writing string to File %u, key '%s'", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
 }

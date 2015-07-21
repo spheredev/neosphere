@@ -15,14 +15,14 @@ struct shader
 void
 initialize_shaders(void)
 {
-	console_log(0, "Initializing shader support\n");
+	console_log(0, "Initializing shader support");
 	reset_shader();
 }
 
 void
 shutdown_shaders(void)
 {
-	console_log(0, "Shutting down shader manager\n");
+	console_log(0, "Shutting down shader manager");
 }
 
 shader_t*

@@ -57,13 +57,13 @@ static shader_t* s_def_shader = NULL;
 void
 initialize_galileo(void)
 {
-	console_log(1, "Initializing Galileo\n");
+	console_log(1, "Initializing Galileo");
 }
 
 void
 shutdown_galileo(void)
 {
-	console_log(1, "Shutting down Galileo\n");
+	console_log(1, "Shutting down Galileo");
 	free_shader(s_def_shader);
 }
 
@@ -74,7 +74,7 @@ get_default_shader(void)
 	const char* vs_filename;
 
 	if (s_def_shader == NULL) {
-		console_log(3, "Compiling Galileo default shaders\n");
+		console_log(3, "Compiling Galileo default shaders");
 		vs_filename = read_string_rec(g_sys_conf, "GalileoVertShader", "shaders/galileo.vs.glsl");
 		fs_filename = read_string_rec(g_sys_conf, "GalileoFragShader", "shaders/galileo.fs.glsl");
 		s_def_shader = create_shader(syspath(vs_filename), syspath(fs_filename));

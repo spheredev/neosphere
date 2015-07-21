@@ -85,19 +85,22 @@ main(int argc, char* argv[])
 	char*                game_path = NULL;
 	image_t*             icon;
 	int                  line_num;
-	int                  log_level;
 	int                  max_skips;
+	int                  maybe_verbosity;
 	char*                p_strtol;
 	ALLEGRO_TRANSFORM    trans;
-	
+	int                  verbosity = 1;
+
 	int i;
 
 	printf("%s %s\n", ENGINE_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
-	// startup processing (command line parsing, etc.)
-	console_log(0, "Parsing command line\n");
+	// parse the command line.
+	// at present, only minimal validation is performed on command line arguments.
+	// unrecognized arguments are silently ignored.
+	printf("Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game path
 		game_path = strdup(argv[1]);
@@ -113,9 +116,9 @@ main(int argc, char* argv[])
 				game_path = strdup(argv[i + 1]);
 			}
 			if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
-				errno = 0; log_level = strtol(argv[i + 1], &p_strtol, 10);
+				errno = 0; maybe_verbosity = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
-					set_log_level(fmax(log_level, 0));
+					verbosity = fmax(maybe_verbosity, 0);
 			}
 			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
 				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
@@ -135,16 +138,17 @@ main(int argc, char* argv[])
 	}
 	
 	// print out options
-	console_log(1, "  Game path: %s\n", game_path != NULL ? game_path : "<none provided>");
-	console_log(1, "  Frameskip limit: %i frames\n", s_max_frameskip);
-	console_log(1, "  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	console_log(1, "  Console verbosity: L%i\n\n", get_log_level());
+	printf("  Game path: %s\n", game_path != NULL ? game_path : "<none provided>");
+	printf("  Frameskip limit: %i frames\n", s_max_frameskip);
+	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	printf("  Console verbosity: L%i\n", verbosity);
 
+	initialize_console(verbosity);
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 
 	// set up jump points for script bailout
-	console_log(1, "Setting up jump points for longjmp\n");
+	console_log(1, "Setting up jump points for longjmp");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
@@ -158,8 +162,9 @@ main(int argc, char* argv[])
 		}
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
-		console_log(0, "Reset requested\n");
+		console_log(0, "Restarting to launch new game");
 		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		console_log(1, "  Game: %s", game_path);
 		shutdown_engine();
 		printf("\n");
 		initialize_engine();
@@ -168,7 +173,7 @@ main(int argc, char* argv[])
 	}
 
 	// locate game.sgm
-	console_log(0, "Looking for a game to launch\n");
+	console_log(0, "Looking for a game to launch");
 	g_game_path = game_path != NULL ? al_create_path(game_path) : NULL;
 	if (g_game_path == NULL)
 		find_startup_game(&g_game_path);
@@ -210,7 +215,7 @@ main(int argc, char* argv[])
 	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
 
 	// set up engine and create display window
-	console_log(1, "Creating render window\n");
+	console_log(1, "Creating render window");
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
@@ -241,7 +246,7 @@ main(int argc, char* argv[])
 	initialize_shaders();
 	
 	// attempt to locate and load system font
-	console_log(1, "Loading system font\n");
+	console_log(1, "Loading system font");
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
 		g_sys_font = load_font(syspath(filename));
@@ -267,7 +272,7 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	console_log(0, "Calling game()\n\n");
+	console_log(0, "Calling game()\n");
 	if (!try_evaluate_file(get_sgm_script(g_fs)))
 		goto on_js_error;
 	duk_pop(g_duk);
@@ -605,7 +610,7 @@ initialize_engine(void)
 	srand(time(NULL));
 	
 	// initialize Allegro
-	console_log(0, "Initializing Allegro\n");
+	console_log(0, "Initializing Allegro");
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon()) goto on_error;
@@ -613,12 +618,12 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
-	console_log(0, "Initializing Dyad\n");
+	console_log(0, "Initializing Dyad");
 	dyad_init();
 	dyad_setUpdateTimeout(0.001);
 
 	// load system configuraton
-	console_log(1, "Loading system configuration\n");
+	console_log(1, "Loading system configuration");
 	g_sys_conf = open_file("~sys/system.ini");
 
 	initialize_async();
@@ -630,10 +635,10 @@ initialize_engine(void)
 	initialize_map_engine();
 
 	// initialize JavaScript
-	console_log(0, "Initializing JavaScript\n");
+	console_log(0, "Initializing JavaScript");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	console_log(1, "  Duktape %s\n", DUK_GIT_DESCRIBE);
+	console_log(1, "  Duktape %s", DUK_GIT_DESCRIBE);
 	initialize_scripts();
 
 	// initialize Sphere API
@@ -656,17 +661,17 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	shutdown_input();
 	
-	console_log(0, "Shutting down Duktape\n");
+	console_log(0, "Shutting down Duktape");
 	duk_destroy_heap(g_duk);
 	
-	console_log(0, "Shutting down Dyad\n");
+	console_log(0, "Shutting down Dyad");
 	dyad_shutdown();
 	
 	shutdown_spritesets();
 	shutdown_audialis();
 	shutdown_galileo();
 	
-	console_log(0, "Shutting down Allegro\n");
+	console_log(0, "Shutting down Allegro");
 	al_destroy_display(g_display); g_display = NULL;
 	al_destroy_event_queue(g_events); g_events = NULL;
 	al_destroy_path(g_game_path); g_game_path = NULL;

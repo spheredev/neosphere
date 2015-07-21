@@ -27,28 +27,28 @@ initialize_scripts(void)
 			duk_push_global_object(g_duk);
 			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript")) {
 				duk_pop_3(g_duk);
-				console_log(1, "  'CoffeeScript' not defined\n");
+				console_log(1, "  'CoffeeScript' not defined");
 				goto on_error;
 			}
 			duk_get_prop_string(g_duk, -1, "VERSION");
-			console_log(1, "  CoffeeScript v%s\n", duk_get_string(g_duk, -1));
+			console_log(1, "  CoffeeScript v%s", duk_get_string(g_duk, -1));
 			duk_pop_n(g_duk, 4);
 		}
 		else {
-			console_log(1, "  Error evaluating compiler script\n");
-			console_log(1, "  %s\n", duk_to_string(g_duk, -1));
+			console_log(1, "  Error evaluating compiler script");
+			console_log(1, "  %s", duk_to_string(g_duk, -1));
 			duk_pop(g_duk);
 			goto on_error;
 		}
 	}
 	else {
-		console_log(1, "  coffee-script.js missing\n");
+		console_log(1, "  coffee-script.js missing");
 		goto on_error;
 	}
 	return;
 
 on_error:
-	console_log(0, "  CoffeeScript support not enabled\n");
+	console_log(0, "  CoffeeScript support not enabled");
 }
 
 bool

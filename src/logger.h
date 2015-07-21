@@ -1,6 +1,6 @@
 typedef struct logger logger_t;
 
-extern logger_t* open_log_file   (const char* path);
+extern logger_t* open_log_file   (const char* filename);
 extern logger_t* ref_logger      (logger_t* logger);
 extern void      free_logger     (logger_t* logger);
 extern bool      begin_log_block (logger_t* logger, const char* title);

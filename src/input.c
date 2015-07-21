@@ -97,7 +97,7 @@ initialize_input(void)
 {
 	int i;
 
-	console_log(1, "Initializing input\n");
+	console_log(1, "Initializing input");
 	
 	al_install_keyboard();
 	if (!(s_have_mouse = al_install_mouse()))
@@ -176,7 +176,7 @@ shutdown_input(void)
 	iter_t iter;
 
 	// save player key mappings
-	console_log(1, "Shutting down input\n");
+	console_log(1, "Shutting down input");
 
 	// free bound key scripts
 	iter = iterate_vector(s_bound_buttons);
@@ -372,7 +372,7 @@ save_key_map(void)
 
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
-	console_log(0, "Saving player key mappings\n");
+	console_log(0, "Saving player key mappings");
 	file = open_file("keymap.mini");
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"

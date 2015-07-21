@@ -3,27 +3,28 @@
 
 #include "console.h"
 
-static int s_log_level = 4;
+static int s_verbosity = 0;
 
-int
-get_log_level(void)
+void
+initialize_console(int verbosity)
 {
-	return s_log_level;
+	s_verbosity = verbosity;
 }
 
 void
-set_log_level(int log_level)
+shutdown_console(void)
 {
-	s_log_level = log_level;
 }
 
 void
-console_log(int log_level, const char* fmt, ...)
+console_log(int level, const char* fmt, ...)
 {
 	va_list ap;
-	
+
+	if (level > s_verbosity)
+		return;
 	va_start(ap, fmt);
-	if (log_level <= s_log_level)
-		vprintf(fmt, ap);
+	vprintf(fmt, ap);
+	fputc('\n', stdout);
 	va_end(ap);
 }

@@ -62,7 +62,7 @@ load_tileset(const char* path)
 	sfs_file_t* file;
 	tileset_t*  tileset;
 
-	console_log(2, "Loading tileset as '%s'\n", path);
+	console_log(2, "Loading tileset as '%s'", path);
 
 	if ((file = sfs_fopen(g_fs, path, "maps", "rb")) == NULL)
 		return NULL;
@@ -86,7 +86,7 @@ read_tileset(sfs_file_t* file)
 
 	memset(&rts, 0, sizeof(struct rts_header));
 	
-	console_log(2, "Reading Tileset %u from open file\n", s_next_tileset_id);
+	console_log(2, "Reading Tileset %u from open file", s_next_tileset_id);
 
 	if (file == NULL) goto on_error;
 	file_pos = sfs_ftell(file);
@@ -146,7 +146,7 @@ read_tileset(sfs_file_t* file)
 	return tileset;
 
 on_error:  // oh no!
-	console_log(2, "Failed to load Tileset %u\n", s_next_tileset_id);
+	console_log(2, "Failed to load Tileset %u", s_next_tileset_id);
 	if (file != NULL)
 		sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {
@@ -167,7 +167,7 @@ free_tileset(tileset_t* tileset)
 {
 	int i;
 
-	console_log(3, "Disposing Tileset %u as it is no longer in use\n", tileset->id);
+	console_log(3, "Disposing Tileset %u as it is no longer in use", tileset->id);
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);

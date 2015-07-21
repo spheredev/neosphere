@@ -37,13 +37,12 @@ open_log_file(const char* filename)
 	time_t     now;
 	char       timestamp[100];
 
-	console_log(2, "Creating Logger %u for '%s'\n", s_next_logger_id, filename);
+	console_log(2, "Creating Logger %u for '%s'", s_next_logger_id, filename);
 	
 	logger = calloc(1, sizeof(logger_t));
 	if (!(logger->file = sfs_fopen(g_fs, filename, "logs", "a")))
 		goto on_error;
-	time(&now);
-	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
+	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_new("LOG OPENED: %s\n", timestamp);
 	sfs_fputs(lstr_cstr(log_entry), logger->file);
 	lstr_free(log_entry);
@@ -52,7 +51,7 @@ open_log_file(const char* filename)
 	return ref_logger(logger);
 
 on_error: // oh no!
-	console_log(2, "  Failed to create Logger %u\n", s_next_logger_id);
+	console_log(2, "Failed to open file for Logger %u", s_next_logger_id++);
 	free(logger);
 	return NULL;
 }
@@ -60,7 +59,7 @@ on_error: // oh no!
 logger_t*
 ref_logger(logger_t* logger)
 {
-	console_log(4, "Incrementing Logger %u refcount, new: %u\n",
+	console_log(4, "Incrementing Logger %u refcount, new: %u",
 		logger->id, logger->refcount + 1);
 	
 	++logger->refcount;
@@ -76,11 +75,11 @@ free_logger(logger_t* logger)
 
 	if (logger == NULL) return;
 
-	console_log(4, "Decrementing Logger %u refcount, new: %u\n",
+	console_log(4, "Decrementing Logger %u refcount, new: %u",
 		logger->id, logger->refcount - 1);
 	
 	if (--logger->refcount == 0) {
-		console_log(3, "Disposing Logger %u as it is no longer in use\n", logger->id);
+		console_log(3, "Disposing Logger %u as it is no longer in use", logger->id);
 		time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 		log_entry = lstr_new("LOG CLOSED: %s\n\n", timestamp);
 		sfs_fputs(lstr_cstr(log_entry), logger->file);

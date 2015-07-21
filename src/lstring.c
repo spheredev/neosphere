@@ -278,23 +278,17 @@ lstr_new(const char* fmt, ...)
 	char*      buffer;
 	int        buf_size;
 	lstring_t* string = NULL;
-	
+
 	va_start(ap, fmt);
 	buf_size = vsnprintf(NULL, 0, fmt, ap) + 1;
 	va_end(ap);
-	if (!(buffer = malloc(buf_size)))
-		goto on_error;
+	buffer = malloc(buf_size);
 	va_start(ap, fmt);
 	vsnprintf(buffer, buf_size, fmt, ap);
 	va_end(ap);
 	string = lstr_from_buf(buffer, buf_size - 1);
 	free(buffer);
 	return string;
-
-on_error:
-	free(buffer);
-	free(string);
-	return NULL;
 }
 
 lstring_t*

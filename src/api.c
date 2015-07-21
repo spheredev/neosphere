@@ -89,16 +89,16 @@ initialize_api(duk_context* ctx)
 
 	int i;
 
-	console_log(1, "Initializing Sphere API\n");
+	console_log(1, "Initializing Sphere API");
 
 	s_user_agent = lstr_new("v%.1f (%s)", SPHERE_API_VERSION, ENGINE_NAME);
-	console_log(0, "  %s\n", lstr_cstr(s_user_agent));
+	console_log(0, "  %s", lstr_cstr(s_user_agent));
 
 	// register API extensions
 	s_extensions = new_vector(sizeof(char*));
 	num_extensions = sizeof SPHERE_EXTENSIONS / sizeof SPHERE_EXTENSIONS[0];
 	for (i = 0; i < num_extensions; ++i) {
-		console_log(1, "  %s\n", SPHERE_EXTENSIONS[i]);
+		console_log(1, "  %s", SPHERE_EXTENSIONS[i]);
 		register_api_extension(SPHERE_EXTENSIONS[i]);
 	}
 
@@ -196,7 +196,7 @@ initialize_api(duk_context* ctx)
 void
 shutdown_api(void)
 {
-	console_log(0, "Shutting down Sphere API\n");
+	console_log(0, "Shutting down Sphere API");
 
 	lstr_free(s_user_agent);
 }
@@ -470,8 +470,8 @@ duk_handle_require(duk_context* ctx)
 		duk_remove(ctx, -2);
 	}
 	free(source);
-	console_log(1, "script: Loaded CommonJS module `%s`\n", id);
-	console_log(2, "  Path: %s\n", filename);
+	console_log(1, "script: Loaded CommonJS module `%s`", id);
+	console_log(2, "  Path: %s", filename);
 	lstr_free(filename);
 	return 1;
 }
@@ -891,7 +891,7 @@ js_Print(duk_context* ctx)
 {
 	const char* text = duk_safe_to_string(ctx, 0);
 	
-	console_log(0, "%s\n", text);
+	console_log(0, "%s", text);
 	return 0;
 }
 

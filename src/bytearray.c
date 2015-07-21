@@ -39,7 +39,7 @@ new_bytearray(int size)
 {
 	bytearray_t* array;
 	
-	console_log(3, "Creating new ByteArray %u size %i bytes\n",
+	console_log(3, "Creating new ByteArray %u size %i bytes",
 		size, s_next_array_id);
 	
 	array = calloc(1, sizeof(bytearray_t));
@@ -60,7 +60,7 @@ bytearray_from_buffer(const void* buffer, int size)
 {
 	bytearray_t* array;
 
-	console_log(3, "Creating bytearray from %i-byte buffer\n", size);
+	console_log(3, "Creating bytearray from %i-byte buffer", size);
 	
 	if (!(array = new_bytearray(size)))
 		return NULL;
@@ -74,7 +74,7 @@ bytearray_from_lstring(const lstring_t* string)
 {
 	bytearray_t* array;
 
-	console_log(3, "Creating bytearray from %u-byte string\n", lstr_len(string));
+	console_log(3, "Creating bytearray from %u-byte string", lstr_len(string));
 	
 	if (lstr_len(string) <= 65)  // log short strings only
 		console_log(4, "  String: \"%s\"", lstr_cstr(string));
@@ -103,7 +103,7 @@ free_bytearray(bytearray_t* array)
 	console_log(4, "Decrementing ByteArray %u refcount, new: %u",
 		array->id, array->refcount - 1);
 	if (--array->refcount == 0) {
-		console_log(3, "Disposing Bytearray %u as it is no longer in use\n", array->id);
+		console_log(3, "Disposing Bytearray %u as it is no longer in use", array->id);
 		free(array->buffer);
 		free(array);
 	}
@@ -140,7 +140,7 @@ concat_bytearrays(bytearray_t* array1, bytearray_t* array2)
 	bytearray_t* new_array;
 	int          new_size;
 
-	console_log(3, "Concatenating ByteArrays %u and %u\n",
+	console_log(3, "Concatenating ByteArrays %u and %u",
 		s_next_array_id, array1->id, array2->id);
 
 	new_size = array1->size + array2->size;
@@ -165,7 +165,7 @@ deflate_bytearray(bytearray_t* array, int level)
 	size_t       out_size;
 	z_stream     z;
 
-	console_log(3, "Deflating ByteArray %u from source ByteArray %u\n",
+	console_log(3, "Deflating ByteArray %u from source ByteArray %u",
 		s_next_array_id, array->id);
 	
 	memset(&z, 0, sizeof(z_stream));
@@ -216,7 +216,7 @@ inflate_bytearray(bytearray_t* array, int max_size)
 	size_t       out_size;
 	z_stream     z;
 
-	console_log(3, "Inflating ByteArray %u from source ByteArray %u\n",
+	console_log(3, "Inflating ByteArray %u from source ByteArray %u",
 		s_next_array_id, array->id);
 	
 	memset(&z, 0, sizeof(z_stream));
@@ -263,7 +263,7 @@ slice_bytearray(bytearray_t* array, int start, int length)
 {
 	bytearray_t* new_array;
 
-	console_log(3, "Copying %i-byte slice from ByteArray %u\n", length, array->id);
+	console_log(3, "Copying %i-byte slice from ByteArray %u", length, array->id);
 	
 	if (!(new_array = new_bytearray(length)))
 		return NULL;

@@ -15,14 +15,14 @@ static duk_ret_t js_RNG_vary   (duk_context* ctx);
 void
 initialize_rng(void)
 {
-	console_log(1, "Initializing Mersenne Twister\n");
+	console_log(1, "Initializing Mersenne Twister");
 	seed_rng((unsigned long)time(NULL));
 }
 
 void
 seed_rng(unsigned long seed)
 {
-	console_log(2, "Seeding MT19937 (%u)\n", seed);
+	console_log(2, "Seeding MT19937 (%u)", seed);
 	init_genrand(seed);
 }
 

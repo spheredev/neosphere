@@ -149,7 +149,7 @@ static person_t*         *s_persons       = NULL;
 void
 initialize_persons_manager(void)
 {
-	console_log(1, "Initializing persons manager\n");
+	console_log(1, "Initializing persons manager");
 	
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	s_num_persons = s_max_persons = 0;
@@ -164,7 +164,7 @@ shutdown_persons_manager(void)
 {
 	int i;
 	
-	console_log(1, "Shutting down persons manager\n");
+	console_log(1, "Shutting down persons manager");
 	
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);

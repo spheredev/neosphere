@@ -95,12 +95,12 @@ static vector_t*            s_streams;
 void
 initialize_audialis(void)
 {
-	console_log(1, "Initializing Audialis\n");
+	console_log(1, "Initializing Audialis");
 	
 	s_have_sound = true;
 	if (!al_install_audio() || !(s_def_mixer = create_mixer(44100, 16, 2))) {
 		s_have_sound = false;
-		console_log(1, "  Sound not available\n");
+		console_log(1, "  Sound not available");
 		return;
 	}
 	al_init_acodec_addon();
@@ -111,7 +111,7 @@ initialize_audialis(void)
 void
 shutdown_audialis(void)
 {
-	console_log(1, "Shutting down Audialis\n");
+	console_log(1, "Shutting down Audialis");
 	free_vector(s_streams);
 	free_mixer(s_def_mixer);
 	if (s_have_sound)
@@ -143,8 +143,8 @@ create_mixer(int frequency, int bits, int channels)
 	ALLEGRO_AUDIO_DEPTH  depth;
 	mixer_t*             mixer;
 
-	console_log(2, "Creating new Mixer %u at %i kHz\n", s_next_mixer_id, frequency / 1000);
-	console_log(3, "  Format: %ich %i Hz, %i-bit\n", channels, frequency, bits);
+	console_log(2, "Creating new Mixer %u at %i kHz", s_next_mixer_id, frequency / 1000);
+	console_log(3, "  Format: %ich %i Hz, %i-bit", channels, frequency, bits);
 
 	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
 		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3
@@ -184,7 +184,7 @@ on_error:
 mixer_t*
 ref_mixer(mixer_t* mixer)
 {
-	console_log(4, "Incrementing Mixer %u refcount, new: %u\n",
+	console_log(4, "Incrementing Mixer %u refcount, new: %u",
 		mixer->id, mixer->refcount + 1);
 	++mixer->refcount;
 	return mixer;
@@ -194,9 +194,9 @@ void
 free_mixer(mixer_t* mixer)
 {
 	if (mixer == NULL) return;
-	console_log(4, "Decrementing Mixer %u refcount, new: %u\n", mixer->id, mixer->refcount - 1);
+	console_log(4, "Decrementing Mixer %u refcount, new: %u", mixer->id, mixer->refcount - 1);
 	if (--mixer->refcount == 0) {
-		console_log(3, "Disposing Mixer %u as it is no longer in use\n", mixer->id);
+		console_log(3, "Disposing Mixer %u as it is no longer in use", mixer->id);
 		al_destroy_mixer(mixer->ptr);
 		free(mixer);
 	}
@@ -220,7 +220,7 @@ load_sound(const char* path, mixer_t* mixer)
 {
 	sound_t* sound;
 
-	console_log(2, "Loading Sound %u as '%s'\n", s_next_sound_id, path);
+	console_log(2, "Loading Sound %u as '%s'", s_next_sound_id, path);
 	
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);
@@ -236,7 +236,7 @@ load_sound(const char* path, mixer_t* mixer)
 	return ref_sound(sound);
 
 on_error:
-	console_log(2, "  Failed to load Sound %u\n", s_next_sound_id);
+	console_log(2, "  Failed to load Sound %u", s_next_sound_id);
 	if (sound != NULL) {
 		free(sound->path);
 		free(sound);
@@ -247,7 +247,7 @@ on_error:
 sound_t*
 ref_sound(sound_t* sound)
 {
-	console_log(4, "Incrementing Sound %u refcount, new: %u\n",
+	console_log(4, "Incrementing Sound %u refcount, new: %u",
 		sound->id, sound->refcount + 1);
 
 	++sound->refcount;
@@ -258,9 +258,9 @@ void
 free_sound(sound_t* sound)
 {
 	if (sound == NULL) return;
-	console_log(4, "Decrementing Sound %u refcount, new: %u\n", sound->id, sound->refcount - 1);
+	console_log(4, "Decrementing Sound %u refcount, new: %u", sound->id, sound->refcount - 1);
 	if (--sound->refcount == 0) {
-		console_log(3, "Disposing Sound %u as it is no longer in use\n", sound->id);
+		console_log(3, "Disposing Sound %u as it is no longer in use", sound->id);
 		free(sound->file_data);
 		if (sound->stream != NULL)
 			al_destroy_audio_stream(sound->stream);
@@ -374,7 +374,7 @@ set_sound_pitch(sound_t* sound, float pitch)
 void
 play_sound(sound_t* sound)
 {
-	console_log(2, "Playing Sound %u on Mixer %u\n", sound->id, sound->mixer->id);
+	console_log(2, "Playing Sound %u on Mixer %u", sound->id, sound->mixer->id);
 	if (sound->stream != NULL)
 		al_set_audio_stream_playing(sound->stream, true);
 }
@@ -386,7 +386,7 @@ reload_sound(sound_t* sound)
 	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
 	int                   play_mode;
 
-	console_log(4, "Reloading Sound %u\n", sound->id);
+	console_log(4, "Reloading Sound %u", sound->id);
 
 	new_stream = NULL;
 	if (s_have_sound) {
@@ -423,7 +423,7 @@ seek_sound(sound_t* sound, long long position)
 void
 stop_sound(sound_t* sound, bool rewind)
 {
-	console_log(3, "Stopping Sound %u %s\n", sound->id, rewind ? "and rewinding" : "");
+	console_log(3, "Stopping Sound %u %s", sound->id, rewind ? "and rewinding" : "");
 	if (sound->stream == NULL)
 		return;
 	al_set_audio_stream_playing(sound->stream, false);
@@ -439,8 +439,8 @@ create_stream(int frequency, int bits, int channels)
 	size_t               sample_size;
 	stream_t*            stream;
 
-	console_log(2, "Creating new Stream %u at %i kHz\n", s_next_stream_id, frequency / 1000);
-	console_log(3, "  Format: %ich %i Hz, %i-bit\n", channels, frequency, bits);
+	console_log(2, "Creating new Stream %u at %i kHz", s_next_stream_id, frequency / 1000);
+	console_log(3, "  Format: %ich %i Hz, %i-bit", channels, frequency, bits);
 	
 	stream = calloc(1, sizeof(stream_t));
 	
@@ -472,7 +472,7 @@ create_stream(int frequency, int bits, int channels)
 	return ref_stream(stream);
 
 on_error:
-	console_log(2, "Failed to create Stream %u\n", s_next_stream_id);
+	console_log(2, "Failed to create Stream %u", s_next_stream_id);
 	free(stream);
 	return NULL;
 }
@@ -480,7 +480,7 @@ on_error:
 stream_t*
 ref_stream(stream_t* stream)
 {
-	console_log(4, "Incrementing Stream %u refcount, new: %u\n",
+	console_log(4, "Incrementing Stream %u refcount, new: %u",
 		stream->id, stream->refcount + 1);
 	++stream->refcount;
 	return stream;
@@ -494,9 +494,9 @@ free_stream(stream_t* stream)
 	iter_t iter;
 	
 	if (stream == NULL) return;
-	console_log(4, "Decrementing Stream %u refcount, new: %u\n", stream->id, stream->refcount);
+	console_log(4, "Decrementing Stream %u refcount, new: %u", stream->id, stream->refcount);
 	if (--stream->refcount == 0) {
-		console_log(3, "Disposing Stream %u as it is no longer in use\n", stream->id);
+		console_log(3, "Disposing Stream %u as it is no longer in use", stream->id);
 		al_drain_audio_stream(stream->ptr);
 		al_destroy_audio_stream(stream->ptr);
 		free_mixer(stream->mixer);
@@ -534,7 +534,7 @@ feed_stream(stream_t* stream, const void* data, size_t size)
 {
 	size_t needed_size;
 	
-	console_log(4, "Buffering %z bytes into Stream %u\n", size, stream->id);
+	console_log(4, "Buffering %z bytes into Stream %u", size, stream->id);
 	
 	needed_size = stream->feed_size + size;
 	if (needed_size > stream->buffer_size) {
