@@ -172,7 +172,7 @@ create_mixer(int frequency, int bits, int channels)
 	return ref_mixer(mixer);
 
 on_error:
-	console_log(2, "Failed to create Mixer %u", s_next_mixer_id);
+	console_log(2, "Failed to create Mixer %u", s_next_mixer_id++);
 	if (mixer->ptr != NULL)
 		al_destroy_mixer(mixer->ptr);
 	if (mixer->voice != NULL)

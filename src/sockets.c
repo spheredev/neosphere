@@ -142,6 +142,12 @@ is_socket_server(socket_t* socket)
 	return dyad_getState(socket->stream) == DYAD_STATE_LISTENING;
 }
 
+size_t
+peek_socket(const socket_t* socket)
+{
+	return socket->pend_size;
+}
+
 socket_t*
 accept_next_socket(socket_t* listener)
 {
@@ -423,7 +429,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has been closed");
 	if (is_socket_data_lost(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Allocation failure while receiving data");
-	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
+	duk_push_uint(ctx, (duk_uint_t)peek_socket(socket));
 	return 1;
 }
 
@@ -532,6 +538,8 @@ js_new_ListeningSocket(duk_context* ctx)
 
 	socket_t* socket;
 
+	if (max_backlog <= 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ListeningSocket(): Backlog size must be greater than zero (%i)", max_backlog);
 	if (socket = listen_on_port(port, 1024, max_backlog))
 		duk_push_sphere_obj(ctx, "ListeningSocket", socket);
 	else

@@ -75,6 +75,7 @@ extern void     do_events          (void);
 extern noreturn exit_game          (bool is_shutdown);
 extern void     flip_screen        (int framerate);
 extern noreturn restart_engine     (void);
+extern void     sleep              (double time);
 extern void     take_screenshot    (void);
 extern void     toggle_fps_display (void);
 extern void     toggle_fullscreen  (void);

@@ -7,6 +7,7 @@ extern void      free_socket         (socket_t* socket);
 extern bool      is_socket_data_lost (socket_t* socket);
 extern bool      is_socket_live      (socket_t* socket);
 extern bool      is_socket_server    (socket_t* socket);
+extern size_t    peek_socket         (const socket_t* socket);
 extern socket_t* accept_next_socket  (socket_t* listener);
 extern size_t    read_socket         (socket_t* socket, uint8_t* buffer, size_t n_bytes);
 extern void      write_socket        (socket_t* socket, const uint8_t* data, size_t n_bytes);
