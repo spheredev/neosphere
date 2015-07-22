@@ -3,7 +3,7 @@
 
 #include "debugger.h"
 
-const int TCP_DEBUG_PORT = 812;
+static const int TCP_DEBUG_PORT = 812;
 
 static void       duk_cb_debug_detach (void* udata);
 static duk_size_t duk_cb_debug_peek   (void* udata);
@@ -35,6 +35,7 @@ attach_debugger(void)
 		NULL,
 		duk_cb_debug_detach,
 		NULL);
+	
 	s_is_attached = true;
 }
 
@@ -66,6 +67,7 @@ duk_cb_debug_detach(void* udata)
 static duk_size_t
 duk_cb_debug_peek(void* udata)
 {
+	delay(0.05);
 	return peek_socket(s_socket);
 }
 
