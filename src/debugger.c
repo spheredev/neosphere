@@ -18,11 +18,15 @@ attach_debugger(void)
 {
 	if (s_is_attached)
 		return;
+	
 	console_log(0, "Waiting for debugger on TCP %i", TCP_DEBUG_PORT);
 	s_socket = listen_on_port(TCP_DEBUG_PORT, 0, 0);
 	while (!is_socket_live(s_socket))
-		sleep(0.05);
+		delay(0.05);
 	console_log(0, "  Connected!");
+	
+	// attach the debugger
+	console_log(1, "Attaching to debugger");
 	duk_debugger_attach(g_duk,
 		duk_cb_debug_read,
 		duk_cb_debug_write,
@@ -39,9 +43,12 @@ detach_debugger(void)
 {
 	if (!s_is_attached)
 		return;
+	
+	// detach the debugger
+	console_log(1, "Detaching from debugger");
+	s_is_attached = false;
 	duk_debugger_detach(g_duk);
 	free_socket(s_socket);
-	s_is_attached = false;
 }
 
 static void
@@ -53,7 +60,7 @@ send_string(const char* string)
 static void
 duk_cb_debug_detach(void* udata)
 {
-	send_string("detach\n");
+	detach_debugger();
 }
 
 static duk_size_t
@@ -69,7 +76,7 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	
 	// Duktape requires us to block until we can provide >= 1 byte
 	while ((n_bytes = peek_socket(s_socket)) == 0)
-		sleep(0.05);
+		delay(0.05);
 	
 	// read at most 'bufsize' bytes
 	if (n_bytes > bufsize) n_bytes = bufsize;

@@ -834,7 +834,7 @@ js_Delay(duk_context* ctx)
 	
 	if (millisecs < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Time cannot be negative (%.0f)", millisecs);
-	sleep(millisecs / 1000);
+	delay(millisecs / 1000);
 	return 0;
 }
 

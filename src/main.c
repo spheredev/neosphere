@@ -364,6 +364,21 @@ set_max_frameskip(int frames)
 }
 
 void
+delay(double time)
+{
+	double end_time;
+	double time_left;
+
+	end_time = al_get_time() + time;
+	do {
+		time_left = end_time - al_get_time();
+		if (time_left > 0.001)  // engine may stall with < 1ms timeout
+			al_wait_for_event_timed(g_events, NULL, time_left);
+		do_events();
+	} while (al_get_time() < end_time);
+}
+
+void
 do_events(void)
 {
 	ALLEGRO_EVENT event;
@@ -481,21 +496,6 @@ noreturn
 restart_engine(void)
 {
 	longjmp(s_jmp_restart, 1);
-}
-
-void
-sleep(double time)
-{
-	double end_time;
-	double time_left;
-
-	end_time = al_get_time() + time;
-	do {
-		time_left = end_time - al_get_time();
-		if (time_left > 0.001)  // engine may stall with < 1ms timeout
-			al_wait_for_event_timed(g_events, NULL, time_left);
-		do_events();
-	} while (al_get_time() < end_time);
 }
 
 void
