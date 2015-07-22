@@ -30,6 +30,7 @@
     <ProjectGuid>{9DA07B08-F2C7-4FFC-8770-9933EAB9D103}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>minisphere</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -150,16 +151,16 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUG;DUK_OPT_ASSERTIONS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUGGER_SUPPORT;DUK_OPT_INTERRUPT_COUNTER;DUK_OPT_DEBUGGER_FWD_PRINTALERT;DUK_OPT_DEBUG;DUK_OPT_ASSERTIONS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
@@ -175,17 +176,17 @@ del "$(OutDir)startup.spk"</Command>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUG;DUK_OPT_ASSERTIONS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUGGER_SUPPORT;DUK_OPT_INTERRUPT_COUNTER;DUK_OPT_DEBUGGER_FWD_PRINTALERT;DUK_OPT_DEBUG;DUK_OPT_ASSERTIONS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
@@ -201,15 +202,18 @@ del "$(OutDir)startup.spk"</Command>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUGGER_SUPPORT;DUK_OPT_INTERRUPT_COUNTER;DUK_OPT_DEBUGGER_FWD_PRINTALERT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -217,6 +221,8 @@ del "$(OutDir)startup.spk"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
@@ -232,15 +238,18 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUGGER_SUPPORT;DUK_OPT_INTERRUPT_COUNTER;DUK_OPT_DEBUGGER_FWD_PRINTALERT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -248,6 +257,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
@@ -263,15 +274,18 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUGGER_SUPPORT;DUK_OPT_INTERRUPT_COUNTER;DUK_OPT_DEBUGGER_FWD_PRINTALERT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <OmitFramePointers>true</OmitFramePointers>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -279,6 +293,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
@@ -294,15 +310,18 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINI_NONFATAL_ASSERT;ALLEGRO_STATICLINK;DUK_OPT_FASTINT;DUK_OPT_DEBUGGER_SUPPORT;DUK_OPT_INTERRUPT_COUNTER;DUK_OPT_DEBUGGER_FWD_PRINTALERT;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <OmitFramePointers>true</OmitFramePointers>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -310,6 +329,8 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
@@ -328,6 +349,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClCompile Include="..\src\bytearray.c" />
     <ClCompile Include="..\src\color.c" />
     <ClCompile Include="..\src\console.c" />
+    <ClCompile Include="..\src\debugger.c" />
     <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\src\dyad.c" />
     <ClCompile Include="..\src\file.c" />
@@ -368,6 +390,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
     <ClInclude Include="..\src\bytearray.h" />
     <ClInclude Include="..\src\color.h" />
     <ClInclude Include="..\src\console.h" />
+    <ClInclude Include="..\src\debugger.h" />
     <ClInclude Include="..\src\duktape.h" />
     <ClInclude Include="..\src\dyad.h" />
     <ClInclude Include="..\src\file.h" />

@@ -9,6 +9,7 @@ msphere_sources = [
 	"bytearray.c",
 	"color.c",
 	"console.c",
+	"debugger.c",
 	"file.c",
 	"font.c",
 	"galileo.c",
@@ -54,5 +55,5 @@ msphere_libs = [
 	"m"
 ]
 
-minisphere = Program("engine", msphere_sources, LIBS = msphere_libs)
+minisphere = Program("msphere", msphere_sources, LIBS = msphere_libs)
 Return("minisphere")

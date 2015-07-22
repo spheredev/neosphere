@@ -90,6 +90,7 @@ main(int argc, char* argv[])
 	char*                p_strtol;
 	ALLEGRO_TRANSFORM    trans;
 	int                  verbosity = 1;
+	bool                 want_debug = false;
 
 	int i;
 
@@ -115,7 +116,10 @@ main(int argc, char* argv[])
 				free(game_path);
 				game_path = strdup(argv[i + 1]);
 			}
-			if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
+			if (strcmp(argv[i], "--debug") == 0) {
+				want_debug = true;
+			}
+			else if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
 				errno = 0; maybe_verbosity = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
 					verbosity = fmax(maybe_verbosity, 0);
@@ -142,6 +146,7 @@ main(int argc, char* argv[])
 	printf("  Frameskip limit: %i frames\n", s_max_frameskip);
 	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	printf("  Console verbosity: L%i\n", verbosity);
+	printf("\n");
 
 	initialize_console(verbosity);
 	if (!initialize_engine())

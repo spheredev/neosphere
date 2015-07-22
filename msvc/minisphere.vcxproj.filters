@@ -132,6 +132,9 @@
     <ClCompile Include="..\src\audialis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\debugger.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -249,6 +252,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\audialis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\debugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
