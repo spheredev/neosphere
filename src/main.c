@@ -2,6 +2,7 @@
 #include "api.h"
 #include "async.h"
 #include "audialis.h"
+#include "debugger.h"
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
@@ -277,7 +278,9 @@ main(int argc, char* argv[])
 	al_hide_mouse_cursor(g_display);
 	
 	// load startup script
-	console_log(0, "Calling game()\n");
+	if (want_debug)
+		attach_debugger();
+	console_log(0, "Starting up game\n");
 	if (!try_evaluate_file(get_sgm_script(g_fs)))
 		goto on_js_error;
 	duk_pop(g_duk);
