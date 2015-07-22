@@ -280,7 +280,7 @@ main(int argc, char* argv[])
 	// load startup script
 	if (want_debug)
 		attach_debugger();
-	console_log(0, "Starting up game\n");
+	console_log(0, "Starting up game");
 	if (!try_evaluate_file(get_sgm_script(g_fs)))
 		goto on_js_error;
 	duk_pop(g_duk);
