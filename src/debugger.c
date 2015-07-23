@@ -20,7 +20,7 @@ attach_debugger(void)
 		return;
 	
 	// open TCP port 812 to listen for a debugger.
-	// a 'magic' legacy socket is used for this (max_backlog == 0). this avoids
+	// a 'magic' legacy socket is used for this (max_backlog = 0). this avoids
 	// having to juggle two sockets, plus it ensures the port closes immediately
 	// upon connection.
 	console_log(0, "Waiting for debugger on TCP %i", TCP_DEBUG_PORT);
@@ -81,7 +81,7 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	
 	// Duktape requires us to block until we can provide >= 1 byte
 	while ((n_bytes = peek_socket(s_socket)) == 0) {
-		if (!is_socket_live(s_socket)) { // did a hunger-pig eat it?
+		if (!is_socket_live(s_socket)) { // did a pig eat it?
 			console_log(0, "Connection to debugger has been reset");
 			return 0;
 		}
@@ -100,6 +100,11 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 static duk_size_t
 duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 {
+	// make sure we're still connected
+	if (!is_socket_live(s_socket))
+		return 0;  // stupid pig
+	
+	// send out the data
 	write_socket(s_socket, data, size);
 	return size;
 }
