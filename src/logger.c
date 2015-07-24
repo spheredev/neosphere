@@ -43,7 +43,7 @@ open_log_file(const char* filename)
 	if (!(logger->file = sfs_fopen(g_fs, filename, "logs", "a")))
 		goto on_error;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-	log_entry = lstr_new("LOG OPENED: %s\n", timestamp);
+	log_entry = lstr_newf("LOG OPENED: %s\n", timestamp);
 	sfs_fputs(lstr_cstr(log_entry), logger->file);
 	lstr_free(log_entry);
 	
@@ -81,7 +81,7 @@ free_logger(logger_t* logger)
 	if (--logger->refcount == 0) {
 		console_log(3, "Disposing Logger %u as it is no longer in use", logger->id);
 		time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-		log_entry = lstr_new("LOG CLOSED: %s\n\n", timestamp);
+		log_entry = lstr_newf("LOG CLOSED: %s\n\n", timestamp);
 		sfs_fputs(lstr_cstr(log_entry), logger->file);
 		lstr_free(log_entry);
 		sfs_fclose(logger->file);
@@ -102,7 +102,7 @@ begin_log_block(logger_t* logger, const char* title)
 		logger->blocks = blocks;
 		logger->max_blocks = new_count * 2;
 	}
-	if (!(block_name = lstr_new("%s", title))) return false;
+	if (!(block_name = lstr_newf("%s", title))) return false;
 	write_log_line(logger, "BEGIN", lstr_cstr(block_name));
 	logger->blocks[logger->num_blocks].name = block_name;
 	++logger->num_blocks;

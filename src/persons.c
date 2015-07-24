@@ -2161,7 +2161,7 @@ js_QueuePersonScript(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
-	lstring_t* script_name = lstr_new("[%s : queued script]", name);
+	lstring_t* script_name = lstr_newf("[%s : queued script]", name);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 

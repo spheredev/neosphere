@@ -6,6 +6,8 @@
 
 #define ENGINE_NAME "minisphere 1.5.3"
 
+#define DUK_OPT_TARGET_INFO ENGINE_NAME
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>

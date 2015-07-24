@@ -2427,7 +2427,7 @@ js_SetTriggerScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTriggerScript(): Map engine must be running");
 	if (trigger_index < 0 || trigger_index >= (int)get_vector_size(s_map->triggers))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTriggerScript(): Invalid trigger index (%i)", trigger_index);
-	if (!(script_name = lstr_new("%s T:%i", get_map_name(), trigger_index)))
+	if (!(script_name = lstr_newf("%s T:%i", get_map_name(), trigger_index)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTriggerScript(): Error compiling trigger script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -2515,7 +2515,7 @@ js_SetZoneScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): Map engine must be running");
 	if (zone_index < 0 || zone_index >= (int)get_vector_size(s_map->zones))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneScript(): Invalid zone index (%i)", zone_index);
-	if (!(script_name = lstr_new("%s Z:%i", get_map_name(), zone_index)))
+	if (!(script_name = lstr_newf("%s Z:%i", get_map_name(), zone_index)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): Error compiling zone script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -2556,7 +2556,7 @@ js_AddTrigger(duk_context* ctx)
 	bounds = get_map_bounds();
 	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddTrigger(): Trigger must be inside map (%i,%i)", x, y);
-	if (!(script_name = lstr_new("%s T:%i", get_map_name(), get_vector_size(s_map->triggers))))
+	if (!(script_name = lstr_newf("%s T:%i", get_map_name(), get_vector_size(s_map->triggers))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddTrigger(): Failed to compile trigger script");
 	script = duk_require_sphere_script(ctx, 3, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -2586,7 +2586,7 @@ js_AddZone(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Width and height must be greater than zero");
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Zone cannot extend outside map (%i,%i,%i,%i)", x, y, width, height);
-	if (!(script_name = lstr_new("%s Z:%i", get_map_name(), get_vector_size(s_map->zones))))
+	if (!(script_name = lstr_newf("%s Z:%i", get_map_name(), get_vector_size(s_map->zones))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddZone(): Failed to compile zone script");
 	script = duk_require_sphere_script(ctx, 5, lstr_cstr(script_name));
 	lstr_free(script_name);

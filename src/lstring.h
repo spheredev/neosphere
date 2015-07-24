@@ -3,7 +3,8 @@
 
 typedef struct lstring lstring_t;
 
-extern lstring_t*  lstr_new      (const char* fmt, ...);
+extern lstring_t*  lstr_newf     (const char* fmt, ...);
+extern lstring_t*  lstr_vnewf    (const char* fmt, va_list args);
 extern lstring_t*  lstr_from_buf (const char* buffer, size_t length);
 extern void        lstr_free     (lstring_t* string);
 extern const char* lstr_cstr     (const lstring_t* string);

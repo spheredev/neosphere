@@ -91,7 +91,7 @@ initialize_api(duk_context* ctx)
 
 	console_log(1, "Initializing Sphere API");
 
-	s_user_agent = lstr_new("v%.1f (%s)", SPHERE_API_VERSION, ENGINE_NAME);
+	s_user_agent = lstr_newf("v%.1f (%s)", SPHERE_API_VERSION, ENGINE_NAME);
 	console_log(0, "  %s", lstr_cstr(s_user_agent));
 
 	// register API extensions
@@ -432,10 +432,10 @@ duk_handle_require(duk_context* ctx)
 	if (id[0] == '~')
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefix not allowed");
 	filenames = new_vector(sizeof(lstring_t*));
-	filename = lstr_new("%s.js", id); push_back_vector(filenames, &filename);
-	filename = lstr_new("%s.coffee", id); push_back_vector(filenames, &filename);
-	filename = lstr_new("~sys/modules/%s.js", id); push_back_vector(filenames, &filename);
-	filename = lstr_new("~sys/modules/%s.coffee", id); push_back_vector(filenames, &filename);
+	filename = lstr_newf("%s.js", id); push_back_vector(filenames, &filename);
+	filename = lstr_newf("%s.coffee", id); push_back_vector(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.js", id); push_back_vector(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.coffee", id); push_back_vector(filenames, &filename);
 	filename = NULL;
 	iter = iterate_vector(filenames);
 	while (p = next_vector_item(&iter)) {
@@ -793,7 +793,7 @@ js_Assert(duk_context* ctx)
 
 		#if defined(MINI_NONFATAL_ASSERT)
 
-		text = lstr_new("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
+		text = lstr_newf("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
 		if (!al_show_native_message_box(g_display, "Script Error", "An Assert() condition failed.",
 			lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
 		{

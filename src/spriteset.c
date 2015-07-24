@@ -200,7 +200,7 @@ load_spriteset(const char* path)
 		spriteset->num_poses = 8;
 		spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t));
 		for (i = 0; i < spriteset->num_poses; ++i)
-			spriteset->poses[i].name = lstr_new("%s", def_dir_names[i]);
+			spriteset->poses[i].name = lstr_newf("%s", def_dir_names[i]);
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
 		if (!(atlas = create_atlas(spriteset->num_images, rss.frame_width, rss.frame_height)))
@@ -234,7 +234,7 @@ load_spriteset(const char* path)
 				goto on_error;
 			spriteset->num_images += dir_v2.num_frames;
 			sprintf(extra_v2_dir_name, "extra %i", i);
-			spriteset->poses[i].name = lstr_new("%s", i < 8 ? def_dir_names[i] : extra_v2_dir_name);
+			spriteset->poses[i].name = lstr_newf("%s", i < 8 ? def_dir_names[i] : extra_v2_dir_name);
 			spriteset->poses[i].num_frames = dir_v2.num_frames;
 			if (!(spriteset->poses[i].frames = calloc(dir_v2.num_frames, sizeof(spriteset_frame_t))))
 				goto on_error;

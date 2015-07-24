@@ -23,7 +23,7 @@ attach_debugger(void)
 	if (s_is_attached)
 		return;
 	
-	// allocate a 64KB write buffer to start. the buffer will be resized later if
+	// allocate a 64 KB write buffer to start. the buffer can be resized later if
 	// needed, but this should be more than enough in 99% of cases.
 	s_write_buf = new_bytearray(65536);
 	
@@ -65,12 +65,6 @@ detach_debugger(void)
 
 	// wrap things up
 	free_bytearray(s_write_buf);
-}
-
-static void
-send_string(const char* string)
-{
-	write_socket(s_socket, string, strlen(string));
 }
 
 static void
@@ -119,8 +113,8 @@ duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 		return 0;  // stupid pig!
 	}
 	
-	// buffer the data until Duktape requests a write flush. this allows
-	// us to parse messages in their entirety, avoiding tedious trial parsing.
+	// buffer the data until Duktape requests a write flush. this
+	// improves the chances the message arrives in one piece.
 	if (s_write_size + size > get_bytearray_size(s_write_buf))
 		resize_bytearray(s_write_buf, get_bytearray_size(s_write_buf) * 2);
 	p_out = get_bytearray_buffer(s_write_buf) + s_write_size;
@@ -132,6 +126,7 @@ duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 static void
 duk_cb_debug_write_flush(void* udata)
 {
-	write_socket(s_socket, get_bytearray_buffer(s_write_buf), s_write_size);
+	write_socket(s_socket, get_bytearray_buffer(s_write_buf),
+		s_write_size);
 	s_write_size = 0;
 }

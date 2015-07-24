@@ -313,7 +313,7 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 				continue;  // ignore files in subdirectories
 			
 			// if we got to this point, we have a valid filename
-			filename = lstr_new("%s", maybe_filename);
+			filename = lstr_newf("%s", maybe_filename);
 			push_back_vector(list, &filename);
 		}
 		else {  // list directories
@@ -334,7 +334,7 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 			// if we got to this point, we have a valid directory name
 			found_dirname = strdup(maybe_dirname);
 			*strchr(found_dirname, '/') = '\0';
-			filename = lstr_new("%s", found_dirname);
+			filename = lstr_newf("%s", found_dirname);
 			iter2 = iterate_vector(list);
 			is_in_set = false;
 			while (item = next_vector_item(&iter2)) {

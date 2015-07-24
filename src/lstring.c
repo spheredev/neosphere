@@ -271,7 +271,20 @@ static uint32_t cp1252[256] =
 };
 
 lstring_t*
-lstr_new(const char* fmt, ...)
+lstr_newf(const char* fmt, ...)
+{
+	va_list ap;
+
+	lstring_t* string = NULL;
+
+	va_start(ap, fmt);
+	string = lstr_vnewf(fmt, ap);
+	va_end(ap);
+	return string;
+}
+
+lstring_t*
+lstr_vnewf(const char* fmt, va_list args)
 {
 	va_list ap;
 
@@ -279,11 +292,11 @@ lstr_new(const char* fmt, ...)
 	int        buf_size;
 	lstring_t* string = NULL;
 
-	va_start(ap, fmt);
+	va_copy(ap, args);
 	buf_size = vsnprintf(NULL, 0, fmt, ap) + 1;
 	va_end(ap);
 	buffer = malloc(buf_size);
-	va_start(ap, fmt);
+	va_copy(ap, args);
 	vsnprintf(buffer, buf_size, fmt, ap);
 	va_end(ap);
 	string = lstr_from_buf(buffer, buf_size - 1);
