@@ -116,7 +116,7 @@ get_byte(bytearray_t* array, int index)
 	return array->buffer[index];
 }
 
-const uint8_t*
+uint8_t*
 get_bytearray_buffer(bytearray_t* array)
 {
 	return array->buffer;

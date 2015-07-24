@@ -9,7 +9,7 @@ extern bytearray_t*   bytearray_from_lstring (const lstring_t* string);
 extern bytearray_t*   ref_bytearray          (bytearray_t* array);
 extern void           free_bytearray         (bytearray_t* array);
 extern uint8_t        get_byte               (bytearray_t* array, int index);
-extern const uint8_t* get_bytearray_buffer   (bytearray_t* array);
+extern uint8_t*       get_bytearray_buffer   (bytearray_t* array);
 extern int            get_bytearray_size     (bytearray_t* array);
 extern void           set_byte               (bytearray_t* array, int index, uint8_t value);
 extern bytearray_t*   concat_bytearrays      (bytearray_t* array1, bytearray_t* array2);
