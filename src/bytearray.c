@@ -22,6 +22,7 @@ static duk_ret_t js_ByteArray_setProp         (duk_context* ctx);
 static duk_ret_t js_ByteArray_concat          (duk_context* ctx);
 static duk_ret_t js_ByteArray_deflate         (duk_context* ctx);
 static duk_ret_t js_ByteArray_inflate         (duk_context* ctx);
+static duk_ret_t js_ByteArray_resize          (duk_context* ctx);
 static duk_ret_t js_ByteArray_slice           (duk_context* ctx);
 
 struct bytearray
@@ -256,6 +257,22 @@ on_error:
 	inflateEnd(&z);
 	free(buffer);
 	return NULL;
+}
+
+bool
+resize_bytearray(bytearray_t* array, int new_size)
+{
+	uint8_t* new_buffer;
+
+	// resize buffer, filling any new slots with zero bytes
+	if (!(new_buffer = realloc(array->buffer, new_size)))
+		return false;
+	if (new_size > array->size)
+		memset(new_buffer + array->size, 0, new_size - array->size);
+	
+	array->buffer = new_buffer;
+	array->size = new_size;
+	return true;
 }
 
 bytearray_t*
@@ -549,6 +566,22 @@ js_ByteArray_inflate(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): Failed to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_resize(duk_context* ctx)
+{
+	int new_size = duk_require_int(ctx, 0);
+
+	bytearray_t* array;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_bytearray(ctx, -1);
+	duk_pop(ctx);
+	if (new_size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:resize(): Size cannot be negative");
+	resize_bytearray(array, new_size);
+	return 0;
 }
 
 static duk_ret_t

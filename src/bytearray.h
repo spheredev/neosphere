@@ -15,6 +15,7 @@ extern void           set_byte               (bytearray_t* array, int index, uin
 extern bytearray_t*   concat_bytearrays      (bytearray_t* array1, bytearray_t* array2);
 extern bytearray_t*   deflate_bytearray      (bytearray_t* array, int level);
 extern bytearray_t*   inflate_bytearray      (bytearray_t* array, int max_size);
+extern bool           resize_bytearray       (bytearray_t* array, int new_size);
 extern bytearray_t*   slice_bytearray        (bytearray_t* array, int start, int length);
 
 extern void         init_bytearray_api           (void);
