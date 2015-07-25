@@ -266,7 +266,7 @@ main(int argc, char* argv[])
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	draw_status_message("loading...");
+	draw_status_message("starting up...");
 	al_flip_display();
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 
