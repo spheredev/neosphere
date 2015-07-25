@@ -13,6 +13,7 @@ enum fs_type
 
 struct sandbox
 {
+	unsigned int    id;
 	ALLEGRO_PATH*   fs_root;
 	ALLEGRO_CONFIG* sgm;
 	spk_t*          spk;
@@ -28,6 +29,8 @@ struct sfs_file
 
 static bool resolve_path (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
 
+static unsigned int s_next_sandbox_id = 0;
+
 sandbox_t*
 new_sandbox(const char* path)
 {
@@ -40,11 +43,12 @@ new_sandbox(const char* path)
 	void*         sgm_text = NULL;
 	spk_t*        spk;
 
+	console_log(1, "Creating Sandbox %u as '%s'", s_next_sandbox_id, path);
+	
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
 	extension = strrchr(path, '.');
 	if (spk = open_spk(path)) {  // Sphere Package (.spk)
-		console_log(1, "Opening game package '%s'", path);
 		fs->type = SPHEREFS_SPK;
 		fs->spk = spk;
 		if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
@@ -56,7 +60,6 @@ new_sandbox(const char* path)
 		free(sgm_text);
 	}
 	else {  // default case, unpacked game folder
-		console_log(1, "Opening game '%s'", path);
 		fs->type = SPHEREFS_LOCAL;
 		if (extension != NULL && strcmp(extension, ".sgm") == 0)
 			fs->fs_root = al_create_path(path);
@@ -70,12 +73,16 @@ new_sandbox(const char* path)
 		al_destroy_path(sgm_path);
 	}
 	get_sgm_metrics(fs, &res_x, &res_y);
+	console_log(1, "Loading metadata for Sandbox %u", s_next_sandbox_id);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);
+	
+	fs->id = s_next_sandbox_id++;
 	return fs;
 
 on_error:
+	console_log(1, "Failed to create Sandbox %u", s_next_sandbox_id++);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(sgm_text);
@@ -91,8 +98,8 @@ on_error:
 void
 free_sandbox(sandbox_t* fs)
 {
-	if (fs == NULL)
-		return;
+	if (fs == NULL) return;
+	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
 	al_destroy_config(fs->sgm);
 	switch (fs->type) {
 	case SPHEREFS_LOCAL:

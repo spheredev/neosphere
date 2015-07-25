@@ -6,6 +6,7 @@
 struct spk
 {
 	unsigned int  refcount;
+	unsigned int  id;
 	ALLEGRO_PATH* path;
 	ALLEGRO_FILE* file;
 	vector_t*     index;
@@ -23,6 +24,7 @@ struct spk_file
 {
 	spk_t*        spk;
 	uint8_t*      buffer;
+	char*         filename;
 	ALLEGRO_FILE* handle;
 };
 
@@ -46,6 +48,8 @@ struct spk_entry_hdr
 };
 #pragma pack(pop)
 
+static unsigned int s_next_spk_id = 0;
+
 spk_t*
 open_spk(const char* path)
 {
@@ -56,6 +60,8 @@ open_spk(const char* path)
 
 	uint32_t i;
 
+	console_log(2, "Opening SPK %u as '%s'", s_next_spk_id, path);
+	
 	if (!(spk = calloc(1, sizeof(spk_t)))) goto on_error;
 	if (!(spk->path = al_create_path(path)))
 		goto on_error;
@@ -67,8 +73,8 @@ open_spk(const char* path)
 	if (spk_hdr.version != 1) goto on_error;
 	
 	// load the package index
-	if (!(spk->index = new_vector(sizeof(struct spk_entry))))
-		goto on_error;
+	console_log(4, "Reading package index for SPK %u", s_next_spk_id);
+	spk->index = new_vector(sizeof(struct spk_entry));
 	al_fseek(spk->file, spk_hdr.index_offset, ALLEGRO_SEEK_SET);
 	for (i = 0; i < spk_hdr.num_files; ++i) {
 		if (al_fread(spk->file, &spk_entry_hdr, sizeof(struct spk_entry_hdr)) != sizeof(struct spk_entry_hdr))
@@ -82,9 +88,11 @@ open_spk(const char* path)
 		if (!push_back_vector(spk->index, &spk_entry)) goto on_error;
 	}
 
+	spk->id = s_next_spk_id++;
 	return ref_spk(spk);
 
 on_error:
+	console_log(2, "Failed to open SPK %u", s_next_spk_id++);
 	if (spk != NULL) {
 		al_destroy_path(spk->path);
 		if (spk->file != NULL)
@@ -98,6 +106,8 @@ on_error:
 spk_t*
 ref_spk(spk_t* spk)
 {
+	console_log(4, "Incrementing SPK %u refcount, new: %u",
+		spk->id, spk->refcount + 1);
 	++spk->refcount;
 	return spk;
 }
@@ -105,11 +115,15 @@ ref_spk(spk_t* spk)
 void
 free_spk(spk_t* spk)
 {
-	if (spk == NULL || --spk->refcount > 0)
-		return;
-	free_vector(spk->index);
-	al_fclose(spk->file);
-	free(spk);
+	if (spk == NULL) return;
+	console_log(4, "Decrementing SPK %u refcount, new: %u", spk->id,
+		spk->refcount - 1);
+	if (--spk->refcount == 0) {
+		console_log(4, "Disposing SPK %u no longer in use", spk->id);
+		free_vector(spk->index);
+		al_fclose(spk->file);
+		free(spk);
+	}
 }
 
 spk_file_t*
@@ -124,6 +138,8 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	ALLEGRO_PATH* local_dir_path;
 	ALLEGRO_PATH* local_path = NULL;
 
+	console_log(4, "Opening '%s' (%s) from SPK %u", path, mode, spk->id);
+	
 	// get path to local cache file
 	home_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
 	al_append_path_component(home_path, "minisphere");
@@ -147,6 +163,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	
 	if (al_filename_exists(local_filename)) {
 		// local cache file already exists, open it	directly	
+		console_log(4, "Using locally cached file for %u:'%s'", spk->id, path);
 		if (!(al_file = al_fopen(local_filename, mode)))
 			goto on_error;
 	}
@@ -158,6 +175,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 				// if a game requests write access to an existing file,
 				// we extract it. this ensures file operations originating from
 				// inside an SPK are transparent to the game.
+				console_log(4, "Extracting %u:'%s', write access requested", spk->id, path);
 				if (!(al_file = al_fopen(local_filename, "w")))
 					goto on_error;
 				al_fwrite(al_file, buffer, file_size);
@@ -177,11 +195,13 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	al_destroy_path(local_path);
 	
 	file->buffer = buffer;
+	file->filename = strdup(path);
 	file->handle = al_file;
 	file->spk = ref_spk(spk);
 	return file;
 
 on_error:
+	console_log(4, "Failed to open '%s' from SPK %u", spk->id);
 	al_destroy_path(local_path);
 	if (al_file != NULL)
 		al_fclose(al_file);
@@ -195,8 +215,10 @@ spk_fclose(spk_file_t* file)
 {
 	if (file == NULL)
 		return;
+	console_log(4, "Closing '%s' from SPK %u", file->filename);
 	al_fclose(file->handle);
 	free(file->buffer);
+	free(file->filename);
 	free_spk(file->spk);
 	free(file);
 }
@@ -247,6 +269,8 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 
 	iter_t iter;
 
+	console_log(3, "Unpacking '%s' from SPK %u", path, spk->id);
+	
 	iter = iterate_vector(spk->index);
 	while (fileinfo = next_vector_item(&iter)) {
 		if (strcasecmp(path, fileinfo->file_path) == 0)
@@ -270,6 +294,7 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 	return unpacked;
 
 on_error:
+	console_log(3, "Failed to unpack '%s' from SPK %u", path, spk->id);
 	free(packdata);
 	free(unpacked);
 	return NULL;
@@ -279,10 +304,10 @@ vector_t*
 list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 {
 	// HERE BE DRAGONS!
-	// this function is kind of a monstrosity because SPK doesn't actually have
+	// this function is kind of a monstrosity because the SPK format doesn't have
 	// any real concept of a directory - each asset is stored with its full path
-	// as its filename.  this means we have to do some ugly parsing and de-duplication
-	// to differentiate file and directory names.
+	// as its filename. as such we have to do some ugly parsing and de-duplication,
+	// particularly in the case of directories.
 	
 	lstring_t*        filename;
 	char*             found_dirname;

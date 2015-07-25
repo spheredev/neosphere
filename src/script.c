@@ -42,7 +42,7 @@ initialize_scripts(void)
 		}
 	}
 	else {
-		console_log(1, "  coffee-script.js missing");
+		console_log(1, "  coffee-script.js is missing");
 		goto on_error;
 	}
 	return;
