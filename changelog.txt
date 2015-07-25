@@ -1,6 +1,18 @@
 minisphere Changelog
 ====================
 
+v1.6.0 - TBD
+------------
+
+* minisphere can now act as a Duktape debug server by passing --debug on the
+  command line. A debugger can attach remotely over TCP using Duktape's binary
+  debug protocol.
+* EvaluateScript() now returns the result of evaluation, as if the contents of
+  the file were passed to eval().
+* Vastly improved console logging.
+* ByteArrays can now be resized at runtime using the new resize() method. This
+  allows them to be used as dynamic buffers.
+
 v1.5.3 - July 18, 2015
 ----------------------
 

@@ -1,4 +1,4 @@
-minisphere 1.5 API Documentation
+minisphere 1.6 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
@@ -29,13 +29,13 @@ GetVersionString()
     Returns the engine's version identification string. For minisphere 1.5, this
     string is:
       
-      v2.0 (compatible; minisphere 1.5.0)
+      v2.0 (compatible; minisphere 1.6.0)
 
 GetExtensions()
 
-  Returns an array of strings representing the engine's built-in
-  capabilities. minisphere currently supports the following extensions (most of
-  these should be self-explanatory):
+  Returns an array of strings representing the engine's built-in capabilities.
+  minisphere currently supports the following extensions (most of these should
+  be self-explanatory):
   
     * minisphere
     * sphere-legacy-api
@@ -131,17 +131,17 @@ require(module_id);
 Basic Debugging
 ---------------
 
-minisphere doesn't include a stepping debugger, so these may come in
-handy!
+As of minisphere 1.6, full remote debugging support is available via Duktape's
+debug protocol.  However, the functions below may still come in handy as a sort
+of "poor man's debugging":
 
 Abort(message[, stack_offset])
 
-  Forces the engine to close, displaying a specified error message. The
-  error is normally said to originate at the location of the Abort()
-  call; you may pass an optional negative stack offset to blame it on a
-  function earlier in the call chain. For example, the following code
-  will report an error at the point PassTheBuck() is called instead of
-  at the Abort() call:
+  Forces the engine to close, displaying a specified error message. The error is
+  normally reported to originate at the location of the Abort() call; you may
+  pass an optional negative stack offset to blame it on a function earlier in
+  the call chain. For example, the following code will report an error at the
+  point PassTheBuck() is called, instead of at the Abort() call:
   
   function PassTheBuck()
   {
@@ -151,9 +151,9 @@ Abort(message[, stack_offset])
 
 Alert(message[, stack_offset])
 
-  Similar to Abort(), except the message is displayed in a dialog box
-  and the game continues running as normal afterwards. Useful for
-  examining variables at runtime when debugging.
+  Similar to Abort(), except the message is displayed in a dialog box and the
+  game continues running as normal afterwards. Useful for examining variables at
+  runtime when debugging.
 
 Assert(condition, error_message[, stack_offset]);
   
@@ -166,9 +166,9 @@ Logging
 -------
 
 Logging is another useful debugging tool. When trying to diagnose a stubborn
-bug, it often helps to be able to see a detailed summary of everything that
-happened when the issue surfaced. Of course, this requires some vigilance on the
-part of the developer to output enough log entries!
+bug, it often helps to have a persistent summary of everything that happened
+when the issue surfaced. Of course, this requires some vigilance on the part of
+the developer to emit enough log entries!
 
 new Logger(filename)
 
@@ -209,7 +209,8 @@ GetSeconds();
 
 Delay(ms);
   
-  Suspends game execution for 'ms' milliseconds.
+  Suspends game execution for 'ms' milliseconds. The engine will "spin down"
+  during this time and relinquish its CPU cycles to other applications.
 
 
 Execution Control and Game Management
@@ -517,6 +518,14 @@ RNG.random();
 
   Returns a floating point value in the range [0,1). This is the basic method of
   random number generation, and a direct, drop-in replacement for Math.random().
+
+RNG.name([length]);
+
+  Returns a randomly-generated string consisting of upper- and lowercase
+  alphabetic characters. The resulting string looks something like a YouTube
+  video hash (e.g. YlHRHDrKS) and is useful for uniquely identifying things, for
+  example to generate temporary filenames. If no length is provided, the default
+  is 10.
 
 RNG.chance(odds);
 
@@ -1149,6 +1158,12 @@ ByteArray:inflate([max_size]);
              whenever possible. Not doing so leaves the engine vulnerable to an
              inflation bomb attack.
   
+ByteArray:resize(new_size);
+  
+  Resizes the byte array to hold the specified number of bytes. The existing
+  contents are preserved to the extent possible, and if the new size is larger,
+  all additional bytes will be set to zero.
+
 ByteArray:slice(start[, end])
   
   Returns a new byte array which is the result of copying all bytes between
@@ -1160,10 +1175,6 @@ CreateStringFromByteArray(byte_array);
   
   Builds a string from the bytes in 'byte_array'.
 
-CreateByteArrayFromString(string);
-
-  Constructs a ByteArray from the specified string.
-  
 
 Networking (Sockets)
 --------------------
