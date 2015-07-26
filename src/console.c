@@ -3,17 +3,18 @@
 
 #include "console.h"
 
-static int s_verbosity = 0;
+static int s_verbosity = 1;
 
-void
-initialize_console(int verbosity)
+int
+get_log_verbosity(void)
 {
-	s_verbosity = verbosity;
+	return s_verbosity;
 }
 
 void
-shutdown_console(void)
+set_log_verbosity(int verbosity)
 {
+	s_verbosity = verbosity;
 }
 
 void

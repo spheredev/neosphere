@@ -87,10 +87,9 @@ main(int argc, char* argv[])
 	image_t*             icon;
 	int                  line_num;
 	int                  max_skips;
-	int                  maybe_verbosity;
 	char*                p_strtol;
 	ALLEGRO_TRANSFORM    trans;
-	int                  verbosity = 1;
+	int                  verbosity;
 	bool                 want_debug = false;
 
 	int i;
@@ -121,9 +120,9 @@ main(int argc, char* argv[])
 				want_debug = true;
 			}
 			else if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
-				errno = 0; maybe_verbosity = strtol(argv[i + 1], &p_strtol, 10);
+				errno = 0; verbosity = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
-					verbosity = fmax(maybe_verbosity, 0);
+					set_log_verbosity(verbosity);
 			}
 			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
 				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
@@ -146,10 +145,9 @@ main(int argc, char* argv[])
 	printf("  Game path: %s\n", game_path != NULL ? game_path : "<none provided>");
 	printf("  Frameskip limit: %i frames\n", s_max_frameskip);
 	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	printf("  Console verbosity: L%i\n", verbosity);
+	printf("  Console verbosity: V%i\n", get_log_verbosity());
 	printf("\n");
 
-	initialize_console(verbosity);
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 
