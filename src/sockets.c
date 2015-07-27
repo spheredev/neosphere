@@ -223,7 +223,7 @@ pipe_socket(socket_t* socket, socket_t* destination)
 {
 	socket_t* old_target;
 	
-	console_log(2, "Piping Socket %u into Socket %u", socket->id, destination->id);
+	console_log(2, "Piping Socket %u into destination Socket %u", socket->id, destination->id);
 	old_target = socket->pipe_target;
 	socket->pipe_target = ref_socket(destination);
 	free_socket(old_target);
@@ -291,8 +291,9 @@ on_dyad_receive(dyad_Event* e)
 	socket_t* socket = e->udata;
 
 	if (socket->pipe_target != NULL) {
-		// if the socket is a pipe, send any data received to pipe target
-		console_log(4, "Piping %i bytes into Socket %u", e->size, socket->pipe_target->id);
+		// if the socket is a pipe, pass the data through to the destination
+		console_log(4, "Piping %i bytes from Socket %u to Socket %u", e->size,
+			socket->id, socket->pipe_target->id);
 		write_socket(socket->pipe_target, e->data, e->size);
 	}
 	else {
@@ -749,7 +750,7 @@ js_IOSocket_pipe(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Destination socket has been closed");
 	pipe_socket(socket, destination);
 	
-	// return the destination to simplify setting up pipe chains
+	// return destination socket (enables pipe chaining)
 	duk_dup(ctx, 0);
 	return 1;
 }
@@ -784,8 +785,6 @@ js_IOSocket_read(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket has been closed");
 	if (length <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IOSocket:read(): At least 1 byte must be read (%i)", length);
-	if (socket->pipe_target != NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "IOSocket:readString(): Reading from pipe not allowed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket is not connected");
 	if (!(read_buffer = malloc(length)))
@@ -810,8 +809,6 @@ js_IOSocket_readString(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket has been closed");
-	if (socket->pipe_target != NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "IOSocket:readString(): Reading from pipe not allowed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket is not connected");
 	if (!(buffer = malloc(length)))

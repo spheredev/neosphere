@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v1.6.0 - TBD
-------------
+v1.6.0 - July 27, 2015
+----------------------
 
 * minisphere can now act as a Duktape debug server by passing --debug on the
   command line. A debugger can attach remotely over TCP using Duktape's binary
@@ -12,6 +12,10 @@ v1.6.0 - TBD
 * Vastly improved console logging.
 * ByteArrays can now be resized at runtime using the new resize() method. This
   allows them to be used as dynamic buffers.
+* Sockets can now be piped via the new pipe() and unpipe() IOSocket methods.
+* Renames the global object to `sphere` for naming consistency with other
+  JavaScript environments, where the global object is always lowercase (window,
+  global, root...).
 
 v1.5.3 - July 18, 2015
 ----------------------

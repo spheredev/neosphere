@@ -30,7 +30,6 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-legacy-api",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
-	"sphere-assert",
 	"sphere-audialis",
 	"sphere-coffeescript",
 	"sphere-commonjs",

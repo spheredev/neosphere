@@ -78,9 +78,9 @@ mini.onStartUp.add(mini.Console, function(params)
 			if (playerID < 1 || playerID > 4)
 				return this.write("keymap set: Player ID out of range (" + playerID + ")");
 			var keyConst, playerKeyConst;
-			if ((keyConst = Sphere["KEY_" + keyName.toUpperCase()]) == undefined)
+			if ((keyConst = sphere["KEY_" + keyName.toUpperCase()]) == undefined)
 				return this.write("keymap set: Invalid key name `" + keyName.toUpperCase() + "`");
-			if ((playerKeyConst = Sphere["PLAYER_KEY_" + playerKey.toUpperCase()]) == undefined)
+			if ((playerKeyConst = sphere["PLAYER_KEY_" + playerKey.toUpperCase()]) == undefined)
 				return this.write("keymap set: Unknown player key `" + keyName.toUpperCase() + "`");
 			SetPlayerKey(playerID - 1, playerKeyConst, keyConst);
 			this.write("PLAYER_KEY_" + playerKey.toUpperCase() + " mapped to KEY_" + keyName.toUpperCase());

@@ -27,8 +27,8 @@
 #endif
 
 #define AppName "minisphere"
-#define AppVersion "1.5.3"
-#define AppBuildNumber "753"
+#define AppVersion "1.6.0"
+#define AppBuildNumber "790"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"

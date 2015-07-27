@@ -207,7 +207,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else if (duk_is_string(ctx, index)) {
 		// caller passed code string, compile it
 		codestring = duk_require_lstring_t(ctx, index);
-		script = compile_script(codestring, false, "%s", name);
+		script = compile_script(codestring, "%s", name);
 		lstr_free(codestring);
 	}
 	else if (duk_is_null_or_undefined(ctx, index))

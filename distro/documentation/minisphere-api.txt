@@ -1239,6 +1239,13 @@ IOSocket:getPendingReadSize();
   Gets the amount of data, in bytes, currently in the receive buffer. Call
   IOSocket:read() or :readString() to retrieve this data.
 
+IOSocket:pipe(destination);
+  
+  Automatically pipes the data received by the socket to the specified
+  destination socket. Piping a socket into itself will create an echo server.
+  Note that only pipe can be active at a time for a given socket; calling pipe()
+  multiple times will simply change the destination.
+
 IOSocket:read(bytes);
   
   Reads up to `bytes` bytes from the socket and returns a ByteArray containing
@@ -1248,6 +1255,11 @@ IOSocket:readString(bytes);
   
   Same as IOSocket:read(), but returns a string instead of a ByteArray. This may
   be more convenient, depending on your use case.
+
+IOSocket:unpipe();
+
+  Reverses the effect of a pipe() call and closes the pipe. read() can be called
+  normally afterwards.
 
 IOSocket:write(data);
 
