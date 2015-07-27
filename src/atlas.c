@@ -5,6 +5,7 @@
 
 struct atlas
 {
+	unsigned int  id;
 	image_t*      image;
 	rect_t        size;
 	int           pitch;
@@ -12,22 +13,29 @@ struct atlas
 	image_lock_t* lock;
 };
 
+static unsigned int s_next_atlas_id = 0;
+
 atlas_t*
 create_atlas(int num_images, int max_width, int max_height)
 {
 	atlas_t* atlas;
 
-	if (!(atlas = calloc(1, sizeof(atlas_t))))
-		goto on_error;
+	console_log(4, "Creating Atlas %u at %ix%i per image", s_next_atlas_id,
+		max_width, max_height);
+	
+	atlas = calloc(1, sizeof(atlas_t));
 	atlas->pitch = ceil(sqrt(num_images));
 	atlas->max_width = max_width;
 	atlas->max_height = max_height;
 	atlas->size = new_rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
 	if (!(atlas->image = create_image(atlas->size.x2, atlas->size.y2)))
 		goto on_error;
+	
+	atlas->id = s_next_atlas_id++;
 	return atlas;
 
 on_error:
+	console_log(4, "Failed to create Atlas %u", s_next_atlas_id++);
 	if (atlas != NULL) {
 		free_image(atlas->image);
 		free(atlas);
@@ -38,6 +46,8 @@ on_error:
 void
 free_atlas(atlas_t* atlas)
 {
+	console_log(4, "Disposing Atlas %u no longer in use", atlas->id);
+	
 	if (atlas->lock != NULL)
 		unlock_image(atlas->image, atlas->lock);
 	free_image(atlas->image);
@@ -47,12 +57,14 @@ free_atlas(atlas_t* atlas)
 void
 lock_atlas(atlas_t* atlas)
 {
+	console_log(4, "Locking Atlas %u for direct access", atlas->id);
 	atlas->lock = lock_image(atlas->image);
 }
 
 void
 unlock_atlas(atlas_t* atlas)
 {
+	console_log(4, "Unlocking Atlas %u", atlas->id);
 	unlock_image(atlas->image, atlas->lock);
 	atlas->lock = NULL;
 }

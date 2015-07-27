@@ -62,13 +62,17 @@ load_tileset(const char* path)
 	sfs_file_t* file;
 	tileset_t*  tileset;
 
-	console_log(2, "Loading tileset as '%s'", path);
+	console_log(2, "Loading Tileset %u as '%s'", s_next_tileset_id, path);
 
 	if ((file = sfs_fopen(g_fs, path, "maps", "rb")) == NULL)
-		return NULL;
+		goto on_error;
 	tileset = read_tileset(file);
 	sfs_fclose(file);
 	return tileset;
+
+on_error:
+	console_log(2, "Failed to load Tileset %u", s_next_tileset_id++);
+	return NULL;
 }
 
 tileset_t*
@@ -146,7 +150,7 @@ read_tileset(sfs_file_t* file)
 	return tileset;
 
 on_error:  // oh no!
-	console_log(2, "Failed to load Tileset %u", s_next_tileset_id);
+	console_log(2, "Failed to read Tileset %u", s_next_tileset_id);
 	if (file != NULL)
 		sfs_fseek(file, file_pos, SFS_SEEK_SET);
 	if (tiles != NULL) {

@@ -34,6 +34,7 @@ static void refresh_shape_vbuf (shape_t* shape);
 struct shape
 {
 	unsigned int           refcount;
+	unsigned int           id;
 	image_t*               texture;
 	shape_type_t           type;
 	ALLEGRO_VERTEX*        sw_vbuf;
@@ -46,13 +47,16 @@ struct shape
 struct group
 {
 	unsigned int refcount;
+	unsigned int id;
 	float        x, y, rot_x, rot_y;
 	double       theta;
 	shader_t*    shader;
 	vector_t*    shapes;
 };
 
-static shader_t* s_def_shader = NULL;
+static shader_t*    s_def_shader = NULL;
+static unsigned int s_next_group_id = 0;
+static unsigned int s_next_shape_id = 0;
 
 void
 initialize_galileo(void)
@@ -98,15 +102,14 @@ new_group(shader_t* shader)
 {
 	group_t* group;
 
-	if (!(group = calloc(1, sizeof(group_t))))
-		goto on_error;
+	console_log(4, "Creating new Group %u", s_next_group_id);
+	
+	group = calloc(1, sizeof(group_t));
 	group->shapes = new_vector(sizeof(shape_t*));
 	group->shader = ref_shader(shader);
+	
+	group->id = s_next_group_id++;
 	return ref_group(group);
-
-on_error:
-	free(group);
-	return NULL;
 }
 
 group_t*
@@ -126,6 +129,8 @@ free_group(group_t* group)
 
 	if (group == NULL || --group->refcount > 0)
 		return;
+
+	console_log(4, "Disposing Group %u no longer in use", group->id);
 
 	iter = iterate_vector(group->shapes);
 	while (i_shape = next_vector_item(&iter))
@@ -165,6 +170,8 @@ set_group_xy(group_t* group, float x, float y)
 bool
 add_group_shape(group_t* group, shape_t* shape)
 {
+	console_log(4, "Adding Shape %u to Group %u", shape->id, group->id);
+	
 	shape = ref_shape(shape);
 	push_back_vector(group->shapes, &shape);
 	return true;
@@ -217,17 +224,23 @@ draw_group(const group_t* group)
 shape_t*
 new_shape(shape_type_t type, image_t* texture)
 {
-	shape_t* shape;
+	shape_t*    shape;
+	const char* type_name;
+
+	type_name = type == SHAPE_POINT_LIST ? "point list"
+		: type == SHAPE_LINE_LIST ? "line list"
+		: type == SHAPE_TRIANGLE_LIST ? "triangle list"
+		: type == SHAPE_TRIANGLE_FAN ? "triangle fan"
+		: type == SHAPE_TRIANGLE_STRIP ? "triangle strip"
+		: "automatic";
+	console_log(4, "Creating Shape %u as %s", s_next_shape_id, type_name);
 	
-	if (!(shape = calloc(1, sizeof(shape_t))))
-		goto on_error;
+	shape = calloc(1, sizeof(shape_t));
 	shape->texture = ref_image(texture);
 	shape->type = type;
+	
+	shape->id = s_next_shape_id++;
 	return ref_shape(shape);
-
-on_error:
-	free(shape);
-	return NULL;
 }
 
 shape_t*
@@ -243,6 +256,7 @@ free_shape(shape_t* shape)
 {
 	if (shape == NULL || --shape->refcount > 0)
 		return;
+	console_log(4, "Disposing Shape %u no longer in use", shape->id);
 	free_image(shape->texture);
 	if (shape->vbuf != NULL)
 		al_destroy_vertex_buffer(shape->vbuf);
@@ -366,6 +380,8 @@ assign_default_uv(shape_t* shape)
 
 	int i;
 
+	console_log(4, "Calculating U/V for Shape %u", shape->id);
+
 	for (i = 0; i < shape->num_vertices; ++i) {
 		// circumscribe the UV coordinate space.
 		// the circumcircle is rotated 135 degrees counterclockwise, which ensures
@@ -383,6 +399,8 @@ refresh_shape_vbuf(shape_t* shape)
 	ALLEGRO_VERTEX* vertices = NULL;
 
 	int i;
+	
+	console_log(4, "Creating vertex buffer for Shape %u", shape->id);
 	
 	if (shape->vbuf != NULL)
 		al_destroy_vertex_buffer(shape->vbuf);
