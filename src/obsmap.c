@@ -4,20 +4,26 @@
 
 struct obsmap
 {
-	int    num_lines;
-	int    max_lines;
-	rect_t *lines;
+	unsigned int id;
+	int          num_lines;
+	int          max_lines;
+	rect_t       *lines;
 };
+
+static unsigned int s_next_obsmap_id = 0;
 
 obsmap_t*
 new_obsmap(void)
 {
 	obsmap_t* obsmap = NULL;
 
-	if ((obsmap = calloc(1, sizeof(obsmap_t))) == NULL)
-		return NULL;
+	console_log(4, "Creating new ObsMap %u", s_next_obsmap_id);
+	
+	obsmap = calloc(1, sizeof(obsmap_t));
 	obsmap->max_lines = 0;
 	obsmap->num_lines = 0;
+
+	obsmap->id = s_next_obsmap_id++;
 	return obsmap;
 }
 
@@ -26,6 +32,7 @@ free_obsmap(obsmap_t* obsmap)
 {
 	if (obsmap == NULL)
 		return;
+	console_log(4, "Disposing ObsMap %u no longer in use", obsmap->id);
 	free(obsmap->lines);
 	free(obsmap);
 }
@@ -35,6 +42,9 @@ add_obsmap_line(obsmap_t* obsmap, rect_t line)
 {
 	int    new_size;
 	rect_t *line_list;
+	
+	console_log(4, "Adding line (%i,%i)-(%i,%i) to ObsMap %u",
+		line.x1, line.y1, line.x2, line.y2, obsmap->id);
 	
 	if (obsmap->num_lines + 1 > obsmap->max_lines) {
 		new_size = (obsmap->num_lines + 1) * 2;
