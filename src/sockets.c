@@ -39,7 +39,8 @@ static duk_ret_t js_IOSocket_write                  (duk_context* ctx);
 
 struct socket
 {
-	int          refcount;
+	unsigned int refcount;
+	unsigned int id;
 	dyad_Stream* stream;
 	bool         is_data_lost;
 	uint8_t*     buffer;
@@ -50,23 +51,31 @@ struct socket
 	dyad_Stream* *backlog;
 };
 
+unsigned int s_next_socket_id = 0;
+
 socket_t*
 connect_to_host(const char* hostname, int port, size_t buffer_size)
 {
 	socket_t*    socket = NULL;
 	dyad_Stream* stream = NULL;
 
-	if (!(socket = calloc(1, sizeof(socket_t)))) goto on_error;
-	if (!(socket->buffer = malloc(buffer_size))) goto on_error;
+	console_log(2, "Connecting Socket %u to %s:%i via TCP", s_next_socket_id, hostname, port);
+	
+	socket = calloc(1, sizeof(socket_t));
+	socket->buffer = malloc(buffer_size);
 	socket->buffer_size = buffer_size;
-	if (!(socket->stream = dyad_newStream())) goto on_error;
+	if (!(socket->stream = dyad_newStream()))
+		goto on_error;
 	dyad_setNoDelay(socket->stream, true);
 	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
 	if (dyad_connect(socket->stream, hostname, port) == -1)
 		goto on_error;
+	
+	socket->id = s_next_socket_id++;
 	return ref_socket(socket);
 
 on_error:
+	console_log(2, "Failed to open Socket %u", s_next_socket_id++);
 	if (socket != NULL) {
 		free(socket->buffer);
 		if (socket->stream != NULL) dyad_close(stream);
@@ -78,23 +87,33 @@ on_error:
 socket_t*
 listen_on_port(int port, size_t buffer_size, int max_backlog)
 {
+	int          backlog_size;
 	socket_t*    socket = NULL;
 	dyad_Stream* stream = NULL;
 
-	if (!(socket = calloc(1, sizeof(socket_t)))) goto on_error;
-	if (max_backlog == 0 && !(socket->buffer = malloc(buffer_size))) goto on_error;
-	if (max_backlog > 0 && !(socket->backlog = malloc(max_backlog * sizeof(dyad_Stream*))))
-		goto on_error;
+	console_log(2, "Opening Socket %u to listen on TCP %i", s_next_socket_id, port);
+	if (max_backlog > 0)
+		console_log(3, "  Backlog: %i connections", max_backlog);
+	
+	socket = calloc(1, sizeof(socket_t));
+	if (max_backlog == 0)
+		socket->buffer = malloc(buffer_size);
+	else
+		socket->backlog = malloc(max_backlog * sizeof(dyad_Stream*));
 	socket->max_backlog = max_backlog;
 	socket->buffer_size = buffer_size;
 	if (!(socket->stream = dyad_newStream())) goto on_error;
 	dyad_setNoDelay(socket->stream, true);
 	dyad_addListener(socket->stream, DYAD_EVENT_ACCEPT, on_dyad_accept, socket);
-	if (dyad_listen(socket->stream, port) == -1)
+	backlog_size = max_backlog > 0 ? max_backlog : 16;
+	if (dyad_listenEx(socket->stream, NULL, port, max_backlog) == -1)
 		goto on_error;
+	
+	socket->id = s_next_socket_id++;
 	return ref_socket(socket);
 
 on_error:
+	console_log(2, "Failed to open Socket %u", s_next_socket_id++);
 	if (socket != NULL) {
 		free(socket->backlog);
 		free(socket->buffer);
@@ -118,6 +137,7 @@ free_socket(socket_t* socket)
 	
 	if (socket == NULL || --socket->refcount)
 		return;
+	console_log(3, "Disposing Socket %u no longer in use", socket->id);
 	for (i = 0; i < socket->num_backlog; ++i)
 		dyad_end(socket->backlog[i]);
 	dyad_end(socket->stream);
@@ -142,6 +162,18 @@ is_socket_server(socket_t* socket)
 	return dyad_getState(socket->stream) == DYAD_STATE_LISTENING;
 }
 
+const char*
+get_socket_host(socket_t* socket)
+{
+	return dyad_getAddress(socket->stream);
+}
+
+int
+get_socket_port(socket_t* socket)
+{
+	return dyad_getPort(socket->stream);
+}
+
 size_t
 peek_socket(const socket_t* socket)
 {
@@ -157,27 +189,34 @@ accept_next_socket(socket_t* listener)
 
 	if (listener->num_backlog == 0)
 		return NULL;
-	if (!(socket = calloc(1, sizeof(socket_t)))) goto on_error;
-	if (!(socket->buffer = malloc(listener->buffer_size))) goto on_error;
+	
+	console_log(2, "Spawning new Socket %u for connection on Socket %u",
+		s_next_socket_id, listener->id);
+	console_log(2, "  Remote address: %s:%i",
+		dyad_getAddress(listener->backlog[0]),
+		dyad_getPort(listener->backlog[0]));
+	
+	// construct a socket object for the new connection
+	socket = calloc(1, sizeof(socket_t));
+	socket->buffer = malloc(listener->buffer_size);
 	socket->buffer_size = listener->buffer_size;
 	socket->stream = listener->backlog[0];
 	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	
+	// we accepted the connection, remove it from the backlog
 	--listener->num_backlog;
-	for (i = 0; i < listener->num_backlog; ++i) listener->backlog[i] = listener->backlog[i + 1];
+	for (i = 0; i < listener->num_backlog; ++i)
+		listener->backlog[i] = listener->backlog[i + 1];
+	
+	socket->id = s_next_socket_id++;
 	return ref_socket(socket);
-
-on_error:
-	if (socket != NULL) {
-		free(socket->buffer);
-		free(socket);
-	}
-	return NULL;
 }
 
 size_t
 read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 {
 	n_bytes = n_bytes <= socket->pend_size ? n_bytes : socket->pend_size;
+	console_log(4, "Reading %z bytes from Socket %u", n_bytes, socket->id);
 	memcpy(buffer, socket->buffer, n_bytes);
 	memmove(socket->buffer, socket->buffer + n_bytes, socket->pend_size - n_bytes);
 	socket->pend_size -= n_bytes;
@@ -187,6 +226,7 @@ read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 void
 write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 {
+	console_log(4, "Writing %z bytes to Socket %u", n_bytes, socket->id);
 	dyad_write(socket->stream, (void*)data, (int)n_bytes);
 }
 
@@ -194,34 +234,32 @@ static void
 on_dyad_accept(dyad_Event* e)
 {
 	int          new_backlog_len;
-	dyad_Stream* *backlog;
 
 	socket_t* socket = e->udata;
 
 	if (socket->max_backlog > 0) {
 		// BSD-style socket with backlog: listener stays open, game must accept new sockets
 		new_backlog_len = socket->num_backlog + 1;
-		backlog = socket->backlog;
-		if (new_backlog_len > socket->max_backlog) {
-			if (!(backlog = realloc(backlog, new_backlog_len * 2 * sizeof(dyad_Stream*))))
-				goto on_error;
-			socket->backlog = backlog;
-			socket->max_backlog = new_backlog_len * 2;
+		if (new_backlog_len <= socket->max_backlog) {
+			console_log(4, "Taking connection from %s:%i on Socket %u",
+				dyad_getAddress(e->remote), dyad_getPort(e->remote), socket->id);
+			socket->backlog[socket->num_backlog++] = e->remote;
 		}
-		socket->backlog[socket->num_backlog] = e->remote;
-		++socket->num_backlog;
+		else {
+			console_log(4, "Backlog full on Socket %u, refusing %s:%i", socket->id,
+				dyad_getAddress(e->remote), dyad_getPort(e->remote), socket->id);
+			dyad_close(e->remote);
+		}
 	}
 	else {
 		// no backlog: listener closes on first connection (legacy socket)
+		console_log(2, "Rebinding Socket %u to %s:%i", socket->id,
+			dyad_getAddress(e->remote), dyad_getPort(e->remote));
 		dyad_removeAllListeners(socket->stream, DYAD_EVENT_ACCEPT);
 		dyad_close(socket->stream);
 		socket->stream = e->remote;
 		dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
 	}
-	return;
-
-on_error:
-	dyad_close(e->remote);
 }
 
 static void

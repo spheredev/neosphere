@@ -27,10 +27,10 @@ attach_debugger(void)
 	s_socket = listen_on_port(TCP_DEBUG_PORT, 1024, 0);
 	while (!is_socket_live(s_socket))
 		delay(0.05);
-	console_log(0, "  Connected!");
 	
 	// attach the debugger
-	console_log(1, "Attaching debugger");
+	console_log(0, "Attaching debugger at %s:%i",
+		get_socket_host(s_socket), get_socket_port(s_socket));
 	duk_debugger_attach(g_duk,
 		duk_cb_debug_read,
 		duk_cb_debug_write,
