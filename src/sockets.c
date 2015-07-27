@@ -33,8 +33,10 @@ static duk_ret_t js_IOSocket_get_remotePort         (duk_context* ctx);
 static duk_ret_t js_IOSocket_isConnected            (duk_context* ctx);
 static duk_ret_t js_IOSocket_getPendingReadSize     (duk_context* ctx);
 static duk_ret_t js_IOSocket_close                  (duk_context* ctx);
+static duk_ret_t js_IOSocket_pipe                   (duk_context* ctx);
 static duk_ret_t js_IOSocket_read                   (duk_context* ctx);
 static duk_ret_t js_IOSocket_readString             (duk_context* ctx);
+static duk_ret_t js_IOSocket_unpipe                 (duk_context* ctx);
 static duk_ret_t js_IOSocket_write                  (duk_context* ctx);
 
 struct socket
@@ -42,10 +44,10 @@ struct socket
 	unsigned int refcount;
 	unsigned int id;
 	dyad_Stream* stream;
-	bool         is_data_lost;
 	uint8_t*     buffer;
 	size_t       buffer_size;
 	size_t       pend_size;
+	socket_t*    pipe_target;
 	int          max_backlog;
 	int          num_backlog;
 	dyad_Stream* *backlog;
@@ -126,28 +128,32 @@ on_error:
 socket_t*
 ref_socket(socket_t* socket)
 {
-	++socket->refcount;
+	if (socket != NULL)
+		++socket->refcount;
 	return socket;
 }
 
 void
 free_socket(socket_t* socket)
 {
+	unsigned int threshold;
+	
 	int i;
 	
-	if (socket == NULL || --socket->refcount)
+	if (socket == NULL) return;
+	
+	// handle the case where a socket is piped into itself.
+	// the circular reference will otherwise prevent the socket from being freed.
+	threshold = socket->pipe_target == socket ? 1 : 0;
+	if (--socket->refcount > threshold)
 		return;
+	
 	console_log(3, "Disposing Socket %u no longer in use", socket->id);
 	for (i = 0; i < socket->num_backlog; ++i)
 		dyad_end(socket->backlog[i]);
 	dyad_end(socket->stream);
+	free_socket(socket->pipe_target);
 	free(socket);
-}
-
-bool
-is_socket_data_lost(socket_t* socket)
-{
-	return socket->is_data_lost;
 }
 
 bool
@@ -174,42 +180,58 @@ get_socket_port(socket_t* socket)
 	return dyad_getPort(socket->stream);
 }
 
-size_t
-peek_socket(const socket_t* socket)
-{
-	return socket->pend_size;
-}
-
 socket_t*
 accept_next_socket(socket_t* listener)
 {
-	socket_t*    socket;
+	socket_t* socket;
 
 	int i;
 
 	if (listener->num_backlog == 0)
 		return NULL;
-	
+
 	console_log(2, "Spawning new Socket %u for connection on Socket %u",
 		s_next_socket_id, listener->id);
 	console_log(2, "  Remote address: %s:%i",
 		dyad_getAddress(listener->backlog[0]),
 		dyad_getPort(listener->backlog[0]));
-	
+
 	// construct a socket object for the new connection
 	socket = calloc(1, sizeof(socket_t));
 	socket->buffer = malloc(listener->buffer_size);
 	socket->buffer_size = listener->buffer_size;
 	socket->stream = listener->backlog[0];
 	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
-	
+
 	// we accepted the connection, remove it from the backlog
 	--listener->num_backlog;
 	for (i = 0; i < listener->num_backlog; ++i)
 		listener->backlog[i] = listener->backlog[i + 1];
-	
+
 	socket->id = s_next_socket_id++;
 	return ref_socket(socket);
+}
+
+size_t
+peek_socket(const socket_t* socket)
+{
+	return socket->pend_size;
+}
+
+void
+pipe_socket(socket_t* socket, socket_t* destination)
+{
+	socket_t* old_target;
+	
+	console_log(2, "Piping Socket %u into Socket %u", socket->id, destination->id);
+	old_target = socket->pipe_target;
+	socket->pipe_target = ref_socket(destination);
+	free_socket(old_target);
+	if (socket->pipe_target != NULL && socket->pend_size > 0) {
+		console_log(4, "Piping %z bytes into Socket %u", socket->pend_size, destination->id);
+		write_socket(destination, socket->buffer, socket->pend_size);
+		socket->pend_size = 0;
+	}
 }
 
 size_t
@@ -265,24 +287,22 @@ on_dyad_accept(dyad_Event* e)
 static void
 on_dyad_receive(dyad_Event* e)
 {
-	uint8_t*  new_buffer;
 	size_t    new_pend_size;
 	socket_t* socket = e->udata;
 
-	new_pend_size = socket->pend_size + e->size;
-	if (new_pend_size > socket->buffer_size) {
-		if (new_pend_size <= UINT_MAX
-			&& (new_buffer = realloc(socket->buffer, new_pend_size * 2)))
-		{
-			socket->buffer = new_buffer;
-			socket->buffer_size = new_pend_size * 2;
-		}
-		else {
-			socket->is_data_lost = true;
-		}
+	if (socket->pipe_target != NULL) {
+		// if the socket is a pipe, send any data received to pipe target
+		console_log(4, "Piping %i bytes into Socket %u", e->size, socket->pipe_target->id);
+		write_socket(socket->pipe_target, e->data, e->size);
 	}
-	if (new_pend_size <= socket->buffer_size) {
-		memcpy(socket->buffer, e->data + socket->pend_size, e->size);
+	else {
+		// buffer received data until read() is called
+		new_pend_size = socket->pend_size + e->size;
+		if (new_pend_size > socket->buffer_size) {
+			socket->buffer_size = new_pend_size * 2;
+			socket->buffer = realloc(socket->buffer, socket->buffer_size);
+		}
+		memcpy(socket->buffer + socket->pend_size, e->data, e->size);
 		socket->pend_size += e->size;
 	}
 }
@@ -320,8 +340,10 @@ init_sockets_api(void)
 	register_api_function(g_duk, "IOSocket", "isConnected", js_IOSocket_isConnected);
 	register_api_function(g_duk, "IOSocket", "getPendingReadSize", js_IOSocket_getPendingReadSize);
 	register_api_function(g_duk, "IOSocket", "close", js_IOSocket_close);
+	register_api_function(g_duk, "IOSocket", "pipe", js_IOSocket_pipe);
 	register_api_function(g_duk, "IOSocket", "read", js_IOSocket_read);
 	register_api_function(g_duk, "IOSocket", "readString", js_IOSocket_readString);
+	register_api_function(g_duk, "IOSocket", "unpipe", js_IOSocket_unpipe);
 	register_api_function(g_duk, "IOSocket", "write", js_IOSocket_write);
 }
 
@@ -403,8 +425,6 @@ js_Socket_get_remoteAddress(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Socket has been closed");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
@@ -421,8 +441,6 @@ js_Socket_get_remotePort(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Socket has been closed");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
@@ -444,14 +462,10 @@ js_Socket_isConnected(duk_context* ctx)
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
-	if (socket != NULL) {
-		if (is_socket_data_lost(socket))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:isConnected(): Allocation failure while receiving data");
+	if (socket != NULL)
 		duk_push_boolean(ctx, is_socket_live(socket));
-	}
-	else {
+	else
 		duk_push_false(ctx);
-	}
 	return 1;
 }
 
@@ -465,8 +479,6 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has been closed");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Allocation failure while receiving data");
 	duk_push_uint(ctx, (duk_uint_t)peek_socket(socket));
 	return 1;
 }
@@ -503,8 +515,6 @@ js_Socket_read(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Allocation failure while receiving data");
 	if (!(read_buffer = malloc(length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer");
 	read_socket(socket, read_buffer, length);
@@ -529,8 +539,6 @@ js_Socket_readString(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Allocation failure while receiving data");
 	if (!(buffer = malloc(length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer");
 	read_socket(socket, buffer, length);
@@ -561,8 +569,6 @@ js_Socket_write(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Allocation failure while receiving data");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
@@ -663,8 +669,6 @@ js_IOSocket_get_remoteAddress(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress - Socket has been closed");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remoteAddress - Socket is not connected");
 	duk_push_string(ctx, dyad_getAddress(socket->stream));
@@ -681,8 +685,6 @@ js_IOSocket_get_remotePort(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort - Socket has been closed");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort - Allocation failure while receiving data");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:remotePort - Socket is not connected");
 	duk_push_int(ctx, dyad_getPort(socket->stream));
@@ -697,14 +699,10 @@ js_IOSocket_isConnected(duk_context* ctx)
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
-	if (socket != NULL) {
-		if (is_socket_data_lost(socket))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:isConnected(): Allocation failure while receiving data");
+	if (socket != NULL)
 		duk_push_boolean(ctx, is_socket_live(socket));
-	}
-	else {
+	else
 		duk_push_false(ctx);
-	}
 	return 1;
 }
 
@@ -718,8 +716,6 @@ js_IOSocket_getPendingReadSize(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:getPendingReadSize(): Socket has been closed");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:getPendingReadSize(): Allocation failure while receiving data");
 	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
 	return 1;
 }
@@ -739,6 +735,40 @@ js_IOSocket_close(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IOSocket_pipe(duk_context* ctx)
+{
+	socket_t* destination = duk_require_sphere_obj(ctx, 0, "IOSocket");
+	socket_t* socket;
+
+	duk_push_this(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
+	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Socket has been closed");
+	if (destination == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Destination socket has been closed");
+	pipe_socket(socket, destination);
+	
+	// return the destination to simplify setting up pipe chains
+	duk_dup(ctx, 0);
+	return 1;
+}
+
+static duk_ret_t
+js_IOSocket_unpipe(duk_context* ctx)
+{
+	socket_t* socket;
+
+	duk_push_this(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
+	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Socket has been closed");
+	pipe_socket(socket, NULL);
+	return 0;
+}
+
+static duk_ret_t
 js_IOSocket_read(duk_context* ctx)
 {
 	int length = duk_require_int(ctx, 0);
@@ -750,14 +780,14 @@ js_IOSocket_read(duk_context* ctx)
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
-	if (length <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IOSocket:read(): At least 1 byte must be read (%i)", length);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket has been closed");
+	if (length <= 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IOSocket:read(): At least 1 byte must be read (%i)", length);
+	if (socket->pipe_target != NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "IOSocket:readString(): Reading from pipe not allowed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket is not connected");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Allocation failure while receiving data");
 	if (!(read_buffer = malloc(length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Failed to allocate read buffer");
 	read_socket(socket, read_buffer, length);
@@ -780,10 +810,10 @@ js_IOSocket_readString(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket has been closed");
+	if (socket->pipe_target != NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "IOSocket:readString(): Reading from pipe not allowed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket is not connected");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Allocation failure while receiving data");
 	if (!(buffer = malloc(length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Failed to allocate read buffer");
 	read_socket(socket, buffer, length);
@@ -814,9 +844,6 @@ js_IOSocket_write(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket is not connected");
-	if (is_socket_data_lost(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Allocation failure while receiving data");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
-
