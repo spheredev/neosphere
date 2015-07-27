@@ -106,11 +106,15 @@ script_t*
 compile_script(const lstring_t* source, const char* fmt_name, ...)
 {
 	va_list ap;
+	lstring_t* name;
+	script_t*  script;
 	
-	script_t* script;
-	
-	if (!(script = calloc(1, sizeof(script_t))))
-		return NULL;
+	va_start(ap, fmt_name);
+	name = lstr_vnewf(fmt_name, ap);
+	va_end(ap);
+	script = calloc(1, sizeof(script_t));
+
+	console_log(3, "Compiling Script %u as '%s'", s_next_script_id, lstr_cstr(name));
 	
 	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
 	// instead we get this ugliness where the compiled function is saved in the global stash
@@ -118,12 +122,12 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "scripts");
 	duk_push_lstring_t(g_duk, source);
-	va_start(ap, fmt_name);
-	duk_push_vsprintf(g_duk, fmt_name, ap);
-	va_end(ap);
+	duk_push_lstring_t(g_duk, name);
 	duk_compile(g_duk, 0x0);
 	duk_put_prop_index(g_duk, -2, s_next_script_id);
 	duk_pop_2(g_duk);
+
+	lstr_free(name);
 
 	script->id = s_next_script_id++;
 	return ref_script(script);
@@ -141,6 +145,8 @@ free_script(script_t* script)
 {
 	if (script == NULL || --script->refcount > 0)
 		return;
+	
+	console_log(3, "Disposing Script %u no longer in use", script->id);
 	
 	// unstash the compiled function, it's now safe to GC
 	duk_push_global_stash(g_duk);
@@ -162,9 +168,13 @@ run_script(script_t* script, bool allow_reentry)
 	// check whether an instance of the script is already running.
 	// if it is, but the script is reentrant, allow it. otherwise, return early
 	// to prevent multiple invocation.
-	if (script->is_in_use && !allow_reentry)
+	if (script->is_in_use && !allow_reentry) {
+		console_log(3, "Skipping execution of Script %u, already in use");
 		return;
+	}
 	was_in_use = script->is_in_use;
+
+	console_log(3, "Executing Script %u");
 
 	// ref the script in case it gets freed during execution. the owner
 	// may be destroyed in the process and we don't want to end up crashing.
