@@ -30,6 +30,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-legacy-api",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
+	"sphere-assert",
 	"sphere-audialis",
 	"sphere-coffeescript",
 	"sphere-commonjs",
@@ -40,6 +41,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"minisphere-galileo-shaders",
 	"minisphere-new-sockets",
 	"minisphere-rng-object",
+	"duktape-debugger",
 	"frameskip-api",
 	"set-script-function",
 };
@@ -102,9 +104,11 @@ initialize_api(duk_context* ctx)
 		register_api_extension(SPHERE_EXTENSIONS[i]);
 	}
 
-	// register global object (`Sphere`)
+	// register the 'sphere' global object alias.
+	// this is like 'window' in web JS or 'global' in Node.js and allows
+	// direct access to the global object from any scope.
 	duk_push_global_object(ctx);
-	duk_dup(ctx, -1); duk_put_prop_string(ctx, -2, "Sphere");
+	duk_dup(ctx, -1); duk_put_prop_string(ctx, -2, "sphere");
 	duk_pop(ctx);
 	
 	// inject __defineGetter__/__defineSetter__ polyfills
