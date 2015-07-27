@@ -88,9 +88,6 @@ on_error:
 animation_t*
 ref_animation(animation_t* animation)
 {
-	console_log(4, "Incrementing Animation %u refcount, new: %u",
-		animation->id, animation->refcount);
-
 	++animation->refcount;
 	return animation;
 }
@@ -98,18 +95,15 @@ ref_animation(animation_t* animation)
 void
 free_animation(animation_t* animation)
 {
-	if (animation == NULL) return;
+	if (animation == NULL || --animation->refcount > 0)
+		return;
 	
-	console_log(4, "Decrementing Animation %u refcount, new: %u",
-		animation->id, animation->refcount - 1);
-	
-	if (--animation->refcount == 0) {
-		console_log(3, "Disposing Animation %u as it is no longer in use", animation->id);
-		mng_cleanup(&animation->stream);
-		sfs_fclose(animation->file);
-		free_image(animation->frame);
-		free(animation);
-	}
+	console_log(3, "Disposing Animation %u as it is no longer in use",
+		animation->id);
+	mng_cleanup(&animation->stream);
+	sfs_fclose(animation->file);
+	free_image(animation->frame);
+	free(animation);
 }
 
 bool

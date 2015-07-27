@@ -59,9 +59,6 @@ on_error: // oh no!
 logger_t*
 ref_logger(logger_t* logger)
 {
-	console_log(4, "Incrementing Logger %u refcount, new: %u",
-		logger->id, logger->refcount + 1);
-	
 	++logger->refcount;
 	return logger;
 }
@@ -73,20 +70,16 @@ free_logger(logger_t* logger)
 	time_t     now;
 	char       timestamp[100];
 
-	if (logger == NULL) return;
+	if (logger == NULL || --logger->refcount > 0)
+		return;
 
-	console_log(4, "Decrementing Logger %u refcount, new: %u",
-		logger->id, logger->refcount - 1);
-	
-	if (--logger->refcount == 0) {
-		console_log(3, "Disposing Logger %u as it is no longer in use", logger->id);
-		time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
-		log_entry = lstr_newf("LOG CLOSED: %s\n\n", timestamp);
-		sfs_fputs(lstr_cstr(log_entry), logger->file);
-		lstr_free(log_entry);
-		sfs_fclose(logger->file);
-		free(logger);
-	}
+	console_log(3, "Disposing Logger %u no longer in use", logger->id);
+	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
+	log_entry = lstr_newf("LOG CLOSED: %s\n\n", timestamp);
+	sfs_fputs(lstr_cstr(log_entry), logger->file);
+	lstr_free(log_entry);
+	sfs_fclose(logger->file);
+	free(logger);
 }
 
 bool

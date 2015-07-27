@@ -184,8 +184,6 @@ on_error:
 mixer_t*
 ref_mixer(mixer_t* mixer)
 {
-	console_log(4, "Incrementing Mixer %u refcount, new: %u",
-		mixer->id, mixer->refcount + 1);
 	++mixer->refcount;
 	return mixer;
 }
@@ -193,13 +191,12 @@ ref_mixer(mixer_t* mixer)
 void
 free_mixer(mixer_t* mixer)
 {
-	if (mixer == NULL) return;
-	console_log(4, "Decrementing Mixer %u refcount, new: %u", mixer->id, mixer->refcount - 1);
-	if (--mixer->refcount == 0) {
-		console_log(3, "Disposing Mixer %u as it is no longer in use", mixer->id);
-		al_destroy_mixer(mixer->ptr);
-		free(mixer);
-	}
+	if (mixer == NULL || --mixer->refcount > 0)
+		return;
+	
+	console_log(3, "Disposing Mixer %u no longer in use", mixer->id);
+	al_destroy_mixer(mixer->ptr);
+	free(mixer);
 }
 
 float
@@ -247,9 +244,6 @@ on_error:
 sound_t*
 ref_sound(sound_t* sound)
 {
-	console_log(4, "Incrementing Sound %u refcount, new: %u",
-		sound->id, sound->refcount + 1);
-
 	++sound->refcount;
 	return sound;
 }
@@ -257,15 +251,14 @@ ref_sound(sound_t* sound)
 void
 free_sound(sound_t* sound)
 {
-	if (sound == NULL) return;
-	console_log(4, "Decrementing Sound %u refcount, new: %u", sound->id, sound->refcount - 1);
-	if (--sound->refcount == 0) {
-		console_log(3, "Disposing Sound %u as it is no longer in use", sound->id);
-		free(sound->file_data);
-		if (sound->stream != NULL)
-			al_destroy_audio_stream(sound->stream);
-		free(sound->path);
-	}
+	if (sound == NULL || --sound->refcount > 0)
+		return;
+	
+	console_log(3, "Disposing Sound %u no longer in use", sound->id);
+	free(sound->file_data);
+	if (sound->stream != NULL)
+		al_destroy_audio_stream(sound->stream);
+	free(sound->path);
 }
 
 bool
@@ -480,8 +473,6 @@ on_error:
 stream_t*
 ref_stream(stream_t* stream)
 {
-	console_log(4, "Incrementing Stream %u refcount, new: %u",
-		stream->id, stream->refcount + 1);
 	++stream->refcount;
 	return stream;
 }
@@ -493,21 +484,20 @@ free_stream(stream_t* stream)
 	
 	iter_t iter;
 	
-	if (stream == NULL) return;
-	console_log(4, "Decrementing Stream %u refcount, new: %u", stream->id, stream->refcount);
-	if (--stream->refcount == 0) {
-		console_log(3, "Disposing Stream %u as it is no longer in use", stream->id);
-		al_drain_audio_stream(stream->ptr);
-		al_destroy_audio_stream(stream->ptr);
-		free_mixer(stream->mixer);
-		free(stream->buffer);
-		free(stream);
-		iter = iterate_vector(s_streams);
-		while (p_stream = next_vector_item(&iter)) {
-			if (*p_stream == stream) {
-				remove_vector_item(s_streams, iter.index);
-				break;
-			}
+	if (stream == NULL || --stream->refcount > 0)
+		return;
+	
+	console_log(3, "Disposing Stream %u no longer in use", stream->id);
+	al_drain_audio_stream(stream->ptr);
+	al_destroy_audio_stream(stream->ptr);
+	free_mixer(stream->mixer);
+	free(stream->buffer);
+	free(stream);
+	iter = iterate_vector(s_streams);
+	while (p_stream = next_vector_item(&iter)) {
+		if (*p_stream == stream) {
+			remove_vector_item(s_streams, iter.index);
+			break;
 		}
 	}
 }

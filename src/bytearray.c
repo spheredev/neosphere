@@ -90,8 +90,6 @@ bytearray_from_lstring(const lstring_t* string)
 bytearray_t*
 ref_bytearray(bytearray_t* array)
 {
-	console_log(4, "Incrementing ByteArray %u refcount, new: %u",
-		array->id, array->refcount + 1);
 	++array->refcount;
 	return array;
 }
@@ -99,15 +97,12 @@ ref_bytearray(bytearray_t* array)
 void
 free_bytearray(bytearray_t* array)
 {
-	if (array == NULL) return;
+	if (array == NULL || --array->refcount > 0)
+		return;
 	
-	console_log(4, "Decrementing ByteArray %u refcount, new: %u",
-		array->id, array->refcount - 1);
-	if (--array->refcount == 0) {
-		console_log(3, "Disposing Bytearray %u as it is no longer in use", array->id);
-		free(array->buffer);
-		free(array);
-	}
+	console_log(3, "Disposing Bytearray %u no longer in use", array->id);
+	free(array->buffer);
+	free(array);
 }
 
 uint8_t

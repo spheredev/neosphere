@@ -230,8 +230,6 @@ on_error:
 font_t*
 ref_font(font_t* font)
 {
-	console_log(4, "Incrementing Font %u refcount, new: %u",
-		font->id, font->refcount + 1);
 	++font->refcount;
 	return font;
 }
@@ -241,17 +239,15 @@ free_font(font_t* font)
 {
 	uint32_t i;
 	
-	if (font == NULL) return;
+	if (font == NULL || --font->refcount > 0)
+		return;
 	
-	console_log(4, "Decrementing Font %u refcount, new: %u", font->id, font->refcount - 1);
-	if (--font->refcount == 0) {
-		console_log(3, "Disposing Font %u as it is no longer in use", font->id);
-		for (i = 0; i < font->num_glyphs; ++i) {
-			free_image(font->glyphs[i].image);
-		}
-		free(font->glyphs);
-		free(font);
+	console_log(3, "Disposing Font %u no longer in use", font->id);
+	for (i = 0; i < font->num_glyphs; ++i) {
+		free_image(font->glyphs[i].image);
 	}
+	free(font->glyphs);
+	free(font);
 }
 
 int

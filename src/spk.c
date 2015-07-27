@@ -106,8 +106,6 @@ on_error:
 spk_t*
 ref_spk(spk_t* spk)
 {
-	console_log(4, "Incrementing SPK %u refcount, new: %u",
-		spk->id, spk->refcount + 1);
 	++spk->refcount;
 	return spk;
 }
@@ -115,15 +113,14 @@ ref_spk(spk_t* spk)
 void
 free_spk(spk_t* spk)
 {
-	if (spk == NULL) return;
-	console_log(4, "Decrementing SPK %u refcount, new: %u", spk->id,
-		spk->refcount - 1);
-	if (--spk->refcount == 0) {
-		console_log(4, "Disposing SPK %u no longer in use", spk->id);
-		free_vector(spk->index);
-		al_fclose(spk->file);
-		free(spk);
-	}
+	if (spk == NULL || --spk->refcount > 0)
+		return;
+	
+	console_log(4, "Disposing SPK %u no longer in use",
+		spk->id);
+	free_vector(spk->index);
+	al_fclose(spk->file);
+	free(spk);
 }
 
 spk_file_t*

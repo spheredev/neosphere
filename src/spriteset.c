@@ -346,9 +346,6 @@ on_error:
 spriteset_t*
 ref_spriteset(spriteset_t* spriteset)
 {
-	console_log(4, "Incrementing Spriteset %u refcount, new: %u",
-		spriteset->id, spriteset->refcount + 1);
-	
 	++spriteset->refcount;
 	return spriteset;
 }
@@ -358,23 +355,20 @@ free_spriteset(spriteset_t* spriteset)
 {
 	int i;
 
-	if (spriteset == NULL) return;
+	if (spriteset == NULL || --spriteset->refcount > 0)
+		return;
 	
-	console_log(4, "Decrementing Spriteset %u refcount, new: %u",
-		spriteset->id, spriteset->refcount - 1);
-	if (--spriteset->refcount == 0) {
-		console_log(3, "Disposing Spriteset %u as it is no longer in use", spriteset->id);
-		for (i = 0; i < spriteset->num_images; ++i)
-			free_image(spriteset->images[i]);
-		free(spriteset->images);
-		for (i = 0; i < spriteset->num_poses; ++i) {
-			free(spriteset->poses[i].frames);
-			lstr_free(spriteset->poses[i].name);
-		}
-		free(spriteset->poses);
-		free(spriteset->filename);
-		free(spriteset);
+	console_log(3, "Disposing Spriteset %u no longer in use", spriteset->id);
+	for (i = 0; i < spriteset->num_images; ++i)
+		free_image(spriteset->images[i]);
+	free(spriteset->images);
+	for (i = 0; i < spriteset->num_poses; ++i) {
+		free(spriteset->poses[i].frames);
+		lstr_free(spriteset->poses[i].name);
 	}
+	free(spriteset->poses);
+	free(spriteset->filename);
+	free(spriteset);
 }
 
 rect_t

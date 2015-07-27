@@ -43,7 +43,7 @@ new_sandbox(const char* path)
 	void*         sgm_text = NULL;
 	spk_t*        spk;
 
-	console_log(1, "Creating Sandbox %u as '%s'", s_next_sandbox_id, path);
+	console_log(1, "Opening '%s' in Sandbox %u", path, s_next_sandbox_id);
 	
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
@@ -73,7 +73,7 @@ new_sandbox(const char* path)
 		al_destroy_path(sgm_path);
 	}
 	get_sgm_metrics(fs, &res_x, &res_y);
-	console_log(1, "Loading metadata for Sandbox %u", s_next_sandbox_id);
+	console_log(1, "Loading game metadata for Sandbox %u", s_next_sandbox_id);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);

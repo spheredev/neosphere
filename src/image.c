@@ -240,29 +240,23 @@ image_t*
 ref_image(image_t* image)
 {
 	
-	if (image != NULL) {
-		console_log(4, "Incrementing Image %u refcount, new: %u",
-			image->id, image->refcount + 1);
+	if (image != NULL)
 		++image->refcount;
-	}
 	return image;
 }
 
 void
 free_image(image_t* image)
 {
-	if (image == NULL) return;
+	if (image == NULL || --image->refcount > 0)
+		return;
 	
-	console_log(4, "Decrementing Image %u refcount, new: %u",
-		image->id, image->refcount - 1);
-	
-	if (--image->refcount == 0) {
-		console_log(3, "Disposing Image %u as it is no longer in use", image->id);
-		uncache_pixels(image);
-		al_destroy_bitmap(image->bitmap);
-		free_image(image->parent);
-		free(image);
-	}
+	console_log(3, "Disposing Image %u as it is no longer in use",
+		image->id);
+	uncache_pixels(image);
+	al_destroy_bitmap(image->bitmap);
+	free_image(image->parent);
+	free(image);
 }
 
 ALLEGRO_BITMAP*
