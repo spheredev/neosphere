@@ -1,6 +1,11 @@
 minisphere Changelog
 ====================
 
+v1.6.1 - July 31, 2015
+----------------------
+
+* Fixes listening sockets not taking connections from IPv4 clients.
+
 v1.6.0 - July 27, 2015
 ----------------------
 
