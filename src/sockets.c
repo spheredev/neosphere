@@ -249,7 +249,7 @@ void
 write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 {
 	console_log(4, "Writing %z bytes to Socket %u", n_bytes, socket->id);
-	dyad_write(socket->stream, (void*)data, (int)n_bytes);
+	dyad_write(socket->stream, data, (int)n_bytes);
 }
 
 static void
@@ -297,7 +297,7 @@ on_dyad_receive(dyad_Event* e)
 		write_socket(socket->pipe_target, e->data, e->size);
 	}
 	else {
-		// buffer received data until read() is called
+		// buffer any data received until read() is called
 		new_pend_size = socket->pend_size + e->size;
 		if (new_pend_size > socket->buffer_size) {
 			socket->buffer_size = new_pend_size * 2;
