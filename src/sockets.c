@@ -228,7 +228,7 @@ pipe_socket(socket_t* socket, socket_t* destination)
 	socket->pipe_target = ref_socket(destination);
 	free_socket(old_target);
 	if (socket->pipe_target != NULL && socket->pend_size > 0) {
-		console_log(4, "Piping %z bytes into Socket %u", socket->pend_size, destination->id);
+		console_log(4, "Piping %zu bytes into Socket %u", socket->pend_size, destination->id);
 		write_socket(destination, socket->buffer, socket->pend_size);
 		socket->pend_size = 0;
 	}
@@ -238,7 +238,7 @@ size_t
 read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 {
 	n_bytes = n_bytes <= socket->pend_size ? n_bytes : socket->pend_size;
-	console_log(4, "Reading %z bytes from Socket %u", n_bytes, socket->id);
+	console_log(4, "Reading %zu bytes from Socket %u", n_bytes, socket->id);
 	memcpy(buffer, socket->buffer, n_bytes);
 	memmove(socket->buffer, socket->buffer + n_bytes, socket->pend_size - n_bytes);
 	socket->pend_size -= n_bytes;
@@ -248,7 +248,7 @@ read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 void
 write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 {
-	console_log(4, "Writing %z bytes to Socket %u", n_bytes, socket->id);
+	console_log(4, "Writing %zu bytes to Socket %u", n_bytes, socket->id);
 	dyad_write(socket->stream, data, (int)n_bytes);
 }
 

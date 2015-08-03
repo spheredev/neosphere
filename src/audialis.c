@@ -524,7 +524,7 @@ feed_stream(stream_t* stream, const void* data, size_t size)
 {
 	size_t needed_size;
 	
-	console_log(4, "Buffering %z bytes into Stream %u", size, stream->id);
+	console_log(4, "Buffering %zu bytes into Stream %u", size, stream->id);
 	
 	needed_size = stream->feed_size + size;
 	if (needed_size > stream->buffer_size) {
