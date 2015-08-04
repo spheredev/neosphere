@@ -4,7 +4,7 @@
 #define _USE_MATH_DEFINES
 #endif
 
-#define ENGINE_NAME "minisphere 1.6.1"
+#define ENGINE_NAME "minisphere 1.6.2"
 
 #include <stdlib.h>
 #include <stdarg.h>
