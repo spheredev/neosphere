@@ -54,7 +54,6 @@ detach_debugger(void)
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
 	free_socket(s_socket);
-	exit_game(true);
 }
 
 static void
