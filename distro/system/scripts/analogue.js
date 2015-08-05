@@ -44,7 +44,7 @@ var analogue = (function() {
 		}
 	}
 	
-	var scriptPath = "../scripts/maps/";
+	var scriptPath = "maps/";
 	var worlds = [CreateWorld()];
 	var cur_world = 0;
 	var world = worlds[cur_world];
@@ -68,29 +68,20 @@ var analogue = (function() {
 		return false;
 	}
 	
-	function GetMapScript(mapfile) {
+	function EvalMapScript(mapfile) {
 		var scriptfile = GetScriptName(mapfile);
 		
-		if (!PathExists(scriptfile)) return "({})";
-		
-		var file = OpenRawFile(scriptfile);
-		var bytearray;
-		
-		try {
-			bytearray = file.read(file.getSize());
-		}
-		finally {
-			file.close();
-		}
-		
-		return CreateStringFromByteArray(bytearray);
+		if (PathExists("scripts/" + scriptfile))
+			return EvaluateScript(scriptfile);
+		else
+			return eval("({})");
 	}
 
 	/* Map Layer */
 
 	function GetMap(mapfile) {
 		if (mapfile in world) return world[mapfile];
-		world[mapfile] = eval(GetMapScript(mapfile));
+		world[mapfile] = EvalMapScript(mapfile);
 		return world[mapfile];
 	}
 	
