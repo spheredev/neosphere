@@ -262,23 +262,31 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	// display loading message, scripts may take a bit to compile
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	draw_status_message("starting up...");
-	al_flip_display();
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-
 	// switch to fullscreen if necessary and initialize clipping
 	if (s_is_fullscreen)
 		toggle_fullscreen();
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
 
-	al_hide_mouse_cursor(g_display);
+	// display loading message, scripts may take a bit to compile
+	if (want_debug) {
+		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+		draw_status_message("waiting for debugger...");
+		al_flip_display();
+		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	}
+
+	// enable debugging support
+	initialize_debugger(want_debug);
+
+	// display loading message, scripts may take a bit to compile
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	draw_status_message("starting up...");
+	al_flip_display();
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	
 	// load startup script
-	if (want_debug)
-		attach_debugger();
 	console_log(0, "Starting up game");
+	al_hide_mouse_cursor(g_display);
 	if (!try_evaluate_file(get_sgm_script(g_fs)))
 		goto on_js_error;
 	duk_pop(g_duk);
@@ -382,6 +390,7 @@ do_events(void)
 	ALLEGRO_EVENT event;
 
 	dyad_update();
+	update_debugger();
 	update_async();
 	update_input();
 	update_audialis();
@@ -679,6 +688,7 @@ shutdown_engine(void)
 {
 	save_key_map();
 	
+	shutdown_debugger();
 	shutdown_map_engine();
 	shutdown_input();
 	

@@ -1,6 +1,19 @@
 minisphere Changelog
 ====================
 
+v1.7.0 - TBD
+------------
+
+* The included analogue.js now uses EvaluateScript() to load map scripts; this
+  ensures their filenames are associated with the code, allowing them to be
+  debugged.
+* Upgrades Duktape to the latest build, adding support for ArrayBuffer and
+  TypedArray objects, and improving the CommonJS implementation (notably,
+  'module.exports' is now supported).
+* The debug port (812) is now kept open, allowing debuggers to be attached and
+  detached at will. This enables a debugger to easily reconnect if the
+  connection is lost.
+
 v1.6.1 - July 31, 2015
 ----------------------
 
