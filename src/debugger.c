@@ -5,6 +5,7 @@
 
 static const int TCP_DEBUG_PORT = 812;
 
+static bool       attach_debugger     (void);
 static void       detach_debugger     (void);
 static void       duk_cb_debug_detach (void* udata);
 static duk_size_t duk_cb_debug_peek   (void* udata);
@@ -29,13 +30,8 @@ initialize_debugger(bool want_attach)
 	
 	// if the engine was started in debug mode, wait for a debugger
 	// to connect before beginning execution.
-	if (s_want_attach) {
-		console_log(0, "Waiting for debugger to connect");
-		while (s_client == NULL) {
-			update_debugger();
-			delay(0.05);
-		}
-	}
+	if (s_want_attach && !attach_debugger())
+		exit_game(true);
 }
 
 void
@@ -57,9 +53,10 @@ update_debugger(void)
 			free_socket(socket);
 		}
 		else {
-			console_log(0, "Attaching to debugger at %s:%i",
+			console_log(0, "Connecting to debugger at %s:%i",
 				get_socket_host(socket), get_socket_port(socket));
 			s_client = socket;
+			duk_debugger_detach(g_duk);
 			duk_debugger_attach(g_duk,
 				duk_cb_debug_read,
 				duk_cb_debug_write,
@@ -71,6 +68,24 @@ update_debugger(void)
 			s_is_attached = true;
 		}
 	}
+}
+
+static bool
+attach_debugger(void)
+{
+	double timeout;
+
+	console_log(0, "Waiting for debugger to connect");
+
+	free_socket(s_client); s_client = NULL;
+	timeout = al_get_time() + 30.0;
+	while (s_client == NULL && al_get_time() < timeout) {
+		update_debugger();
+		delay(0.05);
+	}
+	if (s_client == NULL)  // did we time out?
+		console_log(0, "Timed out waiting for debugger");
+	return s_client != NULL;
 }
 
 static void
@@ -108,7 +123,10 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	while ((n_bytes = peek_socket(s_client)) == 0) {
 		if (!is_socket_live(s_client)) {  // did a pig eat it?
 			console_log(0, "TCP connection reset while debugging");
-			return 0;  // stupid pig
+			if (attach_debugger())
+				continue;
+			else
+				exit_game(true);  // stupid pig
 		}
 		
 		// so the system doesn't think we locked up...
