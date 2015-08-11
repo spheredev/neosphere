@@ -885,7 +885,9 @@ js_Print(duk_context* ctx)
 {
 	const char* text = duk_safe_to_string(ctx, 0);
 	
-	console_log(0, "%s", text);
+	duk_get_global_string(ctx, "print");
+	duk_push_string(ctx, text);
+	duk_call(ctx, 1);
 	return 0;
 }
 
