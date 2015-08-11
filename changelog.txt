@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v1.7.0 - TBD
-------------
+v1.7.0 - August 11, 2015
+------------------------
 
 * The included analogue.js now uses EvaluateScript() to load map
   scripts; this ensures their filenames are associated with the code,

@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 322ccf9a10675a07d594bda9fac9e1ff72ee3f03 (v1.2.0-276-g322ccf9).
+ *  Git commit 84d482fb2339fc30de2e53ad4994faecac1b2bfd (v1.2.0-317-g84d482f).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -67,6 +67,7 @@
  *  * Andreas \u00d6man <andreas@lonelycoder.com>
  *  * L\u00e1szl\u00f3 Lang\u00f3 <llango.u-szeged@partner.samsung.com>
  *  * Legimet <legimet.calc@gmail.com>
+ *  * Karl Skomski <karl@skomski.com>
  *  
  *  Other contributions
  *  ===================
@@ -102,6 +103,7 @@
  *  * https://github.com/Kelledin
  *  * https://github.com/sstruchtrup
  *  * Michael Drake (https://github.com/tlsa)
+ *  * https://github.com/chris-y
  *  
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
@@ -212,7 +214,7 @@ struct duk_number_list_entry {
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.2.0-276-g322ccf9"
+#define DUK_GIT_DESCRIBE                  "v1.2.0-317-g84d482f"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -829,6 +831,7 @@ DUK_EXTERNAL_DECL duk_int_t duk_pcall(duk_context *ctx, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_int_t duk_pcall_method(duk_context *ctx, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_int_t duk_pcall_prop(duk_context *ctx, duk_idx_t obj_index, duk_idx_t nargs);
 DUK_EXTERNAL_DECL void duk_new(duk_context *ctx, duk_idx_t nargs);
+DUK_EXTERNAL_DECL duk_int_t duk_pnew(duk_context *ctx, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, duk_idx_t nargs, duk_idx_t nrets);
 
 /*

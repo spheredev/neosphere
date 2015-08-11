@@ -1,4 +1,4 @@
-minisphere 1.6 API Documentation
+minisphere 1.7 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
@@ -29,7 +29,7 @@ GetVersionString()
     Returns the engine's version identification string. For minisphere 1.5, this
     string is:
       
-      v2.0 (compatible; minisphere 1.6.0)
+      v2.0 (compatible; minisphere 1.7.0)
 
 GetExtensions()
 
@@ -160,6 +160,11 @@ Assert(condition, error_message[, stack_offset]);
   If `condition` evaluates to true, does nothing. Otherwise an error is thrown
   with the error text set to `error_message`. In the Console engine, the error
   is shown in a dialog box with the option to ignore it.
+
+Print(text);
+  
+  Outputs the specified text to the console. When debugging, the text will also
+  be sent to the debugger.
 
 
 Logging
