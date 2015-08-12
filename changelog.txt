@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v1.7.1 - TBD
+------------
+
+* Fixes an issue with Duktape's breakpoint handling where a breakpoint
+  placed inside of a conditional block will be triggered even if the
+  condition isn't met.
+
 v1.7.0 - August 11, 2015
 ------------------------
 
@@ -15,6 +22,7 @@ v1.7.0 - August 11, 2015
   reconnect if the connection is lost.
 * The engine will now wait 30 seconds for the debugger to reconnect if
   the TCP connection is lost during a debug session.
+
 
 v1.6.1 - July 31, 2015
 ----------------------
@@ -36,6 +44,7 @@ v1.6.0 - July 27, 2015
 * Renames the global object to `sphere` for naming consistency with other
   JavaScript environments, where the global object is always lowercase (window,
   global, root...).
+
 
 v1.5.3 - July 18, 2015
 ----------------------
