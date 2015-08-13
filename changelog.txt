@@ -1,12 +1,11 @@
 minisphere Changelog
 ====================
 
-v1.7.1 - TBD
-------------
+v1.7.1 - August 12, 2015
+------------------------
 
-* Fixes an issue with Duktape's breakpoint handling where a breakpoint
-  placed inside of a conditional block will be triggered even if the
-  condition isn't met.
+* Fixes a bug where a breakpoint placed inside of a conditional block
+  will be triggered even if the condition isn't met.
 
 v1.7.0 - August 11, 2015
 ------------------------
