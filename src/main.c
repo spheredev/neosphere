@@ -115,28 +115,45 @@ main(int argc, char* argv[])
 			{
 				free(game_path);
 				game_path = strdup(argv[i + 1]);
+				++i;
 			}
-			if (strcmp(argv[i], "--debug") == 0) {
+			else if (strcmp(argv[i], "--debug") == 0) {
 				want_debug = true;
 			}
-			else if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
-				errno = 0; verbosity = strtol(argv[i + 1], &p_strtol, 10);
+			else if (strncmp(argv[i], "--verbose:", 10) == 0) {
+				errno = 0; verbosity = strtol(&argv[i][10], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
 					set_log_verbosity(verbosity);
+				else {
+					printf("  Invalid verbosity '%s'\n", &argv[i][10]);
+					return EXIT_FAILURE;
+				}
 			}
-			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
-				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
+			else if (strncmp(argv[i], "--frameskip:", 12) == 0) {
+				errno = 0; max_skips = strtol(&argv[i][12], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
 					set_max_frameskip(max_skips);
+				else {
+					printf("  Invalid frameskip '%s'\n", &argv[i][12]);
+					return EXIT_FAILURE;
+				}
 			}
 			else if (strcmp(argv[i], "--no-throttle") == 0) {
 				s_conserve_cpu = false;
 			}
-			else if (strcmp(argv[i], "--fullscreen") == 0) {
-				s_is_fullscreen = true;
+			else if (strncmp(argv[i], "--mode:", 7) == 0) {
+				if (strcmp(&argv[i][7], "fullscreen") == 0)
+					s_is_fullscreen = true;
+				else if (strcmp(&argv[i][7], "window") == 0)
+					s_is_fullscreen = false;
+				else {
+					printf("  Invalid display mode '%s'\n", &argv[i][7]);
+					return EXIT_FAILURE;
+				}
 			}
-			else if (strcmp(argv[i], "--windowed") == 0) {
-				s_is_fullscreen = false;
+			else {
+				printf("  Invalid command line token '%s'\n", argv[i]);
+				return EXIT_FAILURE;
 			}
 		}
 	}
@@ -146,6 +163,7 @@ main(int argc, char* argv[])
 	printf("  Frameskip limit: %i frames\n", s_max_frameskip);
 	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	printf("  Console verbosity: V%i\n", get_log_verbosity());
+	printf("  Debugger mode: %s\n", want_debug ? "Active" : "Passive");
 	printf("\n");
 
 	if (!initialize_engine())
@@ -276,7 +294,7 @@ main(int argc, char* argv[])
 	}
 
 	// enable debugging support
-	initialize_debugger(want_debug);
+	initialize_debugger(want_debug, false);
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));

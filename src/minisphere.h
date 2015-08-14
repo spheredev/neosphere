@@ -4,14 +4,11 @@
 #define _USE_MATH_DEFINES
 #endif
 
-#define ENGINE_NAME "minisphere 1.7.1"
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-
 #include <limits.h>
 #include <math.h>
 #include <setjmp.h>
@@ -25,6 +22,9 @@
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
 #include <zlib.h>
+
+#include "version.h"
+
 #include "duktape.h"
 #include "dyad.h"
 #include "console.h"

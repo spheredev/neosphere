@@ -7,8 +7,9 @@
 
 #ifdef _WIN32
   #define _WIN32_WINNT 0x501
-  #define _CRT_SECURE_NO_WARNINGS
-  #define _WINSOCK_DEPRECATED_NO_WARNINGS
+  #ifndef _CRT_SECURE_NO_WARNINGS
+    #define _CRT_SECURE_NO_WARNINGS
+  #endif
   #include <winsock2.h>
   #include <ws2tcpip.h>
   #include <windows.h>
@@ -34,6 +35,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <limits.h>
+
 #include "dyad.h"
 
 #define DYAD_VERSION "0.2.0"
@@ -65,6 +67,10 @@
     if (res != 0) return NULL;
     return dst;
   }
+#endif
+
+#ifndef INVALID_SOCKET
+  #define INVALID_SOCKET -1
 #endif
 
 
@@ -170,7 +176,8 @@ enum {
 };
 
 typedef struct {
-  int capacity, maxfd;
+  int capacity;
+  dyad_Socket maxfd;
   fd_set *fds[SELECT_MAX];
 } SelectSet;
 
@@ -213,7 +220,7 @@ static void select_zero(SelectSet *s) {
 }
 
 
-static void select_add(SelectSet *s, int set, int fd) {
+static void select_add(SelectSet *s, int set, dyad_Socket fd) {
 #ifdef _WIN32
   fd_set *f;
   if (s->capacity == 0) select_grow(s);
@@ -221,7 +228,7 @@ static void select_add(SelectSet *s, int set, int fd) {
     select_grow(s);
   }
   f = s->fds[set];
-  f->fd_array[f->fd_count++] = (SOCKET) fd;
+  f->fd_array[f->fd_count++] = fd;
 #else
   unsigned *p;
   while (s->capacity * FD_SETSIZE < fd) {
@@ -234,14 +241,14 @@ static void select_add(SelectSet *s, int set, int fd) {
 }
 
 
-static int select_has(SelectSet *s, int set, int fd) {
+static int select_has(SelectSet *s, int set, dyad_Socket fd) {
 #ifdef _WIN32
   unsigned i;
   fd_set *f;
   if (s->capacity == 0) return 0;
   f = s->fds[set];
   for (i = 0; i < f->fd_count; i++) {
-    if (f->fd_array[i] == (SOCKET) fd) {
+    if (f->fd_array[i] == fd) {
       return 1;
     }
   }
@@ -268,7 +275,7 @@ typedef struct {
 
 struct dyad_Stream {
   int state, flags;
-  int sockfd;
+  dyad_Socket sockfd;
   char *address;
   int port;
   int bytesSent, bytesReceived;
@@ -380,7 +387,7 @@ static void stream_destroy(dyad_Stream *stream) {
   dyad_Event e;
   dyad_Stream **next;
   /* Close socket */
-  if (stream->sockfd != -1) {
+  if (stream->sockfd != INVALID_SOCKET) {
     close(stream->sockfd);
   }
   /* Emit destroy event */
@@ -473,7 +480,7 @@ static void stream_setSocketNonBlocking(dyad_Stream *stream, int opt) {
 }
 
 
-static void stream_setSocket(dyad_Stream *stream, int sockfd) {
+static void stream_setSocket(dyad_Stream *stream, dyad_Socket sockfd) {
   stream->sockfd = sockfd;
   stream_setSocketNonBlocking(stream, 1);
   stream_initAddress(stream);
@@ -484,7 +491,7 @@ static int stream_initSocket(
   dyad_Stream *stream, int domain, int type, int protocol
 ) {
   stream->sockfd = socket(domain, type, protocol);
-  if (stream->sockfd == -1) {
+  if (stream->sockfd == INVALID_SOCKET) {
     stream_error(stream, "could not create socket", errno); 
     return -1;
   }
@@ -582,8 +589,8 @@ static void stream_acceptPendingConnections(dyad_Stream *stream) {
     dyad_Stream *remote;
     dyad_Event e;
     int err = 0;
-    int sockfd = accept(stream->sockfd, NULL, NULL);
-    if (sockfd == -1) {
+    dyad_Socket sockfd = accept(stream->sockfd, NULL, NULL);
+    if (sockfd == INVALID_SOCKET) {
       err = errno;
       if (err == EWOULDBLOCK) {
         /* No more waiting sockets */
@@ -602,7 +609,7 @@ static void stream_acceptPendingConnections(dyad_Stream *stream) {
     stream_emitEvent(stream, &e);
     /* Handle invalid socket -- the stream is still made and the ACCEPT event
      * is still emitted, but its shut immediately with an error */
-    if (remote->sockfd == -1) {
+    if (remote->sockfd == INVALID_SOCKET) {
       stream_error(remote, "failed to create socket on accept", err);
       return;
     }
@@ -701,8 +708,17 @@ void dyad_update(void) {
   }
 
   /* Init timeout value and do select */
+  #ifdef _MSC_VER
+    #pragma warning(push)
+    /* Disable double to long implicit conversion warning,
+     * because the type of timeval's fields don't agree across platforms */
+    #pragma warning(disable: 4244)
+  #endif
   tv.tv_sec = dyad_updateTimeout;
   tv.tv_usec = (dyad_updateTimeout - tv.tv_sec) * 1e6;
+  #ifdef _MSC_VER
+    #pragma warning(pop)
+  #endif
 
   select(dyad_selectSet.maxfd + 1,
          dyad_selectSet.fds[SELECT_READ],
@@ -852,7 +868,7 @@ dyad_Stream *dyad_newStream(void) {
   dyad_Stream *stream = dyad_realloc(NULL, sizeof(*stream));
   memset(stream, 0, sizeof(*stream));
   stream->state = DYAD_STATE_CLOSED;
-  stream->sockfd = -1;
+  stream->sockfd = INVALID_SOCKET;
   stream->lastActivity = dyad_getTime();
   /* Add to list and increment count */
   stream->next = dyad_streams;
@@ -905,9 +921,9 @@ void dyad_close(dyad_Stream *stream) {
   if (stream->state == DYAD_STATE_CLOSED) return;
   stream->state = DYAD_STATE_CLOSED;
   /* Close socket */
-  if (stream->sockfd != -1) {
+  if (stream->sockfd != INVALID_SOCKET) {
     close(stream->sockfd);
-    stream->sockfd = -1;
+    stream->sockfd = INVALID_SOCKET;
   }
   /* Emit event */
   e = createEvent(DYAD_EVENT_CLOSE);
@@ -939,7 +955,7 @@ int dyad_listenEx(
 
   /* Get addrinfo */
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
+  hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
   sprintf(buf, "%d", port);
@@ -1132,6 +1148,6 @@ int dyad_getBytesReceived(dyad_Stream *stream) {
 }
 
 
-int dyad_getSocket(dyad_Stream *stream) {
+dyad_Socket dyad_getSocket(dyad_Stream *stream) {
   return stream->sockfd;
 }

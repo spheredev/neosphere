@@ -44,6 +44,7 @@ struct socket
 	unsigned int refcount;
 	unsigned int id;
 	dyad_Stream* stream;
+	dyad_Stream* stream_ipv6;
 	uint8_t*     buffer;
 	size_t       buffer_size;
 	size_t       pend_size;
@@ -87,7 +88,7 @@ on_error:
 }
 
 socket_t*
-listen_on_port(int port, size_t buffer_size, int max_backlog)
+listen_on_port(const char* hostname, int port, size_t buffer_size, int max_backlog)
 {
 	int          backlog_size;
 	socket_t*    socket = NULL;
@@ -108,8 +109,19 @@ listen_on_port(int port, size_t buffer_size, int max_backlog)
 	dyad_setNoDelay(socket->stream, true);
 	dyad_addListener(socket->stream, DYAD_EVENT_ACCEPT, on_dyad_accept, socket);
 	backlog_size = max_backlog > 0 ? max_backlog : 16;
-	if (dyad_listenEx(socket->stream, NULL, port, max_backlog) == -1)
-		goto on_error;
+	if (hostname == NULL) {
+		if (!(socket->stream_ipv6 = dyad_newStream())) goto on_error;
+		dyad_setNoDelay(socket->stream_ipv6, true);
+		dyad_addListener(socket->stream_ipv6, DYAD_EVENT_ACCEPT, on_dyad_accept, socket);
+		if (dyad_listenEx(socket->stream, "0.0.0.0", port, max_backlog) == -1)
+			goto on_error;
+		if (dyad_listenEx(socket->stream_ipv6, "::", port, max_backlog) == -1)
+			goto on_error;
+	}
+	else {
+		if (dyad_listenEx(socket->stream, hostname, port, max_backlog) == -1)
+			goto on_error;
+	}
 	
 	socket->id = s_next_socket_id++;
 	return ref_socket(socket);
@@ -152,6 +164,8 @@ free_socket(socket_t* socket)
 	for (i = 0; i < socket->num_backlog; ++i)
 		dyad_end(socket->backlog[i]);
 	dyad_end(socket->stream);
+	if (socket->stream_ipv6 != NULL)
+		dyad_end(socket->stream_ipv6);
 	free_socket(socket->pipe_target);
 	free(socket);
 }
@@ -390,7 +404,7 @@ js_new_Socket(duk_context* ctx)
 
 	if (duk_is_number(ctx, 0)) {
 		port = duk_require_int(ctx, 0);
-		if (socket = listen_on_port(port, 1024, 0))
+		if (socket = listen_on_port(NULL, port, 1024, 0))
 			duk_push_sphere_obj(ctx, "Socket", socket);
 		else
 			duk_push_null(ctx);
@@ -585,7 +599,7 @@ js_new_ListeningSocket(duk_context* ctx)
 
 	if (max_backlog <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ListeningSocket(): Backlog size must be greater than zero (%i)", max_backlog);
-	if (socket = listen_on_port(port, 1024, max_backlog))
+	if (socket = listen_on_port(NULL, port, 1024, max_backlog))
 		duk_push_sphere_obj(ctx, "ListeningSocket", socket);
 	else
 		duk_push_null(ctx);
