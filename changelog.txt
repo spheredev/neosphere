@@ -1,12 +1,12 @@
 minisphere Changelog
 ====================
 
-v1.7.2 - TBD
-------------
+v1.7.2 - August 15, 2015
+------------------------
 
-* Debugging is now enabled only over loopback. Duktape can't send source
-  over the debug connection, so debugging remotely wasn't particularly
-  useful. This avoids the Windows Firewall prompt as well.
+* Debugging is now enabled only over loopback. Remote debugging isn't
+  particularly useful without access to full matching source, and this avoids
+  the need to add a firewall exception.
 * While in Active debug mode (`--debug`), the engine will automatically
   exit if the debugger detaches cleanly.
 
