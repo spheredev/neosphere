@@ -109,50 +109,46 @@ main(int argc, char* argv[])
 	else {
 		// more than one argument, perform full commandline parsing
 		for (i = 1; i < argc; ++i) {
-			if ((strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "--game") == 0
-				|| strcmp(argv[i], "-package") == 0)
+			if ((strcmp(argv[i], "--game") == 0
+				|| strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "-package") == 0)
 				&& i < argc - 1)
 			{
-				free(game_path);
-				game_path = strdup(argv[i + 1]);
 				++i;
+				if (game_path == NULL)
+					game_path = strdup(argv[i]);
+				else {
+					printf("  More than one game was passed on command line\n");
+					return EXIT_FAILURE;
+				}
 			}
-			else if (strcmp(argv[i], "--debug") == 0) {
+			else if (strcmp(argv[i], "--debug") == 0)
 				want_debug = true;
-			}
-			else if (strncmp(argv[i], "--verbose:", 10) == 0) {
-				errno = 0; verbosity = strtol(&argv[i][10], &p_strtol, 10);
+			else if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
+				errno = 0; verbosity = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
 					set_log_verbosity(verbosity);
 				else {
-					printf("  Invalid verbosity '%s'\n", &argv[i][10]);
+					printf("  Invalid logging level '%s'\n", argv[i + 1]);
 					return EXIT_FAILURE;
 				}
 			}
-			else if (strncmp(argv[i], "--frameskip:", 12) == 0) {
-				errno = 0; max_skips = strtol(&argv[i][12], &p_strtol, 10);
+			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
+				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
 					set_max_frameskip(max_skips);
 				else {
-					printf("  Invalid frameskip '%s'\n", &argv[i][12]);
+					printf("  Invalid frameskip '%s'\n", argv[i + 1]);
 					return EXIT_FAILURE;
 				}
 			}
-			else if (strcmp(argv[i], "--no-throttle") == 0) {
+			else if (strcmp(argv[i], "--no-throttle") == 0)
 				s_conserve_cpu = false;
-			}
-			else if (strncmp(argv[i], "--mode:", 7) == 0) {
-				if (strcmp(&argv[i][7], "fullscreen") == 0)
-					s_is_fullscreen = true;
-				else if (strcmp(&argv[i][7], "window") == 0)
-					s_is_fullscreen = false;
-				else {
-					printf("  Invalid display mode '%s'\n", &argv[i][7]);
-					return EXIT_FAILURE;
-				}
-			}
+			else if (strcmp(argv[i], "--fullscreen") == 0)
+				s_is_fullscreen = true;
+			else if (strcmp(argv[i], "--windowed") == 0)
+				s_is_fullscreen = false;
 			else {
-				printf("  Invalid command line token '%s'\n", argv[i]);
+				printf("  Error parsing command line token '%s'\n", argv[i]);
 				return EXIT_FAILURE;
 			}
 		}
