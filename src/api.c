@@ -4,6 +4,7 @@
 #include "audialis.h"
 #include "bytearray.h"
 #include "color.h"
+#include "debugger.h"
 #include "file.h"
 #include "font.h"
 #include "galileo.h"
@@ -780,6 +781,7 @@ js_Assert(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): Stack offset cannot be positive");
 	
 	if (!result) {
+		// locate the offending script and line number via the call stack
 		duk_push_global_object(ctx);
 		duk_get_prop_string(ctx, -1, "Duktape");
 		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
@@ -794,23 +796,21 @@ js_Assert(duk_context* ctx)
 		duk_pop_2(ctx);
 		fprintf(stderr, "ASSERT: `%s:%i` %s\n", filename, line_number, message);
 
-		#if defined(MINI_NONFATAL_ASSERT)
-
-		text = lstr_newf("%s (line: %i)\n%s\n\nContinue game execution?", filename, line_number, message);
-		if (!al_show_native_message_box(g_display, "Script Error", "An Assert() condition failed.",
-			lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
-		{
-			exit_game(true);
+		// if an assertion fails, one of two things will happen:
+		//   - if no debugger is attached, the engine flags it as an error and aborts.
+		//   - if a debugger is attached, the user is given a choice to either continue
+		//     or abort. continuing may be useful in certain debugging scenarios.
+		if (!is_debugger_attached())
+			duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
+		else {
+			text = lstr_newf("%s (line: %i)\n%s\n\nIf you choose not to continue, the engine will abort.", filename, line_number, message);
+			if (!al_show_native_message_box(g_display, "Script Error", "An assertion failed. Continue?",
+				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
+			{
+				duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
+			}
+			lstr_free(text);
 		}
-		lstr_free(text);
-
-		#else
-		
-		(void)text;
-
-		duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
-
-		#endif
 	}
 	duk_dup(ctx, 0);
 	return 1;

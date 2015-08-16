@@ -73,6 +73,12 @@ update_debugger(void)
 	}
 }
 
+bool
+is_debugger_attached(void)
+{
+	return s_is_attached;
+}
+
 static bool
 attach_debugger(void)
 {

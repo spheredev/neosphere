@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.7.3 - TBD
+------------
+
+* Assert() failures can now be ignored when a debugger is attached. Previously,
+  nonfatal asserts were only enabled for minisphere Console.
+
 v1.7.2 - August 15, 2015
 ------------------------
 
