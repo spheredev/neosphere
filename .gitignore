@@ -1,5 +1,6 @@
 *.log
-bin/
+bin/*.exe
+bin/spherestudio
 msvc/obj
 msvc/debug
 setup/*.exe

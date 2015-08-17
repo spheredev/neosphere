@@ -10,8 +10,3 @@ if not os.path.exists(out_dir):
   os.makedirs(out_dir)
 
 Install(out_dir, minisphere)
-Install(out_dir, os.path.join(os.getcwd(), "distro/system"))
-Install(out_dir, os.path.join(os.getcwd(), "distro/documentation"))
-Install(out_dir, os.path.join(os.getcwd(), "changelog.txt"))
-Install(out_dir, os.path.join(os.getcwd(), "license.txt"))
-Install(out_dir, os.path.join(os.getcwd(), "readme.md"))

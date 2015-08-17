@@ -11,6 +11,7 @@ if (typeof mini === 'undefined') {
     Abort("miniRT component script; use miniRT.js instead", -2);
 }
 
+RequireSystemScript('mini/miniConsole.js');
 RequireSystemScript('mini/miniThreads.js');
 
 // mini.BGM
@@ -30,6 +31,23 @@ mini.onStartUp.add(mini.BGM, function()
 	Print("Initializing miniRT BGM manager");
 	this.mixer = new Mixer(44100, 16, 2);
 	mini.Threads.create(this);
+	mini.Console.register('bgm', mini.BGM, {
+		'play': function(trackName) {
+			try { this.play(trackName); }
+			catch(e) {
+				mini.Console.write("Error playing BGM '" + trackName + "'");
+			}
+		},
+		'pop': function() { this.pop(); },
+		'push': function(trackName) {
+			try { this.push(trackName); }
+			catch(e) {
+				mini.Console.write("Error playing BGM '" + trackName + "'");
+			}
+		},
+		'stop': function() { this.play(null); },
+		'volume': function(volume) { this.adjust(volume); },
+	});
 });
 	
 mini.BGM.update = function()

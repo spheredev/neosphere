@@ -65,6 +65,7 @@ UninstallDisplayIcon={app}\spherical.ico,0
 AppVersion={#AppVersion}.{#AppBuildNumber}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
+LicenseFile=..\license.txt
 OutputDir=.
 Compression=lzma
 SolidCompression=yes
@@ -109,12 +110,9 @@ Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 #endif
+Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\license.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\readme.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\changelog.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifdef WANT_GDK_SETUP
 Source: "..\bin\spherestudio.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs\api

@@ -163,11 +163,8 @@
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
-xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /f "..\readme.md" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-del "$(OutDir)startup.spk"</Command>
+      <Command>xcopy /y /d /e /f "..\bin\system\*.*" "$(OutDir)system"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -189,11 +186,8 @@ del "$(OutDir)startup.spk"</Command>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
-xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /f "..\readme.md" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-del "$(OutDir)startup.spk"</Command>
+      <Command>xcopy /y /d /e /f "..\bin\system\*.*" "$(OutDir)system"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -224,13 +218,7 @@ del "$(OutDir)startup.spk"</Command>
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
-xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /f "..\readme.md" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
     <ClCompile>
@@ -260,13 +248,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
-xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /f "..\readme.md" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -296,13 +278,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
-xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /f "..\readme.md" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <ClCompile>
@@ -332,13 +308,7 @@ xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /y /d /f "..\changelog.txt" "$(OutDir)"
-xcopy /y /d /f "..\license.txt" "$(OutDir)"
-xcopy /y /d /f "..\readme.md" "$(OutDir)"
-xcopy /y /d /e /f "..\distro\*.*" "$(OutDir)"
-</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\animation.c" />
