@@ -31,22 +31,35 @@ mini.onStartUp.add(mini.BGM, function()
 	Print("Initializing miniRT BGM manager");
 	this.mixer = new Mixer(44100, 16, 2);
 	mini.Threads.create(this);
-	mini.Console.register('bgm', mini.BGM, {
-		'play': function(trackName) {
-			try { this.play(trackName); }
+	
+	mini.Console.register('bgm', mini.BGM,
+	{
+		'play': function(trackName, fadeTime) {
+			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+			try { this.play(trackName, fadeTime); }
 			catch(e) {
 				mini.Console.write("Error playing BGM '" + trackName + "'");
 			}
 		},
-		'pop': function() { this.pop(); },
-		'push': function(trackName) {
-			try { this.push(trackName); }
+		'pop': function(fadeTime) {
+			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+			this.pop(fadeTime);
+		},
+		'push': function(trackName, fadeTime) {
+			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+			try { this.push(trackName, fadeTime); }
 			catch(e) {
 				mini.Console.write("Error playing BGM '" + trackName + "'");
 			}
 		},
-		'stop': function() { this.play(null); },
-		'volume': function(volume) { this.adjust(volume); },
+		'stop': function(fadeTime) {
+			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+			this.play(null, fadeTime);
+		},
+		'volume': function(volume, fadeTime) {
+			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+			this.adjust(volume, fadeTime);
+		},
 	});
 });
 	

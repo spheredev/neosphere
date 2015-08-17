@@ -9,6 +9,12 @@ v1.7.3 - August 17, 2015
 * Reverts recent command line option renaming which made the engine incompatible
   with earlier versions. Options may change in 2.0, but for now it's best to
   retain compatibility here.
+* miniRT now includes built-in console commands for BGM management:
+    - bgm play <filename> [<fade>]
+    - bgm push <filename> [<fade>]
+    - bgm pop [<fade>]
+    - bgm stop [<fade>]
+    - bgm volume <0-1> [<fade>]
 
 v1.7.2 - August 15, 2015
 ------------------------
