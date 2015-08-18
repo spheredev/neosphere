@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.7.4 - TBD
+------------
+
+* miniRT console output is now routed through Print() so it is visible to an
+  attached debugger.
+
 v1.7.3 - August 17, 2015
 ------------------------
 

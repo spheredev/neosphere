@@ -73,7 +73,6 @@ mini.initialize = function(params)
 {
     params = typeof params !== 'undefined' ? params : {};
     
-	Print("Initializing miniRT");
 	var frameRate = 'frameRate' in params ? params.frameRate : 0;
 	SetFrameRate(frameRate);
     mini.onStartUp.invoke(params);

@@ -28,7 +28,6 @@ mini.BGM = new (function()
 // Prepares miniBGM for use when the user calls mini.initialize().
 mini.onStartUp.add(mini.BGM, function()
 {
-	Print("Initializing miniRT BGM manager");
 	this.mixer = new Mixer(44100, 16, 2);
 	mini.Threads.create(this);
 	

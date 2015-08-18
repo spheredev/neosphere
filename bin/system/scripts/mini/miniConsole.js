@@ -29,8 +29,6 @@ mini.Console = {};
 //                    to. Can be null, in which case no log file is created. (default: null)
 mini.onStartUp.add(mini.Console, function(params)
 {
-	Print("Initializing miniRT console");
-	
 	this.fadeness = 0.0;
 	this.font = GetSystemFont();
 	this.isVisible = false;
@@ -330,8 +328,9 @@ mini.Console.show = function()
 mini.Console.write = function(text)
 {
 	if (this.log !== null && this.nextLine > 0) {
-		var lineInBuffer = (this.nextLine - 1) % this.bufferSize;
-		this.log.write(this.buffer[lineInBuffer]);
+		var lineText = this.buffer[(this.nextLine - 1) % this.bufferSize];
+		Print(lineText);
+		this.log.write(lineText);
 	}
 	var lineInBuffer = this.nextLine % this.bufferSize;
 	this.buffer[lineInBuffer] = ">" + text;

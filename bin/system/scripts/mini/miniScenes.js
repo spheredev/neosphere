@@ -57,8 +57,6 @@ mini.Scenelet = function(name, code)
 // Initializes miniscenes when the user calls mini.initialize().
 mini.onStartUp.add(mini.Scenes, function(params)
 {
-	Print("Initializing miniRT scene engine");
-	
 	this.screenMask = new Color(0, 0, 0, 0);
 	this.priority = 'scenePriority' in params ? params.scenePriority : 0;
 	this.threadID = mini.Threads.create(this, this.priority);

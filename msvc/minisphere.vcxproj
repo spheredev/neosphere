@@ -402,8 +402,8 @@
     <Image Include="minisphere.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\bin\documentation\minisphere-api.txt" />
     <Text Include="..\changelog.txt" />
-    <Text Include="..\distro\documentation\minisphere-api.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
