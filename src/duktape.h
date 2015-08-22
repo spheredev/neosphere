@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit a773df04bdc84c842bceaeb918bd910579ea8841 (v1.2.0-319-ga773df0).
+ *  Git commit e55e469c68b90f0aac86eca7c058b8347ef2f03e (v1.2.0-365-ge55e469).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -214,7 +214,7 @@ struct duk_number_list_entry {
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.2.0-319-ga773df0"
+#define DUK_GIT_DESCRIBE                  "v1.2.0-365-ge55e469"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -276,9 +276,9 @@ struct duk_number_list_entry {
 #define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 5)    /* enumerate a proxy object itself without invoking proxy behavior */
 
 /* Compilation flags for duk_compile() and duk_eval() */
-#define DUK_COMPILE_EVAL                  (1 << 0)    /* compile eval code (instead of program) */
-#define DUK_COMPILE_FUNCTION              (1 << 1)    /* compile function code (instead of program) */
-#define DUK_COMPILE_STRICT                (1 << 2)    /* use strict (outer) context for program, eval, or function */
+#define DUK_COMPILE_EVAL                  (1 << 0)    /* compile eval code (instead of global code) */
+#define DUK_COMPILE_FUNCTION              (1 << 1)    /* compile function code (instead of global code) */
+#define DUK_COMPILE_STRICT                (1 << 2)    /* use strict (outer) context for global, eval, or function code */
 #define DUK_COMPILE_SAFE                  (1 << 3)    /* (internal) catch compilation errors */
 #define DUK_COMPILE_NORESULT              (1 << 4)    /* (internal) omit eval result */
 #define DUK_COMPILE_NOSOURCE              (1 << 5)    /* (internal) no source string on stack */
