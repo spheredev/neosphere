@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v1.7.5 - August 22, 2015
+------------------------
+
+* The debugger will now automatically pause execution before a fatal exception
+  is thrown to allow local variables and the callstack to be examined.
+
 v1.7.4 - August 18, 2015
 ------------------------
 

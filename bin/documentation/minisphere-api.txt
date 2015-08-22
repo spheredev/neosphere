@@ -21,15 +21,15 @@ engine's level of support for various features.
 GetVersion()
 
   Returns the Sphere API version level as a floating point number. When called
-  under minisphere 1.4, this function returns 2.0, indicating Sphere API version
-  2.
+  under this version of minisphere, this function returns 2.0, indicating Sphere
+  API version 2.
 
 GetVersionString()
 
-    Returns the engine's version identification string. For minisphere 1.5, this
-    string is:
+    Returns the engine's version identification string. The string returned is
+    in the following format:
       
-      v2.0 (compatible; minisphere 1.7.0)
+      v2.0 (minisphere 1.7.0)
 
 GetExtensions()
 
