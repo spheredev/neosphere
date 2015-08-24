@@ -9955,7 +9955,7 @@ DUK_INTERNAL_DECL void duk_debug_write_eom(duk_hthread *thr);
 
 DUK_INTERNAL duk_uint_fast32_t duk_debug_curr_line(duk_hthread *thr);
 DUK_INTERNAL void duk_debug_send_status(duk_hthread *thr);
-DUK_INTERNAL void duk_debug_send_throw(duk_hthread *thr, const char *errstr, duk_bool_t unhandled);
+DUK_INTERNAL void duk_debug_send_throw(duk_hthread *thr, duk_bool_t fatal);
 
 DUK_INTERNAL_DECL duk_bool_t duk_debug_process_messages(duk_hthread *thr, duk_bool_t no_block);
 
@@ -38911,17 +38911,22 @@ DUK_INTERNAL void duk_debug_send_status(duk_hthread *thr) {
 	duk_debug_write_eom(thr);
 }
 
-DUK_INTERNAL void duk_debug_send_throw(duk_hthread *thr, const char *errstr, duk_bool_t unhandled) {
+DUK_INTERNAL void duk_debug_send_throw(duk_hthread *thr, duk_bool_t fatal) {
 	duk_context *ctx = (duk_context *) thr;
 	duk_activation *act;
 	duk_uint32_t pc;
 
-	duk_debug_write_notify(thr, DUK_DBG_CMD_THROW);
-	duk_debug_write_int(thr, unhandled);
-	duk_debug_write_cstring(thr, errstr);
-	
+	DUK_ASSERT(thr->valstack_top > thr->valstack);  /* thrown value on top of valstack */
 	DUK_ASSERT(thr->callstack_top > 0);  /* someone had to throw it */
-	
+
+	duk_debug_write_notify(thr, DUK_DBG_CMD_THROW);
+	duk_debug_write_int(thr, fatal);
+
+	duk_dup(ctx, -1);
+	duk_safe_to_string(ctx, -1);  /* coerce to string for client */
+	duk_debug_write_hstring(thr, duk_require_hstring(ctx, -1));
+	duk_pop(ctx);
+
 	act = thr->callstack + thr->callstack_top - 1;
 	duk_push_hobject(ctx, act->func);
 	duk_get_prop_string(ctx, -1, "fileName");
@@ -40427,33 +40432,30 @@ DUK_INTERNAL void duk_err_setup_heap_ljstate(duk_hthread *thr, duk_small_int_t l
 	 * before the stack is unwound.
 	 */
 
+	/* XXX: This is an awkward place for this, but it's not clear where else
+	 * to put it where it will catch all thrown errors. It can't go in
+	 * duk_err_longjmp() as the interrupt clobbers the longjmp state, leading
+	 * to an internal error. Maybe move this out into its own helper?
+	 */
+
 #if defined(DUK_USE_DEBUGGER_SUPPORT)
 	if (lj_type == DUK_LJ_TYPE_THROW && DUK_HEAP_IS_DEBUGGER_ATTACHED(thr->heap)) {
-		duk_context *ctx = (duk_context *) thr;
-		duk_bool_t unhandled;
+		duk_bool_t fatal;
 		int i;
 
 		DUK_D(DUK_DPRINT("throw with debugger attached, report to client"));
 
-		/* Check the catchstack for active catch clauses */
-
-		unhandled = 1;
+		/* Walk the catchstack to determine if the throw is fatal */
+		fatal = 1;
 		for (i = 0; i < thr->catchstack_top; i++) {
 			duk_catcher *cat = thr->catchstack + i;
-			if (DUK_CAT_HAS_CATCH_ENABLED(cat)) {
-				unhandled = 0;
-			}
+			if (DUK_CAT_HAS_CATCH_ENABLED(cat)) { fatal = 0; }
 		}
 		
-		/* Report the error to the client.  The thrown value is string-coerced
-		 * as there is no way for the client to traverse an Error object.
-		 */
+		/* Report the error to the client */
+		duk_debug_send_throw(thr, fatal);
 
-		duk_dup(ctx, -1);
-		duk_debug_send_throw(thr, duk_safe_to_string(ctx, -1), unhandled);
-		duk_pop(ctx);
-
-		if (unhandled) {
+		if (fatal) {
 			DUK_D(DUK_DPRINT("throw intercepted by debugger, halt before longjmp"));
 			duk_js_enter_debugger(thr, 1 /* show_last_ins */);
 		}

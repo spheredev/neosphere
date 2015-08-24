@@ -223,14 +223,22 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 {
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_string(ctx, name);
+	duk_put_prop_string(ctx, -3, "name");
+	
+	// create a prototype. Duktape won't assign one for us.
 	duk_push_object(ctx);
-	duk_push_string(ctx, name); duk_put_prop_string(ctx, -2, "\xFF" "ctor");
+	duk_push_string(ctx, name);
+	duk_put_prop_string(ctx, -2, "\xFF" "ctor");
 	if (finalizer != NULL) {
 		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
 		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
 	}
-	
-	// save prototype in prototype stash
+
+	// save the prototype in the prototype stash. for full compatibility with
+	// Sphere 1.5, we have to allow native objects to be created through the
+	// legacy APIs even if the corresponding constructor is overwritten or shadowed.
+	// to support that, the prototype has to remain accessible.
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "prototypes");
 	duk_dup(ctx, -3);
@@ -259,11 +267,14 @@ register_api_function(duk_context* ctx, const char* ctor_name, const char* name,
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
+		// load the prototype from the prototype stash
 		duk_push_global_stash(ctx);
 		duk_get_prop_string(ctx, -1, "prototypes");
 		duk_get_prop_string(ctx, -1, ctor_name);
 	}
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_string(ctx, name);
+	duk_put_prop_string(ctx, -2, "name");
 	duk_put_prop_string(ctx, -2, name);
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
