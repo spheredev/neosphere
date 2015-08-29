@@ -224,7 +224,7 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_push_string(ctx, name);
-	duk_put_prop_string(ctx, -3, "name");
+	duk_put_prop_string(ctx, -2, "name");
 	
 	// create a prototype. Duktape won't assign one for us.
 	duk_push_object(ctx);
