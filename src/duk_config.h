@@ -46,10 +46,14 @@
 
 #define DUK_OPT_FASTINT
 
+#ifndef MINISPHERE_REDIST
+
 #define DUK_OPT_INTERRUPT_COUNTER
 #define DUK_OPT_TARGET_INFO ENGINE_NAME
 #define DUK_OPT_DEBUGGER_SUPPORT
 #define DUK_OPT_DEBUGGER_FWD_PRINTALERT
+
+#endif
 
 /*
  *  Compiler features

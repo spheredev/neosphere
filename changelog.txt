@@ -6,6 +6,9 @@ v1.7.6 - TBD
 
 * Sphere API functions are now named in stack listings. This is helpful when
   debugging to see when, e.g. a MapEngine() call is on the stack.
+* Upgraded Duktape to latest build which includes several performance
+  improvements.
+* Redistributable engine 
 
 v1.7.5 - August 22, 2015
 ------------------------

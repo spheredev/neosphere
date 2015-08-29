@@ -121,8 +121,17 @@ main(int argc, char* argv[])
 					return EXIT_FAILURE;
 				}
 			}
-			else if (strcmp(argv[i], "--debug") == 0)
+			else if (strcmp(argv[i], "--debug") == 0) {
+				#ifndef MINISPHERE_REDIST
 				want_debug = true;
+				#else
+				al_show_native_message_box(NULL,
+					"No Debugging Support", "Debugging is not enabled for this build.",
+					"'--debug' was passed on the command line. The redistributable engine is not enabled for debugging. Please use minisphere Console if you need the debugger.",
+					NULL, ALLEGRO_MESSAGEBOX_ERROR);
+				return EXIT_FAILURE;
+				#endif
+			}
 			else if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
 				errno = 0; verbosity = strtol(argv[i + 1], &p_strtol, 10);
 				if (errno != ERANGE && *p_strtol == '\0')
@@ -290,7 +299,9 @@ main(int argc, char* argv[])
 	}
 
 	// enable debugging support
+	#ifndef MINISPHERE_REDIST
 	initialize_debugger(want_debug, false);
+	#endif
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -404,7 +415,11 @@ do_events(void)
 	ALLEGRO_EVENT event;
 
 	dyad_update();
+	
+	#ifndef MINISPHERE_REDIST
 	update_debugger();
+	#endif
+	
 	update_async();
 	update_input();
 	update_audialis();
@@ -702,7 +717,10 @@ shutdown_engine(void)
 {
 	save_key_map();
 	
+	#ifndef MINISPHERE_REDIST
 	shutdown_debugger();
+	#endif
+	
 	shutdown_map_engine();
 	shutdown_input();
 	
