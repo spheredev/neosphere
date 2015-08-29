@@ -1,14 +1,14 @@
 minisphere Changelog
 ====================
 
-v1.7.6 - TBD
-------------
+v1.7.6 - August 29, 2015
+------------------------
 
-* Sphere API functions are now named in stack listings. This is helpful when
+* Sphere API functions are named in stack listings. This is helpful when
   debugging to see when, e.g. a MapEngine() call is on the stack.
-* Upgraded Duktape to latest build which includes several performance
-  improvements.
-* Redistributable engine 
+* Upgrades Duktape to the latest build, improving performance.
+* Debugging has been disabled for the Redistributable as it hurt performance
+  even when not active.
 
 v1.7.5 - August 22, 2015
 ------------------------
