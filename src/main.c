@@ -168,7 +168,11 @@ main(int argc, char* argv[])
 	printf("  Frameskip limit: %i frames\n", s_max_frameskip);
 	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
 	printf("  Console verbosity: V%i\n", get_log_verbosity());
+	
+	#ifndef MINISPHERE_REDIST
 	printf("  Debugger mode: %s\n", want_debug ? "Active" : "Passive");
+	#endif
+	
 	printf("\n");
 
 	if (!initialize_engine())
