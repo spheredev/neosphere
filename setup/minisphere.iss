@@ -20,15 +20,15 @@
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-#define WANT_GDK_SETUP
+;#define WANT_GDK_SETUP
 
 #ifnexist "..\bin\spherestudio\Sphere Studio.exe"
 #undef WANT_GDK_SETUP
 #endif
 
 #define AppName "minisphere"
-#define AppVersion "1.7.6"
-#define AppBuildNumber "821"
+#define AppVersion "1.7.7"
+#define AppBuildNumber "825"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"
