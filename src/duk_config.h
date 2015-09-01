@@ -491,7 +491,9 @@ static __inline__ unsigned long long duk_rdtsc(void) {
  * there is no platform specific date parsing/formatting but there is still
  * the ISO 8601 standard format.
  */
+#if defined(DUK_COMPILING_DUKTAPE)
 #include <windows.h>
+#endif
 #include <limits.h>
 #elif defined(DUK_F_FLASHPLAYER)
 /* Crossbridge */
@@ -3014,6 +3016,7 @@ typedef FILE duk_file;
 #define DUK_USE_JSON_ENC_RECLIMIT 1000
 #define DUK_USE_JSON_QUOTESTRING_FASTPATH
 #undef DUK_USE_JSON_STRINGIFY_FASTPATH
+#undef DUK_USE_MARKANDSWEEP_FINALIZER_TORTURE
 #define DUK_USE_MARK_AND_SWEEP_RECLIMIT 256
 #define DUK_USE_NATIVE_CALL_RECLIMIT 1000
 #undef DUK_USE_REFZERO_FINALIZER_TORTURE
