@@ -3,7 +3,7 @@
 
 #include "debugger.h"
 
-static const int TCP_DEBUG_PORT = 812;
+static const int TCP_DEBUG_PORT = 1208;
 
 static bool       attach_debugger     (void);
 static void       detach_debugger     (bool is_shutdown);
@@ -24,7 +24,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	
 	s_want_attach = want_attach;
 	
-	// listen for debugger connections on TCP port 812.
+	// listen for debugger connections on TCP port 1208.
 	// the listening socket will remain active for the duration of
 	// the session, allowing a debugger to be attached at any time.
 	console_log(0, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
@@ -109,7 +109,7 @@ detach_debugger(bool is_shutdown)
 	duk_debugger_detach(g_duk);
 	free_socket(s_client); s_client = NULL;
 	if (s_want_attach && !is_shutdown)
-		exit_game(true);
+		exit_game(true);  // clean detach, exit
 }
 
 static void

@@ -207,7 +207,7 @@ destroy_person(person_t* person)
 {
 	int i, j;
 
-	// call the person's destroy script *before* renouncing leadership
+	// call the person's destroy script *before* renouncing leadership.
 	// the destroy script may want to reassign followers (they will be orphaned otherwise), so
 	// we want to give it a chance to do so.
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
@@ -309,7 +309,9 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 	if (test_obsmap_rect(obsmap, my_base))
 		is_obstructed = true;
 	
-	// check for obstructing tiles; constrain search to immediate vicinity of sprite base
+	// check for obstructing tiles
+	// for performance reasons, the search is constrained to the immediate vicinity
+	// of the person's sprite base.
 	if (!person->ignore_all_tiles) {
 		tileset = get_map_tileset();
 		get_tile_size(tileset, &tile_w, &tile_h);
@@ -646,10 +648,10 @@ talk_person(const person_t* person)
 	
 	// check if anyone else is within earshot
 	get_person_xy(person, &talk_x, &talk_y, true);
-	if (strstr(person->direction, "north") != NULL) talk_y -= s_talk_distance;
-	if (strstr(person->direction, "east") != NULL) talk_x += s_talk_distance;
-	if (strstr(person->direction, "south") != NULL) talk_y += s_talk_distance;
-	if (strstr(person->direction, "west") != NULL) talk_x -= s_talk_distance;
+	if (strstr(person->direction, "north")) talk_y -= s_talk_distance;
+	if (strstr(person->direction, "east")) talk_x += s_talk_distance;
+	if (strstr(person->direction, "south")) talk_y += s_talk_distance;
+	if (strstr(person->direction, "west")) talk_x -= s_talk_distance;
 	is_person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
 	
 	// if so, call their talk script
@@ -827,6 +829,9 @@ static bool
 enlarge_step_history(person_t* person, int new_size)
 {
 	struct step *new_steps;
+	size_t      pastmost;
+	double      last_x;
+	double      last_y;
 
 	int i;
 	
@@ -834,15 +839,14 @@ enlarge_step_history(person_t* person, int new_size)
 		if (!(new_steps = realloc(person->steps, new_size * sizeof(struct step))))
 			return false;
 
-		// when enlarging the history buffer, we fill new slots with pastmost values
+		// when enlarging the history buffer, fill new slots with pastmost values
 		// (kind of like sign extension)
+		pastmost = person->max_history - 1;
+		last_x = person->steps != NULL ? person->steps[pastmost].x : person->x;
+		last_y = person->steps != NULL ? person->steps[pastmost].y : person->y;
 		for (i = person->max_history; i < new_size; ++i) {
-			new_steps[i].x = person->steps != NULL
-				? person->steps[person->max_history - 1].x
-				: person->x;
-			new_steps[i].y = person->steps != NULL
-				? person->steps[person->max_history - 1].y
-				: person->y;
+			new_steps[i].x = last_x;
+			new_steps[i].y = last_y;
 		}
 		person->steps = new_steps;
 		person->max_history = new_size;
