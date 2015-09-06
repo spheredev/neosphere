@@ -1,6 +1,15 @@
 minisphere Changelog
 ====================
 
+v1.7.8 - September 5, 2015
+--------------------------
+
+* TCP port 1208 is now used for debugging. The previous debug port was
+  812, which is in the well-known port range and can't be opened by a
+  non-root user under Linux.
+* Fixes a bug where an error thrown during a debug eval would cause a
+  corrupt notification message to be sent, likely crashing the debugger.
+
 v1.7.7 - September 1, 2015
 --------------------------
 

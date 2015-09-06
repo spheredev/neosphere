@@ -1,4 +1,4 @@
-minisphere 1.7.7
+minisphere 1.7.8
 ================
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
