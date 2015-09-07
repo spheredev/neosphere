@@ -66410,9 +66410,18 @@ DUK_LOCAL duk_small_uint_t duk__executor_interrupt(duk_hthread *thr) {
 	DUK_HEAP_SET_INTERRUPT_RUNNING(thr->heap);
 
 	act = thr->callstack + thr->callstack_top - 1;
+	
+	/* XXX: This is disabled for now as it prevents the interrupt handler from
+	 * being called during a Duktape/C call, which is needed for, e.g. error
+	 * intercept.
+	 */
+
+#if 0
 	fun = (duk_hcompiledfunction *) DUK_ACT_GET_FUNC(act);
 	DUK_ASSERT(DUK_HOBJECT_HAS_COMPILEDFUNCTION((duk_hobject *) fun));
-	DUK_UNREF(fun);
+#endif
+	
+DUK_UNREF(fun);
 
 #if defined(DUK_USE_EXEC_TIMEOUT_CHECK)
 	/*
@@ -69178,12 +69187,11 @@ DUK_INTERNAL void duk_js_enter_debugger(duk_hthread *thr, duk_bool_t use_prev_op
 		act->curr_pc--;
 	}
 
-	/* Process debug messages until no longer paused */
-	thr->heap->dbg_processing = 1;
-	while (thr->heap->dbg_paused) {
-		duk_debug_process_messages(thr, 0 /* no_block */);
-	}
-	thr->heap->dbg_processing = 0;
+	/* XXX: The only way to reliably pause on-the-fly currently appears to be to
+	 * set the heap paused and deliberately generate an interrupt. Otherwise, Eval
+	 * doesn't work properly as it assumes the interrupt handler is not reentrant.
+	 */
+	duk__executor_interrupt(thr);
 
 	act->curr_pc = old_pc;  /* restore PC */
 }
