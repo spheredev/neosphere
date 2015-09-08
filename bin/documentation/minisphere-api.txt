@@ -524,7 +524,7 @@ RNG.random();
   Returns a floating point value in the range [0,1). This is the basic method of
   random number generation, and a direct, drop-in replacement for Math.random().
 
-RNG.name([length]);
+RNG.string([length]);
 
   Returns a randomly-generated string consisting of upper- and lowercase
   alphabetic characters. The resulting string looks something like a YouTube

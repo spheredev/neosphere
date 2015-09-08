@@ -12,6 +12,11 @@ static duk_ret_t js_RNG_sample (duk_context* ctx);
 static duk_ret_t js_RNG_string (duk_context* ctx);
 static duk_ret_t js_RNG_vary   (duk_context* ctx);
 
+static const char* const RNG_STRING_CORPUS =
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+static long s_corpus_size;
+
 void
 initialize_rng(void)
 {
@@ -22,6 +27,8 @@ initialize_rng(void)
 	seed = (unsigned long)time(NULL);
 	console_log(2, "  Seed: %lu", seed);
 	init_genrand(seed);
+
+	s_corpus_size = (long)strlen(RNG_STRING_CORPUS);
 }
 
 void
@@ -79,10 +86,14 @@ rng_string(int length)
 {
 	static char name[256];
 
+	long index;
+	
 	int i;
 
-	for (i = 0; i < length; ++i)
-		name[i] = rng_chance(0.5) ? rng_ranged('A', 'Z') : rng_ranged('a', 'z');
+	for (i = 0; i < length; ++i) {
+		index = rng_ranged(0, s_corpus_size - 1);
+		name[i] = RNG_STRING_CORPUS[index];
+	}
 	name[length - 1] = '\0';
 	return name;
 }

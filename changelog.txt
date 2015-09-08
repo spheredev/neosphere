@@ -1,9 +1,16 @@
 minisphere Changelog
 ====================
 
-v1.8.0 - TBD
-------------
+v1.7.10 - TBD
+-------------
 
+* Upgrades Duktape to the latest build, which includes several ArrayBuffer
+  fixes.
+* Renames RNG.name() to RNG.string(). This is a breaking change, but makes the
+  purpose of the function clearer.
+* Improves RNG.string() performance by generating only one random number per
+  character instead of 2.
+* RNG.string() output can now include digits.
 
 v1.7.9 - September 7, 2015
 --------------------------
