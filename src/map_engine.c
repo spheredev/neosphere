@@ -622,8 +622,9 @@ load_map(const char* filename)
 	
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
-	if (!(file = sfs_fopen(g_fs, filename, "maps", "rb"))) goto on_error;
-	if (!(map = calloc(1, sizeof(struct map)))) goto on_error;
+	if (!(file = sfs_fopen(g_fs, filename, "maps", "rb")))
+		goto on_error;
+	map = calloc(1, sizeof(struct map));
 	if (sfs_fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
@@ -634,18 +635,17 @@ load_map(const char* filename)
 	switch (rmp.version) {
 	case 1:
 		// load strings (resource filenames, scripts, etc.)
-		if ((strings = calloc(rmp.num_strings, sizeof(lstring_t*))) == NULL)
-			goto on_error;
+		strings = calloc(rmp.num_strings, sizeof(lstring_t*));
 		has_failed = false;
 		for (i = 0; i < rmp.num_strings; ++i)
 			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
 		if (has_failed) goto on_error;
 
-		// pre-allocate map structures; if an allocation fails we won't waste time reading the rest of the file
-		if ((map->layers = calloc(rmp.num_layers, sizeof(struct map_layer))) == NULL) goto on_error;
-		if ((map->persons = calloc(rmp.num_entities, sizeof(struct map_person))) == NULL) goto on_error;
-		if (!(map->triggers = new_vector(sizeof(struct map_trigger)))) goto on_error;
-		if (!(map->zones = new_vector(sizeof(struct map_zone)))) goto on_error;
+		// pre-allocate map structures
+		map->layers = calloc(rmp.num_layers, sizeof(struct map_layer));
+		map->persons = calloc(rmp.num_entities, sizeof(struct map_person));
+		map->triggers = new_vector(sizeof(struct map_trigger));
+		map->zones = new_vector(sizeof(struct map_zone));
 
 		// load layers
 		for (i = 0; i < rmp.num_layers; ++i) {
@@ -668,11 +668,12 @@ load_map(const char* filename)
 			}
 			if (!(layer->tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))))
 				goto on_error;
-			if ((layer->obsmap = new_obsmap()) == NULL) goto on_error;
 			layer->name = read_lstring(file, true);
+			layer->obsmap = new_obsmap();
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
-			if (sfs_fread(tile_data, 2, num_tiles, file) != num_tiles) goto on_error;
+			if (sfs_fread(tile_data, 2, num_tiles, file) != num_tiles)
+				goto on_error;
 			for (j = 0; j < num_tiles; ++j)
 				layer->tilemap[j].tile_index = tile_data[j];
 			for (j = 0; j < layer_hdr.num_segments; ++j) {
@@ -683,7 +684,8 @@ load_map(const char* filename)
 		}
 
 		// if either dimension is zero, the map has no non-parallax layers and is thus malformed
-		if (map->width == 0 || map->height == 0) goto on_error;
+		if (map->width == 0 || map->height == 0)
+			goto on_error;
 
 		// load entities
 		map->num_persons = 0;

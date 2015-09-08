@@ -307,7 +307,7 @@ lstr_vnewf(const char* fmt, va_list args)
 lstring_t*
 lstr_from_buf(const char* buffer, size_t length)
 {
-	// courtesy of Sami Vaarala, adapted for use in minisphere
+	// courtesy of Sami Vaarala, adapted for use in minisphere.
 
 	uint32_t            cp;
 	unsigned char*      out_buf;
@@ -346,7 +346,7 @@ lstr_from_buf(const char* buffer, size_t length)
 				*p++ = (unsigned char)(0x80 + (cp & 0x3f));
 			}
 		}
-		*p = '\0';  // tack on NUL terminator
+		*p = '\0';  // fake NUL terminator
 		length = p - out_buf;
 	}
 	else {
@@ -355,7 +355,7 @@ lstr_from_buf(const char* buffer, size_t length)
 			return NULL;
 		out_buf = (char*)string + sizeof(lstring_t);
 		memcpy(out_buf, buffer, length);
-		out_buf[length] = '\0';  // tack on NUL terminator
+		out_buf[length] = '\0';  // fake NUL terminator
 	}
 
 	string->cstr = out_buf;

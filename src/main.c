@@ -98,16 +98,14 @@ main(int argc, char* argv[])
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
-	// parse the command line.
-	// at present, only minimal validation is performed on command line arguments.
-	// unrecognized arguments are silently ignored.
+	// parse the command line, rejecting any unrecognized options
 	printf("Parsing command line\n");
 	if (argc == 2 && argv[1][0] != '-') {
 		// single non-switch argument passed, assume it's a game path
 		game_path = strdup(argv[1]);
 	}
 	else {
-		// more than one argument, perform full commandline parsing
+		// more than one argument, perform full command line parsing
 		for (i = 1; i < argc; ++i) {
 			if ((strcmp(argv[i], "--game") == 0
 				|| strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "-package") == 0)
