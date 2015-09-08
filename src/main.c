@@ -480,7 +480,7 @@ flip_screen(int framerate)
 			al_append_path_component(path, "Screenshots");
 			al_make_directory(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
 			do {
-				sprintf(filename, "SS_%s.png", rng_name(10));
+				sprintf(filename, "SS_%s.png", rng_string(10));
 				al_set_path_filename(path, filename);
 				pathstr = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP);
 			} while (al_filename_exists(pathstr));
