@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v1.7.10 - TBD
--------------
+v1.7.10 - September 8, 2015
+---------------------------
 
 * Upgrades Duktape to the latest build, which includes several ArrayBuffer
   fixes.
