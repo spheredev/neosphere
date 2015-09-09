@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v1.7.11 - September 9, 2015
+---------------------------
+
+* Re-fixes the eval bug originally fixed in 1.7.8 and accidentally reverted in
+  1.7.10.
+* Updates Duktape to allow objects with circular references to be displayed in
+  the debugger.
+
 v1.7.10 - September 8, 2015
 ---------------------------
 
