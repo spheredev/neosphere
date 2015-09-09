@@ -39403,6 +39403,7 @@ DUK_INTERNAL void duk_debug_send_throw(duk_hthread *thr, duk_bool_t fatal) {
 	if (is_err_inst) {
 		/* Error instance, use augmented error data directly */
 		duk_get_prop_stridx(ctx, -1, DUK_STRIDX_FILE_NAME);
+		duk_safe_to_string(ctx, -1);
 		duk_debug_write_hstring(thr, duk_require_hstring(ctx, -1));
 		duk_get_prop_stridx(ctx, -2, DUK_STRIDX_LINE_NUMBER);
 		duk_debug_write_uint(thr, duk_require_uint(ctx, -1));
@@ -39415,6 +39416,7 @@ DUK_INTERNAL void duk_debug_send_throw(duk_hthread *thr, duk_bool_t fatal) {
 		act = thr->callstack + thr->callstack_top - 1;
 		duk_push_hobject(ctx, act->func);
 		duk_get_prop_string(ctx, -1, "fileName");
+		duk_safe_to_string(ctx, -1);
 		duk_debug_write_hstring(thr, duk_require_hstring(ctx, -1));
 		pc = duk_hthread_get_act_prev_pc(thr, act);
 		duk_debug_write_uint(thr, (duk_uint32_t) duk_hobject_pc2line_query(ctx, -2, pc));
