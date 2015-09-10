@@ -1016,13 +1016,16 @@ js_new_SoundStream(duk_context* ctx)
 	//     bits:      Bit depth. (default: 8)
 	//     channels:  Number of independent channels. (default: 1)
 	
-	int n_args = duk_get_top(ctx);
-	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 22050;
-	int bits = n_args >= 2 ? duk_require_int(ctx, 1) : 8;
-	int channels = n_args >= 3 ? duk_require_int(ctx, 1) : 1;
-
 	stream_t* stream;
+	int       argc;
+	int       frequency;
+	int       bits;
+	int       channels;
 
+	argc = duk_get_top(ctx);
+	frequency = argc >= 1 ? duk_require_int(ctx, 0) : 22050;
+	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
+	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): Invalid bit depth (%i)", bits);
 	if (!(stream = create_stream(frequency, bits, channels)))

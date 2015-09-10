@@ -786,49 +786,52 @@ js_IOSocket_unpipe(duk_context* ctx)
 static duk_ret_t
 js_IOSocket_read(duk_context* ctx)
 {
-	int length = duk_require_int(ctx, 0);
-
-	bytearray_t* array;
-	void*        read_buffer;
-	socket_t*    socket;
+	// IOSocket:read(numBytes);
+	// Reads from a socket and returns the data as a buffer.
+	// Arguments:
+	//     numBytes: The number of bytes to read.
+	
+	void*      buffer;
+	size_t     bytes_read;
+	duk_size_t num_bytes;
+	socket_t*  socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
+	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket has been closed");
-	if (length <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "IOSocket:read(): At least 1 byte must be read (%i)", length);
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket is not connected");
-	if (!(read_buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Failed to allocate read buffer");
-	read_socket(socket, read_buffer, length);
-	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Failed to create byte array");
-	duk_push_sphere_bytearray(ctx, array);
+	buffer = duk_push_fixed_buffer(ctx, num_bytes);
+	bytes_read = read_socket(socket, buffer, num_bytes);
+	duk_push_buffer_object(ctx, -1, 0, bytes_read, DUK_BUFOBJ_ARRAYBUFFER);
 	return 1;
 }
 
 static duk_ret_t
 js_IOSocket_readString(duk_context* ctx)
 {
-	size_t length = duk_require_uint(ctx, 0);
+	// IOSocket:read(numBytes);
+	// Reads data from a socket and returns it as a UTF-8 string.
+	// Arguments:
+	//     numBytes: The number of bytes to read.
 
 	uint8_t*  buffer;
+	size_t    num_bytes;
 	socket_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
+	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket has been closed");
 	if (!is_socket_live(socket))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket is not connected");
-	if (!(buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Failed to allocate read buffer");
-	read_socket(socket, buffer, length);
-	duk_push_lstring(ctx, (char*)buffer, length);
+	read_socket(socket, buffer = malloc(num_bytes), num_bytes);
+	duk_push_lstring(ctx, (char*)buffer, num_bytes);
 	free(buffer);
 	return 1;
 }
