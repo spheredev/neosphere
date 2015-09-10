@@ -1,4 +1,4 @@
-minisphere 1.7 API Documentation
+minisphere 2.0 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
@@ -29,7 +29,7 @@ GetVersionString()
     Returns the engine's version identification string. The string returned is
     in the following format:
       
-      v2.0 (minisphere 1.7.11)
+      v2.0 (minisphere 2.0.0)
 
 GetExtensions()
 
@@ -1089,19 +1089,19 @@ SoundStream:mixer (read/write)
 
 SoundStream:buffer(data);
   
-  Feeds audio data into the stream. 'data' is the data to buffer, encapsulated
-  in a ByteArray. Note that data must be fed into a stream continuously while it
-  is playing to prevent interruption.
+  Feeds audio data into the stream. 'data' is the data to buffer, this can be
+  either a ByteArray, ArrayBuffer or TypedArray. Note that data must be fed into
+  a stream continuously while it is playing to prevent interruption.
 
-SoundStream:play(mixer);
+SoundStream:play([mixer]);
   
   Starts the stream playing. Ideally, some audio should be pre-buffered into the
   stream (see SoundStream:buffer() above) first to minimize the risk of buffer
   underrun.
   
-  'mixer' specifies the mixer used to play the stream. Unlike with Sounds above,
-  a mixer must be explicitly provided. If you want to use the default stereo
-  mixer anyway, call GetDefaultMixer().
+  'mixer' is optional and specifies the mixer used to play the stream. If no
+  mixer is provided, Audialis will use the default mixer (see GetDefaultMixer())
+  to play the stream.
 
 SoundStream:pause();
 
@@ -1122,6 +1122,10 @@ networking as well as in binary file I/O. See the sections below for more
 information about those.  Byte arrays can be used like any other array, via the
 indexing operator [], however values written to the array must be numeric and
 are automatically coerced to 8-bit integers (range 0-255).
+
+As of minisphere 2.0, the ByteArray object is deprecated and has been retained
+only for backwards compatibility. New games should use the JS ArrayBuffer or
+TypedArray objects instead.
 
 new ByteArray(num_bytes);
   
@@ -1270,7 +1274,9 @@ IOSocket:unpipe();
 IOSocket:write(data);
 
   Writes data to the socket, which can be read at the other end. `data` can be
-  either a ByteArray or a string.
+  either a ByteArray, ArrayBuffer, TypedArray, or string.
+  
+  If a string is provided, it will be written encoded as UTF-8.
 
 IOSocket:close();
 
@@ -1399,7 +1405,9 @@ RawFile:write(data);
   
   Writes data to the file and advances the file position. The file must be
   opened for writing or an error will be thrown. 'data' can be either a
-  ByteArray or a string. Strings are written as UTF-8.
+  ByteArray, ArrayBuffer, TypedArray, or string.
+  
+  If a string is provided, it will be written encoded as UTF-8.
 
 RawFile:close();
   
