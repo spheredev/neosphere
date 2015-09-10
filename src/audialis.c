@@ -155,6 +155,7 @@ create_mixer(int frequency, int bits, int channels)
 		: ALLEGRO_CHANNEL_CONF_1;
 	depth = bits == 16 ? ALLEGRO_AUDIO_DEPTH_INT16
 		: bits == 24 ? ALLEGRO_AUDIO_DEPTH_INT24
+		: bits == 32 ? ALLEGRO_AUDIO_DEPTH_FLOAT32
 		: ALLEGRO_AUDIO_DEPTH_UINT8;
 	
 	mixer = calloc(1, sizeof(mixer_t));
@@ -440,6 +441,7 @@ create_stream(int frequency, int bits, int channels)
 	// create the underlying Allegro stream
 	depth_flag = bits == 8 ? ALLEGRO_AUDIO_DEPTH_UINT8
 		: bits == 24 ? ALLEGRO_AUDIO_DEPTH_INT24
+		: bits == 32 ? ALLEGRO_AUDIO_DEPTH_FLOAT32
 		: ALLEGRO_AUDIO_DEPTH_INT16;
 	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
 		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3
@@ -455,7 +457,11 @@ create_stream(int frequency, int bits, int channels)
 	al_attach_audio_stream_to_mixer(stream->ptr, stream->mixer->ptr);
 
 	// allocate an initial stream buffer
-	sample_size = bits == 8 ? 1 : bits == 16 ? 2 : bits == 24 ? 3 : 0;
+	sample_size = bits == 8 ? 1
+		: bits == 16 ? 2
+		: bits == 24 ? 3
+		: bits == 32 ? 4
+		: 0;
 	stream->fragment_size = 1024 * sample_size;
 	stream->buffer_size = frequency * sample_size;  // 1 second
 	stream->buffer = malloc(stream->buffer_size);
@@ -639,7 +645,7 @@ js_new_Mixer(duk_context* ctx)
 
 	mixer_t* mixer;
 
-	if (bits != 8 && bits != 16 && bits != 24)
+	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): Invalid bit depth for mixer (%i)", bits);
 	if (channels < 1 || channels > 7)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): Invalid channel count for mixer (%i)", channels);
@@ -703,7 +709,7 @@ js_new_Sound(duk_context* ctx)
 	const char* filename = duk_require_string(ctx, 0);
 	mixer_t* mixer = n_args >= 2 && !duk_is_boolean(ctx, 1)
 		? duk_require_sphere_obj(ctx, 1, "Mixer")
-		: s_def_mixer;
+		: get_default_mixer();
 	
 	sound_t* sound;
 
@@ -1004,13 +1010,22 @@ js_Sound_stop(duk_context* ctx)
 static duk_ret_t
 js_new_SoundStream(duk_context* ctx)
 {
+	// new SoundStream(frequency[, bits[, channels]]);
+	// Arguments:
+	//     frequency: Audio frequency in Hz. (default: 22050)
+	//     bits:      Bit depth. (default: 8)
+	//     channels:  Number of independent channels. (default: 1)
+	
 	int n_args = duk_get_top(ctx);
 	int frequency = n_args >= 1 ? duk_require_int(ctx, 0) : 22050;
-	int channels = n_args >= 2 ? duk_require_int(ctx, 1) : 1;
+	int bits = n_args >= 2 ? duk_require_int(ctx, 1) : 8;
+	int channels = n_args >= 3 ? duk_require_int(ctx, 1) : 1;
 
 	stream_t* stream;
 
-	if (!(stream = create_stream(frequency, 8, channels)))
+	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): Invalid bit depth (%i)", bits);
+	if (!(stream = create_stream(frequency, bits, channels)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): Stream creation failed");
 	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
@@ -1067,17 +1082,28 @@ js_SoundStream_set_mixer(duk_context* ctx)
 static duk_ret_t
 js_SoundStream_buffer(duk_context* ctx)
 {
-	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
-
-	const void* buffer;
-	size_t      size;
-	stream_t*   stream;
+	// SoundStream:buffer(data);
+	// Arguments:
+	//     data: Either a Sphere ByteArray or any buffer format supported
+	//           by Duktape (ArrayBuffer, Node.js Buffer, etc.).
+	
+	bytearray_t* array;
+	const void*  buffer;
+	duk_size_t   size;
+	stream_t*    stream;
 
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	buffer = get_bytearray_buffer(array);
-	size = get_bytearray_size(array);
+	if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
+		array = duk_require_sphere_bytearray(ctx, 0);
+		size = get_bytearray_size(array);
+		buffer = get_bytearray_buffer(array);
+	}
+	else {
+		buffer = duk_require_buffer_data(ctx, 0, &size);
+	}
+	
 	feed_stream(stream, buffer, size);
 	return 0;
 }
@@ -1097,7 +1123,10 @@ js_SoundStream_pause(duk_context* ctx)
 static duk_ret_t
 js_SoundStream_play(duk_context* ctx)
 {
-	mixer_t* mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
+	int n_args = duk_get_top(ctx);
+	mixer_t* mixer = n_args >= 1
+		? duk_require_sphere_obj(ctx, 0, "Mixer")
+		: get_default_mixer();
 
 	stream_t* stream;
 
