@@ -839,17 +839,20 @@ js_IOSocket_write(duk_context* ctx)
 	bytearray_t*   array;
 	const uint8_t* payload;
 	socket_t*      socket;
-	size_t         write_size;
+	duk_size_t     write_size;
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (duk_is_string(ctx, 0))
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
-	else {
+	else if (duk_is_sphere_obj(ctx, -1, "ByteArray")) {
 		array = duk_require_sphere_bytearray(ctx, 0);
 		payload = get_bytearray_buffer(array);
 		write_size = get_bytearray_size(array);
+	}
+	else {
+		payload = duk_require_buffer_data(ctx, 0, &write_size);
 	}
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket has been closed");

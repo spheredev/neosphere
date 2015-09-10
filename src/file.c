@@ -709,7 +709,7 @@ js_RawFile_write(duk_context* ctx)
 	bytearray_t* array;
 	const void*  data;
 	sfs_file_t*  file;
-	size_t       write_size;
+	duk_size_t   write_size;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
@@ -718,10 +718,13 @@ js_RawFile_write(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): File has been closed");
 	if (duk_is_string(ctx, 0))
 		data = duk_get_lstring(ctx, 0, &write_size);
-	else {
+	else if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
 		array = duk_require_sphere_obj(ctx, 0, "ByteArray");
 		data = get_bytearray_buffer(array);
 		write_size = get_bytearray_size(array);
+	}
+	else {
+		data = duk_require_buffer_data(ctx, 0, &write_size);
 	}
 	if (sfs_fwrite(data, 1, write_size, file) != write_size)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): Write error. The file may be read-only.");

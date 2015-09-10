@@ -3,10 +3,6 @@
 
 #include "bytearray.h"
 
-// WARNING: the JS ByteArray implementation is rather a bit of a hack
-//          because Duktape doesn't (yet) support ArrayBuffers. you have
-//          been warned.
-
 static duk_ret_t js_CreateStringFromByteArray (duk_context* ctx);
 static duk_ret_t js_HashByteArray             (duk_context* ctx);
 static duk_ret_t js_CreateByteArray           (duk_context* ctx);
