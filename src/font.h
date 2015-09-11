@@ -15,7 +15,7 @@ enum text_align
 	TEXT_ALIGN_RIGHT
 } text_align_t;
 
-font_t*     load_font            (const char* path);
+font_t*     load_font            (const char* path, bool is_sfs_compliant);
 font_t*     clone_font           (const font_t* src_font);
 font_t*     ref_font             (font_t* font);
 void        free_font            (font_t* font);

@@ -26,7 +26,7 @@ extern void      pause_stream     (stream_t* stream);
 extern void      play_stream      (stream_t* stream);
 extern void      stop_stream      (stream_t* stream);
 
-extern sound_t*  load_sound        (const char* path, mixer_t* mixer);
+extern sound_t*  load_sound        (const char* path, mixer_t* mixer, bool is_sfs_compliant);
 extern sound_t*  ref_sound         (sound_t* sound);
 extern void      free_sound        (sound_t* sound);
 extern bool      is_sound_looping  (sound_t* sound);

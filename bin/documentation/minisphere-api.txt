@@ -683,12 +683,14 @@ BlendColorsWeighted(color1, color2, w1, w2);
 
 new Image(filename);
   
-  'filename' is relative to ~sgm/images unless qualified.
+  SphereFS compliant.
   
-  Constructs a new Image object from an image file. 'filename' will be relative
-  to your game's "images" directory. Images can be used as textures for
-  Shape objects or drawn directly using the legacy method Image:blit(). Images
-  are read-only. If you need a writable image, you should use a Surface object.
+  Constructs a new Image object from an image file. Images can be used as
+  textures for Shape objects or drawn directly using the legacy method
+  Image:blit().
+  
+  Images are read-only. If you need a writable image, you should use a Surface
+  object instead.
 
 new Image(surface);
   
@@ -831,7 +833,9 @@ new Surface(width, height[, fill_color]);
 
 new Surface(filename);
   
-  'filename' is relative to ~sgm/images unless qualified.
+  SphereFS compliant.
+  
+  Constructs a new surface from the specified image file.
 
 GrabSurface(x, y, width, height);
   
@@ -902,7 +906,7 @@ GetSystemFont();
 
 new Font(filename);
   
-  'filename' is relative to ~sgm/fonts unless qualified.
+  SphereFS compliant.
   
   Constructs a Font object from a font file. The file must be in Sphere RFN
   format.
@@ -995,7 +999,7 @@ Mixer:volume (read/write)
 
 new Sound(filename[, mixer]);
   
-  'filename' is relative to ~sgm/sounds unless qualified.
+  SphereFS compliant.
   
   Constructs a Sound object from the specified audio file. Supported sound
   formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC. minisphere does
@@ -1430,7 +1434,7 @@ The FileStream API is fully SphereFS compliant.
 
 new FileStream(filename, mode);
 
-  Creates a new FileStream from the specified file. 'mode' is a string in the
+  Constructs a new FileStream from the specified file. 'mode' is a string in the
   same format as that of C fopen() specifying how to open the file:
   
     r:  Open file for reading.

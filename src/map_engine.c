@@ -983,7 +983,7 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		if (!(spriteset = load_spriteset(lstr_cstr(person_info->spriteset))))
+		if (!(spriteset = load_spriteset(lstr_cstr(person_info->spriteset), false)))
 			goto on_error;
 		if (!(person = create_person(lstr_cstr(person_info->name), spriteset, false, NULL)))
 			goto on_error;
@@ -1017,7 +1017,7 @@ change_map(const char* filename, bool preserve_persons)
 		free_sound(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
-		if (s_map_bgm_stream = load_sound(lstr_cstr(s_map->bgm_file), get_default_mixer())) {
+		if (s_map_bgm_stream = load_sound(lstr_cstr(s_map->bgm_file), get_default_mixer(), false)) {
 			set_sound_looping(s_map_bgm_stream, true);
 			play_sound(s_map_bgm_stream);
 		}

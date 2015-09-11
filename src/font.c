@@ -71,11 +71,12 @@ struct rfn_glyph_header
 static unsigned int s_next_font_id = 0;
 
 font_t*
-load_font(const char* filename)
+load_font(const char* filename, bool is_sfs_compliant)
 {
 	image_t*                atlas = NULL;
 	int                     atlas_x, atlas_y;
 	int                     atlas_size_x, atlas_size_y;
+	const char*             base_dir;
 	sfs_file_t*             file;
 	font_t*                 font = NULL;
 	struct font_glyph*      glyph;
@@ -97,7 +98,8 @@ load_font(const char* filename)
 	
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
-	if ((file = sfs_fopen(g_fs, filename, "fonts", "rb")) == NULL) goto on_error;
+	base_dir = is_sfs_compliant ? NULL : "fonts";
+	if ((file = sfs_fopen(g_fs, filename, base_dir, "rb")) == NULL) goto on_error;
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
 	if (sfs_fread(&rfn, sizeof(struct rfn_header), 1, file) != 1)
 		goto on_error;
@@ -627,20 +629,26 @@ js_GetSystemFont(duk_context* ctx)
 static duk_ret_t
 js_LoadFont(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
-	
-	js_new_Font(ctx);
+	const char* filename;
+	font_t*     font;
+
+	filename = duk_require_string(ctx, 0);
+	font = load_font(filename, false);
+	if (font == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): Failed to load font file '%s'", filename);
+	duk_push_sphere_font(ctx, font);
+	free_font(font);
 	return 1;
 }
 
 static duk_ret_t
 js_new_Font(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
+	const char* filename;
+	font_t*     font;
 
-	font_t* font;
-
-	font = load_font(filename);
+	filename = duk_require_string(ctx, 0);
+	font = load_font(filename, true);
 	if (font == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): Failed to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);

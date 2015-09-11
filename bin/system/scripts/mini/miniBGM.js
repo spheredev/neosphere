@@ -115,9 +115,10 @@ mini.BGM.override = function(path, fadeTime)
 // .play() method
 // Changes the BGM in place, bypassing the stack.
 // Arguments:
-//     path:     The path to the sound file to play, relative to <game_dir>/sounds. This
-//               can be null, in which case the BGM is silenced.
-//     fadeTime: Optional. The amount of crossfade to apply, in seconds. (default: 0.0)
+//     path:     The SphereFS-compliant path of the sound file to play. This may
+//               be null, in which case the BGM is silenced.
+//     fadeTime: Optional. The amount of crossfade to apply, in seconds.
+//               (default: 0.0)
 mini.BGM.play = function(path, fadeTime)
 {
 	if (fadeTime === undefined) fadeTime = 0.0;

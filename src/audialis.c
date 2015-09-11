@@ -214,15 +214,18 @@ set_mixer_gain(mixer_t* mixer, float gain)
 }
 
 sound_t*
-load_sound(const char* path, mixer_t* mixer)
+load_sound(const char* path, mixer_t* mixer, bool is_sfs_compliant)
 {
-	sound_t* sound;
+	const char* base_dir;
+	sound_t*    sound;
 
 	console_log(2, "Loading Sound %u as '%s'", s_next_sound_id, path);
 	
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);
-	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, "sounds", &sound->file_size)))
+	
+	base_dir = is_sfs_compliant ? NULL : "sounds";
+	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, base_dir, &sound->file_size)))
 		goto on_error;
 	sound->mixer = ref_mixer(mixer);
 	sound->gain = 1.0;
@@ -694,28 +697,32 @@ js_Mixer_set_volume(duk_context* ctx)
 static duk_ret_t
 js_LoadSound(duk_context* ctx)
 {
-	duk_int_t n_args = duk_get_top(ctx);
-	duk_require_string(ctx, 0);
-	if (n_args >= 2) duk_require_boolean(ctx, 1);
-	if (duk_safe_call(ctx, js_new_Sound, 0, 1) != 0)
-		duk_throw(ctx);
+	const char* filename;
+	sound_t*    sound;
+
+	filename = duk_require_string(ctx, 0);
+	if (!(sound = load_sound(filename, get_default_mixer(), false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);
+	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
 
 static duk_ret_t
 js_new_Sound(duk_context* ctx)
 {
-	duk_int_t n_args = duk_get_top(ctx);
-	const char* filename = duk_require_string(ctx, 0);
-	mixer_t* mixer = n_args >= 2 && !duk_is_boolean(ctx, 1)
+	duk_int_t   n_args;
+	const char* filename;
+	mixer_t*    mixer;
+	sound_t*    sound;
+
+	n_args = duk_get_top(ctx);
+	filename = duk_require_string(ctx, 0);
+	mixer = n_args >= 2 && !duk_is_boolean(ctx, 1)
 		? duk_require_sphere_obj(ctx, 1, "Mixer")
 		: get_default_mixer();
-	
-	sound_t* sound;
-
-	sound = load_sound(filename, mixer);
+	sound = load_sound(filename, mixer, true);
 	if (sound == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): failed to load sound file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): Failed to load sound file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }

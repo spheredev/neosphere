@@ -278,7 +278,7 @@ main(int argc, char* argv[])
 	console_log(1, "Loading system font");
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
-		g_sys_font = load_font(syspath(filename));
+		g_sys_font = load_font(syspath(filename), true);
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",

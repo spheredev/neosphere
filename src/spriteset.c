@@ -136,7 +136,7 @@ on_error:
 }
 
 spriteset_t*
-load_spriteset(const char* path)
+load_spriteset(const char* filename, bool is_sfs_compliant)
 {
 	// HERE BE DRAGONS!
 	// the Sphere .rss spriteset format is a nightmare. there are 3 different versions
@@ -149,6 +149,7 @@ load_spriteset(const char* path)
 	};
 	
 	atlas_t*            atlas = NULL;
+	const char*         base_dir;
 	struct rss_dir_v2   dir_v2;
 	struct rss_dir_v3   dir_v3;
 	char                extra_v2_dir_name[32];
@@ -170,8 +171,8 @@ load_spriteset(const char* path)
 	if (s_load_cache != NULL) {
 		iter = iterate_vector(s_load_cache);
 		while (p_spriteset = next_vector_item(&iter)) {
-			if (strcmp(path, (*p_spriteset)->filename) == 0) {
-				console_log(2, "Using cached Spriteset %u for '%s'", (*p_spriteset)->id, path);
+			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
+				console_log(2, "Using cached Spriteset %u for '%s'", (*p_spriteset)->id, filename);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
@@ -181,14 +182,15 @@ load_spriteset(const char* path)
 		s_load_cache = new_vector(sizeof(spriteset_t*));
 	
 	// filename not in load cache, load the spriteset
-	console_log(2, "Loading Spriteset %u as '%s'", s_next_spriteset_id, path);
+	console_log(2, "Loading Spriteset %u as '%s'", s_next_spriteset_id, filename);
 	spriteset = calloc(1, sizeof(spriteset_t));
-	if (!(file = sfs_fopen(g_fs, path, "spritesets", "rb")))
+	base_dir = is_sfs_compliant ? NULL : "spritesets";
+	if (!(file = sfs_fopen(g_fs, filename, base_dir, "rb")))
 		goto on_error;
 	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
-	if (!(spriteset->filename = strdup(path))) goto on_error;
+	if (!(spriteset->filename = strdup(filename))) goto on_error;
 	spriteset->base.x1 = rss.base_x1;
 	spriteset->base.y1 = rss.base_y1;
 	spriteset->base.x2 = rss.base_x2;
@@ -559,20 +561,25 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 static duk_ret_t
 js_LoadSpriteset(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
-	
-	js_new_Spriteset(ctx);
+	const char*  filename;
+	spriteset_t* spriteset;
+
+	filename = duk_require_string(ctx, 0);
+	if ((spriteset = load_spriteset(filename, false)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
+	duk_push_sphere_spriteset(ctx, spriteset);
+	free_spriteset(spriteset);
 	return 1;
 }
 
 static duk_ret_t
 js_new_Spriteset(duk_context* ctx)
 {
-	const char*  filename = duk_require_string(ctx, 0);
-
+	const char*  filename;
 	spriteset_t* spriteset;
 
-	if ((spriteset = load_spriteset(filename)) == NULL)
+	filename = duk_require_string(ctx, 0);
+	if ((spriteset = load_spriteset(filename, true)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
