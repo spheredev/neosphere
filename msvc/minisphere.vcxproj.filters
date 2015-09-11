@@ -135,6 +135,9 @@
     <ClCompile Include="..\src\debugger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\file_stream.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\duktape.h">
@@ -261,6 +264,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\file_stream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

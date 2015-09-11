@@ -24,17 +24,17 @@ static duk_ret_t js_File_flush       (duk_context* ctx);
 static duk_ret_t js_File_read        (duk_context* ctx);
 static duk_ret_t js_File_write       (duk_context* ctx);
 
-static duk_ret_t js_OpenRawFile(duk_context* ctx);
-static duk_ret_t js_new_RawFile(duk_context* ctx);
-static duk_ret_t js_RawFile_finalize(duk_context* ctx);
-static duk_ret_t js_RawFile_toString(duk_context* ctx);
-static duk_ret_t js_RawFile_get_position(duk_context* ctx);
-static duk_ret_t js_RawFile_set_position(duk_context* ctx);
-static duk_ret_t js_RawFile_get_size(duk_context* ctx);
-static duk_ret_t js_RawFile_close(duk_context* ctx);
-static duk_ret_t js_RawFile_read(duk_context* ctx);
-static duk_ret_t js_RawFile_readString(duk_context* ctx);
-static duk_ret_t js_RawFile_write(duk_context* ctx);
+static duk_ret_t js_OpenRawFile          (duk_context* ctx);
+static duk_ret_t js_new_RawFile          (duk_context* ctx);
+static duk_ret_t js_RawFile_finalize     (duk_context* ctx);
+static duk_ret_t js_RawFile_toString     (duk_context* ctx);
+static duk_ret_t js_RawFile_get_position (duk_context* ctx);
+static duk_ret_t js_RawFile_set_position (duk_context* ctx);
+static duk_ret_t js_RawFile_get_size     (duk_context* ctx);
+static duk_ret_t js_RawFile_close        (duk_context* ctx);
+static duk_ret_t js_RawFile_read         (duk_context* ctx);
+static duk_ret_t js_RawFile_readString   (duk_context* ctx);
+static duk_ret_t js_RawFile_write        (duk_context* ctx);
 
 struct kv_file
 {
@@ -542,6 +542,12 @@ js_OpenRawFile(duk_context* ctx)
 static duk_ret_t
 js_new_RawFile(duk_context* ctx)
 {
+	// new RawFile(filename);
+	// Arguments:
+	//     filename: The name of the file to open, relative to ~sgm/other.
+	//     writable: Optional. If true, the file is truncated to zero size and
+	//               opened for writing. (default: false)
+	
 	int n_args = duk_get_top(ctx);
 	const char* filename = duk_require_string(ctx, 0);
 	bool writable = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
@@ -550,7 +556,7 @@ js_new_RawFile(duk_context* ctx)
 
 	file = sfs_fopen(g_fs, filename, "other", writable ? "w+b" : "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): Failed to open file '%s' for %s",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile(): Failed to open file '%s' for %s",
 			filename, writable ? "writing" : "reading");
 	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
@@ -631,7 +637,6 @@ js_RawFile_close(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has been closed");
 	sfs_fclose(file);

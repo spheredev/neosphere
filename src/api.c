@@ -6,6 +6,7 @@
 #include "color.h"
 #include "debugger.h"
 #include "file.h"
+#include "file_stream.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
@@ -181,6 +182,7 @@ initialize_api(duk_context* ctx)
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();
+	init_file_stream_api();
 	init_font_api(g_duk);
 	init_galileo_api();
 	init_image_api(g_duk);

@@ -804,9 +804,9 @@ static duk_ret_t
 js_IOSocket_read(duk_context* ctx)
 {
 	// IOSocket:read(numBytes);
-	// Reads data from a socket and returns it as an ArrayBuffer.
+	// Reads from a socket, returning the data in an ArrayBuffer.
 	// Arguments:
-	//     numBytes: The number of bytes to read.
+	//     numBytes: The maximum number of bytes to read.
 	
 	void*      buffer;
 	size_t     bytes_read;
@@ -833,7 +833,7 @@ js_IOSocket_readString(duk_context* ctx)
 	// IOSocket:read(numBytes);
 	// Reads data from a socket and returns it as a UTF-8 string.
 	// Arguments:
-	//     numBytes: The number of bytes to read.
+	//     numBytes: The maximum number of bytes to read.
 
 	uint8_t*  buffer;
 	size_t    num_bytes;
@@ -856,6 +856,12 @@ js_IOSocket_readString(duk_context* ctx)
 static duk_ret_t
 js_IOSocket_write(duk_context* ctx)
 {
+	// IOSocket:write(data);
+	// Writes data into the socket.
+	// Arguments:
+	//     data: The data to write; this can be either a JS string or an
+	//           ArrayBuffer.
+	
 	const uint8_t* payload;
 	socket_t*      socket;
 	duk_size_t     write_size;

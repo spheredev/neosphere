@@ -40,10 +40,10 @@ static duk_ret_t js_SoundStream_finalize       (duk_context* ctx);
 static duk_ret_t js_SoundStream_get_bufferSize (duk_context* ctx);
 static duk_ret_t js_SoundStream_get_mixer      (duk_context* ctx);
 static duk_ret_t js_SoundStream_set_mixer      (duk_context* ctx);
-static duk_ret_t js_SoundStream_buffer         (duk_context* ctx);
 static duk_ret_t js_SoundStream_play           (duk_context* ctx);
 static duk_ret_t js_SoundStream_pause          (duk_context* ctx);
 static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
+static duk_ret_t js_SoundStream_write          (duk_context* ctx);
 
 static void update_stream (stream_t* stream);
 
@@ -591,11 +591,11 @@ init_audialis_api(void)
 	register_api_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
 	register_api_prop(g_duk, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
 	register_api_prop(g_duk, "SoundStream", "mixer", js_SoundStream_get_mixer, js_SoundStream_set_mixer);
-	register_api_function(g_duk, "SoundStream", "buffer", js_SoundStream_buffer);
 	register_api_function(g_duk, "SoundStream", "pause", js_SoundStream_pause);
 	register_api_function(g_duk, "SoundStream", "play", js_SoundStream_play);
 	register_api_function(g_duk, "SoundStream", "stop", js_SoundStream_stop);
-	
+	register_api_function(g_duk, "SoundStream", "write", js_SoundStream_write);
+
 	// Sound object
 	register_api_function(g_duk, NULL, "LoadSound", js_LoadSound);
 	register_api_ctor(g_duk, "Sound", js_new_Sound, js_Sound_finalize);
@@ -1083,27 +1083,6 @@ js_SoundStream_set_mixer(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SoundStream_buffer(duk_context* ctx)
-{
-	// SoundStream:buffer(data);
-	// Arguments:
-	//     data: An ArrayBuffer or TypedArray containing the audio data
-	//           to feed into the stream buffer.
-	
-	bytearray_t* array;
-	const void*  buffer;
-	duk_size_t   size;
-	stream_t*    stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
-	duk_pop(ctx);
-	buffer = duk_require_buffer_data(ctx, 0, &size);
-	feed_stream(stream, buffer, size);
-	return 0;
-}
-
-static duk_ret_t
 js_SoundStream_pause(duk_context* ctx)
 {
 	stream_t* stream;
@@ -1142,5 +1121,25 @@ js_SoundStream_stop(duk_context* ctx)
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
 	stop_stream(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_write(duk_context* ctx)
+{
+	// SoundStream:buffer(data);
+	// Arguments:
+	//     data: An ArrayBuffer or TypedArray containing the audio data
+	//           to feed into the stream buffer.
+
+	const void* data;
+	duk_size_t  size;
+	stream_t*   stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
+	duk_pop(ctx);
+	data = duk_require_buffer_data(ctx, 0, &size);
+	feed_stream(stream, data, size);
 	return 0;
 }

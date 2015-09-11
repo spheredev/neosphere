@@ -4,12 +4,13 @@ minisphere Changelog
 v2.0.0 - TBD
 ------------
 
-* All non-legacy APIs accepting ByteArrays will now also accept ArrayBuffer and
-  TypedArray objects. ByteArray is deprecated, but retained for backward
-  compatibility.
+* All APIs accepting ByteArrays will now also accept ArrayBuffer and TypedArray
+  objects. ByteArray is deprecated, but retained for backward compatibility.
 * SoundStreams are no longer restricted to 8-bit samples.
 * Audialis now supports 32-bit floating-point for both Mixer and SoundStream
   objects.
+* New 'FileStream' object: A more robust and SphereFS compliant replacement for
+  Sphere 1.x's RawFile, based on the ES6 ArrayBuffer API.
 
 
 v1.7.11 - September 9, 2015
