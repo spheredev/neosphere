@@ -28,10 +28,10 @@ static duk_ret_t js_ListeningSocket_close           (duk_context* ctx);
 static duk_ret_t js_ListeningSocket_accept          (duk_context* ctx);
 static duk_ret_t js_new_IOSocket                    (duk_context* ctx);
 static duk_ret_t js_IOSocket_finalize               (duk_context* ctx);
+static duk_ret_t js_IOSocket_get_bytesPending       (duk_context* ctx);
 static duk_ret_t js_IOSocket_get_remoteAddress      (duk_context* ctx);
 static duk_ret_t js_IOSocket_get_remotePort         (duk_context* ctx);
 static duk_ret_t js_IOSocket_isConnected            (duk_context* ctx);
-static duk_ret_t js_IOSocket_getPendingReadSize     (duk_context* ctx);
 static duk_ret_t js_IOSocket_close                  (duk_context* ctx);
 static duk_ret_t js_IOSocket_pipe                   (duk_context* ctx);
 static duk_ret_t js_IOSocket_read                   (duk_context* ctx);
@@ -350,10 +350,10 @@ init_sockets_api(void)
 	
 	// IOSocket object
 	register_api_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
+	register_api_prop(g_duk, "IOSocket", "bytesPending", js_IOSocket_get_bytesPending, NULL);
 	register_api_prop(g_duk, "IOSocket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
 	register_api_prop(g_duk, "IOSocket", "remotePort", js_IOSocket_get_remotePort, NULL);
 	register_api_function(g_duk, "IOSocket", "isConnected", js_IOSocket_isConnected);
-	register_api_function(g_duk, "IOSocket", "getPendingReadSize", js_IOSocket_getPendingReadSize);
 	register_api_function(g_duk, "IOSocket", "close", js_IOSocket_close);
 	register_api_function(g_duk, "IOSocket", "pipe", js_IOSocket_pipe);
 	register_api_function(g_duk, "IOSocket", "read", js_IOSocket_read);
@@ -675,6 +675,23 @@ js_IOSocket_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IOSocket_get_bytesPending(duk_context* ctx)
+{
+	// get IOSocket:bytesPending
+	// Returns the number of bytes in the socket's receive buffer.
+	
+	socket_t* socket;
+
+	duk_push_this(ctx);
+	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
+	duk_pop(ctx);
+	if (socket == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:bytesPending: Socket has been closed");
+	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
+	return 1;
+}
+
+static duk_ret_t
 js_IOSocket_get_remoteAddress(duk_context* ctx)
 {
 	socket_t* socket;
@@ -722,22 +739,12 @@ js_IOSocket_isConnected(duk_context* ctx)
 }
 
 static duk_ret_t
-js_IOSocket_getPendingReadSize(duk_context* ctx)
-{
-	socket_t* socket;
-
-	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
-	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:getPendingReadSize(): Socket has been closed");
-	duk_push_uint(ctx, (duk_uint_t)socket->pend_size);
-	return 1;
-}
-
-static duk_ret_t
 js_IOSocket_close(duk_context* ctx)
 {
+	// IOSocket:close();
+	// Closes the socket, after which no further I/O may be performed
+	// with it.
+	
 	socket_t* socket;
 
 	duk_push_this(ctx);
@@ -752,17 +759,23 @@ js_IOSocket_close(duk_context* ctx)
 static duk_ret_t
 js_IOSocket_pipe(duk_context* ctx)
 {
-	socket_t* destination = duk_require_sphere_obj(ctx, 0, "IOSocket");
+	// IOSocket:pipe(destSocket);
+	// Pipes all data received by a socket into another socket.
+	// Arguments:
+	//     destSocket: The IOSocket into which to pipe received data.
+	
+	socket_t* dest_socket;
 	socket_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
+	dest_socket = duk_require_sphere_obj(ctx, 0, "IOSocket");
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Socket has been closed");
-	if (destination == NULL)
+	if (dest_socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Destination socket has been closed");
-	pipe_socket(socket, destination);
+	pipe_socket(socket, dest_socket);
 	
 	// return destination socket (enables pipe chaining)
 	duk_dup(ctx, 0);
@@ -772,6 +785,10 @@ js_IOSocket_pipe(duk_context* ctx)
 static duk_ret_t
 js_IOSocket_unpipe(duk_context* ctx)
 {
+	// IOSocket:unpipe();
+	// Undoes a previous call to pipe(), reverting the socket to normal
+	// behavior.
+	
 	socket_t* socket;
 
 	duk_push_this(ctx);
@@ -787,7 +804,7 @@ static duk_ret_t
 js_IOSocket_read(duk_context* ctx)
 {
 	// IOSocket:read(numBytes);
-	// Reads from a socket and returns the data as a buffer.
+	// Reads data from a socket and returns it as an ArrayBuffer.
 	// Arguments:
 	//     numBytes: The number of bytes to read.
 	
@@ -839,7 +856,6 @@ js_IOSocket_readString(duk_context* ctx)
 static duk_ret_t
 js_IOSocket_write(duk_context* ctx)
 {
-	bytearray_t*   array;
 	const uint8_t* payload;
 	socket_t*      socket;
 	duk_size_t     write_size;
@@ -849,14 +865,8 @@ js_IOSocket_write(duk_context* ctx)
 	duk_pop(ctx);
 	if (duk_is_string(ctx, 0))
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
-	else if (duk_is_sphere_obj(ctx, -1, "ByteArray")) {
-		array = duk_require_sphere_bytearray(ctx, 0);
-		payload = get_bytearray_buffer(array);
-		write_size = get_bytearray_size(array);
-	}
-	else {
+	else
 		payload = duk_require_buffer_data(ctx, 0, &write_size);
-	}
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket has been closed");
 	if (!is_socket_live(socket))
