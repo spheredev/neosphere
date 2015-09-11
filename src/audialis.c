@@ -1087,8 +1087,8 @@ js_SoundStream_buffer(duk_context* ctx)
 {
 	// SoundStream:buffer(data);
 	// Arguments:
-	//     data: Either a Sphere ByteArray or any buffer format supported
-	//           by Duktape (ArrayBuffer, Node.js Buffer, etc.).
+	//     data: An ArrayBuffer or TypedArray containing the audio data
+	//           to feed into the stream buffer.
 	
 	bytearray_t* array;
 	const void*  buffer;
@@ -1098,15 +1098,7 @@ js_SoundStream_buffer(duk_context* ctx)
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
-		array = duk_require_sphere_bytearray(ctx, 0);
-		size = get_bytearray_size(array);
-		buffer = get_bytearray_buffer(array);
-	}
-	else {
-		buffer = duk_require_buffer_data(ctx, 0, &size);
-	}
-	
+	buffer = duk_require_buffer_data(ctx, 0, &size);
 	feed_stream(stream, buffer, size);
 	return 0;
 }
