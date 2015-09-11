@@ -314,7 +314,7 @@ main(int argc, char* argv[])
 	// load startup script
 	console_log(0, "Starting up game");
 	al_hide_mouse_cursor(g_display);
-	if (!try_evaluate_file(get_sgm_script(g_fs)))
+	if (!try_evaluate_file(get_sgm_script(g_fs), false))
 		goto on_js_error;
 	duk_pop(g_duk);
 

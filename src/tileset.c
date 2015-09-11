@@ -57,14 +57,16 @@ struct rts_tile_header
 static unsigned int s_next_tileset_id = 0;
 
 tileset_t*
-load_tileset(const char* path)
+load_tileset(const char* filename, bool is_sfs_compliant)
 {
+	const char* base_dir;
 	sfs_file_t* file;
 	tileset_t*  tileset;
 
-	console_log(2, "Loading Tileset %u as '%s'", s_next_tileset_id, path);
+	console_log(2, "Loading Tileset %u as '%s'", s_next_tileset_id, filename);
 
-	if ((file = sfs_fopen(g_fs, path, "maps", "rb")) == NULL)
+	base_dir = is_sfs_compliant ? NULL : "maps";
+	if ((file = sfs_fopen(g_fs, filename, base_dir, "rb")) == NULL)
 		goto on_error;
 	tileset = read_tileset(file);
 	sfs_fclose(file);

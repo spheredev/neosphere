@@ -750,7 +750,7 @@ load_map(const char* filename)
 		if (strcmp(lstr_cstr(strings[0]), "") != 0) {
 			tileset_path = al_create_path(filename);
 			al_set_path_filename(tileset_path, lstr_cstr(strings[0]));
-			tileset = load_tileset(al_path_cstr(tileset_path, ALLEGRO_NATIVE_PATH_SEP));
+			tileset = load_tileset(al_path_cstr(tileset_path, '/'), false);
 			al_destroy_path(tileset_path);
 		}
 		else {

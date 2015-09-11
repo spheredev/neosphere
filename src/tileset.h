@@ -2,7 +2,7 @@
 
 typedef struct tileset tileset_t;
 
-tileset_t*       load_tileset    (const char* path);
+tileset_t*       load_tileset    (const char* filename, bool is_sfs_compliant);
 tileset_t*       read_tileset    (sfs_file_t* file);
 void             free_tileset    (tileset_t* tileset);
 int              get_next_tile   (const tileset_t* tileset, int tile_index);

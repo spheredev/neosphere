@@ -30,17 +30,19 @@ static duk_ret_t js_Logger_write      (duk_context* ctx);
 static unsigned int s_next_logger_id = 0;
 
 logger_t*
-open_log_file(const char* filename)
+open_log_file(const char* filename, bool is_sfs_compliant)
 {
-	lstring_t* log_entry;
-	logger_t*  logger = NULL;
-	time_t     now;
-	char       timestamp[100];
+	const char* base_dir;
+	lstring_t*  log_entry;
+	logger_t*   logger = NULL;
+	time_t      now;
+	char        timestamp[100];
 
 	console_log(2, "Creating Logger %u for '%s'", s_next_logger_id, filename);
 	
 	logger = calloc(1, sizeof(logger_t));
-	if (!(logger->file = sfs_fopen(g_fs, filename, "logs", "a")))
+	base_dir = is_sfs_compliant ? NULL : "logs";
+	if (!(logger->file = sfs_fopen(g_fs, filename, base_dir, "a")))
 		goto on_error;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG OPENED: %s\n", timestamp);
@@ -138,7 +140,7 @@ void
 init_logging_api(void)
 {
 	// Logger object
-	register_api_function(g_duk, NULL, "OpenLog", js_new_Logger);
+	register_api_function(g_duk, NULL, "OpenLog", js_OpenLog);
 	register_api_ctor(g_duk, "Logger", js_new_Logger, js_Logger_finalize);
 	register_api_function(g_duk, "Logger", "toString", js_Logger_toString);
 	register_api_function(g_duk, "Logger", "beginBlock", js_Logger_beginBlock);
@@ -147,13 +149,27 @@ init_logging_api(void)
 }
 
 static duk_ret_t
+js_OpenLog(duk_context* ctx)
+{
+	const char* filename;
+	logger_t*   logger;
+
+	filename = duk_require_string(ctx, 0);
+	if (!(logger = open_log_file(filename, false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
+	duk_push_sphere_obj(ctx, "Logger", logger);
+	return 1;
+}
+
+static duk_ret_t
 js_new_Logger(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
+	const char* filename;
+	logger_t*   logger;
 
-	logger_t* logger = open_log_file(filename);
-	if (logger == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
+	filename = duk_require_string(ctx, 0);
+	if (!(logger = open_log_file(filename, true)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
 }

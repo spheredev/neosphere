@@ -23,7 +23,7 @@ initialize_scripts(void)
 
 	// load the CoffeeScript compiler into the JS context, if it exists
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
-		if (try_evaluate_file("~sys/coffee-script.js")) {
+		if (try_evaluate_file("~sys/coffee-script.js", true)) {
 			duk_push_global_object(g_duk);
 			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript")) {
 				duk_pop_3(g_duk);
@@ -52,8 +52,9 @@ on_error:
 }
 
 bool
-try_evaluate_file(const char* path)
+try_evaluate_file(const char* filename, bool is_sfs_compliant)
 {
+	const char* base_dir;
 	const char* extension;
 	sfs_file_t* file = NULL;
 	lstring_t*  source;
@@ -61,22 +62,23 @@ try_evaluate_file(const char* path)
 	size_t      size;
 
 	// load the source text from the script file
-	if (!(slurp = sfs_fslurp(g_fs, path, "scripts", &size)))
+	base_dir = is_sfs_compliant ? NULL : "scripts";
+	if (!(slurp = sfs_fslurp(g_fs, filename, base_dir, &size)))
 		goto on_error;
 	source = lstr_from_buf(slurp, size);
 	free(slurp);
 
 	// is it a CoffeeScript file? you know, I don't even like coffee.
 	// now, Monster drinks on the other hand...
-	extension = strrchr(path, '.');
+	extension = strrchr(filename, '.');
 	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
 		duk_push_global_object(g_duk);
 		if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
-			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "CoffeeScript compiler is missing (%s)", path);
+			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "CoffeeScript compiler is missing (%s)", filename);
 		duk_get_prop_string(g_duk, -1, "compile");
 		duk_push_lstring_t(g_duk, source);
 		duk_push_object(g_duk);
-		duk_push_string(g_duk, path);
+		duk_push_string(g_duk, filename);
 		duk_put_prop_string(g_duk, -2, "filename");
 		duk_push_true(g_duk);
 		duk_put_prop_string(g_duk, -2, "bare");
@@ -89,7 +91,7 @@ try_evaluate_file(const char* path)
 		duk_push_lstring_t(g_duk, source);
 
 	// ready for launch in T-10...9...*munch*
-	duk_push_string(g_duk, path);
+	duk_push_string(g_duk, filename);
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
@@ -98,7 +100,7 @@ try_evaluate_file(const char* path)
 
 on_error:
 	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "Script '%s' not found\n", path);
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "Script '%s' not found\n", filename);
 	return false;
 }
 

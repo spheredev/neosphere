@@ -52,8 +52,9 @@ struct rws_header
 #pragma pack(pop)
 
 windowstyle_t*
-load_windowstyle(const char* path)
+load_windowstyle(const char* filename, bool is_sfs_compliant)
 {
+	const char*       base_dir;
 	sfs_file_t*       file;
 	image_t*          image;
 	struct rws_header rws;
@@ -61,7 +62,8 @@ load_windowstyle(const char* path)
 	windowstyle_t*    winstyle = NULL;
 	int               i;
 
-	if (!(file = sfs_fopen(g_fs, path, "windowstyles", "rb"))) goto on_error;
+	base_dir = is_sfs_compliant ? NULL : "windowstyles";
+	if (!(file = sfs_fopen(g_fs, filename, base_dir, "rb"))) goto on_error;
 	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL) goto on_error;
 	if (sfs_fread(&rws, sizeof(struct rws_header), 1, file) != 1)
 		goto on_error;
@@ -198,7 +200,7 @@ init_windowstyle_api(void)
 	// load system window style
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "WindowStyle", "system.rws");
-		s_sys_winstyle = load_windowstyle(syspath(filename));
+		s_sys_winstyle = load_windowstyle(syspath(filename), true);
 	}
 
 	// WindowStyle API functions
@@ -233,22 +235,26 @@ js_GetSystemWindowStyle(duk_context* ctx)
 static duk_ret_t
 js_LoadWindowStyle(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
+	const char*    filename;
+	windowstyle_t* winstyle;
 
-	js_new_WindowStyle(ctx);
+	filename = duk_require_string(ctx, 0);
+	if (!(winstyle = load_windowstyle(filename, false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): Failed to load windowstyle file '%s'", filename);
+	duk_push_sphere_windowstyle(ctx, winstyle);
+	free_windowstyle(winstyle);
 	return 1;
 }
 
 static duk_ret_t
 js_new_WindowStyle(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
+	const char*    filename;
+	windowstyle_t* winstyle;
 
-	char*          path = NULL;
-	windowstyle_t* winstyle = NULL;
-
-	if (!(winstyle = load_windowstyle(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): Failed to load windowstyle file '%s'", filename);
+	filename = duk_require_string(ctx, 0);
+	if (!(winstyle = load_windowstyle(filename, true)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "WindowStyle(): Failed to load windowstyle file '%s'", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
 	free_windowstyle(winstyle);
 	return 1;

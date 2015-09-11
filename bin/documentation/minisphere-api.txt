@@ -186,7 +186,7 @@ the developer to emit enough log entries!
 
 new Logger(filename)
 
-  'filename' is relative to ~sgm/logs unless qualified.
+  SphereFS compliant.
   
   Opens a file for logging and constructs an object you can use to access the
   log. An error will be thrown if the file cannot be opened for writing.
@@ -873,7 +873,7 @@ a game.
 
 new WindowStyle(filename);
 
-  'filename' is relative to ~sgm/windowstyles unless qualified.
+  SphereFS compliant.
   
   Constructs a WindowStyle object from a windowstyle file. The file must be in
   Sphere RWS format.
