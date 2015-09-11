@@ -323,7 +323,6 @@
     <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\src\dyad.c" />
     <ClCompile Include="..\src\file.c" />
-    <ClCompile Include="..\src\file_stream.c" />
     <ClCompile Include="..\src\font.c" />
     <ClCompile Include="..\src\geometry.c" />
     <ClCompile Include="..\src\image.c" />
@@ -366,7 +365,6 @@
     <ClInclude Include="..\src\duk_config.h" />
     <ClInclude Include="..\src\dyad.h" />
     <ClInclude Include="..\src\file.h" />
-    <ClInclude Include="..\src\file_stream.h" />
     <ClInclude Include="..\src\font.h" />
     <ClInclude Include="..\src\geometry.h" />
     <ClInclude Include="..\src\image.h" />

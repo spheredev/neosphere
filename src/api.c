@@ -6,7 +6,6 @@
 #include "color.h"
 #include "debugger.h"
 #include "file.h"
-#include "file_stream.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
@@ -32,16 +31,16 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-legacy-api",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
+	"sphere-async-api",
 	"sphere-audialis",
 	"sphere-coffeescript",
 	"sphere-commonjs",
 	"sphere-galileo",
+	"sphere-galileo-shaders",
 	"sphere-map-engine",
+	"sphere-new-sockets",
+	"sphere-rng-object",
 	"sphere-spherefs",
-	"minisphere-async-api",
-	"minisphere-galileo-shaders",
-	"minisphere-new-sockets",
-	"minisphere-rng-object",
 	"duktape-debugger",
 	"frameskip-api",
 	"set-script-function",
@@ -182,7 +181,6 @@ initialize_api(duk_context* ctx)
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();
-	init_file_stream_api();
 	init_font_api(g_duk);
 	init_galileo_api();
 	init_image_api(g_duk);
