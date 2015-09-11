@@ -34,8 +34,8 @@ create_shader(const char* vs_filename, const char* fs_filename)
 
 	shader = calloc(1, sizeof(shader_t));
 	
-	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, "shaders", NULL))) goto on_error;
-	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, "shaders", NULL))) goto on_error;
+	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, NULL, NULL))) goto on_error;
+	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, NULL, NULL))) goto on_error;
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
 	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
 		fprintf(stderr, "\nVertex shader compile log:\n%s\n", al_get_shader_log(shader->program));

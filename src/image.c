@@ -135,20 +135,22 @@ on_error:
 }
 
 image_t*
-load_image(const char* path)
+load_image(const char* filename, bool is_sfs_compliant)
 {
 	ALLEGRO_FILE* al_file = NULL;
+	const char*   base_dir;
 	size_t        file_size;
 	image_t*      image;
 	void*         slurp = NULL;
 
-	console_log(2, "Loading Image %u as '%s'", s_next_image_id, path);
+	console_log(2, "Loading Image %u as '%s'", s_next_image_id, filename);
 	
 	image = calloc(1, sizeof(image_t));
-	if (!(slurp = sfs_fslurp(g_fs, path, "images", &file_size)))
+	base_dir = is_sfs_compliant ? NULL : "images";
+	if (!(slurp = sfs_fslurp(g_fs, filename, base_dir, &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
-	if (!(image->bitmap = al_load_bitmap_f(al_file, strrchr(path, '.'))))
+	if (!(image->bitmap = al_load_bitmap_f(al_file, strrchr(filename, '.'))))
 		goto on_error;
 	al_fclose(al_file);
 	free(slurp);
@@ -651,11 +653,11 @@ init_image_api(duk_context* ctx)
 	// load system-provided images
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Arrow", "pointer.png");
-		s_sys_arrow = load_image(syspath(filename));
+		s_sys_arrow = load_image(syspath(filename), true);
 		filename = read_string_rec(g_sys_conf, "UpArrow", "up_arrow.png");
-		s_sys_up_arrow = load_image(syspath(filename));
+		s_sys_up_arrow = load_image(syspath(filename), true);
 		filename = read_string_rec(g_sys_conf, "DownArrow", "down_arrow.png");
-		s_sys_dn_arrow = load_image(syspath(filename));
+		s_sys_dn_arrow = load_image(syspath(filename), true);
 	}
 	
 	// register image API functions
@@ -723,10 +725,19 @@ js_GetSystemUpArrow(duk_context* ctx)
 static duk_ret_t
 js_LoadImage(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
-	
-	if (duk_safe_call(ctx, js_new_Image, 0, 1) != 0)
-		duk_throw(ctx);
+	// LoadImage(filename); (legacy)
+	// Constructs an Image object from an image file.
+	// Arguments:
+	//     filename: The name of the image file, relative to ~sgm/images.
+
+	const char* filename;
+	image_t*    image;
+
+	filename = duk_require_string(ctx, 0);
+	if (!(image = load_image(filename, false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
+	duk_push_sphere_image(ctx, image);
+	free_image(image);
 	return 1;
 }
 
@@ -750,14 +761,14 @@ js_GrabImage(duk_context* ctx)
 static duk_ret_t
 js_new_Image(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	
+	int         n_args;
 	const char* filename;
 	color_t     fill_color;
 	image_t*    image;
 	image_t*    src_image;
 	int         width, height;
 
+	n_args = duk_get_top(ctx);
 	if (n_args >= 3) {
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
@@ -773,7 +784,7 @@ js_new_Image(duk_context* ctx)
 	}
 	else {
 		filename = duk_require_string(ctx, 0);
-		image = load_image(filename);
+		image = load_image(filename, true);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	}

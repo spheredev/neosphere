@@ -194,23 +194,33 @@ js_CreateSurface(duk_context* ctx)
 static duk_ret_t
 js_LoadSurface(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
-	
-	js_new_Surface(ctx);
+	// LoadSurface(filename); (legacy)
+	// Constructs a new Surface object from an image file.
+	// Arguments:
+	//     filename: The name of the image file, relative to ~sgm/images.
+
+	const char* filename;
+	image_t*    image;
+
+	filename = duk_require_string(ctx, 0);
+	if (!(image = load_image(filename, false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): Failed to load image file '%s'", filename);
+	duk_push_sphere_surface(ctx, image);
+	free_image(image);
 	return 1;
 }
 
 static duk_ret_t
 js_new_Surface(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	
+	int         n_args;
 	const char* filename;
 	color_t     fill_color;
 	image_t*    image;
 	image_t*    src_image;
 	int         width, height;
 
+	n_args = duk_get_top(ctx);
 	if (n_args >= 2) {
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
@@ -226,7 +236,7 @@ js_new_Surface(duk_context* ctx)
 	}
 	else {
 		filename = duk_require_string(ctx, 0);
-		image = load_image(filename);
+		image = load_image(filename, true);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to load image file '%s'", filename);
 	}

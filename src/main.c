@@ -254,8 +254,8 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
-	if (!(icon = load_image("~sgm/icon.png")))
-		icon = load_image("~sys/icon.png");
+	if (!(icon = load_image("~sgm/icon.png", true)))
+		icon = load_image("~sys/icon.png", true);
 	rescale_image(icon, 32, 32);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	al_identity_transform(&trans);

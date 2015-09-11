@@ -78,7 +78,7 @@ calling game's "config" subdirectory:
   
   var file = new File("~sgm/config/settings.cfg");
 
-Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant."
+Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
 For an API to be considered compliant, any method accepting a filename must
 treat an unprefixed, relative path as being relative to either ~sgm/ or ~usr/.
 Most legacy APIs are not SphereFS compliant and treat filenames as relative to a
@@ -785,13 +785,13 @@ GetDefaultShaderProgram();
 
 new ShaderProgram(shader_files);
   
+  SphereFS compliant.
+  
   Constructs a ShaderProgram from a set of shader sources. `shader_files` should
   be an object with the following properties:
     
     vertex:   The filename of the source for the vertex shader.
     fragment: The filename of the source for the fragment shader.
-
-  Note: Shader filenames are relative to ~sgm/shaders unless qualified.
 
 
 Color Matrices
@@ -1426,8 +1426,7 @@ The RawFile object documented above was deprecated in minisphere 2.0 and is now
 retained only for backwards compatibility with Sphere 1.x. New games should
 instead use the much more flexible FileStream object.
 
-The FileStream API is fully SphereFS compliant. Filenames are always relative to
-~sgm/ unless qualified.
+The FileStream API is fully SphereFS compliant.
 
 new FileStream(filename, mode);
 
