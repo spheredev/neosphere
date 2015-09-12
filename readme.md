@@ -1,5 +1,5 @@
-minisphere 2.0
-==============
+minisphere 2.0 WIP
+==================
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
 (https://travis-ci.org/fatcerberus/minisphere)
