@@ -12,7 +12,7 @@
 
 #define CELL_VERSION "2.0.0"
 
-static duk_ret_t js_game(duk_context* ctx);
+static duk_ret_t js_game (duk_context* ctx);
 
 static duk_context* s_duk = NULL;
 static bool         s_want_spk = false;
@@ -20,7 +20,7 @@ static bool         s_want_spk = false;
 int
 main(int argc, char* argv[])
 {
-	// YES, these are entirely necessary. :o)
+	// yes, these are entirely necessary. :o)
 	static const char* const MESSAGES[] =
 	{
 		"Cell seems to be going through some sort of transformation...!",
@@ -29,7 +29,7 @@ main(int argc, char* argv[])
 		"Very soon, I am going to explode. And when I do...",
 		"Careful now! I wouldn't attack me if I were you...",
 		"I'm quite volatile, and the slightest jolt could set me off!",
-		"One minute left! There's nothing you can do now... ha ha ha ha!",
+		"One minute left! There's nothing you can do now!",
 		"If only you'd finished me off a little bit sooner...",
 		"Ten more seconds, and the Earth will be gone!",
 		"Let's just call our little match a draw, shall we?",
@@ -44,7 +44,7 @@ main(int argc, char* argv[])
 	num_messages = sizeof MESSAGES / sizeof(const char*);
 
 	printf("Cell %s  (c) 2015 Fat Cerberus\n", CELL_VERSION);
-	printf("%s\n\n", MESSAGES[rand() % num_messages]);
+	printf("%s\n", MESSAGES[rand() % num_messages]);
 	
 	// initialize JavaScript environment
 	s_duk = duk_create_heap_default();
@@ -59,7 +59,7 @@ main(int argc, char* argv[])
 		if (strstr(js_error_msg, "no sourcecode"))
 			fprintf(stderr, "ERROR: cell.js was not found.\n");
 		else
-			fprintf(stderr, "ERROR: JS error (%s)", js_error_msg);
+			fprintf(stderr, "ERROR: JS error `%s`", js_error_msg);
 		
 		retval = EXIT_FAILURE;
 		goto shutdown;
@@ -67,9 +67,9 @@ main(int argc, char* argv[])
 
 	target_name = argc > 1 ? argv[1] : "make";
 	if (duk_get_global_string(s_duk, target_name) && duk_is_callable(s_duk, -1)) {
-		printf("Processing target '%s'\n", target_name);
+		printf("Processing Cell target '%s'\n", target_name);
 		if (duk_pcall(s_duk, 0) != DUK_EXEC_SUCCESS) {
-			fprintf(stderr, "ERROR: JS error (%s)\n", duk_safe_to_string(s_duk, -1));
+			fprintf(stderr, "ERROR: JS error `%s`\n", duk_safe_to_string(s_duk, -1));
 			retval = EXIT_FAILURE;
 			goto shutdown;
 		}
@@ -112,11 +112,12 @@ js_game(duk_context* ctx)
 
 	// write game.sgm
 	if (!(file = fopen("game.sgm", "wb")))
-		return -1;
+		duk_error(ctx, DUK_ERR_ERROR, "Failed to write game.sgm");
 	fprintf(file, "name=%s", name);
 	fprintf(file, "author=%s\n", author);
 	fprintf(file, "description=%s\n", description);
 	fprintf(file, "resolution=%s\n", author);
 	fclose(file);
+	printf("Wrote game.sgm '%s'\n", name);
 	return 0;
 }
