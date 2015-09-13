@@ -11,6 +11,9 @@ v2.0.0 - TBD
   objects.
 * New 'FileStream' object: A more robust and SphereFS compliant replacement for
   Sphere 1.x's RawFile, based on the ES6 ArrayBuffer API.
+* Includes the all-new Cell build system for automated building of Sphere games.
+* Updates CoffeeScript compiler to v1.10.0.
+* Updates Duktape to v1.3.0.
 
 
 v1.7.11 - September 9, 2015
