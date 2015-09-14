@@ -93,6 +93,7 @@
   <ItemGroup>
     <ClInclude Include="..\cell\duktape.h" />
     <ClInclude Include="..\cell\duk_config.h" />
+    <ClInclude Include="..\cell\tinydir.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

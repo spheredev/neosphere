@@ -29,5 +29,8 @@
     <ClInclude Include="..\cell\duktape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\cell\tinydir.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
