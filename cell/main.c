@@ -16,6 +16,7 @@
 static duk_ret_t js_game    (duk_context* ctx);
 static duk_ret_t js_install (duk_context* ctx);
 
+static void makedir (const char* path);
 static bool wildcmp (const char* filename, const char* pattern);
 
 static duk_context* s_duk = NULL;
@@ -47,8 +48,9 @@ main(int argc, char* argv[])
 	srand((unsigned int)time(NULL));
 	num_messages = sizeof MESSAGES / sizeof(const char*);
 	
-	printf("Cell %s  (c) 2015 Fat Cerberus\n", CELL_VERSION);
+	printf("Cell %s Sphere Game Compiler %s\n", CELL_VERSION, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("%s\n", MESSAGES[rand() % num_messages]);
+	printf("(c) 2015 Fat Cerberus\n\n");
 	
 	// initialize JavaScript environment
 	s_duk = duk_create_heap_default();
@@ -79,7 +81,7 @@ main(int argc, char* argv[])
 			retval = EXIT_FAILURE;
 			goto shutdown;
 		}
-		printf("Success!\n");
+		printf("Success!\n\n");
 	}
 	else {
 		fprintf(stderr, "ERROR: No target named '%s'\n", target_name);
@@ -97,32 +99,56 @@ install(const char* pattern, const char* src_path, const char* dest_path, bool r
 {
 	tinydir_dir  dir;
 	tinydir_file file;
+	bool         skip_entry;
 	int          num_files = 0;
+	const char*  out_path = "dist";
 	char         path[1024];
 
 	tinydir_open(&dir, src_path);
 	while (dir.has_next) {
 		tinydir_readfile(&dir, &file);
-		if (!file.is_dir && wildcmp(file.name, pattern)) {
-			sprintf(path, "./dist/%s/", dest_path);
-			CreateDirectoryA(path, NULL);
+		tinydir_next(&dir);
+
+		sprintf(path, "%s/%s", src_path, out_path);
+		skip_entry = file.is_dir && !recursive
+			|| strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0
+			|| strstr(file.path, path) == file.path;
+
+		if (skip_entry)
+			continue;
+		else if (!file.is_dir && wildcmp(file.name, pattern)) {
+			sprintf(path, "%s/%s/", out_path, dest_path);
+			makedir(path);
 			strcat(path, file.name);
-			if (CopyFileA(file.path, path, TRUE))
+			if (CopyFileA(file.path, path, TRUE)) {
+				printf("Installed file %s\n", path);
 				++num_files;
+			}
 		}
-		else if (file.is_dir && recursive
-			&& strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0
-			&& strcmp(file.path, "./dist") != 0)
-		{
+		else if (file.is_dir) {
 			sprintf(path, "%s/%s", dest_path, file.name);
 			install(pattern, file.path, path, recursive);
 		}
-		tinydir_next(&dir);
 	}
 	tinydir_close(&dir);
-	if (num_files > 0)
-		printf("Installed %d file(s) to ./dist/%s\n", num_files, dest_path);
 	return num_files;
+}
+
+void
+makedir(const char* path)
+{
+	char  parent[1024] = "";
+	char* parse;
+	char* token;
+
+	parse = strdup(path);
+	token = strtok(parse, "/");
+	do {
+		strcat(parent, token);
+		strcat(parent, "/");
+		CreateDirectoryA(parent, NULL);
+	} while (token = strtok(NULL, "/"));
+	free(parse);
 }
 
 static bool
