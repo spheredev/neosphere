@@ -5,7 +5,7 @@ cell_sources = [
 ]
 
 cell_libs = [
-	# no libs yet
+	"m"
 ]
 
 cell = Program("cell", cell_sources, LIBS = cell_libs)

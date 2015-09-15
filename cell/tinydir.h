@@ -541,7 +541,7 @@ _TINYDIR_FUNC
 int tinydir_copy(const char *src, const char *dest, int skip_if_exists)
 {
 #ifdef _WIN32
-	return CopyFileA(src, dest, (BOOL)skip_if_exists);
+	return CopyFileA(src, dest, (BOOL)skip_if_exists) ? 0 : -1;
 #else
 	char        buffer[32768];
 	FILE*       f1;

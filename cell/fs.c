@@ -35,10 +35,8 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 			sprintf(path, "%s/%s/", out_path, dest_path);
 			fs_mkdir(path);
 			strcat(path, file.name);
-			if (tinydir_copy(file.path, path, true) == 0) {
-				printf("Installed file %s\n", path);
+			if (tinydir_copy(file.path, path, true) == 0)
 				++num_files;
-			}
 		}
 		else if (file.is_dir) {
 			sprintf(path, "%s/%s", dest_path, file.name);
@@ -46,6 +44,8 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 		}
 	}
 	tinydir_close(&dir);
+	if (num_files > 0)
+		printf("Installed %d files to '%s/%s'\n", num_files, out_path, dest_path);
 	return num_files;
 }
 
@@ -77,31 +77,46 @@ wildcmp(const char *string, const char *pattern)
 {
 	const char* cp = NULL;
 	const char* mp = NULL;
+	bool        is_match = 0;
+	char*       parse;
+	char*       token;
 
-	while (*string != '\0' && *pattern != '*') {
-		if (*pattern != *string && *pattern != '?')
-			return false;
-		++pattern;
-		++string;
+	if (strchr(pattern, '|')) {
+		parse = strdup(pattern);
+		token = strtok(parse, "|");
+		do {
+			if (is_match |= wildcmp(string, token))
+				break;
+		} while (token = strtok(NULL, "|"));
+		free(parse);
+		return is_match;
 	}
-	while (*string != '\0') {
-		if (*pattern == '*') {
-			if (*++pattern == '\0') return true;
-			mp = pattern;
-			cp = string + 1;
+	else {
+		while (*string != '\0' && *pattern != '*') {
+			if (*pattern != *string && *pattern != '?')
+				return false;
+			++pattern;
+			++string;
 		}
-		else if (*pattern == *string || *pattern == '?') {
+		while (*string != '\0') {
+			if (*pattern == '*') {
+				if (*++pattern == '\0') return true;
+				mp = pattern;
+				cp = string + 1;
+			}
+			else if (*pattern == *string || *pattern == '?') {
+				pattern++;
+				string++;
+			}
+			else {
+				pattern = mp;
+				string = cp++;
+			}
+		}
+		while (*pattern == '*')
 			pattern++;
-			string++;
-		}
-		else {
-			pattern = mp;
-			string = cp++;
-		}
+		return *pattern == '\0';
 	}
-	while (*pattern == '*')
-		pattern++;
-	return *pattern == '\0';
 }
 
 void

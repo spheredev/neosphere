@@ -4,6 +4,7 @@ bin/cli/*.exe
 bin/spherestudio
 msvc/obj
 msvc/debug
+obj/
 setup/*.exe
 
 # Windows cruft
