@@ -58,7 +58,7 @@ main(int argc, char* argv[])
 			retval = EXIT_FAILURE;
 			goto shutdown;
 		}
-		printf("Success!\n\n");
+		printf("Success!\n");
 	}
 	else {
 		fprintf(stderr, "ERROR: No target named '%s'\n", target_name);

@@ -35,7 +35,7 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 			sprintf(path, "%s/%s/", out_path, dest_path);
 			fs_mkdir(path);
 			strcat(path, file.name);
-			if (CopyFileA(file.path, path, TRUE)) {
+			if (tinydir_copy(file.path, path, true) == 0) {
 				printf("Installed file %s\n", path);
 				++num_files;
 			}
@@ -49,7 +49,7 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 	return num_files;
 }
 
-void
+bool
 fs_mkdir(const char* path)
 {
 	char  parent[1024] = "";
@@ -61,9 +61,15 @@ fs_mkdir(const char* path)
 	do {
 		strcat(parent, token);
 		strcat(parent, "/");
-		tinydir_mkdir(path);
+		if (tinydir_mkdir(parent) != 0)
+			goto on_error;
 	} while (token = strtok(NULL, "/"));
 	free(parse);
+	return true;
+
+on_error:
+	free(parse);
+	return false;
 }
 
 static bool
@@ -108,6 +114,45 @@ init_basics_api(void)
 }
 
 static duk_ret_t
+js_game(duk_context* ctx)
+{
+	FILE*       file;
+	const char* name;
+	const char* author;
+	const char* description;
+	char*       parse;
+	const char* resolution;
+	int         res_x, res_y;
+	const char* script;
+
+	duk_require_object_coercible(ctx, 0);
+	name = (duk_get_prop_string(ctx, 0, "name"), duk_require_string(ctx, -1));
+	author = (duk_get_prop_string(ctx, 0, "author"), duk_require_string(ctx, -1));
+	description = (duk_get_prop_string(ctx, 0, "description"), duk_require_string(ctx, -1));
+	resolution = (duk_get_prop_string(ctx, 0, "resolution"), duk_require_string(ctx, -1));
+	script = (duk_get_prop_string(ctx, 0, "script"), duk_require_string(ctx, -1));
+
+	// parse screen resolution
+	parse = strdup(resolution);
+	res_x = atoi(strtok(parse, "x"));
+	res_y = atoi(strtok(NULL, "x"));
+
+	// write game.sgm
+	fs_mkdir("dist");
+	if (!(file = fopen("dist/game.sgm", "wb")))
+		duk_error(ctx, DUK_ERR_ERROR, "Failed to write game.sgm");
+	fprintf(file, "name=%s\n", name);
+	fprintf(file, "author=%s\n", author);
+	fprintf(file, "description=%s\n", description);
+	fprintf(file, "screen_width=%d\n", res_x);
+	fprintf(file, "screen_height=%d\n", res_y);
+	fprintf(file, "script=%s\n", script);
+	fclose(file);
+	printf("Wrote game.sgm '%s'\n", name);
+	return 0;
+}
+
+static duk_ret_t
 js_install(duk_context* ctx)
 {
 	// install(pattern, path, isRecursive);
@@ -136,43 +181,5 @@ js_install(duk_context* ctx)
 	src_path = last_slash != NULL ? pattern : ".";
 	pattern = last_slash != NULL ? last_slash + 1 : pattern;
 	fs_install(pattern, src_path, dest_path, is_recursive);
-	return 0;
-}
-
-static duk_ret_t
-js_game(duk_context* ctx)
-{
-	FILE*       file;
-	const char* name;
-	const char* author;
-	const char* description;
-	char*       parse;
-	const char* resolution;
-	int         res_x, res_y;
-	const char* script;
-
-	duk_require_object_coercible(ctx, 0);
-	name = (duk_get_prop_string(ctx, 0, "name"), duk_require_string(ctx, -1));
-	author = (duk_get_prop_string(ctx, 0, "author"), duk_require_string(ctx, -1));
-	description = (duk_get_prop_string(ctx, 0, "description"), duk_require_string(ctx, -1));
-	resolution = (duk_get_prop_string(ctx, 0, "resolution"), duk_require_string(ctx, -1));
-	script = (duk_get_prop_string(ctx, 0, "script"), duk_require_string(ctx, -1));
-
-	// parse screen resolution
-	parse = strdup(resolution);
-	res_x = atoi(strtok(parse, "x"));
-	res_y = atoi(strtok(NULL, "x"));
-
-	// write game.sgm
-	if (!(file = fopen("dist/game.sgm", "wb")))
-		duk_error(ctx, DUK_ERR_ERROR, "Failed to write game.sgm");
-	fprintf(file, "name=%s\n", name);
-	fprintf(file, "author=%s\n", author);
-	fprintf(file, "description=%s\n", description);
-	fprintf(file, "screen_width=%d\n", res_x);
-	fprintf(file, "screen_height=%d\n", res_y);
-	fprintf(file, "script=%s\n", script);
-	fclose(file);
-	printf("Wrote game.sgm '%s'\n", name);
 	return 0;
 }

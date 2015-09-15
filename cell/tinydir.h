@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #ifdef _WIN32
 # define WIN32_LEAN_AND_MEAN
@@ -118,7 +119,9 @@ int tinydir_readfile_n(const tinydir_dir *dir, tinydir_file *file, size_t i);
 _TINYDIR_FUNC
 int tinydir_open_subdir_n(tinydir_dir *dir, size_t i);
 _TINYDIR_FUNC
-void tinydir_mkdir(const char* path);
+int tinydir_copy(const char* src, const char* dest, int skip_if_exists);
+_TINYDIR_FUNC
+int tinydir_mkdir(const char* path);
 
 _TINYDIR_FUNC
 void _tinydir_get_ext(tinydir_file *file);
@@ -535,12 +538,54 @@ bail:
 }
 
 _TINYDIR_FUNC
-void tinydir_mkdir(const char *path)
+int tinydir_copy(const char *src, const char *dest, int skip_if_exists)
 {
 #ifdef _WIN32
-	CreateDirectoryA(path, NULL);
+	BOOL ok;
+	
+	ok = CopyFileA(src, dest, (BOOL)skip_if_exists);
+	return ok || GetLastError() == ERROR_ALREADY_EXISTS
+		? 0 : -1;
 #else
-	mkdir(path, 0777);
+	char        buffer[32768];
+	FILE*       f1, f2;
+	size_t      n_bytes;
+	struct stat sb;
+
+	if (skip_if_exists && stat(dest, &sb) == 0)
+		return 0;
+	if (!(f1 = fopen(src, "rb"))) return -1;
+	if (!(f2 = fopen(dest, "wb"))) return -1;
+	while (n_bytes = fread(buffer, sizeof(char), sizeof(buffer), f1)) {
+		if (fwrite(buffer, sizeof(char), n_bytes, f2) != n)
+			goto on_error;
+	}
+	fclose(f1);
+	fclose(f2);
+	return 0;
+
+on_error:
+	fclose(f1);
+	fclose(f2);
+	return -1;
+#endif
+}
+
+_TINYDIR_FUNC
+int tinydir_mkdir(const char *path)
+{
+#ifdef _WIN32
+	BOOL ok;
+	
+	ok = CreateDirectoryA(path, NULL);
+	return ok || GetLastError() == ERROR_ALREADY_EXISTS
+		? 0 : -1;
+#else
+	struct stat sb;
+
+	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode))
+		return 0;
+	return mkdir(path, 0777);
 #endif
 }
 
