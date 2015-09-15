@@ -21,6 +21,9 @@
     <ClCompile Include="..\cell\duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\cell\fs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cell\duk_config.h">
@@ -30,6 +33,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\tinydir.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\cell.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\fs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

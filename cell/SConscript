@@ -1,0 +1,12 @@
+cell_sources = [
+	"duktape.c",
+	"fs.c",
+	"main.c"
+]
+
+cell_libs = [
+	# no libs yet
+]
+
+cell = Program("cell", cell_sources, LIBS = cell_libs)
+Return("cell")

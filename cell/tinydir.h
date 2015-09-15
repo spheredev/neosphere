@@ -117,6 +117,8 @@ _TINYDIR_FUNC
 int tinydir_readfile_n(const tinydir_dir *dir, tinydir_file *file, size_t i);
 _TINYDIR_FUNC
 int tinydir_open_subdir_n(tinydir_dir *dir, size_t i);
+_TINYDIR_FUNC
+void tinydir_mkdir(const char* path);
 
 _TINYDIR_FUNC
 void _tinydir_get_ext(tinydir_file *file);
@@ -530,6 +532,16 @@ int tinydir_file_open(tinydir_file *file, const char *path)
 bail:
 	tinydir_close(&dir);
 	return result;
+}
+
+_TINYDIR_FUNC
+void tinydir_mkdir(const char *path)
+{
+#ifdef _WIN32
+	CreateDirectoryA(path, NULL);
+#else
+	mkdir(path, 0777);
+#endif
 }
 
 _TINYDIR_FUNC
