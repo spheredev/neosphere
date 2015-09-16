@@ -1,6 +1,6 @@
 #ifndef MINISPHERE__VERSION_H__INCLUDED
 #define MINISPHERE__VERSION_H__INCLUDED
 
-#define ENGINE_NAME "minisphere 2.0.0"
+#define ENGINE_NAME "minisphere v2.0-WIP"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED

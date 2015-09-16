@@ -1,5 +1,5 @@
 msphere_sources = [
-	"duktape.c",
+	Object("duktape.c"),
 	"dyad.c",
 	"animation.c",
 	"api.c",

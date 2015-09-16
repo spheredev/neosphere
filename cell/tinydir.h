@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 # include <dirent.h>
 # include <libgen.h>
+# include <unistd.h>
 # include <sys/stat.h>
 #endif
 
@@ -119,9 +120,11 @@ int tinydir_readfile_n(const tinydir_dir *dir, tinydir_file *file, size_t i);
 _TINYDIR_FUNC
 int tinydir_open_subdir_n(tinydir_dir *dir, size_t i);
 _TINYDIR_FUNC
-int tinydir_copy(const char* src, const char* dest, int skip_if_exists);
+int tinydir_chdir(const char* path);
 _TINYDIR_FUNC
 int tinydir_mkdir(const char* path);
+_TINYDIR_FUNC
+int tinydir_copy(const char* src, const char* dest, int skip_if_exists);
 
 _TINYDIR_FUNC
 void _tinydir_get_ext(tinydir_file *file);
@@ -565,6 +568,16 @@ on_error:
 	fclose(f1);
 	fclose(f2);
 	return -1;
+#endif
+}
+
+_TINYDIR_FUNC
+int tinydir_chdir(const char *path)
+{
+#ifdef _WIN32
+	return SetCurrentDirectoryA(path) ? 0 : -1;
+#else
+	return chdir(path);
 #endif
 }
 

@@ -11,8 +11,9 @@
 #include <stdio.h>
 #include <time.h>
 #include "duktape.h"
+#include "tinydir.h"
 
-#define CELL_VERSION "2.0.0"
+#define CELL_VERSION "v2.0-WIP"
 
 #include "fs.h"
 

@@ -1,6 +1,8 @@
 #include "cell.h"
 
-static bool parse_cmdline (int argc, char* argv[]);
+static bool parse_cmdline    (int argc, char* argv[]);
+static void print_cell_quote (void);
+static void print_version    (bool want_all);
 
 duk_context* g_duk = NULL;
 bool         g_is_verbose = false;
@@ -18,6 +20,11 @@ main(int argc, char* argv[])
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv))
 		return EXIT_FAILURE;
+
+	if (g_is_verbose) {
+		print_version(false);
+		//printf("\n");
+	}
 	
 	// initialize JavaScript environment
 	g_duk = duk_create_heap_default();
@@ -62,19 +69,6 @@ shutdown:
 static bool
 parse_cmdline(int argc, char* argv[])
 {
-	// yes, these are entirely necessary. :o)
-	static const char* const MESSAGES[] =
-	{
-		"This is the end for you!",
-		"Very soon, I am going to explode. And when I do...",
-		"Careful now! I wouldn't attack me if I were you...",
-		"I'm quite volatile, and the slightest jolt could set me off!",
-		"One minute left! There's nothing you can do now!",
-		"If only you'd finished me off a little bit sooner...",
-		"Ten more seconds, and the Earth will be gone!",
-		"Let's just call our little match a draw, shall we?",
-	};
-
 	int num_targets = 0;
 	
 	int i, j;
@@ -86,20 +80,27 @@ parse_cmdline(int argc, char* argv[])
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
-			if (strcmp(argv[i], "--out") == 0) {
-				if (i >= argc - 1) goto missing_argument;
-				free(g_out_path);
-				g_out_path = strdup(argv[i + 1]);
+			if (strcmp(argv[i], "--in") == 0) {
+				if (++i >= argc) goto missing_argument;
+				if (tinydir_chdir(argv[i]) != 0) {
+					printf("cell: error: no such directory '%s'\n", argv[i]);
+					return false;
+				}
 				++i;
 			}
+			else if (strcmp(argv[i], "--out") == 0) {
+				if (++i >= argc) goto missing_argument;
+				free(g_out_path);
+				g_out_path = strdup(argv[i]);
+			}
 			else if (strcmp(argv[i], "--unforgivable") == 0) {
-				printf("Cell seems to be going through some sort of transformation...\n");
-				printf("He's pumping himself up like a balloon!\n\n");
-				printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
+				print_cell_quote();
 				return false;
 			}
-			else if (strcmp(argv[i], "--version") == 0)
-				goto print_version;
+			else if (strcmp(argv[i], "--version") == 0) {
+				print_version(true);
+				return false;
+			}
 			else {
 				printf("cell: error: unknown option '%s'\n", argv[i]);
 				return false;
@@ -125,16 +126,41 @@ parse_cmdline(int argc, char* argv[])
 	}
 	return true;
 
-print_version:
-	printf("Cell %s Sphere Game Compiler %s\n",
-		CELL_VERSION,
-		sizeof(void*) == 8 ? "x64" : "x86");
-	printf("A scriptable build engine for Sphere games.\n");
-	printf("(c) 2015 Fat Cerberus\n\n");
-	printf("    JavaScript engine: Duktape %s\n", DUK_GIT_DESCRIBE);
-	return false;
-
 missing_argument:
 	printf("ERROR: No argument provided for '%s'.\n", argv[i]);
 	return false;
+}
+
+static void
+print_cell_quote(void)
+{
+	// yes, these are entirely necessary. :o)
+	static const char* const MESSAGES[] =
+	{
+		"This is the end for you!",
+		"Very soon, I am going to explode. And when I do...",
+		"Careful now! I wouldn't attack me if I were you...",
+		"I'm quite volatile, and the slightest jolt could set me off!",
+		"One minute left! There's nothing you can do now!",
+		"If only you'd finished me off a little bit sooner...",
+		"Ten more seconds, and the Earth will be gone!",
+		"Let's just call our little match a draw, shall we?",
+	};
+
+	printf("Cell seems to be going through some sort of transformation...\n");
+	printf("He's pumping himself up like a balloon!\n\n");
+	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
+}
+
+static void
+print_version(bool want_all)
+{
+	printf("Cell %s Sphere Game Compiler %s\n",
+		CELL_VERSION,
+		sizeof(void*) == 8 ? "x64" : "x86");
+	if (want_all) {
+		printf("A scriptable build engine for Sphere games.\n");
+		printf("(c) 2015 Fat Cerberus\n\n");
+		printf("    JS runtime: Duktape %s\n", DUK_GIT_DESCRIBE);
+	}
 }

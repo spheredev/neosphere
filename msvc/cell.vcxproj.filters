@@ -18,18 +18,15 @@
     <ClCompile Include="..\cell\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cell\duktape.c">
+    <ClCompile Include="..\cell\fs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cell\fs.c">
+    <ClCompile Include="..\src\duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cell\duk_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\cell\duktape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\tinydir.h">
@@ -41,5 +38,16 @@
     <ClInclude Include="..\cell\fs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\duktape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="cell.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

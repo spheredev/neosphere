@@ -62,6 +62,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -78,6 +79,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat />
       <FunctionLevelLinking>false</FunctionLevelLinking>
+      <AdditionalIncludeDirectories>..\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,15 +90,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\cell\fs.c" />
-    <ClCompile Include="..\cell\duktape.c" />
+    <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\cell\main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cell\fs.h" />
     <ClInclude Include="..\cell\cell.h" />
-    <ClInclude Include="..\cell\duktape.h" />
+    <ClInclude Include="..\src\duktape.h" />
     <ClInclude Include="..\cell\duk_config.h" />
     <ClInclude Include="..\cell\tinydir.h" />
+    <ClInclude Include="resource1.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="cell.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
