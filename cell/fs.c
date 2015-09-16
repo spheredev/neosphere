@@ -16,7 +16,6 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 	tinydir_file file;
 	bool         skip_entry;
 	int          num_files = 0;
-	const char*  out_path = "dist";
 	char         path[1024];
 
 	tinydir_open(&dir, src_path);
@@ -24,7 +23,7 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 		tinydir_readfile(&dir, &file);
 		tinydir_next(&dir);
 
-		sprintf(path, "%s/%s", src_path, out_path);
+		sprintf(path, "%s/%s", src_path, g_out_path);
 		skip_entry = file.is_dir && !recursive
 			|| strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0
 			|| strstr(file.path, path) == file.path;
@@ -32,7 +31,7 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 		if (skip_entry)
 			continue;
 		else if (!file.is_dir && wildcmp(file.name, pattern)) {
-			sprintf(path, "%s/%s/", out_path, dest_path);
+			sprintf(path, "%s/%s/", g_out_path, dest_path);
 			fs_mkdir(path);
 			strcat(path, file.name);
 			if (tinydir_copy(file.path, path, true) == 0)
@@ -45,7 +44,7 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 	}
 	tinydir_close(&dir);
 	if (num_files > 0)
-		printf("Installed %d files to '%s/%s'\n", num_files, out_path, dest_path);
+		printf("Installed %d files to '%s/%s'\n", num_files, g_out_path, dest_path);
 	return num_files;
 }
 
@@ -120,7 +119,7 @@ wildcmp(const char *string, const char *pattern)
 }
 
 void
-init_basics_api(void)
+init_fs_api(void)
 {
 	duk_push_c_function(g_duk, js_game, DUK_VARARGS);
 	duk_put_global_string(g_duk, "game");
@@ -139,6 +138,7 @@ js_game(duk_context* ctx)
 	const char* resolution;
 	int         res_x, res_y;
 	const char* script;
+	char        sgm_path[1024];
 
 	duk_require_object_coercible(ctx, 0);
 	name = (duk_get_prop_string(ctx, 0, "name"), duk_require_string(ctx, -1));
@@ -153,8 +153,9 @@ js_game(duk_context* ctx)
 	res_y = atoi(strtok(NULL, "x"));
 
 	// write game.sgm
-	fs_mkdir("dist");
-	if (!(file = fopen("dist/game.sgm", "wb")))
+	fs_mkdir(g_out_path);
+	sprintf(sgm_path, "%s/game.sgm", g_out_path);
+	if (!(file = fopen(sgm_path, "wb")))
 		duk_error(ctx, DUK_ERR_ERROR, "Failed to write game.sgm");
 	fprintf(file, "name=%s\n", name);
 	fprintf(file, "author=%s\n", author);

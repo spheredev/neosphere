@@ -27,14 +27,14 @@
 #endif
 
 #define AppName "minisphere"
-#define AppVersion "1.7.11"
-#define AppBuildNumber "838"
+#define AppVersion "2.0.0"
+#define AppBuildNumber "0"
 #define AppPublisher "Fat Cerberus"
 
 #define AppExeName "engine.exe"
 #define AppExeName_64 "engine64.exe"
-#define AppExeName2 "console.exe"
-#define AppExeName2_64 "console64.exe"
+#define AppExeName2 "msphere.exe"
+#define AppExeName2_64 "msphere64.exe"
 
 #ifdef WANT_GDK_SETUP
 #define SphereStudioVersion "2.0"

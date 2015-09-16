@@ -11,8 +11,6 @@ cell = SConscript(dirs=[cell_src_dir], variant_dir="obj/cell")
 
 if not os.path.exists(out_dir):
   os.makedirs(out_dir)
-if not os.path.exists(tools_dir):
-  os.makedirs(tools_dir)
 
 Install(out_dir, minisphere)
 Install(out_dir, cell)
