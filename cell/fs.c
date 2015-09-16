@@ -31,20 +31,31 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 		if (skip_entry)
 			continue;
 		else if (!file.is_dir && wildcmp(file.name, pattern)) {
-			sprintf(path, "%s/%s/", g_out_path, dest_path);
+			if (dest_path != NULL)
+				sprintf(path, "%s/%s/", g_out_path, dest_path);
+			else
+				sprintf(path, "%s/", g_out_path);
 			fs_mkdir(path);
 			strcat(path, file.name);
 			if (tinydir_copy(file.path, path, true) == 0)
 				++num_files;
 		}
 		else if (file.is_dir) {
-			sprintf(path, "%s/%s", dest_path, file.name);
+			if (dest_path != NULL)
+				sprintf(path, "%s/%s", dest_path, file.name);
+			else
+				sprintf(path, "%s", file.name);
 			fs_install(pattern, file.path, path, recursive);
 		}
 	}
 	tinydir_close(&dir);
-	if (num_files > 0)
-		printf("Installed %d files to '%s/%s'\n", num_files, g_out_path, dest_path);
+	if (num_files > 0) {
+		if (dest_path != NULL)
+			sprintf(path, "%s/%s", g_out_path, dest_path);
+		else
+			sprintf(path, "%s", g_out_path);
+		printf("Installed %d files to '%s'\n", num_files, path);
+	}
 	return num_files;
 }
 
@@ -189,7 +200,7 @@ js_install(duk_context* ctx)
 
 	n_args = duk_get_top(ctx);
 	pattern = strdup(duk_require_string(ctx, 0));
-	dest_path = n_args >= 2 ? duk_require_string(ctx, 1) : ".";
+	dest_path = n_args >= 2 ? duk_require_string(ctx, 1) : NULL;
 	is_recursive = n_args >= 3 ? duk_is_valid_index(ctx, 2) : true;
 
 	if (last_slash = strrchr(pattern, '/'))
