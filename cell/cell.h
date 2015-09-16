@@ -17,6 +17,7 @@
 #include "fs.h"
 
 extern duk_context* g_duk;
+extern bool         g_is_verbose;
 extern char*        g_out_path;
 
 #endif // CELL__CELL_H__INCLUDED

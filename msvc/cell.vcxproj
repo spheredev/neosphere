@@ -45,7 +45,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>debug\cli\</OutDir>
+    <OutDir>debug\</OutDir>
     <IntDir>obj\cell\x86\debug\</IntDir>
     <TargetName>cell</TargetName>
   </PropertyGroup>
