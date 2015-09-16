@@ -99,7 +99,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>include;$(IncludePath)</IncludePath>
     <LibraryPath>lib\x86;$(LibraryPath)</LibraryPath>
-    <TargetName>engine</TargetName>
+    <TargetName>msphere</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug\</OutDir>
     <IntDir>obj\x86\debug\</IntDir>
@@ -108,7 +108,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>include;$(IncludePath)</IncludePath>
     <LibraryPath>lib\x64;$(LibraryPath)</LibraryPath>
-    <TargetName>engine64</TargetName>
+    <TargetName>msphere64</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug\</OutDir>
     <IntDir>obj\x64\debug\</IntDir>
@@ -125,7 +125,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>include;$(IncludePath)</IncludePath>
     <LibraryPath>lib\x86;$(LibraryPath)</LibraryPath>
-    <TargetName>console</TargetName>
+    <TargetName>msphere</TargetName>
     <OutDir>..\bin\</OutDir>
     <IntDir>obj\x86\console\</IntDir>
   </PropertyGroup>
@@ -141,7 +141,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>include;$(IncludePath)</IncludePath>
     <LibraryPath>lib\x64;$(LibraryPath)</LibraryPath>
-    <TargetName>console64</TargetName>
+    <TargetName>msphere64</TargetName>
     <OutDir>..\bin\</OutDir>
     <IntDir>obj\x64\console\</IntDir>
   </PropertyGroup>

@@ -2,7 +2,6 @@ import os
 import shutil
 
 out_dir = os.path.join(os.getcwd(), "bin")
-tools_dir = os.path.join(os.getcwd(), "bin/cli")
 
 msphere_src_dir = os.path.join(os.getcwd(), "src")
 cell_src_dir = os.path.join(os.getcwd(), "cell")
@@ -16,4 +15,4 @@ if not os.path.exists(tools_dir):
   os.makedirs(tools_dir)
 
 Install(out_dir, minisphere)
-Install(tools_dir, cell)
+Install(out_dir, cell)

@@ -51,7 +51,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\cli\</OutDir>
+    <OutDir>..\bin\</OutDir>
     <IntDir>obj\cell\x86\release\</IntDir>
     <TargetName>cell</TargetName>
   </PropertyGroup>
