@@ -1,8 +1,8 @@
 #include "cell.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
+static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
-static void print_version    (bool want_all);
 
 duk_context* g_duk = NULL;
 bool         g_is_verbose = false;
@@ -21,11 +21,6 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv))
 		return EXIT_FAILURE;
 
-	if (g_is_verbose) {
-		print_version(false);
-		//printf("\n");
-	}
-	
 	// initialize JavaScript environment
 	g_duk = duk_create_heap_default();
 	init_fs_api();
@@ -46,6 +41,10 @@ main(int argc, char* argv[])
 
 	sprintf(js_target_name, "_%s", s_target_name);
 	if (duk_get_global_string(g_duk, js_target_name) && duk_is_callable(g_duk, -1)) {
+		if (g_is_verbose) {
+			print_banner(true, false);
+			printf("\n");
+		}
 		printf("Processing Cell target '%s'\n", s_target_name);
 		if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS) {
 			fprintf(stderr, "FATAL: JS %s\n", duk_safe_to_string(g_duk, -1));
@@ -66,6 +65,19 @@ shutdown:
 	return retval;
 }
 
+void
+print_verbose(const char* fmt, ...)
+{
+	va_list ap;
+
+	if (!g_is_verbose)
+		return;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 static bool
 parse_cmdline(int argc, char* argv[])
 {
@@ -80,7 +92,20 @@ parse_cmdline(int argc, char* argv[])
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
-			if (strcmp(argv[i], "--in") == 0) {
+			if (strcmp(argv[i], "--help") == 0) {
+				print_banner(false, false);
+				printf("\n");
+				printf("USAGE: cell [--in <path>] [--out <path>] [target]\n");
+				printf("       cell [options] [target]\n");
+				printf("\nOPTIONS:\n");
+				printf("   --version              Prints the Cell compiler version and exits\n");
+				printf("   --in <path>            Sets the input directory, Cell looks for sources in\n");
+				printf("                          the current working directory by default\n");
+				printf("   --out <path>           Sets the output directory, 'dist' if not provided\n");
+				printf("   --verbose, -v          Be verbose, print lots of debugging info\n");
+				return false;
+			}
+			else if (strcmp(argv[i], "--in") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (tinydir_chdir(argv[i]) != 0) {
 					printf("cell: error: no such directory '%s'\n", argv[i]);
@@ -93,12 +118,15 @@ parse_cmdline(int argc, char* argv[])
 				free(g_out_path);
 				g_out_path = strdup(argv[i]);
 			}
-			else if (strcmp(argv[i], "--unforgivable") == 0) {
+			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
 				return false;
 			}
+			else if (strcmp(argv[i], "--verbose") == 0) {
+				g_is_verbose = true;
+			}
 			else if (strcmp(argv[i], "--version") == 0) {
-				print_version(true);
+				print_banner(true, true);
 				return false;
 			}
 			else {
@@ -127,7 +155,7 @@ parse_cmdline(int argc, char* argv[])
 	return true;
 
 missing_argument:
-	printf("ERROR: no argument provided for '%s'.\n", argv[i]);
+	printf("cell: error: no argument provided for '%s'\n", argv[i - 1]);
 	return false;
 }
 
@@ -153,14 +181,16 @@ print_cell_quote(void)
 }
 
 static void
-print_version(bool want_all)
+print_banner(bool want_copyright, bool want_deps)
 {
-	printf("Cell %s Sphere Game Compiler %s\n",
-		CELL_VERSION,
-		sizeof(void*) == 8 ? "x64" : "x86");
-	if (want_all) {
+	printf("Cell %s Sphere Compiler %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+	if (want_copyright) {
 		printf("A scriptable build engine for Sphere games.\n");
-		printf("(c) 2015 Fat Cerberus\n\n");
-		printf("    JS runtime: Duktape %s\n", DUK_GIT_DESCRIBE);
+		printf("(c) 2015 Fat Cerberus\n");
+	}
+	if (want_deps) {
+		printf("\n");
+		printf("    Cell compiler: %s %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+		printf("    Duktape:       %s\n", DUK_GIT_DESCRIBE);
 	}
 }

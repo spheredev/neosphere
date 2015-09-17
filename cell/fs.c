@@ -37,25 +37,20 @@ fs_install(const char* pattern, const char* src_path, const char* dest_path, boo
 				sprintf(path, "%s/", g_out_path);
 			fs_mkdir(path);
 			strcat(path, file.name);
-			if (tinydir_copy(file.path, path, true) == 0)
+			if (tinydir_copy(file.path, path, true) == 0) {
+				print_verbose("Copied file '%s' to '%s'\n", file.path, path);
 				++num_files;
+			}
 		}
 		else if (file.is_dir) {
 			if (dest_path != NULL)
 				sprintf(path, "%s/%s", dest_path, file.name);
 			else
 				sprintf(path, "%s", file.name);
-			fs_install(pattern, file.path, path, recursive);
+			num_files += fs_install(pattern, file.path, path, recursive);
 		}
 	}
 	tinydir_close(&dir);
-	if (num_files > 0) {
-		if (dest_path != NULL)
-			sprintf(path, "%s/%s", g_out_path, dest_path);
-		else
-			sprintf(path, "%s", g_out_path);
-		printf("Installed %d files to '%s'\n", num_files, path);
-	}
 	return num_files;
 }
 
@@ -195,6 +190,7 @@ js_install(duk_context* ctx)
 	bool         is_recursive;
 	char*        last_slash;
 	int          n_args;
+	int          num_copied;
 	char*        pattern;
 	const char*  src_path;
 
@@ -207,6 +203,9 @@ js_install(duk_context* ctx)
 		*last_slash = '\0';
 	src_path = last_slash != NULL ? pattern : ".";
 	pattern = last_slash != NULL ? last_slash + 1 : pattern;
-	fs_install(pattern, src_path, dest_path, is_recursive);
+	num_copied = fs_install(pattern, src_path, dest_path, is_recursive);
+	if (num_copied > 0)
+		printf("Installed %d files into '%s'\n", num_copied,
+			dest_path != NULL ? dest_path : g_out_path);
 	return 0;
 }

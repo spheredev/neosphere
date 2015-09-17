@@ -21,4 +21,6 @@ extern duk_context* g_duk;
 extern bool         g_is_verbose;
 extern char*        g_out_path;
 
+extern void print_verbose (const char* fmt, ...);
+
 #endif // CELL__CELL_H__INCLUDED
