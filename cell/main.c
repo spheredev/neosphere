@@ -127,7 +127,7 @@ parse_cmdline(int argc, char* argv[])
 	return true;
 
 missing_argument:
-	printf("ERROR: No argument provided for '%s'.\n", argv[i]);
+	printf("ERROR: no argument provided for '%s'.\n", argv[i]);
 	return false;
 }
 
