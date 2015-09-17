@@ -102,7 +102,7 @@ parse_cmdline(int argc, char* argv[])
 				printf("   --in <path>            Sets the input directory, Cell looks for sources in\n");
 				printf("                          the current working directory by default\n");
 				printf("   --out <path>           Sets the output directory, 'dist' if not provided\n");
-				printf("   --verbose, -v          Be verbose, print lots of debugging info\n");
+				printf("   --verbose, -v          Be verbose, print detailed progress\n");
 				return false;
 			}
 			else if (strcmp(argv[i], "--in") == 0) {

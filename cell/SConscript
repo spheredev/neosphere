@@ -1,5 +1,5 @@
 cell_sources = [
-	Object("../msphere/duktape.c"),
+	"duktape.c",
 	"fs.c",
 	"main.c"
 ]
@@ -8,5 +8,5 @@ cell_libs = [
 	"m"
 ]
 
-cell = Program("cell", cell_sources, LIBS = cell_libs, CPPPATH='#/src')
+cell = Program("cell", cell_sources, LIBS = cell_libs)
 Return("cell")

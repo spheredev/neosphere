@@ -89,14 +89,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\cell\duktape.c" />
     <ClCompile Include="..\cell\fs.c" />
-    <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\cell\main.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\cell\duktape.h" />
     <ClInclude Include="..\cell\fs.h" />
     <ClInclude Include="..\cell\cell.h" />
-    <ClInclude Include="..\src\duktape.h" />
     <ClInclude Include="..\cell\duk_config.h" />
     <ClInclude Include="..\cell\tinydir.h" />
     <ClInclude Include="resource1.h" />

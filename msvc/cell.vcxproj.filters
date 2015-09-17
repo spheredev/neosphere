@@ -21,7 +21,7 @@
     <ClCompile Include="..\cell\fs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\duktape.c">
+    <ClCompile Include="..\cell\duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,10 +38,10 @@
     <ClInclude Include="..\cell\fs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\duktape.h">
+    <ClInclude Include="resource1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource1.h">
+    <ClInclude Include="..\cell\duktape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

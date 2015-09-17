@@ -1,12 +1,11 @@
 /*
- *  Duktape public API for Duktape 1.3.99.
+ *  Duktape public API for Duktape 1.3.0.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit a6c3826f118d40c98c1a373dd196a8423017adb6 (v1.3.0-44-ga6c3826).
- *  Git branch add-hack-const-support.
+ *  Git commit 675165f35ea3a5bac34ff4d0a58b007cc2f442dc (v1.3.0).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -211,16 +210,13 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10399L
+#define DUK_VERSION                       10300L
 
-/* Git commit, describe, and branch for Duktape build.  Useful for
- * non-official snapshot builds so that application code can easily log
- * which Duktape snapshot was used.  Not available in the Ecmascript
- * environment.
+/* Git describe for Duktape build.  Useful for non-official snapshot builds
+ * so that application code can easily log which Duktape snapshot was used.
+ * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_COMMIT                    "a6c3826f118d40c98c1a373dd196a8423017adb6"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-44-ga6c3826"
-#define DUK_GIT_BRANCH                    "add-hack-const-support"
+#define DUK_GIT_DESCRIBE                  "v1.3.0"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
