@@ -18,10 +18,13 @@
     <ClCompile Include="..\cell\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cell\fs.c">
+    <ClCompile Include="..\cell\duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cell\duktape.c">
+    <ClCompile Include="..\src\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cell\engine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,13 +38,16 @@
     <ClInclude Include="..\cell\cell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\cell\fs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\duktape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

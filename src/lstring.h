@@ -1,6 +1,8 @@
 #ifndef MINISPHERE__LSTRING_H__INCLUDED
 #define MINISPHERE__LSTRING_H__INCLUDED
 
+#include <stdbool.h>
+
 typedef struct lstring lstring_t;
 
 extern lstring_t*  lstr_newf     (const char* fmt, ...);

@@ -15,11 +15,12 @@
 
 #define CELL_VERSION "v2.0-WIP"
 
-#include "fs.h"
+#include "engine.h"
 
 extern duk_context* g_duk;
 extern bool         g_is_verbose;
 extern char*        g_out_path;
+extern bool         g_want_source_map;
 
 extern void print_verbose (const char* fmt, ...);
 

@@ -3,8 +3,6 @@
 // void pointers are thrown around with abandon. as a result, it is not type safe at all
 // and WILL blow up in your face if you're careless with it. you have been warned!
 
-#include "minisphere.h"
-
 #include "vector.h"
 
 static bool maybe_resize_vector(vector_t* vector, size_t min_items);

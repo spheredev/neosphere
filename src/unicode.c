@@ -1,8 +1,6 @@
 // utf8decode function (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-#include "minisphere.h"
-
 #include "unicode.h"
 
 static const uint8_t utf8d[] =

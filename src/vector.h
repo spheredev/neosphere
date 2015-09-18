@@ -1,6 +1,10 @@
 #ifndef MINISPHERE__VECTOR_H__INCLUDED
 #define MINISPHERE__VECTOR_H__INCLUDED
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <memory.h>
+
 typedef struct vector vector_t;
 
 typedef

@@ -7,6 +7,8 @@ static void print_cell_quote (void);
 duk_context* g_duk = NULL;
 bool         g_is_verbose = false;
 char*        g_out_path = NULL;
+bool         g_want_package = false;
+bool         g_want_source_map = false;
 
 char* s_target_name;
 
@@ -23,7 +25,7 @@ main(int argc, char* argv[])
 
 	// initialize JavaScript environment
 	g_duk = duk_create_heap_default();
-	init_fs_api();
+	initialize_js_api();
 
 	// evaluate the build script
 	if (duk_pcompile_file(g_duk, 0x0, "cell.js") != DUK_EXEC_SUCCESS
@@ -41,17 +43,16 @@ main(int argc, char* argv[])
 
 	sprintf(js_target_name, "_%s", s_target_name);
 	if (duk_get_global_string(g_duk, js_target_name) && duk_is_callable(g_duk, -1)) {
-		if (g_is_verbose) {
-			print_banner(true, false);
-			printf("\n");
-		}
+		print_banner(true, false);
+		printf("\n");
 		printf("Processing Cell target '%s'\n", s_target_name);
+		initialize_engine();
 		if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS) {
 			fprintf(stderr, "FATAL: JS %s\n", duk_safe_to_string(g_duk, -1));
 			retval = EXIT_FAILURE;
 			goto shutdown;
 		}
-		printf("Success!\n");
+		run_build();
 	}
 	else {
 		fprintf(stderr, "cell: error: no target named '%s'\n", s_target_name);
@@ -98,11 +99,19 @@ parse_cmdline(int argc, char* argv[])
 				printf("USAGE: cell [--in <path>] [--out <path>] [target]\n");
 				printf("       cell [options] [target]\n");
 				printf("\nOPTIONS:\n");
-				printf("   --version              Prints the Cell compiler version and exits\n");
 				printf("   --in <path>            Sets the input directory, Cell looks for sources in\n");
 				printf("                          the current working directory by default\n");
 				printf("   --out <path>           Sets the output directory, 'dist' if not provided\n");
-				printf("   --verbose, -v          Be verbose, print detailed progress\n");
+				printf("   --version              Prints the Cell compiler version and exits\n");
+				printf("   --make-package, -p     Makes a Sphere package (.spk) for the compiled game\n");
+				printf("   --source-map, -m       Generates a source map, which maps compiled assets to\n");
+				printf("                          their original sources in the input directory; useful\n");
+				printf("                          for debugging\n");
+				printf("   --verbose, -v          Be verbose, print lots of details\n");
+				return false;
+			}
+			else if (strcmp(argv[i], "--version") == 0) {
+				print_banner(true, true);
 				return false;
 			}
 			else if (strcmp(argv[i], "--in") == 0) {
@@ -122,12 +131,14 @@ parse_cmdline(int argc, char* argv[])
 				print_cell_quote();
 				return false;
 			}
+			else if (strcmp(argv[i], "--make-package") == 0) {
+				g_want_package = true;
+			}
+			else if (strcmp(argv[i], "--source-map") == 0) {
+				g_want_source_map = true;
+			}
 			else if (strcmp(argv[i], "--verbose") == 0) {
 				g_is_verbose = true;
-			}
-			else if (strcmp(argv[i], "--version") == 0) {
-				print_banner(true, true);
-				return false;
 			}
 			else {
 				printf("cell: error: unknown option '%s'\n", argv[i]);
@@ -137,9 +148,9 @@ parse_cmdline(int argc, char* argv[])
 		else if (argv[i][0] == '-') {
 			for (j = strlen(argv[i]) - 1; j >= 1; --j) {
 				switch (argv[i][j]) {
-				case 'v':
-					g_is_verbose = true;
-					break;
+				case 'm': g_want_source_map = true; break;
+				case 'p': g_want_package = true; break;
+				case 'v': g_is_verbose = true; break;
 				default:
 					printf("cell: error: unknown option '-%c'\n", argv[i][j]);
 					return false;
@@ -183,14 +194,14 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("Cell %s Sphere Compiler %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("Cell %s Sphere Game Compiler %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A scriptable build engine for Sphere games.\n");
 		printf("(c) 2015 Fat Cerberus\n");
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Cell compiler: %s %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
-		printf("    Duktape:       %s\n", DUK_GIT_DESCRIBE);
+		printf("    Cell:    %s %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
 	}
 }
