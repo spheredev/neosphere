@@ -3,6 +3,9 @@
 
 #include "unicode.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
 static const uint8_t utf8d[] =
 {
 	// The first part of the table maps bytes to character classes that

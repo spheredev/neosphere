@@ -11,11 +11,11 @@
 #include <stdio.h>
 #include <time.h>
 #include "duktape.h"
+#include "lstring.h"
 #include "tinydir.h"
+#include "vector.h"
 
 #define CELL_VERSION "v2.0-WIP"
-
-#include "engine.h"
 
 extern duk_context* g_duk;
 extern bool         g_is_verbose;

@@ -1,6 +1,10 @@
 cell_sources = [
-	"duktape.c",
-	"fs.c",
+	Object("duktape", "../msphere/duktape.c"),
+	Object("lstring", "../msphere/lstring.c"),
+	Object("unicode", "../msphere/unicode.c"),
+	Object("vector", "../msphere/vector.c"),
+
+	"engine.c",
 	"main.c"
 ]
 
@@ -8,5 +12,7 @@ cell_libs = [
 	"m"
 ]
 
-cell = Program("cell", cell_sources, LIBS = cell_libs)
+cell = Program("cell",
+	cell_sources, CPPPATH = "#/src",
+	LIBS = cell_libs)
 Return("cell")

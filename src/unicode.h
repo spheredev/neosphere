@@ -1,6 +1,7 @@
 #ifndef MINISPHERE__UNICODE_H__INCLUDED
 #define MINISPHERE__UNICODE_H__INCLUDED
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define UTF8_ACCEPT 0
