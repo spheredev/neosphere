@@ -93,6 +93,7 @@
     <ClCompile Include="..\cell\main.c" />
     <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\src\lstring.c" />
+    <ClCompile Include="..\src\path.c" />
     <ClCompile Include="..\src\unicode.c" />
     <ClCompile Include="..\src\vector.c" />
   </ItemGroup>
@@ -103,6 +104,7 @@
     <ClInclude Include="..\cell\tinydir.h" />
     <ClInclude Include="..\src\duktape.h" />
     <ClInclude Include="..\src\lstring.h" />
+    <ClInclude Include="..\src\path.h" />
     <ClInclude Include="..\src\unicode.h" />
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="resource1.h" />

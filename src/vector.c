@@ -5,6 +5,10 @@
 
 #include "vector.h"
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
 static bool maybe_resize_vector(vector_t* vector, size_t min_items);
 
 struct vector

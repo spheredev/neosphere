@@ -5,6 +5,7 @@ cell_sources = [
 	Object("vector", "../msphere/vector.c"),
 
 	"engine.c",
+	"path.c",
 	"main.c"
 ]
 

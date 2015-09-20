@@ -8,7 +8,7 @@
 static duk_ret_t js_game    (duk_context* ctx);
 static duk_ret_t js_install (duk_context* ctx);
 
-static void add_source      (const char* source_path, const char* dest_path);
+static void add_source      (const lstring_t* source_path, const lstring_t* dest_path);
 static bool fspew           (const void* buffer, size_t size, const char* filename);
 static int  handle_install  (const char* pattern, const char* src_path, const char* dest_path, bool recursive);
 static bool mkdir_recursive (const char* path);
@@ -26,8 +26,8 @@ struct game
 
 struct source
 {
-	char* source_path;
-	char* dest_path;
+	lstring_t* source_path;
+	lstring_t* dest_path;
 };
 
 static struct game s_game_info;
@@ -59,7 +59,7 @@ bool
 run_build()
 {
 	FILE*          file;
-	char           filename[1024];
+	char           filename[CELL_PATH_MAX];
 	const char*    json;
 	int            num_files = 0;
 	struct source* source;
@@ -73,19 +73,24 @@ run_build()
 	if (get_vector_size(s_files) == 0)
 		printf("warning: no files installed\n");
 	
+	printf("Compiling Sphere game\n");
+	printf("    Name: %s\n", s_game_info.name);
+	printf("    Author: %s\n", s_game_info.author);
+	printf("    Resolution: %dx%d\n", s_game_info.width, s_game_info.height);
+	
 	// copy staged files
 	printf("Installing files... ");
 	if (g_want_source_map)
 		duk_push_object(g_duk);
 	iter = iterate_vector(s_files);
 	while (source = next_vector_item(&iter)) {
-		if (tinydir_copy(source->source_path, source->dest_path, true) == 0) {
+		if (tinydir_copy(lstr_cstr(source->source_path), lstr_cstr(source->dest_path), true) == 0) {
 			++num_files;
 			print_verbose("Copied '%s' to '%s'\n", source->source_path, source->dest_path);
 		}
 		if (g_want_source_map) {
-			duk_push_string(g_duk, source->source_path);
-			duk_put_prop_string(g_duk, -2, source->dest_path);
+			duk_push_string(g_duk, lstr_cstr(source->source_path));
+			duk_put_prop_string(g_duk, -2, lstr_cstr(source->dest_path));
 		}
 	}
 	printf("%d copied\n", num_files);
@@ -105,7 +110,7 @@ run_build()
 	}
 	
 	// write game.sgm
-	printf("Generating game manifest... ");
+	printf("Writing game manifest... ");
 	mkdir_recursive(g_out_path);
 	sprintf(filename, "%s/game.sgm", g_out_path);
 	if (!(file = fopen(filename, "wb")))
@@ -119,19 +124,17 @@ run_build()
 	fclose(file);
 	printf("Done!\n");
 	
-	printf("Successfully built '%s'\n", s_game_info.name);
+	printf("Success!\n");
 	return true;
 }
 
 static void
-add_source(const char* source_path, const char* dest_path)
+add_source(const lstring_t* source_path, const lstring_t* dest_path)
 {
 	struct source source;
 
-	source.source_path = malloc(strlen(source_path) + 1);
-	source.dest_path = malloc(strlen(dest_path) + 1);
-	strcpy(source.source_path, source_path);
-	strcpy(source.dest_path, dest_path);
+	source.source_path = lstr_dup(source_path);
+	source.dest_path = lstr_dup(dest_path);
 	push_back_vector(s_files, &source);
 }
 
@@ -152,9 +155,11 @@ handle_install(const char* pattern, const char* src_path, const char* dest_path,
 {
 	tinydir_dir  dir;
 	tinydir_file file;
+	lstring_t*   in_path = NULL;
+	lstring_t*   out_path = NULL;
 	bool         skip_entry;
 	int          num_files = 0;
-	char         path[1024];
+	char         path[CELL_PATH_MAX];
 
 	tinydir_open(&dir, src_path);
 	while (dir.has_next) {
@@ -169,13 +174,11 @@ handle_install(const char* pattern, const char* src_path, const char* dest_path,
 		if (skip_entry)
 			continue;
 		else if (!file.is_dir && wildcmp(file.name, pattern)) {
-			if (dest_path != NULL)
-				sprintf(path, "%s/%s/", g_out_path, dest_path);
-			else
-				sprintf(path, "%s/", g_out_path);
-			mkdir_recursive(path);
-			strcat(path, file.name);
-			add_source(file.path, path);
+			in_path = src_path ? lstr_newf("%s/%s", src_path, file.name) : lstr_newf("%s", file.name);
+			out_path = dest_path ? lstr_newf("%s/%s", dest_path, file.name) : lstr_newf("%s", file.name);
+			add_source(in_path, out_path);
+			lstr_free(in_path);
+			lstr_free(out_path);
 			++num_files;
 		}
 		else if (file.is_dir) {

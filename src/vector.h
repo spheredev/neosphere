@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__VECTOR_H__INCLUDED
 #define MINISPHERE__VECTOR_H__INCLUDED
 
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <memory.h>
 

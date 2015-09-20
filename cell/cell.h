@@ -12,10 +12,13 @@
 #include <time.h>
 #include "duktape.h"
 #include "lstring.h"
+#include "path.h"
 #include "tinydir.h"
 #include "vector.h"
 
 #define CELL_VERSION "v2.0-WIP"
+
+#define CELL_PATH_MAX 256
 
 extern duk_context* g_duk;
 extern bool         g_is_verbose;

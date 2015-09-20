@@ -276,6 +276,12 @@ static uint32_t cp1252[256] =
 };
 
 lstring_t*
+lstr_new(const char* cstr)
+{
+	return lstr_from_buf(cstr, strlen(cstr));
+}
+
+lstring_t*
 lstr_newf(const char* fmt, ...)
 {
 	va_list ap;
