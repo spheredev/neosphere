@@ -33,7 +33,7 @@
     <ClCompile Include="..\src\duktape.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\path.c">
+    <ClCompile Include="..\cell\path.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,7 +65,7 @@
     <ClInclude Include="..\src\duktape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\path.h">
+    <ClInclude Include="..\cell\path.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
