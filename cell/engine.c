@@ -1,5 +1,4 @@
 #include "cell.h"
-#include "vector.h"
 
 #include "engine.h"
 
@@ -70,8 +69,6 @@ run_build()
 		printf("FATAL: missing game() directive\n");
 		return false;
 	}
-	if (get_vector_size(s_files) == 0)
-		printf("warning: no files installed\n");
 	
 	printf("Compiling Sphere game\n");
 	printf("    Name: %s\n", s_game_info.name);
@@ -80,6 +77,8 @@ run_build()
 	
 	// copy staged files
 	printf("Installing files... ");
+	if (get_vector_size(s_files) == 0)
+		printf("warning: no files installed\n");
 	if (g_want_source_map)
 		duk_push_object(g_duk);
 	iter = iterate_vector(s_files);

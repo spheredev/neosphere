@@ -23,51 +23,12 @@ struct path
 path_t*
 path_new(const char* pathname)
 {
-	char*   hop;
-	char*   parse;
 	path_t* path;
-	char*   token;
-	char    *p_filename;
-
-	char* p;
-
+	
 	path = calloc(1, sizeof(path_t));
 	
-	// normalize path to forward slash delimiters
-	parse = strdup(pathname);
-	p = parse;
-	do {
-		if (*p == '\\') *p = '/';
-	} while (*++p != '\0');
-
-	// parse the filename out of the path, if any
-	if (!(p_filename = strrchr(parse, '/')))
-		p_filename = parse;
-	else
-		++p_filename;
-	path->filename = *p_filename != '\0'
-		? strdup(p_filename) : NULL;
-
-	*p_filename = '\0';  // strip filename
 	path->hops = new_vector(sizeof(char*));
-	if (parse[0] == '/') {
-		// empty component at start of path indicates absolute path
-		hop = strdup("");
-		push_back_vector(path->hops, &hop);
-	}
-		
-	// this isn't an exact science, strtok() collapses consecutive delimiters for
-	// example. then again the Windows command prompt and Bash both exhibit similar
-	// behavior, so I think we're okay.
-	token = strtok(parse, "/");
-	while (token != NULL) {
-		hop = strdup(token);
-		push_back_vector(path->hops, &hop);
-		token = strtok(NULL, "/");
-	}
-	free(parse);
-	
-	update_pathname(path);
+	path_append(path, pathname);
 	return path;
 }
 
@@ -95,14 +56,74 @@ path_cstr(const path_t* path)
 	return path->pathname;
 }
 
+const char*
+path_filename_cstr(const path_t* path)
+{
+	return path->filename;
+}
+
 bool
-is_path_rooted(const path_t* path)
+path_is_rooted(const path_t* path)
 {
 	const char* first_part = get_vector_size(path->hops) >= 1
 		? *(const char**)get_vector_item(path->hops, 0)
 		: "Unforgivable!";
 	return strlen(first_part) >= 2 && first_part[1] == ':'
 		|| strcmp(first_part, "") == 0;
+}
+
+bool
+path_append(path_t* path, const char* pathname)
+{
+	char*   hop;
+	char*   parse;
+	char*   token;
+	char    *p_filename;
+
+	char* p;
+
+	if (path->filename != NULL)
+		goto on_error;
+
+	// normalize path to forward slash delimiters
+	parse = strdup(pathname);
+	p = parse;
+	do {
+		if (*p == '\\') *p = '/';
+	} while (*++p != '\0');
+
+	// parse the filename out of the path, if any
+	if (!(p_filename = strrchr(parse, '/')))
+		p_filename = parse;
+	else
+		++p_filename;
+	path->filename = *p_filename != '\0'
+		? strdup(p_filename) : NULL;
+
+	*p_filename = '\0';  // strip filename
+	if (parse[0] == '/') {
+		// pathname is absolute, replace wholesale instead of appending
+		clear_vector(path->hops);
+		hop = strdup("");
+		push_back_vector(path->hops, &hop);
+	}
+
+	// this isn't an exact science, strtok() collapses consecutive delimiters for
+	// example. then again the Windows command prompt and Bash both exhibit similar
+	// behavior, so I think we're okay.
+	token = strtok(parse, "/");
+	while (token != NULL) {
+		hop = strdup(token);
+		push_back_vector(path->hops, &hop);
+		token = strtok(NULL, "/");
+	}
+	free(parse);
+	
+	update_pathname(path);
+	return true;
+
+on_error:
+	return false;
 }
 
 void
@@ -114,7 +135,7 @@ path_canonicalize(path_t* path)
 	
 	size_t i;
 
-	is_rooted = is_path_rooted(path);
+	is_rooted = path_is_rooted(path);
 	for (i = 0; i < get_vector_size(path->hops); ++i) {
 		++depth;
 		hop = *(char**)get_vector_item(path->hops, i);
