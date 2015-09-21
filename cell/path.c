@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 
 static void promote_filename (path_t* path);
@@ -69,6 +70,12 @@ path_filename_cstr(const path_t* path)
 	return path->filename;
 }
 
+const char*
+path_hop_cstr(const path_t* path, size_t idx)
+{
+	return *(const char**)get_vector_item(path->hops, idx);
+}
+
 bool
 path_is_rooted(const path_t* path)
 {
@@ -79,7 +86,13 @@ path_is_rooted(const path_t* path)
 		|| strcmp(first_part, "") == 0;
 }
 
-bool
+size_t
+path_num_hops(const path_t* path)
+{
+	return get_vector_size(path->hops);
+}
+
+path_t*
 path_append(path_t* path, const char* pathname, bool force_dir_path)
 {
 	char*   hop;
@@ -130,45 +143,50 @@ path_append(path_t* path, const char* pathname, bool force_dir_path)
 		promote_filename(path);
 	path_collapse(path, false);
 	update_pathname(path);
-	return true;
+	return path;
 
 on_error:
-	return false;
+	return NULL;
 }
 
 path_t*
 path_collapse(path_t* path, bool collapse_double_dots)
 {
-	int   depth = 0;
-	char* hop;
-	bool  is_rooted;
+	int         depth = 0;
+	const char* hop;
+	bool        is_rooted;
 	
 	size_t i;
 
 	is_rooted = path_is_rooted(path);
-	for (i = 0; i < get_vector_size(path->hops); ++i) {
+	for (i = 0; i < path_num_hops(path); ++i) {
 		++depth;
-		hop = *(char**)get_vector_item(path->hops, i);
+		hop = path_hop_cstr(path, i);
 		if (strcmp(hop, ".") == 0) {
 			--depth;
-			remove_vector_item(path->hops, i--);
-			free(hop);
+			path_remove_hop(path, i--);
 		}
 		else if (strcmp(hop, "..") == 0) {
 			depth -= 2;
 			if (!collapse_double_dots)
 				continue;
-			if (is_rooted) {
-				remove_vector_item(path->hops, i--);
-				if (i > 0)  // don't strip the root directory
-					remove_vector_item(path->hops, i--);
-			}
-			else if (depth >= 0) {
-				remove_vector_item(path->hops, i--);
-				remove_vector_item(path->hops, i--);
-			}
+			path_remove_hop(path, i--);
+			if (i > 0 || !is_rooted)  // don't strip the root directory
+				path_remove_hop(path, i--);
 		}
 	}
+	update_pathname(path);
+	return path;
+}
+
+path_t*
+path_remove_hop(path_t* path, size_t idx)
+{
+	char*  hop_name;
+
+	hop_name = *(char**)get_vector_item(path->hops, idx);
+	free(hop_name);
+	remove_vector_item(path->hops, idx);
 	update_pathname(path);
 	return path;
 }
