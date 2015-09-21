@@ -5,21 +5,22 @@
 
 #include "path.h"
 
-#include "vector.h"
-
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+
+#define PATH_MAX_HOPS 256
 
 static void promote_filename (path_t* path);
 static void update_pathname  (path_t* path);
 
 struct path
 {
-	char*     filename;
-	vector_t* hops;
-	char*     pathname;
+	char*  filename;
+	char** hops;
+	size_t num_hops;
+	char*  pathname;
 };
 
 path_t*
@@ -29,7 +30,7 @@ path_new(const char* pathname, bool force_dir_path)
 	
 	path = calloc(1, sizeof(path_t));
 	
-	path->hops = new_vector(sizeof(char*));
+	path->hops = malloc(PATH_MAX_HOPS * sizeof(char*));
 	path_append(path, pathname, force_dir_path);
 	return path;
 }
@@ -37,16 +38,14 @@ path_new(const char* pathname, bool force_dir_path)
 void
 path_free(path_t* path)
 {
-	char* *p_hop;
-	
-	iter_t iter;
+	size_t i;
 	
 	if (path == NULL)
 		return;
-	iter = iterate_vector(path->hops);
-	while (p_hop = next_vector_item(&iter))
-		free(*p_hop);
-	free_vector(path->hops);
+	
+	for (i = 0; i < path->num_hops; ++i)
+		free(path->hops[i]);
+	free(path->hops);
 	free(path->filename);
 	free(path->pathname);
 	free(path);
@@ -73,15 +72,13 @@ path_filename_cstr(const path_t* path)
 const char*
 path_hop_cstr(const path_t* path, size_t idx)
 {
-	return *(const char**)get_vector_item(path->hops, idx);
+	return path->hops[idx];
 }
 
 bool
 path_is_rooted(const path_t* path)
 {
-	const char* first_part = get_vector_size(path->hops) >= 1
-		? *(const char**)get_vector_item(path->hops, 0)
-		: "Unforgivable!";
+	const char* first_part = path->num_hops >= 1 ? path->hops[0] : "Unforgivable!";
 	return strlen(first_part) >= 2 && first_part[1] == ':'
 		|| strcmp(first_part, "") == 0;
 }
@@ -89,18 +86,18 @@ path_is_rooted(const path_t* path)
 size_t
 path_num_hops(const path_t* path)
 {
-	return get_vector_size(path->hops);
+	return path->num_hops;
 }
 
 path_t*
 path_append(path_t* path, const char* pathname, bool force_dir_path)
 {
-	char*   hop;
-	char*   parse;
-	char*   token;
-	char    *p_filename;
+	char* parse;
+	char* token;
+	char  *p_filename;
 
-	char* p;
+	char   *p;
+	size_t i;
 
 	if (path->filename != NULL)
 		goto on_error;
@@ -123,9 +120,10 @@ path_append(path_t* path, const char* pathname, bool force_dir_path)
 	*p_filename = '\0';  // strip filename
 	if (parse[0] == '/') {
 		// pathname is absolute, replace wholesale instead of appending
-		clear_vector(path->hops);
-		hop = strdup("");
-		push_back_vector(path->hops, &hop);
+		for (i = 0; i < path->num_hops; ++i)
+			free(path->hops[i]);
+		path->num_hops = 0;
+		path->hops[path->num_hops++] = strdup("");
 	}
 
 	// this isn't an exact science, strtok() collapses consecutive delimiters for
@@ -133,8 +131,7 @@ path_append(path_t* path, const char* pathname, bool force_dir_path)
 	// behavior, so I think we're okay.
 	token = strtok(parse, "/");
 	while (token != NULL) {
-		hop = strdup(token);
-		push_back_vector(path->hops, &hop);
+		path->hops[path->num_hops++] = strdup(token);
 		token = strtok(NULL, "/");
 	}
 	free(parse);
@@ -182,11 +179,12 @@ path_collapse(path_t* path, bool collapse_double_dots)
 path_t*
 path_remove_hop(path_t* path, size_t idx)
 {
-	char*  hop_name;
+	size_t i;
 
-	hop_name = *(char**)get_vector_item(path->hops, idx);
-	free(hop_name);
-	remove_vector_item(path->hops, idx);
+	free(path->hops[idx]);
+	--path->num_hops;
+	for (i = idx; i < path->num_hops; ++i)
+		path->hops[i] = path->hops[i + 1];
 	update_pathname(path);
 	return path;
 }
@@ -203,8 +201,9 @@ path_strip(path_t* path)
 static void
 promote_filename(path_t* path)
 {
-	if (path->filename != NULL)
-		push_back_vector(path->hops, &path->filename);
+	if (path->filename == NULL)
+		return;
+	path->hops[path->num_hops++] = path->filename;
 	path->filename = NULL;
 }
 
@@ -217,18 +216,15 @@ update_pathname(path_t* path)
 	//          must result in the same type of path (file, directory, etc.).
 
 	char  buffer[1024];  // FIXME: security risk
-	char* *p_hop;
 
-	iter_t iter;
+	size_t i;
 
 	strcpy(buffer, !path_is_rooted(path) ? "./" : "");
-	iter = iterate_vector(path->hops);
-	while (p_hop = next_vector_item(&iter)) {
-		if (iter.index > 0) strcat(buffer, "/");
-		strcat(buffer, *p_hop);
+	for (i = 0; i < path->num_hops; ++i) {
+		if (i > 0) strcat(buffer, "/");
+		strcat(buffer, path->hops[i]);
 	}
-	if (get_vector_size(path->hops) > 0)
-		strcat(buffer, "/");
+	if (path->num_hops > 0) strcat(buffer, "/");
 	if (path->filename != NULL)
 		strcat(buffer, path->filename);
 	free(path->pathname);
