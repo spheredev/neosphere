@@ -7,7 +7,9 @@ static void print_cell_quote (void);
 
 duk_context* g_duk = NULL;
 bool         g_is_verbose = false;
-char*        g_out_path = NULL;
+path_t*      g_in_path = NULL;
+path_t*      g_out_path = NULL;
+bool         g_want_dry_run = false;
 bool         g_want_package = false;
 bool         g_want_source_map = false;
 
@@ -88,7 +90,7 @@ parse_cmdline(int argc, char* argv[])
 	int i, j;
 	
 	// establish compiler defaults
-	g_out_path = strdup("dist");
+	g_out_path = path_new("dist/", true);
 	s_target_name = strdup("sphere");
 
 	// validate and parse the command line
@@ -126,7 +128,10 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--out") == 0) {
 				if (++i >= argc) goto missing_argument;
 				free(g_out_path);
-				g_out_path = strdup(argv[i]);
+				g_out_path = path_new(argv[i], true);
+			}
+			else if (strcmp(argv[i], "--dry-run") == 0) {
+				g_want_dry_run = true;
 			}
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();

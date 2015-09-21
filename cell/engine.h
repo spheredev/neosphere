@@ -1,6 +1,8 @@
 #ifndef CELL__ENGINE_H__INCLUDED
 #define CELL__ENGINE_H__INCLUDED
 
+#include <stdbool.h>
+
 extern void initialize_engine (void);
 extern void shutdown_engine   (void);
 extern bool run_build         (void);

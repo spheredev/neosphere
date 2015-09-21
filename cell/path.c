@@ -11,7 +11,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-static void update_pathname (path_t* path);
+static void promote_filename (path_t* path);
+static void update_pathname  (path_t* path);
 
 struct path
 {
@@ -21,14 +22,14 @@ struct path
 };
 
 path_t*
-path_new(const char* pathname)
+path_new(const char* pathname, bool force_dir_path)
 {
 	path_t* path;
 	
 	path = calloc(1, sizeof(path_t));
 	
 	path->hops = new_vector(sizeof(char*));
-	path_append(path, pathname);
+	path_append(path, pathname, force_dir_path);
 	return path;
 }
 
@@ -48,6 +49,12 @@ path_free(path_t* path)
 	free(path->filename);
 	free(path->pathname);
 	free(path);
+}
+
+path_t*
+path_dup(const path_t* path)
+{
+	return path_new(path_cstr(path), false);
 }
 
 const char*
@@ -73,7 +80,7 @@ path_is_rooted(const path_t* path)
 }
 
 bool
-path_append(path_t* path, const char* pathname)
+path_append(path_t* path, const char* pathname, bool force_dir_path)
 {
 	char*   hop;
 	char*   parse;
@@ -119,6 +126,9 @@ path_append(path_t* path, const char* pathname)
 	}
 	free(parse);
 	
+	if (force_dir_path)
+		promote_filename(path);
+	path_collapse(path, false);
 	update_pathname(path);
 	return true;
 
@@ -126,8 +136,8 @@ on_error:
 	return false;
 }
 
-void
-path_canonicalize(path_t* path)
+path_t*
+path_collapse(path_t* path, bool collapse_double_dots)
 {
 	int   depth = 0;
 	char* hop;
@@ -146,6 +156,8 @@ path_canonicalize(path_t* path)
 		}
 		else if (strcmp(hop, "..") == 0) {
 			depth -= 2;
+			if (!collapse_double_dots)
+				continue;
 			if (is_rooted) {
 				remove_vector_item(path->hops, i--);
 				if (i > 0)  // don't strip the root directory
@@ -158,26 +170,40 @@ path_canonicalize(path_t* path)
 		}
 	}
 	update_pathname(path);
+	return path;
+}
+
+path_t*
+path_strip(path_t* path)
+{
+	free(path->filename);
+	path->filename = NULL;
+	update_pathname(path);
+	return path;
+}
+
+static void
+promote_filename(path_t* path)
+{
+	if (path->filename != NULL)
+		push_back_vector(path->hops, &path->filename);
+	path->filename = NULL;
 }
 
 static void
 update_pathname(path_t* path)
 {
-	char*       buffer;
-	size_t      bufsize = 2;
-	char*       *p_hop;
-	
+	// notes: * the canonical path separator is the forward slash (/).
+	//        * directory paths are always reported with a trailing slash.
+	//        * the pathname generated here, when used to construct a new path object,
+	//          must result in the same type of path (file, directory, etc.).
+
+	char  buffer[1024];  // FIXME: security risk
+	char* *p_hop;
+
 	iter_t iter;
-	
-	if (path->filename != NULL)
-		bufsize += strlen(path->filename);
-	iter = iterate_vector(path->hops);
-	while (p_hop = next_vector_item(&iter)) {
-		if (iter.index > 0) bufsize += 1;
-		bufsize += strlen(*p_hop);
-	}
-	buffer = malloc(bufsize);
-	buffer[0] = '\0';
+
+	strcpy(buffer, !path_is_rooted(path) ? "./" : "");
 	iter = iterate_vector(path->hops);
 	while (p_hop = next_vector_item(&iter)) {
 		if (iter.index > 0) strcat(buffer, "/");
@@ -185,9 +211,8 @@ update_pathname(path_t* path)
 	}
 	if (get_vector_size(path->hops) > 0)
 		strcat(buffer, "/");
-	if (path->filename != NULL) {
+	if (path->filename != NULL)
 		strcat(buffer, path->filename);
-	}
 	free(path->pathname);
-	path->pathname = buffer;
+	path->pathname = strdup(buffer);
 }

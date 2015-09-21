@@ -1,15 +1,13 @@
-#include "cell.h"
-
 #include "engine.h"
 
-#include "tinydir.h"
+#include "cell.h"
 
 static duk_ret_t js_game    (duk_context* ctx);
 static duk_ret_t js_install (duk_context* ctx);
 
-static void add_source      (const lstring_t* source_path, const lstring_t* dest_path);
+static void add_source      (const path_t* source_path, const path_t* dest_path);
 static bool fspew           (const void* buffer, size_t size, const char* filename);
-static int  handle_install  (const char* pattern, const char* src_path, const char* dest_path, bool recursive);
+static int  handle_install  (const char* pattern, const path_t* src_path, const path_t* dest_path, bool recursive);
 static bool mkdir_recursive (const char* path);
 static bool wildcmp         (const char* filename, const char* pattern);
 
@@ -25,8 +23,8 @@ struct game
 
 struct source
 {
-	lstring_t* source_path;
-	lstring_t* dest_path;
+	path_t* source_path;
+	path_t* dest_path;
 };
 
 static struct game s_game_info;
@@ -61,6 +59,7 @@ run_build()
 	char           filename[CELL_PATH_MAX];
 	const char*    json;
 	int            num_files = 0;
+	path_t*        path;
 	struct source* source;
 	
 	iter_t iter;
@@ -83,19 +82,24 @@ run_build()
 		duk_push_object(g_duk);
 	iter = iterate_vector(s_files);
 	while (source = next_vector_item(&iter)) {
-		if (tinydir_copy(lstr_cstr(source->source_path), lstr_cstr(source->dest_path), true) == 0) {
+		path = path_strip(path_dup(source->dest_path));
+		mkdir_recursive(path_cstr(path));
+		path_free(path);
+		if (tinydir_copy(path_cstr(source->source_path), path_cstr(source->dest_path), true) == 0) {
 			++num_files;
-			print_verbose("Copied '%s' to '%s'\n", source->source_path, source->dest_path);
+			print_verbose("Copied '%s' to '%s'\n",
+				path_cstr(source->source_path),
+				path_cstr(source->dest_path));
 		}
 		if (g_want_source_map) {
-			duk_push_string(g_duk, lstr_cstr(source->source_path));
-			duk_put_prop_string(g_duk, -2, lstr_cstr(source->dest_path));
+			duk_push_string(g_duk, path_cstr(source->source_path));
+			duk_put_prop_string(g_duk, -2, path_cstr(source->dest_path));
 		}
 	}
 	printf("%d copied\n", num_files);
 	if (g_want_source_map) {
 		printf("Writing source map... ");
-		sprintf(filename, "%s/sourcemap.json", g_out_path);
+		sprintf(filename, "%ssourcemap.json", path_cstr(g_out_path));
 		duk_get_global_string(g_duk, "JSON");
 		duk_get_prop_string(g_duk, -1, "stringify");
 		duk_dup(g_duk, -3);
@@ -110,8 +114,8 @@ run_build()
 	
 	// write game.sgm
 	printf("Writing game manifest... ");
-	mkdir_recursive(g_out_path);
-	sprintf(filename, "%s/game.sgm", g_out_path);
+	mkdir_recursive(path_cstr(g_out_path));
+	sprintf(filename, "%sgame.sgm", path_cstr(g_out_path));
 	if (!(file = fopen(filename, "wb")))
 		fprintf(stderr, "FATAL: failed to write game manifest");
 	fprintf(file, "name=%s\n", s_game_info.name);
@@ -128,12 +132,12 @@ run_build()
 }
 
 static void
-add_source(const lstring_t* source_path, const lstring_t* dest_path)
+add_source(const path_t* source_path, const path_t* dest_path)
 {
 	struct source source;
 
-	source.source_path = lstr_dup(source_path);
-	source.dest_path = lstr_dup(dest_path);
+	source.source_path = path_dup(source_path);
+	source.dest_path = path_dup(dest_path);
 	push_back_vector(s_files, &source);
 }
 
@@ -150,43 +154,39 @@ fspew(const void* buffer, size_t size, const char* filename)
 }
 
 static int
-handle_install(const char* pattern, const char* src_path, const char* dest_path, bool is_recursive)
+handle_install(const char* pattern, const path_t* src_path, const path_t* dest_path, bool is_recursive)
 {
 	tinydir_dir  dir;
 	tinydir_file file;
-	lstring_t*   in_path = NULL;
-	lstring_t*   out_path = NULL;
+	path_t*      in_path;
+	path_t*      out_path;
 	bool         skip_entry;
 	int          num_files = 0;
-	char         path[CELL_PATH_MAX];
 
-	tinydir_open(&dir, src_path);
+	tinydir_open(&dir, path_cstr(src_path));
 	while (dir.has_next) {
 		tinydir_readfile(&dir, &file);
 		tinydir_next(&dir);
 
-		sprintf(path, "%s/%s", src_path, g_out_path);
 		skip_entry = file.is_dir && !is_recursive
 			|| strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0
-			|| strstr(file.path, path) == file.path;
-
+			|| strstr(file.path, path_cstr(g_out_path)) == file.path;
 		if (skip_entry)
 			continue;
-		else if (!file.is_dir && wildcmp(file.name, pattern)) {
-			in_path = src_path ? lstr_newf("%s/%s", src_path, file.name) : lstr_newf("%s", file.name);
-			out_path = dest_path ? lstr_newf("%s/%s", dest_path, file.name) : lstr_newf("%s", file.name);
+
+		in_path = path_dup(src_path);
+		path_append(in_path, file.name, file.is_dir);
+		out_path = path_dup(dest_path);
+		path_append(out_path, file.name, file.is_dir);
+		if (!file.is_dir && wildcmp(file.name, pattern)) {
 			add_source(in_path, out_path);
-			lstr_free(in_path);
-			lstr_free(out_path);
 			++num_files;
 		}
 		else if (file.is_dir) {
-			if (dest_path != NULL)
-				sprintf(path, "%s/%s", dest_path, file.name);
-			else
-				sprintf(path, "%s", file.name);
-			num_files += handle_install(pattern, file.path, path, is_recursive);
+			num_files += handle_install(pattern, in_path, out_path, is_recursive);
 		}
+		path_free(in_path);
+		path_free(out_path);
 	}
 	tinydir_close(&dir);
 	return num_files;
@@ -323,27 +323,34 @@ js_install(duk_context* ctx)
 	//     isRecursive: Optional. true to recursively copy files in subdirectories.
 	//                  (default: true)
 
-	const char*  dest_path;
-	bool         is_recursive;
-	char*        last_slash;
-	int          n_args;
-	int          num_copied;
-	char*        pattern;
-	const char*  src_path;
+	const char* dest_dirname;
+	path_t*     dest_path;
+	bool        is_recursive;
+	char*       last_slash;
+	int         n_args;
+	int         num_copied;
+	char*       pattern;
+	path_t*     src_path;
 
 	n_args = duk_get_top(ctx);
 	pattern = strdup(duk_require_string(ctx, 0));
-	dest_path = n_args >= 2 ? duk_require_string(ctx, 1) : NULL;
+	dest_dirname = n_args >= 2 ? duk_require_string(ctx, 1) : ".";
 	is_recursive = n_args >= 3 ? duk_is_valid_index(ctx, 2) : true;
 
 	if (last_slash = strrchr(pattern, '/'))
 		*last_slash = '\0';
-	src_path = last_slash != NULL ? pattern : ".";
 	pattern = last_slash != NULL ? last_slash + 1 : pattern;
+	src_path = path_new(last_slash != NULL ? pattern : ".", true);
+	dest_path = path_dup(g_out_path);
+	path_append(dest_path, dest_dirname, true);
+	path_collapse(src_path, false);
+	path_collapse(dest_path, false);
 	num_copied = handle_install(pattern, src_path, dest_path, is_recursive);
 	if (num_copied > 0)
 		print_verbose("Staging %d files for install in '%s'\n",
 			num_copied,
-			dest_path != NULL ? dest_path : g_out_path);
+			path_cstr(dest_path));
+	path_free(src_path);
+	path_free(dest_path);
 	return 0;
 }
