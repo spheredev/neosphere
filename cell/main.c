@@ -18,15 +18,11 @@ char* s_target_name;
 int
 main(int argc, char* argv[])
 {
+	path_t*     cell_js_path;
 	int         retval = EXIT_SUCCESS;
 	const char* js_error_msg;
 	char        js_target_name[256];
 
-	path_t* path = path_new("cell/kamehameha.attack", false);
-	path_t* root = path_new("/dbz/attacks/", true);
-	path_rebase(path, root);
-	printf("%s\n", path_cstr(path));
-	
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv))
 		return EXIT_FAILURE;
@@ -36,7 +32,8 @@ main(int argc, char* argv[])
 	initialize_js_api();
 
 	// evaluate the build script
-	if (duk_pcompile_file(g_duk, 0x0, "cell.js") != DUK_EXEC_SUCCESS
+	cell_js_path = path_rebase(path_new("cell.js", false), g_in_path);
+	if (duk_pcompile_file(g_duk, 0x0, path_cstr(cell_js_path)) != DUK_EXEC_SUCCESS
 		|| duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 	{
 		js_error_msg = duk_safe_to_string(g_duk, -1);
@@ -95,6 +92,7 @@ parse_cmdline(int argc, char* argv[])
 	int i, j;
 	
 	// establish compiler defaults
+	g_in_path = path_new("./", true);
 	g_out_path = path_new("dist/", true);
 	s_target_name = strdup("sphere");
 
@@ -124,15 +122,12 @@ parse_cmdline(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--in") == 0) {
 				if (++i >= argc) goto missing_argument;
-				if (tinydir_chdir(argv[i]) != 0) {
-					printf("cell: error: no such directory '%s'\n", argv[i]);
-					return false;
-				}
-				++i;
+				path_free(g_in_path);
+				g_in_path = path_new(argv[i], true);
 			}
 			else if (strcmp(argv[i], "--out") == 0) {
 				if (++i >= argc) goto missing_argument;
-				free(g_out_path);
+				path_free(g_out_path);
 				g_out_path = path_new(argv[i], true);
 			}
 			else if (strcmp(argv[i], "--dry-run") == 0) {

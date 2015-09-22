@@ -323,28 +323,28 @@ js_install(duk_context* ctx)
 	//     isRecursive: Optional. true to recursively copy files in subdirectories.
 	//                  (default: true)
 
-	const char* dest_dirname;
 	path_t*     dest_path;
+	const char* dest_pathname;
 	bool        is_recursive;
 	char*       last_slash;
 	int         n_args;
 	int         num_copied;
-	char*       pattern;
+	const char* pattern;
+	char*       src_filter;
 	path_t*     src_path;
+	char*       src_pathname;
 
 	n_args = duk_get_top(ctx);
-	pattern = strdup(duk_require_string(ctx, 0));
-	dest_dirname = n_args >= 2 ? duk_require_string(ctx, 1) : ".";
+	src_filter = strdup(duk_require_string(ctx, 0));
+	dest_pathname = n_args >= 2 ? duk_require_string(ctx, 1) : ".";
 	is_recursive = n_args >= 3 ? duk_is_valid_index(ctx, 2) : true;
 
-	if (last_slash = strrchr(pattern, '/'))
+	if (last_slash = strrchr(src_filter, '/'))
 		*last_slash = '\0';
-	pattern = last_slash != NULL ? last_slash + 1 : pattern;
-	src_path = path_new(last_slash != NULL ? pattern : ".", true);
-	dest_path = path_dup(g_out_path);
-	path_append(dest_path, dest_dirname, true);
-	path_collapse(src_path, false);
-	path_collapse(dest_path, false);
+	src_pathname = last_slash != NULL ? src_filter : "./";
+	pattern = last_slash != NULL ? last_slash + 1 : src_filter;
+	src_path = path_rebase(path_new(src_pathname, true), g_in_path);
+	dest_path = path_append(path_dup(g_out_path), dest_pathname, true);
 	num_copied = handle_install(pattern, src_path, dest_path, is_recursive);
 	if (num_copied > 0)
 		print_verbose("Staging %d files for install in '%s'\n",
@@ -352,5 +352,6 @@ js_install(duk_context* ctx)
 			path_cstr(dest_path));
 	path_free(src_path);
 	path_free(dest_path);
+	free(src_filter);
 	return 0;
 }
