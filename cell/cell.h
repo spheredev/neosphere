@@ -18,8 +18,6 @@
 
 #define CELL_VERSION "v2.0-WIP"
 
-#define CELL_PATH_MAX 256
-
 extern duk_context* g_duk;
 extern path_t*      g_in_path;
 extern bool         g_is_verbose;

@@ -32,7 +32,7 @@ main(int argc, char* argv[])
 	initialize_js_api();
 
 	// evaluate the build script
-	cell_js_path = path_rebase(path_new("cell.js", false), g_in_path);
+	cell_js_path = path_rebase(path_new("cell.js"), g_in_path);
 	if (duk_pcompile_file(g_duk, 0x0, path_cstr(cell_js_path)) != DUK_EXEC_SUCCESS
 		|| duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 	{
@@ -66,6 +66,7 @@ main(int argc, char* argv[])
 	}
 
 shutdown:
+	path_free(cell_js_path);
 	free(s_target_name);
 	duk_destroy_heap(g_duk);
 	return retval;
@@ -92,8 +93,8 @@ parse_cmdline(int argc, char* argv[])
 	int i, j;
 	
 	// establish compiler defaults
-	g_in_path = path_new("./", true);
-	g_out_path = path_new("dist/", true);
+	g_in_path = path_new("./");
+	g_out_path = path_new("dist/");
 	s_target_name = strdup("sphere");
 
 	// validate and parse the command line
@@ -123,12 +124,12 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--in") == 0) {
 				if (++i >= argc) goto missing_argument;
 				path_free(g_in_path);
-				g_in_path = path_new(argv[i], true);
+				g_in_path = path_new_dirname(argv[i]);
 			}
 			else if (strcmp(argv[i], "--out") == 0) {
 				if (++i >= argc) goto missing_argument;
 				path_free(g_out_path);
-				g_out_path = path_new(argv[i], true);
+				g_out_path = path_new_dirname(argv[i]);
 			}
 			else if (strcmp(argv[i], "--dry-run") == 0) {
 				g_want_dry_run = true;

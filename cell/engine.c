@@ -56,7 +56,6 @@ bool
 run_build()
 {
 	FILE*          file;
-	char           filename[CELL_PATH_MAX];
 	const char*    json;
 	int            num_files = 0;
 	path_t*        path;
@@ -99,7 +98,7 @@ run_build()
 	printf("%d copied\n", num_files);
 	if (g_want_source_map) {
 		printf("Writing source map... ");
-		sprintf(filename, "%ssourcemap.json", path_cstr(g_out_path));
+		path = path_rebase(path_new("sourcemap.json"), g_out_path);
 		duk_get_global_string(g_duk, "JSON");
 		duk_get_prop_string(g_duk, -1, "stringify");
 		duk_dup(g_duk, -3);
@@ -107,16 +106,17 @@ run_build()
 		duk_push_string(g_duk, "\t");
 		duk_call(g_duk, 3);
 		json = duk_get_string(g_duk, -1);
-		fspew(json, strlen(json), filename);
+		fspew(json, strlen(json), path_cstr(path));
 		duk_pop_3(g_duk);
+		path_free(path);
 		printf("Done!\n");
 	}
 	
 	// write game.sgm
 	printf("Writing game manifest... ");
 	mkdir_recursive(path_cstr(g_out_path));
-	sprintf(filename, "%sgame.sgm", path_cstr(g_out_path));
-	if (!(file = fopen(filename, "wb")))
+	path = path_rebase(path_new("game.sgm"), g_out_path);
+	if (!(file = fopen(path_cstr(path), "wb")))
 		fprintf(stderr, "FATAL: failed to write game manifest");
 	fprintf(file, "name=%s\n", s_game_info.name);
 	fprintf(file, "author=%s\n", s_game_info.author);
@@ -125,6 +125,7 @@ run_build()
 	fprintf(file, "screen_height=%d\n", s_game_info.height);
 	fprintf(file, "script=%s\n", s_game_info.script_path);
 	fclose(file);
+	path_free(path);
 	printf("Done!\n");
 	
 	printf("Success!\n");
@@ -174,10 +175,8 @@ handle_install(const char* pattern, const path_t* src_path, const path_t* dest_p
 		if (skip_entry)
 			continue;
 
-		in_path = path_dup(src_path);
-		path_append(in_path, file.name, file.is_dir);
-		out_path = path_dup(dest_path);
-		path_append(out_path, file.name, file.is_dir);
+		in_path = path_append(path_dup(src_path), file.name, file.is_dir);
+		out_path = path_append(path_dup(dest_path), file.name, file.is_dir);
 		if (!file.is_dir && wildcmp(file.name, pattern)) {
 			add_source(in_path, out_path);
 			++num_files;
@@ -343,8 +342,8 @@ js_install(duk_context* ctx)
 		*last_slash = '\0';
 	src_pathname = last_slash != NULL ? src_filter : "./";
 	pattern = last_slash != NULL ? last_slash + 1 : src_filter;
-	src_path = path_rebase(path_new(src_pathname, true), g_in_path);
-	dest_path = path_append(path_dup(g_out_path), dest_pathname, true);
+	src_path = path_rebase(path_new_dirname(src_pathname), g_in_path);
+	dest_path = path_rebase(path_new_dirname(dest_pathname), g_out_path);
 	num_copied = handle_install(pattern, src_path, dest_path, is_recursive);
 	if (num_copied > 0)
 		print_verbose("Staging %d files for install in '%s'\n",

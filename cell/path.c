@@ -15,8 +15,9 @@
 #define PATH_MAX_HOPS   256
 #define PATH_MAX_LENGTH 4096
 
-static void convert_to_directory (path_t* path);
-static void update_pathname      (path_t* path);
+static path_t* construct_path       (const char* pathname, bool force_dir);
+static void    convert_to_directory (path_t* path);
+static void    update_pathname      (path_t* path);
 
 struct path
 {
@@ -27,15 +28,21 @@ struct path
 };
 
 path_t*
-path_new(const char* pathname, bool force_dir_path)
+path_new(const char* pathname)
 {
-	path_t* path;
-	
-	path = calloc(1, sizeof(path_t));
-	
-	path->hops = malloc(PATH_MAX_HOPS * sizeof(char*));
-	path_append(path, pathname, force_dir_path);
-	return path;
+	return construct_path(pathname, false);
+}
+
+path_t*
+path_new_dirname(const char* pathname)
+{
+	return construct_path(pathname, true);
+}
+
+path_t*
+path_dup(const path_t* path)
+{
+	return path_new(path_cstr(path));
 }
 
 void
@@ -54,15 +61,14 @@ path_free(path_t* path)
 	free(path);
 }
 
-path_t*
-path_dup(const path_t* path)
-{
-	return path_new(path_cstr(path), false);
-}
-
 const char*
 path_cstr(const path_t* path)
 {
+	// important note:
+	// path_cstr() must be implemented such that path_new(path_cstr(path))
+	// results in a perfect duplicate. in practice this means directory paths
+	// will always be printed with a trailing separator.
+
 	return path->pathname;
 }
 
@@ -81,9 +87,9 @@ path_hop_cstr(const path_t* path, size_t idx)
 bool
 path_is_rooted(const path_t* path)
 {
-	const char* first_part = path->num_hops >= 1 ? path->hops[0] : "Unforgivable!";
-	return strlen(first_part) >= 2 && first_part[1] == ':'
-		|| strcmp(first_part, "") == 0;
+	const char* first_hop = path->num_hops >= 1 ? path->hops[0] : "Unforgivable!";
+	return strlen(first_hop) >= 2 && first_hop[1] == ':'
+		|| strcmp(first_hop, "") == 0;
 }
 
 size_t
@@ -199,7 +205,7 @@ path_rebase(path_t* path, const path_t* root)
 	new_hops = malloc(PATH_MAX_HOPS * sizeof(char*));
 	num_root_hops = path_num_hops(root);
 	for (i = 0; i < path_num_hops(root); ++i)
-		new_hops[i] = root->hops[i];
+		new_hops[i] = strdup(root->hops[i]);
 	for (i = 0; i < path_num_hops(path); ++i)
 		new_hops[i + num_root_hops] = path->hops[i];
 	free(path->hops);
@@ -232,6 +238,17 @@ path_strip(path_t* path)
 	return path;
 }
 
+static path_t*
+construct_path(const char* pathname, bool force_dir)
+{
+	path_t* path;
+
+	path = calloc(1, sizeof(path_t));
+	path->hops = malloc(PATH_MAX_HOPS * sizeof(char*));
+	path_append(path, pathname, force_dir);
+	return path;
+}
+
 static void
 convert_to_directory(path_t* path)
 {
@@ -244,10 +261,11 @@ convert_to_directory(path_t* path)
 static void
 update_pathname(path_t* path)
 {
-	// notes: * the canonical path separator is the forward slash (/).
+	// notes: * the pathname generated here, when used to construct a new path object,
+	//          must result in the same type of path (file, directory, etc.). see note
+	//          on path_cstr() above.
+	//        * the canonical path separator is the forward slash (/).
 	//        * directory paths are always reported with a trailing slash.
-	//        * the pathname generated here, when used to construct a new path object,
-	//          must result in the same type of path (file, directory, etc.).
 
 	char  buffer[PATH_MAX_LENGTH];  // FIXME: security risk
 
