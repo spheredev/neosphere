@@ -217,6 +217,29 @@ path_rebase(path_t* path, const path_t* root)
 }
 
 path_t*
+path_relativize(path_t* path, const path_t* root)
+{
+	path_t* root_path;
+
+	size_t i;
+
+	root_path = path_strip(path_dup(root));
+	if (path_num_hops(path) < path_num_hops(root))
+		return NULL;
+	for (i = 0; i < path_num_hops(root_path); ++i)  // all hops must match
+		if (strcmp(path_hop_cstr(root_path, 0), path_hop_cstr(path, 0)) != 0)
+			return NULL;
+	while (path_num_hops(root_path) > 0
+		&& strcmp(path_hop_cstr(root_path, 0), path_hop_cstr(path, 0)) == 0)
+	{
+		path_remove_hop(root_path, 0);
+		path_remove_hop(path, 0);
+	}
+	path_free(root_path);
+	return path;
+}
+
+path_t*
 path_remove_hop(path_t* path, size_t idx)
 {
 	size_t i;
@@ -271,7 +294,8 @@ update_pathname(path_t* path)
 
 	size_t i;
 
-	strcpy(buffer, !path_is_rooted(path) ? "./" : "");
+	strcpy(buffer, path->num_hops == 0 && path->filename == NULL
+		? "./" : "");
 	for (i = 0; i < path->num_hops; ++i) {
 		if (i > 0) strcat(buffer, "/");
 		strcat(buffer, path->hops[i]);

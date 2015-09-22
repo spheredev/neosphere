@@ -91,8 +91,10 @@ run_build()
 				path_cstr(source->dest_path));
 		}
 		if (g_want_source_map) {
-			duk_push_string(g_duk, path_cstr(source->source_path));
-			duk_put_prop_string(g_duk, -2, path_cstr(source->dest_path));
+			path = path_relativize(path_dup(source->dest_path), g_out_path);
+			duk_push_string(g_duk, path_cstr(path));
+			duk_put_prop_string(g_duk, -2, path_cstr(source->source_path));
+			path_free(path);
 		}
 	}
 	printf("%d copied\n", num_files);

@@ -19,6 +19,7 @@ path_t*     path_append        (path_t* path, const char* pathname, bool force_d
 path_t*     path_cat           (path_t* path, const path_t* tail);
 path_t*     path_collapse      (path_t* path, bool collapse_double_dots);
 path_t*     path_rebase        (path_t* path, const path_t* root);
+path_t*     path_relativize    (path_t* path, const path_t* root);
 path_t*     path_remove_hop    (path_t* path, size_t idx);
 path_t*     path_strip         (path_t* path);
 
