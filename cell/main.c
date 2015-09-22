@@ -22,6 +22,11 @@ main(int argc, char* argv[])
 	const char* js_error_msg;
 	char        js_target_name[256];
 
+	path_t* path = path_new("cell/kamehameha.attack", false);
+	path_t* root = path_new("/dbz/attacks/", true);
+	path_rebase(path, root);
+	printf("%s\n", path_cstr(path));
+	
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv))
 		return EXIT_FAILURE;

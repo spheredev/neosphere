@@ -1,6 +1,8 @@
 #ifdef _MSC_VER
 #define _CRT_NONSTDC_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+
+#define strtok_r strtok_s
 #endif
 
 #include "path.h"
@@ -10,10 +12,11 @@
 #include <stddef.h>
 #include <string.h>
 
-#define PATH_MAX_HOPS 256
+#define PATH_MAX_HOPS   256
+#define PATH_MAX_LENGTH 4096
 
-static void promote_filename (path_t* path);
-static void update_pathname  (path_t* path);
+static void convert_to_directory (path_t* path);
+static void update_pathname      (path_t* path);
 
 struct path
 {
@@ -126,24 +129,29 @@ path_append(path_t* path, const char* pathname, bool force_dir_path)
 		path->hops[path->num_hops++] = strdup("");
 	}
 
-	// this isn't an exact science, strtok() collapses consecutive delimiters for
-	// example. then again the Windows command prompt and Bash both exhibit similar
-	// behavior, so I think we're okay.
-	token = strtok(parse, "/");
+	// strtok_r() collapses consecutive separator characters, but this is okay: POSIX
+	// requires multiple slashes to be treated as a single separator anyway.
+	token = strtok_r(parse, "/", &p);
 	while (token != NULL) {
 		path->hops[path->num_hops++] = strdup(token);
-		token = strtok(NULL, "/");
+		token = strtok_r(NULL, "/", &p);
 	}
 	free(parse);
 	
 	if (force_dir_path)
-		promote_filename(path);
+		convert_to_directory(path);
 	path_collapse(path, false);
 	update_pathname(path);
 	return path;
 
 on_error:
 	return NULL;
+}
+
+path_t*
+path_cat(path_t* path, const path_t* tail)
+{
+	return path_append(path, path_cstr(tail), false);
 }
 
 path_t*
@@ -177,6 +185,32 @@ path_collapse(path_t* path, bool collapse_double_dots)
 }
 
 path_t*
+path_rebase(path_t* path, const path_t* root)
+{
+	char** new_hops;
+	size_t num_root_hops;
+
+	size_t i;
+	
+	if (path_filename_cstr(root) != NULL)
+		return NULL;
+	if (path_is_rooted(path))
+		return path;
+	new_hops = malloc(PATH_MAX_HOPS * sizeof(char*));
+	num_root_hops = path_num_hops(root);
+	for (i = 0; i < path_num_hops(root); ++i)
+		new_hops[i] = root->hops[i];
+	for (i = 0; i < path_num_hops(path); ++i)
+		new_hops[i + num_root_hops] = path->hops[i];
+	free(path->hops);
+	path->hops = new_hops;
+	path->num_hops += num_root_hops;
+	
+	path_collapse(path, false);
+	return path;
+}
+
+path_t*
 path_remove_hop(path_t* path, size_t idx)
 {
 	size_t i;
@@ -199,7 +233,7 @@ path_strip(path_t* path)
 }
 
 static void
-promote_filename(path_t* path)
+convert_to_directory(path_t* path)
 {
 	if (path->filename == NULL)
 		return;
@@ -215,7 +249,7 @@ update_pathname(path_t* path)
 	//        * the pathname generated here, when used to construct a new path object,
 	//          must result in the same type of path (file, directory, etc.).
 
-	char  buffer[1024];  // FIXME: security risk
+	char  buffer[PATH_MAX_LENGTH];  // FIXME: security risk
 
 	size_t i;
 
