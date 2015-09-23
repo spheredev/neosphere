@@ -23,6 +23,11 @@ main(int argc, char* argv[])
 	const char* js_error_msg;
 	char        js_target_name[256];
 
+	path_t* path = path_new("/pigs/maggie/eatiness.fat");
+	path_insert_hop(path, 2, "neo_hippos");
+	printf(path_cstr(path));
+	return 0;
+	
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv))
 		return EXIT_FAILURE;

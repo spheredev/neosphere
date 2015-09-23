@@ -191,6 +191,19 @@ path_collapse(path_t* path, bool collapse_double_dots)
 }
 
 path_t*
+path_insert_hop(path_t* path, size_t idx, const char* name)
+{
+	size_t i;
+	
+	for (i = idx; i < path_num_hops(path); ++i)
+		path->hops[i + 1] = path->hops[i];
+	path->hops[idx] = strdup(name);
+	++path->num_hops;
+	update_pathname(path);
+	return path;
+}
+
+path_t*
 path_rebase(path_t* path, const path_t* root)
 {
 	char** new_hops;
@@ -217,25 +230,24 @@ path_rebase(path_t* path, const path_t* root)
 }
 
 path_t*
-path_relativize(path_t* path, const path_t* root)
+path_relativize(path_t* path, const path_t* pivot)
 {
-	path_t* root_path;
+	path_t* pivot_path;
 
 	size_t i;
 
-	root_path = path_strip(path_dup(root));
-	if (path_num_hops(path) < path_num_hops(root))
+	if (path_num_hops(path) < path_num_hops(pivot))
 		return NULL;
-	for (i = 0; i < path_num_hops(root_path); ++i)  // all hops must match
-		if (strcmp(path_hop_cstr(root_path, 0), path_hop_cstr(path, 0)) != 0)
-			return NULL;
-	while (path_num_hops(root_path) > 0
-		&& strcmp(path_hop_cstr(root_path, 0), path_hop_cstr(path, 0)) == 0)
-	{
-		path_remove_hop(root_path, 0);
+	pivot_path = path_strip(path_dup(pivot));
+	for (i = 0; i < path_num_hops(pivot_path); ++i) {
+		if (strcmp(path_hop_cstr(pivot_path, 0), path_hop_cstr(path, 0)) != 0)
+			return NULL;  // all hops must match
+	}
+	while (path_num_hops(pivot_path) > 0) {
+		path_remove_hop(pivot_path, 0);
 		path_remove_hop(path, 0);
 	}
-	path_free(root_path);
+	path_free(pivot_path);
 	return path;
 }
 
