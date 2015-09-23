@@ -7,7 +7,7 @@
 typedef struct path path_t;
 
 path_t*     path_new           (const char* pathname);
-path_t*     path_new_dirname   (const char* pathname);
+path_t*     path_new_dir       (const char* pathname);
 path_t*     path_dup           (const path_t* path);
 void        path_free          (path_t* path);
 const char* path_cstr          (const path_t* path);
@@ -22,6 +22,7 @@ path_t*     path_collapse      (path_t* path, bool collapse_double_dots);
 path_t*     path_rebase        (path_t* path, const path_t* root);
 path_t*     path_relativize    (path_t* path, const path_t* pivot);
 path_t*     path_remove_hop    (path_t* path, size_t idx);
+path_t*     path_resolve       (path_t* path, const path_t* relative_to);
 path_t*     path_strip         (path_t* path);
 
 #endif // CELL__PATH_H__INCLUDED

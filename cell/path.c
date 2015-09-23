@@ -1,8 +1,12 @@
 #ifdef _MSC_VER
 #define _CRT_NONSTDC_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-
 #define strtok_r strtok_s
+#endif
+
+#ifdef _WIN32
+#define PATH_MAX _MAX_PATH
+#define realpath(name, r) (_access(name, 00) == 0 ? _fullpath((r), (name), PATH_MAX) : NULL)
 #endif
 
 #include "path.h"
@@ -11,6 +15,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <io.h>
+#endif
 
 #define PATH_MAX_HOPS   256
 #define PATH_MAX_LENGTH 4096
@@ -34,7 +42,7 @@ path_new(const char* pathname)
 }
 
 path_t*
-path_new_dirname(const char* pathname)
+path_new_dir(const char* pathname)
 {
 	return construct_path(pathname, true);
 }
@@ -261,6 +269,40 @@ path_remove_hop(path_t* path, size_t idx)
 	--path->num_hops;
 	for (i = idx; i < path->num_hops; ++i)
 		path->hops[i] = path->hops[i + 1];
+	update_pathname(path);
+	return path;
+}
+
+path_t*
+path_resolve(path_t* path, const path_t* relative_to)
+{
+	path_t* new_path;
+	char*   pathname;
+	path_t* pivot;
+
+	size_t i;
+
+	if (!(pathname = realpath(path_cstr(path), NULL)))
+		return NULL;
+	new_path = path_new(pathname);
+	free(pathname);
+	if (relative_to != NULL) {
+		if (!(pivot = path_resolve(path_dup(relative_to), NULL)))
+			return NULL;
+		path_relativize(new_path, pivot);
+		path_free(pivot);
+	}
+	if (path->filename == NULL)
+		convert_to_directory(new_path);
+	free(path->filename);
+	for (i = 0; i < path->num_hops; ++i)
+		free(path->hops[i]);
+	path->num_hops = new_path->num_hops;
+	for (i = 0; i < new_path->num_hops; ++i)
+		path->hops[i] = strdup(new_path->hops[i]);
+	path->filename = new_path->filename != NULL ?
+		strdup(new_path->filename) : NULL;
+	path_free(new_path);
 	update_pathname(path);
 	return path;
 }

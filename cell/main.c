@@ -124,12 +124,12 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--in") == 0) {
 				if (++i >= argc) goto missing_argument;
 				path_free(g_in_path);
-				g_in_path = path_new_dirname(argv[i]);
+				g_in_path = path_new_dir(argv[i]);
 			}
 			else if (strcmp(argv[i], "--out") == 0) {
 				if (++i >= argc) goto missing_argument;
 				path_free(g_out_path);
-				g_out_path = path_new_dirname(argv[i]);
+				g_out_path = path_new_dir(argv[i]);
 			}
 			else if (strcmp(argv[i], "--dry-run") == 0) {
 				g_want_dry_run = true;

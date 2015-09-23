@@ -91,7 +91,7 @@ run_build()
 				path_cstr(source->dest_path));
 		}
 		if (g_want_source_map) {
-			path = path_relativize(path_dup(source->dest_path), g_out_path);
+			path = path_resolve(path_dup(source->dest_path), g_out_path);
 			duk_push_string(g_duk, path_cstr(path));
 			duk_put_prop_string(g_duk, -2, path_cstr(source->source_path));
 			path_free(path);
@@ -344,8 +344,8 @@ js_install(duk_context* ctx)
 		*last_slash = '\0';
 	src_pathname = last_slash != NULL ? src_filter : "./";
 	pattern = last_slash != NULL ? last_slash + 1 : src_filter;
-	src_path = path_rebase(path_new_dirname(src_pathname), g_in_path);
-	dest_path = path_rebase(path_new_dirname(dest_pathname), g_out_path);
+	src_path = path_rebase(path_new_dir(src_pathname), g_in_path);
+	dest_path = path_rebase(path_new_dir(dest_pathname), g_out_path);
 	num_copied = handle_install(pattern, src_path, dest_path, is_recursive);
 	if (num_copied > 0)
 		print_verbose("Staging %d files for install in '%s'\n",
