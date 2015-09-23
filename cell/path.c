@@ -284,7 +284,9 @@ path_resolve(path_t* path, const path_t* relative_to)
 
 	if (!(pathname = realpath(path_cstr(path), NULL)))
 		return NULL;
-	new_path = path_new(pathname);
+	new_path = path->filename != NULL
+		? path_new(pathname)
+		: path_new_dir(pathname);
 	free(pathname);
 	if (relative_to != NULL) {
 		if (!(pivot = path_resolve(path_dup(relative_to), NULL)))
@@ -292,8 +294,6 @@ path_resolve(path_t* path, const path_t* relative_to)
 		path_relativize(new_path, pivot);
 		path_free(pivot);
 	}
-	if (path->filename == NULL)
-		convert_to_directory(new_path);
 	free(path->filename);
 	for (i = 0; i < path->num_hops; ++i)
 		free(path->hops[i]);
