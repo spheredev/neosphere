@@ -36,6 +36,9 @@
     <ClCompile Include="..\cell\path.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\cell\spk_writer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cell\duk_config.h">
@@ -66,6 +69,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\path.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\posix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\spk_writer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

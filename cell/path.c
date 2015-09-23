@@ -293,8 +293,8 @@ construct_path(path_t* path, const char* pathname, bool force_dir)
 {
 	size_t i;
 
-	// construct_path() may be used to replace a path in-place. in that case
-	// we have to free the existing components.
+	// construct_path() may be used to replace a path in-place. in that
+	// case we have to free the existing components.
 	free(path->filename);
 	for (i = 0; i < path->num_hops; ++i)
 		free(path->hops[i]);
