@@ -23,8 +23,9 @@
 #define PATH_MAX_HOPS   256
 #define PATH_MAX_LENGTH 4096
 
-static path_t* construct_path       (const char* pathname, bool force_dir);
+static path_t* construct_path       (path_t* path, const char* pathname, bool force_dir);
 static void    convert_to_directory (path_t* path);
+static path_t* relativize_path      (path_t* path, const path_t* origin);
 static void    update_pathname      (path_t* path);
 
 struct path
@@ -38,13 +39,17 @@ struct path
 path_t*
 path_new(const char* pathname)
 {
-	return construct_path(pathname, false);
+	return construct_path(
+		calloc(1, sizeof(path_t)),
+		pathname, false);
 }
 
 path_t*
 path_new_dir(const char* pathname)
 {
-	return construct_path(pathname, true);
+	return construct_path(
+		calloc(1, sizeof(path_t)),
+		pathname, true);
 }
 
 path_t*
@@ -238,29 +243,6 @@ path_rebase(path_t* path, const path_t* root)
 }
 
 path_t*
-path_relativize(path_t* path, const path_t* pivot)
-{
-	size_t  num_backhops;
-	path_t* pivot_path;
-
-	size_t i;
-
-	pivot_path = path_strip(path_dup(pivot));
-	num_backhops = path_num_hops(pivot_path);
-	while (path->num_hops > 0 && pivot_path->num_hops > 0) {
-		if (strcmp(pivot_path->hops[0], path->hops[0]) != 0)
-			break;
-		--num_backhops;
-		path_remove_hop(pivot_path, 0);
-		path_remove_hop(path, 0);
-	}
-	for (i = 0; i < num_backhops; ++i)
-		path_insert_hop(path, 0, "..");
-	path_free(pivot_path);
-	return path;
-}
-
-path_t*
 path_remove_hop(path_t* path, size_t idx)
 {
 	size_t i;
@@ -277,10 +259,8 @@ path_t*
 path_resolve(path_t* path, const path_t* relative_to)
 {
 	path_t* new_path;
+	path_t* origin;
 	char*   pathname;
-	path_t* pivot;
-
-	size_t i;
 
 	if (!(pathname = realpath(path_cstr(path), NULL)))
 		return NULL;
@@ -289,21 +269,13 @@ path_resolve(path_t* path, const path_t* relative_to)
 		: path_new_dir(pathname);
 	free(pathname);
 	if (relative_to != NULL) {
-		if (!(pivot = path_resolve(path_dup(relative_to), NULL)))
+		if (!(origin = path_resolve(path_dup(relative_to), NULL)))
 			return NULL;
-		path_relativize(new_path, pivot);
-		path_free(pivot);
+		relativize_path(new_path, origin);
+		path_free(origin);
 	}
-	free(path->filename);
-	for (i = 0; i < path->num_hops; ++i)
-		free(path->hops[i]);
-	path->num_hops = new_path->num_hops;
-	for (i = 0; i < new_path->num_hops; ++i)
-		path->hops[i] = strdup(new_path->hops[i]);
-	path->filename = new_path->filename != NULL ?
-		strdup(new_path->filename) : NULL;
+	construct_path(path, path_cstr(new_path), false);
 	path_free(new_path);
-	update_pathname(path);
 	return path;
 }
 
@@ -317,12 +289,21 @@ path_strip(path_t* path)
 }
 
 static path_t*
-construct_path(const char* pathname, bool force_dir)
+construct_path(path_t* path, const char* pathname, bool force_dir)
 {
-	path_t* path;
+	size_t i;
 
-	path = calloc(1, sizeof(path_t));
+	// construct_path() may be used to replace a path in-place. in that case
+	// we have to free the existing components.
+	free(path->filename);
+	for (i = 0; i < path->num_hops; ++i)
+		free(path->hops[i]);
+	free(path->hops);
+
+	// construct the new path
+	path->filename = NULL;
 	path->hops = malloc(PATH_MAX_HOPS * sizeof(char*));
+	path->num_hops = 0;
 	path_append(path, pathname, force_dir);
 	return path;
 }
@@ -334,6 +315,29 @@ convert_to_directory(path_t* path)
 		return;
 	path->hops[path->num_hops++] = path->filename;
 	path->filename = NULL;
+}
+
+static path_t*
+relativize_path(path_t* path, const path_t* origin)
+{
+	size_t  num_backhops;
+	path_t* origin_path;
+
+	size_t i;
+
+	origin_path = path_strip(path_dup(origin));
+	num_backhops = path_num_hops(origin_path);
+	while (path->num_hops > 0 && origin_path->num_hops > 0) {
+		if (strcmp(origin_path->hops[0], path->hops[0]) != 0)
+			break;
+		--num_backhops;
+		path_remove_hop(origin_path, 0);
+		path_remove_hop(path, 0);
+	}
+	for (i = 0; i < num_backhops; ++i)
+		path_insert_hop(path, 0, "..");
+	path_free(origin_path);
+	return path;
 }
 
 static void
