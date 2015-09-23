@@ -195,10 +195,10 @@ path_insert_hop(path_t* path, size_t idx, const char* name)
 {
 	size_t i;
 	
-	for (i = idx; i < path_num_hops(path); ++i)
-		path->hops[i + 1] = path->hops[i];
-	path->hops[idx] = strdup(name);
+	for (i = path->num_hops; i > idx; --i)
+		path->hops[i] = path->hops[i - 1];
 	++path->num_hops;
+	path->hops[idx] = strdup(name);
 	update_pathname(path);
 	return path;
 }
@@ -232,21 +232,22 @@ path_rebase(path_t* path, const path_t* root)
 path_t*
 path_relativize(path_t* path, const path_t* pivot)
 {
+	size_t  num_backhops;
 	path_t* pivot_path;
 
 	size_t i;
 
-	if (path_num_hops(path) < path_num_hops(pivot))
-		return NULL;
 	pivot_path = path_strip(path_dup(pivot));
-	for (i = 0; i < path_num_hops(pivot_path); ++i) {
-		if (strcmp(path_hop_cstr(pivot_path, 0), path_hop_cstr(path, 0)) != 0)
-			return NULL;  // all hops must match
-	}
-	while (path_num_hops(pivot_path) > 0) {
+	num_backhops = path_num_hops(pivot_path);
+	while (path->num_hops > 0 && pivot_path->num_hops > 0) {
+		if (strcmp(pivot_path->hops[0], path->hops[0]) != 0)
+			break;
+		--num_backhops;
 		path_remove_hop(pivot_path, 0);
 		path_remove_hop(path, 0);
 	}
+	for (i = 0; i < num_backhops; ++i)
+		path_insert_hop(path, 0, "..");
 	path_free(pivot_path);
 	return path;
 }
