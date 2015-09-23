@@ -6,10 +6,12 @@ cell_sources = [
 
 	"engine.c",
 	"path.c",
+	"spk_writer.c",
 	"main.c"
 ]
 
 cell_libs = [
+	"z",
 	"m"
 ]
 

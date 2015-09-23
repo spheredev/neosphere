@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include "cell.h"
+#include "spk_writer.h"
 
 static duk_ret_t js_game    (duk_context* ctx);
 static duk_ret_t js_install (duk_context* ctx);
@@ -59,6 +60,7 @@ run_build()
 	const char*    json;
 	int            num_files = 0;
 	path_t*        path;
+	spk_writer_t*  spk = NULL;
 	struct source* source;
 	
 	iter_t iter;
@@ -72,6 +74,9 @@ run_build()
 	printf("    Name: %s\n", s_game_info.name);
 	printf("    Author: %s\n", s_game_info.author);
 	printf("    Resolution: %dx%d\n", s_game_info.width, s_game_info.height);
+	
+	if (g_want_package)
+		spk = spk_create("game.spk");
 	
 	// copy staged files
 	printf("Installing files... ");
@@ -90,12 +95,14 @@ run_build()
 				path_cstr(source->source_path),
 				path_cstr(source->dest_path));
 		}
+		path = path_resolve(path_dup(source->dest_path), g_out_path);
+		if (g_want_package)
+			spk_pack_file(spk, path_cstr(source->source_path), path_cstr(path));
 		if (g_want_source_map) {
-			path = path_resolve(path_dup(source->dest_path), g_out_path);
 			duk_push_string(g_duk, path_cstr(path));
 			duk_put_prop_string(g_duk, -2, path_cstr(source->source_path));
-			path_free(path);
 		}
+		path_free(path);
 	}
 	printf("%d copied\n", num_files);
 	if (g_want_source_map) {
@@ -110,6 +117,8 @@ run_build()
 		json = duk_get_string(g_duk, -1);
 		fspew(json, strlen(json), path_cstr(path));
 		duk_pop_3(g_duk);
+		if (g_want_package)
+			spk_pack_file(spk, path_cstr(path), "sourcemap.json");
 		path_free(path);
 		printf("Done!\n");
 	}
@@ -127,9 +136,12 @@ run_build()
 	fprintf(file, "screen_height=%d\n", s_game_info.height);
 	fprintf(file, "script=%s\n", s_game_info.script_path);
 	fclose(file);
+	if (g_want_package)
+		spk_pack_file(spk, path_cstr(path), "game.sgm");
 	path_free(path);
 	printf("Done!\n");
 	
+	spk_close(spk);
 	printf("Success!\n");
 	return true;
 }
