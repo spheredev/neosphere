@@ -10,7 +10,7 @@ Command Line Options
 
 * `--version`: Prints version information and exits.
 
-* '--make-package', '-p': Creates a Sphere SPK package in the output directory
+* `--make-package`, `-p`: Creates a Sphere SPK package in the output directory
   from the compiled game.
 
 * `--out <pathname>`: Sets the directory where the game will be compiled. If

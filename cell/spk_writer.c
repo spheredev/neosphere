@@ -96,7 +96,7 @@ spk_close(spk_writer_t* writer)
 }
 
 void
-spk_pack_file(spk_writer_t* writer, const char* filename, const char* spk_pathname)
+spk_pack(spk_writer_t* writer, const char* filename, const char* spk_pathname)
 {
 	uLong            bufsize;
 	void*            data;

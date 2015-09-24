@@ -1,16 +1,17 @@
-#include "engine.h"
+#include "build.h"
 
 #include "cell.h"
 #include "spk_writer.h"
+#include "tinydir.h"
 
 static duk_ret_t js_game    (duk_context* ctx);
 static duk_ret_t js_install (duk_context* ctx);
 
-static void add_source      (const path_t* source_path, const path_t* dest_path);
-static bool fspew           (const void* buffer, size_t size, const char* filename);
-static int  handle_install  (const char* pattern, const path_t* src_path, const path_t* dest_path, bool recursive);
-static bool mkdir_recursive (const char* path);
-static bool wildcmp         (const char* filename, const char* pattern);
+static void add_asset  (const path_t* source_path, const path_t* dest_path);
+static int  do_install (const char* pattern, const path_t* src_path, const path_t* dest_path, bool recursive);
+static bool fspew      (const void* buffer, size_t size, const char* filename);
+static bool mkdir_r    (const char* path);
+static bool wildcmp    (const char* filename, const char* pattern);
 
 struct game
 {
@@ -22,35 +23,35 @@ struct game
 	char* script_path;
 };
 
-struct source
+struct asset
 {
 	path_t* source_path;
-	path_t* dest_path;
+	path_t* path;
 };
 
+static vector_t*   s_assets;
 static struct game s_game_info;
-static vector_t*   s_files;
 
 void
 initialize_engine(void)
 {
 	memset(&s_game_info, 0, sizeof(struct game));
-	s_files = new_vector(sizeof(struct source));
+	s_assets = new_vector(sizeof(struct asset));
 }
 
 void
 shutdown_engine(void)
 {
-	struct source* source;
+	struct asset* source;
 	
 	iter_t iter;
 
-	iter = iterate_vector(s_files);
+	iter = iterate_vector(s_assets);
 	while (source = next_vector_item(&iter)) {
 		free(source->source_path);
-		free(source->dest_path);
+		free(source->path);
 	}
-	free_vector(s_files);
+	free_vector(s_assets);
 }
 
 bool
@@ -61,7 +62,7 @@ run_build()
 	int            num_files = 0;
 	path_t*        path;
 	spk_writer_t*  spk = NULL;
-	struct source* source;
+	struct asset*  asset;
 	
 	iter_t iter;
 	
@@ -70,41 +71,35 @@ run_build()
 		return false;
 	}
 	
-	printf("Compiling Sphere game\n");
-	printf("    Name: %s\n", s_game_info.name);
-	printf("    Author: %s\n", s_game_info.author);
-	printf("    Resolution: %dx%d\n", s_game_info.width, s_game_info.height);
-	
-	if (g_want_package)
-		spk = spk_create("game.spk");
-	
 	// copy staged files
-	printf("Installing files... ");
-	if (get_vector_size(s_files) == 0)
+	printf("Installing assets... ");
+	if (get_vector_size(s_assets) == 0)
 		printf("warning: no files installed\n");
 	if (g_want_source_map)
 		duk_push_object(g_duk);
-	iter = iterate_vector(s_files);
-	while (source = next_vector_item(&iter)) {
-		path = path_strip(path_dup(source->dest_path));
-		mkdir_recursive(path_cstr(path));
+	iter = iterate_vector(s_assets);
+	while (asset = next_vector_item(&iter)) {
+		path = path_strip(path_dup(asset->path));
+		mkdir_r(path_cstr(path));
 		path_free(path);
-		if (tinydir_copy(path_cstr(source->source_path), path_cstr(source->dest_path), true) == 0) {
+		if (tinydir_copy(path_cstr(asset->source_path), path_cstr(asset->path), true) == 0) {
 			++num_files;
-			print_verbose("Copied '%s' to '%s'\n",
-				path_cstr(source->source_path),
-				path_cstr(source->dest_path));
+			print_verbose("  '%s' => '%s'\n",
+				path_cstr(asset->source_path),
+				path_cstr(asset->path));
 		}
-		path = path_resolve(path_dup(source->dest_path), g_out_path);
-		if (g_want_package)
-			spk_pack_file(spk, path_cstr(source->source_path), path_cstr(path));
+		path = path_resolve(path_dup(asset->path), g_out_path);
 		if (g_want_source_map) {
 			duk_push_string(g_duk, path_cstr(path));
-			duk_put_prop_string(g_duk, -2, path_cstr(source->source_path));
+			duk_put_prop_string(g_duk, -2, path_cstr(asset->source_path));
 		}
 		path_free(path);
 	}
-	printf("%d copied\n", num_files);
+	if (num_files > 0)
+		printf("%d asset(s)\n", num_files);
+	else
+		printf("Up to date!\n");
+	
 	if (g_want_source_map) {
 		printf("Writing source map... ");
 		path = path_rebase(path_new("sourcemap.json"), g_out_path);
@@ -117,15 +112,14 @@ run_build()
 		json = duk_get_string(g_duk, -1);
 		fspew(json, strlen(json), path_cstr(path));
 		duk_pop_3(g_duk);
-		if (g_want_package)
-			spk_pack_file(spk, path_cstr(path), "sourcemap.json");
+		add_asset(NULL, path);
 		path_free(path);
 		printf("Done!\n");
 	}
 	
 	// write game.sgm
 	printf("Writing game manifest... ");
-	mkdir_recursive(path_cstr(g_out_path));
+	mkdir_r(path_cstr(g_out_path));
 	path = path_rebase(path_new("game.sgm"), g_out_path);
 	if (!(file = fopen(path_cstr(path), "wb")))
 		fprintf(stderr, "FATAL: failed to write game manifest");
@@ -136,40 +130,51 @@ run_build()
 	fprintf(file, "screen_height=%d\n", s_game_info.height);
 	fprintf(file, "script=%s\n", s_game_info.script_path);
 	fclose(file);
-	if (g_want_package)
-		spk_pack_file(spk, path_cstr(path), "game.sgm");
+	add_asset(NULL, path);
 	path_free(path);
 	printf("Done!\n");
 	
-	spk_close(spk);
-	printf("Success!\n");
+	if (g_want_package) {
+		printf("Packaging... ");
+		path = path_rebase(path_new("game.spk"), g_out_path);
+		spk = spk_create(path_cstr(path));
+		path_free(path);
+		iter = iterate_vector(s_assets);
+		while (asset = next_vector_item(&iter)) {
+			path = path_resolve(path_dup(asset->path), g_out_path);
+			spk_pack(spk, path_cstr(asset->path), path_cstr(path));
+			path_free(path);
+		}
+		spk_close(spk);
+		printf("%zu asset(s)\n", get_vector_size(s_assets));
+	}
+	
+	printf("Success!\n\n");
+	
+	path = path_resolve(path_dup(g_out_path), NULL);
+	printf("Sphere game built in '%s'\n", path_cstr(path));
+	path_free(path);
+	printf("         Title: %s\n", s_game_info.name);
+	printf("        Author: %s\n", s_game_info.author);
+	printf("    Resolution: %dx%d\n", s_game_info.width, s_game_info.height);
+
 	return true;
 }
 
 static void
-add_source(const path_t* source_path, const path_t* dest_path)
+add_asset(const path_t* source_path, const path_t* dest_path)
 {
-	struct source source;
+	struct asset source;
 
-	source.source_path = path_dup(source_path);
-	source.dest_path = path_dup(dest_path);
-	push_back_vector(s_files, &source);
-}
-
-static bool
-fspew(const void* buffer, size_t size, const char* filename)
-{
-	FILE* file = NULL;
-
-	if (!(file = fopen(filename, "wb")))
-		return false;
-	fwrite(buffer, size, 1, file);
-	fclose(file);
-	return true;
+	source.source_path = source_path 
+		? path_dup(source_path)
+		: NULL;
+	source.path = path_dup(dest_path);
+	push_back_vector(s_assets, &source);
 }
 
 static int
-handle_install(const char* pattern, const path_t* src_path, const path_t* dest_path, bool is_recursive)
+do_install(const char* pattern, const path_t* src_path, const path_t* dest_path, bool is_recursive)
 {
 	tinydir_dir  dir;
 	tinydir_file file;
@@ -192,11 +197,11 @@ handle_install(const char* pattern, const path_t* src_path, const path_t* dest_p
 		in_path = path_append(path_dup(src_path), file.name, file.is_dir);
 		out_path = path_append(path_dup(dest_path), file.name, file.is_dir);
 		if (!file.is_dir && wildcmp(file.name, pattern)) {
-			add_source(in_path, out_path);
+			add_asset(in_path, out_path);
 			++num_files;
 		}
 		else if (file.is_dir) {
-			num_files += handle_install(pattern, in_path, out_path, is_recursive);
+			num_files += do_install(pattern, in_path, out_path, is_recursive);
 		}
 		path_free(in_path);
 		path_free(out_path);
@@ -206,7 +211,19 @@ handle_install(const char* pattern, const path_t* src_path, const path_t* dest_p
 }
 
 static bool
-mkdir_recursive(const char* path)
+fspew(const void* buffer, size_t size, const char* filename)
+{
+	FILE* file = NULL;
+
+	if (!(file = fopen(filename, "wb")))
+		return false;
+	fwrite(buffer, size, 1, file);
+	fclose(file);
+	return true;
+}
+
+static bool
+mkdir_r(const char* path)
 {
 	char  parent[1024] = "";
 	char* parse;
@@ -358,7 +375,7 @@ js_install(duk_context* ctx)
 	pattern = last_slash != NULL ? last_slash + 1 : src_filter;
 	src_path = path_rebase(path_new_dir(src_pathname), g_in_path);
 	dest_path = path_rebase(path_new_dir(dest_pathname), g_out_path);
-	num_copied = handle_install(pattern, src_path, dest_path, is_recursive);
+	num_copied = do_install(pattern, src_path, dest_path, is_recursive);
 	if (num_copied > 0)
 		print_verbose("Staging %d files for install in '%s'\n",
 			num_copied,

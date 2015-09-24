@@ -4,7 +4,7 @@ cell_sources = [
 	Object("unicode", "../msphere/unicode.c"),
 	Object("vector", "../msphere/vector.c"),
 
-	"engine.c",
+	"build.c",
 	"path.c",
 	"spk_writer.c",
 	"main.c"

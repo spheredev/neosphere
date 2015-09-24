@@ -21,9 +21,6 @@
     <ClCompile Include="..\src\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cell\engine.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lstring.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,6 +34,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\cell\spk_writer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cell\build.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,9 +56,6 @@
     <ClInclude Include="..\src\vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\cell\engine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lstring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -75,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\spk_writer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\build.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,11 @@
 #ifndef CELL__CELL_H__INCLUDED
 #define CELL__CELL_H__INCLUDED
 
+#ifdef _MSC_VER
+#define _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,7 +13,6 @@
 #include "duktape.h"
 #include "lstring.h"
 #include "path.h"
-#include "tinydir.h"
 #include "vector.h"
 
 #include "posix.h"

@@ -1,5 +1,5 @@
-#ifndef CELL__ENGINE_H__INCLUDED
-#define CELL__ENGINE_H__INCLUDED
+#ifndef CELL__BUILD_H__INCLUDED
+#define CELL__BUILD_H__INCLUDED
 
 #include <stdbool.h>
 
@@ -9,4 +9,4 @@ extern bool run_build         (void);
 
 extern void initialize_js_api (void);
 
-#endif // CELL__ENGINE_H__INCLUDED
+#endif // CELL__BUILD_H__INCLUDED

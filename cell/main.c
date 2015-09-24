@@ -1,5 +1,5 @@
 #include "cell.h"
-#include "engine.h"
+#include "build.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_banner     (bool want_copyright, bool want_deps);
