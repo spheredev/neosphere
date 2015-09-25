@@ -3,7 +3,8 @@ cell_sources = [
 	Object("lstring", "../msphere/lstring.c"),
 	Object("unicode", "../msphere/unicode.c"),
 	Object("vector", "../msphere/vector.c"),
-
+	
+	"assets.c",
 	"build.c",
 	"path.c",
 	"spk_writer.c",

@@ -98,6 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\cell\assets.c" />
     <ClCompile Include="..\cell\build.c" />
     <ClCompile Include="..\cell\main.c" />
     <ClCompile Include="..\cell\path.c" />
@@ -108,6 +109,7 @@
     <ClCompile Include="..\src\vector.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\cell\assets.h" />
     <ClInclude Include="..\cell\build.h" />
     <ClInclude Include="..\cell\cell.h" />
     <ClInclude Include="..\cell\duk_config.h" />

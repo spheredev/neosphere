@@ -73,7 +73,7 @@ new_sandbox(const char* path)
 		al_destroy_path(sgm_path);
 	}
 	get_sgm_metrics(fs, &res_x, &res_y);
-	console_log(1, "Loading game metadata for Sandbox %u", s_next_sandbox_id);
+	console_log(1, "Loading game manifest for Sandbox %u", s_next_sandbox_id);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);

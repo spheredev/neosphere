@@ -1,4 +1,6 @@
 #include "cell.h"
+
+#include "assets.h"
 #include "build.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
@@ -27,6 +29,8 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv))
 		return EXIT_FAILURE;
 
+	initialize_assets();
+
 	// initialize JavaScript environment
 	g_duk = duk_create_heap_default();
 	initialize_js_api();
@@ -46,7 +50,7 @@ main(int argc, char* argv[])
 		goto shutdown;
 	}
 
-	sprintf(js_target_name, "_%s", s_target_name);
+	sprintf(js_target_name, "$%s", s_target_name);
 	if (duk_get_global_string(g_duk, js_target_name) && duk_is_callable(g_duk, -1)) {
 		print_banner(true, false);
 		printf("\n");
@@ -66,6 +70,8 @@ main(int argc, char* argv[])
 	}
 
 shutdown:
+	shutdown_assets();
+
 	path_free(cell_js_path);
 	free(s_target_name);
 	duk_destroy_heap(g_duk);
@@ -178,6 +184,21 @@ missing_argument:
 }
 
 static void
+print_banner(bool want_copyright, bool want_deps)
+{
+	printf("Cell %s Sphere Game Compiler %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+	if (want_copyright) {
+		printf("A scriptable build engine for Sphere games.\n");
+		printf("(c) 2015 Fat Cerberus\n");
+	}
+	if (want_deps) {
+		printf("\n");
+		printf("    Cell:    %s %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
+	}
+}
+
+static void
 print_cell_quote(void)
 {
 	// yes, these are entirely necessary. :o)
@@ -196,19 +217,4 @@ print_cell_quote(void)
 	printf("Cell seems to be going through some sort of transformation...\n");
 	printf("He's pumping himself up like a balloon!\n\n");
 	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
-}
-
-static void
-print_banner(bool want_copyright, bool want_deps)
-{
-	printf("Cell %s Sphere Game Compiler %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
-	if (want_copyright) {
-		printf("A scriptable build engine for Sphere games.\n");
-		printf("(c) 2015 Fat Cerberus\n");
-	}
-	if (want_deps) {
-		printf("\n");
-		printf("    Cell:    %s %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
-		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
-	}
 }
