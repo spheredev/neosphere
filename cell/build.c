@@ -6,6 +6,7 @@
 #include "cell.h"
 
 static duk_ret_t js_file    (duk_context* ctx);
+static duk_ret_t js_sgm     (duk_context* ctx);
 static duk_ret_t js_install (duk_context* ctx);
 
 static int  do_install (const char* pattern, const path_t* src_path, const path_t* dest_path, bool recursive);
@@ -43,41 +44,60 @@ shutdown_engine(void)
 bool
 run_build()
 {
-	int num_installs = 0;
+	path_t* int_path;
+	bool    is_new;
+	int     n_assets;
 	
 	struct install *p_inst;
 	iter_t iter;
 	
 	if (get_vector_size(s_installs) == 0) {
-		printf("FATAL: no assets staged for install\n");
+		printf("error: no assets staged for install\n");
 		return false;
 	}
 	
-	printf("Building assets... ");
+	int_path = path_rebase(path_new(".cell/"), g_in_path);
+	mkdir_r(path_cstr(int_path));
+
+	printf("Building... ");
+	n_assets = 0;
 	iter = iterate_vector(s_installs);
 	while (p_inst = next_vector_item(&iter)) {
-		if (build_asset(p_inst->asset))
-			++num_installs;
+		if (!build_asset(p_inst->asset, &is_new))
+			return false;
+		if (is_new) ++n_assets;
 	}
-	if (num_installs > 0)
-		printf("%d built\n", num_installs);
+	if (n_assets > 0)
+		printf("%d asset(s) built\n", n_assets);
 	else
 		printf("Up to date!\n");
 	
-	printf("Installing assets... ");
+	printf("Installing... ");
+	n_assets = 0;
 	iter = iterate_vector(s_installs);
 	while (p_inst = next_vector_item(&iter)) {
-		if (install_asset(p_inst->asset, p_inst->path))
-			++num_installs;
+		if (!install_asset(p_inst->asset, p_inst->path, &is_new))
+			return false;
+		if (is_new) ++n_assets;
 	}
-	if (num_installs > 0)
-		printf("%d installed\n", num_installs);
+	if (n_assets > 0)
+		printf("%d asset(s) installed\n", n_assets);
 	else
 		printf("Up to date!\n");
 	
-	printf("Success!\n\n");
+	printf("Success!\n");
 	
 	return true;
+}
+
+static void
+add_install(asset_t* asset, const char* dirname)
+{
+	struct install inst;
+
+	inst.asset = asset;
+	inst.path = path_new_dir(dirname);
+	push_back_vector(s_installs, &inst);
 }
 
 static int
@@ -186,14 +206,59 @@ wildcmp(const char *filename, const char *pattern)
 void
 initialize_js_api(void)
 {
-	duk_push_c_function(g_duk, js_file, DUK_VARARGS);
-	duk_put_global_string(g_duk, "file");
 	duk_push_c_function(g_duk, js_install, DUK_VARARGS);
 	duk_put_global_string(g_duk, "install");
+	duk_push_c_function(g_duk, js_file, DUK_VARARGS);
+	duk_put_global_string(g_duk, "file");
+	duk_push_c_function(g_duk, js_sgm, DUK_VARARGS);
+	duk_put_global_string(g_duk, "sgm");
 }
 
 static duk_ret_t
-js_game(duk_context* ctx)
+js_install(duk_context* ctx)
+{
+	const char* dirname;
+	duk_idx_t   n_args;
+	duk_size_t  n_assets;
+
+	duk_size_t i;
+
+	n_args = duk_get_top(ctx);
+	dirname = n_args >= 2 ? duk_require_string(ctx, 1) : "./";
+	if (!duk_is_array(ctx, 0))
+		add_install(duk_require_pointer(ctx, 0), dirname);
+	else {
+		n_assets = duk_get_length(ctx, 0);
+		for (i = 0; i < n_assets; ++i) {
+			duk_get_prop_index(ctx, 0, i);
+			add_install(duk_require_pointer(ctx, -1), dirname);
+			duk_pop(ctx);
+		}
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_file(duk_context* ctx)
+{
+	// files(pattern, isRecursive);
+	// Returns a file asset, which copies a file as-is into the target when installed.
+	// Arguments:
+	//     pattern:     A filename pattern, e.g. "*.js". Files matching the pattern
+	//                  will be copied to the destination directory.
+	//     isRecursive: Optional. true to recursively copy files in subdirectories.
+	//                  (default: true)
+
+	path_t* src_path;
+
+	src_path = path_new(duk_require_string(ctx, 0));
+	duk_push_pointer(ctx, new_file_asset(src_path));
+	path_free(src_path);
+	return 1;
+}
+
+static duk_ret_t
+js_sgm(duk_context* ctx)
 {
 	const char*   name;
 	const char*   author;
@@ -201,71 +266,27 @@ js_game(duk_context* ctx)
 	char*         parse;
 	const char*   resolution;
 	int           res_x, res_y;
-	const path_t* script_path;
+	const char*   script_name;
+	sgm_info_t    sgm;
 
 	duk_require_object_coercible(ctx, 0);
 	name = (duk_get_prop_string(ctx, 0, "name"), duk_require_string(ctx, -1));
 	author = (duk_get_prop_string(ctx, 0, "author"), duk_require_string(ctx, -1));
 	description = (duk_get_prop_string(ctx, 0, "description"), duk_require_string(ctx, -1));
 	resolution = (duk_get_prop_string(ctx, 0, "resolution"), duk_require_string(ctx, -1));
-	script_path = path_new((duk_get_prop_string(ctx, 0, "script"), duk_require_string(ctx, -1)));
+	script_name = (duk_get_prop_string(ctx, 0, "script"), duk_require_string(ctx, -1));
 
 	// parse screen resolution
 	parse = strdup(resolution);
 	res_x = atoi(strtok(parse, "x"));
 	res_y = atoi(strtok(NULL, "x"));
 
-	return 0;
-}
-
-static duk_ret_t
-js_file(duk_context* ctx)
-{
-	// file(filename, isRecursive);
-	// Returns a file asset, which copies a file as-is into the target when installed.
-	// Arguments:
-	//     pattern:     A filename pattern, e.g. "*.js". Files matching the pattern
-	//                  will be copied to the destination directory.
-	//     path:        Path to the destination, relative to the output directory.
-	//     isRecursive: Optional. true to recursively copy files in subdirectories.
-	//                  (default: true)
-
-	asset_t* asset;
-	path_t*  src_path;
-
-	src_path = path_new(duk_require_string(ctx, 0));
-	asset = new_file_asset(src_path);
-	path_free(src_path);
-	duk_push_pointer(ctx, asset);
+	strncpy(sgm.name, name, 255); sgm.name[255] = '\0';
+	strncpy(sgm.author, author, 255); sgm.name[255] = '\0';
+	strncpy(sgm.description, description, 255); sgm.description[255] = '\0';
+	strncpy(sgm.script, script_name, 255); sgm.script[255] = '\0';
+	sgm.width = res_x;
+	sgm.height = res_y;
+	duk_push_pointer(ctx, new_sgm_asset(sgm));
 	return 1;
-}
-
-static duk_ret_t
-js_install(duk_context* ctx)
-{
-	duk_idx_t      n_args;
-	struct install inst;
-	duk_size_t     num_assets;
-	path_t*        path;
-
-	duk_size_t i;
-
-	n_args = duk_get_top(ctx);
-	path = path_new_dir(n_args >= 2 ? duk_require_string(ctx, 1) : "./");
-	if (!duk_is_array(ctx, 0)) {
-		inst.asset = duk_require_pointer(ctx, 0);
-		inst.path = path_dup(path);
-		push_back_vector(s_installs, &inst);
-	}
-	else {
-		num_assets = duk_get_length(ctx, 0);
-		for (i = 0; i < num_assets; ++i) {
-			duk_get_prop_index(ctx, 0, i);
-			inst.asset = duk_require_pointer(ctx, -1);
-			duk_pop(ctx);
-			inst.path = path_dup(path);
-			push_back_vector(s_installs, &inst);
-		}
-	}
-	return 0;
 }

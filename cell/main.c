@@ -2,32 +2,33 @@
 
 #include "assets.h"
 #include "build.h"
+#include "tinydir.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
 
-duk_context* g_duk = NULL;
-bool         g_is_verbose = false;
-path_t*      g_in_path = NULL;
-path_t*      g_out_path = NULL;
-bool         g_want_dry_run = false;
-bool         g_want_package = false;
-bool         g_want_source_map = false;
+duk_context*  g_duk = NULL;
+bool          g_is_verbose = false;
+path_t*       g_in_path = NULL;
+path_t*       g_out_path = NULL;
+spk_writer_t* g_spk_writer = NULL;
+bool          g_want_dry_run = false;
+bool          g_want_source_map = false;
 
 char* s_target_name;
 
 int
 main(int argc, char* argv[])
 {
-	path_t*     cell_js_path;
+	path_t*     cell_js_path = NULL;
 	int         retval = EXIT_SUCCESS;
 	const char* js_error_msg;
 	char        js_target_name[256];
 
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv))
-		return EXIT_FAILURE;
+		goto shutdown;
 
 	initialize_assets();
 
@@ -71,15 +72,38 @@ main(int argc, char* argv[])
 
 shutdown:
 	shutdown_assets();
-
+	spk_close(g_spk_writer);
 	path_free(cell_js_path);
 	free(s_target_name);
 	duk_destroy_heap(g_duk);
 	return retval;
 }
 
+bool
+mkdir_r(const char* pathname)
+{
+	char  parent[1024] = "";
+	char* parse;
+	char* token;
+
+	parse = strdup(pathname);
+	token = strtok(parse, "/");
+	do {
+		strcat(parent, token);
+		strcat(parent, "/");
+		if (tinydir_mkdir(parent) != 0)
+			goto on_error;
+	} while (token = strtok(NULL, "/"));
+	free(parse);
+	return true;
+
+on_error:
+	free(parse);
+	return false;
+}
+
 void
-print_verbose(const char* fmt, ...)
+print_v(const char* fmt, ...)
 {
 	va_list ap;
 
@@ -145,7 +169,11 @@ parse_cmdline(int argc, char* argv[])
 				return false;
 			}
 			else if (strcmp(argv[i], "--make-package") == 0) {
-				g_want_package = true;
+				if (++i >= argc) goto missing_argument;
+				if (!(g_spk_writer = spk_create(argv[i]))) {
+					printf("cell: error: failed to create '%s'\n", argv[i]);
+					return false;
+				}
 			}
 			else if (strcmp(argv[i], "--source-map") == 0) {
 				g_want_source_map = true;
@@ -162,7 +190,13 @@ parse_cmdline(int argc, char* argv[])
 			for (j = strlen(argv[i]) - 1; j >= 1; --j) {
 				switch (argv[i][j]) {
 				case 'm': g_want_source_map = true; break;
-				case 'p': g_want_package = true; break;
+				case 'p':
+					if (++i >= argc) goto missing_argument;
+					if (!(g_spk_writer = spk_create(argv[i]))) {
+						printf("cell: error: failed to create '%s'\n", argv[i]);
+						return false;
+					}
+					break;
 				case 'v': g_is_verbose = true; break;
 				default:
 					printf("cell: error: unknown option '-%c'\n", argv[i][j]);
