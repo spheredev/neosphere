@@ -59,9 +59,9 @@ free_asset(asset_t* asset)
 }
 
 bool
-build_asset(asset_t* asset, const path_t* int_path, bool *out_is_new)
+build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 {
-	FILE*       file;
+	FILE* file;
 
 	*out_is_new = false;
 	switch (asset->type) {
@@ -71,7 +71,7 @@ build_asset(asset_t* asset, const path_t* int_path, bool *out_is_new)
 		asset->obj_path = path_dup(asset->file.path);
 		return true;
 	case ASSET_SGM:
-		asset->obj_path = path_rebase(path_new("game.sgm"), int_path);
+		asset->obj_path = path_rebase(path_new("game.sgm"), staging_path);
 		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
 			printf("error: failed to write '%s'\n", path_cstr(asset->obj_path));
 			return false;

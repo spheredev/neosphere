@@ -2,7 +2,6 @@
 
 #include "assets.h"
 #include "build.h"
-#include "tinydir.h"
 
 #include <sys/stat.h>
 

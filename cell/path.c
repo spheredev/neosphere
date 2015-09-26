@@ -13,7 +13,6 @@
 #if defined(_WIN32)
 #endif
 
-
 #include "path.h"
 
 #include <stdlib.h>
@@ -118,7 +117,7 @@ path_num_hops(const path_t* path)
 }
 
 path_t*
-path_append(path_t* path, const char* pathname, bool force_dir_path)
+path_append(path_t* path, const char* pathname)
 {
 	char* parse;
 	char* token;
@@ -163,8 +162,6 @@ path_append(path_t* path, const char* pathname, bool force_dir_path)
 	}
 	free(parse);
 	
-	if (force_dir_path)
-		convert_to_directory(path);
 	path_collapse(path, false);
 	update_pathname(path);
 	return path;
@@ -174,9 +171,32 @@ on_error:
 }
 
 path_t*
+path_append_dir(path_t* path, const char* pathname)
+{
+	path_append(path, pathname);
+	convert_to_directory(path);
+	return path;
+}
+
+path_t*
 path_cat(path_t* path, const path_t* tail)
 {
-	return path_append(path, path_cstr(tail), false);
+	return path_append(path, path_cstr(tail));
+}
+
+bool
+path_cmp(const path_t* path1, const path_t* path2)
+{
+	bool    retval;
+	path_t* cmp1;
+	path_t* cmp2;
+
+	cmp1 = path_collapse(path_dup(path1), false);
+	cmp2 = path_collapse(path_dup(path2), false);
+	retval = strcmp(path_cstr(cmp1), path_cstr(cmp2)) == 0;
+	path_free(cmp1);
+	path_free(cmp2);
+	return retval;
 }
 
 path_t*
@@ -225,18 +245,18 @@ path_insert_hop(path_t* path, size_t idx, const char* name)
 bool
 path_mkdir(const path_t* path)
 {
+	bool    is_ok;
 	path_t* parent_path;
 	
 	size_t i;
 
 	parent_path = path_new("./");
 	for (i = 0; i < path->num_hops; ++i) {
-		path_append(parent_path, path_hop_cstr(path, i), true);
-		if (mkdir(path_cstr(parent_path), 0777) != 0)
-			return false;
+		path_append_dir(parent_path, path_hop_cstr(path, i));
+		is_ok = mkdir(path_cstr(parent_path), 0777) == 0;
 	}
 	path_free(parent_path);
-	return true;
+	return is_ok;
 }
 
 path_t*
@@ -327,7 +347,8 @@ construct_path(path_t* path, const char* pathname, bool force_dir)
 	path->filename = NULL;
 	path->hops = malloc(PATH_MAX_HOPS * sizeof(char*));
 	path->num_hops = 0;
-	path_append(path, pathname, force_dir);
+	if (force_dir) path_append_dir(path, pathname);
+		else path_append(path, pathname);
 	return path;
 }
 
@@ -338,6 +359,7 @@ convert_to_directory(path_t* path)
 		return;
 	path->hops[path->num_hops++] = path->filename;
 	path->filename = NULL;
+	update_pathname(path);
 }
 
 static path_t*

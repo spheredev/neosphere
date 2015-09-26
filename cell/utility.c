@@ -21,7 +21,8 @@ fslurp(const char* filename, size_t *out_size)
 	*out_size = (fseek(file, 0, SEEK_END), ftell(file));
 	if (!(buffer = malloc(*out_size))) goto on_error;
 	fseek(file, 0, SEEK_SET);
-	if (fread(buffer, *out_size, 1, file) != 1) goto on_error;
+	if (fread(buffer, 1, *out_size, file) != *out_size)
+		goto on_error;
 	fclose(file);
 	return buffer;
 
