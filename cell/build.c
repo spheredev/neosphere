@@ -165,7 +165,7 @@ target_t*
 add_target(build_t* build, asset_t* asset, const path_t* subpath)
 {
 	target_t* target;
-	
+
 	target = calloc(1, sizeof(target_t));
 
 	target->asset = asset;
@@ -213,7 +213,7 @@ run_build(build_t* build)
 	}
 	if (n_assets > 0) printf("    %d asset(s) installed\n", n_assets);
 		else printf("    Up to date!\n");
-	
+
 	printf("Success!\n\n");
 
 	return true;

@@ -67,13 +67,14 @@ spk_close(spk_writer_t* writer)
 	idx_offset = ftell(writer->file);
 	iter = iterate_vector(writer->index);
 	while (p_entry = next_vector_item(&iter)) {
-		path_length = (uint16_t)strlen(p_entry->pathname);
+		path_length = (uint16_t)strlen(p_entry->pathname) + 1;
 		fwrite(&VERSION, sizeof(uint16_t), 1, writer->file);
 		fwrite(&path_length, sizeof(uint16_t), 1, writer->file);
 		fwrite(&p_entry->offset, sizeof(uint32_t), 1, writer->file);
 		fwrite(&p_entry->file_size, sizeof(uint32_t), 1, writer->file);
 		fwrite(&p_entry->pack_size, sizeof(uint32_t), 1, writer->file);
 		fputs(p_entry->pathname, writer->file);
+		fputc('\0', writer->file);
 
 		// free the pathname buffer now, we no longer need it and
 		// it saves us a few lines of code later.
