@@ -4,7 +4,7 @@
 #include "vector.h"
 #include "cell.h"
 
-static vector_t* s_assets = NULL;
+#include <sys/stat.h>
 
 typedef
 enum asset_type
@@ -16,6 +16,7 @@ enum asset_type
 struct file_info
 {
 	path_t* path;
+	path_t* subdir;
 };
 
 struct asset
@@ -28,26 +29,6 @@ struct asset
 	};
 };
 
-void
-initialize_assets(void)
-{
-	s_assets = new_vector(sizeof(asset_t*));
-}
-
-void
-shutdown_assets(void)
-{
-	asset_t* *p_asset;
-	iter_t   iter;
-
-	if (s_assets == NULL) return;
-	
-	iter = iterate_vector(s_assets);
-	while (p_asset = next_vector_item(&iter))
-		free_asset(*p_asset);
-	free_vector(s_assets);
-}
-
 asset_t*
 new_file_asset(const path_t* path)
 {
@@ -56,7 +37,6 @@ new_file_asset(const path_t* path)
 	asset = calloc(1, sizeof(asset_t));
 	asset->type = ASSET_FILE;
 	asset->file.path = path_dup(path);
-	push_back_vector(s_assets, &asset);
 	return asset;
 }
 
@@ -68,7 +48,6 @@ new_sgm_asset(sgm_info_t sgm)
 	asset = calloc(1, sizeof(asset_t));
 	asset->type = ASSET_SGM;
 	asset->sgm = sgm;
-	push_back_vector(s_assets, &asset);
 	return asset;
 }
 
@@ -80,19 +59,21 @@ free_asset(asset_t* asset)
 }
 
 bool
-build_asset(asset_t* asset, bool *out_is_new)
+build_asset(asset_t* asset, const path_t* int_path, bool *out_is_new)
 {
-	FILE* file;
-	
+	FILE*       file;
+
 	*out_is_new = false;
 	switch (asset->type) {
 	case ASSET_FILE:
+		// a file asset represents a direct copy from source to destination, so
+		// there's no need to do anything other than record the source location.
 		asset->obj_path = path_dup(asset->file.path);
 		return true;
 	case ASSET_SGM:
-		asset->obj_path = path_rebase(path_new(".cell/game.sgm"), g_in_path);
+		asset->obj_path = path_rebase(path_new("game.sgm"), int_path);
 		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
-			printf("error: failed to write '%s'", path_cstr(asset->obj_path));
+			printf("error: failed to write '%s'\n", path_cstr(asset->obj_path));
 			return false;
 		}
 		fprintf(file, "name=%s\n", asset->sgm.name);
@@ -103,31 +84,18 @@ build_asset(asset_t* asset, bool *out_is_new)
 		fprintf(file, "script=%s\n", asset->sgm.script);
 		fclose(file);
 		*out_is_new = true;
-		return true;
+		break;
+	default:
+		return false;
 	}
-	return false;
+	if (*out_is_new) {
+		printf("    %s\n", path_cstr(asset->obj_path));
+	}
+	return true;
 }
 
-bool
-install_asset(const asset_t* asset, const path_t* path, bool *out_is_new)
+const path_t*
+get_asset_path(const asset_t* asset)
 {
-	bool    retval = false;
-	path_t* out_path;
-
-	if (asset->obj_path == NULL)
-		return false;
-	
-	if (g_spk_writer == NULL) {
-		out_path = path_rebase(path_dup(path), g_out_path);
-		mkdir_r(path_cstr(out_path));
-		path_append(out_path, path_filename_cstr(asset->obj_path), false);
-		retval = tinydir_copy(path_cstr(asset->obj_path), path_cstr(out_path), false) == 0;
-		path_free(out_path);
-		return retval;
-	} else {
-		out_path = path_collapse(path_dup(path), true);
-		path_append(out_path, path_filename_cstr(asset->obj_path), false);
-		spk_pack(g_spk_writer, path_cstr(asset->obj_path), path_cstr(out_path));
-		return true;
-	}
+	return asset->obj_path;
 }

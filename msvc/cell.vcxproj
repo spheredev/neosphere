@@ -103,9 +103,8 @@
     <ClCompile Include="..\cell\main.c" />
     <ClCompile Include="..\cell\path.c" />
     <ClCompile Include="..\cell\spk_writer.c" />
+    <ClCompile Include="..\cell\utility.c" />
     <ClCompile Include="..\src\duktape.c" />
-    <ClCompile Include="..\src\lstring.c" />
-    <ClCompile Include="..\src\unicode.c" />
     <ClCompile Include="..\src\vector.c" />
   </ItemGroup>
   <ItemGroup>
@@ -117,9 +116,8 @@
     <ClInclude Include="..\cell\posix.h" />
     <ClInclude Include="..\cell\spk_writer.h" />
     <ClInclude Include="..\cell\tinydir.h" />
+    <ClInclude Include="..\cell\utility.h" />
     <ClInclude Include="..\src\duktape.h" />
-    <ClInclude Include="..\src\lstring.h" />
-    <ClInclude Include="..\src\unicode.h" />
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="resource1.h" />
   </ItemGroup>

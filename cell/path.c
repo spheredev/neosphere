@@ -1,17 +1,23 @@
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #define _CRT_NONSTDC_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #define strtok_r strtok_s
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32)
+#include <direct.h>
 #define PATH_MAX _MAX_PATH
+#define mkdir(path, m)    _mkdir(path)
 #define realpath(name, r) (_access(name, 00) == 0 ? _fullpath((r), (name), PATH_MAX) : NULL)
 #endif
+#if defined(_WIN32)
+#endif
+
 
 #include "path.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -214,6 +220,23 @@ path_insert_hop(path_t* path, size_t idx, const char* name)
 	path->hops[idx] = strdup(name);
 	update_pathname(path);
 	return path;
+}
+
+bool
+path_mkdir(const path_t* path)
+{
+	path_t* parent_path;
+	
+	size_t i;
+
+	parent_path = path_new("./");
+	for (i = 0; i < path->num_hops; ++i) {
+		path_append(parent_path, path_hop_cstr(path, i), true);
+		if (mkdir(path_cstr(parent_path), 0777) != 0)
+			return false;
+	}
+	path_free(parent_path);
+	return true;
 }
 
 path_t*

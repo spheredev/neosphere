@@ -4,102 +4,41 @@
 #include "build.h"
 #include "tinydir.h"
 
+#include <sys/stat.h>
+
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
 
-duk_context*  g_duk = NULL;
 bool          g_is_verbose = false;
-path_t*       g_in_path = NULL;
-path_t*       g_out_path = NULL;
-spk_writer_t* g_spk_writer = NULL;
 bool          g_want_dry_run = false;
 bool          g_want_source_map = false;
 
-char* s_target_name;
+static path_t* s_in_path = NULL;
+static path_t* s_out_path = NULL;
+static char*   s_target_name;
 
 int
 main(int argc, char* argv[])
 {
-	path_t*     cell_js_path = NULL;
 	int         retval = EXIT_SUCCESS;
-	const char* js_error_msg;
-	char        js_target_name[256];
+	build_t*    build;
 
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
-	initialize_assets();
-
-	// initialize JavaScript environment
-	g_duk = duk_create_heap_default();
-	initialize_js_api();
-
-	// evaluate the build script
-	cell_js_path = path_rebase(path_new("cell.js"), g_in_path);
-	if (duk_pcompile_file(g_duk, 0x0, path_cstr(cell_js_path)) != DUK_EXEC_SUCCESS
-		|| duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
-	{
-		js_error_msg = duk_safe_to_string(g_duk, -1);
-		if (strstr(js_error_msg, "no sourcecode"))
-			fprintf(stderr, "cell: error: no cell.js in input directory\n");
-		else
-			fprintf(stderr, "FATAL: JS %s", js_error_msg);
-		
-		retval = EXIT_FAILURE;
-		goto shutdown;
-	}
-
-	sprintf(js_target_name, "$%s", s_target_name);
-	if (duk_get_global_string(g_duk, js_target_name) && duk_is_callable(g_duk, -1)) {
-		print_banner(true, false);
-		printf("\n");
-		printf("Processing Cell target '%s'\n", s_target_name);
-		initialize_engine();
-		if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS) {
-			fprintf(stderr, "FATAL: JS %s\n", duk_safe_to_string(g_duk, -1));
-			retval = EXIT_FAILURE;
-			goto shutdown;
-		}
-		run_build();
-	}
-	else {
-		fprintf(stderr, "cell: error: no target named '%s'\n", s_target_name);
-		retval = EXIT_FAILURE;
-		goto shutdown;
-	}
+	print_banner(true, false);
+	printf("\n");
+	build = new_build(s_in_path, s_out_path);
+	if (evaluate_rule(build, s_target_name))
+		run_build(build);
+	free_build(build);
+	return 0;
 
 shutdown:
-	shutdown_assets();
-	spk_close(g_spk_writer);
-	path_free(cell_js_path);
 	free(s_target_name);
-	duk_destroy_heap(g_duk);
 	return retval;
-}
-
-bool
-mkdir_r(const char* pathname)
-{
-	char  parent[1024] = "";
-	char* parse;
-	char* token;
-
-	parse = strdup(pathname);
-	token = strtok(parse, "/");
-	do {
-		strcat(parent, token);
-		strcat(parent, "/");
-		if (tinydir_mkdir(parent) != 0)
-			goto on_error;
-	} while (token = strtok(NULL, "/"));
-	free(parse);
-	return true;
-
-on_error:
-	free(parse);
-	return false;
 }
 
 void
@@ -123,8 +62,8 @@ parse_cmdline(int argc, char* argv[])
 	int i, j;
 	
 	// establish compiler defaults
-	g_in_path = path_new("./");
-	g_out_path = path_new("dist/");
+	s_in_path = path_new("./");
+	s_out_path = path_new("dist/");
 	s_target_name = strdup("sphere");
 
 	// validate and parse the command line
@@ -153,13 +92,13 @@ parse_cmdline(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--in") == 0) {
 				if (++i >= argc) goto missing_argument;
-				path_free(g_in_path);
-				g_in_path = path_new_dir(argv[i]);
+				path_free(s_in_path);
+				s_in_path = path_new_dir(argv[i]);
 			}
 			else if (strcmp(argv[i], "--out") == 0) {
 				if (++i >= argc) goto missing_argument;
-				path_free(g_out_path);
-				g_out_path = path_new_dir(argv[i]);
+				path_free(s_out_path);
+				s_out_path = path_new_dir(argv[i]);
 			}
 			else if (strcmp(argv[i], "--dry-run") == 0) {
 				g_want_dry_run = true;
@@ -170,8 +109,10 @@ parse_cmdline(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--make-package") == 0) {
 				if (++i >= argc) goto missing_argument;
-				if (!(g_spk_writer = spk_create(argv[i]))) {
-					printf("cell: error: failed to create '%s'\n", argv[i]);
+				path_free(s_out_path);
+				s_out_path = path_new(argv[i]);
+				if (path_filename_cstr(s_out_path) == NULL) {
+					printf("cell: error: %s argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
 			}
@@ -192,8 +133,10 @@ parse_cmdline(int argc, char* argv[])
 				case 'm': g_want_source_map = true; break;
 				case 'p':
 					if (++i >= argc) goto missing_argument;
-					if (!(g_spk_writer = spk_create(argv[i]))) {
-						printf("cell: error: failed to create '%s'\n", argv[i]);
+					path_free(s_out_path);
+					s_out_path = path_new(argv[i]);
+					if (path_filename_cstr(s_out_path) == NULL) {
+						printf("cell: error: %s argument cannot be a directory\n", argv[i - 1]);
 						return false;
 					}
 					break;

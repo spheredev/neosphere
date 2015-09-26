@@ -1,0 +1,76 @@
+#if defined(_MSC_VER)
+#define _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include "utility.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+
+void*
+fslurp(const char* filename, size_t *out_size)
+{
+	void* buffer;
+	FILE* file = NULL;
+
+	if (!(file = fopen(filename, "rb")))
+		return false;
+	*out_size = (fseek(file, 0, SEEK_END), ftell(file));
+	if (!(buffer = malloc(*out_size))) goto on_error;
+	fseek(file, 0, SEEK_SET);
+	if (fread(buffer, *out_size, 1, file) != 1) goto on_error;
+	fclose(file);
+	return buffer;
+
+on_error:
+	return NULL;
+}
+
+bool
+fspew(const void* buffer, size_t size, const char* filename)
+{
+	FILE* file = NULL;
+
+	if (!(file = fopen(filename, "wb")))
+		return false;
+	fwrite(buffer, size, 1, file);
+	fclose(file);
+	return true;
+}
+
+bool
+wildcmp(const char* filename, const char* pattern)
+{
+	const char* cp = NULL;
+	const char* mp = NULL;
+	bool        is_match = 0;
+
+	// check filename against the specified filter string
+	while (*filename != '\0' && *pattern != '*') {
+		if (*pattern != *filename && *pattern != '?')
+			return false;
+		++pattern;
+		++filename;
+	}
+	while (*filename != '\0') {
+		if (*pattern == '*') {
+			if (*++pattern == '\0') return true;
+			mp = pattern;
+			cp = filename + 1;
+		}
+		else if (*pattern == *filename || *pattern == '?') {
+			pattern++;
+			filename++;
+		}
+		else {
+			pattern = mp;
+			filename = cp++;
+		}
+	}
+	while (*pattern == '*')
+		pattern++;
+	return *pattern == '\0';
+}
