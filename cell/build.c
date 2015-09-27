@@ -65,6 +65,12 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 
 	// set up build harness
 	path_mkdir(out_path);
+	if (path_filename_cstr(out_path)
+		&& !(build->spk = spk_create(path_cstr(out_path))))
+	{
+		printf("[err] failed to create SPK '%s'", path_cstr(out_path));
+		goto on_error;
+	}
 	build->want_source_map = want_source_map;
 	build->targets = new_vector(sizeof(target_t*));
 	build->installs = new_vector(sizeof(struct install));
@@ -72,13 +78,16 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 	path_mkdir(build->staging_path);
-	if (path_filename_cstr(out_path))
-		build->spk = spk_create(path_cstr(out_path));
 	
 	printf("    Building '%s' (%s)\n", path_cstr(build->out_path),
 		build->spk != NULL ? "SPK" : "Sphere dist");
 	printf("    Source: '%s'\n\n", path_cstr(build->in_path));
 	return build;
+
+on_error:
+	duk_destroy_heap(build->duk);
+	free(build);
+	return NULL;
 }
 
 void
@@ -233,25 +242,27 @@ run_build(build_t* build)
 		else printf(" Up to date!\n");
 
 	// generate source map
-	printf("Generating source map...\n");
-	duk_push_object(build->duk);
-	iter = iterate_vector(build->installs);
-	while (p_inst = next_vector_item(&iter)) {
-		path = path_resolve(path_dup(get_asset_path(p_inst->target->asset)), build->in_path);
-		duk_push_string(build->duk, path_cstr(path));
-		duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
+	if (build->want_source_map) {
+		printf("Generating source map...\n");
+		duk_push_object(build->duk);
+		iter = iterate_vector(build->installs);
+		while (p_inst = next_vector_item(&iter)) {
+			path = path_resolve(path_dup(get_asset_path(p_inst->target->asset)), build->in_path);
+			duk_push_string(build->duk, path_cstr(path));
+			duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
+		}
+		duk_json_encode(build->duk, -1);
+		json = duk_get_lstring(build->duk, -1, &json_size);
+		path = path_rebase(path_new("sourcemap.json"),
+			build->spk ? build->staging_path : build->out_path);
+		path_mkdir(build->out_path);
+		if (!fspew(json, json_size, path_cstr(path))) {
+			printf("[err] failed to write source map");
+			return false;
+		}
+		if (build->spk != NULL)
+			spk_pack(build->spk, path_cstr(path), path_filename_cstr(path));
 	}
-	duk_json_encode(build->duk, -1);
-	json = duk_get_lstring(build->duk, -1, &json_size);
-	path = path_rebase(path_new("sourcemap.json"),
-		build->spk ? build->staging_path : build->out_path);
-	path_mkdir(build->out_path);
-	if (!fspew(json, json_size, path_cstr(path))) {
-		printf("[err] failed to write source map");
-		return false;
-	}
-	if (build->spk != NULL)
-		spk_pack(build->spk, path_cstr(path), path_filename_cstr(path));
 
 	printf("Success!\n\n");
 
@@ -263,7 +274,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 {
 	tinydir_dir  dir;
 	tinydir_file file_info;
-	path_t*      file_path;
+	path_t*      file_path = NULL;
 	path_t*      full_path;
 	path_t*      new_subpath;
 	target_t*    target;
@@ -276,14 +287,17 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 	while (dir.has_next) {
 		tinydir_readfile(&dir, &file_info);
 		tinydir_next(&dir);
+		
+		path_free(file_path);
+		file_path = file_info.is_dir
+			? path_new_dir(file_info.path)
+			: path_new(file_info.path);
+		if (!path_resolve(file_path, NULL)) continue;
 		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
 			continue;
+		if (!wildcmp(file_info.name, wildcard) && file_info.is_reg) continue;
+		if (path_cmp(file_path, build->staging_path)) continue;
 		
-		if (!wildcmp(file_info.name, wildcard) && file_info.is_reg)
-			continue;
-		file_path = file_info.is_dir ? path_new_dir(file_info.path) : path_new(file_info.path);
-		if (path_cmp(file_path, build->staging_path) || path_cmp(file_path, build->out_path))
-			continue;
 		if (file_info.is_reg) {
 			target = add_target(build, new_file_asset(file_path), subpath);
 			push_back_vector(*inout_targets, &target);
@@ -295,8 +309,8 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 			process_add_files(build, wildcard, path, new_subpath, recursive, inout_targets);
 			path_free(new_subpath);
 		}
-		path_free(file_path);
 	}
+	path_free(file_path);
 	tinydir_close(&dir);
 }
 
@@ -376,7 +390,7 @@ js_api_install(duk_context* ctx)
 
 	n_args = duk_get_top(ctx);
 	if (n_args >= 2)
-		path = path_new(duk_require_string(ctx, 1));
+		path = path_new_dir(duk_require_string(ctx, 1));
 	duk_push_global_stash(ctx);
 	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
 	duk_pop_2(ctx);

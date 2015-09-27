@@ -16,6 +16,7 @@
 #include "path.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -247,12 +248,16 @@ path_insert_hop(path_t* path, size_t idx, const char* name)
 bool
 path_mkdir(const path_t* path)
 {
-	bool    is_ok;
+	bool    is_ok = true;
 	path_t* parent_path;
 	
 	size_t i;
 
-	parent_path = path_new("./");
+	// appending an empty string to a path is a no-op, so we have to
+	// explicitly check for an empty string in the first hop and root the
+	// path manually.
+	parent_path = path_num_hops(path) > 0 && strcmp(path_hop_cstr(path, 0), "") == 0
+		? path_new("/") : path_new("./");
 	for (i = 0; i < path->num_hops; ++i) {
 		path_append_dir(parent_path, path_hop_cstr(path, i));
 		is_ok = mkdir(path_cstr(parent_path), 0777) == 0;
