@@ -17,20 +17,22 @@ static char*   s_target_name;
 int
 main(int argc, char* argv[])
 {
-	int         retval = EXIT_SUCCESS;
+	int         retval = EXIT_FAILURE;
 	build_t*    build;
 
 	srand((unsigned int)time(NULL));
+
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
 	print_banner(true, false);
 	printf("\n");
-	build = new_build(s_in_path, s_out_path, s_want_source_map);
+	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))
+		goto shutdown;
 	if (evaluate_rule(build, s_target_name))
 		run_build(build);
 	free_build(build);
-	return 0;
+	retval = EXIT_SUCCESS;
 
 shutdown:
 	free(s_target_name);
@@ -41,9 +43,9 @@ static bool
 parse_cmdline(int argc, char* argv[])
 {
 	int num_targets = 0;
-	
+
 	int i, j;
-	
+
 	// establish compiler defaults
 	s_in_path = path_new("./");
 	s_out_path = path_new("dist/");

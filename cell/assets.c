@@ -36,7 +36,7 @@ new_file_asset(const path_t* path)
 	struct stat sb;
 	
 	if (stat(path_cstr(path), &sb) != 0) {
-		fprintf(stderr, "[err] failed to access file '%s'", path_cstr(path));
+		fprintf(stderr, "[error] failed to access file '%s'", path_cstr(path));
 		return NULL;
 	}
 	
@@ -84,7 +84,7 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		if (stat(path_cstr(asset->obj_path), &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
 			return true;
 		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
-			printf("[err] failed to write '%s'\n", path_cstr(asset->obj_path));
+			printf("[error] failed to write '%s'\n", path_cstr(asset->obj_path));
 			return false;
 		}
 		fprintf(file, "name=%s\n", asset->sgm.name);

@@ -44,9 +44,20 @@ static bool process_target    (build_t* build, const target_t* target, bool *out
 build_t*
 new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 {
-	build_t* build = NULL;
+	build_t*    build = NULL;
+	path_t*     path;
+	struct stat sb;
 
 	build = calloc(1, sizeof(build_t));
+
+	// check for cell.js in input directory
+	path = path_rebase(path_new("cell.js"), in_path);
+	if (stat(path_cstr(path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
+		fprintf(stderr, "[error] no cell.js in input directory\n");
+		return NULL;
+	}
+	build->js_mtime = sb.st_mtime;
+	path_free(path);
 
 	// initialize JavaScript environment
 	build->duk = duk_create_heap_default();
@@ -68,7 +79,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	if (path_filename_cstr(out_path)
 		&& !(build->spk = spk_create(path_cstr(out_path))))
 	{
-		printf("[err] failed to create SPK '%s'", path_cstr(out_path));
+		printf("[error] failed to create SPK '%s'", path_cstr(out_path));
 		goto on_error;
 	}
 	build->want_source_map = want_source_map;
@@ -79,9 +90,9 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 	path_mkdir(build->staging_path);
 	
-	printf("    Building '%s' (%s)\n", path_cstr(build->out_path),
-		build->spk != NULL ? "SPK" : "Sphere dist");
-	printf("    Source: '%s'\n\n", path_cstr(build->in_path));
+	printf("    Building '%s' as %s\n", path_cstr(build->out_path),
+		build->spk ? "SPK" : "gamedist");
+	printf("    Source path is '%s'\n\n", path_cstr(build->in_path));
 	return build;
 
 on_error:
@@ -120,34 +131,28 @@ bool
 evaluate_rule(build_t* build, const char* name)
 {
 	char        func_name[255];
-	struct stat sb;
 	path_t*     script_path;
 
-	script_path = path_rebase(path_new("cell.js"), build->in_path);
-	if (stat(path_cstr(script_path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
-		fprintf(stderr, "[err] no cell.js in input directory\n");
-		return false;
-	}
-	build->js_mtime = sb.st_mtime;
-
 	// process build script
-	printf("Processing cell.js rule '%s'\n", name);
+	printf("Processing cell.js rule '%s'... ", name);
 	sprintf(func_name, "$%s", name);
+	script_path = path_rebase(path_new("cell.js"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
 		path_free(script_path);
-		printf("[js] %s\n", duk_safe_to_string(build->duk, -1));
+		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
 		return false;
 	}
 	path_free(script_path);
 	if (!duk_get_global_string(build->duk, func_name) || !duk_is_callable(build->duk, -1)) {
-		printf("[err] no rule named '%s' in cell.js\n", name);
+		printf("\n[error] no rule named '%s' in cell.js\n", name);
 		return false;
 	}
 	if (duk_pcall(build->duk, 0) != 0) {
-		printf("[js] %s\n", duk_safe_to_string(build->duk, -1));
+		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
 		return false;
 	}
 
+	printf("OK.\n");
 	return true;
 }
 
@@ -206,7 +211,7 @@ run_build(build_t* build)
 	iter_t iter;
 
 	if (get_vector_size(build->installs) == 0) {
-		printf("[err] no assets staged for install\n");
+		printf("[error] no assets staged for install\n");
 		return false;
 	}
 
@@ -224,7 +229,7 @@ run_build(build_t* build)
 		}
 	}
 	if (n_assets > 0) printf("  %d asset(s) built\n", n_assets);
-		else printf(" Up to date!\n");
+		else printf(" Up to date.\n");
 
 	printf("Installing assets...");
 	n_assets = 0;
@@ -239,11 +244,11 @@ run_build(build_t* build)
 		}
 	}
 	if (n_assets > 0) printf("  %d asset(s) installed\n", n_assets);
-		else printf(" Up to date!\n");
+		else printf(" Up to date.\n");
 
 	// generate source map
 	if (build->want_source_map) {
-		printf("Generating source map...\n");
+		printf("Generating source map... ");
 		duk_push_object(build->duk);
 		iter = iterate_vector(build->installs);
 		while (p_inst = next_vector_item(&iter)) {
@@ -257,14 +262,15 @@ run_build(build_t* build)
 			build->spk ? build->staging_path : build->out_path);
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
-			printf("[err] failed to write source map");
+			printf("\n[error] failed to write source map");
 			return false;
 		}
 		if (build->spk != NULL)
 			spk_pack(build->spk, path_cstr(path), path_filename_cstr(path));
+		printf("OK.\n");
 	}
 
-	printf("Success!\n\n");
+	printf("Success!\n");
 
 	return true;
 }
@@ -337,7 +343,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 		fn_src = path_cstr(src_path);
 		fn_dest = path_cstr(out_path);
 		if (stat(fn_src, &sb_src) != 0) {
-			fprintf(stderr, "[err] failed to access '%s'\n", fn_src);
+			fprintf(stderr, "[error] failed to access '%s'\n", fn_src);
 			return false;
 		}
 		if (stat(fn_dest, &sb_dest) != 0
@@ -348,7 +354,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 				|| !fspew(file_data, file_size, fn_dest))
 			{
 				free(file_data);
-				fprintf(stderr, "[err] failed to copy '%s' to '%s'\n",
+				fprintf(stderr, "[error] failed to copy '%s' to '%s'\n",
 					path_cstr(src_path), path_cstr(out_path));
 				return false;
 			}
