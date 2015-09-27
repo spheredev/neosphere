@@ -16,11 +16,11 @@ enum asset_type
 struct file_info
 {
 	path_t* path;
-	path_t* subdir;
 };
 
 struct asset
 {
+	time_t       src_mtime;
 	path_t*      obj_path;
 	asset_type_t type;
 	union {
@@ -32,20 +32,28 @@ struct asset
 asset_t*
 new_file_asset(const path_t* path)
 {
-	asset_t* asset;
-
+	asset_t*    asset;
+	struct stat sb;
+	
+	if (stat(path_cstr(path), &sb) != 0) {
+		fprintf(stderr, "[err] failed to access file '%s'", path_cstr(path));
+		return NULL;
+	}
+	
 	asset = calloc(1, sizeof(asset_t));
 	asset->type = ASSET_FILE;
 	asset->file.path = path_dup(path);
+	asset->src_mtime = sb.st_mtime;
 	return asset;
 }
 
 asset_t*
-new_sgm_asset(sgm_info_t sgm)
+new_sgm_asset(sgm_info_t sgm, time_t src_mtime)
 {
 	asset_t* asset;
 
 	asset = calloc(1, sizeof(asset_t));
+	asset->src_mtime = src_mtime;
 	asset->type = ASSET_SGM;
 	asset->sgm = sgm;
 	return asset;
@@ -61,7 +69,8 @@ free_asset(asset_t* asset)
 bool
 build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 {
-	FILE* file;
+	FILE*       file;
+	struct stat sb;
 
 	*out_is_new = false;
 	switch (asset->type) {
@@ -72,8 +81,10 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		return true;
 	case ASSET_SGM:
 		asset->obj_path = path_rebase(path_new("game.sgm"), staging_path);
+		if (stat(path_cstr(asset->obj_path), &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
+			return true;
 		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
-			printf("error: failed to write '%s'\n", path_cstr(asset->obj_path));
+			printf("[err] failed to write '%s'\n", path_cstr(asset->obj_path));
 			return false;
 		}
 		fprintf(file, "name=%s\n", asset->sgm.name);
@@ -87,9 +98,6 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		break;
 	default:
 		return false;
-	}
-	if (*out_is_new) {
-		printf("    %s\n", path_cstr(asset->obj_path));
 	}
 	return true;
 }

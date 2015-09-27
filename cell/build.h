@@ -9,7 +9,7 @@
 typedef struct build  build_t;
 typedef struct target target_t;
 
-build_t*  new_build     (const path_t* in_path, const path_t* out_path);
+build_t*  new_build     (const path_t* in_path, const path_t* out_path, bool want_source_map);
 void      free_build    (build_t* build);
 vector_t* add_files     (build_t* build, const path_t* pattern, bool recursive);
 void      add_install   (build_t* build, const target_t* target, const path_t* path);

@@ -9,12 +9,9 @@ static bool parse_cmdline    (int argc, char* argv[]);
 static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
 
-bool          g_is_verbose = false;
-bool          g_want_dry_run = false;
-bool          g_want_source_map = false;
-
 static path_t* s_in_path = NULL;
 static path_t* s_out_path = NULL;
+bool           s_want_source_map = false;
 static char*   s_target_name;
 
 int
@@ -29,7 +26,7 @@ main(int argc, char* argv[])
 
 	print_banner(true, false);
 	printf("\n");
-	build = new_build(s_in_path, s_out_path);
+	build = new_build(s_in_path, s_out_path, s_want_source_map);
 	if (evaluate_rule(build, s_target_name))
 		run_build(build);
 	free_build(build);
@@ -38,19 +35,6 @@ main(int argc, char* argv[])
 shutdown:
 	free(s_target_name);
 	return retval;
-}
-
-void
-print_v(const char* fmt, ...)
-{
-	va_list ap;
-
-	if (!g_is_verbose)
-		return;
-
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
 }
 
 static bool
@@ -71,18 +55,18 @@ parse_cmdline(int argc, char* argv[])
 			if (strcmp(argv[i], "--help") == 0) {
 				print_banner(false, false);
 				printf("\n");
-				printf("USAGE: cell [--in <path>] [--out <path>] [target]\n");
+				printf("USAGE: cell [--out <dir>] [--in <path>] [target]\n");
+				printf("       cell -p <filename> [--in <path>] [target]\n");
 				printf("       cell [options] [target]\n");
 				printf("\nOPTIONS:\n");
-				printf("   --in <path>            Sets the input directory, Cell looks for sources in\n");
+				printf("       --in               Sets the input directory, Cell looks for sources in\n");
 				printf("                          the current working directory by default\n");
-				printf("   --out <path>           Sets the output directory, 'dist' if not provided\n");
-				printf("   --version              Prints the Cell compiler version and exits\n");
-				printf("   --make-package, -p     Makes a Sphere package (.spk) for the compiled game\n");
-				printf("   --source-map, -m       Generates a source map, which maps compiled assets to\n");
+				printf("       --out              Sets the output directory, 'dist' if not provided\n");
+				printf("       --version          Prints the Cell compiler version and exits\n");
+				printf("   -p, --make-package     Makes a Sphere package (.spk) for the compiled game\n");
+				printf("   -m, --source-map       Generates a source map, which maps compiled assets to\n");
 				printf("                          their original sources in the input directory; useful\n");
 				printf("                          for debugging\n");
-				printf("   --verbose, -v          Be verbose, print lots of details\n");
 				return false;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
@@ -99,9 +83,6 @@ parse_cmdline(int argc, char* argv[])
 				path_free(s_out_path);
 				s_out_path = path_new_dir(argv[i]);
 			}
-			else if (strcmp(argv[i], "--dry-run") == 0) {
-				g_want_dry_run = true;
-			}
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
 				return false;
@@ -116,10 +97,7 @@ parse_cmdline(int argc, char* argv[])
 				}
 			}
 			else if (strcmp(argv[i], "--source-map") == 0) {
-				g_want_source_map = true;
-			}
-			else if (strcmp(argv[i], "--verbose") == 0) {
-				g_is_verbose = true;
+				s_want_source_map = true;
 			}
 			else {
 				printf("cell: error: unknown option '%s'\n", argv[i]);
@@ -129,7 +107,7 @@ parse_cmdline(int argc, char* argv[])
 		else if (argv[i][0] == '-') {
 			for (j = strlen(argv[i]) - 1; j >= 1; --j) {
 				switch (argv[i][j]) {
-				case 'm': g_want_source_map = true; break;
+				case 'm': s_want_source_map = true; break;
 				case 'p':
 					if (++i >= argc) goto missing_argument;
 					path_free(s_out_path);
@@ -139,7 +117,6 @@ parse_cmdline(int argc, char* argv[])
 						return false;
 					}
 					break;
-				case 'v': g_is_verbose = true; break;
 				default:
 					printf("cell: error: unknown option '-%c'\n", argv[i][j]);
 					return false;

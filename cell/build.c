@@ -18,6 +18,7 @@ struct build
 	spk_writer_t* spk;
 	path_t*       staging_path;
 	vector_t*     targets;
+	bool          want_source_map;
 };
 
 struct install
@@ -37,11 +38,11 @@ static duk_ret_t js_api_files   (duk_context* ctx);
 static duk_ret_t js_api_sgm     (duk_context* ctx);
 
 static void process_add_files (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
-static bool process_install   (build_t* build, const struct install* inst, bool *out_is_new);
+static bool process_install   (build_t* build, struct install* inst, bool *out_is_new);
 static bool process_target    (build_t* build, const target_t* target, bool *out_is_new);
 
 build_t*
-new_build(const path_t* in_path, const path_t* out_path)
+new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 {
 	build_t* build = NULL;
 
@@ -63,14 +64,20 @@ new_build(const path_t* in_path, const path_t* out_path)
 	duk_put_global_string(build->duk, "sgm");
 
 	// set up build harness
+	path_mkdir(out_path);
+	build->want_source_map = want_source_map;
 	build->targets = new_vector(sizeof(target_t*));
 	build->installs = new_vector(sizeof(struct install));
-	build->in_path = path_dup(in_path);
-	build->out_path = path_dup(out_path);
+	build->in_path = path_resolve(path_dup(in_path), NULL);
+	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 	path_mkdir(build->staging_path);
 	if (path_filename_cstr(out_path))
 		build->spk = spk_create(path_cstr(out_path));
+	
+	printf("    Building '%s' (%s)\n", path_cstr(build->out_path),
+		build->spk != NULL ? "SPK" : "Sphere dist");
+	printf("    Source: '%s'\n\n", path_cstr(build->in_path));
 	return build;
 }
 
@@ -180,7 +187,10 @@ bool
 run_build(build_t* build)
 {
 	bool        is_new;
+	const char* json;
+	duk_size_t  json_size;
 	int         n_assets;
+	path_t*     path;
 
 	struct install *p_inst;
 	target_t*      *p_target;
@@ -192,27 +202,56 @@ run_build(build_t* build)
 	}
 
 	// build and install assets
-	printf("Building assets...\n");
+	printf("Building assets...");
 	n_assets = 0;
 	iter = iterate_vector(build->targets);
 	while (p_target = next_vector_item(&iter)) {
 		if (!process_target(build, *p_target, &is_new))
 			return false;
-		if (is_new) ++n_assets;
+		if (is_new) {
+			if (n_assets == 0) printf("\n");
+			printf("  %s\n", path_cstr(get_asset_path((*p_target)->asset)));
+			++n_assets;
+		}
 	}
-	if (n_assets > 0) printf("    %d asset(s) built\n", n_assets);
-		else printf("    Up to date!\n");
+	if (n_assets > 0) printf("  %d asset(s) built\n", n_assets);
+		else printf(" Up to date!\n");
 
-	printf("Installing assets...\n");
+	printf("Installing assets...");
 	n_assets = 0;
 	iter = iterate_vector(build->installs);
 	while (p_inst = next_vector_item(&iter)) {
 		if (!process_install(build, p_inst, &is_new))
 			return false;
-		if (is_new) ++n_assets;
+		if (is_new) {
+			if (n_assets == 0) printf("\n");
+			printf("  %s\n", path_cstr(p_inst->path));
+			++n_assets;
+		}
 	}
-	if (n_assets > 0) printf("    %d asset(s) installed\n", n_assets);
-		else printf("    Up to date!\n");
+	if (n_assets > 0) printf("  %d asset(s) installed\n", n_assets);
+		else printf(" Up to date!\n");
+
+	// generate source map
+	printf("Generating source map...\n");
+	duk_push_object(build->duk);
+	iter = iterate_vector(build->installs);
+	while (p_inst = next_vector_item(&iter)) {
+		path = path_resolve(path_dup(get_asset_path(p_inst->target->asset)), build->in_path);
+		duk_push_string(build->duk, path_cstr(path));
+		duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
+	}
+	duk_json_encode(build->duk, -1);
+	json = duk_get_lstring(build->duk, -1, &json_size);
+	path = path_rebase(path_new("sourcemap.json"),
+		build->spk ? build->staging_path : build->out_path);
+	path_mkdir(build->out_path);
+	if (!fspew(json, json_size, path_cstr(path))) {
+		printf("[err] failed to write source map");
+		return false;
+	}
+	if (build->spk != NULL)
+		spk_pack(build->spk, path_cstr(path), path_filename_cstr(path));
 
 	printf("Success!\n\n");
 
@@ -262,7 +301,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 }
 
 static bool
-process_install(build_t* build, const struct install* inst, bool *out_is_new)
+process_install(build_t* build, struct install* inst, bool *out_is_new)
 {
 	void*         file_data = NULL;
 	size_t        file_size;
@@ -302,17 +341,18 @@ process_install(build_t* build, const struct install* inst, bool *out_is_new)
 			free(file_data);
 			*out_is_new = true;
 		}
+		path_free(inst->path);
+		inst->path = path_resolve(out_path, build->out_path);
 	}
 	else {
 		out_path = path_cat(path_dup(inst->path), inst->target->subpath);
 		path_collapse(out_path, true);
 		path_append(out_path, path_filename_cstr(src_path));
 		spk_pack(build->spk, path_cstr(src_path), path_cstr(out_path));
+		path_free(inst->path);
+		inst->path = path_dup(out_path);
 		*out_is_new = true;
 	}
-	if (*out_is_new)
-		printf("    %s\n", path_cstr(out_path));
-	path_free(out_path);
 	return true;
 }
 
@@ -411,7 +451,7 @@ js_api_sgm(duk_context* ctx)
 	strcpy(manifest.description, duk_require_string(ctx, -2));
 	strcpy(manifest.script, duk_require_string(ctx, -1));
 	manifest.width = 320; manifest.height = 240;
-	target = add_target(build, new_sgm_asset(manifest), NULL);
+	target = add_target(build, new_sgm_asset(manifest, build->js_mtime), NULL);
 	duk_push_pointer(ctx, target);
 	return 1;
 }

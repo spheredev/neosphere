@@ -21,9 +21,4 @@
 
 #define CELL_VERSION "v2.0-WIP"
 
-extern bool g_want_dry_run;
-extern bool g_want_source_map;
-
-extern void print_v (const char* fmt, ...);
-
 #endif // CELL__CELL_H__INCLUDED
