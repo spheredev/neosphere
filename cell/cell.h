@@ -19,6 +19,6 @@
 
 #include "posix.h"
 
-#define CELL_VERSION "v2.0-WIP"
+#define CELL_VERSION "v2.0-wip"
 
 #endif // CELL__CELL_H__INCLUDED

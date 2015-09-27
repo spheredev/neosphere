@@ -50,10 +50,10 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 
 	build = calloc(1, sizeof(build_t));
 
-	// check for cell.js in input directory
-	path = path_rebase(path_new("cell.js"), in_path);
+	// check for cellscript in input directory
+	path = path_rebase(path_new("cellscript"), in_path);
 	if (stat(path_cstr(path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
-		fprintf(stderr, "[error] no cell.js in input directory\n");
+		fprintf(stderr, "[error] no cellscript in input directory\n");
 		return NULL;
 	}
 	build->js_mtime = sb.st_mtime;
@@ -91,7 +91,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	path_mkdir(build->staging_path);
 	
 	printf("    Building '%s' as %s\n", path_cstr(build->out_path),
-		build->spk ? "SPK" : "gamedist");
+		build->spk ? "SPK" : "dist");
 	printf("    Source path is '%s'\n\n", path_cstr(build->in_path));
 	return build;
 
@@ -134,9 +134,9 @@ evaluate_rule(build_t* build, const char* name)
 	path_t*     script_path;
 
 	// process build script
-	printf("Processing cell.js rule '%s'... ", name);
+	printf("Processing cellscript rule '%s'... ", name);
 	sprintf(func_name, "$%s", name);
-	script_path = path_rebase(path_new("cell.js"), build->in_path);
+	script_path = path_rebase(path_new("cellscript"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
 		path_free(script_path);
 		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
@@ -144,7 +144,7 @@ evaluate_rule(build_t* build, const char* name)
 	}
 	path_free(script_path);
 	if (!duk_get_global_string(build->duk, func_name) || !duk_is_callable(build->duk, -1)) {
-		printf("\n[error] no rule named '%s' in cell.js\n", name);
+		printf("\n[error] no rule named '%s' in cellscript\n", name);
 		return false;
 	}
 	if (duk_pcall(build->duk, 0) != 0) {
@@ -200,6 +200,7 @@ add_target(build_t* build, asset_t* asset, const path_t* subpath)
 bool
 run_build(build_t* build)
 {
+	bool        has_changed = false;
 	bool        is_new;
 	const char* json;
 	duk_size_t  json_size;
@@ -226,6 +227,7 @@ run_build(build_t* build)
 			if (n_assets == 0) printf("\n");
 			printf("  %s\n", path_cstr(get_asset_path((*p_target)->asset)));
 			++n_assets;
+			has_changed = true;
 		}
 	}
 	if (n_assets > 0) printf("  %d asset(s) built\n", n_assets);
@@ -241,6 +243,7 @@ run_build(build_t* build)
 			if (n_assets == 0) printf("\n");
 			printf("  %s\n", path_cstr(p_inst->path));
 			++n_assets;
+			has_changed = true;
 		}
 	}
 	if (n_assets > 0) printf("  %d asset(s) installed\n", n_assets);

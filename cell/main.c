@@ -148,7 +148,7 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Cell:    %s %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+		printf("    Cell:    %s (%s)\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
 		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
 	}
 }
