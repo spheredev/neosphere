@@ -25,6 +25,18 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
+	png_image image;
+	uint8_t* px;
+	memset(&image, 0, sizeof(png_image));
+	image.version = PNG_IMAGE_VERSION;
+	if (png_image_begin_read_from_file(&image, "icon.png")) {
+		image.format = PNG_FORMAT_RGBA;
+		if (png_image_finish_read(&image, NULL,
+			px = malloc(PNG_IMAGE_SIZE(image)),
+			0, NULL)) printf("Yay! *munch* Damn pig\n\n", px[201]);
+		png_image_free(&image);
+	}
+	
 	print_banner(true, false);
 	printf("\n");
 	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))

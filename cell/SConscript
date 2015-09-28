@@ -11,6 +11,7 @@ cell_sources = [
 ]
 
 cell_libs = [
+	"png",
 	"z",
 	"m"
 ]

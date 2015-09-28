@@ -50,10 +50,10 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 
 	build = calloc(1, sizeof(build_t));
 
-	// check for cellscript in input directory
-	path = path_rebase(path_new("cellscript"), in_path);
+	// check for Cellscript.js in input directory
+	path = path_rebase(path_new("Cellscript.js"), in_path);
 	if (stat(path_cstr(path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
-		fprintf(stderr, "[error] no cellscript in input directory\n");
+		fprintf(stderr, "[error] no Cellscript.js in input directory\n");
 		return NULL;
 	}
 	build->js_mtime = sb.st_mtime;
@@ -134,9 +134,9 @@ evaluate_rule(build_t* build, const char* name)
 	path_t*     script_path;
 
 	// process build script
-	printf("Processing cellscript rule '%s'... ", name);
+	printf("Processing Cellscript.js rule '%s'... ", name);
 	sprintf(func_name, "$%s", name);
-	script_path = path_rebase(path_new("cellscript"), build->in_path);
+	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
 		path_free(script_path);
 		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
@@ -144,7 +144,7 @@ evaluate_rule(build_t* build, const char* name)
 	}
 	path_free(script_path);
 	if (!duk_get_global_string(build->duk, func_name) || !duk_is_callable(build->duk, -1)) {
-		printf("\n[error] no rule named '%s' in cellscript\n", name);
+		printf("\n[error] no rule named '%s' in Cellscript.js\n", name);
 		return false;
 	}
 	if (duk_pcall(build->duk, 0) != 0) {

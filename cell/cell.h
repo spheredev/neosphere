@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
+#include <png.h>
 #include "duktape.h"
 #include "lstring.h"
 #include "path.h"
