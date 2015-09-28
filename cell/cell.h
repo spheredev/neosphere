@@ -1,11 +1,6 @@
 #ifndef CELL__CELL_H__INCLUDED
 #define CELL__CELL_H__INCLUDED
 
-#ifdef _MSC_VER
-#define _CRT_NONSTDC_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <png.h>
 #include <zlib.h>
 #include "duktape.h"

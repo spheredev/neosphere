@@ -65,7 +65,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -84,7 +84,7 @@
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat />
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
@@ -108,6 +108,7 @@
     <ClCompile Include="..\cell\main.c" />
     <ClCompile Include="..\cell\path.c" />
     <ClCompile Include="..\cell\spk_writer.c" />
+    <ClCompile Include="..\cell\tileset.c" />
     <ClCompile Include="..\cell\utility.c" />
     <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\src\vector.c" />
@@ -121,6 +122,7 @@
     <ClInclude Include="..\cell\path.h" />
     <ClInclude Include="..\cell\posix.h" />
     <ClInclude Include="..\cell\spk_writer.h" />
+    <ClInclude Include="..\cell\tileset.h" />
     <ClInclude Include="..\cell\tinydir.h" />
     <ClInclude Include="..\cell\utility.h" />
     <ClInclude Include="..\src\duktape.h" />

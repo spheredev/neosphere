@@ -1,6 +1,4 @@
 #if defined(_MSC_VER)
-#define _CRT_NONSTDC_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
 #define strtok_r strtok_s
 #endif
 
@@ -9,8 +7,6 @@
 #define PATH_MAX _MAX_PATH
 #define mkdir(path, m)    _mkdir(path)
 #define realpath(name, r) (_access(name, 00) == 0 ? _fullpath((r), (name), PATH_MAX) : NULL)
-#endif
-#if defined(_WIN32)
 #endif
 
 #include "path.h"

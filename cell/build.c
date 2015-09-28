@@ -1,10 +1,9 @@
 #include "build.h"
 
-#include "duktape.h"
+#include "cell.h"
 #include "assets.h"
 #include "spk_writer.h"
 #include "tinydir.h"
-#include "cell.h"
 
 #include <sys/stat.h>
 
