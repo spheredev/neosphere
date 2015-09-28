@@ -104,6 +104,7 @@
   <ItemGroup>
     <ClCompile Include="..\cell\assets.c" />
     <ClCompile Include="..\cell\build.c" />
+    <ClCompile Include="..\cell\image.c" />
     <ClCompile Include="..\cell\main.c" />
     <ClCompile Include="..\cell\path.c" />
     <ClCompile Include="..\cell\spk_writer.c" />
@@ -116,6 +117,7 @@
     <ClInclude Include="..\cell\build.h" />
     <ClInclude Include="..\cell\cell.h" />
     <ClInclude Include="..\cell\duk_config.h" />
+    <ClInclude Include="..\cell\image.h" />
     <ClInclude Include="..\cell\path.h" />
     <ClInclude Include="..\cell\posix.h" />
     <ClInclude Include="..\cell\spk_writer.h" />

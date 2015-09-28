@@ -2,6 +2,7 @@
 
 #include "assets.h"
 #include "build.h"
+#include "image.h"
 
 #include <sys/stat.h>
 
@@ -25,18 +26,6 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
-	png_image image;
-	uint8_t* px;
-	memset(&image, 0, sizeof(png_image));
-	image.version = PNG_IMAGE_VERSION;
-	if (png_image_begin_read_from_file(&image, "icon.png")) {
-		image.format = PNG_FORMAT_RGBA;
-		if (png_image_finish_read(&image, NULL,
-			px = malloc(PNG_IMAGE_SIZE(image)),
-			0, NULL)) printf("Yay! *munch* Damn pig\n\n", px[201]);
-		png_image_free(&image);
-	}
-	
 	print_banner(true, false);
 	printf("\n");
 	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))
@@ -160,8 +149,11 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Cell:    %s (%s)\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+		printf("       Cell: %s %s\n\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
 		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
+		printf("     libpng: v%s\n", png_get_libpng_ver(NULL));
+		printf("       zlib: v%s\n", zlibVersion());
+		printf("\nSee LICENSE file for copyright and licensing information.\n");
 	}
 }
 

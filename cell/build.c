@@ -273,7 +273,7 @@ run_build(build_t* build)
 		printf("OK.\n");
 	}
 
-	printf("Success!\n");
+	printf(has_changed ? "Success!\n" : "Everything up to date.\n");
 
 	return true;
 }

@@ -39,6 +39,9 @@
     <ClCompile Include="..\cell\utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\cell\image.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cell\duk_config.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cell\image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

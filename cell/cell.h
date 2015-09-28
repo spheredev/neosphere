@@ -6,17 +6,19 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <time.h>
 #include <png.h>
+#include <zlib.h>
 #include "duktape.h"
 #include "lstring.h"
 #include "path.h"
 #include "spk_writer.h"
 #include "utility.h"
 #include "vector.h"
+
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <time.h>
 
 #include "posix.h"
 
