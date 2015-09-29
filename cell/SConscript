@@ -4,8 +4,10 @@ cell_sources = [
 	
 	"assets.c",
 	"build.c",
+	"image.c",
 	"path.c",
 	"spk_writer.c",
+	"tileset.c",
 	"utility.c",
 	"main.c"
 ]
