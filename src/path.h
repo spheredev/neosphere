@@ -1,5 +1,5 @@
-#ifndef CELL__PATH_H__INCLUDED
-#define CELL__PATH_H__INCLUDED
+#ifndef MINISPHERE__PATH_H__INCLUDED
+#define MINISPHERE__PATH_H__INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,6 +16,7 @@ const char* path_hop_cstr      (const path_t* path, size_t idx);
 path_t*     path_insert_hop    (path_t* path, size_t idx, const char* name);
 bool        path_is_rooted     (const path_t* path);
 size_t      path_num_hops      (const path_t* path);
+bool        path_hop_cmp       (const path_t* path, size_t idx, const char* name);
 path_t*     path_append        (path_t* path, const char* pathname);
 path_t*     path_append_dir    (path_t* path, const char* pathname);
 path_t*     path_cat           (path_t* path, const path_t* tail);
@@ -25,6 +26,8 @@ bool        path_mkdir         (const path_t* path);
 path_t*     path_rebase        (path_t* path, const path_t* root);
 path_t*     path_remove_hop    (path_t* path, size_t idx);
 path_t*     path_resolve       (path_t* path, const path_t* relative_to);
+path_t*     path_set           (path_t* path, const char* pathname);
+path_t*     path_set_dir       (path_t* path, const char* pathname);
 path_t*     path_strip         (path_t* path);
 
-#endif // CELL__PATH_H__INCLUDED
+#endif // MINISPHERE__PATH_H__INCLUDED

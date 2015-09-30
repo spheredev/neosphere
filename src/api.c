@@ -399,7 +399,16 @@ duk_handle_create_error(duk_context* ctx)
 	const char* message;
 	
 	if (!duk_is_error(ctx, 0)) return 1;
-	duk_get_prop_string(ctx, 0, "message"); message = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "message");
+	message = duk_get_string(ctx, -1);
+	duk_get_prop_string(ctx, 0, "fileName");
+	filename = get_source_pathname(duk_get_string(ctx, -1));
+	duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
+	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
+		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
+		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+	duk_pop_2(ctx);
 	if (strstr(message, "not ") != message
 	    || strcmp(message, "not callable") == 0
 	    || strcmp(message, "not configurable") == 0
@@ -414,7 +423,9 @@ duk_handle_create_error(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
 	duk_get_prop_string(ctx, -1, "lineNumber"); line = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "fileName");
+	filename = get_source_pathname(duk_get_string(ctx, -1));
+	duk_pop(ctx);
 	duk_pop_n(ctx, 4);
 	duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
 	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
@@ -541,12 +552,12 @@ js_EvaluateSystemScript(duk_context* ctx)
 
 	char path[SPHERE_PATH_MAX];
 
-	sprintf(path, "lib/%s", filename);
-	if (!sfs_fexist(g_fs, path, "scripts"))
+	sprintf(path, "scripts/lib/%s", filename);
+	if (!sfs_fexist(g_fs, path, NULL))
 		sprintf(path, "~sys/scripts/%s", filename);
-	if (!sfs_fexist(g_fs, path, "scripts"))
+	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", filename);
-	if (!try_evaluate_file(path, false))
+	if (!try_evaluate_file(path, true))
 		duk_throw(ctx);
 	return 1;
 }
@@ -582,10 +593,10 @@ js_RequireSystemScript(duk_context* ctx)
 	bool is_required;
 	char path[SPHERE_PATH_MAX];
 
-	sprintf(path, "lib/%s", filename);
-	if (!sfs_fexist(g_fs, path, "scripts"))
+	sprintf(path, "scripts/lib/%s", filename);
+	if (!sfs_fexist(g_fs, path, NULL))
 		sprintf(path, "~sys/scripts/%s", filename);
-	if (!sfs_fexist(g_fs, path, "scripts"))
+	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): System script not found '%s'", filename);
 
 	duk_push_global_stash(ctx);
@@ -595,7 +606,7 @@ js_RequireSystemScript(duk_context* ctx)
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, path);
-		if (!try_evaluate_file(path, false))
+		if (!try_evaluate_file(path, true))
 			duk_throw(ctx);
 	}
 	duk_pop_2(ctx);

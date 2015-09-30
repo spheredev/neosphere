@@ -1,11 +1,11 @@
 cell_sources = [
 	Object("duktape", "../msphere/duktape.c"),
+	Object("path", "../msphere/path.c"),
 	Object("vector", "../msphere/vector.c"),
 	
 	"assets.c",
 	"build.c",
 	"image.c",
-	"path.c",
 	"spk_writer.c",
 	"tileset.c",
 	"utility.c",

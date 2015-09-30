@@ -16,6 +16,7 @@ struct sandbox
 	unsigned int    id;
 	ALLEGRO_PATH*   fs_root;
 	ALLEGRO_CONFIG* sgm;
+	lstring_t*      sourcemap;
 	spk_t*          spk;
 	int             type;
 };
@@ -42,6 +43,8 @@ new_sandbox(const char* path)
 	size_t        sgm_size;
 	void*         sgm_text = NULL;
 	spk_t*        spk;
+	void*         sourcemap_data;
+	size_t        sourcemap_size;
 
 	console_log(1, "Opening '%s' in Sandbox %u", path, s_next_sandbox_id);
 	
@@ -79,6 +82,9 @@ new_sandbox(const char* path)
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);
 	
 	fs->id = s_next_sandbox_id++;
+	if (sourcemap_data = sfs_fslurp(fs, "sourcemap.json", NULL, &sourcemap_size))
+		fs->sourcemap = lstr_from_buf(sourcemap_data, sourcemap_size);
+	free(sourcemap_data);
 	return fs;
 
 on_error:
@@ -139,6 +145,34 @@ const char*
 get_sgm_summary(sandbox_t* fs)
 {
 	return al_get_config_value(fs->sgm, NULL, "description");
+}
+
+path_t*
+make_sfs_path(const char* filename, const char* base_dir_name)
+{
+	path_t* base_path = NULL;
+	path_t* path;
+
+	path = path_new(filename);
+	if (path_is_rooted(path))  // absolute path?
+		return path;
+	
+	base_path = path_new_dir(base_dir_name != NULL
+		? base_dir_name : "./");
+	if (path_num_hops(path) == 0)
+		path_rebase(path, base_path);
+	else if (path_hop_cmp(path, 0, "~") || path_hop_cmp(path, 0, "~sgm"))
+		path_remove_hop(path, 0);
+	else if (path_hop_cmp(path, 0, "~sys")) {
+		path_remove_hop(path, 0);
+		path_collapse(path, true);
+		path_insert_hop(path, 0, "~sys");
+	}
+	else
+		path_rebase(path, base_path);
+	path_collapse(path, true);
+	path_free(base_path);
+	return path;
 }
 
 vector_t*

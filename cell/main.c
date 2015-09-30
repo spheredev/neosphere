@@ -17,8 +17,8 @@ static char*   s_target_name;
 int
 main(int argc, char* argv[])
 {
-	int         retval = EXIT_FAILURE;
-	build_t*    build;
+	int      retval = EXIT_FAILURE;
+	build_t* build;
 
 	srand((unsigned int)time(NULL));
 
@@ -29,13 +29,15 @@ main(int argc, char* argv[])
 	printf("\n");
 	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))
 		goto shutdown;
-	if (evaluate_rule(build, s_target_name))
-		run_build(build);
-	free_build(build);
+	if (!evaluate_rule(build, s_target_name)) goto shutdown;
+	if (!run_build(build)) goto shutdown;
 	retval = EXIT_SUCCESS;
 
 shutdown:
+	path_free(s_in_path);
+	path_free(s_out_path);
 	free(s_target_name);
+	free_build(build);
 	return retval;
 }
 

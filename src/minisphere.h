@@ -33,6 +33,7 @@
 #include "font.h"
 #include "geometry.h"
 #include "lstring.h"
+#include "path.h"
 #include "script.h"
 #include "utility.h"
 #include "vector.h"

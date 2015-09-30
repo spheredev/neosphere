@@ -1,4 +1,6 @@
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
+#define _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #define strtok_r strtok_s
 #endif
 
@@ -113,6 +115,12 @@ size_t
 path_num_hops(const path_t* path)
 {
 	return path->num_hops;
+}
+
+bool
+path_hop_cmp(const path_t* path, size_t idx, const char* name)
+{
+	return strcmp(path->hops[idx], name) == 0;
 }
 
 path_t*
@@ -323,6 +331,18 @@ path_resolve(path_t* path, const path_t* relative_to)
 	construct_path(path, path_cstr(new_path), false);
 	path_free(new_path);
 	return path;
+}
+
+path_t*
+path_set(path_t* path, const char* pathname)
+{
+	return construct_path(path, pathname, false);
+}
+
+path_t*
+path_set_dir(path_t* path, const char* pathname)
+{
+	return construct_path(path, pathname, true);
 }
 
 path_t*

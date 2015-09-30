@@ -54,16 +54,16 @@ on_error:
 bool
 try_evaluate_file(const char* filename, bool is_sfs_compliant)
 {
-	const char* base_dir;
-	const char* extension;
-	sfs_file_t* file = NULL;
-	lstring_t*  source;
-	char*       slurp;
-	size_t      size;
+	const char*   extension;
+	sfs_file_t*   file = NULL;
+	path_t*       path;
+	lstring_t*    source;
+	char*         slurp;
+	size_t        size;
 
 	// load the source text from the script file
-	base_dir = is_sfs_compliant ? NULL : "scripts";
-	if (!(slurp = sfs_fslurp(g_fs, filename, base_dir, &size)))
+	path = make_sfs_path(filename, is_sfs_compliant ? NULL : "scripts");
+	if (!(slurp = sfs_fslurp(g_fs, path_cstr(path), NULL, &size)))
 		goto on_error;
 	source = lstr_from_buf(slurp, size);
 	free(slurp);
@@ -91,11 +91,12 @@ try_evaluate_file(const char* filename, bool is_sfs_compliant)
 		duk_push_lstring_t(g_duk, source);
 
 	// ready for launch in T-10...9...*munch*
-	duk_push_string(g_duk, filename);
+	duk_push_string(g_duk, path_cstr(path));
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_error;
+	path_free(path);
 	return true;
 
 on_error:

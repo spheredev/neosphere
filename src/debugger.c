@@ -12,29 +12,44 @@ static duk_size_t duk_cb_debug_peek   (void* udata);
 static duk_size_t duk_cb_debug_read   (void* udata, char* buffer, duk_size_t bufsize);
 static duk_size_t duk_cb_debug_write  (void* udata, const char* data, duk_size_t size);
 
-bool      s_is_attached = false;
-socket_t* s_client;
-socket_t* s_server;
-bool      s_want_attach;
+static bool      s_is_attached = false;
+static socket_t* s_client;
+static bool      s_have_source_map;
+static socket_t* s_server;
+static bool      s_want_attach;
 
 void
 initialize_debugger(bool want_attach, bool allow_remote)
 {
+	void*       data;
+	size_t      data_size;
 	const char* hostname;
-	
+
 	s_want_attach = want_attach;
-	
+
 	// listen for debugger connections on TCP port 1208.
 	// the listening socket will remain active for the duration of
 	// the session, allowing a debugger to be attached at any time.
 	console_log(0, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
 	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
-	
+
 	// if the engine was started in debug mode, wait for a debugger
 	// to connect before beginning execution.
 	if (s_want_attach && !attach_debugger())
 		exit_game(true);
+	
+	// load the source map, if one is available
+	s_have_source_map = false;
+	duk_push_global_stash(g_duk);
+	duk_del_prop_string(g_duk, -1, "\xFF""debugMap");
+	if (data = sfs_fslurp(g_fs, "sourcemap.json", NULL, &data_size)) {
+		duk_push_lstring(g_duk, data, data_size);
+		duk_json_decode(g_duk, -1);
+		duk_put_prop_string(g_duk, -2, "\xFF""debugMap");
+		s_have_source_map = true;
+	}
+	duk_pop(g_duk);
 }
 
 void
@@ -49,7 +64,7 @@ void
 update_debugger(void)
 {
 	socket_t* socket;
-	
+
 	if (socket = accept_next_socket(s_server)) {
 		if (s_client != NULL) {
 			console_log(2, "Rejecting connection from %s, debugger already attached",
@@ -77,6 +92,23 @@ bool
 is_debugger_attached(void)
 {
 	return s_is_attached;
+}
+
+const char*
+get_source_pathname(const char* pathname)
+{
+	static char retval[SPHERE_PATH_MAX];
+
+	strcpy(retval, pathname);
+	if (!s_have_source_map)
+		return retval;
+	duk_push_global_stash(g_duk);
+	duk_get_prop_string(g_duk, -1, "\xFF""debugMap");
+	duk_get_prop_string(g_duk, -1, pathname);
+	if (duk_is_string(g_duk, -1))
+		strcpy(retval, duk_get_string(g_duk, -1));
+	duk_pop_3(g_duk);
+	return retval;
 }
 
 static bool
