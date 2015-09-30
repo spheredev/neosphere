@@ -1,11 +1,7 @@
+#include "cell.h"
 #include "spk_writer.h"
 
-#include "cell.h"
 #include "vector.h"
-
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <zlib.h>
 
 #pragma pack(push, 1)

@@ -1,9 +1,5 @@
+#include "cell.h"
 #include "utility.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
 
 void*
 fslurp(const char* filename, size_t *out_size)

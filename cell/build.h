@@ -1,10 +1,7 @@
 #ifndef CELL__BUILD_H__INCLUDED
 #define CELL__BUILD_H__INCLUDED
 
-#include <stdbool.h>
 #include "assets.h"
-#include "path.h"
-#include "vector.h"
 
 typedef struct build  build_t;
 typedef struct target target_t;

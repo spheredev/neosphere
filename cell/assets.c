@@ -1,7 +1,5 @@
-#include "assets.h"
-
 #include "cell.h"
-#include "tileset.h"
+#include "assets.h"
 
 #include <sys/stat.h>
 

@@ -105,10 +105,8 @@
   <ItemGroup>
     <ClCompile Include="..\cell\assets.c" />
     <ClCompile Include="..\cell\build.c" />
-    <ClCompile Include="..\cell\image.c" />
     <ClCompile Include="..\cell\main.c" />
     <ClCompile Include="..\cell\spk_writer.c" />
-    <ClCompile Include="..\cell\tileset.c" />
     <ClCompile Include="..\cell\utility.c" />
     <ClCompile Include="..\src\duktape.c" />
     <ClCompile Include="..\src\path.c" />
@@ -119,10 +117,8 @@
     <ClInclude Include="..\cell\build.h" />
     <ClInclude Include="..\cell\cell.h" />
     <ClInclude Include="..\cell\duk_config.h" />
-    <ClInclude Include="..\cell\image.h" />
     <ClInclude Include="..\cell\posix.h" />
     <ClInclude Include="..\cell\spk_writer.h" />
-    <ClInclude Include="..\cell\tileset.h" />
     <ClInclude Include="..\cell\tinydir.h" />
     <ClInclude Include="..\cell\utility.h" />
     <ClInclude Include="..\src\duktape.h" />

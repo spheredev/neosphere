@@ -18,7 +18,7 @@ int
 main(int argc, char* argv[])
 {
 	int      retval = EXIT_FAILURE;
-	build_t* build;
+	build_t* build = NULL;
 
 	srand((unsigned int)time(NULL));
 
@@ -150,11 +150,9 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("       Cell: %s %s\n\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
+		printf("       Cell: %s\n", CELL_VERSION);
 		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
-		printf("     libpng: v%s\n", png_get_libpng_ver(NULL));
 		printf("       zlib: v%s\n", zlibVersion());
-		printf("\nSee LICENSE file for copyright and licensing information.\n");
 	}
 }
 

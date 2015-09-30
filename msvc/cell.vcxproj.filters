@@ -36,12 +36,6 @@
     <ClCompile Include="..\cell\utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cell\image.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\cell\tileset.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\path.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,12 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cell\utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\cell\image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\cell\tileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\path.h">

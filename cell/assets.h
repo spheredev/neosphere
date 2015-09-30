@@ -2,7 +2,6 @@
 #define CELL__ASSETS_H__INCLUDED
 
 #include <time.h>
-#include "path.h"
 
 typedef struct asset asset_t;
 

@@ -1,6 +1,6 @@
+#include "cell.h"
 #include "build.h"
 
-#include "cell.h"
 #include "assets.h"
 #include "spk_writer.h"
 #include "tinydir.h"
@@ -107,6 +107,9 @@ free_build(build_t* build)
 	target_t*      *p_target;
 	iter_t iter;
 
+	if (build == NULL)
+		return;
+	
 	duk_destroy_heap(build->duk);
 	iter = iterate_vector(build->targets);
 	while (p_target = next_vector_item(&iter)) {

@@ -5,15 +5,12 @@ cell_sources = [
 	
 	"assets.c",
 	"build.c",
-	"image.c",
 	"spk_writer.c",
-	"tileset.c",
 	"utility.c",
 	"main.c"
 ]
 
 cell_libs = [
-	"png",
 	"z",
 	"m"
 ]
