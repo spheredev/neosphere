@@ -97,6 +97,9 @@ is_debugger_attached(void)
 const char*
 get_source_pathname(const char* pathname)
 {
+	// note: pathname must be canonicalized using make_sfs_path() otherwise
+	//       the source map lookup will fail.
+	
 	static char retval[SPHERE_PATH_MAX];
 
 	strcpy(retval, pathname);

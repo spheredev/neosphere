@@ -2,7 +2,6 @@
 #include "spk_writer.h"
 
 #include "vector.h"
-#include <zlib.h>
 
 #pragma pack(push, 1)
 struct spk_header
@@ -96,7 +95,7 @@ spk_close(spk_writer_t* writer)
 }
 
 void
-spk_pack(spk_writer_t* writer, const char* filename, const char* spk_pathname)
+spk_add_file(spk_writer_t* writer, const char* filename, const char* spk_pathname)
 {
 	uLong            bufsize;
 	void*            data;

@@ -1,8 +1,6 @@
 #include "cell.h"
 #include "assets.h"
 
-#include <sys/stat.h>
-
 typedef
 enum asset_type
 {

@@ -271,7 +271,7 @@ run_build(build_t* build)
 			return false;
 		}
 		if (build->spk != NULL)
-			spk_pack(build->spk, path_cstr(path), path_filename_cstr(path));
+			spk_add_file(build->spk, path_cstr(path), path_filename_cstr(path));
 		printf("OK.\n");
 	}
 
@@ -373,7 +373,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 		out_path = path_cat(path_dup(inst->path), inst->target->subpath);
 		path_collapse(out_path, true);
 		path_append(out_path, path_filename_cstr(src_path));
-		spk_pack(build->spk, path_cstr(src_path), path_cstr(out_path));
+		spk_add_file(build->spk, path_cstr(src_path), path_cstr(out_path));
 		path_free(inst->path);
 		inst->path = path_dup(out_path);
 		*out_is_new = true;

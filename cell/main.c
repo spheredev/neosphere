@@ -3,15 +3,13 @@
 #include "assets.h"
 #include "build.h"
 
-#include <sys/stat.h>
-
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
 
-static path_t* s_in_path = NULL;
-static path_t* s_out_path = NULL;
-bool           s_want_source_map = false;
+static path_t* s_in_path;
+static path_t* s_out_path;
+bool           s_want_source_map;
 static char*   s_target_name;
 
 int
@@ -21,7 +19,12 @@ main(int argc, char* argv[])
 	build_t* build = NULL;
 
 	srand((unsigned int)time(NULL));
-
+	
+	// establish defaults and parse the command line
+	s_in_path = path_new("./");
+	s_out_path = path_new("dist/");
+	s_target_name = strdup("sphere");
+	s_want_source_map = false;
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
@@ -48,11 +51,6 @@ parse_cmdline(int argc, char* argv[])
 	const char* short_args;
 
 	int i, j;
-
-	// establish compiler defaults
-	s_in_path = path_new("./");
-	s_out_path = path_new("dist/");
-	s_target_name = strdup("sphere");
 
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {

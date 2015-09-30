@@ -150,6 +150,10 @@ get_sgm_summary(sandbox_t* fs)
 path_t*
 make_sfs_path(const char* filename, const char* base_dir_name)
 {
+	// note: make_sfs_path() collapses '../' path hops unconditionally, as
+	//       per SphereFS spec. this ensures an unpackaged game can't subvert the
+	//       sandbox by navigating outside of its directory via a symbolic link.
+
 	path_t* base_path = NULL;
 	path_t* path;
 	char*   prefix;
@@ -158,8 +162,7 @@ make_sfs_path(const char* filename, const char* base_dir_name)
 	if (path_is_rooted(path))  // absolute path?
 		return path;
 	
-	base_path = path_new_dir(base_dir_name != NULL
-		? base_dir_name : "./");
+	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
 	if (path_num_hops(path) == 0)
 		path_rebase(path, base_path);
 	else if (path_hop_cmp(path, 0, "~") || path_hop_cmp(path, 0, "~sgm"))
