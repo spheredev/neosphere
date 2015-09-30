@@ -3,6 +3,7 @@ msphere_defines = [
 ]
 
 msphere_sources = [
+	"main.c",
 	"duktape.c",
 	"dyad.c",
 	"animation.c",
@@ -22,11 +23,11 @@ msphere_sources = [
 	"input.c",
 	"logger.c",
 	"lstring.c",
-	"main.c",
 	"map_engine.c",
 	"mt19937ar.c",
 	"obsmap.c",
 	"particles.c",
+	"path.c",
 	"persons.c",
 	"primitives.c",
 	"rng.c",
@@ -41,7 +42,7 @@ msphere_sources = [
 	"unicode.c",
 	"utility.c",
 	"vector.c",
-	"windowstyle.c"
+	"windowstyle.c",
 ]
 
 msphere_libs = [
@@ -56,7 +57,7 @@ msphere_libs = [
 	"allegro",
 	"mng",
 	"z",
-	"m"
+	"m",
 ]
 
 minisphere = Program("msphere", msphere_sources,

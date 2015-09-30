@@ -1,13 +1,12 @@
 cell_sources = [
+	"main.c",
 	Object("duktape", "../msphere/duktape.c"),
 	Object("path", "../msphere/path.c"),
 	Object("vector", "../msphere/vector.c"),
-	
 	"assets.c",
 	"build.c",
 	"spk_writer.c",
 	"utility.c",
-	"main.c"
 ]
 
 cell_libs = [

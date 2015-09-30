@@ -44,7 +44,8 @@ shutdown:
 static bool
 parse_cmdline(int argc, char* argv[])
 {
-	int num_targets = 0;
+	int         num_targets = 0;
+	const char* short_args;
 
 	int i, j;
 
@@ -109,20 +110,21 @@ parse_cmdline(int argc, char* argv[])
 			}
 		}
 		else if (argv[i][0] == '-') {
-			for (j = strlen(argv[i]) - 1; j >= 1; --j) {
-				switch (argv[i][j]) {
+			short_args = argv[i];
+			for (j = strlen(short_args) - 1; j >= 1; --j) {
+				switch (short_args[j]) {
 				case 'm': s_want_source_map = true; break;
 				case 'p':
 					if (++i >= argc) goto missing_argument;
 					path_free(s_out_path);
 					s_out_path = path_new(argv[i]);
 					if (path_filename_cstr(s_out_path) == NULL) {
-						printf("cell: error: %s argument cannot be a directory\n", argv[i - 1]);
+						printf("cell: error: %s argument cannot be a directory\n", short_args);
 						return false;
 					}
 					break;
 				default:
-					printf("cell: error: unknown option '-%c'\n", argv[i][j]);
+					printf("cell: error: unknown option '-%c'\n", short_args[j]);
 					return false;
 				}
 			}
