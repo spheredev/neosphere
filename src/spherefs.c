@@ -152,6 +152,7 @@ make_sfs_path(const char* filename, const char* base_dir_name)
 {
 	path_t* base_path = NULL;
 	path_t* path;
+	char*   prefix;
 
 	path = path_new(filename);
 	if (path_is_rooted(path))  // absolute path?
@@ -163,10 +164,12 @@ make_sfs_path(const char* filename, const char* base_dir_name)
 		path_rebase(path, base_path);
 	else if (path_hop_cmp(path, 0, "~") || path_hop_cmp(path, 0, "~sgm"))
 		path_remove_hop(path, 0);
-	else if (path_hop_cmp(path, 0, "~sys")) {
+	else if (path_hop_cmp(path, 0, "~sys") || path_hop_cmp(path, 0, "~usr")) {
+		prefix = strdup(path_hop_cstr(path, 0));
 		path_remove_hop(path, 0);
 		path_collapse(path, true);
-		path_insert_hop(path, 0, "~sys");
+		path_insert_hop(path, 0, prefix);
+		free(prefix);
 	}
 	else
 		path_rebase(path, base_path);

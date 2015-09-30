@@ -398,17 +398,28 @@ duk_handle_create_error(duk_context* ctx)
 	int         line;
 	const char* message;
 	
-	if (!duk_is_error(ctx, 0)) return 1;
-	duk_get_prop_string(ctx, 0, "message");
-	message = duk_get_string(ctx, -1);
+	if (!duk_is_error(ctx, 0))
+		return 1;
+
+	// make sure we report the correct origin information from the source
+	// map, if one is in use.
 	duk_get_prop_string(ctx, 0, "fileName");
-	filename = get_source_pathname(duk_get_string(ctx, -1));
-	duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
-	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
+	filename = get_source_pathname(duk_safe_to_string(ctx, -1));
+	duk_push_string(ctx, "fileName");
+	duk_push_string(ctx, filename);
+	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE  // why is this needed?
 		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
 		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
 		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
-	duk_pop_2(ctx);
+	duk_pop(ctx);
+
+	// augmentation via JS callstack is needed if this is a "wrong value type" error, which
+	// are thrown by duk_require_xxx(). normally these are reported as originating from C code,
+	// which isn't particularly useful. note that we avoid augmentation for everything else
+	// as doing so would result in the wrong function being blamed for the error.
+	duk_get_prop_string(ctx, 0, "message");
+	message = duk_get_string(ctx, -1);
+	duk_pop(ctx);
 	if (strstr(message, "not ") != message
 	    || strcmp(message, "not callable") == 0
 	    || strcmp(message, "not configurable") == 0
@@ -418,6 +429,8 @@ duk_handle_create_error(duk_context* ctx)
 	{
 		return 1;
 	}
+	
+	// we have a winner!
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
 	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
@@ -437,6 +450,7 @@ duk_handle_create_error(duk_context* ctx)
 		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
 		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
 		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+	
 	return 1;
 }
 
