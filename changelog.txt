@@ -4,9 +4,14 @@ minisphere Changelog
 v2.0.0 - TBD
 ------------
 
+* Updates CoffeeScript compiler to v1.10.0.
 * Includes a new command-line compiler and packager for Sphere games, Cell!
   Using Cell, you can control the build process for your game using JavaScript
   and even compile your game to SPK format!
+* Source map support. When an error occurs and during debugging, if the game was
+  compiled with a source map (-m option to Cell), the path to the corresponding
+  file from the source directory is displayed instead of its name within the
+  game package.
 * All APIs accepting ByteArrays will now also accept ArrayBuffer and TypedArray
   objects. ByteArray is deprecated, but retained for backward compatibility.
 * SoundStreams are no longer restricted to 8-bit samples.
@@ -14,8 +19,6 @@ v2.0.0 - TBD
   objects.
 * New 'FileStream' object: A more robust and SphereFS compliant replacement for
   Sphere 1.x's RawFile, based on the ES6 ArrayBuffer API.
-* Updates CoffeeScript compiler to v1.10.0.
-* Updates Duktape to v1.3.0.
 
 
 v1.7.11 - September 9, 2015

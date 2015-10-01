@@ -93,11 +93,3 @@ calls. minisphere, however, is a lot stricter about this and will throw an error
 if, for example, you pass a string to a function expecting a number value. This
 may prevent some poorly-written Sphere games from running under minisphere.
 There is currently no workaround other than to edit the scripts by hand.
-
-`const` is a Syntax Error
--------------------------
-
-Duktape, the JavaScript engine that powers minisphere, is fully ES5 compliant
-and will throw a syntax error if the `const` keyword is encountered. If you want
-to try running the game in minisphere, you will need to manually replace all
-instances of `const` in the game's scripts with `var`.
