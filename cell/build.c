@@ -5,8 +5,6 @@
 #include "spk_writer.h"
 #include "tinydir.h"
 
-#include <sys/stat.h>
-
 struct build
 {
 	duk_context*  duk;

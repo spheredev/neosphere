@@ -150,8 +150,8 @@ get_sgm_summary(sandbox_t* fs)
 path_t*
 make_sfs_path(const char* filename, const char* base_dir_name)
 {
-	// note: make_sfs_path() collapses '../' path hops unconditionally, as
-	//       per SphereFS spec. this ensures an unpackaged game can't subvert the
+	// note: make_sfs_path() collapses '../' path hops unconditionally, as per
+	//       SphereFS spec. this ensures an unpackaged game can't subvert the
 	//       sandbox by navigating outside of its directory via a symbolic link.
 
 	path_t* base_path = NULL;

@@ -397,21 +397,9 @@ duk_handle_create_error(duk_context* ctx)
 	const char* filename;
 	int         line;
 	const char* message;
-	
+
 	if (!duk_is_error(ctx, 0))
 		return 1;
-
-	// make sure we report the correct origin information from the source
-	// map, if one is in use.
-	duk_get_prop_string(ctx, 0, "fileName");
-	filename = get_source_pathname(duk_safe_to_string(ctx, -1));
-	duk_push_string(ctx, "fileName");
-	duk_push_string(ctx, filename);
-	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE  // why is this needed?
-		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
-		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
-		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
-	duk_pop(ctx);
 
 	// augmentation via JS callstack is needed if this is a "wrong value type" error, which
 	// are thrown by duk_require_xxx(). normally these are reported as originating from C code,
@@ -429,7 +417,7 @@ duk_handle_create_error(duk_context* ctx)
 	{
 		return 1;
 	}
-	
+
 	// we have a winner!
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
@@ -450,7 +438,7 @@ duk_handle_create_error(duk_context* ctx)
 		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
 		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
 		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
-	
+
 	return 1;
 }
 

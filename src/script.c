@@ -1,5 +1,8 @@
 #include "minisphere.h"
+#include "script.h"
+
 #include "api.h"
+#include "debugger.h"
 #include "utility.h"
 
 struct script
@@ -58,6 +61,7 @@ try_evaluate_file(const char* filename, bool is_sfs_compliant)
 	sfs_file_t*   file = NULL;
 	path_t*       path;
 	lstring_t*    source;
+	const char*   source_name;
 	char*         slurp;
 	size_t        size;
 
@@ -65,6 +69,7 @@ try_evaluate_file(const char* filename, bool is_sfs_compliant)
 	path = make_sfs_path(filename, is_sfs_compliant ? NULL : "scripts");
 	if (!(slurp = sfs_fslurp(g_fs, path_cstr(path), NULL, &size)))
 		goto on_error;
+	source_name = get_source_pathname(path_cstr(path));
 	source = lstr_from_buf(slurp, size);
 	free(slurp);
 
@@ -78,7 +83,7 @@ try_evaluate_file(const char* filename, bool is_sfs_compliant)
 		duk_get_prop_string(g_duk, -1, "compile");
 		duk_push_lstring_t(g_duk, source);
 		duk_push_object(g_duk);
-		duk_push_string(g_duk, filename);
+		duk_push_string(g_duk, source_name);
 		duk_put_prop_string(g_duk, -2, "filename");
 		duk_push_true(g_duk);
 		duk_put_prop_string(g_duk, -2, "bare");
@@ -91,7 +96,7 @@ try_evaluate_file(const char* filename, bool is_sfs_compliant)
 		duk_push_lstring_t(g_duk, source);
 
 	// ready for launch in T-10...9...*munch*
-	duk_push_string(g_duk, path_cstr(path));
+	duk_push_string(g_duk, source_name);
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
