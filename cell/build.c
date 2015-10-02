@@ -50,7 +50,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	// check for Cellscript.js in input directory
 	path = path_rebase(path_new("Cellscript.js"), in_path);
 	if (stat(path_cstr(path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
-		fprintf(stderr, "[error] no Cellscript.js in input directory\n");
+		fprintf(stderr, "[error] failed to stat Cellscript.js\n");
 		return NULL;
 	}
 	build->js_mtime = sb.st_mtime;

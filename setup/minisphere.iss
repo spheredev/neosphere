@@ -20,38 +20,27 @@
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-;#define WANT_GDK_SETUP
-
-#ifnexist "..\bin\spherestudio\Sphere Studio.exe"
-#undef WANT_GDK_SETUP
-#endif
+#define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.0.0"
-#define AppBuildNumber "0"
+#define AppExeName "msphere.exe"
+#define AppVersion "2.0b1"
+#define AppRawVersion "1.99.99.1"
 #define AppPublisher "Fat Cerberus"
-
-#define AppExeName "engine.exe"
-#define AppExeName_64 "engine64.exe"
-#define AppExeName2 "msphere.exe"
-#define AppExeName2_64 "msphere64.exe"
-
-#ifdef WANT_GDK_SETUP
-#define SphereStudioVersion "2.0"
-#endif
 
 [Setup]
 #ifdef WANT_GDK_SETUP
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 OutputBaseFilename=minisphereGDK-{#AppVersion}
-SetupIconFile=..\bin\spherestudio.ico
+SetupIconFile=..\bin\spheredev.ico
 InfoBeforeFile=..\changelog.txt
 InfoAfterFile=..\readme.md
 AppName={#AppName} GDK
 AppVerName={#AppName} GDK {#AppVersion}
 DefaultDirName={pf}\{#AppName} GDK
+ChangesEnvironment=yes
 UninstallDisplayName={#AppName} GDK {#AppVersion}
-UninstallDisplayIcon={app}\spherestudio.ico,0
+UninstallDisplayIcon={app}\spheredev.ico,0
 #else
 AppId={{79895E2D-DF9D-4534-9DB8-B3CD2AA92A7A}
 OutputBaseFilename=minisphere-{#AppVersion}
@@ -62,7 +51,7 @@ DefaultDirName={pf}\{#AppName}
 UninstallDisplayName={#AppName} {#AppVersion}
 UninstallDisplayIcon={app}\spherical.ico,0
 #endif
-AppVersion={#AppVersion}.{#AppBuildNumber}
+AppVersion={#AppRawVersion}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
 LicenseFile=..\license.txt
@@ -80,93 +69,47 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Components]
 #ifdef WANT_GDK_SETUP
-Name: "engine"; Description: "{#AppName} {#AppVersion} (required)"; Types: full compact custom; Flags: fixed
-Name: "console"; Description: "{#AppName} Console {#AppVersion} (recommended)"; Types: full
-Name: "studio"; Description: "Sphere Studio {#SphereStudioVersion}"; Types: full
+Name: "minisphere"; Description: "{#AppName} Console {#AppVersion} (recommended)"; Types: full
+Name: "cell"; Description: "Cell {#AppVersion}"; Types: full
 Name: "docs"; Description: "{#AppName} Documentation"; Types: full compact
 Name: "docs\api"; Description: "API Reference"; Types: full compact
 #endif
 
 [Tasks]
-Name: "assoc_spk"; Description: "Associate .spk (game package) with {#AppName}"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc_sgm"; Description: "Associate .sgm (unpackaged game) with:"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc_sgm\engine"; Description: "{#AppName}"; Flags: exclusive
-#ifdef WANT_GDK_SETUP
-Name: "assoc_sgm\console"; Description: "{#AppName} Console"; Flags: exclusive; Components: console
-Name: "assoc_sgm\studio"; Description: "Sphere Studio"; Flags: exclusive unchecked; Components: studio
-Name: "desktop"; Description: "Create a desktop icon for Sphere Studio"; GroupDescription: "{cm:AdditionalIcons}"; Components: studio
-#endif
+Name: "assoc"; Description: "Associate these file extensions with {#AppName}:"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc/sgm"; Description: ".sgm - Sphere game manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc/spk"; Description: ".spk - Sphere SPK game package"; GroupDescription: "Automatically open Sphere file types:"
+Name: "path"; Description: "Add minisphere GDK to the PATH"; GroupDescription: "Run minisphere tools from the command line:"; Flags: unchecked
 
 [Files]
-; don't mind the preprocessor mess here, these are arranged to maximize compression.
-; reordering them will likely make the installer larger.
 #ifdef WANT_GDK_SETUP
-Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\console.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: console
-Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
-Source: "..\bin\console64.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: console; Check: IsWin64
+Source: "..\bin\msphere.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: not IsWin64
+Source: "..\bin\msphere64.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
+Source: "..\bin\cell.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\spheredev.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs\api
 #else
-Source: "..\bin\engine.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\engine64.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
-Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\engine.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: not IsWin64
+Source: "..\bin\engine64.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
 #endif
 Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion
-#ifdef WANT_GDK_SETUP
-Source: "..\bin\spherestudio.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs\api
-Source: "..\bin\spherestudio\*"; DestDir: "{app}\spherestudio"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
-#endif
-
-[INI]
-#ifdef WANT_GDK_SETUP
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "enginePath"; String: "{app}\{#AppExeName}"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "enginePath64"; String: "{app}\{#AppExeName_64}"; Components: studio; Check: IsWin64
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "plugins"; String: "FontEditPlugin|ImageEditPlugin|MapEditPlugin|minisphereRemotePlugin|ScriptEditPlugin|SoundTestPlugin|SPKPackerPlugin|SpritesetEditPlugin|TaskListPlugin|WindowstyleEditPlugin"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere.preset"; Section: "Preset"; Key: "defaultEditor"; String: "Script Editor"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "enginePath"; String: "{app}\{#AppExeName2}"; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "enginePath64"; String: "{app}\{#AppExeName2_64}"; Components: studio and console; Check: IsWin64
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "plugins"; String: "FontEditPlugin|ImageEditPlugin|MapEditPlugin|minisphereRemotePlugin|ScriptEditPlugin|SoundTestPlugin|SPKPackerPlugin|SpritesetEditPlugin|TaskListPlugin|WindowstyleEditPlugin"; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Presets\minisphere Console.preset"; Section: "Preset"; Key: "defaultEditor"; String: "Script Editor"; Components: studio and console
-Filename: "{userdocs}\Sphere Studio\Settings\Sphere Studio.ini"; Section: "Sphere Studio"; Key: "setupComplete"; String: "True"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Settings\Sphere Studio.ini"; Section: "Sphere Studio"; Key: "preset"; String: "minisphere"; Components: studio
-Filename: "{userdocs}\Sphere Studio\Settings\Sphere Studio.ini"; Section: "Sphere Studio"; Key: "preset"; String: "minisphere Console"; Components: studio and console
-#endif
 
 [Registry]
-Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "minisphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc_spk
-Root: HKCR; Subkey: "minisphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc_spk
-Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc_spk
-Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc_spk
-Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName_64}"" ""%1"""; Tasks: assoc_spk; Check: IsWin64
-Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc_sgm
-Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Definition"; Flags: uninsdeletekey; Tasks: assoc_sgm
-Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc_sgm
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc_sgm\engine
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName_64}"" ""%1"""; Tasks: assoc_sgm\engine; Check: IsWin64
-#ifdef WANT_GDK_SETUP
-Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"",0"; Components: studio; Tasks: assoc_sgm\studio
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName2}"" ""%1"""; Tasks: assoc_sgm\console
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName2_64}"" ""%1"""; Tasks: assoc_sgm\console; Check: IsWin64
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"" ""%1"""; Tasks: assoc_sgm\studio
-Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "minisphere.ssproj"; Flags: uninsdeletevalue; Components: studio
-Root: HKCR; Subkey: "minisphere.ssproj"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Components: studio
-Root: HKCR; Subkey: "minisphere.ssproj\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"",0"; Components: studio
-Root: HKCR; Subkey: "minisphere.ssproj\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\spherestudio\Sphere Studio.exe"" ""%1"""; Components: studio
-#endif
+Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "minisphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/spk
+Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
+Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
+Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/sgm
+Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/sgm
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"
 
 [Icons]
+#ifndef WANT_GDK_SETUP
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName_64}"; Check: IsWin64
-#ifdef WANT_GDK_SETUP
-Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\spherestudio\Sphere Studio.exe"; Components: studio
-Name: "{commondesktop}\Sphere Studio"; Filename: "{app}\spherestudio\Sphere Studio.exe"; Components: studio; Tasks: desktop
-Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName2}"; Components: console
-Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName2_64}"; Components: console; Check: IsWin64
-#endif
-
-[Run]
-#ifdef WANT_GDK_SETUP
-Filename: "{app}\spherestudio\Sphere Studio.exe"; Description: "{cm:LaunchProgram,Sphere Studio}"; Flags: nowait postinstall skipifsilent; Components: studio
+#else
+Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName}"
 #endif

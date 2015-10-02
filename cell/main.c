@@ -20,11 +20,7 @@ main(int argc, char* argv[])
 
 	srand((unsigned int)time(NULL));
 	
-	// establish defaults and parse the command line
-	s_in_path = path_new("./");
-	s_out_path = path_new("dist/");
-	s_target_name = strdup("sphere");
-	s_want_source_map = false;
+	// parse the command line
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
@@ -47,29 +43,35 @@ shutdown:
 static bool
 parse_cmdline(int argc, char* argv[])
 {
+	path_t*     cellscript_path;
 	int         num_targets = 0;
 	const char* short_args;
 
 	int i, j;
 
+	// establish default options
+	s_in_path = path_new("./");
+	s_out_path = NULL;
+	s_target_name = strdup("sphere");
+	s_want_source_map = false;
+	
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
 				print_banner(false, false);
 				printf("\n");
-				printf("USAGE: cell [--out <dir>] [--in <path>] [target]\n");
-				printf("       cell -p <filename> [--in <path>] [target]\n");
-				printf("       cell [options] [target]\n");
-				printf("\nOPTIONS:\n");
-				printf("       --in               Sets the input directory, Cell looks for sources in\n");
-				printf("                          the current working directory by default\n");
-				printf("       --out              Sets the output directory, 'dist' if not provided\n");
-				printf("       --version          Prints the Cell compiler version and exits\n");
-				printf("   -p, --make-package     Makes a Sphere package (.spk) for the compiled game\n");
-				printf("   -m, --source-map       Generates a source map, which maps compiled assets to\n");
-				printf("                          their original sources in the input directory; useful\n");
-				printf("                          for debugging\n");
+				printf("USAGE: cell -p <filename> [options] [target]\n");
+				printf("       cell -l <dirname> [options] [target]\n");
+				printf("\n");
+				printf("OPTIONS:\n");
+				printf("       --version          Prints the Cell compiler version and exits.          \n");
+				printf("       --in               Sets the input directory; Cell looks for sources in  \n");
+				printf("                          the current working directory by default.            \n");
+				printf("   -l, --make-dist        Builds an unpacked game distribution.                \n");
+				printf("   -p, --make-package     Builds a Sphere package (.spk).                      \n");
+				printf("   -d, --debug            Generates a source map which maps compiled assets to \n");
+				printf("                          their corresponding source files, aiding debugging.  \n");
 				return false;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
@@ -81,25 +83,31 @@ parse_cmdline(int argc, char* argv[])
 				path_free(s_in_path);
 				s_in_path = path_new_dir(argv[i]);
 			}
-			else if (strcmp(argv[i], "--out") == 0) {
-				if (++i >= argc) goto missing_argument;
-				path_free(s_out_path);
-				s_out_path = path_new_dir(argv[i]);
-			}
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
 				return false;
 			}
 			else if (strcmp(argv[i], "--make-package") == 0) {
 				if (++i >= argc) goto missing_argument;
-				path_free(s_out_path);
+				if (s_out_path != NULL) {
+					printf("cell: error: too many outputs requested\n");
+					return false;
+				}
 				s_out_path = path_new(argv[i]);
 				if (path_filename_cstr(s_out_path) == NULL) {
 					printf("cell: error: %s argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
 			}
-			else if (strcmp(argv[i], "--source-map") == 0) {
+			else if (strcmp(argv[i], "--make-dist") == 0) {
+				if (++i >= argc) goto missing_argument;
+				if (s_out_path != NULL) {
+					printf("cell: error: too many outputs requested\n");
+					return false;
+				}
+				s_out_path = path_new_dir(argv[i]);
+			}
+			else if (strcmp(argv[i], "--debug") == 0) {
 				s_want_source_map = true;
 			}
 			else {
@@ -111,10 +119,21 @@ parse_cmdline(int argc, char* argv[])
 			short_args = argv[i];
 			for (j = strlen(short_args) - 1; j >= 1; --j) {
 				switch (short_args[j]) {
-				case 'm': s_want_source_map = true; break;
+				case 'd': s_want_source_map = true; break;
+				case 'l':
+					if (++i >= argc) goto missing_argument;
+					if (s_out_path != NULL) {
+						printf("cell: error: too many outputs requested\n");
+						return false;
+					}
+					s_out_path = path_new_dir(argv[i]);
+					break;
 				case 'p':
 					if (++i >= argc) goto missing_argument;
-					path_free(s_out_path);
+					if (s_out_path != NULL) {
+						printf("cell: error: too many outputs requested\n");
+						return false;
+					}
 					s_out_path = path_new(argv[i]);
 					if (path_filename_cstr(s_out_path) == NULL) {
 						printf("cell: error: %s argument cannot be a directory\n", short_args);
@@ -131,8 +150,21 @@ parse_cmdline(int argc, char* argv[])
 			free(s_target_name);
 			s_target_name = strdup(argv[i]);
 		}
-
 	}
+	
+	// validate command line
+	cellscript_path = path_rebase(path_new("Cellscript.js"), s_in_path);
+	if (!path_resolve(cellscript_path, NULL)) {
+		path_free(cellscript_path);
+		printf("cell: error: no Cellscript.js in input directory\n");
+		return false;
+	}
+	if (s_out_path == NULL) {
+		printf("cell: error: no output, specify output using -p or -l\n");
+		return false;
+	}
+	
+	path_free(cellscript_path);
 	return true;
 
 missing_argument:
@@ -150,7 +182,6 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("       Cell: %s\n", CELL_VERSION);
 		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
 		printf("       zlib: v%s\n", zlibVersion());
 	}

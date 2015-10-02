@@ -4,7 +4,6 @@ minisphere Changelog
 v2.0.0 - TBD
 ------------
 
-* Updates CoffeeScript compiler to v1.10.0.
 * Includes a new command-line compiler and packager for Sphere games, Cell!
   Using Cell, you can control the build process for your game using JavaScript
   and even compile your game to SPK format!
@@ -12,6 +11,7 @@ v2.0.0 - TBD
   compiled with a source map (-m option to Cell), the path to the corresponding
   file from the source directory is displayed instead of its name within the
   game package.
+* Updates CoffeeScript compiler to v1.10.0.
 * All APIs accepting ByteArrays will now also accept ArrayBuffer and TypedArray
   objects. ByteArray is deprecated, but retained for backward compatibility.
 * SoundStreams are no longer restricted to 8-bit samples.
