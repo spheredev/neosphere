@@ -25,7 +25,7 @@
 #define AppName "minisphere"
 #define AppExeName "msphere.exe"
 #define AppVersion "2.0b1"
-#define AppRawVersion "1.99.99.1"
+#define AppRawVersion "1.99.99.913"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
@@ -79,7 +79,9 @@ Name: "docs\api"; Description: "API Reference"; Types: full compact
 Name: "assoc"; Description: "Associate these file extensions with {#AppName}:"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/sgm"; Description: ".sgm - Sphere game manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere SPK game package"; GroupDescription: "Automatically open Sphere file types:"
-Name: "path"; Description: "Add minisphere GDK to the PATH"; GroupDescription: "Run minisphere tools from the command line:"; Flags: unchecked
+#ifdef WANT_GDK_SETUP
+Name: "path"; Description: "Add {#AppName} GDK to the PATH"; GroupDescription: "Run minisphere tools from the command line:"; Flags: checkedonce unchecked
+#endif
 
 [Files]
 #ifdef WANT_GDK_SETUP
@@ -105,11 +107,11 @@ Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisp
 Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
 Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/sgm
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/sgm
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"; Tasks: path
 
 [Icons]
-#ifndef WANT_GDK_SETUP
-Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-#else
+#ifdef WANT_GDK_SETUP
 Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName}"
+#else
+Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 #endif

@@ -111,6 +111,9 @@ main(int argc, char* argv[])
 				|| strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "-package") == 0)
 				&& i < argc - 1)
 			{
+				// '-game' and '-package' options supported for backward compatibility with
+				// Sphere 1.x. Note that they are functionality identical; new_sandbox() will
+				// automatically detect the correct type.
 				++i;
 				if (game_path == NULL)
 					game_path = strdup(argv[i]);
