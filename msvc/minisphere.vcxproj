@@ -117,7 +117,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>include;$(IncludePath)</IncludePath>
     <LibraryPath>lib\x86;$(LibraryPath)</LibraryPath>
-    <TargetName>engine</TargetName>
+    <TargetName>msphere-nc</TargetName>
     <OutDir>..\bin\</OutDir>
     <IntDir>obj\x86\release\</IntDir>
   </PropertyGroup>
@@ -133,7 +133,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>include;$(IncludePath)</IncludePath>
     <LibraryPath>lib\x64;$(LibraryPath)</LibraryPath>
-    <TargetName>engine64</TargetName>
+    <TargetName>msphere64-nc</TargetName>
     <OutDir>..\bin\</OutDir>
     <IntDir>obj\x64\release\</IntDir>
   </PropertyGroup>

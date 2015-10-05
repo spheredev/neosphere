@@ -61,8 +61,8 @@ parse_cmdline(int argc, char* argv[])
 			if (strcmp(argv[i], "--help") == 0) {
 				print_banner(false, false);
 				printf("\n");
-				printf("USAGE: cell -p <filename> [options] [target]\n");
-				printf("       cell -l <dirname> [options] [target]\n");
+				printf("USAGE: cell -p <out-file> [options] [target]\n");
+				printf("       cell -l <out-dir> [options] [target]\n");
 				printf("\n");
 				printf("OPTIONS:\n");
 				printf("       --version          Prints the Cell compiler version and exits.          \n");
