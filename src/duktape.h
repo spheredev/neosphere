@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 391053e7c244e0fefb26e86b3c6da8ced124c404 (v1.3.0-86-g391053e).
+ *  Git commit 67e88f8fdf3553138cea37a6a959cb1eff504c5b (v1.3.0-125-g67e88f8).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -218,8 +218,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "391053e7c244e0fefb26e86b3c6da8ced124c404"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-86-g391053e"
+#define DUK_GIT_COMMIT                    "67e88f8fdf3553138cea37a6a959cb1eff504c5b"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-125-g67e88f8"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -1352,7 +1352,7 @@ typedef union duk_double_union duk_double_union;
  *
  *  When packed duk_tval is used, the NaN space is used to store pointers
  *  and other tagged values in addition to NaNs.  Actual NaNs are normalized
- *  to a specific format.  The macros below are used by the implementation
+ *  to a specific quiet NaN.  The macros below are used by the implementation
  *  to check and normalize NaN values when they might be created.  The macros
  *  are essentially NOPs when the non-packed duk_tval representation is used.
  *
@@ -1360,7 +1360,8 @@ typedef union duk_double_union duk_double_union;
  *  the packed duk_tval and works correctly for all NaNs except those that
  *  begin with 0x7ff0.  Since the 'normalized NaN' values used with packed
  *  duk_tval begin with 0x7ff8, the partial check is reliable when packed
- *  duk_tval is used.
+ *  duk_tval is used.  The 0x7ff8 prefix means the normalized NaN will be a
+ *  quiet NaN regardless of its remaining lower bits.
  *
  *  The ME variant below is specifically for ARM byte order, which has the
  *  feature that while doubles have a mixed byte order (32107654), unsigned
