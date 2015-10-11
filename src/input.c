@@ -334,15 +334,15 @@ clear_key_queue(void)
 void
 load_key_map(void)
 {
-	kv_file_t*     file;
+	kev_file_t*     file;
 	const char* key_name;
 	char*       filename;
 	lstring_t*  setting;
 
 	int i, j;
 
-	filename = g_game_path != NULL ? "keymap.mini" : "~sys/../minisphere.conf";
-	if (!(file = open_file(filename))) return;
+	filename = g_game_path != NULL ? "keymap.kev" : "~sys/minisphere.conf";
+	if (!(file = open_kev_file(filename, true))) return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"
 			: j == PLAYER_KEY_DOWN ? "DOWN"
@@ -358,13 +358,13 @@ load_key_map(void)
 		s_key_map[i][j] = read_number_rec(file, lstr_cstr(setting), s_default_key_map[i][j]);
 		lstr_free(setting);
 	}
-	close_file(file);
+	close_kev_file(file);
 }
 
 void
 save_key_map(void)
 {
-	kv_file_t*     file;
+	kev_file_t*     file;
 	const char* key_name;
 	lstring_t*  setting;
 	
@@ -373,7 +373,7 @@ save_key_map(void)
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
 	console_log(0, "Saving player key mappings");
-	file = open_file("keymap.mini");
+	file = open_kev_file("keymap.kev", true);
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"
 			: j == PLAYER_KEY_DOWN ? "DOWN"
@@ -389,7 +389,7 @@ save_key_map(void)
 		write_number_rec(file, lstr_cstr(setting), s_key_map[i][j]);
 		lstr_free(setting);
 	}
-	close_file(file);
+	close_kev_file(file);
 }
 
 void

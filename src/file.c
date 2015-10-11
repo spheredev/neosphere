@@ -13,16 +13,16 @@ static duk_ret_t js_RemoveDirectory  (duk_context* ctx);
 static duk_ret_t js_RemoveFile       (duk_context* ctx);
 static duk_ret_t js_Rename           (duk_context* ctx);
 
-static duk_ret_t js_OpenFile         (duk_context* ctx);
-static duk_ret_t js_new_File         (duk_context* ctx);
-static duk_ret_t js_File_finalize    (duk_context* ctx);
-static duk_ret_t js_File_toString    (duk_context* ctx);
-static duk_ret_t js_File_getKey      (duk_context* ctx);
-static duk_ret_t js_File_getNumKeys  (duk_context* ctx);
-static duk_ret_t js_File_close       (duk_context* ctx);
-static duk_ret_t js_File_flush       (duk_context* ctx);
-static duk_ret_t js_File_read        (duk_context* ctx);
-static duk_ret_t js_File_write       (duk_context* ctx);
+static duk_ret_t js_OpenFile            (duk_context* ctx);
+static duk_ret_t js_new_KEVFile         (duk_context* ctx);
+static duk_ret_t js_KEVFile_finalize    (duk_context* ctx);
+static duk_ret_t js_KEVFile_toString    (duk_context* ctx);
+static duk_ret_t js_KEVFile_get_numKeys (duk_context* ctx);
+static duk_ret_t js_KEVFile_getKey      (duk_context* ctx);
+static duk_ret_t js_KEVFile_close       (duk_context* ctx);
+static duk_ret_t js_KEVFile_flush       (duk_context* ctx);
+static duk_ret_t js_KEVFile_read        (duk_context* ctx);
+static duk_ret_t js_KEVFile_write       (duk_context* ctx);
 
 static duk_ret_t js_OpenRawFile          (duk_context* ctx);
 static duk_ret_t js_new_RawFile          (duk_context* ctx);
@@ -45,7 +45,7 @@ static duk_ret_t js_FileStream_close        (duk_context* ctx);
 static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
 
-struct kv_file
+struct kev_file
 {
 	unsigned int    id;
 	ALLEGRO_CONFIG* conf;
@@ -55,17 +55,19 @@ struct kv_file
 
 static unsigned int s_next_file_id = 0;
 
-kv_file_t*
-open_file(const char* filename)
+kev_file_t*
+open_kev_file(const char* filename, bool is_sfs_compliant)
 {
-	kv_file_t*    file;
+	const char*   base_dir;
+	kev_file_t*    file;
 	ALLEGRO_FILE* memfile = NULL;
 	void*         slurp;
 	size_t        slurp_size;
 	
-	console_log(2, "Opening File %u as '%s'", s_next_file_id, filename);
-	file = calloc(1, sizeof(kv_file_t));
-	if (slurp = sfs_fslurp(g_fs, filename, "save", &slurp_size)) {
+	console_log(2, "Opening KEVfile %u as '%s'", s_next_file_id, filename);
+	file = calloc(1, sizeof(kev_file_t));
+	base_dir = is_sfs_compliant ? NULL : "save";
+	if (slurp = sfs_fslurp(g_fs, filename, base_dir, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
@@ -81,7 +83,7 @@ open_file(const char* filename)
 	return file;
 
 on_error:
-	console_log(2, "  Failed to open File %u", s_next_file_id++);
+	console_log(2, "  Failed to open KEVfile %u", s_next_file_id++);
 	if (memfile != NULL) al_fclose(memfile);
 	if (file->conf != NULL)
 		al_destroy_config(file->conf);
@@ -90,20 +92,20 @@ on_error:
 }
 
 void
-close_file(kv_file_t* file)
+close_kev_file(kev_file_t* file)
 {
 	if (file == NULL)
 		return;
 	
-	console_log(3, "Disposing File %u as it is no longer in use", file->id);
+	console_log(3, "Disposing KEVfile %u as it is no longer in use", file->id);
 	if (file->is_dirty)
-		save_file(file);
+		save_kev_file(file);
 	al_destroy_config(file->conf);
 	free(file);
 }
 
 int
-get_record_count(kv_file_t* file)
+get_record_count(kev_file_t* file)
 {
 	ALLEGRO_CONFIG_ENTRY* iter;
 	const char*           key;
@@ -119,7 +121,7 @@ get_record_count(kv_file_t* file)
 }
 
 const char*
-get_record_name(kv_file_t* file, int index)
+get_record_name(kev_file_t* file, int index)
 {
 	ALLEGRO_CONFIG_ENTRY* iter;
 	const char*           name;
@@ -137,7 +139,7 @@ get_record_name(kv_file_t* file, int index)
 }
 
 bool
-read_bool_rec(kv_file_t* file, const char* key, bool def_value)
+read_bool_rec(kev_file_t* file, const char* key, bool def_value)
 {
 	const char* string;
 	bool        value;
@@ -148,7 +150,7 @@ read_bool_rec(kv_file_t* file, const char* key, bool def_value)
 }
 
 double
-read_number_rec(kv_file_t* file, const char* key, double def_value)
+read_number_rec(kev_file_t* file, const char* key, double def_value)
 {
 	char        def_string[500];
 	const char* string;
@@ -161,18 +163,18 @@ read_number_rec(kv_file_t* file, const char* key, double def_value)
 }
 
 const char*
-read_string_rec(kv_file_t* file, const char* key, const char* def_value)
+read_string_rec(kev_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
-	console_log(2, "Reading key '%s' from File %u", key, file->id);
+	console_log(2, "Reading key '%s' from KEVfile %u", key, file->id);
 	if (!(value = al_get_config_value(file->conf, NULL, key)))
 		value = def_value;
 	return value;
 }
 
 bool
-save_file(kv_file_t* file)
+save_kev_file(kev_file_t* file)
 {
 	void*         buffer = NULL;
 	size_t        file_size;
@@ -181,7 +183,7 @@ save_file(kv_file_t* file)
 	size_t        next_buf_size;
 	sfs_file_t*   sfs_file = NULL;
 
-	console_log(3, "Saving File %u as '%s'", file->id, file->filename);
+	console_log(3, "Saving KEVfile %u as '%s'", file->id, file->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
 		buffer = realloc(buffer, next_buf_size);
@@ -208,28 +210,28 @@ on_error:
 }
 
 void
-write_bool_rec(kv_file_t* file, const char* key, bool value)
+write_bool_rec(kev_file_t* file, const char* key, bool value)
 {
-	console_log(3, "Writing boolean to File %u, key '%s'", file->id, key);
+	console_log(3, "Writing boolean to KEVfile %u, key '%s'", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
 }
 
 void
-write_number_rec(kv_file_t* file, const char* key, double value)
+write_number_rec(kev_file_t* file, const char* key, double value)
 {
 	char string[500];
 
-	console_log(3, "Writing number to File %u, key '%s'", file->id, key);
+	console_log(3, "Writing number to KEVfile %u, key '%s'", file->id, key);
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
 	file->is_dirty = true;
 }
 
 void
-write_string_rec(kv_file_t* file, const char* key, const char* value)
+write_string_rec(kev_file_t* file, const char* key, const char* value)
 {
-	console_log(3, "Writing string to File %u, key '%s'", file->id, key);
+	console_log(3, "Writing string to KEVfile %u, key '%s'", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
 }
@@ -249,14 +251,15 @@ init_file_api(void)
 
 	// File object
 	register_api_function(g_duk, NULL, "OpenFile", js_OpenFile);
-	register_api_ctor(g_duk, "File", js_new_File, js_File_finalize);
-	register_api_function(g_duk, "File", "toString", js_File_toString);
-	register_api_function(g_duk, "File", "getKey", js_File_getKey);
-	register_api_function(g_duk, "File", "getNumKeys", js_File_getNumKeys);
-	register_api_function(g_duk, "File", "close", js_File_close);
-	register_api_function(g_duk, "File", "flush", js_File_flush);
-	register_api_function(g_duk, "File", "read", js_File_read);
-	register_api_function(g_duk, "File", "write", js_File_write);
+	register_api_ctor(g_duk, "KEVFile", js_new_KEVFile, js_KEVFile_finalize);
+	register_api_prop(g_duk, "KEVFile", "numKeys", js_KEVFile_get_numKeys, NULL);
+	register_api_function(g_duk, "KEVFile", "toString", js_KEVFile_toString);
+	register_api_function(g_duk, "KEVFile", "getKey", js_KEVFile_getKey);
+	register_api_function(g_duk, "KEVFile", "getNumKeys", js_KEVFile_get_numKeys);
+	register_api_function(g_duk, "KEVFile", "close", js_KEVFile_close);
+	register_api_function(g_duk, "KEVFile", "flush", js_KEVFile_flush);
+	register_api_function(g_duk, "KEVFile", "read", js_KEVFile_read);
+	register_api_function(g_duk, "KEVFile", "write", js_KEVFile_write);
 
 	// RawFile object
 	register_api_function(g_duk, NULL, "OpenRawFile", js_OpenRawFile);
@@ -396,52 +399,70 @@ js_Rename(duk_context* ctx)
 static duk_ret_t
 js_OpenFile(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
-	
-	js_new_File(ctx);
+	kev_file_t*  file;
+	const char* filename;
+
+	filename = duk_require_string(ctx, 0);
+	if (!(file = open_kev_file(filename, false)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
+	duk_push_sphere_obj(ctx, "KEVFile", file);
 	return 1;
 }
 
 static duk_ret_t
-js_new_File(duk_context* ctx)
+js_new_KEVFile(duk_context* ctx)
 {
 	const char* filename = duk_require_string(ctx, 0);
 	
-	kv_file_t* file;
+	kev_file_t* file;
 
-	if (!(file = open_file(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
-	duk_push_sphere_obj(ctx, "File", file);
+	if (!(file = open_kev_file(filename, true)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): Failed to create or open file '%s'", filename);
+	duk_push_sphere_obj(ctx, "KEVFile", file);
 	return 1;
 }
 
 static duk_ret_t
-js_File_finalize(duk_context* ctx)
+js_KEVFile_finalize(duk_context* ctx)
 {
-	kv_file_t* file;
+	kev_file_t* file;
 
-	file = duk_require_sphere_obj(ctx, 0, "File");
-	close_file(file);
+	file = duk_require_sphere_obj(ctx, 0, "KEVFile");
+	close_kev_file(file);
 	return 0;
 }
 
 static duk_ret_t
-js_File_toString(duk_context* ctx)
+js_KEVFile_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object file]");
 	return 1;
 }
 
 static duk_ret_t
-js_File_getKey(duk_context* ctx)
+js_KEVFile_get_numKeys(duk_context* ctx)
+{
+	kev_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has been closed");
+	duk_push_int(ctx, get_record_count(file));
+	return 1;
+}
+
+static duk_ret_t
+js_KEVFile_getKey(duk_context* ctx)
 {
 	int index = duk_require_int(ctx, 0);
 	
-	kv_file_t*  file;
+	kev_file_t*  file;
 	const char* key;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has been closed");
@@ -453,42 +474,28 @@ js_File_getKey(duk_context* ctx)
 }
 
 static duk_ret_t
-js_File_getNumKeys(duk_context* ctx)
+js_KEVFile_flush(duk_context* ctx)
 {
-	kv_file_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
-	duk_pop(ctx);
-	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has been closed");
-	duk_push_int(ctx, get_record_count(file));
-	return 1;
-}
-
-static duk_ret_t
-js_File_flush(duk_context* ctx)
-{
-	kv_file_t* file;
-
-	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): File has been closed");
-	save_file(file);
+	save_kev_file(file);
 	return 0;
 }
 
 static duk_ret_t
-js_File_close(duk_context* ctx)
+js_KEVFile_close(duk_context* ctx)
 {
-	kv_file_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
 	duk_pop(ctx);
-	close_file(file);
+	close_kev_file(file);
 	duk_push_this(ctx);
 	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
@@ -496,18 +503,18 @@ js_File_close(duk_context* ctx)
 }
 
 static duk_ret_t
-js_File_read(duk_context* ctx)
+js_KEVFile_read(duk_context* ctx)
 {
 	const char* key = duk_to_string(ctx, 0);
 	
 	bool        def_bool;
 	double      def_num;
 	const char* def_string;
-	kv_file_t*  file;
+	kev_file_t*  file;
 	const char* value;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): File has been closed");
@@ -530,14 +537,14 @@ js_File_read(duk_context* ctx)
 }
 
 static duk_ret_t
-js_File_write(duk_context* ctx)
+js_KEVFile_write(duk_context* ctx)
 {
 	const char* key = duk_to_string(ctx, 0);
 	
-	kv_file_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has been closed");
@@ -548,11 +555,23 @@ js_File_write(duk_context* ctx)
 static duk_ret_t
 js_OpenRawFile(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	duk_require_string(ctx, 0);
-	if (n_args >= 2) duk_require_boolean(ctx, 1);
+	// OpenRawFile(filename);
+	// Arguments:
+	//     filename: The name of the file to open, relative to ~sgm/other.
+	//     writable: Optional. If true, the file is truncated to zero size and
+	//               opened for writing. (default: false)
 
-	js_new_RawFile(ctx);
+	int n_args = duk_get_top(ctx);
+	const char* filename = duk_require_string(ctx, 0);
+	bool writable = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
+
+	sfs_file_t* file;
+
+	file = sfs_fopen(g_fs, filename, "other", writable ? "w+b" : "rb");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile(): Failed to open file '%s' for %s",
+			filename, writable ? "writing" : "reading");
+	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
 }
 
@@ -561,7 +580,7 @@ js_new_RawFile(duk_context* ctx)
 {
 	// new RawFile(filename);
 	// Arguments:
-	//     filename: The name of the file to open, relative to ~sgm/other.
+	//     filename: The name of the file to open. SphereFS-compliant.
 	//     writable: Optional. If true, the file is truncated to zero size and
 	//               opened for writing. (default: false)
 	
@@ -571,7 +590,7 @@ js_new_RawFile(duk_context* ctx)
 
 	sfs_file_t* file;
 
-	file = sfs_fopen(g_fs, filename, "other", writable ? "w+b" : "rb");
+	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile(): Failed to open file '%s' for %s",
 			filename, writable ? "writing" : "reading");

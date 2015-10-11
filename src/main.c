@@ -35,7 +35,7 @@ ALLEGRO_PATH*        g_game_path = NULL;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
 float                g_scale_y = 1.0;
-kv_file_t*           g_sys_conf;
+kev_file_t*           g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
@@ -688,7 +688,7 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "Loading system configuration");
-	g_sys_conf = open_file("~sys/system.ini");
+	g_sys_conf = open_kev_file("~sys/system.ini", true);
 
 	initialize_async();
 	initialize_rng();
@@ -745,7 +745,7 @@ shutdown_engine(void)
 	al_destroy_path(g_game_path); g_game_path = NULL;
 	free_sandbox(g_fs); g_fs = NULL;
 	if (g_sys_conf != NULL)
-		close_file(g_sys_conf);
+		close_kev_file(g_sys_conf);
 	g_sys_conf = NULL;
 	al_uninstall_system();
 }

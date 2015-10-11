@@ -1,6 +1,0 @@
-#ifndef MINISPHERE__PARTICLES_H__INCLUDED
-#define MINISPHERE__PARTICLES_H__INCLUDED
-
-void init_particle_api (void);
-
-#endif // MINISPHERE__PARTICLES_H__INCLUDED

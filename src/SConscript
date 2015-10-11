@@ -26,7 +26,6 @@ msphere_sources = [
 	"map_engine.c",
 	"mt19937ar.c",
 	"obsmap.c",
-	"particles.c",
 	"path.c",
 	"persons.c",
 	"primitives.c",

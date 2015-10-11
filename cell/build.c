@@ -262,15 +262,23 @@ run_build(build_t* build)
 		duk_json_encode(build->duk, -1);
 		json = duk_get_lstring(build->duk, -1, &json_size);
 		path = path_rebase(path_new("sourcemap.json"),
-			build->spk ? build->staging_path : build->out_path);
+			build->spk != NULL ? build->staging_path : build->out_path);
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
+			path_free(path);
 			printf("\n[error] failed to write source map");
 			return false;
 		}
 		if (build->spk != NULL)
 			spk_add_file(build->spk, path_cstr(path), path_filename_cstr(path));
+		path_free(path);
 		printf("OK.\n");
+	}
+	else if (build->spk == NULL) {
+		// non-debug build, remove any existing source map
+		path = path_rebase(path_new("sourcemap.json"), build->out_path);
+		unlink(path_cstr(path));
+		path_free(path);
 	}
 
 	printf(has_changed ? "Success!\n" : "Everything's up to date!\n");

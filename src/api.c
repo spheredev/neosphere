@@ -12,7 +12,6 @@
 #include "input.h"
 #include "logger.h"
 #include "map_engine.h"
-#include "particles.h"
 #include "primitives.h"
 #include "rng.h"
 #include "shader.h"
@@ -187,7 +186,6 @@ initialize_api(duk_context* ctx)
 	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duk);
-	init_particle_api();
 	init_primitives_api();
 	init_rng_api();
 	init_shader_api();
