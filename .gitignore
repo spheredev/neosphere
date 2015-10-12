@@ -1,7 +1,7 @@
 *.log
 bin/*.exe
-bin/plugin/*
-bin/spherestudio
+bin/plugin/
+bin/studio/
 msvc/obj/
 msvc/debug/
 obj/

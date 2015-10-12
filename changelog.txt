@@ -7,6 +7,8 @@ v2.0.0 - TBD
 * Includes a new command-line compiler and packager for Sphere games, Cell!
   Using Cell, you can control the build process for your game using JavaScript
   and even compile your game to SPK format!
+* Improved Sphere Studio plugin with full support for Cell, including automated
+  SPK packaging.
 * Basic source map support. When an error occurs and during debugging, if the
   game was compiled with Cell's --debug option, the path to the corresponding
   file from the source directory is displayed instead of its name within the
@@ -19,6 +21,8 @@ v2.0.0 - TBD
   objects.
 * New 'FileStream' object: A more robust and SphereFS compliant replacement for
   Sphere 1.x's RawFile, based on the ES6 ArrayBuffer API.
+* 'File' constructor has been renamed to 'KEVFile' to avoid confusion with the
+  more general-purpose RawFile and FileStream objects.
 * Now uses a custom build of Duktape to support 'const' in scripts. Note: As in
   Sphere 1.5, 'const' values are not actually constant and are in fact simply
   synonyms for an equivalent 'var' declaration.

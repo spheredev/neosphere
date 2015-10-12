@@ -76,10 +76,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Components]
 #ifdef WANT_GDK_SETUP
 Name: "engine"; Description: "{#AppName} Console {#AppVersion} (required)"; Types: full compact custom; Flags: fixed
+Name: "cell"; Description: "Cell {#AppVersion}"; Types: full
+Name: "studio"; Description: "Sphere Studio 1.2.0"; Types: full
 Name: "docs"; Description: "{#AppName} Documentation"
 Name: "docs/api"; Description: "API Reference"; Types: full compact
-Name: "cell"; Description: "Cell {#AppVersion}"; Types: full
-Name: "plugin"; Description: "{#AppName} GDK for Sphere Studio"; Types: full
 #endif
 
 [Tasks]
@@ -99,8 +99,9 @@ Source: "..\bin\msphere64-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bi
 Source: "..\bin\cell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: cell
 Source: "..\bin\spheredev.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\bin\plugin\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: plugin
+Source: "..\bin\plugin\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: studio
 Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs/api
+Source: "..\bin\studio\*"; DestDir: "{app}\studio"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
 Source: "..\bin\system\*"; DestDir: "{app}\bin\system"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: engine
 #else
 Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: not IsWin64
@@ -113,19 +114,34 @@ Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recurse
 [Registry]
 Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "minisphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
 Root: HKCR; Subkey: "minisphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
-Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/spk
-Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/spk
 Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
 Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
-Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/sgm
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/sgm
 #ifdef WANT_GDK_SETUP
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app}\bin;{olddata}"; Tasks: path
+Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#AppExeName},0"; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\{#AppExeName}"" ""%1"""; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#AppExeName},0"; Tasks: assoc/sgm
+Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\{#AppExeName}"" ""%1"""; Tasks: assoc/sgm
+Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "minisphere.SSPROJ"; Flags: uninsdeletevalue; Components: studio
+Root: HKCR; Subkey: "minisphere.SSPROJ"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Components: studio
+Root: HKCR; Subkey: "minisphere.SSPROJ\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\studio\Sphere Studio.exe,0"; Components: studio
+Root: HKCR; Subkey: "minisphere.SSPROJ\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\studio\Sphere Studio.exe"" ""%1"""; Components: studio
+#else
+Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/spk
+Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/sgm
+Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/sgm
 #endif
 
 [Icons]
 #ifdef WANT_GDK_SETUP
-Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\{#AppExeName}"
+Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\bin\{#AppExeName}"
+Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\studio\Sphere Studio.exe"; Components: studio
 #else
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+#endif
+
+[Run]
+#ifdef WANT_GDK_SETUP
+Filename: "{app}\studio\Sphere Studio.exe"; Description: "Launch Sphere Studio 1.2.0"; Flags: postinstall skipifsilent; Components: studio
 #endif
