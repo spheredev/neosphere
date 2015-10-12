@@ -82,31 +82,31 @@
             this.panel2.Size = new System.Drawing.Size(592, 200);
             this.panel2.TabIndex = 3;
             // 
-            // MakeDebugPackage
+            // MakeDebugPackageCheckBox
             // 
             this.MakeDebugPackageCheckBox.AutoSize = true;
             this.MakeDebugPackageCheckBox.Location = new System.Drawing.Point(12, 58);
-            this.MakeDebugPackageCheckBox.Name = "MakeDebugPackage";
+            this.MakeDebugPackageCheckBox.Name = "MakeDebugPackageCheckBox";
             this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(247, 17);
             this.MakeDebugPackageCheckBox.TabIndex = 2;
             this.MakeDebugPackageCheckBox.Text = "Include debug map when compiling a package";
             this.MakeDebugPackageCheckBox.UseVisualStyleBackColor = true;
             // 
-            // KeepConsoleOpen
+            // KeepOutputCheckBox
             // 
             this.KeepOutputCheckBox.AutoSize = true;
             this.KeepOutputCheckBox.Location = new System.Drawing.Point(12, 35);
-            this.KeepOutputCheckBox.Name = "KeepConsoleOpen";
+            this.KeepOutputCheckBox.Name = "KeepOutputCheckBox";
             this.KeepOutputCheckBox.Size = new System.Drawing.Size(330, 17);
             this.KeepOutputCheckBox.TabIndex = 1;
             this.KeepOutputCheckBox.Text = "Keep Debug Output pane visible after a debugging session ends";
             this.KeepOutputCheckBox.UseVisualStyleBackColor = true;
             // 
-            // TestWithConsole
+            // TestWithConsoleCheckBox
             // 
             this.TestWithConsoleCheckBox.AutoSize = true;
             this.TestWithConsoleCheckBox.Location = new System.Drawing.Point(12, 12);
-            this.TestWithConsoleCheckBox.Name = "TestWithConsole";
+            this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
             this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(240, 17);
             this.TestWithConsoleCheckBox.TabIndex = 0;
             this.TestWithConsoleCheckBox.Text = "Use minisphere &Console when testing a game";
@@ -140,7 +140,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 51);
+            this.label1.Location = new System.Drawing.Point(9, 51);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(227, 13);
             this.label1.TabIndex = 5;
@@ -159,20 +159,20 @@
             this.BrowseButton.UseVisualStyleBackColor = true;
             this.BrowseButton.Click += new System.EventHandler(this.BrowseButton_Click);
             // 
-            // GDKPath
+            // GdkPathTextBox
             // 
             this.GdkPathTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.GdkPathTextBox.Location = new System.Drawing.Point(77, 13);
-            this.GdkPathTextBox.Name = "GDKPath";
+            this.GdkPathTextBox.Location = new System.Drawing.Point(70, 13);
+            this.GdkPathTextBox.Name = "GdkPathTextBox";
             this.GdkPathTextBox.ReadOnly = true;
-            this.GdkPathTextBox.Size = new System.Drawing.Size(502, 20);
+            this.GdkPathTextBox.Size = new System.Drawing.Size(509, 20);
             this.GdkPathTextBox.TabIndex = 2;
             // 
             // PathLabel
             // 
             this.PathLabel.AutoSize = true;
-            this.PathLabel.Location = new System.Drawing.Point(16, 16);
+            this.PathLabel.Location = new System.Drawing.Point(9, 16);
             this.PathLabel.Name = "PathLabel";
             this.PathLabel.Size = new System.Drawing.Size(55, 13);
             this.PathLabel.TabIndex = 0;
