@@ -64,9 +64,18 @@ namespace minisphere.Gdk
             {
                 RegistryKey key = Registry.LocalMachine.OpenSubKey(
                     @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}_is1");
-                string defaultPath = (string)key.GetValue(@"InstallLocation") ?? "";
-                string path = Conf.GetString("gdkPath", defaultPath);
-                return !string.IsNullOrWhiteSpace(path) ? path : defaultPath;
+                if (key != null)
+                {
+                    // minisphere GDK is installed, get path from registry
+                    string defaultPath = (string)key.GetValue(@"InstallLocation") ?? "";
+                    string path = Conf.GetString("gdkPath", defaultPath);
+                    return !string.IsNullOrWhiteSpace(path) ? path : defaultPath;
+                }
+                else
+                {
+                    // no installation key, just read from conf
+                    return Conf.GetString("gdkPath", "");
+                }
             }
             set
             {
