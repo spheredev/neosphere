@@ -44,13 +44,12 @@
             this.columnScript,
             this.columnLine});
             this.listErrors.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listErrors.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.listErrors.FullRowSelect = true;
             this.listErrors.GridLines = true;
             this.listErrors.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.listErrors.Location = new System.Drawing.Point(0, 0);
             this.listErrors.Name = "listErrors";
-            this.listErrors.Size = new System.Drawing.Size(999, 243);
+            this.listErrors.Size = new System.Drawing.Size(1165, 280);
             this.listErrors.SmallImageList = this.imageList1;
             this.listErrors.TabIndex = 0;
             this.listErrors.UseCompatibleStateImageBehavior = false;
@@ -80,12 +79,12 @@
             // 
             // ErrorPane
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.listErrors);
-            this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "ErrorPane";
-            this.Size = new System.Drawing.Size(999, 243);
+            this.Size = new System.Drawing.Size(1165, 280);
             this.ResumeLayout(false);
 
         }

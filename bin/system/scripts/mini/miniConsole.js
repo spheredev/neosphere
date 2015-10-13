@@ -42,7 +42,7 @@ mini.onStartUp.add(mini.Console, function(params)
 		: Math.floor((GetScreenHeight() - 32) / this.font.getHeight());
 	var bufferSize = 'consoleBuffer' in params ? params.consoleBuffer : 1000;
 	var filename = 'logFile' in params ? params.logFile : null;
-	var prompt = 'consolePrompt' in params ? params.consolePrompt : "Command:";
+	var prompt = 'consolePrompt' in params ? params.consolePrompt : "$";
 	
 	if (typeof filename === 'string')
 		this.log = OpenLog(params.logFile);
@@ -327,10 +327,11 @@ mini.Console.show = function()
 // Writes a line of text to the console.
 mini.Console.write = function(text)
 {
-	if (this.log !== null && this.nextLine > 0) {
+	if (this.nextLine > 0) {
 		var lineText = this.buffer[(this.nextLine - 1) % this.bufferSize];
 		Print(lineText.substr(1));
-		this.log.write(lineText);
+		if (this.log !== null)
+			this.log.write(lineText);
 	}
 	var lineInBuffer = this.nextLine % this.bufferSize;
 	this.buffer[lineInBuffer] = ">" + text;

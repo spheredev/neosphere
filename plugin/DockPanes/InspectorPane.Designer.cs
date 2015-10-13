@@ -59,7 +59,7 @@
             this.listVariables.Location = new System.Drawing.Point(0, 0);
             this.listVariables.MultiSelect = false;
             this.listVariables.Name = "listVariables";
-            this.listVariables.Size = new System.Drawing.Size(332, 182);
+            this.listVariables.Size = new System.Drawing.Size(387, 209);
             this.listVariables.SmallImageList = this.imagesVarList;
             this.listVariables.TabIndex = 0;
             this.listVariables.UseCompatibleStateImageBehavior = false;
@@ -97,8 +97,8 @@
             // 
             this.splitter.Panel2.Controls.Add(this.textValue);
             this.splitter.Panel2.Controls.Add(this.panelEval);
-            this.splitter.Size = new System.Drawing.Size(332, 567);
-            this.splitter.SplitterDistance = 182;
+            this.splitter.Size = new System.Drawing.Size(387, 654);
+            this.splitter.SplitterDistance = 209;
             this.splitter.SplitterWidth = 3;
             this.splitter.TabIndex = 1;
             // 
@@ -106,12 +106,12 @@
             // 
             this.textValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.textValue.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textValue.Location = new System.Drawing.Point(0, 21);
+            this.textValue.Location = new System.Drawing.Point(0, 24);
             this.textValue.Multiline = true;
             this.textValue.Name = "textValue";
             this.textValue.ReadOnly = true;
             this.textValue.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textValue.Size = new System.Drawing.Size(332, 361);
+            this.textValue.Size = new System.Drawing.Size(387, 418);
             this.textValue.TabIndex = 0;
             this.textValue.WordWrap = false;
             // 
@@ -122,7 +122,7 @@
             this.panelEval.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelEval.Location = new System.Drawing.Point(0, 0);
             this.panelEval.Name = "panelEval";
-            this.panelEval.Size = new System.Drawing.Size(332, 21);
+            this.panelEval.Size = new System.Drawing.Size(387, 24);
             this.panelEval.TabIndex = 2;
             // 
             // textEvalBox
@@ -131,7 +131,7 @@
             this.textEvalBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textEvalBox.Location = new System.Drawing.Point(0, 0);
             this.textEvalBox.Name = "textEvalBox";
-            this.textEvalBox.Size = new System.Drawing.Size(277, 23);
+            this.textEvalBox.Size = new System.Drawing.Size(323, 23);
             this.textEvalBox.TabIndex = 1;
             this.textEvalBox.TextChanged += new System.EventHandler(this.textEvalBox_TextChanged);
             this.textEvalBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textEvalBox_KeyDown);
@@ -141,9 +141,9 @@
             this.buttonEval.Dock = System.Windows.Forms.DockStyle.Right;
             this.buttonEval.Enabled = false;
             this.buttonEval.Image = global::minisphere.Gdk.Properties.Resources.EvalIcon;
-            this.buttonEval.Location = new System.Drawing.Point(277, 0);
+            this.buttonEval.Location = new System.Drawing.Point(323, 0);
             this.buttonEval.Name = "buttonEval";
-            this.buttonEval.Size = new System.Drawing.Size(55, 21);
+            this.buttonEval.Size = new System.Drawing.Size(64, 24);
             this.buttonEval.TabIndex = 2;
             this.buttonEval.Text = "&Eval";
             this.buttonEval.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -152,12 +152,12 @@
             // 
             // InspectorPane
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.splitter);
-            this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "InspectorPane";
-            this.Size = new System.Drawing.Size(332, 567);
+            this.Size = new System.Drawing.Size(387, 654);
             this.splitter.Panel1.ResumeLayout(false);
             this.splitter.Panel2.ResumeLayout(false);
             this.splitter.Panel2.PerformLayout();

@@ -48,7 +48,7 @@
             this.listStack.MultiSelect = false;
             this.listStack.Name = "listStack";
             this.listStack.ShowItemToolTips = true;
-            this.listStack.Size = new System.Drawing.Size(349, 455);
+            this.listStack.Size = new System.Drawing.Size(407, 525);
             this.listStack.TabIndex = 0;
             this.listStack.UseCompatibleStateImageBehavior = false;
             this.listStack.View = System.Windows.Forms.View.Details;
@@ -71,12 +71,12 @@
             // 
             // StackPane
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.listStack);
-            this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "StackPane";
-            this.Size = new System.Drawing.Size(349, 455);
+            this.Size = new System.Drawing.Size(407, 525);
             this.ResumeLayout(false);
 
         }
