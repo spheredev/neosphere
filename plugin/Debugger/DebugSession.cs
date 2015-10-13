@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using minisphere.Gdk.Utility;
+using Sphere.Plugins.Views;
 
 namespace minisphere.Gdk.Debugger
 {
@@ -19,6 +20,7 @@ namespace minisphere.Gdk.Debugger
         private DuktapeClient duktape;
         private Process engineProcess;
         private string engineDir;
+        private bool haveError = false;
         private ConcurrentQueue<dynamic[]> replies = new ConcurrentQueue<dynamic[]>();
         private Timer focusTimer;
         private string sourcePath;
@@ -53,7 +55,7 @@ namespace minisphere.Gdk.Debugger
 
         public event EventHandler Detached;
 
-        public event EventHandler Paused;
+        public event EventHandler<PausedEventArgs> Paused;
 
         public event EventHandler Resumed;
 
@@ -152,6 +154,8 @@ namespace minisphere.Gdk.Debugger
             {
                 Panes.Errors.Add(e.Message, e.IsFatal, e.FileName, e.LineNumber);
                 PluginManager.Core.Docking.Show(Panes.Errors);
+                if (e.IsFatal)
+                    haveError = true;
             }), null);
         }
 
@@ -195,7 +199,11 @@ namespace minisphere.Gdk.Debugger
                     Panes.Errors.ClearHighlight();
                 }
                 if (wantPause && Paused != null)
-                    Paused(this, EventArgs.Empty);
+                {
+                    PauseReason reason = haveError ? PauseReason.Exception : PauseReason.Breakpoint;
+                    haveError = false;
+                    Paused(this, new PausedEventArgs(reason));
+                }
                 if (wantResume && Resumed != null)
                     Resumed(this, EventArgs.Empty);
             }), null);
