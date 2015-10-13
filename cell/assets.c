@@ -91,7 +91,9 @@ bool
 build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 {
 	FILE*       file;
+	path_t*     origin;
 	struct stat sb;
+	path_t*     script_path;
 
 	*out_is_new = false;
 	switch (asset->type) {
@@ -108,13 +110,19 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 			printf("[error] failed to write '%s'\n", path_cstr(asset->obj_path));
 			return false;
 		}
+		script_path = path_new(asset->sgm.script);
+		origin = path_new("scripts/");
+		path_collapse(script_path, true);
+		path_relativize(script_path, origin);
+		path_free(origin);
 		fprintf(file, "name=%s\n", asset->sgm.name);
 		fprintf(file, "author=%s\n", asset->sgm.author);
 		fprintf(file, "description=%s\n", asset->sgm.description);
 		fprintf(file, "screen_width=%d\n", asset->sgm.width);
 		fprintf(file, "screen_height=%d\n", asset->sgm.height);
-		fprintf(file, "script=%s\n", asset->sgm.script);
+		fprintf(file, "script=%s\n", path_cstr(script_path));
 		fclose(file);
+		path_free(script_path);
 		*out_is_new = true;
 		break;
 	case ASSET_TILESET:

@@ -31,7 +31,6 @@
 
 static path_t* construct_path       (path_t* path, const char* pathname, bool force_dir);
 static void    convert_to_directory (path_t* path);
-static path_t* relativize_path      (path_t* path, const path_t* origin);
 static void    update_pathname      (path_t* path);
 
 struct path
@@ -297,6 +296,29 @@ path_rebase(path_t* path, const path_t* root)
 }
 
 path_t*
+path_relativize(path_t* path, const path_t* origin)
+{
+	size_t  num_backhops;
+	path_t* origin_path;
+
+	size_t i;
+
+	origin_path = path_collapse(path_strip(path_dup(origin)), false);
+	num_backhops = path_num_hops(origin_path);
+	while (path->num_hops > 0 && origin_path->num_hops > 0) {
+		if (strcmp(origin_path->hops[0], path->hops[0]) != 0)
+			break;
+		--num_backhops;
+		path_remove_hop(origin_path, 0);
+		path_remove_hop(path, 0);
+	}
+	for (i = 0; i < num_backhops; ++i)
+		path_insert_hop(path, 0, "..");
+	path_free(origin_path);
+	return path;
+}
+
+path_t*
 path_remove_hop(path_t* path, size_t idx)
 {
 	size_t i;
@@ -325,7 +347,7 @@ path_resolve(path_t* path, const path_t* relative_to)
 	if (relative_to != NULL) {
 		if (!(origin = path_resolve(path_dup(relative_to), NULL)))
 			return NULL;
-		relativize_path(new_path, origin);
+		path_relativize(new_path, origin);
 		path_free(origin);
 	}
 	construct_path(path, path_cstr(new_path), false);
@@ -383,29 +405,6 @@ convert_to_directory(path_t* path)
 	path->hops[path->num_hops++] = path->filename;
 	path->filename = NULL;
 	update_pathname(path);
-}
-
-static path_t*
-relativize_path(path_t* path, const path_t* origin)
-{
-	size_t  num_backhops;
-	path_t* origin_path;
-
-	size_t i;
-
-	origin_path = path_strip(path_dup(origin));
-	num_backhops = path_num_hops(origin_path);
-	while (path->num_hops > 0 && origin_path->num_hops > 0) {
-		if (strcmp(origin_path->hops[0], path->hops[0]) != 0)
-			break;
-		--num_backhops;
-		path_remove_hop(origin_path, 0);
-		path_remove_hop(path, 0);
-	}
-	for (i = 0; i < num_backhops; ++i)
-		path_insert_hop(path, 0, "..");
-	path_free(origin_path);
-	return path;
 }
 
 static void

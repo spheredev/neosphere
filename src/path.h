@@ -24,6 +24,7 @@ bool        path_cmp           (const path_t* path1, const path_t* path2);
 path_t*     path_collapse      (path_t* path, bool collapse_double_dots);
 bool        path_mkdir         (const path_t* path);
 path_t*     path_rebase        (path_t* path, const path_t* root);
+path_t*     path_relativize    (path_t* path, const path_t* origin);
 path_t*     path_remove_hop    (path_t* path, size_t idx);
 path_t*     path_resolve       (path_t* path, const path_t* relative_to);
 path_t*     path_set           (path_t* path, const char* pathname);

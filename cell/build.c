@@ -466,6 +466,9 @@ js_api_sgm(duk_context* ctx)
 {
 	build_t*   build;
 	sgm_info_t manifest;
+	char*      token;
+	char*      next_token;
+	char*      res_string;
 	target_t*  target;
 
 	duk_require_object_coercible(ctx, 0);
@@ -476,12 +479,23 @@ js_api_sgm(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "name");
 	duk_get_prop_string(ctx, 0, "author");
 	duk_get_prop_string(ctx, 0, "description");
+	duk_get_prop_string(ctx, 0, "resolution");
 	duk_get_prop_string(ctx, 0, "script");
-	strcpy(manifest.name, duk_require_string(ctx, -4));
-	strcpy(manifest.author, duk_require_string(ctx, -3));
-	strcpy(manifest.description, duk_require_string(ctx, -2));
+	strcpy(manifest.name, duk_require_string(ctx, -5));
+	strcpy(manifest.author, duk_require_string(ctx, -4));
+	strcpy(manifest.description, duk_require_string(ctx, -3));
 	strcpy(manifest.script, duk_require_string(ctx, -1));
-	manifest.width = 320; manifest.height = 240;
+	
+	// parse the screen resolution string
+	res_string = strdup(duk_require_string(ctx, -2));
+	token = strtok_r(res_string, "x", &next_token);
+	manifest.width = atoi(token);
+	if (!(token = strtok_r(NULL, "x", &next_token)))
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
+	manifest.height = atoi(token);
+	if (strtok_r(NULL, "x", &next_token) || manifest.width <= 0 || manifest.height <= 0)
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
+	free(res_string);
 	target = add_target(build, new_sgm_asset(manifest, build->js_mtime), NULL);
 	duk_push_pointer(ctx, target);
 	return 1;
