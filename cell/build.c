@@ -12,6 +12,8 @@ struct build
 	vector_t*     installs;
 	path_t*       out_path;
 	time_t        js_mtime;
+	int           n_warnings;
+	char*         rule;
 	spk_writer_t* spk;
 	path_t*       staging_path;
 	vector_t*     targets;
@@ -87,9 +89,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 	path_mkdir(build->staging_path);
 	
-	printf("    Building '%s' as %s\n", path_cstr(build->out_path),
-		build->spk ? "SPK" : "dist");
-	printf("    Source path is '%s'\n\n", path_cstr(build->in_path));
+	printf("Compiling '%s' as %s\n", path_cstr(build->in_path), build->spk ? "SPK" : "dist");
 	return build;
 
 on_error:
@@ -124,6 +124,7 @@ free_build(build_t* build)
 	path_free(build->in_path);
 	path_free(build->out_path);
 	spk_close(build->spk);
+	free(build->rule);
 	free(build);
 }
 
@@ -131,9 +132,13 @@ bool
 evaluate_rule(build_t* build, const char* name)
 {
 	char        func_name[255];
+	int         n_warnings;
 	path_t*     script_path;
 
+	build->rule = strdup(name);
+	
 	// process build script
+	n_warnings = build->n_warnings;
 	printf("Processing Cellscript.js rule '%s'... ", name);
 	sprintf(func_name, "$%s", name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
@@ -152,7 +157,10 @@ evaluate_rule(build_t* build, const char* name)
 		return false;
 	}
 
-	printf("OK.\n");
+	if (build->n_warnings == n_warnings)
+		printf("OK.\n");
+	else
+		printf("\n");
 	return true;
 }
 
@@ -167,6 +175,8 @@ add_files(build_t* build, const path_t* pattern, bool recursive)
 	path = path_rebase(path_strip(path_dup(pattern)), build->in_path);
 	wildcard = strdup(path_filename_cstr(pattern));
 	process_add_files(build, wildcard, path, NULL, recursive, &targets);
+	if (get_vector_size(targets) == 0)
+		emit_warning(build, "no files found matching pattern '%s'", path_cstr(pattern));
 	path_free(path);
 	free(wildcard);
 	return targets;
@@ -195,6 +205,18 @@ add_target(build_t* build, asset_t* asset, const path_t* subpath)
 		: path_new("./");
 	push_back_vector(build->targets, &target);
 	return target;
+}
+
+void
+emit_warning(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+	
+	++build->n_warnings;
+	va_start(ap, fmt);
+	printf("\n  warning: ");
+	vprintf(fmt, ap);
+	va_end(ap);
 }
 
 bool
@@ -281,7 +303,9 @@ run_build(build_t* build)
 		path_free(path);
 	}
 
-	printf(has_changed ? "Success!\n" : "Everything's up to date!\n");
+	printf("\n%s -> '%s'\n", build->rule, path_cstr(build->out_path));
+	printf("%s with %i warning(s).\n", has_changed ? "Succeeded" : "Up to date", build->n_warnings);
+	//printf(has_changed ? "Success!\n" : "Everything's up to date!\n");
 
 	return true;
 }
@@ -431,11 +455,11 @@ js_api_install(duk_context* ctx)
 static duk_ret_t
 js_api_files(duk_context* ctx)
 {
+	int           n_args;
 	build_t*      build;
 	duk_uarridx_t idx = 0;
-	int           n_args;
+	bool          is_recursive;
 	path_t*       pattern;
-	bool          recursive;
 	vector_t*     targets;
 
 	target_t** p_target;
@@ -445,12 +469,12 @@ js_api_files(duk_context* ctx)
 	pattern = path_new(duk_require_string(ctx, 0));
 	if (path_filename_cstr(pattern) == NULL)
 		path_append(pattern, "*");
-	recursive = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
+	is_recursive = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
 	duk_push_global_stash(ctx);
 	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
 	duk_pop_2(ctx);
 
-	targets = add_files(build, pattern, recursive);
+	targets = add_files(build, pattern, is_recursive);
 	duk_push_array(ctx);
 	iter = iterate_vector(targets);
 	while (p_target = next_vector_item(&iter)) {

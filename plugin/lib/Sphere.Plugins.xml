@@ -9,6 +9,14 @@
             Specifies the base interface for a compiler.
             </summary>
         </member>
+        <member name="M:Sphere.Plugins.Interfaces.ICompiler.Prep(Sphere.Plugins.Interfaces.IProject,Sphere.Plugins.Interfaces.IConsole)">
+            <summary>
+            Prepare a new project for use with this compiler.
+            </summary>
+            <param name="project">The project to prepare.</param>
+            <param name="con">An IConsole where project prep progress can be printed.</param>
+            <returns>true if the project was successfully prepared.</returns>
+        </member>
         <member name="M:Sphere.Plugins.Interfaces.ICompiler.Build(Sphere.Plugins.Interfaces.IProject,System.String,Sphere.Plugins.Interfaces.IConsole)">
             <summary>
             Builds a game distribution from a Sphere Studio project.
@@ -52,7 +60,32 @@
         </member>
         <member name="T:Sphere.Plugins.Interfaces.DockHint">
             <summary>
-            Specifies the docking position of a panel.
+            Specifies the position of a dock pane.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.DockHint.Float">
+            <summary>
+            Detaches the pane, making it floating.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.DockHint.Left">
+            <summary>
+            Docks the pane to the left side.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.DockHint.Right">
+            <summary>
+            Docks the pane to the right side.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.DockHint.Top">
+            <summary>
+            Docks the pane to the top.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.DockHint.Bottom">
+            <summary>
+            Docks the pane to the bottom.
             </summary>
         </member>
         <member name="T:Sphere.Plugins.Interfaces.IDockPane">
@@ -62,22 +95,22 @@
         </member>
         <member name="P:Sphere.Plugins.Interfaces.IDockPane.Control">
             <summary>
-            Gets the physical Control providing functionality for the panel.
+            Gets the physical Control providing functionality for this dock pane.
             </summary>
         </member>
         <member name="P:Sphere.Plugins.Interfaces.IDockPane.DockHint">
             <summary>
-            Gets the panel's preferred docking position.
+            Gets the dock pane's preferred docking position.
             </summary>
         </member>
         <member name="P:Sphere.Plugins.Interfaces.IDockPane.DockIcon">
             <summary>
-            Gets the icon bitmap associated with the panel.
+            Gets the icon associated with this dock pane.
             </summary>
         </member>
         <member name="P:Sphere.Plugins.Interfaces.IDockPane.ShowInViewMenu">
             <summary>
-            Gets whether the panel should be shown in the View menu.
+            Gets whether this dock pane should be shown in the View menu.
             </summary>
         </member>
         <member name="T:Sphere.Plugins.Interfaces.IEditor`1">
@@ -189,6 +222,37 @@
             <param name="isPackage">Pass 'true' if gamePath specifies a package.</param>
             <param name="project">The Sphere Studio project hosting the debugger.</param>
             <returns></returns>
+        </member>
+        <member name="T:Sphere.Plugins.Interfaces.PauseReason">
+            <summary>
+            Specifies the reason debug execution was halted.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.PauseReason.Breakpoint">
+            <summary>
+            A breakpoint was triggered.
+            </summary>
+        </member>
+        <member name="F:Sphere.Plugins.Interfaces.PauseReason.Exception">
+            <summary>
+            An exception is about to be thrown.
+            </summary>
+        </member>
+        <member name="T:Sphere.Plugins.Interfaces.PausedEventArgs">
+            <summary>
+            Specifies data for a Paused debugger event.
+            </summary>
+        </member>
+        <member name="M:Sphere.Plugins.Interfaces.PausedEventArgs.#ctor(Sphere.Plugins.Interfaces.PauseReason)">
+            <summary>
+            Constructs data for a Paused debugger event.
+            </summary>
+            <param name="reason"></param>
+        </member>
+        <member name="P:Sphere.Plugins.Interfaces.PausedEventArgs.Reason">
+            <summary>
+            Gets the reason execution was halted.
+            </summary>
         </member>
         <member name="T:Sphere.Plugins.Interfaces.IDebugger">
             <summary>
@@ -655,6 +719,11 @@
             Provides a base class for an image editing component.
             </summary>
         </member>
+        <member name="P:Sphere.Plugins.Views.ImageView.IsDirty">
+            <summary>
+            Gets or sets whether the image has been modified.
+            </summary>
+        </member>
         <member name="E:Sphere.Plugins.Views.ImageView.ImageChanged">
             <summary>
             Raised when the image data has been modified.
@@ -667,18 +736,19 @@
         </member>
         <member name="M:Sphere.Plugins.Views.ImageView.GetImages(System.Int16,System.Int16)">
             <summary>
-            Splits the image being edited into tiles and returns the images for each of those tiles.
+            Splits the image editor content into tiles and returns the tile bitmaps
+            in an array.
             </summary>
             <param name="tileWidth">The width of the tiles.</param>
             <param name="tileHeight">The height of the tiles.</param>
-            <returns>A list of images representing the individual tiles.</returns>
+            <returns>An array of tile bitmaps.</returns>
         </member>
         <member name="T:Sphere.Plugins.Views.ScriptView">
             <summary>
             Provides a base class for a script editing component.
             </summary>
         </member>
-        <member name="E:Sphere.Plugins.Views.ScriptView.BreakpointSet">
+        <member name="E:Sphere.Plugins.Views.ScriptView.BreakpointChanged">
             <summary>
             Fires when a breakpoint is added or removed.
             </summary>
@@ -686,6 +756,12 @@
         <member name="P:Sphere.Plugins.Views.ScriptView.ActiveLine">
             <summary>
             Gets or sets the active line, used while debugging.
+            </summary>
+        </member>
+        <member name="P:Sphere.Plugins.Views.ScriptView.ErrorLine">
+            <summary>
+            Gets or sets  the error line, used to point out script errors
+            during debugging.
             </summary>
         </member>
         <member name="P:Sphere.Plugins.Views.ScriptView.Breakpoints">
@@ -699,17 +775,36 @@
             Gets or sets the contents of the script view.
             </summary>
         </member>
-        <member name="T:Sphere.Plugins.Views.BreakpointSetEventArgs">
+        <member name="M:Sphere.Plugins.Views.ScriptView.GoToLine(System.Int32)">
             <summary>
-            Contains data for a BreakpointSet event.
+            Moves the cursor to a specified line number, used when debugging.
+            </summary>
+            <param name="lineNumber">The line number to navigate to.</param>
+        </member>
+        <member name="M:Sphere.Plugins.Views.ScriptView.OnBreakpointChanged(Sphere.Plugins.Views.BreakpointChangedEventArgs)">
+            <summary>
+            Fires a BreakpointChanged event for this ScriptView.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="T:Sphere.Plugins.Views.BreakpointChangedEventArgs">
+            <summary>
+            Contains data for a BreakpointChanged event.
             </summary>
         </member>
-        <member name="P:Sphere.Plugins.Views.BreakpointSetEventArgs.Active">
+        <member name="M:Sphere.Plugins.Views.BreakpointChangedEventArgs.#ctor(System.Int32,System.Boolean)">
             <summary>
-            If Active is true, the breakpoint was set. Otherwise it was cleared.
+            Initializes data for a BreakpointSet event.
+            </summary>
+            <param name="lineNumber"></param>
+            <param name="isActive"></param>
+        </member>
+        <member name="P:Sphere.Plugins.Views.BreakpointChangedEventArgs.Active">
+            <summary>
+            If Active is true, the breakpoint is set. Otherwise it is cleared.
             </summary>
         </member>
-        <member name="P:Sphere.Plugins.Views.BreakpointSetEventArgs.LineNumber">
+        <member name="P:Sphere.Plugins.Views.BreakpointChangedEventArgs.LineNumber">
             <summary>
             The line number containing the breakpoint.
             </summary>
@@ -795,6 +890,44 @@
             Gets the interface to the Sphere Studio IDE.
             </summary>
         </member>
+        <member name="T:Sphere.Plugins.EditShims.ImageEditShim">
+            <summary>
+            Defers image editing functionality to the active Image plugin.
+            </summary>
+        </member>
+        <member name="M:Sphere.Plugins.EditShims.ImageEditShim.#ctor">
+            <summary>
+            Constructs an Image Editor control.
+            </summary>
+        </member>
+        <member name="E:Sphere.Plugins.EditShims.ImageEditShim.ImageChanged">
+            <summary>
+            Fires when the image is modified.
+            </summary>
+        </member>
+        <member name="P:Sphere.Plugins.EditShims.ImageEditShim.Content">
+            <summary>
+            Gets the image contents as a Bitmap.
+            </summary>
+        </member>
+        <member name="M:Sphere.Plugins.EditShims.ImageEditShim.GetImages(System.Int16,System.Int16)">
+            <summary>
+            Splits the image into tiles and returns the tile bitmaps.
+            </summary>
+            <param name="tileWidth">Tile width.</param>
+            <param name="tileHeight">Tile height.</param>
+            <returns>An array of tile bitmaps.</returns>
+        </member>
+        <member name="M:Sphere.Plugins.EditShims.ImageEditShim.ZoomIn">
+            <summary>
+            Zooms in the image by one level.
+            </summary>
+        </member>
+        <member name="M:Sphere.Plugins.EditShims.ImageEditShim.ZoomOut">
+            <summary>
+            Zooms out the image by one level.
+            </summary>
+        </member>
         <member name="F:Sphere.Plugins.EditShims.ImageEditShim.components">
             <summary> 
             Required designer variable.
@@ -810,6 +943,21 @@
             <summary> 
             Required method for Designer support - do not modify 
             the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:Sphere.Plugins.EditShims.ScriptEditShim">
+            <summary>
+            Defers code editing functionality to the active Script plugin.
+            </summary>
+        </member>
+        <member name="M:Sphere.Plugins.EditShims.ScriptEditShim.#ctor">
+            <summary>
+            Constructs a Script Editor control.
+            </summary>
+        </member>
+        <member name="P:Sphere.Plugins.EditShims.ScriptEditShim.Text">
+            <summary>
+            Gets or sets the contents of the script.
             </summary>
         </member>
         <member name="F:Sphere.Plugins.EditShims.ScriptEditShim.components">

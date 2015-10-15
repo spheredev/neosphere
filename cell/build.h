@@ -11,6 +11,7 @@ void      free_build    (build_t* build);
 vector_t* add_files     (build_t* build, const path_t* pattern, bool recursive);
 void      add_install   (build_t* build, const target_t* target, const path_t* path);
 target_t* add_target    (build_t* build, asset_t* asset, const path_t* subdir);
+void      emit_warning  (build_t* build, const char* fmt, ...);
 bool      evaluate_rule (build_t* build, const char* name);
 bool      run_build     (build_t* build);
 

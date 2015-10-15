@@ -1,12 +1,12 @@
 *.log
 bin/*.exe
 bin/plugin/
-bin/studio/
 msvc/obj/
 msvc/debug/
 obj/
 plugin/bin/
 setup/*.exe
+studio/
 
 # Windows cruft
 Desktop.ini

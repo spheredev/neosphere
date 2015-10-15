@@ -22,7 +22,36 @@ namespace minisphere.Gdk.Plugins
 
         public string SaveFileFilters
         {
-            get { return "Sphere SPK Game Package|*.spk"; }
+            get { return "Sphere Game Package|*.spk"; }
+        }
+
+        public bool Prep(IProject project, IConsole con)
+        {
+            con.Print("Installing project template... ");
+            CopyDirectory(Path.Combine(_main.Conf.GdkPath, "assets", "template"), project.RootPath);
+            con.Print("OK.\n");
+
+            con.Print("Generating Cellscript.js... ");
+            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.js.tmpl");
+            try
+            {
+                var scriptPath = Path.Combine(project.RootPath, "Cellscript.js");
+                var template = File.ReadAllText(cellTemplatePath);
+                var script = string.Format(template,
+                    project.Name, project.Author, project.Description,
+                    project.ScreenWidth, project.ScreenHeight);
+                File.WriteAllText(scriptPath, script);
+                File.Delete(cellTemplatePath);
+            }
+            catch (Exception exc)
+            {
+                con.Print(string.Format("\n[error] {0}\n", exc.Message));
+                return false;
+            }
+            con.Print("OK.\n");
+
+            con.Print("Success!\n");
+            return true;
         }
 
         public async Task<bool> Build(IProject project, string outPath, IConsole con)
@@ -43,6 +72,23 @@ namespace minisphere.Gdk.Plugins
             return await RunCell(cellOptions, con);
         }
 
+        private void CopyDirectory(string sourcePath, string destPath)
+        {
+            var source = new DirectoryInfo(sourcePath);
+            var target = new DirectoryInfo(destPath);
+            target.Create();
+            foreach (var fileInfo in source.GetFiles())
+            {
+                var destFileName = Path.Combine(target.FullName, fileInfo.Name);
+                File.Copy(fileInfo.FullName, destFileName, true);
+            }
+            foreach (var dirInfo in source.GetDirectories())
+            {
+                var destFileName = Path.Combine(target.FullName, dirInfo.Name);
+                CopyDirectory(dirInfo.FullName, destFileName);
+            }
+        }
+
         private async Task<bool> RunCell(string options, IConsole con)
         {
             string cellPath = Path.Combine(_main.Conf.GdkPath, "bin", "cell.exe");
@@ -52,8 +98,6 @@ namespace minisphere.Gdk.Plugins
                 con.Print("       (Please check your GDK path in Settings Center.)\n");
                 return false;
             }
-
-            con.Print(string.Format("$ cell {0}\n\n", options));
 
             ProcessStartInfo psi = new ProcessStartInfo(cellPath, options);
             psi.UseShellExecute = false;
