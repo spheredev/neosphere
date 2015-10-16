@@ -507,7 +507,7 @@
             Gets or sets the name of the project's author.
             </summary>
         </member>
-        <member name="P:Sphere.Plugins.Interfaces.IProject.Description">
+        <member name="P:Sphere.Plugins.Interfaces.IProject.Summary">
             <summary>
             Gets or sets a short summary/description of the game.
             </summary>
@@ -585,11 +585,12 @@
             <param name="defValue">A default value if the setting doesn't exist.</param>
             <returns></returns>
         </member>
-        <member name="M:Sphere.Plugins.Interfaces.ISettings.GetStringArray(System.String)">
+        <member name="M:Sphere.Plugins.Interfaces.ISettings.GetStringArray(System.String,System.String[])">
             <summary>
             Reads a list of comma-separated strings from the settings.
             </summary>
             <param name="key">The name of the setting.</param>
+            <param name="defValues">A default array to return if the setting doesn't exist.</param>
         </member>
         <member name="M:Sphere.Plugins.Interfaces.ISettings.SetValue(System.String,System.Object)">
             <summary>

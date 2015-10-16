@@ -38,7 +38,7 @@ namespace minisphere.Gdk.Plugins
                 var scriptPath = Path.Combine(project.RootPath, "Cellscript.js");
                 var template = File.ReadAllText(cellTemplatePath);
                 var script = string.Format(template,
-                    project.Name, project.Author, project.Description,
+                    project.Name, project.Author, project.Summary,
                     project.ScreenWidth, project.ScreenHeight);
                 File.WriteAllText(scriptPath, script);
                 File.Delete(cellTemplatePath);
