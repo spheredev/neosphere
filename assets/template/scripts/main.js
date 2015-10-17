@@ -1,5 +1,5 @@
 // game() function
-// This function is called by minisphere when the game is launched to
+// This function is called by the engine when the game is launched to
 // prepare game state and start the game.
 function game()
 {

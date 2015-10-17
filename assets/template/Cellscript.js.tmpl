@@ -1,5 +1,13 @@
+// this is your game's Cellscript, used to instruct the Cell compiler how
+// to build your game.  like a Sphere game, the Cellscript is written in
+// JS, however with a different set of bindings tailored to game
+// compilation and packaging.
+
 function $sphere()
 {{
+	// this tells Cell which files to install when packaging the game.
+	// see the Cell API documentation for more information.
+	
 	install(files("scripts/*", true), "scripts");
 	install(files("animations/*", true), "animations");
 	install(files("fonts/*", true), "spritesets");
@@ -9,6 +17,10 @@ function $sphere()
 	install(files("spritesets/*", true), "spritesets");
 	install(files("windowstyles/*", true), "sounds");
 	install(files("icon.png"));
+	
+	// this builds and installs the game manifest.
+	// the arguments passed to sgm() specify the data contained in the
+	// manifest:
 	
 	install(sgm({{
 		name: "{0}",

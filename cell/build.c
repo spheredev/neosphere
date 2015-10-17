@@ -304,8 +304,7 @@ run_build(build_t* build)
 	}
 
 	printf("\n%s -> '%s'\n", build->rule, path_cstr(build->out_path));
-	printf("%s with %i warning(s).\n", has_changed ? "Succeeded" : "Up to date", build->n_warnings);
-	//printf(has_changed ? "Success!\n" : "Everything's up to date!\n");
+	printf("Finished, %i warning(s)\n", build->n_warnings);
 
 	return true;
 }

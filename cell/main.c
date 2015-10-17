@@ -177,7 +177,7 @@ print_banner(bool want_copyright, bool want_deps)
 {
 	printf("Cell %s Sphere Game Compiler %s\n", CELL_VERSION, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("A scriptable build engine for Sphere games.\n");
+		printf("A scriptable build engine for Sphere games\n");
 		printf("(c) 2015 Fat Cerberus\n");
 	}
 	if (want_deps) {
