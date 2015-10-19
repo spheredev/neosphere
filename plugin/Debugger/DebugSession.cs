@@ -34,7 +34,7 @@ namespace minisphere.Gdk.Debugger
             sourcePath = project.RootPath;
             engineProcess = engine;
             engineDir = Path.GetDirectoryName(enginePath);
-            focusTimer = new Timer(FocusEngine, this, Timeout.Infinite, Timeout.Infinite);
+            focusTimer = new Timer(HandleResume, this, Timeout.Infinite, Timeout.Infinite);
             updateTimer = new Timer(UpdateDebugViews, this, Timeout.Infinite, Timeout.Infinite);
         }
 
@@ -75,9 +75,7 @@ namespace minisphere.Gdk.Debugger
 
         public async Task Detach()
         {
-            focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
             await duktape.Detach();
-            --plugin.Sessions;
             Dispose();
         }
 
@@ -136,11 +134,13 @@ namespace minisphere.Gdk.Debugger
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
+                focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
                 if (Detached != null)
                     Detached(this, EventArgs.Empty);
+                --plugin.Sessions;
+
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Hide(Panes.Stack);
-
                 PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Console.Print("");
                 Panes.Console.Print(duktape.TargetID + " detached.");
@@ -260,17 +260,25 @@ namespace minisphere.Gdk.Debugger
             await duktape.StepOver();
         }
 
-        private static void FocusEngine(object state)
+        private static void HandleResume(object state)
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
                 DebugSession me = (DebugSession)state;
-                NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
-                PluginManager.Core.Docking.Activate(Panes.Console);
-                Panes.Inspector.Enabled = false;
-                Panes.Stack.Enabled = false;
-                Panes.Inspector.Clear();
-                Panes.Stack.Clear();
+                try
+                {
+                    NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
+                    PluginManager.Core.Docking.Activate(Panes.Console);
+                    Panes.Inspector.Enabled = false;
+                    Panes.Stack.Enabled = false;
+                    Panes.Inspector.Clear();
+                    Panes.Stack.Clear();
+                }
+                catch (InvalidOperationException)
+                {
+                    // this will be thrown by Process.MainWindowHandle if the process
+                    // is no longer running; we can safely ignore it.
+                }
             }), null);
         }
 
