@@ -250,7 +250,7 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf("  %s\n", path_cstr(get_asset_path((*p_target)->asset)));
+			printf("  %s\n", path_cstr(get_object_path((*p_target)->asset)));
 			++n_assets;
 			has_changed = true;
 		}
@@ -280,7 +280,7 @@ run_build(build_t* build)
 		duk_push_object(build->duk);
 		iter = iterate_vector(build->installs);
 		while (p_inst = next_vector_item(&iter)) {
-			path = path_resolve(path_dup(get_asset_path(p_inst->target->asset)), build->in_path);
+			path = path_resolve(path_dup(get_object_path(p_inst->target->asset)), build->in_path);
 			duk_push_string(build->duk, path_cstr(path));
 			duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
 		}
@@ -369,7 +369,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 	const path_t* src_path;
 
 	*out_is_new = false;
-	if (!(src_path = get_asset_path(inst->target->asset)))
+	if (!(src_path = get_object_path(inst->target->asset)))
 		return false;
 
 	if (build->spk == NULL) {

@@ -16,8 +16,9 @@ struct file_info
 
 struct asset
 {
-	time_t       src_mtime;
+	path_t*      path;
 	path_t*      obj_path;
+	time_t       src_mtime;
 	asset_type_t type;
 	union {
 		struct file_info file;
@@ -33,7 +34,7 @@ new_file_asset(const path_t* path)
 	struct stat sb;
 	
 	if (stat(path_cstr(path), &sb) != 0) {
-		fprintf(stderr, "[error] failed to access file '%s'", path_cstr(path));
+		fprintf(stderr, "ERROR: failed to stat '%s'\n", path_cstr(path));
 		return NULL;
 	}
 	
@@ -50,6 +51,7 @@ new_sgm_asset(sgm_info_t sgm, time_t src_mtime)
 	asset_t* asset;
 
 	asset = calloc(1, sizeof(asset_t));
+	asset->path = path_new("game.sgm");
 	asset->src_mtime = src_mtime;
 	asset->type = ASSET_SGM;
 	asset->sgm = sgm;
@@ -62,6 +64,7 @@ new_s2gm_asset(const char* json, time_t src_mtime)
 	asset_t* asset;
 
 	asset = calloc(1, sizeof(asset_t));
+	asset->path = path_new("game.s2gm");
 	asset->src_mtime = src_mtime;
 	asset->type = ASSET_S2GM;
 	asset->s2gm_json = strdup(json);
@@ -72,6 +75,7 @@ void
 free_asset(asset_t* asset)
 {
 	path_free(asset->obj_path);
+	path_free(asset->path);
 	free(asset);
 }
 
@@ -84,37 +88,34 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 	path_t*     script_path;
 
 	*out_is_new = false;
+	asset->obj_path = asset->type != ASSET_FILE
+		? path_rebase(path_dup(asset->path), staging_path)
+		: path_dup(asset->file.path);
+	if (stat(path_cstr(asset->obj_path), &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
+		return true;  // asset is up-to-date
+
+	*out_is_new = true;
 	switch (asset->type) {
 	case ASSET_FILE:
-		// a file asset represents a direct copy from source to destination, so
-		// there's no need to do anything other than record the source location.
-		asset->obj_path = path_dup(asset->file.path);
+		// a file asset is just a direct copy from source to destination, so
+		// there's nothing to build.
 		return true;
 	case ASSET_S2GM:
-		asset->obj_path = path_rebase(path_new("game.s2gm"), staging_path);
-		if (stat(path_cstr(asset->obj_path), &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
-			return true;
-		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
-			printf("[error] failed to write '%s'\n", path_cstr(asset->obj_path));
+		if (!fspew(asset->s2gm_json, strlen(asset->s2gm_json), path_cstr(asset->obj_path))) {
+			printf("ERROR: failed to write '%s'\n", path_cstr(asset->path));
 			return false;
 		}
-		fwrite(asset->s2gm_json, strlen(asset->s2gm_json), 1, file);
-		fclose(file);
-		*out_is_new = true;
-		break;
+		return true;
 	case ASSET_SGM:
-		asset->obj_path = path_rebase(path_new("game.sgm"), staging_path);
-		if (stat(path_cstr(asset->obj_path), &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
-			return true;
-		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
-			printf("[error] failed to write '%s'\n", path_cstr(asset->obj_path));
-			return false;
-		}
 		script_path = path_new(asset->sgm.script);
 		origin = path_new("scripts/");
 		path_collapse(script_path, true);
 		path_relativize(script_path, origin);
 		path_free(origin);
+		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
+			printf("ERROR: failed to write '%s'\n", path_cstr(asset->path));
+			return false;
+		}
 		fprintf(file, "name=%s\n", asset->sgm.name);
 		fprintf(file, "author=%s\n", asset->sgm.author);
 		fprintf(file, "description=%s\n", asset->sgm.description);
@@ -123,16 +124,14 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		fprintf(file, "script=%s\n", path_cstr(script_path));
 		fclose(file);
 		path_free(script_path);
-		*out_is_new = true;
-		break;
+		return true;
 	default:
 		return false;
 	}
-	return true;
 }
 
 const path_t*
-get_asset_path(const asset_t* asset)
+get_object_path(const asset_t* asset)
 {
 	return asset->obj_path;
 }
