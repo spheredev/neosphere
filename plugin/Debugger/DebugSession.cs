@@ -34,7 +34,7 @@ namespace minisphere.Gdk.Debugger
             sourcePath = project.RootPath;
             engineProcess = engine;
             engineDir = Path.GetDirectoryName(enginePath);
-            focusTimer = new Timer(HandleResume, this, Timeout.Infinite, Timeout.Infinite);
+            focusTimer = new Timer(HandleFocusSwitch, this, Timeout.Infinite, Timeout.Infinite);
             updateTimer = new Timer(UpdateDebugViews, this, Timeout.Infinite, Timeout.Infinite);
         }
 
@@ -260,7 +260,7 @@ namespace minisphere.Gdk.Debugger
             await duktape.StepOver();
         }
 
-        private static void HandleResume(object state)
+        private static void HandleFocusSwitch(object state)
         {
             PluginManager.Core.Invoke(new Action(() =>
             {

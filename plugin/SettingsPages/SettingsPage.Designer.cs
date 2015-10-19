@@ -40,7 +40,6 @@
             this.GdkPathTextBox = new System.Windows.Forms.TextBox();
             this.PathLabel = new System.Windows.Forms.Label();
             this.editorLabel1 = new Sphere.Core.Editor.EditorLabel();
-            this.KeepOutputCheckBox = new System.Windows.Forms.CheckBox();
             this.TabView.SuspendLayout();
             this.MainTabPage.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -74,7 +73,6 @@
             // panel2
             // 
             this.panel2.Controls.Add(this.MakeDebugPackageCheckBox);
-            this.panel2.Controls.Add(this.KeepOutputCheckBox);
             this.panel2.Controls.Add(this.TestWithConsoleCheckBox);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(3, 126);
@@ -85,7 +83,7 @@
             // MakeDebugPackageCheckBox
             // 
             this.MakeDebugPackageCheckBox.AutoSize = true;
-            this.MakeDebugPackageCheckBox.Location = new System.Drawing.Point(12, 58);
+            this.MakeDebugPackageCheckBox.Location = new System.Drawing.Point(12, 35);
             this.MakeDebugPackageCheckBox.Name = "MakeDebugPackageCheckBox";
             this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(247, 17);
             this.MakeDebugPackageCheckBox.TabIndex = 2;
@@ -132,9 +130,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(9, 51);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(227, 13);
+            this.label1.Size = new System.Drawing.Size(190, 13);
             this.label1.TabIndex = 5;
-            this.label1.Text = "minisphere GDK version 2.0 or later is required.";
+            this.label1.Text = "minisphere GDK 2.0 or later is required.";
             // 
             // BrowseButton
             // 
@@ -181,16 +179,6 @@
             this.editorLabel1.Text = "Where is the minisphere GDK installed?";
             this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // KeepOutputCheckBox
-            // 
-            this.KeepOutputCheckBox.AutoSize = true;
-            this.KeepOutputCheckBox.Location = new System.Drawing.Point(12, 35);
-            this.KeepOutputCheckBox.Name = "KeepOutputCheckBox";
-            this.KeepOutputCheckBox.Size = new System.Drawing.Size(296, 17);
-            this.KeepOutputCheckBox.TabIndex = 1;
-            this.KeepOutputCheckBox.Text = "Keep the Debug Console available for viewing at all times";
-            this.KeepOutputCheckBox.UseVisualStyleBackColor = true;
-            // 
             // SettingsPage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -222,6 +210,5 @@
         private Sphere.Core.Editor.EditorLabel editorLabel2;
         private System.Windows.Forms.CheckBox MakeDebugPackageCheckBox;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.CheckBox KeepOutputCheckBox;
     }
 }
