@@ -34,6 +34,7 @@ struct target
 
 static duk_ret_t js_api_install (duk_context* ctx);
 static duk_ret_t js_api_files   (duk_context* ctx);
+static duk_ret_t js_api_s2gm    (duk_context* ctx);
 static duk_ret_t js_api_sgm     (duk_context* ctx);
 
 static void process_add_files (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
@@ -70,6 +71,8 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	duk_put_global_string(build->duk, "install");
 	duk_push_c_function(build->duk, js_api_files, DUK_VARARGS);
 	duk_put_global_string(build->duk, "files");
+	duk_push_c_function(build->duk, js_api_s2gm, DUK_VARARGS);
+	duk_put_global_string(build->duk, "s2gm");
 	duk_push_c_function(build->duk, js_api_sgm, DUK_VARARGS);
 	duk_put_global_string(build->duk, "sgm");
 
@@ -520,6 +523,24 @@ js_api_sgm(duk_context* ctx)
 		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
 	free(res_string);
 	target = add_target(build, new_sgm_asset(manifest, build->js_mtime), NULL);
+	duk_push_pointer(ctx, target);
+	return 1;
+}
+
+static duk_ret_t
+js_api_s2gm(duk_context* ctx)
+{
+	build_t*  build;
+	target_t* target;
+
+	duk_require_object_coercible(ctx, 0);
+	duk_push_global_stash(ctx);
+	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
+	duk_pop_2(ctx);
+
+	target = add_target(build,
+		new_s2gm_asset(duk_json_encode(ctx, 0), build->js_mtime),
+		NULL);
 	duk_push_pointer(ctx, target);
 	return 1;
 }
