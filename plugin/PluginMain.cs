@@ -22,14 +22,16 @@ namespace minisphere.Gdk
         public string Version { get { return "2.0b2"; } }
 
         internal PluginConf Conf { get; private set; }
+        internal int Sessions { get; set; }
 
         public void Initialize(ISettings conf)
         {
             Conf = new PluginConf(conf);
+            Sessions = 0;
 
             PluginManager.Register(this, new CellCompiler(this), "Cell");
             PluginManager.Register(this, new minisphereStarter(this), "minisphere");
-            PluginManager.Register(this, new SettingsPage(Conf), "minisphere GDK");
+            PluginManager.Register(this, new SettingsPage(this), "minisphere GDK");
 
             Panes.Initialize(this);
 
@@ -89,12 +91,6 @@ namespace minisphere.Gdk
             set { Conf.SetValue("alwaysUseConsole", value); }
         }
 
-        public bool KeepDebugOutput
-        {
-            get { return Conf.GetBoolean("keepDebugOutput", true); }
-            set { Conf.SetValue("keepDebugOutput", value); }
-        }
-
         public bool MakeDebugPackages
         {
             get { return Conf.GetBoolean("makeDebugPackages", false); }
@@ -108,11 +104,8 @@ namespace minisphere.Gdk
         {
             PluginManager.Register(main, Inspector = new InspectorPane(), "Variables");
             PluginManager.Register(main, Stack = new StackPane(), "Call Stack");
-            PluginManager.Register(main, Console = new ConsolePane(), "Debug Output");
-            PluginManager.Register(main, Errors = new ErrorPane(), "Error View");
-
-            if (main.Conf.KeepDebugOutput)
-                PluginManager.Core.Docking.Show(Console);
+            PluginManager.Register(main, Console = new ConsolePane(main.Conf), "Debug Console");
+            PluginManager.Register(main, Errors = new ErrorPane(), "Exceptions");
         }
 
         public static ConsolePane Console { get; private set; }

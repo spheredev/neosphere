@@ -16,11 +16,13 @@ namespace minisphere.Gdk.DockPanes
 {
     partial class ConsolePane : UserControl, IDockPane
     {
+        PluginConf _conf;
         List<string> _lines = new List<string>();
 
-        public ConsolePane()
+        public ConsolePane(PluginConf conf)
         {
             InitializeComponent();
+            _conf = conf;
         }
 
         public bool ShowInViewMenu { get { return true; } }

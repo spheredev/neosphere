@@ -25,11 +25,11 @@ namespace minisphere.Gdk.Debugger
         private Timer focusTimer;
         private string sourcePath;
         private Timer updateTimer;
-        private PluginConf conf;
+        private PluginMain plugin;
 
         public DebugSession(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
         {
-            conf = main.Conf;
+            plugin = main;
             sgmPath = gamePath;
             sourcePath = project.RootPath;
             engineProcess = engine;
@@ -64,6 +64,7 @@ namespace minisphere.Gdk.Debugger
             try
             {
                 await Connect("localhost", 1208);
+                ++plugin.Sessions;
                 return true;
             }
             catch (TimeoutException)
@@ -76,6 +77,7 @@ namespace minisphere.Gdk.Debugger
         {
             focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
             await duktape.Detach();
+            --plugin.Sessions;
             Dispose();
         }
 
@@ -121,8 +123,8 @@ namespace minisphere.Gdk.Debugger
                 Panes.Console.Print(string.Format("minisphere GDK for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2015 Fat Cerberus"));
                 Panes.Console.Print("");
-                Panes.Console.Print(string.Format("Debuggee IDs as {0}.", duktape.TargetID));
-                Panes.Console.Print(string.Format("Duktape {0}", duktape.Version));
+                Panes.Console.Print(string.Format("Host: Duktape {0}", duktape.Version));
+                Panes.Console.Print(string.Format("({0})", duktape.TargetID));
                 Panes.Console.Print("");
 
                 PluginManager.Core.Docking.Show(Panes.Inspector);
@@ -138,13 +140,10 @@ namespace minisphere.Gdk.Debugger
                     Detached(this, EventArgs.Empty);
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Hide(Panes.Stack);
-                Panes.Errors.HideIfClean();
 
-                PluginManager.Core.Docking.Show(Panes.Console);
+                PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Console.Print("");
                 Panes.Console.Print(duktape.TargetID + " detached.");
-                if (!conf.KeepDebugOutput)
-                    PluginManager.Core.Docking.Hide(Panes.Console);
             }), null);
         }
 
@@ -267,7 +266,7 @@ namespace minisphere.Gdk.Debugger
             {
                 DebugSession me = (DebugSession)state;
                 NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
-                PluginManager.Core.Docking.Show(Panes.Console);
+                PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Inspector.Enabled = false;
                 Panes.Stack.Enabled = false;
                 Panes.Inspector.Clear();

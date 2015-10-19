@@ -9,36 +9,35 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using Sphere.Plugins.Interfaces;
+using Sphere.Plugins;
 
 namespace minisphere.Gdk.SettingsPages
 {
     partial class SettingsPage : UserControl, ISettingsPage
     {
-        private PluginConf _settings;
+        private PluginMain _main;
 
-        public SettingsPage(PluginConf settings)
+        public SettingsPage(PluginMain main)
         {
             InitializeComponent();
-            _settings = settings;
+            _main = main;
         }
 
         public Control Control { get { return this; } }
 
         public bool Apply()
         {
-            _settings.GdkPath = GdkPathTextBox.Text;
-            _settings.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
-            _settings.KeepDebugOutput = KeepOutputCheckBox.Checked;
-            _settings.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
+            _main.Conf.GdkPath = GdkPathTextBox.Text;
+            _main.Conf.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
+            _main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
             return true;
         }
 
         protected override void OnLoad(EventArgs e)
         {
-            GdkPathTextBox.Text = _settings.GdkPath;
-            MakeDebugPackageCheckBox.Checked = _settings.MakeDebugPackages;
-            KeepOutputCheckBox.Checked = _settings.KeepDebugOutput;
-            TestWithConsoleCheckBox.Checked = _settings.AlwaysUseConsole;
+            GdkPathTextBox.Text = _main.Conf.GdkPath;
+            MakeDebugPackageCheckBox.Checked = _main.Conf.MakeDebugPackages;
+            TestWithConsoleCheckBox.Checked = _main.Conf.AlwaysUseConsole;
 
             base.OnLoad(e);
         }

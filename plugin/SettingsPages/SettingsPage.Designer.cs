@@ -32,7 +32,6 @@
             this.MainTabPage = new System.Windows.Forms.TabPage();
             this.panel2 = new System.Windows.Forms.Panel();
             this.MakeDebugPackageCheckBox = new System.Windows.Forms.CheckBox();
-            this.KeepOutputCheckBox = new System.Windows.Forms.CheckBox();
             this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
             this.editorLabel2 = new Sphere.Core.Editor.EditorLabel();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -41,6 +40,7 @@
             this.GdkPathTextBox = new System.Windows.Forms.TextBox();
             this.PathLabel = new System.Windows.Forms.Label();
             this.editorLabel1 = new Sphere.Core.Editor.EditorLabel();
+            this.KeepOutputCheckBox = new System.Windows.Forms.CheckBox();
             this.TabView.SuspendLayout();
             this.MainTabPage.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -91,16 +91,6 @@
             this.MakeDebugPackageCheckBox.TabIndex = 2;
             this.MakeDebugPackageCheckBox.Text = "Include debug map when compiling a package";
             this.MakeDebugPackageCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // KeepOutputCheckBox
-            // 
-            this.KeepOutputCheckBox.AutoSize = true;
-            this.KeepOutputCheckBox.Location = new System.Drawing.Point(12, 35);
-            this.KeepOutputCheckBox.Name = "KeepOutputCheckBox";
-            this.KeepOutputCheckBox.Size = new System.Drawing.Size(330, 17);
-            this.KeepOutputCheckBox.TabIndex = 1;
-            this.KeepOutputCheckBox.Text = "Keep Debug Output pane visible after a debugging session ends";
-            this.KeepOutputCheckBox.UseVisualStyleBackColor = true;
             // 
             // TestWithConsoleCheckBox
             // 
@@ -191,6 +181,16 @@
             this.editorLabel1.Text = "Where is the minisphere GDK installed?";
             this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // KeepOutputCheckBox
+            // 
+            this.KeepOutputCheckBox.AutoSize = true;
+            this.KeepOutputCheckBox.Location = new System.Drawing.Point(12, 35);
+            this.KeepOutputCheckBox.Name = "KeepOutputCheckBox";
+            this.KeepOutputCheckBox.Size = new System.Drawing.Size(296, 17);
+            this.KeepOutputCheckBox.TabIndex = 1;
+            this.KeepOutputCheckBox.Text = "Keep the Debug Console available for viewing at all times";
+            this.KeepOutputCheckBox.UseVisualStyleBackColor = true;
+            // 
             // SettingsPage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -220,8 +220,8 @@
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.CheckBox TestWithConsoleCheckBox;
         private Sphere.Core.Editor.EditorLabel editorLabel2;
-        private System.Windows.Forms.CheckBox KeepOutputCheckBox;
         private System.Windows.Forms.CheckBox MakeDebugPackageCheckBox;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.CheckBox KeepOutputCheckBox;
     }
 }

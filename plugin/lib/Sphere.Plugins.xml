@@ -469,17 +469,23 @@
             Refreshes the dock and updates it with any new and removed panes.
             </summary>
         </member>
-        <member name="M:Sphere.Plugins.Interfaces.IDock.Hide(Sphere.Plugins.Interfaces.IDockPane)">
+        <member name="M:Sphere.Plugins.Interfaces.IDock.Activate(Sphere.Plugins.Interfaces.IDockPane)">
             <summary>
-            Hides a registered dock pane. If it is already hidden, does nothing.
+            Activates a dock pane, giving it focus. Has no effect if the pane is hidden.
             </summary>
-            <param name="pane">The dock pane to hide.</param>
+            <param name="pane"></param>
         </member>
         <member name="M:Sphere.Plugins.Interfaces.IDock.Show(Sphere.Plugins.Interfaces.IDockPane)">
             <summary>
             Shows a registered dock pane. If it is already visible, does nothing.
             </summary>
             <param name="pane">The dock pane to show.</param>
+        </member>
+        <member name="M:Sphere.Plugins.Interfaces.IDock.Hide(Sphere.Plugins.Interfaces.IDockPane)">
+            <summary>
+            Hides a registered dock pane. If it is already hidden, does nothing.
+            </summary>
+            <param name="pane">The dock pane to hide.</param>
         </member>
         <member name="T:Sphere.Plugins.Interfaces.IProject">
             <summary>
