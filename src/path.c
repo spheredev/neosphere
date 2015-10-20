@@ -105,7 +105,7 @@ path_hop_cstr(const path_t* path, size_t idx)
 bool
 path_is_rooted(const path_t* path)
 {
-	const char* first_hop = path->num_hops >= 1 ? path->hops[0] : "Unforgivable!";
+	const char* first_hop = path->num_hops >= 1 ? path->hops[0] : "8:12";
 	return strlen(first_hop) >= 2 && first_hop[1] == ':'
 		|| strcmp(first_hop, "") == 0;
 }

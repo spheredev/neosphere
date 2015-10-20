@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static bool maybe_resize_vector(vector_t* vector, size_t min_items);
+static bool resize_vector (vector_t* vector, size_t min_items);
 
 struct vector
 {
@@ -64,13 +64,13 @@ void
 clear_vector(vector_t* vector)
 {
 	vector->num_items = 0;
-	maybe_resize_vector(vector, 0);
+	resize_vector(vector, 0);
 }
 
 bool
 push_back_vector(vector_t* vector, const void* in_object)
 {
-	if (!maybe_resize_vector(vector, vector->num_items + 1))
+	if (!resize_vector(vector, vector->num_items + 1))
 		return false;
 	memcpy(vector->buffer + vector->num_items * vector->pitch, in_object, vector->pitch);
 	++vector->num_items;
@@ -87,7 +87,25 @@ remove_vector_item(vector_t* vector, size_t index)
 	move_size = (vector->num_items - index) * vector->pitch;
 	p = vector->buffer + index * vector->pitch;
 	memmove(p, p + vector->pitch, move_size);
-	maybe_resize_vector(vector, vector->num_items);
+	resize_vector(vector, vector->num_items);
+}
+
+vector_t*
+vector_dup(const vector_t* vector)
+{
+	vector_t* copy;
+
+	copy = new_vector(vector->pitch);
+	resize_vector(copy, vector->num_items);
+	memcpy(copy->buffer, vector->buffer, vector->pitch * vector->num_items);
+	return copy;
+}
+
+vector_t*
+vector_sort(vector_t* vector, int (*comparer)(const void* in_a, const void* in_b))
+{
+	qsort(vector->buffer, vector->num_items, vector->pitch, comparer);
+	return vector;
 }
 
 iter_t
@@ -121,7 +139,7 @@ next_vector_item(iter_t* iter)
 }
 
 static bool
-maybe_resize_vector(vector_t* vector, size_t min_items)
+resize_vector(vector_t* vector, size_t min_items)
 {
 	unsigned char* new_buffer;
 	size_t         new_max;

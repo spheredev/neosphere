@@ -17,6 +17,9 @@ main(int argc, char* argv[])
 {
 	int      retval = EXIT_FAILURE;
 	build_t* build = NULL;
+	int      num_errors;
+	int      num_warnings;
+	bool     is_success;
 
 	srand((unsigned int)time(NULL));
 	
@@ -33,6 +36,10 @@ main(int argc, char* argv[])
 	retval = EXIT_SUCCESS;
 
 shutdown:
+	if (build != NULL) {
+		is_success = is_build_ok(build, &num_errors, &num_warnings);
+		printf("\n%d error(s), %d warning(s)\n", num_errors, num_warnings);
+	}
 	path_free(s_in_path);
 	path_free(s_out_path);
 	free(s_target_name);

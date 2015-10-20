@@ -12,6 +12,7 @@ struct build
 	vector_t*     installs;
 	path_t*       out_path;
 	time_t        js_mtime;
+	int           n_errors;
 	int           n_warnings;
 	char*         rule;
 	spk_writer_t* spk;
@@ -40,6 +41,8 @@ static duk_ret_t js_api_sgm     (duk_context* ctx);
 static void process_add_files (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
 static bool process_install   (build_t* build, struct install* inst, bool *out_is_new);
 static bool process_target    (build_t* build, const target_t* target, bool *out_is_new);
+static void validate_targets  (build_t* build);
+static int  qcmp_asset_names  (const void* in_a, const void* in_b);
 
 build_t*
 new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
@@ -132,15 +135,19 @@ free_build(build_t* build)
 }
 
 bool
+is_build_ok(const build_t* build, int *out_n_errors, int *out_n_warnings)
+{
+	if (out_n_errors) *out_n_errors = build->n_errors;
+	if (out_n_warnings) *out_n_warnings = build->n_warnings;
+	return build->n_errors == 0;
+}
+
+bool
 evaluate_rule(build_t* build, const char* name)
 {
-	char        func_name[255];
-	int         n_conflicts = 0;
-	int         n_warnings;
-	path_t*     script_path;
-
-	iter_t iter;
-	target_t* *p_target;
+	char    func_name[255];
+	int     n_warnings;
+	path_t* script_path;
 
 	build->rule = strdup(name);
 	
@@ -151,29 +158,26 @@ evaluate_rule(build_t* build, const char* name)
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
 		path_free(script_path);
-		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
+		printf("\nJS: %s\n", duk_safe_to_string(build->duk, -1));
 		return false;
 	}
 	path_free(script_path);
 	if (!duk_get_global_string(build->duk, func_name) || !duk_is_callable(build->duk, -1)) {
-		printf("\n[error] no rule named '%s' in Cellscript.js\n", name);
+		emit_error(build, "no Cellscript rule named '%s'\n", name);
 		return false;
 	}
 	if (duk_pcall(build->duk, 0) != 0) {
-		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
+		printf("\nJS: %s\n", duk_safe_to_string(build->duk, -1));
 		return false;
 	}
-	if (build->n_warnings == n_warnings)
+
+	validate_targets(build);
+
+	if (build->n_warnings == n_warnings && build->n_errors == 0)
 		printf("OK.\n");
 	else
 		printf("\n");
-
-	// check for asset name conflicts
-	iter = iterate_vector(build->targets);
-	while (p_target = next_vector_item(&iter)) {
-
-	}
-	return true;
+	return build->n_errors == 0;
 }
 
 vector_t*
@@ -188,7 +192,7 @@ add_files(build_t* build, const path_t* pattern, bool recursive)
 	wildcard = strdup(path_filename_cstr(pattern));
 	process_add_files(build, wildcard, path, NULL, recursive, &targets);
 	if (get_vector_size(targets) == 0)
-		emit_warning(build, "no files found matching pattern '%s'", path_cstr(pattern));
+		emit_warning(build, "no files match pattern '%s'", path_cstr(pattern));
 	path_free(path);
 	free(wildcard);
 	return targets;
@@ -217,6 +221,18 @@ add_target(build_t* build, asset_t* asset, const path_t* subpath)
 		: path_new("./");
 	push_back_vector(build->targets, &target);
 	return target;
+}
+
+void
+emit_error(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->n_errors;
+	va_start(ap, fmt);
+	printf("\n  ERROR: ");
+	vprintf(fmt, ap);
+	va_end(ap);
 }
 
 void
@@ -265,7 +281,7 @@ run_build(build_t* build)
 		}
 	}
 	if (n_assets > 0) printf("  %d asset(s) built\n", n_assets);
-		else printf(" Up to date.\n");
+		else printf(" Up-to-date.\n");
 
 	printf("Installing assets...");
 	n_assets = 0;
@@ -281,7 +297,7 @@ run_build(build_t* build)
 		}
 	}
 	if (n_assets > 0) printf("  %d asset(s) installed\n", n_assets);
-		else printf(" Up to date.\n");
+		else printf(" Up-to-date.\n");
 
 	// generate source map
 	if (build->want_source_map) {
@@ -315,10 +331,40 @@ run_build(build_t* build)
 		path_free(path);
 	}
 
-	printf("\n%s -> '%s'\n", build->rule, path_cstr(build->out_path));
-	printf("Finished, %i warning(s)\n", build->n_warnings);
+	printf("%s -> '%s'\n", build->rule, path_cstr(build->out_path));
 
 	return true;
+}
+
+static void
+validate_targets(build_t* build)
+{
+	const path_t* asset_name;
+	int           n_dups = 0;
+	const path_t* prev_asset_name = NULL;
+	vector_t*     targets;
+
+	iter_t iter;
+	target_t* *p_target;
+
+	// check for asset name conflicts
+	targets = vector_sort(vector_dup(build->targets), qcmp_asset_names);
+	iter = iterate_vector(build->targets);
+	while (p_target = next_vector_item(&iter)) {
+		if (!(asset_name = get_asset_name((*p_target)->asset)))
+			continue;
+		if (prev_asset_name != NULL && path_cmp(asset_name, prev_asset_name))
+			++n_dups;
+		else {
+			if (n_dups > 0)
+				emit_error(build, "'%s' %d-way asset conflict", path_cstr(asset_name), n_dups + 1);
+			n_dups = 0;
+		}
+		prev_asset_name = asset_name;
+	}
+	if (n_dups > 0)
+		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_asset_name), n_dups + 1);
+	free_vector(targets);
 }
 
 static void
@@ -389,7 +435,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 		fn_src = path_cstr(src_path);
 		fn_dest = path_cstr(out_path);
 		if (stat(fn_src, &sb_src) != 0) {
-			fprintf(stderr, "[error] failed to access '%s'\n", fn_src);
+			emit_error(build, "failed to access '%s'", fn_src);
 			return false;
 		}
 		if (stat(fn_dest, &sb_dest) != 0
@@ -400,8 +446,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 				|| !fspew(file_data, file_size, fn_dest))
 			{
 				free(file_data);
-				fprintf(stderr, "[error] failed to copy '%s' to '%s'\n",
-					path_cstr(src_path), path_cstr(out_path));
+				emit_error(build, "failed to copy '%s' to '%s'", path_cstr(src_path), path_cstr(out_path));
 				return false;
 			}
 			free(file_data);
@@ -428,6 +473,19 @@ process_target(build_t* build, const target_t* target, bool *out_is_new)
 	return build_asset(target->asset, build->staging_path, out_is_new);
 }
 
+static int
+qcmp_asset_names(const void* in_a, const void* in_b)
+{
+	const path_t* path_a;
+	const path_t* path_b;
+
+	path_a = get_asset_name((*(target_t**)in_a)->asset);
+	path_b = get_asset_name((*(target_t**)in_b)->asset);
+	return path_a == path_b ? 0
+		: path_a == NULL ? 1
+		: path_b == NULL ? -1
+		: strcmp(path_cstr(path_a), path_cstr(path_b));
+}
 
 static duk_ret_t
 js_api_install(duk_context* ctx)

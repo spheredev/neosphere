@@ -24,6 +24,9 @@ void      clear_vector       (vector_t* vector);
 bool      push_back_vector   (vector_t* vector, const void* in_object);
 void      remove_vector_item (vector_t* vector, size_t index);
 
+vector_t* vector_dup  (const vector_t* vector);
+vector_t* vector_sort (vector_t* vector, int (*comparer)(const void* in_a, const void* in_b));
+
 iter_t iterate_vector   (const vector_t* vector);
 void*  next_vector_item (iter_t* inout_iter);
 
