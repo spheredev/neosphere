@@ -132,13 +132,13 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		path_free(script_path);
 		return true;
 	default:
-		printf("ERROR: internal: unknown asset type %d '%s'\n",
+		fprintf(stderr, "ERROR: internal: unknown asset type %d '%s'\n",
 			asset->type, path_cstr(asset->name));
 		return false;
 	}
 
 on_error:
-	printf("ERROR: failed to build '%s', errno = %d\n", path_cstr(asset->name), errno);
+	fprintf(stderr, "\nERROR: failed to build '%s', errno = %d\n", path_cstr(asset->name), errno);
 	return false;
 }
 

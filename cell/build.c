@@ -29,8 +29,9 @@ struct install
 
 struct target
 {
-	asset_t* asset;
-	path_t*  subpath;
+	unsigned int num_refs;
+	asset_t*     asset;
+	path_t*      subpath;
 };
 
 static duk_ret_t js_api_install (duk_context* ctx);
@@ -38,11 +39,12 @@ static duk_ret_t js_api_files   (duk_context* ctx);
 static duk_ret_t js_api_s2gm    (duk_context* ctx);
 static duk_ret_t js_api_sgm     (duk_context* ctx);
 
+static int qcmp_asset_name (const void* in_a, const void* in_b);
+
 static void process_add_files (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
 static bool process_install   (build_t* build, struct install* inst, bool *out_is_new);
 static bool process_target    (build_t* build, const target_t* target, bool *out_is_new);
 static void validate_targets  (build_t* build);
-static int  qcmp_asset_names  (const void* in_a, const void* in_b);
 
 build_t*
 new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
@@ -56,7 +58,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	// check for Cellscript.js in input directory
 	path = path_rebase(path_new("Cellscript.js"), in_path);
 	if (stat(path_cstr(path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
-		fprintf(stderr, "[error] failed to stat Cellscript.js\n");
+		fprintf(stderr, "error: internal: failed to stat Cellscript.js\n");
 		return NULL;
 	}
 	build->js_mtime = sb.st_mtime;
@@ -84,7 +86,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	if (path_filename_cstr(out_path)
 		&& !(build->spk = spk_create(path_cstr(out_path))))
 	{
-		printf("[error] failed to create SPK '%s'", path_cstr(out_path));
+		fprintf(stderr, "error: internal: failed to create SPK '%s'", path_cstr(out_path));
 		goto on_error;
 	}
 	build->want_source_map = want_source_map;
@@ -93,7 +95,6 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	build->in_path = path_resolve(path_dup(in_path), NULL);
 	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
-	path_mkdir(build->staging_path);
 	
 	printf("Compiling '%s' as %s\n", path_cstr(build->in_path), build->spk ? "SPK" : "dist");
 	return build;
@@ -158,26 +159,35 @@ evaluate_rule(build_t* build, const char* name)
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
 		path_free(script_path);
-		printf("\nJS: %s\n", duk_safe_to_string(build->duk, -1));
-		return false;
+		emit_error(build, "JS: %s", duk_safe_to_string(build->duk, -1));
+		goto on_error;
 	}
 	path_free(script_path);
-	if (!duk_get_global_string(build->duk, func_name) || !duk_is_callable(build->duk, -1)) {
-		emit_error(build, "no Cellscript rule named '%s'\n", name);
-		return false;
+	if (duk_get_global_string(build->duk, func_name) && duk_is_callable(build->duk, -1)) {
+		if (duk_pcall(build->duk, 0) != 0) {
+			emit_error(build, "JS: %s", duk_safe_to_string(build->duk, -1));
+			goto on_error;
+		}
 	}
-	if (duk_pcall(build->duk, 0) != 0) {
-		printf("\nJS: %s\n", duk_safe_to_string(build->duk, -1));
-		return false;
+	else {
+		emit_error(build, "no Cellscript rule named '%s'", name);
+		goto on_error;
 	}
 
 	validate_targets(build);
+	if (build->n_errors)
+		goto on_error;
 
-	if (build->n_warnings == n_warnings && build->n_errors == 0)
+	path_append_dir(build->staging_path, name);
+	if (build->n_warnings == n_warnings)
 		printf("OK.\n");
 	else
 		printf("\n");
-	return build->n_errors == 0;
+	return true;
+
+on_error:
+	printf("\n");
+	return false;
 }
 
 vector_t*
@@ -262,15 +272,18 @@ run_build(build_t* build)
 	iter_t iter;
 
 	if (get_vector_size(build->installs) == 0) {
-		printf("[error] no assets staged for install\n");
+		emit_error(build, "no assets staged for install");
 		return false;
 	}
 
 	// build and install assets
 	printf("Building assets...");
+	path_mkdir(build->staging_path);
 	n_assets = 0;
 	iter = iterate_vector(build->targets);
 	while (p_target = next_vector_item(&iter)) {
+		if (!(*p_target)->num_refs == 0) continue;
+
 		if (!process_target(build, *p_target, &is_new))
 			return false;
 		if (is_new) {
@@ -316,7 +329,7 @@ run_build(build_t* build)
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
 			path_free(path);
-			printf("\n[error] failed to write source map");
+			fprintf(stderr, "\nerror: internal: failed to write source map");
 			return false;
 		}
 		if (build->spk != NULL)
@@ -348,11 +361,12 @@ validate_targets(build_t* build)
 	target_t* *p_target;
 
 	// check for asset name conflicts
-	targets = vector_sort(vector_dup(build->targets), qcmp_asset_names);
+	targets = vector_sort(vector_dup(build->targets), qcmp_asset_name);
 	iter = iterate_vector(build->targets);
 	while (p_target = next_vector_item(&iter)) {
-		if (!(asset_name = get_asset_name((*p_target)->asset)))
-			continue;
+		if (!(asset_name = get_asset_name((*p_target)->asset))) continue;
+		if (!(*p_target)->num_refs == 0) continue;
+
 		if (prev_asset_name != NULL && path_cmp(asset_name, prev_asset_name))
 			++n_dups;
 		else {
@@ -474,7 +488,7 @@ process_target(build_t* build, const target_t* target, bool *out_is_new)
 }
 
 static int
-qcmp_asset_names(const void* in_a, const void* in_b)
+qcmp_asset_name(const void* in_a, const void* in_b)
 {
 	const path_t* path_a;
 	const path_t* path_b;
@@ -507,13 +521,16 @@ js_api_install(duk_context* ctx)
 	
 	if (!duk_is_array(ctx, 0)) {
 		target = duk_require_pointer(ctx, 0);
+		++target->num_refs;
 		add_install(build, target, path);
 	}
 	else {
 		n_targets = duk_get_length(ctx, 0);
 		for (i = 0; i < n_targets; ++i) {
 			duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-			add_install(build, duk_require_pointer(ctx, -1), path);
+			target = duk_require_pointer(ctx, -1);
+			++target->num_refs;
+			add_install(build, target, path);
 			duk_pop(ctx);
 		}
 	}
