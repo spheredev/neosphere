@@ -5,9 +5,15 @@ typedef
 enum asset_type
 {
 	ASSET_FILE,
-	ASSET_S2GM,
+	ASSET_RAW,
 	ASSET_SGM,
 } asset_type_t;
+
+struct raw_info
+{
+	void*  buffer;
+	size_t size;
+};
 
 struct file_info
 {
@@ -16,14 +22,14 @@ struct file_info
 
 struct asset
 {
-	path_t*      path;
-	path_t*      obj_path;
+	path_t*      name;
+	path_t*      object_path;
 	time_t       src_mtime;
 	asset_type_t type;
 	union {
 		struct file_info file;
+		struct raw_info  data;
 		sgm_info_t       sgm;
-		char*            s2gm_json;
 	};
 };
 
@@ -51,7 +57,7 @@ new_sgm_asset(sgm_info_t sgm, time_t src_mtime)
 	asset_t* asset;
 
 	asset = calloc(1, sizeof(asset_t));
-	asset->path = path_new("game.sgm");
+	asset->name = path_new("game.sgm");
 	asset->src_mtime = src_mtime;
 	asset->type = ASSET_SGM;
 	asset->sgm = sgm;
@@ -59,23 +65,25 @@ new_sgm_asset(sgm_info_t sgm, time_t src_mtime)
 }
 
 asset_t*
-new_s2gm_asset(const char* json, time_t src_mtime)
+new_raw_asset(const path_t* name, const void* buffer, size_t size, time_t src_mtime)
 {
 	asset_t* asset;
 
 	asset = calloc(1, sizeof(asset_t));
-	asset->path = path_new("game.s2gm");
+	asset->name = path_dup(name);
 	asset->src_mtime = src_mtime;
-	asset->type = ASSET_S2GM;
-	asset->s2gm_json = strdup(json);
+	asset->type = ASSET_RAW;
+	asset->data.buffer = malloc(size);
+	asset->data.size = size;
+	memcpy(asset->data.buffer, buffer, size);
 	return asset;
 }
 
 void
 free_asset(asset_t* asset)
 {
-	path_free(asset->obj_path);
-	path_free(asset->path);
+	path_free(asset->object_path);
+	path_free(asset->name);
 	free(asset);
 }
 
@@ -83,15 +91,17 @@ bool
 build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 {
 	FILE*       file;
+	const char* filename;
 	path_t*     origin;
 	struct stat sb;
 	path_t*     script_path;
 
 	*out_is_new = false;
-	asset->obj_path = asset->type != ASSET_FILE
-		? path_rebase(path_dup(asset->path), staging_path)
+	asset->object_path = asset->type != ASSET_FILE
+		? path_rebase(path_dup(asset->name), staging_path)
 		: path_dup(asset->file.path);
-	if (stat(path_cstr(asset->obj_path), &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
+	filename = path_cstr(asset->object_path);
+	if (stat(filename, &sb) == 0 && difftime(sb.st_mtime, asset->src_mtime) >= 0.0)
 		return true;  // asset is up-to-date
 
 	*out_is_new = true;
@@ -100,11 +110,9 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		// a file asset is just a direct copy from source to destination, so
 		// there's nothing to build.
 		return true;
-	case ASSET_S2GM:
-		if (!fspew(asset->s2gm_json, strlen(asset->s2gm_json), path_cstr(asset->obj_path))) {
-			printf("ERROR: failed to write '%s'\n", path_cstr(asset->path));
-			return false;
-		}
+	case ASSET_RAW:
+		if (!fspew(asset->data.buffer, asset->data.size, filename))
+			goto on_error;
 		return true;
 	case ASSET_SGM:
 		script_path = path_new(asset->sgm.script);
@@ -112,10 +120,8 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		path_collapse(script_path, true);
 		path_relativize(script_path, origin);
 		path_free(origin);
-		if (!(file = fopen(path_cstr(asset->obj_path), "wt"))) {
-			printf("ERROR: failed to write '%s'\n", path_cstr(asset->path));
-			return false;
-		}
+		if (!(file = fopen(filename, "wt")))
+			goto on_error;
 		fprintf(file, "name=%s\n", asset->sgm.name);
 		fprintf(file, "author=%s\n", asset->sgm.author);
 		fprintf(file, "description=%s\n", asset->sgm.description);
@@ -126,12 +132,24 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		path_free(script_path);
 		return true;
 	default:
+		printf("ERROR: internal: unknown asset type %d '%s'\n",
+			asset->type, path_cstr(asset->name));
 		return false;
 	}
+
+on_error:
+	printf("ERROR: failed to build '%s', errno = %d\n", path_cstr(asset->name), errno);
+	return false;
+}
+
+const path_t*
+get_asset_name(const asset_t* asset)
+{
+	return asset->name;
 }
 
 const path_t*
 get_object_path(const asset_t* asset)
 {
-	return asset->obj_path;
+	return asset->object_path;
 }

@@ -135,8 +135,12 @@ bool
 evaluate_rule(build_t* build, const char* name)
 {
 	char        func_name[255];
+	int         n_conflicts = 0;
 	int         n_warnings;
 	path_t*     script_path;
+
+	iter_t iter;
+	target_t* *p_target;
 
 	build->rule = strdup(name);
 	
@@ -159,11 +163,16 @@ evaluate_rule(build_t* build, const char* name)
 		printf("\n[js] %s\n", duk_safe_to_string(build->duk, -1));
 		return false;
 	}
-
 	if (build->n_warnings == n_warnings)
 		printf("OK.\n");
 	else
 		printf("\n");
+
+	// check for asset name conflicts
+	iter = iterate_vector(build->targets);
+	while (p_target = next_vector_item(&iter)) {
+
+	}
 	return true;
 }
 
@@ -530,17 +539,22 @@ js_api_sgm(duk_context* ctx)
 static duk_ret_t
 js_api_s2gm(duk_context* ctx)
 {
-	build_t*  build;
-	target_t* target;
+	build_t*    build;
+	const char* json;
+	path_t*     name;
+	target_t*   target;
 
 	duk_require_object_coercible(ctx, 0);
 	duk_push_global_stash(ctx);
 	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
 	duk_pop_2(ctx);
 
+	json = duk_json_encode(ctx, 0);
+	name = path_new("game.s2gm");
 	target = add_target(build,
-		new_s2gm_asset(duk_json_encode(ctx, 0), build->js_mtime),
+		new_raw_asset(name, json, strlen(json), build->js_mtime),
 		NULL);
+	path_free(name);
 	duk_push_pointer(ctx, target);
 	return 1;
 }
