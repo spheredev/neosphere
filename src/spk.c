@@ -74,7 +74,7 @@ open_spk(const char* path)
 	
 	// load the package index
 	console_log(4, "Reading package index for SPK %u", s_next_spk_id);
-	spk->index = new_vector(sizeof(struct spk_entry));
+	spk->index = vector_new(sizeof(struct spk_entry));
 	al_fseek(spk->file, spk_hdr.index_offset, ALLEGRO_SEEK_SET);
 	for (i = 0; i < spk_hdr.num_files; ++i) {
 		if (al_fread(spk->file, &spk_entry_hdr, sizeof(struct spk_entry_hdr)) != sizeof(struct spk_entry_hdr))
@@ -85,7 +85,7 @@ open_spk(const char* path)
 		spk_entry.offset = spk_entry_hdr.offset;
 		al_fread(spk->file, spk_entry.file_path, spk_entry_hdr.filename_size);
 		spk_entry.file_path[spk_entry_hdr.filename_size] = '\0';
-		if (!push_back_vector(spk->index, &spk_entry)) goto on_error;
+		if (!vector_push(spk->index, &spk_entry)) goto on_error;
 	}
 
 	spk->id = s_next_spk_id++;
@@ -97,7 +97,7 @@ on_error:
 		al_destroy_path(spk->path);
 		if (spk->file != NULL)
 			al_fclose(spk->file);
-		free_vector(spk->index);
+		vector_free(spk->index);
 		free(spk);
 	}
 	return NULL;
@@ -118,7 +118,7 @@ free_spk(spk_t* spk)
 	
 	console_log(4, "Disposing SPK %u no longer in use",
 		spk->id);
-	free_vector(spk->index);
+	vector_free(spk->index);
 	al_fclose(spk->file);
 	free(spk);
 }
@@ -268,8 +268,8 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 
 	console_log(3, "Unpacking '%s' from SPK %u", path, spk->id);
 	
-	iter = iterate_vector(spk->index);
-	while (fileinfo = next_vector_item(&iter)) {
+	iter = vector_enum(spk->index);
+	while (fileinfo = vector_next(&iter)) {
 		if (strcasecmp(path, fileinfo->file_path) == 0)
 			break;
 	}
@@ -318,9 +318,9 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 	iter_t iter, iter2;
 	lstring_t** item;
 	
-	list = new_vector(sizeof(lstring_t*));
-	iter = iterate_vector(spk->index);
-	while (p_entry = next_vector_item(&iter)) {
+	list = vector_new(sizeof(lstring_t*));
+	iter = vector_enum(spk->index);
+	while (p_entry = vector_next(&iter)) {
 		if (!want_dirs) {  // list files
 			if (!(match = strstr(p_entry->file_path, dirname)))
 				continue;
@@ -336,7 +336,7 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 			
 			// if we got to this point, we have a valid filename
 			filename = lstr_newf("%s", maybe_filename);
-			push_back_vector(list, &filename);
+			vector_push(list, &filename);
 		}
 		else {  // list directories
 			if (!(match = strstr(p_entry->file_path, dirname)))
@@ -357,13 +357,13 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 			found_dirname = strdup(maybe_dirname);
 			*strchr(found_dirname, '/') = '\0';
 			filename = lstr_newf("%s", found_dirname);
-			iter2 = iterate_vector(list);
+			iter2 = vector_enum(list);
 			is_in_set = false;
-			while (item = next_vector_item(&iter2)) {
+			while (item = vector_next(&iter2)) {
 				is_in_set |= lstr_cmp(filename, *item) == 0;
 			}
 			if (!is_in_set)  // avoid duplicate listings
-				push_back_vector(list, &filename);
+				vector_push(list, &filename);
 			free(found_dirname);
 		}
 	}

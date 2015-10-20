@@ -96,7 +96,7 @@ initialize_api(duk_context* ctx)
 	console_log(0, "  API %s", lstr_cstr(s_user_agent));
 
 	// register API extensions
-	s_extensions = new_vector(sizeof(char*));
+	s_extensions = vector_new(sizeof(char*));
 	num_extensions = sizeof SPHERE_EXTENSIONS / sizeof SPHERE_EXTENSIONS[0];
 	for (i = 0; i < num_extensions; ++i) {
 		console_log(1, "  %s", SPHERE_EXTENSIONS[i]);
@@ -255,7 +255,7 @@ register_api_extension(const char* designation)
 	char* string;
 
 	if (!(string = strdup(designation))) return false;
-	if (!push_back_vector(s_extensions, &string))
+	if (!vector_push(s_extensions, &string))
 		return false;
 	return true;
 }
@@ -457,20 +457,20 @@ duk_handle_require(duk_context* ctx)
 
 	if (id[0] == '~')
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefix not allowed");
-	filenames = new_vector(sizeof(lstring_t*));
-	filename = lstr_newf("%s.js", id); push_back_vector(filenames, &filename);
-	filename = lstr_newf("%s.coffee", id); push_back_vector(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.js", id); push_back_vector(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.coffee", id); push_back_vector(filenames, &filename);
+	filenames = vector_new(sizeof(lstring_t*));
+	filename = lstr_newf("%s.js", id); vector_push(filenames, &filename);
+	filename = lstr_newf("%s.coffee", id); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.js", id); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.coffee", id); vector_push(filenames, &filename);
 	filename = NULL;
-	iter = iterate_vector(filenames);
-	while (p = next_vector_item(&iter)) {
+	iter = vector_enum(filenames);
+	while (p = vector_next(&iter)) {
 		if (sfs_fexist(g_fs, lstr_cstr(*p), "modules"))
 			filename = *p;
 		else
 			lstr_free(*p);
 	}
-	free_vector(filenames);
+	vector_free(filenames);
 	if (filename == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "require(): '%s' module not found", id);
 	is_cs = strcasecmp(strrchr(lstr_cstr(filename), '.'), ".coffee") == 0;
@@ -525,8 +525,8 @@ js_GetExtensions(duk_context* ctx)
 	int    i;
 
 	duk_push_array(ctx);
-	iter = iterate_vector(s_extensions); i = 0;
-	while (i_string = next_vector_item(&iter)) {
+	iter = vector_enum(s_extensions); i = 0;
+	while (i_string = vector_next(&iter)) {
 		duk_push_string(ctx, *i_string);
 		duk_put_prop_index(ctx, -2, i++);
 	}

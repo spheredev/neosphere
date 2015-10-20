@@ -261,6 +261,9 @@ path_mkdir(const path_t* path)
 	// path manually.
 	parent_path = path_num_hops(path) > 0 && strcmp(path_hop_cstr(path, 0), "") == 0
 		? path_new("/") : path_new("./");
+	
+	// create directories recursively, starting from the rootmost
+	// ancestor and working our way down.
 	for (i = 0; i < path->num_hops; ++i) {
 		path_append_dir(parent_path, path_hop_cstr(path, i));
 		is_ok = mkdir(path_cstr(parent_path), 0777) == 0;

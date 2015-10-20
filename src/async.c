@@ -13,7 +13,7 @@ bool
 initialize_async(void)
 {
 	console_log(1, "Initializing async manager");
-	s_scripts = new_vector(sizeof(script_t*));
+	s_scripts = vector_new(sizeof(script_t*));
 	return s_scripts != NULL;
 }
 
@@ -21,7 +21,7 @@ void
 shutdown_async(void)
 {
 	console_log(1, "Shutting down async manager");
-	free_vector(s_scripts);
+	vector_free(s_scripts);
 }
 
 void
@@ -32,14 +32,14 @@ update_async(void)
 	vector_t*  vector;
 	
 	vector = s_scripts;
-	s_scripts = new_vector(sizeof(script_t*));
+	s_scripts = vector_new(sizeof(script_t*));
 	if (vector != NULL) {
-		iter = iterate_vector(vector);
-		while (pscript = next_vector_item(&iter)) {
+		iter = vector_enum(vector);
+		while (pscript = vector_next(&iter)) {
 			run_script(*pscript, false);
 			free_script(*pscript);
 		}
-		free_vector(vector);
+		vector_free(vector);
 	}
 }
 
@@ -47,7 +47,7 @@ bool
 queue_async_script(script_t* script)
 {
 	if (s_scripts != NULL)
-		return push_back_vector(s_scripts, &script);
+		return vector_push(s_scripts, &script);
 	else
 		return false;
 }

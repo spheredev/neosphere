@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static bool resize_vector (vector_t* vector, size_t min_items);
+static bool vector_resize (vector_t* vector, size_t min_items);
 
 struct vector
 {
@@ -20,7 +20,7 @@ struct vector
 };
 
 vector_t*
-new_vector(size_t pitch)
+vector_new(size_t pitch)
 {
 	vector_t* vector;
 
@@ -30,8 +30,19 @@ new_vector(size_t pitch)
 	return vector;
 }
 
+vector_t*
+vector_dup(const vector_t* vector)
+{
+	vector_t* copy;
+
+	copy = vector_new(vector->pitch);
+	vector_resize(copy, vector->num_items);
+	memcpy(copy->buffer, vector->buffer, vector->pitch * vector->num_items);
+	return copy;
+}
+
 void
-free_vector(vector_t* vector)
+vector_free(vector_t* vector)
 {
 	if (vector == NULL)
 		return;
@@ -40,13 +51,13 @@ free_vector(vector_t* vector)
 }
 
 void*
-get_vector_item(const vector_t* vector, size_t index)
+vector_get(const vector_t* vector, size_t index)
 {
 	return vector->buffer + index * vector->pitch;
 }
 
 void
-set_vector_item(vector_t* vector, size_t index, const void* in_object)
+vector_set(vector_t* vector, size_t index, const void* in_object)
 {
 	unsigned char* p;
 
@@ -55,22 +66,22 @@ set_vector_item(vector_t* vector, size_t index, const void* in_object)
 }
 
 size_t
-get_vector_size(const vector_t* vector)
+vector_size(const vector_t* vector)
 {
 	return vector->num_items;
 }
 
 void
-clear_vector(vector_t* vector)
+vector_clear(vector_t* vector)
 {
 	vector->num_items = 0;
-	resize_vector(vector, 0);
+	vector_resize(vector, 0);
 }
 
 bool
-push_back_vector(vector_t* vector, const void* in_object)
+vector_push(vector_t* vector, const void* in_object)
 {
-	if (!resize_vector(vector, vector->num_items + 1))
+	if (!vector_resize(vector, vector->num_items + 1))
 		return false;
 	memcpy(vector->buffer + vector->num_items * vector->pitch, in_object, vector->pitch);
 	++vector->num_items;
@@ -78,7 +89,7 @@ push_back_vector(vector_t* vector, const void* in_object)
 }
 
 void
-remove_vector_item(vector_t* vector, size_t index)
+vector_remove(vector_t* vector, size_t index)
 {
 	size_t         move_size;
 	unsigned char* p;
@@ -87,18 +98,7 @@ remove_vector_item(vector_t* vector, size_t index)
 	move_size = (vector->num_items - index) * vector->pitch;
 	p = vector->buffer + index * vector->pitch;
 	memmove(p, p + vector->pitch, move_size);
-	resize_vector(vector, vector->num_items);
-}
-
-vector_t*
-vector_dup(const vector_t* vector)
-{
-	vector_t* copy;
-
-	copy = new_vector(vector->pitch);
-	resize_vector(copy, vector->num_items);
-	memcpy(copy->buffer, vector->buffer, vector->pitch * vector->num_items);
-	return copy;
+	vector_resize(vector, vector->num_items);
 }
 
 vector_t*
@@ -109,7 +109,7 @@ vector_sort(vector_t* vector, int (*comparer)(const void* in_a, const void* in_b
 }
 
 iter_t
-iterate_vector(const vector_t* vector)
+vector_enum(const vector_t* vector)
 {
 	iter_t iter;
 
@@ -120,7 +120,7 @@ iterate_vector(const vector_t* vector)
 }
 
 void*
-next_vector_item(iter_t* iter)
+vector_next(iter_t* iter)
 {
 	void*           pcurrent;
 	void*           ptail;
@@ -139,7 +139,7 @@ next_vector_item(iter_t* iter)
 }
 
 static bool
-resize_vector(vector_t* vector, size_t min_items)
+vector_resize(vector_t* vector, size_t min_items)
 {
 	unsigned char* new_buffer;
 	size_t         new_max;

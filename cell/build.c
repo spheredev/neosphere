@@ -90,8 +90,8 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 		goto on_error;
 	}
 	build->want_source_map = want_source_map;
-	build->targets = new_vector(sizeof(target_t*));
-	build->installs = new_vector(sizeof(struct install));
+	build->targets = vector_new(sizeof(target_t*));
+	build->installs = vector_new(sizeof(struct install));
 	build->in_path = path_resolve(path_dup(in_path), NULL);
 	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
@@ -116,18 +116,18 @@ free_build(build_t* build)
 		return;
 	
 	duk_destroy_heap(build->duk);
-	iter = iterate_vector(build->targets);
-	while (p_target = next_vector_item(&iter)) {
+	iter = vector_enum(build->targets);
+	while (p_target = vector_next(&iter)) {
 		free_asset((*p_target)->asset);
 		path_free((*p_target)->subpath);
 		free(*p_target);
 	}
-	free_vector(build->targets);
-	iter = iterate_vector(build->installs);
-	while (p_inst = next_vector_item(&iter)) {
+	vector_free(build->targets);
+	iter = vector_enum(build->installs);
+	while (p_inst = vector_next(&iter)) {
 		path_free(p_inst->path);
 	}
-	free_vector(build->installs);
+	vector_free(build->installs);
 	path_free(build->in_path);
 	path_free(build->out_path);
 	spk_close(build->spk);
@@ -197,11 +197,11 @@ add_files(build_t* build, const path_t* pattern, bool recursive)
 	vector_t*    targets;
 	char*        wildcard;
 
-	targets = new_vector(sizeof(target_t*));
+	targets = vector_new(sizeof(target_t*));
 	path = path_rebase(path_strip(path_dup(pattern)), build->in_path);
 	wildcard = strdup(path_filename_cstr(pattern));
 	process_add_files(build, wildcard, path, NULL, recursive, &targets);
-	if (get_vector_size(targets) == 0)
+	if (vector_size(targets) == 0)
 		emit_warning(build, "no files match pattern '%s'", path_cstr(pattern));
 	path_free(path);
 	free(wildcard);
@@ -215,7 +215,7 @@ add_install(build_t* build, const target_t* target, const path_t* path)
 
 	inst.target = target;
 	inst.path = path != NULL ? path_dup(path) : path_new("./");
-	push_back_vector(build->installs, &inst);
+	vector_push(build->installs, &inst);
 }
 
 target_t*
@@ -229,7 +229,7 @@ add_target(build_t* build, asset_t* asset, const path_t* subpath)
 	target->subpath = subpath != NULL
 		? path_dup(subpath)
 		: path_new("./");
-	push_back_vector(build->targets, &target);
+	vector_push(build->targets, &target);
 	return target;
 }
 
@@ -271,7 +271,7 @@ run_build(build_t* build)
 	target_t*      *p_target;
 	iter_t iter;
 
-	if (get_vector_size(build->installs) == 0) {
+	if (vector_size(build->installs) == 0) {
 		emit_error(build, "no assets staged for install");
 		return false;
 	}
@@ -280,8 +280,8 @@ run_build(build_t* build)
 	printf("Building assets...");
 	path_mkdir(build->staging_path);
 	n_assets = 0;
-	iter = iterate_vector(build->targets);
-	while (p_target = next_vector_item(&iter)) {
+	iter = vector_enum(build->targets);
+	while (p_target = vector_next(&iter)) {
 		if (!(*p_target)->num_refs == 0) continue;
 
 		if (!process_target(build, *p_target, &is_new))
@@ -298,8 +298,8 @@ run_build(build_t* build)
 
 	printf("Installing assets...");
 	n_assets = 0;
-	iter = iterate_vector(build->installs);
-	while (p_inst = next_vector_item(&iter)) {
+	iter = vector_enum(build->installs);
+	while (p_inst = vector_next(&iter)) {
 		if (!process_install(build, p_inst, &is_new))
 			return false;
 		if (is_new) {
@@ -316,8 +316,8 @@ run_build(build_t* build)
 	if (build->want_source_map) {
 		printf("Generating source map... ");
 		duk_push_object(build->duk);
-		iter = iterate_vector(build->installs);
-		while (p_inst = next_vector_item(&iter)) {
+		iter = vector_enum(build->installs);
+		while (p_inst = vector_next(&iter)) {
 			path = path_resolve(path_dup(get_object_path(p_inst->target->asset)), build->in_path);
 			duk_push_string(build->duk, path_cstr(path));
 			duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
@@ -362,8 +362,8 @@ validate_targets(build_t* build)
 
 	// check for asset name conflicts
 	targets = vector_sort(vector_dup(build->targets), qcmp_asset_name);
-	iter = iterate_vector(build->targets);
-	while (p_target = next_vector_item(&iter)) {
+	iter = vector_enum(build->targets);
+	while (p_target = vector_next(&iter)) {
 		if (!(asset_name = get_asset_name((*p_target)->asset))) continue;
 		if (!(*p_target)->num_refs == 0) continue;
 
@@ -378,7 +378,7 @@ validate_targets(build_t* build)
 	}
 	if (n_dups > 0)
 		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_asset_name), n_dups + 1);
-	free_vector(targets);
+	vector_free(targets);
 }
 
 static void
@@ -412,7 +412,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 		
 		if (file_info.is_reg) {
 			target = add_target(build, new_file_asset(file_path), subpath);
-			push_back_vector(*inout_targets, &target);
+			vector_push(*inout_targets, &target);
 		}
 		else if (file_info.is_dir && recursive) {
 			new_subpath = subpath != NULL
@@ -562,12 +562,12 @@ js_api_files(duk_context* ctx)
 
 	targets = add_files(build, pattern, is_recursive);
 	duk_push_array(ctx);
-	iter = iterate_vector(targets);
-	while (p_target = next_vector_item(&iter)) {
+	iter = vector_enum(targets);
+	while (p_target = vector_next(&iter)) {
 		duk_push_pointer(ctx, *p_target);
 		duk_put_prop_index(ctx, -2, idx++);
 	}
-	free_vector(targets);
+	vector_free(targets);
 	return 1;
 }
 

@@ -105,14 +105,14 @@ initialize_audialis(void)
 	}
 	al_init_acodec_addon();
 	al_reserve_samples(10);
-	s_streams = new_vector(sizeof(stream_t*));
+	s_streams = vector_new(sizeof(stream_t*));
 }
 
 void
 shutdown_audialis(void)
 {
 	console_log(1, "Shutting down Audialis");
-	free_vector(s_streams);
+	vector_free(s_streams);
 	free_mixer(s_def_mixer);
 	if (s_have_sound)
 		al_uninstall_audio();
@@ -125,8 +125,8 @@ update_audialis(void)
 	
 	iter_t iter;
 
-	iter = iterate_vector(s_streams);
-	while (p_stream = next_vector_item(&iter))
+	iter = vector_enum(s_streams);
+	while (p_stream = vector_next(&iter))
 		update_stream(*p_stream);
 }
 
@@ -470,7 +470,7 @@ create_stream(int frequency, int bits, int channels)
 	stream->buffer = malloc(stream->buffer_size);
 	
 	stream->id = s_next_stream_id++;
-	push_back_vector(s_streams, &stream);
+	vector_push(s_streams, &stream);
 	return ref_stream(stream);
 
 on_error:
@@ -502,10 +502,10 @@ free_stream(stream_t* stream)
 	free_mixer(stream->mixer);
 	free(stream->buffer);
 	free(stream);
-	iter = iterate_vector(s_streams);
-	while (p_stream = next_vector_item(&iter)) {
+	iter = vector_enum(s_streams);
+	while (p_stream = vector_next(&iter)) {
 		if (*p_stream == stream) {
-			remove_vector_item(s_streams, iter.index);
+			vector_remove(s_streams, iter.index);
 			break;
 		}
 	}

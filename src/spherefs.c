@@ -195,7 +195,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 
 	if (!resolve_path(fs, dirname, base_dir, &dir_path, &fs_type))
 		goto on_error;
-	if (!(list = new_vector(sizeof(lstring_t*))))
+	if (!(list = vector_new(sizeof(lstring_t*))))
 		goto on_error;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
@@ -206,7 +206,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 				file_path = al_create_path(al_get_fs_entry_name(file_info));
 				filename = lstr_newf("%s", al_get_path_filename(file_path));
 				if (al_get_fs_entry_mode(file_info) & type_flag)
-					push_back_vector(list, &filename);
+					vector_push(list, &filename);
 				al_destroy_path(file_path);
 			}
 		}
@@ -222,7 +222,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 on_error:
 	al_destroy_fs_entry(fse);
 	al_destroy_path(dir_path);
-	free_vector(list);
+	vector_free(list);
 	return NULL;
 }
 

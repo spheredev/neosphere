@@ -69,7 +69,7 @@ void
 initialize_spritesets(void)
 {
 	console_log(1, "Initializing spriteset manager");
-	s_load_cache = new_vector(sizeof(spriteset_t*));
+	s_load_cache = vector_new(sizeof(spriteset_t*));
 }
 
 void
@@ -82,10 +82,10 @@ shutdown_spritesets(void)
 	console_log(2, "  Objects created: %u", s_next_spriteset_id);
 	console_log(2, "  Cache hits: %u", s_num_cache_hits);
 	if (s_load_cache != NULL) {
-		iter = iterate_vector(s_load_cache);
-		while (p_spriteset = next_vector_item(&iter))
+		iter = vector_enum(s_load_cache);
+		while (p_spriteset = vector_next(&iter))
 			free_spriteset(*p_spriteset);
-		free_vector(s_load_cache);
+		vector_free(s_load_cache);
 	}
 }
 
@@ -169,8 +169,8 @@ load_spriteset(const char* filename, bool is_sfs_compliant)
 
 	// check load cache to see if we loaded this file once already
 	if (s_load_cache != NULL) {
-		iter = iterate_vector(s_load_cache);
-		while (p_spriteset = next_vector_item(&iter)) {
+		iter = vector_enum(s_load_cache);
+		while (p_spriteset = vector_next(&iter)) {
 			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
 				console_log(2, "Using cached Spriteset %u for '%s'", (*p_spriteset)->id, filename);
 				++s_num_cache_hits;
@@ -179,7 +179,7 @@ load_spriteset(const char* filename, bool is_sfs_compliant)
 		}
 	}
 	else
-		s_load_cache = new_vector(sizeof(spriteset_t*));
+		s_load_cache = vector_new(sizeof(spriteset_t*));
 	
 	// filename not in load cache, load the spriteset
 	console_log(2, "Loading Spriteset %u as '%s'", s_next_spriteset_id, filename);
@@ -314,13 +314,13 @@ load_spriteset(const char* filename, bool is_sfs_compliant)
 	sfs_fclose(file);
 	
 	if (s_load_cache != NULL) {
-		while (get_vector_size(s_load_cache) >= 10) {
-			p_spriteset = get_vector_item(s_load_cache, 0);
+		while (vector_size(s_load_cache) >= 10) {
+			p_spriteset = vector_get(s_load_cache, 0);
 			free_spriteset(*p_spriteset);
-			remove_vector_item(s_load_cache, 0);
+			vector_remove(s_load_cache, 0);
 		}
 		ref_spriteset(spriteset);
-		push_back_vector(s_load_cache, &spriteset);
+		vector_push(s_load_cache, &spriteset);
 	}
 	spriteset->id = s_next_spriteset_id++;
 	return ref_spriteset(spriteset);

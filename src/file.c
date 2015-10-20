@@ -307,13 +307,13 @@ js_GetDirectoryList(duk_context* ctx)
 
 	list = list_filenames(g_fs, dirname, NULL, true);
 	duk_push_array(ctx);
-	iter = iterate_vector(list);
-	while (p_filename = next_vector_item(&iter)) {
+	iter = vector_enum(list);
+	while (p_filename = vector_next(&iter)) {
 		duk_push_string(ctx, lstr_cstr(*p_filename));
 		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
 		lstr_free(*p_filename);
 	}
-	free_vector(list);
+	vector_free(list);
 	return 1;
 }
 
@@ -330,13 +330,13 @@ js_GetFileList(duk_context* ctx)
 
 	list = list_filenames(g_fs, directory_name, NULL, false);
 	duk_push_array(ctx);
-	iter = iterate_vector(list);
-	while (p_filename = next_vector_item(&iter)) {
+	iter = vector_enum(list);
+	while (p_filename = vector_next(&iter)) {
 		duk_push_string(ctx, lstr_cstr(*p_filename));
 		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
 		lstr_free(*p_filename);
 	}
-	free_vector(list);
+	vector_free(list);
 	return 1;
 }
 

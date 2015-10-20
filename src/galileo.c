@@ -105,7 +105,7 @@ new_group(shader_t* shader)
 	console_log(4, "Creating new Group %u", s_next_group_id);
 	
 	group = calloc(1, sizeof(group_t));
-	group->shapes = new_vector(sizeof(shape_t*));
+	group->shapes = vector_new(sizeof(shape_t*));
 	group->shader = ref_shader(shader);
 	
 	group->id = s_next_group_id++;
@@ -132,10 +132,10 @@ free_group(group_t* group)
 
 	console_log(4, "Disposing Group %u no longer in use", group->id);
 
-	iter = iterate_vector(group->shapes);
-	while (i_shape = next_vector_item(&iter))
+	iter = vector_enum(group->shapes);
+	while (i_shape = vector_next(&iter))
 		free_shape(*i_shape);
-	free_vector(group->shapes);
+	vector_free(group->shapes);
 	free_shader(group->shader);
 	free(group);
 }
@@ -145,7 +145,7 @@ get_group_shape(const group_t* group, int index)
 {
 	shape_t* *p_shape;
 
-	p_shape = get_vector_item(group->shapes, index);
+	p_shape = vector_get(group->shapes, index);
 	return *p_shape;
 }
 
@@ -155,8 +155,8 @@ set_group_shape(group_t* group, int index, shape_t* shape)
 	shape_t* *p_old_shape;
 
 	shape = ref_shape(shape);
-	p_old_shape = get_vector_item(group->shapes, index);
-	set_vector_item(group->shapes, index, &shape);
+	p_old_shape = vector_get(group->shapes, index);
+	vector_set(group->shapes, index, &shape);
 	free_shape(*p_old_shape);
 }
 
@@ -173,14 +173,14 @@ add_group_shape(group_t* group, shape_t* shape)
 	console_log(4, "Adding Shape %u to Group %u", shape->id, group->id);
 	
 	shape = ref_shape(shape);
-	push_back_vector(group->shapes, &shape);
+	vector_push(group->shapes, &shape);
 	return true;
 }
 
 void
 remove_group_shape(group_t* group, int index)
 {
-	remove_vector_item(group->shapes, index);
+	vector_remove(group->shapes, index);
 }
 
 void
@@ -190,10 +190,10 @@ clear_group(group_t* group)
 	
 	iter_t iter;
 
-	iter = iterate_vector(group->shapes);
-	while (i_shape = next_vector_item(&iter))
+	iter = vector_enum(group->shapes);
+	while (i_shape = vector_next(&iter))
 		free_shape(*i_shape);
-	clear_vector(group->shapes);
+	vector_clear(group->shapes);
 }
 
 void
@@ -214,8 +214,8 @@ draw_group(const group_t* group)
 	al_translate_transform(&matrix, group->x, group->y);
 	al_scale_transform(&matrix, g_scale_x, g_scale_y);
 	al_use_transform(&matrix);
-	iter = iterate_vector(group->shapes);
-	while (i_shape = next_vector_item(&iter))
+	iter = vector_enum(group->shapes);
+	while (i_shape = vector_next(&iter))
 		draw_shape(*i_shape);
 	al_use_transform(&old_matrix);
 	reset_shader();

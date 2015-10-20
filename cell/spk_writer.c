@@ -40,7 +40,7 @@ spk_create(const char* filename)
 		return NULL;
 	fseek(writer->file, sizeof(struct spk_header), SEEK_SET);
 	
-	writer->index = new_vector(sizeof(struct spk_entry));
+	writer->index = vector_new(sizeof(struct spk_entry));
 	return writer;
 }
 
@@ -60,8 +60,8 @@ spk_close(spk_writer_t* writer)
 	
 	// write package index
 	idx_offset = ftell(writer->file);
-	iter = iterate_vector(writer->index);
-	while (p_entry = next_vector_item(&iter)) {
+	iter = vector_enum(writer->index);
+	while (p_entry = vector_next(&iter)) {
 		// for compatibility with Sphere 1.5, we have to include the NUL terminator
 		// in the filename. this, despite the fact that there is an explicit length
 		// field in the header...
@@ -84,13 +84,13 @@ spk_close(spk_writer_t* writer)
 	memset(&hdr, 0, sizeof(struct spk_header));
 	memcpy(hdr.magic, ".spk", 4);
 	hdr.version = 1;
-	hdr.num_files = (uint32_t)get_vector_size(writer->index);
+	hdr.num_files = (uint32_t)vector_size(writer->index);
 	hdr.idx_offset = idx_offset;
 	fwrite(&hdr, sizeof(struct spk_header), 1, writer->file);
 
 	// finally, close the file
 	fclose(writer->file);
-	free_vector(writer->index);
+	vector_free(writer->index);
 	free(writer);
 }
 
@@ -122,5 +122,5 @@ spk_add_file(spk_writer_t* writer, const char* filename, const char* spk_pathnam
 	idx_entry.file_size = file_size;
 	idx_entry.pack_size = bufsize;
 	idx_entry.offset = offset;
-	push_back_vector(writer->index, &idx_entry);
+	vector_push(writer->index, &idx_entry);
 }

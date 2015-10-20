@@ -120,9 +120,9 @@ initialize_input(void)
 	}
 
 	// create bound key vectors
-	s_bound_buttons = new_vector(sizeof(struct bound_button));
-	s_bound_keys = new_vector(sizeof(struct bound_key));
-	s_bound_map_keys = new_vector(sizeof(struct bound_key));
+	s_bound_buttons = vector_new(sizeof(struct bound_button));
+	s_bound_keys = vector_new(sizeof(struct bound_key));
+	s_bound_map_keys = vector_new(sizeof(struct bound_key));
 
 	// fill in default player key map
 	memset(s_key_map, 0, sizeof(s_key_map));
@@ -179,24 +179,24 @@ shutdown_input(void)
 	console_log(1, "Shutting down input");
 
 	// free bound key scripts
-	iter = iterate_vector(s_bound_buttons);
-	while (pbutton = next_vector_item(&iter)) {
+	iter = vector_enum(s_bound_buttons);
+	while (pbutton = vector_next(&iter)) {
 		free_script(pbutton->on_down_script);
 		free_script(pbutton->on_up_script);
 	}
-	iter = iterate_vector(s_bound_keys);
-	while (pkey = next_vector_item(&iter)) {
+	iter = vector_enum(s_bound_keys);
+	while (pkey = vector_next(&iter)) {
 		free_script(pkey->on_down_script);
 		free_script(pkey->on_up_script);
 	}
-	iter = iterate_vector(s_bound_map_keys);
-	while (pkey = next_vector_item(&iter)) {
+	iter = vector_enum(s_bound_map_keys);
+	while (pkey = vector_next(&iter)) {
 		free_script(pkey->on_down_script);
 		free_script(pkey->on_up_script);
 	}
-	free_vector(s_bound_buttons);
-	free_vector(s_bound_keys);
-	free_vector(s_bound_map_keys);
+	vector_free(s_bound_buttons);
+	vector_free(s_bound_keys);
+	vector_free(s_bound_map_keys);
 
 	// shut down Allegro input
 	al_destroy_event_queue(s_events);
@@ -403,8 +403,8 @@ update_bound_keys(bool use_map_keys)
 
 	// check bound keyboard keys
 	if (use_map_keys) {
-		iter = iterate_vector(s_bound_map_keys);
-		while (key = next_vector_item(&iter)) {
+		iter = vector_enum(s_bound_map_keys);
+		while (key = vector_next(&iter)) {
 			is_down = s_key_state[key->keycode];
 			if (is_down && !key->is_pressed)
 				run_script(key->on_down_script, false);
@@ -413,8 +413,8 @@ update_bound_keys(bool use_map_keys)
 			key->is_pressed = is_down;
 		}
 	}
-	iter = iterate_vector(s_bound_keys);
-	while (key = next_vector_item(&iter)) {
+	iter = vector_enum(s_bound_keys);
+	while (key = vector_next(&iter)) {
 		is_down = s_key_state[key->keycode];
 		if (is_down && !key->is_pressed)
 			run_script(key->on_down_script, false);
@@ -424,8 +424,8 @@ update_bound_keys(bool use_map_keys)
 	}
 
 	// check bound joystick buttons
-	iter = iterate_vector(s_bound_buttons);
-	while (button = next_vector_item(&iter)) {
+	iter = vector_enum(s_bound_buttons);
+	while (button = vector_next(&iter)) {
 		is_down = is_joy_button_down(button->joystick_id, button->button);
 		if (is_down && !button->is_pressed)
 			run_script(button->on_down_script, false);
@@ -527,8 +527,8 @@ bind_button(vector_t* bindings, int joy_index, int button, script_t* on_down_scr
 	new_binding.is_pressed = false;
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
-	iter = iterate_vector(bindings);
-	while (bound = next_vector_item(&iter)) {
+	iter = vector_enum(bindings);
+	while (bound = vector_next(&iter)) {
 		if (bound->joystick_id == joy_index && bound->button == button) {
 			bound->is_pressed = false;
 			old_down_script = bound->on_down_script;
@@ -542,7 +542,7 @@ bind_button(vector_t* bindings, int joy_index, int button, script_t* on_down_scr
 		}
 	}
 	if (is_new_entry)
-		push_back_vector(bindings, &new_binding);
+		vector_push(bindings, &new_binding);
 }
 
 static void
@@ -560,8 +560,8 @@ bind_key(vector_t* bindings, int keycode, script_t* on_down_script, script_t* on
 	new_binding.is_pressed = false;
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
-	iter = iterate_vector(bindings);
-	while (key = next_vector_item(&iter)) {
+	iter = vector_enum(bindings);
+	while (key = vector_next(&iter)) {
 		if (key->keycode == keycode) {
 			key->is_pressed = false;
 			old_down_script = key->on_down_script;
@@ -575,7 +575,7 @@ bind_key(vector_t* bindings, int keycode, script_t* on_down_script, script_t* on
 		}
 	}
 	if (is_new_key)
-		push_back_vector(bindings, &new_binding);
+		vector_push(bindings, &new_binding);
 }
 
 void
