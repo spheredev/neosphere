@@ -205,7 +205,7 @@ main(int argc, char* argv[])
 		free(game_path);
 	}
 
-	// locate game.sgm
+	// locate game manifest
 	console_log(0, "Looking for a game to launch");
 	g_game_path = game_path != NULL ? al_create_path(game_path) : NULL;
 	if (g_game_path == NULL)
@@ -224,7 +224,7 @@ main(int argc, char* argv[])
 		al_destroy_fs_entry(games_dir);
 		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
 		file_dlg = al_create_native_file_dialog(games_dirname, al_cstr(dialog_name),
-			"game.sgm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		al_show_native_file_dialog(NULL, file_dlg);
 		al_destroy_path(browse_path);
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {

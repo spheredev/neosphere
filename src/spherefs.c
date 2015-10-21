@@ -32,7 +32,8 @@ struct sfs_file
 	spk_file_t*   spk_file;
 };
 
-static bool resolve_path (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
+static bool      resolve_path     (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
+static duk_ret_t safe_decode_s2gm (duk_context* ctx);
 
 static unsigned int s_next_sandbox_id = 0;
 
@@ -43,17 +44,18 @@ new_sandbox(const char* path)
 	ALLEGRO_CONFIG* conf;
 	const char*     extension;
 	sandbox_t*      fs;
+	bool            is_file;
 	int             res_x, res_y;
 	size_t          sgm_size;
 	char*           sgm_text = NULL;
 	spk_t*          spk;
+	struct stat     stat_buf;
 	void*           sourcemap_data;
 	size_t          sourcemap_size;
 
 	console_log(1, "Opening '%s' in Sandbox %u", path, s_next_sandbox_id);
+	fs = calloc(1, sizeof(sandbox_t));
 	
-	if (!(fs = calloc(1, sizeof(sandbox_t))))
-		goto on_error;
 	fs->id = s_next_sandbox_id;
 	extension = strrchr(path, '.');
 	if (spk = open_spk(path)) {  // Sphere Package (.spk)
@@ -62,7 +64,8 @@ new_sandbox(const char* path)
 	}
 	else {  // default case, unpacked game folder
 		fs->type = SPHEREFS_LOCAL;
-		if (extension != NULL && strcmp(extension, ".sgm") == 0)
+		is_file = stat(path, &stat_buf) == 0 && (stat_buf.st_mode & S_IFREG);
+		if (is_file)
 			fs->fs_root = al_create_path(path);
 		else
 			fs->fs_root = al_create_path_for_directory(path);
@@ -71,19 +74,10 @@ new_sandbox(const char* path)
 	
 	// load the game manifest
 	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
+		duk_push_pointer(g_duk, fs);
 		duk_push_lstring(g_duk, sgm_text, sgm_size);
-		duk_json_decode(g_duk, -1);
-		if (duk_get_prop_string(g_duk, -1, "name") && duk_is_string(g_duk, -1))
-			fs->name = lstr_new(duk_get_string(g_duk, -1));
-		if (duk_get_prop_string(g_duk, -2, "author") && duk_is_string(g_duk, -1))
-			fs->author = lstr_new(duk_get_string(g_duk, -1));
-		if (duk_get_prop_string(g_duk, -3, "summary") && duk_is_string(g_duk, -1))
-			fs->summary = lstr_new(duk_get_string(g_duk, -1));
-		if (duk_get_prop_string(g_duk, -4, "resolution") && duk_is_string(g_duk, -1))
-			sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
-		if (duk_get_prop_string(g_duk, -5, "script") && duk_is_string(g_duk, -1))
-			fs->script_path = path_new(duk_get_string(g_duk, -1));
-		duk_pop_n(g_duk, 6);
+		if (duk_safe_call(g_duk, safe_decode_s2gm, 2, 0) != 0)
+			goto on_error;
 	}
 	else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
 		al_file = al_open_memfile(sgm_text, sgm_size, "rb");
@@ -98,8 +92,10 @@ new_sandbox(const char* path)
 		al_destroy_config(conf);
 		al_fclose(al_file);
 	}
+	else
+		goto on_error;
 	free(sgm_text);
-	
+
 	console_log(1, "Parsing game manifest for Sandbox %u", s_next_sandbox_id);
 	get_sgm_metrics(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
@@ -115,7 +111,7 @@ new_sandbox(const char* path)
 	return fs;
 
 on_error:
-	console_log(1, "Failed to create Sandbox %u", s_next_sandbox_id++);
+	console_log(1, "Failed to load manifest for Sandbox %u", s_next_sandbox_id++);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(sgm_text);
@@ -507,6 +503,45 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 	default:
 		return false;
 	}
+}
+
+static duk_ret_t
+safe_decode_s2gm(duk_context* ctx)
+{
+	// arguments: -2 = sandbox_t* fs (pointer)
+	//            -1 = .s2gm JSON text (string)
+	
+	sandbox_t* fs;
+	
+	fs = duk_get_pointer(ctx, -2);
+	
+	duk_dup(ctx, -1);
+	duk_json_decode(ctx, -1);
+
+	// required entries
+	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
+		goto on_error;
+	fs->name = lstr_new(duk_get_string(g_duk, -1));
+	if (!duk_get_prop_string(g_duk, -2, "author") || !duk_is_string(g_duk, -1))
+		goto on_error;
+	fs->author = lstr_new(duk_get_string(g_duk, -1));
+	if (!duk_get_prop_string(g_duk, -3, "resolution") || !duk_is_string(g_duk, -1))
+		goto on_error;
+	sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
+	if (!duk_get_prop_string(g_duk, -4, "script") || !duk_is_string(g_duk, -1))
+		goto on_error;
+	fs->script_path = path_new(duk_get_string(g_duk, -1));
+
+	// summary is optional
+	if (duk_get_prop_string(g_duk, -5, "summary") && duk_is_string(g_duk, -1))
+		fs->summary = lstr_new(duk_get_string(g_duk, -1));
+	else
+		fs->summary = lstr_new("No information available.");
+
+	return 0;
+
+on_error:
+	return -1;
 }
 
 static bool
