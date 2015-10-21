@@ -32,8 +32,8 @@ struct sfs_file
 	spk_file_t*   spk_file;
 };
 
-static bool      resolve_path     (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
-static duk_ret_t safe_decode_s2gm (duk_context* ctx);
+static duk_ret_t duk_decode_s2gm (duk_context* ctx);
+static bool      resolve_path    (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_sandbox_id = 0;
 
@@ -76,7 +76,7 @@ new_sandbox(const char* path)
 	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
 		duk_push_pointer(g_duk, fs);
 		duk_push_lstring(g_duk, sgm_text, sgm_size);
-		if (duk_safe_call(g_duk, safe_decode_s2gm, 2, 0) != 0)
+		if (duk_safe_call(g_duk, duk_decode_s2gm, 2, 0) != 0)
 			goto on_error;
 	}
 	else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
@@ -91,6 +91,19 @@ new_sandbox(const char* path)
 		fs->script_path = make_sfs_path(al_get_config_value(conf, NULL, "script"), "scripts");
 		al_destroy_config(conf);
 		al_fclose(al_file);
+		
+		// store data for GetGameInformation()
+		duk_push_global_stash(g_duk);
+		duk_push_object(g_duk);
+		duk_push_string(g_duk, al_path_cstr(fs->fs_root, ALLEGRO_NATIVE_PATH_SEP));
+		duk_put_prop_string(g_duk, -2, "directory");
+		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
+		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
+		duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
+		duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
+		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
+		duk_put_prop_string(g_duk, -2, "\xFF""manifest");
+		duk_pop(g_duk);
 	}
 	else
 		goto on_error;
@@ -506,19 +519,29 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 }
 
 static duk_ret_t
-safe_decode_s2gm(duk_context* ctx)
+duk_decode_s2gm(duk_context* ctx)
 {
 	// arguments: -2 = sandbox_t* fs (pointer)
 	//            -1 = .s2gm JSON text (string)
 	
 	sandbox_t* fs;
+	duk_idx_t  json_idx;
 	
 	fs = duk_get_pointer(ctx, -2);
+	json_idx = duk_normalize_index(ctx, -1);
 	
-	duk_dup(ctx, -1);
+	// store data for GetGameInformation()
+	duk_push_global_stash(ctx);
+	duk_dup(ctx, json_idx);
 	duk_json_decode(ctx, -1);
-
-	// required entries
+	duk_push_string(ctx, al_path_cstr(fs->fs_root, ALLEGRO_NATIVE_PATH_SEP));
+	duk_put_prop_string(ctx, -2, "directory");
+	duk_put_prop_string(ctx, -2, "\xFF""manifest");
+	duk_pop(ctx);
+	
+	// load required entries
+	duk_dup(ctx, json_idx);
+	duk_json_decode(ctx, -1);
 	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->name = lstr_new(duk_get_string(g_duk, -1));
@@ -532,7 +555,7 @@ safe_decode_s2gm(duk_context* ctx)
 		goto on_error;
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
 
-	// summary is optional
+	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -5, "summary") && duk_is_string(g_duk, -1))
 		fs->summary = lstr_new(duk_get_string(g_duk, -1));
 	else

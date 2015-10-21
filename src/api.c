@@ -630,11 +630,9 @@ js_GetFrameRate(duk_context* ctx)
 static duk_ret_t
 js_GetGameInformation(duk_context* ctx)
 {
-	duk_push_object(ctx);
-	duk_push_string(ctx, al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP)); duk_put_prop_string(ctx, -2, "directory");
-	duk_push_string(ctx, get_sgm_name(g_fs)); duk_put_prop_string(ctx, -2, "name");
-	duk_push_string(ctx, get_sgm_author(g_fs)); duk_put_prop_string(ctx, -2, "author");
-	duk_push_string(ctx, get_sgm_summary(g_fs)); duk_put_prop_string(ctx, -2, "description");
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF""manifest");
+	duk_remove(ctx, -2);
 	return 1;
 }
 
@@ -866,17 +864,17 @@ js_Delay(duk_context* ctx)
 static duk_ret_t
 js_ExecuteGame(duk_context* ctx)
 {
-	const char*   filename = duk_require_string(ctx, 0);
-	
-	ALLEGRO_PATH* exe_path;
+	ALLEGRO_PATH* engine_path;
+	const char*   filename;
 
+	filename = duk_require_string(ctx, 0);
 	g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 	al_destroy_path(g_game_path);
 	g_game_path = al_create_path(filename);
-	exe_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(exe_path, "games");
-	al_rebase_path(exe_path, g_game_path);
-	al_destroy_path(exe_path);
+	engine_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+	al_append_path_component(engine_path, "games");
+	al_rebase_path(engine_path, g_game_path);
+	al_destroy_path(engine_path);
 	
 	restart_engine();
 }
