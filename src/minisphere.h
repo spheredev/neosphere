@@ -75,7 +75,7 @@ extern void     set_clip_rectangle (rect_t clip_rect);
 extern void     set_max_frameskip  (int frames);
 extern void     delay              (double time);
 extern void     do_events          (void);
-extern noreturn exit_game          (bool is_shutdown);
+extern noreturn exit_game          (bool force_shutdown);
 extern void     flip_screen        (int framerate);
 extern noreturn restart_engine     (void);
 extern void     take_screenshot    (void);

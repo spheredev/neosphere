@@ -35,7 +35,7 @@ ALLEGRO_PATH*        g_game_path = NULL;
 char*                g_last_game_path = NULL;
 float                g_scale_x = 1.0;
 float                g_scale_y = 1.0;
-kev_file_t*           g_sys_conf;
+kev_file_t*          g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
@@ -76,7 +76,7 @@ int
 main(int argc, char* argv[])
 {
 	ALLEGRO_PATH*        browse_path;
-	ALLEGRO_USTR*        dialog_name;
+	lstring_t*           dialog_name;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
@@ -205,14 +205,17 @@ main(int argc, char* argv[])
 		free(game_path);
 	}
 
-	// locate game manifest
+	// locate the game manifest
 	console_log(0, "Looking for a game to launch");
 	g_game_path = game_path != NULL ? al_create_path(game_path) : NULL;
 	if (g_game_path == NULL)
+		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
+		// user provided a path or startup game was found, attempt to load it
 		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-	if (g_fs == NULL) {
+	else {
+		// no game path provided and no startup game, let user find manifest
 		browse_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
 		al_append_path_component(browse_path, "Sphere Games");
 		games_dirname = al_path_cstr(browse_path, ALLEGRO_NATIVE_PATH_SEP);
@@ -222,29 +225,37 @@ main(int argc, char* argv[])
 			games_dirname = NULL;
 		al_close_directory(games_dir);
 		al_destroy_fs_entry(games_dir);
-		dialog_name = al_ustr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
-		file_dlg = al_create_native_file_dialog(games_dirname, al_cstr(dialog_name),
+		dialog_name = lstr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
+		file_dlg = al_create_native_file_dialog(games_dirname, lstr_cstr(dialog_name),
 			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		al_show_native_file_dialog(NULL, file_dlg);
+		lstr_free(dialog_name);
 		al_destroy_path(browse_path);
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
+			al_destroy_native_file_dialog(file_dlg);
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
+			g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
 		}
 		else {
+			// user clicked Cancel; as this is a valid action, we return
+			// success, not failure.
+			al_destroy_native_file_dialog(file_dlg);
 			return EXIT_SUCCESS;
 		}
-		al_destroy_native_file_dialog(file_dlg);
-		al_ustr_free(dialog_name);
-		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-		if (g_fs == NULL) {
-			al_show_native_message_box(NULL, "Unable to Load Game",
-				al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
-				"minisphere was unable to load game.sgm or it was not found.  Check to make sure the above directory exists and contains a valid Sphere game.",
-				NULL, ALLEGRO_MESSAGEBOX_ERROR);
-			return EXIT_FAILURE;
-		}
 	}
+	if (g_fs == NULL) {
+		// if after all that, we still don't have a valid sandbox pointer, bail out
+		// because there's not much else we can do.
+		al_show_native_message_box(NULL, "Unable to Load Game",
+			al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
+			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
+			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+		
+		// in case we reached this point via ExecuteGame()
+		exit_game(false);
+	}
+	
 	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
 
 	// set up engine and create display window
@@ -442,9 +453,9 @@ do_events(void)
 }
 
 noreturn
-exit_game(bool is_shutdown)
+exit_game(bool force_shutdown)
 {
-	if (is_shutdown) {
+	if (force_shutdown) {
 		free(g_last_game_path);
 		g_last_game_path = NULL;
 	}
