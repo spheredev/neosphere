@@ -586,7 +586,7 @@ js_api_sgm(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "name");
 	duk_get_prop_string(ctx, 0, "author");
-	duk_get_prop_string(ctx, 0, "description");
+	duk_get_prop_string(ctx, 0, "summary");
 	duk_get_prop_string(ctx, 0, "resolution");
 	duk_get_prop_string(ctx, 0, "script");
 	strcpy(manifest.name, duk_require_string(ctx, -5));

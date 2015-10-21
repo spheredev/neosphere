@@ -14,8 +14,12 @@ enum fs_type
 struct sandbox
 {
 	unsigned int    id;
+	lstring_t*      name;
+	lstring_t*      author;
+	lstring_t*      summary;
+	path_t*         script_path;
+	int             res_x, res_y;
 	ALLEGRO_PATH*   fs_root;
-	ALLEGRO_CONFIG* sgm;
 	lstring_t*      sourcemap;
 	spk_t*          spk;
 	int             type;
@@ -35,32 +39,26 @@ static unsigned int s_next_sandbox_id = 0;
 sandbox_t*
 new_sandbox(const char* path)
 {
-	ALLEGRO_FILE* al_file = NULL;
-	const char*   extension;
-	sandbox_t*    fs;
-	int           res_x, res_y;
-	ALLEGRO_PATH* sgm_path = NULL;
-	size_t        sgm_size;
-	void*         sgm_text = NULL;
-	spk_t*        spk;
-	void*         sourcemap_data;
-	size_t        sourcemap_size;
+	ALLEGRO_FILE*   al_file = NULL;
+	ALLEGRO_CONFIG* conf;
+	const char*     extension;
+	sandbox_t*      fs;
+	int             res_x, res_y;
+	size_t          sgm_size;
+	char*           sgm_text = NULL;
+	spk_t*          spk;
+	void*           sourcemap_data;
+	size_t          sourcemap_size;
 
 	console_log(1, "Opening '%s' in Sandbox %u", path, s_next_sandbox_id);
 	
 	if (!(fs = calloc(1, sizeof(sandbox_t))))
 		goto on_error;
+	fs->id = s_next_sandbox_id;
 	extension = strrchr(path, '.');
 	if (spk = open_spk(path)) {  // Sphere Package (.spk)
 		fs->type = SPHEREFS_SPK;
 		fs->spk = spk;
-		if (!(sgm_text = spk_fslurp(fs->spk, "game.sgm", &sgm_size)))
-			goto on_error;
-		al_file = al_open_memfile(sgm_text, sgm_size, "rb");
-		if (!(fs->sgm = al_load_config_file_f(al_file)))
-			goto on_error;
-		al_fclose(al_file);
-		free(sgm_text);
 	}
 	else {  // default case, unpacked game folder
 		fs->type = SPHEREFS_LOCAL;
@@ -69,22 +67,51 @@ new_sandbox(const char* path)
 		else
 			fs->fs_root = al_create_path_for_directory(path);
 		al_set_path_filename(fs->fs_root, NULL);
-		sgm_path = al_clone_path(fs->fs_root);
-		al_set_path_filename(sgm_path, "game.sgm");
-		if (!(fs->sgm = al_load_config_file(al_path_cstr(sgm_path, ALLEGRO_NATIVE_PATH_SEP))))
-			goto on_error;
-		al_destroy_path(sgm_path);
 	}
+	
+	// load the game manifest
+	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
+		duk_push_lstring(g_duk, sgm_text, sgm_size);
+		duk_json_decode(g_duk, -1);
+		if (duk_get_prop_string(g_duk, -1, "name") && duk_is_string(g_duk, -1))
+			fs->name = lstr_new(duk_get_string(g_duk, -1));
+		if (duk_get_prop_string(g_duk, -2, "author") && duk_is_string(g_duk, -1))
+			fs->author = lstr_new(duk_get_string(g_duk, -1));
+		if (duk_get_prop_string(g_duk, -3, "summary") && duk_is_string(g_duk, -1))
+			fs->summary = lstr_new(duk_get_string(g_duk, -1));
+		if (duk_get_prop_string(g_duk, -4, "resolution") && duk_is_string(g_duk, -1))
+			sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
+		if (duk_get_prop_string(g_duk, -5, "script") && duk_is_string(g_duk, -1))
+			fs->script_path = path_new(duk_get_string(g_duk, -1));
+		duk_pop_n(g_duk, 6);
+	}
+	else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
+		al_file = al_open_memfile(sgm_text, sgm_size, "rb");
+		if (!(conf = al_load_config_file_f(al_file)))
+			goto on_error;
+		fs->name = lstr_new(al_get_config_value(conf, NULL, "name"));
+		fs->author = lstr_new(al_get_config_value(conf, NULL, "author"));
+		fs->summary = lstr_new(al_get_config_value(conf, NULL, "description"));
+		fs->res_x = atoi(al_get_config_value(conf, NULL, "screen_width"));
+		fs->res_y = atoi(al_get_config_value(conf, NULL, "screen_height"));
+		fs->script_path = make_sfs_path(al_get_config_value(conf, NULL, "script"), "scripts");
+		al_destroy_config(conf);
+		al_fclose(al_file);
+	}
+	free(sgm_text);
+	
+	console_log(1, "Parsing game manifest for Sandbox %u", s_next_sandbox_id);
 	get_sgm_metrics(fs, &res_x, &res_y);
-	console_log(1, "Loading game manifest for Sandbox %u", s_next_sandbox_id);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);
 	
-	fs->id = s_next_sandbox_id++;
+	// load the source map
 	if (sourcemap_data = sfs_fslurp(fs, "sourcemap.json", NULL, &sourcemap_size))
 		fs->sourcemap = lstr_from_buf(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
+
+	s_next_sandbox_id++;
 	return fs;
 
 on_error:
@@ -92,8 +119,6 @@ on_error:
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(sgm_text);
-	if (sgm_path != NULL)
-		al_destroy_path(sgm_path);
 	if (fs != NULL) {
 		free_spk(fs->spk);
 		free(fs);
@@ -106,7 +131,6 @@ free_sandbox(sandbox_t* fs)
 {
 	if (fs == NULL) return;
 	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
-	al_destroy_config(fs->sgm);
 	switch (fs->type) {
 	case SPHEREFS_LOCAL:
 		al_destroy_path(fs->fs_root);
@@ -119,32 +143,32 @@ free_sandbox(sandbox_t* fs)
 const char*
 get_sgm_author(sandbox_t* fs)
 {
-	return al_get_config_value(fs->sgm, NULL, "author");
+	return lstr_cstr(fs->author);
 }
 
 void
 get_sgm_metrics(sandbox_t* fs, int *out_x_res, int *out_y_res)
 {
-	*out_x_res = atoi(al_get_config_value(fs->sgm, NULL, "screen_width"));
-	*out_y_res = atoi(al_get_config_value(fs->sgm, NULL, "screen_height"));
+	*out_x_res = fs->res_x;
+	*out_y_res = fs->res_y;
 }
 
 const char*
 get_sgm_name(sandbox_t* fs)
 {
-	return al_get_config_value(fs->sgm, NULL, "name");
+	return lstr_cstr(fs->name);
 }
 
-const char*
-get_sgm_script(sandbox_t* fs)
+const path_t*
+get_sgm_script_path(sandbox_t* fs)
 {
-	return al_get_config_value(fs->sgm, NULL, "script");
+	return fs->script_path;
 }
 
 const char*
 get_sgm_summary(sandbox_t* fs)
 {
-	return al_get_config_value(fs->sgm, NULL, "description");
+	return lstr_cstr(fs->summary);
 }
 
 path_t*
@@ -503,8 +527,8 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 		*out_fs_type = SPHEREFS_LOCAL;
 	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {  // ~/ prefix
 		// the ~/ prefix is maintained for backwards compatibility.
-		// counterintuitively, it references the directory containing game.sgm,
-		// NOT the user's home directory.
+		// counterintuitively, it references the directory containing the game manifest,
+		// and NOT the user's home directory.
 		if (fs == NULL) goto on_error;
 		al_destroy_path(*out_path);
 		*out_path = al_create_path(filename + 2);
@@ -515,7 +539,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS ~xxx/ prefix
 		al_destroy_path(*out_path);
 		*out_path = al_create_path(filename + 5);
-		if (memcmp(filename, "~sgm/", 5) == 0) {  // game.sgm root
+		if (memcmp(filename, "~sgm/", 5) == 0) {  // game root
 			if (fs == NULL) goto on_error;
 			if (fs->type == SPHEREFS_LOCAL)
 				al_rebase_path(fs->fs_root, *out_path);

@@ -87,10 +87,11 @@ main(int argc, char* argv[])
 	image_t*             icon;
 	int                  line_num;
 	int                  max_skips;
-	char*                p_strtol;
+	const path_t*        script_path;
 	ALLEGRO_TRANSFORM    trans;
 	int                  verbosity;
 	bool                 want_debug = false;
+	char                 *p_strtol;
 
 	int i;
 
@@ -317,7 +318,8 @@ main(int argc, char* argv[])
 	// load startup script
 	console_log(0, "Starting up game");
 	al_hide_mouse_cursor(g_display);
-	if (!try_evaluate_file(get_sgm_script(g_fs), false))
+	script_path = get_sgm_script_path(g_fs);
+	if (!try_evaluate_file(path_cstr(script_path), true))
 		goto on_js_error;
 	duk_pop(g_duk);
 
@@ -331,8 +333,9 @@ main(int argc, char* argv[])
 	duk_push_global_object(g_duk);
 	duk_get_prop_string(g_duk, -1, "game");
 	if (!duk_is_callable(g_duk, -1)) {
+		script_path = get_sgm_script_path(g_fs);
 		duk_push_error_object_raw(g_duk, DUK_ERR_SYNTAX_ERROR,
-			get_sgm_script(g_fs), 0, "game() is not defined");
+			path_cstr(script_path), 0, "game() is not defined");
 		goto on_js_error;
 	}
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
