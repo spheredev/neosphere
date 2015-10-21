@@ -84,7 +84,7 @@ spk_close(spk_writer_t* writer)
 	memset(&hdr, 0, sizeof(struct spk_header));
 	memcpy(hdr.magic, ".spk", 4);
 	hdr.version = 1;
-	hdr.num_files = (uint32_t)vector_size(writer->index);
+	hdr.num_files = (uint32_t)vector_len(writer->index);
 	hdr.idx_offset = idx_offset;
 	fwrite(&hdr, sizeof(struct spk_header), 1, writer->file);
 

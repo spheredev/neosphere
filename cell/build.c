@@ -39,12 +39,11 @@ static duk_ret_t js_api_files   (duk_context* ctx);
 static duk_ret_t js_api_s2gm    (duk_context* ctx);
 static duk_ret_t js_api_sgm     (duk_context* ctx);
 
-static int qcmp_asset_name (const void* in_a, const void* in_b);
-
-static void process_add_files (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
-static bool process_install   (build_t* build, struct install* inst, bool *out_is_new);
-static bool process_target    (build_t* build, const target_t* target, bool *out_is_new);
-static void validate_targets  (build_t* build);
+static int  compare_asset_names (const void* in_a, const void* in_b);
+static void process_add_files   (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
+static bool process_install     (build_t* build, struct install* inst, bool *out_is_new);
+static bool process_target      (build_t* build, const target_t* target, bool *out_is_new);
+static void validate_targets    (build_t* build);
 
 build_t*
 new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
@@ -201,7 +200,7 @@ add_files(build_t* build, const path_t* pattern, bool recursive)
 	path = path_rebase(path_strip(path_dup(pattern)), build->in_path);
 	wildcard = strdup(path_filename_cstr(pattern));
 	process_add_files(build, wildcard, path, NULL, recursive, &targets);
-	if (vector_size(targets) == 0)
+	if (vector_len(targets) == 0)
 		emit_warning(build, "no files match pattern '%s'", path_cstr(pattern));
 	path_free(path);
 	free(wildcard);
@@ -271,7 +270,7 @@ run_build(build_t* build)
 	target_t*      *p_target;
 	iter_t iter;
 
-	if (vector_size(build->installs) == 0) {
+	if (vector_len(build->installs) == 0) {
 		emit_error(build, "no assets staged for install");
 		return false;
 	}
@@ -282,8 +281,6 @@ run_build(build_t* build)
 	n_assets = 0;
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
-		if (!(*p_target)->num_refs == 0) continue;
-
 		if (!process_target(build, *p_target, &is_new))
 			return false;
 		if (is_new) {
@@ -361,7 +358,7 @@ validate_targets(build_t* build)
 	target_t* *p_target;
 
 	// check for asset name conflicts
-	targets = vector_sort(vector_dup(build->targets), qcmp_asset_name);
+	targets = vector_sort(vector_dup(build->targets), compare_asset_names);
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		if (!(asset_name = get_asset_name((*p_target)->asset))) continue;
@@ -484,11 +481,12 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 static bool
 process_target(build_t* build, const target_t* target, bool *out_is_new)
 {
-	return build_asset(target->asset, build->staging_path, out_is_new);
+	return target->num_refs == 0
+		|| build_asset(target->asset, build->staging_path, out_is_new);
 }
 
 static int
-qcmp_asset_name(const void* in_a, const void* in_b)
+compare_asset_names(const void* in_a, const void* in_b)
 {
 	const path_t* path_a;
 	const path_t* path_b;

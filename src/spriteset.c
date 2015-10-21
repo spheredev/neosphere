@@ -314,7 +314,7 @@ load_spriteset(const char* filename, bool is_sfs_compliant)
 	sfs_fclose(file);
 	
 	if (s_load_cache != NULL) {
-		while (vector_size(s_load_cache) >= 10) {
+		while (vector_len(s_load_cache) >= 10) {
 			p_spriteset = vector_get(s_load_cache, 0);
 			free_spriteset(*p_spriteset);
 			vector_remove(s_load_cache, 0);

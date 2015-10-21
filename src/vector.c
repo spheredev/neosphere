@@ -66,7 +66,7 @@ vector_set(vector_t* vector, size_t index, const void* in_object)
 }
 
 size_t
-vector_size(const vector_t* vector)
+vector_len(const vector_t* vector)
 {
 	return vector->num_items;
 }
