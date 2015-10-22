@@ -39,6 +39,7 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-map-engine",
 	"sphere-new-sockets",
 	"sphere-rng-object",
+	"sphere-s2gm",
 	"sphere-spherefs",
 	"duktape-debugger",
 	"frameskip-api",
