@@ -7,13 +7,16 @@ v2.0.0 - TBD
 * Includes a new command-line compiler and packager for Sphere games, Cell!
   Using Cell, you can control the build process for your game using JavaScript
   and even compile your game to SPK format!
-* Improved Sphere Studio plugin with full support for Cell, including automated
-  SPK packaging.
+* New JSON-based .s2gm game manifest format allowing much more flexibility in
+  authoring metadata for a game. All values in the .s2gm are available to
+  scripts by calling GetGameManifest().
+* Vastly improved Sphere Studio plugin with full support for Cell, including
+  automated SPK packaging.
 * Basic source map support. When an error occurs and during debugging, if the
-  game was compiled with Cell's --debug option, the path to the corresponding
+  game was compiled with Cell's '--debug' option, the path to the corresponding
   file from the source directory is displayed instead of its name within the
   game package.
-* Updates CoffeeScript compiler to v1.10.0.
+* CoffeeScript compiler version is now at 1.10.0.
 * All APIs accepting ByteArrays will now also accept ArrayBuffer and TypedArray
   objects. ByteArray is deprecated, but retained for backward compatibility.
 * SoundStreams are no longer restricted to 8-bit samples.
