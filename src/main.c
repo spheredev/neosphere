@@ -232,10 +232,10 @@ main(int argc, char* argv[])
 		lstr_free(dialog_name);
 		al_destroy_path(browse_path);
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
-			al_destroy_native_file_dialog(file_dlg);
 			al_destroy_path(g_game_path);
 			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
 			g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
 			// user clicked Cancel; as this is a valid action, we return

@@ -14,12 +14,14 @@ enum fs_type
 struct sandbox
 {
 	unsigned int    id;
+	ALLEGRO_PATH*   root_path;
+	lstring_t*      manifest;
 	lstring_t*      name;
 	lstring_t*      author;
 	lstring_t*      summary;
+	int             res_x;
+	int             res_y;
 	path_t*         script_path;
-	int             res_x, res_y;
-	ALLEGRO_PATH*   fs_root;
 	lstring_t*      sourcemap;
 	spk_t*          spk;
 	int             type;
@@ -32,7 +34,7 @@ struct sfs_file
 	spk_file_t*   spk_file;
 };
 
-static duk_ret_t duk_decode_s2gm (duk_context* ctx);
+static duk_ret_t duk_load_s2gm (duk_context* ctx);
 static bool      resolve_path    (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_sandbox_id = 0;
@@ -66,17 +68,18 @@ new_sandbox(const char* path)
 		fs->type = SPHEREFS_LOCAL;
 		is_file = stat(path, &stat_buf) == 0 && (stat_buf.st_mode & S_IFREG);
 		if (is_file)
-			fs->fs_root = al_create_path(path);
+			fs->root_path = al_create_path(path);
 		else
-			fs->fs_root = al_create_path_for_directory(path);
-		al_set_path_filename(fs->fs_root, NULL);
+			fs->root_path = al_create_path_for_directory(path);
+		al_set_path_filename(fs->root_path, NULL);
 	}
 	
 	// load the game manifest
 	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
+		fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 		duk_push_pointer(g_duk, fs);
-		duk_push_lstring(g_duk, sgm_text, sgm_size);
-		if (duk_safe_call(g_duk, duk_decode_s2gm, 2, 0) != 0)
+		duk_push_lstring_t(g_duk, fs->manifest);
+		if (duk_safe_call(g_duk, duk_load_s2gm, 2, 0) != 0)
 			goto on_error;
 	}
 	else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
@@ -92,18 +95,14 @@ new_sandbox(const char* path)
 		al_destroy_config(conf);
 		al_fclose(al_file);
 		
-		// store data for GetGameInformation()
-		duk_push_global_stash(g_duk);
+		// generate a JSON manifest (used for, e.g. GetGameInformation())
 		duk_push_object(g_duk);
-		duk_push_string(g_duk, al_path_cstr(fs->fs_root, ALLEGRO_NATIVE_PATH_SEP));
-		duk_put_prop_string(g_duk, -2, "directory");
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
 		duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
 		duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
 		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
-		duk_put_prop_string(g_duk, -2, "\xFF""manifest");
-		duk_pop(g_duk);
+		fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
 	}
 	else
 		goto on_error;
@@ -142,17 +141,35 @@ free_sandbox(sandbox_t* fs)
 	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
 	switch (fs->type) {
 	case SPHEREFS_LOCAL:
-		al_destroy_path(fs->fs_root);
+		al_destroy_path(fs->root_path);
 	case SPHEREFS_SPK:
 		free_spk(fs->spk);
 	}
 	free(fs);
 }
 
+const lstring_t*
+get_game_manifest(sandbox_t* fs)
+{
+	return fs->manifest;
+}
+
+const char*
+get_sgm_name(sandbox_t* fs)
+{
+	return lstr_cstr(fs->name);
+}
+
 const char*
 get_sgm_author(sandbox_t* fs)
 {
 	return lstr_cstr(fs->author);
+}
+
+const char*
+get_sgm_summary(sandbox_t* fs)
+{
+	return lstr_cstr(fs->summary);
 }
 
 void
@@ -162,22 +179,10 @@ get_sgm_metrics(sandbox_t* fs, int *out_x_res, int *out_y_res)
 	*out_y_res = fs->res_y;
 }
 
-const char*
-get_sgm_name(sandbox_t* fs)
-{
-	return lstr_cstr(fs->name);
-}
-
 const path_t*
 get_sgm_script_path(sandbox_t* fs)
 {
 	return fs->script_path;
-}
-
-const char*
-get_sgm_summary(sandbox_t* fs)
-{
-	return lstr_cstr(fs->summary);
 }
 
 path_t*
@@ -519,7 +524,7 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 }
 
 static duk_ret_t
-duk_decode_s2gm(duk_context* ctx)
+duk_load_s2gm(duk_context* ctx)
 {
 	// arguments: -2 = sandbox_t* fs (pointer)
 	//            -1 = .s2gm JSON text (string)
@@ -530,24 +535,12 @@ duk_decode_s2gm(duk_context* ctx)
 	fs = duk_get_pointer(ctx, -2);
 	json_idx = duk_normalize_index(ctx, -1);
 	
-	// store data for GetGameInformation()
-	duk_push_global_stash(ctx);
-	duk_dup(ctx, json_idx);
-	duk_json_decode(ctx, -1);
-	duk_push_string(ctx, al_path_cstr(fs->fs_root, ALLEGRO_NATIVE_PATH_SEP));
-	duk_put_prop_string(ctx, -2, "directory");
-	duk_put_prop_string(ctx, -2, "\xFF""manifest");
-	duk_pop(ctx);
-	
 	// load required entries
 	duk_dup(ctx, json_idx);
 	duk_json_decode(ctx, -1);
 	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->name = lstr_new(duk_get_string(g_duk, -1));
-	if (!duk_get_prop_string(g_duk, -2, "author") || !duk_is_string(g_duk, -1))
-		goto on_error;
-	fs->author = lstr_new(duk_get_string(g_duk, -1));
 	if (!duk_get_prop_string(g_duk, -3, "resolution") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
@@ -556,6 +549,10 @@ duk_decode_s2gm(duk_context* ctx)
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
 
 	// game summary is optional, use a default summary if one is not provided.
+	if (duk_get_prop_string(g_duk, -2, "author") && duk_is_string(g_duk, -1))
+		fs->author = lstr_new(duk_get_string(g_duk, -1));
+	else
+		fs->author = lstr_new("Author Unknown");
 	if (duk_get_prop_string(g_duk, -5, "summary") && duk_is_string(g_duk, -1))
 		fs->summary = lstr_new(duk_get_string(g_duk, -1));
 	else
@@ -591,7 +588,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 		al_destroy_path(*out_path);
 		*out_path = al_create_path(filename + 2);
 		if (fs->type == SPHEREFS_LOCAL)
-			al_rebase_path(fs->fs_root, *out_path);
+			al_rebase_path(fs->root_path, *out_path);
 		*out_fs_type = fs->type;
 	}
 	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS ~xxx/ prefix
@@ -600,7 +597,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 		if (memcmp(filename, "~sgm/", 5) == 0) {  // game root
 			if (fs == NULL) goto on_error;
 			if (fs->type == SPHEREFS_LOCAL)
-				al_rebase_path(fs->fs_root, *out_path);
+				al_rebase_path(fs->root_path, *out_path);
 			*out_fs_type = fs->type;
 		}
 		else if (memcmp(filename, "~sys/", 5) == 0) {  // engine "system" directory
@@ -626,7 +623,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_
 		origin = al_create_path_for_directory(base_dir);
 		al_rebase_path(origin, *out_path);
 		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
-			al_rebase_path(fs->fs_root, *out_path);
+			al_rebase_path(fs->root_path, *out_path);
 		else {
 			// SPK requires a fully canonized path, so we have to collapse
 			// any '..' components prior to returning the path.

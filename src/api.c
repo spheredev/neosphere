@@ -630,9 +630,10 @@ js_GetFrameRate(duk_context* ctx)
 static duk_ret_t
 js_GetGameInformation(duk_context* ctx)
 {
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF""manifest");
-	duk_remove(ctx, -2);
+	duk_push_lstring_t(ctx, get_game_manifest(g_fs));
+	duk_json_decode(ctx, -1);
+	duk_push_string(ctx, al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	duk_put_prop_string(ctx, -2, "directory");
 	return 1;
 }
 
