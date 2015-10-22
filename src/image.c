@@ -139,7 +139,9 @@ load_image(const char* filename, bool is_sfs_compliant)
 {
 	ALLEGRO_FILE* al_file = NULL;
 	const char*   base_dir;
+	const char*   file_ext;
 	size_t        file_size;
+	uint8_t       first_16[16];
 	image_t*      image;
 	void*         slurp = NULL;
 
@@ -150,7 +152,18 @@ load_image(const char* filename, bool is_sfs_compliant)
 	if (!(slurp = sfs_fslurp(g_fs, filename, base_dir, &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
-	if (!(image->bitmap = al_load_bitmap_f(al_file, strrchr(filename, '.'))))
+
+	// look at the first 16 bytes of the file to determine its actual type.
+	// Allegro won't load it if the content doesn't match the file extension, so
+	// we have to inspect the file ourselves.
+	al_fread(al_file, first_16, 16);
+	al_fseek(al_file, 0, ALLEGRO_SEEK_SET);
+	file_ext = strrchr(filename, '.');
+	if (memcmp(first_16, "BM", 2) == 0) file_ext = ".bmp";
+	if (memcmp(first_16, "\211PNG\r\n\032\n", 8) == 0) file_ext = ".png";
+	if (memcmp(first_16, "\0xFF\0xD8", 2) == 0) file_ext = ".jpg";
+
+	if (!(image->bitmap = al_load_bitmap_f(al_file, file_ext)))
 		goto on_error;
 	al_fclose(al_file);
 	free(slurp);

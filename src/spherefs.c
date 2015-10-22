@@ -541,15 +541,15 @@ duk_load_s2gm(duk_context* ctx)
 	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->name = lstr_new(duk_get_string(g_duk, -1));
-	if (!duk_get_prop_string(g_duk, -3, "resolution") || !duk_is_string(g_duk, -1))
+	if (!duk_get_prop_string(g_duk, -2, "resolution") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
-	if (!duk_get_prop_string(g_duk, -4, "script") || !duk_is_string(g_duk, -1))
+	if (!duk_get_prop_string(g_duk, -3, "script") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
 
 	// game summary is optional, use a default summary if one is not provided.
-	if (duk_get_prop_string(g_duk, -2, "author") && duk_is_string(g_duk, -1))
+	if (duk_get_prop_string(g_duk, -4, "author") && duk_is_string(g_duk, -1))
 		fs->author = lstr_new(duk_get_string(g_duk, -1));
 	else
 		fs->author = lstr_new("Author Unknown");
