@@ -54,7 +54,7 @@ static duk_ret_t js_EvaluateSystemScript (duk_context* ctx);
 static duk_ret_t js_EvaluateScript       (duk_context* ctx);
 static duk_ret_t js_IsSkippedFrame       (duk_context* ctx);
 static duk_ret_t js_GetFrameRate         (duk_context* ctx);
-static duk_ret_t js_GetGameInformation   (duk_context* ctx);
+static duk_ret_t js_GetGameManifest      (duk_context* ctx);
 static duk_ret_t js_GetGameList          (duk_context* ctx);
 static duk_ret_t js_GetMaxFrameSkips     (duk_context* ctx);
 static duk_ret_t js_GetScreenHeight      (duk_context* ctx);
@@ -151,7 +151,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
 	register_api_function(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
 	register_api_function(ctx, NULL, "GetFrameRate", js_GetFrameRate);
-	register_api_function(ctx, NULL, "GetGameInformation", js_GetGameInformation);
+	register_api_function(ctx, NULL, "GetGameManifest", js_GetGameManifest);
 	register_api_function(ctx, NULL, "GetGameList", js_GetGameList);
 	register_api_function(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
 	register_api_function(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
@@ -628,7 +628,7 @@ js_GetFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
-js_GetGameInformation(duk_context* ctx)
+js_GetGameManifest(duk_context* ctx)
 {
 	duk_push_lstring_t(ctx, get_game_manifest(g_fs));
 	duk_json_decode(ctx, -1);

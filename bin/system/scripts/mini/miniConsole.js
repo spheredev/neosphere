@@ -63,7 +63,7 @@ mini.onStartUp.add(mini.Console, function(params)
 		.run();
 	mini.Threads.create(this, 101);
 	
-	var game = GetGameInformation();
+	var game = GetGameManifest();
 	this.write(game.name + " Console");
 	this.write("Sphere " + GetVersionString());
 	this.write("");
