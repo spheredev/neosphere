@@ -327,7 +327,7 @@ main(int argc, char* argv[])
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	
 	// load startup script
-	console_log(0, "Starting up game");
+	console_log(0, "Engine started!\n");
 	al_hide_mouse_cursor(g_display);
 	script_path = get_sgm_script_path(g_fs);
 	if (!evaluate_script(path_cstr(script_path)))

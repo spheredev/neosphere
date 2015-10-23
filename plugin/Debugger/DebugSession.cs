@@ -153,6 +153,7 @@ namespace minisphere.Gdk.Debugger
             {
                 Panes.Errors.Add(e.Message, e.IsFatal, e.FileName, e.LineNumber);
                 PluginManager.Core.Docking.Show(Panes.Errors);
+                PluginManager.Core.Docking.Activate(Panes.Errors);
                 if (e.IsFatal)
                     haveError = true;
             }), null);

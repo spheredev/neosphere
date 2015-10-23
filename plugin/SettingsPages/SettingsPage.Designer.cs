@@ -85,9 +85,9 @@
             this.MakeDebugPackageCheckBox.AutoSize = true;
             this.MakeDebugPackageCheckBox.Location = new System.Drawing.Point(12, 35);
             this.MakeDebugPackageCheckBox.Name = "MakeDebugPackageCheckBox";
-            this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(247, 17);
+            this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(317, 17);
             this.MakeDebugPackageCheckBox.TabIndex = 2;
-            this.MakeDebugPackageCheckBox.Text = "Include debug map when compiling a package";
+            this.MakeDebugPackageCheckBox.Text = "Include debug map when building an SPK package using Cell";
             this.MakeDebugPackageCheckBox.UseVisualStyleBackColor = true;
             // 
             // TestWithConsoleCheckBox

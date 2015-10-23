@@ -36,7 +36,7 @@ namespace minisphere.Gdk.Plugins
 
         public void Configure()
         {
-            throw new NotSupportedException("minisphere doesn't support configuration.");
+            throw new NotSupportedException("minisphere doesn't support engine configuration.");
         }
 
         public IDebugger Debug(string gamePath, bool isPackage, IProject project)
