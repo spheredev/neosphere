@@ -537,11 +537,12 @@ js_GetExtensions(duk_context* ctx)
 static duk_ret_t
 js_EvaluateScript(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
+	const char* filename;
 
-	if (!sfs_fexist(g_fs, filename, "scripts"))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): Script file not found '%s'", filename);
-	if (!try_evaluate_file(filename, false))
+	filename = duk_require_path(ctx, 0, "scripts");
+	if (!sfs_fexist(g_fs, filename, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): File not found '%s'", filename);
+	if (!try_evaluate_file(filename, true))
 		duk_throw(ctx);
 	return 1;
 }
@@ -568,10 +569,8 @@ js_RequireScript(duk_context* ctx)
 {
 	const char* filename;
 	bool        is_required;
-	path_t*     path;
 
-	path = duk_require_path(ctx, 0, "scripts");
-	filename = path_cstr(path);
+	filename = duk_require_path(ctx, 0, "scripts");
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): Script file not found '%s'", filename);
 	duk_push_global_stash(ctx);

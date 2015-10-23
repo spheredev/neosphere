@@ -293,7 +293,7 @@ main(int argc, char* argv[])
 	console_log(1, "Loading system font");
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
-		g_sys_font = load_font(syspath(filename), true);
+		g_sys_font = load_font(syspath(filename));
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
@@ -702,7 +702,7 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "Loading system configuration");
-	g_sys_conf = open_kev_file("~sys/system.ini", true);
+	g_sys_conf = open_kev_file("~sys/system.ini");
 
 	initialize_async();
 	initialize_rng();

@@ -622,7 +622,7 @@ load_map(const char* filename)
 	
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
-	if (!(file = sfs_fopen(g_fs, filename, "maps", "rb")))
+	if (!(file = sfs_fopen(g_fs, filename, NULL, "rb")))
 		goto on_error;
 	map = calloc(1, sizeof(struct map));
 	if (sfs_fread(&rmp, sizeof(struct rmp_header), 1, file) != 1)
@@ -750,7 +750,7 @@ load_map(const char* filename)
 		if (strcmp(lstr_cstr(strings[0]), "") != 0) {
 			tileset_path = al_create_path(filename);
 			al_set_path_filename(tileset_path, lstr_cstr(strings[0]));
-			tileset = load_tileset(al_path_cstr(tileset_path, '/'), false);
+			tileset = load_tileset(al_path_cstr(tileset_path, '/'));
 			al_destroy_path(tileset_path);
 		}
 		else {
@@ -958,6 +958,7 @@ change_map(const char* filename, bool preserve_persons)
 	struct map*        map;
 	person_t*          person;
 	struct map_person* person_info;
+	path_t*            sprite_path;
 	spriteset_t*       spriteset;
 
 	int i;
@@ -983,7 +984,10 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		if (!(spriteset = load_spriteset(lstr_cstr(person_info->spriteset), false)))
+		sprite_path = make_sfs_path(lstr_cstr(person_info->spriteset), "spritesets");
+		spriteset = load_spriteset(path_cstr(sprite_path));
+		path_free(sprite_path);
+		if (spriteset == NULL)
 			goto on_error;
 		if (!(person = create_person(lstr_cstr(person_info->name), spriteset, false, NULL)))
 			goto on_error;
@@ -1529,9 +1533,12 @@ duk_require_map_layer(duk_context* ctx, duk_idx_t index)
 static duk_ret_t
 js_MapEngine(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
-	int framerate = duk_require_int(ctx, 1);
+	const char* filename;
+	int         framerate;
 	
+	filename = duk_require_path(ctx, 0, "maps");
+	framerate = duk_require_int(ctx, 1);
+
 	s_is_map_running = true;
 	s_exiting = false;
 	s_color_mask = rgba(0, 0, 0, 0);
@@ -1678,9 +1685,22 @@ js_GetCameraY(duk_context* ctx)
 static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
+	path_t* map_name;
+	path_t* origin;
+	
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetCurrentMap(): Map engine not running");
-	duk_push_string(ctx, s_map_filename);
+	
+	// GetCurrentMap() in Sphere 1.x returns the map path
+	// relative to the 'maps' directory.
+	map_name = path_new(s_map_filename);
+	if (!path_is_rooted(map_name)) {
+		origin = path_new("maps/");
+		path_relativize(map_name, origin);
+		path_free(origin);
+	}
+	duk_push_string(ctx, path_cstr(map_name));
+	path_free(map_name);
 	return 1;
 }
 
@@ -2677,8 +2697,9 @@ js_CallMapScript(duk_context* ctx)
 static duk_ret_t
 js_ChangeMap(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
-	
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "maps");
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): Map engine is not running");
 	if (!change_map(filename, false))

@@ -1,5 +1,4 @@
 #include "minisphere.h"
-#include "logger.h"
 
 #include "console.h"
 

@@ -71,12 +71,11 @@ struct rfn_glyph_header
 static unsigned int s_next_font_id = 0;
 
 font_t*
-load_font(const char* filename, bool is_sfs_compliant)
+load_font(const char* filename)
 {
 	image_t*                atlas = NULL;
 	int                     atlas_x, atlas_y;
 	int                     atlas_size_x, atlas_size_y;
-	const char*             base_dir;
 	sfs_file_t*             file;
 	font_t*                 font = NULL;
 	struct font_glyph*      glyph;
@@ -98,8 +97,7 @@ load_font(const char* filename, bool is_sfs_compliant)
 	
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
-	base_dir = is_sfs_compliant ? NULL : "fonts";
-	if ((file = sfs_fopen(g_fs, filename, base_dir, "rb")) == NULL) goto on_error;
+	if ((file = sfs_fopen(g_fs, filename, NULL, "rb")) == NULL) goto on_error;
 	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
 	if (sfs_fread(&rfn, sizeof(struct rfn_header), 1, file) != 1)
 		goto on_error;
@@ -632,8 +630,8 @@ js_LoadFont(duk_context* ctx)
 	const char* filename;
 	font_t*     font;
 
-	filename = duk_require_string(ctx, 0);
-	font = load_font(filename, false);
+	filename = duk_require_path(ctx, 0, "fonts");
+	font = load_font(filename);
 	if (font == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): Failed to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);
@@ -647,8 +645,8 @@ js_new_Font(duk_context* ctx)
 	const char* filename;
 	font_t*     font;
 
-	filename = duk_require_string(ctx, 0);
-	font = load_font(filename, true);
+	filename = duk_require_path(ctx, 0, NULL);
+	font = load_font(filename);
 	if (font == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): Failed to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);

@@ -62,7 +62,7 @@ load_animation(const char* path)
 	mng_setcb_readdata(anim->stream, mng_cb_readdata);
 	mng_setcb_refresh(anim->stream, mng_cb_refresh);
 	mng_setcb_settimer(anim->stream, mng_cb_settimer);
-	if (!(anim->file = sfs_fopen(g_fs, path, "animations", "rb")))
+	if (!(anim->file = sfs_fopen(g_fs, path, NULL, "rb")))
 		goto on_error;
 	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
 	anim->id = s_next_animation_id++;
@@ -215,19 +215,23 @@ init_animation_api(void)
 static duk_ret_t
 js_LoadAnimation(duk_context* ctx)
 {
-	duk_require_string(ctx, 0);
+	animation_t* anim;
+	const char*  filename;
 
-	js_new_Animation(ctx);
+	filename = duk_require_path(ctx, 0, "animations");
+	if (!(anim = load_animation(filename)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): Failed to load animation file '%s'", filename);
+	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
 }
 
 static duk_ret_t
 js_new_Animation(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
-
 	animation_t* anim;
+	const char*  filename;
 
+	filename = duk_require_path(ctx, 0, NULL);
 	if (!(anim = load_animation(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): Failed to load animation file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);

@@ -67,7 +67,7 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 	return lstr_from_buf(buffer, length);
 }
 
-path_t*
+const char*
 duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 {
 	static int     s_index = 0;
@@ -84,5 +84,5 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;
 	s_index = (s_index + 1) % 10;
-	return path;
+	return path_cstr(path);
 }

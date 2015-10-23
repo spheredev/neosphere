@@ -116,8 +116,8 @@ js_new_ShaderProgram(duk_context* ctx)
 	
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
-	vs_filename = duk_require_string(ctx, -2);
-	fs_filename = duk_require_string(ctx, -1);
+	vs_filename = duk_require_path(ctx, -2, NULL);
+	fs_filename = duk_require_path(ctx, -1, NULL);
 	duk_pop_2(ctx);
 	if (!(shader = create_shader(vs_filename, fs_filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", vs_filename, fs_filename);

@@ -36,7 +36,7 @@ struct spriteset
 extern void         initialize_spritesets   (void);
 extern void         shutdown_spritesets     (void);
 extern spriteset_t* clone_spriteset         (const spriteset_t* spriteset);
-extern spriteset_t* load_spriteset          (const char* filename, bool is_sfs_compliant);
+extern spriteset_t* load_spriteset          (const char* filename);
 extern spriteset_t* ref_spriteset           (spriteset_t* spriteset);
 extern void         free_spriteset          (spriteset_t* spriteset);
 extern rect_t       get_sprite_base         (const spriteset_t* spriteset);

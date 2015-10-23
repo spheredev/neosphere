@@ -30,19 +30,17 @@ static duk_ret_t js_Logger_write      (duk_context* ctx);
 static unsigned int s_next_logger_id = 0;
 
 logger_t*
-open_log_file(const char* filename, bool is_sfs_compliant)
+open_log_file(const char* filename)
 {
-	const char* base_dir;
-	lstring_t*  log_entry;
-	logger_t*   logger = NULL;
-	time_t      now;
-	char        timestamp[100];
+	lstring_t* log_entry;
+	logger_t*  logger = NULL;
+	time_t     now;
+	char       timestamp[100];
 
 	console_log(2, "Creating Logger %u for '%s'", s_next_logger_id, filename);
 	
 	logger = calloc(1, sizeof(logger_t));
-	base_dir = is_sfs_compliant ? NULL : "logs";
-	if (!(logger->file = sfs_fopen(g_fs, filename, base_dir, "a")))
+	if (!(logger->file = sfs_fopen(g_fs, filename, NULL, "a")))
 		goto on_error;
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG OPENED: %s\n", timestamp);
@@ -154,8 +152,8 @@ js_OpenLog(duk_context* ctx)
 	const char* filename;
 	logger_t*   logger;
 
-	filename = duk_require_string(ctx, 0);
-	if (!(logger = open_log_file(filename, false)))
+	filename = duk_require_path(ctx, 0, "logs");
+	if (!(logger = open_log_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
@@ -167,8 +165,8 @@ js_new_Logger(duk_context* ctx)
 	const char* filename;
 	logger_t*   logger;
 
-	filename = duk_require_string(ctx, 0);
-	if (!(logger = open_log_file(filename, true)))
+	filename = duk_require_path(ctx, 0, NULL);
+	if (!(logger = open_log_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;

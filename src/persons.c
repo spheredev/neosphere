@@ -1067,8 +1067,8 @@ js_CreatePerson(duk_context* ctx)
 		// having to check the argument type again.
 		spriteset = ref_spriteset(duk_require_sphere_obj(ctx, 1, "Spriteset"));
 	else {
-		filename = duk_require_string(ctx, 1);
-		if (!(spriteset = load_spriteset(filename, false)))
+		filename = duk_require_path(ctx, 1, "spritesets");
+		if (!(spriteset = load_spriteset(filename)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to load spriteset file '%s'", filename);
 	}
 

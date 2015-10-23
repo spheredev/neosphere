@@ -600,7 +600,7 @@ save_image(image_t* image, const char* filename)
 		is_eof = al_feof(memfile);
 		al_fclose(memfile);
 	} while (is_eof);
-	result = sfs_fspew(g_fs, filename, "images", buffer, file_size);
+	result = sfs_fspew(g_fs, filename, NULL, buffer, file_size);
 	free(buffer);
 	return result;
 }
@@ -746,8 +746,8 @@ js_LoadImage(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_string(ctx, 0);
-	if (!(image = load_image(filename, false)))
+	filename = duk_require_path(ctx, 0, "images");
+	if (!(image = load_image(filename, true)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
@@ -796,7 +796,7 @@ js_new_Image(duk_context* ctx)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to create image from surface");
 	}
 	else {
-		filename = duk_require_string(ctx, 0);
+		filename = duk_require_path(ctx, 0, NULL);
 		image = load_image(filename, true);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);

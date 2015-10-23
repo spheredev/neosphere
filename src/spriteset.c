@@ -136,7 +136,7 @@ on_error:
 }
 
 spriteset_t*
-load_spriteset(const char* filename, bool is_sfs_compliant)
+load_spriteset(const char* filename)
 {
 	// HERE BE DRAGONS!
 	// the Sphere .rss spriteset format is a nightmare. there are 3 different versions
@@ -149,7 +149,6 @@ load_spriteset(const char* filename, bool is_sfs_compliant)
 	};
 	
 	atlas_t*            atlas = NULL;
-	const char*         base_dir;
 	struct rss_dir_v2   dir_v2;
 	struct rss_dir_v3   dir_v3;
 	char                extra_v2_dir_name[32];
@@ -184,8 +183,7 @@ load_spriteset(const char* filename, bool is_sfs_compliant)
 	// filename not in load cache, load the spriteset
 	console_log(2, "Loading Spriteset %u as '%s'", s_next_spriteset_id, filename);
 	spriteset = calloc(1, sizeof(spriteset_t));
-	base_dir = is_sfs_compliant ? NULL : "spritesets";
-	if (!(file = sfs_fopen(g_fs, filename, base_dir, "rb")))
+	if (!(file = sfs_fopen(g_fs, filename, NULL, "rb")))
 		goto on_error;
 	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
@@ -564,8 +562,8 @@ js_LoadSpriteset(duk_context* ctx)
 	const char*  filename;
 	spriteset_t* spriteset;
 
-	filename = duk_require_string(ctx, 0);
-	if ((spriteset = load_spriteset(filename, false)) == NULL)
+	filename = duk_require_path(ctx, 0, "spritesets");
+	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
@@ -578,8 +576,8 @@ js_new_Spriteset(duk_context* ctx)
 	const char*  filename;
 	spriteset_t* spriteset;
 
-	filename = duk_require_string(ctx, 0);
-	if ((spriteset = load_spriteset(filename, true)) == NULL)
+	filename = duk_require_path(ctx, 0, NULL);
+	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);

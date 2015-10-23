@@ -1,10 +1,10 @@
 typedef struct logger logger_t;
 
-extern logger_t* open_log_file   (const char* filename, bool is_sfs_compliant);
-extern logger_t* ref_logger      (logger_t* logger);
-extern void      free_logger     (logger_t* logger);
-extern bool      begin_log_block (logger_t* logger, const char* title);
-extern void      end_log_block   (logger_t* logger);
-extern void      write_log_line  (logger_t* logger, const char* prefix, const char* text);
+logger_t* open_log_file   (const char* filename);
+logger_t* ref_logger      (logger_t* logger);
+void      free_logger     (logger_t* logger);
+bool      begin_log_block (logger_t* logger, const char* title);
+void      end_log_block   (logger_t* logger);
+void      write_log_line  (logger_t* logger, const char* prefix, const char* text);
 
 extern void init_logging_api (void);

@@ -202,8 +202,8 @@ js_LoadSurface(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_string(ctx, 0);
-	if (!(image = load_image(filename, false)))
+	filename = duk_require_path(ctx, 0, "images");
+	if (!(image = load_image(filename, true)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): Failed to load image file '%s'", filename);
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
@@ -235,7 +235,7 @@ js_new_Surface(duk_context* ctx)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to create surface from image");
 	}
 	else {
-		filename = duk_require_string(ctx, 0);
+		filename = duk_require_path(ctx, 0, NULL);
 		image = load_image(filename, true);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to load image file '%s'", filename);
@@ -883,13 +883,13 @@ js_Surface_rectangle(duk_context* ctx)
 static duk_ret_t
 js_Surface_save(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
-	
-	image_t* image;
+	const char* filename;
+	image_t*    image;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
+	filename = duk_require_path(ctx, 0, "images");
 	save_image(image, filename);
 	return 1;
 }

@@ -3,7 +3,7 @@
 
 typedef struct kev_file kev_file_t;
 
-extern kev_file_t* open_kev_file    (const char* filename, bool is_sfs_compliant);
+extern kev_file_t* open_kev_file    (const char* filename);
 extern void        close_kev_file   (kev_file_t* file);
 extern int         get_record_count (kev_file_t* file);
 extern const char* get_record_name  (kev_file_t* file, int index);
