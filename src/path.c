@@ -208,7 +208,6 @@ path_cmp(const path_t* path1, const path_t* path2)
 path_t*
 path_collapse(path_t* path, bool collapse_double_dots)
 {
-	int         depth = 0;
 	const char* hop;
 	bool        is_rooted;
 	
@@ -216,14 +215,10 @@ path_collapse(path_t* path, bool collapse_double_dots)
 
 	is_rooted = path_is_rooted(path);
 	for (i = 0; i < path_num_hops(path); ++i) {
-		++depth;
 		hop = path_hop_cstr(path, i);
-		if (strcmp(hop, ".") == 0) {
-			--depth;
+		if (strcmp(hop, ".") == 0)
 			path_remove_hop(path, i--);
-		}
-		else if (strcmp(hop, "..") == 0) {
-			depth -= 2;
+		else if (strcmp(hop, "..") == 0 && i > 0) {
 			if (!collapse_double_dots)
 				continue;
 			path_remove_hop(path, i--);
