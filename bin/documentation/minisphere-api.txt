@@ -96,7 +96,7 @@ to get very far!
 RequireScript(filename)
 EvaluateScript(filename)
 
-  'filename' is relative to ~sgm/scripts unless qualified.
+  'filename' is relative to '~sgm/scripts'. Not SphereFS compliant.
   
   Evaluates the contents of `filename`, as if the code contained within
   were part of the script containing the call. If you've ever worked in
@@ -235,21 +235,22 @@ the engine and allow the user to choose a game to play. For these functions to
 work, a `games` directory must be placed in the same directory as the engine,
 alongside the `system` directory, with subdirectories for each game.
 
-GetGameInformation()
+GetGameManifest()
   
   Returns an object describing the currently running game. The object is of the
-  same form as those returned by GetGameList() (see below), with the caveat that
-  the directory path returned is absolute instead of relative.
+  same form as those returned by GetGameList() (see below) and is constructed
+  from the game manifest (game.sgm or game.s2gm).
 
 GetGameList()
 
   Returns an array of objects, one for each Sphere game found in
-  [engine root]/games. Each object has the following properties:
+  [engine root]/games. Each object has at least the following properties, and
+  may have more depending on the information in the game manifest:
     
-    .name:        The game's title, taken from game.sgm.
-    .directory:   The directory the game was found in, relative to
-                  [engine root]/games. For packaged games, this will be the
-                  name of the package file instead of a directory name.
+    .name:        The game's title, taken from the .
+    .directory:   The absolute path of the directory the game was found in. For
+				  packaged games, this will be the filename of the package file
+				  instead of a directory name.
     .author:      The game's author, taken from game.sgm.
     .description: A short description of the game, taken from game.sgm.
 
@@ -856,7 +857,7 @@ Surface:clone();
 
 Surface:save(filename);
 
-  'filename' is relative to ~sgm/images unless qualified.
+  'filename' is relative to '~sgm/images'. Not SphereFS compliant.
   
   Saves the contents of the surface to an image file. The filename extension
   determines the format of the saved image. Supported formats are PNG, BMP and
@@ -1299,18 +1300,18 @@ file and directory names are relative to ~sgm/save.
 
 GetFileList([dirname]);
   
-  'dirname' is relative to ~sgm/ unless qualified.
+  'dirname' is relative to '~sgm/'. Not SphereFS compliant.
   
   Returns an array of strings naming files found in the specified directory. If
-  'dirname' is not provided, ~/save is assumed.
+  'dirname' is not provided, '~sgm/save' is assumed.
 
 GetDirectoryList([dirname]);
   
-  'dirname' is relative to ~sgm/ unless qualified.
+  'dirname' is relative to '~sgm/'. Not SphereFS compliant.
   
   Returns an array of strings naming subdirectories found in the specified
-  directory. If 'dirname' is not provided, ~/ is assumed. This is inconsistent
-  with GetFileList(), but is compatible with Sphere 1.5.
+  directory. If 'dirname' is not provided, '~sgm/' is assumed. This is
+  inconsistent with GetFileList(), but is compatible with Sphere 1.x.
 
 DoesFileExist(filename);
 
@@ -1380,7 +1381,7 @@ KEVFile:close()
   
 new RawFile(filename[, is_writable]);
   
-  'filename' is relative to ~sgm/other unless qualified.
+  SphereFS compliant.
   
   Opens a binary file, allowing raw data to be read and/or written. If
   'is_writable' is false, the file must exist and will be opened for reading
@@ -1456,6 +1457,10 @@ FileStream:position (read/write)
   
   Gets or sets the file position, which determines where in the file the next
   read or write will start from. Expressed in bytes.
+  
+  Note: For files opened for writing, it is valid to seek past the end of the
+  stream. In this case the next write operation will be done at the new position
+  and the gap filled with NUL bytes.
 
 FileStream:close();
 
@@ -1472,8 +1477,9 @@ FileStream:read([numBytes]);
 
 FileStream:write(data);
   
-  Writes data to the file. 'data' is an ArrayBuffer, TypedArray or DataView
-  containing the data to be written. The file must be opened for writing.
+  Writes data to the file at the current position. 'data' is an ArrayBuffer,
+  TypedArray or DataView containing the data to be written. The file must be
+  opened for writing.
 
 
 Map Engine
@@ -1486,7 +1492,7 @@ documentation for the full set of map functions.
 
 MapEngine(filename, framerate);
 
-  'filename' is relative to ~sgm/maps unless qualified.
+  'filename' is relative to '~sgm/maps'. Not SphereFS compliant.
   
   Starts the map engine, loading `map_file` as the initial map. `framerate`
   specifies the framerate the map engine will run at; a framerate of 0 will run
@@ -1499,7 +1505,7 @@ IsMapEngineRunning();
 
 ChangeMap(filename);
 
-  'filename' is relative to ~sgm/maps unless qualified.
+  'filename' is relative to '~sgm/maps'. Not SphereFS compliant.
   
   Loads a new map into the map engine. This destroys any transient persons
   automatically. Transient persons are those defined in the map file as well as

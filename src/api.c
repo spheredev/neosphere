@@ -566,11 +566,13 @@ js_EvaluateSystemScript(duk_context* ctx)
 static duk_ret_t
 js_RequireScript(duk_context* ctx)
 {
-	const char* filename = duk_require_string(ctx, 0);
+	const char* filename;
+	bool        is_required;
+	path_t*     path;
 
-	bool is_required;
-
-	if (!sfs_fexist(g_fs, filename, "scripts"))
+	path = duk_require_path(ctx, 0, "scripts");
+	filename = path_cstr(path);
+	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): Script file not found '%s'", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
@@ -579,7 +581,7 @@ js_RequireScript(duk_context* ctx)
 	duk_pop(ctx);
 	if (!is_required) {
 		duk_push_true(ctx); duk_put_prop_string(ctx, -2, filename);
-		if (!try_evaluate_file(filename, false))
+		if (!try_evaluate_file(filename, true))
 			duk_throw(ctx);
 	}
 	duk_pop_3(ctx);
@@ -663,11 +665,10 @@ js_GetGameList(duk_context* ctx)
 			while (file_info = al_read_directory(fse)) {
 				path = al_create_path(al_get_fs_entry_name(file_info));
 				if (sandbox = new_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
-					duk_push_object(ctx);
-					duk_push_string(ctx, al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)); duk_put_prop_string(ctx, -2, "directory");
-					duk_push_string(ctx, get_sgm_name(sandbox)); duk_put_prop_string(ctx, -2, "name");
-					duk_push_string(ctx, get_sgm_author(sandbox)); duk_put_prop_string(ctx, -2, "author");
-					duk_push_string(ctx, get_sgm_summary(sandbox)); duk_put_prop_string(ctx, -2, "description");
+					duk_push_lstring_t(ctx, get_game_manifest(sandbox));
+					duk_json_decode(ctx, -1);
+					duk_push_string(ctx, al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
+					duk_put_prop_string(ctx, -2, "directory");
 					duk_put_prop_index(ctx, -2, j++);
 					free_sandbox(sandbox);
 				}

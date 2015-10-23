@@ -62,6 +62,7 @@ new_sandbox(const char* path)
 	extension = strrchr(path, '.');
 	if (spk = open_spk(path)) {  // Sphere Package (.spk)
 		fs->type = SPHEREFS_SPK;
+		fs->root_path = al_create_path(path);
 		fs->spk = spk;
 	}
 	else {  // default case, unpacked game folder
@@ -76,6 +77,7 @@ new_sandbox(const char* path)
 	
 	// load the game manifest
 	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
+		console_log(1, "Parsing game.s2gm in Sandbox %u", s_next_sandbox_id);
 		fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 		duk_push_pointer(g_duk, fs);
 		duk_push_lstring_t(g_duk, fs->manifest);
@@ -83,6 +85,7 @@ new_sandbox(const char* path)
 			goto on_error;
 	}
 	else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
+		console_log(1, "Parsing game.sgm in Sandbox %u", s_next_sandbox_id);
 		al_file = al_open_memfile(sgm_text, sgm_size, "rb");
 		if (!(conf = al_load_config_file_f(al_file)))
 			goto on_error;
@@ -95,7 +98,7 @@ new_sandbox(const char* path)
 		al_destroy_config(conf);
 		al_fclose(al_file);
 		
-		// generate a JSON manifest (used for, e.g. GetGameInformation())
+		// generate a JSON manifest (used by, e.g. GetGameInformation())
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
@@ -108,7 +111,6 @@ new_sandbox(const char* path)
 		goto on_error;
 	free(sgm_text);
 
-	console_log(1, "Parsing game manifest for Sandbox %u", s_next_sandbox_id);
 	get_sgm_metrics(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
@@ -123,7 +125,7 @@ new_sandbox(const char* path)
 	return fs;
 
 on_error:
-	console_log(1, "Failed to load manifest for Sandbox %u", s_next_sandbox_id++);
+	console_log(1, "Failed to load manifest in Sandbox %u", s_next_sandbox_id++);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(sgm_text);
