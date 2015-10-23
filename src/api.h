@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__API_H__INCLUDED
 #define MINISPHERE__API_H__INCLUDED
 
-extern void initialize_api(duk_context* ctx);
+extern void initialize_api         (duk_context* ctx);
 extern void register_api_const     (duk_context* ctx, const char* name, double value);
 extern void register_api_ctor      (duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer);
 extern bool register_api_extension (const char* designation);

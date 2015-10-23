@@ -14,7 +14,7 @@ extern image_t*        create_image             (int width, int height);
 extern image_t*        create_subimage          (image_t* parent, int x, int y, int width, int height);
 extern image_t*        grab_image               (int x, int y, int width, int height);
 extern image_t*        clone_image              (const image_t* image);
-extern image_t*        load_image               (const char* filename, bool is_sfs_compliant);
+extern image_t*        load_image               (const char* filename);
 extern image_t*        read_image               (sfs_file_t* file, int width, int height);
 extern image_t*        read_subimage            (sfs_file_t* file, image_t* parent, int x, int y, int width, int height);
 extern image_t*        ref_image                (image_t* image);

@@ -269,8 +269,8 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
-	if (!(icon = load_image("~sgm/icon.png", true)))
-		icon = load_image("~sys/icon.png", true);
+	if (!(icon = load_image("~sgm/icon.png")))
+		icon = load_image("~sys/icon.png");
 	rescale_image(icon, 32, 32);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	al_identity_transform(&trans);
@@ -330,7 +330,7 @@ main(int argc, char* argv[])
 	console_log(0, "Starting up game");
 	al_hide_mouse_cursor(g_display);
 	script_path = get_sgm_script_path(g_fs);
-	if (!try_evaluate_file(path_cstr(script_path), true))
+	if (!evaluate_script(path_cstr(script_path)))
 		goto on_js_error;
 	duk_pop(g_duk);
 

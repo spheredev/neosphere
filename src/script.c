@@ -26,7 +26,7 @@ initialize_scripts(void)
 
 	// load the CoffeeScript compiler into the JS context, if it exists
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
-		if (try_evaluate_file("~sys/coffee-script.js", true)) {
+		if (evaluate_script("~sys/coffee-script.js")) {
 			duk_push_global_object(g_duk);
 			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript")) {
 				duk_pop_3(g_duk);
@@ -55,7 +55,7 @@ on_error:
 }
 
 bool
-try_evaluate_file(const char* filename, bool is_sfs_compliant)
+evaluate_script(const char* filename)
 {
 	const char*   extension;
 	sfs_file_t*   file = NULL;
@@ -66,7 +66,7 @@ try_evaluate_file(const char* filename, bool is_sfs_compliant)
 	size_t        size;
 
 	// load the source text from the script file
-	path = make_sfs_path(filename, is_sfs_compliant ? NULL : "scripts");
+	path = make_sfs_path(filename, NULL);
 	if (!(slurp = sfs_fslurp(g_fs, path_cstr(path), NULL, &size)))
 		goto on_error;
 	source_name = get_source_pathname(path_cstr(path));

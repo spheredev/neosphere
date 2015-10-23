@@ -214,18 +214,16 @@ set_mixer_gain(mixer_t* mixer, float gain)
 }
 
 sound_t*
-load_sound(const char* path, mixer_t* mixer, bool is_sfs_compliant)
+load_sound(const char* path, mixer_t* mixer)
 {
-	const char* base_dir;
-	sound_t*    sound;
+	sound_t* sound;
 
 	console_log(2, "Loading Sound %u as '%s'", s_next_sound_id, path);
 	
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);
 	
-	base_dir = is_sfs_compliant ? NULL : "sounds";
-	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, base_dir, &sound->file_size)))
+	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, NULL, &sound->file_size)))
 		goto on_error;
 	sound->mixer = ref_mixer(mixer);
 	sound->gain = 1.0;
@@ -701,7 +699,7 @@ js_LoadSound(duk_context* ctx)
 	sound_t*    sound;
 
 	filename = duk_require_path(ctx, 0, "sounds");
-	if (!(sound = load_sound(filename, get_default_mixer(), true)))
+	if (!(sound = load_sound(filename, get_default_mixer())))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
@@ -720,7 +718,7 @@ js_new_Sound(duk_context* ctx)
 	mixer = n_args >= 2 && !duk_is_boolean(ctx, 1)
 		? duk_require_sphere_obj(ctx, 1, "Mixer")
 		: get_default_mixer();
-	sound = load_sound(filename, mixer, true);
+	sound = load_sound(filename, mixer);
 	if (sound == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): Failed to load sound file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);

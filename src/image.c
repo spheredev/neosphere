@@ -135,10 +135,9 @@ on_error:
 }
 
 image_t*
-load_image(const char* filename, bool is_sfs_compliant)
+load_image(const char* filename)
 {
 	ALLEGRO_FILE* al_file = NULL;
-	const char*   base_dir;
 	const char*   file_ext;
 	size_t        file_size;
 	uint8_t       first_16[16];
@@ -148,8 +147,7 @@ load_image(const char* filename, bool is_sfs_compliant)
 	console_log(2, "Loading Image %u as '%s'", s_next_image_id, filename);
 	
 	image = calloc(1, sizeof(image_t));
-	base_dir = is_sfs_compliant ? NULL : "images";
-	if (!(slurp = sfs_fslurp(g_fs, filename, base_dir, &file_size)))
+	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
 
@@ -666,11 +664,11 @@ init_image_api(duk_context* ctx)
 	// load system-provided images
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Arrow", "pointer.png");
-		s_sys_arrow = load_image(syspath(filename), true);
+		s_sys_arrow = load_image(syspath(filename));
 		filename = read_string_rec(g_sys_conf, "UpArrow", "up_arrow.png");
-		s_sys_up_arrow = load_image(syspath(filename), true);
+		s_sys_up_arrow = load_image(syspath(filename));
 		filename = read_string_rec(g_sys_conf, "DownArrow", "down_arrow.png");
-		s_sys_dn_arrow = load_image(syspath(filename), true);
+		s_sys_dn_arrow = load_image(syspath(filename));
 	}
 	
 	// register image API functions
@@ -747,7 +745,7 @@ js_LoadImage(duk_context* ctx)
 	image_t*    image;
 
 	filename = duk_require_path(ctx, 0, "images");
-	if (!(image = load_image(filename, true)))
+	if (!(image = load_image(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
@@ -797,7 +795,7 @@ js_new_Image(duk_context* ctx)
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL);
-		image = load_image(filename, true);
+		image = load_image(filename);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	}

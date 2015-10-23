@@ -958,7 +958,7 @@ change_map(const char* filename, bool preserve_persons)
 	struct map*        map;
 	person_t*          person;
 	struct map_person* person_info;
-	path_t*            sprite_path;
+	path_t*            path;
 	spriteset_t*       spriteset;
 
 	int i;
@@ -984,9 +984,9 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		sprite_path = make_sfs_path(lstr_cstr(person_info->spriteset), "spritesets");
-		spriteset = load_spriteset(path_cstr(sprite_path));
-		path_free(sprite_path);
+		path = make_sfs_path(lstr_cstr(person_info->spriteset), "spritesets");
+		spriteset = load_spriteset(path_cstr(path));
+		path_free(path);
 		if (spriteset == NULL)
 			goto on_error;
 		if (!(person = create_person(lstr_cstr(person_info->name), spriteset, false, NULL)))
@@ -1021,10 +1021,12 @@ change_map(const char* filename, bool preserve_persons)
 		free_sound(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
-		if (s_map_bgm_stream = load_sound(lstr_cstr(s_map->bgm_file), get_default_mixer(), false)) {
+		path = make_sfs_path(lstr_cstr(s_map->bgm_file), "sounds");
+		if (s_map_bgm_stream = load_sound(path_cstr(path), get_default_mixer())) {
 			set_sound_looping(s_map_bgm_stream, true);
 			play_sound(s_map_bgm_stream);
 		}
+		path_free(path);
 	}
 
 	// run map entry scripts
