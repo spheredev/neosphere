@@ -14,15 +14,15 @@ static duk_ret_t js_RemoveFile       (duk_context* ctx);
 static duk_ret_t js_Rename           (duk_context* ctx);
 
 static duk_ret_t js_OpenFile            (duk_context* ctx);
-static duk_ret_t js_new_KEVFile         (duk_context* ctx);
-static duk_ret_t js_KEVFile_finalize    (duk_context* ctx);
-static duk_ret_t js_KEVFile_toString    (duk_context* ctx);
-static duk_ret_t js_KEVFile_get_numKeys (duk_context* ctx);
-static duk_ret_t js_KEVFile_getKey      (duk_context* ctx);
-static duk_ret_t js_KEVFile_close       (duk_context* ctx);
-static duk_ret_t js_KEVFile_flush       (duk_context* ctx);
-static duk_ret_t js_KEVFile_read        (duk_context* ctx);
-static duk_ret_t js_KEVFile_write       (duk_context* ctx);
+static duk_ret_t js_new_KevFile         (duk_context* ctx);
+static duk_ret_t js_KevFile_finalize    (duk_context* ctx);
+static duk_ret_t js_KevFile_toString    (duk_context* ctx);
+static duk_ret_t js_KevFile_get_numKeys (duk_context* ctx);
+static duk_ret_t js_KevFile_getKey      (duk_context* ctx);
+static duk_ret_t js_KevFile_close       (duk_context* ctx);
+static duk_ret_t js_KevFile_flush       (duk_context* ctx);
+static duk_ret_t js_KevFile_read        (duk_context* ctx);
+static duk_ret_t js_KevFile_write       (duk_context* ctx);
 
 static duk_ret_t js_OpenRawFile          (duk_context* ctx);
 static duk_ret_t js_new_RawFile          (duk_context* ctx);
@@ -249,15 +249,15 @@ init_file_api(void)
 
 	// File object
 	register_api_function(g_duk, NULL, "OpenFile", js_OpenFile);
-	register_api_ctor(g_duk, "KEVFile", js_new_KEVFile, js_KEVFile_finalize);
-	register_api_prop(g_duk, "KEVFile", "numKeys", js_KEVFile_get_numKeys, NULL);
-	register_api_function(g_duk, "KEVFile", "toString", js_KEVFile_toString);
-	register_api_function(g_duk, "KEVFile", "getKey", js_KEVFile_getKey);
-	register_api_function(g_duk, "KEVFile", "getNumKeys", js_KEVFile_get_numKeys);
-	register_api_function(g_duk, "KEVFile", "close", js_KEVFile_close);
-	register_api_function(g_duk, "KEVFile", "flush", js_KEVFile_flush);
-	register_api_function(g_duk, "KEVFile", "read", js_KEVFile_read);
-	register_api_function(g_duk, "KEVFile", "write", js_KEVFile_write);
+	register_api_ctor(g_duk, "KevFile", js_new_KevFile, js_KevFile_finalize);
+	register_api_prop(g_duk, "KevFile", "numKeys", js_KevFile_get_numKeys, NULL);
+	register_api_function(g_duk, "KevFile", "toString", js_KevFile_toString);
+	register_api_function(g_duk, "KevFile", "getKey", js_KevFile_getKey);
+	register_api_function(g_duk, "KevFile", "getNumKeys", js_KevFile_get_numKeys);
+	register_api_function(g_duk, "KevFile", "close", js_KevFile_close);
+	register_api_function(g_duk, "KevFile", "flush", js_KevFile_flush);
+	register_api_function(g_duk, "KevFile", "read", js_KevFile_read);
+	register_api_function(g_duk, "KevFile", "write", js_KevFile_write);
 
 	// RawFile object
 	register_api_function(g_duk, NULL, "OpenRawFile", js_OpenRawFile);
@@ -413,12 +413,12 @@ js_OpenFile(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "save");
 	if (!(file = open_kev_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
-	duk_push_sphere_obj(ctx, "KEVFile", file);
+	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
 }
 
 static duk_ret_t
-js_new_KEVFile(duk_context* ctx)
+js_new_KevFile(duk_context* ctx)
 {
 	kev_file_t* file;
 	const char* filename;
@@ -426,34 +426,34 @@ js_new_KEVFile(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL);
 	if (!(file = open_kev_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): Failed to create or open file '%s'", filename);
-	duk_push_sphere_obj(ctx, "KEVFile", file);
+	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
 }
 
 static duk_ret_t
-js_KEVFile_finalize(duk_context* ctx)
+js_KevFile_finalize(duk_context* ctx)
 {
 	kev_file_t* file;
 
-	file = duk_require_sphere_obj(ctx, 0, "KEVFile");
+	file = duk_require_sphere_obj(ctx, 0, "KevFile");
 	close_kev_file(file);
 	return 0;
 }
 
 static duk_ret_t
-js_KEVFile_toString(duk_context* ctx)
+js_KevFile_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object file]");
 	return 1;
 }
 
 static duk_ret_t
-js_KEVFile_get_numKeys(duk_context* ctx)
+js_KevFile_get_numKeys(duk_context* ctx)
 {
 	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has been closed");
@@ -462,7 +462,7 @@ js_KEVFile_get_numKeys(duk_context* ctx)
 }
 
 static duk_ret_t
-js_KEVFile_getKey(duk_context* ctx)
+js_KevFile_getKey(duk_context* ctx)
 {
 	int index = duk_require_int(ctx, 0);
 	
@@ -470,7 +470,7 @@ js_KEVFile_getKey(duk_context* ctx)
 	const char* key;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has been closed");
@@ -482,12 +482,12 @@ js_KEVFile_getKey(duk_context* ctx)
 }
 
 static duk_ret_t
-js_KEVFile_flush(duk_context* ctx)
+js_KevFile_flush(duk_context* ctx)
 {
 	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): File has been closed");
@@ -496,12 +496,12 @@ js_KEVFile_flush(duk_context* ctx)
 }
 
 static duk_ret_t
-js_KEVFile_close(duk_context* ctx)
+js_KevFile_close(duk_context* ctx)
 {
 	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	close_kev_file(file);
 	duk_push_this(ctx);
@@ -511,7 +511,7 @@ js_KEVFile_close(duk_context* ctx)
 }
 
 static duk_ret_t
-js_KEVFile_read(duk_context* ctx)
+js_KevFile_read(duk_context* ctx)
 {
 	const char* key = duk_to_string(ctx, 0);
 	
@@ -522,7 +522,7 @@ js_KEVFile_read(duk_context* ctx)
 	const char* value;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): File has been closed");
@@ -545,14 +545,14 @@ js_KEVFile_read(duk_context* ctx)
 }
 
 static duk_ret_t
-js_KEVFile_write(duk_context* ctx)
+js_KevFile_write(duk_context* ctx)
 {
 	const char* key = duk_to_string(ctx, 0);
 	
 	kev_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "KEVFile");
+	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has been closed");

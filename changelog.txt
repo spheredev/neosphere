@@ -8,25 +8,24 @@ v2.0.0 - TBD
   Using Cell, you can control the build process for your game using JavaScript
   and even compile your game to SPK format!
 * New JSON-based .s2gm game manifest format allowing much more flexibility in
-  authoring metadata for a game. All values in the .s2gm are available to
-  scripts by calling GetGameManifest().
+  authoring metadata for a game. All data in the .s2gm is available to scripts
+  by calling GetGameManifest().
 * Vastly improved Sphere Studio plugin with full support for Cell, including
   automated SPK packaging.
 * Basic source map support. When an error occurs and during debugging, if the
   game was compiled with Cell's '--debug' option, the path to the corresponding
   file from the source directory is displayed instead of its name within the
   game package.
-* CoffeeScript compiler version is now at 1.10.0.
 * All APIs accepting ByteArrays will now also accept ArrayBuffer and TypedArray
   objects. ByteArray is deprecated, but retained for backward compatibility.
 * SoundStreams are no longer restricted to 8-bit samples.
-* Audialis now supports 32-bit floating-point for both Mixer and SoundStream
-  objects.
+* Audialis now supports 16- and 24-bit signed as well as 32-bit floating-point
+  for both Mixer and SoundStream objects.
 * New 'FileStream' object: A more robust and SphereFS compliant replacement for
   Sphere 1.x's RawFile, based on the ES6 ArrayBuffer API.
-* 'File' constructor has been renamed to 'KEVFile' to avoid confusion with the
-  more general-purpose RawFile and FileStream objects.
-* Now uses a custom build of Duktape to support 'const' in scripts. Note: As in
+* The File object has been renamed to 'KevFile' to avoid confusion with the more
+  general-purpose RawFile and FileStream objects.
+* Now uses a custom build of Duktape to support 'const' in scripts. As in
   Sphere 1.5, 'const' values are not actually constant and are in fact simply
   synonyms for an equivalent 'var' declaration.
 

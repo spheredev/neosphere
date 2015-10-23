@@ -1069,12 +1069,11 @@ js_CreatePerson(duk_context* ctx)
 	else {
 		filename = duk_require_path(ctx, 1, "spritesets");
 		if (!(spriteset = load_spriteset(filename)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to load spriteset file '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to load spriteset '%s'", filename);
 	}
 
 	// create the person and its JS-side data object
-	if (!(person = create_person(name, spriteset, !destroy_with_map, NULL)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): Failed to create person object");
+	person = create_person(name, spriteset, !destroy_with_map, NULL);
 	free_spriteset(spriteset);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");

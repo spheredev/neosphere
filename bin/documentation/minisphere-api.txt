@@ -76,7 +76,7 @@ use one of the following SphereFS prefixes:
 By way of example, the following will open the kevfile settings.cfg from the
 calling game's "config" subdirectory:
   
-  var file = new KEVFile("~sgm/config/settings.cfg");
+  var file = new KevFile("~sgm/config/settings.cfg");
 
 Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
 For an API to be considered compliant, any method accepting a filename must
@@ -1344,9 +1344,9 @@ File I/O
 When developing a game, at some point you will need to be able to read and write
 data to a file, whether to save and load game progress or something else.
 
-new KEVFile(filename);
+new KevFile(filename);
 
-  Opens a kevfile. The file format used for the KEVFile object is similar to a
+  Opens a kevfile. The file format used for the KevFile object is similar to a
   Windows INI file, containing key/value pairs separated by an equals sign, for
   instance:
     
@@ -1355,29 +1355,29 @@ new KEVFile(filename);
     currentMap=foodville.rmp
     # etc.
 
-KEVFile:read(key, defval);
+KevFile:read(key, defval);
   
   Reads a value from the kevfile. If the key doesn't exist in the file, 'defval'
   is returned. Note that the return type depends on the type of 'defval', either
   boolean (true/false), number, or string.
 
-KEVFile:write(key, value);
+KevFile:write(key, value);
   
   Writes a value to the kevfile under a specified key. If the key already
   exists, it will be overwritten. Note that writes are cached, and not written
-  to the file until it flushed, either by calling KEVFile:flush() or
+  to the file until it flushed, either by calling KevFile:flush() or
   automatically when it is closed.
 
-KEVFile:flush()
+KevFile:flush()
 
   Flushes the file. All pending changes will be written out to the file system.
   The file will remain open afterwards.
 
-KEVFile:close()
+KevFile:close()
   
   Closes the file, writing any changes out to the file system in the process.
   You should not call any other methods on the object after this (it is safe to
-  call KEVFile:close() more than once, however). Doing so will throw an error.
+  call KevFile:close() more than once, however). Doing so will throw an error.
   
 new RawFile(filename[, is_writable]);
   
