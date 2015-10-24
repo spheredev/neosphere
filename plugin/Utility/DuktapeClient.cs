@@ -273,10 +273,11 @@ namespace minisphere.Gdk.Utility
         /// Gets a list of local values and their values. Note that objects
         /// are not evaluated and are listed simply as "JS object".
         /// </summary>
+        /// <param name="stackOffset">The call stack offset to get locals for, -1 being the current activation.</param>
         /// <returns></returns>
-        public async Task<IReadOnlyDictionary<string, string>> GetLocals()
+        public async Task<IReadOnlyDictionary<string, string>> GetLocals(int stackOffset = -1)
         {
-            var reply = await Converse(DValue.REQ, 0x1D);
+            var reply = await Converse(DValue.REQ, 0x1D, stackOffset);
             var variables = new Dictionary<string, string>();
             int count = (reply.Length - 1) / 2;
             for (int i = 0; i < count; ++i)
@@ -528,11 +529,9 @@ namespace minisphere.Gdk.Utility
 
         private void SendValue(int value)
         {
-            if (value < 64)
-            {
+            if (value >= 0 && value < 64)
                 tcp.Client.Send(new byte[] { (byte)(0x80 + value) });
-            }
-            else if (value < 16384)
+            else if (value >= 0 && value < 16384)
             {
                 tcp.Client.Send(new byte[] {
                     (byte)(0xC0 + (value >> 8 & 0xFF)),

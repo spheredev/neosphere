@@ -110,6 +110,7 @@ namespace minisphere.Gdk.Debugger
                     Attached(this, EventArgs.Empty);
 
                 Panes.Inspector.Session = this;
+                Panes.Inspector.Duktape = duktape;
                 Panes.Errors.CurrentSession = this;
                 Panes.Inspector.Enabled = false;
                 Panes.Console.Clear();
@@ -320,7 +321,7 @@ namespace minisphere.Gdk.Debugger
         /// not possible, leaves the path as-is.
         /// </summary>
         /// <param name="path">The absolute path to unresolve.</param>
-        internal string UnresolvePath(string path)
+        private string UnresolvePath(string path)
         {
             var pathSep = Path.DirectorySeparatorChar.ToString();
             string sourceRoot = sourcePath.EndsWith(pathSep)

@@ -11,6 +11,7 @@ using Sphere.Plugins.Views;
 using minisphere.Gdk.Debugger;
 using minisphere.Gdk.Forms;
 using minisphere.Gdk.Properties;
+using minisphere.Gdk.Utility;
 
 namespace minisphere.Gdk.DockPanes
 {
@@ -32,6 +33,7 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint { get { return DockHint.Right; } }
         public Bitmap DockIcon { get { return Resources.InspectorIcon; } }
 
+        public DuktapeClient Duktape { get; set; }
         public DebugSession Session { get; set; }
 
         public void Clear()
@@ -60,7 +62,7 @@ namespace minisphere.Gdk.DockPanes
         {
             this.variables = variables;
             LocalsView.BeginUpdate();
-            Clear();
+            LocalsView.Items.Clear();
             foreach (var k in this.variables.Keys)
             {
                 var item = LocalsView.Items.Add(k, 0);
@@ -103,11 +105,12 @@ namespace minisphere.Gdk.DockPanes
                 && !isEvaluating;
         }
 
-        private void CallsView_DoubleClick(object sender, EventArgs e)
+        private async void CallsView_DoubleClick(object sender, EventArgs e)
         {
             if (CallsView.SelectedItems.Count > 0)
             {
                 ListViewItem item = CallsView.SelectedItems[0];
+                SetVariables(await Duktape.GetLocals(-(item.Index + 1)));
                 string filename = Session.ResolvePath(item.SubItems[1].Text);
                 int lineNumber = int.Parse(item.SubItems[2].Text);
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;

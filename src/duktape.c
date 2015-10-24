@@ -40139,6 +40139,7 @@ DUK_LOCAL void duk__debug_handle_get_call_stack(duk_hthread *thr, duk_heap *heap
 DUK_LOCAL void duk__debug_handle_get_locals(duk_hthread *thr, duk_heap *heap) {
 	duk_context *ctx = (duk_context *) thr;
 	duk_activation *curr_act;
+	duk_int32_t level = -1;
 	duk_hstring *varname;
 
 	DUK_UNREF(heap);
@@ -40147,7 +40148,14 @@ DUK_LOCAL void duk__debug_handle_get_locals(duk_hthread *thr, duk_heap *heap) {
 	if (thr->callstack_top == 0) {
 		goto callstack_empty;
 	}
-	curr_act = thr->callstack + thr->callstack_top - 1;
+	
+	/* FIXME: implement this without breaking V1 protocol compatibility */
+	level = duk_debug_read_int(thr);
+	if (level >= 0 || -level > (duk_int32_t) thr->callstack_top) {
+		duk_debug_write_error_eom(thr, DUK_DBG_ERR_UNKNOWN, "invalid callstack level");  /* FIXME: error type */
+	}
+	
+	curr_act = thr->callstack + thr->callstack_top + level;
 
 	/* XXX: several nice-to-have improvements here:
 	 *   - Use direct reads avoiding value stack operations
