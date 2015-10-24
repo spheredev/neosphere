@@ -41,6 +41,10 @@ static duk_ret_t js_api_s2gm    (duk_context* ctx);
 static duk_ret_t js_api_sgm     (duk_context* ctx);
 
 static int  compare_asset_names (const void* in_a, const void* in_b);
+static void emit_begin_op       (build_t* build, const char* fmt, ...);
+static void emit_end_op         (build_t* build, const char* fmt, ...);
+static void emit_warning        (build_t* build, const char* fmt, ...);
+static void emit_error          (build_t* build, const char* fmt, ...);
 static void process_add_files   (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
 static bool process_install     (build_t* build, struct install* inst, bool *out_is_new);
 static bool process_target      (build_t* build, const target_t* target, bool *out_is_new);
@@ -189,9 +193,9 @@ on_error:
 vector_t*
 add_files(build_t* build, const path_t* pattern, bool recursive)
 {
-	path_t*      path;
-	vector_t*    targets;
-	char*        wildcard;
+	path_t*   path;
+	vector_t* targets;
+	char*     wildcard;
 
 	targets = vector_new(sizeof(target_t*));
 	path = path_rebase(path_strip(path_dup(pattern)), build->in_path);
@@ -225,57 +229,6 @@ add_target(build_t* build, asset_t* asset, const path_t* subpath)
 		: path_new("./");
 	vector_push(build->targets, &target);
 	return target;
-}
-
-void
-emit_begin_op(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	build->last_warn_count = build->num_warnings;
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	printf("... ");
-	va_end(ap);
-}
-
-void
-emit_end_op(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	if (build->num_warnings > build->last_warn_count)
-		printf("\n");
-	else {
-		va_start(ap, fmt);
-		vprintf(fmt, ap);
-		printf("\n");
-		va_end(ap);
-	}
-}
-
-void
-emit_error(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	++build->num_errors;
-	va_start(ap, fmt);
-	printf("\n  ERROR: ");
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-void
-emit_warning(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-	
-	++build->num_warnings;
-	va_start(ap, fmt);
-	printf("\n  warning: ");
-	vprintf(fmt, ap);
-	va_end(ap);
 }
 
 bool
@@ -366,6 +319,57 @@ run_build(build_t* build)
 	printf("\n%s -> '%s'\n", build->rule, path_cstr(build->out_path));
 
 	return true;
+}
+
+static void
+emit_begin_op(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	build->last_warn_count = build->num_warnings;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	printf("... ");
+	va_end(ap);
+}
+
+static void
+emit_end_op(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	if (build->num_warnings > build->last_warn_count)
+		printf("\n");
+	else {
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+		printf("\n");
+		va_end(ap);
+	}
+}
+
+static void
+emit_warning(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_warnings;
+	va_start(ap, fmt);
+	printf("\n  warning: ");
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+static void
+emit_error(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_errors;
+	va_start(ap, fmt);
+	printf("\n  ERROR: ");
+	vprintf(fmt, ap);
+	va_end(ap);
 }
 
 static void

@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Media;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
+using Sphere.Plugins.Views;
 using minisphere.Gdk.Debugger;
+using minisphere.Gdk.Forms;
 using minisphere.Gdk.Properties;
 
 namespace minisphere.Gdk.DockPanes
@@ -16,16 +19,12 @@ namespace minisphere.Gdk.DockPanes
         private const string ValueBoxHint = "Select a variable from the list above to see what it contains.";
 
         private bool isEvaluating = false;
-        private string lastVarName = null;
         private IReadOnlyDictionary<string, string> variables;
 
         public InspectorPane()
         {
             InitializeComponent();
             Enabled = false;
-
-            textValue.Text = ValueBoxHint;
-            textValue.WordWrap = true;
         }
 
         public bool ShowInViewMenu { get { return false; } }
@@ -33,87 +32,104 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint { get { return DockHint.Right; } }
         public Bitmap DockIcon { get { return Resources.InspectorIcon; } }
 
-        public DebugSession CurrentSession { get; set; }
+        public DebugSession Session { get; set; }
 
         public void Clear()
         {
-            listVariables.Items.Clear();
-            textEvalBox.Text = "";
-            textValue.Text = ValueBoxHint;
-            textValue.WordWrap = true;
+            LocalsView.Items.Clear();
+            CallsView.Items.Clear();
+        }
+
+        public void SetCallStack(Tuple<string, string, int>[] stack)
+        {
+            CallsView.BeginUpdate();
+            CallsView.Items.Clear();
+            foreach (var entry in stack)
+            {
+                ListViewItem item = new ListViewItem(entry.Item1 != ""
+                    ? string.Format("{0}()", entry.Item1)
+                    : "function()");
+                item.SubItems.Add(entry.Item2);
+                item.SubItems.Add(entry.Item3.ToString());
+                CallsView.Items.Add(item);
+            }
+            CallsView.EndUpdate();
         }
 
         public void SetVariables(IReadOnlyDictionary<string, string> variables)
         {
             this.variables = variables;
-            listVariables.BeginUpdate();
+            LocalsView.BeginUpdate();
             Clear();
             foreach (var k in this.variables.Keys)
             {
-                var item = listVariables.Items.Add(k, 0);
+                var item = LocalsView.Items.Add(k, 0);
                 item.SubItems.Add(this.variables[k]);
             }
-            if (lastVarName != null)
-            {
-                var toSelect = listVariables.FindItemWithText(lastVarName);
-                if (toSelect != null)
-                    toSelect.Selected = true;
-            }
-            listVariables.EndUpdate();
+            LocalsView.EndUpdate();
         }
 
-        private async Task DoEvaluate(string expression)
+        private async Task DoEvaluate(string expr)
         {
             isEvaluating = true;
-            textEvalBox.Text = expression;
-            textEvalBox.Enabled = false;
-            buttonEval.Enabled = false;
-            textValue.Text = "Evaluating...";
-            textValue.WordWrap = false;
-            string value = await CurrentSession.Evaluate(expression);
-            textValue.Text = string.Format("Expression:\r\n{0}\r\n\r\nValue:\r\n{1}",
-                expression, value.Replace("\n", "\r\n"));
-            textEvalBox.Text = "";
-            textEvalBox.Enabled = true;
-            buttonEval.Enabled = true;
+            ExprTextBox.Text = expr;
+            ExprTextBox.Enabled = false;
+            EvalButton.Enabled = false;
+            string value = await Session.Evaluate(expr);
             isEvaluating = false;
+            new JSViewer(expr, value).ShowDialog(this);
+            ExprTextBox.Text = "";
+            ExprTextBox.Enabled = true;
         }
 
-        private async void buttonEval_Click(object sender, EventArgs e)
+        private async void EvalButton_Click(object sender, EventArgs e)
         {
-            await DoEvaluate(textEvalBox.Text);
+            await DoEvaluate(ExprTextBox.Text);
         }
 
-        private async void listVariables_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            lastVarName = listVariables.SelectedItems.Count > 0
-                ? listVariables.SelectedItems[0].Text : null;
-            if (listVariables.SelectedItems.Count > 0)
-                await DoEvaluate(listVariables.SelectedItems[0].Text);
-            else
-            {
-                textEvalBox.Text = "";
-                textValue.Text = ValueBoxHint;
-                textValue.WordWrap = true;
-            }
-        }
-
-        private void textEvalBox_KeyDown(object sender, KeyEventArgs e)
+        private void ExprTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter && e.Modifiers == Keys.None)
             {
-                buttonEval.PerformClick();
+                EvalButton.PerformClick();
                 e.Handled = true;
                 e.SuppressKeyPress = true;
             }
         }
 
-        private void textEvalBox_TextChanged(object sender, EventArgs e)
+        private void ExprTextBox_TextChanged(object sender, EventArgs e)
         {
-            if (isEvaluating) return;
+            EvalButton.Enabled = !string.IsNullOrWhiteSpace(ExprTextBox.Text)
+                && !isEvaluating;
+        }
 
-            listVariables.SelectedItems.Clear();
-            buttonEval.Enabled = !string.IsNullOrWhiteSpace(textEvalBox.Text);
+        private void CallsView_DoubleClick(object sender, EventArgs e)
+        {
+            if (CallsView.SelectedItems.Count > 0)
+            {
+                ListViewItem item = CallsView.SelectedItems[0];
+                string filename = Session.ResolvePath(item.SubItems[1].Text);
+                int lineNumber = int.Parse(item.SubItems[2].Text);
+                ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
+                if (view != null)
+                {
+                    view.GoToLine(lineNumber);
+                }
+                else
+                {
+                    SystemSounds.Asterisk.Play();
+                }
+            }
+        }
+
+        private void LocalsView_DoubleClick(object sender, EventArgs e)
+        {
+            if (LocalsView.SelectedItems.Count > 0)
+            {
+                ListViewItem item = LocalsView.SelectedItems[0];
+                ExprTextBox.Text = item.Text;
+                EvalButton.PerformClick();
+            }
         }
     }
 }

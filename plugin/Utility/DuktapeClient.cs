@@ -237,7 +237,7 @@ namespace minisphere.Gdk.Utility
         public async Task<string> Eval(string expression)
         {
             var code = string.Format(
-                @"(function() {{ try {{ return Duktape.enc('jx', eval(""{0}""), null, 2); }} catch (e) {{ return e.toString(); }} }})();",
+                @"(function() {{ try {{ return Duktape.enc('jx', eval(""{0}""), null, 4); }} catch (e) {{ return e.toString(); }} }})();",
                 expression.Replace(@"\", @"\\").Replace(@"""", @"\"""));
             var reply = await Converse(DValue.REQ, 0x1E, code);
             return reply[2];

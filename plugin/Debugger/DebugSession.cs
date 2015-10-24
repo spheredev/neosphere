@@ -9,8 +9,9 @@ using System.Threading.Tasks;
 
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
-using minisphere.Gdk.Utility;
 using Sphere.Plugins.Views;
+using minisphere.Gdk.Forms;
+using minisphere.Gdk.Utility;
 
 namespace minisphere.Gdk.Debugger
 {
@@ -108,15 +109,12 @@ namespace minisphere.Gdk.Debugger
                 if (Attached != null)
                     Attached(this, EventArgs.Empty);
 
-                Panes.Inspector.CurrentSession = this;
-                Panes.Stack.CurrentSession = this;
+                Panes.Inspector.Session = this;
                 Panes.Errors.CurrentSession = this;
                 Panes.Inspector.Enabled = false;
-                Panes.Stack.Enabled = false;
                 Panes.Console.Clear();
                 Panes.Errors.Clear();
                 Panes.Inspector.Clear();
-                Panes.Stack.Clear();
 
                 Panes.Console.Print(string.Format("minisphere GDK for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2015 Fat Cerberus"));
@@ -126,7 +124,6 @@ namespace minisphere.Gdk.Debugger
                 Panes.Console.Print("");
 
                 PluginManager.Core.Docking.Show(Panes.Inspector);
-                PluginManager.Core.Docking.Show(Panes.Stack);
             }), null);
         }
 
@@ -140,7 +137,6 @@ namespace minisphere.Gdk.Debugger
                 --plugin.Sessions;
 
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
-                PluginManager.Core.Docking.Hide(Panes.Stack);
                 PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Console.Print("");
                 Panes.Console.Print(duktape.TargetID + " detached.");
@@ -187,8 +183,8 @@ namespace minisphere.Gdk.Debugger
                         var topCall = callStack.First(entry => entry.Item2 != duktape.TargetID || entry.Item3 != 0);
                         FileName = ResolvePath(topCall.Item2);
                         LineNumber = topCall.Item3;
-                        Panes.Stack.UpdateStack(callStack);
-                        Panes.Stack.Enabled = true;
+                        Panes.Inspector.SetCallStack(callStack);
+                        Panes.Inspector.Enabled = true;
                     }
                     updateTimer.Change(500, Timeout.Infinite);
                 }
@@ -271,9 +267,7 @@ namespace minisphere.Gdk.Debugger
                     NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
                     PluginManager.Core.Docking.Activate(Panes.Console);
                     Panes.Inspector.Enabled = false;
-                    Panes.Stack.Enabled = false;
                     Panes.Inspector.Clear();
-                    Panes.Stack.Clear();
                 }
                 catch (InvalidOperationException)
                 {
@@ -292,11 +286,10 @@ namespace minisphere.Gdk.Debugger
                 var vars = await me.duktape.GetLocals();
                 if (!me.Running)
                 {
-                    Panes.Stack.UpdateStack(callStack);
-                    Panes.Stack.Enabled = true;
                     Panes.Inspector.SetVariables(vars);
+                    Panes.Inspector.SetCallStack(callStack);
                     Panes.Inspector.Enabled = true;
-                    PluginManager.Core.Docking.Show(Panes.Inspector);
+                    PluginManager.Core.Docking.Activate(Panes.Inspector);
                 }
             }), null);
         }

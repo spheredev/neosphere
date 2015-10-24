@@ -102,8 +102,7 @@ namespace minisphere.Gdk
     {
         public static void Initialize(PluginMain main)
         {
-            PluginManager.Register(main, Inspector = new InspectorPane(), "Variables");
-            PluginManager.Register(main, Stack = new StackPane(), "Call Stack");
+            PluginManager.Register(main, Inspector = new InspectorPane(), "Inspector");
             PluginManager.Register(main, Console = new ConsolePane(main.Conf), "Debug Console");
             PluginManager.Register(main, Errors = new ErrorPane(), "Exceptions");
         }
@@ -111,6 +110,5 @@ namespace minisphere.Gdk
         public static ConsolePane Console { get; private set; }
         public static ErrorPane Errors { get; private set; }
         public static InspectorPane Inspector { get; private set; }
-        public static StackPane Stack { get; private set; }
     }
 }

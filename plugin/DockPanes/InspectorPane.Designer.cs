@@ -30,41 +30,44 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InspectorPane));
-            this.listVariables = new System.Windows.Forms.ListView();
+            this.LocalsView = new System.Windows.Forms.ListView();
             this.columnName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnValue = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.imagesVarList = new System.Windows.Forms.ImageList(this.components);
             this.splitter = new System.Windows.Forms.SplitContainer();
-            this.textValue = new System.Windows.Forms.TextBox();
-            this.panelEval = new System.Windows.Forms.Panel();
-            this.textEvalBox = new System.Windows.Forms.TextBox();
-            this.buttonEval = new System.Windows.Forms.Button();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.ExprTextBox = new System.Windows.Forms.TextBox();
+            this.EvalButton = new System.Windows.Forms.Button();
+            this.CallsView = new System.Windows.Forms.ListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.splitter)).BeginInit();
             this.splitter.Panel1.SuspendLayout();
             this.splitter.Panel2.SuspendLayout();
             this.splitter.SuspendLayout();
-            this.panelEval.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // listVariables
+            // LocalsView
             // 
-            this.listVariables.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.LocalsView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnName,
             this.columnValue});
-            this.listVariables.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listVariables.FullRowSelect = true;
-            this.listVariables.GridLines = true;
-            this.listVariables.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-            this.listVariables.HideSelection = false;
-            this.listVariables.Location = new System.Drawing.Point(0, 0);
-            this.listVariables.MultiSelect = false;
-            this.listVariables.Name = "listVariables";
-            this.listVariables.Size = new System.Drawing.Size(387, 209);
-            this.listVariables.SmallImageList = this.imagesVarList;
-            this.listVariables.TabIndex = 0;
-            this.listVariables.UseCompatibleStateImageBehavior = false;
-            this.listVariables.View = System.Windows.Forms.View.Details;
-            this.listVariables.SelectedIndexChanged += new System.EventHandler(this.listVariables_SelectedIndexChanged);
+            this.LocalsView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.LocalsView.FullRowSelect = true;
+            this.LocalsView.GridLines = true;
+            this.LocalsView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.LocalsView.HideSelection = false;
+            this.LocalsView.Location = new System.Drawing.Point(0, 0);
+            this.LocalsView.MultiSelect = false;
+            this.LocalsView.Name = "LocalsView";
+            this.LocalsView.Size = new System.Drawing.Size(387, 231);
+            this.LocalsView.SmallImageList = this.imagesVarList;
+            this.LocalsView.TabIndex = 0;
+            this.LocalsView.UseCompatibleStateImageBehavior = false;
+            this.LocalsView.View = System.Windows.Forms.View.Details;
+            this.LocalsView.DoubleClick += new System.EventHandler(this.LocalsView_DoubleClick);
             // 
             // columnName
             // 
@@ -74,7 +77,7 @@
             // columnValue
             // 
             this.columnValue.Text = "Value";
-            this.columnValue.Width = 100;
+            this.columnValue.Width = 200;
             // 
             // imagesVarList
             // 
@@ -91,64 +94,89 @@
             // 
             // splitter.Panel1
             // 
-            this.splitter.Panel1.Controls.Add(this.listVariables);
+            this.splitter.Panel1.Controls.Add(this.panel1);
+            this.splitter.Panel1.Controls.Add(this.LocalsView);
             // 
             // splitter.Panel2
             // 
-            this.splitter.Panel2.Controls.Add(this.textValue);
-            this.splitter.Panel2.Controls.Add(this.panelEval);
+            this.splitter.Panel2.Controls.Add(this.CallsView);
             this.splitter.Size = new System.Drawing.Size(387, 654);
-            this.splitter.SplitterDistance = 209;
+            this.splitter.SplitterDistance = 231;
             this.splitter.SplitterWidth = 3;
             this.splitter.TabIndex = 1;
             // 
-            // textValue
+            // panel1
             // 
-            this.textValue.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textValue.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textValue.Location = new System.Drawing.Point(0, 24);
-            this.textValue.Multiline = true;
-            this.textValue.Name = "textValue";
-            this.textValue.ReadOnly = true;
-            this.textValue.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textValue.Size = new System.Drawing.Size(387, 418);
-            this.textValue.TabIndex = 0;
-            this.textValue.WordWrap = false;
+            this.panel1.Controls.Add(this.ExprTextBox);
+            this.panel1.Controls.Add(this.EvalButton);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel1.Location = new System.Drawing.Point(0, 208);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(387, 23);
+            this.panel1.TabIndex = 3;
             // 
-            // panelEval
+            // ExprTextBox
             // 
-            this.panelEval.Controls.Add(this.textEvalBox);
-            this.panelEval.Controls.Add(this.buttonEval);
-            this.panelEval.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelEval.Location = new System.Drawing.Point(0, 0);
-            this.panelEval.Name = "panelEval";
-            this.panelEval.Size = new System.Drawing.Size(387, 24);
-            this.panelEval.TabIndex = 2;
+            this.ExprTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ExprTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ExprTextBox.Location = new System.Drawing.Point(0, 0);
+            this.ExprTextBox.Name = "ExprTextBox";
+            this.ExprTextBox.Size = new System.Drawing.Size(323, 23);
+            this.ExprTextBox.TabIndex = 1;
+            this.ExprTextBox.TextChanged += new System.EventHandler(this.ExprTextBox_TextChanged);
+            this.ExprTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ExprTextBox_KeyDown);
             // 
-            // textEvalBox
+            // EvalButton
             // 
-            this.textEvalBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textEvalBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textEvalBox.Location = new System.Drawing.Point(0, 0);
-            this.textEvalBox.Name = "textEvalBox";
-            this.textEvalBox.Size = new System.Drawing.Size(323, 23);
-            this.textEvalBox.TabIndex = 1;
-            this.textEvalBox.TextChanged += new System.EventHandler(this.textEvalBox_TextChanged);
-            this.textEvalBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textEvalBox_KeyDown);
+            this.EvalButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.EvalButton.Enabled = false;
+            this.EvalButton.Image = global::minisphere.Gdk.Properties.Resources.EvalIcon;
+            this.EvalButton.Location = new System.Drawing.Point(323, 0);
+            this.EvalButton.Name = "EvalButton";
+            this.EvalButton.Size = new System.Drawing.Size(64, 23);
+            this.EvalButton.TabIndex = 2;
+            this.EvalButton.Text = "&Eval";
+            this.EvalButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.EvalButton.UseVisualStyleBackColor = true;
+            this.EvalButton.Click += new System.EventHandler(this.EvalButton_Click);
             // 
-            // buttonEval
+            // CallsView
             // 
-            this.buttonEval.Dock = System.Windows.Forms.DockStyle.Right;
-            this.buttonEval.Enabled = false;
-            this.buttonEval.Image = global::minisphere.Gdk.Properties.Resources.EvalIcon;
-            this.buttonEval.Location = new System.Drawing.Point(323, 0);
-            this.buttonEval.Name = "buttonEval";
-            this.buttonEval.Size = new System.Drawing.Size(64, 24);
-            this.buttonEval.TabIndex = 2;
-            this.buttonEval.Text = "&Eval";
-            this.buttonEval.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.buttonEval.UseVisualStyleBackColor = true;
-            this.buttonEval.Click += new System.EventHandler(this.buttonEval_Click);
+            this.CallsView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3});
+            this.CallsView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.CallsView.FullRowSelect = true;
+            this.CallsView.GridLines = true;
+            this.CallsView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.CallsView.Location = new System.Drawing.Point(0, 0);
+            this.CallsView.MultiSelect = false;
+            this.CallsView.Name = "CallsView";
+            this.CallsView.ShowItemToolTips = true;
+            this.CallsView.Size = new System.Drawing.Size(387, 420);
+            this.CallsView.TabIndex = 1;
+            this.CallsView.UseCompatibleStateImageBehavior = false;
+            this.CallsView.View = System.Windows.Forms.View.Details;
+            this.CallsView.DoubleClick += new System.EventHandler(this.CallsView_DoubleClick);
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Function";
+            this.columnHeader1.Width = 125;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.DisplayIndex = 2;
+            this.columnHeader2.Text = "Script";
+            this.columnHeader2.Width = 175;
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.DisplayIndex = 1;
+            this.columnHeader3.Text = "Line";
+            this.columnHeader3.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.columnHeader3.Width = 40;
             // 
             // InspectorPane
             // 
@@ -160,25 +188,27 @@
             this.Size = new System.Drawing.Size(387, 654);
             this.splitter.Panel1.ResumeLayout(false);
             this.splitter.Panel2.ResumeLayout(false);
-            this.splitter.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitter)).EndInit();
             this.splitter.ResumeLayout(false);
-            this.panelEval.ResumeLayout(false);
-            this.panelEval.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.ListView listVariables;
+        private System.Windows.Forms.ListView LocalsView;
         private System.Windows.Forms.ColumnHeader columnName;
         private System.Windows.Forms.ColumnHeader columnValue;
         private System.Windows.Forms.SplitContainer splitter;
-        private System.Windows.Forms.TextBox textValue;
         private System.Windows.Forms.ImageList imagesVarList;
-        private System.Windows.Forms.TextBox textEvalBox;
-        private System.Windows.Forms.Panel panelEval;
-        private System.Windows.Forms.Button buttonEval;
+        private System.Windows.Forms.TextBox ExprTextBox;
+        private System.Windows.Forms.Button EvalButton;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.ListView CallsView;
+        private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ColumnHeader columnHeader3;
     }
 }
