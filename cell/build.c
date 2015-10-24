@@ -12,8 +12,9 @@ struct build
 	vector_t*     installs;
 	path_t*       out_path;
 	time_t        js_mtime;
-	int           n_errors;
-	int           n_warnings;
+	int           last_warn_count;
+	int           num_errors;
+	int           num_warnings;
 	char*         rule;
 	spk_writer_t* spk;
 	path_t*       staging_path;
@@ -95,7 +96,8 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 	
-	printf("Compiling '%s' as %s\n", path_cstr(build->in_path), build->spk ? "SPK" : "dist");
+	printf("Compiling '%s' as %s.\n", path_cstr(build->in_path), build->spk ? "SPK" : "dist");
+
 	return build;
 
 on_error:
@@ -137,23 +139,21 @@ free_build(build_t* build)
 bool
 is_build_ok(const build_t* build, int *out_n_errors, int *out_n_warnings)
 {
-	if (out_n_errors) *out_n_errors = build->n_errors;
-	if (out_n_warnings) *out_n_warnings = build->n_warnings;
-	return build->n_errors == 0;
+	if (out_n_errors) *out_n_errors = build->num_errors;
+	if (out_n_warnings) *out_n_warnings = build->num_warnings;
+	return build->num_errors == 0;
 }
 
 bool
 evaluate_rule(build_t* build, const char* name)
 {
 	char    func_name[255];
-	int     n_warnings;
 	path_t* script_path;
 
 	build->rule = strdup(name);
 	
 	// process build script
-	n_warnings = build->n_warnings;
-	printf("Processing Cellscript.js rule '%s'... ", name);
+	emit_begin_op(build, "Processing Cellscript.js rule '%s'", name);
 	sprintf(func_name, "$%s", name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
@@ -174,14 +174,11 @@ evaluate_rule(build_t* build, const char* name)
 	}
 
 	validate_targets(build);
-	if (build->n_errors)
+	if (build->num_errors)
 		goto on_error;
 
 	path_append_dir(build->staging_path, name);
-	if (build->n_warnings == n_warnings)
-		printf("OK.\n");
-	else
-		printf("\n");
+	emit_end_op(build, "OK.");
 	return true;
 
 on_error:
@@ -200,8 +197,6 @@ add_files(build_t* build, const path_t* pattern, bool recursive)
 	path = path_rebase(path_strip(path_dup(pattern)), build->in_path);
 	wildcard = strdup(path_filename_cstr(pattern));
 	process_add_files(build, wildcard, path, NULL, recursive, &targets);
-	if (vector_len(targets) == 0)
-		emit_warning(build, "no files match pattern '%s'", path_cstr(pattern));
 	path_free(path);
 	free(wildcard);
 	return targets;
@@ -233,11 +228,38 @@ add_target(build_t* build, asset_t* asset, const path_t* subpath)
 }
 
 void
+emit_begin_op(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	build->last_warn_count = build->num_warnings;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	printf("... ");
+	va_end(ap);
+}
+
+void
+emit_end_op(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	if (build->num_warnings > build->last_warn_count)
+		printf("\n");
+	else {
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+		printf("\n");
+		va_end(ap);
+	}
+}
+
+void
 emit_error(build_t* build, const char* fmt, ...)
 {
 	va_list ap;
 
-	++build->n_errors;
+	++build->num_errors;
 	va_start(ap, fmt);
 	printf("\n  ERROR: ");
 	vprintf(fmt, ap);
@@ -249,7 +271,7 @@ emit_warning(build_t* build, const char* fmt, ...)
 {
 	va_list ap;
 	
-	++build->n_warnings;
+	++build->num_warnings;
 	va_start(ap, fmt);
 	printf("\n  warning: ");
 	vprintf(fmt, ap);
@@ -293,7 +315,7 @@ run_build(build_t* build)
 	if (n_assets > 0) printf("  %d asset(s) built\n", n_assets);
 		else printf(" Up-to-date.\n");
 
-	printf("Installing assets...");
+	printf("Installing assets... ");
 	n_assets = 0;
 	iter = vector_enum(build->installs);
 	while (p_inst = vector_next(&iter)) {
@@ -341,7 +363,7 @@ run_build(build_t* build)
 		path_free(path);
 	}
 
-	printf("%s -> '%s'\n", build->rule, path_cstr(build->out_path));
+	printf("\n%s -> '%s'\n", build->rule, path_cstr(build->out_path));
 
 	return true;
 }
@@ -559,6 +581,8 @@ js_api_files(duk_context* ctx)
 	duk_pop_2(ctx);
 
 	targets = add_files(build, pattern, is_recursive);
+	if (vector_len(targets) == 0)
+		emit_warning(build, "files(): no files match '%s'", path_cstr(pattern));
 	duk_push_array(ctx);
 	iter = vector_enum(targets);
 	while (p_target = vector_next(&iter)) {
@@ -620,6 +644,12 @@ js_api_s2gm(duk_context* ctx)
 	duk_require_object_coercible(ctx, 0);
 	duk_push_global_stash(ctx);
 	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
+	duk_pop_2(ctx);
+
+	if (!duk_get_prop_string(ctx, 0, "author"))
+		emit_warning(build, "s2gm(): 'author' field is missing");
+	if (!duk_get_prop_string(ctx, 0, "summary"))
+		emit_warning(build, "s2gm(): 'summary' field is missing");
 	duk_pop_2(ctx);
 
 	json = duk_json_encode(ctx, 0);

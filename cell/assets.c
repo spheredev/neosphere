@@ -110,16 +110,21 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		// a file asset is just a direct copy from source to destination, so
 		// there's nothing to build.
 		return true;
+
 	case ASSET_RAW:
 		if (!fspew(asset->data.buffer, asset->data.size, filename))
 			goto on_error;
 		return true;
+
 	case ASSET_SGM:
+		// SGMv1 requires the script name to be relative to ~/scripts
 		script_path = path_new(asset->sgm.script);
 		origin = path_new("scripts/");
 		path_collapse(script_path, true);
 		path_relativize(script_path, origin);
 		path_free(origin);
+
+		// write out the manifest
 		if (!(file = fopen(filename, "wt")))
 			goto on_error;
 		fprintf(file, "name=%s\n", asset->sgm.name);
@@ -131,6 +136,7 @@ build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		fclose(file);
 		path_free(script_path);
 		return true;
+
 	default:
 		fprintf(stderr, "ERROR: internal: unknown asset type %d '%s'\n",
 			asset->type, path_cstr(asset->name));

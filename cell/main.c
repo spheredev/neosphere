@@ -38,7 +38,7 @@ main(int argc, char* argv[])
 shutdown:
 	if (build != NULL) {
 		is_success = is_build_ok(build, &num_errors, &num_warnings);
-		printf("\n%d error(s), %d warning(s)\n", num_errors, num_warnings);
+		printf("%d error(s), %d warning(s)\n", num_errors, num_warnings);
 	}
 	path_free(s_in_path);
 	path_free(s_out_path);
