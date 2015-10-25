@@ -33,7 +33,6 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint { get { return DockHint.Right; } }
         public Bitmap DockIcon { get { return Resources.InspectorIcon; } }
 
-        public DuktapeClient Duktape { get; set; }
         public DebugSession Session { get; set; }
 
         public void Clear()
@@ -42,7 +41,7 @@ namespace minisphere.Gdk.DockPanes
             CallsView.Items.Clear();
         }
 
-        public void SetCallStack(Tuple<string, string, int>[] stack)
+        public async Task SetCallStack(Tuple<string, string, int>[] stack, int stackOffset = -1)
         {
             CallsView.BeginUpdate();
             CallsView.Items.Clear();
@@ -56,19 +55,8 @@ namespace minisphere.Gdk.DockPanes
                 CallsView.Items.Add(item);
             }
             CallsView.EndUpdate();
-        }
-
-        public void SetVariables(IReadOnlyDictionary<string, string> variables)
-        {
-            this.variables = variables;
-            LocalsView.BeginUpdate();
-            LocalsView.Items.Clear();
-            foreach (var k in this.variables.Keys)
-            {
-                var item = LocalsView.Items.Add(k, 0);
-                item.SubItems.Add(this.variables[k]);
-            }
-            LocalsView.EndUpdate();
+            if (stack.Length > 0) await LoadVariables(stackOffset);
+                else LocalsView.Items.Clear();
         }
 
         private async Task DoEvaluate(string expr)
@@ -77,11 +65,24 @@ namespace minisphere.Gdk.DockPanes
             ExprTextBox.Text = expr;
             ExprTextBox.Enabled = false;
             EvalButton.Enabled = false;
-            string value = await Session.Evaluate(expr);
+            string value = await Session.Duktape.Eval(expr);
             isEvaluating = false;
             new JSViewer(expr, value).ShowDialog(this);
             ExprTextBox.Text = "";
             ExprTextBox.Enabled = true;
+        }
+
+        private async Task LoadVariables(int stackOffset)
+        {
+            this.variables = await Session.Duktape.GetLocals(stackOffset);
+            LocalsView.BeginUpdate();
+            LocalsView.Items.Clear();
+            foreach (var k in this.variables.Keys)
+            {
+                var item = LocalsView.Items.Add(k, 0);
+                item.SubItems.Add(this.variables[k]);
+            }
+            LocalsView.EndUpdate();
         }
 
         private async void EvalButton_Click(object sender, EventArgs e)
@@ -110,13 +111,13 @@ namespace minisphere.Gdk.DockPanes
             if (CallsView.SelectedItems.Count > 0)
             {
                 ListViewItem item = CallsView.SelectedItems[0];
-                SetVariables(await Duktape.GetLocals(-(item.Index + 1)));
                 string filename = Session.ResolvePath(item.SubItems[1].Text);
                 int lineNumber = int.Parse(item.SubItems[2].Text);
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
                 if (view != null)
                 {
                     view.GoToLine(lineNumber);
+                    await LoadVariables(-(item.Index + 1));
                 }
                 else
                 {

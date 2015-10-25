@@ -18,7 +18,6 @@ namespace minisphere.Gdk.Debugger
     class DebugSession : IDebugger, IDisposable
     {
         private string sgmPath;
-        private DuktapeClient duktape;
         private Process engineProcess;
         private string engineDir;
         private bool haveError = false;
@@ -41,23 +40,19 @@ namespace minisphere.Gdk.Debugger
 
         public void Dispose()
         {
-            duktape.Dispose();
+            Duktape.Dispose();
             focusTimer.Dispose();
             updateTimer.Dispose();
         }
 
+        public DuktapeClient Duktape { get; private set; }
         public string FileName { get; private set; }
-
         public int LineNumber { get; private set; }
-
         public bool Running { get; private set; }
 
         public event EventHandler Attached;
-
         public event EventHandler Detached;
-
         public event EventHandler<PausedEventArgs> Paused;
-
         public event EventHandler Resumed;
 
         public async Task<bool> Attach()
@@ -76,7 +71,7 @@ namespace minisphere.Gdk.Debugger
 
         public async Task Detach()
         {
-            await duktape.Detach();
+            await Duktape.Detach();
             Dispose();
         }
 
@@ -87,14 +82,14 @@ namespace minisphere.Gdk.Debugger
             {
                 try
                 {
-                    duktape = new DuktapeClient();
-                    duktape.Attached += duktape_Attached;
-                    duktape.Detached += duktape_Detached;
-                    duktape.ErrorThrown += duktape_ErrorThrown;
-                    duktape.Alert += duktape_Print;
-                    duktape.Print += duktape_Print;
-                    duktape.Status += duktape_Status;
-                    await duktape.Connect(hostname, port);
+                    Duktape = new DuktapeClient();
+                    Duktape.Attached += duktape_Attached;
+                    Duktape.Detached += duktape_Detached;
+                    Duktape.ErrorThrown += duktape_ErrorThrown;
+                    Duktape.Alert += duktape_Print;
+                    Duktape.Print += duktape_Print;
+                    Duktape.Status += duktape_Status;
+                    await Duktape.Connect(hostname, port);
                     return;
                 }
                 catch (SocketException) { } // *munch*
@@ -110,8 +105,7 @@ namespace minisphere.Gdk.Debugger
                     Attached(this, EventArgs.Empty);
 
                 Panes.Inspector.Session = this;
-                Panes.Inspector.Duktape = duktape;
-                Panes.Errors.CurrentSession = this;
+                Panes.Errors.Session = this;
                 Panes.Inspector.Enabled = false;
                 Panes.Console.Clear();
                 Panes.Errors.Clear();
@@ -120,8 +114,8 @@ namespace minisphere.Gdk.Debugger
                 Panes.Console.Print(string.Format("minisphere GDK for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2015 Fat Cerberus"));
                 Panes.Console.Print("");
-                Panes.Console.Print(string.Format("Host: Duktape {0}", duktape.Version));
-                Panes.Console.Print(string.Format("({0})", duktape.TargetID));
+                Panes.Console.Print(string.Format("Host: Duktape {0}", Duktape.Version));
+                Panes.Console.Print(string.Format("({0})", Duktape.TargetID));
                 Panes.Console.Print("");
 
                 PluginManager.Core.Docking.Show(Panes.Inspector);
@@ -140,7 +134,7 @@ namespace minisphere.Gdk.Debugger
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Console.Print("");
-                Panes.Console.Print(duktape.TargetID + " detached.");
+                Panes.Console.Print(Duktape.TargetID + " detached.");
             }), null);
         }
 
@@ -168,28 +162,32 @@ namespace minisphere.Gdk.Debugger
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                bool wantPause = !duktape.Running;
-                bool wantResume = !Running && duktape.Running;
-                Running = duktape.Running;
+                bool wantPause = !Duktape.Running;
+                bool wantResume = !Running && Duktape.Running;
+                Running = Duktape.Running;
                 if (wantPause)
                 {
                     focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    FileName = ResolvePath(duktape.FileName);
-                    LineNumber = duktape.LineNumber;
+                    FileName = ResolvePath(Duktape.FileName);
+                    LineNumber = Duktape.LineNumber;
                     if (!File.Exists(FileName))
                     {
                         // filename reported by Duktape doesn't exist; walk callstack for a
                         // JavaScript call as a fallback
-                        var callStack = await duktape.GetCallStack();
-                        var topCall = callStack.First(entry => entry.Item2 != duktape.TargetID || entry.Item3 != 0);
+                        var callStack = await Duktape.GetCallStack();
+                        var topCall = callStack.First(entry => entry.Item2 != Duktape.TargetID || entry.Item3 != 0);
+                        var stackOffset = -(Array.IndexOf(callStack, topCall) + 1);
                         FileName = ResolvePath(topCall.Item2);
                         LineNumber = topCall.Item3;
-                        Panes.Inspector.SetCallStack(callStack);
+                        await Panes.Inspector.SetCallStack(callStack, stackOffset);
                         Panes.Inspector.Enabled = true;
                     }
-                    updateTimer.Change(500, Timeout.Infinite);
+                    else
+                    {
+                        updateTimer.Change(500, Timeout.Infinite);
+                    }
                 }
-                if (wantResume && duktape.Running)
+                if (wantResume && Duktape.Running)
                 {
                     focusTimer.Change(250, Timeout.Infinite);
                     updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -209,7 +207,7 @@ namespace minisphere.Gdk.Debugger
         public async Task SetBreakpoint(string fileName, int lineNumber)
         {
             fileName = UnresolvePath(fileName);
-            await duktape.AddBreak(fileName, lineNumber);
+            await Duktape.AddBreak(fileName, lineNumber);
         }
 
         public async Task ClearBreakpoint(string fileName, int lineNumber)
@@ -217,45 +215,40 @@ namespace minisphere.Gdk.Debugger
             fileName = UnresolvePath(fileName);
 
             // clear all matching breakpoints
-            var breaks = await duktape.ListBreak();
+            var breaks = await Duktape.ListBreak();
             for (int i = breaks.Length - 1; i >= 0; --i)
             {
                 string fn = breaks[i].Item1;
                 int line = breaks[i].Item2;
                 if (fileName == fn && lineNumber == line)
-                    await duktape.DelBreak(i);
+                    await Duktape.DelBreak(i);
             }
 
         }
 
         public async Task Resume()
         {
-            await duktape.Resume();
+            await Duktape.Resume();
         }
 
         public async Task Pause()
         {
-            await duktape.Pause();
-        }
-
-        public async Task<string> Evaluate(string expression)
-        {
-            return await duktape.Eval(expression);
+            await Duktape.Pause();
         }
 
         public async Task StepInto()
         {
-            await duktape.StepInto();
+            await Duktape.StepInto();
         }
 
         public async Task StepOut()
         {
-            await duktape.StepOut();
+            await Duktape.StepOut();
         }
 
         public async Task StepOver()
         {
-            await duktape.StepOver();
+            await Duktape.StepOver();
         }
 
         private static void HandleFocusSwitch(object state)
@@ -283,12 +276,10 @@ namespace minisphere.Gdk.Debugger
             PluginManager.Core.Invoke(new Action(async () =>
             {
                 DebugSession me = (DebugSession)state;
-                var callStack = await me.duktape.GetCallStack();
-                var vars = await me.duktape.GetLocals();
+                var callStack = await me.Duktape.GetCallStack();
                 if (!me.Running)
                 {
-                    Panes.Inspector.SetVariables(vars);
-                    Panes.Inspector.SetCallStack(callStack);
+                    await Panes.Inspector.SetCallStack(callStack);
                     Panes.Inspector.Enabled = true;
                     PluginManager.Core.Docking.Activate(Panes.Inspector);
                 }
@@ -337,9 +328,9 @@ namespace minisphere.Gdk.Debugger
 
         private void UpdateStatus()
         {
-            FileName = ResolvePath(duktape.FileName);
-            LineNumber = duktape.LineNumber;
-            Running = duktape.Running;
+            FileName = ResolvePath(Duktape.FileName);
+            LineNumber = Duktape.LineNumber;
+            Running = Duktape.Running;
         }
     }
 }

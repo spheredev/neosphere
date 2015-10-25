@@ -23,7 +23,7 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint { get { return DockHint.Bottom; } }
         public Bitmap DockIcon { get { return Resources.ErrorIcon; } }
 
-        public DebugSession CurrentSession { get; set; }
+        public DebugSession Session { get; set; }
 
         public void Add(string value, bool isFatal, string filename, int line)
         {
@@ -70,7 +70,7 @@ namespace minisphere.Gdk.DockPanes
             if (listErrors.SelectedItems.Count > 0)
             {
                 ListViewItem item = listErrors.SelectedItems[0];
-                string filename = CurrentSession.ResolvePath(item.SubItems[1].Text);
+                string filename = Session.ResolvePath(item.SubItems[1].Text);
                 int lineNumber = int.Parse(item.SubItems[2].Text);
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
                 if (view != null)

@@ -365,15 +365,12 @@ namespace minisphere.Gdk.Utility
 
         private async Task<dynamic[]> Converse(params dynamic[] values)
         {
+            lock (replyLock) requests.Enqueue(values);
             foreach (dynamic value in values)
             {
                 SendValue(value);
             }
             SendValue(DValue.EOM);
-            lock (replyLock)
-            {
-                requests.Enqueue(values);
-            }
             return await Task.Run(() =>
             {
                 while (true)
