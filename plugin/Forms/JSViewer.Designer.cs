@@ -43,7 +43,7 @@
             this.JsonTextBox.Name = "JsonTextBox";
             this.JsonTextBox.ReadOnly = true;
             this.JsonTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.JsonTextBox.Size = new System.Drawing.Size(480, 409);
+            this.JsonTextBox.Size = new System.Drawing.Size(584, 357);
             this.JsonTextBox.TabIndex = 0;
             this.JsonTextBox.WordWrap = false;
             // 
@@ -51,7 +51,7 @@
             // 
             this.OKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.OKButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.OKButton.Location = new System.Drawing.Point(412, 429);
+            this.OKButton.Location = new System.Drawing.Point(516, 377);
             this.OKButton.Name = "OKButton";
             this.OKButton.Size = new System.Drawing.Size(80, 25);
             this.OKButton.TabIndex = 1;
@@ -63,7 +63,8 @@
             this.AcceptButton = this.OKButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(504, 466);
+            this.CancelButton = this.OKButton;
+            this.ClientSize = new System.Drawing.Size(608, 414);
             this.Controls.Add(this.OKButton);
             this.Controls.Add(this.JsonTextBox);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));

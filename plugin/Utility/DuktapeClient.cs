@@ -234,12 +234,12 @@ namespace minisphere.Gdk.Utility
         /// </summary>
         /// <param name="expression">The expression or statement to evaluate.</param>
         /// <returns>The JX-encoded value produced by the expression.</returns>
-        public async Task<string> Eval(string expression)
+        public async Task<string> Eval(string expression, int stackOffset = -1)
         {
             var code = string.Format(
-                @"(function() {{ try {{ return Duktape.enc('jx', eval(""{0}""), null, 4); }} catch (e) {{ return e.toString(); }} }})();",
+                @"(function() {{ try {{ return Duktape.enc('jx', eval(""{0}""), null, 3); }} catch (e) {{ return e.toString(); }} }})();",
                 expression.Replace(@"\", @"\\").Replace(@"""", @"\"""));
-            var reply = await Converse(DValue.REQ, 0x1E, code);
+            var reply = await Converse(DValue.REQ, 0x1E, code, stackOffset);
             return reply[2];
         }
 

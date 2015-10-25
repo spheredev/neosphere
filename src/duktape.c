@@ -30402,11 +30402,12 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_eval(duk_context *ctx) {
 	duk_hobject *outer_var_env;
 	duk_bool_t this_to_global = 1;
 	duk_small_uint_t comp_flags;
+	duk_int_t level;
 
 	DUK_ASSERT_TOP(ctx, 1);
 	DUK_ASSERT(thr->callstack_top >= 1);  /* at least this function exists */
 	DUK_ASSERT(((thr->callstack + thr->callstack_top - 1)->flags & DUK_ACT_FLAG_DIRECT_EVAL) == 0 || /* indirect eval */
-	           (thr->callstack_top >= 2));  /* if direct eval, calling activation must exist */
+	           (thr->callstack_top >= (duk_size_t) -level));  /* if direct eval, calling activation must exist */
 
 	/*
 	 *  callstack_top - 1 --> this function
@@ -30420,16 +30421,27 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_eval(duk_context *ctx) {
 	if (!h) {
 		return 1;  /* return arg as-is */
 	}
+	
+	/*  XXX: level is used only by the debugger and should never be present
+	 *  for eval() called from Ecmascript code. is there a way to assert for
+	 *  this?
+	 */
+	level = -2;
+	if (duk_get_top(ctx) >= 2 && duk_is_number(ctx, 1)) {
+		level = duk_get_int(ctx, 1);
+	}
+	DUK_ASSERT(level <= -2);
+
 
 	/* [ source ] */
-
+	
 	comp_flags = DUK_JS_COMPILE_FLAG_EVAL;
 	act_eval = thr->callstack + thr->callstack_top - 1;    /* this function */
-	if (thr->callstack_top >= 2) {
+	if (thr->callstack_top >= (duk_size_t) -level) {
 		/* Have a calling activation, check for direct eval (otherwise
 		 * assume indirect eval.
 		 */
-		act_caller = thr->callstack + thr->callstack_top - 2;  /* caller */
+		act_caller = thr->callstack + thr->callstack_top + level;  /* caller */
 		if ((act_caller->flags & DUK_ACT_FLAG_STRICT) &&
 		    (act_eval->flags & DUK_ACT_FLAG_DIRECT_EVAL)) {
 			/* Only direct eval inherits strictness from calling code
@@ -30459,14 +30471,14 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_eval(duk_context *ctx) {
 	act = thr->callstack + thr->callstack_top - 1;  /* this function */
 	if (act->flags & DUK_ACT_FLAG_DIRECT_EVAL) {
 		DUK_ASSERT(thr->callstack_top >= 2);
-		act = thr->callstack + thr->callstack_top - 2;  /* caller */
+		act = thr->callstack + thr->callstack_top + level;  /* caller */
 		if (act->lex_env == NULL) {
 			DUK_ASSERT(act->var_env == NULL);
 			DUK_DDD(DUK_DDDPRINT("delayed environment initialization"));
 
 			/* this may have side effects, so re-lookup act */
 			duk_js_init_activation_environment_records_delayed(thr, act);
-			act = thr->callstack + thr->callstack_top - 2;
+			act = thr->callstack + thr->callstack_top + level;
 		}
 		DUK_ASSERT(act->lex_env != NULL);
 		DUK_ASSERT(act->var_env != NULL);
@@ -30481,7 +30493,7 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_eval(duk_context *ctx) {
 			                     "var_env and lex_env to a fresh env, "
 			                     "this_binding to caller's this_binding"));
 
-			act = thr->callstack + thr->callstack_top - 2;  /* caller */
+			act = thr->callstack + thr->callstack_top + level;  /* caller */
 			act_lex_env = act->lex_env;
 			act = NULL;  /* invalidated */
 
@@ -30532,7 +30544,7 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_eval(duk_context *ctx) {
 	} else {
 		duk_tval *tv;
 		DUK_ASSERT(thr->callstack_top >= 2);
-		act = thr->callstack + thr->callstack_top - 2;  /* caller */
+		act = thr->callstack + thr->callstack_top + level;  /* caller */
 		tv = thr->valstack + act->idx_bottom - 1;  /* this is just beneath bottom */
 		DUK_ASSERT(tv >= thr->valstack);
 		duk_push_tval(ctx, tv);
@@ -40236,6 +40248,7 @@ DUK_LOCAL void duk__debug_handle_eval(duk_hthread *thr, duk_heap *heap) {
 	duk_small_uint_t call_flags;
 	duk_int_t call_ret;
 	duk_small_int_t eval_err;
+	duk_int32_t level;
 #if defined(DUK_USE_ASSERTIONS)
 	duk_idx_t entry_top;
 #endif
@@ -40253,18 +40266,31 @@ DUK_LOCAL void duk__debug_handle_eval(duk_hthread *thr, duk_heap *heap) {
 	entry_top = duk_get_top(ctx);
 #endif
 
-	duk_push_c_function(ctx, duk_bi_global_object_eval, 1 /*nargs*/);
+	duk_push_c_function(ctx, duk_bi_global_object_eval, 2 /*nargs*/);
 	duk_push_undefined(ctx);  /* 'this' binding shouldn't matter here */
 	(void) duk_debug_read_hstring(thr);
+	if (duk_debug_peek_byte(thr) != 0x00) {
+		level = duk_debug_read_int(thr);
+		if (level >= 0 || -level > (duk_int32_t)thr->callstack_top) {
+			DUK_D(DUK_DPRINT("invalid callstack level provided for Eval"));
+			duk_debug_write_error_eom(thr, DUK_DBG_ERR_NOTFOUND, "invalid callstack level");
+			return;
+		}
+	}
+	else {
+		level = -1;
+	}
+	DUK_ASSERT(level < 0 && -level <= (duk_int32_t) thr->callstack_top);
+	duk_push_int(ctx, level - 1);
 
-	/* [ ... eval "eval" eval_input ] */
+	/* [ ... eval "eval" eval_input level ] */
 
 	call_flags = DUK_CALL_FLAG_PROTECTED;
-	if (thr->callstack_top >= 1) {
+	if (thr->callstack_top >= (duk_size_t) -level) {
 		duk_activation *act;
 		duk_hobject *fun;
 
-		act = thr->callstack + thr->callstack_top - 1;
+		act = thr->callstack + thr->callstack_top + level;
 		fun = DUK_ACT_GET_FUNC(act);
 		if (fun != NULL && DUK_HOBJECT_IS_COMPILEDFUNCTION(fun)) {
 			/* Direct eval requires that there's a current
@@ -40276,7 +40302,7 @@ DUK_LOCAL void duk__debug_handle_eval(duk_hthread *thr, duk_heap *heap) {
 		}
 	}
 
-	call_ret = duk_handle_call(thr, 1 /*num_stack_args*/, call_flags);
+	call_ret = duk_handle_call(thr, 2 /*num_stack_args*/, call_flags);
 
 	if (call_ret == DUK_EXEC_SUCCESS) {
 		eval_err = 0;

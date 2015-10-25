@@ -20,6 +20,7 @@ namespace minisphere.Gdk.DockPanes
         private const string ValueBoxHint = "Select a variable from the list above to see what it contains.";
 
         private bool isEvaluating = false;
+        private int stackOffset = 0;
         private IReadOnlyDictionary<string, string> variables;
 
         public InspectorPane()
@@ -55,7 +56,7 @@ namespace minisphere.Gdk.DockPanes
                 CallsView.Items.Add(item);
             }
             CallsView.EndUpdate();
-            if (stack.Length > 0) await LoadVariables(stackOffset);
+            if (stack.Length > 0) await LoadStackFrame(stackOffset);
                 else LocalsView.Items.Clear();
         }
 
@@ -65,15 +66,16 @@ namespace minisphere.Gdk.DockPanes
             ExprTextBox.Text = expr;
             ExprTextBox.Enabled = false;
             EvalButton.Enabled = false;
-            string value = await Session.Duktape.Eval(expr);
+            string value = await Session.Duktape.Eval(expr, stackOffset);
             isEvaluating = false;
             new JSViewer(expr, value).ShowDialog(this);
             ExprTextBox.Text = "";
             ExprTextBox.Enabled = true;
         }
 
-        private async Task LoadVariables(int stackOffset)
+        private async Task LoadStackFrame(int offset)
         {
+            stackOffset = offset;
             this.variables = await Session.Duktape.GetLocals(stackOffset);
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
@@ -117,7 +119,7 @@ namespace minisphere.Gdk.DockPanes
                 if (view != null)
                 {
                     view.GoToLine(lineNumber);
-                    await LoadVariables(-(item.Index + 1));
+                    await LoadStackFrame(-(item.Index + 1));
                 }
                 else
                 {
