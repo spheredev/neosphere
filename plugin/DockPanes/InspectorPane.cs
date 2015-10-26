@@ -20,7 +20,7 @@ namespace minisphere.Gdk.DockPanes
         private const string ValueBoxHint = "Select a variable from the list above to see what it contains.";
 
         private bool isEvaluating = false;
-        private int stackOffset = 0;
+        private int stackIndex = -1;
         private IReadOnlyDictionary<string, string> variables;
 
         public InspectorPane()
@@ -42,7 +42,7 @@ namespace minisphere.Gdk.DockPanes
             CallsView.Items.Clear();
         }
 
-        public async Task SetCallStack(Tuple<string, string, int>[] stack, int stackOffset = -1)
+        public async Task SetCallStack(Tuple<string, string, int>[] stack, int index = 0)
         {
             CallsView.BeginUpdate();
             CallsView.Items.Clear();
@@ -56,27 +56,25 @@ namespace minisphere.Gdk.DockPanes
                 CallsView.Items.Add(item);
             }
             CallsView.EndUpdate();
-            if (stack.Length > 0) await LoadStackFrame(stackOffset);
-                else LocalsView.Items.Clear();
+            stackIndex = -1;
+
+            await LoadStackFrame(index);
         }
 
         private async Task DoEvaluate(string expr)
         {
-            isEvaluating = true;
-            ExprTextBox.Text = expr;
-            ExprTextBox.Enabled = false;
-            EvalButton.Enabled = false;
-            string value = await Session.Duktape.Eval(expr, stackOffset);
-            isEvaluating = false;
-            new JSViewer(expr, value).ShowDialog(this);
-            ExprTextBox.Text = "";
-            ExprTextBox.Enabled = true;
+            new JSViewer(expr, await Session.Duktape.Eval(expr, -(stackIndex + 1)))
+                .ShowDialog(this);
         }
 
-        private async Task LoadStackFrame(int offset)
+        private async Task LoadStackFrame(int callIndex)
         {
-            stackOffset = offset;
-            this.variables = await Session.Duktape.GetLocals(stackOffset);
+            if (stackIndex >= 0)
+                CallsView.Items[stackIndex].ForeColor = SystemColors.WindowText;
+            stackIndex = callIndex;
+            CallsView.Items[stackIndex].ForeColor = Color.Blue;
+            CallsView.SelectedItems.Clear();
+            this.variables = await Session.Duktape.GetLocals(-(stackIndex + 1));
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
             foreach (var k in this.variables.Keys)
@@ -108,6 +106,15 @@ namespace minisphere.Gdk.DockPanes
                 && !isEvaluating;
         }
 
+        private async void LocalsView_DoubleClick(object sender, EventArgs e)
+        {
+            if (LocalsView.SelectedItems.Count > 0)
+            {
+                ListViewItem item = LocalsView.SelectedItems[0];
+                await DoEvaluate(item.Text);
+            }
+        }
+
         private async void CallsView_DoubleClick(object sender, EventArgs e)
         {
             if (CallsView.SelectedItems.Count > 0)
@@ -118,23 +125,14 @@ namespace minisphere.Gdk.DockPanes
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
                 if (view != null)
                 {
+                    await LoadStackFrame(item.Index);
+                    view.Activate();
                     view.GoToLine(lineNumber);
-                    await LoadStackFrame(-(item.Index + 1));
                 }
                 else
                 {
-                    SystemSounds.Asterisk.Play();
+                    SystemSounds.Hand.Play();
                 }
-            }
-        }
-
-        private void LocalsView_DoubleClick(object sender, EventArgs e)
-        {
-            if (LocalsView.SelectedItems.Count > 0)
-            {
-                ListViewItem item = LocalsView.SelectedItems[0];
-                ExprTextBox.Text = item.Text;
-                EvalButton.PerformClick();
             }
         }
     }

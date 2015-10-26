@@ -233,6 +233,7 @@ namespace minisphere.Gdk.Utility
         /// Evaluates a JS expression and returns the JX-encoded result.
         /// </summary>
         /// <param name="expression">The expression or statement to evaluate.</param>
+        /// <param name="stackOffset">The point in the stack to do the eval. -1 is active call, -2 the caller, etc..</param>
         /// <returns>The JX-encoded value produced by the expression.</returns>
         public async Task<string> Eval(string expression, int stackOffset = -1)
         {

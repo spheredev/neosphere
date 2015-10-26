@@ -62,7 +62,7 @@
             this.LocalsView.Location = new System.Drawing.Point(0, 0);
             this.LocalsView.MultiSelect = false;
             this.LocalsView.Name = "LocalsView";
-            this.LocalsView.Size = new System.Drawing.Size(387, 231);
+            this.LocalsView.Size = new System.Drawing.Size(387, 333);
             this.LocalsView.SmallImageList = this.imagesVarList;
             this.LocalsView.TabIndex = 0;
             this.LocalsView.UseCompatibleStateImageBehavior = false;
@@ -101,7 +101,7 @@
             // 
             this.splitter.Panel2.Controls.Add(this.CallsView);
             this.splitter.Size = new System.Drawing.Size(387, 654);
-            this.splitter.SplitterDistance = 231;
+            this.splitter.SplitterDistance = 333;
             this.splitter.SplitterWidth = 3;
             this.splitter.TabIndex = 1;
             // 
@@ -110,7 +110,7 @@
             this.panel1.Controls.Add(this.ExprTextBox);
             this.panel1.Controls.Add(this.EvalButton);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 208);
+            this.panel1.Location = new System.Drawing.Point(0, 310);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(387, 23);
             this.panel1.TabIndex = 3;
@@ -150,11 +150,12 @@
             this.CallsView.FullRowSelect = true;
             this.CallsView.GridLines = true;
             this.CallsView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.CallsView.HideSelection = false;
             this.CallsView.Location = new System.Drawing.Point(0, 0);
             this.CallsView.MultiSelect = false;
             this.CallsView.Name = "CallsView";
             this.CallsView.ShowItemToolTips = true;
-            this.CallsView.Size = new System.Drawing.Size(387, 420);
+            this.CallsView.Size = new System.Drawing.Size(387, 318);
             this.CallsView.TabIndex = 1;
             this.CallsView.UseCompatibleStateImageBehavior = false;
             this.CallsView.View = System.Windows.Forms.View.Details;
