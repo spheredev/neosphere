@@ -1,0 +1,68 @@
+Cell 2.0 API Documentation
+==========================
+
+Cell is a scriptable build system and compiler for Sphere games. Like Sphere
+itself, it uses JavaScript to control the build process.  This file documents
+the public API used to write build scripts.
+
+General
+-------
+
+install(asset, path);
+
+Installs one or more assets in 'path'.  The path is relative to the output
+directory.  'asset' can be either a single asset (see Assets below), or an array
+of them.
+
+
+Assets
+------
+
+The basic build unit in Cell is an asset.  If you've ever used SCons, this is
+similar in concept to a target.  Assets may either be installed directly or used
+as input when building other assets, and Cell will automatically determine the
+correct build order at runtime.
+
+In this version of Cell, all assets are built independently.
+
+files(pattern[, recursive]);
+
+Returns an array of assets for files matching the specified pattern. File assets
+are unique: They have no build step associated with them and simply use the
+named file as-is.
+
+'pattern' is a wildcard (e.g. "*.png") combined with an optional path specifying
+the directory (relative to the input directory) to be searched. If 'recursive'
+is true, searches subdirectories as well.
+
+sgm(manifest);
+
+Only one sgm() asset may be built in a single run.
+
+Builds a Sphere 1.0 game manifest. 'manifest' is an object with metadata for the
+manifest being built. The following properties must be present:
+
+    name:       The title of the game, displayed in the engine's title bar.
+    resolution: The game's default screen resolution.
+    script:     The SphereFS path of the script containing the game() function.
+
+The properties below are optional, but highly recommended:
+
+    author:  The name of the author. If not provided, Cell will write
+             "Author Unknown".
+    summary: A short, one-line summary of your game.  If not provided, Cell will
+             write "No description available." to the manifest.
+
+Any other properties will be ignored.  If you need additional metadata, you must
+use an s2gm() asset.
+
+s2gm(manifest);
+
+Only one s2gm() asset may be built in a single run.
+
+Builds a Sphere 2.0 game manifest. 'manifest' will be converted to JSON and
+stored in the S2GM file as-is. For required and recommended metadata, see the
+documentation for the sgm() asset above.
+
+Note that if you need to retain compatibility with Sphere 1.x, you can include
+an sgm() asset as well.
