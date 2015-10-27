@@ -44,7 +44,7 @@ namespace minisphere.Gdk.Plugins
             string gdkPath = _main.Conf.GdkPath;
 
             string enginePath = Path.Combine(gdkPath, "bin", "msphere.exe");
-            string options = string.Format(@"--debug --game ""{0}""", gamePath);
+            string options = string.Format(@"--debug ""{0}""", gamePath);
             Process engine = Process.Start(enginePath, options);
             return new DebugSession(_main, gamePath, enginePath, engine, project);
         }

@@ -106,6 +106,7 @@ new_sandbox(const char* path)
 		duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
 		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
 		fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
+		duk_pop(g_duk);
 	}
 	else
 		goto on_error;

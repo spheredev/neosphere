@@ -20,11 +20,11 @@
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-#define WANT_GDK_SETUP
+;#define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.0b2"
-#define AppRawVersion "1.99.99.920"
+#define AppVersion "2.0.0"
+#define AppRawVersion "2.0.0.960"
 #define AppPublisher "Fat Cerberus"
 
 #ifdef WANT_GDK_SETUP
@@ -85,6 +85,7 @@ Name: "docs/api"; Description: "API Reference"; Types: full compact
 [Tasks]
 Name: "assoc"; Description: "Associate these file extensions with {#AppName}:"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/sgm"; Description: ".sgm - Sphere game manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc/s2gm"; Description: ".s2gm - Sphere 2.0 game manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere SPK game package"; GroupDescription: "Automatically open Sphere file types:"
 #ifdef WANT_GDK_SETUP
 Name: "path"; Description: "Add {#AppName} GDK to the PATH"; GroupDescription: "Run minisphere tools from the command line:"; Flags: checkedonce unchecked
@@ -117,6 +118,8 @@ Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "minisp
 Root: HKCR; Subkey: "minisphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
 Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
 Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
+Root: HKCR; Subkey: ".s2gm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "minisphere.S2GM"; ValueType: string; ValueName: ""; ValueData: "Sphere 2 Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/s2gm
 #ifdef WANT_GDK_SETUP
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app}\bin;{olddata}"; Tasks: path
 Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#AppExeName},0"; Tasks: assoc/spk
@@ -132,6 +135,8 @@ Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: 
 Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/spk
 Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/sgm
 Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/sgm
+Root: HKCR; Subkey: "minisphere.S2GM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "minisphere.S2GM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Tasks: assoc/s2gm
 #endif
 
 [Icons]

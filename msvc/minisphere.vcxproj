@@ -163,7 +163,7 @@
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\bin\system\*.*" "$(OutDir)system\"
+      <Command>xcopy /y /d /e /f "..\bin\system\*" "$(OutDir)system\"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -186,7 +186,7 @@
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\bin\system\*.*" "$(OutDir)system\"
+      <Command>xcopy /y /d /e /f "..\bin\system\*" "$(OutDir)system\"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

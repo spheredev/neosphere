@@ -23,7 +23,7 @@ Command Line Options
 
 * `--fullscreen`: Starts the engine in full-screen mode.
 
-* `--windowed`: Starts the engine in windowed mode.
+* `--window`: Starts the engine in windowed mode.
 
 * `--frameskip <x>`: Sets the initial frameskip limit to `<x>`. Note that if the
   game calls `SetMaxFrameSkips()`, that value overrides this one.  The default

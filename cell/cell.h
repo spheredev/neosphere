@@ -19,6 +19,6 @@
 #include <time.h>
 #include <sys/stat.h>
 
-#define CELL_VERSION "2.0b2"
+#define CELL_VERSION "2.0.0"
 
 #endif // CELL__CELL_H__INCLUDED

@@ -24,6 +24,8 @@ static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static void draw_status_message (const char* text);
 static bool find_startup_game   (ALLEGRO_PATH* *out_path);
+static bool parse_command_line  (int argc, char* argv[], char* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
+static void report_error        (const char* fmt, ...);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
@@ -83,100 +85,25 @@ main(int argc, char* argv[])
 	const char*          filename;
 	ALLEGRO_FS_ENTRY*    games_dir;
 	const char*          games_dirname;
-	char*                game_path = NULL;
+	char*                game_path;
 	image_t*             icon;
 	int                  line_num;
-	int                  max_skips;
 	const path_t*        script_path;
 	ALLEGRO_TRANSFORM    trans;
 	int                  verbosity;
-	bool                 want_debug = false;
-	char                 *p_strtol;
-
-	int i;
+	bool                 want_debug;
 
 	printf("%s %s\n", ENGINE_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
-	// parse the command line, rejecting any unrecognized options
-	printf("Parsing command line\n");
-	if (argc == 2 && argv[1][0] != '-') {
-		// single non-switch argument passed, assume it's a game path
-		game_path = strdup(argv[1]);
-	}
-	else {
-		// more than one argument, perform full command line parsing
-		for (i = 1; i < argc; ++i) {
-			if ((strcmp(argv[i], "--game") == 0
-				|| strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "-package") == 0)
-				&& i < argc - 1)
-			{
-				// '-game' and '-package' options supported for backward compatibility with
-				// Sphere 1.x. Note that they are functionality identical; new_sandbox() will
-				// automatically detect the correct type.
-				++i;
-				if (game_path == NULL)
-					game_path = strdup(argv[i]);
-				else {
-					printf("  More than one game was passed on command line\n");
-					return EXIT_FAILURE;
-				}
-			}
-			else if (strcmp(argv[i], "--debug") == 0) {
-				#ifndef MINISPHERE_REDIST
-				want_debug = true;
-				#else
-				al_show_native_message_box(NULL,
-					"No Debugging Support", "Debugging is not enabled for this build.",
-					"'--debug' was passed on the command line. The redistributable engine is not enabled for debugging. Please use minisphere Console if you need the debugger.",
-					NULL, ALLEGRO_MESSAGEBOX_ERROR);
-				return EXIT_FAILURE;
-				#endif
-			}
-			else if (strcmp(argv[i], "--log-level") == 0 && i < argc - 1) {
-				errno = 0; verbosity = strtol(argv[i + 1], &p_strtol, 10);
-				if (errno != ERANGE && *p_strtol == '\0')
-					set_log_verbosity(verbosity);
-				else {
-					printf("  Invalid logging level '%s'\n", argv[i + 1]);
-					return EXIT_FAILURE;
-				}
-			}
-			else if (strcmp(argv[i], "--frameskip") == 0 && i < argc - 1) {
-				errno = 0; max_skips = strtol(argv[i + 1], &p_strtol, 10);
-				if (errno != ERANGE && *p_strtol == '\0')
-					set_max_frameskip(max_skips);
-				else {
-					printf("  Invalid frameskip '%s'\n", argv[i + 1]);
-					return EXIT_FAILURE;
-				}
-			}
-			else if (strcmp(argv[i], "--no-throttle") == 0)
-				s_conserve_cpu = false;
-			else if (strcmp(argv[i], "--fullscreen") == 0)
-				s_is_fullscreen = true;
-			else if (strcmp(argv[i], "--windowed") == 0)
-				s_is_fullscreen = false;
-			else {
-				printf("  Error parsing command line token '%s'\n", argv[i]);
-				return EXIT_FAILURE;
-			}
-		}
+	// parse the command line
+	if (!parse_command_line(argc, argv, &game_path,
+		&s_is_fullscreen, &s_max_frameskip, &verbosity, &s_conserve_cpu, &want_debug))
+	{
+		return EXIT_FAILURE;
 	}
 	
-	// print out options
-	printf("  Game path: %s\n", game_path != NULL ? game_path : "<none provided>");
-	printf("  Frameskip limit: %i frames\n", s_max_frameskip);
-	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	printf("  Console verbosity: V%i\n", get_log_verbosity());
-	
-	#ifndef MINISPHERE_REDIST
-	printf("  Debugger mode: %s\n", want_debug ? "Active" : "Passive");
-	#endif
-	
-	printf("\n");
-
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 
@@ -822,4 +749,131 @@ find_startup_game(ALLEGRO_PATH* *out_path)
 	al_destroy_path(*out_path);
 	*out_path = NULL;
 	return false;
+}
+
+static bool
+parse_command_line(
+	int argc, char* argv[],
+	char* *out_game_path, bool *out_want_fullscreen, int *out_frameskip,
+	int *out_verbosity, bool *out_want_throttle, bool *out_want_debug)
+{
+	bool parse_options = true;
+
+	int i;
+
+	// establish default settings
+	#ifndef MINISPHERE_REDIST
+	*out_want_fullscreen = false;
+	#else
+	*out_want_fullscreen = true;
+	#endif
+	
+	*out_game_path = NULL;
+	*out_frameskip = 5;
+	*out_verbosity = 1;
+	*out_want_throttle = true;
+	*out_want_debug = false;
+
+	// process command line arguments
+	for (i = 1; i < argc; ++i) {
+		if (strstr(argv[i], "--") == argv[i] && parse_options) {
+			if (strcmp(argv[i], "--") == 0)
+				parse_options = false;
+			else if (strcmp(argv[i], "--debug") == 0) {
+				#ifndef MINISPHERE_REDIST
+				*out_want_debug = true;
+				#else
+				al_show_native_message_box(NULL,
+					"No Debugging Support", "Debugging is not enabled for this build.",
+					"'--debug' was passed on the command line. The redistributable engine is not enabled for debugging. Please use minisphere Console if you need the debugger.",
+					NULL, ALLEGRO_MESSAGEBOX_ERROR);
+				return false;
+				#endif
+			}
+			else if (strcmp(argv[i], "--frameskip") == 0) {
+				if (++i >= argc) goto missing_argument;
+				*out_frameskip = atoi(argv[i]);
+			}
+			else if (strcmp(argv[i], "--log-level") == 0) {
+				if (++i >= argc) goto missing_argument;
+				*out_verbosity = atoi(argv[i]);
+			}
+			else if (strcmp(argv[i], "--no-throttle") == 0) {
+				*out_want_throttle = false;
+			}
+			else if (strcmp(argv[i], "--fullscreen") == 0) {
+				*out_want_fullscreen = true;
+			}
+			else if (strcmp(argv[i], "--window") == 0) {
+				*out_want_fullscreen = false;
+			}
+			else {
+				report_error("unrecognized option '%s'\n", argv[i]);
+				return false;
+			}
+		}
+		else if (argv[i][0] == '-' && parse_options) {
+			if (strcmp(argv[i], "-game") == 0 && strcmp(argv[i], "-package") == 0) {
+				// -game and -package are provided for backwards compatibility; to minisphere
+				// the two options are equivalent.
+				if (++i >= argc) goto missing_argument;
+				if (*out_game_path != NULL) {
+					report_error("more than one game specified on command line");
+					return false;
+				}
+				*out_game_path = strdup(argv[i]);
+			}
+			else {
+				report_error("unrecognized option '%s'\n", argv[i]);
+				return false;
+			}
+		}
+		else {
+			if (*out_game_path != NULL) {
+				report_error("more than one game specified on command line");
+				return false;
+			}
+			*out_game_path = strdup(argv[i]);
+		}
+	}
+
+	// print out options
+	printf("Parsing command line\n");
+	printf("  Game path: %s\n", *out_game_path != NULL ? *out_game_path : "<none provided>");
+	printf("  Fullscreen: %s\n", *out_want_fullscreen ? "ON" : "OFF");
+	printf("  Frameskip limit: %i frames\n", *out_frameskip);
+	printf("  CPU throttle: %s\n", *out_want_throttle ? "ON" : "OFF");
+	printf("  Console verbosity: V%i\n", *out_verbosity);
+	#ifndef MINISPHERE_REDIST
+	printf("  Debugger mode: %s\n", *out_want_debug ? "Active" : "Passive");
+	#endif
+
+	printf("\n");
+
+
+	return true;
+
+missing_argument:
+	report_error("missing argument for option '%s'", argv[i - 1]);
+	return false;
+}
+
+static void
+report_error(const char* fmt, ...)
+{
+	va_list ap;
+
+	lstring_t* error_text;
+	
+	va_start(ap, fmt);
+	error_text = lstr_vnewf(fmt, ap);
+	va_end(ap);
+	#ifndef MINISPHERE_REDIST
+	fprintf(stderr, "ERROR: %s", lstr_cstr(error_text));
+	#else
+	al_show_native_message_box(NULL,
+		"minisphere", "An error occurred starting the engine.", lstr_cstr(error_text),
+		NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	#endif
+	lstr_free(error_text);
 }
