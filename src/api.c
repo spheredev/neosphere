@@ -636,7 +636,7 @@ js_GetGameManifest(duk_context* ctx)
 {
 	duk_push_lstring_t(ctx, get_game_manifest(g_fs));
 	duk_json_decode(ctx, -1);
-	duk_push_string(ctx, al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+	duk_push_string(ctx, path_cstr(get_game_path(g_fs)));
 	duk_put_prop_string(ctx, -2, "directory");
 	return 1;
 }
@@ -646,38 +646,36 @@ js_GetGameList(duk_context* ctx)
 {
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_FS_ENTRY* fse;
-	ALLEGRO_PATH*     path = NULL;
-	ALLEGRO_PATH*     paths[2];
+	path_t*           path = NULL;
+	path_t*           paths[2];
 	sandbox_t*        sandbox;
 
 	int i, j = 0;
 
 	// build search paths
-	paths[0] = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(paths[0], "games");
-	paths[1] = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
-	al_append_path_component(paths[1], "Sphere Games");
+	paths[0] = path_rebase(path_new("games/"), enginepath());
+	paths[1] = path_rebase(path_new("Sphere Games/"), homepath());
 	
 	// search for supported games
 	duk_push_array(ctx);
-	for (i = sizeof paths / sizeof(ALLEGRO_PATH*) - 1; i >= 0; --i) {
-		fse = al_create_fs_entry(al_path_cstr(paths[i], ALLEGRO_NATIVE_PATH_SEP));
+	for (i = sizeof paths / sizeof(path_t*) - 1; i >= 0; --i) {
+		fse = al_create_fs_entry(path_cstr(paths[i]));
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
-				path = al_create_path(al_get_fs_entry_name(file_info));
-				if (sandbox = new_sandbox(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP))) {
+				path = path_new(al_get_fs_entry_name(file_info));
+				if (sandbox = new_sandbox(path_cstr(path))) {
 					duk_push_lstring_t(ctx, get_game_manifest(sandbox));
 					duk_json_decode(ctx, -1);
-					duk_push_string(ctx, al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
+					duk_push_string(ctx, path_cstr(path));
 					duk_put_prop_string(ctx, -2, "directory");
 					duk_put_prop_index(ctx, -2, j++);
 					free_sandbox(sandbox);
 				}
-				al_destroy_path(path);
+				path_free(path);
 			}
 		}
 		al_destroy_fs_entry(fse);
-		al_destroy_path(paths[i]);
+		path_free(paths[i]);
 	}
 	return 1;
 }
@@ -868,17 +866,20 @@ js_Delay(duk_context* ctx)
 static duk_ret_t
 js_ExecuteGame(duk_context* ctx)
 {
-	ALLEGRO_PATH* engine_path;
-	const char*   filename;
+	path_t*     games_path;
+	const char* filename;
 
 	filename = duk_require_string(ctx, 0);
-	g_last_game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-	al_destroy_path(g_game_path);
-	g_game_path = al_create_path(filename);
-	engine_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(engine_path, "games");
-	al_rebase_path(engine_path, g_game_path);
-	al_destroy_path(engine_path);
+	
+	// store the old game path so we can relaunch when the chained game exits
+	g_last_game_path = path_dup(get_game_path(g_fs));
+	
+	// if the passed-in path is relative, resolve it relative to <engine>/games.
+	// this is done for compatibility with Sphere 1.x.
+	g_game_path = path_new(filename);
+	games_path = path_rebase(path_new("games/"), enginepath());
+	path_rebase(g_game_path, games_path);
+	path_free(games_path);
 	
 	restart_engine();
 }

@@ -7,7 +7,7 @@ struct spk
 {
 	unsigned int  refcount;
 	unsigned int  id;
-	ALLEGRO_PATH* path;
+	path_t*       path;
 	ALLEGRO_FILE* file;
 	vector_t*     index;
 };
@@ -62,16 +62,16 @@ open_spk(const char* path)
 
 	console_log(2, "Opening SPK %u as '%s'", s_next_spk_id, path);
 	
-	if (!(spk = calloc(1, sizeof(spk_t)))) goto on_error;
-	if (!(spk->path = al_create_path(path)))
-		goto on_error;
-	
+	spk = calloc(1, sizeof(spk_t));
+
 	if (!(spk->file = al_fopen(path, "rb"))) goto on_error;
 	if (al_fread(spk->file, &spk_hdr, sizeof(struct spk_header)) != sizeof(struct spk_header))
 		goto on_error;
 	if (memcmp(spk_hdr.signature, ".spk", 4) != 0) goto on_error;
 	if (spk_hdr.version != 1) goto on_error;
 	
+	spk->path = path_new(path);
+
 	// load the package index
 	console_log(4, "Reading package index for SPK %u", s_next_spk_id);
 	spk->index = vector_new(sizeof(struct spk_entry));
@@ -94,7 +94,7 @@ open_spk(const char* path)
 on_error:
 	console_log(2, "Failed to open SPK %u", s_next_spk_id++);
 	if (spk != NULL) {
-		al_destroy_path(spk->path);
+		path_free(spk->path);
 		if (spk->file != NULL)
 			al_fclose(spk->file);
 		vector_free(spk->index);
@@ -128,32 +128,24 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 {
 	ALLEGRO_FILE* al_file = NULL;
 	void*         buffer = NULL;
+	path_t*       cache_path;
 	spk_file_t*   file = NULL;
 	size_t        file_size;
-	ALLEGRO_PATH* home_path;
 	const char*   local_filename;
-	ALLEGRO_PATH* local_dir_path;
-	ALLEGRO_PATH* local_path = NULL;
+	path_t*       local_path;
 
 	console_log(4, "Opening '%s' (%s) from SPK %u", path, mode, spk->id);
 	
 	// get path to local cache file
-	home_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
-	al_append_path_component(home_path, "minisphere");
-	al_append_path_component(home_path, ".spkcache");
-	al_append_path_component(home_path, al_get_path_filename(spk->path));
-	local_path = al_create_path(path);
-	al_rebase_path(home_path, local_path);
-	al_destroy_path(home_path);
+	cache_path = path_rebase(path_new("minisphere/.spkcache/"), homepath());
+	path_append_dir(cache_path, path_filename_cstr(spk->path));
+	local_path = path_rebase(path_new(path), cache_path);
+	path_free(cache_path);
 	
 	// ensure all subdirectories exist
-	local_filename = al_path_cstr(local_path, ALLEGRO_NATIVE_PATH_SEP);
-	if (mode[0] == 'w' || mode[0] == 'a' || strchr(mode, '+')) {
-		local_dir_path = al_clone_path(local_path);
-		al_set_path_filename(local_dir_path, NULL);
-		al_make_directory(al_path_cstr(local_dir_path, ALLEGRO_NATIVE_PATH_SEP));
-		al_destroy_path(local_dir_path);
-	}
+	local_filename = path_cstr(local_path);
+	if (mode[0] == 'w' || mode[0] == 'a' || strchr(mode, '+'))
+		path_mkdir(local_path);
 
 	if (!(file = calloc(1, sizeof(spk_file_t))))
 		goto on_error;
@@ -189,7 +181,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 		}
 	}
 
-	al_destroy_path(local_path);
+	path_free(local_path);
 	
 	file->buffer = buffer;
 	file->filename = strdup(path);
@@ -199,7 +191,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 
 on_error:
 	console_log(4, "Failed to open '%s' from SPK %u", spk->id);
-	al_destroy_path(local_path);
+	path_free(local_path);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(buffer);

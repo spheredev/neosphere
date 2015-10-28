@@ -17,9 +17,10 @@ enum sfs_whence
 	SFS_SEEK_END,
 } sfs_whence_t;
 
-sandbox_t*       new_sandbox         (const char* path);
+sandbox_t*       new_sandbox         (const char* pathname);
 void             free_sandbox        (sandbox_t* fs);
-const lstring_t* get_game_manifest   (sandbox_t* fs);
+const lstring_t* get_game_manifest   (const sandbox_t* fs);
+const path_t*    get_game_path       (const sandbox_t* fs);
 const char*      get_sgm_name        (sandbox_t* fs);
 const char*      get_sgm_author      (sandbox_t* fs);
 const char*      get_sgm_summary     (sandbox_t* fs);

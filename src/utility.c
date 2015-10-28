@@ -13,6 +13,37 @@ syspath(const char* filename)
 	return retval;
 }
 
+const path_t*
+homepath(void)
+{
+	static path_t* retval = NULL;
+
+	ALLEGRO_PATH* al_path;
+
+	if (retval == NULL) {
+		al_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
+		retval = path_new_dir(al_path_cstr(al_path, '/'));
+		al_destroy_path(al_path);
+	}
+	path_mkdir(retval);
+	return retval;
+}
+
+const path_t*
+enginepath(void)
+{
+	static path_t* retval = NULL;
+
+	ALLEGRO_PATH* al_path;
+
+	if (retval == NULL) {
+		al_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+		retval = path_new_dir(al_path_cstr(al_path, '/'));
+		al_destroy_path(al_path);
+	}
+	return retval;
+}
+
 lstring_t*
 read_lstring(sfs_file_t* file, bool trim_null)
 {

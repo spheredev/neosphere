@@ -609,7 +609,7 @@ load_map(const char* filename)
 	lstring_t*               script;
 	rect_t                   segment;
 	int16_t*                 tile_data = NULL;
-	ALLEGRO_PATH*            tileset_path;
+	path_t*                  tileset_path;
 	tileset_t*               tileset;
 	struct map_trigger       trigger;
 	struct map_zone          zone;
@@ -748,10 +748,10 @@ load_map(const char* filename)
 
 		// load tileset
 		if (strcmp(lstr_cstr(strings[0]), "") != 0) {
-			tileset_path = al_create_path(filename);
-			al_set_path_filename(tileset_path, lstr_cstr(strings[0]));
-			tileset = load_tileset(al_path_cstr(tileset_path, '/'));
-			al_destroy_path(tileset_path);
+			tileset_path = path_strip(path_new(filename));
+			path_append(tileset_path, lstr_cstr(strings[0]));
+			tileset = load_tileset(path_cstr(tileset_path));
+			path_free(tileset_path);
 		}
 		else {
 			tileset = read_tileset(file);

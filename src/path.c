@@ -332,15 +332,17 @@ path_remove_hop(path_t* path, size_t idx)
 path_t*
 path_resolve(path_t* path, const path_t* relative_to)
 {
-	path_t* new_path;
-	path_t* origin;
-	char*   pathname;
+	path_t*     new_path;
+	path_t*     origin;
+	char*       pathname;
+	struct stat stat_buf;
 
 	if (!(pathname = realpath(path_cstr(path), NULL)))
 		return NULL;
-	new_path = path->filename != NULL
-		? path_new(pathname)
-		: path_new_dir(pathname);
+	if (stat(path_cstr(path), &stat_buf) != 0) return NULL;
+	new_path = stat_buf.st_mode & S_IFDIR
+		? path_new_dir(pathname)
+		: path_new(pathname);
 	free(pathname);
 	if (relative_to != NULL) {
 		if (!(origin = path_resolve(path_dup(relative_to), NULL)))

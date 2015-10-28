@@ -23,8 +23,8 @@
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static void draw_status_message (const char* text);
-static bool find_startup_game   (ALLEGRO_PATH* *out_path);
-static bool parse_command_line  (int argc, char* argv[], char* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
+static bool find_startup_game   (path_t* *out_path);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void report_error        (const char* fmt, ...);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
@@ -33,8 +33,8 @@ ALLEGRO_DISPLAY*     g_display = NULL;
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 sandbox_t*           g_fs = NULL;
-ALLEGRO_PATH*        g_game_path = NULL;
-char*                g_last_game_path = NULL;
+path_t*              g_game_path = NULL;
+path_t*              g_last_game_path = NULL;
 float                g_scale_x = 1.0;
 float                g_scale_y = 1.0;
 kev_file_t*          g_sys_conf;
@@ -77,15 +77,17 @@ static const char* const ERROR_TEXT[][2] =
 int
 main(int argc, char* argv[])
 {
-	ALLEGRO_PATH*        browse_path;
+	// HERE BE DRAGONS!
+	// as the oldest function in the minisphere codebase by definition, this has become
+	// something of a hairball over time, and likely quite fragile.  don't be surprised if
+	// attempting to edit it causes something to break. :o)
+	
+	path_t*              browse_path;
 	lstring_t*           dialog_name;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
-	ALLEGRO_FS_ENTRY*    games_dir;
-	const char*          games_dirname;
-	char*                game_path;
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
@@ -98,7 +100,7 @@ main(int argc, char* argv[])
 	printf("(c) 2015 Fat Cerberus\n\n");
 	
 	// parse the command line
-	if (!parse_command_line(argc, argv, &game_path,
+	if (!parse_command_line(argc, argv, &g_game_path,
 		&s_is_fullscreen, &s_max_frameskip, &verbosity, &s_conserve_cpu, &want_debug))
 	{
 		return EXIT_FAILURE;
@@ -113,8 +115,7 @@ main(int argc, char* argv[])
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
-			g_game_path = al_create_path(g_last_game_path);
-			free(g_last_game_path);
+			g_game_path = g_last_game_path;
 			g_last_game_path = NULL;
 		}
 		else {
@@ -122,46 +123,37 @@ main(int argc, char* argv[])
 		}
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
-		console_log(0, "Restarting to launch new game");
-		game_path = strdup(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
-		console_log(1, "  Game: %s", game_path);
+		printf("\n");
 		shutdown_engine();
+		console_log(0, "Restarting to launch new game");
+		console_log(1, "  Path: %s", path_cstr(g_game_path));
 		printf("\n");
 		initialize_engine();
-		g_game_path = al_create_path(game_path);
-		free(game_path);
 	}
 
 	// locate the game manifest
 	console_log(0, "Looking for a game to launch");
-	g_game_path = game_path != NULL ? al_create_path(game_path) : NULL;
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
 		// user provided a path or startup game was found, attempt to load it
-		g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+		g_fs = new_sandbox(path_cstr(g_game_path));
 	else {
 		// no game path provided and no startup game, let user find manifest
-		browse_path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
-		al_append_path_component(browse_path, "Sphere Games");
-		games_dirname = al_path_cstr(browse_path, ALLEGRO_NATIVE_PATH_SEP);
-		al_make_directory(games_dirname);
-		games_dir = al_create_fs_entry(games_dirname);
-		if (!al_open_directory(games_dir))
-			games_dirname = NULL;
-		al_close_directory(games_dir);
-		al_destroy_fs_entry(games_dir);
-		dialog_name = lstr_newf("%s - Where is your Sphere game?", ENGINE_NAME);
-		file_dlg = al_create_native_file_dialog(games_dirname, lstr_cstr(dialog_name),
+		browse_path = path_rebase(path_new("Sphere Games/"), homepath());
+		path_mkdir(browse_path);
+		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);
+		file_dlg = al_create_native_file_dialog(path_cstr(browse_path),
+			lstr_cstr(dialog_name),
 			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		al_show_native_file_dialog(NULL, file_dlg);
 		lstr_free(dialog_name);
-		al_destroy_path(browse_path);
+		path_free(browse_path);
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
-			al_destroy_path(g_game_path);
-			g_game_path = al_create_path(al_get_native_file_dialog_path(file_dlg, 0));
-			g_fs = new_sandbox(al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP));
+			path_free(g_game_path);
+			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
+			g_fs = new_sandbox(path_cstr(g_game_path));
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
@@ -174,8 +166,7 @@ main(int argc, char* argv[])
 	if (g_fs == NULL) {
 		// if after all that, we still don't have a valid sandbox pointer, bail out
 		// because there's not much else we can do.
-		al_show_native_message_box(NULL, "Unable to Load Game",
-			al_path_cstr(g_game_path, ALLEGRO_NATIVE_PATH_SEP),
+		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		
@@ -396,7 +387,7 @@ flip_screen(int framerate)
 	char              fps_text[20];
 	bool              is_backbuffer_valid;
 	ALLEGRO_STATE     old_state;
-	ALLEGRO_PATH*     path;
+	path_t*           path;
 	const char*       pathstr;
 	ALLEGRO_BITMAP*   snapshot;
 	double            time_left;
@@ -417,18 +408,17 @@ flip_screen(int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			al_restore_state(&old_state);
-			path = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
-			al_append_path_component(path, "minisphere");
-			al_append_path_component(path, "Screenshots");
-			al_make_directory(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
+			path = path_rebase(path_new("minisphere/Screenshots/"), homepath());
+			path_mkdir(path);
 			do {
+				path_strip(path);
 				sprintf(filename, "SS_%s.png", rng_string(10));
-				al_set_path_filename(path, filename);
-				pathstr = al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP);
+				path_append(path, filename);
+				pathstr = path_cstr(path);
 			} while (al_filename_exists(pathstr));
 			al_save_bitmap(pathstr, snapshot);
 			al_destroy_bitmap(snapshot);
-			al_destroy_path(path);
+			path_free(path);
 			s_want_snapshot = false;
 		}
 		if (s_show_fps) {
@@ -631,6 +621,7 @@ initialize_engine(void)
 	console_log(1, "Loading system configuration");
 	g_sys_conf = open_kev_file("~sys/system.ini");
 
+	// initialize engine components
 	initialize_async();
 	initialize_rng();
 	initialize_galileo();
@@ -646,7 +637,7 @@ initialize_engine(void)
 	console_log(1, "  Duktape %s", DUK_GIT_DESCRIBE);
 	initialize_scripts();
 
-	// initialize Sphere API
+	// register the Sphere API
 	initialize_api(g_duk);
 	
 	return true;
@@ -681,10 +672,14 @@ shutdown_engine(void)
 	shutdown_galileo();
 	
 	console_log(0, "Shutting down Allegro");
-	al_destroy_display(g_display); g_display = NULL;
-	al_destroy_event_queue(g_events); g_events = NULL;
-	al_destroy_path(g_game_path); g_game_path = NULL;
-	free_sandbox(g_fs); g_fs = NULL;
+	if (g_display != NULL)
+		al_destroy_display(g_display);
+	g_display = NULL;
+	if (g_events != NULL)
+		al_destroy_event_queue(g_events);
+	g_events = NULL;
+	free_sandbox(g_fs);
+	g_fs = NULL;
 	if (g_sys_conf != NULL)
 		close_kev_file(g_sys_conf);
 	g_sys_conf = NULL;
@@ -713,7 +708,7 @@ draw_status_message(const char* text)
 }
 
 static bool
-find_startup_game(ALLEGRO_PATH* *out_path)
+find_startup_game(path_t* *out_path)
 {
 	ALLEGRO_FS_ENTRY* engine_dir;
 	const char*       file_ext;
@@ -722,31 +717,31 @@ find_startup_game(ALLEGRO_PATH* *out_path)
 	int               n_spk_files = 0;
 	
 	// prefer startup game if one exists
-	*out_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	al_append_path_component(*out_path, "startup");
-	al_set_path_filename(*out_path, "game.sgm");
-	if (al_filename_exists(al_path_cstr(*out_path, ALLEGRO_NATIVE_PATH_SEP)))
+	*out_path = path_rebase(path_new("startup/game.sgm"), enginepath());
+	if (al_filename_exists(path_cstr(*out_path)))
 		return true;
-	al_destroy_path(*out_path);
+	path_free(*out_path);
 	*out_path = NULL;
 	
 	// check for single SPK package alongside engine
-	*out_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-	engine_dir = al_create_fs_entry(al_path_cstr(*out_path, ALLEGRO_NATIVE_PATH_SEP));
+	*out_path = path_dup(enginepath());
+	engine_dir = al_create_fs_entry(path_cstr(*out_path));
 	al_open_directory(engine_dir);
 	while (fse = al_read_directory(engine_dir)) {
 		filename = al_get_fs_entry_name(fse);
 		file_ext = strrchr(filename, '.');
 		if (file_ext != NULL && strcmp(file_ext, ".spk") == 0) {
 			if (++n_spk_files == 1)
-				*out_path = al_create_path(filename);
+				*out_path = path_new(filename);
 		}
 		al_destroy_fs_entry(fse);
 	}
 	al_close_directory(engine_dir);
 	if (n_spk_files == 1)
-		return true;
-	al_destroy_path(*out_path);
+		return true;  // found an SPK
+	
+	// if we reached this point, no suitable startup game was found.
+	path_free(*out_path);
 	*out_path = NULL;
 	return false;
 }
@@ -754,7 +749,7 @@ find_startup_game(ALLEGRO_PATH* *out_path)
 static bool
 parse_command_line(
 	int argc, char* argv[],
-	char* *out_game_path, bool *out_want_fullscreen, int *out_frameskip,
+	path_t* *out_game_path, bool *out_want_fullscreen, int *out_frameskip,
 	int *out_verbosity, bool *out_want_throttle, bool *out_want_debug)
 {
 	bool parse_options = true;
@@ -821,7 +816,7 @@ parse_command_line(
 					report_error("more than one game specified on command line");
 					return false;
 				}
-				*out_game_path = strdup(argv[i]);
+				*out_game_path = path_new(argv[i]);
 			}
 			else {
 				report_error("unrecognized option '%s'\n", argv[i]);
@@ -833,13 +828,13 @@ parse_command_line(
 				report_error("more than one game specified on command line");
 				return false;
 			}
-			*out_game_path = strdup(argv[i]);
+			*out_game_path = path_new(argv[i]);
 		}
 	}
 
 	// print out options
 	printf("Parsing command line\n");
-	printf("  Game path: %s\n", *out_game_path != NULL ? *out_game_path : "<none provided>");
+	printf("  Game path: %s\n", *out_game_path != NULL ? path_cstr(*out_game_path) : "<none provided>");
 	printf("  Fullscreen: %s\n", *out_want_fullscreen ? "ON" : "OFF");
 	printf("  Frameskip limit: %i frames\n", *out_frameskip);
 	printf("  CPU throttle: %s\n", *out_want_throttle ? "ON" : "OFF");

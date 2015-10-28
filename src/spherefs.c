@@ -13,18 +13,18 @@ enum fs_type
 
 struct sandbox
 {
-	unsigned int    id;
-	ALLEGRO_PATH*   root_path;
-	lstring_t*      manifest;
-	lstring_t*      name;
-	lstring_t*      author;
-	lstring_t*      summary;
-	int             res_x;
-	int             res_y;
-	path_t*         script_path;
-	lstring_t*      sourcemap;
-	spk_t*          spk;
-	int             type;
+	unsigned int id;
+	path_t*      root_path;
+	lstring_t*   manifest;
+	lstring_t*   name;
+	lstring_t*   author;
+	lstring_t*   summary;
+	int          res_x;
+	int          res_y;
+	path_t*      script_path;
+	lstring_t*   sourcemap;
+	spk_t*       spk;
+	int          type;
 };
 
 struct sfs_file
@@ -35,44 +35,39 @@ struct sfs_file
 };
 
 static duk_ret_t duk_load_s2gm (duk_context* ctx);
-static bool      resolve_path    (sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type);
+static bool      resolve_path  (sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_sandbox_id = 0;
 
 sandbox_t*
-new_sandbox(const char* path)
+new_sandbox(const char* pathname)
 {
 	ALLEGRO_FILE*   al_file = NULL;
 	ALLEGRO_CONFIG* conf;
-	const char*     extension;
 	sandbox_t*      fs;
-	bool            is_file;
+	path_t*         path;
 	int             res_x, res_y;
 	size_t          sgm_size;
 	char*           sgm_text = NULL;
 	spk_t*          spk;
-	struct stat     stat_buf;
 	void*           sourcemap_data;
 	size_t          sourcemap_size;
 
-	console_log(1, "Opening '%s' in Sandbox %u", path, s_next_sandbox_id);
+	console_log(1, "Opening '%s' in Sandbox %u", pathname, s_next_sandbox_id);
+	
 	fs = calloc(1, sizeof(sandbox_t));
 	
 	fs->id = s_next_sandbox_id;
-	extension = strrchr(path, '.');
-	if (spk = open_spk(path)) {  // Sphere Package (.spk)
+	path = path_new(pathname);
+	if (!path_resolve(path, NULL)) goto on_error;
+	if (spk = open_spk(path_cstr(path))) {  // Sphere Package (.spk)
 		fs->type = SPHEREFS_SPK;
-		fs->root_path = al_create_path(path);
+		fs->root_path = path_dup(path);
 		fs->spk = spk;
 	}
 	else {  // default case, unpacked game folder
 		fs->type = SPHEREFS_LOCAL;
-		is_file = stat(path, &stat_buf) == 0 && (stat_buf.st_mode & S_IFREG);
-		if (is_file)
-			fs->root_path = al_create_path(path);
-		else
-			fs->root_path = al_create_path_for_directory(path);
-		al_set_path_filename(fs->root_path, NULL);
+		fs->root_path = path_strip(path_dup(path));
 	}
 	
 	// load the game manifest
@@ -98,7 +93,7 @@ new_sandbox(const char* path)
 		al_destroy_config(conf);
 		al_fclose(al_file);
 		
-		// generate a JSON manifest (used by, e.g. GetGameInformation())
+		// generate a JSON manifest (used by, e.g. GetGameManifest())
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
@@ -122,11 +117,13 @@ new_sandbox(const char* path)
 		fs->sourcemap = lstr_from_buf(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
 
+	path_free(path);
 	s_next_sandbox_id++;
 	return fs;
 
 on_error:
 	console_log(1, "Failed to load manifest in Sandbox %u", s_next_sandbox_id++);
+	path_free(path);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(sgm_text);
@@ -142,19 +139,22 @@ free_sandbox(sandbox_t* fs)
 {
 	if (fs == NULL) return;
 	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
-	switch (fs->type) {
-	case SPHEREFS_LOCAL:
-		al_destroy_path(fs->root_path);
-	case SPHEREFS_SPK:
+	if (fs->type == SPHEREFS_SPK)
 		free_spk(fs->spk);
-	}
+	path_free(fs->root_path);
 	free(fs);
 }
 
 const lstring_t*
-get_game_manifest(sandbox_t* fs)
+get_game_manifest(const sandbox_t* fs)
 {
 	return fs->manifest;
+}
+
+const path_t*
+get_game_path(const sandbox_t* fs)
+{
+	return fs->root_path;
 }
 
 const char*
@@ -225,9 +225,9 @@ make_sfs_path(const char* filename, const char* base_dir_name)
 vector_t*
 list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs)
 {
-	ALLEGRO_PATH*     dir_path;
+	path_t*           dir_path;
 	ALLEGRO_FS_ENTRY* file_info;
-	ALLEGRO_PATH*     file_path;
+	path_t*           file_path;
 	lstring_t*        filename;
 	enum fs_type      fs_type;
 	ALLEGRO_FS_ENTRY* fse = NULL;
@@ -241,28 +241,28 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
 		type_flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
-		fse = al_create_fs_entry(al_path_cstr(dir_path, ALLEGRO_NATIVE_PATH_SEP));
+		fse = al_create_fs_entry(path_cstr(dir_path));
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
-				file_path = al_create_path(al_get_fs_entry_name(file_info));
-				filename = lstr_newf("%s", al_get_path_filename(file_path));
+				file_path = path_new(al_get_fs_entry_name(file_info));
+				filename = lstr_new(path_filename_cstr(file_path));
 				if (al_get_fs_entry_mode(file_info) & type_flag)
 					vector_push(list, &filename);
-				al_destroy_path(file_path);
+				path_free(file_path);
 			}
 		}
 		al_destroy_fs_entry(fse);
 		break;
 	case SPHEREFS_SPK:
-		list = list_spk_filenames(fs->spk, al_path_cstr(dir_path, '/'), want_dirs);
+		list = list_spk_filenames(fs->spk, path_cstr(dir_path), want_dirs);
 		break;
 	}
-	al_destroy_path(dir_path);
+	path_free(dir_path);
 	return list;
 
 on_error:
 	al_destroy_fs_entry(fse);
-	al_destroy_path(dir_path);
+	path_free(dir_path);
 	vector_free(list);
 	return NULL;
 }
@@ -270,10 +270,9 @@ on_error:
 sfs_file_t*
 sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char* mode)
 {
-	ALLEGRO_PATH* dir_path;
-	sfs_file_t*   file;
-	ALLEGRO_PATH* file_path;
-	const char*   path;
+	path_t*     dir_path;
+	sfs_file_t* file;
+	path_t*     file_path;
 
 	if (!(file = calloc(1, sizeof(sfs_file_t))))
 		goto on_error;
@@ -283,22 +282,19 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 	case SPHEREFS_LOCAL:
 		if (strchr(mode, 'w') || strchr(mode, '+') || strchr(mode, 'a')) {
 			// write access requested, ensure directory exists
-			dir_path = al_clone_path(file_path);
-			al_set_path_filename(dir_path, NULL);
-			al_make_directory(al_path_cstr(dir_path, ALLEGRO_NATIVE_PATH_SEP));
-			al_destroy_path(dir_path);
+			dir_path = path_strip(path_dup(file_path));
+			path_mkdir(dir_path);
+			path_free(dir_path);
 		}
-		path = al_path_cstr(file_path, ALLEGRO_NATIVE_PATH_SEP);
-		if (!(file->handle = al_fopen(path, mode)))
+		if (!(file->handle = al_fopen(path_cstr(file_path), mode)))
 			goto on_error;
 		break;
 	case SPHEREFS_SPK:
-		path = al_path_cstr(file_path, '/');
-		if (!(file->spk_file = spk_fopen(fs->spk, path, mode)))
+		if (!(file->spk_file = spk_fopen(fs->spk, path_cstr(file_path), mode)))
 			goto on_error;
 		break;
 	}
-	al_destroy_path(file_path);
+	path_free(file_path);
 	return file;
 
 on_error:
@@ -451,13 +447,13 @@ bool
 sfs_mkdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 {
 	enum fs_type  fs_type;
-	ALLEGRO_PATH* path;
+	path_t*       path;
 	
 	if (!resolve_path(fs, dirname, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
-		return al_make_directory(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP));
+		return path_mkdir(path);
 	case SPHEREFS_SPK:
 		return false;
 	default:
@@ -468,14 +464,14 @@ sfs_mkdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 bool
 sfs_rmdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 {
-	enum fs_type  fs_type;
-	ALLEGRO_PATH* path;
+	enum fs_type fs_type;
+	path_t*      path;
 
 	if (!resolve_path(fs, dirname, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
-		return rmdir(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)) == 0;
+		return rmdir(path_cstr(path)) == 0;
 	case SPHEREFS_SPK:
 		return false;
 	default:
@@ -486,10 +482,9 @@ sfs_rmdir(sandbox_t* fs, const char* dirname, const char* base_dir)
 bool
 sfs_rename(sandbox_t* fs, const char* name1, const char* name2, const char* base_dir)
 {
-	enum fs_type  fs_type;
-	ALLEGRO_PATH* path1;
-	ALLEGRO_PATH* path2;
-	int           result;
+	enum fs_type fs_type;
+	path_t*      path1;
+	path_t*      path2;
 
 	if (!resolve_path(fs, name1, base_dir, &path1, &fs_type))
 		return false;
@@ -497,10 +492,7 @@ sfs_rename(sandbox_t* fs, const char* name1, const char* name2, const char* base
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
-		result = rename(
-			al_path_cstr(path1, ALLEGRO_NATIVE_PATH_SEP),
-			al_path_cstr(path2, ALLEGRO_NATIVE_PATH_SEP));
-		return result == 0;
+		return rename(path_cstr(path1), path_cstr(path2)) == 0;
 	case SPHEREFS_SPK:
 		return false;
 	default:
@@ -511,14 +503,14 @@ sfs_rename(sandbox_t* fs, const char* name1, const char* name2, const char* base
 bool
 sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 {
-	enum fs_type  fs_type;
-	ALLEGRO_PATH* path;
+	enum fs_type fs_type;
+	path_t*      path;
 
 	if (!resolve_path(fs, filename, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
-		return unlink(al_path_cstr(path, ALLEGRO_NATIVE_PATH_SEP)) == 0;
+		return unlink(path_cstr(path)) == 0;
 	case SPHEREFS_SPK:
 		return false;
 	default:
@@ -568,85 +560,69 @@ on_error:
 }
 
 static bool
-resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, ALLEGRO_PATH* *out_path, enum fs_type *out_fs_type)
+resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type)
 {
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
 	// Sphere SPK package, etc.
 	
-	ALLEGRO_PATH* origin = NULL;
+	path_t* origin;
 
-	int i;
-
-	*out_path = al_create_path(filename);
-	al_make_path_canonical(*out_path);
-
-	if (filename[0] == '/' || filename[1] == ':')  // absolute path
+	*out_path = path_new(filename);
+	if (path_is_rooted(*out_path)) {  // absolute path
 		*out_fs_type = SPHEREFS_LOCAL;
-	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {  // ~/ prefix
+		return true;
+	}
+	path_free(*out_path);
+	
+	// process SphereFS path
+	if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {  // ~/ prefix
 		// the ~/ prefix is maintained for backwards compatibility.
 		// counterintuitively, it references the directory containing the game manifest,
 		// and NOT the user's home directory.
-		if (fs == NULL) goto on_error;
-		al_destroy_path(*out_path);
-		*out_path = al_create_path(filename + 2);
+		if (fs == NULL)
+			goto on_error;
+		*out_path = path_new(filename + 2);
 		if (fs->type == SPHEREFS_LOCAL)
-			al_rebase_path(fs->root_path, *out_path);
+			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;
 	}
 	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS ~xxx/ prefix
-		al_destroy_path(*out_path);
-		*out_path = al_create_path(filename + 5);
+		*out_path = path_new(filename + 5);
 		if (memcmp(filename, "~sgm/", 5) == 0) {  // game root
 			if (fs == NULL) goto on_error;
 			if (fs->type == SPHEREFS_LOCAL)
-				al_rebase_path(fs->root_path, *out_path);
+				path_rebase(*out_path, fs->root_path);
 			*out_fs_type = fs->type;
 		}
-		else if (memcmp(filename, "~sys/", 5) == 0) {  // engine "system" directory
-			origin = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-			al_append_path_component(origin, "system");
-			al_rebase_path(origin, *out_path);
-			al_destroy_path(origin);
+		else if (memcmp(filename, "~sys/", 5) == 0) {  // engine's "system" directory
+			origin = path_rebase(path_new("system/"), enginepath());
+			path_rebase(*out_path, origin);
+			path_free(origin);
 			*out_fs_type = SPHEREFS_LOCAL;
 		}
 		else if (memcmp(filename, "~usr/", 5) == 0) {  // user profile
-			origin = al_get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH);
-			al_append_path_component(origin, "minisphere");
-			al_make_directory(al_path_cstr(origin, ALLEGRO_NATIVE_PATH_SEP));
-			al_rebase_path(origin, *out_path);
-			al_destroy_path(origin);
+			origin = path_rebase(path_new("minisphere/"), homepath());
+			path_rebase(*out_path, origin);
+			path_free(origin);
 			*out_fs_type = SPHEREFS_LOCAL;
 		}
 		else  // unrecognized prefix
 			goto on_error;
 	}
 	else {  // default case: assume relative path
-		if (fs == NULL) goto on_error;
-		origin = al_create_path_for_directory(base_dir);
-		al_rebase_path(origin, *out_path);
+		if (fs == NULL)
+			goto on_error;
+		*out_path = make_sfs_path(filename, base_dir);
 		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
-			al_rebase_path(fs->root_path, *out_path);
-		else {
-			// SPK requires a fully canonized path, so we have to collapse
-			// any '..' components prior to returning the path.
-			for (i = 0; i < al_get_path_num_components(*out_path); ++i) {
-				if (strcmp(al_get_path_component(*out_path, i), "..") == 0) {
-					al_remove_path_component(*out_path, i--);
-					if (i >= 0)
-						al_remove_path_component(*out_path, i);
-				}
-			}
-		}
-		al_destroy_path(origin);
+			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;
 	}
 	
 	return true;
 
 on_error:
-	al_destroy_path(*out_path);
-	al_destroy_path(origin);
+	path_free(*out_path);
 	*out_path = NULL;
 	*out_fs_type = SPHEREFS_UNKNOWN;
 	return false;
