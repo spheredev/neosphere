@@ -89,6 +89,9 @@
     <ClInclude Include="..\src\duk_config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="cell.rc">
