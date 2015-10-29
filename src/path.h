@@ -20,6 +20,7 @@ bool        path_hop_cmp       (const path_t* path, size_t idx, const char* name
 path_t*     path_append        (path_t* path, const char* pathname);
 path_t*     path_append_dir    (path_t* path, const char* pathname);
 path_t*     path_cat           (path_t* path, const path_t* tail);
+path_t*     path_change_name   (path_t* path, const char* filename);
 bool        path_cmp           (const path_t* path1, const path_t* path2);
 path_t*     path_collapse      (path_t* path, bool collapse_double_dots);
 bool        path_mkdir         (const path_t* path);

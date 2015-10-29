@@ -31,7 +31,7 @@
 
 static path_t* construct_path       (path_t* path, const char* pathname, bool force_dir);
 static void    convert_to_directory (path_t* path);
-static void    update_pathname      (path_t* path);
+static void    refresh_pathname     (path_t* path);
 
 struct path
 {
@@ -169,7 +169,7 @@ path_append(path_t* path, const char* pathname)
 	free(parse);
 	
 	path_collapse(path, false);
-	update_pathname(path);
+	refresh_pathname(path);
 	return path;
 
 on_error:
@@ -188,6 +188,15 @@ path_t*
 path_cat(path_t* path, const path_t* tail)
 {
 	return path_append(path, path_cstr(tail));
+}
+
+path_t*
+path_change_name(path_t* path, const char* filename)
+{
+	free(path->filename);
+	path->filename = strdup(filename);
+	refresh_pathname(path);
+	return path;
 }
 
 bool
@@ -226,7 +235,7 @@ path_collapse(path_t* path, bool collapse_double_dots)
 				path_remove_hop(path, i--);
 		}
 	}
-	update_pathname(path);
+	refresh_pathname(path);
 	return path;
 }
 
@@ -239,7 +248,7 @@ path_insert_hop(path_t* path, size_t idx, const char* name)
 		path->hops[i] = path->hops[i - 1];
 	++path->num_hops;
 	path->hops[idx] = strdup(name);
-	update_pathname(path);
+	refresh_pathname(path);
 	return path;
 }
 
@@ -325,7 +334,7 @@ path_remove_hop(path_t* path, size_t idx)
 	--path->num_hops;
 	for (i = idx; i < path->num_hops; ++i)
 		path->hops[i] = path->hops[i + 1];
-	update_pathname(path);
+	refresh_pathname(path);
 	return path;
 }
 
@@ -372,7 +381,7 @@ path_strip(path_t* path)
 {
 	free(path->filename);
 	path->filename = NULL;
-	update_pathname(path);
+	refresh_pathname(path);
 	return path;
 }
 
@@ -404,11 +413,11 @@ convert_to_directory(path_t* path)
 		return;
 	path->hops[path->num_hops++] = path->filename;
 	path->filename = NULL;
-	update_pathname(path);
+	refresh_pathname(path);
 }
 
 static void
-update_pathname(path_t* path)
+refresh_pathname(path_t* path)
 {
 	// notes: * the pathname generated here, when used to construct a new path object,
 	//          must result in the same type of path (file, directory, etc.). see note
