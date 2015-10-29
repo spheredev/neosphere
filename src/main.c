@@ -670,6 +670,7 @@ shutdown_engine(void)
 	shutdown_spritesets();
 	shutdown_audialis();
 	shutdown_galileo();
+	shutdown_async();
 	
 	console_log(0, "Shutting down Allegro");
 	if (g_display != NULL)

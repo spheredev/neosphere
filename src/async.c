@@ -12,7 +12,7 @@ static vector_t* s_scripts;
 bool
 initialize_async(void)
 {
-	console_log(1, "Initializing async manager");
+	console_log(1, "Initializing Async");
 	s_scripts = vector_new(sizeof(script_t*));
 	return s_scripts != NULL;
 }
@@ -20,7 +20,7 @@ initialize_async(void)
 void
 shutdown_async(void)
 {
-	console_log(1, "Shutting down async manager");
+	console_log(1, "Shutting down Async");
 	vector_free(s_scripts);
 }
 
