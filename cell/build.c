@@ -100,7 +100,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 	
-	printf("Compiling '%s' as %s.\n", path_cstr(build->in_path), build->spk ? "SPK" : "dist");
+	printf("Building '%s' as %s.\n", path_cstr(build->in_path), build->spk ? "SPK" : "dist");
 
 	return build;
 
@@ -251,7 +251,7 @@ run_build(build_t* build)
 	}
 
 	// build and install assets
-	printf("Building assets...");
+	printf("Compiling assets...");
 	path_mkdir(build->staging_path);
 	n_assets = 0;
 	iter = vector_enum(build->targets);
@@ -265,7 +265,7 @@ run_build(build_t* build)
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf("  %d asset(s) built\n", n_assets);
+	if (n_assets > 0) printf("  %d asset(s) compiled\n", n_assets);
 		else printf(" Up-to-date.\n");
 
 	printf("Installing assets... ");
@@ -316,7 +316,7 @@ run_build(build_t* build)
 		path_free(path);
 	}
 
-	printf("\n%s -> '%s'\n", build->rule, path_cstr(build->out_path));
+	printf("%s -> '%s'\n", build->rule, path_cstr(build->out_path));
 
 	return true;
 }

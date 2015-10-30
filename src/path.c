@@ -7,7 +7,7 @@
 #if defined(_WIN32)
 #include <direct.h>
 #define PATH_MAX _MAX_PATH
-#define mkdir(path, m)    _mkdir(path)
+#define mkdir(path, m) _mkdir(path)
 #define realpath(name, r) (_access(name, 00) == 0 ? _fullpath((r), (name), PATH_MAX) : NULL)
 #endif
 

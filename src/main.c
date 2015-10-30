@@ -106,6 +106,7 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	
+	set_log_verbosity(verbosity);
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 
@@ -123,11 +124,9 @@ main(int argc, char* argv[])
 		}
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
-		printf("\n");
 		shutdown_engine();
-		console_log(0, "Restarting to launch new game");
+		console_log(0, "\nRestarting to launch new game");
 		console_log(1, "  Path: %s", path_cstr(g_game_path));
-		printf("\n");
 		initialize_engine();
 	}
 

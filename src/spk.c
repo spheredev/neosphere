@@ -190,7 +190,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	return file;
 
 on_error:
-	console_log(4, "Failed to open '%s' from SPK %u", spk->id);
+	console_log(4, "Failed to open '%s' from SPK %u", path, spk->id);
 	path_free(local_path);
 	if (al_file != NULL)
 		al_fclose(al_file);
@@ -204,7 +204,7 @@ spk_fclose(spk_file_t* file)
 {
 	if (file == NULL)
 		return;
-	console_log(4, "Closing '%s' from SPK %u", file->filename);
+	console_log(4, "Closing '%s' from SPK %u", file->filename, file->spk->id);
 	al_fclose(file->handle);
 	free(file->buffer);
 	free(file->filename);
