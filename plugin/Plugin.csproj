@@ -142,8 +142,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if not exist "%25ALLUSERSPROFILE%25\Sphere Studio\Plugins" mkdir "%25ALLUSERSPROFILE%25\Sphere Studio\Plugins"
-copy /y "$(TargetPath)" "%25ALLUSERSPROFILE%25\Sphere Studio\Plugins\"
+    <PostBuildEvent>if not exist "%25USERPROFILE%25\Documents\Sphere Studio\Plugins" mkdir "%25USERPROFILE%25\Documents\Sphere Studio\Plugins"
+copy /y "$(TargetPath)" "%25USERPROFILE%25\Documents\Sphere Studio\Plugins\"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
