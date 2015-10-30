@@ -4,7 +4,12 @@ minisphere Changelog
 v2.1.0 - TBD
 ------------
 
+v2.0.1 - October 30, 2015
+-------------------------
 
+* Fixes segfaults and insane console output at higher log levels.
+* Fixes a memory leak in the Async() trampoline due to a missing shutdown call.
+* Adds an API reference for Cell to the distribution.
 
 v2.0.0 - October 26, 2015
 -------------------------
