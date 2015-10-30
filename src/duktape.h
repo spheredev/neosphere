@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit ceb34bf1801bec67e062ebb274c9966f91486f97 (v1.3.0-145-gceb34bf).
+ *  Git commit ef506ffcc877fd66ffbfd0fc2dc4c8186077fd71 (v1.3.0-158-gef506ff).
  *  Git branch fatcerberus.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -218,8 +218,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "ceb34bf1801bec67e062ebb274c9966f91486f97"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-145-gceb34bf"
+#define DUK_GIT_COMMIT                    "ef506ffcc877fd66ffbfd0fc2dc4c8186077fd71"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-158-gef506ff"
 #define DUK_GIT_BRANCH                    "fatcerberus"
 
 /* Duktape debug protocol version used by this build. */

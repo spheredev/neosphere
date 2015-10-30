@@ -4,7 +4,10 @@ minisphere Changelog
 v2.1.0 - TBD
 ------------
 
-* Nothing yet.
+* Improves JS error messages when attempting to read properties from
+  non-objects. (e.g. "cannot read property 'foo' of undefined", as opposed to
+  "invalid base value")
+
 
 v2.0.1 - October 30, 2015
 -------------------------
