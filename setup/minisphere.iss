@@ -20,11 +20,11 @@
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-;#define WANT_GDK_SETUP
+#define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.0.0"
-#define AppRawVersion "2.0.0.960"
+#define AppVersion "2.0.1"
+#define AppRawVersion "2.0.1.968"
 #define AppPublisher "Fat Cerberus"
 
 #ifdef WANT_GDK_SETUP
@@ -44,6 +44,7 @@ InfoAfterFile=..\readme.md
 AppName={#AppName} GDK
 AppVerName={#AppName} GDK {#AppVersion}
 DefaultDirName={pf}\{#AppName} GDK
+DefaultGroupName={#AppName} GDK
 ChangesEnvironment=yes
 UninstallDisplayName={#AppName} GDK {#AppVersion}
 UninstallDisplayIcon={app}\spheredev.ico,0
@@ -54,6 +55,7 @@ SetupIconFile=..\bin\spherical.ico
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion}
 DefaultDirName={pf}\{#AppName}
+DisableProgramGroupPage=yes
 UninstallDisplayName={#AppName} {#AppVersion}
 UninstallDisplayIcon={app}\spherical.ico,0
 #endif
@@ -65,7 +67,6 @@ OutputDir=.
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
-DisableProgramGroupPage=yes
 DisableDirPage=auto
 AlwaysShowDirOnReadyPage=yes
 ChangesAssociations=yes
@@ -93,8 +94,8 @@ Name: "path"; Description: "Add {#AppName} GDK to the PATH"; GroupDescription: "
 
 [Files]
 #ifdef WANT_GDK_SETUP
-Source: "..\bin\msphere.exe"; DestName: "{#AppExeName2}"; DestDir: "{app}\bin"; Flags: ignoreversion; Check: not IsWin64; Components: engine
-Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion; Check: not IsWin64; Components: engine
+Source: "..\bin\msphere.exe"; DestName: "{#AppExeName2}"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: engine
+Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: engine
 Source: "..\bin\msphere64.exe"; DestName: "{#AppExeName2}"; DestDir: "{app}\bin"; Flags: ignoreversion; Check: IsWin64; Components: engine
 Source: "..\bin\msphere64-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion; Check: IsWin64; Components: engine
 Source: "..\bin\cell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: cell
@@ -141,8 +142,10 @@ Root: HKCR; Subkey: "minisphere.S2GM\shell\open\command"; ValueType: string; Val
 
 [Icons]
 #ifdef WANT_GDK_SETUP
-Name: "{commonprograms}\{#AppName} Console"; Filename: "{app}\bin\{#AppExeName}"
-Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\studio\Sphere Studio.exe"; Components: studio
+Name: "{group}\API Reference - Cell"; Filename: "{app}\documentation\cell-api.txt"; Components: docs/api
+Name: "{group}\API Reference - minisphere"; Filename: "{app}\documentation\minisphere-api.txt"; Components: docs/api
+Name: "{group}\{#AppName} Console"; Filename: "{app}\bin\{#AppExeName2}"; Components: engine
+Name: "{group}\Sphere Studio"; Filename: "{app}\studio\Sphere Studio.exe"; Components: studio
 #else
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 #endif
