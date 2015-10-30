@@ -64,6 +64,7 @@ static duk_ret_t js_GetSeconds           (duk_context* ctx);
 static duk_ret_t js_GetTime              (duk_context* ctx);
 static duk_ret_t js_SetFrameRate         (duk_context* ctx);
 static duk_ret_t js_SetMaxFrameSkips     (duk_context* ctx);
+static duk_ret_t js_SetScreenSize        (duk_context* ctx);
 static duk_ret_t js_Abort                (duk_context* ctx);
 static duk_ret_t js_Alert                (duk_context* ctx);
 static duk_ret_t js_Assert               (duk_context* ctx);
@@ -161,6 +162,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "GetTime", js_GetTime);
 	register_api_function(ctx, NULL, "SetFrameRate", js_SetFrameRate);
 	register_api_function(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
+	register_api_function(ctx, NULL, "SetScreenSize", js_SetScreenSize);
 	register_api_function(ctx, NULL, "Abort", js_Abort);
 	register_api_function(ctx, NULL, "Alert", js_Alert);
 	register_api_function(ctx, NULL, "Assert", js_Assert);
@@ -734,6 +736,20 @@ js_SetMaxFrameSkips(duk_context* ctx)
 	if (max_skips < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetMaxFrameSkips(): Value cannot be negative (%i)", max_skips);
 	set_max_frameskip(max_skips);
+	return 0;
+}
+
+static duk_ret_t
+js_SetScreenSize(duk_context* ctx)
+{
+	int res_width;
+	int res_height;
+
+	res_width = duk_require_int(ctx, 0);
+	res_height = duk_require_int(ctx, 1);
+	if (res_width < 0 || res_height < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetResolution(): Dimensions cannot be negative (%i x %i)", res_width, res_height);
+	set_resolution(res_width, res_height);
 	return 0;
 }
 
