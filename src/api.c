@@ -742,20 +742,16 @@ js_SetMaxFrameSkips(duk_context* ctx)
 static duk_ret_t
 js_SetScreenSize(duk_context* ctx)
 {
-	int  num_args;
 	int  res_width;
 	int  res_height;
-	bool persistent;
 
-	num_args = duk_get_top(ctx);
 	res_width = duk_require_int(ctx, 0);
 	res_height = duk_require_int(ctx, 1);
-	persistent = num_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	if (res_width < 0 || res_height < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetScreenSize(): Dimensions cannot be negative (%i x %i)",
 			res_width, res_height);
-	set_resolution(res_width, res_height, persistent);
+	set_resolution(res_width, res_height);
 	return 0;
 }
 

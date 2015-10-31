@@ -46,7 +46,6 @@ static bool    s_conserve_cpu = true;
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
-kev_file_t*    s_game_conf;
 static bool    s_is_fullscreen = false;
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
@@ -176,11 +175,6 @@ main(int argc, char* argv[])
 	
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 	
-	// load game configuration
-	s_game_conf = open_kev_file(g_fs, "game.conf");
-	g_res_x = read_number_rec(s_game_conf, "screenWidth", g_res_x);
-	g_res_y = read_number_rec(s_game_conf, "screenHeight", g_res_y);
-
 	// set up engine and create display window
 	console_log(1, "Creating render window");
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
@@ -337,7 +331,7 @@ set_max_frameskip(int frames)
 }
 
 void
-set_resolution(int width, int height, bool persistent)
+set_resolution(int width, int height)
 {
 	ALLEGRO_MONITOR_INFO monitor;
 	ALLEGRO_TRANSFORM    transform;
@@ -359,12 +353,6 @@ set_resolution(int width, int height, bool persistent)
 	al_scale_transform(&transform, g_scale_x, g_scale_y);
 	al_use_transform(&transform);
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
-
-	if (persistent) {
-		write_number_rec(s_game_conf, "screenWidth", width);
-		write_number_rec(s_game_conf, "screenHeight", height);
-		save_kev_file(s_game_conf);
-	}
 }
 
 void
@@ -716,7 +704,6 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
-	close_kev_file(s_game_conf);
 	free_sandbox(g_fs);
 	g_fs = NULL;
 	if (g_sys_conf != NULL)
