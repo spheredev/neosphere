@@ -173,7 +173,7 @@ main(int argc, char* argv[])
 		exit_game(false);
 	}
 	
-	get_sgm_metrics(g_fs, &g_res_x, &g_res_y);
+	get_game_resolution(g_fs, &g_res_x, &g_res_y);
 
 	// set up engine and create display window
 	console_log(1, "Creating render window");

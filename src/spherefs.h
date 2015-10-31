@@ -21,11 +21,12 @@ sandbox_t*       new_sandbox         (const char* pathname);
 void             free_sandbox        (sandbox_t* fs);
 const lstring_t* get_game_manifest   (const sandbox_t* fs);
 const path_t*    get_game_path       (const sandbox_t* fs);
+void             get_game_resolution (sandbox_t* fs, int *out_width, int *out_height);
 const char*      get_sgm_name        (sandbox_t* fs);
 const char*      get_sgm_author      (sandbox_t* fs);
 const char*      get_sgm_summary     (sandbox_t* fs);
-void             get_sgm_metrics     (sandbox_t* fs, int *out_x_res, int *out_y_res);
 const path_t*    get_sgm_script_path (sandbox_t* fs);
+void             set_game_resolution (sandbox_t* fs, int width, int height);
 vector_t*        list_filenames      (sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
 path_t*          make_sfs_path       (const char* filename, const char* base_dir_name);
 

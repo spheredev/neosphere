@@ -15,6 +15,7 @@ struct sandbox
 {
 	unsigned int id;
 	path_t*      root_path;
+	kev_file_t*  conf;
 	lstring_t*   manifest;
 	lstring_t*   name;
 	lstring_t*   author;
@@ -40,11 +41,12 @@ static bool      resolve_path  (sandbox_t* fs, const char* filename, const char*
 static unsigned int s_next_sandbox_id = 0;
 
 sandbox_t*
-new_sandbox(const char* pathname)
+new_sandbox(const char* game_path)
 {
 	ALLEGRO_FILE*   al_file = NULL;
 	ALLEGRO_CONFIG* conf;
 	sandbox_t*      fs;
+	enum fs_type    fs_type;
 	path_t*         path;
 	int             res_x, res_y;
 	size_t          sgm_size;
@@ -53,12 +55,12 @@ new_sandbox(const char* pathname)
 	void*           sourcemap_data;
 	size_t          sourcemap_size;
 
-	console_log(1, "Opening '%s' in Sandbox %u", pathname, s_next_sandbox_id);
+	console_log(1, "Opening '%s' in Sandbox %u", game_path, s_next_sandbox_id);
 	
 	fs = calloc(1, sizeof(sandbox_t));
 	
 	fs->id = s_next_sandbox_id;
-	path = path_new(pathname);
+	path = path_new(game_path);
 	if (!path_resolve(path, NULL)) goto on_error;
 	if (spk = open_spk(path_cstr(path))) {  // Sphere Package (.spk)
 		fs->type = SPHEREFS_SPK;
@@ -69,6 +71,8 @@ new_sandbox(const char* pathname)
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
 	}
+	path_free(path);
+	path = NULL;
 	
 	// load the game manifest
 	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
@@ -107,7 +111,15 @@ new_sandbox(const char* pathname)
 		goto on_error;
 	free(sgm_text);
 
-	get_sgm_metrics(fs, &res_x, &res_y);
+	// load game configuration
+	resolve_path(fs, "game.conf", NULL, &path, &fs_type);
+	if (!(fs->conf = open_kev_file(path_cstr(path))))
+		goto on_error;
+	fs->res_x = read_number_rec(fs->conf, "screenWidth", fs->res_x);
+	fs->res_y = read_number_rec(fs->conf, "screenHeight", fs->res_y);
+	path_free(path);
+
+	get_game_resolution(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);
@@ -117,7 +129,6 @@ new_sandbox(const char* pathname)
 		fs->sourcemap = lstr_from_buf(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
 
-	path_free(path);
 	s_next_sandbox_id++;
 	return fs;
 
@@ -157,6 +168,23 @@ get_game_path(const sandbox_t* fs)
 	return fs->root_path;
 }
 
+void
+get_game_resolution(sandbox_t* fs, int *out_width, int *out_height)
+{
+	*out_width = fs->res_x;
+	*out_height = fs->res_y;
+}
+
+void
+set_game_resolution(sandbox_t* fs, int width, int height)
+{
+	fs->res_x = width;
+	fs->res_y = height;
+	write_number_rec(fs->conf, "screenWidth", fs->res_x);
+	write_number_rec(fs->conf, "screenHeight", fs->res_y);
+	save_kev_file(fs->conf);
+}
+
 const char*
 get_sgm_name(sandbox_t* fs)
 {
@@ -173,13 +201,6 @@ const char*
 get_sgm_summary(sandbox_t* fs)
 {
 	return lstr_cstr(fs->summary);
-}
-
-void
-get_sgm_metrics(sandbox_t* fs, int *out_x_res, int *out_y_res)
-{
-	*out_x_res = fs->res_x;
-	*out_y_res = fs->res_y;
 }
 
 const path_t*
