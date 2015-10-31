@@ -338,21 +338,28 @@ set_resolution(int width, int height)
 	
 	g_res_x = width;
 	g_res_y = height;
-	g_scale_x = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
-	g_scale_y = g_scale_x;
 
-	al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
 	if (!s_is_fullscreen) {
+		g_scale_x = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
+		g_scale_y = g_scale_x;
+		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
 		al_get_monitor_info(0, &monitor);
 		al_set_window_position(g_display,
 			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
 			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
+	}
+	else {
+		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
+		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
 	}
 	
 	al_identity_transform(&transform);
 	al_scale_transform(&transform, g_scale_x, g_scale_y);
 	al_use_transform(&transform);
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
+
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	al_flip_display();
 }
 
 void
