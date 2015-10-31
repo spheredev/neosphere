@@ -46,6 +46,7 @@ static bool    s_conserve_cpu = true;
 static int     s_current_fps;
 static int     s_current_game_fps;
 static int     s_frame_skips;
+kev_file_t*    s_game_conf;
 static bool    s_is_fullscreen = false;
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
@@ -163,8 +164,8 @@ main(int argc, char* argv[])
 		}
 	}
 	if (g_fs == NULL) {
-		// if after all that, we still don't have a valid sandbox pointer, bail out
-		// because there's not much else we can do.
+		// if after all that, we still don't have a valid sandbox pointer, bail out;
+		// there's not much else we can do.
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
@@ -173,7 +174,12 @@ main(int argc, char* argv[])
 		exit_game(false);
 	}
 	
-	get_game_resolution(g_fs, &g_res_x, &g_res_y);
+	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
+	
+	// load game configuration
+	s_game_conf = open_kev_file(g_fs, "game.conf");
+	g_res_x = read_number_rec(s_game_conf, "screenWidth", g_res_x);
+	g_res_y = read_number_rec(s_game_conf, "screenHeight", g_res_y);
 
 	// set up engine and create display window
 	console_log(1, "Creating render window");
@@ -331,7 +337,7 @@ set_max_frameskip(int frames)
 }
 
 void
-set_resolution(int width, int height)
+set_resolution(int width, int height, bool persistent)
 {
 	ALLEGRO_MONITOR_INFO monitor;
 	ALLEGRO_TRANSFORM    transform;
@@ -342,15 +348,23 @@ set_resolution(int width, int height)
 	g_scale_y = g_scale_x;
 
 	al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
-	al_get_monitor_info(0, &monitor);
-	al_set_window_position(g_display,
-		(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
-		(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
+	if (!s_is_fullscreen) {
+		al_get_monitor_info(0, &monitor);
+		al_set_window_position(g_display,
+			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
+			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
+	}
 	
 	al_identity_transform(&transform);
 	al_scale_transform(&transform, g_scale_x, g_scale_y);
 	al_use_transform(&transform);
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
+
+	if (persistent) {
+		write_number_rec(s_game_conf, "screenWidth", width);
+		write_number_rec(s_game_conf, "screenHeight", height);
+		save_kev_file(s_game_conf);
+	}
 }
 
 void
@@ -642,7 +656,7 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "Loading system configuration");
-	g_sys_conf = open_kev_file("~sys/system.ini");
+	g_sys_conf = open_kev_file(NULL, "~sys/system.ini");
 
 	// initialize engine components
 	initialize_async();
@@ -702,6 +716,7 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
+	close_kev_file(s_game_conf);
 	free_sandbox(g_fs);
 	g_fs = NULL;
 	if (g_sys_conf != NULL)

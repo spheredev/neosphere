@@ -14,8 +14,8 @@ enum fs_type
 struct sandbox
 {
 	unsigned int id;
+	unsigned int refcount;
 	path_t*      root_path;
-	kev_file_t*  conf;
 	lstring_t*   manifest;
 	lstring_t*   name;
 	lstring_t*   author;
@@ -46,7 +46,6 @@ new_sandbox(const char* game_path)
 	ALLEGRO_FILE*   al_file = NULL;
 	ALLEGRO_CONFIG* conf;
 	sandbox_t*      fs;
-	enum fs_type    fs_type;
 	path_t*         path;
 	int             res_x, res_y;
 	size_t          sgm_size;
@@ -111,15 +110,7 @@ new_sandbox(const char* game_path)
 		goto on_error;
 	free(sgm_text);
 
-	// load game configuration
-	resolve_path(fs, "game.conf", NULL, &path, &fs_type);
-	if (!(fs->conf = open_kev_file(path_cstr(path))))
-		goto on_error;
-	fs->res_x = read_number_rec(fs->conf, "screenWidth", fs->res_x);
-	fs->res_y = read_number_rec(fs->conf, "screenHeight", fs->res_y);
-	path_free(path);
-
-	get_game_resolution(fs, &res_x, &res_y);
+	get_sgm_resolution(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
 	console_log(1, "  Author: %s", get_sgm_author(fs));
 	console_log(1, "  Resolution: %ix%i", res_x, res_y);
@@ -130,7 +121,7 @@ new_sandbox(const char* game_path)
 	free(sourcemap_data);
 
 	s_next_sandbox_id++;
-	return fs;
+	return ref_sandbox(fs);
 
 on_error:
 	console_log(1, "Failed to load manifest in Sandbox %u", s_next_sandbox_id++);
@@ -145,10 +136,22 @@ on_error:
 	return NULL;
 }
 
+sandbox_t*
+ref_sandbox(sandbox_t* fs)
+{
+	if (fs == NULL)
+		return NULL;
+
+	++fs->refcount;
+	return fs;
+}
+
 void
 free_sandbox(sandbox_t* fs)
 {
-	if (fs == NULL) return;
+	if (fs == NULL || --fs->refcount > 0)
+		return;
+
 	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
 	if (fs->type == SPHEREFS_SPK)
 		free_spk(fs->spk);
@@ -169,20 +172,10 @@ get_game_path(const sandbox_t* fs)
 }
 
 void
-get_game_resolution(sandbox_t* fs, int *out_width, int *out_height)
+get_sgm_resolution(sandbox_t* fs, int *out_width, int *out_height)
 {
 	*out_width = fs->res_x;
 	*out_height = fs->res_y;
-}
-
-void
-set_game_resolution(sandbox_t* fs, int width, int height)
-{
-	fs->res_x = width;
-	fs->res_y = height;
-	write_number_rec(fs->conf, "screenWidth", fs->res_x);
-	write_number_rec(fs->conf, "screenHeight", fs->res_y);
-	save_kev_file(fs->conf);
 }
 
 const char*

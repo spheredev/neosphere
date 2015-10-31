@@ -48,6 +48,7 @@ static duk_ret_t js_FileStream_write        (duk_context* ctx);
 struct kev_file
 {
 	unsigned int    id;
+	sandbox_t*      fs;
 	ALLEGRO_CONFIG* conf;
 	char*           filename;
 	bool            is_dirty;
@@ -56,7 +57,7 @@ struct kev_file
 static unsigned int s_next_file_id = 0;
 
 kev_file_t*
-open_kev_file(const char* filename)
+open_kev_file(sandbox_t* fs, const char* filename)
 {
 	kev_file_t*   file;
 	ALLEGRO_FILE* memfile = NULL;
@@ -65,7 +66,7 @@ open_kev_file(const char* filename)
 	
 	console_log(2, "Opening KEVfile %u as '%s'", s_next_file_id, filename);
 	file = calloc(1, sizeof(kev_file_t));
-	if (slurp = sfs_fslurp(g_fs, filename, NULL, &slurp_size)) {
+	if (slurp = sfs_fslurp(fs, filename, NULL, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
@@ -76,6 +77,7 @@ open_kev_file(const char* filename)
 		if (!(file->conf = al_create_config()))
 			goto on_error;
 	}
+	file->fs = ref_sandbox(fs);
 	file->filename = strdup(filename);
 	file->id = s_next_file_id++;
 	return file;
@@ -99,6 +101,7 @@ close_kev_file(kev_file_t* file)
 	if (file->is_dirty)
 		save_kev_file(file);
 	al_destroy_config(file->conf);
+	free_sandbox(file->fs);
 	free(file);
 }
 
@@ -192,7 +195,7 @@ save_kev_file(kev_file_t* file)
 		file_size = al_ftell(memfile);
 		al_fclose(memfile); memfile = NULL;
 	}
-	if (!(sfs_file = sfs_fopen(g_fs, file->filename, "save", "wt")))
+	if (!(sfs_file = sfs_fopen(file->fs, file->filename, NULL, "wt")))
 		goto on_error;
 	sfs_fwrite(buffer, file_size, 1, sfs_file);
 	sfs_fclose(sfs_file);
@@ -411,7 +414,7 @@ js_OpenFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save");
-	if (!(file = open_kev_file(filename)))
+	if (!(file = open_kev_file(g_fs, filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
@@ -424,7 +427,7 @@ js_new_KevFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, NULL);
-	if (!(file = open_kev_file(filename)))
+	if (!(file = open_kev_file(g_fs, filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): Failed to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;

@@ -73,7 +73,7 @@ extern rect_t   get_clip_rectangle (void);
 extern int      get_max_frameskip  (void);
 extern void     set_clip_rectangle (rect_t clip_rect);
 extern void     set_max_frameskip  (int frames);
-extern void     set_resolution     (int width, int height);
+extern void     set_resolution     (int width, int height, bool persistent);
 extern void     delay              (double time);
 extern void     do_events          (void);
 extern noreturn exit_game          (bool force_shutdown);
