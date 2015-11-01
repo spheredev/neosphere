@@ -4,7 +4,10 @@ minisphere Changelog
 v2.1.0 - TBD
 ------------
 
-* minisphere can now run JS scripts without a manifest, by executing, e.g.
+* Adds support for checked API extensions. By including a 'minimumPlatform'
+  object in the game's S2GM manifest, S2GM-compliant engines can be made to
+  check that the minimum API requirements are met before launching the game.
+* Now has the ability to run JS scripts without a manifest, by executing, e.g.
   'msphere script.js' at the command line. The script to be run must have a
   game() function.
 * Adds a new API function, SetScreenSize(), allowing games to change resolution

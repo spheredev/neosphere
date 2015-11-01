@@ -206,6 +206,24 @@ shutdown_api(void)
 	lstr_free(s_user_agent);
 }
 
+bool
+have_api_extension(const char* name)
+{
+	iter_t iter;
+	char* *i_name;
+
+	iter = vector_enum(s_extensions);
+	while (i_name = vector_next(&iter))
+		if (strcmp(*i_name, name) == 0) return true;
+	return false;
+}
+
+double
+get_api_version(void)
+{
+	return SPHERE_API_VERSION;
+}
+
 void
 register_api_const(duk_context* ctx, const char* name, double value)
 {
@@ -312,23 +330,6 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	duk_pop(ctx);
 }
 
-duk_bool_t
-duk_is_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
-{
-	const char* obj_ctor_name;
-	duk_bool_t  result;
-
-	index = duk_require_normalize_index(ctx, index);
-	if (!duk_is_object_coercible(ctx, index))
-		return 0;
-
-	duk_get_prop_string(ctx, index, "\xFF" "ctor");
-	obj_ctor_name = duk_safe_to_string(ctx, -1);
-	result = strcmp(obj_ctor_name, ctor_name) == 0;
-	duk_pop(ctx);
-	return result;
-}
-
 noreturn
 duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
@@ -359,6 +360,23 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	// throw the exception
 	va_start(ap, fmt);
 	duk_error_va_raw(ctx, err_code, filename, line_number, fmt, ap);
+}
+
+duk_bool_t
+duk_is_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+{
+	const char* obj_ctor_name;
+	duk_bool_t  result;
+
+	index = duk_require_normalize_index(ctx, index);
+	if (!duk_is_object_coercible(ctx, index))
+		return 0;
+
+	duk_get_prop_string(ctx, index, "\xFF" "ctor");
+	obj_ctor_name = duk_safe_to_string(ctx, -1);
+	result = strcmp(obj_ctor_name, ctor_name) == 0;
+	duk_pop(ctx);
+	return result;
 }
 
 void

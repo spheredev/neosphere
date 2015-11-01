@@ -26,6 +26,7 @@ static void draw_status_message (const char* text);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void report_error        (const char* fmt, ...);
+static bool verify_requirements (sandbox_t* fs);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
@@ -100,13 +101,14 @@ main(int argc, char* argv[])
 	printf("(c) 2015 Fat Cerberus\n\n");
 
 	// parse the command line
-	if (!parse_command_line(argc, argv, &g_game_path,
+	if (parse_command_line(argc, argv, &g_game_path,
 		&s_is_fullscreen, &s_max_frameskip, &verbosity, &s_conserve_cpu, &want_debug))
 	{
-		return EXIT_FAILURE;
+		set_log_verbosity(verbosity);
 	}
-
-	set_log_verbosity(verbosity);
+	else
+		return EXIT_FAILURE;
+	
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 
@@ -168,10 +170,10 @@ main(int argc, char* argv[])
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
-		
-		// in case we reached this point via ExecuteGame()
 		exit_game(false);
 	}
+	if (!verify_requirements(g_fs))
+		exit_game(false);
 
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 
@@ -904,4 +906,67 @@ report_error(const char* fmt, ...)
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	#endif
 	lstr_free(error_text);
+}
+
+static bool
+verify_requirements(sandbox_t* fs)
+{
+	// NOTE: before calling this function, the Sphere API must already have been
+	//       initialized using initialize_api().
+
+	const char* extension_name;
+	lstring_t*  message;
+	const char* recommendation = NULL;
+
+	duk_size_t i;
+
+	duk_push_lstring_t(g_duk, get_game_manifest(g_fs));
+	duk_json_decode(g_duk, -1);
+
+	if (duk_get_prop_string(g_duk, -1, "minimumPlatform")) {
+		if (duk_get_prop_string(g_duk, -1, "recommend")) {
+			if (duk_is_string(g_duk, -1))
+				recommendation = duk_get_string(g_duk, -1);
+			duk_pop(g_duk);
+		}
+
+		// check for minimum API version
+		if (duk_get_prop_string(g_duk, -1, "apiVersion")) {
+			if (duk_is_number(g_duk, -1)) {
+				if (duk_get_number(g_duk, -1) > get_api_version())
+					goto is_unsupported;
+			}
+			duk_pop(g_duk);
+		}
+
+		// check API extensions
+		if (duk_get_prop_string(g_duk, -1, "extensions")) {
+			if (duk_is_array(g_duk, -1))
+				for (i = 0; i < duk_get_length(g_duk, -1); ++i) {
+					duk_get_prop_index(g_duk, -1, (duk_uarridx_t)i);
+					extension_name = duk_get_string(g_duk, -1);
+					duk_pop(g_duk);
+					if (extension_name != NULL && !have_api_extension(extension_name))
+						goto is_unsupported;
+				}
+			duk_pop(g_duk);
+		}
+		duk_pop(g_duk);
+	}
+	duk_pop(g_duk);
+	return true;
+
+is_unsupported:
+	if (recommendation != NULL) {
+		message = lstr_newf(
+			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
+			"\n\nThe game developer recommends using %s.", ENGINE_NAME, recommendation);
+	}
+	else {
+		message = lstr_newf(
+			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
+			"\n\nNo specific recommendation was provided by the game developer.", ENGINE_NAME);
+	}
+	al_show_native_message_box(NULL, "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	return false;
 }
