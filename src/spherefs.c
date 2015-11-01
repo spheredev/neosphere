@@ -69,16 +69,17 @@ new_sandbox(const char* game_path)
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-
+		
+		// synthesize a game manifest for the script. this way we make this trick
+		// transparent to the rest of the engine, keeping things simple.
 		console_log(1, "Synthesizing manifest for '%s' in Sandbox %u", path_cstr(path),
 			s_next_sandbox_id);
 		fs->name = lstr_new(path_filename_cstr(path));
 		fs->author = lstr_new("Author Unknown");
-		fs->summary = lstr_new("No summary available.");
+		fs->summary = lstr_new(path_cstr(path));
 		fs->res_x = 320; fs->res_y = 240;
 		fs->script_path = path_new(path_filename_cstr(path));
 		
-		// generate a JSON manifest (used by, e.g. GetGameManifest())
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
