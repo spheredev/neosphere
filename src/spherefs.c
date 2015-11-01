@@ -79,7 +79,6 @@ new_sandbox(const char* game_path)
 		fs->summary = lstr_new(path_cstr(path));
 		fs->res_x = 320; fs->res_y = 240;
 		fs->script_path = path_new(path_filename_cstr(path));
-		
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
@@ -92,8 +91,12 @@ new_sandbox(const char* game_path)
 	else {  // default case, unpacked game folder
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-		
-		// try to load the game manifest
+	}
+	path_free(path);
+	path = NULL;
+
+	// try to load the game manifest if one hasn't been synthesized already
+	if (fs->name == NULL) {
 		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
 			console_log(1, "Parsing game.s2gm in Sandbox %u", s_next_sandbox_id);
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
@@ -128,10 +131,9 @@ new_sandbox(const char* game_path)
 		}
 		else
 			goto on_error;
+		free(sgm_text);
+		sgm_text = NULL;
 	}
-	free(sgm_text);
-	path_free(path);
-	path = NULL;
 
 	get_sgm_resolution(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
