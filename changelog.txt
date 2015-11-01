@@ -4,9 +4,14 @@ minisphere Changelog
 v2.1.0 - TBD
 ------------
 
+* minisphere can now run JS scripts without a manifest, by executing, e.g.
+  'msphere script.js' at the command line. The script to be run must have a
+  game() function.
+* Adds a new API function, SetScreenSize(), allowing games to change resolution
+  at runtime.
 * Improves JS error messages when attempting to read properties from
-  non-objects. (e.g. "cannot read property 'foo' of undefined", as opposed to
-  "invalid base value")
+  non-objects (e.g. "cannot read property 'foo' of undefined", as opposed to
+  "invalid base value").
 
 
 v2.0.1 - October 30, 2015
