@@ -66,35 +66,17 @@ new_sandbox(const char* game_path)
 		fs->root_path = path_dup(path);
 		fs->spk = spk;
 	}
-	else {  // default case, unpacked game folder
+	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-	}
-	path_free(path);
-	path = NULL;
-	
-	// load the game manifest
-	if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
-		console_log(1, "Parsing game.s2gm in Sandbox %u", s_next_sandbox_id);
-		fs->manifest = lstr_from_buf(sgm_text, sgm_size);
-		duk_push_pointer(g_duk, fs);
-		duk_push_lstring_t(g_duk, fs->manifest);
-		if (duk_safe_call(g_duk, duk_load_s2gm, 2, 0) != 0)
-			goto on_error;
-	}
-	else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
-		console_log(1, "Parsing game.sgm in Sandbox %u", s_next_sandbox_id);
-		al_file = al_open_memfile(sgm_text, sgm_size, "rb");
-		if (!(conf = al_load_config_file_f(al_file)))
-			goto on_error;
-		fs->name = lstr_new(al_get_config_value(conf, NULL, "name"));
-		fs->author = lstr_new(al_get_config_value(conf, NULL, "author"));
-		fs->summary = lstr_new(al_get_config_value(conf, NULL, "description"));
-		fs->res_x = atoi(al_get_config_value(conf, NULL, "screen_width"));
-		fs->res_y = atoi(al_get_config_value(conf, NULL, "screen_height"));
-		fs->script_path = make_sfs_path(al_get_config_value(conf, NULL, "script"), "scripts");
-		al_destroy_config(conf);
-		al_fclose(al_file);
+
+		console_log(1, "Synthesizing manifest for '%s' in Sandbox %u", path_cstr(path),
+			s_next_sandbox_id);
+		fs->name = lstr_new(path_filename_cstr(path));
+		fs->author = lstr_new("Author Unknown");
+		fs->summary = lstr_new("No summary available.");
+		fs->res_x = 320; fs->res_y = 240;
+		fs->script_path = path_new(path_filename_cstr(path));
 		
 		// generate a JSON manifest (used by, e.g. GetGameManifest())
 		duk_push_object(g_duk);
@@ -106,9 +88,49 @@ new_sandbox(const char* game_path)
 		fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
 		duk_pop(g_duk);
 	}
-	else
-		goto on_error;
+	else {  // default case, unpacked game folder
+		fs->type = SPHEREFS_LOCAL;
+		fs->root_path = path_strip(path_dup(path));
+		
+		// try to load the game manifest
+		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
+			console_log(1, "Parsing game.s2gm in Sandbox %u", s_next_sandbox_id);
+			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
+			duk_push_pointer(g_duk, fs);
+			duk_push_lstring_t(g_duk, fs->manifest);
+			if (duk_safe_call(g_duk, duk_load_s2gm, 2, 0) != 0)
+				goto on_error;
+		}
+		else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
+			console_log(1, "Parsing game.sgm in Sandbox %u", s_next_sandbox_id);
+			al_file = al_open_memfile(sgm_text, sgm_size, "rb");
+			if (!(conf = al_load_config_file_f(al_file)))
+				goto on_error;
+			fs->name = lstr_new(al_get_config_value(conf, NULL, "name"));
+			fs->author = lstr_new(al_get_config_value(conf, NULL, "author"));
+			fs->summary = lstr_new(al_get_config_value(conf, NULL, "description"));
+			fs->res_x = atoi(al_get_config_value(conf, NULL, "screen_width"));
+			fs->res_y = atoi(al_get_config_value(conf, NULL, "screen_height"));
+			fs->script_path = make_sfs_path(al_get_config_value(conf, NULL, "script"), "scripts");
+			al_destroy_config(conf);
+			al_fclose(al_file);
+
+			// generate a JSON manifest (used by, e.g. GetGameManifest())
+			duk_push_object(g_duk);
+			duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
+			duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
+			duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
+			duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
+			duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
+			fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
+			duk_pop(g_duk);
+		}
+		else
+			goto on_error;
+	}
 	free(sgm_text);
+	path_free(path);
+	path = NULL;
 
 	get_sgm_resolution(fs, &res_x, &res_y);
 	console_log(1, "  Title: %s", get_sgm_name(fs));
@@ -124,7 +146,7 @@ new_sandbox(const char* game_path)
 	return ref_sandbox(fs);
 
 on_error:
-	console_log(1, "Failed to load manifest in Sandbox %u", s_next_sandbox_id++);
+	console_log(1, "Failed to create Sandbox %u", s_next_sandbox_id++);
 	path_free(path);
 	if (al_file != NULL)
 		al_fclose(al_file);

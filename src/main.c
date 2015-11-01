@@ -81,7 +81,7 @@ main(int argc, char* argv[])
 	// as the oldest function in the minisphere codebase by definition, this has become
 	// something of a hairball over time, and likely quite fragile.  don't be surprised if
 	// attempting to edit it causes something to break. :o)
-	
+
 	path_t*              browse_path;
 	lstring_t*           dialog_name;
 	duk_errcode_t        err_code;
@@ -98,14 +98,14 @@ main(int argc, char* argv[])
 	printf("%s %s\n", ENGINE_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2015 Fat Cerberus\n\n");
-	
+
 	// parse the command line
 	if (!parse_command_line(argc, argv, &g_game_path,
 		&s_is_fullscreen, &s_max_frameskip, &verbosity, &s_conserve_cpu, &want_debug))
 	{
 		return EXIT_FAILURE;
 	}
-	
+
 	set_log_verbosity(verbosity);
 	if (!initialize_engine())
 		return EXIT_FAILURE;
@@ -172,9 +172,9 @@ main(int argc, char* argv[])
 		// in case we reached this point via ExecuteGame()
 		exit_game(false);
 	}
-	
+
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
-	
+
 	// set up engine and create display window
 	console_log(1, "Creating render window");
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
@@ -205,7 +205,7 @@ main(int argc, char* argv[])
 
 	// initialize shader support
 	initialize_shaders();
-	
+
 	// attempt to locate and load system font
 	console_log(1, "Loading system font");
 	if (g_sys_conf != NULL) {
@@ -242,7 +242,7 @@ main(int argc, char* argv[])
 	draw_status_message("starting up...");
 	al_flip_display();
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	
+
 	// load startup script
 	console_log(0, "Engine started!\n");
 	al_hide_mouse_cursor(g_display);
@@ -270,7 +270,7 @@ main(int argc, char* argv[])
 		goto on_js_error;
 	duk_pop(g_duk);
 	duk_pop(g_duk);
-	
+
 	exit_game(false);
 
 on_js_error:
@@ -284,14 +284,14 @@ on_js_error:
 	duk_get_prop_string(g_duk, -2, "fileName");
 	filename = duk_get_string(g_duk, -1);
 	if (filename != NULL) {
-		fprintf(stderr, "JS Error: %s:%i - %s\n", filename, line_num, err_msg);
+		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%i] %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "'%s' (line: %i)\n\n%s", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "'%s' (line: %i)\n\n  %s", filename, line_num, err_msg);
 		else
 			duk_push_string(g_duk, err_msg);
 	}
 	else {
-		fprintf(stderr, "JS Error: %s\n", err_msg);
+		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);
 		duk_push_string(g_duk, err_msg);
 	}
 	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
