@@ -185,7 +185,7 @@ namespace minisphere.Gdk.Utility
             TargetID = handshake[3];
 
             // start the communication thread
-            messenger = new Thread(RunMessenger) { IsBackground = true };
+            messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
             if (Attached != null)
             {
@@ -225,8 +225,9 @@ namespace minisphere.Gdk.Utility
                 return;
             await Converse(DValue.REQ, 0x1F);
             await Task.Run(() => messenger.Join());
-            tcp.Close();
-            messenger = null;
+            tcp.Client.Disconnect(true);
+            if (Detached != null)
+                Detached(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -564,12 +565,19 @@ namespace minisphere.Gdk.Utility
             tcp.Client.Send(stringBytes);
         }
 
-        private void RunMessenger()
+        private void ProcessMessages()
         {
             while (true)
             {
                 dynamic[] message = ReceiveMessage();
-                if (message == null) goto detachNow;
+                if (message == null)
+                {
+                    // if ReceiveMessage() returns null, detach.
+                    tcp.Client.Disconnect(true);
+                    if (Detached != null)
+                        Detached(this, EventArgs.Empty);
+                    return;
+                }
                 if (message[0] == DValue.NFY)
                 {
                     int commandID = message[1];
@@ -609,12 +617,6 @@ namespace minisphere.Gdk.Utility
                         replies.Add(request, message.Take(message.Length - 1).ToArray());
                     }
                 }
-            }
-
-        detachNow:
-            if (Detached != null)
-            {
-                Detached(this, EventArgs.Empty);
             }
         }
     }

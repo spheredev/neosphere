@@ -25,6 +25,7 @@ namespace minisphere.Gdk.Debugger
         private Timer focusTimer;
         private string sourcePath;
         private Timer updateTimer;
+        private bool expectDetach = false;
         private PluginMain plugin;
 
         public DebugSession(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
@@ -71,14 +72,15 @@ namespace minisphere.Gdk.Debugger
 
         public async Task Detach()
         {
+            expectDetach = true;
             await Duktape.Detach();
             Dispose();
         }
 
         private async Task Connect(string hostname, int port, uint timeout = 5000)
         {
-            long end = DateTime.Now.Ticks + timeout * 10000;
-            while (DateTime.Now.Ticks < end)
+            long endTime = DateTime.Now.Ticks + timeout * 10000;
+            while (DateTime.Now.Ticks < endTime)
             {
                 try
                 {
@@ -92,7 +94,12 @@ namespace minisphere.Gdk.Debugger
                     await Duktape.Connect(hostname, port);
                     return;
                 }
-                catch (SocketException) { } // *munch*
+                catch (SocketException)
+                {
+                    // a SocketException in this situation just means we failed to connect,
+                    // likely due to nobody listening.  we can safely ignore it; just keep trying
+                    // until the timeout expires.
+                }
             }
             throw new TimeoutException();
         }
@@ -125,8 +132,26 @@ namespace minisphere.Gdk.Debugger
 
         private void duktape_Detached(object sender, EventArgs e)
         {
-            PluginManager.Core.Invoke(new Action(() =>
+            PluginManager.Core.Invoke(new Action(async () =>
             {
+                if (!expectDetach)
+                {
+                    await Task.Delay(1000);
+                    if (!engineProcess.HasExited)
+                    {
+                        try
+                        {
+                            await Connect("localhost", 1208);
+                            return;  // we're reconnected, don't detach.
+                        }
+                        catch (TimeoutException)
+                        {
+                            // if we time out on the reconnection attempt, go on and signal a
+                            // detach to Sphere Studio.
+                        }
+                    }
+                }
+
                 focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
                 if (Detached != null)
                     Detached(this, EventArgs.Empty);
