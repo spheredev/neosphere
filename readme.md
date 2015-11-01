@@ -13,28 +13,28 @@ of a single executable just over 2 MB in size, plus around 200KB or so for the
 system assets. This makes it very easy to distribute.
 
 
-Command Line Options
---------------------
+Command Line Usage
+------------------
 
-* `--game <path>`: Loads the Sphere game at `<path>`. If not provided,
-  minisphere will open a file dialog allowing the user to locate a desired game
-  manually. For compatibility reasons, this can also be specified as
-  `-game <path>` (with only one dash).
+```
+msphere [options] [file_or_dir]
 
-* `--fullscreen`: Starts the engine in full-screen mode.
+file_or_dir can be either a directory, or the name of a file to open, either
+an SPK package or a bare JS script to execute.
 
-* `--window`: Starts the engine in windowed mode.
+--fullscreen        Starts the engine in full-screen mode.
+--window            Starts the engine in windowed mode.
+--frameskip <x>     Sets the initial frameskip limit to <x>. Note that if the
+					game calls SetMaxFrameSkips(), that value overrides this
+                    one.  The default frameskip limit is 5.
+--no-throttle       Disables interframe throttling. This may improve performance
+                    on slower machines at the cost of maxing out a processor
+                    core.
+--log-level <0-4>   Sets the console verbosity. 0 is practically silent, while 4
+                    is quite noisy and useful for diagnostics. The default
+                    setting is 1.
 
-* `--frameskip <x>`: Sets the initial frameskip limit to `<x>`. Note that if the
-  game calls `SetMaxFrameSkips()`, that value overrides this one.  The default
-  frameskip limit is 5.
-
-* `--no-throttle`: Disables interframe throttling. This may improve performance
-  on slower machines at the cost of maxing out a processor core.
-
-* `--log-level <0-4>`: Sets the console verbosity. 0 is practically silent,
-  while 4 is quite noisy and useful for diagnostics. The default setting is 1.
-
+```
 
 Potential Compatibility Issues
 ------------------------------

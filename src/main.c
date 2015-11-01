@@ -245,7 +245,13 @@ main(int argc, char* argv[])
 	al_flip_display();
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 
-	// load startup script
+	// initialize timing variables
+	s_next_fps_poll_time = al_get_time() + 1.0;
+	s_num_frames = s_num_flips = 0;
+	s_current_fps = s_current_game_fps = 0;
+	s_next_frame_time = s_last_flip_time = al_get_time();
+
+	// evaluate startup script
 	console_log(0, "Engine started!\n");
 	al_hide_mouse_cursor(g_display);
 	script_path = get_sgm_script_path(g_fs);
@@ -253,26 +259,11 @@ main(int argc, char* argv[])
 		goto on_js_error;
 	duk_pop(g_duk);
 
-	// initialize timing variables
-	s_next_fps_poll_time = al_get_time() + 1.0;
-	s_num_frames = s_num_flips = 0;
-	s_current_fps = s_current_game_fps = 0;
-	s_next_frame_time = s_last_flip_time = al_get_time();
-
 	// call game() function in script
-	duk_push_global_object(g_duk);
-	duk_get_prop_string(g_duk, -1, "game");
-	if (!duk_is_callable(g_duk, -1)) {
-		script_path = get_sgm_script_path(g_fs);
-		duk_push_error_object_raw(g_duk, DUK_ERR_SYNTAX_ERROR,
-			path_cstr(script_path), 0, "game() is not defined");
-		goto on_js_error;
-	}
-	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+	duk_get_global_string(g_duk, "game");
+	if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_js_error;
 	duk_pop(g_duk);
-	duk_pop(g_duk);
-
 	exit_game(false);
 
 on_js_error:

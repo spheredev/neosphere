@@ -23,8 +23,8 @@
 #define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.1a"
-#define AppRawVersion "0.0.0.0"
+#define AppVersion "2.1.0"
+#define AppRawVersion "2.1.0.983"
 #define AppPublisher "Fat Cerberus"
 
 #ifdef WANT_GDK_SETUP
@@ -152,5 +152,5 @@ Name: "{commonprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 
 [Run]
 #ifdef WANT_GDK_SETUP
-Filename: "{app}\studio\Sphere Studio.exe"; Description: "Launch Sphere Studio 1.2.0"; Flags: postinstall skipifsilent; Components: studio
+Filename: "{app}\studio\Sphere Studio.exe"; Description: "Launch Sphere Studio 1.2.0"; Flags: postinstall nowait skipifsilent; Components: studio
 #endif

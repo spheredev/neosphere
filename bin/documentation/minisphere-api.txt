@@ -29,7 +29,7 @@ GetVersionString()
     Returns the engine's version identification string. The string returned is
     in the following format:
       
-      v2.0 (minisphere 2.1a)
+      v2.0 (minisphere 2.1.0)
 
 GetExtensions()
 
@@ -54,6 +54,44 @@ GetExtensions()
     * duktape-debugger
     * frameskip-api
     * set-script-function
+
+
+S2GM Manifest Format
+--------------------
+
+A game targeting minisphere, or any other Sphere 2.0 engine, may opt to use the
+S2GM format for its metadata instead of--or in addition to--the legacy game.sgm
+format.  game.s2gm file is simply a JSON file and looks like this:
+
+{
+  name: "Spectacles: Bruce's Story",
+  author: "Fat Cerberus",
+  summary: "Follow Scott Starcross in his quest to stop the Primus.",
+  resolution: '320x240',
+  script: 'scripts/main.js',
+  
+  minimumPlatform: {
+    recommend: "minisphere 2.1 or later",
+	apiVersion: 2.0,
+    extensions: [
+      "sphere-legacy-api",
+      "sphere-obj-constructors",
+      "sphere-obj-props",
+      "sphere-map-engine",
+      "sphere-rng-object",
+      "sphere-s2gm",
+      "sphere-spherefs",
+	]
+  }
+}
+
+minimumPlatform, if present, is checked by the engine on startup and, if the
+declared requirements are not met, the game will fail to start.  Besides that,
+an S2GM may contain any amount of data in any layout, which will then be
+available to game code at any time by calling GetGameManifest().
+
+When building a game using Cell, you can compile an S2GM manifest using the
+s2gm() asset.  See the Cell API reference for more details.
 
 
 SphereFS File System
@@ -590,8 +628,9 @@ SetFrameRate(fps);
 
 GetScreenWidth();
 GetScreenHeight();
+SetScreenSize(width, height);
 
-  Gets the current screen resolution width and height.
+  Gets or sets the current screen resolution.
 
 SetClippingRectangle(x, y, width, height);
 GetClippingRectangle();

@@ -1,20 +1,23 @@
 minisphere Changelog
 ====================
 
-v2.1.0 - TBD
-------------
+v2.1.0 - November 1, 2015
+-------------------------
 
 * Adds support for checked API extensions. By including a 'minimumPlatform'
   object in the game's S2GM manifest, S2GM-compliant engines can be made to
   check that the minimum API requirements are met before launching the game.
 * Now has the ability to run JS scripts without a manifest, by executing, e.g.
-  'msphere script.js' at the command line. The script to be run must have a
-  game() function.
+  'msphere script.js' at the command line.
 * Adds a new API function, SetScreenSize(), allowing games to change resolution
   at runtime.
 * Improves JS error messages when attempting to read properties from
   non-objects (e.g. "cannot read property 'foo' of undefined", as opposed to
   "invalid base value").
+* Running a script without a game() function will no longer produce an
+  exception.
+* Fixes a bug in KevFile:save() which, in certain circumstances, caused the file
+  to be saved in a different location than it was opened from.
 
 
 v2.0.1 - October 30, 2015
