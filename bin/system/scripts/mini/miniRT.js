@@ -66,16 +66,12 @@ mini.Delegate.prototype.invoke = function()
 
 // mini.initialize()
 // Initializes miniRT and all registered components.
-// Arguments:
-//     params: An object specifying initialization parameters. This object will
-//             be passed to each registered initializer.
 mini.initialize = function(params)
 {
-    params = typeof params !== 'undefined' ? params : {};
-    
-	var frameRate = 'frameRate' in params ? params.frameRate : 0;
+	var manifest = GetGameManifest();
+	var frameRate = 'frameRate' in manifest ? manifest.frameRate : 0;
 	SetFrameRate(frameRate);
-    mini.onStartUp.invoke(params);
+    mini.onStartUp.invoke();
 }
 
 // mini.onStartUp

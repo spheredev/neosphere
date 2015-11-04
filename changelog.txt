@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v2.2.0 - TBD
+------------
+
+* miniRT now reads initialization parameters from the game manifest. This means
+  that, going forward, S2GM will be required to take full advantage of the
+  library.
+
+
 v2.1.0 - November 1, 2015
 -------------------------
 

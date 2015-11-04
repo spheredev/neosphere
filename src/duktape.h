@@ -5,8 +5,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 62dc71124003febe78c4b1b1de0d70a786276e50 (v1.3.0-163-g62dc711).
- *  Git branch debug-get-locals-callstack-level.
+ *  Git commit f8619e1948ecbc0e176277e9fa0fcd69230772f2 (v1.3.0-181-gf8619e1).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -218,9 +218,9 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "62dc71124003febe78c4b1b1de0d70a786276e50"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-163-g62dc711"
-#define DUK_GIT_BRANCH                    "debug-get-locals-callstack-level"
+#define DUK_GIT_COMMIT                    "f8619e1948ecbc0e176277e9fa0fcd69230772f2"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-181-gf8619e1"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1

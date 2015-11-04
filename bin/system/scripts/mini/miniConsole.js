@@ -21,13 +21,7 @@ mini.Console = {};
 
 // miniconsole initializer
 // Initializes miniconsole when the user calls mini.initialize().
-// Parameters:
-//     consoleLines:  The number of lines to display at a time. If not provided, the line count
-//                    will be determined dynamically based on the game resolution.
-//     consoleBuffer: The maximum number of lines kept in the line buffer. (default: 1000)
-//     logFile:       Path, relative to <game_dir>/logs, of the file to write console output
-//                    to. Can be null, in which case no log file is created. (default: null)
-mini.onStartUp.add(mini.Console, function(params)
+mini.onStartUp.add(mini.Console, function()
 {
 	this.fadeness = 0.0;
 	this.font = GetSystemFont();
@@ -38,16 +32,15 @@ mini.onStartUp.add(mini.Console, function(params)
 	this.numLines = 0;
 	this.wasKeyDown = false;
 	
-	var numLines = 'consoleLines' in params ? params.consoleLines
+	var manifest = GetGameManifest();
+	var numLines = 'consoleLines' in manifest ? manifest.consoleLines
 		: Math.floor((GetScreenHeight() - 32) / this.font.getHeight());
-	var bufferSize = 'consoleBuffer' in params ? params.consoleBuffer : 1000;
-	var filename = 'logFile' in params ? params.logFile : null;
-	var prompt = 'consolePrompt' in params ? params.consolePrompt : "$";
+	var bufferSize = 'consoleBuffer' in manifest ? manifest.consoleBuffer : 1000;
+	var logFileName = 'logPath' in manifest ? manifest.logPath : null;
+	var prompt = 'consolePrompt' in manifest ? manifest.consolePrompt : "$";
 	
-	if (typeof filename === 'string')
-		this.log = OpenLog(params.logFile);
-	else
-		this.log = null;
+	this.log = typeof logFileName === 'string'
+		? new Logger(logFileName) : null;
 	this.numLines = numLines;
 	this.buffer = [];
 	this.bufferSize = bufferSize;
@@ -63,9 +56,9 @@ mini.onStartUp.add(mini.Console, function(params)
 		.run();
 	mini.Threads.create(this, 101);
 	
-	var game = GetGameManifest();
-	this.write(game.name + " Console");
-	this.write("Sphere " + GetVersionString());
+	var manifest = GetGameManifest();
+	this.write(manifest.name + " miniRT Console");
+	this.write("Sphere API " + GetVersionString());
 	this.write("");
 	
 	this.register('keymap', this, {

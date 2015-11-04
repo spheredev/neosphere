@@ -55,10 +55,11 @@ mini.Scenelet = function(name, code)
 
 // initializer registration
 // Initializes miniscenes when the user calls mini.initialize().
-mini.onStartUp.add(mini.Scenes, function(params)
+mini.onStartUp.add(mini.Scenes, function()
 {
+	var manifest = GetGameManifest();
+	this.priority = 'sceneRenderPriority' in manifest ? manifest.sceneRenderPriority : 0;
 	this.screenMask = new Color(0, 0, 0, 0);
-	this.priority = 'scenePriority' in params ? params.scenePriority : 0;
 	this.threadID = mini.Threads.create(this, this.priority);
 });
 
