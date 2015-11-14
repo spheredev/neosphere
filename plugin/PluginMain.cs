@@ -11,6 +11,7 @@ using Sphere.Plugins.Interfaces;
 using minisphere.Gdk.DockPanes;
 using minisphere.Gdk.Plugins;
 using minisphere.Gdk.SettingsPages;
+using minisphere.Gdk.Properties;
 
 namespace minisphere.Gdk
 {
@@ -24,6 +25,9 @@ namespace minisphere.Gdk
         internal PluginConf Conf { get; private set; }
         internal int Sessions { get; set; }
 
+        private ToolStripMenuItem _msphereApiReferenceItem;
+        private ToolStripMenuItem _cellApiReferenceItem;
+
         public void Initialize(ISettings conf)
         {
             Conf = new PluginConf(conf);
@@ -35,12 +39,33 @@ namespace minisphere.Gdk
 
             Panes.Initialize(this);
 
+            _msphereApiReferenceItem = new ToolStripMenuItem("minisphere API Reference", Resources.EvalIcon);
+            _msphereApiReferenceItem.Click += msphereApiReferenceItem_Click;
+            _cellApiReferenceItem = new ToolStripMenuItem("Cell API Reference", Resources.EvalIcon);
+            _cellApiReferenceItem.Click += cellApiReferenceItem_Click;
+            PluginManager.Core.AddMenuItem("Help", _msphereApiReferenceItem);
+            PluginManager.Core.AddMenuItem("Help", _cellApiReferenceItem);
+
             PluginManager.Core.UnloadProject += on_UnloadProject;
+        }
+
+        private void msphereApiReferenceItem_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "minisphere-api.txt");
+            PluginManager.Core.OpenFile(filePath);
+        }
+
+        private void cellApiReferenceItem_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "cell-api.txt");
+            PluginManager.Core.OpenFile(filePath);
         }
 
         public void ShutDown()
         {
             PluginManager.Core.UnloadProject -= on_UnloadProject;
+            PluginManager.Core.RemoveMenuItem(_msphereApiReferenceItem);
+            PluginManager.Core.RemoveMenuItem(_cellApiReferenceItem);
             PluginManager.UnregisterAll(this);
         }
 

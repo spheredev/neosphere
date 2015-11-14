@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit f8619e1948ecbc0e176277e9fa0fcd69230772f2 (v1.3.0-181-gf8619e1).
+ *  Git commit 12e6f9b2aea632157658af10f3eeae5f3a1d3b90 (v1.3.0-223-g12e6f9b).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -218,8 +218,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "f8619e1948ecbc0e176277e9fa0fcd69230772f2"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-181-gf8619e1"
+#define DUK_GIT_COMMIT                    "12e6f9b2aea632157658af10f3eeae5f3a1d3b90"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-223-g12e6f9b"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -301,6 +301,12 @@ struct duk_number_list_entry {
 #define DUK_DEFPROP_HAVE_GETTER           (1 << 7)    /* set getter (given on value stack) */
 #define DUK_DEFPROP_HAVE_SETTER           (1 << 8)    /* set setter (given on value stack) */
 #define DUK_DEFPROP_FORCE                 (1 << 9)    /* force change if possible, may still fail for e.g. virtual properties */
+#define DUK_DEFPROP_SET_WRITABLE          (DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE)
+#define DUK_DEFPROP_CLEAR_WRITABLE        DUK_DEFPROP_HAVE_WRITABLE
+#define DUK_DEFPROP_SET_ENUMERABLE        (DUK_DEFPROP_HAVE_ENUMERABLE | DUK_DEFPROP_ENUMERABLE)
+#define DUK_DEFPROP_CLEAR_ENUMERABLE      DUK_DEFPROP_HAVE_ENUMERABLE
+#define DUK_DEFPROP_SET_CONFIGURABLE      (DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE)
+#define DUK_DEFPROP_CLEAR_CONFIGURABLE    DUK_DEFPROP_HAVE_CONFIGURABLE
 
 /* Flags for duk_push_thread_raw() */
 #define DUK_THREAD_NEW_GLOBAL_ENV         (1 << 0)    /* create a new global environment */
@@ -642,6 +648,18 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t 
 DUK_EXTERNAL_DECL duk_errcode_t duk_get_error_code(duk_context *ctx, duk_idx_t index);
 #define duk_is_error(ctx,index) \
 	(duk_get_error_code((ctx), (index)) != 0)
+#define duk_is_eval_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) == DUK_ERR_EVAL_ERROR)
+#define duk_is_range_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) == DUK_ERR_RANGE_ERROR)
+#define duk_is_reference_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) == DUK_ERR_REFERENCE_ERROR)
+#define duk_is_syntax_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) == DUK_ERR_SYNTAX_ERROR)
+#define duk_is_type_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) == DUK_ERR_TYPE_ERROR)
+#define duk_is_uri_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) == DUK_ERR_URI_ERROR)
 
 /*
  *  Get operations: no coercion, returns default value for invalid
