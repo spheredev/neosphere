@@ -276,7 +276,10 @@
     <Text Include="..\changelog.txt">
       <Filter>Documentation Files</Filter>
     </Text>
-    <Text Include="..\bin\documentation\minisphere-api.txt">
+    <Text Include="..\docs\cell-api.txt">
+      <Filter>Documentation Files</Filter>
+    </Text>
+    <Text Include="..\docs\minisphere-api.txt">
       <Filter>Documentation Files</Filter>
     </Text>
   </ItemGroup>
