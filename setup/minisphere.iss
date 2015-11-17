@@ -102,9 +102,9 @@ Source: "..\bin\cell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 Source: "..\bin\spheredev.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\plugin\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: studio
-Source: "..\bin\documentation\*"; DestDir: "{app}\documentation"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs/api
 Source: "..\bin\system\*"; DestDir: "{app}\bin\system"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: engine
 Source: "..\assets\template\*"; DestDir: "{app}\assets\template"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
+Source: "..\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs/api
 Source: "..\studio\*"; DestDir: "{app}\studio"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
 #else
 Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: not IsWin64

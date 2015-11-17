@@ -51,13 +51,13 @@ namespace minisphere.Gdk
 
         private void msphereApiReferenceItem_Click(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Conf.GdkPath, "documentation", "minisphere-api.txt");
+            string filePath = Path.Combine(Conf.GdkPath, "docs", "minisphere-api.txt");
             PluginManager.Core.OpenFile(filePath);
         }
 
         private void cellApiReferenceItem_Click(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Conf.GdkPath, "documentation", "cell-api.txt");
+            string filePath = Path.Combine(Conf.GdkPath, "docs", "cell-api.txt");
             PluginManager.Core.OpenFile(filePath);
         }
 
