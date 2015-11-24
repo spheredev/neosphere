@@ -427,36 +427,28 @@ duk_handle_create_error(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "message");
 	message = duk_get_string(ctx, -1);
 	duk_pop(ctx);
-	if (strstr(message, "not ") != message
-	    || strcmp(message, "not callable") == 0
-	    || strcmp(message, "not configurable") == 0
-	    || strcmp(message, "not constructable") == 0
-	    || strcmp(message, "not extensible") == 0
-	    || strcmp(message, "not writable") == 0)
-	{
-		return 1;
-	}
+	if (strstr(message, " required, found ") || strstr(message, "not a Sphere ") == message) {
+		duk_push_global_object(ctx);
+		duk_get_prop_string(ctx, -1, "Duktape");
+		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
+		duk_get_prop_string(ctx, -1, "lineNumber"); line = duk_get_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "function");
+		duk_get_prop_string(ctx, -1, "fileName");
+		filename = get_source_pathname(duk_get_string(ctx, -1));
+		duk_pop(ctx);
+		duk_pop_n(ctx, 4);
 
-	// we have a winner!
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
-	duk_get_prop_string(ctx, -1, "lineNumber"); line = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName");
-	filename = get_source_pathname(duk_get_string(ctx, -1));
-	duk_pop(ctx);
-	duk_pop_n(ctx, 4);
-	duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
-	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
-		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
-		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
-	duk_push_string(ctx, "lineNumber"); duk_push_int(ctx, line);
-	duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
-		| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
-		| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+		duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
+		duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
+			| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
+			| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+		duk_push_string(ctx, "lineNumber"); duk_push_int(ctx, line);
+		duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
+			| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
+			| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
+	}
 
 	return 1;
 }

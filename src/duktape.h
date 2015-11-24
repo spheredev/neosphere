@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 81a788d5925f8938410d4bdf374430b435f3b390 (v1.3.0-244-g81a788d).
+ *  Git commit e1ab8d4918ce7518815ce017ed5f35c090240786 (v1.3.0-291-ge1ab8d4).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -218,8 +218,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "81a788d5925f8938410d4bdf374430b435f3b390"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-244-g81a788d"
+#define DUK_GIT_COMMIT                    "e1ab8d4918ce7518815ce017ed5f35c090240786"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-291-ge1ab8d4"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -242,6 +242,7 @@ struct duk_number_list_entry {
 #define DUK_API_ENTRY_STACK               64
 
 /* Value types, used by e.g. duk_get_type() */
+#define DUK_TYPE_MIN                      0
 #define DUK_TYPE_NONE                     0    /* no value, e.g. invalid index */
 #define DUK_TYPE_UNDEFINED                1    /* Ecmascript undefined */
 #define DUK_TYPE_NULL                     2    /* Ecmascript null */
@@ -252,6 +253,7 @@ struct duk_number_list_entry {
 #define DUK_TYPE_BUFFER                   7    /* fixed or dynamic, garbage collected byte buffer */
 #define DUK_TYPE_POINTER                  8    /* raw void pointer */
 #define DUK_TYPE_LIGHTFUNC                9    /* lightweight function pointer */
+#define DUK_TYPE_MAX                      9
 
 /* Value mask types, used by e.g. duk_get_type_mask() */
 #define DUK_TYPE_MASK_NONE                (1 << DUK_TYPE_NONE)
@@ -621,7 +623,8 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_ecmascript_function(duk_context *ctx, duk_id
 DUK_EXTERNAL_DECL duk_bool_t duk_is_bound_function(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_thread(duk_context *ctx, duk_idx_t index);
 
-DUK_EXTERNAL_DECL duk_bool_t duk_is_callable(duk_context *ctx, duk_idx_t index);
+#define duk_is_callable(ctx,index) \
+	duk_is_function((ctx), (index))
 DUK_EXTERNAL_DECL duk_bool_t duk_is_dynamic_buffer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_fixed_buffer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t index);
@@ -704,6 +707,9 @@ DUK_EXTERNAL_DECL void *duk_require_buffer_data(duk_context *ctx, duk_idx_t inde
 DUK_EXTERNAL_DECL void *duk_require_pointer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_c_function duk_require_c_function(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_context *duk_require_context(duk_context *ctx, duk_idx_t index);
+DUK_EXTERNAL_DECL void duk_require_function(duk_context *ctx, duk_idx_t index);
+#define duk_require_callable(ctx,index) \
+	duk_require_function((ctx), (index))
 DUK_EXTERNAL_DECL void *duk_require_heapptr(duk_context *ctx, duk_idx_t index);
 
 #define duk_require_object_coercible(ctx,index) \
