@@ -1,4 +1,4 @@
-minisphere 2.2 API Documentation
+minisphere 2.1 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
