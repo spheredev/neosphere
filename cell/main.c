@@ -208,6 +208,7 @@ print_cell_quote(void)
 		"If only you'd finished me off a little bit sooner...",
 		"Ten more seconds, and the Earth will be gone!",
 		"Let's just call our little match a draw, shall we?",
+		"Watch out! You might make me explode!",
 	};
 
 	printf("Cell seems to be going through some sort of transformation...\n");
