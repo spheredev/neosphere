@@ -78,8 +78,7 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static duk_ret_t duk_handle_create_error (duk_context* ctx);
-static duk_ret_t duk_handle_require      (duk_context* ctx);
+static duk_ret_t duk_handle_require (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static int        s_framerate = 0;
@@ -123,24 +122,18 @@ initialize_api(duk_context* ctx)
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
-	// register module search callback
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_push_c_function(ctx, duk_handle_require, DUK_VARARGS);
-	duk_put_prop_string(ctx, -2, "modSearch");
-	duk_pop_2(ctx);
-
-	// register error callback (adds filename and line number to duk_require_xxx() errors)
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_push_c_function(ctx, duk_handle_create_error, DUK_VARARGS);
-	duk_put_prop_string(ctx, -2, "errCreate");
-	duk_pop_2(ctx);
-
-	// create prototype stash (allows shadowing of constructors)
+	// create an stash object to hold the prototypes for built-in objects (such
+	// as Image). this ensures the engine won't suddenly crap out if a constructor
+	// gets overwritten by a game script.
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "prototypes");
+	duk_pop(ctx);
+
+	// register module search callback
+	duk_get_global_string(ctx, "Duktape");
+	duk_push_c_function(ctx, duk_handle_require, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "modSearch");
 	duk_pop(ctx);
 
 	// register core API functions
@@ -408,49 +401,6 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 		duk_error(ctx, DUK_ERR_TYPE_ERROR, "not a Sphere %s", ctor_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata"); udata = duk_get_pointer(ctx, -1); duk_pop(ctx);
 	return udata;
-}
-
-static duk_ret_t
-duk_handle_create_error(duk_context* ctx)
-{
-	const char* filename;
-	int         line;
-	const char* message;
-
-	if (!duk_is_error(ctx, 0))
-		return 1;
-
-	// augmentation via JS callstack is needed if this is a "wrong value type" error, which
-	// are thrown by duk_require_xxx(). normally these are reported as originating from C code,
-	// which isn't particularly useful. note that we avoid augmentation for everything else
-	// as doing so would result in the wrong function being blamed for the error.
-	duk_get_prop_string(ctx, 0, "message");
-	message = duk_get_string(ctx, -1);
-	duk_pop(ctx);
-	if (strstr(message, " required, found ") || strstr(message, "not a Sphere ") == message) {
-		duk_push_global_object(ctx);
-		duk_get_prop_string(ctx, -1, "Duktape");
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -4); duk_call(ctx, 1);
-		duk_get_prop_string(ctx, -1, "lineNumber"); line = duk_get_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName");
-		filename = get_source_pathname(duk_get_string(ctx, -1));
-		duk_pop(ctx);
-		duk_pop_n(ctx, 4);
-
-		duk_push_string(ctx, "fileName"); duk_push_string(ctx, filename);
-		duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
-			| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
-			| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
-			| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
-		duk_push_string(ctx, "lineNumber"); duk_push_int(ctx, line);
-		duk_def_prop(ctx, 0, DUK_DEFPROP_HAVE_VALUE
-			| DUK_DEFPROP_HAVE_WRITABLE | DUK_DEFPROP_WRITABLE
-			| DUK_DEFPROP_HAVE_CONFIGURABLE | DUK_DEFPROP_CONFIGURABLE
-			| DUK_DEFPROP_HAVE_ENUMERABLE | 0);
-	}
-
-	return 1;
 }
 
 static duk_ret_t
