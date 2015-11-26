@@ -26,8 +26,8 @@ GetVersion()
 
 GetVersionString()
 
-    Returns the engine's version identification string. The string returned is
-    in the following format:
+  Returns the engine's version identification string. The string returned will
+  be in the following format:
       
       v2.0 (minisphere 2.2a)
 
@@ -63,27 +63,27 @@ A game targeting minisphere, or any other Sphere 2.0 engine, may opt to use the
 S2GM format for its metadata instead of--or in addition to--the legacy game.sgm
 format.  game.s2gm file is simply a JSON file and looks like this:
 
-{
-  name: "Spectacles: Bruce's Story",
-  author: "Fat Cerberus",
-  summary: "Follow Scott Starcross in his quest to stop the Primus.",
-  resolution: '320x240',
-  script: 'scripts/main.js',
-  
-  minimumPlatform: {
-    recommend: "minisphere 2.1 or later",
-	apiVersion: 2.0,
-    extensions: [
-      "sphere-legacy-api",
-      "sphere-obj-constructors",
-      "sphere-obj-props",
-      "sphere-map-engine",
-      "sphere-rng-object",
-      "sphere-s2gm",
-      "sphere-spherefs",
-	]
+  {
+    name: "Spectacles: Bruce's Story",
+    author: "Fat Cerberus",
+    summary: "Follow Scott Starcross in his quest to stop the Primus.",
+    resolution: '320x240',
+    script: 'scripts/main.js',
+    
+    minimumPlatform: {
+      recommend: "minisphere 2.1 or later",
+	  apiVersion: 2.0,
+      extensions: [
+        "sphere-legacy-api",
+        "sphere-obj-constructors",
+        "sphere-obj-props",
+        "sphere-map-engine",
+        "sphere-rng-object",
+        "sphere-s2gm",
+        "sphere-spherefs",
+	  ]
+    }
   }
-}
 
 minimumPlatform, if present, is checked by the engine on startup and, if the
 declared requirements are not met, the game will fail to start.  Besides that,
