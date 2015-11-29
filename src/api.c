@@ -122,9 +122,7 @@ initialize_api(duk_context* ctx)
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
-	// create an stash object to hold the prototypes for built-in objects (such
-	// as Image). this ensures the engine won't suddenly crap out if a constructor
-	// gets overwritten by a game script.
+	// stash an object to hold prototypes for built-in objects
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "prototypes");
@@ -250,7 +248,7 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 	// save the prototype in the prototype stash. for full compatibility with
 	// Sphere 1.5, we have to allow native objects to be created through the
 	// legacy APIs even if the corresponding constructor is overwritten or shadowed.
-	// to support that, the prototype has to remain accessible.
+	// for that to work, the prototype must remain accessible.
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "prototypes");
 	duk_dup(ctx, -3);
@@ -307,8 +305,7 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	}
 	obj_index = duk_normalize_index(ctx, -1);
 	duk_push_string(ctx, name);
-	flags = DUK_DEFPROP_HAVE_ENUMERABLE | 0
-		| DUK_DEFPROP_CONFIGURABLE | 0;
+	flags = DUK_DEFPROP_CLEAR_ENUMERABLE | DUK_DEFPROP_CLEAR_CONFIGURABLE;
 	if (getter != NULL) {
 		duk_push_c_function(ctx, getter, DUK_VARARGS);
 		flags |= DUK_DEFPROP_HAVE_GETTER;
@@ -350,9 +347,15 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
 	filename = filename != NULL ? filename + 1 : full_path;
 
-	// throw the exception
+	// construct and throw the exception
 	va_start(ap, fmt);
-	duk_error_va_raw(ctx, err_code, filename, line_number, fmt, ap);
+	duk_push_error_object_va(ctx, err_code, fmt, ap);
+	va_end(ap);
+	duk_push_string(ctx, filename);
+	duk_put_prop_string(ctx, -2, "fileName");
+	duk_push_int(ctx, line_number);
+	duk_put_prop_string(ctx, -2, "lineNumber");
+	duk_throw(ctx);
 }
 
 duk_bool_t
