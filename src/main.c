@@ -6,6 +6,7 @@
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
+#include "physics.h"
 #include "rng.h"
 #include "spriteset.h"
 
@@ -651,6 +652,7 @@ initialize_engine(void)
 	initialize_rng();
 	initialize_galileo();
 	initialize_audialis();
+	initialize_physics();
 	initialize_input();
 	initialize_spritesets();
 	initialize_map_engine();
@@ -693,6 +695,7 @@ shutdown_engine(void)
 	dyad_shutdown();
 	
 	shutdown_spritesets();
+	shutdown_physics();
 	shutdown_audialis();
 	shutdown_galileo();
 	shutdown_async();
