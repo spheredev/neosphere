@@ -57,6 +57,8 @@
 /* #undef ALLEGRO_HAVE_MPROTECT */
 /* #undef ALLEGRO_HAVE_SCHED_YIELD */
 /* #undef ALLEGRO_HAVE_SYSCONF */
+/* #undef ALLEGRO_HAVE_SYSCTL */
+
 /* #undef ALLEGRO_HAVE_FSEEKO */
 /* #undef ALLEGRO_HAVE_FTELLO */
 /* #undef ALLEGRO_HAVE_STRERROR_R */
@@ -96,6 +98,9 @@
 
 /* Define if XIM extension is supported. */
 /* #undef ALLEGRO_XWINDOWS_WITH_XIM */
+
+/* Define if XInput 2.2 X11 extension is supported. */
+/* #undef ALLEGRO_XWINDOWS_WITH_XINPUT2 */
 
 /*---------------------------------------------------------------------------*/
 
