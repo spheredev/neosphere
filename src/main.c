@@ -628,10 +628,15 @@ show_error_box:
 static bool
 initialize_engine(void)
 {
+	uint32_t al_version;
+	
 	srand(time(NULL));
 	
 	// initialize Allegro
-	console_log(0, "Initializing Allegro");
+	al_version = al_get_allegro_version();
+	console_log(0, "Initializing Allegro %d.%d.%d",
+		al_version >> 24, (al_version >> 16) & 0xFF,
+		(al_version >> 8) & 0xFF);
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon()) goto on_error;

@@ -157,7 +157,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;jpeg.lib;libpng16.lib;dumb.lib;FLAC.lib;ogg.lib;vorbis.lib;vorbisfile.lib;libmng.lib;zlib.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
@@ -180,7 +180,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;jpeg.lib;libpng16.lib;dumb.lib;FLAC.lib;ogg.lib;vorbis.lib;vorbisfile.lib;libmng.lib;zlib.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
@@ -213,7 +213,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;jpeg.lib;libpng16.lib;dumb.lib;FLAC.lib;ogg.lib;vorbis.lib;vorbisfile.lib;libmng.lib;zlib.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -243,7 +243,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;jpeg.lib;libpng16.lib;dumb.lib;FLAC.lib;ogg.lib;vorbis.lib;vorbisfile.lib;libmng.lib;zlib.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -273,7 +273,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;jpeg.lib;libpng16.lib;dumb.lib;FLAC.lib;ogg.lib;vorbis.lib;vorbisfile.lib;libmng.lib;zlib.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -303,7 +303,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;dumb-static.lib;libFLAC-static.lib;libogg-static.lib;libvorbis-static.lib;libvorbisfile-static.lib;libmng-static.lib;zlib-static.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>allegro_acodec-static.lib;allegro_audio-static.lib;allegro_color-static.lib;allegro_dialog-static.lib;allegro_image-static.lib;allegro_memfile-static.lib;allegro_primitives-static.lib;allegro-static.lib;jpeg.lib;libpng16.lib;dumb.lib;FLAC.lib;ogg.lib;vorbis.lib;vorbisfile.lib;libmng.lib;zlib.lib;winmm.lib;ws2_32.lib;gdiplus.lib;uuid.lib;opengl32.lib;glu32.lib;shlwapi.lib;psapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
