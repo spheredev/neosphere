@@ -63,17 +63,17 @@ static bool    s_want_snapshot = false;
 
 static const char* const ERROR_TEXT[][2] =
 {
-	{ "*munch*", "A hunger-pig just devoured your game!" },
-	{ "*CRASH!*", "It's an 812-car pileup!" },
-	{ "So, um... a funny thing happened...", "...on the way to the boss..." },
-	{ "Here's the deal.", "The game encountered an error." },
-	{ "This game sucks!", "Or maybe it's just the programmer..." },
-	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
-	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
-	{ "Sorry. It's just...", "...well, this is a trainwreck of a game." },
-	{ "You better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
-	{ "An exception was thrown.", "minisphere takes exception to sucky games." },
-	{ "honk. HONK. honk. HONK. :o)", "There's a clown behind you." },
+	{ "*munch*", "a hunger-pig just devoured your game!" },
+	{ "*CRASH!*", "it's an 812-car pileup!" },
+	{ "so, um... a funny thing happened...", "...on the way to the boss..." },
+	{ "here's the deal.", "the game encountered an error." },
+	{ "this game sucks!", "or maybe it's just the programmer..." },
+	{ "cows eat kitties. pigs don't eat cows.", "they just get \"replaced\" by them." },
+	{ "hey look, a squirrel!", "I wonder if IT'S responsible for this." },
+	{ "sorry. it's just...", "...well, this is a trainwreck of a game." },
+	{ "you better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
+	{ "an exception was thrown.", "minisphere takes exception to sucky games." },
+	{ "honk. HONK. honk. HONK. :o)", "there's a clown behind you." },
 };
 
 int
@@ -280,7 +280,7 @@ on_js_error:
 	if (filename != NULL) {
 		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%i] %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "'%s' (line: %i)\n\n  %s", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "'%s' (line: %i)\n\n%s", filename, line_num, err_msg);
 		else
 			duk_push_string(g_duk, err_msg);
 	}
@@ -419,6 +419,7 @@ flip_screen(int framerate)
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 
+	// update FPS with 1s granularity
 	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
 		s_current_game_fps = s_num_frames;
@@ -426,6 +427,8 @@ flip_screen(int framerate)
 		s_num_frames = 0;
 		s_next_fps_poll_time = al_get_time() + 1.0;
 	}
+
+	// flip the backbuffer, unless the preceeding frame was skipped
 	is_backbuffer_valid = !s_skipping_frame;
 	if (is_backbuffer_valid) {
 		if (s_want_snapshot) {
@@ -467,9 +470,14 @@ flip_screen(int framerate)
 	else {
 		++s_frame_skips;
 	}
+	
+	// if framerate is nonzero and we're backed up on frames, skip frames until we
+	// catch up. there is a cap on consecutive frameskips to avoid the situation where
+	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
+	// that we lag instead of never rendering anything at all.
 	if (framerate > 0) {
 		s_skipping_frame = s_frame_skips < s_max_frameskip && s_last_flip_time > s_next_frame_time;
-		do {
+		do {  // kill time while we wait for the next frame
 			time_left = s_next_frame_time - al_get_time();
 			if (s_conserve_cpu && time_left > 0.001)  // engine may stall with < 1ms timeout
 				al_wait_for_event_timed(g_events, NULL, time_left);
@@ -486,7 +494,8 @@ flip_screen(int framerate)
 		s_next_frame_time = al_get_time();
 	}
 	++s_num_frames;
-	if (!s_skipping_frame) al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	if (!s_skipping_frame)
+		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
 noreturn
@@ -600,7 +609,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 		}
 		if (frames_till_close <= 0) {
 			draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
-				TEXT_ALIGN_CENTER, "Press space bar or [Esc] to close.");
+				TEXT_ALIGN_CENTER, "press [Space] or [Esc] to close");
 		}
 		flip_screen(30);
 		if (frames_till_close <= 0) {
@@ -634,9 +643,8 @@ initialize_engine(void)
 	
 	// initialize Allegro
 	al_version = al_get_allegro_version();
-	console_log(0, "Initializing Allegro %d.%d.%d",
-		al_version >> 24, (al_version >> 16) & 0xFF,
-		(al_version >> 8) & 0xFF);
+	console_log(0, "Initializing Allegro (%d.%d.%d)",
+		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF);
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon()) goto on_error;
