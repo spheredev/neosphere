@@ -645,6 +645,8 @@ initialize_engine(void)
 	al_version = al_get_allegro_version();
 	console_log(0, "Initializing Allegro (%d.%d.%d)",
 		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF);
+	al_set_org_name("Fat Cerberus");
+	al_set_app_name("minisphere");
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon()) goto on_error;
