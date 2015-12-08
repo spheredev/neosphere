@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v2.1.2 - December 8, 2015
+-------------------------
+
+* Fixes a bug where JavaScript Error objects with messages of the form "not X"
+  can be constructed with the wrong filename and line number information.
+* Allegro version is now logged during startup.
+
 v2.1.1 - November 25, 2015
 --------------------------
 
