@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__VERSION_H__INCLUDED
 #define MINISPHERE__VERSION_H__INCLUDED
 
-#define ENGINE_NAME   "minisphere 2.1.1"
-#define COMPILER_NAME "Cell 2.1.1"
+#define ENGINE_NAME   "minisphere 2.1.2"
+#define COMPILER_NAME "Cell 2.1.2"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED
