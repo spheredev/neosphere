@@ -280,7 +280,7 @@ on_js_error:
 	if (filename != NULL) {
 		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%i] %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "'%s' (line: %i)\n\n%s", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "%s:%i\n\n%s\n ", filename, line_num, err_msg);
 		else
 			duk_push_string(g_duk, err_msg);
 	}
@@ -566,6 +566,7 @@ static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
 	wraptext_t*            error_info;
+	bool                   is_copied = false;
 	bool                   is_finished;
 	int                    frames_till_close;
 	ALLEGRO_KEYBOARD_STATE keyboard;
@@ -609,13 +610,20 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 		}
 		if (frames_till_close <= 0) {
 			draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
-				TEXT_ALIGN_CENTER, "press [Space] or [Esc] to close");
+				TEXT_ALIGN_CENTER,
+				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
 		}
 		flip_screen(30);
 		if (frames_till_close <= 0) {
 			al_get_keyboard_state(&keyboard);
 			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
 				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
+			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
+				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
+			{
+				is_copied = true;
+				al_set_clipboard_text(g_display, msg);
+			}
 		}
 		else {
 			--frames_till_close;
