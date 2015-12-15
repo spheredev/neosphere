@@ -28,7 +28,6 @@ msphere_sources = [
 	"obsmap.c",
 	"path.c",
 	"persons.c",
-	"physics.c",
 	"primitives.c",
 	"rng.c",
 	"script.c",
