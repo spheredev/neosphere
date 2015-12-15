@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v2.1.3 - December 14, 2015
+--------------------------
+
+* Fixes a bug where evaluating an expression in the debugger would use the
+  global object for 'this' instead of the active function's proper 'this'
+  binding.
+
 v2.1.2 - December 8, 2015
 -------------------------
 
