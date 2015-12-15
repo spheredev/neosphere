@@ -6,7 +6,6 @@
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
-#include "physics.h"
 #include "rng.h"
 #include "spriteset.h"
 
@@ -282,7 +281,7 @@ on_js_error:
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "%s:%i\n\n%s\n ", filename, line_num, err_msg);
 		else
-			duk_push_string(g_duk, err_msg);
+			duk_push_sprintf(g_duk, "%s\n ", err_msg);
 	}
 	else {
 		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);
@@ -675,7 +674,6 @@ initialize_engine(void)
 	initialize_rng();
 	initialize_galileo();
 	initialize_audialis();
-	initialize_physics();
 	initialize_input();
 	initialize_spritesets();
 	initialize_map_engine();
@@ -718,7 +716,6 @@ shutdown_engine(void)
 	dyad_shutdown();
 	
 	shutdown_spritesets();
-	shutdown_physics();
 	shutdown_audialis();
 	shutdown_galileo();
 	shutdown_async();

@@ -334,7 +334,6 @@
     <ClCompile Include="..\src\galileo.c" />
     <ClCompile Include="..\src\mt19937ar.c" />
     <ClCompile Include="..\src\path.c" />
-    <ClCompile Include="..\src\physics.c" />
     <ClCompile Include="..\src\rng.c" />
     <ClCompile Include="..\src\shader.c" />
     <ClCompile Include="..\src\sockets.c" />
@@ -378,7 +377,6 @@
     <ClInclude Include="..\src\galileo.h" />
     <ClInclude Include="..\src\mt19937ar.h" />
     <ClInclude Include="..\src\path.h" />
-    <ClInclude Include="..\src\physics.h" />
     <ClInclude Include="..\src\rng.h" />
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\sockets.h" />
