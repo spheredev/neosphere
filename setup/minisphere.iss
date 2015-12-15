@@ -23,8 +23,8 @@
 #define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.1.2"
-#define AppRawVersion "2.1.2.1000"
+#define AppVersion "2.1.3"
+#define AppRawVersion "2.1.3.1002"
 #define AppPublisher "Fat Cerberus"
 
 #ifdef WANT_GDK_SETUP
