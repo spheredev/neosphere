@@ -4,9 +4,10 @@ minisphere 2.2
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
 (https://travis-ci.org/fatcerberus/minisphere)
 
-minisphere is a drop-in replacement for the Sphere game engine written from the
-ground up in C.  It boasts high compatibility with most games written for
-Sphere 1.x, but with better performance and new functionality.
+minisphere is a drop-in replacement and successor to the Sphere game engine,
+written from the ground up in C.  It boasts a high level of compatibility with
+most games written for Sphere 1.x, with better performance and new functionality.
+The majority of games will run with no modifications.
 
 minisphere is small, living up to its name: The engine in its entirety consists
 of a single executable just over 2 MB in size, plus around 200KB or so for the
