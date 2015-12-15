@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v2.1.4 - TBD
+------------
+
+* When an unhandled error is encountered, the error text can now be copied to
+  the clipboard by pressing Ctrl+C.
+* Fixes a bug where GrabImage and GrabSurface would grab a black screen when
+  called from a map engine script, regardless of what was rendered that frame.
+
 v2.1.3 - December 14, 2015
 --------------------------
 
