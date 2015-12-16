@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v2.1.4 - TBD
-------------
+v2.1.4 - December 16, 2015
+--------------------------
 
 * When an unhandled error is encountered, the error text can now be copied to
   the clipboard by pressing Ctrl+C.
