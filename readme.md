@@ -10,19 +10,19 @@ most games written for Sphere 1.x, with better performance and new functionality
 The majority of games will run with no modifications.
 
 minisphere is small, living up to its name: The engine in its entirety consists
-of a single executable just over 2 MB in size, plus around 200KB or so for the
-system assets. This makes it very easy to distribute.
+of a single executable 2-3 MB in size, plus around 200KB or so for the system
+assets. This makes it very easy to distribute.
 
 Like Sphere, minisphere uses JavaScript for game coding. The engine exposes a
 collection of low-level functions through a standardized JavaScript API, leaving
-higher-level game logic entirely up to scripts. This allows any type of game to be
-made with minisphere, but of course requires more expertise than making a game
-with, say, RPG Maker or even Game Maker.
+higher-level game logic entirely up to scripts. This allows any type of game to
+be made with minisphere, but of course requires more expertise than making a
+game with, say, RPG Maker or even Game Maker.
 
 The engine uses Allegro 5.1 for graphics and sound and Duktape for JavaScript.
 As both of these are highly portable to various platforms, this allows
 minisphere to be compiled successfully on all three major platforms (Windows,
-Linux, and OS X) with no changes to the source.
+Linux, and OS X)--and possibly others--with no changes to the source.
 
 License
 -------
@@ -60,9 +60,10 @@ Potential Compatibility Issues
 No mp3 Support
 --------------
 
-minisphere is based on Allegro, which doesn't include mp3 support due to
-licensing issues. Therefore games using mp3 audio won't run in minisphere unless
-the tracks are converted to another format such as Ogg Vorbis (.ogg).
+minisphere is based on Allegro, which doesn't include mp3 support presumably due
+to licensing issues. Therefore games using mp3 audio won't run in minisphere
+unless the tracks are first converted to another format such as Ogg Vorbis
+(.ogg).
 
 `GrabImage()` and `GrabSurface()`
 ---------------------------------
