@@ -31,6 +31,7 @@
             this.TabView = new System.Windows.Forms.TabControl();
             this.MainTabPage = new System.Windows.Forms.TabPage();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.TestInWindowCheckBox = new System.Windows.Forms.CheckBox();
             this.MakeDebugPackageCheckBox = new System.Windows.Forms.CheckBox();
             this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
             this.editorLabel2 = new Sphere.Core.Editor.EditorLabel();
@@ -72,6 +73,7 @@
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.TestInWindowCheckBox);
             this.panel2.Controls.Add(this.MakeDebugPackageCheckBox);
             this.panel2.Controls.Add(this.TestWithConsoleCheckBox);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -79,6 +81,16 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(592, 200);
             this.panel2.TabIndex = 3;
+            // 
+            // TestInWindowCheckBox
+            // 
+            this.TestInWindowCheckBox.AutoSize = true;
+            this.TestInWindowCheckBox.Location = new System.Drawing.Point(12, 58);
+            this.TestInWindowCheckBox.Name = "TestInWindowCheckBox";
+            this.TestInWindowCheckBox.Size = new System.Drawing.Size(260, 17);
+            this.TestInWindowCheckBox.TabIndex = 3;
+            this.TestInWindowCheckBox.Text = "Always use windowed mode when testing a game";
+            this.TestInWindowCheckBox.UseVisualStyleBackColor = true;
             // 
             // MakeDebugPackageCheckBox
             // 
@@ -210,5 +222,6 @@
         private Sphere.Core.Editor.EditorLabel editorLabel2;
         private System.Windows.Forms.CheckBox MakeDebugPackageCheckBox;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.CheckBox TestInWindowCheckBox;
     }
 }

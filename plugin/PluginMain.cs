@@ -121,6 +121,12 @@ namespace minisphere.Gdk
             get { return Conf.GetBoolean("makeDebugPackages", false); }
             set { Conf.SetValue("makeDebugPackages", value); }
         }
+
+        public bool TestInWindow
+        {
+            get { return Conf.GetBoolean("testInWindow", false); }
+            set { Conf.SetValue("testInWindow", value); }
+        }
     }
 
     static class Panes

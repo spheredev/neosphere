@@ -27,10 +27,12 @@ namespace minisphere.Gdk.Plugins
         {
             string gdkPath = _main.Conf.GdkPath;
             bool wantConsole = _main.Conf.AlwaysUseConsole;
+            bool wantWindow = _main.Conf.TestInWindow || wantConsole;
 
             string enginePath = Path.Combine(gdkPath, "bin",
                 wantConsole ? "msphere.exe" : "msphere-nc.exe");
-            string options = string.Format(@"""{0}""", gamePath);
+            string options = string.Format(@"{1} ""{0}""", gamePath,
+                wantWindow ? "--window" : "--fullscreen");
             Process.Start(enginePath, options);
         }
 

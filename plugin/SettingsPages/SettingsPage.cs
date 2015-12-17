@@ -30,6 +30,7 @@ namespace minisphere.Gdk.SettingsPages
             _main.Conf.GdkPath = GdkPathTextBox.Text;
             _main.Conf.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
             _main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
+            _main.Conf.TestInWindow = TestInWindowCheckBox.Checked;
             return true;
         }
 
@@ -38,6 +39,7 @@ namespace minisphere.Gdk.SettingsPages
             GdkPathTextBox.Text = _main.Conf.GdkPath;
             MakeDebugPackageCheckBox.Checked = _main.Conf.MakeDebugPackages;
             TestWithConsoleCheckBox.Checked = _main.Conf.AlwaysUseConsole;
+            TestInWindowCheckBox.Checked = _main.Conf.TestInWindow;
 
             base.OnLoad(e);
         }
