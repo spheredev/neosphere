@@ -617,6 +617,8 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 			al_get_keyboard_state(&keyboard);
 			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
 				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
+			
+			// if Ctrl+C is pressed, copy the error message and location to clipboard
 			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
 				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
 			{
