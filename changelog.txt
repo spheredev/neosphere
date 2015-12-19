@@ -1,8 +1,18 @@
 minisphere Changelog
 ====================
 
-v2.1.4 - TBD
+v2.1.5 - TBD
 ------------
+
+* The Sphere Studio plugin now includes a setting to test games in windowed
+  mode.
+* Fixes momentarily display of "Allegro" in the title bar instead of the game
+  title during startup.
+* Fixes minor audio corruption at the end of the stream when playing some WAV
+  files.
+
+v2.1.4 - December 18, 2015
+--------------------------
 
 * When an unhandled error is encountered, the error text can now be copied to
   the clipboard by pressing Ctrl+C.
