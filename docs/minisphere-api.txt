@@ -1,4 +1,4 @@
-minisphere 2.2 API Documentation
+minisphere 2.1 API Documentation
 ================================
 
 minisphere uses JavaScript for game logic. This is similar to the Sphere
@@ -29,7 +29,7 @@ GetVersionString()
   Returns the engine's version identification string. The string returned will
   be in the following format:
       
-      v2.0 (minisphere 2.2a)
+      v2.0 (minisphere 2.1.5)
 
 GetExtensions()
 

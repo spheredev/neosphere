@@ -1,4 +1,4 @@
-Cell 2.2 API Documentation
+Cell 2.1 API Documentation
 ==========================
 
 Cell is a scriptable build system and compiler for Sphere games. Like Sphere

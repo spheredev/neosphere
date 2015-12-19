@@ -1552,9 +1552,9 @@ js_MapEngine(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapEngine(): Failed to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
 		render_map();
+		flip_screen(s_framerate);
 		update_map_engine(true);
 		process_map_input();
-		flip_screen(s_framerate);
 	}
 	reset_persons(false);
 	s_is_map_running = false;
