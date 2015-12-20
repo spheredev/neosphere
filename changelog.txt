@@ -1,11 +1,11 @@
 minisphere Changelog
 ====================
 
-v2.1.6 - TBD
-------------
+v2.1.6 - December 20, 2015
+--------------------------
 
-* Fix a 2.1.5 regression causing the last character to be cut off of the title
-  bar text.
+* Fixes a 2.1.5 regression which caused the last character to be cut off of the
+  title bar text.
 
 v2.1.5 - December 19, 2015
 --------------------------

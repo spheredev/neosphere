@@ -20,7 +20,7 @@ namespace minisphere.Gdk
         public string Name { get { return "minisphere GDK"; } }
         public string Author { get { return "Fat Cerberus"; } }
         public string Description { get { return "Provides support for the minisphere GDK toolchain."; } }
-        public string Version { get { return "2.1.5"; } }
+        public string Version { get { return "2.1.6"; } }
 
         internal PluginConf Conf { get; private set; }
         internal int Sessions { get; set; }

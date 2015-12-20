@@ -20,11 +20,11 @@
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-#define WANT_GDK_SETUP
+;#define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.1.5"
-#define AppRawVersion "2.1.5.1010"
+#define AppVersion "2.1.6"
+#define AppRawVersion "2.1.6.1012"
 #define AppPublisher "Fat Cerberus"
 
 #ifdef WANT_GDK_SETUP
