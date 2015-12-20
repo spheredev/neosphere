@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit a0cfda4610789ada80aab7cf19249b95d9097aa5 (v1.3.0-380-ga0cfda4).
+ *  Git commit 1e66f8bc6052d67bf2827802187fdd51604cb346 (v1.3.0-393-g1e66f8b).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -218,8 +218,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "a0cfda4610789ada80aab7cf19249b95d9097aa5"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-380-ga0cfda4"
+#define DUK_GIT_COMMIT                    "1e66f8bc6052d67bf2827802187fdd51604cb346"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-393-g1e66f8b"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -1231,13 +1231,13 @@ DUK_EXTERNAL_DECL void duk_debugger_cooperate(duk_context *ctx);
 union duk_double_union {
 	double d;
 	float f[2];
-#ifdef DUK_USE_64BIT_OPS
+#if defined(DUK_USE_64BIT_OPS)
 	duk_uint64_t ull[1];
 #endif
 	duk_uint32_t ui[2];
 	duk_uint16_t us[4];
 	duk_uint8_t uc[8];
-#ifdef DUK_USE_PACKED_TVAL_POSSIBLE
+#if defined(DUK_USE_PACKED_TVAL)
 	void *vp[2];  /* used by packed duk_tval, assumes sizeof(void *) == 4 */
 #endif
 };
