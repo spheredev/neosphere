@@ -37,6 +37,7 @@ Temporary Items
 # Visual Studio build cruft
 *.sdf
 *.opensdf
+*.opendb
 *.suo
 *.user
 *.aps

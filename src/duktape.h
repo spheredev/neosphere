@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 1e66f8bc6052d67bf2827802187fdd51604cb346 (v1.3.0-393-g1e66f8b).
+ *  Git commit 74f0d2578f477b0a6942cf45ad0dc1cc6706de13 (v1.3.0-400-g74f0d25).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -218,8 +218,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "1e66f8bc6052d67bf2827802187fdd51604cb346"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-393-g1e66f8b"
+#define DUK_GIT_COMMIT                    "74f0d2578f477b0a6942cf45ad0dc1cc6706de13"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-400-g74f0d25"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -556,7 +556,7 @@ DUK_EXTERNAL_DECL duk_idx_t duk_push_error_object_va_raw(duk_context *ctx, duk_e
 DUK_EXTERNAL_DECL void *duk_push_buffer_raw(duk_context *ctx, duk_size_t size, duk_small_uint_t flags);
 
 #define duk_push_buffer(ctx,size,dynamic) \
-	duk_push_buffer_raw((ctx), (size), (dynamic) ? DUK_BUF_FLAG_DYNAMIC : 0);
+	duk_push_buffer_raw((ctx), (size), (dynamic) ? DUK_BUF_FLAG_DYNAMIC : 0)
 #define duk_push_fixed_buffer(ctx,size) \
 	duk_push_buffer_raw((ctx), (size), 0 /*flags*/)
 #define duk_push_dynamic_buffer(ctx,size) \
