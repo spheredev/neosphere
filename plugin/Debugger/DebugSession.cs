@@ -119,7 +119,7 @@ namespace minisphere.Gdk.Debugger
                 Panes.Inspector.Clear();
 
                 Panes.Console.Print(string.Format("minisphere GDK for Sphere Studio"));
-                Panes.Console.Print(string.Format("(c) 2015 Fat Cerberus"));
+                Panes.Console.Print(string.Format("(c) 2016 Fat Cerberus"));
                 Panes.Console.Print("");
                 Panes.Console.Print("Debug Target:");
                 Panes.Console.Print(string.Format("  Duktape {0}", Duktape.Version));

@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v2.2.0 - TBD
+------------
+
+* Fixes a bug where Cell would terminate with a return code of 0 even if the
+  build failed.
+
 v2.1.6 - December 20, 2015
 --------------------------
 

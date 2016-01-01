@@ -98,7 +98,7 @@ main(int argc, char* argv[])
 
 	printf("%s %s\n", ENGINE_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("A lightweight Sphere-compatible game engine\n");
-	printf("(c) 2015 Fat Cerberus\n\n");
+	printf("(c) 2016 Fat Cerberus\n\n");
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
@@ -191,7 +191,8 @@ main(int argc, char* argv[])
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 	if (!(icon = load_image("~sgm/icon.png")))
 		icon = load_image("~sys/icon.png");
-	rescale_image(icon, 32, 32);
+	if (icon != NULL)
+		rescale_image(icon, 32, 32);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	al_identity_transform(&trans);
 	al_scale_transform(&trans, g_scale_x, g_scale_y);
