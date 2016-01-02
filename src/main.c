@@ -89,6 +89,7 @@ main(int argc, char* argv[])
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
+	bool                 have_shaders = true;
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
@@ -177,17 +178,25 @@ main(int argc, char* argv[])
 
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 
-	// set up engine and create display window
-	console_log(1, "Creating render window");
+	// try to create a display. if we can't get a programmable pipeline, try again but
+	// only request bare OpenGL. keep in mind that if this happens, shader support will be
+	// disabled.
+	console_log(1, "Creating rendering context");
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	al_set_new_window_title(get_sgm_name(g_fs));
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
-		al_show_native_message_box(NULL, "Unable to Create Display", "minisphere was unable to create a display window.",
-			"A display window is required for rendering. The engine cannot run without it and will now close.",
+		al_set_new_display_flags(ALLEGRO_OPENGL);
+		have_shaders = false;
+		g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
+	}
+	if (g_display == NULL) {
+		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a rendering context.",
+			"Your hardware is either too old to run minisphere, or there is a driver problem on this system.  Check that all drivers are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
+	console_log(1, "  Shaders: %s", have_shaders ? "Enabled" : "Unsupported");
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 	if (!(icon = load_image("~sgm/icon.png")))
 		icon = load_image("~sys/icon.png");
@@ -207,7 +216,7 @@ main(int argc, char* argv[])
 	load_key_map();
 
 	// initialize shader support
-	initialize_shaders();
+	initialize_shaders(have_shaders);
 
 	// attempt to locate and load system font
 	console_log(1, "Loading system font");

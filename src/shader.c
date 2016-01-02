@@ -12,10 +12,13 @@ struct shader
 	ALLEGRO_SHADER* program;
 };
 
+static bool s_have_shaders;
+
 void
-initialize_shaders(void)
+initialize_shaders(bool enable_shading)
 {
 	console_log(0, "Initializing shader support");
+	s_have_shaders = enable_shading;
 	reset_shader();
 }
 
@@ -23,6 +26,12 @@ void
 shutdown_shaders(void)
 {
 	console_log(0, "Shutting down shader manager");
+}
+
+bool
+are_shaders_active(void)
+{
+	return s_have_shaders;
 }
 
 shader_t*
@@ -83,13 +92,18 @@ free_shader(shader_t* shader)
 bool
 apply_shader(shader_t* shader)
 {
-	return al_use_shader(shader != NULL ? shader->program : NULL);
+	if (are_shaders_active())
+		return al_use_shader(shader != NULL ? shader->program : NULL);
+	else
+		// if shaders are not supported, degrade gracefully. this simplifies the rest
+		// of the engine, which simply assumes shaders are always supported.
+		return true;
 }
 
 void
 reset_shader(void)
 {
-	al_use_shader(NULL);
+	if (s_have_shaders) al_use_shader(NULL);
 }
 
 void
@@ -113,6 +127,9 @@ js_new_ShaderProgram(duk_context* ctx)
 	if (duk_get_prop_string(ctx, 0, "fragment"), !duk_is_string(ctx, -1))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): 'fragment' property, string required");
 	duk_pop_2(ctx);
+
+	if (!are_shaders_active())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Shaders not supported on this system");
 	
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
