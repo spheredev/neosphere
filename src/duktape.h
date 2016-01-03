@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 74f0d2578f477b0a6942cf45ad0dc1cc6706de13 (v1.3.0-400-g74f0d25).
+ *  Git commit 2e11acc220d08816111bec2d384ee18b21df0233 (v1.3.0-417-g2e11acc).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -71,6 +71,7 @@
  *  * Legimet <legimet.calc@gmail.com>
  *  * Karl Skomski <karl@skomski.com>
  *  * Bruce Pascoe <fatcerberus1@gmail.com>
+ *  * Ren\u00e9 Hollander <rene@rene8888.at>
  *  
  *  Other contributions
  *  ===================
@@ -218,8 +219,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "74f0d2578f477b0a6942cf45ad0dc1cc6706de13"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-400-g74f0d25"
+#define DUK_GIT_COMMIT                    "2e11acc220d08816111bec2d384ee18b21df0233"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-417-g2e11acc"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
