@@ -6,6 +6,9 @@ v2.2.0 - TBD
 
 * Fixes a bug where Cell would terminate with a return code of 0 even if the
   build failed.
+* minisphere will no longer fail to create a render context if the system it's
+  running on doesn't support shaders. Instead ShaderProgram will be disabled in
+  this case.
 
 v2.1.6 - December 20, 2015
 --------------------------
