@@ -1,7 +1,7 @@
 minisphere Changelog
 ====================
 
-v2.2.0 - TBD
+v3.0.0 - TBD
 ------------
 
 * Fixes a bug where Cell would terminate with a return code of 0 even if the

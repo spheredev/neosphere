@@ -11,11 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}</ProjectGuid>
+    <ProjectGuid>{9C731E06-D435-43AF-8730-7BD51A6C731D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>cell</RootNamespace>
+    <RootNamespace>SSJ</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>Cell</ProjectName>
+    <ProjectName>SSJ</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -45,19 +45,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IntDir>obj\ssj\x86\debug\</IntDir>
+    <TargetName>ssj</TargetName>
     <OutDir>debug\</OutDir>
-    <IntDir>obj\cell\x86\debug\</IntDir>
-    <TargetName>cell</TargetName>
-    <IncludePath>include;$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);</IncludePath>
-    <LibraryPath>lib\x86;$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IntDir>obj\ssj\x86\console\</IntDir>
+    <TargetName>ssj</TargetName>
     <OutDir>..\bin\</OutDir>
-    <IntDir>obj\cell\x86\console\</IntDir>
-    <TargetName>cell</TargetName>
-    <IncludePath>include;$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);</IncludePath>
-    <LibraryPath>lib\x86;$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -67,15 +63,10 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -83,56 +74,31 @@
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DebugInformationFormat />
-      <FunctionLevelLinking>false</FunctionLevelLinking>
       <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <DebugInformationFormat />
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>No</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\cell\assets.c" />
-    <ClCompile Include="..\cell\build.c" />
-    <ClCompile Include="..\cell\main.c" />
-    <ClCompile Include="..\cell\spk_writer.c" />
-    <ClCompile Include="..\cell\utility.c" />
-    <ClCompile Include="..\src\duktape.c" />
-    <ClCompile Include="..\src\lstring.c" />
-    <ClCompile Include="..\src\path.c" />
-    <ClCompile Include="..\src\unicode.c" />
-    <ClCompile Include="..\src\vector.c" />
+    <ClCompile Include="..\ssj\main.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\cell\assets.h" />
-    <ClInclude Include="..\cell\build.h" />
-    <ClInclude Include="..\cell\cell.h" />
-    <ClInclude Include="..\cell\posix.h" />
-    <ClInclude Include="..\cell\spk_writer.h" />
-    <ClInclude Include="..\cell\tinydir.h" />
-    <ClInclude Include="..\cell\utility.h" />
-    <ClInclude Include="..\src\duktape.h" />
-    <ClInclude Include="..\src\duk_config.h" />
-    <ClInclude Include="..\src\lstring.h" />
-    <ClInclude Include="..\src\path.h" />
-    <ClInclude Include="..\src\unicode.h" />
-    <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\version.h" />
-    <ClInclude Include="resource1.h" />
+    <ClInclude Include="..\ssj\ssj.h" />
+    <ClInclude Include="resource2.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="cell.rc" />
+    <ResourceCompile Include="ssj.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

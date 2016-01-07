@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 2e11acc220d08816111bec2d384ee18b21df0233 (v1.3.0-417-g2e11acc).
+ *  Git commit 5c863edb9d3186e8db2417dcd1ac9a2b508f3023 (v1.3.0-431-g5c863ed).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -108,6 +108,7 @@
  *  * https://github.com/sstruchtrup
  *  * Michael Drake (https://github.com/tlsa)
  *  * https://github.com/chris-y
+ *  * Laurent Zubiaur (https://github.com/lzubiaur)
  *  
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
@@ -219,8 +220,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "2e11acc220d08816111bec2d384ee18b21df0233"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-417-g2e11acc"
+#define DUK_GIT_COMMIT                    "5c863edb9d3186e8db2417dcd1ac9a2b508f3023"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-431-g5c863ed"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
