@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+
+#include "path.h"
 
 #include "version.h"
 

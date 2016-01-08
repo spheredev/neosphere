@@ -1,0 +1,6 @@
+#ifndef SSJ__CLIENT_H__INCLUDED
+#define SSJ__CLIENT_H__INCLUDED
+
+
+
+#endif // SSJ__CLIENT_H__INCLUDED

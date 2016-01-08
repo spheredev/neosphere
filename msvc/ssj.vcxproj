@@ -67,6 +67,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -87,13 +88,20 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>No</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\dyad.c" />
+    <ClCompile Include="..\src\path.c" />
+    <ClCompile Include="..\ssj\client.c" />
     <ClCompile Include="..\ssj\main.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\dyad.h" />
+    <ClInclude Include="..\src\path.h" />
     <ClInclude Include="..\src\version.h" />
+    <ClInclude Include="..\ssj\client.h" />
     <ClInclude Include="..\ssj\ssj.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>

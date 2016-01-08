@@ -1,0 +1,15 @@
+ssj_sources = [
+	"main.c",
+	Object("dyad", "../msphere/dyad.c"),
+	Object("path", "../msphere/path.c"),
+	"client.c",
+]
+
+ssj_libs = [
+	"m"
+]
+
+ssj = Program("ssj",
+	ssj_sources, CPPPATH = "#/src",
+	LIBS = ssj_libs)
+Return("ssj")
