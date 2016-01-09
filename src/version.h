@@ -3,6 +3,7 @@
 
 #define ENGINE_NAME   "minisphere 3.0b0"
 #define COMPILER_NAME "Cell 3.0b0"
-#define DEBUGGER_NAME "SSJ 3.0b0"
+
+#define VERSION_NAME "3.0b0"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED
