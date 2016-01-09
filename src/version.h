@@ -1,9 +1,7 @@
 #ifndef MINISPHERE__VERSION_H__INCLUDED
 #define MINISPHERE__VERSION_H__INCLUDED
 
-#define ENGINE_NAME   "minisphere 3.0b0"
-#define COMPILER_NAME "Cell 3.0b0"
-
-#define VERSION_NAME "3.0b0"
+#define PRODUCT_NAME "minisphere 2.99.812"
+#define VERSION_NAME "2.99.812"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED

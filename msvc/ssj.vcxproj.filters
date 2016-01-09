@@ -27,15 +27,15 @@
     <ClCompile Include="..\src\path.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssj\ssj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\dyad.h">
@@ -46,6 +46,12 @@
     </ClInclude>
     <ClInclude Include="..\src\path.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource2.h">
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -184,7 +184,7 @@ missing_argument:
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("%s Sphere Game Compiler %s\n", COMPILER_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("Cell %s Sphere Game Compiler %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A scriptable build engine for Sphere games\n");
 		printf("(c) 2016 Fat Cerberus\n");

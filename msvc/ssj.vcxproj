@@ -75,11 +75,11 @@
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <DebugInformationFormat />
     </ClCompile>
     <Link>
@@ -94,12 +94,14 @@
   <ItemGroup>
     <ClCompile Include="..\src\dyad.c" />
     <ClCompile Include="..\src\path.c" />
+    <ClCompile Include="..\src\vector.c" />
     <ClCompile Include="..\ssj\client.c" />
     <ClCompile Include="..\ssj\main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dyad.h" />
     <ClInclude Include="..\src\path.h" />
+    <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\version.h" />
     <ClInclude Include="..\ssj\client.h" />
     <ClInclude Include="..\ssj\ssj.h" />

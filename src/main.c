@@ -97,7 +97,7 @@ main(int argc, char* argv[])
 	int                  verbosity;
 	bool                 want_debug;
 
-	printf("%s %s\n", ENGINE_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	printf("%s %s\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	printf("A lightweight Sphere-compatible game engine\n");
 	printf("(c) 2016 Fat Cerberus\n\n");
 
@@ -145,7 +145,7 @@ main(int argc, char* argv[])
 		// no game path provided and no startup game, let user find manifest
 		browse_path = path_rebase(path_new("Sphere Games/"), homepath());
 		path_mkdir(browse_path);
-		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);
+		dialog_name = lstr_newf("%s - Select a Sphere game to launch", PRODUCT_NAME);
 		file_dlg = al_create_native_file_dialog(path_cstr(browse_path),
 			lstr_cstr(dialog_name),
 			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
@@ -181,9 +181,10 @@ main(int argc, char* argv[])
 	// try to create a display. if we can't get a programmable pipeline, try again but
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
-	console_log(1, "Creating rendering context");
+	console_log(1, "Creating Allegro rendering context");
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
-	al_set_new_window_title(get_sgm_name(g_fs));
+	console_log(1, "  Resolution: %dx%d @ %.1fx", g_res_x, g_res_y, (double)g_scale_x);
+		al_set_new_window_title(get_sgm_name(g_fs));
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
 		al_set_new_display_flags(ALLEGRO_OPENGL);
@@ -986,12 +987,12 @@ is_unsupported:
 	if (recommendation != NULL) {
 		message = lstr_newf(
 			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
-			"\n\nThe game developer recommends using %s.", ENGINE_NAME, recommendation);
+			"\n\nThe game developer recommends using %s.", PRODUCT_NAME, recommendation);
 	}
 	else {
 		message = lstr_newf(
 			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
-			"\n\nNo specific recommendation was provided by the game developer.", ENGINE_NAME);
+			"\n\nNo specific recommendation was provided by the game developer.", PRODUCT_NAME);
 	}
 	al_show_native_message_box(NULL, "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;

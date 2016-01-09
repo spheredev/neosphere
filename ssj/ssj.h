@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "path.h"
+#include "vector.h"
 
 #include "version.h"
 
