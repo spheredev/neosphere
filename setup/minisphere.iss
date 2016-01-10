@@ -5,16 +5,14 @@
 ; This will build a Windows installer for minisphere. Before compiling the
 ; installer, you must first build the engine using Visual Studio or MSBuild.
 ; For a GDK installer, you will also need to build the Console engine and
-; place the binaries for Sphere Studio in bin/spherestudio.
+; GDK tools (Cell and SSJ).
 ;
 ; To build the engine, enter the following commands from the directory where
 ; you checked out the source:
-;     MSBuild msvc/minisphere.sln /p:Configuration=Release /p:Platform=Win32
-;     MSBuild msvc/minisphere.sln /p:Configuration=Release /p:Platform=x64
+;     MSBuild msvc/minisphere.sln /p:Configuration=Release
 ;
-; And for minisphere Console:
-;     MSBuild msvc/minisphere.sln /p:Configuration=Console /p:Platform=Win32
-;     MSBuild msvc/minisphere.sln /p:Configuration=Console /p:Platform=x64
+; And for minisphere GDK:
+;     MSBuild msvc/minisphere.sln /p:Configuration=Console
 
 
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
@@ -23,8 +21,8 @@
 ;#define WANT_GDK_SETUP
 
 #define AppName "minisphere"
-#define AppVersion "2.1.6"
-#define AppRawVersion "2.1.6.1012"
+#define AppVersion "2.99.812"
+#define AppRawVersion "0.0.0.0"
 #define AppPublisher "Fat Cerberus"
 
 #ifdef WANT_GDK_SETUP
@@ -66,6 +64,7 @@ LicenseFile=..\license.txt
 OutputDir=.
 Compression=lzma
 SolidCompression=yes
+ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 DisableDirPage=auto
 AlwaysShowDirOnReadyPage=yes
@@ -96,8 +95,6 @@ Name: "path"; Description: "Add {#AppName} GDK to the PATH"; GroupDescription: "
 #ifdef WANT_GDK_SETUP
 Source: "..\bin\msphere.exe"; DestName: "{#AppExeName2}"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: engine
 Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: engine
-Source: "..\bin\msphere64.exe"; DestName: "{#AppExeName2}"; DestDir: "{app}\bin"; Flags: ignoreversion; Check: IsWin64; Components: engine
-Source: "..\bin\msphere64-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion; Check: IsWin64; Components: engine
 Source: "..\bin\cell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: cell
 Source: "..\bin\spheredev.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
@@ -107,8 +104,7 @@ Source: "..\assets\template\*"; DestDir: "{app}\assets\template"; Flags: ignorev
 Source: "..\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: docs/api
 Source: "..\studio\*"; DestDir: "{app}\studio"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: studio
 #else
-Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: not IsWin64
-Source: "..\bin\msphere64-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: IsWin64
+Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\startup.spk"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs
