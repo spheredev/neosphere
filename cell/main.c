@@ -56,7 +56,8 @@ parse_cmdline(int argc, char* argv[])
 	int         num_targets = 0;
 	const char* short_args;
 
-	int i, j;
+	int    i;
+	size_t i_arg;
 
 	// establish default options
 	s_in_path = path_new("./");
@@ -126,8 +127,8 @@ parse_cmdline(int argc, char* argv[])
 		}
 		else if (argv[i][0] == '-') {
 			short_args = argv[i];
-			for (j = strlen(short_args) - 1; j >= 1; --j) {
-				switch (short_args[j]) {
+			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
+				switch (short_args[i_arg]) {
 				case 'd': s_want_source_map = true; break;
 				case 'l':
 					if (++i >= argc) goto missing_argument;
@@ -150,7 +151,7 @@ parse_cmdline(int argc, char* argv[])
 					}
 					break;
 				default:
-					printf("cell: error: unknown option '-%c'\n", short_args[j]);
+					printf("cell: error: unknown option '-%c'\n", short_args[i_arg]);
 					return false;
 				}
 			}

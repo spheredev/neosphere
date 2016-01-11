@@ -122,8 +122,8 @@ namespace minisphere.Gdk.Debugger
                 Panes.Console.Print(string.Format("(c) 2016 Fat Cerberus"));
                 Panes.Console.Print("");
                 Panes.Console.Print("Debug Target:");
-                Panes.Console.Print(string.Format("  Duktape {0}", Duktape.Version));
                 Panes.Console.Print(string.Format("  {0}", Duktape.TargetID));
+                Panes.Console.Print(string.Format("  Duktape {0}", Duktape.Version));
                 Panes.Console.Print("");
 
                 PluginManager.Core.Docking.Show(Panes.Inspector);

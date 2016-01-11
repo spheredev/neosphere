@@ -24,6 +24,15 @@ As both of these are highly portable to various platforms, this allows
 minisphere to be compiled successfully on all three major platforms (Windows,
 Linux, and OS X)--and possibly others--with no changes to the source.
 
+System Requirements
+-------------------
+
+minisphere requires somewhat modern hardware to run adequately.  The official
+Windows release requires a 64-bit processor and operating system; starting with
+minisphere 3.0, there is no officially-supported 32-bit Windows build.  A decent
+graphics card is also required, supporting at least OpenGL 2.0 for full
+functionality.
+
 License
 -------
 

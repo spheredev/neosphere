@@ -1,9 +1,10 @@
 #include "ssj.h"
 
-#include "client.h"
+#include "dvalue.h"
 
-static bool parse_cmdline (int argc, char* argv[], path_t* *out_game_path);
-static void print_banner  (bool want_copyright);
+static bool parse_cmdline    (int argc, char* argv[], path_t* *out_game_path);
+static void print_banner     (bool want_copyright);
+static void print_cell_quote (void);
 
 int
 main(int argc, char* argv[])
@@ -11,6 +12,7 @@ main(int argc, char* argv[])
 	int     retval = EXIT_FAILURE;
 	path_t* game_path;
 	
+	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv, &game_path))
 		goto shut_down;
 	
@@ -25,25 +27,16 @@ shut_down:
 	return retval;
 }
 
-static void
-print_banner(bool want_copyright)
-{
-	printf("SSJ %s Sphere Game Debugger %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
-	if (want_copyright) {
-		printf("A powerful JavaScript debugger for minisphere\n");
-		printf("(c) 2016 Fat Cerberus\n");
-	}
-}
-
 static bool
 parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 {
 	const char* short_args;
 
-	int i, j;
+	int    i;
+	size_t i_arg;
 
 	*out_game_path = NULL;
-	
+
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
@@ -62,8 +55,7 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 				return false;
 			}
 			else if (strcmp(argv[i], "--explode") == 0) {
-				printf("Release it, release everything! Remember all the pain he's caused, the people\n");
-				printf("he's hurt--now MAKE THAT YOUR POWER!\n");
+				print_cell_quote();
 				return false;
 			}
 			else {
@@ -73,10 +65,10 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 		}
 		else if (argv[i][0] == '-') {
 			short_args = argv[i];
-			for (j = strlen(short_args) - 1; j >= 1; --j) {
-				switch (short_args[j]) {
+			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
+				switch (short_args[i_arg]) {
 				default:
-					printf("ssj: error: unknown option '-%c'\n", short_args[j]);
+					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
 					return false;
 				}
 			}
@@ -88,8 +80,36 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 	}
 
 	return true;
+}
 
-missing_argument:
-	printf("ssj: error: no argument provided for '%s'\n", argv[i - 1]);
-	return false;
+static void
+print_banner(bool want_copyright)
+{
+	printf("SSJ %s Sphere Game Debugger %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	if (want_copyright) {
+		printf("A powerful JavaScript debugger for minisphere\n");
+		printf("(c) 2016 Fat Cerberus\n");
+	}
+}
+
+static void
+print_cell_quote(void)
+{
+	// yes, these are entirely necessary. :o)
+	static const char* const MESSAGES[] =
+	{
+		"I expected the end to be a little more dramatic...",
+		"Don't you realize yet you're up against the perfect weapon?!",
+		"Would you stop interfering!?",
+		"You're all so anxious to die, aren't you!",
+		"Why can't you people JUST STAY DOWN!!",
+		"They just keep lining up to die!",
+		"No chance! YOU HAVE NO CHANCE!!",
+		"SAY GOODBYE!",
+		"I WAS PERFECT...!",
+	};
+
+	printf("Release it, release everything! Remember all the pain he's caused, the people\n");
+	printf("he's hurt--now MAKE THAT YOUR POWER!\n\n");
+	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
 }

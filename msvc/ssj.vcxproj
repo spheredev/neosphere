@@ -98,7 +98,7 @@
     <ClCompile Include="..\src\dyad.c" />
     <ClCompile Include="..\src\path.c" />
     <ClCompile Include="..\src\vector.c" />
-    <ClCompile Include="..\ssj\client.c" />
+    <ClCompile Include="..\ssj\dvalue.c" />
     <ClCompile Include="..\ssj\main.c" />
   </ItemGroup>
   <ItemGroup>
@@ -106,7 +106,7 @@
     <ClInclude Include="..\src\path.h" />
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\version.h" />
-    <ClInclude Include="..\ssj\client.h" />
+    <ClInclude Include="..\ssj\dvalue.h" />
     <ClInclude Include="..\ssj\ssj.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>
