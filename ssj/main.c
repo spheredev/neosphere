@@ -95,13 +95,12 @@ print_banner(bool want_copyright)
 static void
 print_cell_quote(void)
 {
-	// yes, these are entirely necessary. :o)
 	static const char* const MESSAGES[] =
 	{
 		"I expected the end to be a little more dramatic...",
 		"Don't you realize yet you're up against the perfect weapon?!",
 		"Would you stop interfering!?",
-		"You're all so anxious to die, aren't you!",
+		"You're all so anxious to die, aren't you? Well all you had to do WAS ASK!",
 		"Why can't you people JUST STAY DOWN!!",
 		"They just keep lining up to die!",
 		"No chance! YOU HAVE NO CHANCE!!",
@@ -109,7 +108,7 @@ print_cell_quote(void)
 		"I WAS PERFECT...!",
 	};
 
-	printf("Release it, release everything! Remember all the pain he's caused, the people\n");
-	printf("he's hurt--now MAKE THAT YOUR POWER!\n\n");
+	printf("Release it--release everything! Remember all the pain he's caused, the people\n");
+	printf("he's hurt--now MAKE THAT YOUR POWER!!\n\n");
 	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
 }
