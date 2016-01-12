@@ -27,7 +27,10 @@
     <ClCompile Include="..\src\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ssj\dvalue.c">
+    <ClCompile Include="..\ssj\remote.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ssj\session.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,10 +53,13 @@
     <ClInclude Include="resource2.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ssj\dvalue.h">
+    <ClInclude Include="..\ssj\posix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ssj\posix.h">
+    <ClInclude Include="..\ssj\remote.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ssj\session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

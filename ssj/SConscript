@@ -3,7 +3,8 @@ ssj_sources = [
 	Object("path", "../msphere/path.c"),
 	Object("vector", "../msphere/vector.c"),
 	"main.c",
-	"dvalue.c",
+	"remote.c",
+	"session.c",
 ]
 
 ssj_libs = [

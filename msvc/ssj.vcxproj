@@ -98,16 +98,18 @@
     <ClCompile Include="..\src\dyad.c" />
     <ClCompile Include="..\src\path.c" />
     <ClCompile Include="..\src\vector.c" />
-    <ClCompile Include="..\ssj\dvalue.c" />
+    <ClCompile Include="..\ssj\remote.c" />
     <ClCompile Include="..\ssj\main.c" />
+    <ClCompile Include="..\ssj\session.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dyad.h" />
     <ClInclude Include="..\src\path.h" />
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\version.h" />
-    <ClInclude Include="..\ssj\dvalue.h" />
+    <ClInclude Include="..\ssj\remote.h" />
     <ClInclude Include="..\ssj\posix.h" />
+    <ClInclude Include="..\ssj\session.h" />
     <ClInclude Include="..\ssj\ssj.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>

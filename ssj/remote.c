@@ -1,7 +1,13 @@
 #include "ssj.h"
-#include "dvalue.h"
+#include "remote.h"
 
 #include <dyad.h>
+
+static bool   parse_handshake (remote_t* remote);
+static size_t receive_bytes   (remote_t* remote, void* buffer, size_t num_bytes);
+static void   send_dvalue_ib  (remote_t* remote, enum dvalue_tag tag);
+
+static void on_socket_recv (dyad_Event* e);
 
 enum dvalue_tag
 {
@@ -32,7 +38,7 @@ enum dvalue_tag
 	//   0xC0...0xFF - int, value = ((b[0] - 0xC0) << 8) + b[1]
 };
 
-struct session
+struct remote
 {
 	uint8_t*     recv_buf;
 	size_t       recv_buf_size;
@@ -54,89 +60,6 @@ struct dvalue
 	};
 };
 
-static void
-on_socket_recv(dyad_Event* e)
-{
-	bool       need_resize = false;
-	session_t* session;
-	char*      p_next_write;
-	
-	session = e->udata;
-	while (session->recv_size + e->size > session->recv_buf_size) {
-		session->recv_buf_size *= 2;
-		need_resize = true;
-	}
-	if (need_resize)
-		session->recv_buf = realloc(session->recv_buf, session->recv_buf_size);
-	p_next_write = session->recv_buf + session->recv_size;
-	session->recv_size += e->size;
-	memcpy(p_next_write, e->data, e->size);
-}
-
-static size_t
-receive_bytes(session_t* session, void* buffer, size_t num_bytes)
-{
-	while (session->recv_size < num_bytes)
-		dyad_update();
-	memcpy(buffer, session->recv_buf, num_bytes);
-	memmove(session->recv_buf, session->recv_buf + num_bytes,
-		session->recv_size -= num_bytes);
-	return num_bytes;
-}
-
-static bool
-parse_handshake(session_t* session)
-{
-	static char handshake[128];
-	
-	char* next_token;
-	char* token;
-	char  *p_ch;
-
-	printf("Handshaking... ");
-	memset(handshake, 0, sizeof handshake);
-	p_ch = handshake;
-	do {
-		receive_bytes(session, p_ch, 1);
-	} while (*p_ch++ != '\n');
-	*(p_ch - 1) = '\0';
-
-	// parse handshake line
-	if (!(token = strtok_r(handshake, " ", &next_token)))
-		goto on_error;
-	if (atoi(token) != 1) goto on_error;
-	if (!(token = strtok_r(NULL, " ", &next_token)))
-		goto on_error;
-	if (!(token = strtok_r(NULL, " ", &next_token)))
-		goto on_error;
-	printf("OK.\n");
-	printf("  Connected to debuggee '%s'\n", next_token);
-	printf("  Target is Duktape %s\n", token);
-
-	return true;
-
-on_error:
-	printf("ERROR!\n");
-	return false;
-}
-
-static void
-send_dvalue_ib(session_t* session, enum dvalue_tag tag)
-{
-	uint8_t ib;
-
-	ib = tag == DVALUE_TAG_EOM ? 0x00
-		: tag == DVALUE_TAG_REQ ? 0x01
-		: tag == DVALUE_TAG_REP ? 0x02
-		: tag == DVALUE_TAG_ERR ? 0x03
-		: tag == DVALUE_TAG_NFY ? 0x04
-		: tag == DVALUE_TAG_INT32 ? 0x10
-		: tag == DVALUE_TAG_STR32 ? 0x11
-		: tag == DVALUE_TAG_FLOAT ? 0x1A
-		: 0x15;
-	dyad_write(session->socket, &ib, 1);
-}
-
 void
 initialize_client(void)
 {
@@ -149,21 +72,26 @@ shutdown_client(void)
 	dyad_shutdown();
 }
 
-session_t*
-session_new(const char* hostname, int port)
+remote_t*
+connect_remote(const char* hostname, int port)
 {
-	session_t* session;
+	remote_t* session;
 
-	session = calloc(1, sizeof(session_t));
+	session = calloc(1, sizeof(remote_t));
 	session->recv_buf_size = 65536;
 	session->recv_buf = malloc(session->recv_buf_size);
 	
-	printf("Connecting to %s:%d... ", hostname, port);
+	printf("Connecting to remote '%s:%d'... ", hostname, port);
 	session->socket = dyad_newStream();
 	dyad_addListener(session->socket, DYAD_EVENT_DATA, on_socket_recv, session);
 	if (dyad_connect(session->socket, hostname, port) != 0)
 		goto on_error;
-	printf("OK.\n");
+	while (dyad_getState(session->socket) == DYAD_STATE_CONNECTING)
+		dyad_update();
+	if (dyad_getState(session->socket) == DYAD_STATE_CONNECTED)
+		printf("OK.\n");
+	else
+		goto on_error;
 	
 	if (!parse_handshake(session))
 		goto on_error;
@@ -171,6 +99,7 @@ session_new(const char* hostname, int port)
 	return session;
 
 on_error:
+	printf("Failed.\n");
 	if (session != NULL) {
 		if (session->socket != NULL)
 			dyad_close(session->socket);
@@ -180,14 +109,14 @@ on_error:
 }
 
 void
-session_free(session_t* session)
+close_remote(remote_t* remote)
 {
-	dyad_end(session->socket);
-	free(session);
+	dyad_end(remote->socket);
+	free(remote);
 }
 
 dvalue_t*
-receive_dvalue(session_t* session)
+receive_dvalue(remote_t* remote)
 {
 	uint8_t   data[32];
 	dvalue_t* dvalue;
@@ -195,7 +124,7 @@ receive_dvalue(session_t* session)
 	uint8_t   ptr_size;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	receive_bytes(session, &ib, 1);
+	receive_bytes(remote, &ib, 1);
 	switch (ib) {
 	case DVALUE_TAG_EOM:
 	case DVALUE_TAG_REQ:
@@ -205,36 +134,36 @@ receive_dvalue(session_t* session)
 		dvalue->tag = (enum dvalue_tag)ib;
 		break;
 	case DVALUE_TAG_INT32:
-		receive_bytes(session, data, 4);
+		receive_bytes(remote, data, 4);
 		dvalue->tag = DVALUE_TAG_INT32;
 		dvalue->int_value = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
 	case DVALUE_TAG_STR32:
-		receive_bytes(session, data, 4);
+		receive_bytes(remote, data, 4);
 		dvalue->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
-		receive_bytes(session, dvalue->buffer.data, dvalue->buffer.size);
+		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		dvalue->tag = DVALUE_TAG_STR32;
 		break;
 	case DVALUE_TAG_STR16:
-		receive_bytes(session, data, 2);
+		receive_bytes(remote, data, 2);
 		dvalue->buffer.size = (data[0] << 8) + data[1];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
-		receive_bytes(session, dvalue->buffer.data, dvalue->buffer.size);
+		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		dvalue->tag = DVALUE_TAG_STR32;
 		break;
 	case DVALUE_TAG_BUF32:
-		receive_bytes(session, data, 4);
+		receive_bytes(remote, data, 4);
 		dvalue->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
-		receive_bytes(session, dvalue->buffer.data, dvalue->buffer.size);
+		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		dvalue->tag = DVALUE_TAG_BUF32;
 		break;
 	case DVALUE_TAG_BUF16:
-		receive_bytes(session, data, 2);
+		receive_bytes(remote, data, 2);
 		dvalue->buffer.size = (data[0] << 8) + data[1];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
-		receive_bytes(session, dvalue->buffer.data, dvalue->buffer.size);
+		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		dvalue->tag = DVALUE_TAG_BUF32;
 		break;
 	case DVALUE_TAG_UNUSED:
@@ -245,7 +174,7 @@ receive_dvalue(session_t* session)
 		dvalue->tag = (enum dvalue_tag)ib;
 		break;
 	case DVALUE_TAG_FLOAT:
-		receive_bytes(session, data, 8);
+		receive_bytes(remote, data, 8);
 		((uint8_t*)&dvalue->float_value)[0] = data[7];
 		((uint8_t*)&dvalue->float_value)[1] = data[6];
 		((uint8_t*)&dvalue->float_value)[2] = data[5];
@@ -257,25 +186,25 @@ receive_dvalue(session_t* session)
 		dvalue->tag = DVALUE_TAG_FLOAT;
 		break;
 	case DVALUE_TAG_OBJ:
-		receive_bytes(session, data, 1);
-		receive_bytes(session, &ptr_size, 1);
-		receive_bytes(session, data, ptr_size);
+		receive_bytes(remote, data, 1);
+		receive_bytes(remote, &ptr_size, 1);
+		receive_bytes(remote, data, ptr_size);
 		dvalue->tag = DVALUE_TAG_UNUSED;
 		break;
 	case DVALUE_TAG_PTR:
-		receive_bytes(session, &ptr_size, 1);
-		receive_bytes(session, data, ptr_size);
+		receive_bytes(remote, &ptr_size, 1);
+		receive_bytes(remote, data, ptr_size);
 		dvalue->tag = DVALUE_TAG_UNUSED;
 		break;
 	case DVALUE_TAG_LIGHTFUNC:
-		receive_bytes(session, data, 2);
-		receive_bytes(session, &ptr_size, 1);
-		receive_bytes(session, data, ptr_size);
+		receive_bytes(remote, data, 2);
+		receive_bytes(remote, &ptr_size, 1);
+		receive_bytes(remote, data, ptr_size);
 		dvalue->tag = DVALUE_TAG_UNUSED;
 		break;
 	case DVALUE_TAG_HEAPPTR:
-		receive_bytes(session, &ptr_size, 1);
-		receive_bytes(session, data, ptr_size);
+		receive_bytes(remote, &ptr_size, 1);
+		receive_bytes(remote, data, ptr_size);
 		dvalue->tag = DVALUE_TAG_UNUSED;
 		break;
 	default:
@@ -283,14 +212,14 @@ receive_dvalue(session_t* session)
 			dvalue->tag = DVALUE_TAG_STR32;
 			dvalue->buffer.size = ib - 0x60;
 			dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
-			receive_bytes(session, dvalue->buffer.data, dvalue->buffer.size);
+			receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		}
 		else if (ib >= 0x80 && ib <= 0xBF) {
 			dvalue->tag = DVALUE_TAG_INT32;
 			dvalue->int_value = ib - 0x80;
 		}
 		else if (ib >= 0xC0) {
-			receive_bytes(session, data, 1);
+			receive_bytes(remote, data, 1);
 			dvalue->tag = DVALUE_TAG_INT32;
 			dvalue->int_value = ((ib - 0xC0) << 8) + data[0];
 		}
@@ -305,7 +234,7 @@ on_error:
 }
 
 void
-send_dvalue(session_t* session, const dvalue_t* dvalue)
+send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 {
 	uint8_t  data[32];
 	uint32_t str_length;
@@ -316,15 +245,15 @@ send_dvalue(session_t* session, const dvalue_t* dvalue)
 	case DVALUE_TAG_REP:
 	case DVALUE_TAG_ERR:
 	case DVALUE_TAG_NFY:
-		send_dvalue_ib(session, dvalue->tag);
+		send_dvalue_ib(remote, dvalue->tag);
 		break;
 	case DVALUE_TAG_INT32:
 		data[0] = (uint8_t)(dvalue->int_value >> 24 & 0xFF);
 		data[1] = (uint8_t)(dvalue->int_value >> 16 & 0xFF);
 		data[2] = (uint8_t)(dvalue->int_value >> 8 & 0xFF);
 		data[3] = (uint8_t)(dvalue->int_value & 0xFF);
-		send_dvalue_ib(session, DVALUE_TAG_INT32);
-		dyad_write(session->socket, data, 4);
+		send_dvalue_ib(remote, DVALUE_TAG_INT32);
+		dyad_write(remote->socket, data, 4);
 		break;
 	case DVALUE_TAG_STR32:
 		str_length = (uint32_t)strlen(dvalue->buffer.data);
@@ -332,16 +261,16 @@ send_dvalue(session_t* session, const dvalue_t* dvalue)
 		data[1] = (uint8_t)(str_length >> 16 & 0xFF);
 		data[2] = (uint8_t)(str_length >> 8 & 0xFF);
 		data[3] = (uint8_t)(str_length & 0xFF);
-		send_dvalue_ib(session, DVALUE_TAG_STR32);
-		dyad_write(session->socket, data, 4);
-		dyad_write(session->socket, dvalue->buffer.data, (int)str_length);
+		send_dvalue_ib(remote, DVALUE_TAG_STR32);
+		dyad_write(remote->socket, data, 4);
+		dyad_write(remote->socket, dvalue->buffer.data, (int)str_length);
 		break;
 	case DVALUE_TAG_UNUSED:
 	case DVALUE_TAG_UNDEF:
 	case DVALUE_TAG_NULL:
 	case DVALUE_TAG_TRUE:
 	case DVALUE_TAG_FALSE:
-		send_dvalue_ib(session, dvalue->tag);
+		send_dvalue_ib(remote, dvalue->tag);
 		break;
 	case DVALUE_TAG_FLOAT:
 		data[0] = ((uint8_t*)&dvalue->float_value)[7];
@@ -352,11 +281,11 @@ send_dvalue(session_t* session, const dvalue_t* dvalue)
 		data[5] = ((uint8_t*)&dvalue->float_value)[2];
 		data[6] = ((uint8_t*)&dvalue->float_value)[1];
 		data[7] = ((uint8_t*)&dvalue->float_value)[0];
-		send_dvalue_ib(session, DVALUE_TAG_FLOAT);
-		dyad_write(session->socket, data, 8);
+		send_dvalue_ib(remote, DVALUE_TAG_FLOAT);
+		dyad_write(remote->socket, data, 8);
 		break;
 	default:
-		send_dvalue_ib(session, DVALUE_TAG_UNUSED);
+		send_dvalue_ib(remote, DVALUE_TAG_UNUSED);
 	}
 }
 
@@ -417,4 +346,88 @@ dvalue_get_type(dvalue_t* dvalue)
 	case DVALUE_TAG_FALSE:
 		return DVALUE_BOOL;
 	}
+}
+
+static bool
+parse_handshake(remote_t* remote)
+{
+	static char handshake[128];
+
+	char* next_token;
+	char* token;
+	char  *p_ch;
+
+	printf("Handshaking... ");
+	memset(handshake, 0, sizeof handshake);
+	p_ch = handshake;
+	do {
+		receive_bytes(remote, p_ch, 1);
+	} while (*p_ch++ != '\n');
+	*(p_ch - 1) = '\0';
+
+	// parse handshake line
+	if (!(token = strtok_r(handshake, " ", &next_token)))
+		goto on_error;
+	if (atoi(token) != 1) goto on_error;
+	if (!(token = strtok_r(NULL, " ", &next_token)))
+		goto on_error;
+	if (!(token = strtok_r(NULL, " ", &next_token)))
+		goto on_error;
+	printf("OK.\n");
+	printf("  Connected to %s\n", next_token);
+	printf("  Duktape version is %s\n", token);
+	printf("\n");
+
+	return true;
+
+on_error:
+	printf("ERROR!\n");
+	return false;
+}
+
+static size_t
+receive_bytes(remote_t* remote, void* buffer, size_t num_bytes)
+{
+	while (remote->recv_size < num_bytes)
+		dyad_update();
+	memcpy(buffer, remote->recv_buf, num_bytes);
+	memmove(remote->recv_buf, remote->recv_buf + num_bytes,
+		remote->recv_size -= num_bytes);
+	return num_bytes;
+}
+
+static void
+send_dvalue_ib(remote_t* remote, enum dvalue_tag tag)
+{
+	uint8_t ib;
+
+	ib = tag == DVALUE_TAG_EOM ? 0x00
+		: tag == DVALUE_TAG_REQ ? 0x01
+		: tag == DVALUE_TAG_REP ? 0x02
+		: tag == DVALUE_TAG_ERR ? 0x03
+		: tag == DVALUE_TAG_NFY ? 0x04
+		: tag == DVALUE_TAG_INT32 ? 0x10
+		: tag == DVALUE_TAG_STR32 ? 0x11
+		: tag == DVALUE_TAG_FLOAT ? 0x1A
+		: 0x15;
+	dyad_write(remote->socket, &ib, 1);
+}
+
+static void
+on_socket_recv(dyad_Event* e)
+{
+	bool      need_resize = false;
+	remote_t* remote;
+	char*     p_next_write;
+
+	remote = e->udata;
+	while (remote->recv_size + e->size > remote->recv_buf_size) {
+		remote->recv_buf_size *= 2;
+		need_resize = true;
+	}
+	if (need_resize)
+		remote->recv_buf = realloc(remote->recv_buf, remote->recv_buf_size);
+	p_next_write = remote->recv_buf + remote->recv_size;
+	remote->recv_size += e->size;
+	memcpy(p_next_write, e->data, e->size);
 }

@@ -1,9 +1,10 @@
 #include "ssj.h"
 
-#include "dvalue.h"
+#include <dyad.h>
+#include "remote.h"
 
 static bool parse_cmdline    (int argc, char* argv[], path_t* *out_game_path);
-static void print_banner     (bool want_copyright);
+static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
 
 int
@@ -16,11 +17,11 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv, &game_path))
 		goto shut_down;
 	
-	print_banner(true);
+	print_banner(true, false);
 	printf("\n");
 	
 	initialize_client();
-	session_new("127.0.0.1", 1208);
+	connect_remote("127.0.0.1", 1208);
 	
 	retval = EXIT_SUCCESS;
 
@@ -44,7 +45,7 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
-				print_banner(false);
+				print_banner(false, false);
 				printf("\n");
 				printf("USAGE: ssj\n");
 				printf("       ssj [options] [<game_path>]\n");
@@ -54,7 +55,7 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 				return false;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
-				print_banner(true);
+				print_banner(true, true);
 				return false;
 			}
 			else if (strcmp(argv[i], "--explode") == 0) {
@@ -86,12 +87,16 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 }
 
 static void
-print_banner(bool want_copyright)
+print_banner(bool want_copyright, bool want_deps)
 {
 	printf("SSJ %s Sphere Game Debugger %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A powerful JavaScript debugger for minisphere\n");
 		printf("(c) 2016 Fat Cerberus\n");
+	}
+	if (want_deps) {
+		printf("\n");
+		printf("    Dyad.c: v%s\n", dyad_getVersion());
 	}
 }
 
