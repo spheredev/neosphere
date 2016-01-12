@@ -3,12 +3,6 @@
 
 #include <dyad.h>
 
-static bool   parse_handshake (remote_t* remote);
-static size_t receive_bytes   (remote_t* remote, void* buffer, size_t num_bytes);
-static void   send_dvalue_ib  (remote_t* remote, enum dvalue_tag tag);
-
-static void on_socket_recv (dyad_Event* e);
-
 enum dvalue_tag
 {
 	DVALUE_TAG_EOM = 0x00,
@@ -37,6 +31,12 @@ enum dvalue_tag
 	//   0x80...0xBF - int, value = (ib - 0x80)
 	//   0xC0...0xFF - int, value = ((b[0] - 0xC0) << 8) + b[1]
 };
+
+static bool   parse_handshake (remote_t* remote);
+static size_t receive_bytes   (remote_t* remote, void* buffer, size_t num_bytes);
+static void   send_dvalue_ib  (remote_t* remote, enum dvalue_tag tag);
+
+static void on_socket_recv (dyad_Event* e);
 
 struct remote
 {

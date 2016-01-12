@@ -2,6 +2,7 @@
 
 #include <dyad.h>
 #include "remote.h"
+#include "session.h"
 
 static bool parse_cmdline    (int argc, char* argv[], path_t* *out_game_path);
 static void print_banner     (bool want_copyright, bool want_deps);
@@ -10,8 +11,9 @@ static void print_cell_quote (void);
 int
 main(int argc, char* argv[])
 {
-	int     retval = EXIT_FAILURE;
-	path_t* game_path;
+	int        retval = EXIT_FAILURE;
+	path_t*    game_path;
+	session_t* session;
 	
 	srand((unsigned int)time(NULL));
 	if (!parse_cmdline(argc, argv, &game_path))
@@ -21,8 +23,8 @@ main(int argc, char* argv[])
 	printf("\n");
 	
 	initialize_client();
-	connect_remote("127.0.0.1", 1208);
-	
+	session = new_session("127.0.0.1", 1208);
+	run_session(session);
 	retval = EXIT_SUCCESS;
 
 shut_down:

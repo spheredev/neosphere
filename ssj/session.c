@@ -25,3 +25,18 @@ on_error:
 	free(sess);
 	return NULL;
 }
+
+void
+run_session(session_t* sess)
+{
+	char line[65536];
+	char ch;
+	char *p;
+	
+	while (true) {
+		printf("SSJ> ");
+		p = memset(line, 0, sizeof line);
+		while ((ch = getchar()) != '\n')
+			*p++ = ch;
+	}
+}
