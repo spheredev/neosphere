@@ -17,7 +17,10 @@ main(int argc, char* argv[])
 		goto shut_down;
 	
 	print_banner(true);
+	printf("\n");
+	
 	initialize_client();
+	session_new("127.0.0.1", 1208);
 	
 	retval = EXIT_SUCCESS;
 

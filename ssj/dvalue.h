@@ -19,7 +19,7 @@ void          shutdown_client   (void);
 session_t*    session_new       (const char* hostname, int port);
 void          session_free      (session_t* session);
 dvalue_t*     receive_dvalue    (session_t* session);
-void          send_dvalue       (session_t* session, dvalue_t* dvalue);
+void          send_dvalue       (session_t* session, const dvalue_t* dvalue);
 dvalue_t*     dvalue_new_float  (double value);
 dvalue_t*     dvalue_new_int    (int32_t value);
 dvalue_t*     dvalue_new_string (const char* value);

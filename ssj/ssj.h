@@ -2,10 +2,10 @@
 #define SSJ__SSJ_H__INCLUDED
 
 #ifdef _MSC_VER
-#define _CRT_NONSTDC_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
 #define _USE_MATH_DEFINES
 #endif
+
+#include "posix.h"
 
 #include <stdlib.h>
 #include <stdbool.h>

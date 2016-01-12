@@ -107,6 +107,7 @@
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\version.h" />
     <ClInclude Include="..\ssj\dvalue.h" />
+    <ClInclude Include="..\ssj\posix.h" />
     <ClInclude Include="..\ssj\ssj.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>
