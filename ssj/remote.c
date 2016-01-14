@@ -3,35 +3,6 @@
 
 #include <dyad.h>
 
-enum dvalue_tag
-{
-	DVALUE_TAG_EOM = 0x00,
-	DVALUE_TAG_REQ = 0x01,
-	DVALUE_TAG_REP = 0x02,
-	DVALUE_TAG_ERR = 0x03,
-	DVALUE_TAG_NFY = 0x04,
-	DVALUE_TAG_INT32 = 0x10,
-	DVALUE_TAG_STR32 = 0x11,
-	DVALUE_TAG_STR16 = 0x12,
-	DVALUE_TAG_BUF32 = 0x13,
-	DVALUE_TAG_BUF16 = 0x14,
-	DVALUE_TAG_UNUSED = 0x15,
-	DVALUE_TAG_UNDEF = 0x16,
-	DVALUE_TAG_NULL = 0x17,
-	DVALUE_TAG_TRUE = 0x18,
-	DVALUE_TAG_FALSE = 0x19,
-	DVALUE_TAG_FLOAT = 0x1A,
-	DVALUE_TAG_OBJ = 0x1B,
-	DVALUE_TAG_PTR = 0x1C,
-	DVALUE_TAG_LIGHTFUNC = 0x1D,
-	DVALUE_TAG_HEAPPTR = 0x1E,
-
-	// Special cases:
-	//   0x60...0x7F - string, len = (ib - 0x60)
-	//   0x80...0xBF - int, value = (ib - 0x80)
-	//   0xC0...0xFF - int, value = ((b[0] - 0xC0) << 8) + b[1]
-};
-
 static bool   parse_handshake (remote_t* remote);
 static size_t receive_bytes   (remote_t* remote, void* buffer, size_t num_bytes);
 static void   send_dvalue_ib  (remote_t* remote, enum dvalue_tag tag);
@@ -133,38 +104,38 @@ receive_dvalue(remote_t* remote)
 	case DVALUE_TAG_NFY:
 		dvalue->tag = (enum dvalue_tag)ib;
 		break;
-	case DVALUE_TAG_INT32:
+	case DVALUE_TAG_INT:
 		receive_bytes(remote, data, 4);
-		dvalue->tag = DVALUE_TAG_INT32;
+		dvalue->tag = DVALUE_TAG_INT;
 		dvalue->int_value = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
-	case DVALUE_TAG_STR32:
+	case DVALUE_TAG_STRING:
 		receive_bytes(remote, data, 4);
 		dvalue->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_STR32;
+		dvalue->tag = DVALUE_TAG_STRING;
 		break;
 	case DVALUE_TAG_STR16:
 		receive_bytes(remote, data, 2);
 		dvalue->buffer.size = (data[0] << 8) + data[1];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_STR32;
+		dvalue->tag = DVALUE_TAG_STRING;
 		break;
-	case DVALUE_TAG_BUF32:
+	case DVALUE_TAG_BUFFER:
 		receive_bytes(remote, data, 4);
 		dvalue->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_BUF32;
+		dvalue->tag = DVALUE_TAG_BUFFER;
 		break;
 	case DVALUE_TAG_BUF16:
 		receive_bytes(remote, data, 2);
 		dvalue->buffer.size = (data[0] << 8) + data[1];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_BUF32;
+		dvalue->tag = DVALUE_TAG_BUFFER;
 		break;
 	case DVALUE_TAG_UNUSED:
 	case DVALUE_TAG_UNDEF:
@@ -209,18 +180,18 @@ receive_dvalue(remote_t* remote)
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
-			dvalue->tag = DVALUE_TAG_STR32;
+			dvalue->tag = DVALUE_TAG_STRING;
 			dvalue->buffer.size = ib - 0x60;
 			dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 			receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		}
 		else if (ib >= 0x80 && ib <= 0xBF) {
-			dvalue->tag = DVALUE_TAG_INT32;
+			dvalue->tag = DVALUE_TAG_INT;
 			dvalue->int_value = ib - 0x80;
 		}
 		else if (ib >= 0xC0) {
 			receive_bytes(remote, data, 1);
-			dvalue->tag = DVALUE_TAG_INT32;
+			dvalue->tag = DVALUE_TAG_INT;
 			dvalue->int_value = ((ib - 0xC0) << 8) + data[0];
 		}
 		else
@@ -231,6 +202,21 @@ receive_dvalue(remote_t* remote)
 on_error:
 	free(dvalue);
 	return NULL;
+}
+
+bool
+receive_dvalue_int(remote_t* remote, int32_t *out_value)
+{
+	dvalue_t* dvalue;
+
+	dvalue = receive_dvalue(remote);
+	if (dvalue->tag != DVALUE_TAG_INT) {
+		dvalue_free(dvalue);
+		return false;
+	}
+	*out_value = dvalue->int_value;
+	dvalue_free(dvalue);
+	return true;
 }
 
 void
@@ -247,21 +233,21 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 	case DVALUE_TAG_NFY:
 		send_dvalue_ib(remote, dvalue->tag);
 		break;
-	case DVALUE_TAG_INT32:
+	case DVALUE_TAG_INT:
 		data[0] = (uint8_t)(dvalue->int_value >> 24 & 0xFF);
 		data[1] = (uint8_t)(dvalue->int_value >> 16 & 0xFF);
 		data[2] = (uint8_t)(dvalue->int_value >> 8 & 0xFF);
 		data[3] = (uint8_t)(dvalue->int_value & 0xFF);
-		send_dvalue_ib(remote, DVALUE_TAG_INT32);
+		send_dvalue_ib(remote, DVALUE_TAG_INT);
 		dyad_write(remote->socket, data, 4);
 		break;
-	case DVALUE_TAG_STR32:
+	case DVALUE_TAG_STRING:
 		str_length = (uint32_t)strlen(dvalue->buffer.data);
 		data[0] = (uint8_t)(str_length >> 24 & 0xFF);
 		data[1] = (uint8_t)(str_length >> 16 & 0xFF);
 		data[2] = (uint8_t)(str_length >> 8 & 0xFF);
 		data[3] = (uint8_t)(str_length & 0xFF);
-		send_dvalue_ib(remote, DVALUE_TAG_STR32);
+		send_dvalue_ib(remote, DVALUE_TAG_STRING);
 		dyad_write(remote->socket, data, 4);
 		dyad_write(remote->socket, dvalue->buffer.data, (int)str_length);
 		break;
@@ -306,7 +292,7 @@ dvalue_new_int(int32_t value)
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_INT32;
+	dvalue->tag = DVALUE_TAG_INT;
 	dvalue->int_value = value;
 	return dvalue;
 }
@@ -317,7 +303,7 @@ dvalue_new_string(const char* value)
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_STR32;
+	dvalue->tag = DVALUE_TAG_STRING;
 	dvalue->buffer.size = strlen(value);
 	dvalue->buffer.data = malloc(dvalue->buffer.size + 1);
 	strcpy(dvalue->buffer.data, value);
@@ -327,25 +313,15 @@ dvalue_new_string(const char* value)
 void
 dvalue_free(dvalue_t* dvalue)
 {
-	if (dvalue->tag == DVALUE_TAG_STR32 || dvalue->tag == DVALUE_TAG_BUF32)
+	if (dvalue->tag == DVALUE_TAG_STRING || dvalue->tag == DVALUE_TAG_BUFFER)
 		free(dvalue->buffer.data);
 	free(dvalue);
 }
 
-dvalue_type_t
-dvalue_get_type(dvalue_t* dvalue)
+dvalue_tag_t
+dvalue_get_tag(dvalue_t* dvalue)
 {
-	switch (dvalue->tag) {
-	case DVALUE_TAG_INT32:
-		return DVALUE_INT;
-	case DVALUE_TAG_STR32:
-		return DVALUE_STRING;
-	case DVALUE_TAG_BUF32:
-		return DVALUE_BUFFER;
-	case DVALUE_TAG_TRUE:
-	case DVALUE_TAG_FALSE:
-		return DVALUE_BOOL;
-	}
+	return dvalue->tag;
 }
 
 static bool
@@ -406,8 +382,8 @@ send_dvalue_ib(remote_t* remote, enum dvalue_tag tag)
 		: tag == DVALUE_TAG_REP ? 0x02
 		: tag == DVALUE_TAG_ERR ? 0x03
 		: tag == DVALUE_TAG_NFY ? 0x04
-		: tag == DVALUE_TAG_INT32 ? 0x10
-		: tag == DVALUE_TAG_STR32 ? 0x11
+		: tag == DVALUE_TAG_INT ? 0x10
+		: tag == DVALUE_TAG_STRING ? 0x11
 		: tag == DVALUE_TAG_FLOAT ? 0x1A
 		: 0x15;
 	dyad_write(remote->socket, &ib, 1);
