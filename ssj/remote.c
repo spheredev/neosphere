@@ -3,9 +3,12 @@
 
 #include <dyad.h>
 
-static bool   parse_handshake (remote_t* remote);
-static size_t receive_bytes   (remote_t* remote, void* buffer, size_t num_bytes);
-static void   send_dvalue_ib  (remote_t* remote, enum dvalue_tag tag);
+static void      free_dvalue     (dvalue_t* dvalue);
+static bool      parse_handshake (remote_t* remote);
+static size_t    receive_bytes   (remote_t* remote, void* buffer, size_t num_bytes);
+static dvalue_t* receive_dvalue  (remote_t* remote);
+static void      send_dvalue     (remote_t* remote, const dvalue_t* dvalue);
+static void      send_dvalue_ib  (remote_t* remote, enum dvalue_tag tag);
 
 static void on_socket_recv (dyad_Event* e);
 
@@ -29,6 +32,12 @@ struct dvalue
 		int32_t  int_value;
 		uint64_t ptr_value;
 	};
+};
+
+struct message
+{
+	msg_class_t cls;
+	vector_t*   dvalues;
 };
 
 void
@@ -86,7 +95,169 @@ close_remote(remote_t* remote)
 	free(remote);
 }
 
-dvalue_t*
+message_t*
+new_message(msg_class_t msg_class)
+{
+	message_t* msg;
+	
+	msg = calloc(1, sizeof(message_t));
+	msg->dvalues = vector_new(sizeof(dvalue_t*));
+	msg->cls = msg_class;
+	return msg;
+}
+
+void
+free_message(message_t* msg)
+{
+	iter_t iter;
+	dvalue_t* *p;
+
+	if (msg == NULL)
+		return;
+
+	iter = vector_enum(msg->dvalues);
+	while (p = vector_next(&iter))
+		free_dvalue(*p);
+	free(msg);
+}
+
+message_t*
+receive_message(remote_t* remote)
+{
+	dvalue_t*  dvalue;
+	message_t* msg;
+
+	msg = calloc(1, sizeof(message_t));
+	msg->dvalues = vector_new(sizeof(dvalue_t*));
+	dvalue = receive_dvalue(remote);
+	msg->cls = dvalue->tag == DVALUE_TAG_REQ ? MSG_CLASS_REQ
+		: dvalue->tag == DVALUE_TAG_REP ? MSG_CLASS_REP
+		: dvalue->tag == DVALUE_TAG_ERR ? MSG_CLASS_ERR
+		: dvalue->tag == DVALUE_TAG_NFY ? MSG_CLASS_NFY
+		: MSG_CLASS_UNKNOWN;
+	free_dvalue(dvalue);
+	dvalue = receive_dvalue(remote);
+	while (dvalue->tag != DVALUE_TAG_EOM) {
+		dvalue = receive_dvalue(remote);
+		vector_push(msg->dvalues, &dvalue);
+	}
+	return msg;
+}
+
+void
+send_message(remote_t* remote, const message_t* msg)
+{
+	const uint8_t EOM_BYTE = 0x00;
+
+	uint8_t lead_byte;
+
+	iter_t iter;
+	dvalue_t* *p;
+
+	lead_byte = msg->cls == MSG_CLASS_REQ ? 0x01
+		: msg->cls == MSG_CLASS_REP ? 0x02
+		: msg->cls == MSG_CLASS_ERR ? 0x03
+		: msg->cls == MSG_CLASS_NFY ? 0x04
+		: 0x00;
+	dyad_write(remote->socket, &lead_byte, 1);
+	iter = vector_enum(msg->dvalues);
+	while (p = vector_next(&iter))
+		send_dvalue(remote, *p);
+	dyad_write(remote->socket, &EOM_BYTE, 1);
+}
+
+void
+add_float_dvalue(message_t* msg, double value)
+{
+	dvalue_t* dvalue;
+
+	dvalue = calloc(1, sizeof(dvalue_t));
+	dvalue->tag = DVALUE_TAG_FLOAT;
+	dvalue->float_value = value;
+	vector_push(msg->dvalues, &dvalue);
+}
+
+void
+add_int_dvalue(message_t* msg, int32_t value)
+{
+	dvalue_t* dvalue;
+
+	dvalue = calloc(1, sizeof(dvalue_t));
+	dvalue->tag = DVALUE_TAG_INT;
+	dvalue->int_value = value;
+	vector_push(msg->dvalues, &dvalue);
+}
+
+void
+add_string_dvalue(message_t* msg, const char* value)
+{
+	dvalue_t* dvalue;
+
+	dvalue = calloc(1, sizeof(dvalue_t));
+	dvalue->tag = DVALUE_TAG_STRING;
+	dvalue->buffer.size = strlen(value);
+	dvalue->buffer.data = malloc(dvalue->buffer.size + 1);
+	strcpy(dvalue->buffer.data, value);
+	vector_push(msg->dvalues, &dvalue);
+}
+
+static void
+free_dvalue(dvalue_t* dvalue)
+{
+	if (dvalue->tag == DVALUE_TAG_STRING || dvalue->tag == DVALUE_TAG_BUFFER)
+		free(dvalue->buffer.data);
+	free(dvalue);
+}
+
+static bool
+parse_handshake(remote_t* remote)
+{
+	static char handshake[128];
+
+	char* next_token;
+	char* token;
+	char  *p_ch;
+
+	printf("Handshaking... ");
+	memset(handshake, 0, sizeof handshake);
+	p_ch = handshake;
+	do {
+		receive_bytes(remote, p_ch, 1);
+	} while (*p_ch++ != '\n');
+	*(p_ch - 1) = '\0';
+
+	// parse handshake line
+	if (!(token = strtok_r(handshake, " ", &next_token)))
+		goto on_error;
+	if (atoi(token) != 1) goto on_error;
+	if (!(token = strtok_r(NULL, " ", &next_token)))
+		goto on_error;
+	if (!(token = strtok_r(NULL, " ", &next_token)))
+		goto on_error;
+	printf("OK.\n");
+	printf("  Connected to %s\n", next_token);
+	printf("  Duktape version is %s\n", token);
+	printf("\n");
+
+	return true;
+
+on_error:
+	printf("ERROR!\n");
+	return false;
+}
+
+static size_t
+receive_bytes(remote_t* remote, void* buffer, size_t num_bytes)
+{
+	while (remote->recv_size < num_bytes)
+		dyad_update();
+	memcpy(buffer, remote->recv_buf, num_bytes);
+	memmove(remote->recv_buf, remote->recv_buf + num_bytes,
+		remote->recv_size -= num_bytes);
+	return num_bytes;
+}
+
+static dvalue_t*
 receive_dvalue(remote_t* remote)
 {
 	uint8_t   data[32];
@@ -204,22 +375,7 @@ on_error:
 	return NULL;
 }
 
-bool
-receive_dvalue_int(remote_t* remote, int32_t *out_value)
-{
-	dvalue_t* dvalue;
-
-	dvalue = receive_dvalue(remote);
-	if (dvalue->tag != DVALUE_TAG_INT) {
-		dvalue_free(dvalue);
-		return false;
-	}
-	*out_value = dvalue->int_value;
-	dvalue_free(dvalue);
-	return true;
-}
-
-void
+static void
 send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 {
 	uint8_t  data[32];
@@ -273,103 +429,6 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 	default:
 		send_dvalue_ib(remote, DVALUE_TAG_UNUSED);
 	}
-}
-
-dvalue_t*
-dvalue_new_float(double value)
-{
-	dvalue_t* dvalue;
-
-	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_FLOAT;
-	dvalue->float_value = value;
-	return dvalue;
-}
-
-dvalue_t*
-dvalue_new_int(int32_t value)
-{
-	dvalue_t* dvalue;
-
-	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_INT;
-	dvalue->int_value = value;
-	return dvalue;
-}
-
-dvalue_t*
-dvalue_new_string(const char* value)
-{
-	dvalue_t* dvalue;
-
-	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_STRING;
-	dvalue->buffer.size = strlen(value);
-	dvalue->buffer.data = malloc(dvalue->buffer.size + 1);
-	strcpy(dvalue->buffer.data, value);
-	return dvalue;
-}
-
-void
-dvalue_free(dvalue_t* dvalue)
-{
-	if (dvalue->tag == DVALUE_TAG_STRING || dvalue->tag == DVALUE_TAG_BUFFER)
-		free(dvalue->buffer.data);
-	free(dvalue);
-}
-
-dvalue_tag_t
-dvalue_get_tag(dvalue_t* dvalue)
-{
-	return dvalue->tag;
-}
-
-static bool
-parse_handshake(remote_t* remote)
-{
-	static char handshake[128];
-
-	char* next_token;
-	char* token;
-	char  *p_ch;
-
-	printf("Handshaking... ");
-	memset(handshake, 0, sizeof handshake);
-	p_ch = handshake;
-	do {
-		receive_bytes(remote, p_ch, 1);
-	} while (*p_ch++ != '\n');
-	*(p_ch - 1) = '\0';
-
-	// parse handshake line
-	if (!(token = strtok_r(handshake, " ", &next_token)))
-		goto on_error;
-	if (atoi(token) != 1) goto on_error;
-	if (!(token = strtok_r(NULL, " ", &next_token)))
-		goto on_error;
-	if (!(token = strtok_r(NULL, " ", &next_token)))
-		goto on_error;
-	printf("OK.\n");
-	printf("  Connected to %s\n", next_token);
-	printf("  Duktape version is %s\n", token);
-	printf("\n");
-
-	return true;
-
-on_error:
-	printf("ERROR!\n");
-	return false;
-}
-
-static size_t
-receive_bytes(remote_t* remote, void* buffer, size_t num_bytes)
-{
-	while (remote->recv_size < num_bytes)
-		dyad_update();
-	memcpy(buffer, remote->recv_buf, num_bytes);
-	memmove(remote->recv_buf, remote->recv_buf + num_bytes,
-		remote->recv_size -= num_bytes);
-	return num_bytes;
 }
 
 static void
