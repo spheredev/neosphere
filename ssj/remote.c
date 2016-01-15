@@ -36,7 +36,7 @@ struct dvalue
 
 struct message
 {
-	msg_class_t cls;
+	msg_class_t msg_class;
 	vector_t*   dvalues;
 };
 
@@ -102,7 +102,7 @@ new_message(msg_class_t msg_class)
 	
 	msg = calloc(1, sizeof(message_t));
 	msg->dvalues = vector_new(sizeof(dvalue_t*));
-	msg->cls = msg_class;
+	msg->msg_class = msg_class;
 	return msg;
 }
 
@@ -121,6 +121,12 @@ free_message(message_t* msg)
 	free(msg);
 }
 
+msg_class_t
+get_message_class(message_t* msg)
+{
+	return msg->msg_class;
+}
+
 message_t*
 receive_message(remote_t* remote)
 {
@@ -130,7 +136,7 @@ receive_message(remote_t* remote)
 	msg = calloc(1, sizeof(message_t));
 	msg->dvalues = vector_new(sizeof(dvalue_t*));
 	dvalue = receive_dvalue(remote);
-	msg->cls = dvalue->tag == DVALUE_TAG_REQ ? MSG_CLASS_REQ
+	msg->msg_class = dvalue->tag == DVALUE_TAG_REQ ? MSG_CLASS_REQ
 		: dvalue->tag == DVALUE_TAG_REP ? MSG_CLASS_REP
 		: dvalue->tag == DVALUE_TAG_ERR ? MSG_CLASS_ERR
 		: dvalue->tag == DVALUE_TAG_NFY ? MSG_CLASS_NFY
@@ -154,10 +160,10 @@ send_message(remote_t* remote, const message_t* msg)
 	iter_t iter;
 	dvalue_t* *p;
 
-	lead_byte = msg->cls == MSG_CLASS_REQ ? 0x01
-		: msg->cls == MSG_CLASS_REP ? 0x02
-		: msg->cls == MSG_CLASS_ERR ? 0x03
-		: msg->cls == MSG_CLASS_NFY ? 0x04
+	lead_byte = msg->msg_class == MSG_CLASS_REQ ? 0x01
+		: msg->msg_class == MSG_CLASS_REP ? 0x02
+		: msg->msg_class == MSG_CLASS_ERR ? 0x03
+		: msg->msg_class == MSG_CLASS_NFY ? 0x04
 		: 0x00;
 	dyad_write(remote->socket, &lead_byte, 1);
 	iter = vector_enum(msg->dvalues);

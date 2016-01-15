@@ -46,6 +46,7 @@ remote_t*     connect_remote     (const char* hostname, int port);
 void          close_remote       (remote_t* remote);
 message_t*    new_message        (msg_class_t msg_class);
 void          free_message       (message_t* msg);
+msg_class_t   get_message_class  (message_t* message);
 message_t*    receive_message    (remote_t* remote);
 void          send_message       (remote_t* remote, const message_t* msg);
 void          add_float_dvalue   (message_t* msg, double value);

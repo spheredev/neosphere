@@ -32,6 +32,10 @@ run_session(session_t* sess)
 {
 	while (true) {
 		message_t* msg = receive_message(sess->remote);
+		switch (get_message_class(msg)) {
+		case MSG_CLASS_NFY:
+			break;
+		}
 		if (sess->is_paused)
 			do_command_line(sess);
 	}
