@@ -40,17 +40,20 @@ enum msg_class
 	MSG_CLASS_NFY,
 } msg_class_t;
 
-void          initialize_client  (void);
-void          shutdown_client    (void);
-remote_t*     connect_remote     (const char* hostname, int port);
-void          close_remote       (remote_t* remote);
-message_t*    new_message        (msg_class_t msg_class);
-void          free_message       (message_t* msg);
-msg_class_t   get_message_class  (message_t* message);
-message_t*    receive_message    (remote_t* remote);
-void          send_message       (remote_t* remote, const message_t* msg);
-void          add_float_dvalue   (message_t* msg, double value);
-void          add_int_dvalue     (message_t* msg, int32_t value);
-void          add_string_dvalue  (message_t* msg, const char* value);
+void          initialize_client (void);
+void          shutdown_client   (void);
+remote_t*     connect_remote    (const char* hostname, int port);
+void          close_remote      (remote_t* remote);
+message_t*    msg_new           (msg_class_t msg_class);
+message_t*    msg_receive       (remote_t* remote);
+void          msg_free          (message_t* msg);
+msg_class_t   msg_get_class     (message_t* message);
+void          msg_send          (remote_t* remote, const message_t* msg);
+void          msg_add_float     (message_t* msg, double value);
+void          msg_add_int       (message_t* msg, int32_t value);
+void          msg_add_string    (message_t* msg, const char* value);
+bool          msg_get_float     (message_t* msg, size_t index, double *out_value);
+bool          msg_get_int       (message_t* msg, size_t index, int32_t *out_value);
+bool          msg_get_string    (message_t* msg, size_t index, const char* *out_value);
 
 #endif // SSJ__REMOTE_H__INCLUDED

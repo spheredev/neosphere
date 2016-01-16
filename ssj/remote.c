@@ -96,7 +96,7 @@ close_remote(remote_t* remote)
 }
 
 message_t*
-new_message(msg_class_t msg_class)
+msg_new(msg_class_t msg_class)
 {
 	message_t* msg;
 	
@@ -106,29 +106,8 @@ new_message(msg_class_t msg_class)
 	return msg;
 }
 
-void
-free_message(message_t* msg)
-{
-	iter_t iter;
-	dvalue_t* *p;
-
-	if (msg == NULL)
-		return;
-
-	iter = vector_enum(msg->dvalues);
-	while (p = vector_next(&iter))
-		free_dvalue(*p);
-	free(msg);
-}
-
-msg_class_t
-get_message_class(message_t* msg)
-{
-	return msg->msg_class;
-}
-
 message_t*
-receive_message(remote_t* remote)
+msg_receive(remote_t* remote)
 {
 	dvalue_t*  dvalue;
 	message_t* msg;
@@ -144,14 +123,36 @@ receive_message(remote_t* remote)
 	free_dvalue(dvalue);
 	dvalue = receive_dvalue(remote);
 	while (dvalue->tag != DVALUE_TAG_EOM) {
-		dvalue = receive_dvalue(remote);
 		vector_push(msg->dvalues, &dvalue);
+		dvalue = receive_dvalue(remote);
 	}
+	free_dvalue(dvalue);
 	return msg;
 }
 
 void
-send_message(remote_t* remote, const message_t* msg)
+msg_free(message_t* msg)
+{
+	iter_t iter;
+	dvalue_t* *p;
+
+	if (msg == NULL)
+		return;
+
+	iter = vector_enum(msg->dvalues);
+	while (p = vector_next(&iter))
+		free_dvalue(*p);
+	free(msg);
+}
+
+msg_class_t
+msg_get_class(message_t* msg)
+{
+	return msg->msg_class;
+}
+
+void
+msg_send(remote_t* remote, const message_t* msg)
 {
 	const uint8_t EOM_BYTE = 0x00;
 
@@ -173,7 +174,7 @@ send_message(remote_t* remote, const message_t* msg)
 }
 
 void
-add_float_dvalue(message_t* msg, double value)
+msg_add_float(message_t* msg, double value)
 {
 	dvalue_t* dvalue;
 
@@ -184,7 +185,7 @@ add_float_dvalue(message_t* msg, double value)
 }
 
 void
-add_int_dvalue(message_t* msg, int32_t value)
+msg_add_int(message_t* msg, int32_t value)
 {
 	dvalue_t* dvalue;
 
@@ -195,16 +196,52 @@ add_int_dvalue(message_t* msg, int32_t value)
 }
 
 void
-add_string_dvalue(message_t* msg, const char* value)
+msg_add_string(message_t* msg, const char* value)
 {
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
 	dvalue->tag = DVALUE_TAG_STRING;
 	dvalue->buffer.size = strlen(value);
-	dvalue->buffer.data = malloc(dvalue->buffer.size + 1);
+	dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 	strcpy(dvalue->buffer.data, value);
 	vector_push(msg->dvalues, &dvalue);
+}
+
+bool
+msg_get_float(message_t* msg, size_t index, double *out_value)
+{
+	dvalue_t* dvalue;
+
+	if (index >= vector_len(msg->dvalues))
+		return false;
+	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
+	*out_value = dvalue->float_value;
+	return dvalue->tag == DVALUE_TAG_FLOAT;
+}
+
+bool
+msg_get_int(message_t* msg, size_t index, int32_t *out_value)
+{
+	dvalue_t* dvalue;
+	
+	if (index >= vector_len(msg->dvalues))
+		return false;
+	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
+	*out_value = dvalue->int_value;
+	return dvalue->tag == DVALUE_TAG_INT;
+}
+
+bool
+msg_get_string(message_t* msg, size_t index, const char* *out_value)
+{
+	dvalue_t* dvalue;
+
+	if (index >= vector_len(msg->dvalues))
+		return false;
+	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
+	*out_value = dvalue->buffer.data;
+	return dvalue->tag == DVALUE_TAG_STRING;
 }
 
 static void

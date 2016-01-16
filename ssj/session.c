@@ -30,10 +30,31 @@ on_error:
 void
 run_session(session_t* sess)
 {
+	const char* filename;
+	const char* func_name;
+	int32_t     line_no;
+	message_t*  msg;
+	int32_t     notify_id;
+	int32_t     state;
+	
 	while (true) {
-		message_t* msg = receive_message(sess->remote);
-		switch (get_message_class(msg)) {
+		msg = msg_receive(sess->remote);
+		switch (msg_get_class(msg)) {
 		case MSG_CLASS_NFY:
+			msg_get_int(msg, 0, &notify_id);
+			switch (notify_id) {
+			case 0x01:
+				msg_get_int(msg, 1, &state);
+				msg_get_string(msg, 2, &filename);
+				msg_get_string(msg, 3, &func_name);
+				msg_get_int(msg, 4, &line_no);
+				if (sess->is_paused = state != 0) {
+					printf("STOPPED in function '%s'\n", func_name);
+					printf("  script: %s\n", filename);
+					printf("  line number: %d\n\n", line_no);
+				}
+				break;
+			}
 			break;
 		}
 		if (sess->is_paused)
