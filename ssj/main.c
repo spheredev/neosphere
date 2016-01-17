@@ -23,7 +23,10 @@ main(int argc, char* argv[])
 	printf("\n");
 	
 	initialize_client();
-	session = new_session("127.0.0.1", 1208);
+	if (!(session = new_session("127.0.0.1", 1208))) {
+		printf("Failed to connect.\n");
+		goto shut_down;
+	}
 	run_session(session);
 	retval = EXIT_SUCCESS;
 

@@ -61,7 +61,7 @@ connect_remote(const char* hostname, int port)
 	session->recv_buf_size = 65536;
 	session->recv_buf = malloc(session->recv_buf_size);
 	
-	printf("Connecting to remote '%s:%d'... ", hostname, port);
+	printf("Connecting to '%s:%d'... ", hostname, port);
 	session->socket = dyad_newStream();
 	dyad_addListener(session->socket, DYAD_EVENT_DATA, on_socket_recv, session);
 	if (dyad_connect(session->socket, hostname, port) != 0)
@@ -79,7 +79,7 @@ connect_remote(const char* hostname, int port)
 	return session;
 
 on_error:
-	printf("Failed.\n");
+	printf("Error.\n");
 	if (session != NULL) {
 		if (session->socket != NULL)
 			dyad_close(session->socket);
@@ -146,7 +146,7 @@ msg_free(message_t* msg)
 }
 
 msg_class_t
-msg_get_class(message_t* msg)
+msg_get_class(const message_t* msg)
 {
 	return msg->msg_class;
 }
@@ -209,7 +209,7 @@ msg_add_string(message_t* msg, const char* value)
 }
 
 bool
-msg_get_float(message_t* msg, size_t index, double *out_value)
+msg_get_float(const message_t* msg, size_t index, double *out_value)
 {
 	dvalue_t* dvalue;
 
@@ -221,7 +221,7 @@ msg_get_float(message_t* msg, size_t index, double *out_value)
 }
 
 bool
-msg_get_int(message_t* msg, size_t index, int32_t *out_value)
+msg_get_int(const message_t* msg, size_t index, int32_t *out_value)
 {
 	dvalue_t* dvalue;
 	
@@ -233,7 +233,7 @@ msg_get_int(message_t* msg, size_t index, int32_t *out_value)
 }
 
 bool
-msg_get_string(message_t* msg, size_t index, const char* *out_value)
+msg_get_string(const message_t* msg, size_t index, const char* *out_value)
 {
 	dvalue_t* dvalue;
 
@@ -285,7 +285,7 @@ parse_handshake(remote_t* remote)
 	return true;
 
 on_error:
-	printf("ERROR!\n");
+	printf("Error.\n");
 	return false;
 }
 
