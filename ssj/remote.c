@@ -151,6 +151,12 @@ msg_get_class(const message_t* msg)
 	return msg->msg_class;
 }
 
+size_t
+msg_get_length(const message_t* msg)
+{
+	return vector_len(msg->dvalues);
+}
+
 void
 msg_send(remote_t* remote, const message_t* msg)
 {

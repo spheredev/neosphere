@@ -24,7 +24,7 @@ main(int argc, char* argv[])
 	
 	initialize_client();
 	if (!(session = new_session("127.0.0.1", 1208))) {
-		printf("Failed to connect.\n");
+		printf("Failed to connect to target.\n");
 		goto shut_down;
 	}
 	run_session(session);

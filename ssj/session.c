@@ -9,7 +9,7 @@ struct session
 {
 	char      cl_buffer[CL_BUFFER_SIZE];
 	remote_t* remote;
-	bool      want_cl;
+	bool      is_breakpoint;
 };
 
 enum req_command
@@ -70,7 +70,7 @@ run_session(session_t* sess)
 	message_t* msg;
 	
 	while (is_active) {
-		if (sess->want_cl)
+		if (sess->is_breakpoint)
 			do_command_line(sess);
 		else {
 			if (!(msg = msg_receive(sess->remote)))
@@ -96,14 +96,18 @@ do_command_line(session_t* sess)
 	size_t      ch_idx = 0;
 	lstring_t*  eval_code;
 	const char* eval_result;
+	size_t      num_vars;
 	char*       parsee;
 	message_t*  reply;
 	message_t*  req;
+	const char* var_name;
+
+	size_t i;
 
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("ssj: ");
+		printf("ssj > ");
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -120,13 +124,20 @@ do_command_line(session_t* sess)
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
-	if (strcmp(command, "x") == 0) {
-		printf("Exit requested, detaching debugger.\n");
+	if (strcmp(command, "q") == 0) {
+		printf("Shutdown requested, sending detach request.\n");
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(handle_req(sess, req));
 		msg_free(req);
-		sess->want_cl = false;
+		sess->is_breakpoint = false;
+	}
+	else if (strcmp(command, "r") == 0) {
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_RESUME);
+		msg_free(handle_req(sess, req));
+		msg_free(req);
+		sess->is_breakpoint = false;
 	}
 	else if (strcmp(command, "e") == 0) {
 		eval_code = lstr_newf(
@@ -136,17 +147,22 @@ do_command_line(session_t* sess)
 		msg_add_int(req, REQ_EVAL);
 		msg_add_string(req, lstr_cstr(eval_code));
 		reply = handle_req(sess, req);
+		msg_free(req);
 		msg_get_string(reply, 1, &eval_result);
-		printf("%s\n\n", eval_result);
+		printf("%s\n", eval_result);
 		msg_free(reply);
-		msg_free(req);
 	}
-	else if (strcmp(command, "r") == 0) {
+	else if (strcmp(command, "lv") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_RESUME);
-		msg_free(handle_req(sess, req));
+		msg_add_int(req, REQ_GET_LOCALS);
+		reply = handle_req(sess, req);
 		msg_free(req);
-		sess->want_cl = false;
+		num_vars = msg_get_length(reply) / 2;
+		for (i = 0; i < num_vars; ++i) {
+			msg_get_string(reply, i * 2, &var_name);
+			printf("%s = [value]\n", var_name);
+		}
+		msg_free(reply);
 	}
 	free(parsee);
 }
@@ -171,39 +187,43 @@ static bool
 process_message(session_t* sess, const message_t* msg)
 {
 	const char* filename;
-	const char* error_text;
+	int32_t     flag;
 	const char* func_name;
 	int32_t     line_no;
 	int32_t     notify_id;
-	int32_t     state;
-	int32_t     throw_type;
+	const char* text;
 
 	switch (msg_get_class(msg)) {
 	case MSG_CLASS_NFY:
 		msg_get_int(msg, 0, &notify_id);
 		switch (notify_id) {
 		case NFY_STATUS:
-			msg_get_int(msg, 1, &state);
+			msg_get_int(msg, 1, &flag);
 			msg_get_string(msg, 2, &filename);
 			msg_get_string(msg, 3, &func_name);
 			msg_get_int(msg, 4, &line_no);
-			if (sess->want_cl = state != 0) {
-				printf("Paused in function '%s'\n", func_name);
-				printf("  script: '%s':%i\n\n", filename, line_no);
-			}
+			if (flag != 0 && !sess->is_breakpoint)
+				printf("[SSJ @ %s:%i] BREAK: in function '%s'\n", filename, line_no, func_name);
+			sess->is_breakpoint = flag != 0;
+			break;
+		case NFY_PRINT:
+			msg_get_string(msg, 1, &text);
+			printf("%s", text);
 			break;
 		case NFY_THROW:
-			msg_get_int(msg, 1, &throw_type);
-			msg_get_string(msg, 2, &error_text);
+			msg_get_int(msg, 1, &flag);
+			msg_get_string(msg, 2, &text);
 			msg_get_string(msg, 3, &filename);
 			msg_get_int(msg, 4, &line_no);
-			if (throw_type != 0) {
-				printf("Intercepted %s, halting execution\n", error_text);
-				printf("  script: '%s':%i\n\n", filename, line_no);
-			}
+			if (flag != 0)
+				printf("[SSJ @ %s:%i] FATAL: %s\n", filename, line_no, text);
 			break;
 		case NFY_DETACHING:
-			printf("Target has been detached.\n");
+			msg_get_int(msg, 1, &flag);
+			if (flag == 0)
+				printf("Target detached cleanly.\n");
+			else
+				printf("Target detached due to stream error.\n");
 			return false;
 		}
 		break;
