@@ -1,6 +1,8 @@
 ssj_sources = [
 	Object("dyad", "../msphere/dyad.c"),
+	Object("lstring", "../msphere/lstring.c"),
 	Object("path", "../msphere/path.c"),
+	Object("unicode", "../msphere/unicode.c"),
 	Object("vector", "../msphere/vector.c"),
 	"main.c",
 	"remote.c",

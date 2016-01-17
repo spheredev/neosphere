@@ -33,6 +33,12 @@
     <ClCompile Include="..\ssj\session.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lstring.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\unicode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssj\ssj.h">
@@ -60,6 +66,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ssj\session.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lstring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\unicode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

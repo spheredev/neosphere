@@ -14,6 +14,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "lstring.h"
 #include "path.h"
 #include "vector.h"
 

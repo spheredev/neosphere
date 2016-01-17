@@ -96,7 +96,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\dyad.c" />
+    <ClCompile Include="..\src\lstring.c" />
     <ClCompile Include="..\src\path.c" />
+    <ClCompile Include="..\src\unicode.c" />
     <ClCompile Include="..\src\vector.c" />
     <ClCompile Include="..\ssj\remote.c" />
     <ClCompile Include="..\ssj\main.c" />
@@ -104,7 +106,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dyad.h" />
+    <ClInclude Include="..\src\lstring.h" />
     <ClInclude Include="..\src\path.h" />
+    <ClInclude Include="..\src\unicode.h" />
     <ClInclude Include="..\src\vector.h" />
     <ClInclude Include="..\src\version.h" />
     <ClInclude Include="..\ssj\remote.h" />
