@@ -142,6 +142,8 @@ detach_debugger(bool is_shutdown)
 	console_log(1, "Detaching debugger");
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
+	while (is_socket_live(s_client))
+		delay(0.05);
 	free_socket(s_client); s_client = NULL;
 	if (s_want_attach && !is_shutdown)
 		exit_game(true);  // clean detach, exit
