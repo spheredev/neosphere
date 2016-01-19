@@ -62,7 +62,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -84,7 +84,7 @@
       <DebugInformationFormat>
       </DebugInformationFormat>
       <FunctionLevelLinking>false</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>include;..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -100,32 +100,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\cell\assets.c" />
-    <ClCompile Include="..\cell\build.c" />
-    <ClCompile Include="..\cell\main.c" />
-    <ClCompile Include="..\cell\spk_writer.c" />
-    <ClCompile Include="..\cell\utility.c" />
-    <ClCompile Include="..\src\duktape.c" />
-    <ClCompile Include="..\src\lstring.c" />
-    <ClCompile Include="..\src\path.c" />
-    <ClCompile Include="..\src\unicode.c" />
-    <ClCompile Include="..\src\vector.c" />
+    <ClCompile Include="..\src\shared\duktape.c" />
+    <ClCompile Include="..\src\shared\lstring.c" />
+    <ClCompile Include="..\src\shared\path.c" />
+    <ClCompile Include="..\src\shared\unicode.c" />
+    <ClCompile Include="..\src\shared\vector.c" />
+    <ClCompile Include="..\src\cell\assets.c" />
+    <ClCompile Include="..\src\cell\build.c" />
+    <ClCompile Include="..\src\cell\main.c" />
+    <ClCompile Include="..\src\cell\spk_writer.c" />
+    <ClCompile Include="..\src\cell\utility.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\cell\assets.h" />
-    <ClInclude Include="..\cell\build.h" />
-    <ClInclude Include="..\cell\cell.h" />
-    <ClInclude Include="..\cell\posix.h" />
-    <ClInclude Include="..\cell\spk_writer.h" />
-    <ClInclude Include="..\cell\tinydir.h" />
-    <ClInclude Include="..\cell\utility.h" />
-    <ClInclude Include="..\src\duktape.h" />
-    <ClInclude Include="..\src\duk_config.h" />
-    <ClInclude Include="..\src\lstring.h" />
-    <ClInclude Include="..\src\path.h" />
-    <ClInclude Include="..\src\unicode.h" />
-    <ClInclude Include="..\src\vector.h" />
-    <ClInclude Include="..\src\version.h" />
+    <ClInclude Include="..\src\shared\duktape.h" />
+    <ClInclude Include="..\src\shared\duk_config.h" />
+    <ClInclude Include="..\src\shared\lstring.h" />
+    <ClInclude Include="..\src\shared\path.h" />
+    <ClInclude Include="..\src\shared\tinydir.h" />
+    <ClInclude Include="..\src\shared\unicode.h" />
+    <ClInclude Include="..\src\shared\vector.h" />
+    <ClInclude Include="..\src\shared\version.h" />
+    <ClInclude Include="..\src\cell\assets.h" />
+    <ClInclude Include="..\src\cell\build.h" />
+    <ClInclude Include="..\src\cell\cell.h" />
+    <ClInclude Include="..\src\cell\posix.h" />
+    <ClInclude Include="..\src\cell\spk_writer.h" />
+    <ClInclude Include="..\src\cell\utility.h" />
     <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
