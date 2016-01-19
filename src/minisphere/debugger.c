@@ -38,7 +38,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	// to connect before beginning execution.
 	if (s_want_attach && !attach_debugger())
 		exit_game(true);
-	
+
 	// load the source map, if one is available
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
@@ -99,7 +99,7 @@ get_source_pathname(const char* pathname)
 {
 	// note: pathname must be canonicalized using make_sfs_path() otherwise
 	//       the source map lookup will fail.
-	
+
 	static char retval[SPHERE_PATH_MAX];
 
 	strcpy(retval, pathname);
@@ -165,7 +165,10 @@ static duk_size_t
 duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 {
 	size_t n_bytes;
-	
+
+	if (s_client == NULL)
+		return 0;
+
 	// if we return zero, Duktape will drop the session. thus we're forced
 	// to block until we can read >= 1 byte.
 	while ((n_bytes = peek_socket(s_client)) == 0) {
@@ -176,11 +179,11 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 			else
 				exit_game(true);  // stupid pig
 		}
-		
+
 		// so the system doesn't think we locked up...
 		delay(0.05);
 	}
-	
+
 	// let's not overflow the buffer, alright?
 	if (n_bytes > bufsize) n_bytes = bufsize;
 	read_socket(s_client, buffer, n_bytes);
@@ -190,13 +193,16 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 static duk_size_t
 duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 {
+	if (s_client == NULL)
+		return 0;
+
 	// make sure we're still connected
 	if (!is_socket_live(s_client)) {
 		console_log(0, "TCP connection reset while debugging");
 		if (!attach_debugger() && s_want_attach)
 			exit_game(true);  // stupid pig!
 	}
-	
+
 	// send out the data
 	write_socket(s_client, data, size);
 	return size;

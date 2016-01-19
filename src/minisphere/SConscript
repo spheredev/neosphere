@@ -3,7 +3,9 @@ msphere_defines = [
 ]
 
 msphere_sources = [
-	Object("duktape", "#/src/shared/duktape.c"),
+	Object("duktape", "#/src/shared/duktape.c",
+		CPPPATH = [ ".", "#/src/shared" ],
+		CPPDEFINES = msphere_defines),
 	Object("dyad", "#/src/shared/dyad.c"),
 	Object("mt19937ar", "#/src/shared/mt19937ar.c"),
 	Object("lstring", "#/src/shared/lstring.c"),
