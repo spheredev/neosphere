@@ -3,9 +3,14 @@ msphere_defines = [
 ]
 
 msphere_sources = [
+	Object("duktape", "#/src/shared/duktape.c"),
+	Object("dyad", "#/src/shared/dyad.c"),
+	Object("mt19937ar", "#/src/shared/mt19937ar.c"),
+	Object("lstring", "#/src/shared/lstring.c"),
+	Object("path", "#/src/shared/path.c"),
+	Object("unicode", "#/src/shared/unicode.c"),
+	Object("vector", "#/src/shared/vector.c"),
 	"main.c",
-	"duktape.c",
-	"dyad.c",
 	"animation.c",
 	"api.c",
 	"async.c",
@@ -22,11 +27,8 @@ msphere_sources = [
 	"image.c",
 	"input.c",
 	"logger.c",
-	"lstring.c",
 	"map_engine.c",
-	"mt19937ar.c",
 	"obsmap.c",
-	"path.c",
 	"persons.c",
 	"primitives.c",
 	"rng.c",
@@ -38,9 +40,7 @@ msphere_sources = [
 	"spriteset.c",
 	"surface.c",
 	"tileset.c",
-	"unicode.c",
 	"utility.c",
-	"vector.c",
 	"windowstyle.c",
 ]
 
@@ -59,7 +59,10 @@ msphere_libs = [
 	"m",
 ]
 
-minisphere = Program("msphere", msphere_sources,
+minisphere = Program("msphere",
+	msphere_sources,
+	CPPPATH = [ ".", "#/src/shared" ],
 	CPPDEFINES = msphere_defines,
 	LIBS = msphere_libs)
 Return("minisphere")
+

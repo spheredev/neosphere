@@ -1,0 +1,21 @@
+ssj_sources = [
+	Object("dyad", "#/src/shared/dyad.c"),
+	Object("lstring", "#/src/shared/lstring.c"),
+	Object("path", "#/src/shared/path.c"),
+	Object("unicode", "#/src/shared/unicode.c"),
+	Object("vector", "#/src/shared/vector.c"),
+	"main.c",
+	"remote.c",
+	"session.c",
+]
+
+ssj_libs = [
+	"m"
+]
+
+ssj = Program("ssj",
+	ssj_sources,
+	CPPPATH = "#/src/shared",
+	LIBS = ssj_libs)
+Return("ssj")
+
