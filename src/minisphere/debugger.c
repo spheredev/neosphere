@@ -119,7 +119,7 @@ attach_debugger(void)
 	double timeout;
 
 	if (s_is_attached)
-		return;
+		return true;
 
 	console_log(0, "Waiting for connection from debugger");
 	timeout = al_get_time() + 5.0;
@@ -180,6 +180,9 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 			free_socket(s_client); s_client = NULL;
 			return 0;  // stupid pig
 		}
+
+		// so the system doesn't think we locked up...
+		delay(0.05);
 	}
 
 	// let's not overflow the buffer, alright?

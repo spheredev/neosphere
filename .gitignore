@@ -4,10 +4,10 @@ bin/cell
 bin/ssj
 bin/*.exe
 bin/plugin/
-msvc/obj/
-msvc/debug/
+msvs/obj/
+msvs/debug/
 obj/
-plugin/bin/
+src/plugin/bin/
 setup/*.exe
 studio/
 
