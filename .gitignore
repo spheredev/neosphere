@@ -1,4 +1,7 @@
 *.log
+bin/msphere
+bin/cell
+bin/ssj
 bin/*.exe
 bin/plugin/
 msvc/obj/
