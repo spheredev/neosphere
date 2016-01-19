@@ -56,7 +56,6 @@ void
 shutdown_debugger()
 {
 	detach_debugger(true);
-	free_socket(s_client);
 	free_socket(s_server);
 }
 
@@ -72,7 +71,7 @@ update_debugger(void)
 			free_socket(socket);
 		}
 		else {
-			console_log(0, "Connecting to debugger at %s", get_socket_host(socket));
+			console_log(0, "Connected to debugger at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
 			duk_debugger_attach(g_duk,
@@ -119,10 +118,11 @@ attach_debugger(void)
 {
 	double timeout;
 
-	console_log(0, "Waiting for debugger to connect");
+	if (s_is_attached)
+		return;
 
-	free_socket(s_client); s_client = NULL;
-	timeout = al_get_time() + 30.0;
+	console_log(0, "Waiting for connection from debugger");
+	timeout = al_get_time() + 5.0;
 	while (s_client == NULL && al_get_time() < timeout) {
 		update_debugger();
 		delay(0.05);
@@ -142,9 +142,8 @@ detach_debugger(bool is_shutdown)
 	console_log(1, "Detaching debugger");
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
-	while (is_socket_live(s_client))
-		delay(0.05);
-	free_socket(s_client); s_client = NULL;
+	free_socket(s_client);
+	s_client = NULL;
 	if (s_want_attach && !is_shutdown)
 		exit_game(true);  // clean detach, exit
 }
@@ -152,7 +151,12 @@ detach_debugger(bool is_shutdown)
 static void
 duk_cb_debug_detach(void* udata)
 {
-	detach_debugger(false);
+	s_is_attached = false;
+
+	// note: if s_client is null, a TCP reset was detected by one of the I/O callbacks.
+	// if this is the case, wait a bit for the client to reconnect.
+	if (s_client == NULL && !attach_debugger())
+		detach_debugger(false);
 }
 
 static duk_size_t
@@ -166,22 +170,16 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 {
 	size_t n_bytes;
 
-	if (s_client == NULL)
-		return 0;
+	if (s_client == NULL) return 0;
 
 	// if we return zero, Duktape will drop the session. thus we're forced
 	// to block until we can read >= 1 byte.
 	while ((n_bytes = peek_socket(s_client)) == 0) {
 		if (!is_socket_live(s_client)) {  // did a pig eat it?
 			console_log(0, "TCP connection reset while debugging");
-			if (attach_debugger())
-				continue;
-			else
-				exit_game(true);  // stupid pig
+			free_socket(s_client); s_client = NULL;
+			return 0;  // stupid pig
 		}
-
-		// so the system doesn't think we locked up...
-		delay(0.05);
 	}
 
 	// let's not overflow the buffer, alright?
@@ -193,14 +191,13 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 static duk_size_t
 duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 {
-	if (s_client == NULL)
-		return 0;
+	if (s_client == NULL) return 0;
 
 	// make sure we're still connected
 	if (!is_socket_live(s_client)) {
 		console_log(0, "TCP connection reset while debugging");
-		if (!attach_debugger() && s_want_attach)
-			exit_game(true);  // stupid pig!
+		free_socket(s_client); s_client = NULL;
+		return 0;
 	}
 
 	// send out the data
