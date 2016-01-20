@@ -119,7 +119,7 @@ attach_debugger(void)
 	double timeout;
 
 	console_log(0, "Waiting for connection from debugger");
-	timeout = al_get_time() + 5.0;
+	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
 		update_debugger();
 		delay(0.05);
