@@ -118,9 +118,6 @@ attach_debugger(void)
 {
 	double timeout;
 
-	if (s_is_attached)
-		return true;
-
 	console_log(0, "Waiting for connection from debugger");
 	timeout = al_get_time() + 5.0;
 	while (s_client == NULL && al_get_time() < timeout) {
@@ -135,13 +132,17 @@ attach_debugger(void)
 static void
 detach_debugger(bool is_shutdown)
 {
-	if (!s_is_attached)
-		return;
-
+	if (!s_is_attached) return;
+	
 	// detach the debugger
 	console_log(1, "Detaching debugger");
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
+	if (s_client != NULL) {
+		shutdown_socket(s_client);
+		while (is_socket_live(s_client))
+			delay(0.05);
+	}
 	free_socket(s_client);
 	s_client = NULL;
 	if (s_want_attach && !is_shutdown)
@@ -151,11 +152,9 @@ detach_debugger(bool is_shutdown)
 static void
 duk_cb_debug_detach(void* udata)
 {
-	s_is_attached = false;
-
 	// note: if s_client is null, a TCP reset was detected by one of the I/O callbacks.
 	// if this is the case, wait a bit for the client to reconnect.
-	if (s_client == NULL && !attach_debugger())
+	if (s_client != NULL || !attach_debugger())
 		detach_debugger(false);
 }
 

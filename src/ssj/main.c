@@ -57,6 +57,7 @@ parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
 				printf("\n");
 				printf("OPTIONS:\n");
 				printf("       --version          Prints the SSJ debugger version and exits.           \n");
+				printf("       --help             Prints this help text and exits.                     \n");
 				return false;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {

@@ -8,10 +8,11 @@ extern bool        is_socket_live      (socket_t* socket);
 extern bool        is_socket_server    (socket_t* socket);
 extern const char* get_socket_host     (socket_t* socket);
 extern int         get_socket_port     (socket_t* socket);
+extern socket_t*   accept_next_socket  (socket_t* listener);
 extern size_t      peek_socket         (const socket_t* socket);
 extern void        pipe_socket         (socket_t* socket, socket_t* destination);
-extern socket_t*   accept_next_socket  (socket_t* listener);
 extern size_t      read_socket         (socket_t* socket, uint8_t* buffer, size_t n_bytes);
+extern void        shutdown_socket     (socket_t* socket);
 extern void        write_socket        (socket_t* socket, const uint8_t* data, size_t n_bytes);
 
 void init_sockets_api (void);

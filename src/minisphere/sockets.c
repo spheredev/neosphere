@@ -173,7 +173,11 @@ free_socket(socket_t* socket)
 bool
 is_socket_live(socket_t* socket)
 {
-	return dyad_getState(socket->stream) == DYAD_STATE_CONNECTED;
+	int state;
+
+	state = dyad_getState(socket->stream);
+	return state == DYAD_STATE_CONNECTED
+		|| state == DYAD_STATE_CLOSING;
 }
 
 bool
@@ -257,6 +261,13 @@ read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 	memmove(socket->buffer, socket->buffer + n_bytes, socket->pend_size - n_bytes);
 	socket->pend_size -= n_bytes;
 	return n_bytes;
+}
+
+void
+shutdown_socket(socket_t* socket)
+{
+	console_log(2, "Shutting down Socket %u", socket->id);
+	dyad_end(socket->stream);
 }
 
 void
