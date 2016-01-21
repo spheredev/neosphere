@@ -288,9 +288,8 @@ parse_handshake(remote_t* remote)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf("  Connected to %s\n", next_token);
+	printf("  Attached to %s\n", next_token);
 	printf("  Duktape version is %s\n", token);
-	printf("\n");
 
 	return true;
 

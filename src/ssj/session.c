@@ -46,7 +46,7 @@ enum nfy_command
 	NFY_DETACHING = 0x06,
 };
 
-static void       do_command_line (session_t* sess);
+static bool       do_command_line (session_t* sess);
 static message_t* do_request      (session_t* sess, message_t* msg);
 static bool       process_message (session_t* sess, const message_t* msg);
 
@@ -56,13 +56,7 @@ new_session(const char* hostname, int port)
 	session_t* sess;
 
 	sess = calloc(1, sizeof(session_t));
-	if (!(sess->remote = connect_remote(hostname, port)))
-		goto on_error;
 	return sess;
-
-on_error:
-	free(sess);
-	return NULL;
 }
 
 void
@@ -71,13 +65,20 @@ run_session(session_t* sess)
 	bool       is_active = true;
 	message_t* msg;
 	
+	printf("\33[0;1m");
+	printf("Quickstart:\n");
+	printf(" 'c' to Connect to target\n");
+	printf(" 'h' for Help with SSJ commands\n");
+	printf(" 'q' to Quit\n");
+	printf("\33[m");
+	
 	while (is_active) {
-		if (sess->is_breakpoint)
-			do_command_line(sess);
+		if (sess->remote == NULL || sess->is_breakpoint)
+			is_active &= do_command_line(sess);
 		else {
 			if (!(msg = msg_receive(sess->remote)))
 				goto on_error;
-			is_active = process_message(sess, msg);
+			is_active &= process_message(sess, msg);
 			msg_free(msg);
 		}
 	}
@@ -89,7 +90,7 @@ on_error:
 	return;
 }
 
-static void
+static bool
 do_command_line(session_t* sess)
 {
 	char*       argument;
@@ -109,8 +110,12 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\x1B[33;1mSSJ \x1B[32m%s:%d\x1B[m\n\x1B[33m$\x1B[m ",
-			lstr_cstr(sess->filename), sess->line);
+		if (sess->remote == NULL)
+			printf("\n\x1B[33;1mSSJ \x1B[31mno target\n\x1B[33m$\x1B[m ");
+		else {
+			printf("\n\x1B[33;1mSSJ \x1B[36;1m%s:%d\x1B[m\n\x1B[33m$\x1B[m ",
+				lstr_cstr(sess->filename), sess->line);
+		}
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -127,18 +132,34 @@ do_command_line(session_t* sess)
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
-	if (strcmp(command, "q") == 0) {
-		printf("Shutdown requested, sending detach request.\n");
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_DETACH);
-		msg_free(do_request(sess, req));
-		sess->is_breakpoint = false;
+	if (strcmp(command, "c") == 0) {
+		if (sess->remote != NULL)
+			printf("Already attached.");
+		else {
+			if (!(sess->remote = connect_remote("127.0.0.1", 1208)))
+				printf("Failed to connect to target.\n");
+		}
+	}
+	else if (strcmp(command, "q") == 0) {
+		printf("Exit requested, shutting down SSJ\n");
+		if (sess->remote == NULL)
+			return false;
+		else {
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_DETACH);
+			msg_free(do_request(sess, req));
+			sess->is_breakpoint = false;
+		}
 	}
 	else if (strcmp(command, "r") == 0) {
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_RESUME);
-		msg_free(do_request(sess, req));
-		sess->is_breakpoint = false;
+		if (sess->remote == NULL)
+			printf("No target to resume, use 'c' to attach.\n");
+		else {
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_RESUME);
+			msg_free(do_request(sess, req));
+			sess->is_breakpoint = false;
+		}
 	}
 	else if (strcmp(command, "e") == 0) {
 		eval_code = lstr_newf(
@@ -163,7 +184,11 @@ do_command_line(session_t* sess)
 		}
 		msg_free(reply);
 	}
+	else {
+		printf("'%s' not recognized in this context\n", command);
+	}
 	free(parsee);
+	return true;
 }
 
 static message_t*
