@@ -4,92 +4,112 @@
 #include "remote.h"
 #include "session.h"
 
-static bool parse_cmdline    (int argc, char* argv[], path_t* *out_game_path);
-static void print_banner     (bool want_copyright, bool want_deps);
-static void print_cell_quote (void);
+struct cmdline
+{
+	path_t* path;
+};
+
+static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
+static void            print_banner     (bool want_copyright, bool want_deps);
+static void            print_cell_quote (void);
 
 int
 main(int argc, char* argv[])
 {
-	int        retval = EXIT_FAILURE;
-	path_t*    game_path;
-	session_t* session;
+	struct cmdline* cmdline;
+	int             retval;
+	session_t*      session;
 	
 	srand((unsigned int)time(NULL));
-	if (!parse_cmdline(argc, argv, &game_path))
-		goto shut_down;
+	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
+		return retval;
 	
 	print_banner(true, false);
 	printf("\n");
 	
 	initialize_client();
-	if (!(session = new_session("127.0.0.1", 1208))) {
-		printf("Failed to connect to target.\n");
-		goto shut_down;
-	}
+	session = new_session();
 	run_session(session);
-	retval = EXIT_SUCCESS;
-
-shut_down:
 	shutdown_client();
-	path_free(game_path);
-	return retval;
+	return EXIT_SUCCESS;
 }
 
-static bool
-parse_cmdline(int argc, char* argv[], path_t* *out_game_path)
+static struct cmdline*
+parse_cmdline(int argc, char* argv[], int *out_retval)
 {
-	const char* short_args;
+	struct cmdline* cmdline;
+	bool            have_target = false;
+	const char*     short_args;
 
 	int    i;
 	size_t i_arg;
 
-	*out_game_path = NULL;
-
-	// validate and parse the command line
+	// parse the command line
+	cmdline = calloc(1, sizeof(struct cmdline));
+	*out_retval = EXIT_SUCCESS;
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
-				print_banner(false, false);
+				print_banner(true, false);
 				printf("\n");
-				printf("USAGE: ssj\n");
-				printf("       ssj [options] [<game_path>]\n");
+				printf("USAGE: ssj [options] <game path>\n");
+				printf("       ssj -c [options]\n");
 				printf("\n");
 				printf("OPTIONS:\n");
-				printf("       --version          Prints the SSJ debugger version and exits.           \n");
-				printf("       --help             Prints this help text and exits.                     \n");
-				return false;
+				printf("       --version          Prints the SSJ debugger version.                     \n");
+				printf("       --help             Prints this help text.                               \n");
+				printf("   -c, --connect          Attempts to attach to a target already running. If   \n");
+				printf("                          the connection attempt fails, SSJ will exit.         \n");
+				goto on_output_only;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
 				print_banner(true, true);
-				return false;
+				goto on_output_only;
 			}
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
-				return false;
+				goto on_output_only;
 			}
+			else if (strcmp(argv[i], "--connect") == 0)
+				have_target = true;
 			else {
 				printf("ssj: error: unknown option '%s'\n", argv[i]);
-				return false;
+				goto on_output_only;
 			}
 		}
 		else if (argv[i][0] == '-') {
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
+				case 'c':
+					have_target = true;
+					break;
 				default:
 					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
-					return false;
+					*out_retval = EXIT_FAILURE;
+					goto on_output_only;
 				}
 			}
 		}
 		else {
-			path_free(*out_game_path);
-			*out_game_path = path_new(argv[i]);
+			path_free(cmdline->path);
+			cmdline->path = path_new(argv[i]);
+			have_target = true;
 		}
 	}
+	
+	// sanity-check command line parameters
+	if (!have_target) {
+		printf("ssj: error: no target specified. please provide path or use -c.\n");
+		printf("     run 'ssj --help' for details.\n");
+	}
+	
+	// we're good!
+	return EXIT_SUCCESS;
 
-	return true;
+on_output_only:
+	free(cmdline);
+	return NULL;
 }
 
 static void

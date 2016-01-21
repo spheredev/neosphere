@@ -68,6 +68,7 @@ run_session(session_t* sess)
 	printf("\33[0;1m");
 	printf("Quickstart:\n");
 	printf(" 'c' to Connect to target\n");
+	printf(" 'r' to Resume execution\n");
 	printf(" 'h' for Help with SSJ commands\n");
 	printf(" 'q' to Quit\n");
 	printf("\33[m");
@@ -153,7 +154,7 @@ do_command_line(session_t* sess)
 	}
 	else if (strcmp(command, "r") == 0) {
 		if (sess->remote == NULL)
-			printf("No target to resume, use 'c' to attach.\n");
+			printf("No target attached, use 'c' to attach.\n");
 		else {
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_RESUME);
@@ -162,16 +163,20 @@ do_command_line(session_t* sess)
 		}
 	}
 	else if (strcmp(command, "e") == 0) {
-		eval_code = lstr_newf(
-			"(function() { try { return Duktape.enc('jx', eval(\"%s\"), null, 3); } catch (e) { return e.toString(); } }).call(this);",
-			argument);
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_EVAL);
-		msg_add_string(req, lstr_cstr(eval_code));
-		reply = do_request(sess, req);
-		msg_get_string(reply, 1, &eval_result);
-		printf("%s\n", eval_result);
-		msg_free(reply);
+		if (sess->remote == NULL)
+			printf("No target attached, use 'c' to attach.\n");
+		else {
+			eval_code = lstr_newf(
+				"(function() { try { return Duktape.enc('jx', eval(\"%s\"), null, 3); } catch (e) { return e.toString(); } }).call(this);",
+				argument);
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_EVAL);
+			msg_add_string(req, lstr_cstr(eval_code));
+			reply = do_request(sess, req);
+			msg_get_string(reply, 1, &eval_result);
+			printf("%s\n", eval_result);
+			msg_free(reply);
+		}
 	}
 	else if (strcmp(command, "lv") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
