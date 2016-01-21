@@ -7,9 +7,11 @@
 
 struct session
 {
-	char      cl_buffer[CL_BUFFER_SIZE];
-	remote_t* remote;
-	bool      is_breakpoint;
+	char       cl_buffer[CL_BUFFER_SIZE];
+	lstring_t* filename;
+	int32_t    line;
+	remote_t*  remote;
+	bool       is_breakpoint;
 };
 
 enum req_command
@@ -45,7 +47,7 @@ enum nfy_command
 };
 
 static void       do_command_line (session_t* sess);
-static message_t* handle_req      (session_t* sess, const message_t* msg);
+static message_t* do_request      (session_t* sess, message_t* msg);
 static bool       process_message (session_t* sess, const message_t* msg);
 
 session_t*
@@ -107,11 +109,12 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("ssj$ ");
+		printf("\n\x1B[33;1mSSJ \x1B[32m%s:%d\x1B[m\n\x1B[33m$\x1B[m ",
+			lstr_cstr(sess->filename), sess->line);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
-				printf("ERROR: command string is too long (> 64k)");
+				printf("Command string is too long, must be < 64k");
 				sess->cl_buffer[0] = '\0';
 				break;
 			}
@@ -128,15 +131,13 @@ do_command_line(session_t* sess)
 		printf("Shutdown requested, sending detach request.\n");
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_DETACH);
-		msg_free(handle_req(sess, req));
-		msg_free(req);
+		msg_free(do_request(sess, req));
 		sess->is_breakpoint = false;
 	}
 	else if (strcmp(command, "r") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_RESUME);
-		msg_free(handle_req(sess, req));
-		msg_free(req);
+		msg_free(do_request(sess, req));
 		sess->is_breakpoint = false;
 	}
 	else if (strcmp(command, "e") == 0) {
@@ -146,8 +147,7 @@ do_command_line(session_t* sess)
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_EVAL);
 		msg_add_string(req, lstr_cstr(eval_code));
-		reply = handle_req(sess, req);
-		msg_free(req);
+		reply = do_request(sess, req);
 		msg_get_string(reply, 1, &eval_result);
 		printf("%s\n", eval_result);
 		msg_free(reply);
@@ -155,8 +155,7 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "lv") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_GET_LOCALS);
-		reply = handle_req(sess, req);
-		msg_free(req);
+		reply = do_request(sess, req);
 		num_vars = msg_get_length(reply) / 2;
 		for (i = 0; i < num_vars; ++i) {
 			msg_get_string(reply, i * 2, &var_name);
@@ -168,7 +167,7 @@ do_command_line(session_t* sess)
 }
 
 static message_t*
-handle_req(session_t* sess, const message_t* msg)
+do_request(session_t* sess, message_t* msg)
 {
 	message_t* response;
 
@@ -202,28 +201,32 @@ process_message(session_t* sess, const message_t* msg)
 			msg_get_string(msg, 2, &filename);
 			msg_get_string(msg, 3, &func_name);
 			msg_get_int(msg, 4, &line_no);
-			if (flag != 0 && !sess->is_breakpoint)
-				printf("[SSJ @ %s:%i] BREAK: in function '%s'\n", filename, line_no, func_name);
 			sess->is_breakpoint = flag != 0;
+			sess->filename = lstr_new(filename);
+			sess->line = line_no;
 			break;
 		case NFY_PRINT:
 			msg_get_string(msg, 1, &text);
-			printf("%s", text);
+			printf("\x1B[36m%s\x1B[m", text);
+			break;
+		case NFY_ALERT:
+			msg_get_string(msg, 1, &text);
+			printf("\x1B[31m%s\x1B[m", text);
 			break;
 		case NFY_THROW:
 			msg_get_int(msg, 1, &flag);
 			msg_get_string(msg, 2, &text);
 			msg_get_string(msg, 3, &filename);
 			msg_get_int(msg, 4, &line_no);
-			if (flag != 0)
-				printf("[SSJ @ %s:%i] FATAL: %s\n", filename, line_no, text);
+			printf("%s '%s' at %s:%i\n", flag == 0 ? "THROW" : "UNCAUGHT", text,
+				filename, line_no);
 			break;
 		case NFY_DETACHING:
 			msg_get_int(msg, 1, &flag);
 			if (flag == 0)
 				printf("Target detached cleanly.\n");
 			else
-				printf("Target detached due to stream error.\n");
+				printf("Target detached due to an error.\n");
 			return false;
 		}
 		break;

@@ -158,8 +158,11 @@ msg_get_length(const message_t* msg)
 }
 
 void
-msg_send(remote_t* remote, const message_t* msg)
+msg_send(remote_t* remote, message_t* msg)
 {
+	// note: msg_send() will free the message after sending it. this is for
+	//       convenience, but requires diligence on the part of the caller.
+	
 	const uint8_t EOM_BYTE = 0x00;
 
 	uint8_t lead_byte;
@@ -177,6 +180,7 @@ msg_send(remote_t* remote, const message_t* msg)
 	while (p = vector_next(&iter))
 		send_dvalue(remote, *p);
 	dyad_write(remote->socket, &EOM_BYTE, 1);
+	msg_free(msg);
 }
 
 void
