@@ -213,8 +213,9 @@ print_usage(void)
 {
 	print_banner(true, false);
 	printf("\n");
-	printf("USAGE: cell -p <out-file> [options] [target]\n");
-	printf("       cell -l <out-dir> [options] [target]\n");
+	printf("USAGE:\n");
+	printf("   cell -p <out-file> [options] [target]\n");
+	printf("   cell -l <out-dir> [options] [target]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --version          Prints the Cell compiler version and exits.          \n");

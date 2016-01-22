@@ -72,14 +72,6 @@ run_session(session_t* sess)
 	bool       is_active = true;
 	message_t* msg;
 	
-	printf("\33[0;1m\n");
-	printf("Quickstart:\n");
-	printf(" 'c' to Connect to target\n");
-	printf(" 'r' to Resume execution\n");
-	printf(" 'h' for Help with SSJ commands\n");
-	printf(" 'q' to Quit\n");
-	printf("\33[m");
-	
 	while (is_active) {
 		if (sess->remote == NULL || sess->is_breakpoint)
 			is_active &= do_command_line(sess);
@@ -118,12 +110,8 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		if (sess->remote == NULL)
-			printf("\n\x1B[33;1mSSJ \x1B[31mno target\n\x1B[33m$\x1B[m ");
-		else {
-			printf("\n\x1B[33;1mSSJ \x1B[36;1m%s:%d\x1B[m\n\x1B[33m$\x1B[m ",
-				lstr_cstr(sess->filename), sess->line);
-		}
+		printf("\n\x1B[33;1mSSJ \x1B[0;1m[%s:%d]\x1B[m\n\x1B[32m$\x1B[m ",
+			lstr_cstr(sess->filename), sess->line);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -274,7 +262,7 @@ process_message(session_t* sess, const message_t* msg)
 			break;
 		case NFY_PRINT:
 			msg_get_string(msg, 1, &text);
-			printf("\x1B[36m%s\x1B[m", text);
+			printf("\x1B[32m%s\x1B[m", text);
 			break;
 		case NFY_ALERT:
 			msg_get_string(msg, 1, &text);
@@ -285,8 +273,8 @@ process_message(session_t* sess, const message_t* msg)
 			msg_get_string(msg, 2, &text);
 			msg_get_string(msg, 3, &filename);
 			msg_get_int(msg, 4, &line_no);
-			printf("%s '%s' at %s:%i\n", flag == 0 ? "THROW" : "UNCAUGHT", text,
-				filename, line_no);
+			if (flag != 0)
+				printf("\033[0;1m'%s' thrown at %s:%d\033[m\n", text, filename, line_no);
 			break;
 		case NFY_DETACHING:
 			msg_get_int(msg, 1, &flag);

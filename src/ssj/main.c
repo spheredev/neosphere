@@ -146,8 +146,9 @@ print_usage(void)
 {
 	print_banner(true, false);
 	printf("\n");
-	printf("USAGE: ssj [options] <game-path>\n");
-	printf("       ssj -c [options]\n");
+	printf("USAGE:\n");
+	printf("   ssj [options] <game-path>\n");
+	printf("   ssj -c [options]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --version          Prints the SSJ debugger version.                     \n");
