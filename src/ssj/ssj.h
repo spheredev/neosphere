@@ -14,6 +14,11 @@
 #include <string.h>
 #include <time.h>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
 #include "lstring.h"
 #include "path.h"
 #include "vector.h"

@@ -110,7 +110,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[0;1m%s:%d\33[m\33[33;1m ssj$\33[m ",
+		printf("\n\33[0;1m%s:%d\n\33[33;1mssj$\33[m ",
 			lstr_cstr(sess->filename), sess->line);
 		ch = getchar();
 		while (ch != '\n') {
@@ -124,7 +124,7 @@ do_command_line(session_t* sess)
 		}
 		sess->cl_buffer[ch_idx] = '\0';
 	}
-	
+
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
@@ -133,11 +133,11 @@ do_command_line(session_t* sess)
 			printf("Already attached.");
 		else {
 			if (!(sess->remote = connect_remote("127.0.0.1", 1208)))
-				printf("Failed to connect to target.\n");
+				printf("Failed to connect to minisphere.\n");
 		}
 	}
 	else if (strcmp(command, "q") == 0) {
-		printf("Exit requested, shutting down SSJ\n");
+		printf("Exit requested, ending SSJ session\n");
 		if (sess->remote == NULL)
 			return false;
 		else {
@@ -149,7 +149,7 @@ do_command_line(session_t* sess)
 	}
 	else if (strcmp(command, "r") == 0) {
 		if (sess->remote == NULL)
-			printf("No target attached, use 'c' to attach.\n");
+			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_RESUME);
@@ -159,7 +159,7 @@ do_command_line(session_t* sess)
 	}
 	else if (strcmp(command, "s") == 0) {
 		if (sess->remote == NULL)
-			printf("No target attached, use 'c' to attach.\n");
+			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_STEP_OVER);
@@ -169,7 +169,7 @@ do_command_line(session_t* sess)
 	}
 	else if (strcmp(command, "si") == 0) {
 		if (sess->remote == NULL)
-			printf("No target attached, use 'c' to attach.\n");
+			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_STEP_INTO);
@@ -179,7 +179,7 @@ do_command_line(session_t* sess)
 	}
 	else if (strcmp(command, "so") == 0) {
 		if (sess->remote == NULL)
-			printf("No target attached, use 'c' to attach.\n");
+			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_STEP_OUT);
@@ -189,7 +189,7 @@ do_command_line(session_t* sess)
 	}
 	else if (strcmp(command, "e") == 0) {
 		if (sess->remote == NULL)
-			printf("No target attached, use 'c' to attach.\n");
+			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
 			eval_code = lstr_newf(
 				"(function() { try { return Duktape.enc('jx', eval(\"%s\"), null, 3); } catch (e) { return e.toString(); } }).call(this);",
@@ -279,9 +279,9 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_DETACHING:
 			msg_get_int(msg, 1, &flag);
 			if (flag == 0)
-				printf("Target detached cleanly.\n");
+				printf("minisphere detached cleanly.\n");
 			else
-				printf("Target detached due to an error.\n");
+				printf("minisphere detached due to an error.\n");
 			return false;
 		}
 		break;

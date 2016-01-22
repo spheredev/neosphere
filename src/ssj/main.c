@@ -12,7 +12,7 @@ struct cmdline
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
 static void            print_cell_quote (void);
 static void            print_banner     (bool want_copyright, bool want_deps);
-static void            print_usage       (void);
+static void            print_usage      (void);
 
 int
 main(int argc, char* argv[])
@@ -21,22 +21,29 @@ main(int argc, char* argv[])
 	lstring_t*      game_command;
 	int             retval;
 	session_t*      session;
-	
+
 	srand((unsigned int)time(NULL));
 	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
 		return retval;
-	
+
 	print_banner(true, false);
 	printf("\n");
-	
+
 	if (cmdline->path != NULL) {
 		printf("Starting minisphere... ");
+		fflush(stdout);
+
 #ifdef _WIN32
 		game_command = lstr_newf("start msphere --debug \"%s\"", path_cstr(cmdline->path));
-#else
-		game_command = lstr_newf("msphere --debug \"%s\" &", path_cstr(cmdline->path));
-#endif
 		system(lstr_cstr(game_command));
+#else
+		game_command = lstr_newf("msphere --debug \"%s\"", path_cstr(cmdline->path));
+		if (fork() == 0) {
+			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
+			system(lstr_cstr(game_command));
+		}
+#endif
+
 		lstr_free(game_command);
 		printf("OK.\n");
 	}

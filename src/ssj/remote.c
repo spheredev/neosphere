@@ -55,27 +55,34 @@ shutdown_client(void)
 remote_t*
 connect_remote(const char* hostname, int port)
 {
+	bool      is_connected;
 	remote_t* session;
+	int       state;
+	clock_t   timeout;
 
 	session = calloc(1, sizeof(remote_t));
 	session->recv_buf_size = 65536;
 	session->recv_buf = malloc(session->recv_buf_size);
 	
 	printf("Connecting to \33[36;1m%s:%d\33[m... ", hostname, port);
+	fflush(stdout);
 	session->socket = dyad_newStream();
 	dyad_addListener(session->socket, DYAD_EVENT_DATA, on_socket_recv, session);
-	if (dyad_connect(session->socket, hostname, port) != 0)
-		goto on_error;
-	while (dyad_getState(session->socket) == DYAD_STATE_CONNECTING)
+	is_connected = false;
+	timeout = clock() + (clock_t)(30.0 * CLOCKS_PER_SEC);
+	do {
+		state = dyad_getState(session->socket);
+		if (state == DYAD_STATE_CLOSED)
+			dyad_connect(session->socket, hostname, port);
+		is_connected = state == DYAD_STATE_CONNECTED;
+		if (clock() >= timeout)
+			goto on_error;
 		dyad_update();
-	if (dyad_getState(session->socket) == DYAD_STATE_CONNECTED)
-		printf("OK.\n");
-	else
-		goto on_error;
+	} while (state != DYAD_STATE_CONNECTED);
+	printf("OK.\n");
 	
 	if (!parse_handshake(session))
 		goto on_error;
-
 	return session;
 
 on_error:
