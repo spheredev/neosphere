@@ -18,6 +18,7 @@ int
 main(int argc, char* argv[])
 {
 	struct cmdline* cmdline;
+	lstring_t*      game_command;
 	int             retval;
 	session_t*      session;
 	
@@ -27,6 +28,18 @@ main(int argc, char* argv[])
 	
 	print_banner(true, false);
 	printf("\n");
+	
+	if (cmdline->path != NULL) {
+		printf("Starting minisphere... ");
+#ifdef _WIN32
+		game_command = lstr_newf("start msphere --debug \"%s\"", path_cstr(cmdline->path));
+#else
+		game_command = lstr_newf("msphere --debug \"%s\" &", path_cstr(cmdline->path));
+#endif
+		system(lstr_cstr(game_command));
+		lstr_free(game_command);
+		printf("OK.\n");
+	}
 	
 	initialize_client();
 	session = new_session();

@@ -110,7 +110,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\x1B[33;1mSSJ \x1B[0;1m[%s:%d]\x1B[m\n\x1B[32m$\x1B[m ",
+		printf("\n\33[0;1m%s:%d\33[m\33[33;1m ssj$\33[m ",
 			lstr_cstr(sess->filename), sess->line);
 		ch = getchar();
 		while (ch != '\n') {
@@ -262,7 +262,7 @@ process_message(session_t* sess, const message_t* msg)
 			break;
 		case NFY_PRINT:
 			msg_get_string(msg, 1, &text);
-			printf("\x1B[32m%s\x1B[m", text);
+			printf("\x1B[36m%s\x1B[m", text);
 			break;
 		case NFY_ALERT:
 			msg_get_string(msg, 1, &text);
