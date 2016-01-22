@@ -51,12 +51,19 @@ static message_t* do_request      (session_t* sess, message_t* msg);
 static bool       process_message (session_t* sess, const message_t* msg);
 
 session_t*
-new_session(const char* hostname, int port)
+new_session(void)
 {
 	session_t* sess;
 
 	sess = calloc(1, sizeof(session_t));
 	return sess;
+}
+
+bool
+attach_session(session_t* sess, const char* hostname, int port)
+{
+	sess->remote = connect_remote(hostname, port);
+	return sess->remote != NULL;
 }
 
 void
@@ -65,7 +72,7 @@ run_session(session_t* sess)
 	bool       is_active = true;
 	message_t* msg;
 	
-	printf("\33[0;1m");
+	printf("\33[0;1m\n");
 	printf("Quickstart:\n");
 	printf(" 'c' to Connect to target\n");
 	printf(" 'r' to Resume execution\n");
@@ -158,6 +165,36 @@ do_command_line(session_t* sess)
 		else {
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_RESUME);
+			msg_free(do_request(sess, req));
+			sess->is_breakpoint = false;
+		}
+	}
+	else if (strcmp(command, "s") == 0) {
+		if (sess->remote == NULL)
+			printf("No target attached, use 'c' to attach.\n");
+		else {
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_STEP_OVER);
+			msg_free(do_request(sess, req));
+			sess->is_breakpoint = false;
+		}
+	}
+	else if (strcmp(command, "si") == 0) {
+		if (sess->remote == NULL)
+			printf("No target attached, use 'c' to attach.\n");
+		else {
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_STEP_INTO);
+			msg_free(do_request(sess, req));
+			sess->is_breakpoint = false;
+		}
+	}
+	else if (strcmp(command, "so") == 0) {
+		if (sess->remote == NULL)
+			printf("No target attached, use 'c' to attach.\n");
+		else {
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_STEP_OUT);
 			msg_free(do_request(sess, req));
 			sess->is_breakpoint = false;
 		}

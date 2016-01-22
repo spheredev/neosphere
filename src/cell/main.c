@@ -4,8 +4,9 @@
 #include "build.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
-static void print_banner     (bool want_copyright, bool want_deps);
 static void print_cell_quote (void);
+static void print_banner     (bool want_copyright, bool want_deps);
+static void print_usage      (void);
 
 static path_t* s_in_path;
 static path_t* s_out_path;
@@ -69,19 +70,7 @@ parse_cmdline(int argc, char* argv[])
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
-				print_banner(false, false);
-				printf("\n");
-				printf("USAGE: cell -p <out-file> [options] [target]\n");
-				printf("       cell -l <out-dir> [options] [target]\n");
-				printf("\n");
-				printf("OPTIONS:\n");
-				printf("       --version          Prints the Cell compiler version and exits.          \n");
-				printf("       --in               Sets the input directory; Cell looks for sources in  \n");
-				printf("                          the current working directory by default.            \n");
-				printf("   -l, --make-dist        Builds an unpacked game distribution.                \n");
-				printf("   -p, --make-package     Builds a Sphere package (.spk).                      \n");
-				printf("   -d, --debug            Generates a source map which maps compiled assets to \n");
-				printf("                          their corresponding source files, aiding debugging.  \n");
+				print_usage();
 				return false;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
@@ -170,7 +159,7 @@ parse_cmdline(int argc, char* argv[])
 		return false;
 	}
 	if (s_out_path == NULL) {
-		printf("cell: error: no output, specify output using -p or -l\n");
+		print_usage();
 		return false;
 	}
 	
@@ -180,21 +169,6 @@ parse_cmdline(int argc, char* argv[])
 missing_argument:
 	printf("cell: error: no argument provided for '%s'\n", argv[i - 1]);
 	return false;
-}
-
-static void
-print_banner(bool want_copyright, bool want_deps)
-{
-	printf("Cell %s Sphere Game Compiler %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
-	if (want_copyright) {
-		printf("A scriptable build engine for Sphere games\n");
-		printf("(c) 2016 Fat Cerberus\n");
-	}
-	if (want_deps) {
-		printf("\n");
-		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
-		printf("       zlib: v%s\n", zlibVersion());
-	}
 }
 
 static void
@@ -217,4 +191,37 @@ print_cell_quote(void)
 	printf("Cell seems to be going through some sort of transformation...\n");
 	printf("He's pumping himself up like a balloon!\n\n");
 	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
+}
+
+static void
+print_banner(bool want_copyright, bool want_deps)
+{
+	printf("Cell %s Sphere Game Compiler %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	if (want_copyright) {
+		printf("A scriptable build engine for Sphere games\n");
+		printf("(c) 2016 Fat Cerberus\n");
+	}
+	if (want_deps) {
+		printf("\n");
+		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
+		printf("       zlib: v%s\n", zlibVersion());
+	}
+}
+
+static void
+print_usage(void)
+{
+	print_banner(true, false);
+	printf("\n");
+	printf("USAGE: cell -p <out-file> [options] [target]\n");
+	printf("       cell -l <out-dir> [options] [target]\n");
+	printf("\n");
+	printf("OPTIONS:\n");
+	printf("       --version          Prints the Cell compiler version and exits.          \n");
+	printf("       --in               Sets the input directory; Cell looks for sources in  \n");
+	printf("                          the current working directory by default.            \n");
+	printf("   -l, --make-dist        Builds an unpacked game distribution.                \n");
+	printf("   -p, --make-package     Builds a Sphere package (.spk).                      \n");
+	printf("   -d, --debug            Generates a source map which maps compiled assets to \n");
+	printf("                          their corresponding source files, aiding debugging.  \n");
 }

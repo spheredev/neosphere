@@ -10,8 +10,9 @@ struct cmdline
 };
 
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
-static void            print_banner     (bool want_copyright, bool want_deps);
 static void            print_cell_quote (void);
+static void            print_banner     (bool want_copyright, bool want_deps);
+static void            print_usage       (void);
 
 int
 main(int argc, char* argv[])
@@ -29,6 +30,8 @@ main(int argc, char* argv[])
 	
 	initialize_client();
 	session = new_session();
+	if (!attach_session(session, "127.0.0.1", 1208))
+		return EXIT_FAILURE;
 	run_session(session);
 	shutdown_client();
 	return EXIT_SUCCESS;
@@ -50,16 +53,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
-				print_banner(true, false);
-				printf("\n");
-				printf("USAGE: ssj [options] <game path>\n");
-				printf("       ssj -c [options]\n");
-				printf("\n");
-				printf("OPTIONS:\n");
-				printf("       --version          Prints the SSJ debugger version.                     \n");
-				printf("       --help             Prints this help text.                               \n");
-				printf("   -c, --connect          Attempts to attach to a target already running. If   \n");
-				printf("                          the connection attempt fails, SSJ will exit.         \n");
+				print_usage();
 				goto on_output_only;
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
@@ -100,30 +94,16 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 	
 	// sanity-check command line parameters
 	if (!have_target) {
-		printf("ssj: error: no target specified. please provide path or use -c.\n");
-		printf("     run 'ssj --help' for details.\n");
+		print_usage();
+		goto on_output_only;
 	}
 	
 	// we're good!
-	return EXIT_SUCCESS;
+	return cmdline;
 
 on_output_only:
 	free(cmdline);
 	return NULL;
-}
-
-static void
-print_banner(bool want_copyright, bool want_deps)
-{
-	printf("SSJ %s Sphere Game Debugger %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
-	if (want_copyright) {
-		printf("A powerful JavaScript debugger for minisphere\n");
-		printf("(c) 2016 Fat Cerberus\n");
-	}
-	if (want_deps) {
-		printf("\n");
-		printf("    Dyad.c: v%s\n", dyad_getVersion());
-	}
 }
 
 static void
@@ -145,4 +125,33 @@ print_cell_quote(void)
 	printf("Release it--release everything! Remember all the pain he's caused, the people\n");
 	printf("he's hurt--now MAKE THAT YOUR POWER!!\n\n");
 	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
+}
+
+static void
+print_banner(bool want_copyright, bool want_deps)
+{
+	printf("SSJ %s Sphere Game Debugger %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	if (want_copyright) {
+		printf("A powerful JavaScript debugger for minisphere\n");
+		printf("(c) 2016 Fat Cerberus\n");
+	}
+	if (want_deps) {
+		printf("\n");
+		printf("    Dyad.c: v%s\n", dyad_getVersion());
+	}
+}
+
+static void
+print_usage(void)
+{
+	print_banner(true, false);
+	printf("\n");
+	printf("USAGE: ssj [options] <game-path>\n");
+	printf("       ssj -c [options]\n");
+	printf("\n");
+	printf("OPTIONS:\n");
+	printf("       --version          Prints the SSJ debugger version.                     \n");
+	printf("       --help             Prints this help text.                               \n");
+	printf("   -c, --connect          Attempts to attach to a target already running. If   \n");
+	printf("                          the connection attempt fails, SSJ will exit.         \n");
 }
