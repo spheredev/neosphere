@@ -33,16 +33,19 @@ main(int argc, char* argv[])
 		printf("Starting minisphere... ");
 		fflush(stdout);
 
-#ifdef _WIN32
+		// fork a new process to run minisphere, suppressing stdout to avoid SSJ and minisphere
+		// uselessly fighting over the terminal. on Windows, 'start' makes this unnecessary,
+		// since it creates a new console.
+		#ifdef _WIN32
 		game_command = lstr_newf("start msphere --debug \"%s\"", path_cstr(cmdline->path));
 		system(lstr_cstr(game_command));
-#else
+		#else
 		game_command = lstr_newf("msphere --debug \"%s\"", path_cstr(cmdline->path));
 		if (fork() == 0) {
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
-			system(lstr_cstr(game_command));
+			execlp("msphere", "msphere", "--debug", lstr_cstr(game_command));
 		}
-#endif
+		#endif
 
 		lstr_free(game_command);
 		printf("OK.\n");
