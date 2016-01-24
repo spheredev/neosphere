@@ -11,6 +11,11 @@ src/plugin/bin/
 setup/*.exe
 studio/
 
+# Code::Blocks cruft
+cbp/debug
+cbp/*.layout
+cbp/*.depends
+
 # Windows cruft
 Desktop.ini
 Thumbs.db

@@ -110,7 +110,7 @@ main(int argc, char* argv[])
 	}
 	else
 		return EXIT_FAILURE;
-	
+
 	if (!initialize_engine())
 		return EXIT_FAILURE;
 
@@ -344,7 +344,7 @@ set_resolution(int width, int height)
 {
 	ALLEGRO_MONITOR_INFO monitor;
 	ALLEGRO_TRANSFORM    transform;
-	
+
 	g_res_x = width;
 	g_res_y = height;
 
@@ -361,7 +361,7 @@ set_resolution(int width, int height)
 		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
 		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
 	}
-	
+
 	al_identity_transform(&transform);
 	al_scale_transform(&transform, g_scale_x, g_scale_y);
 	al_use_transform(&transform);
@@ -392,11 +392,11 @@ do_events(void)
 	ALLEGRO_EVENT event;
 
 	dyad_update();
-	
+
 	#ifndef MINISPHERE_REDIST
 	update_debugger();
 	#endif
-	
+
 	update_async();
 	update_input();
 	update_audialis();
@@ -485,7 +485,7 @@ flip_screen(int framerate)
 	else {
 		++s_frame_skips;
 	}
-	
+
 	// if framerate is nonzero and we're backed up on frames, skip frames until we
 	// catch up. there is a cap on consecutive frameskips to avoid the situation where
 	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
@@ -544,7 +544,7 @@ toggle_fullscreen(void)
 		s_is_fullscreen = false;
 		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, false);
 		g_scale_x = g_scale_y = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
-		
+
 		// we have to resize and reposition manually because Allegro is bugged
 		// and gives us a 0x0 window when switching out of fullscreen
 		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
@@ -552,7 +552,7 @@ toggle_fullscreen(void)
 		al_set_window_position(g_display,
 			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
 			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
-		
+
 		// strange but true: this fixes an Allegro bug where OpenGL displays get
 		// stuck in limbo when switching out of fullscreen.
 		al_destroy_bitmap(al_clone_bitmap(al_get_backbuffer(g_display)));
@@ -592,18 +592,18 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	int                    title_index;
 
 	int i;
-	
+
 	title_index = rand() % (sizeof(ERROR_TEXT) / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];
 	subtitle = ERROR_TEXT[title_index][1];
 	if (g_sys_font == NULL)
 		goto show_error_box;
-	
+
 	// create wraptext from error message
 	if (!(error_info = word_wrap_text(g_sys_font, msg, g_res_x - 84)))
 		goto show_error_box;
 	num_lines = get_wraptext_line_count(error_info);
-	
+
 	// show error in-engine, Sphere 1.x style
 	unskip_frame();
 	is_finished = false;
@@ -633,7 +633,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 			al_get_keyboard_state(&keyboard);
 			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
 				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
-			
+
 			// if Ctrl+C is pressed, copy the error message and location to clipboard
 			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
 				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
@@ -649,11 +649,11 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	free_wraptext(error_info);
 	shutdown_engine();
 	exit(EXIT_SUCCESS);
-	
+
 show_error_box:
 	// use a native message box only as a last resort
 	al_show_native_message_box(g_display, "Script Error",
-		"minisphere encountered an error during game execution.", 
+		"minisphere encountered an error during game execution.",
 		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(EXIT_SUCCESS);
@@ -663,9 +663,9 @@ static bool
 initialize_engine(void)
 {
 	uint32_t al_version;
-	
+
 	srand(time(NULL));
-	
+
 	// initialize Allegro
 	al_version = al_get_allegro_version();
 	console_log(0, "Initializing Allegro (%d.%d.%d)",
@@ -705,7 +705,7 @@ initialize_engine(void)
 
 	// register the Sphere API
 	initialize_api(g_duk);
-	
+
 	return true;
 
 on_error:
@@ -719,25 +719,25 @@ static void
 shutdown_engine(void)
 {
 	save_key_map();
-	
+
 	#ifndef MINISPHERE_REDIST
 	shutdown_debugger();
 	#endif
-	
+
 	shutdown_map_engine();
 	shutdown_input();
-	
+
 	console_log(0, "Shutting down Duktape");
 	duk_destroy_heap(g_duk);
-	
+
 	console_log(0, "Shutting down Dyad");
 	dyad_shutdown();
-	
+
 	shutdown_spritesets();
 	shutdown_audialis();
 	shutdown_galileo();
 	shutdown_async();
-	
+
 	console_log(0, "Shutting down Allegro");
 	if (g_display != NULL)
 		al_destroy_display(g_display);
@@ -782,14 +782,14 @@ find_startup_game(path_t* *out_path)
 	const char*       filename;
 	ALLEGRO_FS_ENTRY* fse;
 	int               n_spk_files = 0;
-	
+
 	// prefer startup game if one exists
 	*out_path = path_rebase(path_new("startup/game.sgm"), enginepath());
 	if (al_filename_exists(path_cstr(*out_path)))
 		return true;
 	path_free(*out_path);
 	*out_path = NULL;
-	
+
 	// check for single SPK package alongside engine
 	*out_path = path_dup(enginepath());
 	engine_dir = al_create_fs_entry(path_cstr(*out_path));
@@ -806,7 +806,7 @@ find_startup_game(path_t* *out_path)
 	al_close_directory(engine_dir);
 	if (n_spk_files == 1)
 		return true;  // found an SPK
-	
+
 	// if we reached this point, no suitable startup game was found.
 	path_free(*out_path);
 	*out_path = NULL;
@@ -829,7 +829,7 @@ parse_command_line(
 	#else
 	*out_want_fullscreen = true;
 	#endif
-	
+
 	*out_game_path = NULL;
 	*out_frameskip = 5;
 	*out_verbosity = 1;
@@ -926,7 +926,7 @@ report_error(const char* fmt, ...)
 	va_list ap;
 
 	lstring_t* error_text;
-	
+
 	va_start(ap, fmt);
 	error_text = lstr_vnewf(fmt, ap);
 	va_end(ap);

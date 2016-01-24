@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="minisphere" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="debug/msphere" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="../bin/msphere" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-DDUK_OPT_HAVE_CUSTOM_H" />
+			<Add directory="../src/minisphere" />
+			<Add directory="../src/shared" />
+		</Compiler>
+		<Linker>
+			<Add library="allegro_audio" />
+			<Add library="allegro_acodec" />
+			<Add library="allegro_color" />
+			<Add library="allegro_dialog" />
+			<Add library="allegro_image" />
+			<Add library="allegro_memfile" />
+			<Add library="allegro_primitives" />
+			<Add library="allegro" />
+			<Add library="mng" />
+			<Add library="z" />
+			<Add library="m" />
+		</Linker>
+		<Unit filename="../src/minisphere/animation.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/animation.h" />
+		<Unit filename="../src/minisphere/api.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/api.h" />
+		<Unit filename="../src/minisphere/async.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/async.h" />
+		<Unit filename="../src/minisphere/atlas.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/atlas.h" />
+		<Unit filename="../src/minisphere/audialis.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/audialis.h" />
+		<Unit filename="../src/minisphere/bytearray.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/bytearray.h" />
+		<Unit filename="../src/minisphere/color.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/color.h" />
+		<Unit filename="../src/minisphere/console.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/console.h" />
+		<Unit filename="../src/minisphere/debugger.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/debugger.h" />
+		<Unit filename="../src/minisphere/duk_custom.h" />
+		<Unit filename="../src/minisphere/file.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/file.h" />
+		<Unit filename="../src/minisphere/font.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/font.h" />
+		<Unit filename="../src/minisphere/galileo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/galileo.h" />
+		<Unit filename="../src/minisphere/geometry.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/geometry.h" />
+		<Unit filename="../src/minisphere/image.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/image.h" />
+		<Unit filename="../src/minisphere/input.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/input.h" />
+		<Unit filename="../src/minisphere/logger.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/logger.h" />
+		<Unit filename="../src/minisphere/main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/map_engine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/map_engine.h" />
+		<Unit filename="../src/minisphere/minisphere.h" />
+		<Unit filename="../src/minisphere/obsmap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/obsmap.h" />
+		<Unit filename="../src/minisphere/persons.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/persons.h" />
+		<Unit filename="../src/minisphere/physics.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/physics.h" />
+		<Unit filename="../src/minisphere/primitives.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/primitives.h" />
+		<Unit filename="../src/minisphere/rng.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/rng.h" />
+		<Unit filename="../src/minisphere/script.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/script.h" />
+		<Unit filename="../src/minisphere/shader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/shader.h" />
+		<Unit filename="../src/minisphere/sockets.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/sockets.h" />
+		<Unit filename="../src/minisphere/spherefs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/spherefs.h" />
+		<Unit filename="../src/minisphere/spk.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/spk.h" />
+		<Unit filename="../src/minisphere/spriteset.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/spriteset.h" />
+		<Unit filename="../src/minisphere/surface.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/surface.h" />
+		<Unit filename="../src/minisphere/tileset.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/tileset.h" />
+		<Unit filename="../src/minisphere/utility.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/utility.h" />
+		<Unit filename="../src/minisphere/windowstyle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/minisphere/windowstyle.h" />
+		<Unit filename="../src/shared/duk_config.h" />
+		<Unit filename="../src/shared/duktape.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/duktape.h" />
+		<Unit filename="../src/shared/dyad.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/dyad.h" />
+		<Unit filename="../src/shared/lstring.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/lstring.h" />
+		<Unit filename="../src/shared/mt19937ar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/mt19937ar.h" />
+		<Unit filename="../src/shared/path.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/path.h" />
+		<Unit filename="../src/shared/unicode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/unicode.h" />
+		<Unit filename="../src/shared/vector.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/vector.h" />
+		<Unit filename="../src/shared/version.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
