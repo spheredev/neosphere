@@ -7,8 +7,8 @@
 ; For a GDK installer, you will also need to build the Console engine and
 ; GDK tools (Cell and SSJ).
 ;
-; To build the engine, enter the following commands from the directory where
-; you checked out the source:
+; To build the redistributable engine, enter the following commands from the
+; directory where you checked out the source:
 ;     MSBuild msvc/minisphere.sln /p:Configuration=Release
 ;
 ; And for minisphere GDK:
@@ -18,7 +18,7 @@
 ; if, after copying the Sphere Studio binaries into bin/spherestudio, you
 ; still need to build an engine-only installer, you can do so by commenting out the
 ; line below:
-;#define WANT_GDK_SETUP
+#define WANT_GDK_SETUP
 
 #define AppName "minisphere"
 #define AppVersion "2.99.812"
@@ -77,6 +77,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 #ifdef WANT_GDK_SETUP
 Name: "engine"; Description: "{#AppName} Console {#AppVersion} (required)"; Types: full compact custom; Flags: fixed
 Name: "cell"; Description: "Cell {#AppVersion}"; Types: full
+Name: "ssj"; Description: "SSJ {#AppVersion}"; Types: full
 Name: "studio"; Description: "Sphere Studio 1.2.0"; Types: full
 Name: "docs"; Description: "{#AppName} Documentation"
 Name: "docs/api"; Description: "API Reference"; Types: full compact
@@ -96,6 +97,7 @@ Name: "path"; Description: "Add {#AppName} GDK to the PATH"; GroupDescription: "
 Source: "..\bin\msphere.exe"; DestName: "{#AppExeName2}"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: engine
 Source: "..\bin\msphere-nc.exe"; DestName: "{#AppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: engine
 Source: "..\bin\cell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: cell
+Source: "..\bin\ssj.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: ssj
 Source: "..\bin\spheredev.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\spherical.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\bin\plugin\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: studio

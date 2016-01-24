@@ -139,7 +139,8 @@ do_command_line(session_t* sess)
 		}
 	}
 	else if (strcmp(command, "quit") == 0) {
-		printf("Quit SSJ, closing debug session\n");
+		printf("Quit, asking target to detach... ");
+		fflush(stdout);
 		if (sess->remote == NULL)
 			return false;
 		else {
@@ -148,11 +149,13 @@ do_command_line(session_t* sess)
 			msg_free(do_request(sess, req));
 			sess->is_breakpoint = false;
 		}
+		printf("OK.\n");
 	}
-	else if (strcmp(command, "run") == 0) {
+	else if (strcmp(command, "go") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
+			printf("Resuming execution at %s:%d\n", lstr_cstr(sess->filename), sess->line);
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_RESUME);
 			msg_free(do_request(sess, req));
@@ -171,12 +174,12 @@ do_command_line(session_t* sess)
 				msg_get_string(reply, i * 2, &filename);
 				msg_get_string(reply, i * 2 + 1, &item_name);
 				msg_get_int(reply, i * 2 + 2, &line_no);
-				printf("%s() <%s:%d>\n", item_name, filename, line_no);
+				printf("%3zd - %s() <%s:%d>\n", i, item_name, filename, line_no);
 			}
 			msg_free(reply);
 		}
 	}
-	else if (strcmp(command, "step") == 0) {
+	else if (strcmp(command, "next") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -186,7 +189,7 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "step-in") == 0) {
+	else if (strcmp(command, "step") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -196,7 +199,7 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "step-out") == 0) {
+	else if (strcmp(command, "out") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
