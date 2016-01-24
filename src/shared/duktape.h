@@ -1,11 +1,11 @@
 /*
- *  Duktape public API for Duktape 1.4.0.
+ *  Duktape public API for Duktape 1.4.99.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit cad6f595382a0cc1a7e4207794ade5be11b3e397 (v1.4.0).
+ *  Git commit c8d3e3691b5bdb8ff690926e248df0e579fcdbde (v1.4.0-56-gc8d3e36).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -72,6 +72,7 @@
  *  * Karl Skomski <karl@skomski.com>
  *  * Bruce Pascoe <fatcerberus1@gmail.com>
  *  * Ren\u00e9 Hollander <rene@rene8888.at>
+ *  * Julien Hamaide (https://github.com/crazyjul)
  *  
  *  Other contributions
  *  ===================
@@ -109,6 +110,7 @@
  *  * Michael Drake (https://github.com/tlsa)
  *  * https://github.com/chris-y
  *  * Laurent Zubiaur (https://github.com/lzubiaur)
+ *  * Ole Andr\u00e9 Vadla Ravn\u00e5s (https://github.com/oleavr)
  *  
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
@@ -213,15 +215,15 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10400L
+#define DUK_VERSION                       10499L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "cad6f595382a0cc1a7e4207794ade5be11b3e397"
-#define DUK_GIT_DESCRIBE                  "v1.4.0"
+#define DUK_GIT_COMMIT                    "c8d3e3691b5bdb8ff690926e248df0e579fcdbde"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-56-gc8d3e36"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */

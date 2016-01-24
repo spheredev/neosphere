@@ -296,7 +296,7 @@ parse_handshake(remote_t* remote)
 		goto on_error;
 	printf("OK.\n");
 	printf("  Attached to \33[36;1m%s\33[m\n", next_token);
-	printf("  Duktape version is \33[36;1m%s\33[m\n", token);
+	printf("  Duktape \33[36;1m%s\33[m\n", token);
 
 	return true;
 

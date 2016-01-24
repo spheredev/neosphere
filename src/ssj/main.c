@@ -36,16 +36,16 @@ main(int argc, char* argv[])
 		// fork a new process to run minisphere, suppressing stdout to avoid SSJ and minisphere
 		// uselessly fighting over the terminal. on Windows, 'start' makes this unnecessary,
 		// since it creates a new console.
-		#ifdef _WIN32
+	#ifdef _WIN32
 		game_command = lstr_newf("start msphere --debug \"%s\"", path_cstr(cmdline->path));
 		system(lstr_cstr(game_command));
 		lstr_free(game_command);
-		#else
+	#else
 		if (fork() == 0) {
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
 			execlp("msphere", "msphere", "--debug", path_cstr(cmdline->path), NULL);
 		}
-		#endif
+	#endif
 
 		printf("OK.\n");
 	}

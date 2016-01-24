@@ -28,7 +28,7 @@ enum req_command
 	REQ_DEL_BREAK = 0x19,
 	REQ_GET_VAR = 0x1A,
 	REQ_PUT_VAR = 0x1B,
-	REQ_CALLSTACK = 0x1C,
+	REQ_GET_CALLSTACK = 0x1C,
 	REQ_GET_LOCALS = 0x1D,
 	REQ_EVAL = 0x1E,
 	REQ_DETACH = 0x1F,
@@ -99,18 +99,20 @@ do_command_line(session_t* sess)
 	size_t      ch_idx = 0;
 	lstring_t*  eval_code;
 	const char* eval_result;
-	size_t      num_vars;
+	const char* filename;
+	int32_t     line_no;
+	size_t      num_items;
 	char*       parsee;
 	message_t*  reply;
 	message_t*  req;
-	const char* var_name;
+	const char* item_name;
 
 	size_t i;
 
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[0;1m%s:%d\n\33[33;1mssj$\33[m ",
+		printf("\n\33[0;1m%s:%d \33[33;1mssj$\33[m ",
 			lstr_cstr(sess->filename), sess->line);
 		ch = getchar();
 		while (ch != '\n') {
@@ -136,8 +138,8 @@ do_command_line(session_t* sess)
 				printf("Failed to connect to minisphere.\n");
 		}
 	}
-	else if (strcmp(command, "q") == 0) {
-		printf("Exit requested, ending SSJ session\n");
+	else if (strcmp(command, "quit") == 0) {
+		printf("Quit SSJ, closing debug session\n");
 		if (sess->remote == NULL)
 			return false;
 		else {
@@ -147,7 +149,7 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "r") == 0) {
+	else if (strcmp(command, "run") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -157,7 +159,24 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "s") == 0) {
+	else if (strcmp(command, "stack") == 0) {
+		if (sess->remote == NULL)
+			printf("minisphere not attached, use 'c' to attach.\n");
+		else {
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_GET_CALLSTACK);
+			reply = do_request(sess, req);
+			num_items = msg_get_length(reply) / 4;
+			for (i = 0; i < num_items; ++i) {
+				msg_get_string(reply, i * 2, &filename);
+				msg_get_string(reply, i * 2 + 1, &item_name);
+				msg_get_int(reply, i * 2 + 2, &line_no);
+				printf("%s() <%s:%d>\n", item_name, filename, line_no);
+			}
+			msg_free(reply);
+		}
+	}
+	else if (strcmp(command, "step") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -167,7 +186,7 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "si") == 0) {
+	else if (strcmp(command, "step-in") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -177,7 +196,7 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "so") == 0) {
+	else if (strcmp(command, "step-out") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -187,7 +206,7 @@ do_command_line(session_t* sess)
 			sess->is_breakpoint = false;
 		}
 	}
-	else if (strcmp(command, "e") == 0) {
+	else if (strcmp(command, "eval") == 0) {
 		if (sess->remote == NULL)
 			printf("minisphere not attached, use 'c' to attach.\n");
 		else {
@@ -203,14 +222,14 @@ do_command_line(session_t* sess)
 			msg_free(reply);
 		}
 	}
-	else if (strcmp(command, "lv") == 0) {
+	else if (strcmp(command, "var") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_GET_LOCALS);
 		reply = do_request(sess, req);
-		num_vars = msg_get_length(reply) / 2;
-		for (i = 0; i < num_vars; ++i) {
-			msg_get_string(reply, i * 2, &var_name);
-			printf("%s = [value]\n", var_name);
+		num_items = msg_get_length(reply) / 2;
+		for (i = 0; i < num_items; ++i) {
+			msg_get_string(reply, i * 2, &item_name);
+			printf("%s = [value]\n", item_name);
 		}
 		msg_free(reply);
 	}
