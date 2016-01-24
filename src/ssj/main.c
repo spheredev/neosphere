@@ -39,15 +39,14 @@ main(int argc, char* argv[])
 		#ifdef _WIN32
 		game_command = lstr_newf("start msphere --debug \"%s\"", path_cstr(cmdline->path));
 		system(lstr_cstr(game_command));
+		lstr_free(game_command);
 		#else
-		game_command = lstr_newf("msphere --debug \"%s\"", path_cstr(cmdline->path));
 		if (fork() == 0) {
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
-			execlp("msphere", "msphere", "--debug", lstr_cstr(game_command));
+			execlp("msphere", "msphere", "--debug", path_cstr(cmdline->path), NULL);
 		}
 		#endif
 
-		lstr_free(game_command);
 		printf("OK.\n");
 	}
 	
