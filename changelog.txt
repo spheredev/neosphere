@@ -4,11 +4,17 @@ minisphere Changelog
 v3.0.0 - TBD
 ------------
 
-* Fixes a bug where Cell would terminate with a return code of 0 even if the
-  build failed.
+* The Windows GDK release now requires a 64-bit version of Windows. It's still
+  possible to build a 32-bit GDK from source, but it's no longer officially
+  supported.
+* The minisphere GDK comes with a new console debugger, called SSJ. Simply run
+  `ssj <game-path>` on the command line to start an interactive debugging
+  session for a specified game. This brings single-step debugging to non-Windows
+  platforms for the first time!
 * minisphere will no longer fail to create a render context if the system it's
   running on doesn't support shaders. Instead ShaderProgram will be disabled in
   this case.
+* Fixes a bunch of bugs found since the release of 2.1.6.
 
 v2.1.6 - December 20, 2015
 --------------------------

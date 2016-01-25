@@ -4,8 +4,9 @@ bin/cell
 bin/ssj
 bin/*.exe
 bin/plugin/
-msvs/obj/
 msvs/debug/
+msvs/obj/
+msvs/packages/
 obj/
 src/plugin/bin/
 setup/*.exe
