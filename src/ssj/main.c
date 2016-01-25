@@ -51,8 +51,7 @@ main(int argc, char* argv[])
 	}
 	
 	initialize_client();
-	session = new_session();
-	if (!attach_session(session, "127.0.0.1", 1208))
+	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
 	run_session(session);
 	shutdown_client();

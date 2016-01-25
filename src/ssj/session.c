@@ -11,7 +11,7 @@ struct session
 	lstring_t* filename;
 	int32_t    line;
 	remote_t*  remote;
-	bool       is_breakpoint;
+	bool       is_stopped;
 };
 
 enum req_command
@@ -46,24 +46,69 @@ enum nfy_command
 	NFY_DETACHING = 0x06,
 };
 
+static message_t* converse        (session_t* sess, message_t* msg);
 static bool       do_command_line (session_t* sess);
-static message_t* do_request      (session_t* sess, message_t* msg);
 static bool       process_message (session_t* sess, const message_t* msg);
 
 session_t*
-new_session(void)
+new_session(const char* hostname, int port)
 {
-	session_t* sess;
+	session_t* session;
 
-	sess = calloc(1, sizeof(session_t));
-	return sess;
+	session = calloc(1, sizeof(session_t));
+	if (!(session->remote = connect_remote(hostname, port)))
+		goto on_error;
+	return session;
+
+on_error:
+	free(session);
+	return NULL;
 }
 
-bool
-attach_session(session_t* sess, const char* hostname, int port)
+void
+print_callstack(session_t* sess)
 {
-	sess->remote = connect_remote(hostname, port);
-	return sess->remote != NULL;
+	const char* filename;
+	const char* function_name;
+	int32_t     line_num;
+	size_t      n_items;
+	message_t*  request;
+	message_t*  response;
+
+	size_t i;
+	
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request, REQ_GET_CALLSTACK);
+	response = converse(sess, request);
+	n_items = msg_get_length(response) / 4;
+	for (i = 0; i < n_items; ++i) {
+		msg_get_string(response, i * 2, &filename);
+		msg_get_string(response, i * 2 + 1, &function_name);
+		msg_get_int(response, i * 2 + 2, &line_num);
+		printf("%3zd : %s() <%s:%d>\n", i, function_name, filename, line_num);
+	}
+	msg_free(response);
+}
+
+void
+print_variables(session_t* sess)
+{
+	size_t      n_items;
+	message_t*  request;
+	message_t*  response;
+	const char* var_name;
+
+	size_t i;
+
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request, REQ_GET_LOCALS);
+	response = converse(sess, request);
+	n_items = msg_get_length(response) / 2;
+	for (i = 0; i < n_items; ++i) {
+		msg_get_string(response, i * 2, &var_name);
+		printf("var %s = { ... };\n", var_name);
+	}
+	msg_free(response);
 }
 
 void
@@ -73,7 +118,7 @@ run_session(session_t* sess)
 	message_t* msg;
 	
 	while (is_active) {
-		if (sess->remote == NULL || sess->is_breakpoint)
+		if (sess->remote == NULL || sess->is_stopped)
 			is_active &= do_command_line(sess);
 		else {
 			if (!(msg = msg_receive(sess->remote)))
@@ -90,6 +135,22 @@ on_error:
 	return;
 }
 
+static message_t*
+converse(session_t* sess, message_t* msg)
+{
+	message_t* response;
+
+	msg_send(sess->remote, msg);
+	do {
+		if (!(response = msg_receive(sess->remote))) return NULL;
+		if (msg_get_class(response) == MSG_CLASS_NFY) {
+			process_message(sess, response);
+			msg_free(response);
+		}
+	} while (msg_get_class(response) == MSG_CLASS_NFY);
+	return response;
+}
+
 static bool
 do_command_line(session_t* sess)
 {
@@ -99,15 +160,9 @@ do_command_line(session_t* sess)
 	size_t      ch_idx = 0;
 	lstring_t*  eval_code;
 	const char* eval_result;
-	const char* filename;
-	int32_t     line_no;
-	size_t      num_items;
 	char*       parsee;
 	message_t*  reply;
 	message_t*  req;
-	const char* item_name;
-
-	size_t i;
 
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
@@ -130,133 +185,62 @@ do_command_line(session_t* sess)
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
-	if (strcmp(command, "c") == 0) {
-		if (sess->remote != NULL)
-			printf("Already attached.");
-		else {
-			if (!(sess->remote = connect_remote("127.0.0.1", 1208)))
-				printf("Failed to connect to minisphere.\n");
-		}
-	}
-	else if (strcmp(command, "quit") == 0) {
+	if (strcmp(command, "quit") == 0) {
 		printf("Quit, asking target to detach... ");
 		fflush(stdout);
-		if (sess->remote == NULL)
-			return false;
-		else {
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_DETACH);
-			msg_free(do_request(sess, req));
-			sess->is_breakpoint = false;
-		}
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_DETACH);
+		msg_free(converse(sess, req));
+		sess->is_stopped = false;
 		printf("OK.\n");
 	}
 	else if (strcmp(command, "go") == 0) {
-		if (sess->remote == NULL)
-			printf("minisphere not attached, use 'c' to attach.\n");
-		else {
-			printf("Resuming execution at %s:%d\n", lstr_cstr(sess->filename), sess->line);
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_RESUME);
-			msg_free(do_request(sess, req));
-			sess->is_breakpoint = false;
-		}
+		printf("Resuming execution at %s:%d... ", lstr_cstr(sess->filename), sess->line);
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_RESUME);
+		msg_free(converse(sess, req));
+		sess->is_stopped = false;
+		printf("OK.\n");
 	}
-	else if (strcmp(command, "stack") == 0) {
-		if (sess->remote == NULL)
-			printf("minisphere not attached, use 'c' to attach.\n");
-		else {
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_GET_CALLSTACK);
-			reply = do_request(sess, req);
-			num_items = msg_get_length(reply) / 4;
-			for (i = 0; i < num_items; ++i) {
-				msg_get_string(reply, i * 2, &filename);
-				msg_get_string(reply, i * 2 + 1, &item_name);
-				msg_get_int(reply, i * 2 + 2, &line_no);
-				printf("%3zd - %s() <%s:%d>\n", i, item_name, filename, line_no);
-			}
-			msg_free(reply);
-		}
-	}
+	else if (strcmp(command, "stack") == 0)
+		print_callstack(sess);
 	else if (strcmp(command, "next") == 0) {
-		if (sess->remote == NULL)
-			printf("minisphere not attached, use 'c' to attach.\n");
-		else {
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_STEP_OVER);
-			msg_free(do_request(sess, req));
-			sess->is_breakpoint = false;
-		}
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_STEP_OVER);
+		msg_free(converse(sess, req));
+		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "step") == 0) {
-		if (sess->remote == NULL)
-			printf("minisphere not attached, use 'c' to attach.\n");
-		else {
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_STEP_INTO);
-			msg_free(do_request(sess, req));
-			sess->is_breakpoint = false;
-		}
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_STEP_INTO);
+		msg_free(converse(sess, req));
+		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "out") == 0) {
-		if (sess->remote == NULL)
-			printf("minisphere not attached, use 'c' to attach.\n");
-		else {
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_STEP_OUT);
-			msg_free(do_request(sess, req));
-			sess->is_breakpoint = false;
-		}
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_STEP_OUT);
+		msg_free(converse(sess, req));
+		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "eval") == 0) {
-		if (sess->remote == NULL)
-			printf("minisphere not attached, use 'c' to attach.\n");
-		else {
-			eval_code = lstr_newf(
-				"(function() { try { return Duktape.enc('jx', eval(\"%s\"), null, 3); } catch (e) { return e.toString(); } }).call(this);",
-				argument);
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_EVAL);
-			msg_add_string(req, lstr_cstr(eval_code));
-			reply = do_request(sess, req);
-			msg_get_string(reply, 1, &eval_result);
-			printf("%s\n", eval_result);
-			msg_free(reply);
-		}
-	}
-	else if (strcmp(command, "var") == 0) {
+		eval_code = lstr_newf(
+			"(function() { try { return Duktape.enc('jx', eval(\"%s\"), null, 3); } catch (e) { return e.toString(); } }).call(this);",
+			argument);
 		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_GET_LOCALS);
-		reply = do_request(sess, req);
-		num_items = msg_get_length(reply) / 2;
-		for (i = 0; i < num_items; ++i) {
-			msg_get_string(reply, i * 2, &item_name);
-			printf("%s = [value]\n", item_name);
-		}
+		msg_add_int(req, REQ_EVAL);
+		msg_add_string(req, lstr_cstr(eval_code));
+		reply = converse(sess, req);
+		msg_get_string(reply, 1, &eval_result);
+		printf("%s\n", eval_result);
 		msg_free(reply);
 	}
+	else if (strcmp(command, "var") == 0)
+		print_variables(sess);
 	else {
 		printf("'%s' not recognized in this context\n", command);
 	}
 	free(parsee);
 	return true;
-}
-
-static message_t*
-do_request(session_t* sess, message_t* msg)
-{
-	message_t* response;
-
-	msg_send(sess->remote, msg);
-	do {
-		if (!(response = msg_receive(sess->remote))) return NULL;
-		if (msg_get_class(response) == MSG_CLASS_NFY) {
-			process_message(sess, response);
-			msg_free(response);
-		}
-	} while (msg_get_class(response) == MSG_CLASS_NFY);
-	return response;
 }
 
 static bool
@@ -278,7 +262,7 @@ process_message(session_t* sess, const message_t* msg)
 			msg_get_string(msg, 2, &filename);
 			msg_get_string(msg, 3, &func_name);
 			msg_get_int(msg, 4, &line_no);
-			sess->is_breakpoint = flag != 0;
+			sess->is_stopped = flag != 0;
 			sess->filename = lstr_new(filename);
 			sess->line = line_no;
 			break;
@@ -301,7 +285,7 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_DETACHING:
 			msg_get_int(msg, 1, &flag);
 			if (flag == 0)
-				printf("minisphere detached cleanly.\n");
+				printf("minisphere detached normally.\n");
 			else
 				printf("minisphere detached due to an error.\n");
 			return false;
