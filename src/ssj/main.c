@@ -158,7 +158,7 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Dyad.c: v%s\n", dyad_getVersion());
+		printf("   Dyad.c: v%s\n", dyad_getVersion());
 	}
 }
 

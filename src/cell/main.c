@@ -203,8 +203,8 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
-		printf("       zlib: v%s\n", zlibVersion());
+		printf("   Duktape: %s\n", DUK_GIT_DESCRIBE);
+		printf("      zlib: v%s\n", zlibVersion());
 	}
 }
 

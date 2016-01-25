@@ -9,6 +9,8 @@
 #include "rng.h"
 #include "spriteset.h"
 
+#include <libmng.h>
+
 // enable Windows visual styles (MSVC)
 #ifdef _MSC_VER
 #pragma comment(linker, \
@@ -25,6 +27,7 @@ static void shutdown_engine     (void);
 static void draw_status_message (const char* text);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
+static void print_banner        (bool want_copyright, bool want_deps);
 static void report_error        (const char* fmt, ...);
 static bool verify_requirements (sandbox_t* fs);
 
@@ -97,10 +100,6 @@ main(int argc, char* argv[])
 	ALLEGRO_TRANSFORM    trans;
 	int                  verbosity;
 	bool                 want_debug;
-
-	printf("%s %s\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
-	printf("A lightweight Sphere-compatible game engine\n");
-	printf("(c) 2016 Fat Cerberus\n\n");
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
@@ -841,6 +840,10 @@ parse_command_line(
 		if (strstr(argv[i], "--") == argv[i] && parse_options) {
 			if (strcmp(argv[i], "--") == 0)
 				parse_options = false;
+			else if (strcmp(argv[i], "--version") == 0) {
+				print_banner(true, true);
+				return false;
+			}
 			else if (strcmp(argv[i], "--debug") == 0) {
 				#ifndef MINISPHERE_REDIST
 				*out_want_debug = true;
@@ -899,6 +902,9 @@ parse_command_line(
 		}
 	}
 
+	print_banner(true, false);
+	printf("\n");
+	
 	// print out options
 	printf("Parsing command line\n");
 	printf("  Game path: %s\n", *out_game_path != NULL ? path_cstr(*out_game_path) : "<none provided>");
@@ -918,6 +924,28 @@ parse_command_line(
 missing_argument:
 	report_error("missing argument for option '%s'", argv[i - 1]);
 	return false;
+}
+
+static void
+print_banner(bool want_copyright, bool want_deps)
+{
+	uint32_t al_version;
+	char     version_string[64];
+	
+	printf("%s %s\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	if (want_copyright) {
+		printf("A lightweight Sphere-compatible game engine\n");
+		printf("(c) 2016 Fat Cerberus\n");
+	}
+	if (want_deps) {
+		al_version = al_get_allegro_version();
+		sprintf(version_string, "%d.%d.%d", al_version >> 24, (al_version >> 16) & 0xFF,
+			(al_version >> 8) & 0xFF);
+		printf("\n");
+		printf("   Allegro: v%-12s libmng: v%s\n", version_string, mng_version_text());
+		printf("   Duktape: %-13s   zlib: v%s\n", DUK_GIT_DESCRIBE, zlibVersion());
+		printf("    Dyad.c: v%-12s\n", dyad_getVersion());
+	}
 }
 
 static void
