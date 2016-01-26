@@ -66,6 +66,31 @@ on_error:
 }
 
 void
+eval_expression(session_t* sess, const char* expr)
+{
+	lstring_t*  eval_code;
+	int32_t     flag;
+	message_t*  request;
+	message_t*  response;
+	const char* result;
+	
+	printf("Evaluating JS expression... ");
+	eval_code = lstr_newf(
+		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
+		expr);
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request, REQ_EVAL);
+	msg_add_string(request, lstr_cstr(eval_code));
+	response = converse(sess, request);
+	printf("OK.\n");
+	msg_get_int(response, 0, &flag);
+	msg_get_string(response, 1, &result);
+	printf(flag == 0 ? "\33[36;1m" : "\33[31;1m");
+	printf("%s\33[m\n", result);
+	msg_free(response);
+}
+
+void
 print_callstack(session_t* sess)
 {
 	const char* filename;
@@ -77,15 +102,17 @@ print_callstack(session_t* sess)
 
 	size_t i;
 	
+	printf("Requesting stack trace... ");
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_CALLSTACK);
 	response = converse(sess, request);
+	printf("OK.\n");
 	n_items = msg_get_length(response) / 4;
 	for (i = 0; i < n_items; ++i) {
-		msg_get_string(response, i * 2, &filename);
-		msg_get_string(response, i * 2 + 1, &function_name);
-		msg_get_int(response, i * 2 + 2, &line_num);
-		printf("%3zd : %s() <%s:%d>\n", i, function_name, filename, line_num);
+		msg_get_string(response, i * 4, &filename);
+		msg_get_string(response, i * 4 + 1, &function_name);
+		msg_get_int(response, i * 4 + 2, &line_num);
+		printf("\33[36;1m%3zd: %s() <%s:%d>\33[m\n", i, function_name, filename, line_num);
 	}
 	msg_free(response);
 }
@@ -100,13 +127,15 @@ print_variables(session_t* sess)
 
 	size_t i;
 
+	printf("Requesting variable list... ");
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_LOCALS);
 	response = converse(sess, request);
+	printf("OK.\n");
 	n_items = msg_get_length(response) / 2;
 	for (i = 0; i < n_items; ++i) {
 		msg_get_string(response, i * 2, &var_name);
-		printf("var %s = { ... };\n", var_name);
+		printf("\33[36;1mvar %s = { ... };\33[m\n", var_name);
 	}
 	msg_free(response);
 }
@@ -158,10 +187,7 @@ do_command_line(session_t* sess)
 	char*       command;
 	int         ch = '\0';
 	size_t      ch_idx = 0;
-	lstring_t*  eval_code;
-	const char* eval_result;
 	char*       parsee;
-	message_t*  reply;
 	message_t*  req;
 
 	// get a command from the user
@@ -172,7 +198,7 @@ do_command_line(session_t* sess)
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
-				printf("Command string is too long, must be < 64k");
+				printf("String entered is too long to parse.");
 				sess->cl_buffer[0] = '\0';
 				break;
 			}
@@ -202,15 +228,15 @@ do_command_line(session_t* sess)
 		sess->is_stopped = false;
 		printf("OK.\n");
 	}
-	else if (strcmp(command, "stack") == 0)
+	else if (strcmp(command, "trace") == 0)
 		print_callstack(sess);
-	else if (strcmp(command, "next") == 0) {
+	else if (strcmp(command, "step") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_STEP_OVER);
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "step") == 0) {
+	else if (strcmp(command, "in") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_STEP_INTO);
 		msg_free(converse(sess, req));
@@ -222,18 +248,8 @@ do_command_line(session_t* sess)
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "eval") == 0) {
-		eval_code = lstr_newf(
-			"(function() { try { return Duktape.enc('jx', eval(\"%s\"), null, 3); } catch (e) { return e.toString(); } }).call(this);",
-			argument);
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_EVAL);
-		msg_add_string(req, lstr_cstr(eval_code));
-		reply = converse(sess, req);
-		msg_get_string(reply, 1, &eval_result);
-		printf("%s\n", eval_result);
-		msg_free(reply);
-	}
+	else if (strcmp(command, "eval") == 0)
+		eval_expression(sess, argument);
 	else if (strcmp(command, "var") == 0)
 		print_variables(sess);
 	else {
@@ -265,14 +281,16 @@ process_message(session_t* sess, const message_t* msg)
 			sess->is_stopped = flag != 0;
 			sess->filename = lstr_new(filename);
 			sess->line = line_no;
+			if (sess->is_stopped)
+				printf("I ate it!");
 			break;
 		case NFY_PRINT:
 			msg_get_string(msg, 1, &text);
-			printf("\x1B[36m%s\x1B[m", text);
+			printf("\33[36m%s\x1B[m", text);
 			break;
 		case NFY_ALERT:
 			msg_get_string(msg, 1, &text);
-			printf("\x1B[31m%s\x1B[m", text);
+			printf("\33[31m%s\x1B[m", text);
 			break;
 		case NFY_THROW:
 			msg_get_int(msg, 1, &flag);
@@ -280,7 +298,7 @@ process_message(session_t* sess, const message_t* msg)
 			msg_get_string(msg, 3, &filename);
 			msg_get_int(msg, 4, &line_no);
 			if (flag != 0)
-				printf("\033[0;1m'%s' thrown at %s:%d\033[m\n", text, filename, line_no);
+				printf("\33[31;1mUncaught %s <%s:%d>\33[m\n", text, filename, line_no);
 			break;
 		case NFY_DETACHING:
 			msg_get_int(msg, 1, &flag);
