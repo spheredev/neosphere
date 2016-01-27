@@ -7,6 +7,7 @@
 struct cmdline
 {
 	path_t* path;
+	bool    want_pause;
 };
 
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
@@ -53,6 +54,8 @@ main(int argc, char* argv[])
 	initialize_client();
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
+	if (cmdline->path == NULL || !cmdline->want_pause)
+		execute_next(session, EXEC_RESUME);
 	run_session(session);
 	shutdown_client();
 	return EXIT_SUCCESS;
@@ -87,6 +90,8 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			}
 			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
+			else if (strcmp(argv[i], "--start-paused") == 0)
+				cmdline->want_pause = true;
 			else {
 				printf("ssj: error: unknown option '%s'\n", argv[i]);
 				goto on_output_only;
@@ -98,6 +103,9 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 				switch (short_args[i_arg]) {
 				case 'c':
 					have_target = true;
+					break;
+				case 'p':
+					cmdline->want_pause = true;
 					break;
 				default:
 					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
@@ -176,4 +184,8 @@ print_usage(void)
 	printf("       --help             Prints this help text.                               \n");
 	printf("   -c, --connect          Attempts to attach to a target already running. If   \n");
 	printf("                          the connection attempt fails, SSJ will exit.         \n");
+	printf("   -p, --start-paused     Pauses execution on attach, or, when debugging a new \n");
+	printf("                          instance, pauses before any code is executed. This   \n");
+	printf("                          allows setting up breakpoints, etc. before manually  \n");
+	printf("                          resuming execution.                                  \n");
 }

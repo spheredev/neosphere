@@ -117,7 +117,7 @@ print_callstack(session_t* sess, size_t frame)
 			line_num = msg_atom_int(response, i * 4 + 2);
 			display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
 				: lstr_new("anonymous");
-			printf("\33[33;1m%s \33[36;1m%3zd: %s <%s:%d>\33[m\n", i == frame ? ">" : " ",
+			printf("\33[33;1m%s \33[36;1m%3zd: %s <%s:%d>\33[m\n", i == frame ? ">>" : "  ",
 				i, lstr_cstr(display_name), filename, line_num);
 			lstr_free(display_name);
 		}
@@ -159,6 +159,22 @@ print_variables(session_t* sess, size_t frame)
 		printf("\33[m\n");
 	}
 	msg_free(response);
+}
+
+void
+execute_next(session_t* sess, exec_op_t op)
+{
+	message_t* request;
+	
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request,
+		op == EXEC_STEP_OVER ? REQ_STEP_OVER
+		: op == EXEC_STEP_IN ? REQ_STEP_INTO
+		: op == EXEC_STEP_OUT ? REQ_STEP_OUT
+		: REQ_RESUME);
+	msg_free(converse(sess, request));
+	sess->current_frame = 0;
+	sess->is_stopped = false;
 }
 
 void
@@ -238,46 +254,24 @@ do_command_line(session_t* sess)
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "go") == 0 || strcmp(command, "g") == 0) {
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_RESUME);
-		msg_free(converse(sess, req));
-		sess->current_frame = 0;
-		sess->is_stopped = false;
-	}
-	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
-		print_callstack(sess, sess->current_frame);
-	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0) {
-		print_callstack(sess, atoi(argument));
-	}
-	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0) {
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_STEP_OVER);
-		msg_free(converse(sess, req));
-		sess->current_frame = 0;
-		sess->is_stopped = false;
-	}
-	else if (strcmp(command, "step-in") == 0 || strcmp(command, "si") == 0) {
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_STEP_INTO);
-		msg_free(converse(sess, req));
-		sess->current_frame = 0;
-		sess->is_stopped = false;
-	}
-	else if (strcmp(command, "step-out") == 0 || strcmp(command, "so") == 0) {
-		req = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req, REQ_STEP_OUT);
-		msg_free(converse(sess, req));
-		sess->current_frame = 0;
-		sess->is_stopped = false;
-	}
-	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
-		eval_expression(sess, argument, sess->current_frame);
+	else if (strcmp(command, "go") == 0 || strcmp(command, "g") == 0)
+		execute_next(sess, EXEC_RESUME);
+	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
+		execute_next(sess, EXEC_STEP_OVER);
+	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
+		execute_next(sess, EXEC_STEP_IN);
+	else if (strcmp(command, "stepout") == 0 || strcmp(command, "so") == 0)
+		execute_next(sess, EXEC_STEP_OUT);
 	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
 		print_variables(sess, sess->current_frame);
-	else {
+	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
+		eval_expression(sess, argument, sess->current_frame);
+	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
+		print_callstack(sess, sess->current_frame);
+	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
+		print_callstack(sess, atoi(argument));
+	else
 		printf("'%s' not recognized in this context\n", command);
-	}
 	free(parsee);
 	return true;
 }
