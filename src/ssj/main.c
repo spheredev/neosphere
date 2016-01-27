@@ -30,7 +30,7 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	if (cmdline->path != NULL) {
-		printf("Starting minisphere... ");
+		printf("Launching minisphere... ");
 		fflush(stdout);
 
 		// fork a new process to run minisphere, suppressing stdout to avoid SSJ and minisphere

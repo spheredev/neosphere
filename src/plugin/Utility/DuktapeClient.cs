@@ -273,7 +273,7 @@ namespace minisphere.Gdk.Utility
 
         /// <summary>
         /// Gets a list of local values and their values. Note that objects
-        /// are not evaluated and are listed simply as "JS object".
+        /// are not evaluated and are listed simply as "{ ... }".
         /// </summary>
         /// <param name="stackOffset">The call stack offset to get locals for, -1 being the current activation.</param>
         /// <returns></returns>
@@ -286,7 +286,7 @@ namespace minisphere.Gdk.Utility
             {
                 string name = reply[1 + i * 2].ToString();
                 dynamic value = reply[2 + i * 2];
-                string friendlyValue = value.Equals(DValue.Object) ? "JS object"
+                string friendlyValue = value.Equals(DValue.Object) ? "object { ... }"
                     : value.Equals(DValue.Undefined) ? "undefined"
                     : value is bool ? value ? "true" : "false"
                     : value is int ? value.ToString()

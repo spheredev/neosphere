@@ -96,7 +96,6 @@ main(int argc, char* argv[])
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
-	lstring_t*           title_text;
 	ALLEGRO_TRANSFORM    trans;
 	int                  verbosity;
 	bool                 want_debug;
@@ -176,12 +175,6 @@ main(int argc, char* argv[])
 	if (!verify_requirements(g_fs))
 		exit_game(false);
 
-	// Allegro 5.1.12 has a bug where the the last character of the title bar text is cut
-	// off, so we add a space to compensate.
-	title_text = lstr_newf("%s ", get_sgm_name(g_fs));
-	al_set_new_window_title(lstr_cstr(title_text));
-	lstr_free(title_text);
-
 	// try to create a display. if we can't get a programmable pipeline, try again but
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
@@ -189,6 +182,7 @@ main(int argc, char* argv[])
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	console_log(1, "  Resolution: %dx%d @ %.1fx", g_res_x, g_res_y, (double)g_scale_x);
+	al_set_new_window_title(get_sgm_name(g_fs));
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
 		al_set_new_display_flags(ALLEGRO_OPENGL);
@@ -292,11 +286,11 @@ on_js_error:
 	duk_get_prop_string(g_duk, -2, "fileName");
 	filename = duk_get_string(g_duk, -1);
 	if (filename != NULL) {
-		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%i] %s\n", filename, line_num, err_msg);
+		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%d] %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "%s:%i\n\n%s\n ", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n", filename, line_num, err_msg);
 		else
-			duk_push_sprintf(g_duk, "%s\n ", err_msg);
+			duk_push_sprintf(g_duk, "%s\n", err_msg);
 	}
 	else {
 		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);

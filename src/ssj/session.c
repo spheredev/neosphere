@@ -8,6 +8,7 @@
 struct session
 {
 	char       cl_buffer[CL_BUFFER_SIZE];
+	size_t     current_frame;
 	lstring_t* filename;
 	int32_t    line;
 	remote_t*  remote;
@@ -66,7 +67,7 @@ on_error:
 }
 
 void
-eval_expression(session_t* sess, const char* expr)
+eval_expression(session_t* sess, const char* expr, size_t frame)
 {
 	lstring_t*  eval_code;
 	int32_t     flag;
@@ -74,25 +75,25 @@ eval_expression(session_t* sess, const char* expr)
 	message_t*  response;
 	const char* result;
 	
-	printf("Evaluating JS expression... ");
 	eval_code = lstr_newf(
 		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
 		expr);
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_EVAL);
 	msg_add_string(request, lstr_cstr(eval_code));
+	msg_add_int(request, -(int32_t)(1 + frame));
 	response = converse(sess, request);
-	printf("OK.\n");
-	msg_get_int(response, 0, &flag);
-	msg_get_string(response, 1, &result);
+	flag = msg_atom_int(response, 0);
+	result = msg_atom_string(response, 1);
 	printf(flag == 0 ? "\33[36;1m" : "\33[31;1m");
 	printf("%s\33[m\n", result);
 	msg_free(response);
 }
 
 void
-print_callstack(session_t* sess)
+print_callstack(session_t* sess, size_t frame)
 {
+	lstring_t*  display_name;
 	const char* filename;
 	const char* function_name;
 	int32_t     line_num;
@@ -102,40 +103,60 @@ print_callstack(session_t* sess)
 
 	size_t i;
 	
-	printf("Requesting stack trace... ");
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_CALLSTACK);
 	response = converse(sess, request);
-	printf("OK.\n");
-	n_items = msg_get_length(response) / 4;
-	for (i = 0; i < n_items; ++i) {
-		msg_get_string(response, i * 4, &filename);
-		msg_get_string(response, i * 4 + 1, &function_name);
-		msg_get_int(response, i * 4 + 2, &line_num);
-		printf("\33[36;1m%3zd: %s() <%s:%d>\33[m\n", i, function_name, filename, line_num);
+	n_items = msg_len(response) / 4;
+	if (frame < 0 || frame >= n_items)
+		printf("no frame at index %zd, use `backtrace` for list\n", frame);
+	else {
+		sess->current_frame = frame;
+		for (i = 0; i < n_items; ++i) {
+			filename = msg_atom_string(response, i * 4);
+			function_name = msg_atom_string(response, i * 4 + 1);
+			line_num = msg_atom_int(response, i * 4 + 2);
+			display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
+				: lstr_new("anonymous");
+			printf("\33[33;1m%s \33[36;1m%3zd: %s <%s:%d>\33[m\n", i == frame ? ">" : " ",
+				i, lstr_cstr(display_name), filename, line_num);
+			lstr_free(display_name);
+		}
 	}
 	msg_free(response);
 }
 
 void
-print_variables(session_t* sess)
+print_variables(session_t* sess, size_t frame)
 {
 	size_t      n_items;
 	message_t*  request;
 	message_t*  response;
-	const char* var_name;
 
 	size_t i;
 
-	printf("Requesting variable list... ");
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_LOCALS);
+	msg_add_int(request, -(int32_t)(1 + frame));
 	response = converse(sess, request);
-	printf("OK.\n");
-	n_items = msg_get_length(response) / 2;
+	n_items = msg_len(response) / 2;
 	for (i = 0; i < n_items; ++i) {
-		msg_get_string(response, i * 2, &var_name);
-		printf("\33[36;1mvar %s = { ... };\33[m\n", var_name);
+		printf("\33[36;1mvar %s = ", msg_atom_string(response, i * 2));
+		switch (msg_atom_type(response, i * 2 + 1)) {
+		case ATOM_UNDEFINED: printf("undefined"); break;
+		case ATOM_OBJECT: printf("{ ... }"); break;
+		case ATOM_FLOAT:
+			printf("%f", msg_atom_float(response, i * 2 + 1));
+			break;
+		case ATOM_INT:
+			printf("%d", msg_atom_int(response, i * 2 + 1));
+			break;
+		case ATOM_STRING:
+			printf("\"%s\"", msg_atom_string(response, i * 2 + 1));
+			break;
+		default:
+			printf("<unknown>");
+		}
+		printf("\33[m\n");
 	}
 	msg_free(response);
 }
@@ -211,47 +232,49 @@ do_command_line(session_t* sess)
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
-	if (strcmp(command, "quit") == 0) {
-		printf("Quit, asking target to detach... ");
-		fflush(stdout);
+	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
-		printf("OK.\n");
 	}
-	else if (strcmp(command, "go") == 0) {
-		printf("Resuming execution at %s:%d... ", lstr_cstr(sess->filename), sess->line);
+	else if (strcmp(command, "go") == 0 || strcmp(command, "g") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_RESUME);
 		msg_free(converse(sess, req));
+		sess->current_frame = 0;
 		sess->is_stopped = false;
-		printf("OK.\n");
 	}
-	else if (strcmp(command, "trace") == 0)
-		print_callstack(sess);
-	else if (strcmp(command, "step") == 0) {
+	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
+		print_callstack(sess, sess->current_frame);
+	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0) {
+		print_callstack(sess, atoi(argument));
+	}
+	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_STEP_OVER);
 		msg_free(converse(sess, req));
+		sess->current_frame = 0;
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "in") == 0) {
+	else if (strcmp(command, "step-in") == 0 || strcmp(command, "si") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_STEP_INTO);
 		msg_free(converse(sess, req));
+		sess->current_frame = 0;
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "out") == 0) {
+	else if (strcmp(command, "step-out") == 0 || strcmp(command, "so") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_STEP_OUT);
 		msg_free(converse(sess, req));
+		sess->current_frame = 0;
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "eval") == 0)
-		eval_expression(sess, argument);
-	else if (strcmp(command, "var") == 0)
-		print_variables(sess);
+	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
+		eval_expression(sess, argument, sess->current_frame);
+	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
+		print_variables(sess, sess->current_frame);
 	else {
 		printf("'%s' not recognized in this context\n", command);
 	}
@@ -266,46 +289,41 @@ process_message(session_t* sess, const message_t* msg)
 	int32_t     flag;
 	const char* func_name;
 	int32_t     line_no;
-	int32_t     notify_id;
 	const char* text;
 
 	switch (msg_get_class(msg)) {
 	case MSG_CLASS_NFY:
-		msg_get_int(msg, 0, &notify_id);
-		switch (notify_id) {
+		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
-			msg_get_int(msg, 1, &flag);
-			msg_get_string(msg, 2, &filename);
-			msg_get_string(msg, 3, &func_name);
-			msg_get_int(msg, 4, &line_no);
+			flag = msg_atom_int(msg, 1);
+			filename = msg_atom_string(msg, 2);
+			func_name = msg_atom_string(msg, 3);
+			line_no = msg_atom_int(msg, 4);
 			sess->is_stopped = flag != 0;
 			sess->filename = lstr_new(filename);
 			sess->line = line_no;
-			if (sess->is_stopped)
-				printf("I ate it!");
 			break;
 		case NFY_PRINT:
-			msg_get_string(msg, 1, &text);
-			printf("\33[36m%s\x1B[m", text);
+			printf("\33[36m%s\x1B[m", msg_atom_string(msg, 1));
 			break;
 		case NFY_ALERT:
-			msg_get_string(msg, 1, &text);
-			printf("\33[31m%s\x1B[m", text);
+			printf("\33[31m%s\x1B[m", msg_atom_string(msg, 1));
 			break;
 		case NFY_THROW:
-			msg_get_int(msg, 1, &flag);
-			msg_get_string(msg, 2, &text);
-			msg_get_string(msg, 3, &filename);
-			msg_get_int(msg, 4, &line_no);
+			flag = msg_atom_int(msg, 1);
+			text = msg_atom_string(msg, 2);
+			filename = msg_atom_string(msg, 3);
+			line_no = msg_atom_int(msg, 4);
 			if (flag != 0)
 				printf("\33[31;1mUncaught %s <%s:%d>\33[m\n", text, filename, line_no);
 			break;
 		case NFY_DETACHING:
-			msg_get_int(msg, 1, &flag);
+			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("minisphere detached normally.\n");
+				printf("\33[36;1mTarget detached normally.");
 			else
-				printf("minisphere detached due to an error.\n");
+				printf("\33[31;1mTarget detached unexpectedly.");
+			printf("\33[m\n");
 			return false;
 		}
 		break;

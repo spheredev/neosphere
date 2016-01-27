@@ -159,7 +159,7 @@ msg_get_class(const message_t* msg)
 }
 
 size_t
-msg_get_length(const message_t* msg)
+msg_len(const message_t* msg)
 {
 	return vector_len(msg->dvalues);
 }
@@ -225,40 +225,45 @@ msg_add_string(message_t* msg, const char* value)
 	vector_push(msg->dvalues, &dvalue);
 }
 
-bool
-msg_get_float(const message_t* msg, size_t index, double *out_value)
+atom_type_t
+msg_atom_type(const message_t* msg, size_t index)
 {
 	dvalue_t* dvalue;
 
-	if (index >= vector_len(msg->dvalues))
-		return false;
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	*out_value = dvalue->float_value;
-	return dvalue->tag == DVALUE_TAG_FLOAT;
+	return dvalue->tag == DVALUE_TAG_OBJ ? ATOM_OBJECT
+		: dvalue->tag == DVALUE_TAG_FLOAT ? ATOM_FLOAT
+		: dvalue->tag == DVALUE_TAG_INT ? ATOM_INT
+		: dvalue->tag == DVALUE_TAG_STRING ? ATOM_STRING
+		: ATOM_UNDEFINED;
 }
 
-bool
-msg_get_int(const message_t* msg, size_t index, int32_t *out_value)
+double
+msg_atom_float(const message_t* msg, size_t index)
+{
+	dvalue_t* dvalue;
+
+	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
+	return dvalue->tag == DVALUE_TAG_FLOAT ? dvalue->float_value : 0.0;
+}
+
+int32_t
+msg_atom_int(const message_t* msg, size_t index)
 {
 	dvalue_t* dvalue;
 	
-	if (index >= vector_len(msg->dvalues))
-		return false;
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	*out_value = dvalue->int_value;
-	return dvalue->tag == DVALUE_TAG_INT;
+	return dvalue->tag == DVALUE_TAG_INT ? dvalue->int_value : 0;
 }
 
-bool
-msg_get_string(const message_t* msg, size_t index, const char* *out_value)
+const char*
+msg_atom_string(const message_t* msg, size_t index)
 {
 	dvalue_t* dvalue;
 
-	if (index >= vector_len(msg->dvalues))
-		return false;
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	*out_value = dvalue->buffer.data;
-	return dvalue->tag == DVALUE_TAG_STRING;
+	return dvalue->tag == DVALUE_TAG_STRING ? dvalue->buffer.data
+		: NULL;
 }
 
 static void
@@ -390,23 +395,23 @@ receive_dvalue(remote_t* remote)
 		receive_bytes(remote, data, 1);
 		receive_bytes(remote, &ptr_size, 1);
 		receive_bytes(remote, data, ptr_size);
-		dvalue->tag = DVALUE_TAG_UNUSED;
+		dvalue->tag = DVALUE_TAG_OBJ;
 		break;
 	case DVALUE_TAG_PTR:
 		receive_bytes(remote, &ptr_size, 1);
 		receive_bytes(remote, data, ptr_size);
-		dvalue->tag = DVALUE_TAG_UNUSED;
+		dvalue->tag = DVALUE_TAG_PTR;
 		break;
 	case DVALUE_TAG_LIGHTFUNC:
 		receive_bytes(remote, data, 2);
 		receive_bytes(remote, &ptr_size, 1);
 		receive_bytes(remote, data, ptr_size);
-		dvalue->tag = DVALUE_TAG_UNUSED;
+		dvalue->tag = DVALUE_TAG_OBJ;
 		break;
 	case DVALUE_TAG_HEAPPTR:
 		receive_bytes(remote, &ptr_size, 1);
 		receive_bytes(remote, data, ptr_size);
-		dvalue->tag = DVALUE_TAG_UNUSED;
+		dvalue->tag = DVALUE_TAG_PTR;
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
