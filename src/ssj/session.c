@@ -9,6 +9,7 @@ struct session
 {
 	char       cl_buffer[CL_BUFFER_SIZE];
 	size_t     current_frame;
+	lstring_t* function;
 	lstring_t* filename;
 	int32_t    line;
 	remote_t*  remote;
@@ -67,6 +68,16 @@ on_error:
 }
 
 void
+print_commands(session_t* sess)
+{
+	printf(
+		"`go`     Run until either a breakpoint is hit or an error is thrown.           \n"
+		"`help`   Show this list of commands.                                           \n"
+		);
+
+}
+
+void
 eval_expression(session_t* sess, const char* expr, size_t frame)
 {
 	lstring_t*  eval_code;
@@ -115,8 +126,8 @@ print_callstack(session_t* sess, size_t frame)
 			filename = msg_atom_string(response, i * 4);
 			function_name = msg_atom_string(response, i * 4 + 1);
 			line_num = msg_atom_int(response, i * 4 + 2);
-			display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
-				: lstr_new("anonymous");
+			display_name = function_name[0] != '\0' ? lstr_newf("`%s()`", function_name)
+				: lstr_new("anon");
 			printf("\33[33;1m%s \33[36;1m%3zd: %s <%s:%d>\33[m\n", i == frame ? ">>" : "  ",
 				i, lstr_cstr(display_name), filename, line_num);
 			lstr_free(display_name);
@@ -248,11 +259,17 @@ do_command_line(session_t* sess)
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
-	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
+	if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
+		print_commands(sess);
+	else if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
+	}
+	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
+		printf("execution paused in `%s()` <%s:%d>\n", lstr_cstr(sess->function),
+			lstr_cstr(sess->filename), sess->line);
 	}
 	else if (strcmp(command, "go") == 0 || strcmp(command, "g") == 0)
 		execute_next(sess, EXEC_RESUME);
@@ -281,7 +298,6 @@ process_message(session_t* sess, const message_t* msg)
 {
 	const char* filename;
 	int32_t     flag;
-	const char* func_name;
 	int32_t     line_no;
 	const char* text;
 
@@ -289,13 +305,13 @@ process_message(session_t* sess, const message_t* msg)
 	case MSG_CLASS_NFY:
 		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
+			lstr_free(sess->filename);
+			lstr_free(sess->function);
 			flag = msg_atom_int(msg, 1);
-			filename = msg_atom_string(msg, 2);
-			func_name = msg_atom_string(msg, 3);
-			line_no = msg_atom_int(msg, 4);
+			sess->filename = lstr_new(msg_atom_string(msg, 2));
+			sess->function = lstr_new(msg_atom_string(msg, 3));
+			sess->line = msg_atom_int(msg, 4);
 			sess->is_stopped = flag != 0;
-			sess->filename = lstr_new(filename);
-			sess->line = line_no;
 			break;
 		case NFY_PRINT:
 			printf("\33[36m%s\x1B[m", msg_atom_string(msg, 1));
@@ -309,14 +325,14 @@ process_message(session_t* sess, const message_t* msg)
 			filename = msg_atom_string(msg, 3);
 			line_no = msg_atom_int(msg, 4);
 			if (flag != 0)
-				printf("\33[31;1mUncaught %s <%s:%d>\33[m\n", text, filename, line_no);
+				printf("\33[31;1muncaught `%s` <%s:%d>\33[m\n", text, filename, line_no);
 			break;
 		case NFY_DETACHING:
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("\33[36;1mTarget detached normally.");
+				printf("\33[36;1mtarget detached normally.");
 			else
-				printf("\33[31;1mTarget detached unexpectedly.");
+				printf("\33[31;1mtarget detached unexpectedly.");
 			printf("\33[m\n");
 			return false;
 		}
