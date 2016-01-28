@@ -271,7 +271,7 @@ do_command_line(session_t* sess)
 		printf("execution paused in `%s()` <%s:%d>\n", lstr_cstr(sess->function),
 			lstr_cstr(sess->filename), sess->line);
 	}
-	else if (strcmp(command, "go") == 0 || strcmp(command, "g") == 0)
+	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);

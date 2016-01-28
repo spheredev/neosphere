@@ -288,12 +288,16 @@ run_build(build_t* build)
 	if (build->want_source_map) {
 		printf("Generating source map... ");
 		duk_push_object(build->duk);
+		duk_push_string(build->duk, path_cstr(build->in_path));
+		duk_put_prop_string(build->duk, -2, "sourcePath");
+		duk_push_object(build->duk);
 		iter = vector_enum(build->installs);
 		while (p_inst = vector_next(&iter)) {
 			path = path_resolve(path_dup(get_object_path(p_inst->target->asset)), build->in_path);
 			duk_push_string(build->duk, path_cstr(path));
 			duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
 		}
+		duk_put_prop_string(build->duk, -2, "fileMap");
 		duk_json_encode(build->duk, -1);
 		json = duk_get_lstring(build->duk, -1, &json_size);
 		path = path_rebase(path_new("sourcemap.json"),
