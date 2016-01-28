@@ -106,11 +106,14 @@ get_source_pathname(const char* pathname)
 		return retval;
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "\xFF""debugMap");
-	duk_get_prop_string(g_duk, -1, "fileMap");
-	duk_get_prop_string(g_duk, -1, pathname);
-	if (duk_is_string(g_duk, -1))
-		strcpy(retval, duk_get_string(g_duk, -1));
-	duk_pop_n(g_duk, 4);
+	if (!duk_get_prop_string(g_duk, -1, "fileMap"))
+		duk_pop_3(g_duk);
+	else {
+		duk_get_prop_string(g_duk, -1, pathname);
+		if (duk_is_string(g_duk, -1))
+			strcpy(retval, duk_get_string(g_duk, -1));
+		duk_pop_n(g_duk, 4);
+	}
 	return retval;
 }
 
