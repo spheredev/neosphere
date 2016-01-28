@@ -71,23 +71,25 @@ void
 print_commands(session_t* sess)
 {
 	printf(
-		"Here are some common commands used when debugging with SSJ:\n\n"
-		"   bt   backtrace   Prints a listing of all function calls currently on the\n"
-		"                    stack.\n"
-		"   c    continue    Run until either a breakpoint is hit or an error is thrown.\n"
-		"   e    eval        Evaluates a JavaScript expression within the scope of the\n"
-		"                    active stack frame and prints the result.\n"
-		"   f    frame       Changes the active stack frame. This affects the behavior\n"
-		"                    of commands such as `eval` and `var`, but doesn't affect\n"
-		"                    control flow. The correct index can be found using `bt`.\n"
-		"   s    step        Steps through to the next line of code.\n"
-		"   si   stepin      Steps through to the next line of code. If a function is\n"
-		"                    called, SSJ will pause at the top of that function.\n"
-		"   so   stepout     Runs until the current function call returns.\n"
-		"   v    var         Lists automatic variables and their values for the active\n"
-		"                    stack frame.\n"
-		"   w    where       Shows the filename and line number of the next line of code\n"
-		"                    to be executed.\n"
+		"Abbreviated command names are listed first, then the full verbose name of that \n"
+		"command.                                                                       \n\n"
+
+		" bt, backtrace  Print a listing of all function calls currently on the stack.  \n"
+		" c,  continue   Run either until a breakpoint is hit or an error is thrown,    \n"
+		"                whichever comes first                                          \n"
+		" e,  eval       Evaluate a JavaScript expression within the scope of the active\n"
+		"                stack frame and print the result                               \n"
+		" f,  frame      Change the active stack frame used for commands such as 'eval' \n"
+		"                and 'var' (use 'bt' to list stack frames)                      \n"
+		" s,  step       Run to the next line of code                                   \n"
+		" si, stepin     Run to the next line of code, or until a function is called,   \n"
+		"                whichever comes first                                          \n"
+		" so, stepout    Run until the current function call returns                    \n"
+		" v,  var        List automatic variables and their values for the active stack \n"
+		"                frame                                                          \n"
+		" w,  where      Show the filename and line number of the next line of code to  \n"
+		"                be executed                                                    \n"
+		" q,  quit       Detach the debugger and terminate your SSJ debugging session   \n"
 		);
 
 }
@@ -167,12 +169,12 @@ print_variables(session_t* sess, size_t frame)
 	response = converse(sess, request);
 	n_items = msg_len(response) / 2;
 	for (i = 0; i < n_items; ++i) {
-		printf("var %s = ", msg_atom_string(response, i * 2));
+		printf("var \33[36;1m%s\33[m = \33[0;1m", msg_atom_string(response, i * 2));
 		switch (msg_atom_type(response, i * 2 + 1)) {
 		case ATOM_UNDEFINED: printf("undefined"); break;
 		case ATOM_OBJECT: printf("{ ... }"); break;
 		case ATOM_FLOAT:
-			printf("%f", msg_atom_float(response, i * 2 + 1));
+			printf("%g", msg_atom_float(response, i * 2 + 1));
 			break;
 		case ATOM_INT:
 			printf("%d", msg_atom_int(response, i * 2 + 1));
@@ -183,7 +185,7 @@ print_variables(session_t* sess, size_t frame)
 		default:
 			printf("<unknown>");
 		}
-		printf("\n");
+		printf("\33[m\n");
 	}
 	msg_free(response);
 }
