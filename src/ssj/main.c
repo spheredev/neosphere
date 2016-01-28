@@ -92,7 +92,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			}
 			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
-			else if (strcmp(argv[i], "--start-paused") == 0)
+			else if (strcmp(argv[i], "--pause") == 0)
 				cmdline->want_pause = true;
 			else {
 				printf("ssj: error: unknown option '%s'\n", argv[i]);
@@ -182,12 +182,11 @@ print_usage(void)
 	printf("   ssj -c [options]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --version          Prints the SSJ debugger version.                     \n");
-	printf("       --help             Prints this help text.                               \n");
-	printf("   -c, --connect          Attempts to attach to a target already running. If   \n");
-	printf("                          the connection attempt fails, SSJ will exit.         \n");
-	printf("   -p, --start-paused     Pauses execution on attach, or, when debugging a new \n");
-	printf("                          instance, pauses before any code is executed. This   \n");
-	printf("                          allows setting up breakpoints, etc. before manually  \n");
-	printf("                          resuming execution.                                  \n");
+	printf("       --version   Prints the SSJ debugger version.                            \n");
+	printf("       --help      Prints this help text.                                      \n");
+	printf("   -c, --connect   Attempts to attach to a target already running. If the      \n");
+	printf("                   connection attempt fails, SSJ will exit.                    \n");
+	printf("   -p, --pause     Pauses execution on attach, or, when debugging a new        \n");
+	printf("                   instance, pauses before any code is executed. This allows   \n");
+	printf("                   setting up breakpoints, etc. in advance.                    \n");
 }

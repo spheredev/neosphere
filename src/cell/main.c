@@ -218,11 +218,11 @@ print_usage(void)
 	printf("   cell -l <out-dir> [options] [target]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --version          Prints the Cell compiler version and exits.          \n");
-	printf("       --in               Sets the input directory; Cell looks for sources in  \n");
-	printf("                          the current working directory by default.            \n");
-	printf("   -l, --make-dist        Builds an unpacked game distribution.                \n");
-	printf("   -p, --make-package     Builds a Sphere package (.spk).                      \n");
-	printf("   -d, --debug            Generates a source map which maps compiled assets to \n");
-	printf("                          their corresponding source files, aiding debugging.  \n");
+	printf("       --version        Show the Cell compiler version and copyright notice. \n");
+	printf("       --in             Set the input directory; Cell looks for sources in   \n");
+	printf("                        the current working directory by default.            \n");
+	printf("   -l, --make-dist      Build an unpacked game distribution.                 \n");
+	printf("   -p, --make-package   Build a Sphere package (.spk).                       \n");
+	printf("   -d, --debug          Generate a source map which maps compiled assets to  \n");
+	printf("                        their corresponding source files, aiding debugging.  \n");
 }

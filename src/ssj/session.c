@@ -74,7 +74,7 @@ print_commands(session_t* sess)
 		"Abbreviated command names are listed first, then the full verbose name of that \n"
 		"command.                                                                       \n\n"
 
-		" bt, backtrace  Print a listing of all function calls currently on the stack.  \n"
+		" bt, backtrace  Print a listing of all function calls currently on the stack   \n"
 		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
 		" e,  eval       Evaluate a JavaScript expression and print the result          \n"
 		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
@@ -82,7 +82,7 @@ print_commands(session_t* sess)
 		" si, stepin     Run to the next line of code, stepping into functions          \n"
 		" so, stepout    Run until the current function call returns                    \n"
 		" v,  var        List local variables and their values in the active frame      \n"
-		" w,  where      Show the filename and line number for the next line of code    \n"
+		" w,  where      Show the filename and line number of the next line of code     \n"
 		" h,  help       Show this list of commands                                     \n"
 		" q,  quit       Detach and terminate your SSJ debugging session                \n"
 		);
@@ -271,20 +271,22 @@ do_command_line(session_t* sess)
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
-	if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
-		print_commands(sess);
-	else if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
+	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
-		printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
-			lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
-	}
+	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
+		print_commands(sess);
+	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
+		print_callstack(sess, sess->current_frame);
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
+	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
+		eval_expression(sess, argument, sess->current_frame);
+	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
+		print_callstack(sess, atoi(argument));
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -293,12 +295,10 @@ do_command_line(session_t* sess)
 		execute_next(sess, EXEC_STEP_OUT);
 	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
 		print_variables(sess, sess->current_frame);
-	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
-		eval_expression(sess, argument, sess->current_frame);
-	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
-		print_callstack(sess, sess->current_frame);
-	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
-		print_callstack(sess, atoi(argument));
+	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
+		printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
+			lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
+	}
 	else
 		printf("'%s' not recognized in this context\n", command);
 	free(parsee);
