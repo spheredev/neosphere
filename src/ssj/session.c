@@ -71,8 +71,23 @@ void
 print_commands(session_t* sess)
 {
 	printf(
-		"`go`     Run until either a breakpoint is hit or an error is thrown.           \n"
-		"`help`   Show this list of commands.                                           \n"
+		"Here are some common commands used when debugging with SSJ:\n\n"
+		"   bt   backtrace   Prints a listing of all function calls currently on the\n"
+		"                    stack.\n"
+		"   c    continue    Run until either a breakpoint is hit or an error is thrown.\n"
+		"   e    eval        Evaluates a JavaScript expression within the scope of the\n"
+		"                    active stack frame and prints the result.\n"
+		"   f    frame       Changes the active stack frame. This affects the behavior\n"
+		"                    of commands such as `eval` and `var`, but doesn't affect\n"
+		"                    control flow. The correct index can be found using `bt`.\n"
+		"   s    step        Steps through to the next line of code.\n"
+		"   si   stepin      Steps through to the next line of code. If a function is\n"
+		"                    called, SSJ will pause at the top of that function.\n"
+		"   so   stepout     Runs until the current function call returns.\n"
+		"   v    var         Lists automatic variables and their values for the active\n"
+		"                    stack frame.\n"
+		"   w    where       Shows the filename and line number of the next line of code\n"
+		"                    to be executed.\n"
 		);
 
 }
@@ -96,7 +111,8 @@ eval_expression(session_t* sess, const char* expr, size_t frame)
 	response = converse(sess, request);
 	flag = msg_atom_int(response, 0);
 	result = msg_atom_string(response, 1);
-	printf(flag == 0 ? "\33[36;1m" : "\33[31;1m");
+	if (flag != 0) printf("\33[31;1m");
+		else printf("\33[36;1m");
 	printf("%s\33[m\n", result);
 	msg_free(response);
 }
@@ -126,10 +142,10 @@ print_callstack(session_t* sess, size_t frame)
 			filename = msg_atom_string(response, i * 4);
 			function_name = msg_atom_string(response, i * 4 + 1);
 			line_num = msg_atom_int(response, i * 4 + 2);
-			display_name = function_name[0] != '\0' ? lstr_newf("`%s()`", function_name)
+			display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
 				: lstr_new("anon");
-			printf("\33[33;1m%s \33[36;1m%3zd: %s <%s:%d>\33[m\n", i == frame ? ">>" : "  ",
-				i, lstr_cstr(display_name), filename, line_num);
+			printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n", i,
+				lstr_cstr(display_name), filename, line_num, i == frame ? "<<<" : "");
 			lstr_free(display_name);
 		}
 	}
@@ -151,7 +167,7 @@ print_variables(session_t* sess, size_t frame)
 	response = converse(sess, request);
 	n_items = msg_len(response) / 2;
 	for (i = 0; i < n_items; ++i) {
-		printf("\33[36;1mvar %s = ", msg_atom_string(response, i * 2));
+		printf("var %s = ", msg_atom_string(response, i * 2));
 		switch (msg_atom_type(response, i * 2 + 1)) {
 		case ATOM_UNDEFINED: printf("undefined"); break;
 		case ATOM_OBJECT: printf("{ ... }"); break;
@@ -167,7 +183,7 @@ print_variables(session_t* sess, size_t frame)
 		default:
 			printf("<unknown>");
 		}
-		printf("\33[m\n");
+		printf("\n");
 	}
 	msg_free(response);
 }
@@ -241,8 +257,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[0;1m%s:%d \33[33;1mssj$\33[m ",
-			lstr_cstr(sess->filename), sess->line);
+		printf("\n\33[36;1m%s \33[33;1mssj$\33[m ", lstr_cstr(sess->function));
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -268,8 +283,8 @@ do_command_line(session_t* sess)
 		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
-		printf("execution paused in `%s()` <%s:%d>\n", lstr_cstr(sess->function),
-			lstr_cstr(sess->filename), sess->line);
+		printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
+			lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
 	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
@@ -298,6 +313,7 @@ process_message(session_t* sess, const message_t* msg)
 {
 	const char* filename;
 	int32_t     flag;
+	const char* function_name;
 	int32_t     line_no;
 	const char* text;
 
@@ -308,8 +324,11 @@ process_message(session_t* sess, const message_t* msg)
 			lstr_free(sess->filename);
 			lstr_free(sess->function);
 			flag = msg_atom_int(msg, 1);
+			function_name = msg_atom_string(msg, 3);
 			sess->filename = lstr_new(msg_atom_string(msg, 2));
-			sess->function = lstr_new(msg_atom_string(msg, 3));
+			sess->function = function_name[0] != '\0'
+				? lstr_newf("%s()", msg_atom_string(msg, 3))
+				: lstr_new("anon");
 			sess->line = msg_atom_int(msg, 4);
 			sess->is_stopped = flag != 0;
 			break;
@@ -324,15 +343,15 @@ process_message(session_t* sess, const message_t* msg)
 			text = msg_atom_string(msg, 2);
 			filename = msg_atom_string(msg, 3);
 			line_no = msg_atom_int(msg, 4);
-			if (flag != 0)
-				printf("\33[31;1muncaught `%s` <%s:%d>\33[m\n", text, filename, line_no);
+			printf("\33[31;1m%s at %s:%d `%s`\33[m\n", flag != 0 ? "ERROR" : "THROW",
+				filename, line_no, text);
 			break;
 		case NFY_DETACHING:
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("\33[36;1mtarget detached normally.");
+				printf("\33[0;1mminisphere has detached normally.");
 			else
-				printf("\33[31;1mtarget detached unexpectedly.");
+				printf("\33[31;1mUnrecoverable error, target detached");
 			printf("\33[m\n");
 			return false;
 		}
