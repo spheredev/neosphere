@@ -320,11 +320,13 @@ process_message(session_t* sess, const message_t* msg)
 	const char* function_name;
 	int32_t     line_no;
 	const char* text;
+	bool        was_running;
 
 	switch (msg_get_class(msg)) {
 	case MSG_CLASS_NFY:
 		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
+			was_running = !sess->is_stopped;
 			lstr_free(sess->filename);
 			lstr_free(sess->function);
 			flag = msg_atom_int(msg, 1);
@@ -335,7 +337,7 @@ process_message(session_t* sess, const message_t* msg)
 				: lstr_new("anon");
 			sess->line = msg_atom_int(msg, 4);
 			sess->is_stopped = flag != 0;
-			if (sess->is_stopped)
+			if (sess->is_stopped && was_running)
 				print_status(sess);
 			break;
 		case NFY_PRINT:
