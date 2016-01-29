@@ -74,19 +74,18 @@ print_commands(session_t* sess)
 		"Abbreviated command names are listed first, then the full verbose name of that \n"
 		"command.                                                                       \n\n"
 
-		" bt, backtrace  Print a listing of all function calls currently on the stack   \n"
+		" bt, backtrace  Show a list of all function calls currently on the stack       \n"
 		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
-		" e,  eval       Evaluate a JavaScript expression and print the result          \n"
+		" e,  eval       Evaluate a JavaScript expression                               \n"
 		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
-		" s,  step       Run to the next line of code                                   \n"
-		" si, stepin     Run to the next line of code, stepping into functions          \n"
+		" s,  step       Run the next line of code                                      \n"
+		" si, stepin     Run the next line of code, stepping into functions             \n"
 		" so, stepout    Run until the current function call returns                    \n"
 		" v,  var        List local variables and their values in the active frame      \n"
 		" w,  where      Show the filename and line number of the next line of code     \n"
 		" h,  help       Show this list of commands                                     \n"
 		" q,  quit       Detach and terminate your SSJ debugging session                \n"
-		);
-
+	);
 }
 
 void
@@ -109,7 +108,7 @@ eval_expression(session_t* sess, const char* expr, size_t frame)
 	flag = msg_atom_int(response, 0);
 	result = msg_atom_string(response, 1);
 	if (flag != 0) printf("\33[31;1m");
-		else printf("\33[36;1m");
+		else printf("\33[0;1m");
 	printf("%s\33[m\n", result);
 	msg_free(response);
 }
@@ -141,12 +140,21 @@ print_callstack(session_t* sess, size_t frame)
 			line_num = msg_atom_int(response, i * 4 + 2);
 			display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
 				: lstr_new("anon");
-			printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n", i,
-				lstr_cstr(display_name), filename, line_num, i == frame ? "<<<" : "");
+			printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n",
+				i, lstr_cstr(display_name), filename, line_num,
+				i == frame ? "<<<" : "");
 			lstr_free(display_name);
 		}
 	}
 	msg_free(response);
+}
+
+void
+print_status(session_t* sess)
+{
+	printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m:\n",
+		lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
+	printf("\33[30;1m%4d: %s\33[m\n", sess->line, "lauren.eatenness = 812;");
 }
 
 void
@@ -207,6 +215,7 @@ run_session(session_t* sess)
 	bool       is_active = true;
 	message_t* msg;
 	
+	printf("\n");
 	while (is_active) {
 		if (sess->remote == NULL || sess->is_stopped)
 			is_active &= do_command_line(sess);
@@ -295,10 +304,8 @@ do_command_line(session_t* sess)
 		execute_next(sess, EXEC_STEP_OUT);
 	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
 		print_variables(sess, sess->current_frame);
-	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
-		printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
-			lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
-	}
+	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
+		print_status(sess);
 	else
 		printf("'%s' not recognized in this context\n", command);
 	free(parsee);
@@ -328,6 +335,8 @@ process_message(session_t* sess, const message_t* msg)
 				: lstr_new("anon");
 			sess->line = msg_atom_int(msg, 4);
 			sess->is_stopped = flag != 0;
+			if (sess->is_stopped)
+				print_status(sess);
 			break;
 		case NFY_PRINT:
 			printf("\33[36m%s\x1B[m", msg_atom_string(msg, 1));
@@ -340,8 +349,8 @@ process_message(session_t* sess, const message_t* msg)
 			text = msg_atom_string(msg, 2);
 			filename = msg_atom_string(msg, 3);
 			line_no = msg_atom_int(msg, 4);
-			printf("\33[31;1m%s at %s:%d `%s`\33[m\n", flag != 0 ? "ERROR" : "THROW",
-				filename, line_no, text);
+			printf("\33[31;1m%s `%s` at %s:%d\33[m\n", flag != 0 ? "uncaught" : "threw",
+				text, filename, line_no);
 			break;
 		case NFY_DETACHING:
 			flag = msg_atom_int(msg, 1);
