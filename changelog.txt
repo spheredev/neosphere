@@ -7,6 +7,9 @@ v3.0.0 - TBD
 * The Windows GDK release now requires a 64-bit version of Windows. It's still
   possible to build a 32-bit GDK from source, but it's no longer officially
   supported.
+* The command to run minisphere from the command line has been changed from
+  'msphere' to 'minisphere'. This is slightly more verbose, but also more
+  discoverable for those (like me!) who don't like reading documentation.
 * The minisphere GDK comes with a new console debugger, called SSJ. Simply run
   `ssj <game-path>` on the command line to start an interactive debugging
   session for a specified game. This brings single-step debugging to non-Windows
