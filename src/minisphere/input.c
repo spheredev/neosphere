@@ -372,7 +372,7 @@ save_key_map(void)
 
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
-	console_log(0, "Saving player key mappings");
+	console_log(1, "Saving player key mappings");
 	file = open_kev_file(g_fs, "keymap.kev");
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"

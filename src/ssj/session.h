@@ -15,7 +15,7 @@ enum exec_op
 session_t* new_session     (const char* hostname, int port);
 void       eval_expression (session_t* sess, const char* expr, size_t frame);
 void       execute_next    (session_t* sess, exec_op_t op);
-void       print_callstack (session_t* sess, size_t frame);
+void       print_callstack (session_t* sess, size_t frame, bool show_all);
 void       print_commands  (session_t* sess);
 void       print_variables (session_t* sess, size_t frame);
 void       run_session     (session_t* sess);

@@ -30,7 +30,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	// listen for debugger connections on TCP port 1208.
 	// the listening socket will remain active for the duration of
 	// the session, allowing a debugger to be attached at any time.
-	console_log(0, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
+	console_log(1, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
 	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
 
@@ -71,7 +71,7 @@ update_debugger(void)
 			free_socket(socket);
 		}
 		else {
-			console_log(0, "Connected to debugger at %s", get_socket_host(socket));
+			console_log(1, "Connected to debugger at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
 			duk_debugger_attach(g_duk,
@@ -122,14 +122,14 @@ attach_debugger(void)
 {
 	double timeout;
 
-	console_log(0, "Waiting for connection from debugger");
+	console_log(1, "Waiting for connection from debugger");
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
 		update_debugger();
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
-		console_log(0, "Timed out waiting for debugger");
+		console_log(1, "Timed out waiting for debugger");
 	return s_client != NULL;
 }
 
@@ -179,7 +179,7 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	// to block until we can read >= 1 byte.
 	while ((n_bytes = peek_socket(s_client)) == 0) {
 		if (!is_socket_live(s_client)) {  // did a pig eat it?
-			console_log(0, "TCP connection reset while debugging");
+			console_log(1, "TCP connection reset while debugging");
 			free_socket(s_client); s_client = NULL;
 			return 0;  // stupid pig
 		}
@@ -201,7 +201,7 @@ duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 
 	// make sure we're still connected
 	if (!is_socket_live(s_client)) {
-		console_log(0, "TCP connection reset while debugging");
+		console_log(1, "TCP connection reset while debugging");
 		free_socket(s_client); s_client = NULL;
 		return 0;
 	}

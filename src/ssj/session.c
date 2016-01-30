@@ -114,7 +114,7 @@ eval_expression(session_t* sess, const char* expr, size_t frame)
 }
 
 void
-print_callstack(session_t* sess, size_t frame)
+print_callstack(session_t* sess, size_t frame, bool show_all)
 {
 	lstring_t*  display_name;
 	const char* filename;
@@ -125,7 +125,7 @@ print_callstack(session_t* sess, size_t frame)
 	message_t*  response;
 
 	size_t i;
-	
+
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_CALLSTACK);
 	response = converse(sess, request);
@@ -138,12 +138,14 @@ print_callstack(session_t* sess, size_t frame)
 			filename = msg_atom_string(response, i * 4);
 			function_name = msg_atom_string(response, i * 4 + 1);
 			line_num = msg_atom_int(response, i * 4 + 2);
-			display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
-				: lstr_new("anon");
-			printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n",
-				i, lstr_cstr(display_name), filename, line_num,
-				i == frame ? "<<<" : "");
-			lstr_free(display_name);
+			if (i == frame || show_all) {
+				display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
+					: lstr_new("anon");
+				printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n",
+					i, lstr_cstr(display_name), filename, line_num,
+					i == frame ? "<<<" : "");
+				lstr_free(display_name);
+			}
 		}
 	}
 	msg_free(response);
@@ -288,13 +290,13 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
 		print_commands(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
-		print_callstack(sess, sess->current_frame);
+		print_callstack(sess, sess->current_frame, true);
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
 		eval_expression(sess, argument, sess->current_frame);
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
-		print_callstack(sess, atoi(argument));
+		print_callstack(sess, atoi(argument), false);
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -356,7 +358,7 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_DETACHING:
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("\33[0;1mminisphere has detached normally.");
+				printf("\33[0;1mminisphere detached normally.");
 			else
 				printf("\33[31;1mUnrecoverable error, target detached");
 			printf("\33[m\n");

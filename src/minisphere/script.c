@@ -51,7 +51,7 @@ initialize_scripts(void)
 	return;
 
 on_error:
-	console_log(0, "  CoffeeScript support not enabled");
+	console_log(1, "  CoffeeScript support not enabled");
 }
 
 bool

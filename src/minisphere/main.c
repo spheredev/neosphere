@@ -127,13 +127,13 @@ main(int argc, char* argv[])
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
 		shutdown_engine();
-		console_log(0, "\nRestarting to launch new game");
+		console_log(1, "\nRestarting to launch new game");
 		console_log(1, "  Path: %s", path_cstr(g_game_path));
 		initialize_engine();
 	}
 
 	// locate the game manifest
-	console_log(0, "Looking for a game to launch");
+	console_log(1, "Looking for a game to launch");
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
@@ -261,7 +261,6 @@ main(int argc, char* argv[])
 	s_next_frame_time = s_last_flip_time = al_get_time();
 
 	// evaluate startup script
-	console_log(0, "Engine started!\n");
 	al_hide_mouse_cursor(g_display);
 	script_path = get_sgm_script_path(g_fs);
 	if (!evaluate_script(path_cstr(script_path)))
@@ -661,7 +660,7 @@ initialize_engine(void)
 
 	// initialize Allegro
 	al_version = al_get_allegro_version();
-	console_log(0, "Initializing Allegro (%d.%d.%d)",
+	console_log(1, "Initializing Allegro (%d.%d.%d)",
 		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF);
 	al_set_org_name("Fat Cerberus");
 	al_set_app_name("minisphere");
@@ -672,7 +671,7 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
-	console_log(0, "Initializing Dyad");
+	console_log(1, "Initializing Dyad");
 	dyad_init();
 	dyad_setUpdateTimeout(0.001);
 
@@ -690,7 +689,7 @@ initialize_engine(void)
 	initialize_map_engine();
 
 	// initialize JavaScript
-	console_log(0, "Initializing JavaScript");
+	console_log(1, "Initializing JavaScript");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
 	console_log(1, "  Duktape %s", DUK_GIT_DESCRIBE);
@@ -720,10 +719,10 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	shutdown_input();
 
-	console_log(0, "Shutting down Duktape");
+	console_log(1, "Shutting down Duktape");
 	duk_destroy_heap(g_duk);
 
-	console_log(0, "Shutting down Dyad");
+	console_log(1, "Shutting down Dyad");
 	dyad_shutdown();
 
 	shutdown_spritesets();
@@ -731,7 +730,7 @@ shutdown_engine(void)
 	shutdown_galileo();
 	shutdown_async();
 
-	console_log(0, "Shutting down Allegro");
+	console_log(1, "Shutting down Allegro");
 	if (g_display != NULL)
 		al_destroy_display(g_display);
 	g_display = NULL;
@@ -825,7 +824,7 @@ parse_command_line(
 
 	*out_game_path = NULL;
 	*out_frameskip = 5;
-	*out_verbosity = 1;
+	*out_verbosity = 0;
 	*out_want_throttle = true;
 	*out_want_debug = false;
 
@@ -853,7 +852,7 @@ parse_command_line(
 				if (++i >= argc) goto missing_argument;
 				*out_frameskip = atoi(argv[i]);
 			}
-			else if (strcmp(argv[i], "--log-level") == 0) {
+			else if (strcmp(argv[i], "--log") == 0) {
 				if (++i >= argc) goto missing_argument;
 				*out_verbosity = atoi(argv[i]);
 			}

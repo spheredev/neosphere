@@ -61,7 +61,7 @@ msphere_libs = [
 	"m",
 ]
 
-minisphere = Program("msphere",
+minisphere = Program("minisphere",
 	msphere_sources,
 	CPPPATH = [ ".", "#/src/shared" ],
 	CPPDEFINES = msphere_defines,

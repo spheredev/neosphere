@@ -17,7 +17,7 @@ static bool s_have_shaders;
 void
 initialize_shaders(bool enable_shading)
 {
-	console_log(0, "Initializing shader support");
+	console_log(1, "Initializing shader support");
 	s_have_shaders = enable_shading;
 	reset_shader();
 }
@@ -25,7 +25,7 @@ initialize_shaders(bool enable_shading)
 void
 shutdown_shaders(void)
 {
-	console_log(0, "Shutting down shader manager");
+	console_log(1, "Shutting down shader manager");
 }
 
 bool
