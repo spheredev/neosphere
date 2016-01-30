@@ -156,7 +156,7 @@ print_status(session_t* sess)
 {
 	printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m:\n",
 		lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
-	printf("\33[30;1m%4d: %s\33[m\n", sess->line, "lauren.eatenness = 812;");
+	printf("\33[30;1m%4d\33[m %s\n", sess->line, "lauren.eatenness = 812;");
 }
 
 void
