@@ -237,15 +237,14 @@ on_error:
 static message_t*
 converse(session_t* sess, message_t* msg)
 {
-	message_t* response;
+	message_t* response = NULL;
 
 	msg_send(sess->remote, msg);
 	do {
+		msg_free(response);
 		if (!(response = msg_receive(sess->remote))) return NULL;
-		if (msg_get_class(response) == MSG_CLASS_NFY) {
+		if (msg_get_class(response) == MSG_CLASS_NFY)
 			process_message(sess, response);
-			msg_free(response);
-		}
 	} while (msg_get_class(response) == MSG_CLASS_NFY);
 	return response;
 }
