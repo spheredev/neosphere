@@ -38,13 +38,13 @@ main(int argc, char* argv[])
 		// uselessly fighting over the terminal. on Windows, 'start' makes this unnecessary,
 		// since it creates a new console.
 	#ifdef _WIN32
-		game_command = lstr_newf("start msphere --debug \"%s\"", path_cstr(cmdline->path));
+		game_command = lstr_newf("start minisphere --debug \"%s\"", path_cstr(cmdline->path));
 		system(lstr_cstr(game_command));
 		lstr_free(game_command);
 	#else
 		if (fork() == 0) {
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
-			execlp("msphere", "msphere", "--debug", path_cstr(cmdline->path), NULL);
+			execlp("minisphere", "minisphere", "--debug", path_cstr(cmdline->path), NULL);
 		}
 	#endif
 
