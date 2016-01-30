@@ -4,6 +4,7 @@ bin/cell
 bin/ssj
 bin/*.exe
 bin/plugin/
+cbp/*.depend
 msvs/debug/
 msvs/obj/
 msvs/packages/

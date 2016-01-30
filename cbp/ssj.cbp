@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SSJ" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="debug/ssj" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="../bin/ssj" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add directory="../src/shared" />
+		</Compiler>
+		<Unit filename="../src/shared/dyad.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/dyad.h" />
+		<Unit filename="../src/shared/lstring.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/lstring.h" />
+		<Unit filename="../src/shared/path.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/path.h" />
+		<Unit filename="../src/shared/unicode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/unicode.h" />
+		<Unit filename="../src/shared/vector.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shared/vector.h" />
+		<Unit filename="../src/shared/version.h" />
+		<Unit filename="../src/ssj/main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/ssj/posix.h" />
+		<Unit filename="../src/ssj/remote.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/ssj/remote.h" />
+		<Unit filename="../src/ssj/session.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/ssj/session.h" />
+		<Unit filename="../src/ssj/source.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/ssj/source.h" />
+		<Unit filename="../src/ssj/ssj.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
