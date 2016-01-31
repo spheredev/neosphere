@@ -17,6 +17,7 @@
 #if !defined(_WIN32)
 #include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #else
 #include <Shlwapi.h>
 #endif

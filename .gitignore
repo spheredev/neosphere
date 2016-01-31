@@ -1,5 +1,5 @@
 *.log
-bin/minisphere
+bin/sphere
 bin/cell
 bin/ssj
 bin/*.exe
