@@ -10,7 +10,7 @@ static char* freadline (FILE* h_file);
 static char* fslurp    (const char* filename);
 
 source_t*
-load_source(const path_t* path, const path_t* source_path)
+load_source(const lstring_t* filename, const path_t* source_path)
 {
 	path_t*    full_path;
 	FILE*      h_file = NULL;
@@ -19,7 +19,8 @@ load_source(const path_t* path, const path_t* source_path)
 	source_t*  source = NULL;
 	char*      text;
 
-	full_path = path_rebase(path_dup(path), source_path);
+	
+	full_path = path_rebase(path_new(lstr_cstr(filename)), source_path);
 	if (!(h_file = fopen(path_cstr(full_path), "rb")))
         goto on_error;
 	lines = vector_new(sizeof(lstring_t*));
@@ -46,11 +47,20 @@ free_source(source_t* source)
 	iter_t     it;
 	lstring_t* *p_line;
 
+	if (source == NULL) return;
 	it = vector_enum(source->lines);
 	while (p_line = vector_next(&it))
         lstr_free(*p_line);
 	vector_free(source->lines);
 	free(source);
+}
+
+const lstring_t*
+get_source_line(const source_t* source, size_t index)
+{
+	if (index >= vector_len(source->lines))
+		return NULL;
+	return *(lstring_t**)vector_get(source->lines, index);
 }
 
 static char*
@@ -73,8 +83,8 @@ freadline(FILE* h_file)
         case '\n': have_line = true; break;
         case '\r':
             fread(&ch, 1, 1, h_file);
-            if (ch != '\n')
-                fseek(h_file, -1, SEEK_CUR);
+			if (!feof(h_file) && ch != '\n')
+				ungetc(ch, h_file);
             have_line = true;
             break;
         default:

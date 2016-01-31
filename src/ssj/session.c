@@ -1,5 +1,6 @@
 #include "ssj.h"
 #include "session.h"
+#include "source.h"
 
 #include "remote.h"
 
@@ -11,9 +12,11 @@ struct session
 	size_t     current_frame;
 	lstring_t* function;
 	lstring_t* filename;
+	bool       is_stopped;
 	int32_t    line;
 	remote_t*  remote;
-	bool       is_stopped;
+	source_t*  source;
+	path_t*    source_path;
 };
 
 enum req_command
@@ -60,6 +63,7 @@ new_session(const char* hostname, int port)
 	session = calloc(1, sizeof(session_t));
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
+	session->source_path = path_new("D:/src/spectacles-i/dist/");
 	return session;
 
 on_error:
@@ -71,22 +75,28 @@ void
 print_commands(session_t* sess)
 {
 	printf(
-		"Abbreviated command names are listed first, then the full verbose name of that \n"
-		"command.                                                                       \n\n"
+		"\33[0;1m"
+		"SSJ Debugger Commands                                                          \n"
+		"\33[m"
+		"Abbreviated names are listed first, followed by the full, verbose name of each \n"
+		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
 
 		" bt, backtrace  Show a list of all function calls currently on the stack       \n"
-		" b,  break      Set a breakpoint at file:line (e.g. scripts/main.js:812)       \n"
+		" bp, break      Set a breakpoint at file:line (e.g. scripts/main.js:812)       \n"
 		" cl, clear      Clear a breakpoint set a file:line (see 'break')               \n"
 		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
 		" e,  eval       Evaluate a JavaScript expression                               \n"
 		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
+		" l,  list       Show source text around the line of code being debugged        \n"
 		" s,  step       Run the next line of code                                      \n"
 		" si, stepin     Run the next line of code, stepping into functions             \n"
 		" so, stepout    Run until the current function call returns                    \n"
 		" v,  var        List local variables and their values in the active frame      \n"
 		" w,  where      Show the filename and line number of the next line of code     \n"
 		" h,  help       Show this list of commands                                     \n"
-		" q,  quit       Detach and terminate your SSJ debugging session                \n"
+		" q,  quit       Detach and terminate your SSJ debugging session                \n\n"
+
+		"Type 'help <command>' for usage of individual commands.                        \n"
 	);
 }
 
@@ -110,7 +120,7 @@ eval_expression(session_t* sess, const char* expr, size_t frame)
 	flag = msg_atom_int(response, 0);
 	result = msg_atom_string(response, 1);
 	if (flag != 0) printf("\33[31;1m");
-		else printf("\33[0;1m");
+		else printf("= \33[0;1m");
 	printf("%s\33[m\n", result);
 	msg_free(response);
 }
@@ -156,9 +166,14 @@ print_callstack(session_t* sess, size_t frame, bool show_all)
 void
 print_status(session_t* sess)
 {
-	printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m:\n",
+	const lstring_t* line;
+	
+	printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
 		lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
-	printf("\33[30;1m%4d\33[m %s\n", sess->line, "lauren.eatenness = 812;");
+	if (sess->source != NULL) {
+		line = get_source_line(sess->source, sess->line - 1);
+		printf("\33[30;1m%4d\33[m %s\n", sess->line, lstr_cstr(line));
+	}
 }
 
 void
@@ -208,7 +223,7 @@ set_breakpoint(session_t* sess, const char* filename, int line)
 	msg_add_string(request, filename);
 	msg_add_int(request, (int32_t)line);
 	response = converse(sess, request);
-	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%d\33[m",
+	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%d\33[m\n",
 		msg_atom_int(response, 0), filename, line);
 	msg_free(response);
 }
@@ -309,7 +324,7 @@ do_command_line(session_t* sess)
 		print_commands(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_callstack(sess, sess->current_frame, true);
-	else if (strcmp(command, "break") == 0 || strcmp(command, "b") == 0) {
+	else if (strcmp(command, "break") == 0 || strcmp(command, "bp") == 0) {
 		set_breakpoint(sess, "scripts/main.js", 30);
 	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
@@ -349,6 +364,7 @@ process_message(session_t* sess, const message_t* msg)
 		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
 			was_running = !sess->is_stopped;
+			free_source(sess->source);
 			lstr_free(sess->filename);
 			lstr_free(sess->function);
 			flag = msg_atom_int(msg, 1);
@@ -358,6 +374,7 @@ process_message(session_t* sess, const message_t* msg)
 				? lstr_newf("%s()", msg_atom_string(msg, 3))
 				: lstr_new("anon");
 			sess->line = msg_atom_int(msg, 4);
+			sess->source = load_source(sess->filename, sess->source_path);
 			sess->is_stopped = flag != 0;
 			if (sess->is_stopped && was_running)
 				print_status(sess);
