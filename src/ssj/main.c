@@ -10,7 +10,6 @@ struct cmdline
 	bool    want_pause;
 };
 
-static bool            find_minisphere  (void);
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
 static void            print_cell_quote (void);
 static void            print_banner     (bool want_copyright, bool want_deps);
@@ -20,7 +19,6 @@ int
 main(int argc, char* argv[])
 {
 	struct cmdline* cmdline;
-	lstring_t*      game_command;
 	int             retval;
 	session_t*      session;
 
@@ -31,31 +29,8 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
-	if (cmdline->path != NULL) {
-		printf("Launching minisphere... ");
-		fflush(stdout);
-
-		// fork a new process to run minisphere, suppressing stdout to avoid SSJ and minisphere
-		// uselessly fighting over the terminal. on Windows, 'start' makes this unnecessary,
-		// since it creates a new console.
-		if (!find_minisphere()) {
-			printf("Error!\n");
-			return EXIT_FAILURE;
-		}
-
-	#ifdef _WIN32
-		game_command = lstr_newf("start ./sphere.exe --debug \"%s\"", path_cstr(cmdline->path));
-		system(lstr_cstr(game_command));
-		lstr_free(game_command);
-	#else
-		if (fork() == 0) {
-			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
-			execlp("./sphere", "./sphere", "--debug", path_cstr(cmdline->path), NULL);
-		}
-	#endif
-
-		printf("OK.\n");
-	}
+	if (cmdline->path != NULL && !launch_minisphere(cmdline->path))
+		return EXIT_FAILURE;
 
 	initialize_client();
 	if (!(session = new_session("127.0.0.1", 1208)))
@@ -69,28 +44,57 @@ main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
-static bool
-find_minisphere(void)
+bool
+launch_minisphere(path_t* game_path)
 {
 #if defined(_WIN32)
-	HMODULE h_module;
-	TCHAR   pathname[MAX_PATH];
+	lstring_t* command;
+	HMODULE    h_module;
+	TCHAR      pathname[MAX_PATH];
 
+	printf("Starting '%s'... ", path_cstr(game_path));
+	fflush(stdout);
 	h_module = GetModuleHandle(NULL);
 	GetModuleFileName(h_module, pathname, MAX_PATH);
 	PathRemoveFileSpec(pathname);
 	SetCurrentDirectory(pathname);
-	return PathFileExists(TEXT(".\\sphere.exe"));
+	if (!PathFileExists(TEXT(".\\sphere.exe"))) {
+		printf("Error!\n");
+		return false;
+	}
+	else {
+		command = lstr_newf("start ./sphere.exe --debug \"%s\"", path_cstr(game_path));
+		system(lstr_cstr(command));
+		lstr_free(command);
+		printf("OK.\n");
+		return true;
+	}
 #else
 	char        pathname[PATH_MAX];
 	path_t*     path;
 	struct stat stat_buf;
 	
+	printf("Starting '%s'... ", path_cstr(game_path));
+	fflush(stdout);
 	readlink("/proc/self/exe", pathname, PATH_MAX);
 	path = path_strip(path_new(pathname));
 	chdir(path_cstr(path));
 	path_append(path, "sphere");
-	return stat(path_cstr(path), &stat_buf) == 0;
+	if (stat(path_cstr(path), &stat_buf) != 0) {
+		printf("Error!\n");
+		return false;
+	}
+	else {
+		if (fork() == 0) {
+			// suppress minisphere's stdout. this is kind of a hack for now; eventually
+			// I'd like to intermingle the engine's output with SSJ's, like in native
+			// debuggers e.g. GDB.
+			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
+			execlp("./sphere", "./sphere", "--debug", path_cstr(game_path), NULL);
+		}
+		printf("OK.\n");
+		return true;
+	}
 #endif
 }
 

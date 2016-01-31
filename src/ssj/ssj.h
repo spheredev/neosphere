@@ -28,4 +28,6 @@
 
 #include "version.h"
 
+bool launch_minisphere (path_t* game_path);
+
 #endif // SSJ__SSJ_H__INCLUDED
