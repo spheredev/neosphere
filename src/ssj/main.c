@@ -50,7 +50,7 @@ main(int argc, char* argv[])
 
 		printf("OK.\n");
 	}
-	
+
 	initialize_client();
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
@@ -122,13 +122,13 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			have_target = true;
 		}
 	}
-	
+
 	// sanity-check command line parameters
 	if (!have_target) {
 		print_usage();
 		goto on_output_only;
 	}
-	
+
 	// we're good!
 	return cmdline;
 

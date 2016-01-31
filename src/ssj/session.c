@@ -75,6 +75,8 @@ print_commands(session_t* sess)
 		"command.                                                                       \n\n"
 
 		" bt, backtrace  Show a list of all function calls currently on the stack       \n"
+		" b,  break      Set a breakpoint at file:line (e.g. scripts/main.js:812)       \n"
+		" cl, clear      Clear a breakpoint set a file:line (see 'break')               \n"
 		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
 		" e,  eval       Evaluate a JavaScript expression                               \n"
 		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
@@ -96,7 +98,7 @@ eval_expression(session_t* sess, const char* expr, size_t frame)
 	message_t*  request;
 	message_t*  response;
 	const char* result;
-	
+
 	eval_code = lstr_newf(
 		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
 		expr);
@@ -196,10 +198,26 @@ print_variables(session_t* sess, size_t frame)
 }
 
 void
+set_breakpoint(session_t* sess, const char* filename, int line)
+{
+	message_t* request;
+	message_t* response;
+
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request, REQ_ADD_BREAK);
+	msg_add_string(request, filename);
+	msg_add_int(request, (int32_t)line);
+	response = converse(sess, request);
+	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%d\33[m",
+		msg_atom_int(response, 0), filename, line);
+	msg_free(response);
+}
+
+void
 execute_next(session_t* sess, exec_op_t op)
 {
 	message_t* request;
-	
+
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request,
 		op == EXEC_STEP_OVER ? REQ_STEP_OVER
@@ -216,7 +234,7 @@ run_session(session_t* sess)
 {
 	bool       is_active = true;
 	message_t* msg;
-	
+
 	printf("\n");
 	while (is_active) {
 		if (sess->remote == NULL || sess->is_stopped)
@@ -291,6 +309,9 @@ do_command_line(session_t* sess)
 		print_commands(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_callstack(sess, sess->current_frame, true);
+	else if (strcmp(command, "break") == 0 || strcmp(command, "b") == 0) {
+		set_breakpoint(sess, "scripts/main.js", 30);
+	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
