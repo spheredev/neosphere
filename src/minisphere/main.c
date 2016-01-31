@@ -104,10 +104,25 @@ main(int argc, char* argv[])
 	if (parse_command_line(argc, argv, &g_game_path,
 		&s_is_fullscreen, &s_max_frameskip, &verbosity, &s_conserve_cpu, &want_debug))
 	{
-		set_log_verbosity(verbosity);
+		initialize_console(verbosity);
 	}
 	else
 		return EXIT_FAILURE;
+
+	print_banner(true, false);
+	printf("\n");
+
+	// print out options
+	printf("Parsing command line\n");
+	printf("  Game path: %s\n", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
+	printf("  Fullscreen: %s\n", s_is_fullscreen ? "ON" : "OFF");
+	printf("  Frameskip limit: %d frames\n", s_max_frameskip);
+	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
+	printf("  Console verbosity: V%d\n", verbosity);
+#ifndef MINISPHERE_REDIST
+	printf("  Debugger mode: %s\n", want_debug ? "Active" : "Passive");
+#endif
+	printf("\n");
 
 	if (!initialize_engine())
 		return EXIT_FAILURE;
@@ -894,23 +909,6 @@ parse_command_line(
 			*out_game_path = path_new(argv[i]);
 		}
 	}
-
-	print_banner(true, false);
-	printf("\n");
-	
-	// print out options
-	printf("Parsing command line\n");
-	printf("  Game path: %s\n", *out_game_path != NULL ? path_cstr(*out_game_path) : "<none provided>");
-	printf("  Fullscreen: %s\n", *out_want_fullscreen ? "ON" : "OFF");
-	printf("  Frameskip limit: %i frames\n", *out_frameskip);
-	printf("  CPU throttle: %s\n", *out_want_throttle ? "ON" : "OFF");
-	printf("  Console verbosity: V%i\n", *out_verbosity);
-	#ifndef MINISPHERE_REDIST
-	printf("  Debugger mode: %s\n", *out_want_debug ? "Active" : "Passive");
-	#endif
-
-	printf("\n");
-
 
 	return true;
 

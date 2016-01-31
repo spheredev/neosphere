@@ -17,6 +17,8 @@
 #if !defined(_WIN32)
 #include <unistd.h>
 #include <fcntl.h>
+#else
+#include <Shlwapi.h>
 #endif
 
 #include "lstring.h"

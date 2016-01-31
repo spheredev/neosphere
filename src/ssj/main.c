@@ -10,6 +10,7 @@ struct cmdline
 	bool    want_pause;
 };
 
+static bool            find_minisphere  (void);
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
 static void            print_cell_quote (void);
 static void            print_banner     (bool want_copyright, bool want_deps);
@@ -37,14 +38,19 @@ main(int argc, char* argv[])
 		// fork a new process to run minisphere, suppressing stdout to avoid SSJ and minisphere
 		// uselessly fighting over the terminal. on Windows, 'start' makes this unnecessary,
 		// since it creates a new console.
+		if (!find_minisphere()) {
+			printf("Error!\n");
+			return EXIT_FAILURE;
+		}
+
 	#ifdef _WIN32
-		game_command = lstr_newf("start minisphere --debug \"%s\"", path_cstr(cmdline->path));
+		game_command = lstr_newf("start ./sphere.exe --debug \"%s\"", path_cstr(cmdline->path));
 		system(lstr_cstr(game_command));
 		lstr_free(game_command);
 	#else
 		if (fork() == 0) {
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
-			execlp("minisphere", "minisphere", "--debug", path_cstr(cmdline->path), NULL);
+			execlp("./sphere", "./sphere", "--debug", path_cstr(cmdline->path), NULL);
 		}
 	#endif
 
@@ -61,6 +67,31 @@ main(int argc, char* argv[])
 	run_session(session);
 	shutdown_client();
 	return EXIT_SUCCESS;
+}
+
+static bool
+find_minisphere(void)
+{
+#if defined(_WIN32)
+	HMODULE h_module;
+	TCHAR   pathname[MAX_PATH];
+
+	h_module = GetModuleHandle(NULL);
+	GetModuleFileName(h_module, pathname, MAX_PATH);
+	PathRemoveFileSpec(pathname);
+	SetCurrentDirectory(pathname);
+	return PathFileExists(TEXT(".\\sphere.exe"));
+#else
+	char        pathname[PATH_MAX];
+	path_t*     path;
+	struct stat stat_buf;
+	
+	readlink("/proc/self/exe", pathname, PATH_MAX);
+	path = path_strip(path_new(pathname));
+	chdir(path_cstr(path));
+	path_append(path, "sphere");
+	return stat(path_cstr(path), &stat_buf) == 0;
+#endif
 }
 
 static struct cmdline*
@@ -118,7 +149,12 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 		}
 		else {
 			path_free(cmdline->path);
-			cmdline->path = path_new(argv[i]);
+			cmdline->path = path_resolve(path_new(argv[i]), NULL);
+			if (cmdline->path == NULL) {
+				printf("ssj: error: cannot resolve pathname '%s'\n", argv[i]);
+				*out_retval = EXIT_FAILURE;
+				goto on_output_only;
+			}
 			have_target = true;
 		}
 	}

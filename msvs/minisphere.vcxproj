@@ -56,7 +56,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>msphere</TargetName>
+    <TargetName>sphere</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug\</OutDir>
     <IntDir>obj\debug\minisphere\</IntDir>
@@ -71,7 +71,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>msphere-nc</TargetName>
+    <TargetName>sphere-play</TargetName>
     <OutDir>..\bin\</OutDir>
     <IntDir>obj\release\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -85,7 +85,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>msphere</TargetName>
+    <TargetName>sphere</TargetName>
     <OutDir>..\bin\</OutDir>
     <IntDir>obj\console\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -152,6 +152,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent />
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
