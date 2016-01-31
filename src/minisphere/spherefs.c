@@ -66,6 +66,10 @@ new_sandbox(const char* game_path)
 		fs->root_path = path_dup(path);
 		fs->spk = spk;
 	}
+	else if (path_has_extension(path, ".sgm") || path_has_extension(path, ".s2gm")) {  // game manifest
+		fs->type = SPHEREFS_LOCAL;
+		fs->root_path = path_strip(path_dup(path));
+	}
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));

@@ -14,6 +14,7 @@ const char* path_cstr          (const path_t* path);
 const char* path_filename_cstr (const path_t* path);
 const char* path_hop_cstr      (const path_t* path, size_t idx);
 path_t*     path_insert_hop    (path_t* path, size_t idx, const char* name);
+bool        path_has_extension (const path_t* path, const char* extension);
 bool        path_is_file       (const path_t* path);
 bool        path_is_rooted     (const path_t* path);
 size_t      path_num_hops      (const path_t* path);

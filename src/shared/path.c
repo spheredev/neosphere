@@ -1,6 +1,7 @@
 #ifdef _MSC_VER
 #define _CRT_NONSTDC_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#define strcasecmp stricmp
 #define strtok_r strtok_s
 #endif
 
@@ -100,6 +101,23 @@ const char*
 path_hop_cstr(const path_t* path, size_t idx)
 {
 	return path->hops[idx];
+}
+
+bool
+path_has_extension(const path_t* path, const char* extension)
+{
+	const char* my_extension;
+
+	if (!path_is_file(path))
+		return false;
+	else {
+		my_extension = strrchr(path->filename, '.');
+		if (my_extension == NULL)
+			return extension == NULL || extension[0] == '\0';
+		else {
+			return strcasecmp(my_extension, extension) == 0;
+		}
+	}
 }
 
 bool

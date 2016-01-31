@@ -113,16 +113,16 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	// print out options
-	printf("Parsing command line\n");
-	printf("  Game path: %s\n", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
-	printf("  Fullscreen: %s\n", s_is_fullscreen ? "ON" : "OFF");
-	printf("  Frameskip limit: %d frames\n", s_max_frameskip);
-	printf("  CPU throttle: %s\n", s_conserve_cpu ? "ON" : "OFF");
-	printf("  Console verbosity: V%d\n", verbosity);
+	console_log(1, "Parsing command line");
+	console_log(1, "  Game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
+	console_log(1, "  Fullscreen: %s", s_is_fullscreen ? "ON" : "OFF");
+	console_log(1, "  Frameskip limit: %d frames", s_max_frameskip);
+	console_log(1, "  CPU throttle: %s", s_conserve_cpu ? "ON" : "OFF");
+	console_log(1, "  Console verbosity: V%d", verbosity);
 #ifndef MINISPHERE_REDIST
-	printf("  Debugger mode: %s\n", want_debug ? "Active" : "Passive");
+	console_log(1, "  Debugger mode: %s", want_debug ? "Active" : "Passive");
 #endif
-	printf("\n");
+	console_log(1, "");
 
 	if (!initialize_engine())
 		return EXIT_FAILURE;
