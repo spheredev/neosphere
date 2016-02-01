@@ -640,6 +640,10 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 		}
 		else if (memcmp(filename, "~sys/", 5) == 0) {  // engine's "system" directory
 			origin = path_rebase(path_new("system/"), enginepath());
+			if (!path_resolve(origin, NULL)) {
+				path_free(origin);
+				origin = path_new("/usr/share/minisphere/system/");
+			}
 			path_rebase(*out_path, origin);
 			path_free(origin);
 			*out_fs_type = SPHEREFS_LOCAL;

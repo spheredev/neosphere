@@ -22,7 +22,7 @@ dependencies, so nothing further is required to build for Windows.
 Linux
 -----
 
-minisphere depends on Allegro 5.1.12 (earlier versions will not work), libmng,
+minisphere depends on Allegro 5.1.12+ (earlier versions will not work), libmng,
 and zlib. libmng and zlib are usually available through your distribution's
 package manager, but Allegro 5.1 is considered "unstable" and likely won't be
 available through that channel.
@@ -40,7 +40,7 @@ Allegro repository from GitHub and follow the installation instructions found in
 (https://github.com/liballeg/allegro5)
 
 Once you have Allegro and other necessary dependencies installed, simply switch
-to the directory where you checked out minisphere and run `scons` on the
+to the directory where you checked out minisphere and run `make` on the
 command-line. This will build minisphere and all GDK tools in `bin/`.
 
 Mac OS X
