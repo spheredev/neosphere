@@ -8,4 +8,4 @@ before_install:
 install:
   - sudo apt-get install -qq liballegro5-dev
   - sudo apt-get install -qq libmng-dev
-script: scons
+script: make && sudo make install

@@ -19,11 +19,13 @@ install: all
 clean:
 	rm -f bin/sphere bin/cell bin/ssj
 
-bin:
-	mkdir bin
+minisphere: bin/sphere
+cell: bin/cell
+ssj: bin/ssj
 
-bin/sphere: bin
-	cc -o bin/sphere -O2 -Isrc/shared -Isrc/minisphere \
+bin/sphere:
+	mkdir -p bin
+	cc -o bin/sphere -O3 -Isrc/shared -Isrc/minisphere \
 	   src/minisphere/main.c \
 	   src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
 	   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
@@ -49,16 +51,18 @@ bin/sphere: bin
 	   -lmng -lz -lm
 	cp -r assets/system bin
 
-bin/cell: bin
-	cc -o bin/cell -O2 -Isrc/shared \
+bin/cell:
+	mkdir -p bin
+	cc -o bin/cell -O3 -Isrc/shared \
 	   src/cell/main.c \
 	   src/shared/duktape.c src/shared/path.c src/shared/vector.c \
 	   src/cell/assets.c src/cell/build.c src/cell/spk_writer.c \
 	   src/cell/utility.c \
 	   -lz -lm
 
-bin/ssj: bin
-	cc -o bin/ssj -O2 -Isrc/shared \
+bin/ssj:
+	mkdir -p bin
+	cc -o bin/ssj -O3 -Isrc/shared \
 	   src/ssj/main.c \
 	   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
 	   src/shared/unicode.c src/shared/vector.c \
