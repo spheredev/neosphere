@@ -8,6 +8,8 @@ dist: all
 	cp -r assets dist/$(PKG_NAME)
 	cp -r src dist/$(PKG_NAME)
 	cp Makefile dist/$(PKG_NAME)
+	cp CHANGELOG dist/$(PKG_NAME)
+	cp README.md dist/$(PKG_NAME)
 	cp LICENSE.txt dist/$(PKG_NAME)
 	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
 
