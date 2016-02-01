@@ -71,8 +71,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>sphere-play</TargetName>
-    <OutDir>..\bin\</OutDir>
+    <TargetName>spherun</TargetName>
+    <OutDir>..\msw\</OutDir>
     <IntDir>obj\release\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
     <Allegro_AddonImage>true</Allegro_AddonImage>
@@ -86,7 +86,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>sphere</TargetName>
-    <OutDir>..\bin\</OutDir>
+    <OutDir>..\msw\</OutDir>
     <IntDir>obj\console\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
     <Allegro_AddonImage>true</Allegro_AddonImage>
@@ -118,8 +118,7 @@
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\bin\system\*" "$(OutDir)system\"
-</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -154,6 +153,9 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <ClCompile>
@@ -186,6 +188,9 @@
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\shared\duktape.c" />
@@ -278,11 +283,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="minisphere.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\changelog.txt" />
-    <Text Include="..\docs\cell-api.txt" />
-    <Text Include="..\docs\minisphere-api.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

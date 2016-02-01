@@ -1,6 +1,7 @@
 *.log
-bin
-dist
+bin/
+dist/
+msw/
 msvs/debug/
 msvs/obj/
 msvs/packages/

@@ -1,29 +1,37 @@
-PKG_VERSION=$(shell git describe)
-PKG_NAME=minisphere-$(PKG_VERSION)
+PKG_NAME=minisphere-$(shell cat VERSION)
 
-all: bin/sphere bin/cell bin/ssj
+.PHONY: all
+all: minisphere cell ssj
 
+.PHONY: minisphere
+minisphere: bin/sphere
+
+.PHONY: cell
+cell: bin/cell
+
+.PHONY: ssj
+ssj: bin/ssj
+
+.PHONY: dist
 dist: all
 	mkdir -p dist/$(PKG_NAME)
-	cp -r assets dist/$(PKG_NAME)
-	cp -r src dist/$(PKG_NAME)
-	cp Makefile dist/$(PKG_NAME)
-	cp CHANGELOG dist/$(PKG_NAME)
-	cp README.md dist/$(PKG_NAME)
-	cp LICENSE.txt dist/$(PKG_NAME)
+	cp -r assets man src dist/$(PKG_NAME)
+	cp Makefile VERSION dist/$(PKG_NAME)
+	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
 	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
 
+.PHONY: install
 install: all
 	mkdir -p /usr/share/minisphere
 	cp bin/sphere bin/cell bin/ssj /usr/bin
 	cp -r bin/system /usr/share/minisphere
+	gzip man/minisphere.1
+	mv man/minisphere.1.gz /usr/man/man1
+	makewhatis
 
+.PHONY: clean
 clean:
 	rm -f bin/sphere bin/cell bin/ssj
-
-minisphere: bin/sphere
-cell: bin/cell
-ssj: bin/ssj
 
 bin/sphere:
 	mkdir -p bin

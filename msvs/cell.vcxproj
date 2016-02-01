@@ -52,7 +52,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <TargetName>cell</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\</OutDir>
+    <OutDir>..\msw\</OutDir>
     <IntDir>obj\console\cell\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
