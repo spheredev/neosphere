@@ -1,17 +1,11 @@
 *.log
-bin/sphere
-bin/cell
-bin/ssj
-bin/*.exe
-bin/plugin/
-cbp/*.depend
+bin
+dist
 msvs/debug/
 msvs/obj/
 msvs/packages/
 obj/
-src/plugin/bin/
 setup/*.exe
-studio/
 
 # Code::Blocks cruft
 cbp/debug

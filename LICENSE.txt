@@ -1,5 +1,3 @@
-minisphere License
-
 Copyright (c) 2016, Fat Cerberus
 All rights reserved.
 
