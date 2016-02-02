@@ -25,9 +25,8 @@ install: all
 	mkdir -p /usr/local/share/minisphere
 	cp bin/sphere bin/cell bin/ssj /usr/local/bin
 	cp -r bin/system /usr/local/share/minisphere
-	gzip -c > man/sphere.1.gz
 	mkdir -p /usr/local/share/man/man1
-	mv man/sphere.1.gz /usr/local/share/man/man1
+	gzip man/sphere.1 -c > /usr/local/share/man/man1/sphere.1.gz
 
 .PHONY: clean
 clean:
