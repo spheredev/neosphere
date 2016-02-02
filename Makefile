@@ -22,12 +22,12 @@ dist: all
 
 .PHONY: install
 install: all
-	mkdir -p /usr/share/minisphere
-	cp bin/sphere bin/cell bin/ssj /usr/bin
-	cp -r bin/system /usr/share/minisphere
-	gzip man/minisphere.1
-	mv man/minisphere.1.gz /usr/man/man1
-	makewhatis
+	mkdir -p /usr/local/share/minisphere
+	cp bin/sphere bin/cell bin/ssj /usr/local/bin
+	cp -r bin/system /usr/local/share/minisphere
+	gzip -k man/sphere.1
+	mkdir -p /usr/local/share/man/man1
+	mv man/sphere.1.gz /usr/local/share/man/man1
 
 .PHONY: clean
 clean:

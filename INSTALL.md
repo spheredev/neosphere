@@ -9,15 +9,16 @@ Windows
 -------
 
 You can build a complete 64-bit distribution of minisphere GDK using the included
-Visual Studio solution `minisphere.sln` located in `msvc/`. Visual Studio 2015
+Visual Studio solution `minisphere.sln` located in `msvs/`. Visual Studio 2015
 (or later) is required; as of this writing, Visual Studio Community 2015 can be
 downloaded free of charge from here:
 
 [Download Visual Studio Community 2015]
 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
   
-Static libraries and/or source files are included for all third-party
-dependencies, so nothing further is required to build for Windows.
+Allegro is provided through NuGet, and static libraries and/or source are included
+for all other dependencies, so no additional software is required to build for
+Windows.
 
 Linux
 -----
@@ -41,13 +42,14 @@ Allegro repository from GitHub and follow the installation instructions found in
 
 Once you have Allegro and other necessary dependencies installed, simply switch
 to the directory where you checked out minisphere and run `make` on the
-command-line. This will build minisphere and all GDK tools in `bin/`.
+command-line. This will build minisphere and all GDK tools in `bin/`. To
+install the GDK on your system, follow this up with `sudo make install`.
 
 Mac OS X
 --------
 
-Building minisphere for OS X is very similar to Linux and uses SCons as well.
+Building minisphere for OS X is very similar to Linux and uses Make as well.
 The dependencies are the same; however, it's not necessary to build Allegro
 yourself if you have Homebrew. To get Allegro installed, simply run
 `brew install --devel allegro` from the command line. Then switch to the
-directory where you checked out minisphere and run `scons`.
+directory where you checked out minisphere and run `make`.
