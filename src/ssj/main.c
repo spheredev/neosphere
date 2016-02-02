@@ -58,10 +58,8 @@ launch_minisphere(path_t* game_path)
 	GetModuleFileName(h_module, pathname, MAX_PATH);
 	PathRemoveFileSpec(pathname);
 	SetCurrentDirectory(pathname);
-	if (!PathFileExists(TEXT(".\\sphere.exe"))) {
-		printf("Error!\n");
-		return false;
-	}
+	if (!PathFileExists(TEXT(".\\sphere.exe")))
+		goto on_error;
 	else {
 		command = lstr_newf("start ./sphere.exe --debug \"%s\"", path_cstr(game_path));
 		system(lstr_cstr(command));
@@ -70,20 +68,22 @@ launch_minisphere(path_t* game_path)
 		return true;
 	}
 #else
-	char        pathname[PATH_MAX];
 	path_t*     path;
+	char        pathname[PATH_MAX];
+	ssize_t     pathname_len;
 	struct stat stat_buf;
 	
 	printf("Starting '%s'... ", path_cstr(game_path));
 	fflush(stdout);
-	readlink("/proc/self/exe", pathname, PATH_MAX);
+	memset(pathname, 0, sizeof pathname);
+	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX)
+	if (pathname_len == -1 || pathname_len == PATH_MAX)
+		goto on_error;
 	path = path_strip(path_new(pathname));
-	chdir(path_cstr(path));
+	if (chdir(path_cstr(path)) != 0) goto on_error;
 	path_append(path, "sphere");
-	if (stat(path_cstr(path), &stat_buf) != 0) {
-		printf("Error!\n");
-		return false;
-	}
+	if (stat(path_cstr(path), &stat_buf) != 0)
+		goto on_error;
 	else {
 		if (fork() == 0) {
 			// suppress minisphere's stdout. this is kind of a hack for now; eventually
@@ -96,6 +96,10 @@ launch_minisphere(path_t* game_path)
 		return true;
 	}
 #endif
+
+on_error:
+	printf("Error!\n");
+	return false;
 }
 
 static struct cmdline*

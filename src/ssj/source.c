@@ -77,8 +77,12 @@ freadline(FILE* h_file)
     while (!have_line) {
         if (index + 1 >= buf_size)
             buffer = realloc(buffer, buf_size *= 2);
-        fread(&ch, 1, 1, h_file);
-        if (feof(h_file)) goto hit_eof;
+		if (fread(&ch, 1, 1, h_file) != 1) {
+			if (feof(h_file))
+				goto hit_eof;
+			else
+				goto on_error;
+		}
         switch (ch) {
         case '\n': have_line = true; break;
         case '\r':
@@ -102,6 +106,10 @@ hit_eof:
         free(buffer);
         return NULL;
     }
+
+on_error:
+	free(buffer);
+	return NULL;
 }
 
 static char*

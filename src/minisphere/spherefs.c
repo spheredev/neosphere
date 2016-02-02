@@ -642,7 +642,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 			origin = path_rebase(path_new("system/"), enginepath());
 			if (!path_resolve(origin, NULL)) {
 				path_free(origin);
-				origin = path_new("/usr/share/minisphere/system/");
+				origin = path_rebase(path_new("../share/minisphere/system/"), enginepath());
 			}
 			path_rebase(*out_path, origin);
 			path_free(origin);
