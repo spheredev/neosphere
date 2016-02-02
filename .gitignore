@@ -2,8 +2,10 @@
 bin/
 dist/
 msw/
+msw64/
 msvs/debug/
 msvs/obj/
+msvs/obj64/
 msvs/packages/
 obj/
 setup/*.exe

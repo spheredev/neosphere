@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__VERSION_H__INCLUDED
 #define MINISPHERE__VERSION_H__INCLUDED
 
-#define PRODUCT_NAME "minisphere 2.99.812"
-#define VERSION_NAME "2.99.812"
+#define PRODUCT_NAME "minisphere 3.0a0"
+#define VERSION_NAME "3.0a0"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED
