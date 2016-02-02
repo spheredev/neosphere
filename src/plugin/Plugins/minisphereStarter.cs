@@ -29,8 +29,7 @@ namespace minisphere.Gdk.Plugins
             bool wantConsole = _main.Conf.AlwaysUseConsole;
             bool wantWindow = _main.Conf.TestInWindow || wantConsole;
 
-            string enginePath = Path.Combine(gdkPath, "bin",
-                wantConsole ? "msphere.exe" : "msphere-nc.exe");
+            string enginePath = Path.Combine(gdkPath, wantConsole ? "sphere.exe" : "spherun.exe");
             string options = string.Format(@"{1} ""{0}""", gamePath,
                 wantWindow ? "--window" : "--fullscreen");
             Process.Start(enginePath, options);
@@ -45,7 +44,7 @@ namespace minisphere.Gdk.Plugins
         {
             string gdkPath = _main.Conf.GdkPath;
 
-            string enginePath = Path.Combine(gdkPath, "bin", "msphere.exe");
+            string enginePath = Path.Combine(gdkPath, "sphere.exe");
             string options = string.Format(@"--debug ""{0}""", gamePath);
             Process engine = Process.Start(enginePath, options);
             return new DebugSession(_main, gamePath, enginePath, engine, project);

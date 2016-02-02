@@ -144,7 +144,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(190, 13);
             this.label1.TabIndex = 5;
-            this.label1.Text = "minisphere GDK 2.0 or later is required.";
+            this.label1.Text = "minisphere GDK 3.0 or later is required.";
             // 
             // BrowseButton
             // 

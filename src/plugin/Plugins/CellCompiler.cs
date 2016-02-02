@@ -91,7 +91,7 @@ namespace minisphere.Gdk.Plugins
 
         private async Task<bool> RunCell(string options, IConsole con)
         {
-            string cellPath = Path.Combine(_main.Conf.GdkPath, "bin", "cell.exe");
+            string cellPath = Path.Combine(_main.Conf.GdkPath, "cell.exe");
             if (!File.Exists(cellPath))
             {
                 con.Print("ERROR: no 'cell' executable was found, did Gohan kill Cell already?\n");

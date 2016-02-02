@@ -86,7 +86,8 @@ freadline(FILE* h_file)
         switch (ch) {
         case '\n': have_line = true; break;
         case '\r':
-            fread(&ch, 1, 1, h_file);
+			if (fread(&ch, 1, 1, h_file) != 1 && !feof(h_file))
+				goto on_error;
 			if (!feof(h_file) && ch != '\n')
 				ungetc(ch, h_file);
             have_line = true;

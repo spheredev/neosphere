@@ -76,7 +76,7 @@ launch_minisphere(path_t* game_path)
 	printf("Starting '%s'... ", path_cstr(game_path));
 	fflush(stdout);
 	memset(pathname, 0, sizeof pathname);
-	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX)
+	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX);
 	if (pathname_len == -1 || pathname_len == PATH_MAX)
 		goto on_error;
 	path = path_strip(path_new(pathname));
