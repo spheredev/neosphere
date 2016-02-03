@@ -202,7 +202,8 @@
       <AdditionalLibraryDirectories>lib64</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
+xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -226,7 +227,8 @@
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
+xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -262,7 +264,8 @@
     <PostBuildEvent />
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
+xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -298,7 +301,8 @@
     <PostBuildEvent />
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
+xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
@@ -333,7 +337,8 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
+xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -368,7 +373,8 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"</Command>
+      <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
+xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

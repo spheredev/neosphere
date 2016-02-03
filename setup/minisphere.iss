@@ -2,27 +2,19 @@
 ; (C) 2015 Fat Cerberus
 ; Inno Setup 5.5 or later with ISPP is required.
 ;
-; This will build a Windows installer for minisphere. Before compiling the
-; installer, you must first build the engine using Visual Studio or MSBuild.
-; For a GDK installer, you will also need to build the Console engine and
-; GDK tools (Cell and SSJ).
-;
-; To build the redistributable engine, enter the following commands from the
-; directory where you checked out the source:
-;     MSBuild msvc/minisphere.sln /p:Configuration=Release
-;
-; And for minisphere GDK:
-;     MSBuild msvc/minisphere.sln /p:Configuration=Console
+; This will build a Windows installer for minisphere. Before compiling the installer,
+; you must first build the complete minisphere GDK for both x86 and x64 using Visual Studio.
+; In practical terms, this means building the full GDK and Redist solution
+; configurations.
 
 
-; if, after copying the Sphere Studio binaries into bin/spherestudio, you
-; still need to build an engine-only installer, you can do so by commenting out the
-; line below:
+; Normally, a full GDK installer is built. To create an end-user redist (engine only), 
+; simply comment out the line below before compiling the installer.
 #define WANT_GDK_SETUP
 
 #define AppName "minisphere"
 #define AppVersion "3.0a0"
-#define AppRawVersion "2.99.812"
+#define AppRawVersion "3.0a0"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
