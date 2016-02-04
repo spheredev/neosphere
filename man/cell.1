@@ -1,0 +1,30 @@
+.TH CELL 1 "2016-02-03" "minisphere-3.0a0" "minisphere Game Development Kit"
+.SH NAME
+cell \- Sphere game compiler and packager
+.SH SYNOPSIS
+.nh
+.na
+.TP
+.B cell
+.RB [ \-i
+.IR indir ]
+.RB [ \-p
+.I spkfile
+.RB "| " \-l
+.IR gamedir ]
+[\fB\-\-debug\fR]
+.RI [ target ]
+.ad
+.hy
+.SH DESCRIPTION
+Cell compiles and packages games for use with a Sphere-compatible game engine such as minisphere.
+The build process is controlled by a JS script named
+.I Cellscript.js
+in the game's source directory.
+.SH BUGS
+Report any bugs found in minisphere or the GDK tools to:
+.br
+.B Bruce Pascoe <fatcerberus@icloud.com>
+.SH SEE ALSO
+.BR sphere (1),
+.BR ssj (1)
