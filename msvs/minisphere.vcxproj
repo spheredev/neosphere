@@ -97,7 +97,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>minisphere</TargetName>
+    <TargetName>spherun</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug64\</OutDir>
     <IntDir>obj64\debug\minisphere\</IntDir>
@@ -120,7 +120,7 @@
     <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
     <Allegro_AddonColor>true</Allegro_AddonColor>
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>minisphere</TargetName>
+    <TargetName>spherun</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug\</OutDir>
     <IntDir>obj\debug\minisphere\</IntDir>
@@ -187,7 +187,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_HAVE_CUSTOM_H;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -212,7 +212,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_HAVE_CUSTOM_H;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -237,7 +237,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>MINISPHERE_REDIST;ALLEGRO_STATICLINK;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -274,7 +274,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>MINISPHERE_REDIST;ALLEGRO_STATICLINK;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -311,7 +311,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -347,7 +347,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>ALLEGRO_STATICLINK;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>

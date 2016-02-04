@@ -119,7 +119,7 @@ main(int argc, char* argv[])
 	console_log(1, "  Frameskip limit: %d frames", s_max_frameskip);
 	console_log(1, "  CPU throttle: %s", s_conserve_cpu ? "ON" : "OFF");
 	console_log(1, "  Console verbosity: V%d", verbosity);
-#ifndef MINISPHERE_REDIST
+#if defined(MINISPHERE_SPHERUN)
 	console_log(1, "  Debugger mode: %s", want_debug ? "Active" : "Passive");
 #endif
 	console_log(1, "");
@@ -259,9 +259,9 @@ main(int argc, char* argv[])
 	}
 
 	// enable debugging support
-	#ifndef MINISPHERE_REDIST
+#if defined(MINISPHERE_SPHERUN)
 	initialize_debugger(want_debug, false);
-	#endif
+#endif
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -400,9 +400,9 @@ do_events(void)
 
 	dyad_update();
 
-	#ifndef MINISPHERE_REDIST
+#if defined(MINISPHERE_SPHERUN)
 	update_debugger();
-	#endif
+#endif
 
 	update_async();
 	update_input();
@@ -727,9 +727,9 @@ shutdown_engine(void)
 {
 	save_key_map();
 
-	#ifndef MINISPHERE_REDIST
+#if defined(MINISPHERE_SPHERUN)
 	shutdown_debugger();
-	#endif
+#endif
 
 	shutdown_map_engine();
 	shutdown_input();
@@ -831,9 +831,9 @@ parse_command_line(
 	int i;
 
 	// establish default settings
-	#ifndef MINISPHERE_REDIST
+#if defined(MINISPHERE_SPHERUN)
 	*out_want_fullscreen = false;
-	#else
+#else
 	*out_want_fullscreen = true;
 	#endif
 
@@ -848,28 +848,9 @@ parse_command_line(
 		if (strstr(argv[i], "--") == argv[i] && parse_options) {
 			if (strcmp(argv[i], "--") == 0)
 				parse_options = false;
-			else if (strcmp(argv[i], "--version") == 0) {
-				print_banner(true, true);
-				return false;
-			}
-			else if (strcmp(argv[i], "--debug") == 0) {
-				#ifndef MINISPHERE_REDIST
-				*out_want_debug = true;
-				#else
-				al_show_native_message_box(NULL,
-					"No Debugging Support", "Debugging is not enabled for this build.",
-					"'--debug' was passed on the command line. The redistributable engine is not enabled for debugging. Please use minisphere Console if you need the debugger.",
-					NULL, ALLEGRO_MESSAGEBOX_ERROR);
-				return false;
-				#endif
-			}
 			else if (strcmp(argv[i], "--frameskip") == 0) {
 				if (++i >= argc) goto missing_argument;
 				*out_frameskip = atoi(argv[i]);
-			}
-			else if (strcmp(argv[i], "--log") == 0) {
-				if (++i >= argc) goto missing_argument;
-				*out_verbosity = atoi(argv[i]);
 			}
 			else if (strcmp(argv[i], "--no-throttle") == 0) {
 				*out_want_throttle = false;
@@ -880,30 +861,45 @@ parse_command_line(
 			else if (strcmp(argv[i], "--window") == 0) {
 				*out_want_fullscreen = false;
 			}
+#if defined(MINISPHERE_SPHERUN)
+			else if (strcmp(argv[i], "--version") == 0) {
+				print_banner(true, true);
+				return false;
+			}
+			else if (strcmp(argv[i], "--debug") == 0) {
+				*out_want_debug = true;
+			}
+			else if (strcmp(argv[i], "--verbose") == 0) {
+				if (++i >= argc) goto missing_argument;
+				*out_verbosity = atoi(argv[i]);
+			}
 			else {
 				report_error("unrecognized option '%s'\n", argv[i]);
 				return false;
 			}
+#endif
 		}
 		else if (argv[i][0] == '-' && parse_options) {
-			if (strcmp(argv[i], "-game") == 0 && strcmp(argv[i], "-package") == 0) {
+			if (strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "-package") == 0) {
 				// -game and -package are provided for backwards compatibility; to minisphere
 				// the two options are equivalent.
 				if (++i >= argc) goto missing_argument;
 				if (*out_game_path != NULL) {
-					report_error("more than one game specified on command line");
+					report_error("more than one game specified on command line\n");
 					return false;
 				}
 				*out_game_path = path_new(argv[i]);
 			}
+#if defined(MINISPHERE_SPHERUN)
 			else {
 				report_error("unrecognized option '%s'\n", argv[i]);
 				return false;
 			}
+#endif
 		}
 		else {
 			if (*out_game_path != NULL) {
-				report_error("more than one game specified on command line");
+				report_error("more than one game specified on command line\n");
 				return false;
 			}
 			*out_game_path = path_new(argv[i]);
@@ -913,7 +909,7 @@ parse_command_line(
 	return true;
 
 missing_argument:
-	report_error("missing argument for option '%s'", argv[i - 1]);
+	report_error("missing argument for option '%s'\n", argv[i - 1]);
 	return false;
 }
 
@@ -949,13 +945,13 @@ report_error(const char* fmt, ...)
 	va_start(ap, fmt);
 	error_text = lstr_vnewf(fmt, ap);
 	va_end(ap);
-	#ifndef MINISPHERE_REDIST
+#if defined(MINISPHERE_SPHERUN)
 	fprintf(stderr, "ERROR: %s", lstr_cstr(error_text));
-	#else
+#else
 	al_show_native_message_box(NULL,
 		"minisphere", "An error occurred starting the engine.", lstr_cstr(error_text),
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	#endif
+#endif
 	lstr_free(error_text);
 }
 
