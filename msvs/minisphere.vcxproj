@@ -97,7 +97,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>sphere</TargetName>
+    <TargetName>minisphere</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug64\</OutDir>
     <IntDir>obj64\debug\minisphere\</IntDir>
@@ -120,14 +120,14 @@
     <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
     <Allegro_AddonColor>true</Allegro_AddonColor>
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>sphere</TargetName>
+    <TargetName>minisphere</TargetName>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug\</OutDir>
     <IntDir>obj\debug\minisphere\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>spherun</TargetName>
+    <TargetName>minisphere</TargetName>
     <OutDir>..\msw64\</OutDir>
     <IntDir>obj64\release\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -149,13 +149,13 @@
     <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
     <Allegro_AddonColor>true</Allegro_AddonColor>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>spherun</TargetName>
+    <TargetName>minisphere</TargetName>
     <OutDir>..\msw\</OutDir>
     <IntDir>obj\release\minisphere\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>sphere</TargetName>
+    <TargetName>spherun</TargetName>
     <OutDir>..\msw64\</OutDir>
     <IntDir>obj64\console\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -177,7 +177,7 @@
     <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
     <Allegro_AddonColor>true</Allegro_AddonColor>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>sphere</TargetName>
+    <TargetName>spherun</TargetName>
     <OutDir>..\msw\</OutDir>
     <IntDir>obj\console\minisphere\</IntDir>
   </PropertyGroup>

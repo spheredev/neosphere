@@ -4,7 +4,7 @@ PKG_NAME=minisphere-$(shell cat VERSION)
 all: minisphere cell ssj
 
 .PHONY: minisphere
-minisphere: bin/sphere
+spherun: bin/spherun
 
 .PHONY: cell
 cell: bin/cell
@@ -23,10 +23,10 @@ dist: all
 .PHONY: install
 install: all
 	mkdir -p /usr/local/share/minisphere
-	cp bin/sphere bin/cell bin/ssj /usr/local/bin
+	cp bin/spherun bin/cell bin/ssj /usr/local/bin
 	cp -r bin/system /usr/local/share/minisphere
 	mkdir -p /usr/local/share/man/man1
-	gzip man-pages/sphere.1 -c > /usr/local/share/man/man1/sphere.1.gz
+	gzip man-pages/spherun.1 -c > /usr/local/share/man/man1/spherun.1.gz
 	gzip man-pages/cell.1 -c > /usr/local/share/man/man1/cell.1.gz
 	gzip man-pages/ssj.1 -c > /usr/local/share/man/man1/ssj.1.gz
 	mkdir -p /usr/local/share/applications
@@ -34,11 +34,11 @@ install: all
 
 .PHONY: clean
 clean:
-	rm -f bin/sphere bin/cell bin/ssj
+	rm -f bin/spherun bin/cell bin/ssj
 
-bin/sphere:
+bin/spherun:
 	mkdir -p bin
-	cc -o bin/sphere -O3 -Isrc/shared -Isrc/minisphere \
+	cc -o bin/spherun -O3 -Isrc/shared -Isrc/minisphere \
 	   -DDUK_OPT_HAVE_CUSTOM_H \
 	   src/minisphere/main.c \
 	   src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
