@@ -1,5 +1,9 @@
 PKG_NAME=minisphere-$(shell cat VERSION)
 
+ifndef prefix
+prefix=/usr/local
+endif
+
 .PHONY: all
 all: spherun cell ssj
 
@@ -22,15 +26,16 @@ dist: all
 
 .PHONY: install
 install: all
-	mkdir -p /usr/local/share/minisphere
-	cp bin/spherun bin/cell bin/ssj /usr/local/bin
-	cp -r bin/system /usr/local/share/minisphere
-	mkdir -p /usr/local/share/man/man1
-	gzip man-pages/spherun.1 -c > /usr/local/share/man/man1/spherun.1.gz
-	gzip man-pages/cell.1 -c > /usr/local/share/man/man1/cell.1.gz
-	gzip man-pages/ssj.1 -c > /usr/local/share/man/man1/ssj.1.gz
-	mkdir -p /usr/local/share/applications
-	cp desktops/minisphere.desktop /usr/local/share/applications
+	mkdir -p $(prefix)/share/minisphere
+	cp bin/spherun bin/cell bin/ssj $(prefix)/bin
+	cp -r bin/system $(prefix)/share/minisphere
+	mkdir -p $(prefix)/share/man/man1
+	gzip man-pages/spherun.1 -c > $(prefix)/share/man/man1/spherun.1.gz
+	gzip man-pages/cell.1 -c > $(prefix)/share/man/man1/cell.1.gz
+	gzip man-pages/ssj.1 -c > $(prefix)/share/man/man1/ssj.1.gz
+	mkdir -p $(prefix)/share/applications
+	cp desktops/minisphere.desktop $(prefix)/share/applications
+	cp desktops/sphere-icon.svg $(prefix)/share/minisphere
 
 .PHONY: clean
 clean:

@@ -1,10 +1,10 @@
 .TH SPHERUN 1 "2016-02-03" "minisphere-3.0a0" "minisphere Game Development Kit"
 .SH NAME
-spherun \- run Sphere game in a debuggable minisphere session
+spherun \- run Sphere game in a dev-friendly environment
 .SH SYNOPSIS
 .nh
 .na
-.TP
+.TP 8
 .B spherun
 [\fB\-\-debug\fR]
 [\fB\-\-fullscreen\fR | \fB\-\-window\fR]
@@ -17,10 +17,13 @@ spherun \- run Sphere game in a debuggable minisphere session
 .SH DESCRIPTION
 minisphere is a general-purpose game engine which uses JavaScript for game coding.
 It is mostly compatible with the Sphere game engine developed by Chad Austin, but is not a fork of that engine.
-Nonetheless, as it is designed to be compatible, the command to invoke the engine is
-.BR sphere (1).
-.PP
-minisphere is officially supported on both Windows and Linux operating systems.
+
+Normally, minisphere is launched via the command
+.BR minisphere (1).
+When the engine is started that way, all debugging and logging features are disabled to maximize game performance.
+Thus,
+.BR spherun (1)
+is the preferred way to invoke the engine while developing a game.
 .SH OPTIONS
 .IP \fB\-\-fullscreen
 Starts the engine in fullscreen mode. This option is ignored if
@@ -52,11 +55,16 @@ Displays the version number of this copy of minisphere along with the version nu
 .SH BUGS
 Report any bugs found in minisphere or the GDK tools to:
 .br
-.B Bruce Pascoe <fatcerberus@icloud.com>
+.I Bruce Pascoe <fatcerberus@icloud.com>
 .PP
-.I Known issues in minisphere 3.0
+.B While not bugs per se, there are some known limitations in minisphere 3.0 compared to Sphere:
 .IP \(bu
-Sorry, a hunger-pig ate all the issues
+Due to licensing restrictions, there is no built-in support in minisphere for mp3 audio.
+All known FOSS mp3 decoders are GPL, while minisphere is licensed under 3-clause BSD.
+It is therefore impossible to support mp3 out-of-the-box unless minisphere is relicensed under the GPL, which I won't do.
+.IP \(bu
+Compared to Sphere, minisphere is stricter about arguments to engine APIs and will complain if, e.g., a string is passed to a function expecting an integer.
+For existing codebases, code changes may be required to make the game work properly under minisphere.
 .SH "SEE ALSO"
 .BR cell (1),
 .BR ssj (1)
