@@ -12,13 +12,15 @@ struct shader
 	ALLEGRO_SHADER* program;
 };
 
-static bool s_have_shaders;
+static bool s_have_shaders = false;
 
 void
 initialize_shaders(bool enable_shading)
 {
 	console_log(1, "Initializing shader support");
+#ifdef MINISPHERE_USE_SHADERS
 	s_have_shaders = enable_shading;
+#endif
 	reset_shader();
 }
 
@@ -45,6 +47,7 @@ create_shader(const char* vs_filename, const char* fs_filename)
 	
 	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, NULL, NULL))) goto on_error;
 	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, NULL, NULL))) goto on_error;
+#ifdef MINISPHERE_USE_SHADERS
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
 	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
 		fprintf(stderr, "\nVertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
@@ -58,6 +61,7 @@ create_shader(const char* vs_filename, const char* fs_filename)
 		fprintf(stderr, "\nError building shader program:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
+#endif
 	free(vs_source);
 	free(fs_source);
 	return ref_shader(shader);
@@ -85,25 +89,33 @@ free_shader(shader_t* shader)
 {
 	if (shader == NULL || --shader->refcount > 0)
 		return;
+#ifdef MINISPHERE_USE_SHADERS
 	al_destroy_shader(shader->program);
+#endif
 	free(shader);
 }
 
 bool
 apply_shader(shader_t* shader)
 {
+#ifdef MINISPHERE_USE_SHADERS
 	if (are_shaders_active())
 		return al_use_shader(shader != NULL ? shader->program : NULL);
 	else
 		// if shaders are not supported, degrade gracefully. this simplifies the rest
 		// of the engine, which simply assumes shaders are always supported.
 		return true;
+#else
+	return true;
+#endif
 }
 
 void
 reset_shader(void)
 {
+#ifdef MINISPHERE_USE_SHADERS
 	if (s_have_shaders) al_use_shader(NULL);
+#endif
 }
 
 void

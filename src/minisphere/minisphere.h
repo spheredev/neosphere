@@ -56,6 +56,11 @@
 #define noreturn void
 #endif
 
+#if ALLEGRO_VERSION >= 5 && ALLEGRO_SUB_VERSION >= 1
+#define MINISPHERE_USE_SHADERS
+#define MINISPHERE_USE_VERTEX_BUF
+#endif
+
 extern ALLEGRO_DISPLAY*     g_display;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern duk_context*         g_duk;

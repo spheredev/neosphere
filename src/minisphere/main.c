@@ -92,7 +92,7 @@ main(int argc, char* argv[])
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
-	bool                 have_shaders = true;
+	bool                 have_shaders = false;
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
@@ -197,13 +197,18 @@ main(int argc, char* argv[])
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
 	console_log(1, "  Resolution: %dx%d @ %.1fx", g_res_x, g_res_y, (double)g_scale_x);
-	al_set_new_window_title(get_sgm_name(g_fs));
+#ifdef MINISPHERE_USE_SHADERS
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
-	if (!(g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))) {
+	if (g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))
+		have_shaders = true;
+	else {
 		al_set_new_display_flags(ALLEGRO_OPENGL);
-		have_shaders = false;
 		g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
 	}
+#else
+	al_set_new_display_flags(ALLEGRO_OPENGL);
+	g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
+#endif
 	if (g_display == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a rendering context.",
 			"Your hardware is either too old to run minisphere, or there is a driver problem on this system.  Check that all drivers are installed and up-to-date.",
@@ -211,6 +216,7 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	console_log(1, "  Shaders: %s", have_shaders ? "Enabled" : "Unsupported");
+	al_set_window_title(g_display, get_sgm_name(g_fs));
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 	if (!(icon = load_image("~sgm/icon.png")))
 		icon = load_image("~sys/icon.png");
