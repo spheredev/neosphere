@@ -44,7 +44,7 @@ clean:
 bin/spherun:
 	mkdir -p bin
 	cc -o bin/spherun -O3 -Isrc/shared -Isrc/minisphere \
-	   -DDUK_OPT_HAVE_CUSTOM_H \
+	   -DMINISPHERE_SPHERUN -DDUK_OPT_HAVE_CUSTOM_H \
 	   src/minisphere/main.c \
 	   src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
 	   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \

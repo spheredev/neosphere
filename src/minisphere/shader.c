@@ -9,7 +9,9 @@ static duk_ret_t js_ShaderProgram_finalize (duk_context* ctx);
 struct shader
 {
 	unsigned int    refcount;
+#ifdef MINISPHERE_USE_SHADERS
 	ALLEGRO_SHADER* program;
+#endif
 };
 
 static bool s_have_shaders = false;
@@ -69,8 +71,10 @@ create_shader(const char* vs_filename, const char* fs_filename)
 on_error:
 	free(vs_source);
 	free(fs_source);
+#ifdef MINISPHERE_USE_SHADERS
 	if (shader->program != NULL)
 		al_destroy_shader(shader->program);
+#endif
 	free(shader);
 	return NULL;
 }

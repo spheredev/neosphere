@@ -594,7 +594,7 @@ static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 {
 	wraptext_t*            error_info;
-	bool                   is_copied = false;
+	bool                   is_copied = true;
 	bool                   is_finished;
 	int                    frames_till_close;
 	ALLEGRO_KEYBOARD_STATE keyboard;
@@ -605,6 +605,10 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	int                    title_index;
 
 	int i;
+
+#ifdef MINISPHERE_USE_CLIPBOARD
+	is_copied = false;
+#endif
 
 	title_index = rand() % (sizeof(ERROR_TEXT) / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];
@@ -648,12 +652,14 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
 
 			// if Ctrl+C is pressed, copy the error message and location to clipboard
+#ifdef MINISPHERE_USE_CLIPBOARD
 			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
 				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
 			{
 				is_copied = true;
 				al_set_clipboard_text(g_display, msg);
 			}
+#endif
 		}
 		else {
 			--frames_till_close;
