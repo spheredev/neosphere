@@ -1,9 +1,9 @@
 PKG_NAME=minisphere-$(shell cat VERSION)
 
 .PHONY: all
-all: minisphere cell ssj
+all: spherun cell ssj
 
-.PHONY: minisphere
+.PHONY: spherun
 spherun: bin/spherun
 
 .PHONY: cell
