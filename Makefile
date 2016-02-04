@@ -15,7 +15,7 @@ ssj: bin/ssj
 .PHONY: dist
 dist: all
 	mkdir -p dist/$(PKG_NAME)
-	cp -r assets man src dist/$(PKG_NAME)
+	cp -r assets doc man-pages src dist/$(PKG_NAME)
 	cp Makefile VERSION dist/$(PKG_NAME)
 	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
 	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
@@ -26,9 +26,11 @@ install: all
 	cp bin/sphere bin/cell bin/ssj /usr/local/bin
 	cp -r bin/system /usr/local/share/minisphere
 	mkdir -p /usr/local/share/man/man1
-	gzip man/sphere.1 -c > /usr/local/share/man/man1/sphere.1.gz
-	gzip man/cell.1 -c > /usr/local/share/man/man1/cell.1.gz
-	gzip man/ssj.1 -c > /usr/local/share/man/man1/ssj.1.gz
+	gzip man-pages/sphere.1 -c > /usr/local/share/man/man1/sphere.1.gz
+	gzip man-pages/cell.1 -c > /usr/local/share/man/man1/cell.1.gz
+	gzip man-pages/ssj.1 -c > /usr/local/share/man/man1/ssj.1.gz
+	mkdir -p /usr/local/share/applications
+	cp desktops/minisphere.desktop /usr/local/share/applications
 
 .PHONY: clean
 clean:

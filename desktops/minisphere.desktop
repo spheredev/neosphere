@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=minisphere
+Comment=minisphere is a general-purpose game engine which uses JavaScript for game coding.
+Exec=sphere
+Icon=/usr/share/icons/Humanity/apps/32/access.svg
+Terminal=false
+Type=Application
+Categories=Application;Development;
