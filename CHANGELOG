@@ -4,20 +4,21 @@ minisphere Changelog
 v3.0.0 - TBD
 ------------
 
-* The Windows GDK release now requires a 64-bit version of Windows. It's still
-  possible to build a 32-bit GDK from source, but it's no longer officially
-  supported.
-* The command to run minisphere from the command line has been changed from
-  'msphere' to 'minisphere'. This is slightly more verbose, but also more
-  discoverable for those (like me!) who don't like reading documentation.
-* The minisphere GDK comes with a new console debugger, called SSJ. Simply run
+* minisphere redist and GDK have been folded into a single installer. The engine
+  is so compact that there's not much gained from having separate installers.
+* The command to run minisphere Console from the command line has been changed
+  from 'msphere' to 'spherun'. This will be the standard command to start a
+  Sphere 2.0 engine in debuggable mode going forward. The end-user engine has
+  been renamed as well, to 'minisphere'.
+* minisphere now comes with a new console debugger, called SSJ. Simply run
   `ssj <game-path>` on the command line to start an interactive debugging
   session for a specified game. This brings single-step debugging to non-Windows
   platforms for the first time!
 * minisphere will no longer fail to create a render context if the system it's
   running on doesn't support shaders. Instead ShaderProgram will be disabled in
   this case.
-* Fixes a bunch of bugs found since the release of 2.1.6.
+* minisphere will now compile against Allegro 5.0, at the cost of losing shader
+  support.
 
 v2.1.6 - December 20, 2015
 --------------------------
