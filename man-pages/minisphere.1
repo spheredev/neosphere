@@ -1,6 +1,6 @@
-.TH MINISPHERE 1 "2016-02-05" "minisphere-3.0a0" "minisphere Game Development Kit"
+.TH MINISPHERE 1 "2016-02-05" "minisphere-3.0a0" "minisphere Game Engine"
 .SH NAME
-minisphere \- Sphere-compatible JavaScript game engine
+minisphere \- a Sphere-compatible JavaScript game engine
 .SH SYNOPSIS
 .nh
 .na
@@ -8,28 +8,34 @@ minisphere \- Sphere-compatible JavaScript game engine
 .B minisphere
 [\fB\-\-fullscreen\fR | \fB\-\-window\fR]
 [\fB\-\-frameskip \fImaxframes\fR]
-[\fB\-\-no\-throttle]
-.I gamefile
+.RI [ spkfile ]
 .ad
 .hy
 .SH DESCRIPTION
 minisphere is a general-purpose game engine which uses JavaScript for game coding.
-It is mostly compatible with the Sphere game engine developed by Chad Austin, but is not a fork of that engine.
-When run with no arguments, minisphere will display a menu allowing you to choose from a list of installed Sphere games.
-You can also pass the name of a
+It is a mostly compatible reimplementation of the Sphere game engine developed by Chad Austin (it is not a fork), boasting better performance and several new features and enhancements.
+.PP
+When run with no arguments, minisphere will launch with a menu allowing you to choose from a list of installed Sphere games.
+You can also pass the name of an
 .I .spk
 (Sphere game PacKage) file on the command line to launch that game directly.
 .PP
 When developing a game,
 .BR spherun (1)
-should be used to start the engine instead of
-.BR minisphere .
+should be used to launch the engine instead of
+.BR minisphere (1).
 This enables a number of features useful during game development, such as debugging using
 .BR ssj (1)
 and engine logging via the
 .B \-\-verbose
 option.
 .SH OPTIONS
+.B Important note:
+.br
+Unrecognized options to the
+.BR minisphere (1)
+command will be silently ignored.
+.PP
 .IP \fB\-\-fullscreen
 Starts minisphere in fullscreen mode. This is the default when starting the engine using the
 .BR minisphere (1)
@@ -41,7 +47,7 @@ minisphere skips rendering frames when it can't keep up with a game's requested 
 To ensure games remain playable, no more than 5 consecutive frames will be skipped by default.
 This option may be used to change the maximum to deal with slow machines; note, however, that games can override the value you provide.
 .SH BUGS
-Report any bugs found in minisphere or the GDK tools to:
+Report any bugs found in minisphere or the minisphere GDK tools to:
 .br
 .I Bruce Pascoe <fatcerberus@icloud.com>
 .PP
@@ -53,7 +59,7 @@ All known FOSS mp3 decoders are GPL, while minisphere is licensed under 3-clause
 It is therefore impossible to support mp3 out-of-the-box unless minisphere is relicensed under the GPL.
 .IP \(bu 3
 Compared to Sphere, minisphere is stricter about arguments to engine APIs and will complain if, e.g., a string is passed to a function expecting an integer.
-This may prevent some older games from running.
+This may prevent some older games from running properly.
 .SH "SEE ALSO"
 .BR spherun (1),
 .BR cell (1),
