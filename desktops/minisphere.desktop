@@ -2,7 +2,7 @@
 Version=1.0
 Name=minisphere
 Comment=minisphere is a general-purpose game engine which uses JavaScript for game coding.
-Exec=spherun
+Exec=minisphere
 Icon=/usr/local/share/minisphere/sphere-icon.svg
 Terminal=false
 Type=Application

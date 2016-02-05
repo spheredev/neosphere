@@ -1,14 +1,41 @@
 PKG_NAME=minisphere-$(shell cat VERSION)
-
 ifndef prefix
 prefix=/usr/local
 endif
 
+minisphere_sources=src/minisphere/main.c \
+   src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
+   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
+   src/shared/vector.c \
+   src/minisphere/animation.c src/minisphere/api.c \
+   src/minisphere/async.c src/minisphere/atlas.c \
+   src/minisphere/audialis.c src/minisphere/bytearray.c \
+   src/minisphere/color.c src/minisphere/console.c \
+   src/minisphere/debugger.c src/minisphere/file.c \
+   src/minisphere/font.c src/minisphere/galileo.c \
+   src/minisphere/geometry.c src/minisphere/image.c \
+   src/minisphere/input.c src/minisphere/logger.c \
+   src/minisphere/map_engine.c src/minisphere/obsmap.c \
+   src/minisphere/persons.c src/minisphere/physics.c \
+   src/minisphere/primitives.c src/minisphere/rng.c \
+   src/minisphere/script.c src/minisphere/shader.c \
+   src/minisphere/sockets.c src/minisphere/spherefs.c \
+   src/minisphere/spk.c src/minisphere/spriteset.c \
+   src/minisphere/surface.c src/minisphere/tileset.c \
+   src/minisphere/utility.c src/minisphere/windowstyle.c
+minisphere_libs= \
+   -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
+   -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
+   -lmng -lz -lm
+
 .PHONY: all
-all: spherun cell ssj
+all: minisphere spherun cell ssj
+
+.PHONY: minisphere
+minisphere: bin/minisphere
 
 .PHONY: spherun
-spherun: bin/spherun
+spherun: minisphere bin/spherun
 
 .PHONY: cell
 cell: bin/cell
@@ -27,7 +54,7 @@ dist: all
 .PHONY: install
 install: all
 	mkdir -p $(prefix)/share/minisphere
-	cp bin/spherun bin/cell bin/ssj $(prefix)/bin
+	cp bin/minisphere bin/spherun bin/cell bin/ssj $(prefix)/bin
 	cp -r bin/system $(prefix)/share/minisphere
 	mkdir -p $(prefix)/share/man/man1
 	gzip man-pages/spherun.1 -c > $(prefix)/share/man/man1/spherun.1.gz
@@ -41,34 +68,18 @@ install: all
 clean:
 	rm -f bin/spherun bin/cell bin/ssj
 
+bin/minisphere:
+	mkdir -p bin
+	cc -o bin/minisphere -O3 -Isrc/shared -Isrc/minisphere \
+	   -DDUK_OPT_HAVE_CUSTOM_H \
+	   $(minisphere_sources) $(minisphere_libs)
+	cp -r assets/system bin
+
 bin/spherun:
 	mkdir -p bin
 	cc -o bin/spherun -O3 -Isrc/shared -Isrc/minisphere \
 	   -DMINISPHERE_SPHERUN -DDUK_OPT_HAVE_CUSTOM_H \
-	   src/minisphere/main.c \
-	   src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
-	   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
-	   src/shared/vector.c \
-	   src/minisphere/animation.c src/minisphere/api.c \
-	   src/minisphere/async.c src/minisphere/atlas.c \
-	   src/minisphere/audialis.c src/minisphere/bytearray.c \
-	   src/minisphere/color.c src/minisphere/console.c \
-	   src/minisphere/debugger.c src/minisphere/file.c \
-	   src/minisphere/font.c src/minisphere/galileo.c \
-	   src/minisphere/geometry.c src/minisphere/image.c \
-	   src/minisphere/input.c src/minisphere/logger.c \
-	   src/minisphere/map_engine.c src/minisphere/obsmap.c \
-	   src/minisphere/persons.c src/minisphere/physics.c \
-	   src/minisphere/primitives.c src/minisphere/rng.c \
-	   src/minisphere/script.c src/minisphere/shader.c \
-	   src/minisphere/sockets.c src/minisphere/spherefs.c \
-	   src/minisphere/spk.c src/minisphere/spriteset.c \
-	   src/minisphere/surface.c src/minisphere/tileset.c \
-	   src/minisphere/utility.c src/minisphere/windowstyle.c \
-	   -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
-	   -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
-	   -lmng -lz -lm
-	cp -r assets/system bin
+	   $(minisphere_sources) $(minisphere_libs)
 
 bin/cell:
 	mkdir -p bin
