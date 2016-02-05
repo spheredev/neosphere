@@ -63,7 +63,7 @@ new_session(const char* hostname, int port)
 	session = calloc(1, sizeof(session_t));
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
-	session->source_path = path_new("/home/fatcerberus/src/spectacles-i/");
+	session->source_path = path_new("C:/src/spectacles-i/");
 	return session;
 
 on_error:

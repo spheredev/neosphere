@@ -28,7 +28,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
-DefaultGroupName={#AppName}
+DefaultGroupName={#AppName} GDK
 InfoBeforeFile=..\CHANGELOG
 InfoAfterFile=..\README.md
 LicenseFile=..\license.txt
@@ -85,6 +85,6 @@ Root: HKCR; Subkey: "minisphere.S2GM"; ValueType: string; ValueName: ""; ValueDa
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"; Tasks: path
 
 [Icons]
-Name: "{commonprograms}\{#AppName} GDK"; Filename: "{app}\minisphere.exe"
+Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 Name: "{group}\API Reference - minisphere"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
 Name: "{group}\API Reference - Cell"; Filename: "{app}\documentation\cell-api.txt"; Components: spherun/cell

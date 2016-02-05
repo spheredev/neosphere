@@ -58,10 +58,10 @@ launch_minisphere(path_t* game_path)
 	GetModuleFileName(h_module, pathname, MAX_PATH);
 	PathRemoveFileSpec(pathname);
 	SetCurrentDirectory(pathname);
-	if (!PathFileExists(TEXT(".\\sphere.exe")))
+	if (!PathFileExists(TEXT(".\\spherun.exe")))
 		goto on_error;
 	else {
-		command = lstr_newf("start ./sphere.exe --debug \"%s\"", path_cstr(game_path));
+		command = lstr_newf("start ./spherun.exe --debug \"%s\"", path_cstr(game_path));
 		system(lstr_cstr(command));
 		lstr_free(command);
 		printf("OK.\n");

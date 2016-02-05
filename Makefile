@@ -57,6 +57,7 @@ install: all
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(prefix)/bin
 	cp -r bin/system $(prefix)/share/minisphere
 	mkdir -p $(prefix)/share/man/man1
+	gzip man-pages/minisphere.1 -c > $(prefix)/share/man/man1/minisphere.1.gz
 	gzip man-pages/spherun.1 -c > $(prefix)/share/man/man1/spherun.1.gz
 	gzip man-pages/cell.1 -c > $(prefix)/share/man/man1/cell.1.gz
 	gzip man-pages/ssj.1 -c > $(prefix)/share/man/man1/ssj.1.gz
