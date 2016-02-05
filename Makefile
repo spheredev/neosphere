@@ -1,9 +1,13 @@
 PKG_NAME=minisphere-$(shell cat VERSION)
+
 ifndef prefix
 prefix=/usr/local
 endif
+ifndef CC
+CC=cc
+endif
 
-minisphere_sources=src/minisphere/main.c \
+engine_sources=src/minisphere/main.c \
    src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
    src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
    src/shared/vector.c \
@@ -23,7 +27,7 @@ minisphere_sources=src/minisphere/main.c \
    src/minisphere/spk.c src/minisphere/spriteset.c \
    src/minisphere/surface.c src/minisphere/tileset.c \
    src/minisphere/utility.c src/minisphere/windowstyle.c
-minisphere_libs= \
+engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
    -lmng -lz -lm
@@ -35,7 +39,7 @@ all: minisphere spherun cell ssj
 minisphere: bin/minisphere
 
 .PHONY: spherun
-spherun: minisphere bin/spherun
+spherun: bin/minisphere bin/spherun
 
 .PHONY: cell
 cell: bin/cell
@@ -46,7 +50,7 @@ ssj: bin/ssj
 .PHONY: dist
 dist: all
 	mkdir -p dist/$(PKG_NAME)
-	cp -r assets doc man-pages src dist/$(PKG_NAME)
+	cp -r assets desktops doc man-pages src dist/$(PKG_NAME)
 	cp Makefile VERSION dist/$(PKG_NAME)
 	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
 	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
@@ -67,24 +71,25 @@ install: all
 
 .PHONY: clean
 clean:
-	rm -f bin/spherun bin/cell bin/ssj
+	rm -rf bin/minisphere bin/spherun bin/cell bin/ssj
+	rm -rf bin/system
 
 bin/minisphere:
 	mkdir -p bin
-	cc -o bin/minisphere -O3 -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/minisphere -O3 -Isrc/shared -Isrc/minisphere \
 	   -DDUK_OPT_HAVE_CUSTOM_H \
-	   $(minisphere_sources) $(minisphere_libs)
+	   $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
-	cc -o bin/spherun -O3 -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/spherun -O3 -Isrc/shared -Isrc/minisphere \
 	   -DMINISPHERE_SPHERUN -DDUK_OPT_HAVE_CUSTOM_H \
-	   $(minisphere_sources) $(minisphere_libs)
+	   $(engine_sources) $(engine_libs)
 
 bin/cell:
 	mkdir -p bin
-	cc -o bin/cell -O3 -Isrc/shared \
+	$(CC) -o bin/cell -O3 -Isrc/shared \
 	   src/cell/main.c \
 	   src/shared/duktape.c src/shared/path.c src/shared/vector.c \
 	   src/cell/assets.c src/cell/build.c src/cell/spk_writer.c \
@@ -93,7 +98,7 @@ bin/cell:
 
 bin/ssj:
 	mkdir -p bin
-	cc -o bin/ssj -O3 -Isrc/shared \
+	$(CC) -o bin/ssj -O3 -Isrc/shared \
 	   src/ssj/main.c \
 	   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
 	   src/shared/unicode.c src/shared/vector.c \
