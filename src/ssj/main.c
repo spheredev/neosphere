@@ -81,7 +81,7 @@ launch_minisphere(path_t* game_path)
 		goto on_error;
 	path = path_strip(path_new(pathname));
 	if (chdir(path_cstr(path)) != 0) goto on_error;
-	path_append(path, "sphere");
+	path_append(path, "spherun");
 	if (stat(path_cstr(path), &stat_buf) != 0)
 		goto on_error;
 	else {
@@ -90,7 +90,7 @@ launch_minisphere(path_t* game_path)
 			// I'd like to intermingle the engine's output with SSJ's, like in native
 			// debuggers e.g. GDB.
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
-			execlp("./sphere", "./sphere", "--debug", path_cstr(game_path), NULL);
+			execlp("./spherun", "./spherun", "--debug", path_cstr(game_path), NULL);
 		}
 		printf("OK.\n");
 		return true;
