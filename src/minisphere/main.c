@@ -918,6 +918,13 @@ parse_command_line(
 		}
 	}
 
+#if defined(MINISPHERE_SPHERUN)
+	if (*out_game_path == NULL) {
+		report_error("no game specified\n");
+		return false;
+	}
+#endif
+	
 	return true;
 
 missing_argument:
@@ -931,7 +938,7 @@ print_banner(bool want_copyright, bool want_deps)
 	uint32_t al_version;
 	char     version_string[64];
 	
-	printf("%s %s\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	printf("%s JS game engine %s\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
 		printf("A lightweight Sphere-compatible game engine\n");
 		printf("(c) 2016 Fat Cerberus\n");
@@ -958,7 +965,7 @@ report_error(const char* fmt, ...)
 	error_text = lstr_vnewf(fmt, ap);
 	va_end(ap);
 #if defined(MINISPHERE_SPHERUN)
-	fprintf(stderr, "ERROR: %s", lstr_cstr(error_text));
+	fprintf(stderr, "spherun: ERROR: %s", lstr_cstr(error_text));
 #else
 	al_show_native_message_box(NULL,
 		"minisphere", "An error occurred starting the engine.", lstr_cstr(error_text),

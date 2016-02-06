@@ -4,6 +4,7 @@ dist/
 msw/
 msw64/
 msvs/debug/
+msvs/debug64/
 msvs/obj/
 msvs/obj64/
 msvs/packages/
