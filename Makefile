@@ -53,7 +53,7 @@ dist: all
 	cp -r assets desktops doc man-pages src dist/$(PKG_NAME)
 	cp Makefile VERSION dist/$(PKG_NAME)
 	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
-	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
+	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME) && rm -r $(PKG_NAME)
 
 .PHONY: install
 install: all
