@@ -66,6 +66,9 @@ mini.Delegate.prototype.invoke = function()
 
 // mini.initialize()
 // Initializes miniRT and all registered components.
+// Arguments:
+//     params: An object specifying initialization parameters. This object will
+//             be passed to each registered initializer.
 mini.initialize = function(params)
 {
 	var manifest = GetGameManifest();

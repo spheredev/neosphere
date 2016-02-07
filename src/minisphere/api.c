@@ -104,12 +104,10 @@ initialize_api(duk_context* ctx)
 		register_api_extension(SPHERE_EXTENSIONS[i]);
 	}
 
-	// register the 'sphere' global object alias.
-	// this is like 'window' in web JS or 'global' in Node.js and allows
-	// direct access to the global object from any scope.
+	// register the 'global' global object alias (like Node.js!).
+	// this provides direct access to the global object from any scope.
 	duk_push_global_object(ctx);
-	duk_dup(ctx, -1); duk_put_prop_string(ctx, -2, "sphere");
-	duk_pop(ctx);
+	duk_put_global_string(ctx, "global");
 	
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"

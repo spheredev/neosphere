@@ -56,9 +56,9 @@ mini.onStartUp.add(mini.Console, function()
 		.run();
 	mini.Threads.create(this, 101);
 	
-	var manifest = GetGameManifest();
-	this.write(manifest.name + " miniRT Console");
-	this.write("Sphere API " + GetVersionString());
+	var game = GetGameManifest();
+	this.write(game.name + " [miniRT]");
+	this.write("Sphere " + GetVersionString());
 	this.write("");
 	
 	this.register('keymap', this, {
@@ -69,9 +69,9 @@ mini.onStartUp.add(mini.Console, function()
 			if (playerID < 1 || playerID > 4)
 				return this.write("keymap set: Player ID out of range (" + playerID + ")");
 			var keyConst, playerKeyConst;
-			if ((keyConst = sphere["KEY_" + keyName.toUpperCase()]) == undefined)
+			if ((keyConst = global["KEY_" + keyName.toUpperCase()]) == undefined)
 				return this.write("keymap set: Invalid key name `" + keyName.toUpperCase() + "`");
-			if ((playerKeyConst = sphere["PLAYER_KEY_" + playerKey.toUpperCase()]) == undefined)
+			if ((playerKeyConst = global["PLAYER_KEY_" + playerKey.toUpperCase()]) == undefined)
 				return this.write("keymap set: Unknown player key `" + keyName.toUpperCase() + "`");
 			SetPlayerKey(playerID - 1, playerKeyConst, keyConst);
 			this.write("PLAYER_KEY_" + playerKey.toUpperCase() + " mapped to KEY_" + keyName.toUpperCase());

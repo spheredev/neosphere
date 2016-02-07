@@ -156,7 +156,7 @@ main(int argc, char* argv[])
 		// user provided a path or startup game was found, attempt to load it
 		g_fs = new_sandbox(path_cstr(g_game_path));
 	else {
-		// no game path provided and no startup game, let user find manifest
+		// no game path provided and no startup game, let user find one
 		browse_path = path_rebase(path_new("Sphere Games/"), homepath());
 		path_mkdir(browse_path);
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", PRODUCT_NAME);

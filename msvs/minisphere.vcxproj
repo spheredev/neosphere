@@ -203,7 +203,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
+xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -228,7 +228,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
+xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -265,7 +265,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
+xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -302,7 +302,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
+xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
@@ -338,7 +338,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
+xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -374,7 +374,7 @@ xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-xcopy /y /d /e /f "..\doc\*-api.txt" "$(OutDir)documentation\"</Command>
+xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
