@@ -12,9 +12,9 @@ struct session
 	size_t     current_frame;
 	lstring_t* function;
 	lstring_t* filename;
+	bool       have_debug_info;
 	bool       is_stopped;
 	int32_t    line;
-	bool       need_origin;
 	remote_t*  remote;
 	source_t*  source;
 	path_t*    source_path;
@@ -54,6 +54,7 @@ enum nfy_command
 
 static message_t* converse        (session_t* sess, message_t* msg);
 static bool       do_command_line (session_t* sess);
+static void       load_debug_info (session_t* sess);
 static bool       process_message (session_t* sess, const message_t* msg);
 
 session_t*
@@ -64,7 +65,7 @@ new_session(const char* hostname, int port)
 	session = calloc(1, sizeof(session_t));
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
-	session->need_origin = true;
+	load_debug_info(session);
 	return session;
 
 on_error:
@@ -350,6 +351,26 @@ do_command_line(session_t* sess)
 	return true;
 }
 
+static void
+load_debug_info(session_t* sess)
+{
+	message_t*  request;
+	message_t*  response;
+
+	if (sess->have_debug_info)
+		return;
+	
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request, REQ_EVAL);
+	msg_add_string(request, "global.SourceMap.origin");
+	response = converse(sess, request);
+	path_free(sess->source_path);
+	if (msg_atom_int(response, 0) == 0)
+		sess->source_path = path_new(msg_atom_string(response, 1));
+	msg_free(response);
+	sess->have_debug_info = true;
+}
+
 static bool
 process_message(session_t* sess, const message_t* msg)
 {
@@ -357,8 +378,6 @@ process_message(session_t* sess, const message_t* msg)
 	int32_t     flag;
 	const char* function_name;
 	int32_t     line_no;
-	message_t*  request;
-	message_t*  response;
 	const char* text;
 	bool        was_running;
 
@@ -366,16 +385,6 @@ process_message(session_t* sess, const message_t* msg)
 	case MSG_CLASS_NFY:
 		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
-			if (sess->need_origin) {
-				sess->need_origin = false;
-				request = msg_new(MSG_CLASS_REQ);
-				msg_add_int(request, REQ_EVAL);
-				msg_add_string(request, "SourceMap.origin");
-				response = converse(sess, request);
-				if (msg_atom_int(response, 0) == 0)
-					sess->source_path = path_new(msg_atom_string(response, 1));
-				msg_free(response);
-			}
 			was_running = !sess->is_stopped;
 			free_source(sess->source);
 			lstr_free(sess->filename);

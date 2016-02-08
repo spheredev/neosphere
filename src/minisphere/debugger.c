@@ -25,20 +25,6 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	size_t      data_size;
 	const char* hostname;
 
-	s_want_attach = want_attach;
-
-	// listen for debugger connections on TCP port 1208.
-	// the listening socket will remain active for the duration of
-	// the session, allowing a debugger to be attached at any time.
-	console_log(1, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
-	hostname = allow_remote ? NULL : "127.0.0.1";
-	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
-
-	// if the engine was started in debug mode, wait for a debugger
-	// to connect before beginning execution.
-	if (s_want_attach && !attach_debugger())
-		exit_game(true);
-
 	// load the source map, if one is available
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
@@ -59,6 +45,19 @@ initialize_debugger(bool want_attach, bool allow_remote)
 		s_have_source_map = true;
 	}
 	duk_pop(g_duk);
+	
+	// listen for debugger connections on TCP port 1208.
+	// the listening socket will remain active for the duration of
+	// the session, allowing a debugger to be attached at any time.
+	console_log(1, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
+	hostname = allow_remote ? NULL : "127.0.0.1";
+	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
+
+	// if the engine was started in debug mode, wait for a debugger
+	// to connect before beginning execution.
+	s_want_attach = want_attach;
+	if (s_want_attach && !attach_debugger())
+		exit_game(true);
 }
 
 void
