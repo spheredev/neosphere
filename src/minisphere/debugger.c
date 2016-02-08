@@ -42,11 +42,20 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	// load the source map, if one is available
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
-	duk_del_prop_string(g_duk, -1, "\xFF""debugMap");
+	duk_del_prop_string(g_duk, -1, "debugMap");
 	if (data = sfs_fslurp(g_fs, "sourcemap.json", NULL, &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
-		duk_put_prop_string(g_duk, -2, "\xFF""debugMap");
+		duk_put_prop_string(g_duk, -2, "debugMap");
+		duk_push_global_object(g_duk);
+		duk_push_string(g_duk, "SourceMap");
+		duk_push_lstring(g_duk, data, data_size);
+		duk_json_decode(g_duk, -1);
+		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_CLEAR_WRITABLE | DUK_DEFPROP_CLEAR_CONFIGURABLE
+			| DUK_DEFPROP_CLEAR_ENUMERABLE);
+		duk_pop(g_duk);
+		free(data);
 		s_have_source_map = true;
 	}
 	duk_pop(g_duk);
@@ -105,7 +114,7 @@ get_source_pathname(const char* pathname)
 	if (!s_have_source_map)
 		return retval;
 	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "\xFF""debugMap");
+	duk_get_prop_string(g_duk, -1, "debugMap");
 	if (!duk_get_prop_string(g_duk, -1, "fileMap"))
 		duk_pop_3(g_duk);
 	else {

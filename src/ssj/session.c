@@ -14,6 +14,7 @@ struct session
 	lstring_t* filename;
 	bool       is_stopped;
 	int32_t    line;
+	bool       need_origin;
 	remote_t*  remote;
 	source_t*  source;
 	path_t*    source_path;
@@ -63,7 +64,7 @@ new_session(const char* hostname, int port)
 	session = calloc(1, sizeof(session_t));
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
-	session->source_path = path_new("C:/src/spectacles-i/");
+	session->need_origin = true;
 	return session;
 
 on_error:
@@ -356,6 +357,8 @@ process_message(session_t* sess, const message_t* msg)
 	int32_t     flag;
 	const char* function_name;
 	int32_t     line_no;
+	message_t*  request;
+	message_t*  response;
 	const char* text;
 	bool        was_running;
 
@@ -363,6 +366,16 @@ process_message(session_t* sess, const message_t* msg)
 	case MSG_CLASS_NFY:
 		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
+			if (sess->need_origin) {
+				sess->need_origin = false;
+				request = msg_new(MSG_CLASS_REQ);
+				msg_add_int(request, REQ_EVAL);
+				msg_add_string(request, "SourceMap.origin");
+				response = converse(sess, request);
+				if (msg_atom_int(response, 0) == 0)
+					sess->source_path = path_new(msg_atom_string(response, 1));
+				msg_free(response);
+			}
 			was_running = !sess->is_stopped;
 			free_source(sess->source);
 			lstr_free(sess->filename);

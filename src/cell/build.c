@@ -289,7 +289,7 @@ run_build(build_t* build)
 		printf("Generating source map... ");
 		duk_push_object(build->duk);
 		duk_push_string(build->duk, path_cstr(build->in_path));
-		duk_put_prop_string(build->duk, -2, "sourcePath");
+		duk_put_prop_string(build->duk, -2, "origin");
 		duk_push_object(build->duk);
 		iter = vector_enum(build->installs);
 		while (p_inst = vector_next(&iter)) {

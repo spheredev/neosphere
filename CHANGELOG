@@ -13,7 +13,7 @@ v3.0.0 - TBD
   installers.
 * The command to run minisphere Console from the command line has been changed
   from 'msphere' to 'spherun'. This will be the standard command to start a
-  Sphere 2.0 engine in debuggable mode going forward. The end-user engine has
+  Sphere 2.0 engine in developer mode going forward. The end-user engine has
   been renamed as well, to 'minisphere'.
 * The 'sphere' global object alias has been renamed to 'global', which is more
   obvious and matches Node.js. Any code relying on the old alias will need to
