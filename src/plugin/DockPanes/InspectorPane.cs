@@ -123,15 +123,13 @@ namespace minisphere.Gdk.DockPanes
                 string filename = Session.ResolvePath(item.SubItems[1].Text);
                 int lineNumber = int.Parse(item.SubItems[2].Text);
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
-                if (view != null)
+                if (view == null)
+                    SystemSounds.Hand.Play();
+                else
                 {
                     await LoadStackFrame(item.Index);
                     view.Activate();
                     view.GoToLine(lineNumber);
-                }
-                else
-                {
-                    SystemSounds.Hand.Play();
                 }
             }
         }

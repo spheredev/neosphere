@@ -108,8 +108,7 @@ namespace minisphere.Gdk.Debugger
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
-                if (Attached != null)
-                    Attached(this, EventArgs.Empty);
+                Attached?.Invoke(this, EventArgs.Empty);
 
                 Panes.Inspector.Session = this;
                 Panes.Errors.Session = this;
@@ -153,8 +152,7 @@ namespace minisphere.Gdk.Debugger
                 }
 
                 focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                if (Detached != null)
-                    Detached(this, EventArgs.Empty);
+                Detached?.Invoke(this, EventArgs.Empty);
                 --plugin.Sessions;
 
                 PluginManager.Core.Docking.Hide(Panes.Inspector);

@@ -96,8 +96,7 @@ namespace minisphere.Gdk.Utility
         /// </summary>
         public void Dispose()
         {
-            if (messenger != null)
-                messenger.Abort();
+            messenger?.Abort();
             Alert = null;
             Attached = null;
             Detached = null;
@@ -187,10 +186,7 @@ namespace minisphere.Gdk.Utility
             // start the communication thread
             messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
-            if (Attached != null)
-            {
-                Attached(this, EventArgs.Empty);
-            }
+            Attached?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -226,8 +222,7 @@ namespace minisphere.Gdk.Utility
             await Converse(DValue.REQ, 0x1F);
             await Task.Run(() => messenger.Join());
             tcp.Client.Disconnect(true);
-            if (Detached != null)
-                Detached(this, EventArgs.Empty);
+            Detached?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -574,8 +569,7 @@ namespace minisphere.Gdk.Utility
                 {
                     // if ReceiveMessage() returns null, detach.
                     tcp.Client.Disconnect(true);
-                    if (Detached != null)
-                        Detached(this, EventArgs.Empty);
+                    Detached?.Invoke(this, EventArgs.Empty);
                     return;
                 }
                 if (message[0] == DValue.NFY)
@@ -587,25 +581,18 @@ namespace minisphere.Gdk.Utility
                             FileName = message[3];
                             LineNumber = message[5];
                             Running = message[2] == 0;
-                            if (Status != null)
-                                Status(this, EventArgs.Empty);
+                            Status?.Invoke(this, EventArgs.Empty);
                             break;
                         case 0x02: // Print notification
-                            if (Print != null)
-                                Print(this, new TraceEventArgs(message[2]));
+                            Print?.Invoke(this, new TraceEventArgs(message[2]));
                             break;
                         case 0x03: // Alert notification
-                            if (Alert != null)
-                                Alert(this, new TraceEventArgs(message[2]));
+                            Alert?.Invoke(this, new TraceEventArgs(message[2]));
                             break;
                         case 0x05: // Throw notification
-                            if (ErrorThrown != null)
-                            {
-                                string filename = message[4];
-                                ErrorThrown(this, new ErrorThrownEventArgs(
-                                    message[3], filename, message[5],
-                                    message[2] != 0));
-                            }
+                            ErrorThrown?.Invoke(this, new ErrorThrownEventArgs(
+                                message[3], message[4], message[5],
+                                message[2] != 0));
                             break;
                     }
                 }
