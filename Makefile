@@ -61,7 +61,7 @@ deb: dist
 .PHONY: dist
 dist:
 	mkdir -p dist/$(pkgname)
-	cp -r assets desktops docs man-pages src dist/$(pkgname)
+	cp -r assets desktop docs man-pages src dist/$(pkgname)
 	cp Makefile VERSION dist/$(pkgname)
 	cp CHANGELOG LICENSE.txt README.md dist/$(pkgname)
 	cd dist && tar cfz $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)
@@ -72,14 +72,15 @@ install: all
 	mkdir -p $(installdir)/share/minisphere
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/applications
+	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
 	cp -r bin/system $(installdir)/share/minisphere
 	gzip man-pages/minisphere.1 -c > $(installdir)/share/man/man1/minisphere.1.gz
 	gzip man-pages/spherun.1 -c > $(installdir)/share/man/man1/spherun.1.gz
 	gzip man-pages/cell.1 -c > $(installdir)/share/man/man1/cell.1.gz
 	gzip man-pages/ssj.1 -c > $(installdir)/share/man/man1/ssj.1.gz
-	cp desktops/minisphere.desktop $(installdir)/share/applications
-	cp desktops/sphere-icon.svg $(installdir)/share/minisphere
+	cp desktop/minisphere.desktop $(installdir)/share/applications
+	cp desktop/sphere-icon.svg $(installdir)/share/pixmaps
 
 .PHONY: clean
 clean:
