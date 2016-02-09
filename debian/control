@@ -1,0 +1,15 @@
+Source: minisphere
+Maintainer: Bruce Pascoe <fatcerberus@icloud.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 9)
+
+Package: minisphere
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: JavaScript game engine
+ minisphere is a lightweight re-implementation of the Sphere game engine
+ originally developed by Chad Austin which sports better performance, more
+ features, and command-line development tools such as a debugger and
+ packaging compiler.

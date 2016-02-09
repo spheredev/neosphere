@@ -49,13 +49,19 @@ cell: bin/cell
 .PHONY: ssj
 ssj: bin/ssj
 
+.PHONY: debian
+debian: dist
+	cp dist/minisphere-3.0a0.tar.gz dist/minisphere_3.0a0.orig.tar.gz
+	cd dist && tar xf minisphere_3.0a0.orig.tar.gz
+	cd dist/minisphere-3.0a0 && debuild -us -uc
+
 .PHONY: dist
-dist: all
+dist:
 	mkdir -p dist/$(PKG_NAME)
-	cp -r assets desktops docs man-pages src dist/$(PKG_NAME)
+	cp -r assets debian desktops docs man-pages src dist/$(PKG_NAME)
 	cp Makefile VERSION dist/$(PKG_NAME)
 	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
-	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
+	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME) && rm -rf $(PKG_NAME)
 
 .PHONY: install
 install: all
@@ -74,8 +80,7 @@ install: all
 
 .PHONY: clean
 clean:
-	rm -rf bin/minisphere bin/spherun bin/cell bin/ssj
-	rm -rf bin/system
+	rm -rf bin
 
 bin/minisphere:
 	mkdir -p bin
