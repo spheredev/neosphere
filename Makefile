@@ -1,8 +1,10 @@
 PKG_NAME=minisphere-$(shell cat VERSION)
 
 ifndef prefix
-prefix=/usr/local
+prefix=/usr
 endif
+installdir=$(DESTDIR)$(prefix)
+
 ifndef CC
 CC=cc
 endif
@@ -53,21 +55,22 @@ dist: all
 	cp -r assets desktops docs man-pages src dist/$(PKG_NAME)
 	cp Makefile VERSION dist/$(PKG_NAME)
 	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
-	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME) && rm -r $(PKG_NAME)
+	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME)
 
 .PHONY: install
 install: all
-	mkdir -p $(prefix)/share/minisphere
-	cp bin/minisphere bin/spherun bin/cell bin/ssj $(prefix)/bin
-	cp -r bin/system $(prefix)/share/minisphere
-	mkdir -p $(prefix)/share/man/man1
-	gzip man-pages/minisphere.1 -c > $(prefix)/share/man/man1/minisphere.1.gz
-	gzip man-pages/spherun.1 -c > $(prefix)/share/man/man1/spherun.1.gz
-	gzip man-pages/cell.1 -c > $(prefix)/share/man/man1/cell.1.gz
-	gzip man-pages/ssj.1 -c > $(prefix)/share/man/man1/ssj.1.gz
-	mkdir -p $(prefix)/share/applications
-	cp desktops/minisphere.desktop $(prefix)/share/applications
-	cp desktops/sphere-icon.svg $(prefix)/share/minisphere
+	mkdir -p $(installdir)/bin
+	mkdir -p $(installdir)/share/minisphere
+	mkdir -p $(installdir)/share/man/man1
+	mkdir -p $(installdir)/share/applications
+	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
+	cp -r bin/system $(installdir)/share/minisphere
+	gzip man-pages/minisphere.1 -c > $(installdir)/share/man/man1/minisphere.1.gz
+	gzip man-pages/spherun.1 -c > $(installdir)/share/man/man1/spherun.1.gz
+	gzip man-pages/cell.1 -c > $(installdir)/share/man/man1/cell.1.gz
+	gzip man-pages/ssj.1 -c > $(installdir)/share/man/man1/ssj.1.gz
+	cp desktops/minisphere.desktop $(installdir)/share/applications
+	cp desktops/sphere-icon.svg $(installdir)/share/minisphere
 
 .PHONY: clean
 clean:
