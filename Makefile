@@ -1,4 +1,5 @@
-PKG_NAME=minisphere-$(shell cat VERSION)
+version=$(shell cat VERSION)
+pkgname=minisphere-$(version)
 
 ifndef prefix
 prefix=/usr
@@ -49,19 +50,21 @@ cell: bin/cell
 .PHONY: ssj
 ssj: bin/ssj
 
-.PHONY: debian
-debian: dist
-	cp dist/minisphere-3.0a0.tar.gz dist/minisphere_3.0a0.orig.tar.gz
-	cd dist && tar xf minisphere_3.0a0.orig.tar.gz
-	cd dist/minisphere-3.0a0 && debuild -us -uc
+.PHONY: deb
+deb: dist
+	cp dist/minisphere-$(version).tar.gz dist/minisphere_$(version).orig.tar.gz
+	cd dist && tar xf minisphere_$(version).orig.tar.gz
+	cp -r src/debian dist/minisphere-$(version)
+	cd dist/minisphere-$(version) && debuild -us -uc
+	rm -rf dist/minisphere-$(version)
 
 .PHONY: dist
 dist:
-	mkdir -p dist/$(PKG_NAME)
-	cp -r assets debian desktops docs man-pages src dist/$(PKG_NAME)
-	cp Makefile VERSION dist/$(PKG_NAME)
-	cp CHANGELOG LICENSE.txt README.md dist/$(PKG_NAME)
-	cd dist && tar cfz $(PKG_NAME).tar.gz $(PKG_NAME) && rm -rf $(PKG_NAME)
+	mkdir -p dist/$(pkgname)
+	cp -r assets desktops docs man-pages src dist/$(pkgname)
+	cp Makefile VERSION dist/$(pkgname)
+	cp CHANGELOG LICENSE.txt README.md dist/$(pkgname)
+	cd dist && tar cfz $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)
 
 .PHONY: install
 install: all
@@ -81,6 +84,7 @@ install: all
 .PHONY: clean
 clean:
 	rm -rf bin
+	rm -rf dist
 
 bin/minisphere:
 	mkdir -p bin
