@@ -12,6 +12,7 @@ struct session
 	size_t     current_frame;
 	lstring_t* function;
 	lstring_t* filename;
+	bool       has_pc_changed;
 	bool       have_debug_info;
 	bool       is_stopped;
 	int32_t    line;
@@ -55,6 +56,7 @@ enum nfy_command
 
 static message_t* converse        (session_t* sess, message_t* msg);
 static bool       do_command_line (session_t* sess);
+static void       print_help      (session_t* sess);
 static bool       process_message (session_t* sess, const message_t* msg);
 
 session_t*
@@ -69,7 +71,9 @@ new_session(const char* hostname, int port)
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
 
-	// get the original source tree path from the target.
+	// find out where the original source tree is from the target.
+	// we can't ask directly because Duktape doesn't allow custom messages, so
+	// we fake it with an Eval command.
 	req = msg_new(MSG_CLASS_REQ);
 	msg_add_int(req, REQ_EVAL);
 	msg_add_string(req, "global.SourceMap.origin");
@@ -87,61 +91,7 @@ on_error:
 }
 
 void
-print_commands(session_t* sess)
-{
-	printf(
-		"\33[0;1m"
-		"SSJ Debugger Commands                                                          \n"
-		"\33[m"
-		"Abbreviated names are listed first, followed by the full, verbose name of each \n"
-		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
-
-		" bt, backtrace  Show a list of all function calls currently on the stack       \n"
-		" bp, break      Set a breakpoint at file:line (e.g. scripts/main.js:812)       \n"
-		" cl, clear      Clear a breakpoint set a file:line (see 'break')               \n"
-		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
-		" e,  eval       Evaluate a JavaScript expression                               \n"
-		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
-		" l,  list       Show source text around the line of code being debugged        \n"
-		" s,  step       Run the next line of code                                      \n"
-		" si, stepin     Run the next line of code, stepping into functions             \n"
-		" so, stepout    Run until the current function call returns                    \n"
-		" v,  var        List local variables and their values in the active frame      \n"
-		" w,  where      Show the filename and line number of the next line of code     \n"
-		" h,  help       Show this list of commands                                     \n"
-		" q,  quit       Detach and terminate your SSJ debugging session                \n\n"
-
-		"Type 'help <command>' for usage of individual commands.                        \n"
-	);
-}
-
-void
-eval_expression(session_t* sess, const char* expr, size_t frame)
-{
-	lstring_t*  eval_code;
-	int32_t     flag;
-	message_t*  request;
-	message_t*  response;
-	const char* result;
-
-	eval_code = lstr_newf(
-		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
-		expr);
-	request = msg_new(MSG_CLASS_REQ);
-	msg_add_int(request, REQ_EVAL);
-	msg_add_string(request, lstr_cstr(eval_code));
-	msg_add_int(request, -(int32_t)(1 + frame));
-	response = converse(sess, request);
-	flag = msg_atom_int(response, 0);
-	result = msg_atom_string(response, 1);
-	if (flag != 0) printf("\33[31;1m");
-		else printf("= \33[0;1m");
-	printf("%s\33[m\n", result);
-	msg_free(response);
-}
-
-void
-print_callstack(session_t* sess, size_t frame, bool show_all)
+print_backtrace(session_t* sess, size_t frame, bool show_all)
 {
 	lstring_t*       display_name;
 	lstring_t*       filename;
@@ -170,14 +120,14 @@ print_callstack(session_t* sess, size_t frame, bool show_all)
 			if (i == frame || show_all) {
 				display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
 					: lstr_new("anon");
-				printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n",
-					i, lstr_cstr(display_name), lstr_cstr(filename), line_num,
-					i == frame ? "<<<" : "");
+				printf("\33[33;1m%s\33[m %3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m\n",
+					i == frame ? ">>>" : "   ",
+					i, lstr_cstr(display_name), lstr_cstr(filename), line_num);
 				lstr_free(display_name);
 				if (!show_all) {
 					if (source = load_source(filename, sess->source_path)) {
 						line = get_source_line(source, line_num - 1);
-						printf("\33[30;1m%4d\33[m %s\n", line_num, lstr_cstr(line));
+						printf("\33[30;1m[%d]\33[m %s\n", line_num, lstr_cstr(line));
 						free_source(source);
 					}
 				}
@@ -189,20 +139,32 @@ print_callstack(session_t* sess, size_t frame, bool show_all)
 }
 
 void
-print_status(session_t* sess)
+print_eval(session_t* sess, const char* expr, size_t frame)
 {
-	const lstring_t* line;
-	
-	printf("PC is at \33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
-		lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
-	if (sess->source != NULL) {
-		line = get_source_line(sess->source, sess->line - 1);
-		printf("\33[30;1m%4d\33[m %s\n", sess->line, lstr_cstr(line));
-	}
+	lstring_t*  eval_code;
+	int32_t     flag;
+	message_t*  request;
+	message_t*  response;
+	const char* result;
+
+	eval_code = lstr_newf(
+		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
+		expr);
+	request = msg_new(MSG_CLASS_REQ);
+	msg_add_int(request, REQ_EVAL);
+	msg_add_string(request, lstr_cstr(eval_code));
+	msg_add_int(request, -(int32_t)(1 + frame));
+	response = converse(sess, request);
+	flag = msg_atom_int(response, 0);
+	result = msg_atom_string(response, 1);
+	if (flag != 0) printf("\33[31;1m");
+	else printf("= \33[0;1m");
+	printf("%s\33[m\n", result);
+	msg_free(response);
 }
 
 void
-print_variables(session_t* sess, size_t frame)
+print_locals(session_t* sess, size_t frame)
 {
 	size_t      n_items;
 	message_t*  request;
@@ -319,6 +281,11 @@ do_command_line(session_t* sess)
 	char*       parsee;
 	message_t*  req;
 
+	if (sess->has_pc_changed) {
+		sess->has_pc_changed = false;
+		print_backtrace(sess, 0, false);
+	}
+	
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
@@ -346,17 +313,17 @@ do_command_line(session_t* sess)
 		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
-		print_commands(sess);
+		print_help(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
-		print_callstack(sess, sess->current_frame, true);
+		print_backtrace(sess, sess->current_frame, true);
 	else if (strcmp(command, "break") == 0 || strcmp(command, "bp") == 0)
 		set_breakpoint(sess, "scripts/main.js", 30);
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
-		eval_expression(sess, argument, sess->current_frame);
+		print_eval(sess, argument, sess->current_frame);
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
-		print_callstack(sess, atoi(argument), false);
+		print_backtrace(sess, atoi(argument), false);
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -364,9 +331,9 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "stepout") == 0 || strcmp(command, "so") == 0)
 		execute_next(sess, EXEC_STEP_OUT);
 	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
-		print_variables(sess, sess->current_frame);
+		print_locals(sess, sess->current_frame);
 	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
-		print_status(sess);
+		print_backtrace(sess, 0, false);
 	else
 		printf("'%s' - command not recognized\n", command);
 	free(parsee);
@@ -374,8 +341,32 @@ do_command_line(session_t* sess)
 }
 
 static void
-load_debug_info(session_t* sess)
+print_help(session_t* sess)
 {
+	printf(
+		"\33[0;1m"
+		"SSJ Debugger Commands                                                          \n"
+		"\33[m"
+		"Abbreviated names are listed first, followed by the full, verbose name of each \n"
+		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
+
+		" bt, backtrace  Show a list of all function calls currently on the stack       \n"
+		" bp, break      Set a breakpoint at file:line (e.g. scripts/main.js:812)       \n"
+		" cl, clear      Clear a breakpoint set a file:line (see 'break')               \n"
+		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
+		" e,  eval       Evaluate a JavaScript expression                               \n"
+		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
+		" l,  list       Show source text around the line of code being debugged        \n"
+		" s,  step       Run the next line of code                                      \n"
+		" si, stepin     Run the next line of code, stepping into functions             \n"
+		" so, stepout    Run until the current function call returns                    \n"
+		" v,  var        List local variables and their values in the active frame      \n"
+		" w,  where      Show the filename and line number of the next line of code     \n"
+		" h,  help       Show this list of commands                                     \n"
+		" q,  quit       Detach and terminate your SSJ debugging session                \n\n"
+
+		"Type 'help <command>' for usage of individual commands.                        \n"
+		);
 }
 
 static bool
@@ -406,7 +397,7 @@ process_message(session_t* sess, const message_t* msg)
 			sess->source = load_source(sess->filename, sess->source_path);
 			sess->is_stopped = flag != 0;
 			if (sess->is_stopped && was_running)
-				print_status(sess);
+				sess->has_pc_changed = true;
 			break;
 		case NFY_PRINT:
 			printf("\33[36m%s\x1B[m", msg_atom_string(msg, 1));

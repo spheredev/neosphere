@@ -35,10 +35,8 @@ main(int argc, char* argv[])
 	initialize_client();
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
-	if (!cmdline->want_pause) {
-		printf("\n");
+	if (!cmdline->want_pause)
 		execute_next(session, EXEC_RESUME);
-	}
 	run_session(session);
 	shutdown_client();
 	return EXIT_SUCCESS;
