@@ -40,6 +40,7 @@ enum req_command
 	REQ_DETACH = 0x1F,
 	REQ_DUMP_HEAP = 0x20,
 	REQ_GET_BYTECODE = 0x21,
+	REQ_INSPECT_OBJ = 0x22,
 };
 
 enum nfy_command
@@ -54,18 +55,30 @@ enum nfy_command
 
 static message_t* converse        (session_t* sess, message_t* msg);
 static bool       do_command_line (session_t* sess);
-static void       load_debug_info (session_t* sess);
 static bool       process_message (session_t* sess, const message_t* msg);
 
 session_t*
 new_session(const char* hostname, int port)
 {
-	session_t* session;
+	path_t*     origin = NULL;
+	message_t*  req;
+	message_t*  rep;
+	session_t*  session;
 
 	session = calloc(1, sizeof(session_t));
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
-	load_debug_info(session);
+
+	// get the original source tree path from the target.
+	req = msg_new(MSG_CLASS_REQ);
+	msg_add_int(req, REQ_EVAL);
+	msg_add_string(req, "global.SourceMap.origin");
+	rep = converse(session, req);
+	if (msg_atom_int(rep, 0) == 0)
+		origin = path_new(msg_atom_string(rep, 1));
+	msg_free(rep);
+	session->source_path = origin;
+	
 	return session;
 
 on_error:
@@ -130,13 +143,15 @@ eval_expression(session_t* sess, const char* expr, size_t frame)
 void
 print_callstack(session_t* sess, size_t frame, bool show_all)
 {
-	lstring_t*  display_name;
-	const char* filename;
-	const char* function_name;
-	int32_t     line_num;
-	size_t      n_items;
-	message_t*  request;
-	message_t*  response;
+	lstring_t*       display_name;
+	lstring_t*       filename;
+	const char*      function_name;
+	const lstring_t* line;
+	int32_t          line_num;
+	size_t           n_items;
+	message_t*       request;
+	message_t*       response;
+	source_t*        source;
 
 	size_t i;
 
@@ -149,17 +164,25 @@ print_callstack(session_t* sess, size_t frame, bool show_all)
 	else {
 		sess->current_frame = frame;
 		for (i = 0; i < n_items; ++i) {
-			filename = msg_atom_string(response, i * 4);
+			filename = lstr_new(msg_atom_string(response, i * 4));
 			function_name = msg_atom_string(response, i * 4 + 1);
 			line_num = msg_atom_int(response, i * 4 + 2);
 			if (i == frame || show_all) {
 				display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
 					: lstr_new("anon");
 				printf("%3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m \33[33;1m%s\33[m\n",
-					i, lstr_cstr(display_name), filename, line_num,
+					i, lstr_cstr(display_name), lstr_cstr(filename), line_num,
 					i == frame ? "<<<" : "");
 				lstr_free(display_name);
+				if (!show_all) {
+					if (source = load_source(filename, sess->source_path)) {
+						line = get_source_line(source, line_num - 1);
+						printf("\33[30;1m%4d\33[m %s\n", line_num, lstr_cstr(line));
+						free_source(source);
+					}
+				}
 			}
+			lstr_free(filename);
 		}
 	}
 	msg_free(response);
@@ -170,7 +193,7 @@ print_status(session_t* sess)
 {
 	const lstring_t* line;
 	
-	printf("\33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
+	printf("PC is at \33[36;1m%s:%d\33[m in function \33[36;1m%s\33[m\n",
 		lstr_cstr(sess->filename), sess->line, lstr_cstr(sess->function));
 	if (sess->source != NULL) {
 		line = get_source_line(sess->source, sess->line - 1);
@@ -326,9 +349,8 @@ do_command_line(session_t* sess)
 		print_commands(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_callstack(sess, sess->current_frame, true);
-	else if (strcmp(command, "break") == 0 || strcmp(command, "bp") == 0) {
+	else if (strcmp(command, "break") == 0 || strcmp(command, "bp") == 0)
 		set_breakpoint(sess, "scripts/main.js", 30);
-	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
@@ -346,7 +368,7 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
 		print_status(sess);
 	else
-		printf("'%s' not recognized in this context\n", command);
+		printf("'%s' - command not recognized\n", command);
 	free(parsee);
 	return true;
 }
@@ -354,21 +376,6 @@ do_command_line(session_t* sess)
 static void
 load_debug_info(session_t* sess)
 {
-	message_t*  request;
-	message_t*  response;
-
-	if (sess->have_debug_info)
-		return;
-	
-	request = msg_new(MSG_CLASS_REQ);
-	msg_add_int(request, REQ_EVAL);
-	msg_add_string(request, "global.SourceMap.origin");
-	response = converse(sess, request);
-	path_free(sess->source_path);
-	if (msg_atom_int(response, 0) == 0)
-		sess->source_path = path_new(msg_atom_string(response, 1));
-	msg_free(response);
-	sess->have_debug_info = true;
 }
 
 static bool
