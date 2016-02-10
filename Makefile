@@ -60,7 +60,6 @@ deb: dist
 	cd dist && tar xf minisphere_$(version).orig.tar.gz
 	cp -r src/debian dist/minisphere-$(version)
 	cd dist/minisphere-$(version) && debuild -S -sa
-	rm -rf dist/minisphere-$(version)
 
 .PHONY: dist
 dist:

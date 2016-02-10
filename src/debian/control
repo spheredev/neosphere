@@ -3,7 +3,15 @@ Maintainer: Bruce Pascoe <fatcerberus@icloud.com>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.5
-Build-Depends: debhelper (>= 9)
+Build-Depends:
+ debhelper (>= 9),
+ liballegro5-dev (>= 5.0.0),
+ liballegro-audio5-dev (>= 5.0.0),
+ liballegro-acodec5-dev (>= 5.0.0),
+ liballegro-dialog5-dev (>= 5.0.0),
+ liballegro-image5-dev (>= 5.0.0),
+ libmng-dev (>= 1.0.10),
+ zlib1g-dev (>= 1.2.3)
 
 Package: minisphere
 Architecture: any
