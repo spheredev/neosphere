@@ -10,6 +10,10 @@ ifndef CC
 CC=cc
 endif
 
+ifndef CFLAGS
+CFLAGS=-O3
+endif
+
 engine_sources=src/minisphere/main.c \
    src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
    src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
@@ -55,7 +59,7 @@ deb: dist
 	cp dist/minisphere-$(version).tar.gz dist/minisphere_$(version).orig.tar.gz
 	cd dist && tar xf minisphere_$(version).orig.tar.gz
 	cp -r src/debian dist/minisphere-$(version)
-	cd dist/minisphere-$(version) && debuild -us -uc
+	cd dist/minisphere-$(version) && debuild -S -sa
 	rm -rf dist/minisphere-$(version)
 
 .PHONY: dist
@@ -89,20 +93,20 @@ clean:
 
 bin/minisphere:
 	mkdir -p bin
-	$(CC) -o bin/minisphere -O3 -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/minisphere  $(CFLAGS) -Isrc/shared -Isrc/minisphere \
 	   -DDUK_OPT_HAVE_CUSTOM_H \
 	   $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
-	$(CC) -o bin/spherun -O3 -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/minisphere \
 	   -DMINISPHERE_SPHERUN -DDUK_OPT_HAVE_CUSTOM_H \
 	   $(engine_sources) $(engine_libs)
 
 bin/cell:
 	mkdir -p bin
-	$(CC) -o bin/cell -O3 -Isrc/shared \
+	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared \
 	   src/cell/main.c \
 	   src/shared/duktape.c src/shared/path.c src/shared/vector.c \
 	   src/cell/assets.c src/cell/build.c src/cell/spk_writer.c \
@@ -111,7 +115,7 @@ bin/cell:
 
 bin/ssj:
 	mkdir -p bin
-	$(CC) -o bin/ssj -O3 -Isrc/shared \
+	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared \
 	   src/ssj/main.c \
 	   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
 	   src/shared/unicode.c src/shared/vector.c \
