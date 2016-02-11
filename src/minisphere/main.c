@@ -920,6 +920,8 @@ parse_command_line(
 
 #if defined(MINISPHERE_SPHERUN)
 	if (*out_game_path == NULL) {
+		print_banner(true, false);
+		printf("\n");
 		report_error("no game specified\n");
 		return false;
 	}

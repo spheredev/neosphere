@@ -18,9 +18,6 @@ main(int argc, char* argv[])
 {
 	int      retval = EXIT_FAILURE;
 	build_t* build = NULL;
-	int      num_errors;
-	int      num_warnings;
-	bool     is_success;
 
 	srand((unsigned int)time(NULL));
 	
@@ -28,8 +25,6 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
-	print_banner(true, false);
-	printf("\n");
 	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))
 		goto shutdown;
 	if (!evaluate_rule(build, s_target_name)) goto shutdown;
@@ -38,9 +33,7 @@ main(int argc, char* argv[])
 
 shutdown:
 	if (build != NULL) {
-		is_success = is_build_ok(build, &num_errors, &num_warnings);
-		printf("%d error(s), %d warning(s)\n", num_errors, num_warnings);
-		if (!is_success)
+		if (!is_build_ok(build, NULL, NULL))
 			retval = EXIT_FAILURE;
 	}
 	path_free(s_in_path);
@@ -89,19 +82,19 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--make-package") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (s_out_path != NULL) {
-					printf("cell: error: too many outputs requested\n");
+					printf("cell: ERROR: too many outputs requested\n");
 					return false;
 				}
 				s_out_path = path_new(argv[i]);
 				if (path_filename_cstr(s_out_path) == NULL) {
-					printf("cell: error: %s argument cannot be a directory\n", argv[i - 1]);
+					printf("cell: ERROR: %s argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
 			}
 			else if (strcmp(argv[i], "--make-dist") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (s_out_path != NULL) {
-					printf("cell: error: too many outputs requested\n");
+					printf("cell: ERROR: too many outputs requested\n");
 					return false;
 				}
 				s_out_path = path_new_dir(argv[i]);
@@ -110,7 +103,7 @@ parse_cmdline(int argc, char* argv[])
 				s_want_source_map = true;
 			}
 			else {
-				printf("cell: error: unknown option '%s'\n", argv[i]);
+				printf("cell: ERROR: unknown option '%s'\n", argv[i]);
 				return false;
 			}
 		}
@@ -122,7 +115,7 @@ parse_cmdline(int argc, char* argv[])
 				case 'l':
 					if (++i >= argc) goto missing_argument;
 					if (s_out_path != NULL) {
-						printf("cell: error: too many outputs requested\n");
+						printf("cell: ERROR: too many outputs requested\n");
 						return false;
 					}
 					s_out_path = path_new_dir(argv[i]);
@@ -130,17 +123,17 @@ parse_cmdline(int argc, char* argv[])
 				case 'p':
 					if (++i >= argc) goto missing_argument;
 					if (s_out_path != NULL) {
-						printf("cell: error: too many outputs requested\n");
+						printf("cell: ERROR: too many outputs requested\n");
 						return false;
 					}
 					s_out_path = path_new(argv[i]);
 					if (path_filename_cstr(s_out_path) == NULL) {
-						printf("cell: error: %s argument cannot be a directory\n", short_args);
+						printf("cell: ERROR: %s argument cannot be a directory\n", short_args);
 						return false;
 					}
 					break;
 				default:
-					printf("cell: error: unknown option '-%c'\n", short_args[i_arg]);
+					printf("cell: ERROR: unknown option '-%c'\n", short_args[i_arg]);
 					return false;
 				}
 			}
@@ -152,14 +145,16 @@ parse_cmdline(int argc, char* argv[])
 	}
 	
 	// validate command line
+	if (s_out_path == NULL) {
+		print_usage();
+		return false;
+	}
+	
+	// check if a Cellscript exists
 	cellscript_path = path_rebase(path_new("Cellscript.js"), s_in_path);
 	if (!path_resolve(cellscript_path, NULL)) {
 		path_free(cellscript_path);
-		printf("cell: error: no Cellscript.js in input directory\n");
-		return false;
-	}
-	if (s_out_path == NULL) {
-		print_usage();
+		printf("cell: ERROR: no Cellscript.js in current directory\n");
 		return false;
 	}
 	
@@ -167,7 +162,7 @@ parse_cmdline(int argc, char* argv[])
 	return true;
 
 missing_argument:
-	printf("cell: error: no argument provided for '%s'\n", argv[i - 1]);
+	printf("cell: ERROR: no argument provided for '%s'\n", argv[i - 1]);
 	return false;
 }
 
@@ -196,7 +191,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("Cell %s Sphere packaging compiler %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("Cell %s Sphere compiler %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A scriptable build engine for Sphere games\n");
 		printf("(c) 2016 Fat Cerberus\n");

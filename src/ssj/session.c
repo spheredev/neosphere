@@ -85,7 +85,7 @@ new_session(const char* hostname, int port)
 		printf("\33[31;1mnone found.\33[m\n");
 	else {
 		printf("OK.\n");
-		printf(": using \33[33;1m%s\33[m\n", path_cstr(origin));
+		printf(": using directory \33[33;1m%s\33[m\n", path_cstr(origin));
 	}
 	msg_free(rep);
 	session->source_path = origin;
@@ -423,9 +423,9 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_DETACHING:
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("\33[0;1mSSJ session detached.");
+				printf("\33[0;1mSSJ session has been detached.");
 			else
-				printf("\33[31;1munrecoverable error, SSJ detached.");
+				printf("\33[31;1munrecoverable error, session detached.");
 			printf("\33[m\n");
 			return false;
 		}
