@@ -21,14 +21,16 @@ static bool      s_want_attach;
 void
 initialize_debugger(bool want_attach, bool allow_remote)
 {
-	void*       data;
-	size_t      data_size;
-	const char* hostname;
+	void*         data;
+	size_t        data_size;
+	const path_t* game_path;
+	const char*   hostname;
 
 	// load the source map, if one is available
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
+	game_path = get_game_path(g_fs);
 	if (data = sfs_fslurp(g_fs, "sourcemap.json", NULL, &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
@@ -43,6 +45,17 @@ initialize_debugger(bool want_attach, bool allow_remote)
 		duk_pop(g_duk);
 		free(data);
 		s_have_source_map = true;
+	}
+	else if (!path_is_file(game_path)) {
+		duk_push_global_object(g_duk);
+		duk_push_string(g_duk, "SourceMap");
+		duk_push_object(g_duk);
+		duk_push_string(g_duk, path_cstr(game_path));
+		duk_put_prop_string(g_duk, -2, "origin");
+		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_CLEAR_WRITABLE | DUK_DEFPROP_CLEAR_CONFIGURABLE
+			| DUK_DEFPROP_CLEAR_ENUMERABLE);
+		duk_pop(g_duk);
 	}
 	duk_pop(g_duk);
 	

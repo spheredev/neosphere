@@ -71,18 +71,25 @@ new_session(const char* hostname, int port)
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
 
-	// find out where the original source tree is from the target.
+	// find out where the original source tree is by querying the target.
 	// we can't ask directly because Duktape doesn't allow custom messages, so
 	// we fake it with an Eval command.
+	printf("Locate sources... ");
 	req = msg_new(MSG_CLASS_REQ);
 	msg_add_int(req, REQ_EVAL);
-	msg_add_string(req, "global.SourceMap.origin");
+	msg_add_string(req, "(function() { return 'SourceMap' in global ? global.SourceMap.origin : undefined; })();");
 	rep = converse(session, req);
-	if (msg_atom_int(rep, 0) == 0)
-		origin = path_new(msg_atom_string(rep, 1));
+	if (msg_atom_string(rep, 1) != NULL)
+		origin = path_resolve(path_new(msg_atom_string(rep, 1)), NULL);
+	if (origin == NULL)
+		printf("\33[31;1mNone found.\33[m\n");
+	else {
+		printf("OK.\n");
+		printf("  \33[33;1m%s\33[m\n", path_cstr(origin));
+	}
 	msg_free(rep);
 	session->source_path = origin;
-	
+
 	return session;
 
 on_error:
@@ -121,7 +128,7 @@ print_backtrace(session_t* sess, size_t frame, bool show_all)
 				display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
 					: lstr_new("anon");
 				printf("\33[33;1m%s\33[m %3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m\n",
-					i == frame ? ">>>" : "   ",
+					i == frame ? ">>" : "  ",
 					i, lstr_cstr(display_name), lstr_cstr(filename), line_num);
 				lstr_free(display_name);
 				if (!show_all) {

@@ -64,7 +64,7 @@ connect_remote(const char* hostname, int port)
 	session->recv_buf_size = 65536;
 	session->recv_buf = malloc(session->recv_buf_size);
 	
-	printf("Connecting to \33[36;1m%s:%d\33[m... ", hostname, port);
+	printf("Connect to \33[36;1m%s:%d\33[m... ", hostname, port);
 	fflush(stdout);
 	session->socket = dyad_newStream();
 	dyad_addListener(session->socket, DYAD_EVENT_DATA, on_socket_recv, session);
@@ -283,7 +283,7 @@ parse_handshake(remote_t* remote)
 	char* token;
 	char  *p_ch;
 
-	printf("Handshaking... ");
+	printf("Handshake... ");
 	memset(handshake, 0, sizeof handshake);
 	p_ch = handshake;
 	do {

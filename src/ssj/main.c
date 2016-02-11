@@ -50,7 +50,7 @@ launch_minisphere(path_t* game_path)
 	HMODULE    h_module;
 	TCHAR      pathname[MAX_PATH];
 
-	printf("Starting '%s'... ", path_cstr(game_path));
+	printf("Start '%s'... ", path_cstr(game_path));
 	fflush(stdout);
 	h_module = GetModuleHandle(NULL);
 	GetModuleFileName(h_module, pathname, MAX_PATH);
@@ -71,7 +71,7 @@ launch_minisphere(path_t* game_path)
 	ssize_t     pathname_len;
 	struct stat stat_buf;
 	
-	printf("Starting '%s'... ", path_cstr(game_path));
+	printf("Launch \33[36;1m%s\33[m... ", path_cstr(game_path));
 	fflush(stdout);
 	memset(pathname, 0, sizeof pathname);
 	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX);
@@ -88,6 +88,7 @@ launch_minisphere(path_t* game_path)
 			// I'd like to intermingle the engine's output with SSJ's, like in native
 			// debuggers e.g. GDB.
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
+			dup2(open("/dev/null", O_WRONLY), STDERR_FILENO);
 			execlp("./spherun", "./spherun", "--debug", path_cstr(game_path), NULL);
 		}
 		printf("OK.\n");
