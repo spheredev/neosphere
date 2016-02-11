@@ -54,10 +54,11 @@ enum nfy_command
 	NFY_DETACHING = 0x06,
 };
 
-static message_t* converse        (session_t* sess, message_t* msg);
-static bool       do_command_line (session_t* sess);
-static void       print_help      (session_t* sess);
-static bool       process_message (session_t* sess, const message_t* msg);
+static message_t* converse            (session_t* sess, message_t* msg);
+static bool       do_command_line     (session_t* sess);
+static bool       parse_file_and_line (session_t* sess, const char* string, lstring_t* *out_filename, size_t *out_line);
+static void       print_help          (session_t* sess);
+static bool       process_message     (session_t* sess, const message_t* msg);
 
 session_t*
 new_session(const char* hostname, int port)
@@ -218,7 +219,7 @@ print_source(session_t* sess, size_t line_num, size_t window)
 	size_t idx;
 
 	if (!(source = load_source(sess->filename, sess->source_path)))
-		printf("no source code available at this location\n");
+		printf("no source code available.\n");
 	else {
 		line_count = get_source_size(source);
 		median = window / 2;
@@ -246,7 +247,7 @@ set_breakpoint(session_t* sess, const char* filename, int line)
 	msg_add_string(request, filename);
 	msg_add_int(request, (int32_t)line);
 	response = converse(sess, request);
-	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%d\33[m\n",
+	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%d\33[m.\n",
 		msg_atom_int(response, 0), filename, line);
 	msg_free(response);
 }
@@ -288,7 +289,7 @@ run_session(session_t* sess)
 
 on_error:
 	msg_free(msg);
-	printf("Communication error, ending session.\n");
+	printf("communication error. session detached.\n");
 	return;
 }
 
@@ -314,6 +315,8 @@ do_command_line(session_t* sess)
 	char*       command;
 	int         ch = '\0';
 	size_t      ch_idx = 0;
+	lstring_t*  filename;
+	size_t      line_num;
 	char*       parsee;
 	message_t*  req;
 
@@ -329,7 +332,7 @@ do_command_line(session_t* sess)
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
-				printf("String entered is too long to parse.");
+				printf("string entered is too long to parse.");
 				sess->cl_buffer[0] = '\0';
 				break;
 			}
@@ -352,8 +355,12 @@ do_command_line(session_t* sess)
 		print_help(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_backtrace(sess, sess->current_frame, true);
-	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0)
-		set_breakpoint(sess, "scripts/main.js", 30);
+	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0) {
+		if (parse_file_and_line(sess, argument, &filename, &line_num)) {
+			set_breakpoint(sess, lstr_cstr(filename), line_num);
+			lstr_free(filename);
+		}
+	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
@@ -373,9 +380,37 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
 		print_backtrace(sess, 0, false);
 	else
-		printf("'%s' - command not recognized\n", command);
+		printf("'%s': command not recognized.\n", command);
 	free(parsee);
 	return true;
+}
+
+static bool
+parse_file_and_line(session_t* sess, const char* string, lstring_t* *out_filename, size_t *out_line)
+{
+	char*   next;
+	char*   parsee = NULL;
+	path_t* path = NULL;
+	char*   token;
+	
+	if (strchr(string, ':') == NULL)
+		goto on_error;
+	parsee = strdup(string);
+	token = strtok_r(parsee, ":", &next);
+	path = path_rebase(path_new(token), sess->source_path);
+	if (!path_resolve(path, NULL)) {
+		printf("'%s': source file not found.\n", token);
+		goto on_error;
+	}
+	*out_filename = lstr_new(token);
+	*out_line = atoi(next);
+	free(parsee);
+	return *out_line > 0;
+
+on_error:
+	free(parsee);
+	path_free(path);
+	return false;
 }
 
 static void
@@ -456,7 +491,7 @@ process_message(session_t* sess, const message_t* msg)
 			if (flag == 0)
 				printf("\33[0;1mSSJ session has been detached.");
 			else
-				printf("\33[31;1munrecoverable error, session detached.");
+				printf("\33[31;1munrecoverable error. session detached.");
 			printf("\33[m\n");
 			return false;
 		}

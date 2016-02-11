@@ -137,7 +137,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 				print_cell_quote();
 				goto on_output_only;
 			}
-			else if (strcmp(argv[i], "--connect") == 0)
+			else if (strcmp(argv[i], "--attach") == 0)
 				have_target = true;
 			else if (strcmp(argv[i], "--pause") == 0)
 				cmdline->want_pause = true;
@@ -150,7 +150,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'c':
+				case 'a':
 					have_target = true;
 					break;
 				case 'p':
@@ -236,9 +236,8 @@ print_usage(void)
 	printf("OPTIONS:\n");
 	printf("       --version   Prints the SSJ debugger version.                            \n");
 	printf("       --help      Prints this help text.                                      \n");
-	printf("   -c, --connect   Attempts to attach to a target already running. If the      \n");
-	printf("                   connection attempt fails, SSJ will exit.                    \n");
+	printf("   -a, --attach    Attaches to a target which has already been started. If the \n");
+	printf("                   connection can't be made within 30 seconds, SSJ will exit.  \n");
 	printf("   -p, --pause     Pauses execution on attach, or, when debugging a new        \n");
-	printf("                   instance, pauses before any code is executed. This allows   \n");
-	printf("                   setting up breakpoints, etc. in advance.                    \n");
+	printf("                   instance, pauses before any code is executed.               \n");
 }

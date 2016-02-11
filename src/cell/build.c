@@ -90,7 +90,7 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	if (path_filename_cstr(out_path)
 		&& !(build->spk = spk_create(path_cstr(out_path))))
 	{
-		fprintf(stderr, "error: internal: failed to create SPK '%s'", path_cstr(out_path));
+		fprintf(stderr, "error: internal: failed to create SPK '%s'\n", path_cstr(out_path));
 		goto on_error;
 	}
 	build->want_source_map = want_source_map;
@@ -306,7 +306,7 @@ run_build(build_t* build)
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
 			path_free(path);
-			fprintf(stderr, "\nerror: internal: failed to write source map");
+			fprintf(stderr, "\nerror: internal: failed to write source map\n");
 			return false;
 		}
 		if (build->spk != NULL)
