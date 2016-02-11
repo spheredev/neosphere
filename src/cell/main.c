@@ -224,6 +224,6 @@ print_usage(void)
 	printf("   -p, --package   Build a Sphere package (.spk).                            \n");
 	printf("   -d, --debug     Include a debugging map in the compiled game which maps   \n");
 	printf("                   compiled assets to their corresponding source files.      \n");
-	printf("       --version   Show the version of this copy of Cell.                    \n");
-	printf("       --help      Show this help text.                                      \n");
+	printf("       --version   Print the version number of Cell and its dependencies.    \n");
+	printf("       --help      Print this help text.                                     \n");
 }

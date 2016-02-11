@@ -234,10 +234,10 @@ print_usage(void)
 	printf("   ssj -c [options]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --version   Prints the SSJ debugger version.                            \n");
-	printf("       --help      Prints this help text.                                      \n");
 	printf("   -a, --attach    Attaches to a target which has already been started. If the \n");
 	printf("                   connection can't be made within 30 seconds, SSJ will exit.  \n");
 	printf("   -p, --pause     Pauses execution on attach, or, when debugging a new        \n");
 	printf("                   instance, pauses before any code is executed.               \n");
+	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
+	printf("       --help      Print this help text.                                       \n");
 }

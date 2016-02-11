@@ -28,6 +28,7 @@ static void draw_status_message (const char* text);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void print_banner        (bool want_copyright, bool want_deps);
+static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static bool verify_requirements (sandbox_t* fs);
 
@@ -864,7 +865,7 @@ parse_command_line(
 				if (++i >= argc) goto missing_argument;
 				*out_frameskip = atoi(argv[i]);
 			}
-			else if (strcmp(argv[i], "--no-throttle") == 0) {
+			else if (strcmp(argv[i], "--no-sleep") == 0) {
 				*out_want_throttle = false;
 			}
 			else if (strcmp(argv[i], "--fullscreen") == 0) {
@@ -876,6 +877,10 @@ parse_command_line(
 #if defined(MINISPHERE_SPHERUN)
 			else if (strcmp(argv[i], "--version") == 0) {
 				print_banner(true, true);
+				return false;
+			}
+			else if (strcmp(argv[i], "--help") == 0) {
+				print_usage();
 				return false;
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
@@ -920,9 +925,7 @@ parse_command_line(
 
 #if defined(MINISPHERE_SPHERUN)
 	if (*out_game_path == NULL) {
-		print_banner(true, false);
-		printf("\n");
-		report_error("no game specified\n");
+		print_usage();
 		return false;
 	}
 #endif
@@ -954,6 +957,29 @@ print_banner(bool want_copyright, bool want_deps)
 		printf("   Duktape: %-13s   zlib: v%s\n", DUK_GIT_DESCRIBE, zlibVersion());
 		printf("    Dyad.c: v%-12s\n", dyad_getVersion());
 	}
+}
+
+static void
+print_usage(void)
+{
+	print_banner(true, false);
+	printf("\n");
+	printf("USAGE:\n");
+	printf("   spherun [--fullscreen | --window] [--frameskip <n>] [--no-sleep] [--debug]\n");
+	printf("           [--verbose <n>] <game_path>                                       \n");
+	printf("\n");
+	printf("OPTIONS:\n");
+	printf("       --fullscreen  Start the engine in fullscreen mode.                    \n");
+	printf("       --window      Start the engine in windowed mode. This is the default. \n");
+	printf("       --frameskip   Set the maximum number of consecutive frames to skip.   \n");
+	printf("       --no-sleep    Prevent the engine from sleeping between frames.        \n");
+	printf("       --debug       Wait 30 seconds for the debugger to attach. If nothing  \n");
+	printf("                     attaches, minisphere will exit.                         \n");
+	printf("   -v, --verbose     Set the engine's verbosity level. Valid levels are 0-4. \n");
+	printf("                     Higher numbers are more verbose. The default is 0, which\n");
+	printf("                     only shows game output.                                 \n");
+	printf("       --version     Show the version number of the installed minipshere.    \n");
+	printf("       --help        Show this help text.                                    \n");
 }
 
 static void
