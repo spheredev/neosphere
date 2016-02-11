@@ -65,6 +65,12 @@ get_source_line(const source_t* source, size_t index)
 	return *(lstring_t**)vector_get(source->lines, index);
 }
 
+size_t
+get_source_size(const source_t* source)
+{
+	return vector_len(source->lines);
+}
+
 static char*
 freadline(FILE* h_file)
 {

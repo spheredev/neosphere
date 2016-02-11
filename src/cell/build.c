@@ -248,7 +248,7 @@ run_build(build_t* build)
 		return false;
 	}
 
-	printf(":: build %s '%s'\n", build->spk ? "package" : "distribution",
+	printf(": build %s '%s'\n", build->spk ? "package" : "distribution",
 		path_cstr(build->in_path));
 	
 	// build and install assets
@@ -261,12 +261,12 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf(":: %s\n", path_cstr(get_object_path((*p_target)->asset)));
+			printf(": %s\n", path_cstr(get_object_path((*p_target)->asset)));
 			++n_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf(":: %d asset(s) compiled\n", n_assets);
+	if (n_assets > 0) printf(": %d asset(s) compiled\n", n_assets);
 		else printf(" Up-to-date.\n");
 
 	printf("Installing assets... ");
@@ -277,12 +277,12 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf(":: %s\n", path_cstr(p_inst->path));
+			printf(": %s\n", path_cstr(p_inst->path));
 			++n_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf(":: %d asset(s) installed\n", n_assets);
+	if (n_assets > 0) printf(": %d asset(s) installed\n", n_assets);
 		else printf(" Up-to-date.\n");
 
 	// generate source map
@@ -322,7 +322,7 @@ run_build(build_t* build)
 	}
 
 	printf("%s -> %s\n", build->rule, path_cstr(build->out_path));
-	printf(":: %d error(s), %d warning(s)\n", build->num_errors, build->num_warnings);
+	printf(": %d error(s), %d warning(s)\n", build->num_errors, build->num_warnings);
 
 	return true;
 }

@@ -85,7 +85,7 @@ new_session(const char* hostname, int port)
 		printf("\33[31;1mnone found.\33[m\n");
 	else {
 		printf("OK.\n");
-		printf(":: origin \33[33;1m%s\33[m\n", path_cstr(origin));
+		printf(": source tree \33[33;1m%s\33[m\n", path_cstr(origin));
 	}
 	msg_free(rep);
 	session->source_path = origin;
@@ -134,7 +134,7 @@ print_backtrace(session_t* sess, size_t frame, bool show_all)
 				if (!show_all) {
 					if (source = load_source(filename, sess->source_path)) {
 						line = get_source_line(source, line_num - 1);
-						printf("\33[30;1m[%d]\33[m %s\n", line_num, lstr_cstr(line));
+						printf("\33[30;1m%d:\33[m %s\n", line_num, lstr_cstr(line));
 						free_source(source);
 					}
 				}
@@ -204,6 +204,35 @@ print_locals(session_t* sess, size_t frame)
 		printf("\33[m\n");
 	}
 	msg_free(response);
+}
+
+void
+print_source(session_t* sess, size_t line_num, size_t window)
+{
+	const lstring_t* line;
+	size_t           line_count;
+	size_t           median;
+	source_t*        source;
+	size_t           start, end;
+
+	size_t idx;
+
+	if (!(source = load_source(sess->filename, sess->source_path)))
+		printf("no source code available at this location\n");
+	else {
+		line_count = get_source_size(source);
+		median = window / 2;
+		start = line_num > median ? line_num - (median + 1) : 0;
+		end = start + window < line_count ? start + window : line_count;
+		
+		for (idx = start; idx < end; ++idx) {
+			line = get_source_line(source, idx);
+			printf("\33[36;1m%s \33[30;1m%4zd\33[m %s\n",
+				idx == sess->line - 1 ? ">>" : "  ",
+				idx + 1, lstr_cstr(line));
+		}
+		free_source(source);
+	}
 }
 
 void
@@ -323,7 +352,7 @@ do_command_line(session_t* sess)
 		print_help(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_backtrace(sess, sess->current_frame, true);
-	else if (strcmp(command, "break") == 0 || strcmp(command, "bp") == 0)
+	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0)
 		set_breakpoint(sess, "scripts/main.js", 30);
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
@@ -331,6 +360,8 @@ do_command_line(session_t* sess)
 		print_eval(sess, argument, sess->current_frame);
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
 		print_backtrace(sess, atoi(argument), false);
+	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0)
+		print_source(sess, sess->line, 10);
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -357,20 +388,20 @@ print_help(session_t* sess)
 		"Abbreviated names are listed first, followed by the full, verbose name of each \n"
 		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
 
-		" bt, backtrace  Show a list of all function calls currently on the stack       \n"
-		" bp, break      Set a breakpoint at file:line (e.g. scripts/main.js:812)       \n"
-		" cl, clear      Clear a breakpoint set a file:line (see 'break')               \n"
-		" c,  continue   Run either until a breakpoint is hit or an error is thrown     \n"
-		" e,  eval       Evaluate a JavaScript expression                               \n"
-		" f,  frame      Change the stack frame used for commands like 'eval' and 'var' \n"
-		" l,  list       Show source text around the line of code being debugged        \n"
-		" s,  step       Run the next line of code                                      \n"
-		" si, stepin     Run the next line of code, stepping into functions             \n"
-		" so, stepout    Run until the current function call returns                    \n"
-		" v,  var        List local variables and their values in the active frame      \n"
-		" w,  where      Show the filename and line number of the next line of code     \n"
-		" h,  help       Show this list of commands                                     \n"
-		" q,  quit       Detach and terminate your SSJ debugging session                \n\n"
+		" bt, backtrace    Show a list of all function calls currently on the stack     \n"
+		" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/main.js:812)     \n"
+		" cl, clear        Clear a breakpoint set a file:line (see 'break')             \n"
+		" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
+		" e,  eval         Evaluate a JavaScript expression                             \n"
+		" f,  frame        Change the stack frame used for, e.g. 'eval' and 'var'       \n"
+		" l,  list         Show source text around the line of code being debugged      \n"
+		" s,  step         Run the next line of code                                    \n"
+		" si, stepin       Run the next line of code, stepping into functions           \n"
+		" so, stepout      Run until the current function call returns                  \n"
+		" v,  var          List local variables and their values in the active frame    \n"
+		" w,  where        Show the filename and line number of the next line of code   \n"
+		" h,  help         Show this list of commands                                   \n"
+		" q,  quit         Detach and terminate your SSJ debugging session              \n\n"
 
 		"Type 'help <command>' for usage of individual commands.                        \n"
 		);
