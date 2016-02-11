@@ -50,7 +50,7 @@ launch_minisphere(path_t* game_path)
 	HMODULE    h_module;
 	TCHAR      pathname[MAX_PATH];
 
-	printf("Start '%s'... ", path_cstr(game_path));
+	printf("Launch '%s'... ", path_cstr(game_path));
 	fflush(stdout);
 	h_module = GetModuleHandle(NULL);
 	GetModuleFileName(h_module, pathname, MAX_PATH);
@@ -59,8 +59,17 @@ launch_minisphere(path_t* game_path)
 	if (!PathFileExists(TEXT(".\\spherun.exe")))
 		goto on_error;
 	else {
-		command = lstr_newf("start ./spherun.exe --debug \"%s\"", path_cstr(game_path));
-		system(lstr_cstr(command));
+		STARTUPINFOA si;
+		PROCESS_INFORMATION pi;
+		memset(&si, 0, sizeof(STARTUPINFOA));
+		si.cb = sizeof(STARTUPINFOA);
+		si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+		si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+		si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+		si.wShowWindow = SW_HIDE;
+		command = lstr_newf("./spherun.exe --debug \"%s\"", path_cstr(game_path));
+		CreateProcessA(NULL, lstr_cstr(command), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
 		lstr_free(command);
 		printf("OK.\n");
 		return true;

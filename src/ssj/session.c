@@ -85,7 +85,7 @@ new_session(const char* hostname, int port)
 		printf("\33[31;1mNone found.\33[m\n");
 	else {
 		printf("OK.\n");
-		printf("  \33[33;1m%s\33[m\n", path_cstr(origin));
+		printf("  Using \33[33;1m%s\33[m\n", path_cstr(origin));
 	}
 	msg_free(rep);
 	session->source_path = origin;
