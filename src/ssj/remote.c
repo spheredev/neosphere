@@ -300,8 +300,8 @@ parse_handshake(remote_t* remote)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf(": attached \33[36;1m%s\33[m\n", next_token);
-	printf(": duktape \33[36;1m%s\33[m\n", token);
+	printf(":: attached \33[36;1m%s\33[m\n", next_token);
+	printf(":: duktape \33[36;1m%s\33[m\n", token);
 
 	return true;
 

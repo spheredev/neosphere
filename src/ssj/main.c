@@ -213,7 +213,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("SSJ %s Sphere debugger %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("SSJ %s Sphere debugger (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A powerful JavaScript debugger for minisphere\n");
 		printf("(c) 2016 Fat Cerberus\n");

@@ -25,6 +25,9 @@ main(int argc, char* argv[])
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
 
+	print_banner(true, false);
+	printf("\n");
+
 	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))
 		goto shutdown;
 	if (!evaluate_rule(build, s_target_name)) goto shutdown;
@@ -70,7 +73,7 @@ parse_cmdline(int argc, char* argv[])
 				print_banner(true, true);
 				return false;
 			}
-			else if (strcmp(argv[i], "--in") == 0) {
+			else if (strcmp(argv[i], "--in-dir") == 0) {
 				if (++i >= argc) goto missing_argument;
 				path_free(s_in_path);
 				s_in_path = path_new_dir(argv[i]);
@@ -79,7 +82,7 @@ parse_cmdline(int argc, char* argv[])
 				print_cell_quote();
 				return false;
 			}
-			else if (strcmp(argv[i], "--make-package") == 0) {
+			else if (strcmp(argv[i], "--package") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (s_out_path != NULL) {
 					printf("cell: ERROR: too many outputs requested\n");
@@ -91,7 +94,7 @@ parse_cmdline(int argc, char* argv[])
 					return false;
 				}
 			}
-			else if (strcmp(argv[i], "--make-dist") == 0) {
+			else if (strcmp(argv[i], "--build") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (s_out_path != NULL) {
 					printf("cell: ERROR: too many outputs requested\n");
@@ -111,8 +114,7 @@ parse_cmdline(int argc, char* argv[])
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'd': s_want_source_map = true; break;
-				case 'l':
+				case 'b':
 					if (++i >= argc) goto missing_argument;
 					if (s_out_path != NULL) {
 						printf("cell: ERROR: too many outputs requested\n");
@@ -131,6 +133,9 @@ parse_cmdline(int argc, char* argv[])
 						printf("cell: ERROR: %s argument cannot be a directory\n", short_args);
 						return false;
 					}
+					break;
+				case 'd':
+					s_want_source_map = true;
 					break;
 				default:
 					printf("cell: ERROR: unknown option '-%c'\n", short_args[i_arg]);
@@ -191,7 +196,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("Cell %s Sphere compiler %s\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("Cell %s Sphere compiler (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A scriptable build engine for Sphere games\n");
 		printf("(c) 2016 Fat Cerberus\n");
@@ -209,15 +214,16 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
+	printf("   cell -b <out-dir> [options] [target]\n");
 	printf("   cell -p <out-file> [options] [target]\n");
-	printf("   cell -l <out-dir> [options] [target]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --version        Show the Cell compiler version and copyright notice. \n");
-	printf("       --in             Set the input directory; Cell looks for sources in   \n");
-	printf("                        the current working directory by default.            \n");
-	printf("   -l, --make-dist      Build an unpacked game distribution.                 \n");
-	printf("   -p, --make-package   Build a Sphere package (.spk).                       \n");
-	printf("   -d, --debug          Generate a source map which maps compiled assets to  \n");
-	printf("                        their corresponding source files, aiding debugging.  \n");
+	printf("       --in-dir    Set the input directory; Cell looks for sources in the    \n");
+	printf("                   current working directory by default.                     \n");
+	printf("   -b, --build     Build an unpackaged Sphere game distribution.             \n");
+	printf("   -p, --package   Build a Sphere package (.spk).                            \n");
+	printf("   -d, --debug     Include a debugger map with the compiled game which maps  \n");
+	printf("                   compiled assets to their corresponding source files.      \n");
+	printf("       --version   Show the version of this copy of Cell.                    \n");
+	printf("       --help      Show this help text.                                      \n");
 }
