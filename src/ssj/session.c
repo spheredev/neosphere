@@ -74,7 +74,7 @@ new_session(const char* hostname, int port)
 	// find out where the original source tree is by querying the target.
 	// we can't ask directly because Duktape doesn't allow custom messages, so
 	// we fake it with an Eval command.
-	printf("Locate sources... ");
+	printf("locating sources... ");
 	req = msg_new(MSG_CLASS_REQ);
 	msg_add_int(req, REQ_EVAL);
 	msg_add_string(req, "(function() { return 'SourceMap' in global ? global.SourceMap.origin : undefined; })();");
@@ -82,10 +82,10 @@ new_session(const char* hostname, int port)
 	if (msg_atom_string(rep, 1) != NULL)
 		origin = path_resolve(path_new(msg_atom_string(rep, 1)), NULL);
 	if (origin == NULL)
-		printf("\33[31;1mNone found.\33[m\n");
+		printf("\33[31;1mnone found.\33[m\n");
 	else {
 		printf("OK.\n");
-		printf("  Using \33[33;1m%s\33[m\n", path_cstr(origin));
+		printf(": using \33[33;1m%s\33[m\n", path_cstr(origin));
 	}
 	msg_free(rep);
 	session->source_path = origin;
@@ -296,7 +296,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[36;1m%s \33[33;1mssj$\33[m ", lstr_cstr(sess->function));
+		printf("\n\33[36;1m%s\33[m \33[33;1mssj$\33[m ", lstr_cstr(sess->function));
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -417,15 +417,15 @@ process_message(session_t* sess, const message_t* msg)
 			text = msg_atom_string(msg, 2);
 			filename = msg_atom_string(msg, 3);
 			line_no = msg_atom_int(msg, 4);
-			printf("\33[31;1m%s `%s` at %s:%d\33[m\n", flag != 0 ? "uncaught" : "threw",
+			printf("\33[31;1m%s `%s` at %s:%d\33[m\n", flag != 0 ? "error" : "threw",
 				text, filename, line_no);
 			break;
 		case NFY_DETACHING:
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("\33[0;1mminisphere detached normally.");
+				printf("\33[0;1mSSJ session detached.");
 			else
-				printf("\33[31;1mUnrecoverable error, target detached");
+				printf("\33[31;1munrecoverable error, SSJ detached.");
 			printf("\33[m\n");
 			return false;
 		}

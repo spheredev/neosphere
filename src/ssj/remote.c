@@ -64,7 +64,7 @@ connect_remote(const char* hostname, int port)
 	session->recv_buf_size = 65536;
 	session->recv_buf = malloc(session->recv_buf_size);
 	
-	printf("Connect to \33[36;1m%s:%d\33[m... ", hostname, port);
+	printf("connecting to \33[36;1m%s:%d\33[m... ", hostname, port);
 	fflush(stdout);
 	session->socket = dyad_newStream();
 	dyad_addListener(session->socket, DYAD_EVENT_DATA, on_socket_recv, session);
@@ -86,7 +86,7 @@ connect_remote(const char* hostname, int port)
 	return session;
 
 on_error:
-	printf("Error.\n");
+	printf("\33[31;1mmerror.\33[m\n");
 	if (session != NULL) {
 		if (session->socket != NULL)
 			dyad_close(session->socket);
@@ -283,7 +283,7 @@ parse_handshake(remote_t* remote)
 	char* token;
 	char  *p_ch;
 
-	printf("Handshake... ");
+	printf("verifying... ");
 	memset(handshake, 0, sizeof handshake);
 	p_ch = handshake;
 	do {
@@ -300,13 +300,13 @@ parse_handshake(remote_t* remote)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf("  Attached to \33[36;1m%s\33[m\n", next_token);
-	printf("  Duktape \33[36;1m%s\33[m\n", token);
+	printf(": attached \33[36;1m%s\33[m\n", next_token);
+	printf(": duktape \33[36;1m%s\33[m\n", token);
 
 	return true;
 
 on_error:
-	printf("Error.\n");
+	printf("\33[31;1merror!\33[m\n");
 	return false;
 }
 
