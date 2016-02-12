@@ -7,10 +7,9 @@
 ; In practical terms, this means building the full GDK and Redist solution
 ; configurations.
 
-
 #define AppName "minisphere"
-#define AppVersion "3.0a0"
-#define AppRawVersion "3.0a0"
+#define AppVersion "3.0b1"
+#define AppRawVersion "2.99.812.1"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
@@ -43,6 +42,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Components]
 Name: "engine"; Description: "{#AppName} {#AppVersion} [Required]"; Types: full compact custom; Flags: fixed
 Name: "spherun"; Description: "{#AppName} Console {#AppVersion} (spherun)"; Types: full; Flags: checkablealone
+Name: "spherun/plugin"; Description: "GDK plugin for Sphere Studio"; Types: full
 Name: "spherun/cell"; Description: "cell - Sphere packaging compiler"; Types: full
 Name: "spherun/ssj"; Description: "ssj - JavaScript debugger"; Types: full
 
@@ -66,6 +66,7 @@ Source: "..\msw\startup.spk"; DestDir: "{app}"; Components: engine; Flags: ignor
 Source: "..\msw\documentation\minisphere-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cell-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\plugin\bin\Release\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio"; Flags: ignoreversion; Components: spherun/plugin
 
 [Registry]
 ; File Associations
