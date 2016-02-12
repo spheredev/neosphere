@@ -353,7 +353,9 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_backtrace(sess, sess->current_frame, true);
 	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0) {
-		if (parse_file_and_line(sess, argument, &filename, &line_num)) {
+		if (argument[0] == '\0')
+			print_breakpoints(sess);
+		else if (parse_file_and_line(sess, argument, &filename, &line_num)) {
 			set_breakpoint(sess, filename, line_num);
 			free(filename);
 		}
@@ -411,6 +413,29 @@ on_error:
 }
 
 static void
+print_breakpoints(session_t* sess)
+{
+	const char* filename;
+	int         line_num;
+	message_t*  msg;
+	size_t      num_breaks;
+
+	size_t idx;
+
+	msg = msg_new(MSG_CLASS_REQ);
+	msg_add_int(msg, REQ_LIST_BREAK);
+	msg = converse(sess, msg);
+	if ((num_breaks = msg_len(msg) / 2) == 0)
+		printf("no active breakpoints.\n");
+	for (idx = 0; idx < num_breaks; ++idx) {
+		filename = msg_atom_string(msg, idx * 2);
+		line_num = msg_atom_int(msg, idx * 2 + 1);
+		printf("\33[33;1m%2zd\33[m: breakpoint set at \33[36;1m%s:%d\33[m\n",
+			idx, filename, line_num);
+	}
+}
+
+static void
 print_help(session_t* sess)
 {
 	printf(
@@ -421,8 +446,8 @@ print_help(session_t* sess)
 		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
 
 		" bt, backtrace    Show a list of all function calls currently on the stack     \n"
-		" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/main.js:812)     \n"
-		" cl, clear        Clear a breakpoint set a file:line (see 'break')             \n"
+		" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
+		" cb, clear        Clear a breakpoint set at file:line (see 'breakpoint')       \n"
 		" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
 		" e,  eval         Evaluate a JavaScript expression                             \n"
 		" f,  frame        Change the stack frame used for, e.g. 'eval' and 'var'       \n"
