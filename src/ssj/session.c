@@ -130,14 +130,8 @@ print_backtrace(session_t* sess, size_t frame, bool show_all)
 					i == frame ? ">>" : "  ",
 					i, display_name, filename, line_num);
 				free(display_name);
-				if (!show_all) {
+				if (!show_all)
 					print_source(sess, filename, line_num, 1);
-					/*if (source = load_source(filename, sess->source_path)) {
-						line = get_source_line(source, line_num - 1);
-						printf("\33[30;1m%d:\33[m %s\n", line_num, lstr_cstr(line));
-						free_source(source);
-					}*/
-				}
 			}
 		}
 	}
@@ -243,7 +237,6 @@ set_breakpoint(session_t* sess, const char* filename, size_t line)
 {
 	message_t* request;
 	message_t* response;
-	source_t*  source;
 
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_ADD_BREAK);
@@ -252,9 +245,7 @@ set_breakpoint(session_t* sess, const char* filename, size_t line)
 	response = converse(sess, request);
 	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%zd\33[m.\n",
 		msg_atom_int(response, 0), filename, line);
-	source = load_source(filename, sess->source_path);
-
-	free_source(source);
+	print_source(sess, filename, line, 1);
 	msg_free(response);
 }
 
