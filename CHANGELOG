@@ -4,10 +4,15 @@ minisphere Changelog
 v3.0.0 - TBD
 ------------
 
-* minisphere now comes with a console debugger, called SSJ. Simply run
+* minisphere is now packaged for Ubuntu as Debian packages. The engine is also
+  available via PPA, to install on Ubuntu simply run:
+      sudo add-apt-repository ppa:fatcerberus/minisphere
+      sudo apt-get update
+      sudo apt-get install minisphere
+* There's a new addition to the GDK, a console debugger called SSJ. Simply run
   `ssj <game-path>` on the command line to start an interactive debugging
-  session for a specified game. This brings single-step debugging to
-  non-Windows platforms for the first time!
+  session for a game. This brings single-step debugging to non-Windows platforms
+  for the first time!
 * minisphere redist and GDK have been folded into a single installer. The
   engine is so compact that there's not much gained from having separate
   installers.
