@@ -92,7 +92,7 @@ clean:
 
 bin/minisphere:
 	mkdir -p bin
-	$(CC) -o bin/minisphere  $(CFLAGS) -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/minisphere \
 	   -DDUK_OPT_HAVE_CUSTOM_H \
 	   $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
