@@ -46,9 +46,9 @@ bool
 launch_minisphere(path_t* game_path)
 {
 #if defined(_WIN32)
-	lstring_t* command;
-	HMODULE    h_module;
-	TCHAR      pathname[MAX_PATH];
+	char*   command_line;
+	HMODULE h_module;
+	TCHAR   pathname[MAX_PATH];
 
 	printf("spherun \33[36;1m%s\33[m... ", path_cstr(game_path));
 	fflush(stdout);
@@ -68,9 +68,9 @@ launch_minisphere(path_t* game_path)
 		si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 		si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 		si.wShowWindow = SW_HIDE;
-		command = lstr_newf("./spherun.exe --debug \"%s\"", path_cstr(game_path));
-		CreateProcessA(NULL, lstr_cstr(command), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
-		lstr_free(command);
+		command_line = strnewf("./spherun.exe --debug \"%s\"", path_cstr(game_path));
+		CreateProcessA(NULL, command_line, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+		free(command_line);
 		printf("OK.\n");
 		return true;
 	}
