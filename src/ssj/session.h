@@ -17,7 +17,8 @@ void       execute_next    (session_t* sess, exec_op_t op);
 void       print_backtrace (session_t* sess, size_t frame, bool show_all);
 void       print_eval      (session_t* sess, const char* expr, size_t frame);
 void       print_locals    (session_t* sess, size_t frame);
-void       print_source    (session_t* sess, size_t line, size_t window);
+void       print_source    (session_t* sess, const char* filename, size_t line, size_t window);
 void       run_session     (session_t* sess);
+void       set_breakpoint  (session_t* sess, const char* filename, size_t line);
 
 #endif // SSJ__SESSION_H__INCLUDED

@@ -8,17 +8,17 @@
 
 struct session
 {
-	char       cl_buffer[CL_BUFFER_SIZE];
-	size_t     current_frame;
-	lstring_t* function;
-	lstring_t* filename;
-	bool       has_pc_changed;
-	bool       have_debug_info;
-	bool       is_stopped;
-	int32_t    line;
-	remote_t*  remote;
-	source_t*  source;
-	path_t*    source_path;
+	char      cl_buffer[CL_BUFFER_SIZE];
+	size_t    current_frame;
+	char*     function;
+	char*     filename;
+	bool      has_pc_changed;
+	bool      have_debug_info;
+	bool      is_stopped;
+	int32_t   line;
+	remote_t* remote;
+	source_t* source;
+	path_t*   source_path;
 };
 
 enum req_command
@@ -56,7 +56,7 @@ enum nfy_command
 
 static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
-static bool       parse_file_and_line (session_t* sess, const char* string, lstring_t* *out_filename, size_t *out_line);
+static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, size_t *out_line);
 static void       print_help          (session_t* sess);
 static bool       process_message     (session_t* sess, const message_t* msg);
 
@@ -101,15 +101,13 @@ on_error:
 void
 print_backtrace(session_t* sess, size_t frame, bool show_all)
 {
-	lstring_t*       display_name;
-	lstring_t*       filename;
+	char*            display_name;
+	const char*      filename;
 	const char*      function_name;
-	const lstring_t* line;
 	int32_t          line_num;
 	size_t           n_items;
 	message_t*       request;
 	message_t*       response;
-	source_t*        source;
 
 	size_t i;
 
@@ -122,25 +120,25 @@ print_backtrace(session_t* sess, size_t frame, bool show_all)
 	else {
 		sess->current_frame = frame;
 		for (i = 0; i < n_items; ++i) {
-			filename = lstr_new(msg_atom_string(response, i * 4));
+			filename = msg_atom_string(response, i * 4);
 			function_name = msg_atom_string(response, i * 4 + 1);
 			line_num = msg_atom_int(response, i * 4 + 2);
 			if (i == frame || show_all) {
-				display_name = function_name[0] != '\0' ? lstr_newf("%s()", function_name)
-					: lstr_new("anon");
+				display_name = function_name[0] != '\0'
+					? strnewf("%s()", function_name) : strdup("anon");
 				printf("\33[33;1m%s\33[m %3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m\n",
 					i == frame ? ">>" : "  ",
-					i, lstr_cstr(display_name), lstr_cstr(filename), line_num);
-				lstr_free(display_name);
+					i, display_name, filename, line_num);
+				free(display_name);
 				if (!show_all) {
-					if (source = load_source(filename, sess->source_path)) {
+					print_source(sess, filename, line_num, 1);
+					/*if (source = load_source(filename, sess->source_path)) {
 						line = get_source_line(source, line_num - 1);
 						printf("\33[30;1m%d:\33[m %s\n", line_num, lstr_cstr(line));
 						free_source(source);
-					}
+					}*/
 				}
 			}
-			lstr_free(filename);
 		}
 	}
 	msg_free(response);
@@ -208,47 +206,55 @@ print_locals(session_t* sess, size_t frame)
 }
 
 void
-print_source(session_t* sess, size_t line_num, size_t window)
+print_source(session_t* sess, const char* filename, size_t line_num, size_t window)
 {
+	bool             is_next_line;
 	const lstring_t* line;
 	size_t           line_count;
 	size_t           median;
+	const char*      prefix;
 	source_t*        source;
 	size_t           start, end;
 
 	size_t idx;
 
-	if (!(source = load_source(sess->filename, sess->source_path)))
+	if (!(source = load_source(filename, sess->source_path)))
 		printf("no source code available.\n");
 	else {
 		line_count = get_source_size(source);
 		median = window / 2;
 		start = line_num > median ? line_num - (median + 1) : 0;
 		end = start + window < line_count ? start + window : line_count;
-		
 		for (idx = start; idx < end; ++idx) {
 			line = get_source_line(source, idx);
-			printf("\33[36;1m%s \33[30;1m%4zd\33[m %s\n",
-				idx == sess->line - 1 ? ">>" : "  ",
-				idx + 1, lstr_cstr(line));
+			is_next_line = idx == sess->line - 1 && strcmp(filename, sess->filename) == 0;
+			prefix = is_next_line ? ">>" : "  ";
+			if (window > 1)
+				printf("\33[36;1m%s \33[30;1m%4zd\33[m %s\n", prefix, idx + 1, lstr_cstr(line));
+			else
+				printf("\33[30;1m%zd:\33[m %s\n", idx + 1, lstr_cstr(line));
 		}
 		free_source(source);
 	}
 }
 
 void
-set_breakpoint(session_t* sess, const char* filename, int line)
+set_breakpoint(session_t* sess, const char* filename, size_t line)
 {
 	message_t* request;
 	message_t* response;
+	source_t*  source;
 
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_ADD_BREAK);
 	msg_add_string(request, filename);
 	msg_add_int(request, (int32_t)line);
 	response = converse(sess, request);
-	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%d\33[m.\n",
+	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%zd\33[m.\n",
 		msg_atom_int(response, 0), filename, line);
+	source = load_source(filename, sess->source_path);
+
+	free_source(source);
 	msg_free(response);
 }
 
@@ -315,7 +321,7 @@ do_command_line(session_t* sess)
 	char*       command;
 	int         ch = '\0';
 	size_t      ch_idx = 0;
-	lstring_t*  filename;
+	char*       filename;
 	size_t      line_num;
 	char*       parsee;
 	message_t*  req;
@@ -328,7 +334,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[36;1m%s\33[m \33[33;1mssj$\33[m ", lstr_cstr(sess->function));
+		printf("\n\33[36;1m%s\33[m \33[33;1mssj$\33[m ", sess->function);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -357,8 +363,8 @@ do_command_line(session_t* sess)
 		print_backtrace(sess, sess->current_frame, true);
 	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0) {
 		if (parse_file_and_line(sess, argument, &filename, &line_num)) {
-			set_breakpoint(sess, lstr_cstr(filename), line_num);
-			lstr_free(filename);
+			set_breakpoint(sess, filename, line_num);
+			free(filename);
 		}
 	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
@@ -368,7 +374,7 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
 		print_backtrace(sess, atoi(argument), false);
 	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0)
-		print_source(sess, sess->line, 10);
+		print_source(sess, sess->filename, sess->line, 10);
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -386,7 +392,7 @@ do_command_line(session_t* sess)
 }
 
 static bool
-parse_file_and_line(session_t* sess, const char* string, lstring_t* *out_filename, size_t *out_line)
+parse_file_and_line(session_t* sess, const char* string, char* *out_filename, size_t *out_line)
 {
 	char*   next;
 	char*   parsee = NULL;
@@ -402,7 +408,7 @@ parse_file_and_line(session_t* sess, const char* string, lstring_t* *out_filenam
 		printf("'%s': source file not found.\n", token);
 		goto on_error;
 	}
-	*out_filename = lstr_new(token);
+	*out_filename = strdup(token);
 	*out_line = atoi(next);
 	free(parsee);
 	return *out_line > 0;
@@ -458,14 +464,14 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_STATUS:
 			was_running = !sess->is_stopped;
 			free_source(sess->source);
-			lstr_free(sess->filename);
-			lstr_free(sess->function);
+			free(sess->filename);
+			free(sess->function);
 			flag = msg_atom_int(msg, 1);
 			function_name = msg_atom_string(msg, 3);
-			sess->filename = lstr_new(msg_atom_string(msg, 2));
+			sess->filename = strdup(msg_atom_string(msg, 2));
 			sess->function = function_name[0] != '\0'
-				? lstr_newf("%s()", msg_atom_string(msg, 3))
-				: lstr_new("anon");
+				? strnewf("%s()", msg_atom_string(msg, 3))
+				: strdup("anon");
 			sess->line = msg_atom_int(msg, 4);
 			sess->source = load_source(sess->filename, sess->source_path);
 			sess->is_stopped = flag != 0;

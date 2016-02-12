@@ -969,17 +969,21 @@ print_usage(void)
 	printf("           [--verbose <n>] <game_path>                                       \n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --fullscreen  Start the engine in fullscreen mode.                    \n");
-	printf("       --window      Start the engine in windowed mode. This is the default. \n");
-	printf("       --frameskip   Set the maximum number of consecutive frames to skip.   \n");
-	printf("       --no-sleep    Prevent the engine from sleeping between frames.        \n");
-	printf("       --debug       Wait 30 seconds for the debugger to attach. If nothing  \n");
-	printf("                     attaches, minisphere will exit.                         \n");
-	printf("   -v, --verbose     Set the engine's verbosity level. Valid levels are 0-4. \n");
-	printf("                     Higher numbers are more verbose. The default is 0, which\n");
-	printf("                     only shows game output.                                 \n");
-	printf("       --version     Show the version number of the installed minipshere.    \n");
-	printf("       --help        Show this help text.                                    \n");
+	printf("       --fullscreen   Start the engine in fullscreen mode.                   \n");
+	printf("       --window       Start the engine in windowed mode. This is the default.\n");
+	printf("       --frameskip    Set the maximum number of consecutive frames to skip.  \n");
+	printf("       --no-sleep     Prevent the engine from sleeping between frames.       \n");
+	printf("       --debug        Wait 30 seconds for the debugger to attach. If nothing \n");
+	printf("                      attaches, minisphere will exit.                        \n");
+	printf("   -v, --verbose      Set the engine's verbosity level. Valid levels are 0-4.\n");
+	printf("                      Higher levels are more verbose. The default is 0, which\n");
+	printf("                      only shows game output.                                \n");
+	printf("       --version      Show the version number of the installed minisphere.   \n");
+	printf("       --help         Show this help text.                                   \n");
+	printf("\n");
+	printf("NOTE:\n");
+	printf("   spherun(1) is used to execute Sphere games in a development environment. If\n");
+	printf("   your intent is simply to play a game, use minisphere(1) instead.           \n");
 }
 
 static void

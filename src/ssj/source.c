@@ -10,7 +10,7 @@ static char* freadline (FILE* h_file);
 static char* fslurp    (const char* filename);
 
 source_t*
-load_source(const lstring_t* filename, const path_t* source_path)
+load_source(const char* filename, const path_t* source_path)
 {
 	path_t*    full_path;
 	FILE*      h_file = NULL;
@@ -22,7 +22,7 @@ load_source(const lstring_t* filename, const path_t* source_path)
 	
 	if (source_path == NULL)
 		return NULL;
-	full_path = path_rebase(path_new(lstr_cstr(filename)), source_path);
+	full_path = path_rebase(path_new(filename), source_path);
 	if (!(h_file = fopen(path_cstr(full_path), "rb")))
         goto on_error;
 	lines = vector_new(sizeof(lstring_t*));

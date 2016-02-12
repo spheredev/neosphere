@@ -28,6 +28,7 @@
 
 #include "version.h"
 
-bool launch_minisphere (path_t* game_path);
+bool  launch_minisphere (path_t* game_path);
+char* strnewf           (const char* fmt, ...);
 
 #endif // SSJ__SSJ_H__INCLUDED
