@@ -19,7 +19,6 @@ load_source(const char* filename, const path_t* source_path)
 	source_t*  source = NULL;
 	char*      text;
 
-	
 	if (source_path == NULL)
 		return NULL;
 	full_path = path_rebase(path_new(filename), source_path);
@@ -58,17 +57,17 @@ free_source(source_t* source)
 }
 
 const lstring_t*
-get_source_line(const source_t* source, size_t index)
+get_source_line(const source_t* source, int index)
 {
-	if (index >= vector_len(source->lines))
+	if (index < 0 || index >= get_source_size(source))
 		return NULL;
 	return *(lstring_t**)vector_get(source->lines, index);
 }
 
-size_t
+int
 get_source_size(const source_t* source)
 {
-	return vector_len(source->lines);
+	return (int)vector_len(source->lines);
 }
 
 static char*

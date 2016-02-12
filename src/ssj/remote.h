@@ -58,7 +58,7 @@ message_t*    msg_new           (msg_class_t msg_class);
 message_t*    msg_receive       (remote_t* remote);
 void          msg_free          (message_t* msg);
 msg_class_t   msg_get_class     (const message_t* message);
-size_t        msg_len    (const message_t* message);
+size_t        msg_len           (const message_t* message);
 void          msg_send          (remote_t* remote, message_t* msg);
 void          msg_add_float     (message_t* msg, double value);
 void          msg_add_int       (message_t* msg, int32_t value);

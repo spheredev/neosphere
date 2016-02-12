@@ -9,13 +9,13 @@
 struct session
 {
 	char      cl_buffer[CL_BUFFER_SIZE];
-	size_t    current_frame;
+	int       frame_index;
 	char*     function;
 	char*     filename;
 	bool      has_pc_changed;
 	bool      have_debug_info;
 	bool      is_stopped;
-	int32_t   line;
+	int       line_no;
 	remote_t* remote;
 	source_t* source;
 	path_t*   source_path;
@@ -56,7 +56,7 @@ enum nfy_command
 
 static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
-static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, size_t *out_line);
+static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_help          (session_t* sess);
 static bool       process_message     (session_t* sess, const message_t* msg);
 
@@ -99,26 +99,56 @@ on_error:
 }
 
 void
-print_backtrace(session_t* sess, size_t frame, bool show_all)
+clear_breakpoint(session_t* sess, const char* filename, int line_no)
+{
+	bool        is_ok = false;
+	message_t*  msg;
+	message_t*  msg2;
+	size_t      num_breaks;
+
+	size_t idx;
+
+	msg = msg_new(MSG_CLASS_REQ);
+	msg_add_int(msg, REQ_LIST_BREAK);
+	msg = converse(sess, msg);
+	num_breaks = msg_len(msg) / 2;
+	for (idx = 0; idx < num_breaks; ++idx) {
+		if (strcmp(filename, msg_atom_string(msg, idx * 2)) == 0
+		    && line_no == msg_atom_int(msg, idx * 2 + 1))
+		{
+			msg2 = msg_new(MSG_CLASS_REQ);
+			msg_add_int(msg2, REQ_DEL_BREAK);
+			msg_add_int(msg2, (int)idx);
+			msg_free(converse(sess, msg2));
+			printf("breakpoint #%2zd cleared at \33[36;1m%s:%d\33[m.\n", idx, filename, line_no);
+			is_ok = true;
+		}
+	}
+	if (!is_ok)
+		printf("no breakpoints at \33[36;1m%s:%d\33[m.\n", filename, line_no);
+}
+
+void
+print_backtrace(session_t* sess, int frame, bool show_all)
 {
 	char*            display_name;
 	const char*      filename;
 	const char*      function_name;
-	int32_t          line_num;
-	size_t           n_items;
+	int              line_num;
+	int              n_items;
 	message_t*       request;
 	message_t*       response;
 
-	size_t i;
+	int i;
 
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_CALLSTACK);
 	response = converse(sess, request);
-	n_items = msg_len(response) / 4;
+	n_items = (int)(msg_len(response) / 4);
 	if (frame < 0 || frame >= n_items)
-		printf("no frame at index %zd, use `backtrace` for list\n", frame);
+		printf("no active frame at index %d.\n", frame);
 	else {
-		sess->current_frame = frame;
+		sess->frame_index = frame;
 		for (i = 0; i < n_items; ++i) {
 			filename = msg_atom_string(response, i * 4);
 			function_name = msg_atom_string(response, i * 4 + 1);
@@ -126,7 +156,7 @@ print_backtrace(session_t* sess, size_t frame, bool show_all)
 			if (i == frame || show_all) {
 				display_name = function_name[0] != '\0'
 					? strnewf("%s()", function_name) : strdup("anon");
-				printf("\33[33;1m%s\33[m %3zd: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m\n",
+				printf("\33[33;1m%s\33[m #%2d: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m\n",
 					i == frame ? ">>" : "  ",
 					i, display_name, filename, line_num);
 				free(display_name);
@@ -139,21 +169,44 @@ print_backtrace(session_t* sess, size_t frame, bool show_all)
 }
 
 void
-print_eval(session_t* sess, const char* expr, size_t frame)
+print_breakpoints(session_t* sess)
 {
-	lstring_t*  eval_code;
+	const char* filename;
+	int         line_no;
+	message_t*  msg;
+	size_t      num_breaks;
+
+	size_t idx;
+
+	msg = msg_new(MSG_CLASS_REQ);
+	msg_add_int(msg, REQ_LIST_BREAK);
+	msg = converse(sess, msg);
+	if ((num_breaks = msg_len(msg) / 2) == 0)
+		printf("no active breakpoints.\n");
+	for (idx = 0; idx < num_breaks; ++idx) {
+		filename = msg_atom_string(msg, idx * 2);
+		line_no = msg_atom_int(msg, idx * 2 + 1);
+		printf("#%2zd: breakpoint at \33[36;1m%s:%d\33[m\n",
+			idx, filename, line_no);
+	}
+}
+
+void
+print_eval(session_t* sess, const char* expr, int frame)
+{
+	char*       eval_code;
 	int32_t     flag;
 	message_t*  request;
 	message_t*  response;
 	const char* result;
 
-	eval_code = lstr_newf(
+	eval_code = strnewf(
 		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
 		expr);
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_EVAL);
-	msg_add_string(request, lstr_cstr(eval_code));
-	msg_add_int(request, -(int32_t)(1 + frame));
+	msg_add_string(request, eval_code);
+	msg_add_int(request, -(1 + frame));
 	response = converse(sess, request);
 	flag = msg_atom_int(response, 0);
 	result = msg_atom_string(response, 1);
@@ -164,9 +217,9 @@ print_eval(session_t* sess, const char* expr, size_t frame)
 }
 
 void
-print_locals(session_t* sess, size_t frame)
+print_locals(session_t* sess, int frame)
 {
-	size_t      n_items;
+	size_t      num_vars;
 	message_t*  request;
 	message_t*  response;
 
@@ -174,10 +227,11 @@ print_locals(session_t* sess, size_t frame)
 
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_GET_LOCALS);
-	msg_add_int(request, -(int32_t)(1 + frame));
+	msg_add_int(request, -(1 + frame));
 	response = converse(sess, request);
-	n_items = msg_len(response) / 2;
-	for (i = 0; i < n_items; ++i) {
+	if ((num_vars = msg_len(response) / 2) == 0)
+		printf("no locals in function \33[36;1m%s\33[m.\n", sess->function);
+	for (i = 0; i < num_vars; ++i) {
 		printf("var \33[36;1m%s\33[m = \33[0;1m", msg_atom_string(response, i * 2));
 		switch (msg_atom_type(response, i * 2 + 1)) {
 		case ATOM_UNDEFINED: printf("undefined"); break;
@@ -200,53 +254,52 @@ print_locals(session_t* sess, size_t frame)
 }
 
 void
-print_source(session_t* sess, const char* filename, size_t line_num, size_t window)
+print_source(session_t* sess, const char* filename, int line_no, int window)
 {
 	bool             is_next_line;
-	const lstring_t* line;
-	size_t           line_count;
-	size_t           median;
+	int              line_count;
+	int              median;
 	const char*      prefix;
 	source_t*        source;
-	size_t           start, end;
+	int              start, end;
+	const lstring_t* text;
 
-	size_t idx;
+	int i;
 
 	if (!(source = load_source(filename, sess->source_path)))
 		printf("no source code available.\n");
 	else {
 		line_count = get_source_size(source);
 		median = window / 2;
-		start = line_num > median ? line_num - (median + 1) : 0;
+		start = line_no > median ? line_no - (median + 1) : 0;
 		end = start + window < line_count ? start + window : line_count;
-		for (idx = start; idx < end; ++idx) {
-			line = get_source_line(source, idx);
-			is_next_line = idx == sess->line - 1 && strcmp(filename, sess->filename) == 0;
+		for (i = start; i < end; ++i) {
+			text = get_source_line(source, i);
+			is_next_line = i == sess->line_no - 1 && strcmp(filename, sess->filename) == 0;
 			prefix = is_next_line ? ">>" : "  ";
 			if (window > 1)
-				printf("\33[36;1m%s \33[30;1m%4zd\33[m %s\n", prefix, idx + 1, lstr_cstr(line));
+				printf("\33[36;1m%s \33[30;1m%4d\33[m %s\n", prefix, i + 1, lstr_cstr(text));
 			else
-				printf("\33[30;1m%zd:\33[m %s\n", idx + 1, lstr_cstr(line));
+				printf("\33[30;1m%d:\33[m %s\n", i + 1, lstr_cstr(text));
 		}
 		free_source(source);
 	}
 }
 
-void
-set_breakpoint(session_t* sess, const char* filename, size_t line)
+int
+set_breakpoint(session_t* sess, const char* filename, int line_no)
 {
-	message_t* request;
-	message_t* response;
+	int        index;
+	message_t* msg;
 
-	request = msg_new(MSG_CLASS_REQ);
-	msg_add_int(request, REQ_ADD_BREAK);
-	msg_add_string(request, filename);
-	msg_add_int(request, (int32_t)line);
-	response = converse(sess, request);
-	printf("breakpoint \33[33;1m%d\33[m set at \33[36;1m%s:%zd\33[m.\n",
-		msg_atom_int(response, 0), filename, line);
-	print_source(sess, filename, line, 1);
-	msg_free(response);
+	msg = msg_new(MSG_CLASS_REQ);
+	msg_add_int(msg, REQ_ADD_BREAK);
+	msg_add_string(msg, filename);
+	msg_add_int(msg, (int32_t)line_no);
+	msg = converse(sess, msg);
+	index = msg_atom_int(msg, 0);
+	msg_free(msg);
+	return index;
 }
 
 void
@@ -261,7 +314,7 @@ execute_next(session_t* sess, exec_op_t op)
 		: op == EXEC_STEP_OUT ? REQ_STEP_OUT
 		: REQ_RESUME);
 	msg_free(converse(sess, request));
-	sess->current_frame = 0;
+	sess->frame_index = 0;
 	sess->is_stopped = false;
 }
 
@@ -313,7 +366,8 @@ do_command_line(session_t* sess)
 	int         ch = '\0';
 	size_t      ch_idx = 0;
 	char*       filename;
-	size_t      line_num;
+	int         index;
+	int         line_no;
 	char*       parsee;
 	message_t*  req;
 
@@ -351,23 +405,34 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
 		print_help(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
-		print_backtrace(sess, sess->current_frame, true);
+		print_backtrace(sess, sess->frame_index, true);
 	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0) {
 		if (argument[0] == '\0')
 			print_breakpoints(sess);
-		else if (parse_file_and_line(sess, argument, &filename, &line_num)) {
-			set_breakpoint(sess, filename, line_num);
+		else if (parse_file_and_line(sess, argument, &filename, &line_no)) {
+			index = set_breakpoint(sess, filename, line_no);
+			printf("breakpoint #%2d set at \33[36;1m%s:%d\33[m.\n",
+				index, filename, line_no);
+			print_source(sess, filename, line_no, 1);
+			free(filename);
+		}
+	}
+	else if (strcmp(command, "clear") == 0 || strcmp(command, "cb") == 0) {
+		if (argument[0] == '\0')
+			printf("please specify location of breakpoint to clear.\n");
+		else if (parse_file_and_line(sess, argument, &filename, &line_no)) {
+			clear_breakpoint(sess, filename, line_no);
 			free(filename);
 		}
 	}
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
-		print_eval(sess, argument, sess->current_frame);
+		print_eval(sess, argument, sess->frame_index);
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
 		print_backtrace(sess, atoi(argument), false);
 	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0)
-		print_source(sess, sess->filename, sess->line, 10);
+		print_source(sess, sess->filename, sess->line_no, 10);
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -375,7 +440,7 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "stepout") == 0 || strcmp(command, "so") == 0)
 		execute_next(sess, EXEC_STEP_OUT);
 	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
-		print_locals(sess, sess->current_frame);
+		print_locals(sess, sess->frame_index);
 	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
 		print_backtrace(sess, 0, false);
 	else
@@ -385,7 +450,7 @@ do_command_line(session_t* sess)
 }
 
 static bool
-parse_file_and_line(session_t* sess, const char* string, char* *out_filename, size_t *out_line)
+parse_file_and_line(session_t* sess, const char* string, char* *out_filename, int *out_line_no)
 {
 	char*   next;
 	char*   parsee = NULL;
@@ -402,37 +467,14 @@ parse_file_and_line(session_t* sess, const char* string, char* *out_filename, si
 		goto on_error;
 	}
 	*out_filename = strdup(token);
-	*out_line = atoi(next);
+	*out_line_no = atoi(next);
 	free(parsee);
-	return *out_line > 0;
+	return *out_line_no > 0;
 
 on_error:
 	free(parsee);
 	path_free(path);
 	return false;
-}
-
-static void
-print_breakpoints(session_t* sess)
-{
-	const char* filename;
-	int         line_num;
-	message_t*  msg;
-	size_t      num_breaks;
-
-	size_t idx;
-
-	msg = msg_new(MSG_CLASS_REQ);
-	msg_add_int(msg, REQ_LIST_BREAK);
-	msg = converse(sess, msg);
-	if ((num_breaks = msg_len(msg) / 2) == 0)
-		printf("no active breakpoints.\n");
-	for (idx = 0; idx < num_breaks; ++idx) {
-		filename = msg_atom_string(msg, idx * 2);
-		line_num = msg_atom_int(msg, idx * 2 + 1);
-		printf("\33[33;1m%2zd\33[m: breakpoint set at \33[36;1m%s:%d\33[m\n",
-			idx, filename, line_num);
-	}
 }
 
 static void
@@ -488,7 +530,7 @@ process_message(session_t* sess, const message_t* msg)
 			sess->function = function_name[0] != '\0'
 				? strnewf("%s()", msg_atom_string(msg, 3))
 				: strdup("anon");
-			sess->line = msg_atom_int(msg, 4);
+			sess->line_no = msg_atom_int(msg, 4);
 			sess->source = load_source(sess->filename, sess->source_path);
 			sess->is_stopped = flag != 0;
 			if (sess->is_stopped && was_running)
