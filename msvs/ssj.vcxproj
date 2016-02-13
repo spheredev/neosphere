@@ -178,6 +178,7 @@
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
     <ClCompile Include="..\src\shared\vector.c" />
+    <ClCompile Include="..\src\ssj\command.c" />
     <ClCompile Include="..\src\ssj\remote.c" />
     <ClCompile Include="..\src\ssj\main.c" />
     <ClCompile Include="..\src\ssj\session.c" />
@@ -190,6 +191,7 @@
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
+    <ClInclude Include="..\src\ssj\command.h" />
     <ClInclude Include="..\src\ssj\remote.h" />
     <ClInclude Include="..\src\ssj\posix.h" />
     <ClInclude Include="..\src\ssj\session.h" />
