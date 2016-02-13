@@ -1,7 +1,8 @@
 #ifndef SSJ__SESSION_H__INCLUDED
 #define SSJ__SESSION_H__INCLUDED
 
-typedef struct session session_t;
+typedef struct session   session_t;
+typedef struct file_line file_line_t;
 
 typedef
 enum exec_op
