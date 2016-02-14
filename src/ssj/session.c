@@ -61,7 +61,7 @@ static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
 static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_help          (session_t* sess);
-static void       print_msg_atom      (session_t* sess, message_t* message, size_t index, bool want_expand_obj);
+static void       print_msg_atom      (session_t* sess, const message_t* message, size_t index, bool want_expand_obj);
 static bool       process_message     (session_t* sess, const message_t* msg);
 
 session_t*
@@ -492,7 +492,7 @@ print_help(session_t* sess)
 }
 
 static void
-print_msg_atom(session_t* sess, message_t* message, size_t index, bool want_expand_obj)
+print_msg_atom(session_t* sess, const message_t* message, size_t index, bool want_expand_obj)
 {
 	int32_t     flag;
 	uint64_t    heapptr;
@@ -540,11 +540,8 @@ print_msg_atom(session_t* sess, message_t* message, size_t index, bool want_expa
 static bool
 process_message(session_t* sess, const message_t* msg)
 {
-	const char* filename;
 	int32_t     flag;
 	const char* function_name;
-	int32_t     line_no;
-	const char* text;
 	bool        was_running;
 
 	switch (msg_get_class(msg)) {
@@ -568,18 +565,19 @@ process_message(session_t* sess, const message_t* msg)
 				sess->has_pc_changed = true;
 			break;
 		case NFY_PRINT:
-			printf("\33[36m%s\x1B[m", msg_atom_string(msg, 1));
+			printf("\33[36mprint:\33[m %s", msg_atom_string(msg, 1));
 			break;
 		case NFY_ALERT:
-			printf("\33[31m%s\x1B[m", msg_atom_string(msg, 1));
+			printf("\33[33malert:\33[m %s", msg_atom_string(msg, 1));
+			break;
+		case NFY_LOG:
+			printf("\33[32mlog:\33[m %s", msg_atom_string(msg, 1));
 			break;
 		case NFY_THROW:
-			flag = msg_atom_int(msg, 1);
-			text = msg_atom_string(msg, 2);
-			filename = msg_atom_string(msg, 3);
-			line_no = msg_atom_int(msg, 4);
-			printf("\33[31;1m%s `%s` at %s:%d\33[m\n", flag != 0 ? "error" : "threw",
-				text, filename, line_no);
+			if ((flag = msg_atom_int(msg, 1)) == 0)
+				break;
+			printf("\33[31;1mFATAL:\33[0;1m %s\33[m\n", msg_atom_string(msg, 2));
+			printf("       (at \33[36;1m%s:%d\33[m)\n", msg_atom_string(msg, 3), msg_atom_int(msg, 4));
 			break;
 		case NFY_DETACHING:
 			sess->is_attached = false;
