@@ -61,6 +61,7 @@ static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
 static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_help          (session_t* sess);
+static void       print_msg_atom      (session_t* sess, message_t* message, size_t index, bool want_expand_obj);
 static bool       process_message     (session_t* sess, const message_t* msg);
 
 session_t*
@@ -198,46 +199,20 @@ print_breakpoints(session_t* sess)
 void
 print_eval(session_t* sess, const char* expr, int frame)
 {
-	int32_t     flag;
-	message_t*  req_inspect;
-	message_t*  request;
-	message_t*  response;
-	uint64_t    ptr;
+	message_t* req;
 
-	request = msg_new(MSG_CLASS_REQ);
-	msg_add_int(request, REQ_EVAL);
-	msg_add_string(request, expr);
-	msg_add_int(request, -(1 + frame));
-	response = converse(sess, request);
-	if ((flag = msg_atom_int(response, 0)) == 0)
-		printf("\33[0;1m");
+	req = msg_new(MSG_CLASS_REQ);
+	msg_add_int(req, REQ_EVAL);
+	msg_add_string(req, expr);
+	msg_add_int(req, -(1 + frame));
+	req = converse(sess, req);
+	if (msg_atom_int(req, 0) == 0)
+		printf("= ");
 	else
-		printf("\33[31;1m");
-	switch (msg_atom_type(response, 1)) {
-	case ATOM_STRING:
-		printf("%s", msg_atom_string(response, 1));
-		break;
-	case ATOM_INT:
-		printf("%d", msg_atom_int(response, 1));
-		break;
-	case ATOM_FLOAT:
-		printf("%g", msg_atom_float(response, 1));
-		break;
-	case ATOM_OBJECT:
-		ptr = msg_atom_heapptr(response, 1);
-		req_inspect = msg_new(MSG_CLASS_REQ);
-		msg_add_int(req_inspect, REQ_INSPECT_OBJ);
-		msg_add_heapptr(req_inspect, ptr);
-		msg_add_int(req_inspect, 0x0);
-		req_inspect = converse(sess, req_inspect);
-		printf("%s", msg_atom_string(req_inspect, 1));
-		msg_free(req_inspect);
-		break;
-	default:
-		printf("\33[31;1m(internal error)");
-	}
+		printf("\33[31;1merror: \33[m");
+	print_msg_atom(sess, req, 1, true);
 	printf("\33[m\n");
-	msg_free(response);
+	msg_free(req);
 }
 
 void
@@ -256,23 +231,9 @@ print_locals(session_t* sess, int frame)
 	if ((num_vars = msg_len(response) / 2) == 0)
 		printf("no locals in function \33[36;1m%s\33[m.\n", sess->function);
 	for (i = 0; i < num_vars; ++i) {
-		printf("var \33[36;1m%s\33[m = \33[0;1m", msg_atom_string(response, i * 2));
-		switch (msg_atom_type(response, i * 2 + 1)) {
-		case ATOM_UNDEFINED: printf("undefined"); break;
-		case ATOM_OBJECT: printf("{ ... }"); break;
-		case ATOM_FLOAT:
-			printf("%g", msg_atom_float(response, i * 2 + 1));
-			break;
-		case ATOM_INT:
-			printf("%d", msg_atom_int(response, i * 2 + 1));
-			break;
-		case ATOM_STRING:
-			printf("\"%s\"", msg_atom_string(response, i * 2 + 1));
-			break;
-		default:
-			printf("<unknown>");
-		}
-		printf("\33[m\n");
+		printf("var \33[36;1m%s\33[m = ", msg_atom_string(response, i * 2));
+		print_msg_atom(sess, response, i * 2 + 1, false);
+		printf("\n");
 	}
 	msg_free(response);
 }
@@ -528,6 +489,52 @@ print_help(session_t* sess)
 
 		"Type 'help <command>' for usage of individual commands.                        \n"
 		);
+}
+
+static void
+print_msg_atom(session_t* sess, message_t* message, size_t index, bool want_expand_obj)
+{
+	int32_t     flag;
+	uint64_t    heapptr;
+	size_t      idx;
+	message_t*  req;
+	
+	switch (msg_atom_type(message, index)) {
+	case ATOM_UNDEFINED: printf("undefined"); break;
+	case ATOM_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
+	case ATOM_INT: printf("%d", msg_atom_int(message, index)); break;
+	case ATOM_FLOAT: printf("%g", msg_atom_float(message, index)); break;
+	case ATOM_OBJECT:
+		if (!want_expand_obj)
+			printf("{...}");
+		else {
+			heapptr = msg_atom_heapptr(message, index);
+			req = msg_new(MSG_CLASS_REQ);
+			msg_add_int(req, REQ_INSPECT_OBJ);
+			msg_add_heapptr(req, heapptr);
+			msg_add_int(req, 0x0);
+			req = converse(sess, req);
+			idx = 0;
+			printf("{\n");
+			while (idx < msg_len(req)) {
+				flag = msg_atom_int(req, idx++);
+				if ((flag & 0x100) != 0x0)
+					idx += 2;
+				else {
+					printf("   ");
+					print_msg_atom(sess, req, idx++, false);
+					printf(": ");
+					print_msg_atom(sess, req, idx++, false);
+					printf("\n");
+				}
+			}
+			printf("}");
+			msg_free(req);
+		}
+		break;
+	default:
+		printf("*munch*");
+	}
 }
 
 static bool

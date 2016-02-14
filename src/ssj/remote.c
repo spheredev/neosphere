@@ -539,6 +539,7 @@ send_dvalue_ib(remote_t* remote, enum dvalue_tag tag)
 		: tag == DVALUE_TAG_INT ? 0x10
 		: tag == DVALUE_TAG_STRING ? 0x11
 		: tag == DVALUE_TAG_FLOAT ? 0x1A
+		: tag == DVALUE_TAG_HEAPPTR ? 0x1E
 		: 0x15;
 	dyad_write(remote->socket, &ib, 1);
 }
