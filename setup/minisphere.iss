@@ -8,8 +8,8 @@
 ; configurations.
 
 #define AppName "minisphere"
-#define AppVersion "3.0b1"
-#define AppRawVersion "2.99.812.1"
+#define AppVersion "3.0a2"
+#define AppRawVersion "2.99.812.2"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
@@ -66,7 +66,7 @@ Source: "..\msw\startup.spk"; DestDir: "{app}"; Components: engine; Flags: ignor
 Source: "..\msw\documentation\minisphere-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cell-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\src\plugin\bin\Release\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio"; Flags: ignoreversion; Components: spherun/plugin
+Source: "..\src\plugin\bin\Release\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: spherun/plugin
 
 [Registry]
 ; File Associations

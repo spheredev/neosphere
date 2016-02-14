@@ -518,7 +518,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 			printf("{\n");
 			while (idx < msg_len(req)) {
 				flag = msg_atom_int(req, idx++);
-				if ((flag & 0x100) != 0x0)
+				if ((flag & 0x300) != 0x0)
 					idx += 2;
 				else {
 					printf("   ");
