@@ -118,5 +118,5 @@ bin/ssj:
 	   src/ssj/main.c \
 	   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
 	   src/shared/unicode.c src/shared/vector.c \
-	   src/ssj/command.c src/ssj/file_line.c src/ssj/remote.c src/ssj/session.c
+	   src/ssj/command.c src/ssj/file_line.c src/ssj/remote.c src/ssj/session.c \
 	   src/ssj/source.c
