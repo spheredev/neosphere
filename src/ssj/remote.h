@@ -61,10 +61,12 @@ msg_class_t   msg_get_class     (const message_t* message);
 size_t        msg_len           (const message_t* message);
 void          msg_send          (remote_t* remote, message_t* msg);
 void          msg_add_float     (message_t* msg, double value);
+void          msg_add_heapptr   (message_t* msg, uint64_t value);
 void          msg_add_int       (message_t* msg, int32_t value);
 void          msg_add_string    (message_t* msg, const char* value);
 atom_type_t   msg_atom_type     (const message_t* msg, size_t index);
 double        msg_atom_float    (const message_t* msg, size_t index);
+uint64_t      msg_atom_heapptr  (const message_t* msg, size_t index);
 int32_t       msg_atom_int      (const message_t* msg, size_t index);
 const char*   msg_atom_string   (const message_t* msg, size_t index);
 

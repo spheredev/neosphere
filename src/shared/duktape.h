@@ -1,12 +1,12 @@
 /*
- *  Duktape public API for Duktape 1.4.0.
+ *  Duktape public API for Duktape 1.4.99.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit cad6f595382a0cc1a7e4207794ade5be11b3e397 (v1.4.0).
- *  Git branch master.
+ *  Git commit 35ec8d94a82d80277ff7589e427bed851c53db8a (v1.4.0-137-g35ec8d9).
+ *  Git branch debugger-heap-walking-support.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -72,6 +72,7 @@
  *  * Karl Skomski <karl@skomski.com>
  *  * Bruce Pascoe <fatcerberus1@gmail.com>
  *  * Ren\u00e9 Hollander <rene@rene8888.at>
+ *  * Julien Hamaide (https://github.com/crazyjul)
  *  
  *  Other contributions
  *  ===================
@@ -109,6 +110,7 @@
  *  * Michael Drake (https://github.com/tlsa)
  *  * https://github.com/chris-y
  *  * Laurent Zubiaur (https://github.com/lzubiaur)
+ *  * Ole Andr\u00e9 Vadla Ravn\u00e5s (https://github.com/oleavr)
  *  
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
@@ -213,16 +215,16 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10400L
+#define DUK_VERSION                       10499L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "cad6f595382a0cc1a7e4207794ade5be11b3e397"
-#define DUK_GIT_DESCRIBE                  "v1.4.0"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "35ec8d94a82d80277ff7589e427bed851c53db8a"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-137-g35ec8d9"
+#define DUK_GIT_BRANCH                    "debugger-heap-walking-support"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -1157,6 +1159,17 @@ DUK_EXTERNAL_DECL void duk_debugger_cooperate(duk_context *ctx);
 #define DUK_DATE_FLAG_YEAR_FIXUP           (1 << 10) /* setter: perform 2-digit year fixup (00...99 -> 1900...1999) */
 #define DUK_DATE_FLAG_SEP_T                (1 << 11) /* string conversion: use 'T' instead of ' ' as a separator */
 #define DUK_DATE_FLAG_VALUE_SHIFT          12        /* additional values begin at bit 12 */
+
+/*
+ *  ROM pointer compression
+ */
+
+/* Support array for ROM pointer compression.  Only declared when ROM
+ * pointer compression is active.
+ */
+#if defined(DUK_USE_ROM_OBJECTS) && defined(DUK_USE_HEAPPTR16)
+DUK_EXTERNAL_DECL const void * const duk_rom_compressed_pointers[];
+#endif
 
 /*
  *  C++ name mangling

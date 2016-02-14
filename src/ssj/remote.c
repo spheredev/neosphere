@@ -14,6 +14,7 @@ static void on_socket_recv (dyad_Event* e);
 
 struct remote
 {
+	uint8_t      ptr_size;
 	uint8_t*     recv_buf;
 	size_t       recv_buf_size;
 	size_t       recv_size;
@@ -213,6 +214,17 @@ msg_add_int(message_t* msg, int32_t value)
 }
 
 void
+msg_add_heapptr(message_t* msg, uint64_t value)
+{
+	dvalue_t* dvalue;
+
+	dvalue = calloc(1, sizeof(dvalue_t));
+	dvalue->tag = DVALUE_TAG_HEAPPTR;
+	dvalue->ptr_value = value;
+	vector_push(msg->dvalues, &dvalue);
+}
+
+void
 msg_add_string(message_t* msg, const char* value)
 {
 	dvalue_t* dvalue;
@@ -245,6 +257,16 @@ msg_atom_float(const message_t* msg, size_t index)
 
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
 	return dvalue->tag == DVALUE_TAG_FLOAT ? dvalue->float_value : 0.0;
+}
+
+uint64_t
+msg_atom_heapptr(const message_t* msg, size_t index)
+{
+	dvalue_t* dvalue;
+
+	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
+	return dvalue->tag == DVALUE_TAG_HEAPPTR || dvalue->tag == DVALUE_TAG_OBJ
+		? dvalue->ptr_value : 0x0;
 }
 
 int32_t
@@ -300,7 +322,7 @@ parse_handshake(remote_t* remote)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf(": attached \33[36;1m%s\33[m\n", next_token);
+	printf(": inferior is \33[36;1m%s\33[m\n", next_token);
 	printf(": duktape \33[36;1m%s\33[m\n", token);
 
 	return true;
@@ -327,7 +349,6 @@ receive_dvalue(remote_t* remote)
 	uint8_t   data[32];
 	dvalue_t* dvalue;
 	uint8_t   ib;
-	uint8_t   ptr_size;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
 	receive_bytes(remote, &ib, 1);
@@ -393,25 +414,29 @@ receive_dvalue(remote_t* remote)
 		break;
 	case DVALUE_TAG_OBJ:
 		receive_bytes(remote, data, 1);
-		receive_bytes(remote, &ptr_size, 1);
-		receive_bytes(remote, data, ptr_size);
+		receive_bytes(remote, &remote->ptr_size, 1);
+		receive_bytes(remote, data, remote->ptr_size);
 		dvalue->tag = DVALUE_TAG_OBJ;
+		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
 		break;
 	case DVALUE_TAG_PTR:
-		receive_bytes(remote, &ptr_size, 1);
-		receive_bytes(remote, data, ptr_size);
+		receive_bytes(remote, &remote->ptr_size, 1);
+		receive_bytes(remote, data, remote->ptr_size);
 		dvalue->tag = DVALUE_TAG_PTR;
+		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
 		break;
 	case DVALUE_TAG_LIGHTFUNC:
 		receive_bytes(remote, data, 2);
-		receive_bytes(remote, &ptr_size, 1);
-		receive_bytes(remote, data, ptr_size);
-		dvalue->tag = DVALUE_TAG_OBJ;
+		receive_bytes(remote, &remote->ptr_size, 1);
+		receive_bytes(remote, data, remote->ptr_size);
+		dvalue->tag = DVALUE_TAG_LIGHTFUNC;
+		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
 		break;
 	case DVALUE_TAG_HEAPPTR:
-		receive_bytes(remote, &ptr_size, 1);
-		receive_bytes(remote, data, ptr_size);
-		dvalue->tag = DVALUE_TAG_PTR;
+		receive_bytes(remote, &remote->ptr_size, 1);
+		receive_bytes(remote, data, remote->ptr_size);
+		dvalue->tag = DVALUE_TAG_HEAPPTR;
+		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
@@ -489,6 +514,12 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 		data[7] = ((uint8_t*)&dvalue->float_value)[0];
 		send_dvalue_ib(remote, DVALUE_TAG_FLOAT);
 		dyad_write(remote->socket, data, 8);
+		break;
+	case DVALUE_TAG_HEAPPTR:
+		memcpy(data, &dvalue->ptr_value, remote->ptr_size);
+		send_dvalue_ib(remote, DVALUE_TAG_HEAPPTR);
+		dyad_write(remote->socket, &remote->ptr_size, 1);
+		dyad_write(remote->socket, data, remote->ptr_size);
 		break;
 	default:
 		send_dvalue_ib(remote, DVALUE_TAG_UNUSED);

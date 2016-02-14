@@ -1,11 +1,11 @@
 #ifndef SSJ__FILE_LINE_H__INCLUDED
 #define SSJ__FILE_LINE_H__INCLUDED
 
-typedef struct fileline fileline_t;
+typedef struct file_line file_line_t;
 
-fileline_t* new_fileline      (const char* filename, int line_no);
-void        free_fileline     (fileline_t* obj);
-const char* fileline_filename (fileline_t* obj);
-int         fileline_line_no  (fileline_t* obj);
+file_line_t* new_fileline       (const char* filename, int line_no);
+void         free_fileline      (file_line_t* obj);
+const char*  file_line_filename (file_line_t* obj);
+int          file_line_lineno   (file_line_t* obj);
 
 #endif

@@ -8,6 +8,8 @@
 
 struct session
 {
+	bool      is_attached;
+	vector_t* backtrace;
 	char      cl_buffer[CL_BUFFER_SIZE];
 	int       frame_index;
 	char*     function;
@@ -16,6 +18,7 @@ struct session
 	bool      have_debug_info;
 	bool      is_stopped;
 	int       line_no;
+	uint8_t   ptr_size;
 	remote_t* remote;
 	source_t* source;
 	path_t*   source_path;
@@ -71,6 +74,7 @@ new_session(const char* hostname, int port)
 	session = calloc(1, sizeof(session_t));
 	if (!(session->remote = connect_remote(hostname, port)))
 		goto on_error;
+	session->is_attached = true;
 
 	// find out where the original source tree is by querying the target.
 	// we can't ask directly because Duktape doesn't allow custom messages, so
@@ -194,25 +198,45 @@ print_breakpoints(session_t* sess)
 void
 print_eval(session_t* sess, const char* expr, int frame)
 {
-	char*       eval_code;
 	int32_t     flag;
+	message_t*  req_inspect;
 	message_t*  request;
 	message_t*  response;
-	const char* result;
+	uint64_t    ptr;
 
-	eval_code = strnewf(
-		"(function() { return Duktape.enc('jx', eval(\"%s\"), null, 3); }).call(this);",
-		expr);
 	request = msg_new(MSG_CLASS_REQ);
 	msg_add_int(request, REQ_EVAL);
-	msg_add_string(request, eval_code);
+	msg_add_string(request, expr);
 	msg_add_int(request, -(1 + frame));
 	response = converse(sess, request);
-	flag = msg_atom_int(response, 0);
-	result = msg_atom_string(response, 1);
-	if (flag != 0) printf("\33[31;1m");
-	else printf("= \33[0;1m");
-	printf("%s\33[m\n", result);
+	if ((flag = msg_atom_int(response, 0)) == 0)
+		printf("\33[0;1m");
+	else
+		printf("\33[31;1m");
+	switch (msg_atom_type(response, 1)) {
+	case ATOM_STRING:
+		printf("%s", msg_atom_string(response, 1));
+		break;
+	case ATOM_INT:
+		printf("%d", msg_atom_int(response, 1));
+		break;
+	case ATOM_FLOAT:
+		printf("%g", msg_atom_float(response, 1));
+		break;
+	case ATOM_OBJECT:
+		ptr = msg_atom_heapptr(response, 1);
+		req_inspect = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req_inspect, REQ_INSPECT_OBJ);
+		msg_add_heapptr(req_inspect, ptr);
+		msg_add_int(req_inspect, 0x0);
+		req_inspect = converse(sess, req_inspect);
+		printf("%s", msg_atom_string(req_inspect, 1));
+		msg_free(req_inspect);
+		break;
+	default:
+		printf("\33[31;1m(internal error)");
+	}
+	printf("\33[m\n");
 	msg_free(response);
 }
 
@@ -551,11 +575,12 @@ process_message(session_t* sess, const message_t* msg)
 				text, filename, line_no);
 			break;
 		case NFY_DETACHING:
+			sess->is_attached = false;
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
 				printf("\33[0;1mSSJ session has been detached.");
 			else
-				printf("\33[31;1munrecoverable error. session detached.");
+				printf("\33[31;1mforced detach due to error in inferior.");
 			printf("\33[m\n");
 			return false;
 		}

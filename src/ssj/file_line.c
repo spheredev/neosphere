@@ -2,38 +2,38 @@
 
 #include "file_line.h"
 
-struct fileline
+struct file_line
 {
 	char* filename;
-	int   line_no;
+	int   lineno;
 };
 
-fileline_t*
+file_line_t*
 new_fileline(const char* filename, int line_no)
 {
-	fileline_t* obj;
+	file_line_t* obj;
 
-	obj = calloc(1, sizeof(fileline_t));
+	obj = calloc(1, sizeof(file_line_t));
 	obj->filename = strdup(filename);
-	obj->line_no = line_no;
+	obj->lineno = line_no;
 	return obj;
 }
 
 void
-free_fileline(fileline_t* obj)
+free_fileline(file_line_t* obj)
 {
 	free(obj->filename);
 	free(obj);
 }
 
 const char*
-fileline_filename(fileline_t* obj)
+file_line_filename(file_line_t* obj)
 {
 	return obj->filename;
 }
 
 int
-fileline_line_no(fileline_t* obj)
+file_line_lineno(file_line_t* obj)
 {
-	return obj->line_no;
+	return obj->lineno;
 }
