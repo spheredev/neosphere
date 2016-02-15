@@ -3,7 +3,13 @@
 
 #include "socket.h"
 
-typedef struct dvalue dvalue_t;
+typedef struct dvalue  dvalue_t;
+
+typedef
+struct heapptr {
+	uintmax_t ptr;
+	uint8_t   size;
+} heapptr_t;
 
 typedef
 enum dvalue_tag
@@ -32,15 +38,18 @@ enum dvalue_tag
 
 dvalue_t*    dvalue_new         (dvalue_tag_t tag);
 dvalue_t*    dvalue_new_float   (double value);
+dvalue_t*    dvalue_new_heapptr (heapptr_t value);
 dvalue_t*    dvalue_new_int     (int value);
 dvalue_t*    dvalue_new_string  (const char* value);
 dvalue_t*    dvalue_dup         (const dvalue_t* obj);
-dvalue_t*    dvalue_recv        (socket_t* socket);
 void         dvalue_free        (dvalue_t* obj);
+dvalue_tag_t dvalue_tag         (const dvalue_t* obj);
 const char*  dvalue_as_cstr     (const dvalue_t* obj);
+heapptr_t    dvalue_as_heapptr  (const dvalue_t* obj);
 double       dvalue_as_float    (const dvalue_t* obj);
 int          dvalue_as_int      (const dvalue_t* obj);
+void         dvalue_print       (const dvalue_t* obj);
+dvalue_t*    dvalue_recv        (socket_t* socket);
 void         dvalue_send        (const dvalue_t* obj, socket_t* socket);
-dvalue_tag_t dvalue_tag         (const dvalue_t* obj);
 
 #endif // SSJ__DVALUE_H__INCLUDED

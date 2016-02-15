@@ -115,6 +115,15 @@ msg_add_float(message_t* msg, double value)
 }
 
 void
+msg_add_heapptr(message_t* msg, heapptr_t heapptr)
+{
+	dvalue_t* dvalue;
+
+	dvalue = dvalue_new_heapptr(heapptr);
+	vector_push(msg->dvalues, &dvalue);
+}
+
+void
 msg_add_int(message_t* msg, int value)
 {
 	dvalue_t* dvalue;

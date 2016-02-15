@@ -233,7 +233,7 @@ print_locals(session_t* sess, int frame)
 		printf("no locals in function \33[36;1m%s\33[m.\n", sess->function);
 	for (i = 0; i < num_vars; ++i) {
 		printf("var \33[36;1m%s\33[m = ", msg_atom_string(response, i * 2));
-		print_msg_atom(sess, response, i * 2 + 1, false);
+		dvalue_print(msg_atom_dvalue(response, i * 2 + 1));
 		printf("\n");
 	}
 	msg_free(response);
@@ -496,50 +496,36 @@ print_help(session_t* sess)
 static void
 print_msg_atom(session_t* sess, const message_t* message, size_t index, bool want_expand_obj)
 {
-	int32_t         flags;
-	const dvalue_t* heapptr;
-	size_t          idx;
-	message_t*      req;
+	int32_t    flags;
+	heapptr_t  heapptr;
+	size_t     idx;
+	message_t* req;
 	
-	switch (msg_atom_tag(message, index)) {
-	case DVALUE_UNDEF: printf("undefined"); break;
-	case DVALUE_NULL: printf("null"); break;
-	case DVALUE_TRUE: printf("true"); break;
-	case DVALUE_FALSE: printf("false"); break;
-	case DVALUE_FLOAT: printf("%g", msg_atom_float(message, index)); break;
-	case DVALUE_HEAPPTR: printf("heapptr"); break;
-	case DVALUE_INT: printf("%d", msg_atom_int(message, index)); break;
-	case DVALUE_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
-	case DVALUE_OBJ:
-		if (!want_expand_obj)
-			printf("{...}");
-		else {
-			heapptr = msg_atom_dvalue(message, index);
-			req = msg_new(MSG_CLASS_REQ);
-			msg_add_int(req, REQ_INSPECT_OBJ);
-			msg_add_dvalue(req, heapptr);
-			msg_add_int(req, 0x0);
-			req = converse(sess, req);
-			idx = 0;
-			printf("\33[0;1m{\33[m\n");
-			while (idx < msg_len(req)) {
-				flags = msg_atom_int(req, idx++);
-				if ((flags & 0x300) != 0x0)
-					idx += 2;
-				else {
-					printf("   prop \33[36;1m");
-					print_msg_atom(sess, req, idx++, false);
-					printf("\33[m = ");
-					print_msg_atom(sess, req, idx++, false);
-					printf("\n");
-				}
+	if (!msg_atom_tag(message, index) == DVALUE_OBJ || !want_expand_obj)
+		dvalue_print(msg_atom_dvalue(message, index));
+	else {
+		heapptr = dvalue_as_heapptr(msg_atom_dvalue(message, index));
+		req = msg_new(MSG_CLASS_REQ);
+		msg_add_int(req, REQ_INSPECT_OBJ);
+		msg_add_heapptr(req, heapptr);
+		msg_add_int(req, 0x0);
+		req = converse(sess, req);
+		idx = 0;
+		printf("\33[0;1m{\33[m\n");
+		while (idx < msg_len(req)) {
+			flags = msg_atom_int(req, idx++);
+			if ((flags & 0x300) != 0x0)
+				idx += 2;
+			else {
+				printf("   prop \33[36;1m");
+				print_msg_atom(sess, req, idx++, false);
+				printf("\33[m = ");
+				print_msg_atom(sess, req, idx++, false);
+				printf("\n");
 			}
-			printf("\33[0;1m}\33[m");
-			msg_free(req);
 		}
-		break;
-	default:
-		printf("\33[31;1m*munch*\33[m");
+		printf("\33[0;1m}\33[m");
+		msg_free(req);
 	}
 }
 

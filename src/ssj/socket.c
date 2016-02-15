@@ -12,7 +12,7 @@ struct socket
 };
 
 static void
-on_stream_recv(dyad_Event* e)
+dyad_on_stream_recv(dyad_Event* e)
 {
 	socket_t* obj;
 	bool  need_resize = false;
@@ -45,16 +45,18 @@ sockets_deinit()
 socket_t*
 socket_connect(const char* hostname, int port, double timeout)
 {
+	clock_t   end_time;
+	bool      is_connected;
 	socket_t* obj;
-	clock_t      end_time;
-	bool         is_connected;
-	int          state;
+	int       state;
 	
 	obj = calloc(1, sizeof(socket_t));
+	
 	obj->stream = dyad_newStream();
+	dyad_addListener(obj->stream, DYAD_EVENT_DATA, dyad_on_stream_recv, obj);
+	dyad_setNoDelay(obj->stream, true);
 	obj->buf_size = 4096;
 	obj->recv_buffer = malloc(obj->buf_size);
-	dyad_addListener(obj->stream, DYAD_EVENT_DATA, on_stream_recv, obj);
 	is_connected = false;
 	end_time = clock() + (clock_t)(timeout * CLOCKS_PER_SEC);
 	do {
@@ -81,6 +83,8 @@ socket_close(socket_t* obj)
 	dyad_end(obj->stream);
 	while (dyad_getState(obj->stream) == DYAD_STATE_CLOSING)
 		dyad_update();
+	free(obj->recv_buffer);
+	free(obj);
 }
 
 size_t
@@ -98,5 +102,6 @@ size_t
 socket_send(socket_t* obj, const void* data, size_t num_bytes)
 {
 	dyad_write(obj->stream, data, (int)num_bytes);
+	dyad_update();
 	return num_bytes;
 }

@@ -42,6 +42,18 @@ dvalue_new_float(double value)
 }
 
 dvalue_t*
+dvalue_new_heapptr(heapptr_t value)
+{
+	dvalue_t* obj;
+
+	obj = calloc(1, sizeof(dvalue_t));
+	obj->tag = DVALUE_HEAPPTR;
+	obj->ptr.value = value.ptr;
+	obj->ptr.size = value.size;
+	return obj;
+}
+
+dvalue_t*
 dvalue_new_int(int value)
 {
 	dvalue_t* obj;
@@ -72,6 +84,99 @@ dvalue_dup(const dvalue_t* src)
 	obj = calloc(1, sizeof(dvalue_t));
 	memcpy(obj, src, sizeof(dvalue_t));
 	return obj;
+}
+
+void
+dvalue_free(dvalue_t* obj)
+{
+	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUF)
+		free(obj->buffer.data);
+	free(obj);
+}
+
+dvalue_tag_t
+dvalue_tag(const dvalue_t* obj)
+{
+	return obj->tag;
+}
+
+const char*
+dvalue_as_cstr(const dvalue_t* obj)
+{
+	return obj->tag == DVALUE_STRING ? obj->buffer.data : NULL;
+}
+
+double
+dvalue_as_float(const dvalue_t* obj)
+{
+	return obj->tag == DVALUE_FLOAT ? obj->float_value : 0.0;
+}
+
+heapptr_t
+dvalue_as_heapptr(const dvalue_t* obj)
+{
+	heapptr_t retval;
+
+	memset(&retval, 0, sizeof(heapptr_t));
+	if (obj->tag == DVALUE_HEAPPTR || obj->tag == DVALUE_OBJ || obj->tag == DVALUE_LIGHTFUNC) {
+		retval.ptr = obj->ptr.value;
+		retval.size = obj->ptr.size;
+	}
+	return retval;
+}
+
+int
+dvalue_as_int(const dvalue_t* obj)
+{
+	return obj->tag == DVALUE_INT ? obj->int_value : 0;
+}
+
+void
+dvalue_print(const dvalue_t* obj)
+{
+	heapptr_t heapptr;
+	
+	switch (dvalue_tag(obj)) {
+	case DVALUE_UNDEF: printf("undefined"); break;
+	case DVALUE_UNUSED: printf("unused"); break;
+	case DVALUE_NULL: printf("null"); break;
+	case DVALUE_TRUE: printf("true"); break;
+	case DVALUE_FALSE: printf("false"); break;
+	case DVALUE_FLOAT: printf("%g", dvalue_as_float(obj)); break;
+	case DVALUE_INT: printf("%d", dvalue_as_int(obj)); break;
+	case DVALUE_STRING: printf("\"%s\"", dvalue_as_cstr(obj)); break;
+	case DVALUE_BUF: printf("{ buf }"); break;
+	case DVALUE_HEAPPTR:
+		heapptr = dvalue_as_heapptr(obj);
+		if (heapptr.size == 8)  // x64 pointer
+			printf("{ heapptr:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+		else if (heapptr.size == 4)  // x86 pointer
+			printf("{ heapptr:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+		break;
+	case DVALUE_LIGHTFUNC:
+		heapptr = dvalue_as_heapptr(obj);
+		if (heapptr.size == 8)  // x64 pointer
+			printf("{ lfunc:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+		else if (heapptr.size == 4)  // x86 pointer
+			printf("{ lfunc:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+		break;
+	case DVALUE_OBJ:
+		heapptr = dvalue_as_heapptr(obj);
+		if (heapptr.size == 8)  // x64 pointer
+			printf("{ obj:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+		else if (heapptr.size == 4)  // x86 pointer
+			printf("{ obj:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+		break;
+	case DVALUE_PTR:
+		heapptr = dvalue_as_heapptr(obj);
+		if (heapptr.size == 8)  // x64 pointer
+			printf("{ ptr:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+		else if (heapptr.size == 4)  // x86 pointer
+			printf("{ ptr:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+		break;
+	default:
+		printf("*munch*");
+	}
 }
 
 dvalue_t*
@@ -183,32 +288,6 @@ dvalue_recv(socket_t* socket)
 }
 
 void
-dvalue_free(dvalue_t* obj)
-{
-	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUF)
-		free(obj->buffer.data);
-	free(obj);
-}
-
-const char*
-dvalue_as_cstr(const dvalue_t* obj)
-{
-	return obj->tag == DVALUE_STRING ? obj->buffer.data : NULL;
-}
-
-double
-dvalue_as_float(const dvalue_t* obj)
-{
-	return obj->tag == DVALUE_FLOAT ? obj->float_value : 0.0;
-}
-
-int
-dvalue_as_int(const dvalue_t* obj)
-{
-	return obj->tag == DVALUE_INT ? obj->int_value : 0;
-}
-
-void
 dvalue_send(const dvalue_t* obj, socket_t* socket)
 {
 	uint8_t  data[32];
@@ -253,10 +332,4 @@ dvalue_send(const dvalue_t* obj, socket_t* socket)
 		socket_send(socket, data, obj->ptr.size);
 		break;
 	}
-}
-
-dvalue_tag_t
-dvalue_tag(const dvalue_t* obj)
-{
-	return obj->tag;
 }
