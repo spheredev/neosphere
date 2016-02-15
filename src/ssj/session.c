@@ -12,6 +12,7 @@ struct session
 	bool      is_attached;
 	vector_t* backtrace;
 	char      cl_buffer[CL_BUFFER_SIZE];
+	client_t* client;
 	int       frame_index;
 	char*     function;
 	char*     filename;
@@ -20,7 +21,6 @@ struct session
 	bool      is_stopped;
 	int       line_no;
 	uint8_t   ptr_size;
-	client_t* remote;
 	source_t* source;
 	path_t*   source_path;
 };
@@ -74,7 +74,7 @@ new_session(const char* hostname, int port)
 	session_t*  session;
 
 	session = calloc(1, sizeof(session_t));
-	if (!(session->remote = client_connect(hostname, port)))
+	if (!(session->client = client_connect(hostname, port)))
 		goto on_error;
 	session->is_attached = true;
 
@@ -312,10 +312,10 @@ run_session(session_t* sess)
 
 	printf("\n");
 	while (is_active) {
-		if (sess->remote == NULL || sess->is_stopped)
+		if (sess->client == NULL || sess->is_stopped)
 			is_active &= do_command_line(sess);
 		else {
-			if (!(msg = client_recv_msg(sess->remote)))
+			if (!(msg = client_recv_msg(sess->client)))
 				goto on_error;
 			is_active &= process_message(sess, msg);
 			msg_free(msg);
@@ -334,10 +334,10 @@ converse(session_t* sess, message_t* msg)
 {
 	message_t* response = NULL;
 
-	client_send_msg(sess->remote, msg);
+	client_send_msg(sess->client, msg);
 	do {
 		msg_free(response);
-		if (!(response = client_recv_msg(sess->remote))) return NULL;
+		if (!(response = client_recv_msg(sess->client))) return NULL;
 		if (msg_get_class(response) == MSG_CLASS_NFY)
 			process_message(sess, response);
 	} while (msg_get_class(response) == MSG_CLASS_NFY);
@@ -496,11 +496,10 @@ print_help(session_t* sess)
 static void
 print_msg_atom(session_t* sess, const message_t* message, size_t index, bool want_expand_obj)
 {
-	int32_t     flags;
-	heapptr_t   heapptr;
-	size_t      idx;
-	const char* prop_tag;
-	message_t*  req;
+	int32_t    flags;
+	heapptr_t  heapptr;
+	size_t     idx;
+	message_t* req;
 	
 	if (msg_atom_tag(message, index) != DVALUE_OBJ || !want_expand_obj)
 		dvalue_print(msg_atom_dvalue(message, index));
@@ -514,19 +513,26 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 		idx = 0;
 		printf("\33[0;1m{\33[m\n");
 		while (idx < msg_len(req)) {
-			flags = msg_atom_int(req, idx++);
-			if ((flags & 0x100) != 0x0)
-				idx += 2;
-			else {
-				prop_tag = flags & 0x200 ? "\33[30;1mduktape\33[36m"
-					: "prop\33[36;1m";
-				printf("   %s ", prop_tag);
-				print_msg_atom(sess, req, idx++, false);
-				if (flags & 0x200) printf("\33[30;1m = ");
-				else printf("\33[m = ");
-				print_msg_atom(sess, req, idx++, false);
-				printf("\33[m\n");
+			flags = msg_atom_int(req, idx);
+			if (!(flags & 0x0300)) {
+				if (!(flags & 0x0008))
+					printf("   prop \33[36;1m");
+				else
+					printf("   accessor \33[36;1m");
+				print_msg_atom(sess, req, idx + 1, false);
+				printf("\33[m = ");
+				if (!(flags & 0x008))
+					print_msg_atom(sess, req, idx + 2, false);
+				else {
+					printf("{ get: ");
+					print_msg_atom(sess, req, idx + 2, false);
+					printf(", set: ");
+					print_msg_atom(sess, req, idx + 3, false);
+					printf("}");
+				}
+				printf("\n");
 			}
+			idx += (flags & 0x0008) ? 4 : 3;
 		}
 		printf("\33[0;1m}\33[m");
 		msg_free(req);

@@ -149,30 +149,30 @@ dvalue_print(const dvalue_t* obj)
 	case DVALUE_HEAPPTR:
 		heapptr = dvalue_as_heapptr(obj);
 		if (heapptr.size == 8)  // x64 pointer
-			printf("{ heapptr:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+			printf("{ heapptr:0x%016"PRIx64" }", (uint64_t)heapptr.ptr);
 		else if (heapptr.size == 4)  // x86 pointer
-			printf("{ heapptr:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+			printf("{ heapptr:0x%08"PRIx32" }", (uint32_t)heapptr.ptr);
 		break;
 	case DVALUE_LIGHTFUNC:
 		heapptr = dvalue_as_heapptr(obj);
 		if (heapptr.size == 8)  // x64 pointer
-			printf("{ lfunc:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+			printf("{ lfunc:0x%016"PRIx64" }", (uint64_t)heapptr.ptr);
 		else if (heapptr.size == 4)  // x86 pointer
-			printf("{ lfunc:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+			printf("{ lfunc:0x%08"PRIx32" }", (uint32_t)heapptr.ptr);
 		break;
 	case DVALUE_OBJ:
 		heapptr = dvalue_as_heapptr(obj);
 		if (heapptr.size == 8)  // x64 pointer
-			printf("{ obj:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+			printf("{ obj:0x%016"PRIx64" }", (uint64_t)heapptr.ptr);
 		else if (heapptr.size == 4)  // x86 pointer
-			printf("{ obj:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+			printf("{ obj:0x%08"PRIx32" }", (uint32_t)heapptr.ptr);
 		break;
 	case DVALUE_PTR:
 		heapptr = dvalue_as_heapptr(obj);
 		if (heapptr.size == 8)  // x64 pointer
-			printf("{ ptr:0x%016"PRIx64"h }", (uint64_t)heapptr.ptr);
+			printf("{ ptr:0x%016"PRIx64" }", (uint64_t)heapptr.ptr);
 		else if (heapptr.size == 4)  // x86 pointer
-			printf("{ ptr:0x%08"PRIx32"h }", (uint32_t)heapptr.ptr);
+			printf("{ ptr:0x%08"PRIx32" }", (uint32_t)heapptr.ptr);
 		break;
 	default:
 		printf("*munch*");

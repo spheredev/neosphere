@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 2e801d46913a258e93325b18dc328b3dbd766de6 (v1.4.0-145-g2e801d4).
+ *  Git commit 11a6c0b504fd021849d258226002bbd7e51ba4de (v1.4.0-138-g11a6c0b).
  *  Git branch debugger-heap-walking-support.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -222,8 +222,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "2e801d46913a258e93325b18dc328b3dbd766de6"
-#define DUK_GIT_DESCRIBE                  "v1.4.0-145-g2e801d4"
+#define DUK_GIT_COMMIT                    "11a6c0b504fd021849d258226002bbd7e51ba4de"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-138-g11a6c0b"
 #define DUK_GIT_BRANCH                    "debugger-heap-walking-support"
 
 /* Duktape debug protocol version used by this build. */
