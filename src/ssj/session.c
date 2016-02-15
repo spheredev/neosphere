@@ -404,7 +404,7 @@ do_command_line(session_t* sess)
 			free(filename);
 		}
 	}
-	else if (strcmp(command, "clear") == 0 || strcmp(command, "cb") == 0) {
+	else if (strcmp(command, "clearbreak") == 0 || strcmp(command, "cb") == 0) {
 		if (argument[0] == '\0')
 			printf("please specify location of breakpoint to clear.\n");
 		else if (parse_file_and_line(sess, argument, &filename, &line_no)) {
@@ -476,7 +476,7 @@ print_help(session_t* sess)
 
 		" bt, backtrace    Show a list of all function calls currently on the stack     \n"
 		" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
-		" cb, clear        Clear a breakpoint set at file:line (see 'breakpoint')       \n"
+		" cb, clearbreak   Clear a breakpoint set at file:line (see 'breakpoint')       \n"
 		" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
 		" e,  eval         Evaluate a JavaScript expression                             \n"
 		" f,  frame        Change the stack frame used for, e.g. 'eval' and 'var'       \n"
@@ -496,12 +496,13 @@ print_help(session_t* sess)
 static void
 print_msg_atom(session_t* sess, const message_t* message, size_t index, bool want_expand_obj)
 {
-	int32_t    flags;
-	heapptr_t  heapptr;
-	size_t     idx;
-	message_t* req;
+	int32_t     flags;
+	heapptr_t   heapptr;
+	size_t      idx;
+	const char* prop_tag;
+	message_t*  req;
 	
-	if (!msg_atom_tag(message, index) == DVALUE_OBJ || !want_expand_obj)
+	if (msg_atom_tag(message, index) != DVALUE_OBJ || !want_expand_obj)
 		dvalue_print(msg_atom_dvalue(message, index));
 	else {
 		heapptr = dvalue_as_heapptr(msg_atom_dvalue(message, index));
@@ -514,14 +515,17 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 		printf("\33[0;1m{\33[m\n");
 		while (idx < msg_len(req)) {
 			flags = msg_atom_int(req, idx++);
-			if ((flags & 0x300) != 0x0)
+			if ((flags & 0x100) != 0x0)
 				idx += 2;
 			else {
-				printf("   prop \33[36;1m");
+				prop_tag = flags & 0x200 ? "\33[30;1mduktape\33[36m"
+					: "prop\33[36;1m";
+				printf("   %s ", prop_tag);
 				print_msg_atom(sess, req, idx++, false);
-				printf("\33[m = ");
+				if (flags & 0x200) printf("\33[30;1m = ");
+				else printf("\33[m = ");
 				print_msg_atom(sess, req, idx++, false);
-				printf("\n");
+				printf("\33[m\n");
 			}
 		}
 		printf("\33[0;1m}\33[m");
