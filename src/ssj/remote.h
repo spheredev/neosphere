@@ -33,10 +33,13 @@ enum dvalue_tag
 typedef
 enum atom_type
 {
+	ATOM_UNUSED,
 	ATOM_UNDEFINED,
-	ATOM_OBJECT,
+	ATOM_NULL,
 	ATOM_FLOAT,
+	ATOM_HEAPPTR,
 	ATOM_INT,
+	ATOM_OBJECT,
 	ATOM_STRING,
 } atom_type_t;
 

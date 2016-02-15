@@ -243,11 +243,14 @@ msg_atom_type(const message_t* msg, size_t index)
 	dvalue_t* dvalue;
 
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	return dvalue->tag == DVALUE_TAG_OBJ ? ATOM_OBJECT
+	return dvalue->tag == DVALUE_TAG_UNDEF ? ATOM_UNDEFINED
+		: dvalue->tag == DVALUE_TAG_NULL ? ATOM_NULL
 		: dvalue->tag == DVALUE_TAG_FLOAT ? ATOM_FLOAT
+		: dvalue->tag == DVALUE_TAG_HEAPPTR ? ATOM_HEAPPTR
 		: dvalue->tag == DVALUE_TAG_INT ? ATOM_INT
+		: dvalue->tag == DVALUE_TAG_OBJ ? ATOM_OBJECT
 		: dvalue->tag == DVALUE_TAG_STRING ? ATOM_STRING
-		: ATOM_UNDEFINED;
+		: ATOM_UNUSED;
 }
 
 double
@@ -322,8 +325,8 @@ parse_handshake(remote_t* remote)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf(": inferior is \33[36;1m%s\33[m\n", next_token);
-	printf(": duktape \33[36;1m%s\33[m\n", token);
+	printf("   inferior is \33[36;1m%s\33[m\n", next_token);
+	printf("   duktape \33[36;1m%s\33[m\n", token);
 
 	return true;
 
@@ -349,6 +352,8 @@ receive_dvalue(remote_t* remote)
 	uint8_t   data[32];
 	dvalue_t* dvalue;
 	uint8_t   ib;
+	
+	ptrdiff_t i, j;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
 	receive_bytes(remote, &ib, 1);
@@ -417,26 +422,30 @@ receive_dvalue(remote_t* remote)
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
 		dvalue->tag = DVALUE_TAG_OBJ;
-		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
+		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
 	case DVALUE_TAG_PTR:
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
 		dvalue->tag = DVALUE_TAG_PTR;
-		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
+		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
 	case DVALUE_TAG_LIGHTFUNC:
 		receive_bytes(remote, data, 2);
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
 		dvalue->tag = DVALUE_TAG_LIGHTFUNC;
-		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
+		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
 	case DVALUE_TAG_HEAPPTR:
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
 		dvalue->tag = DVALUE_TAG_HEAPPTR;
-		memcpy(&dvalue->ptr_value, data, remote->ptr_size);
+		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
@@ -469,6 +478,8 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 {
 	uint8_t  data[32];
 	uint32_t str_length;
+
+	ptrdiff_t i, j;
 
 	switch (dvalue->tag) {
 	case DVALUE_TAG_EOM:
@@ -516,7 +527,8 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 		dyad_write(remote->socket, data, 8);
 		break;
 	case DVALUE_TAG_HEAPPTR:
-		memcpy(data, &dvalue->ptr_value, remote->ptr_size);
+		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
+			data[i] = ((uint8_t*)&dvalue->ptr_value)[j];
 		send_dvalue_ib(remote, DVALUE_TAG_HEAPPTR);
 		dyad_write(remote->socket, &remote->ptr_size, 1);
 		dyad_write(remote->socket, data, remote->ptr_size);

@@ -91,7 +91,7 @@ new_session(const char* hostname, int port)
 		printf("\33[31;1mnone found.\33[m\n");
 	else {
 		printf("OK.\n");
-		printf(": source tree \33[33;1m%s\33[m\n", path_cstr(origin));
+		printf("   sources in \33[33;1m%s\33[m\n", path_cstr(origin));
 	}
 	msg_free(rep);
 	session->source_path = origin;
@@ -356,6 +356,7 @@ do_command_line(session_t* sess)
 	char*       parsee;
 	message_t*  req;
 
+	printf("\n");
 	if (sess->has_pc_changed) {
 		sess->has_pc_changed = false;
 		print_backtrace(sess, 0, false);
@@ -364,7 +365,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[36;1m%s\33[m \33[33;1mssj$\33[m ", sess->function);
+		printf("\33[36;1m%s\33[m \33[33;1mssj$\33[m ", sess->filename);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -501,9 +502,11 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 	
 	switch (msg_atom_type(message, index)) {
 	case ATOM_UNDEFINED: printf("undefined"); break;
-	case ATOM_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
-	case ATOM_INT: printf("%d", msg_atom_int(message, index)); break;
+	case ATOM_NULL: printf("null"); break;
 	case ATOM_FLOAT: printf("%g", msg_atom_float(message, index)); break;
+	case ATOM_HEAPPTR: printf("addr:0x%016"PRIx64, msg_atom_heapptr(message, index)); break;
+	case ATOM_INT: printf("%d", msg_atom_int(message, index)); break;
+	case ATOM_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
 	case ATOM_OBJECT:
 		if (!want_expand_obj)
 			printf("{...}");
@@ -515,25 +518,25 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 			msg_add_int(req, 0x0);
 			req = converse(sess, req);
 			idx = 0;
-			printf("{\n");
+			printf("\33[0;1m{\33[m\n");
 			while (idx < msg_len(req)) {
 				flag = msg_atom_int(req, idx++);
 				if ((flag & 0x300) != 0x0)
 					idx += 2;
 				else {
-					printf("   ");
+					printf("   prop \33[36;1m");
 					print_msg_atom(sess, req, idx++, false);
-					printf(": ");
+					printf("\33[m = ");
 					print_msg_atom(sess, req, idx++, false);
 					printf("\n");
 				}
 			}
-			printf("}");
+			printf("\33[0;1m}\33[m");
 			msg_free(req);
 		}
 		break;
 	default:
-		printf("*munch*");
+		printf("\33[31;1m*munch*\33[m");
 	}
 }
 
