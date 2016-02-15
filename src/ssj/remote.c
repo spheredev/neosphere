@@ -29,6 +29,7 @@ struct dvalue
 			void*  data;
 			size_t size;
 		} buffer;
+		bool     bool_value;
 		double   float_value;
 		int32_t  int_value;
 		uint64_t ptr_value;
@@ -245,6 +246,8 @@ msg_atom_type(const message_t* msg, size_t index)
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
 	return dvalue->tag == DVALUE_TAG_UNDEF ? ATOM_UNDEFINED
 		: dvalue->tag == DVALUE_TAG_NULL ? ATOM_NULL
+		: dvalue->tag == DVALUE_TAG_TRUE ? ATOM_BOOL_TRUE
+		: dvalue->tag == DVALUE_TAG_FALSE ? ATOM_BOOL_FALSE
 		: dvalue->tag == DVALUE_TAG_FLOAT ? ATOM_FLOAT
 		: dvalue->tag == DVALUE_TAG_HEAPPTR ? ATOM_HEAPPTR
 		: dvalue->tag == DVALUE_TAG_INT ? ATOM_INT
