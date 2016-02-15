@@ -33,9 +33,6 @@
     <ClCompile Include="..\src\ssj\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ssj\remote.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ssj\session.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,6 +43,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ssj\file_line.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\message.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\dvalue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\socket.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\client.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,9 +83,6 @@
     <ClInclude Include="..\src\ssj\posix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ssj\remote.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ssj\session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -90,6 +96,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ssj\file_line.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\message.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\dvalue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\socket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,7 @@
 #include "ssj.h"
 
 #include <dyad.h>
-#include "remote.h"
+#include "client.h"
 #include "session.h"
 
 struct cmdline
@@ -32,13 +32,13 @@ main(int argc, char* argv[])
 	if (cmdline->path != NULL && !launch_minisphere(cmdline->path))
 		return EXIT_FAILURE;
 
-	initialize_client();
+	clients_init();
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
 	if (!cmdline->want_pause)
 		execute_next(session, EXEC_RESUME);
 	run_session(session);
-	shutdown_client();
+	clients_deinit();
 	return EXIT_SUCCESS;
 }
 

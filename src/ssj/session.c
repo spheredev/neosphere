@@ -2,7 +2,8 @@
 #include "session.h"
 #include "source.h"
 
-#include "remote.h"
+#include "client.h"
+#include "message.h"
 
 #define CL_BUFFER_SIZE 65536
 
@@ -19,7 +20,7 @@ struct session
 	bool      is_stopped;
 	int       line_no;
 	uint8_t   ptr_size;
-	remote_t* remote;
+	client_t* remote;
 	source_t* source;
 	path_t*   source_path;
 };
@@ -73,7 +74,7 @@ new_session(const char* hostname, int port)
 	session_t*  session;
 
 	session = calloc(1, sizeof(session_t));
-	if (!(session->remote = connect_remote(hostname, port)))
+	if (!(session->remote = client_connect(hostname, port)))
 		goto on_error;
 	session->is_attached = true;
 
@@ -314,7 +315,7 @@ run_session(session_t* sess)
 		if (sess->remote == NULL || sess->is_stopped)
 			is_active &= do_command_line(sess);
 		else {
-			if (!(msg = msg_receive(sess->remote)))
+			if (!(msg = client_recv_msg(sess->remote)))
 				goto on_error;
 			is_active &= process_message(sess, msg);
 			msg_free(msg);
@@ -333,10 +334,10 @@ converse(session_t* sess, message_t* msg)
 {
 	message_t* response = NULL;
 
-	msg_send(sess->remote, msg);
+	client_send_msg(sess->remote, msg);
 	do {
 		msg_free(response);
-		if (!(response = msg_receive(sess->remote))) return NULL;
+		if (!(response = client_recv_msg(sess->remote))) return NULL;
 		if (msg_get_class(response) == MSG_CLASS_NFY)
 			process_message(sess, response);
 	} while (msg_get_class(response) == MSG_CLASS_NFY);
@@ -495,10 +496,10 @@ print_help(session_t* sess)
 static void
 print_msg_atom(session_t* sess, const message_t* message, size_t index, bool want_expand_obj)
 {
-	int32_t     flag;
-	uint64_t    heapptr;
-	size_t      idx;
-	message_t*  req;
+	int32_t         flags;
+	const dvalue_t* heapptr;
+	size_t          idx;
+	message_t*      req;
 	
 	switch (msg_atom_tag(message, index)) {
 	case DVALUE_UNDEF: printf("undefined"); break;
@@ -506,24 +507,24 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 	case DVALUE_TRUE: printf("true"); break;
 	case DVALUE_FALSE: printf("false"); break;
 	case DVALUE_FLOAT: printf("%g", msg_atom_float(message, index)); break;
-	case DVALUE_HEAPPTR: printf("addr:0x%016"PRIx64, msg_atom_heapptr(message, index)); break;
-	case DVALUE_INT32: printf("%d", msg_atom_int(message, index)); break;
+	case DVALUE_HEAPPTR: printf("heapptr"); break;
+	case DVALUE_INT: printf("%d", msg_atom_int(message, index)); break;
 	case DVALUE_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
 	case DVALUE_OBJ:
 		if (!want_expand_obj)
 			printf("{...}");
 		else {
-			heapptr = msg_atom_heapptr(message, index);
+			heapptr = msg_atom_dvalue(message, index);
 			req = msg_new(MSG_CLASS_REQ);
 			msg_add_int(req, REQ_INSPECT_OBJ);
-			msg_add_heapptr(req, heapptr);
+			msg_add_dvalue(req, heapptr);
 			msg_add_int(req, 0x0);
 			req = converse(sess, req);
 			idx = 0;
 			printf("\33[0;1m{\33[m\n");
 			while (idx < msg_len(req)) {
-				flag = msg_atom_int(req, idx++);
-				if ((flag & 0x300) != 0x0)
+				flags = msg_atom_int(req, idx++);
+				if ((flags & 0x300) != 0x0)
 					idx += 2;
 				else {
 					printf("   prop \33[36;1m");
