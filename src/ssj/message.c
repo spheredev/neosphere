@@ -115,7 +115,7 @@ msg_add_float(message_t* msg, double value)
 }
 
 void
-msg_add_heapptr(message_t* msg, heapptr_t heapptr)
+msg_add_heapptr(message_t* msg, duk_ptr_t heapptr)
 {
 	dvalue_t* dvalue;
 

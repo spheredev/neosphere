@@ -18,7 +18,7 @@ void       clear_breakpoint  (session_t* sess, const char* filename, int line_no
 void       execute_next      (session_t* sess, exec_op_t op);
 void       print_backtrace   (session_t* sess, int frame, bool show_all);
 void       print_breakpoints (session_t* sess);
-void       print_eval        (session_t* sess, const char* expr, int frame);
+void       print_eval        (session_t* sess, const char* expr, int frame, bool show_metadata);
 void       print_locals      (session_t* sess, int frame);
 void       print_source      (session_t* sess, const char* filename, int line_no, int window);
 void       run_session       (session_t* sess);

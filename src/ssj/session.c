@@ -62,7 +62,7 @@ static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
 static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_help          (session_t* sess);
-static void       print_msg_atom      (session_t* sess, const message_t* message, size_t index, bool want_expand_obj);
+static void       print_msg_atom      (session_t* sess, const message_t* message, size_t index, int obj_verbosity);
 static bool       process_message     (session_t* sess, const message_t* msg);
 
 session_t*
@@ -198,7 +198,7 @@ print_breakpoints(session_t* sess)
 }
 
 void
-print_eval(session_t* sess, const char* expr, int frame)
+print_eval(session_t* sess, const char* expr, int frame, bool show_metadata)
 {
 	message_t* req;
 
@@ -211,7 +211,7 @@ print_eval(session_t* sess, const char* expr, int frame)
 		printf("= ");
 	else
 		printf("\33[31;1merror: \33[m");
-	print_msg_atom(sess, req, 1, true);
+	print_msg_atom(sess, req, 1, show_metadata ? 2 : 1);
 	printf("\33[m\n");
 	msg_free(req);
 }
@@ -232,7 +232,7 @@ print_locals(session_t* sess, int frame)
 	if ((num_vars = msg_len(response) / 2) == 0)
 		printf("no locals in function \33[36;1m%s\33[m.\n", sess->function);
 	for (i = 0; i < num_vars; ++i) {
-		printf("var \33[36;1m%s\33[m = ", msg_atom_string(response, i * 2));
+		printf("var \33[36m%s\33[m = ", msg_atom_string(response, i * 2));
 		dvalue_print(msg_atom_dvalue(response, i * 2 + 1));
 		printf("\n");
 	}
@@ -415,7 +415,9 @@ do_command_line(session_t* sess)
 	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
 	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
-		print_eval(sess, argument, sess->frame_index);
+		print_eval(sess, argument, sess->frame_index, false);
+	else if (strcmp(command, "examine") == 0 || strcmp(command, "x") == 0)
+		print_eval(sess, argument, sess->frame_index, true);
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
 		print_backtrace(sess, atoi(argument), false);
 	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0)
@@ -426,7 +428,7 @@ do_command_line(session_t* sess)
 		execute_next(sess, EXEC_STEP_IN);
 	else if (strcmp(command, "stepout") == 0 || strcmp(command, "so") == 0)
 		execute_next(sess, EXEC_STEP_OUT);
-	else if (strcmp(command, "var") == 0 || strcmp(command, "v") == 0)
+	else if (strcmp(command, "vars") == 0 || strcmp(command, "v") == 0)
 		print_locals(sess, sess->frame_index);
 	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
 		print_backtrace(sess, 0, false);
@@ -484,8 +486,9 @@ print_help(session_t* sess)
 		" s,  step         Run the next line of code                                    \n"
 		" si, stepin       Run the next line of code, stepping into functions           \n"
 		" so, stepout      Run until the current function call returns                  \n"
-		" v,  var          List local variables and their values in the active frame    \n"
+		" v,  vars         List local variables and their values in the active frame    \n"
 		" w,  where        Show the filename and line number of the next line of code   \n"
+		" x,  examine      Like 'eval' but shows low-level runtime metadata for objects \n"
 		" h,  help         Show this list of commands                                   \n"
 		" q,  quit         Detach and terminate your SSJ debugging session              \n\n"
 
@@ -494,17 +497,20 @@ print_help(session_t* sess)
 }
 
 static void
-print_msg_atom(session_t* sess, const message_t* message, size_t index, bool want_expand_obj)
+print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_verbosity)
 {
-	int32_t    flags;
-	heapptr_t  heapptr;
-	size_t     idx;
-	message_t* req;
+	unsigned int bitmask;
+	int32_t      flags;
+	duk_ptr_t    heapptr;
+	size_t       idx;
+	bool         is_accessor;
+	bool         is_metadata;
+	message_t*   req;
 	
-	if (msg_atom_tag(message, index) != DVALUE_OBJ || !want_expand_obj)
+	if (msg_atom_tag(message, index) != DVALUE_OBJ || obj_verbosity <= 0)
 		dvalue_print(msg_atom_dvalue(message, index));
 	else {
-		heapptr = dvalue_as_heapptr(msg_atom_dvalue(message, index));
+		heapptr = dvalue_as_ptr(msg_atom_dvalue(message, index));
 		req = msg_new(MSG_CLASS_REQ);
 		msg_add_int(req, REQ_INSPECT_OBJ);
 		msg_add_heapptr(req, heapptr);
@@ -514,11 +520,11 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 		printf("\33[0;1m{\33[m\n");
 		while (idx < msg_len(req)) {
 			flags = msg_atom_int(req, idx);
-			if (!(flags & 0x0300)) {
-				if (!(flags & 0x0008))
-					printf("   prop \33[36;1m");
-				else
-					printf("   accessor \33[36;1m");
+			bitmask = obj_verbosity >= 2 ? 0x0100 : 0x0300;
+			if (!(flags & bitmask)) {
+				is_accessor = (flags & 0x0008) != 0x0;
+				is_metadata = (flags & 0x0200) != 0x0;
+				printf("   %s \33[36m", is_metadata ? "meta" : is_accessor ? "acc" : "prop");
 				print_msg_atom(sess, req, idx + 1, false);
 				printf("\33[m = ");
 				if (!(flags & 0x008))
@@ -530,7 +536,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 					print_msg_atom(sess, req, idx + 3, false);
 					printf("}");
 				}
-				printf("\n");
+				printf("\33[m\n");
 			}
 			idx += (flags & 0x0008) ? 4 : 3;
 		}

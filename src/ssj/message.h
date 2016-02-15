@@ -23,7 +23,7 @@ size_t          msg_len           (const message_t* message);
 void            msg_send          (socket_t* socket, const message_t* msg);
 void            msg_add_dvalue    (message_t* msg, const dvalue_t* dvalue);
 void            msg_add_float     (message_t* msg, double value);
-void            msg_add_heapptr   (message_t* msg, heapptr_t value);
+void            msg_add_heapptr   (message_t* msg, duk_ptr_t value);
 void            msg_add_int       (message_t* msg, int value);
 void            msg_add_string    (message_t* msg, const char* value);
 dvalue_tag_t    msg_atom_tag      (const message_t* msg, size_t index);
