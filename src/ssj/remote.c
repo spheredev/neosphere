@@ -124,14 +124,14 @@ msg_receive(remote_t* remote)
 	msg = calloc(1, sizeof(message_t));
 	msg->dvalues = vector_new(sizeof(dvalue_t*));
 	dvalue = receive_dvalue(remote);
-	msg->msg_class = dvalue->tag == DVALUE_TAG_REQ ? MSG_CLASS_REQ
-		: dvalue->tag == DVALUE_TAG_REP ? MSG_CLASS_REP
-		: dvalue->tag == DVALUE_TAG_ERR ? MSG_CLASS_ERR
-		: dvalue->tag == DVALUE_TAG_NFY ? MSG_CLASS_NFY
+	msg->msg_class = dvalue->tag == DVALUE_REQ ? MSG_CLASS_REQ
+		: dvalue->tag == DVALUE_REP ? MSG_CLASS_REP
+		: dvalue->tag == DVALUE_ERR ? MSG_CLASS_ERR
+		: dvalue->tag == DVALUE_NFY ? MSG_CLASS_NFY
 		: MSG_CLASS_UNKNOWN;
 	free_dvalue(dvalue);
 	dvalue = receive_dvalue(remote);
-	while (dvalue->tag != DVALUE_TAG_EOM) {
+	while (dvalue->tag != DVALUE_EOM) {
 		vector_push(msg->dvalues, &dvalue);
 		dvalue = receive_dvalue(remote);
 	}
@@ -198,7 +198,7 @@ msg_add_float(message_t* msg, double value)
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_FLOAT;
+	dvalue->tag = DVALUE_FLOAT;
 	dvalue->float_value = value;
 	vector_push(msg->dvalues, &dvalue);
 }
@@ -209,7 +209,7 @@ msg_add_int(message_t* msg, int32_t value)
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_INT;
+	dvalue->tag = DVALUE_INT32;
 	dvalue->int_value = value;
 	vector_push(msg->dvalues, &dvalue);
 }
@@ -220,7 +220,7 @@ msg_add_heapptr(message_t* msg, uint64_t value)
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_HEAPPTR;
+	dvalue->tag = DVALUE_HEAPPTR;
 	dvalue->ptr_value = value;
 	vector_push(msg->dvalues, &dvalue);
 }
@@ -231,29 +231,20 @@ msg_add_string(message_t* msg, const char* value)
 	dvalue_t* dvalue;
 
 	dvalue = calloc(1, sizeof(dvalue_t));
-	dvalue->tag = DVALUE_TAG_STRING;
+	dvalue->tag = DVALUE_STRING;
 	dvalue->buffer.size = strlen(value);
 	dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 	strcpy(dvalue->buffer.data, value);
 	vector_push(msg->dvalues, &dvalue);
 }
 
-atom_type_t
-msg_atom_type(const message_t* msg, size_t index)
+dvalue_tag_t
+msg_atom_tag(const message_t* msg, size_t index)
 {
 	dvalue_t* dvalue;
 
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	return dvalue->tag == DVALUE_TAG_UNDEF ? ATOM_UNDEFINED
-		: dvalue->tag == DVALUE_TAG_NULL ? ATOM_NULL
-		: dvalue->tag == DVALUE_TAG_TRUE ? ATOM_BOOL_TRUE
-		: dvalue->tag == DVALUE_TAG_FALSE ? ATOM_BOOL_FALSE
-		: dvalue->tag == DVALUE_TAG_FLOAT ? ATOM_FLOAT
-		: dvalue->tag == DVALUE_TAG_HEAPPTR ? ATOM_HEAPPTR
-		: dvalue->tag == DVALUE_TAG_INT ? ATOM_INT
-		: dvalue->tag == DVALUE_TAG_OBJ ? ATOM_OBJECT
-		: dvalue->tag == DVALUE_TAG_STRING ? ATOM_STRING
-		: ATOM_UNUSED;
+	return dvalue->tag;
 }
 
 double
@@ -262,7 +253,7 @@ msg_atom_float(const message_t* msg, size_t index)
 	dvalue_t* dvalue;
 
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	return dvalue->tag == DVALUE_TAG_FLOAT ? dvalue->float_value : 0.0;
+	return dvalue->tag == DVALUE_FLOAT ? dvalue->float_value : 0.0;
 }
 
 uint64_t
@@ -271,7 +262,7 @@ msg_atom_heapptr(const message_t* msg, size_t index)
 	dvalue_t* dvalue;
 
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	return dvalue->tag == DVALUE_TAG_HEAPPTR || dvalue->tag == DVALUE_TAG_OBJ
+	return dvalue->tag == DVALUE_HEAPPTR || dvalue->tag == DVALUE_OBJ
 		? dvalue->ptr_value : 0x0;
 }
 
@@ -281,7 +272,7 @@ msg_atom_int(const message_t* msg, size_t index)
 	dvalue_t* dvalue;
 	
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	return dvalue->tag == DVALUE_TAG_INT ? dvalue->int_value : 0;
+	return dvalue->tag == DVALUE_INT32 ? dvalue->int_value : 0;
 }
 
 const char*
@@ -290,14 +281,14 @@ msg_atom_string(const message_t* msg, size_t index)
 	dvalue_t* dvalue;
 
 	dvalue = *(dvalue_t**)vector_get(msg->dvalues, index);
-	return dvalue->tag == DVALUE_TAG_STRING ? dvalue->buffer.data
+	return dvalue->tag == DVALUE_STRING ? dvalue->buffer.data
 		: NULL;
 }
 
 static void
 free_dvalue(dvalue_t* dvalue)
 {
-	if (dvalue->tag == DVALUE_TAG_STRING || dvalue->tag == DVALUE_TAG_BUFFER)
+	if (dvalue->tag == DVALUE_STRING || dvalue->tag == DVALUE_BUF)
 		free(dvalue->buffer.data);
 	free(dvalue);
 }
@@ -361,54 +352,54 @@ receive_dvalue(remote_t* remote)
 	dvalue = calloc(1, sizeof(dvalue_t));
 	receive_bytes(remote, &ib, 1);
 	switch (ib) {
-	case DVALUE_TAG_EOM:
-	case DVALUE_TAG_REQ:
-	case DVALUE_TAG_REP:
-	case DVALUE_TAG_ERR:
-	case DVALUE_TAG_NFY:
+	case DVALUE_EOM:
+	case DVALUE_REQ:
+	case DVALUE_REP:
+	case DVALUE_ERR:
+	case DVALUE_NFY:
 		dvalue->tag = (enum dvalue_tag)ib;
 		break;
-	case DVALUE_TAG_INT:
+	case DVALUE_INT32:
 		receive_bytes(remote, data, 4);
-		dvalue->tag = DVALUE_TAG_INT;
+		dvalue->tag = DVALUE_INT32;
 		dvalue->int_value = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
-	case DVALUE_TAG_STRING:
+	case DVALUE_STRING:
 		receive_bytes(remote, data, 4);
 		dvalue->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_STRING;
+		dvalue->tag = DVALUE_STRING;
 		break;
-	case DVALUE_TAG_STR16:
+	case DVALUE_STRING16:
 		receive_bytes(remote, data, 2);
 		dvalue->buffer.size = (data[0] << 8) + data[1];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_STRING;
+		dvalue->tag = DVALUE_STRING;
 		break;
-	case DVALUE_TAG_BUFFER:
+	case DVALUE_BUF:
 		receive_bytes(remote, data, 4);
 		dvalue->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_BUFFER;
+		dvalue->tag = DVALUE_BUF;
 		break;
-	case DVALUE_TAG_BUF16:
+	case DVALUE_BUF16:
 		receive_bytes(remote, data, 2);
 		dvalue->buffer.size = (data[0] << 8) + data[1];
 		dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 		receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
-		dvalue->tag = DVALUE_TAG_BUFFER;
+		dvalue->tag = DVALUE_BUF;
 		break;
-	case DVALUE_TAG_UNUSED:
-	case DVALUE_TAG_UNDEF:
-	case DVALUE_TAG_NULL:
-	case DVALUE_TAG_TRUE:
-	case DVALUE_TAG_FALSE:
+	case DVALUE_UNUSED:
+	case DVALUE_UNDEF:
+	case DVALUE_NULL:
+	case DVALUE_TRUE:
+	case DVALUE_FALSE:
 		dvalue->tag = (enum dvalue_tag)ib;
 		break;
-	case DVALUE_TAG_FLOAT:
+	case DVALUE_FLOAT:
 		receive_bytes(remote, data, 8);
 		((uint8_t*)&dvalue->float_value)[0] = data[7];
 		((uint8_t*)&dvalue->float_value)[1] = data[6];
@@ -418,52 +409,52 @@ receive_dvalue(remote_t* remote)
 		((uint8_t*)&dvalue->float_value)[5] = data[2];
 		((uint8_t*)&dvalue->float_value)[6] = data[1];
 		((uint8_t*)&dvalue->float_value)[7] = data[0];
-		dvalue->tag = DVALUE_TAG_FLOAT;
+		dvalue->tag = DVALUE_FLOAT;
 		break;
-	case DVALUE_TAG_OBJ:
+	case DVALUE_OBJ:
 		receive_bytes(remote, data, 1);
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
-		dvalue->tag = DVALUE_TAG_OBJ;
+		dvalue->tag = DVALUE_OBJ;
 		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
-	case DVALUE_TAG_PTR:
+	case DVALUE_PTR:
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
-		dvalue->tag = DVALUE_TAG_PTR;
+		dvalue->tag = DVALUE_PTR;
 		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
-	case DVALUE_TAG_LIGHTFUNC:
+	case DVALUE_LIGHTFUNC:
 		receive_bytes(remote, data, 2);
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
-		dvalue->tag = DVALUE_TAG_LIGHTFUNC;
+		dvalue->tag = DVALUE_LIGHTFUNC;
 		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
-	case DVALUE_TAG_HEAPPTR:
+	case DVALUE_HEAPPTR:
 		receive_bytes(remote, &remote->ptr_size, 1);
 		receive_bytes(remote, data, remote->ptr_size);
-		dvalue->tag = DVALUE_TAG_HEAPPTR;
+		dvalue->tag = DVALUE_HEAPPTR;
 		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&dvalue->ptr_value)[i] = data[j];
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
-			dvalue->tag = DVALUE_TAG_STRING;
+			dvalue->tag = DVALUE_STRING;
 			dvalue->buffer.size = ib - 0x60;
 			dvalue->buffer.data = calloc(1, dvalue->buffer.size + 1);
 			receive_bytes(remote, dvalue->buffer.data, dvalue->buffer.size);
 		}
 		else if (ib >= 0x80 && ib <= 0xBF) {
-			dvalue->tag = DVALUE_TAG_INT;
+			dvalue->tag = DVALUE_INT32;
 			dvalue->int_value = ib - 0x80;
 		}
 		else if (ib >= 0xC0) {
 			receive_bytes(remote, data, 1);
-			dvalue->tag = DVALUE_TAG_INT;
+			dvalue->tag = DVALUE_INT32;
 			dvalue->int_value = ((ib - 0xC0) << 8) + data[0];
 		}
 		else
@@ -485,39 +476,39 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 	ptrdiff_t i, j;
 
 	switch (dvalue->tag) {
-	case DVALUE_TAG_EOM:
-	case DVALUE_TAG_REQ:
-	case DVALUE_TAG_REP:
-	case DVALUE_TAG_ERR:
-	case DVALUE_TAG_NFY:
+	case DVALUE_EOM:
+	case DVALUE_REQ:
+	case DVALUE_REP:
+	case DVALUE_ERR:
+	case DVALUE_NFY:
 		send_dvalue_ib(remote, dvalue->tag);
 		break;
-	case DVALUE_TAG_INT:
+	case DVALUE_INT32:
 		data[0] = (uint8_t)(dvalue->int_value >> 24 & 0xFF);
 		data[1] = (uint8_t)(dvalue->int_value >> 16 & 0xFF);
 		data[2] = (uint8_t)(dvalue->int_value >> 8 & 0xFF);
 		data[3] = (uint8_t)(dvalue->int_value & 0xFF);
-		send_dvalue_ib(remote, DVALUE_TAG_INT);
+		send_dvalue_ib(remote, DVALUE_INT32);
 		dyad_write(remote->socket, data, 4);
 		break;
-	case DVALUE_TAG_STRING:
+	case DVALUE_STRING:
 		str_length = (uint32_t)strlen(dvalue->buffer.data);
 		data[0] = (uint8_t)(str_length >> 24 & 0xFF);
 		data[1] = (uint8_t)(str_length >> 16 & 0xFF);
 		data[2] = (uint8_t)(str_length >> 8 & 0xFF);
 		data[3] = (uint8_t)(str_length & 0xFF);
-		send_dvalue_ib(remote, DVALUE_TAG_STRING);
+		send_dvalue_ib(remote, DVALUE_STRING);
 		dyad_write(remote->socket, data, 4);
 		dyad_write(remote->socket, dvalue->buffer.data, (int)str_length);
 		break;
-	case DVALUE_TAG_UNUSED:
-	case DVALUE_TAG_UNDEF:
-	case DVALUE_TAG_NULL:
-	case DVALUE_TAG_TRUE:
-	case DVALUE_TAG_FALSE:
+	case DVALUE_UNUSED:
+	case DVALUE_UNDEF:
+	case DVALUE_NULL:
+	case DVALUE_TRUE:
+	case DVALUE_FALSE:
 		send_dvalue_ib(remote, dvalue->tag);
 		break;
-	case DVALUE_TAG_FLOAT:
+	case DVALUE_FLOAT:
 		data[0] = ((uint8_t*)&dvalue->float_value)[7];
 		data[1] = ((uint8_t*)&dvalue->float_value)[6];
 		data[2] = ((uint8_t*)&dvalue->float_value)[5];
@@ -526,18 +517,18 @@ send_dvalue(remote_t* remote, const dvalue_t* dvalue)
 		data[5] = ((uint8_t*)&dvalue->float_value)[2];
 		data[6] = ((uint8_t*)&dvalue->float_value)[1];
 		data[7] = ((uint8_t*)&dvalue->float_value)[0];
-		send_dvalue_ib(remote, DVALUE_TAG_FLOAT);
+		send_dvalue_ib(remote, DVALUE_FLOAT);
 		dyad_write(remote->socket, data, 8);
 		break;
-	case DVALUE_TAG_HEAPPTR:
+	case DVALUE_HEAPPTR:
 		for (i = 0, j = remote->ptr_size - 1; j >= 0; ++i, --j)
 			data[i] = ((uint8_t*)&dvalue->ptr_value)[j];
-		send_dvalue_ib(remote, DVALUE_TAG_HEAPPTR);
+		send_dvalue_ib(remote, DVALUE_HEAPPTR);
 		dyad_write(remote->socket, &remote->ptr_size, 1);
 		dyad_write(remote->socket, data, remote->ptr_size);
 		break;
 	default:
-		send_dvalue_ib(remote, DVALUE_TAG_UNUSED);
+		send_dvalue_ib(remote, DVALUE_UNUSED);
 	}
 }
 
@@ -546,15 +537,15 @@ send_dvalue_ib(remote_t* remote, enum dvalue_tag tag)
 {
 	uint8_t ib;
 
-	ib = tag == DVALUE_TAG_EOM ? 0x00
-		: tag == DVALUE_TAG_REQ ? 0x01
-		: tag == DVALUE_TAG_REP ? 0x02
-		: tag == DVALUE_TAG_ERR ? 0x03
-		: tag == DVALUE_TAG_NFY ? 0x04
-		: tag == DVALUE_TAG_INT ? 0x10
-		: tag == DVALUE_TAG_STRING ? 0x11
-		: tag == DVALUE_TAG_FLOAT ? 0x1A
-		: tag == DVALUE_TAG_HEAPPTR ? 0x1E
+	ib = tag == DVALUE_EOM ? 0x00
+		: tag == DVALUE_REQ ? 0x01
+		: tag == DVALUE_REP ? 0x02
+		: tag == DVALUE_ERR ? 0x03
+		: tag == DVALUE_NFY ? 0x04
+		: tag == DVALUE_INT32 ? 0x10
+		: tag == DVALUE_STRING ? 0x11
+		: tag == DVALUE_FLOAT ? 0x1A
+		: tag == DVALUE_HEAPPTR ? 0x1E
 		: 0x15;
 	dyad_write(remote->socket, &ib, 1);
 }

@@ -500,16 +500,16 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, bool wan
 	size_t      idx;
 	message_t*  req;
 	
-	switch (msg_atom_type(message, index)) {
-	case ATOM_UNDEFINED: printf("undefined"); break;
-	case ATOM_NULL: printf("null"); break;
-	case ATOM_BOOL_TRUE: printf("true"); break;
-	case ATOM_BOOL_FALSE: printf("false"); break;
-	case ATOM_FLOAT: printf("%g", msg_atom_float(message, index)); break;
-	case ATOM_HEAPPTR: printf("addr:0x%016"PRIx64, msg_atom_heapptr(message, index)); break;
-	case ATOM_INT: printf("%d", msg_atom_int(message, index)); break;
-	case ATOM_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
-	case ATOM_OBJECT:
+	switch (msg_atom_tag(message, index)) {
+	case DVALUE_UNDEF: printf("undefined"); break;
+	case DVALUE_NULL: printf("null"); break;
+	case DVALUE_TRUE: printf("true"); break;
+	case DVALUE_FALSE: printf("false"); break;
+	case DVALUE_FLOAT: printf("%g", msg_atom_float(message, index)); break;
+	case DVALUE_HEAPPTR: printf("addr:0x%016"PRIx64, msg_atom_heapptr(message, index)); break;
+	case DVALUE_INT32: printf("%d", msg_atom_int(message, index)); break;
+	case DVALUE_STRING: printf("\"%s\"", msg_atom_string(message, index)); break;
+	case DVALUE_OBJ:
 		if (!want_expand_obj)
 			printf("{...}");
 		else {

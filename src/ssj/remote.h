@@ -8,42 +8,27 @@ typedef struct message message_t;
 typedef
 enum dvalue_tag
 {
-	DVALUE_TAG_EOM = 0x00,
-	DVALUE_TAG_REQ = 0x01,
-	DVALUE_TAG_REP = 0x02,
-	DVALUE_TAG_ERR = 0x03,
-	DVALUE_TAG_NFY = 0x04,
-	DVALUE_TAG_INT = 0x10,
-	DVALUE_TAG_STRING = 0x11,
-	DVALUE_TAG_STR16 = 0x12,
-	DVALUE_TAG_BUFFER = 0x13,
-	DVALUE_TAG_BUF16 = 0x14,
-	DVALUE_TAG_UNUSED = 0x15,
-	DVALUE_TAG_UNDEF = 0x16,
-	DVALUE_TAG_NULL = 0x17,
-	DVALUE_TAG_TRUE = 0x18,
-	DVALUE_TAG_FALSE = 0x19,
-	DVALUE_TAG_FLOAT = 0x1A,
-	DVALUE_TAG_OBJ = 0x1B,
-	DVALUE_TAG_PTR = 0x1C,
-	DVALUE_TAG_LIGHTFUNC = 0x1D,
-	DVALUE_TAG_HEAPPTR = 0x1E,
+	DVALUE_EOM = 0x00,
+	DVALUE_REQ = 0x01,
+	DVALUE_REP = 0x02,
+	DVALUE_ERR = 0x03,
+	DVALUE_NFY = 0x04,
+	DVALUE_INT32 = 0x10,
+	DVALUE_STRING = 0x11,
+	DVALUE_STRING16 = 0x12,
+	DVALUE_BUF = 0x13,
+	DVALUE_BUF16 = 0x14,
+	DVALUE_UNUSED = 0x15,
+	DVALUE_UNDEF = 0x16,
+	DVALUE_NULL = 0x17,
+	DVALUE_TRUE = 0x18,
+	DVALUE_FALSE = 0x19,
+	DVALUE_FLOAT = 0x1A,
+	DVALUE_OBJ = 0x1B,
+	DVALUE_PTR = 0x1C,
+	DVALUE_LIGHTFUNC = 0x1D,
+	DVALUE_HEAPPTR = 0x1E,
 } dvalue_tag_t;
-
-typedef
-enum atom_type
-{
-	ATOM_UNUSED,
-	ATOM_UNDEFINED,
-	ATOM_NULL,
-	ATOM_BOOL_TRUE,
-	ATOM_BOOL_FALSE,
-	ATOM_FLOAT,
-	ATOM_HEAPPTR,
-	ATOM_INT,
-	ATOM_OBJECT,
-	ATOM_STRING,
-} atom_type_t;
 
 typedef
 enum msg_class
@@ -69,7 +54,7 @@ void          msg_add_float     (message_t* msg, double value);
 void          msg_add_heapptr   (message_t* msg, uint64_t value);
 void          msg_add_int       (message_t* msg, int32_t value);
 void          msg_add_string    (message_t* msg, const char* value);
-atom_type_t   msg_atom_type     (const message_t* msg, size_t index);
+dvalue_tag_t  msg_atom_tag      (const message_t* msg, size_t index);
 double        msg_atom_float    (const message_t* msg, size_t index);
 uint64_t      msg_atom_heapptr  (const message_t* msg, size_t index);
 int32_t       msg_atom_int      (const message_t* msg, size_t index);

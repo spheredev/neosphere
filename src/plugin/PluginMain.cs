@@ -49,6 +49,14 @@ namespace minisphere.Gdk
             PluginManager.Core.UnloadProject += on_UnloadProject;
         }
 
+        public void ShutDown()
+        {
+            PluginManager.Core.UnloadProject -= on_UnloadProject;
+            PluginManager.Core.RemoveMenuItem(_msphereApiReferenceItem);
+            PluginManager.Core.RemoveMenuItem(_cellApiReferenceItem);
+            PluginManager.UnregisterAll(this);
+        }
+
         private void msphereApiReferenceItem_Click(object sender, EventArgs e)
         {
             string filePath = Path.Combine(Conf.GdkPath, "documentation", "minisphere-api.txt");
@@ -59,14 +67,6 @@ namespace minisphere.Gdk
         {
             string filePath = Path.Combine(Conf.GdkPath, "documentation", "cell-api.txt");
             PluginManager.Core.OpenFile(filePath);
-        }
-
-        public void ShutDown()
-        {
-            PluginManager.Core.UnloadProject -= on_UnloadProject;
-            PluginManager.Core.RemoveMenuItem(_msphereApiReferenceItem);
-            PluginManager.Core.RemoveMenuItem(_cellApiReferenceItem);
-            PluginManager.UnregisterAll(this);
         }
 
         private void on_UnloadProject(object sender, EventArgs e)

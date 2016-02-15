@@ -117,12 +117,9 @@ namespace minisphere.Gdk.Debugger
                 Panes.Errors.Clear();
                 Panes.Inspector.Clear();
 
-                Panes.Console.Print(string.Format("minisphere GDK for Sphere Studio"));
+                Panes.Console.Print(string.Format("SSJ2 " + plugin.Version + " Sphere GUI debugger"));
+                Panes.Console.Print(string.Format("An interactive JS debugger for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2016 Fat Cerberus"));
-                Panes.Console.Print("");
-                Panes.Console.Print("Debug Target:");
-                Panes.Console.Print(string.Format("  {0}", Duktape.TargetID));
-                Panes.Console.Print(string.Format("  Duktape {0}", Duktape.Version));
                 Panes.Console.Print("");
 
                 PluginManager.Core.Docking.Show(Panes.Inspector);
