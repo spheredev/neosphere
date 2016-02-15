@@ -12,24 +12,20 @@ static char* fslurp    (const char* filename);
 source_t*
 load_source(const char* filename, const path_t* source_path)
 {
-	path_t*    full_path;
-	FILE*      h_file = NULL;
-	lstring_t* line;
-	vector_t*  lines;
-	source_t*  source = NULL;
-	char*      text;
+	path_t*   full_path;
+	FILE*     h_file = NULL;
+	vector_t* lines;
+	source_t* source = NULL;
+	char*     text;
 
 	if (source_path == NULL)
 		return NULL;
 	full_path = path_rebase(path_new(filename), source_path);
 	if (!(h_file = fopen(path_cstr(full_path), "rb")))
         goto on_error;
-	lines = vector_new(sizeof(lstring_t*));
-    while (text = freadline(h_file)) {
-        line = lstr_new(text);
-        vector_push(lines, &line);
-        free(text);
-    }
+	lines = vector_new(sizeof(char*));
+    while (text = freadline(h_file))
+        vector_push(lines, &text);
 
 	source = calloc(1, sizeof(source_t));
 	source->lines = lines;
@@ -45,23 +41,23 @@ on_error:
 void
 free_source(source_t* source)
 {
-	iter_t     it;
-	lstring_t* *p_line;
+	iter_t it;
+	char*  *p_line;
 
 	if (source == NULL) return;
 	it = vector_enum(source->lines);
 	while (p_line = vector_next(&it))
-        lstr_free(*p_line);
+        free(*p_line);
 	vector_free(source->lines);
 	free(source);
 }
 
-const lstring_t*
-get_source_line(const source_t* source, int index)
+const char*
+get_source_line(const source_t* source, int line_index)
 {
-	if (index < 0 || index >= get_source_size(source))
+	if (line_index < 0 || line_index >= get_source_size(source))
 		return NULL;
-	return *(lstring_t**)vector_get(source->lines, index);
+	return *(char**)vector_get(source->lines, line_index);
 }
 
 int

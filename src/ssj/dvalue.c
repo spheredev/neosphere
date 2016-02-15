@@ -7,6 +7,8 @@ struct dvalue
 {
 	enum dvalue_tag tag;
 	union {
+		double float_value;
+		int    int_value;
 		struct {
 			void*  data;
 			size_t size;
@@ -15,8 +17,6 @@ struct dvalue
 			uintmax_t value;
 			uint8_t   size;
 		} ptr;
-		double    float_value;
-		int       int_value;
 	};
 };
 

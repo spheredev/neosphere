@@ -242,13 +242,13 @@ print_locals(session_t* sess, int frame)
 void
 print_source(session_t* sess, const char* filename, int line_no, int window)
 {
-	bool             is_next_line;
-	int              line_count;
-	int              median;
-	const char*      prefix;
-	source_t*        source;
-	int              start, end;
-	const lstring_t* text;
+	bool        is_next_line;
+	int         line_count;
+	int         median;
+	const char* prefix;
+	source_t*   source;
+	int         start, end;
+	const char* text;
 
 	int i;
 
@@ -264,9 +264,9 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 			is_next_line = i == sess->line_no - 1 && strcmp(filename, sess->filename) == 0;
 			prefix = is_next_line ? ">>" : "  ";
 			if (window > 1)
-				printf("\33[36;1m%s \33[30;1m%4d\33[m %s\n", prefix, i + 1, lstr_cstr(text));
+				printf("\33[36;1m%s \33[30;1m%4d\33[m %s\n", prefix, i + 1, text);
 			else
-				printf("\33[30;1m%d:\33[m %s\n", i + 1, lstr_cstr(text));
+				printf("\33[30;1m%d:\33[m %s\n", i + 1, text);
 		}
 		free_source(source);
 	}

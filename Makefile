@@ -106,17 +106,15 @@ bin/spherun:
 bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared \
-	   src/cell/main.c \
 	   src/shared/duktape.c src/shared/path.c src/shared/vector.c \
-	   src/cell/assets.c src/cell/build.c src/cell/spk_writer.c \
+	   src/cell/main.c src/cell/assets.c src/cell/build.c src/cell/spk_writer.c \
 	   src/cell/utility.c \
 	   -lz -lm
 
 bin/ssj:
 	mkdir -p bin
 	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared \
-	   src/ssj/main.c \
-	   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
-	   src/shared/unicode.c src/shared/vector.c \
-	   src/ssj/client.c src/ssj/command.c src/ssj/dvalue.c src/ssj/file_line.c \
-	   src/ssj/message.c src/ssj/session.c src/ssj/socket.c src/ssj/source.c
+	   src/shared/dyad.c src/shared/path.c src/shared/vector.c \
+	   src/ssj/main.c src/ssj/client.c src/ssj/command.c src/ssj/dvalue.c \
+	   src/ssj/file_line.c src/ssj/message.c src/ssj/session.c src/ssj/socket.c \
+	   src/ssj/source.c
