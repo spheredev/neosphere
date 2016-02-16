@@ -20,6 +20,15 @@ struct dvalue
 	};
 };
 
+static void
+print_duk_ptr(duk_ptr_t ptr)
+{
+	if (ptr.size == 8)  // x64 pointer
+		printf("%016"PRIx64"h", (uint64_t)ptr.value);
+	else if (ptr.size == 4)  // x86 pointer
+		printf("%08"PRIx32"h", (uint32_t)ptr.value);
+}
+
 dvalue_t*
 dvalue_new(dvalue_tag_t tag)
 {
@@ -132,47 +141,37 @@ dvalue_as_int(const dvalue_t* obj)
 }
 
 void
-dvalue_print(const dvalue_t* obj)
+dvalue_print(const dvalue_t* obj, bool is_verbose)
 {
-	duk_ptr_t ptr;
-	
 	switch (dvalue_tag(obj)) {
 	case DVALUE_UNDEF: printf("undefined"); break;
 	case DVALUE_UNUSED: printf("unused"); break;
 	case DVALUE_NULL: printf("null"); break;
 	case DVALUE_TRUE: printf("true"); break;
 	case DVALUE_FALSE: printf("false"); break;
-	case DVALUE_FLOAT: printf("%g", dvalue_as_float(obj)); break;
-	case DVALUE_INT: printf("%d", dvalue_as_int(obj)); break;
-	case DVALUE_STRING: printf("\"%s\"", dvalue_as_cstr(obj)); break;
-	case DVALUE_BUF: printf("{ buf }"); break;
+	case DVALUE_FLOAT: printf("%g", obj->float_value); break;
+	case DVALUE_INT: printf("%d", obj->int_value); break;
+	case DVALUE_STRING: printf("\"%s\"", (char*)obj->buffer.data); break;
+	case DVALUE_BUF: printf("buf:%zd-bytes", obj->buffer.size); break;
 	case DVALUE_HEAPPTR:
-		ptr = dvalue_as_ptr(obj);
-		if (ptr.size == 8)  // x64 pointer
-			printf("heapptr:%016"PRIx64"h", (uint64_t)ptr.value);
-		else if (ptr.size == 4)  // x86 pointer
-			printf("heapptr:%08"PRIx32"h", (uint32_t)ptr.value);
+		printf("heap:");
+		print_duk_ptr(dvalue_as_ptr(obj));
 		break;
 	case DVALUE_LIGHTFUNC:
-		ptr = dvalue_as_ptr(obj);
-		if (ptr.size == 8)  // x64 pointer
-			printf("lightfunc:%016"PRIx64"h", (uint64_t)ptr.value);
-		else if (ptr.size == 4)  // x86 pointer
-			printf("lightfunc:%08"PRIx32"h", (uint32_t)ptr.value);
+		printf("lightfunc:");
+		print_duk_ptr(dvalue_as_ptr(obj));
 		break;
 	case DVALUE_OBJ:
-		ptr = dvalue_as_ptr(obj);
-		if (ptr.size == 8)  // x64 pointer
-			printf("obj:%016"PRIx64"h", (uint64_t)ptr.value);
-		else if (ptr.size == 4)  // x86 pointer
-			printf("obj:%08"PRIx32"h", (uint32_t)ptr.value);
+		if (!is_verbose)
+			printf("{...}");
+		else {
+			printf("obj:");
+			print_duk_ptr(dvalue_as_ptr(obj));
+		}
 		break;
 	case DVALUE_PTR:
-		ptr = dvalue_as_ptr(obj);
-		if (ptr.size == 8)  // x64 pointer
-			printf("ptr:%016"PRIx64"h", (uint64_t)ptr.value);
-		else if (ptr.size == 4)  // x86 pointer
-			printf("ptr:%08"PRIx32"h", (uint32_t)ptr.value);
+		printf("ptr:");
+		print_duk_ptr(dvalue_as_ptr(obj));
 		break;
 	default:
 		printf("*munch*");

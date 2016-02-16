@@ -48,7 +48,7 @@ const char*  dvalue_as_cstr     (const dvalue_t* obj);
 duk_ptr_t    dvalue_as_ptr      (const dvalue_t* obj);
 double       dvalue_as_float    (const dvalue_t* obj);
 int          dvalue_as_int      (const dvalue_t* obj);
-void         dvalue_print       (const dvalue_t* obj);
+void         dvalue_print       (const dvalue_t* obj, bool is_verbose);
 dvalue_t*    dvalue_recv        (socket_t* socket);
 void         dvalue_send        (const dvalue_t* obj, socket_t* socket);
 

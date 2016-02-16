@@ -233,7 +233,7 @@ print_locals(session_t* sess, int frame)
 		printf("no locals in function \33[36m%s\33[m.\n", sess->function);
 	for (i = 0; i < num_vars; ++i) {
 		printf("var \33[36m%s\33[m = ", msg_atom_string(response, i * 2));
-		dvalue_print(msg_atom_dvalue(response, i * 2 + 1));
+		dvalue_print(msg_atom_dvalue(response, i * 2 + 1), false);
 		printf("\n");
 	}
 	msg_free(response);
@@ -508,7 +508,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 	message_t*   req;
 	
 	if (msg_atom_tag(message, index) != DVALUE_OBJ || obj_verbosity <= 0)
-		dvalue_print(msg_atom_dvalue(message, index));
+		dvalue_print(msg_atom_dvalue(message, index), obj_verbosity >= 2);
 	else {
 		heapptr = dvalue_as_ptr(msg_atom_dvalue(message, index));
 		req = msg_new(MSG_CLASS_REQ);
@@ -525,15 +525,15 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 				is_accessor = (flags & 0x0008) != 0x0;
 				is_metadata = (flags & 0x0200) != 0x0;
 				printf("   %s \33[36m", is_metadata ? "meta" : is_accessor ? "acc" : "prop");
-				print_msg_atom(sess, req, idx + 1, false);
+				dvalue_print(msg_atom_dvalue(req, idx + 1), false);
 				printf("\33[m = ");
-				if (!(flags & 0x008))
-					print_msg_atom(sess, req, idx + 2, false);
+				if (!is_accessor)
+					dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
 				else {
 					printf("{ get: ");
-					print_msg_atom(sess, req, idx + 2, false);
+					dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
 					printf(", set: ");
-					print_msg_atom(sess, req, idx + 3, false);
+					dvalue_print(msg_atom_dvalue(req, idx + 3), obj_verbosity >= 2);
 					printf("}");
 				}
 				printf("\33[m\n");
