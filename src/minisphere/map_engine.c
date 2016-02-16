@@ -333,6 +333,8 @@ shutdown_map_engine(void)
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
 	free(s_delay_scripts);
+	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
+		free_script(s_def_scripts[i]);
 	free_script(s_update_script);
 	free_script(s_render_script);
 	free_map(s_map);

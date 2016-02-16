@@ -20,6 +20,9 @@ v3.0.0 - TBD
   from 'msphere' to 'spherun'. This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward. The end-user engine has
   been renamed as well, to 'minisphere'.
+* Fixes a bunch of memory leaks in both Cell and minisphere, including one in
+  Cell's packaging code which could have caused it to run out of memory during
+  the final compression step.
 * The 'sphere' global object alias has been renamed to 'global', which is more
   obvious and matches Node.js. Any code relying on the old alias will need to
   be updated for minisphere 3.0.

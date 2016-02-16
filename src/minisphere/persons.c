@@ -168,6 +168,8 @@ shutdown_persons_manager(void)
 	
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);
+	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
+		free_script(s_def_scripts[i]);
 	free(s_persons);
 }
 
