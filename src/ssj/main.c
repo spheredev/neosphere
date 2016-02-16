@@ -50,7 +50,7 @@ launch_minisphere(path_t* game_path)
 	HMODULE h_module;
 	TCHAR   pathname[MAX_PATH];
 
-	printf("spherun \33[36;1m%s\33[m... ", path_cstr(game_path));
+	printf("starting \33[36m%s\33[m... ", path_cstr(game_path));
 	fflush(stdout);
 	h_module = GetModuleHandle(NULL);
 	GetModuleFileName(h_module, pathname, MAX_PATH);

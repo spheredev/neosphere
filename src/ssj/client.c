@@ -35,8 +35,8 @@ parse_handshake(client_t* obj)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf("   inferior is \33[36;1m%s\33[m\n", next_token);
-	printf("   duktape \33[36;1m%s\33[m\n", token);
+	printf("   inferior is \33[36m%s\33[m\n", next_token);
+	printf("   duktape \33[36m%s\33[m\n", token);
 
 	return true;
 
@@ -64,7 +64,7 @@ client_connect(const char* hostname, int port)
 
 	obj = calloc(1, sizeof(client_t));
 	
-	printf("connecting to \33[36;1m%s:%d\33[m... ", hostname, port);
+	printf("connecting to \33[36m%s:%d\33[m... ", hostname, port);
 	fflush(stdout);
 	if (!(obj->socket = socket_connect(hostname, port, 30.0)))
 		goto on_error;

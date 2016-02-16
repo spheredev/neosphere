@@ -92,7 +92,7 @@ new_session(const char* hostname, int port)
 		printf("\33[31;1mnone found.\33[m\n");
 	else {
 		printf("OK.\n");
-		printf("   sources in \33[33;1m%s\33[m\n", path_cstr(origin));
+		printf("   sources in \33[33m%s\33[m\n", path_cstr(origin));
 	}
 	msg_free(rep);
 	session->source_path = origin;
@@ -162,7 +162,7 @@ print_backtrace(session_t* sess, int frame, bool show_all)
 			if (i == frame || show_all) {
 				display_name = function_name[0] != '\0'
 					? strnewf("%s()", function_name) : strdup("anon");
-				printf("\33[33;1m%s\33[m #%2d: \33[36;1m%s\33[m at \33[36;1m%s:%d\33[m\n",
+				printf("\33[33m%s\33[m #%2d: \33[36m%s\33[m at \33[36m%s:%d\33[m\n",
 					i == frame ? ">>" : "  ",
 					i, display_name, filename, line_num);
 				free(display_name);
@@ -230,7 +230,7 @@ print_locals(session_t* sess, int frame)
 	msg_add_int(request, -(1 + frame));
 	response = converse(sess, request);
 	if ((num_vars = msg_len(response) / 2) == 0)
-		printf("no locals in function \33[36;1m%s\33[m.\n", sess->function);
+		printf("no locals in function \33[36m%s\33[m.\n", sess->function);
 	for (i = 0; i < num_vars; ++i) {
 		printf("var \33[36m%s\33[m = ", msg_atom_string(response, i * 2));
 		dvalue_print(msg_atom_dvalue(response, i * 2 + 1));
@@ -264,7 +264,7 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 			is_next_line = i == sess->line_no - 1 && strcmp(filename, sess->filename) == 0;
 			prefix = is_next_line ? ">>" : "  ";
 			if (window > 1)
-				printf("\33[36;1m%s \33[30;1m%4d\33[m %s\n", prefix, i + 1, text);
+				printf("\33[36m%s \33[30;1m%4d\33[m %s\n", prefix, i + 1, text);
 			else
 				printf("\33[30;1m%d:\33[m %s\n", i + 1, text);
 		}
