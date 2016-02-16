@@ -98,9 +98,9 @@ bool
 spk_add_file(spk_writer_t* writer, const char* filename, const char* spk_pathname)
 {
 	uLong            bufsize;
-	void*            data = NULL;
 	struct spk_entry idx_entry;
 	FILE*            file;
+	void*            file_data = NULL;
 	long             file_size;
 	long             offset;
 	void*            packdata;
@@ -110,13 +110,15 @@ spk_add_file(spk_writer_t* writer, const char* filename, const char* spk_pathnam
 	fseek(file, 0, SEEK_END);
 	file_size = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	if (fread(data = malloc(file_size), 1, file_size, file) != file_size)
+	file_data = malloc(file_size);
+	if (fread(file_data, 1, file_size, file) != file_size)
 		goto on_error;
 	fclose(file);
 	packdata = malloc(bufsize = compressBound(file_size));
-	compress(packdata, &bufsize, data, file_size);
+	compress(packdata, &bufsize, file_data, file_size);
 	offset = ftell(writer->file);
 	fwrite(packdata, bufsize, 1, writer->file);
+	free(file_data);
 	free(packdata);
 
 	idx_entry.pathname = strdup(spk_pathname);
@@ -127,6 +129,6 @@ spk_add_file(spk_writer_t* writer, const char* filename, const char* spk_pathnam
 	return true;
 
 on_error:
-	free(data);
+	free(file_data);
 	return false;
 }
