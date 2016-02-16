@@ -131,6 +131,7 @@ free_build(build_t* build)
 		path_free(p_inst->path);
 	}
 	vector_free(build->installs);
+	path_free(build->staging_path);
 	path_free(build->in_path);
 	path_free(build->out_path);
 	spk_close(build->spk);

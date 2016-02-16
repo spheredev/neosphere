@@ -85,6 +85,7 @@ free_asset(asset_t* asset)
 	switch (asset->type) {
 	case ASSET_RAW:
 		free(asset->data.buffer);
+		break;
 	case ASSET_FILE:
 		path_free(asset->file.path);
 		break;

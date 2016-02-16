@@ -162,9 +162,10 @@ path_append(path_t* path, const char* pathname)
 	// normalize path to forward slash delimiters
 	parse = strdup(pathname);
 	p = parse;
-	do {
+	while (*p != '\0') {
 		if (*p == '\\') *p = '/';
-	} while (*++p != '\0');
+		++p;
+	}
 
 	// parse the filename out of the path, if any
 	if (!(p_filename = strrchr(parse, '/')))
