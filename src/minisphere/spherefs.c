@@ -184,6 +184,7 @@ free_sandbox(sandbox_t* fs)
 	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
 	if (fs->type == SPHEREFS_SPK)
 		free_spk(fs->spk);
+	lstr_free(fs->sourcemap);
 	path_free(fs->script_path);
 	path_free(fs->root_path);
 	lstr_free(fs->manifest);
