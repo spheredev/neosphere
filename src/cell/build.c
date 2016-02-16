@@ -85,21 +85,27 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	duk_push_c_function(build->duk, js_api_sgm, DUK_VARARGS);
 	duk_put_global_string(build->duk, "sgm");
 
-	// set up build harness
+	// set up build environment (ensure directory exists, etc.)
 	path_mkdir(out_path);
-	if (path_filename_cstr(out_path)
-		&& !(build->spk = spk_create(path_cstr(out_path))))
-	{
-		fprintf(stderr, "error: internal: failed to create SPK '%s'\n", path_cstr(out_path));
-		goto on_error;
+	if (path_filename_cstr(out_path)) {
+		build->spk = spk_create(path_cstr(out_path));
+		if (build->spk == NULL) {
+			fprintf(stderr, "ERROR: unable to create package '%s'\n", path_cstr(out_path));
+			goto on_error;
+		}
 	}
+
 	build->want_source_map = want_source_map;
 	build->targets = vector_new(sizeof(target_t*));
 	build->installs = vector_new(sizeof(struct install));
 	build->in_path = path_resolve(path_dup(in_path), NULL);
 	build->out_path = path_resolve(path_dup(out_path), NULL);
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
-	
+
+	if (build->out_path == NULL) {
+		fprintf(stderr, "ERROR: unable to create '%s'\n", path_cstr(out_path));
+		goto on_error;
+	}
 	return build;
 
 on_error:
