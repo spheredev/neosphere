@@ -155,7 +155,7 @@ evaluate_rule(build_t* build, const char* name)
 	build->rule = strdup(name);
 	
 	// process build script
-	emit_begin_op(build, "Processing Cellscript.js rule '%s'", name);
+	emit_begin_op(build, "processing Cellscript.js rule '%s'", name);
 	sprintf(func_name, "$%s", name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
@@ -248,11 +248,11 @@ run_build(build_t* build)
 		return false;
 	}
 
-	printf(": build %s '%s'\n", build->spk ? "package" : "distribution",
+	printf("   build %s '%s'\n", build->spk ? "package" : "distribution",
 		path_cstr(build->in_path));
 	
 	// build and install assets
-	printf("Compiling assets...");
+	printf("compiling assets...");
 	path_mkdir(build->staging_path);
 	n_assets = 0;
 	iter = vector_enum(build->targets);
@@ -261,15 +261,15 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf(": %s\n", path_cstr(get_object_path((*p_target)->asset)));
+			printf("   %s\n", path_cstr(get_object_path((*p_target)->asset)));
 			++n_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf(": %d asset(s) compiled\n", n_assets);
-		else printf(" Up-to-date.\n");
+	if (n_assets > 0) printf("   %d asset(s) compiled\n", n_assets);
+		else printf(" up-to-date.\n");
 
-	printf("Installing assets... ");
+	printf("installing assets... ");
 	n_assets = 0;
 	iter = vector_enum(build->installs);
 	while (p_inst = vector_next(&iter)) {
@@ -277,17 +277,17 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf(": %s\n", path_cstr(p_inst->path));
+			printf("   %s\n", path_cstr(p_inst->path));
 			++n_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf(": %d asset(s) installed\n", n_assets);
-		else printf(" Up-to-date.\n");
+	if (n_assets > 0) printf("   %d asset(s) installed\n", n_assets);
+		else printf(" up-to-date.\n");
 
 	// generate source map
 	if (build->want_source_map) {
-		printf("Generating source map... ");
+		printf("generating source map... ");
 		duk_push_object(build->duk);
 		duk_push_string(build->duk, path_cstr(build->in_path));
 		duk_put_prop_string(build->duk, -2, "origin");
@@ -322,7 +322,7 @@ run_build(build_t* build)
 	}
 
 	printf("%s -> %s\n", build->rule, path_cstr(build->out_path));
-	printf(": %d error(s), %d warning(s)\n", build->num_errors, build->num_warnings);
+	printf("   %d error(s), %d warning(s)\n", build->num_errors, build->num_warnings);
 
 	return true;
 }
