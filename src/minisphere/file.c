@@ -71,6 +71,7 @@ open_kev_file(sandbox_t* fs, const char* filename)
 		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
 		al_fclose(memfile);
+		free(slurp);
 	}
 	else {
 		console_log(3, "  '%s' doesn't exist", filename);

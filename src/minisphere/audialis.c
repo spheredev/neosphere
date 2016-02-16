@@ -260,7 +260,9 @@ free_sound(sound_t* sound)
 	free(sound->file_data);
 	if (sound->stream != NULL)
 		al_destroy_audio_stream(sound->stream);
+	free_mixer(sound->mixer);
 	free(sound->path);
+	free(sound);
 }
 
 bool

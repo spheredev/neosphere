@@ -60,7 +60,7 @@ evaluate_script(const char* filename)
 	const char*   extension;
 	sfs_file_t*   file = NULL;
 	path_t*       path;
-	lstring_t*    source;
+	lstring_t*    source_text = NULL;
 	const char*   source_name;
 	char*         slurp;
 	size_t        size;
@@ -70,7 +70,7 @@ evaluate_script(const char* filename)
 	if (!(slurp = sfs_fslurp(g_fs, path_cstr(path), NULL, &size)))
 		goto on_error;
 	source_name = get_source_pathname(path_cstr(path));
-	source = lstr_from_buf(slurp, size);
+	source_text = lstr_from_buf(slurp, size);
 	free(slurp);
 
 	// is it a CoffeeScript file? you know, I don't even like coffee.
@@ -81,7 +81,7 @@ evaluate_script(const char* filename)
 		if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
 			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "CoffeeScript compiler is missing (%s)", filename);
 		duk_get_prop_string(g_duk, -1, "compile");
-		duk_push_lstring_t(g_duk, source);
+		duk_push_lstring_t(g_duk, source_text);
 		duk_push_object(g_duk);
 		duk_push_string(g_duk, source_name);
 		duk_put_prop_string(g_duk, -2, "filename");
@@ -93,7 +93,7 @@ evaluate_script(const char* filename)
 		duk_remove(g_duk, -2);
 	}
 	else
-		duk_push_lstring_t(g_duk, source);
+		duk_push_lstring_t(g_duk, source_text);
 
 	// ready for launch in T-10...9...*munch*
 	duk_push_string(g_duk, source_name);
@@ -102,9 +102,11 @@ evaluate_script(const char* filename)
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	path_free(path);
+	lstr_free(source_text);
 	return true;
 
 on_error:
+	lstr_free(source_text);
 	if (!duk_is_error(g_duk, -1))
 		duk_push_error_object(g_duk, DUK_ERR_ERROR, "Script '%s' not found\n", filename);
 	return false;

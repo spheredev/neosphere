@@ -608,9 +608,9 @@ process_message(session_t* sess, const message_t* msg)
 			sess->is_attached = false;
 			flag = msg_atom_int(msg, 1);
 			if (flag == 0)
-				printf("\33[0;1mSSJ session has been detached.");
+				printf("\33[32;1mSSJ session has been detached.");
 			else
-				printf("\33[31;1mforced detach due to error in inferior.");
+				printf("\33[31;1mSSJ detached due to an error in inferior.");
 			printf("\33[m\n");
 			return false;
 		}

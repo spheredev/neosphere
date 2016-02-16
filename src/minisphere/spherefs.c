@@ -184,7 +184,9 @@ free_sandbox(sandbox_t* fs)
 	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
 	if (fs->type == SPHEREFS_SPK)
 		free_spk(fs->spk);
+	path_free(fs->script_path);
 	path_free(fs->root_path);
+	lstr_free(fs->manifest);
 	free(fs);
 }
 
@@ -292,6 +294,7 @@ list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool wa
 				if (al_get_fs_entry_mode(file_info) & type_flag)
 					vector_push(list, &filename);
 				path_free(file_path);
+				al_destroy_fs_entry(file_info);
 			}
 		}
 		al_destroy_fs_entry(fse);
@@ -315,10 +318,10 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 {
 	path_t*     dir_path;
 	sfs_file_t* file;
-	path_t*     file_path;
+	path_t*     file_path = NULL;
 
-	if (!(file = calloc(1, sizeof(sfs_file_t))))
-		goto on_error;
+	file = calloc(1, sizeof(sfs_file_t));
+	
 	if (!resolve_path(fs, filename, base_dir, &file_path, &file->fs_type))
 		goto on_error;
 	switch (file->fs_type) {
@@ -341,6 +344,7 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 	return file;
 
 on_error:
+	path_free(file_path);
 	free(file);
 	return NULL;
 }

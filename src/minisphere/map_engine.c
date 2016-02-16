@@ -959,7 +959,7 @@ change_map(const char* filename, bool preserve_persons)
 	person_t*          person;
 	struct map_person* person_info;
 	path_t*            path;
-	spriteset_t*       spriteset;
+	spriteset_t*       spriteset = NULL;
 
 	int i;
 
@@ -991,6 +991,7 @@ change_map(const char* filename, bool preserve_persons)
 			goto on_error;
 		if (!(person = create_person(lstr_cstr(person_info->name), spriteset, false, NULL)))
 			goto on_error;
+		free_spriteset(spriteset);
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
 		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
 		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
@@ -1037,6 +1038,7 @@ change_map(const char* filename, bool preserve_persons)
 	return true;
 
 on_error:
+	free_spriteset(spriteset);
 	free_map(s_map);
 	return false;
 }
