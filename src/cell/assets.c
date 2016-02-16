@@ -82,6 +82,13 @@ new_raw_asset(const path_t* name, const void* buffer, size_t size, time_t src_mt
 void
 free_asset(asset_t* asset)
 {
+	switch (asset->type) {
+	case ASSET_RAW:
+		free(asset->data.buffer);
+	case ASSET_FILE:
+		path_free(asset->file.path);
+		break;
+	}
 	path_free(asset->object_path);
 	path_free(asset->name);
 	free(asset);

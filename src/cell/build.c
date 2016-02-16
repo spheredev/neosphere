@@ -297,6 +297,7 @@ run_build(build_t* build)
 			path = path_resolve(path_dup(get_object_path(p_inst->target->asset)), build->in_path);
 			duk_push_string(build->duk, path_cstr(path));
 			duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
+			path_free(path);
 		}
 		duk_put_prop_string(build->duk, -2, "fileMap");
 		duk_json_encode(build->duk, -1);
@@ -424,6 +425,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 		? path_cat(path_dup(path), subpath)
 		: path_dup(path);
 	tinydir_open(&dir, path_cstr(full_path));
+	path_free(full_path);
 	dir.n_files;
 	while (dir.has_next) {
 		tinydir_readfile(&dir, &file_info);
@@ -504,7 +506,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 		path_append(out_path, path_filename_cstr(src_path));
 		spk_add_file(build->spk, path_cstr(src_path), path_cstr(out_path));
 		path_free(inst->path);
-		inst->path = path_dup(out_path);
+		inst->path = out_path;
 		*out_is_new = true;
 	}
 	return true;
@@ -600,6 +602,7 @@ js_api_files(duk_context* ctx)
 		duk_put_prop_index(ctx, -2, idx++);
 	}
 	vector_free(targets);
+	path_free(pattern);
 	return 1;
 }
 
