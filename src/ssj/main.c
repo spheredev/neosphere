@@ -38,6 +38,7 @@ main(int argc, char* argv[])
 	if (!cmdline->want_pause)
 		execute_next(session, EXEC_RESUME);
 	run_session(session);
+	end_session(session);
 	clients_deinit();
 	return EXIT_SUCCESS;
 }
@@ -92,7 +93,9 @@ launch_minisphere(path_t* game_path)
 	if (stat(path_cstr(path), &stat_buf) != 0)
 		goto on_error;
 	else {
-		if (fork() == 0) {
+		if (fork() != 0)
+			path_free(path);
+		else {
 			// suppress minisphere's stdout. this is kind of a hack for now; eventually
 			// I'd like to intermingle the engine's output with SSJ's, like in native
 			// debuggers e.g. GDB.

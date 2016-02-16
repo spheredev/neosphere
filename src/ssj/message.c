@@ -56,6 +56,7 @@ msg_free(message_t* obj)
 	iter = vector_enum(obj->dvalues);
 	while (p = vector_next(&iter))
 		dvalue_free(*p);
+	vector_free(obj->dvalues);
 	free(obj);
 }
 

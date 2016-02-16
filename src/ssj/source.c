@@ -23,6 +23,7 @@ load_source(const char* filename, const path_t* source_path)
 	full_path = path_rebase(path_new(filename), source_path);
 	if (!(h_file = fopen(path_cstr(full_path), "rb")))
         goto on_error;
+	path_free(full_path);
 	lines = vector_new(sizeof(char*));
     while (text = freadline(h_file))
         vector_push(lines, &text);

@@ -14,6 +14,7 @@ enum exec_op
 } exec_op_t;
 
 session_t* new_session       (const char* hostname, int port);
+void       end_session       (session_t* session);
 void       clear_breakpoint  (session_t* sess, const char* filename, int line_no);
 void       execute_next      (session_t* sess, exec_op_t op);
 void       print_backtrace   (session_t* sess, int frame, bool show_all);

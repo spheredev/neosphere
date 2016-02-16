@@ -10,18 +10,16 @@
 struct session
 {
 	bool      is_attached;
-	vector_t* backtrace;
 	char      cl_buffer[CL_BUFFER_SIZE];
 	client_t* client;
 	int       frame_index;
-	char*     function;
+	char*     function_name;
 	char*     filename;
 	bool      has_pc_changed;
 	bool      have_debug_info;
 	bool      is_stopped;
 	int       line_no;
 	uint8_t   ptr_size;
-	source_t* source;
 	path_t*   source_path;
 };
 
@@ -102,6 +100,16 @@ new_session(const char* hostname, int port)
 on_error:
 	free(session);
 	return NULL;
+}
+
+void
+end_session(session_t* sess)
+{
+	free(sess->filename);
+	free(sess->function_name);
+	path_free(sess->source_path);
+	client_close(sess->client);
+	free(sess);
 }
 
 void
@@ -230,7 +238,7 @@ print_locals(session_t* sess, int frame)
 	msg_add_int(request, -(1 + frame));
 	response = converse(sess, request);
 	if ((num_vars = msg_len(response) / 2) == 0)
-		printf("no locals in function \33[36m%s\33[m.\n", sess->function);
+		printf("no locals in function \33[36m%s\33[m.\n", sess->function_name);
 	for (i = 0; i < num_vars; ++i) {
 		printf("var \33[36m%s\33[m = ", msg_atom_string(response, i * 2));
 		dvalue_print(msg_atom_dvalue(response, i * 2 + 1), false);
@@ -568,17 +576,15 @@ process_message(session_t* sess, const message_t* msg)
 		switch (msg_atom_int(msg, 0)) {
 		case NFY_STATUS:
 			was_running = !sess->is_stopped;
-			free_source(sess->source);
 			free(sess->filename);
-			free(sess->function);
+			free(sess->function_name);
 			flag = msg_atom_int(msg, 1);
 			function_name = msg_atom_string(msg, 3);
 			sess->filename = strdup(msg_atom_string(msg, 2));
-			sess->function = function_name[0] != '\0'
+			sess->function_name = function_name[0] != '\0'
 				? strnewf("%s()", msg_atom_string(msg, 3))
 				: strdup("anon");
 			sess->line_no = msg_atom_int(msg, 4);
-			sess->source = load_source(sess->filename, sess->source_path);
 			sess->is_stopped = flag != 0;
 			if (sess->is_stopped && was_running)
 				sess->has_pc_changed = true;
