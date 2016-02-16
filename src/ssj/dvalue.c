@@ -154,24 +154,28 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 	case DVALUE_STRING: printf("\"%s\"", (char*)obj->buffer.data); break;
 	case DVALUE_BUF: printf("buf:%zd-bytes", obj->buffer.size); break;
 	case DVALUE_HEAPPTR:
-		printf("heap:");
+		printf("{ heap:\"");
 		print_duk_ptr(dvalue_as_ptr(obj));
+		printf("\" }");
 		break;
 	case DVALUE_LIGHTFUNC:
-		printf("lightfunc:");
+		printf("{ lightfunc:\"");
 		print_duk_ptr(dvalue_as_ptr(obj));
+		printf("\" }");
 		break;
 	case DVALUE_OBJ:
 		if (!is_verbose)
 			printf("{...}");
 		else {
-			printf("obj:");
+			printf("{ obj:\"");
 			print_duk_ptr(dvalue_as_ptr(obj));
+			printf("\" }");
 		}
 		break;
 	case DVALUE_PTR:
-		printf("ptr:");
+		printf("{ ptr:\"");
 		print_duk_ptr(dvalue_as_ptr(obj));
+		printf("\" }");
 		break;
 	default:
 		printf("*munch*");

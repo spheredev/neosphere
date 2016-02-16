@@ -501,6 +501,8 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 {
 	unsigned int bitmask;
 	int32_t      flags;
+	bool         have_get;
+	bool         have_set;
 	duk_ptr_t    heapptr;
 	size_t       idx;
 	bool         is_accessor;
@@ -524,17 +526,26 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 			if (!(flags & bitmask)) {
 				is_accessor = (flags & 0x0008) != 0x0;
 				is_metadata = (flags & 0x0200) != 0x0;
-				printf("   %s \33[36m", is_metadata ? "meta" : is_accessor ? "acc" : "prop");
+				printf("   %s \33[36m", is_metadata ? "meta" : "prop");
 				dvalue_print(msg_atom_dvalue(req, idx + 1), false);
 				printf("\33[m = ");
 				if (!is_accessor)
 					dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
 				else {
-					printf("{ get: ");
-					dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
-					printf(", set: ");
-					dvalue_print(msg_atom_dvalue(req, idx + 3), obj_verbosity >= 2);
-					printf("}");
+					if (obj_verbosity < 2) {
+						have_get = msg_atom_tag(req, idx + 2) != DVALUE_NULL;
+						have_set = msg_atom_tag(req, idx + 3) != DVALUE_NULL;
+						if (have_set && have_get) printf("{ get, set }");
+							else if (have_set) printf("{ set }");
+							else if (have_get) printf("{ get }");
+					}
+					else {
+						printf("{ get: ");
+						dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
+						printf(", set: ");
+						dvalue_print(msg_atom_dvalue(req, idx + 3), obj_verbosity >= 2);
+						printf(" }");
+					}
 				}
 				printf("\33[m\n");
 			}
