@@ -156,9 +156,9 @@ static char*               s_map_filename      = NULL;
 static sound_t*            s_map_bgm_stream    = NULL;
 static struct map_trigger* s_on_trigger        = NULL;
 static struct player*      s_players;
-static script_t*           s_render_script     = 0;
+static script_t*           s_render_script = NULL;
 static int                 s_talk_button = 0;
-static script_t*           s_update_script     = 0;
+static script_t*           s_update_script = NULL;
 static int                 s_num_delay_scripts = 0;
 static int                 s_max_delay_scripts = 0;
 static struct delay_script *s_delay_scripts    = NULL;
@@ -333,6 +333,8 @@ shutdown_map_engine(void)
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
 	free(s_delay_scripts);
+	free_script(s_update_script);
+	free_script(s_render_script);
 	free_map(s_map);
 	free(s_players);
 	shutdown_persons_manager();

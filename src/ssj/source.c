@@ -27,6 +27,7 @@ load_source(const char* filename, const path_t* source_path)
 	lines = vector_new(sizeof(char*));
     while (text = freadline(h_file))
         vector_push(lines, &text);
+    fclose(h_file);
 
 	source = calloc(1, sizeof(source_t));
 	source->lines = lines;
