@@ -11,6 +11,7 @@ struct cmdline
 };
 
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
+static void            free_cmdline     (struct cmdline* obj);
 static void            print_cell_quote (void);
 static void            print_banner     (bool want_copyright, bool want_deps);
 static void            print_usage      (void);
@@ -22,7 +23,6 @@ main(int argc, char* argv[])
 	int             retval;
 	session_t*      session;
 
-	srand((unsigned int)time(NULL));
 	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
 		return retval;
 
@@ -33,13 +33,17 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 
 	clients_init();
+
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
 	if (!cmdline->want_pause)
 		execute_next(session, EXEC_RESUME);
 	run_session(session);
 	end_session(session);
+
 	clients_deinit();
+
+	free_cmdline(cmdline);
 	return EXIT_SUCCESS;
 }
 
@@ -130,6 +134,13 @@ strnewf(const char* fmt, ...)
 	va_end(apc);
 	va_end(ap);
 	return buffer;
+}
+
+static void
+free_cmdline(struct cmdline* obj)
+{
+	path_free(obj->path);
+	free(obj);
 }
 
 static struct cmdline*
@@ -227,6 +238,7 @@ print_cell_quote(void)
 		"I WAS PERFECT...!",
 	};
 
+	srand((unsigned int)time(NULL));
 	printf("Release it--release everything! Remember all the pain he's caused, the people\n");
 	printf("he's hurt--now MAKE THAT YOUR POWER!!\n\n");
 	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
