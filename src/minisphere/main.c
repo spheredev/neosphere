@@ -701,7 +701,7 @@ initialize_engine(void)
 	// initialize networking
 	console_log(1, "Initializing Dyad");
 	dyad_init();
-	dyad_setUpdateTimeout(0.001);
+	dyad_setUpdateTimeout(0.0);
 
 	// load system configuraton
 	console_log(1, "Loading system configuration");
