@@ -34,7 +34,7 @@ void
 sockets_init()
 {
 	dyad_init();
-	dyad_setUpdateTimeout(0.0);
+	dyad_setUpdateTimeout(0.05);
 }
 
 void
@@ -103,6 +103,7 @@ size_t
 socket_send(socket_t* obj, const void* data, size_t num_bytes)
 {
 	dyad_write(obj->stream, data, (int)num_bytes);
-	dyad_update();
+	if (num_bytes > 0)
+		dyad_update();
 	return num_bytes;
 }
