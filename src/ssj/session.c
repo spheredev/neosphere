@@ -374,7 +374,7 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\33[36;1m%s\33[m \33[33;1mssj$\33[m ", sess->filename);
+		printf("\33[36;1m%s %s\33[m \33[33;1mssj$\33[m ", sess->filename, sess->function_name);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
