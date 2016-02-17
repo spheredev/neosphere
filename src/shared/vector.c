@@ -27,6 +27,7 @@ vector_new(size_t pitch)
 	if (!(vector = calloc(1, sizeof(vector_t))))
 		return NULL;
 	vector->pitch = pitch;
+	vector_resize(vector, 8);
 	return vector;
 }
 
@@ -75,7 +76,7 @@ void
 vector_clear(vector_t* vector)
 {
 	vector->num_items = 0;
-	vector_resize(vector, 0);
+	vector_resize(vector, 8);
 }
 
 bool
@@ -114,28 +115,22 @@ vector_enum(const vector_t* vector)
 	iter_t iter;
 
 	iter.vector = vector;
-	iter.ptr = vector->buffer;
-	iter.index = 0;
+	iter.ptr = NULL;
+	iter.index = -1;
 	return iter;
 }
 
 void*
 vector_next(iter_t* iter)
 {
-	void*           pcurrent;
-	void*           ptail;
 	const vector_t* vector;
+	void*           p_tail;
 
 	vector = iter->vector;
-	ptail = vector->buffer + vector->num_items * vector->pitch;
-	pcurrent = iter->ptr < ptail ? iter->ptr : NULL;
-	if (pcurrent != NULL)
-		iter->ptr = (char*)pcurrent + vector->pitch;
-	else
-		iter->ptr = NULL;
-	if (pcurrent > (void*)vector->buffer)
-		++iter->index;
-	return pcurrent;
+	iter->ptr = iter->ptr != NULL ? (char*)iter->ptr + vector->pitch : vector->buffer;
+	++iter->index;
+	p_tail = vector->buffer + vector->num_items * vector->pitch;
+	return (iter->ptr < p_tail) ? iter->ptr : NULL;
 }
 
 static bool

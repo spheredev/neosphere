@@ -24,14 +24,13 @@ void
 msg_free(message_t* obj)
 {
 	iter_t iter;
-	dvalue_t* *p;
 
 	if (obj == NULL)
 		return;
 
 	iter = vector_enum(obj->dvalues);
-	while (p = vector_next(&iter))
-		dvalue_free(*p);
+	while (vector_next(&iter))
+		dvalue_free(*(dvalue_t**)iter.ptr);
 	vector_free(obj->dvalues);
 	free(obj);
 }

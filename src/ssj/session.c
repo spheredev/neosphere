@@ -7,9 +7,17 @@
 
 #define CL_BUFFER_SIZE 65536
 
+struct frame
+{
+	char* function_name;
+	char* filename;
+	int   line_no;
+};
+
 struct session
 {
 	bool      is_attached;
+	vector_t* backtrace;
 	char      cl_buffer[CL_BUFFER_SIZE];
 	client_t* client;
 	int       frame_index;
@@ -56,12 +64,14 @@ enum nfy_command
 	NFY_DETACHING = 0x06,
 };
 
+static void       clear_cli_cache     (session_t* sess);
 static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
 static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_help          (session_t* sess);
 static void       print_msg_atom      (session_t* sess, const message_t* message, size_t index, int obj_verbosity);
 static bool       process_message     (session_t* sess, const message_t* msg);
+static void       refresh_backtrace   (session_t* sess);
 
 session_t*
 new_session(const char* hostname, int port)
@@ -105,6 +115,7 @@ on_error:
 void
 end_session(session_t* sess)
 {
+	clear_cli_cache(sess);
 	free(sess->filename);
 	free(sess->function_name);
 	path_free(sess->source_path);
@@ -145,41 +156,32 @@ clear_breakpoint(session_t* sess, const char* filename, int line_no)
 void
 print_backtrace(session_t* sess, int frame, bool show_all)
 {
-	char*            display_name;
-	const char*      filename;
-	const char*      function_name;
-	int              line_num;
-	int              n_items;
-	message_t*       request;
-	message_t*       response;
+	const char* filename;
+	const char* function_name;
+	int         line_no;
 
-	int i;
+	iter_t iter;
 
-	request = msg_new(MSG_TYPE_REQ);
-	msg_add_int(request, REQ_GET_CALLSTACK);
-	response = converse(sess, request);
-	n_items = (int)(msg_len(response) / 4);
-	if (frame < 0 || frame >= n_items)
+	refresh_backtrace(sess);
+	
+	if (frame < 0 || frame >= vector_len(sess->backtrace))
 		printf("no active frame at index %d.\n", frame);
 	else {
 		sess->frame_index = frame;
-		for (i = 0; i < n_items; ++i) {
-			filename = msg_get_string(response, i * 4);
-			function_name = msg_get_string(response, i * 4 + 1);
-			line_num = msg_get_int(response, i * 4 + 2);
-			if (i == frame || show_all) {
-				display_name = function_name[0] != '\0'
-					? strnewf("%s()", function_name) : strdup("anon");
-				printf("\33[33m%s\33[m #%2d: \33[36m%s\33[m at \33[36m%s:%d\33[m\n",
-					i == frame ? ">>" : "  ",
-					i, display_name, filename, line_num);
-				free(display_name);
+		iter = vector_enum(sess->backtrace);
+		while (vector_next(&iter)) {
+			filename = ((struct frame*)iter.ptr)->filename;
+			function_name = ((struct frame*)iter.ptr)->function_name;
+			line_no = ((struct frame*)iter.ptr)->line_no;
+			if (iter.index == frame || show_all) {
+				printf("\33[33m%s\33[m #%2td: \33[36m%s\33[m at \33[36m%s:%d\33[m\n",
+					iter.index == frame ? ">>" : "  ",
+					iter.index, function_name, filename, line_no);
 				if (!show_all)
-					print_source(sess, filename, line_num, 1);
+					print_source(sess, filename, line_no, 1);
 			}
 		}
 	}
-	msg_free(response);
 }
 
 void
@@ -301,6 +303,7 @@ execute_next(session_t* sess, exec_op_t op)
 {
 	message_t* request;
 
+	clear_cli_cache(sess);
 	request = msg_new(MSG_TYPE_REQ);
 	msg_add_int(request,
 		op == EXEC_STEP_OVER ? REQ_STEP_OVER
@@ -335,6 +338,22 @@ on_error:
 	msg_free(msg);
 	printf("communication error. session detached.\n");
 	return;
+}
+
+static void
+clear_cli_cache(session_t* sess)
+{
+	iter_t iter;
+
+	if (sess->backtrace != NULL) {
+		iter = vector_enum(sess->backtrace);
+		while (vector_next(&iter)) {
+			free(((struct frame*)iter.ptr)->filename);
+			free(((struct frame*)iter.ptr)->function_name);
+		}
+		vector_free(sess->backtrace);
+		sess->backtrace = NULL;
+	}
 }
 
 static message_t*
@@ -586,6 +605,7 @@ process_message(session_t* sess, const message_t* msg)
 				: strdup("anon");
 			sess->line_no = msg_get_int(msg, 4);
 			sess->is_stopped = flag != 0;
+			if (!sess->is_stopped) clear_cli_cache(sess);
 			if (sess->is_stopped && was_running)
 				sess->has_pc_changed = true;
 			break;
@@ -608,7 +628,7 @@ process_message(session_t* sess, const message_t* msg)
 			sess->is_attached = false;
 			flag = msg_get_int(msg, 1);
 			if (flag == 0)
-				printf("\33[32;1mSSJ session has been detached.");
+				printf("\33[0;1mSSJ session has been detached.");
 			else
 				printf("\33[31;1mSSJ detached due to an error in inferior.");
 			printf("\33[m\n");
@@ -617,4 +637,32 @@ process_message(session_t* sess, const message_t* msg)
 		break;
 	}
 	return true;
+}
+
+static void
+refresh_backtrace(session_t* sess)
+{
+	struct frame frame;
+	const char*  function_name;
+	message_t*   msg;
+	int          n_items;
+
+	int i;
+
+	if (sess->backtrace != NULL)
+		return;
+
+	sess->backtrace = vector_new(sizeof(struct frame));
+	msg = msg_new(MSG_TYPE_REQ);
+	msg_add_int(msg, REQ_GET_CALLSTACK);
+	msg = converse(sess, msg);
+	n_items = (int)(msg_len(msg) / 4);
+	for (i = 0; i < n_items; ++i) {
+		function_name = msg_get_string(msg, i * 4 + 1);
+		frame.filename = strdup(msg_get_string(msg, i * 4));
+		frame.function_name = function_name[0] != '\0' ? strnewf("%s()", function_name)
+			: strdup("anon");
+		frame.line_no = msg_get_int(msg, i * 4 + 2);
+		vector_push(sess->backtrace, &frame);
+	}
 }

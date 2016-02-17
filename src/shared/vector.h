@@ -12,7 +12,7 @@ struct iter
 {
 	const vector_t* vector;
 	void*           ptr;
-	size_t          index;
+	ptrdiff_t       index;
 } iter_t;
 
 vector_t* vector_new    (size_t pitch);
