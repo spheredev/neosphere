@@ -3,9 +3,8 @@
 
 typedef struct source source_t;
 
-source_t*   load_source     (const char* filename, const path_t* source_path);
-void        free_source     (source_t* source);
-const char* get_source_line (const source_t* source, int line_index);
-int         get_source_size (const source_t* source);
+source_t*   source_load     (const char* filename, const path_t* source_path);
+int         source_cloc     (const source_t* source);
+const char* source_get_line (const source_t* source, int line_index);
 
 #endif // SSJ__SOURCE_H__INCLUDED

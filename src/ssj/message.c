@@ -6,7 +6,7 @@
 struct message
 {
 	msg_type_t type;
-	vector_t*   dvalues;
+	vector_t*  dvalues;
 };
 
 message_t*
@@ -29,8 +29,10 @@ msg_free(message_t* obj)
 		return;
 
 	iter = vector_enum(obj->dvalues);
-	while (vector_next(&iter))
-		dvalue_free(*(dvalue_t**)iter.ptr);
+	while (vector_next(&iter)) {
+		dvalue_t* dvalue = *(dvalue_t**)iter.ptr;
+		dvalue_free(dvalue);
+	}
 	vector_free(obj->dvalues);
 	free(obj);
 }
@@ -108,7 +110,7 @@ msg_add_float(message_t* msg, double value)
 }
 
 void
-msg_add_heapptr(message_t* msg, duk_ptr_t heapptr)
+msg_add_heapptr(message_t* msg, dukptr_t heapptr)
 {
 	dvalue_t* dvalue;
 

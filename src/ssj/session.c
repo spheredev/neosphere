@@ -16,19 +16,20 @@ struct frame
 
 struct session
 {
-	bool      is_attached;
-	vector_t* backtrace;
-	char      cl_buffer[CL_BUFFER_SIZE];
-	client_t* client;
-	int       frame_index;
-	char*     function_name;
-	char*     filename;
-	bool      has_pc_changed;
-	bool      have_debug_info;
-	bool      is_stopped;
-	int       line_no;
-	uint8_t   ptr_size;
-	path_t*   source_path;
+	bool          is_attached;
+	struct frame* backtrace;
+	int           n_frames;
+	char          cl_buffer[CL_BUFFER_SIZE];
+	client_t*     client;
+	int           frame_index;
+	char*         function_name;
+	char*         filename;
+	bool          has_pc_changed;
+	bool          have_debug_info;
+	int           line_no;
+	uint8_t       ptr_size;
+	path_t*       source_path;
+	bool          is_stopped;
 };
 
 enum req_command
@@ -116,10 +117,9 @@ void
 end_session(session_t* sess)
 {
 	clear_cli_cache(sess);
-	free(sess->filename);
-	free(sess->function_name);
 	path_free(sess->source_path);
 	client_close(sess->client);
+
 	free(sess);
 }
 
@@ -154,33 +154,38 @@ clear_breakpoint(session_t* sess, const char* filename, int line_no)
 }
 
 void
-print_backtrace(session_t* sess, int frame, bool show_all)
+print_backtrace(session_t* sess, int frame_index, bool show_all)
 {
-	const char* filename;
-	const char* function_name;
-	int         line_no;
+	const char*   filename;
+	struct frame* framedata;
+	const char*   function_name;
+	int           line_no;
 
-	iter_t iter;
+	int i;
 
 	refresh_backtrace(sess);
 	
-	if (frame < 0 || frame >= vector_len(sess->backtrace))
-		printf("no active frame at index %d.\n", frame);
+	if (frame_index < 0 || frame_index >= sess->n_frames)
+		printf("no active frame at index %d.\n", frame_index);
 	else {
-		sess->frame_index = frame;
-		iter = vector_enum(sess->backtrace);
-		while (vector_next(&iter)) {
-			filename = ((struct frame*)iter.ptr)->filename;
-			function_name = ((struct frame*)iter.ptr)->function_name;
-			line_no = ((struct frame*)iter.ptr)->line_no;
-			if (iter.index == frame || show_all) {
-				printf("\33[33m%s\33[m #%2td: \33[36m%s\33[m at \33[36m%s:%d\33[m\n",
-					iter.index == frame ? ">>" : "  ",
-					iter.index, function_name, filename, line_no);
+		sess->frame_index = frame_index;
+		for (i = 0; i < sess->n_frames; ++i) {
+			filename = sess->backtrace[i].filename;
+			function_name = sess->backtrace[i].function_name;
+			line_no = sess->backtrace[i].line_no;
+			if (i == frame_index || show_all) {
+				printf("\33[33m%s\33[m #%2d: \33[36m%s\33[m at \33[36m%s:%d\33[m\n",
+					i == frame_index ? ">>" : "  ", i, function_name, filename, line_no);
 				if (!show_all)
 					print_source(sess, filename, line_no, 1);
 			}
 		}
+		framedata = &sess->backtrace[frame_index];
+		free(sess->function_name);
+		free(sess->filename);
+		sess->function_name = strdup(framedata->function_name);
+		sess->filename = strdup(framedata->filename);
+		sess->line_no = framedata->line_no;
 	}
 }
 
@@ -262,15 +267,15 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 
 	int i;
 
-	if (!(source = load_source(filename, sess->source_path)))
+	if (!(source = source_load(filename, sess->source_path)))
 		printf("no source code available.\n");
 	else {
-		line_count = get_source_size(source);
+		line_count = source_cloc(source);
 		median = window / 2;
 		start = line_no > median ? line_no - (median + 1) : 0;
 		end = start + window < line_count ? start + window : line_count;
 		for (i = start; i < end; ++i) {
-			text = get_source_line(source, i);
+			text = source_get_line(source, i);
 			is_next_line = i == sess->line_no - 1 && strcmp(filename, sess->filename) == 0;
 			prefix = is_next_line ? ">>" : "  ";
 			if (window > 1)
@@ -278,7 +283,6 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 			else
 				printf("\33[30;1m%d:\33[m %s\n", i + 1, text);
 		}
-		free_source(source);
 	}
 }
 
@@ -343,15 +347,18 @@ on_error:
 static void
 clear_cli_cache(session_t* sess)
 {
-	iter_t iter;
+	int i;
 
+	free(sess->function_name);
+	free(sess->filename);
+	sess->function_name = NULL;
+	sess->filename = NULL;
 	if (sess->backtrace != NULL) {
-		iter = vector_enum(sess->backtrace);
-		while (vector_next(&iter)) {
-			free(((struct frame*)iter.ptr)->filename);
-			free(((struct frame*)iter.ptr)->function_name);
+		for (i = 0; i < sess->n_frames; ++i) {
+			free(sess->backtrace[i].filename);
+			free(sess->backtrace[i].function_name);
 		}
-		vector_free(sess->backtrace);
+		free(sess->backtrace);
 		sess->backtrace = NULL;
 	}
 }
@@ -379,8 +386,10 @@ do_command_line(session_t* sess)
 	int         ch = '\0';
 	size_t      ch_idx = 0;
 	char*       filename;
+	int         frame_index;
 	int         index;
 	int         line_no;
+	int         num_lines;
 	char*       parsee;
 	message_t*  req;
 
@@ -420,6 +429,19 @@ do_command_line(session_t* sess)
 		print_help(sess);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_backtrace(sess, sess->frame_index, true);
+	else if (strcmp(command, "up") == 0 || strcmp(command, "u") == 0) {
+		if (argument[0] != '\0') frame_index = sess->frame_index + atoi(argument);
+			else frame_index = sess->frame_index + 1;
+		frame_index = (frame_index < sess->n_frames) ? frame_index
+			: sess->n_frames - 1;
+		print_backtrace(sess, frame_index, false);
+	}
+	else if (strcmp(command, "down") == 0 || strcmp(command, "d") == 0) {
+		if (argument[0] != '\0') frame_index = sess->frame_index - atoi(argument);
+			else frame_index = sess->frame_index - 1;
+		frame_index = (frame_index >= 0) ? frame_index : 0;
+		print_backtrace(sess, frame_index, false);
+	}
 	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0) {
 		if (argument[0] == '\0')
 			print_breakpoints(sess);
@@ -447,8 +469,13 @@ do_command_line(session_t* sess)
 		print_eval(sess, argument, sess->frame_index, true);
 	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
 		print_backtrace(sess, atoi(argument), false);
-	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0)
-		print_source(sess, sess->filename, sess->line_no, 10);
+	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0) {
+		if (argument[0] != 0)
+			num_lines = atoi(argument);
+		else
+			num_lines = 10;
+		print_source(sess, sess->filename, sess->line_no, num_lines);
+	}
 	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
@@ -504,6 +531,8 @@ print_help(session_t* sess)
 		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
 
 		" bt, backtrace    Show a list of all function calls currently on the stack     \n"
+		" u,  up           Move up the call stack (outwards) from the selected frame    \n"
+		" d,  down         Move down the call stack (inwards) from the selected frame   \n"
 		" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
 		" cb, clearbreak   Clear a breakpoint set at file:line (see 'breakpoint')       \n"
 		" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
@@ -530,7 +559,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 	int32_t      flags;
 	bool         have_get;
 	bool         have_set;
-	duk_ptr_t    heapptr;
+	dukptr_t    heapptr;
 	size_t       idx;
 	bool         is_accessor;
 	bool         is_metadata;
@@ -642,27 +671,26 @@ process_message(session_t* sess, const message_t* msg)
 static void
 refresh_backtrace(session_t* sess)
 {
-	struct frame frame;
-	const char*  function_name;
-	message_t*   msg;
-	int          n_items;
+	struct frame* frame;
+	const char*   function_name;
+	message_t*    msg;
 
 	int i;
 
 	if (sess->backtrace != NULL)
 		return;
 
-	sess->backtrace = vector_new(sizeof(struct frame));
 	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_GET_CALLSTACK);
 	msg = converse(sess, msg);
-	n_items = (int)(msg_len(msg) / 4);
-	for (i = 0; i < n_items; ++i) {
+	sess->n_frames = (int)(msg_len(msg) / 4);
+	sess->backtrace = calloc(sess->n_frames, sizeof(struct frame));
+	for (i = 0; i < sess->n_frames; ++i) {
+		frame = sess->backtrace + i;
 		function_name = msg_get_string(msg, i * 4 + 1);
-		frame.filename = strdup(msg_get_string(msg, i * 4));
-		frame.function_name = function_name[0] != '\0' ? strnewf("%s()", function_name)
+		frame->filename = strdup(msg_get_string(msg, i * 4));
+		frame->function_name = function_name[0] != '\0' ? strnewf("%s()", function_name)
 			: strdup("anon");
-		frame.line_no = msg_get_int(msg, i * 4 + 2);
-		vector_push(sess->backtrace, &frame);
+		frame->line_no = msg_get_int(msg, i * 4 + 2);
 	}
 }
