@@ -102,6 +102,6 @@ client_send_msg(client_t* obj, message_t* msg)
 	// note: client_send() will free the message after sending it. this is for
 	//       convenience, but requires diligence on the part of the caller.
 
-	msg_send(obj->socket, msg);
+	msg_send(msg, obj->socket);
 	msg_free(msg);
 }

@@ -80,12 +80,12 @@ new_session(const char* hostname, int port)
 	// we can't ask directly because Duktape doesn't allow custom messages, so
 	// we fake it with an Eval command.
 	printf("locating sources... ");
-	req = msg_new(MSG_CLASS_REQ);
+	req = msg_new(MSG_TYPE_REQ);
 	msg_add_int(req, REQ_EVAL);
 	msg_add_string(req, "(function() { return 'SourceMap' in global ? global.SourceMap.origin : undefined; })();");
 	rep = converse(session, req);
-	if (msg_atom_string(rep, 1) != NULL)
-		origin = path_resolve(path_new(msg_atom_string(rep, 1)), NULL);
+	if (msg_get_string(rep, 1) != NULL)
+		origin = path_resolve(path_new(msg_get_string(rep, 1)), NULL);
 	if (origin == NULL)
 		printf("\33[31;1mnone found.\33[m\n");
 	else {
@@ -122,15 +122,15 @@ clear_breakpoint(session_t* sess, const char* filename, int line_no)
 
 	size_t idx;
 
-	msg = msg_new(MSG_CLASS_REQ);
+	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_LIST_BREAK);
 	msg = converse(sess, msg);
 	num_breaks = msg_len(msg) / 2;
 	for (idx = 0; idx < num_breaks; ++idx) {
-		if (strcmp(filename, msg_atom_string(msg, idx * 2)) == 0
-		    && line_no == msg_atom_int(msg, idx * 2 + 1))
+		if (strcmp(filename, msg_get_string(msg, idx * 2)) == 0
+		    && line_no == msg_get_int(msg, idx * 2 + 1))
 		{
-			msg2 = msg_new(MSG_CLASS_REQ);
+			msg2 = msg_new(MSG_TYPE_REQ);
 			msg_add_int(msg2, REQ_DEL_BREAK);
 			msg_add_int(msg2, (int)idx);
 			msg_free(converse(sess, msg2));
@@ -155,7 +155,7 @@ print_backtrace(session_t* sess, int frame, bool show_all)
 
 	int i;
 
-	request = msg_new(MSG_CLASS_REQ);
+	request = msg_new(MSG_TYPE_REQ);
 	msg_add_int(request, REQ_GET_CALLSTACK);
 	response = converse(sess, request);
 	n_items = (int)(msg_len(response) / 4);
@@ -164,9 +164,9 @@ print_backtrace(session_t* sess, int frame, bool show_all)
 	else {
 		sess->frame_index = frame;
 		for (i = 0; i < n_items; ++i) {
-			filename = msg_atom_string(response, i * 4);
-			function_name = msg_atom_string(response, i * 4 + 1);
-			line_num = msg_atom_int(response, i * 4 + 2);
+			filename = msg_get_string(response, i * 4);
+			function_name = msg_get_string(response, i * 4 + 1);
+			line_num = msg_get_int(response, i * 4 + 2);
 			if (i == frame || show_all) {
 				display_name = function_name[0] != '\0'
 					? strnewf("%s()", function_name) : strdup("anon");
@@ -192,14 +192,14 @@ print_breakpoints(session_t* sess)
 
 	size_t idx;
 
-	msg = msg_new(MSG_CLASS_REQ);
+	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_LIST_BREAK);
 	msg = converse(sess, msg);
 	if ((num_breaks = msg_len(msg) / 2) == 0)
 		printf("no active breakpoints.\n");
 	for (idx = 0; idx < num_breaks; ++idx) {
-		filename = msg_atom_string(msg, idx * 2);
-		line_no = msg_atom_int(msg, idx * 2 + 1);
+		filename = msg_get_string(msg, idx * 2);
+		line_no = msg_get_int(msg, idx * 2 + 1);
 		printf("#%2zd: breakpoint at \33[36;1m%s:%d\33[m\n",
 			idx, filename, line_no);
 	}
@@ -210,12 +210,12 @@ print_eval(session_t* sess, const char* expr, int frame, bool show_metadata)
 {
 	message_t* req;
 
-	req = msg_new(MSG_CLASS_REQ);
+	req = msg_new(MSG_TYPE_REQ);
 	msg_add_int(req, REQ_EVAL);
 	msg_add_string(req, expr);
 	msg_add_int(req, -(1 + frame));
 	req = converse(sess, req);
-	if (msg_atom_int(req, 0) == 0)
+	if (msg_get_int(req, 0) == 0)
 		printf("= ");
 	else
 		printf("\33[31;1merror: \33[m");
@@ -233,15 +233,15 @@ print_locals(session_t* sess, int frame)
 
 	size_t i;
 
-	request = msg_new(MSG_CLASS_REQ);
+	request = msg_new(MSG_TYPE_REQ);
 	msg_add_int(request, REQ_GET_LOCALS);
 	msg_add_int(request, -(1 + frame));
 	response = converse(sess, request);
 	if ((num_vars = msg_len(response) / 2) == 0)
 		printf("no locals in function \33[36m%s\33[m.\n", sess->function_name);
 	for (i = 0; i < num_vars; ++i) {
-		printf("var \33[36m%s\33[m = ", msg_atom_string(response, i * 2));
-		dvalue_print(msg_atom_dvalue(response, i * 2 + 1), false);
+		printf("var \33[36m%s\33[m = ", msg_get_string(response, i * 2));
+		dvalue_print(msg_get_dvalue(response, i * 2 + 1), false);
 		printf("\n");
 	}
 	msg_free(response);
@@ -286,12 +286,12 @@ set_breakpoint(session_t* sess, const char* filename, int line_no)
 	int        index;
 	message_t* msg;
 
-	msg = msg_new(MSG_CLASS_REQ);
+	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_ADD_BREAK);
 	msg_add_string(msg, filename);
 	msg_add_int(msg, (int32_t)line_no);
 	msg = converse(sess, msg);
-	index = msg_atom_int(msg, 0);
+	index = msg_get_int(msg, 0);
 	msg_free(msg);
 	return index;
 }
@@ -301,7 +301,7 @@ execute_next(session_t* sess, exec_op_t op)
 {
 	message_t* request;
 
-	request = msg_new(MSG_CLASS_REQ);
+	request = msg_new(MSG_TYPE_REQ);
 	msg_add_int(request,
 		op == EXEC_STEP_OVER ? REQ_STEP_OVER
 		: op == EXEC_STEP_IN ? REQ_STEP_INTO
@@ -346,9 +346,9 @@ converse(session_t* sess, message_t* msg)
 	do {
 		msg_free(response);
 		if (!(response = client_recv_msg(sess->client))) return NULL;
-		if (msg_get_class(response) == MSG_CLASS_NFY)
+		if (msg_type(response) == MSG_TYPE_NFY)
 			process_message(sess, response);
-	} while (msg_get_class(response) == MSG_CLASS_NFY);
+	} while (msg_type(response) == MSG_TYPE_NFY);
 	return response;
 }
 
@@ -392,7 +392,7 @@ do_command_line(session_t* sess)
 	parsee = strdup(sess->cl_buffer);
 	command = strtok_r(parsee, " ", &argument);
 	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
-		req = msg_new(MSG_CLASS_REQ);
+		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(converse(sess, req));
 		sess->is_stopped = false;
@@ -517,11 +517,11 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 	bool         is_metadata;
 	message_t*   req;
 	
-	if (msg_atom_tag(message, index) != DVALUE_OBJ || obj_verbosity <= 0)
-		dvalue_print(msg_atom_dvalue(message, index), obj_verbosity >= 2);
+	if (msg_get_atom_tag(message, index) != DVALUE_OBJ || obj_verbosity <= 0)
+		dvalue_print(msg_get_dvalue(message, index), obj_verbosity >= 2);
 	else {
-		heapptr = dvalue_as_ptr(msg_atom_dvalue(message, index));
-		req = msg_new(MSG_CLASS_REQ);
+		heapptr = dvalue_as_ptr(msg_get_dvalue(message, index));
+		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_INSPECT_OBJ);
 		msg_add_heapptr(req, heapptr);
 		msg_add_int(req, 0x0);
@@ -529,29 +529,29 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 		idx = 0;
 		printf("\33[0;1m{\33[m\n");
 		while (idx < msg_len(req)) {
-			flags = msg_atom_int(req, idx);
+			flags = msg_get_int(req, idx);
 			bitmask = obj_verbosity >= 2 ? 0x0100 : 0x0300;
 			if (!(flags & bitmask)) {
 				is_accessor = (flags & 0x0008) != 0x0;
 				is_metadata = (flags & 0x0200) != 0x0;
 				printf("   %s \33[36m", is_metadata ? "meta" : "prop");
-				dvalue_print(msg_atom_dvalue(req, idx + 1), false);
+				dvalue_print(msg_get_dvalue(req, idx + 1), false);
 				printf("\33[m = ");
 				if (!is_accessor)
-					dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
+					dvalue_print(msg_get_dvalue(req, idx + 2), obj_verbosity >= 2);
 				else {
 					if (obj_verbosity < 2) {
-						have_get = msg_atom_tag(req, idx + 2) != DVALUE_NULL;
-						have_set = msg_atom_tag(req, idx + 3) != DVALUE_NULL;
+						have_get = msg_get_atom_tag(req, idx + 2) != DVALUE_NULL;
+						have_set = msg_get_atom_tag(req, idx + 3) != DVALUE_NULL;
 						if (have_set && have_get) printf("{ get, set }");
 							else if (have_set) printf("{ set }");
 							else if (have_get) printf("{ get }");
 					}
 					else {
 						printf("{ get: ");
-						dvalue_print(msg_atom_dvalue(req, idx + 2), obj_verbosity >= 2);
+						dvalue_print(msg_get_dvalue(req, idx + 2), obj_verbosity >= 2);
 						printf(", set: ");
-						dvalue_print(msg_atom_dvalue(req, idx + 3), obj_verbosity >= 2);
+						dvalue_print(msg_get_dvalue(req, idx + 3), obj_verbosity >= 2);
 						printf(" }");
 					}
 				}
@@ -571,42 +571,42 @@ process_message(session_t* sess, const message_t* msg)
 	const char* function_name;
 	bool        was_running;
 
-	switch (msg_get_class(msg)) {
-	case MSG_CLASS_NFY:
-		switch (msg_atom_int(msg, 0)) {
+	switch (msg_type(msg)) {
+	case MSG_TYPE_NFY:
+		switch (msg_get_int(msg, 0)) {
 		case NFY_STATUS:
 			was_running = !sess->is_stopped;
 			free(sess->filename);
 			free(sess->function_name);
-			flag = msg_atom_int(msg, 1);
-			function_name = msg_atom_string(msg, 3);
-			sess->filename = strdup(msg_atom_string(msg, 2));
+			flag = msg_get_int(msg, 1);
+			function_name = msg_get_string(msg, 3);
+			sess->filename = strdup(msg_get_string(msg, 2));
 			sess->function_name = function_name[0] != '\0'
-				? strnewf("%s()", msg_atom_string(msg, 3))
+				? strnewf("%s()", msg_get_string(msg, 3))
 				: strdup("anon");
-			sess->line_no = msg_atom_int(msg, 4);
+			sess->line_no = msg_get_int(msg, 4);
 			sess->is_stopped = flag != 0;
 			if (sess->is_stopped && was_running)
 				sess->has_pc_changed = true;
 			break;
 		case NFY_PRINT:
-			printf("\33[36mprint:\33[m %s", msg_atom_string(msg, 1));
+			printf("\33[36mprint:\33[m %s", msg_get_string(msg, 1));
 			break;
 		case NFY_ALERT:
-			printf("\33[33malert:\33[m %s", msg_atom_string(msg, 1));
+			printf("\33[33malert:\33[m %s", msg_get_string(msg, 1));
 			break;
 		case NFY_LOG:
-			printf("\33[32mlog:\33[m %s", msg_atom_string(msg, 1));
+			printf("\33[32mlog:\33[m %s", msg_get_string(msg, 1));
 			break;
 		case NFY_THROW:
-			if ((flag = msg_atom_int(msg, 1)) == 0)
+			if ((flag = msg_get_int(msg, 1)) == 0)
 				break;
-			printf("\33[31;1mFATAL:\33[0;1m %s\33[m\n", msg_atom_string(msg, 2));
-			printf("       (at \33[36;1m%s:%d\33[m)\n", msg_atom_string(msg, 3), msg_atom_int(msg, 4));
+			printf("\33[31;1mFATAL:\33[0;1m %s\33[m\n", msg_get_string(msg, 2));
+			printf("       (at \33[36;1m%s:%d\33[m)\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
 			break;
 		case NFY_DETACHING:
 			sess->is_attached = false;
-			flag = msg_atom_int(msg, 1);
+			flag = msg_get_int(msg, 1);
 			if (flag == 0)
 				printf("\33[32;1mSSJ session has been detached.");
 			else
