@@ -322,7 +322,7 @@ mini.Console.write = function(text)
 {
 	if (this.nextLine > 0) {
 		var lineText = this.buffer[(this.nextLine - 1) % this.bufferSize];
-		Print(lineText.substr(1));
+		Trace(lineText.substr(1));
 		if (this.log !== null)
 			this.log.write(lineText);
 	}

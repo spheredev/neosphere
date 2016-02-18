@@ -53,6 +53,7 @@ enum req_command
 	REQ_DUMP_HEAP = 0x20,
 	REQ_GET_BYTECODE = 0x21,
 	REQ_INSPECT_OBJ = 0x22,
+	REQ_CUSTOM = 0xFF,
 };
 
 enum nfy_command
@@ -63,6 +64,17 @@ enum nfy_command
 	NFY_LOG = 0x04,
 	NFY_THROW = 0x05,
 	NFY_DETACHING = 0x06,
+	NFY_CUSTOM = 0xFF,
+
+	NFY_CUSTOM_TRACE = 0x00,
+};
+
+enum err_command
+{
+	ERR_UNKNOWN = 0x00,
+	ERR_UNSUPPORTED = 0x01,
+	ERR_TOO_MANY = 0x02,
+	ERR_NOT_FOUND = 0x03,
 };
 
 static void       clear_cli_cache     (session_t* sess);
@@ -419,16 +431,16 @@ clear_cli_cache(session_t* sess)
 static message_t*
 converse(session_t* sess, message_t* msg)
 {
-	message_t* response = NULL;
+	message_t* reply = NULL;
 
 	msg_send(msg, sess->socket);
 	do {
-		msg_free(response);
-		if (!(response = msg_recv(sess->socket))) return NULL;
-		if (msg_type(response) == MSG_TYPE_NFY)
-			process_message(sess, response);
-	} while (msg_type(response) == MSG_TYPE_NFY);
-	return response;
+		msg_free(reply);
+		if (!(reply = msg_recv(sess->socket))) return NULL;
+		if (msg_type(reply) == MSG_TYPE_NFY)
+			process_message(sess, reply);
+	} while (msg_type(reply) == MSG_TYPE_NFY);
+	return reply;
 }
 
 static bool
@@ -692,7 +704,7 @@ process_message(session_t* sess, const message_t* msg)
 				sess->has_pc_changed = true;
 			break;
 		case NFY_PRINT:
-			printf("\33[36mprint:\33[m %s", msg_get_string(msg, 1));
+			printf("\33[35mprint:\33[m %s", msg_get_string(msg, 1));
 			break;
 		case NFY_ALERT:
 			printf("\33[33malert:\33[m %s", msg_get_string(msg, 1));
@@ -705,6 +717,13 @@ process_message(session_t* sess, const message_t* msg)
 				break;
 			printf("\33[31;1mFATAL:\33[0;1m %s\33[m ", msg_get_string(msg, 2));
 			printf("[at \33[36;1m%s:%d\33[m]\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
+			break;
+		case NFY_CUSTOM:
+			switch (msg_get_int(msg, 1)) {
+			case NFY_CUSTOM_TRACE:
+				printf("\33[36mtrace:\33[m %s", msg_get_string(msg, 2));
+				break;
+			}
 			break;
 		case NFY_DETACHING:
 			sess->is_attached = false;

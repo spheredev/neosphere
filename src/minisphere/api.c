@@ -76,6 +76,7 @@ static duk_ret_t js_FlipScreen           (duk_context* ctx);
 static duk_ret_t js_GarbageCollect       (duk_context* ctx);
 static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
+static duk_ret_t js_Trace                (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
 static duk_ret_t duk_handle_require (duk_context* ctx);
@@ -162,6 +163,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "FlipScreen", js_FlipScreen);
 	register_api_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
 	register_api_function(ctx, NULL, "Print", js_Print);
+	register_api_function(ctx, NULL, "Trace", js_Trace);
 	register_api_function(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_function(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
@@ -899,6 +901,23 @@ static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
 	restart_engine();
+}
+
+static duk_ret_t
+js_Trace(duk_context* ctx)
+{
+	int num_items;
+	
+	num_items = duk_get_top(ctx);
+	duk_push_string(ctx, "\n");
+	
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+	duk_join(ctx, num_items + 1);
+	duk_push_int(ctx, NFY_TRACE);
+	duk_insert(ctx, -2);
+	duk_debugger_notify(ctx, 2);
+	return 0;
 }
 
 static duk_ret_t

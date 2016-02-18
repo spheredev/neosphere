@@ -8,6 +8,7 @@ static const int TCP_DEBUG_PORT = 1208;
 static bool       attach_debugger     (void);
 static void       detach_debugger     (bool is_shutdown);
 static void       duk_cb_debug_detach (void* udata);
+static duk_idx_t  duk_cb_debug_custom (void* udata, duk_context* ctx, duk_idx_t nvalues);
 static duk_size_t duk_cb_debug_peek   (void* udata);
 static duk_size_t duk_cb_debug_read   (void* udata, char* buffer, duk_size_t bufsize);
 static duk_size_t duk_cb_debug_write  (void* udata, const char* data, duk_size_t size);
@@ -62,7 +63,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	// listen for debugger connections on TCP port 1208.
 	// the listening socket will remain active for the duration of
 	// the session, allowing a debugger to be attached at any time.
-	console_log(1, "Opening TCP port %i to listen for debugger", TCP_DEBUG_PORT);
+	console_log(1, "Opening TCP %i to listen for debugger", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
 	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
 
@@ -101,6 +102,7 @@ update_debugger(void)
 				duk_cb_debug_peek,
 				NULL,
 				NULL,
+				duk_cb_debug_custom,
 				duk_cb_debug_detach,
 				NULL);
 			s_is_attached = true;
@@ -143,14 +145,14 @@ attach_debugger(void)
 {
 	double timeout;
 
-	console_log(1, "Waiting for connection from debugger");
+	console_log(0, "Waiting for debug connection from SSJ...");
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
 		update_debugger();
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
-		console_log(1, "Timed out waiting for debugger");
+		console_log(0, "Timed out waiting for SSJ!");
 	return s_client != NULL;
 }
 
@@ -181,6 +183,12 @@ duk_cb_debug_detach(void* udata)
 	// if this is the case, wait a bit for the client to reconnect.
 	if (s_client != NULL || !attach_debugger())
 		detach_debugger(false);
+}
+
+static duk_idx_t
+duk_cb_debug_custom(void* udata, duk_context* ctx, duk_idx_t nvalues)
+{
+	return 0;
 }
 
 static duk_size_t

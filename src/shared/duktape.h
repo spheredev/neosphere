@@ -5,8 +5,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 6db0b911272b5f3816121448e36465ff1ba65393 (v1.4.0-139-g6db0b91).
- *  Git branch debugger-heap-walking-support.
+ *  Git commit 4ec41b63b6b82e37f38a05b3f0490ca99f594d04 (v1.4.0-133-g4ec41b6-dirty).
+ *  Git branch debugger-custom-commands.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -185,6 +185,7 @@ typedef duk_size_t (*duk_debug_write_function) (void *udata, const char *buffer,
 typedef duk_size_t (*duk_debug_peek_function) (void *udata);
 typedef void (*duk_debug_read_flush_function) (void *udata);
 typedef void (*duk_debug_write_flush_function) (void *udata);
+typedef duk_idx_t (*duk_debug_custom_function) (void *udata, duk_context *ctx, duk_idx_t nvalues);
 typedef void (*duk_debug_detached_function) (void *udata);
 
 struct duk_memory_functions {
@@ -222,9 +223,9 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "6db0b911272b5f3816121448e36465ff1ba65393"
-#define DUK_GIT_DESCRIBE                  "v1.4.0-139-g6db0b91"
-#define DUK_GIT_BRANCH                    "debugger-heap-walking-support"
+#define DUK_GIT_COMMIT                    "4ec41b63b6b82e37f38a05b3f0490ca99f594d04"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-133-g4ec41b6-dirty"
+#define DUK_GIT_BRANCH                    "debugger-custom-commands"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -1071,16 +1072,19 @@ DUK_EXTERNAL_DECL void duk_push_context_dump(duk_context *ctx);
  *  Debugger (debug protocol)
  */
 
+/* FIXME: addition of Custom callback breaks 1.x compatibility, see if there's another way */
 DUK_EXTERNAL_DECL void duk_debugger_attach(duk_context *ctx,
                                            duk_debug_read_function read_cb,
                                            duk_debug_write_function write_cb,
                                            duk_debug_peek_function peek_cb,
                                            duk_debug_read_flush_function read_flush_cb,
                                            duk_debug_write_flush_function write_flush_cb,
+                                           duk_debug_custom_function custom_cb,
                                            duk_debug_detached_function detached_cb,
                                            void *udata);
 DUK_EXTERNAL_DECL void duk_debugger_detach(duk_context *ctx);
 DUK_EXTERNAL_DECL void duk_debugger_cooperate(duk_context *ctx);
+DUK_EXTERNAL_DECL void duk_debugger_notify(duk_context *ctx, duk_idx_t nvalues);
 
 /*
  *  Date provider related constants
