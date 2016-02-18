@@ -115,6 +115,5 @@ bin/ssj:
 	mkdir -p bin
 	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared \
 	   src/shared/dyad.c src/shared/path.c src/shared/vector.c \
-	   src/ssj/main.c src/ssj/client.c src/ssj/command.c src/ssj/dvalue.c \
-	   src/ssj/file_line.c src/ssj/message.c src/ssj/session.c src/ssj/socket.c \
-	   src/ssj/source.c
+	   src/ssj/main.c src/ssj/command.c src/ssj/dvalue.c src/ssj/message.c \
+	   src/ssj/session.c src/ssj/sockets.c src/ssj/source.c

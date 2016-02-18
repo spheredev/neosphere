@@ -23,7 +23,6 @@
 #include <Shlwapi.h>
 #endif
 
-#include "file_line.h"
 #include "path.h"
 #include "vector.h"
 

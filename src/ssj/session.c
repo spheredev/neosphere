@@ -2,8 +2,8 @@
 #include "session.h"
 #include "source.h"
 
-#include "client.h"
 #include "message.h"
+#include "sockets.h"
 
 #define CL_BUFFER_SIZE 65536
 
@@ -20,7 +20,7 @@ struct session
 	struct frame* backtrace;
 	int           n_frames;
 	char          cl_buffer[CL_BUFFER_SIZE];
-	client_t*     client;
+	socket_t*     socket;
 	int           frame_index;
 	char*         function_name;
 	char*         filename;
@@ -74,6 +74,54 @@ static void       print_msg_atom      (session_t* sess, const message_t* message
 static bool       process_message     (session_t* sess, const message_t* msg);
 static void       refresh_backtrace   (session_t* sess);
 
+static bool
+parse_handshake(socket_t* socket)
+{
+	static char handshake[128];
+
+	char* next_token;
+	char* token;
+	char  *p_ch;
+
+	printf("verifying... ");
+	memset(handshake, 0, sizeof handshake);
+	p_ch = handshake;
+	do {
+		socket_recv(socket, p_ch, 1);
+	} while (*p_ch++ != '\n');
+	*(p_ch - 1) = '\0';
+
+	// parse handshake line
+	if (!(token = strtok_r(handshake, " ", &next_token)))
+		goto on_error;
+	if (atoi(token) != 1) goto on_error;
+	if (!(token = strtok_r(NULL, " ", &next_token)))
+		goto on_error;
+	if (!(token = strtok_r(NULL, " ", &next_token)))
+		goto on_error;
+	printf("OK.\n");
+	printf("   inferior is \33[36m%s\33[m\n", next_token);
+	printf("   duktape \33[36m%s\33[m\n", token);
+
+	return true;
+
+on_error:
+	printf("\33[31;1merror!\33[m\n");
+	return false;
+}
+
+void
+sessions_init(void)
+{
+	sockets_init();
+}
+
+void
+sessions_deinit(void)
+{
+	sockets_deinit();
+}
+
 session_t*
 new_session(const char* hostname, int port)
 {
@@ -83,7 +131,12 @@ new_session(const char* hostname, int port)
 	session_t*  session;
 
 	session = calloc(1, sizeof(session_t));
-	if (!(session->client = client_connect(hostname, port)))
+	printf("connecting to \33[36m%s:%d\33[m... ", hostname, port);
+	fflush(stdout);
+	if (!(session->socket = socket_connect(hostname, port, 30.0)))
+		goto on_error;
+	printf("OK.\n");
+	if (!parse_handshake(session->socket))
 		goto on_error;
 	session->is_attached = true;
 
@@ -118,7 +171,7 @@ end_session(session_t* sess)
 {
 	clear_cli_cache(sess);
 	path_free(sess->source_path);
-	client_close(sess->client);
+	socket_close(sess->socket);
 
 	free(sess);
 }
@@ -327,10 +380,10 @@ run_session(session_t* sess)
 
 	printf("\n");
 	while (is_active) {
-		if (sess->client == NULL || sess->is_stopped)
+		if (sess->socket == NULL || sess->is_stopped)
 			is_active &= do_command_line(sess);
 		else {
-			if (!(msg = client_recv_msg(sess->client)))
+			if (!(msg = msg_recv(sess->socket)))
 				goto on_error;
 			is_active &= process_message(sess, msg);
 			msg_free(msg);
@@ -368,10 +421,10 @@ converse(session_t* sess, message_t* msg)
 {
 	message_t* response = NULL;
 
-	client_send_msg(sess->client, msg);
+	msg_send(msg, sess->socket);
 	do {
 		msg_free(response);
-		if (!(response = client_recv_msg(sess->client))) return NULL;
+		if (!(response = msg_recv(sess->socket))) return NULL;
 		if (msg_type(response) == MSG_TYPE_NFY)
 			process_message(sess, response);
 	} while (msg_type(response) == MSG_TYPE_NFY);
@@ -393,7 +446,6 @@ do_command_line(session_t* sess)
 	char*       parsee;
 	message_t*  req;
 
-	printf("\n");
 	if (sess->has_pc_changed) {
 		sess->has_pc_changed = false;
 		print_backtrace(sess, 0, false);
@@ -402,7 +454,8 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\33[36;1m%s %s\33[m \33[33;1mssj$\33[m ", sess->filename, sess->function_name);
+		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1mssj:\33[m ", sess->filename, sess->line_no,
+			sess->function_name);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
@@ -418,7 +471,7 @@ do_command_line(session_t* sess)
 
 	// parse the command line
 	parsee = strdup(sess->cl_buffer);
-	command = strtok_r(parsee, " ", &argument);
+	command = strtok_r(parsee, " \t", &argument);
 	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
 		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_DETACH);
@@ -537,7 +590,7 @@ print_help(session_t* sess)
 		" cb, clearbreak   Clear a breakpoint set at file:line (see 'breakpoint')       \n"
 		" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
 		" e,  eval         Evaluate a JavaScript expression                             \n"
-		" f,  frame        Change the stack frame used for, e.g. 'eval' and 'var'       \n"
+		" f,  frame        Select the stack frame used for, e.g. 'eval' and 'var'       \n"
 		" l,  list         Show source text around the line of code being debugged      \n"
 		" s,  step         Run the next line of code                                    \n"
 		" si, stepin       Run the next line of code, stepping into functions           \n"
@@ -650,8 +703,8 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_THROW:
 			if ((flag = msg_get_int(msg, 1)) == 0)
 				break;
-			printf("\33[31;1mFATAL:\33[0;1m %s\33[m\n", msg_get_string(msg, 2));
-			printf("       (at \33[36;1m%s:%d\33[m)\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
+			printf("\33[31;1mFATAL:\33[0;1m %s\33[m ", msg_get_string(msg, 2));
+			printf("[at \33[36;1m%s:%d\33[m]\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
 			break;
 		case NFY_DETACHING:
 			sess->is_attached = false;

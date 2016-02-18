@@ -1,7 +1,7 @@
 #ifndef SSJ__DVALUE_H__INCLUDED
 #define SSJ__DVALUE_H__INCLUDED
 
-#include "socket.h"
+#include "sockets.h"
 
 typedef struct dvalue  dvalue_t;
 

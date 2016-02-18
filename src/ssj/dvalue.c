@@ -1,7 +1,7 @@
 #include "ssj.h"
 #include "dvalue.h"
 
-#include "socket.h"
+#include "sockets.h"
 
 struct dvalue
 {

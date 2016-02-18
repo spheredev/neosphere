@@ -1,5 +1,5 @@
 #include "ssj.h"
-#include "socket.h"
+#include "sockets.h"
 
 #include <dyad.h>
 

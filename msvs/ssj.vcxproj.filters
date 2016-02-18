@@ -36,19 +36,13 @@
     <ClCompile Include="..\src\ssj\command.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ssj\file_line.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ssj\message.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ssj\dvalue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ssj\socket.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ssj\client.c">
+    <ClCompile Include="..\src\ssj\sockets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,19 +77,13 @@
     <ClInclude Include="..\src\ssj\command.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ssj\file_line.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ssj\message.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ssj\dvalue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ssj\socket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ssj\client.h">
+    <ClInclude Include="..\src\ssj\sockets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,6 @@
 #include "ssj.h"
 
 #include <dyad.h>
-#include "client.h"
 #include "session.h"
 
 struct cmdline
@@ -32,7 +31,7 @@ main(int argc, char* argv[])
 	if (cmdline->path != NULL && !launch_minisphere(cmdline->path))
 		return EXIT_FAILURE;
 
-	clients_init();
+	sessions_init();
 
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
@@ -41,7 +40,7 @@ main(int argc, char* argv[])
 	run_session(session);
 	end_session(session);
 
-	clients_deinit();
+	sessions_deinit();
 
 	free_cmdline(cmdline);
 	return EXIT_SUCCESS;
