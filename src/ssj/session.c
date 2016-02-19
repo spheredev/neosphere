@@ -53,7 +53,7 @@ enum req_command
 	REQ_DUMP_HEAP = 0x20,
 	REQ_GET_BYTECODE = 0x21,
 	REQ_INSPECT_OBJ = 0x22,
-	REQ_CUSTOM = 0xFF,
+	REQ_APPREQUEST = 0x23,
 };
 
 enum nfy_command
@@ -64,9 +64,18 @@ enum nfy_command
 	NFY_LOG = 0x04,
 	NFY_THROW = 0x05,
 	NFY_DETACHING = 0x06,
-	NFY_CUSTOM = 0xFF,
+	NFY_APPNOTIFY = 0x07,
+};
 
-	NFY_CUSTOM_TRACE = 0x00,
+enum appnotify
+{
+	APPNFY_TRACE,
+};
+
+enum apprequest
+{
+	APPREQ_NOP,
+	APPREQ_SRC_PATH,
 };
 
 enum err_command
@@ -152,16 +161,14 @@ new_session(const char* hostname, int port)
 		goto on_error;
 	session->is_attached = true;
 
-	// find out where the original source tree is by querying the target.
-	// we can't ask directly because Duktape doesn't allow custom messages, so
-	// we fake it with an Eval command.
+	// find out where the source tree is by querying the target
 	printf("locating sources... ");
 	req = msg_new(MSG_TYPE_REQ);
-	msg_add_int(req, REQ_EVAL);
-	msg_add_string(req, "(function() { return 'SourceMap' in global ? global.SourceMap.origin : undefined; })();");
+	msg_add_int(req, REQ_APPREQUEST);
+	msg_add_int(req, APPREQ_SRC_PATH);
 	rep = converse(session, req);
-	if (msg_get_string(rep, 1) != NULL)
-		origin = path_resolve(path_new(msg_get_string(rep, 1)), NULL);
+	if (msg_get_string(rep, 0) != NULL)
+		origin = path_resolve(path_new(msg_get_string(rep, 0)), NULL);
 	if (origin == NULL)
 		printf("\33[31;1mnone found.\33[m\n");
 	else {
@@ -718,9 +725,9 @@ process_message(session_t* sess, const message_t* msg)
 			printf("\33[31;1mFATAL:\33[0;1m %s\33[m ", msg_get_string(msg, 2));
 			printf("[at \33[36;1m%s:%d\33[m]\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
 			break;
-		case NFY_CUSTOM:
+		case NFY_APPNOTIFY:
 			switch (msg_get_int(msg, 1)) {
-			case NFY_CUSTOM_TRACE:
+			case APPNFY_TRACE:
 				printf("\33[36mtrace:\33[m %s", msg_get_string(msg, 2));
 				break;
 			}

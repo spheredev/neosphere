@@ -909,14 +909,16 @@ js_Trace(duk_context* ctx)
 	int num_items;
 	
 	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, "\n");
 	
+	// separate printed values with a space
 	duk_push_string(ctx, " ");
 	duk_insert(ctx, 0);
+	
+	// tack on a newline and concatenate the values
+	duk_push_string(ctx, "\n");
 	duk_join(ctx, num_items + 1);
-	duk_push_int(ctx, NFY_TRACE);
-	duk_insert(ctx, -2);
-	duk_debugger_notify(ctx, 2);
+
+	debug_print(duk_get_string(ctx, -1));
 	return 0;
 }
 

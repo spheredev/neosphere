@@ -3,15 +3,26 @@
 
 #include "debugger.h"
 
+enum appnotify
+{
+	APPNFY_TRACE,
+};
+
+enum apprequest
+{
+	APPREQ_NOP,
+	APPREQ_SRC_PATH,
+};
+
 static const int TCP_DEBUG_PORT = 1208;
 
-static bool       attach_debugger     (void);
-static void       detach_debugger     (bool is_shutdown);
-static void       duk_cb_debug_detach (void* udata);
-static duk_idx_t  duk_cb_debug_custom (void* udata, duk_context* ctx, duk_idx_t nvalues);
-static duk_size_t duk_cb_debug_peek   (void* udata);
-static duk_size_t duk_cb_debug_read   (void* udata, char* buffer, duk_size_t bufsize);
-static duk_size_t duk_cb_debug_write  (void* udata, const char* data, duk_size_t size);
+static bool       attach_debugger      (void);
+static void       detach_debugger      (bool is_shutdown);
+static void       duk_cb_debug_detach  (void* udata);
+static duk_idx_t  duk_cb_debug_request (void* udata, duk_context* ctx, duk_idx_t nvalues);
+static duk_size_t duk_cb_debug_peek    (void* udata);
+static duk_size_t duk_cb_debug_read    (void* udata, char* buffer, duk_size_t bufsize);
+static duk_size_t duk_cb_debug_write   (void* udata, const char* data, duk_size_t size);
 
 static bool      s_is_attached = false;
 static socket_t* s_client;
@@ -36,27 +47,14 @@ initialize_debugger(bool want_attach, bool allow_remote)
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
 		duk_put_prop_string(g_duk, -2, "debugMap");
-		duk_push_global_object(g_duk);
-		duk_push_string(g_duk, "SourceMap");
-		duk_push_lstring(g_duk, data, data_size);
-		duk_json_decode(g_duk, -1);
-		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
-			| DUK_DEFPROP_CLEAR_WRITABLE | DUK_DEFPROP_CLEAR_CONFIGURABLE
-			| DUK_DEFPROP_CLEAR_ENUMERABLE);
-		duk_pop(g_duk);
 		free(data);
 		s_have_source_map = true;
 	}
 	else if (!path_is_file(game_path)) {
-		duk_push_global_object(g_duk);
-		duk_push_string(g_duk, "SourceMap");
 		duk_push_object(g_duk);
 		duk_push_string(g_duk, path_cstr(game_path));
 		duk_put_prop_string(g_duk, -2, "origin");
-		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
-			| DUK_DEFPROP_CLEAR_WRITABLE | DUK_DEFPROP_CLEAR_CONFIGURABLE
-			| DUK_DEFPROP_CLEAR_ENUMERABLE);
-		duk_pop(g_duk);
+		duk_put_prop_string(g_duk, -2, "debugMap");
 	}
 	duk_pop(g_duk);
 	
@@ -96,13 +94,13 @@ update_debugger(void)
 			console_log(1, "Connected to debugger at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
-			duk_debugger_attach(g_duk,
+			duk_debugger_attach_custom(g_duk,
 				duk_cb_debug_read,
 				duk_cb_debug_write,
 				duk_cb_debug_peek,
 				NULL,
 				NULL,
-				duk_cb_debug_custom,
+				duk_cb_debug_request,
 				duk_cb_debug_detach,
 				NULL);
 			s_is_attached = true;
@@ -138,6 +136,14 @@ get_source_pathname(const char* pathname)
 		duk_pop_n(g_duk, 4);
 	}
 	return retval;
+}
+
+void
+debug_print(const char* text)
+{
+	duk_push_int(g_duk, APPNFY_TRACE);
+	duk_push_string(g_duk, text);
+	duk_debugger_notify(g_duk, 2);
 }
 
 static bool
@@ -186,9 +192,22 @@ duk_cb_debug_detach(void* udata)
 }
 
 static duk_idx_t
-duk_cb_debug_custom(void* udata, duk_context* ctx, duk_idx_t nvalues)
+duk_cb_debug_request(void* udata, duk_context* ctx, duk_idx_t nvalues)
 {
-	return 0;
+	const char* pathname = NULL;
+	int         request_id;
+	
+	request_id = duk_get_int(ctx, -nvalues + 0);
+	switch (request_id) {
+	case APPREQ_SRC_PATH:
+		duk_push_global_stash(ctx);
+		if (duk_get_prop_string(ctx, -1, "debugMap") && duk_get_prop_string(ctx, -1, "origin"))
+			return 1;
+		duk_push_null(ctx);
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static duk_size_t
