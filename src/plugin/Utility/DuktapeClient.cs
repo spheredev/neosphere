@@ -26,6 +26,41 @@ namespace minisphere.Gdk.Utility
         Lightfunc,
     }
 
+    enum RequestCode
+    {
+        BasicInfo = 0x10,
+        TriggerStatus = 0x11,
+        Pause = 0x12,
+        Resume = 0x13,
+        StepInto = 0x14,
+        StepOver = 0x15,
+        StepOut = 0x16,
+        ListBreak = 0x17,
+        AddBreak = 0x18,
+        DelBreak = 0x19,
+        GetVar = 0x1A,
+        PutVar = 0x1B,
+        GetCallStack = 0x1C,
+        GetLocals = 0x1D,
+        Eval = 0x1E,
+        Detach = 0x1F,
+        DumpHeap = 0x20,
+        GetByteCode = 0x21,
+        AppRequest = 0x22,
+        InspectHeapObject = 0x23,
+    }
+
+    enum NotifyCode
+    {
+        Status = 0x01,
+        Print = 0x02,
+        Alert = 0x03,
+        Log = 0x04,
+        Throw = 0x05,
+        Detaching = 0x06,
+        AppNotify = 0x07,
+    }
+
     class ErrorThrownEventArgs : EventArgs
     {
         public ErrorThrownEventArgs(string message, string filename, int lineNumber, bool isFatal)
@@ -320,7 +355,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task Pause()
         {
-            await Converse(DValue.REQ, 0x12);
+            await Converse(DValue.REQ, RequestCode.Pause);
         }
 
         /// <summary>
@@ -329,7 +364,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task Resume()
         {
-            await Converse(DValue.REQ, 0x13);
+            await Converse(DValue.REQ, RequestCode.Resume);
         }
 
         /// <summary>
@@ -339,7 +374,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task StepInto()
         {
-            await Converse(DValue.REQ, 0x14);
+            await Converse(DValue.REQ, RequestCode.StepInto);
         }
 
         /// <summary>
@@ -348,7 +383,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task StepOut()
         {
-            await Converse(DValue.REQ, 0x16);
+            await Converse(DValue.REQ, RequestCode.StepOut);
         }
 
         /// <summary>
@@ -357,7 +392,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task StepOver()
         {
-            await Converse(DValue.REQ, 0x15);
+            await Converse(DValue.REQ, RequestCode.StepOut);
         }
 
         private async Task<dynamic[]> Converse(params dynamic[] values)
@@ -514,6 +549,11 @@ namespace minisphere.Gdk.Utility
             }
         }
 
+        private void SendValue(RequestCode value)
+        {
+            SendValue((int)value);
+        }
+
         private void SendValue(bool value)
         {
             tcp.Client.Send(new byte[] {
@@ -574,25 +614,31 @@ namespace minisphere.Gdk.Utility
                 }
                 if (message[0] == DValue.NFY)
                 {
-                    int commandID = message[1];
-                    switch (commandID)
+                    switch ((NotifyCode)message[1])
                     {
-                        case 0x01: // Status notification
+                        case NotifyCode.Status:
                             FileName = message[3];
                             LineNumber = message[5];
                             Running = message[2] == 0;
                             Status?.Invoke(this, EventArgs.Empty);
                             break;
-                        case 0x02: // Print notification
-                            Print?.Invoke(this, new TraceEventArgs(message[2]));
+                        case NotifyCode.Print:
+                            Print?.Invoke(this, new TraceEventArgs("print: " + message[2]));
                             break;
-                        case 0x03: // Alert notification
+                        case NotifyCode.Alert:
                             Alert?.Invoke(this, new TraceEventArgs(message[2]));
                             break;
-                        case 0x05: // Throw notification
+                        case NotifyCode.Throw:
                             ErrorThrown?.Invoke(this, new ErrorThrownEventArgs(
                                 message[3], message[4], message[5],
                                 message[2] != 0));
+                            break;
+                        case NotifyCode.AppNotify:
+                            switch ((int)message[2]) {
+                                case 0x00:  // DebugPrint
+                                    Print?.Invoke(this, new TraceEventArgs("debug: " + message[3]));
+                                    break;
+                            }
                             break;
                     }
                 }
