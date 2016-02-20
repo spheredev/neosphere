@@ -87,7 +87,6 @@ enum err_command
 };
 
 static void       clear_cli_cache     (session_t* sess);
-static message_t* converse            (session_t* sess, message_t* msg);
 static bool       do_command_line     (session_t* sess);
 static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_help          (session_t* sess);
@@ -96,21 +95,22 @@ static bool       process_message     (session_t* sess, const message_t* msg);
 static void       refresh_backtrace   (session_t* sess);
 
 static bool
-parse_handshake(socket_t* socket)
+do_handshake(socket_t* socket)
 {
 	static char handshake[128];
 
-	char* next_token;
-	char* token;
-	char  *p_ch;
+	ptrdiff_t idx;
+	char*     next_token;
+	char*     token;
 
 	printf("verifying... ");
-	memset(handshake, 0, sizeof handshake);
-	p_ch = handshake;
+	idx = 0;
 	do {
-		socket_recv(socket, p_ch, 1);
-	} while (*p_ch++ != '\n');
-	*(p_ch - 1) = '\0';
+		if (idx >= 127)  // probably not a Duktape handshake
+			goto on_error;
+		socket_recv(socket, &handshake[idx], 1);
+	} while (handshake[idx++] != '\n');
+	handshake[idx - 1] = '\0';  // remove the newline
 
 	// parse handshake line
 	if (!(token = strtok_r(handshake, " ", &next_token)))
@@ -129,6 +129,21 @@ parse_handshake(socket_t* socket)
 on_error:
 	printf("\33[31;1merror!\33[m\n");
 	return false;
+}
+
+static message_t*
+do_request(session_t* sess, message_t* msg)
+{
+	message_t* reply = NULL;
+
+	msg_send(msg, sess->socket);
+	do {
+		msg_free(reply);
+		if (!(reply = msg_recv(sess->socket))) return NULL;
+		if (msg_type(reply) == MSG_TYPE_NFY)
+			process_message(sess, reply);
+	} while (msg_type(reply) == MSG_TYPE_NFY);
+	return reply;
 }
 
 void
@@ -157,7 +172,7 @@ new_session(const char* hostname, int port)
 	if (!(session->socket = socket_connect(hostname, port, 30.0)))
 		goto on_error;
 	printf("OK.\n");
-	if (!parse_handshake(session->socket))
+	if (!do_handshake(session->socket))
 		goto on_error;
 	session->is_attached = true;
 
@@ -166,7 +181,7 @@ new_session(const char* hostname, int port)
 	req = msg_new(MSG_TYPE_REQ);
 	msg_add_int(req, REQ_APP_REQUEST);
 	msg_add_int(req, APPREQ_SRC_PATH);
-	rep = converse(session, req);
+	rep = do_request(session, req);
 	if (msg_get_string(rep, 0) != NULL)
 		origin = path_resolve(path_new(msg_get_string(rep, 0)), NULL);
 	if (origin == NULL)
@@ -207,7 +222,7 @@ clear_breakpoint(session_t* sess, const char* filename, int line_no)
 
 	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_LIST_BREAK);
-	msg = converse(sess, msg);
+	msg = do_request(sess, msg);
 	num_breaks = msg_len(msg) / 2;
 	for (idx = 0; idx < num_breaks; ++idx) {
 		if (strcmp(filename, msg_get_string(msg, idx * 2)) == 0
@@ -216,7 +231,7 @@ clear_breakpoint(session_t* sess, const char* filename, int line_no)
 			msg2 = msg_new(MSG_TYPE_REQ);
 			msg_add_int(msg2, REQ_DEL_BREAK);
 			msg_add_int(msg2, (int)idx);
-			msg_free(converse(sess, msg2));
+			msg_free(do_request(sess, msg2));
 			printf("breakpoint #%2zd cleared at \33[36;1m%s:%d\33[m.\n", idx, filename, line_no);
 			is_ok = true;
 		}
@@ -273,7 +288,7 @@ print_breakpoints(session_t* sess)
 
 	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_LIST_BREAK);
-	msg = converse(sess, msg);
+	msg = do_request(sess, msg);
 	if ((num_breaks = msg_len(msg) / 2) == 0)
 		printf("no active breakpoints.\n");
 	for (idx = 0; idx < num_breaks; ++idx) {
@@ -293,7 +308,7 @@ print_eval(session_t* sess, const char* expr, int frame, bool show_metadata)
 	msg_add_int(req, REQ_EVAL);
 	msg_add_string(req, expr);
 	msg_add_int(req, -(1 + frame));
-	req = converse(sess, req);
+	req = do_request(sess, req);
 	if (msg_get_int(req, 0) == 0)
 		printf("= ");
 	else
@@ -315,7 +330,7 @@ print_locals(session_t* sess, int frame)
 	request = msg_new(MSG_TYPE_REQ);
 	msg_add_int(request, REQ_GET_LOCALS);
 	msg_add_int(request, -(1 + frame));
-	response = converse(sess, request);
+	response = do_request(sess, request);
 	if ((num_vars = msg_len(response) / 2) == 0)
 		printf("no locals in function \33[36m%s\33[m.\n", sess->function_name);
 	for (i = 0; i < num_vars; ++i) {
@@ -368,7 +383,7 @@ set_breakpoint(session_t* sess, const char* filename, int line_no)
 	msg_add_int(msg, REQ_ADD_BREAK);
 	msg_add_string(msg, filename);
 	msg_add_int(msg, (int32_t)line_no);
-	msg = converse(sess, msg);
+	msg = do_request(sess, msg);
 	index = msg_get_int(msg, 0);
 	msg_free(msg);
 	return index;
@@ -386,7 +401,7 @@ execute_next(session_t* sess, exec_op_t op)
 		: op == EXEC_STEP_IN ? REQ_STEP_INTO
 		: op == EXEC_STEP_OUT ? REQ_STEP_OUT
 		: REQ_RESUME);
-	msg_free(converse(sess, request));
+	msg_free(do_request(sess, request));
 	sess->frame_index = 0;
 	sess->is_stopped = false;
 }
@@ -435,21 +450,6 @@ clear_cli_cache(session_t* sess)
 	}
 }
 
-static message_t*
-converse(session_t* sess, message_t* msg)
-{
-	message_t* reply = NULL;
-
-	msg_send(msg, sess->socket);
-	do {
-		msg_free(reply);
-		if (!(reply = msg_recv(sess->socket))) return NULL;
-		if (msg_type(reply) == MSG_TYPE_NFY)
-			process_message(sess, reply);
-	} while (msg_type(reply) == MSG_TYPE_NFY);
-	return reply;
-}
-
 static bool
 do_command_line(session_t* sess)
 {
@@ -494,7 +494,7 @@ do_command_line(session_t* sess)
 	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
 		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_DETACH);
-		msg_free(converse(sess, req));
+		msg_free(do_request(sess, req));
 		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
@@ -645,7 +645,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 		msg_add_int(req, REQ_INSPECT_OBJ);
 		msg_add_heapptr(req, heapptr);
 		msg_add_int(req, 0x0);
-		req = converse(sess, req);
+		req = do_request(sess, req);
 		idx = 0;
 		printf("\33[0;1m{\33[m\n");
 		while (idx < msg_len(req)) {
@@ -761,7 +761,7 @@ refresh_backtrace(session_t* sess)
 
 	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_GET_CALLSTACK);
-	msg = converse(sess, msg);
+	msg = do_request(sess, msg);
 	sess->n_frames = (int)(msg_len(msg) / 4);
 	sess->backtrace = calloc(sess->n_frames, sizeof(struct frame));
 	for (i = 0; i < sess->n_frames; ++i) {
