@@ -28,8 +28,8 @@ get_command()
 	
 	command_t* command;
 	char       ch;
-	size_t     ch_idx;
-	bool       is_parsed;
+	size_t     ch_idx = 0;
+	bool       is_parsed = false;
 	char*      next_token;
 	char*      verb;
 	
@@ -55,4 +55,6 @@ get_command()
 	while (!is_parsed) {
 
 	}
+
+	return command;
 }

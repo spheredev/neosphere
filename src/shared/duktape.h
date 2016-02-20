@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 0883d720c17fcbfddda788d71385a1580cbbcb22 (v1.4.0-153-g0883d72).
+ *  Git commit 3e5bc16c0f54c7b388628b4eeabae2504cfcf8d3 (v1.4.0-155-g3e5bc16).
  *  Git branch debugger-custom-commands.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -223,8 +223,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "0883d720c17fcbfddda788d71385a1580cbbcb22"
-#define DUK_GIT_DESCRIBE                  "v1.4.0-153-g0883d72"
+#define DUK_GIT_COMMIT                    "3e5bc16c0f54c7b388628b4eeabae2504cfcf8d3"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-155-g3e5bc16"
 #define DUK_GIT_BRANCH                    "debugger-custom-commands"
 
 /* Duktape debug protocol version used by this build. */
@@ -1072,8 +1072,9 @@ DUK_EXTERNAL_DECL void duk_push_context_dump(duk_context *ctx);
  *  Debugger (debug protocol)
  */
 
-#define duk_debugger_attach(ctx, read_cb, write_cb, peek_cb, read_flush_cb, write_flush_cb, detached_cb, udata) \
-	duk_debugger_attach_custom(ctx, read_cb, write_cb, peek_cb, read_flush_cb, write_flush_cb, NULL, detached_cb, udata)
+#define duk_debugger_attach(ctx,read_cb,write_cb,peek_cb,read_flush_cb,write_flush_cb,detached_cb,udata) \
+	duk_debugger_attach_custom((ctx), (read_cb), (write_cb), (peek_cb), (read_flush_cb), (write_flush_cb), \
+	                           NULL, (detached_cb), (udata))
 
 DUK_EXTERNAL_DECL void duk_debugger_attach_custom(duk_context *ctx,
                                                   duk_debug_read_function read_cb,

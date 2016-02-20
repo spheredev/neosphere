@@ -84,7 +84,7 @@ launch_minisphere(path_t* game_path)
 	ssize_t     pathname_len;
 	struct stat stat_buf;
 	
-	printf("spherun \33[36;1m%s\33[m... ", path_cstr(game_path));
+	printf("starting \33[36m%s\33[m... ", path_cstr(game_path));
 	fflush(stdout);
 	memset(pathname, 0, sizeof pathname);
 	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX);
@@ -246,7 +246,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("SSJ %s Sphere CLI debugger (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("SSJ %s minisphere CLI debugger (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A powerful JavaScript debugger for minisphere\n");
 		printf("(c) 2016 Fat Cerberus\n");

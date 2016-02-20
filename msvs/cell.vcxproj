@@ -80,7 +80,7 @@
     <TargetName>cell</TargetName>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>debug\</OutDir>
-    <IntDir>obj\debug\minisphere\</IntDir>
+    <IntDir>obj\debug\cell\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <TargetName>cell</TargetName>

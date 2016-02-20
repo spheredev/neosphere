@@ -151,14 +151,17 @@ attach_debugger(void)
 {
 	double timeout;
 
-	console_log(0, "Waiting for debug connection from SSJ...");
+	printf("Waiting for SSJ to connect... ");
+	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
 		update_debugger();
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
-		console_log(0, "Timed out waiting for SSJ!");
+		printf("Timed out!\n");
+	else
+		printf("OK.\n");
 	return s_client != NULL;
 }
 

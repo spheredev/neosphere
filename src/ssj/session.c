@@ -52,8 +52,8 @@ enum req_command
 	REQ_DETACH = 0x1F,
 	REQ_DUMP_HEAP = 0x20,
 	REQ_GET_BYTECODE = 0x21,
-	REQ_INSPECT_OBJ = 0x22,
-	REQ_APPREQUEST = 0x23,
+	REQ_APP_REQUEST = 0x22,
+	REQ_INSPECT_OBJ = 0x23,
 };
 
 enum nfy_command
@@ -64,7 +64,7 @@ enum nfy_command
 	NFY_LOG = 0x04,
 	NFY_THROW = 0x05,
 	NFY_DETACHING = 0x06,
-	NFY_APPNOTIFY = 0x07,
+	NFY_APP_NOTIFY = 0x07,
 };
 
 enum appnotify
@@ -164,7 +164,7 @@ new_session(const char* hostname, int port)
 	// find out where the source tree is by querying the target
 	printf("locating sources... ");
 	req = msg_new(MSG_TYPE_REQ);
-	msg_add_int(req, REQ_APPREQUEST);
+	msg_add_int(req, REQ_APP_REQUEST);
 	msg_add_int(req, APPREQ_SRC_PATH);
 	rep = converse(session, req);
 	if (msg_get_string(rep, 0) != NULL)
@@ -725,10 +725,10 @@ process_message(session_t* sess, const message_t* msg)
 			printf("\33[31;1mFATAL:\33[0;1m %s\33[m ", msg_get_string(msg, 2));
 			printf("[at \33[36;1m%s:%d\33[m]\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
 			break;
-		case NFY_APPNOTIFY:
+		case NFY_APP_NOTIFY:
 			switch (msg_get_int(msg, 1)) {
 			case APPNFY_TRACE:
-				printf("\33[36mtrace:\33[m %s", msg_get_string(msg, 2));
+				printf("\33[36mdebug:\33[m %s", msg_get_string(msg, 2));
 				break;
 			}
 			break;

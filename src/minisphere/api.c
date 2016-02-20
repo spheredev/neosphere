@@ -69,6 +69,7 @@ static duk_ret_t js_Abort                (duk_context* ctx);
 static duk_ret_t js_Alert                (duk_context* ctx);
 static duk_ret_t js_Assert               (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode (duk_context* ctx);
+static duk_ret_t js_DebugPrint           (duk_context* ctx);
 static duk_ret_t js_Delay                (duk_context* ctx);
 static duk_ret_t js_ExecuteGame          (duk_context* ctx);
 static duk_ret_t js_Exit                 (duk_context* ctx);
@@ -76,13 +77,13 @@ static duk_ret_t js_FlipScreen           (duk_context* ctx);
 static duk_ret_t js_GarbageCollect       (duk_context* ctx);
 static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
-static duk_ret_t js_Trace                (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
 static duk_ret_t duk_handle_require (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static int        s_framerate = 0;
+static void*      s_print_ptr;
 static lstring_t* s_user_agent;
 
 void
@@ -115,6 +116,11 @@ initialize_api(duk_context* ctx)
 		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
+	
+	// save built-in print() in case a script overwrites it
+	duk_get_global_string(ctx, "print");
+	s_print_ptr = duk_get_heapptr(ctx, -1);
+	duk_pop(ctx);
 	
 	// set up RequireScript() inclusion tracking table
 	duk_push_global_stash(ctx);
@@ -157,13 +163,13 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "Alert", js_Alert);
 	register_api_function(ctx, NULL, "Assert", js_Assert);
 	register_api_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
+	register_api_function(ctx, NULL, "DebugPrint", js_DebugPrint);
 	register_api_function(ctx, NULL, "Delay", js_Delay);
 	register_api_function(ctx, NULL, "Exit", js_Exit);
 	register_api_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
 	register_api_function(ctx, NULL, "FlipScreen", js_FlipScreen);
 	register_api_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
 	register_api_function(ctx, NULL, "Print", js_Print);
-	register_api_function(ctx, NULL, "Trace", js_Trace);
 	register_api_function(ctx, NULL, "RestartGame", js_RestartGame);
 	register_api_function(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
@@ -834,6 +840,25 @@ js_CreateStringFromCode(duk_context* ctx)
 }
 
 static duk_ret_t
+js_DebugPrint(duk_context* ctx)
+{
+	int num_items;
+
+	num_items = duk_get_top(ctx);
+
+	// separate printed values with a space
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+
+	// tack on a newline and concatenate the values
+	duk_push_string(ctx, "\n");
+	duk_join(ctx, num_items + 1);
+
+	debug_print(duk_get_string(ctx, -1));
+	return 0;
+}
+
+static duk_ret_t
 js_Delay(duk_context* ctx)
 {
 	double millisecs = floor(duk_require_number(ctx, 0));
@@ -889,11 +914,12 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_Print(duk_context* ctx)
 {
-	const char* text = duk_safe_to_string(ctx, 0);
-	
-	duk_get_global_string(ctx, "print");
-	duk_push_string(ctx, text);
-	duk_call(ctx, 1);
+	int num_items;
+
+	num_items = duk_get_top(ctx);
+	duk_push_heapptr(ctx, s_print_ptr);
+	duk_insert(ctx, 0);
+	duk_call(ctx, num_items);
 	return 0;
 }
 
@@ -901,25 +927,6 @@ static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
 	restart_engine();
-}
-
-static duk_ret_t
-js_Trace(duk_context* ctx)
-{
-	int num_items;
-	
-	num_items = duk_get_top(ctx);
-	
-	// separate printed values with a space
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	
-	// tack on a newline and concatenate the values
-	duk_push_string(ctx, "\n");
-	duk_join(ctx, num_items + 1);
-
-	debug_print(duk_get_string(ctx, -1));
-	return 0;
 }
 
 static duk_ret_t

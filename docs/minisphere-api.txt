@@ -29,7 +29,7 @@ GetVersionString()
   Returns the engine's version identification string. The string returned will
   be in the following format:
       
-      v2.0 (minisphere 2.99.812)
+      v2.0 (minisphere 3.0.0)
 
 GetExtensions()
 
@@ -205,15 +205,21 @@ Alert(message[, stack_offset])
   runtime when debugging.
 
 Assert(condition, error_message[, stack_offset]);
-  
+
   If `condition` evaluates to true, does nothing. Otherwise an error is thrown
   with the error text set to `error_message`. In the Console engine, the error
   is shown in a dialog box with the option to ignore it.
 
-Print(text);
+DebugPrint(value1, value2, ...);
+
+  Prints the provided values in the debugger (SSJ). This function has no effect
+  when SSJ is not attached, so it's useful for logging low-level debugging
+  information.
+
+Print(value1, value2, ...);
   
-  Outputs the specified text to the console. When debugging, the text will also
-  be sent to the debugger.
+  Like DebugPrint(), but sends the output to the console as well. This should be
+  used for general logging which might be helpful when debugging offline.
 
 
 Logging
@@ -1956,4 +1962,3 @@ SetTileSurface(tile_id, surface);
 
   Like Get/SetTileImage(), but uses Surface objects instead. Note: Drawing to
   the Surface after calling either of these functions will not modify the tile.
-
