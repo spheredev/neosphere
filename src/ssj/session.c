@@ -728,7 +728,7 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_APP_NOTIFY:
 			switch (msg_get_int(msg, 1)) {
 			case APPNFY_TRACE:
-				printf("\33[36mdebug:\33[m %s", msg_get_string(msg, 2));
+				printf("\33[35mdebug:\33[m %s", msg_get_string(msg, 2));
 				break;
 			}
 			break;

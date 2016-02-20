@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 3e5bc16c0f54c7b388628b4eeabae2504cfcf8d3 (v1.4.0-155-g3e5bc16).
+ *  Git commit 208d2e018ed3d997fe5fa5df6e8eb38e58e45d52 (v1.4.0-157-g208d2e0).
  *  Git branch debugger-custom-commands.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -185,7 +185,7 @@ typedef duk_size_t (*duk_debug_write_function) (void *udata, const char *buffer,
 typedef duk_size_t (*duk_debug_peek_function) (void *udata);
 typedef void (*duk_debug_read_flush_function) (void *udata);
 typedef void (*duk_debug_write_flush_function) (void *udata);
-typedef duk_idx_t (*duk_debug_request_function) (void *udata, duk_context *ctx, duk_idx_t nvalues);
+typedef duk_idx_t (*duk_debug_request_function) (duk_context *ctx, void *udata, duk_idx_t nvalues);
 typedef void (*duk_debug_detached_function) (void *udata);
 
 struct duk_memory_functions {
@@ -223,8 +223,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "3e5bc16c0f54c7b388628b4eeabae2504cfcf8d3"
-#define DUK_GIT_DESCRIBE                  "v1.4.0-155-g3e5bc16"
+#define DUK_GIT_COMMIT                    "208d2e018ed3d997fe5fa5df6e8eb38e58e45d52"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-157-g208d2e0"
 #define DUK_GIT_BRANCH                    "debugger-custom-commands"
 
 /* Duktape debug protocol version used by this build. */

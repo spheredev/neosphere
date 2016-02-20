@@ -19,7 +19,7 @@ static const int TCP_DEBUG_PORT = 1208;
 static bool       attach_debugger      (void);
 static void       detach_debugger      (bool is_shutdown);
 static void       duk_cb_debug_detach  (void* udata);
-static duk_idx_t  duk_cb_debug_request (void* udata, duk_context* ctx, duk_idx_t nvalues);
+static duk_idx_t  duk_cb_debug_request (duk_context* ctx, void* udata, duk_idx_t nvalues);
 static duk_size_t duk_cb_debug_peek    (void* udata);
 static duk_size_t duk_cb_debug_read    (void* udata, char* buffer, duk_size_t bufsize);
 static duk_size_t duk_cb_debug_write   (void* udata, const char* data, duk_size_t size);
@@ -195,7 +195,7 @@ duk_cb_debug_detach(void* udata)
 }
 
 static duk_idx_t
-duk_cb_debug_request(void* udata, duk_context* ctx, duk_idx_t nvalues)
+duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 {
 	const char* pathname = NULL;
 	int         request_id;
