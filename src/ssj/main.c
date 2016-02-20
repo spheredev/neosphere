@@ -169,7 +169,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 				print_cell_quote();
 				goto on_output_only;
 			}
-			else if (strcmp(argv[i], "--attach") == 0)
+			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
 			else if (strcmp(argv[i], "--pause") == 0)
 				cmdline->want_pause = true;
@@ -182,7 +182,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'a':
+				case 'c':
 					have_target = true;
 					break;
 				case 'p':
@@ -264,11 +264,11 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   ssj [--pause] <game-path>\n");
-	printf("   ssj -a [--pause]\n");
+	printf("   ssj -c [--pause]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -a, --attach    Attach to a target which has already been started. If the   \n");
-	printf("                   connection can't be made within 30 seconds, SSJ will exit.  \n");
+	printf("   -c, --connect   Connect to a target which has already been started.  If no  \n");
+	printf("                   connection can be made within 30 seconds, SSJ will exit.    \n");
 	printf("   -p, --pause     Pause execution on attach, or, when debugging a new         \n");
 	printf("                   instance, pause before any code is executed.                \n");
 	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
