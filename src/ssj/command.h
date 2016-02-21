@@ -3,12 +3,6 @@
 
 typedef struct command command_t;
 
-typedef
-enum cli_type
-{
-	CLI_STRING,
-	CLI_NUMBER,
-	CLI_FILE_LINE,
-} cli_type_t;
+command_t* command_read (void);
 
 #endif // SSJ__COMMANDLINE_H__INCLUDED

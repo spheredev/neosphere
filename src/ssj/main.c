@@ -185,7 +185,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 				case 'c':
 					have_target = true;
 					break;
-				case 'p':
+				case 'r':
 					cmdline->want_run = true;
 					break;
 				default:

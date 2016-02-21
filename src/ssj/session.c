@@ -1,6 +1,7 @@
 #include "ssj.h"
 #include "session.h"
 
+#include "command.h"
 #include "help.h"
 #include "message.h"
 #include "sockets.h"
@@ -488,7 +489,8 @@ do_command_line(session_t* sess)
 	while (sess->cl_buffer[0] == '\0') {
 		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
 			sess->function_name);
-		ch = getchar();
+		command_read();
+		/*ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
 				printf("string is too long to parse.");
@@ -498,7 +500,7 @@ do_command_line(session_t* sess)
 			sess->cl_buffer[ch_idx++] = ch;
 			ch = getchar();
 		}
-		sess->cl_buffer[ch_idx] = '\0';
+		sess->cl_buffer[ch_idx] = '\0';*/
 	}
 
 	// parse the command line
