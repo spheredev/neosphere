@@ -6,7 +6,7 @@
 struct cmdline
 {
 	path_t* path;
-	bool    want_pause;
+	bool    want_run;
 };
 
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
@@ -35,7 +35,7 @@ main(int argc, char* argv[])
 
 	if (!(session = new_session("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
-	if (!cmdline->want_pause)
+	if (cmdline->want_run)
 		execute_next(session, EXEC_RESUME);
 	run_session(session);
 	end_session(session);
@@ -171,8 +171,8 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			}
 			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
-			else if (strcmp(argv[i], "--pause") == 0)
-				cmdline->want_pause = true;
+			else if (strcmp(argv[i], "--run") == 0)
+				cmdline->want_run = true;
 			else {
 				printf("ssj: error: unknown option '%s'\n", argv[i]);
 				goto on_output_only;
@@ -186,7 +186,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 					have_target = true;
 					break;
 				case 'p':
-					cmdline->want_pause = true;
+					cmdline->want_run = true;
 					break;
 				default:
 					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
@@ -263,14 +263,14 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   ssj [--pause] <game-path>\n");
-	printf("   ssj -c [--pause]\n");
+	printf("   ssj [--run] <game-path>\n");
+	printf("   ssj -c [--run]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   -c, --connect   Connect to a target which has already been started.  If no  \n");
 	printf("                   connection can be made within 30 seconds, SSJ will exit.    \n");
-	printf("   -p, --pause     Pause execution on attach, or, when debugging a new         \n");
-	printf("                   instance, pause before any code is executed.                \n");
+	printf("   -r, --run       Prevent SSJ from pausing execution on attach.  When starting \n");
+	printf("                   a new instance, begin execution immediately.                \n");
 	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
 	printf("       --help      Print this help text.                                       \n");
 }

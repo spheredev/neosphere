@@ -1,9 +1,10 @@
 #include "ssj.h"
 #include "session.h"
-#include "source.h"
 
+#include "help.h"
 #include "message.h"
 #include "sockets.h"
+#include "source.h"
 
 #define CL_BUFFER_SIZE 65536
 
@@ -93,7 +94,6 @@ enum err_command
 static void       clear_cli_cache     (session_t* sess);
 static bool       do_command_line     (session_t* sess);
 static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
-static void       print_help          (session_t* sess);
 static void       print_msg_atom      (session_t* sess, const message_t* message, size_t index, int obj_verbosity);
 static bool       process_message     (session_t* sess, const message_t* msg);
 static void       refresh_backtrace   (session_t* sess);
@@ -128,7 +128,7 @@ do_handshake(socket_t* socket)
 		goto on_error;
 	printf("OK.\n");
 	printf("    inferior: %s\n", next_token);
-	printf("    duktape %d.%d.%d\n", duk_version / 10000,
+	printf("    duktape %d.%d.%d\n\n", duk_version / 10000,
 		(duk_version / 100) % 100, duk_version % 100);
 
 	return true;
@@ -482,7 +482,7 @@ do_command_line(session_t* sess)
 		sess->has_pc_changed = false;
 		print_backtrace(sess, 0, false);
 	}
-	
+
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
@@ -511,19 +511,19 @@ do_command_line(session_t* sess)
 		sess->is_stopped = false;
 	}
 	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
-		print_help(sess);
+		print_help(argument);
 	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
 		print_backtrace(sess, sess->frame_index, true);
 	else if (strcmp(command, "up") == 0 || strcmp(command, "u") == 0) {
 		if (argument[0] != '\0') frame_index = sess->frame_index + atoi(argument);
-			else frame_index = sess->frame_index + 1;
+		else frame_index = sess->frame_index + 1;
 		frame_index = (frame_index < sess->n_frames) ? frame_index
 			: sess->n_frames - 1;
 		print_backtrace(sess, frame_index, false);
 	}
 	else if (strcmp(command, "down") == 0 || strcmp(command, "d") == 0) {
 		if (argument[0] != '\0') frame_index = sess->frame_index - atoi(argument);
-			else frame_index = sess->frame_index - 1;
+		else frame_index = sess->frame_index - 1;
 		frame_index = (frame_index >= 0) ? frame_index : 0;
 		print_backtrace(sess, frame_index, false);
 	}
@@ -552,8 +552,12 @@ do_command_line(session_t* sess)
 		print_eval(sess, argument, sess->frame_index, false);
 	else if (strcmp(command, "examine") == 0 || strcmp(command, "x") == 0)
 		print_eval(sess, argument, sess->frame_index, true);
-	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0)
-		print_backtrace(sess, atoi(argument), false);
+	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0) {
+		if (argument[0] != '\0')
+			print_backtrace(sess, atoi(argument), false);
+		else
+			print_backtrace(sess, sess->frame_index, false);
+	}
 	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0) {
 		if (argument[0] != 0)
 			num_lines = atoi(argument);
@@ -561,7 +565,7 @@ do_command_line(session_t* sess)
 			num_lines = 10;
 		print_source(sess, sess->filename, sess->line_no, num_lines);
 	}
-	else if (strcmp(command, "step") == 0 || strcmp(command, "s") == 0)
+	else if (strcmp(command, "stepover") == 0 || strcmp(command, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
 	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
 		execute_next(sess, EXEC_STEP_IN);
@@ -569,8 +573,11 @@ do_command_line(session_t* sess)
 		execute_next(sess, EXEC_STEP_OUT);
 	else if (strcmp(command, "vars") == 0 || strcmp(command, "v") == 0)
 		print_locals(sess, sess->frame_index);
-	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0)
+	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
+		frame_index = sess->frame_index;
 		print_backtrace(sess, 0, false);
+		sess->frame_index = frame_index;
+	}
 	else
 		printf("'%s': command not recognized.\n", command);
 	free(parsee);
@@ -603,38 +610,6 @@ on_error:
 	free(parsee);
 	path_free(path);
 	return false;
-}
-
-static void
-print_help(session_t* sess)
-{
-	printf(
-		"\33[0;1m"
-		"SSJ Debugger Commands                                                          \n"
-		"\33[m"
-		"Abbreviated names are listed first, followed by the full, verbose name of each \n"
-		"command. Unlike GDB, truncated names are not allowed.                          \n\n"
-
-		" bt, backtrace    Show a list of all function calls currently on the stack     \n"
-		" d,  down         Move down the call stack (inwards) from the selected frame   \n"
-		" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
-		" cb, clearbreak   Clear a breakpoint set at file:line (see 'breakpoint')       \n"
-		" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
-		" e,  eval         Evaluate a JavaScript expression                             \n"
-		" x,  examine      Like 'eval' but shows low-level runtime metadata for objects \n"
-		" f,  frame        Select the stack frame used for, e.g. 'eval' and 'var'       \n"
-		" l,  list         Show source text around the line of code being debugged      \n"
-		" s,  step         Run the next line of code                                    \n"
-		" si, stepin       Run the next line of code, stepping into functions           \n"
-		" so, stepout      Run until the current function call returns                  \n"
-		" v,  vars         List local variables and their values in the active frame    \n"
-		" u,  up           Move up the call stack (outwards) from the selected frame    \n"
-		" w,  where        Show the filename and line number of the next line of code   \n"
-		" h,  help         Get help with SSJ commands                                   \n"
-		" q,  quit         Detach and terminate your SSJ debugging session              \n\n"
-
-		"Type 'help <command>' for usage of individual commands.                        \n"
-		);
 }
 
 static void
