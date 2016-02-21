@@ -21,7 +21,7 @@ Cell compiles and packages games for use with a Sphere-compatible game engine su
 The build process is controlled by a JS script named
 .I Cellscript.js
 in the root of the game's source tree.
-.SH INTRODUCTION
+.P
 A minimal Cellscript for a Sphere 1.x-compatible game might look like this:
 .P
 .RS 0
@@ -53,7 +53,7 @@ At that point it would be simpler to write the
 file manually, archive the entire source tree, and distribute the archive, forgoing Cell entirely.
 The real power of Cell comes from its asset system, of which the
 .B files()
-function used above is just one example.
+function used above is just one component.
 .P
 In Cell, an
 .I asset
@@ -68,6 +68,29 @@ used as a
 in building another asset.
 For example, you might build a tileset from a set of image files.
 With a properly-written Cellscript, Cell can figure out all the dependencies for you, and build everything in the proper order to make a working game package.
+.SH ASSETS
+.TP
+.B files(pattern[, recursive = false])
+An asset that stands in for a set of files.
+.B files()
+is unique in that it doesn't actually build anything - the files named are used as-is.
+However, like all other assets, a
+.B files()
+asset  may be installed directly (which will copy the files into the final package), or used as input for building another asset.
+.P
+Asset functions only declare assets.
+At build time, Cell will compile only assets which are part of the dependency chain for an asset which is ultimately installed.
+Therefore, you must pass any assets which need to be included in the final package to the
+.B install()
+function:
+.TP
+.B install(asset[, subdir])
+Install an asset. The optional
+.I subdir
+parameter specifies the subdirectory path, relative to the root of the package, where the asset will be installed.
+(note: Recursive
+.B files()
+assets, when installed, will recreate the matching portion of the original directory tree in the install location.)
 .SH BUGS
 Report any bugs found in minisphere or the GDK tools to:
 .br
