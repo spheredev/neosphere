@@ -8,19 +8,66 @@ cell \- Sphere game compiler and packager
 .B cell
 .RB [ \-i
 .IR indir ]
-.RB [ \-p
-.I spkfile
-.RB "| " \-l
-.IR gamedir ]
+.RB [ \-b
+.I gamedir
+.RB "| " \-p
+.IR spkfile ]
 [\fB\-\-debug\fR]
-.RI [ target ]
+.RI [ targetname ]
 .ad
 .hy
 .SH DESCRIPTION
 Cell compiles and packages games for use with a Sphere-compatible game engine such as minisphere.
 The build process is controlled by a JS script named
 .I Cellscript.js
-in the game's source directory.
+in the root of the game's source tree.
+.SH INTRODUCTION
+A minimal Cellscript for a Sphere 1.x-compatible game might look like this:
+.P
+.RS 0
+function $default()
+.RS 0
+{
+.RS 0
+    install(files("*", true));
+.RS 0
+    install(sgm({
+.RS 0
+        name: "Showdown at 8:12 PM",
+.RS 0
+        author: "maggie Pigg",
+.RS 0
+        summary: "Have fun getting eaten!",
+.RS 0
+        resolution: '320x240',
+.RS 0
+        script: 'scripts/start.js',
+.RS 0
+    }));
+.RS 0
+}
+.P
+The above script packages the entire source tree, which is usually undesirable.
+At that point it would be simpler to write the
+.I .sgm
+file manually, archive the entire source tree, and distribute the archive, forgoing Cell entirely.
+The real power of Cell comes from its asset system, of which the
+.B files()
+function used above is just one example.
+.P
+In Cell, an
+.I asset
+represents the output of a single step in the build process.
+Assets may either be
+.I installed
+(using the
+.B install()
+function, as illustrated in the example above), such that they become part of the final game package, or
+used as a
+.I dependency
+in building another asset.
+For example, you might build a tileset from a set of image files.
+With a properly-written Cellscript, Cell can figure out all the dependencies for you, and build everything in the proper order to make a working game package.
 .SH BUGS
 Report any bugs found in minisphere or the GDK tools to:
 .br

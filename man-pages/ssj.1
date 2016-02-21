@@ -35,6 +35,14 @@ By setting a breakpoint on a line of source code, the debugger will automaticall
 View debug traces.
 Games will often log interesting events using the DebugPrint() function.
 SSJ will let you see that output.
+.P
+Unless you use the
+.B \-\-connect
+option (see below), SSJ will start minisphere for you.
+This avoids to need to open a separate terminal for debugging.
+Simply provide the name of a Sphere game directory or package as the last argument to the
+.BR ssj (1)
+command, and SSJ will do the rest.
 .SH OPTIONS
 .TP
 .BR \fB\-c ", " \-\-connect
@@ -51,16 +59,23 @@ For newly started games, this allows you to set up breakpoints, etc. before any 
 Show the version number of the installed copy of SSJ along with the version numbers of any libraries it depends on.
 .SH COMMANDS
 Once attached, SSJ provides a large set of tools for you to use in debugging your game.
-Since SSJ is a console debugger, these are accessed via commands entered on a command line.
+Since SSJ is a console debugger, these are provided through a command-line interface.
 Below is a list of all commands supported by this version of SSJ:
 .TP
 .BR \fBbacktrace " or " bt
 View the contents of the call stack.
-This allows you to see which functions calls are in progress and is especially useful in tracing your game's execution path leading up to an error.
+This allows you to see which function calls are in progress and is especially useful in tracing your game's execution path leading up to an error.
 .TP
 .BR \fBcontinue " or " c
 Resume normal execution.
 If a breakpoint is hit or an error is thrown which is not caught, SSJ will pause execution again.
+.TP
+.BR \fBdown " or " d
+Move down the callstack relative to the selected frame, towards the innermost call.
+A number can be provided which specifies the number of frames to move.
+If no argument is given,
+.B down
+moves down 1 frame.
 .TP
 .BR \fBeval " or " e
 Evaluate a JavaScript expression.
@@ -68,6 +83,28 @@ This works exactly like JavaScript
 .B eval()
 and allows you to examine objects, assign to variables, or anything else you can do with a line of code.
 The expression is evaluated in the context of the selected stack frame.
+.TP
+.BR \fBexamine " or " x
+Evaluate a JavaScript expression verbosely.
+This performs the same function as
+.BR eval ,
+but shows runtime data such as heap pointers for any objects in the result.
+This is not often useful, but may be in certain circumstances.
+.TP
+.BR \fBframe " or " f
+Select a callstack frame to examine.
+Use
+.B backtrace
+to see the full list of frames on the callstack.
+When SSJ stops the program, the innermost frame is selected, which corresponds to the function call currently underway.
+Sometimes it's necessary when investigating a bug to view the state earlier in the call chain.
+To that end, the
+.frame
+command changes the context used for the following commands:
+.BR eval ", " list ", and " vars.
+The program counter isn't affected such that
+.B continue
+or stepping commands will resume execution in the innermost call regardless of the selected frame.
 .TP
 .BR \fBlist " or " l
 Print a few lines of source code surrounding the line currently being executed.
@@ -87,11 +124,30 @@ This lets you trace into functions.
 Continue execution until the active function call returns.
 Execution will pause again at the call site.
 .TP
+.BR \fBup " or " u
+Move up the callstack relative to the selected frame, towards the outermost call.
+A number can be provided which specifies the number of frames to move.
+If no argument is given,
+.B up
+moves up 1 frame.
+.TP
 .BR \fBvars " or " v
-Show local variables for selected stack frame along with all primitive values.
+Show local variables for the selected stack frame along with all primitive values.
 Non-primitive values such as objects and functions are displayed simply as "{...}" so you will need to use the
 .B eval
 command to examine them.
+.TP
+.BR \fBwhere " or " w
+Show the function name, filename and current line number for the selected frame, along with the line of code currently being executed.
+This can help you to regain your bearings after an extended debugging session.
+.P
+If you need help with any of these commands while using SSJ, you can use the
+.B help
+command.
+.B help
+with no arguments will show the list of usable commands and a short summary of the function of each.
+If you need help with a specific command, simply provide that command name as an argument to
+.BR help .
 .SH BUGS
 Report any bugs found in minisphere or the GDK tools to:
 .br
