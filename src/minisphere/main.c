@@ -910,6 +910,10 @@ parse_command_line(
 				*out_game_path = path_new(argv[i]);
 			}
 #if defined(MINISPHERE_SPHERUN)
+			else if (strcmp(argv[i], "-v") == 0) {
+				if (++i >= argc) goto missing_argument;
+				*out_verbosity = atoi(argv[i]);
+			}
 			else {
 				report_error("unrecognized option '%s'\n", argv[i]);
 				return false;

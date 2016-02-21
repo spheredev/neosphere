@@ -1,23 +1,101 @@
-.TH SSJ 1 "2016-02-03" "minisphere-3.0a0" "minisphere Game Development Kit"
+.TH SSJ 1 "2016-02-21" "minisphere-3.0a2" "minisphere Game Development Kit"
 .SH NAME
-ssj \- a JavaScript console debugger for minisphere
+ssj \- a JavaScript CLI debugger for minisphere
 .SH SYNOPSIS
 .nh
 .na
 .TP 4
 .B ssj
 .RB [ \-\-pause ]
-.RB [ \-\-attach " | "
+.RB [ \-\-connect " | "
 .IR gamefile ]
 .ad
 .hy
 .SH DESCRIPTION
 When used in combination with minisphere, SSJ allows you step through a game's code and track its state as it executes.
-In this regard it is similar in purpose to other console debuggers such as GDB.
+In this regard it is similar in purpose to other CLI debuggers such as GDB.
+The debugger enables you to diagnose bugs and crashes as they happen by tracking program variables, function calls, and objects, all while your game is still running.
+.P
+Using SSJ, you have to ability to:
+.IP \(bu 3
+Step through a game's source code one line at a time.
+This lets you see the code paths the game takes and often helps illuminate difficult-to-understand bugs.
+.IP \(bu 3
+Track local variables and their values.
+This allows you to see if the game assigns the wrong value to a variable, the effects of which may not manifest until much later on.
+It is also possible to change the value of a variable in realtime.
+.IP \(bu 3
+Examine the contents of JavaScript objects.
+Often it's not enough seeing only primitive values and you will need to drill down into an object's properties in order to understand a bug.
+.IP \(bu 3
+Set breakpoints.
+Sometimes you have a good idea of where a bug is, and single-stepping to that point would be too tedious.
+By setting a breakpoint on a line of source code, the debugger will automatically pause execution when that line is reached.
+.IP \(bu 3
+View debug traces.
+Games will often log interesting events using the DebugPrint() function.
+SSJ will let you see that output.
+.SH OPTIONS
+.TP
+.BR \fB\-c ", " \-\-connect
+Connects to a running game which was starting using the
+.BR spherun (1)
+command.
+This can be invaluable by allowing you to debug hard-to-reproduce bugs when they happen.
+.TP
+.BR \fB\-p ", " \-\-pause
+Pauses execution upon attachment.
+This stops the game in its tracks so you can view the program state exactly as it is when the debugger was attached.
+For newly started games, this allows you to set up breakpoints, etc. before any code is executed.
+.IP \fB\-\-version
+Show the version number of the installed copy of SSJ along with the version numbers of any libraries it depends on.
+.SH COMMANDS
+Once attached, SSJ provides a large set of tools for you to use in debugging your game.
+Since SSJ is a console debugger, these are accessed via commands entered on a command line.
+Below is a list of all commands supported by this version of SSJ:
+.TP
+.BR \fBbacktrace " or " bt
+View the contents of the call stack.
+This allows you to see which functions calls are in progress and is especially useful in tracing your game's execution path leading up to an error.
+.TP
+.BR \fBcontinue " or " c
+Resume normal execution.
+If a breakpoint is hit or an error is thrown which is not caught, SSJ will pause execution again.
+.TP
+.BR \fBeval " or " e
+Evaluate a JavaScript expression.
+This works exactly like JavaScript
+.B eval()
+and allows you to examine objects, assign to variables, or anything else you can do with a line of code.
+The expression is evaluated in the context of the selected stack frame.
+.TP
+.BR \fBlist " or " l
+Print a few lines of source code surrounding the line currently being executed.
+By default, 10 lines of source are shown.  If you provide a number with the
+.B list
+command, that number of lines will be printed.
+.TP
+.BR \fBstepover " or " s
+Execute the next line of source code, including all function calls in their entirety.
+.TP
+.BR \fBstepin " or " si
+Execute the next line of source code.
+If a function is called, execution will pause at the start of that function.
+This lets you trace into functions.
+.TP
+.BR \fBstepout " or " so
+Continue execution until the active function call returns.
+Execution will pause again at the call site.
+.TP
+.BR \fBvars " or " v
+Show local variables for selected stack frame along with all primitive values.
+Non-primitive values such as objects and functions are displayed simply as "{...}" so you will need to use the
+.B eval
+command to examine them.
 .SH BUGS
 Report any bugs found in minisphere or the GDK tools to:
 .br
 .B Bruce Pascoe <fatcerberus@icloud.com>
 .SH SEE ALSO
-.BR sphere (1),
+.BR spherun (1),
 .BR cell (1)
