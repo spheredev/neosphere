@@ -5,13 +5,15 @@
 
 enum appnotify
 {
-	APPNFY_TRACE,
+	APPNFY_NOP,
+	APPNFY_DEBUGPRINT,
 };
 
 enum apprequest
 {
 	APPREQ_NOP,
-	APPREQ_SRC_PATH,
+	APPREQ_GAMEINFO,
+	APPREQ_SRCPATH,
 };
 
 static const int TCP_DEBUG_PORT = 1208;
@@ -141,7 +143,7 @@ get_source_pathname(const char* pathname)
 void
 debug_print(const char* text)
 {
-	duk_push_int(g_duk, APPNFY_TRACE);
+	duk_push_int(g_duk, APPNFY_DEBUGPRINT);
 	duk_push_string(g_duk, text);
 	duk_debugger_notify(g_duk, 2);
 }
@@ -202,11 +204,15 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
-	case APPREQ_SRC_PATH:
+	case APPREQ_GAMEINFO:
+		duk_push_string(ctx, get_sgm_name(g_fs));
+		duk_push_string(ctx, get_sgm_author(g_fs));
+		duk_push_string(ctx, get_sgm_summary(g_fs));
+		return 3;
+	case APPREQ_SRCPATH:
 		duk_push_global_stash(ctx);
-		if (duk_get_prop_string(ctx, -1, "debugMap") && duk_get_prop_string(ctx, -1, "origin"))
-			return 1;
-		duk_push_null(ctx);
+		if (!duk_get_prop_string(ctx, -1, "debugMap") || !duk_get_prop_string(ctx, -1, "origin"))
+			duk_push_null(ctx);
 		return 1;
 	default:
 		return 0;

@@ -18,6 +18,8 @@ struct session
 {
 	bool          is_attached;
 	struct frame* backtrace;
+	char*         game_title;
+	char*         game_author;
 	int           n_frames;
 	char          cl_buffer[CL_BUFFER_SIZE];
 	socket_t*     socket;
@@ -69,13 +71,15 @@ enum nfy_command
 
 enum appnotify
 {
-	APPNFY_TRACE,
+	APPNFY_NOP,
+	APPNFY_DEBUGPRINT,
 };
 
 enum apprequest
 {
 	APPREQ_NOP,
-	APPREQ_SRC_PATH,
+	APPREQ_GAMEINFO,
+	APPREQ_SRCPATH,
 };
 
 enum err_command
@@ -99,9 +103,10 @@ do_handshake(socket_t* socket)
 {
 	static char handshake[128];
 
-	ptrdiff_t idx;
-	char*     next_token;
-	char*     token;
+	unsigned int duk_version;
+	ptrdiff_t    idx;
+	char*        next_token;
+	char*        token;
 
 	printf("verifying... ");
 	idx = 0;
@@ -118,11 +123,13 @@ do_handshake(socket_t* socket)
 	if (atoi(token) != 1) goto on_error;
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
+	duk_version = atoi(token);
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf("   inferior is \33[36m%s\33[m\n", next_token);
-	printf("   duktape \33[36m%s\33[m\n", token);
+	printf("   inferior: %s\n", next_token);
+	printf("   duktape %d.%d.%d\n\n", duk_version / 10000,
+		(duk_version / 100) % 100, duk_version % 100);
 
 	return true;
 
@@ -167,7 +174,7 @@ new_session(const char* hostname, int port)
 	session_t*  session;
 
 	session = calloc(1, sizeof(session_t));
-	printf("connecting to \33[36m%s:%d\33[m... ", hostname, port);
+	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
 	if (!(session->socket = socket_connect(hostname, port, 30.0)))
 		goto on_error;
@@ -176,21 +183,27 @@ new_session(const char* hostname, int port)
 		goto on_error;
 	session->is_attached = true;
 
-	// find out where the source tree is by querying the target
-	printf("locating sources... ");
+	printf("querying target... ");
 	req = msg_new(MSG_TYPE_REQ);
 	msg_add_int(req, REQ_APP_REQUEST);
-	msg_add_int(req, APPREQ_SRC_PATH);
+	msg_add_int(req, APPREQ_GAMEINFO);
+	rep = do_request(session, req);
+	session->game_title = strdup(msg_get_string(rep, 0));
+	session->game_author = strdup(msg_get_string(rep, 1));
+	msg_free(rep);
+	req = msg_new(MSG_TYPE_REQ);
+	msg_add_int(req, REQ_APP_REQUEST);
+	msg_add_int(req, APPREQ_SRCPATH);
 	rep = do_request(session, req);
 	if (msg_get_string(rep, 0) != NULL)
 		origin = path_resolve(path_new(msg_get_string(rep, 0)), NULL);
-	if (origin == NULL)
-		printf("\33[31;1mnone found.\33[m\n");
-	else {
-		printf("OK.\n");
-		printf("   sources in \33[33m%s\33[m\n", path_cstr(origin));
-	}
 	msg_free(rep);
+	printf("OK.\n");
+
+	printf("   game title: %s\n", session->game_title);
+	printf("   author: %s\n", session->game_author);
+	if (origin != NULL)
+		printf("   source: %s\n", path_cstr(origin));
 	session->source_path = origin;
 
 	return session;
@@ -261,8 +274,8 @@ print_backtrace(session_t* sess, int frame_index, bool show_all)
 			function_name = sess->backtrace[i].function_name;
 			line_no = sess->backtrace[i].line_no;
 			if (i == frame_index || show_all) {
-				printf("\33[33m%s\33[m #%2d: \33[36m%s\33[m at \33[36m%s:%d\33[m\n",
-					i == frame_index ? ">>" : "  ", i, function_name, filename, line_no);
+				printf("%s #%2d: %s at %s:%d\n",
+					i == frame_index ? "=>" : "  ", i, function_name, filename, line_no);
 				if (!show_all)
 					print_source(sess, filename, line_no, 1);
 			}
@@ -332,9 +345,9 @@ print_locals(session_t* sess, int frame)
 	msg_add_int(request, -(1 + frame));
 	response = do_request(sess, request);
 	if ((num_vars = msg_len(response) / 2) == 0)
-		printf("no locals in function \33[36m%s\33[m.\n", sess->function_name);
+		printf("no locals in function %s.\n", sess->function_name);
 	for (i = 0; i < num_vars; ++i) {
-		printf("var \33[36m%s\33[m = ", msg_get_string(response, i * 2));
+		printf("var %s = ", msg_get_string(response, i * 2));
 		dvalue_print(msg_get_dvalue(response, i * 2 + 1), false);
 		printf("\n");
 	}
@@ -364,11 +377,11 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 		for (i = start; i < end; ++i) {
 			text = source_get_line(source, i);
 			is_next_line = i == sess->line_no - 1 && strcmp(filename, sess->filename) == 0;
-			prefix = is_next_line ? ">>" : "  ";
+			prefix = is_next_line ? "=>" : "  ";
 			if (window > 1)
-				printf("\33[36m%s \33[30;1m%4d\33[m %s\n", prefix, i + 1, text);
+				printf("%s %4d: %s\n", prefix, i + 1, text);
 			else
-				printf("\33[30;1m%d:\33[m %s\n", i + 1, text);
+				printf("%d: %s\n", i + 1, text);
 		}
 	}
 }
@@ -473,12 +486,12 @@ do_command_line(session_t* sess)
 	// get a command from the user
 	sess->cl_buffer[0] = '\0';
 	while (sess->cl_buffer[0] == '\0') {
-		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1mssj:\33[m ", sess->filename, sess->line_no,
+		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
 			sess->function_name);
 		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
-				printf("string entered is too long to parse.");
+				printf("string is too long to parse.");
 				sess->cl_buffer[0] = '\0';
 				break;
 			}
@@ -647,16 +660,16 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 		msg_add_int(req, 0x0);
 		req = do_request(sess, req);
 		idx = 0;
-		printf("\33[0;1m{\33[m\n");
+		printf("{\n");
 		while (idx < msg_len(req)) {
 			flags = msg_get_int(req, idx);
 			bitmask = obj_verbosity >= 2 ? 0x0100 : 0x0300;
 			if (!(flags & bitmask)) {
 				is_accessor = (flags & 0x0008) != 0x0;
 				is_metadata = (flags & 0x0200) != 0x0;
-				printf("   %s \33[36m", is_metadata ? "meta" : "prop");
+				printf("   %s ", is_metadata ? "rtdata" : "prop");
 				dvalue_print(msg_get_dvalue(req, idx + 1), false);
-				printf("\33[m = ");
+				printf(" = ");
 				if (!is_accessor)
 					dvalue_print(msg_get_dvalue(req, idx + 2), obj_verbosity >= 2);
 				else {
@@ -675,11 +688,11 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 						printf(" }");
 					}
 				}
-				printf("\33[m\n");
+				printf("\n");
 			}
 			idx += (flags & 0x0008) ? 4 : 3;
 		}
-		printf("\33[0;1m}\33[m");
+		printf("}");
 		msg_free(req);
 	}
 }
@@ -703,7 +716,7 @@ process_message(session_t* sess, const message_t* msg)
 			sess->filename = strdup(msg_get_string(msg, 2));
 			sess->function_name = function_name[0] != '\0'
 				? strnewf("%s()", msg_get_string(msg, 3))
-				: strdup("anon");
+				: strdup("[anon]");
 			sess->line_no = msg_get_int(msg, 4);
 			sess->is_stopped = flag != 0;
 			if (!sess->is_stopped) clear_cli_cache(sess);
@@ -711,35 +724,34 @@ process_message(session_t* sess, const message_t* msg)
 				sess->has_pc_changed = true;
 			break;
 		case NFY_PRINT:
-			printf("\33[35mprint:\33[m %s", msg_get_string(msg, 1));
+			printf("print: %s", msg_get_string(msg, 1));
 			break;
 		case NFY_ALERT:
-			printf("\33[33malert:\33[m %s", msg_get_string(msg, 1));
+			printf("alert: %s", msg_get_string(msg, 1));
 			break;
 		case NFY_LOG:
-			printf("\33[32mlog:\33[m %s", msg_get_string(msg, 1));
+			printf("log: %s", msg_get_string(msg, 1));
 			break;
 		case NFY_THROW:
 			if ((flag = msg_get_int(msg, 1)) == 0)
 				break;
-			printf("\33[31;1mFATAL:\33[0;1m %s\33[m ", msg_get_string(msg, 2));
-			printf("[at \33[36;1m%s:%d\33[m]\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
+			printf("FATAL UNCAUGHT - %s\n", msg_get_string(msg, 2));
+			refresh_backtrace(sess);
+			printf("   at: %s:%d\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
 			break;
 		case NFY_APP_NOTIFY:
 			switch (msg_get_int(msg, 1)) {
-			case APPNFY_TRACE:
-				printf("\33[35mdebug:\33[m %s", msg_get_string(msg, 2));
+			case APPNFY_DEBUGPRINT:
+				printf("debug: %s", msg_get_string(msg, 2));
 				break;
 			}
 			break;
 		case NFY_DETACHING:
 			sess->is_attached = false;
 			flag = msg_get_int(msg, 1);
-			if (flag == 0)
-				printf("\33[0;1mSSJ session has been detached.");
-			else
-				printf("\33[31;1mSSJ detached due to an error in inferior.");
-			printf("\33[m\n");
+			if (flag != 0)
+				printf("Unexpected error in inferior!\n");
+			printf("SSJ session has been detached.\n");
 			return false;
 		}
 		break;
@@ -769,7 +781,7 @@ refresh_backtrace(session_t* sess)
 		function_name = msg_get_string(msg, i * 4 + 1);
 		frame->filename = strdup(msg_get_string(msg, i * 4));
 		frame->function_name = function_name[0] != '\0' ? strnewf("%s()", function_name)
-			: strdup("anon");
+			: strdup("[anon]");
 		frame->line_no = msg_get_int(msg, i * 4 + 2);
 	}
 }

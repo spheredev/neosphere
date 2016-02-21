@@ -115,7 +115,9 @@ dvalue_as_cstr(const dvalue_t* obj)
 double
 dvalue_as_float(const dvalue_t* obj)
 {
-	return obj->tag == DVALUE_FLOAT ? obj->float_value : 0.0;
+	return obj->tag == DVALUE_FLOAT ? obj->float_value
+		: obj->tag == DVALUE_INT ? (double)obj->int_value
+		: 0.0;
 }
 
 dukptr_t
@@ -134,7 +136,9 @@ dvalue_as_ptr(const dvalue_t* obj)
 int
 dvalue_as_int(const dvalue_t* obj)
 {
-	return obj->tag == DVALUE_INT ? obj->int_value : 0;
+	return obj->tag == DVALUE_INT ? obj->int_value
+		: obj->tag == DVALUE_FLOAT ? (int)obj->float_value
+		: 0;
 }
 
 void
