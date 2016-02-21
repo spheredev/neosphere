@@ -127,8 +127,8 @@ do_handshake(socket_t* socket)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf("   inferior: %s\n", next_token);
-	printf("   duktape %d.%d.%d\n\n", duk_version / 10000,
+	printf("    inferior: %s\n", next_token);
+	printf("    duktape %d.%d.%d\n", duk_version / 10000,
 		(duk_version / 100) % 100, duk_version % 100);
 
 	return true;
@@ -200,10 +200,10 @@ new_session(const char* hostname, int port)
 	msg_free(rep);
 	printf("OK.\n");
 
-	printf("   game title: %s\n", session->game_title);
-	printf("   author: %s\n", session->game_author);
+	printf("    game title: %s\n", session->game_title);
+	printf("    author: %s\n", session->game_author);
 	if (origin != NULL)
-		printf("   source: %s\n", path_cstr(origin));
+		printf("    source: %s\n", path_cstr(origin));
 	session->source_path = origin;
 
 	return session;
@@ -667,7 +667,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 			if (!(flags & bitmask)) {
 				is_accessor = (flags & 0x0008) != 0x0;
 				is_metadata = (flags & 0x0200) != 0x0;
-				printf("   %s ", is_metadata ? "rtdata" : "prop");
+				printf("    %s ", is_metadata ? "rtdata" : "prop");
 				dvalue_print(msg_get_dvalue(req, idx + 1), false);
 				printf(" = ");
 				if (!is_accessor)
@@ -724,13 +724,13 @@ process_message(session_t* sess, const message_t* msg)
 				sess->has_pc_changed = true;
 			break;
 		case NFY_PRINT:
-			printf("print: %s", msg_get_string(msg, 1));
+			printf("p: %s", msg_get_string(msg, 1));
 			break;
 		case NFY_ALERT:
-			printf("alert: %s", msg_get_string(msg, 1));
+			printf("a: %s", msg_get_string(msg, 1));
 			break;
 		case NFY_LOG:
-			printf("log: %s", msg_get_string(msg, 1));
+			printf("l: %s", msg_get_string(msg, 1));
 			break;
 		case NFY_THROW:
 			if ((flag = msg_get_int(msg, 1)) == 0)
@@ -742,7 +742,7 @@ process_message(session_t* sess, const message_t* msg)
 		case NFY_APP_NOTIFY:
 			switch (msg_get_int(msg, 1)) {
 			case APPNFY_DEBUGPRINT:
-				printf("debug: %s", msg_get_string(msg, 2));
+				printf("t: %s", msg_get_string(msg, 2));
 				break;
 			}
 			break;

@@ -7,16 +7,17 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 static bool vector_resize (vector_t* vector, size_t min_items);
 
 struct vector
 {
-	size_t        pitch;
-	size_t        max_items;
-	size_t        num_items;
-	unsigned char *buffer;
+	size_t   pitch;
+	uint8_t* buffer;
+	size_t   num_items;
+	size_t   max_items;
 };
 
 vector_t*
@@ -60,10 +61,10 @@ vector_get(const vector_t* vector, size_t index)
 void
 vector_set(vector_t* vector, size_t index, const void* in_object)
 {
-	unsigned char* p;
+	uint8_t* p_item;
 
-	p = vector->buffer + index * vector->pitch;
-	memcpy(p, in_object, vector->pitch);
+	p_item = vector->buffer + index * vector->pitch;
+	memcpy(p_item, in_object, vector->pitch);
 }
 
 size_t
@@ -92,13 +93,13 @@ vector_push(vector_t* vector, const void* in_object)
 void
 vector_remove(vector_t* vector, size_t index)
 {
-	size_t         move_size;
-	unsigned char* p;
+	size_t   move_size;
+	uint8_t* p_item;
 
 	--vector->num_items;
 	move_size = (vector->num_items - index) * vector->pitch;
-	p = vector->buffer + index * vector->pitch;
-	memmove(p, p + vector->pitch, move_size);
+	p_item = vector->buffer + index * vector->pitch;
+	memmove(p_item, p_item + vector->pitch, move_size);
 	vector_resize(vector, vector->num_items);
 }
 
@@ -127,7 +128,8 @@ vector_next(iter_t* iter)
 	void*           p_tail;
 
 	vector = iter->vector;
-	iter->ptr = iter->ptr != NULL ? (char*)iter->ptr + vector->pitch : vector->buffer;
+	iter->ptr = iter->ptr != NULL ? (uint8_t*)iter->ptr + vector->pitch
+		: vector->buffer;
 	++iter->index;
 	p_tail = vector->buffer + vector->num_items * vector->pitch;
 	return (iter->ptr < p_tail) ? iter->ptr : NULL;
@@ -136,8 +138,8 @@ vector_next(iter_t* iter)
 static bool
 vector_resize(vector_t* vector, size_t min_items)
 {
-	unsigned char* new_buffer;
-	size_t         new_max;
+	uint8_t* new_buffer;
+	size_t   new_max;
 	
 	new_max = vector->max_items;
 	if (min_items > vector->max_items)  // is the buffer too small?

@@ -59,7 +59,7 @@ parse_cmdline(int argc, char* argv[])
 	// establish default options
 	s_in_path = path_new("./");
 	s_out_path = NULL;
-	s_target_name = strdup("game");
+	s_target_name = strdup("default");
 	s_want_source_map = false;
 	
 	// validate and parse the command line

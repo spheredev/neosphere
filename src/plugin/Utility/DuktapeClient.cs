@@ -61,6 +61,11 @@ namespace minisphere.Gdk.Utility
         AppNotify = 0x07,
     }
 
+    enum AppNotify
+    {
+        DebugPrint = 0x01,
+    }
+
     class ErrorThrownEventArgs : EventArgs
     {
         public ErrorThrownEventArgs(string message, string filename, int lineNumber, bool isFatal)
@@ -634,9 +639,9 @@ namespace minisphere.Gdk.Utility
                                 message[2] != 0));
                             break;
                         case NotifyCode.AppNotify:
-                            switch ((int)message[2]) {
-                                case 0x00:  // DebugPrint
-                                    Print?.Invoke(this, new TraceEventArgs("debug: " + message[3]));
+                            switch ((AppNotify)message[2]) {
+                                case AppNotify.DebugPrint:
+                                    Print?.Invoke(this, new TraceEventArgs("t: " + message[3]));
                                     break;
                             }
                             break;

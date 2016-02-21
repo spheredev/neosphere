@@ -9,7 +9,7 @@
 
 #define AppName "minisphere"
 #define AppVersion "3.0a2"
-#define AppRawVersion "2.99.812.2"
+#define AppRawVersion "2.99.2.0"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
@@ -42,9 +42,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Components]
 Name: "engine"; Description: "{#AppName} {#AppVersion} [Required]"; Types: full compact custom; Flags: fixed
 Name: "spherun"; Description: "{#AppName} Console {#AppVersion} (spherun)"; Types: full; Flags: checkablealone
-Name: "spherun/plugin"; Description: "GDK plugin for Sphere Studio"; Types: full
+Name: "spherun/plugin"; Description: "minisphere GDK plugin for Sphere Studio"; Types: full
 Name: "spherun/cell"; Description: "cell - Sphere packaging compiler"; Types: full
-Name: "spherun/ssj"; Description: "ssj - JavaScript debugger"; Types: full
+Name: "spherun/ssj"; Description: "ssj - minisphere CLI debugger"; Types: full
 
 [Tasks]
 Name: "assoc"; Description: "Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
@@ -58,6 +58,7 @@ Source: "..\msw\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Compone
 Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell
 Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/ssj
+Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun
 Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun; Check: IsWin64
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell; Check: IsWin64
@@ -87,5 +88,12 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 
 [Icons]
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
+Name: "{group}\{#AppName} GDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
 Name: "{group}\API Reference - minisphere"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
 Name: "{group}\API Reference - Cell"; Filename: "{app}\documentation\cell-api.txt"; Components: spherun/cell
+
+[Code]
+procedure InitializeWizard;
+begin
+  WizardForm.LicenseAcceptedRadio.Checked := True;
+end;

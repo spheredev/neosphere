@@ -942,8 +942,9 @@ missing_argument:
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	uint32_t al_version;
-	char     version_string[64];
+	lstring_t* al_version;
+	uint32_t   al_version_id;
+	lstring_t* duk_version;
 	
 	printf("%s JS game engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
@@ -951,13 +952,15 @@ print_banner(bool want_copyright, bool want_deps)
 		printf("(c) 2016 Fat Cerberus\n");
 	}
 	if (want_deps) {
-		al_version = al_get_allegro_version();
-		sprintf(version_string, "%d.%d.%d", al_version >> 24, (al_version >> 16) & 0xFF,
-			(al_version >> 8) & 0xFF);
+		al_version_id = al_get_allegro_version();
+		al_version = lstr_newf("%d.%d.%d", al_version_id >> 24,
+			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF);
+		duk_version = lstr_newf("%d.%d.%d", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 		printf("\n");
-		printf("   Allegro: v%-12s libmng: v%s\n", version_string, mng_version_text());
-		printf("   Duktape: %-13s   zlib: v%s\n", DUK_GIT_DESCRIBE, zlibVersion());
-		printf("    Dyad.c: v%-12s\n", dyad_getVersion());
+		printf("    Allegro: v%-10s libmng: v%s\n", lstr_cstr(al_version), mng_version_text());
+		printf("    Duktape: v%-10s   zlib: v%s\n", lstr_cstr(duk_version), zlibVersion());
+		printf("     Dyad.c: v%-10s\n", dyad_getVersion());
+		lstr_free(duk_version);
 	}
 }
 

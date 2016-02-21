@@ -255,9 +255,6 @@ run_build(build_t* build)
 		return false;
 	}
 
-	printf("   build %s '%s'\n", build->spk ? "package" : "distribution",
-		path_cstr(build->in_path));
-	
 	// build and install assets
 	printf("compiling assets...");
 	path_mkdir(build->staging_path);
@@ -268,12 +265,12 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf("   %s\n", path_cstr(get_object_path((*p_target)->asset)));
+			printf("    %s\n", path_cstr(get_object_path((*p_target)->asset)));
 			++n_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf("   %d asset(s) compiled\n", n_assets);
+	if (n_assets > 0) printf("    %d asset(s) compiled\n", n_assets);
 		else printf(" up-to-date.\n");
 
 	printf("installing assets... ");
@@ -284,12 +281,12 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf("   %s\n", path_cstr(p_inst->path));
+			printf("    %s\n", path_cstr(p_inst->path));
 			++n_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf("   %d asset(s) installed\n", n_assets);
+	if (n_assets > 0) printf("    %d asset(s) installed\n", n_assets);
 		else printf(" up-to-date.\n");
 
 	// generate source map
@@ -314,7 +311,7 @@ run_build(build_t* build)
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
 			path_free(path);
-			fprintf(stderr, "\nerror: internal: failed to write source map\n");
+			fprintf(stderr, "\nERROR: failed to write source map\n");
 			return false;
 		}
 		if (build->spk != NULL)
@@ -330,7 +327,7 @@ run_build(build_t* build)
 	}
 
 	printf("%s -> %s\n", build->rule, path_cstr(build->out_path));
-	printf("   %d error(s), %d warning(s)\n", build->num_errors, build->num_warnings);
+	printf("    %d errors, %d warnings\n", build->num_errors, build->num_warnings);
 
 	return true;
 }
