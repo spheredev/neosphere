@@ -1,9 +1,9 @@
 #include "ssj.h"
 #include "session.h"
 
-#include "command.h"
 #include "help.h"
 #include "message.h"
+#include "parser.h"
 #include "sockets.h"
 #include "source.h"
 
@@ -93,7 +93,6 @@ enum err_command
 
 static void       clear_cli_cache     (session_t* sess);
 static bool       do_command_line     (session_t* sess);
-static bool       parse_file_and_line (session_t* sess, const char* string, char* *out_filename, int *out_line_no);
 static void       print_msg_atom      (session_t* sess, const message_t* message, size_t index, int obj_verbosity);
 static bool       process_message     (session_t* sess, const message_t* msg);
 static void       refresh_backtrace   (session_t* sess);
@@ -471,7 +470,10 @@ do_command_line(session_t* sess)
 	int         ch = '\0';
 	size_t      ch_idx = 0;
 	command_t*  command;
+	const char* filename;
 	int         frame_index;
+	int         index;
+	int         line_no;
 	int         num_args;
 	int         num_lines;
 	message_t*  req;
@@ -483,8 +485,9 @@ do_command_line(session_t* sess)
 	}
 
 	// get a command from the user
+	printf("\n");
 	while (verb == NULL) {
-		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
+		printf("\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
 			sess->function_name);
 		ch_idx = 0;
 		ch = getchar();
@@ -535,11 +538,12 @@ do_command_line(session_t* sess)
 		if (num_args == 0)
 			print_breakpoints(sess);
 		else {
-			/*index = set_breakpoint(sess, filename, line_no);
+			filename = command_get_string(command, 1);
+			line_no = command_get_int(command, 1);
+			index = set_breakpoint(sess, filename, line_no);
 			printf("breakpoint #%2d set at \33[36;1m%s:%d\33[m.\n",
 				index, filename, line_no);
 			print_source(sess, filename, line_no, 1);
-			free(filename);*/
 		}
 	}
 	else if (strcmp(verb, "clearbreak") == 0 || strcmp(verb, "cb") == 0) {
@@ -588,34 +592,6 @@ do_command_line(session_t* sess)
 		printf("'%s': command not recognized.\n", verb);
 	command_free(command);
 	return true;
-}
-
-static bool
-parse_file_and_line(session_t* sess, const char* string, char* *out_filename, int *out_line_no)
-{
-	char*   next;
-	char*   parsee = NULL;
-	path_t* path = NULL;
-	char*   token;
-	
-	if (strchr(string, ':') == NULL)
-		goto on_error;
-	parsee = strdup(string);
-	token = strtok_r(parsee, ":", &next);
-	path = path_rebase(path_new(token), sess->source_path);
-	if (!path_resolve(path, NULL)) {
-		printf("'%s': source file not found.\n", token);
-		goto on_error;
-	}
-	*out_filename = strdup(token);
-	*out_line_no = atoi(next);
-	free(parsee);
-	return *out_line_no > 0;
-
-on_error:
-	free(parsee);
-	path_free(path);
-	return false;
 }
 
 static void

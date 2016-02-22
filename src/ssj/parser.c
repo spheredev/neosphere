@@ -1,14 +1,13 @@
 #include "ssj.h"
 
-#include "command.h"
+#include "parser.h"
 
 struct token
 {
-	enum token_tag tag;
-	union {
-		char*  string;
-		double number;
-	};
+	token_tag_t tag;
+	char*       string;
+	int         line_no;
+	double      number;
 };
 
 struct command
@@ -64,13 +63,25 @@ command_parse(const char* string)
 			p_ch += length + 2;
 		}
 		else {
-			length = strcspn(p_ch, " \t'\"");
+			length = strcspn(p_ch, " \t'\":");
 			next_char = *(p_ch + length);
 			string_value = malloc(length + 1);
 			strncpy(string_value, p_ch, length); string_value[length] = '\0';
 			tokens[index].tag = TOK_STRING;
 			tokens[index].string = string_value;
 			p_ch += length;
+		}
+		if (tokens[index].tag == TOK_STRING && *p_ch == ':') {
+			// a string token followed immediately by a colon with no intervening whitespace
+			// should be parsed instead as a filename/linenumber pair.
+			length = strspn(p_ch + 1, "0123456789");
+			number_value = strtod(p_ch + 1, &p_tail);
+			next_char = *p_tail;
+			if (next_char != '\0' && next_char != ' ' && next_char != '\t')
+				goto syntax_error;
+			tokens[index].tag = TOK_FILE_LINE;
+			tokens[index].line_no = (int)number_value;
+			p_ch += length + 1;
 		}
 		++index;
 	}
@@ -84,7 +95,7 @@ command_parse(const char* string)
 	return this;
 
 syntax_error:
-	printf("syntax error.\n");
+	printf("syntax error in command line.\n");
 	return NULL;
 }
 
@@ -101,6 +112,12 @@ command_size(const command_t* this)
 	return this->num_tokens;
 }
 
+token_tag_t
+command_get_tag(const command_t* this, int index)
+{
+	return this->tokens[index].tag;
+}
+
 double
 command_get_float(const command_t* this, int index)
 {
@@ -111,13 +128,53 @@ command_get_float(const command_t* this, int index)
 int
 command_get_int(const command_t* this, int index)
 {
-	return this->tokens[index].tag == TOK_NUMBER
-		? (int)this->tokens[index].number : 0;
+	return this->tokens[index].tag == TOK_NUMBER ? (int)this->tokens[index].number
+		: this->tokens[index].tag == TOK_FILE_LINE ? this->tokens[index].line_no
+		: 0;
 }
 
 const char*
 command_get_string(const command_t* this, int index)
 {
-	return this->tokens[index].tag == TOK_STRING
+	return this->tokens[index].tag == TOK_STRING || this->tokens[index].tag == TOK_FILE_LINE
 		? this->tokens[index].string : NULL;
+}
+
+bool
+command_validate(const command_t* this, const char* pattern)
+{
+	int         index = 0;
+	const char* verb;
+	token_tag_t want_tag;
+	const char* want_type;
+
+	verb = command_get_string(this, 0);
+	if (command_size(this) != strlen(pattern)) {
+		printf("wrong number of arguments for '%s'", verb);
+		return false;
+	}
+	while (index < command_size(this)) {
+		switch (pattern[index]) {
+		case 's':
+			want_tag = TOK_STRING;
+			want_type = "string";
+			break;
+		case 'n':
+			want_tag = TOK_STRING;
+			want_type = "number";
+			break;
+		case 'f':
+			want_tag = TOK_FILE_LINE;
+			want_type = "file/line";
+			break;
+		}
+		if (command_get_tag(this, index) != want_tag)
+			goto wrong_type;
+		++index;
+	}
+	return true;
+
+wrong_type:
+	printf("expected %s for argument %d of '%s'.", want_type, index + 1, verb);
+	return false;
 }

@@ -39,6 +39,17 @@ engine_libs= \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
    -lmng -lz -lm
 
+cell_sources=src/cell/main.c \
+   src/shared/duktape.c src/shared/path.c src/shared/vector.c \
+   src/cell/assets.c src/cell/build.c src/cell/spk_writer.c src/cell/utility.c
+cell_libs= \
+   -lz -lm
+
+ssj_sources=src/ssj/main.c \
+   src/shared/dyad.c src/shared/path.c src/shared/vector.c \
+   src/ssj/commands.c src/ssj/dvalue.c src/ssj/help.c src/ssj/message.c \
+   src/ssj/parser.c src/ssj/session.c src/ssj/sockets.c src/ssj/source.c
+
 .PHONY: all
 all: minisphere spherun cell ssj
 
@@ -93,27 +104,20 @@ clean:
 bin/minisphere:
 	mkdir -p bin
 	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/minisphere \
-	   -DDUK_OPT_HAVE_CUSTOM_H \
-	   $(engine_sources) $(engine_libs)
+	      -DDUK_OPT_HAVE_CUSTOM_H \
+	      $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
 	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/minisphere \
-	   -DMINISPHERE_SPHERUN -DDUK_OPT_HAVE_CUSTOM_H \
-	   $(engine_sources) $(engine_libs)
+	      -DDUK_OPT_HAVE_CUSTOM_H -DMINISPHERE_SPHERUN \
+	      $(engine_sources) $(engine_libs)
 
 bin/cell:
 	mkdir -p bin
-	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared \
-	   src/shared/duktape.c src/shared/path.c src/shared/vector.c \
-	   src/cell/main.c src/cell/assets.c src/cell/build.c src/cell/spk_writer.c \
-	   src/cell/utility.c \
-	   -lz -lm
+	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared $(cell_sources) $(cell_libs)
 
 bin/ssj:
 	mkdir -p bin
-	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared \
-	   src/shared/dyad.c src/shared/path.c src/shared/vector.c \
-	   src/ssj/main.c src/ssj/command.c src/ssj/dvalue.c src/ssj/help.c \
-	   src/ssj/message.c src/ssj/session.c src/ssj/sockets.c src/ssj/source.c
+	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared $(ssj_sources)
