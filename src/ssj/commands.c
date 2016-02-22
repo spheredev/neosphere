@@ -8,8 +8,8 @@ command_db[] =
 {
 	"backtrace",  "bt", "",
 	"breakpoint", "bp", "~f",
-	"continue",   "c",  "",
 	"clearbp",    "cb", "n",
+	"continue",   "c",  "",
 	"down",       "d",  "~n",
 	"eval",       "e",  "s",
 	"examine",    "x",  "s",
@@ -18,9 +18,6 @@ command_db[] =
 	"stepover",   "s",  "",
 	"stepin",     "si", "",
 	"stepout",    "so", "",
-	"stepin",     "si", "",
-	"list",       "l",  "~nf",
-	"list",       "l",  "~nf",
 	"up",         "u",  "~n",
 	"vars",       "v",  "",
 	"where",      "w",  "",
@@ -79,26 +76,47 @@ const char*
 find_ssj_command(command_t* command)
 {
 	const char* full_name;
+	const char* matches[100];
 	int         num_commands;
+	int         num_matches = 0;
 	const char* pattern;
 	const char* short_name;
 	const char* verb;
-	
+
 	int i;
 
 	if (command_size(command) < 1)
 		return NULL;
-	
+
 	num_commands = sizeof(command_db) / sizeof(command_db[0]) / 3;
 	verb = command_get_string(command, 0);
 	for (i = 0; i < num_commands; ++i) {
 		full_name = command_db[0 + i * 3];
 		short_name = command_db[1 + i * 3];
-		pattern = command_db[2 + i * 3];
-		if (strcmp(verb, short_name) == 0 || strstr(full_name, verb) == full_name)
-			return validate_args(command, full_name, pattern) ? full_name : NULL;
+		if (strcmp(verb, short_name) == 0) {
+			matches[0] = full_name;
+			pattern = command_db[2 + i * 3];
+			num_matches = 1;  // canonical short name is never ambiguous
+			break;
+		}
+		if (strstr(full_name, verb) == full_name) {
+			matches[num_matches] = full_name;
+			if (num_matches == 0)
+				pattern = command_db[2 + i * 3];
+			++num_matches;
+		}
 	}
 	
-	printf("'%s': unrecognized command name.\n", verb);
-	return NULL;
+	if (num_matches == 1)
+		return validate_args(command, matches[0], pattern) ? matches[0] : NULL;
+	else if (num_matches > 1) {
+		printf("'%s': abbreviated name is ambiguous between:\n", verb);
+		for (i = 0; i < num_matches; ++i)
+			printf("    * %s\n", matches[i]);
+		return NULL;
+	}
+	else {
+		printf("'%s': unrecognized command name.\n", verb);
+		return NULL;
+	}
 }

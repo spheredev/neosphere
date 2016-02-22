@@ -6,8 +6,8 @@ print_help(const char* command_name)
 {
 	if (command_name == NULL || strcmp(command_name, "") == 0) {
 		printf(
-			"Abbreviated names are listed first, followed by the full, verbose name of each \n"
-			"command. Unlike GDB, truncated names are not allowed.                          \n\n"
+			"Short (1-2 character) names are listed first, followed by the full name of the \n"
+			"command. Truncated full names are allowed as long as they are unambiguous.     \n\n"
 
 			" bt, backtrace    Show a list of all function calls currently on the stack     \n"
 			" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
