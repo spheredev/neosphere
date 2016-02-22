@@ -238,8 +238,8 @@ print_cell_quote(void)
 	};
 
 	srand((unsigned int)time(NULL));
-	printf("Release it--release everything! Remember all the pain he's caused, the people\n");
-	printf("he's hurt--now MAKE THAT YOUR POWER!!\n\n");
+	printf("Release it, Gohan--release everything! Remember all the pain he's caused, the\n");
+	printf("people he's hurt--now MAKE THAT YOUR POWER!!\n\n");
 	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
 }
 
@@ -269,7 +269,7 @@ print_usage(void)
 	printf("OPTIONS:\n");
 	printf("   -c, --connect   Connect to a target which has already been started.  If no  \n");
 	printf("                   connection can be made within 30 seconds, SSJ will exit.    \n");
-	printf("   -r, --run       Prevent SSJ from pausing execution on attach.  When starting \n");
+	printf("   -r, --run       Prevent SSJ from pausing execution on attach.  When starting\n");
 	printf("                   a new instance, begin execution immediately.                \n");
 	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
 	printf("       --help      Print this help text.                                       \n");
