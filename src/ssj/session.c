@@ -362,7 +362,7 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 	int i;
 
 	if (!(source = source_load(filename, sess->source_path)))
-		printf("no source code available.\n");
+		printf("'%s': source file could not be located.\n", filename);
 	else {
 		line_count = source_cloc(source);
 		median = window / 2;
@@ -555,11 +555,16 @@ do_command_line(session_t* sess)
 			print_backtrace(sess, sess->frame_index, false);
 	}
 	else if (strcmp(verb, "list") == 0) {
+		num_lines = 10;
+		filename = sess->filename;
+		line_no = sess->line_no;
 		if (num_args >= 1)
 			num_lines = command_get_int(command, 1);
-		else
-			num_lines = 10;
-		print_source(sess, sess->filename, sess->line_no, num_lines);
+		if (num_args >= 2) {
+			filename = command_get_string(command, 2);
+			line_no = command_get_int(command, 2);
+		}
+		print_source(sess, filename, line_no, num_lines);
 	}
 	else if (strcmp(verb, "stepover") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
