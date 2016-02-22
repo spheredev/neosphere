@@ -10,10 +10,10 @@ print_help(const char* command_name)
 			"command. Unlike GDB, truncated names are not allowed.                          \n\n"
 
 			" bt, backtrace    Show a list of all function calls currently on the stack     \n"
-			" d,  down         Move down the call stack (inwards) from the selected frame   \n"
 			" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
-			" cb, clearbreak   Clear a breakpoint set at file:line (see 'breakpoint')       \n"
+			" cb, clearbp      Clear a breakpoint set at file:line (see 'breakpoint')       \n"
 			" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
+			" d,  down         Move down the call stack (inwards) from the selected frame   \n"
 			" e,  eval         Evaluate a JavaScript expression                             \n"
 			" x,  examine      Like 'eval' but shows low-level runtime metadata for objects \n"
 			" f,  frame        Select the stack frame used for, e.g. 'eval' and 'var'       \n"
@@ -24,8 +24,8 @@ print_help(const char* command_name)
 			" v,  vars         List local variables and their values in the active frame    \n"
 			" u,  up           Move up the call stack (outwards) from the selected frame    \n"
 			" w,  where        Show the filename and line number of the next line of code   \n"
-			" h,  help         Get help with SSJ commands                                   \n"
-			" q,  quit         Detach and terminate your SSJ debugging session              \n\n"
+			" q,  quit         Detach and terminate your SSJ debugging session              \n"
+			" h,  help         Get help with SSJ commands                                   \n\n"
 
 			"Type 'help <command>' for help with individual commands.                       \n"
 		);

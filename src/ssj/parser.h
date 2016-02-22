@@ -17,6 +17,5 @@ token_tag_t command_get_tag    (const command_t* this, int index);
 int         command_get_int    (const command_t* this, int index);
 double      command_get_float  (const command_t* this, int index);
 const char* command_get_string (const command_t* this, int index);
-bool        command_validate   (const command_t* this, const char* pattern);
 
 #endif // SSJ__PARSER_H__INCLUDED

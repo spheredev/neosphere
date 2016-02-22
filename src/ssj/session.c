@@ -1,6 +1,7 @@
 #include "ssj.h"
 #include "session.h"
 
+#include "commands.h"
 #include "help.h"
 #include "message.h"
 #include "parser.h"
@@ -223,33 +224,27 @@ end_session(session_t* sess)
 }
 
 void
-clear_breakpoint(session_t* sess, const char* filename, int line_no)
+clear_breakpoint(session_t* sess, int index)
 {
 	bool        is_ok = false;
 	message_t*  msg;
 	message_t*  msg2;
-	size_t      num_breaks;
-
-	size_t idx;
+	int         num_breaks;
 
 	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_LIST_BREAK);
 	msg = do_request(sess, msg);
-	num_breaks = msg_len(msg) / 2;
-	for (idx = 0; idx < num_breaks; ++idx) {
-		if (strcmp(filename, msg_get_string(msg, idx * 2)) == 0
-		    && line_no == msg_get_int(msg, idx * 2 + 1))
-		{
-			msg2 = msg_new(MSG_TYPE_REQ);
-			msg_add_int(msg2, REQ_DEL_BREAK);
-			msg_add_int(msg2, (int)idx);
-			msg_free(do_request(sess, msg2));
-			printf("breakpoint #%2zd cleared at \33[36;1m%s:%d\33[m.\n", idx, filename, line_no);
-			is_ok = true;
-		}
+	num_breaks = (int)msg_len(msg) / 2;
+	msg_free(msg);
+	if (index >= num_breaks)
+		printf("#%2d: breakpoint index out of range.\n", index);
+	else {
+		msg2 = msg_new(MSG_TYPE_REQ);
+		msg_add_int(msg2, REQ_DEL_BREAK);
+		msg_add_int(msg2, index);
+		msg_free(do_request(sess, msg2));
+		printf("breakpoint #%2d cleared.\n", index);
 	}
-	if (!is_ok)
-		printf("no breakpoints at \33[36;1m%s:%d\33[m.\n", filename, line_no);
 }
 
 void
@@ -306,7 +301,7 @@ print_breakpoints(session_t* sess)
 	for (idx = 0; idx < num_breaks; ++idx) {
 		filename = msg_get_string(msg, idx * 2);
 		line_no = msg_get_int(msg, idx * 2 + 1);
-		printf("#%2zd: breakpoint at \33[36;1m%s:%d\33[m\n",
+		printf("#%2zd: breakpoint at %s:%d\n",
 			idx, filename, line_no);
 	}
 }
@@ -466,7 +461,6 @@ static bool
 do_command_line(session_t* sess)
 {
 	static char buffer[CL_BUFFER_SIZE];
-	
 	int         ch = '\0';
 	size_t      ch_idx = 0;
 	command_t*  command;
@@ -485,9 +479,8 @@ do_command_line(session_t* sess)
 	}
 
 	// get a command from the user
-	printf("\n");
 	while (verb == NULL) {
-		printf("\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
+		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
 			sess->function_name);
 		ch_idx = 0;
 		ch = getchar();
@@ -501,23 +494,22 @@ do_command_line(session_t* sess)
 			ch = getchar();
 		}
 		buffer[ch_idx] = '\0';
-		command = command_parse(buffer);
-		verb = command_size(command) ? command_get_string(command, 0)
-			: NULL;
+		if ((command = command_parse(buffer)))
+			verb = find_ssj_command(command);
 	}
+	
 	num_args = command_size(command) - 1;
-
-	if (strcmp(verb, "quit") == 0 || strcmp(verb, "q") == 0) {
+	if (strcmp(verb, "quit") == 0) {
 		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(do_request(sess, req));
 		sess->is_stopped = false;
 	}
-	else if (strcmp(verb, "help") == 0 || strcmp(verb, "h") == 0)
+	else if (strcmp(verb, "help") == 0)
 		print_help(num_args > 0 ? command_get_string(command, 1) : NULL);
-	else if (strcmp(verb, "backtrace") == 0 || strcmp(verb, "bt") == 0)
+	else if (strcmp(verb, "backtrace") == 0)
 		print_backtrace(sess, sess->frame_index, true);
-	else if (strcmp(verb, "up") == 0 || strcmp(verb, "u") == 0) {
+	else if (strcmp(verb, "up") == 0) {
 		if (num_args >= 1)
 			frame_index = sess->frame_index + command_get_int(command, 1);
 		else
@@ -526,7 +518,7 @@ do_command_line(session_t* sess)
 			: sess->n_frames - 1;
 		print_backtrace(sess, frame_index, false);
 	}
-	else if (strcmp(verb, "down") == 0 || strcmp(verb, "d") == 0) {
+	else if (strcmp(verb, "down") == 0) {
 		if (num_args >= 1)
 			frame_index = sess->frame_index - command_get_int(command, 1);
 		else
@@ -541,47 +533,41 @@ do_command_line(session_t* sess)
 			filename = command_get_string(command, 1);
 			line_no = command_get_int(command, 1);
 			index = set_breakpoint(sess, filename, line_no);
-			printf("breakpoint #%2d set at \33[36;1m%s:%d\33[m.\n",
+			printf("breakpoint #%2d set at %s:%d.\n",
 				index, filename, line_no);
 			print_source(sess, filename, line_no, 1);
 		}
 	}
-	else if (strcmp(verb, "clearbreak") == 0 || strcmp(verb, "cb") == 0) {
-		if (num_args == 0)
-			printf("please specify location of breakpoint to clear.\n");
-		else {
-			/*clear_breakpoint(sess, filename, line_no);
-			free(filename);*/
-		}
-	}
-	else if (strcmp(verb, "continue") == 0 || strcmp(verb, "c") == 0)
+	else if (strcmp(verb, "clearbp") == 0)
+		clear_breakpoint(sess, command_get_int(command, 1));
+	else if (strcmp(verb, "continue") == 0)
 		execute_next(sess, EXEC_RESUME);
-	else if (strcmp(verb, "eval") == 0 || strcmp(verb, "e") == 0)
+	else if (strcmp(verb, "eval") == 0)
 		print_eval(sess, num_args > 0 ? command_get_string(command, 1) : "",
 			sess->frame_index, false);
-	else if (strcmp(verb, "examine") == 0 || strcmp(verb, "x") == 0)
+	else if (strcmp(verb, "examine") == 0)
 		print_eval(sess, num_args > 0 ? command_get_string(command, 1) : "",
 			sess->frame_index, true);
-	else if (strcmp(verb, "frame") == 0 || strcmp(verb, "f") == 0) {
+	else if (strcmp(verb, "frame") == 0) {
 		if (num_args >= 1)
 			print_backtrace(sess, command_get_int(command, 1), false);
 		else
 			print_backtrace(sess, sess->frame_index, false);
 	}
-	else if (strcmp(verb, "list") == 0 || strcmp(verb, "l") == 0) {
+	else if (strcmp(verb, "list") == 0) {
 		if (num_args >= 1)
 			num_lines = command_get_int(command, 1);
 		else
 			num_lines = 10;
 		print_source(sess, sess->filename, sess->line_no, num_lines);
 	}
-	else if (strcmp(verb, "stepover") == 0 || strcmp(verb, "s") == 0)
+	else if (strcmp(verb, "stepover") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
-	else if (strcmp(verb, "stepin") == 0 || strcmp(verb, "si") == 0)
+	else if (strcmp(verb, "stepin") == 0)
 		execute_next(sess, EXEC_STEP_IN);
-	else if (strcmp(verb, "stepout") == 0 || strcmp(verb, "so") == 0)
+	else if (strcmp(verb, "stepout") == 0)
 		execute_next(sess, EXEC_STEP_OUT);
-	else if (strcmp(verb, "vars") == 0 || strcmp(verb, "v") == 0)
+	else if (strcmp(verb, "vars") == 0)
 		print_locals(sess, sess->frame_index);
 	else if (strcmp(verb, "where") == 0 || strcmp(verb, "w") == 0) {
 		frame_index = sess->frame_index;
@@ -589,7 +575,7 @@ do_command_line(session_t* sess)
 		sess->frame_index = frame_index;
 	}
 	else
-		printf("'%s': command not recognized.\n", verb);
+		printf("'%s': internal error.\n", verb);
 	command_free(command);
 	return true;
 }
