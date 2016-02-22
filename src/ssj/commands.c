@@ -8,16 +8,16 @@ command_db[] =
 {
 	"backtrace",  "bt", "",
 	"breakpoint", "bp", "~f",
-	"clearbp",    "cb", "n",
 	"continue",   "c",  "",
+	"clearbp",    "cb", "n",
 	"down",       "d",  "~n",
 	"eval",       "e",  "s",
 	"examine",    "x",  "s",
 	"frame",      "f",  "~n",
 	"list",       "l",  "~nf",
+	"stepover",   "s",  "",
 	"stepin",     "si", "",
 	"stepout",    "so", "",
-	"stepover",   "s",  "",
 	"stepin",     "si", "",
 	"list",       "l",  "~nf",
 	"list",       "l",  "~nf",
@@ -42,7 +42,7 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 	else
 		want_num_args = (int)strlen(pattern);
 	if (command_size(this) - 1 < want_num_args) {
-		printf("at least %d arguments needed for '%s'\n", want_num_args, verb_name);
+		printf("'%s': expected at least %d arguments.\n", verb_name, want_num_args);
 		return false;
 	}
 	p_type = pattern;
@@ -71,7 +71,7 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 	return true;
 
 wrong_type:
-	printf("expected %s for argument %d of '%s'.\n", want_type, index + 1, verb_name);
+	printf("'%s': expected a %s for argument %d.\n", verb_name, want_type, index + 1);
 	return false;
 }
 
@@ -99,6 +99,6 @@ find_ssj_command(command_t* command)
 			return validate_args(command, full_name, pattern) ? full_name : NULL;
 	}
 	
-	printf("'%s': unrecognized command name\n", verb);
+	printf("'%s': unrecognized command name.\n", verb);
 	return NULL;
 }
