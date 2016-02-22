@@ -2,124 +2,122 @@
 
 #include "command.h"
 
-enum token_tag
-{
-	TOK_STRING,
-	TOK_NUMBER,
-};
-
 struct token
 {
 	enum token_tag tag;
 	union {
-		char*   string;
-		double  number;
+		char*  string;
+		double number;
 	};
-	struct token*  prev;
-	struct token*  next;
 };
 
 struct command
 {
-	struct token* first_token;
+	int          num_tokens;
+	struct token *tokens;
 };
 
-static struct token*
-tokenize(const char* string)
+command_t*
+command_parse(const char* string)
 {
-	struct token* first_token = NULL;
-	size_t        len;
-	char*         end_ptr;
-	char          next_char;
-	long          number_value;
-	char          quote[2];
-	char*         string_value;
-	struct token* token;
-	struct token* prev_token = NULL;
-	const char*   p;
+	command_t*   this;
+	int          array_len = 8;
+	int          index = 0;
+	size_t       length;
+	char         next_char;
+	double       number_value;
+	char         quote[2];
+	char*        string_value;
+	const char   *p_ch;
+	char         *p_tail;
+	struct token *tokens;
 	
-	p = string;
-	while (*p != '\0') {
-		while (*p == ' ' || *p == '\t')
-			++p;
-		token = calloc(1, sizeof(struct token));
-		if (first_token == NULL) first_token = token;
-		if (prev_token != NULL)
-			prev_token->next = token;
-		token->prev = prev_token;
-		prev_token = token;
-		if (*p >= '0' && *p <= '9') {
-			len = strspn(p, "0123456789");
-			number_value = strtol(p, &end_ptr, 10);
-			next_char = *end_ptr;
+	tokens = malloc(array_len * sizeof(struct token));
+	p_ch = string;
+	while (*p_ch != '\0') {
+		while (*p_ch == ' ' || *p_ch == '\t')
+			++p_ch;  // skip whitespace
+		if (index >= array_len) {
+			array_len *= 2;
+			tokens = realloc(tokens, array_len * sizeof(struct token));
+		}
+		if (*p_ch >= '0' && *p_ch <= '9') {
+			length = strspn(p_ch, "0123456789.");
+			number_value = strtod(p_ch, &p_tail);
+			next_char = *p_tail;
 			if (next_char != '\0' && next_char != ' ' && next_char != '\t')
 				goto syntax_error;
-			token->tag = TOK_NUMBER;
-			token->number = number_value;
-			p += len;
+			tokens[index].tag = TOK_NUMBER;
+			tokens[index].number = number_value;
+			p_ch += length;
 		}
-		else if (*p == '"' || *p == '\'') {
-			sprintf(quote, "%c", *p);
-			len = strcspn(p + 1, quote);
-			next_char = *(p + 1 + len);
+		else if (*p_ch == '"' || *p_ch == '\'') {
+			sprintf(quote, "%c", *p_ch);
+			length = strcspn(p_ch + 1, quote);
+			next_char = *(p_ch + 1 + length);
 			if (next_char != quote[0])
 				goto syntax_error;
-			string_value = malloc(len + 1);
-			strncpy(string_value, p + 1, len); string_value[len] = '\0';
-			token->tag = TOK_STRING;
-			token->string = string_value;
-			p += len + 2;
+			string_value = malloc(length + 1);
+			strncpy(string_value, p_ch + 1, length); string_value[length] = '\0';
+			tokens[index].tag = TOK_STRING;
+			tokens[index].string = string_value;
+			p_ch += length + 2;
 		}
-		else if ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z')) {
-			len = strspn(p, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-			next_char = *(p + len);
-			if (next_char != '\0' && next_char != ' ' && next_char != '\t')
-				goto syntax_error;
-			string_value = malloc(len + 1);
-			strncpy(string_value, p, len); string_value[len] = '\0';
-			token->tag = TOK_STRING;
-			token->string = string_value;
-			p += len;
+		else {
+			length = strcspn(p_ch, " \t'\"");
+			next_char = *(p_ch + length);
+			string_value = malloc(length + 1);
+			strncpy(string_value, p_ch, length); string_value[length] = '\0';
+			tokens[index].tag = TOK_STRING;
+			tokens[index].string = string_value;
+			p_ch += length;
 		}
-		else
-			goto syntax_error;
+		++index;
 	}
-	if (first_token->tag != TOK_STRING)
+	
+	if (index > 0 && tokens[0].tag != TOK_STRING)
 		goto syntax_error;
-	return first_token;
+	
+	this = calloc(1, sizeof(command_t));
+	this->num_tokens = index;
+	this->tokens = tokens;
+	return this;
 
 syntax_error:
 	printf("syntax error.\n");
 	return NULL;
 }
 
-command_t*
-command_read(void)
+void
+command_free(command_t* this)
 {
-	static char buffer[4096];
-	
-	command_t* command;
-	char       ch;
-	size_t     ch_idx = 0;
-	bool       is_parsed = false;
-	
-	// get a command from the user
-	buffer[0] = '\0';
-	ch = getchar();
-	while (ch != '\n') {
-		if (ch_idx >= 4095) {
-			printf("string entered is too long to parse.");
-			buffer[0] = '\0';
-			return NULL;
-		}
-		buffer[ch_idx++] = ch;
-		ch = getchar();
-	}
-	buffer[ch_idx] = '\0';
+	free(this->tokens);
+	free(this);
+}
 
-	// parse the command line
-	command = calloc(1, sizeof(command_t));
-	command->first_token = tokenize(buffer);
+int
+command_size(const command_t* this)
+{
+	return this->num_tokens;
+}
 
-	return command;
+double
+command_get_float(const command_t* this, int index)
+{
+	return this->tokens[index].tag == TOK_NUMBER
+		? this->tokens[index].number : 0.0;
+}
+
+int
+command_get_int(const command_t* this, int index)
+{
+	return this->tokens[index].tag == TOK_NUMBER
+		? (int)this->tokens[index].number : 0;
+}
+
+const char*
+command_get_string(const command_t* this, int index)
+{
+	return this->tokens[index].tag == TOK_STRING
+		? this->tokens[index].string : NULL;
 }

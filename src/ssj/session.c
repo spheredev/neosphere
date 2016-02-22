@@ -23,7 +23,6 @@ struct session
 	char*         game_title;
 	char*         game_author;
 	int           n_frames;
-	char          cl_buffer[CL_BUFFER_SIZE];
 	socket_t*     socket;
 	int           frame_index;
 	char*         function_name;
@@ -467,17 +466,16 @@ clear_cli_cache(session_t* sess)
 static bool
 do_command_line(session_t* sess)
 {
-	char*       argument;
-	char*       command;
+	static char buffer[CL_BUFFER_SIZE];
+	
 	int         ch = '\0';
 	size_t      ch_idx = 0;
-	char*       filename;
+	command_t*  command;
 	int         frame_index;
-	int         index;
-	int         line_no;
+	int         num_args;
 	int         num_lines;
-	char*       parsee;
 	message_t*  req;
+	const char* verb = NULL;
 
 	if (sess->has_pc_changed) {
 		sess->has_pc_changed = false;
@@ -485,104 +483,110 @@ do_command_line(session_t* sess)
 	}
 
 	// get a command from the user
-	sess->cl_buffer[0] = '\0';
-	while (sess->cl_buffer[0] == '\0') {
+	while (verb == NULL) {
 		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
 			sess->function_name);
-		command_read();
-		/*ch = getchar();
+		ch_idx = 0;
+		ch = getchar();
 		while (ch != '\n') {
 			if (ch_idx >= CL_BUFFER_SIZE - 1) {
 				printf("string is too long to parse.");
-				sess->cl_buffer[0] = '\0';
+				buffer[0] = '\0';
 				break;
 			}
-			sess->cl_buffer[ch_idx++] = ch;
+			buffer[ch_idx++] = ch;
 			ch = getchar();
 		}
-		sess->cl_buffer[ch_idx] = '\0';*/
+		buffer[ch_idx] = '\0';
+		command = command_parse(buffer);
+		verb = command_size(command) ? command_get_string(command, 0)
+			: NULL;
 	}
+	num_args = command_size(command) - 1;
 
-	// parse the command line
-	parsee = strdup(sess->cl_buffer);
-	command = strtok_r(parsee, " \t", &argument);
-	if (strcmp(command, "quit") == 0 || strcmp(command, "q") == 0) {
+	if (strcmp(verb, "quit") == 0 || strcmp(verb, "q") == 0) {
 		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_DETACH);
 		msg_free(do_request(sess, req));
 		sess->is_stopped = false;
 	}
-	else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0)
-		print_help(argument);
-	else if (strcmp(command, "backtrace") == 0 || strcmp(command, "bt") == 0)
+	else if (strcmp(verb, "help") == 0 || strcmp(verb, "h") == 0)
+		print_help(num_args > 0 ? command_get_string(command, 1) : NULL);
+	else if (strcmp(verb, "backtrace") == 0 || strcmp(verb, "bt") == 0)
 		print_backtrace(sess, sess->frame_index, true);
-	else if (strcmp(command, "up") == 0 || strcmp(command, "u") == 0) {
-		if (argument[0] != '\0') frame_index = sess->frame_index + atoi(argument);
-		else frame_index = sess->frame_index + 1;
+	else if (strcmp(verb, "up") == 0 || strcmp(verb, "u") == 0) {
+		if (num_args >= 1)
+			frame_index = sess->frame_index + command_get_int(command, 1);
+		else
+			frame_index = sess->frame_index + 1;
 		frame_index = (frame_index < sess->n_frames) ? frame_index
 			: sess->n_frames - 1;
 		print_backtrace(sess, frame_index, false);
 	}
-	else if (strcmp(command, "down") == 0 || strcmp(command, "d") == 0) {
-		if (argument[0] != '\0') frame_index = sess->frame_index - atoi(argument);
-		else frame_index = sess->frame_index - 1;
+	else if (strcmp(verb, "down") == 0 || strcmp(verb, "d") == 0) {
+		if (num_args >= 1)
+			frame_index = sess->frame_index - command_get_int(command, 1);
+		else
+			frame_index = sess->frame_index - 1;
 		frame_index = (frame_index >= 0) ? frame_index : 0;
 		print_backtrace(sess, frame_index, false);
 	}
-	else if (strcmp(command, "breakpoint") == 0 || strcmp(command, "bp") == 0) {
-		if (argument[0] == '\0')
+	else if (strcmp(verb, "breakpoint") == 0 || strcmp(verb, "bp") == 0) {
+		if (num_args == 0)
 			print_breakpoints(sess);
-		else if (parse_file_and_line(sess, argument, &filename, &line_no)) {
-			index = set_breakpoint(sess, filename, line_no);
+		else {
+			/*index = set_breakpoint(sess, filename, line_no);
 			printf("breakpoint #%2d set at \33[36;1m%s:%d\33[m.\n",
 				index, filename, line_no);
 			print_source(sess, filename, line_no, 1);
-			free(filename);
+			free(filename);*/
 		}
 	}
-	else if (strcmp(command, "clearbreak") == 0 || strcmp(command, "cb") == 0) {
-		if (argument[0] == '\0')
+	else if (strcmp(verb, "clearbreak") == 0 || strcmp(verb, "cb") == 0) {
+		if (num_args == 0)
 			printf("please specify location of breakpoint to clear.\n");
-		else if (parse_file_and_line(sess, argument, &filename, &line_no)) {
-			clear_breakpoint(sess, filename, line_no);
-			free(filename);
+		else {
+			/*clear_breakpoint(sess, filename, line_no);
+			free(filename);*/
 		}
 	}
-	else if (strcmp(command, "continue") == 0 || strcmp(command, "c") == 0)
+	else if (strcmp(verb, "continue") == 0 || strcmp(verb, "c") == 0)
 		execute_next(sess, EXEC_RESUME);
-	else if (strcmp(command, "eval") == 0 || strcmp(command, "e") == 0)
-		print_eval(sess, argument, sess->frame_index, false);
-	else if (strcmp(command, "examine") == 0 || strcmp(command, "x") == 0)
-		print_eval(sess, argument, sess->frame_index, true);
-	else if (strcmp(command, "frame") == 0 || strcmp(command, "f") == 0) {
-		if (argument[0] != '\0')
-			print_backtrace(sess, atoi(argument), false);
+	else if (strcmp(verb, "eval") == 0 || strcmp(verb, "e") == 0)
+		print_eval(sess, num_args > 0 ? command_get_string(command, 1) : "",
+			sess->frame_index, false);
+	else if (strcmp(verb, "examine") == 0 || strcmp(verb, "x") == 0)
+		print_eval(sess, num_args > 0 ? command_get_string(command, 1) : "",
+			sess->frame_index, true);
+	else if (strcmp(verb, "frame") == 0 || strcmp(verb, "f") == 0) {
+		if (num_args >= 1)
+			print_backtrace(sess, command_get_int(command, 1), false);
 		else
 			print_backtrace(sess, sess->frame_index, false);
 	}
-	else if (strcmp(command, "list") == 0 || strcmp(command, "l") == 0) {
-		if (argument[0] != 0)
-			num_lines = atoi(argument);
+	else if (strcmp(verb, "list") == 0 || strcmp(verb, "l") == 0) {
+		if (num_args >= 1)
+			num_lines = command_get_int(command, 1);
 		else
 			num_lines = 10;
 		print_source(sess, sess->filename, sess->line_no, num_lines);
 	}
-	else if (strcmp(command, "stepover") == 0 || strcmp(command, "s") == 0)
+	else if (strcmp(verb, "stepover") == 0 || strcmp(verb, "s") == 0)
 		execute_next(sess, EXEC_STEP_OVER);
-	else if (strcmp(command, "stepin") == 0 || strcmp(command, "si") == 0)
+	else if (strcmp(verb, "stepin") == 0 || strcmp(verb, "si") == 0)
 		execute_next(sess, EXEC_STEP_IN);
-	else if (strcmp(command, "stepout") == 0 || strcmp(command, "so") == 0)
+	else if (strcmp(verb, "stepout") == 0 || strcmp(verb, "so") == 0)
 		execute_next(sess, EXEC_STEP_OUT);
-	else if (strcmp(command, "vars") == 0 || strcmp(command, "v") == 0)
+	else if (strcmp(verb, "vars") == 0 || strcmp(verb, "v") == 0)
 		print_locals(sess, sess->frame_index);
-	else if (strcmp(command, "where") == 0 || strcmp(command, "w") == 0) {
+	else if (strcmp(verb, "where") == 0 || strcmp(verb, "w") == 0) {
 		frame_index = sess->frame_index;
 		print_backtrace(sess, 0, false);
 		sess->frame_index = frame_index;
 	}
 	else
-		printf("'%s': command not recognized.\n", command);
-	free(parsee);
+		printf("'%s': command not recognized.\n", verb);
+	command_free(command);
 	return true;
 }
 
