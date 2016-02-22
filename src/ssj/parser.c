@@ -36,6 +36,8 @@ command_parse(const char* string)
 	while (*p_ch != '\0') {
 		while (*p_ch == ' ' || *p_ch == '\t')
 			++p_ch;  // skip whitespace
+		if (*p_ch == '\0')
+			break;  // avoid parsing the NUL terminator as a token
 		if (index >= array_len) {
 			array_len *= 2;
 			tokens = realloc(tokens, array_len * sizeof(struct token));
