@@ -117,8 +117,8 @@ namespace minisphere.Gdk.Debugger
                 Panes.Errors.Clear();
                 Panes.Inspector.Clear();
 
-                Panes.Console.Print(string.Format("SSJ2 " + plugin.Version + " Sphere GUI debugger"));
-                Panes.Console.Print(string.Format("A graphical JS debugger for Sphere Studio"));
+                Panes.Console.Print(string.Format("SSJ2 " + plugin.Version + " minisphere GUI Debugger"));
+                Panes.Console.Print(string.Format("a graphical JS debugger for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2016 Fat Cerberus"));
                 Panes.Console.Print("");
 
@@ -154,8 +154,7 @@ namespace minisphere.Gdk.Debugger
 
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Activate(Panes.Console);
-                Panes.Console.Print("");
-                Panes.Console.Print(Duktape.TargetID + " detached.");
+                Panes.Console.Print("SSJ session has ended.");
             }), null);
         }
 

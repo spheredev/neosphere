@@ -125,8 +125,6 @@ do_handshake(socket_t* socket)
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
-	printf("    inferior: %s\n", next_token);
-	printf("    duktape %s\n\n", token);
 
 	return true;
 
@@ -695,8 +693,8 @@ process_message(session_t* sess, const message_t* msg)
 			sess->is_attached = false;
 			flag = msg_get_int(msg, 1);
 			if (flag != 0)
-				printf("Unexpected error in inferior!\n");
-			printf("SSJ session has been detached.\n");
+				printf("unexpected error in inferior!\n");
+			printf("SSJ session closed by target.\n");
 			return false;
 		}
 		break;
