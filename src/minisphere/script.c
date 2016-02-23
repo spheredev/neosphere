@@ -12,18 +12,45 @@ struct script
 	duk_uarridx_t id;
 };
 
+struct source
+{
+	char*      filename;
+	char*      orig_name;
+	lstring_t* text;
+};
+
 static script_t* script_from_js_function (void* heapptr);
 
-static int s_next_script_id = 0;
+static vector_t* s_sources = NULL;
+static int       s_next_script_id = 0;
+
+static lstring_t*
+check_source_cache(const char* filename)
+{
+	iter_t iter;
+	struct source* p_source;
+	
+	iter = vector_enum(s_sources);
+	while (p_source = vector_next(&iter)) {
+		if (strcmp(filename, p_source->filename) == 0)
+			return p_source->text;
+	}
+	return NULL;
+}
 
 void
 initialize_scripts(void)
 {
+	console_log(1, "initializing JS manager");
+	
 	duk_push_global_stash(g_duk);
 	duk_push_array(g_duk);
 	duk_put_prop_string(g_duk, -2, "scripts");
 	duk_pop(g_duk);
 
+	// initialize the source cache
+	s_sources = vector_new(sizeof(struct source));
+	
 	// load the CoffeeScript compiler into the JS context, if it exists
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
 		if (evaluate_script("~sys/coffee-script.js")) {
@@ -54,25 +81,72 @@ on_error:
 	console_log(1, "    CoffeeScript support not enabled");
 }
 
+void
+shutdown_scripts(void)
+{
+	iter_t iter;
+	struct source* p_source;
+	
+	console_log(1, "shutting down JS manager");
+	iter = vector_enum(s_sources);
+	while (p_source = vector_next(&iter)) {
+		free(p_source->filename);
+		lstr_free(p_source->text);
+	}
+	vector_free(s_sources);
+}
+
+const lstring_t*
+get_source_text(const char* filename)
+{
+	iter_t iter;
+	struct source* p_source;
+
+	iter = vector_enum(s_sources);
+	while (p_source = vector_next(&iter)) {
+		if (strcmp(filename, p_source->filename) == 0)
+			return p_source->text;
+	}
+	return NULL;
+}
+
 bool
 evaluate_script(const char* filename)
 {
-	const char*   extension;
-	sfs_file_t*   file = NULL;
-	path_t*       path;
-	lstring_t*    source_text = NULL;
-	const char*   source_name;
-	char*         slurp;
-	size_t        size;
+	const char*    extension;
+	sfs_file_t*    file = NULL;
+	bool           found_in_cache = false;
+	path_t*        path;
+	struct source  cache_entry;
+	const char*    source_name;
+	lstring_t*     source_text = NULL;
+	char*          slurp;
+	size_t         size;
+	
+	iter_t iter;
+	struct source* p_source;
 
-	// load the source text from the script file
+	// if the file has been loaded before, just return it from the cache.
+	// otherwise, load the source text and cache it.
 	path = make_sfs_path(filename, NULL);
-	if (!(slurp = sfs_fslurp(g_fs, path_cstr(path), NULL, &size)))
-		goto on_error;
 	source_name = get_source_pathname(path_cstr(path));
-	source_text = lstr_from_buf(slurp, size);
-	free(slurp);
-
+	iter = vector_enum(s_sources);
+	while (p_source = vector_next(&iter)) {
+		if (strcmp(path_cstr(path), p_source->filename) == 0)
+			source_text = p_source->text;
+	}
+	found_in_cache = source_text != NULL;
+	if (!found_in_cache) {
+		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
+			goto on_error;
+		source_text = lstr_from_buf(slurp, size);
+		cache_entry.filename = strdup(filename);
+		cache_entry.orig_name = strdup(source_name);
+		cache_entry.text = source_text;
+		vector_push(s_sources, &cache_entry);
+		free(slurp);
+	}
+	
 	// is it a CoffeeScript file? you know, I don't even like coffee.
 	// now, Monster drinks on the other hand...
 	extension = strrchr(filename, '.');
@@ -102,7 +176,6 @@ evaluate_script(const char* filename)
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_error;
 	path_free(path);
-	lstr_free(source_text);
 	return true;
 
 on_error:
@@ -115,7 +188,7 @@ on_error:
 script_t*
 compile_script(const lstring_t* source, const char* fmt_name, ...)
 {
-	va_list ap;
+	va_list    ap;
 	lstring_t* name;
 	script_t*  script;
 	
@@ -128,7 +201,7 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	
 	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
 	// instead we get this ugliness where the compiled function is saved in the global stash
-	// so it doesn't get eaten by the garbage collector.
+	// so it doesn't get eaten by the garbage collector. yummy!
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "scripts");
 	duk_push_lstring_t(g_duk, source);

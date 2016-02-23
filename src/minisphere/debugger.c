@@ -12,8 +12,9 @@ enum appnotify
 enum apprequest
 {
 	APPREQ_NOP,
-	APPREQ_GAMEINFO,
-	APPREQ_SRCPATH,
+	APPREQ_GAME_INFO,
+	APPREQ_SOURCE,
+	APPREQ_SRC_PATH,
 };
 
 static const int TCP_DEBUG_PORT = 1208;
@@ -199,17 +200,29 @@ duk_cb_debug_detach(void* udata)
 static duk_idx_t
 duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 {
-	const char* pathname = NULL;
-	int         request_id;
+	const char*      pathname = NULL;
+	int              request_id;
+	const lstring_t* source_text;
 	
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
-	case APPREQ_GAMEINFO:
+	case APPREQ_GAME_INFO:
 		duk_push_string(ctx, get_sgm_name(g_fs));
 		duk_push_string(ctx, get_sgm_author(g_fs));
 		duk_push_string(ctx, get_sgm_summary(g_fs));
 		return 3;
-	case APPREQ_SRCPATH:
+	case APPREQ_SOURCE:
+		pathname = duk_get_string(ctx, -nvalues + 1);
+		if (source_text = get_source_text(pathname)) {
+			duk_push_lstring_t(ctx, source_text);
+			return 1;
+		}
+		else {
+			duk_push_sprintf(ctx, "no source for %s", pathname);
+			return -1;
+		}
+		break;
+	case APPREQ_SRC_PATH:
 		duk_push_global_stash(ctx);
 		if (!duk_get_prop_string(ctx, -1, "debugMap") || !duk_get_prop_string(ctx, -1, "origin"))
 			duk_push_null(ctx);

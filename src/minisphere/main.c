@@ -121,7 +121,7 @@ main(int argc, char* argv[])
 	console_log(1, "    conserve CPU: %s", s_conserve_cpu ? "yes" : "no");
 	console_log(1, "    console verbosity: V%d", verbosity);
 #if defined(MINISPHERE_SPHERUN)
-	console_log(1, "    debugger mode: %s", want_debug ? "Active" : "Passive");
+	console_log(1, "    debugger mode: %s", want_debug ? "active" : "passive");
 #endif
 	console_log(1, "");
 
@@ -705,6 +705,11 @@ initialize_engine(void)
 	dyad_init();
 	dyad_setUpdateTimeout(0.0);
 
+	// initialize JavaScript
+	console_log(1, "initializing Duktape (%s)", DUK_GIT_DESCRIBE);
+	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
+		goto on_error;
+
 	// load system configuraton
 	console_log(1, "loading system configuration");
 	g_sys_conf = open_kev_file(NULL, "~sys/system.ini");
@@ -717,12 +722,6 @@ initialize_engine(void)
 	initialize_input();
 	initialize_spritesets();
 	initialize_map_engine();
-
-	// initialize JavaScript
-	console_log(1, "initializing JavaScript");
-	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
-		goto on_error;
-	console_log(1, "    Duktape %s", DUK_GIT_DESCRIBE);
 	initialize_scripts();
 
 	// register the Sphere API
@@ -748,6 +747,7 @@ shutdown_engine(void)
 
 	shutdown_map_engine();
 	shutdown_input();
+	shutdown_scripts();
 
 	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);

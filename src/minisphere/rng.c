@@ -22,7 +22,7 @@ initialize_rng(void)
 {
 	unsigned long seed;
 	
-	console_log(1, "initializing Mersenne Twister");
+	console_log(1, "initializing MT19937");
 	
 	seed = (unsigned long)time(NULL);
 	console_log(2, "    seed: %lu", seed);

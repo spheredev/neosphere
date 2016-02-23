@@ -80,8 +80,9 @@ enum appnotify
 enum apprequest
 {
 	APPREQ_NOP,
-	APPREQ_GAMEINFO,
-	APPREQ_SRCPATH,
+	APPREQ_GAME_INFO,
+	APPREQ_SOURCE,
+	APPREQ_SRC_PATH,
 };
 
 enum err_command
@@ -181,17 +182,12 @@ new_session(const char* hostname, int port)
 	printf("querying target... ");
 	req = msg_new(MSG_TYPE_REQ);
 	msg_add_int(req, REQ_APP_REQUEST);
-	msg_add_int(req, APPREQ_GAMEINFO);
+	msg_add_int(req, APPREQ_GAME_INFO);
 	rep = do_request(session, req);
 	session->game_title = strdup(msg_get_string(rep, 0));
 	session->game_author = strdup(msg_get_string(rep, 1));
-	msg_free(rep);
-	req = msg_new(MSG_TYPE_REQ);
-	msg_add_int(req, REQ_APP_REQUEST);
-	msg_add_int(req, APPREQ_SRCPATH);
-	rep = do_request(session, req);
-	if (msg_get_string(rep, 0) != NULL)
-		origin = path_resolve(path_new(msg_get_string(rep, 0)), NULL);
+	if (msg_get_string(rep, 2) != NULL)
+		origin = path_resolve(path_new(msg_get_string(rep, 2)), NULL);
 	msg_free(rep);
 	printf("OK.\n");
 
