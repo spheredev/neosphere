@@ -103,7 +103,6 @@ do_handshake(socket_t* socket)
 {
 	static char handshake[128];
 
-	unsigned int duk_version;
 	ptrdiff_t    idx;
 	char*        next_token;
 	char*        token;
@@ -123,13 +122,11 @@ do_handshake(socket_t* socket)
 	if (atoi(token) != 1) goto on_error;
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
-	duk_version = atoi(token);
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
 	printf("    inferior: %s\n", next_token);
-	printf("    duktape %d.%d.%d\n\n", duk_version / 10000,
-		(duk_version / 100) % 100, duk_version % 100);
+	printf("    duktape %s\n\n", token);
 
 	return true;
 
@@ -685,7 +682,7 @@ process_message(session_t* sess, const message_t* msg)
 				break;
 			printf("FATAL UNCAUGHT - %s\n", msg_get_string(msg, 2));
 			refresh_backtrace(sess);
-			printf("   at: %s:%d\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
+			printf("    at: %s:%d\n", msg_get_string(msg, 3), msg_get_int(msg, 4));
 			break;
 		case NFY_APP_NOTIFY:
 			switch (msg_get_int(msg, 1)) {
