@@ -196,7 +196,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("Cell %s Sphere packaging compiler (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
+	printf("Cell %s Sphere Packaging Compiler (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("A scriptable build engine for Sphere games\n");
 		printf("(c) 2016 Fat Cerberus\n");
