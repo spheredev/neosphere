@@ -19,7 +19,7 @@ static bool s_have_shaders = false;
 void
 initialize_shaders(bool enable_shading)
 {
-	console_log(1, "Initializing shader support");
+	console_log(1, "initializing shader support");
 #ifdef MINISPHERE_USE_SHADERS
 	s_have_shaders = enable_shading;
 #endif
@@ -29,7 +29,7 @@ initialize_shaders(bool enable_shading)
 void
 shutdown_shaders(void)
 {
-	console_log(1, "Shutting down shader manager");
+	console_log(1, "shutting down shader manager");
 }
 
 bool
@@ -52,15 +52,15 @@ create_shader(const char* vs_filename, const char* fs_filename)
 #ifdef MINISPHERE_USE_SHADERS
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
 	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
-		fprintf(stderr, "\nVertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
+		fprintf(stderr, "\nvertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
 	if (!al_attach_shader_source(shader->program, ALLEGRO_PIXEL_SHADER, fs_source)) {
-		fprintf(stderr, "\nFragment shader compile log:\n%s\n", al_get_shader_log(shader->program));
+		fprintf(stderr, "\nfragment shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
 	if (!al_build_shader(shader->program)) {
-		fprintf(stderr, "\nError building shader program:\n%s\n", al_get_shader_log(shader->program));
+		fprintf(stderr, "\nerror building shader program:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
 #endif
@@ -145,7 +145,7 @@ js_new_ShaderProgram(duk_context* ctx)
 	duk_pop_2(ctx);
 
 	if (!are_shaders_active())
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Shaders not supported on this system");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): shaders not supported on this system");
 	
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
@@ -153,7 +153,7 @@ js_new_ShaderProgram(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL);
 	duk_pop_2(ctx);
 	if (!(shader = create_shader(vs_filename, fs_filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): Failed to build shader from '%s', '%s'", vs_filename, fs_filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): failed to build shader from '%s', '%s'", vs_filename, fs_filename);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
 	return 1;
 }

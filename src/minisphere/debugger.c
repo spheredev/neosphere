@@ -63,7 +63,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	// listen for debugger connections on TCP port 1208.
 	// the listening socket will remain active for the duration of
 	// the session, allowing a debugger to be attached at any time.
-	console_log(1, "Opening TCP %i to listen for debugger", TCP_DEBUG_PORT);
+	console_log(1, "listening for SSJ on TCP %i", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
 	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
 
@@ -88,12 +88,12 @@ update_debugger(void)
 
 	if (socket = accept_next_socket(s_server)) {
 		if (s_client != NULL) {
-			console_log(2, "Rejecting connection from %s, debugger already attached",
+			console_log(2, "rejected connection from %s, debugger already attached",
 				get_socket_host(socket));
 			free_socket(socket);
 		}
 		else {
-			console_log(1, "Connected to debugger at %s", get_socket_host(socket));
+			console_log(1, "connected to debugger at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
 			duk_debugger_attach_custom(g_duk,
@@ -153,7 +153,7 @@ attach_debugger(void)
 {
 	double timeout;
 
-	printf("Waiting for SSJ to connect... ");
+	printf("waiting for SSJ... ");
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
@@ -161,7 +161,7 @@ attach_debugger(void)
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
-		printf("Timed out!\n");
+		printf("timed out!\n");
 	else
 		printf("OK.\n");
 	return s_client != NULL;
@@ -173,7 +173,7 @@ detach_debugger(bool is_shutdown)
 	if (!s_is_attached) return;
 	
 	// detach the debugger
-	console_log(1, "Detaching debugger");
+	console_log(1, "detaching debugger");
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
 	if (s_client != NULL) {

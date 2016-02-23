@@ -30,16 +30,16 @@ initialize_scripts(void)
 			duk_push_global_object(g_duk);
 			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript")) {
 				duk_pop_3(g_duk);
-				console_log(1, "  'CoffeeScript' not defined");
+				console_log(1, "    'CoffeeScript' not defined");
 				goto on_error;
 			}
 			duk_get_prop_string(g_duk, -1, "VERSION");
-			console_log(1, "  CoffeeScript v%s", duk_get_string(g_duk, -1));
+			console_log(1, "    CoffeeScript v%s", duk_get_string(g_duk, -1));
 			duk_pop_n(g_duk, 4);
 		}
 		else {
-			console_log(1, "  Error evaluating compiler script");
-			console_log(1, "  %s", duk_to_string(g_duk, -1));
+			console_log(1, "    error evaluating compiler script");
+			console_log(1, "    %s", duk_to_string(g_duk, -1));
 			duk_pop(g_duk);
 			goto on_error;
 		}
@@ -51,7 +51,7 @@ initialize_scripts(void)
 	return;
 
 on_error:
-	console_log(1, "  CoffeeScript support not enabled");
+	console_log(1, "    CoffeeScript support not enabled");
 }
 
 bool
@@ -124,7 +124,7 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	va_end(ap);
 	script = calloc(1, sizeof(script_t));
 
-	console_log(3, "Compiling Script %u as '%s'", s_next_script_id, lstr_cstr(name));
+	console_log(3, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
 	
 	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
 	// instead we get this ugliness where the compiled function is saved in the global stash
@@ -156,7 +156,7 @@ free_script(script_t* script)
 	if (script == NULL || --script->refcount > 0)
 		return;
 	
-	console_log(3, "Disposing Script %u no longer in use", script->id);
+	console_log(3, "disposing script #%u no longer in use", script->id);
 	
 	// unstash the compiled function, it's now safe to GC
 	duk_push_global_stash(g_duk);
@@ -179,12 +179,12 @@ run_script(script_t* script, bool allow_reentry)
 	// if it is, but the script is reentrant, allow it. otherwise, return early
 	// to prevent multiple invocation.
 	if (script->is_in_use && !allow_reentry) {
-		console_log(3, "Skipping execution of Script %u, already in use", script->id);
+		console_log(3, "skipping execution of script #%u, already in use", script->id);
 		return;
 	}
 	was_in_use = script->is_in_use;
 
-	console_log(3, "Executing Script %u", script->id);
+	console_log(3, "executing script #%u", script->id);
 
 	// ref the script in case it gets freed during execution. the owner
 	// may be destroyed in the process and we don't want to end up crashing.
@@ -223,7 +223,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else if (duk_is_null_or_undefined(ctx, index))
 		return NULL;
 	else
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Script must be a string, function, or null/undefined");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "script must be string, function, or null/undefined");
 	return script;
 }
 

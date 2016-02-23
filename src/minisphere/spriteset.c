@@ -68,7 +68,7 @@ static unsigned int s_num_cache_hits = 0;
 void
 initialize_spritesets(void)
 {
-	console_log(1, "Initializing spriteset manager");
+	console_log(1, "initializing spriteset manager");
 	s_load_cache = vector_new(sizeof(spriteset_t*));
 }
 
@@ -78,9 +78,9 @@ shutdown_spritesets(void)
 	iter_t        iter;
 	spriteset_t** p_spriteset;
 	
-	console_log(1, "Shutting down spriteset manager");
-	console_log(2, "  Objects created: %u", s_next_spriteset_id);
-	console_log(2, "  Cache hits: %u", s_num_cache_hits);
+	console_log(1, "shutting down spriteset manager");
+	console_log(2, "    objects created: %u", s_next_spriteset_id);
+	console_log(2, "    cache hits: %u", s_num_cache_hits);
 	if (s_load_cache != NULL) {
 		iter = vector_enum(s_load_cache);
 		while (p_spriteset = vector_next(&iter))
@@ -96,7 +96,7 @@ clone_spriteset(const spriteset_t* spriteset)
 	
 	int i, j;
 
-	console_log(2, "Cloning Spriteset %u from source Spriteset %u",
+	console_log(2, "cloning spriteset #%u from source spriteset #%u",
 		s_next_spriteset_id, spriteset->id);
 	
 	clone = calloc(1, sizeof(spriteset_t));
@@ -171,7 +171,7 @@ load_spriteset(const char* filename)
 		iter = vector_enum(s_load_cache);
 		while (p_spriteset = vector_next(&iter)) {
 			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
-				console_log(2, "Using cached Spriteset %u for '%s'", (*p_spriteset)->id, filename);
+				console_log(2, "using cached spriteset #%u for '%s'", (*p_spriteset)->id, filename);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
@@ -181,7 +181,7 @@ load_spriteset(const char* filename)
 		s_load_cache = vector_new(sizeof(spriteset_t*));
 	
 	// filename not in load cache, load the spriteset
-	console_log(2, "Loading Spriteset %u as '%s'", s_next_spriteset_id, filename);
+	console_log(2, "loading spriteset #%u as '%s'", s_next_spriteset_id, filename);
 	spriteset = calloc(1, sizeof(spriteset_t));
 	if (!(file = sfs_fopen(g_fs, filename, NULL, "rb")))
 		goto on_error;
@@ -324,7 +324,7 @@ load_spriteset(const char* filename)
 	return ref_spriteset(spriteset);
 
 on_error:
-	console_log(2, "Failed to load Spriteset %u", s_next_spriteset_id);
+	console_log(2, "failed to load spriteset #%u", s_next_spriteset_id);
 	if (file != NULL) sfs_fclose(file);
 	if (spriteset != NULL) {
 		if (spriteset->poses != NULL) {
@@ -358,7 +358,7 @@ free_spriteset(spriteset_t* spriteset)
 	if (spriteset == NULL || --spriteset->refcount > 0)
 		return;
 	
-	console_log(3, "Disposing Spriteset %u no longer in use", spriteset->id);
+	console_log(3, "disposing spriteset #%u no longer in use", spriteset->id);
 	for (i = 0; i < spriteset->num_images; ++i)
 		free_image(spriteset->images[i]);
 	free(spriteset->images);

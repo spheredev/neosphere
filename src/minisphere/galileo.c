@@ -64,13 +64,13 @@ static unsigned int s_next_shape_id = 0;
 void
 initialize_galileo(void)
 {
-	console_log(1, "Initializing Galileo");
+	console_log(1, "initializing Galileo");
 }
 
 void
 shutdown_galileo(void)
 {
-	console_log(1, "Shutting down Galileo");
+	console_log(1, "shutting down Galileo");
 	free_shader(s_def_shader);
 }
 
@@ -81,7 +81,7 @@ get_default_shader(void)
 	const char* vs_filename;
 
 	if (s_def_shader == NULL) {
-		console_log(3, "Compiling Galileo default shaders");
+		console_log(3, "compiling Galileo default shaders");
 		vs_filename = read_string_rec(g_sys_conf, "GalileoVertShader", "shaders/galileo.vs.glsl");
 		fs_filename = read_string_rec(g_sys_conf, "GalileoFragShader", "shaders/galileo.fs.glsl");
 		s_def_shader = create_shader(syspath(vs_filename), syspath(fs_filename));
@@ -105,7 +105,7 @@ new_group(shader_t* shader)
 {
 	group_t* group;
 
-	console_log(4, "Creating new Group %u", s_next_group_id);
+	console_log(4, "creating new group #%u", s_next_group_id);
 	
 	group = calloc(1, sizeof(group_t));
 	group->shapes = vector_new(sizeof(shape_t*));
@@ -133,7 +133,7 @@ free_group(group_t* group)
 	if (group == NULL || --group->refcount > 0)
 		return;
 
-	console_log(4, "Disposing Group %u no longer in use", group->id);
+	console_log(4, "disposing group #%u no longer in use", group->id);
 
 	iter = vector_enum(group->shapes);
 	while (i_shape = vector_next(&iter))
@@ -173,7 +173,7 @@ set_group_xy(group_t* group, float x, float y)
 bool
 add_group_shape(group_t* group, shape_t* shape)
 {
-	console_log(4, "Adding Shape %u to Group %u", shape->id, group->id);
+	console_log(4, "adding shape #%u to group #%u", shape->id, group->id);
 	
 	shape = ref_shape(shape);
 	vector_push(group->shapes, &shape);
@@ -236,7 +236,7 @@ new_shape(shape_type_t type, image_t* texture)
 		: type == SHAPE_TRIANGLE_FAN ? "triangle fan"
 		: type == SHAPE_TRIANGLE_STRIP ? "triangle strip"
 		: "automatic";
-	console_log(4, "Creating Shape %u as %s", s_next_shape_id, type_name);
+	console_log(4, "creating shape #%u as %s", s_next_shape_id, type_name);
 	
 	shape = calloc(1, sizeof(shape_t));
 	shape->texture = ref_image(texture);
@@ -259,7 +259,7 @@ free_shape(shape_t* shape)
 {
 	if (shape == NULL || --shape->refcount > 0)
 		return;
-	console_log(4, "Disposing Shape %u no longer in use", shape->id);
+	console_log(4, "disposing shape #%u no longer in use", shape->id);
 	free_image(shape->texture);
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (shape->vbuf != NULL)
@@ -388,7 +388,7 @@ assign_default_uv(shape_t* shape)
 
 	int i;
 
-	console_log(4, "Calculating U/V for Shape %u", shape->id);
+	console_log(4, "auto-calculating U/V for shape #%u", shape->id);
 
 	for (i = 0; i < shape->num_vertices; ++i) {
 		// circumscribe the UV coordinate space.
@@ -418,7 +418,7 @@ refresh_shape_vbuf(shape_t* shape)
 
 	int i;
 	
-	console_log(4, "Creating vertex buffer for Shape %u", shape->id);
+	console_log(4, "creating vertex buffer for shape #%u", shape->id);
 	
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (shape->vbuf != NULL)

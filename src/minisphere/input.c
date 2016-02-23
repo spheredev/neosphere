@@ -97,13 +97,13 @@ initialize_input(void)
 {
 	int i;
 
-	console_log(1, "Initializing input");
+	console_log(1, "initializing input");
 	
 	al_install_keyboard();
 	if (!(s_have_mouse = al_install_mouse()))
-		console_log(1, "  Mouse initialization failed");
+		console_log(1, "  mouse initialization failed");
 	if (!(s_have_joystick = al_install_joystick()))
-		console_log(1, "  Joystick initialization failed");
+		console_log(1, "  joystick initialization failed");
 
 	s_events = al_create_event_queue();
 	al_register_event_source(s_events, al_get_keyboard_event_source());
@@ -176,7 +176,7 @@ shutdown_input(void)
 	iter_t iter;
 
 	// save player key mappings
-	console_log(1, "Shutting down input");
+	console_log(1, "shutting down input");
 
 	// free bound key scripts
 	iter = vector_enum(s_bound_buttons);
@@ -372,7 +372,7 @@ save_key_map(void)
 
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
-	console_log(1, "Saving player key mappings");
+	console_log(1, "saving player key mappings");
 	file = open_kev_file(g_fs, "keymap.kev");
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"

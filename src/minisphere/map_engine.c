@@ -302,7 +302,7 @@ initialize_map_engine(void)
 {
 	int i;
 	
-	console_log(1, "Initializing map engine");
+	console_log(1, "initializing map engine");
 	
 	initialize_persons_manager();
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
@@ -328,7 +328,7 @@ shutdown_map_engine(void)
 {
 	int i;
 
-	console_log(1, "Shutting down map engine");
+	console_log(1, "shutting down map engine");
 	
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
@@ -517,8 +517,8 @@ add_trigger(int x, int y, int layer, script_t* script)
 {
 	struct map_trigger trigger;
 
-	console_log(2, "Creating trigger %i on map '%s'", vector_len(s_map->triggers), s_map_filename);
-	console_log(3, "  Location: '%s' @ (%i,%i)", lstr_cstr(s_map->layers[layer].name), x, y);
+	console_log(2, "creating trigger #%i on map '%s'", vector_len(s_map->triggers), s_map_filename);
+	console_log(3, "    location: '%s' @ (%i,%i)", lstr_cstr(s_map->layers[layer].name), x, y);
 	
 	trigger.x = x; trigger.y = y;
 	trigger.z = layer;
@@ -533,8 +533,8 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 {
 	struct map_zone zone;
 
-	console_log(2, "Creating %u-step zone %i on map '%s'", steps, vector_len(s_map->zones), s_map_filename);
-	console_log(3, "  Bounds: (%i,%i)-(%i,%i)", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
+	console_log(2, "creating %u-step zone #%i on map '%s'", steps, vector_len(s_map->zones), s_map_filename);
+	console_log(3, "    bounds: (%i,%i)-(%i,%i)", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
 	
 	memset(&zone, 0, sizeof(struct map_zone));
 	zone.bounds = bounds;
@@ -622,7 +622,7 @@ load_map(const char* filename)
 
 	int i, j, x, y, z;
 
-	console_log(2, "Loading map as '%s'", filename);
+	console_log(2, "constructing new map from '%s'", filename);
 	
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
@@ -722,7 +722,7 @@ load_map(const char* filename)
 				trigger.x = entity_hdr.x;
 				trigger.y = entity_hdr.y;
 				trigger.z = entity_hdr.z;
-				trigger.script = compile_script(script, "%s T:%i", filename, vector_len(map->triggers));
+				trigger.script = compile_script(script, "%s/trig%i", filename, vector_len(map->triggers));
 				if (!vector_push(map->triggers, &trigger))
 					return false;
 				lstr_free(script);
@@ -743,7 +743,7 @@ load_map(const char* filename)
 			zone.bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			zone.interval = zone_hdr.interval;
 			zone.steps_left = 0;
-			zone.script = compile_script(script, "%s Z:%i", filename, vector_len(map->zones));
+			zone.script = compile_script(script, "%s/zone%i", filename, vector_len(map->zones));
 			normalize_rect(&zone.bounds);
 			if (!vector_push(map->zones, &zone))
 				return false;
@@ -782,14 +782,14 @@ load_map(const char* filename)
 		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
 		if (rmp.num_strings >= 5) {
-			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "%s onEnter", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "%s onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "%s/onEnter", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "%s/onLeave", filename);
 		}
 		if (rmp.num_strings >= 9) {
-			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "%s onLeave", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "%s onLeaveEast", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "%s onLeaveSouth", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "%s onLeaveWest", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "%s/onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "%s/onLeaveEast", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "%s/onLeaveSouth", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "%s/onLeaveWest", filename);
 		}
 		for (i = 0; i < rmp.num_strings; ++i)
 			lstr_free(strings[i]);
@@ -967,7 +967,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	int i;
 
-	console_log(2, "Changing current map to '%s'", filename);
+	console_log(2, "changing current map to '%s'", filename);
 	
 	map = load_map(filename);
 	if (map == NULL) return false;
@@ -2457,7 +2457,7 @@ js_SetTriggerScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTriggerScript(): Map engine must be running");
 	if (trigger_index < 0 || trigger_index >= (int)vector_len(s_map->triggers))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTriggerScript(): Invalid trigger index (%i)", trigger_index);
-	if (!(script_name = lstr_newf("%s T:%i", get_map_name(), trigger_index)))
+	if (!(script_name = lstr_newf("%s/trig%i", get_map_name(), trigger_index)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTriggerScript(): Error compiling trigger script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -2545,7 +2545,7 @@ js_SetZoneScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): Map engine must be running");
 	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneScript(): Invalid zone index (%i)", zone_index);
-	if (!(script_name = lstr_newf("%s Z:%i", get_map_name(), zone_index)))
+	if (!(script_name = lstr_newf("%s/zone%i", get_map_name(), zone_index)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): Error compiling zone script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -2586,7 +2586,7 @@ js_AddTrigger(duk_context* ctx)
 	bounds = get_map_bounds();
 	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddTrigger(): Trigger must be inside map (%i,%i)", x, y);
-	if (!(script_name = lstr_newf("%s T:%i", get_map_name(), vector_len(s_map->triggers))))
+	if (!(script_name = lstr_newf("%s/trig%i", get_map_name(), vector_len(s_map->triggers))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddTrigger(): Failed to compile trigger script");
 	script = duk_require_sphere_script(ctx, 3, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -2616,7 +2616,7 @@ js_AddZone(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Width and height must be greater than zero");
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Zone cannot extend outside map (%i,%i,%i,%i)", x, y, width, height);
-	if (!(script_name = lstr_newf("%s Z:%i", get_map_name(), vector_len(s_map->zones))))
+	if (!(script_name = lstr_newf("%s/zone%i", get_map_name(), vector_len(s_map->zones))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddZone(): Failed to compile zone script");
 	script = duk_require_sphere_script(ctx, 5, lstr_cstr(script_name));
 	lstr_free(script_name);

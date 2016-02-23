@@ -54,7 +54,7 @@ new_sandbox(const char* game_path)
 	void*           sourcemap_data;
 	size_t          sourcemap_size;
 
-	console_log(1, "Opening '%s' in Sandbox %u", game_path, s_next_sandbox_id);
+	console_log(1, "opening '%s' in sandbox #%u", game_path, s_next_sandbox_id);
 	
 	fs = calloc(1, sizeof(sandbox_t));
 	
@@ -76,7 +76,7 @@ new_sandbox(const char* game_path)
 		
 		// synthesize a game manifest for the script. this way we make this trick
 		// transparent to the rest of the engine, keeping things simple.
-		console_log(1, "Synthesizing manifest for '%s' in Sandbox %u", path_cstr(path),
+		console_log(1, "synthesizing manifest for '%s' in sandbox #%u", path_cstr(path),
 			s_next_sandbox_id);
 		fs->name = lstr_new(path_filename_cstr(path));
 		fs->author = lstr_new("Author Unknown");
@@ -102,7 +102,7 @@ new_sandbox(const char* game_path)
 	// try to load the game manifest if one hasn't been synthesized already
 	if (fs->name == NULL) {
 		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
-			console_log(1, "Parsing game.s2gm in Sandbox %u", s_next_sandbox_id);
+			console_log(1, "parsing game.s2gm in sandbox #%u", s_next_sandbox_id);
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
@@ -110,7 +110,7 @@ new_sandbox(const char* game_path)
 				goto on_error;
 		}
 		else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
-			console_log(1, "Parsing game.sgm in Sandbox %u", s_next_sandbox_id);
+			console_log(1, "parsing game.sgm in sandbox #%u", s_next_sandbox_id);
 			al_file = al_open_memfile(sgm_text, sgm_size, "rb");
 			if (!(conf = al_load_config_file_f(al_file)))
 				goto on_error;
@@ -140,9 +140,9 @@ new_sandbox(const char* game_path)
 	}
 
 	get_sgm_resolution(fs, &res_x, &res_y);
-	console_log(1, "  Title: %s", get_sgm_name(fs));
-	console_log(1, "  Author: %s", get_sgm_author(fs));
-	console_log(1, "  Resolution: %ix%i", res_x, res_y);
+	console_log(1, "    title: %s", get_sgm_name(fs));
+	console_log(1, "    author: %s", get_sgm_author(fs));
+	console_log(1, "    resolution: %ix%i", res_x, res_y);
 	
 	// load the source map
 	if (sourcemap_data = sfs_fslurp(fs, "sourcemap.json", NULL, &sourcemap_size))
@@ -153,7 +153,7 @@ new_sandbox(const char* game_path)
 	return ref_sandbox(fs);
 
 on_error:
-	console_log(1, "Failed to create Sandbox %u", s_next_sandbox_id++);
+	console_log(1, "failed to create sandbox #%u", s_next_sandbox_id++);
 	path_free(path);
 	if (al_file != NULL)
 		al_fclose(al_file);
@@ -181,7 +181,7 @@ free_sandbox(sandbox_t* fs)
 	if (fs == NULL || --fs->refcount > 0)
 		return;
 
-	console_log(3, "Disposing Sandbox %u no longer in use", fs->id);
+	console_log(3, "disposing sandbox #%u no longer in use", fs->id);
 	if (fs->type == SPHEREFS_SPK)
 		free_spk(fs->spk);
 	lstr_free(fs->sourcemap);

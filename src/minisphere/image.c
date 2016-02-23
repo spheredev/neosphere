@@ -52,7 +52,7 @@ create_image(int width, int height)
 {
 	image_t* image;
 
-	console_log(3, "Creating Image %u at %ix%i", s_next_image_id, width, height);
+	console_log(3, "creating image #%u at %ix%i", s_next_image_id, width, height);
 	image = calloc(1, sizeof(image_t));
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
@@ -71,7 +71,7 @@ create_subimage(image_t* parent, int x, int y, int width, int height)
 {
 	image_t* image;
 
-	console_log(3, "Creating Image %u as %ix%i subimage of Image %u", s_next_image_id, width, height, parent->id);
+	console_log(3, "creating image #%u as %ix%i subimage of image #%u", s_next_image_id, width, height, parent->id);
 	image = calloc(1, sizeof(image_t));
 	if (!(image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)))
 		goto on_error;
@@ -117,7 +117,7 @@ clone_image(const image_t* src_image)
 {
 	image_t* image;
 
-	console_log(3, "Cloning Image %u from source Image %u",
+	console_log(3, "cloning image #%u from source image #%u",
 		s_next_image_id, src_image->id);
 	
 	image = calloc(1, sizeof(image_t));
@@ -144,7 +144,7 @@ load_image(const char* filename)
 	image_t*      image;
 	void*         slurp = NULL;
 
-	console_log(2, "Loading Image %u as '%s'", s_next_image_id, filename);
+	console_log(2, "loading image #%u as '%s'", s_next_image_id, filename);
 	
 	image = calloc(1, sizeof(image_t));
 	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &file_size)))
@@ -172,7 +172,7 @@ load_image(const char* filename)
 	return ref_image(image);
 
 on_error:
-	console_log(2, "  Failed to load Image %u", s_next_image_id++);
+	console_log(2, "    failed to load image #%u", s_next_image_id++);
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(slurp);
@@ -191,7 +191,7 @@ read_image(sfs_file_t* file, int width, int height)
 
 	int i_y;
 
-	console_log(3, "Reading %ix%i Image %u from open file", width, height, s_next_image_id);
+	console_log(3, "reading %ix%i image #%u from open file", width, height, s_next_image_id);
 	image = calloc(1, sizeof(image_t));
 	file_pos = sfs_ftell(file);
 	if (!(image->bitmap = al_create_bitmap(width, height))) goto on_error;
@@ -210,7 +210,7 @@ read_image(sfs_file_t* file, int width, int height)
 	return ref_image(image);
 
 on_error:
-	console_log(3, "  Failed!");
+	console_log(3, "    failed!");
 	sfs_fseek(file, file_pos, SEEK_SET);
 	if (lock != NULL) al_unlock_bitmap(image->bitmap);
 	if (image != NULL) {
@@ -264,7 +264,7 @@ free_image(image_t* image)
 	if (image == NULL || --image->refcount > 0)
 		return;
 	
-	console_log(3, "Disposing Image %u as it is no longer in use",
+	console_log(3, "disposing image #%u no longer in use",
 		image->id);
 	uncache_pixels(image);
 	al_destroy_bitmap(image->bitmap);
@@ -289,7 +289,7 @@ color_t
 get_image_pixel(image_t* image, int x, int y)
 {
 	if (image->pixel_cache == NULL) {
-		console_log(4, "get_image_pixel() cache miss on Image %u", image->id);
+		console_log(4, "get_image_pixel() cache miss for image #%u", image->id);
 		cache_pixels(image);
 	}
 	else
@@ -630,7 +630,7 @@ cache_pixels(image_t* image)
 		goto on_error;
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;
-	console_log(4, "Creating new pixel cache for Image %u", image->id);
+	console_log(4, "creating new pixel cache for image #%u", image->id);
 	for (i = 0; i < image->height; ++i) {
 		psrc = lock->pixels + i * lock->pitch;
 		pdest = cache + i * image->width;
@@ -651,7 +651,7 @@ uncache_pixels(image_t* image)
 {
 	if (image->pixel_cache == NULL)
 		return;
-	console_log(4, "Pixel cache invalidated for Image %u, hits: %u", image->id, image->cache_hits);
+	console_log(4, "pixel cache invalidated for image #%u, hits: %u", image->id, image->cache_hits);
 	free(image->pixel_cache);
 	image->pixel_cache = NULL;
 }

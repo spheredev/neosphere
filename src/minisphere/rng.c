@@ -22,10 +22,10 @@ initialize_rng(void)
 {
 	unsigned long seed;
 	
-	console_log(1, "Initializing Mersenne Twister");
+	console_log(1, "initializing Mersenne Twister");
 	
 	seed = (unsigned long)time(NULL);
-	console_log(2, "  Seed: %lu", seed);
+	console_log(2, "    seed: %lu", seed);
 	init_genrand(seed);
 
 	s_corpus_size = (long)strlen(RNG_STRING_CORPUS);
@@ -34,8 +34,8 @@ initialize_rng(void)
 void
 seed_rng(unsigned long seed)
 {
-	console_log(2, "Reseeding Mersenne Twister");
-	console_log(2, "  Seed: %lu", seed);
+	console_log(2, "reseeding Mersenne Twister");
+	console_log(2, "    seed: %lu", seed);
 	
 	init_genrand(seed);
 }
@@ -179,7 +179,7 @@ js_RNG_string(duk_context* ctx)
 	int length = n_args >= 1 ? duk_require_number(ctx, 0) : 10;
 
 	if (length < 1 || length > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): Length must be between 1-255 inclusive (%i)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): length must be between 1-255 inclusive (%i)", length);
 	duk_push_string(ctx, rng_string(length));
 	return 1;
 }

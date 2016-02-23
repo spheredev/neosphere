@@ -149,7 +149,7 @@ static person_t*         *s_persons       = NULL;
 void
 initialize_persons_manager(void)
 {
-	console_log(1, "Initializing persons manager");
+	console_log(1, "initializing persons manager");
 	
 	memset(s_def_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	s_num_persons = s_max_persons = 0;
@@ -164,7 +164,7 @@ shutdown_persons_manager(void)
 {
 	int i;
 	
-	console_log(1, "Shutting down persons manager");
+	console_log(1, "shutting down persons manager");
 	
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);
@@ -492,7 +492,7 @@ compile_person_script(person_t* person, int type, const lstring_t* codestring)
 		: type == PERSON_SCRIPT_GENERATOR ? "genCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	script = compile_script(codestring, "%s '%s' %s", get_map_name(), person_name, script_name);
+	script = compile_script(codestring, "%s/%s/%s", get_map_name(), person_name, script_name);
 	set_person_script(person, type, script);
 	return true;
 }

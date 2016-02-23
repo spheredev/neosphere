@@ -62,7 +62,7 @@ connect_to_host(const char* hostname, int port, size_t buffer_size)
 	socket_t*    socket = NULL;
 	dyad_Stream* stream = NULL;
 
-	console_log(2, "Connecting Socket %u to %s:%i via TCP", s_next_socket_id, hostname, port);
+	console_log(2, "connecting socket #%u to %s:%i", s_next_socket_id, hostname, port);
 	
 	socket = calloc(1, sizeof(socket_t));
 	socket->buffer = malloc(buffer_size);
@@ -78,7 +78,7 @@ connect_to_host(const char* hostname, int port, size_t buffer_size)
 	return ref_socket(socket);
 
 on_error:
-	console_log(2, "Failed to open Socket %u", s_next_socket_id++);
+	console_log(2, "failed to connect socket #%u", s_next_socket_id++);
 	if (socket != NULL) {
 		free(socket->buffer);
 		if (socket->stream != NULL) dyad_close(stream);
@@ -94,9 +94,9 @@ listen_on_port(const char* hostname, int port, size_t buffer_size, int max_backl
 	socket_t*    socket = NULL;
 	dyad_Stream* stream = NULL;
 
-	console_log(2, "Opening Socket %u to listen on TCP %i", s_next_socket_id, port);
+	console_log(2, "opening socket #%u to listen on %i", s_next_socket_id, port);
 	if (max_backlog > 0)
-		console_log(3, "  Backlog: %i connections", max_backlog);
+		console_log(3, "    backlog: up to %i", max_backlog);
 	
 	socket = calloc(1, sizeof(socket_t));
 	if (max_backlog == 0)
@@ -127,7 +127,7 @@ listen_on_port(const char* hostname, int port, size_t buffer_size, int max_backl
 	return ref_socket(socket);
 
 on_error:
-	console_log(2, "Failed to open Socket %u", s_next_socket_id++);
+	console_log(2, "failed to open socket #%u", s_next_socket_id++);
 	if (socket != NULL) {
 		free(socket->backlog);
 		free(socket->buffer);
@@ -160,7 +160,7 @@ free_socket(socket_t* socket)
 	if (--socket->refcount > threshold)
 		return;
 	
-	console_log(3, "Disposing Socket %u no longer in use", socket->id);
+	console_log(3, "disposing socket #%u no longer in use", socket->id);
 	for (i = 0; i < socket->num_backlog; ++i)
 		dyad_end(socket->backlog[i]);
 	dyad_end(socket->stream);
@@ -208,9 +208,9 @@ accept_next_socket(socket_t* listener)
 	if (listener->num_backlog == 0)
 		return NULL;
 
-	console_log(2, "Spawning new Socket %u for connection on Socket %u",
+	console_log(2, "spawning new socket #%u for connection to socket #%u",
 		s_next_socket_id, listener->id);
-	console_log(2, "  Remote address: %s:%i",
+	console_log(2, "    remote address: %s:%d",
 		dyad_getAddress(listener->backlog[0]),
 		dyad_getPort(listener->backlog[0]));
 
@@ -241,12 +241,12 @@ pipe_socket(socket_t* socket, socket_t* destination)
 {
 	socket_t* old_target;
 	
-	console_log(2, "Piping Socket %u into destination Socket %u", socket->id, destination->id);
+	console_log(2, "piping socket #%u into destination socket #%u", socket->id, destination->id);
 	old_target = socket->pipe_target;
 	socket->pipe_target = ref_socket(destination);
 	free_socket(old_target);
 	if (socket->pipe_target != NULL && socket->pend_size > 0) {
-		console_log(4, "Piping %zu bytes into Socket %u", socket->pend_size, destination->id);
+		console_log(4, "piping %zd bytes into socket #%u", socket->pend_size, destination->id);
 		write_socket(destination, socket->buffer, socket->pend_size);
 		socket->pend_size = 0;
 	}
@@ -256,7 +256,7 @@ size_t
 read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 {
 	n_bytes = n_bytes <= socket->pend_size ? n_bytes : socket->pend_size;
-	console_log(4, "Reading %zu bytes from Socket %u", n_bytes, socket->id);
+	console_log(4, "reading %zd bytes from socket #%u", n_bytes, socket->id);
 	memcpy(buffer, socket->buffer, n_bytes);
 	memmove(socket->buffer, socket->buffer + n_bytes, socket->pend_size - n_bytes);
 	socket->pend_size -= n_bytes;
@@ -266,14 +266,14 @@ read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
 void
 shutdown_socket(socket_t* socket)
 {
-	console_log(2, "Shutting down Socket %u", socket->id);
+	console_log(2, "shutting down socket #%u", socket->id);
 	dyad_end(socket->stream);
 }
 
 void
 write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
 {
-	console_log(4, "Writing %zu bytes to Socket %u", n_bytes, socket->id);
+	console_log(4, "writing %zd bytes to socket #%u", n_bytes, socket->id);
 	dyad_write(socket->stream, data, (int)n_bytes);
 }
 
@@ -288,19 +288,19 @@ on_dyad_accept(dyad_Event* e)
 		// BSD-style socket with backlog: listener stays open, game must accept new sockets
 		new_backlog_len = socket->num_backlog + 1;
 		if (new_backlog_len <= socket->max_backlog) {
-			console_log(4, "Taking connection from %s:%i on Socket %u",
+			console_log(4, "taking connection from %s:%i on socket #%u",
 				dyad_getAddress(e->remote), dyad_getPort(e->remote), socket->id);
 			socket->backlog[socket->num_backlog++] = e->remote;
 		}
 		else {
-			console_log(4, "Backlog full on Socket %u, refusing %s:%i", socket->id,
+			console_log(4, "backlog full fpr socket #%u, refusing %s:%i", socket->id,
 				dyad_getAddress(e->remote), dyad_getPort(e->remote), socket->id);
 			dyad_close(e->remote);
 		}
 	}
 	else {
 		// no backlog: listener closes on first connection (legacy socket)
-		console_log(2, "Rebinding Socket %u to %s:%i", socket->id,
+		console_log(2, "rebinding socket #%u to %s:%i", socket->id,
 			dyad_getAddress(e->remote), dyad_getPort(e->remote));
 		dyad_removeAllListeners(socket->stream, DYAD_EVENT_ACCEPT);
 		dyad_close(socket->stream);
@@ -317,7 +317,7 @@ on_dyad_receive(dyad_Event* e)
 
 	if (socket->pipe_target != NULL) {
 		// if the socket is a pipe, pass the data through to the destination
-		console_log(4, "Piping %i bytes from Socket %u to Socket %u", e->size,
+		console_log(4, "piping %d bytes from socket #%u to socket #%u", e->size,
 			socket->id, socket->pipe_target->id);
 		write_socket(socket->pipe_target, e->data, e->size);
 	}

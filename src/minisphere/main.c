@@ -114,14 +114,14 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	// print out options
-	console_log(1, "Parsing command line");
-	console_log(1, "  Game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
-	console_log(1, "  Fullscreen: %s", s_is_fullscreen ? "ON" : "OFF");
-	console_log(1, "  Frameskip limit: %d frames", s_max_frameskip);
-	console_log(1, "  CPU throttle: %s", s_conserve_cpu ? "ON" : "OFF");
-	console_log(1, "  Console verbosity: V%d", verbosity);
+	console_log(1, "parsing command line");
+	console_log(1, "    game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
+	console_log(1, "    fullscreen: %s", s_is_fullscreen ? "on" : "off");
+	console_log(1, "    frameskip limit: %d frames", s_max_frameskip);
+	console_log(1, "    conserve CPU: %s", s_conserve_cpu ? "yes" : "no");
+	console_log(1, "    console verbosity: V%d", verbosity);
 #if defined(MINISPHERE_SPHERUN)
-	console_log(1, "  Debugger mode: %s", want_debug ? "Active" : "Passive");
+	console_log(1, "    debugger mode: %s", want_debug ? "Active" : "Passive");
 #endif
 	console_log(1, "");
 
@@ -129,7 +129,7 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 
 	// set up jump points for script bailout
-	console_log(1, "Setting up jump points for longjmp");
+	console_log(1, "setting up jump points for longjmp");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
@@ -143,13 +143,13 @@ main(int argc, char* argv[])
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
 		shutdown_engine();
-		console_log(1, "\nRestarting to launch new game");
-		console_log(1, "  Path: %s", path_cstr(g_game_path));
+		console_log(1, "\nrestarting to launch new game");
+		console_log(1, "    path: %s", path_cstr(g_game_path));
 		initialize_engine();
 	}
 
 	// locate the game manifest
-	console_log(1, "Looking for a game to launch");
+	console_log(1, "searching for a game to launch");
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
@@ -194,10 +194,10 @@ main(int argc, char* argv[])
 	// try to create a display. if we can't get a programmable pipeline, try again but
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
-	console_log(1, "Creating Allegro rendering context");
+	console_log(1, "creating Allegro rendering context");
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
-	console_log(1, "  Resolution: %dx%d @ %.1fx", g_res_x, g_res_y, (double)g_scale_x);
+	console_log(1, "    resolution: %dx%d @ %.1fx", g_res_x, g_res_y, (double)g_scale_x);
 #ifdef MINISPHERE_USE_SHADERS
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))
@@ -216,7 +216,7 @@ main(int argc, char* argv[])
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
-	console_log(1, "  Shaders: %s", have_shaders ? "Enabled" : "Unsupported");
+	console_log(1, "    shaders: %s", have_shaders ? "enabled" : "unsupported");
 	al_set_window_title(g_display, get_sgm_name(g_fs));
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 	if (!(icon = load_image("~sgm/icon.png")))
@@ -240,7 +240,7 @@ main(int argc, char* argv[])
 	initialize_shaders(have_shaders);
 
 	// attempt to locate and load system font
-	console_log(1, "Loading system font");
+	console_log(1, "loading system default font");
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
 		g_sys_font = load_font(syspath(filename));
@@ -257,10 +257,12 @@ main(int argc, char* argv[])
 		toggle_fullscreen();
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
 
+	console_log(0, "engine started!");
+
 	// display loading message, scripts may take a bit to compile
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		draw_status_message("waiting for debugger...");
+		draw_status_message("waiting for SSJ...");
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
@@ -269,8 +271,6 @@ main(int argc, char* argv[])
 #if defined(MINISPHERE_SPHERUN)
 	initialize_debugger(want_debug, false);
 #endif
-
-	console_log(0, ">>> Engine started!");
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -690,7 +690,7 @@ initialize_engine(void)
 
 	// initialize Allegro
 	al_version = al_get_allegro_version();
-	console_log(1, "Initializing Allegro (%d.%d.%d)",
+	console_log(1, "initializing Allegro (%d.%d.%d)",
 		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF);
 	al_set_org_name("Fat Cerberus");
 	al_set_app_name("minisphere");
@@ -701,12 +701,12 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
-	console_log(1, "Initializing Dyad");
+	console_log(1, "initializing Dyad (%s)", dyad_getVersion());
 	dyad_init();
 	dyad_setUpdateTimeout(0.0);
 
 	// load system configuraton
-	console_log(1, "Loading system configuration");
+	console_log(1, "loading system configuration");
 	g_sys_conf = open_kev_file(NULL, "~sys/system.ini");
 
 	// initialize engine components
@@ -719,10 +719,10 @@ initialize_engine(void)
 	initialize_map_engine();
 
 	// initialize JavaScript
-	console_log(1, "Initializing JavaScript");
+	console_log(1, "initializing JavaScript");
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
-	console_log(1, "  Duktape %s", DUK_GIT_DESCRIBE);
+	console_log(1, "    Duktape %s", DUK_GIT_DESCRIBE);
 	initialize_scripts();
 
 	// register the Sphere API
@@ -749,10 +749,10 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	shutdown_input();
 
-	console_log(1, "Shutting down Duktape");
+	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);
 
-	console_log(1, "Shutting down Dyad");
+	console_log(1, "shutting down Dyad");
 	dyad_shutdown();
 
 	shutdown_spritesets();
@@ -760,7 +760,7 @@ shutdown_engine(void)
 	shutdown_galileo();
 	shutdown_async();
 
-	console_log(1, "Shutting down Allegro");
+	console_log(1, "shutting down Allegro");
 	if (g_display != NULL)
 		al_destroy_display(g_display);
 	g_display = NULL;
@@ -948,7 +948,6 @@ print_banner(bool want_copyright, bool want_deps)
 {
 	lstring_t* al_version;
 	uint32_t   al_version_id;
-	lstring_t* duk_version;
 	
 	printf("%s JS Game Engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
@@ -959,12 +958,10 @@ print_banner(bool want_copyright, bool want_deps)
 		al_version_id = al_get_allegro_version();
 		al_version = lstr_newf("%d.%d.%d", al_version_id >> 24,
 			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF);
-		duk_version = lstr_newf("%d.%d.%d", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 		printf("\n");
-		printf("    Allegro: v%-10s libmng: v%s\n", lstr_cstr(al_version), mng_version_text());
-		printf("    Duktape: v%-10s   zlib: v%s\n", lstr_cstr(duk_version), zlibVersion());
-		printf("     Dyad.c: v%-10s\n", dyad_getVersion());
-		lstr_free(duk_version);
+		printf("    Allegro: v%-7s   libmng: v%s\n", lstr_cstr(al_version), mng_version_text());
+		printf("     Dyad.c: v%-7s     zlib: v%s\n", dyad_getVersion(), zlibVersion());
+		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
 	}
 }
 
