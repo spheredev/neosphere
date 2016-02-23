@@ -42,9 +42,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Components]
 Name: "engine"; Description: "{#AppName} {#AppVersion} [Required]"; Types: full compact custom; Flags: fixed
 Name: "spherun"; Description: "{#AppName} Console {#AppVersion} (spherun)"; Types: full; Flags: checkablealone
-Name: "spherun/plugin"; Description: "minisphere GDK plugin for Sphere Studio"; Types: full
-Name: "spherun/cell"; Description: "cell - Sphere packaging compiler"; Types: full
-Name: "spherun/ssj"; Description: "ssj - minisphere CLI debugger"; Types: full
+Name: "spherun/plugin"; Description: "minisphere GDK for Sphere Studio"; Types: full
+Name: "spherun/cell"; Description: "Cell: Sphere Packaging Compiler"; Types: full
+Name: "spherun/ssj"; Description: "SSJ: minisphere Console Debugger"; Types: full
 
 [Tasks]
 Name: "assoc"; Description: "Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
