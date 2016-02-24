@@ -74,7 +74,7 @@ evaluate_script(const char* filename)
 	size_t         size;
 	
 	path = make_sfs_path(filename, NULL);
-	source_name = get_source_pathname(path_cstr(path));
+	source_name = get_source_name(path_cstr(path));
 	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
 		goto on_error;
 	source_text = lstr_from_buf(slurp, size);

@@ -6,6 +6,7 @@
 struct source
 {
 	char*      name;
+	char*      compiled_name;
 	lstring_t* text;
 };
 
@@ -135,14 +136,18 @@ is_debugger_attached(void)
 }
 
 const char*
-get_source_pathname(const char* pathname)
+get_compiled_name(const char* source_name)
 {
-	// note: pathname must be canonicalized using make_sfs_path() otherwise
-	//       the source map lookup will fail.
+	// perform a reverse lookup on the source map to find the compiled name
+	// of an asset based on its name in the source tree.  this is needed to
+	// support SSJ source code download, since SSJ only knows the source names.
 
 	static char retval[SPHERE_PATH_MAX];
 
-	strcpy(retval, pathname);
+	const char* this_source;
+
+	strncpy(retval, source_name, SPHERE_PATH_MAX - 1);
+	retval[SPHERE_PATH_MAX] = '\0';
 	if (!s_have_source_map)
 		return retval;
 	duk_push_global_stash(g_duk);
@@ -150,9 +155,38 @@ get_source_pathname(const char* pathname)
 	if (!duk_get_prop_string(g_duk, -1, "fileMap"))
 		duk_pop_3(g_duk);
 	else {
-		duk_get_prop_string(g_duk, -1, pathname);
+		duk_enum(g_duk, -1, DUK_ENUM_OWN_PROPERTIES_ONLY);
+		while (duk_next(g_duk, -1, true)) {
+			this_source = duk_get_string(g_duk, -1);
+			if (strcmp(this_source, source_name) == 0)
+				strncpy(retval, duk_get_string(g_duk, -2), SPHERE_PATH_MAX - 1);
+			duk_pop_2(g_duk);
+		}
+		duk_pop_n(g_duk, 4);
+	}
+	return retval;
+}
+
+const char*
+get_source_name(const char* compiled_name)
+{
+	// note: pathname must be canonicalized using make_sfs_path() otherwise
+	//       the source map lookup will fail.
+
+	static char retval[SPHERE_PATH_MAX];
+
+	strncpy(retval, compiled_name, SPHERE_PATH_MAX - 1);
+	retval[SPHERE_PATH_MAX] = '\0';
+	if (!s_have_source_map)
+		return retval;
+	duk_push_global_stash(g_duk);
+	duk_get_prop_string(g_duk, -1, "debugMap");
+	if (!duk_get_prop_string(g_duk, -1, "fileMap"))
+		duk_pop_3(g_duk);
+	else {
+		duk_get_prop_string(g_duk, -1, compiled_name);
 		if (duk_is_string(g_duk, -1))
-			strcpy(retval, duk_get_string(g_duk, -1));
+			strncpy(retval, duk_get_string(g_duk, -1), SPHERE_PATH_MAX - 1);
 		duk_pop_n(g_duk, 4);
 	}
 	return retval;
@@ -261,7 +295,8 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		return 5;
 	case APPREQ_SOURCE:
 		name = duk_get_string(ctx, -nvalues + 1);
-		
+		name = get_compiled_name(name);
+
 		// check if the data is in the source cache
 		iter = vector_enum(s_sources);
 		while (p_source = vector_next(&iter)) {
