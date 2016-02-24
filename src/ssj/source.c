@@ -64,7 +64,12 @@ read_line(const char** p_string)
 
 hit_eof:
 	buffer[length] = '\0';
-	return *(*p_string) != '\0' ? buffer : NULL;
+	if (*(*p_string) == '\0') {
+		free(buffer);
+		return NULL;
+	}
+	else
+		return buffer;
 }
 
 source_t*

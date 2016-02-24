@@ -23,8 +23,6 @@ struct session
 	struct frame* backtrace;
 	char*         game_title;
 	char*         game_author;
-	int           game_width;
-	int           game_height;
 	int           num_frames;
 	socket_t*     socket;
 	int           frame_index;
@@ -98,6 +96,7 @@ do_request(session_t* sess, message_t* msg)
 		if (msg_type(reply) == MSG_TYPE_NFY)
 			process_message(sess, reply);
 	} while (msg_type(reply) == MSG_TYPE_NFY);
+	msg_free(msg);
 	return reply;
 }
 
@@ -137,14 +136,11 @@ new_session(const char* hostname, int port)
 	rep = do_request(session, req);
 	session->game_title = strdup(msg_get_string(rep, 0));
 	session->game_author = strdup(msg_get_string(rep, 1));
-	session->game_width = msg_get_int(rep, 3);
-	session->game_height = msg_get_int(rep, 4);
 	msg_free(rep);
 	printf("OK.\n");
 
 	printf("    game title: %s\n", session->game_title);
 	printf("    author: %s\n", session->game_author);
-	printf("    resolution: %dx%d\n", session->game_width, session->game_height);
 
 	return session;
 
@@ -158,6 +154,8 @@ end_session(session_t* sess)
 {
 	clear_cli_cache(sess);
 	socket_close(sess->socket);
+	free(sess->game_title);
+	free(sess->game_author);
 
 	free(sess);
 }
@@ -671,4 +669,5 @@ refresh_backtrace(session_t* sess)
 			: strdup("[anon]");
 		frame->line_no = msg_get_int(msg, i * 4 + 2);
 	}
+	msg_free(msg);
 }

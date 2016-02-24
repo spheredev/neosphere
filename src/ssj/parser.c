@@ -42,6 +42,7 @@ command_parse(const char* string)
 			array_len *= 2;
 			tokens = realloc(tokens, array_len * sizeof(struct token));
 		}
+		memset(&tokens[index], 0, sizeof(struct token));
 		if (*p_ch >= '0' && *p_ch <= '9') {
 			length = strspn(p_ch, "0123456789.");
 			number_value = strtod(p_ch, &p_tail);
@@ -104,6 +105,10 @@ syntax_error:
 void
 command_free(command_t* this)
 {
+	int i;
+
+	for (i = 0; i < this->num_tokens; ++i)
+		free(this->tokens[i].string);
 	free(this->tokens);
 	free(this);
 }
