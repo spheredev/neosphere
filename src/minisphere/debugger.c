@@ -3,6 +3,12 @@
 
 #include "debugger.h"
 
+struct source
+{
+	char*      name;
+	lstring_t* text;
+};
+
 enum appnotify
 {
 	APPNFY_NOP,
@@ -31,6 +37,7 @@ static bool      s_is_attached = false;
 static socket_t* s_client;
 static bool      s_have_source_map;
 static socket_t* s_server;
+static vector_t* s_sources;
 static bool      s_want_attach;
 
 void
@@ -41,6 +48,8 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	const path_t* game_path;
 	const char*   hostname;
 
+	s_sources = vector_new(sizeof(struct source));
+	
 	// load the source map, if one is available
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
@@ -61,15 +70,14 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	}
 	duk_pop(g_duk);
 	
-	// listen for debugger connections on TCP port 1208.
-	// the listening socket will remain active for the duration of
-	// the session, allowing a debugger to be attached at any time.
+	// listen for SSJ connection on TCP port 1208. the listening socket will remain active
+	// for the duration of the session, allowing a debugger to be attached at any time.
 	console_log(1, "listening for SSJ on TCP %i", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
 	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
 
-	// if the engine was started in debug mode, wait for a debugger
-	// to connect before beginning execution.
+	// if the engine was started in debug mode, wait for a debugger to connect before
+	// beginning execution.
 	s_want_attach = want_attach;
 	if (s_want_attach && !attach_debugger())
 		exit_game(true);
@@ -78,8 +86,17 @@ initialize_debugger(bool want_attach, bool allow_remote)
 void
 shutdown_debugger()
 {
+	iter_t iter;
+	struct source* p_source;
+	
 	detach_debugger(true);
 	free_socket(s_server);
+	
+	iter = vector_enum(s_sources);
+	while (p_source = vector_next(&iter)) {
+		lstr_free(p_source->text);
+		free(p_source->name);
+	}
 }
 
 void
@@ -142,6 +159,28 @@ get_source_pathname(const char* pathname)
 }
 
 void
+cache_source(const char* name, const lstring_t* text)
+{
+	struct source cache_entry;
+	
+	iter_t iter;
+	struct source* p_source;
+	
+	iter = vector_enum(s_sources);
+	while (p_source = vector_next(&iter)) {
+		if (strcmp(name, p_source->name) == 0) {
+			lstr_free(p_source->text);
+			p_source->text = lstr_dup(text);
+			return;
+		}
+	}
+	
+	cache_entry.name = strdup(name);
+	cache_entry.text = lstr_dup(text);
+	vector_push(s_sources, &cache_entry);
+}
+
+void
 debug_print(const char* text)
 {
 	duk_push_int(g_duk, APPNFY_DEBUGPRINT);
@@ -200,28 +239,47 @@ duk_cb_debug_detach(void* udata)
 static duk_idx_t
 duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 {
-	const char*      pathname = NULL;
-	int              request_id;
-	const lstring_t* source_text;
+	void*       file_data;
+	const char* name;
+	int         request_id;
+	size_t      size;
+	int         x_size;
+	int         y_size;
+
+	iter_t iter;
+	struct source* p_source;
 	
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
+		get_sgm_resolution(g_fs, &x_size, &y_size);
 		duk_push_string(ctx, get_sgm_name(g_fs));
 		duk_push_string(ctx, get_sgm_author(g_fs));
 		duk_push_string(ctx, get_sgm_summary(g_fs));
-		return 3;
+		duk_push_int(ctx, x_size);
+		duk_push_int(ctx, y_size);
+		return 5;
 	case APPREQ_SOURCE:
-		pathname = duk_get_string(ctx, -nvalues + 1);
-		if (source_text = get_source_text(pathname)) {
-			duk_push_lstring_t(ctx, source_text);
+		name = duk_get_string(ctx, -nvalues + 1);
+		
+		// check if the data is in the source cache
+		iter = vector_enum(s_sources);
+		while (p_source = vector_next(&iter)) {
+			if (strcmp(name, p_source->name) == 0) {
+				duk_push_lstring_t(ctx, p_source->text);
+				return 1;
+			}
+		}
+		
+		// no cache entry, try loading the file via SphereFS
+		if ((file_data = sfs_fslurp(g_fs, name, NULL, &size))) {
+			duk_push_lstring(ctx, file_data, size);
+			free(file_data);
 			return 1;
 		}
-		else {
-			duk_push_sprintf(ctx, "no source for %s", pathname);
-			return -1;
-		}
-		break;
+		
+		duk_push_sprintf(ctx, "no source available for '%s'", name);
+		return -1;
 	case APPREQ_SRC_PATH:
 		duk_push_global_stash(ctx);
 		if (!duk_get_prop_string(ctx, -1, "debugMap") || !duk_get_prop_string(ctx, -1, "origin"))

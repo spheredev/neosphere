@@ -12,31 +12,9 @@ struct script
 	duk_uarridx_t id;
 };
 
-struct source
-{
-	char*      filename;
-	char*      orig_name;
-	lstring_t* text;
-};
-
 static script_t* script_from_js_function (void* heapptr);
 
-static vector_t* s_sources = NULL;
 static int       s_next_script_id = 0;
-
-static lstring_t*
-check_source_cache(const char* filename)
-{
-	iter_t iter;
-	struct source* p_source;
-	
-	iter = vector_enum(s_sources);
-	while (p_source = vector_next(&iter)) {
-		if (strcmp(filename, p_source->filename) == 0)
-			return p_source->text;
-	}
-	return NULL;
-}
 
 void
 initialize_scripts(void)
@@ -48,9 +26,6 @@ initialize_scripts(void)
 	duk_put_prop_string(g_duk, -2, "scripts");
 	duk_pop(g_duk);
 
-	// initialize the source cache
-	s_sources = vector_new(sizeof(struct source));
-	
 	// load the CoffeeScript compiler into the JS context, if it exists
 	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
 		if (evaluate_script("~sys/coffee-script.js")) {
@@ -84,30 +59,7 @@ on_error:
 void
 shutdown_scripts(void)
 {
-	iter_t iter;
-	struct source* p_source;
-	
 	console_log(1, "shutting down JS manager");
-	iter = vector_enum(s_sources);
-	while (p_source = vector_next(&iter)) {
-		free(p_source->filename);
-		lstr_free(p_source->text);
-	}
-	vector_free(s_sources);
-}
-
-const lstring_t*
-get_source_text(const char* filename)
-{
-	iter_t iter;
-	struct source* p_source;
-
-	iter = vector_enum(s_sources);
-	while (p_source = vector_next(&iter)) {
-		if (strcmp(filename, p_source->filename) == 0)
-			return p_source->text;
-	}
-	return NULL;
 }
 
 bool
@@ -115,38 +67,19 @@ evaluate_script(const char* filename)
 {
 	const char*    extension;
 	sfs_file_t*    file = NULL;
-	bool           found_in_cache = false;
 	path_t*        path;
-	struct source  cache_entry;
 	const char*    source_name;
 	lstring_t*     source_text = NULL;
 	char*          slurp;
 	size_t         size;
 	
-	iter_t iter;
-	struct source* p_source;
-
-	// if the file has been loaded before, just return it from the cache.
-	// otherwise, load the source text and cache it.
 	path = make_sfs_path(filename, NULL);
 	source_name = get_source_pathname(path_cstr(path));
-	iter = vector_enum(s_sources);
-	while (p_source = vector_next(&iter)) {
-		if (strcmp(path_cstr(path), p_source->filename) == 0)
-			source_text = p_source->text;
-	}
-	found_in_cache = source_text != NULL;
-	if (!found_in_cache) {
-		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
-			goto on_error;
-		source_text = lstr_from_buf(slurp, size);
-		cache_entry.filename = strdup(filename);
-		cache_entry.orig_name = strdup(source_name);
-		cache_entry.text = source_text;
-		vector_push(s_sources, &cache_entry);
-		free(slurp);
-	}
-	
+	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
+		goto on_error;
+	source_text = lstr_from_buf(slurp, size);
+	free(slurp);
+
 	// is it a CoffeeScript file? you know, I don't even like coffee.
 	// now, Monster drinks on the other hand...
 	extension = strrchr(filename, '.');
@@ -175,13 +108,16 @@ evaluate_script(const char* filename)
 		goto on_error;
 	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 		goto on_error;
+	
+	lstr_free(source_text);
 	path_free(path);
 	return true;
 
 on_error:
 	lstr_free(source_text);
+	path_free(path);
 	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "Script '%s' not found\n", filename);
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script '%s' not found\n", filename);
 	return false;
 }
 
@@ -210,6 +146,7 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	duk_put_prop_index(g_duk, -2, s_next_script_id);
 	duk_pop_2(g_duk);
 
+	cache_source(lstr_cstr(name), source);
 	lstr_free(name);
 
 	script->id = s_next_script_id++;

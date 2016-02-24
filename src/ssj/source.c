@@ -1,6 +1,8 @@
 #include "ssj.h"
 #include "source.h"
 
+#include "session.h"
+
 #define CACHE_SIZE 10
 
 struct source
@@ -32,64 +34,49 @@ free_source(source_t* source)
 }
 
 static char*
-read_line(FILE* h_file)
+read_line(const char** p_string)
 {
 	char*  buffer;
 	size_t buf_size;
 	char   ch;
 	bool   have_line = false;
-	size_t index;
+	size_t length;
 
 	buffer = malloc(buf_size = 256);
-	index = 0;
+	length = 0;
 	while (!have_line) {
-		if (index + 1 >= buf_size)
+		if (length + 1 >= buf_size)
 			buffer = realloc(buffer, buf_size *= 2);
-		if (fread(&ch, 1, 1, h_file) != 1) {
-			if (feof(h_file))
-				goto hit_eof;
-			else
-				goto on_error;
-		}
+		if ((ch = *(*p_string)) == '\0')
+			goto hit_eof;
+		++(*p_string);
 		switch (ch) {
 		case '\n': have_line = true; break;
 		case '\r':
-			if (fread(&ch, 1, 1, h_file) != 1 && !feof(h_file))
-				goto on_error;
-			if (!feof(h_file) && ch != '\n')
-				ungetc(ch, h_file);
 			have_line = true;
+			if (*(*p_string) == '\n')  // CR LF?
+				++(*p_string);
 			break;
 		default:
-			buffer[index++] = ch;
+			buffer[length++] = ch;
 		}
 	}
-	buffer[index] = '\0';
-	return buffer;
 
 hit_eof:
-	buffer[index] = '\0';
-	if (buffer[0] != '\0')
-		return buffer;
-	else {
-		free(buffer);
-		return NULL;
-	}
-
-on_error:
-	free(buffer);
-	return NULL;
+	buffer[length] = '\0';
+	return *(*p_string) != '\0' ? buffer : NULL;
 }
 
 source_t*
-source_load(const char* filename, const path_t* source_path)
+source_load(session_t* session, const char* filename)
 {
-	int       cache_id;
-	path_t*   full_path;
-	FILE*     h_file = NULL;
-	vector_t* lines;
-	source_t* source = NULL;
-	char*     text;
+	int         cache_id;
+	char*       line_text;
+	vector_t*   lines;
+	message_t*  msg;
+	source_t*   source = NULL;
+	const char* text;
+	const char* p_source;
 
 	int i;
 
@@ -103,16 +90,18 @@ source_load(const char* filename, const path_t* source_path)
 	free(s_cache[cache_id].filename);
 	free_source(s_cache[cache_id].source);
 
-	if (source_path == NULL)
-		return NULL;
-	full_path = path_rebase(path_new(filename), source_path);
-	if (!(h_file = fopen(path_cstr(full_path), "rb")))
+	msg = msg_new(MSG_TYPE_REQ);
+	msg_add_int(msg, REQ_APP_REQUEST);
+	msg_add_int(msg, APPREQ_SOURCE);
+	msg_add_string(msg, filename);
+	msg = do_request(session, msg);
+	if (msg_type(msg) == MSG_TYPE_ERR)
 		goto on_error;
-	path_free(full_path);
+	p_source = text = msg_get_string(msg, 0);
 	lines = vector_new(sizeof(char*));
-	while (text = read_line(h_file))
-		vector_push(lines, &text);
-	fclose(h_file);
+	while (line_text = read_line(&p_source))
+		vector_push(lines, &line_text);
+	msg_free(msg);
 
 	source = calloc(1, sizeof(source_t));
 	source->lines = lines;
@@ -121,8 +110,6 @@ source_load(const char* filename, const path_t* source_path)
 	return source;
 
 on_error:
-	if (h_file != NULL)
-        fclose(h_file);
 	free(source);
 	return NULL;
 }

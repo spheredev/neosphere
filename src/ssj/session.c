@@ -23,7 +23,9 @@ struct session
 	struct frame* backtrace;
 	char*         game_title;
 	char*         game_author;
-	int           n_frames;
+	int           game_width;
+	int           game_height;
+	int           num_frames;
 	socket_t*     socket;
 	int           frame_index;
 	char*         function_name;
@@ -32,57 +34,7 @@ struct session
 	bool          have_debug_info;
 	int           line_no;
 	uint8_t       ptr_size;
-	path_t*       source_path;
 	bool          is_stopped;
-};
-
-enum req_command
-{
-	REQ_BASIC_INFO = 0x10,
-	REQ_SEND_STATUS = 0x11,
-	REQ_PAUSE = 0x12,
-	REQ_RESUME = 0x13,
-	REQ_STEP_INTO = 0x14,
-	REQ_STEP_OVER = 0x15,
-	REQ_STEP_OUT = 0x16,
-	REQ_LIST_BREAK = 0x17,
-	REQ_ADD_BREAK = 0x18,
-	REQ_DEL_BREAK = 0x19,
-	REQ_GET_VAR = 0x1A,
-	REQ_PUT_VAR = 0x1B,
-	REQ_GET_CALLSTACK = 0x1C,
-	REQ_GET_LOCALS = 0x1D,
-	REQ_EVAL = 0x1E,
-	REQ_DETACH = 0x1F,
-	REQ_DUMP_HEAP = 0x20,
-	REQ_GET_BYTECODE = 0x21,
-	REQ_APP_REQUEST = 0x22,
-	REQ_INSPECT_OBJ = 0x23,
-};
-
-enum nfy_command
-{
-	NFY_STATUS = 0x01,
-	NFY_PRINT = 0x02,
-	NFY_ALERT = 0x03,
-	NFY_LOG = 0x04,
-	NFY_THROW = 0x05,
-	NFY_DETACHING = 0x06,
-	NFY_APP_NOTIFY = 0x07,
-};
-
-enum appnotify
-{
-	APPNFY_NOP,
-	APPNFY_DEBUGPRINT,
-};
-
-enum apprequest
-{
-	APPREQ_NOP,
-	APPREQ_GAME_INFO,
-	APPREQ_SOURCE,
-	APPREQ_SRC_PATH,
 };
 
 enum err_command
@@ -134,7 +86,7 @@ on_error:
 	return false;
 }
 
-static message_t*
+message_t*
 do_request(session_t* sess, message_t* msg)
 {
 	message_t* reply = NULL;
@@ -164,7 +116,6 @@ sessions_deinit(void)
 session_t*
 new_session(const char* hostname, int port)
 {
-	path_t*     origin = NULL;
 	message_t*  req;
 	message_t*  rep;
 	session_t*  session;
@@ -186,16 +137,14 @@ new_session(const char* hostname, int port)
 	rep = do_request(session, req);
 	session->game_title = strdup(msg_get_string(rep, 0));
 	session->game_author = strdup(msg_get_string(rep, 1));
-	if (msg_get_string(rep, 2) != NULL)
-		origin = path_resolve(path_new(msg_get_string(rep, 2)), NULL);
+	session->game_width = msg_get_int(rep, 3);
+	session->game_height = msg_get_int(rep, 4);
 	msg_free(rep);
 	printf("OK.\n");
 
 	printf("    game title: %s\n", session->game_title);
 	printf("    author: %s\n", session->game_author);
-	if (origin != NULL)
-		printf("    source: %s\n", path_cstr(origin));
-	session->source_path = origin;
+	printf("    resolution: %dx%d\n", session->game_width, session->game_height);
 
 	return session;
 
@@ -208,7 +157,6 @@ void
 end_session(session_t* sess)
 {
 	clear_cli_cache(sess);
-	path_free(sess->source_path);
 	socket_close(sess->socket);
 
 	free(sess);
@@ -250,11 +198,11 @@ print_backtrace(session_t* sess, int frame_index, bool show_all)
 
 	refresh_backtrace(sess);
 	
-	if (frame_index < 0 || frame_index >= sess->n_frames)
+	if (frame_index < 0 || frame_index >= sess->num_frames)
 		printf("no active frame at index %d.\n", frame_index);
 	else {
 		sess->frame_index = frame_index;
-		for (i = 0; i < sess->n_frames; ++i) {
+		for (i = 0; i < sess->num_frames; ++i) {
 			filename = sess->backtrace[i].filename;
 			function_name = sess->backtrace[i].function_name;
 			line_no = sess->backtrace[i].line_no;
@@ -352,7 +300,7 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 
 	int i;
 
-	if (!(source = source_load(filename, sess->source_path)))
+	if (!(source = source_load(sess, filename)))
 		printf("'%s': source file could not be located.\n", filename);
 	else {
 		line_count = source_cloc(source);
@@ -439,7 +387,7 @@ clear_cli_cache(session_t* sess)
 	sess->function_name = NULL;
 	sess->filename = NULL;
 	if (sess->backtrace != NULL) {
-		for (i = 0; i < sess->n_frames; ++i) {
+		for (i = 0; i < sess->num_frames; ++i) {
 			free(sess->backtrace[i].filename);
 			free(sess->backtrace[i].function_name);
 		}
@@ -505,8 +453,8 @@ do_command_line(session_t* sess)
 			frame_index = sess->frame_index + command_get_int(command, 1);
 		else
 			frame_index = sess->frame_index + 1;
-		frame_index = (frame_index < sess->n_frames) ? frame_index
-			: sess->n_frames - 1;
+		frame_index = (frame_index < sess->num_frames) ? frame_index
+			: sess->num_frames - 1;
 		print_backtrace(sess, frame_index, false);
 	}
 	else if (strcmp(verb, "down") == 0) {
@@ -713,9 +661,9 @@ refresh_backtrace(session_t* sess)
 	msg = msg_new(MSG_TYPE_REQ);
 	msg_add_int(msg, REQ_GET_CALLSTACK);
 	msg = do_request(sess, msg);
-	sess->n_frames = (int)(msg_len(msg) / 4);
-	sess->backtrace = calloc(sess->n_frames, sizeof(struct frame));
-	for (i = 0; i < sess->n_frames; ++i) {
+	sess->num_frames = (int)(msg_len(msg) / 4);
+	sess->backtrace = calloc(sess->num_frames, sizeof(struct frame));
+	for (i = 0; i < sess->num_frames; ++i) {
 		frame = sess->backtrace + i;
 		function_name = msg_get_string(msg, i * 4 + 1);
 		frame->filename = strdup(msg_get_string(msg, i * 4));

@@ -5,7 +5,6 @@ typedef struct script script_t;
 
 extern void             initialize_scripts (void);
 extern void             shutdown_scripts   (void);
-extern const lstring_t* get_source_text    (const char* filename);
 extern bool             evaluate_script    (const char* filename);
 extern script_t*        compile_script     (const lstring_t* script, const char* fmt_name, ...);
 extern script_t*        ref_script         (script_t* script);
