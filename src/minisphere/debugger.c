@@ -6,7 +6,6 @@
 struct source
 {
 	char*      name;
-	char*      compiled_name;
 	lstring_t* text;
 };
 
@@ -98,6 +97,7 @@ shutdown_debugger()
 		lstr_free(p_source->text);
 		free(p_source->name);
 	}
+	vector_free(s_sources);
 }
 
 void
@@ -147,7 +147,7 @@ get_compiled_name(const char* source_name)
 	const char* this_source;
 
 	strncpy(retval, source_name, SPHERE_PATH_MAX - 1);
-	retval[SPHERE_PATH_MAX] = '\0';
+	retval[SPHERE_PATH_MAX - 1] = '\0';
 	if (!s_have_source_map)
 		return retval;
 	duk_push_global_stash(g_duk);
@@ -176,7 +176,7 @@ get_source_name(const char* compiled_name)
 	static char retval[SPHERE_PATH_MAX];
 
 	strncpy(retval, compiled_name, SPHERE_PATH_MAX - 1);
-	retval[SPHERE_PATH_MAX] = '\0';
+	retval[SPHERE_PATH_MAX - 1] = '\0';
 	if (!s_have_source_map)
 		return retval;
 	duk_push_global_stash(g_duk);
