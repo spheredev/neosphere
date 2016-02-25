@@ -64,7 +64,7 @@ read_line(const char** p_string)
 
 hit_eof:
 	buffer[length] = '\0';
-	if (*(*p_string) == '\0') {
+	if (*(*p_string) == '\0' && length == 0) {
 		free(buffer);
 		return NULL;
 	}

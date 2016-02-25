@@ -205,8 +205,10 @@ print_backtrace(session_t* sess, int frame_index, bool show_all)
 			function_name = sess->backtrace[i].function_name;
 			line_no = sess->backtrace[i].line_no;
 			if (i == frame_index || show_all) {
-				printf("%s #%2d: %s at %s:%d\n",
-					i == frame_index ? "=>" : "  ", i, function_name, filename, line_no);
+				if (line_no > 0)
+					printf("%s #%2d: %s at %s:%d\n", i == frame_index ? "=>" : "  ", i, function_name, filename, line_no);
+				else
+					printf("%s #%2d: %s <system call>\n", i == frame_index ? "=>" : "  ", i, function_name);
 				if (!show_all)
 					print_source(sess, filename, line_no, 1);
 			}
