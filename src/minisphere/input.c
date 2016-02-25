@@ -1,5 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
+#include "debugger.h"
 #include "file.h"
 #include "input.h"
 #include "vector.h"
@@ -491,7 +492,10 @@ update_input(void)
 				toggle_fps_display();
 				break;
 			case ALLEGRO_KEY_F12:
-				take_screenshot();
+				if (is_debugger_attached())
+					duk_debugger_pause(g_duk);
+				else
+					take_screenshot();
 				break;
 			default:
 				queue_key(event.keyboard.keycode);

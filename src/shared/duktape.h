@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 6c6cb26949a414e3e9dc21018b587c19551eaa45 (v1.4.0-198-g6c6cb26).
+ *  Git commit 1110eaea5bcb20a5f4583d9e8d841d777a0c1484 (v1.4.0-200-g1110eae).
  *  Git branch debugger-heap-walking-support.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -223,8 +223,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "6c6cb26949a414e3e9dc21018b587c19551eaa45"
-#define DUK_GIT_DESCRIBE                  "v1.4.0-198-g6c6cb26"
+#define DUK_GIT_COMMIT                    "1110eaea5bcb20a5f4583d9e8d841d777a0c1484"
+#define DUK_GIT_DESCRIBE                  "v1.4.0-200-g1110eae"
 #define DUK_GIT_BRANCH                    "debugger-heap-walking-support"
 
 /* Duktape debug protocol version used by this build. */
@@ -1088,6 +1088,7 @@ DUK_EXTERNAL_DECL void duk_debugger_attach_custom(duk_context *ctx,
 DUK_EXTERNAL_DECL void duk_debugger_detach(duk_context *ctx);
 DUK_EXTERNAL_DECL void duk_debugger_cooperate(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_bool_t duk_debugger_notify(duk_context *ctx, duk_idx_t nvalues);
+DUK_EXTERNAL_DECL void duk_debugger_pause(duk_context *ctx);
 
 /*
  *  Date provider related constants

@@ -301,9 +301,9 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 	int i;
 
 	if (line_no <= 0)
-		printf("no source provided for system call.\n");
+		printf("no source code for system call.\n");
 	else if (!(source = source_load(sess, filename)))
-		printf("source unavailable for %s.\n", filename);
+		printf("source code unavailable for %s.\n", filename);
 	else {
 		line_count = source_cloc(source);
 		median = window / 2;
@@ -425,8 +425,10 @@ do_command_line(session_t* sess)
 
 	// get a command from the user
 	while (verb == NULL) {
-		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no,
-			sess->function_name);
+		if (sess->line_no != 0)
+			printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", sess->filename, sess->line_no, sess->function_name);
+		else
+			printf("\n\33[36;1msyscall %s\33[m\n\33[33;1m(ssj)\33[m ", sess->function_name);
 		ch_idx = 0;
 		ch = getchar();
 		while (ch != '\n') {
@@ -455,21 +457,29 @@ do_command_line(session_t* sess)
 	else if (strcmp(verb, "backtrace") == 0)
 		print_backtrace(sess, sess->frame_index, true);
 	else if (strcmp(verb, "up") == 0) {
-		if (num_args >= 1)
-			frame_index = sess->frame_index + command_get_int(command, 1);
-		else
-			frame_index = sess->frame_index + 1;
-		frame_index = (frame_index < sess->num_frames) ? frame_index
-			: sess->num_frames - 1;
-		print_backtrace(sess, frame_index, false);
+		if (sess->frame_index >= sess->num_frames - 1)
+			printf("can't go up any further.\n");
+		else {
+			if (num_args >= 1)
+				frame_index = sess->frame_index + command_get_int(command, 1);
+			else
+				frame_index = sess->frame_index + 1;
+			frame_index = (frame_index < sess->num_frames) ? frame_index
+				: sess->num_frames - 1;
+			print_backtrace(sess, frame_index, false);
+		}
 	}
 	else if (strcmp(verb, "down") == 0) {
-		if (num_args >= 1)
-			frame_index = sess->frame_index - command_get_int(command, 1);
-		else
-			frame_index = sess->frame_index - 1;
-		frame_index = (frame_index >= 0) ? frame_index : 0;
-		print_backtrace(sess, frame_index, false);
+		if (sess->frame_index <= 0)
+			printf("can't go down any further.\n");
+		else {
+			if (num_args >= 1)
+				frame_index = sess->frame_index - command_get_int(command, 1);
+			else
+				frame_index = sess->frame_index - 1;
+			frame_index = (frame_index >= 0) ? frame_index : 0;
+			print_backtrace(sess, frame_index, false);
+		}
 	}
 	else if (strcmp(verb, "breakpoint") == 0 || strcmp(verb, "bp") == 0) {
 		if (num_args == 0)
