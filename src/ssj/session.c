@@ -299,7 +299,7 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 	int i;
 
 	if (!(source = source_load(sess, filename)))
-		printf("'%s': source file could not be located.\n", filename);
+		printf("no source code available for '%s'\n", filename);
 	else {
 		line_count = source_cloc(source);
 		median = window / 2;
@@ -412,7 +412,11 @@ do_command_line(session_t* sess)
 
 	if (sess->has_pc_changed) {
 		sess->has_pc_changed = false;
-		print_backtrace(sess, 0, false);
+		refresh_backtrace(sess);
+		frame_index = 0;
+		while (sess->backtrace[frame_index].line_no == 0)
+			++frame_index;
+		print_backtrace(sess, frame_index, false);
 	}
 
 	// get a command from the user
@@ -542,7 +546,7 @@ print_msg_atom(session_t* sess, const message_t* message, size_t index, int obj_
 		req = msg_new(MSG_TYPE_REQ);
 		msg_add_int(req, REQ_INSPECT_OBJ);
 		msg_add_heapptr(req, heapptr);
-		msg_add_int(req, 0x0);
+		msg_add_int(req, 0x03);
 		req = do_request(sess, req);
 		idx = 0;
 		printf("{\n");

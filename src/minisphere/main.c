@@ -311,9 +311,9 @@ on_js_error:
 	if (filename != NULL) {
 		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%d] %s\n", filename, line_num, err_msg);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n ", filename, line_num, err_msg);
 		else
-			duk_push_sprintf(g_duk, "%s\n", err_msg);
+			duk_push_sprintf(g_duk, "%s\n ", err_msg);
 	}
 	else {
 		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);
