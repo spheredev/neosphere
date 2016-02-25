@@ -185,7 +185,7 @@ clear_breakpoint(session_t* sess, int index)
 }
 
 void
-print_backtrace(session_t* sess, int frame_index, bool show_all)
+print_backtrace(session_t* sess, int frame_index, bool select_frame, bool show_all)
 {
 	const char*   filename;
 	struct frame* framedata;
@@ -199,26 +199,28 @@ print_backtrace(session_t* sess, int frame_index, bool show_all)
 	if (frame_index < 0 || frame_index >= sess->num_frames)
 		printf("no active frame at index %d.\n", frame_index);
 	else {
-		sess->frame_index = frame_index;
 		for (i = 0; i < sess->num_frames; ++i) {
 			filename = sess->backtrace[i].filename;
 			function_name = sess->backtrace[i].function_name;
 			line_no = sess->backtrace[i].line_no;
 			if (i == frame_index || show_all) {
 				if (line_no > 0)
-					printf("%s #%2d: %s at %s:%d\n", i == frame_index ? "=>" : "  ", i, function_name, filename, line_no);
+					printf("%s #%2d: %s at %s:%d\n", i == sess->frame_index ? "=>" : "  ", i, function_name, filename, line_no);
 				else
-					printf("%s #%2d: %s <system call>\n", i == frame_index ? "=>" : "  ", i, function_name);
+					printf("%s #%2d: %s <system call>\n", i == sess->frame_index ? "=>" : "  ", i, function_name);
 				if (!show_all)
 					print_source(sess, filename, line_no, 1);
 			}
 		}
-		framedata = &sess->backtrace[frame_index];
-		free(sess->function_name);
-		free(sess->filename);
-		sess->function_name = strdup(framedata->function_name);
-		sess->filename = strdup(framedata->filename);
-		sess->line_no = framedata->line_no;
+		if (select_frame) {
+			framedata = &sess->backtrace[frame_index];
+			free(sess->function_name);
+			free(sess->filename);
+			sess->frame_index = frame_index;
+			sess->function_name = strdup(framedata->function_name);
+			sess->filename = strdup(framedata->filename);
+			sess->line_no = framedata->line_no;
+		}
 	}
 }
 
@@ -420,7 +422,7 @@ do_command_line(session_t* sess)
 		frame_index = 0;
 		while (sess->backtrace[frame_index].line_no == 0)
 			++frame_index;
-		print_backtrace(sess, frame_index, false);
+		print_backtrace(sess, frame_index, true, false);
 	}
 
 	// get a command from the user
@@ -455,7 +457,7 @@ do_command_line(session_t* sess)
 	else if (strcmp(verb, "help") == 0)
 		print_help(num_args > 0 ? command_get_string(command, 1) : NULL);
 	else if (strcmp(verb, "backtrace") == 0)
-		print_backtrace(sess, sess->frame_index, true);
+		print_backtrace(sess, sess->frame_index, false, true);
 	else if (strcmp(verb, "up") == 0) {
 		if (sess->frame_index >= sess->num_frames - 1)
 			printf("can't go up any further.\n");
@@ -466,7 +468,7 @@ do_command_line(session_t* sess)
 				frame_index = sess->frame_index + 1;
 			frame_index = (frame_index < sess->num_frames) ? frame_index
 				: sess->num_frames - 1;
-			print_backtrace(sess, frame_index, false);
+			print_backtrace(sess, frame_index, true, false);
 		}
 	}
 	else if (strcmp(verb, "down") == 0) {
@@ -478,7 +480,7 @@ do_command_line(session_t* sess)
 			else
 				frame_index = sess->frame_index - 1;
 			frame_index = (frame_index >= 0) ? frame_index : 0;
-			print_backtrace(sess, frame_index, false);
+			print_backtrace(sess, frame_index, true, false);
 		}
 	}
 	else if (strcmp(verb, "breakpoint") == 0 || strcmp(verb, "bp") == 0) {
@@ -505,9 +507,9 @@ do_command_line(session_t* sess)
 			sess->frame_index, true);
 	else if (strcmp(verb, "frame") == 0) {
 		if (num_args >= 1)
-			print_backtrace(sess, command_get_int(command, 1), false);
+			print_backtrace(sess, command_get_int(command, 1), true, false);
 		else
-			print_backtrace(sess, sess->frame_index, false);
+			print_backtrace(sess, sess->frame_index, false, false);
 	}
 	else if (strcmp(verb, "list") == 0) {
 		num_lines = 10;
@@ -530,9 +532,10 @@ do_command_line(session_t* sess)
 	else if (strcmp(verb, "vars") == 0)
 		print_locals(sess, sess->frame_index);
 	else if (strcmp(verb, "where") == 0 || strcmp(verb, "w") == 0) {
-		frame_index = sess->frame_index;
-		print_backtrace(sess, 0, false);
-		sess->frame_index = frame_index;
+		frame_index = 0;
+		while (sess->backtrace[frame_index].line_no == 0)
+			++frame_index;
+		print_backtrace(sess, frame_index, false, false);
 	}
 	else
 		printf("'%s': internal error.\n", verb);
