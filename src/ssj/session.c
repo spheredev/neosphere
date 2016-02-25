@@ -300,8 +300,10 @@ print_source(session_t* sess, const char* filename, int line_no, int window)
 
 	int i;
 
-	if (!(source = source_load(sess, filename)))
-		printf("no source code available for '%s'\n", filename);
+	if (line_no <= 0)
+		printf("no source provided for system call.\n");
+	else if (!(source = source_load(sess, filename)))
+		printf("source unavailable for %s.\n", filename);
 	else {
 		line_count = source_cloc(source);
 		median = window / 2;
