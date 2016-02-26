@@ -2,7 +2,7 @@
 #include "help.h"
 
 void
-print_help(const char* command_name)
+help_print(const char* command_name)
 {
 	if (command_name == NULL || strcmp(command_name, "") == 0) {
 		printf(

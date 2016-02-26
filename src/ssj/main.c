@@ -2,6 +2,7 @@
 
 #include <dyad.h>
 #include "inferior.h"
+#include "session.h"
 
 struct cmdline
 {
@@ -19,8 +20,9 @@ int
 main(int argc, char* argv[])
 {
 	struct cmdline* cmdline;
-	inferior_t*     inf;
+	inferior_t*     inferior;
 	int             retval;
+	session_t*      session;
 
 	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
 		return retval;
@@ -33,12 +35,14 @@ main(int argc, char* argv[])
 
 	inferiors_init();
 
-	if (!(inf = inferior_new("127.0.0.1", 1208)))
+	if (!(inferior = inferior_new("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
 	if (cmdline->want_run)
-		inferior_resume(inf, OP_RESUME);
-	inferior_run(inf);
-	inferior_free(inf);
+		inferior_resume(inferior, OP_RESUME);
+	session = session_new(inferior);
+	session_run(session);
+	session_free(session);
+	inferior_free(inferior);
 
 	inferiors_deinit();
 
@@ -112,7 +116,7 @@ launch_minisphere(path_t* game_path)
 #endif
 
 on_error:
-	printf("Error!\n");
+	printf("error!\n");
 	return false;
 }
 

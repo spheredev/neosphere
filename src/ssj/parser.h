@@ -12,7 +12,7 @@ enum token_tag
 
 command_t*  command_parse      (const char* string);
 void        command_free       (command_t* this);
-int         command_size       (const command_t* this);
+int         command_len        (const command_t* this);
 token_tag_t command_get_tag    (const command_t* this, int index);
 int         command_get_int    (const command_t* this, int index);
 double      command_get_float  (const command_t* this, int index);

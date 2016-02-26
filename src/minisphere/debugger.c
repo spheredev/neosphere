@@ -12,7 +12,7 @@ struct source
 enum appnotify
 {
 	APPNFY_NOP,
-	APPNFY_DEBUGPRINT,
+	APPNFY_DEBUG_PRINT,
 };
 
 enum apprequest
@@ -219,7 +219,7 @@ cache_source(const char* name, const lstring_t* text)
 void
 debug_print(const char* text)
 {
-	duk_push_int(g_duk, APPNFY_DEBUGPRINT);
+	duk_push_int(g_duk, APPNFY_DEBUG_PRINT);
 	duk_push_string(g_duk, text);
 	duk_debugger_notify(g_duk, 2);
 }

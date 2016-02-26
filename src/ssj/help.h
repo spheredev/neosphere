@@ -1,6 +1,6 @@
 #ifndef SSJ__HELP_H__INCLUDED
 #define SSJ__HELP_H__INCLUDED
 
-void print_help (const char* command_name);
+void help_print (const char* command_name);
 
 #endif // SSJ__HELP_H__INCLUDED

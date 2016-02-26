@@ -12,128 +12,128 @@ struct message
 message_t*
 message_new(message_tag_t tag)
 {
-	message_t* this;
+	message_t* o;
 
-	this = calloc(1, sizeof(message_t));
-	this->dvalues = vector_new(sizeof(dvalue_t*));
-	this->tag = tag;
-	return this;
+	o = calloc(1, sizeof(message_t));
+	o->dvalues = vector_new(sizeof(dvalue_t*));
+	o->tag = tag;
+	return o;
 }
 
 void
-message_free(message_t* this)
+message_free(message_t* o)
 {
 	iter_t iter;
 
-	if (this== NULL)
+	if (o== NULL)
 		return;
 
-	iter = vector_enum(this->dvalues);
+	iter = vector_enum(o->dvalues);
 	while (vector_next(&iter)) {
 		dvalue_t* dvalue = *(dvalue_t**)iter.ptr;
 		dvalue_free(dvalue);
 	}
-	vector_free(this->dvalues);
-	free(this);
+	vector_free(o->dvalues);
+	free(o);
 }
 
-size_t
-message_len(const message_t* this)
+int
+message_len(const message_t* o)
 {
-	return vector_len(this->dvalues);
+	return (int)vector_len(o->dvalues);
 }
 
 message_tag_t
-message_tag(const message_t* this)
+message_tag(const message_t* o)
 {
-	return this->tag;
+	return o->tag;
 }
 
 dvalue_tag_t
-message_get_atom_tag(const message_t* this, size_t index)
+message_get_atom_tag(const message_t* o, int index)
 {
 	dvalue_t* dvalue;
 
-	dvalue = *(dvalue_t**)vector_get(this->dvalues, index);
+	dvalue = *(dvalue_t**)vector_get(o->dvalues, index);
 	return dvalue_tag(dvalue);
 }
 
 const dvalue_t*
-message_get_dvalue(const message_t* this, size_t index)
+message_get_dvalue(const message_t* o, int index)
 {
-	return *(dvalue_t**)vector_get(this->dvalues, index);
+	return *(dvalue_t**)vector_get(o->dvalues, index);
 }
 
 double
-message_get_float(const message_t* this, size_t index)
+message_get_float(const message_t* o, int index)
 {
 	dvalue_t* dvalue;
 
-	dvalue = *(dvalue_t**)vector_get(this->dvalues, index);
+	dvalue = *(dvalue_t**)vector_get(o->dvalues, index);
 	return dvalue_as_float(dvalue);
 }
 
 int
-message_get_int(const message_t* this, size_t index)
+message_get_int(const message_t* o, int index)
 {
 	dvalue_t* dvalue;
 
-	dvalue = *(dvalue_t**)vector_get(this->dvalues, index);
+	dvalue = *(dvalue_t**)vector_get(o->dvalues, index);
 	return dvalue_as_int(dvalue);
 }
 
 const char*
-message_get_string(const message_t* this, size_t index)
+message_get_string(const message_t* o, int index)
 {
 	dvalue_t* dvalue;
 
-	dvalue = *(dvalue_t**)vector_get(this->dvalues, index);
+	dvalue = *(dvalue_t**)vector_get(o->dvalues, index);
 	return dvalue_as_cstr(dvalue);
 }
 
 void
-message_add_dvalue(message_t* this, const dvalue_t* dvalue)
+message_add_dvalue(message_t* o, const dvalue_t* dvalue)
 {
 	dvalue_t* dup;
 
 	dup = dvalue_dup(dvalue);
-	vector_push(this->dvalues, &dup);
+	vector_push(o->dvalues, &dup);
 }
 
 void
-message_add_float(message_t* this, double value)
+message_add_float(message_t* o, double value)
 {
 	dvalue_t* dvalue;
 
 	dvalue = dvalue_new_float(value);
-	vector_push(this->dvalues, &dvalue);
+	vector_push(o->dvalues, &dvalue);
 }
 
 void
-message_add_heapptr(message_t* this, dukptr_t heapptr)
+message_add_heapptr(message_t* o, dukptr_t heapptr)
 {
 	dvalue_t* dvalue;
 
 	dvalue = dvalue_new_heapptr(heapptr);
-	vector_push(this->dvalues, &dvalue);
+	vector_push(o->dvalues, &dvalue);
 }
 
 void
-message_add_int(message_t* this, int value)
+message_add_int(message_t* o, int value)
 {
 	dvalue_t* dvalue;
 
 	dvalue = dvalue_new_int(value);
-	vector_push(this->dvalues, &dvalue);
+	vector_push(o->dvalues, &dvalue);
 }
 
 void
-message_add_string(message_t* this, const char* value)
+message_add_string(message_t* o, const char* value)
 {
 	dvalue_t* dvalue;
 
 	dvalue = dvalue_new_string(value);
-	vector_push(this->dvalues, &dvalue);
+	vector_push(o->dvalues, &dvalue);
 }
 
 message_t*
@@ -173,7 +173,7 @@ lost_dvalue:
 }
 
 void
-message_send(const message_t* this, socket_t* socket)
+message_send(const message_t* o, socket_t* socket)
 {
 	dvalue_t*    dvalue;
 	dvalue_tag_t lead_tag;
@@ -181,15 +181,15 @@ message_send(const message_t* this, socket_t* socket)
 	iter_t iter;
 	dvalue_t* *p_dvalue;
 
-	lead_tag = this->tag == MESSAGE_REQ ? DVALUE_REQ
-		: this->tag == MESSAGE_REP ? DVALUE_REP
-		: this->tag == MESSAGE_ERR ? DVALUE_ERR
-		: this->tag == MESSAGE_NFY ? DVALUE_NFY
+	lead_tag = o->tag == MESSAGE_REQ ? DVALUE_REQ
+		: o->tag == MESSAGE_REP ? DVALUE_REP
+		: o->tag == MESSAGE_ERR ? DVALUE_ERR
+		: o->tag == MESSAGE_NFY ? DVALUE_NFY
 		: DVALUE_EOM;
 	dvalue = dvalue_new(lead_tag);
 	dvalue_send(dvalue, socket);
 	dvalue_free(dvalue);
-	iter = vector_enum(this->dvalues);
+	iter = vector_enum(o->dvalues);
 	while (p_dvalue = vector_next(&iter))
 		dvalue_send(*p_dvalue, socket);
 	dvalue = dvalue_new(DVALUE_EOM);

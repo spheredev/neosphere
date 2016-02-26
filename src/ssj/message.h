@@ -62,7 +62,7 @@ enum err_command
 enum appnotify
 {
 	APPNFY_NOP,
-	APPNFY_DEBUGPRINT,
+	APPNFY_DEBUG_PRINT,
 };
 
 enum apprequest
@@ -73,20 +73,20 @@ enum apprequest
 };
 
 message_t*      message_new          (message_tag_t tag);
-void            message_free         (message_t* this);
-size_t          message_len          (const message_t* this);
-message_tag_t   message_tag          (const message_t* this);
-dvalue_tag_t    message_get_atom_tag (const message_t* this, size_t index);
-const dvalue_t* message_get_dvalue   (const message_t* this, size_t index);
-double          message_get_float    (const message_t* this, size_t index);
-int32_t         message_get_int      (const message_t* this, size_t index);
-const char*     message_get_string   (const message_t* this, size_t index);
-void            message_add_dvalue   (message_t* this, const dvalue_t* dvalue);
-void            message_add_float    (message_t* this, double value);
-void            message_add_heapptr  (message_t* this, dukptr_t value);
-void            message_add_int      (message_t* this, int value);
-void            message_add_string   (message_t* this, const char* value);
+void            message_free         (message_t* o);
+int             message_len          (const message_t* o);
+message_tag_t   message_tag          (const message_t* o);
+dvalue_tag_t    message_get_atom_tag (const message_t* o, int index);
+const dvalue_t* message_get_dvalue   (const message_t* o, int index);
+double          message_get_float    (const message_t* o, int index);
+int32_t         message_get_int      (const message_t* o, int index);
+const char*     message_get_string   (const message_t* o, int index);
+void            message_add_dvalue   (message_t* o, const dvalue_t* dvalue);
+void            message_add_float    (message_t* o, double value);
+void            message_add_heapptr  (message_t* o, dukptr_t value);
+void            message_add_int      (message_t* o, int value);
+void            message_add_string   (message_t* o, const char* value);
 message_t*      message_recv         (socket_t* socket);
-void            message_send         (const message_t* this, socket_t* socket);
+void            message_send         (const message_t* o, socket_t* socket);
 
 #endif // SSJ__MESSAGE_H__INCLUDED

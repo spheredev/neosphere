@@ -1,8 +1,6 @@
 #include "ssj.h"
 #include "source.h"
 
-#define CACHE_SIZE 10
-
 struct source
 {
 	vector_t* lines;
@@ -91,4 +89,29 @@ source_get_line(const source_t* source, int line_index)
 	if (line_index < 0 || line_index >= source_cloc(source))
 		return NULL;
 	return *(char**)vector_get(source->lines, line_index);
+}
+
+void
+source_print(const source_t* source, int lineno, int num_lines, int active_lineno)
+{
+	const char* arrow;
+	int         line_count;
+	int         median;
+	int         start, end;
+	const char* text;
+
+	int i;
+
+	line_count = source_cloc(source);
+	median = num_lines / 2;
+	start = lineno > median ? lineno - (median + 1) : 0;
+	end = start + num_lines < line_count ? start + num_lines : line_count;
+	for (i = start; i < end; ++i) {
+		text = source_get_line(source, i);
+		arrow = i + 1 == active_lineno ? "->" : "  ";
+		if (num_lines > 1)
+			printf("%s %4d  %s\n", arrow, i + 1, text);
+		else
+			printf("%d  %s\n", i + 1, text);
+	}
 }

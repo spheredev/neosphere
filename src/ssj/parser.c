@@ -114,7 +114,7 @@ command_free(command_t* this)
 }
 
 int
-command_size(const command_t* this)
+command_len(const command_t* this)
 {
 	return this->num_tokens;
 }
