@@ -8,8 +8,8 @@ struct socket
 	bool         has_closed;
 	dyad_Stream* stream;
 	uint8_t*     recv_buffer;
-	size_t       recv_size;
-	size_t       buf_size;
+	int          recv_size;
+	int          buf_size;
 };
 
 static void

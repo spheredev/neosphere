@@ -12,8 +12,8 @@
 
 struct frame
 {
-	char* function_name;
 	char* filename;
+	char* function_name;
 	int   line_no;
 };
 
@@ -25,7 +25,7 @@ struct source
 
 struct inferior
 {
-	unsigned int   id;
+	unsigned int   id_no;
 	int            num_frames;
 	int            num_sources;
 	bool           has_detached;
@@ -628,7 +628,7 @@ inferior_new(const char* hostname, int port)
 	printf("    game: %s\n", inf->title);
 	printf("    author: %s\n", inf->author);
 
-	inf->id = s_next_inferior_id++;
+	inf->id_no = s_next_inferior_id++;
 	return inf;
 
 on_error:
@@ -768,7 +768,7 @@ inferior_run(inferior_t* inf)
 	}
 
 	if (inf->has_detached)
-		printf("SSJ inferior~%u closed by target.\n", inf->id);
+		printf("SSJ inferior~%u closed by target.\n", inf->id_no);
 	else
 		printf("SSJ lost connection with the target.\n");
 	inf->has_detached = true;

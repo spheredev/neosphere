@@ -199,6 +199,9 @@ cache_source(const char* name, const lstring_t* text)
 	iter_t iter;
 	struct source* p_source;
 	
+	if (s_sources == NULL)
+		return;
+	
 	iter = vector_enum(s_sources);
 	while (p_source = vector_next(&iter)) {
 		if (strcmp(name, p_source->name) == 0) {
