@@ -6,14 +6,14 @@
 typedef struct message message_t;
 
 typedef
-enum msg_type
+enum message_tag
 {
-	MSG_TYPE_UNKNOWN,
-	MSG_TYPE_REQ,
-	MSG_TYPE_REP,
-	MSG_TYPE_ERR,
-	MSG_TYPE_NFY,
-} msg_type_t;
+	MESSAGE_UNKNOWN,
+	MESSAGE_REQ,
+	MESSAGE_REP,
+	MESSAGE_ERR,
+	MESSAGE_NFY,
+} message_tag_t;
 
 enum req_command
 {
@@ -50,6 +50,15 @@ enum nfy_command
 	NFY_APP_NOTIFY = 0x07,
 };
 
+enum err_command
+{
+	ERR_UNKNOWN = 0x00,
+	ERR_UNSUPPORTED = 0x01,
+	ERR_TOO_MANY = 0x02,
+	ERR_NOT_FOUND = 0x03,
+	ERR_APP_ERROR = 0x04,
+};
+
 enum appnotify
 {
 	APPNFY_NOP,
@@ -61,24 +70,23 @@ enum apprequest
 	APPREQ_NOP,
 	APPREQ_GAME_INFO,
 	APPREQ_SOURCE,
-	APPREQ_SRC_PATH,
 };
 
-message_t*      msg_new          (msg_type_t type);
-void            msg_free         (message_t* msg);
-size_t          msg_len          (const message_t* message);
-msg_type_t      msg_type         (const message_t* message);
-dvalue_tag_t    msg_get_atom_tag (const message_t* msg, size_t index);
-const dvalue_t* msg_get_dvalue   (const message_t* msg, size_t index);
-double          msg_get_float    (const message_t* msg, size_t index);
-int32_t         msg_get_int      (const message_t* msg, size_t index);
-const char*     msg_get_string   (const message_t* msg, size_t index);
-void            msg_add_dvalue   (message_t* msg, const dvalue_t* dvalue);
-void            msg_add_float    (message_t* msg, double value);
-void            msg_add_heapptr  (message_t* msg, dukptr_t value);
-void            msg_add_int      (message_t* msg, int value);
-void            msg_add_string   (message_t* msg, const char* value);
-message_t*      msg_recv         (socket_t* socket);
-void            msg_send         (const message_t* msg, socket_t* socket);
+message_t*      message_new          (message_tag_t tag);
+void            message_free         (message_t* this);
+size_t          message_len          (const message_t* this);
+message_tag_t   message_tag          (const message_t* this);
+dvalue_tag_t    message_get_atom_tag (const message_t* this, size_t index);
+const dvalue_t* message_get_dvalue   (const message_t* this, size_t index);
+double          message_get_float    (const message_t* this, size_t index);
+int32_t         message_get_int      (const message_t* this, size_t index);
+const char*     message_get_string   (const message_t* this, size_t index);
+void            message_add_dvalue   (message_t* this, const dvalue_t* dvalue);
+void            message_add_float    (message_t* this, double value);
+void            message_add_heapptr  (message_t* this, dukptr_t value);
+void            message_add_int      (message_t* this, int value);
+void            message_add_string   (message_t* this, const char* value);
+message_t*      message_recv         (socket_t* socket);
+void            message_send         (const message_t* this, socket_t* socket);
 
 #endif // SSJ__MESSAGE_H__INCLUDED

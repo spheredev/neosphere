@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-const char* find_ssj_command (command_t* command);
+const char* find_command (command_t* command);
 
 #endif // SSJ__COMMANDS_H__INCLUDED

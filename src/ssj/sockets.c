@@ -5,6 +5,7 @@
 
 struct socket
 {
+	bool         has_closed;
 	dyad_Stream* stream;
 	uint8_t*     recv_buffer;
 	size_t       recv_size;
@@ -12,11 +13,20 @@ struct socket
 };
 
 static void
+dyad_on_stream_close(dyad_Event* e)
+{
+	socket_t* obj;
+
+	obj = e->udata;
+	obj->has_closed = true;
+}
+
+static void
 dyad_on_stream_recv(dyad_Event* e)
 {
 	socket_t* obj;
 	bool  need_resize = false;
-	char* p_next_write;
+	char* write_ptr;
 
 	obj = e->udata;
 	while (obj->recv_size + e->size > obj->buf_size) {
@@ -25,9 +35,9 @@ dyad_on_stream_recv(dyad_Event* e)
 	}
 	if (need_resize)
 		obj->recv_buffer = realloc(obj->recv_buffer, obj->buf_size);
-	p_next_write = obj->recv_buffer + obj->recv_size;
+	write_ptr = obj->recv_buffer + obj->recv_size;
 	obj->recv_size += e->size;
-	memcpy(p_next_write, e->data, e->size);
+	memcpy(write_ptr, e->data, e->size);
 }
 
 void
@@ -69,6 +79,7 @@ socket_connect(const char* hostname, int port, double timeout)
 			goto on_timeout;
 		dyad_update();
 	} while (state != DYAD_STATE_CONNECTED);
+	dyad_addListener(obj->stream, DYAD_EVENT_CLOSE, dyad_on_stream_close, obj);
 	return obj;
 
 on_timeout:
@@ -81,28 +92,37 @@ on_timeout:
 void
 socket_close(socket_t* obj)
 {
-	dyad_end(obj->stream);
-	while (dyad_getState(obj->stream) == DYAD_STATE_CLOSING)
-		dyad_update();
+	if (!obj->has_closed) {
+		dyad_end(obj->stream);
+		while (!obj->has_closed)
+			dyad_update();
+	}
 	free(obj->recv_buffer);
 	free(obj);
 }
 
-size_t
-socket_recv(socket_t* obj, void* buffer, size_t num_bytes)
+int
+socket_recv(socket_t* obj, void* buffer, int num_bytes)
 {
-	while (obj->recv_size < num_bytes)
+	while (obj->recv_size < num_bytes && !obj->has_closed)
 		dyad_update();
-	memcpy(buffer, obj->recv_buffer, num_bytes);
-	obj->recv_size -= num_bytes;
-	memmove(obj->recv_buffer, obj->recv_buffer + num_bytes, obj->recv_size);
-	return num_bytes;
+	if (obj->recv_size < num_bytes)
+		return 0;
+	else {
+		memcpy(buffer, obj->recv_buffer, num_bytes);
+		obj->recv_size -= num_bytes;
+		memmove(obj->recv_buffer, obj->recv_buffer + num_bytes, obj->recv_size);
+		return num_bytes;
+	}
 }
 
-size_t
-socket_send(socket_t* obj, const void* data, size_t num_bytes)
+int
+socket_send(socket_t* obj, const void* data, int num_bytes)
 {
-	dyad_write(obj->stream, data, (int)num_bytes);
+	if (obj->has_closed)
+		return 0;
+
+	dyad_write(obj->stream, data, num_bytes);
 	if (num_bytes > 0)
 		dyad_update();
 	return num_bytes;

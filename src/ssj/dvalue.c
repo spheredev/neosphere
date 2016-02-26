@@ -95,7 +95,7 @@ dvalue_dup(const dvalue_t* src)
 void
 dvalue_free(dvalue_t* obj)
 {
-	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUF)
+	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUFFER)
 		free(obj->buffer.data);
 	free(obj);
 }
@@ -153,7 +153,7 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 	case DVALUE_FLOAT: printf(is_verbose ? "{ float: %g }" : "%g", obj->float_value); break;
 	case DVALUE_INT: printf(is_verbose ? "{ int: %d }" : "%d", obj->int_value); break;
 	case DVALUE_STRING: printf("\"%s\"", (char*)obj->buffer.data); break;
-	case DVALUE_BUF: printf("{ buf:%zd-bytes }", obj->buffer.size); break;
+	case DVALUE_BUFFER: printf("{ buf:%zd-bytes }", obj->buffer.size); break;
 	case DVALUE_HEAPPTR:
 		printf("{ heap:\"");
 		print_duktape_ptr(dvalue_as_ptr(obj));
@@ -189,48 +189,64 @@ dvalue_recv(socket_t* socket)
 	dvalue_t* obj;
 	uint8_t data[32];
 	uint8_t ib;
+	int     read_size;
 
 	ptrdiff_t i, j;
 
 	obj = calloc(1, sizeof(dvalue_t));
-	socket_recv(socket, &ib, 1);
+	if (socket_recv(socket, &ib, 1) == 0)
+		goto lost_connection;
 	obj->tag = (enum dvalue_tag)ib;
 	switch (ib) {
 	case DVALUE_INT:
-		socket_recv(socket, data, 4);
+		if (socket_recv(socket, data, 4) == 0)
+			goto lost_connection;
 		obj->tag = DVALUE_INT;
 		obj->int_value = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
 	case DVALUE_STRING:
-		socket_recv(socket, data, 4);
+		if (socket_recv(socket, data, 4) == 0)
+			goto lost_connection;
 		obj->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		obj->buffer.data = calloc(1, obj->buffer.size + 1);
-		socket_recv(socket, obj->buffer.data, obj->buffer.size);
+		read_size = (int)obj->buffer.size;
+		if (socket_recv(socket, obj->buffer.data, read_size) != read_size)
+			goto lost_connection;
 		obj->tag = DVALUE_STRING;
 		break;
 	case DVALUE_STRING16:
-		socket_recv(socket, data, 2);
+		if (socket_recv(socket, data, 2) == 0)
+			goto lost_connection;
 		obj->buffer.size = (data[0] << 8) + data[1];
 		obj->buffer.data = calloc(1, obj->buffer.size + 1);
-		socket_recv(socket, obj->buffer.data, obj->buffer.size);
+		read_size = (int)obj->buffer.size;
+		if (socket_recv(socket, obj->buffer.data, read_size) != read_size)
+			goto lost_connection;
 		obj->tag = DVALUE_STRING;
 		break;
-	case DVALUE_BUF:
-		socket_recv(socket, data, 4);
+	case DVALUE_BUFFER:
+		if (socket_recv(socket, data, 4) == 0)
+			goto lost_connection;
 		obj->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		obj->buffer.data = calloc(1, obj->buffer.size + 1);
-		socket_recv(socket, obj->buffer.data, obj->buffer.size);
-		obj->tag = DVALUE_BUF;
+		read_size = (int)obj->buffer.size;
+		if (socket_recv(socket, obj->buffer.data, read_size) != read_size)
+			goto lost_connection;
+		obj->tag = DVALUE_BUFFER;
 		break;
 	case DVALUE_BUF16:
-		socket_recv(socket, data, 2);
+		if (socket_recv(socket, data, 2) == 0)
+			goto lost_connection;
 		obj->buffer.size = (data[0] << 8) + data[1];
 		obj->buffer.data = calloc(1, obj->buffer.size + 1);
-		socket_recv(socket, obj->buffer.data, obj->buffer.size);
-		obj->tag = DVALUE_BUF;
+		read_size = (int)obj->buffer.size;
+		if (socket_recv(socket, obj->buffer.data, read_size) != read_size)
+			goto lost_connection;
+		obj->tag = DVALUE_BUFFER;
 		break;
 	case DVALUE_FLOAT:
-		socket_recv(socket, data, 8);
+		if (socket_recv(socket, data, 8) == 0)
+			goto lost_connection;
 		((uint8_t*)&obj->float_value)[0] = data[7];
 		((uint8_t*)&obj->float_value)[1] = data[6];
 		((uint8_t*)&obj->float_value)[2] = data[5];
@@ -242,31 +258,41 @@ dvalue_recv(socket_t* socket)
 		obj->tag = DVALUE_FLOAT;
 		break;
 	case DVALUE_OBJ:
-		socket_recv(socket, data, 1);
-		socket_recv(socket, &obj->ptr_value.size, 1);
-		socket_recv(socket, data, obj->ptr_value.size);
+		if (socket_recv(socket, data, 1) == 0)
+			goto lost_connection;
+		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+			goto lost_connection;
+		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+			goto lost_connection;
 		obj->tag = DVALUE_OBJ;
 		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
 		break;
 	case DVALUE_PTR:
-		socket_recv(socket, &obj->ptr_value.size, 1);
-		socket_recv(socket, data, obj->ptr_value.size);
+		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+			goto lost_connection;
+		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+			goto lost_connection;
 		obj->tag = DVALUE_PTR;
 		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
 		break;
 	case DVALUE_LIGHTFUNC:
-		socket_recv(socket, data, 2);
-		socket_recv(socket, &obj->ptr_value.size, 1);
-		socket_recv(socket, data, obj->ptr_value.size);
+		if (socket_recv(socket, data, 2) == 0)
+			goto lost_connection;
+		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+			goto lost_connection;
+		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+			goto lost_connection;
 		obj->tag = DVALUE_LIGHTFUNC;
 		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
 		break;
 	case DVALUE_HEAPPTR:
-		socket_recv(socket, &obj->ptr_value.size, 1);
-		socket_recv(socket, data, obj->ptr_value.size);
+		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+			goto lost_connection;
+		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+			goto lost_connection;
 		obj->tag = DVALUE_HEAPPTR;
 		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
 			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
@@ -276,19 +302,26 @@ dvalue_recv(socket_t* socket)
 			obj->tag = DVALUE_STRING;
 			obj->buffer.size = ib - 0x60;
 			obj->buffer.data = calloc(1, obj->buffer.size + 1);
-			socket_recv(socket, obj->buffer.data, obj->buffer.size);
+			read_size = (int)obj->buffer.size;
+			if (socket_recv(socket, obj->buffer.data, read_size) != read_size)
+				goto lost_connection;
 		}
 		else if (ib >= 0x80 && ib <= 0xBF) {
 			obj->tag = DVALUE_INT;
 			obj->int_value = ib - 0x80;
 		}
 		else if (ib >= 0xC0) {
-			socket_recv(socket, data, 1);
+			if (socket_recv(socket, data, 1) == 0)
+				goto lost_connection;
 			obj->tag = DVALUE_INT;
 			obj->int_value = ((ib - 0xC0) << 8) + data[0];
 		}
 	}
 	return obj;
+
+lost_connection:
+	free(obj);
+	return NULL;
 }
 
 void

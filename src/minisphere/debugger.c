@@ -20,7 +20,6 @@ enum apprequest
 	APPREQ_NOP,
 	APPREQ_GAME_INFO,
 	APPREQ_SOURCE,
-	APPREQ_SRC_PATH,
 };
 
 static const int TCP_DEBUG_PORT = 1208;
@@ -315,11 +314,6 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		
 		duk_push_sprintf(ctx, "no source available for '%s'", name);
 		return -1;
-	case APPREQ_SRC_PATH:
-		duk_push_global_stash(ctx);
-		if (!duk_get_prop_string(ctx, -1, "debugMap") || !duk_get_prop_string(ctx, -1, "origin"))
-			duk_push_null(ctx);
-		return 1;
 	default:
 		return 0;
 	}

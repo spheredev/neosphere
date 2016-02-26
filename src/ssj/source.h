@@ -1,11 +1,11 @@
 #ifndef SSJ__SOURCE_H__INCLUDED
 #define SSJ__SOURCE_H__INCLUDED
 
-#include "session.h"
+#include "inferior.h"
 
 typedef struct source source_t;
 
-source_t*   source_load     (session_t* session, const char* filename);
+source_t*   source_load     (inferior_t* inferior, const char* filename);
 int         source_cloc     (const source_t* source);
 const char* source_get_line (const source_t* source, int line_index);
 

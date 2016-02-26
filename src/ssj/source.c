@@ -1,7 +1,7 @@
 #include "ssj.h"
 #include "source.h"
 
-#include "session.h"
+#include "inferior.h"
 
 #define CACHE_SIZE 10
 
@@ -73,7 +73,7 @@ hit_eof:
 }
 
 source_t*
-source_load(session_t* session, const char* filename)
+source_load(inferior_t* inf, const char* filename)
 {
 	int         cache_id;
 	char*       line_text;
@@ -95,18 +95,18 @@ source_load(session_t* session, const char* filename)
 	free(s_cache[cache_id].filename);
 	free_source(s_cache[cache_id].source);
 
-	msg = msg_new(MSG_TYPE_REQ);
-	msg_add_int(msg, REQ_APP_REQUEST);
-	msg_add_int(msg, APPREQ_SOURCE);
-	msg_add_string(msg, filename);
-	msg = do_request(session, msg);
-	if (msg_type(msg) == MSG_TYPE_ERR)
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_APP_REQUEST);
+	message_add_int(msg, APPREQ_SOURCE);
+	message_add_string(msg, filename);
+	msg = inferior_request(inf, msg);
+	if (message_tag(msg) == MESSAGE_ERR)
 		goto on_error;
-	p_source = text = msg_get_string(msg, 0);
+	p_source = text = message_get_string(msg, 0);
 	lines = vector_new(sizeof(char*));
 	while (line_text = read_line(&p_source))
 		vector_push(lines, &line_text);
-	msg_free(msg);
+	message_free(msg);
 
 	source = calloc(1, sizeof(source_t));
 	source->lines = lines;

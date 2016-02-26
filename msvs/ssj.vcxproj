@@ -184,7 +184,7 @@
     <ClCompile Include="..\src\ssj\help.c" />
     <ClCompile Include="..\src\ssj\message.c" />
     <ClCompile Include="..\src\ssj\main.c" />
-    <ClCompile Include="..\src\ssj\session.c" />
+    <ClCompile Include="..\src\ssj\inferior.c" />
     <ClCompile Include="..\src\ssj\sockets.c" />
     <ClCompile Include="..\src\ssj\source.c" />
   </ItemGroup>
@@ -201,7 +201,7 @@
     <ClInclude Include="..\src\ssj\help.h" />
     <ClInclude Include="..\src\ssj\message.h" />
     <ClInclude Include="..\src\ssj\posix.h" />
-    <ClInclude Include="..\src\ssj\session.h" />
+    <ClInclude Include="..\src\ssj\inferior.h" />
     <ClInclude Include="..\src\ssj\sockets.h" />
     <ClInclude Include="..\src\ssj\source.h" />
     <ClInclude Include="..\src\ssj\ssj.h" />

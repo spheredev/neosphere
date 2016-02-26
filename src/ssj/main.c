@@ -1,7 +1,7 @@
 #include "ssj.h"
 
 #include <dyad.h>
-#include "session.h"
+#include "inferior.h"
 
 struct cmdline
 {
@@ -19,8 +19,8 @@ int
 main(int argc, char* argv[])
 {
 	struct cmdline* cmdline;
+	inferior_t*     inf;
 	int             retval;
-	session_t*      session;
 
 	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
 		return retval;
@@ -31,16 +31,16 @@ main(int argc, char* argv[])
 	if (cmdline->path != NULL && !launch_minisphere(cmdline->path))
 		return EXIT_FAILURE;
 
-	sessions_init();
+	inferiors_init();
 
-	if (!(session = new_session("127.0.0.1", 1208)))
+	if (!(inf = inferior_new("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
 	if (cmdline->want_run)
-		execute_next(session, EXEC_RESUME);
-	run_session(session);
-	end_session(session);
+		inferior_resume(inf, OP_RESUME);
+	inferior_run(inf);
+	inferior_free(inf);
 
-	sessions_deinit();
+	inferiors_deinit();
 
 	free_cmdline(cmdline);
 	return EXIT_SUCCESS;

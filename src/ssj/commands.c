@@ -73,7 +73,7 @@ wrong_type:
 }
 
 const char*
-find_ssj_command(command_t* command)
+find_command(command_t* command)
 {
 	const char* full_name;
 	const char* matches[100];
