@@ -17,23 +17,31 @@ struct frame
 	int   line_no;
 };
 
+struct source
+{
+	char*     filename;
+	source_t* source;
+};
+
 struct inferior
 {
-	unsigned int  id;
-	bool          has_detached;
-	char*         title;
-	char*         author;
-	struct frame* backtrace;
-	int           num_frames;
-	socket_t*     socket;
-	int           frame_index;
-	char*         function_name;
-	char*         filename;
-	bool          has_pc_changed;
-	bool          have_debug_info;
-	int           line_no;
-	uint8_t       ptr_size;
-	bool          is_stopped;
+	unsigned int   id;
+	int            num_frames;
+	int            num_sources;
+	bool           has_detached;
+	bool           has_pc_changed;
+	char*          title;
+	char*          author;
+	int            frame_index;
+	char*          function_name;
+	char*          filename;
+	struct frame*  frames;
+	bool           have_debug_info;
+	bool           is_stopped;
+	int            line_no;
+	uint8_t        ptr_size;
+	socket_t*      socket;
+	struct source* sources;
 };
 
 static void clear_breakpoint  (inferior_t* sess, int index);
@@ -57,13 +65,13 @@ clear_cli_cache(inferior_t* sess)
 	free(sess->filename);
 	sess->function_name = NULL;
 	sess->filename = NULL;
-	if (sess->backtrace != NULL) {
+	if (sess->frames != NULL) {
 		for (i = 0; i < sess->num_frames; ++i) {
-			free(sess->backtrace[i].filename);
-			free(sess->backtrace[i].function_name);
+			free(sess->frames[i].filename);
+			free(sess->frames[i].function_name);
 		}
-		free(sess->backtrace);
-		sess->backtrace = NULL;
+		free(sess->frames);
+		sess->frames = NULL;
 	}
 }
 
@@ -87,7 +95,7 @@ do_command_line(inferior_t* sess)
 		sess->has_pc_changed = false;
 		update_backtrace(sess);
 		frame_index = 0;
-		while (sess->backtrace[frame_index].line_no == 0)
+		while (sess->frames[frame_index].line_no == 0)
 			++frame_index;
 		print_backtrace(sess, frame_index, true, false);
 	}
@@ -202,7 +210,7 @@ do_command_line(inferior_t* sess)
 		print_locals(sess, sess->frame_index);
 	else if (strcmp(verb, "where") == 0 || strcmp(verb, "w") == 0) {
 		frame_index = 0;
-		while (sess->backtrace[frame_index].line_no == 0)
+		while (sess->frames[frame_index].line_no == 0)
 			++frame_index;
 		print_backtrace(sess, frame_index, false, false);
 	}
@@ -348,9 +356,9 @@ print_backtrace(inferior_t* sess, int frame_index, bool select_frame, bool show_
 		printf("no active frame at index %d.\n", frame_index);
 	else {
 		for (i = 0; i < sess->num_frames; ++i) {
-			filename = sess->backtrace[i].filename;
-			function_name = sess->backtrace[i].function_name;
-			line_no = sess->backtrace[i].line_no;
+			filename = sess->frames[i].filename;
+			function_name = sess->frames[i].function_name;
+			line_no = sess->frames[i].line_no;
 			if (i == frame_index || show_all) {
 				if (line_no > 0)
 					printf("%s #%2d: %s at %s:%d\n", i == sess->frame_index ? "=>" : "  ", i, function_name, filename, line_no);
@@ -361,7 +369,7 @@ print_backtrace(inferior_t* sess, int frame_index, bool select_frame, bool show_
 			}
 		}
 		if (select_frame) {
-			framedata = &sess->backtrace[frame_index];
+			framedata = &sess->frames[frame_index];
 			free(sess->function_name);
 			free(sess->filename);
 			sess->frame_index = frame_index;
@@ -439,7 +447,7 @@ print_locals(inferior_t* sess, int frame)
 }
 
 static void
-print_source(inferior_t* sess, const char* filename, int line_no, int window)
+print_source(inferior_t* inf, const char* filename, int line_no, int window)
 {
 	bool        is_next_line;
 	int         line_count;
@@ -453,7 +461,7 @@ print_source(inferior_t* sess, const char* filename, int line_no, int window)
 
 	if (line_no <= 0)
 		printf("no source code for system call.\n");
-	else if (!(source = source_load(sess, filename)))
+	else if (!(source = inferior_get_source(inf, filename)))
 		printf("source code unavailable for %s.\n", filename);
 	else {
 		line_count = source_cloc(source);
@@ -462,7 +470,7 @@ print_source(inferior_t* sess, const char* filename, int line_no, int window)
 		end = start + window < line_count ? start + window : line_count;
 		for (i = start; i < end; ++i) {
 			text = source_get_line(source, i);
-			is_next_line = i == sess->line_no - 1 && strcmp(filename, sess->filename) == 0;
+			is_next_line = i == inf->line_no - 1 && strcmp(filename, inf->filename) == 0;
 			prefix = is_next_line ? "=>" : "  ";
 			if (window > 1)
 				printf("%s %4d: %s\n", prefix, i + 1, text);
@@ -559,7 +567,7 @@ update_backtrace(inferior_t* inf)
 
 	int i;
 
-	if (inf->backtrace != NULL)
+	if (inf->frames != NULL)
 		return;
 
 	msg = message_new(MESSAGE_REQ);
@@ -567,9 +575,9 @@ update_backtrace(inferior_t* inf)
 	if (!(msg = inferior_request(inf, msg)))
 		return;
 	inf->num_frames = (int)(message_len(msg) / 4);
-	inf->backtrace = calloc(inf->num_frames, sizeof(struct frame));
+	inf->frames = calloc(inf->num_frames, sizeof(struct frame));
 	for (i = 0; i < inf->num_frames; ++i) {
-		frame = inf->backtrace + i;
+		frame = inf->frames + i;
 		function_name = message_get_string(msg, i * 4 + 1);
 		frame->filename = strdup(message_get_string(msg, i * 4));
 		frame->function_name = function_name[0] != '\0' ? strnewf("%s()", function_name)
@@ -617,7 +625,7 @@ inferior_new(const char* hostname, int port)
 	message_free(rep);
 	printf("OK.\n");
 
-	printf("    game title: %s\n", inf->title);
+	printf("    game: %s\n", inf->title);
 	printf("    author: %s\n", inf->author);
 
 	inf->id = s_next_inferior_id++;
@@ -631,6 +639,12 @@ on_error:
 void
 inferior_free(inferior_t* inf)
 {
+	int i;
+
+	for (i = 0; i < inf->num_sources; ++i) {
+		source_free(inf->sources[i].source);
+		free(inf->sources[i].filename);
+	}
 	clear_cli_cache(inf);
 	socket_close(inf->socket);
 	free(inf->title);
@@ -639,9 +653,59 @@ inferior_free(inferior_t* inf)
 }
 
 bool
-inferior_is_ready(inferior_t* inf)
+inferior_attached(inferior_t* inf)
 {
 	return !inf->has_detached;
+}
+
+source_t*
+inferior_get_source(inferior_t* inf, const char* filename)
+{
+	int         cache_id;
+	message_t*  msg;
+	source_t*   source;
+	const char* text;
+
+	int i;
+
+	for (i = 0; i < inf->num_sources; ++i) {
+		if (strcmp(filename, inf->sources[i].filename) == 0)
+			return inf->sources[i].source;
+	}
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_APP_REQUEST);
+	message_add_int(msg, APPREQ_SOURCE);
+	message_add_string(msg, filename);
+	if (!(msg = inferior_request(inf, msg)))
+		goto on_error;
+	if (message_tag(msg) == MESSAGE_ERR)
+		goto on_error;
+	text = message_get_string(msg, 0);
+	source = source_new(text);
+
+	cache_id = inf->num_sources++;
+	inf->sources = realloc(inf->sources, inf->num_sources * sizeof(struct source));
+	inf->sources[cache_id].filename = strdup(filename);
+	inf->sources[cache_id].source = source;
+
+	return source;
+
+on_error:
+	message_free(msg);
+	return NULL;
+}
+
+bool
+inferior_pause(inferior_t* inf)
+{
+	message_t* msg;
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_PAUSE);
+	if (!(msg = inferior_request(inf, msg)))
+		return false;
+	return true;
 }
 
 message_t*
@@ -663,18 +727,6 @@ inferior_request(inferior_t* inf, message_t* msg)
 lost_connection:
 	message_free(msg);
 	return NULL;
-}
-
-bool
-inferior_pause(inferior_t* inf)
-{
-	message_t* msg;
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_PAUSE);
-	if (!(msg = inferior_request(inf, msg)))
-		return false;
-	return true;
 }
 
 bool
@@ -716,7 +768,7 @@ inferior_run(inferior_t* inf)
 	}
 
 	if (inf->has_detached)
-		printf("SSJ inferior %u closed by target.\n", inf->id);
+		printf("SSJ inferior~%u closed by target.\n", inf->id);
 	else
 		printf("SSJ lost connection with the target.\n");
 	inf->has_detached = true;

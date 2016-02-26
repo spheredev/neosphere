@@ -1,37 +1,12 @@
 #include "ssj.h"
 #include "source.h"
 
-#include "inferior.h"
-
 #define CACHE_SIZE 10
 
 struct source
 {
 	vector_t* lines;
 };
-
-struct cache_entry
-{
-	char*     filename;
-	source_t* source;
-};
-
-static struct cache_entry s_cache[CACHE_SIZE];
-static int                s_next_cache_id;
-
-static void
-free_source(source_t* source)
-{
-	iter_t it;
-	char*  *p_line;
-
-	if (source == NULL) return;
-	it = vector_enum(source->lines);
-	while (p_line = vector_next(&it))
-		free(*p_line);
-	vector_free(source->lines);
-	free(source);
-}
 
 static char*
 read_line(const char** p_string)
@@ -73,50 +48,35 @@ hit_eof:
 }
 
 source_t*
-source_load(inferior_t* inf, const char* filename)
+source_new(const char* text)
 {
-	int         cache_id;
 	char*       line_text;
 	vector_t*   lines;
-	message_t*  msg;
 	source_t*   source = NULL;
-	const char* text;
 	const char* p_source;
 
-	int i;
-
-	for (i = 0; i < CACHE_SIZE; ++i) {
-		if (s_cache[i].filename != NULL && strcmp(filename, s_cache[i].filename) == 0)
-			return s_cache[i].source;
-	}
-	cache_id = s_next_cache_id++;
-	if (s_next_cache_id >= CACHE_SIZE)
-		s_next_cache_id = 0;
-	free(s_cache[cache_id].filename);
-	free_source(s_cache[cache_id].source);
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_APP_REQUEST);
-	message_add_int(msg, APPREQ_SOURCE);
-	message_add_string(msg, filename);
-	msg = inferior_request(inf, msg);
-	if (message_tag(msg) == MESSAGE_ERR)
-		goto on_error;
-	p_source = text = message_get_string(msg, 0);
+	p_source = text;
 	lines = vector_new(sizeof(char*));
 	while (line_text = read_line(&p_source))
 		vector_push(lines, &line_text);
-	message_free(msg);
 
 	source = calloc(1, sizeof(source_t));
 	source->lines = lines;
-	s_cache[cache_id].filename = strdup(filename);
-	s_cache[cache_id].source = source;
 	return source;
+}
 
-on_error:
+void
+source_free(source_t* source)
+{
+	iter_t it;
+	char*  *p_line;
+
+	if (source == NULL) return;
+	it = vector_enum(source->lines);
+	while (p_line = vector_next(&it))
+		free(*p_line);
+	vector_free(source->lines);
 	free(source);
-	return NULL;
 }
 
 int
