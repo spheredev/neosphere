@@ -48,8 +48,8 @@ cell_libs= \
 ssj_sources=src/ssj/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
    src/ssj/backtrace.c src/ssj/dvalue.c src/ssj/help.c src/ssj/inferior.c \
-   src/ssj/message.c src/ssj/parser.c src/ssj/session.c src/ssj/sockets.c \
-   src/ssj/source.c
+   src/ssj/message.c src/ssj/objview.c src/ssj/parser.c src/ssj/session.c \
+   src/ssj/sockets.c src/ssj/source.c
 
 .PHONY: all
 all: minisphere spherun cell ssj

@@ -139,9 +139,7 @@
   <ItemGroup>
     <None Include="Resources\folder.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Utility\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist "%25USERPROFILE%25\Documents\Sphere Studio\Plugins" mkdir "%25USERPROFILE%25\Documents\Sphere Studio\Plugins"

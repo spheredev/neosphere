@@ -39,6 +39,7 @@ static void        handle_eval      (session_t* o, command_t* cmd, bool is_verbo
 static void        handle_frame     (session_t* o, command_t* cmd);
 static void        handle_list      (session_t* o, command_t* cmd);
 static void        handle_up_down   (session_t* o, command_t* cmd, int direction);
+static void        handle_vars      (session_t* o, command_t* cmd);
 static void        handle_where     (session_t* o, command_t* cmd);
 static void        handle_quit      (session_t* o, command_t* cmd);
 static void        preview_frame    (session_t* o, int frame);
@@ -130,6 +131,8 @@ session_run(session_t* o)
 			inferior_resume(o->inferior, OP_STEP_IN);
 		else if (strcmp(verb, "stepout") == 0)
 			inferior_resume(o->inferior, OP_STEP_OUT);
+		else if (strcmp(verb, "vars") == 0)
+			handle_vars(o, command);
 		else if (strcmp(verb, "where") == 0)
 			handle_where(o, command);
 		else
@@ -206,13 +209,12 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 	dukptr_t        heapptr;
 	bool            is_accessor;
 	bool            is_error;
-	message_t*      msg;
-	int             prop_flags;
-	const dvalue_t* prop_key;
+	objview_t*   obj_view;
+	const char*     prop_key;
 	const dvalue_t* setter;
 	dvalue_t*       result;
 	
-	int idx = 0;
+	int i = 0;
 
 	expr = command_get_string(cmd, 1);
 	result = inferior_eval(o->inferior, expr, o->frame, &is_error);
@@ -221,30 +223,18 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 		dvalue_print(result, is_verbose);
 	else {
 		heapptr = dvalue_as_ptr(result);
-		msg = message_new(MESSAGE_REQ);
-		message_add_int(msg, REQ_INSPECT_PROPS);
-		message_add_heapptr(msg, heapptr);
-		message_add_int(msg, 0);
-		message_add_int(msg, INT_MAX);
-		if (!(msg = inferior_request(o->inferior, msg)))
+		if (!(obj_view = inferior_inspect_obj(o->inferior, heapptr)))
 			return;
 		printf("{\n");
-		while (idx < message_len(msg)) {
-			prop_flags = message_get_int(msg, idx++);
-			prop_key = message_get_dvalue(msg, idx++);
-			is_accessor = (prop_flags & 0x008) != 0;
-			if (prop_flags & 0x100) {
-				idx += is_accessor ? 4 : 3;
-				continue;
-			}
-			printf("    prop ");
-			dvalue_print(prop_key, false);
-			printf(" = ");
+		for (i = 0; i < objview_len(obj_view); ++i) {
+			is_accessor = objview_get_tag(obj_view, i) == PROP_ACCESSOR;
+			prop_key = objview_get_key(obj_view, i);
+			printf("    prop \"%s\" = ", prop_key);
 			if (!is_accessor)
-				dvalue_print(message_get_dvalue(msg, idx++), is_verbose);
+				dvalue_print(objview_get_value(obj_view, i), is_verbose);
 			else {
-				getter = message_get_dvalue(msg, idx++);
-				setter = message_get_dvalue(msg, idx++);
+				getter = objview_get_getter(obj_view, i);
+				setter = objview_get_setter(obj_view, i);
 				printf("{ get: ");
 				dvalue_print(getter, is_verbose);
 				printf(", set: ");
@@ -256,6 +246,7 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 		printf("}");
 	}
 	printf("\n");
+	objview_free(obj_view);
 	dvalue_free(result);
 }
 
@@ -330,6 +321,25 @@ handle_up_down(session_t* o, command_t* cmd, int direction)
 			: new_frame >= backtrace_len(stack) ? backtrace_len(stack) - 1
 			: new_frame;
 		preview_frame(o, o->frame);
+	}
+}
+
+static void
+handle_vars(session_t* dis, command_t* cmd)
+{
+	const char*     name;
+	const dvalue_t* value;
+	objview_t*   var_list;
+
+	int i;
+
+	var_list = inferior_get_locals(dis->inferior, 0);
+	for (i = 0; i < objview_len(var_list); ++i) {
+		name = objview_get_key(var_list, i);
+		value = objview_get_value(var_list, i);
+		printf("var %s = ", name);
+		dvalue_print(value, true);
+		printf("\n");
 	}
 }
 

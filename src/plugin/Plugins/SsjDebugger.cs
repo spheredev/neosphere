@@ -195,7 +195,7 @@ namespace minisphere.Gdk.Plugins
                         // filename reported by Duktape doesn't exist; walk callstack for a
                         // JavaScript call as a fallback
                         var callStack = await Duktape.GetCallStack();
-                        var topCall = callStack.First(entry => entry.Item2 != Duktape.TargetID || entry.Item3 != 0);
+                        var topCall = callStack.First(entry => entry.Item3 != 0);
                         var callIndex = Array.IndexOf(callStack, topCall);
                         FileName = ResolvePath(topCall.Item2);
                         LineNumber = topCall.Item3;

@@ -1,8 +1,9 @@
 #ifndef SSJ__PARSER_H__INCLUDED
 #define SSJ__PARSER_H__INCLUDED
 
-typedef struct command command_t; typedef
+typedef struct command command_t;
 
+typedef
 enum token_tag
 {
 	TOK_STRING,

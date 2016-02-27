@@ -305,8 +305,8 @@ namespace minisphere.Gdk.Duktape
                 string functionName = reply[2 + i * 4];
                 int lineNumber = reply[3 + i * 4];
                 int pc = reply[4 + i * 4];
-                if (filename == "undefined" && pc == 0)
-                    filename = TargetID;
+                if (pc == 0)
+                    filename = "(system call)";
                 stack.Add(Tuple.Create(functionName, filename, lineNumber));
             }
             return stack.ToArray();
@@ -314,7 +314,7 @@ namespace minisphere.Gdk.Duktape
 
         /// <summary>
         /// Gets a list of local values and their values. Note that objects
-        /// are not evaluated and are listed simply as "{ ... }".
+        /// are not evaluated and are listed simply as "{...}".
         /// </summary>
         /// <param name="stackOffset">The call stack offset to get locals for, -1 being the current activation.</param>
         /// <returns></returns>
@@ -327,12 +327,12 @@ namespace minisphere.Gdk.Duktape
             {
                 string name = reply[1 + i * 2].ToString();
                 dynamic value = reply[2 + i * 2];
-                string friendlyValue = value.Equals(DValue.Object) ? "object { ... }"
+                string friendlyValue = value.Equals(DValue.Object) ? "Object { ... }"
                     : value.Equals(DValue.Undefined) ? "undefined"
                     : value is bool ? value ? "true" : "false"
                     : value is int ? value.ToString()
                     : value is double ? value.ToString()
-                    : value is string ? string.Format("\"{0}\"", value)
+                    : value is string ? string.Format("\"{0}\"", value.Replace(@"""", @"\"""))
                     : await Eval(name);
                 variables.Add(name, friendlyValue);
             }
