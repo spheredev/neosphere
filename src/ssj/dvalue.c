@@ -89,6 +89,10 @@ dvalue_dup(const dvalue_t* src)
 
 	obj = calloc(1, sizeof(dvalue_t));
 	memcpy(obj, src, sizeof(dvalue_t));
+	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUFFER) {
+		obj->buffer.data = malloc(src->buffer.size + 1);
+		memcpy(obj->buffer.data, src->buffer.data, src->buffer.size + 1);
+	}
 	return obj;
 }
 

@@ -35,6 +35,7 @@ command_db[] =
 
 static const char* find_verb        (command_t* cmd);
 static void        handle_backtrace (session_t* o, command_t* cmd);
+static void        handle_eval      (session_t* o, command_t* cmd);
 static void        handle_frame     (session_t* o, command_t* cmd);
 static void        handle_list      (session_t* o, command_t* cmd);
 static void        handle_up_down   (session_t* o, command_t* cmd, int direction);
@@ -75,7 +76,7 @@ session_run(session_t* o)
 	
 	while (inferior_is_attached(o->inferior)) {
 		while (inferior_is_running(o->inferior))
-			inferior_tick(o->inferior);
+			inferior_update(o->inferior);
 		if (!inferior_is_attached(o->inferior))
 			break;
 		stack = inferior_get_stack(o->inferior);
@@ -115,6 +116,8 @@ session_run(session_t* o)
 			handle_up_down(o, command, -1);
 		else if (strcmp(verb, "continue") == 0)
 			inferior_resume(o->inferior, OP_RESUME);
+		else if (strcmp(verb, "eval") == 0)
+			handle_eval(o, command);
 		else if (strcmp(verb, "frame") == 0)
 			handle_frame(o, command);
 		else if (strcmp(verb, "list") == 0)
@@ -191,6 +194,21 @@ handle_backtrace(session_t* o, command_t* cmd)
 	if (!(stack = inferior_get_stack(o->inferior)))
 		return;
 	backtrace_print(stack, o->frame, true);
+}
+
+static void
+handle_eval(session_t* o, command_t* cmd)
+{
+	const char* expr;
+	bool        is_error;
+	dvalue_t*   result;
+
+	expr = command_get_string(cmd, 1);
+	result = inferior_eval(o->inferior, expr, o->frame, &is_error);
+	printf(is_error ? "error: " : "= ");
+	dvalue_print(result, false);
+	printf("\n");
+	dvalue_free(result);
 }
 
 static void

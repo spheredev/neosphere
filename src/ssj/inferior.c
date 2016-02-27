@@ -102,7 +102,7 @@ inferior_free(inferior_t* o)
 }
 
 bool
-inferior_tick(inferior_t* o)
+inferior_update(inferior_t* o)
 {
 	bool       is_active = true;
 	message_t* msg = NULL;
@@ -240,7 +240,7 @@ inferior_eval(inferior_t* o, const char* expr, int frame, bool* out_is_error)
 	message_add_int(msg, -(1 + frame));
 	msg = inferior_request(o, msg);
 	dvalue = dvalue_dup(message_get_dvalue(msg, 1));
-	*out_is_error = message_get_dvalue(msg, 0) != 0;
+	*out_is_error = message_get_int(msg, 0) != 0;
 	message_free(msg);
 	return dvalue;
 }

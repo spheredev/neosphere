@@ -20,7 +20,7 @@ void               inferiors_init       (void);
 void               inferiors_deinit     (void);
 inferior_t*        inferior_new         (const char* hostname, int port);
 void               inferior_free        (inferior_t* o);
-bool               inferior_tick        (inferior_t* o);
+bool               inferior_update      (inferior_t* o);
 bool               inferior_is_attached (const inferior_t* o);
 bool               inferior_is_running  (const inferior_t* o);
 const char*        inferior_author      (const inferior_t* o);

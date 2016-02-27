@@ -833,7 +833,7 @@ js_CreateStringFromCode(duk_context* ctx)
 	char cstr[2];
 
 	if (code < 0 || code > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "CreateStringFromCode(): Character code is out of ASCII range (%i)", code);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "CreateStringFromCode(): character code is out of ASCII range (%i)", code);
 	cstr[0] = (char)code; cstr[1] = '\0';
 	duk_push_string(ctx, cstr);
 	return 1;
