@@ -315,7 +315,7 @@ handle_up_down(session_t* o, command_t* cmd, int direction)
 	else if (new_frame < 0)
 		printf("can't go down any further.\n");
 	else {
-		num_steps = command_len(cmd) >= 1 ? command_get_int(cmd, 1) : 1;
+		num_steps = command_len(cmd) >= 2 ? command_get_int(cmd, 1) : 1;
 		new_frame = o->frame + num_steps * direction;
 		o->frame = new_frame < 0 ? 0
 			: new_frame >= backtrace_len(stack) ? backtrace_len(stack) - 1
