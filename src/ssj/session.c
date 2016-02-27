@@ -329,11 +329,12 @@ handle_vars(session_t* dis, command_t* cmd)
 {
 	const char*     name;
 	const dvalue_t* value;
-	objview_t*   var_list;
+	objview_t*      var_list;
 
 	int i;
 
-	var_list = inferior_get_locals(dis->inferior, 0);
+	if (!(var_list = inferior_get_locals(dis->inferior, 0)))
+		return;
 	for (i = 0; i < objview_len(var_list); ++i) {
 		name = objview_get_key(var_list, i);
 		value = objview_get_value(var_list, i);
