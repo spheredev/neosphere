@@ -370,9 +370,9 @@ handle_notify(inferior_t* o, const message_t* msg)
 		case NFY_DETACHING:
 			status = message_get_int(msg, 1);
 			if (status == 0)
-				printf("SSJ inferior #%u detached normally.\n", o->id_no);
+				printf("inferior #%u disconnected normally.\n", o->id_no);
 			else
-				printf("SSJ inferior #%u detached due to error.\n", o->id_no);
+				printf("inferior #%u disconnected due to an error.\n", o->id_no);
 			o->is_detached = true;
 			return false;
 		}

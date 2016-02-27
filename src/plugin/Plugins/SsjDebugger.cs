@@ -11,11 +11,11 @@ using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins.Views;
 using minisphere.Gdk.Forms;
-using minisphere.Gdk.Utility;
+using minisphere.Gdk.Duktape;
 
-namespace minisphere.Gdk.Debugger
+namespace minisphere.Gdk.Plugins
 {
-    class DebugSession : IDebugger, IDisposable
+    class SsjDebugger : IDebugger, IDisposable
     {
         private string sgmPath;
         private Process engineProcess;
@@ -28,7 +28,7 @@ namespace minisphere.Gdk.Debugger
         private bool expectDetach = false;
         private PluginMain plugin;
 
-        public DebugSession(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
+        public SsjDebugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
         {
             plugin = main;
             sgmPath = gamePath;
@@ -46,7 +46,7 @@ namespace minisphere.Gdk.Debugger
             updateTimer.Dispose();
         }
 
-        public DuktapeClient Duktape { get; private set; }
+        public Inferior Duktape { get; private set; }
         public string FileName { get; private set; }
         public int LineNumber { get; private set; }
         public bool Running { get; private set; }
@@ -84,7 +84,7 @@ namespace minisphere.Gdk.Debugger
             {
                 try
                 {
-                    Duktape = new DuktapeClient();
+                    Duktape = new Inferior();
                     Duktape.Attached += duktape_Attached;
                     Duktape.Detached += duktape_Detached;
                     Duktape.ErrorThrown += duktape_ErrorThrown;
@@ -110,8 +110,8 @@ namespace minisphere.Gdk.Debugger
             {
                 Attached?.Invoke(this, EventArgs.Empty);
 
-                Panes.Inspector.Session = this;
-                Panes.Errors.Session = this;
+                Panes.Inspector.Ssj = this;
+                Panes.Errors.Ssj = this;
                 Panes.Inspector.Enabled = false;
                 Panes.Console.Clear();
                 Panes.Errors.Clear();
@@ -119,7 +119,7 @@ namespace minisphere.Gdk.Debugger
 
                 Panes.Console.Print(string.Format("SSJ2 " + plugin.Version + " minisphere GUI Debugger"));
                 Panes.Console.Print(string.Format("a graphical JS debugger for Sphere Studio"));
-                Panes.Console.Print(string.Format("(c) 2016 Fat Cerberus"));
+                Panes.Console.Print(string.Format("(c) 2015-2016 Fat Cerberus"));
                 Panes.Console.Print("");
 
                 PluginManager.Core.Docking.Show(Panes.Inspector);
@@ -275,7 +275,7 @@ namespace minisphere.Gdk.Debugger
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
-                DebugSession me = (DebugSession)state;
+                SsjDebugger me = (SsjDebugger)state;
                 try
                 {
                     NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
@@ -295,7 +295,7 @@ namespace minisphere.Gdk.Debugger
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                DebugSession me = (DebugSession)state;
+                SsjDebugger me = (SsjDebugger)state;
                 var callStack = await me.Duktape.GetCallStack();
                 if (!me.Running)
                 {

@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
-using minisphere.Gdk.Debugger;
 
 namespace minisphere.Gdk.Plugins
 {
@@ -47,7 +46,7 @@ namespace minisphere.Gdk.Plugins
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
             string options = string.Format(@"--debug ""{0}""", gamePath);
             Process engine = Process.Start(enginePath, options);
-            return new DebugSession(_main, gamePath, enginePath, engine, project);
+            return new SsjDebugger(_main, gamePath, enginePath, engine, project);
         }
     }
 }

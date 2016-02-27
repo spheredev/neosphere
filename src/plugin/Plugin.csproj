@@ -86,8 +86,8 @@
     <Compile Include="DockPanes\InspectorPane.Designer.cs">
       <DependentUpon>InspectorPane.cs</DependentUpon>
     </Compile>
-    <Compile Include="Debugger\DebugSession.cs" />
-    <Compile Include="Utility\DuktapeClient.cs" />
+    <Compile Include="Plugins\SsjDebugger.cs" />
+    <Compile Include="Duktape\Inferior.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="PluginMain.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -139,7 +139,9 @@
   <ItemGroup>
     <None Include="Resources\folder.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Utility\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist "%25USERPROFILE%25\Documents\Sphere Studio\Plugins" mkdir "%25USERPROFILE%25\Documents\Sphere Studio\Plugins"

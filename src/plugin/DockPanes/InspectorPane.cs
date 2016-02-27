@@ -8,10 +8,10 @@ using System.Windows.Forms;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins.Views;
-using minisphere.Gdk.Debugger;
 using minisphere.Gdk.Forms;
+using minisphere.Gdk.Plugins;
 using minisphere.Gdk.Properties;
-using minisphere.Gdk.Utility;
+using minisphere.Gdk.Duktape;
 
 namespace minisphere.Gdk.DockPanes
 {
@@ -34,7 +34,7 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint { get { return DockHint.Right; } }
         public Bitmap DockIcon { get { return Resources.InspectorIcon; } }
 
-        public DebugSession Session { get; set; }
+        public SsjDebugger Ssj { get; set; }
 
         public void Clear()
         {
@@ -63,7 +63,7 @@ namespace minisphere.Gdk.DockPanes
 
         private async Task DoEvaluate(string expr)
         {
-            new JSViewer(expr, await Session.Duktape.Eval(expr, -(stackIndex + 1)))
+            new JSViewer(expr, await Ssj.Duktape.Eval(expr, -(stackIndex + 1)))
                 .ShowDialog(this);
         }
 
@@ -74,7 +74,7 @@ namespace minisphere.Gdk.DockPanes
             stackIndex = callIndex;
             CallsView.Items[stackIndex].ForeColor = Color.Blue;
             CallsView.SelectedItems.Clear();
-            this.variables = await Session.Duktape.GetLocals(-(stackIndex + 1));
+            this.variables = await Ssj.Duktape.GetLocals(-(stackIndex + 1));
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
             foreach (var k in this.variables.Keys)
@@ -120,7 +120,7 @@ namespace minisphere.Gdk.DockPanes
             if (CallsView.SelectedItems.Count > 0)
             {
                 ListViewItem item = CallsView.SelectedItems[0];
-                string filename = Session.ResolvePath(item.SubItems[1].Text);
+                string filename = Ssj.ResolvePath(item.SubItems[1].Text);
                 int lineNumber = int.Parse(item.SubItems[2].Text);
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
                 if (view == null)

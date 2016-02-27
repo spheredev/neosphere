@@ -11,15 +11,13 @@ struct source
 
 enum appnotify
 {
-	APPNFY_NOP,
-	APPNFY_DEBUG_PRINT,
+	APPNFY_DEBUG_PRINT = 0x01,
 };
 
 enum apprequest
 {
-	APPREQ_NOP,
-	APPREQ_GAME_INFO,
-	APPREQ_SOURCE,
+	APPREQ_GAME_INFO = 0x01,
+	APPREQ_SOURCE = 0x02,
 };
 
 static const int TCP_DEBUG_PORT = 1208;

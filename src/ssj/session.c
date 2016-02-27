@@ -35,7 +35,7 @@ command_db[] =
 
 static const char* find_verb        (command_t* cmd);
 static void        handle_backtrace (session_t* o, command_t* cmd);
-static void        handle_eval      (session_t* o, command_t* cmd);
+static void        handle_eval      (session_t* o, command_t* cmd, bool is_verbose);
 static void        handle_frame     (session_t* o, command_t* cmd);
 static void        handle_list      (session_t* o, command_t* cmd);
 static void        handle_up_down   (session_t* o, command_t* cmd, int direction);
@@ -117,7 +117,9 @@ session_run(session_t* o)
 		else if (strcmp(verb, "continue") == 0)
 			inferior_resume(o->inferior, OP_RESUME);
 		else if (strcmp(verb, "eval") == 0)
-			handle_eval(o, command);
+			handle_eval(o, command, false);
+		else if (strcmp(verb, "examine") == 0)
+			handle_eval(o, command, true);
 		else if (strcmp(verb, "frame") == 0)
 			handle_frame(o, command);
 		else if (strcmp(verb, "list") == 0)
@@ -197,16 +199,62 @@ handle_backtrace(session_t* o, command_t* cmd)
 }
 
 static void
-handle_eval(session_t* o, command_t* cmd)
+handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 {
-	const char* expr;
-	bool        is_error;
-	dvalue_t*   result;
+	const char*     expr;
+	const dvalue_t* getter;
+	dukptr_t        heapptr;
+	bool            is_accessor;
+	bool            is_error;
+	message_t*      msg;
+	int             prop_flags;
+	const dvalue_t* prop_key;
+	const dvalue_t* setter;
+	dvalue_t*       result;
+	
+	int idx = 0;
 
 	expr = command_get_string(cmd, 1);
 	result = inferior_eval(o->inferior, expr, o->frame, &is_error);
 	printf(is_error ? "error: " : "= ");
-	dvalue_print(result, false);
+	if (dvalue_tag(result) != DVALUE_OBJ)
+		dvalue_print(result, is_verbose);
+	else {
+		heapptr = dvalue_as_ptr(result);
+		msg = message_new(MESSAGE_REQ);
+		message_add_int(msg, REQ_INSPECT_PROPS);
+		message_add_heapptr(msg, heapptr);
+		message_add_int(msg, 0);
+		message_add_int(msg, INT_MAX);
+		if (!(msg = inferior_request(o->inferior, msg)))
+			return;
+		printf("{\n");
+		while (idx < message_len(msg)) {
+			prop_flags = message_get_int(msg, idx++);
+			prop_key = message_get_dvalue(msg, idx++);
+			is_accessor = (prop_flags & 0x008) != 0;
+			if (prop_flags & 0x100) {
+				idx += is_accessor ? 4 : 3;
+				continue;
+			}
+			printf("    prop ");
+			dvalue_print(prop_key, false);
+			printf(" = ");
+			if (!is_accessor)
+				dvalue_print(message_get_dvalue(msg, idx++), is_verbose);
+			else {
+				getter = message_get_dvalue(msg, idx++);
+				setter = message_get_dvalue(msg, idx++);
+				printf("{ get: ");
+				dvalue_print(getter, is_verbose);
+				printf(", set: ");
+				dvalue_print(setter, is_verbose);
+				printf(" }");
+			}
+			printf("\n");
+		}
+		printf("}");
+	}
 	printf("\n");
 	dvalue_free(result);
 }

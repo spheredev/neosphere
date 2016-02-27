@@ -37,6 +37,8 @@ enum req_command
 	REQ_GET_BYTECODE = 0x21,
 	REQ_APP_REQUEST = 0x22,
 	REQ_INSPECT_OBJ = 0x23,
+	REQ_INSPECT_PROP_KEY = 0x24,
+	REQ_INSPECT_PROPS = 0x25,
 };
 
 enum nfy_command

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace minisphere.Gdk.Utility
+namespace minisphere.Gdk.Duktape
 {
     enum DValue
     {
@@ -26,7 +26,7 @@ namespace minisphere.Gdk.Utility
         Lightfunc,
     }
 
-    enum RequestCode
+    enum Request
     {
         BasicInfo = 0x10,
         TriggerStatus = 0x11,
@@ -50,7 +50,7 @@ namespace minisphere.Gdk.Utility
         InspectHeapObject = 0x23,
     }
 
-    enum NotifyCode
+    enum Notify
     {
         Status = 0x01,
         Print = 0x02,
@@ -59,6 +59,12 @@ namespace minisphere.Gdk.Utility
         Throw = 0x05,
         Detaching = 0x06,
         AppNotify = 0x07,
+    }
+
+    enum AppRequest
+    {
+        GameInfo = 0x01,
+        Source = 0x02,
     }
 
     enum AppNotify
@@ -108,9 +114,9 @@ namespace minisphere.Gdk.Utility
     }
     
     /// <summary>
-    /// Allows remote control of a Duktape debug target over TCP.
+    /// Allows control of a Duktape debug target over TCP.
     /// </summary>
-    class DuktapeClient : IDisposable
+    class Inferior : IDisposable
     {
         private TcpClient tcp = new TcpClient() { NoDelay = true };
         private Thread messenger = null;
@@ -122,11 +128,11 @@ namespace minisphere.Gdk.Utility
         /// Constructs a DuktapeClient object used for communicating with a
         /// Duktape debuggee over TCP.
         /// </summary>
-        public DuktapeClient()
+        public Inferior()
         {
         }
 
-        ~DuktapeClient()
+        ~Inferior()
         {
             Dispose();
         }
@@ -237,7 +243,7 @@ namespace minisphere.Gdk.Utility
         /// <returns>The index assigned to the breakpoint by Duktape.</returns>
         public async Task<int> AddBreak(string filename, int lineNumber)
         {
-            var reply = await Converse(DValue.REQ, 0x18, filename, lineNumber);
+            var reply = await Converse(DValue.REQ, Request.AddBreak, filename, lineNumber);
             return reply[1];
         }
 
@@ -276,7 +282,7 @@ namespace minisphere.Gdk.Utility
             var code = string.Format(
                 @"(function() {{ try {{ return Duktape.enc('jx', eval(""{0}""), null, 3); }} catch (e) {{ return e.toString(); }} }}).call(this);",
                 expression.Replace(@"\", @"\\").Replace(@"""", @"\"""));
-            var reply = await Converse(DValue.REQ, 0x1E, code, stackOffset);
+            var reply = await Converse(DValue.REQ, Request.Eval, code, stackOffset);
             return reply[2];
         }
 
@@ -290,7 +296,7 @@ namespace minisphere.Gdk.Utility
         /// </returns>
         public async Task<Tuple<string, string, int>[]> GetCallStack()
         {
-            var reply = await Converse(DValue.REQ, 0x1C);
+            var reply = await Converse(DValue.REQ, Request.GetCallStack);
             var stack = new List<Tuple<string, string, int>>();
             int count = (reply.Length - 1) / 4;
             for (int i = 0; i < count; ++i)
@@ -314,7 +320,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task<IReadOnlyDictionary<string, string>> GetLocals(int stackOffset = -1)
         {
-            var reply = await Converse(DValue.REQ, 0x1D, stackOffset);
+            var reply = await Converse(DValue.REQ, Request.GetLocals, stackOffset);
             var variables = new Dictionary<string, string>();
             int count = (reply.Length - 1) / 2;
             for (int i = 0; i < count; ++i)
@@ -342,7 +348,7 @@ namespace minisphere.Gdk.Utility
         /// </returns>
         public async Task<Tuple<string, int>[]> ListBreak()
         {
-            var reply = await Converse(DValue.REQ, 0x17);
+            var reply = await Converse(DValue.REQ, Request.ListBreak);
             var count = (reply.Length - 1) / 2;
             List<Tuple<string, int>> list = new List<Tuple<string, int>>();
             for (int i = 0; i < count; ++i)
@@ -360,7 +366,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task Pause()
         {
-            await Converse(DValue.REQ, RequestCode.Pause);
+            await Converse(DValue.REQ, Request.Pause);
         }
 
         /// <summary>
@@ -369,7 +375,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task Resume()
         {
-            await Converse(DValue.REQ, RequestCode.Resume);
+            await Converse(DValue.REQ, Request.Resume);
         }
 
         /// <summary>
@@ -379,7 +385,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task StepInto()
         {
-            await Converse(DValue.REQ, RequestCode.StepInto);
+            await Converse(DValue.REQ, Request.StepInto);
         }
 
         /// <summary>
@@ -388,7 +394,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task StepOut()
         {
-            await Converse(DValue.REQ, RequestCode.StepOut);
+            await Converse(DValue.REQ, Request.StepOut);
         }
 
         /// <summary>
@@ -397,7 +403,7 @@ namespace minisphere.Gdk.Utility
         /// <returns></returns>
         public async Task StepOver()
         {
-            await Converse(DValue.REQ, RequestCode.StepOut);
+            await Converse(DValue.REQ, Request.StepOut);
         }
 
         private async Task<dynamic[]> Converse(params dynamic[] values)
@@ -554,7 +560,7 @@ namespace minisphere.Gdk.Utility
             }
         }
 
-        private void SendValue(RequestCode value)
+        private void SendValue(Request value)
         {
             SendValue((int)value);
         }
@@ -619,26 +625,26 @@ namespace minisphere.Gdk.Utility
                 }
                 if (message[0] == DValue.NFY)
                 {
-                    switch ((NotifyCode)message[1])
+                    switch ((Notify)message[1])
                     {
-                        case NotifyCode.Status:
+                        case Notify.Status:
                             FileName = message[3];
                             LineNumber = message[5];
                             Running = message[2] == 0;
                             Status?.Invoke(this, EventArgs.Empty);
                             break;
-                        case NotifyCode.Print:
+                        case Notify.Print:
                             Print?.Invoke(this, new TraceEventArgs("print: " + message[2]));
                             break;
-                        case NotifyCode.Alert:
+                        case Notify.Alert:
                             Alert?.Invoke(this, new TraceEventArgs(message[2]));
                             break;
-                        case NotifyCode.Throw:
+                        case Notify.Throw:
                             ErrorThrown?.Invoke(this, new ErrorThrownEventArgs(
                                 message[3], message[4], message[5],
                                 message[2] != 0));
                             break;
-                        case NotifyCode.AppNotify:
+                        case Notify.AppNotify:
                             switch ((AppNotify)message[2]) {
                                 case AppNotify.DebugPrint:
                                     Print?.Invoke(this, new TraceEventArgs("t: " + message[3]));
