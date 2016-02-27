@@ -292,7 +292,7 @@ handle_list(session_t* o, command_t* cmd)
 		lineno = command_get_int(cmd, 2);
 	}
 	if (!(source = inferior_get_source(o->inferior, filename)))
-		printf("source code unavailable for %s", filename);
+		printf("source is unavailable for %s.\n", filename);
 	else {
 		if (strcmp(filename, active_filename) != 0)
 			active_lineno = 0;
@@ -327,14 +327,22 @@ handle_up_down(session_t* o, command_t* cmd, int direction)
 static void
 handle_vars(session_t* dis, command_t* cmd)
 {
-	const char*     name;
-	const dvalue_t* value;
-	objview_t*      var_list;
+	const char*        function_name;
+	const char*        name;
+	const backtrace_t* stack;
+	const dvalue_t*    value;
+	objview_t*         var_list;
 
 	int i;
 
+	if (!(stack = inferior_get_stack(dis->inferior)))
+		return;
 	if (!(var_list = inferior_get_locals(dis->inferior, 0)))
 		return;
+	if (objview_len(var_list) == 0) {
+		function_name = backtrace_get_name(stack, dis->frame);
+		printf("no local variables in function %s.\n", function_name);
+	}
 	for (i = 0; i < objview_len(var_list); ++i) {
 		name = objview_get_key(var_list, i);
 		value = objview_get_value(var_list, i);
@@ -377,10 +385,10 @@ preview_frame(session_t* o, int frame)
 	filename = backtrace_get_filename(stack, frame);
 	lineno = backtrace_get_lineno(stack, frame);
 	if (lineno == 0)
-		printf("no source provided for system call\n");
+		printf("no source provided for system call.\n");
 	else {
 		if (!(source = inferior_get_source(o->inferior, filename)))
-			printf("source is unavailable for %s\n", filename);
+			printf("source is unavailable for %s.\n", filename);
 		else
 			source_print(source, lineno, 1, lineno);
 	}

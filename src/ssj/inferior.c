@@ -190,10 +190,11 @@ const backtrace_t*
 inferior_get_stack(inferior_t* dis)
 {
 	const char* filename;
+	const char* function_name;
 	int         line_no;
 	message_t*  msg;
-	const char* name;
 	int         num_frames;
+	char*       view_name;
 
 	int i;
 
@@ -205,10 +206,14 @@ inferior_get_stack(inferior_t* dis)
 		num_frames = message_len(msg) / 4;
 		dis->stack = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
-			name = message_get_string(msg, i * 4 + 1);
+			function_name = message_get_string(msg, i * 4 + 1);
+			if (strcmp(function_name, "") == 0)
+				view_name = strdup("[anon]");
+			else
+				view_name = strnewf("%s()", function_name);
 			filename = message_get_string(msg, i * 4);
 			line_no = message_get_int(msg, i * 4 + 2);
-			backtrace_add(dis->stack, name, filename, line_no);
+			backtrace_add(dis->stack, view_name, filename, line_no);
 		}
 		message_free(msg);
 	}
