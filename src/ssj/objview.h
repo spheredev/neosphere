@@ -15,9 +15,9 @@ enum prop_tag
 typedef
 enum prop_flag
 {
-	PROP_ENUMERABLE,
-	PROP_WRITABLE,
-	PROP_CONFIGURABLE,
+	PROP_WRITABLE     = 1 << 0,
+	PROP_ENUMERABLE   = 1 << 1,
+	PROP_CONFIGURABLE = 1 << 2,
 } prop_flag_t;
 
 objview_t*      objview_new          (void);
