@@ -24,14 +24,14 @@ struct inferior
 	bool           is_paused;
 	char*          title;
 	char*          author;
-	backtrace_t*   stack;
+	backtrace_t*   calls;
 	int            frame_index;
 	bool           have_debug_info;
 	int            line_no;
 	uint8_t        ptr_size;
 	socket_t*      socket;
 	struct source* sources;
-	objview_t*     var_list;
+	objview_t*     vars;
 };
 
 static void clear_pause_cache (inferior_t* obj);
@@ -151,44 +151,6 @@ inferior_title(const inferior_t* obj)
 	return obj->title;
 }
 
-const source_t*
-inferior_get_source(inferior_t* obj, const char* filename)
-{
-	int         cache_id;
-	message_t*  msg;
-	source_t*   source;
-	const char* text;
-
-	int i;
-
-	for (i = 0; i < obj->num_sources; ++i) {
-		if (strcmp(filename, obj->sources[i].filename) == 0)
-			return obj->sources[i].source;
-	}
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_APP_REQUEST);
-	message_add_int(msg, APPREQ_SOURCE);
-	message_add_string(msg, filename);
-	if (!(msg = inferior_request(obj, msg)))
-		goto on_error;
-	if (message_tag(msg) == MESSAGE_ERR)
-		goto on_error;
-	text = message_get_string(msg, 0);
-	source = source_new(text);
-
-	cache_id = obj->num_sources++;
-	obj->sources = realloc(obj->sources, obj->num_sources * sizeof(struct source));
-	obj->sources[cache_id].filename = strdup(filename);
-	obj->sources[cache_id].source = source;
-
-	return source;
-
-on_error:
-	message_free(msg);
-	return NULL;
-}
-
 const backtrace_t*
 inferior_get_calls(inferior_t* obj)
 {
@@ -201,13 +163,13 @@ inferior_get_calls(inferior_t* obj)
 
 	int i;
 
-	if (obj->stack == NULL) {
+	if (obj->calls == NULL) {
 		msg = message_new(MESSAGE_REQ);
 		message_add_int(msg, REQ_GET_CALLSTACK);
 		if (!(msg = inferior_request(obj, msg)))
 			return NULL;
 		num_frames = message_len(msg) / 4;
-		obj->stack = backtrace_new();
+		obj->calls = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
 			function_name = message_get_string(msg, i * 4 + 1);
 			if (strcmp(function_name, "") == 0)
@@ -216,87 +178,16 @@ inferior_get_calls(inferior_t* obj)
 				view_name = strnewf("%s()", function_name);
 			filename = message_get_string(msg, i * 4);
 			line_no = message_get_int(msg, i * 4 + 2);
-			backtrace_add(obj->stack, view_name, filename, line_no);
+			backtrace_add(obj->calls, view_name, filename, line_no);
 		}
 		message_free(msg);
 	}
 
-	return obj->stack;
-}
-
-void
-inferior_detach(inferior_t* obj)
-{
-	message_t* msg;
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_DETACH);
-	if (!(msg = inferior_request(obj, msg)))
-		return;
-	message_free(msg);
-	while (inferior_is_attached(obj))
-		inferior_update(obj);
-}
-
-dvalue_t*
-inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
-{
-	dvalue_t*  dvalue = NULL;
-	message_t* msg;
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_EVAL);
-	message_add_string(msg, expr);
-	message_add_int(msg, -(1 + frame));
-	msg = inferior_request(obj, msg);
-	dvalue = dvalue_dup(message_get_dvalue(msg, 1));
-	*out_is_error = message_get_int(msg, 0) != 0;
-	message_free(msg);
-	return dvalue;
-}
-
-const objview_t*
-inferior_get_vars(inferior_t* obj, int frame)
-{
-	const char*     name;
-	message_t*      msg;
-	int             num_vars;
-	const dvalue_t* value;
-
-	int i;
-
-	if (obj->var_list != NULL)
-		return obj->var_list;
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_GET_LOCALS);
-	message_add_int(msg, -frame - 1);
-	if (!(msg = inferior_request(obj, msg)))
-		return NULL;
-	obj->var_list = objview_new();
-	num_vars = message_len(msg) / 2;
-	for (i = 0; i < num_vars; ++i) {
-		name = message_get_string(msg, i * 2 + 0);
-		value = message_get_dvalue(msg, i * 2 + 1);
-		objview_add_value(obj->var_list, name, value);
-	}
-	return obj->var_list;
-}
-
-bool
-inferior_pause(inferior_t* obj)
-{
-	message_t* msg;
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_PAUSE);
-	if (!(msg = inferior_request(obj, msg)))
-		return false;
-	return true;
+	return obj->calls;
 }
 
 objview_t*
-inferior_pull_props(inferior_t* obj, remote_ptr_t heapptr)
+inferior_get_object(inferior_t* obj, remote_ptr_t heapptr)
 {
 	const dvalue_t* getter;
 	bool            is_accessor;
@@ -336,6 +227,115 @@ inferior_pull_props(inferior_t* obj, remote_ptr_t heapptr)
 	}
 	message_free(msg);
 	return view;
+}
+
+const source_t*
+inferior_get_source(inferior_t* obj, const char* filename)
+{
+	int         cache_id;
+	message_t*  msg;
+	source_t*   source;
+	const char* text;
+
+	int i;
+
+	for (i = 0; i < obj->num_sources; ++i) {
+		if (strcmp(filename, obj->sources[i].filename) == 0)
+			return obj->sources[i].source;
+	}
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_APP_REQUEST);
+	message_add_int(msg, APPREQ_SOURCE);
+	message_add_string(msg, filename);
+	if (!(msg = inferior_request(obj, msg)))
+		goto on_error;
+	if (message_tag(msg) == MESSAGE_ERR)
+		goto on_error;
+	text = message_get_string(msg, 0);
+	source = source_new(text);
+
+	cache_id = obj->num_sources++;
+	obj->sources = realloc(obj->sources, obj->num_sources * sizeof(struct source));
+	obj->sources[cache_id].filename = strdup(filename);
+	obj->sources[cache_id].source = source;
+
+	return source;
+
+on_error:
+	message_free(msg);
+	return NULL;
+}
+
+const objview_t*
+inferior_get_vars(inferior_t* obj, int frame)
+{
+	const char*     name;
+	message_t*      msg;
+	int             num_vars;
+	const dvalue_t* value;
+
+	int i;
+
+	if (obj->vars == NULL) {
+		msg = message_new(MESSAGE_REQ);
+		message_add_int(msg, REQ_GET_LOCALS);
+		message_add_int(msg, -frame - 1);
+		if (!(msg = inferior_request(obj, msg)))
+			return NULL;
+		obj->vars = objview_new();
+		num_vars = message_len(msg) / 2;
+		for (i = 0; i < num_vars; ++i) {
+			name = message_get_string(msg, i * 2 + 0);
+			value = message_get_dvalue(msg, i * 2 + 1);
+			objview_add_value(obj->vars, name, value);
+		}
+	}
+
+	return obj->vars;
+}
+
+void
+inferior_detach(inferior_t* obj)
+{
+	message_t* msg;
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_DETACH);
+	if (!(msg = inferior_request(obj, msg)))
+		return;
+	message_free(msg);
+	while (inferior_is_attached(obj))
+		inferior_update(obj);
+}
+
+dvalue_t*
+inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
+{
+	dvalue_t*  dvalue = NULL;
+	message_t* msg;
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_EVAL);
+	message_add_string(msg, expr);
+	message_add_int(msg, -(1 + frame));
+	msg = inferior_request(obj, msg);
+	dvalue = dvalue_dup(message_get_dvalue(msg, 1));
+	*out_is_error = message_get_int(msg, 0) != 0;
+	message_free(msg);
+	return dvalue;
+}
+
+bool
+inferior_pause(inferior_t* obj)
+{
+	message_t* msg;
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_PAUSE);
+	if (!(msg = inferior_request(obj, msg)))
+		return false;
+	return true;
 }
 
 message_t*
@@ -385,10 +385,10 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 static void
 clear_pause_cache(inferior_t* obj)
 {
-	backtrace_free(obj->stack);
-	objview_free(obj->var_list);
-	obj->stack = NULL;
-	obj->var_list = NULL;
+	backtrace_free(obj->calls);
+	objview_free(obj->vars);
+	obj->calls = NULL;
+	obj->vars = NULL;
 }
 
 static bool

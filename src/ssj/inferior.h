@@ -26,13 +26,13 @@ bool               inferior_is_attached (const inferior_t* obj);
 bool               inferior_is_running  (const inferior_t* obj);
 const char*        inferior_author      (const inferior_t* obj);
 const char*        inferior_title       (const inferior_t* obj);
-const source_t*    inferior_get_source  (inferior_t* obj, const char* filename);
 const backtrace_t* inferior_get_calls   (inferior_t* obj);
+objview_t*         inferior_get_object  (inferior_t* obj, remote_ptr_t heapptr);
+const source_t*    inferior_get_source  (inferior_t* obj, const char* filename);
+const objview_t*   inferior_get_vars    (inferior_t* obj, int frame);
 void               inferior_detach      (inferior_t* obj);
 dvalue_t*          inferior_eval        (inferior_t* obj, const char* expr, int frame, bool* out_is_error);
-const objview_t*   inferior_get_vars    (inferior_t* obj, int frame);
 bool               inferior_pause       (inferior_t* obj);
-objview_t*         inferior_pull_props  (inferior_t* obj, remote_ptr_t heapptr);
 message_t*         inferior_request     (inferior_t* obj, message_t* msg);
 bool               inferior_resume      (inferior_t* obj, resume_op_t op);
 

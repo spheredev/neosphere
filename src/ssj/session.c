@@ -91,20 +91,20 @@ static void
 do_command_line(session_t* obj)
 {
 	char               buffer[4096];
+	const backtrace_t* calls;
 	char               ch;
 	command_t*         command;
 	const char*        filename;
 	const char*        function_name;
 	int                line_no;
-	const backtrace_t* stack;
 	const char*        verb;
 
 	int idx;
 
-	stack = inferior_get_calls(obj->inferior);
-	function_name = backtrace_get_name(stack, obj->frame);
-	filename = backtrace_get_filename(stack, obj->frame);
-	line_no = backtrace_get_lineno(stack, obj->frame);
+	calls = inferior_get_calls(obj->inferior);
+	function_name = backtrace_get_name(calls, obj->frame);
+	filename = backtrace_get_filename(calls, obj->frame);
+	line_no = backtrace_get_lineno(calls, obj->frame);
 	if (line_no != 0)
 		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1mssj:\33[m ", filename, line_no, function_name);
 	else
@@ -214,11 +214,11 @@ find_verb(command_t* command)
 static void
 handle_backtrace(session_t* obj, command_t* cmd)
 {
-	const backtrace_t* stack;
+	const backtrace_t* calls;
 
-	if (!(stack = inferior_get_calls(obj->inferior)))
+	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
-	backtrace_print(stack, obj->frame, true);
+	backtrace_print(calls, obj->frame, true);
 }
 
 static void
@@ -229,8 +229,8 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 	remote_ptr_t    heapptr;
 	bool            is_accessor;
 	bool            is_error;
+	objview_t*      object;
 	const char*     prop_key;
-	objview_t*      prop_list;
 	const dvalue_t* setter;
 	dvalue_t*       result;
 
@@ -243,18 +243,18 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		dvalue_print(result, is_verbose);
 	else {
 		heapptr = dvalue_as_ptr(result);
-		if (!(prop_list = inferior_pull_props(obj->inferior, heapptr)))
+		if (!(object = inferior_get_object(obj->inferior, heapptr)))
 			return;
 		printf("{\n");
-		for (i = 0; i < objview_len(prop_list); ++i) {
-			is_accessor = objview_get_tag(prop_list, i) == PROP_ACCESSOR;
-			prop_key = objview_get_key(prop_list, i);
+		for (i = 0; i < objview_len(object); ++i) {
+			is_accessor = objview_get_tag(object, i) == PROP_ACCESSOR;
+			prop_key = objview_get_key(object, i);
 			printf("    \"%s\" : ", prop_key);
 			if (!is_accessor)
-				dvalue_print(objview_get_value(prop_list, i), is_verbose);
+				dvalue_print(objview_get_value(object, i), is_verbose);
 			else {
-				getter = objview_get_getter(prop_list, i);
-				setter = objview_get_setter(prop_list, i);
+				getter = objview_get_getter(object, i);
+				setter = objview_get_setter(object, i);
 				printf("{ get: ");
 				dvalue_print(getter, is_verbose);
 				printf(", set: ");
@@ -266,22 +266,22 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		printf("}");
 	}
 	printf("\n");
-	objview_free(prop_list);
+	objview_free(object);
 	dvalue_free(result);
 }
 
 static void
 handle_frame(session_t* obj, command_t* cmd)
 {
+	const backtrace_t* calls;
 	int                frame;
-	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_calls(obj->inferior)))
+	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
 	frame = obj->frame;
 	if (command_len(cmd) >= 2)
 		frame = command_get_int(cmd, 1);
-	if (frame < 0 || frame >= backtrace_len(stack))
+	if (frame < 0 || frame >= backtrace_len(calls))
 		printf("stack frame #%2d doesn't exist.\n", frame);
 	else {
 		obj->frame = frame;
@@ -300,15 +300,15 @@ handle_list(session_t* obj, command_t* cmd)
 {
 	const char*        active_filename;
 	int                active_lineno = 0;
+	const backtrace_t* calls;
 	const char*        filename;
 	int                lineno;
 	int                num_lines = 10;
 	const source_t*    source;
-	const backtrace_t* stack;
 
-	stack = inferior_get_calls(obj->inferior);
-	active_filename = backtrace_get_filename(stack, obj->frame);
-	active_lineno = backtrace_get_lineno(stack, obj->frame);
+	calls = inferior_get_calls(obj->inferior);
+	active_filename = backtrace_get_filename(calls, obj->frame);
+	active_lineno = backtrace_get_lineno(calls, obj->frame);
 	filename = active_filename;
 	lineno = active_lineno;
 	if (command_len(cmd) >= 2)
@@ -329,22 +329,22 @@ handle_list(session_t* obj, command_t* cmd)
 static void
 handle_up_down(session_t* obj, command_t* cmd, int direction)
 {
+	const backtrace_t* calls;
 	int                new_frame;
 	int                num_steps;
-	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_calls(obj->inferior)))
+	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
 	new_frame = obj->frame + direction;
-	if (new_frame >= backtrace_len(stack))
-		printf("Innermost frame: Can't go up any further.\n");
+	if (new_frame >= backtrace_len(calls))
+		printf("innermost frame: can't go up any further.\n");
 	else if (new_frame < 0)
-		printf("Outermost frame: Can't go down any further.\n");
+		printf("outermost frame: can't go down any further.\n");
 	else {
 		num_steps = command_len(cmd) >= 2 ? command_get_int(cmd, 1) : 1;
 		new_frame = obj->frame + num_steps * direction;
 		obj->frame = new_frame < 0 ? 0
-			: new_frame >= backtrace_len(stack) ? backtrace_len(stack) - 1
+			: new_frame >= backtrace_len(calls) ? backtrace_len(calls) - 1
 			: new_frame;
 		preview_frame(obj, obj->frame);
 	}
@@ -356,22 +356,22 @@ handle_vars(session_t* obj, command_t* cmd)
 	const backtrace_t* calls;
 	const char*        call_name;
 	const dvalue_t*    value;
-	const objview_t*   var_list;
+	const objview_t*   vars;
 	const char*        var_name;
 
 	int i;
 
 	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
-	if (!(var_list = inferior_get_vars(obj->inferior, obj->frame)))
+	if (!(vars = inferior_get_vars(obj->inferior, obj->frame)))
 		return;
-	if (objview_len(var_list) == 0) {
+	if (objview_len(vars) == 0) {
 		call_name = backtrace_get_name(calls, obj->frame);
 		printf("%s has no local variables.\n", call_name);
 	}
-	for (i = 0; i < objview_len(var_list); ++i) {
-		var_name = objview_get_key(var_list, i);
-		value = objview_get_value(var_list, i);
+	for (i = 0; i < objview_len(vars); ++i) {
+		var_name = objview_get_key(vars, i);
+		value = objview_get_value(vars, i);
 		printf("var %s = ", var_name);
 		dvalue_print(value, false);
 		printf("\n");
@@ -382,11 +382,11 @@ static void
 handle_where(session_t* obj, command_t* cmd)
 {
 	int                frame = 0;
-	const backtrace_t* stack;
+	const backtrace_t* calls;
 
-	if (!(stack = inferior_get_calls(obj->inferior)))
+	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
-	while (backtrace_get_lineno(stack, frame) <= 0)
+	while (backtrace_get_lineno(calls, frame) <= 0)
 		++frame;
 	preview_frame(obj, obj->frame);
 }
@@ -400,16 +400,16 @@ handle_quit(session_t* obj, command_t* cmd)
 static void
 preview_frame(session_t* obj, int frame)
 {
+	const backtrace_t* calls;
 	const char*        filename;
 	int                lineno;
 	const source_t*    source;
-	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_calls(obj->inferior)))
+	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
-	backtrace_print(stack, frame, false);
-	filename = backtrace_get_filename(stack, frame);
-	lineno = backtrace_get_lineno(stack, frame);
+	backtrace_print(calls, frame, false);
+	filename = backtrace_get_filename(calls, frame);
+	lineno = backtrace_get_lineno(calls, frame);
 	if (lineno == 0)
 		printf("system call - no source provided\n");
 	else {
