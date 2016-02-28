@@ -31,7 +31,6 @@ struct inferior
 	uint8_t        ptr_size;
 	socket_t*      socket;
 	struct source* sources;
-	objview_t*     vars;
 };
 
 static void clear_pause_cache (inferior_t* obj);
@@ -154,12 +153,12 @@ inferior_title(const inferior_t* obj)
 const backtrace_t*
 inferior_get_calls(inferior_t* obj)
 {
+	char*       call_name;
 	const char* filename;
 	const char* function_name;
 	int         line_no;
 	message_t*  msg;
 	int         num_frames;
-	char*       view_name;
 
 	int i;
 
@@ -173,12 +172,12 @@ inferior_get_calls(inferior_t* obj)
 		for (i = 0; i < num_frames; ++i) {
 			function_name = message_get_string(msg, i * 4 + 1);
 			if (strcmp(function_name, "") == 0)
-				view_name = strdup("[anon]");
+				call_name = strdup("[anon]");
 			else
-				view_name = strnewf("%s()", function_name);
+				call_name = strnewf("%s()", function_name);
 			filename = message_get_string(msg, i * 4);
 			line_no = message_get_int(msg, i * 4 + 2);
-			backtrace_add(obj->calls, view_name, filename, line_no);
+			backtrace_add(obj->calls, call_name, filename, line_no);
 		}
 		message_free(msg);
 	}
@@ -187,8 +186,9 @@ inferior_get_calls(inferior_t* obj)
 }
 
 objview_t*
-inferior_get_object(inferior_t* obj, remote_ptr_t heapptr)
+inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 {
+	unsigned int    flags;
 	const dvalue_t* getter;
 	bool            is_accessor;
 	int             index = 0;
@@ -215,14 +215,18 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr)
 			index += is_accessor ? 2 : 1;
 			continue;
 		}
+		flags = 0x0;
+		if (prop_flags & 0x01) flags |= PROP_WRITABLE;
+		if (prop_flags & 0x02) flags |= PROP_ENUMERABLE;
+		if (prop_flags & 0x04) flags |= PROP_CONFIGURABLE;
 		if (is_accessor) {
 			getter = message_get_dvalue(msg, index++);
 			setter = message_get_dvalue(msg, index++);
-			objview_add_accessor(view, prop_key, getter, setter);
+			objview_add_accessor(view, prop_key, getter, setter, flags);
 		}
 		else {
 			value = message_get_dvalue(msg, index++);
-			objview_add_value(view, prop_key, value);
+			objview_add_value(view, prop_key, value, flags);
 		}
 	}
 	message_free(msg);
@@ -267,32 +271,30 @@ on_error:
 	return NULL;
 }
 
-const objview_t*
+objview_t*
 inferior_get_vars(inferior_t* obj, int frame)
 {
 	const char*     name;
 	message_t*      msg;
 	int             num_vars;
 	const dvalue_t* value;
+	objview_t*      vars;
 
 	int i;
 
-	if (obj->vars == NULL) {
-		msg = message_new(MESSAGE_REQ);
-		message_add_int(msg, REQ_GET_LOCALS);
-		message_add_int(msg, -frame - 1);
-		if (!(msg = inferior_request(obj, msg)))
-			return NULL;
-		obj->vars = objview_new();
-		num_vars = message_len(msg) / 2;
-		for (i = 0; i < num_vars; ++i) {
-			name = message_get_string(msg, i * 2 + 0);
-			value = message_get_dvalue(msg, i * 2 + 1);
-			objview_add_value(obj->vars, name, value);
-		}
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_GET_LOCALS);
+	message_add_int(msg, -frame - 1);
+	if (!(msg = inferior_request(obj, msg)))
+		return NULL;
+	vars = objview_new();
+	num_vars = message_len(msg) / 2;
+	for (i = 0; i < num_vars; ++i) {
+		name = message_get_string(msg, i * 2 + 0);
+		value = message_get_dvalue(msg, i * 2 + 1);
+		objview_add_value(vars, name, value, 0x0);
 	}
-
-	return obj->vars;
+	return vars;
 }
 
 void
@@ -386,9 +388,7 @@ static void
 clear_pause_cache(inferior_t* obj)
 {
 	backtrace_free(obj->calls);
-	objview_free(obj->vars);
 	obj->calls = NULL;
-	obj->vars = NULL;
 }
 
 static bool

@@ -41,6 +41,7 @@ static void        handle_eval      (session_t* obj, command_t* cmd, bool is_ver
 static void        handle_frame     (session_t* obj, command_t* cmd);
 static void        handle_help      (session_t* obj, command_t* cmd);
 static void        handle_list      (session_t* obj, command_t* cmd);
+static void        handle_resume    (session_t* obj, command_t* cmd, resume_op_t op);
 static void        handle_up_down   (session_t* obj, command_t* cmd, int direction);
 static void        handle_vars      (session_t* obj, command_t* cmd);
 static void        handle_where     (session_t* obj, command_t* cmd);
@@ -67,12 +68,15 @@ session_free(session_t* obj)
 void
 session_run(session_t* obj, bool run_now)
 {
-	if (run_now)
+	if (run_now) {
 		inferior_resume(obj->inferior, OP_RESUME);
-	while (inferior_is_attached(obj->inferior)) {
-		autoselect_frame(obj);
-		do_command_line(obj);
+		printf("\n");
 	}
+	autoselect_frame(obj);
+	preview_frame(obj, obj->frame);
+	
+	while (inferior_is_attached(obj->inferior))
+		do_command_line(obj);
 	printf("SSJ session terminated.\n");
 }
 
@@ -83,7 +87,7 @@ autoselect_frame(session_t* obj)
 
 	calls = inferior_get_calls(obj->inferior);
 	obj->frame = 0;
-	while (backtrace_get_lineno(calls, obj->frame) == 0)
+	while (backtrace_get_linenum(calls, obj->frame) == 0)
 		++obj->frame;
 }
 
@@ -102,9 +106,9 @@ do_command_line(session_t* obj)
 	int idx;
 
 	calls = inferior_get_calls(obj->inferior);
-	function_name = backtrace_get_name(calls, obj->frame);
+	function_name = backtrace_get_call_name(calls, obj->frame);
 	filename = backtrace_get_filename(calls, obj->frame);
-	line_no = backtrace_get_lineno(calls, obj->frame);
+	line_no = backtrace_get_linenum(calls, obj->frame);
 	if (line_no != 0)
 		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1mssj:\33[m ", filename, line_no, function_name);
 	else
@@ -138,7 +142,7 @@ do_command_line(session_t* obj)
 	else if (strcmp(verb, "down") == 0)
 		handle_up_down(obj, command, -1);
 	else if (strcmp(verb, "continue") == 0)
-		inferior_resume(obj->inferior, OP_RESUME);
+		handle_resume(obj, command, OP_RESUME);
 	else if (strcmp(verb, "eval") == 0)
 		handle_eval(obj, command, false);
 	else if (strcmp(verb, "examine") == 0)
@@ -148,11 +152,11 @@ do_command_line(session_t* obj)
 	else if (strcmp(verb, "list") == 0)
 		handle_list(obj, command);
 	else if (strcmp(verb, "stepover") == 0)
-		inferior_resume(obj->inferior, OP_STEP_OVER);
+		handle_resume(obj, command, OP_STEP_OVER);
 	else if (strcmp(verb, "stepin") == 0)
-		inferior_resume(obj->inferior, OP_STEP_IN);
+		handle_resume(obj, command, OP_STEP_IN);
 	else if (strcmp(verb, "stepout") == 0)
-		inferior_resume(obj->inferior, OP_STEP_OUT);
+		handle_resume(obj, command, OP_STEP_OUT);
 	else if (strcmp(verb, "vars") == 0)
 		handle_vars(obj, command);
 	else if (strcmp(verb, "where") == 0)
@@ -222,6 +226,17 @@ handle_backtrace(session_t* obj, command_t* cmd)
 }
 
 static void
+handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
+{
+	inferior_resume(obj->inferior, op);
+	if (inferior_is_attached(obj->inferior))
+		autoselect_frame(obj);
+	if (op == OP_RESUME)
+		printf("\n");
+	preview_frame(obj, obj->frame);
+}
+
+static void
 handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 {
 	const char*     expr;
@@ -230,6 +245,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 	bool            is_accessor;
 	bool            is_error;
 	objview_t*      object;
+	unsigned int    prop_flags;
 	const char*     prop_key;
 	const dvalue_t* setter;
 	dvalue_t*       result;
@@ -243,13 +259,20 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		dvalue_print(result, is_verbose);
 	else {
 		heapptr = dvalue_as_ptr(result);
-		if (!(object = inferior_get_object(obj->inferior, heapptr)))
+		if (!(object = inferior_get_object(obj->inferior, heapptr, is_verbose)))
 			return;
 		printf("{\n");
 		for (i = 0; i < objview_len(object); ++i) {
 			is_accessor = objview_get_tag(object, i) == PROP_ACCESSOR;
 			prop_key = objview_get_key(object, i);
-			printf("    \"%s\" : ", prop_key);
+			prop_flags = objview_get_flags(object, i);
+			if (!(prop_flags & PROP_ENUMERABLE) && !is_verbose)
+				continue;
+			printf("    %s%s%s  \"%s\" : ",
+				prop_flags & PROP_WRITABLE ? "w" : "-",
+				prop_flags & PROP_ENUMERABLE ? "e" : "-",
+				prop_flags & PROP_CONFIGURABLE ? "c" : "-",
+				prop_key);
 			if (!is_accessor)
 				dvalue_print(objview_get_value(object, i), is_verbose);
 			else {
@@ -264,9 +287,9 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			printf("\n");
 		}
 		printf("}");
+		objview_free(object);
 	}
 	printf("\n");
-	objview_free(object);
 	dvalue_free(result);
 }
 
@@ -308,7 +331,7 @@ handle_list(session_t* obj, command_t* cmd)
 
 	calls = inferior_get_calls(obj->inferior);
 	active_filename = backtrace_get_filename(calls, obj->frame);
-	active_lineno = backtrace_get_lineno(calls, obj->frame);
+	active_lineno = backtrace_get_linenum(calls, obj->frame);
 	filename = active_filename;
 	lineno = active_lineno;
 	if (command_len(cmd) >= 2)
@@ -366,7 +389,7 @@ handle_vars(session_t* obj, command_t* cmd)
 	if (!(vars = inferior_get_vars(obj->inferior, obj->frame)))
 		return;
 	if (objview_len(vars) == 0) {
-		call_name = backtrace_get_name(calls, obj->frame);
+		call_name = backtrace_get_call_name(calls, obj->frame);
 		printf("%s has no local variables.\n", call_name);
 	}
 	for (i = 0; i < objview_len(vars); ++i) {
@@ -386,7 +409,7 @@ handle_where(session_t* obj, command_t* cmd)
 
 	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
-	while (backtrace_get_lineno(calls, frame) <= 0)
+	while (backtrace_get_linenum(calls, frame) <= 0)
 		++frame;
 	preview_frame(obj, obj->frame);
 }
@@ -409,7 +432,7 @@ preview_frame(session_t* obj, int frame)
 		return;
 	backtrace_print(calls, frame, false);
 	filename = backtrace_get_filename(calls, frame);
-	lineno = backtrace_get_lineno(calls, frame);
+	lineno = backtrace_get_linenum(calls, frame);
 	if (lineno == 0)
 		printf("system call - no source provided\n");
 	else {

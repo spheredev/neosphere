@@ -46,7 +46,7 @@ backtrace_len(const backtrace_t* obj)
 }
 
 const char*
-backtrace_get_name(const backtrace_t* obj, int index)
+backtrace_get_call_name(const backtrace_t* obj, int index)
 {
 	return obj->frames[index].name;
 }
@@ -58,19 +58,19 @@ backtrace_get_filename(const backtrace_t* obj, int index)
 }
 
 int
-backtrace_get_lineno(const backtrace_t* obj, int index)
+backtrace_get_linenum(const backtrace_t* obj, int index)
 {
 	return obj->frames[index].lineno;
 }
 
 void
-backtrace_add(backtrace_t* obj, const char* name, const char* filename, int line_no)
+backtrace_add(backtrace_t* obj, const char* call_name, const char* filename, int line_no)
 {
 	int index;
 	
 	index = obj->num_frames++;
 	obj->frames = realloc(obj->frames, obj->num_frames * sizeof(struct frame));
-	obj->frames[index].name = strdup(name);
+	obj->frames[index].name = strdup(call_name);
 	obj->frames[index].filename = strdup(filename);
 	obj->frames[index].lineno = line_no;
 }
@@ -86,9 +86,9 @@ backtrace_print(const backtrace_t* obj, int active_frame, bool show_all)
 	int i;
 
 	for (i = 0; i < backtrace_len(obj); ++i) {
-		name = backtrace_get_name(obj, i);
+		name = backtrace_get_call_name(obj, i);
 		filename = backtrace_get_filename(obj, i);
-		line_no = backtrace_get_lineno(obj, i);
+		line_no = backtrace_get_linenum(obj, i);
 		if (i == active_frame || show_all) {
 			arrow = i == active_frame ? "=>" : "  ";
 			if (line_no > 0)

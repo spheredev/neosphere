@@ -5,11 +5,12 @@
 
 struct entry
 {
-	char*      key;
-	prop_tag_t tag;
-	dvalue_t*  getter;
-	dvalue_t*  setter;
-	dvalue_t*  value;
+	char*        key;
+	prop_tag_t   tag;
+	unsigned int flags;
+	dvalue_t*    getter;
+	dvalue_t*    setter;
+	dvalue_t*    value;
 };
 
 struct objview
@@ -47,6 +48,12 @@ objview_free(objview_t* obj)
 		dvalue_free(obj->props[i].value);
 	}
 	free(obj);
+}
+
+unsigned int
+objview_get_flags(const objview_t* obj, int index)
+{
+	return obj->props[index].flags;
 }
 
 int
@@ -88,7 +95,7 @@ objview_get_value(const objview_t* obj, int index)
 }
 
 void
-objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, const dvalue_t* setter)
+objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, const dvalue_t* setter, unsigned int flags)
 {
 	int idx;
 
@@ -101,10 +108,11 @@ objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, co
 	obj->props[idx].key = strdup(key);
 	obj->props[idx].getter = dvalue_dup(getter);
 	obj->props[idx].setter = dvalue_dup(setter);
+	obj->props[idx].flags = flags;
 }
 
 void
-objview_add_value(objview_t* obj, const char* key, const dvalue_t* value)
+objview_add_value(objview_t* obj, const char* key, const dvalue_t* value, unsigned int flags)
 {
 	int idx;
 
@@ -116,4 +124,5 @@ objview_add_value(objview_t* obj, const char* key, const dvalue_t* value)
 	obj->props[idx].tag = PROP_VALUE;
 	obj->props[idx].key = strdup(key);
 	obj->props[idx].value = dvalue_dup(value);
+	obj->props[idx].flags = flags;
 }
