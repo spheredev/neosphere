@@ -30,9 +30,9 @@ const source_t*    inferior_get_source  (inferior_t* dis, const char* filename);
 const backtrace_t* inferior_get_stack   (inferior_t* dis);
 void               inferior_detach      (inferior_t* dis);
 dvalue_t*          inferior_eval        (inferior_t* dis, const char* expr, int frame, bool* out_is_error);
-objview_t*      inferior_get_locals  (inferior_t* dis, int frame);
-objview_t*      inferior_inspect_obj (inferior_t* dis, dukptr_t heapptr);
+objview_t*         inferior_get_locals  (inferior_t* dis, int frame);
 bool               inferior_pause       (inferior_t* dis);
+objview_t*         inferior_pull_props  (inferior_t* dis, remote_ptr_t heapptr);
 message_t*         inferior_request     (inferior_t* dis, message_t* msg);
 bool               inferior_resume      (inferior_t* dis, resume_op_t op);
 

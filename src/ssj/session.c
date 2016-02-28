@@ -206,11 +206,11 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 {
 	const char*     expr;
 	const dvalue_t* getter;
-	dukptr_t        heapptr;
+	remote_ptr_t    heapptr;
 	bool            is_accessor;
 	bool            is_error;
-	objview_t*   obj_view;
 	const char*     prop_key;
+	objview_t*      prop_list;
 	const dvalue_t* setter;
 	dvalue_t*       result;
 	
@@ -223,18 +223,18 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 		dvalue_print(result, is_verbose);
 	else {
 		heapptr = dvalue_as_ptr(result);
-		if (!(obj_view = inferior_inspect_obj(o->inferior, heapptr)))
+		if (!(prop_list = inferior_pull_props(o->inferior, heapptr)))
 			return;
 		printf("{\n");
-		for (i = 0; i < objview_len(obj_view); ++i) {
-			is_accessor = objview_get_tag(obj_view, i) == PROP_ACCESSOR;
-			prop_key = objview_get_key(obj_view, i);
-			printf("    prop \"%s\" = ", prop_key);
+		for (i = 0; i < objview_len(prop_list); ++i) {
+			is_accessor = objview_get_tag(prop_list, i) == PROP_ACCESSOR;
+			prop_key = objview_get_key(prop_list, i);
+			printf("    \"%s\" : ", prop_key);
 			if (!is_accessor)
-				dvalue_print(objview_get_value(obj_view, i), is_verbose);
+				dvalue_print(objview_get_value(prop_list, i), is_verbose);
 			else {
-				getter = objview_get_getter(obj_view, i);
-				setter = objview_get_setter(obj_view, i);
+				getter = objview_get_getter(prop_list, i);
+				setter = objview_get_setter(prop_list, i);
 				printf("{ get: ");
 				dvalue_print(getter, is_verbose);
 				printf(", set: ");
@@ -246,7 +246,7 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 		printf("}");
 	}
 	printf("\n");
-	objview_free(obj_view);
+	objview_free(prop_list);
 	dvalue_free(result);
 }
 

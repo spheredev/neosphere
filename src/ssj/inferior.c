@@ -277,49 +277,6 @@ inferior_get_locals(inferior_t* dis, int frame)
 	return view;
 }
 
-objview_t*
-inferior_inspect_obj(inferior_t* dis, dukptr_t heapptr)
-{
-	const dvalue_t* getter;
-	bool            is_accessor;
-	int             index = 0;
-	int             prop_flags;
-	const char*     prop_key;
-	message_t*      msg;
-	objview_t*   obj_view;
-	const dvalue_t* setter;
-	const dvalue_t* value;
-
-	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_INSPECT_PROPS);
-	message_add_heapptr(msg, heapptr);
-	message_add_int(msg, 0);
-	message_add_int(msg, INT_MAX);
-	if (!(msg = inferior_request(dis, msg)))
-		return NULL;
-	obj_view = objview_new();
-	while (index < message_len(msg)) {
-		prop_flags = message_get_int(msg, index++);
-		prop_key = message_get_string(msg, index++);
-		is_accessor = (prop_flags & 0x008) != 0;
-		if (prop_key[0] == '\xFF') {
-			index += is_accessor ? 2 : 1;
-			continue;
-		}
-		if (is_accessor) {
-			getter = message_get_dvalue(msg, index++);
-			setter = message_get_dvalue(msg, index++);
-			objview_add_accessor(obj_view, prop_key, getter, setter);
-		}
-		else {
-			value = message_get_dvalue(msg, index++);
-			objview_add_value(obj_view, prop_key, value);
-		}
-	}
-	message_free(msg);
-	return obj_view;
-}
-
 bool
 inferior_pause(inferior_t* dis)
 {
@@ -330,6 +287,49 @@ inferior_pause(inferior_t* dis)
 	if (!(msg = inferior_request(dis, msg)))
 		return false;
 	return true;
+}
+
+objview_t*
+inferior_pull_props(inferior_t* dis, remote_ptr_t heapptr)
+{
+	const dvalue_t* getter;
+	bool            is_accessor;
+	int             index = 0;
+	int             prop_flags;
+	const char*     prop_key;
+	message_t*      msg;
+	const dvalue_t* setter;
+	const dvalue_t* value;
+	objview_t*      view;
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_INSPECT_PROPS);
+	message_add_heapptr(msg, heapptr);
+	message_add_int(msg, 0);
+	message_add_int(msg, INT_MAX);
+	if (!(msg = inferior_request(dis, msg)))
+		return NULL;
+	view = objview_new();
+	while (index < message_len(msg)) {
+		prop_flags = message_get_int(msg, index++);
+		prop_key = message_get_string(msg, index++);
+		is_accessor = (prop_flags & 0x008) != 0;
+		if (prop_flags & 0x100) {
+			index += is_accessor ? 2 : 1;
+			continue;
+		}
+		if (is_accessor) {
+			getter = message_get_dvalue(msg, index++);
+			setter = message_get_dvalue(msg, index++);
+			objview_add_accessor(view, prop_key, getter, setter);
+		}
+		else {
+			value = message_get_dvalue(msg, index++);
+			objview_add_value(view, prop_key, value);
+		}
+	}
+	message_free(msg);
+	return view;
 }
 
 message_t*
@@ -439,8 +439,10 @@ handle_notify(inferior_t* dis, const message_t* msg)
 		case NFY_THROW:
 			if ((status = message_get_int(msg, 1)) == 0)
 				break;
-			printf("FATAL UNCAUGHT - %s\n", message_get_string(msg, 2));
-			printf("    at: %s:%d\n", message_get_string(msg, 3), message_get_int(msg, 4));
+			printf("\nuncaught throw - %s\n", message_get_string(msg, 2));
+			printf("    at: %s:%d\n",
+				message_get_string(msg, 3),
+				message_get_int(msg, 4));
 			break;
 		case NFY_DETACHING:
 			status = message_get_int(msg, 1);

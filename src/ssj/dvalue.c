@@ -7,9 +7,9 @@ struct dvalue
 {
 	enum dvalue_tag tag;
 	union {
-		double   float_value;
-		int      int_value;
-		dukptr_t ptr_value;
+		double       float_value;
+		int          int_value;
+		remote_ptr_t ptr_value;
 		struct {
 			void*  data;
 			size_t size;
@@ -18,7 +18,7 @@ struct dvalue
 };
 
 static void
-print_duktape_ptr(dukptr_t ptr)
+print_duktape_ptr(remote_ptr_t ptr)
 {
 	if (ptr.size == 8)  // x64 pointer
 		printf("%016"PRIx64"h", (uint64_t)ptr.addr);
@@ -48,7 +48,7 @@ dvalue_new_float(double value)
 }
 
 dvalue_t*
-dvalue_new_heapptr(dukptr_t value)
+dvalue_new_heapptr(remote_ptr_t value)
 {
 	dvalue_t* obj;
 
@@ -124,12 +124,12 @@ dvalue_as_float(const dvalue_t* obj)
 		: 0.0;
 }
 
-dukptr_t
+remote_ptr_t
 dvalue_as_ptr(const dvalue_t* obj)
 {
-	dukptr_t retval;
+	remote_ptr_t retval;
 
-	memset(&retval, 0, sizeof(dukptr_t));
+	memset(&retval, 0, sizeof(remote_ptr_t));
 	if (obj->tag == DVALUE_PTR || obj->tag == DVALUE_HEAPPTR || obj->tag == DVALUE_OBJ || obj->tag == DVALUE_LIGHTFUNC) {
 		retval.addr = obj->ptr_value.addr;
 		retval.size = obj->ptr_value.size;

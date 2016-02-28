@@ -6,10 +6,10 @@
 typedef struct dvalue  dvalue_t;
 
 typedef
-struct dukptr {
+struct remote_ptr {
 	uintmax_t addr;
 	uint8_t   size;
-} dukptr_t;
+} remote_ptr_t;
 
 typedef
 enum dvalue_tag
@@ -38,14 +38,14 @@ enum dvalue_tag
 
 dvalue_t*    dvalue_new         (dvalue_tag_t tag);
 dvalue_t*    dvalue_new_float   (double value);
-dvalue_t*    dvalue_new_heapptr (dukptr_t value);
+dvalue_t*    dvalue_new_heapptr (remote_ptr_t value);
 dvalue_t*    dvalue_new_int     (int value);
 dvalue_t*    dvalue_new_string  (const char* value);
 dvalue_t*    dvalue_dup         (const dvalue_t* obj);
 void         dvalue_free        (dvalue_t* obj);
 dvalue_tag_t dvalue_tag         (const dvalue_t* obj);
 const char*  dvalue_as_cstr     (const dvalue_t* obj);
-dukptr_t     dvalue_as_ptr      (const dvalue_t* obj);
+remote_ptr_t dvalue_as_ptr      (const dvalue_t* obj);
 double       dvalue_as_float    (const dvalue_t* obj);
 int          dvalue_as_int      (const dvalue_t* obj);
 void         dvalue_print       (const dvalue_t* obj, bool is_verbose);

@@ -85,7 +85,7 @@ int32_t         message_get_int      (const message_t* o, int index);
 const char*     message_get_string   (const message_t* o, int index);
 void            message_add_dvalue   (message_t* o, const dvalue_t* dvalue);
 void            message_add_float    (message_t* o, double value);
-void            message_add_heapptr  (message_t* o, dukptr_t value);
+void            message_add_heapptr  (message_t* o, remote_ptr_t value);
 void            message_add_int      (message_t* o, int value);
 void            message_add_string   (message_t* o, const char* value);
 message_t*      message_recv         (socket_t* socket);

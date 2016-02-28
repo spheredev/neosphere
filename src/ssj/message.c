@@ -110,7 +110,7 @@ message_add_float(message_t* o, double value)
 }
 
 void
-message_add_heapptr(message_t* o, dukptr_t heapptr)
+message_add_heapptr(message_t* o, remote_ptr_t heapptr)
 {
 	dvalue_t* dvalue;
 
