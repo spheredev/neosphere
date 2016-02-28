@@ -101,6 +101,12 @@ socket_close(socket_t* obj)
 	free(obj);
 }
 
+bool
+socket_is_live(socket_t* obj)
+{
+	return !obj->has_closed;
+}
+
 int
 socket_recv(socket_t* obj, void* buffer, int num_bytes)
 {

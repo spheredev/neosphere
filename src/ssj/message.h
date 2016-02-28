@@ -89,6 +89,6 @@ void            message_add_heapptr  (message_t* o, remote_ptr_t value);
 void            message_add_int      (message_t* o, int value);
 void            message_add_string   (message_t* o, const char* value);
 message_t*      message_recv         (socket_t* socket);
-void            message_send         (const message_t* o, socket_t* socket);
+bool            message_send         (const message_t* o, socket_t* socket);
 
 #endif // SSJ__MESSAGE_H__INCLUDED

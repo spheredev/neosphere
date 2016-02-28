@@ -12,8 +12,8 @@
 
 struct source
 {
-	char*     filename;
-	source_t* source;
+	char*      filename;
+	source_t*  source;
 };
 
 struct inferior
@@ -31,10 +31,12 @@ struct inferior
 	uint8_t        ptr_size;
 	socket_t*      socket;
 	struct source* sources;
+	objview_t*     var_list;
 };
 
-static bool do_handshake  (socket_t* socket);
-static bool handle_notify (inferior_t* dis, const message_t* msg);
+static void clear_pause_cache (inferior_t* obj);
+static bool do_handshake      (socket_t* socket);
+static bool handle_notify     (inferior_t* obj, const message_t* msg);
 
 static unsigned int s_next_id_no = 1;
 
@@ -53,103 +55,104 @@ inferiors_deinit(void)
 inferior_t*
 inferior_new(const char* hostname, int port)
 {
-	inferior_t* dis;
+	inferior_t* obj;
 	message_t*  req;
 	message_t*  rep;
 
-	dis = calloc(1, sizeof(inferior_t));
+	obj = calloc(1, sizeof(inferior_t));
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
-	if (!(dis->socket = socket_connect(hostname, port, 30.0)))
+	if (!(obj->socket = socket_connect(hostname, port, 30.0)))
 		goto on_error;
 	printf("OK.\n");
-	if (!do_handshake(dis->socket))
+	if (!do_handshake(obj->socket))
 		goto on_error;
 
 	printf("querying target... ");
 	req = message_new(MESSAGE_REQ);
 	message_add_int(req, REQ_APP_REQUEST);
 	message_add_int(req, APPREQ_GAME_INFO);
-	rep = inferior_request(dis, req);
-	dis->title = strdup(message_get_string(rep, 0));
-	dis->author = strdup(message_get_string(rep, 1));
+	rep = inferior_request(obj, req);
+	obj->title = strdup(message_get_string(rep, 0));
+	obj->author = strdup(message_get_string(rep, 1));
 	message_free(rep);
 	printf("OK.\n");
 
-	printf("    game: %s\n", dis->title);
-	printf("    author: %s\n", dis->author);
+	printf("    game: %s\n", obj->title);
+	printf("    author: %s\n", obj->author);
 
-	dis->id_no = s_next_id_no++;
-	return dis;
+	obj->id_no = s_next_id_no++;
+	return obj;
 
 on_error:
-	free(dis);
+	free(obj);
 	return NULL;
 }
 
 void
-inferior_free(inferior_t* dis)
+inferior_free(inferior_t* obj)
 {
 	int i;
 
-	for (i = 0; i < dis->num_sources; ++i) {
-		source_free(dis->sources[i].source);
-		free(dis->sources[i].filename);
+	clear_pause_cache(obj);
+	for (i = 0; i < obj->num_sources; ++i) {
+		source_free(obj->sources[i].source);
+		free(obj->sources[i].filename);
 	}
-	socket_close(dis->socket);
-	free(dis->title);
-	free(dis->author);
-	free(dis);
+	socket_close(obj->socket);
+	free(obj->title);
+	free(obj->author);
+	free(obj);
 }
 
 bool
-inferior_update(inferior_t* dis)
+inferior_update(inferior_t* obj)
 {
 	bool       is_active = true;
 	message_t* msg = NULL;
 
-	if (dis->is_detached)
+	if (obj->is_detached)
 		return false;
 	
-	if (!(msg = message_recv(dis->socket)))
+	if (!(msg = message_recv(obj->socket)))
 		goto detached;
-	if (!handle_notify(dis, msg))
+	if (!handle_notify(obj, msg))
 		goto detached;
 	message_free(msg);
 	return true;
 
 detached:
 	message_free(msg);
-	dis->is_detached = true;
+	obj->is_detached = true;
 	return false;
 }
 
 bool
-inferior_is_attached(const inferior_t* dis)
+inferior_is_attached(const inferior_t* obj)
 {
-	return !dis->is_detached;
+	return !obj->is_detached;
 }
 
 bool
-inferior_is_running(const inferior_t* dis)
+inferior_is_running(const inferior_t* obj)
 {
-	return !dis->is_paused && inferior_is_attached(dis);
+	return !obj->is_paused && inferior_is_attached(obj);
 }
 
 const char*
-inferior_author(const inferior_t* dis)
+inferior_author(const inferior_t* obj)
 {
-	return dis->author;
+	return obj->author;
 }
 
 const char*
-inferior_title(const inferior_t* dis)
+inferior_title(const inferior_t* obj)
 {
-	return dis->title;
+	return obj->title;
 }
 
 const source_t*
-inferior_get_source(inferior_t* dis, const char* filename)
+inferior_get_source(inferior_t* obj, const char* filename)
 {
 	int         cache_id;
 	message_t*  msg;
@@ -158,26 +161,26 @@ inferior_get_source(inferior_t* dis, const char* filename)
 
 	int i;
 
-	for (i = 0; i < dis->num_sources; ++i) {
-		if (strcmp(filename, dis->sources[i].filename) == 0)
-			return dis->sources[i].source;
+	for (i = 0; i < obj->num_sources; ++i) {
+		if (strcmp(filename, obj->sources[i].filename) == 0)
+			return obj->sources[i].source;
 	}
 
 	msg = message_new(MESSAGE_REQ);
 	message_add_int(msg, REQ_APP_REQUEST);
 	message_add_int(msg, APPREQ_SOURCE);
 	message_add_string(msg, filename);
-	if (!(msg = inferior_request(dis, msg)))
+	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
 	if (message_tag(msg) == MESSAGE_ERR)
 		goto on_error;
 	text = message_get_string(msg, 0);
 	source = source_new(text);
 
-	cache_id = dis->num_sources++;
-	dis->sources = realloc(dis->sources, dis->num_sources * sizeof(struct source));
-	dis->sources[cache_id].filename = strdup(filename);
-	dis->sources[cache_id].source = source;
+	cache_id = obj->num_sources++;
+	obj->sources = realloc(obj->sources, obj->num_sources * sizeof(struct source));
+	obj->sources[cache_id].filename = strdup(filename);
+	obj->sources[cache_id].source = source;
 
 	return source;
 
@@ -187,7 +190,7 @@ on_error:
 }
 
 const backtrace_t*
-inferior_get_stack(inferior_t* dis)
+inferior_get_calls(inferior_t* obj)
 {
 	const char* filename;
 	const char* function_name;
@@ -198,13 +201,13 @@ inferior_get_stack(inferior_t* dis)
 
 	int i;
 
-	if (dis->stack == NULL) {
+	if (obj->stack == NULL) {
 		msg = message_new(MESSAGE_REQ);
 		message_add_int(msg, REQ_GET_CALLSTACK);
-		if (!(msg = inferior_request(dis, msg)))
+		if (!(msg = inferior_request(obj, msg)))
 			return NULL;
 		num_frames = message_len(msg) / 4;
-		dis->stack = backtrace_new();
+		obj->stack = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
 			function_name = message_get_string(msg, i * 4 + 1);
 			if (strcmp(function_name, "") == 0)
@@ -213,29 +216,30 @@ inferior_get_stack(inferior_t* dis)
 				view_name = strnewf("%s()", function_name);
 			filename = message_get_string(msg, i * 4);
 			line_no = message_get_int(msg, i * 4 + 2);
-			backtrace_add(dis->stack, view_name, filename, line_no);
+			backtrace_add(obj->stack, view_name, filename, line_no);
 		}
 		message_free(msg);
 	}
 
-	return dis->stack;
+	return obj->stack;
 }
 
 void
-inferior_detach(inferior_t* dis)
+inferior_detach(inferior_t* obj)
 {
 	message_t* msg;
 
 	msg = message_new(MESSAGE_REQ);
 	message_add_int(msg, REQ_DETACH);
-	if (!(msg = inferior_request(dis, msg)))
+	if (!(msg = inferior_request(obj, msg)))
 		return;
 	message_free(msg);
-	dis->is_paused = false;
+	while (inferior_is_attached(obj))
+		inferior_update(obj);
 }
 
 dvalue_t*
-inferior_eval(inferior_t* dis, const char* expr, int frame, bool* out_is_error)
+inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 {
 	dvalue_t*  dvalue = NULL;
 	message_t* msg;
@@ -244,53 +248,55 @@ inferior_eval(inferior_t* dis, const char* expr, int frame, bool* out_is_error)
 	message_add_int(msg, REQ_EVAL);
 	message_add_string(msg, expr);
 	message_add_int(msg, -(1 + frame));
-	msg = inferior_request(dis, msg);
+	msg = inferior_request(obj, msg);
 	dvalue = dvalue_dup(message_get_dvalue(msg, 1));
 	*out_is_error = message_get_int(msg, 0) != 0;
 	message_free(msg);
 	return dvalue;
 }
 
-objview_t*
-inferior_get_locals(inferior_t* dis, int frame)
+const objview_t*
+inferior_get_vars(inferior_t* obj, int frame)
 {
 	const char*     name;
 	message_t*      msg;
 	int             num_vars;
 	const dvalue_t* value;
-	objview_t*      view;
 
 	int i;
+
+	if (obj->var_list != NULL)
+		return obj->var_list;
 
 	msg = message_new(MESSAGE_REQ);
 	message_add_int(msg, REQ_GET_LOCALS);
 	message_add_int(msg, -frame - 1);
-	if (!(msg = inferior_request(dis, msg)))
+	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
-	view = objview_new();
+	obj->var_list = objview_new();
 	num_vars = message_len(msg) / 2;
 	for (i = 0; i < num_vars; ++i) {
 		name = message_get_string(msg, i * 2 + 0);
 		value = message_get_dvalue(msg, i * 2 + 1);
-		objview_add_value(view, name, value);
+		objview_add_value(obj->var_list, name, value);
 	}
-	return view;
+	return obj->var_list;
 }
 
 bool
-inferior_pause(inferior_t* dis)
+inferior_pause(inferior_t* obj)
 {
 	message_t* msg;
 
 	msg = message_new(MESSAGE_REQ);
 	message_add_int(msg, REQ_PAUSE);
-	if (!(msg = inferior_request(dis, msg)))
+	if (!(msg = inferior_request(obj, msg)))
 		return false;
 	return true;
 }
 
 objview_t*
-inferior_pull_props(inferior_t* dis, remote_ptr_t heapptr)
+inferior_pull_props(inferior_t* obj, remote_ptr_t heapptr)
 {
 	const dvalue_t* getter;
 	bool            is_accessor;
@@ -307,7 +313,7 @@ inferior_pull_props(inferior_t* dis, remote_ptr_t heapptr)
 	message_add_heapptr(msg, heapptr);
 	message_add_int(msg, 0);
 	message_add_int(msg, INT_MAX);
-	if (!(msg = inferior_request(dis, msg)))
+	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
 	view = objview_new();
 	while (index < message_len(msg)) {
@@ -333,28 +339,31 @@ inferior_pull_props(inferior_t* dis, remote_ptr_t heapptr)
 }
 
 message_t*
-inferior_request(inferior_t* dis, message_t* msg)
+inferior_request(inferior_t* obj, message_t* msg)
 {
 	message_t* response = NULL;
 
-	message_send(msg, dis->socket);
+	if (!(message_send(msg, obj->socket)))
+		goto lost_connection;
 	do {
 		message_free(response);
-		if (!(response = message_recv(dis->socket)))
+		if (!(response = message_recv(obj->socket)))
 			goto lost_connection;
 		if (message_tag(response) == MESSAGE_NFY)
-			handle_notify(dis, response);
+			handle_notify(obj, response);
 	} while (message_tag(response) == MESSAGE_NFY);
 	message_free(msg);
 	return response;
 
 lost_connection:
+	printf("inferior lost connection with the target.\n");
 	message_free(msg);
+	obj->is_detached = true;
 	return NULL;
 }
 
 bool
-inferior_resume(inferior_t* dis, resume_op_t op)
+inferior_resume(inferior_t* obj, resume_op_t op)
 {
 	message_t* msg;
 
@@ -364,11 +373,22 @@ inferior_resume(inferior_t* dis, resume_op_t op)
 		: op == OP_STEP_IN ? REQ_STEP_INTO
 		: op == OP_STEP_OUT ? REQ_STEP_OUT
 		: REQ_RESUME);
-	if (!(msg = inferior_request(dis, msg)))
+	if (!(msg = inferior_request(obj, msg)))
 		return false;
-	dis->frame_index = 0;
-	dis->is_paused = false;
+	obj->frame_index = 0;
+	obj->is_paused = false;
+	while (inferior_is_running(obj))
+		inferior_update(obj);
 	return true;
+}
+
+static void
+clear_pause_cache(inferior_t* obj)
+{
+	backtrace_free(obj->stack);
+	objview_free(obj->var_list);
+	obj->stack = NULL;
+	obj->var_list = NULL;
 }
 
 static bool
@@ -407,9 +427,9 @@ on_error:
 }
 
 static bool
-handle_notify(inferior_t* dis, const message_t* msg)
+handle_notify(inferior_t* obj, const message_t* msg)
 {
-	int status;
+	int status_type;
 
 	switch (message_tag(msg)) {
 	case MESSAGE_NFY:
@@ -422,10 +442,10 @@ handle_notify(inferior_t* dis, const message_t* msg)
 			}
 			break;
 		case NFY_STATUS:
-			status = message_get_int(msg, 1);
-			backtrace_free(dis->stack);
-			dis->stack = NULL;
-			dis->is_paused = status != 0;
+			status_type = message_get_int(msg, 1);
+			obj->is_paused = status_type != 0;
+			if (!obj->is_paused)
+				clear_pause_cache(obj);
 			break;
 		case NFY_PRINT:
 			printf("p: %s", message_get_string(msg, 1));
@@ -437,20 +457,20 @@ handle_notify(inferior_t* dis, const message_t* msg)
 			printf("l: %s", message_get_string(msg, 1));
 			break;
 		case NFY_THROW:
-			if ((status = message_get_int(msg, 1)) == 0)
+			if ((status_type = message_get_int(msg, 1)) == 0)
 				break;
-			printf("\nuncaught throw - %s\n", message_get_string(msg, 2));
+			printf("uncaught error! - %s\n", message_get_string(msg, 2));
 			printf("    at: %s:%d\n",
 				message_get_string(msg, 3),
 				message_get_int(msg, 4));
 			break;
 		case NFY_DETACHING:
-			status = message_get_int(msg, 1);
-			if (status == 0)
-				printf("inferior #%u disconnected normally.\n", dis->id_no);
+			status_type = message_get_int(msg, 1);
+			if (status_type == 0)
+				printf("inferior disconnected normally.\n");
 			else
-				printf("inferior #%u disconnected due to an error.\n", dis->id_no);
-			dis->is_detached = true;
+				printf("inferior disconnected due to an error.\n");
+			obj->is_detached = true;
 			return false;
 		}
 		break;

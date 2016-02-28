@@ -172,7 +172,7 @@ lost_dvalue:
 	return NULL;
 }
 
-void
+bool
 message_send(const message_t* o, socket_t* socket)
 {
 	dvalue_t*    dvalue;
@@ -195,4 +195,5 @@ message_send(const message_t* o, socket_t* socket)
 	dvalue = dvalue_new(DVALUE_EOM);
 	dvalue_send(dvalue, socket);
 	dvalue_free(dvalue);
+	return socket_is_live(socket);
 }

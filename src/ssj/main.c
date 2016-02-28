@@ -7,7 +7,7 @@
 struct cmdline
 {
 	path_t* path;
-	bool    want_run;
+	bool    run_now;
 };
 
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
@@ -37,10 +37,9 @@ main(int argc, char* argv[])
 
 	if (!(inferior = inferior_new("127.0.0.1", 1208)))
 		return EXIT_FAILURE;
-	if (cmdline->want_run)
-		inferior_resume(inferior, OP_RESUME);
+	printf("\n");
 	session = session_new(inferior);
-	session_run(session);
+	session_run(session, cmdline->run_now);
 	session_free(session);
 	inferior_free(inferior);
 
@@ -176,7 +175,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
 			else if (strcmp(argv[i], "--run") == 0)
-				cmdline->want_run = true;
+				cmdline->run_now = true;
 			else {
 				printf("ssj: error: unknown option '%s'\n", argv[i]);
 				goto on_output_only;
@@ -190,7 +189,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 					have_target = true;
 					break;
 				case 'r':
-					cmdline->want_run = true;
+					cmdline->run_now = true;
 					break;
 				default:
 					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);

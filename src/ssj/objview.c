@@ -24,93 +24,96 @@ objview_new(void)
 {
 	struct entry* array;
 	int           array_size = 16;
-	objview_t* dis;
+	objview_t* obj;
 
 	array = malloc(array_size * sizeof(struct entry));
 	
-	dis = calloc(1, sizeof(objview_t));
-	dis->props = array;
-	dis->array_size = array_size;
-	return dis;
+	obj = calloc(1, sizeof(objview_t));
+	obj->props = array;
+	obj->array_size = array_size;
+	return obj;
 }
 
 void
-objview_free(objview_t* dis)
+objview_free(objview_t* obj)
 {
 	int i;
 
-	for (i = 0; i < dis->num_props; ++i) {
-		free(dis->props[i].key);
-		dvalue_free(dis->props[i].value);
+	if (obj == NULL)
+		return;
+	
+	for (i = 0; i < obj->num_props; ++i) {
+		free(obj->props[i].key);
+		dvalue_free(obj->props[i].value);
 	}
-	free(dis);
+	free(obj);
 }
 
 int
-objview_len(const objview_t* dis)
+objview_len(const objview_t* obj)
 {
-	return dis->num_props;
+	return obj->num_props;
 }
 
 prop_tag_t
-objview_get_tag(const objview_t* dis, int index)
+objview_get_tag(const objview_t* obj, int index)
 {
-	return dis->props[index].tag;
+	return obj->props[index].tag;
 }
 
 const char*
-objview_get_key(const objview_t* dis, int index)
+objview_get_key(const objview_t* obj, int index)
 {
-	return dis->props[index].key;
+	return obj->props[index].key;
 }
 
 const dvalue_t*
-objview_get_getter(const objview_t* dis, int index)
+objview_get_getter(const objview_t* obj, int index)
 {
-	return dis->props[index].tag == PROP_ACCESSOR
-		? dis->props[index].getter : NULL;
+	return obj->props[index].tag == PROP_ACCESSOR
+		? obj->props[index].getter : NULL;
 }
 
 const dvalue_t*
-objview_get_setter(const objview_t* dis, int index)
+objview_get_setter(const objview_t* obj, int index)
 {
-	return dis->props[index].tag == PROP_ACCESSOR
-		? dis->props[index].setter : NULL;
+	return obj->props[index].tag == PROP_ACCESSOR
+		? obj->props[index].setter : NULL;
 }
 
 const dvalue_t*
-objview_get_value(const objview_t* dis, int index)
+objview_get_value(const objview_t* obj, int index)
 {
-	return dis->props[index].tag == PROP_VALUE ? dis->props[index].value : NULL;
+	return obj->props[index].tag == PROP_VALUE ? obj->props[index].value : NULL;
 }
 
 void
-objview_add_accessor(objview_t* dis, const char* key, const dvalue_t* getter, const dvalue_t* setter)
+objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, const dvalue_t* setter)
 {
 	int idx;
 
-	idx = dis->num_props++;
-	if (dis->num_props > dis->array_size) {
-		dis->array_size *= 2;
-		dis->props = realloc(dis->props, dis->array_size * sizeof(struct entry));
+	idx = obj->num_props++;
+	if (obj->num_props > obj->array_size) {
+		obj->array_size *= 2;
+		obj->props = realloc(obj->props, obj->array_size * sizeof(struct entry));
 	}
-	dis->props[idx].tag = PROP_ACCESSOR;
-	dis->props[idx].key = strdup(key);
-	dis->props[idx].getter = dvalue_dup(getter);
-	dis->props[idx].setter = dvalue_dup(setter);
+	obj->props[idx].tag = PROP_ACCESSOR;
+	obj->props[idx].key = strdup(key);
+	obj->props[idx].getter = dvalue_dup(getter);
+	obj->props[idx].setter = dvalue_dup(setter);
 }
 
 void
-objview_add_value(objview_t* dis, const char* key, const dvalue_t* value)
+objview_add_value(objview_t* obj, const char* key, const dvalue_t* value)
 {
 	int idx;
 
-	idx = dis->num_props++;
-	if (dis->num_props > dis->array_size) {
-		dis->array_size *= 2;
-		dis->props = realloc(dis->props, dis->array_size * sizeof(struct entry));
+	idx = obj->num_props++;
+	if (obj->num_props > obj->array_size) {
+		obj->array_size *= 2;
+		obj->props = realloc(obj->props, obj->array_size * sizeof(struct entry));
 	}
-	dis->props[idx].tag = PROP_VALUE;
-	dis->props[idx].key = strdup(key);
-	dis->props[idx].value = dvalue_dup(value);
+	obj->props[idx].tag = PROP_VALUE;
+	obj->props[idx].key = strdup(key);
+	obj->props[idx].value = dvalue_dup(value);
 }

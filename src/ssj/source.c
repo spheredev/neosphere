@@ -108,10 +108,10 @@ source_print(const source_t* source, int lineno, int num_lines, int active_linen
 	end = start + num_lines < line_count ? start + num_lines : line_count;
 	for (i = start; i < end; ++i) {
 		text = source_get_line(source, i);
-		arrow = i + 1 == active_lineno ? "->" : "  ";
+		arrow = i + 1 == active_lineno ? "=>" : "  ";
 		if (num_lines > 1)
-			printf("%s %4d  %s\n", arrow, i + 1, text);
+			printf("%s %4d %s\n", arrow, i + 1, text);
 		else
-			printf("%d  %s\n", i + 1, text);
+			printf("%d %s\n", i + 1, text);
 	}
 }

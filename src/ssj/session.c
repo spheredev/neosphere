@@ -33,117 +33,137 @@ command_db[] =
 	"help",       "h",  "~s",
 };
 
+static void        autoselect_frame (session_t* obj);
+static void        do_command_line  (session_t* obj);
 static const char* find_verb        (command_t* cmd);
-static void        handle_backtrace (session_t* o, command_t* cmd);
-static void        handle_eval      (session_t* o, command_t* cmd, bool is_verbose);
-static void        handle_frame     (session_t* o, command_t* cmd);
-static void        handle_list      (session_t* o, command_t* cmd);
-static void        handle_up_down   (session_t* o, command_t* cmd, int direction);
-static void        handle_vars      (session_t* o, command_t* cmd);
-static void        handle_where     (session_t* o, command_t* cmd);
-static void        handle_quit      (session_t* o, command_t* cmd);
-static void        preview_frame    (session_t* o, int frame);
+static void        handle_backtrace (session_t* obj, command_t* cmd);
+static void        handle_eval      (session_t* obj, command_t* cmd, bool is_verbose);
+static void        handle_frame     (session_t* obj, command_t* cmd);
+static void        handle_help      (session_t* obj, command_t* cmd);
+static void        handle_list      (session_t* obj, command_t* cmd);
+static void        handle_up_down   (session_t* obj, command_t* cmd, int direction);
+static void        handle_vars      (session_t* obj, command_t* cmd);
+static void        handle_where     (session_t* obj, command_t* cmd);
+static void        handle_quit      (session_t* obj, command_t* cmd);
+static void        preview_frame    (session_t* obj, int frame);
 static bool        validate_args    (const command_t* this, const char* verb_name, const char* pattern);
 
 session_t*
 session_new(inferior_t* inferior)
 {
-	session_t* o;
+	session_t* obj;
 
-	o = calloc(1, sizeof(session_t));
-	o->inferior = inferior;
-	return o;
+	obj = calloc(1, sizeof(session_t));
+	obj->inferior = inferior;
+	return obj;
 }
 
 void
-session_free(session_t* o)
+session_free(session_t* obj)
 {
-	free(o);
+	free(obj);
 }
 
 void
-session_run(session_t* o)
+session_run(session_t* obj, bool run_now)
+{
+	if (run_now)
+		inferior_resume(obj->inferior, OP_RESUME);
+	while (inferior_is_attached(obj->inferior)) {
+		autoselect_frame(obj);
+		do_command_line(obj);
+	}
+	printf("SSJ session terminated.\n");
+}
+
+static void
+autoselect_frame(session_t* obj)
+{
+	const backtrace_t* calls;
+
+	calls = inferior_get_calls(obj->inferior);
+	obj->frame = 0;
+	while (backtrace_get_lineno(calls, obj->frame) == 0)
+		++obj->frame;
+}
+
+static void
+do_command_line(session_t* obj)
 {
 	char               buffer[4096];
 	char               ch;
 	command_t*         command;
 	const char*        filename;
 	const char*        function_name;
-	int                idx;
 	int                line_no;
-	int                num_args;
 	const backtrace_t* stack;
 	const char*        verb;
-	
-	while (inferior_is_attached(o->inferior)) {
-		while (inferior_is_running(o->inferior))
-			inferior_update(o->inferior);
-		if (!inferior_is_attached(o->inferior))
-			break;
-		stack = inferior_get_stack(o->inferior);
-		
-		function_name = backtrace_get_name(stack, o->frame);
-		filename = backtrace_get_filename(stack, o->frame);
-		line_no = backtrace_get_lineno(stack, o->frame);
-		if (line_no != 0)
-			printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", filename, line_no, function_name);
-		else
-			printf("\n\33[36;1msyscall %s\33[m\n\33[33;1m(ssj)\33[m ", function_name);
-		idx = 0;
-		ch = getchar();
-		while (ch != '\n') {
-			if (idx >= 4095) {
-				printf("string is too long to parse.\n");
-				buffer[0] = '\0';
-				break;
-			}
-			buffer[idx++] = ch;
-			ch = getchar();
-		}
-		buffer[idx] = '\0';
 
-		command = command_parse(buffer);
-		verb = find_verb(command);
-		num_args = command_len(command) - 1;
-		if (strcmp(verb, "quit") == 0)
-			handle_quit(o, command);
-		else if (strcmp(verb, "help") == 0)
-			help_print(num_args > 0 ? command_get_string(command, 1) : NULL);
-		else if (strcmp(verb, "backtrace") == 0)
-			handle_backtrace(o, command);
-		else if (strcmp(verb, "up") == 0)
-			handle_up_down(o, command, +1);
-		else if (strcmp(verb, "down") == 0)
-			handle_up_down(o, command, -1);
-		else if (strcmp(verb, "continue") == 0)
-			inferior_resume(o->inferior, OP_RESUME);
-		else if (strcmp(verb, "eval") == 0)
-			handle_eval(o, command, false);
-		else if (strcmp(verb, "examine") == 0)
-			handle_eval(o, command, true);
-		else if (strcmp(verb, "frame") == 0)
-			handle_frame(o, command);
-		else if (strcmp(verb, "list") == 0)
-			handle_list(o, command);
-		else if (strcmp(verb, "stepover") == 0)
-			inferior_resume(o->inferior, OP_STEP_OVER);
-		else if (strcmp(verb, "stepin") == 0)
-			inferior_resume(o->inferior, OP_STEP_IN);
-		else if (strcmp(verb, "stepout") == 0)
-			inferior_resume(o->inferior, OP_STEP_OUT);
-		else if (strcmp(verb, "vars") == 0)
-			handle_vars(o, command);
-		else if (strcmp(verb, "where") == 0)
-			handle_where(o, command);
-		else
-			printf("'%s': not implemented.\n", verb);
-		command_free(command);
+	int idx;
+
+	stack = inferior_get_calls(obj->inferior);
+	function_name = backtrace_get_name(stack, obj->frame);
+	filename = backtrace_get_filename(stack, obj->frame);
+	line_no = backtrace_get_lineno(stack, obj->frame);
+	if (line_no != 0)
+		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1mssj:\33[m ", filename, line_no, function_name);
+	else
+		printf("\n\33[36;1msyscall %s\33[m\n\33[33;1mssj:\33[m ", function_name);
+	idx = 0;
+	ch = getchar();
+	while (ch != '\n') {
+		if (idx >= 4095) {
+			printf("string is too long to parse.\n");
+			buffer[0] = '\0';
+			break;
+		}
+		buffer[idx++] = ch;
+		ch = getchar();
 	}
-	printf("SSJ session terminated.\n");
+	buffer[idx] = '\0';
+	command = command_parse(buffer);
+	verb = find_verb(command);
+
+	// figure out which handler to run based on the command name. this could
+	// probably be generalized to factor out the massive if/elseif tower, but for
+	// now it serves its purpose.
+	if (strcmp(verb, "quit") == 0)
+		handle_quit(obj, command);
+	else if (strcmp(verb, "help") == 0)
+		handle_help(obj, command);
+	else if (strcmp(verb, "backtrace") == 0)
+		handle_backtrace(obj, command);
+	else if (strcmp(verb, "up") == 0)
+		handle_up_down(obj, command, +1);
+	else if (strcmp(verb, "down") == 0)
+		handle_up_down(obj, command, -1);
+	else if (strcmp(verb, "continue") == 0)
+		inferior_resume(obj->inferior, OP_RESUME);
+	else if (strcmp(verb, "eval") == 0)
+		handle_eval(obj, command, false);
+	else if (strcmp(verb, "examine") == 0)
+		handle_eval(obj, command, true);
+	else if (strcmp(verb, "frame") == 0)
+		handle_frame(obj, command);
+	else if (strcmp(verb, "list") == 0)
+		handle_list(obj, command);
+	else if (strcmp(verb, "stepover") == 0)
+		inferior_resume(obj->inferior, OP_STEP_OVER);
+	else if (strcmp(verb, "stepin") == 0)
+		inferior_resume(obj->inferior, OP_STEP_IN);
+	else if (strcmp(verb, "stepout") == 0)
+		inferior_resume(obj->inferior, OP_STEP_OUT);
+	else if (strcmp(verb, "vars") == 0)
+		handle_vars(obj, command);
+	else if (strcmp(verb, "where") == 0)
+		handle_where(obj, command);
+	else
+		printf("'%s': not implemented.\n", verb);
+	command_free(command);
 }
 
 static const char*
-find_verb(command_t* cmd)
+find_verb(command_t* command)
 {
 	const char* full_name;
 	const char* matches[100];
@@ -155,11 +175,11 @@ find_verb(command_t* cmd)
 
 	int i;
 
-	if (command_len(cmd) < 1)
+	if (command_len(command) < 1)
 		return NULL;
 
 	num_commands = sizeof(command_db) / sizeof(command_db[0]) / 3;
-	verb = command_get_string(cmd, 0);
+	verb = command_get_string(command, 0);
 	for (i = 0; i < num_commands; ++i) {
 		full_name = command_db[0 + i * 3];
 		short_name = command_db[1 + i * 3];
@@ -178,7 +198,7 @@ find_verb(command_t* cmd)
 	}
 
 	if (num_matches == 1)
-		return validate_args(cmd, matches[0], pattern) ? matches[0] : NULL;
+		return validate_args(command, matches[0], pattern) ? matches[0] : NULL;
 	else if (num_matches > 1) {
 		printf("'%s': abbreviated name is ambiguous between:\n", verb);
 		for (i = 0; i < num_matches; ++i)
@@ -192,17 +212,17 @@ find_verb(command_t* cmd)
 }
 
 static void
-handle_backtrace(session_t* o, command_t* cmd)
+handle_backtrace(session_t* obj, command_t* cmd)
 {
 	const backtrace_t* stack;
-	
-	if (!(stack = inferior_get_stack(o->inferior)))
+
+	if (!(stack = inferior_get_calls(obj->inferior)))
 		return;
-	backtrace_print(stack, o->frame, true);
+	backtrace_print(stack, obj->frame, true);
 }
 
 static void
-handle_eval(session_t* o, command_t* cmd, bool is_verbose)
+handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 {
 	const char*     expr;
 	const dvalue_t* getter;
@@ -213,17 +233,17 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 	objview_t*      prop_list;
 	const dvalue_t* setter;
 	dvalue_t*       result;
-	
+
 	int i = 0;
 
 	expr = command_get_string(cmd, 1);
-	result = inferior_eval(o->inferior, expr, o->frame, &is_error);
+	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
 	printf(is_error ? "error: " : "= ");
 	if (dvalue_tag(result) != DVALUE_OBJ)
 		dvalue_print(result, is_verbose);
 	else {
 		heapptr = dvalue_as_ptr(result);
-		if (!(prop_list = inferior_pull_props(o->inferior, heapptr)))
+		if (!(prop_list = inferior_pull_props(obj->inferior, heapptr)))
 			return;
 		printf("{\n");
 		for (i = 0; i < objview_len(prop_list); ++i) {
@@ -251,26 +271,32 @@ handle_eval(session_t* o, command_t* cmd, bool is_verbose)
 }
 
 static void
-handle_frame(session_t* o, command_t* cmd)
+handle_frame(session_t* obj, command_t* cmd)
 {
 	int                frame;
 	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_stack(o->inferior)))
+	if (!(stack = inferior_get_calls(obj->inferior)))
 		return;
-	frame = o->frame;
-	if (command_len(cmd) >= 1)
+	frame = obj->frame;
+	if (command_len(cmd) >= 2)
 		frame = command_get_int(cmd, 1);
 	if (frame < 0 || frame >= backtrace_len(stack))
 		printf("stack frame #%2d doesn't exist.\n", frame);
 	else {
-		o->frame = frame;
-		preview_frame(o, o->frame);
+		obj->frame = frame;
+		preview_frame(obj, obj->frame);
 	}
 }
 
 static void
-handle_list(session_t* o, command_t* cmd)
+handle_help(session_t* obj, command_t* cmd)
+{
+	help_print(command_len(cmd) > 0 ? command_get_string(cmd, 1) : NULL);
+}
+
+static void
+handle_list(session_t* obj, command_t* cmd)
 {
 	const char*        active_filename;
 	int                active_lineno = 0;
@@ -280,9 +306,9 @@ handle_list(session_t* o, command_t* cmd)
 	const source_t*    source;
 	const backtrace_t* stack;
 
-	stack = inferior_get_stack(o->inferior);
-	active_filename = backtrace_get_filename(stack, o->frame);
-	active_lineno = backtrace_get_lineno(stack, o->frame);
+	stack = inferior_get_calls(obj->inferior);
+	active_filename = backtrace_get_filename(stack, obj->frame);
+	active_lineno = backtrace_get_lineno(stack, obj->frame);
 	filename = active_filename;
 	lineno = active_lineno;
 	if (command_len(cmd) >= 2)
@@ -291,8 +317,8 @@ handle_list(session_t* o, command_t* cmd)
 		filename = command_get_string(cmd, 2);
 		lineno = command_get_int(cmd, 2);
 	}
-	if (!(source = inferior_get_source(o->inferior, filename)))
-		printf("source is unavailable for %s.\n", filename);
+	if (!(source = inferior_get_source(obj->inferior, filename)))
+		printf("source unavailable for %s.\n", filename);
 	else {
 		if (strcmp(filename, active_filename) != 0)
 			active_lineno = 0;
@@ -301,94 +327,94 @@ handle_list(session_t* o, command_t* cmd)
 }
 
 static void
-handle_up_down(session_t* o, command_t* cmd, int direction)
+handle_up_down(session_t* obj, command_t* cmd, int direction)
 {
 	int                new_frame;
 	int                num_steps;
 	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_stack(o->inferior)))
+	if (!(stack = inferior_get_calls(obj->inferior)))
 		return;
-	new_frame = o->frame + direction;
+	new_frame = obj->frame + direction;
 	if (new_frame >= backtrace_len(stack))
-		printf("can't go up any further.\n");
+		printf("Innermost frame: Can't go up any further.\n");
 	else if (new_frame < 0)
-		printf("can't go down any further.\n");
+		printf("Outermost frame: Can't go down any further.\n");
 	else {
 		num_steps = command_len(cmd) >= 2 ? command_get_int(cmd, 1) : 1;
-		new_frame = o->frame + num_steps * direction;
-		o->frame = new_frame < 0 ? 0
+		new_frame = obj->frame + num_steps * direction;
+		obj->frame = new_frame < 0 ? 0
 			: new_frame >= backtrace_len(stack) ? backtrace_len(stack) - 1
 			: new_frame;
-		preview_frame(o, o->frame);
+		preview_frame(obj, obj->frame);
 	}
 }
 
 static void
-handle_vars(session_t* dis, command_t* cmd)
+handle_vars(session_t* obj, command_t* cmd)
 {
-	const char*        function_name;
-	const char*        name;
-	const backtrace_t* stack;
+	const backtrace_t* calls;
+	const char*        call_name;
 	const dvalue_t*    value;
-	objview_t*         var_list;
+	const objview_t*   var_list;
+	const char*        var_name;
 
 	int i;
 
-	if (!(stack = inferior_get_stack(dis->inferior)))
+	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
-	if (!(var_list = inferior_get_locals(dis->inferior, 0)))
+	if (!(var_list = inferior_get_vars(obj->inferior, obj->frame)))
 		return;
 	if (objview_len(var_list) == 0) {
-		function_name = backtrace_get_name(stack, dis->frame);
-		printf("no local variables in function %s.\n", function_name);
+		call_name = backtrace_get_name(calls, obj->frame);
+		printf("%s has no local variables.\n", call_name);
 	}
 	for (i = 0; i < objview_len(var_list); ++i) {
-		name = objview_get_key(var_list, i);
+		var_name = objview_get_key(var_list, i);
 		value = objview_get_value(var_list, i);
-		printf("var %s = ", name);
-		dvalue_print(value, true);
+		printf("var %s = ", var_name);
+		dvalue_print(value, false);
 		printf("\n");
 	}
 }
 
 static void
-handle_where(session_t* o, command_t* cmd)
+handle_where(session_t* obj, command_t* cmd)
 {
 	int                frame = 0;
 	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_stack(o->inferior)))
+	if (!(stack = inferior_get_calls(obj->inferior)))
 		return;
 	while (backtrace_get_lineno(stack, frame) <= 0)
 		++frame;
-	preview_frame(o, o->frame);
+	preview_frame(obj, obj->frame);
 }
 
 static void
-handle_quit(session_t* o, command_t* cmd)
+handle_quit(session_t* obj, command_t* cmd)
 {
-	inferior_detach(o->inferior);
+	inferior_detach(obj->inferior);
 }
 
 static void
-preview_frame(session_t* o, int frame)
+preview_frame(session_t* obj, int frame)
 {
 	const char*        filename;
 	int                lineno;
 	const source_t*    source;
 	const backtrace_t* stack;
 
-	if (!(stack = inferior_get_stack(o->inferior)))
+	if (!(stack = inferior_get_calls(obj->inferior)))
 		return;
 	backtrace_print(stack, frame, false);
 	filename = backtrace_get_filename(stack, frame);
 	lineno = backtrace_get_lineno(stack, frame);
 	if (lineno == 0)
-		printf("no source provided for system call.\n");
+		printf("system call - no source provided\n");
 	else {
-		if (!(source = inferior_get_source(o->inferior, filename)))
-			printf("source is unavailable for %s.\n", filename);
+		if (!(source = inferior_get_source(obj->inferior, filename)))
+			printf("source unavailable for %s.\n", filename);
 		else
 			source_print(source, lineno, 1, lineno);
 	}

@@ -50,6 +50,6 @@ double       dvalue_as_float    (const dvalue_t* obj);
 int          dvalue_as_int      (const dvalue_t* obj);
 void         dvalue_print       (const dvalue_t* obj, bool is_verbose);
 dvalue_t*    dvalue_recv        (socket_t* socket);
-void         dvalue_send        (const dvalue_t* obj, socket_t* socket);
+bool         dvalue_send        (const dvalue_t* obj, socket_t* socket);
 
 #endif // SSJ__DVALUE_H__INCLUDED
