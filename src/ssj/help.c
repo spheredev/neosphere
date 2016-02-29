@@ -15,7 +15,7 @@ help_print(const char* command_name)
 			" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
 			" d,  down         Move down the call stack (inwards) from the selected frame   \n"
 			" e,  eval         Evaluate a JavaScript expression                             \n"
-			" x,  examine      Like 'eval' but shows non-enumerable properties of objects   \n"
+			" x,  examine      Show all properties of an object and their attributes        \n"
 			" f,  frame        Select the stack frame used for, e.g. 'eval' and 'var'       \n"
 			" l,  list         Show source text around the line of code being debugged      \n"
 			" s,  stepover     Run the next line of code                                    \n"

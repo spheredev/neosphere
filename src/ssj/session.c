@@ -264,6 +264,8 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		heapptr = dvalue_as_ptr(result);
 		if (!(object = inferior_get_object(obj->inferior, heapptr, is_verbose)))
 			return;
+		if (!is_verbose)
+			printf("= {\n");
 		for (i = 0; i < objview_len(object); ++i) {
 			prop_key = objview_get_key(object, i);
 			if ((int)strlen(prop_key) > max_len)
@@ -275,12 +277,17 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			prop_flags = objview_get_flags(object, i);
 			if (!(prop_flags & PROP_ENUMERABLE) && !is_verbose)
 				continue;
-			printf("%s%s%s%s %-*s ",
-				prop_flags & PROP_ENUMERABLE ? "e" : "-",
-				prop_flags & PROP_WRITABLE ? "w" : "-",
-				prop_flags & PROP_CONFIGURABLE ? "c" : "-",
-				is_accessor ? "a" : "-",
-				max_len, prop_key);
+			if (is_verbose) {
+				printf("%s%s%s%s %-*s ",
+					prop_flags & PROP_ENUMERABLE ? "e" : "-",
+					prop_flags & PROP_WRITABLE ? "w" : "-",
+					prop_flags & PROP_CONFIGURABLE ? "c" : "-",
+					is_accessor ? "a" : "-",
+					max_len, prop_key);
+			}
+			else {
+				printf("    \"%s\": ", prop_key);
+			}
 			if (!is_accessor)
 				dvalue_print(objview_get_value(object, i), is_verbose);
 			else {
@@ -295,6 +302,8 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			printf("\n");
 		}
 		objview_free(object);
+		if (!is_verbose)
+			printf("}\n");
 	}
 	dvalue_free(result);
 }
