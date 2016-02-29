@@ -8,8 +8,8 @@
 ; configurations.
 
 #define AppName "minisphere"
-#define AppVersion "3.0a3"
-#define AppRawVersion "2.99.3.0"
+#define AppVersion "3.0b3"
+#define AppRawVersion "2.99.3.1244"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]

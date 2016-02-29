@@ -257,8 +257,6 @@ main(int argc, char* argv[])
 		toggle_fullscreen();
 	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
 
-	console_log(0, "engine started!");
-
 	// display loading message, scripts may take a bit to compile
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -271,6 +269,8 @@ main(int argc, char* argv[])
 #if defined(MINISPHERE_SPHERUN)
 	initialize_debugger(want_debug, false);
 #endif
+
+	console_log(0, "engine started!");
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -956,11 +956,12 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		al_version_id = al_get_allegro_version();
-		al_version = lstr_newf("%d.%d.%d", al_version_id >> 24,
-			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF);
+		al_version = lstr_newf("%d.%d.%d.%d", al_version_id >> 24,
+			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF,
+			(al_version_id & 0xFF) - 1);
 		printf("\n");
-		printf("    Allegro: v%-7s   libmng: v%s\n", lstr_cstr(al_version), mng_version_text());
-		printf("     Dyad.c: v%-7s     zlib: v%s\n", dyad_getVersion(), zlibVersion());
+		printf("    Allegro: v%-8s    libmng: v%s\n", lstr_cstr(al_version), mng_version_text());
+		printf("     Dyad.c: v%-8s      zlib: v%s\n", dyad_getVersion(), zlibVersion());
 		printf("    Duktape: %s\n", DUK_GIT_DESCRIBE);
 	}
 }

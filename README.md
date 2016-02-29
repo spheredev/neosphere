@@ -20,14 +20,23 @@ both of these are portable to various platforms, this allows minisphere to be
 compiled successfully on all three major platforms (Windows, Linux, and OS X)--
 and possibly others--with no changes to the source.
 
-SSJ
----
+Powerful Debugging
+------------------
 
 In version 3.0 and later, minisphere comes with a GDB-inspired console debugger
 called SSJ. SSJ allows single-stepping through a game's JavaScript code and
-in general inspecting the internal state (variables, call stack, etc.) of a
+in inspecting the internal state (variables, call stack, objects, etc.) of a
 game as it executes. This is a very useful tool for diagnosing bugs and is
-exclusive to minisphere--no such program has ever been available for Sphere 1.x.
+exclusive to minisphere--no similar program has ever been available for
+Sphere 1.x.
+
+
+License
+=======
+
+minisphere is licensed under the terms of the BSD 3-clause license. Practically
+speaking, this means the engine can be used for any purpose, even commercially,
+with no restriction other than maintain the original copyright notice.
 
 
 System Requirements
@@ -38,14 +47,6 @@ Windows release requires a 64-bit processor and operating system; starting with
 minisphere 3.0, there is no officially-supported 32-bit Windows build.  A decent
 graphics card is also required, supporting at least OpenGL 2.0 for full
 functionality.
-
-
-License
-=======
-
-minisphere is licensed under the terms of the BSD 3-clause license. Practically
-speaking, this means the engine can be used for any purpose, even commercially,
-with no restriction other than maintain the original copyright notice.
 
 
 Command Line Usage
@@ -69,63 +70,3 @@ an SPK package or a bare JS script to execute.
                     is quite noisy and useful for diagnostics. The default
                     setting is 1.
 ```
-
-
-Potential Compatibility Issues
-==============================
-
-No mp3 Support
---------------
-
-minisphere is based on Allegro, which doesn't include mp3 support presumably due
-to licensing issues. Therefore games using mp3 audio won't run in minisphere
-unless the tracks are first converted to another format such as Ogg Vorbis
-(.ogg).
-
-`GrabImage()` and `GrabSurface()`
----------------------------------
-
-These functions create a copy of the contents of the backbuffer and return
-either an image or surface from it. In minisphere, however, this may not work as
-expected due to the engine's advanced frame skipping algorithm which prevents
-anything from being written to the backbuffer during a frameskip.
-
-When writing a game specifically targetting minisphere, the correct solution is
-to call `UnskipFrame()`, render what you need, then use
-`GrabImage()`/`GrabSurface()` to save the render. If you absolutely *must* grab
-a backbuffer image every frame (for advanced rendering effects, etc.), you can
-place `SetMaxFrameSkips(0);` at the beginning of your game to prevent any frames
-from being skipped.
-
-Note that as a last resort when running older games, you can also pass
-`--frameskip 0` to engine.exe on the command line to disable frame skipping.
-
-Interframe Throttling
----------------------
-
-minisphere attempts to minimize its CPU utilization by going to sleep while it
-waits for the next frame to start. This improves battery life on laptops and
-prevents the engine from heating up the CPU unnecessarily. In most cases this
-causes no adverse effects; however on slower computers or more demanding games,
-it may cause more frames to be skipped than necessary.
-
-If you want to temporarily disable this feature, run engine.exe with the
-`--no-throttle` command line option.
-
-More Aggressive Frame Skipping
-------------------------------
-
-minisphere's frame skipping algorithm is very aggressive and many things that
-usually happen every frame won't happen if the frame is skipped. For example,
-the map engine doesn't call the render script for skipped frames. This can cause
-issues if a game does anything other than rendering in a render script and can
-be worked around by passing `--frameskip 0` on the command line.
-
-Stricter Type Checking for API Calls
-------------------------------------
-
-Sphere 1.x, in general, silently coerces most wrong-type values passed to API
-calls. minisphere, however, is a lot stricter about this and will throw an error
-if, for example, you pass a string to a function expecting a number value. This
-may prevent some poorly-written Sphere games from running under minisphere.
-There is currently no workaround other than to edit the scripts by hand.
