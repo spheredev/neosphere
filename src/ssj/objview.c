@@ -46,6 +46,8 @@ objview_free(objview_t* obj)
 	for (i = 0; i < obj->num_props; ++i) {
 		free(obj->props[i].key);
 		dvalue_free(obj->props[i].value);
+		dvalue_free(obj->props[i].getter);
+		dvalue_free(obj->props[i].setter);
 	}
 	free(obj);
 }
@@ -106,6 +108,7 @@ objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, co
 	}
 	obj->props[idx].tag = PROP_ACCESSOR;
 	obj->props[idx].key = strdup(key);
+	obj->props[idx].value = NULL;
 	obj->props[idx].getter = dvalue_dup(getter);
 	obj->props[idx].setter = dvalue_dup(setter);
 	obj->props[idx].flags = flags;
@@ -124,5 +127,7 @@ objview_add_value(objview_t* obj, const char* key, const dvalue_t* value, unsign
 	obj->props[idx].tag = PROP_VALUE;
 	obj->props[idx].key = strdup(key);
 	obj->props[idx].value = dvalue_dup(value);
+	obj->props[idx].getter = NULL;
+	obj->props[idx].setter = NULL;
 	obj->props[idx].flags = flags;
 }

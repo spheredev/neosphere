@@ -99,6 +99,9 @@ dvalue_dup(const dvalue_t* src)
 void
 dvalue_free(dvalue_t* obj)
 {
+	if (obj == NULL)
+		return;
+	
 	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUFFER)
 		free(obj->buffer.data);
 	free(obj);
@@ -154,17 +157,17 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 	case DVALUE_NULL: printf("null"); break;
 	case DVALUE_TRUE: printf("true"); break;
 	case DVALUE_FALSE: printf("false"); break;
-	case DVALUE_FLOAT: printf(is_verbose ? "{ float:%g }" : "%g", obj->float_value); break;
-	case DVALUE_INT: printf(is_verbose ? "{ int:%d }" : "%d", obj->int_value); break;
+	case DVALUE_FLOAT: printf("%g", obj->float_value); break;
+	case DVALUE_INT: printf("%d", obj->int_value); break;
 	case DVALUE_STRING: printf("\"%s\"", (char*)obj->buffer.data); break;
-	case DVALUE_BUFFER: printf("{ buf:\"%zd bytes\" }", obj->buffer.size); break;
+	case DVALUE_BUFFER: printf("{ buf: \"%zd bytes\" }", obj->buffer.size); break;
 	case DVALUE_HEAPPTR:
-		printf("{ heap:\"");
+		printf("{ heap: \"");
 		print_duktape_ptr(dvalue_as_ptr(obj));
 		printf("\" }");
 		break;
 	case DVALUE_LIGHTFUNC:
-		printf("{ lightfunc:\"");
+		printf("{ lightfunc: \"");
 		print_duktape_ptr(dvalue_as_ptr(obj));
 		printf("\" }");
 		break;
@@ -172,13 +175,13 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 		if (!is_verbose)
 			printf("{...}");
 		else {
-			printf("{ obj:\"");
+			printf("{ obj: \"");
 			print_duktape_ptr(dvalue_as_ptr(obj));
 			printf("\" }");
 		}
 		break;
 	case DVALUE_PTR:
-		printf("{ ptr:\"");
+		printf("{ ptr: \"");
 		print_duktape_ptr(dvalue_as_ptr(obj));
 		printf("\" }");
 		break;

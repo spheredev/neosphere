@@ -244,6 +244,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 	remote_ptr_t    heapptr;
 	bool            is_accessor;
 	bool            is_error;
+	int             max_len = 0;
 	objview_t*      object;
 	unsigned int    prop_flags;
 	const char*     prop_key;
@@ -254,25 +255,32 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 
 	expr = command_get_string(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
-	printf(is_error ? "error: " : "= ");
-	if (dvalue_tag(result) != DVALUE_OBJ)
+	if (dvalue_tag(result) != DVALUE_OBJ) {
+		printf(is_error ? "error: " : "= ");
 		dvalue_print(result, is_verbose);
+		printf("\n");
+	}
 	else {
 		heapptr = dvalue_as_ptr(result);
 		if (!(object = inferior_get_object(obj->inferior, heapptr, is_verbose)))
 			return;
-		printf("{\n");
+		for (i = 0; i < objview_len(object); ++i) {
+			prop_key = objview_get_key(object, i);
+			if ((int)strlen(prop_key) > max_len)
+				max_len = (int)strlen(prop_key);
+		}
 		for (i = 0; i < objview_len(object); ++i) {
 			is_accessor = objview_get_tag(object, i) == PROP_ACCESSOR;
 			prop_key = objview_get_key(object, i);
 			prop_flags = objview_get_flags(object, i);
 			if (!(prop_flags & PROP_ENUMERABLE) && !is_verbose)
 				continue;
-			printf("    %s%s%s  \"%s\" : ",
-				prop_flags & PROP_WRITABLE ? "w" : "-",
+			printf("%s%s%s%s %-*s ",
 				prop_flags & PROP_ENUMERABLE ? "e" : "-",
+				prop_flags & PROP_WRITABLE ? "w" : "-",
 				prop_flags & PROP_CONFIGURABLE ? "c" : "-",
-				prop_key);
+				is_accessor ? "a" : "-",
+				max_len, prop_key);
 			if (!is_accessor)
 				dvalue_print(objview_get_value(object, i), is_verbose);
 			else {
@@ -286,10 +294,8 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			}
 			printf("\n");
 		}
-		printf("}");
 		objview_free(object);
 	}
-	printf("\n");
 	dvalue_free(result);
 }
 

@@ -117,7 +117,11 @@ init_rng_api(void)
 	duk_push_c_function(g_duk, js_RNG_sample, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "sample");
 	duk_push_c_function(g_duk, js_RNG_string, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "string");
 	duk_push_c_function(g_duk, js_RNG_vary, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "vary");
-	duk_put_prop_string(g_duk, -2, "RNG");
+	duk_push_string(g_duk, "RNG");
+	duk_insert(g_duk, -2);
+	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 	duk_pop(g_duk);
 }
 

@@ -109,7 +109,9 @@ initialize_api(duk_context* ctx)
 	// register the 'global' global object alias (like Node.js!).
 	// this provides direct access to the global object from any scope.
 	duk_push_global_object(ctx);
-	duk_put_global_string(ctx, "global");
+	duk_push_string(ctx, "global");
+	duk_push_global_object(ctx);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
 	
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
@@ -226,11 +228,8 @@ register_api_const(duk_context* ctx, const char* name, double value)
 {
 	duk_push_global_object(ctx);
 	duk_push_string(ctx, name); duk_push_number(ctx, value);
-	duk_def_prop(ctx, -3,
-		DUK_DEFPROP_HAVE_CONFIGURABLE | 0
-		| DUK_DEFPROP_HAVE_ENUMERABLE | 0
-		| DUK_DEFPROP_HAVE_WRITABLE | 0
-		| DUK_DEFPROP_HAVE_VALUE);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 	duk_pop(ctx);
 }
 
@@ -239,8 +238,9 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 {
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_string(ctx, "name");
 	duk_push_string(ctx, name);
-	duk_put_prop_string(ctx, -2, "name");
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
 	
 	// create a prototype. Duktape won't assign one for us.
 	duk_push_object(ctx);
@@ -262,8 +262,15 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 	duk_pop_2(ctx);
 	
 	// attach prototype to constructor
-	duk_put_prop_string(ctx, -2, "prototype");
-	duk_put_prop_string(ctx, -2, name);
+	duk_push_string(ctx, "prototype");
+	duk_insert(ctx, -2);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE);
+	duk_push_string(ctx, name);
+	duk_insert(ctx, -2);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 	duk_pop(ctx);
 }
 
@@ -288,10 +295,21 @@ register_api_function(duk_context* ctx, const char* ctor_name, const char* name,
 		duk_get_prop_string(ctx, -1, "prototypes");
 		duk_get_prop_string(ctx, -1, ctor_name);
 	}
+	
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_string(ctx, "name");
 	duk_push_string(ctx, name);
-	duk_put_prop_string(ctx, -2, "name");
-	duk_put_prop_string(ctx, -2, name);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+	
+	// for a defprop, Duktape expects the key to be pushed first, then the value; however, since
+	// we have the value (the function being registered) on the stack already by this point, we
+	// need to shuffle things around to make everything work.
+	duk_push_string(ctx, name);
+	duk_insert(ctx, -2);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
@@ -311,7 +329,7 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	}
 	obj_index = duk_normalize_index(ctx, -1);
 	duk_push_string(ctx, name);
-	flags = DUK_DEFPROP_CLEAR_ENUMERABLE | DUK_DEFPROP_CLEAR_CONFIGURABLE;
+	flags = DUK_DEFPROP_SET_CONFIGURABLE;
 	if (getter != NULL) {
 		duk_push_c_function(ctx, getter, DUK_VARARGS);
 		flags |= DUK_DEFPROP_HAVE_GETTER;
