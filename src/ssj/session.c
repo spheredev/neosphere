@@ -136,7 +136,8 @@ do_command_line(session_t* obj)
 		ch = getchar();
 	}
 	buffer[idx] = '\0';
-	command = command_parse(buffer);
+	if (!(command = command_parse(buffer)))
+		goto finished;
 	if ((verb = find_verb(command)) == NULL)
 		goto finished;
 
