@@ -142,7 +142,7 @@ do_command_line(session_t* obj)
 		goto finished;
 
 	// figure out which handler to run based on the command name. this could
-	// probably be generalized to factor out the massive if/elseif tower, but for
+	// probably be refactored to get rid of the massive if/elseif tower, but for
 	// now it serves its purpose.
 	if (strcmp(verb, "quit") == 0)
 		handle_quit(obj, command);
@@ -365,10 +365,10 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			if (!(prop_flags & PROP_ENUMERABLE) && !is_verbose)
 				continue;
 			if (is_verbose) {
-				printf("%s%s%s%s %-*s ",
+				printf("%s%s%s%s  %-*s  ",
 					prop_flags & PROP_ENUMERABLE ? "e" : "-",
-					prop_flags & PROP_WRITABLE ? "w" : "-",
 					prop_flags & PROP_CONFIGURABLE ? "c" : "-",
+					prop_flags & PROP_WRITABLE ? "w" : "-",
 					is_accessor ? "a" : "-",
 					max_len, prop_key);
 			}
@@ -380,11 +380,10 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			else {
 				getter = objview_get_getter(object, i);
 				setter = objview_get_setter(object, i);
-				printf("{ get: ");
+				printf("get ");
 				dvalue_print(getter, is_verbose);
-				printf(", set: ");
+				printf(", set ");
 				dvalue_print(setter, is_verbose);
-				printf(" }");
 			}
 			printf("\n");
 		}

@@ -3,13 +3,50 @@
 
 #include "sockets.h"
 
+const char* const
+CLASS_NAMES[] = {
+	"unknown",
+	"arguments",
+	"Array",
+	"Boolean",
+	"Date",
+	"Error",
+	"Function",
+	"JSON",
+	"Math",
+	"Number",
+	"Object",
+	"RegExp",
+	"String",
+	"global",
+	"ObjEnv",
+	"DecEnv",
+	"Buffer",
+	"Pointer",
+	"Thread",
+	"ArrayBuffer",
+	"DataView",
+	"Int8Array",
+	"Uint8Array",
+	"Uint8ClampedArray",
+	"Int16Array",
+	"Uint16Array",
+	"Int32Array",
+	"Uint32Array",
+	"Float32Array",
+	"Float64Array",
+};
+
 struct dvalue
 {
 	enum dvalue_tag tag;
 	union {
 		double       float_value;
 		int          int_value;
-		remote_ptr_t ptr_value;
+		struct {
+			remote_ptr_t value;
+			uint8_t      class;
+		} ptr;
 		struct {
 			void*  data;
 			size_t size;
@@ -54,8 +91,8 @@ dvalue_new_heapptr(remote_ptr_t value)
 
 	obj = calloc(1, sizeof(dvalue_t));
 	obj->tag = DVALUE_HEAPPTR;
-	obj->ptr_value.addr = value.addr;
-	obj->ptr_value.size = value.size;
+	obj->ptr.value.addr = value.addr;
+	obj->ptr.value.size = value.size;
 	return obj;
 }
 
@@ -134,8 +171,8 @@ dvalue_as_ptr(const dvalue_t* obj)
 
 	memset(&retval, 0, sizeof(remote_ptr_t));
 	if (obj->tag == DVALUE_PTR || obj->tag == DVALUE_HEAPPTR || obj->tag == DVALUE_OBJ || obj->tag == DVALUE_LIGHTFUNC) {
-		retval.addr = obj->ptr_value.addr;
-		retval.size = obj->ptr_value.size;
+		retval.addr = obj->ptr.value.addr;
+		retval.size = obj->ptr.value.size;
 	}
 	return retval;
 }
@@ -160,7 +197,7 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 	case DVALUE_FLOAT: printf("%g", obj->float_value); break;
 	case DVALUE_INT: printf("%d", obj->int_value); break;
 	case DVALUE_STRING: printf("\"%s\"", (char*)obj->buffer.data); break;
-	case DVALUE_BUFFER: printf("{ buf: \"%zd bytes\" }", obj->buffer.size); break;
+	case DVALUE_BUFFER: printf("{buf:\"%zd bytes\"}", obj->buffer.size); break;
 	case DVALUE_HEAPPTR:
 		printf("{heap:\"");
 		print_duktape_ptr(dvalue_as_ptr(obj));
@@ -175,9 +212,7 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 		if (!is_verbose)
 			printf("{...}");
 		else {
-			printf("{obj:\"");
-			print_duktape_ptr(dvalue_as_ptr(obj));
-			printf("\"}");
+			printf("{ obj:'%s' }", CLASS_NAMES[obj->ptr.class]);
 		}
 		break;
 	case DVALUE_PTR:
@@ -265,44 +300,44 @@ dvalue_recv(socket_t* socket)
 		obj->tag = DVALUE_FLOAT;
 		break;
 	case DVALUE_OBJ:
-		if (socket_recv(socket, data, 1) == 0)
+		if (socket_recv(socket, &obj->ptr.class, 1) == 0)
 			goto lost_connection;
-		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+		if (socket_recv(socket, &obj->ptr.value.size, 1) == 0)
 			goto lost_connection;
-		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+		if (socket_recv(socket, data, obj->ptr.value.size) == 0)
 			goto lost_connection;
 		obj->tag = DVALUE_OBJ;
-		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
+		for (i = 0, j = obj->ptr.value.size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&obj->ptr.value.addr)[i] = data[j];
 		break;
 	case DVALUE_PTR:
-		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+		if (socket_recv(socket, &obj->ptr.value.size, 1) == 0)
 			goto lost_connection;
-		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+		if (socket_recv(socket, data, obj->ptr.value.size) == 0)
 			goto lost_connection;
 		obj->tag = DVALUE_PTR;
-		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
+		for (i = 0, j = obj->ptr.value.size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&obj->ptr.value.addr)[i] = data[j];
 		break;
 	case DVALUE_LIGHTFUNC:
 		if (socket_recv(socket, data, 2) == 0)
 			goto lost_connection;
-		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+		if (socket_recv(socket, &obj->ptr.value.size, 1) == 0)
 			goto lost_connection;
-		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+		if (socket_recv(socket, data, obj->ptr.value.size) == 0)
 			goto lost_connection;
 		obj->tag = DVALUE_LIGHTFUNC;
-		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
+		for (i = 0, j = obj->ptr.value.size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&obj->ptr.value.addr)[i] = data[j];
 		break;
 	case DVALUE_HEAPPTR:
-		if (socket_recv(socket, &obj->ptr_value.size, 1) == 0)
+		if (socket_recv(socket, &obj->ptr.value.size, 1) == 0)
 			goto lost_connection;
-		if (socket_recv(socket, data, obj->ptr_value.size) == 0)
+		if (socket_recv(socket, data, obj->ptr.value.size) == 0)
 			goto lost_connection;
 		obj->tag = DVALUE_HEAPPTR;
-		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&obj->ptr_value.addr)[i] = data[j];
+		for (i = 0, j = obj->ptr.value.size - 1; j >= 0; ++i, --j)
+			((uint8_t*)&obj->ptr.value.addr)[i] = data[j];
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
@@ -370,10 +405,10 @@ dvalue_send(const dvalue_t* obj, socket_t* socket)
 		socket_send(socket, data, 8);
 		break;
 	case DVALUE_HEAPPTR:
-		for (i = 0, j = obj->ptr_value.size - 1; j >= 0; ++i, --j)
-			data[i] = ((uint8_t*)&obj->ptr_value.addr)[j];
-		socket_send(socket, &obj->ptr_value.size, 1);
-		socket_send(socket, data, obj->ptr_value.size);
+		for (i = 0, j = obj->ptr.value.size - 1; j >= 0; ++i, --j)
+			data[i] = ((uint8_t*)&obj->ptr.value.addr)[j];
+		socket_send(socket, &obj->ptr.value.size, 1);
+		socket_send(socket, data, obj->ptr.value.size);
 		break;
 	}
 	return socket_is_live(socket);
