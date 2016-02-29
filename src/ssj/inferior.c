@@ -127,15 +127,15 @@ detached:
 }
 
 bool
-inferior_is_attached(const inferior_t* obj)
+inferior_attached(const inferior_t* obj)
 {
 	return !obj->is_detached;
 }
 
 bool
-inferior_is_running(const inferior_t* obj)
+inferior_running(const inferior_t* obj)
 {
-	return !obj->is_paused && inferior_is_attached(obj);
+	return !obj->is_paused && inferior_attached(obj);
 }
 
 const char*
@@ -192,8 +192,9 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 	const dvalue_t* getter;
 	bool            is_accessor;
 	int             index = 0;
+	char*           key_string;
 	int             prop_flags;
-	const char*     prop_key;
+	const dvalue_t* prop_key;
 	message_t*      msg;
 	const dvalue_t* setter;
 	const dvalue_t* value;
@@ -209,7 +210,11 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 	view = objview_new();
 	while (index < message_len(msg)) {
 		prop_flags = message_get_int(msg, index++);
-		prop_key = message_get_string(msg, index++);
+		prop_key = message_get_dvalue(msg, index++);
+		if (dvalue_tag(prop_key) == DVALUE_STRING)
+			key_string = strdup(dvalue_as_cstr(prop_key));
+		else
+			key_string = strnewf("%d", dvalue_as_int(prop_key));
 		is_accessor = (prop_flags & 0x008) != 0;
 		if (prop_flags & 0x100) {
 			index += is_accessor ? 2 : 1;
@@ -222,12 +227,14 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 		if (is_accessor) {
 			getter = message_get_dvalue(msg, index++);
 			setter = message_get_dvalue(msg, index++);
-			objview_add_accessor(view, prop_key, getter, setter, flags);
+			objview_add_accessor(view, key_string, getter, setter, flags);
 		}
 		else {
 			value = message_get_dvalue(msg, index++);
-			objview_add_value(view, prop_key, value, flags);
+			if (dvalue_tag(value) != DVALUE_UNUSED)
+				objview_add_value(view, key_string, value, flags);
 		}
+		free(key_string);
 	}
 	message_free(msg);
 	return view;
@@ -297,6 +304,49 @@ inferior_get_vars(inferior_t* obj, int frame)
 	return vars;
 }
 
+int
+inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
+{
+	int        handle;
+	message_t* msg;
+	
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_ADD_BREAK);
+	message_add_string(msg, filename);
+	message_add_int(msg, linenum);
+	if (!(msg = inferior_request(obj, msg)))
+		goto on_error;
+	if (message_tag(msg) == MESSAGE_ERR)
+		goto on_error;
+	handle = message_get_int(msg, 0);
+	message_free(msg);
+	return handle;
+
+on_error:
+	message_free(msg);
+	return -1;
+}
+
+bool
+inferior_clear_breakpoint(inferior_t* obj, int handle)
+{
+	message_t* msg;
+
+	msg = message_new(MESSAGE_REQ);
+	message_add_int(msg, REQ_DEL_BREAK);
+	message_add_int(msg, handle);
+	if (!(msg = inferior_request(obj, msg)))
+		goto on_error;
+	if (message_tag(msg) == MESSAGE_ERR)
+		goto on_error;
+	message_free(msg);
+	return true;
+
+on_error:
+	message_free(msg);
+	return false;
+}
+
 void
 inferior_detach(inferior_t* obj)
 {
@@ -307,7 +357,7 @@ inferior_detach(inferior_t* obj)
 	if (!(msg = inferior_request(obj, msg)))
 		return;
 	message_free(msg);
-	while (inferior_is_attached(obj))
+	while (inferior_attached(obj))
 		inferior_update(obj);
 }
 
@@ -379,7 +429,7 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 		return false;
 	obj->frame_index = 0;
 	obj->is_paused = false;
-	while (inferior_is_running(obj))
+	while (inferior_running(obj))
 		inferior_update(obj);
 	return true;
 }

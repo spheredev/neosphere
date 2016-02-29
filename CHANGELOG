@@ -28,6 +28,10 @@ v3.0.0 - TBD
 * The 'sphere' global object alias has been renamed to 'global', which is more
   obvious and matches Node.js.  Any code relying on the old alias will need to
   be updated for minisphere 3.0.
+* All minisphere API calls and constructors are now registered as
+  non-enumerable, to avoid bloating the output when examining the global object
+  in the debugger. Everything is still fully writable and configurable, so as
+  not to prevent monkey-patching.
 * Fixes a bunch of memory leaks in both Cell and minisphere, including one in
   Cell's packaging code which could have caused it to run out of memory during
   the final compression step.

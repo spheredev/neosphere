@@ -19,7 +19,7 @@ struct command
 command_t*
 command_parse(const char* string)
 {
-	command_t*   this;
+	command_t*   obj;
 	int          array_len = 8;
 	int          index = 0;
 	size_t       length;
@@ -92,10 +92,10 @@ command_parse(const char* string)
 	if (index > 0 && tokens[0].tag != TOK_STRING)
 		goto syntax_error;
 	
-	this = calloc(1, sizeof(command_t));
-	this->num_tokens = index;
-	this->tokens = tokens;
-	return this;
+	obj = calloc(1, sizeof(command_t));
+	obj->num_tokens = index;
+	obj->tokens = tokens;
+	return obj;
 
 syntax_error:
 	printf("syntax error in command line.\n");
@@ -103,46 +103,49 @@ syntax_error:
 }
 
 void
-command_free(command_t* this)
+command_free(command_t* obj)
 {
 	int i;
 
-	for (i = 0; i < this->num_tokens; ++i)
-		free(this->tokens[i].string);
-	free(this->tokens);
-	free(this);
+	if (obj == NULL)
+		return;
+	
+	for (i = 0; i < obj->num_tokens; ++i)
+		free(obj->tokens[i].string);
+	free(obj->tokens);
+	free(obj);
 }
 
 int
-command_len(const command_t* this)
+command_len(const command_t* obj)
 {
-	return this->num_tokens;
+	return obj->num_tokens;
 }
 
 token_tag_t
-command_get_tag(const command_t* this, int index)
+command_get_tag(const command_t* obj, int index)
 {
-	return this->tokens[index].tag;
+	return obj->tokens[index].tag;
 }
 
 double
-command_get_float(const command_t* this, int index)
+command_get_float(const command_t* obj, int index)
 {
-	return this->tokens[index].tag == TOK_NUMBER
-		? this->tokens[index].number : 0.0;
+	return obj->tokens[index].tag == TOK_NUMBER
+		? obj->tokens[index].number : 0.0;
 }
 
 int
-command_get_int(const command_t* this, int index)
+command_get_int(const command_t* obj, int index)
 {
-	return this->tokens[index].tag == TOK_NUMBER ? (int)this->tokens[index].number
-		: this->tokens[index].tag == TOK_FILE_LINE ? this->tokens[index].line_no
+	return obj->tokens[index].tag == TOK_NUMBER ? (int)obj->tokens[index].number
+		: obj->tokens[index].tag == TOK_FILE_LINE ? obj->tokens[index].line_no
 		: 0;
 }
 
 const char*
-command_get_string(const command_t* this, int index)
+command_get_string(const command_t* obj, int index)
 {
-	return this->tokens[index].tag == TOK_STRING || this->tokens[index].tag == TOK_FILE_LINE
-		? this->tokens[index].string : NULL;
+	return obj->tokens[index].tag == TOK_STRING || obj->tokens[index].tag == TOK_FILE_LINE
+		? obj->tokens[index].string : NULL;
 }

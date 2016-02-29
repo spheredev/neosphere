@@ -5,10 +5,19 @@
 #include "inferior.h"
 #include "parser.h"
 
+struct breakpoint
+{
+	int   handle;
+	char* filename;
+	int   linenum;
+};
+
 struct session
 {
-	int         frame;
-	inferior_t* inferior;
+	struct breakpoint* breaks;
+	int                num_breaks;
+	int                frame;
+	inferior_t*        inferior;
 };
 
 const char* const
@@ -33,21 +42,23 @@ command_db[] =
 	"help",       "h",  "~s",
 };
 
-static void        autoselect_frame (session_t* obj);
-static void        do_command_line  (session_t* obj);
-static const char* find_verb        (command_t* cmd);
-static void        handle_backtrace (session_t* obj, command_t* cmd);
-static void        handle_eval      (session_t* obj, command_t* cmd, bool is_verbose);
-static void        handle_frame     (session_t* obj, command_t* cmd);
-static void        handle_help      (session_t* obj, command_t* cmd);
-static void        handle_list      (session_t* obj, command_t* cmd);
-static void        handle_resume    (session_t* obj, command_t* cmd, resume_op_t op);
-static void        handle_up_down   (session_t* obj, command_t* cmd, int direction);
-static void        handle_vars      (session_t* obj, command_t* cmd);
-static void        handle_where     (session_t* obj, command_t* cmd);
-static void        handle_quit      (session_t* obj, command_t* cmd);
-static void        preview_frame    (session_t* obj, int frame);
-static bool        validate_args    (const command_t* this, const char* verb_name, const char* pattern);
+static void        autoselect_frame  (session_t* obj);
+static void        do_command_line   (session_t* obj);
+static const char* find_verb         (command_t* cmd);
+static void        handle_backtrace  (session_t* obj, command_t* cmd);
+static void        handle_breakpoint (session_t* obj, command_t* cmd);
+static void        handle_clearbp    (session_t* obj, command_t* cmd);
+static void        handle_eval       (session_t* obj, command_t* cmd, bool is_verbose);
+static void        handle_frame      (session_t* obj, command_t* cmd);
+static void        handle_help       (session_t* obj, command_t* cmd);
+static void        handle_list       (session_t* obj, command_t* cmd);
+static void        handle_resume     (session_t* obj, command_t* cmd, resume_op_t op);
+static void        handle_up_down    (session_t* obj, command_t* cmd, int direction);
+static void        handle_vars       (session_t* obj, command_t* cmd);
+static void        handle_where      (session_t* obj, command_t* cmd);
+static void        handle_quit       (session_t* obj, command_t* cmd);
+static void        preview_frame     (session_t* obj, int frame);
+static bool        validate_args     (const command_t* this, const char* verb_name, const char* pattern);
 
 session_t*
 session_new(inferior_t* inferior)
@@ -75,7 +86,7 @@ session_run(session_t* obj, bool run_now)
 	autoselect_frame(obj);
 	preview_frame(obj, obj->frame);
 	
-	while (inferior_is_attached(obj->inferior))
+	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
 	printf("SSJ session terminated.\n");
 }
@@ -126,7 +137,8 @@ do_command_line(session_t* obj)
 	}
 	buffer[idx] = '\0';
 	command = command_parse(buffer);
-	verb = find_verb(command);
+	if ((verb = find_verb(command)) == NULL)
+		goto finished;
 
 	// figure out which handler to run based on the command name. this could
 	// probably be generalized to factor out the massive if/elseif tower, but for
@@ -137,10 +149,14 @@ do_command_line(session_t* obj)
 		handle_help(obj, command);
 	else if (strcmp(verb, "backtrace") == 0)
 		handle_backtrace(obj, command);
+	else if (strcmp(verb, "breakpoint") == 0)
+		handle_breakpoint(obj, command);
 	else if (strcmp(verb, "up") == 0)
 		handle_up_down(obj, command, +1);
 	else if (strcmp(verb, "down") == 0)
 		handle_up_down(obj, command, -1);
+	else if (strcmp(verb, "clearbp") == 0)
+		handle_clearbp(obj, command);
 	else if (strcmp(verb, "continue") == 0)
 		handle_resume(obj, command, OP_RESUME);
 	else if (strcmp(verb, "eval") == 0)
@@ -163,6 +179,8 @@ do_command_line(session_t* obj)
 		handle_where(obj, command);
 	else
 		printf("'%s': not implemented.\n", verb);
+
+finished:
 	command_free(command);
 }
 
@@ -226,10 +244,78 @@ handle_backtrace(session_t* obj, command_t* cmd)
 }
 
 static void
+handle_breakpoint(session_t* obj, command_t* cmd)
+{
+	const char*     filename;
+	int             handle;
+	int             linenum;
+	const source_t* source;
+
+	int i;
+
+	if (command_len(cmd) < 2) {
+		if (obj->num_breaks <= 0)
+			printf("no breakpoints are currently set.\n");
+		else {
+			for (i = 0; i < obj->num_breaks; ++i) {
+				printf("#%2d: breakpoint at %s:%d\n", i,
+					obj->breaks[i].filename,
+					obj->breaks[i].linenum);
+			}
+		}
+	}
+	else {
+		filename = command_get_string(cmd, 1);
+		linenum = command_get_int(cmd, 1);
+		if ((handle = inferior_add_breakpoint(obj->inferior, filename, linenum)) < 0)
+			printf("SSJ was unable to set the breakpoint.\n");
+		else {
+			i = obj->num_breaks++;
+			obj->breaks = realloc(obj->breaks, obj->num_breaks * sizeof(struct breakpoint));
+			obj->breaks[i].handle = handle;
+			obj->breaks[i].filename = strdup(command_get_string(cmd, 1));
+			obj->breaks[i].linenum = command_get_int(cmd, 1);
+			printf("breakpoint #%2d set at %s:%d.\n", i,
+				obj->breaks[i].filename,
+				obj->breaks[i].linenum);
+			if ((source = inferior_get_source(obj->inferior, filename)))
+				source_print(source, linenum, 1, 0);
+		}
+	}
+}
+
+static void
+handle_clearbp(session_t* obj, command_t* cmd)
+{
+	const char*     filename;
+	int             handle;
+	int             index;
+	int             linenum;
+	const source_t* source;
+
+	index = command_get_int(cmd, 1);
+	if (obj->num_breaks <= 0)
+		printf("no breakpoints to clear.\n");
+	else if (index > obj->num_breaks)
+		printf("invalid breakpoint index, valid range is 0-%d.", obj->num_breaks);
+	else {
+		handle = obj->breaks[index].handle;
+		filename = obj->breaks[index].filename;
+		linenum = obj->breaks[index].linenum;
+		if (!inferior_clear_breakpoint(obj->inferior, handle))
+			return;
+		printf("cleared breakpoint #%2d at %s:%d.\n", index,
+			obj->breaks[index].filename, obj->breaks[index].linenum);
+		if ((source = inferior_get_source(obj->inferior, filename)))
+			source_print(source, linenum, 1, 0);
+	}
+}
+
+static void
 handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 {
 	inferior_resume(obj->inferior, op);
-	if (inferior_is_attached(obj->inferior))
+	if (inferior_attached(obj->inferior))
 		autoselect_frame(obj);
 	if (op == OP_RESUME)
 		printf("\n");
