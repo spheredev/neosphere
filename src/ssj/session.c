@@ -81,10 +81,12 @@ session_run(session_t* obj, bool run_now)
 {
 	if (run_now) {
 		inferior_resume(obj->inferior, OP_RESUME);
-		printf("\n");
+		if (inferior_attached(obj->inferior)) {
+			printf("\n");
+			autoselect_frame(obj);
+			preview_frame(obj, obj->frame);
+		}
 	}
-	autoselect_frame(obj);
-	preview_frame(obj, obj->frame);
 	
 	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
@@ -316,11 +318,12 @@ static void
 handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 {
 	inferior_resume(obj->inferior, op);
-	if (inferior_attached(obj->inferior))
+	if (inferior_attached(obj->inferior)) {
+		if (op == OP_RESUME)
+			printf("\n");
 		autoselect_frame(obj);
-	if (op == OP_RESUME)
-		printf("\n");
-	preview_frame(obj, obj->frame);
+		preview_frame(obj, obj->frame);
+	}
 }
 
 static void
@@ -367,9 +370,9 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			if (is_verbose) {
 				printf("%s%s%s%s  %-*s  ",
 					prop_flags & PROP_ENUMERABLE ? "e" : "-",
-					prop_flags & PROP_CONFIGURABLE ? "c" : "-",
 					prop_flags & PROP_WRITABLE ? "w" : "-",
 					is_accessor ? "a" : "-",
+					prop_flags & PROP_CONFIGURABLE ? "c" : "-",
 					max_len, prop_key);
 			}
 			else {
