@@ -1,4 +1,4 @@
-.TH SSJ 1 "2016-02-21" "minisphere-3.0a2" "minisphere Game Development Kit"
+.TH SSJ 1 "2016-03-01" "minisphere-3.0a4" "minisphere Game Development Kit"
 .SH NAME
 ssj \- a JavaScript CLI debugger for minisphere
 .SH SYNOPSIS
@@ -51,10 +51,12 @@ Connects to a running game which was starting using the
 command.
 This can be invaluable by allowing you to debug hard-to-reproduce bugs when they happen.
 .TP
-.BR \-p ", " \-\-pause
-Pauses execution upon attachment.
-This stops the game in its tracks so you can view the program state exactly as it is when the debugger was attached.
-For newly started games, this allows you to set up breakpoints, etc. before any code is executed.
+.BR \-r ", " \-\-run
+Sends a resume command upon attachment.
+Normally SSJ automatically pauses execution so you can see the program exactly as it was when the debugger attached.
+Use the
+.B \-\-run
+option to override this behavior.
 .TP
 .B \-\-version
 Show the version number of the installed copy of SSJ along with the version numbers of any libraries it depends on.
@@ -84,26 +86,28 @@ This works exactly like JavaScript
 .B eval()
 and allows you to examine objects, assign to variables, or anything else you could do with a line of code.
 The expression is evaluated in the context of the selected stack frame.
+Only enumerable properties are displayed for objects.
 .TP
 .BR examine " or " x
-Evaluate a JavaScript expression verbosely.
-This performs the same function as
-.BR eval ,
-but shows runtime data such as heap pointers for any objects in the result.
-This is not often useful, but may be in certain circumstances.
+Evaluate a JavaScript expression.
+If the result is a primitive value such as a string or number,
+.B examine
+works exactly like
+.BR eval .
+If the result is an object, all of its properties (including non-enumerable), their attributes, and their values are listed in long form.
 .TP
 .BR frame " or " f
 Select a callstack frame to examine.
 Use
 .B backtrace
 to see the full list of frames on the callstack.
-When SSJ stops the program, the innermost frame is selected, which corresponds to the function call currently underway.
+When SSJ pauses execution, the innermost frame is selected, which corresponds to the function call currently underway.
 Sometimes it's necessary when investigating a bug to view the state earlier in the call chain.
-To that end, the
+The
 .frame
 command changes the context used for the following commands:
-.BR eval ", " list ", and " vars.
-The program counter isn't affected such that
+.BR eval ", " examine ", " list ", and " vars .
+The program counter isn't affected;
 .B continue
 or stepping commands will resume execution in the innermost call regardless of the selected frame.
 .TP
@@ -135,8 +139,8 @@ moves up 1 frame.
 .BR vars " or " v
 Show local variables for the selected stack frame along with all primitive values.
 Non-primitive values such as objects and functions are displayed simply as "{...}" so you will need to use the
-.B eval
-command to examine them.
+.BR eval or examine
+commands to view their contents.
 .TP
 .BR where " or " w
 Show the function name, filename and current line number for the selected frame, along with the line of code currently being executed.
