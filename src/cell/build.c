@@ -7,7 +7,7 @@
 
 struct build
 {
-	duk_context*  duk;
+	duk_context*  duktape;
 	path_t*       in_path;
 	vector_t*     installs;
 	path_t*       out_path;
@@ -15,7 +15,7 @@ struct build
 	int           last_warn_count;
 	int           num_errors;
 	int           num_warnings;
-	char*         rule;
+	char*         rule_name;
 	spk_writer_t* spk;
 	path_t*       staging_path;
 	vector_t*     targets;
@@ -51,7 +51,7 @@ static bool process_target      (build_t* build, const target_t* target, bool *o
 static void validate_targets    (build_t* build);
 
 build_t*
-new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
+build_new(const path_t* in_path, const path_t* out_path, bool want_source_map)
 {
 	build_t*    build = NULL;
 	path_t*     path;
@@ -69,21 +69,21 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	path_free(path);
 
 	// initialize JavaScript environment
-	build->duk = duk_create_heap_default();
-	duk_push_global_stash(build->duk);
-	duk_push_pointer(build->duk, build);
-	duk_put_prop_string(build->duk, -2, "\xFF""environ");
-	duk_pop(build->duk);
+	build->duktape = duk_create_heap_default();
+	duk_push_global_stash(build->duktape);
+	duk_push_pointer(build->duktape, build);
+	duk_put_prop_string(build->duktape, -2, "\xFF""environ");
+	duk_pop(build->duktape);
 
 	// wire up JavaScript API
-	duk_push_c_function(build->duk, js_api_install, DUK_VARARGS);
-	duk_put_global_string(build->duk, "install");
-	duk_push_c_function(build->duk, js_api_files, DUK_VARARGS);
-	duk_put_global_string(build->duk, "files");
-	duk_push_c_function(build->duk, js_api_s2gm, DUK_VARARGS);
-	duk_put_global_string(build->duk, "s2gm");
-	duk_push_c_function(build->duk, js_api_sgm, DUK_VARARGS);
-	duk_put_global_string(build->duk, "sgm");
+	duk_push_c_function(build->duktape, js_api_install, DUK_VARARGS);
+	duk_put_global_string(build->duktape, "install");
+	duk_push_c_function(build->duktape, js_api_files, DUK_VARARGS);
+	duk_put_global_string(build->duktape, "files");
+	duk_push_c_function(build->duktape, js_api_s2gm, DUK_VARARGS);
+	duk_put_global_string(build->duktape, "s2gm");
+	duk_push_c_function(build->duktape, js_api_sgm, DUK_VARARGS);
+	duk_put_global_string(build->duktape, "sgm");
 
 	// set up build environment (ensure directory exists, etc.)
 	path_mkdir(out_path);
@@ -109,13 +109,13 @@ new_build(const path_t* in_path, const path_t* out_path, bool want_source_map)
 	return build;
 
 on_error:
-	duk_destroy_heap(build->duk);
+	duk_destroy_heap(build->duktape);
 	free(build);
 	return NULL;
 }
 
 void
-free_build(build_t* build)
+build_free(build_t* build)
 {
 	struct install *p_inst;
 	target_t*      *p_target;
@@ -124,10 +124,10 @@ free_build(build_t* build)
 	if (build == NULL)
 		return;
 	
-	duk_destroy_heap(build->duk);
+	duk_destroy_heap(build->duktape);
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
-		free_asset((*p_target)->asset);
+		asset_free((*p_target)->asset);
 		path_free((*p_target)->subpath);
 		free(*p_target);
 	}
@@ -141,62 +141,35 @@ free_build(build_t* build)
 	path_free(build->in_path);
 	path_free(build->out_path);
 	spk_close(build->spk);
-	free(build->rule);
+	free(build->rule_name);
 	free(build);
 }
 
 bool
-is_build_ok(const build_t* build, int *out_n_errors, int *out_n_warnings)
+build_is_ok(const build_t* build, int *out_n_errors, int *out_n_warnings)
 {
 	if (out_n_errors) *out_n_errors = build->num_errors;
 	if (out_n_warnings) *out_n_warnings = build->num_warnings;
 	return build->num_errors == 0;
 }
 
-bool
-evaluate_rule(build_t* build, const char* name)
+target_t*
+build_add_asset(build_t* build, asset_t* asset, const path_t* subpath)
 {
-	char    func_name[255];
-	path_t* script_path;
+	target_t* target;
 
-	build->rule = strdup(name);
-	
-	// process build script
-	emit_begin_op(build, "processing Cellscript.js rule '%s'", name);
-	sprintf(func_name, "$%s", name);
-	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
-	if (duk_peval_file(build->duk, path_cstr(script_path)) != 0) {
-		path_free(script_path);
-		emit_error(build, "JS: %s", duk_safe_to_string(build->duk, -1));
-		goto on_error;
-	}
-	path_free(script_path);
-	if (duk_get_global_string(build->duk, func_name) && duk_is_callable(build->duk, -1)) {
-		if (duk_pcall(build->duk, 0) != 0) {
-			emit_error(build, "JS: %s", duk_safe_to_string(build->duk, -1));
-			goto on_error;
-		}
-	}
-	else {
-		emit_error(build, "no Cellscript rule named '%s'", name);
-		goto on_error;
-	}
+	target = calloc(1, sizeof(target_t));
 
-	validate_targets(build);
-	if (build->num_errors)
-		goto on_error;
-
-	path_append_dir(build->staging_path, name);
-	emit_end_op(build, "OK.");
-	return true;
-
-on_error:
-	printf("\n");
-	return false;
+	target->asset = asset;
+	target->subpath = subpath != NULL
+		? path_dup(subpath)
+		: path_new("./");
+	vector_push(build->targets, &target);
+	return target;
 }
 
 vector_t*
-add_files(build_t* build, const path_t* pattern, bool recursive)
+build_add_files(build_t* build, const path_t* pattern, bool recursive)
 {
 	path_t*   path;
 	vector_t* targets;
@@ -212,7 +185,7 @@ add_files(build_t* build, const path_t* pattern, bool recursive)
 }
 
 void
-add_install(build_t* build, const target_t* target, const path_t* path)
+build_install(build_t* build, const target_t* target, const path_t* path)
 {
 	struct install inst;
 
@@ -221,23 +194,50 @@ add_install(build_t* build, const target_t* target, const path_t* path)
 	vector_push(build->installs, &inst);
 }
 
-target_t*
-add_target(build_t* build, asset_t* asset, const path_t* subpath)
+bool
+build_prime(build_t* build, const char* rule_name)
 {
-	target_t* target;
+	char    func_name[255];
+	path_t* script_path;
 
-	target = calloc(1, sizeof(target_t));
+	build->rule_name = strdup(rule_name);
 
-	target->asset = asset;
-	target->subpath = subpath != NULL
-		? path_dup(subpath)
-		: path_new("./");
-	vector_push(build->targets, &target);
-	return target;
+	// process build script
+	emit_begin_op(build, "processing Cellscript.js rule '%s'", rule_name);
+	sprintf(func_name, "$%s", rule_name);
+	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
+	if (duk_peval_file(build->duktape, path_cstr(script_path)) != 0) {
+		path_free(script_path);
+		emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+		goto on_error;
+	}
+	path_free(script_path);
+	if (duk_get_global_string(build->duktape, func_name) && duk_is_callable(build->duktape, -1)) {
+		if (duk_pcall(build->duktape, 0) != 0) {
+			emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+			goto on_error;
+		}
+	}
+	else {
+		emit_error(build, "no Cellscript rule named '%s'", rule_name);
+		goto on_error;
+	}
+
+	validate_targets(build);
+	if (build->num_errors)
+		goto on_error;
+
+	path_append_dir(build->staging_path, rule_name);
+	emit_end_op(build, "OK.");
+	return true;
+
+on_error:
+	printf("\n");
+	return false;
 }
 
 bool
-run_build(build_t* build)
+build_run(build_t* build)
 {
 	bool        has_changed = false;
 	bool        is_new;
@@ -265,7 +265,7 @@ run_build(build_t* build)
 			return false;
 		if (is_new) {
 			if (n_assets == 0) printf("\n");
-			printf("    %s\n", path_cstr(get_object_path((*p_target)->asset)));
+			printf("    %s\n", path_cstr(asset_object_path((*p_target)->asset)));
 			++n_assets;
 			has_changed = true;
 		}
@@ -292,20 +292,20 @@ run_build(build_t* build)
 	// generate source map
 	if (build->want_source_map) {
 		printf("generating source map... ");
-		duk_push_object(build->duk);
-		duk_push_string(build->duk, path_cstr(build->in_path));
-		duk_put_prop_string(build->duk, -2, "origin");
-		duk_push_object(build->duk);
+		duk_push_object(build->duktape);
+		duk_push_string(build->duktape, path_cstr(build->in_path));
+		duk_put_prop_string(build->duktape, -2, "origin");
+		duk_push_object(build->duktape);
 		iter = vector_enum(build->installs);
 		while (p_inst = vector_next(&iter)) {
-			path = path_resolve(path_dup(get_object_path(p_inst->target->asset)), build->in_path);
-			duk_push_string(build->duk, path_cstr(path));
-			duk_put_prop_string(build->duk, -2, path_cstr(p_inst->path));
+			path = path_resolve(path_dup(asset_object_path(p_inst->target->asset)), build->in_path);
+			duk_push_string(build->duktape, path_cstr(path));
+			duk_put_prop_string(build->duktape, -2, path_cstr(p_inst->path));
 			path_free(path);
 		}
-		duk_put_prop_string(build->duk, -2, "fileMap");
-		duk_json_encode(build->duk, -1);
-		json = duk_get_lstring(build->duk, -1, &json_size);
+		duk_put_prop_string(build->duktape, -2, "fileMap");
+		duk_json_encode(build->duktape, -1);
+		json = duk_get_lstring(build->duktape, -1, &json_size);
 		path = path_rebase(path_new("sourcemap.json"),
 			build->spk != NULL ? build->staging_path : build->out_path);
 		path_mkdir(build->out_path);
@@ -326,7 +326,7 @@ run_build(build_t* build)
 		path_free(path);
 	}
 
-	printf("%s -> %s\n", build->rule, path_cstr(build->out_path));
+	printf("%s -> %s\n", build->rule_name, path_cstr(build->out_path));
 	printf("    %d errors, %d warnings\n", build->num_errors, build->num_warnings);
 
 	return true;
@@ -386,9 +386,9 @@ emit_error(build_t* build, const char* fmt, ...)
 static void
 validate_targets(build_t* build)
 {
-	const path_t* asset_name;
-	int           n_dups = 0;
-	const path_t* prev_asset_name = NULL;
+	const path_t* name;
+	int           num_dups = 0;
+	const path_t* prev_name = NULL;
 	vector_t*     targets;
 
 	iter_t iter;
@@ -398,20 +398,21 @@ validate_targets(build_t* build)
 	targets = vector_sort(vector_dup(build->targets), compare_asset_names);
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
-		if (!(asset_name = get_asset_name((*p_target)->asset))) continue;
-		if (!(*p_target)->num_refs == 0) continue;
-
-		if (prev_asset_name != NULL && path_cmp(asset_name, prev_asset_name))
-			++n_dups;
+		if (!(name = asset_name((*p_target)->asset)))
+			continue;
+		if (!(*p_target)->num_refs == 0)
+			continue;
+		if (prev_name != NULL && path_cmp(name, prev_name))
+			++num_dups;
 		else {
-			if (n_dups > 0)
-				emit_error(build, "'%s' %d-way asset conflict", path_cstr(asset_name), n_dups + 1);
-			n_dups = 0;
+			if (num_dups > 0)
+				emit_error(build, "'%s' %d-way asset conflict", path_cstr(name), num_dups + 1);
+			num_dups = 0;
 		}
-		prev_asset_name = asset_name;
+		prev_name = name;
 	}
-	if (n_dups > 0)
-		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_asset_name), n_dups + 1);
+	if (num_dups > 0)
+		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
 	vector_free(targets);
 }
 
@@ -446,7 +447,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 		if (path_cmp(file_path, build->staging_path)) continue;
 		
 		if (file_info.is_reg) {
-			target = add_target(build, new_file_asset(file_path), subpath);
+			target = build_add_asset(build, asset_new_file(file_path), subpath);
 			vector_push(*inout_targets, &target);
 		}
 		else if (file_info.is_dir && recursive) {
@@ -473,7 +474,7 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 	const path_t* src_path;
 
 	*out_is_new = false;
-	if (!(src_path = get_object_path(inst->target->asset)))
+	if (!(src_path = asset_object_path(inst->target->asset)))
 		return false;
 
 	if (build->spk == NULL) {
@@ -520,7 +521,7 @@ static bool
 process_target(build_t* build, const target_t* target, bool *out_is_new)
 {
 	return target->num_refs == 0
-		|| build_asset(target->asset, build->staging_path, out_is_new);
+		|| asset_build(target->asset, build->staging_path, out_is_new);
 }
 
 static int
@@ -529,8 +530,8 @@ compare_asset_names(const void* in_a, const void* in_b)
 	const path_t* path_a;
 	const path_t* path_b;
 
-	path_a = get_asset_name((*(target_t**)in_a)->asset);
-	path_b = get_asset_name((*(target_t**)in_b)->asset);
+	path_a = asset_name((*(target_t**)in_a)->asset);
+	path_b = asset_name((*(target_t**)in_b)->asset);
 	return path_a == path_b ? 0
 		: path_a == NULL ? 1
 		: path_b == NULL ? -1
@@ -558,7 +559,7 @@ js_api_install(duk_context* ctx)
 	if (!duk_is_array(ctx, 0)) {
 		target = duk_require_pointer(ctx, 0);
 		++target->num_refs;
-		add_install(build, target, path);
+		build_install(build, target, path);
 	}
 	else {
 		n_targets = duk_get_length(ctx, 0);
@@ -566,7 +567,7 @@ js_api_install(duk_context* ctx)
 			duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
 			target = duk_require_pointer(ctx, -1);
 			++target->num_refs;
-			add_install(build, target, path);
+			build_install(build, target, path);
 			duk_pop(ctx);
 		}
 	}
@@ -596,7 +597,7 @@ js_api_files(duk_context* ctx)
 	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
 	duk_pop_2(ctx);
 
-	targets = add_files(build, pattern, is_recursive);
+	targets = build_add_files(build, pattern, is_recursive);
 	if (vector_len(targets) == 0)
 		emit_warning(build, "files(): no files match '%s'", path_cstr(pattern));
 	duk_push_array(ctx);
@@ -645,7 +646,7 @@ js_api_sgm(duk_context* ctx)
 	if (strtok_r(NULL, "x", &next_token) || manifest.width <= 0 || manifest.height <= 0)
 		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
 	free(res_string);
-	target = add_target(build, new_sgm_asset(manifest, build->js_mtime), NULL);
+	target = build_add_asset(build, asset_new_sgm(manifest, build->js_mtime), NULL);
 	duk_push_pointer(ctx, target);
 	return 1;
 }
@@ -671,8 +672,8 @@ js_api_s2gm(duk_context* ctx)
 
 	json = duk_json_encode(ctx, 0);
 	name = path_new("game.s2gm");
-	target = add_target(build,
-		new_raw_asset(name, json, strlen(json), build->js_mtime),
+	target = build_add_asset(build,
+		asset_new_raw(name, json, strlen(json), build->js_mtime),
 		NULL);
 	path_free(name);
 	duk_push_pointer(ctx, target);

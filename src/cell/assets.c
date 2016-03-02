@@ -34,7 +34,7 @@ struct asset
 };
 
 asset_t*
-new_file_asset(const path_t* path)
+asset_new_file(const path_t* path)
 {
 	asset_t*    asset;
 	struct stat sb;
@@ -52,7 +52,7 @@ new_file_asset(const path_t* path)
 }
 
 asset_t*
-new_sgm_asset(sgm_info_t sgm, time_t src_mtime)
+asset_new_sgm(sgm_info_t sgm, time_t src_mtime)
 {
 	asset_t* asset;
 
@@ -65,7 +65,7 @@ new_sgm_asset(sgm_info_t sgm, time_t src_mtime)
 }
 
 asset_t*
-new_raw_asset(const path_t* name, const void* buffer, size_t size, time_t src_mtime)
+asset_new_raw(const path_t* name, const void* buffer, size_t size, time_t src_mtime)
 {
 	asset_t* asset;
 
@@ -80,7 +80,7 @@ new_raw_asset(const path_t* name, const void* buffer, size_t size, time_t src_mt
 }
 
 void
-free_asset(asset_t* asset)
+asset_free(asset_t* asset)
 {
 	switch (asset->type) {
 	case ASSET_RAW:
@@ -96,7 +96,7 @@ free_asset(asset_t* asset)
 }
 
 bool
-build_asset(asset_t* asset, const path_t* staging_path, bool *out_is_new)
+asset_build(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 {
 	FILE*       file;
 	const char* filename;
@@ -157,13 +157,13 @@ on_error:
 }
 
 const path_t*
-get_asset_name(const asset_t* asset)
+asset_name(const asset_t* asset)
 {
 	return asset->name;
 }
 
 const path_t*
-get_object_path(const asset_t* asset)
+asset_object_path(const asset_t* asset)
 {
 	return asset->object_path;
 }

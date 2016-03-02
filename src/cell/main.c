@@ -28,21 +28,21 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
-	if (!(build = new_build(s_in_path, s_out_path, s_want_source_map)))
+	if (!(build = build_new(s_in_path, s_out_path, s_want_source_map)))
 		goto shutdown;
-	if (!evaluate_rule(build, s_target_name)) goto shutdown;
-	if (!run_build(build)) goto shutdown;
+	if (!build_prime(build, s_target_name)) goto shutdown;
+	if (!build_run(build)) goto shutdown;
 	retval = EXIT_SUCCESS;
 
 shutdown:
 	if (build != NULL) {
-		if (!is_build_ok(build, NULL, NULL))
+		if (!build_is_ok(build, NULL, NULL))
 			retval = EXIT_FAILURE;
 	}
 	path_free(s_in_path);
 	path_free(s_out_path);
 	free(s_target_name);
-	free_build(build);
+	build_free(build);
 	return retval;
 }
 
