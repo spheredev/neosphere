@@ -47,7 +47,9 @@ namespace minisphere.Gdk.Duktape
         DumpHeap = 0x20,
         GetByteCode = 0x21,
         AppRequest = 0x22,
-        InspectHeapObject = 0x23,
+        GetHeapObjInfo = 0x23,
+        GetObjProp = 0x24,
+        GetObjPropRange = 0x25,
     }
 
     enum Notify

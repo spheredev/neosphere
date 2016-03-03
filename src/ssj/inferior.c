@@ -69,7 +69,7 @@ inferior_new(const char* hostname, int port)
 
 	printf("querying target... ");
 	req = message_new(MESSAGE_REQ);
-	message_add_int(req, REQ_APP_REQUEST);
+	message_add_int(req, REQ_APPREQUEST);
 	message_add_int(req, APPREQ_GAME_INFO);
 	rep = inferior_request(obj, req);
 	obj->title = strdup(message_get_string(rep, 0));
@@ -164,7 +164,7 @@ inferior_get_calls(inferior_t* obj)
 
 	if (obj->calls == NULL) {
 		msg = message_new(MESSAGE_REQ);
-		message_add_int(msg, REQ_GET_CALLSTACK);
+		message_add_int(msg, REQ_GETCALLSTACK);
 		if (!(msg = inferior_request(obj, msg)))
 			return NULL;
 		num_frames = message_len(msg) / 4;
@@ -201,7 +201,7 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 	objview_t*      view;
 
 	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_INSPECT_PROPS);
+	message_add_int(msg, REQ_GETOBJPROPRANGE);
 	message_add_heapptr(msg, heapptr);
 	message_add_int(msg, 0);
 	message_add_int(msg, INT_MAX);
@@ -256,7 +256,7 @@ inferior_get_source(inferior_t* obj, const char* filename)
 	}
 
 	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_APP_REQUEST);
+	message_add_int(msg, REQ_APPREQUEST);
 	message_add_int(msg, APPREQ_SOURCE);
 	message_add_string(msg, filename);
 	if (!(msg = inferior_request(obj, msg)))
@@ -290,7 +290,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 	int i;
 
 	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_GET_LOCALS);
+	message_add_int(msg, REQ_GETLOCALS);
 	message_add_int(msg, -frame - 1);
 	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
@@ -311,7 +311,7 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 	message_t* msg;
 	
 	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_ADD_BREAK);
+	message_add_int(msg, REQ_ADDBREAK);
 	message_add_string(msg, filename);
 	message_add_int(msg, linenum);
 	if (!(msg = inferior_request(obj, msg)))
@@ -333,7 +333,7 @@ inferior_clear_breakpoint(inferior_t* obj, int handle)
 	message_t* msg;
 
 	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_DEL_BREAK);
+	message_add_int(msg, REQ_DELBREAK);
 	message_add_int(msg, handle);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
@@ -421,9 +421,9 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 
 	msg = message_new(MESSAGE_REQ);
 	message_add_int(msg,
-		op == OP_STEP_OVER ? REQ_STEP_OVER
-		: op == OP_STEP_IN ? REQ_STEP_INTO
-		: op == OP_STEP_OUT ? REQ_STEP_OUT
+		op == OP_STEP_OVER ? REQ_STEPOVER
+		: op == OP_STEP_IN ? REQ_STEPINTO
+		: op == OP_STEP_OUT ? REQ_STEPOUT
 		: REQ_RESUME);
 	if (!(msg = inferior_request(obj, msg)))
 		return false;
@@ -484,7 +484,7 @@ handle_notify(inferior_t* obj, const message_t* msg)
 	switch (message_tag(msg)) {
 	case MESSAGE_NFY:
 		switch (message_get_int(msg, 0)) {
-		case NFY_APP_NOTIFY:
+		case NFY_APPNOTIFY:
 			switch (message_get_int(msg, 1)) {
 			case APPNFY_DEBUG_PRINT:
 				printf("t: %s", message_get_string(msg, 2));

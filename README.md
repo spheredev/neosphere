@@ -20,7 +20,15 @@ both of these are portable to various platforms, this allows minisphere to be
 compiled successfully on all three major platforms (Windows, Linux, and OS X)--
 and possibly others--with no changes to the source.
 
-Powerful Debugging
+Cell
+----
+
+minisphere comes with a powerful script-driven build system called Cell, which
+can not only build a Sphere game package, but also allows generating assets from
+easier-to-modify sources--for example, building tilesets from images or
+minifying scripts at build time.
+
+SSJ
 ------------------
 
 In version 3.0 and later, minisphere comes with a GDB-inspired console debugger
