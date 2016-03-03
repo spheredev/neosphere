@@ -11,15 +11,15 @@ struct build
 	path_t*       in_path;
 	vector_t*     installs;
 	path_t*       out_path;
-	time_t        js_mtime;
 	int           last_warn_count;
+	bool          make_source_map;
 	int           num_errors;
 	int           num_warnings;
 	char*         rule_name;
 	spk_writer_t* spk;
 	path_t*       staging_path;
 	vector_t*     targets;
-	bool          want_source_map;
+	time_t        timestamp;
 };
 
 struct install
@@ -41,32 +41,32 @@ static duk_ret_t js_api_s2gm    (duk_context* ctx);
 static duk_ret_t js_api_sgm     (duk_context* ctx);
 
 static int  compare_asset_names (const void* in_a, const void* in_b);
-static void emit_begin_op       (build_t* build, const char* fmt, ...);
-static void emit_end_op         (build_t* build, const char* fmt, ...);
-static void emit_warning        (build_t* build, const char* fmt, ...);
+static void do_add_files        (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
+static bool do_build_target     (build_t* build, const target_t* target, bool *out_is_new);
+static bool do_install_target   (build_t* build, struct install* inst, bool *out_is_new);
 static void emit_error          (build_t* build, const char* fmt, ...);
-static void process_add_files   (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
-static bool process_install     (build_t* build, struct install* inst, bool *out_is_new);
-static bool process_target      (build_t* build, const target_t* target, bool *out_is_new);
+static void emit_op_begin       (build_t* build, const char* fmt, ...);
+static void emit_op_end         (build_t* build, const char* fmt, ...);
+static void emit_warning        (build_t* build, const char* fmt, ...);
 static void validate_targets    (build_t* build);
 
 build_t*
-build_new(const path_t* in_path, const path_t* out_path, bool want_source_map)
+build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 {
 	build_t*    build = NULL;
-	path_t*     path;
-	struct stat sb;
+	path_t*     script_path;
+	struct stat stat_buf;
 
 	build = calloc(1, sizeof(build_t));
 
 	// check for Cellscript.js in input directory
-	path = path_rebase(path_new("Cellscript.js"), in_path);
-	if (stat(path_cstr(path), &sb) != 0 || !(sb.st_mode & S_IFREG)) {
-		fprintf(stderr, "error: internal: failed to stat Cellscript.js\n");
+	script_path = path_rebase(path_new("Cellscript.js"), in_path);
+	if (stat(path_cstr(script_path), &stat_buf) != 0 || !(stat_buf.st_mode & S_IFREG)) {
+		fprintf(stderr, "ERROR: failed to stat Cellscript.js\n");
 		return NULL;
 	}
-	build->js_mtime = sb.st_mtime;
-	path_free(path);
+	build->timestamp = stat_buf.st_mtime;
+	path_free(script_path);
 
 	// initialize JavaScript environment
 	build->duktape = duk_create_heap_default();
@@ -95,7 +95,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool want_source_map)
 		}
 	}
 
-	build->want_source_map = want_source_map;
+	build->make_source_map = make_source_map;
 	build->targets = vector_new(sizeof(target_t*));
 	build->installs = vector_new(sizeof(struct install));
 	build->in_path = path_resolve(path_dup(in_path), NULL);
@@ -178,7 +178,7 @@ build_add_files(build_t* build, const path_t* pattern, bool recursive)
 	targets = vector_new(sizeof(target_t*));
 	path = path_rebase(path_strip(path_dup(pattern)), build->in_path);
 	wildcard = strdup(path_filename_cstr(pattern));
-	process_add_files(build, wildcard, path, NULL, recursive, &targets);
+	do_add_files(build, wildcard, path, NULL, recursive, &targets);
 	path_free(path);
 	free(wildcard);
 	return targets;
@@ -203,7 +203,7 @@ build_prime(build_t* build, const char* rule_name)
 	build->rule_name = strdup(rule_name);
 
 	// process build script
-	emit_begin_op(build, "processing Cellscript.js rule '%s'", rule_name);
+	emit_op_begin(build, "processing Cellscript.js rule '%s'", rule_name);
 	sprintf(func_name, "$%s", rule_name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duktape, path_cstr(script_path)) != 0) {
@@ -228,7 +228,7 @@ build_prime(build_t* build, const char* rule_name)
 		goto on_error;
 
 	path_append_dir(build->staging_path, rule_name);
-	emit_end_op(build, "OK.");
+	emit_op_end(build, "OK.");
 	return true;
 
 on_error:
@@ -243,7 +243,7 @@ build_run(build_t* build)
 	bool        is_new;
 	const char* json;
 	duk_size_t  json_size;
-	int         n_assets;
+	int         num_assets;
 	path_t*     path;
 
 	struct install *p_inst;
@@ -256,41 +256,41 @@ build_run(build_t* build)
 	}
 
 	// build and install assets
-	printf("compiling assets...");
+	printf("compiling assets... ");
 	path_mkdir(build->staging_path);
-	n_assets = 0;
+	num_assets = 0;
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
-		if (!process_target(build, *p_target, &is_new))
+		if (!do_build_target(build, *p_target, &is_new))
 			return false;
 		if (is_new) {
-			if (n_assets == 0) printf("\n");
+			if (num_assets == 0) printf("\n");
 			printf("    %s\n", path_cstr(asset_object_path((*p_target)->asset)));
-			++n_assets;
+			++num_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf("    %d asset(s) compiled\n", n_assets);
-		else printf(" up-to-date.\n");
+	if (num_assets > 0) printf("    %d asset(s) compiled\n", num_assets);
+		else printf("up-to-date.\n");
 
 	printf("installing assets... ");
-	n_assets = 0;
+	num_assets = 0;
 	iter = vector_enum(build->installs);
 	while (p_inst = vector_next(&iter)) {
-		if (!process_install(build, p_inst, &is_new))
+		if (!do_install_target(build, p_inst, &is_new))
 			return false;
 		if (is_new) {
-			if (n_assets == 0) printf("\n");
+			if (num_assets == 0) printf("\n");
 			printf("    %s\n", path_cstr(p_inst->path));
-			++n_assets;
+			++num_assets;
 			has_changed = true;
 		}
 	}
-	if (n_assets > 0) printf("    %d asset(s) installed\n", n_assets);
-		else printf(" up-to-date.\n");
+	if (num_assets > 0) printf("    %d asset(s) installed\n", num_assets);
+		else printf("up-to-date.\n");
 
 	// generate source map
-	if (build->want_source_map) {
+	if (build->make_source_map) {
 		printf("generating source map... ");
 		duk_push_object(build->duktape);
 		duk_push_string(build->duktape, path_cstr(build->in_path));
@@ -332,92 +332,22 @@ build_run(build_t* build)
 	return true;
 }
 
-static void
-emit_begin_op(build_t* build, const char* fmt, ...)
+static int
+compare_asset_names(const void* in_a, const void* in_b)
 {
-	va_list ap;
+	const path_t* path_a;
+	const path_t* path_b;
 
-	build->last_warn_count = build->num_warnings;
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	printf("... ");
-	va_end(ap);
+	path_a = asset_name((*(target_t**)in_a)->asset);
+	path_b = asset_name((*(target_t**)in_b)->asset);
+	return path_a == path_b ? 0
+		: path_a == NULL ? 1
+		: path_b == NULL ? -1
+		: strcmp(path_cstr(path_a), path_cstr(path_b));
 }
 
 static void
-emit_end_op(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	if (build->num_warnings > build->last_warn_count)
-		printf("\n");
-	else {
-		va_start(ap, fmt);
-		vprintf(fmt, ap);
-		printf("\n");
-		va_end(ap);
-	}
-}
-
-static void
-emit_warning(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	++build->num_warnings;
-	va_start(ap, fmt);
-	printf("\n  warning: ");
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-static void
-emit_error(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	++build->num_errors;
-	va_start(ap, fmt);
-	printf("\n  ERROR: ");
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-static void
-validate_targets(build_t* build)
-{
-	const path_t* name;
-	int           num_dups = 0;
-	const path_t* prev_name = NULL;
-	vector_t*     targets;
-
-	iter_t iter;
-	target_t* *p_target;
-
-	// check for asset name conflicts
-	targets = vector_sort(vector_dup(build->targets), compare_asset_names);
-	iter = vector_enum(build->targets);
-	while (p_target = vector_next(&iter)) {
-		if (!(name = asset_name((*p_target)->asset)))
-			continue;
-		if (!(*p_target)->num_refs == 0)
-			continue;
-		if (prev_name != NULL && path_cmp(name, prev_name))
-			++num_dups;
-		else {
-			if (num_dups > 0)
-				emit_error(build, "'%s' %d-way asset conflict", path_cstr(name), num_dups + 1);
-			num_dups = 0;
-		}
-		prev_name = name;
-	}
-	if (num_dups > 0)
-		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
-	vector_free(targets);
-}
-
-static void
-process_add_files(build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets)
+do_add_files(build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets)
 {
 	tinydir_dir  dir;
 	tinydir_file file_info;
@@ -435,7 +365,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 	while (dir.has_next) {
 		tinydir_readfile(&dir, &file_info);
 		tinydir_next(&dir);
-		
+
 		path_free(file_path);
 		file_path = file_info.is_dir
 			? path_new_dir(file_info.path)
@@ -445,7 +375,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 			continue;
 		if (!wildcmp(file_info.name, wildcard) && file_info.is_reg) continue;
 		if (path_cmp(file_path, build->staging_path)) continue;
-		
+
 		if (file_info.is_reg) {
 			target = build_add_asset(build, asset_new_file(file_path), subpath);
 			vector_push(*inout_targets, &target);
@@ -454,7 +384,7 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 			new_subpath = subpath != NULL
 				? path_append_dir(path_dup(subpath), file_info.name)
 				: path_new_dir(file_info.name);
-			process_add_files(build, wildcard, path, new_subpath, recursive, inout_targets);
+			do_add_files(build, wildcard, path, new_subpath, recursive, inout_targets);
 			path_free(new_subpath);
 		}
 	}
@@ -463,7 +393,14 @@ process_add_files(build_t* build, const char* wildcard, const path_t* path, cons
 }
 
 static bool
-process_install(build_t* build, struct install* inst, bool *out_is_new)
+do_build_target(build_t* build, const target_t* target, bool *out_is_new)
+{
+	return target->num_refs == 0
+		|| asset_build(target->asset, build->staging_path, out_is_new);
+}
+
+static bool
+do_install_target(build_t* build, struct install* inst, bool *out_is_new)
 {
 	void*         file_data = NULL;
 	size_t        file_size;
@@ -517,25 +454,88 @@ process_install(build_t* build, struct install* inst, bool *out_is_new)
 	return true;
 }
 
-static bool
-process_target(build_t* build, const target_t* target, bool *out_is_new)
+static void
+emit_error(build_t* build, const char* fmt, ...)
 {
-	return target->num_refs == 0
-		|| asset_build(target->asset, build->staging_path, out_is_new);
+	va_list ap;
+
+	++build->num_errors;
+	va_start(ap, fmt);
+	printf("\n  ERROR: ");
+	vprintf(fmt, ap);
+	va_end(ap);
 }
 
-static int
-compare_asset_names(const void* in_a, const void* in_b)
+static void
+emit_op_begin(build_t* build, const char* fmt, ...)
 {
-	const path_t* path_a;
-	const path_t* path_b;
+	va_list ap;
 
-	path_a = asset_name((*(target_t**)in_a)->asset);
-	path_b = asset_name((*(target_t**)in_b)->asset);
-	return path_a == path_b ? 0
-		: path_a == NULL ? 1
-		: path_b == NULL ? -1
-		: strcmp(path_cstr(path_a), path_cstr(path_b));
+	build->last_warn_count = build->num_warnings;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	printf("... ");
+	va_end(ap);
+}
+
+static void
+emit_op_end(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	if (build->num_warnings > build->last_warn_count)
+		printf("\n");
+	else {
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+		printf("\n");
+		va_end(ap);
+	}
+}
+
+static void
+emit_warning(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_warnings;
+	va_start(ap, fmt);
+	printf("\n  warning: ");
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+static void
+validate_targets(build_t* build)
+{
+	const path_t* name;
+	int           num_dups = 0;
+	const path_t* prev_name = NULL;
+	vector_t*     targets;
+
+	iter_t iter;
+	target_t* *p_target;
+
+	// check for asset name conflicts
+	targets = vector_sort(vector_dup(build->targets), compare_asset_names);
+	iter = vector_enum(build->targets);
+	while (p_target = vector_next(&iter)) {
+		if (!(name = asset_name((*p_target)->asset)))
+			continue;
+		if (!(*p_target)->num_refs == 0)
+			continue;
+		if (prev_name != NULL && path_cmp(name, prev_name))
+			++num_dups;
+		else {
+			if (num_dups > 0)
+				emit_error(build, "'%s' %d-way asset conflict", path_cstr(name), num_dups + 1);
+			num_dups = 0;
+		}
+		prev_name = name;
+	}
+	if (num_dups > 0)
+		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
+	vector_free(targets);
 }
 
 static duk_ret_t
@@ -646,7 +646,7 @@ js_api_sgm(duk_context* ctx)
 	if (strtok_r(NULL, "x", &next_token) || manifest.width <= 0 || manifest.height <= 0)
 		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
 	free(res_string);
-	target = build_add_asset(build, asset_new_sgm(manifest, build->js_mtime), NULL);
+	target = build_add_asset(build, asset_new_sgm(manifest, build->timestamp), NULL);
 	duk_push_pointer(ctx, target);
 	return 1;
 }
@@ -673,7 +673,7 @@ js_api_s2gm(duk_context* ctx)
 	json = duk_json_encode(ctx, 0);
 	name = path_new("game.s2gm");
 	target = build_add_asset(build,
-		asset_new_raw(name, json, strlen(json), build->js_mtime),
+		asset_new_raw(name, json, strlen(json), build->timestamp),
 		NULL);
 	path_free(name);
 	duk_push_pointer(ctx, target);

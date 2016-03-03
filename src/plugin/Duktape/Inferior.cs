@@ -85,24 +85,25 @@ namespace minisphere.Gdk.Duktape
         }
 
         /// <summary>
-        /// Gets whether the error was fatal, i.e. unhandled.
-        /// </summary>
-        public bool IsFatal { get; private set; }
-
-        /// <summary>
-        /// Gets the string representation of the thrown value.
-        /// </summary>
-        public string Message { get; private set; }
-        
-        /// <summary>
         /// Gets the filename of the script throwing the error.
         /// </summary>
         public string FileName { get; private set; }
 
         /// <summary>
+        /// Gets whether the error was fatal, i.e. unhandled.
+        /// </summary>
+        public bool IsFatal { get; private set; }
+
+        /// <summary>
         /// Gets the line number where the error was thrown.
         /// </summary>
         public int LineNumber { get; private set; }
+
+        /// <summary>
+        /// Gets the string representation of the thrown value.
+        /// </summary>
+        public string Message { get; private set; }
+
     }
 
     class TraceEventArgs : EventArgs

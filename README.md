@@ -9,7 +9,7 @@ written from the ground up in C.  It boasts a high level of compatibility with
 most games written for Sphere 1.x, with better performance and new functionality.
 The majority of games will run with no modifications.
 
-Like Sphere, minisphere uses JavaScript for game coding. The engine exposes a
+Like Sphere, minisphere uses JavaScript for game coding.  The engine exposes a
 collection of low-level functions through a standardized JavaScript API, leaving
 higher-level game logic entirely up to scripts. This allows any type of game to
 be made with minisphere, but of course requires more expertise than making a
@@ -20,41 +20,42 @@ both of these are portable to various platforms, this allows minisphere to be
 compiled successfully on all three major platforms (Windows, Linux, and OS X)--
 and possibly others--with no changes to the source.
 
-Cell
-----
+Automated Builds with Cell
+--------------------------
 
 minisphere comes with a powerful script-driven build system called Cell, which
-can not only build a Sphere game package, but also allows generating assets from
-easier-to-modify sources--for example, building tilesets from images or
-minifying scripts at build time.
+can not only package Sphere games into easy-to-distribute SPKs, but also allows
+generating assets from easier-to-modify sources.  For example: Building tilesets
+from images, or minifying scripts at build time.
 
-SSJ
-------------------
+Powerful Debugging with SSJ
+---------------------------
 
-In version 3.0 and later, minisphere comes with a GDB-inspired console debugger
-called SSJ. SSJ allows single-stepping through a game's JavaScript code and
-in inspecting the internal state (variables, call stack, objects, etc.) of a
-game as it executes. This is a very useful tool for diagnosing bugs and is
-exclusive to minisphere--no similar program has ever been available for
-Sphere 1.x.
+minisphere includes a GDB-inspired command-line debugger, called SSJ.  SSJ
+allows you to step through your game's code and inspect the internal state
+(variables, call stack, objects, etc.) of the game as it executes.  And since
+minisphere uses JavaScript, the original source files aren't required to be
+present--SSJ can download source code directly from the minisphere instance
+being debugged.
+
+A symbolic debugger such as SSJ is an invaluable tool for development and is a
+minisphere exclusive: No similar tool was ever available for Sphere 1.x.
 
 
 License
 =======
 
-minisphere is licensed under the terms of the BSD 3-clause license. Practically
-speaking, this means the engine can be used for any purpose, even commercially,
-with no restriction other than maintain the original copyright notice.
+minisphere and its accompanying command-line tools are licensed under the terms
+of the BSD 3-clause license. Practically speaking, this means the engine can be
+used for any purpose, even commercially, with no restriction other than maintain
+the original copyright notice.
 
 
 System Requirements
 ===================
 
-minisphere requires somewhat modern hardware to run adequately.  The official
-Windows release requires a 64-bit processor and operating system; starting with
-minisphere 3.0, there is no officially-supported 32-bit Windows build.  A decent
-graphics card is also required, supporting at least OpenGL 2.0 for full
-functionality.
+minisphere requires somewhat modern hardware to run adequately.  At the least, a
+graphics card supporting at least OpenGL 2.0 is required for full functionality.
 
 
 Command Line Usage

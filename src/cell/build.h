@@ -6,7 +6,7 @@
 typedef struct build  build_t;
 typedef struct target target_t;
 
-build_t*  build_new       (const path_t* in_path, const path_t* out_path, bool want_source_map);
+build_t*  build_new       (const path_t* in_path, const path_t* out_path, bool make_source_map);
 void      build_free      (build_t* build);
 bool      build_is_ok     (const build_t* build, int *out_num_errors, int *out_num_warnings);
 target_t* build_add_asset (build_t* build, asset_t* asset, const path_t* subdir);
