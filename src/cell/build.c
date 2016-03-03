@@ -44,10 +44,8 @@ static int  compare_asset_names (const void* in_a, const void* in_b);
 static void do_add_files        (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
 static bool do_build_target     (build_t* build, const target_t* target, bool *out_is_new);
 static bool do_install_target   (build_t* build, struct install* inst, bool *out_is_new);
-static void emit_error          (build_t* build, const char* fmt, ...);
 static void emit_op_begin       (build_t* build, const char* fmt, ...);
 static void emit_op_end         (build_t* build, const char* fmt, ...);
-static void emit_warning        (build_t* build, const char* fmt, ...);
 static void validate_targets    (build_t* build);
 
 build_t*
@@ -62,7 +60,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	// check for Cellscript.js in input directory
 	script_path = path_rebase(path_new("Cellscript.js"), in_path);
 	if (stat(path_cstr(script_path), &stat_buf) != 0 || !(stat_buf.st_mode & S_IFREG)) {
-		fprintf(stderr, "ERROR: failed to stat Cellscript.js\n");
+		fprintf(stderr, "ERROR: unable to stat Cellscript.js\n");
 		return NULL;
 	}
 	build->timestamp = stat_buf.st_mtime;
@@ -185,6 +183,30 @@ build_add_files(build_t* build, const path_t* pattern, bool recursive)
 }
 
 void
+build_emit_error(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_errors;
+	va_start(ap, fmt);
+	printf("\n  ERROR: ");
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+build_emit_warn(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_warnings;
+	va_start(ap, fmt);
+	printf("\n  warning: ");
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
 build_install(build_t* build, const target_t* target, const path_t* path)
 {
 	struct install inst;
@@ -208,18 +230,18 @@ build_prime(build_t* build, const char* rule_name)
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duktape, path_cstr(script_path)) != 0) {
 		path_free(script_path);
-		emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+		build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
 		goto on_error;
 	}
 	path_free(script_path);
 	if (duk_get_global_string(build->duktape, func_name) && duk_is_callable(build->duktape, -1)) {
 		if (duk_pcall(build->duktape, 0) != 0) {
-			emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+			build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
 			goto on_error;
 		}
 	}
 	else {
-		emit_error(build, "no Cellscript rule named '%s'", rule_name);
+		build_emit_error(build, "no Cellscript rule named '%s'", rule_name);
 		goto on_error;
 	}
 
@@ -251,7 +273,7 @@ build_run(build_t* build)
 	iter_t iter;
 
 	if (vector_len(build->installs) == 0) {
-		emit_error(build, "no assets staged for install");
+		build_emit_error(build, "no assets staged for install");
 		return false;
 	}
 
@@ -422,7 +444,7 @@ do_install_target(build_t* build, struct install* inst, bool *out_is_new)
 		fn_src = path_cstr(src_path);
 		fn_dest = path_cstr(out_path);
 		if (stat(fn_src, &sb_src) != 0) {
-			emit_error(build, "failed to access '%s'", fn_src);
+			build_emit_error(build, "unable to access '%s'", fn_src);
 			return false;
 		}
 		if (stat(fn_dest, &sb_dest) != 0
@@ -433,7 +455,7 @@ do_install_target(build_t* build, struct install* inst, bool *out_is_new)
 				|| !fspew(file_data, file_size, fn_dest))
 			{
 				free(file_data);
-				emit_error(build, "failed to copy '%s' to '%s'", path_cstr(src_path), path_cstr(out_path));
+				build_emit_error(build, "unable to copy '%s' to '%s'", path_cstr(src_path), path_cstr(out_path));
 				return false;
 			}
 			free(file_data);
@@ -452,18 +474,6 @@ do_install_target(build_t* build, struct install* inst, bool *out_is_new)
 		*out_is_new = true;
 	}
 	return true;
-}
-
-static void
-emit_error(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	++build->num_errors;
-	va_start(ap, fmt);
-	printf("\n  ERROR: ");
-	vprintf(fmt, ap);
-	va_end(ap);
 }
 
 static void
@@ -494,18 +504,6 @@ emit_op_end(build_t* build, const char* fmt, ...)
 }
 
 static void
-emit_warning(build_t* build, const char* fmt, ...)
-{
-	va_list ap;
-
-	++build->num_warnings;
-	va_start(ap, fmt);
-	printf("\n  warning: ");
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-static void
 validate_targets(build_t* build)
 {
 	const path_t* name;
@@ -528,13 +526,13 @@ validate_targets(build_t* build)
 			++num_dups;
 		else {
 			if (num_dups > 0)
-				emit_error(build, "'%s' %d-way asset conflict", path_cstr(name), num_dups + 1);
+				build_emit_error(build, "'%s' %d-way asset conflict", path_cstr(name), num_dups + 1);
 			num_dups = 0;
 		}
 		prev_name = name;
 	}
 	if (num_dups > 0)
-		emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
+		build_emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
 	vector_free(targets);
 }
 
@@ -599,7 +597,7 @@ js_api_files(duk_context* ctx)
 
 	targets = build_add_files(build, pattern, is_recursive);
 	if (vector_len(targets) == 0)
-		emit_warning(build, "files(): no files match '%s'", path_cstr(pattern));
+		build_emit_warn(build, "files(): no files match '%s'", path_cstr(pattern));
 	duk_push_array(ctx);
 	iter = vector_enum(targets);
 	while (p_target = vector_next(&iter)) {
@@ -665,9 +663,9 @@ js_api_s2gm(duk_context* ctx)
 	duk_pop_2(ctx);
 
 	if (!duk_get_prop_string(ctx, 0, "author"))
-		emit_warning(build, "s2gm(): 'author' field is missing");
+		build_emit_warn(build, "s2gm(): 'author' field is missing");
 	if (!duk_get_prop_string(ctx, 0, "summary"))
-		emit_warning(build, "s2gm(): 'summary' field is missing");
+		build_emit_warn(build, "s2gm(): 'summary' field is missing");
 	duk_pop_2(ctx);
 
 	json = duk_json_encode(ctx, 0);
