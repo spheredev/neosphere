@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace minisphere.Gdk.Debugger
 {
-    class ErrorThrownEventArgs : EventArgs
+    class ThrowEventArgs : EventArgs
     {
-        public ErrorThrownEventArgs(string message, string filename, int lineNumber, bool isFatal)
+        public ThrowEventArgs(string message, string filename, int lineNumber, bool isFatal)
         {
             Message = message;
             FileName = filename;
@@ -64,8 +64,7 @@ namespace minisphere.Gdk.Debugger
         private Dictionary<DMessage, DMessage> replies = new Dictionary<DMessage, DMessage>();
 
         /// <summary>
-        /// Constructs a DuktapeClient object used for communicating with a
-        /// Duktape debuggee over TCP.
+        /// Constructs an Inferior to control a Duktape debuggee.
         /// </summary>
         public Inferior()
         {
@@ -77,7 +76,7 @@ namespace minisphere.Gdk.Debugger
         }
 
         /// <summary>
-        /// Releases all resources used by the DuktapeClient object.
+        /// Releases all resources used by the Inferior.
         /// </summary>
         public void Dispose()
         {
@@ -85,9 +84,9 @@ namespace minisphere.Gdk.Debugger
             Alert = null;
             Attached = null;
             Detached = null;
-            ErrorThrown = null;
             Print = null;
             Status = null;
+            Throw = null;
             tcp.Close();
         }
 
@@ -107,11 +106,6 @@ namespace minisphere.Gdk.Debugger
         public event EventHandler Detached;
 
         /// <summary>
-        /// Fires when an error is thrown by JS code.
-        /// </summary>
-        public event EventHandler<ErrorThrownEventArgs> ErrorThrown;
-        
-        /// <summary>
         /// Fires when a script calls print().
         /// </summary>
         public event EventHandler<TraceEventArgs> Print;
@@ -120,14 +114,19 @@ namespace minisphere.Gdk.Debugger
         /// Fires when execution status (code position, etc.) has changed.
         /// </summary>
         public event EventHandler Status;
-        
+
         /// <summary>
-        /// Gets the identification string reported in the handshake.
+        /// Fires when an error is thrown by JavaScript code.
+        /// </summary>
+        public event EventHandler<ThrowEventArgs> Throw;
+
+        /// <summary>
+        /// Gets the target's application identification string.
         /// </summary>
         public string TargetID { get; private set; }
 
         /// <summary>
-        /// Gets the version identification of the Duktape host.
+        /// Gets the target's Duktape version ID string.
         /// </summary>
         public string Version { get; private set; }
         
@@ -142,7 +141,7 @@ namespace minisphere.Gdk.Debugger
         public int LineNumber { get; private set; }
 
         /// <summary>
-        /// Gets whether the target is currently executing code.
+        /// Gets whether the target is actively executing code.
         /// </summary>
         public bool Running { get; private set; }
 
@@ -268,9 +267,9 @@ namespace minisphere.Gdk.Debugger
             return vars;
         }
 
-        public async Task<Dictionary<string, PropDesc>> GetObjPropRange(HeapPtr ptr, int start, int end)
+        public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(HeapPtr ptr, int start, int end)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetObjPropRange, ptr, start, end);
+            var reply = await DoRequest(DValueTag.REQ, Request.GetObjPropDescRange, ptr, start, end);
             var props = new Dictionary<string, PropDesc>();
             int count = (reply.Length - 1) / 2;
             int i = 1;
@@ -375,12 +374,9 @@ namespace minisphere.Gdk.Debugger
 
             return await Task.Run(() =>
             {
-                while (true)
-                {
-                    lock (replyLock)
-                    {
-                        if (replies.ContainsKey(message))
-                        {
+                while (true) {
+                    lock (replyLock) {
+                        if (replies.ContainsKey(message)) {
                             var reply = replies[message];
                             replies.Remove(message);
                             return reply;
@@ -422,7 +418,7 @@ namespace minisphere.Gdk.Debugger
                             Alert?.Invoke(this, new TraceEventArgs("a: " + alertText));
                             break;
                         case Notify.Throw:
-                            ErrorThrown?.Invoke(this, new ErrorThrownEventArgs(
+                            Throw?.Invoke(this, new ThrowEventArgs(
                                 (string)message[3], (string)message[4], (int)message[5],
                                 (int)message[2] != 0));
                             break;

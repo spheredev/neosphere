@@ -47,10 +47,6 @@ namespace minisphere.Gdk.Forms
             PropTree.EndUpdate();
         }
 
-        private void JSViewer_Shown(object sender, EventArgs e)
-        {
-        }
-
         private async void PropTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             if (e.Node.Tag is HeapPtr)
@@ -60,7 +56,7 @@ namespace minisphere.Gdk.Forms
         private async Task PopulateTreeNode(TreeNode node, HeapPtr ptr)
         {
             PropTree.BeginUpdate();
-            var props = await _inferior.GetObjPropRange(ptr, 0, int.MaxValue);
+            var props = await _inferior.GetObjPropDescRange(ptr, 0, int.MaxValue);
             foreach (var key in props.Keys)
             {
                 DValue value = props[key].Value;

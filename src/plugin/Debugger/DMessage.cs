@@ -29,8 +29,8 @@ namespace minisphere.Gdk.Debugger
         GetByteCode = 0x21,
         AppRequest = 0x22,
         GetHeapObjInfo = 0x23,
-        GetObjProp = 0x24,
-        GetObjPropRange = 0x25,
+        GetObjPropDesc = 0x24,
+        GetObjPropDescRange = 0x25,
     }
 
     enum Notify
@@ -59,24 +59,21 @@ namespace minisphere.Gdk.Debugger
     {
         private DValue[] _fields;
 
-        public DMessage(dynamic[] values)
+        public DMessage(params dynamic[] values)
         {
             List<DValue> fields = new List<DValue>();
             DValue fieldValue;
 
             foreach (dynamic value in values) {
-                if (value is Request || value is AppRequest)
+                if (value is DValue)
+                    fieldValue = value;
+                else if (value is Request || value is AppRequest)
                     fieldValue = new DValue((int)value);
                 else
                     fieldValue = new DValue(value);
                 fields.Add(fieldValue);
             }
             _fields = fields.ToArray();
-        }
-
-        public DMessage(DValue[] fields)
-        {
-            _fields = (DValue[])fields.Clone();
         }
 
         public DValue this[int index] => _fields[index];

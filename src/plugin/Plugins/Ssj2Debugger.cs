@@ -15,7 +15,7 @@ using minisphere.Gdk.Debugger;
 
 namespace minisphere.Gdk.Plugins
 {
-    class SsjDebugger : IDebugger, IDisposable
+    class Ssj2Debugger : IDebugger, IDisposable
     {
         private string sgmPath;
         private Process engineProcess;
@@ -28,7 +28,7 @@ namespace minisphere.Gdk.Plugins
         private bool expectDetach = false;
         private PluginMain plugin;
 
-        public SsjDebugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
+        public Ssj2Debugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
         {
             plugin = main;
             sgmPath = gamePath;
@@ -87,7 +87,7 @@ namespace minisphere.Gdk.Plugins
                     Inferior = new Inferior();
                     Inferior.Attached += duktape_Attached;
                     Inferior.Detached += duktape_Detached;
-                    Inferior.ErrorThrown += duktape_ErrorThrown;
+                    Inferior.Throw += duktape_ErrorThrown;
                     Inferior.Alert += duktape_Print;
                     Inferior.Print += duktape_Print;
                     Inferior.Status += duktape_Status;
@@ -158,7 +158,7 @@ namespace minisphere.Gdk.Plugins
             }), null);
         }
 
-        private void duktape_ErrorThrown(object sender, ErrorThrownEventArgs e)
+        private void duktape_ErrorThrown(object sender, ThrowEventArgs e)
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
@@ -275,7 +275,7 @@ namespace minisphere.Gdk.Plugins
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
-                SsjDebugger me = (SsjDebugger)state;
+                Ssj2Debugger me = (Ssj2Debugger)state;
                 try
                 {
                     NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
@@ -295,7 +295,7 @@ namespace minisphere.Gdk.Plugins
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                SsjDebugger me = (SsjDebugger)state;
+                Ssj2Debugger me = (Ssj2Debugger)state;
                 var callStack = await me.Inferior.GetCallStack();
                 if (!me.Running)
                 {

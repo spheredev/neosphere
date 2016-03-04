@@ -46,7 +46,7 @@ namespace minisphere.Gdk.Plugins
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
             string options = string.Format(@"--debug ""{0}""", gamePath);
             Process engine = Process.Start(enginePath, options);
-            return new SsjDebugger(_main, gamePath, enginePath, engine, project);
+            return new Ssj2Debugger(_main, gamePath, enginePath, engine, project);
         }
     }
 }

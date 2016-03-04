@@ -31,15 +31,15 @@
             this.components = new System.ComponentModel.Container();
             this.OKButton = new System.Windows.Forms.Button();
             this.PropTree = new System.Windows.Forms.TreeView();
-            this.ObjectNameTextBox = new System.Windows.Forms.TextBox();
             this.TreeIconImageList = new System.Windows.Forms.ImageList(this.components);
+            this.ObjectNameTextBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // OKButton
             // 
             this.OKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.OKButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.OKButton.Location = new System.Drawing.Point(481, 418);
+            this.OKButton.Location = new System.Drawing.Point(481, 419);
             this.OKButton.Name = "OKButton";
             this.OKButton.Size = new System.Drawing.Size(80, 25);
             this.OKButton.TabIndex = 1;
@@ -56,9 +56,15 @@
             this.PropTree.Location = new System.Drawing.Point(12, 41);
             this.PropTree.Name = "PropTree";
             this.PropTree.SelectedImageIndex = 0;
-            this.PropTree.Size = new System.Drawing.Size(549, 371);
+            this.PropTree.Size = new System.Drawing.Size(549, 372);
             this.PropTree.TabIndex = 2;
             this.PropTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.PropTree_BeforeExpand);
+            // 
+            // TreeIconImageList
+            // 
+            this.TreeIconImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+            this.TreeIconImageList.ImageSize = new System.Drawing.Size(16, 16);
+            this.TreeIconImageList.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // ObjectNameTextBox
             // 
@@ -68,19 +74,13 @@
             this.ObjectNameTextBox.Size = new System.Drawing.Size(549, 23);
             this.ObjectNameTextBox.TabIndex = 3;
             // 
-            // TreeIconImageList
-            // 
-            this.TreeIconImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            this.TreeIconImageList.ImageSize = new System.Drawing.Size(16, 16);
-            this.TreeIconImageList.TransparentColor = System.Drawing.Color.Transparent;
-            // 
             // ObjectViewer
             // 
             this.AcceptButton = this.OKButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.OKButton;
-            this.ClientSize = new System.Drawing.Size(573, 455);
+            this.ClientSize = new System.Drawing.Size(573, 456);
             this.Controls.Add(this.ObjectNameTextBox);
             this.Controls.Add(this.PropTree);
             this.Controls.Add(this.OKButton);
@@ -92,7 +92,6 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "SSJ2 Object Viewer";
             this.Load += new System.EventHandler(this.JSViewer_Load);
-            this.Shown += new System.EventHandler(this.JSViewer_Shown);
             this.ResumeLayout(false);
             this.PerformLayout();
 
