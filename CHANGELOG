@@ -7,11 +7,14 @@ v3.0.0 - TBD
 * Command-line debugging comes to minisphere! Try out the brand-new SSJ console
   debugger by running `ssj <game-path>` on the command line. This brings
   full debugger support to non-Windows platforms for the first time!
+* Vastly improves object inspection in the Sphere Studio debugger.  Object
+  contents are now displayed in a treeview and you can drill down through the
+  properties, instead of having to sift through a potentially huge JSON dump.
 * The command to run minisphere Console from the command line has been changed
   from 'msphere' to 'spherun'.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
   been renamed as well, to 'minisphere'.
-* The redistributable and GDK Windows downloads have been combined into a single
+* The Windows redistributable and GDK downloads have been combined into a single
   installer.  The engine is so compact that there's not much gained from having
   separate installers.
 * New API: `DebugPrint()`, designed for logging low-level debug information

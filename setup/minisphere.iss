@@ -1,5 +1,5 @@
 ; minisphere installer for Windows releases
-; (C) 2015 Fat Cerberus
+; (C) 2015-2016 Fat Cerberus
 ; Inno Setup 5.5 or later with ISPP is required.
 ;
 ; This will build a Windows installer for minisphere. Before compiling the installer,
@@ -8,8 +8,8 @@
 ; configurations.
 
 #define AppName "minisphere"
-#define AppVersion "3.0a4"
-#define AppRawVersion "2.99.4.0"
+#define AppVersion "3.0b4"
+#define AppRawVersion "2.99.4.1260"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
