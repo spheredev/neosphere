@@ -28,35 +28,31 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.JsonTextBox = new System.Windows.Forms.TextBox();
             this.OKButton = new System.Windows.Forms.Button();
+            this.PropTree = new System.Windows.Forms.TreeView();
             this.SuspendLayout();
-            // 
-            // JsonTextBox
-            // 
-            this.JsonTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.JsonTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.JsonTextBox.Location = new System.Drawing.Point(12, 14);
-            this.JsonTextBox.Multiline = true;
-            this.JsonTextBox.Name = "JsonTextBox";
-            this.JsonTextBox.ReadOnly = true;
-            this.JsonTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.JsonTextBox.Size = new System.Drawing.Size(584, 357);
-            this.JsonTextBox.TabIndex = 0;
-            this.JsonTextBox.WordWrap = false;
             // 
             // OKButton
             // 
             this.OKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.OKButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.OKButton.Location = new System.Drawing.Point(516, 377);
+            this.OKButton.Location = new System.Drawing.Point(481, 364);
             this.OKButton.Name = "OKButton";
             this.OKButton.Size = new System.Drawing.Size(80, 25);
             this.OKButton.TabIndex = 1;
-            this.OKButton.Text = "OK";
+            this.OKButton.Text = "&Close";
             this.OKButton.UseVisualStyleBackColor = true;
+            // 
+            // PropTree
+            // 
+            this.PropTree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.PropTree.Location = new System.Drawing.Point(12, 12);
+            this.PropTree.Name = "PropTree";
+            this.PropTree.Size = new System.Drawing.Size(549, 346);
+            this.PropTree.TabIndex = 2;
+            this.PropTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.PropTree_BeforeExpand);
             // 
             // JSViewer
             // 
@@ -64,9 +60,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.OKButton;
-            this.ClientSize = new System.Drawing.Size(608, 414);
+            this.ClientSize = new System.Drawing.Size(573, 401);
+            this.Controls.Add(this.PropTree);
             this.Controls.Add(this.OKButton);
-            this.Controls.Add(this.JsonTextBox);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -77,13 +73,11 @@
             this.Load += new System.EventHandler(this.JSViewer_Load);
             this.Shown += new System.EventHandler(this.JSViewer_Shown);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox JsonTextBox;
         private System.Windows.Forms.Button OKButton;
+        private System.Windows.Forms.TreeView PropTree;
     }
 }

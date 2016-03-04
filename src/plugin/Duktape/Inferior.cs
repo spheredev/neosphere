@@ -26,6 +26,40 @@ namespace minisphere.Gdk.Duktape
         Lightfunc,
     }
 
+    enum ObjClass
+    {
+        Unused,
+        Arguments,
+        Array,
+        Boolean,
+        Date,
+        Error,
+        Function,
+        JSON,
+        Math,
+        Number,
+        Object,
+        RegExp,
+        String,
+        global,
+        ObjEnv,
+        DecEnv,
+        Buffer,
+        Pointer,
+        Thread,
+        ArrayBuffer,
+        DataView,
+        Int8Array,
+        Uint8Array,
+        Uint8ClampedArray,
+        Int16Array,
+        Uint16Array,
+        Int32Array,
+        Uint32Array,
+        Float32Array,
+        Float64Array,
+    }
+
     enum Request
     {
         BasicInfo = 0x10,
@@ -72,6 +106,13 @@ namespace minisphere.Gdk.Duktape
     enum AppNotify
     {
         DebugPrint = 0x01,
+    }
+
+    class HeapPtr
+    {
+        public ObjClass Class;
+        public byte[] Data;
+        public byte Size;
     }
 
     class ErrorThrownEventArgs : EventArgs
@@ -279,13 +320,10 @@ namespace minisphere.Gdk.Duktape
         /// </summary>
         /// <param name="expression">The expression or statement to evaluate.</param>
         /// <param name="stackOffset">The point in the stack to do the eval. -1 is active call, -2 the caller, etc..</param>
-        /// <returns>The JX-encoded value produced by the expression.</returns>
-        public async Task<string> Eval(string expression, int stackOffset = -1)
+        /// <returns>The value produced by the expression.</returns>
+        public async Task<dynamic> Eval(string expression, int stackOffset = -1)
         {
-            var code = string.Format(
-                @"(function() {{ try {{ return Duktape.enc('jx', eval(""{0}""), null, 3); }} catch (e) {{ return e.toString(); }} }}).call(this);",
-                expression.Replace(@"\", @"\\").Replace(@"""", @"\"""));
-            var reply = await Converse(DValue.REQ, Request.Eval, code, stackOffset);
+            var reply = await Converse(DValue.REQ, Request.Eval, expression, stackOffset);
             return reply[2];
         }
 
@@ -330,16 +368,42 @@ namespace minisphere.Gdk.Duktape
             {
                 string name = reply[1 + i * 2].ToString();
                 dynamic value = reply[2 + i * 2];
-                string friendlyValue = value.Equals(DValue.Object) ? "Object { ... }"
+                string friendlyValue =
+                    value is HeapPtr && value.Class == ObjClass.Array ? "[ ... ]"
+                    : value is HeapPtr ? string.Format(@"{{ obj: '{0}' }}", value.Class.ToString())
+                    : value.Equals(DValue.Unused) ? "undefined"
                     : value.Equals(DValue.Undefined) ? "undefined"
+                    : value.Equals(DValue.Null) ? "null"
                     : value is bool ? value ? "true" : "false"
                     : value is int ? value.ToString()
                     : value is double ? value.ToString()
-                    : value is string ? string.Format("\"{0}\"", value.Replace(@"""", @"\"""))
+                    : value is string ? string.Format("\"{0}\"", value.Replace(@"""", @"\""").Replace("\n", @"\n"))
                     : await Eval(name);
                 variables.Add(name, friendlyValue);
             }
             return variables;
+        }
+
+        public async Task<Dictionary<string, dynamic>> GetObjPropRange(HeapPtr ptr, int start, int end)
+        {
+            var reply = await Converse(DValue.REQ, Request.GetObjPropRange, ptr, start, end);
+            var props = new Dictionary<string, dynamic>();
+            int count = (reply.Length - 1) / 2;
+            int i = 1;
+            while (i < reply.Length)
+            {
+                int flags = reply[i++];
+                string name = reply[i++].ToString();
+                if ((flags & 0x0008) == 0)
+                {
+                    dynamic value = reply[i++];
+                    if ((flags & 0x0100) == 0)
+                        props.Add(name, value);
+                }
+                else
+                    i += 2;
+            }
+            return props;
         }
 
         /// <summary>
@@ -476,6 +540,7 @@ namespace minisphere.Gdk.Duktape
             }
             else
             {
+                HeapPtr ptr = new HeapPtr();
                 switch (bytes[0])
                 {
                     case 0x00: return DValue.EOM;
@@ -527,9 +592,12 @@ namespace minisphere.Gdk.Duktape
                             Array.Reverse(bytes);
                         return BitConverter.ToDouble(bytes, 0);
                     case 0x1B: // JS object
-                        tcp.Client.ReceiveAll(bytes = new byte[2]);
-                        tcp.Client.ReceiveAll(new byte[bytes[1]]);
-                        return DValue.Object;
+                        tcp.Client.ReceiveAll(bytes = new byte[1]);
+                        ptr.Class = (ObjClass)bytes[0];
+                        tcp.Client.ReceiveAll(bytes = new byte[1]);
+                        ptr.Size = bytes[0];
+                        tcp.Client.ReceiveAll(ptr.Data = new byte[ptr.Size]);
+                        return ptr;
                     case 0x1C: // pointer
                         tcp.Client.ReceiveAll(bytes = new byte[1]);
                         tcp.Client.ReceiveAll(new byte[bytes[0]]);
@@ -539,9 +607,11 @@ namespace minisphere.Gdk.Duktape
                         tcp.Client.ReceiveAll(new byte[bytes[2]]);
                         return DValue.Lightfunc;
                     case 0x1E: // Duktape heap pointer
+                        ptr.Class = ObjClass.Pointer;
                         tcp.Client.ReceiveAll(bytes = new byte[1]);
-                        tcp.Client.ReceiveAll(new byte[bytes[0]]);
-                        return DValue.HeapPtr;
+                        ptr.Size = bytes[0];
+                        tcp.Client.ReceiveAll(ptr.Data = new byte[ptr.Size]);
+                        return ptr;
                     default:
                         return DValue.EOM;
                 }
@@ -612,6 +682,13 @@ namespace minisphere.Gdk.Duktape
                 (byte)(stringBytes.Length & 0xFF)
             });
             tcp.Client.Send(stringBytes);
+        }
+
+        private void SendValue(HeapPtr ptr)
+        {
+            tcp.Client.Send(new byte[] { 0x1E });
+            tcp.Client.Send(new byte[] { ptr.Size });
+            tcp.Client.Send(ptr.Data);
         }
 
         private void ProcessMessages()

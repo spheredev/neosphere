@@ -63,8 +63,11 @@ namespace minisphere.Gdk.DockPanes
 
         private async Task DoEvaluate(string expr)
         {
-            new JSViewer(expr, await Ssj.Duktape.Eval(expr, -(stackIndex + 1)))
-                .ShowDialog(this);
+            dynamic result = await Ssj.Duktape.Eval(expr, -(stackIndex + 1));
+            if (result is HeapPtr)
+                new JSViewer(Ssj.Duktape, result).ShowDialog(this);
+            else
+                SystemSounds.Exclamation.Play();
         }
 
         private async Task LoadStackFrame(int callIndex)
