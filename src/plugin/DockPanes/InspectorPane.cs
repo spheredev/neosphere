@@ -19,9 +19,9 @@ namespace minisphere.Gdk.DockPanes
     {
         private const string ValueBoxHint = "Select a variable from the list above to see what it contains.";
 
-        private bool isEvaluating = false;
-        private int stackIndex = -1;
-        private IReadOnlyDictionary<string, string> variables;
+        private bool _isEvaling = false;
+        private int _frame = -1;
+        private IReadOnlyDictionary<string, DValue> _vars;
 
         public InspectorPane()
         {
@@ -56,34 +56,31 @@ namespace minisphere.Gdk.DockPanes
                 CallsView.Items.Add(item);
             }
             CallsView.EndUpdate();
-            stackIndex = -1;
+            _frame = -1;
 
             await LoadStackFrame(index);
         }
 
         private async Task DoEvaluate(string expr)
         {
-            dynamic result = await Ssj.Inferior.Eval(expr, -(stackIndex + 1));
-            if (result is HeapPtr)
-                new ObjectViewer(Ssj.Inferior, expr, result).ShowDialog(this);
-            else
-                SystemSounds.Exclamation.Play();
+            var result = await Ssj.Inferior.Eval(expr, -(_frame + 1));
+            new ObjectViewer(Ssj.Inferior, expr, result).ShowDialog(this);
         }
 
         private async Task LoadStackFrame(int callIndex)
         {
-            if (stackIndex >= 0)
-                CallsView.Items[stackIndex].ForeColor = SystemColors.WindowText;
-            stackIndex = callIndex;
-            CallsView.Items[stackIndex].ForeColor = Color.Blue;
+            if (_frame >= 0)
+                CallsView.Items[_frame].ForeColor = SystemColors.WindowText;
+            _frame = callIndex;
+            CallsView.Items[_frame].ForeColor = Color.Blue;
             CallsView.SelectedItems.Clear();
-            this.variables = await Ssj.Inferior.GetLocals(-(stackIndex + 1));
+            this._vars = await Ssj.Inferior.GetLocals(-(_frame + 1));
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
-            foreach (var k in this.variables.Keys)
+            foreach (var k in this._vars.Keys)
             {
                 var item = LocalsView.Items.Add(k, 0);
-                item.SubItems.Add(this.variables[k]);
+                item.SubItems.Add(_vars[k].ToString());
             }
             LocalsView.EndUpdate();
         }
@@ -106,7 +103,7 @@ namespace minisphere.Gdk.DockPanes
         private void ExprTextBox_TextChanged(object sender, EventArgs e)
         {
             EvalButton.Enabled = !string.IsNullOrWhiteSpace(ExprTextBox.Text)
-                && !isEvaluating;
+                && !_isEvaling;
         }
 
         private async void LocalsView_DoubleClick(object sender, EventArgs e)

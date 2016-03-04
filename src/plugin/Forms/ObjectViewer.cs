@@ -18,30 +18,31 @@ namespace minisphere.Gdk.Forms
     partial class ObjectViewer : Form
     {
         private Inferior _inferior;
-        private HeapPtr _objectPtr;
+        private DValue _value;
 
-        public ObjectViewer(Inferior inferior, string objectName, HeapPtr objectPtr)
+        public ObjectViewer(Inferior inferior, string objectName, DValue value)
         {
             InitializeComponent();
 
-            ObjectNameTextBox.Text = objectName;
+            ObjectNameTextBox.Text = "eval('"
+                + objectName.Replace(@"\", @"\\").Replace("'", @"\'").Replace("\n", @"\n")
+                + "');";
             TreeIconImageList.Images.Add("object", Resources.StackIcon);
             TreeIconImageList.Images.Add("prop", Resources.VisibleIcon);
             TreeIconImageList.Images.Add("hiddenProp", Resources.InvisibleIcon);
 
             _inferior = inferior;
-            _objectPtr = objectPtr;
+            _value = value;
         }
 
         private async void JSViewer_Load(object sender, EventArgs e)
         {
             PropTree.BeginUpdate();
             PropTree.Nodes.Clear();
-            var trunkName = _objectPtr.Class == ObjClass.Array ? "[ ... ]"
-                : string.Format(@"{{ obj: '{0}' }}", _objectPtr.Class.ToString());
-            var trunk = PropTree.Nodes.Add(trunkName);
+            var trunk = PropTree.Nodes.Add(_value.ToString());
             trunk.ImageKey = "object";
-            await PopulateTreeNode(trunk, _objectPtr);
+            if (_value.Tag == DValueTag.HeapPtr)
+                await PopulateTreeNode(trunk, (HeapPtr)_value);
             trunk.Expand();
             PropTree.EndUpdate();
         }
@@ -62,26 +63,15 @@ namespace minisphere.Gdk.Forms
             var props = await _inferior.GetObjPropRange(ptr, 0, int.MaxValue);
             foreach (var key in props.Keys)
             {
-                dynamic value = props[key].Value;
-                string friendlyValue =
-                    value is HeapPtr && value.Class == ObjClass.Array ? "[ ... ]"
-                    : value is HeapPtr ? string.Format(@"{{ obj: '{0}' }}", value.Class.ToString())
-                    : value.Equals(DValue.Unused) ? "undefined"
-                    : value.Equals(DValue.Undefined) ? "undefined"
-                    : value.Equals(DValue.Null) ? "null"
-                    : value is bool ? value ? "true" : "false"
-                    : value is int ? value.ToString()
-                    : value is double ? value.ToString()
-                    : value is string ? string.Format("\"{0}\"", value.Replace(@"""", @"\""").Replace("\n", @"\n"))
-                    : "*munch*";
-                var nodeText = string.Format("{0} = {1}", key, friendlyValue);
+                DValue value = props[key].Value;
+                var nodeText = string.Format("{0} = {1}", key, value.ToString());
                 var valueNode = node.Nodes.Add(nodeText);
-                valueNode.ImageKey = props[key].Flags.HasFlag(JSPropFlags.Enumerable) ? "prop" : "hiddenProp";
+                valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
                 valueNode.SelectedImageKey = valueNode.ImageKey;
-                if (value is HeapPtr)
+                if (value.Tag == DValueTag.HeapPtr)
                 {
                     valueNode.Nodes.Add("");
-                    valueNode.Tag = value;
+                    valueNode.Tag = (HeapPtr)value;
                 }
             }
             if (node.Tag is HeapPtr)

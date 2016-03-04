@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>minisphere.Gdk</RootNamespace>
     <AssemblyName>minisphereGdkPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -55,7 +55,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Debugger\JSProperty.cs" />
+    <Compile Include="Debugger\DMessage.cs" />
+    <Compile Include="Debugger\DValue.cs" />
+    <Compile Include="Debugger\PropDesc.cs" />
     <Compile Include="Forms\ObjectViewer.cs">
       <SubType>Form</SubType>
     </Compile>

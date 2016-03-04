@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace minisphere.Gdk.Debugger
 {
-    struct JSProperty
+    struct PropDesc
     {
-        public JSProperty(dynamic value, JSPropFlags flags)
+        public PropDesc(DValue value, PropFlags flags)
         {
             Value = value;
             Getter = Setter = null;
             Flags = flags;
         }
 
-        public JSProperty(dynamic getter, dynamic setter, JSPropFlags flags)
+        public PropDesc(DValue getter, DValue setter, PropFlags flags)
         {
             Value = null;
             Getter = getter;
@@ -23,14 +23,14 @@ namespace minisphere.Gdk.Debugger
             Flags = flags;
         }
 
-        public dynamic Value;
-        public dynamic Getter;
-        public dynamic Setter;
-        public JSPropFlags Flags;
+        public DValue Value;
+        public DValue Getter;
+        public DValue Setter;
+        public PropFlags Flags;
     }
 
     [Flags]
-    enum JSPropFlags
+    enum PropFlags
     {
         None = 0x0000,
         Writable = 0x0001,
