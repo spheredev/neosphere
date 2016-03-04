@@ -153,8 +153,7 @@ namespace minisphere.Gdk.Debugger
             await Task.Run(() =>
             {
                 byte[] buffer = new byte[1];
-                while (buffer[0] != '\n')
-                {
+                while (buffer[0] != '\n') {
                     tcp.Client.ReceiveAll(buffer);
                     line += (char)buffer[0];
                 }
@@ -234,13 +233,12 @@ namespace minisphere.Gdk.Debugger
             var reply = await DoRequest(DValueTag.REQ, Request.GetCallStack);
             var stack = new List<Tuple<string, string, int>>();
             int count = (reply.Length - 1) / 4;
-            for (int i = 0; i < count; ++i)
-            {
+            for (int i = 0; i < count; ++i) {
                 string filename = (string)reply[1 + i * 4];
                 string functionName = (string)reply[2 + i * 4];
                 int lineNumber = (int)reply[3 + i * 4];
                 int pc = (int)reply[4 + i * 4];
-                if (pc == 0)
+                if (lineNumber == 0)
                     filename = "(system call)";
                 stack.Add(Tuple.Create(functionName, filename, lineNumber));
             }
@@ -258,8 +256,7 @@ namespace minisphere.Gdk.Debugger
             var reply = await DoRequest(DValueTag.REQ, Request.GetLocals, stackOffset);
             var vars = new Dictionary<string, DValue>();
             int count = (reply.Length - 1) / 2;
-            for (int i = 0; i < count; ++i)
-            {
+            for (int i = 0; i < count; ++i) {
                 string name = (string)reply[1 + i * 2];
                 DValue value = reply[2 + i * 2];
                 vars.Add(name, value);
@@ -273,20 +270,17 @@ namespace minisphere.Gdk.Debugger
             var props = new Dictionary<string, PropDesc>();
             int count = (reply.Length - 1) / 2;
             int i = 1;
-            while (i < reply.Length)
-            {
+            while (i < reply.Length) {
                 PropFlags flags = (PropFlags)(int)reply[i++];
                 string name = reply[i++].ToString();
-                if (flags.HasFlag(PropFlags.Accessor))
-                {
+                if (flags.HasFlag(PropFlags.Accessor)) {
                     DValue getter = reply[i++];
                     DValue setter = reply[i++];
                     PropDesc propValue = new PropDesc(getter, setter, flags);
                     if (!flags.HasFlag(PropFlags.Internal))
                         props.Add(name, propValue);
                 }
-                else
-                {
+                else {
                     DValue value = reply[i++];
                     PropDesc propValue = new PropDesc(value, flags);
                     if (!flags.HasFlag(PropFlags.Internal) && value.Tag != DValueTag.Unused)
@@ -308,8 +302,7 @@ namespace minisphere.Gdk.Debugger
             var reply = await DoRequest(DValueTag.REQ, Request.ListBreak);
             var count = (reply.Length - 1) / 2;
             List<Tuple<string, int>> list = new List<Tuple<string, int>>();
-            for (int i = 0; i < count; ++i)
-            {
+            for (int i = 0; i < count; ++i) {
                 var breakpoint = Tuple.Create(
                     (string)reply[1 + i * 2], 
                     (int)reply[2 + i * 2]);
@@ -389,18 +382,15 @@ namespace minisphere.Gdk.Debugger
 
         private void ProcessMessages()
         {
-            while (true)
-            {
+            while (true) {
                 DMessage message = DMessage.Receive(tcp.Client);
-                if (message == null)
-                {
+                if (message == null) {
                     // if DMessage.Receive() returns null, detach.
                     tcp.Close();
                     Detached?.Invoke(this, EventArgs.Empty);
                     return;
                 }
-                if (message[0].Tag == DValueTag.NFY)
-                {
+                else if (message[0].Tag == DValueTag.NFY) {
                     switch ((Notify)(int)message[1])
                     {
                         case Notify.Status:
@@ -427,7 +417,8 @@ namespace minisphere.Gdk.Debugger
                             Detached?.Invoke(this, EventArgs.Empty);
                             return;
                         case Notify.AppNotify:
-                            switch ((AppNotify)(int)message[2]) {
+                            switch ((AppNotify)(int)message[2])
+                            {
                                 case AppNotify.DebugPrint:
                                     string debugText = (string)message[3];
                                     Print?.Invoke(this, new TraceEventArgs("t: " + debugText));
@@ -436,10 +427,8 @@ namespace minisphere.Gdk.Debugger
                             break;
                     }
                 }
-                else if (message[0].Tag == DValueTag.REP || message[0].Tag == DValueTag.ERR)
-                {
-                    lock (replyLock)
-                    {
+                else if (message[0].Tag == DValueTag.REP || message[0].Tag == DValueTag.ERR) {
+                    lock (replyLock) {
                         DMessage request = requests.Dequeue();
                         replies.Add(request, message);
                     }

@@ -57,17 +57,26 @@ namespace minisphere.Gdk.Forms
         {
             PropTree.BeginUpdate();
             var props = await _inferior.GetObjPropDescRange(ptr, 0, int.MaxValue);
-            foreach (var key in props.Keys)
-            {
-                DValue value = props[key].Value;
-                var nodeText = string.Format("{0} = {1}", key, value.ToString());
-                var valueNode = node.Nodes.Add(nodeText);
-                valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
-                valueNode.SelectedImageKey = valueNode.ImageKey;
-                if (value.Tag == DValueTag.HeapPtr)
-                {
-                    valueNode.Nodes.Add("");
-                    valueNode.Tag = (HeapPtr)value;
+            foreach (var key in props.Keys) {
+                if (props[key].Flags.HasFlag(PropFlags.Accessor)) {
+                    DValue getter = props[key].Getter;
+                    DValue setter = props[key].Setter;
+                    var nodeText = string.Format("{0} = get: {1}, set: {2}", key,
+                        getter.ToString(), setter.ToString());
+                    var valueNode = node.Nodes.Add(nodeText);
+                    valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
+                    valueNode.SelectedImageKey = valueNode.ImageKey;
+                }
+                else {
+                    DValue value = props[key].Value;
+                    var nodeText = string.Format("{0} = {1}", key, value.ToString());
+                    var valueNode = node.Nodes.Add(nodeText);
+                    valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
+                    valueNode.SelectedImageKey = valueNode.ImageKey;
+                    if (value.Tag == DValueTag.HeapPtr) {
+                        valueNode.Nodes.Add("");
+                        valueNode.Tag = (HeapPtr)value;
+                    }
                 }
             }
             if (node.Tag is HeapPtr)
