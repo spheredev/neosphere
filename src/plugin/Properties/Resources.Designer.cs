@@ -103,9 +103,9 @@ namespace minisphere.Gdk.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap InspectorIcon {
+        internal static System.Drawing.Bitmap InvisibleIcon {
             get {
-                object obj = ResourceManager.GetObject("InspectorIcon", resourceCulture);
+                object obj = ResourceManager.GetObject("InvisibleIcon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -116,6 +116,16 @@ namespace minisphere.Gdk.Properties {
         internal static System.Drawing.Bitmap StackIcon {
             get {
                 object obj = ResourceManager.GetObject("StackIcon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap VisibleIcon {
+            get {
+                object obj = ResourceManager.GetObject("VisibleIcon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -11,7 +11,7 @@ using Sphere.Plugins.Views;
 using minisphere.Gdk.Forms;
 using minisphere.Gdk.Plugins;
 using minisphere.Gdk.Properties;
-using minisphere.Gdk.Duktape;
+using minisphere.Gdk.Debugger;
 
 namespace minisphere.Gdk.DockPanes
 {
@@ -32,7 +32,7 @@ namespace minisphere.Gdk.DockPanes
         public bool ShowInViewMenu { get { return false; } }
         public Control Control { get { return this; } }
         public DockHint DockHint { get { return DockHint.Right; } }
-        public Bitmap DockIcon { get { return Resources.InspectorIcon; } }
+        public Bitmap DockIcon { get { return Resources.VisibleIcon; } }
 
         public SsjDebugger Ssj { get; set; }
 
@@ -63,9 +63,9 @@ namespace minisphere.Gdk.DockPanes
 
         private async Task DoEvaluate(string expr)
         {
-            dynamic result = await Ssj.Duktape.Eval(expr, -(stackIndex + 1));
+            dynamic result = await Ssj.Inferior.Eval(expr, -(stackIndex + 1));
             if (result is HeapPtr)
-                new JSViewer(Ssj.Duktape, result).ShowDialog(this);
+                new ObjectViewer(Ssj.Inferior, expr, result).ShowDialog(this);
             else
                 SystemSounds.Exclamation.Play();
         }
@@ -77,7 +77,7 @@ namespace minisphere.Gdk.DockPanes
             stackIndex = callIndex;
             CallsView.Items[stackIndex].ForeColor = Color.Blue;
             CallsView.SelectedItems.Clear();
-            this.variables = await Ssj.Duktape.GetLocals(-(stackIndex + 1));
+            this.variables = await Ssj.Inferior.GetLocals(-(stackIndex + 1));
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
             foreach (var k in this.variables.Keys)

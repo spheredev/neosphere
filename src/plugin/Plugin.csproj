@@ -55,11 +55,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Forms\JSViewer.cs">
+    <Compile Include="Debugger\JSProperty.cs" />
+    <Compile Include="Forms\ObjectViewer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\JSViewer.Designer.cs">
-      <DependentUpon>JSViewer.cs</DependentUpon>
+    <Compile Include="Forms\ObjectViewer.Designer.cs">
+      <DependentUpon>ObjectViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="Plugins\CellCompiler.cs" />
     <Compile Include="SettingsPages\SettingsPage.cs">
@@ -87,7 +88,7 @@
       <DependentUpon>InspectorPane.cs</DependentUpon>
     </Compile>
     <Compile Include="Plugins\SsjDebugger.cs" />
-    <Compile Include="Duktape\Inferior.cs" />
+    <Compile Include="Debugger\Inferior.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="PluginMain.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -100,8 +101,8 @@
     <Compile Include="Plugins\minisphereStarter.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Forms\JSViewer.resx">
-      <DependentUpon>JSViewer.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\ObjectViewer.resx">
+      <DependentUpon>ObjectViewer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SettingsPages\SettingsPage.resx">
       <DependentUpon>SettingsPage.cs</DependentUpon>
@@ -139,7 +140,9 @@
   <ItemGroup>
     <None Include="Resources\folder.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\eye_shut.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist "%25USERPROFILE%25\Documents\Sphere Studio\Plugins" mkdir "%25USERPROFILE%25\Documents\Sphere Studio\Plugins"

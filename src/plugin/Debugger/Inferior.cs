@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace minisphere.Gdk.Duktape
+namespace minisphere.Gdk.Debugger
 {
     enum DValue
     {
@@ -355,7 +355,7 @@ namespace minisphere.Gdk.Duktape
 
         /// <summary>
         /// Gets a list of local values and their values. Note that objects
-        /// are not evaluated and are listed simply as "{...}".
+        /// are not evaluated and are listed simply as "{ obj: 'classname' }".
         /// </summary>
         /// <param name="stackOffset">The call stack offset to get locals for, -1 being the current activation.</param>
         /// <returns></returns>
@@ -384,24 +384,31 @@ namespace minisphere.Gdk.Duktape
             return variables;
         }
 
-        public async Task<Dictionary<string, dynamic>> GetObjPropRange(HeapPtr ptr, int start, int end)
+        public async Task<Dictionary<string, JSProperty>> GetObjPropRange(HeapPtr ptr, int start, int end)
         {
             var reply = await Converse(DValue.REQ, Request.GetObjPropRange, ptr, start, end);
-            var props = new Dictionary<string, dynamic>();
+            var props = new Dictionary<string, JSProperty>();
             int count = (reply.Length - 1) / 2;
             int i = 1;
             while (i < reply.Length)
             {
-                int flags = reply[i++];
+                JSPropFlags flags = (JSPropFlags)reply[i++];
                 string name = reply[i++].ToString();
-                if ((flags & 0x0008) == 0)
+                if (flags.HasFlag(JSPropFlags.Accessor))
                 {
-                    dynamic value = reply[i++];
-                    if ((flags & 0x0100) == 0)
-                        props.Add(name, value);
+                    dynamic getter = reply[i++];
+                    dynamic setter = reply[i++];
+                    JSProperty propValue = new JSProperty(getter, setter, flags);
+                    if (!flags.HasFlag(JSPropFlags.Internal))
+                        props.Add(name, propValue);
                 }
                 else
-                    i += 2;
+                {
+                    dynamic value = reply[i++];
+                    JSProperty propValue = new JSProperty(value, flags);
+                    if (!flags.HasFlag(JSPropFlags.Internal) && !value.Equals(DValue.Unused))
+                        props.Add(name, propValue);
+                }
             }
             return props;
         }

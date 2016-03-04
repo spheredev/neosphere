@@ -9,19 +9,25 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using minisphere.Gdk.Duktape;
+using minisphere.Gdk.Debugger;
 using minisphere.Gdk.Plugins;
+using minisphere.Gdk.Properties;
 
 namespace minisphere.Gdk.Forms
 {
-    partial class JSViewer : Form
+    partial class ObjectViewer : Form
     {
         private Inferior _inferior;
         private HeapPtr _objectPtr;
 
-        public JSViewer(Inferior inferior, HeapPtr objectPtr)
+        public ObjectViewer(Inferior inferior, string objectName, HeapPtr objectPtr)
         {
             InitializeComponent();
+
+            ObjectNameTextBox.Text = objectName;
+            TreeIconImageList.Images.Add("object", Resources.StackIcon);
+            TreeIconImageList.Images.Add("prop", Resources.VisibleIcon);
+            TreeIconImageList.Images.Add("hiddenProp", Resources.InvisibleIcon);
 
             _inferior = inferior;
             _objectPtr = objectPtr;
@@ -34,6 +40,7 @@ namespace minisphere.Gdk.Forms
             var trunkName = _objectPtr.Class == ObjClass.Array ? "[ ... ]"
                 : string.Format(@"{{ obj: '{0}' }}", _objectPtr.Class.ToString());
             var trunk = PropTree.Nodes.Add(trunkName);
+            trunk.ImageKey = "object";
             await PopulateTreeNode(trunk, _objectPtr);
             trunk.Expand();
             PropTree.EndUpdate();
@@ -55,7 +62,7 @@ namespace minisphere.Gdk.Forms
             var props = await _inferior.GetObjPropRange(ptr, 0, int.MaxValue);
             foreach (var key in props.Keys)
             {
-                dynamic value = props[key];
+                dynamic value = props[key].Value;
                 string friendlyValue =
                     value is HeapPtr && value.Class == ObjClass.Array ? "[ ... ]"
                     : value is HeapPtr ? string.Format(@"{{ obj: '{0}' }}", value.Class.ToString())
@@ -69,6 +76,8 @@ namespace minisphere.Gdk.Forms
                     : "*munch*";
                 var nodeText = string.Format("{0} = {1}", key, friendlyValue);
                 var valueNode = node.Nodes.Add(nodeText);
+                valueNode.ImageKey = props[key].Flags.HasFlag(JSPropFlags.Enumerable) ? "prop" : "hiddenProp";
+                valueNode.SelectedImageKey = valueNode.ImageKey;
                 if (value is HeapPtr)
                 {
                     valueNode.Nodes.Add("");

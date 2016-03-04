@@ -127,7 +127,7 @@
   <data name="StackIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\application_view_list.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="InspectorIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="VisibleIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\eye.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ErrorIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
@@ -135,5 +135,8 @@
   </data>
   <data name="FolderIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\folder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="InvisibleIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\eye_shut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

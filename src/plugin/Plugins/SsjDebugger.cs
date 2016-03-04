@@ -11,7 +11,7 @@ using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins.Views;
 using minisphere.Gdk.Forms;
-using minisphere.Gdk.Duktape;
+using minisphere.Gdk.Debugger;
 
 namespace minisphere.Gdk.Plugins
 {
@@ -41,12 +41,12 @@ namespace minisphere.Gdk.Plugins
 
         public void Dispose()
         {
-            Duktape.Dispose();
+            Inferior.Dispose();
             focusTimer.Dispose();
             updateTimer.Dispose();
         }
 
-        public Inferior Duktape { get; private set; }
+        public Inferior Inferior { get; private set; }
         public string FileName { get; private set; }
         public int LineNumber { get; private set; }
         public bool Running { get; private set; }
@@ -73,7 +73,7 @@ namespace minisphere.Gdk.Plugins
         public async Task Detach()
         {
             expectDetach = true;
-            await Duktape.Detach();
+            await Inferior.Detach();
             Dispose();
         }
 
@@ -84,14 +84,14 @@ namespace minisphere.Gdk.Plugins
             {
                 try
                 {
-                    Duktape = new Inferior();
-                    Duktape.Attached += duktape_Attached;
-                    Duktape.Detached += duktape_Detached;
-                    Duktape.ErrorThrown += duktape_ErrorThrown;
-                    Duktape.Alert += duktape_Print;
-                    Duktape.Print += duktape_Print;
-                    Duktape.Status += duktape_Status;
-                    await Duktape.Connect(hostname, port);
+                    Inferior = new Inferior();
+                    Inferior.Attached += duktape_Attached;
+                    Inferior.Detached += duktape_Detached;
+                    Inferior.ErrorThrown += duktape_ErrorThrown;
+                    Inferior.Alert += duktape_Print;
+                    Inferior.Print += duktape_Print;
+                    Inferior.Status += duktape_Status;
+                    await Inferior.Connect(hostname, port);
                     return;
                 }
                 catch (SocketException)
@@ -182,19 +182,19 @@ namespace minisphere.Gdk.Plugins
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                bool wantPause = !Duktape.Running;
-                bool wantResume = !Running && Duktape.Running;
-                Running = Duktape.Running;
+                bool wantPause = !Inferior.Running;
+                bool wantResume = !Running && Inferior.Running;
+                Running = Inferior.Running;
                 if (wantPause)
                 {
                     focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    FileName = ResolvePath(Duktape.FileName);
-                    LineNumber = Duktape.LineNumber;
+                    FileName = ResolvePath(Inferior.FileName);
+                    LineNumber = Inferior.LineNumber;
                     if (!File.Exists(FileName))
                     {
                         // filename reported by Duktape doesn't exist; walk callstack for a
                         // JavaScript call as a fallback
-                        var callStack = await Duktape.GetCallStack();
+                        var callStack = await Inferior.GetCallStack();
                         var topCall = callStack.First(entry => entry.Item3 != 0);
                         var callIndex = Array.IndexOf(callStack, topCall);
                         FileName = ResolvePath(topCall.Item2);
@@ -207,7 +207,7 @@ namespace minisphere.Gdk.Plugins
                         updateTimer.Change(500, Timeout.Infinite);
                     }
                 }
-                if (wantResume && Duktape.Running)
+                if (wantResume && Inferior.Running)
                 {
                     focusTimer.Change(250, Timeout.Infinite);
                     updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -227,7 +227,7 @@ namespace minisphere.Gdk.Plugins
         public async Task SetBreakpoint(string fileName, int lineNumber)
         {
             fileName = UnresolvePath(fileName);
-            await Duktape.AddBreak(fileName, lineNumber);
+            await Inferior.AddBreak(fileName, lineNumber);
         }
 
         public async Task ClearBreakpoint(string fileName, int lineNumber)
@@ -235,40 +235,40 @@ namespace minisphere.Gdk.Plugins
             fileName = UnresolvePath(fileName);
 
             // clear all matching breakpoints
-            var breaks = await Duktape.ListBreak();
+            var breaks = await Inferior.ListBreak();
             for (int i = breaks.Length - 1; i >= 0; --i)
             {
                 string fn = breaks[i].Item1;
                 int line = breaks[i].Item2;
                 if (fileName == fn && lineNumber == line)
-                    await Duktape.DelBreak(i);
+                    await Inferior.DelBreak(i);
             }
 
         }
 
         public async Task Resume()
         {
-            await Duktape.Resume();
+            await Inferior.Resume();
         }
 
         public async Task Pause()
         {
-            await Duktape.Pause();
+            await Inferior.Pause();
         }
 
         public async Task StepInto()
         {
-            await Duktape.StepInto();
+            await Inferior.StepInto();
         }
 
         public async Task StepOut()
         {
-            await Duktape.StepOut();
+            await Inferior.StepOut();
         }
 
         public async Task StepOver()
         {
-            await Duktape.StepOver();
+            await Inferior.StepOver();
         }
 
         private static void HandleFocusSwitch(object state)
@@ -296,7 +296,7 @@ namespace minisphere.Gdk.Plugins
             PluginManager.Core.Invoke(new Action(async () =>
             {
                 SsjDebugger me = (SsjDebugger)state;
-                var callStack = await me.Duktape.GetCallStack();
+                var callStack = await me.Inferior.GetCallStack();
                 if (!me.Running)
                 {
                     await Panes.Inspector.SetCallStack(callStack);
@@ -348,9 +348,9 @@ namespace minisphere.Gdk.Plugins
 
         private void UpdateStatus()
         {
-            FileName = ResolvePath(Duktape.FileName);
-            LineNumber = Duktape.LineNumber;
-            Running = Duktape.Running;
+            FileName = ResolvePath(Inferior.FileName);
+            LineNumber = Inferior.LineNumber;
+            Running = Inferior.Running;
         }
     }
 }
