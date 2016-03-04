@@ -4,41 +4,38 @@ minisphere Changelog
 v3.0.0 - TBD
 ------------
 
-* minisphere is now packaged for Ubuntu as Debian packages. The engine is also
-  available via PPA, to install on Ubuntu simply run:
-      sudo add-apt-repository ppa:fatcerberus/minisphere
-      sudo apt-get update
-      sudo apt-get install minisphere
-* There's a new addition to the GDK, a console debugger called SSJ.  Simply run
-  `ssj <game-path>` on the command line to start an interactive debugging
-  session for a game.  This brings single-step debugging to non-Windows platforms
-  for the first time!
-* minisphere redist and GDK have been folded into a single installer.  The
-  engine is so compact that there's not much gained from having separate
-  installers.
+* Command-line debugging comes to minisphere! Try out the brand-new SSJ console
+  debugger by running `ssj <game-path>` on the command line. This brings
+  full debugger support to non-Windows platforms for the first time!
 * The command to run minisphere Console from the command line has been changed
   from 'msphere' to 'spherun'.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
   been renamed as well, to 'minisphere'.
-* New API: DebugPrint().  This enables printing debugging information which can
-  only be seen with the debugger attached.  Useful for low-level logging which
-  would otherwise clutter the console.
-* Print() will now accept multiple values, which will be separated with spaces
-  when printed.
+* The redistributable and GDK Windows downloads have been combined into a single
+  installer.  The engine is so compact that there's not much gained from having
+  separate installers.
+* New API: `DebugPrint()`, designed for logging low-level debug information
+  without cluttering the console. `DebugPrint()` output is visible only with a
+  debugger attached.
+* New API: `DoEvents()`. This function can be called in a long-running loop to
+  avoid locking up the engine when you don't need to render anything or
+  otherwise disturb the backbuffer.
+* `Print()` now accepts multiple values, which will be separated with spaces
+  when output.
 * The 'sphere' global object alias has been renamed to 'global', which is more
   obvious and matches Node.js.  Any code relying on the old alias will need to
   be updated for minisphere 3.0.
-* All minisphere API calls and constructors are now registered as
+* All minisphere API functions, constructors, and constants have been marked as
   non-enumerable, to avoid bloating the output when examining the global object
   in the debugger. Everything is still fully writable and configurable, so as
   not to prevent monkey-patching.
 * Fixes a bunch of memory leaks in both Cell and minisphere, including one in
   Cell's packaging code which could have caused it to run out of memory during
   the final compression step.
-* The engine will no longer fail to create a render context if the system it's
-  running on doesn't support shaders.  Instead, the ShaderProgram constructor
-  will throw an error if called.  Likewise if minisphere is compiled against
-  Allegro 5.0 instead of 5.1.
+* Fixes an issue where the engine will fail to start if the platform doesn't
+  support shaders.  Now, the ShaderProgram constructor will instead throw an
+  error in this case.  This will also be the case if minisphere is compiled
+  against Allegro 5.0 instead of 5.1.
 
 v2.1.6 - December 20, 2015
 --------------------------

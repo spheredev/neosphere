@@ -20,35 +20,35 @@ both of these are portable to various platforms, this allows minisphere to be
 compiled successfully on all three major platforms (Windows, Linux, and OS X)--
 and possibly others--with no changes to the source.
 
-Automated Builds with Cell
---------------------------
+minisphere is not just a game engine, but a complete toolchain for game
+development. Several command-line tools, described below, are included to make
+game development easier:
 
-minisphere comes with a powerful script-driven build system called Cell, which
+Fully Automated Build System
+----------------------------
+
+minisphere comes with a flexible script-driven build system called Cell, which
 can not only package Sphere games into easy-to-distribute SPKs, but also allows
 generating assets from easier-to-modify sources.  For example: Building tilesets
 from images, or minifying scripts at build time.
 
-Powerful Debugging with SSJ
----------------------------
+Cell's design borrows heavily from SCons, with a declarative approach to
+scripting. This may be confusing for those attempting to jump right in; it is
+highly recommend that you at least read the manual page for Cell before trying
+to write a Cellscript for your game.
 
-minisphere includes a GDB-inspired command-line debugger, called SSJ.  SSJ
-allows you to step through your game's code and inspect the internal state
-(variables, call stack, objects, etc.) of the game as it executes.  And since
-minisphere uses JavaScript, the original source files aren't required to be
-present--SSJ can download source code directly from the minisphere instance
+Powerful Console Debugger
+-------------------------
+
+minisphere includes a powerful but easy-to-use command-line debugger, called
+SSJ. SSJ allows you to step through your game's code and inspect the internal
+state of the game--variables, call stack, objects, etc.--as it executes.  And
+since minisphere uses JavaScript, the original source files aren't required to
+be present--SSJ can download source code directly from the minisphere instance
 being debugged.
 
 A symbolic debugger such as SSJ is an invaluable tool for development and is a
 minisphere exclusive: No similar tool was ever available for Sphere 1.x.
-
-
-License
-=======
-
-minisphere and its accompanying command-line tools are licensed under the terms
-of the BSD 3-clause license. Practically speaking, this means the engine can be
-used for any purpose, even commercially, with no restriction other than maintain
-the original copyright notice.
 
 
 System Requirements
@@ -58,24 +58,25 @@ minisphere requires somewhat modern hardware to run adequately.  At the least, a
 graphics card supporting at least OpenGL 2.0 is required for full functionality.
 
 
-Command Line Usage
-==================
+Download
+========
 
-```
-spherun [options] [file_or_dir]
+Official binaries for minisphere are released through GitHub and the latest
+stable version can always be downloaded directly from the GitHub releases page
+here:
 
-file_or_dir can be either a directory, or the name of a file to open, either
-an SPK package or a bare JS script to execute.
+    <https://github.com/fatcerberus/minisphere/releases>
 
---fullscreen        Start the engine in full-screen mode.
---window            Start the engine in windowed mode.
---frameskip <x>     Set the initial frameskip limit to <x>. Note that if the
-					game calls SetMaxFrameSkips(), that value overrides this
-                    one.  The default frameskip limit is 5.
---no-sleep          Prevent the engine from sleeping between frames. This may
-                    improve performance on slower machines at the cost of maxing
-					out a processor core.
---log-level <0-4>   Set the console verbosity. 0 is practically silent, while 4
-                    is quite noisy and useful for diagnostics. The default
-                    setting is 1.
-```
+The current version of minisphere at the time of this writing is
+[3.0b3](https://github.com/fatcerberus/minisphere/releases/tag/v3.0b3). Note
+that this is a pre-release, and while it is well-tested, it may exhibit minor
+bugs. It is quite usable for everyday game development, however.
+
+
+License
+=======
+
+minisphere and its accompanying command-line tools are licensed under the terms
+of the BSD 3-clause license. Practically speaking, this means the engine can be
+used for any purpose, even commercially, with no restriction other than maintain
+the original copyright notice.

@@ -71,6 +71,7 @@ static duk_ret_t js_Assert               (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode (duk_context* ctx);
 static duk_ret_t js_DebugPrint           (duk_context* ctx);
 static duk_ret_t js_Delay                (duk_context* ctx);
+static duk_ret_t js_DoEvents             (duk_context* ctx);
 static duk_ret_t js_ExecuteGame          (duk_context* ctx);
 static duk_ret_t js_Exit                 (duk_context* ctx);
 static duk_ret_t js_FlipScreen           (duk_context* ctx);
@@ -167,6 +168,7 @@ initialize_api(duk_context* ctx)
 	register_api_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	register_api_function(ctx, NULL, "DebugPrint", js_DebugPrint);
 	register_api_function(ctx, NULL, "Delay", js_Delay);
+	register_api_function(ctx, NULL, "DoEvents", js_DoEvents);
 	register_api_function(ctx, NULL, "Exit", js_Exit);
 	register_api_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
 	register_api_function(ctx, NULL, "FlipScreen", js_FlipScreen);
@@ -885,6 +887,14 @@ js_Delay(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Time cannot be negative (%.0f)", millisecs);
 	delay(millisecs / 1000);
 	return 0;
+}
+
+static duk_ret_t
+js_DoEvents(duk_context* ctx)
+{
+	do_events();
+	duk_push_boolean(ctx, true);
+	return 1;
 }
 
 static duk_ret_t
