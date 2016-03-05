@@ -9,9 +9,11 @@ v3.0.0 - March 28, 2016
 * Command-line debugging comes to minisphere! Try out the brand-new SSJ console
   debugger by running `ssj <game-path>` on the command line. This brings
   full single-step debugger support to non-Windows platforms for the first time!
+* The Sphere Studio plugin now allows changing the minisphere Console verbosity
+  level in Settings Center. V1 is the default.
 * Vastly improves object inspection in the Sphere Studio debugger.  Object
   contents are now displayed in a treeview and you can drill down through the
-  properties, instead of having to sift through a potentially huge JSON dump.
+  properties, instead of having to scroll through a potentially huge JSON dump.
 * The command to run minisphere Console from the command line has been changed
   from `msphere` to `spherun`.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
