@@ -29,9 +29,10 @@ Functions, structs and enums get their opening and closing braces on separate
 lines:
 
 ```c
-bool drink_a_bunch_of_monster_drinks()
+const char*
+path_filename_cstr(const path_t* path)
 {
-    return true;
+    return path->filename;
 }
 ```
 
@@ -48,6 +49,23 @@ if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO
 {
     is_copied = true;
     al_set_clipboard_text(g_display, msg);
+}
+```
+
+Function Definitions
+--------------------
+
+Function definitions in minisphere code look like this, with the storage class
+and return type on a separate line from the function name and parameters:
+
+```c
+static bool
+drink_a_bunch_of_monster_drinks(int how_many)
+{
+    if (how_many > 812)
+        return false;
+
+    return true;
 }
 ```
 
