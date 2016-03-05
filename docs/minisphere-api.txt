@@ -116,7 +116,7 @@ use one of the following SphereFS prefixes:
 By way of example, the following will open the kevfile settings.cfg from the
 calling game's "config" subdirectory:
   
-  var file = new KevFile("~sgm/config/settings.cfg");
+    var file = new KevFile("~sgm/config/settings.cfg");
 
 Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
 For an API to be considered compliant, any method accepting a filename must
@@ -311,17 +311,30 @@ RestartGame()
   Restarts the current game. All game state is cleared and the game()
   function is called again, as if the game was just started.
 
+Async(script);
+  
+  Queues a script or function to be executed on the next FlipScreen() call. This
+  is similar to setTimeout(func, 0); in the browser.
+
+DoEvents();
+
+    Performs one iteration of the engine's event loop.  DoEvents() can be used
+    in place of FlipScreen() (which clears the backbuffer) in a long-running
+    loop when you don't want to disturb the contents of the screen.
+
+    DoEvents() always returns `true`, allowing you to use it as part of a loop
+    condition:
+
+        while (condition && DoEvents()) {
+            // do stuff...
+        }
+
 Exit()
   
   Exits the current game and shuts down the engine. If the current game
   was started by via ExecuteGame(), the original game will be restarted
   following the Exit() call.
   
-Async(script);
-  
-  Queues a script or function to be executed on the next FlipScreen() call. This
-  is similar to setTimeout(func, 0); in the browser.
-
 
 Keyboard Routines
 -----------------

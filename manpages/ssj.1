@@ -59,7 +59,7 @@ Use the
 option to override this behavior.
 .TP
 .B \-\-version
-Show the version number of the installed copy of SSJ along with the version numbers of any libraries it depends on.
+Show the version number of SSJ along with the version numbers of any libraries it depends on.
 .SH COMMANDS
 Once attached, SSJ provides a large set of tools for you to use in debugging your game.
 Since SSJ is a console debugger, these are provided through a command-line interface.
@@ -101,13 +101,13 @@ Select a callstack frame to examine.
 Use
 .B backtrace
 to see the full list of frames on the callstack.
-When SSJ pauses execution, the innermost frame is selected, which corresponds to the function call currently underway.
+When SSJ pauses execution, the innermost frame is selected, which corresponds to the function call in progress.
 Sometimes it's necessary when investigating a bug to view the state earlier in the call chain.
 The
 .frame
 command changes the context used for the following commands:
 .BR eval ", " examine ", " list ", and " vars .
-The program counter isn't affected;
+The program counter isn't affected:
 .B continue
 or stepping commands will resume execution in the innermost call regardless of the selected frame.
 .TP
@@ -139,7 +139,7 @@ moves up 1 frame.
 .BR vars " or " v
 Show local variables for the selected stack frame along with all primitive values.
 Non-primitive values such as objects and functions are displayed simply as "{...}" so you will need to use the
-.BR eval or examine
+.BR eval " or " examine
 commands to view their contents.
 .TP
 .BR where " or " w

@@ -51,13 +51,6 @@ A symbolic debugger such as SSJ is an invaluable tool for development and is a
 minisphere exclusive: No similar tool was ever available for Sphere 1.x.
 
 
-System Requirements
-===================
-
-minisphere requires somewhat modern hardware to run adequately.  At the least, a
-graphics card supporting at least OpenGL 2.0 is required for full functionality.
-
-
 Download
 ========
 
@@ -67,10 +60,11 @@ here:
 
 <https://github.com/fatcerberus/minisphere/releases>
 
-The current version of minisphere at the time of this writing is
-[3.0b4](https://github.com/fatcerberus/minisphere/releases/tag/v3.0b4). Note
-that this is a pre-release, and while it is well-tested, it may exhibit minor
-bugs. It is quite usable for everyday game development, however.
+The current minisphere release at the time of this writing is
+[minisphere 3.0b4](https://github.com/fatcerberus/minisphere/releases/tag/v3.0b4).
+Note that this is a pre-release, and while it is well-tested in-house, it may
+exhibit minor bugs. It should be quite usable for everyday game development,
+however.
 
 
 License
