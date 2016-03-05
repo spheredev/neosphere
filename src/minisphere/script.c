@@ -12,6 +12,8 @@ struct script
 	duk_uarridx_t id;
 };
 
+static void      initialize_coffeescript (void);
+static void      initialize_typescript   (void);
 static script_t* script_from_js_function (void* heapptr);
 
 static int       s_next_script_id = 0;
@@ -26,34 +28,8 @@ initialize_scripts(void)
 	duk_put_prop_string(g_duk, -2, "scripts");
 	duk_pop(g_duk);
 
-	// load the CoffeeScript compiler into the JS context, if it exists
-	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
-		if (evaluate_script("~sys/coffee-script.js")) {
-			duk_push_global_object(g_duk);
-			if (!duk_get_prop_string(g_duk, -1, "CoffeeScript")) {
-				duk_pop_3(g_duk);
-				console_log(1, "    'CoffeeScript' not defined");
-				goto on_error;
-			}
-			duk_get_prop_string(g_duk, -1, "VERSION");
-			console_log(1, "    CoffeeScript v%s", duk_get_string(g_duk, -1));
-			duk_pop_n(g_duk, 4);
-		}
-		else {
-			console_log(1, "    error evaluating compiler script");
-			console_log(1, "    %s", duk_to_string(g_duk, -1));
-			duk_pop(g_duk);
-			goto on_error;
-		}
-	}
-	else {
-		console_log(1, "  coffee-script.js is missing");
-		goto on_error;
-	}
-	return;
-
-on_error:
-	console_log(1, "    CoffeeScript support not enabled");
+	initialize_coffeescript();
+	initialize_typescript();
 }
 
 void
@@ -72,6 +48,7 @@ evaluate_script(const char* filename)
 	lstring_t*     source_text = NULL;
 	char*          slurp;
 	size_t         size;
+	lstring_t*     transpiled_text;
 	
 	path = make_sfs_path(filename, NULL);
 	source_name = get_source_name(path_cstr(path));
@@ -86,7 +63,7 @@ evaluate_script(const char* filename)
 	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
 		duk_push_global_object(g_duk);
 		if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
-			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "CoffeeScript compiler is missing (%s)", filename);
+			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "no CoffeeScript support (%s)", filename);
 		duk_get_prop_string(g_duk, -1, "compile");
 		duk_push_lstring_t(g_duk, source_text);
 		duk_push_object(g_duk);
@@ -98,6 +75,26 @@ evaluate_script(const char* filename)
 			goto on_error;
 		duk_remove(g_duk, -2);
 		duk_remove(g_duk, -2);
+		transpiled_text = duk_require_lstring_t(g_duk, -1);
+		cache_source(source_name, transpiled_text);
+		lstr_free(transpiled_text);
+	}
+	// TypeScript?
+	else if (extension != NULL && strcasecmp(extension, ".ts") == 0) {
+		if (!duk_get_global_string(g_duk, "ts")) {
+			duk_pop(g_duk);
+			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "no TypeScript support (%s)", filename);
+		}
+		duk_get_prop_string(g_duk, -1, "transpile");
+		duk_push_lstring_t(g_duk, source_text);
+		duk_push_null(g_duk);
+		duk_push_string(g_duk, source_name);
+		if (duk_pcall(g_duk, 3) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_remove(g_duk, -2);
+		transpiled_text = duk_require_lstring_t(g_duk, -1);
+		cache_source(source_name, transpiled_text);
+		lstr_free(transpiled_text);
 	}
 	else
 		duk_push_lstring_t(g_duk, source_text);
@@ -235,6 +232,68 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "script must be string, function, or null/undefined");
 	return script;
+}
+
+static void
+initialize_coffeescript(void)
+{
+	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
+		if (evaluate_script("~sys/coffee-script.js")) {
+			if (!duk_get_global_string(g_duk, "CoffeeScript")) {
+				duk_pop_2(g_duk);
+				console_log(1, "    'CoffeeScript' not defined");
+				goto on_error;
+			}
+			duk_get_prop_string(g_duk, -1, "VERSION");
+			console_log(1, "    CoffeeScript %s", duk_get_string(g_duk, -1));
+			duk_pop_3(g_duk);
+		}
+		else {
+			console_log(1, "    error evaluating coffee-script.js");
+			console_log(1, "    %s", duk_to_string(g_duk, -1));
+			duk_pop(g_duk);
+			goto on_error;
+		}
+	}
+	else {
+		console_log(1, "  coffee-script.js is missing");
+		goto on_error;
+	}
+	return;
+
+on_error:
+	console_log(1, "    CoffeeScript support not enabled");
+}
+
+static void
+initialize_typescript(void)
+{
+	if (sfs_fexist(g_fs, "~sys/typescriptServices.js", NULL)) {
+		if (evaluate_script("~sys/typescriptServices.js")) {
+			if (!duk_get_global_string(g_duk, "TypeScript")) {
+				duk_pop_2(g_duk);
+				console_log(1, "    'TypeScript' not defined");
+				goto on_error;
+			}
+			duk_get_global_string(g_duk, "toolsVersion");
+			console_log(1, "    TypeScript %s", duk_get_string(g_duk, -1));
+			duk_pop_3(g_duk);
+		}
+		else {
+			console_log(1, "    error evaluating typescriptServices.js");
+			console_log(1, "    %s", duk_to_string(g_duk, -1));
+			duk_pop(g_duk);
+			goto on_error;
+		}
+	}
+	else {
+		console_log(1, "  typescriptServices.js is missing");
+		goto on_error;
+	}
+	return;
+
+on_error:
+	console_log(1, "    TypeScript support not enabled");
 }
 
 static script_t*
