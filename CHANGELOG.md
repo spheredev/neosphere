@@ -9,7 +9,9 @@ v3.0.0 - March 28, 2016
 * Command-line debugging comes to minisphere! Try out the brand-new SSJ console
   debugger by running `ssj <game-path>` on the command line. This brings
   full single-step debugger support to non-Windows platforms for the first time!
-* minisphere now supports TypeScript!
+* Introduces experimental support for TypeScript.  All TypeScript 1.8 syntax is
+  supported; however, because the engine uses `ts.transpile()` under the hood to
+  compile .ts scripts, variable and argument typing is not currently enforced.
 * While the debugger is attached, you can now press F12 to pause game execution
   and turn over control to the attached debugger.  This can be useful for
   debugging glitches that don't lead to an exception.

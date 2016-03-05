@@ -87,7 +87,9 @@ evaluate_script(const char* filename)
 		}
 		duk_get_prop_string(g_duk, -1, "transpile");
 		duk_push_lstring_t(g_duk, source_text);
-		duk_push_null(g_duk);
+		duk_push_object(g_duk);
+		duk_push_boolean(g_duk, true);
+		duk_put_prop_string(g_duk, -2, "noImplicitUseStrict");
 		duk_push_string(g_duk, source_name);
 		if (duk_pcall(g_duk, 3) != DUK_EXEC_SUCCESS)
 			goto on_error;
@@ -270,12 +272,12 @@ initialize_typescript(void)
 {
 	if (sfs_fexist(g_fs, "~sys/typescriptServices.js", NULL)) {
 		if (evaluate_script("~sys/typescriptServices.js")) {
-			if (!duk_get_global_string(g_duk, "TypeScript")) {
+			if (!duk_get_global_string(g_duk, "ts")) {
 				duk_pop_2(g_duk);
-				console_log(1, "    'TypeScript' not defined");
+				console_log(1, "    'ts' not defined");
 				goto on_error;
 			}
-			duk_get_global_string(g_duk, "toolsVersion");
+			duk_get_prop_string(g_duk, -1, "version");
 			console_log(1, "    TypeScript %s", duk_get_string(g_duk, -1));
 			duk_pop_3(g_duk);
 		}

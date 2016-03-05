@@ -34,16 +34,16 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-audialis",
 	"sphere-coffeescript",
 	"sphere-commonjs",
+	"sphere-frameskip-api",
 	"sphere-galileo",
 	"sphere-galileo-shaders",
 	"sphere-map-engine",
 	"sphere-new-sockets",
 	"sphere-rng-object",
 	"sphere-s2gm",
+	"sphere-set-script-function",
 	"sphere-spherefs",
-	"duktape-debugger",
-	"frameskip-api",
-	"set-script-function",
+	"sphere-typescript",
 };
 
 static duk_ret_t js_GetVersion           (duk_context* ctx);
