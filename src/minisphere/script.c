@@ -194,7 +194,7 @@ run_script(script_t* script, bool allow_reentry)
 	}
 	was_in_use = script->is_in_use;
 
-	console_log(3, "executing script #%u", script->id);
+	console_log(4, "executing script #%u", script->id);
 
 	// ref the script in case it gets freed during execution. the owner
 	// may be destroyed in the process and we don't want to end up crashing.

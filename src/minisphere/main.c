@@ -896,6 +896,9 @@ parse_command_line(
 				report_error("unrecognized option '%s'\n", argv[i]);
 				return false;
 			}
+#else
+			else if (strcmp(argv[i], "--verbose") == 0)
+				++i;
 #endif
 		}
 		else if (argv[i][0] == '-' && parse_options) {

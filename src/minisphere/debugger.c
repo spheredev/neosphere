@@ -104,12 +104,12 @@ update_debugger(void)
 
 	if (socket = accept_next_socket(s_server)) {
 		if (s_client != NULL) {
-			console_log(2, "rejected connection from %s, debugger already attached",
+			console_log(2, "rejected connection from %s, SSJ already attached",
 				get_socket_host(socket));
 			free_socket(socket);
 		}
 		else {
-			console_log(1, "connected to debugger at %s", get_socket_host(socket));
+			console_log(1, "connected to SSJ at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
 			duk_debugger_attach_custom(g_duk,
@@ -227,7 +227,7 @@ attach_debugger(void)
 {
 	double timeout;
 
-	printf("waiting for SSJ... ");
+	printf("waiting for SSJ connection\n");
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
@@ -235,9 +235,7 @@ attach_debugger(void)
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
-		printf("timed out!\n");
-	else
-		printf("OK.\n");
+		printf("timed out waiting for debugger\n");
 	return s_client != NULL;
 }
 

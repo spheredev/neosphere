@@ -29,8 +29,8 @@ namespace minisphere.Gdk.Plugins
             bool wantWindow = _main.Conf.TestInWindow || wantConsole;
 
             string enginePath = Path.Combine(gdkPath, wantConsole ? "spherun.exe" : "minisphere.exe");
-            string options = string.Format(@"{1} ""{0}""", gamePath,
-                wantWindow ? "--window" : "--fullscreen");
+            string options = string.Format(@"{0} --verbose {1} ""{2}""",
+                wantWindow ? "--window" : "--fullscreen", _main.Conf.Verbosity, gamePath);
             Process.Start(enginePath, options);
         }
 
@@ -44,7 +44,8 @@ namespace minisphere.Gdk.Plugins
             string gdkPath = _main.Conf.GdkPath;
 
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
-            string options = string.Format(@"--debug ""{0}""", gamePath);
+            string options = string.Format(@"--verbose {0} --debug ""{1}""",
+                _main.Conf.Verbosity, gamePath);
             Process engine = Process.Start(enginePath, options);
             return new Ssj2Debugger(_main, gamePath, enginePath, engine, project);
         }

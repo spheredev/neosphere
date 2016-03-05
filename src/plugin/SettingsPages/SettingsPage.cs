@@ -31,6 +31,7 @@ namespace minisphere.Gdk.SettingsPages
             _main.Conf.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
             _main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
             _main.Conf.TestInWindow = TestInWindowCheckBox.Checked;
+            _main.Conf.Verbosity = VerbosityComboBox.SelectedIndex;
             return true;
         }
 
@@ -40,7 +41,7 @@ namespace minisphere.Gdk.SettingsPages
             MakeDebugPackageCheckBox.Checked = _main.Conf.MakeDebugPackages;
             TestWithConsoleCheckBox.Checked = _main.Conf.AlwaysUseConsole;
             TestInWindowCheckBox.Checked = _main.Conf.TestInWindow;
-
+            VerbosityComboBox.SelectedIndex = _main.Conf.Verbosity;
             base.OnLoad(e);
         }
 

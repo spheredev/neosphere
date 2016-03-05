@@ -127,6 +127,12 @@ namespace minisphere.Gdk
             get { return Conf.GetBoolean("testInWindow", false); }
             set { Conf.SetValue("testInWindow", value); }
         }
+
+        public int Verbosity
+        {
+            get { return Math.Min(Math.Max(Conf.GetInteger("verbosity", 1), 0), 4); }
+            set { Conf.SetValue("verbosity", Math.Min(Math.Max(value, 0), 4)); }
+        }
     }
 
     static class Panes
