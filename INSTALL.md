@@ -8,10 +8,10 @@ each platform.
 Windows
 -------
 
-You can build a complete 64-bit distribution of minisphere GDK using the included
-Visual Studio solution `minisphere.sln` located in `msvs/`. Visual Studio 2015
-(or later) is required; as of this writing, Visual Studio Community 2015 can be
-downloaded free of charge from here:
+You can build complete 32- and 64-bit distributions of minisphere using the
+included Visual Studio solution `minisphere.sln` located in `msvs/`.
+Visual Studio 2015 or later is required; as of this writing,
+Visual Studio Community 2015 can be downloaded free of charge from here:
 
 [Download Visual Studio Community 2015]
 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
@@ -23,18 +23,20 @@ Windows.
 Linux
 -----
 
-minisphere depends on Allegro 5.1.12+ (earlier versions will not work), libmng,
-and zlib. libmng and zlib are usually available through your distribution's
-package manager, but Allegro 5.1 is considered "unstable" and likely won't be
-available through that channel.
+minisphere depends on Allegro 5 (5.1 or later is recommended), libmng, and zlib.
+libmng and zlib are usually available through your distribution's package
+manager, but Allegro 5.1 is considered "unstable" and likely won't be
+available through that channel.  You can build against Allegro 5.0, but this
+version has some fairly major bugs and is not recommended except as a last
+resort.
 
-If you're running Ubuntu, there are PPA packages available.
+If you're running Ubuntu, there are PPA packages available for Allegro 5.1.
 
 [Ubuntu PPA - Allegro 5.1 "Unstable"]
 (https://launchpad.net/~allegro/+archive/ubuntu/5.1)
 
-Otherwise, you will have to compile and install Allegro yourself. Clone the
-Allegro repository from GitHub and follow the installation instructions found in
+Otherwise, you can compile and install Allegro yourself.  Clone the Allegro
+repository from GitHub and follow the installation instructions found in
 `README_make.txt` to get Allegro set up on your system.
 
 [Allegro 5 GitHub Repository]
@@ -49,7 +51,7 @@ Mac OS X
 --------
 
 Building minisphere for OS X is very similar to Linux and uses Make as well.
-The dependencies are the same; however, it's not necessary to build Allegro
+The dependencies are the same; however, it's not necessary to build Allegro 5.1
 yourself if you have Homebrew. To get Allegro installed, simply run
 `brew install --devel allegro` from the command line. Then switch to the
 directory where you checked out minisphere and run `make`.
