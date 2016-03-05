@@ -35,7 +35,7 @@ namespace minisphere.Gdk.Forms
             _value = value;
         }
 
-        private async void JSViewer_Load(object sender, EventArgs e)
+        private async void this_Load(object sender, EventArgs e)
         {
             PropTree.BeginUpdate();
             PropTree.Nodes.Clear();
@@ -47,10 +47,42 @@ namespace minisphere.Gdk.Forms
             PropTree.EndUpdate();
         }
 
+        private void PropTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (e.Node.Tag != null)
+            {
+                PropDesc desc = (PropDesc)e.Node.Tag;
+                WritableCheckBox.Enabled = !desc.Flags.HasFlag(PropFlags.Accessor);
+                EnumerableCheckBox.Enabled = true;
+                ConfigurableCheckBox.Enabled = true;
+                WritableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Writable);
+                EnumerableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Enumerable);
+                ConfigurableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Configurable);
+                AccessorCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Accessor);
+            }
+            else {
+                WritableCheckBox.Enabled = WritableCheckBox.Checked = false;
+                EnumerableCheckBox.Enabled = EnumerableCheckBox.Checked = false;
+                ConfigurableCheckBox.Enabled = ConfigurableCheckBox.Checked = false;
+                AccessorCheckBox.Enabled = AccessorCheckBox.Enabled = false;
+            }
+        }
+
         private async void PropTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node.Tag is HeapPtr)
-                await PopulateTreeNode(e.Node, (HeapPtr)e.Node.Tag);
+            if (e.Node.Tag == null || e.Node.Nodes[0].Text != "")
+                return;
+
+            PropDesc propDesc = (PropDesc)e.Node.Tag;
+            if (propDesc.Value.Tag == DValueTag.HeapPtr)
+                await PopulateTreeNode(e.Node, (HeapPtr)propDesc.Value);
+        }
+
+        private void PropTree_MouseMove(object sender, MouseEventArgs e)
+        {
+            var ht = PropTree.HitTest(e.Location);
+            PropTree.Cursor = ht.Node != null && ht.Node.Bounds.Contains(e.Location)
+                ? Cursors.Hand : Cursors.Default;
         }
 
         private async Task PopulateTreeNode(TreeNode node, HeapPtr ptr)
@@ -66,6 +98,7 @@ namespace minisphere.Gdk.Forms
                     var valueNode = node.Nodes.Add(nodeText);
                     valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
                     valueNode.SelectedImageKey = valueNode.ImageKey;
+                    valueNode.Tag = props[key];
                 }
                 else {
                     DValue value = props[key].Value;
@@ -73,15 +106,14 @@ namespace minisphere.Gdk.Forms
                     var valueNode = node.Nodes.Add(nodeText);
                     valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
                     valueNode.SelectedImageKey = valueNode.ImageKey;
+                    valueNode.Tag = props[key];
                     if (value.Tag == DValueTag.HeapPtr) {
                         valueNode.Nodes.Add("");
-                        valueNode.Tag = (HeapPtr)value;
                     }
                 }
             }
-            if (node.Tag is HeapPtr)
+            if (node.Nodes[0].Text == "")
                 node.Nodes.RemoveAt(0);
-            node.Tag = null;
             PropTree.EndUpdate();
         }
     }

@@ -19,8 +19,9 @@ Naming Convention
 Names of variables, functions, etc. should use the typical C naming convention
 of all lowercase with words separated by underscores, e.g. `big_fat_pig`.
 Global variables should be prefixed with `g_` and static variables (including
-those at file scope) with `s_`. There is one exception: utility functions with
-no side effects should have no word separator, e.g. `nativecolor()`.
+those at file scope) with `s_`. There is one exception: simple utility functions
+with no side effects can leave out the word separator when appropriate, e.g.
+`nativecolor()`.
 
 Placement of Braces
 -------------------

@@ -70,7 +70,7 @@ however.
 License
 =======
 
-minisphere and its accompanying command-line tools are licensed under the terms
-of the BSD 3-clause license. Practically speaking, this means the engine can be
+minisphere and accompanying command-line tools are licensed under the terms of
+the BSD-3-clause license. Practically speaking, this means the engine can be
 used for any purpose, even commercially, with no restriction other than maintain
 the original copyright notice.

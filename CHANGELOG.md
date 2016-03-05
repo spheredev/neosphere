@@ -4,8 +4,8 @@ minisphere Changelog
 v3.0.0 - March 28, 2016
 -----------------------
 
-* minisphere is now officially supported on Linux! .deb and .tar.gz downloads
-  will be provided for all minisphere releases going forward.
+* minisphere is now officially supported on Linux! `.deb` binary and `.tar.gz`
+  source packages will be provided for all minisphere releases going forward.
 * Command-line debugging comes to minisphere! Try out the brand-new SSJ console
   debugger by running `ssj <game-path>` on the command line. This brings
   full single-step debugger support to non-Windows platforms for the first time!
