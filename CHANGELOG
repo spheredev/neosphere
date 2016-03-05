@@ -1,19 +1,21 @@
 minisphere Changelog
 ====================
 
-v3.0.0 - TBD
-------------
+v3.0.0 - March 28, 2016
+-----------------------
 
+* minisphere is now officially supported on Linux! .deb and .tar.gz downloads
+  will be provided for all minisphere releases going forward.
 * Command-line debugging comes to minisphere! Try out the brand-new SSJ console
   debugger by running `ssj <game-path>` on the command line. This brings
-  full debugger support to non-Windows platforms for the first time!
+  full single-step debugger support to non-Windows platforms for the first time!
 * Vastly improves object inspection in the Sphere Studio debugger.  Object
   contents are now displayed in a treeview and you can drill down through the
   properties, instead of having to sift through a potentially huge JSON dump.
 * The command to run minisphere Console from the command line has been changed
-  from 'msphere' to 'spherun'.  This will be the standard command to start a
+  from `msphere` to `spherun`.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
-  been renamed as well, to 'minisphere'.
+  been renamed as well, to `minisphere`.
 * The Windows redistributable and GDK downloads have been combined into a single
   installer.  The engine is so compact that there's not much gained from having
   separate installers.
@@ -25,9 +27,9 @@ v3.0.0 - TBD
   otherwise disturb the backbuffer.
 * `Print()` now accepts multiple values, which will be separated with spaces
   when output.
-* The 'sphere' global object alias has been renamed to 'global', which is more
-  obvious and matches Node.js.  Any code relying on the old alias will need to
-  be updated for minisphere 3.0.
+* The `sphere` global object alias has been renamed to `global`, which is more
+  obvious and matches Node.js.  Any code relying on the `sphere` alias will need
+  to be updated to work with minisphere 3.0.
 * All minisphere API functions, constructors, and constants have been marked as
   non-enumerable, to avoid bloating the output when examining the global object
   in the debugger. Everything is still fully writable and configurable, so as
@@ -36,9 +38,10 @@ v3.0.0 - TBD
   Cell's packaging code which could have caused it to run out of memory during
   the final compression step.
 * Fixes an issue where the engine will fail to start if the platform doesn't
-  support shaders.  Now, the ShaderProgram constructor will instead throw an
-  error in this case.  This will also be the case if minisphere is compiled
-  against Allegro 5.0 instead of 5.1.
+  support shaders.  The ShaderProgram constructor will instead throw an error in
+  this case.  This will also be the case if minisphere is compiled against
+  Allegro 5.0 (instead of 5.1).
+
 
 v2.1.6 - December 20, 2015
 --------------------------

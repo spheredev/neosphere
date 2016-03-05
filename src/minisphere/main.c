@@ -657,7 +657,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 			// if Ctrl+C is pressed, copy the error message and location to clipboard
 #ifdef MINISPHERE_USE_CLIPBOARD
 			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
-				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
+			    && al_key_down(&keyboard, ALLEGRO_KEY_C))
 			{
 				is_copied = true;
 				al_set_clipboard_text(g_display, msg);
