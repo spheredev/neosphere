@@ -63,14 +63,12 @@ the original copyright notice.
 Download
 ========
 
-Official binaries for minisphere are released through GitHub and the latest
-stable version can always be downloaded directly from the GitHub releases page
-here:
+The current stable minisphere release at the time of this writing is
+**minisphere 3.0rc1**.  This is a release candidate: If no new bugs are
+discovered, 3.0rc1 will be officially released as **minisphere 3.0.0** on
+March 28, 2016.
 
-<https://github.com/fatcerberus/minisphere/releases>
+Official binaries for minisphere are released through GitHub.  The latest
+version is available for download here:
 
-The current minisphere release at the time of this writing is
-[minisphere 3.0b4](https://github.com/fatcerberus/minisphere/releases/tag/v3.0b4).
-Note that this is a pre-release, and while it is well-tested in-house, it may
-exhibit minor bugs. It should be quite usable for everyday game development,
-however.
+<https://github.com/fatcerberus/minisphere/releases/tag/v3.0rc1>

@@ -9,7 +9,7 @@
 
 #define AppName "minisphere"
 #define AppVersion "3.0.0"
-#define AppRawVersion "3.0.0.1276"
+#define AppRawVersion "3.0.0.1279"
 #define AppPublisher "Fat Cerberus"
 
 [Setup]
@@ -21,6 +21,7 @@ AppVerName={#AppName} {#AppVersion}
 AppVersion={#AppRawVersion}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
+AppCopyright=© 2015-2016 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesInstallIn64BitMode=x64
 ChangesAssociations=yes
@@ -28,7 +29,7 @@ ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
 DefaultGroupName={#AppName} GDK
-InfoBeforeFile=..\CHANGELOG
+InfoBeforeFile=..\CHANGELOG.md
 InfoAfterFile=..\README.md
 LicenseFile=..\license.txt
 SetupIconFile=..\msvs\minisphere.ico

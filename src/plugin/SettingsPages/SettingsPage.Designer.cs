@@ -33,11 +33,11 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.TestInWindowCheckBox = new System.Windows.Forms.CheckBox();
             this.MakeDebugPackageCheckBox = new System.Windows.Forms.CheckBox();
-            this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
             this.editorLabel3 = new Sphere.Core.Editor.EditorLabel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.VerbosityComboBox = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
             this.editorLabel2 = new Sphere.Core.Editor.EditorLabel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
@@ -108,16 +108,6 @@
             this.MakeDebugPackageCheckBox.Text = "Include debug map when building an SPK package using Cell";
             this.MakeDebugPackageCheckBox.UseVisualStyleBackColor = true;
             // 
-            // TestWithConsoleCheckBox
-            // 
-            this.TestWithConsoleCheckBox.AutoSize = true;
-            this.TestWithConsoleCheckBox.Location = new System.Drawing.Point(12, 12);
-            this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
-            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(210, 17);
-            this.TestWithConsoleCheckBox.TabIndex = 0;
-            this.TestWithConsoleCheckBox.Text = "\"Test Game\" using minisphere &Console";
-            this.TestWithConsoleCheckBox.UseVisualStyleBackColor = true;
-            // 
             // editorLabel3
             // 
             this.editorLabel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
@@ -128,7 +118,7 @@
             this.editorLabel3.Name = "editorLabel3";
             this.editorLabel3.Size = new System.Drawing.Size(562, 23);
             this.editorLabel3.TabIndex = 4;
-            this.editorLabel3.Text = "additional settings";
+            this.editorLabel3.Text = "Additional settings";
             this.editorLabel3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // panel3
@@ -148,11 +138,11 @@
             this.VerbosityComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.VerbosityComboBox.FormattingEnabled = true;
             this.VerbosityComboBox.Items.AddRange(new object[] {
-            "V0 (game output only)",
-            "V1 (basic logging)",
-            "V2 (high-level logging)",
-            "V3 (low-level logging)",
-            "V4 (logs everything!)"});
+            "V0 - game output only",
+            "V1 - basic logging",
+            "V2 - high-level logging",
+            "V3 - low-level logging",
+            "V4 - log everything!"});
             this.VerbosityComboBox.Location = new System.Drawing.Point(401, 10);
             this.VerbosityComboBox.Name = "VerbosityComboBox";
             this.VerbosityComboBox.Size = new System.Drawing.Size(148, 21);
@@ -167,6 +157,16 @@
             this.label2.Size = new System.Drawing.Size(50, 13);
             this.label2.TabIndex = 0;
             this.label2.Text = "Verbosity";
+            // 
+            // TestWithConsoleCheckBox
+            // 
+            this.TestWithConsoleCheckBox.AutoSize = true;
+            this.TestWithConsoleCheckBox.Location = new System.Drawing.Point(12, 12);
+            this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
+            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(210, 17);
+            this.TestWithConsoleCheckBox.TabIndex = 0;
+            this.TestWithConsoleCheckBox.Text = "\"Test Game\" using minisphere &Console";
+            this.TestWithConsoleCheckBox.UseVisualStyleBackColor = true;
             // 
             // editorLabel2
             // 
@@ -244,7 +244,7 @@
             this.editorLabel1.Name = "editorLabel1";
             this.editorLabel1.Size = new System.Drawing.Size(562, 23);
             this.editorLabel1.TabIndex = 0;
-            this.editorLabel1.Text = "where is the minisphere GDK installed?";
+            this.editorLabel1.Text = "Where is the minisphere GDK installed?";
             this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SettingsPage
