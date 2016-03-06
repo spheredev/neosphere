@@ -672,26 +672,26 @@ init_image_api(duk_context* ctx)
 	}
 	
 	// register image API functions
-	register_api_function(ctx, NULL, "GetSystemArrow", js_GetSystemArrow);
-	register_api_function(ctx, NULL, "GetSystemDownArrow", js_GetSystemDownArrow);
-	register_api_function(ctx, NULL, "GetSystemUpArrow", js_GetSystemUpArrow);
-	register_api_function(ctx, NULL, "LoadImage", js_LoadImage);
-	register_api_function(ctx, NULL, "GrabImage", js_GrabImage);
+	register_api_method(ctx, NULL, "GetSystemArrow", js_GetSystemArrow);
+	register_api_method(ctx, NULL, "GetSystemDownArrow", js_GetSystemDownArrow);
+	register_api_method(ctx, NULL, "GetSystemUpArrow", js_GetSystemUpArrow);
+	register_api_method(ctx, NULL, "LoadImage", js_LoadImage);
+	register_api_method(ctx, NULL, "GrabImage", js_GrabImage);
 
 	// register Image properties and methods
 	register_api_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
-	register_api_function(ctx, "Image", "toString", js_Image_toString);
+	register_api_method(ctx, "Image", "toString", js_Image_toString);
 	register_api_prop(ctx, "Image", "height", js_Image_get_height, NULL);
 	register_api_prop(ctx, "Image", "width", js_Image_get_width, NULL);
-	register_api_function(ctx, "Image", "blit", js_Image_blit);
-	register_api_function(ctx, "Image", "blitMask", js_Image_blitMask);
-	register_api_function(ctx, "Image", "createSurface", js_Image_createSurface);
-	register_api_function(ctx, "Image", "rotateBlit", js_Image_rotateBlit);
-	register_api_function(ctx, "Image", "rotateBlitMask", js_Image_rotateBlitMask);
-	register_api_function(ctx, "Image", "transformBlit", js_Image_transformBlit);
-	register_api_function(ctx, "Image", "transformBlitMask", js_Image_transformBlitMask);
-	register_api_function(ctx, "Image", "zoomBlit", js_Image_zoomBlit);
-	register_api_function(ctx, "Image", "zoomBlitMask", js_Image_zoomBlitMask);
+	register_api_method(ctx, "Image", "blit", js_Image_blit);
+	register_api_method(ctx, "Image", "blitMask", js_Image_blitMask);
+	register_api_method(ctx, "Image", "createSurface", js_Image_createSurface);
+	register_api_method(ctx, "Image", "rotateBlit", js_Image_rotateBlit);
+	register_api_method(ctx, "Image", "rotateBlitMask", js_Image_rotateBlitMask);
+	register_api_method(ctx, "Image", "transformBlit", js_Image_transformBlit);
+	register_api_method(ctx, "Image", "transformBlitMask", js_Image_transformBlitMask);
+	register_api_method(ctx, "Image", "zoomBlit", js_Image_zoomBlit);
+	register_api_method(ctx, "Image", "zoomBlitMask", js_Image_zoomBlitMask);
 }
 
 void

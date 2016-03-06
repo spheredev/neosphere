@@ -61,9 +61,10 @@ evaluate_script(const char* filename)
 	// now, Monster drinks on the other hand...
 	extension = strrchr(filename, '.');
 	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
-		duk_push_global_object(g_duk);
-		if (!duk_get_prop_string(g_duk, -1, "CoffeeScript"))
+		if (!duk_get_global_string(g_duk, "CoffeeScript")) {
+			duk_pop(g_duk);
 			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "no CoffeeScript support (%s)", filename);
+		}
 		duk_get_prop_string(g_duk, -1, "compile");
 		duk_push_lstring_t(g_duk, source_text);
 		duk_push_object(g_duk);
@@ -73,7 +74,6 @@ evaluate_script(const char* filename)
 		duk_put_prop_string(g_duk, -2, "bare");
 		if (duk_pcall(g_duk, 2) != DUK_EXEC_SUCCESS)
 			goto on_error;
-		duk_remove(g_duk, -2);
 		duk_remove(g_duk, -2);
 		transpiled_text = duk_require_lstring_t(g_duk, -1);
 		cache_source(source_name, transpiled_text);

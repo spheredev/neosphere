@@ -108,21 +108,13 @@ rng_uniform(double mean, double variance)
 void
 init_rng_api(void)
 {
-	duk_push_global_object(g_duk);
-	duk_push_object(g_duk);
-	duk_push_c_function(g_duk, js_RNG_seed, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "seed");
-	duk_push_c_function(g_duk, js_RNG_chance, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "chance");
-	duk_push_c_function(g_duk, js_RNG_normal, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "normal");
-	duk_push_c_function(g_duk, js_RNG_range, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "range");
-	duk_push_c_function(g_duk, js_RNG_sample, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "sample");
-	duk_push_c_function(g_duk, js_RNG_string, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "string");
-	duk_push_c_function(g_duk, js_RNG_vary, DUK_VARARGS); duk_put_prop_string(g_duk, -2, "vary");
-	duk_push_string(g_duk, "RNG");
-	duk_insert(g_duk, -2);
-	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(g_duk);
+	register_api_function(g_duk, "RNG", "seed", js_RNG_seed);
+	register_api_function(g_duk, "RNG", "chance", js_RNG_chance);
+	register_api_function(g_duk, "RNG", "normal", js_RNG_normal);
+	register_api_function(g_duk, "RNG", "range", js_RNG_range);
+	register_api_function(g_duk, "RNG", "sample", js_RNG_sample);
+	register_api_function(g_duk, "RNG", "string", js_RNG_string);
+	register_api_function(g_duk, "RNG", "vary", js_RNG_vary);
 }
 
 static duk_ret_t

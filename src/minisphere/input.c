@@ -704,30 +704,30 @@ init_input_api(void)
 	register_api_const(g_duk, "JOYSTICK_AXIS_U", 4);
 	register_api_const(g_duk, "JOYSTICK_AXIS_V", 5);
 
-	register_api_function(g_duk, NULL, "AreKeysLeft", js_AreKeysLeft);
-	register_api_function(g_duk, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
-	register_api_function(g_duk, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
-	register_api_function(g_duk, NULL, "IsKeyPressed", js_IsKeyPressed);
-	register_api_function(g_duk, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
-	register_api_function(g_duk, NULL, "GetJoystickAxis", js_GetJoystickAxis);
-	register_api_function(g_duk, NULL, "GetKey", js_GetKey);
-	register_api_function(g_duk, NULL, "GetKeyString", js_GetKeyString);
-	register_api_function(g_duk, NULL, "GetMouseWheelEvent", js_GetMouseWheelEvent);
-	register_api_function(g_duk, NULL, "GetMouseX", js_GetMouseX);
-	register_api_function(g_duk, NULL, "GetMouseY", js_GetMouseY);
-	register_api_function(g_duk, NULL, "GetNumJoysticks", js_GetNumJoysticks);
-	register_api_function(g_duk, NULL, "GetNumJoystickAxes", js_GetNumJoystickAxes);
-	register_api_function(g_duk, NULL, "GetNumJoystickButtons", js_GetNumJoystickButtons);
-	register_api_function(g_duk, NULL, "GetNumMouseWheelEvents", js_GetNumMouseWheelEvents);
-	register_api_function(g_duk, NULL, "GetPlayerKey", js_GetPlayerKey);
-	register_api_function(g_duk, NULL, "GetToggleState", js_GetToggleState);
-	register_api_function(g_duk, NULL, "SetMousePosition", js_SetMousePosition);
-	register_api_function(g_duk, NULL, "SetPlayerKey", js_SetPlayerKey);
-	register_api_function(g_duk, NULL, "BindJoystickButton", js_BindJoystickButton);
-	register_api_function(g_duk, NULL, "BindKey", js_BindKey);
-	register_api_function(g_duk, NULL, "ClearKeyQueue", js_ClearKeyQueue);
-	register_api_function(g_duk, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
-	register_api_function(g_duk, NULL, "UnbindKey", js_UnbindKey);
+	register_api_method(g_duk, NULL, "AreKeysLeft", js_AreKeysLeft);
+	register_api_method(g_duk, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
+	register_api_method(g_duk, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
+	register_api_method(g_duk, NULL, "IsKeyPressed", js_IsKeyPressed);
+	register_api_method(g_duk, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
+	register_api_method(g_duk, NULL, "GetJoystickAxis", js_GetJoystickAxis);
+	register_api_method(g_duk, NULL, "GetKey", js_GetKey);
+	register_api_method(g_duk, NULL, "GetKeyString", js_GetKeyString);
+	register_api_method(g_duk, NULL, "GetMouseWheelEvent", js_GetMouseWheelEvent);
+	register_api_method(g_duk, NULL, "GetMouseX", js_GetMouseX);
+	register_api_method(g_duk, NULL, "GetMouseY", js_GetMouseY);
+	register_api_method(g_duk, NULL, "GetNumJoysticks", js_GetNumJoysticks);
+	register_api_method(g_duk, NULL, "GetNumJoystickAxes", js_GetNumJoystickAxes);
+	register_api_method(g_duk, NULL, "GetNumJoystickButtons", js_GetNumJoystickButtons);
+	register_api_method(g_duk, NULL, "GetNumMouseWheelEvents", js_GetNumMouseWheelEvents);
+	register_api_method(g_duk, NULL, "GetPlayerKey", js_GetPlayerKey);
+	register_api_method(g_duk, NULL, "GetToggleState", js_GetToggleState);
+	register_api_method(g_duk, NULL, "SetMousePosition", js_SetMousePosition);
+	register_api_method(g_duk, NULL, "SetPlayerKey", js_SetPlayerKey);
+	register_api_method(g_duk, NULL, "BindJoystickButton", js_BindJoystickButton);
+	register_api_method(g_duk, NULL, "BindKey", js_BindKey);
+	register_api_method(g_duk, NULL, "ClearKeyQueue", js_ClearKeyQueue);
+	register_api_method(g_duk, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
+	register_api_method(g_duk, NULL, "UnbindKey", js_UnbindKey);
 }
 
 static void

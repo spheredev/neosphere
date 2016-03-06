@@ -51,7 +51,7 @@ void
 init_surface_api(void)
 {
 	// register Surface API functions
-	register_api_function(g_duk, NULL, "GrabSurface", js_GrabSurface);
+	register_api_method(g_duk, NULL, "GrabSurface", js_GrabSurface);
 	
 	// register Surface API constants	
 	register_api_const(g_duk, "BLEND", BLEND_BLEND);
@@ -65,40 +65,40 @@ init_surface_api(void)
 	register_api_const(g_duk, "INVERT", BLEND_INVERT);
 	
 	// register Surface methods and properties
-	register_api_function(g_duk, NULL, "CreateSurface", js_CreateSurface);
-	register_api_function(g_duk, NULL, "LoadSurface", js_LoadSurface);
+	register_api_method(g_duk, NULL, "CreateSurface", js_CreateSurface);
+	register_api_method(g_duk, NULL, "LoadSurface", js_LoadSurface);
 	register_api_ctor(g_duk, "Surface", js_new_Surface, js_Surface_finalize);
-	register_api_function(g_duk, "Surface", "toString", js_Surface_toString);
+	register_api_method(g_duk, "Surface", "toString", js_Surface_toString);
 	register_api_prop(g_duk, "Surface", "height", js_Surface_get_height, NULL);
 	register_api_prop(g_duk, "Surface", "width", js_Surface_get_width, NULL);
-	register_api_function(g_duk, "Surface", "getPixel", js_Surface_getPixel);
-	register_api_function(g_duk, "Surface", "setAlpha", js_Surface_setAlpha);
-	register_api_function(g_duk, "Surface", "setBlendMode", js_Surface_setBlendMode);
-	register_api_function(g_duk, "Surface", "setPixel", js_Surface_setPixel);
-	register_api_function(g_duk, "Surface", "applyColorFX", js_Surface_applyColorFX);
-	register_api_function(g_duk, "Surface", "applyColorFX4", js_Surface_applyColorFX4);
-	register_api_function(g_duk, "Surface", "applyLookup", js_Surface_applyLookup);
-	register_api_function(g_duk, "Surface", "blit", js_Surface_blit);
-	register_api_function(g_duk, "Surface", "blitMaskSurface", js_Surface_blitMaskSurface);
-	register_api_function(g_duk, "Surface", "blitSurface", js_Surface_blitSurface);
-	register_api_function(g_duk, "Surface", "clone", js_Surface_clone);
-	register_api_function(g_duk, "Surface", "cloneSection", js_Surface_cloneSection);
-	register_api_function(g_duk, "Surface", "createImage", js_Surface_createImage);
-	register_api_function(g_duk, "Surface", "drawText", js_Surface_drawText);
-	register_api_function(g_duk, "Surface", "filledCircle", js_Surface_filledCircle);
-	register_api_function(g_duk, "Surface", "flipHorizontally", js_Surface_flipHorizontally);
-	register_api_function(g_duk, "Surface", "flipVertically", js_Surface_flipVertically);
-	register_api_function(g_duk, "Surface", "gradientCircle", js_Surface_gradientCircle);
-	register_api_function(g_duk, "Surface", "gradientRectangle", js_Surface_gradientRectangle);
-	register_api_function(g_duk, "Surface", "line", js_Surface_line);
-	register_api_function(g_duk, "Surface", "outlinedCircle", js_Surface_outlinedCircle);
-	register_api_function(g_duk, "Surface", "outlinedRectangle", js_Surface_outlinedRectangle);
-	register_api_function(g_duk, "Surface", "pointSeries", js_Surface_pointSeries);
-	register_api_function(g_duk, "Surface", "rotate", js_Surface_rotate);
-	register_api_function(g_duk, "Surface", "rectangle", js_Surface_rectangle);
-	register_api_function(g_duk, "Surface", "replaceColor", js_Surface_replaceColor);
-	register_api_function(g_duk, "Surface", "rescale", js_Surface_rescale);
-	register_api_function(g_duk, "Surface", "save", js_Surface_save);
+	register_api_method(g_duk, "Surface", "getPixel", js_Surface_getPixel);
+	register_api_method(g_duk, "Surface", "setAlpha", js_Surface_setAlpha);
+	register_api_method(g_duk, "Surface", "setBlendMode", js_Surface_setBlendMode);
+	register_api_method(g_duk, "Surface", "setPixel", js_Surface_setPixel);
+	register_api_method(g_duk, "Surface", "applyColorFX", js_Surface_applyColorFX);
+	register_api_method(g_duk, "Surface", "applyColorFX4", js_Surface_applyColorFX4);
+	register_api_method(g_duk, "Surface", "applyLookup", js_Surface_applyLookup);
+	register_api_method(g_duk, "Surface", "blit", js_Surface_blit);
+	register_api_method(g_duk, "Surface", "blitMaskSurface", js_Surface_blitMaskSurface);
+	register_api_method(g_duk, "Surface", "blitSurface", js_Surface_blitSurface);
+	register_api_method(g_duk, "Surface", "clone", js_Surface_clone);
+	register_api_method(g_duk, "Surface", "cloneSection", js_Surface_cloneSection);
+	register_api_method(g_duk, "Surface", "createImage", js_Surface_createImage);
+	register_api_method(g_duk, "Surface", "drawText", js_Surface_drawText);
+	register_api_method(g_duk, "Surface", "filledCircle", js_Surface_filledCircle);
+	register_api_method(g_duk, "Surface", "flipHorizontally", js_Surface_flipHorizontally);
+	register_api_method(g_duk, "Surface", "flipVertically", js_Surface_flipVertically);
+	register_api_method(g_duk, "Surface", "gradientCircle", js_Surface_gradientCircle);
+	register_api_method(g_duk, "Surface", "gradientRectangle", js_Surface_gradientRectangle);
+	register_api_method(g_duk, "Surface", "line", js_Surface_line);
+	register_api_method(g_duk, "Surface", "outlinedCircle", js_Surface_outlinedCircle);
+	register_api_method(g_duk, "Surface", "outlinedRectangle", js_Surface_outlinedRectangle);
+	register_api_method(g_duk, "Surface", "pointSeries", js_Surface_pointSeries);
+	register_api_method(g_duk, "Surface", "rotate", js_Surface_rotate);
+	register_api_method(g_duk, "Surface", "rectangle", js_Surface_rectangle);
+	register_api_method(g_duk, "Surface", "replaceColor", js_Surface_replaceColor);
+	register_api_method(g_duk, "Surface", "rescale", js_Surface_rescale);
+	register_api_method(g_duk, "Surface", "save", js_Surface_save);
 }
 
 void

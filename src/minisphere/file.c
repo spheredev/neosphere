@@ -242,49 +242,49 @@ void
 init_file_api(void)
 {
 	// File API functions
-	register_api_function(g_duk, NULL, "DoesFileExist", js_DoesFileExist);
-	register_api_function(g_duk, NULL, "GetDirectoryList", js_GetDirectoryList);
-	register_api_function(g_duk, NULL, "GetFileList", js_GetFileList);
-	register_api_function(g_duk, NULL, "CreateDirectory", js_CreateDirectory);
-	register_api_function(g_duk, NULL, "HashRawFile", js_HashRawFile);
-	register_api_function(g_duk, NULL, "RemoveDirectory", js_RemoveDirectory);
-	register_api_function(g_duk, NULL, "RemoveFile", js_RemoveFile);
-	register_api_function(g_duk, NULL, "Rename", js_Rename);
+	register_api_method(g_duk, NULL, "DoesFileExist", js_DoesFileExist);
+	register_api_method(g_duk, NULL, "GetDirectoryList", js_GetDirectoryList);
+	register_api_method(g_duk, NULL, "GetFileList", js_GetFileList);
+	register_api_method(g_duk, NULL, "CreateDirectory", js_CreateDirectory);
+	register_api_method(g_duk, NULL, "HashRawFile", js_HashRawFile);
+	register_api_method(g_duk, NULL, "RemoveDirectory", js_RemoveDirectory);
+	register_api_method(g_duk, NULL, "RemoveFile", js_RemoveFile);
+	register_api_method(g_duk, NULL, "Rename", js_Rename);
 
 	// File object
-	register_api_function(g_duk, NULL, "OpenFile", js_OpenFile);
+	register_api_method(g_duk, NULL, "OpenFile", js_OpenFile);
 	register_api_ctor(g_duk, "KevFile", js_new_KevFile, js_KevFile_finalize);
 	register_api_prop(g_duk, "KevFile", "numKeys", js_KevFile_get_numKeys, NULL);
-	register_api_function(g_duk, "KevFile", "toString", js_KevFile_toString);
-	register_api_function(g_duk, "KevFile", "getKey", js_KevFile_getKey);
-	register_api_function(g_duk, "KevFile", "getNumKeys", js_KevFile_get_numKeys);
-	register_api_function(g_duk, "KevFile", "close", js_KevFile_close);
-	register_api_function(g_duk, "KevFile", "flush", js_KevFile_flush);
-	register_api_function(g_duk, "KevFile", "read", js_KevFile_read);
-	register_api_function(g_duk, "KevFile", "write", js_KevFile_write);
+	register_api_method(g_duk, "KevFile", "toString", js_KevFile_toString);
+	register_api_method(g_duk, "KevFile", "getKey", js_KevFile_getKey);
+	register_api_method(g_duk, "KevFile", "getNumKeys", js_KevFile_get_numKeys);
+	register_api_method(g_duk, "KevFile", "close", js_KevFile_close);
+	register_api_method(g_duk, "KevFile", "flush", js_KevFile_flush);
+	register_api_method(g_duk, "KevFile", "read", js_KevFile_read);
+	register_api_method(g_duk, "KevFile", "write", js_KevFile_write);
 
 	// RawFile object
-	register_api_function(g_duk, NULL, "OpenRawFile", js_OpenRawFile);
+	register_api_method(g_duk, NULL, "OpenRawFile", js_OpenRawFile);
 	register_api_ctor(g_duk, "RawFile", js_new_RawFile, js_RawFile_finalize);
-	register_api_function(g_duk, "RawFile", "toString", js_RawFile_toString);
+	register_api_method(g_duk, "RawFile", "toString", js_RawFile_toString);
 	register_api_prop(g_duk, "RawFile", "length", js_RawFile_get_size, NULL);
 	register_api_prop(g_duk, "RawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
 	register_api_prop(g_duk, "RawFile", "size", js_RawFile_get_size, NULL);
-	register_api_function(g_duk, "RawFile", "getPosition", js_RawFile_get_position);
-	register_api_function(g_duk, "RawFile", "setPosition", js_RawFile_set_position);
-	register_api_function(g_duk, "RawFile", "getSize", js_RawFile_get_size);
-	register_api_function(g_duk, "RawFile", "close", js_RawFile_close);
-	register_api_function(g_duk, "RawFile", "read", js_RawFile_read);
-	register_api_function(g_duk, "RawFile", "readString", js_RawFile_readString);
-	register_api_function(g_duk, "RawFile", "write", js_RawFile_write);
+	register_api_method(g_duk, "RawFile", "getPosition", js_RawFile_get_position);
+	register_api_method(g_duk, "RawFile", "setPosition", js_RawFile_set_position);
+	register_api_method(g_duk, "RawFile", "getSize", js_RawFile_get_size);
+	register_api_method(g_duk, "RawFile", "close", js_RawFile_close);
+	register_api_method(g_duk, "RawFile", "read", js_RawFile_read);
+	register_api_method(g_duk, "RawFile", "readString", js_RawFile_readString);
+	register_api_method(g_duk, "RawFile", "write", js_RawFile_write);
 	
 	// FileStream object
 	register_api_ctor(g_duk, "FileStream", js_new_FileStream, js_FileStream_finalize);
 	register_api_prop(g_duk, "FileStream", "length", js_FileStream_get_length, NULL);
 	register_api_prop(g_duk, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
-	register_api_function(g_duk, "FileStream", "close", js_FileStream_close);
-	register_api_function(g_duk, "FileStream", "read", js_FileStream_read);
-	register_api_function(g_duk, "FileStream", "write", js_FileStream_write);
+	register_api_method(g_duk, "FileStream", "close", js_FileStream_close);
+	register_api_method(g_duk, "FileStream", "read", js_FileStream_read);
+	register_api_method(g_duk, "FileStream", "write", js_FileStream_write);
 }
 
 static duk_ret_t

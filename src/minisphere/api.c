@@ -143,39 +143,39 @@ initialize_api(duk_context* ctx)
 	duk_pop(ctx);
 
 	// register core API functions
-	register_api_function(ctx, NULL, "GetVersion", js_GetVersion);
-	register_api_function(ctx, NULL, "GetVersionString", js_GetVersionString);
-	register_api_function(ctx, NULL, "GetExtensions", js_GetExtensions);
-	register_api_function(ctx, NULL, "EvaluateScript", js_EvaluateScript);
-	register_api_function(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
-	register_api_function(ctx, NULL, "RequireScript", js_RequireScript);
-	register_api_function(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
-	register_api_function(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
-	register_api_function(ctx, NULL, "GetFrameRate", js_GetFrameRate);
-	register_api_function(ctx, NULL, "GetGameManifest", js_GetGameManifest);
-	register_api_function(ctx, NULL, "GetGameList", js_GetGameList);
-	register_api_function(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
-	register_api_function(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
-	register_api_function(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
-	register_api_function(ctx, NULL, "GetSeconds", js_GetSeconds);
-	register_api_function(ctx, NULL, "GetTime", js_GetTime);
-	register_api_function(ctx, NULL, "SetFrameRate", js_SetFrameRate);
-	register_api_function(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
-	register_api_function(ctx, NULL, "SetScreenSize", js_SetScreenSize);
-	register_api_function(ctx, NULL, "Abort", js_Abort);
-	register_api_function(ctx, NULL, "Alert", js_Alert);
-	register_api_function(ctx, NULL, "Assert", js_Assert);
-	register_api_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
-	register_api_function(ctx, NULL, "DebugPrint", js_DebugPrint);
-	register_api_function(ctx, NULL, "Delay", js_Delay);
-	register_api_function(ctx, NULL, "DoEvents", js_DoEvents);
-	register_api_function(ctx, NULL, "Exit", js_Exit);
-	register_api_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
-	register_api_function(ctx, NULL, "FlipScreen", js_FlipScreen);
-	register_api_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
-	register_api_function(ctx, NULL, "Print", js_Print);
-	register_api_function(ctx, NULL, "RestartGame", js_RestartGame);
-	register_api_function(ctx, NULL, "UnskipFrame", js_UnskipFrame);
+	register_api_method(ctx, NULL, "GetVersion", js_GetVersion);
+	register_api_method(ctx, NULL, "GetVersionString", js_GetVersionString);
+	register_api_method(ctx, NULL, "GetExtensions", js_GetExtensions);
+	register_api_method(ctx, NULL, "EvaluateScript", js_EvaluateScript);
+	register_api_method(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
+	register_api_method(ctx, NULL, "RequireScript", js_RequireScript);
+	register_api_method(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
+	register_api_method(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
+	register_api_method(ctx, NULL, "GetFrameRate", js_GetFrameRate);
+	register_api_method(ctx, NULL, "GetGameManifest", js_GetGameManifest);
+	register_api_method(ctx, NULL, "GetGameList", js_GetGameList);
+	register_api_method(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
+	register_api_method(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
+	register_api_method(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
+	register_api_method(ctx, NULL, "GetSeconds", js_GetSeconds);
+	register_api_method(ctx, NULL, "GetTime", js_GetTime);
+	register_api_method(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	register_api_method(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
+	register_api_method(ctx, NULL, "SetScreenSize", js_SetScreenSize);
+	register_api_method(ctx, NULL, "Abort", js_Abort);
+	register_api_method(ctx, NULL, "Alert", js_Alert);
+	register_api_method(ctx, NULL, "Assert", js_Assert);
+	register_api_method(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
+	register_api_method(ctx, NULL, "DebugPrint", js_DebugPrint);
+	register_api_method(ctx, NULL, "Delay", js_Delay);
+	register_api_method(ctx, NULL, "DoEvents", js_DoEvents);
+	register_api_method(ctx, NULL, "Exit", js_Exit);
+	register_api_method(ctx, NULL, "ExecuteGame", js_ExecuteGame);
+	register_api_method(ctx, NULL, "FlipScreen", js_FlipScreen);
+	register_api_method(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	register_api_method(ctx, NULL, "Print", js_Print);
+	register_api_method(ctx, NULL, "RestartGame", js_RestartGame);
+	register_api_method(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
 	// initialize subsystem APIs
 	init_animation_api();
@@ -288,7 +288,38 @@ register_api_extension(const char* designation)
 }
 
 void
-register_api_function(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
+register_api_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
+{
+	duk_push_global_object(ctx);
+	
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
+			duk_pop(ctx);
+			duk_push_string(ctx, namespace_name);
+			duk_push_object(ctx);
+			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+				| DUK_DEFPROP_SET_WRITABLE
+				| DUK_DEFPROP_SET_CONFIGURABLE);
+			duk_get_prop_string(ctx, -1, namespace_name);
+		}
+	}
+	
+	duk_push_string(ctx, name);
+	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_string(ctx, "name");
+	duk_push_string(ctx, name);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	if (namespace_name != NULL)
+		duk_pop(ctx);
+	duk_pop(ctx);
+}
+
+void
+register_api_method(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
