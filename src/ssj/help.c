@@ -39,13 +39,172 @@ help_print(const char* command_name)
 			"    backtrace                                                                  \n"
 		);
 	}
-	else if (strcmp(command_name, "eval") == 0) {
+	else if (strcmp(command_name, "breakpoint") == 0) {
 		printf(
-			"Evaluate a JavaScript expression. This works exactly like JavaScript eval() and\n"
-			"allows you to examine objects, assign to variables, or anything else you could \n"
-			"do with a line of code.                                                        \n\n"
+			"Set a breakpoint at <file:line>.  When you have an idea in which part of the   \n"
+			"program a bug resides but aren't sure of the exact cause, breakpoints can be   \n"
+			"invaluable.  When the breakpoint is reached, execution will pause, leaving SSJ \n"
+			"in control.                                                                    \n\n"
+			"The ID number of the set breakpoint will be given, which will be needed if you \n"
+			"want to clear it later using `clearbp`.                                        \n\n"
 			"SYNTAX:                                                                        \n"
-			"    eval <expression>                                                          \n"
+			"    breakpoint             - to list active breakpoints                        \n"
+			"    breakpoint <file:line> - to set a breakpoint                               \n"
 		);
 	}
+	else if (strcmp(command_name, "clearbp") == 0) {
+		printf(
+			"Clear the breakpoint <index> established using `breakpoint`.  When you no      \n"
+			"longer need a breakpoint, you should clear to prevent execution from pausing in\n"
+			"that spot again.                                                               \n\n"
+			"To list active breakpoints and their indices, simply enter `breakpoint` with no\n"
+			"arguments.                                                                     \n\n"
+			"SYNTAX:                                                                        \n"
+			"    clearbp <index>                                                            \n"
+		);
+	}
+	else if (strcmp(command_name, "continue") == 0) {
+		printf(
+			"Resume normal execution.  If a breakpoint is hit or an error is thrown which is\n"
+			"not caught, SSJ will pause execution again.                                    \n\n"
+			"SYNTAX:                                                                        \n"
+			"    continue                                                                   \n"
+		);
+	}
+	else if (strcmp(command_name, "down") == 0) {
+		printf(
+			"Move down the callstack relative to the selected frame, towards the innermost  \n"
+			"call.  A number can be provided which specifies the number of frames to move.  \n"
+			"If no argument is given, `down` moves down by one (1) frame.                   \n\n"
+			"SYNTAX:                                                                        \n"
+			"    down         - move down by one (1) frame                                  \n"
+			"    down <steps> - move down by <steps> frames                                 \n"
+			);
+	}
+	else if (strcmp(command_name, "eval") == 0) {
+		printf(
+			"Evaluate a JavaScript expression <expr>. This works exactly like JavaScript    \n"
+			"eval() and allows you to examine objects, assign to variables, or anything else\n"
+			"you can do with a line of code.                                                \n\n"
+			"The expression is evaluated using the lexical environment of the selected      \n"
+			"stack frame, and if the result is an object, only enumerable properties will be\n"
+			"displayed.                                                                     \n\n"
+			"SYNTAX:                                                                        \n"
+			"    eval <expr>                                                                \n"
+		);
+	}
+	else if (strcmp(command_name, "examine") == 0) {
+		printf(
+			"Evaluate a JavaScript expression <expr>.  If the result is a primitive value   \n"
+			"such as a string or number, `examine` works exactly like `eval`.  If the result\n"
+			"is an object, all of its properties (including non-enumerable), their          \n"
+			"attributes, and their values are listed in long form.                          \n\n"
+			"SYNTAX:                                                                        \n"
+			"    examine <expr>                                                             \n"
+		);
+	}
+	else if (strcmp(command_name, "frame") == 0) {
+		printf(
+			"Select a callstack frame to examine.  Use `backtrace` to see the full list of  \n"
+			"frames on the callstack.  When SSJ pauses execution, the innermost JavaScript  \n"
+			"frame is selected, which corresponds to the function call in progress.         \n\n"
+			"Sometimes it's necessary when investigating a bug to view the state earlier in \n"
+			"the call chain.  The `frame` command changes the context used for the following\n"
+			"commands:                                                                      \n\n"
+			"    - eval                                                                     \n"
+			"    - examine                                                                  \n"
+			"    - list                                                                     \n"
+			"    - vars                                                                     \n\n"
+			"The program counter isn't affected: `continue` and stepping commands will      \n"
+			"resume in the innermost call regardless of the stack frame selected.           \n\n"
+			"SYNTAX:                                                                        \n"
+			"    frame <index>                                                              \n"
+		);
+	}
+	else if (strcmp(command_name, "list") == 0) {
+		printf(
+			"Print a few lines of source code surrounding the line currently being executed.\n"
+			"By default, 10 lines of source are shown.  If you provide a number with the    \n"
+			"`list` command, that number of lines will be printed.                          \n\n"
+			"`list` may also be used to show the text of any source file in the project so  \n"
+			"long as you know its SphereFS filename.                                        \n\n"
+			"SYNTAX:                                                                        \n"
+			"    list                     - list 10 LOC around the line being executed      \n"
+			"    list <lines>             - list <lines> LOC around the line being executed \n"
+			"    list <lines> <file:line> - list <lines> LOC around <file:line>             \n"
+		);
+	}
+	else if (strcmp(command_name, "stepin") == 0) {
+		printf(
+			"Execute the next line of source code.  If a function is called, execution will \n"
+			"pause at the start of that function.  This lets you trace into function calls. \n\n"
+			"SYNTAX:                                                                        \n"
+			"    stepin                                                                     \n"
+		);
+	}
+	else if (strcmp(command_name, "stepout") == 0) {
+		printf(
+			"Continue execution until the active function call returns.  Execution will     \n"
+			"pause again at the call site.                                                  \n\n"
+			"SYNTAX:                                                                        \n"
+			"    stepout                                                                    \n"
+			);
+	}
+	else if (strcmp(command_name, "stepover") == 0) {
+		printf(
+			"Execute the next line of source code, including all function calls in their    \n"
+			"entirety.                                                                      \n\n"
+			"SYNTAX:                                                                        \n"
+			"    stepover                                                                   \n"
+		);
+	}
+	else if (strcmp(command_name, "up") == 0) {
+		printf(
+			"Move up the callstack relative to the selected frame, towards the outermost    \n"
+			"call.  A number can be provided which specifies the number of frames to move.  \n"
+			"If no argument is given, `up` moves up by one (1) frame.                       \n\n"
+			"SYNTAX:                                                                        \n"
+			"    up         - move up by one (1) frame                                      \n"
+			"    up <steps> - move up by <steps> frames                                     \n"
+		);
+	}
+	else if (strcmp(command_name, "vars") == 0) {
+		printf(
+			"Show local variables for the selected stack frame along with all primitive     \n"
+			"values.  Non-primitive values such as objects and functions are displayed      \n"
+			"simply as `{...}` so you will need to use the `eval` or `examine` commands to  \n"
+			"view their content.                                                            \n\n"
+			"SYNTAX:                                                                        \n"
+			"    vars                                                                       \n"
+		);
+	}
+	else if (strcmp(command_name, "where") == 0) {
+		printf(
+			"Show the function name, filename and current line number for the innermost     \n"
+			"JavaScript stack frame, along with the line of code currently being executed.  \n"
+			"This can help you to regain your bearings after an extended debugging session. \n\n"
+			"SYNTAX:                                                                        \n"
+			"    where                                                                      \n"
+		);
+	}
+	else if (strcmp(command_name, "quit") == 0) {
+		printf(
+			"Quit SSJ.  This will detach the debugger and return you to the shell.  In most \n"
+			"cases the minisphere debug target will also close, unless SSJ was started with \n"
+			"the `-c` option to connect to a running instance.                              \n\n"
+			"SYNTAX:                                                                        \n"
+			"    quit                                                                       \n"
+		);
+	}
+	else if (strcmp(command_name, "help") == 0) {
+		printf(
+			"Get help with SSJ commands.  Since you're seeing this text, it looks like you  \n"
+			"already know what to do!                                                       \n\n"
+			"SYNTAX:                                                                        \n"
+			"    help           - show a list of SSJ commands and their functions           \n"
+			"    help <command> - get help with a specific command (use full name)          \n"
+		);
+	}
+	else
+		printf("unrecognized name `%s`. make sure you use the full command name.\n", command_name);
 }

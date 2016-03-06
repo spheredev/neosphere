@@ -69,6 +69,23 @@ Below is a list of all commands supported by this version of SSJ:
 View the contents of the call stack.
 This allows you to see which function calls are in progress and is especially useful in tracing your game's execution path leading up to an error.
 .TP
+.BR breakpoint " or " bp
+Set a breakpoint at
+.IR file:line .
+When you have an idea in which part of the program a bug resides but aren't sure of the exact cause, breakpoints can be invaluable.
+When the breakpoint is reached, execution will pause, leaving SSJ in control.
+.B breakpoint
+will show the ID number of the set breakpoint, which you will need if want to clear it later using
+.BR clearbp .
+.TP
+.BR clearbp " or " cb
+Clear a breakpoint established using
+.BR breakpoint .
+When you no longer need a breakpoint, you should clear it to prevent execution from pausing in that spot again.
+To list active breakpoints and their indices, simply enter
+.B breakpoint
+with no arguments.
+.TP
 .BR continue " or " c
 Resume normal execution.
 If a breakpoint is hit or an error is thrown which is not caught, SSJ will pause execution again.
@@ -78,13 +95,13 @@ Move down the callstack relative to the selected frame, towards the innermost ca
 A number can be provided which specifies the number of frames to move.
 If no argument is given,
 .B down
-moves down 1 frame.
+moves down by one (1) frame.
 .TP
 .BR eval " or " e
 Evaluate a JavaScript expression.
 This works exactly like JavaScript
 .B eval()
-and allows you to examine objects, assign to variables, or anything else you could do with a line of code.
+and allows you to examine objects, assign to variables, or anything else you can do with a line of code.
 The expression is evaluated in the context of the selected stack frame.
 Only enumerable properties are displayed for objects.
 .TP
@@ -101,7 +118,7 @@ Select a callstack frame to examine.
 Use
 .B backtrace
 to see the full list of frames on the callstack.
-When SSJ pauses execution, the innermost frame is selected, which corresponds to the function call in progress.
+When SSJ pauses execution, the innermost JavaScript frame is selected, which corresponds to the function call in progress.
 Sometimes it's necessary when investigating a bug to view the state earlier in the call chain.
 The
 .frame
@@ -109,7 +126,7 @@ command changes the context used for the following commands:
 .BR eval ", " examine ", " list ", and " vars .
 The program counter isn't affected:
 .B continue
-or stepping commands will resume execution in the innermost call regardless of the selected frame.
+and stepping commands will resume in the innermost call regardless of the stack frame selected.
 .TP
 .BR list " or " l
 Print a few lines of source code surrounding the line currently being executed.
@@ -140,11 +157,18 @@ moves up 1 frame.
 Show local variables for the selected stack frame along with all primitive values.
 Non-primitive values such as objects and functions are displayed simply as "{...}" so you will need to use the
 .BR eval " or " examine
-commands to view their contents.
+commands to view their content.
 .TP
 .BR where " or " w
-Show the function name, filename and current line number for the selected frame, along with the line of code currently being executed.
+Show the function name, filename and current line number for the innermost JavaScript stack frame, along with the line of code currently being executed.
 This can help you to regain your bearings after an extended debugging session.
+.TP
+.BR quit " or " q
+Quit SSJ.
+This will detach the debugger and return you to the shell.
+In most cases the minisphere debug target will also close, unless SSJ was started with the
+.B -c
+option to connect to a running instance.
 .P
 If you need help with any of these commands while using SSJ, you can use the
 .B help
