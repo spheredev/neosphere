@@ -109,8 +109,11 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 
 	pathname = duk_require_string(ctx, index);
 	path = make_sfs_path(pathname, origin_name);
-	if (path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SphereFS sandbox violation ('%s')", pathname);
+	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
+	    || path_is_rooted(path))
+	{
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandbox violation ('%s')", pathname);
+	}
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;

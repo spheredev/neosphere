@@ -354,7 +354,7 @@ js_CreateDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save");
 	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): Failed to create directory '%s'", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to create directory '%s'", name);
 	return 0;
 }
 
@@ -367,10 +367,10 @@ js_HashRawFile(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL);
 	file = sfs_fopen(g_fs, filename, "other", "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Failed to open file '%s' for reading");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): unable to open file '%s' for reading");
 	sfs_fclose(file);
 	// TODO: implement raw file hashing
-	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): Function is not yet implemented");
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): function is not yet implemented");
 }
 
 static duk_ret_t
@@ -380,7 +380,7 @@ js_RemoveDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save");
 	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): Failed to create directory '%s'", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to remove directory '%s'", name);
 	return 0;
 }
 
@@ -391,7 +391,7 @@ js_RemoveFile(duk_context* ctx)
 	
 	filename = duk_require_path(ctx, 0, "save");
 	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): Failed to delete file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): unable to delete file '%s'", filename);
 	return 0;
 }
 
@@ -404,7 +404,7 @@ js_Rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, "save");
 	name2 = duk_require_path(ctx, 1, "save");
 	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): Failed to rename file '%s' to '%s'", name1, name2);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): unable to rename file '%s' to '%s'", name1, name2);
 	return 0;
 }
 
@@ -416,7 +416,7 @@ js_OpenFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "save");
 	if (!(file = open_kev_file(g_fs, filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): Failed to create or open file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): unable to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
 }
@@ -429,7 +429,7 @@ js_new_KevFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL);
 	if (!(file = open_kev_file(g_fs, filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): Failed to create or open file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): unable to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
 }
@@ -460,7 +460,7 @@ js_KevFile_get_numKeys(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file has been closed");
 	duk_push_int(ctx, get_record_count(file));
 	return 1;
 }
@@ -477,7 +477,7 @@ js_KevFile_getKey(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): file has been closed");
 	if (key = get_record_name(file, index))
 		duk_push_string(ctx, key);
 	else
@@ -494,7 +494,7 @@ js_KevFile_flush(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file has been closed");
 	save_kev_file(file);
 	return 0;
 }
@@ -529,7 +529,7 @@ js_KevFile_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): file has been closed");
 	switch (duk_get_type(ctx, 1)) {
 	case DUK_TYPE_BOOLEAN:
 		def_bool = duk_get_boolean(ctx, 1);
@@ -559,7 +559,7 @@ js_KevFile_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): file has been closed");
 	write_string_rec(file, key, duk_to_string(ctx, 1));
 	return 0;
 }
@@ -586,7 +586,7 @@ js_OpenRawFile(duk_context* ctx)
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): Failed to open file '%s' for %s",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file '%s' for %s",
 			filename, writable ? "writing" : "reading");
 	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
@@ -614,7 +614,7 @@ js_new_RawFile(duk_context* ctx)
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): Failed to open file '%s' for %s",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file '%s' for %s",
 			filename, writable ? "writing" : "reading");
 	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
@@ -646,7 +646,7 @@ js_RawFile_get_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file has been closed");
 	duk_push_int(ctx, sfs_ftell(file));
 	return 1;
 }
@@ -662,9 +662,9 @@ js_RawFile_set_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file has been closed");
 	if (!sfs_fseek(file, new_pos, SEEK_SET))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position - Failed to set read/write position");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
 	return 0;
 }
 
@@ -678,7 +678,7 @@ js_RawFile_get_size(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size - File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size: file has been closed");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_int(ctx, sfs_ftell(file));
@@ -696,7 +696,7 @@ js_RawFile_close(duk_context* ctx)
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file has been closed");
 	sfs_fclose(file);
 	return 0;
 }
@@ -716,21 +716,21 @@ js_RawFile_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file has been closed");
 	if (n_args < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Read size out of range (%u)", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): read size out of range (%u)", num_bytes);
 	if (!(read_buffer = malloc(num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to allocate buffer for file read");
 	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
 	if (n_args < 1)  // reset file position after whole-file read
 		sfs_fseek(file, pos, SEEK_SET);
 	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to create byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -749,16 +749,16 @@ js_RawFile_readString(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file has been closed");
 	if (n_args < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): Read size out of range (%i)", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): read size out of range (%i)", num_bytes);
 	if (!(read_buffer = malloc(num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): Failed to allocate buffer for file read");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to allocate buffer for file read");
 	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
 	if (n_args < 1)  // reset file position after whole-file read
 		sfs_fseek(file, pos, SEEK_SET);
@@ -778,7 +778,7 @@ js_RawFile_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): file has been closed");
 	if (duk_is_string(ctx, 0))
 		data = duk_get_lstring(ctx, 0, &write_size);
 	else if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
@@ -790,7 +790,7 @@ js_RawFile_write(duk_context* ctx)
 		data = duk_require_buffer_data(ctx, 0, &write_size);
 	}
 	if (sfs_fwrite(data, 1, write_size, file) != write_size)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): Write error. The file may be read-only.");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): error writing to file");
 	return 0;
 }
 
@@ -811,7 +811,7 @@ js_new_FileStream(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream(): Failed to open file '%s' with mode '%s'",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream(): unable to open file '%s' with mode '%s'",
 			filename, mode);
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;
@@ -861,7 +861,7 @@ js_FileStream_get_length(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:length: File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:length: file has been closed");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, sfs_ftell(file));
@@ -901,14 +901,14 @@ js_FileStream_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	long num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:read(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:read(): file has been closed");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FileStream:read(): Read size out of range (%u)", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FileStream:read(): read size out of range (%u)", num_bytes);
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	num_bytes = (long)sfs_fread(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
@@ -928,9 +928,9 @@ js_FileStream_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): File has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): file has been closed");
 	data = duk_require_buffer_data(ctx, 0, &write_size);
 	if (sfs_fwrite(data, 1, write_size, file) != write_size)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): Write error. The file may be read-only.");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): error writing to file");
 	return 0;
 }
