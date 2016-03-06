@@ -1,4 +1,4 @@
-.TH CELL 1 "2016-03-04" "minisphere-3.0a5" "minisphere Game Development Kit"
+.TH CELL 1 "2016-03-28" "minisphere-3.0a5" "minisphere Game Development Kit"
 .SH NAME
 cell \- Sphere game compiler and packager
 .SH SYNOPSIS
@@ -47,7 +47,7 @@ function $default()
 .RS 0
 }
 .P
-The above script packages the entire source tree, which is usually undesirable.
+The above script packages the entire source tree, which is usually overkill.
 At that point it would be simpler to write the
 .I .sgm
 file manually, archive the entire source tree, and distribute the archive, forgoing Cell entirely.
@@ -67,7 +67,7 @@ used as a
 .I dependency
 in building another asset.
 For example, you might build a tileset from a set of image files.
-With a properly-written Cellscript, Cell can figure out all the dependencies for you, and build everything in the proper order to make a working game package.
+With a properly-written Cellscript, Cell can figure out all the dependencies for you, and build everything in the proper order to make a working package.
 .SH ASSETS
 .TP
 .B files(pattern[, recursive = false])
@@ -76,7 +76,7 @@ An asset that stands in for a set of files.
 is unique in that it doesn't actually build anything - the files named are used as-is.
 However, like all other assets, a
 .B files()
-asset  may be installed directly (which will copy the files into the final package), or used as input for building another asset.
+asset may be installed directly (which will copy the files into the final package), or used as input for building another asset.
 .P
 Asset functions only declare assets.
 At build time, Cell will compile only assets which are part of the dependency chain for an asset which is ultimately installed.

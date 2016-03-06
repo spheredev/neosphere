@@ -118,7 +118,7 @@ main(int argc, char* argv[])
 	console_log(1, "    game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
 	console_log(1, "    fullscreen: %s", s_is_fullscreen ? "on" : "off");
 	console_log(1, "    frameskip limit: %d frames", s_max_frameskip);
-	console_log(1, "    conserve CPU: %s", s_conserve_cpu ? "yes" : "no");
+	console_log(1, "    sleep when idle: %s", s_conserve_cpu ? "yes" : "no");
 	console_log(1, "    console verbosity: V%d", verbosity);
 #if defined(MINISPHERE_SPHERUN)
 	console_log(1, "    debugger mode: %s", want_debug ? "active" : "passive");
