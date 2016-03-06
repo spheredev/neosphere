@@ -33,8 +33,8 @@ namespace minisphere.Gdk
             Conf = new PluginConf(conf);
             Sessions = 0;
 
-            PluginManager.Register(this, new CellCompiler(this), "Cell");
             PluginManager.Register(this, new minisphereStarter(this), "minisphere");
+            PluginManager.Register(this, new CellCompiler(this), "Cell");
             PluginManager.Register(this, new SettingsPage(this), "minisphere GDK");
 
             Panes.Initialize(this);

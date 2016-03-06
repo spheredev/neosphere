@@ -42,6 +42,8 @@ v3.0.0 - March 28, 2016
   non-enumerable, to avoid bloating the output when examining the global object
   in the debugger. Everything is still fully writable and configurable, so as
   not to prevent monkey-patching.
+* Strengthens the SphereFS sandbox: Using absolute file paths is no longer
+  supported and will result in a sandbox violation error.
 * Fixes a bunch of memory leaks in both Cell and minisphere, including one in
   Cell's packaging code which could have caused it to run out of memory during
   the final compression step.

@@ -29,9 +29,9 @@ ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
 DefaultGroupName={#AppName} GDK
-InfoBeforeFile=..\CHANGELOG.md
+DisableWelcomePage=no
+InfoBeforeFile=changelog.rtf
 InfoAfterFile=..\README.md
-LicenseFile=..\license.txt
 SetupIconFile=..\msvs\minisphere.ico
 SolidCompression=yes
 UninstallDisplayName={#AppName} {#AppVersion}
@@ -42,17 +42,17 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Components]
 Name: "engine"; Description: "{#AppName} {#AppVersion} [Required]"; Types: full compact custom; Flags: fixed
-Name: "spherun"; Description: "{#AppName} Console {#AppVersion} (spherun)"; Types: full; Flags: checkablealone
+Name: "spherun"; Description: "{#AppName} Console {#AppVersion} (`spherun`)"; Types: full; Flags: checkablealone
+Name: "spherun/cell"; Description: "Cell - Sphere Packaging Compiler"; Types: full
+Name: "spherun/ssj"; Description: "SSJ - minisphere Console Debugger"; Types: full
 Name: "spherun/plugin"; Description: "minisphere GDK for Sphere Studio"; Types: full
-Name: "spherun/cell"; Description: "Cell: Sphere Packaging Compiler"; Types: full
-Name: "spherun/ssj"; Description: "SSJ: minisphere Console Debugger"; Types: full
 
 [Tasks]
 Name: "assoc"; Description: "Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/sgm"; Description: ".sgm - Sphere game manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/s2gm"; Description: ".s2gm - Sphere 2.0 game manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere SPK game package"; GroupDescription: "Automatically open Sphere file types:"
-Name: "path"; Description: "Add {#AppName} Console (spherun) to the PATH"; GroupDescription: "Develop on the command line:"; Flags: checkedonce unchecked
+Name: "path"; Description: "Add {#AppName} GDK to the system PATH"; GroupDescription: "Develop on the command line:"; Flags: checkedonce unchecked
 
 [Files]
 Source: "..\msw\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
