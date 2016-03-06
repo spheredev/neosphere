@@ -29,7 +29,7 @@ GetVersionString()
   Returns the engine's version identification string. The string returned will
   be in the following format:
       
-      v2.0 (minisphere 3.0a5)
+      v2.0 (minisphere 3.0.0)
 
 GetExtensions()
 
@@ -37,7 +37,6 @@ GetExtensions()
   minisphere currently supports the following extensions (most of these should
   be self-explanatory):
   
-    * minisphere
     * sphere-legacy-api
     * sphere-obj-constructors
     * sphere-obj-props
@@ -46,6 +45,7 @@ GetExtensions()
 	* sphere-coffeescript
     * sphere-commonjs
     * sphere-file-streams
+    * sphere-frameskip-api
     * sphere-galileo
     * sphere-galileo-shaders
     * sphere-map-engine
@@ -53,9 +53,7 @@ GetExtensions()
     * sphere-rng-object
 	* sphere-s2gm
     * sphere-spherefs
-    * duktape-debugger
-    * frameskip-api
-    * set-script-function
+    * sphere-typescript
 
 
 S2GM Manifest Format

@@ -26,7 +26,6 @@ static double const SPHERE_API_VERSION = 2.0;
 
 static const char* const SPHERE_EXTENSIONS[] =
 {
-	"minisphere",
 	"sphere-legacy-api",
 	"sphere-obj-constructors",
 	"sphere-obj-props",
@@ -41,7 +40,6 @@ static const char* const SPHERE_EXTENSIONS[] =
 	"sphere-new-sockets",
 	"sphere-rng-object",
 	"sphere-s2gm",
-	"sphere-set-script-function",
 	"sphere-spherefs",
 	"sphere-typescript",
 };

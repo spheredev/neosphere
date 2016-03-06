@@ -1,5 +1,5 @@
-minisphere (2.99.812.1-trusty) trusty; urgency=low
+minisphere (3.0.0) trusty; urgency=low
 
-  * Initial release.
+  * Initial Linux release.
 
- -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 11 Feb 2016 18:45:00 -0500
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 28 Mar 2016 00:00:00 -0500
