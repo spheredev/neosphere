@@ -3,13 +3,18 @@
 
 #include "utility.h"
 
-const char*
-syspath(const char* filename)
+const path_t*
+enginepath(void)
 {
-	static char retval[SPHERE_PATH_MAX];
+	static path_t* retval = NULL;
 
-	retval[SPHERE_PATH_MAX - 1] = '\0';
-	snprintf(retval, SPHERE_PATH_MAX - 1, "~sys/%s", filename);
+	ALLEGRO_PATH* al_path;
+
+	if (retval == NULL) {
+		al_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+		retval = path_new_dir(al_path_cstr(al_path, '/'));
+		al_destroy_path(al_path);
+	}
 	return retval;
 }
 
@@ -29,18 +34,13 @@ homepath(void)
 	return retval;
 }
 
-const path_t*
-enginepath(void)
+const char*
+systempath(const char* filename)
 {
-	static path_t* retval = NULL;
+	static char retval[SPHERE_PATH_MAX];
 
-	ALLEGRO_PATH* al_path;
-
-	if (retval == NULL) {
-		al_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-		retval = path_new_dir(al_path_cstr(al_path, '/'));
-		al_destroy_path(al_path);
-	}
+	retval[SPHERE_PATH_MAX - 1] = '\0';
+	snprintf(retval, SPHERE_PATH_MAX - 1, "~sys/%s", filename);
 	return retval;
 }
 

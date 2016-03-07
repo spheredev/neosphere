@@ -11,7 +11,7 @@
 #define AppPublisher "Fat Cerberus"
 #define AppVersion2 "3.0"
 #define AppVersion3 "3.0.0"
-#define AppVersion4 "3.0.0.1282"
+#define AppVersion4 "3.0.0.1283"
 
 [Setup]
 OutputBaseFilename=minisphere-{#AppVersion3}
@@ -42,19 +42,24 @@ UninstallDisplayIcon={app}\minisphere.exe,0
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Types]
+Name: "normal"; Description: "Standard installation (engine only)"
+Name: "developer"; Description: "Game Developer installation (GDK)"
+Name: "custom"; Description: "Custom installation"; Flags: iscustom
+
 [Components]
-Name: "engine"; Description: "{#AppName} {#AppVersion2} [Required]"; Types: full compact custom; Flags: fixed
-Name: "spherun"; Description: "{#AppName} Console {#AppVersion2} (`spherun`)"; Types: full; Flags: checkablealone
-Name: "spherun/cell"; Description: "Cell - Sphere Packaging Compiler"; Types: full
-Name: "spherun/ssj"; Description: "SSJ - minisphere Console Debugger"; Types: full
-Name: "spherun/plugin"; Description: "minisphere GDK for Sphere Studio"; Types: full
+Name: "engine"; Description: "{#AppName} {#AppVersion2} [Required]"; Types: normal developer custom; Flags: fixed
+Name: "spherun"; Description: "{#AppName} Console {#AppVersion2} (`spherun`)"; Types: developer; Flags: checkablealone
+Name: "spherun/cell"; Description: "Cell - Sphere Packaging Compiler"; Types: developer
+Name: "spherun/ssj"; Description: "SSJ - minisphere Console Debugger"; Types: developer
+Name: "spherun/plugin"; Description: "minisphere GDK for Sphere Studio"; Types: developer
 
 [Tasks]
-Name: "assoc"; Description: "Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc/sgm"; Description: ".sgm - Sphere game manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc/s2gm"; Description: ".s2gm - Sphere 2.0 game manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc/spk"; Description: ".spk - Sphere SPK game package"; GroupDescription: "Automatically open Sphere file types:"
-Name: "path"; Description: "Add {#AppName} GDK to the system PATH"; GroupDescription: "Develop on the command line:"; Flags: checkedonce unchecked
+Name: "assoc"; Description: "&Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc/sgm"; Description: ".sgm - Sphere &game manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc/s2gm"; Description: ".s2gm - Sphere 2.0 game &manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc/spk"; Description: ".spk - Sphere &SPK game package"; GroupDescription: "Automatically open Sphere file types:"
+Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Components: spherun; Flags: checkedonce unchecked
 
 [Files]
 Source: "..\msw\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
@@ -66,7 +71,6 @@ Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Compo
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun; Check: IsWin64
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell; Check: IsWin64
 Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/ssj; Check: IsWin64
-Source: "..\msw\startup.spk"; DestDir: "{app}"; Components: engine; Flags: ignoreversion
 Source: "..\msw\documentation\minisphere-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cell-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs

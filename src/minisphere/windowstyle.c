@@ -198,7 +198,7 @@ init_windowstyle_api(void)
 	// load system window style
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "WindowStyle", "system.rws");
-		s_sys_winstyle = load_windowstyle(syspath(filename));
+		s_sys_winstyle = load_windowstyle(systempath(filename));
 	}
 
 	// WindowStyle API functions

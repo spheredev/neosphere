@@ -136,7 +136,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	console_log(4, "opening '%s' (%s) from SPK #%u", path, mode, spk->id);
 	
 	// get path to local cache file
-	cache_path = path_rebase(path_new("minisphere/.spkcache/"), homepath());
+	cache_path = path_rebase(path_new("Sphere 2.0/.spkcache/"), homepath());
 	path_append_dir(cache_path, path_filename_cstr(spk->path));
 	local_path = path_rebase(path_new(path), cache_path);
 	path_free(cache_path);

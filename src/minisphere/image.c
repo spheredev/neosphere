@@ -664,11 +664,11 @@ init_image_api(duk_context* ctx)
 	// load system-provided images
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Arrow", "pointer.png");
-		s_sys_arrow = load_image(syspath(filename));
+		s_sys_arrow = load_image(systempath(filename));
 		filename = read_string_rec(g_sys_conf, "UpArrow", "up_arrow.png");
-		s_sys_up_arrow = load_image(syspath(filename));
+		s_sys_up_arrow = load_image(systempath(filename));
 		filename = read_string_rec(g_sys_conf, "DownArrow", "down_arrow.png");
-		s_sys_dn_arrow = load_image(syspath(filename));
+		s_sys_dn_arrow = load_image(systempath(filename));
 	}
 	
 	// register image API functions

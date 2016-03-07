@@ -87,7 +87,7 @@ main(int argc, char* argv[])
 	// something of a hairball over time, and likely quite fragile.  don't be surprised if
 	// attempting to edit it causes something to break. :o)
 
-	path_t*              browse_path;
+	path_t*              games_path;
 	lstring_t*           dialog_name;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
@@ -150,6 +150,8 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
+	games_path = path_rebase(path_new("Sphere 2.0/Games/"), homepath());
+	path_mkdir(games_path);
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
@@ -158,15 +160,12 @@ main(int argc, char* argv[])
 		g_fs = new_sandbox(path_cstr(g_game_path));
 	else {
 		// no game path provided and no startup game, let user find one
-		browse_path = path_rebase(path_new("Sphere Games/"), homepath());
-		path_mkdir(browse_path);
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", PRODUCT_NAME);
-		file_dlg = al_create_native_file_dialog(path_cstr(browse_path),
+		file_dlg = al_create_native_file_dialog(path_cstr(games_path),
 			lstr_cstr(dialog_name),
 			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		al_show_native_file_dialog(NULL, file_dlg);
 		lstr_free(dialog_name);
-		path_free(browse_path);
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
 			path_free(g_game_path);
 			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
@@ -177,9 +176,12 @@ main(int argc, char* argv[])
 			// user clicked Cancel; as this is a valid action, we return
 			// success, not failure.
 			al_destroy_native_file_dialog(file_dlg);
+			path_free(games_path);
 			return EXIT_SUCCESS;
 		}
 	}
+	path_free(games_path);
+
 	if (g_fs == NULL) {
 		// if after all that, we still don't have a valid sandbox pointer, bail out;
 		// there's not much else we can do.
@@ -243,7 +245,7 @@ main(int argc, char* argv[])
 	console_log(1, "loading system default font");
 	if (g_sys_conf != NULL) {
 		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
-		g_sys_font = load_font(syspath(filename));
+		g_sys_font = load_font(systempath(filename));
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
@@ -467,7 +469,7 @@ flip_screen(int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			al_restore_state(&old_state);
-			path = path_rebase(path_new("minisphere/Screenshots/"), homepath());
+			path = path_rebase(path_new("Sphere 2.0/Screenshots/"), homepath());
 			path_mkdir(path);
 			do {
 				path_strip(path);
@@ -805,12 +807,11 @@ find_startup_game(path_t* *out_path)
 	ALLEGRO_FS_ENTRY* fse;
 	int               n_spk_files = 0;
 
-	// prefer startup game if one exists
+	// prefer startup game alongside engine if one exists
 	*out_path = path_rebase(path_new("startup/game.sgm"), enginepath());
 	if (al_filename_exists(path_cstr(*out_path)))
 		return true;
 	path_free(*out_path);
-	*out_path = NULL;
 
 	// check for single SPK package alongside engine
 	*out_path = path_dup(enginepath());
@@ -829,6 +830,17 @@ find_startup_game(path_t* *out_path)
 	if (n_spk_files == 1)
 		return true;  // found an SPK
 
+	// as a last resort, use the default startup game
+	*out_path = path_rebase(path_new("system/startup.spk"), enginepath());
+	if (al_filename_exists(path_cstr(*out_path)))
+		return true;
+	path_free(*out_path);
+	*out_path = path_rebase(path_new("../share/minisphere/system/startup.spk"), enginepath());
+	if (al_filename_exists(path_cstr(*out_path)))
+		return true;
+	path_free(*out_path);
+	*out_path = NULL;
+	
 	// if we reached this point, no suitable startup game was found.
 	path_free(*out_path);
 	*out_path = NULL;
