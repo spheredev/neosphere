@@ -202,9 +202,9 @@ help_print(const char* command_name)
 			"already know what to do!                                                       \n\n"
 			"SYNTAX:                                                                        \n"
 			"    help           - show a list of SSJ commands and their functions           \n"
-			"    help <command> - get help with a specific command (use full name)          \n"
+			"    help <command> - get help with a specific command                          \n"
 		);
 	}
 	else
-		printf("unrecognized name `%s`. make sure you use the full command name.\n", command_name);
+		printf("*munch*\n");
 }

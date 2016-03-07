@@ -44,7 +44,8 @@ command_db[] =
 
 static void        autoselect_frame  (session_t* obj);
 static void        do_command_line   (session_t* obj);
-static const char* find_verb         (command_t* cmd);
+static const char* find_verb         (const char* abbrev, const char* *o_pattern);
+static const char* resolve_command   (command_t* cmd);
 static void        handle_backtrace  (session_t* obj, command_t* cmd);
 static void        handle_breakpoint (session_t* obj, command_t* cmd);
 static void        handle_clearbp    (session_t* obj, command_t* cmd);
@@ -91,6 +92,49 @@ session_run(session_t* obj, bool run_now)
 	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
 	printf("SSJ session terminated.\n");
+}
+
+static const char*
+find_verb(const char* abbrev, const char* *o_pattern)
+{
+	const char* full_name;
+	const char* matches[100];
+	int         num_commands;
+	int         num_matches = 0;
+	const char* short_name;
+
+	int i;
+
+	num_commands = sizeof(command_db) / sizeof(command_db[0]) / 3;
+	for (i = 0; i < num_commands; ++i) {
+		full_name = command_db[0 + i * 3];
+		short_name = command_db[1 + i * 3];
+		if (strcmp(abbrev, short_name) == 0) {
+			matches[0] = full_name;
+			num_matches = 1;  // canonical short name is never ambiguous
+			*o_pattern = command_db[2 + i * 3];
+			break;
+		}
+		if (strstr(full_name, abbrev) == full_name) {
+			matches[num_matches] = full_name;
+			if (num_matches == 0)
+				*o_pattern = command_db[2 + i * 3];
+			++num_matches;
+		}
+	}
+
+	if (num_matches == 1)
+		return matches[0];
+	else if (num_matches > 1) {
+		printf("'%s': abbreviated name is ambiguous between:\n", abbrev);
+		for (i = 0; i < num_matches; ++i)
+			printf("    * %s\n", matches[i]);
+		return NULL;
+	}
+	else {
+		printf("'%s': unrecognized command name.\n", abbrev);
+		return NULL;
+	}
 }
 
 static void
@@ -140,7 +184,7 @@ do_command_line(session_t* obj)
 	buffer[idx] = '\0';
 	if (!(command = command_parse(buffer)))
 		goto finished;
-	if ((verb = find_verb(command)) == NULL)
+	if ((verb = resolve_command(command)) == NULL)
 		goto finished;
 
 	// figure out which handler to run based on the command name. this could
@@ -188,52 +232,17 @@ finished:
 }
 
 static const char*
-find_verb(command_t* command)
+resolve_command(command_t* command)
 {
-	const char* full_name;
-	const char* matches[100];
-	int         num_commands;
-	int         num_matches = 0;
 	const char* pattern;
-	const char* short_name;
 	const char* verb;
-
-	int i;
 
 	if (command_len(command) < 1)
 		return NULL;
-
-	num_commands = sizeof(command_db) / sizeof(command_db[0]) / 3;
-	verb = command_get_string(command, 0);
-	for (i = 0; i < num_commands; ++i) {
-		full_name = command_db[0 + i * 3];
-		short_name = command_db[1 + i * 3];
-		if (strcmp(verb, short_name) == 0) {
-			matches[0] = full_name;
-			pattern = command_db[2 + i * 3];
-			num_matches = 1;  // canonical short name is never ambiguous
-			break;
-		}
-		if (strstr(full_name, verb) == full_name) {
-			matches[num_matches] = full_name;
-			if (num_matches == 0)
-				pattern = command_db[2 + i * 3];
-			++num_matches;
-		}
-	}
-
-	if (num_matches == 1)
-		return validate_args(command, matches[0], pattern) ? matches[0] : NULL;
-	else if (num_matches > 1) {
-		printf("'%s': abbreviated name is ambiguous between:\n", verb);
-		for (i = 0; i < num_matches; ++i)
-			printf("    * %s\n", matches[i]);
+	
+	if (!(verb = find_verb(command_get_string(command, 0), &pattern)))
 		return NULL;
-	}
-	else {
-		printf("'%s': unrecognized command name.\n", verb);
-		return NULL;
-	}
+	return validate_args(command, verb, pattern) ? verb : NULL;
 }
 
 static void
@@ -419,7 +428,15 @@ handle_frame(session_t* obj, command_t* cmd)
 static void
 handle_help(session_t* obj, command_t* cmd)
 {
-	help_print(command_len(cmd) > 0 ? command_get_string(cmd, 1) : NULL);
+	const char* verb;
+	
+	if (command_len(cmd) > 1) {
+		if (!(verb = find_verb(command_get_string(cmd, 1), NULL)))
+			return;
+		help_print(verb);
+	}
+	else
+		help_print(NULL);
 }
 
 static void

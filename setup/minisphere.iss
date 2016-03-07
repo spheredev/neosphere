@@ -8,17 +8,18 @@
 ; configurations.
 
 #define AppName "minisphere"
-#define AppVersion "3.0.0"
-#define AppRawVersion "3.0.0.1279"
 #define AppPublisher "Fat Cerberus"
+#define AppVersion2 "3.0"
+#define AppVersion3 "3.0.0"
+#define AppVersion4 "3.0.0.1280"
 
 [Setup]
-OutputBaseFilename=minisphere-{#AppVersion}
+OutputBaseFilename=minisphere-{#AppVersion3}
 OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
-AppVerName={#AppName} {#AppVersion}
-AppVersion={#AppRawVersion}
+AppVerName={#AppName} {#AppVersion3}
+AppVersion={#AppVersion4}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
 AppCopyright=© 2015-2016 Fat Cerberus
@@ -29,20 +30,21 @@ ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
 DefaultGroupName={#AppName} GDK
+DisableProgramGroupPage=yes
 DisableWelcomePage=no
 InfoBeforeFile=changelog.rtf
-InfoAfterFile=..\README.md
+InfoAfterFile=release.rtf
 SetupIconFile=..\msvs\minisphere.ico
 SolidCompression=yes
-UninstallDisplayName={#AppName} {#AppVersion}
+UninstallDisplayName={#AppName} {#AppVersion3}
 UninstallDisplayIcon={app}\minisphere.exe,0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Components]
-Name: "engine"; Description: "{#AppName} {#AppVersion} [Required]"; Types: full compact custom; Flags: fixed
-Name: "spherun"; Description: "{#AppName} Console {#AppVersion} (`spherun`)"; Types: full; Flags: checkablealone
+Name: "engine"; Description: "{#AppName} {#AppVersion2} [Required]"; Types: full compact custom; Flags: fixed
+Name: "spherun"; Description: "{#AppName} Console {#AppVersion2} (`spherun`)"; Types: full; Flags: checkablealone
 Name: "spherun/cell"; Description: "Cell - Sphere Packaging Compiler"; Types: full
 Name: "spherun/ssj"; Description: "SSJ - minisphere Console Debugger"; Types: full
 Name: "spherun/plugin"; Description: "minisphere GDK for Sphere Studio"; Types: full
