@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
+
 using minisphere.Gdk.DockPanes;
 using minisphere.Gdk.Plugins;
 using minisphere.Gdk.SettingsPages;
