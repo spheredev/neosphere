@@ -64,11 +64,11 @@ Download
 ========
 
 The current stable minisphere release at the time of this writing is
-**minisphere 3.0rc1**.  This is a release candidate: If no new bugs are
-discovered, 3.0rc1 will be officially released as **minisphere 3.0.0** on
+**minisphere 3.0rc3**.  This is a release candidate: If no new bugs are
+discovered, 3.0rc3 will be officially released as **minisphere 3.0.0** on
 March 28, 2016.
 
 Official binaries for minisphere are released through GitHub.  The latest
 version is available for download here:
 
-<https://github.com/fatcerberus/minisphere/releases/tag/v3.0rc1>
+<https://github.com/fatcerberus/minisphere/releases/tag/v3.0rc3>
