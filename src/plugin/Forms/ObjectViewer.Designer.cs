@@ -48,7 +48,7 @@
             this.OKButton.Location = new System.Drawing.Point(481, 476);
             this.OKButton.Name = "OKButton";
             this.OKButton.Size = new System.Drawing.Size(80, 25);
-            this.OKButton.TabIndex = 3;
+            this.OKButton.TabIndex = 2;
             this.OKButton.Text = "&Close";
             this.OKButton.UseVisualStyleBackColor = true;
             // 
@@ -65,7 +65,7 @@
             this.PropTree.Name = "PropTree";
             this.PropTree.SelectedImageIndex = 0;
             this.PropTree.Size = new System.Drawing.Size(549, 361);
-            this.PropTree.TabIndex = 1;
+            this.PropTree.TabIndex = 0;
             this.PropTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.PropTree_BeforeExpand);
             this.PropTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.PropTree_AfterSelect);
             this.PropTree.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PropTree_MouseMove);
@@ -82,7 +82,7 @@
             this.ObjectNameTextBox.Name = "ObjectNameTextBox";
             this.ObjectNameTextBox.ReadOnly = true;
             this.ObjectNameTextBox.Size = new System.Drawing.Size(549, 23);
-            this.ObjectNameTextBox.TabIndex = 0;
+            this.ObjectNameTextBox.TabIndex = 3;
             // 
             // groupBox1
             // 
@@ -95,7 +95,7 @@
             this.groupBox1.Location = new System.Drawing.Point(12, 408);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(549, 62);
-            this.groupBox1.TabIndex = 2;
+            this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Property Descriptor";
             // 

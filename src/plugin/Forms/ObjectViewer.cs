@@ -24,9 +24,9 @@ namespace minisphere.Gdk.Forms
         {
             InitializeComponent();
 
-            ObjectNameTextBox.Text = "eval('"
-                + objectName.Replace(@"\", @"\\").Replace("'", @"\'").Replace("\n", @"\n")
-                + "');";
+            ObjectNameTextBox.Text = string.Format("eval('{0}') = {1};",
+                objectName.Replace(@"\", @"\\").Replace("'", @"\'").Replace("\n", @"\n").Replace("\r", @"\r"),
+                value.ToString());
             TreeIconImageList.Images.Add("object", Resources.StackIcon);
             TreeIconImageList.Images.Add("prop", Resources.VisibleIcon);
             TreeIconImageList.Images.Add("hiddenProp", Resources.InvisibleIcon);

@@ -304,7 +304,7 @@ namespace minisphere.Gdk.Debugger
                 : _tag == DValueTag.True ? "true" : _tag == DValueTag.False ? "false"
                 : _tag == DValueTag.Integer ? _value.ToString()
                 : _tag == DValueTag.Float ? _value.ToString()
-                : _tag == DValueTag.String ? string.Format("\"{0}\"", _value.Replace(@"""", @"\""").Replace("\n", @"\n"))
+                : _tag == DValueTag.String ? string.Format("\"{0}\"", _value.Replace(@"""", @"\""").Replace("\r", @"\r").Replace("\n", @"\n"))
                 : "*munch*";
         }
     }

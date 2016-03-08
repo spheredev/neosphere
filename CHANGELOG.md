@@ -9,52 +9,54 @@ v3.0.0 - March 28, 2016
   separate installers.
 * minisphere is now officially supported on Linux! `.deb` binary and `.tar.gz`
   source packages will be provided for all minisphere releases going forward.
-* Command-line debugging comes to minisphere! Try out the brand-new SSJ console
-  debugger by running `ssj <game-path>` on the command line. This brings
-  full single-step debugger support to non-Windows platforms for the first time!
-* Introduces experimental support for TypeScript.  All TypeScript 1.8 syntax is
-  supported; however, because the engine uses `ts.transpile()` under the hood to
-  compile .ts scripts, variable and argument typing is not currently enforced.
+* Command-line debugging comes to minisphere!  Try out the brand-new SSJ console
+  debugger by running `ssj <game-path>` on the command line.  This brings
+  single-step debugging support to non-Windows platforms for the first time!
+* Adds provisional TypeScript support.  minisphere uses `ts.transpile()`
+  internally to convert TypeScript to JavaScript, so some TypeScript features
+  may not work as expected.  See the release notes for more details.
 * User data (screenshots, save files, etc.) is now stored in `<docs>/Sphere 2.0`
   instead of `<docs>/minisphere` as it was in prior versions.  SPK packages can
   be placed into the `Games` subdirectory to have the startup game automatically
   pick them up.
-* Enhances the behavior of `Assert()`.  With the debugger attached, if an
-  assertion fails, choosing not to continue will now cause a breakpoint directly
-  rather than throwing an error.  Similarly, if the debugger is NOT attached,
-  failed asserts will be logged to the console but otherwise ignored.
-* While the debugger is attached, you can now press F12 to pause game execution
-  and turn over control to the attached debugger.  This can be useful for
-  debugging glitches that don't lead to an exception.
-* The Sphere Studio plugin now allows changing the minisphere Console verbosity
-  level in Settings Center.  V1 is the default.
+* Enhances `Assert()` behavior.  If an assertion fails and the debugger is
+  attached, choosing not to continue will cause a prompt breakpoint instead of
+  throwing an error.  If the debugger is not attached, any failing assertions
+  will be logged to `stderr` but otherwise ignored.
+* With the debugger attached, you can now press F12 to pause game execution and
+  turn over control to the attached debugger.  This can be useful when trying to
+  debug glitches that don't lead to an exception.
+* You can now change the minisphere Console verbosity level when developing in
+  Sphere Studio by going to the Settings Center page.  V1 (basic logging) is the
+  default.
 * Vastly improves object inspection in the Sphere Studio debugger.  Object
-  contents are now displayed in a treeview and you can drill down through the
-  properties, instead of having to scroll through a potentially huge JSON dump.
-* The command to run minisphere Console from the command line has been changed
-  from `msphere` to `spherun`.  This will be the standard command to start a
+  contents will be displayed in a treeview, allowing you to drill down into
+  properties, alleviating the need to scroll through a potentially huge JSON
+  dump.
+* The command to run minisphere Console from the command line has changed from
+  `msphere` to `spherun`.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
   been renamed as well, to `minisphere`.
-* New API: `DebugPrint()`, designed for logging low-level debug information
-  without cluttering the console. `DebugPrint()` output is visible only with a
-  debugger attached.
-* New API: `DoEvents()`. This function can be called in a long-running loop to
+* New API: `DebugPrint()`, for logging low-level debug information without
+  cluttering the console.  `DebugPrint()` output is visible only with a debugger
+  attached.
+* New API: `DoEvents()`.  This function can be called in a long-running loop to
   avoid locking up the engine when you don't need to render anything or
   otherwise disturb the backbuffer.
-* `Print()` now accepts multiple values, which will be separated with spaces
-  when output.
+* `Print()` now accepts multiple values, which are separated by spaces when
+  printed.
 * The `sphere` global object alias has been renamed to `global`, which is more
-  obvious and matches Node.js.  Any code relying on the `sphere` alias will need
-  to be updated to work with minisphere 3.0.
+  obvious and matches Node.js.  Code relying on the `sphere` alias will need to
+  be updated to work with minisphere 3.0.
 * All minisphere API functions, constructors, and constants have been marked as
   non-enumerable, to avoid bloating the output when examining the global object
-  in the debugger. Everything is still fully writable and configurable, so as
+  in the debugger.  Everything is still fully writable and configurable, so as
   not to prevent monkey-patching.
 * Strengthens the SphereFS sandbox: Using absolute file paths is no longer
   supported and will result in a sandbox violation error.
-* Fixes several memory leaks in both Cell and minisphere, including a major one
-  in Cell's packaging code which could have caused it to run out of memory
-  during the installation step.
+* Fixes memory leaks in both Cell and minisphere, including a major one in
+  Cell's packaging code which could have caused it to run out of memory during
+  the installation step.
 * minisphere will no longer fail to start if the underlying platform doesn't
   support shaders.  Instead, the Galileo `ShaderProgram` constructor will throw
   an error if called.  Shaders are always disabled when the engine is compiled
