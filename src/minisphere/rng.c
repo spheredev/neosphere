@@ -4,13 +4,13 @@
 
 #include "rng.h"
 
-static duk_ret_t js_RNG_seed   (duk_context* ctx);
-static duk_ret_t js_RNG_chance (duk_context* ctx);
-static duk_ret_t js_RNG_normal (duk_context* ctx);
-static duk_ret_t js_RNG_range  (duk_context* ctx);
-static duk_ret_t js_RNG_sample (duk_context* ctx);
-static duk_ret_t js_RNG_string (duk_context* ctx);
-static duk_ret_t js_RNG_vary   (duk_context* ctx);
+static duk_ret_t js_RNG_seed    (duk_context* ctx);
+static duk_ret_t js_RNG_chance  (duk_context* ctx);
+static duk_ret_t js_RNG_normal  (duk_context* ctx);
+static duk_ret_t js_RNG_range   (duk_context* ctx);
+static duk_ret_t js_RNG_sample  (duk_context* ctx);
+static duk_ret_t js_RNG_string  (duk_context* ctx);
+static duk_ret_t js_RNG_uniform (duk_context* ctx);
 
 static const char* const RNG_STRING_CORPUS =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -114,7 +114,7 @@ init_rng_api(void)
 	register_api_function(g_duk, "RNG", "range", js_RNG_range);
 	register_api_function(g_duk, "RNG", "sample", js_RNG_sample);
 	register_api_function(g_duk, "RNG", "string", js_RNG_string);
-	register_api_function(g_duk, "RNG", "vary", js_RNG_vary);
+	register_api_function(g_duk, "RNG", "uniform", js_RNG_uniform);
 }
 
 static duk_ret_t
@@ -175,13 +175,13 @@ js_RNG_string(duk_context* ctx)
 	int length = n_args >= 1 ? duk_require_number(ctx, 0) : 10;
 
 	if (length < 1 || length > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.name(): length must be between 1-255 inclusive (%i)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.string(): length must be between 1-255 inclusive (got: %d)", length);
 	duk_push_string(ctx, rng_string(length));
 	return 1;
 }
 
 static duk_ret_t
-js_RNG_vary(duk_context* ctx)
+js_RNG_uniform(duk_context* ctx)
 {
 	double mean = duk_require_number(ctx, 0);
 	double variance = duk_require_number(ctx, 1);

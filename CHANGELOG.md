@@ -37,6 +37,7 @@ v3.0.0 - March 28, 2016
   `msphere` to `spherun`.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
   been renamed as well, to `minisphere`.
+* `RNG.vary()` is now named `RNG.uniform()`.
 * New API: `DebugPrint()`, for logging low-level debug information without
   cluttering the console.  `DebugPrint()` output is visible only with a debugger
   attached.

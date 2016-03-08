@@ -596,7 +596,7 @@ RNG.string([length]);
   Returns a randomly-generated string consisting of alphanumeric characters. The
   resulting string looks something like a YouTube video hash (e.g. YlHRHDrKS)
   and is useful for uniquely identifying things, for example to generate
-  temporary filenames. If no length is provided, the default is 10.
+  temporary filenames.  If no length is provided, the default is 10.
 
 RNG.chance(odds);
 
@@ -618,10 +618,10 @@ RNG.sample(array);
 
   Returns a single randomly-chosen item from `array`.
 
-RNG.vary(mean, variance);
+RNG.uniform(mean, variance);
 
   Returns a random floating point value uniformly distributed around `mean` with
-  a maximum deviation specified by `variance`.
+  absolute maximum deviation specified by `variance`.
 
 
 Graphics Routines
