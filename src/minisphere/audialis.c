@@ -30,7 +30,6 @@ static duk_ret_t js_Sound_set_repeat           (duk_context* ctx);
 static duk_ret_t js_Sound_get_seekable         (duk_context* ctx);
 static duk_ret_t js_Sound_get_volume           (duk_context* ctx);
 static duk_ret_t js_Sound_set_volume           (duk_context* ctx);
-static duk_ret_t js_Sound_clone                (duk_context* ctx);
 static duk_ret_t js_Sound_pause                (duk_context* ctx);
 static duk_ret_t js_Sound_play                 (duk_context* ctx);
 static duk_ret_t js_Sound_reset                (duk_context* ctx);
@@ -90,6 +89,7 @@ static mixer_t*             s_def_mixer;
 static unsigned int         s_next_mixer_id = 0;
 static unsigned int         s_next_sound_id = 0;
 static unsigned int         s_next_stream_id = 0;
+static vector_t*            s_playing_sounds;
 static vector_t*            s_streams;
 
 void
@@ -106,12 +106,20 @@ initialize_audialis(void)
 	al_init_acodec_addon();
 	al_reserve_samples(10);
 	s_streams = vector_new(sizeof(stream_t*));
+	s_playing_sounds = vector_new(sizeof(sound_t*));
 }
 
 void
 shutdown_audialis(void)
 {
+	iter_t iter;
+	sound_t* *p_sound;
+	
 	console_log(1, "shutting down Audialis");
+	iter = vector_enum(s_playing_sounds);
+	while (p_sound = vector_next(&iter))
+		free_sound(*p_sound);
+	vector_free(s_playing_sounds);
 	vector_free(s_streams);
 	free_mixer(s_def_mixer);
 	if (s_have_sound)
@@ -121,6 +129,7 @@ shutdown_audialis(void)
 void
 update_audialis(void)
 {
+	sound_t*  *p_sound;
 	stream_t* *p_stream;
 	
 	iter_t iter;
@@ -128,6 +137,14 @@ update_audialis(void)
 	iter = vector_enum(s_streams);
 	while (p_stream = vector_next(&iter))
 		update_stream(*p_stream);
+	
+	iter = vector_enum(s_playing_sounds);
+	while (p_sound = vector_next(&iter)) {
+		if (is_sound_playing(*p_sound))
+			continue;
+		free_sound(*p_sound);
+		iter_remove(&iter);
+	}
 }
 
 mixer_t*
@@ -372,8 +389,11 @@ void
 play_sound(sound_t* sound)
 {
 	console_log(2, "playing sound #%u on mixer #%u", sound->id, sound->mixer->id);
-	if (sound->stream != NULL)
+	if (sound->stream != NULL) {
 		al_set_audio_stream_playing(sound->stream, true);
+		ref_sound(sound);
+		vector_push(s_playing_sounds, &sound);
+	}
 }
 
 bool
@@ -509,6 +529,12 @@ free_stream(stream_t* stream)
 			break;
 		}
 	}
+}
+
+bool
+is_stream_playing(const stream_t* stream)
+{
+	return al_get_audio_stream_playing(stream->ptr);
 }
 
 mixer_t*

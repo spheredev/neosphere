@@ -10,9 +10,9 @@ typedef struct vector vector_t;
 typedef
 struct iter
 {
-	const vector_t* vector;
-	void*           ptr;
-	ptrdiff_t       index;
+	vector_t* vector;
+	void*     ptr;
+	ptrdiff_t index;
 } iter_t;
 
 vector_t* vector_new    (size_t pitch);
@@ -26,7 +26,8 @@ vector_t* vector_sort   (vector_t* vector, int(*comparer)(const void* in_a, cons
 
 void*  vector_get  (const vector_t* vector, size_t index);
 void   vector_set  (vector_t* vector, size_t index, const void* in_object);
-iter_t vector_enum (const vector_t* vector);
+iter_t vector_enum (vector_t* vector);
 void*  vector_next (iter_t* inout_iter);
+void   iter_remove (iter_t* iter);
 
 #endif // MINISPHERE__VECTOR_H__INCLUDED

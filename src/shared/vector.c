@@ -111,7 +111,7 @@ vector_sort(vector_t* vector, int (*comparer)(const void* in_a, const void* in_b
 }
 
 iter_t
-vector_enum(const vector_t* vector)
+vector_enum(vector_t* vector)
 {
 	iter_t iter;
 
@@ -133,6 +133,19 @@ vector_next(iter_t* iter)
 	++iter->index;
 	p_tail = vector->buffer + vector->num_items * vector->pitch;
 	return (iter->ptr < p_tail) ? iter->ptr : NULL;
+}
+
+void
+iter_remove(iter_t* iter)
+{
+	vector_t* vector;
+	
+	vector = iter->vector;
+	vector_remove(vector, iter->index);
+	--iter->index;
+	iter->ptr = iter->index >= 0
+		? vector->buffer + iter->index * vector->pitch
+		: NULL;
 }
 
 static bool
