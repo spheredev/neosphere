@@ -12,6 +12,8 @@ v3.0.0 - March 28, 2016
 * Command-line debugging comes to minisphere!  Try out the brand-new SSJ console
   debugger by running `ssj <game-path>` on the command line.  This brings
   single-step debugging support to non-Windows platforms for the first time!
+* Strengthens the SphereFS sandbox: Using absolute file paths is no longer
+  supported and will result in a sandbox violation error.
 * Adds provisional TypeScript support.  minisphere uses `ts.transpile()`
   internally to convert TypeScript to JavaScript, so some TypeScript features
   may not work as expected.  See the release notes for more details.
@@ -23,6 +25,9 @@ v3.0.0 - March 28, 2016
   attached, choosing not to continue will cause a prompt breakpoint instead of
   throwing an error.  If the debugger is not attached, any failing assertions
   will be logged to `stderr` but otherwise ignored.
+* The engine now waits for sounds to stop playing before freeing them, even if
+  the Sound object goes out of scope.  This allows a common Sphere idiom
+  `new Sound("munch.wav").play()` to work as expected.
 * With the debugger attached, you can now press F12 to pause game execution and
   turn over control to the attached debugger.  This can be useful when trying to
   debug glitches that don't lead to an exception.
@@ -53,8 +58,6 @@ v3.0.0 - March 28, 2016
   non-enumerable, to avoid bloating the output when examining the global object
   in the debugger.  Everything is still fully writable and configurable, so as
   not to prevent monkey-patching.
-* Strengthens the SphereFS sandbox: Using absolute file paths is no longer
-  supported and will result in a sandbox violation error.
 * Fixes memory leaks in both Cell and minisphere, including a major one in
   Cell's packaging code which could have caused it to run out of memory during
   the installation step.

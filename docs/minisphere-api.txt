@@ -42,7 +42,7 @@ GetExtensions()
     * sphere-obj-props
     * sphere-async-api
     * sphere-audialis
-	* sphere-coffeescript
+    * sphere-coffeescript
     * sphere-commonjs
     * sphere-file-streams
     * sphere-frameskip-api
@@ -51,7 +51,7 @@ GetExtensions()
     * sphere-map-engine
     * sphere-new-sockets
     * sphere-rng-object
-	* sphere-s2gm
+    * sphere-s2gm
     * sphere-spherefs
     * sphere-typescript
 
@@ -72,7 +72,7 @@ format.  game.s2gm file is simply a JSON file and looks like this:
     
     minimumPlatform: {
       recommend: "minisphere 2.1 or later",
-	  apiVersion: 2.0,
+      apiVersion: 2.0,
       extensions: [
         "sphere-legacy-api",
         "sphere-obj-constructors",
@@ -81,7 +81,7 @@ format.  game.s2gm file is simply a JSON file and looks like this:
         "sphere-rng-object",
         "sphere-s2gm",
         "sphere-spherefs",
-	  ]
+      ]
     }
   }
 
@@ -293,8 +293,8 @@ GetGameList()
     
     .name:        The game's title, taken from the .
     .directory:   The absolute path of the directory the game was found in. For
-				  packaged games, this will be the filename of the package file
-				  instead of a directory name.
+                  packaged games, this will be the filename of the package file
+                  instead of a directory name.
     .author:      The game's author, taken from game.sgm.
     .description: A short description of the game, taken from game.sgm.
 

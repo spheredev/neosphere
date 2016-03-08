@@ -38,8 +38,8 @@ scripting. This may be confusing for those attempting to jump right in; it is
 highly recommend to read the manual page for Cell before trying to write a
 Cellscript for your game.
 
-**note:** Cell is still in its infancy and mostly serves as a packaging tool in
-          practice.  Its feature set will be fleshed out in future versions.
+**note:** Cell is still in its infancy.  The feature set will be fleshed out in
+          future versions.
 
 Powerful Console Debugger
 -------------------------
@@ -68,11 +68,11 @@ Download
 ========
 
 The current stable minisphere release at the time of this writing is
-**minisphere 3.0rc3**.  This is a release candidate: If no new bugs are
-discovered, 3.0rc3 will be officially released as **minisphere 3.0.0** on
+**minisphere 3.0rc4**.  This is a release candidate: If no further changes are
+needed, 3.0rc4 will be officially released as **minisphere 3.0.0** on
 March 28, 2016.
 
 Official binaries for minisphere are released through GitHub.  The latest
 version is available for download here:
 
-<https://github.com/fatcerberus/minisphere/releases/tag/v3.0rc3>
+<https://github.com/fatcerberus/minisphere/releases/tag/v3.0rc4>
