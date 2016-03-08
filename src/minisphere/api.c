@@ -786,7 +786,7 @@ js_Alert(duk_context* ctx)
 	int         line_number;
 
 	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): Stack offset cannot be positive");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): stack offset must be negative");
 
 	// get filename and line number of Alert() call
 	duk_push_global_object(ctx);
@@ -819,27 +819,32 @@ js_Abort(duk_context* ctx)
 	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): Stack offset cannot be positive");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): stack offset must be negative");
 	duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
 }
 
 static duk_ret_t
 js_Assert(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	bool result = duk_to_boolean(ctx, 0);
-	const char* message = duk_require_string(ctx, 1);
-	int stack_offset = n_args >= 3 ? duk_require_int(ctx, 2) : 0;
-
 	const char* filename;
 	int         line_number;
+	const char* message;
+	int         num_args;
+	bool        result;
+	int         stack_offset;
 	lstring_t*  text;
 
+	num_args = duk_get_top(ctx);
+	result = duk_to_boolean(ctx, 0);
+	message = duk_require_string(ctx, 1);
+	stack_offset = num_args >= 3 ? duk_require_int(ctx, 2)
+		: 0;
+	
 	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): Stack offset cannot be positive");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): stack offset must be negative");
 	
 	if (!result) {
-		// locate the offending script and line number via the call stack
+		// get the offending script and line number from the call stack
 		duk_push_global_object(ctx);
 		duk_get_prop_string(ctx, -1, "Duktape");
 		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
@@ -852,20 +857,19 @@ js_Assert(duk_context* ctx)
 		duk_get_prop_string(ctx, -1, "function");
 		duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
 		duk_pop_2(ctx);
-		fprintf(stderr, "ASSERT: `%s:%i` %s\n", filename, line_number, message);
+		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
 
-		// if an assertion fails, one of two things will happen:
-		//   - if no debugger is attached, the engine flags it as an error and aborts.
-		//   - if a debugger is attached, the user is given a choice to either continue
-		//     or abort. continuing may be useful in certain debugging scenarios.
-		if (!is_debugger_attached())
-			duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
-		else {
-			text = lstr_newf("%s (line: %i)\n%s\n\nIf you choose not to continue, the engine will abort.", filename, line_number, message);
-			if (!al_show_native_message_box(g_display, "Script Error", "An assertion failed. Continue?",
+		// if an assertion fails in a game being debugged:
+		//   - the user may choose to ignore it, in which case execution continues.  this is useful
+		//     in some debugging scenarios.
+		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
+		//     over control to the attached debugger.
+		if (is_debugger_attached()) {
+			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
+			if (!al_show_native_message_box(g_display, "Script Error", "Assertion failed!",
 				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
 			{
-				duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
+				duk_debugger_pause(ctx);
 			}
 			lstr_free(text);
 		}

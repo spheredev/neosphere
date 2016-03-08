@@ -22,8 +22,8 @@ enum apprequest
 
 static const int TCP_DEBUG_PORT = 1208;
 
-static bool       attach_debugger      (void);
-static void       detach_debugger      (bool is_shutdown);
+static bool       do_attach_debugger   (void);
+static void       do_detach_debugger   (bool is_shutdown);
 static void       duk_cb_debug_detach  (void* udata);
 static duk_idx_t  duk_cb_debug_request (duk_context* ctx, void* udata, duk_idx_t nvalues);
 static duk_size_t duk_cb_debug_peek    (void* udata);
@@ -76,7 +76,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	// if the engine was started in debug mode, wait for a debugger to connect before
 	// beginning execution.
 	s_want_attach = want_attach;
-	if (s_want_attach && !attach_debugger())
+	if (s_want_attach && !do_attach_debugger())
 		exit_game(true);
 }
 
@@ -86,7 +86,7 @@ shutdown_debugger()
 	iter_t iter;
 	struct source* p_source;
 	
-	detach_debugger(true);
+	do_detach_debugger(true);
 	free_socket(s_server);
 	
 	iter = vector_enum(s_sources);
@@ -196,10 +196,10 @@ cache_source(const char* name, const lstring_t* text)
 	
 	iter_t iter;
 	struct source* p_source;
-	
+
 	if (s_sources == NULL)
 		return;
-	
+
 	iter = vector_enum(s_sources);
 	while (p_source = vector_next(&iter)) {
 		if (strcmp(name, p_source->name) == 0) {
@@ -208,7 +208,7 @@ cache_source(const char* name, const lstring_t* text)
 			return;
 		}
 	}
-	
+
 	cache_entry.name = strdup(name);
 	cache_entry.text = lstr_dup(text);
 	vector_push(s_sources, &cache_entry);
@@ -223,7 +223,7 @@ debug_print(const char* text)
 }
 
 static bool
-attach_debugger(void)
+do_attach_debugger(void)
 {
 	double timeout;
 
@@ -240,7 +240,7 @@ attach_debugger(void)
 }
 
 static void
-detach_debugger(bool is_shutdown)
+do_detach_debugger(bool is_shutdown)
 {
 	if (!s_is_attached) return;
 	
@@ -264,8 +264,8 @@ duk_cb_debug_detach(void* udata)
 {
 	// note: if s_client is null, a TCP reset was detected by one of the I/O callbacks.
 	// if this is the case, wait a bit for the client to reconnect.
-	if (s_client != NULL || !attach_debugger())
-		detach_debugger(false);
+	if (s_client != NULL || !do_attach_debugger())
+		do_detach_debugger(false);
 }
 
 static duk_idx_t

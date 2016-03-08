@@ -493,7 +493,7 @@ compile_person_script(person_t* person, int type, const lstring_t* codestring)
 		: type == PERSON_SCRIPT_GENERATOR ? "genCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	script = compile_script(codestring, "%s/%s/%s", get_map_name(), person_name, script_name);
+	script = compile_script(codestring, "%s/%s/%s.js", get_map_name(), person_name, script_name);
 	set_person_script(person, type, script);
 	return true;
 }
@@ -1072,7 +1072,7 @@ js_CreatePerson(duk_context* ctx)
 	else {
 		filename = duk_require_path(ctx, 1, "spritesets");
 		if (!(spriteset = load_spriteset(filename)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): failed to load spriteset '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreatePerson(): unable to load spriteset '%s'", filename);
 	}
 
 	// create the person and its JS-side data object
@@ -1490,7 +1490,7 @@ js_GetPersonSpriteset(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpriteset(): no such person '%s'", name);
 	if ((new_spriteset = clone_spriteset(get_person_spriteset(person))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetPersonSpriteset(): failed to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetPersonSpriteset(): unable to create new spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;
@@ -1621,11 +1621,11 @@ static duk_ret_t
 js_SetDefaultPersonScript(duk_context* ctx)
 {
 	int type = duk_require_int(ctx, 0);
-	const char* script_name = (type == PERSON_SCRIPT_ON_CREATE) ? "[default create person script]"
-		: (type == PERSON_SCRIPT_ON_DESTROY) ? "[default destroy person script]"
-		: (type == PERSON_SCRIPT_ON_TALK) ? "[default talk script]"
-		: (type == PERSON_SCRIPT_ON_TOUCH) ? "[default touch person script]"
-		: (type == PERSON_SCRIPT_GENERATOR) ? "[default command generator]"
+	const char* script_name = (type == PERSON_SCRIPT_ON_CREATE) ? "synth:onCreatePerson.js"
+		: (type == PERSON_SCRIPT_ON_DESTROY) ? "synth:onDestroyPerson.js"
+		: (type == PERSON_SCRIPT_ON_TALK) ? "synth:onTalk.js"
+		: (type == PERSON_SCRIPT_ON_TOUCH) ? "synth:onTouchPerson.js"
+		: (type == PERSON_SCRIPT_GENERATOR) ? "synth:onGenCommands.js"
 		: NULL;
 	script_t* script = duk_require_sphere_script(ctx, 1, script_name);
 
@@ -1695,7 +1695,7 @@ js_SetPersonFollowDistance(duk_context* ctx)
 	if (distance <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFollowDistance(): distance must be greater than zero (%i)", distance);
 	if (!enlarge_step_history(person->leader, distance))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): failed to enlarge leader's tracking buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonFollowDistance(): unable to enlarge leader's tracking buffer");
 	person->follow_distance = distance;
 	return 0;
 }
@@ -1729,7 +1729,7 @@ js_SetPersonFrameNext(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): no such person '%s'", name);
 	if (frames < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameNext(): negative delay not allowed (%i)", frames);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameNext(): delay must be positive (got: %i)", frames);
 	person->anim_frames = frames;
 	person->revert_frames = person->revert_delay;
 	return 0;
@@ -1746,7 +1746,7 @@ js_SetPersonFrameRevert(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonFrameRevert(): no such person '%s'", name);
 	if (frames < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameRevert(): negative delay not allowed (%i)", frames);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonFrameRevert(): delay must be positive (got: %i)", frames);
 	person->revert_delay = frames;
 	person->revert_frames = person->revert_delay;
 	return 0;
@@ -1769,7 +1769,7 @@ js_SetPersonIgnoreList(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): ignore_list argument must be an array");
 	list_size = duk_get_length(ctx, 1);
 	if (list_size > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): list too large");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonIgnoreList(): list is too large");
 	for (i = 0; i < person->num_ignores; ++i) {
 		free(person->ignores[i]);
 	}
@@ -1852,7 +1852,7 @@ js_SetPersonScaleAbsolute(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleAbsolute(): no such person '%s'", name);
 	if (width < 0 || height < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonScaleAbsolute(): scale dimensions cannot be negative ({ w: %i, h: %i })", width, height);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonScaleAbsolute(): scale must be positive (got W: %i, H: %i)", width, height);
 	get_sprite_size(get_person_spriteset(person), &sprite_w, &sprite_h);
 	set_person_scale(person, width / sprite_w, height / sprite_h);
 	return 0;
@@ -1870,7 +1870,7 @@ js_SetPersonScaleFactor(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonScaleFactor(): no such person '%s'", name);
 	if (scale_x < 0.0 || scale_y < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonScaleFactor(): scale factors cannot be negative ({ scale_x: %f, scale_y: %f })", scale_x, scale_y);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPersonScaleFactor(): scale must be positive (got X: %f, Y: %f })", scale_x, scale_y);
 	set_person_scale(person, scale_x, scale_y);
 	return 0;
 }
@@ -1942,7 +1942,7 @@ js_SetPersonSpriteset(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "SetPersonSpriteset(): no such person '%s'", name);
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonSpriteset(): failed to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetPersonSpriteset(): unable to create new spriteset");
 	set_person_spriteset(person, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 0;
@@ -2036,7 +2036,7 @@ js_SetTalkDistance(duk_context* ctx)
 	int pixels = duk_require_int(ctx, 0);
 
 	if (pixels < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTalkDistance(): negative distance not allowed (caller passed %i)", pixels);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTalkDistance(): distance must be positive (got: %i)", pixels);
 	s_talk_distance = pixels;
 	return 0;
 }
@@ -2155,10 +2155,10 @@ js_QueuePersonCommand(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "QueuePersonCommand(): invalid command type constant");
 	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
 		if (!queue_person_command(person, COMMAND_ANIMATE, true))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): failed to queue command");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): unable to queue command");
 	}
 	if (!queue_person_command(person, command, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): failed to queue command");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonCommand(): unable to queue command");
 	return 0;
 }
 
@@ -2167,7 +2167,7 @@ js_QueuePersonScript(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
-	lstring_t* script_name = lstr_newf("queuescript~%u", s_queued_id++);
+	lstring_t* script_name = lstr_newf("%s/%s/queueScript.js", get_map_name(), name, s_queued_id++);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
 
@@ -2177,6 +2177,6 @@ js_QueuePersonScript(duk_context* ctx)
 	if (!(person = find_person(name)))
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "QueuePersonScript(): no such person '%s'", name);
 	if (!queue_person_script(person, script, is_immediate))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): failed to enqueue script");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "QueuePersonScript(): unable to enqueue script");
 	return 0;
 }

@@ -4,6 +4,9 @@ minisphere Changelog
 v3.0.0 - March 28, 2016
 -----------------------
 
+* The Windows redistributable and GDK downloads have been combined into a single
+  installer.  The engine is so compact that there's nothing gained from having
+  separate installers.
 * minisphere is now officially supported on Linux! `.deb` binary and `.tar.gz`
   source packages will be provided for all minisphere releases going forward.
 * Command-line debugging comes to minisphere! Try out the brand-new SSJ console
@@ -12,6 +15,14 @@ v3.0.0 - March 28, 2016
 * Introduces experimental support for TypeScript.  All TypeScript 1.8 syntax is
   supported; however, because the engine uses `ts.transpile()` under the hood to
   compile .ts scripts, variable and argument typing is not currently enforced.
+* User data (screenshots, save files, etc.) is now stored in `<docs>/Sphere 2.0`
+  instead of `<docs>/minisphere` as it was in prior versions.  SPK packages can
+  be placed into the `Games` subdirectory to have the startup game automatically
+  pick them up.
+* Enhances the behavior of `Assert()`.  With the debugger attached, if an
+  assertion fails, choosing not to continue will now cause a breakpoint directly
+  rather than throwing an error.  Similarly, if the debugger is NOT attached,
+  failed asserts will be logged to the console but otherwise ignored.
 * While the debugger is attached, you can now press F12 to pause game execution
   and turn over control to the attached debugger.  This can be useful for
   debugging glitches that don't lead to an exception.
@@ -24,9 +35,6 @@ v3.0.0 - March 28, 2016
   from `msphere` to `spherun`.  This will be the standard command to start a
   Sphere 2.0 engine in developer mode going forward.  The end-user engine has
   been renamed as well, to `minisphere`.
-* The Windows redistributable and GDK downloads have been combined into a single
-  installer.  The engine is so compact that there's not much gained from having
-  separate installers.
 * New API: `DebugPrint()`, designed for logging low-level debug information
   without cluttering the console. `DebugPrint()` output is visible only with a
   debugger attached.
@@ -44,13 +52,13 @@ v3.0.0 - March 28, 2016
   not to prevent monkey-patching.
 * Strengthens the SphereFS sandbox: Using absolute file paths is no longer
   supported and will result in a sandbox violation error.
-* Fixes a bunch of memory leaks in both Cell and minisphere, including one in
-  Cell's packaging code which could have caused it to run out of memory during
-  the final compression step.
-* Fixes an issue where the engine will fail to start if the platform doesn't
-  support shaders.  The ShaderProgram constructor will instead throw an error in
-  this case.  This will also be the case if minisphere is compiled against
-  Allegro 5.0 (instead of 5.1).
+* Fixes several memory leaks in both Cell and minisphere, including a major one
+  in Cell's packaging code which could have caused it to run out of memory
+  during the installation step.
+* minisphere will no longer fail to start if the underlying platform doesn't
+  support shaders.  Instead, the Galileo `ShaderProgram` constructor will throw
+  an error if called.  Shaders are always disabled when the engine is compiled
+  against Allegro 5.0.
 
 
 v2.1.6 - December 20, 2015
