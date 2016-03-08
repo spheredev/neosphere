@@ -84,7 +84,7 @@ rng_ranged(long lower, long upper)
 const char*
 rng_string(int length)
 {
-	static char name[256];
+	static char s_name[256];
 
 	long index;
 	
@@ -92,16 +92,18 @@ rng_string(int length)
 
 	for (i = 0; i < length; ++i) {
 		index = rng_ranged(0, s_corpus_size - 1);
-		name[i] = RNG_STRING_CORPUS[index];
+		s_name[i] = RNG_STRING_CORPUS[index];
 	}
-	name[length - 1] = '\0';
-	return name;
+	s_name[length - 1] = '\0';
+	return s_name;
 }
 
 double
 rng_uniform(double mean, double variance)
 {
-	double error = variance * 2 * (0.5 - genrand_real2());
+	double error;
+	
+	error = variance * 2 * (0.5 - genrand_real2());
 	return mean + error;
 }
 
@@ -120,17 +122,19 @@ init_rng_api(void)
 static duk_ret_t
 js_RNG_seed(duk_context* ctx)
 {
-	unsigned long seed = duk_require_number(ctx, 0);
-
-	seed_rng(seed);
+	unsigned long new_seed;
+	
+	new_seed = duk_require_number(ctx, 0);
+	seed_rng(new_seed);
 	return 0;
 }
 
 static duk_ret_t
 js_RNG_chance(duk_context* ctx)
 {
-	double odds = duk_require_number(ctx, 0);
-
+	double odds;
+	
+	odds = duk_require_number(ctx, 0);
 	duk_push_boolean(ctx, rng_chance(odds));
 	return 1;
 }
@@ -138,9 +142,11 @@ js_RNG_chance(duk_context* ctx)
 static duk_ret_t
 js_RNG_normal(duk_context* ctx)
 {
-	double mean = duk_require_number(ctx, 0);
-	double sigma = duk_require_number(ctx, 1);
+	double mean;
+	double sigma;
 
+	mean = duk_require_number(ctx, 0);
+	sigma = duk_require_number(ctx, 1);
 	duk_push_number(ctx, rng_normal(mean, sigma));
 	return 1;
 }
@@ -148,9 +154,11 @@ js_RNG_normal(duk_context* ctx)
 static duk_ret_t
 js_RNG_range(duk_context* ctx)
 {
-	long lower = duk_require_number(ctx, 0);
-	long upper = duk_require_number(ctx, 1);
+	long lower;
+	long upper;
 
+	lower = duk_require_number(ctx, 0);
+	upper = duk_require_number(ctx, 1);
 	duk_push_number(ctx, rng_ranged(lower, upper));
 	return 1;
 }
@@ -171,11 +179,15 @@ js_RNG_sample(duk_context* ctx)
 static duk_ret_t
 js_RNG_string(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int length = n_args >= 1 ? duk_require_number(ctx, 0) : 10;
+	int num_args;
+	int length;
 
+	num_args = duk_get_top(ctx);
+	length = num_args >= 1 ? duk_require_number(ctx, 0)
+		: 10;
 	if (length < 1 || length > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.string(): length must be between 1-255 inclusive (got: %d)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.string(): length must be [1-255] (got: %d)", length);
+	
 	duk_push_string(ctx, rng_string(length));
 	return 1;
 }
@@ -183,9 +195,11 @@ js_RNG_string(duk_context* ctx)
 static duk_ret_t
 js_RNG_uniform(duk_context* ctx)
 {
-	double mean = duk_require_number(ctx, 0);
-	double variance = duk_require_number(ctx, 1);
+	double mean;
+	double variance;
 
+	mean = duk_require_number(ctx, 0);
+	variance = duk_require_number(ctx, 1);
 	duk_push_number(ctx, rng_uniform(mean, variance));
 	return 1;
 }
