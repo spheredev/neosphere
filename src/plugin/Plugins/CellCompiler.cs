@@ -28,7 +28,7 @@ namespace minisphere.Gdk.Plugins
         public bool Prep(IProject project, IConsole con)
         {
             con.Print("Installing project template... ");
-            CopyDirectory(Path.Combine(_main.Conf.GdkPath, "assets", "template"), project.RootPath);
+            CopyDirectory(Path.Combine(_main.Conf.GdkPath, "template"), project.RootPath);
             con.Print("OK.\n");
 
             con.Print("Generating Cellscript.js... ");
@@ -38,7 +38,8 @@ namespace minisphere.Gdk.Plugins
                 var scriptPath = Path.Combine(project.RootPath, "Cellscript.js");
                 var template = File.ReadAllText(cellTemplatePath);
                 var script = string.Format(template,
-                    project.Name, project.Author, project.Summary,
+                    JSifyString(project.Name, '"'), JSifyString(project.Author, '"'),
+                    JSifyString(project.Summary, '"'),
                     project.ScreenWidth, project.ScreenHeight);
                 File.WriteAllText(scriptPath, script);
                 File.Delete(cellTemplatePath);
@@ -87,6 +88,19 @@ namespace minisphere.Gdk.Plugins
                 var destFileName = Path.Combine(target.FullName, dirInfo.Name);
                 CopyDirectory(dirInfo.FullName, destFileName);
             }
+        }
+
+        private string JSifyString(string str, char quoteChar)
+        {
+            str = str
+                .Replace("\n", @"\n").Replace("\r", @"\r")
+                .Replace(@"\", @"\\");
+            if (quoteChar == '"')
+                return str.Replace(@"""", @"\""");
+            else if (quoteChar == '\'')
+                return str.Replace("'", @"\'");
+            else
+                return str;
         }
 
         private async Task<bool> RunCell(string options, IConsole con)

@@ -74,6 +74,7 @@ Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: 
 Source: "..\msw\documentation\minisphere-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cell-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\msw\template\*"; DestDir: "{app}\template"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\src\plugin\bin\Release\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: spherun/plugin
 
 [Registry]
