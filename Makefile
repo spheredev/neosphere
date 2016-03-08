@@ -84,12 +84,15 @@ dist:
 .PHONY: install
 install: all
 	mkdir -p $(installdir)/bin
+	mkdir -p $(installdir)/share/doc/minisphere
 	mkdir -p $(installdir)/share/minisphere
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/applications
 	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
 	cp -r bin/system $(installdir)/share/minisphere
+	gzip docs/minisphere-api.txt -c > $(installdir)/share/doc/minisphere/minisphere-api.gz
+	gzip docs/cell-api.txt -c > $(installdir)/share/doc/minisphere/cell-api.gz
 	gzip manpages/minisphere.1 -c > $(installdir)/share/man/man1/minisphere.1.gz
 	gzip manpages/spherun.1 -c > $(installdir)/share/man/man1/spherun.1.gz
 	gzip manpages/cell.1 -c > $(installdir)/share/man/man1/cell.1.gz
