@@ -8,7 +8,7 @@ each platform.
 Windows
 -------
 
-You can build complete 32- and 64-bit distributions of minisphere using the
+You can build a complete 32- or 64-bit distribution of minisphere using the
 included Visual Studio solution `minisphere.sln` located in `msvs/`.
 Visual Studio 2015 or later is required; as of this writing,
 Visual Studio Community 2015 can be downloaded free of charge from here:
@@ -30,10 +30,9 @@ available through that channel.  You can build against Allegro 5.0, but this
 version has some fairly major bugs and is not recommended except as a last
 resort.
 
-If you're running Ubuntu, there are PPA packages available for Allegro 5.1.
+If you're running Ubuntu, there are PPA packages available for Allegro 5.1 here:
 
-[Ubuntu PPA - Allegro 5.1 "Unstable"]
-(https://launchpad.net/~allegro/+archive/ubuntu/5.1)
+<https://launchpad.net/~allegro/+archive/ubuntu/5.1>
 
 Otherwise, you can compile and install Allegro yourself.  Clone the Allegro
 repository from GitHub and follow the installation instructions found in
@@ -45,7 +44,7 @@ repository from GitHub and follow the installation instructions found in
 Once you have Allegro and other necessary dependencies installed, simply switch
 to the directory where you checked out minisphere and run `make` on the
 command-line. This will build minisphere and all GDK tools in `bin/`. To
-install the GDK on your system, follow this up with `sudo make install`.
+install minisphere on your system, follow this up with `sudo make install`.
 
 Mac OS X
 --------

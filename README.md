@@ -11,31 +11,35 @@ The majority of games will run with no modifications.
 
 Like Sphere, minisphere uses JavaScript for game coding.  The engine exposes a
 collection of low-level functions through a standardized JavaScript API, leaving
-higher-level game logic entirely up to scripts. This allows any type of game to
-be made with minisphere, but of course requires more expertise than making a
-game with, say, RPG Maker or even Game Maker.
+higher-level game logic entirely up to scripts.  This allows any type of game to
+be made with minisphere; of course, this naturally requires more expertise than
+making a game with, say, RPG Maker or even Game Maker, but the results are worth
+it.
 
-The engine uses Allegro 5 for graphics and sound and Duktape for JavaScript. As
+The engine uses Allegro 5 for graphics and sound and Duktape for JavaScript.  As
 both of these are portable to various platforms, this allows minisphere to be
 compiled successfully on all three major platforms (Windows, Linux, and OS X)--
 and possibly others--with no changes to the source.
 
 minisphere is not just a game engine, but a complete toolchain for game
-development. Several command-line tools, described below, are included to make
-game development easier:
+development.  Several command-line tools, collectively known as the
+minisphere GDK, are included to make game development easier:
 
 Fully Automated Build System
 ----------------------------
 
 minisphere comes with a flexible script-driven build system called Cell, which
-can not only package Sphere games into easy-to-distribute SPKs, but also allows
-generating assets from easier-to-modify sources.  For example: Building tilesets
-from images, or minifying scripts at build time.
+not only allows you to package Sphere games into easy-to-distribute SPKs, but
+can automatically generate assets from easier-to-modify sources.  For example:
+Building tilesets from images, or minifying scripts at build time.
 
 Cell's design borrows heavily from SCons, with a declarative approach to
 scripting. This may be confusing for those attempting to jump right in; it is
 highly recommend to read the manual page for Cell before trying to write a
 Cellscript for your game.
+
+**note:** Cell is still in its infancy and mostly serves as a packaging tool in
+          practice.  Its feature set will be fleshed out in future versions.
 
 Powerful Console Debugger
 -------------------------

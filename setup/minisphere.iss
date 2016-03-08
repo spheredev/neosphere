@@ -11,7 +11,7 @@
 #define AppPublisher "Fat Cerberus"
 #define AppVersion2 "3.0"
 #define AppVersion3 "3.0.0"
-#define AppVersion4 "3.0.0.1285"
+#define AppVersion4 "3.0.0.1290"
 
 [Setup]
 OutputBaseFilename=minisphere-{#AppVersion3}
@@ -48,7 +48,7 @@ Name: "developer"; Description: "Game Developer installation (GDK)"
 Name: "custom"; Description: "Custom installation"; Flags: iscustom
 
 [Components]
-Name: "engine"; Description: "{#AppName} {#AppVersion2} [Required]"; Types: normal developer custom; Flags: fixed
+Name: "engine"; Description: "{#AppName} {#AppVersion3} [Required]"; Types: normal developer custom; Flags: fixed
 Name: "spherun"; Description: "{#AppName} Console {#AppVersion2} (`spherun`)"; Types: developer; Flags: checkablealone
 Name: "spherun/cell"; Description: "Cell - Sphere Packaging Compiler"; Types: developer
 Name: "spherun/ssj"; Description: "SSJ - minisphere Console Debugger"; Types: developer
