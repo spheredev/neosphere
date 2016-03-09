@@ -1425,82 +1425,84 @@ data to a file, whether to save and load game progress or something else.
 
 new KevFile(filename);
 
-  Opens a kevfile. The file format used for the KevFile object is similar to a
-  Windows INI file, containing key/value pairs separated by an equals sign, for
-  instance:
+    Opens a kevfile.  The file format used for kevfiles is similar to a Windows
+    INI file, containing key/value pairs separated by an equals sign, for
+    instance:
 
-    playerName=maggie
-    playtime=812:00:00
-    currentMap=foodville.rmp
-    # etc.
+        playerName=maggie
+        playtime=812:00:00
+        currentMap=foodville.rmp
+        # etc.
 
 KevFile:read(key, defval);
 
-  Reads a value from the kevfile. If the key doesn't exist in the file, 'defval'
-  is returned. Note that the return type depends on the type of 'defval', either
-  boolean (true/false), number, or string.
+    Reads a value from the kevfile.  If the key doesn't exist in the file,
+    `defval` is returned.  The return type depends on the type of `defval`,
+    either boolean (true/false), number, or string.
 
 KevFile:write(key, value);
 
-  Writes a value to the kevfile under a specified key. If the key already
-  exists, it will be overwritten. Note that writes are cached, and not written
-  to the file until it flushed, either by calling KevFile:flush() or
-  automatically when it is closed.
+    Writes a value to the kevfile under a specified key.  If the key already
+    exists, it will be overwritten.  Writes are cached, and not written to the
+    file until flushed, either by calling KevFile:flush() or automatically when
+    it is closed.
 
 KevFile:flush()
 
-  Flushes the file. All pending changes will be written out to the file system.
-  The file will remain open afterwards.
+    Flushes the file.  All pending changes will be written out to the file
+    system.  The file will remain open afterwards.
 
 KevFile:close()
 
-  Closes the file, writing any changes out to the file system in the process.
-  You should not call any other methods on the object after this (it is safe to
-  call KevFile:close() more than once, however). Doing so will throw an error.
+    Closes the file, writing any changes out to the file system in the process.
+    You should not call any other methods on the object after this (it is safe
+    to call KevFile:close() more than once, however).  Doing so will throw an
+    error.
 
 new RawFile(filename[, is_writable]);
 
-  SphereFS compliant.
+    SphereFS compliant.
 
-  Opens a binary file, allowing raw data to be read and/or written. If
-  'is_writable' is false, the file must exist and will be opened for reading
-  only. Otherwise, the file is overwritten (be careful!) and opened for writing.
-  If it cannot be opened for writing, an error will be thrown.
+    Opens a binary file, allowing raw data to be read and/or written.  If
+    `is_writable` is false, the file must exist and will be opened for reading
+    only.  Otherwise, the file is overwritten (be careful!) and opened for
+    writing.  If it cannot be opened for writing, an error will be thrown.
 
 RawFile:position (read/write)
 
-  Gets or sets the current file position. This determines where the next read
-  or write operation will start.
+    Gets or sets the current file position.  This determines where the next read
+    or write operation will start.
 
 RawFile:size (read-only)
 
-  Gets the current size of the file in bytes. Can also be specified as
-  RawFile:length.
+    Gets the current size of the file in bytes.  Can also be specified as
+    RawFile:length.
 
 RawFile:read([num_bytes]);
 
-  Reads data from the file and advances the file position. 'num_bytes' specifies
-  the amount of data to read; it can be omitted to read the entire file at once
-  (the file position will not change in this case). Returns a ByteArray.
+    Reads data from the file and advances the file position.  `num_bytes`
+    specifies the amount of data to read; it can be omitted to read the entire
+    file at once (the file position will not change in this case).  Returns a
+    ByteArray.
 
 RawFile:readString([num_bytes]);
 
-  Like RawFile:read(), but returns a UTF-8 string instead of a ByteArray. This
-  may be more convenient in some cases.
+    Like RawFile:read(), but returns a UTF-8 string instead of a ByteArray.
+    This may be more convenient in some cases.
 
 RawFile:write(data);
 
-  Writes data to the file and advances the file position. The file must be
-  opened for writing or an error will be thrown. 'data' can be either a
-  ByteArray, ArrayBuffer, TypedArray, or string.
+    Writes data to the file and advances the file position.  The file must be
+    opened for writing or an error will be thrown.  `data` can be either a
+    ByteArray, ArrayBuffer, TypedArray, or string.
 
-  If a string is provided, it will be written encoded as UTF-8.
+    If a string is provided, it will be written encoded as UTF-8.
 
 RawFile:close();
 
-  Closes the file. You should not call any other methods on the object after
-  this (it is safe to call RawFile:close() more than once, however). Doing so
-  will throw an error.
+    Closes the file.  You should not call any other methods on the object after
+    this (it is safe to call RawFile:close() more than once, however).  Doing so
+    will throw an error.
 
 
 File Streams
@@ -1514,51 +1516,51 @@ The FileStream API is fully SphereFS compliant.
 
 new FileStream(filename, mode);
 
-  Constructs a new FileStream from the specified file. 'mode' is a string in the
-  same format as that of C fopen() specifying how to open the file:
+    Constructs a new FileStream from the specified file.  `mode` is a string in
+    the same format as that of C fopen() specifying how to open the file:
 
-    r:  Open file for reading.
-    r+: Open file for update (reading and writing).
-    w:  Create/truncate then open file for writing.
-    w+: Create/truncate then open file for update.
-    a:  Open file (create if not found) with initial position at end of file.
-    a+: Open file for update with initial position at end of file.
+        r:  Open file for reading.
+        r+: Open file for update (reading and writing).
+        w:  Create/truncate then open file for writing.
+        w+: Create/truncate then open file for update.
+        a:  Open file (create if not found) with file position at end of file.
+        a+: Open file for update with initial position at end of file.
 
-  A valid mode must be provided, otherwise stream construction will fail and
-  throw an error.
+    A valid mode must be provided, otherwise stream construction will fail and
+    throw an error.
 
 FileStream:length (read-only)
 
-  Gets the length of the stream in bytes. This corresponds to the size of the
-  underlying file.
+    Gets the length of the stream in bytes.  This corresponds to the size of the
+    underlying file.
 
 FileStream:position (read/write)
 
-  Gets or sets the file position, which determines where in the file the next
-  read or write will start from. Expressed in bytes.
+    Gets or sets the file position, which determines where in the file the next
+    read or write will start from.  Expressed in bytes.
 
-  Note: For files opened for writing, it is valid to seek past the end of the
-  stream. In this case the next write operation will be done at the new position
-  and the gap filled with NUL bytes.
+    Note: For files opened for writing, it is valid to seek past the end of the
+    stream.  In this case the next write operation will be done at the new
+    position and the gap filled with NUL bytes.
 
 FileStream:close();
 
-  Closes the stream, after which the FileStream object should not be used.
-  Attempting to read or write to a stream after it is closed will throw an
-  error.
+    Closes the stream, after which the FileStream object should not be used.
+    Attempting to read or write to a stream after it is closed will throw an
+    error.
 
 FileStream:read([numBytes]);
 
-  Reads data from the file, up to the specified number of bytes, and returns it
-  in an ArrayBuffer. As a convenience, 'numBytes' can be omitted to read the
-  entire file without affecting the file position. The file must be opened for
-  reading.
+    Reads data from the file, up to the specified number of bytes, and returns
+    it in an ArrayBuffer.  As a convenience, `numBytes` can be omitted to read
+    the entire file without affecting the file position. The file must be opened
+    for reading.
 
 FileStream:write(data);
 
-  Writes data to the file at the current position. 'data' is an ArrayBuffer,
-  TypedArray or DataView containing the data to be written. The file must be
-  opened for writing.
+    Writes data to the file at the current position.  `data` is an ArrayBuffer,
+    TypedArray or DataView containing the data to be written.  The file must be
+    opened for writing.
 
 
 Map Engine
@@ -1571,95 +1573,99 @@ documentation for the full set of map functions.
 
 MapEngine(filename, framerate);
 
-  'filename' is relative to '~sgm/maps'. Not SphereFS compliant.
+    Not SphereFS compliant: `filename` is relative to ~sgm/maps.
 
-  Starts the map engine, loading `map_file` as the initial map. `framerate`
-  specifies the framerate the map engine will run at; a framerate of 0 will run
-  unthrottled, which may be useful for benchmarks but is generally useless
-  otherwise.
+    Starts the map engine, loading `map_file` as the initial map.  `framerate`
+    specifies the framerate the map engine will run at; a framerate of 0 will
+    run unthrottled, which may be useful for benchmarks but is generally useless
+    otherwise.
 
 IsMapEngineRunning();
 
-  Returns true if the map engine is currently running.
+    Returns true if the map engine is currently running.
 
 ChangeMap(filename);
 
-  'filename' is relative to '~sgm/maps'. Not SphereFS compliant.
+    Not SphereFS compliant: `filename` is relative to ~sgm/maps.
 
-  Loads a new map into the map engine. This destroys any transient persons
-  automatically. Transient persons are those defined in the map file as well as
-  any created by passing `true` as the third argument to CreatePerson().
+    Loads a new map into the map engine.  This destroys any transient persons
+    automatically.  Transient persons are those defined in the map file as well
+    as any created by passing `true` as the third argument to CreatePerson().
 
 MapToScreenX(layer, x);
 MapToScreenY(layer, y);
 ScreenToMapX(layer, x);
 ScreenToMapY(layer, y);
 
-  Converts between map and screen coordinates.
+    Converts between map and screen coordinates.
 
 SetUpdateScript(fn);
 SetRenderScript(fn);
 
-  Sets a function `fn` to be called once per map engine frame. Game state should
-  be updated in the update script, while drawing is done in the render script.
-  The distinction is important, as render calls can be skipped to minimize lag.
-  Note: You shouldn't call these functions when using miniRT. The runtime uses
-  them internally and changing them out will break things.
+    Sets a function `fn` to be called once per map engine frame.  Game state
+    should be updated in the update script, while drawing is done in the render
+    script.  The distinction is important, as render calls can be skipped to
+    minimize lag.
+    
+    Note: You shouldn't call these functions when using miniRT.  The runtime
+    uses update and render scripts internally and switching them out will break
+    things.
 
 SetMapEngineFrameRate(fps);
 GetMapEngineFrameRate();
 
-  Gets or sets the map engine framerate. Set it to 0 to run the map engine
-  unthrottled (not generally useful outside of benchmarks).
+    Gets or sets the map engine framerate.  Set it to 0 to run the map engine
+    unthrottled (not generally useful outside of benchmarks).
 
 GetCurrentMap();
 
-  Gets the filename of the current map, relative to ~sgm/maps.
+    Gets the filename of the current map, relative to ~sgm/maps.
 
 AttachInput(name);
 DetachInput();
 IsInputAttached();
 GetInputPerson();
 
-  Attaches, detaches or gets the input focus. The player will have control of
-  the person with input focus. `name` is the name of the person as passed to
-  CreatePerson().
+    Attaches, detaches or gets the input focus.  The player will have control of
+    the person with input focus.  `name` is the name of the person as passed to
+    CreatePerson().
 
 AttachCamera(name);
 DetachCamera();
 IsCameraAttached();
 GetCameraPerson();
 
-  Attaches, detaches, or gets the camera focus. The camera will remain centered
-  on whichever person it's attached to as they move about the map. `name` is the
-  name of the person as passed to CreatePerson().
+    Attaches, detaches, or gets the camera focus.  The camera will remain
+    centered on whichever person it's attached to as they move about the map.
+    `name` is the name of the person as passed to CreatePerson().
 
 SetCameraX();
 SetCameraY();
 GetCameraX();
 GetCameraY();
 
-Gets or sets the camera position. Note: If the camera is placed beyond the edge
-of a non-repeating map, the map's corresponding edge script will be called.
+    Gets or sets the camera position. Note: If the camera is placed beyond the
+    edge of a non-repeating map, the map's corresponding edge script will be
+    called.
 
 UpdateMapEngine();
 
-  Updates the map engine per frame. Used to keep the map engine operating in
-  the background when running a tight loop. Note that map input will not be
-  accepted during an UpdateMapEngine() loop.
+    Updates the map engine per frame. Used to keep the map engine operating in
+    the background when running a tight loop. Note that map input will not be
+    accepted during an UpdateMapEngine() loop.
 
 RenderMap();
 
-  Renders the current map and set of persons to the backbuffer. Used
-  along with UpdateMapEngine() to keep the map engine operating when
-  running a tight loop.
+    Renders the current map and set of persons to the backbuffer. Used along
+    with UpdateMapEngine() to keep the map engine operating when running a tight
+    loop.
 
 ExitMapEngine();
 
-  Tells the map engine to shut down at the start of the next frame. If
-  the map engine is presently held up in an UpdateMapEngine() loop (see
-  below), this call will not take effect until control returns to the
-  map engine proper.
+    Tells the map engine to shut down at the start of the next frame.  If the
+    map engine is presently held up in an UpdateMapEngine() loop (see below),
+    this call will not take effect until control returns to the map engine
+    proper.
 
 
 Trigger Management
@@ -1676,24 +1682,25 @@ triggers to be edited in the map file itself.
 
 GetCurrentTrigger();
 
-  When called in a trigger script, returns the trigger ID of the executing
-  trigger. Calling this in any other context will throw an error.
+    When called in a trigger script, returns the trigger ID of the executing
+    trigger. Calling this in any other context will throw an error.
 
 AddTrigger(x, y, layer, script);
 
-  Adds a trigger to the current map and returns its trigger ID. 'script' can be
-  either a code string or a function. Triggers created this way are transient
-  and will need to be recreated if the map is reloaded. For compatibility
-  reasons, the layer is ignored by the engine when processing triggers.
+    Adds a trigger to the current map and returns its trigger ID.  `script` can
+    be either a code string or a function.  Triggers created this way are
+    transient and will need to be recreated if the map is reloaded.  For
+    compatibility reasons, the layer is ignored by the engine when processing
+    triggers.
 
 RemoveTrigger(trigger_id);
 
-  Removes the trigger with the specified trigger ID from the map. As with
-  AddTrigger(), the modification is transient.
+    Removes the trigger with the specified trigger ID from the map.  As with
+    AddTrigger(), the modification is transient.
 
 GetNumTriggers();
 
-  Gets the number of triggers on the current map.
+    Gets the number of triggers on the current map.
 
 GetTriggerX(trigger_id);
 GetTriggerY(trigger_id);
@@ -1701,22 +1708,22 @@ GetTriggerLayer(trigger_id);
 SetTriggerXY(trigger_id, x, y);
 SetTriggerLayer(trigger_id, layer);
 
-  Gets or sets the location of a trigger on the map, in pixels.
+    Gets or sets the location of a trigger on the map, in pixels.
 
 SetTriggerScript(trigger_id, script);
 
-  Sets the specified trigger's script. Like most trigger modifications, this is
-  transient.
+    Sets the specified trigger's script. Like most trigger modifications, this
+    is transient.
 
 IsTriggerAt(x, y, layer);
 
-  Returns true if there is a trigger at the specified location, false otherwise.
-  'layer' is required, but ignored for compatibility reasons.
+    Returns true if there is a trigger at the specified location, false
+    otherwise.  'layer' is required, but ignored for compatibility reasons.
 
 ExecuteTrigger(x, y, layer);
 
-  Fires the trigger at the specified location, if one exists. As above, 'layer'
-  is required but ignored.
+    Fires the trigger at the specified location, if one exists.  As above,
+    `layer` is required but ignored.
 
 
 Zone Management
@@ -1732,22 +1739,22 @@ As with triggers, all zone modifications at runtime are transient.
 
 GetCurrentZone();
 
-  When called in a zone script, returns the zone ID of the executing zones.
-  Calling this in any other context will throw an error.
+    When called in a zone script, returns the zone ID of the executing zones.
+    Calling this in any other context will throw an error.
 
 AddZone(x, y, width, height, layer, script);
 
-  Adds a zone to the current map. 'script' can be either a code string or a
-  function. As with triggers, the layer is ignored by the engine when processing
-  zones.
+    Adds a zone to the current map.  `script` can be either a code string or a
+    function.  As with triggers, the layer is ignored by the engine when
+    processing zones.
 
 RemoveZone(zone_id);
 
-  Removes the zone with the specified zone ID from the map.
+    Removes the zone with the specified zone ID from the map.
 
 GetNumZones();
 
-  Returns the number of zones on the current map.
+    Returns the number of zones on the current map.
 
 GetZoneX(zone_id);
 GetZoneY(zone_id);
@@ -1756,23 +1763,23 @@ GetZoneHeight(zone_id);
 GetZoneLayer(zone_id);
 SetZoneMetrics(zone_id, x, y, width, height[, layer]);
 
-  Gets or sets the location and size of a zone, in pixels.
+    Gets or sets the location and size of a zone, in pixels.
 
 GetZoneSteps(zone_id);
 SetZoneSteps(zone_id);
 
-  Gets or sets the zone's step count. The zone script will execute every time
-  the input character takes this number of steps while inside the zone.
+    Gets or sets the zone's step count.  The zone script will execute every time
+    the input character takes this number of steps while inside the zone.
 
 AreZonesAt(x, y, layer);
 
-  Returns true if the specified point is inside of a zone, or false otherwise.
-  'layer' is required, but ignored for compatibility reasons.
+    Returns true if the specified point is inside of a zone, or false otherwise.
+    'layer' is required, but ignored for compatibility reasons.
 
 ExecuteZones(x, y, layer);
 
-  Executes the scripts of all zones straddling the specified point, if any. As
-  above, 'layer' is required but ignored.
+    Executes the scripts of all zones straddling the specified point, if any.
+    As above, 'layer' is required but ignored.
 
 
 Persons Management
@@ -1786,26 +1793,28 @@ loaded.
 
 CreatePerson(name, spriteset, transient);
 
-  Creates a person using the spriteset specified by `spriteset`. This can either
-  be an .rss spriteset path (relative to ~sgm/spritesets) or a Spriteset object.
-  If `transient` true, the person is transient and will automatically be
-  destroyed when a new map is loaded via ChangeMap().
+    Not SphereFS compliant: `spriteset` is relative to ~sgm/spritesets.
+    
+    Creates a person using the spriteset specified by `spriteset`.  This can
+    either be an .rss spriteset filename or a Spriteset object.  If `transient`
+    is true, the person is transient and will automatically be destroyed when a
+    new map is loaded via ChangeMap().
 
 DestroyPerson(name);
 
-  Destroys the person, removing it from play. This works on persons
-  created manually via CreatePerson() as well as those created during
-  map load, so be careful!
+    Destroys the person, removing it from play.  This works on persons created
+    manually via CreatePerson() as well as those created during map load, so be
+    careful!
 
 GetPersonList();
 
-  Returns an array of person names representing all the persons that
-  currently exist.
+    Returns an array of person names representing all the persons that currently
+    exist.
 
 DoesPersonExist(name);
 
-  Returns true if a person named `name` currently exists, otherwise
-  returns false.
+    Returns true if a person named `name` currently exists, otherwise returns
+    false.
 
 GetPersonX(name);
 GetPersonY(name);
@@ -1814,146 +1823,146 @@ SetPersonX(name, new_x);
 SetPersonY(name, new_y);
 SetPersonLayer(name, layer);
 
-  Gets or sets a person's position relative to the current map. `layer` can be
-  either a 0-based layer index or a layer name. Note: For compatibility reasons,
-  GetPersonLayer() always returns the index.
+    Gets or sets a person's position relative to the current map.  `layer` can
+    be either a 0-based layer index or a layer name.  Note: For compatibility
+    reasons, GetPersonLayer() always returns the index.
 
 SetPersonXYFloat(name, new_x, new_y);
 GetPersonXFloat(name);
 GetPersonYFloat(name);
 
-  Gets or sets a person's position relative to the current map, with
-  subpixel precision.
+    Gets or sets a person's position relative to the current map, with subpixel
+    precision.
 
 SetPersonDirection(name, new_dir);
 GetPersonDirection(name);
 
-  Gets or sets a person's current direction. The "direction" is actually the
-  name of a pose as defined in the person's spriteset. Note: A spriteset is
-  required to have a pose for at least each of the 4 cardinal directions (north,
-  east, south and west).
+    Gets or sets a person's current direction.  The "direction" is actually the
+    name of a pose as defined in the person's spriteset.  Note: A spriteset is
+    required to have a pose for at least each of the 4 cardinal directions
+    (north, east, south and west).
 
 FollowPerson(name, leader_name, distance);
 
-  Makes a person follow another person at a distance specified by
-  `distance`. Note that the distance is not absolute and the actual
-  trailing distance depends on the leader's speed. Faster leaders will
-  put more distance between themselves and their followers.
+    Makes a person follow another person at a distance specified by `distance`.
+    The distance is not absolute and the actual trailing distance depends on the
+    leader's speed.  Faster leaders will put more distance between themselves
+    and their followers.
 
-  To detach a follower and make them independent again, call the
-  function again like this:
+    To detach a follower and make them independent again, call the function
+    again like this:
 
-    FollowPerson("<name>", null, 0);
+        FollowPerson("<name>", null, 0);
 
 GetPersonLeader(name);
 
-  Gets the person `name` is currently following. If no leader exists
-  (the person is independent), returns an empty string ("").
+    Gets the person `name` is currently following.  If no leader exists (the
+    person is independent), returns an empty string ("").
 
 GetPersonFollowers(name);
 
-  Gets an array of names of persons following a specified person.
+    Gets an array of names of persons following a specified person.
 
 GetPersonFollowDistance(name);
 SetPersonFollowDistance(name);
 
-  Gets or sets the named person's follow distance. Throws an error if
-  the person is not following anyone.
+    Gets or sets the named person's follow distance.  Throws an error if the
+    person is not following anyone.
 
 IsPersonVisible()
 SetPersonVisible(is_visible)
 
-  Gets or sets the person's visibility status. 'true' if visible, 'false' if
-  not.
+    Gets or sets the person's visibility status.  `true` if visible, `false` if
+    not.
 
 IsPersonObstructed(name, x, y);
 
-  Checks whether the person would be obstructed at a given location. Useful for
-  pathfinding.
+    Checks whether the person would be obstructed at a given location.  Useful
+    for pathfinding.
 
 GetObstructingPerson(name, x, y);
 
-  If the person named `name` is obstructed by a person at the given location,
-  returns the offending person's name. Otherwise, returns an empty string ("").
+    If the person named `name` is obstructed by a person at the given location,
+    returns the offending person's name.  Otherwise, returns an empty string.
 
 GetObstructingTile(name, x, y);
 
   If the person named `name` is obstructed by a map tile at the given location,
-  returns the tile index. Otherwise, returns -1.
+  returns the tile index.  Otherwise, returns -1.
 
 SetPersonSpeed(name, speed);
 SetPersonSpeedXY(name, new_speed_x, new_speed_y);
 GetPersonSpeedX(name);
 GetPersonSpeedY(name);
 
-  Gets or sets the person's speed in two dimensions. SetPersonSpeed(name, speed)
-  is shorthand for SetPersonSpeedXY(name, speed, speed).
+    Gets or sets the person's speed in two dimensions.  This function is
+    shorthand for SetPersonSpeedXY(name, speed, speed).
 
 SetPersonSpriteset(name, spriteset);
 GetPersonSpriteset(name);
 
-  Gets the person's current spriteset as a Spriteset object.
+    Gets the person's current spriteset as a Spriteset object.
 
 IsIgnoringPersonObstructions(name);
 IgnorePersonObstructions(name, ignore);
 
-  Gets or sets whether the person is ignoring other persons. Ignored persons
-  do not affect collision and cannot be talked to. Note that ignoring is mutual
-  between persons.
+    Gets or sets whether the person is ignoring other persons.  Ignored persons
+    do not affect collision and cannot be talked to.  Note that ignoring is
+    mutual between persons.
 
 IsIgnoringTileObstructions(name);
 IgnoreTileObstructions(name, ignore);
 
-  Gets or sets whether the person is ignoring tile obstructions. As with ignored
-  persons, this disables tile collision.
+    Gets or sets whether the person is ignoring tile obstructions.  As with
+    ignored persons, this disables tile collision.
 
 QueuePersonCommand(name, command[, is_immediate]);
 
-  Adds a command to the person's command queue. If `is_immediate` is true, the
-  engine will immediately execute the next command in the queue. Otherwise,
-  execution will halt until the next frame. The default is false. The following
-  commands are supported:
+    Adds a command to the person's command queue. If `is_immediate` is true, the
+    engine will immediately execute the next command in the queue. Otherwise,
+    execution will halt until the next frame.  The default is false. The
+    following commands are supported:
 
-    COMMAND_WAIT - do nothing, useful as a non-immediate command to delay for
-                   a frame.
+        COMMAND_WAIT - do nothing, useful as a non-immediate command to delay for
+                       a frame.
 
-    COMMAND_ANIMATE - advances the person's animation state by one frame. Queue
-                      these continuously to animate the sprite.
+        COMMAND_ANIMATE - advance the person's animation state by one frame.
+                          Queue these continuously to animate the sprite.
 
-    COMMAND_FACE_NORTH
-    COMMAND_FACE_NORTHEAST
-    COMMAND_FACE_EAST
-    COMMAND_FACE_SOUTHEAST
-    COMMAND_FACE_SOUTH
-    COMMAND_FACE_SOUTHWEST
-    COMMAND_FACE_WEST
-    COMMAND_FACE_NORTHWEST
+        COMMAND_FACE_NORTH
+        COMMAND_FACE_NORTHEAST
+        COMMAND_FACE_EAST
+        COMMAND_FACE_SOUTHEAST
+        COMMAND_FACE_SOUTH
+        COMMAND_FACE_SOUTHWEST
+        COMMAND_FACE_WEST
+        COMMAND_FACE_NORTHWEST
 
-      Changes the person's facing direction. If the specified direction isn't
-      available in the person's spriteset, the engine will use the closest
-      match.
+            Changes the person's facing direction.  If the specified direction
+            isn't available in the person's spriteset, the engine will use the
+            closest match.
 
-    COMMAND_MOVE_NORTH
-    COMMAND_MOVE_NORTHEAST
-    COMMAND_MOVE_EAST
-    COMMAND_MOVE_SOUTHEAST
-    COMMAND_MOVE_SOUTH
-    COMMAND_MOVE_SOUTHWEST
-    COMMAND_MOVE_WEST
-    COMMAND_MOVE_NORTHWEST
+        COMMAND_MOVE_NORTH
+        COMMAND_MOVE_NORTHEAST
+        COMMAND_MOVE_EAST
+        COMMAND_MOVE_SOUTHEAST
+        COMMAND_MOVE_SOUTH
+        COMMAND_MOVE_SOUTHWEST
+        COMMAND_MOVE_WEST
+        COMMAND_MOVE_NORTHWEST
 
-      Moves the person a number of pixels determined by their speed. See
-      SetPersonSpeed() above.
+            Moves the person a number of pixels determined by their speed.  See
+            SetPersonSpeed() above.
 
 QueuePersonScript(name, script[, is_immediate]);
 
-  Adds a script to the person's command queue. `is_immediate` has the same
-  meaning and semantics as in QueuePersonCommand() above. `script` can be either
-  a JavaScript source string or a function.
+  Adds a script to the person's command queue.  `is_immediate` has the same
+  meaning and semantics as in QueuePersonCommand() above.  `script` can be
+  either a JavaScript source string or a function.
 
 IsCommandQueueEmpty(name);
 
-  Returns true if the person's command queue is empty, false otherwise.
+    Returns true if the person's command queue is empty, false otherwise.
 
 ClearCommandQueue(name);
 
@@ -1963,34 +1972,35 @@ ClearCommandQueue(name);
 Tileset Management
 ------------------
 
-These functions aren't generally needed for most use cases. They are used to
-modify the current map's tileset. As with most map modifications, these are
+These functions aren't generally needed for most use cases.  They are used to
+modify the current map's tileset.  As with most map modifications, these are
 transient and must be redone if the map is reloaded.
 
 GetNumTiles();
 
-  Returns the number of the tiles in the current map's tileset.
+    Returns the number of the tiles in the current map's tileset.
 
 GetTileDelay(tile_id);
 SetTileDelay(tile_id, frames);
 
-  Gets or sets a tile's animation delay. This is the number of frames which
-  must elapsed before the tile switches to the next one in its animation
-  sequence.
+    Gets or sets a tile's animation delay.  This is the number of frames which
+    must elapse before the tile switches to the next one in its animation
+    sequence.
 
 GetNextAnimatedTile(tile_id);
 SetNextAnimatedTile(tile_id, next_tile_id);
 
-  Gets or sets the next tile in the tile animation sequence.
+    Gets or sets the next tile in the tile animation sequence.
 
 GetTileImage(tile_id);
 SetTileImage(tile_id, image);
 
-  Gets or sets the Image associated with a tile. The dimensions of the Image
-  must match the tile dimensions, or an error will be thrown.
+    Gets or sets the Image associated with a tile.  The dimensions of the Image
+    must match the tile dimensions, or an error will be thrown.
 
 GetTileSurface(tile_id);
 SetTileSurface(tile_id, surface);
 
-  Like Get/SetTileImage(), but uses Surface objects instead. Note: Drawing to
-  the Surface after calling either of these functions will not modify the tile.
+    Like Get/SetTileImage(), but uses Surface objects instead.  Note: Drawing to
+    the Surface after calling either of these functions will not modify the
+    tile.
