@@ -112,12 +112,13 @@ find_verb(const char* abbrev, const char* *o_pattern)
 		if (strcmp(abbrev, short_name) == 0) {
 			matches[0] = full_name;
 			num_matches = 1;  // canonical short name is never ambiguous
-			*o_pattern = command_db[2 + i * 3];
+			if (o_pattern != NULL)
+				*o_pattern = command_db[2 + i * 3];
 			break;
 		}
 		if (strstr(full_name, abbrev) == full_name) {
 			matches[num_matches] = full_name;
-			if (num_matches == 0)
+			if (num_matches == 0 && o_pattern != NULL)
 				*o_pattern = command_db[2 + i * 3];
 			++num_matches;
 		}
