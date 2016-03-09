@@ -34,7 +34,7 @@ can automatically generate assets from easier-to-modify sources.  For example:
 Building tilesets from images, or minifying scripts at build time.
 
 Cell's design borrows heavily from SCons, with a declarative approach to
-scripting. This may be confusing for those attempting to jump right in; it is
+scripting.  This may be confusing for those attempting to jump right in; it is
 highly recommend to read the manual page for Cell before trying to write a
 Cellscript for your game.
 
@@ -45,7 +45,7 @@ Powerful Console Debugger
 -------------------------
 
 minisphere includes a powerful but easy-to-use command-line debugger, called
-SSJ. The debugger allows you to step through your game's code and inspect the
+SSJ.  The debugger allows you to step through your game's code and inspect the
 internal state of the game--variables, call stack, objects, etc.--as it
 executes.  And since minisphere uses JavaScript, the original source files
 aren't required to be present--SSJ can download source code directly from the
@@ -59,7 +59,7 @@ License
 =======
 
 minisphere and accompanying command-line tools are licensed under the terms of
-the BSD-3-clause license. Practically speaking, this means the engine can be
+the BSD-3-clause license.  Practically speaking, this means the engine can be
 used for any purpose, even commercially, with no restriction other than maintain
 the original copyright notice.
 

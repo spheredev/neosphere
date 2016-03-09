@@ -25,7 +25,7 @@ command_db[] =
 {
 	"backtrace",  "bt", "",
 	"breakpoint", "bp", "~f",
-	"clearbp",    "cb", "n",
+	"clearbreak", "cb", "n",
 	"continue",   "c",  "",
 	"down",       "d",  "~n",
 	"eval",       "e",  "s",
@@ -48,7 +48,7 @@ static const char* find_verb         (const char* abbrev, const char* *o_pattern
 static const char* resolve_command   (command_t* cmd);
 static void        handle_backtrace  (session_t* obj, command_t* cmd);
 static void        handle_breakpoint (session_t* obj, command_t* cmd);
-static void        handle_clearbp    (session_t* obj, command_t* cmd);
+static void        handle_clearbreak (session_t* obj, command_t* cmd);
 static void        handle_eval       (session_t* obj, command_t* cmd, bool is_verbose);
 static void        handle_frame      (session_t* obj, command_t* cmd);
 static void        handle_help       (session_t* obj, command_t* cmd);
@@ -202,8 +202,8 @@ do_command_line(session_t* obj)
 		handle_up_down(obj, command, +1);
 	else if (strcmp(verb, "down") == 0)
 		handle_up_down(obj, command, -1);
-	else if (strcmp(verb, "clearbp") == 0)
-		handle_clearbp(obj, command);
+	else if (strcmp(verb, "clearbreak") == 0)
+		handle_clearbreak(obj, command);
 	else if (strcmp(verb, "continue") == 0)
 		handle_resume(obj, command, OP_RESUME);
 	else if (strcmp(verb, "eval") == 0)
@@ -297,7 +297,7 @@ handle_breakpoint(session_t* obj, command_t* cmd)
 }
 
 static void
-handle_clearbp(session_t* obj, command_t* cmd)
+handle_clearbreak(session_t* obj, command_t* cmd)
 {
 	const char*     filename;
 	int             handle;
