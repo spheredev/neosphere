@@ -1,15 +1,14 @@
 minisphere 3.0 API Documentation
 ================================
 
-minisphere uses JavaScript for game logic. This is similar to the Sphere
-engine, which minisphere is designed to be compatible with.  In fact,
-the vast majority of the API is identical to Sphere's, with a handful of
-backwards-compatible enhancements.
+minisphere uses JavaScript for game logic. This is similar to the Sphere engine,
+which minisphere is designed to be compatible with.  In fact, minisphere
+implements most of the Sphere 1.5 API, with several backwards-compatible
+enhancements.
 
-This file documents the functions exposed by minisphere for use in game
-scripts. This list is not yet exhaustive; see the included Sphere 1.5 API
-reference for the full list of legacy functions (a few may not be supported,
-however).
+This file documents the functions exposed by minisphere for use in game scripts.
+The list may not be exhaustive; see the included Sphere 1.5 API reference for
+the full list of legacy functions (a few may not be supported, however).
 
 
 Engine Identification
@@ -103,13 +102,14 @@ directory by default, generally a subdirectory below the current game's
 game.sgm. To get around this and load files from a different location, you can
 use one of the following SphereFS prefixes:
 
-    ~usr/: The current user's local home directory. This may be used to store
+    ~usr/: The current user's save data directory.  This may be used to store
            save files and other such data where the user can easily access it.
-           Guaranteed to be writable on all systems.
-    ~sgm/: The directory containing game.sgm. For backwards compatibility, this
-           may also be specified as ~/. You should not assume this is writable.
-    ~sys/: minisphere's "system" directory.  This is used to access assets
-           included with the engine.  Not likely to be writable.
+           Guaranteed to be writable on all systems.  As of minisphere 3.0, this
+           maps to <documents>/Sphere 2.0/saveData.
+    ~sgm/: The directory containing game.sgm.  For backwards compatibility, this
+           may also be specified as ~/.  You should not assume this is writable.
+    ~sys/: minisphere's "system" directory.  This contains assets included with
+           the engine.  Not likely to be writable.
 
 By way of example, the following will open the kevfile settings.cfg from the
 calling game's "config" subdirectory:
@@ -134,7 +134,7 @@ to get very far!
 RequireScript(filename)
 EvaluateScript(filename)
 
-    'filename' is relative to '~sgm/scripts'. Not SphereFS compliant.
+    Not SphereFS compliant: `filename` is relative to ~sgm/scripts.
 
     Evaluates the contents of `filename`, as if the code contained within were
     part of the script containing the call. If you've ever worked in C or C++,
@@ -147,10 +147,10 @@ EvaluateScript(filename)
 RequireSystemScript(filename)
 EvaluateSystemScript(filename)
 
-    'filename' is relative to ~sys/scripts. SphereFS prefixes are not allowed.
+    `filename` is relative to ~sys/scripts.  SphereFS prefixes are not allowed.
 
-    Same as above, except the script is loaded from the engine's system directory.
-    These are used to import scripts included with the engine.
+    Same as above, except the script is loaded from the engine's system
+    directory.  These are used to import scripts included with the engine.
 
 
 CommonJS
@@ -170,16 +170,18 @@ require(module_id);
         ~sgm/modules
         ~sys/modules
 
-    If require() is called inside of a module and the ID provided is prefixed with
-    either './' or '../', this specifies a path relative to the calling module.
+    If require() is called inside of a module and the ID provided is prefixed
+    with either './' or '../', this specifies a path relative to the calling
+    module.
 
 
 Basic Debugging
 ---------------
 
-As of minisphere 1.6, full remote debugging support is available via Duktape's
-debug protocol.  However, the functions below may still come in handy as a sort
-of "poor man's debugging":
+Since minisphere 1.6, full single-step debugging has been available via
+Sphere Studio.  minisphere 3.0 and later additionally include the SSJ
+command-line debugger.  The functions below may still come in handy as a sort
+of poor man's debugging, however:
 
 Abort(message[, stack_offset])
 
@@ -227,9 +229,9 @@ Print(value1, value2, ...);
 Logging
 -------
 
-Logging is another useful debugging tool. When trying to diagnose a stubborn
+Logging is another useful debugging tool.  When trying to diagnose a stubborn
 bug, it often helps to have a persistent summary of everything that happened
-when the issue surfaced. Of course, this requires some vigilance on the part of
+when the issue surfaced.  Of course, this requires some vigilance on the part of
 the developer to emit enough log entries!
 
 new Logger(filename)
@@ -286,7 +288,7 @@ alongside the `system` directory, with subdirectories for each game.
 
 GetGameManifest()
 
-    Returns an object describing the currently running game. The object is of
+    Returns an object describing the currently running game.  The object is of
     the same form as those returned by GetGameList() (see below) and is
     constructed from the game manifest (game.sgm or game.s2gm).
 
@@ -298,8 +300,8 @@ GetGameList()
 
         .name:        The game's title, taken from the game manifest.
         .directory:   The absolute path of the directory the game was found in.
-                      For packaged games, this will be the filename of the
-                      package file instead of a directory name.
+                      For packaged games, this is the filename of the package
+                      file instead of a directory name.
         .author:      The game's author, taken from the game manifest.
         .description: A short description of the game, taken from the game
                       manifest.
@@ -314,7 +316,10 @@ GetGameList()
 ExecuteGame(directory)
 
     Replaces the currently running game with the one found in the specified
-    directory. The directory is assumed to be relative to <enginedir>/games.
+    directory.  The directory is assumed to be relative to <enginedir>/games.
+
+    Unlike most of the minisphere API, this function will accept an absolute
+    path.
 
 RestartGame()
 
@@ -714,12 +719,12 @@ UnskipFrame();
 Galileo Graphics API
 --------------------
 
-Wondered what that `sphere-galileo` extension was above? This is it! It's a
+Wondered what that `sphere-galileo` extension was above?  This is it!  It's a
 more modern approach to graphics rendering based on precomposing scenes from
 groups of shapes which can then be transformed and rendered as a unit.
 
 All the old-school primitives provided by Sphere 1.5 are still available in
-minisphere. However, there's a newer, much more modern way: the Shape and Group
+minisphere.  However, there's a newer, much more modern way: the Shape and Group
 objects.  With these, you precompose a complex object out of a set of vertices
 and textures which are then uploaded to the GPU to save time during the main
 render loop.
@@ -733,7 +738,7 @@ new Color(red, green, blue[, alpha]);
 
 Color:clone();
 
-    Copies this Color object to a new one. Changes to the new object will not
+    Copies this Color object to a new one.  Changes to the new object will not
     affect the original.
 
 Color:red (read/write)
@@ -741,7 +746,7 @@ Color:green (read/write)
 Color:blue (read/write)
 Color:alpha (read/write)
 
-    Gets or sets the individual components of the color. Values outside the
+    Gets or sets the individual components of the color.  Values outside the
     range of [0-255] are accepted, but the engine will automatically clamp them
     during rendering.
 
@@ -758,16 +763,16 @@ new Image(filename);
 
     SphereFS compliant.
 
-    Constructs a new Image object from an image file. Images can be used as
+    Constructs a new Image object from an image file.  Images can be used as
     textures for Shape objects or drawn directly using the legacy method
     Image:blit().
 
-    Images are read-only. If you need a writable image, you should use a Surface
-    object instead.
+    Images are read-only.  If you need a writable image, you should use a
+    Surface object instead.
 
 new Image(surface);
 
-    Creates an Image object with the contents of a specified surface. This can
+    Creates an Image object with the contents of a specified surface.  This can
     be used to regain rendering performance after composing the surface.
 
 Image:width (read-only)
@@ -777,11 +782,11 @@ Image:height (read-only)
 
 new Vertex(x, y[, color[, u, v]]);
 
-    Constructs an object describing a vertex of a shape. x and y specify the
-    location of the vertex relative to the shape's origin. The color, if
+    Constructs an object describing a vertex of a shape.  `x` and `y` specify
+    the location of the vertex relative to the shape's origin.  `color`, if
     specified, is multiplied with the texture at that point in the shape to
-    "tint" the vertex.  U/V are texture coordinates ranging from 0 to 1
-    describing the part of the texture which will be mapped to that vertex.
+    "tint" the vertex.  `u` and `v` are texture coordinates ranging from 0 to 1
+    describing which part of the texture is mapped to that vertex.
 
 new Shape(vertices, image[, primitive_type]);
 
@@ -931,7 +936,7 @@ Surface:clone();
 
 Surface:save(filename);
 
-    Not SphereFS compliant: 'filename' is relative to '~sgm/images'.
+    Not SphereFS compliant: `filename` is relative to ~sgm/images.
 
     Saves the contents of the surface to an image file.  The filename extension
     determines the format of the saved image.  Supported formats are PNG, BMP
@@ -1379,17 +1384,17 @@ file and directory names are relative to ~sgm/save.
 
 GetFileList([dirname]);
 
-    Not SphereFS compliant.  `dirname` is relative to `~sgm/`.
+    Not SphereFS compliant.  `dirname` is relative to ~sgm/.
 
     Returns an array of strings naming files found in the specified directory.
-    If `dirname` is not provided, `~sgm/save` is assumed.
+    If `dirname` is not provided, ~sgm/save is assumed.
 
 GetDirectoryList([dirname]);
 
-    Not SphereFS compliant.  `dirname` is relative to `~sgm/`.
+    Not SphereFS compliant.  `dirname` is relative to ~sgm/.
 
     Returns an array of strings naming subdirectories found in the specified
-    directory.  If 'dirname' is not provided, `~sgm/` is assumed.  This is
+    directory.  If 'dirname' is not provided, ~sgm/ is assumed.  This is
     inconsistent with GetFileList(), but is compatible with Sphere 1.x.
 
 DoesFileExist(filename);
