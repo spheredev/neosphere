@@ -1544,7 +1544,7 @@ js_MapEngine(duk_context* ctx)
 	const char* filename;
 	int         framerate;
 	
-	filename = duk_require_path(ctx, 0, "maps");
+	filename = duk_require_path(ctx, 0, "maps", false);
 	framerate = duk_require_int(ctx, 1);
 
 	s_is_map_running = true;
@@ -2707,7 +2707,7 @@ js_ChangeMap(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "maps");
+	filename = duk_require_path(ctx, 0, "maps", false);
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): map engine not running");
 	if (!change_map(filename, false))

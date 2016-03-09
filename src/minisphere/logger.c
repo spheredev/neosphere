@@ -152,7 +152,7 @@ js_OpenLog(duk_context* ctx)
 	const char* filename;
 	logger_t*   logger;
 
-	filename = duk_require_path(ctx, 0, "logs");
+	filename = duk_require_path(ctx, 0, "logs", false);
 	if (!(logger = open_log_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
@@ -165,7 +165,7 @@ js_new_Logger(duk_context* ctx)
 	const char* filename;
 	logger_t*   logger;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(logger = open_log_file(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): Failed to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);

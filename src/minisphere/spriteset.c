@@ -562,7 +562,7 @@ js_LoadSpriteset(duk_context* ctx)
 	const char*  filename;
 	spriteset_t* spriteset;
 
-	filename = duk_require_path(ctx, 0, "spritesets");
+	filename = duk_require_path(ctx, 0, "spritesets", false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
@@ -576,7 +576,7 @@ js_new_Spriteset(duk_context* ctx)
 	const char*  filename;
 	spriteset_t* spriteset;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);

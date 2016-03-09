@@ -315,6 +315,8 @@ GetGameList()
 
 ExecuteGame(directory)
 
+    Not SphereFS compliant: SphereFS prefixes are not honored.
+    
     Replaces the currently running game with the one found in the specified
     directory.  The directory is assumed to be relative to <enginedir>/games.
 

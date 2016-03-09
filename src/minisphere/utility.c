@@ -99,7 +99,7 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 }
 
 const char*
-duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
+duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, bool allow_absolute)
 {
 	static int     s_index = 0;
 	static path_t* s_paths[10];
@@ -110,7 +110,7 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 	pathname = duk_require_string(ctx, index);
 	path = make_sfs_path(pathname, origin_name);
 	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
-	    || path_is_rooted(path))
+	    || (path_is_rooted(path) && !allow_absolute))
 	{
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandbox violation ('%s')", pathname);
 	}

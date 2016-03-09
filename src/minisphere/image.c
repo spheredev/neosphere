@@ -744,7 +744,7 @@ js_LoadImage(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images");
+	filename = duk_require_path(ctx, 0, "images", false);
 	if (!(image = load_image(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
@@ -794,7 +794,7 @@ js_new_Image(duk_context* ctx)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to create image from surface");
 	}
 	else {
-		filename = duk_require_path(ctx, 0, NULL);
+		filename = duk_require_path(ctx, 0, NULL, false);
 		image = load_image(filename);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);

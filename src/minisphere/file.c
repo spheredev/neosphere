@@ -292,7 +292,7 @@ js_DoesFileExist(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
 	return 1;
 }
@@ -301,7 +301,9 @@ static duk_ret_t
 js_GetDirectoryList(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	const char* dirname = n_args >= 1 ? duk_require_path(ctx, 0, NULL) : "";
+	const char* dirname = n_args >= 1
+		? duk_require_path(ctx, 0, NULL, false)
+		: "";
 
 	vector_t*  list;
 	lstring_t* *p_filename;
@@ -332,7 +334,7 @@ js_GetFileList(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	directory_name = num_args >= 1
-		? duk_require_path(ctx, 0, NULL)
+		? duk_require_path(ctx, 0, NULL, false)
 		: "save";
 	
 	list = list_filenames(g_fs, directory_name, NULL, false);
@@ -352,7 +354,7 @@ js_CreateDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, "save");
+	name = duk_require_path(ctx, 0, "save", false);
 	if (!sfs_mkdir(g_fs, name, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to create directory '%s'", name);
 	return 0;
@@ -364,7 +366,7 @@ js_HashRawFile(duk_context* ctx)
 	sfs_file_t* file;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	file = sfs_fopen(g_fs, filename, "other", "rb");
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): unable to open file '%s' for reading");
@@ -378,7 +380,7 @@ js_RemoveDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, "save");
+	name = duk_require_path(ctx, 0, "save", false);
 	if (!sfs_rmdir(g_fs, name, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to remove directory '%s'", name);
 	return 0;
@@ -389,7 +391,7 @@ js_RemoveFile(duk_context* ctx)
 {
 	const char* filename;
 	
-	filename = duk_require_path(ctx, 0, "save");
+	filename = duk_require_path(ctx, 0, "save", false);
 	if (!sfs_unlink(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): unable to delete file '%s'", filename);
 	return 0;
@@ -401,8 +403,8 @@ js_Rename(duk_context* ctx)
 	const char* name1; 
 	const char* name2;
 
-	name1 = duk_require_path(ctx, 0, "save");
-	name2 = duk_require_path(ctx, 1, "save");
+	name1 = duk_require_path(ctx, 0, "save", false);
+	name2 = duk_require_path(ctx, 1, "save", false);
 	if (!sfs_rename(g_fs, name1, name2, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): unable to rename file '%s' to '%s'", name1, name2);
 	return 0;
@@ -414,7 +416,7 @@ js_OpenFile(duk_context* ctx)
 	kev_file_t* file;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "save");
+	filename = duk_require_path(ctx, 0, "save", false);
 	if (!(file = open_kev_file(g_fs, filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): unable to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
@@ -427,7 +429,7 @@ js_new_KevFile(duk_context* ctx)
 	kev_file_t* file;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(file = open_kev_file(g_fs, filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): unable to create or open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
@@ -579,7 +581,7 @@ js_OpenRawFile(duk_context* ctx)
 	sfs_file_t* file;
 
 	int n_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "other");
+	filename = duk_require_path(ctx, 0, "other", false);
 	writable = n_args >= 2
 		? duk_require_boolean(ctx, 1)
 		: false;
@@ -607,7 +609,7 @@ js_new_RawFile(duk_context* ctx)
 	sfs_file_t* file;
 
 	int n_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	writable = n_args >= 2
 		? duk_require_boolean(ctx, 1)
 		: false;
@@ -807,7 +809,7 @@ js_new_FileStream(duk_context* ctx)
 	const char* filename;
 	const char* mode;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	filename = duk_require_path(ctx, 0, NULL, false);
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
