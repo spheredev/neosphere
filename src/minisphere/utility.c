@@ -82,6 +82,25 @@ on_error:
 	return NULL;
 }
 
+char*
+strnewf(const char* fmt, ...)
+{
+	va_list ap, apc;
+	char* buffer;
+	int   buf_size;
+
+	va_start(ap, fmt);
+	va_copy(apc, ap);
+	buf_size = vsnprintf(NULL, 0, fmt, apc) + 1;
+	va_end(apc);
+	buffer = malloc(buf_size);
+	va_copy(apc, ap);
+	vsnprintf(buffer, buf_size, fmt, apc);
+	va_end(apc);
+	va_end(ap);
+	return buffer;
+}
+
 void
 duk_push_lstring_t(duk_context* ctx, const lstring_t* string)
 {

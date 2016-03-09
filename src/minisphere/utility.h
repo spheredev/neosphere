@@ -10,5 +10,6 @@ lstring_t*  duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
 const char* duk_require_path      (duk_context* ctx, duk_idx_t index, const char* origin_name, bool allow_absolute);
 lstring_t*  read_lstring          (sfs_file_t* file, bool trim_null);
 lstring_t*  read_lstring_raw      (sfs_file_t* file, size_t length, bool trim_null);
+char*       strnewf               (const char* fmt, ...);
 
 #endif // MINISPHERE__UTILITY_H__INCLUDED

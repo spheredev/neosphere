@@ -441,16 +441,23 @@ exit_game(bool force_shutdown)
 void
 flip_screen(int framerate)
 {
-	char              filename[50];
+	char*             filename;
 	char              fps_text[20];
+	const char*       game_filename;
+	const path_t*     game_path;
 	bool              is_backbuffer_valid;
+	time_t            now;
 	ALLEGRO_STATE     old_state;
 	path_t*           path;
 	const char*       pathstr;
+	int               serial = 1;
 	ALLEGRO_BITMAP*   snapshot;
 	double            time_left;
+	char              timestamp[100];
 	ALLEGRO_TRANSFORM trans;
 	int               x, y;
+
+	size_t i;
 
 	// update FPS with 1s granularity
 	if (al_get_time() >= s_next_fps_poll_time) {
@@ -469,13 +476,22 @@ flip_screen(int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			al_restore_state(&old_state);
+			game_path = get_game_path(g_fs);
+			game_filename = path_is_file(game_path)
+				? path_filename_cstr(game_path)
+				: path_hop_cstr(game_path, path_num_hops(game_path) - 1);
 			path = path_rebase(path_new("Sphere 2.0/screenshots/"), homepath());
 			path_mkdir(path);
+			time(&now);
+			strftime(timestamp, 100, "%Y%m%d", localtime(&now));
 			do {
+				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
+				for (i = 0; filename[i] != '\0'; ++i)
+					filename[i];
 				path_strip(path);
-				sprintf(filename, "SS_%s.png", rng_string(10));
 				path_append(path, filename);
 				pathstr = path_cstr(path);
+				free(filename);
 			} while (al_filename_exists(pathstr));
 			al_save_bitmap(pathstr, snapshot);
 			al_destroy_bitmap(snapshot);

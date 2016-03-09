@@ -42,7 +42,8 @@ open_log_file(const char* filename)
 	logger = calloc(1, sizeof(logger_t));
 	if (!(logger->file = sfs_fopen(g_fs, filename, NULL, "a")))
 		goto on_error;
-	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
+	time(&now);
+	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG OPENED: %s\n", timestamp);
 	sfs_fputs(lstr_cstr(log_entry), logger->file);
 	lstr_free(log_entry);
