@@ -150,7 +150,7 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("Sphere 2.0/Games/"), homepath());
+	games_path = path_rebase(path_new("Sphere 2.0/games/"), homepath());
 	path_mkdir(games_path);
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
@@ -469,7 +469,7 @@ flip_screen(int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
 			al_restore_state(&old_state);
-			path = path_rebase(path_new("Sphere 2.0/Screenshots/"), homepath());
+			path = path_rebase(path_new("Sphere 2.0/screenshots/"), homepath());
 			path_mkdir(path);
 			do {
 				path_strip(path);

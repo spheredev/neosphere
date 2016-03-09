@@ -19,7 +19,7 @@ v3.0.0 - March 28, 2016
   may not work as expected.  See the release notes for more details.
 * User data (screenshots, save files, etc.) is now stored in `<docs>/Sphere 2.0`
   instead of `<docs>/minisphere` as it was in prior versions.  SPK packages can
-  be placed into the `Games` subdirectory to have the startup game automatically
+  be placed into the `games` subdirectory to have the startup game automatically
   pick them up.
 * Enhances `Assert()` behavior.  If an assertion fails and the debugger is
   attached, choosing not to continue will cause a prompt breakpoint instead of

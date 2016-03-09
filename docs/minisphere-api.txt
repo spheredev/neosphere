@@ -20,40 +20,40 @@ engine's level of support for various features.
 
 GetVersion()
 
-  Returns the Sphere API version level as a floating point number. When called
-  under this version of minisphere, this function returns 2.0, indicating Sphere
-  API version 2.
+    Returns the Sphere API version level as a floating point number. When called
+    under this version of minisphere, this function returns 2.0, indicating
+    version 2 of the Sphere API.
 
 GetVersionString()
 
-  Returns the engine's version identification string. The string returned will
-  be in the following format:
-      
-      v2.0 (minisphere 3.0.0)
+    Returns the engine's version identification string. The string returned will
+    be in the following format:
+
+        v2.0 (minisphere 3.0.0)
 
 GetExtensions()
 
-  Returns an array of strings representing the engine's built-in capabilities.
-  minisphere currently supports the following extensions (most of these should
-  be self-explanatory):
-  
-    * sphere-legacy-api
-    * sphere-obj-constructors
-    * sphere-obj-props
-    * sphere-async-api
-    * sphere-audialis
-    * sphere-coffeescript
-    * sphere-commonjs
-    * sphere-file-streams
-    * sphere-frameskip-api
-    * sphere-galileo
-    * sphere-galileo-shaders
-    * sphere-map-engine
-    * sphere-new-sockets
-    * sphere-rng-object
-    * sphere-s2gm
-    * sphere-spherefs
-    * sphere-typescript
+    Returns an array of strings representing the engine's built-in capabilities.
+    minisphere currently supports the following extensions (most of these should
+    be self-explanatory):
+
+        sphere-legacy-api
+        sphere-obj-constructors
+        sphere-obj-props
+        sphere-async-api
+        sphere-audialis
+        sphere-coffeescript
+        sphere-commonjs
+        sphere-file-streams
+        sphere-frameskip-api
+        sphere-galileo
+        sphere-galileo-shaders
+        sphere-map-engine
+        sphere-new-sockets
+        sphere-rng-object
+        sphere-s2gm
+        sphere-spherefs
+        sphere-typescript
 
 
 S2GM Manifest Format
@@ -63,27 +63,27 @@ A game targeting minisphere, or any other Sphere 2.0 engine, may opt to use the
 S2GM format for its metadata instead of--or in addition to--the legacy game.sgm
 format.  game.s2gm file is simply a JSON file and looks like this:
 
-  {
-    name: "Spectacles: Bruce's Story",
-    author: "Fat Cerberus",
-    summary: "Follow Scott Starcross in his quest to stop the Primus.",
-    resolution: '320x240',
-    script: 'scripts/main.js',
-    
-    minimumPlatform: {
-      recommend: "minisphere 2.1 or later",
-      apiVersion: 2.0,
-      extensions: [
-        "sphere-legacy-api",
-        "sphere-obj-constructors",
-        "sphere-obj-props",
-        "sphere-map-engine",
-        "sphere-rng-object",
-        "sphere-s2gm",
-        "sphere-spherefs",
-      ]
+    {
+        name: "Spectacles: Bruce's Story",
+        author: "Fat Cerberus",
+        summary: "Follow Scott Starcross in his quest to stop the Primus.",
+        resolution: '320x240',
+        script: 'scripts/main.js',
+
+        minimumPlatform: {
+            recommend: "minisphere 2.1 or later",
+            apiVersion: 2.0,
+            extensions: [
+                "sphere-legacy-api",
+                "sphere-obj-constructors",
+                "sphere-obj-props",
+                "sphere-map-engine",
+                "sphere-rng-object",
+                "sphere-s2gm",
+                "sphere-spherefs",
+            ]
+        }
     }
-  }
 
 minimumPlatform, if present, is checked by the engine on startup and, if the
 declared requirements are not met, the game will fail to start.  Besides that,
@@ -103,17 +103,17 @@ directory by default, generally a subdirectory below the current game's
 game.sgm. To get around this and load files from a different location, you can
 use one of the following SphereFS prefixes:
 
-  ~usr/: The current user's local home directory. This may be used to store
-         save files and other such data where the user can easily access it.
-         Guaranteed to be writable on all systems.
-  ~sgm/: The directory containing game.sgm. For backwards compatibility, this
-         may also be specified as ~/. You should not assume this is writable.
-  ~sys/: minisphere's "system" directory. May be used to access assets included
-         with the engine. Not likely to be writable.
+    ~usr/: The current user's local home directory. This may be used to store
+           save files and other such data where the user can easily access it.
+           Guaranteed to be writable on all systems.
+    ~sgm/: The directory containing game.sgm. For backwards compatibility, this
+           may also be specified as ~/. You should not assume this is writable.
+    ~sys/: minisphere's "system" directory.  This is used to access assets
+           included with the engine.  Not likely to be writable.
 
 By way of example, the following will open the kevfile settings.cfg from the
 calling game's "config" subdirectory:
-  
+
     var file = new KevFile("~sgm/config/settings.cfg");
 
 Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
@@ -134,24 +134,23 @@ to get very far!
 RequireScript(filename)
 EvaluateScript(filename)
 
-  'filename' is relative to '~sgm/scripts'. Not SphereFS compliant.
-  
-  Evaluates the contents of `filename`, as if the code contained within
-  were part of the script containing the call. If you've ever worked in
-  C or C++, this is a bit like including a header file.
-  
-  Note: RequireScript only executes a given script once, regardless
-  of how many RequireScript() calls specifying it are encountered. This
-  is generally preferable to EvaluateScript(), which always executes the
-  script.
+    'filename' is relative to '~sgm/scripts'. Not SphereFS compliant.
+
+    Evaluates the contents of `filename`, as if the code contained within were
+    part of the script containing the call. If you've ever worked in C or C++,
+    this is a bit like including a header file.
+
+    Note: RequireScript only executes a given script once, regardless of how
+    many RequireScript() calls specifying it are encountered. This is generally
+    preferable to EvaluateScript(), which always executes the script.
 
 RequireSystemScript(filename)
 EvaluateSystemScript(filename)
-  
-  'filename' is relative to ~sys/scripts. SphereFS prefixes are not allowed.
-  
-  Same as above, except the script is loaded from the engine's system directory.
-  These are used to import scripts included with the engine.
+
+    'filename' is relative to ~sys/scripts. SphereFS prefixes are not allowed.
+
+    Same as above, except the script is loaded from the engine's system directory.
+    These are used to import scripts included with the engine.
 
 
 CommonJS
@@ -163,16 +162,16 @@ require() function is provided.
 
 require(module_id);
 
-  Loads a CommonJS module and returns its export table. `module_id` is an
-  abstract path (a string) identifying the module to load, with the same
-  semantics as in, e.g. Node.js. If the module cannot be found, an error will be
-  thrown. minisphere will look for modules in the following locations:
-  
-    ~sgm/modules
-    ~sys/modules
-  
-  If require() is called inside of a module and the ID provided is prefixed with
-  either './' or '../', this specifies a path relative to the calling module.
+    Loads a CommonJS module and returns its export table. `module_id` is an
+    abstract path (a string) identifying the module to load, with the same
+    semantics as in, e.g. Node.js.  If the module cannot be found, an error will
+    be thrown.  minisphere will look for modules in the following locations:
+
+        ~sgm/modules
+        ~sys/modules
+
+    If require() is called inside of a module and the ID provided is prefixed with
+    either './' or '../', this specifies a path relative to the calling module.
 
 
 Basic Debugging
@@ -184,40 +183,45 @@ of "poor man's debugging":
 
 Abort(message[, stack_offset])
 
-  Forces the engine to close, displaying a specified error message. The error is
-  normally reported to originate at the location of the Abort() call; you may
-  pass an optional negative stack offset to blame it on a function earlier in
-  the call chain. For example, the following code will report an error at the
-  point PassTheBuck() is called, instead of at the Abort() call:
-  
-  function PassTheBuck()
-  {
-      Abort("PassTheBuck() says: It's not my fault!", -1);
-  }
-  PassTheBuck();
+    Forces the engine to close, displaying a specified error message. The error
+    is normally reported to originate at the location of the Abort() call; you
+    may pass an optional negative stack offset to blame it on a function earlier
+    in the call chain. For example, the following code will report an error at
+    the point PassTheBuck() is called, instead of at the Abort() call:
+
+        function PassTheBuck()
+        {
+            Abort("PassTheBuck() says: It's not my fault!", -1);
+        }
+        PassTheBuck();
 
 Alert(message[, stack_offset])
 
-  Similar to Abort(), except the message is displayed in a dialog box and the
-  game continues running as normal afterwards. Useful for examining variables at
-  runtime when debugging.
+    Similar to Abort(), except the message is displayed in a dialog box and the
+    game continues running as normal afterwards. Useful for examining variables
+    at runtime when debugging.
 
 Assert(condition, error_message[, stack_offset]);
 
-  If `condition` evaluates to true, does nothing. Otherwise an error is thrown
-  with the error text set to `error_message`. In the Console engine, the error
-  is shown in a dialog box with the option to ignore it.
+    If `condition` evaluates to true, does nothing.  Otherwise the behavior
+    depends on whether a debugger is attached.  Without a debugger attached, the
+    error is ignored (except for logging it to the console).  If a debugger *is*
+    attached, the user has the option to continue execution, ignoring the error,
+    or trigger a breakpoint, allowing it to be debugged.
+
+    As with Abort(), `stack_offset` determines which callstack frame the error
+    is blamed on.
 
 DebugPrint(value1, value2, ...);
 
-  Prints the provided values in the debugger (SSJ). This function has no effect
-  when SSJ is not attached, so it's useful for logging low-level debugging
-  information.
+    Prints the provided values in the debugger.  This function has no effect
+    if a debugger is not attached, so it's useful for logging low-level
+    debugging information.
 
 Print(value1, value2, ...);
-  
-  Like DebugPrint(), but sends the output to the console as well. This should be
-  used for general logging which might be helpful when debugging offline.
+
+    Like DebugPrint(), but sends the output to the console as well.  This should
+    be used for general logging which might be helpful when debugging offline.
 
 
 Logging
@@ -230,23 +234,23 @@ the developer to emit enough log entries!
 
 new Logger(filename)
 
-  SphereFS compliant.
-  
-  Opens a file for logging and constructs an object you can use to access the
-  log. An error will be thrown if the file cannot be opened for writing.
+    SphereFS compliant.
+
+    Opens a file for logging and constructs an object you can use to access the
+    log. An error will be thrown if the file cannot be opened for writing.
 
 Logger:write(text)
-  
-  Logs a line with the specified `text` at the current indent level.
+
+    Logs a line with the specified `text` at the current indent level.
 
 Logger:beginBlock(name)
-  
-  Opens a block with the heading `name` and increases the indent level. Blocks
-  can be nested and are useful to group related log entries.
+
+    Opens a block with the heading `name` and increases the indent level. Blocks
+    can be nested and are useful to group related log entries.
 
 Logger:endBlock()
-  
-  Closes the innermost block and decreases the indent level.
+
+    Closes the innermost block and decreases the indent level.
 
 
 Timing Functions
@@ -257,18 +261,19 @@ events.
 
 GetTime();
 
-  Returns the number of milliseconds elapsed since some arbitrary point in time
-  (usually engine start). If you need more precision, use GetSeconds() instead.
+    Returns the number of milliseconds elapsed since some arbitrary point in
+    time (usually engine start, but this is not guaranteed).  If you need more
+    precision, use GetSeconds() instead.
 
 GetSeconds();
 
-  Returns the amount of time in seconds, in floating point, since some arbitrary
-  point in time. Precision is guaranteed to be < 1µs.
+    Returns the amount of time in seconds, in floating point, since some
+    arbitrary point in time. Precision is guaranteed to be < 1µs.
 
 Delay(ms);
-  
-  Suspends game execution for 'ms' milliseconds. The engine will "spin down"
-  during this time and relinquish its CPU cycles to other applications.
+
+    Suspends game execution for 'ms' milliseconds. The engine will "spin down"
+    during this time and relinquish its CPU cycles to other applications.
 
 
 Execution Control and Game Management
@@ -280,39 +285,46 @@ work, a `games` directory must be placed in the same directory as the engine,
 alongside the `system` directory, with subdirectories for each game.
 
 GetGameManifest()
-  
-  Returns an object describing the currently running game. The object is of the
-  same form as those returned by GetGameList() (see below) and is constructed
-  from the game manifest (game.sgm or game.s2gm).
+
+    Returns an object describing the currently running game. The object is of
+    the same form as those returned by GetGameList() (see below) and is
+    constructed from the game manifest (game.sgm or game.s2gm).
 
 GetGameList()
 
-  Returns an array of objects, one for each Sphere game found in
-  [engine root]/games. Each object has at least the following properties, and
-  may have more depending on the information in the game manifest:
-    
-    .name:        The game's title, taken from the .
-    .directory:   The absolute path of the directory the game was found in. For
-                  packaged games, this will be the filename of the package file
-                  instead of a directory name.
-    .author:      The game's author, taken from game.sgm.
-    .description: A short description of the game, taken from game.sgm.
+    Returns an array of objects, one for each Sphere game found on the system.
+    Each object has at least the following properties, and may have more
+    depending on the information in the game manifest:
+
+        .name:        The game's title, taken from the game manifest.
+        .directory:   The absolute path of the directory the game was found in.
+                      For packaged games, this will be the filename of the
+                      package file instead of a directory name.
+        .author:      The game's author, taken from the game manifest.
+        .description: A short description of the game, taken from the game
+                      manifest.
+
+    GetGameList() searches for games in the following directories, in the order
+    listed:
+
+        <enginedir>/games/
+        <documents>/Sphere 2.0/games/
+
 
 ExecuteGame(directory)
 
-  Replaces the currently running game with the one found in the
-  specified directory. The directory is assumed to be relative to
-  [engine root]/games.
+    Replaces the currently running game with the one found in the specified
+    directory. The directory is assumed to be relative to <enginedir>/games.
 
 RestartGame()
 
-  Restarts the current game. All game state is cleared and the game()
-  function is called again, as if the game was just started.
+    Restarts the current game.  All game state is cleared and game() is called
+    again, as if the game was just started.
 
 Async(script);
-  
-  Queues a script or function to be executed on the next FlipScreen() call. This
-  is similar to setTimeout(func, 0); in the browser.
+
+    Queues a script or function to be executed on the next FlipScreen() call.
+    This is similar to setTimeout(func, 0); in the browser.
 
 DoEvents();
 
@@ -328,11 +340,11 @@ DoEvents();
         }
 
 Exit()
-  
-  Exits the current game and shuts down the engine. If the current game
-  was started by via ExecuteGame(), the original game will be restarted
-  following the Exit() call.
-  
+
+    Exits the current game and shuts down the engine. If the current game was
+    started by via ExecuteGame(), the original game will be restarted following
+    the Exit() call.
+
 
 Keyboard Routines
 -----------------
@@ -341,167 +353,168 @@ What would a game be without the ability for the player to control it? This set
 of functions allows your game to accept input via the keyboard, the most common
 input method for a PC game. First of all, the available keycodes:
 
-  KEY_ESCAPE     
-  KEY_F1         
-  KEY_F2         
-  KEY_F3         
-  KEY_F4         
-  KEY_F5         
-  KEY_F6         
-  KEY_F7         
-  KEY_F8         
-  KEY_F9         
-  KEY_F10        
-  KEY_F11        
-  KEY_F12        
-  KEY_TILDE      
-  KEY_0          
-  KEY_1          
-  KEY_2          
-  KEY_3          
-  KEY_4          
-  KEY_5          
-  KEY_6          
-  KEY_7          
-  KEY_8          
-  KEY_9          
-  KEY_MINUS      
-  KEY_EQUALS     
-  KEY_BACKSPACE  
-  KEY_TAB        
-  KEY_A          
-  KEY_B          
-  KEY_C          
-  KEY_D          
-  KEY_E          
-  KEY_F          
-  KEY_G          
-  KEY_H          
-  KEY_I          
-  KEY_J          
-  KEY_K          
-  KEY_L          
-  KEY_M          
-  KEY_N          
-  KEY_O          
-  KEY_P          
-  KEY_Q          
-  KEY_R          
-  KEY_S          
-  KEY_T          
-  KEY_U          
-  KEY_V          
-  KEY_W          
-  KEY_X          
-  KEY_Y          
-  KEY_Z          
-  KEY_SHIFT      
-  KEY_CTRL       
-  KEY_ALT        
-  KEY_SPACE      
-  KEY_OPENBRACE  
-  KEY_CLOSEBRACE 
-  KEY_SEMICOLON  
-  KEY_APOSTROPHE 
-  KEY_COMMA      
-  KEY_PERIOD     
-  KEY_SLASH      
-  KEY_BACKSLASH  
-  KEY_ENTER      
-  KEY_INSERT     
-  KEY_DELETE     
-  KEY_HOME       
-  KEY_END        
-  KEY_PAGEUP     
-  KEY_PAGEDOWN   
-  KEY_UP         
-  KEY_RIGHT      
-  KEY_DOWN       
-  KEY_LEFT       
-  KEY_NUM_0
-  KEY_NUM_1
-  KEY_NUM_2
-  KEY_NUM_3
-  KEY_NUM_4
-  KEY_NUM_5
-  KEY_NUM_6
-  KEY_NUM_7
-  KEY_NUM_8
-  KEY_NUM_9
-  KEY_CAPSLOCK
-  KEY_NUMLOCK
-  KEY_SCROLLLOCK
-
-GetPlayerKey(player, button);
-SetPlayerKey(player, button, keycode);
-
-  Gets or sets the keycode mapped to a specified playerkey. Playerkeys mirror
-  the layout of a Super NES controller. GetPlayerKey() should be used in place
-  of hardcoded keys whenever possible, in order to allow the player to customize
-  the mappings. 'player' can be one of the following values:
-    
-    PLAYER_1
-    PLAYER_2
-    PLAYER_3
-    PLAYER_4
-  
-  'button' can be one of the following:
-    
-    PLAYER_KEY_UP
-    PLAYER_KEY_RIGHT
-    PLAYER_KEY_DOWN
-    PLAYER_KEY_LEFT
-    PLAYER_KEY_MENU
-    PLAYER_KEY_A
-    PLAYER_KEY_B
-    PLAYER_KEY_X
-    PLAYER_KEY_Y
-  
-  Modifications made by SetPlayerKey() are persistent; the new mapping will be
-  saved to your game's "save" directory when the engine exits and reloaded when
-  the game is started again. Key mappings for other games are not affected.
-  
-  See key-mapping.txt for more information on these functions and an easy way
-  you can allow your players to change the key mappings.
-
-IsKeyPressed(keycode);
-IsAnyKeyPressed();
-
-  Returns true if the user is currently pressing either a specified key, or any
-  key on the keyboard, respectively.
-
-GetToggleState(keycode);
-
-  Gets the state of the specified toggle key, which should be one of the
-  following:
-  
+    KEY_ESCAPE
+    KEY_F1
+    KEY_F2
+    KEY_F3
+    KEY_F4
+    KEY_F5
+    KEY_F6
+    KEY_F7
+    KEY_F8
+    KEY_F9
+    KEY_F10
+    KEY_F11
+    KEY_F12
+    KEY_TILDE
+    KEY_0
+    KEY_1
+    KEY_2
+    KEY_3
+    KEY_4
+    KEY_5
+    KEY_6
+    KEY_7
+    KEY_8
+    KEY_9
+    KEY_MINUS
+    KEY_EQUALS
+    KEY_BACKSPACE
+    KEY_TAB
+    KEY_A
+    KEY_B
+    KEY_C
+    KEY_D
+    KEY_E
+    KEY_F
+    KEY_G
+    KEY_H
+    KEY_I
+    KEY_J
+    KEY_K
+    KEY_L
+    KEY_M
+    KEY_N
+    KEY_O
+    KEY_P
+    KEY_Q
+    KEY_R
+    KEY_S
+    KEY_T
+    KEY_U
+    KEY_V
+    KEY_W
+    KEY_X
+    KEY_Y
+    KEY_Z
+    KEY_SHIFT
+    KEY_CTRL
+    KEY_ALT
+    KEY_SPACE
+    KEY_OPENBRACE
+    KEY_CLOSEBRACE
+    KEY_SEMICOLON
+    KEY_APOSTROPHE
+    KEY_COMMA
+    KEY_PERIOD
+    KEY_SLASH
+    KEY_BACKSLASH
+    KEY_ENTER
+    KEY_INSERT
+    KEY_DELETE
+    KEY_HOME
+    KEY_END
+    KEY_PAGEUP
+    KEY_PAGEDOWN
+    KEY_UP
+    KEY_RIGHT
+    KEY_DOWN
+    KEY_LEFT
+    KEY_NUM_0
+    KEY_NUM_1
+    KEY_NUM_2
+    KEY_NUM_3
+    KEY_NUM_4
+    KEY_NUM_5
+    KEY_NUM_6
+    KEY_NUM_7
+    KEY_NUM_8
+    KEY_NUM_9
     KEY_CAPSLOCK
     KEY_NUMLOCK
     KEY_SCROLLLOCK
 
-  Passing any other keycode will throw an error.
+GetPlayerKey(player, button);
+SetPlayerKey(player, button, keycode);
+
+    Gets or sets the keycode mapped to a specified playerkey.  Playerkeys mirror
+    the layout of a Super NES controller.  GetPlayerKey() should be used in
+    place of hardcoded keys whenever possible, in order to allow the player to
+    customize the mappings.  'player' can be one of the following values:
+
+        PLAYER_1 (or 0)
+        PLAYER_2 (or 1)
+        PLAYER_3 (or 2)
+        PLAYER_4 (or 3)
+
+    'button' can be one of the following:
+
+        PLAYER_KEY_UP
+        PLAYER_KEY_RIGHT
+        PLAYER_KEY_DOWN
+        PLAYER_KEY_LEFT
+        PLAYER_KEY_MENU
+        PLAYER_KEY_A
+        PLAYER_KEY_B
+        PLAYER_KEY_X
+        PLAYER_KEY_Y
+
+    Modifications made by SetPlayerKey() are persistent; the new mapping will be
+    saved to your game's "save" directory when the engine exits and reloaded 
+    when the game is started again.  Key mappings for other games are not
+    affected.
+
+    See key-mapping.txt for more information on these functions and an easy way
+    you can allow your players to change the key mappings.
+
+IsKeyPressed(keycode);
+IsAnyKeyPressed();
+
+    Returns true if the user is currently pressing either a specified key, or
+    any key on the keyboard, respectively.
+
+GetToggleState(keycode);
+
+    Gets the state of the specified toggle key, which should be one of the
+    following:
+
+        KEY_CAPSLOCK
+        KEY_NUMLOCK
+        KEY_SCROLLLOCK
+
+    Passing any other keycode will throw an error.
 
 AreKeysLeft();
 GetKey();
-  
-  GetKey() returns the keycode of the next key in the keyboard queue. If the
-  queue is empty, it will wait until the user presses a key. AreKeysLeft()
-  returns true if keys are pending, and should be used to avoid delays if such
-  behavior is undesirable.
+
+    GetKey() returns the keycode of the next key in the keyboard queue.  If the
+    queue is empty, it will wait until the user presses a key.  AreKeysLeft()
+    returns true if keys are pending, and should be used to avoid delays if such
+    behavior is undesirable.
 
 ClearKeyQueue();
-  
-  Removes all keys from the keyboard queue.
+
+    Removes all keys from the keyboard queue.
 
 BindKey(keycode, on_down_script, on_up_script);
 UnbindKey(keycode);
 
-  BindKey() executes a script whenever the player presses or releases a
-  specified key. The scripts can be either functions, source code strings, or
-  null/undefined (to do nothing).  Note that bound keys are only honored during
-  the main loop of a MapEngine() call.
-  
-  UnbindKey() removes a binding created by BindKey().
+    BindKey() executes a script whenever the player presses or releases a
+    specified key.  The scripts can be either functions, source code strings, or
+    null/undefined (to do nothing).  Note that bound keys are only honored
+    during the main loop of a MapEngine() call.
+
+    UnbindKey() removes a binding created by BindKey().
 
 
 Joystick Routines
@@ -512,32 +525,32 @@ console-like experience.
 
 GetNumJoysticks();
 
-  Returns the number of joysticks currently available for use.
+    Returns the number of joysticks currently available for use.
 
 GetNumJoystickAxes(joystick);
 GetJoystickAxis(joystick, axis);
 
-  Gets the current position of a joystick axis. 'joystick' and 'axis' are zero-
-  based indices whose exact meaning depends on the device and system. Return
-  value ranges from -1.0 to 1.0, with zero indicating dead center. Call
-  GetNumJoystickAxes() to get the number of available axes.
-  
-  Note: Joystick indices are not set in stone, even on the same system, and can
-  change, e.g. after a reboot.
+    Gets the current position of a joystick axis. 'joystick' and 'axis' are
+    zero-based indices whose exact meaning depends on the device and system.
+    Return value ranges from -1.0 to 1.0, with zero indicating dead center.
+    Call GetNumJoystickAxes() to get the number of available axes.
+
+    Note: Joystick indices are not set in stone, even on the same system, and
+    can change, e.g. after a reboot.
 
 GetNumJoystickButtons(joystick);
 IsJoystickButtonPressed(joystick, button);
 
-  Returns true if a specified joystick button is pressed. 'button' is a zero-
-  based index whose exact mapping depends on the device in question. Call
-  GetNumJoystickButtons() to get the number of available buttons.
+    Returns true if a specified joystick button is pressed.  'button' is a zero-
+    based index whose exact mapping depends on the device in question.  Call
+    GetNumJoystickButtons() to get the number of available buttons.
 
 BindJoystickButton(joystick, button, on_down_script, on_up_script);
 UnbindJoystickButton(joystick, button);
 
-  Like BindKey() and UnbindKey() above, but binds a joystick button instead of
-  a keyboard key. As with BindKey(), bound joystick buttons are only honored in
-  the main MapEngine() loop.
+    Like BindKey() and UnbindKey() above, but binds a joystick button instead of
+    a keyboard key.  As with BindKey(), bound joystick buttons are only honored
+    in the main MapEngine() loop.
 
 
 Mouse Input Routines
@@ -550,25 +563,25 @@ GetMouseX();
 GetMouseY();
 SetMousePosition(x, y);
 
-  Gets or sets the location of the mouse cursor, in pixels, relative to the game
-  screen.
-  
+    Gets or sets the location of the mouse cursor, in pixels, relative to the
+    game screen.
+
 IsMouseButtonPressed(button);
 
-  Returns true if the player is pressing the specified mouse button. 'button'
-  can be one of the following:
-  
-    MOUSE_LEFT:   Left button
-    MOUSE_MIDDLE: Middle or wheel button
-    MOUSE_RIGHT:  Right button
+    Returns true if the player is pressing the specified mouse button. 'button'
+    can be one of the following:
+
+        MOUSE_LEFT:   Left button
+        MOUSE_MIDDLE: Middle or wheel button
+        MOUSE_RIGHT:  Right button
 
 GetNumMouseWheelEvents();
 GetMouseWheelEvent();
 
-  GetMouseWheelEvent() returns the next mouse wheel event in the wheel queue. If
-  the queue is empty, waits until the player moves the wheel. If this behavior
-  is undesirable, call GetNumMouseWheelEvents() first to make sure the queue
-  isn't empty.
+    GetMouseWheelEvent() returns the next mouse wheel event in the wheel queue.
+    If the queue is empty, waits until the player moves the wheel. If this
+    behavior is undesirable, call GetNumMouseWheelEvents() first to make sure
+    the queue isn't empty.
 
 
 Random Number Generation
@@ -582,46 +595,47 @@ high-quality random values and allows manual seeding.
 
 RNG.seed(seed);
 
-  Seeds the random number generator with `seed`. If the seed is floating point,
-  it will be truncated to an integer; using a seed of 812.88, for example, has
-  the same effect as 812.
+    Seeds the random number generator with `seed`. If the seed is floating
+    point, it will be truncated to an integer; using a seed of 812.88, for
+    example, has the same effect as 812.
 
 RNG.random();
 
-  Returns a floating point value in the range [0,1). This is the basic method of
-  random number generation, and a direct, drop-in replacement for Math.random().
+    Returns a floating point value in the range [0,1). This is the basic method
+    of random number generation, and is a direct, drop-in replacement for
+    Math.random().
 
 RNG.string([length]);
 
-  Returns a randomly-generated string consisting of alphanumeric characters. The
-  resulting string looks something like a YouTube video hash (e.g. YlHRHDrKS)
-  and is useful for uniquely identifying things, for example to generate
-  temporary filenames.  If no length is provided, the default is 10.
+    Returns a randomly-generated string consisting of alphanumeric characters.
+    The generated string looks something like a YouTube video hash (e.g.
+    YlHRHDrKS) and is useful for uniquely identifying things, for example to
+    generate temporary filenames.  If no length is provided, the default is 10.
 
 RNG.chance(odds);
 
-  Tests a percentage chance. Returns true if the chance succeeds, false
-  otherwise. `odds` is a value between 0 and 1; for example, 0.75 will return
-  true 75% of the time.
+    Tests a percentage chance. Returns true if the chance succeeds, false
+    otherwise. `odds` is a value between 0 and 1; for example, 0.75 will return
+    true 75% of the time.
 
 RNG.normal(mean, sigma);
 
-  Returns a random floating point value normally distributed around `mean` with
-  a standard deviation specified by `sigma`. The probability distribution of
-  this function is sometimes termed a "bell curve."
+    Returns a random floating point value normally distributed around `mean`
+    with a standard deviation specified by `sigma`. The probability distribution
+    of this function is sometimes termed a "bell curve."
 
 RNG.range(min, max);
 
-  Returns a random integer uniformly distributed within the range [min,max].
+    Returns a random integer uniformly distributed within the range [min,max].
 
 RNG.sample(array);
 
-  Returns a single randomly-chosen item from `array`.
+    Returns a single randomly-chosen item from `array`.
 
 RNG.uniform(mean, variance);
 
-  Returns a random floating point value uniformly distributed around `mean` with
-  absolute maximum deviation specified by `variance`.
+    Returns a random floating point value uniformly distributed around `mean`
+    with absolute maximum deviation specified by `variance`.
 
 
 Graphics Routines
@@ -634,36 +648,36 @@ output.
 
 FlipScreen();
 
-  Flips the backbuffer. Note that this also performs event loop processing, so
-  if it is not called regularly, the engine will stop responding.
+    Flips the backbuffer. Note that this also performs event loop processing, so
+    if it is not called regularly, the engine will stop responding.
 
 GetFrameRate();
 SetFrameRate(fps);
 
-  Gets or sets the current target frame rate. Your game will be automatically
-  throttled to match this framerate. If `fps` is zero, the game will be
-  unthrottled, which may be useful for benchmarks but otherwise is usually a
-  waste of CPU resources.
+    Gets or sets the current target frame rate. Your game will be automatically
+    throttled to match this framerate. If `fps` is zero, the game will be
+    unthrottled, which may be useful for benchmarks but otherwise is usually a
+    waste of CPU resources.
 
 GetScreenWidth();
 GetScreenHeight();
 SetScreenSize(width, height);
 
-  Gets or sets the current screen resolution.
+    Gets or sets the current screen resolution.
 
 SetClippingRectangle(x, y, width, height);
 GetClippingRectangle();
-  
-  Gets or sets the clipping rectangle. All rendering done to the backbuffer is
-  constrained to this rectangle. Note that GetClippingRectangle() returns the
-  current clipping rectangle as an object describing it, with `x`, `y`, `width`
-  and `height` properties.
+
+    Gets or sets the clipping rectangle. All rendering done to the backbuffer is
+    constrained to this rectangle. Note that GetClippingRectangle() returns the
+    current clipping rectangle as an object describing it, with `x`, `y`,
+    `width` and `height` properties.
 
 ApplyColorMask(color);
-  
-  Applies a full-screen color mask. The color passed in is multiplied with the
-  pixels of the backbuffer to tint the screen. This may be used for, e.g.
-  day/night effects.
+
+    Applies a full-screen color mask. The color passed in is multiplied with the
+    pixels of the backbuffer to tint the screen. This may be used for, e.g.
+    day/night effects.
 
 
 Frame Skipping
@@ -675,26 +689,26 @@ the engine running at full speed even on lower-end computers. The following
 functions are provided to manage frame skipping.
 
 IsSkippedFrame();
-  
-  Returns true if the engine has marked the current frame for skipping. Useful
-  to avoid performing extra rendering calculations when nothing is going to be
-  rendered anyway.
+
+    Returns true if the engine has marked the current frame for skipping. Useful
+    to avoid performing extra rendering calculations when nothing is going to be
+    rendered anyway.
 
 GetMaxFrameSkips();
 SetMaxFrameSkips(max_skips);
 
-  Gets or sets the maximum number of consecutive frames the engine is allowed
-  to skip. The default is 5 frames. If your game uses GrabImage or GrabSurface
-  pervasively, it may be useful to set this to zero. This will almost certainly
-  lead to lag, however.
-  
+    Gets or sets the maximum number of consecutive frames the engine is allowed
+    to skip.  The default is 5 frames.  If your game uses GrabImage() or
+    GrabSurface() pervasively, it may be useful to set this to zero. This will
+    almost certainly lead to lag, however.
+
 UnskipFrame();
 
-  Instructs the engine to re-enable rendering for the current frame if it has
-  been marked for skipping. This also clears the backbuffer. This function can
-  be used in lieu of SetMaxFrameSkips(0) during sections which make heavy use of
-  GrabImage or GrabSurface without impacting performance for the rest of the
-  game.
+    Instructs the engine to re-enable rendering for the current frame if it has
+    been marked for skipping.  This also clears the backbuffer. This call can
+    be used in lieu of SetMaxFrameSkips(0) during sections which make heavy use
+    of GrabImage() or GrabSurface() without impacting performance for the rest
+    of the game.
 
 
 Galileo Graphics API
@@ -711,148 +725,148 @@ and textures which are then uploaded to the GPU to save time during the main
 render loop.
 
 new Color(red, green, blue[, alpha]);
-  
-  Constructs a new Color object. Color objects are used to specify the color of
-  elements such as vertices and primitives. Color components should be in the
-  range [0-255] and out-of-range values will be silently clamped. 'alpha'
-  specifies opacity and defaults to 255 if not provided.
+
+    Constructs a new Color object.  Color objects are used to specify the color
+    of elements such as vertices and primitives.  Color components should be in
+    the range [0-255] and out-of-range values will be silently clamped.  `alpha`
+    specifies opacity and defaults to 255 if not provided.
 
 Color:clone();
-  
-  Copies this Color object to a new one. Changes to the new object will not
-  affect the original.
+
+    Copies this Color object to a new one. Changes to the new object will not
+    affect the original.
 
 Color:red (read/write)
 Color:green (read/write)
 Color:blue (read/write)
 Color:alpha (read/write)
 
-  Gets or sets the individual components of the color. Values outside the range
-  of [0-255] are accepted, but the engine will automatically clamp them during
-  rendering.
+    Gets or sets the individual components of the color. Values outside the
+    range of [0-255] are accepted, but the engine will automatically clamp them
+    during rendering.
 
 BlendColors(color1, color2);
-  
-  Averages two colors and returns the new Color object from the result.
+
+    Averages two colors and returns the new Color object from the result.
 
 BlendColorsWeighted(color1, color2, w1, w2);
 
-  Returns a new Color object which is a weighted average of the two passed in.
-  'w1' and 'w2' are the relative weights of the two colors.
+    Returns a new Color object which is a weighted average of the two passed in.
+    'w1' and 'w2' are the relative weights of the two colors.
 
 new Image(filename);
-  
-  SphereFS compliant.
-  
-  Constructs a new Image object from an image file. Images can be used as
-  textures for Shape objects or drawn directly using the legacy method
-  Image:blit().
-  
-  Images are read-only. If you need a writable image, you should use a Surface
-  object instead.
+
+    SphereFS compliant.
+
+    Constructs a new Image object from an image file. Images can be used as
+    textures for Shape objects or drawn directly using the legacy method
+    Image:blit().
+
+    Images are read-only. If you need a writable image, you should use a Surface
+    object instead.
 
 new Image(surface);
-  
-  Creates an Image object with the contents of a specified surface. This can be
-  used to regain rendering performance after composing the surface.
+
+    Creates an Image object with the contents of a specified surface. This can
+    be used to regain rendering performance after composing the surface.
 
 Image:width (read-only)
 Image:height (read-only)
 
-  Gets the width or height of the image, in pixels.
+    Gets the width or height of the image, in pixels.
 
 new Vertex(x, y[, color[, u, v]]);
-  
-  Constructs an object describing a vertex of a shape. x and y specify the
-  location of the vertex relative to the shape's origin. The color, if
-  specified, is multiplied with the texture at that point in the shape to "tint"
-  the vertex.  U/V are texture coordinates ranging from 0 to 1 describing the
-  part of the texture which will be mapped to that vertex.
+
+    Constructs an object describing a vertex of a shape. x and y specify the
+    location of the vertex relative to the shape's origin. The color, if
+    specified, is multiplied with the texture at that point in the shape to
+    "tint" the vertex.  U/V are texture coordinates ranging from 0 to 1
+    describing the part of the texture which will be mapped to that vertex.
 
 new Shape(vertices, image[, primitive_type]);
 
-  Constructs a primitive shape out of the provided array of vertices textured
-  with the Image object specified by `image`. `primitive_type` is optional and
-  can be one of the following:
-    
-    SHAPE_AUTO - Primitive type is determined automatically based on the number
-                 of vertices. This is the default.
-    
-    SHAPE_POINT_LIST - A point list. Each vertex represents a single point to be
-                       rendered. Useful for particle effects.
-  
-    SHAPE_LINE_LIST - A line list. Each pair of vertices represents a line
-                      segment.
-    
-    SHAPE_TRIANGLE_LIST - A triangle will be drawn for every 3 vertices.
-    
-    SHAPE_TRIANGLE_STRIP - A triangle strip. The first 3 vertices represent a
-                           complete triangle, and each subsequent vertex is
-                           combined with the previous two to form another.
-                           Number of triangles drawn is equal to
-                           (num_verts - 2).
-    
-    SHAPE_TRIANGLE_FAN - A series of triangles is drawn, all sharing the first
-                         vertex. As with a strip, the number of triangles is
-                         equal to (num_verts - 2).
+    Constructs a primitive shape out of the provided array of vertices textured
+    with the Image object specified by `image`.  `primitive_type` is optional
+    and can be one of the following:
+
+        SHAPE_AUTO - Primitive type is determined automatically based on the
+                     number of vertices.  This is the default.
+
+        SHAPE_POINT_LIST - A point list. Each vertex represents a single point
+                           to be rendered.  Useful for particle effects.
+
+        SHAPE_LINE_LIST - A line list.  Each pair of vertices represents a line
+                          segment.
+
+        SHAPE_TRIANGLE_LIST - A triangle will be drawn for every 3 vertices.
+
+        SHAPE_TRIANGLE_STRIP - A triangle strip.  The first 3 vertices represent
+                               a complete triangle, and each subsequent vertex
+                               is combined with the previous two to form
+                               another.  Number of triangles drawn is equal to
+                               (num_verts - 2).
+
+        SHAPE_TRIANGLE_FAN - A series of triangles is drawn, all sharing the
+                             first vertex.  As with a strip, the total number of
+                             triangles is equal to (num_verts - 2).
 
 Shape:image (read/write)
-  
-  The Image to be used when texturing the shape. This can be null, in which case
-  the vertex colors alone will determine the rendered shape's appearance.
+
+    The Image to be used when texturing the shape. This can be null, in which
+    case the vertex colors alone will determine the rendered shape's appearance.
 
 new Group(shapes, shader);
-  
-  Constructs a Group out of the provided array of Shape objects. `shader` is the
-  shader program to use when rendering the group, obtained by calling either the
-  ShaderProgram constructor or GetDefaultShaderProgram(). See below for more
-  information on shaders.
+
+    Constructs a Group out of the provided array of Shape objects.  `shader` is
+    the shader program to use when rendering the group, obtained by calling
+    either the ShaderProgram constructor or GetDefaultShaderProgram().  See
+    below for more information on shaders.
 
 Group:draw();
-  
-  Renders the group to the backbuffer. Any transformations specified for the
-  group (see below for properties) are applied as if the entire group were a
-  single primitive.
+
+    Renders the group to the backbuffer. Any transformations specified for the
+    group (see below for properties) are applied as if the entire group were a
+    single primitive.
 
 Group:x (read/write)
 Group:y (read/write)
-  
-  Sets the location the Group will be drawn at. When using default shaders,
-  these are in raster coordinates where +X is right and +Y is down. Note that
-  the translation described by these values is applied *after* rotation. To
-  apply translation before rotation, use the `rotX` and `rotY` properties (see
-  below).
+
+    Sets the location the Group will be drawn at. When using default shaders,
+    these are in raster coordinates where +X is right and +Y is down. Note that
+    the translation described by these values is applied *after* rotation. To
+    apply translation before rotation, use the `rotX` and `rotY` properties (see
+    below).
 
 Group:angle (read/write)
-  
-  The entire Group is rotated by this angle when rendered.
+
+    The entire Group is rotated by this angle when rendered.
 
 Group:rotX (read/write)
 Group:rotY (read/write)
-  
-  Specifies the amount by which to translate before rotation is applied. The
-  shapes in the group will revolve about the origin at a distance determined by
-  these values.
+
+    Specifies the amount by which to translate before rotation is applied.  The
+    shapes in the group will revolve about the origin at a distance determined
+    by these values.
 
 Group:shader (read/write);
 
-  Gets or sets the ShaderProgram used when rendering this Group.
+    Gets or sets the ShaderProgram used when rendering this Group.
 
 GetDefaultShaderProgram();
-  
-  Gets the default Galileo shader program. This is a very barebones shader which
-  uses screen coordinates for vertices and performs only basic texture mapping
-  in the fragment shader.
+
+    Gets the default Galileo shader program.  This is a very barebones shader
+    which uses screen coordinates for vertices and performs only basic texture
+    mapping in the fragment shader.
 
 new ShaderProgram(shader_files);
-  
-  SphereFS compliant.
-  
-  Constructs a ShaderProgram from a set of shader sources. `shader_files` should
-  be an object with the following properties:
-    
-    vertex:   The filename of the source for the vertex shader.
-    fragment: The filename of the source for the fragment shader.
+
+    SphereFS compliant.
+
+    Constructs a ShaderProgram from a set of shader sources. `shader_files`
+    should be an object with the following properties:
+
+        .vertex:   The filename of the source for the vertex shader.
+        .fragment: The filename of the source for the fragment shader.
 
 
 Color Matrices
@@ -862,18 +876,20 @@ A color matrix is used to transform indivual pixel colors similar to the way
 matrices are used in graphics to transform points. Color matrices operate on the
 individual color components (RGB) of the pixel, as follows:
 
-  [ rn, rr, rg, rb ]   [r]    r' = rn + (rr * r + rg * g + rb * b) / 255
-  [ gn, gr, gg, gb ] * [g]    g' = gn + (gr * r + gg * g + gb * b) / 255
-  [ bn, br, bg, bb ]   [b]    b' = bn + (br * r + bg * g + bb * b) / 255
+    [ rn, rr, rg, rb ]   [r]    r' = rn + (rr * r + rg * g + rb * b) / 255
+    [ gn, gr, gg, gb ] * [g]    g' = gn + (gr * r + gg * g + gb * b) / 255
+    [ bn, br, bg, bb ]   [b]    b' = bn + (br * r + bg * g + bb * b) / 255
 
 new ColorMatrix(rn, rr, rg, rb, gn, gr, gg, gb, bn, br, bg, bb);
 
-  Constructs a new ColorMatrix object which can be used in color transformation
-  operations. All arguments are required and specify the contents of the matrix.
+    Constructs a new ColorMatrix object which can be used in color
+    transformation operations. All arguments are required and specify the
+    contents of the matrix.
 
 ColorMatrix.apply(color);
-  
-  Applies the matrix to the specified color value and returns the output color.
+
+    Applies the matrix to the specified color value and returns the output
+    color.
 
 
 Surfaces
@@ -886,40 +902,40 @@ at the expense of direct rendering performance.
 
 new Surface(width, height[, fill_color]);
 
-  Constructs a new surface with the specified width and height, optionally
-  filled with 'fill_color'. If a fill color is not provided, the created surface
-  will be filled with transparent pixels.
+    Constructs a new surface with the specified width and height, optionally
+    filled with 'fill_color'.  If a fill color is not provided, the created
+    surface will be filled with transparent pixels.
 
 new Surface(filename);
-  
-  SphereFS compliant.
-  
-  Constructs a new surface from the specified image file.
+
+    SphereFS compliant.
+
+    Constructs a new surface from the specified image file.
 
 GrabSurface(x, y, width, height);
-  
-  Creates a surface with the contents of the specified portion of the
-  backbuffer. If this called during a skipped frame, the content of the created
-  surface is undefined. See the documentation for the Frameskip API above for
-  information on how to mitigate this.
+
+    Creates a surface with the contents of the specified portion of the
+    backbuffer. If this called during a skipped frame, the content of the
+    created surface is undefined. See the documentation for the Frameskip API
+    above for information on how to mitigate this.
 
 Surface:width (read-only)
 Surface:height (read-only)
 
-  Gets the width or height of the surface, in pixels.
+    Gets the width or height of the surface, in pixels.
 
 Surface:clone();
 
-  Creates a new surface from the contents of this one. Modifications to the new
-  surface will not affect the original.
+    Creates a new surface from the contents of this one. Modifications to the
+    new surface will not affect the original.
 
 Surface:save(filename);
 
-  'filename' is relative to '~sgm/images'. Not SphereFS compliant.
-  
-  Saves the contents of the surface to an image file. The filename extension
-  determines the format of the saved image. Supported formats are PNG, BMP and
-  JPG.
+    Not SphereFS compliant: 'filename' is relative to '~sgm/images'.
+
+    Saves the contents of the surface to an image file.  The filename extension
+    determines the format of the saved image.  Supported formats are PNG, BMP
+    and JPG.
 
 
 Windowstyles
@@ -932,23 +948,23 @@ a game.
 
 new WindowStyle(filename);
 
-  SphereFS compliant.
-  
-  Constructs a WindowStyle object from a windowstyle file. The file must be in
-  Sphere RWS format.
-  
+    SphereFS compliant.
+
+    Constructs a WindowStyle object from a windowstyle file. The file must be in
+    Sphere RWS format.
+
 WindowStyle:colorMask (read/write)
 
-  Gets or sets the windowstyle color mask. This is the color that is combined
-  with the windowstyle images to tint the rendered window. If this is not
-  modified, the default color is #FFFFFFFF and the windowstyle will be rendered
-  as-is.
+    Gets or sets the windowstyle color mask.  This is the color that is combined
+    with the windowstyle images to tint the rendered window.  If this is not
+    modified, the default color is #FFFFFFFF and the windowstyle will be
+    rendered as-is.
 
 WindowStyle:drawWindow(x, y, width, height);
 
-  Renders a window to the backbuffer using this windowstyle. Note that the
-  dimensions provided include the window border, so you will need to make it a
-  bit larger than your content.
+    Renders a window to the backbuffer using this windowstyle.  Note that the
+    dimensions provided include the window border, so you will need to make it a
+    bit larger than your content.
 
 
 Fonts and Text Rendering
@@ -958,73 +974,74 @@ A common task in a game engine, at some point you will probably want to get text
 on the screen.  In minisphere, you use a Font object to do this.
 
 GetSystemFont();
-  
-  Returns a Font object for the engine's built-in default font. This can be used
-  in lieu of the Font constructor for prototyping--or even if you just prefer
-  the default font.
+
+    Returns a Font object for the engine's built-in default font.  This can be
+    used in lieu of the Font constructor for prototyping--or even if you just
+    prefer the default font.
 
 new Font(filename);
-  
-  SphereFS compliant.
-  
-  Constructs a Font object from a font file. The file must be in Sphere RFN
-  format.
+
+    SphereFS compliant.
+
+    Constructs a Font object from a font file. The file must be in Sphere RFN
+    format.
 
 Font:clone();
-  
-  Creates a new Font object by copying everything from this one. Modifications
-  to the cloned font then won't affect the original.
+
+    Creates a new Font object by copying everything from this one.
+    Modifications to the cloned font then won't affect the original.
 
 Font:colorMask (read/write)
-  
-  Gets or sets the color mask, which is blended with the font bitmaps when text
-  is rendered using the font.
+
+    Gets or sets the color mask, which is blended with the font bitmaps when
+    text is rendered using the font.
 
 Font:height (read-only)
 
-  Gets the line height, in pixels, for text rendered using this font.
+    Gets the line height, in pixels, for text rendered using this font.
 
 Font:getCharacterImage(cp);
-  
-  Gets an Image object for a specified character glyph. 'cp' is an integer in
-  range [0-255] specifying the ASCII character code.
+
+    Gets an Image object for a specified character glyph.  `cp` is an integer in
+    the range [0-255] specifying the ASCII character code.
 
 Font:setCharacterImage(cp, image);
-  
-  Sets the glyph image for a specified character. 'cp' has the same meaning as
-  above and 'image' is the replacement Image object. Note that replacing glyph
-  images requires the font metrics to be recalculated, which may cause
-  performance issues if overused.
+
+    Sets the glyph image for a specified character.  `cp` has the same meaning
+    as above and `image` is the replacement Image object.  Note that replacing
+    glyph images requires the font metrics to be recalculated, which may cause
+    performance issues if overused.
 
 Font:getStringWidth(string);
 
-  Gets the width, in pixels, of 'string' if it were rendered using this font.
+    Gets the width, in pixels, of `string` when it is rendered using this font.
 
 Font:getStringHeight(string, wrap_width);
-  
-  Gets the height, in pixels, of the string if it were rendered using using
-  Font:drawTextBox(), passing 'wrap_width'.
+
+    Gets the height, in pixels, of the string when it is rendered using
+    Font:drawTextBox(), passing `wrap_width`.
 
 Font:wordWrapString(text, wrap_width);
 
-  Wraps 'text' as if it were drawn with Font:drawTextBox() with the specified
-  wrap width. Returns an array of strings, representing the lines of the wrapped
-  string.
+    Wraps `text` as if it were drawn with Font:drawTextBox() with the specified
+    wrap width.  Returns an array of strings, representing the lines of the
+    wrapped string.
 
 Font:drawText(x, y, text);
 
-  Renders 'text' at (x,y) using this font. The text is not wrapped.
+    Renders `text` at (x,y) using this font.  The text is not wrapped.
 
 Font:drawZoomedText(x, y, scale, text);
-  
-  Renders 'text' at (x,Y0 using this font, scaled according to 'scale'. For
-  example, a scale of 2.0 is double size. As with Font:drawText(), the text is
-  not wrapped.
+
+    Renders `text` at (x, y) using this font, scaled according to `scale`. For
+    example, a scale of 2.0 is double size.  As with Font:drawText(), the text
+    is not wrapped.
 
 Font:drawTextBox(x, y, width, height, x_offset, text);
-  
-  Renders 'text' at (x,y) wrapped and constrained to a box of the specified
-  width and height. 'x_offset' is added to the X coordinate to offset the text.
+
+    Renders `text` at (x, y) wrapped and constrained to a box of the specified
+    width and height.  `x_offset` is added to the X coordinate to offset the
+    text.
 
 
 Audialis Sound Routines
@@ -1036,148 +1053,150 @@ which can be used to adjust certain parameters across all sounds associated with
 that mixer. This is useful for implementing global volume controls, for example.
 
 GetDefaultMixer();
-  
-  Gets the default Audialis mixer. The default mixer outputs 44.1 kHz 16-bit
-  sound with two channels, i.e. CD quality.
+
+    Gets the default Audialis mixer.  The default mixer outputs 44.1 kHz 16-bit
+    sound with two channels, i.e. CD quality.
 
 new Mixer(frequency, bits[, channels]);
 
-  Constructs a new Mixer object. Any sounds played through the mixer will use
-  the format specified by the parameters above. 'frequency' is the sample rate,
-  'bits' specifies the bit depth (allowed values are 8, 16 and 24), and
-  'channels' is the number of channels, ranging [1-7]. Note that channel counts
-  of 5 or higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
-  
-  Do note that this creates a _hardware_ mixer. If the requested format is not
-  supported by the system, an error will be thrown ("Unable to create voice").
+    Constructs a new Mixer object.  Any sounds played through the mixer will use
+    the format specified by the parameters above. `frequency` is the sample
+    rate, `bits` specifies the bit depth (allowed values are 8, 16 and 24), and
+    `channels` is the number of channels, ranging [1-7].  Note that channel
+    counts of 5 or higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
+
+    Do note that this creates a _hardware_ mixer.  If the requested format is
+    not supported by the system, an error will be thrown ("unable to create
+    voice").
 
 Mixer:volume (read/write)
-  
-  Gets or sets the output volume of the mixer. This will affect the volume of
-  any sounds played through the mixer.
+
+    Gets or sets the output volume of the mixer. This will affect the volume of
+    any sounds played through the mixer.
 
 new Sound(filename[, mixer]);
-  
-  SphereFS compliant.
-  
-  Constructs a Sound object from the specified audio file. Supported sound
-  formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC. minisphere does
-  not support mp3 or MIDI.
-  
-  'mixer', if provided, specifies the mixer which will be used to play the
-  sound. If no mixer is specified, the built-in stereo mixer will be used. See
-  GetDefaultMixer() above.
+
+    SphereFS compliant.
+
+    Constructs a Sound object from the specified audio file.  Supported sound
+    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  minisphere does
+    not support mp3 or MIDI.
+
+    `mixer`, if provided, specifies the mixer which will be used to play the
+    sound.  If no mixer is specified, the built-in stereo mixer will be used.
+    See GetDefaultMixer() above.
 
 Sound:playing (read-only)
 
-  true if the sound is currently playing, false otherwise.
+    true if the sound is currently playing, false otherwise.
 
 Sound:length (read-only)
-  
-  Gets the length of the sound in microseconds.
+
+    Gets the length of the sound in microseconds.
 
 Sound:mixer (read/write)
-  
-  Gets or sets the mixer used to play the sound.
+
+    Gets or sets the mixer used to play the sound.
 
 Sound:pan (read/write)
 
-  Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full left,
-  and 1.0 is full right.
+    Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
+    left, and 1.0 is full right.
 
 Sound:pitch (read/write)
 
-  Gets the current relative pitch of the sound. 1.0 is normal. Note that this
-  is not a true pitch adjustment: the playback speed will be altered.
+    Gets the current relative pitch of the sound. 1.0 is normal.  Note that this
+    is not a true pitch adjustment: the playback speed will be altered.
 
 Sound:position (read/write)
-  
-  Gets or sets the playback position within the sound, in microseconds.
+
+    Gets or sets the playback position within the sound, in microseconds.
 
 Sound:repeat (read/write)
 
-  Gets or sets whether the sound will automatically repeat when it reaches the
-  end.
+    Gets or sets whether the sound will automatically repeat when it reaches the
+    end.
 
 Sound:seekable (read-only)
- 
-  Gets or sets whether the sound is seekable. Currently all supported formats
-  are seekable, so this will always be true.
+
+    Gets or sets whether the sound is seekable.  Currently all supported formats
+    are seekable, so this will always be true.
 
 Sound:volume (read/write)
-  
-  Gets or sets the current volume of the sound. 0.0 is silent, 1.0 is full
-  volume. Higher values are allowed, but may introduce distortion due to
-  clipping.
+
+    Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
+    volume.  Higher values are allowed, but may introduce distortion due to
+    clipping.
 
 Sound:pause();
-  
-  Pauses the sound. If it is already paused, this has no effect.
+
+    Pauses the sound.  If it is already paused, this has no effect.
 
 Sound:play([is_looping]);
-  
-  Begins or resumes sound playback. The semantics of this function are a bit
-  counterintuitive, but match the behavior of Sphere 1.5. When called with no
-  arguments, Sound:play() resumes a paused sound. Otherwise, the sound is
-  restarted from the beginning (even if it was already playing). If 'is_looping'
-  is true, the sound will automatically repeat when playback ends.
+
+    Begins or resumes sound playback. The semantics of this function are a bit
+    counterintuitive, but match the behavior of Sphere 1.5. When called with no
+    arguments, Sound:play() resumes a paused sound. Otherwise, the sound is
+    restarted from the beginning (even if it was already playing). If
+    `is_looping` is true, the sound will automatically repeat when playback
+    ends.
 
 Sound:reset();
-  
-  Seeks to the beginning of the stream. Playback state is not altered; if the
-  sound is playing at the time of this call, it simply starts over from the
-  beginning. Essentially, this has the same effect as setting Sound:position to
-  zero.
+
+    Seeks to the beginning of the stream. Playback state is not altered; if the
+    sound is playing at the time of this call, it simply starts over from the
+    beginning. Essentially, this has the same effect as setting Sound:position
+    to zero.
 
 Sound:stop();
-  
-  Stops the sound. The playback position will be reset to the beginning, even if
-  the sound was not playing.
+
+    Stops the sound. The playback position will be reset to the beginning, even
+    if the sound was not playing.
 
 new SoundStream([frequency[, bits[, channels]]]);
-  
-  Constructs a sound stream, which plays arbitrary sound data provided by the
-  game at runtime. This may be used, for example, to generate sound procedurally
-  or add support for an unsupported audio format in script. 'frequency'
-  specifies the stream's sample rate and 'channels' the number of audio
-  channels, between 1 and 7. Note that channel counts of 5 and higher imply an
-  additional LFE (subwoofer) channel.
-  
-  The default stream format is 8-bit 22050Hz with 1 channel.
+
+    Constructs a sound stream, which plays arbitrary sound data provided by the
+    game at runtime.  This may be used, for example, to generate sound
+    procedurally or add support for an unsupported audio format in script.
+    `frequency` specifies the stream's sample rate and 'channels' the number of
+    audio channels, ranging [1-7].  Channel counts of 5 and higher imply an
+    additional LFE (subwoofer) channel.
+
+    The default stream format is 8-bit 22050Hz with 1 channel.
 
 SoundStream:bufferSize (read-only)
-  
-  Gets the total number of samples in the stream's buffer.
-  
+
+    Gets the total number of samples in the stream's buffer.
+
 SoundStream:mixer (read/write)
-  
-  Gets or sets the mixer used to play the stream.
+
+    Gets or sets the mixer used to play the stream.
 
 SoundStream:play([mixer]);
-  
-  Starts the stream playing. Ideally, some audio should be pre-buffered into the
-  stream (see SoundStream:buffer() above) first to minimize the risk of buffer
-  underrun.
-  
-  'mixer' is optional and specifies the mixer used to play the stream. If no
-  mixer is provided, Audialis will use the default mixer (see GetDefaultMixer())
-  to play the stream.
+
+    Starts the stream playing. Ideally, some audio should be pre-buffered into 
+    the stream (see SoundStream:write() below) first to minimize the risk of
+    buffer underrun.
+
+    `mixer` is optional and specifies the mixer used to play the stream.  If no
+    mixer is provided, Audialis will use the default mixer (see
+    GetDefaultMixer()) to play the stream.
 
 SoundStream:pause();
 
-  Temporarily pauses playback of the stream.
+    Temporarily pauses playback of the stream.
 
 SoundStream:stop();
 
-  Stops playback of the stream and frees its buffer. This should be called when
-  you are done using a stream. The stream may be reused after a stop() call, but
-  you will have to feed new audio data.
+    Stops playback of the stream and frees its buffer.  This should be called
+    when you are done using a stream.  The stream may be reused after a stop()
+    call, but you will have to feed new audio data.
 
 SoundStream:write(data);
-  
-  Writes audio data to the stream buffer. 'data' is an ArrayBuffer, TypedArray
-  or DataView containing the data to write. Audio data must be fed into a stream
-  continuously while it is playing to prevent interruption.
+
+    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
+    TypedArray or DataView containing the data to write.  Audio data must be fed
+    into a stream continuously while it is playing to prevent interruption.
 
 
 Byte Arrays
@@ -1194,62 +1213,63 @@ only for backwards compatibility. New games should use the native JavaScript
 ArrayBuffer, TypedArray, or DataView objects instead.
 
 new ByteArray(num_bytes);
-  
-  Constructs a byte array which can hold 'num_bytes' of data. A byte array
-  cannot be resized after it is created, so you will have to plan ahead to
-  choose the right size. Note that byte arrays start out empty, with all bytes
-  set to zero.
+
+    Constructs a byte array which can hold 'num_bytes' of data.  A byte array
+    cannot be resized after it is created, so you will have to plan ahead to
+    choose the right size.  Note that byte arrays start out empty, with all
+    bytes set to zero.
 
 new ByteArray(string);
-  
-  Constructs a byte array from the bytes of the provided string. The size of
-  the created byte array will be the number of bytes in the string (which may
-  be greater than the string length!).
+
+    Constructs a byte array from the bytes of the provided string.  The size of
+    the created byte array will be the number of bytes in the string (which may
+    be greater than the string length!).
 
 ByteArray:length (read-only)
 ByteArray:size (read-only)
 
-  Gets the size of the byte array, in bytes.
+    Gets the size of the byte array, in bytes.
 
 ByteArray:concat(byte_array);
 
-  Returns a new byte array which is the result of appending 'byte_array' to the
-  end of the one this method is called for.
+    Returns a new byte array which is the result of appending 'byte_array' to
+    the end of the one this method is called for.
 
 ByteArray:deflate([level]);
-  
-  Compresses the data in the byte array using the zlib deflate algorithm and
-  returns a new ByteArray containing the compressed data. 'level' specifies the
-  relative compression level in the range [0-9]. If not provided, a default
-  level is used (usually 6).
+
+    Compresses the data in the byte array using the zlib deflate algorithm and
+    returns a new ByteArray containing the compressed data. 'level' specifies
+    the relative compression level in the range [0-9].  If not provided, a
+    default level is used (usually 6).
 
 ByteArray:inflate([max_size]);
-  
-  Decompresses a byte array containing deflated data. If the byte array doesn't
-  contain valid compressed data such as generated by deflate(), an error will be
-  thrown. 'max_size' specifies the maximum size of the uncompressed data.  If it
-  is omitted, the inflate buffer will be dynamically sized to fit the data.
-  
-  Important: It is recommended to provide a maximum buffer size to inflate()
-             whenever possible. Not doing so leaves the engine vulnerable to an
-             inflation bomb attack.
-  
+
+    Decompresses a byte array containing deflated data.  If the byte array
+    doesn't contain valid compressed data such as generated by deflate(), an
+    error will be thrown.  `max_size` specifies the maximum size of the
+    uncompressed data.  If it is omitted, the inflate buffer will be dynamically
+    sized to fit the data.
+
+    Important: It is recommended to provide a maximum buffer size to inflate()
+               whenever possible.  Not doing so leaves your game vulnerable to
+               zip bomb-style exploits.
+
 ByteArray:resize(new_size);
-  
-  Resizes the byte array to hold the specified number of bytes. The existing
-  contents are preserved to the extent possible, and if the new size is larger,
-  all additional bytes will be set to zero.
+
+    Resizes the byte array to hold the specified number of bytes. The existing
+    contents are preserved to the extent possible, and if the new size is
+    larger, all additional bytes will be set to zero.
 
 ByteArray:slice(start[, end])
-  
-  Returns a new byte array which is the result of copying all bytes between
-  start and end, exclusive. If 'end' is negative, it is relative to the end of
-  the byte array; if it is omitted, the entirety of the array from 'start'
-  onwards is taken.
+
+    Returns a new byte array which is the result of copying all bytes between
+    start and end, exclusive. If 'end' is negative, it is relative to the end of
+    the byte array; if it is omitted, the entirety of the array from 'start'
+    onwards is taken.
 
 CreateStringFromByteArray(byte_array);
-  
-  Builds a string from the bytes in 'byte_array'.
+
+    Builds a string from the bytes in 'byte_array'.
 
 
 Networking (Sockets)
@@ -1261,94 +1281,95 @@ deprecated. Under minisphere, sockets are divided into two types: Listening
 sockets, used for servers, and I/O sockets, for clients.
 
 GetLocalName();
-  
-  Returns the calling machine's network name.
+
+    Returns the calling machine's network name.
 
 GetLocalAddress();
 
-  Returns the calling machine's local IP address.
+    Returns the calling machine's local IP address.
 
 new ListeningSocket(port[, backlog_size]);
-  
-  Constructs a new listening socket which listens for connections on `port`.
-  `backlog_size` specifies the size of the backlog. If the backlog fills, new
-  connections will be dropped.
+
+    Constructs a new listening socket which listens for connections on `port`.
+    `backlog_size` specifies the size of the backlog. If the backlog fills, new
+    connections will be dropped.
 
 ListeningSocket:accept();
 
-  If one or more connections are waiting in the backlog, accepts one of them and
-  returns an IOSocket object representing the connection. Otherwise, returns
-  null. This should be called regularly to prevent the backlog from filling up.
+    If one or more connections are waiting in the backlog, accepts one of them
+    and returns an IOSocket object representing the connection.  Otherwise,
+    returns null.  This should be called regularly to prevent the backlog from
+    filling up.
 
 ListeningSocket:close();
-  
-  Disconnects the socket. Any sockets in the backlog will be purged and no new
-  connections can be made unless a new ListeningSocket is created.
+
+    Disconnects the socket. Any sockets in the backlog will be purged and no new
+    connections can be made unless a new ListeningSocket is created.
 
 new IOSocket(hostname, port);
-  
-  Connects to `hostname` on `port` and constructs an IOSocket representing the
-  connection. The hostname can either be a named address (e.g. google.com) or an
-  IP address (e.g. 127.0.0.1). As this operation is non-blocking, a valid socket
-  will be returned even if the connection can be not be made; you must call
-  IOSocket:isConnected() to find out when the connection has opened.
+
+    Connects to `hostname` on `port` and constructs an IOSocket representing the
+    connection.  The hostname can either be a named address (e.g. google.com) or
+    an IP address (e.g. 127.0.0.1).  As this operation is non-blocking, a valid
+    socket will be returned even if the connection can be not be made; you must
+    call IOSocket:isConnected() to find out when the connection has opened.
 
 IOSocket:remoteAddress (read-only)
-  
-  Gets the IP address of the upstream end of the socket. Throws an error if
-  accessed before a connection has been established.
+
+    Gets the IP address of the upstream end of the socket.  Throws an error if
+    accessed before a connection has been established.
 
 IOSocket:remotePort (read-only)
-  
-  Gets the port that the remote machine is using for the connection. Generally
-  not a useful statistic, but it's there if you need it. Throws an error if
-  accessed before a connection is established.
+
+    Gets the port that the remote machine is using for the connection.
+    Generally not a useful statistic, but it's there if you need it.  Throws an
+    error if accessed before a connection is established.
 
 IOSocket:isConnected();
-  
-  Returns true if the a connection has been established. As long as this returns
-  false, you cannot call any other methods on the socket object. Doing so will
-  cause an error to be thrown.
+
+    Returns true if the a connection has been established.  As long as this
+    returns false, you cannot call any other methods on the socket object.
+    Doing so will cause an error to be thrown.
 
 IOSocket:getPendingReadSize();
-  
-  Gets the amount of data, in bytes, currently in the receive buffer. Call
-  IOSocket:read() or :readString() to retrieve this data.
+
+    Gets the amount of data, in bytes, currently in the receive buffer.  Call
+    IOSocket:read() or :readString() to retrieve this data.
 
 IOSocket:pipe(destination);
-  
-  Automatically pipes the data received by the socket to the specified
-  destination socket. Piping a socket into itself will create an echo server.
-  Note that only pipe can be active at a time for a given socket; calling pipe()
-  multiple times will simply change the destination.
+
+    Automatically pipes the data received by the socket to the specified
+    destination socket.  Piping a socket into itself will create an echo server.
+    Note that only one pipe can be active at a time for a given socket; calling
+    pipe() multiple times will simply change the destination.
 
 IOSocket:read(bytes);
-  
-  Reads up to `bytes` bytes from the socket and returns a ByteArray containing
-  the data received.
+
+    Reads up to `bytes` bytes from the socket and returns a ByteArray containing
+    the data received.
 
 IOSocket:readString(bytes);
-  
-  Same as IOSocket:read(), but returns a string instead of a ByteArray. This may
-  be more convenient, depending on your use case.
+
+    Same as IOSocket:read(), but returns a string instead of a ByteArray. This
+    may be more convenient, depending on your use case.
 
 IOSocket:unpipe();
 
-  Reverses the effect of a pipe() call and closes the pipe. read() can be called
-  normally afterwards.
+    Reverses the effect of a pipe() call and closes the pipe.  read() can be
+    called normally afterwards.
 
 IOSocket:write(data);
 
-  Writes data to the socket, which can be read at the other end. `data` can be
-  either a ByteArray, ArrayBuffer, TypedArray, or string.
-  
-  If a string is provided, it will be written encoded as UTF-8.
+    Writes data to the socket, which can be read at the other end.  `data` can
+    be either a ByteArray, ArrayBuffer, TypedArray, or string.
+
+    If a string is provided, it will be written encoded as UTF-8.
 
 IOSocket:close();
 
-  Disconnects the socket. Note that a socket object cannot be reused after it
-  has been closed; a new one must be created.
-  
+    Disconnects the socket.  Note that a socket object cannot be reused after it
+    has been closed; a new one must be created.
+
 
 File and Directory Management
 -----------------------------
@@ -1357,43 +1378,43 @@ These functions allow you to manage the file system. For all of these functions,
 file and directory names are relative to ~sgm/save.
 
 GetFileList([dirname]);
-  
-  'dirname' is relative to '~sgm/'. Not SphereFS compliant.
-  
-  Returns an array of strings naming files found in the specified directory. If
-  'dirname' is not provided, '~sgm/save' is assumed.
+
+    Not SphereFS compliant.  `dirname` is relative to `~sgm/`.
+
+    Returns an array of strings naming files found in the specified directory.
+    If `dirname` is not provided, `~sgm/save` is assumed.
 
 GetDirectoryList([dirname]);
-  
-  'dirname' is relative to '~sgm/'. Not SphereFS compliant.
-  
-  Returns an array of strings naming subdirectories found in the specified
-  directory. If 'dirname' is not provided, '~sgm/' is assumed. This is
-  inconsistent with GetFileList(), but is compatible with Sphere 1.x.
+
+    Not SphereFS compliant.  `dirname` is relative to `~sgm/`.
+
+    Returns an array of strings naming subdirectories found in the specified
+    directory.  If 'dirname' is not provided, `~sgm/` is assumed.  This is
+    inconsistent with GetFileList(), but is compatible with Sphere 1.x.
 
 DoesFileExist(filename);
 
-  Returns true if the specified file exists, false otherwise.
+    Returns true if the specified file exists, false otherwise.
 
 CreateDirectory(dirname);
 
-  Recursively creates a directory. It is safe to call this function if the
-  directory already exists. In that case, nothing happens.
+    Recursively creates a directory.  It is safe to call this function if the
+    directory already exists.  In that case, nothing happens.
 
 RemoveDirectory(dirname);
-  
-  Removes the specified directory from the file system. The directory must be
-  empty, otherwise an error will be thrown.
+
+    Removes the specified directory from the file system.  The directory must be
+    empty, otherwise an error will be thrown.
 
 RemoveFile(filename);
-  
-  Deletes a file from the file system. If the file cannot be deleted, an error
-  will be thrown.
+
+    Deletes a file from the file system.  If the file cannot be deleted, an
+    error will be thrown.
 
 Rename(filename, new_filename);
-  
-  Renames a file on the file system. If the file cannot be renamed, an error
-  will be thrown.
+
+    Renames a file on the file system.  If the file cannot be renamed, an error
+    will be thrown.
 
 
 File I/O
@@ -1407,20 +1428,20 @@ new KevFile(filename);
   Opens a kevfile. The file format used for the KevFile object is similar to a
   Windows INI file, containing key/value pairs separated by an equals sign, for
   instance:
-    
+
     playerName=maggie
     playtime=812:00:00
     currentMap=foodville.rmp
     # etc.
 
 KevFile:read(key, defval);
-  
+
   Reads a value from the kevfile. If the key doesn't exist in the file, 'defval'
   is returned. Note that the return type depends on the type of 'defval', either
   boolean (true/false), number, or string.
 
 KevFile:write(key, value);
-  
+
   Writes a value to the kevfile under a specified key. If the key already
   exists, it will be overwritten. Note that writes are cached, and not written
   to the file until it flushed, either by calling KevFile:flush() or
@@ -1432,51 +1453,51 @@ KevFile:flush()
   The file will remain open afterwards.
 
 KevFile:close()
-  
+
   Closes the file, writing any changes out to the file system in the process.
   You should not call any other methods on the object after this (it is safe to
   call KevFile:close() more than once, however). Doing so will throw an error.
-  
+
 new RawFile(filename[, is_writable]);
-  
+
   SphereFS compliant.
-  
+
   Opens a binary file, allowing raw data to be read and/or written. If
   'is_writable' is false, the file must exist and will be opened for reading
   only. Otherwise, the file is overwritten (be careful!) and opened for writing.
   If it cannot be opened for writing, an error will be thrown.
 
 RawFile:position (read/write)
-  
+
   Gets or sets the current file position. This determines where the next read
   or write operation will start.
 
 RawFile:size (read-only)
-  
+
   Gets the current size of the file in bytes. Can also be specified as
   RawFile:length.
 
 RawFile:read([num_bytes]);
-  
+
   Reads data from the file and advances the file position. 'num_bytes' specifies
   the amount of data to read; it can be omitted to read the entire file at once
   (the file position will not change in this case). Returns a ByteArray.
 
 RawFile:readString([num_bytes]);
-  
+
   Like RawFile:read(), but returns a UTF-8 string instead of a ByteArray. This
   may be more convenient in some cases.
 
 RawFile:write(data);
-  
+
   Writes data to the file and advances the file position. The file must be
   opened for writing or an error will be thrown. 'data' can be either a
   ByteArray, ArrayBuffer, TypedArray, or string.
-  
+
   If a string is provided, it will be written encoded as UTF-8.
 
 RawFile:close();
-  
+
   Closes the file. You should not call any other methods on the object after
   this (it is safe to call RawFile:close() more than once, however). Doing so
   will throw an error.
@@ -1495,27 +1516,27 @@ new FileStream(filename, mode);
 
   Constructs a new FileStream from the specified file. 'mode' is a string in the
   same format as that of C fopen() specifying how to open the file:
-  
+
     r:  Open file for reading.
     r+: Open file for update (reading and writing).
     w:  Create/truncate then open file for writing.
     w+: Create/truncate then open file for update.
     a:  Open file (create if not found) with initial position at end of file.
     a+: Open file for update with initial position at end of file.
-  
+
   A valid mode must be provided, otherwise stream construction will fail and
   throw an error.
 
 FileStream:length (read-only)
-  
+
   Gets the length of the stream in bytes. This corresponds to the size of the
   underlying file.
 
 FileStream:position (read/write)
-  
+
   Gets or sets the file position, which determines where in the file the next
   read or write will start from. Expressed in bytes.
-  
+
   Note: For files opened for writing, it is valid to seek past the end of the
   stream. In this case the next write operation will be done at the new position
   and the gap filled with NUL bytes.
@@ -1527,14 +1548,14 @@ FileStream:close();
   error.
 
 FileStream:read([numBytes]);
-  
+
   Reads data from the file, up to the specified number of bytes, and returns it
   in an ArrayBuffer. As a convenience, 'numBytes' can be omitted to read the
   entire file without affecting the file position. The file must be opened for
   reading.
 
 FileStream:write(data);
-  
+
   Writes data to the file at the current position. 'data' is an ArrayBuffer,
   TypedArray or DataView containing the data to be written. The file must be
   opened for writing.
@@ -1551,20 +1572,20 @@ documentation for the full set of map functions.
 MapEngine(filename, framerate);
 
   'filename' is relative to '~sgm/maps'. Not SphereFS compliant.
-  
+
   Starts the map engine, loading `map_file` as the initial map. `framerate`
   specifies the framerate the map engine will run at; a framerate of 0 will run
   unthrottled, which may be useful for benchmarks but is generally useless
   otherwise.
-  
+
 IsMapEngineRunning();
-  
+
   Returns true if the map engine is currently running.
 
 ChangeMap(filename);
 
   'filename' is relative to '~sgm/maps'. Not SphereFS compliant.
-  
+
   Loads a new map into the map engine. This destroys any transient persons
   automatically. Transient persons are those defined in the map file as well as
   any created by passing `true` as the third argument to CreatePerson().
@@ -1578,7 +1599,7 @@ ScreenToMapY(layer, y);
 
 SetUpdateScript(fn);
 SetRenderScript(fn);
-  
+
   Sets a function `fn` to be called once per map engine frame. Game state should
   be updated in the update script, while drawing is done in the render script.
   The distinction is important, as render calls can be skipped to minimize lag.
@@ -1592,14 +1613,14 @@ GetMapEngineFrameRate();
   unthrottled (not generally useful outside of benchmarks).
 
 GetCurrentMap();
-  
+
   Gets the filename of the current map, relative to ~sgm/maps.
 
 AttachInput(name);
 DetachInput();
 IsInputAttached();
 GetInputPerson();
-  
+
   Attaches, detaches or gets the input focus. The player will have control of
   the person with input focus. `name` is the name of the person as passed to
   CreatePerson().
@@ -1608,7 +1629,7 @@ AttachCamera(name);
 DetachCamera();
 IsCameraAttached();
 GetCameraPerson();
-  
+
   Attaches, detaches, or gets the camera focus. The camera will remain centered
   on whichever person it's attached to as they move about the map. `name` is the
   name of the person as passed to CreatePerson().
@@ -1622,19 +1643,19 @@ Gets or sets the camera position. Note: If the camera is placed beyond the edge
 of a non-repeating map, the map's corresponding edge script will be called.
 
 UpdateMapEngine();
-  
+
   Updates the map engine per frame. Used to keep the map engine operating in
   the background when running a tight loop. Note that map input will not be
   accepted during an UpdateMapEngine() loop.
 
 RenderMap();
-  
+
   Renders the current map and set of persons to the backbuffer. Used
   along with UpdateMapEngine() to keep the map engine operating when
   running a tight loop.
 
 ExitMapEngine();
-  
+
   Tells the map engine to shut down at the start of the next frame. If
   the map engine is presently held up in an UpdateMapEngine() loop (see
   below), this call will not take effect until control returns to the
@@ -1654,12 +1675,12 @@ need to be redone if the map is reloaded. Persistent modifications require
 triggers to be edited in the map file itself.
 
 GetCurrentTrigger();
-  
+
   When called in a trigger script, returns the trigger ID of the executing
   trigger. Calling this in any other context will throw an error.
 
 AddTrigger(x, y, layer, script);
-  
+
   Adds a trigger to the current map and returns its trigger ID. 'script' can be
   either a code string or a function. Triggers created this way are transient
   and will need to be recreated if the map is reloaded. For compatibility
@@ -1671,7 +1692,7 @@ RemoveTrigger(trigger_id);
   AddTrigger(), the modification is transient.
 
 GetNumTriggers();
-  
+
   Gets the number of triggers on the current map.
 
 GetTriggerX(trigger_id);
@@ -1683,20 +1704,20 @@ SetTriggerLayer(trigger_id, layer);
   Gets or sets the location of a trigger on the map, in pixels.
 
 SetTriggerScript(trigger_id, script);
-  
+
   Sets the specified trigger's script. Like most trigger modifications, this is
   transient.
 
 IsTriggerAt(x, y, layer);
-  
+
   Returns true if there is a trigger at the specified location, false otherwise.
   'layer' is required, but ignored for compatibility reasons.
 
 ExecuteTrigger(x, y, layer);
-  
+
   Fires the trigger at the specified location, if one exists. As above, 'layer'
   is required but ignored.
-  
+
 
 Zone Management
 ---------------
@@ -1710,7 +1731,7 @@ included with the engine.
 As with triggers, all zone modifications at runtime are transient.
 
 GetCurrentZone();
-  
+
   When called in a zone script, returns the zone ID of the executing zones.
   Calling this in any other context will throw an error.
 
@@ -1725,7 +1746,7 @@ RemoveZone(zone_id);
   Removes the zone with the specified zone ID from the map.
 
 GetNumZones();
-  
+
   Returns the number of zones on the current map.
 
 GetZoneX(zone_id);
@@ -1739,17 +1760,17 @@ SetZoneMetrics(zone_id, x, y, width, height[, layer]);
 
 GetZoneSteps(zone_id);
 SetZoneSteps(zone_id);
-  
+
   Gets or sets the zone's step count. The zone script will execute every time
   the input character takes this number of steps while inside the zone.
 
 AreZonesAt(x, y, layer);
-  
+
   Returns true if the specified point is inside of a zone, or false otherwise.
   'layer' is required, but ignored for compatibility reasons.
 
 ExecuteZones(x, y, layer);
-  
+
   Executes the scripts of all zones straddling the specified point, if any. As
   above, 'layer' is required but ignored.
 
@@ -1764,25 +1785,25 @@ characters, and the rest are transient, to be destroyed when a new map is
 loaded.
 
 CreatePerson(name, spriteset, transient);
-  
+
   Creates a person using the spriteset specified by `spriteset`. This can either
   be an .rss spriteset path (relative to ~sgm/spritesets) or a Spriteset object.
   If `transient` true, the person is transient and will automatically be
   destroyed when a new map is loaded via ChangeMap().
 
 DestroyPerson(name);
-  
+
   Destroys the person, removing it from play. This works on persons
   created manually via CreatePerson() as well as those created during
   map load, so be careful!
 
 GetPersonList();
-  
+
   Returns an array of person names representing all the persons that
   currently exist.
 
 DoesPersonExist(name);
-  
+
   Returns true if a person named `name` currently exists, otherwise
   returns false.
 
@@ -1818,14 +1839,14 @@ FollowPerson(name, leader_name, distance);
   `distance`. Note that the distance is not absolute and the actual
   trailing distance depends on the leader's speed. Faster leaders will
   put more distance between themselves and their followers.
-  
+
   To detach a follower and make them independent again, call the
   function again like this:
-    
+
     FollowPerson("<name>", null, 0);
 
 GetPersonLeader(name);
-  
+
   Gets the person `name` is currently following. If no leader exists
   (the person is independent), returns an empty string ("").
 
@@ -1835,7 +1856,7 @@ GetPersonFollowers(name);
 
 GetPersonFollowDistance(name);
 SetPersonFollowDistance(name);
-  
+
   Gets or sets the named person's follow distance. Throws an error if
   the person is not following anyone.
 
@@ -1846,17 +1867,17 @@ SetPersonVisible(is_visible)
   not.
 
 IsPersonObstructed(name, x, y);
-  
+
   Checks whether the person would be obstructed at a given location. Useful for
   pathfinding.
 
 GetObstructingPerson(name, x, y);
-  
+
   If the person named `name` is obstructed by a person at the given location,
   returns the offending person's name. Otherwise, returns an empty string ("").
 
 GetObstructingTile(name, x, y);
-  
+
   If the person named `name` is obstructed by a map tile at the given location,
   returns the tile index. Otherwise, returns -1.
 
@@ -1892,13 +1913,13 @@ QueuePersonCommand(name, command[, is_immediate]);
   engine will immediately execute the next command in the queue. Otherwise,
   execution will halt until the next frame. The default is false. The following
   commands are supported:
-    
-    COMMAND_WAIT - do nothing, useful as a non-immediate command to delay for 
+
+    COMMAND_WAIT - do nothing, useful as a non-immediate command to delay for
                    a frame.
-    
+
     COMMAND_ANIMATE - advances the person's animation state by one frame. Queue
                       these continuously to animate the sprite.
-    
+
     COMMAND_FACE_NORTH
     COMMAND_FACE_NORTHEAST
     COMMAND_FACE_EAST
@@ -1907,11 +1928,11 @@ QueuePersonCommand(name, command[, is_immediate]);
     COMMAND_FACE_SOUTHWEST
     COMMAND_FACE_WEST
     COMMAND_FACE_NORTHWEST
-      
+
       Changes the person's facing direction. If the specified direction isn't
       available in the person's spriteset, the engine will use the closest
       match.
-    
+
     COMMAND_MOVE_NORTH
     COMMAND_MOVE_NORTHEAST
     COMMAND_MOVE_EAST
@@ -1920,22 +1941,22 @@ QueuePersonCommand(name, command[, is_immediate]);
     COMMAND_MOVE_SOUTHWEST
     COMMAND_MOVE_WEST
     COMMAND_MOVE_NORTHWEST
-      
+
       Moves the person a number of pixels determined by their speed. See
       SetPersonSpeed() above.
 
 QueuePersonScript(name, script[, is_immediate]);
-  
+
   Adds a script to the person's command queue. `is_immediate` has the same
   meaning and semantics as in QueuePersonCommand() above. `script` can be either
   a JavaScript source string or a function.
 
 IsCommandQueueEmpty(name);
-  
+
   Returns true if the person's command queue is empty, false otherwise.
 
 ClearCommandQueue(name);
-  
+
   Removes all commands and scripts from the person's command queue.
 
 
