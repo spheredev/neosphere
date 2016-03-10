@@ -316,7 +316,8 @@ get_player_key(int player, player_key_t vkey)
 void
 attach_input_display(void)
 {
-	al_register_event_source(s_events, al_get_display_event_source(g_display));
+	al_register_event_source(s_events,
+		al_get_display_event_source(screen_display(g_screen)));
 }
 
 void
@@ -479,14 +480,14 @@ update_input(void)
 				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
 				 || event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
 				{
-					toggle_fullscreen();
+					screen_toggle(g_screen);
 				}
 				else {
 					queue_key(event.keyboard.keycode);
 				}
 				break;
 			case ALLEGRO_KEY_F10:
-				toggle_fullscreen();
+				screen_toggle(g_screen);
 				break;
 			case ALLEGRO_KEY_F11:
 				toggle_fps_display();
@@ -788,16 +789,18 @@ js_IsKeyPressed(duk_context* ctx)
 static duk_ret_t
 js_IsMouseButtonPressed(duk_context* ctx)
 {
-	int button = duk_require_int(ctx, 0);
-
+	int                 button;
 	int                 button_id;
+	ALLEGRO_DISPLAY*    display;
 	ALLEGRO_MOUSE_STATE mouse_state;
 
+	button = duk_require_int(ctx, 0);
 	button_id = button == MOUSE_BUTTON_RIGHT ? 2
 		: button == MOUSE_BUTTON_MIDDLE ? 3
 		: 1;
 	al_get_mouse_state(&mouse_state);
-	duk_push_boolean(ctx, mouse_state.display == g_display && al_mouse_button_down(&mouse_state, button_id));
+	display = screen_display(g_screen);
+	duk_push_boolean(ctx, mouse_state.display == display && al_mouse_button_down(&mouse_state, button_id));
 	return 1;
 }
 
@@ -909,20 +912,22 @@ js_GetMouseWheelEvent(duk_context* ctx)
 static duk_ret_t
 js_GetMouseX(duk_context* ctx)
 {
-	ALLEGRO_MOUSE_STATE mouse_state;
+	int x;
+	int y;
 	
-	al_get_mouse_state(&mouse_state);
-	duk_push_int(ctx, mouse_state.x / g_scale_x);
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, x);
 	return 1;
 }
 
 static duk_ret_t
 js_GetMouseY(duk_context* ctx)
 {
-	ALLEGRO_MOUSE_STATE mouse_state;
+	int x;
+	int y;
 
-	al_get_mouse_state(&mouse_state);
-	duk_push_int(ctx, mouse_state.y / g_scale_y);
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, y);
 	return 1;
 }
 
@@ -996,10 +1001,12 @@ js_GetToggleState(duk_context* ctx)
 static duk_ret_t
 js_SetMousePosition(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
+	int x;
+	int y;
 	
-	al_set_mouse_xy(g_display, x * g_scale_x, y * g_scale_y);
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	screen_set_mouse_xy(g_screen, x, y);
 	return 0;
 }
 

@@ -33,6 +33,7 @@
 #include "file.h"
 #include "font.h"
 #include "geometry.h"
+#include "screen.h"
 #include "lstring.h"
 #include "path.h"
 #include "script.h"
@@ -62,24 +63,20 @@
 #define MINISPHERE_USE_VERTEX_BUF
 #endif
 
-extern ALLEGRO_DISPLAY*     g_display;
-extern ALLEGRO_EVENT_QUEUE* g_events;
+extern screen_t*            g_screen;
 extern duk_context*         g_duk;
+extern ALLEGRO_EVENT_QUEUE* g_events;
 extern int                  g_fps;
 extern sandbox_t*           g_fs;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
-extern float                g_scale_x, g_scale_y;
 extern kev_file_t*          g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
 
 bool     is_skipped_frame   (void);
-rect_t   get_clip_rectangle (void);
 int      get_max_frameskip  (void);
-void     set_clip_rectangle (rect_t clip_rect);
 void     set_max_frameskip  (int frames);
-void     set_resolution     (int width, int height);
 void     delay              (double time);
 void     do_events          (void);
 noreturn exit_game          (bool force_shutdown);
@@ -87,5 +84,4 @@ void     flip_screen        (int framerate);
 noreturn restart_engine     (void);
 void     take_screenshot    (void);
 void     toggle_fps_display (void);
-void     toggle_fullscreen  (void);
 void     unskip_frame       (void);

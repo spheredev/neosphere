@@ -24,7 +24,6 @@
 
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
-static void draw_status_message (const char* text);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void print_banner        (bool want_copyright, bool want_deps);
@@ -34,14 +33,12 @@ static bool verify_requirements (sandbox_t* fs);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
-ALLEGRO_DISPLAY*     g_display = NULL;
+screen_t*            g_screen = NULL;
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 sandbox_t*           g_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
-float                g_scale_x = 1.0;
-float                g_scale_y = 1.0;
 kev_file_t*          g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
@@ -97,7 +94,6 @@ main(int argc, char* argv[])
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
-	ALLEGRO_TRANSFORM    trans;
 	int                  verbosity;
 	bool                 want_debug;
 
@@ -186,7 +182,7 @@ main(int argc, char* argv[])
 		// if after all that, we still don't have a valid sandbox pointer, bail out;
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
-		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
+		al_show_native_message_box(screen_display(g_screen), "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
@@ -198,45 +194,30 @@ main(int argc, char* argv[])
 	// try to create a display. if we can't get a programmable pipeline, try again but
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
-	console_log(1, "creating Allegro rendering context");
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
-	g_scale_x = g_scale_y = (g_res_x <= 400 && g_res_y <= 300) ? 2.0 : 1.0;
-	console_log(1, "    resolution: %dx%d @ %.1fx", g_res_x, g_res_y, (double)g_scale_x);
-#ifdef MINISPHERE_USE_SHADERS
-	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
-	if (g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y))
-		have_shaders = true;
-	else {
-		al_set_new_display_flags(ALLEGRO_OPENGL);
-		g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
-	}
-#else
-	al_set_new_display_flags(ALLEGRO_OPENGL);
-	g_display = al_create_display(g_res_x * g_scale_x, g_res_y * g_scale_y);
-#endif
-	if (g_display == NULL) {
-		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a rendering context.",
-			"Your hardware is either too old to run minisphere, or there is a driver problem on this system.  Check that all drivers are installed and up-to-date.",
+	g_screen = screen_new(g_res_x, g_res_y, false);
+	if (g_screen == NULL) {
+		al_show_native_message_box(screen_display(g_screen), "Unable to Create Render COntext", "minisphere was unable to create a render context.",
+			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
 	console_log(1, "    shaders: %s", have_shaders ? "enabled" : "unsupported");
-	al_set_window_title(g_display, get_sgm_name(g_fs));
+	al_set_window_title(screen_display(g_screen), get_sgm_name(g_fs));
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 	if (!(icon = load_image("~sgm/icon.png")))
 		icon = load_image("~sys/icon.png");
 	if (icon != NULL)
 		rescale_image(icon, 32, 32);
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
-	al_identity_transform(&trans);
-	al_scale_transform(&trans, g_scale_x, g_scale_y);
-	al_use_transform(&trans);
+	
 	if (icon != NULL)
-		al_set_display_icon(g_display, get_image_bitmap(icon));
+		al_set_display_icon(screen_display(g_screen), get_image_bitmap(icon));
 	free_image(icon);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
-	al_register_event_source(g_events, al_get_display_event_source(g_display));
+	al_register_event_source(g_events,
+		al_get_display_event_source(screen_display(g_screen)));
 	attach_input_display();
 	load_key_map();
 
@@ -250,7 +231,7 @@ main(int argc, char* argv[])
 		g_sys_font = load_font(systempath(filename));
 	}
 	if (g_sys_font == NULL) {
-		al_show_native_message_box(g_display, "No System Font Available", "A system font is required.",
+		al_show_native_message_box(screen_display(g_screen), "No System Font Available", "A system font is required.",
 			"minisphere was unable to locate the system font or it failed to load.  As a usable font is necessary for correct operation, minisphere will now close.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
@@ -258,13 +239,12 @@ main(int argc, char* argv[])
 
 	// switch to fullscreen if necessary and initialize clipping
 	if (s_is_fullscreen)
-		toggle_fullscreen();
-	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
+		screen_toggle(g_screen);
 
 	// display loading message, scripts may take a bit to compile
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		draw_status_message("waiting for SSJ...");
+		screen_status(g_screen, "waiting for SSJ...");
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
@@ -278,7 +258,7 @@ main(int argc, char* argv[])
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	draw_status_message("starting up...");
+	screen_status(g_screen, "starting up...");
 	al_flip_display();
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 
@@ -289,7 +269,7 @@ main(int argc, char* argv[])
 	s_next_frame_time = s_last_flip_time = al_get_time();
 
 	// evaluate startup script
-	al_hide_mouse_cursor(g_display);
+	screen_show_mouse(g_screen, false);
 	script_path = get_sgm_script_path(g_fs);
 	if (!evaluate_script(path_cstr(script_path)))
 		goto on_js_error;
@@ -306,7 +286,7 @@ on_js_error:
 	err_code = duk_get_error_code(g_duk, -1);
 	duk_dup(g_duk, -1);
 	err_msg = duk_safe_to_string(g_duk, -1);
-	al_show_mouse_cursor(g_display);
+	screen_show_mouse(g_screen, true);
 	duk_get_prop_string(g_duk, -2, "lineNumber");
 	line_num = duk_get_int(g_duk, -1);
 	duk_pop(g_duk);
@@ -332,12 +312,6 @@ is_skipped_frame(void)
 	return s_skipping_frame;
 }
 
-rect_t
-get_clip_rectangle(void)
-{
-	return s_clip_rect;
-}
-
 int
 get_max_frameskip(void)
 {
@@ -345,50 +319,9 @@ get_max_frameskip(void)
 }
 
 void
-set_clip_rectangle(rect_t clip)
-{
-	s_clip_rect = clip;
-	clip.x1 *= g_scale_x; clip.y1 *= g_scale_y;
-	clip.x2 *= g_scale_x; clip.y2 *= g_scale_y;
-	al_set_clipping_rectangle(clip.x1, clip.y1, clip.x2 - clip.x1, clip.y2 - clip.y1);
-}
-
-void
 set_max_frameskip(int frames)
 {
 	s_max_frameskip = frames >= 0 ? frames : 0;
-}
-
-void
-set_resolution(int width, int height)
-{
-	ALLEGRO_MONITOR_INFO monitor;
-	ALLEGRO_TRANSFORM    transform;
-
-	g_res_x = width;
-	g_res_y = height;
-
-	if (!s_is_fullscreen) {
-		g_scale_x = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
-		g_scale_y = g_scale_x;
-		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
-		al_get_monitor_info(0, &monitor);
-		al_set_window_position(g_display,
-			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
-			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
-	}
-	else {
-		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
-		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
-	}
-
-	al_identity_transform(&transform);
-	al_scale_transform(&transform, g_scale_x, g_scale_y);
-	al_use_transform(&transform);
-	set_clip_rectangle(new_rect(0, 0, g_res_x, g_res_y));
-
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	al_flip_display();
 }
 
 void
@@ -443,6 +376,7 @@ exit_game(bool force_shutdown)
 void
 flip_screen(int framerate)
 {
+	ALLEGRO_DISPLAY*  al_display;
 	char*             filename;
 	char              fps_text[20];
 	const char*       game_filename;
@@ -452,6 +386,8 @@ flip_screen(int framerate)
 	ALLEGRO_STATE     old_state;
 	path_t*           path;
 	const char*       pathstr;
+	int               screen_cx;
+	int               screen_cy;
 	int               serial = 1;
 	ALLEGRO_BITMAP*   snapshot;
 	double            time_left;
@@ -461,6 +397,8 @@ flip_screen(int framerate)
 
 	size_t i;
 
+	al_display = screen_display(g_screen);
+	
 	// update FPS with 1s granularity
 	if (al_get_time() >= s_next_fps_poll_time) {
 		s_current_fps = s_num_flips;
@@ -476,7 +414,7 @@ flip_screen(int framerate)
 		if (s_want_snapshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
-			snapshot = al_clone_bitmap(al_get_backbuffer(g_display));
+			snapshot = al_clone_bitmap(al_get_backbuffer(al_display));
 			al_restore_state(&old_state);
 			game_path = get_game_path(g_fs);
 			game_filename = path_is_file(game_path)
@@ -501,16 +439,20 @@ flip_screen(int framerate)
 			s_want_snapshot = false;
 		}
 		if (s_show_fps) {
-			if (framerate > 0) sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
-			else sprintf(fps_text, "%i fps", s_current_fps);
+			if (framerate > 0)
+				sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
+			else
+				sprintf(fps_text, "%i fps", s_current_fps);
+			screen_cx = al_get_display_width(al_display);
+			screen_cy = al_get_display_height(al_display);
+			x = screen_cx - 108;
+			y = 8;
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
-			x = al_get_display_width(g_display) - 108;
-			y = 8;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
 			draw_text(g_sys_font, rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			draw_text(g_sys_font, rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
-			al_scale_transform(&trans, g_scale_x, g_scale_y);
+			screen_transform(g_screen, &trans);
 			al_use_transform(&trans);
 		}
 		al_flip_display();
@@ -565,45 +507,6 @@ void
 toggle_fps_display(void)
 {
 	s_show_fps = !s_show_fps;
-}
-
-void
-toggle_fullscreen(void)
-{
-	int                  flags;
-	ALLEGRO_MONITOR_INFO monitor;
-	ALLEGRO_TRANSFORM    transform;
-
-	flags = al_get_display_flags(g_display);
-	if (flags & ALLEGRO_FULLSCREEN_WINDOW) {
-		// switch from fullscreen to windowed
-		s_is_fullscreen = false;
-		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, false);
-		g_scale_x = g_scale_y = (g_res_x <= 400 || g_res_y <= 300) ? 2.0 : 1.0;
-
-		// we have to resize and reposition manually because Allegro is bugged
-		// and gives us a 0x0 window when switching out of fullscreen
-		al_resize_display(g_display, g_res_x * g_scale_x, g_res_y * g_scale_y);
-		al_get_monitor_info(0, &monitor);
-		al_set_window_position(g_display,
-			(monitor.x1 + monitor.x2) / 2 - g_res_x * g_scale_x / 2,
-			(monitor.y1 + monitor.y2) / 2 - g_res_y * g_scale_y / 2);
-
-		// strange but true: this fixes an Allegro bug where OpenGL displays get
-		// stuck in limbo when switching out of fullscreen.
-		al_destroy_bitmap(al_clone_bitmap(al_get_backbuffer(g_display)));
-	}
-	else {
-		// switch from windowed to fullscreen
-		s_is_fullscreen = true;
-		al_set_display_flag(g_display, ALLEGRO_FULLSCREEN_WINDOW, true);
-		g_scale_x = al_get_display_width(g_display) / (float)g_res_x;
-		g_scale_y = al_get_display_height(g_display) / (float)g_res_y;
-	}
-	al_identity_transform(&transform);
-	al_scale_transform(&transform, g_scale_x, g_scale_y);
-	al_use_transform(&transform);
-	set_clip_rectangle(s_clip_rect);
 }
 
 void
@@ -680,7 +583,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 			    && al_key_down(&keyboard, ALLEGRO_KEY_C))
 			{
 				is_copied = true;
-				al_set_clipboard_text(g_display, msg);
+				al_set_clipboard_text(screen_display(g_screen), msg);
 			}
 #endif
 		}
@@ -694,7 +597,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 
 show_error_box:
 	// use a native message box only as a last resort
-	al_show_native_message_box(g_display, "Script Error",
+	al_show_native_message_box(screen_display(g_screen), "Script Error",
 		"minisphere encountered an error during game execution.",
 		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
@@ -750,7 +653,7 @@ initialize_engine(void)
 	return true;
 
 on_error:
-	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
+	al_show_native_message_box(screen_display(g_screen), "Unable to Start", "Engine initialized failed.",
 		"One or more components failed to initialize properly. minisphere cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
@@ -781,9 +684,8 @@ shutdown_engine(void)
 	shutdown_async();
 
 	console_log(1, "shutting down Allegro");
-	if (g_display != NULL)
-		al_destroy_display(g_display);
-	g_display = NULL;
+	screen_free(g_screen);
+	g_screen = NULL;
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
@@ -793,27 +695,6 @@ shutdown_engine(void)
 		close_kev_file(g_sys_conf);
 	g_sys_conf = NULL;
 	al_uninstall_system();
-}
-
-static void
-draw_status_message(const char* text)
-{
-	ALLEGRO_TRANSFORM old_transform;
-	ALLEGRO_TRANSFORM transform;
-	int               width = get_text_width(g_sys_font, text) + 20;
-	int               height = get_font_line_height(g_sys_font) + 10;
-	int               w_screen = al_get_display_width(g_display);
-	int               h_screen = al_get_display_height(g_display);
-
-	al_copy_transform(&old_transform, al_get_current_transform());
-	al_identity_transform(&transform);
-	al_use_transform(&transform);
-	al_draw_filled_rounded_rectangle(
-		w_screen - 16 - width, h_screen - 16 - height, w_screen - 16, h_screen - 16,
-		4, 4, al_map_rgba(16, 16, 16, 255));
-	draw_text(g_sys_font, rgba(0, 0, 0, 255), w_screen - 16 - width / 2 + 1, h_screen - 16 - height + 6, TEXT_ALIGN_CENTER, text);
-	draw_text(g_sys_font, rgba(255, 255, 255, 255), w_screen - 16 - width / 2, h_screen - 16 - height + 5, TEXT_ALIGN_CENTER, text);
-	al_use_transform(&old_transform);
 }
 
 static bool
@@ -1042,7 +923,7 @@ report_error(const char* fmt, ...)
 #if defined(MINISPHERE_SPHERUN)
 	fprintf(stderr, "spherun: ERROR: %s", lstr_cstr(error_text));
 #else
-	al_show_native_message_box(NULL,
+	al_show_native_message_box(screen_display(g_screen),
 		"minisphere", "An error occurred starting the engine.", lstr_cstr(error_text),
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
@@ -1108,6 +989,6 @@ is_unsupported:
 			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
 			"\n\nNo specific recommendation was provided by the game developer.", PRODUCT_NAME);
 	}
-	al_show_native_message_box(NULL, "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	al_show_native_message_box(screen_display(g_screen), "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
 }

@@ -215,7 +215,7 @@ draw_group(const group_t* group)
 	al_translate_transform(&matrix, group->rot_x, group->rot_y);
 	al_rotate_transform(&matrix, group->theta);
 	al_translate_transform(&matrix, group->x, group->y);
-	al_scale_transform(&matrix, g_scale_x, g_scale_y);
+	screen_transform(g_screen, &matrix);
 	al_use_transform(&matrix);
 	iter = vector_enum(group->shapes);
 	while (i_shape = vector_next(&iter))

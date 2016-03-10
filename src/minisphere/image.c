@@ -87,32 +87,6 @@ on_error:
 }
 
 image_t*
-grab_image(int x, int y, int width, int height)
-{
-	ALLEGRO_BITMAP* backbuffer;
-	image_t*        image = NULL;
-
-	x *= g_scale_x;
-	y *= g_scale_y;
-	width *= g_scale_x;
-	height *= g_scale_y;
-	
-	backbuffer = al_get_backbuffer(g_display);
-	if (!(image = create_image(width, height)))
-		goto on_error;
-	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_bitmap_region(backbuffer, x, y, width, height, 0, 0, 0x0);
-	al_set_target_backbuffer(g_display);
-	if (!rescale_image(image, g_res_x, g_res_y))
-		goto on_error;
-	return image;
-
-on_error:
-	free_image(image);
-	return NULL;
-}
-
-image_t*
 clone_image(const image_t* src_image)
 {
 	image_t* image;
@@ -762,7 +736,7 @@ js_GrabImage(duk_context* ctx)
 
 	image_t* image;
 
-	if (!(image = grab_image(x, y, w, h)))
+	if (!(image = screen_grab(g_screen, x, y, w, h)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to grab backbuffer image");
 	duk_push_sphere_image(ctx, image);
 	free_image(image);

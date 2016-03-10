@@ -364,6 +364,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\minisphere\screen.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\dyad.c" />
     <ClCompile Include="..\src\shared\mt19937ar.c" />
@@ -405,6 +406,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\minisphere\windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\minisphere\screen.h" />
     <ClInclude Include="..\src\shared\duktape.h" />
     <ClInclude Include="..\src\shared\duk_config.h" />
     <ClInclude Include="..\src\shared\dyad.h" />

@@ -29,7 +29,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/map_engine.c src/minisphere/obsmap.c \
    src/minisphere/persons.c src/minisphere/physics.c \
    src/minisphere/primitives.c src/minisphere/rng.c \
-   src/minisphere/script.c src/minisphere/shader.c \
+   src/minisphere/screen.c src/minisphere/script.c src/minisphere/shader.c \
    src/minisphere/sockets.c src/minisphere/spherefs.c \
    src/minisphere/spk.c src/minisphere/spriteset.c \
    src/minisphere/surface.c src/minisphere/tileset.c \

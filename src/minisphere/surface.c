@@ -178,7 +178,7 @@ js_GrabSurface(duk_context* ctx)
 
 	image_t* image;
 
-	if (!(image = grab_image(x, y, w, h)))
+	if (!(image = screen_grab(g_screen, x, y, w, h)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): Failed to grab backbuffer image");
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
@@ -431,7 +431,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_tinted_bitmap(get_image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -454,7 +454,7 @@ js_Surface_blitSurface(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap(get_image_bitmap(src_image), x, y, 0x0);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -493,7 +493,7 @@ js_Surface_cloneSection(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection() - Failed to create new surface");
 	al_set_target_bitmap(get_image_bitmap(new_image));
 	al_draw_bitmap_region(get_image_bitmap(image), x, y, w, h, 0, 0, 0x0);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	duk_push_sphere_surface(ctx, new_image);
 	free_image(new_image);
 	return 1;
@@ -536,7 +536,7 @@ js_Surface_drawText(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -560,7 +560,7 @@ js_Surface_filledCircle(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_filled_circle(x, y, radius, nativecolor(color));
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -629,7 +629,7 @@ js_Surface_gradientCircle(duk_context* ctx)
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -664,7 +664,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -689,7 +689,7 @@ js_Surface_line(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -713,7 +713,7 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_circle(x, y, radius, nativecolor(color), 1);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -755,7 +755,7 @@ js_Surface_pointSeries(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -783,7 +783,7 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }
@@ -845,7 +845,7 @@ js_Surface_rotate(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rotate() - Failed to create new surface bitmap");
 	al_set_target_bitmap(get_image_bitmap(new_image));
 	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	
 	// free old image and replace internal image pointer
 	// at one time this was an acceptable thing to do; now it's just a hack
@@ -875,7 +875,7 @@ js_Surface_rectangle(duk_context* ctx)
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
-	al_set_target_backbuffer(g_display);
+	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
 }

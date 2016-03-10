@@ -790,7 +790,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 		bitmap = al_create_bitmap(text_w, text_h);
 		al_set_target_bitmap(bitmap);
 		draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
-		al_set_target_backbuffer(g_display);
+		al_set_target_backbuffer(screen_display(g_screen));
 		al_draw_scaled_bitmap(bitmap, 0, 0, text_w, text_h, x, y, text_w * scale, text_h * scale, 0x0);
 		al_destroy_bitmap(bitmap);
 	}

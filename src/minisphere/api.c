@@ -769,7 +769,7 @@ js_SetScreenSize(duk_context* ctx)
 	if (res_width < 0 || res_height < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetScreenSize(): Dimensions cannot be negative (%i x %i)",
 			res_width, res_height);
-	set_resolution(res_width, res_height);
+	screen_resize(g_screen, res_width, res_height);
 	return 0;
 }
 
@@ -803,11 +803,13 @@ js_Alert(duk_context* ctx)
 	duk_pop_2(ctx);
 
 	// show the message
+	screen_show_mouse(g_screen, true);
 	caller_info =
 		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
 		duk_get_string(ctx, -1);
-	al_show_native_message_box(g_display, "Alert from Sphere game", caller_info, text, NULL, 0x0);
-	duk_pop(ctx);
+	al_show_native_message_box(screen_display(g_screen), "Alert from Sphere game", caller_info, text, NULL, 0x0);
+	screen_show_mouse(g_screen, false);
+	
 	return 0;
 }
 
@@ -866,7 +868,7 @@ js_Assert(duk_context* ctx)
 		//     over control to the attached debugger.
 		if (is_debugger_attached()) {
 			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
-			if (!al_show_native_message_box(g_display, "Script Error", "Assertion failed!",
+			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
 				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
 			{
 				duk_debugger_pause(ctx);

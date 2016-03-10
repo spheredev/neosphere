@@ -132,6 +132,9 @@
     <ClCompile Include="..\src\minisphere\windowstyle.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\minisphere\screen.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -262,6 +265,9 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\screen.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
