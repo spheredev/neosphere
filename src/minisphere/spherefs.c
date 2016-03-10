@@ -1,8 +1,8 @@
 #include "minisphere.h"
-#include "spk.h"
-#include "vector.h"
-
 #include "spherefs.h"
+
+#include "file.h"
+#include "spk.h"
 
 enum fs_type
 {
@@ -43,20 +43,19 @@ static unsigned int s_next_sandbox_id = 0;
 sandbox_t*
 new_sandbox(const char* game_path)
 {
-	ALLEGRO_FILE*   al_file = NULL;
-	ALLEGRO_CONFIG* conf;
-	sandbox_t*      fs;
-	path_t*         path;
-	int             res_x, res_y;
-	size_t          sgm_size;
-	char*           sgm_text = NULL;
-	spk_t*          spk;
-	void*           sourcemap_data;
-	size_t          sourcemap_size;
+	sandbox_t*  fs;
+	path_t*     path;
+	int         res_x, res_y;
+	size_t      sgm_size;
+	kev_file_t* sgm_file;
+	char*       sgm_text = NULL;
+	spk_t*      spk;
+	void*       sourcemap_data;
+	size_t      sourcemap_size;
 
 	console_log(1, "opening `%s` in sandbox #%u", game_path, s_next_sandbox_id);
 	
-	fs = calloc(1, sizeof(sandbox_t));
+	fs = ref_sandbox(calloc(1, sizeof(sandbox_t)));
 	
 	fs->id = s_next_sandbox_id;
 	path = path_new(game_path);
@@ -112,20 +111,18 @@ new_sandbox(const char* game_path)
 				goto on_error;
 			}
 			duk_pop(g_duk);
+			free(sgm_text);
+			sgm_text = NULL;
 		}
-		else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
+		else if (sgm_file = open_kev_file(fs, "game.sgm")) {
 			console_log(1, "parsing Sphere 1.x manifest in sandbox #%u", s_next_sandbox_id);
-			al_file = al_open_memfile(sgm_text, sgm_size, "rb");
-			if (!(conf = al_load_config_file_f(al_file)))
-				goto on_error;
-			fs->name = lstr_new(al_get_config_value(conf, NULL, "name"));
-			fs->author = lstr_new(al_get_config_value(conf, NULL, "author"));
-			fs->summary = lstr_new(al_get_config_value(conf, NULL, "description"));
-			fs->res_x = atoi(al_get_config_value(conf, NULL, "screen_width"));
-			fs->res_y = atoi(al_get_config_value(conf, NULL, "screen_height"));
-			fs->script_path = make_sfs_path(al_get_config_value(conf, NULL, "script"), "scripts");
-			al_destroy_config(conf);
-			al_fclose(al_file);
+			fs->name = lstr_new(read_string_rec(sgm_file, "name", "Untitled"));
+			fs->author = lstr_new(read_string_rec(sgm_file, "author", "Author Unknown"));
+			fs->summary = lstr_new(read_string_rec(sgm_file, "description", "No information available."));
+			fs->res_x = read_number_rec(sgm_file, "screen_width", 320);
+			fs->res_y = read_number_rec(sgm_file, "screen_height", 240);
+			fs->script_path = make_sfs_path(read_string_rec(sgm_file, "script", "main.js"), "scripts");
+			close_kev_file(sgm_file);
 
 			// generate a JSON manifest (used by, e.g. GetGameManifest())
 			duk_push_object(g_duk);
@@ -139,8 +136,6 @@ new_sandbox(const char* game_path)
 		}
 		else
 			goto on_error;
-		free(sgm_text);
-		sgm_text = NULL;
 	}
 
 	get_sgm_resolution(fs, &res_x, &res_y);
@@ -154,13 +149,11 @@ new_sandbox(const char* game_path)
 	free(sourcemap_data);
 
 	s_next_sandbox_id++;
-	return ref_sandbox(fs);
+	return fs;
 
 on_error:
 	console_log(1, "failed to create sandbox #%u", s_next_sandbox_id++);
 	path_free(path);
-	if (al_file != NULL)
-		al_fclose(al_file);
 	free(sgm_text);
 	if (fs != NULL) {
 		free_spk(fs->spk);
