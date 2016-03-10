@@ -89,12 +89,14 @@ shutdown_debugger()
 	do_detach_debugger(true);
 	free_socket(s_server);
 	
-	iter = vector_enum(s_sources);
-	while (p_source = vector_next(&iter)) {
-		lstr_free(p_source->text);
-		free(p_source->name);
+	if (s_sources != NULL) {
+		iter = vector_enum(s_sources);
+		while (p_source = vector_next(&iter)) {
+			lstr_free(p_source->text);
+			free(p_source->name);
+		}
+		vector_free(s_sources);
 	}
-	vector_free(s_sources);
 }
 
 void

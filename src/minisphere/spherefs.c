@@ -54,7 +54,7 @@ new_sandbox(const char* game_path)
 	void*           sourcemap_data;
 	size_t          sourcemap_size;
 
-	console_log(1, "opening '%s' in sandbox #%u", game_path, s_next_sandbox_id);
+	console_log(1, "opening `%s` in sandbox #%u", game_path, s_next_sandbox_id);
 	
 	fs = calloc(1, sizeof(sandbox_t));
 	
@@ -102,15 +102,19 @@ new_sandbox(const char* game_path)
 	// try to load the game manifest if one hasn't been synthesized already
 	if (fs->name == NULL) {
 		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
-			console_log(1, "parsing game.s2gm in sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing Sphere 2.0 manifest in sandbox #%u", s_next_sandbox_id);
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
-			if (duk_safe_call(g_duk, duk_load_s2gm, 2, 0) != 0)
+			if (duk_safe_call(g_duk, duk_load_s2gm, 2, 1) != 0) {
+				console_log(0, "error parsing JSON manifest `game.s2gm`\n    %s", duk_to_string(g_duk, -1));
+				duk_pop(g_duk);
 				goto on_error;
+			}
+			duk_pop(g_duk);
 		}
 		else if (sgm_text = sfs_fslurp(fs, "game.sgm", NULL, &sgm_size)) {
-			console_log(1, "parsing game.sgm in sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing Sphere 1.x manifest in sandbox #%u", s_next_sandbox_id);
 			al_file = al_open_memfile(sgm_text, sgm_size, "rb");
 			if (!(conf = al_load_config_file_f(al_file)))
 				goto on_error;

@@ -185,9 +185,11 @@ main(int argc, char* argv[])
 	if (g_fs == NULL) {
 		// if after all that, we still don't have a valid sandbox pointer, bail out;
 		// there's not much else we can do.
+#if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+#endif
 		exit_game(false);
 	}
 	if (!verify_requirements(g_fs))
@@ -949,6 +951,9 @@ parse_command_line(
 				report_error("unrecognized option '%s'\n", argv[i]);
 				return false;
 			}
+#else
+			else if (strcmp(argv[i], "-v") == 0)
+				++i;
 #endif
 		}
 		else {
