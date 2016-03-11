@@ -259,8 +259,8 @@ screen_flip(screen_t* obj, int framerate)
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
-			draw_text(g_sys_font, rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
-			draw_text(g_sys_font, rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
+			draw_text(g_sys_font, rgba(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
+			draw_text(g_sys_font, rgba(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 			screen_transform(g_screen, &trans);
 			al_use_transform(&trans);
 		}
@@ -297,8 +297,12 @@ screen_flip(screen_t* obj, int framerate)
 		obj->next_frame_time = al_get_time();
 	}
 	++obj->num_frames;
-	if (!obj->skip_frame)
+	if (!obj->skip_frame) {
+		// clipping is disabled so we can clear out the letterbox area.
+		al_set_clipping_rectangle(0, 0, screen_cx, screen_cy);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+		screen_set_clipping(obj, obj->clip_rect);
+	}
 }
 
 image_t*

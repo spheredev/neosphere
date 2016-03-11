@@ -25,6 +25,12 @@ v3.0.0 - March 28, 2016
   attached, choosing not to continue will cause a prompt breakpoint instead of
   throwing an error.  If the debugger is not attached, any failing assertions
   will be logged to `stderr` but otherwise ignored.
+* Improves fullscreen behavior: Games are letter/pillarboxed to maintain their
+  aspect ratio when switching into fullscreen mode.
+* Screenshots are now given meaningful names based on the game filename and
+  current date instead of random characters.
+* When the debugger is attached, the engine now shows a small "SSJ" watermark in
+  the bottom-left corner of the screen as a reminder.
 * The engine now waits for sounds to stop playing before freeing them, even if
   the Sound object goes out of scope.  This allows a common Sphere idiom
   `new Sound("munch.wav").play()` to work as expected.
