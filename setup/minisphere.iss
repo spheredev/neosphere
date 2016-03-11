@@ -11,7 +11,7 @@
 #define AppPublisher "Fat Cerberus"
 #define AppVersion2 "3.0"
 #define AppVersion3 "3.0.0"
-#define AppVersion4 "3.0.0.1300"
+#define AppVersion4 "3.0.0.1316"
 
 [Setup]
 OutputBaseFilename=minisphere-{#AppVersion3}
