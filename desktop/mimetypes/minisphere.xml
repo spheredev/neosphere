@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  <mime-type type="application/x-sphere">
+    <magic priority="50">
+      <match type="string" offset="0" value=".spk"/>
+    </magic>
+    <glob pattern="*.spk"/>
+    <glob pattern="*.sgm"/>
+    <glob pattern="*.s2gm "/>
+  </mime-type>
+</mime-info>

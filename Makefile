@@ -84,10 +84,12 @@ dist:
 .PHONY: install
 install: all
 	mkdir -p $(installdir)/bin
-	mkdir -p $(installdir)/share/doc/minisphere
 	mkdir -p $(installdir)/share/minisphere
-	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/applications
+	mkdir -p $(installdir)/share/doc/minisphere
+	mkdir -p $(installdir)/share/icons/hicolor/scalable/mimetypes
+	mkdir -p $(installdir)/share/mime/packages
+	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
 	cp -r bin/system $(installdir)/share/minisphere
@@ -99,6 +101,8 @@ install: all
 	gzip manpages/ssj.1 -c > $(installdir)/share/man/man1/ssj.1.gz
 	cp desktop/minisphere.desktop $(installdir)/share/applications
 	cp desktop/sphere-icon.svg $(installdir)/share/pixmaps
+	cp desktop/mimetypes/minisphere.xml $(installdir)/share/mime/packages
+	cp desktop/mimetypes/application-x-sphere.svg $(installdir)/share/icons/hicolor/scalable/mimetypes
 
 .PHONY: clean
 clean:
