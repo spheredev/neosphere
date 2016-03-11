@@ -71,7 +71,8 @@ extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;
 extern kev_file_t*          g_sys_conf;
 extern font_t*              g_sys_font;
-extern int                  g_res_x, g_res_y;
+extern int                  g_res_x;
+extern int                  g_res_y;
 
 void     delay             (double time);
 void     do_events         (void);

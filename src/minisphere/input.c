@@ -496,7 +496,7 @@ update_input(void)
 				if (is_debugger_attached())
 					duk_debugger_pause(g_duk);
 				else
-					screen_capture_now(g_screen);
+					screen_queue_screenshot(g_screen);
 				break;
 			default:
 				queue_key(event.keyboard.keycode);

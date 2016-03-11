@@ -5,6 +5,7 @@
 #include "minisphere.h"
 #include "screen.h"
 
+#include "debugger.h"
 #include "image.h"
 
 struct screen
@@ -69,11 +70,15 @@ screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
 	obj->max_skips = frameskip;
 	obj->avoid_sleep = avoid_sleep;
 
+#ifdef MINISPHERE_SPHERUN
+	obj->show_fps = true;
+#endif
+
 	obj->fps_poll_time = al_get_time() + 1.0;
 	obj->next_frame_time = al_get_time();
 	obj->last_flip_time = obj->next_frame_time;
 
-	screen_set_clip(obj, new_rect(0, 0, x_size, y_size));
+	screen_set_clipping(obj, new_rect(0, 0, x_size, y_size));
 	refresh_display(obj);
 	return obj;
 }
@@ -102,7 +107,7 @@ screen_is_skipframe(const screen_t* obj)
 }
 
 rect_t
-screen_get_clip(screen_t* obj)
+screen_get_clipping(screen_t* obj)
 {
 	return obj->clip_rect;
 }
@@ -138,7 +143,7 @@ screen_set_mouse_xy(screen_t* obj, int x, int y)
 }
 
 void
-screen_set_clip(screen_t* obj, rect_t clip_rect)
+screen_set_clipping(screen_t* obj, rect_t clip_rect)
 {
 	obj->clip_rect = clip_rect;
 	clip_rect.x1 = clip_rect.x1 * obj->x_scale + obj->x_offset;
@@ -150,14 +155,9 @@ screen_set_clip(screen_t* obj, rect_t clip_rect)
 }
 
 void
-screen_capture_now(screen_t* obj)
-{
-	obj->take_screenshot = true;
-}
-
-void
 screen_draw_status(screen_t* obj, const char* text)
 {
+	rect_t            bounds;
 	int               screen_cx;
 	int               screen_cy;
 	ALLEGRO_TRANSFORM trans;
@@ -168,13 +168,18 @@ screen_draw_status(screen_t* obj, const char* text)
 	screen_cy = al_get_display_height(obj->display);
 	width = get_text_width(g_sys_font, text) + 20;
 	height = get_font_line_height(g_sys_font) + 10;
+	bounds.x1 = 8 + obj->x_offset;
+	bounds.y1 = screen_cy - obj->y_offset - height - 8;
+	bounds.x2 = bounds.x1 + width;
+	bounds.y2 = bounds.y1 + height;
 	al_identity_transform(&trans);
 	al_use_transform(&trans);
-	al_draw_filled_rounded_rectangle(
-		screen_cx - 16 - width, screen_cy - 16 - height, screen_cx - 16, screen_cy - 16,
-		4, 4, al_map_rgba(16, 16, 16, 255));
-	draw_text(g_sys_font, rgba(0, 0, 0, 255), screen_cx - 16 - width / 2 + 1, screen_cy - 16 - height + 6, TEXT_ALIGN_CENTER, text);
-	draw_text(g_sys_font, rgba(255, 255, 255, 255), screen_cx - 16 - width / 2, screen_cy - 16 - height + 5, TEXT_ALIGN_CENTER, text);
+	al_draw_filled_rounded_rectangle(bounds.x1, bounds.y1, bounds.x2, bounds.y2, 4, 4,
+		al_map_rgba(16, 16, 16, 192));
+	draw_text(g_sys_font, rgba(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
+		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
+	draw_text(g_sys_font, rgba(255, 255, 255, 255), (bounds.x2 + bounds.x1) / 2,
+		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
 	screen_transform(obj, &trans);
 	al_use_transform(&trans);
 }
@@ -240,6 +245,8 @@ screen_flip(screen_t* obj, int framerate)
 			path_free(path);
 			obj->take_screenshot = false;
 		}
+		if (is_debugger_attached())
+			screen_draw_status(obj, "SSJ");
 		if (obj->show_fps) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", obj->fps_flips, obj->fps_frames);
@@ -247,11 +254,11 @@ screen_flip(screen_t* obj, int framerate)
 				sprintf(fps_text, "%d fps", obj->fps_flips);
 			screen_cx = al_get_display_width(obj->display);
 			screen_cy = al_get_display_height(obj->display);
-			x = screen_cx - 108;
-			y = 8;
+			x = screen_cx - obj->x_offset - 108;
+			y = obj->y_offset + 8;
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
-			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
+			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
 			draw_text(g_sys_font, rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			draw_text(g_sys_font, rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 			screen_transform(g_screen, &trans);
@@ -323,6 +330,12 @@ on_error:
 }
 
 void
+screen_queue_screenshot(screen_t* obj)
+{
+	obj->take_screenshot = true;
+}
+
+void
 screen_resize(screen_t* obj, int x_size, int y_size)
 {
 	obj->x_size = x_size;
@@ -341,16 +354,16 @@ screen_show_mouse(screen_t* obj, bool visible)
 }
 
 void
+screen_toggle_fps(screen_t* obj)
+{
+	obj->show_fps = !obj->show_fps;
+}
+
+void
 screen_toggle_fullscreen(screen_t* obj)
 {
 	obj->fullscreen = !obj->fullscreen;
 	refresh_display(obj);
-}
-
-void
-screen_toggle_fps(screen_t* obj)
-{
-	obj->show_fps = !obj->show_fps;
 }
 
 void
@@ -410,5 +423,5 @@ refresh_display(screen_t* obj)
 	screen_transform(obj, &trans);
 	al_use_transform(&trans);
 	
-	screen_set_clip(obj, obj->clip_rect);
+	screen_set_clipping(obj, obj->clip_rect);
 }
