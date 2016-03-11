@@ -329,8 +329,6 @@ handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 {
 	inferior_resume(obj->inferior, op);
 	if (inferior_attached(obj->inferior)) {
-		if (op == OP_RESUME)
-			printf("\n");
 		autoselect_frame(obj);
 		preview_frame(obj, obj->frame);
 	}

@@ -91,10 +91,13 @@ backtrace_print(const backtrace_t* obj, int active_frame, bool show_all)
 		line_no = backtrace_get_linenum(obj, i);
 		if (i == active_frame || show_all) {
 			arrow = i == active_frame ? "=>" : "  ";
+			if (i == active_frame && show_all)
+				printf("\33[0;1m");
 			if (line_no > 0)
 				printf("%s #%2d: %s at %s:%d\n", arrow, i, name, filename, line_no);
 			else
 				printf("%s #%2d: %s <system call>\n", arrow, i, name);
+			printf("\33[m");
 		}
 	}
 }
