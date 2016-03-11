@@ -72,13 +72,13 @@ screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
 	obj->max_skips = frameskip;
 	obj->avoid_sleep = avoid_sleep;
 
-#ifdef MINISPHERE_SPHERUN
-	obj->show_fps = true;
-#endif
-
 	obj->fps_poll_time = al_get_time() + 1.0;
 	obj->next_frame_time = al_get_time();
 	obj->last_flip_time = obj->next_frame_time;
+
+#ifdef MINISPHERE_SPHERUN
+	obj->show_fps = true;
+#endif
 
 	screen_set_clipping(obj, new_rect(0, 0, x_size, y_size));
 	refresh_display(obj);
@@ -131,6 +131,18 @@ screen_get_mouse_xy(const screen_t* obj, int* o_x, int* o_y)
 }
 
 void
+screen_set_clipping(screen_t* obj, rect_t clip_rect)
+{
+	obj->clip_rect = clip_rect;
+	clip_rect.x1 = clip_rect.x1 * obj->x_scale + obj->x_offset;
+	clip_rect.y1 = clip_rect.y1 * obj->y_scale + obj->y_offset;
+	clip_rect.x2 = clip_rect.x2 * obj->x_scale + obj->x_offset;
+	clip_rect.y2 = clip_rect.y2 * obj->y_scale + obj->y_offset;
+	al_set_clipping_rectangle(clip_rect.x1, clip_rect.y1,
+		clip_rect.x2 - clip_rect.x1, clip_rect.y2 - clip_rect.y1);
+}
+
+void
 screen_set_frameskip(screen_t* obj, int max_skips)
 {
 	obj->max_skips = max_skips;
@@ -142,18 +154,6 @@ screen_set_mouse_xy(screen_t* obj, int x, int y)
 	x = x * obj->x_scale + obj->x_offset;
 	y = y * obj->y_scale + obj->y_offset;
 	al_set_mouse_xy(obj->display, x, y);
-}
-
-void
-screen_set_clipping(screen_t* obj, rect_t clip_rect)
-{
-	obj->clip_rect = clip_rect;
-	clip_rect.x1 = clip_rect.x1 * obj->x_scale + obj->x_offset;
-	clip_rect.y1 = clip_rect.y1 * obj->y_scale + obj->y_offset;
-	clip_rect.x2 = clip_rect.x2 * obj->x_scale + obj->x_offset;
-	clip_rect.y2 = clip_rect.y2 * obj->y_scale + obj->y_offset;
-	al_set_clipping_rectangle(clip_rect.x1, clip_rect.y1,
-		clip_rect.x2 - clip_rect.x1, clip_rect.y2 - clip_rect.y1);
 }
 
 void
@@ -220,6 +220,8 @@ screen_flip(screen_t* obj, int framerate)
 	// flip the backbuffer, unless the preceeding frame was skipped
 	is_backbuffer_valid = !obj->skip_frame;
 	if (is_backbuffer_valid) {
+		screen_cx = al_get_display_width(obj->display);
+		screen_cy = al_get_display_height(obj->display);
 		if (obj->take_screenshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
@@ -254,8 +256,6 @@ screen_flip(screen_t* obj, int framerate)
 				sprintf(fps_text, "%d/%d fps", obj->fps_flips, obj->fps_frames);
 			else
 				sprintf(fps_text, "%d fps", obj->fps_flips);
-			screen_cx = al_get_display_width(obj->display);
-			screen_cy = al_get_display_height(obj->display);
 			x = screen_cx - obj->x_offset - 108;
 			y = screen_cy - obj->y_offset - 24;
 			al_identity_transform(&trans);
@@ -300,7 +300,8 @@ screen_flip(screen_t* obj, int framerate)
 	}
 	++obj->num_frames;
 	if (!obj->skip_frame) {
-		// clipping is disabled so we can clear out the letterbox area.
+		// disable clipping momentarily so we can clear the letterbox area.
+		// this prevents artifacts which manifest with some graphics drivers.
 		al_set_clipping_rectangle(0, 0, screen_cx, screen_cy);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		screen_set_clipping(obj, obj->clip_rect);
