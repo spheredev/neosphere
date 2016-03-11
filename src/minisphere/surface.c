@@ -408,7 +408,7 @@ js_Surface_blit(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	if (!screen_is_skipframe(g_screen)) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 

@@ -63,25 +63,17 @@
 #define MINISPHERE_USE_VERTEX_BUF
 #endif
 
-extern screen_t*            g_screen;
 extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
-extern int                  g_fps;
 extern sandbox_t*           g_fs;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
+extern screen_t*            g_screen;
 extern kev_file_t*          g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x, g_res_y;
 
-bool     is_skipped_frame   (void);
-int      get_max_frameskip  (void);
-void     set_max_frameskip  (int frames);
-void     delay              (double time);
-void     do_events          (void);
-noreturn exit_game          (bool force_shutdown);
-void     flip_screen        (int framerate);
-noreturn restart_engine     (void);
-void     take_screenshot    (void);
-void     toggle_fps_display (void);
-void     unskip_frame       (void);
+void     delay             (double time);
+void     do_events         (void);
+noreturn exit_game         (bool force_shutdown);
+noreturn restart_engine    (void);

@@ -87,7 +87,7 @@ js_ApplyColorMask(duk_context* ctx)
 	
 	color = duk_require_sphere_color(ctx, 0);
 	
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
 	return 0;
 }
@@ -108,7 +108,7 @@ js_GradientCircle(duk_context* ctx)
 
 	int i;
 
-	if (is_skipped_frame())
+	if (screen_is_skipframe(g_screen))
 		return 0;
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -140,7 +140,7 @@ js_GradientRectangle(duk_context* ctx)
 	color_t color_lr = duk_require_sphere_color(ctx, 6);
 	color_t color_ll = duk_require_sphere_color(ctx, 7);
 
-	if (!is_skipped_frame()) {
+	if (!screen_is_skipframe(g_screen)) {
 		ALLEGRO_VERTEX verts[] = {
 			{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
 			{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
@@ -161,7 +161,7 @@ js_Line(duk_context* ctx)
 	float y2 = duk_require_int(ctx, 3) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 4);
 
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	return 0;
 }
@@ -215,7 +215,7 @@ js_OutlinedCircle(duk_context* ctx)
 	float radius = duk_require_int(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
 
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_circle(x, y, radius, nativecolor(color), 1);
 	return 0;
 }
@@ -231,7 +231,7 @@ js_OutlinedRectangle(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 4);
 	int thickness = n_args >= 6 ? duk_require_int(ctx, 5) : 1;
 	
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
 	return 0;
 }
@@ -248,7 +248,7 @@ js_OutlinedRoundRectangle(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 5);
 	int thickness = n_args >= 7 ? duk_require_int(ctx, 6) : 1;
 
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
 	return 0;
 }
@@ -260,7 +260,7 @@ js_Point(duk_context* ctx)
 	float y = duk_require_int(ctx, 1) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 2);
 	
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_pixel(x, y, nativecolor(color));
 	return 0;
 }
@@ -309,7 +309,7 @@ js_Rectangle(duk_context* ctx)
 	int h = duk_require_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
 	return 0;
 }
@@ -324,7 +324,7 @@ js_RoundRectangle(duk_context* ctx)
 	float radius = duk_require_number(ctx, 4);
 	color_t color = duk_require_sphere_color(ctx, 5);
 
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
 	return 0;
 }
@@ -340,7 +340,7 @@ js_Triangle(duk_context* ctx)
 	int y3 = duk_require_int(ctx, 5);
 	color_t color = duk_require_sphere_color(ctx, 6);
 
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_filled_triangle(x1, y1, x2, y2, x3, y3, nativecolor(color));
 	return 0;
 }

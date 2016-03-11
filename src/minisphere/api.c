@@ -640,7 +640,7 @@ js_RequireSystemScript(duk_context* ctx)
 static duk_ret_t
 js_IsSkippedFrame(duk_context* ctx)
 {
-	duk_push_boolean(ctx, is_skipped_frame());
+	duk_push_boolean(ctx, screen_is_skipframe(g_screen));
 	return 1;
 }
 
@@ -703,7 +703,7 @@ js_GetGameList(duk_context* ctx)
 static duk_ret_t
 js_GetMaxFrameSkips(duk_context* ctx)
 {
-	duk_push_int(ctx, get_max_frameskip());
+	duk_push_int(ctx, screen_get_frameskip(g_screen));
 	return 1;
 }
 
@@ -741,7 +741,7 @@ js_SetFrameRate(duk_context* ctx)
 	int framerate = duk_require_int(ctx, 0);
 	
 	if (framerate < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): Frame rate cannot be negative (%i)", framerate);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): framerate must be positive (got: %d)", framerate);
 	s_framerate = framerate;
 	return 0;
 }
@@ -752,8 +752,8 @@ js_SetMaxFrameSkips(duk_context* ctx)
 	int max_skips = duk_require_int(ctx, 0);
 
 	if (max_skips < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetMaxFrameSkips(): Value cannot be negative (%i)", max_skips);
-	set_max_frameskip(max_skips);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetMaxFrameSkips(): value cannot be negative (%d)", max_skips);
+	screen_set_frameskip(g_screen, max_skips);
 	return 0;
 }
 
@@ -767,7 +767,7 @@ js_SetScreenSize(duk_context* ctx)
 	res_height = duk_require_int(ctx, 1);
 
 	if (res_width < 0 || res_height < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetScreenSize(): Dimensions cannot be negative (%i x %i)",
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetScreenSize(): dimensions cannot be negative (got X: %d, Y: %d)",
 			res_width, res_height);
 	screen_resize(g_screen, res_width, res_height);
 	return 0;
@@ -962,7 +962,7 @@ js_Exit(duk_context* ctx)
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	flip_screen(s_framerate);
+	screen_flip(g_screen, s_framerate);
 	return 0;
 }
 
@@ -995,6 +995,6 @@ js_RestartGame(duk_context* ctx)
 static duk_ret_t
 js_UnskipFrame(duk_context* ctx)
 {
-	unskip_frame();
+	screen_unskip_frame(g_screen);
 	return 0;
 }

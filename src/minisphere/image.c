@@ -830,7 +830,7 @@ js_Image_blit(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	if (!screen_is_skipframe(g_screen)) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
@@ -846,7 +846,7 @@ js_Image_blitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) al_draw_tinted_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
+	if (!screen_is_skipframe(g_screen)) al_draw_tinted_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 	return 0;
 }
 
@@ -878,7 +878,7 @@ js_Image_rotateBlit(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_rotated_bitmap(get_image_bitmap(image),
 			image->width / 2, image->height / 2, x + image->width / 2, y + image->height / 2,
 			angle, 0x0);
@@ -898,7 +898,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_tinted_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
 			image->width / 2, image->height / 2, x + image->width / 2, y + image->height / 2,
 			angle, 0x0);
@@ -930,7 +930,7 @@ js_Image_transformBlit(duk_context* ctx)
 		{ x4 + 0.5, y4 + 0.5, 0, 0, image->height, vertex_color },
 		{ x3 + 0.5, y3 + 0.5, 0, image->width, image->height, vertex_color }
 	};
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
@@ -961,7 +961,7 @@ js_Image_transformBlitMask(duk_context* ctx)
 		{ x4 + 0.5, y4 + 0.5, 0, 0, image->height, vtx_color },
 		{ x3 + 0.5, y3 + 0.5, 0, image->width, image->height, vtx_color }
 	};
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_prim(v, NULL, get_image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
@@ -978,7 +978,7 @@ js_Image_zoomBlit(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_scaled_bitmap(get_image_bitmap(image), 0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
 	return 0;
 }
@@ -996,7 +996,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		al_draw_tinted_scaled_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
 			0, 0, image->width, image->height, x, y, image->width * scale, image->height * scale, 0x0);
 	return 0;

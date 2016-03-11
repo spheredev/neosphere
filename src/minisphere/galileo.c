@@ -689,7 +689,7 @@ js_Group_draw(duk_context* ctx)
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 	duk_pop(ctx);
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		draw_group(group);
 	return 0;
 }

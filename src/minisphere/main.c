@@ -33,33 +33,18 @@ static bool verify_requirements (sandbox_t* fs);
 
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
-screen_t*            g_screen = NULL;
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 sandbox_t*           g_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
+screen_t*            g_screen = NULL;
 kev_file_t*          g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
-static rect_t  s_clip_rect;
-static bool    s_conserve_cpu = true;
-static int     s_current_fps;
-static int     s_current_game_fps;
-static int     s_frame_skips;
-static bool    s_is_fullscreen = false;
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
-static double  s_last_flip_time;
-static int     s_max_frameskip = 5;
-static double  s_next_fps_poll_time;
-static double  s_next_frame_time;
-static int     s_num_flips;
-static int     s_num_frames;
-bool           s_skipping_frame = false;
-static bool    s_show_fps = false;
-static bool    s_want_snapshot = false;
 
 static const char* const ERROR_TEXT[][2] =
 {
@@ -94,14 +79,17 @@ main(int argc, char* argv[])
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
-	int                  verbosity;
+	bool                 use_conserve_cpu;
+	int                  use_frameskip;
+	bool                 use_fullscreen;
+	int                  use_verbosity;
 	bool                 want_debug;
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
-		&s_is_fullscreen, &s_max_frameskip, &verbosity, &s_conserve_cpu, &want_debug))
+		&use_fullscreen, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
 	{
-		initialize_console(verbosity);
+		initialize_console(use_verbosity);
 	}
 	else
 		return EXIT_FAILURE;
@@ -112,10 +100,10 @@ main(int argc, char* argv[])
 	// print out options
 	console_log(1, "parsing command line");
 	console_log(1, "    game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
-	console_log(1, "    fullscreen: %s", s_is_fullscreen ? "on" : "off");
-	console_log(1, "    frameskip limit: %d frames", s_max_frameskip);
-	console_log(1, "    sleep when idle: %s", s_conserve_cpu ? "yes" : "no");
-	console_log(1, "    console verbosity: V%d", verbosity);
+	console_log(1, "    fullscreen: %s", use_fullscreen ? "on" : "off");
+	console_log(1, "    frameskip limit: %d frames", use_frameskip);
+	console_log(1, "    sleep when idle: %s", use_conserve_cpu ? "yes" : "no");
+	console_log(1, "    console verbosity: V%d", use_verbosity);
 #if defined(MINISPHERE_SPHERUN)
 	console_log(1, "    debugger mode: %s", want_debug ? "active" : "passive");
 #endif
@@ -195,7 +183,7 @@ main(int argc, char* argv[])
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
-	g_screen = screen_new(g_res_x, g_res_y, false);
+	g_screen = screen_new(g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(screen_display(g_screen), "Unable to Create Render COntext", "minisphere was unable to create a render context.",
 			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
@@ -238,13 +226,13 @@ main(int argc, char* argv[])
 	}
 
 	// switch to fullscreen if necessary and initialize clipping
-	if (s_is_fullscreen)
-		screen_toggle(g_screen);
+	if (use_fullscreen)
+		screen_toggle_fullscreen(g_screen);
 
 	// display loading message, scripts may take a bit to compile
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_status(g_screen, "waiting for SSJ...");
+		screen_draw_status(g_screen, "waiting for SSJ...");
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
@@ -258,15 +246,9 @@ main(int argc, char* argv[])
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	screen_status(g_screen, "starting up...");
+	screen_draw_status(g_screen, "starting up...");
 	al_flip_display();
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-
-	// initialize timing variables
-	s_next_fps_poll_time = al_get_time() + 1.0;
-	s_num_frames = s_num_flips = 0;
-	s_current_fps = s_current_game_fps = 0;
-	s_next_frame_time = s_last_flip_time = al_get_time();
 
 	// evaluate startup script
 	screen_show_mouse(g_screen, false);
@@ -304,24 +286,6 @@ on_js_error:
 		duk_push_string(g_duk, err_msg);
 	}
 	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
-}
-
-bool
-is_skipped_frame(void)
-{
-	return s_skipping_frame;
-}
-
-int
-get_max_frameskip(void)
-{
-	return s_max_frameskip;
-}
-
-void
-set_max_frameskip(int frames)
-{
-	s_max_frameskip = frames >= 0 ? frames : 0;
 }
 
 void
@@ -373,147 +337,10 @@ exit_game(bool force_shutdown)
 	longjmp(s_jmp_exit, 1);
 }
 
-void
-flip_screen(int framerate)
-{
-	ALLEGRO_DISPLAY*  al_display;
-	char*             filename;
-	char              fps_text[20];
-	const char*       game_filename;
-	const path_t*     game_path;
-	bool              is_backbuffer_valid;
-	time_t            now;
-	ALLEGRO_STATE     old_state;
-	path_t*           path;
-	const char*       pathstr;
-	int               screen_cx;
-	int               screen_cy;
-	int               serial = 1;
-	ALLEGRO_BITMAP*   snapshot;
-	double            time_left;
-	char              timestamp[100];
-	ALLEGRO_TRANSFORM trans;
-	int               x, y;
-
-	size_t i;
-
-	al_display = screen_display(g_screen);
-	
-	// update FPS with 1s granularity
-	if (al_get_time() >= s_next_fps_poll_time) {
-		s_current_fps = s_num_flips;
-		s_current_game_fps = s_num_frames;
-		s_num_flips = 0;
-		s_num_frames = 0;
-		s_next_fps_poll_time = al_get_time() + 1.0;
-	}
-
-	// flip the backbuffer, unless the preceeding frame was skipped
-	is_backbuffer_valid = !s_skipping_frame;
-	if (is_backbuffer_valid) {
-		if (s_want_snapshot) {
-			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
-			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
-			snapshot = al_clone_bitmap(al_get_backbuffer(al_display));
-			al_restore_state(&old_state);
-			game_path = get_game_path(g_fs);
-			game_filename = path_is_file(game_path)
-				? path_filename_cstr(game_path)
-				: path_hop_cstr(game_path, path_num_hops(game_path) - 1);
-			path = path_rebase(path_new("Sphere 2.0/screenshots/"), homepath());
-			path_mkdir(path);
-			time(&now);
-			strftime(timestamp, 100, "%Y%m%d", localtime(&now));
-			do {
-				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
-				for (i = 0; filename[i] != '\0'; ++i)
-					filename[i];
-				path_strip(path);
-				path_append(path, filename);
-				pathstr = path_cstr(path);
-				free(filename);
-			} while (al_filename_exists(pathstr));
-			al_save_bitmap(pathstr, snapshot);
-			al_destroy_bitmap(snapshot);
-			path_free(path);
-			s_want_snapshot = false;
-		}
-		if (s_show_fps) {
-			if (framerate > 0)
-				sprintf(fps_text, "%i/%i fps", s_current_fps, s_current_game_fps);
-			else
-				sprintf(fps_text, "%i fps", s_current_fps);
-			screen_cx = al_get_display_width(al_display);
-			screen_cy = al_get_display_height(al_display);
-			x = screen_cx - 108;
-			y = 8;
-			al_identity_transform(&trans);
-			al_use_transform(&trans);
-			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
-			draw_text(g_sys_font, rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
-			draw_text(g_sys_font, rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
-			screen_transform(g_screen, &trans);
-			al_use_transform(&trans);
-		}
-		al_flip_display();
-		s_last_flip_time = al_get_time();
-		s_frame_skips = 0;
-		++s_num_flips;
-	}
-	else {
-		++s_frame_skips;
-	}
-
-	// if framerate is nonzero and we're backed up on frames, skip frames until we
-	// catch up. there is a cap on consecutive frameskips to avoid the situation where
-	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
-	// that we lag instead of never rendering anything at all.
-	if (framerate > 0) {
-		s_skipping_frame = s_frame_skips < s_max_frameskip && s_last_flip_time > s_next_frame_time;
-		do {  // kill time while we wait for the next frame
-			time_left = s_next_frame_time - al_get_time();
-			if (s_conserve_cpu && time_left > 0.001)  // engine may stall with < 1ms timeout
-				al_wait_for_event_timed(g_events, NULL, time_left);
-			do_events();
-		} while (al_get_time() < s_next_frame_time);
-		if (!is_backbuffer_valid && !s_skipping_frame)  // did we just finish skipping frames?
-			s_next_frame_time = al_get_time() + 1.0 / framerate;
-		else
-			s_next_frame_time += 1.0 / framerate;
-	}
-	else {
-		s_skipping_frame = false;
-		do_events();
-		s_next_frame_time = al_get_time();
-	}
-	++s_num_frames;
-	if (!s_skipping_frame)
-		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-}
-
 noreturn
 restart_engine(void)
 {
 	longjmp(s_jmp_restart, 1);
-}
-
-void
-take_screenshot(void)
-{
-	s_want_snapshot = true;
-}
-
-void
-toggle_fps_display(void)
-{
-	s_show_fps = !s_show_fps;
-}
-
-void
-unskip_frame(void)
-{
-	s_skipping_frame = false;
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
 static void
@@ -548,7 +375,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	num_lines = get_wraptext_line_count(error_info);
 
 	// show error in-engine, Sphere 1.x style
-	unskip_frame();
+	screen_unskip_frame(g_screen);
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {
@@ -571,7 +398,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 				TEXT_ALIGN_CENTER,
 				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
 		}
-		flip_screen(30);
+		screen_flip(g_screen, 30);
 		if (frames_till_close <= 0) {
 			al_get_keyboard_state(&keyboard);
 			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)

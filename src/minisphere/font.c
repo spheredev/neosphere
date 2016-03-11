@@ -762,7 +762,7 @@ js_Font_drawText(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!is_skipped_frame())
+	if (!screen_is_skipframe(g_screen))
 		draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
 	return 0;
 }
@@ -784,7 +784,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) {
+	if (!screen_is_skipframe(g_screen)) {
 		text_w = get_text_width(font, text);
 		text_h = get_font_line_height(font);
 		bitmap = al_create_bitmap(text_w, text_h);
@@ -819,7 +819,7 @@ js_Font_drawTextBox(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	if (!is_skipped_frame()) {
+	if (!screen_is_skipframe(g_screen)) {
 		duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
 		duk_push_this(ctx);
 		duk_push_string(ctx, text);

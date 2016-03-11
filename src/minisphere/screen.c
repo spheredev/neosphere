@@ -1,3 +1,7 @@
+// note: due to Allegro's architecture, this is far from a perfect abstraction. avoid the
+//       temptation to create multiple screen objects for any reason as this will not work properly
+//       and will almost certainly blow up in your face. :o)
+
 #include "minisphere.h"
 #include "screen.h"
 
@@ -5,9 +9,22 @@
 
 struct screen
 {
-	ALLEGRO_DISPLAY* display;
+	bool             avoid_sleep;
 	rect_t           clip_rect;
+	ALLEGRO_DISPLAY* display;
+	int              fps_flips;
+	int              fps_frames;
+	double           fps_poll_time;
 	bool             fullscreen;
+	double           last_flip_time;
+	int              max_skips;
+	double           next_frame_time;
+	int              num_flips;
+	int              num_frames;
+	int              num_skips;
+	bool             show_fps;
+	bool             skip_frame;
+	bool             take_screenshot;
 	bool             use_shaders;
 	float            x_offset;
 	float            x_scale;
@@ -20,7 +37,7 @@ struct screen
 static void refresh_display (screen_t* obj);
 
 screen_t*
-screen_new(int x_size, int y_size, bool fullscreen)
+screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
 {
 	ALLEGRO_DISPLAY* display;
 	screen_t*        obj;
@@ -49,8 +66,13 @@ screen_new(int x_size, int y_size, bool fullscreen)
 	obj->display = display;
 	obj->x_size = x_size;
 	obj->y_size = y_size;
-	obj->fullscreen = fullscreen;
-	
+	obj->max_skips = frameskip;
+	obj->avoid_sleep = avoid_sleep;
+
+	obj->fps_poll_time = al_get_time() + 1.0;
+	obj->next_frame_time = al_get_time();
+	obj->last_flip_time = obj->next_frame_time;
+
 	screen_set_clip(obj, new_rect(0, 0, x_size, y_size));
 	refresh_display(obj);
 	return obj;
@@ -73,10 +95,22 @@ screen_display(const screen_t* obj)
 	return obj->display;
 }
 
+bool
+screen_is_skipframe(const screen_t* obj)
+{
+	return obj->skip_frame;
+}
+
 rect_t
 screen_get_clip(screen_t* obj)
 {
 	return obj->clip_rect;
+}
+
+int
+screen_get_frameskip(const screen_t* obj)
+{
+	return obj->max_skips;
 }
 
 void
@@ -87,6 +121,12 @@ screen_get_mouse_xy(const screen_t* obj, int* o_x, int* o_y)
 	al_get_mouse_state(&mouse_state);
 	*o_x = (mouse_state.x - obj->x_offset) / obj->x_scale;
 	*o_y = (mouse_state.y - obj->y_offset) / obj->y_scale;
+}
+
+void
+screen_set_frameskip(screen_t* obj, int max_skips)
+{
+	obj->max_skips = max_skips;
 }
 
 void
@@ -107,6 +147,151 @@ screen_set_clip(screen_t* obj, rect_t clip_rect)
 	clip_rect.y2 = clip_rect.y2 * obj->y_scale + obj->y_offset;
 	al_set_clipping_rectangle(clip_rect.x1, clip_rect.y1,
 		clip_rect.x2 - clip_rect.x1, clip_rect.y2 - clip_rect.y1);
+}
+
+void
+screen_capture_now(screen_t* obj)
+{
+	obj->take_screenshot = true;
+}
+
+void
+screen_draw_status(screen_t* obj, const char* text)
+{
+	int               screen_cx;
+	int               screen_cy;
+	ALLEGRO_TRANSFORM trans;
+	int               width;
+	int               height;
+
+	screen_cx = al_get_display_width(obj->display);
+	screen_cy = al_get_display_height(obj->display);
+	width = get_text_width(g_sys_font, text) + 20;
+	height = get_font_line_height(g_sys_font) + 10;
+	al_identity_transform(&trans);
+	al_use_transform(&trans);
+	al_draw_filled_rounded_rectangle(
+		screen_cx - 16 - width, screen_cy - 16 - height, screen_cx - 16, screen_cy - 16,
+		4, 4, al_map_rgba(16, 16, 16, 255));
+	draw_text(g_sys_font, rgba(0, 0, 0, 255), screen_cx - 16 - width / 2 + 1, screen_cy - 16 - height + 6, TEXT_ALIGN_CENTER, text);
+	draw_text(g_sys_font, rgba(255, 255, 255, 255), screen_cx - 16 - width / 2, screen_cy - 16 - height + 5, TEXT_ALIGN_CENTER, text);
+	screen_transform(obj, &trans);
+	al_use_transform(&trans);
+}
+
+void
+screen_flip(screen_t* obj, int framerate)
+{
+	char*             filename;
+	char              fps_text[20];
+	const char*       game_filename;
+	const path_t*     game_path;
+	bool              is_backbuffer_valid;
+	time_t            now;
+	ALLEGRO_STATE     old_state;
+	path_t*           path;
+	const char*       pathstr;
+	int               screen_cx;
+	int               screen_cy;
+	int               serial = 1;
+	ALLEGRO_BITMAP*   snapshot;
+	double            time_left;
+	char              timestamp[100];
+	ALLEGRO_TRANSFORM trans;
+	int               x, y;
+
+	size_t i;
+
+	// update FPS with 1s granularity
+	if (al_get_time() >= obj->fps_poll_time) {
+		obj->fps_flips = obj->num_flips;
+		obj->fps_frames = obj->num_frames;
+		obj->num_frames = obj->num_flips = 0;
+		obj->fps_poll_time = al_get_time() + 1.0;
+	}
+
+	// flip the backbuffer, unless the preceeding frame was skipped
+	is_backbuffer_valid = !obj->skip_frame;
+	if (is_backbuffer_valid) {
+		if (obj->take_screenshot) {
+			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
+			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
+			snapshot = al_clone_bitmap(al_get_backbuffer(obj->display));
+			al_restore_state(&old_state);
+			game_path = get_game_path(g_fs);
+			game_filename = path_is_file(game_path)
+				? path_filename_cstr(game_path)
+				: path_hop_cstr(game_path, path_num_hops(game_path) - 1);
+			path = path_rebase(path_new("Sphere 2.0/screenshots/"), homepath());
+			path_mkdir(path);
+			time(&now);
+			strftime(timestamp, 100, "%Y%m%d", localtime(&now));
+			do {
+				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
+				for (i = 0; filename[i] != '\0'; ++i)
+					filename[i];
+				path_strip(path);
+				path_append(path, filename);
+				pathstr = path_cstr(path);
+				free(filename);
+			} while (al_filename_exists(pathstr));
+			al_save_bitmap(pathstr, snapshot);
+			al_destroy_bitmap(snapshot);
+			path_free(path);
+			obj->take_screenshot = false;
+		}
+		if (obj->show_fps) {
+			if (framerate > 0)
+				sprintf(fps_text, "%d/%d fps", obj->fps_flips, obj->fps_frames);
+			else
+				sprintf(fps_text, "%d fps", obj->fps_flips);
+			screen_cx = al_get_display_width(obj->display);
+			screen_cy = al_get_display_height(obj->display);
+			x = screen_cx - 108;
+			y = 8;
+			al_identity_transform(&trans);
+			al_use_transform(&trans);
+			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(0, 0, 0, 128));
+			draw_text(g_sys_font, rgba(0, 0, 0, 128), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
+			draw_text(g_sys_font, rgba(255, 255, 255, 128), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
+			screen_transform(g_screen, &trans);
+			al_use_transform(&trans);
+		}
+		al_flip_display();
+		obj->last_flip_time = al_get_time();
+		obj->num_skips = 0;
+		++obj->num_flips;
+	}
+	else {
+		++obj->num_skips;
+	}
+
+	// if framerate is nonzero and we're backed up on frames, skip frames until we
+	// catch up. there is a cap on consecutive frameskips to avoid the situation where
+	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
+	// that we lag instead of never rendering anything at all.
+	if (framerate > 0) {
+		obj->skip_frame = obj->num_skips < obj->max_skips && obj->last_flip_time > obj->next_frame_time;
+		do {  // kill time while we wait for the next frame
+			time_left = obj->next_frame_time - al_get_time();
+			if (!obj->avoid_sleep && time_left > 0.001)  // engine may stall with < 1ms timeout
+				al_wait_for_event_timed(g_events, NULL, time_left);
+			do_events();
+		} while (al_get_time() < obj->next_frame_time);
+		if (!is_backbuffer_valid && !obj->skip_frame)  // did we just finish skipping frames?
+			obj->next_frame_time = al_get_time() + 1.0 / framerate;
+		else
+			obj->next_frame_time += 1.0 / framerate;
+	}
+	else {
+		obj->skip_frame = false;
+		do_events();
+		obj->next_frame_time = al_get_time();
+		obj->next_frame_time = al_get_time();
+	}
+	++obj->num_frames;
+	if (!obj->skip_frame)
+		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
 image_t*
@@ -156,34 +341,16 @@ screen_show_mouse(screen_t* obj, bool visible)
 }
 
 void
-screen_status(screen_t* obj, const char* text)
-{
-	int               screen_cx;
-	int               screen_cy;
-	ALLEGRO_TRANSFORM trans;
-	int               width;
-	int               height;
-
-	screen_cx = al_get_display_width(obj->display);
-	screen_cy = al_get_display_height(obj->display);
-	width = get_text_width(g_sys_font, text) + 20;
-	height = get_font_line_height(g_sys_font) + 10;
-	al_identity_transform(&trans);
-	al_use_transform(&trans);
-	al_draw_filled_rounded_rectangle(
-		screen_cx - 16 - width, screen_cy - 16 - height, screen_cx - 16, screen_cy - 16,
-		4, 4, al_map_rgba(16, 16, 16, 255));
-	draw_text(g_sys_font, rgba(0, 0, 0, 255), screen_cx - 16 - width / 2 + 1, screen_cy - 16 - height + 6, TEXT_ALIGN_CENTER, text);
-	draw_text(g_sys_font, rgba(255, 255, 255, 255), screen_cx - 16 - width / 2, screen_cy - 16 - height + 5, TEXT_ALIGN_CENTER, text);
-	screen_transform(obj, &trans);
-	al_use_transform(&trans);
-}
-
-void
-screen_toggle(screen_t* obj)
+screen_toggle_fullscreen(screen_t* obj)
 {
 	obj->fullscreen = !obj->fullscreen;
 	refresh_display(obj);
+}
+
+void
+screen_toggle_fps(screen_t* obj)
+{
+	obj->show_fps = !obj->show_fps;
 }
 
 void
@@ -191,6 +358,13 @@ screen_transform(const screen_t* obj, ALLEGRO_TRANSFORM* p_trans)
 {
 	al_scale_transform(p_trans, obj->x_scale, obj->y_scale);
 	al_translate_transform(p_trans, obj->x_offset, obj->y_offset);
+}
+
+void
+screen_unskip_frame(screen_t* obj)
+{
+	obj->skip_frame = false;
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
 static void

@@ -480,23 +480,23 @@ update_input(void)
 				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
 				 || event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
 				{
-					screen_toggle(g_screen);
+					screen_toggle_fullscreen(g_screen);
 				}
 				else {
 					queue_key(event.keyboard.keycode);
 				}
 				break;
 			case ALLEGRO_KEY_F10:
-				screen_toggle(g_screen);
+				screen_toggle_fullscreen(g_screen);
 				break;
 			case ALLEGRO_KEY_F11:
-				toggle_fps_display();
+				screen_toggle_fps(g_screen);
 				break;
 			case ALLEGRO_KEY_F12:
 				if (is_debugger_attached())
 					duk_debugger_pause(g_duk);
 				else
-					take_screenshot();
+					screen_capture_now(g_screen);
 				break;
 			default:
 				queue_key(event.keyboard.keycode);

@@ -1241,7 +1241,7 @@ render_map(void)
 	
 	int x, y, z;
 	
-	if (is_skipped_frame())
+	if (screen_is_skipframe(g_screen))
 		return;
 	
 	// render map layers from bottom to top (+Z = up)
@@ -1558,7 +1558,7 @@ js_MapEngine(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapEngine(): unable to load map file '%s' into map engine", filename);
 	while (!s_exiting) {
 		render_map();
-		flip_screen(s_framerate);
+		screen_flip(g_screen, s_framerate);
 		update_map_engine(true);
 		process_map_input();
 	}
