@@ -46,7 +46,7 @@ screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
 	int              x_scale;
 	int              y_scale;
 
-	console_log(1, "creating render context at %dx%d", x_size, y_size);
+	console_log(1, "initializing render context at %dx%d", x_size, y_size);
 
 #ifdef MINISPHERE_USE_SHADERS
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
@@ -62,6 +62,8 @@ screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
 	al_set_new_display_flags(ALLEGRO_OPENGL);
 	display = al_create_display(320, 240);
 #endif
+	
+	console_log(1, "    shader support: %s", use_shaders ? "yes" : "no");
 
 	obj = calloc(1, sizeof(screen_t));
 	obj->display = display;
@@ -89,7 +91,7 @@ screen_free(screen_t* obj)
 	if (obj == NULL)
 		return;
 	
-	console_log(1, "freeing render context");
+	console_log(1, "shutting down render context");
 	al_destroy_display(obj->display);
 	free(obj);
 }

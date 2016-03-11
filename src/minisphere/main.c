@@ -185,12 +185,11 @@ main(int argc, char* argv[])
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 	g_screen = screen_new(g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
-		al_show_native_message_box(screen_display(g_screen), "Unable to Create Render COntext", "minisphere was unable to create a render context.",
+		al_show_native_message_box(screen_display(g_screen), "Unable to Create Render Context", "minisphere was unable to create a render context.",
 			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
-	console_log(1, "    shaders: %s", have_shaders ? "enabled" : "unsupported");
 	al_set_window_title(screen_display(g_screen), get_sgm_name(g_fs));
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 	if (!(icon = load_image("~sgm/icon.png")))

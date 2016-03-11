@@ -597,21 +597,21 @@ GetMouseWheelEvent();
 Random Number Generation
 ------------------------
 
-Many games have need of a good random number generator, particularly RPGs. All
+Many games have need of a good random number generator, particularly RPGs.  All
 JavaScript engines have a built-in generator in the form of the Math.random()
-function, however this is generally considered subpar. minisphere provides the
+function, however this is generally considered subpar.  minisphere provides the
 RNG object, which uses the MT19937 (Mersenne Twister) algorithm to generate
 high-quality random values and allows manual seeding.
 
 RNG.seed(seed);
 
-    Seeds the random number generator with `seed`. If the seed is floating
+    Seeds the random number generator with `seed`.  If the seed is floating
     point, it will be truncated to an integer; using a seed of 812.88, for
     example, has the same effect as 812.
 
 RNG.random();
 
-    Returns a floating point value in the range [0,1). This is the basic method
+    Returns a floating point value in the range [0,1).  This is the basic method
     of random number generation, and is a direct, drop-in replacement for
     Math.random().
 
@@ -625,14 +625,14 @@ RNG.string([length]);
 RNG.chance(odds);
 
     Tests a percentage chance. Returns true if the chance succeeds, false
-    otherwise. `odds` is a value between 0 and 1; for example, 0.75 will return
+    otherwise.  `odds` is a value between 0 and 1; for example, 0.75 will return
     true 75% of the time.
 
 RNG.normal(mean, sigma);
 
     Returns a random floating point value normally distributed around `mean`
-    with a standard deviation specified by `sigma`. The probability distribution
-    of this function is sometimes termed a "bell curve."
+    with a standard deviation of `sigma`.  The probability distribution of this
+    function is sometimes termed a "bell curve."
 
 RNG.range(min, max);
 
@@ -651,15 +651,16 @@ RNG.uniform(mean, variance);
 Graphics Routines
 -----------------
 
-minisphere, like Sphere, uses double-buffered rendering. In this scheme, all
+minisphere, like Sphere, uses double-buffered rendering.  In this scheme, all
 drawing is done to a backbuffer, which is not visible to the user, and then
 "flipped" once per frame, so that the player only sees the final rendering
 output.
 
 FlipScreen();
 
-    Flips the backbuffer. Note that this also performs event loop processing, so
-    if it is not called regularly, the engine will stop responding.
+    Flips the backbuffer.  This also performs event loop processing, so if it is
+    not called regularly (or DoEvents() in its place, see above), the engine
+    will stop responding.
 
 GetFrameRate();
 SetFrameRate(fps);
@@ -694,8 +695,8 @@ Frame Skipping
 --------------
 
 minisphere has an aggressive frame skipping algorithm which avoids rendering
-to the backbuffer if it determines that a frame will be late. This helps keep
-the engine running at full speed even on lower-end computers. The following
+to the backbuffer if it determines that a frame will be late.  This helps keep
+the engine running at full speed even on lower-end computers.  The following
 functions are provided to manage frame skipping.
 
 IsSkippedFrame();
@@ -709,13 +710,13 @@ SetMaxFrameSkips(max_skips);
 
     Gets or sets the maximum number of consecutive frames the engine is allowed
     to skip.  The default is 5 frames.  If your game uses GrabImage() or
-    GrabSurface() pervasively, it may be useful to set this to zero. This will
-    almost certainly lead to lag, however.
+    GrabSurface() pervasively, it may be useful to set this to zero.  This will
+    almost certainly cause lag, however.
 
 UnskipFrame();
 
     Instructs the engine to re-enable rendering for the current frame if it has
-    been marked for skipping.  This also clears the backbuffer. This call can
+    been marked for skipping.  This also clears the backbuffer.  This call can
     be used in lieu of SetMaxFrameSkips(0) during sections which make heavy use
     of GrabImage() or GrabSurface() without impacting performance for the rest
     of the game.
@@ -743,8 +744,8 @@ new Color(red, green, blue[, alpha]);
 
 Color:clone();
 
-    Copies this Color object to a new one.  Changes to the new object will not
-    affect the original.
+    Copies this Color object to a new one.  Changes to the cloned object will
+    not affect the original.
 
 Color:red (read/write)
 Color:green (read/write)
@@ -872,7 +873,7 @@ new ShaderProgram(shader_files);
 
     SphereFS compliant.
 
-    Constructs a ShaderProgram from a set of shader sources. `shader_files`
+    Constructs a ShaderProgram from a set of shader sources.  `shader_files`
     should be an object with the following properties:
 
         .vertex:   The filename of the source for the vertex shader.
@@ -887,13 +888,13 @@ matrices are used in graphics to transform points. Color matrices operate on the
 individual color components (RGB) of the pixel, as follows:
 
     [ rn, rr, rg, rb ]   [r]    r' = rn + (rr * r + rg * g + rb * b) / 255
-    [ gn, gr, gg, gb ] * [g]    g' = gn + (gr * r + gg * g + gb * b) / 255
+    [ gn, gr, gg, gb ] x [g]    g' = gn + (gr * r + gg * g + gb * b) / 255
     [ bn, br, bg, bb ]   [b]    b' = bn + (br * r + bg * g + bb * b) / 255
 
 new ColorMatrix(rn, rr, rg, rb, gn, gr, gg, gb, bn, br, bg, bb);
 
     Constructs a new ColorMatrix object which can be used in color
-    transformation operations. All arguments are required and specify the
+    transformation operations.  All arguments are required and specify the
     contents of the matrix.
 
 ColorMatrix.apply(color);
@@ -905,10 +906,10 @@ ColorMatrix.apply(color);
 Surfaces
 --------
 
-A surface is a writable image which you can render primitives, images and other
-surfaces to to compose an image behind-the-scenes and later render it all at
-once. Surfaces are allocated from main memory, which allows fast manipulation
-at the expense of direct rendering performance.
+A surface is a writable image to which you can render primitives, images and
+even other surfaces in order to compose an image behind-the-scenes and later
+render it all at once.  Surfaces are allocated from main memory, which allows
+fast manipulation at the expense of direct rendering performance.
 
 new Surface(width, height[, fill_color]);
 
@@ -1058,9 +1059,10 @@ Audialis Sound Routines
 -----------------------
 
 Playing sounds and music are both handled in minisphere by Audialis, the
-evolution of Sphere 1.x's audio subsystem. Audialis allows you to create mixers
+evolution of Sphere 1.x's audio subsystem.  Audialis allows you to create mixers
 which can be used to adjust certain parameters across all sounds associated with
-that mixer. This is useful for implementing global volume controls, for example.
+that mixer.  This is useful for implementing global volume controls, for
+example.
 
 GetDefaultMixer();
 
@@ -1070,14 +1072,14 @@ GetDefaultMixer();
 new Mixer(frequency, bits[, channels]);
 
     Constructs a new Mixer object.  Any sounds played through the mixer will use
-    the format specified by the parameters above. `frequency` is the sample
+    the format specified by the parameters above.  `frequency` is the sample
     rate, `bits` specifies the bit depth (allowed values are 8, 16 and 24), and
-    `channels` is the number of channels, ranging [1-7].  Note that channel
-    counts of 5 or higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
+    `channels` is the number of channels, ranging [1-7].  Channel counts of 5 or
+    higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
 
     Do note that this creates a _hardware_ mixer.  If the requested format is
     not supported by the system, an error will be thrown ("unable to create
-    voice").
+    hardware voice").
 
 Mixer:volume (read/write)
 
@@ -1145,22 +1147,22 @@ Sound:pause();
 Sound:play([is_looping]);
 
     Begins or resumes sound playback. The semantics of this function are a bit
-    counterintuitive, but match the behavior of Sphere 1.5. When called with no
-    arguments, Sound:play() resumes a paused sound. Otherwise, the sound is
-    restarted from the beginning (even if it was already playing). If
+    counterintuitive, but match the behavior of Sphere 1.5.  When called with no
+    arguments, Sound:play() resumes a paused sound.  Otherwise, the sound is
+    restarted from the beginning (even if it was already playing).  If
     `is_looping` is true, the sound will automatically repeat when playback
     ends.
 
 Sound:reset();
 
-    Seeks to the beginning of the stream. Playback state is not altered; if the
+    Seeks to the beginning of the stream.  Playback state is not altered; if the
     sound is playing at the time of this call, it simply starts over from the
-    beginning. Essentially, this has the same effect as setting Sound:position
+    beginning.  Essentially, this has the same effect as setting Sound:position
     to zero.
 
 Sound:stop();
 
-    Stops the sound. The playback position will be reset to the beginning, even
+    Stops the sound.  The playback position will be reset to the beginning, even
     if the sound was not playing.
 
 new SoundStream([frequency[, bits[, channels]]]);
@@ -1213,13 +1215,13 @@ Byte Arrays
 -----------
 
 A byte array is a buffer containing raw data. Byte arrays are used for both
-networking as well as in binary file I/O. See the sections below for more
+networking as well as in binary file I/O.  See the sections below for more
 information about those.  Byte arrays can be used like any other array, via the
 indexing operator [], however values written to the array must be numeric and
 are automatically coerced to 8-bit integers (range 0-255).
 
 As of minisphere 2.0, the ByteArray object is deprecated and has been retained
-only for backwards compatibility. New games should use the native JavaScript
+only for backwards compatibility.  New games should use the native JavaScript
 ArrayBuffer, TypedArray, or DataView objects instead.
 
 new ByteArray(num_bytes);
@@ -1286,8 +1288,8 @@ Networking (Sockets)
 --------------------
 
 minisphere includes an advanced sockets API which is more flexible than the one
-Sphere provides. The old routines are still available, but should be considered
-deprecated. Under minisphere, sockets are divided into two types: Listening
+Sphere provides.  The old routines are still available, but should be considered
+deprecated.  Under minisphere, sockets are divided into two types: Listening
 sockets, used for servers, and I/O sockets, for clients.
 
 GetLocalName();
@@ -1337,9 +1339,9 @@ IOSocket:remotePort (read-only)
 
 IOSocket:isConnected();
 
-    Returns true if the a connection has been established.  As long as this
-    returns false, you cannot call any other methods on the socket object.
-    Doing so will cause an error to be thrown.
+    Returns true if a connection has been established.  As long as this returns
+    false, you cannot call any other methods on the socket object.  Doing so
+    will cause an error to be thrown.
 
 IOSocket:getPendingReadSize();
 
@@ -1459,12 +1461,12 @@ KevFile:write(key, value);
 
 KevFile:flush()
 
-    Flushes the file.  All pending changes will be written out to the file
-    system.  The file will remain open afterwards.
+    Flushes the file.  All pending changes will be written out to the file on
+    disk.  The file will remain open afterwards.
 
 KevFile:close()
 
-    Closes the file, writing any changes out to the file system in the process.
+    Closes the file, writing any changes out to the file on disk in the process.
     You should not call any other methods on the object after this (it is safe
     to call KevFile:close() more than once, however).  Doing so will throw an
     error.
