@@ -255,7 +255,7 @@ screen_flip(screen_t* obj, int framerate)
 			screen_cx = al_get_display_width(obj->display);
 			screen_cy = al_get_display_height(obj->display);
 			x = screen_cx - obj->x_offset - 108;
-			y = obj->y_offset + 8;
+			y = screen_cy - obj->y_offset - 24;
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
