@@ -21,6 +21,7 @@ v3.0.0 - March 28, 2016
   instead of `<docs>/minisphere` as it was in prior versions.  SPK packages can
   be placed into the `games` subdirectory to have the startup game automatically
   pick them up.
+* minisphere now looks for CommonJS modules in `~sgm/commonjs`.
 * Enhances `Assert()` behavior.  If an assertion fails and the debugger is
   attached, choosing not to continue will cause a prompt breakpoint instead of
   throwing an error.  If the debugger is not attached, any failing assertions
@@ -29,8 +30,10 @@ v3.0.0 - March 28, 2016
   aspect ratio when switching into fullscreen mode.
 * Screenshots are now given meaningful names based on the game filename and
   current date instead of random characters.
+* The frame rate is now visible by default whenever a game is started using the
+  `spherun` command, and has been moved to the lower right corner of the screen.
 * When the debugger is attached, the engine now shows a small "SSJ" watermark in
-  the bottom-left corner of the screen as a reminder.
+  the lower left corner of the screen as a reminder.
 * The engine now waits for sounds to stop playing before freeing them, even if
   the Sound object goes out of scope.  This allows a common Sphere idiom
   `new Sound("munch.wav").play()` to work as expected.
@@ -38,8 +41,8 @@ v3.0.0 - March 28, 2016
   turn over control to the attached debugger.  This can be useful when trying to
   debug glitches that don't lead to an exception.
 * You can now change the minisphere Console verbosity level when developing in
-  Sphere Studio by going to the Settings Center page.  V1 (basic logging) is the
-  default.
+  Sphere Studio by going to the Settings Center page.  V2 (high-level logging)
+  is the default.
 * Vastly improves object inspection in the Sphere Studio debugger.  Object
   contents will be displayed in a treeview, allowing you to drill down into
   properties, alleviating the need to scroll through a potentially huge JSON

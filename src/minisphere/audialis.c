@@ -675,11 +675,11 @@ js_new_Mixer(duk_context* ctx)
 	mixer_t* mixer;
 
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): Invalid bit depth for mixer (%i)", bits);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): invalid bit depth for mixer (%i)", bits);
 	if (channels < 1 || channels > 7)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): Invalid channel count for mixer (%i)", channels);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): invalid channel count for mixer (%i)", channels);
 	if (!(mixer = create_mixer(freq, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): Unable to create %i-bit %ich voice", bits, channels);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): unable to create %i-bit %ich voice", bits, channels);
 	duk_push_sphere_obj(ctx, "Mixer", mixer);
 	return 1;
 }
@@ -728,7 +728,7 @@ js_LoadSound(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "sounds", false);
 	if (!(sound = load_sound(filename, get_default_mixer())))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): Failed to load sound file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): unable to load sound file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
@@ -748,7 +748,7 @@ js_new_Sound(duk_context* ctx)
 		: get_default_mixer();
 	sound = load_sound(filename, mixer);
 	if (sound == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): Failed to load sound file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): unable to load sound file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
@@ -1060,9 +1060,9 @@ js_new_SoundStream(duk_context* ctx)
 	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
 	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): Invalid bit depth (%i)", bits);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): invalid bit depth (%i)", bits);
 	if (!(stream = create_stream(frequency, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): Stream creation failed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): stream creation failed");
 	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
 }

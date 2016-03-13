@@ -504,7 +504,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): socket has been closed");
 	duk_push_uint(ctx, (duk_uint_t)peek_socket(socket));
 	return 1;
 }
@@ -536,16 +536,16 @@ js_Socket_read(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (length <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): At least 1 byte must be read (%i)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): must read at least 1 byte (got: %i)", length);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): socket is not connected");
 	if (!(read_buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to allocate read buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): unable to allocate read buffer");
 	read_socket(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): Failed to create byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -562,11 +562,11 @@ js_Socket_readString(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): socket is not connected");
 	if (!(buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): Failed to allocate read buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): unable to allocate read buffer");
 	read_socket(socket, buffer, length);
 	duk_push_lstring(ctx, (char*)buffer, length);
 	free(buffer);
@@ -592,9 +592,9 @@ js_Socket_write(duk_context* ctx)
 		write_size = get_bytearray_size(array);
 	}
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): socket is not connected");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
@@ -609,7 +609,7 @@ js_new_ListeningSocket(duk_context* ctx)
 	socket_t* socket;
 
 	if (max_backlog <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ListeningSocket(): Backlog size must be greater than zero (%i)", max_backlog);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ListeningSocket(): backlog size must be greater than zero (got: %i)", max_backlog);
 	if (socket = listen_on_port(NULL, port, 1024, max_backlog))
 		duk_push_sphere_obj(ctx, "ListeningSocket", socket);
 	else
@@ -637,7 +637,7 @@ js_ListeningSocket_accept(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "ListeningSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:accept(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:accept(): socket has been closed");
 	new_socket = accept_next_socket(socket);
 	if (new_socket)
 		duk_push_sphere_obj(ctx, "IOSocket", new_socket);
@@ -783,9 +783,9 @@ js_IOSocket_pipe(duk_context* ctx)
 	duk_pop(ctx);
 	dest_socket = duk_require_sphere_obj(ctx, 0, "IOSocket");
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): socket has been closed");
 	if (dest_socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Destination socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): destination socket has been closed");
 	pipe_socket(socket, dest_socket);
 	
 	// return destination socket (enables pipe chaining)
@@ -806,7 +806,7 @@ js_IOSocket_unpipe(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "IOSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:pipe(): socket has been closed");
 	pipe_socket(socket, NULL);
 	return 0;
 }
@@ -829,9 +829,9 @@ js_IOSocket_read(duk_context* ctx)
 	duk_pop(ctx);
 	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:read(): socket is not connected");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	bytes_read = read_socket(socket, buffer, num_bytes);
 	duk_push_buffer_object(ctx, -1, 0, bytes_read, DUK_BUFOBJ_ARRAYBUFFER);
@@ -855,9 +855,9 @@ js_IOSocket_readString(duk_context* ctx)
 	duk_pop(ctx);
 	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:readString(): socket is not connected");
 	read_socket(socket, buffer = malloc(num_bytes), num_bytes);
 	duk_push_lstring(ctx, (char*)buffer, num_bytes);
 	free(buffer);
@@ -885,9 +885,9 @@ js_IOSocket_write(duk_context* ctx)
 	else
 		payload = duk_require_buffer_data(ctx, 0, &write_size);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "IOSocket:write(): socket is not connected");
 	write_socket(socket, payload, write_size);
 	return 0;
 }

@@ -684,7 +684,7 @@ static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): No system arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemArrow(): missing system arrow image");
 	duk_push_sphere_image(ctx, s_sys_arrow);
 	return 1;
 }
@@ -693,7 +693,7 @@ static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): No system down arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemDownArrow(): missing system down arrow image");
 	duk_push_sphere_image(ctx, s_sys_dn_arrow);
 	return 1;
 }
@@ -702,7 +702,7 @@ static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): No system up arrow image available");
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetSystemUpArrow(): missing system up arrow image");
 	duk_push_sphere_image(ctx, s_sys_up_arrow);
 	return 1;
 }
@@ -720,7 +720,7 @@ js_LoadImage(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "images", false);
 	if (!(image = load_image(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file '%s'", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -737,7 +737,7 @@ js_GrabImage(duk_context* ctx)
 	image_t* image;
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): Failed to grab backbuffer image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): unable to grab backbuffer image");
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -759,19 +759,19 @@ js_new_Image(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = duk_require_sphere_color(ctx, 2);
 		if (!(image = create_image(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to create new image");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create new image");
 		fill_image(image, fill_color);
 	}
 	else if (duk_is_sphere_obj(ctx, 0, "Surface")) {
 		src_image = duk_require_sphere_surface(ctx, 0);
 		if (!(image = clone_image(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to create image from surface");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create image from surface");
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = load_image(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): Failed to load image file '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file '%s'", filename);
 	}
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
@@ -860,7 +860,7 @@ js_Image_createSurface(duk_context* ctx)
 	image = duk_require_sphere_image(ctx, -1);
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): Failed to create new surface image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): unable to create new surface image");
 	duk_push_sphere_surface(ctx, new_image);
 	free_image(new_image);
 	return 1;

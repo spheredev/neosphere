@@ -633,7 +633,7 @@ js_LoadFont(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "fonts", false);
 	font = load_font(filename);
 	if (font == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): Failed to load font file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): unable to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
 	return 1;
@@ -648,7 +648,7 @@ js_new_Font(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 	font = load_font(filename);
 	if (font == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): Failed to load font file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): unable to load font file '%s'", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
 	return 1;
@@ -743,7 +743,7 @@ js_Font_clone(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_pop(ctx);
 	if (!(dolly_font = clone_font(font)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font:clone(): Failed to clone font");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font:clone(): unable to clone font");
 	duk_push_sphere_font(ctx, dolly_font);
 	return 1;
 }

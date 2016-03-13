@@ -64,6 +64,6 @@ js_Async(duk_context* ctx)
 	script_t* script = duk_require_sphere_script(ctx, 0, "[async script]");
 
 	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Async(): Failed to queue async script");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Async(): unable to queue async script");
 	return 0;
 }

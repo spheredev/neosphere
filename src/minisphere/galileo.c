@@ -503,15 +503,15 @@ js_new_Group(duk_context* ctx)
 	duk_uarridx_t i;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): first argument must be an array");
 	if (!(group = new_group(shader)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Failed to create group object");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): unable to create group object");
 	num_shapes = duk_get_length(ctx, 0);
 	for (i = 0; i < num_shapes; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		shape = duk_require_sphere_obj(ctx, -1, "Shape");
 		if (!add_group_shape(group, shape))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): Shape list allocation failure");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Group(): shape list allocation failure");
 	}
 	duk_push_sphere_obj(ctx, "Group", group);
 	return 1;
@@ -700,7 +700,7 @@ js_GetDefaultShaderProgram(duk_context* ctx)
 	shader_t* shader;
 	
 	if (!(shader = get_default_shader()))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetDefaultShaderProgram(): No default shader available or shader couldn't be built");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetDefaultShaderProgram(): no default shader available or shader couldn't be built");
 	duk_push_sphere_obj(ctx, "ShaderProgram", ref_shader(shader));
 	return 1;
 }
@@ -722,11 +722,11 @@ js_new_Shape(duk_context* ctx)
 	duk_uarridx_t i;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): First argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): first argument must be an array");
 	if (type < 0 || type >= SHAPE_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Shape(): Invalid shape type constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Shape(): invalid shape type constant");
 	if (!(shape = new_shape(type, texture)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Failed to create shape object");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): unable to create shape object");
 	num_vertices = duk_get_length(ctx, 0);
 	for (i = 0; i < num_vertices; ++i) {
 		duk_get_prop_index(ctx, 0, i); stack_idx = duk_normalize_index(ctx, -1);
@@ -745,7 +745,7 @@ js_new_Shape(duk_context* ctx)
 			: rgba(255, 255, 255, 255);
 		duk_pop_n(ctx, 6);
 		if (!add_shape_vertex(shape, vertex))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): Vertex list allocation failure");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): vertex list allocation failure");
 	}
 	if (is_missing_uv)
 		assign_default_uv(shape);

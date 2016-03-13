@@ -362,6 +362,10 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		heapptr = dvalue_as_ptr(result);
 		if (!(object = inferior_get_object(obj->inferior, heapptr, is_verbose)))
 			return;
+		if (objview_len(object) == 0) {
+			printf("object has no properties.\n");
+			return;
+		}
 		if (!is_verbose)
 			printf("= {\n");
 		for (i = 0; i < objview_len(object); ++i) {

@@ -970,9 +970,9 @@ js_GetPlayerKey(duk_context* ctx)
 	int key_type = duk_require_int(ctx, 1);
 
 	if (player < 0 || player >= 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): Player index out of range");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): player index out of range");
 	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): Invalid key type constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): invalid key type constant");
 	duk_push_int(ctx, get_player_key(player, key_type));
 	return 1;
 }
@@ -988,7 +988,7 @@ js_GetToggleState(duk_context* ctx)
 		&& keycode != ALLEGRO_KEY_NUMLOCK
 		&& keycode != ALLEGRO_KEY_SCROLLLOCK)
 	{
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetToggleState(): Invalid toggle key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetToggleState(): invalid toggle key constant");
 	}
 	flag = keycode == ALLEGRO_KEY_CAPSLOCK ? ALLEGRO_KEYMOD_CAPSLOCK
 		: keycode == ALLEGRO_KEY_NUMLOCK ? ALLEGRO_KEYMOD_NUMLOCK
@@ -1018,11 +1018,11 @@ js_SetPlayerKey(duk_context* ctx)
 	int keycode = duk_require_int(ctx, 2);
 
 	if (player < 0 || player >= 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): Player index out of range");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): player index `%d` out of range", player);
 	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): Invalid key type constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): invalid key type constant");
 	if (keycode < 0 || key_type >= ALLEGRO_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): Invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): invalid key constant");
 	set_player_key(player, key_type, keycode);
 	return 0;
 }
@@ -1036,9 +1036,9 @@ js_BindJoystickButton(duk_context* ctx)
 	script_t* on_up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): joystick index `%d` out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): button index `%d` out of range", button);
 	bind_button(s_bound_buttons, joy_index, button, on_down_script, on_up_script);
 	return 0;
 }
@@ -1051,7 +1051,7 @@ js_BindKey(duk_context* ctx)
 	script_t* on_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): Invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): invalid key constant");
 	bind_key(s_bound_map_keys, keycode, on_down_script, on_up_script);
 	return 0;
 }
@@ -1070,9 +1070,9 @@ js_UnbindJoystickButton(duk_context* ctx)
 	int button = duk_require_int(ctx, 1);
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Joystick index out of range (%i)", joy_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): joystick index `%d` out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): Button index out of range (%i)", button);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): button index `%d` out of range", button);
 	bind_button(s_bound_buttons, joy_index, button, NULL, NULL);
 	return 0;
 }
@@ -1083,7 +1083,7 @@ js_UnbindKey(duk_context* ctx)
 	int keycode = duk_require_int(ctx, 0);
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindKey(): Invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindKey(): invalid key constant");
 	bind_key(s_bound_map_keys, keycode, NULL, NULL);
 	return 0;
 }

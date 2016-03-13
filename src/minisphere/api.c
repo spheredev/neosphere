@@ -464,46 +464,48 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 static duk_ret_t
 duk_handle_require(duk_context* ctx)
 {
-	const char* id = duk_get_string(ctx, 0);
-
 	vector_t*   filenames;
 	lstring_t*  filename;
 	size_t      file_size;
 	bool        is_cs;
 	bool        is_sys_module = false;
+	const char* name;
 	char*       source;
+	lstring_t*  source_text;
 
 	iter_t     iter;
 	lstring_t* *p;
 
-	if (id[0] == '~')
+	name = duk_get_string(ctx, 0);
+	if (name[0] == '~')
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefix not allowed");
+	
 	filenames = vector_new(sizeof(lstring_t*));
-	filename = lstr_newf("%s.js", id); vector_push(filenames, &filename);
-	filename = lstr_newf("%s.coffee", id); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.js", id); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.coffee", id); vector_push(filenames, &filename);
+	filename = lstr_newf("%s.js", name); vector_push(filenames, &filename);
+	filename = lstr_newf("%s.coffee", name); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/commonjs/%s.js", name); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/commonjs/%s.coffee", name); vector_push(filenames, &filename);
 	filename = NULL;
 	iter = vector_enum(filenames);
 	while (p = vector_next(&iter)) {
-		if (sfs_fexist(g_fs, lstr_cstr(*p), "modules"))
-			filename = *p;
-		else
-			lstr_free(*p);
+		if (filename == NULL && sfs_fexist(g_fs, lstr_cstr(*p), "commonjs"))
+			filename = lstr_dup(*p);
+		lstr_free(*p);
 	}
 	vector_free(filenames);
 	if (filename == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "require(): '%s' module not found", id);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "require(): module `%s` not found", name);
 	is_cs = strcasecmp(strrchr(lstr_cstr(filename), '.'), ".coffee") == 0;
 	is_sys_module = strstr(lstr_cstr(filename), "~sys/") == lstr_cstr(filename);
-	if (!(source = sfs_fslurp(g_fs, lstr_cstr(filename), "modules", &file_size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): Failed to read script '%s'", lstr_cstr(filename));
+	console_log(2, "loading CommonJS module `%s` as `%s`", name, lstr_cstr(filename));
+	if (!(source = sfs_fslurp(g_fs, lstr_cstr(filename), "commonjs", &file_size)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): unable to read script '%s'", lstr_cstr(filename));
 	if (!is_cs)
 		duk_push_lstring(ctx, source, file_size);
 	else {
 		duk_push_global_object(ctx);
 		if (!duk_get_prop_string(ctx, -1, "CoffeeScript"))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): CoffeeScript compiler is missing (%s)", lstr_cstr(filename));
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): missing CoffeeScript compiler");
 		duk_get_prop_string(ctx, -1, "compile");
 		duk_push_lstring(ctx, source, file_size);
 		duk_push_object(ctx);
@@ -516,9 +518,10 @@ duk_handle_require(duk_context* ctx)
 		duk_remove(ctx, -2);
 		duk_remove(ctx, -2);
 	}
+	source_text = duk_require_lstring_t(ctx, -1);
+	cache_source(name, source_text);
+	lstr_free(source_text);
 	free(source);
-	console_log(1, "script: Loaded CommonJS module `%s`", id);
-	console_log(2, "  path: %s", filename);
 	lstr_free(filename);
 	return 1;
 }
@@ -561,7 +564,7 @@ js_EvaluateScript(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "scripts", false);
 	if (!sfs_fexist(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): File not found '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): file `%s` not found", filename);
 	if (!evaluate_script(filename))
 		duk_throw(ctx);
 	return 1;
@@ -578,7 +581,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 	if (!sfs_fexist(g_fs, path, NULL))
 		sprintf(path, "~sys/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): System script not found '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): system script `%s` not found", filename);
 	if (!evaluate_script(path))
 		duk_throw(ctx);
 	return 1;
@@ -592,7 +595,7 @@ js_RequireScript(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "scripts", false);
 	if (!sfs_fexist(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): File not found '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): file `%s` not found", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, filename);
@@ -620,7 +623,7 @@ js_RequireSystemScript(duk_context* ctx)
 	if (!sfs_fexist(g_fs, path, NULL))
 		sprintf(path, "~sys/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): System script not found '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): system script `%s` not found", filename);
 
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
@@ -919,7 +922,7 @@ js_Delay(duk_context* ctx)
 	double millisecs = floor(duk_require_number(ctx, 0));
 	
 	if (millisecs < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): Time cannot be negative (%.0f)", millisecs);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): delay must be positive (got: %.0f)", millisecs);
 	delay(millisecs / 1000);
 	return 0;
 }

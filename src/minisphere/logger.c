@@ -155,7 +155,7 @@ js_OpenLog(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "logs", false);
 	if (!(logger = open_log_file(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): Failed to open file for logging '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): unable to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
 }
@@ -168,7 +168,7 @@ js_new_Logger(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(logger = open_log_file(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): Failed to open file for logging '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): unable to open file for logging '%s'", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
 }
@@ -200,7 +200,7 @@ js_Logger_beginBlock(duk_context* ctx)
 	duk_push_this(ctx);
 	logger = duk_require_sphere_obj(ctx, -1, "Logger");
 	if (!begin_log_block(logger, title))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): Failed to create new log block");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): unable to create new log block");
 	return 0;
 }
 

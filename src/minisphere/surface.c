@@ -179,7 +179,7 @@ js_GrabSurface(duk_context* ctx)
 	image_t* image;
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): Failed to grab backbuffer image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): unable to grab backbuffer image");
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
 	return 1;
@@ -204,7 +204,7 @@ js_LoadSurface(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "images", false);
 	if (!(image = load_image(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): Failed to load image file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file '%s'", filename);
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
 	return 1;
@@ -226,19 +226,19 @@ js_new_Surface(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : rgba(0, 0, 0, 0);
 		if (!(image = create_image(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to create new surface");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to create new surface");
 		fill_image(image, fill_color);
 	}
 	else if (duk_is_sphere_obj(ctx, 0, "Image")) {
 		src_image = duk_require_sphere_image(ctx, 0);
 		if (!(image = clone_image(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to create surface from image");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to create surface from image");
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = load_image(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): Failed to load image file '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to load image file '%s'", filename);
 	}
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
@@ -339,9 +339,9 @@ js_Surface_applyColorFX(duk_context* ctx)
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
 	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Box extends outside image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_color_matrix(image, matrix, x, y, w, h))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): Failed to apply transformation");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): unable to apply transformation");
 	return 0;
 }
 
@@ -363,9 +363,9 @@ js_Surface_applyColorFX4(duk_context* ctx)
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
 	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): Box extends outside image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_color_matrix_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX4(): Failed to apply transformation");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX4(): unable to apply transformation");
 	return 0;
 }
 
@@ -387,9 +387,9 @@ js_Surface_applyLookup(duk_context* ctx)
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
 	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): Specified area extends outside image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyLookup(): Failed to apply lookup transformation");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyLookup(): unable to apply lookup transformation");
 	free(red_lu);
 	free(green_lu);
 	free(blue_lu);
@@ -738,10 +738,10 @@ js_Surface_pointSeries(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): First argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): first argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:pointSeries(): Too many vertices (%u)", num_points);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:pointSeries(): too many vertices (%u)", num_points);
 	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
@@ -912,7 +912,7 @@ js_Surface_setAlpha(duk_context* ctx)
 	image = duk_require_sphere_surface(ctx, -1);
 	duk_pop(ctx);
 	if (!(lock = lock_image(image)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): Failed to lock surface");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): unable to lock surface");
 	w = get_image_width(image);
 	h = get_image_height(image);
 	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;

@@ -181,7 +181,7 @@ load_spriteset(const char* filename)
 		s_load_cache = vector_new(sizeof(spriteset_t*));
 	
 	// filename not in load cache, load the spriteset
-	console_log(2, "loading spriteset #%u as '%s'", s_next_spriteset_id, filename);
+	console_log(2, "loading spriteset #%u as `%s`", s_next_spriteset_id, filename);
 	spriteset = calloc(1, sizeof(spriteset_t));
 	if (!(file = sfs_fopen(g_fs, filename, NULL, "rb")))
 		goto on_error;
@@ -564,7 +564,7 @@ js_LoadSpriteset(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "spritesets", false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;
@@ -578,7 +578,7 @@ js_new_Spriteset(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): Failed to load spriteset file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file '%s'", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;
@@ -623,7 +623,7 @@ js_Spriteset_clone(duk_context* ctx)
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	duk_pop(ctx);
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): Failed to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): unable to create new spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;

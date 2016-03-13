@@ -27,10 +27,10 @@ struct screen
 	bool             skip_frame;
 	bool             take_screenshot;
 	bool             use_shaders;
-	float            x_offset;
+	int              x_offset;
 	float            x_scale;
 	int              x_size;
-	float            y_offset;
+	int              y_offset;
 	float            y_scale;
 	int              y_size;
 };
@@ -219,9 +219,9 @@ screen_flip(screen_t* obj, int framerate)
 
 	// flip the backbuffer, unless the preceeding frame was skipped
 	is_backbuffer_valid = !obj->skip_frame;
+	screen_cx = al_get_display_width(obj->display);
+	screen_cy = al_get_display_height(obj->display);
 	if (is_backbuffer_valid) {
-		screen_cx = al_get_display_width(obj->display);
-		screen_cy = al_get_display_height(obj->display);
 		if (obj->take_screenshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);

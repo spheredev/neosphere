@@ -346,9 +346,9 @@ js_DeflateByteArray(duk_context* ctx)
 	bytearray_t* new_array;
 
 	if ((level < 0 || level > 9) && n_args >= 2)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DeflateByteArray(): Compression level is out of range (%i)", level);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DeflateByteArray(): compression level must be [0-9] (got: %i)", level);
 	if (!(new_array = deflate_bytearray(array, level)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DeflateByteArray(): Failed to deflate source ByteArray");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DeflateByteArray(): unable to deflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -359,7 +359,7 @@ js_HashByteArray(duk_context* ctx)
 	duk_require_sphere_bytearray(ctx, 0);
 	
 	// TODO: implement byte array hashing
-	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashByteArray(): Function is not yet implemented");
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashByteArray(): function is not implemented");
 }
 
 static duk_ret_t
@@ -372,9 +372,9 @@ js_InflateByteArray(duk_context* ctx)
 	bytearray_t* new_array;
 
 	if (max_size < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "InflateByteArray(): Buffer size cannot be negative");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "InflateByteArray(): buffer size must not be negative (got: %d)", max_size);
 	if (!(new_array = inflate_bytearray(array, max_size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): Failed to inflate source ByteArray");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -407,17 +407,17 @@ js_new_ByteArray(duk_context* ctx)
 	if (duk_is_string(ctx, 0)) {
 		string = duk_require_lstring_t(ctx, 0);
 		if (lstr_len(string) > INT_MAX)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): Input string is too long");
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): input string is too long");
 		if (!(array = bytearray_from_lstring(string)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): Failed to create byte array from string");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): unable to create byte array from string");
 		lstr_free(string);
 	}
 	else {
 		size = duk_require_int(ctx, 0);
 		if (size < 0)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): Size cannot be negative", size);
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): size must not be negative (got: %d)", size);
 		if (!(array = new_bytearray(size)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): Failed to create new byte array");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): unable to create new byte array");
 	}
 	duk_push_sphere_bytearray(ctx, array);
 	free_bytearray(array);
@@ -465,7 +465,7 @@ js_ByteArray_getProp(duk_context* ctx)
 		index = duk_to_int(ctx, 1);
 		size = get_bytearray_size(array);
 		if (index < 0 || index >= size)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: Index is out of bounds (%i - size: %i)", index, size);
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
 		duk_push_uint(ctx, get_byte(array, index));
 		return 1;
 	}
@@ -488,7 +488,7 @@ js_ByteArray_setProp(duk_context* ctx)
 		index = duk_to_int(ctx, 1);
 		size = get_bytearray_size(array);
 		if (index < 0 || index >= size)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: Index is out of bounds (%i - size: %i)", index, size);
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
 		set_byte(array, index, duk_require_uint(ctx, 2));
 		return 0;
 	}
@@ -512,9 +512,9 @@ js_ByteArray_concat(duk_context* ctx)
 	array = duk_require_sphere_bytearray(ctx, -1);
 	duk_pop(ctx);
 	if (array->size + array2->size > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:concat(): Unable to concatenate, final size would exceed 2 GB (size1: %u, size2: %u)", array->size, array2->size);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:concat(): unable to concatenate, final size would exceed 2 GB (size1: %u, size2: %u)", array->size, array2->size);
 	if (!(new_array = concat_bytearrays(array, array2)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:concat(): Failed to create concatenated byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:concat(): unable to create concatenated byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -532,9 +532,9 @@ js_ByteArray_deflate(duk_context* ctx)
 	array = duk_require_sphere_bytearray(ctx, -1);
 	duk_pop(ctx);
 	if ((level < 0 || level > 9) && n_args >= 1)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): Compression level is out of range (%i)", level);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): compression level must be [0-9] (got: %d)", level);
 	if (!(new_array = deflate_bytearray(array, level)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:deflate(): Failed to deflate source ByteArray");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:deflate(): unable to deflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -552,9 +552,9 @@ js_ByteArray_inflate(duk_context* ctx)
 	array = duk_require_sphere_bytearray(ctx, -1);
 	duk_pop(ctx);
 	if (max_size < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): Buffer size cannot be negative");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): buffer size must not be negative (got: %d)", max_size);
 	if (!(new_array = inflate_bytearray(array, max_size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): Failed to inflate source ByteArray");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -570,7 +570,7 @@ js_ByteArray_resize(duk_context* ctx)
 	array = duk_require_sphere_bytearray(ctx, -1);
 	duk_pop(ctx);
 	if (new_size < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:resize(): Size cannot be negative");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:resize(): size must not be negative (got: %d)", new_size);
 	resize_bytearray(array, new_size);
 	return 0;
 }
@@ -591,9 +591,9 @@ js_ByteArray_slice(duk_context* ctx)
 	duk_pop(ctx);
 	end_norm = fmin(end >= 0 ? end : array->size + end, array->size);
 	if (end_norm < start || end_norm > array->size)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:slice(): Start and/or end values out of bounds (start: %i, end: %i - size: %i)", start, end_norm, array->size);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:slice(): start and/or end values out of bounds (start: %i, end: %i, size: %i)", start, end_norm, array->size);
 	if (!(new_array = slice_bytearray(array, start, end_norm - start)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:slice(): Failed to create sliced byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:slice(): unable to create sliced byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }

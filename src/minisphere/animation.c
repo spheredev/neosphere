@@ -220,7 +220,7 @@ js_LoadAnimation(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "animations", false);
 	if (!(anim = load_animation(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): Failed to load animation file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
 }
@@ -233,7 +233,7 @@ js_new_Animation(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(anim = load_animation(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): Failed to load animation file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): unable to load animation file '%s'", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
 }
@@ -316,7 +316,7 @@ js_Animation_drawZoomedFrame(duk_context* ctx)
 {
 	int x = duk_require_number(ctx, 0);
 	int y = duk_require_number(ctx, 1);
-	float scale = duk_require_number(ctx, 2);
+	double scale = duk_require_number(ctx, 2);
 
 	animation_t* anim;
 
@@ -324,7 +324,7 @@ js_Animation_drawZoomedFrame(duk_context* ctx)
 	anim = duk_require_sphere_obj(ctx, -1, "Animation");
 	duk_pop(ctx);
 	if (scale < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Animation:drawZoomedFrame(): Scale must not be negative");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Animation:drawZoomedFrame(): scale must be positive (got: %g)", scale);
 	draw_image_scaled(anim->frame, x, y, anim->w * scale, anim->h * scale);
 	return 0;
 }

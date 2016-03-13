@@ -1,14 +1,17 @@
 minisphere 3.0 API Documentation
 ================================
 
-minisphere uses JavaScript for game logic. This is similar to the Sphere engine,
-which minisphere is designed to be compatible with.  In fact, minisphere
-implements most of the Sphere 1.5 API, with several backwards-compatible
-enhancements.
+minisphere uses JavaScript for game logic.  This is the same programming
+language used by the Sphere engine, which minisphere is compatible with.  In
+fact, minisphere implements most of the Sphere 1.5 API, with several backwards-
+compatible enhancements.
 
 This file documents the functions exposed by minisphere for use in game scripts.
-The list may not be exhaustive; see the included Sphere 1.5 API reference for
-the full list of legacy functions (a few may not be supported, however).
+The list may not be exhaustive; refer to the Sphere 1.x API reference for a full
+list of legacy functions (a few may not be supported, however).
+
+    Sphere 1.x API Reference:
+    https://github.com/sphere-group/sphere/blob/master/sphere/docs/development/api.txt
 
 
 Engine Identification
@@ -1580,8 +1583,8 @@ Map Engine
 
 minisphere's map engine is fully compatible with the one found in Sphere 1.5 and
 very powerful.  It's also very easy to get up and running. This section is
-incomplete; the APIs below are only the basics. See the included Sphere 1.5 API
-documentation for the full set of map functions.
+incomplete; the APIs below are only the basics. See the Sphere 1.x API reference
+for the full set of map functions.
 
 MapEngine(filename, framerate);
 
@@ -1744,8 +1747,7 @@ Zone Management
 Zones are similar to triggers, except they can cover more than one tile and run
 their associated scripts periodically as long as the player is moving and
 remains inside the zone. A potential use for these is implementing random
-battles. They have other uses as well, as demonstrated in the Lithonite demo
-included with the engine.
+battles.  They have other uses as well, as demonstrated by, e.g., Lithonite.
 
 As with triggers, all zone modifications at runtime are transient.
 

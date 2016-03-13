@@ -1601,7 +1601,7 @@ js_IsInputAttached(duk_context* ctx)
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
 		if (!(person = find_person(name)))
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsInputAttached(): Person '%s' doesn't exist", name);
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsInputAttached(): person '%s' doesn't exist", name);
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
 			player = s_players[i].person == person ? i : player;
@@ -2382,7 +2382,7 @@ js_SetTileImage(duk_context* ctx)
 	image_w = get_image_width(image);
 	image_h = get_image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): Image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
 	set_tile_image(s_map->tileset, tile_index, image);
 	return 0;
 }
@@ -2524,9 +2524,9 @@ js_SetZoneMetrics(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneDimensions(): invalid zone index (%d)", zone_index);
 	map_bounds = get_map_bounds();
 	if (width <= 0 || height <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneDimensions(): Width and height must be greater than zero");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneDimensions(): width and height must be greater than zero");
 	if (x < map_bounds.x1 || y < map_bounds.y1 || x + width > map_bounds.x2 || y + height > map_bounds.y2)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneDimensions(): Zone cannot extend outside map (%d,%d,%d,%d)", x, y, width, height);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneDimensions(): zone cannot extend outside map (%d,%d,%d,%d)", x, y, width, height);
 	set_zone_bounds(zone_index, new_rect(x, y, x + width, y + height));
 	if (layer >= 0)
 		set_zone_layer(zone_index, layer);
@@ -2544,9 +2544,9 @@ js_SetZoneScript(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): map engine not running");
 	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneScript(): invalid zone index (%d)", zone_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneScript(): invalid zone index `%d`", zone_index);
 	if (!(script_name = lstr_newf("%s/zone%d", get_map_name(), zone_index)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): Error compiling zone script");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneScript(): error compiling zone script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
 	set_zone_script(zone_index, script);
@@ -2563,9 +2563,9 @@ js_SetZoneSteps(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetZoneLayer(): map engine not running");
 	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): invalid zone index (%d)", zone_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneLayer(): invalid zone index `%d`", zone_index);
 	if (steps <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneSteps(): Step count must be greater than zero (%d)", steps);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetZoneSteps(): steps must be positive (got: %d)", steps);
 	set_zone_steps(zone_index, steps);
 	return 0;
 }
@@ -2585,7 +2585,7 @@ js_AddTrigger(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddTrigger(): map engine not running");
 	bounds = get_map_bounds();
 	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddTrigger(): Trigger must be inside map (%d,%d)", x, y);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddTrigger(): trigger must be inside map (got X: %d, Y: %d)", x, y);
 	if (!(script_name = lstr_newf("%s/trig%d", get_map_name(), vector_len(s_map->triggers))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddTrigger(): unable to compile trigger script");
 	script = duk_require_sphere_script(ctx, 3, lstr_cstr(script_name));
@@ -2613,9 +2613,9 @@ js_AddZone(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddZone(): map engine not running");
 	bounds = get_map_bounds();
 	if (width <= 0 || height <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Width and height must be greater than zero");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): width and height must be greater than zero");
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): Zone cannot extend outside map (%d,%d,%d,%d)", x, y, width, height);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AddZone(): zone cannot extend outside map (got X: %d, Y: %d, W: %d,H: %d)", x, y, width, height);
 	if (!(script_name = lstr_newf("%s/zone%d", get_map_name(), vector_len(s_map->zones))))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "AddZone(): unable to compile zone script");
 	script = duk_require_sphere_script(ctx, 5, lstr_cstr(script_name));
@@ -2634,7 +2634,7 @@ js_AttachCamera(duk_context* ctx)
 
 	name = duk_to_string(ctx, 0);
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachCamera(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachCamera(): person '%s' doesn't exist", name);
 	s_camera_person = person;
 	return 0;
 }
@@ -2649,7 +2649,7 @@ js_AttachInput(duk_context* ctx)
 	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): person '%s' doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
 	s_players[0].person = person;
@@ -2669,7 +2669,7 @@ js_AttachPlayerInput(duk_context* ctx)
 	if (player < 0 || player >= MAX_PLAYERS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AttachPlayerInput(): player number out of range (%d)", player);
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): Person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): person '%s' doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
 	s_players[player].person = person;
@@ -2769,7 +2769,7 @@ js_DetachPlayerInput(duk_context* ctx)
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
 		if (!(person = find_person(name)))
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DetachPlayerInput(): Person '%s' doesn't exist", name);
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DetachPlayerInput(): person '%s' doesn't exist", name);
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
 			player = s_players[i].person == person ? i : player;
