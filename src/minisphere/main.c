@@ -35,6 +35,7 @@ static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg)
 
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
+int                  g_framerate = 0;
 sandbox_t*           g_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;

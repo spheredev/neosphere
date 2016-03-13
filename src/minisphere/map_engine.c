@@ -1543,9 +1543,12 @@ js_MapEngine(duk_context* ctx)
 {
 	const char* filename;
 	int         framerate;
+	int         num_args;
 	
+	num_args = duk_get_top(ctx);
 	filename = duk_require_path(ctx, 0, "maps", false);
-	framerate = duk_require_int(ctx, 1);
+	framerate = num_args >= 2 ? duk_require_int(ctx, 1)
+		: g_framerate;
 
 	s_is_map_running = true;
 	s_exiting = false;

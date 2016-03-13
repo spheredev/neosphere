@@ -81,7 +81,6 @@ static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 static duk_ret_t duk_handle_require (duk_context* ctx);
 
 static vector_t*  s_extensions;
-static int        s_framerate = 0;
 static void*      s_print_ptr;
 static lstring_t* s_user_agent;
 
@@ -650,7 +649,7 @@ js_IsSkippedFrame(duk_context* ctx)
 static duk_ret_t
 js_GetFrameRate(duk_context* ctx)
 {
-	duk_push_int(ctx, s_framerate);
+	duk_push_int(ctx, g_framerate);
 	return 1;
 }
 
@@ -745,7 +744,7 @@ js_SetFrameRate(duk_context* ctx)
 	
 	if (framerate < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): framerate must be positive (got: %d)", framerate);
-	s_framerate = framerate;
+	g_framerate = framerate;
 	return 0;
 }
 
@@ -965,7 +964,7 @@ js_Exit(duk_context* ctx)
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	screen_flip(g_screen, s_framerate);
+	screen_flip(g_screen, g_framerate);
 	return 0;
 }
 

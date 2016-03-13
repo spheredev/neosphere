@@ -1586,7 +1586,7 @@ very powerful.  It's also very easy to get up and running. This section is
 incomplete; the APIs below are only the basics. See the Sphere 1.x API reference
 for the full set of map functions.
 
-MapEngine(filename, framerate);
+MapEngine(filename[, framerate]);
 
     Not SphereFS compliant: `filename` is relative to ~sgm/maps.
 
@@ -1594,6 +1594,9 @@ MapEngine(filename, framerate);
     specifies the framerate the map engine will run at; a framerate of 0 will
     run unthrottled, which may be useful for benchmarks but is generally useless
     otherwise.
+    
+    Unlike Sphere 1.x, `framerate` is optional.  If it is not provided, the
+    FlipScreen() framerate (set using SetFrameRate()) will be used.
 
 IsMapEngineRunning();
 

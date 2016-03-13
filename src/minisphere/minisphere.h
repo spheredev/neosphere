@@ -66,6 +66,7 @@
 extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern sandbox_t*           g_fs;
+extern int                  g_framerate;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;
