@@ -19,6 +19,7 @@ module.exports = (function()
 {
 	var currentSelf = 0;
 	var hasUpdated = false;
+	var manifest = GetGameManifest();
 	var nextThreadID = 1;
 	var threads = [];
 
@@ -28,15 +29,17 @@ module.exports = (function()
 			a.id - b.id;
 	};
 
+	// the threading system commandeers the update and render scripts.
+	// this is not really ideal, but the design of the Sphere map engine precludes
+	// a more elegant solution.
 	SetUpdateScript(updateAll);
 	SetRenderScript(renderAll);
-	SetUpdateScript = function() {
-		Abort("miniRT in use, cannot change update script", -1);
-	}
-	SetRenderScript = function() {
-		Abort("miniRT in use, cannot change render script", -1);
-	}
-	
+	SetFrameRate('frameRate' in manifest ? manifest.frameRate : 0);
+	SetUpdateScript = SetRenderScript
+		function() {
+			Abort("API is not compatible with miniRT", -1);
+		}
+
 	return {
 		create:    create,
 		createEx:  createEx,
@@ -47,7 +50,7 @@ module.exports = (function()
 		self:      self,
 		updateAll: updateAll,
 	};
-	
+
 	function doFrame()
 	{
 		if (IsMapEngineRunning())

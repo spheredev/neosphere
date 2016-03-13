@@ -25,7 +25,7 @@ module.exports = (function()
 
 	threads.create({ update: update });
 
-	console.register('bgm', null,
+	console.register('music', null,
 	{
 		'play': function(trackName, fadeTime) {
 			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;

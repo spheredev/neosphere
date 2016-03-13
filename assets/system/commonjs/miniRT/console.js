@@ -67,6 +67,16 @@ module.exports = (function() {
 		}
 	});
 
+	return {
+		isOpen:     isOpen,
+		append:     append,
+		hide:       hide,
+		log:        log,
+		register:   register,
+		show:       show,
+		unregister: unregister,
+	};
+
 	function executeCommand(command)
 	{
 		// NOTES:
@@ -305,23 +315,13 @@ module.exports = (function() {
 	}
 
 	// console.unregister()
-	// Unregisters a previously-registered entity.
-	// Arguments:
-	//     name: The name of the entity as passed to mini.Console.register().
+	// unregister a previously-registered entity.
+	// arguments:
+	//     name: the name of the entity as passed to console.register().
 	function unregister(name)
 	{
 		commands = link(commands)
 			.where(function(command) { return command.entity != name; })
 			.toArray();
-	};
-
-	return {
-		isOpen:     isOpen,
-		append:     append,
-		hide:       hide,
-		log:        log,
-		register:   register,
-		show:       show,
-		unregister: unregister,
 	};
 })();
