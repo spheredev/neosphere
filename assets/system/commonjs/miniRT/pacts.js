@@ -1,28 +1,27 @@
 /**
- * miniRT  (c) 2015 Fat Cerberus
- * A set of system scripts for minisphere providing advanced, high-level
- * functionality not available in the engine itself.
- *
- * [mini/miniPact.js]
- * A promise implementation for minisphere, based on the Promises/A+
- * specification. The implementation is fully compliant.
+ *  miniRT/pacts 2.0 CommonJS module
+ *  (c) 2015-2016 Fat Cerberus
+ *  a promise implementation for minisphere, based on the Promises/A+
+ *  specification.  the implementation is fully compliant.
 **/
 
-if (typeof mini === 'undefined') {
-    Abort("miniRT component script; use miniRT.js instead", -2);
+if (typeof exports === 'undefined')
+{
+    throw new TypeError("pacts.js must be loaded using require()");
 }
 
-mini.Promise = (function(undefined)
+var pacts =
+module.exports = (function()
 {
 	'use strict';
-	
+
 	function Promise(fn)
 	{
 		var deferred = [];
 		var state = 'pending';
 		var result = undefined;
 		var self = this;
-		
+
 		function handle(handler)
 		{
 			if (state == 'pending')
@@ -39,7 +38,7 @@ mini.Promise = (function(undefined)
 				}
 			});
 		}
-		
+
 		function resolve(value)
 		{
 			if (value === self) {
@@ -66,7 +65,7 @@ mini.Promise = (function(undefined)
 				reject(e);
 			}
 		}
-		
+
 		function reject(reason)
 		{
 			if (state != 'pending') return;
@@ -76,23 +75,23 @@ mini.Promise = (function(undefined)
 				handle(deferred[i]);
 			deferred = [];
 		}
-		
+
 		this.toString = function()
 		{
 			return state != 'pending'
 				? "[promise: " + state + " `" + result + "`]"
 				: "[promise: pending]";
 		}
-		
+
 		this.catch = function(errback)
 		{
 			return this.then(undefined, errback);
 		};
-		
+
 		this.then = function(callback, errback)
 		{
 			var promise = this;
-			return new mini.Promise(function(resolve, reject) {
+			return new Promise(function(resolve, reject) {
 				handle({
 					promise: promise,
 					resolve: resolve, reject: reject,
@@ -101,24 +100,24 @@ mini.Promise = (function(undefined)
 				});
 			});
 		};
-		
+
 		this.done = function(callback, errback)
 		{
 			var self = arguments.length > 0 ? this.then.apply(this, arguments) : this;
 			if (typeof errback !== 'function')
 				self.catch(function(reason) { throw reason; });
 		};
-		
+
 		try {
 			fn.call(this, resolve, reject);
 		} catch(e) {
 			reject(e);
 		}
 	};
-	
+
 	Promise.all = function(iterable)
 	{
-		return new mini.Promise(function(resolve, reject) {
+		return new Promise(function(resolve, reject) {
 			var promises = [];
 			var values = [];
 			var numPromises = iterable.length;
@@ -141,10 +140,10 @@ mini.Promise = (function(undefined)
 			}
 		});
 	};
-	
+
 	Promise.race = function(iterable)
 	{
-		return new mini.Promise(function(resolve, reject) {
+		return new Promise(function(resolve, reject) {
 			var numPromises = iterable.length;
 			for (var i = 0; i < numPromises; ++i) {
 				var v = iterable[i];
@@ -155,58 +154,43 @@ mini.Promise = (function(undefined)
 			}
 		});
 	};
-	
+
 	Promise.reject = function(reason)
 	{
-		return new mini.Promise(function(resolve, reject) {
+		return new Promise(function(resolve, reject) {
 			reject(reason);
 		});
 	};
-	
+
 	Promise.resolve = function(value)
 	{
 		if (value instanceof Promise) return value;
-		return new mini.Promise(function(resolve, reject) {
+		return new Promise(function(resolve, reject) {
 			resolve(value);
 		});
 	};
-	
-	return Promise;
-})();
 
-mini.Pact = (function(undefined)
-{
-	'use strict';
-	
 	function Pact()
 	{
 		var numPending = 0;
 		var handlers = [];
-		
-		// checkPromise() [internal]
-		// Checks if the specified promise object came from this pact. If not,
-		// aborts with an error.
-		// Arguments:
-		//     promise: The promise to check.
-		// Returns:
-		//     The promise handler.
+
 		function checkPromise(promise)
 		{
-			if (!(promise instanceof mini.Promise))
+			if (!(promise instanceof Promise))
 				Abort("argument is not a promise", -2);
 			for (var i = handlers.length - 1; i >= 0; --i)
 				if (handlers[i].that == promise) return handlers[i];
 			Abort("promise was not made from this pact", -2);
 		};
-		
-		// mini.Pact:makePromise()
-		// Makes a new promise with this pact.
-		// Arguments: None.
-		this.makePromise = function()
+
+		// Pact:promise()
+		// makes a new promise with this pact.
+		this.promise = function()
 		{
 			++numPending;
 			var handler;
-			var promise = new mini.Promise(function(resolve, reject) {
+			var promise = new Promise(function(resolve, reject) {
 				handler = { resolve: resolve, reject: reject };
 			})
 			promise.then(
@@ -217,44 +201,47 @@ mini.Pact = (function(undefined)
 			handlers.push(handler);
 			return promise;
 		};
-		
-		// mini.Pact:resolve()
-		// Resolves a promise originating from this pact.
-		// Arguments:
-		//     promise: The promise to resolve. If the promise wasn't made from this pact,
+
+		// Pact:resolve()
+		// resolve a promise originating from this pact.
+		// arguments:
+		//     promise: the promise to resolve.  if the promise wasn't made from this pact,
 		//              a TypeError will be thrown.
-		//     value:   The value with which to resolve the promise.
+		//     value:   the value with which to resolve the promise.
 		this.resolve = function(promise, value)
 		{
 			checkPromise(promise).resolve(value);
 		};
-		
-		// mini.Pact:reject()
-		// Rejects a promise originating from this pact.
-		// Arguments:
-		//     promise: The promise to reject. If the promise wasn't made from this pact,
+
+		// Pact:reject()
+		// reject a promise originating from this pact.
+		// argument:
+		//     promise: the promise to reject.  if the promise wasn't made from this pact,
 		//              a TypeError will be thrown.
-		//     reason:  The value to reject with (usually an Error object).
+		//     reason:  the value to reject with (usually an Error object).
 		this.reject = function(promise, reason)
 		{
 			checkPromise(promise).reject(reason);
 		};
-		
-		// mini.Pact:welch()
-		// Rejects all outstanding promises from this pact.
-		// Arguments:
-		//     reason: The value to reject with (usually an Error object).
-		this.welch = function(reason)
+
+		// Pact:welsh()
+		// reject all outstanding promises from this pact.
+		// arguments:
+		//     reason: the value to reject with (usually an Error object).
+		this.welsh = function(reason)
 		{
 			for (var i = handlers.length - 1; i >= 0; --i)
 				handlers[i].reject(reason);
 		};
-		
+
 		this.toString = function()
 		{
 			return "[pact: " + numPending.toString() + " outstanding]";
 		};
 	}
-	
-	return Pact;
+
+	return {
+		Pact:    Pact,
+		Promise: Promise,
+	}
 })();

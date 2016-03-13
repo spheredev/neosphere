@@ -1,342 +1,367 @@
 /**
- * miniRT  (c) 2015 Fat Cerberus
- * A set of system scripts for minisphere providing advanced, high-level
- * functionality not available in the engine itself.
- *
- * [mini/miniScenes.js]
- * An advanced scene manager that allows you to coordinate complex sequences
- * using multiple timelines and cooperative threading. Based on Scenario.
+ *  miniRT/scenes 2.0 CommonJS module
+ *  (c) 2015-2016 Fat Cerberus
+ *  an advanced scene manager that allows you to coordinate complex sequences
+ *  using multiple timelines and cooperative threading.  originally based on
+ *  Scenario.
 **/
 
-if (typeof mini === 'undefined') {
-    Abort("miniRT component script; use miniRT.js instead", -2);
+if (typeof exports === 'undefined')
+{
+    throw new TypeError("scenes.js must be loaded using require()");
 }
 
-RequireSystemScript('mini/miniLink.js');
-RequireSystemScript('mini/miniThreads.js');
+var link    = require('link');
+var threads = require('./threads');
 
-mini.Scenes = mini.Scenes || {};
+var screenMask = new Color(0, 0, 0, 0);
 
-// mini.Scenelet()
-// Registers a new scenelet.
-// Arguments:
-//     name: The name of the command. This should be a valid JavaScript identifier (alphanumeric, no spaces).
-//     code: An object defining the command's callback functions:
-//           .start(scene, ...): Called when the command begins executing to initialize the state, or for
-//                               instantaneous commands, perform the necessary action.
-//           .update(scene):     Optional. A function to be called once per frame to update state data. If not
-//                               provided, Scenes immediately moves on to the next command after calling start().
-//                               This function should return true to keep the operation running, or false to
-//                               terminate it.
-//           .getInput(scene):   Optional. A function to be called once per frame to check for player input and
-//                               update state data accordingly.
-//           .render(scene):     Optional. A function to be called once per frame to perform any rendering
-//                               related to the command (e.g. text boxes).
-//           .finish(scene):     Optional. Called after command execution ends, just before Scenes executes
-//                               the next instruction in the queue.
-// Remarks:
-//    It is safe to call this prior to runtime initialization.
-mini.Scenelet = function(name, code)
+var scenes =
+module.exports = (function()
 {
-	if (mini.Scene.prototype[name] != null)
-		Abort("mini.Scenelet(): Scenelet identifier '" + name + "' is already in use", -1);
-	mini.Scene.prototype[name] = function() {
-		this.enqueue({
-			arguments: arguments,
-			start: code.start,
-			getInput: code.getInput,
-			update: code.update,
-			render: code.render,
-			finish: code.finish
-		});
-		return this;
+	renderScenes = function()
+	{
+		if (screenMask.alpha > 0) {
+			ApplyColorMask(screenMask);
+		}
 	};
-};
 
-// initializer registration
-// Initializes miniscenes when the user calls mini.initialize().
-mini.onStartUp.add(mini.Scenes, function()
-{
+	var updateScenes = function()
+	{
+		return true;
+	};
+
 	var manifest = GetGameManifest();
-	this.priority = 'sceneRenderPriority' in manifest ? manifest.sceneRenderPriority : 0;
-	this.screenMask = new Color(0, 0, 0, 0);
-	this.threadID = mini.Threads.create(this, this.priority);
-});
+	var priority = 99;
+	var threadID = threads.create({
+		update: updateScenes,
+		render: renderScenes,
+	}, priority);
 
-// mini.Scenes.update()
-// Updates miniscenes per frame.
-mini.Scenes.update = function()
-{
-	return true;
-};
-
-// mini.Scenes.render()
-// Performs rendering for miniscenes per frame.
-mini.Scenes.render = function()
-{
-	if (this.screenMask.alpha > 0) {
-		ApplyColorMask(this.screenMask);
-	}
-};
-
-// mini.Scene()
-// Constructs a scene definition.
-mini.Scene = function()
-{
-	this.activation = null;
-	this.forkedQueues = [];
-	this.jumpsToFix = [];
-	this.mainThread = 0;
-	this.openBlockTypes = [];
-	this.queueToFill = [];
-	this.tasks = [];
-	
-	this.runTimeline = function(ctx)
+	// scenelet()
+	// register a new scenelet.
+	// arguments:
+	//     name: the name of the command.  this should be a valid JavaScript identifier (alphanumeric, no spaces).
+	//     code: an object defining the command's callback functions:
+	//           .start(scene, ...): called when the command begins executing to initialize the state, or for
+	//                               instantaneous commands, perform the necessary action.
+	//           .update(scene):     optional.  a function to be called once per frame to update state data.  if not
+	//                               provided, scenes immediately moves on to the next command after calling start().
+	//                               this function should return true to keep the operation running, or false to
+	//                               terminate it.
+	//           .getInput(scene):   optional.  a function to be called once per frame to check for player input and
+	//                               update state data accordingly.
+	//           .render(scene):     optional.  a function to be called once per frame to perform any rendering
+	//                               related to the command (e.g. text boxes).
+	//           .finish(scene):     optional.  called after command execution ends, just before Scenes executes
+	//                               the next instruction in the queue.
+	// remarks:
+	//    it is safe to call this prior to initialization.
+	var scenelet = function(name, code)
 	{
-		if ('opThread' in ctx) {
-			if (mini.Threads.isRunning(ctx.opThread))
-				return true;
-			else {
-				mini.Link(this.tasks)
-					.where(function(thread) { return ctx.opThread == thread })
-					.remove();
-				delete ctx.opThread;
-				this.activation = ctx;
-				if (typeof ctx.op.finish === 'function')
-					ctx.op.finish.call(ctx.opctx, this);
-				this.activation = null;
-			}
-		}
-		if (ctx.pc < ctx.instructions.length) {
-			ctx.op = ctx.instructions[ctx.pc++];
-			ctx.opctx = {};
-			if (typeof ctx.op.start === 'function') {
-				var arglist = [ this ];
-				for (i = 0; i < ctx.op.arguments.length; ++i)
-					arglist.push(ctx.op.arguments[i]);
-				this.activation = ctx;
-				ctx.op.start.apply(ctx.opctx, arglist);
-				this.activation = null;
-			}
-			if (ctx.op.update != null) {
-				ctx.opThread = mini.Threads.createEx(ctx.opctx, {
-					update: ctx.op.update.bind(ctx.opctx, this),
-					render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
-					getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
-					priority: mini.Scenes.priority,
-				});
-				this.tasks.push(ctx.opThread);
-			} else {
-				ctx.opThread = 0;
-			}
-			return true;
-		} else {
-			if (mini.Link(ctx.forks)
-				.where(function(thread) { return mini.Threads.isRunning(thread); })
-				.length() == 0)
-			{
-				var self = mini.Threads.self();
-				mini.Link(this.tasks)
-					.where(function(thread) { return self == thread })
-					.remove();
-				return false;
-			} else {
-				return true;
-			}
-		}
+		if (name in Scene.prototype)
+			Abort("scenes.scenelet(): scenelet ID `" + name + "` already in use", -1);
+		Scene.prototype[name] = function() {
+			this.enqueue({
+				arguments: arguments,
+				start: code.start,
+				getInput: code.getInput,
+				update: code.update,
+				render: code.render,
+				finish: code.finish
+			});
+			return this;
+		};
 	};
 	
-	this.enqueue = function(command)
+	// Scene()
+	// construct a scene definition.
+	function Scene()
 	{
-		if (this.isRunning())
-			Abort("Attempt to modify scene definition during playback", -2);
-		this.queueToFill.push(command);
-	};
-	
-	this.goTo = function(address)
-	{
-		this.activation.pc = address;
-	};
-}
+		var activation = null;
+		var forkedQueues = [];
+		var jumpsToFix = [];
+		var mainThread = 0;
+		var openBlockTypes = [];
+		var queueToFill = [];
+		var tasks = [];
 
-// mini.Scene:isPlaying()
-// Determines whether a scene is currently playing.
-// Returns:
-//     true if the scenario is still executing commands; false otherwise.
-mini.Scene.prototype.isRunning = function()
-{
-	return mini.Threads.isRunning(this.mainThread);
-};
+		var goTo = function(address)
+		{
+			activation.pc = address;
+		};
 
-// mini.Scene:play()
-// Plays back the scene.
-// Arguments:
-//     waitUntilDone: If true, blocks until the playback has finished.
-mini.Scene.prototype.run = function(waitUntilDone)
-{
-	if (this.openBlockTypes.length > 0)
-		Abort("Unclosed block in scene definition", -1);
-	if (this.isRunning()) return;
-	this.frameRate = IsMapEngineRunning() ? GetMapEngineFrameRate() : GetFrameRate();
-	var ctx = {
-		instructions: this.queueToFill,
-		pc: 0,
-		forks: [],
-	};
-	this.mainThread = mini.Threads.createEx(this, {
-		update: this.runTimeline.bind(this, ctx)
-	});
-	this.tasks.push(this.mainThread);
-	if (waitUntilDone)
-		mini.Threads.join(this.mainThread);
-	return this;
-};
-
-// mini.Scene:stop()
-// Immediately halts scene playback. Has no effect if the scene isn't playing.
-// Remarks:
-//     After calling this method, calling .play() afterwards will start from the
-//     beginning.
-mini.Scene.prototype.stop = function()
-{
-	mini.Link(this.tasks)
-		.each(function(thread)
-	{
-		mini.Threads.kill(thread);
-	});
-};
-
-// mini.Scene:restart()
-// Restarts the scene from the beginning. This has the same effect as calling
-// .stop() and .play() back-to-back.
-mini.Scene.prototype.restart = function()
-{
-	this.stop();
-	this.run();
-};
-
-// mini.Scene:doIf()
-// During scene execution, executes a block of commands only if a specified condition is met.
-// Arguments:
-//     conditional: A function to be called during scene execution to determine whether to run the following
-//                  block. The function should return true to execute the block, or false to skip it. It
-//                  will be called with 'this' set to the invoking scene.
-mini.Scene.prototype.doIf = function(conditional)
-{
-	var jump = { ifFalse: null };
-	this.jumpsToFix.push(jump);
-	var command = {
-		arguments: [],
-		start: function(scene) {
-			if (!conditional.call(scene)) {
-				scene.goTo(jump.ifFalse);
-			}
-		}
-	};
-	this.enqueue(command);
-	this.openBlockTypes.push('branch');
-	return this;
-};
-
-// mini.Scene:doWhile()
-// During scene execution, repeats a block of commands for as long as a specified condition is met.
-// Arguments:
-//     conditional: A function to be called at each iteration to determine whether to continue the
-//                  loop. The function should return true to continue the loop, or false to
-//                  stop it. It will be called with 'this' set to the invoking Scene object.
-mini.Scene.prototype.doWhile = function(conditional)
-{
-	var jump = { loopStart: this.queueToFill.length, ifDone: null };
-	this.jumpsToFix.push(jump);
-	var command = {
-		arguments: [],
-		start: function(scene) {
-			if (!conditional.call(scene)) {
-				scene.goTo(jump.ifDone);
-			}
-		}
-	};
-	this.enqueue(command);
-	this.openBlockTypes.push('loop');
-	return this;
-};
-
-// mini.Scene:fork()
-// During scene execution, forks the timeline, allowing a block to run simultaneously with
-// the instructions after the block.
-mini.Scene.prototype.fork = function()
-{
-	this.forkedQueues.push(this.queueToFill);
-	this.queueToFill = [];
-	this.openBlockTypes.push('fork');
-	return this;
-};
-
-// mini.Scene:end()
-// Marks the end of a block of commands.
-mini.Scene.prototype.end = function()
-{
-	if (this.openBlockTypes.length == 0)
-		Abort("Mismatched end() in scene definition", -1);
-	var blockType = this.openBlockTypes.pop();
-	switch (blockType) {
-		case 'fork':
-			var command = {
-				arguments: [ this.queueToFill ],
-				start: function(scene, instructions) {
-					var ctx = {
-						instructions: instructions,
-						pc: 0,
-						forks: [],
-					};
-					var tid = mini.Threads.createEx(scene, {
-						update: scene.runTimeline.bind(scene, ctx)
-					});
-					scene.tasks.push(tid);
-					scene.activation.forks.push(tid);
+		function runTimeline(ctx)
+		{
+			this.frameRate = IsMapEngineRunning()
+				? GetMapEngineFrameRate()
+				: GetFrameRate();
+			if ('opThread' in ctx) {
+				if (threads.isRunning(ctx.opThread))
+					return true;
+				else {
+					link(tasks)
+						.where(function(thread) { return ctx.opThread == thread })
+						.remove();
+					delete ctx.opThread;
+					activation = ctx;
+					if (typeof ctx.op.finish === 'function')
+						ctx.op.finish.call(ctx.opctx, this);
+					activation = null;
 				}
-			};
-			this.queueToFill = this.forkedQueues.pop();
-			this.enqueue(command);
-			break;
-		case 'branch':
-			var jump = this.jumpsToFix.pop();
-			jump.ifFalse = this.queueToFill.length;
-			break;
-		case 'loop':
+			}
+			if (ctx.pc < ctx.instructions.length) {
+				ctx.op = ctx.instructions[ctx.pc++];
+				ctx.opctx = {};
+				if (typeof ctx.op.start === 'function') {
+					var arglist = [ this ];
+					for (i = 0; i < ctx.op.arguments.length; ++i)
+						arglist.push(ctx.op.arguments[i]);
+					activation = ctx;
+					ctx.op.start.apply(ctx.opctx, arglist);
+					activation = null;
+				}
+				if (ctx.op.update != null) {
+					ctx.opThread = threads.createEx(ctx.opctx, {
+						update: ctx.op.update.bind(ctx.opctx, this),
+						render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
+						getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
+						priority: priority,
+					});
+					tasks.push(ctx.opThread);
+				} else {
+					ctx.opThread = 0;
+				}
+				return true;
+			} else {
+				if (link(ctx.forks)
+					.where(function(thread) { return threads.isRunning(thread); })
+					.length() == 0)
+				{
+					var self = threads.self();
+					link(tasks)
+						.where(function(thread) { return self == thread })
+						.remove();
+					return false;
+				} else {
+					return true;
+				}
+			}
+		};
+
+		// Scene:isPlaying()
+		// Determines whether a scene is currently playing.
+		// Returns:
+		//     true if the scenario is still executing commands; false otherwise.
+		function isRunning()
+		{
+			return threads.isRunning(mainThread);
+		};
+
+		// Scene:doIf()
+		// during scene execution, execute a block of commands only if a specified condition is met.
+		// arguments:
+		//     conditional: a function to be called during scene execution to determine whether to run the following
+		//                  block.  the function should return true to execute the block, or false to skip it.  it
+		//                  will be called with 'this' set to the invoking scene.
+		function doIf(conditional)
+		{
+			var jump = { ifFalse: null };
+			jumpsToFix.push(jump);
 			var command = {
 				arguments: [],
 				start: function(scene) {
-					scene.goTo(jump.loopStart);
+					if (!conditional.call(scene)) {
+						goTo(jump.ifFalse);
+					}
 				}
 			};
-			this.enqueue(command);
-			var jump = this.jumpsToFix.pop();
-			jump.ifDone = this.queueToFill.length;
-			break;
-		default:
-			Abort("miniscenes internal error (unknown block type)", -1);
-			break;
-	}
-	return this;
-};
+			enqueue(command);
+			openBlockTypes.push('branch');
+			return this;
+		};
 
-// 'resync' scenelet
-// During a scene, suspends the current timeline until all of its forks have run to
-// completion.
-// Remarks:
-//     There is an implicit resync at the end of a timeline.
-mini.Scenelet('resync',
-{
-	start: function(scene) {
-		this.forks = scene.activation.forks;
-	},
-	update: function(scene) {
-		return mini.Link(this.forks)
-			.where(function(thread) { return mini.Threads.isRunning(thread); })
-			.length() > 0;
+		// Scene:doWhile()
+		// During scene execution, repeats a block of commands for as long as a specified condition is met.
+		// Arguments:
+		//     conditional: A function to be called at each iteration to determine whether to continue the
+		//                  loop. The function should return true to continue the loop, or false to
+		//                  stop it. It will be called with 'this' set to the invoking Scene object.
+		function doWhile(conditional)
+		{
+			var jump = { loopStart: queueToFill.length, ifDone: null };
+			jumpsToFix.push(jump);
+			var command = {
+				arguments: [],
+				start: function(scene) {
+					if (!conditional.call(scene)) {
+						goTo(jump.ifDone);
+					}
+				}
+			};
+			enqueue(command);
+			openBlockTypes.push('loop');
+			return this;
+		};
+
+		// Scene:end()
+		// marks the end of a block of commands.
+		function end()
+		{
+			if (openBlockTypes.length == 0)
+				Abort("Mismatched end() in scene definition", -1);
+			var blockType = openBlockTypes.pop();
+			switch (blockType) {
+				case 'fork':
+					var command = {
+						arguments: [ queueToFill ],
+						start: function(scene, instructions) {
+							var ctx = {
+								instructions: instructions,
+								pc: 0,
+								forks: [],
+							};
+							var tid = threads.createEx(scene, {
+								update: runTimeline.bind(scene, ctx)
+							});
+							tasks.push(tid);
+							activation.forks.push(tid);
+						}
+					};
+					queueToFill = forkedQueues.pop();
+					enqueue(command);
+					break;
+				case 'branch':
+					var jump = jumpsToFix.pop();
+					jump.ifFalse = queueToFill.length;
+					break;
+				case 'loop':
+					var command = {
+						arguments: [],
+						start: function(scene) {
+							goTo(jump.loopStart);
+						}
+					};
+					enqueue(command);
+					var jump = jumpsToFix.pop();
+					jump.ifDone = queueToFill.length;
+					break;
+				default:
+					Abort("miniscenes internal error (unknown block type)", -1);
+					break;
+			}
+			return this;
+		};
+
+		// Scene:enqueue()
+		// enqueues a custom scenelet.  not recommended for outside use.
+		function enqueue(command)
+		{
+			if (isRunning())
+				Abort("attempt to modify scene definition during playback", -2);
+			queueToFill.push(command);
+		};
+
+		// Scene:fork()
+		// during scene execution, fork the timeline, allowing a block to run simultaneously with
+		// the instructions after it.
+		function fork()
+		{
+			forkedQueues.push(queueToFill);
+			queueToFill = [];
+			openBlockTypes.push('fork');
+			return this;
+		};
+
+		// Scene:restart()
+		// restart the scene from the beginning.  this has the same effect as calling
+		// .stop() and .play() back-to-back.
+		function restart()
+		{
+			stop();
+			run();
+		};
+
+		// Scene:resync()
+		// during a scene, suspend the current timeline until all of its forks have run to
+		// completion.
+		// remarks:
+		//     there is an implicit resync at the end of a timeline.
+		function resync()
+		{
+			var command = {
+				arguments: [],
+				start: function(scene) {
+					forks = activation.forks;
+				},
+				update: function(scene) {
+					return link(forks)
+						.where(function(tid) { return threads.isRunning(tid); })
+						.length() > 0;
+				}
+			};
+			enqueue(command);
+			return this;
+		}
+
+		// Scene:play()
+		// play back the scene.
+		// arguments:
+		//     waitUntilDone: if true, block until playback has finished.
+		function run(waitUntilDone)
+		{
+			if (openBlockTypes.length > 0)
+				Abort("unclosed block in scene definition", -1);
+			if (isRunning()) return;
+			var ctx = {
+				instructions: queueToFill,
+				pc: 0,
+				forks: [],
+			};
+			mainThread = threads.createEx(this, {
+				update: runTimeline.bind(this, ctx)
+			});
+			tasks.push(mainThread);
+			if (waitUntilDone)
+				threads.join(mainThread);
+			return this;
+		};
+
+		// Scene:stop()
+		// immediately halt scene playback.  no effect if the scene isn't playing.
+		// remarks:
+		//     after calling this method, calling .play() afterwards will start from the
+		//     beginning.
+		function stop()
+		{
+			link(tasks)
+				.each(function(tid)
+			{
+				threads.kill(tid);
+			});
+		};
+
+		var retobj = {
+			isRunning: isRunning,
+			doIf:      doIf,
+			doWhile:   doWhile,
+			end:       end,
+			enqueue:   enqueue,
+			fork:      fork,
+			restart:   restart,
+			resync:    resync,
+			run:       run,
+			stop:      stop,
+		};
+		Object.setPrototypeOf(retobj, Scene.prototype);
+		return retobj;
 	}
-});
+
+	return {
+		scenelet: scenelet,
+		Scene:    Scene,
+	};
+})();
 
 // .call() scenelet
 // Calls a function during scene execution.
@@ -345,7 +370,7 @@ mini.Scenelet('resync',
 // Remarks:
 //     Any additional arguments provided beyond the 'method' argument will be passed
 //     to the specified function when it is called.
-mini.Scenelet('call',
+scenes.scenelet('call',
 {
 	start: function(scene, method /*...*/) {
 		method.apply(null, [].slice.call(arguments, 2));
@@ -357,7 +382,7 @@ mini.Scenelet('call',
 // Arguments:
 //     person:    The name of the entity whose direction to change.
 //     direction: The name of the new direction.
-mini.Scenelet('facePerson',
+scenes.scenelet('facePerson',
 {
 	start: function(scene, person, direction) {
 		var faceCommand;
@@ -398,13 +423,13 @@ mini.Scenelet('facePerson',
 // Arguments:
 //     color:    The new screen mask color.
 //     duration: The length of the fading operation, in seconds.
-mini.Scenelet('fadeTo',
+scenes.scenelet('fadeTo',
 {
 	start: function(scene, color, duration) {
 		duration = duration !== undefined ? duration : 0.25;
 		
-		this.fader = new mini.Scene()
-			.tween(mini.Scenes.screenMask, duration, 'linear', color)
+		this.fader = new scenes.Scene()
+			.tween(screenMask, duration, 'linear', color)
 			.run();
 	},
 	update: function(scene) {
@@ -418,12 +443,12 @@ mini.Scenelet('fadeTo',
 //     person:   The name of the entity to focus on.
 //     duration: Optional. The length of the panning operation, in seconds.
 //               (default: 0.25)
-mini.Scenelet('focusOnPerson',
+scenes.scenelet('focusOnPerson',
 {
 	start: function(scene, person, duration) {
 		duration = duration !== undefined ? duration : 0.25;
 		
-		this.pan = new mini.Scene()
+		this.pan = new scenes.Scene()
 			.panTo(GetPersonX(person), GetPersonY(person), duration)
 			.run();
 	},
@@ -436,11 +461,11 @@ mini.Scenelet('focusOnPerson',
 // Pans to and attaches the camera to a specified map entity.
 // Arguments:
 //     person: The name of the entity to follow.
-mini.Scenelet('followPerson',
+scenes.scenelet('followPerson',
 {
 	start: function(scene, person) {
 		this.person = person;
-		this.pan = new mini.Scene()
+		this.pan = new scenes.Scene()
 			.focusOnPerson(person)
 			.run();
 	},
@@ -456,7 +481,7 @@ mini.Scenelet('followPerson',
 // Hides a map entity and prevents it from obstructing other entities.
 // Arguments:
 //     person: The name of the entity to hide.
-mini.Scenelet('hidePerson',
+scenes.scenelet('hidePerson',
 {
 	start: function(scene, person) {
 		SetPersonVisible(person, false);
@@ -468,7 +493,7 @@ mini.Scenelet('hidePerson',
 // Destroys a map entity.
 // Arguments:
 //     person: The name of the entity to destroy.
-mini.Scenelet('killPerson',
+scenes.scenelet('killPerson',
 {
 	start: function(scene, person) {
 		DestroyPerson(person);
@@ -481,7 +506,7 @@ mini.Scenelet('killPerson',
 //     text:            The text to display.
 //     backgroundColor: The background color of the marquee.
 //     color:           The text color.
-mini.Scenelet('marquee',
+scenes.scenelet('marquee',
 {
 	start: function(scene, text, backgroundColor, color) {
 		if (backgroundColor === undefined) { backgroundColor = new Color(0, 0, 0, 255); }
@@ -496,7 +521,7 @@ mini.Scenelet('marquee',
 		this.textHeight = this.font.getHeight();
 		this.fadeness = 0.0;
 		this.scroll = 0.0;
-		this.animation = new mini.Scene()
+		this.animation = new scenes.Scene()
 			.tween(this, 0.25, 'linear', { fadeness: 1.0 })
 			.tween(this, 1.0, 'easeOutExpo', { scroll: 0.5 })
 			.tween(this, 1.0, 'easeInExpo', { scroll: 1.0 })
@@ -520,14 +545,14 @@ mini.Scenelet('marquee',
 });
 
 // .maskPerson() scenelet
-mini.Scenelet('maskPerson',
+scenes.scenelet('maskPerson',
 {
 	start: function(scene, name, newMask, duration) {
 		duration = duration !== undefined ? duration : 0.25;
 		
 		this.name = name;
 		this.mask = GetPersonMask(this.name);
-		this.fade = new mini.Scene()
+		this.fade = new scenes.Scene()
 			.tween(this.mask, duration, 'easeInOutSine', newMask)
 			.run();
 	},
@@ -546,7 +571,7 @@ mini.Scenelet('maskPerson',
 //     speed:     The number of pixels per frame the entity should move.
 //     faceFirst: Optional. If this is false, the entity will move without changing its facing
 //                direction. (default: true)
-mini.Scenelet('movePerson',
+scenes.scenelet('movePerson',
 {
 	start: function(scene, person, direction, distance, speed, faceFirst) {
 		faceFirst = faceFirst !== undefined ? faceFirst : true;
@@ -622,7 +647,7 @@ mini.Scenelet('movePerson',
 //     x:        The X coordinate of the location to pan to.
 //     y:        The Y coordinate of the location to pan to.
 //     duration: Optional. The length of the panning operation, in seconds. (default: 0.25)
-mini.Scenelet('panTo',
+scenes.scenelet('panTo',
 {
 	start: function(scene, x, y, duration) {
 		duration = duration !== undefined ? duration : 0.25;
@@ -634,7 +659,7 @@ mini.Scenelet('panTo',
 		};
 		this.cameraX = GetCameraX();
 		this.cameraY = GetCameraY();
-		this.pan = new mini.Scene()
+		this.pan = new scenes.Scene()
 			.tween(this, duration, 'easeOutQuad', targetXY)
 			.run();
 	},
@@ -649,7 +674,7 @@ mini.Scenelet('panTo',
 // Delays execution of the current timeline for a specified amount of time.
 // Arguments:
 //     duration: The length of the delay, in seconds.
-mini.Scenelet('pause',
+scenes.scenelet('pause',
 {
 	start: function(scene, duration) {
 		this.duration = duration;
@@ -664,7 +689,7 @@ mini.Scenelet('pause',
 // .playSound() scenelet
 // Plays a sound from a file.
 //     fileName: The name of the file to play.
-mini.Scenelet('playSound',
+scenes.scenelet('playSound',
 {
 	start: function(scene, fileName) {
 		this.sound = new Sound(fileName);
@@ -680,7 +705,7 @@ mini.Scenelet('playSound',
 // Makes a map entity visible and enables obstruction.
 // Arguments:
 //     person: The name of the entity to show.
-mini.Scenelet('showPerson',
+scenes.scenelet('showPerson',
 {
 	start: function(scene, person) {
 		SetPersonVisible(person, true);
@@ -689,7 +714,7 @@ mini.Scenelet('showPerson',
 });
 
 // .spriteset() scenelet
-mini.Scenelet('setSprite',
+scenes.scenelet('setSprite',
 {
 	start: function(scene, name, spriteFile) {
 		var spriteset = new Spriteset(spriteFile);
@@ -704,7 +729,7 @@ mini.Scenelet('setSprite',
 //    duration:   The length of the tweening operation, in seconds.
 //    easingType: The name of the easing function to use, e.g. 'linear' or 'easeOutQuad'.
 //    endValues:  An object specifying the properties to tween and their final values.
-mini.Scenelet('tween',
+scenes.scenelet('tween',
 {
 	start: function(scene, object, duration, easingType, endValues) {
 		this.easers = {
