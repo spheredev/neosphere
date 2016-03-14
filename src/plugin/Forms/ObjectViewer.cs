@@ -55,6 +55,7 @@ namespace minisphere.Gdk.Forms
                 WritableCheckBox.Enabled = !desc.Flags.HasFlag(PropFlags.Accessor);
                 EnumerableCheckBox.Enabled = true;
                 ConfigurableCheckBox.Enabled = true;
+                AccessorCheckBox.Enabled = true;
                 WritableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Writable);
                 EnumerableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Enumerable);
                 ConfigurableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Configurable);

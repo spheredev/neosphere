@@ -23,8 +23,9 @@ namespace minisphere.Gdk
         internal PluginConf Conf { get; private set; }
         internal int Sessions { get; set; }
 
-        private ToolStripMenuItem _msphereApiReferenceItem;
-        private ToolStripMenuItem _cellApiReferenceItem;
+        private ToolStripMenuItem _sphereApiRefCommand;
+        private ToolStripMenuItem _cellApiRefCommand;
+        private ToolStripMenuItem _miniRTApiRefCommand;
 
         public void Initialize(ISettings conf)
         {
@@ -37,12 +38,15 @@ namespace minisphere.Gdk
 
             Panes.Initialize(this);
 
-            _msphereApiReferenceItem = new ToolStripMenuItem("minisphere API Reference", Resources.EvalIcon);
-            _msphereApiReferenceItem.Click += msphereApiReferenceItem_Click;
-            _cellApiReferenceItem = new ToolStripMenuItem("Cell API Reference", Resources.EvalIcon);
-            _cellApiReferenceItem.Click += cellApiReferenceItem_Click;
-            PluginManager.Core.AddMenuItem("Help", _msphereApiReferenceItem);
-            PluginManager.Core.AddMenuItem("Help", _cellApiReferenceItem);
+            _sphereApiRefCommand = new ToolStripMenuItem("minisphere API Reference", Resources.EvalIcon);
+            _sphereApiRefCommand.Click += sphereApiRefCommand_Click;
+            _miniRTApiRefCommand = new ToolStripMenuItem("miniRT API Reference", Resources.EvalIcon);
+            _miniRTApiRefCommand.Click += miniRTApiRefCommand_Click;
+            _cellApiRefCommand = new ToolStripMenuItem("Cell API Reference", Resources.EvalIcon);
+            _cellApiRefCommand.Click += cellApiRefCommand_Click;
+            PluginManager.Core.AddMenuItem("Help", _sphereApiRefCommand);
+            PluginManager.Core.AddMenuItem("Help", _miniRTApiRefCommand);
+            PluginManager.Core.AddMenuItem("Help", _cellApiRefCommand);
 
             PluginManager.Core.UnloadProject += on_UnloadProject;
         }
@@ -50,18 +54,25 @@ namespace minisphere.Gdk
         public void ShutDown()
         {
             PluginManager.Core.UnloadProject -= on_UnloadProject;
-            PluginManager.Core.RemoveMenuItem(_msphereApiReferenceItem);
-            PluginManager.Core.RemoveMenuItem(_cellApiReferenceItem);
+            PluginManager.Core.RemoveMenuItem(_sphereApiRefCommand);
+            PluginManager.Core.RemoveMenuItem(_miniRTApiRefCommand);
+            PluginManager.Core.RemoveMenuItem(_cellApiRefCommand);
             PluginManager.UnregisterAll(this);
         }
 
-        private void msphereApiReferenceItem_Click(object sender, EventArgs e)
+        private void sphereApiRefCommand_Click(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Conf.GdkPath, "documentation", "minisphere-api.txt");
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "sphere-api.txt");
             PluginManager.Core.OpenFile(filePath);
         }
 
-        private void cellApiReferenceItem_Click(object sender, EventArgs e)
+        private void miniRTApiRefCommand_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "miniRT-api.txt");
+            PluginManager.Core.OpenFile(filePath);
+        }
+
+        private void cellApiRefCommand_Click(object sender, EventArgs e)
         {
             string filePath = Path.Combine(Conf.GdkPath, "documentation", "cell-api.txt");
             PluginManager.Core.OpenFile(filePath);

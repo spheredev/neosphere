@@ -51,31 +51,37 @@ battlefield.
 
     var threads = require('miniRT/threads');
 
-threads.create(threadCode[, priority]);
+threads.create(def[, priority]);
 
-    Creates a new thread and returns its thread ID (an integer).  `threadCode`
-    should be an object with the following properties:
+    Creates a new thread and returns its thread ID (an integer).  `def` should
+    be an object with the following properties:
 
-        update:   the thread's update function.  this is called once per game
-                  frame to update any state maintained by the thread.  the
-                  update function should return `true` to keep the thread going.
-                  if it ever returns `false`, the thread will terminate.
-        render:   optional.  the thread's render function.  this is called once
-                  per render frame to perform any rendering related to the
-                  thread.  for example, a thread managing a battle unit might
-                  render its sprite.  render order of threads is determined by
-                  `priority`, with higher priority threads being rendered later
-                  (closer to the screen).
-        getInput: optional.  called once per frame to process player input for
-                  the thread.  in the current version of miniRT (2.0),
-                  getInput() and update() calls match 1:1.  future versions may
-                  change this, for example by implementing an input stack or
-                  Z-ordering of some form.
+        def.update()
 
-    Each of the above functions is called with its `this` binding set to
-    `threadCode`.  This fact can be used to implement an "entity": a full object
-    implementing the above functions may be passed to threads.create() directly
-    and manage its own state directly.
+            The thread's update function.  This is called once per game frame to
+            update any state maintained by the thread.  The update function
+            should return true to keep the thread going.  If it ever returns
+            false, the thread will terminate.
+
+        def.render()
+
+            Optional.  The thread's render function.  This is called once per
+            render frame to perform any rendering related to the thread.  For
+            example, a thread managing a battle unit could render its sprite.
+            Render order of threads is determined by `priority`, with higher
+            priority threads being rendered later (closer to the screen).
+
+        def.getInput()
+
+            Optional.  Called once per frame to process player input for the
+            thread.  In the current version of miniRT (2.0), getInput() and
+            update() calls will always match 1:1.  Future versions may change
+            this however, for example by implementing an input stack or
+            Z-ordering of some form.
+
+    Each of the above functions is called with its `this` binding set to `def`.
+    This can be used to implement an "entity": a full object implementing the
+    above functions which manages its own thread.
 
 threads.isRunning(tid);
 
@@ -132,12 +138,6 @@ console.close();
 
     Closes the console, hiding it from view of the player.
 
-console.deregister(objectName);
-
-    Deregisters all commands previously registered under `objectName`.  See
-    `console.register()` below for more information.  Note: It is not currently
-    possible to deregister individual commands.
-
 console.log(text);
 
     Logs a line of text to the console.  This line can be extended by following
@@ -171,6 +171,12 @@ console.register(objectName, thisObj, commands);
     processing a command, the console will not catch it.  Games should perform
     some form of error checking in their command functions to prevent the player
     from destabilizing the game.
+
+console.unregister(objectName);
+
+    Unregisters all commands previously registered under `objectName`.  See
+    `console.register()` below for more information.  Note: It is not currently
+    possible to unregister individual commands.
 
 
 miniRT/music
@@ -253,19 +259,20 @@ enables something akin to C#'s `async` and `await` keywords.  This is done by
 having a promise's fulfillment function return a promise object, which will then
 be used as input for the next link in the chain:
 
-    loadHugePigFile()  // returns a promise, then operates in background
-        .then(function(file) {  // called with fulfillment value
-            return processPigFile(file);  // also returns a promise
-        }).then(function(numPigs) {  // called when second promise is fulfilled
-            DebugPrint("Wow, you mean that actually finished?!");
+    loadHugePigFile()                    // <- makes a promise, then works in background
+        .then(function(file) {           // <- receives fulfillment value
+            return processPigFile(file); // <- also makes a promise
+        }).then(function(numPigs) {      // <- receives fulfillment value
+            DebugPrint("Wow, that actually finished?!");
+            DebugPrint("Loaded " + numPigs + " big fat pigs! *MUNCH*");
         });
 
 Outside code must not be allowed to resolve a promise prematurely.  Only the
-code which created the promise should resolve it, and this is enforced through
+code which made the promise should resolve it, and this is enforced through
 encapsulation (the promise is resolved directly via a closure passed to the
 Promise constructor).  This makes managing them difficult--which is where the
-Pact object comes in.  A Pact can be used to generate an unlimited number of
-promises which can only be resolved through that pact.  In this way
+Pact object comes in.  A Pact can be used to make an unlimited number of
+promises which can then be resolved through that pact.  In this way
 encapsulation of the Promise object is maintained while keeping things simple
 for the code handing them out.
 
@@ -328,7 +335,7 @@ pacts.Pact:resolve(promise, value);
 pacts.Pact:reject(promise, reason);
 
     Rejects a promise with `reason` (usually an Error value).  `promise` must
-    have come from this pact.  It is a TypeError to reject a promise through an
+    have come from this pact.  It is a TypeError to reject a promise using an
     unrelated pact.
 
 pacts.Pact:welsh(reason);
@@ -355,9 +362,9 @@ more seamlessly with miniRT/threads.
 
 A scene consists of a chain of scenelet invocations, with optional forks and
 resync points.  For example, supposing the scenelets used have been properly
-defined, the scene below cause make the person `scott` walk offscreen and the
-screen to fade out simultaneously, and then change the background music only
-when both are complete:
+defined, the scene below would cause the screen to fade out simultaneously and
+the person `scott` to walk offscreen, and finally change the background music
+only when both are complete:
 
     var myScene = new scenes.Scene()
         .fork()  // fork the timeline
@@ -367,7 +374,7 @@ when both are complete:
         .resync()  // resync point - await completion of forks
         .changeBGM('maggieIsHungry')
 
-The scene can be played back at any time by calling `myScene.run()`.  miniRT's
+This scene can be played back at any time by calling `myScene.run()`.  miniRT's
 scene engine uses miniRT/threads and by default, scenes are nonblocking.  See
 the documentation for `Scene.run()` below to find out how to play a scene in
 blocking mode.
@@ -376,7 +383,7 @@ scenes.scenelet(name, def);
 
     Registers a new scenelet with miniRT.  `name` is the name of the scenelet
     and should be a valid JavaScript identifier (although this is not enforced).
-    `def` is an object defining the scenelet, and should have the following
+    `def` is an object defining the scenelet, and should include the following
     function properties:
 
         def.start(scene, ...)
@@ -387,8 +394,8 @@ scenes.scenelet(name, def);
             .start() may return false.  Otherwise, it should return true to kick
             off a scenelet thread.
 
-            .start() receives all arguments provided when the scenelet was added to
-            the scene.
+            .start() receives all arguments provided when the scenelet was added
+            to the scene.
 
         def.update(scene)
 
@@ -396,18 +403,18 @@ scenes.scenelet(name, def);
             this is called once per game frame and should return true to
             continue scenelet execution or false to finish.
 
-		def.render(scene)
+        def.render(scene)
 
-			Optional.  .render() is called once per render frame to render
-			anything related to the scenelet.  A dialogue scenelet might render
-			a textbox, for example.  Render order is determined by the order in
-			which scenelets were started.
+            Optional.  .render() is called once per render frame to render
+            anything related to the scenelet.  A dialogue scenelet might render
+            a textbox, for example.  Render order is determined by the order in
+            which scenelets were started.
 
-		def.getInput(scene)
+        def.getInput(scene)
 
-			Optional.  Called once per game frame for the topmost scenelet to
-			accept player input for that scenelet.  Only scenelets implementing
-			a .getInput() callback are considered for topmost status.
+            Optional.  Called once per game frame for the topmost scenelet to
+            accept player input for that scenelet.  Only scenelets implementing
+            a .getInput() callback are considered for topmost status.
 
     Each callback receives a reference to the scene object which invoked it as
     its first argument, and its `this` binding is set to a unique object it can

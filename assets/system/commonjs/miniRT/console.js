@@ -74,7 +74,7 @@ module.exports = (function() {
 		log:        log,
 		open:       open,
 		register:   register,
-		deregister: deregister,
+		unregister: unregister,
 	};
 
 	function executeCommand(command)
@@ -142,9 +142,9 @@ module.exports = (function() {
 		var consoleKey = GetPlayerKey(PLAYER_1, PLAYER_KEY_MENU);
 		if (!wasKeyDown && IsKeyPressed(consoleKey)) {
 			if (!isOpen())
-				show();
+				open();
 			else
-				hide();
+				close();
 		}
 		wasKeyDown = IsKeyPressed(consoleKey);
 		if (isOpen()) {
@@ -191,7 +191,7 @@ module.exports = (function() {
 		if (visible.fade <= 0.0)
 			return;
 
-		// draw command prompt
+		// draw the command prompt...
 		var boxY = -22 * (1.0 - visible.fade);
 		Rectangle(0, boxY, GetScreenWidth(), 22, new Color(0, 0, 0, visible.fade * 224));
 		var promptWidth = font.getStringWidth(prompt + " ");
@@ -206,6 +206,7 @@ module.exports = (function() {
 		font.setColorMask(cursorColor);
 		font.drawText(5 + promptWidth + font.getStringWidth(entry), 5 + boxY, "_");
 
+		// ...then the console output
 		var boxHeight = numLines * font.getHeight() + 10;
 		var boxY = GetScreenHeight() - boxHeight * visible.fade;
 		Rectangle(0, boxY, GetScreenWidth(), boxHeight, new Color(0, 0, 0, visible.fade * 192));
@@ -268,17 +269,6 @@ module.exports = (function() {
 			.run();
 	};
 
-	// console.deregister()
-	// deregister a previously-registered entity.
-	// arguments:
-	//     name: the name of the entity as passed to console.register().
-	function deregister(name)
-	{
-		commands = link(commands)
-			.where(function(command) { return command.entity != name; })
-			.toArray();
-	};
-	
 	// console.log()
 	// write a line of text to the console.
 	function log(text)
@@ -323,5 +313,16 @@ module.exports = (function() {
 				method: methods[instruction]
 			});
 		}
+	};
+
+	// console.unregister()
+	// unregister all commands for a previously-registered entity.
+	// arguments:
+	//     name: the name of the entity as passed to console.register().
+	function unregister(name)
+	{
+		commands = link(commands)
+			.where(function(command) { return command.entity != name; })
+			.toArray();
 	};
 })();
