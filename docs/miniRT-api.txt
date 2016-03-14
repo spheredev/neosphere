@@ -1,0 +1,480 @@
+miniRT CommonJS - API Reference
+===============================
+
+minisphere comes with a set of CommonJS modules, collectively called miniRT,
+which provide advanced, high-level functionality above and beyond what the
+lower-level Sphere API provides.
+
+miniRT is made up of several components, each of which is documented under its
+own section below:
+
+    * miniRT/console:
+      A ready-made text console with full logging support and a built-in command
+      parser.
+
+    * miniRT/delegates:
+      A multicast delegate implementation inspired by .NET events.
+
+    * miniRT/music:
+      A BGM manager based on a pushdown stack which integrates well with finite
+      state machine architectures.
+
+    * miniRT/pacts:
+      A Promises/A+ implementation used for asynchronous logic.  miniRT/pacts
+      also provides the Pact object (its namesake), which simplifies code to
+      fulfill and reject promises.
+
+    * miniRT/scenes:
+      An extensible cutscene engine with support for multiple timelines and a
+      simple but powerful timeline synchronization system.
+
+    * miniRT/threads:
+      An advanced cooperative threading engine which replaces Sphere 1.x-style
+      update and render scripts.
+
+
+miniRT/threads
+--------------
+
+miniRT/threads is the cornerstone of miniRT and is therefore documented first.
+almost all other miniRT components depend on it.  require() almost any miniRT
+module and miniRT/threads will also be pulled in, which affects your code even
+if you don't use the threader yourself--notably, by preventing the legacy update
+and render script functionality from being used by game code.
+
+miniRT/threads is an advanced cooperative threading engine.  Each thread has its
+own update and render functions, which are called once per frame.  This allows
+many actions to run simultaneously.  For example, you might have a thread to
+run the in-game clock and another to manage animations.  An active-time battle
+engine might even use several threads to manage each of the units on the
+battlefield.
+
+    var threads = require('miniRT/threads');
+
+threads.create(threadCode[, priority]);
+
+    Creates a new thread and returns its thread ID (an integer).  `threadCode`
+    should be an object with the following properties:
+
+        update:   the thread's update function.  this is called once per game
+                  frame to update any state maintained by the thread.  the
+                  update function should return `true` to keep the thread going.
+                  if it ever returns `false`, the thread will terminate.
+        render:   optional.  the thread's render function.  this is called once
+                  per render frame to perform any rendering related to the
+                  thread.  for example, a thread managing a battle unit might
+                  render its sprite.  render order of threads is determined by
+                  `priority`, with higher priority threads being rendered later
+                  (closer to the screen).
+        getInput: optional.  called once per frame to process player input for
+                  the thread.  in the current version of miniRT (2.0),
+                  getInput() and update() calls match 1:1.  future versions may
+                  change this, for example by implementing an input stack or
+                  Z-ordering of some form.
+
+    Each of the above functions is called with its `this` binding set to
+    `threadCode`.  This fact can be used to implement an "entity": a full object
+    implementing the above functions may be passed to threads.create() directly
+    and manage its own state directly.
+
+threads.isRunning(tid);
+
+    true if a thread with thread ID `tid` is running.  miniRT never recycles
+    thread IDs, so this can be counted on to return false if given the tid of a
+    thread which has terminated.
+
+threads.join(tid);
+
+    Blocks the caller and awaits termination of the thread with thread ID `tid`.
+    Any running threads (and the map engine, if it's in use) will continue to
+    run.  If called during a thread update, the calling thread will be blocked
+    from updating or accepting input until the join is satisfied.
+
+    Note that due to limitations inherent to JavaScript's single-threaded
+    architecture, joins are implemented recursively and can only be satisfied in
+    a last-in-first-out manner.  So if two threads are being awaited and the
+    first one terminates, the corresponding join cannot be satisfied until the
+    second thread also terminates.
+
+threads.kill(tid);
+
+    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
+    invalid or has already terminated, nothing happens.
+
+threads.self();
+
+    When called from an update or render function, returns the thread ID of the
+    active thread.  Otherwise, returns 0.
+
+
+miniRT/console
+--------------
+
+miniRT/console allows you to add a text-based interface to your game.  The
+console provides a full command parser, all your game is responsible for is
+providing the names and implementations of supported commands!
+
+During gameplay, if the game allows it, the console may be shown and hidden
+using the Player 1 `Menu` key (Tab by default).
+
+    var console = require('miniRT/console');
+
+console.isOpen();
+
+    `true` if the console is currently visible to the player.
+
+console.append(text);
+
+    Appends text to the end of last line logged to the console.  See
+    `console.log()` below.
+
+console.close();
+
+    Closes the console, hiding it from view of the player.
+
+console.deregister(objectName);
+
+    Deregisters all commands previously registered under `objectName`.  See
+    `console.register()` below for more information.  Note: It is not currently
+    possible to deregister individual commands.
+
+console.log(text);
+
+    Logs a line of text to the console.  This line can be extended by following
+    up with one or more console.append() calls.
+
+console.open();
+
+    Opens the console, making it visible to the player.
+
+console.register(objectName, thisObj, commands);
+
+    Registers an object and a set of commands with the console.  `commands` is
+    an object providing the names and implementations of the commands being
+    added, which will be associated with the name specified by `objectName`.
+    Each property of `commands` has as its key the command name, and a function
+    as its value, which will be called when the command is invoked.  `thisObj`
+    specifies a `this` binding to use when calling a command function.
+
+    As this API is complex and difficult to explain, an example might help
+    illuminate things.  An example console.register() call might look something
+    like this:
+
+        console.register('sound', null, {
+            'play': function(filename) {
+                if (DoesFileExist(filename)) new Sound(filename).play();
+            }
+        });
+
+    The player could then type `sound play sounds/munch.wav` into the console to
+    play that sound (assuming it exists).  Note that if an error is thrown while
+    processing a command, the console will not catch it.  Games should perform
+    some form of error checking in their command functions to prevent the player
+    from destabilizing the game.
+
+
+miniRT/music
+------------
+
+miniRT/music is a flexible system based on Audialis for managing playback of
+background music.  The design, based on a pushdown stack, integrates well with
+finite state machine architectures, which are often themselves based on a stack
+of states.  Code can push new BGM to the music stack, and when it is later
+popped, the previous track resumes right where it left off.
+
+miniRT/music supports crossfading, which helps smooth out BGM transitions.  It
+also allows the stack to be bypassed when needed, from simply switching out the
+song on top of the stack with another track, to overriding the contents of the
+stack entirely, which is often useful in RPGs to override the battle music for
+storyline reasons.
+
+    var music = require('miniRT/music');
+
+music.isAdjusting();
+
+    true if the music volume is currently being adjusted by a call to
+    music.adjust() (see below).
+
+music.adjust(newVolume, duration);
+
+    Smoothly adjusts the BGM volume level.  `newVolume` should be a value
+    between 0 and 1, where 0 is silent and 1 is full volume.  `duration` is
+    how long the adjustment should take, in seconds.
+
+music.override(path[, fadeTime]);
+
+    Overrides the BGM stack by playing the song specified by `path` at all
+    times.  This may be useful in RPGs, for example to override the battle music
+    during an important storyline event.
+
+    `fadeTime` is the amount of crossfade to apply, in seconds.
+
+    Note that overriding the BGM doesn't prevent music stack tracking.  So once
+    the override is lifted (by calling reset()), the song on top of the stack at
+    that time will play.
+
+music.play(path[, fadeTime]);
+
+    Replaces the song on top of the music stack with the track named by `path`.
+    This is not the same as an override; if play() or push() is called
+    afterwards, the BGM will change.
+
+    `fadeTime` is the amount of crossfade to apply, in seconds.
+
+music.pop([fadeTime]);
+
+    Pops the topmost song off the music stack.  This will resume playing
+    whatever song was playing when the corresponding push() was done.
+
+music.push(path[, fadeTime]);
+
+    Pushes a new song to the music stack.  If pop() is called later, the
+    previous BGM will resume from where it left off.  `fadeTime` is the amount
+    of crossfade to apply, in seconds.
+
+music.reset();
+
+    Resets the BGM manager to normal operation, removing any outstanding
+    overrides.
+
+
+miniRT/pacts
+------------
+
+miniRT/pacts is an implementation of the Promises/A+ standard.  These are
+commonly used in JavaScript frameworks such as Node.js to implement asynchronous
+logic.  Code which receives a promise can register a function to be called when
+the promise is fulfilled, which allows normal execution to continue while some
+long-running operation takes place in the background.
+
+Promises are so called because they represent a promise to "return" a value,
+which is provided by the code fulfilling it.  Promises can be chained, which
+enables something akin to C#'s `async` and `await` keywords.  This is done by
+having a promise's fulfillment function return a promise object, which will then
+be used as input for the next link in the chain:
+
+    loadHugePigFile()  // returns a promise, then operates in background
+        .then(function(file) {  // called with fulfillment value
+            return processPigFile(file);  // also returns a promise
+        }).then(function(numPigs) {  // called when second promise is fulfilled
+            DebugPrint("Wow, you mean that actually finished?!");
+        });
+
+Outside code must not be allowed to resolve a promise prematurely.  Only the
+code which created the promise should resolve it, and this is enforced through
+encapsulation (the promise is resolved directly via a closure passed to the
+Promise constructor).  This makes managing them difficult--which is where the
+Pact object comes in.  A Pact can be used to generate an unlimited number of
+promises which can only be resolved through that pact.  In this way
+encapsulation of the Promise object is maintained while keeping things simple
+for the code handing them out.
+
+    var pacts = require('miniRT/pacts');
+
+new pacts.Promise(fn);
+
+    Makes a promise.  `fn` should be a function with the following signature,
+    where `resolve` and `reject` are themselves functions:
+
+        function fn(resolve, reject)
+
+    This function should call resolve(value) to fulfill the promise with
+    `value`, or reject(reason) to reject the promise.  `reason` is usually an
+    Error object or derivative, but this is not enforced.  If `fn` throws, the
+    promise will be rejected with the thrown value as the reason.
+
+    To maintain encapsulation and prevent unrelated code from resolving a
+    promise, resolution is only possible using the functions passed to `fn`.
+    This makes things difficult for the code which is actually responsible for
+    satisfying the promise.  Consider using a Pact (see below) to simplify the
+    process.
+
+pacts.Promise.all(promises);
+
+    Makes a promise which is fulfilled only when all promises in the array
+    `promises` have been fulfilled.  If any of the promises is rejected, the
+    Promises.all() promise will be rejected immediately with the same reason
+    value.
+
+pacts.Promise.race(promises);
+
+    Makes a promise which resolves once any promise in `promises` is resolved,
+    with the same value or reason.
+
+pacts.Promise.reject(reason);
+
+    Makes a promise which is rejected immediately with `reason` (usually an
+    Error value).
+
+pacts.Promise.resolve(value);
+
+    Makes a promise which is fulfilled immediately with `value`.
+
+new pacts.Pact();
+
+    Creates a new pact.  As described above, Pacts are used to generate promises
+    which can then be resolved via the pact.
+
+pacts.Pact:promise();
+
+    Makes a promise using this pact.  The promise can only be resolved through
+    the pact used to make it.
+
+pacts.Pact:resolve(promise, value);
+
+    Fulfills a promise with `value`.  `promise` must have come from this pact.
+    It is a TypeError to fulfill a promise using an unrelated pact.
+
+pacts.Pact:reject(promise, reason);
+
+    Rejects a promise with `reason` (usually an Error value).  `promise` must
+    have come from this pact.  It is a TypeError to reject a promise through an
+    unrelated pact.
+
+pacts.Pact:welsh(reason);
+
+    Rejects all outstanding promises from this pact.  `reason` is the value to
+    reject with, usually an Error object.
+
+
+miniRT/scenes
+-------------
+
+miniRT/scenes is a powerful scene engine which can run multiple operations in
+parallel, and then sync the timelines up as needed.  An example of this would be
+where several characters need to move into place for a cutscene, but may take
+differing amounts of time to get there.  The game can fork the timeline once for
+each character, and then resync on the main timeline, which will wait until all
+the forked timelines finish before continuing.
+
+miniRT/scenes is originally based on the Scenario standalone cutscene engine for
+Sphere 1.5, updated to take advantage of Sphere 2.0 features and to integrate
+more seamlessly with miniRT/threads.
+
+    var scenes = require('miniRT/scenes');
+
+A scene consists of a chain of scenelet invocations, with optional forks and
+resync points.  For example, supposing the scenelets used have been properly
+defined, the scene below cause make the person `scott` walk offscreen and the
+screen to fade out simultaneously, and then change the background music only
+when both are complete:
+
+    var myScene = new scenes.Scene()
+        .fork()  // fork the timeline
+            .fadeTo(new Color(0, 0, 0, 255), 2.0)  // 2 sec. fade
+        .end()
+        .walkOffscreen("scott")
+        .resync()  // resync point - await completion of forks
+        .changeBGM('maggieIsHungry')
+
+The scene can be played back at any time by calling `myScene.run()`.  miniRT's
+scene engine uses miniRT/threads and by default, scenes are nonblocking.  See
+the documentation for `Scene.run()` below to find out how to play a scene in
+blocking mode.
+
+scenes.scenelet(name, def);
+
+    Registers a new scenelet with miniRT.  `name` is the name of the scenelet
+    and should be a valid JavaScript identifier (although this is not enforced).
+    `def` is an object defining the scenelet, and should have the following
+    function properties:
+
+        def.start(scene, ...)
+
+            Required.  Called once when the scenelet begins execution.  .start()
+            should initialize any execution state for the scenelet.  For one-off
+            operations which can be completed entirely in the start function,
+            .start() may return false.  Otherwise, it should return true to kick
+            off a scenelet thread.
+
+            .start() receives all arguments provided when the scenelet was added to
+            the scene.
+
+        def.update(scene)
+
+            Required.  The scenelet's update function.  As with miniRT/threads,
+            this is called once per game frame and should return true to
+            continue scenelet execution or false to finish.
+
+		def.render(scene)
+
+			Optional.  .render() is called once per render frame to render
+			anything related to the scenelet.  A dialogue scenelet might render
+			a textbox, for example.  Render order is determined by the order in
+			which scenelets were started.
+
+		def.getInput(scene)
+
+			Optional.  Called once per game frame for the topmost scenelet to
+			accept player input for that scenelet.  Only scenelets implementing
+			a .getInput() callback are considered for topmost status.
+
+    Each callback receives a reference to the scene object which invoked it as
+    its first argument, and its `this` binding is set to a unique object it can
+    use to manage execution state for that invocation only.
+
+new scenes.Scene();
+
+    Constructs a new scene definition.  The scene starts with no scenelets and
+    will do nothing when run.  Calling any method other than .run() on the scene
+    will add scenelets, and this is how you build a scene.
+
+scenes.Scene:isRunning();
+
+    true if scene execution is in progress, false if not.
+
+scenes.Scene.doIf(fn);
+
+    `fn` should be a function.  Any scenelets between the doIf() and its
+    corresponding end() will be executed only if the function returns true.
+    This is like to an `if` statement in JavaScript.
+
+scenes.Scene.doWhile(fn);
+
+    `fn` should be a function.  Any scenelets between the doWhile() and its
+    corresponding end() will be executed in a loop as long as the function
+    keeps returning true.  This is like to a `while` statement in JavaScript.
+
+scenes.Scene:end();
+
+    A metascenelet which closes the open context.  Currently, metascenelets
+    which open a context and therefore require an end() marker are:
+
+        doIf()
+        doWhile()
+        fork()
+
+scenes.Scene:fork();
+
+    A metascenelet which forks the timeline.  This opens a new timeline to which
+    all subsequent scenelets are added until an end() metascenelet is
+    encountered.  Forked timelines run in parallel with the timeline that
+    spawned them.
+
+scenes.Scene:restart();
+
+    Restarts a scene from the beginning, regardless of whether or not it was
+    running at the time restart() is called.
+
+scenes.Scene:resync();
+
+    A metascenelet which adds a resync point to the open timeline.  Timelines
+    may be forked to run operations in parallel, but it is sometimes necessary
+    to wait until several simultaneous operations have completed before
+    continuing.  Resync points do just that, halting the timeline they are found
+    on until all outstanding forks against it have completed.
+
+    There is an implicit resync point at the end of a timeline.  In practice,
+    this means that a scene will not complete until all of its timelines have
+    completed.
+
+scenes.Scene:run([blocking]);
+
+    Plays back this scene.  `blocking` is an optional boolean argument
+    specifying whether to wait for the scene to finish before returning.  If
+    not provided, `blocking` defaults to false.
+
+scenes.Scene:stop();
+
+    Stops scene execution immediately.  This works like the Stop button on a CD
+    player: The next time the scene is run, it will start from the beginning.

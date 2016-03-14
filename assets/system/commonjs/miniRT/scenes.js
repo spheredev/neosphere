@@ -41,8 +41,8 @@ module.exports = (function()
 	// scenelet()
 	// register a new scenelet.
 	// arguments:
-	//     name: the name of the command.  this should be a valid JavaScript identifier (alphanumeric, no spaces).
-	//     code: an object defining the command's callback functions:
+	//     name: the name of the scenelet.  this should be a valid JavaScript identifier (alphanumeric, no spaces).
+	//     def:  an object defining the scenelet callbacks:
 	//           .start(scene, ...): called when the command begins executing to initialize the state, or for
 	//                               instantaneous commands, perform the necessary action.
 	//           .update(scene):     optional.  a function to be called once per frame to update state data.  if not
@@ -57,18 +57,18 @@ module.exports = (function()
 	//                               the next instruction in the queue.
 	// remarks:
 	//    it is safe to call this prior to initialization.
-	var scenelet = function(name, code)
+	var scenelet = function(name, def)
 	{
 		if (name in Scene.prototype)
 			Abort("scenes.scenelet(): scenelet ID `" + name + "` already in use", -1);
 		Scene.prototype[name] = function() {
 			this.enqueue({
 				arguments: arguments,
-				start: code.start,
-				getInput: code.getInput,
-				update: code.update,
-				render: code.render,
-				finish: code.finish
+				start: def.start,
+				getInput: def.getInput,
+				update: def.update,
+				render: def.render,
+				finish: def.finish
 			});
 			return this;
 		};
@@ -149,7 +149,7 @@ module.exports = (function()
 			}
 		};
 
-		// Scene:isPlaying()
+		// Scene:isRunning()
 		// Determines whether a scene is currently playing.
 		// Returns:
 		//     true if the scenario is still executing commands; false otherwise.
@@ -304,7 +304,7 @@ module.exports = (function()
 			return this;
 		}
 
-		// Scene:play()
+		// Scene:run()
 		// play back the scene.
 		// arguments:
 		//     waitUntilDone: if true, block until playback has finished.

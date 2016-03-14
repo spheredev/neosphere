@@ -62,6 +62,7 @@ module.exports = (function()
 		play:        play,
 		pop:         pop,
 		push:        push,
+		reset:       reset,
 	};
 
 	function update()
@@ -181,5 +182,12 @@ module.exports = (function()
 		var oldSound = currentSound;
 		this.play(path, fadeTime);
 		oldSounds.push(oldSound);
+	};
+
+	// music.reset()
+	// reset the BGM manager, which removes any outstanding overrides.
+	function reset(path, fadeTime)
+	{
+		Abort("music.reset(): not implemented", -1);
 	};
 })();

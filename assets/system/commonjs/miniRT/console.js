@@ -9,8 +9,8 @@ if (typeof exports === 'undefined')
 	throw new TypeError("console.js must be loaded using require()");
 }
 
-var link	= require('link');
-var scenes	= require('./scenes');
+var link    = require('link');
+var scenes  = require('./scenes');
 var threads = require('./threads');
 
 var console =
@@ -68,23 +68,23 @@ module.exports = (function() {
 	});
 
 	return {
-		isOpen:		isOpen,
-		append:		append,
-		close:		close,
-		log:		log,
-		open:		open,
-		register:	register,
+		isOpen:     isOpen,
+		append:     append,
+		close:      close,
+		log:        log,
+		open:       open,
+		register:   register,
 		deregister: deregister,
 	};
 
 	function executeCommand(command)
 	{
 		// NOTES:
-		//	   * Command format is `<entity_name> <instruction> <arg_1> ... <arg_n>`
-		//		 e.g.: `cow eat kitties 100`
-		//	   * Quoted text (single or double quotes) is treated as a single token.
-		//	   * Numeric arguments are converted to actual JS numbers before being passed to an
-		//		 instruction method.
+		//    * Command format is `<entity_name> <instruction> <arg_1> ... <arg_n>`
+		//      e.g.: `cow eat kitties 100`
+		//    * Quoted text (single or double quotes) is treated as a single token.
+		//    * Numeric arguments are converted to actual JS numbers before being passed to an
+		//      instruction method.
 
 		// tokenize the command string
 		var tokens = command.match(/'.*?'|".*?"|\S+/g);
@@ -237,7 +237,7 @@ module.exports = (function() {
 	// console.isOpen()
 	// determine whether the console is currently displayed or not.
 	// returns:
-	//	   true if the console is open, false otherwise.
+	//     true if the console is open, false otherwise.
 	function isOpen()
 	{
 		return visible.yes;
@@ -246,7 +246,7 @@ module.exports = (function() {
 	// console.append()
 	// append additional output text to the last line in the console.
 	// arguments:
-	//	   text: the text to append.
+	//     text: the text to append.
 	function append(text)
 	{
 		if (nextLine == 0) {
@@ -271,7 +271,7 @@ module.exports = (function() {
 	// console.deregister()
 	// deregister a previously-registered entity.
 	// arguments:
-	//	   name: the name of the entity as passed to console.register().
+	//     name: the name of the entity as passed to console.register().
 	function deregister(name)
 	{
 		commands = link(commands)
@@ -280,7 +280,7 @@ module.exports = (function() {
 	};
 	
 	// console.log()
-	// writes a line of text to the console.
+	// write a line of text to the console.
 	function log(text)
 	{
 		if (nextLine > 0) {
@@ -308,11 +308,11 @@ module.exports = (function() {
 	// console.register()
 	// register a named entity with the console.
 	// arguments:
-	//	   name:	the name of the entity.	 this should not contain spaces.
-	//	   that:	the value which will be bound to `this` when one of the entity's methods is executed.
-	//	   methods: an associative array of functions, keyed by name, defining the valid operations
-	//				for this entity.  one-word names are recommended and as with the entity name,
-	//				should not contain spaces.
+	//     name:    the name of the entity.	 this should not contain spaces.
+	//     that:    the value which will be bound to `this` when one of the entity's methods is executed.
+	//     methods: an associative array of functions, keyed by name, defining the valid operations
+	//              for this entity.  one-word names are recommended and as with the entity name,
+	//              should not contain spaces.
 	function register(name, that, methods)
 	{
 		for (var instruction in methods) {
