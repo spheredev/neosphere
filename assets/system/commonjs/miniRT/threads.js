@@ -35,10 +35,9 @@ module.exports = (function()
 	SetUpdateScript(updateAll);
 	SetRenderScript(renderAll);
 	SetFrameRate('frameRate' in manifest ? manifest.frameRate : 0);
-	SetUpdateScript = SetRenderScript
-		function() {
-			Abort("API is not compatible with miniRT", -1);
-		}
+	SetUpdateScript = SetRenderScript = function() {
+		Abort("API is not compatible with miniRT", -1);
+	}
 
 	return {
 		create:    create,

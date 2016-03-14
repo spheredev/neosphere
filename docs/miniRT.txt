@@ -1,0 +1,284 @@
+miniRT 2.0 CJS - API Reference
+==============================
+
+minisphere comes with a set of CommonJS modules, collectively called miniRT,
+which provide advanced, high-level functionality above and beyond what the
+lower-level Sphere API provides.
+
+miniRT 2.0 is made up of several components, each of which is documented under
+its own section below:
+
+    * miniRT/console:
+      A ready-made text console with full logging support and a built-in command
+      parser.
+
+    * miniRT/delegates:
+      A multicast delegate implementation inspired by .NET events.
+
+    * miniRT/music:
+      A BGM manager based on a pushdown stack which integrates well with finite
+      state machine architectures.
+
+    * miniRT/pacts:
+      A Promises/A+ implementation used for asynchronous logic.  miniRT/pacts
+      also provides the Pact object (its namesake), which simplifies code to
+      fulfill and reject promises.
+
+    * miniRT/scenes:
+      An extensible cutscene engine with support for multiple timelines and a
+      simple but powerful timeline synchronization system.
+
+    * miniRT/threads:
+      An advanced cooperative threading engine which replaces Sphere 1.x-style
+      update and render scripts.
+
+
+miniRT/threads
+--------------
+
+miniRT/threads is documented first because it is the primary component on which
+almost all other miniRT components depend.  require() any miniRT module and the
+threader will also be pulled in, which affects your code even if you don't
+declare a dependency on the threader yourself: Most importantly, the legacy
+update and render script functionality will become unavailable for use by game
+code.
+
+miniRT/threads is an advanced cooperative threading engine.  Each thread has its
+own update and render functions, which are called once per frame.  This allows
+many actions to run simultaneously.  For example, you might have a thread to
+run the in-game clock and another to manage animations.  An active-time battle
+engine might even use several threads to manage each of the units on the
+battlefield.
+
+    var threads = require('miniRT/threads');
+
+threads.create(threadCode[, priority]);
+
+    Creates a new thread and returns its thread ID (an integer).  `threadCode`
+    should be an object with the following properties:
+    
+        update:   the thread's update function.  this is called once per game
+                  frame to update any state maintained by the thread.  the
+                  update function should return `true` to keep the thread going.
+                  if it ever returns `false`, the thread will terminate.
+        render:   optional.  the thread's render function.  this is called once
+                  per render frame to perform any rendering related to the
+                  thread.  for example, a thread managing a battle unit might
+                  render its sprite.  render order of threads is determined by
+                  `priority`, with higher priority threads being rendered later
+                  (closer to the screen).
+        getInput: optional.  called once per frame to process player input for
+                  the thread.  in the current version of miniRT (2.0),
+                  getInput() and update() calls match 1:1.  future versions may
+                  change this, for example by implementing an input stack or
+                  Z-ordering of some form.
+
+    Each of the above functions is called with its `this` binding set to
+    `threadCode`.  This fact can be used to implement an "entity": a full object
+    implementing the above functions may be passed to threads.create() directly
+    and manage its own state directly.
+
+threads.isRunning(tid);
+
+    true if a thread with thread ID `tid` is running.  miniRT never recycles
+    thread IDs, so this can be counted on to return false if given the tid of a
+    thread which has terminated.
+
+threads.join(tid);
+    
+    Blocks the caller until the thread with thread ID `tid` terminates.  Any
+    running threads (and the map engine, if it's active) will continue to run.
+    If called during a thread update, the calling thread will be blocked from
+    updating or accepting input until the join is satisfied.
+    
+    Note that due to limitations inherent to JavaScript's single-threaded
+    architecture, joins are implemented recursively and can only be satisfied in
+    a last-in-first-out manner.  So if two threads have been joined and the
+    first one terminates, the corresponding join cannot be satisfied until the
+    second thread also terminates.
+
+threads.kill(tid);
+
+    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
+    invalid or has already terminated, nothing happens.
+
+threads.self();
+
+    When called from an update or render function, returns the thread ID of the
+    active thread.  Otherwise, returns 0.
+
+
+miniRT/console
+--------------
+
+miniRT/console allows you to add a text-based interface to your game.  The
+console provides a full command parser, all your game is responsible for is
+providing the names and implementations of supported commands!
+
+During gameplay, if the game allows it, the console may be shown and hidden
+using the Player 1 `Menu` key (Tab by default).
+
+    var console = require('miniRT/console');
+
+console.isOpen();
+
+    `true` if the console is currently visible to the player.
+
+console.append(text);
+
+    Appends text to the end of last line logged to the console.  See
+    `console.log()` below.
+
+console.close();
+
+    Closes the console, hiding it from view of the player.
+
+console.deregister(objectName);
+
+    Deregisters all commands previously registered under `objectName`.  See
+    `console.register()` below for more information.  Note: It is not currently
+    possible to deregister individual commands.
+
+console.log(text);
+
+    Logs a line of text to the console.  This line can be extended by following
+    up with one or more console.append() calls.
+
+console.open();
+
+    Opens the console, making it visible to the player.
+
+console.register(objectName, thisObj, commands);
+
+    Registers an object and a set of commands with the console.  `commands` is
+    an object providing the names and implementations of the commands being
+    added, which will be associated with the name specified by `objectName`.
+    Each property of `commands` has as its key the command name, and a function
+    as its value, which will be called when the command is invoked.  `thisObj`
+    specifies a `this` binding to use when calling a command function.
+    
+    As this API is complex and difficult to explain, an example might help
+    illuminate things.  An example console.register() call might look something
+    like this:
+    
+        console.register('sound', null, {
+            'play': function(filename) {
+                if (DoesFileExist(filename)) new Sound(filename).play();
+            }
+        });
+
+    The player could then type `sound play sounds/munch.wav` into the console to
+    play that sound (assuming it exists).  Note that if an error is thrown while
+    processing a command, the console will not catch it.  Games should perform
+    some form of error checking in their command functions to prevent the player
+    from destabilizing the game.
+
+
+miniRT/pacts
+------------
+
+miniRT/pacts is an implementation of the Promises/A+ standard.  These are
+commonly used in JavaScript frameworks such as Node.js to implement asynchronous
+logic.  Code which receives a promise can register a function to be called when
+the promise is fulfilled, which allows normal execution to continue while some
+long-running operation takes place in the background.
+
+Promises are so called because they represent a promise to "return" a value,
+which is provided by the code fulfilling it.  Promises can be chained, which
+enables something akin to C#'s `async` and `await` keywords.  This is done by
+having a promise's fulfillment function return a promise object, which will then
+be used as input for the next link in the chain:
+
+    loadHugePigFile()  // returns a promise, then operates in background
+        .then(function(file) {  // called with fulfillment value
+            return processPigFile(file);  // also returns a promise
+        }).then(function(numPigs) {  // called when second promise is fulfilled
+            DebugPrint("Wow, you mean that actually finished?!");
+        });
+
+Outside code must not be allowed to resolve a promise prematurely.  Only the
+code which created the promise can resolve it, and this is enforced through
+encapsulation.  This makes managing them difficult--which is where the Pact
+object comes in.  A Pact can be used to generate an unlimited number of promises
+which can only be resolved through that pact.  In this way encapsulation of the
+Promise object is maintained while keeping things simple for the code handing
+out promises.
+
+    var pacts = require('miniRT/pacts');
+
+new Promise(fn);
+
+    Makes a promise.  `fn` should be a function with the following signature,
+    where `resolve` and `reject` are themselves functions:
+
+        function fn(resolve, reject)
+    
+    This function should call resolve(value) to fulfill the promise with
+    `value`, or reject(reason) to reject the promise.  `reason` is usually an
+    Error object or derivative, but this is not enforced.
+    
+    If `fn` throws, the promise will be rejected with the thrown value.
+
+Promise.all(promises);
+
+    Makes a promise which is fulfilled only when all promises in the array
+    `promises` have been fulfilled.  If any of the promises is rejected, the
+    Promises.all() promise will be rejected immediately with the same reason
+    value.
+
+Promise.race(promises);
+
+    Makes a promise which resolves once any promise in `promises` is resolved,
+    with the same value or reason.
+
+Promise.reject(reason);
+    
+    Makes a promise which is rejected immediately with `reason`, usually an
+    Error object.
+
+Promise.resolve(value);
+    
+    Makes a promise which is fulfilled immediately with `value`.
+
+new Pact();
+
+    Creates a new pact.  As described above, Pacts are used to generate promises
+    which can then be resolved via the pact.
+
+Pact:promise();
+    
+    Makes a promise using this pact.  The promise can only be resolved through
+    the pact used to make it.
+
+Pact:resolve(promise, value);
+
+    Fulfills a promise with `value`.  `promise` must have come from this pact.
+    It is a TypeError to fulfill a promise using an unrelated pact.
+
+Pact:reject(promise, reason);
+
+    Rejects a promise with `reason`, usually an Error object.  `promise` must
+    have come from this pact.  It is a TypeError to reject a promise using an
+    unrelated pact.
+
+Pact:welsh(reason);
+
+    Rejects all outstanding promises from this pact.  `reason` is the value to
+    reject with, usually an Error object.
+
+
+miniRT/scenes
+-------------
+
+miniRT/scenes is a powerful scene engine which can run multiple operations in
+parallel, and then sync the timelines up as needed.  An example of this would be
+where several characters need to move into place for a cutscene, but may take
+differing amounts of time to get there.  The game can fork the timeline once for
+each character, and then resync on the main timeline, which will wait until all
+the forked timelines finish before continuing.
+
+miniRT/scenes is originally based on the Scenario standalone cutscene engine for
+Sphere 1.5, updated to take advantage of Sphere 2.0 features and to integrate
+more seamlessly with miniRT/threads.
+
+    var scenes = require('miniRT/scenes');

@@ -130,12 +130,35 @@ subdirectory of ~sgm/. These cannot be made compliant without breaking
 compatibility with Sphere 1.x.
 
 
-Dependency Management
----------------------
+CommonJS
+--------
 
-Outside of very simple one-off games, most projects will consist of multiple
-script files. You will need to know how to use the functions below if you expect
-to get very far!
+In addition to the legacy dependency management functions described below,
+minisphere supports CommonJS modules, and this is the preferred method for
+managing dependencies.  The built-in require() function is provided for this
+purpose.
+
+require(module_id);
+
+    Loads a CommonJS module and returns its export table. `module_id` is an
+    abstract path (a string) identifying the module to load, with the same
+    semantics as in, e.g. Node.js.  If the module cannot be found, an error will
+    be thrown.  minisphere will look for modules in the following locations:
+
+        ~sgm/commonjs
+        ~sys/commonjs
+
+    If require() is called inside of a module and the ID provided is prefixed
+    with either './' or '../', this specifies a path relative to the calling
+    module.
+
+
+Classic Dependency Management
+-----------------------------
+
+The functions described below are maintained for backwards compatibility with
+games and scripts written for Sphere 1.x, but should be considered deprecated.
+Any new code should make use of CommonJS instead (see above).
 
 RequireScript(filename)
 EvaluateScript(filename)
@@ -159,35 +182,13 @@ EvaluateSystemScript(filename)
     directory.  These are used to import scripts included with the engine.
 
 
-CommonJS
---------
-
-In addition to the classic dependency management functions described above,
-minisphere also supports CommonJS modules.  To load these, the built-in
-require() function is provided.
-
-require(module_id);
-
-    Loads a CommonJS module and returns its export table. `module_id` is an
-    abstract path (a string) identifying the module to load, with the same
-    semantics as in, e.g. Node.js.  If the module cannot be found, an error will
-    be thrown.  minisphere will look for modules in the following locations:
-
-        ~sgm/modules
-        ~sys/modules
-
-    If require() is called inside of a module and the ID provided is prefixed
-    with either './' or '../', this specifies a path relative to the calling
-    module.
-
-
 Basic Debugging
 ---------------
 
-Since minisphere 1.6, full single-step debugging has been available via
-Sphere Studio.  minisphere 3.0 and later additionally include the SSJ
-command-line debugger.  The functions below may still come in handy as a sort
-of poor man's debugging, however:
+Since minisphere 1.6, full single-step debugging has been available through
+Sphere Studio.  minisphere 3.0 additionally includes the SSJ command-line
+debugger.  The functions below may still come in handy as a sort of "poor man's
+debugging", however:
 
 Abort(message[, stack_offset])
 
@@ -322,7 +323,7 @@ GetGameList()
 ExecuteGame(directory)
 
     Not SphereFS compliant: SphereFS prefixes are not honored.
-    
+
     Replaces the currently running game with the one found in the specified
     directory.  The directory is assumed to be relative to <enginedir>/games.
 
@@ -341,9 +342,9 @@ Async(script);
 
 DoEvents();
 
-    Performs one iteration of the engine's event loop.  DoEvents() can be used
-    in place of FlipScreen() (which clears the backbuffer) in a long-running
-    loop when you don't want to disturb the contents of the screen.
+    Performs a single iteration of the engine's event loop.  DoEvents() can be
+    used in place of FlipScreen() (which clears the backbuffer) in a long-
+    running loop when you don't want to disturb the contents of the screen.
 
     DoEvents() always returns `true`, allowing you to use it as part of a loop
     condition:
@@ -483,7 +484,7 @@ SetPlayerKey(player, button, keycode);
         PLAYER_KEY_Y
 
     Modifications made by SetPlayerKey() are persistent; the new mapping will be
-    saved to your game's "save" directory when the engine exits and reloaded 
+    saved to your game's "save" directory when the engine exits and reloaded
     when the game is started again.  Key mappings for other games are not
     affected.
 
@@ -1189,7 +1190,7 @@ SoundStream:mixer (read/write)
 
 SoundStream:play([mixer]);
 
-    Starts the stream playing. Ideally, some audio should be pre-buffered into 
+    Starts the stream playing. Ideally, some audio should be pre-buffered into
     the stream (see SoundStream:write() below) first to minimize the risk of
     buffer underrun.
 
@@ -1594,7 +1595,7 @@ MapEngine(filename[, framerate]);
     specifies the framerate the map engine will run at; a framerate of 0 will
     run unthrottled, which may be useful for benchmarks but is generally useless
     otherwise.
-    
+
     Unlike Sphere 1.x, `framerate` is optional.  If it is not provided, the
     FlipScreen() framerate (set using SetFrameRate()) will be used.
 
@@ -1624,7 +1625,7 @@ SetRenderScript(fn);
     should be updated in the update script, while drawing is done in the render
     script.  The distinction is important, as render calls can be skipped to
     minimize lag.
-    
+
     Note: You shouldn't call these functions when using miniRT.  The runtime
     uses update and render scripts internally and switching them out will break
     things.
@@ -1811,7 +1812,7 @@ loaded.
 CreatePerson(name, spriteset, transient);
 
     Not SphereFS compliant: `spriteset` is relative to ~sgm/spritesets.
-    
+
     Creates a person using the spriteset specified by `spriteset`.  This can
     either be an .rss spriteset filename or a Spriteset object.  If `transient`
     is true, the person is transient and will automatically be destroyed when a

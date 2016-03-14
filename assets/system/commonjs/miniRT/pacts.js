@@ -215,7 +215,7 @@ module.exports = (function()
 
 		// Pact:reject()
 		// reject a promise originating from this pact.
-		// argument:
+		// arguments:
 		//     promise: the promise to reject.  if the promise wasn't made from this pact,
 		//              a TypeError will be thrown.
 		//     reason:  the value to reject with (usually an Error object).

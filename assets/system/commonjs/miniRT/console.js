@@ -1,16 +1,16 @@
 /**
- *  miniRT/console 2.0 CommonJS module
- *  (c) 2015-2016 Fat Cerberus
- *  an easy-to-use command console which optionally logs output to disk.
+ *	miniRT/console 2.0 CommonJS module
+ *	(c) 2015-2016 Fat Cerberus
+ *	an easy-to-use command console which optionally logs output to disk.
 **/
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("console.js must be loaded using require()");
+	throw new TypeError("console.js must be loaded using require()");
 }
 
-var link    = require('link');
-var scenes  = require('./scenes');
+var link	= require('link');
+var scenes	= require('./scenes');
 var threads = require('./threads');
 
 var console =
@@ -41,8 +41,8 @@ module.exports = (function() {
 		.end()
 		.run();
 	threads.create({
-		update:   update,
-		render:   render,
+		update:	  update,
+		render:	  render,
 		getInput: getInput,
 	}, 100);
 
@@ -68,23 +68,23 @@ module.exports = (function() {
 	});
 
 	return {
-		isOpen:     isOpen,
-		append:     append,
-		hide:       hide,
-		log:        log,
-		register:   register,
-		show:       show,
-		unregister: unregister,
+		isOpen:		isOpen,
+		append:		append,
+		close:		close,
+		log:		log,
+		open:		open,
+		register:	register,
+		deregister: deregister,
 	};
 
 	function executeCommand(command)
 	{
 		// NOTES:
-		//     * Command format is `<entity_name> <instruction> <arg_1> ... <arg_n>`
-		//       e.g.: `cow eat kitties 100`
-		//     * Quoted text (single or double quotes) is treated as a single token.
-		//     * Numeric arguments are converted to actual JS numbers before being passed to an
-		//       instruction method.
+		//	   * Command format is `<entity_name> <instruction> <arg_1> ... <arg_n>`
+		//		 e.g.: `cow eat kitties 100`
+		//	   * Quoted text (single or double quotes) is treated as a single token.
+		//	   * Numeric arguments are converted to actual JS numbers before being passed to an
+		//		 instruction method.
 
 		// tokenize the command string
 		var tokens = command.match(/'.*?'|".*?"|\S+/g);
@@ -237,7 +237,7 @@ module.exports = (function() {
 	// console.isOpen()
 	// determine whether the console is currently displayed or not.
 	// returns:
-	//     true if the console is open, false otherwise.
+	//	   true if the console is open, false otherwise.
 	function isOpen()
 	{
 		return visible.yes;
@@ -246,7 +246,7 @@ module.exports = (function() {
 	// console.append()
 	// append additional output text to the last line in the console.
 	// arguments:
-	//     text: the text to append.
+	//	   text: the text to append.
 	function append(text)
 	{
 		if (nextLine == 0) {
@@ -258,9 +258,9 @@ module.exports = (function() {
 		visible.line = 0.0;
 	};
 
-	// console.hide()
-	// Hides the console.
-	function hide()
+	// console.close()
+	// close the console, hiding it from view.
+	function close()
 	{
 		new scenes.Scene()
 			.tween(visible, 0.25, 'easeInQuad', { fade: 0.0 })
@@ -268,6 +268,17 @@ module.exports = (function() {
 			.run();
 	};
 
+	// console.deregister()
+	// deregister a previously-registered entity.
+	// arguments:
+	//	   name: the name of the entity as passed to console.register().
+	function deregister(name)
+	{
+		commands = link(commands)
+			.where(function(command) { return command.entity != name; })
+			.toArray();
+	};
+	
 	// console.log()
 	// writes a line of text to the console.
 	function log(text)
@@ -284,14 +295,24 @@ module.exports = (function() {
 		visible.line = 0.0;
 	};
 
+	// console.open()
+	// open the console, making it visible to the player.
+	function open()
+	{
+		new scenes.Scene()
+			.tween(visible, 0.25, 'easeOutQuad', { fade: 1.0 })
+			.call(function() { visible.yes = true; })
+			.run();
+	}
+
 	// console.register()
 	// register a named entity with the console.
 	// arguments:
-	//     name:    the name of the entity.  this should not contain spaces.
-	//     that:    the value which will be bound to `this` when one of the entity's methods is executed.
-	//     methods: an associative array of functions, keyed by name, defining the valid operations
-	//              for this entity.  one-word names are recommended and as with the entity name,
-	//              should not contain spaces.
+	//	   name:	the name of the entity.	 this should not contain spaces.
+	//	   that:	the value which will be bound to `this` when one of the entity's methods is executed.
+	//	   methods: an associative array of functions, keyed by name, defining the valid operations
+	//				for this entity.  one-word names are recommended and as with the entity name,
+	//				should not contain spaces.
 	function register(name, that, methods)
 	{
 		for (var instruction in methods) {
@@ -302,26 +323,5 @@ module.exports = (function() {
 				method: methods[instruction]
 			});
 		}
-	};
-
-	// console.show()
-	// show the console window.
-	function show()
-	{
-		new scenes.Scene()
-			.tween(visible, 0.25, 'easeOutQuad', { fade: 1.0 })
-			.call(function() { visible.yes = true; })
-			.run();
-	}
-
-	// console.unregister()
-	// unregister a previously-registered entity.
-	// arguments:
-	//     name: the name of the entity as passed to console.register().
-	function unregister(name)
-	{
-		commands = link(commands)
-			.where(function(command) { return command.entity != name; })
-			.toArray();
 	};
 })();
