@@ -71,8 +71,9 @@ Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Compo
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun; Check: IsWin64
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell; Check: IsWin64
 Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/ssj; Check: IsWin64
-Source: "..\msw\documentation\minisphere-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
+Source: "..\msw\documentation\sphere-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cell-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
+Source: "..\msw\documentation\miniRT-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\msw\template\*"; DestDir: "{app}\template"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\src\plugin\bin\Release\minisphereGdkPlugin.dll"; DestDir: "{commonappdata}\Sphere Studio\Plugins"; Flags: ignoreversion; Components: spherun/plugin
@@ -97,8 +98,9 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 [Icons]
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 Name: "{group}\{#AppName} GDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
-Name: "{group}\API Reference - minisphere"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
+Name: "{group}\API Reference - Sphere API"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
 Name: "{group}\API Reference - Cell"; Filename: "{app}\documentation\cell-api.txt"; Components: spherun/cell
+Name: "{group}\API Reference - miniRT CJS"; Filename: "{app}\documentation\miniRT-api.txt"; Components: spherun/cell
 
 [Code]
 procedure InitializeWizard;
