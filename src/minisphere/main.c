@@ -622,7 +622,7 @@ parse_command_line(
 				*out_verbosity = atoi(argv[i]);
 			}
 			else {
-				report_error("unrecognized option '%s'\n", argv[i]);
+				report_error("unrecognized option `%s`\n", argv[i]);
 				return false;
 			}
 #else
@@ -647,7 +647,7 @@ parse_command_line(
 				*out_verbosity = atoi(argv[i]);
 			}
 			else {
-				report_error("unrecognized option '%s'\n", argv[i]);
+				report_error("unrecognized option `%s`\n", argv[i]);
 				return false;
 			}
 #else
@@ -674,7 +674,7 @@ parse_command_line(
 	return true;
 
 missing_argument:
-	report_error("missing argument for option '%s'\n", argv[i - 1]);
+	report_error("missing argument for option `%s`\n", argv[i - 1]);
 	return false;
 }
 

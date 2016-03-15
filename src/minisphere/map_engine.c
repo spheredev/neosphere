@@ -517,8 +517,8 @@ add_trigger(int x, int y, int layer, script_t* script)
 {
 	struct map_trigger trigger;
 
-	console_log(2, "creating trigger #%d on map '%s'", vector_len(s_map->triggers), s_map_filename);
-	console_log(3, "    location: '%s' @ (%d,%d)", lstr_cstr(s_map->layers[layer].name), x, y);
+	console_log(2, "creating trigger #%d on map `%s`", vector_len(s_map->triggers), s_map_filename);
+	console_log(3, "    location: `%s` @ (%d,%d)", lstr_cstr(s_map->layers[layer].name), x, y);
 	
 	trigger.x = x; trigger.y = y;
 	trigger.z = layer;
@@ -533,7 +533,7 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 {
 	struct map_zone zone;
 
-	console_log(2, "creating %u-step zone #%d on map '%s'", steps, vector_len(s_map->zones), s_map_filename);
+	console_log(2, "creating %u-step zone #%d on map `%s`", steps, vector_len(s_map->zones), s_map_filename);
 	console_log(3, "    bounds: (%d,%d)-(%d,%d)", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
 	
 	memset(&zone, 0, sizeof(struct map_zone));
@@ -622,7 +622,7 @@ load_map(const char* filename)
 
 	int i, j, x, y, z;
 
-	console_log(2, "constructing new map from '%s'", filename);
+	console_log(2, "constructing new map from `%s`", filename);
 	
 	memset(&rmp, 0, sizeof(struct rmp_header));
 	
@@ -967,7 +967,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	int i;
 
-	console_log(2, "changing current map to '%s'", filename);
+	console_log(2, "changing current map to `%s`", filename);
 	
 	map = load_map(filename);
 	if (map == NULL) return false;
@@ -1533,7 +1533,7 @@ duk_require_map_layer(duk_context* ctx, duk_idx_t index)
 	else {
 		name = duk_get_string(ctx, index);
 		if ((layer = find_layer(name)) == -1)
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no layer exists with name '%s'", name);
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no layer exists with name `%s`", name);
 	}
 	return layer;
 }
@@ -1558,7 +1558,7 @@ js_MapEngine(duk_context* ctx)
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	s_framerate = framerate;
 	if (!change_map(filename, true))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapEngine(): unable to load map file '%s' into map engine", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "MapEngine(): unable to load map file `%s` into map engine", filename);
 	while (!s_exiting) {
 		render_map();
 		screen_flip(g_screen, s_framerate);
@@ -1604,7 +1604,7 @@ js_IsInputAttached(duk_context* ctx)
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
 		if (!(person = find_person(name)))
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsInputAttached(): person '%s' doesn't exist", name);
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "IsInputAttached(): person `%s` doesn't exist", name);
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
 			player = s_players[i].person == person ? i : player;
@@ -2637,7 +2637,7 @@ js_AttachCamera(duk_context* ctx)
 
 	name = duk_to_string(ctx, 0);
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachCamera(): person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachCamera(): person `%s` doesn't exist", name);
 	s_camera_person = person;
 	return 0;
 }
@@ -2652,7 +2652,7 @@ js_AttachInput(duk_context* ctx)
 	int i;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): person `%s` doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
 	s_players[0].person = person;
@@ -2672,7 +2672,7 @@ js_AttachPlayerInput(duk_context* ctx)
 	if (player < 0 || player >= MAX_PLAYERS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "AttachPlayerInput(): player number out of range (%d)", player);
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): person '%s' doesn't exist", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "AttachInput(): person `%s` doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
 	s_players[player].person = person;
@@ -2714,7 +2714,7 @@ js_ChangeMap(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): map engine not running");
 	if (!change_map(filename, false))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): unable to load map file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): unable to load map file `%s`", filename);
 	return 0;
 }
 
@@ -2772,7 +2772,7 @@ js_DetachPlayerInput(duk_context* ctx)
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
 		if (!(person = find_person(name)))
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DetachPlayerInput(): person '%s' doesn't exist", name);
+			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "DetachPlayerInput(): person `%s` doesn't exist", name);
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
 			player = s_players[i].person == person ? i : player;

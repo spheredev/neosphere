@@ -40,7 +40,7 @@ asset_new_file(const path_t* path)
 	struct stat sb;
 	
 	if (stat(path_cstr(path), &sb) != 0) {
-		fprintf(stderr, "ERROR: failed to stat '%s'\n", path_cstr(path));
+		fprintf(stderr, "ERROR: failed to stat `%s`\n", path_cstr(path));
 		return NULL;
 	}
 	
@@ -146,13 +146,13 @@ asset_build(asset_t* asset, const path_t* staging_path, bool *out_is_new)
 		return true;
 
 	default:
-		fprintf(stderr, "ERROR: internal: unknown asset type %d '%s'\n",
+		fprintf(stderr, "ERROR: internal: unknown asset type %d `%s`\n",
 			asset->type, path_cstr(asset->name));
 		return false;
 	}
 
 on_error:
-	fprintf(stderr, "\nERROR: failed to build '%s', errno = %d\n", path_cstr(asset->name), errno);
+	fprintf(stderr, "\nERROR: failed to build `%s`, errno = %d\n", path_cstr(asset->name), errno);
 	return false;
 }
 

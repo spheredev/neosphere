@@ -106,7 +106,7 @@ parse_cmdline(int argc, char* argv[])
 				s_want_source_map = true;
 			}
 			else {
-				printf("cell: ERROR: unknown option '%s'\n", argv[i]);
+				printf("cell: ERROR: unknown option `%s`\n", argv[i]);
 				return false;
 			}
 		}
@@ -167,7 +167,7 @@ parse_cmdline(int argc, char* argv[])
 	return true;
 
 missing_argument:
-	printf("cell: ERROR: no argument provided for '%s'\n", argv[i - 1]);
+	printf("cell: ERROR: no argument provided for `%s`\n", argv[i - 1]);
 	return false;
 }
 

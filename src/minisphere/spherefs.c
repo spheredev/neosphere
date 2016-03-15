@@ -75,7 +75,7 @@ new_sandbox(const char* game_path)
 		
 		// synthesize a game manifest for the script. this way we make this trick
 		// transparent to the rest of the engine, keeping things simple.
-		console_log(1, "synthesizing manifest for '%s' in sandbox #%u", path_cstr(path),
+		console_log(1, "synthesizing manifest for `%s` in sandbox #%u", path_cstr(path),
 			s_next_sandbox_id);
 		fs->name = lstr_new(path_filename_cstr(path));
 		fs->author = lstr_new("Author Unknown");

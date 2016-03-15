@@ -118,7 +118,7 @@ load_image(const char* filename)
 	image_t*      image;
 	void*         slurp = NULL;
 
-	console_log(2, "loading image #%u as '%s'", s_next_image_id, filename);
+	console_log(2, "loading image #%u as `%s`", s_next_image_id, filename);
 	
 	image = calloc(1, sizeof(image_t));
 	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &file_size)))
@@ -720,7 +720,7 @@ js_LoadImage(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "images", false);
 	if (!(image = load_image(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
 	duk_push_sphere_image(ctx, image);
 	free_image(image);
 	return 1;
@@ -771,7 +771,7 @@ js_new_Image(duk_context* ctx)
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = load_image(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
 	}
 	duk_push_sphere_image(ctx, image);
 	free_image(image);

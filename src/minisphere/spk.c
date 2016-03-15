@@ -60,7 +60,7 @@ open_spk(const char* path)
 
 	uint32_t i;
 
-	console_log(2, "opening SPK #%u as '%s'", s_next_spk_id, path);
+	console_log(2, "opening SPK #%u as `%s`", s_next_spk_id, path);
 	
 	spk = calloc(1, sizeof(spk_t));
 
@@ -133,7 +133,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	const char*   local_filename;
 	path_t*       local_path;
 
-	console_log(4, "opening '%s' (%s) from SPK #%u", path, mode, spk->id);
+	console_log(4, "opening `%s` (%s) from SPK #%u", path, mode, spk->id);
 	
 	// get path to local cache file
 	cache_path = path_rebase(path_new("Sphere 2.0/.spkcache/"), homepath());
@@ -151,7 +151,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	
 	if (al_filename_exists(local_filename)) {
 		// local cache file already exists, open it	directly	
-		console_log(4, "using locally cached file for #%u:'%s'", spk->id, path);
+		console_log(4, "using locally cached file for #%u:`%s`", spk->id, path);
 		if (!(al_file = al_fopen(local_filename, mode)))
 			goto on_error;
 	}
@@ -163,7 +163,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 				// if a game requests write access to an existing file,
 				// we extract it. this ensures file operations originating from
 				// inside an SPK are transparent to the game.
-				console_log(4, "extracting #%u:'%s', write access requested", spk->id, path);
+				console_log(4, "extracting #%u:`%s`, write access requested", spk->id, path);
 				if (!(al_file = al_fopen(local_filename, "w")))
 					goto on_error;
 				al_fwrite(al_file, buffer, file_size);
@@ -189,7 +189,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	return file;
 
 on_error:
-	console_log(4, "failed to open '%s' from SPK #%u", path, spk->id);
+	console_log(4, "failed to open `%s` from SPK #%u", path, spk->id);
 	path_free(local_path);
 	if (al_file != NULL)
 		al_fclose(al_file);
@@ -203,7 +203,7 @@ spk_fclose(spk_file_t* file)
 {
 	if (file == NULL)
 		return;
-	console_log(4, "closing '%s' from SPK #%u", file->filename, file->spk->id);
+	console_log(4, "closing `%s` from SPK #%u", file->filename, file->spk->id);
 	al_fclose(file->handle);
 	free(file->buffer);
 	free(file->filename);
@@ -257,7 +257,7 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 
 	iter_t iter;
 
-	console_log(3, "unpacking '%s' from SPK #%u", path, spk->id);
+	console_log(3, "unpacking `%s` from SPK #%u", path, spk->id);
 	
 	iter = vector_enum(spk->index);
 	while (fileinfo = vector_next(&iter)) {
@@ -282,7 +282,7 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 	return unpacked;
 
 on_error:
-	console_log(3, "failed to unpack '%s' from SPK #%u", path, spk->id);
+	console_log(3, "failed to unpack `%s` from SPK #%u", path, spk->id);
 	free(packdata);
 	free(unpacked);
 	return NULL;

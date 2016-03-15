@@ -196,7 +196,7 @@ new delegates.Delegate();
     Constructs a new delegate.  The delegate starts out empty, with no handlers
     attached.  Unlike .NET however, it is safe to invoke in this state.
 
-delegates.Delegate:add(handler[, thisObj]);
+Delegate:add(handler[, thisObj]);
 
     Registers the function `handler` with the delegate.  Whenever the delegate
     is invoked, all handlers registered at that time will be called in order.
@@ -205,7 +205,7 @@ delegates.Delegate:add(handler[, thisObj]);
 
     add() will throw an error if a matching handler has already been registered.
 
-delegates.Delegate:remove(handler[, thisObj]);
+Delegate:remove(handler[, thisObj]);
 
     Removes a previously-registered handler from the delegate.  Throws an error
     if no matching handler is registered.
@@ -328,24 +328,24 @@ new pacts.Promise(fn);
     satisfying the promise.  Consider using a Pact (see below) to simplify the
     process.
 
-pacts.Promise.all(promises);
+Promise.all(promises);
 
     Makes a promise which is fulfilled only when all promises in the array
     `promises` have been fulfilled.  If any of the promises is rejected, the
-    Promises.all() promise will be rejected immediately with the same reason
+    Promise.all() promise will be rejected immediately with the same reason
     value.
 
-pacts.Promise.race(promises);
+Promise.race(promises);
 
     Makes a promise which resolves once any promise in `promises` is resolved,
     with the same value or reason.
 
-pacts.Promise.reject(reason);
+Promise.reject(reason);
 
     Makes a promise which is rejected immediately with `reason` (usually an
     Error value).
 
-pacts.Promise.resolve(value);
+Promise.resolve(value);
 
     Makes a promise which is fulfilled immediately with `value`.
 
@@ -354,23 +354,23 @@ new pacts.Pact();
     Creates a new pact.  As described above, Pacts are used to generate promises
     which can then be resolved via the pact.
 
-pacts.Pact:promise();
+Pact:promise();
 
     Makes a promise using this pact.  The promise can only be resolved through
     the pact used to make it.
 
-pacts.Pact:resolve(promise, value);
+Pact:resolve(promise, value);
 
     Fulfills a promise with `value`.  `promise` must have come from this pact.
     It is a TypeError to fulfill a promise using an unrelated pact.
 
-pacts.Pact:reject(promise, reason);
+Pact:reject(promise, reason);
 
     Rejects a promise with `reason` (usually an Error value).  `promise` must
     have come from this pact.  It is a TypeError to reject a promise using an
     unrelated pact.
 
-pacts.Pact:welsh(reason);
+Pact:welsh(reason);
 
     Rejects all outstanding promises from this pact.  `reason` is the value to
     reject with, usually an Error object.
@@ -458,23 +458,23 @@ new scenes.Scene();
     will do nothing when run.  Calling any method other than .run() on the scene
     will add scenelets, and this is how you build a scene.
 
-scenes.Scene:isRunning();
+Scene:isRunning();
 
     true if scene execution is in progress, false if not.
 
-scenes.Scene.doIf(fn);
+Scene:doIf(fn);
 
     `fn` should be a function.  Any scenelets between the doIf() and its
     corresponding end() will be executed only if the function returns true.
     This is like to an `if` statement in JavaScript.
 
-scenes.Scene.doWhile(fn);
+Scene:doWhile(fn);
 
     `fn` should be a function.  Any scenelets between the doWhile() and its
     corresponding end() will be executed in a loop as long as the function
     keeps returning true.  This is like to a `while` statement in JavaScript.
 
-scenes.Scene:end();
+Scene:end();
 
     A metascenelet which closes the open context.  Currently, metascenelets
     which open a context and therefore require an end() marker are:
@@ -483,19 +483,19 @@ scenes.Scene:end();
         doWhile()
         fork()
 
-scenes.Scene:fork();
+Scene:fork();
 
     A metascenelet which forks the timeline.  This opens a new timeline to which
     all subsequent scenelets are added until an end() metascenelet is
     encountered.  Forked timelines run in parallel with the timeline that
     spawned them.
 
-scenes.Scene:restart();
+Scene:restart();
 
     Restarts a scene from the beginning, regardless of whether or not it was
     running at the time restart() is called.
 
-scenes.Scene:resync();
+Scene:resync();
 
     A metascenelet which adds a resync point to the open timeline.  Timelines
     may be forked to run operations in parallel, but it is sometimes necessary
@@ -507,13 +507,13 @@ scenes.Scene:resync();
     this means that a scene will not complete until all of its timelines have
     completed.
 
-scenes.Scene:run([blocking]);
+Scene:run([blocking]);
 
     Plays back this scene.  `blocking` is an optional boolean argument
-    specifying whether to wait for the scene to finish before returning.  If
-    not provided, `blocking` defaults to false.
+    specifying whether to wait for the scene to finish before returning.  If not
+    provided, the default is false.
 
-scenes.Scene:stop();
+Scene:stop();
 
     Stops scene execution immediately.  This works like the Stop button on a CD
     player: The next time the scene is run, it will start from the beginning.

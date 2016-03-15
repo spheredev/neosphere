@@ -127,13 +127,13 @@ find_verb(const char* abbrev, const char* *o_pattern)
 	if (num_matches == 1)
 		return matches[0];
 	else if (num_matches > 1) {
-		printf("'%s': abbreviated name is ambiguous between:\n", abbrev);
+		printf("`%s`: abbreviated name is ambiguous between:\n", abbrev);
 		for (i = 0; i < num_matches; ++i)
 			printf("    * %s\n", matches[i]);
 		return NULL;
 	}
 	else {
-		printf("'%s': unrecognized command name.\n", abbrev);
+		printf("`%s`: unrecognized command name.\n", abbrev);
 		return NULL;
 	}
 }
@@ -226,7 +226,7 @@ do_command_line(session_t* obj)
 	else if (strcmp(verb, "where") == 0)
 		handle_where(obj, command);
 	else
-		printf("'%s': not implemented.\n", verb);
+		printf("`%s`: not implemented.\n", verb);
 
 finished:
 	command_free(command);
@@ -581,7 +581,7 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 	else
 		want_num_args = (int)strlen(pattern);
 	if (command_len(this) - 1 < want_num_args) {
-		printf("'%s': expected at least %d arguments.\n", verb_name, want_num_args);
+		printf("`%s`: expected at least %d arguments.\n", verb_name, want_num_args);
 		return false;
 	}
 	p_type = pattern;
@@ -610,6 +610,6 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 	return true;
 
 wrong_type:
-	printf("'%s': expected a %s for argument %d.\n", verb_name, want_type, index + 1);
+	printf("`%s`: expected a %s for argument %d.\n", verb_name, want_type, index + 1);
 	return false;
 }

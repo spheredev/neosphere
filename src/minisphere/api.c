@@ -498,7 +498,7 @@ duk_handle_require(duk_context* ctx)
 	is_sys_module = strstr(lstr_cstr(filename), "~sys/") == lstr_cstr(filename);
 	console_log(2, "loading CommonJS module `%s` as `%s`", name, lstr_cstr(filename));
 	if (!(source = sfs_fslurp(g_fs, lstr_cstr(filename), "commonjs", &file_size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): unable to read script '%s'", lstr_cstr(filename));
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "require(): unable to read script `%s`", lstr_cstr(filename));
 	if (!is_cs)
 		duk_push_lstring(ctx, source, file_size);
 	else {

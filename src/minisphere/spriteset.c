@@ -171,7 +171,7 @@ load_spriteset(const char* filename)
 		iter = vector_enum(s_load_cache);
 		while (p_spriteset = vector_next(&iter)) {
 			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
-				console_log(2, "using cached spriteset #%u for '%s'", (*p_spriteset)->id, filename);
+				console_log(2, "using cached spriteset #%u for `%s`", (*p_spriteset)->id, filename);
 				++s_num_cache_hits;
 				return clone_spriteset(*p_spriteset);
 			}
@@ -564,7 +564,7 @@ js_LoadSpriteset(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "spritesets", false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;
@@ -578,7 +578,7 @@ js_new_Spriteset(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;

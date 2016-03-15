@@ -313,7 +313,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 			return 1;
 		}
 		
-		duk_push_sprintf(ctx, "no source available for '%s'", name);
+		duk_push_sprintf(ctx, "no source available for `%s`", name);
 		return -1;
 	default:
 		return 0;

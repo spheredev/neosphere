@@ -177,7 +177,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			else if (strcmp(argv[i], "--run") == 0)
 				cmdline->run_now = true;
 			else {
-				printf("ssj: error: unknown option '%s'\n", argv[i]);
+				printf("ssj: error: unknown option `%s`\n", argv[i]);
 				goto on_output_only;
 			}
 		}
@@ -202,7 +202,7 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			path_free(cmdline->path);
 			cmdline->path = path_resolve(path_new(argv[i]), NULL);
 			if (cmdline->path == NULL) {
-				printf("ssj: error: cannot resolve pathname '%s'\n", argv[i]);
+				printf("ssj: error: cannot resolve pathname `%s`\n", argv[i]);
 				*out_retval = EXIT_FAILURE;
 				goto on_output_only;
 			}

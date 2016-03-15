@@ -238,7 +238,7 @@ js_LoadWindowStyle(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "windowstyles", false);
 	if (!(winstyle = load_windowstyle(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): unable to load windowstyle file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadWindowStyle(): unable to load windowstyle file `%s`", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
 	free_windowstyle(winstyle);
 	return 1;
@@ -252,7 +252,7 @@ js_new_WindowStyle(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(winstyle = load_windowstyle(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "WindowStyle(): unable to load windowstyle file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "WindowStyle(): unable to load windowstyle file `%s`", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
 	free_windowstyle(winstyle);
 	return 1;

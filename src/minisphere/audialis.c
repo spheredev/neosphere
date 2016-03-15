@@ -235,7 +235,7 @@ load_sound(const char* path, mixer_t* mixer)
 {
 	sound_t* sound;
 
-	console_log(2, "loading sound #%u as '%s'", s_next_sound_id, path);
+	console_log(2, "loading sound #%u as `%s`", s_next_sound_id, path);
 	
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);
@@ -728,7 +728,7 @@ js_LoadSound(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "sounds", false);
 	if (!(sound = load_sound(filename, get_default_mixer())))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): unable to load sound file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): unable to load sound file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
@@ -748,7 +748,7 @@ js_new_Sound(duk_context* ctx)
 		: get_default_mixer();
 	sound = load_sound(filename, mixer);
 	if (sound == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): unable to load sound file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): unable to load sound file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }

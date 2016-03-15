@@ -204,7 +204,7 @@ js_LoadSurface(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "images", false);
 	if (!(image = load_image(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file `%s`", filename);
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);
 	return 1;
@@ -238,7 +238,7 @@ js_new_Surface(duk_context* ctx)
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = load_image(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to load image file '%s'", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to load image file `%s`", filename);
 	}
 	duk_push_sphere_surface(ctx, image);
 	free_image(image);

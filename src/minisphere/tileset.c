@@ -62,7 +62,7 @@ load_tileset(const char* filename)
 	sfs_file_t* file;
 	tileset_t*  tileset;
 
-	console_log(2, "loading tileset #%u as '%s'", s_next_tileset_id, filename);
+	console_log(2, "loading tileset #%u as `%s`", s_next_tileset_id, filename);
 
 	if ((file = sfs_fopen(g_fs, filename, NULL, "rb")) == NULL)
 		goto on_error;

@@ -64,7 +64,7 @@ open_kev_file(sandbox_t* fs, const char* filename)
 	void*         slurp;
 	size_t        slurp_size;
 	
-	console_log(2, "opening kevfile #%u as '%s'", s_next_file_id, filename);
+	console_log(2, "opening kevfile #%u as `%s`", s_next_file_id, filename);
 	file = calloc(1, sizeof(kev_file_t));
 	if (slurp = sfs_fslurp(fs, filename, NULL, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
@@ -74,7 +74,7 @@ open_kev_file(sandbox_t* fs, const char* filename)
 		free(slurp);
 	}
 	else {
-		console_log(3, "    '%s' doesn't exist", filename);
+		console_log(3, "    `%s` doesn't exist", filename);
 		if (!(file->conf = al_create_config()))
 			goto on_error;
 	}
@@ -169,7 +169,7 @@ read_string_rec(kev_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
-	console_log(2, "reading key '%s' from kevfile #%u", key, file->id);
+	console_log(2, "reading key `%s` from kevfile #%u", key, file->id);
 	if (!(value = al_get_config_value(file->conf, NULL, key)))
 		value = def_value;
 	return value;
@@ -185,7 +185,7 @@ save_kev_file(kev_file_t* file)
 	size_t        next_buf_size;
 	sfs_file_t*   sfs_file = NULL;
 
-	console_log(3, "saving kevfile #%u as '%s'", file->id, file->filename);
+	console_log(3, "saving kevfile #%u as `%s`", file->id, file->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
 		buffer = realloc(buffer, next_buf_size);
@@ -214,7 +214,7 @@ on_error:
 void
 write_bool_rec(kev_file_t* file, const char* key, bool value)
 {
-	console_log(3, "writing boolean to kevfile #%u, key '%s'", file->id, key);
+	console_log(3, "writing boolean to kevfile #%u, key `%s`", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
 	file->is_dirty = true;
 }
@@ -224,7 +224,7 @@ write_number_rec(kev_file_t* file, const char* key, double value)
 {
 	char string[500];
 
-	console_log(3, "writing number to kevfile #%u, key '%s'", file->id, key);
+	console_log(3, "writing number to kevfile #%u, key `%s`", file->id, key);
 	sprintf(string, "%f", value);
 	al_set_config_value(file->conf, NULL, key, string);
 	file->is_dirty = true;
@@ -233,7 +233,7 @@ write_number_rec(kev_file_t* file, const char* key, double value)
 void
 write_string_rec(kev_file_t* file, const char* key, const char* value)
 {
-	console_log(3, "writing string to kevfile #%u, key '%s'", file->id, key);
+	console_log(3, "writing string to kevfile #%u, key `%s`", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
 }
@@ -356,7 +356,7 @@ js_CreateDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save", false);
 	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to create directory '%s'", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to create directory `%s`", name);
 	return 0;
 }
 
@@ -369,7 +369,7 @@ js_HashRawFile(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 	file = sfs_fopen(g_fs, filename, "other", "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): unable to open file '%s' for reading");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): unable to open file `%s` for reading");
 	sfs_fclose(file);
 	// TODO: implement raw file hashing
 	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashRawFile(): function is not yet implemented");
@@ -382,7 +382,7 @@ js_RemoveDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save", false);
 	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to remove directory '%s'", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to remove directory `%s`", name);
 	return 0;
 }
 
@@ -393,7 +393,7 @@ js_RemoveFile(duk_context* ctx)
 	
 	filename = duk_require_path(ctx, 0, "save", false);
 	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): unable to delete file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): unable to delete file `%s`", filename);
 	return 0;
 }
 
@@ -406,7 +406,7 @@ js_Rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, "save", false);
 	name2 = duk_require_path(ctx, 1, "save", false);
 	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): unable to rename file '%s' to '%s'", name1, name2);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
 
@@ -418,7 +418,7 @@ js_OpenFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "save", false);
 	if (!(file = open_kev_file(g_fs, filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): unable to create or open file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): unable to create or open file `%s`", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
 }
@@ -431,7 +431,7 @@ js_new_KevFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(file = open_kev_file(g_fs, filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): unable to create or open file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): unable to create or open file `%s`", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
 }
@@ -588,7 +588,7 @@ js_OpenRawFile(duk_context* ctx)
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file '%s' for %s",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file `%s` for %s",
 			filename, writable ? "writing" : "reading");
 	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
@@ -616,7 +616,7 @@ js_new_RawFile(duk_context* ctx)
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file '%s' for %s",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file `%s` for %s",
 			filename, writable ? "writing" : "reading");
 	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
@@ -813,7 +813,7 @@ js_new_FileStream(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream(): unable to open file '%s' with mode '%s'",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream(): unable to open file `%s` with mode `%s`",
 			filename, mode);
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;

@@ -93,7 +93,7 @@ load_font(const char* filename)
 
 	int i, x, y;
 	
-	console_log(2, "loading font #%u as '%s'", s_next_font_id, filename);
+	console_log(2, "loading font #%u as `%s`", s_next_font_id, filename);
 	
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
@@ -633,7 +633,7 @@ js_LoadFont(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "fonts", false);
 	font = load_font(filename);
 	if (font == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): unable to load font file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): unable to load font file `%s`", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
 	return 1;
@@ -648,7 +648,7 @@ js_new_Font(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 	font = load_font(filename);
 	if (font == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): unable to load font file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): unable to load font file `%s`", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
 	return 1;

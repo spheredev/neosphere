@@ -153,7 +153,7 @@ js_new_ShaderProgram(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL, false);
 	duk_pop_2(ctx);
 	if (!(shader = create_shader(vs_filename, fs_filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): failed to build shader from '%s', '%s'", vs_filename, fs_filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): failed to build shader from `%s`, `%s`", vs_filename, fs_filename);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
 	return 1;
 }

@@ -88,7 +88,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	if (path_filename_cstr(out_path)) {
 		build->spk = spk_create(path_cstr(out_path));
 		if (build->spk == NULL) {
-			fprintf(stderr, "ERROR: unable to create package '%s'\n", path_cstr(out_path));
+			fprintf(stderr, "ERROR: unable to create package `%s`\n", path_cstr(out_path));
 			goto on_error;
 		}
 	}
@@ -101,7 +101,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 
 	if (build->out_path == NULL) {
-		fprintf(stderr, "ERROR: unable to create '%s'\n", path_cstr(out_path));
+		fprintf(stderr, "ERROR: unable to create `%s`\n", path_cstr(out_path));
 		goto on_error;
 	}
 	return build;
@@ -225,7 +225,7 @@ build_prime(build_t* build, const char* rule_name)
 	build->rule_name = strdup(rule_name);
 
 	// process build script
-	emit_op_begin(build, "processing Cellscript.js rule '%s'", rule_name);
+	emit_op_begin(build, "processing Cellscript.js rule `%s`", rule_name);
 	sprintf(func_name, "$%s", rule_name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
 	if (duk_peval_file(build->duktape, path_cstr(script_path)) != 0) {
@@ -241,7 +241,7 @@ build_prime(build_t* build, const char* rule_name)
 		}
 	}
 	else {
-		build_emit_error(build, "no Cellscript rule named '%s'", rule_name);
+		build_emit_error(build, "no Cellscript rule named `%s`", rule_name);
 		goto on_error;
 	}
 
@@ -444,7 +444,7 @@ do_install_target(build_t* build, struct install* inst, bool *out_is_new)
 		fn_src = path_cstr(src_path);
 		fn_dest = path_cstr(out_path);
 		if (stat(fn_src, &sb_src) != 0) {
-			build_emit_error(build, "unable to access '%s'", fn_src);
+			build_emit_error(build, "unable to access `%s`", fn_src);
 			return false;
 		}
 		if (stat(fn_dest, &sb_dest) != 0
@@ -455,7 +455,7 @@ do_install_target(build_t* build, struct install* inst, bool *out_is_new)
 				|| !fspew(file_data, file_size, fn_dest))
 			{
 				free(file_data);
-				build_emit_error(build, "unable to copy '%s' to '%s'", path_cstr(src_path), path_cstr(out_path));
+				build_emit_error(build, "unable to copy `%s` to `%s`", path_cstr(src_path), path_cstr(out_path));
 				return false;
 			}
 			free(file_data);
@@ -526,13 +526,13 @@ validate_targets(build_t* build)
 			++num_dups;
 		else {
 			if (num_dups > 0)
-				build_emit_error(build, "'%s' %d-way asset conflict", path_cstr(name), num_dups + 1);
+				build_emit_error(build, "`%s` %d-way asset conflict", path_cstr(name), num_dups + 1);
 			num_dups = 0;
 		}
 		prev_name = name;
 	}
 	if (num_dups > 0)
-		build_emit_error(build, "'%s' %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
+		build_emit_error(build, "`%s` %d-way asset conflict", path_cstr(prev_name), num_dups + 1);
 	vector_free(targets);
 }
 
@@ -597,7 +597,7 @@ js_api_files(duk_context* ctx)
 
 	targets = build_add_files(build, pattern, is_recursive);
 	if (vector_len(targets) == 0)
-		build_emit_warn(build, "files(): no files match '%s'", path_cstr(pattern));
+		build_emit_warn(build, "files(): no files match `%s`", path_cstr(pattern));
 	duk_push_array(ctx);
 	iter = vector_enum(targets);
 	while (p_target = vector_next(&iter)) {
@@ -639,10 +639,10 @@ js_api_sgm(duk_context* ctx)
 	token = strtok_r(res_string, "x", &next_token);
 	manifest.width = atoi(token);
 	if (!(token = strtok_r(NULL, "x", &next_token)))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution `%s`", duk_require_string(ctx, -2));
 	manifest.height = atoi(token);
 	if (strtok_r(NULL, "x", &next_token) || manifest.width <= 0 || manifest.height <= 0)
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution '%s'", duk_require_string(ctx, -2));
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution `%s`", duk_require_string(ctx, -2));
 	free(res_string);
 	target = build_add_asset(build, asset_new_sgm(manifest, build->timestamp), NULL);
 	duk_push_pointer(ctx, target);

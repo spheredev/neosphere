@@ -116,7 +116,7 @@ on_error:
 	lstr_free(source_text);
 	path_free(path);
 	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script '%s' not found\n", filename);
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script `%s` not found\n", filename);
 	return false;
 }
 
@@ -132,7 +132,7 @@ compile_script(const lstring_t* source, const char* fmt_name, ...)
 	va_end(ap);
 	script = calloc(1, sizeof(script_t));
 
-	console_log(3, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
+	console_log(3, "compiling script #%u as `%s`", s_next_script_id, lstr_cstr(name));
 	
 	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
 	// instead we get this ugliness where the compiled function is saved in the global stash

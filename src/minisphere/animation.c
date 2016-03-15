@@ -48,7 +48,7 @@ load_animation(const char* path)
 {
 	animation_t* anim;
 
-	console_log(2, "loading animation #%u as '%s'", s_next_animation_id, path);
+	console_log(2, "loading animation #%u as `%s`", s_next_animation_id, path);
 	
 	if (!(anim = calloc(1, sizeof(animation_t))))
 		goto on_error;
@@ -220,7 +220,7 @@ js_LoadAnimation(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "animations", false);
 	if (!(anim = load_animation(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
 }
@@ -233,7 +233,7 @@ js_new_Animation(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(anim = load_animation(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): unable to load animation file '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): unable to load animation file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
 }

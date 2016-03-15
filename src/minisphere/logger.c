@@ -37,7 +37,7 @@ open_log_file(const char* filename)
 	time_t     now;
 	char       timestamp[100];
 
-	console_log(2, "creating logger #%u for '%s'", s_next_logger_id, filename);
+	console_log(2, "creating logger #%u for `%s`", s_next_logger_id, filename);
 	
 	logger = calloc(1, sizeof(logger_t));
 	if (!(logger->file = sfs_fopen(g_fs, filename, NULL, "a")))
@@ -155,7 +155,7 @@ js_OpenLog(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "logs", false);
 	if (!(logger = open_log_file(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): unable to open file for logging '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): unable to open file for logging `%s`", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
 }
@@ -168,7 +168,7 @@ js_new_Logger(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!(logger = open_log_file(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): unable to open file for logging '%s'", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): unable to open file for logging `%s`", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
 }
