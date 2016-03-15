@@ -13,7 +13,7 @@ own section below:
       parser.
 
     * miniRT/delegates:
-      A multicast delegate implementation inspired by .NET events.
+      A multicast delegate implementation inspired by the .NET event model.
 
     * miniRT/music:
       A BGM manager based on a pushdown stack which integrates well with finite
@@ -177,6 +177,38 @@ console.unregister(objectName);
     Unregisters all commands previously registered under `objectName`.  See
     `console.register()` below for more information.  Note: It is not currently
     possible to unregister individual commands.
+
+
+miniRT/delegates
+----------------
+
+miniRT/delegates provides a simple multicast delegate implementation which works
+similarly to events in .NET.  An object exposes one or more delegates, which can
+have functions registered to them.  When something interesting happens, the
+object owning the delegate invokes it, which calls all the registered functions
+in turn.  In this way outside code can react to changing situations without
+breaking encapsulation.
+
+    var delegates = require('miniRT/delegates');
+
+new delegates.Delegate();
+
+    Constructs a new delegate.  The delegate starts out empty, with no handlers
+    attached.  Unlike .NET however, it is safe to invoke in this state.
+
+delegates.Delegate:add(handler[, thisObj]);
+
+    Registers the function `handler` with the delegate.  Whenever the delegate
+    is invoked, all handlers registered at that time will be called in order.
+    `thisObj` is optional and specifies an object to use for the `this` binding
+    when calling `handler`.
+
+    add() will throw an error if a matching handler has already been registered.
+
+delegates.Delegate:remove(handler[, thisObj]);
+
+    Removes a previously-registered handler from the delegate.  Throws an error
+    if no matching handler is registered.
 
 
 miniRT/music

@@ -6,8 +6,10 @@
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("delegates.js must be loaded using require()");
+	throw new TypeError("delegates.js must be loaded using require()");
 }
+
+var link = require('link');
 
 var delegates =
 module.exports = (function()
@@ -15,7 +17,7 @@ module.exports = (function()
 	return {
 		Delegate: Delegate,
 	};
-	
+
 	function Delegate()
 	{
 		var invokeList = [];
@@ -25,47 +27,56 @@ module.exports = (function()
 			invoke: invoke,
 			remove: remove,
 		};
+		
+		function haveHandler(handler, thisObj)
+		{
+			return link(invokeList).contains(function(v) {
+				return v.handler == handler && v.thisObj == thisObj;
+			});
+		}
 
-		// delegate:add()
-		// add a method to the delegate's invocation list.
+		// Delegate:add()
+		// registers a handler to the delegate.
 		// arguments:
-		//     o:      the object which will be bound to 'this' when the
-		//             delegate is invoked.
-		//     method: the method to be called.
-		function add(o, method)
+		//     handler: a function to be called when the delegate is invoked.
+		//     thisObj: optional.  an object to use for the `this` binding of
+		//              `handler`. (default: undefined)
+		function add(handler, thisObj)
 		{
-			invokeList.push({ o:o, method:method });
-		};
+			if (haveHandler(handler, thisObj))
+				Abort("Delegate:add(): attempt to add duplicate handler", -1);
+			invokeList.push({ thisObj: thisObj, handler: handler });
+		}
 
-		// delegate:remove()
-		// remove a method that was previously added with .add().
-		// remarks:
-		//     takes the same arguments, with the same semantics, as delegate:add().
-		//     delegate:add() must already have been called with the same arguments.
-		function remove(o, method)
-		{
-			for (var i = invokeList.length - 1; i >= 0; --i) {
-				if (o == invokeList[i].o && method == invokeList[i].method) {
-					invokeList.splice(i, 1);
-					break;
-				}
-			}
-		};
-
-		// delegate:invoke()
-		// call all methods in the delegate's invocation list, returning
-		// the result of the last method called.
+		// Delegate:invoke()
+		// calls all methods in this delegate's invocation list.
+		// returns:
+		//     the return value of the last handler called.
 		function invoke()
 		{
-			var result = undefined;
-			for (var i = 0; i < invokeList.length; ++i) {
-				var o = invokeList[i].o;
-				var method = invokeList[i].method;
-				result = method.apply(o, arguments);
-			}
-			
-			// Return result of last method call
-			return result;
-		};
+			var lastReturn = undefined;
+			var invokeArgs = arguments;
+			link(invokeList).each(function(v) {
+				lastReturn = v.handler.apply(v.thisObj, invokeArgs);
+			});
+
+			// mirror return value of the last handler called
+			return lastReturn;
+		}
+
+		// Delegate:remove()
+		// remove a handler that was previously registered with add().
+		// remarks:
+		//     takes the same arguments, with the same semantics, as Delegate:add().
+		//     Delegate:add() must already have been called with the same arguments.
+		function remove(handler, thisObj)
+		{
+			if (!haveHandler(handler, thisObj))
+				Abort("Delegate:remove(): no such handler is registered", -1);
+			link(invokeList)
+				.where(function(v) { return v.handler == handler; })
+				.where(function(v) { return v.thisObj == thisObj; })
+				.remove();
+		}
 	}
 })();
