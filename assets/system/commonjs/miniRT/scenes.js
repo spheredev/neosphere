@@ -1,14 +1,15 @@
 /**
  *  miniRT/scenes 2.0 CommonJS module
+ *  advanced scene manager using multiple timelines and cooperative threading
  *  (c) 2015-2016 Fat Cerberus
- *  an advanced scene manager that allows you to coordinate complex sequences
- *  using multiple timelines and cooperative threading.  originally based on
- *  Scenario.
+ *
+ *  miniRT/scenes is based on the Scenario cutscene engine originally written
+ *  for Sphere 1.5.
 **/
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("scenes.js must be loaded using require()");
+    throw new TypeError("miniRT/scenes must be loaded using require()");
 }
 
 var link    = require('link');

@@ -1,13 +1,12 @@
 /**
  *  miniRT/threads 2.0 CommonJS module
+ *  a threading engine for Sphere with an API similar to pthreads
  *  (c) 2015-2016 Fat Cerberus
- *  a cooperative threader with an API similar to pthreads, which replaces
- *  Sphere's update and render scripts with a much more robust solution.
 **/
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("threads.js must be loaded using require()");
+    throw new TypeError("miniRT/threads must be loaded using require()");
 }
 
 var link = require('link');

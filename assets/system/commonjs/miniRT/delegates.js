@@ -1,12 +1,12 @@
 /**
  *  miniRT/delegates 2.0 CommonJS module
+ *  a multicast delegate implementation inspired by .NET events
  *  (c) 2015-2016 Fat Cerberus
- *  a multicast delegate implementation inspired by C# events.
 **/
 
 if (typeof exports === 'undefined')
 {
-	throw new TypeError("delegates.js must be loaded using require()");
+	throw new TypeError("miniRT/delegates must be loaded using require()");
 }
 
 var link = require('link');

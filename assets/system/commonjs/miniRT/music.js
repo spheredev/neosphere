@@ -1,12 +1,12 @@
 /**
  *  miniRT/music 2.0 CommonJS module
+ *  a stack-based solution for managing background music
  *  (c) 2015-2016 Fat Cerberus
- *  a stack-based solution for managing background music.
 **/
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("music.js must be loaded using require()");
+    throw new TypeError("miniRT/music must be loaded using require()");
 }
 
 var console = require('./console');

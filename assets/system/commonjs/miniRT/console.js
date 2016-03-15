@@ -1,12 +1,12 @@
 /**
- *	miniRT/console 2.0 CommonJS module
- *	(c) 2015-2016 Fat Cerberus
- *	an easy-to-use command console which optionally logs output to disk.
+ *  miniRT/console 2.0 CommonJS module
+ *  an easy-to-use text console for games with optional logging
+ *  (c) 2015-2016 Fat Cerberus
 **/
 
 if (typeof exports === 'undefined')
 {
-	throw new TypeError("console.js must be loaded using require()");
+	throw new TypeError("miniRT/console must be loaded using require()");
 }
 
 var link    = require('link');

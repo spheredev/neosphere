@@ -1,13 +1,12 @@
 /**
  *  miniRT/pacts 2.0 CommonJS module
+ *  easy-to-use promises for Sphere, based on Promises/A+
  *  (c) 2015-2016 Fat Cerberus
- *  a promise implementation for minisphere, based on the Promises/A+
- *  specification.  the implementation is fully compliant.
 **/
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("pacts.js must be loaded using require()");
+    throw new TypeError("miniRT/pacts must be loaded using require()");
 }
 
 var pacts =
