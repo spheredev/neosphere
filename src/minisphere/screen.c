@@ -38,10 +38,12 @@ struct screen
 static void refresh_display (screen_t* obj);
 
 screen_t*
-screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
+screen_new(const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep)
 {
 	ALLEGRO_DISPLAY* display;
+	ALLEGRO_BITMAP*  icon_bitmap;
 	screen_t*        obj;
+	int              bitmap_flags;
 	bool             use_shaders = false;
 	int              x_scale;
 	int              y_scale;
@@ -64,6 +66,19 @@ screen_new(int x_size, int y_size, int frameskip, bool avoid_sleep)
 #endif
 	
 	console_log(1, "    shader support: %s", use_shaders ? "yes" : "no");
+
+	al_set_window_title(display, title);
+	if (icon != NULL) {
+		bitmap_flags = al_get_new_bitmap_flags();
+		al_set_new_bitmap_flags(
+			ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR
+			| bitmap_flags);
+		icon = clone_image(icon);
+		rescale_image(icon, 32, 32);
+		icon_bitmap = get_image_bitmap(icon);
+		al_set_new_bitmap_flags(bitmap_flags);
+		al_set_display_icon(display, icon_bitmap);
+	}
 
 	obj = calloc(1, sizeof(screen_t));
 	obj->display = display;

@@ -5,7 +5,7 @@
 
 typedef struct screen screen_t;
 
-screen_t*        screen_new               (int x_size, int y_size, int frameskip, bool avoid_sleep);
+screen_t*        screen_new               (const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep);
 void             screen_free              (screen_t* obj);
 ALLEGRO_DISPLAY* screen_display           (const screen_t* obj);
 bool             screen_is_skipframe      (const screen_t* obj);

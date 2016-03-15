@@ -184,24 +184,17 @@ main(int argc, char* argv[])
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
-	g_screen = screen_new(g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
+	if (!(icon = load_image("~sgm/icon.png")))
+		icon = load_image("~sys/icon.png");
+	g_screen = screen_new(get_sgm_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(screen_display(g_screen), "Unable to Create Render Context", "minisphere was unable to create a render context.",
 			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
-	al_set_window_title(screen_display(g_screen), get_sgm_name(g_fs));
-	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
-	if (!(icon = load_image("~sgm/icon.png")))
-		icon = load_image("~sys/icon.png");
-	if (icon != NULL)
-		rescale_image(icon, 32, 32);
-	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	
-	if (icon != NULL)
-		al_set_display_icon(screen_display(g_screen), get_image_bitmap(icon));
-	free_image(icon);
+	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events,
