@@ -103,7 +103,7 @@ install: all
 	cp desktop/minisphere.desktop $(installdir)/share/applications
 	cp desktop/sphere-icon.svg $(installdir)/share/pixmaps
 	cp desktop/mimetypes/minisphere.xml $(installdir)/share/mime/packages
-	cp desktop/mimetypes/application-x-sphere.svg $(installdir)/share/icons/hicolor/scalable/mimetypes
+	cp desktop/mimetypes/*.svg $(installdir)/share/icons/hicolor/scalable/mimetypes
 
 .PHONY: clean
 clean:
