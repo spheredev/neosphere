@@ -11,7 +11,6 @@
 #define AppPublisher "Fat Cerberus"
 #define AppVersion2 "3.0"
 #define AppVersion3 "3.0.0"
-#define AppVersion4 "3.0.0.1316"
 
 [Setup]
 OutputBaseFilename=minisphere-{#AppVersion3}
@@ -19,7 +18,7 @@ OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion3}
-AppVersion={#AppVersion4}
+AppVersion={#AppVersion3}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
 AppCopyright=© 2015-2016 Fat Cerberus
@@ -34,6 +33,7 @@ DisableProgramGroupPage=yes
 DisableWelcomePage=no
 InfoBeforeFile=changelog.rtf
 InfoAfterFile=release.rtf
+LicenseFile=../LICENSE.txt
 SetupIconFile=..\msvs\minisphere.ico
 SolidCompression=yes
 UninstallDisplayName={#AppName} {#AppVersion3}
@@ -97,10 +97,10 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 
 [Icons]
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
-Name: "{group}\{#AppName} GDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
-Name: "{group}\API Reference - Sphere API"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
-Name: "{group}\API Reference - Cell"; Filename: "{app}\documentation\cell-api.txt"; Components: spherun/cell
-Name: "{group}\API Reference - miniRT CJS"; Filename: "{app}\documentation\miniRT-api.txt"; Components: spherun/cell
+Name: "{group}\miniGDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
+Name: "{group}\Sphere 2.0 API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
+Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cell-api.txt"; Components: spherun/cell
+Name: "{group}\miniRT API Reference"; Filename: "{app}\documentation\miniRT-api.txt"; Components: spherun
 
 [Code]
 procedure InitializeWizard;
