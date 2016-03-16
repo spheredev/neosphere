@@ -94,9 +94,6 @@ module.exports = (function()
 
 		function runTimeline(ctx)
 		{
-			this.frameRate = IsMapEngineRunning()
-				? GetMapEngineFrameRate()
-				: GetFrameRate();
 			if ('opThread' in ctx) {
 				if (threads.isRunning(ctx.opThread))
 					return true;
@@ -150,10 +147,10 @@ module.exports = (function()
 			}
 		};
 
-		// Scene:isRunning()
-		// Determines whether a scene is currently playing.
+        // Scene:isRunning()
+		// determines whether a scene is currently playing.
 		// Returns:
-		//     true if the scenario is still executing commands; false otherwise.
+		//     true if the scene is still executing commands; false otherwise.
 		function isRunning()
 		{
 			return threads.isRunning(mainThread);
@@ -682,7 +679,7 @@ scenes.scenelet('pause',
 		this.elapsed = 0;
 	},
 	update: function(scene) {
-		this.elapsed += 1.0 / scene.frameRate;
+		this.elapsed += 1.0 / threads.frameRate;
 		return this.elapsed < this.duration;
 	}
 });
@@ -890,7 +887,7 @@ scenes.scenelet('tween',
 		}
 	},
 	update: function(scene) {
-		this.elapsed += 1.0 / scene.frameRate;
+		this.elapsed += 1.0 / threads.frameRate;
 		if (this.elapsed < this.duration) {
 			for (var p in this.change) {
 				this.object[p] = this.easers[this.type](this.elapsed, this.startValues[p], this.change[p], this.duration);

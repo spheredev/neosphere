@@ -51,6 +51,13 @@ battlefield.
 
     var threads = require('miniRT/threads');
 
+An important note: When miniRT/threads is initialized, it commandeers a few
+legacy facilities related to frame management.  Specifically, setting update and
+render scripts is disabled (calling SetUpdateScript or SetRenderScript will
+throw an error), and both the general and map engine frame rates are frozen to
+the value of the `frameRate` property in the manifest (or 60fps, if the property
+is not present or using a legacy manifest).
+
 threads.create(def[, priority]);
 
     Creates a new thread and returns its thread ID (an integer).  `def` should
@@ -82,6 +89,11 @@ threads.create(def[, priority]);
     Each of the above functions is called with its `this` binding set to `def`.
     This can be used to implement an "entity": a full object implementing the
     above functions which manages its own thread.
+
+threads.frameRate (read/write)
+
+    Gets or sets the miniRT frame rate.  When using miniRT/threads, this should
+    be used instead of SetFrameRate(), which will throw an error if called.
 
 threads.isRunning(tid);
 

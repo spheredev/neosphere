@@ -29,29 +29,29 @@ module.exports = (function()
 	{
 		'play': function(trackName, fadeTime) {
 			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			try { this.play(trackName, fadeTime); }
+			try { play(trackName, fadeTime); }
 			catch(e) {
 				console.write("Error playing BGM '" + trackName + "'");
 			}
 		},
 		'pop': function(fadeTime) {
 			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			this.pop(fadeTime);
+			pop(fadeTime);
 		},
 		'push': function(trackName, fadeTime) {
 			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			try { this.push(trackName, fadeTime); }
+			try { push(trackName, fadeTime); }
 			catch(e) {
 				console.write("Error playing BGM '" + trackName + "'");
 			}
 		},
 		'stop': function(fadeTime) {
 			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			this.play(null, fadeTime);
+			play(null, fadeTime);
 		},
 		'volume': function(volume, fadeTime) {
 			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			this.adjust(volume, fadeTime);
+			adjust(volume, fadeTime);
 		},
 	});
 
@@ -180,7 +180,7 @@ module.exports = (function()
 	function push(path, fadeTime)
 	{
 		var oldSound = currentSound;
-		this.play(path, fadeTime);
+		play(path, fadeTime);
 		oldSounds.push(oldSound);
 	};
 
