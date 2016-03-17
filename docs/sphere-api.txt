@@ -1,14 +1,14 @@
-minisphere 3.0 API Documentation
-================================
+Sphere 2.0 API Documentation
+============================
 
 minisphere uses JavaScript for game logic.  This is the same programming
-language used by the Sphere engine, which minisphere is compatible with.  In
-fact, minisphere implements most of the Sphere 1.5 API, with several backwards-
-compatible enhancements.
+language used by the original Sphere engine, which minisphere is the successor
+to.  In fact, minisphere implements most of the Sphere 1.5 API, with several
+backwards-compatible enhancements.
 
 This file documents the functions exposed by minisphere for use in game scripts.
 The list may not be exhaustive; refer to the Sphere 1.x API reference for a full
-list of legacy functions (a few may not be supported, however).
+list of legacy functions (a few of those may not be supported, however).
 
     Sphere 1.x API Reference:
     https://github.com/sphere-group/sphere/blob/master/sphere/docs/development/api.txt
@@ -61,9 +61,9 @@ GetExtensions()
 S2GM Manifest Format
 --------------------
 
-A game targeting minisphere, or any other Sphere 2.0 engine, may opt to use the
-S2GM format for its metadata instead of--or in addition to--the legacy game.sgm
-format.  game.s2gm file is simply a JSON file and looks like this:
+A game targeting Sphere 2.0 may opt to use the S2GM format for its metadata
+instead of--or in addition to--the legacy game.sgm format.  game.s2gm file is
+simply a JSON file and looks like this:
 
     {
         "name": "Spectacles: Bruce's Story",
@@ -88,7 +88,7 @@ format.  game.s2gm file is simply a JSON file and looks like this:
     }
 
 An important note on `apiVersion`: This refers to the Sphere API level, NOT the
-engine version.  minisphere currently supports Sphere API level 2.0.
+engine version.  minisphere currently supports Sphere API version 2.0.
 
 minimumPlatform, if present, is checked by the engine on startup and, if the
 declared requirements are not met, the game will fail to start.  Besides that,

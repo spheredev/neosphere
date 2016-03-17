@@ -38,11 +38,11 @@ namespace minisphere.Gdk
 
             Panes.Initialize(this);
 
-            _sphereApiRefCommand = new ToolStripMenuItem("minisphere API Reference", Resources.EvalIcon);
+            _sphereApiRefCommand = new ToolStripMenuItem("Sphere 2.0 API Reference", Resources.EvalIcon);
             _sphereApiRefCommand.Click += sphereApiRefCommand_Click;
             _miniRTApiRefCommand = new ToolStripMenuItem("miniRT API Reference", Resources.EvalIcon);
             _miniRTApiRefCommand.Click += miniRTApiRefCommand_Click;
-            _cellApiRefCommand = new ToolStripMenuItem("Cell API Reference", Resources.EvalIcon);
+            _cellApiRefCommand = new ToolStripMenuItem("Cellscript API Reference", Resources.EvalIcon);
             _cellApiRefCommand.Click += cellApiRefCommand_Click;
             PluginManager.Core.AddMenuItem("Help", _sphereApiRefCommand);
             PluginManager.Core.AddMenuItem("Help", _miniRTApiRefCommand);

@@ -109,7 +109,7 @@ threads.join(tid);
     from updating or accepting input until the join is satisfied.
 
     Note that due to limitations inherent to JavaScript's single-threaded
-    architecture, joins are implemented recursively and can only be satisfied in
+    architecture, join is implemented recursively and can only be satisfied in
     a last-in-first-out manner.  So if two threads are being awaited and the
     first one terminates, the corresponding join cannot be satisfied until the
     second thread also terminates.

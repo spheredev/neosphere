@@ -1,5 +1,5 @@
-Cell 3.0 API Documentation
-==========================
+Cellscript API Documentation
+============================
 
 Cell is a scriptable build system and compiler for Sphere games. Like Sphere
 itself, it uses JavaScript to control the build process.  This file documents
