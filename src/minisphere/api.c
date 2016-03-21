@@ -110,18 +110,18 @@ initialize_api(duk_context* ctx)
 	duk_push_string(ctx, "global");
 	duk_push_global_object(ctx);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-	
+
 	// inject __defineGetter__/__defineSetter__ polyfills
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
-	
+
 	// save built-in print() in case a script overwrites it
 	duk_get_global_string(ctx, "print");
 	s_print_ptr = duk_get_heapptr(ctx, -1);
 	duk_pop(ctx);
-	
+
 	// set up RequireScript() inclusion tracking table
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, "RequireScript");
@@ -240,7 +240,7 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 	duk_push_string(ctx, "name");
 	duk_push_string(ctx, name);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-	
+
 	// create a prototype. Duktape won't assign one for us.
 	duk_push_object(ctx);
 	duk_push_string(ctx, name);
@@ -259,7 +259,7 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 	duk_dup(ctx, -3);
 	duk_put_prop_string(ctx, -2, name);
 	duk_pop_2(ctx);
-	
+
 	// attach prototype to constructor
 	duk_push_string(ctx, "prototype");
 	duk_insert(ctx, -2);
@@ -288,7 +288,7 @@ void
 register_api_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
-	
+
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
 		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
@@ -301,7 +301,7 @@ register_api_function(duk_context* ctx, const char* namespace_name, const char* 
 			duk_get_prop_string(ctx, -1, namespace_name);
 		}
 	}
-	
+
 	duk_push_string(ctx, name);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_push_string(ctx, "name");
@@ -325,12 +325,12 @@ register_api_method(duk_context* ctx, const char* ctor_name, const char* name, d
 		duk_get_prop_string(ctx, -1, "prototypes");
 		duk_get_prop_string(ctx, -1, ctor_name);
 	}
-	
+
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
 	duk_push_string(ctx, "name");
 	duk_push_string(ctx, name);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-	
+
 	// for a defprop, Duktape expects the key to be pushed first, then the value; however, since
 	// we have the value (the function being registered) on the stack already by this point, we
 	// need to shuffle things around to make everything work.
@@ -339,7 +339,7 @@ register_api_method(duk_context* ctx, const char* ctor_name, const char* name, d
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
-	
+
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
@@ -350,7 +350,7 @@ register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 {
 	duk_uint_t flags;
 	int        obj_index;
-	
+
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
 		duk_push_global_stash(ctx);
@@ -378,7 +378,7 @@ noreturn
 duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
-	
+
 	const char*   filename = NULL;
 	int           line_number;
 	const char*   full_path;
@@ -433,7 +433,7 @@ void
 duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
 {
 	duk_idx_t index;
-	
+
 	duk_push_object(ctx); index = duk_normalize_index(ctx, -1);
 	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_push_global_stash(ctx);
@@ -470,7 +470,6 @@ duk_handle_require(duk_context* ctx)
 	bool        is_sys_module = false;
 	const char* name;
 	char*       source;
-	lstring_t*  source_text;
 
 	iter_t     iter;
 	lstring_t* *p;
@@ -478,7 +477,7 @@ duk_handle_require(duk_context* ctx)
 	name = duk_get_string(ctx, 0);
 	if (name[0] == '~')
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefix not allowed");
-	
+
 	filenames = vector_new(sizeof(lstring_t*));
 	filename = lstr_newf("%s.js", name); vector_push(filenames, &filename);
 	filename = lstr_newf("%s.coffee", name); vector_push(filenames, &filename);
@@ -517,10 +516,9 @@ duk_handle_require(duk_context* ctx)
 		duk_remove(ctx, -2);
 		duk_remove(ctx, -2);
 	}
-	source_text = duk_require_lstring_t(ctx, -1);
-	cache_source(name, source_text);
-	lstr_free(source_text);
 	free(source);
+	duk_push_lstring_t(ctx, filename);
+	duk_put_prop_string(ctx, 3, "fileName");
 	lstr_free(filename);
 	return 1;
 }
@@ -677,7 +675,7 @@ js_GetGameList(duk_context* ctx)
 	// build search paths
 	paths[0] = path_rebase(path_new("games/"), enginepath());
 	paths[1] = path_rebase(path_new("Sphere 2.0/games/"), homepath());
-	
+
 	// search for supported games
 	duk_push_array(ctx);
 	for (i = sizeof paths / sizeof(path_t*) - 1; i >= 0; --i) {
@@ -741,7 +739,7 @@ static duk_ret_t
 js_SetFrameRate(duk_context* ctx)
 {
 	int framerate = duk_require_int(ctx, 0);
-	
+
 	if (framerate < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): framerate must be positive (got: %d)", framerate);
 	g_framerate = framerate;
@@ -811,7 +809,7 @@ js_Alert(duk_context* ctx)
 		duk_get_string(ctx, -1);
 	al_show_native_message_box(screen_display(g_screen), "Alert from Sphere game", caller_info, text, NULL, 0x0);
 	screen_show_mouse(g_screen, false);
-	
+
 	return 0;
 }
 
@@ -843,10 +841,10 @@ js_Assert(duk_context* ctx)
 	message = duk_require_string(ctx, 1);
 	stack_offset = num_args >= 3 ? duk_require_int(ctx, 2)
 		: 0;
-	
+
 	if (stack_offset > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): stack offset must be negative");
-	
+
 	if (!result) {
 		// get the offending script and line number from the call stack
 		duk_push_global_object(ctx);
@@ -919,7 +917,7 @@ static duk_ret_t
 js_Delay(duk_context* ctx)
 {
 	double millisecs = floor(duk_require_number(ctx, 0));
-	
+
 	if (millisecs < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): delay must be positive (got: %.0f)", millisecs);
 	delay(millisecs / 1000);
@@ -941,17 +939,17 @@ js_ExecuteGame(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_string(ctx, 0);
-	
+
 	// store the old game path so we can relaunch when the chained game exits
 	g_last_game_path = path_dup(get_game_path(g_fs));
-	
+
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
 	g_game_path = path_new(filename);
 	games_path = path_rebase(path_new("games/"), enginepath());
 	path_rebase(g_game_path, games_path);
 	path_free(games_path);
-	
+
 	restart_engine();
 }
 

@@ -32,7 +32,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/screen.c src/minisphere/script.c src/minisphere/shader.c \
    src/minisphere/sockets.c src/minisphere/spherefs.c \
    src/minisphere/spk.c src/minisphere/spriteset.c \
-   src/minisphere/surface.c src/minisphere/tileset.c \
+   src/minisphere/surface.c src/minisphere/tileset.c src/minisphere/transpiler.c \
    src/minisphere/utility.c src/minisphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \

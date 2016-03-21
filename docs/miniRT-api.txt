@@ -1,5 +1,5 @@
-miniRT CommonJS - API Reference
-===============================
+miniRT API Reference
+====================
 
 minisphere comes with a set of CommonJS modules, collectively called miniRT,
 which provide advanced, high-level functionality above and beyond what the
@@ -37,10 +37,9 @@ miniRT/threads
 --------------
 
 miniRT/threads is the cornerstone of miniRT and is therefore documented first.
-almost all other miniRT components depend on it.  require() almost any miniRT
-module and miniRT/threads will also be pulled in, which affects your code even
-if you don't use the threader yourself--notably, by preventing the legacy update
-and render script functionality from being used by game code.
+Nearly all other miniRT components depend on it, and this affects your code even
+if you don't use the threader yourself--notably, by preventing the legacy frame
+management functionality from being used by game code.
 
 miniRT/threads is an advanced cooperative threading engine.  Each thread has its
 own update and render functions, which are called once per frame.  This allows
@@ -54,9 +53,9 @@ battlefield.
 An important note: When miniRT/threads is initialized, it commandeers a few
 legacy facilities related to frame management.  Specifically, setting update and
 render scripts is disabled (calling SetUpdateScript or SetRenderScript will
-throw an error), and both the general and map engine frame rates are frozen to
-the value of the `frameRate` property in the manifest (or 60fps, if the property
-is not present or using a legacy manifest).
+throw an error), and both the general and map engine frame rates are set to the
+value of the `frameRate` property in the manifest (or 60fps, if the property is
+not present or using a legacy manifest).
 
 threads.create(def[, priority]);
 
@@ -92,8 +91,9 @@ threads.create(def[, priority]);
 
 threads.frameRate (read/write)
 
-    Gets or sets the miniRT frame rate.  When using miniRT/threads, this should
-    be used instead of SetFrameRate(), which will throw an error if called.
+    Gets or sets the miniRT frame rate.  When using miniRT/threads, this must be
+    used to change the frame rate instead of SetFrameRate(), which will throw an
+    error if called.
 
 threads.isRunning(tid);
 

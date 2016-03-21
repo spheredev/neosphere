@@ -3,6 +3,7 @@
 
 #include "api.h"
 #include "debugger.h"
+#include "transpiler.h"
 #include "utility.h"
 
 struct script
@@ -12,8 +13,6 @@ struct script
 	duk_uarridx_t id;
 };
 
-static void      initialize_coffeescript (void);
-static void      initialize_typescript   (void);
 static script_t* script_from_js_function (void* heapptr);
 
 static int       s_next_script_id = 0;
@@ -28,27 +27,25 @@ initialize_scripts(void)
 	duk_put_prop_string(g_duk, -2, "scripts");
 	duk_pop(g_duk);
 
-	initialize_coffeescript();
-	initialize_typescript();
+	initialize_transpiler();
 }
 
 void
 shutdown_scripts(void)
 {
 	console_log(1, "shutting down JS manager");
+	shutdown_transpiler();
 }
 
 bool
 evaluate_script(const char* filename)
 {
-	const char*    extension;
 	sfs_file_t*    file = NULL;
 	path_t*        path;
 	const char*    source_name;
 	lstring_t*     source_text = NULL;
 	char*          slurp;
 	size_t         size;
-	lstring_t*     transpiled_text;
 	
 	path = make_sfs_path(filename, NULL);
 	source_name = get_source_name(path_cstr(path));
@@ -57,51 +54,13 @@ evaluate_script(const char* filename)
 	source_text = lstr_from_buf(slurp, size);
 	free(slurp);
 
-	// is it a CoffeeScript file? you know, I don't even like coffee.
-	// now, Monster drinks on the other hand...
-	extension = strrchr(filename, '.');
-	if (extension != NULL && strcasecmp(extension, ".coffee") == 0) {
-		if (!duk_get_global_string(g_duk, "CoffeeScript")) {
-			duk_pop(g_duk);
-			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "no CoffeeScript support (%s)", filename);
-		}
-		duk_get_prop_string(g_duk, -1, "compile");
-		duk_push_lstring_t(g_duk, source_text);
-		duk_push_object(g_duk);
-		duk_push_string(g_duk, source_name);
-		duk_put_prop_string(g_duk, -2, "filename");
-		duk_push_true(g_duk);
-		duk_put_prop_string(g_duk, -2, "bare");
-		if (duk_pcall(g_duk, 2) != DUK_EXEC_SUCCESS)
-			goto on_error;
-		duk_remove(g_duk, -2);
-		transpiled_text = duk_require_lstring_t(g_duk, -1);
-		cache_source(source_name, transpiled_text);
-		lstr_free(transpiled_text);
-	}
-	// TypeScript?
-	else if (extension != NULL && strcasecmp(extension, ".ts") == 0) {
-		if (!duk_get_global_string(g_duk, "ts")) {
-			duk_pop(g_duk);
-			duk_error_ni(g_duk, -1, DUK_ERR_ERROR, "no TypeScript support (%s)", filename);
-		}
-		duk_get_prop_string(g_duk, -1, "transpile");
-		duk_push_lstring_t(g_duk, source_text);
-		duk_push_object(g_duk);
-		duk_push_boolean(g_duk, true);
-		duk_put_prop_string(g_duk, -2, "noImplicitUseStrict");
-		duk_push_string(g_duk, source_name);
-		if (duk_pcall(g_duk, 3) != DUK_EXEC_SUCCESS)
-			goto on_error;
-		duk_remove(g_duk, -2);
-		transpiled_text = duk_require_lstring_t(g_duk, -1);
-		cache_source(source_name, transpiled_text);
-		lstr_free(transpiled_text);
-	}
-	else
-		duk_push_lstring_t(g_duk, source_text);
+	// ensure non-JS scripts are transpiled to JS first.  this is needed to support
+	// TypeScript, CoffeeScript, etc. transparently.
+	if (!transpile_to_js(&source_text, source_name))
+		goto on_error;
 
 	// ready for launch in T-10...9...*munch*
+	duk_push_lstring_t(g_duk, source_text);
 	duk_push_string(g_duk, source_name);
 	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 		goto on_error;
@@ -234,68 +193,6 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "script must be string, function, or null/undefined");
 	return script;
-}
-
-static void
-initialize_coffeescript(void)
-{
-	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
-		if (evaluate_script("~sys/coffee-script.js")) {
-			if (!duk_get_global_string(g_duk, "CoffeeScript")) {
-				duk_pop_2(g_duk);
-				console_log(1, "    'CoffeeScript' not defined");
-				goto on_error;
-			}
-			duk_get_prop_string(g_duk, -1, "VERSION");
-			console_log(1, "    CoffeeScript %s", duk_get_string(g_duk, -1));
-			duk_pop_3(g_duk);
-		}
-		else {
-			console_log(1, "    error evaluating coffee-script.js");
-			console_log(1, "    %s", duk_to_string(g_duk, -1));
-			duk_pop(g_duk);
-			goto on_error;
-		}
-	}
-	else {
-		console_log(1, "  coffee-script.js is missing");
-		goto on_error;
-	}
-	return;
-
-on_error:
-	console_log(1, "    CoffeeScript support not enabled");
-}
-
-static void
-initialize_typescript(void)
-{
-	if (sfs_fexist(g_fs, "~sys/typescriptServices.js", NULL)) {
-		if (evaluate_script("~sys/typescriptServices.js")) {
-			if (!duk_get_global_string(g_duk, "ts")) {
-				duk_pop_2(g_duk);
-				console_log(1, "    'ts' not defined");
-				goto on_error;
-			}
-			duk_get_prop_string(g_duk, -1, "version");
-			console_log(1, "    TypeScript %s", duk_get_string(g_duk, -1));
-			duk_pop_3(g_duk);
-		}
-		else {
-			console_log(1, "    error evaluating typescriptServices.js");
-			console_log(1, "    %s", duk_to_string(g_duk, -1));
-			duk_pop(g_duk);
-			goto on_error;
-		}
-	}
-	else {
-		console_log(1, "  typescriptServices.js is missing");
-		goto on_error;
-	}
-	return;
-
-on_error:
-	console_log(1, "    TypeScript support not enabled");
 }
 
 static script_t*

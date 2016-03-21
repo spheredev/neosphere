@@ -1,5 +1,5 @@
-Sphere 2.0 API Documentation
-============================
+Sphere 2.0 API Reference
+========================
 
 minisphere uses JavaScript for game logic.  This is the same programming
 language used by the original Sphere engine, which minisphere is the successor
@@ -192,10 +192,10 @@ debugging", however:
 
 Abort(message[, stack_offset])
 
-    Forces the engine to close, displaying a specified error message. The error
+    Forces the engine to close, displaying a specified error message.  The error
     is normally reported to originate at the location of the Abort() call; you
     may pass an optional negative stack offset to blame it on a function earlier
-    in the call chain. For example, the following code will report an error at
+    in the call chain.  For example, the following code will report an error at
     the point PassTheBuck() is called, instead of at the Abort() call:
 
         function PassTheBuck()
@@ -207,7 +207,7 @@ Abort(message[, stack_offset])
 Alert(message[, stack_offset])
 
     Similar to Abort(), except the message is displayed in a dialog box and the
-    game continues running as normal afterwards. Useful for examining variables
+    game continues running as normal afterwards.  Useful for examining variables
     at runtime when debugging.
 
 Assert(condition, error_message[, stack_offset]);
@@ -246,20 +246,20 @@ new Logger(filename)
     SphereFS compliant.
 
     Opens a file for logging and constructs an object you can use to access the
-    log. An error will be thrown if the file cannot be opened for writing.
-
-Logger:write(text)
-
-    Logs a line with the specified `text` at the current indent level.
+    log.  An error will be thrown if the file cannot be opened for writing.
 
 Logger:beginBlock(name)
 
-    Opens a block with the heading `name` and increases the indent level. Blocks
-    can be nested and are useful to group related log entries.
+    Opens a block with the heading `name` and increases the indent level.
+    Blocks can be nested and are useful to group related log entries.
 
 Logger:endBlock()
 
     Closes the innermost block and decreases the indent level.
+
+Logger:write(text)
+
+    Logs a line with the specified `text` at the current indent level.
 
 
 Timing Functions
@@ -268,30 +268,30 @@ Timing Functions
 These are used to measure elapsed time during gameplay and coordinate timed
 events.
 
-GetTime();
+Delay(ms);
 
-    Returns the number of milliseconds elapsed since some arbitrary point in
-    time (usually engine start, but this is not guaranteed).  If you need more
-    precision, use GetSeconds() instead.
+    Suspends game execution for 'ms' milliseconds. The engine will "spin down"
+    during this time and relinquish its CPU cycles to other applications.
 
 GetSeconds();
 
     Returns the amount of time in seconds, in floating point, since some
     arbitrary point in time. Precision is guaranteed to be < 1µs.
 
-Delay(ms);
+GetTime();
 
-    Suspends game execution for 'ms' milliseconds. The engine will "spin down"
-    during this time and relinquish its CPU cycles to other applications.
+    Returns the number of milliseconds elapsed since some arbitrary point in
+    time (usually engine start, but this is not guaranteed).  If you need more
+    precision, use GetSeconds() instead.
 
 
 Execution Control and Game Management
 -------------------------------------
 
-Most of these are only useful for startup games, which can be distributed with
-the engine and allow the user to choose a game to play. For these functions to
-work, a `games` directory must be placed in the same directory as the engine,
-alongside the `system` directory, with subdirectories for each game.
+Many of these are only useful for startup games, which serve as launchers to
+allow the user to choose a game to play.  For a game to be visible to a startup
+game, it should be stored in `<documents>/Sphere 2.0/games`, or alternatively
+(for backwards compatibility) in `<enginedir>/games`.
 
 GetGameManifest()
 
@@ -303,7 +303,7 @@ GetGameList()
 
     Returns an array of objects, one for each Sphere game found on the system.
     Each object has at least the following properties, and may have more
-    depending on the information in the game manifest:
+    depending on the content of the game manifest:
 
         .name:        The game's title, taken from the game manifest.
         .directory:   The absolute path of the directory the game was found in.
@@ -318,22 +318,6 @@ GetGameList()
 
         <enginedir>/games/
         <documents>/Sphere 2.0/games/
-
-
-ExecuteGame(directory)
-
-    Not SphereFS compliant: SphereFS prefixes are not honored.
-
-    Replaces the currently running game with the one found in the specified
-    directory.  The directory is assumed to be relative to <enginedir>/games.
-
-    Unlike most of the minisphere API, this function will accept an absolute
-    path.
-
-RestartGame()
-
-    Restarts the current game.  All game state is cleared and game() is called
-    again, as if the game was just started.
 
 Async(script);
 
@@ -353,19 +337,34 @@ DoEvents();
             // do stuff...
         }
 
+ExecuteGame(directory)
+
+    Not SphereFS compliant: SphereFS prefixes are not honored.
+
+    Replaces the currently running game with the one found in the specified
+    directory.  The directory is assumed to be relative to <enginedir>/games.
+
+    Unlike most of the minisphere API, this function will accept an absolute
+    path.
+
 Exit()
 
-    Exits the current game and shuts down the engine. If the current game was
+    Exits the current game and shuts down the engine.  If the current game was
     started by via ExecuteGame(), the original game will be restarted following
     the Exit() call.
+
+RestartGame()
+
+    Restarts the current game.  All game state is cleared and game() is called
+    again, as if the game was just started.
 
 
 Keyboard Routines
 -----------------
 
-What would a game be without the ability for the player to control it? This set
+What would a game be without the ability for the player to control it?  This set
 of functions allows your game to accept input via the keyboard, the most common
-input method for a PC game. First of all, the available keycodes:
+input method for a PC game.  First of all, the available keycodes:
 
     KEY_ESCAPE
     KEY_F1
@@ -491,12 +490,6 @@ SetPlayerKey(player, button, keycode);
     See key-mapping.txt for more information on these functions and an easy way
     you can allow your players to change the key mappings.
 
-IsKeyPressed(keycode);
-IsAnyKeyPressed();
-
-    Returns true if the user is currently pressing either a specified key, or
-    any key on the keyboard, respectively.
-
 GetToggleState(keycode);
 
     Gets the state of the specified toggle key, which should be one of the
@@ -507,6 +500,12 @@ GetToggleState(keycode);
         KEY_SCROLLLOCK
 
     Passing any other keycode will throw an error.
+
+IsKeyPressed(keycode);
+IsAnyKeyPressed();
+
+    Returns true if the user is currently pressing either a specified key, or
+    any key on the keyboard, respectively.
 
 AreKeysLeft();
 GetKey();
@@ -544,20 +543,21 @@ GetNumJoysticks();
 GetNumJoystickAxes(joystick);
 GetJoystickAxis(joystick, axis);
 
-    Gets the current position of a joystick axis. 'joystick' and 'axis' are
+    Gets the current position of a joystick axis.  'joystick' and 'axis' are
     zero-based indices whose exact meaning depends on the device and system.
     Return value ranges from -1.0 to 1.0, with zero indicating dead center.
     Call GetNumJoystickAxes() to get the number of available axes.
 
-    Note: Joystick indices are not set in stone, even on the same system, and
-    can change, e.g. after a reboot.
+    Note: Joystick axis indices may differ from device to device.
 
 GetNumJoystickButtons(joystick);
 IsJoystickButtonPressed(joystick, button);
 
     Returns true if a specified joystick button is pressed.  'button' is a zero-
-    based index whose exact mapping depends on the device in question.  Call
+    based index whose exact mapping depends on the device and system.  Call
     GetNumJoystickButtons() to get the number of available buttons.
+
+    Note: Joystick button indices may differ from device to device.
 
 BindJoystickButton(joystick, button, on_down_script, on_up_script);
 UnbindJoystickButton(joystick, button);
@@ -580,6 +580,14 @@ SetMousePosition(x, y);
     Gets or sets the location of the mouse cursor, in pixels, relative to the
     game screen.
 
+GetNumMouseWheelEvents();
+GetMouseWheelEvent();
+
+    GetMouseWheelEvent() returns the next mouse wheel event in the wheel queue.
+    If the queue is empty, waits until the player moves the wheel. If this
+    behavior is undesirable, call GetNumMouseWheelEvents() first to make sure
+    the queue isn't empty.
+
 IsMouseButtonPressed(button);
 
     Returns true if the player is pressing the specified mouse button. 'button'
@@ -589,54 +597,34 @@ IsMouseButtonPressed(button);
         MOUSE_MIDDLE: Middle or wheel button
         MOUSE_RIGHT:  Right button
 
-GetNumMouseWheelEvents();
-GetMouseWheelEvent();
-
-    GetMouseWheelEvent() returns the next mouse wheel event in the wheel queue.
-    If the queue is empty, waits until the player moves the wheel. If this
-    behavior is undesirable, call GetNumMouseWheelEvents() first to make sure
-    the queue isn't empty.
-
 
 Random Number Generation
 ------------------------
 
 Many games have need of a good random number generator, particularly RPGs.  All
 JavaScript engines have a built-in generator in the form of the Math.random()
-function, however this is generally considered subpar.  minisphere provides the
-RNG object, which uses the MT19937 (Mersenne Twister) algorithm to generate
-high-quality random values and allows manual seeding.
-
-RNG.seed(seed);
-
-    Seeds the random number generator with `seed`.  If the seed is floating
-    point, it will be truncated to an integer; using a seed of 812.88, for
-    example, has the same effect as 812.
-
-RNG.random();
-
-    Returns a floating point value in the range [0,1).  This is the basic method
-    of random number generation, and is a direct, drop-in replacement for
-    Math.random().
-
-RNG.string([length]);
-
-    Returns a randomly-generated string consisting of alphanumeric characters.
-    The generated string looks something like a YouTube video hash (e.g.
-    YlHRHDrKS) and is useful for uniquely identifying things, for example to
-    generate temporary filenames.  If no length is provided, the default is 10.
+function; however, this is based on a very simple linear generator and produces
+low-quality random numbers.  minisphere provides the RNG object, which uses the
+MT19937 (Mersenne Twister) algorithm to generate high-quality random values and
+also allows manual seeding.
 
 RNG.chance(odds);
 
-    Tests a percentage chance. Returns true if the chance succeeds, false
-    otherwise.  `odds` is a value between 0 and 1; for example, 0.75 will return
-    true 75% of the time.
+    Takes a chance and returns true or false depending on the outcome.  `odds`
+    is a value in the range [0-1] and represents a percentage: 0.75, for
+    instance, will pass 75% of the time.
 
 RNG.normal(mean, sigma);
 
     Returns a random floating point value normally distributed around `mean`
     with a standard deviation of `sigma`.  The probability distribution of this
     function is sometimes termed a "bell curve."
+
+RNG.random();
+
+    Returns a floating point value in the range [0,1).  This is the basic method
+    of random number generation, and is a direct, drop-in replacement for
+    Math.random().
 
 RNG.range(min, max);
 
@@ -645,6 +633,19 @@ RNG.range(min, max);
 RNG.sample(array);
 
     Returns a single randomly-chosen item from `array`.
+
+RNG.seed(seed);
+
+    Seeds the random number generator with `seed`.  If the seed is floating
+    point, it will be truncated to an integer; using a seed of 812.88, for
+    example, has the same effect as 812.
+
+RNG.string([length]);
+
+    Returns a randomly-generated string consisting of alphanumeric characters.
+    The generated string looks something like a YouTube video hash (e.g.
+    YlHRHDrKS) and is useful for uniquely identifying things, for example to
+    generate temporary filenames.  If no length is provided, the default is 10.
 
 RNG.uniform(mean, variance);
 
@@ -660,11 +661,13 @@ drawing is done to a backbuffer, which is not visible to the user, and then
 "flipped" once per frame, so that the player only sees the final rendering
 output.
 
-FlipScreen();
+GetClippingRectangle();
+SetClippingRectangle(x, y, width, height);
 
-    Flips the backbuffer.  This also performs event loop processing, so if it is
-    not called regularly (or DoEvents() in its place, see above), the engine
-    will stop responding.
+    Gets or sets the clipping rectangle. All rendering done to the backbuffer is
+    constrained to this rectangle. Note that GetClippingRectangle() returns the
+    current clipping rectangle as an object describing it, with `x`, `y`,
+    `width` and `height` properties.
 
 GetFrameRate();
 SetFrameRate(fps);
@@ -680,19 +683,17 @@ SetScreenSize(width, height);
 
     Gets or sets the current screen resolution.
 
-SetClippingRectangle(x, y, width, height);
-GetClippingRectangle();
-
-    Gets or sets the clipping rectangle. All rendering done to the backbuffer is
-    constrained to this rectangle. Note that GetClippingRectangle() returns the
-    current clipping rectangle as an object describing it, with `x`, `y`,
-    `width` and `height` properties.
-
 ApplyColorMask(color);
 
     Applies a full-screen color mask. The color passed in is multiplied with the
     pixels of the backbuffer to tint the screen. This may be used for, e.g.
     day/night effects.
+
+FlipScreen();
+
+    Flips the backbuffer.  This also performs event loop processing, so if it is
+    not called regularly (or DoEvents() in its place, see above), the engine
+    will stop responding.
 
 
 Frame Skipping
@@ -703,12 +704,6 @@ to the backbuffer if it determines that a frame will be late.  This helps keep
 the engine running at full speed even on lower-end computers.  The following
 functions are provided to manage frame skipping.
 
-IsSkippedFrame();
-
-    Returns true if the engine has marked the current frame for skipping. Useful
-    to avoid performing extra rendering calculations when nothing is going to be
-    rendered anyway.
-
 GetMaxFrameSkips();
 SetMaxFrameSkips(max_skips);
 
@@ -716,6 +711,12 @@ SetMaxFrameSkips(max_skips);
     to skip.  The default is 5 frames.  If your game uses GrabImage() or
     GrabSurface() pervasively, it may be useful to set this to zero.  This will
     almost certainly cause lag, however.
+
+IsSkippedFrame();
+
+    Returns true if the engine has marked the current frame for skipping. Useful
+    to avoid performing extra rendering calculations when nothing is going to be
+    rendered anyway.
 
 UnskipFrame();
 

@@ -55,15 +55,6 @@ A symbolic debugger such as SSJ is an invaluable tool for development and is a
 minisphere exclusive: No similar tool was ever available for Sphere 1.x.
 
 
-License
-=======
-
-minisphere and accompanying command-line tools are licensed under the terms of
-the BSD-3-clause license.  Practically speaking, this means the engine can be
-used for any purpose, even commercially, with no restriction other than maintain
-the original copyright notice.
-
-
 Download
 ========
 
@@ -72,3 +63,12 @@ The latest stable minisphere release at the time of this writing is
 through GitHub, and the latest version is always available for download here:
 
 <https://github.com/fatcerberus/minisphere/releases>
+
+
+License
+=======
+
+minisphere and accompanying command-line tools are licensed under the terms of
+the BSD-3-clause license.  Practically speaking, this means the engine can be
+used for any purpose, even commercially, with no restriction other than maintain
+the original copyright notice.
