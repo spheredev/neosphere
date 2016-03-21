@@ -10,8 +10,8 @@ void
 initialize_transpiler(void)
 {
 	console_log(1, "initializing JS transpiler");
-	load_typescript();
 	load_coffeescript();
+	load_typescript();
 }
 
 void

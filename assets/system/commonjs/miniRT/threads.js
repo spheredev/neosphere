@@ -1,6 +1,6 @@
 /**
  *  miniRT/threads 2.0 CommonJS module
- *  a threading engine for Sphere with an API similar to pthreads
+ *  a threading engine for Sphere with an API similar to Pthreads
  *  (c) 2015-2016 Fat Cerberus
 **/
 
@@ -29,7 +29,7 @@ module.exports = (function()
 	var nextThreadID = 1;
 	var threads = [];
 	
-	if ('frameRate' in manifest && typeof manifest.frameRate === "number")
+	if ('frameRate' in manifest && typeof manifest.frameRate === 'number')
 		frameRate = manifest.frameRate;
 	var threadSorter = function(a, b) {
 		return a.priority != b.priority ?
@@ -148,7 +148,6 @@ module.exports = (function()
 			renderer: render,
 			updater: update,
 		};
-		var startTime = GetSeconds();
 		threads.push(newThread);
 		return newThread.id;
 	};

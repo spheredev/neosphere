@@ -1,13 +1,14 @@
 /**
-* Script: Link.js
-* Written by: Andrew Helenius
-* Updated: May/11/2015
-* Version: 0.3.0
-* Desc: Link.js is a very fast general-purpose functional programming library.
-		Still somewhat experimental, and still under construction.
+ *  Link 0.3.0 for Sphere 2.0  (c) 2015 Andrew Helenius
+ *  CommonJS module by Fat Cerberus
+ * 
+ *  Link is a very fast general-purpose functional programming library inspired
+ *  by .NET LINQ which allows you to perform complex queries against JavaScript
+ *  arrays.
 **/
 
-var link = (function(undefined) {
+var link = (function(undefined)
+{
 	"use strict";
 	
 	var _slice = [].slice;
@@ -1080,7 +1081,7 @@ var link = (function(undefined) {
 	
 	function Concat(array) {
 		if (array instanceof Chain) array = array.toArray();
-		return Link(this.toArray(), array);
+		return link(this.toArray(), array);
 	}
 	
 	function Average(obj) {
@@ -1363,7 +1364,7 @@ var link = (function(undefined) {
 		zip       : Zip,
 	}
 		
-	function Link(arr, test) {
+	function link(arr, test) {
 		if (!test)
 			return new Chain(arr);
 		else {
@@ -1372,7 +1373,7 @@ var link = (function(undefined) {
 		}
 	}
 	
-	Link.create = function() {
+	link.create = function() {
 		var args = _slice.call(arguments, 0),
 			stop = args.length - 1,
 			v    = args[stop],
@@ -1392,18 +1393,18 @@ var link = (function(undefined) {
 		return CreateArray(0);
 	}
 	
-	Link.range = function(num) {
+	link.range = function(num) {
 		var a = [];
 		while (num--) { a[num] = num; }
 		return a;
 	}
 	
-	Link.alias = function(from, to) {
+	link.alias = function(from, to) {
 		Chain.prototype[to] = Chain.prototype[from];
 		return this;
 	}
 	
-	return Link;
+	return link;
 })();
 
 // CommonJS export table
