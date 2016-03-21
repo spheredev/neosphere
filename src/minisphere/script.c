@@ -20,7 +20,7 @@ static int       s_next_script_id = 0;
 void
 initialize_scripts(void)
 {
-	console_log(1, "initializing JS manager");
+	console_log(1, "initializing JS script manager");
 	
 	duk_push_global_stash(g_duk);
 	duk_push_array(g_duk);
@@ -33,7 +33,7 @@ initialize_scripts(void)
 void
 shutdown_scripts(void)
 {
-	console_log(1, "shutting down JS manager");
+	console_log(1, "shutting down JS script manager");
 	shutdown_transpiler();
 }
 

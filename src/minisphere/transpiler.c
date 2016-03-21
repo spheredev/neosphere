@@ -9,15 +9,15 @@ static bool load_typescript   (void);
 void
 initialize_transpiler(void)
 {
-	console_log(1, "Initializing JS transpiler");
-	load_coffeescript();
+	console_log(1, "initializing JS transpiler");
 	load_typescript();
+	load_coffeescript();
 }
 
 void
 shutdown_transpiler(void)
 {
-	console_log(1, "Shutting down JS transpiler");
+	console_log(1, "shutting down JS transpiler");
 }
 
 bool
@@ -78,9 +78,8 @@ transpile_to_js(lstring_t** p_source, const char* filename)
 	return true;
 
 on_error:
-	// note: in case of failure, the caller expects the JS error which caused the
-	//       operation to fail to be left on top of the Duktape stack.  ensure this is the
-	//       case before returning false.
+	// note: when we return false, the caller expects the JS error which caused the
+	//       operation to fail to be left on top of the Duktape value stack.
 	return false;
 }
 
