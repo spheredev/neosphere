@@ -479,16 +479,16 @@ duk_handle_require(duk_context* ctx)
 		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefixes not allowed");
 
 	filenames = vector_new(sizeof(lstring_t*));
-	filename = lstr_newf("%s.js", name); vector_push(filenames, &filename);
-	filename = lstr_newf("%s.ts", name); vector_push(filenames, &filename);
-	filename = lstr_newf("%s.coffee", name); vector_push(filenames, &filename);
+	filename = lstr_newf("commonjs/%s.js", name); vector_push(filenames, &filename);
+	filename = lstr_newf("commonjs/%s.ts", name); vector_push(filenames, &filename);
+	filename = lstr_newf("commonjs/%s.coffee", name); vector_push(filenames, &filename);
 	filename = lstr_newf("~sys/commonjs/%s.js", name); vector_push(filenames, &filename);
 	filename = lstr_newf("~sys/commonjs/%s.ts", name); vector_push(filenames, &filename);
 	filename = lstr_newf("~sys/commonjs/%s.coffee", name); vector_push(filenames, &filename);
 	filename = NULL;
 	iter = vector_enum(filenames);
 	while (p = vector_next(&iter)) {
-		if (filename == NULL && sfs_fexist(g_fs, lstr_cstr(*p), "commonjs"))
+		if (filename == NULL && sfs_fexist(g_fs, lstr_cstr(*p), NULL))
 			filename = lstr_dup(*p);
 		lstr_free(*p);
 	}
@@ -496,7 +496,7 @@ duk_handle_require(duk_context* ctx)
 	if (filename == NULL)
 		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "require(): module `%s` not found", name);
 	console_log(2, "loading JS module `%s` as `%s`", name, lstr_cstr(filename));
-	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), "commonjs", &len)))
+	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), NULL, &len)))
 		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "require(): unable to read script `%s`", lstr_cstr(filename));
 	source_text = lstr_from_buf(slurp, len);
 	free(slurp);

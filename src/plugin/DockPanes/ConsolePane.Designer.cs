@@ -37,7 +37,7 @@
             // 
             this.textOutput.BackColor = System.Drawing.Color.Black;
             this.textOutput.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textOutput.Font = new System.Drawing.Font("Consolas", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textOutput.Font = new System.Drawing.Font("Consolas", 10.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textOutput.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.textOutput.Location = new System.Drawing.Point(0, 0);
             this.textOutput.Multiline = true;
