@@ -1,5 +1,5 @@
 /**
- *  miniRT/delegates 2.0 CommonJS module
+ *  miniRT/delegates CommonJS module
  *  a multicast delegate implementation inspired by .NET events
  *  (c) 2015-2016 Fat Cerberus
 **/

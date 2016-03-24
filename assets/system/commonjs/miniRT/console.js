@@ -1,5 +1,5 @@
 /**
- *  miniRT/console 2.0 CommonJS module
+ *  miniRT/console CommonJS module
  *  an easy-to-use text console for games with optional logging
  *  (c) 2015-2016 Fat Cerberus
 **/

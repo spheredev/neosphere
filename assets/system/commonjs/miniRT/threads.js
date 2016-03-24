@@ -1,5 +1,5 @@
 /**
- *  miniRT/threads 2.0 CommonJS module
+ *  miniRT/threads CommonJS module
  *  a threading engine for Sphere with an API similar to Pthreads
  *  (c) 2015-2016 Fat Cerberus
 **/

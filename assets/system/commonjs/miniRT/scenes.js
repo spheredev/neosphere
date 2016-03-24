@@ -1,5 +1,5 @@
 /**
- *  miniRT/scenes 2.0 CommonJS module
+ *  miniRT/scenes CommonJS module
  *  advanced scene manager using multiple timelines and cooperative threading
  *  (c) 2015-2016 Fat Cerberus
  *

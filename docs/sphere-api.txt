@@ -117,16 +117,16 @@ use one of the following SphereFS prefixes:
     ~sys/: minisphere's "system" directory.  This contains assets included with
            the engine.  Not likely to be writable.
 
-By way of example, the following will open the kevfile settings.cfg from the
-calling game's "config" subdirectory:
+By way of example, the following will open the kevfile `eaty-pigs.conf` from the
+user's save data directory:
 
-    var file = new KevFile("~sgm/config/settings.cfg");
+    var file = new KevFile("~usr/eaty-pigs.conf");
 
 Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
 For an API to be considered compliant, any method accepting a filename must
 treat an unprefixed, relative path as being relative to either ~sgm/ or ~usr/.
 Most legacy APIs are not SphereFS compliant and treat filenames as relative to a
-subdirectory of ~sgm/. These cannot be made compliant without breaking
+subdirectory of ~sgm/.  These cannot be made compliant without breaking
 compatibility with Sphere 1.x.
 
 
@@ -140,7 +140,7 @@ purpose.
 
 require(module_id);
 
-    Loads a CommonJS module and returns its export table. `module_id` is an
+    Loads a CommonJS module and returns its export table.  `module_id` is an
     abstract path (a string) identifying the module to load, with the same
     semantics as in, e.g. Node.js.  If the module cannot be found, an error will
     be thrown.  minisphere will look for modules in the following locations:
@@ -166,11 +166,11 @@ EvaluateScript(filename)
     Not SphereFS compliant: `filename` is relative to ~sgm/scripts.
 
     Evaluates the contents of `filename`, as if the code contained within were
-    part of the script containing the call. If you've ever worked in C or C++,
+    part of the script containing the call.  If you've ever worked in C or C++,
     this is a bit like including a header file.
 
     Note: RequireScript only executes a given script once, regardless of how
-    many RequireScript() calls specifying it are encountered. This is generally
+    many RequireScript() calls specifying it are encountered.  This is generally
     preferable to EvaluateScript(), which always executes the script.
 
 RequireSystemScript(filename)
@@ -186,9 +186,9 @@ Basic Debugging
 ---------------
 
 Since minisphere 1.6, full single-step debugging has been available through
-Sphere Studio.  minisphere 3.0 additionally includes the SSJ command-line
-debugger.  The functions below may still come in handy as a sort of "poor man's
-debugging", however:
+Sphere Studio, and minisphere 3.0 introduced the SSJ command-line debugger.  The
+functions below may still come in handy as a sort of "poor man's debugging",
+however:
 
 Abort(message[, stack_offset])
 
@@ -198,8 +198,7 @@ Abort(message[, stack_offset])
     in the call chain.  For example, the following code will report an error at
     the point PassTheBuck() is called, instead of at the Abort() call:
 
-        function PassTheBuck()
-        {
+        function PassTheBuck() {
             Abort("PassTheBuck() says: It's not my fault!", -1);
         }
         PassTheBuck();
@@ -270,13 +269,13 @@ events.
 
 Delay(ms);
 
-    Suspends game execution for 'ms' milliseconds. The engine will "spin down"
+    Suspends game execution for `ms` milliseconds.  The engine will "spin down"
     during this time and relinquish its CPU cycles to other applications.
 
 GetSeconds();
 
     Returns the amount of time in seconds, in floating point, since some
-    arbitrary point in time. Precision is guaranteed to be < 1µs.
+    arbitrary point in time.  Precision is guaranteed to be < 1µs.
 
 GetTime();
 

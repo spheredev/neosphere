@@ -282,10 +282,10 @@ music.push(path[, fadeTime]);
     previous BGM will resume from where it left off.  `fadeTime` is the amount
     of crossfade to apply, in seconds.
 
-music.reset();
+music.reset([fadeTime]);
 
     Resets the BGM manager to normal operation, removing any outstanding
-    overrides.
+    overrides.  `fadeTime` is the amount of crossfade to apply, in seconds.
 
 
 miniRT/pacts

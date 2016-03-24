@@ -1,5 +1,5 @@
 /**
- *  miniRT/music 2.0 CommonJS module
+ *  miniRT/music CommonJS module
  *  a stack-based solution for managing background music
  *  (c) 2015-2016 Fat Cerberus
 **/
@@ -10,48 +10,49 @@ if (typeof exports === 'undefined')
 }
 
 var console = require('./console');
-var link    = require('link');
 var scenes  = require('./scenes');
-var threads = require('./threads');
 
 var music =
 module.exports = (function()
 {
-	var activeSounds = [];
 	var adjuster = null;
 	var currentSound = null;
+	var haveOverride = false;
 	var mixer = new Mixer(44100, 16, 2);
 	var oldSounds = [];
+	var topmostSound = null;
 
-	threads.create({ update: update });
-
-	console.register('music', null,
+	console.register('bgm', null,
 	{
+		'adjust': function(volume, fadeTime) {
+			adjust(volume, fadeTime);
+		},
+		'override': function(trackName, fadeTime) {
+			try { override(trackName, fadeTime); }
+			catch(e) {
+				console.write("error playing `" + trackName + "`");
+			}
+		},
 		'play': function(trackName, fadeTime) {
-			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
 			try { play(trackName, fadeTime); }
 			catch(e) {
-				console.write("Error playing BGM '" + trackName + "'");
+				console.write("error playing `" + trackName + "`");
 			}
 		},
 		'pop': function(fadeTime) {
-			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
 			pop(fadeTime);
 		},
 		'push': function(trackName, fadeTime) {
-			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
 			try { push(trackName, fadeTime); }
 			catch(e) {
-				console.write("Error playing BGM '" + trackName + "'");
+				console.write("error playing `" + trackName + "`");
 			}
 		},
-		'stop': function(fadeTime) {
-			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			play(null, fadeTime);
+		'reset': function(fadeTime) {
+			reset(fadeTime);
 		},
-		'volume': function(volume, fadeTime) {
-			fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-			adjust(volume, fadeTime);
+		'stop': function(fadeTime) {
+			play(null, fadeTime);
 		},
 	});
 
@@ -65,19 +66,35 @@ module.exports = (function()
 		reset:       reset,
 	};
 
-	function update()
+	function crossfade(path, fadeTime, forceChange)
 	{
-		for (var i = activeSounds.length - 1; i >= 0; --i) {
-			if (activeSounds[i].volume <= 0.0
-				&& activeSounds[i] != currentSound
-				&& !link(oldSounds).contains(activeSounds[i]))
-			{
-				activeSounds.splice(i, 1);
-			}
+		fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+		
+		var allowChange = !haveOverride || forceChange;
+		if (currentSound != null && allowChange) {
+			currentSound.fader.stop();
+			currentSound.fader = new scenes.Scene()
+				.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
+				.run();
 		}
-		return true;
-	};
-
+		if (path !== null) {
+			var stream = new Sound(path, mixer);
+			stream.volume = 0.0;
+			stream.play(true);
+			var fader = new scenes.Scene()
+				.tween(stream, fadeTime, 'linear', { volume: 1.0 })
+			var newSound = { stream: stream, fader: fader };
+			if (allowChange) {
+				currentSound = newSound;
+				newSound.fader.run();
+			}
+			return newSound;
+		}
+		else {
+			return null;
+		}
+	}
+	
 	// music.isAdjusting()
 	// get whether or not the volume level is being adjusted.
 	function isAdjusting()
@@ -93,7 +110,7 @@ module.exports = (function()
 	//                (default: 0.0).
 	function adjust(newVolume, duration)
 	{
-		duration = duration !== void null ? duration : 0.0;
+		duration = duration !== undefined ? duration : 0.0;
 
 		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 		if (adjuster != null && adjuster.isRunning()) {
@@ -113,7 +130,8 @@ module.exports = (function()
 	// will be deferred until the BGM is reset by calling music.reset().
 	function override(path, fadeTime)
 	{
-		Abort("music.override(): not implemented", -1);
+		crossfade(path, fadeTime, true);
+		haveOverride = true;
 	};
 
 	// music.play()
@@ -124,24 +142,9 @@ module.exports = (function()
 	//     fadeTime: optional.  the amount of crossfade to apply, in seconds. (default: 0.0)
 	function play(path, fadeTime)
 	{
-		if (fadeTime === undefined) fadeTime = 0.0;
+		fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
 
-		if (currentSound != null) {
-			currentSound.fader.stop();
-			currentSound.fader = new scenes.Scene()
-				.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
-				.run();
-		}
-		if (path !== null) {
-			var stream = new Sound(path, mixer);
-			stream.volume = 0.0;
-			stream.play(true);
-			var fader = new scenes.Scene()
-				.tween(stream, fadeTime, 'linear', { volume: 1.0 })
-				.run();
-			currentSound = { stream: stream, fader: fader };
-			activeSounds.push(currentSound);
-		}
+		topmostSound = crossfade(path, fadeTime, false);
 	};
 
 	// music.pop()
@@ -152,15 +155,16 @@ module.exports = (function()
 	//     if the BGM stack is empty, this is a no-op.
 	function pop(fadeTime)
 	{
-		if (fadeTime === undefined) fadeTime = 0.0;
+		fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
 
-		if (oldSounds.length == 0) return;
+		if (oldSounds.length == 0)
+			return;
 		currentSound.fader.stop();
 		currentSound.fader = new scenes.Scene()
 			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
 			.run();
-		var oldSound = oldSounds.pop();
-		currentSound = oldSound;
+		topmostSound = oldSounds.pop();
+		currentSound = topmostSound;
 		if (currentSound !== null) {
 			currentSound.stream.volume = 0.0;
 			currentSound.stream.play();
@@ -179,15 +183,33 @@ module.exports = (function()
 	//     fadeTime: optional.  the amount of crossfade to apply, in seconds. (default: 0.0)
 	function push(path, fadeTime)
 	{
-		var oldSound = currentSound;
+		var oldSound = topmostSound;
 		play(path, fadeTime);
 		oldSounds.push(oldSound);
 	};
 
 	// music.reset()
 	// reset the BGM manager, which removes any outstanding overrides.
-	function reset(path, fadeTime)
+	function reset(fadeTime)
 	{
-		Abort("music.reset(): not implemented", -1);
+		fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+		
+		if (!haveOverride)
+			return;
+		haveOverride = false;
+		
+		currentSound.fader.stop();
+		currentSound.fader = new scenes.Scene()
+			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
+			.run();
+		currentSound = topmostSound;
+		if (currentSound !== null) {
+			currentSound.stream.volume = 0.0;
+			currentSound.stream.play();
+			currentSound.fader.stop();
+			currentSound.fader = new scenes.Scene()
+				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
+				.run();
+		}
 	};
 })();
