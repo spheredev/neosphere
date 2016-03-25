@@ -18,10 +18,10 @@ namespace minisphere.Gdk.DockPanes
             InitializeComponent();
         }
 
-        public bool ShowInViewMenu { get { return true; } }
-        public Control Control { get { return this; } }
-        public DockHint DockHint { get { return DockHint.Bottom; } }
-        public Bitmap DockIcon { get { return Resources.ErrorIcon; } }
+        public bool ShowInViewMenu => true;
+        public Control Control => this;
+        public DockHint DockHint => DockHint.Bottom;
+        public Bitmap DockIcon => Resources.ErrorIcon;
 
         public Ssj2Debugger Ssj { get; set; }
 

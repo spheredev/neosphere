@@ -10,10 +10,10 @@ v3.0.0 - March 28, 2016
 * minisphere is now officially supported on Linux! `.deb` binary and `.tar.gz`
   source packages will be provided for all minisphere releases going forward.
 * miniRT is completely revamped and modernized.  All miniRT components have been
-  converted into CommonJS modules which allows them to be pulled in individually
+  rewritten as CommonJS modules which allows them to be pulled in individually
   as needed, instead of all at once using a global RequireScript().
-* A complete API reference for miniRT is now included with the release.
-* Introducing the brand-new command-line debugger, "SSJ"!  SSJ can be used by
+* A complete API reference for miniRT is now included with the engine.
+* Introducing the brand-new command-line debugger, SSJ!  SSJ can be started by
   running `ssj <game-path>` on the command line.  This brings single-step Sphere
   debugging to non-Windows platforms for the first time!
 * Strengthens the SphereFS sandbox: Using absolute file paths is no longer

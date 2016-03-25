@@ -121,8 +121,6 @@ namespace minisphere.Gdk.Plugins
                 Panes.Console.Print(string.Format("a graphical JS debugger for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2015-2016 Fat Cerberus"));
                 Panes.Console.Print("");
-
-                PluginManager.Core.Docking.Show(Panes.Inspector);
             }), null);
         }
 
@@ -152,7 +150,6 @@ namespace minisphere.Gdk.Plugins
                 Detached?.Invoke(this, EventArgs.Empty);
                 --plugin.Sessions;
 
-                PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Console.Print("SSJ session has ended.");
             }), null);
@@ -279,7 +276,6 @@ namespace minisphere.Gdk.Plugins
                 try
                 {
                     NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
-                    PluginManager.Core.Docking.Activate(Panes.Console);
                     Panes.Inspector.Enabled = false;
                     Panes.Inspector.Clear();
                 }

@@ -201,7 +201,7 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 	objview_t*      view;
 
 	msg = message_new(MESSAGE_REQ);
-	message_add_int(msg, REQ_GETOBJPROPRANGE);
+	message_add_int(msg, REQ_GETOBJPROPDESCRANGE);
 	message_add_heapptr(msg, heapptr);
 	message_add_int(msg, 0);
 	message_add_int(msg, INT_MAX);
@@ -509,10 +509,13 @@ handle_notify(inferior_t* obj, const message_t* msg)
 		case NFY_THROW:
 			if ((status_type = message_get_int(msg, 1)) == 0)
 				break;
-			printf("uncaught error! - %s\n", message_get_string(msg, 2));
-			printf("    at: %s:%d\n",
+			printf("**************************************************\n");
+			printf("uncaught exception! - at %s:%d\n",
 				message_get_string(msg, 3),
 				message_get_int(msg, 4));
+			printf("    value: ");
+			dvalue_print(message_get_dvalue(msg, 2), true);
+			printf("\n**************************************************\n\n");
 			break;
 		case NFY_DETACHING:
 			status_type = message_get_int(msg, 1);

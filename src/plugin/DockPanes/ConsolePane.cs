@@ -25,10 +25,10 @@ namespace minisphere.Gdk.DockPanes
             _conf = conf;
         }
 
-        public bool ShowInViewMenu { get { return true; } }
-        public Control Control { get { return this; } }
-        public DockHint DockHint { get { return DockHint.Right; } }
-        public Bitmap DockIcon { get { return Resources.ConsoleIcon; } }
+        public bool ShowInViewMenu => true;
+        public Control Control => this;
+        public DockHint DockHint => DockHint.Bottom;
+        public Bitmap DockIcon => Resources.ConsoleIcon;
 
         public void Clear()
         {

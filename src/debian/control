@@ -16,8 +16,19 @@ Build-Depends:
 Package: minisphere
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: JavaScript game engine
- minisphere is a lightweight re-implementation of the Sphere game engine
- originally developed by Chad Austin which sports better performance, more
- features, and command-line development tools such as a debugger and
- packaging compiler.
+Description: JavaScript-based game engine
+ minisphere is a drop-in replacement and successor to the Sphere game engine,
+ written from the ground up in C.  It boasts a high level of compatibility with
+ most games written for Sphere 1.x, with better performance and new
+ functionality.  The majority of games will run with no modifications. 
+ .
+ Like Sphere, minisphere uses JavaScript for game coding.  The engine exposes a
+ collection of low-level functions through a standardized JavaScript API, leaving
+ higher-level game logic entirely up to scripts.  This allows any type of game to
+ be made with minisphere; of course, this naturally requires more expertise than
+ making a game with, say, RPG Maker or even Game Maker, but the results are worth
+ it.
+ .
+ minisphere is not just a game engine, but a complete toolchain for game
+ development.  Several command-line tools, collectively known as the
+ minisphere GDK, are included to make game development easier:

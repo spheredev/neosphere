@@ -13,7 +13,7 @@
 #define AppVersion3 "3.0.0"
 
 [Setup]
-OutputBaseFilename=minisphere-{#AppVersion3}
+OutputBaseFilename=minisphereSetup-{#AppVersion3}
 OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
@@ -28,7 +28,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
-DefaultGroupName={#AppName} GDK
+DefaultGroupName=Sphere 2.0 GDK
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
 InfoBeforeFile=changelog.rtf
@@ -43,9 +43,9 @@ UninstallDisplayIcon={app}\minisphere.exe,0
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Types]
-Name: "normal"; Description: "Standard installation (engine only)"
-Name: "developer"; Description: "Game Developer installation (GDK)"
-Name: "custom"; Description: "Custom installation"; Flags: iscustom
+Name: "normal"; Description: "Standard Redistributable (engine only)"
+Name: "developer"; Description: "Sphere 2.0 Game Development Kit (GDK)"
+Name: "custom"; Description: "Custom Installation"; Flags: iscustom
 
 [Components]
 Name: "engine"; Description: "{#AppName} {#AppVersion3} [Required]"; Types: normal developer custom; Flags: fixed
@@ -97,8 +97,8 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 
 [Icons]
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
-Name: "{group}\miniGDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
-Name: "{group}\Sphere 2.0 API Reference"; Filename: "{app}\documentation\minisphere-api.txt"; Components: spherun
+Name: "{group}\Sphere 2.0 Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
+Name: "{group}\Sphere 2.0 API Reference"; Filename: "{app}\documentation\sphere-api.txt"; Components: spherun
 Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cell-api.txt"; Components: spherun/cell
 Name: "{group}\miniRT API Reference"; Filename: "{app}\documentation\miniRT-api.txt"; Components: spherun
 

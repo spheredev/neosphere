@@ -82,13 +82,12 @@ session_run(session_t* obj, bool run_now)
 {
 	if (run_now) {
 		inferior_resume(obj->inferior, OP_RESUME);
-		if (inferior_attached(obj->inferior)) {
-			printf("\n");
-			autoselect_frame(obj);
-			preview_frame(obj, obj->frame);
-		}
 	}
-	
+	if (inferior_attached(obj->inferior)) {
+		autoselect_frame(obj);
+		preview_frame(obj, obj->frame);
+	}
+
 	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
 	printf("SSJ session terminated.\n");
@@ -168,9 +167,9 @@ do_command_line(session_t* obj)
 	filename = backtrace_get_filename(calls, obj->frame);
 	line_no = backtrace_get_linenum(calls, obj->frame);
 	if (line_no != 0)
-		printf("\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", filename, line_no, function_name);
+		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", filename, line_no, function_name);
 	else
-		printf("\33[36;1msyscall %s\33[m\n\33[33;1m(ssj)\33[m ", function_name);
+		printf("\n\33[36;1msyscall %s\33[m\n\33[33;1m(ssj)\33[m ", function_name);
 	idx = 0;
 	ch = getchar();
 	while (ch != '\n') {

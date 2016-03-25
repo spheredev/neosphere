@@ -35,16 +35,14 @@
             // 
             // textOutput
             // 
-            this.textOutput.BackColor = System.Drawing.Color.Black;
             this.textOutput.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textOutput.Font = new System.Drawing.Font("Consolas", 10.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textOutput.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.textOutput.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textOutput.Location = new System.Drawing.Point(0, 0);
             this.textOutput.Multiline = true;
             this.textOutput.Name = "textOutput";
             this.textOutput.ReadOnly = true;
-            this.textOutput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textOutput.Size = new System.Drawing.Size(276, 385);
+            this.textOutput.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textOutput.Size = new System.Drawing.Size(764, 221);
             this.textOutput.TabIndex = 0;
             this.textOutput.WordWrap = false;
             // 
@@ -60,7 +58,7 @@
             this.Controls.Add(this.textOutput);
             this.DoubleBuffered = true;
             this.Name = "ConsolePane";
-            this.Size = new System.Drawing.Size(276, 385);
+            this.Size = new System.Drawing.Size(764, 221);
             this.ResumeLayout(false);
             this.PerformLayout();
 

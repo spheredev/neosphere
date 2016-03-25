@@ -45,7 +45,7 @@
             // 
             this.OKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.OKButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.OKButton.Location = new System.Drawing.Point(481, 476);
+            this.OKButton.Location = new System.Drawing.Point(485, 417);
             this.OKButton.Name = "OKButton";
             this.OKButton.Size = new System.Drawing.Size(80, 25);
             this.OKButton.TabIndex = 2;
@@ -64,7 +64,7 @@
             this.PropTree.Location = new System.Drawing.Point(12, 41);
             this.PropTree.Name = "PropTree";
             this.PropTree.SelectedImageIndex = 0;
-            this.PropTree.Size = new System.Drawing.Size(549, 361);
+            this.PropTree.Size = new System.Drawing.Size(553, 302);
             this.PropTree.TabIndex = 0;
             this.PropTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.PropTree_BeforeExpand);
             this.PropTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.PropTree_AfterSelect);
@@ -78,10 +78,12 @@
             // 
             // ObjectNameTextBox
             // 
+            this.ObjectNameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ObjectNameTextBox.Location = new System.Drawing.Point(12, 12);
             this.ObjectNameTextBox.Name = "ObjectNameTextBox";
             this.ObjectNameTextBox.ReadOnly = true;
-            this.ObjectNameTextBox.Size = new System.Drawing.Size(549, 23);
+            this.ObjectNameTextBox.Size = new System.Drawing.Size(553, 23);
             this.ObjectNameTextBox.TabIndex = 3;
             // 
             // groupBox1
@@ -92,18 +94,19 @@
             this.groupBox1.Controls.Add(this.ConfigurableCheckBox);
             this.groupBox1.Controls.Add(this.EnumerableCheckBox);
             this.groupBox1.Controls.Add(this.WritableCheckBox);
-            this.groupBox1.Location = new System.Drawing.Point(12, 408);
+            this.groupBox1.Location = new System.Drawing.Point(12, 349);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(549, 62);
+            this.groupBox1.Size = new System.Drawing.Size(553, 62);
             this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Property Descriptor";
             // 
             // AccessorCheckBox
             // 
+            this.AccessorCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.AccessorCheckBox.AutoCheck = false;
             this.AccessorCheckBox.AutoSize = true;
-            this.AccessorCheckBox.Location = new System.Drawing.Point(410, 26);
+            this.AccessorCheckBox.Location = new System.Drawing.Point(424, 26);
             this.AccessorCheckBox.Name = "AccessorCheckBox";
             this.AccessorCheckBox.Size = new System.Drawing.Size(123, 19);
             this.AccessorCheckBox.TabIndex = 3;
@@ -149,7 +152,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.OKButton;
-            this.ClientSize = new System.Drawing.Size(573, 513);
+            this.ClientSize = new System.Drawing.Size(577, 454);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.ObjectNameTextBox);
             this.Controls.Add(this.PropTree);

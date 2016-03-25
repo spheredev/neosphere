@@ -113,7 +113,7 @@ namespace minisphere.Gdk.Forms
                     }
                 }
             }
-            if (node.Nodes[0].Text == "")
+            if (node.Nodes.Count > 0 && node.Nodes[0].Text == "")
                 node.Nodes.RemoveAt(0);
             PropTree.EndUpdate();
         }

@@ -43,6 +43,8 @@ namespace minisphere.Gdk.Plugins
         {
             string gdkPath = _main.Conf.GdkPath;
 
+            PluginManager.Core.Docking.Activate(Panes.Console);
+            Panes.Console.Clear();
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
             string options = string.Format(@"--verbose {0} --debug ""{1}""",
                 _main.Conf.Verbosity, gamePath);

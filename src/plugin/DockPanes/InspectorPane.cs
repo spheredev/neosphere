@@ -29,10 +29,10 @@ namespace minisphere.Gdk.DockPanes
             Enabled = false;
         }
 
-        public bool ShowInViewMenu { get { return false; } }
-        public Control Control { get { return this; } }
-        public DockHint DockHint { get { return DockHint.Right; } }
-        public Bitmap DockIcon { get { return Resources.VisibleIcon; } }
+        public bool ShowInViewMenu => true;
+        public Control Control => this;
+        public DockHint DockHint => DockHint.Left;
+        public Bitmap DockIcon => Resources.VisibleIcon;
 
         public Ssj2Debugger Ssj { get; set; }
 
@@ -49,8 +49,7 @@ namespace minisphere.Gdk.DockPanes
             foreach (var entry in stack)
             {
                 ListViewItem item = new ListViewItem(entry.Item1 != ""
-                    ? string.Format("{0}()", entry.Item1)
-                    : "function()");
+                    ? string.Format("{0}()", entry.Item1) : "anon");
                 item.SubItems.Add(entry.Item2);
                 item.SubItems.Add(entry.Item3.ToString());
                 CallsView.Items.Add(item);
