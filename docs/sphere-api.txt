@@ -1640,6 +1640,20 @@ GetCurrentMap();
 
     Gets the filename of the current map, relative to ~sgm/maps.
 
+SetLayerWidth(layer, width);
+SetLayerHeight(layer, height);
+SetLayerSize(layer, width, height);
+GetLayerWidth(layer);
+GetLayerHeight(layer);
+
+    Gets or sets the size, in tiles, of the specified map layer.  Newly created
+    map tiles will be set to use tile number 0 (the first image in the tileset).
+    The change persists until the next ChangeMap() call.
+
+    Note: If a map becomes smaller as a result of resize calls, zones and
+    triggers which are fully outside the map will be deleted.  Any zones which
+    are only partially out-of-bounds will be resized to fit.
+
 AttachInput(name);
 DetachInput();
 IsInputAttached();

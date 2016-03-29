@@ -24,6 +24,7 @@ extern bool             add_zone                (rect_t bounds, int layer, scrip
 extern void             detach_person           (const person_t* person);
 extern void             normalize_map_entity_xy (double* inout_x, double* inout_y, int layer);
 extern void             remove_zone             (int zone_index);
+extern bool             resize_map_layer        (int layer, int x_size, int y_size);
 
 extern void             init_map_engine_api   (duk_context* ctx);
 extern int              duk_require_map_layer (duk_context* ctx, duk_idx_t index);

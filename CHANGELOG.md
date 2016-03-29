@@ -7,6 +7,8 @@ v3.0.1 - TBD
 * Fixes a bug where running `minisphere` from the command line and passing an
   invalid or nonexistent game path would cause the engine to segfault trying to
   display the error message.
+* Adds the Sphere 1.x API functions SetLayerWidth() and SetLayerHeight().  As a
+  convenience, I also added SetLayerSize() to set both dimensions at once.
 
 v3.0.0 - March 28, 2016
 -----------------------
