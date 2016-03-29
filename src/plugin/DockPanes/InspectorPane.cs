@@ -31,7 +31,7 @@ namespace minisphere.Gdk.DockPanes
 
         public bool ShowInViewMenu => false;
         public Control Control => this;
-        public DockHint DockHint => DockHint.Left;
+        public DockHint DockHint => DockHint.Right;
         public Bitmap DockIcon => Resources.VisibleIcon;
 
         public Ssj2Debugger Ssj { get; set; }

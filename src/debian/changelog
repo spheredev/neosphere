@@ -1,5 +1,94 @@
+minisphere (3.0.1) trusty; urgency=low
+
+  * Fixes a bug where running `minisphere` from the command line and giving an
+    invalid or nonexistent game path would cause the engine to segfault trying
+    to display an error message.
+  * Adds Sphere 1.x API functions `SetLayerWidth()` and `SetLayerHeight()`.  For 
+    convenience, I also added `SetLayerSize()` to set both dimensions at once.
+  * In Sphere Studio, the Debugger pane is now hidden when not actively
+    debugging.  This helps maximize screen real estate without forcing the user
+    to set the pane to autohide.
+  * Fixes a bug where receiving a malformed source code request from the
+    debugger would cause a segfault.  This wasn't a security risk right now, but
+    might have become one in the future once I add remote debugging support.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 29 Mar 2016 00:00:00 -0500
+
 minisphere (3.0.0) trusty; urgency=low
 
-  * Initial Linux release.
+  * The Windows redistributable and GDK downloads have been combined into a single
+    installer.  The engine is so compact that there's nothing gained from having
+    separate installers.
+  * minisphere is now officially supported on Linux! `.deb` binary and `.tar.gz`
+    source packages will be provided for all minisphere releases going forward.
+  * miniRT is completely revamped and modernized.  All miniRT components have been
+    rewritten as CommonJS modules which allows them to be pulled in individually
+    as needed, instead of all at once using a global RequireScript().
+  * A complete API reference for miniRT is now included with the engine.
+  * Introducing the brand-new command-line debugger, SSJ!  SSJ can be started by
+    running `ssj <game-path>` on the command line.  This brings single-step Sphere
+    debugging to non-Windows platforms for the first time!
+  * Strengthens the SphereFS sandbox: Using absolute file paths is no longer
+    supported and will result in a sandbox violation error.
+  * Adds provisional TypeScript support.  minisphere uses `ts.transpile()`
+    internally to convert TypeScript to JavaScript, so some TypeScript features
+    may not work as expected.  See the release notes for more details.
+  * User data (screenshots, save files, etc.) is now stored in `<docs>/Sphere 2.0`
+    instead of `<docs>/minisphere` as it was in prior versions.  SPK packages can
+    be placed into the `games` subdirectory to have the startup game automatically
+    pick them up.
+  * minisphere now looks for CommonJS modules in `~sgm/commonjs`.
+  * Enhances `Assert()` behavior.  If an assertion fails and the debugger is
+    attached, choosing not to continue will cause a prompt breakpoint instead of
+    throwing an error.  If the debugger is not attached, any failing assertions
+    will be logged to `stderr` but otherwise ignored.
+  * Improves fullscreen behavior: Games are letter/pillarboxed to maintain their
+    aspect ratio when switching into fullscreen mode.
+  * Screenshots are now given meaningful names based on the game filename and
+    current date instead of random characters.
+  * The frame rate is now visible by default whenever a game is started using the
+    `spherun` command, and has been moved to the lower right corner of the screen.
+  * When the debugger is attached, the engine now shows a small "SSJ" watermark in
+    the lower left corner of the screen as a reminder.
+  * The engine now waits for sounds to stop playing before freeing them, even if
+    the Sound object goes out of scope.  This allows a common Sphere idiom
+    `new Sound("munch.wav").play()` to work as expected.
+  * With the debugger attached, you can now press F12 to pause game execution and
+    turn over control to the attached debugger.  This can be useful when trying to
+    debug glitches that don't lead to an exception.
+  * You can now change the minisphere Console verbosity level when developing in
+    Sphere Studio by going to the Settings Center page.  V2 (high-level logging)
+    is the default.
+  * Vastly improves object inspection in the Sphere Studio debugger.  Object
+    contents will be displayed in a treeview, allowing you to drill down into
+    properties, alleviating the need to scroll through a potentially huge JSON
+    dump.
+  * The command to run minisphere Console from the command line has changed from
+    `msphere` to `spherun`.  This will be the standard command to start a
+    Sphere 2.0 engine in developer mode going forward.  The end-user engine has
+    been renamed as well, to `minisphere`.
+  * `RNG.vary()` is now named `RNG.uniform()`.
+  * New API: `DebugPrint()`, for logging low-level debug information without
+    cluttering the console.  `DebugPrint()` output is visible only with a debugger
+    attached.
+  * New API: `DoEvents()`.  This function can be called in a long-running loop to
+    avoid locking up the engine when you don't need to render anything or
+    otherwise disturb the backbuffer.
+  * `Print()` now accepts multiple values, which are separated by spaces when
+    printed.
+  * The `sphere` global object alias has been renamed to `global`, which is more
+    obvious and matches Node.js.  Code relying on the `sphere` alias will need to
+    be updated to work with minisphere 3.0.
+  * All minisphere API functions, constructors, and constants have been marked as
+    non-enumerable, to avoid bloating the output when examining the global object
+    in the debugger.  Everything is still fully writable and configurable, so as
+    not to prevent monkey-patching.
+  * Fixes memory leaks in both Cell and minisphere, including a major one in
+    Cell's packaging code which could have caused it to run out of memory during
+    the installation step.
+  * minisphere will no longer fail to start if the underlying platform doesn't
+    support shaders.  Instead, the Galileo `ShaderProgram` constructor will throw
+    an error if called.  Shaders are always disabled when the engine is compiled
+    against Allegro 5.0.
 
- -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 28 Mar 2016 00:00:00 -0500
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 28 Mar 2016 00:00:00 -0500
