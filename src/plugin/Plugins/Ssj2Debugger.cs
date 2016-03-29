@@ -150,6 +150,7 @@ namespace minisphere.Gdk.Plugins
                 Detached?.Invoke(this, EventArgs.Empty);
                 --plugin.Sessions;
 
+                PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Activate(Panes.Console);
                 Panes.Console.Print("SSJ session has ended.");
             }), null);

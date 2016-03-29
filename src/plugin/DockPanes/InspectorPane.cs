@@ -29,7 +29,7 @@ namespace minisphere.Gdk.DockPanes
             Enabled = false;
         }
 
-        public bool ShowInViewMenu => true;
+        public bool ShowInViewMenu => false;
         public Control Control => this;
         public DockHint DockHint => DockHint.Left;
         public Bitmap DockIcon => Resources.VisibleIcon;
@@ -73,10 +73,10 @@ namespace minisphere.Gdk.DockPanes
             _frame = callIndex;
             CallsView.Items[_frame].ForeColor = Color.Blue;
             CallsView.SelectedItems.Clear();
-            this._vars = await Ssj.Inferior.GetLocals(-(_frame + 1));
+            _vars = await Ssj.Inferior.GetLocals(-(_frame + 1));
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
-            foreach (var k in this._vars.Keys)
+            foreach (var k in _vars.Keys)
             {
                 var item = LocalsView.Items.Add(k, 0);
                 item.SubItems.Add(_vars[k].ToString());

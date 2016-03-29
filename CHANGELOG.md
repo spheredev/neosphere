@@ -9,6 +9,9 @@ v3.0.1 - TBD
   display the error message.
 * Adds the Sphere 1.x API functions SetLayerWidth() and SetLayerHeight().  As a
   convenience, I also added SetLayerSize() to set both dimensions at once.
+* In Sphere Studio, the Debugger pane is now hidden when not actively debugging.
+  This helps maximize screen real estate without forcing the user to set the
+  pane to autohide.
 
 v3.0.0 - March 28, 2016
 -----------------------
