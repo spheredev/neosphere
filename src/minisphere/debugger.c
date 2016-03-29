@@ -283,6 +283,12 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	iter_t iter;
 	struct source* p_source;
 	
+	// the first atom must be a request ID number
+	if (nvalues < 1 || !duk_is_number(ctx, -nvalues + 0)) {
+		duk_push_string(ctx, "missing AppRequest command number");
+		return -1;
+	}
+	
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
@@ -294,6 +300,11 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		duk_push_int(ctx, y_size);
 		return 5;
 	case APPREQ_SOURCE:
+		if (nvalues < 2) {
+			duk_push_string(ctx, "missing filename for Source request");
+			return -1;
+		}
+		
 		name = duk_get_string(ctx, -nvalues + 1);
 		name = get_compiled_name(name);
 
@@ -316,7 +327,8 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		duk_push_sprintf(ctx, "no source available for `%s`", name);
 		return -1;
 	default:
-		return 0;
+		duk_push_sprintf(ctx, "invalid AppRequest command number `%d`", request_id);
+		return -1;
 	}
 }
 

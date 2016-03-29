@@ -7,11 +7,14 @@ v3.0.1 - TBD
 * Fixes a bug where running `minisphere` from the command line and passing an
   invalid or nonexistent game path would cause the engine to segfault trying to
   display the error message.
-* Adds the Sphere 1.x API functions SetLayerWidth() and SetLayerHeight().  As a
-  convenience, I also added SetLayerSize() to set both dimensions at once.
+* Adds Sphere 1.x API functions `SetLayerWidth()` and `SetLayerHeight()`.  For 
+  convenience I also added `SetLayerSize()` to set both dimensions at once.
 * In Sphere Studio, the Debugger pane is now hidden when not actively debugging.
   This helps maximize screen real estate without forcing the user to set the
   pane to autohide.
+* Fixes a bug where receiving a malformed source code request from the debugger
+  would cause a segfault.  This wasn't a security risk right now, but might have
+  become one in the future once I add remote debugging support.
 
 v3.0.0 - March 28, 2016
 -----------------------
