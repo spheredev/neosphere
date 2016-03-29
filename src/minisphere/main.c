@@ -171,7 +171,7 @@ main(int argc, char* argv[])
 		// if after all that, we still don't have a valid sandbox pointer, bail out;
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
-		al_show_native_message_box(screen_display(g_screen), "Unable to Load Game", path_cstr(g_game_path),
+		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
@@ -188,7 +188,7 @@ main(int argc, char* argv[])
 		icon = load_image("~sys/icon.png");
 	g_screen = screen_new(get_sgm_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
-		al_show_native_message_box(screen_display(g_screen), "Unable to Create Render Context", "minisphere was unable to create a render context.",
+		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a render context.",
 			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;

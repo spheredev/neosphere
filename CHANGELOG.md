@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v3.0.1 - TBD
+------------
+
+* Fixes a bug where running `minisphere` from the command line and passing an
+  invalid or nonexistent game path would cause the engine to segfault trying to
+  display the error message.
+
 v3.0.0 - March 28, 2016
 -----------------------
 
