@@ -44,6 +44,17 @@ systempath(const char* filename)
 	return retval;
 }
 
+bool
+is_cpu_little_endian(void)
+{
+	uint8_t  lead_byte;
+	uint16_t value;
+
+	value = 812;
+	lead_byte = *(uint8_t*)&value;
+	return lead_byte == 44;
+}
+
 lstring_t*
 read_lstring(sfs_file_t* file, bool trim_null)
 {

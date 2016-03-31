@@ -1546,9 +1546,9 @@ new FileStream(filename, mode);
     throw an error.
 
 FileStream:length (read-only)
+FileStream:size (read-only)
 
-    Gets the length of the stream in bytes.  This corresponds to the size of the
-    underlying file.
+    Gets the size of the underlying file, in bytes.
 
 FileStream:position (read/write)
 
@@ -1572,11 +1572,48 @@ FileStream:read([numBytes]);
     the entire file without affecting the file position. The file must be opened
     for reading.
 
+FileStream:readString([numBytes]);
+
+    Reads data from the file and encodes it as a UTF-8 string.  `numBytes` can
+    be omitted to read in the entire file without affecting the file pointer.
+    The file must be opened for reading.
+
+FileStream:readFloat([little_endian]);
+FileStream:readDouble([little_endian]);
+
+    Reads a floating point value from the file and advances the file pointer.
+    `little_endian` is optional and defaults to false.
+
+FileStream:readInt([size[, little_endian]]);
+FileStream:readUInt([size[, little_endian]]);
+
+    Reads a signed or unsigned integer from the file and advances the file
+    pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
+    value to read.  This allows integer values of up to 48 bits to be read.
+
 FileStream:write(data);
 
-    Writes data to the file at the current position.  `data` is an ArrayBuffer,
-    TypedArray or DataView containing the data to be written.  The file must be
-    opened for writing.
+    Writes data to the file and advances the file pointer.  `data` should be an
+    ArrayBuffer, TypedArray or DataView containing the data to be written.
+
+FileStream:writeString(string);
+
+    Writes a UTF-8-encoded string to the file and advances the file pointer.
+
+FileStream:writeFloat(value[, little_endian]);
+FileStream:writeDouble(value[, little_endian]);
+
+    Writes a floating point value to the file and advances the file pointer.
+    `little_endian` is optional and defaults to false.
+
+FileStream:writeInt(value[, size[, little_endian]]);
+FileStream:writeUInt(value[, size[, little_endian]]);
+
+    Writes a signed or unsigned integer to the file and advances the file
+    pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
+    value to write.  This allows integer values of up to 48 bits to be written.
+
+    It is a TypeError if `value` is too large or small to be represented.
 
 
 Map Engine
