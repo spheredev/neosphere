@@ -46,12 +46,14 @@ static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_readDouble   (duk_context* ctx);
 static duk_ret_t js_FileStream_readFloat    (duk_context* ctx);
 static duk_ret_t js_FileStream_readInt      (duk_context* ctx);
+static duk_ret_t js_FileStream_readPString  (duk_context* ctx);
 static duk_ret_t js_FileStream_readString   (duk_context* ctx);
 static duk_ret_t js_FileStream_readUInt     (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
 static duk_ret_t js_FileStream_writeDouble  (duk_context* ctx);
 static duk_ret_t js_FileStream_writeFloat   (duk_context* ctx);
 static duk_ret_t js_FileStream_writeInt     (duk_context* ctx);
+static duk_ret_t js_FileStream_writePString (duk_context* ctx);
 static duk_ret_t js_FileStream_writeString  (duk_context* ctx);
 static duk_ret_t js_FileStream_writeUInt    (duk_context* ctx);
 
@@ -63,6 +65,11 @@ struct kev_file
 	char*           filename;
 	bool            is_dirty;
 };
+
+static bool read_vsize_int   (sfs_file_t* file, intmax_t* p_value, int size, bool is_le);
+static bool read_vsize_uint  (sfs_file_t* file, uintmax_t* p_value, int size, bool is_le);
+static bool write_vsize_int  (sfs_file_t* file, intmax_t value, int size, bool is_le);
+static bool write_vsize_uint (sfs_file_t* file, uintmax_t value, int size, bool is_le);
 
 static unsigned int s_next_file_id = 0;
 
@@ -248,6 +255,125 @@ write_string_rec(kev_file_t* file, const char* key, const char* value)
 	file->is_dirty = true;
 }
 
+static bool
+read_vsize_int(sfs_file_t* file, intmax_t* p_value, int size, bool is_le)
+{
+	// NOTE: supports decoding values up to 48-bit (6 bytes).  don't specify
+	//       size > 6 unless you want a segfault!
+
+	uint8_t data[6];
+	int     mul = 1;
+	
+	int i;
+	
+	if (sfs_fread(data, 1, size, file) != size)
+		return false;
+	
+	// variable-sized int decoding adapted from Node.js
+	if (is_le) {
+		*p_value = data[i = 0];
+		while (++i < size && (mul *= 0x100))
+			*p_value += data[i] * mul;
+	}
+	else {
+		*p_value = data[i = size - 1];
+		while (i > 0 && (mul *= 0x100))
+			*p_value += data[--i] * mul;
+	}
+	if (*p_value >= mul * 0x80)
+		*p_value -= pow(2, 8 * size);
+
+	return true;
+}
+
+static bool
+read_vsize_uint(sfs_file_t* file, uintmax_t* p_value, int size, bool is_le)
+{
+	// NOTE: supports decoding values up to 48-bit (6 bytes).  don't specify
+	//       size > 6 unless you want a segfault!
+
+	uint8_t data[6];
+	int     mul = 1;
+
+	int i;
+
+	if (sfs_fread(data, 1, size, file) != size)
+		return false;
+
+	// variable-sized uint decoding adapted from Node.js
+	if (is_le) {
+		*p_value = data[i = 0];
+		while (++i < size && (mul *= 0x100))
+			*p_value += data[i] * mul;
+	}
+	else {
+		*p_value = data[--size];
+		while (size > 0 && (mul *= 0x100))
+			*p_value += data[--size] * mul;
+	}
+
+	return true;
+}
+
+static bool
+write_vsize_int(sfs_file_t* file, intmax_t value, int size, bool is_le)
+{
+	// NOTE: supports encoding values up to 48-bit (6 bytes).  don't specify
+	//       size > 6 unless you want a segfault!
+
+	uint8_t data[6];
+	int     mul = 1;
+	int     sub = 0;
+
+	int i;
+
+	// variable-sized int encoding adapted from Node.js
+	if (is_le) {
+		data[i = 0] = value & 0xFF;
+		while (++i < size && (mul *= 0x100)) {
+			if (value < 0 && sub == 0 && data[i - 1] != 0)
+				sub = 1;
+			data[i] = (value / mul - sub) & 0xFF;
+		}
+	}
+	else {
+		data[i = size - 1] = value & 0xFF;
+		while (--i >= 0 && (mul *= 0x100)) {
+			if (value < 0 && sub == 0 && data[i + 1] != 0)
+				sub = 1;
+			data[i] = (value / mul - sub) & 0xFF;
+		}
+	}
+	
+	return sfs_fwrite(data, 1, size, file) == size;
+}
+
+static bool
+write_vsize_uint(sfs_file_t* file, uintmax_t value, int size, bool is_le)
+{
+	// NOTE: supports encoding values up to 48-bit (6 bytes).  don't specify
+	//       size > 6 unless you want a segfault!
+	
+	uint8_t data[6];
+	int     mul = 1;
+
+	int i;
+
+	// variable-sized uint encoding adapted from Node.js
+	if (is_le) {
+		data[i = 0] = value & 0xFF;
+		while (++i < size && (mul *= 0x100))
+			data[i] = (value / mul) & 0xFF;
+	}
+	else {
+		data[i = size - 1] = value & 0xFF;
+		while (--i >= 0 && (mul *= 0x100))
+			data[i] = (value / mul) & 0xFF;
+	}
+
+	return sfs_fwrite(data, 1, size, file) == size;
+}
+
 void
 init_file_api(void)
 {
@@ -298,12 +424,14 @@ init_file_api(void)
 	register_api_method(g_duk, "FileStream", "readDouble", js_FileStream_readDouble);
 	register_api_method(g_duk, "FileStream", "readFloat", js_FileStream_readFloat);
 	register_api_method(g_duk, "FileStream", "readInt", js_FileStream_readInt);
+	register_api_method(g_duk, "FileStream", "readPString", js_FileStream_readPString);
 	register_api_method(g_duk, "FileStream", "readString", js_FileStream_readString);
 	register_api_method(g_duk, "FileStream", "readUInt", js_FileStream_readUInt);
 	register_api_method(g_duk, "FileStream", "write", js_FileStream_write);
 	register_api_method(g_duk, "FileStream", "writeDouble", js_FileStream_writeDouble);
 	register_api_method(g_duk, "FileStream", "writeFloat", js_FileStream_writeFloat);
 	register_api_method(g_duk, "FileStream", "writeInt", js_FileStream_writeInt);
+	register_api_method(g_duk, "FileStream", "writePString", js_FileStream_writePString);
 	register_api_method(g_duk, "FileStream", "writeString", js_FileStream_writeString);
 	register_api_method(g_duk, "FileStream", "writeUInt", js_FileStream_writeUInt);
 }
@@ -1050,6 +1178,36 @@ js_FileStream_readInt(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FileStream_readPString(duk_context* ctx)
+{
+	int          argc;
+	void*        buffer;
+	sfs_file_t*  file;
+	int          len_size;
+	uintmax_t    length;
+	bool         want_le;
+
+	argc = duk_get_top(ctx);
+	len_size = duk_require_int(ctx, 0);
+	want_le = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "FileStream");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+	if (len_size < 1 || len_size > 4)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "lensize must be in [1-4] range (got: %d)", len_size);
+	if (!read_vsize_uint(file, &length, len_size, want_le))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read pstring from file");
+	buffer = malloc((size_t)length);
+	if (sfs_fread(buffer, 1, (size_t)length, file) != (size_t)length)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read pstring from file");
+	duk_push_lstring(ctx, buffer, (size_t)length);
+	free(buffer);
+	return 1;
+}
+
+static duk_ret_t
 js_FileStream_readString(duk_context* ctx)
 {
 	// FileStream:readString([numBytes]);
@@ -1265,6 +1423,40 @@ js_FileStream_writeInt(duk_context* ctx)
 
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
+	return 0;
+}
+
+static duk_ret_t
+js_FileStream_writePString(duk_context* ctx)
+{
+	int         argc;
+	const void* data;
+	sfs_file_t* file;
+	int         len_size;
+	uintmax_t   max_len;
+	duk_size_t  string_len;
+	bool        use_le;
+
+	argc = duk_get_top(ctx);
+	data = duk_require_lstring(ctx, 0, &string_len);
+	len_size = duk_require_int(ctx, 1);
+	use_le = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "FileStream");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+	if (len_size < 1 || len_size > 4)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "lensize must be in [1-4] range (got: %d)", len_size);
+	max_len = (uintmax_t)pow(2, len_size * 8) - 1;
+	if (string_len > max_len)
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "string length is too large to fit in %d bytes", len_size);
+	if (!write_vsize_uint(file, (uintmax_t)string_len, len_size, use_le)
+		|| sfs_fwrite(data, 1, string_len, file) != string_len)
+	{
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write pstring to file");
+	}
 	return 0;
 }
 

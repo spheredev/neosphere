@@ -1572,12 +1572,6 @@ FileStream:read([numBytes]);
     the entire file without affecting the file position. The file must be opened
     for reading.
 
-FileStream:readString([numBytes]);
-
-    Reads data from the file and encodes it as a UTF-8 string.  `numBytes` can
-    be omitted to read in the entire file without affecting the file pointer.
-    The file must be opened for reading.
-
 FileStream:readFloat([little_endian]);
 FileStream:readDouble([little_endian]);
 
@@ -1591,14 +1585,25 @@ FileStream:readUInt([size[, little_endian]]);
     pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
     value to read.  This allows integer values of up to 48 bits to be read.
 
+FileStream:readPString(lenSize[, little_endian]);
+
+    Reads a length-prefixed string from the file.  `lenSize` specifies the
+    number of bytes [1-4] used to encode the string length.  `little_endian` is
+    optional and defaults to false.
+
+FileStream:readString([numBytes]);
+
+    Reads a fixed-length string from the file.  `numBytes` specifies how many
+    bytes to read and can be omitted to read the entire file at once without
+    affecting the file pointer.
+    
+    Note: Strings in minisphere are UTF-8 encoded.  As a result, the number of
+          bytes in a string may not match the number of characters.
+
 FileStream:write(data);
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
-
-FileStream:writeString(string);
-
-    Writes a UTF-8-encoded string to the file and advances the file pointer.
 
 FileStream:writeFloat(value[, little_endian]);
 FileStream:writeDouble(value[, little_endian]);
@@ -1613,7 +1618,22 @@ FileStream:writeUInt(value[, size[, little_endian]]);
     pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
     value to write.  This allows integer values of up to 48 bits to be written.
 
-    It is a TypeError if `value` is too large or small to be represented.
+    Note: If `value` is too large or small to be represented in `size` bytes,
+          this method will throw a TypeError.
+
+FileStream:writePString(string, lenSize[, little_endian]);
+
+    Writes a UTF-8-encoded, length-prefixed (Pascal-style) string to the file
+    and advances the file pointer.  `lenSize` specifies the number of bytes [1-4]
+    used to encode the string length.  `little_endian` is optional and defaults
+    to false.
+    
+    Note: If the string is too long for its length to be encoded in `lenSize`
+		  bytes, this method will throw a TypeError.
+
+FileStream:writeString(string);
+
+    Writes a UTF-8-encoded string to the file and advances the file pointer.
 
 
 Map Engine
