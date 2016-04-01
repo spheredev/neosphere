@@ -355,7 +355,7 @@ namespace minisphere.Gdk.Debugger
         /// <returns></returns>
         public async Task StepOver()
         {
-            await DoRequest(DValueTag.REQ, Request.StepOut);
+            await DoRequest(DValueTag.REQ, Request.StepOver);
         }
 
         private async Task<DMessage> DoRequest(params dynamic[] values)

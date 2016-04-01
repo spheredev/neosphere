@@ -1,12 +1,14 @@
 minisphere Changelog
 ====================
 
-v3.1.0 - TBD
+v3.0.2 - TBD
 ------------
 
-* Improves the file API: The FileStream object now has methods for directly
-  reading integers, strings, and floats in addition to the standard
+* Improves the file API: The FileStream object now includes methods for directly
+  reading and writing integers, strings, and floats in addition to the standard
   ArrayBuffer-based I/O.
+* Fixes a bug in the Sphere Studio debugger where pressing F10 would perform a
+  Step Out instead of Step Over.
 
 v3.0.1 - March 29, 2016
 -----------------------
