@@ -7,6 +7,7 @@ v3.0.2 - TBD
 * Improves the file API: The FileStream object now includes methods for directly
   reading and writing integers, strings, and floats in addition to the standard
   ArrayBuffer-based I/O.
+* The Windows build now uses Allegro 5.2.0, the latest stable version.
 * Fixes a bug in the Sphere Studio debugger where pressing F10 would perform a
   Step Out instead of Step Over.
 
