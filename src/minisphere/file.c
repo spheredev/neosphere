@@ -66,10 +66,10 @@ struct kev_file
 	bool            is_dirty;
 };
 
-static bool read_vsize_int   (sfs_file_t* file, intmax_t* p_value, int size, bool is_le);
-static bool read_vsize_uint  (sfs_file_t* file, uintmax_t* p_value, int size, bool is_le);
-static bool write_vsize_int  (sfs_file_t* file, intmax_t value, int size, bool is_le);
-static bool write_vsize_uint (sfs_file_t* file, uintmax_t value, int size, bool is_le);
+static bool read_vsize_int   (sfs_file_t* file, intmax_t* p_value, int size, bool little_endian);
+static bool read_vsize_uint  (sfs_file_t* file, intmax_t* p_value, int size, bool little_endian);
+static bool write_vsize_int  (sfs_file_t* file, intmax_t value, int size, bool little_endian);
+static bool write_vsize_uint (sfs_file_t* file, intmax_t value, int size, bool little_endian);
 
 static unsigned int s_next_file_id = 0;
 
@@ -256,7 +256,7 @@ write_string_rec(kev_file_t* file, const char* key, const char* value)
 }
 
 static bool
-read_vsize_int(sfs_file_t* file, intmax_t* p_value, int size, bool is_le)
+read_vsize_int(sfs_file_t* file, intmax_t* p_value, int size, bool little_endian)
 {
 	// NOTE: supports decoding values up to 48-bit (6 bytes).  don't specify
 	//       size > 6 unless you want a segfault!
@@ -270,7 +270,7 @@ read_vsize_int(sfs_file_t* file, intmax_t* p_value, int size, bool is_le)
 		return false;
 	
 	// variable-sized int decoding adapted from Node.js
-	if (is_le) {
+	if (little_endian) {
 		*p_value = data[i = 0];
 		while (++i < size && (mul *= 0x100))
 			*p_value += data[i] * mul;
@@ -287,7 +287,7 @@ read_vsize_int(sfs_file_t* file, intmax_t* p_value, int size, bool is_le)
 }
 
 static bool
-read_vsize_uint(sfs_file_t* file, uintmax_t* p_value, int size, bool is_le)
+read_vsize_uint(sfs_file_t* file, intmax_t* p_value, int size, bool little_endian)
 {
 	// NOTE: supports decoding values up to 48-bit (6 bytes).  don't specify
 	//       size > 6 unless you want a segfault!
@@ -301,7 +301,7 @@ read_vsize_uint(sfs_file_t* file, uintmax_t* p_value, int size, bool is_le)
 		return false;
 
 	// variable-sized uint decoding adapted from Node.js
-	if (is_le) {
+	if (little_endian) {
 		*p_value = data[i = 0];
 		while (++i < size && (mul *= 0x100))
 			*p_value += data[i] * mul;
@@ -316,7 +316,7 @@ read_vsize_uint(sfs_file_t* file, uintmax_t* p_value, int size, bool is_le)
 }
 
 static bool
-write_vsize_int(sfs_file_t* file, intmax_t value, int size, bool is_le)
+write_vsize_int(sfs_file_t* file, intmax_t value, int size, bool little_endian)
 {
 	// NOTE: supports encoding values up to 48-bit (6 bytes).  don't specify
 	//       size > 6 unless you want a segfault!
@@ -328,7 +328,7 @@ write_vsize_int(sfs_file_t* file, intmax_t value, int size, bool is_le)
 	int i;
 
 	// variable-sized int encoding adapted from Node.js
-	if (is_le) {
+	if (little_endian) {
 		data[i = 0] = value & 0xFF;
 		while (++i < size && (mul *= 0x100)) {
 			if (value < 0 && sub == 0 && data[i - 1] != 0)
@@ -349,7 +349,7 @@ write_vsize_int(sfs_file_t* file, intmax_t value, int size, bool is_le)
 }
 
 static bool
-write_vsize_uint(sfs_file_t* file, uintmax_t value, int size, bool is_le)
+write_vsize_uint(sfs_file_t* file, intmax_t value, int size, bool little_endian)
 {
 	// NOTE: supports encoding values up to 48-bit (6 bytes).  don't specify
 	//       size > 6 unless you want a segfault!
@@ -360,7 +360,7 @@ write_vsize_uint(sfs_file_t* file, uintmax_t value, int size, bool is_le)
 	int i;
 
 	// variable-sized uint encoding adapted from Node.js
-	if (is_le) {
+	if (little_endian) {
 		data[i = 0] = value & 0xFF;
 		while (++i < size && (mul *= 0x100))
 			data[i] = (value / mul) & 0xFF;
@@ -611,7 +611,7 @@ js_KevFile_get_numKeys(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file was closed");
 	duk_push_int(ctx, get_record_count(file));
 	return 1;
 }
@@ -628,7 +628,7 @@ js_KevFile_getKey(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): file was closed");
 	if (key = get_record_name(file, index))
 		duk_push_string(ctx, key);
 	else
@@ -645,7 +645,7 @@ js_KevFile_flush(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file was closed");
 	save_kev_file(file);
 	return 0;
 }
@@ -680,7 +680,7 @@ js_KevFile_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): file was closed");
 	switch (duk_get_type(ctx, 1)) {
 	case DUK_TYPE_BOOLEAN:
 		def_bool = duk_get_boolean(ctx, 1);
@@ -710,7 +710,7 @@ js_KevFile_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "KevFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): file was closed");
 	write_string_rec(file, key, duk_to_string(ctx, 1));
 	return 0;
 }
@@ -797,7 +797,7 @@ js_RawFile_get_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
 	duk_push_int(ctx, sfs_ftell(file));
 	return 1;
 }
@@ -813,7 +813,7 @@ js_RawFile_set_position(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
 	if (!sfs_fseek(file, new_pos, SEEK_SET))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
 	return 0;
@@ -829,7 +829,7 @@ js_RawFile_get_size(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size: file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size: file was closed");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_int(ctx, sfs_ftell(file));
@@ -847,7 +847,7 @@ js_RawFile_close(duk_context* ctx)
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file was closed");
 	sfs_fclose(file);
 	return 0;
 }
@@ -867,7 +867,7 @@ js_RawFile_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
 	if (n_args < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
@@ -900,7 +900,7 @@ js_RawFile_readString(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
 	if (n_args < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
@@ -929,7 +929,7 @@ js_RawFile_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "RawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): file was closed");
 	if (duk_is_string(ctx, 0))
 		data = duk_get_lstring(ctx, 0, &write_size);
 	else if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
@@ -962,7 +962,7 @@ js_new_FileStream(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream(): unable to open file `%s` with mode `%s`",
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s` in mode `%s`",
 			filename, mode);
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;
@@ -1012,7 +1012,7 @@ js_FileStream_get_length(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:length: file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, sfs_ftell(file));
@@ -1054,14 +1054,14 @@ js_FileStream_read(duk_context* ctx)
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:read(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FileStream:read(): bytes must be positive (%d)", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "string length must be zero or greater");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	num_bytes = (int)sfs_fread(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
@@ -1076,22 +1076,22 @@ js_FileStream_readDouble(duk_context* ctx)
 	int         argc;
 	uint8_t     data[8];
 	sfs_file_t* file;
-	bool        use_le;
+	bool        little_endian;
 	double      value;
 
 	int i;
 
 	argc = duk_get_top(ctx);
-	use_le = argc >= 1 ? duk_require_boolean(ctx, 0) : false;
+	little_endian = argc >= 1 ? duk_require_boolean(ctx, 0) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (sfs_fread(data, 1, 8, file) != 8)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error reading from FileStream");
-	if (use_le == is_cpu_little_endian())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read double from file");
+	if (little_endian == is_cpu_little_endian())
 		memcpy(&value, data, 8);
 	else {
 		for (i = 0; i < 8; ++i)
@@ -1107,22 +1107,22 @@ js_FileStream_readFloat(duk_context* ctx)
 	int         argc;
 	uint8_t     data[8];
 	sfs_file_t* file;
-	bool        use_le;
+	bool        little_endian;
 	float       value;
 
 	int i;
 
 	argc = duk_get_top(ctx);
-	use_le = argc >= 1 ? duk_require_boolean(ctx, 0) : false;
+	little_endian = argc >= 1 ? duk_require_boolean(ctx, 0) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (sfs_fread(data, 1, 4, file) != 4)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error reading from FileStream");
-	if (use_le == is_cpu_little_endian())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read float from file");
+	if (little_endian == is_cpu_little_endian())
 		memcpy(&value, data, 4);
 	else {
 		for (i = 0; i < 4; ++i)
@@ -1136,43 +1136,24 @@ static duk_ret_t
 js_FileStream_readInt(duk_context* ctx)
 {
 	int         argc;
-	uint8_t     data[6];
 	sfs_file_t* file;
-	intmax_t    mul = 1;
+	bool        little_endian;
 	int         num_bytes;
-	bool        use_le;
 	intmax_t    value;
-
-	int i;
 
 	argc = duk_get_top(ctx);
 	num_bytes = duk_require_int(ctx, 0);
-	use_le = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
+	little_endian = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (num_bytes < 1 || num_bytes > 6)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "number of bytes must be [1-6]");
-	if (sfs_fread(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
-
-	// the code below is adapted from Node.js buffer code.
-	if (use_le) {
-		value = data[i = 0];
-		while (++i < num_bytes && (mul *= 0x100))
-			value += data[i] * mul;
-	}
-	else {
-		value = data[i = num_bytes - 1];
-		while (i > 0 && (mul *= 0x100))
-			value += data[--i] * mul;
-	}
-	if (value >= mul * 0x80)
-		value -= pow(2, 8 * num_bytes);
-
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "int byte size must be in [1-6] range");
+	if (!read_vsize_int(file, &value, num_bytes, little_endian))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read int from file");
 	duk_push_number(ctx, (double)value);
 	return 1;
 }
@@ -1183,21 +1164,21 @@ js_FileStream_readPString(duk_context* ctx)
 	int          argc;
 	void*        buffer;
 	sfs_file_t*  file;
-	int          len_size;
-	uintmax_t    length;
-	bool         want_le;
+	intmax_t     length;
+	bool         little_endian;
+	int          uint_size;
 
 	argc = duk_get_top(ctx);
-	len_size = duk_require_int(ctx, 0);
-	want_le = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
+	uint_size = duk_require_int(ctx, 0);
+	little_endian = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
-	if (len_size < 1 || len_size > 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "lensize must be in [1-4] range (got: %d)", len_size);
-	if (!read_vsize_uint(file, &length, len_size, want_le))
+	if (uint_size < 1 || uint_size > 4)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "length bytes must be in [1-4] range (got: %d)", uint_size);
+	if (!read_vsize_uint(file, &length, uint_size, little_endian))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read pstring from file");
 	buffer = malloc((size_t)length);
 	if (sfs_fread(buffer, 1, (size_t)length, file) != (size_t)length)
@@ -1228,14 +1209,14 @@ js_FileStream_readString(duk_context* ctx)
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:readString(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "FileStream:readString(): bytes must be positive (%i)", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "string length must be zero or greater");
 	buffer = malloc(num_bytes);
 	num_bytes = (int)sfs_fread(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
@@ -1249,41 +1230,24 @@ static duk_ret_t
 js_FileStream_readUInt(duk_context* ctx)
 {
 	int         argc;
-	uint8_t     data[6];
 	sfs_file_t* file;
-	uintmax_t   mul = 1;
+	bool        little_endian;
 	int         num_bytes;
-	bool        use_le;
-	uintmax_t   value;
-
-	int i;
+	intmax_t     value;
 
 	argc = duk_get_top(ctx);
 	num_bytes = duk_require_int(ctx, 0);
-	use_le = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
+	little_endian = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (num_bytes < 1 || num_bytes > 6)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "number of bytes must be [1-6]");
-	if (sfs_fread(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
-
-	// the code below is adapted from Node.js buffer code.
-	if (use_le) {
-		value = data[i = 0];
-		while (++i < num_bytes && (mul *= 0x100))
-			value += data[i] * mul;
-	}
-	else {
-		value = data[--num_bytes];
-		while (num_bytes > 0 && (mul *= 0x100))
-			value += data[--num_bytes] * mul;
-	}
-
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "uint byte size must be in [1-6] range");
+	if (!read_vsize_uint(file, &value, num_bytes, little_endian))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read uint from file");
 	duk_push_number(ctx, (double)value);
 	return 1;
 }
@@ -1302,9 +1266,9 @@ js_FileStream_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): error writing to file");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write data to file");
 	return 0;
 }
 
@@ -1314,28 +1278,28 @@ js_FileStream_writeDouble(duk_context* ctx)
 	int         argc;
 	uint8_t     data[8];
 	sfs_file_t* file;
-	bool        use_le;
+	bool        little_endian;
 	double      value;
 
 	int i;
 
 	argc = duk_get_top(ctx);
-	value = (uintmax_t)duk_require_number(ctx, 0);
-	use_le = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
+	value = duk_require_number(ctx, 0);
+	little_endian = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
-	if (use_le == is_cpu_little_endian())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+	if (little_endian == is_cpu_little_endian())
 		memcpy(data, &value, 8);
 	else {
 		for (i = 0; i < 8; ++i)
 			data[i] = ((uint8_t*)&value)[7 - i];
 	}
 	if (sfs_fwrite(data, 1, 8, file) != 8)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write double to file");
 	return 0;
 }
 
@@ -1345,28 +1309,28 @@ js_FileStream_writeFloat(duk_context* ctx)
 	int         argc;
 	uint8_t     data[4];
 	sfs_file_t* file;
-	bool        use_le;
+	bool        little_endian;
 	float       value;
 
 	int i;
 
 	argc = duk_get_top(ctx);
-	value = (uintmax_t)duk_require_number(ctx, 0);
-	use_le = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
+	value = duk_require_number(ctx, 0);
+	little_endian = argc >= 2 ? duk_require_boolean(ctx, 1) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
-	if (use_le == is_cpu_little_endian())
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+	if (little_endian == is_cpu_little_endian())
 		memcpy(data, &value, 4);
 	else {
 		for (i = 0; i < 4; ++i)
 			data[i] = ((uint8_t*)&value)[3 - i];
 	}
 	if (sfs_fwrite(data, 1, 4, file) != 4)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write float to file");
 	return 0;
 }
 
@@ -1374,55 +1338,31 @@ static duk_ret_t
 js_FileStream_writeInt(duk_context* ctx)
 {
 	int         argc;
-	uint8_t     data[6];
 	sfs_file_t* file;
+	bool        little_endian;
 	intmax_t    min_value;
 	intmax_t    max_value;
-	intmax_t    mul = 1;
 	int         num_bytes;
-	int         sub = 0;
-	bool        use_le;
 	intmax_t    value;
 
-	int i;
-
 	argc = duk_get_top(ctx);
-	value = (uintmax_t)duk_require_number(ctx, 0);
+	value = (intmax_t)duk_require_number(ctx, 0);
 	num_bytes = duk_require_int(ctx, 1);
-	use_le = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
+	little_endian = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (num_bytes < 1 || num_bytes > 6)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "number of bytes must be [1-6]");
-	min_value = (intmax_t)pow(-2, num_bytes * 8 - 1);
-	max_value = (intmax_t)pow(2, num_bytes * 8 - 1) - 1;
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "int byte size must be in [1-6] range");
+	min_value = pow(-2, num_bytes * 8 - 1);
+	max_value = pow(2, num_bytes * 8 - 1) - 1;
 	if (value < min_value || value > max_value)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "value is too large to store in %d bytes", num_bytes);
-
-	// the code below is adapted from Node.js buffer code.
-	if (use_le) {
-		data[i = 0] = value & 0xFF;
-		while (++i < num_bytes && (mul *= 0x100)) {
-			if (value < 0 && sub == 0 && data[i - 1] != 0)
-				sub = 1;
-			data[i] = (value / mul - sub) & 0xFF;
-		}
-	}
-	else {
-		data[i = num_bytes - 1] = value & 0xFF;
-		while (--i >= 0 && (mul *= 0x100)) {
-			if (value < 0 && sub == 0 && data[i + 1] != 0)
-				sub = 1;
-			data[i] = (value / mul - sub) & 0xFF;
-		}
-	}
-
-	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "value is unrepresentable in `%d` bytes", num_bytes);
+	if (!write_vsize_int(file, value, num_bytes, little_endian))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write int to file");
 	return 0;
 }
 
@@ -1430,30 +1370,32 @@ static duk_ret_t
 js_FileStream_writePString(duk_context* ctx)
 {
 	int         argc;
-	const void* data;
 	sfs_file_t* file;
-	int         len_size;
-	uintmax_t   max_len;
+	bool        little_endian;
+	intmax_t    max_len;
+	intmax_t    num_bytes;
+	const char* string;
 	duk_size_t  string_len;
-	bool        use_le;
+	int         uint_size;
 
 	argc = duk_get_top(ctx);
-	data = duk_require_lstring(ctx, 0, &string_len);
-	len_size = duk_require_int(ctx, 1);
-	use_le = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
+	string = duk_require_lstring(ctx, 0, &string_len);
+	uint_size = duk_require_int(ctx, 1);
+	little_endian = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
-	if (len_size < 1 || len_size > 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "lensize must be in [1-4] range (got: %d)", len_size);
-	max_len = (uintmax_t)pow(2, len_size * 8) - 1;
-	if (string_len > max_len)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "string length is too large to fit in %d bytes", len_size);
-	if (!write_vsize_uint(file, (uintmax_t)string_len, len_size, use_le)
-		|| sfs_fwrite(data, 1, string_len, file) != string_len)
+	if (uint_size < 1 || uint_size > 4)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "length bytes must be in [1-4] range", uint_size);
+	max_len = pow(2, uint_size * 8) - 1;
+	num_bytes = (intmax_t)string_len;
+	if (num_bytes > max_len)
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "string is too long for `%d`-byte length", uint_size);
+	if (!write_vsize_uint(file, num_bytes, uint_size, little_endian)
+		|| sfs_fwrite(string, 1, string_len, file) != string_len)
 	{
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write pstring to file");
 	}
@@ -1474,9 +1416,9 @@ js_FileStream_writeString(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): file has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream:write(): error writing to file");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write string to file");
 	return 0;
 }
 
@@ -1484,45 +1426,28 @@ static duk_ret_t
 js_FileStream_writeUInt(duk_context* ctx)
 {
 	int         argc;
-	uint8_t     data[6];
 	sfs_file_t* file;
-	uintmax_t   max_value;
-	uintmax_t   mul = 1;
+	bool        little_endian;
+	intmax_t    max_value;
 	int         num_bytes;
-	bool        use_le;
-	uintmax_t   value;
-
-	int i;
+	intmax_t    value;
 
 	argc = duk_get_top(ctx);
-	value = (uintmax_t)duk_require_number(ctx, 0);
+	value = (intmax_t)duk_require_number(ctx, 0);
 	num_bytes = duk_require_int(ctx, 1);
-	use_le = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
+	little_endian = argc >= 3 ? duk_require_boolean(ctx, 2) : false;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (num_bytes < 1 || num_bytes > 6)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "number of bytes must be [1-6]");
-	max_value = (uintmax_t)pow(2, num_bytes * 8) - 1;
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "uint byte size must be in [1-6] range");
+	max_value = pow(2, num_bytes * 8) - 1;
 	if (value < 0 || value > max_value)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "value is too large to store in %d bytes", num_bytes);
-
-	// the code below is adapted from Node.js buffer code.
-	if (use_le) {
-		data[i = 0] = value & 0xFF;
-		while (++i < num_bytes && (mul *= 0x100))
-			data[i] = (value / mul) & 0xFF;
-	}
-	else {
-		data[i = num_bytes - 1] = value & 0xFF;
-		while (--i >= 0 && (mul *= 0x100))
-			data[i] = (value / mul) & 0xFF;
-	}
-
-	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to FileStream");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "value is unrepresentable in `%d` bytes", num_bytes);
+	if (!write_vsize_uint(file, value, num_bytes, little_endian))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write int to file");
 	return 0;
 }

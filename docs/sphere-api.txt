@@ -1587,9 +1587,9 @@ FileStream:readUInt([size[, little_endian]]);
 
 FileStream:readPString(lenSize[, little_endian]);
 
-    Reads a length-prefixed string from the file.  `lenSize` specifies the
-    number of bytes [1-4] used to encode the string length.  `little_endian` is
-    optional and defaults to false.
+    Reads a length-prefixed (Pascal) string from the file.  `lenSize` specifies
+    the number of bytes [1-4] used to encode the string length.  `little_endian`
+    is optional and defaults to false.
 
 FileStream:readString([numBytes]);
 
