@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.0.2 - TBD
-------------
+v3.0.2 - April 1, 2016
+----------------------
 
 * Improves the file API: The FileStream object now includes methods for directly
   reading and writing integers, strings, and floats in addition to the standard
