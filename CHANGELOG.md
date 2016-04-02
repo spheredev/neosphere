@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v3.1.0 - TBD
+------------
+
+* While debugging in Sphere Studio, variables are now sorted alphabetically in
+  the Debugger pane.
+
 v3.0.2 - April 1, 2016
 ----------------------
 

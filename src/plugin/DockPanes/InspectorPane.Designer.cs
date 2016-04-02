@@ -64,6 +64,7 @@
             this.LocalsView.Name = "LocalsView";
             this.LocalsView.Size = new System.Drawing.Size(387, 333);
             this.LocalsView.SmallImageList = this.imagesVarList;
+            this.LocalsView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.LocalsView.TabIndex = 0;
             this.LocalsView.UseCompatibleStateImageBehavior = false;
             this.LocalsView.View = System.Windows.Forms.View.Details;

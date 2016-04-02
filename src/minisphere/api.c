@@ -79,7 +79,7 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static duk_ret_t duk_handle_require (duk_context* ctx);
+static duk_ret_t duk_load_module (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static void*      s_print_ptr;
@@ -136,7 +136,7 @@ initialize_api(duk_context* ctx)
 
 	// register module search callback
 	duk_get_global_string(ctx, "Duktape");
-	duk_push_c_function(ctx, duk_handle_require, DUK_VARARGS);
+	duk_push_c_function(ctx, duk_load_module, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "modSearch");
 	duk_pop(ctx);
 
@@ -462,7 +462,7 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 }
 
 static duk_ret_t
-duk_handle_require(duk_context* ctx)
+duk_load_module(duk_context* ctx)
 {
 	vector_t*   filenames;
 	lstring_t*  filename;
