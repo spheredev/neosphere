@@ -6,11 +6,11 @@
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("module must be loaded using require()");
+    throw new TypeError("script must be loaded with require()");
 }
 
-var console = require('./console');
-var scenes  = require('./scenes');
+const console = require('./console');
+const scenes  = require('./scenes');
 
 var music =
 module.exports = (function()

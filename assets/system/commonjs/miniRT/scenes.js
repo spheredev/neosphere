@@ -9,11 +9,11 @@
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("module must be loaded using require()");
+    throw new TypeError("script must be loaded with require()");
 }
 
-var link    = require('link');
-var threads = require('./threads');
+const link    = require('link');
+const threads = require('./threads');
 
 var screenMask = new Color(0, 0, 0, 0);
 

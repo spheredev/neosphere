@@ -6,10 +6,10 @@
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("module must be loaded using require()");
+    throw new TypeError("script must be loaded with require()");
 }
 
-var link = require('link');
+const link = require('link');
 
 // threads object
 // represents the threader.

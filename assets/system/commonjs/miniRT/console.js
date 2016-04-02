@@ -6,7 +6,7 @@
 
 if (typeof exports === 'undefined')
 {
-	throw new TypeError("module must be loaded using require()");
+	throw new TypeError("script must be loaded with require()");
 }
 
 const link    = require('link');
