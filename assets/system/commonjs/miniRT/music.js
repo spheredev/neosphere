@@ -6,7 +6,7 @@
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("miniRT/music must be loaded using require()");
+    throw new TypeError("module must be loaded using require()");
 }
 
 var console = require('./console');

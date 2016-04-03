@@ -6,12 +6,12 @@
 
 if (typeof exports === 'undefined')
 {
-	throw new TypeError("miniRT/console must be loaded using require()");
+	throw new TypeError("module must be loaded using require()");
 }
 
-var link    = require('link');
-var scenes  = require('./scenes');
-var threads = require('./threads');
+const link    = require('link');
+const scenes  = require('./scenes');
+const threads = require('./threads');
 
 var console =
 module.exports = (function() {

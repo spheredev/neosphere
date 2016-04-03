@@ -9,7 +9,7 @@
 
 if (typeof exports === 'undefined')
 {
-    throw new TypeError("miniRT/scenes must be loaded using require()");
+    throw new TypeError("module must be loaded using require()");
 }
 
 var link    = require('link');
