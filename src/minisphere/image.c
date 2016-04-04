@@ -746,15 +746,23 @@ js_GrabImage(duk_context* ctx)
 static duk_ret_t
 js_new_Image(duk_context* ctx)
 {
-	int         n_args;
-	const char* filename;
-	color_t     fill_color;
-	image_t*    image;
-	image_t*    src_image;
-	int         width, height;
+	const color_t* buffer;
+	size_t         buffer_size;
+	const char*    filename;
+	color_t        fill_color;
+	int            height;
+	image_t*       image;
+	image_lock_t*  lock;
+	int            num_args;
+	color_t*       p_line;
+	image_t*       src_image;
+	int            width;
 
-	n_args = duk_get_top(ctx);
-	if (n_args >= 3) {
+	int y;
+
+	num_args = duk_get_top(ctx);
+	if (num_args >= 3 && duk_is_sphere_obj(ctx, 2, "Color")) {
+		// create an Image filled with a single pixel value
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		fill_color = duk_require_sphere_color(ctx, 2);
@@ -762,12 +770,33 @@ js_new_Image(duk_context* ctx)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create new image");
 		fill_image(image, fill_color);
 	}
+	else if (num_args >= 3 && (buffer = duk_get_buffer_data(ctx, 2, &buffer_size))) {
+		// create an Image from an ArrayBuffer or similar object
+		width = duk_require_int(ctx, 0);
+		height = duk_require_int(ctx, 1);
+		if (buffer_size < width * height * sizeof(color_t))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "buffer is too small to describe a %dx%d image", width, height);
+		if (!(image = create_image(width, height)))
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create image");
+		if (!(lock = lock_image(image))) {
+			free_image(image);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to lock pixels for writing");
+		}
+		p_line = lock->pixels;
+		for (y = 0; y < height; ++y) {
+			memcpy(p_line, buffer + y * width, width * sizeof(color_t));
+			p_line += lock->pitch;
+		}
+		unlock_image(image, lock);
+	}
 	else if (duk_is_sphere_obj(ctx, 0, "Surface")) {
+		// create an Image from a Surface
 		src_image = duk_require_sphere_surface(ctx, 0);
 		if (!(image = clone_image(src_image)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create image from surface");
 	}
 	else {
+		// create an Image by loading an image file
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = load_image(filename);
 		if (image == NULL)
