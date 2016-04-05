@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.0.3 - TBD
-------------
+v3.0.3 - April 5, 2016
+----------------------
 
 * While debugging in Sphere Studio, variables are now sorted alphabetically in
   the Debugger pane.
@@ -10,9 +10,6 @@ v3.0.3 - TBD
   source for both the vertex and fragment shaders, causing the call to fail.
 * Implements RNG.random(), an API function which has been documented for a while
   without actually being present.
-* Adds some experimental components to miniRT: miniRT/binary, which allows you
-  to load entire binary files using a JSON schema; and miniRT/xml, which creates
-  a link-queryable DOM from XML files.
 
 v3.0.2 - April 1, 2016
 ----------------------
