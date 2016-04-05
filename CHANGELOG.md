@@ -1,11 +1,13 @@
 minisphere Changelog
 ====================
 
-v3.1.0 - TBD
+v3.0.3 - TBD
 ------------
 
 * While debugging in Sphere Studio, variables are now sorted alphabetically in
   the Debugger pane.
+* Fixes a bug where GetDefaultShaderProgram() would attempt to compile the same
+  source for both the vertex and fragment shaders, causing the call to fail.
 
 v3.0.2 - April 1, 2016
 ----------------------
