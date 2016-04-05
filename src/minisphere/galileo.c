@@ -362,15 +362,15 @@ draw_shape(shape_t* shape)
 	if (!have_vertex_buffer(shape)) refresh_shape_vbuf(shape);
 	if (shape->type == SHAPE_AUTO)
 		draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
-		: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
-		: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
-		: ALLEGRO_PRIM_TRIANGLE_STRIP;
+			: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
+			: shape->num_vertices == 4 ? ALLEGRO_PRIM_TRIANGLE_FAN
+			: ALLEGRO_PRIM_TRIANGLE_STRIP;
 	else
 		draw_mode = shape->type == SHAPE_LINE_LIST ? ALLEGRO_PRIM_LINE_LIST
-		: shape->type == SHAPE_TRIANGLE_LIST ? ALLEGRO_PRIM_TRIANGLE_LIST
-		: shape->type == SHAPE_TRIANGLE_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
-		: shape->type == SHAPE_TRIANGLE_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
-		: ALLEGRO_PRIM_POINT_LIST;
+			: shape->type == SHAPE_TRIANGLE_LIST ? ALLEGRO_PRIM_TRIANGLE_LIST
+			: shape->type == SHAPE_TRIANGLE_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
+			: shape->type == SHAPE_TRIANGLE_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
+			: ALLEGRO_PRIM_POINT_LIST;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (shape->vbuf != NULL)
