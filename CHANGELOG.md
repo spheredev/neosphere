@@ -8,6 +8,8 @@ v3.0.3 - TBD
   the Debugger pane.
 * Fixes a bug where GetDefaultShaderProgram() would attempt to compile the same
   source for both the vertex and fragment shaders, causing the call to fail.
+* Implements RNG.random(), an API function which has been documented for a while
+  without actually being present.
 
 v3.0.2 - April 1, 2016
 ----------------------

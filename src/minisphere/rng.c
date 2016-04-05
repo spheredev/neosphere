@@ -7,6 +7,7 @@
 static duk_ret_t js_RNG_seed    (duk_context* ctx);
 static duk_ret_t js_RNG_chance  (duk_context* ctx);
 static duk_ret_t js_RNG_normal  (duk_context* ctx);
+static duk_ret_t js_RNG_random  (duk_context* ctx);
 static duk_ret_t js_RNG_range   (duk_context* ctx);
 static duk_ret_t js_RNG_sample  (duk_context* ctx);
 static duk_ret_t js_RNG_string  (duk_context* ctx);
@@ -113,6 +114,7 @@ init_rng_api(void)
 	register_api_function(g_duk, "RNG", "seed", js_RNG_seed);
 	register_api_function(g_duk, "RNG", "chance", js_RNG_chance);
 	register_api_function(g_duk, "RNG", "normal", js_RNG_normal);
+	register_api_function(g_duk, "RNG", "random", js_RNG_random);
 	register_api_function(g_duk, "RNG", "range", js_RNG_range);
 	register_api_function(g_duk, "RNG", "sample", js_RNG_sample);
 	register_api_function(g_duk, "RNG", "string", js_RNG_string);
@@ -148,6 +150,13 @@ js_RNG_normal(duk_context* ctx)
 	mean = duk_require_number(ctx, 0);
 	sigma = duk_require_number(ctx, 1);
 	duk_push_number(ctx, rng_normal(mean, sigma));
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_random(duk_context* ctx)
+{
+	duk_push_number(ctx, genrand_res53());
 	return 1;
 }
 
