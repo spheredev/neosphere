@@ -7,6 +7,8 @@ v3.0.4 - TBD
 * Fixes a memory management bug in Galileo which caused it to leak potentially
   massive amounts of memory in games which generate a lot of Shape objects.
 * Fixes a bug in the Windows build where stdout couldn't be redirected.
+* Updates the map engine to use the Galileo graphics subsystem internally, which
+  improves rendering performance in most cases.
 
 v3.0.3 - April 5, 2016
 ----------------------

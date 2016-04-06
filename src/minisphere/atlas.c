@@ -54,6 +54,28 @@ free_atlas(atlas_t* atlas)
 	free(atlas);
 }
 
+image_t*
+get_atlas_image(const atlas_t* atlas)
+{
+	return atlas->image;
+}
+
+float_rect_t
+get_atlas_uv(const atlas_t* atlas, int image_index)
+{
+	float        atlas_height;
+	float        atlas_width;
+	float_rect_t uv;
+	
+	atlas_width = get_image_width(atlas->image);
+	atlas_height = get_image_height(atlas->image);
+	uv.x1 = (image_index % atlas->pitch) * atlas->max_width;
+	uv.y1 = (image_index / atlas->pitch) * atlas->max_height;
+	uv.x2 = uv.x1 + atlas->max_width;
+	uv.y2 = uv.y1 + atlas->max_height;
+	return uv;
+}
+
 void
 lock_atlas(atlas_t* atlas)
 {

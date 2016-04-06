@@ -1,3 +1,6 @@
+#ifndef MINISPHERE__SURFACE_H__INCLUDED
+#define MINISPHERE__SURFACE_H__INCLUDED
+
 #include "image.h"
 
 void init_surface_api (void);
@@ -19,3 +22,5 @@ enum blend_mode
 
 extern void     duk_push_sphere_surface    (duk_context* ctx, image_t* image);
 extern image_t* duk_require_sphere_surface (duk_context* ctx, duk_idx_t index);
+
+#endif // MINISPHERE__SURFACE_H__INCLUDED

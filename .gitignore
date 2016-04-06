@@ -43,6 +43,7 @@ Temporary Items
 *.msp
 
 # Visual Studio build cruft
+*.VC.db
 *.sdf
 *.opensdf
 *.opendb

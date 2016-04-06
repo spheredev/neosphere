@@ -50,6 +50,7 @@ extern void         set_shape_texture   (shape_t* shape, image_t* texture);
 extern bool         add_shape_vertex    (shape_t* shape, vertex_t vertex);
 extern void         remove_shape_vertex (shape_t* shape, int index);
 extern void         draw_shape          (shape_t* shape);
+extern void         upload_shape        (shape_t* shape);
 
 extern void init_galileo_api (void);
 

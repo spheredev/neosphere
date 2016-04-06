@@ -2,6 +2,7 @@
 #include "api.h"
 #include "audialis.h"
 #include "color.h"
+#include "galileo.h"
 #include "image.h"
 #include "input.h"
 #include "obsmap.h"
@@ -26,18 +27,20 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static struct map*         load_map            (const char* path);
-static void                free_map            (struct map* map);
-static bool                are_zones_at        (int x, int y, int layer, int* out_count);
-static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
-static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
-static bool                change_map          (const char* filename, bool preserve_persons);
-static int                 find_layer          (const char* name);
-static void                map_screen_to_layer (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
-static void                map_screen_to_map   (int camera_x, int camera_y, int* inout_x, int* inout_y);
-static void                process_map_input   (void);
-static void                render_map          (void);
-static void                update_map_engine   (bool is_main_loop);
+static struct map*         load_map               (const char* path);
+static void                free_map               (struct map* map);
+static bool                are_zones_at           (int x, int y, int layer, int* out_count);
+static struct map_trigger* get_trigger_at         (int x, int y, int layer, int* out_index);
+static struct map_zone*    get_zone_at            (int x, int y, int layer, int which, int* out_index);
+static void                calculate_map_render   (void);
+static bool                change_map             (const char* filename, bool preserve_persons);
+static void                clear_map_render_cache (void);
+static int                 find_layer             (const char* name);
+static void                map_screen_to_layer    (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                map_screen_to_map      (int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                process_map_input      (void);
+static void                render_map             (void);
+static void                update_map_engine      (bool is_main_loop);
 
 static duk_ret_t js_MapEngine               (duk_context* ctx);
 static duk_ret_t js_AreZonesAt              (duk_context* ctx);
@@ -135,9 +138,9 @@ static duk_ret_t js_ScreenToMapY            (duk_context* ctx);
 static duk_ret_t js_SetDelayScript          (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine         (duk_context* ctx);
 
-static person_t*           s_camera_person     = NULL;
-static int                 s_cam_x             = 0;
-static int                 s_cam_y             = 0;
+static person_t*           s_camera_person = NULL;
+static int                 s_cam_x = 0;
+static int                 s_cam_y = 0;
 static color_t             s_color_mask;
 static color_t             s_fade_color_from;
 static color_t             s_fade_color_to;
@@ -145,25 +148,26 @@ static int                 s_fade_frames;
 static int                 s_fade_progress;
 static int                 s_map_corner_x;
 static int                 s_map_corner_y;
-static int                 s_current_trigger   = -1;
-static int                 s_current_zone      = -1;
+static int                 s_current_trigger = -1;
+static int                 s_current_zone = -1;
 static script_t*           s_def_scripts[MAP_SCRIPT_MAX];
-static bool                s_exiting           = false;
-static int                 s_framerate         = 0;
-static unsigned int        s_frames            = 0;
-static bool                s_is_map_running    = false;
-static lstring_t*          s_last_bgm_file     = NULL;
+static bool                s_exiting = false;
+static int                 s_framerate = 0;
+static unsigned int        s_frames = 0;
+static bool                s_is_map_running = false;
+static lstring_t*          s_last_bgm_file = NULL;
 static struct map*         s_map = NULL;
-static char*               s_map_filename      = NULL;
-static sound_t*            s_map_bgm_stream    = NULL;
-static struct map_trigger* s_on_trigger        = NULL;
+static sound_t*            s_map_bgm_stream = NULL;
+static char*               s_map_filename = NULL;
+static group_t**           s_layer_groups = NULL;
+static struct map_trigger* s_on_trigger = NULL;
 static struct player*      s_players;
 static script_t*           s_render_script = NULL;
 static int                 s_talk_button = 0;
 static script_t*           s_update_script = NULL;
 static int                 s_num_delay_scripts = 0;
 static int                 s_max_delay_scripts = 0;
-static struct delay_script *s_delay_scripts    = NULL;
+static struct delay_script *s_delay_scripts = NULL;
 
 struct delay_script
 {
@@ -1029,6 +1033,49 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 	return found_item;
 }
 
+static void
+calculate_map_render(void)
+{
+	shape_t*        layer_shape;
+	struct map_tile tile;
+	image_t*        tile_atlas;
+	int             tile_height;
+	int             tile_width;
+	float_rect_t    uv;
+	int             x1, x2;
+	int             y1, y2;
+
+	int i, x, y;
+
+	clear_map_render_cache();
+	
+	tile_atlas = get_tile_atlas(s_map->tileset);
+	get_tile_size(s_map->tileset, &tile_width, &tile_height);
+	s_layer_groups = malloc(s_map->num_layers * sizeof(group_t*));
+	for (i = 0; i < s_map->num_layers; ++i) {
+		s_layer_groups[i] = new_group(get_default_shader());
+		layer_shape = new_shape(SHAPE_TRIANGLE_STRIP, tile_atlas);
+		for (y = 0; y < s_map->height; ++y) for (x = 0; x < s_map->width; ++x) {
+			tile = s_map->layers[i].tilemap[x + y * s_map->layers[i].width];
+			uv = get_tile_atlas_uv(s_map->tileset, tile.tile_index);
+			x1 = x * tile_width; x2 = x1 + tile_width;
+			y1 = y * tile_height; y2 = y1 + tile_height;
+			add_shape_vertex(layer_shape, vertex(x1, y1, uv.x1, uv.y1, rgba(255, 255, 255, 255)));
+			add_shape_vertex(layer_shape, vertex(x2, y1, uv.x2, uv.y1, rgba(255, 255, 255, 255)));
+			add_shape_vertex(layer_shape, vertex(x1, y2, uv.x1, uv.y2, rgba(255, 255, 255, 255)));
+			add_shape_vertex(layer_shape, vertex(x2, y2, uv.x2, uv.y2, rgba(255, 255, 255, 255)));
+			if (x < s_map->layers[i].width - 1) {
+				tile = s_map->layers[i].tilemap[(x + 1) + y * s_map->layers[i].width];
+				uv = get_tile_atlas_uv(s_map->tileset, tile.tile_index);
+				add_shape_vertex(layer_shape, vertex(x2, y2, uv.x1, uv.y2, rgba(255, 255, 255, 255)));
+			}
+		}
+		upload_shape(layer_shape);
+		add_group_shape(s_layer_groups[i], layer_shape);
+		free_shape(layer_shape);
+	}
+}
+
 static bool
 change_map(const char* filename, bool preserve_persons)
 {
@@ -1055,6 +1102,7 @@ change_map(const char* filename, bool preserve_persons)
 	}
 	
 	// close out old map and prep for new one
+	clear_map_render_cache();
 	free_map(s_map); free(s_map_filename);
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
@@ -1122,6 +1170,20 @@ on_error:
 	free_spriteset(spriteset);
 	free_map(s_map);
 	return false;
+}
+
+static void
+clear_map_render_cache(void)
+{
+	int z;
+
+	if (s_layer_groups == NULL)
+		return;
+	
+	for (z = 0; z < s_map->num_layers; ++z)
+		free_group(s_layer_groups[z]);
+	free(s_layer_groups);
+	s_layer_groups = NULL;
 }
 
 static int
@@ -1306,15 +1368,14 @@ process_map_input(void)
 static void
 render_map(void)
 {
-	int               cell_x, cell_y;
-	int               first_cell_x, first_cell_y;
 	bool              is_repeating;
 	struct map_layer* layer;
 	int               layer_w, layer_h;
 	ALLEGRO_COLOR     overlay_color;
 	int               tile_w, tile_h;
 	int               off_x, off_y;
-	int               tile_index;
+	int               x_repeats;
+	int               y_repeats;
 	
 	int x, y, z;
 	
@@ -1322,6 +1383,8 @@ render_map(void)
 		return;
 	
 	// render map layers from bottom to top (+Z = up)
+	if (s_layer_groups == NULL)
+		calculate_map_render();
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
@@ -1330,8 +1393,7 @@ render_map(void)
 		layer_h = layer->height * tile_h;
 		off_x = 0; off_y = 0;
 		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
-		al_hold_bitmap_drawing(true);
-		
+
 		// render person reflections if layer is reflective
 		if (layer->is_reflective) {
 			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
@@ -1343,17 +1405,13 @@ render_map(void)
 			}
 		}
 		
-		// render tiles, but only if layer is visible
+		// render tiles, but only if the layer is visible
 		if (layer->is_visible) {
-			first_cell_x = off_x / tile_w;
-			first_cell_y = off_y / tile_h;
-			for (y = 0; y < g_res_y / tile_h + 2; ++y) for (x = 0; x < g_res_x / tile_w + 2; ++x) {
-				cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
-				cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
-				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
-					continue;
-				tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
-				draw_tile(s_map->tileset, layer->color_mask, x * tile_w - off_x % tile_w, y * tile_h - off_y % tile_h, tile_index);
+			x_repeats = is_repeating ? g_res_x / layer_w + 2 : 1;
+			y_repeats = is_repeating ? g_res_y / layer_h + 2 : 1;
+			for (y = 0; y < y_repeats; ++y) for (x = 0; x < x_repeats; ++x) {
+				set_group_xy(s_layer_groups[z], -off_x + x * layer_w, -off_y + y * layer_h);
+				draw_group(s_layer_groups[z]);
 			}
 		}
 		
@@ -1366,9 +1424,9 @@ render_map(void)
 			render_persons(z, false, off_x, off_y);
 		}
 
-		al_hold_bitmap_drawing(false);
 		run_script(layer->render_script, false);
 	}
+
 	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.alpha);
 	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
 	run_script(s_render_script, false);
@@ -1399,7 +1457,8 @@ update_map_engine(bool is_main_loop)
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
 	
-	animate_tileset(s_map->tileset);
+	if (animate_tileset(s_map->tileset))
+		clear_map_render_cache();
 
 	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL)
 		get_person_xy(s_players[i].person, &start_x[i], &start_y[i], false);
@@ -2455,6 +2514,7 @@ js_SetTile(duk_context* ctx)
 	tilemap = s_map->layers[layer].tilemap;
 	tilemap[x + y * layer_w].tile_index = tile_index;
 	tilemap[x + y * layer_w].frames_left = get_tile_delay(s_map->tileset, tile_index);
+	clear_map_render_cache();
 	return 0;
 }
 
@@ -2495,6 +2555,7 @@ js_SetTileImage(duk_context* ctx)
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
 	set_tile_image(s_map->tileset, tile_index, image);
+	clear_map_render_cache();
 	return 0;
 }
 
@@ -2520,25 +2581,22 @@ js_SetTileSurface(duk_context* ctx)
 	int tile_index = duk_require_int(ctx, 0);
 	image_t* image = duk_require_sphere_surface(ctx, 1);
 
-	int      c_tiles;
-	int      image_w, image_h;
-	image_t* new_image;
-	int      tile_w, tile_h;
+	int image_w, image_h;
+	int num_tiles;
+	int tile_w, tile_h;
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileSurface(): map engine not running");
-	c_tiles = get_tile_count(s_map->tileset);
-	if (tile_index < 0 || tile_index >= c_tiles)
+	num_tiles = get_tile_count(s_map->tileset);
+	if (tile_index < 0 || tile_index >= num_tiles)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileSurface(): invalid tile index (%d)", tile_index);
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	image_w = get_image_width(image);
 	image_h = get_image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileSurface(): surface dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
-	if ((new_image = clone_image(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileSurface(): unable to create new tile image");
-	set_tile_image(s_map->tileset, tile_index, new_image);
-	free_image(new_image);
+	set_tile_image(s_map->tileset, tile_index, image);
+	clear_map_render_cache();
 	return 0;
 }
 

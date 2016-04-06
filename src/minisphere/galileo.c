@@ -30,7 +30,6 @@ static duk_ret_t js_new_Vertex              (duk_context* ctx);
 
 static void assign_default_uv  (shape_t* shape);
 static bool have_vertex_buffer (const shape_t* shape);
-static void refresh_shape_vbuf (shape_t* shape);
 
 struct shape
 {
@@ -323,7 +322,7 @@ set_shape_texture(shape_t* shape, image_t* texture)
 	old_texture = shape->texture;
 	shape->texture = ref_image(texture);
 	free_image(old_texture);
-	refresh_shape_vbuf(shape);
+	upload_shape(shape);
 }
 
 bool
@@ -360,7 +359,8 @@ draw_shape(shape_t* shape)
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
 
-	if (!have_vertex_buffer(shape)) refresh_shape_vbuf(shape);
+	if (!have_vertex_buffer(shape))
+		upload_shape(shape);
 	if (shape->type == SHAPE_AUTO)
 		draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 			: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
@@ -380,6 +380,55 @@ draw_shape(shape_t* shape)
 		al_draw_prim(shape->sw_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
 #else
 	al_draw_prim(shape->sw_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
+#endif
+}
+
+void
+upload_shape(shape_t* shape)
+{
+	ALLEGRO_BITMAP* bitmap;
+	ALLEGRO_VERTEX* vertices = NULL;
+
+	int i;
+
+#ifdef MINISPHERE_USE_VERTEX_BUF
+	console_log(4, "uploading shape #%u vertices to GPU", shape->id);
+	if (shape->vbuf != NULL)
+		al_destroy_vertex_buffer(shape->vbuf);
+#else
+	console_log(4, "caching vertices for shape #%u", shape->id);
+#endif
+	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
+	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+
+	// create a vertex buffer
+#ifdef MINISPHERE_USE_VERTEX_BUF
+	if (shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
+		vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY);
+#endif
+	if (vertices == NULL) {
+		// hardware buffer couldn't be created, fall back to software
+		if (!(shape->sw_vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
+			return;
+		vertices = shape->sw_vbuf;
+	}
+
+	// upload vertices
+	for (i = 0; i < shape->num_vertices; ++i) {
+		vertices[i].x = shape->vertices[i].x;
+		vertices[i].y = shape->vertices[i].y;
+		vertices[i].z = 0;
+		vertices[i].color = nativecolor(shape->vertices[i].color);
+		vertices[i].u = shape->vertices[i].u;
+		vertices[i].v = shape->vertices[i].v;
+	}
+
+	// unlock hardware buffer, if applicable
+#ifdef MINISPHERE_USE_VERTEX_BUF
+	if (vertices != shape->sw_vbuf)
+		al_unlock_vertex_buffer(shape->vbuf);
+	else if (shape->vbuf != NULL)
+		al_destroy_vertex_buffer(shape->vbuf);
 #endif
 }
 
@@ -414,54 +463,6 @@ have_vertex_buffer(const shape_t* shape)
 	return shape->vbuf != NULL || shape->sw_vbuf != NULL;
 #else
 	return shape->sw_vbuf != NULL;
-#endif
-}
-
-static void
-refresh_shape_vbuf(shape_t* shape)
-{
-	ALLEGRO_BITMAP* bitmap;
-	ALLEGRO_VERTEX* vertices = NULL;
-
-	int i;
-	
-	console_log(4, "creating vertex buffer for shape #%u", shape->id);
-	
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	if (shape->vbuf != NULL)
-		al_destroy_vertex_buffer(shape->vbuf);
-#endif
-	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
-	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
-	
-	// create a vertex buffer
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	if (shape->vbuf = al_create_vertex_buffer(NULL, NULL, shape->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
-		vertices = al_lock_vertex_buffer(shape->vbuf, 0, shape->num_vertices, ALLEGRO_LOCK_WRITEONLY);
-#endif
-	if (vertices == NULL) {
-		// hardware buffer couldn't be created, fall back to software
-		if (!(shape->sw_vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
-			return;
-		vertices = shape->sw_vbuf;
-	}
-	
-	// upload vertices
-	for (i = 0; i < shape->num_vertices; ++i) {
-		vertices[i].x = shape->vertices[i].x;
-		vertices[i].y = shape->vertices[i].y;
-		vertices[i].z = 0;
-		vertices[i].color = nativecolor(shape->vertices[i].color);
-		vertices[i].u = shape->vertices[i].u;
-		vertices[i].v = shape->vertices[i].v;
-	}
-	
-	// unlock hardware buffer, if applicable
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	if (vertices != shape->sw_vbuf)
-		al_unlock_vertex_buffer(shape->vbuf);
-	else if (shape->vbuf != NULL)
-		al_destroy_vertex_buffer(shape->vbuf);
 #endif
 }
 
@@ -756,7 +757,7 @@ js_new_Shape(duk_context* ctx)
 	}
 	if (is_missing_uv)
 		assign_default_uv(shape);
-	refresh_shape_vbuf(shape);
+	upload_shape(shape);
 	duk_push_sphere_obj(ctx, "Shape", shape);
 	return 1;
 }

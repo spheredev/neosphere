@@ -8,6 +8,7 @@ struct image_lock
 {
 	color_t*  pixels;
 	ptrdiff_t pitch;
+	int       num_lines;
 } image_lock_t;
 
 image_t*        create_image             (int width, int height);

@@ -8,18 +8,21 @@
 struct tileset
 {
 	unsigned int id;
-	int          width, height;
+	atlas_t*     atlas;
+	int          atlas_pitch;
+	int          height;
 	int          num_tiles;
-	struct tile  *tiles;
+	struct tile* tiles;
+	int          width;
 };
 
 struct tile
 {
-	lstring_t* name;
-	int        animate_index;
+	int        delay;
 	int        frames_left;
 	image_t*   image;
-	int        delay;
+	int        image_index;
+	lstring_t* name;
 	int        next_index;
 	int        num_obs_lines;
 	obsmap_t*  obsmap;
@@ -110,7 +113,7 @@ read_tileset(sfs_file_t* file)
 		if (!(tiles[i].image = read_atlas_image(atlas, file, i, rts.tile_width, rts.tile_height)))
 			goto on_error;
 	unlock_atlas(atlas);
-	free_atlas(atlas);
+	tileset->atlas = atlas;
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
@@ -119,7 +122,7 @@ read_tileset(sfs_file_t* file)
 		tiles[i].name = read_lstring_raw(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
 		tiles[i].delay = tilehdr.animated ? tilehdr.delay : 0;
-		tiles[i].animate_index = i;
+		tiles[i].image_index = i;
 		tiles[i].frames_left = tiles[i].delay;
 		if (rts.has_obstructions) {
 			switch (tilehdr.obsmap_type) {
@@ -178,6 +181,7 @@ free_tileset(tileset_t* tileset)
 		free_image(tileset->tiles[i].image);
 		free_obsmap(tileset->tiles[i].obsmap);
 	}
+	free_atlas(tileset->atlas);
 	free(tileset->tiles);
 	free(tileset);
 }
@@ -190,6 +194,18 @@ get_next_tile(const tileset_t* tileset, int tile_index)
 	next_index = tileset->tiles[tile_index].next_index;
 	return next_index >= 0 && next_index < tileset->num_tiles
 		? next_index : tile_index;
+}
+
+image_t*
+get_tile_atlas(const tileset_t* tileset)
+{
+	return get_atlas_image(tileset->atlas);
+}
+
+float_rect_t
+get_tile_atlas_uv(const tileset_t* tileset, int tile_index)
+{
+	return get_atlas_uv(tileset->atlas, tileset->tiles[tile_index].image_index);
 }
 
 int
@@ -247,11 +263,20 @@ set_tile_delay(tileset_t* tileset, int tile_index, int delay)
 void
 set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 {
-	image_t* old_image;
+	// CAUTION: the new tile image is assumed to be the same same size as the tile it
+	//     replaces.  if it's not, the engine won't crash, but it may cause graphical
+	//     glitches.
 	
-	old_image = tileset->tiles[tile_index].image;
-	tileset->tiles[tile_index].image = ref_image(image);
-	free_image(old_image);
+	int blend_mode_dest;
+	int blend_mode_src;
+	int blend_op;
+
+	al_set_target_bitmap(get_image_bitmap(tileset->tiles[tile_index].image));
+	al_get_blender(&blend_op, &blend_mode_src, &blend_mode_dest);
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+	al_draw_bitmap(get_image_bitmap(image), 0, 0, 0x0);
+	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
+	al_set_target_backbuffer(screen_display(g_screen));
 }
 
 bool
@@ -266,9 +291,10 @@ set_tile_name(tileset_t* tileset, int tile_index, const lstring_t* name)
 	return true;
 }
 
-void
+bool
 animate_tileset(tileset_t* tileset)
 {
+	bool         has_changed = false;
 	struct tile* tile;
 	
 	int i;
@@ -276,10 +302,12 @@ animate_tileset(tileset_t* tileset)
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		tile = &tileset->tiles[i];
 		if (tile->frames_left > 0 && --tile->frames_left == 0) {
-			tile->animate_index = get_next_tile(tileset, tile->animate_index);
-			tile->frames_left = get_tile_delay(tileset, tile->animate_index);
+			tile->image_index = get_next_tile(tileset, tile->image_index);
+			tile->frames_left = get_tile_delay(tileset, tile->image_index);
+			has_changed = true;
 		}
 	}
+	return has_changed;
 }
 
 void
@@ -287,7 +315,7 @@ draw_tile(const tileset_t* tileset, color_t mask, float x, float y, int tile_ind
 {
 	if (tile_index < 0)
 		return;
-	tile_index = tileset->tiles[tile_index].animate_index;
+	tile_index = tileset->tiles[tile_index].image_index;
 	al_draw_tinted_bitmap(get_image_bitmap(tileset->tiles[tile_index].image),
 		al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 }

@@ -491,6 +491,7 @@ lock_image(image_t* image)
 		ref_image(image);
 		image->lock.pixels = ll_lock->data;
 		image->lock.pitch = ll_lock->pitch / 4;
+		image->lock.num_lines = image->height;
 	}
 	++image->lock_count;
 	return &image->lock;
