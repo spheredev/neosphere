@@ -6,6 +6,7 @@ v3.0.4 - TBD
 
 * Fixes a memory management bug in Galileo which caused it to leak potentially
   massive amounts of memory in games which generate a lot of Shape objects.
+* Fixes a bug in the Windows build where stdout couldn't be redirected.
 
 v3.0.3 - April 5, 2016
 ----------------------
