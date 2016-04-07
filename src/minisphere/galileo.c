@@ -272,6 +272,7 @@ free_shape(shape_t* shape)
 		al_destroy_vertex_buffer(shape->vbuf);
 #endif
 	free(shape->sw_vbuf);
+	free(shape->vertices);
 	free(shape);
 }
 

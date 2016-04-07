@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v3.0.4 - TBD
+------------
+
+* Fixes a memory management bug in Galileo which caused it to leak potentially
+  massive amounts of memory in games which generate a lot of Shape objects.
+
 v3.0.3 - April 5, 2016
 ----------------------
 
