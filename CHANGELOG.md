@@ -9,6 +9,7 @@ v3.0.4 - TBD
 * Fixes a bug in the Windows build where stdout couldn't be redirected.
 * Updates the map engine to use the Galileo graphics subsystem internally, which
   improves rendering performance in most cases.
+* Fixes a segfault when rendering a Galileo primitive with no vertices defined.
 
 v3.0.3 - April 5, 2016
 ----------------------

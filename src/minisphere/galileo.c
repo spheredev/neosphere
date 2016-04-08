@@ -359,6 +359,9 @@ draw_shape(shape_t* shape)
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
 
+	if (shape->num_vertices == 0)
+		return;
+	
 	if (!have_vertex_buffer(shape))
 		upload_shape(shape);
 	if (shape->type == SHAPE_AUTO)
@@ -427,8 +430,10 @@ upload_shape(shape_t* shape)
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (vertices != shape->sw_vbuf)
 		al_unlock_vertex_buffer(shape->vbuf);
-	else if (shape->vbuf != NULL)
+	else if (shape->vbuf != NULL) {
 		al_destroy_vertex_buffer(shape->vbuf);
+		shape->vbuf = NULL;
+	}
 #endif
 }
 
