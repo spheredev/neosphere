@@ -373,6 +373,21 @@ apply_image_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 }
 
 void
+blit_image(image_t* image, image_t* target_image, int x, int y)
+{
+	int blend_mode_dest;
+	int blend_mode_src;
+	int blend_op;
+
+	al_set_target_bitmap(get_image_bitmap(target_image));
+	al_get_blender(&blend_op, &blend_mode_src, &blend_mode_dest);
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+	al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
+	al_set_target_backbuffer(screen_display(g_screen));
+}
+
+void
 draw_image(image_t* image, int x, int y)
 {
 	al_draw_bitmap(image->bitmap, x, y, 0x0);

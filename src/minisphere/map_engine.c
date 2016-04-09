@@ -1457,8 +1457,7 @@ update_map_engine(bool is_main_loop)
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
 	
-	if (animate_tileset(s_map->tileset))
-		clear_map_render_cache();
+	animate_tileset(s_map->tileset);
 
 	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL)
 		get_person_xy(s_players[i].person, &start_x[i], &start_y[i], false);
@@ -2555,7 +2554,6 @@ js_SetTileImage(duk_context* ctx)
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
 	set_tile_image(s_map->tileset, tile_index, image);
-	clear_map_render_cache();
 	return 0;
 }
 
@@ -2596,7 +2594,6 @@ js_SetTileSurface(duk_context* ctx)
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileSurface(): surface dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
 	set_tile_image(s_map->tileset, tile_index, image);
-	clear_map_render_cache();
 	return 0;
 }
 

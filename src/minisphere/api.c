@@ -505,7 +505,7 @@ duk_load_module(duk_context* ctx)
 		duk_throw(ctx);
 	}
 	duk_push_lstring_t(ctx, filename);
-	duk_put_prop_string(ctx, 3, "fileName");
+	duk_put_prop_string(ctx, 3, "filename");
 	duk_push_lstring_t(ctx, source_text);
 	lstr_free(source_text);
 	lstr_free(filename);

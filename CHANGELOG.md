@@ -1,12 +1,18 @@
 minisphere Changelog
 ====================
 
+v3.0.5 - TBD
+------------
+
+* Fixes a performance regression in 3.0.4 related to Galileo map rendering and
+  animated tilesets.
+
 v3.0.4 - April 9, 2016
 ----------------------
 
 * Fixes a memory management bug in Galileo which caused it to leak potentially
-  massive amounts of memory in games which generate a lot of Shape objects.
-* Fixes a bug in the Windows build where stdout couldn't be redirected.
+  massive amounts of memory in games which generate a lot of `Shape` objects.
+* Fixes a bug in the Windows build where `stdout` couldn't be redirected.
 * Updates the map engine to use the Galileo graphics subsystem internally, which
   improves rendering performance in most cases.
 * Fixes a segfault when rendering a Galileo primitive with no vertices defined.
@@ -16,17 +22,18 @@ v3.0.3 - April 5, 2016
 
 * While debugging in Sphere Studio, variables are now sorted alphabetically in
   the Debugger pane.
-* Fixes a bug where GetDefaultShaderProgram() would attempt to compile the same
-  source for both the vertex and fragment shaders, causing the call to fail.
-* Implements RNG.random(), an API function which has been documented for a while
-  without actually being present.
+* Fixes a bug where `GetDefaultShaderProgram()` would attempt to compile the
+  same source for both the vertex and fragment shaders, causing the call to
+  fail.
+* Implements `RNG.random()`, an API function which has been documented for a
+  while without actually being present.
 
 v3.0.2 - April 1, 2016
 ----------------------
 
-* Improves the file API: The FileStream object now includes methods for directly
-  reading and writing integers, strings, and floats in addition to the standard
-  ArrayBuffer-based I/O.
+* Improves the file API: The `FileStream` object now includes methods for
+  directly reading and writing integers, strings, and floats in addition to the
+  standard `ArrayBuffer`-based I/O.
 * The Windows build now uses Allegro 5.2.0, the latest stable version.
 * Fixes a bug in the Sphere Studio debugger where pressing F10 would perform a
   Step Out instead of Step Over.

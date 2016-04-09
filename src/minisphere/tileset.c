@@ -11,6 +11,7 @@ struct tileset
 	atlas_t*     atlas;
 	int          atlas_pitch;
 	int          height;
+	image_t*     texture;
 	int          num_tiles;
 	struct tile* tiles;
 	int          width;
@@ -199,7 +200,9 @@ get_next_tile(const tileset_t* tileset, int tile_index)
 image_t*
 get_tile_atlas(const tileset_t* tileset)
 {
-	return get_atlas_image(tileset->atlas);
+	return tileset->texture != NULL
+		? tileset->texture
+		: get_atlas_image(tileset->atlas);
 }
 
 float_rect_t
@@ -267,23 +270,17 @@ set_tile_image(tileset_t* tileset, int tile_index, image_t* image)
 	//     replaces.  if it's not, the engine won't crash, but it may cause graphical
 	//     glitches.
 	
-	int blend_mode_dest;
-	int blend_mode_src;
-	int blend_op;
-
-	al_set_target_bitmap(get_image_bitmap(tileset->tiles[tile_index].image));
-	al_get_blender(&blend_op, &blend_mode_src, &blend_mode_dest);
-	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-	al_draw_bitmap(get_image_bitmap(image), 0, 0, 0x0);
-	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
-	al_set_target_backbuffer(screen_display(g_screen));
+	rect_t xy;
+	
+	xy = get_atlas_xy(tileset->atlas, tile_index);
+	blit_image(image, tileset->texture, xy.x1, xy.y1);
 }
 
 bool
 set_tile_name(tileset_t* tileset, int tile_index, const lstring_t* name)
 {
 	lstring_t* new_name;
-	
+
 	if (!(new_name = lstr_dup(name)))
 		return false;
 	lstr_free(tileset->tiles[tile_index].name);
@@ -291,23 +288,25 @@ set_tile_name(tileset_t* tileset, int tile_index, const lstring_t* name)
 	return true;
 }
 
-bool
+void
 animate_tileset(tileset_t* tileset)
 {
-	bool         has_changed = false;
 	struct tile* tile;
+	rect_t       xy;
 	
 	int i;
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		tile = &tileset->tiles[i];
 		if (tile->frames_left > 0 && --tile->frames_left == 0) {
+			if (tileset->texture == NULL)
+				tileset->texture = clone_image(get_atlas_image(tileset->atlas));
 			tile->image_index = get_next_tile(tileset, tile->image_index);
 			tile->frames_left = get_tile_delay(tileset, tile->image_index);
-			has_changed = true;
+			xy = get_atlas_xy(tileset->atlas, tile->image_index);
+			blit_image(tile->image, tileset->texture, xy.x1, xy.y1);
 		}
 	}
-	return has_changed;
 }
 
 void

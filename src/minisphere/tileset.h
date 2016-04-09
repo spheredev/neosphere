@@ -22,7 +22,7 @@ void             set_next_tile     (tileset_t* tileset, int tile_index, int next
 void             set_tile_delay    (tileset_t* tileset, int tile_index, int delay);
 void             set_tile_image    (tileset_t* tileset, int tile_index, image_t* image);
 bool             set_tile_name     (tileset_t* tileset, int tile_index, const lstring_t* name);
-bool             animate_tileset   (tileset_t* tileset);
+void             animate_tileset   (tileset_t* tileset);
 void             draw_tile         (const tileset_t* tileset, color_t mask, float x, float y, int tile_index);
 
 #endif // MINISPHERE__TILESET_H__INCLUDED
