@@ -1,3 +1,10 @@
+minisphere (3.0.5) trusty; urgency=low
+
+  * Fixes a performance regression in 3.0.4 related to Galileo map rendering and
+    animated tilesets.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 10 Apr 2016 00:00:00 -0500
+
 minisphere (3.0.4) trusty; urgency=low
 
   * Fixes a memory management bug in Galileo which caused it to leak potentially

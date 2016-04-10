@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.0.5 - TBD
-------------
+v3.0.5 - April 10, 2016
+-----------------------
 
 * Fixes a performance regression in 3.0.4 related to Galileo map rendering and
   animated tilesets.
