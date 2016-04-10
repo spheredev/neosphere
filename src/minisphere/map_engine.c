@@ -1395,6 +1395,7 @@ render_map(void)
 		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
 
 		// render person reflections if layer is reflective
+		al_hold_bitmap_drawing(true);
 		if (layer->is_reflective) {
 			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
 				for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
@@ -1404,6 +1405,7 @@ render_map(void)
 				render_persons(z, true, off_x, off_y);
 			}
 		}
+		al_hold_bitmap_drawing(false);
 		
 		// render tiles, but only if the layer is visible
 		if (layer->is_visible) {
@@ -1416,6 +1418,7 @@ render_map(void)
 		}
 		
 		// render persons
+		al_hold_bitmap_drawing(true);
 		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
 			for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
 				render_persons(z, false, off_x - x * layer_w, off_y - y * layer_h);
@@ -1423,6 +1426,7 @@ render_map(void)
 		else {
 			render_persons(z, false, off_x, off_y);
 		}
+		al_hold_bitmap_drawing(false);
 
 		run_script(layer->render_script, false);
 	}

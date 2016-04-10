@@ -344,7 +344,6 @@ set_glyph_image(font_t* font, int codepoint, image_t* image)
 void
 draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
-	bool     is_draw_held;
 	uint8_t  ch_byte;
 	uint32_t cp;
 	int      tab_width;
@@ -356,7 +355,6 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 		x -= get_text_width(font, text);
 	
 	tab_width = font->glyphs[' '].width * 3;
-	is_draw_held = al_is_bitmap_drawing_held();
 	al_hold_bitmap_drawing(true);
 	for (;;) {
 		utf8state = UTF8_ACCEPT;
@@ -403,7 +401,7 @@ draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignmen
 			x += font->glyphs[cp].width;
 		}
 	}
-	al_hold_bitmap_drawing(is_draw_held);
+	al_hold_bitmap_drawing(false);
 }
 
 wraptext_t*

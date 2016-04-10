@@ -537,7 +537,8 @@ follow_person(person_t* person, person_t* leader, int distance)
 bool
 queue_person_command(person_t* person, int command, bool is_immediate)
 {
-	bool is_aok = true;
+	struct command* commands;
+	bool            is_aok = true;
 	
 	switch (command) {
 	case COMMAND_MOVE_NORTHEAST:
@@ -559,9 +560,10 @@ queue_person_command(person_t* person, int command, bool is_immediate)
 	default:
 		++person->num_commands;
 		if (person->num_commands > person->max_commands) {
-			if (!(person->commands = realloc(person->commands, person->num_commands * sizeof(struct command))))
+			if (!(commands = realloc(person->commands, person->num_commands * 2 * sizeof(struct command))))
 				return false;
-			person->max_commands = person->num_commands;
+			person->max_commands = person->num_commands * 2;
+			person->commands = commands;
 		}
 		person->commands[person->num_commands - 1].type = command;
 		person->commands[person->num_commands - 1].is_immediate = is_immediate;
@@ -810,6 +812,7 @@ free_person(person_t* person)
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
 		free_script(person->scripts[i]);
 	free_spriteset(person->sprite);
+	free(person->commands);
 	free(person->name);
 	free(person->direction);
 	free(person);
