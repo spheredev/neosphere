@@ -394,12 +394,10 @@ upload_shape(shape_t* shape)
 
 	int i;
 
+	console_log(3, "uploading shape #%u vertices to GPU", shape->id);
 #ifdef MINISPHERE_USE_VERTEX_BUF
-	console_log(4, "uploading shape #%u vertices to GPU", shape->id);
 	if (shape->vbuf != NULL)
 		al_destroy_vertex_buffer(shape->vbuf);
-#else
-	console_log(4, "caching vertices for shape #%u", shape->id);
 #endif
 	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
@@ -411,6 +409,7 @@ upload_shape(shape_t* shape)
 #endif
 	if (vertices == NULL) {
 		// hardware buffer couldn't be created, fall back to software
+		console_log(3, "unable to create a VBO for shape #%u", shape->id);
 		if (!(shape->sw_vbuf = malloc(shape->num_vertices * sizeof(ALLEGRO_VERTEX))))
 			return;
 		vertices = shape->sw_vbuf;
