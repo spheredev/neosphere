@@ -4,8 +4,8 @@ minisphere Changelog
 v3.0.6 - TBD
 ------------
 
-* Fixes a regression in 3.0.5 which prevented tile animations from working in
-  certain circumstances.
+* Reverts to the pre-3.0.4 method of map rendering.  It turns out that Allegro's
+  sprite batcher is actually pretty awesome.
 
 v3.0.5 - April 10, 2016
 -----------------------

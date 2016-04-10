@@ -2,7 +2,6 @@
 #include "api.h"
 #include "audialis.h"
 #include "color.h"
-#include "galileo.h"
 #include "image.h"
 #include "input.h"
 #include "obsmap.h"
@@ -32,9 +31,7 @@ static void                free_map               (struct map* map);
 static bool                are_zones_at           (int x, int y, int layer, int* out_count);
 static struct map_trigger* get_trigger_at         (int x, int y, int layer, int* out_index);
 static struct map_zone*    get_zone_at            (int x, int y, int layer, int which, int* out_index);
-static void                calculate_map_render   (void);
 static bool                change_map             (const char* filename, bool preserve_persons);
-static void                clear_map_render_cache (void);
 static int                 find_layer             (const char* name);
 static void                map_screen_to_layer    (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
 static void                map_screen_to_map      (int camera_x, int camera_y, int* inout_x, int* inout_y);
@@ -196,16 +193,16 @@ struct map_layer
 	bool             is_parallax;
 	bool             is_reflective;
 	bool             is_visible;
-	int              width, height;
-	group_t*         group;
 	float            autoscroll_x;
 	float            autoscroll_y;
+	color_t          color_mask;
+	int              height;
+	obsmap_t*        obsmap;
 	float            parallax_x;
 	float            parallax_y;
-	struct map_tile* tilemap;
-	obsmap_t*        obsmap;
-	color_t          color_mask;
 	script_t*        render_script;
+	struct map_tile* tilemap;
+	int              width;
 };
 
 struct map_person
@@ -1033,48 +1030,6 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 	return found_item;
 }
 
-static void
-calculate_map_render(void)
-{
-	shape_t*        layer_shape;
-	struct map_tile tile;
-	image_t*        tile_atlas;
-	int             tile_height;
-	int             tile_width;
-	float_rect_t    uv;
-	int             x1, x2;
-	int             y1, y2;
-
-	int i, x, y;
-
-	clear_map_render_cache();
-	
-	tile_atlas = get_tile_atlas(s_map->tileset);
-	get_tile_size(s_map->tileset, &tile_width, &tile_height);
-	for (i = 0; i < s_map->num_layers; ++i) {
-		s_map->layers[i].group = new_group(get_default_shader());
-		layer_shape = new_shape(SHAPE_TRIANGLE_STRIP, tile_atlas);
-		for (y = 0; y < s_map->height; ++y) for (x = 0; x < s_map->width; ++x) {
-			tile = s_map->layers[i].tilemap[x + y * s_map->layers[i].width];
-			uv = get_tile_atlas_uv(s_map->tileset, tile.tile_index);
-			x1 = x * tile_width; x2 = x1 + tile_width;
-			y1 = y * tile_height; y2 = y1 + tile_height;
-			add_shape_vertex(layer_shape, vertex(x1, y1, uv.x1, uv.y1, rgba(255, 255, 255, 255)));
-			add_shape_vertex(layer_shape, vertex(x2, y1, uv.x2, uv.y1, rgba(255, 255, 255, 255)));
-			add_shape_vertex(layer_shape, vertex(x1, y2, uv.x1, uv.y2, rgba(255, 255, 255, 255)));
-			add_shape_vertex(layer_shape, vertex(x2, y2, uv.x2, uv.y2, rgba(255, 255, 255, 255)));
-			if (x < s_map->layers[i].width - 1) {
-				tile = s_map->layers[i].tilemap[(x + 1) + y * s_map->layers[i].width];
-				uv = get_tile_atlas_uv(s_map->tileset, tile.tile_index);
-				add_shape_vertex(layer_shape, vertex(x2, y2, uv.x1, uv.y2, rgba(255, 255, 255, 255)));
-			}
-		}
-		upload_shape(layer_shape);
-		add_group_shape(s_map->layers[i].group, layer_shape);
-		free_shape(layer_shape);
-	}
-}
-
 static bool
 change_map(const char* filename, bool preserve_persons)
 {
@@ -1101,7 +1056,6 @@ change_map(const char* filename, bool preserve_persons)
 	}
 	
 	// close out old map and prep for new one
-	clear_map_render_cache();
 	free_map(s_map); free(s_map_filename);
 	for (i = 0; i < s_num_delay_scripts; ++i)
 		free_script(s_delay_scripts[i].script);
@@ -1169,20 +1123,6 @@ on_error:
 	free_spriteset(spriteset);
 	free_map(s_map);
 	return false;
-}
-
-static void
-clear_map_render_cache(void)
-{
-	int z;
-
-	if (s_map == NULL)
-		return;
-	
-	for (z = 0; z < s_map->num_layers; ++z) {
-		free_group(s_map->layers[z].group);
-		s_map->layers[z].group = NULL;
-	}
 }
 
 static int
@@ -1368,13 +1308,18 @@ static void
 render_map(void)
 {
 	bool              is_repeating;
+	int               cell_x;
+	int               cell_y;
+	int               first_cell_x;
+	int               first_cell_y;
 	struct map_layer* layer;
-	int               layer_w, layer_h;
+	int               layer_height;
+	int               layer_width;
 	ALLEGRO_COLOR     overlay_color;
-	int               tile_w, tile_h;
+	int               tile_height;
+	int               tile_index;
+	int               tile_width;
 	int               off_x, off_y;
-	int               x_repeats;
-	int               y_repeats;
 	
 	int x, y, z;
 	
@@ -1382,14 +1327,12 @@ render_map(void)
 		return;
 	
 	// render map layers from bottom to top (+Z = up)
-	if (s_map->layers[0].group == NULL)
-		calculate_map_render();
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	get_tile_size(s_map->tileset, &tile_width, &tile_height);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
 		is_repeating = s_map->is_repeating || layer->is_parallax;
-		layer_w = layer->width * tile_w;
-		layer_h = layer->height * tile_h;
+		layer_width = layer->width * tile_width;
+		layer_height = layer->height * tile_height;
 		off_x = 0; off_y = 0;
 		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
 
@@ -1397,30 +1340,32 @@ render_map(void)
 		al_hold_bitmap_drawing(true);
 		if (layer->is_reflective) {
 			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
-				for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
-					render_persons(z, true, off_x - x * layer_w, off_y - y * layer_h);
+				for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
+					render_persons(z, true, off_x - x * layer_width, off_y - y * layer_height);
 			}
 			else {
 				render_persons(z, true, off_x, off_y);
 			}
 		}
-		al_hold_bitmap_drawing(false);
 		
 		// render tiles, but only if the layer is visible
 		if (layer->is_visible) {
-			x_repeats = is_repeating ? g_res_x / layer_w + 2 : 1;
-			y_repeats = is_repeating ? g_res_y / layer_h + 2 : 1;
-			for (y = 0; y < y_repeats; ++y) for (x = 0; x < x_repeats; ++x) {
-				set_group_xy(s_map->layers[z].group, -off_x + x * layer_w, -off_y + y * layer_h);
-				draw_group(s_map->layers[z].group);
+			first_cell_x = off_x / tile_width;
+			first_cell_y = off_y / tile_height;
+			for (y = 0; y < g_res_y / tile_height + 2; ++y) for (x = 0; x < g_res_x / tile_width + 2; ++x) {
+				cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
+				cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
+				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
+					continue;
+				tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
+				draw_tile(s_map->tileset, layer->color_mask, x * tile_width - off_x % tile_width, y * tile_height - off_y % tile_height, tile_index);
 			}
 		}
-		
+
 		// render persons
-		al_hold_bitmap_drawing(true);
 		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
-			for (y = 0; y < g_res_y / layer_h + 2; ++y) for (x = 0; x < g_res_x / layer_w + 2; ++x)
-				render_persons(z, false, off_x - x * layer_w, off_y - y * layer_h);
+			for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
+				render_persons(z, false, off_x - x * layer_width, off_y - y * layer_height);
 		}
 		else {
 			render_persons(z, false, off_x, off_y);
@@ -2516,7 +2461,6 @@ js_SetTile(duk_context* ctx)
 	tilemap = s_map->layers[layer].tilemap;
 	tilemap[x + y * layer_w].tile_index = tile_index;
 	tilemap[x + y * layer_w].frames_left = get_tile_delay(s_map->tileset, tile_index);
-	clear_map_render_cache();
 	return 0;
 }
 
