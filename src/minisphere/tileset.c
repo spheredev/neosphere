@@ -84,6 +84,7 @@ read_tileset(sfs_file_t* file)
 {
 	atlas_t*               atlas = NULL;
 	long                   file_pos;
+	bool                   have_animation = false;
 	struct rts_header      rts;
 	rect_t                 segment;
 	struct rts_tile_header tilehdr;
@@ -120,6 +121,7 @@ read_tileset(sfs_file_t* file)
 	for (i = 0; i < rts.num_tiles; ++i) {
 		if (sfs_fread(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
 			goto on_error;
+		have_animation |= tilehdr.animated != 0;
 		tiles[i].name = read_lstring_raw(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
 		tiles[i].delay = tilehdr.animated ? tilehdr.delay : 0;
@@ -146,6 +148,10 @@ read_tileset(sfs_file_t* file)
 	}
 
 	// wrap things up
+	if (have_animation) {
+		if (!(tileset->texture = clone_image(get_atlas_image(tileset->atlas))))
+			goto on_error;
+	}
 	tileset->id = s_next_tileset_id++;
 	tileset->width = rts.tile_width;
 	tileset->height = rts.tile_height;
@@ -291,6 +297,7 @@ set_tile_name(tileset_t* tileset, int tile_index, const lstring_t* name)
 void
 animate_tileset(tileset_t* tileset)
 {
+	struct tile* next_tile;
 	struct tile* tile;
 	rect_t       xy;
 	
@@ -298,13 +305,14 @@ animate_tileset(tileset_t* tileset)
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		tile = &tileset->tiles[i];
+		if (tile->next_index == i)
+			continue;
 		if (tile->frames_left > 0 && --tile->frames_left == 0) {
-			if (tileset->texture == NULL)
-				tileset->texture = clone_image(get_atlas_image(tileset->atlas));
 			tile->image_index = get_next_tile(tileset, tile->image_index);
 			tile->frames_left = get_tile_delay(tileset, tile->image_index);
-			xy = get_atlas_xy(tileset->atlas, tile->image_index);
-			blit_image(tile->image, tileset->texture, xy.x1, xy.y1);
+			next_tile = &tileset->tiles[tile->image_index];
+			xy = get_atlas_xy(tileset->atlas, i);
+			blit_image(next_tile->image, tileset->texture, xy.x1, xy.y1);
 		}
 	}
 }

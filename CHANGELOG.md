@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v3.0.6 - TBD
+------------
+
+* Fixes a regression in 3.0.5 which prevented tile animations from working in
+  certain circumstances.
+
 v3.0.5 - April 10, 2016
 -----------------------
 
