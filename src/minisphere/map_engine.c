@@ -159,7 +159,6 @@ static lstring_t*          s_last_bgm_file = NULL;
 static struct map*         s_map = NULL;
 static sound_t*            s_map_bgm_stream = NULL;
 static char*               s_map_filename = NULL;
-static group_t**           s_layer_groups = NULL;
 static struct map_trigger* s_on_trigger = NULL;
 static struct player*      s_players;
 static script_t*           s_render_script = NULL;
@@ -198,6 +197,7 @@ struct map_layer
 	bool             is_reflective;
 	bool             is_visible;
 	int              width, height;
+	group_t*         group;
 	float            autoscroll_x;
 	float            autoscroll_y;
 	float            parallax_x;
@@ -1051,9 +1051,8 @@ calculate_map_render(void)
 	
 	tile_atlas = get_tile_atlas(s_map->tileset);
 	get_tile_size(s_map->tileset, &tile_width, &tile_height);
-	s_layer_groups = malloc(s_map->num_layers * sizeof(group_t*));
 	for (i = 0; i < s_map->num_layers; ++i) {
-		s_layer_groups[i] = new_group(get_default_shader());
+		s_map->layers[i].group = new_group(get_default_shader());
 		layer_shape = new_shape(SHAPE_TRIANGLE_STRIP, tile_atlas);
 		for (y = 0; y < s_map->height; ++y) for (x = 0; x < s_map->width; ++x) {
 			tile = s_map->layers[i].tilemap[x + y * s_map->layers[i].width];
@@ -1071,7 +1070,7 @@ calculate_map_render(void)
 			}
 		}
 		upload_shape(layer_shape);
-		add_group_shape(s_layer_groups[i], layer_shape);
+		add_group_shape(s_map->layers[i].group, layer_shape);
 		free_shape(layer_shape);
 	}
 }
@@ -1177,13 +1176,13 @@ clear_map_render_cache(void)
 {
 	int z;
 
-	if (s_layer_groups == NULL)
+	if (s_map == NULL)
 		return;
 	
-	for (z = 0; z < s_map->num_layers; ++z)
-		free_group(s_layer_groups[z]);
-	free(s_layer_groups);
-	s_layer_groups = NULL;
+	for (z = 0; z < s_map->num_layers; ++z) {
+		free_group(s_map->layers[z].group);
+		s_map->layers[z].group = NULL;
+	}
 }
 
 static int
@@ -1383,7 +1382,7 @@ render_map(void)
 		return;
 	
 	// render map layers from bottom to top (+Z = up)
-	if (s_layer_groups == NULL)
+	if (s_map->layers[0].group == NULL)
 		calculate_map_render();
 	get_tile_size(s_map->tileset, &tile_w, &tile_h);
 	for (z = 0; z < s_map->num_layers; ++z) {
@@ -1412,8 +1411,8 @@ render_map(void)
 			x_repeats = is_repeating ? g_res_x / layer_w + 2 : 1;
 			y_repeats = is_repeating ? g_res_y / layer_h + 2 : 1;
 			for (y = 0; y < y_repeats; ++y) for (x = 0; x < x_repeats; ++x) {
-				set_group_xy(s_layer_groups[z], -off_x + x * layer_w, -off_y + y * layer_h);
-				draw_group(s_layer_groups[z]);
+				set_group_xy(s_map->layers[z].group, -off_x + x * layer_w, -off_y + y * layer_h);
+				draw_group(s_map->layers[z].group);
 			}
 		}
 		
