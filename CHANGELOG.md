@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.0.6 - TBD
-------------
+v3.0.6 - April 11, 2016
+-----------------------
 
 * Reverts to the pre-3.0.4 method of map rendering.  It turns out that Allegro's
   sprite batcher is actually pretty awesome.
