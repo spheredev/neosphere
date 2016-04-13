@@ -295,13 +295,15 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 		for (i = 0; i < s_num_persons; ++i) {
 			if (s_persons[i] == person)  // these persons aren't going to obstruct themselves!
 				continue;
-			if (s_persons[i]->layer != layer) continue;  // ignore persons not on the same layer
-			if (is_person_following(s_persons[i], person)) continue;  // ignore own followers
-			if (is_person_ignored(person, s_persons[i])) continue;
+			if (s_persons[i]->layer != layer)
+				continue;  // ignore persons not on the same layer
+			if (is_person_following(s_persons[i], person))
+				continue;  // ignore own followers
 			base = get_person_base(s_persons[i]);
-			if (do_rects_intersect(my_base, base)) {
+			if (do_rects_intersect(my_base, base) && !is_person_ignored(person, s_persons[i])) {
 				is_obstructed = true;
-				if (out_obstructing_person) *out_obstructing_person = s_persons[i];
+				if (out_obstructing_person)
+					*out_obstructing_person = s_persons[i];
 				break;
 			}
 		}
