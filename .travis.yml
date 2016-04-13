@@ -3,7 +3,7 @@ compiler:
   - clang
   - gcc
 before_install:
-  - sudo add-apt-repository -y ppa:allegro/5.1
+  - sudo add-apt-repository -y ppa:allegro/5.2
   - sudo apt-get update -qq
 install:
   - sudo apt-get install -qq liballegro5-dev

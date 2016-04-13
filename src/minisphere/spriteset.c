@@ -455,6 +455,8 @@ draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double 
 	image_h = get_image_height(image);
 	scale_w = image_w * scale_x;
 	scale_h = image_h * scale_y;
+	if (x + scale_w <= 0 || x >= g_res_x || y + scale_h <= 0 || y >= g_res_y)
+		return;
 	al_draw_tinted_scaled_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
 		(float)image_w / 2, (float)image_h / 2, x + scale_w / 2, y + scale_h / 2,
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
