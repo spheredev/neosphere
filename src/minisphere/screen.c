@@ -50,10 +50,10 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 
 	console_log(1, "initializing render context at %dx%d", x_size, y_size);
 
-#ifdef MINISPHERE_USE_SHADERS
-	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	x_scale = x_size <= 400 && y_size <= 300 ? 2.0 : 1.0;
 	y_scale = x_scale;
+#ifdef MINISPHERE_USE_SHADERS
+	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (display = al_create_display(320 * x_scale, 240 * y_scale))
 		use_shaders = true;
 	else {
@@ -62,8 +62,13 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	}
 #else
 	al_set_new_display_flags(ALLEGRO_OPENGL);
-	display = al_create_display(320, 240);
+	display = al_create_display(320 * x_scale, 240 * y_scale);
 #endif
+
+	if (display == NULL) {
+		fprintf(stderr, "FATAL: unable to initialize render context!");
+		return NULL;
+	}
 	
 	console_log(1, "    shader support: %s", use_shaders ? "yes" : "no");
 
