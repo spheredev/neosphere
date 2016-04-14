@@ -1,3 +1,11 @@
+minisphere (3.0.7) trusty; urgency=low
+
+  * Fixes an issue where persons with large ignore lists would cause an inordinate
+    amount of lag.  This was caused by the engine checking persons' ignore lists
+    before their hitboxes.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 14 Apr 2016 00:00:00 -0500
+
 minisphere (3.0.6) trusty; urgency=low
 
   * Reverts to the pre-3.0.4 method of map rendering.  It turns out that Allegro's

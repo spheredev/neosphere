@@ -287,8 +287,10 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 	normalize_map_entity_xy(&x, &y, person->layer);
 	get_person_xyz(person, &cur_x, &cur_y, &layer, true);
 	my_base = translate_rect(get_person_base(person), x - cur_x, y - cur_y);
-	if (out_obstructing_person) *out_obstructing_person = NULL;
-	if (out_tile_index) *out_tile_index = -1;
+	if (out_obstructing_person)
+		*out_obstructing_person = NULL;
+	if (out_tile_index)
+		*out_tile_index = -1;
 
 	// check for obstructing persons
 	if (!person->ignore_all_persons) {
@@ -329,7 +331,8 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 			obsmap = get_tile_obsmap(tileset, get_map_tile(i_x, i_y, layer));
 			if (obsmap != NULL && test_obsmap_rect(obsmap, base)) {
 				is_obstructed = true;
-				if (out_tile_index) *out_tile_index = get_map_tile(i_x, i_y, layer);
+				if (out_tile_index)
+					*out_tile_index = get_map_tile(i_x, i_y, layer);
 				break;
 			}
 		}

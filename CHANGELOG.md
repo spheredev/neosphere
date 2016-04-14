@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.0.7 - TBD
-------------
+v3.0.7 - April 14, 2016
+-----------------------
 
 * Fixes an issue where persons with large ignore lists would cause an inordinate
   amount of lag.  This was caused by the engine checking persons' ignore lists
