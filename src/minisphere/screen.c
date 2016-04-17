@@ -54,15 +54,15 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	y_scale = x_scale;
 #ifdef MINISPHERE_USE_SHADERS
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
-	if (display = al_create_display(320 * x_scale, 240 * y_scale))
+	if (display = al_create_display(x_size * x_scale, y_size * y_scale))
 		use_shaders = true;
 	else {
 		al_set_new_display_flags(ALLEGRO_OPENGL);
-		display = al_create_display(320 * x_scale, 240 * y_scale);
+		display = al_create_display(x_size * x_scale, y_size * y_scale);
 	}
 #else
 	al_set_new_display_flags(ALLEGRO_OPENGL);
-	display = al_create_display(320 * x_scale, 240 * y_scale);
+	display = al_create_display(x_size * x_scale, y_size * y_scale);
 #endif
 
 	if (display == NULL) {
