@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v3.0.8 - April 17, 2016
+-----------------------
+
+* Fixes a bug where minisphere would crash instead of showing an error message
+  if it was unable to create a render context.
+* SSJ will now continue with the previous course of action if given a null
+  command.  This only works for certain commands.
+
 v3.0.7 - April 14, 2016
 -----------------------
 
