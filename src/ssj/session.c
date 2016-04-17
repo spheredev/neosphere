@@ -5,6 +5,17 @@
 #include "inferior.h"
 #include "parser.h"
 
+enum auto_action
+{
+	AUTO_NONE,
+	AUTO_LIST,
+	AUTO_CONTINUE,
+	AUTO_STEP_IN,
+	AUTO_STEP_OUT,
+	AUTO_STEP_OVER,
+	AUTO_UP_DOWN,
+};
+
 struct breakpoint
 {
 	int   handle;
@@ -14,10 +25,15 @@ struct breakpoint
 
 struct session
 {
+	enum auto_action   auto_action;
 	struct breakpoint* breaks;
-	int                num_breaks;
 	int                frame;
 	inferior_t*        inferior;
+	int                list_num_lines;
+	char*              list_filename;
+	int                list_linenum;
+	int                num_breaks;
+	int                up_down_direction;
 };
 
 const char* const
@@ -43,6 +59,7 @@ command_db[] =
 };
 
 static void        autoselect_frame  (session_t* obj);
+static void        clear_auto_action (session_t* obj);
 static void        do_command_line   (session_t* obj);
 static const char* find_verb         (const char* abbrev, const char* *o_pattern);
 static const char* resolve_command   (command_t* cmd);
@@ -149,6 +166,17 @@ autoselect_frame(session_t* obj)
 }
 
 static void
+clear_auto_action(session_t* obj)
+{
+	switch (obj->auto_action) {
+	case AUTO_LIST:
+		free(obj->list_filename);
+		break;
+	}
+	obj->auto_action = AUTO_NONE;
+}
+
+static void
 do_command_line(session_t* obj)
 {
 	char               buffer[4096];
@@ -158,6 +186,7 @@ do_command_line(session_t* obj)
 	const char*        filename;
 	const char*        function_name;
 	int                line_no;
+	char*              synth;
 	const char*        verb;
 
 	int idx;
@@ -184,12 +213,52 @@ do_command_line(session_t* obj)
 	buffer[idx] = '\0';
 	if (!(command = command_parse(buffer)))
 		goto finished;
-	if ((verb = resolve_command(command)) == NULL)
-		goto finished;
+	
+	// if the command line is empty, this is a cue from the user that we should
+	// repeat the last command.  the implementation of this is a bit hacky and would benefit
+	// from some refactoring in the future.
+	if (!(verb = resolve_command(command))) {
+		command_free(command);
+		command = NULL;
+		switch (obj->auto_action) {
+		case AUTO_CONTINUE:
+			command = command_parse("continue");
+			break;
+		case AUTO_LIST:
+			synth = strnewf("list %d \"%s\":%d", obj->list_num_lines, obj->list_filename, obj->list_linenum);
+			command = command_parse(synth);
+			free(synth);
+			break;
+		case AUTO_STEP_IN:
+			command = command_parse("stepin");
+			break;
+		case AUTO_STEP_OUT:
+			command = command_parse("stepout");
+			break;
+		case AUTO_STEP_OVER:
+			command = command_parse("stepover");
+			break;
+		case AUTO_UP_DOWN:
+			if (obj->up_down_direction > 0)
+				command = command_parse("up");
+			else if (obj->up_down_direction < 0)
+				command = command_parse("down");
+			else  // crash prevention
+				command = command_parse("frame");
+			break;
+		default:
+			printf("nothing to repeat, please enter a valid SSJ command.\n");
+			printf("type 'help' to see a list of usable commands.\n");
+			goto finished;
+		}
+		if (!(verb = resolve_command(command)))
+			goto finished;
+	}
 
 	// figure out which handler to run based on the command name. this could
 	// probably be refactored to get rid of the massive if/elseif tower, but for
 	// now it serves its purpose.
+	clear_auto_action(obj);
 	if (strcmp(verb, "quit") == 0)
 		handle_quit(obj, command);
 	else if (strcmp(verb, "help") == 0)
@@ -326,6 +395,21 @@ handle_clearbreak(session_t* obj, command_t* cmd)
 static void
 handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 {
+	switch (op) {
+	case OP_RESUME:
+		obj->auto_action = AUTO_CONTINUE;
+		break;
+	case OP_STEP_IN:
+		obj->auto_action = AUTO_STEP_IN;
+		break;
+	case OP_STEP_OUT:
+		obj->auto_action = AUTO_STEP_OUT;
+		break;
+	case OP_STEP_OVER:
+		obj->auto_action = AUTO_STEP_OVER;
+		break;
+	}
+
 	inferior_resume(obj->inferior, op);
 	if (inferior_attached(obj->inferior)) {
 		autoselect_frame(obj);
@@ -469,6 +553,10 @@ handle_list(session_t* obj, command_t* cmd)
 		if (strcmp(filename, active_filename) != 0)
 			active_lineno = 0;
 		source_print(source, lineno, num_lines, active_lineno);
+		obj->list_num_lines = num_lines;
+		obj->list_filename = strdup(filename);
+		obj->list_linenum = lineno + num_lines;
+		obj->auto_action = AUTO_LIST;
 	}
 }
 
@@ -494,6 +582,8 @@ handle_up_down(session_t* obj, command_t* cmd, int direction)
 			: new_frame;
 		preview_frame(obj, obj->frame);
 	}
+	obj->auto_action = AUTO_UP_DOWN;
+	obj->up_down_direction = direction;
 }
 
 static void
