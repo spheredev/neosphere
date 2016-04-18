@@ -27,6 +27,10 @@ own section below:
       A Promises/A+ implementation used for asynchronous logic.  miniRT/pacts
       also provides the Pact object (its namesake), which simplifies code to
       fulfill and reject promises.
+	
+	* miniRT/render
+	  Allows pre-rendering of elements such as text which are expensive to draw
+	  in immediate mode.
 
     * miniRT/scenes:
       An extensible cutscene engine with support for multiple timelines and a
@@ -444,6 +448,42 @@ Pact:welsh(reason);
 
     Rejects all outstanding promises from this pact.  `reason` is the value to
     reject with, usually an Error object.
+
+
+miniRT/render
+-------------
+
+miniRT/render allows games to pre-render common screen elements which are
+otherwise expensive to draw and cause slowdown when rendered in immediate mode
+(i.e. in realtime), such as text.
+
+    var render = require('miniRT/render');
+
+new render.TextRender(text[, options]);
+
+    Constructs a render of `text`.  `options` specifies rendering options and
+    may include one or more of the following properties:
+
+        options.color (Color object)
+
+            A color object specifying the color and opacity of the text.  The
+            default is white (#FFFFFFFF).
+
+        options.font (Font object)
+
+            The Font object used to render the text.  If this is not provided,
+            the Sphere default font will be used.
+
+        options.shadow (number)
+
+            The length of the shadow cast by the text, in pixels.  If not
+            provided or zero, no shadow will be rendered.  This can be negative,
+            in which case the light source will be on the bottom right instead
+            of the top left.
+
+TextRender#draw(x, y);
+
+    Draws the pre-rendered text to the backbuffer at (x, y).
 
 
 miniRT/scenes

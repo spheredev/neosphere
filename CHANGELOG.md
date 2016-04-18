@@ -1,6 +1,15 @@
 minisphere Changelog
 ====================
 
+v3.1.0 - TBD
+------------
+
+* Adds some new components to miniRT: miniRT/binary allows easy loading of
+  structured binary data, miniRT/xml is a simple XML parser and DOM generator,
+  and miniRT/render allows pre-rendering of expensive-to-draw components such
+  as text.
+
+
 v3.0.8 - April 17, 2016
 -----------------------
 

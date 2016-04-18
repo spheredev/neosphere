@@ -20,7 +20,7 @@ main(int argc, char* argv[])
 	build_t* build = NULL;
 
 	srand((unsigned int)time(NULL));
-	
+
 	// parse the command line
 	if (!parse_cmdline(argc, argv))
 		goto shutdown;
