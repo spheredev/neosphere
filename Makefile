@@ -26,7 +26,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/font.c src/minisphere/galileo.c \
    src/minisphere/geometry.c src/minisphere/image.c \
    src/minisphere/input.c src/minisphere/logger.c \
-   src/minisphere/map_engine.c src/minisphere/obsmap.c \
+   src/minisphere/map_engine.c src/minisphere/matrix.c src/minisphere/obsmap.c \
    src/minisphere/persons.c src/minisphere/physics.c \
    src/minisphere/rng.c src/minisphere/screen.c src/minisphere/script.c \
    src/minisphere/shader.c src/minisphere/sockets.c src/minisphere/spherefs.c \
