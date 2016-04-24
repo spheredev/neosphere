@@ -12,7 +12,6 @@
 #include "input.h"
 #include "logger.h"
 #include "map_engine.h"
-#include "primitives.h"
 #include "rng.h"
 #include "shader.h"
 #include "sockets.h"
@@ -188,8 +187,8 @@ initialize_api(duk_context* ctx)
 	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duk);
-	init_primitives_api();
 	init_rng_api();
+	init_screen_api();
 	init_shader_api();
 	init_sockets_api();
 	init_spriteset_api(g_duk);

@@ -26,4 +26,6 @@ void             screen_toggle_fullscreen (screen_t* obj);
 void             screen_transform         (const screen_t* obj, ALLEGRO_TRANSFORM* p_trans);
 void             screen_unskip_frame      (screen_t* obj);
 
+void init_screen_api (void);
+
 #endif // MINISPHERE__DISPLAY_H__INCLUDED

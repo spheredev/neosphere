@@ -96,9 +96,6 @@
     <ClCompile Include="..\src\minisphere\persons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\primitives.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\minisphere\rng.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -228,9 +225,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\persons.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\minisphere\primitives.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\rng.h">
