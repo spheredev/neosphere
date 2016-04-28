@@ -32,10 +32,22 @@ matrix_free(matrix_t* matrix)
 	free(matrix);
 }
 
+const ALLEGRO_TRANSFORM*
+matrix_transform(const matrix_t* matrix)
+{
+	return &matrix->transform;
+}
+
 void
 matrix_identity(matrix_t* matrix)
 {
 	al_identity_transform(&matrix->transform);
+}
+
+void
+matrix_compose(matrix_t* matrix, const matrix_t* other)
+{
+	al_compose_transform(&matrix->transform, &other->transform);
 }
 
 void

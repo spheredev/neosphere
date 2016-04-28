@@ -40,7 +40,7 @@ sandbox_t*           g_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
 screen_t*            g_screen = NULL;
-kev_file_t*          g_sys_conf;
+kevfile_t*          g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 
@@ -208,7 +208,7 @@ main(int argc, char* argv[])
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");
 	if (g_sys_conf != NULL) {
-		filename = read_string_rec(g_sys_conf, "Font", "system.rfn");
+		filename = kev_read_string(g_sys_conf, "Font", "system.rfn");
 		g_sys_font = load_font(systempath(filename));
 	}
 	if (g_sys_font == NULL) {
@@ -453,7 +453,7 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "loading system configuration");
-	g_sys_conf = open_kev_file(NULL, "~sys/system.ini");
+	g_sys_conf = kev_open(NULL, "~sys/system.ini");
 
 	// initialize engine components
 	initialize_async();
@@ -510,7 +510,7 @@ shutdown_engine(void)
 	free_sandbox(g_fs);
 	g_fs = NULL;
 	if (g_sys_conf != NULL)
-		close_kev_file(g_sys_conf);
+		kev_close(g_sys_conf);
 	g_sys_conf = NULL;
 	al_uninstall_system();
 }

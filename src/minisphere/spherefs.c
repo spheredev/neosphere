@@ -47,7 +47,7 @@ new_sandbox(const char* game_path)
 	path_t*     path;
 	int         res_x, res_y;
 	size_t      sgm_size;
-	kev_file_t* sgm_file;
+	kevfile_t* sgm_file;
 	char*       sgm_text = NULL;
 	spk_t*      spk;
 	void*       sourcemap_data;
@@ -114,15 +114,15 @@ new_sandbox(const char* game_path)
 			free(sgm_text);
 			sgm_text = NULL;
 		}
-		else if (sgm_file = open_kev_file(fs, "game.sgm")) {
+		else if (sgm_file = kev_open(fs, "game.sgm")) {
 			console_log(1, "parsing Sphere 1.x manifest in sandbox #%u", s_next_sandbox_id);
-			fs->name = lstr_new(read_string_rec(sgm_file, "name", "Untitled"));
-			fs->author = lstr_new(read_string_rec(sgm_file, "author", "Author Unknown"));
-			fs->summary = lstr_new(read_string_rec(sgm_file, "description", "No information available."));
-			fs->res_x = read_number_rec(sgm_file, "screen_width", 320);
-			fs->res_y = read_number_rec(sgm_file, "screen_height", 240);
-			fs->script_path = make_sfs_path(read_string_rec(sgm_file, "script", "main.js"), "scripts");
-			close_kev_file(sgm_file);
+			fs->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
+			fs->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
+			fs->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
+			fs->res_x = kev_read_float(sgm_file, "screen_width", 320);
+			fs->res_y = kev_read_float(sgm_file, "screen_height", 240);
+			fs->script_path = make_sfs_path(kev_read_string(sgm_file, "script", "main.js"), "scripts");
+			kev_close(sgm_file);
 
 			// generate a JSON manifest (used by, e.g. GetGameManifest())
 			duk_push_object(g_duk);

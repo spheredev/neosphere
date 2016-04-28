@@ -31,7 +31,7 @@ GetVersionString()
     Returns the engine's version identification string. The string returned will
     be in the following format:
 
-        v2.0 (minisphere 3.0.8)
+        v2.0 (minisphere 3.1a0)
 
 GetExtensions()
 
@@ -790,82 +790,128 @@ Image:height (read-only)
 
     Gets the width or height of the image, in pixels.
 
-new Vertex(x, y[, color[, u, v]]);
+new Matrix();
 
-    Constructs an object describing a vertex of a shape.  `x` and `y` specify
-    the location of the vertex relative to the shape's origin.  `color`, if
-    specified, is multiplied with the texture at that point in the shape to
-    "tint" the vertex.  `u` and `v` are texture coordinates ranging from 0 to 1
-    describing which part of the texture is mapped to that vertex.
+    Constructs a transformation matrix.  The object represents a 4x4 matrix and
+    is initialized as an identity matrix.
 
-new Shape(vertices, image[, primitive_type]);
+Matrix:identity();
+
+    Initializes this matrix as an identity matrix.
+
+Matrix:compose(otherMatrix);
+
+    Multiplies this matrix by `otherMatrix`.
+
+Matrix:rotate(theta);
+
+    Applies a rotation transformation to this matrix.  `theta` is the angle of
+    rotation, in radians.
+
+Matrix:scale(sx, sy);
+
+    Applies a scaling transformation to this matrix.  `sx` and `sy` are the
+    horizontal and vertical scaling factors, respectively.
+
+Matrix:translate(tx, ty);
+
+    Applies a translation transformation to this matrix.  `tx` and `ty` are the
+    horizontal and vertical translations, respectively.
+
+new Shape(vertices[, texture[, primitive_type]]);
 
     Constructs a primitive shape out of the provided array of vertices textured
-    with the Image object specified by `image`.  `primitive_type` is optional
-    and can be one of the following:
+    with the Image specified by `texture`.
 
-        SHAPE_AUTO - Primitive type is determined automatically based on the
-                     number of vertices.  This is the default.
+    Each vertex can have the following properties:
 
-        SHAPE_POINT_LIST - A point list. Each vertex represents a single point
-                           to be rendered.  Useful for particle effects.
+        vertex.x, vertex.y
 
-        SHAPE_LINE_LIST - A line list.  Each pair of vertices represents a line
-                          segment.
+            The location of the vertex.  The final location of each vertex can
+            be modified by using a transformation matrix (see Matrix above).
 
-        SHAPE_TRIANGLE_LIST - A triangle will be drawn for every 3 vertices.
+        vertex.u, vertex.v
 
-        SHAPE_TRIANGLE_STRIP - A triangle strip.  The first 3 vertices represent
-                               a complete triangle, and each subsequent vertex
-                               is combined with the previous two to form
-                               another.  Number of triangles drawn is equal to
-                               (num_verts - 2).
+            The texture coordinates of the vertex.  This is used to control
+            which part of the texture will be applied to this vertex.  If u/v
+            is not provided for a vertex, it will be assumed to be have its u/v
+            at (0, 0).
 
-        SHAPE_TRIANGLE_FAN - A series of triangles is drawn, all sharing the
-                             first vertex.  As with a strip, the total number of
-                             triangles is equal to (num_verts - 2).
+        vertex.color
 
-Shape:image (read/write)
+            The color of the vertex.  The vertex colors will be multiplied with
+            texture pixels to determine the final color of each pixel in a
+            shape.
+
+    `primitive_type` can be one of the following:
+
+        SHAPE_AUTO
+
+            Primitive type is determined automatically based on the number of
+            vertices.  This is the default.
+
+        SHAPE_POINTS
+
+            A point list. Each vertex represents a single point to be rendered.
+            Useful for particle effects.
+
+        SHAPE_LINES
+
+            A line list.  Each pair of vertices represents a line segment.
+
+        SHAPE_TRIANGLES
+
+            A triangle will be drawn for every 3 vertices.
+
+        SHAPE_TRI_STRIP
+
+            A triangle strip.  The first 3 vertices represent a complete
+            triangle, and each subsequent vertex is combined with the previous
+            two to form another.  Number of triangles drawn is equal to
+            (num_verts - 2).
+
+        SHAPE_TRI_FAN
+
+            A series of triangles is drawn, all sharing the first vertex.  As
+            with a strip, the total number of triangles is equal to
+            (num_verts - 2).s
+
+Shape:texture (read/write)
 
     The Image to be used when texturing the shape. This can be null, in which
-    case the vertex colors alone will determine the rendered shape's appearance.
+    case the vertex colors alone will determine the rendered shape's
+    appearance.
 
-new Group(shapes, shader);
+Shape:draw([surface[, transform]]);
+
+    Draws the shape.  `surface` specifies the surface to drawn the shape on, or
+    null to draw to the backbuffer.  `transform` is the Matrix to use to
+    transform the shape.
+
+new Group(shapes[, shader]);
 
     Constructs a Group out of the provided array of Shape objects.  `shader` is
-    the shader program to use when rendering the group, obtained by calling
-    either the ShaderProgram constructor or GetDefaultShaderProgram().  See
-    below for more information on shaders.
+    the shader program to use when rendering the group.  See below for more
+    information on shaders.
 
-Group:draw();
+    When a Group is created, its transformation matrix is set to the identity
+    matrix.  If `shader` is not provided, the default shader program will be
+    used (see `GetDefaultShaderProgram()`).
 
-    Renders the group to the backbuffer. Any transformations specified for the
-    group (see below for properties) are applied as if the entire group were a
-    single primitive.
+Group:shader (read/write)
 
-Group:x (read/write)
-Group:y (read/write)
+    Gets or sets the ShaderProgram to use when drawing this group.
 
-    Sets the location the Group will be drawn at. When using default shaders,
-    these are in raster coordinates where +X is right and +Y is down. Note that
-    the translation described by these values is applied *after* rotation. To
-    apply translation before rotation, use the `rotX` and `rotY` properties (see
-    below).
+Group:transform (read/write)
 
-Group:angle (read/write)
+    Gets or sets the transformation matrix to use when drawing this group.
 
-    The entire Group is rotated by this angle when rendered.
+Group:draw([surface]);
 
-Group:rotX (read/write)
-Group:rotY (read/write)
-
-    Specifies the amount by which to translate before rotation is applied.  The
-    shapes in the group will revolve about the origin at a distance determined
-    by these values.
-
-Group:shader (read/write);
-
-    Gets or sets the ShaderProgram used when rendering this Group.
+    Draws the group to the backbuffer. Any transformations defined for the
+    group (see below) are applied as if the entire group were a single
+    primitive.  `surface` specifies the Surface to draw on, or null for the
+    backbuffer.
 
 GetDefaultShaderProgram();
 
@@ -1596,7 +1642,7 @@ FileStream:readString([numBytes]);
     Reads a fixed-length string from the file.  `numBytes` specifies how many
     bytes to read and can be omitted to read the entire file at once without
     affecting the file pointer.
-    
+
     Note: Strings in minisphere are UTF-8 encoded.  As a result, the number of
           bytes in a string may not match the number of characters.
 
@@ -1627,7 +1673,7 @@ FileStream:writePString(string, lenSize[, little_endian]);
     and advances the file pointer.  `lenSize` specifies the number of bytes [1-4]
     used to encode the string length.  `little_endian` is optional and defaults
     to false.
-    
+
     Note: If the string is too long for its length to be encoded in `lenSize`
 		  bytes, this method will throw a TypeError.
 

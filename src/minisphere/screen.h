@@ -2,6 +2,7 @@
 #define MINISPHERE__DISPLAY_H__INCLUDED
 
 #include "image.h"
+#include "matrix.h"
 
 typedef struct screen screen_t;
 
@@ -23,7 +24,7 @@ void             screen_resize            (screen_t* obj, int x_size, int y_size
 void             screen_show_mouse        (screen_t* obj, bool visible);
 void             screen_toggle_fps        (screen_t* obj);
 void             screen_toggle_fullscreen (screen_t* obj);
-void             screen_transform         (const screen_t* obj, ALLEGRO_TRANSFORM* p_trans);
+void             screen_transform         (screen_t* obj, const matrix_t* matrix);
 void             screen_unskip_frame      (screen_t* obj);
 
 void init_screen_api (void);

@@ -8,6 +8,10 @@ v3.1.0 - TBD
   structured binary data, miniRT/xml is a simple XML parser and DOM generator,
   and miniRT/render allows pre-rendering of expensive-to-draw components such
   as text.
+* Adds a new Matrix object to make working with transformation matrices easier.
+* Improves the Galileo API: Shapes can now be drawn directly, and Groups now
+  have a `transform` property which allows the transformation matrix to be
+  modified directly.  The `x`/`y` and `angle` properties have been removed.
 
 
 v3.0.8 - April 17, 2016

@@ -8,6 +8,7 @@
 #include "api.h"
 #include "debugger.h"
 #include "image.h"
+#include "matrix.h"
 
 static duk_ret_t js_GetClippingRectangle   (duk_context* ctx);
 static duk_ret_t js_SetClippingRectangle   (duk_context* ctx);
@@ -226,8 +227,7 @@ screen_draw_status(screen_t* obj, const char* text)
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
 	draw_text(g_sys_font, rgba(255, 255, 255, 255), (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
-	screen_transform(obj, &trans);
-	al_use_transform(&trans);
+	screen_transform(obj, NULL);
 }
 
 void
@@ -307,8 +307,7 @@ screen_flip(screen_t* obj, int framerate)
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
 			draw_text(g_sys_font, rgba(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			draw_text(g_sys_font, rgba(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
-			screen_transform(g_screen, &trans);
-			al_use_transform(&trans);
+			screen_transform(g_screen, NULL);
 		}
 		al_flip_display();
 		obj->last_flip_time = al_get_time();
@@ -418,10 +417,18 @@ screen_toggle_fullscreen(screen_t* obj)
 }
 
 void
-screen_transform(const screen_t* obj, ALLEGRO_TRANSFORM* p_trans)
+screen_transform(screen_t* obj, const matrix_t* matrix)
 {
-	al_scale_transform(p_trans, obj->x_scale, obj->y_scale);
-	al_translate_transform(p_trans, obj->x_offset, obj->y_offset);
+	ALLEGRO_TRANSFORM transform;
+	
+	al_identity_transform(&transform);
+	if (matrix != NULL)
+		al_compose_transform(&transform, matrix_transform(matrix));
+	if (al_get_target_bitmap() == al_get_backbuffer(obj->display)) {
+		al_scale_transform(&transform, obj->x_scale, obj->y_scale);
+		al_translate_transform(&transform, obj->x_offset, obj->y_offset);
+	}
+	al_use_transform(&transform);
 }
 
 void
@@ -437,7 +444,6 @@ refresh_display(screen_t* obj)
 	ALLEGRO_MONITOR_INFO monitor;
 	int                  real_width;
 	int                  real_height;
-	ALLEGRO_TRANSFORM    trans;
 
 	al_set_display_flag(obj->display, ALLEGRO_FULLSCREEN_WINDOW, obj->fullscreen);
 	if (obj->fullscreen) {
@@ -470,10 +476,7 @@ refresh_display(screen_t* obj)
 			(monitor.y1 + monitor.y2) / 2 - obj->y_size * obj->y_scale / 2);
 	}
 	
-	al_identity_transform(&trans);
-	screen_transform(obj, &trans);
-	al_use_transform(&trans);
-	
+	screen_transform(obj, NULL);
 	screen_set_clipping(obj, obj->clip_rect);
 }
 

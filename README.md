@@ -1,4 +1,4 @@
-minisphere 3.0
+minisphere 3.1
 ==============
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
