@@ -74,6 +74,12 @@ rng_normal(double mean, double sigma)
 	return mean + x * sigma;
 }
 
+double
+rng_random(void)
+{
+	return genrand_res53();
+}
+
 long
 rng_ranged(long lower, long upper)
 {
@@ -156,7 +162,7 @@ js_RNG_normal(duk_context* ctx)
 static duk_ret_t
 js_RNG_random(duk_context* ctx)
 {
-	duk_push_number(ctx, genrand_res53());
+	duk_push_number(ctx, rng_random());
 	return 1;
 }
 

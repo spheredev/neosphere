@@ -32,7 +32,7 @@ void        free_wraptext           (wraptext_t* wraptext);
 const char* get_wraptext_line       (const wraptext_t* wraptext, int line_index);
 int         get_wraptext_line_count (const wraptext_t* wraptext);
 
-extern void init_font_api        (duk_context* ctx);
-extern void duk_push_sphere_font (duk_context* ctx, font_t* font);
+void init_font_api        (duk_context* ctx);
+void duk_push_sphere_font (duk_context* ctx, font_t* font);
 
 #endif // MINISPHERE__FONT_H__INCLUDED

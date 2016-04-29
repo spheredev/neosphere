@@ -1,9 +1,9 @@
 #include "minisphere.h"
+#include "async.h"
+
 #include "api.h"
 #include "script.h"
 #include "vector.h"
-
-#include "async.h"
 
 static duk_ret_t js_DispatchScript (duk_context* ctx);
 
@@ -13,15 +13,16 @@ static vector_t*    s_scripts;
 bool
 initialize_async(void)
 {
-	console_log(1, "initializing Async");
-	s_scripts = vector_new(sizeof(script_t*));
-	return s_scripts != NULL;
+	console_log(1, "initializing async manager");
+	if (!(s_scripts = vector_new(sizeof(script_t*))))
+		return false;
+	return true;
 }
 
 void
 shutdown_async(void)
 {
-	console_log(1, "shutting down Async");
+	console_log(1, "shutting down async manager");
 	vector_free(s_scripts);
 }
 

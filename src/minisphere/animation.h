@@ -3,11 +3,11 @@
 
 typedef struct animation animation_t;
 
-extern animation_t* load_animation   (const char* path);
-extern animation_t* ref_animation    (animation_t* anim);
-extern void         free_animation   (animation_t* anim);
-extern bool         update_animation (animation_t* anim);
+animation_t* load_animation   (const char* path);
+animation_t* ref_animation    (animation_t* anim);
+void         free_animation   (animation_t* anim);
+bool         update_animation (animation_t* anim);
 
-extern void init_animation_api (void);
+void init_animation_api (void);
 
 #endif // MINISPHERE__ANIMATION_H__INCLUDED

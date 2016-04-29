@@ -2034,8 +2034,7 @@ js_GetTileSurface(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileSurface(): invalid tile index (%d)", tile_index);
 	if ((image = clone_image(get_tile_image(s_map->tileset, tile_index))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileSurface(): unable to create new surface image");
-	duk_push_sphere_surface(ctx, image);
-	free_image(image);
+	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
 }
 
@@ -2524,7 +2523,7 @@ static duk_ret_t
 js_SetTileSurface(duk_context* ctx)
 {
 	int tile_index = duk_require_int(ctx, 0);
-	image_t* image = duk_require_sphere_surface(ctx, 1);
+	image_t* image = duk_require_sphere_obj(ctx, 1, "Surface");
 
 	int image_w, image_h;
 	int num_tiles;

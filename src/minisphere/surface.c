@@ -101,18 +101,6 @@ init_surface_api(void)
 	register_api_method(g_duk, "Surface", "save", js_Surface_save);
 }
 
-void
-duk_push_sphere_surface(duk_context* ctx, image_t* image)
-{
-	duk_push_sphere_obj(ctx, "Surface", ref_image(image));
-}
-
-image_t*
-duk_require_sphere_surface(duk_context* ctx, duk_idx_t index)
-{
-	return duk_require_sphere_obj(ctx, index, "Surface");
-}
-
 static uint8_t*
 duk_require_rgba_lut(duk_context* ctx, duk_idx_t index)
 {
@@ -180,8 +168,7 @@ js_GrabSurface(duk_context* ctx)
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): unable to grab backbuffer image");
-	duk_push_sphere_surface(ctx, image);
-	free_image(image);
+	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
 }
 
@@ -205,8 +192,7 @@ js_LoadSurface(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "images", false);
 	if (!(image = load_image(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file `%s`", filename);
-	duk_push_sphere_surface(ctx, image);
-	free_image(image);
+	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
 }
 
@@ -240,8 +226,7 @@ js_new_Surface(duk_context* ctx)
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to load image file `%s`", filename);
 	}
-	duk_push_sphere_surface(ctx, image);
-	free_image(image);
+	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
 }
 
@@ -262,7 +247,7 @@ js_Surface_get_height(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
-	duk_pop(ctx);
+
 	duk_push_int(ctx, get_image_height(image));
 	return 1;
 }
@@ -274,7 +259,7 @@ js_Surface_get_width(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
-	duk_pop(ctx);
+
 	duk_push_int(ctx, get_image_width(image));
 	return 1;
 }
@@ -296,8 +281,8 @@ js_Surface_setPixel(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+
 	set_image_pixel(image, x, y, color);
 	return 0;
 }
@@ -305,20 +290,22 @@ js_Surface_setPixel(duk_context* ctx)
 static duk_ret_t
 js_Surface_getPixel(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-
+	int      height;
 	image_t* image;
 	color_t  pixel;
-	int      w, h;
+	int      width;
+	int      x;
+	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
-	w = get_image_width(image);
-	h = get_image_height(image);
-	if (x < 0 || x >= w || y < 0 || y >= h)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, w, h);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+
+	width = get_image_width(image);
+	height = get_image_height(image);
+	if (x < 0 || x >= width || y < 0 || y >= height)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
 	pixel = get_image_pixel(image, x, y);
 	duk_push_sphere_color(ctx, pixel);
 	return 1;
@@ -327,20 +314,25 @@ js_Surface_getPixel(duk_context* ctx)
 static duk_ret_t
 js_Surface_applyColorFX(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
-	colormatrix_t matrix = duk_require_sphere_colormatrix(ctx, 4);
+	colormatrix_t matrix;
+	int           height;
+	int           width;
+	int           x;
+	int           y;
 
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
-	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
-	if (!apply_color_matrix(image, matrix, x, y, w, h))
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	width = duk_require_int(ctx, 2);
+	height = duk_require_int(ctx, 3);
+	matrix = duk_require_sphere_colormatrix(ctx, 4);
+
+	if (x < 0 || y < 0 || x + width > get_image_width(image) || y + height > get_image_height(image))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, width, height);
+	if (!apply_color_matrix(image, matrix, x, y, width, height))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): unable to apply transformation");
 	return 0;
 }
@@ -360,8 +352,8 @@ js_Surface_applyColorFX4(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+
 	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_color_matrix_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
@@ -384,8 +376,8 @@ js_Surface_applyLookup(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+
 	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
@@ -402,20 +394,21 @@ js_Surface_blit(duk_context* ctx)
 {
 	int x = duk_require_int(ctx, 0);
 	int y = duk_require_int(ctx, 1);
-	
+
 	image_t* image;
-	
+
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+
+	if (!screen_is_skipframe(g_screen))
+		al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
 static duk_ret_t
 js_Surface_blitMaskSurface(duk_context* ctx)
 {
-	image_t* src_image = duk_require_sphere_surface(ctx, 0);
+	image_t* src_image = duk_require_sphere_obj(ctx, 0, "Surface");
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 	color_t mask = duk_require_sphere_color(ctx, 3);
@@ -424,10 +417,10 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_tinted_bitmap(get_image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
@@ -439,7 +432,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 static duk_ret_t
 js_Surface_blitSurface(duk_context* ctx)
 {
-	image_t* src_image = duk_require_sphere_surface(ctx, 0);
+	image_t* src_image = duk_require_sphere_obj(ctx, 0, "Surface");
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 
@@ -447,10 +440,10 @@ js_Surface_blitSurface(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
 	al_draw_bitmap(get_image_bitmap(src_image), x, y, 0x0);
@@ -466,36 +459,37 @@ js_Surface_clone(duk_context* ctx)
 	image_t* new_image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+
 	if ((new_image = clone_image(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:clone() - Unable to create new surface image");
-	duk_push_sphere_surface(ctx, new_image);
-	free_image(new_image);
+	duk_push_sphere_obj(ctx, "Surface", new_image);
 	return 1;
 }
 
 static duk_ret_t
 js_Surface_cloneSection(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
-
+	int      height;
 	image_t* image;
 	image_t* new_image;
+	int      width;
+	int      x;
+	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
-	if ((new_image = create_image(w, h)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection() - Failed to create new surface");
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	width = duk_require_int(ctx, 2);
+	height = duk_require_int(ctx, 3);
+
+	if ((new_image = create_image(width, height)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection(): unable to create surface");
 	al_set_target_bitmap(get_image_bitmap(new_image));
-	al_draw_bitmap_region(get_image_bitmap(image), x, y, w, h, 0, 0, 0x0);
+	al_draw_bitmap_region(get_image_bitmap(image), x, y, width, height, 0, 0, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
-	duk_push_sphere_surface(ctx, new_image);
-	free_image(new_image);
+	duk_push_sphere_obj(ctx, "Surface", new_image);
 	return 1;
 }
 
@@ -506,10 +500,10 @@ js_Surface_createImage(duk_context* ctx)
 	image_t* new_image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
-	duk_pop(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
+
 	if ((new_image = clone_image(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:createImage() - Failed to create new image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:createImage(): unable to create image");
 	duk_push_sphere_image(ctx, new_image);
 	free_image(new_image);
 	return 1;
@@ -528,10 +522,10 @@ js_Surface_drawText(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(get_image_bitmap(image));
@@ -553,7 +547,7 @@ js_Surface_filledCircle(duk_context* ctx)
 	image_t* image;
 	
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -571,7 +565,7 @@ js_Surface_flipHorizontally(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	flip_image(image, true, false);
 	return 0;
@@ -583,7 +577,7 @@ js_Surface_flipVertically(duk_context* ctx)
 	image_t* image;
 	
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	flip_image(image, false, true);
 	return 0;
@@ -608,7 +602,7 @@ js_Surface_gradientCircle(duk_context* ctx)
 	int i;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -650,7 +644,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	image_t*      image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -682,7 +676,7 @@ js_Surface_line(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -706,7 +700,7 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -733,7 +727,7 @@ js_Surface_pointSeries(duk_context* ctx)
 	unsigned int i;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -776,7 +770,7 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -797,7 +791,7 @@ js_Surface_replaceColor(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	if (!replace_image_color(image, color, new_color))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:replaceColor() - Failed to perform replacement");
@@ -813,7 +807,7 @@ js_Surface_rescale(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	if (!rescale_image(image, width, height))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rescale() - Failed to rescale image");
@@ -834,7 +828,7 @@ js_Surface_rotate(duk_context* ctx)
 	int      w, h;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	w = new_w = get_image_width(image);
 	h = new_h = get_image_height(image);
@@ -868,7 +862,7 @@ js_Surface_rectangle(duk_context* ctx)
 	int      blend_mode;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -887,7 +881,7 @@ js_Surface_save(duk_context* ctx)
 	image_t*    image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	filename = duk_require_path(ctx, 0, "images", false);
 	save_image(image, filename);
@@ -909,7 +903,7 @@ js_Surface_setAlpha(duk_context* ctx)
 	int i_x, i_y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_surface(ctx, -1);
+	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	if (!(lock = lock_image(image)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): unable to lock surface");

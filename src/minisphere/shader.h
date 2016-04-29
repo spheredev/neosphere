@@ -11,15 +11,15 @@ enum shader_type
 	SHADER_TYPE_MAX
 } shader_type_t;
 
-extern void      initialize_shaders (bool enable_shading);
-extern void      shutdown_shaders   (void);
-extern bool      are_shaders_active (void);
-extern shader_t* create_shader      (const char* vs_path, const char* fs_path);
-extern shader_t* ref_shader         (shader_t* shader);
-extern void      free_shader        (shader_t* shader);
-extern bool      apply_shader       (shader_t* shader);
-extern void      reset_shader       (void);
+void      initialize_shaders (bool enable_shading);
+void      shutdown_shaders   (void);
+bool      are_shaders_active (void);
+shader_t* create_shader      (const char* vs_path, const char* fs_path);
+shader_t* ref_shader         (shader_t* shader);
+void      free_shader        (shader_t* shader);
+bool      apply_shader       (shader_t* shader);
+void      reset_shader       (void);
 
-extern void init_shader_api (void);
+void init_shader_api (void);
 
 #endif // MINISPHERE__SHADER_H__INCLUDED

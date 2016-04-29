@@ -807,7 +807,7 @@ js_new_Image(duk_context* ctx)
 	}
 	else if (duk_is_sphere_obj(ctx, 0, "Surface")) {
 		// create an Image from a Surface
-		src_image = duk_require_sphere_surface(ctx, 0);
+		src_image = duk_require_sphere_obj(ctx, 0, "Surface");
 		if (!(image = clone_image(src_image)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create image from surface");
 	}
@@ -906,8 +906,7 @@ js_Image_createSurface(duk_context* ctx)
 	duk_pop(ctx);
 	if ((new_image = clone_image(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): unable to create new surface image");
-	duk_push_sphere_surface(ctx, new_image);
-	free_image(new_image);
+	duk_push_sphere_obj(ctx, "Surface", new_image);
 	return 1;
 }
 
