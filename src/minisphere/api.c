@@ -378,30 +378,28 @@ noreturn
 duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
-
-	const char*   filename = NULL;
-	int           line_number;
-	const char*   full_path;
+	char*   filename;
+	int     line_number;
 
 	// get filename and line number from Duktape call stack
-	duk_push_global_object(g_duk);
-	duk_get_prop_string(g_duk, -1, "Duktape");
-	duk_get_prop_string(g_duk, -1, "act"); duk_push_int(g_duk, -2 + blame_offset); duk_call(g_duk, 1);
+	duk_get_global_string(g_duk, "Duktape");
+	duk_get_prop_string(g_duk, -1, "act");
+	duk_push_int(g_duk, -2 + blame_offset);
+	duk_call(g_duk, 1);
 	if (!duk_is_object(g_duk, -1)) {
 		duk_pop(g_duk);
-		duk_get_prop_string(g_duk, -1, "act"); duk_push_int(g_duk, -2); duk_call(g_duk, 1);
+		duk_get_prop_string(g_duk, -1, "act");
+		duk_push_int(g_duk, -2);
+		duk_call(g_duk, 1);
 	}
-	duk_remove(g_duk, -2);
-	duk_get_prop_string(g_duk, -1, "lineNumber"); line_number = duk_to_int(g_duk, -1); duk_pop(g_duk);
-	duk_get_prop_string(g_duk, -1, "function");
-	duk_get_prop_string(g_duk, -1, "fileName"); full_path = duk_safe_to_string(g_duk, -1); duk_pop(g_duk);
-	duk_pop_2(g_duk);
+	duk_get_prop_string(g_duk, -1, "lineNumber");
+	duk_get_prop_string(g_duk, -2, "function");
+	duk_get_prop_string(g_duk, -1, "fileName");
+	filename = strdup(duk_safe_to_string(g_duk, -1));
+	line_number = duk_to_int(g_duk, -3);
+	duk_pop_n(g_duk, 5);
 
-	// strip directory path from filename
-	filename = strrchr(full_path, ALLEGRO_NATIVE_PATH_SEP);
-	filename = filename != NULL ? filename + 1 : full_path;
-
-	// construct and throw the exception
+	// construct an Error object
 	va_start(ap, fmt);
 	duk_push_error_object_va(ctx, err_code, fmt, ap);
 	va_end(ap);
@@ -409,6 +407,8 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	duk_put_prop_string(ctx, -2, "fileName");
 	duk_push_int(ctx, line_number);
 	duk_put_prop_string(ctx, -2, "lineNumber");
+	free(filename);
+	
 	duk_throw(ctx);
 }
 
