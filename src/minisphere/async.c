@@ -5,9 +5,10 @@
 
 #include "async.h"
 
-static duk_ret_t js_Async (duk_context* ctx);
+static duk_ret_t js_DispatchScript (duk_context* ctx);
 
-static vector_t* s_scripts;
+static unsigned int s_next_script_id = 1;
+static vector_t*    s_scripts;
 
 bool
 initialize_async(void)
@@ -28,16 +29,16 @@ void
 update_async(void)
 {
 	iter_t     iter;
-	script_t** pscript;
+	script_t** p_script;
 	vector_t*  vector;
 	
 	vector = s_scripts;
 	s_scripts = vector_new(sizeof(script_t*));
 	if (vector != NULL) {
 		iter = vector_enum(vector);
-		while (pscript = vector_next(&iter)) {
-			run_script(*pscript, false);
-			free_script(*pscript);
+		while (p_script = vector_next(&iter)) {
+			run_script(*p_script, false);
+			free_script(*p_script);
 		}
 		vector_free(vector);
 	}
@@ -55,15 +56,20 @@ queue_async_script(script_t* script)
 void
 init_async_api(void)
 {
-	register_api_method(g_duk, NULL, "Async", js_Async);
+	register_api_method(g_duk, NULL, "DispatchScript", js_DispatchScript);
 }
 
 static duk_ret_t
-js_Async(duk_context* ctx)
+js_DispatchScript(duk_context* ctx)
 {
-	script_t* script = duk_require_sphere_script(ctx, 0, "[async script]");
+	script_t* script;
+	char*     script_name;
+
+	script_name = strnewf("synth:async~%u.js", s_next_script_id++);
+	script = duk_require_sphere_script(ctx, 0, script_name);
+	free(script_name);
 
 	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Async(): unable to queue async script");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch async script");
 	return 0;
 }
