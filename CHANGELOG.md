@@ -8,15 +8,15 @@ v3.1.0 - TBD
   structured binary data, miniRT/xml is a simple XML parser and DOM generator,
   and miniRT/render allows pre-rendering of expensive-to-draw components such
   as text.
-* Adds a new Matrix object to make working with transformation matrices easier.
+* Adds a new Transform object which allows working with transformation matrices.
 * Improves the Galileo API: Shapes can now be drawn directly, and Groups now
   have a `transform` property which allows the transformation matrix to be
-  modified directly.  The `x`/`y` and `angle` properties have been removed.
-* `Async()` has been renamed `DispatchScript()` for consistency with other parts
-  of the Sphere API.
+  manipulated directly.
 * minisphere now looks for CommonJS modules in `~sgm/lib` instead of
   `~sgm/commonjs`.  `lib/` seems to be the de facto standard location to put
   libraries on CommonJS platforms.
+* `Async()` is now called `DispatchScript()` for consistency.
+* `ListeningSocket` is now called `Server`.
 
 
 v3.0.8 - April 17, 2016

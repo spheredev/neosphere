@@ -22,10 +22,10 @@ static duk_ret_t js_Socket_close                    (duk_context* ctx);
 static duk_ret_t js_Socket_read                     (duk_context* ctx);
 static duk_ret_t js_Socket_readString               (duk_context* ctx);
 static duk_ret_t js_Socket_write                    (duk_context* ctx);
-static duk_ret_t js_new_ListeningSocket             (duk_context* ctx);
-static duk_ret_t js_ListeningSocket_finalize        (duk_context* ctx);
-static duk_ret_t js_ListeningSocket_close           (duk_context* ctx);
-static duk_ret_t js_ListeningSocket_accept          (duk_context* ctx);
+static duk_ret_t js_new_Server                      (duk_context* ctx);
+static duk_ret_t js_Server_finalize                 (duk_context* ctx);
+static duk_ret_t js_Server_close                    (duk_context* ctx);
+static duk_ret_t js_Server_accept                   (duk_context* ctx);
 static duk_ret_t js_new_IOSocket                    (duk_context* ctx);
 static duk_ret_t js_IOSocket_finalize               (duk_context* ctx);
 static duk_ret_t js_IOSocket_get_bytesPending       (duk_context* ctx);
@@ -354,10 +354,10 @@ init_sockets_api(void)
 	register_api_method(g_duk, "Socket", "readString", js_Socket_readString);
 	register_api_method(g_duk, "Socket", "write", js_Socket_write);
 
-	// ListeningSocket object
-	register_api_ctor(g_duk, "ListeningSocket", js_new_ListeningSocket, js_ListeningSocket_finalize);
-	register_api_method(g_duk, "ListeningSocket", "close", js_ListeningSocket_close);
-	register_api_method(g_duk, "ListeningSocket", "accept", js_ListeningSocket_accept);
+	// Server object
+	register_api_ctor(g_duk, "Server", js_new_Server, js_Server_finalize);
+	register_api_method(g_duk, "Server", "close", js_Server_close);
+	register_api_method(g_duk, "Server", "accept", js_Server_accept);
 	
 	// IOSocket object
 	register_api_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
@@ -600,7 +600,7 @@ js_Socket_write(duk_context* ctx)
 }
 
 static duk_ret_t
-js_new_ListeningSocket(duk_context* ctx)
+js_new_Server(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int port = duk_require_int(ctx, 0);
@@ -609,35 +609,35 @@ js_new_ListeningSocket(duk_context* ctx)
 	socket_t* socket;
 
 	if (max_backlog <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ListeningSocket(): backlog size must be greater than zero (got: %i)", max_backlog);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Server(): backlog size must be greater than zero (got: %i)", max_backlog);
 	if (socket = listen_on_port(NULL, port, 1024, max_backlog))
-		duk_push_sphere_obj(ctx, "ListeningSocket", socket);
+		duk_push_sphere_obj(ctx, "Server", socket);
 	else
 		duk_push_null(ctx);
 	return 1;
 }
 
 static duk_ret_t
-js_ListeningSocket_finalize(duk_context* ctx)
+js_Server_finalize(duk_context* ctx)
 {
 	socket_t*   socket;
 
-	socket = duk_require_sphere_obj(ctx, 0, "ListeningSocket");
+	socket = duk_require_sphere_obj(ctx, 0, "Server");
 	free_socket(socket);
 	return 0;
 }
 
 static duk_ret_t
-js_ListeningSocket_accept(duk_context* ctx)
+js_Server_accept(duk_context* ctx)
 {
 	socket_t* new_socket;
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "ListeningSocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Server");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ListeningSocket:accept(): socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Server:accept(): socket has been closed");
 	new_socket = accept_next_socket(socket);
 	if (new_socket)
 		duk_push_sphere_obj(ctx, "IOSocket", new_socket);
@@ -647,12 +647,12 @@ js_ListeningSocket_accept(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ListeningSocket_close(duk_context* ctx)
+js_Server_close(duk_context* ctx)
 {
 	socket_t*   socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "ListeningSocket");
+	socket = duk_require_sphere_obj(ctx, -1, "Server");
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (socket != NULL)
