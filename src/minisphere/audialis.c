@@ -98,7 +98,7 @@ initialize_audialis(void)
 	console_log(1, "initializing Audialis");
 	
 	s_have_sound = true;
-	if (!al_install_audio() || !(s_def_mixer = create_mixer(44100, 16, 2))) {
+	if (!al_install_audio() || !(s_def_mixer = mixer_new(44100, 16, 2))) {
 		s_have_sound = false;
 		console_log(1, "  no audio is available");
 		return;
@@ -118,10 +118,10 @@ shutdown_audialis(void)
 	console_log(1, "shutting down Audialis");
 	iter = vector_enum(s_playing_sounds);
 	while (p_sound = vector_next(&iter))
-		free_sound(*p_sound);
+		sound_free(*p_sound);
 	vector_free(s_playing_sounds);
 	vector_free(s_streams);
-	free_mixer(s_def_mixer);
+	mixer_free(s_def_mixer);
 	if (s_have_sound)
 		al_uninstall_audio();
 }
@@ -140,9 +140,9 @@ update_audialis(void)
 	
 	iter = vector_enum(s_playing_sounds);
 	while (p_sound = vector_next(&iter)) {
-		if (is_sound_playing(*p_sound))
+		if (sound_playing(*p_sound))
 			continue;
-		free_sound(*p_sound);
+		sound_free(*p_sound);
 		iter_remove(&iter);
 	}
 }
@@ -154,7 +154,7 @@ get_default_mixer(void)
 }
 
 mixer_t*
-create_mixer(int frequency, int bits, int channels)
+mixer_new(int frequency, int bits, int channels)
 {
 	ALLEGRO_CHANNEL_CONF conf;
 	ALLEGRO_AUDIO_DEPTH  depth;
@@ -187,7 +187,7 @@ create_mixer(int frequency, int bits, int channels)
 
 	mixer->gain = al_get_mixer_gain(mixer->ptr);
 	mixer->id = s_next_mixer_id++;
-	return ref_mixer(mixer);
+	return mixer_ref(mixer);
 
 on_error:
 	console_log(2, "failed to create mixer #%u", s_next_mixer_id++);
@@ -200,14 +200,14 @@ on_error:
 }
 
 mixer_t*
-ref_mixer(mixer_t* mixer)
+mixer_ref(mixer_t* mixer)
 {
 	++mixer->refcount;
 	return mixer;
 }
 
 void
-free_mixer(mixer_t* mixer)
+mixer_free(mixer_t* mixer)
 {
 	if (mixer == NULL || --mixer->refcount > 0)
 		return;
@@ -218,20 +218,20 @@ free_mixer(mixer_t* mixer)
 }
 
 float
-get_mixer_gain(mixer_t* mixer)
+mixer_get_gain(mixer_t* mixer)
 {
 	return mixer->gain;
 }
 
 void
-set_mixer_gain(mixer_t* mixer, float gain)
+mixer_set_gain(mixer_t* mixer, float gain)
 {
 	al_set_mixer_gain(mixer->ptr, gain);
 	mixer->gain = gain;
 }
 
 sound_t*
-load_sound(const char* path, mixer_t* mixer)
+sound_load(const char* path, mixer_t* mixer)
 {
 	sound_t* sound;
 
@@ -242,14 +242,14 @@ load_sound(const char* path, mixer_t* mixer)
 	
 	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, NULL, &sound->file_size)))
 		goto on_error;
-	sound->mixer = ref_mixer(mixer);
+	sound->mixer = mixer_ref(mixer);
 	sound->gain = 1.0;
 	sound->pan = 0.0;
 	sound->pitch = 1.0;
-	if (!reload_sound(sound))
+	if (!sound_reload(sound))
 		goto on_error;
 	sound->id = s_next_sound_id++;
-	return ref_sound(sound);
+	return sound_ref(sound);
 
 on_error:
 	console_log(2, "    failed to load sound #%u", s_next_sound_id);
@@ -261,14 +261,14 @@ on_error:
 }
 
 sound_t*
-ref_sound(sound_t* sound)
+sound_ref(sound_t* sound)
 {
 	++sound->refcount;
 	return sound;
 }
 
 void
-free_sound(sound_t* sound)
+sound_free(sound_t* sound)
 {
 	if (sound == NULL || --sound->refcount > 0)
 		return;
@@ -277,19 +277,22 @@ free_sound(sound_t* sound)
 	free(sound->file_data);
 	if (sound->stream != NULL)
 		al_destroy_audio_stream(sound->stream);
-	free_mixer(sound->mixer);
+	mixer_free(sound->mixer);
 	free(sound->path);
 	free(sound);
 }
 
-bool
-is_sound_looping(sound_t* sound)
+double
+sound_len(sound_t* sound)
 {
-	return sound->is_looping;
+	if (sound->stream != NULL)
+		return al_get_audio_stream_length_secs(sound->stream);
+	else
+		return 0.0;
 }
 
 bool
-is_sound_playing(sound_t* sound)
+sound_playing(sound_t* sound)
 {
 	if (sound->stream != NULL)
 		return al_get_audio_stream_playing(sound->stream);
@@ -297,50 +300,47 @@ is_sound_playing(sound_t* sound)
 		return false;
 }
 
-float
-get_sound_gain(sound_t* sound)
-{
-	return sound->gain;
-}
-
-long long
-get_sound_length(sound_t* sound)
+double
+sound_tell(sound_t* sound)
 {
 	if (sound->stream != NULL)
-		return al_get_audio_stream_length_secs(sound->stream) * 1000000;
+		return al_get_audio_stream_position_secs(sound->stream);
 	else
 		return 0.0;
 }
 
+float
+sound_get_gain(sound_t* sound)
+{
+	return sound->gain;
+}
+
+bool
+sound_get_looping(sound_t* sound)
+{
+	return sound->is_looping;
+}
+
 mixer_t*
-get_sound_mixer(sound_t* sound)
+sound_get_mixer(sound_t* sound)
 {
 	return sound->mixer;
 }
 
 float
-get_sound_pan(sound_t* sound)
+sound_get_pan(sound_t* sound)
 {
 	return sound->pan;
 }
 
 float
-get_sound_pitch(sound_t* sound)
+sound_get_pitch(sound_t* sound)
 {
 	return sound->pitch;
 }
 
-long long
-get_sound_seek(sound_t* sound)
-{
-	if (sound->stream != NULL)
-		return al_get_audio_stream_position_secs(sound->stream) * 1000000;
-	else
-		return 0.0;
-}
-
 void
-set_sound_gain(sound_t* sound, float gain)
+sound_set_gain(sound_t* sound, float gain)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_gain(sound->stream, gain);
@@ -348,7 +348,7 @@ set_sound_gain(sound_t* sound, float gain)
 }
 
 void
-set_sound_looping(sound_t* sound, bool is_looping)
+sound_set_looping(sound_t* sound, bool is_looping)
 {
 	int play_mode;
 
@@ -359,18 +359,18 @@ set_sound_looping(sound_t* sound, bool is_looping)
 }
 
 void
-set_sound_mixer(sound_t* sound, mixer_t* mixer)
+sound_set_mixer(sound_t* sound, mixer_t* mixer)
 {
 	mixer_t* old_mixer;
 
 	old_mixer = sound->mixer;
-	sound->mixer = ref_mixer(mixer);
+	sound->mixer = mixer_ref(mixer);
 	al_attach_audio_stream_to_mixer(sound->stream, sound->mixer->ptr);
-	free_mixer(old_mixer);
+	mixer_free(old_mixer);
 }
 
 void
-set_sound_pan(sound_t* sound, float pan)
+sound_set_pan(sound_t* sound, float pan)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_pan(sound->stream, pan);
@@ -378,7 +378,7 @@ set_sound_pan(sound_t* sound, float pan)
 }
 
 void
-set_sound_pitch(sound_t* sound, float pitch)
+sound_set_pitch(sound_t* sound, float pitch)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_speed(sound->stream, pitch);
@@ -386,18 +386,18 @@ set_sound_pitch(sound_t* sound, float pitch)
 }
 
 void
-play_sound(sound_t* sound)
+sound_play(sound_t* sound)
 {
 	console_log(2, "playing sound #%u on mixer #%u", sound->id, sound->mixer->id);
 	if (sound->stream != NULL) {
 		al_set_audio_stream_playing(sound->stream, true);
-		ref_sound(sound);
+		sound_ref(sound);
 		vector_push(s_playing_sounds, &sound);
 	}
 }
 
 bool
-reload_sound(sound_t* sound)
+sound_reload(sound_t* sound)
 {
 	ALLEGRO_FILE*         memfile;
 	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
@@ -431,14 +431,14 @@ on_error:
 }
 
 void
-seek_sound(sound_t* sound, long long position)
+sound_seek(sound_t* sound, double position)
 {
 	if (sound->stream != NULL)
-		al_seek_audio_stream_secs(sound->stream, (double)position / 1000000);
+		al_seek_audio_stream_secs(sound->stream, position);
 }
 
 void
-stop_sound(sound_t* sound, bool rewind)
+sound_stop(sound_t* sound, bool rewind)
 {
 	console_log(3, "stopping sound #%u %s", sound->id, rewind ? "and rewinding" : "");
 	if (sound->stream == NULL)
@@ -449,7 +449,7 @@ stop_sound(sound_t* sound, bool rewind)
 }
 
 stream_t*
-create_stream(int frequency, int bits, int channels)
+stream_new(int frequency, int bits, int channels)
 {
 	ALLEGRO_CHANNEL_CONF conf;
 	ALLEGRO_AUDIO_DEPTH  depth_flag;
@@ -475,7 +475,7 @@ create_stream(int frequency, int bits, int channels)
 		: ALLEGRO_CHANNEL_CONF_1;
 	if (!(stream->ptr = al_create_audio_stream(4, 1024, frequency, depth_flag, conf)))
 		goto on_error;
-	stream->mixer = ref_mixer(s_def_mixer);
+	stream->mixer = mixer_ref(s_def_mixer);
 	al_set_audio_stream_playing(stream->ptr, false);
 	al_attach_audio_stream_to_mixer(stream->ptr, stream->mixer->ptr);
 
@@ -491,7 +491,7 @@ create_stream(int frequency, int bits, int channels)
 	
 	stream->id = s_next_stream_id++;
 	vector_push(s_streams, &stream);
-	return ref_stream(stream);
+	return stream_ref(stream);
 
 on_error:
 	console_log(2, "failed to create stream #%u", s_next_stream_id);
@@ -500,14 +500,14 @@ on_error:
 }
 
 stream_t*
-ref_stream(stream_t* stream)
+stream_ref(stream_t* stream)
 {
 	++stream->refcount;
 	return stream;
 }
 
 void
-free_stream(stream_t* stream)
+stream_free(stream_t* stream)
 {
 	stream_t* *p_stream;
 	
@@ -519,7 +519,7 @@ free_stream(stream_t* stream)
 	console_log(3, "disposing stream #%u no longer in use", stream->id);
 	al_drain_audio_stream(stream->ptr);
 	al_destroy_audio_stream(stream->ptr);
-	free_mixer(stream->mixer);
+	mixer_free(stream->mixer);
 	free(stream->buffer);
 	free(stream);
 	iter = vector_enum(s_streams);
@@ -532,30 +532,30 @@ free_stream(stream_t* stream)
 }
 
 bool
-is_stream_playing(const stream_t* stream)
+stream_playing(const stream_t* stream)
 {
 	return al_get_audio_stream_playing(stream->ptr);
 }
 
 mixer_t*
-get_stream_mixer(stream_t* stream)
+stream_get_mixer(stream_t* stream)
 {
 	return stream->mixer;
 }
 
 void
-set_stream_mixer(stream_t* stream, mixer_t* mixer)
+stream_set_mixer(stream_t* stream, mixer_t* mixer)
 {
 	mixer_t* old_mixer;
 
 	old_mixer = stream->mixer;
-	stream->mixer = ref_mixer(mixer);
+	stream->mixer = mixer_ref(mixer);
 	al_attach_audio_stream_to_mixer(stream->ptr, stream->mixer->ptr);
-	free_mixer(old_mixer);
+	mixer_free(old_mixer);
 }
 
 void
-feed_stream(stream_t* stream, const void* data, size_t size)
+stream_buffer(stream_t* stream, const void* data, size_t size)
 {
 	size_t needed_size;
 	
@@ -573,19 +573,19 @@ feed_stream(stream_t* stream, const void* data, size_t size)
 }
 
 void
-pause_stream(stream_t* stream)
+stream_pause(stream_t* stream)
 {
 	al_set_audio_stream_playing(stream->ptr, false);
 }
 
 void
-play_stream(stream_t* stream)
+stream_play(stream_t* stream)
 {
 	al_set_audio_stream_playing(stream->ptr, true);
 }
 
 void
-stop_stream(stream_t* stream)
+stream_stop(stream_t* stream)
 {
 	al_drain_audio_stream(stream->ptr);
 	free(stream->buffer); stream->buffer = NULL;
@@ -660,7 +660,7 @@ init_audialis_api(void)
 static duk_ret_t
 js_GetDefaultMixer(duk_context* ctx)
 {
-	duk_push_sphere_obj(ctx, "Mixer", ref_mixer(s_def_mixer));
+	duk_push_sphere_obj(ctx, "Mixer", mixer_ref(s_def_mixer));
 	return 1;
 }
 
@@ -678,7 +678,7 @@ js_new_Mixer(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): invalid bit depth for mixer (%i)", bits);
 	if (channels < 1 || channels > 7)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): invalid channel count for mixer (%i)", channels);
-	if (!(mixer = create_mixer(freq, bits, channels)))
+	if (!(mixer = mixer_new(freq, bits, channels)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): unable to create %i-bit %ich voice", bits, channels);
 	duk_push_sphere_obj(ctx, "Mixer", mixer);
 	return 1;
@@ -690,7 +690,7 @@ js_Mixer_finalize(duk_context* ctx)
 	mixer_t* mixer;
 
 	mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
-	free_mixer(mixer);
+	mixer_free(mixer);
 	return 0;
 }
 
@@ -702,7 +702,7 @@ js_Mixer_get_volume(duk_context* ctx)
 	duk_push_this(ctx);
 	mixer = duk_require_sphere_obj(ctx, -1, "Mixer");
 	duk_pop(ctx);
-	duk_push_number(ctx, get_mixer_gain(mixer));
+	duk_push_number(ctx, mixer_get_gain(mixer));
 	return 1;
 }
 
@@ -716,7 +716,7 @@ js_Mixer_set_volume(duk_context* ctx)
 	duk_push_this(ctx);
 	mixer = duk_require_sphere_obj(ctx, -1, "Mixer");
 	duk_pop(ctx);
-	set_mixer_gain(mixer, volume);
+	mixer_set_gain(mixer, volume);
 	return 0;
 }
 
@@ -727,7 +727,7 @@ js_LoadSound(duk_context* ctx)
 	sound_t*    sound;
 
 	filename = duk_require_path(ctx, 0, "sounds", false);
-	if (!(sound = load_sound(filename, get_default_mixer())))
+	if (!(sound = sound_load(filename, get_default_mixer())))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): unable to load sound file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
@@ -746,7 +746,7 @@ js_new_Sound(duk_context* ctx)
 	mixer = n_args >= 2 && !duk_is_boolean(ctx, 1)
 		? duk_require_sphere_obj(ctx, 1, "Mixer")
 		: get_default_mixer();
-	sound = load_sound(filename, mixer);
+	sound = sound_load(filename, mixer);
 	if (sound == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Sound(): unable to load sound file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
@@ -759,7 +759,7 @@ js_Sound_finalize(duk_context* ctx)
 	sound_t* sound;
 
 	sound = duk_require_sphere_obj(ctx, 0, "Sound");
-	free_sound(sound);
+	sound_free(sound);
 	return 0;
 }
 
@@ -778,7 +778,7 @@ js_Sound_getVolume(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_gain(sound) * 255);
+	duk_push_int(ctx, sound_get_gain(sound) * 255);
 	return 1;
 }
 
@@ -793,7 +793,7 @@ js_Sound_setVolume(duk_context* ctx)
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
-	set_sound_gain(sound, (float)volume / 255);
+	sound_set_gain(sound, (float)volume / 255);
 	return 0;
 }
 
@@ -805,7 +805,7 @@ js_Sound_get_length(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_number(ctx, get_sound_length(sound));
+	duk_push_number(ctx, (long long)(sound_len(sound) * 1000000));
 	return 1;
 }
 
@@ -817,7 +817,7 @@ js_Sound_get_mixer(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_sphere_obj(ctx, "Mixer", ref_mixer(get_sound_mixer(sound)));
+	duk_push_sphere_obj(ctx, "Mixer", mixer_ref(sound_get_mixer(sound)));
 	return 1;
 }
 
@@ -831,7 +831,7 @@ js_Sound_set_mixer(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	set_sound_mixer(sound, mixer);
+	sound_set_mixer(sound, mixer);
 	return 1;
 }
 
@@ -843,7 +843,7 @@ js_Sound_get_pan(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_int(ctx, get_sound_pan(sound) * 255);
+	duk_push_int(ctx, sound_get_pan(sound) * 255);
 	return 1;
 }
 
@@ -857,7 +857,7 @@ js_Sound_set_pan(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	set_sound_pan(sound, (float)new_pan / 255);
+	sound_set_pan(sound, (float)new_pan / 255);
 	return 0;
 }
 
@@ -869,7 +869,7 @@ js_Sound_get_pitch(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_number(ctx, get_sound_pitch(sound));
+	duk_push_number(ctx, sound_get_pitch(sound));
 	return 1;
 }
 
@@ -883,7 +883,7 @@ js_Sound_set_pitch(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	set_sound_pitch(sound, new_pitch);
+	sound_set_pitch(sound, new_pitch);
 	return 0;
 }
 
@@ -895,7 +895,7 @@ js_Sound_get_playing(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_boolean(ctx, is_sound_playing(sound));
+	duk_push_boolean(ctx, sound_playing(sound));
 	return 1;
 }
 
@@ -907,7 +907,7 @@ js_Sound_get_position(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_number(ctx, get_sound_seek(sound));
+	duk_push_number(ctx, (long long)(sound_tell(sound) * 1000000));
 	return 1;
 }
 
@@ -921,7 +921,7 @@ js_Sound_set_position(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	seek_sound(sound, new_pos);
+	sound_seek(sound, (double)new_pos / 1000000);
 	return 0;
 }
 
@@ -933,7 +933,7 @@ js_Sound_get_repeat(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_boolean(ctx, is_sound_looping(sound));
+	duk_push_boolean(ctx, sound_get_looping(sound));
 	return 1;
 }
 
@@ -947,7 +947,7 @@ js_Sound_set_repeat(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	set_sound_looping(sound, is_looped);
+	sound_set_looping(sound, is_looped);
 	return 0;
 }
 
@@ -966,7 +966,7 @@ js_Sound_get_volume(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	duk_push_number(ctx, get_sound_gain(sound));
+	duk_push_number(ctx, sound_get_gain(sound));
 	return 1;
 }
 
@@ -980,7 +980,7 @@ js_Sound_set_volume(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	set_sound_gain(sound, volume);
+	sound_set_gain(sound, volume);
 	return 0;
 }
 
@@ -992,7 +992,7 @@ js_Sound_pause(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	stop_sound(sound, false);
+	sound_stop(sound, false);
 	return 0;
 }
 
@@ -1008,11 +1008,11 @@ js_Sound_play(duk_context* ctx)
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
 	if (n_args >= 1) {
-		reload_sound(sound);
+		sound_reload(sound);
 		is_looping = duk_require_boolean(ctx, 0);
-		set_sound_looping(sound, is_looping);
+		sound_set_looping(sound, is_looping);
 	}
-	play_sound(sound);
+	sound_play(sound);
 	return 0;
 }
 
@@ -1024,7 +1024,7 @@ js_Sound_reset(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	seek_sound(sound, 0);
+	sound_seek(sound, 0.0);
 	return 0;
 }
 
@@ -1036,7 +1036,7 @@ js_Sound_stop(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 	duk_pop(ctx);
-	stop_sound(sound, true);
+	sound_stop(sound, true);
 	return 0;
 }
 
@@ -1061,7 +1061,7 @@ js_new_SoundStream(duk_context* ctx)
 	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): invalid bit depth (%i)", bits);
-	if (!(stream = create_stream(frequency, bits, channels)))
+	if (!(stream = stream_new(frequency, bits, channels)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): stream creation failed");
 	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
@@ -1073,7 +1073,7 @@ js_SoundStream_finalize(duk_context* ctx)
 	stream_t* stream;
 
 	stream = duk_require_sphere_obj(ctx, 0, "SoundStream");
-	free_stream(stream);
+	stream_free(stream);
 	return 0;
 }
 
@@ -1097,7 +1097,7 @@ js_SoundStream_get_mixer(duk_context* ctx)
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	duk_push_sphere_obj(ctx, "Mixer", ref_mixer(get_stream_mixer(stream)));
+	duk_push_sphere_obj(ctx, "Mixer", mixer_ref(stream_get_mixer(stream)));
 	return 1;
 }
 
@@ -1111,7 +1111,7 @@ js_SoundStream_set_mixer(duk_context* ctx)
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	set_stream_mixer(stream, mixer);
+	stream_set_mixer(stream, mixer);
 	return 1;
 }
 
@@ -1123,7 +1123,7 @@ js_SoundStream_pause(duk_context* ctx)
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	pause_stream(stream);
+	stream_pause(stream);
 	return 0;
 }
 
@@ -1140,8 +1140,8 @@ js_SoundStream_play(duk_context* ctx)
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	set_stream_mixer(stream, mixer);
-	play_stream(stream);
+	stream_set_mixer(stream, mixer);
+	stream_play(stream);
 	return 0;
 }
 
@@ -1153,7 +1153,7 @@ js_SoundStream_stop(duk_context* ctx)
 	duk_push_this(ctx);
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
-	stop_stream(stream);
+	stream_stop(stream);
 	return 0;
 }
 
@@ -1173,6 +1173,6 @@ js_SoundStream_write(duk_context* ctx)
 	stream = duk_require_sphere_obj(ctx, -1, "SoundStream");
 	duk_pop(ctx);
 	data = duk_require_buffer_data(ctx, 0, &size);
-	feed_stream(stream, data, size);
+	stream_buffer(stream, data, size);
 	return 0;
 }

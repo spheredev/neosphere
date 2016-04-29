@@ -32,14 +32,13 @@ shader_t* get_default_shader (void);
 
 vertex_t vertex (float x, float y, float u, float v, color_t color);
 
-group_t*  group_new          (shader_t* shader);
-group_t*  group_ref          (group_t* group);
-void      group_free         (group_t* group);
-shader_t* group_shader       (const group_t* group);
-matrix_t* group_transform    (const group_t* group);
-bool      group_add_shape    (group_t* group, shape_t* shape);
-void      group_draw         (const group_t* group, image_t* surface);
-
+group_t*     group_new         (shader_t* shader);
+group_t*     group_ref         (group_t* group);
+void         group_free        (group_t* group);
+shader_t*    group_shader      (const group_t* group);
+matrix_t*    group_transform   (const group_t* group);
+bool         group_add_shape   (group_t* group, shape_t* shape);
+void         group_draw        (const group_t* group, image_t* surface);
 shape_t*     shape_new         (shape_type_t type, image_t* texture);
 shape_t*     shape_ref         (shape_t* shape);
 void         shape_free        (shape_t* shape);

@@ -1093,7 +1093,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	// start up map BGM (if same as previous, leave alone)
 	if (s_map->bgm_file == NULL && s_map_bgm_stream != NULL) {
-		free_sound(s_map_bgm_stream);
+		sound_free(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_map_bgm_stream = NULL;
 		s_last_bgm_file = NULL;
@@ -1101,13 +1101,13 @@ change_map(const char* filename, bool preserve_persons)
 	else if (s_map->bgm_file != NULL
 		&& (s_last_bgm_file == NULL || lstr_cmp(s_map->bgm_file, s_last_bgm_file) != 0))
 	{
-		free_sound(s_map_bgm_stream);
+		sound_free(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
 		path = make_sfs_path(lstr_cstr(s_map->bgm_file), "sounds");
-		if (s_map_bgm_stream = load_sound(path_cstr(path), get_default_mixer())) {
-			set_sound_looping(s_map_bgm_stream, true);
-			play_sound(s_map_bgm_stream);
+		if (s_map_bgm_stream = sound_load(path_cstr(path), get_default_mixer())) {
+			sound_set_looping(s_map_bgm_stream, true);
+			sound_play(s_map_bgm_stream);
 		}
 		path_free(path);
 	}
