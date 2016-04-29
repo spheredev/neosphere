@@ -78,7 +78,7 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static duk_ret_t duk_load_module (duk_context* ctx);
+static duk_ret_t duk_mod_search (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static void*      s_print_ptr;
@@ -135,7 +135,7 @@ initialize_api(duk_context* ctx)
 
 	// register module search callback
 	duk_get_global_string(ctx, "Duktape");
-	duk_push_c_function(ctx, duk_load_module, DUK_VARARGS);
+	duk_push_c_function(ctx, duk_mod_search, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "modSearch");
 	duk_pop(ctx);
 
@@ -461,7 +461,7 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 }
 
 static duk_ret_t
-duk_load_module(duk_context* ctx)
+duk_mod_search(duk_context* ctx)
 {
 	vector_t*   filenames;
 	lstring_t*  filename;
@@ -475,15 +475,15 @@ duk_load_module(duk_context* ctx)
 
 	name = duk_get_string(ctx, 0);
 	if (name[0] == '~')
-		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "require(): SphereFS prefixes not allowed");
+		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "SphereFS prefix not allowed in module ID");
 
 	filenames = vector_new(sizeof(lstring_t*));
-	filename = lstr_newf("commonjs/%s.js", name); vector_push(filenames, &filename);
-	filename = lstr_newf("commonjs/%s.ts", name); vector_push(filenames, &filename);
-	filename = lstr_newf("commonjs/%s.coffee", name); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/commonjs/%s.js", name); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/commonjs/%s.ts", name); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/commonjs/%s.coffee", name); vector_push(filenames, &filename);
+	filename = lstr_newf("lib/%s.js", name); vector_push(filenames, &filename);
+	filename = lstr_newf("lib/%s.ts", name); vector_push(filenames, &filename);
+	filename = lstr_newf("lib/%s.coffee", name); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.js", name); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.ts", name); vector_push(filenames, &filename);
+	filename = lstr_newf("~sys/modules/%s.coffee", name); vector_push(filenames, &filename);
 	filename = NULL;
 	iter = vector_enum(filenames);
 	while (p = vector_next(&iter)) {
@@ -493,10 +493,10 @@ duk_load_module(duk_context* ctx)
 	}
 	vector_free(filenames);
 	if (filename == NULL)
-		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "require(): module `%s` not found", name);
+		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "CommonJS module `%s` not found", name);
 	console_log(2, "loading JS module `%s` as `%s`", name, lstr_cstr(filename));
 	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), NULL, &len)))
-		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "require(): unable to read script `%s`", lstr_cstr(filename));
+		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "unable to read script `%s`", lstr_cstr(filename));
 	source_text = lstr_from_buf(slurp, len);
 	free(slurp);
 	if (!transpile_to_js(&source_text, lstr_cstr(filename))) {

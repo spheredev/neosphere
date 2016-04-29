@@ -12,8 +12,11 @@ v3.1.0 - TBD
 * Improves the Galileo API: Shapes can now be drawn directly, and Groups now
   have a `transform` property which allows the transformation matrix to be
   modified directly.  The `x`/`y` and `angle` properties have been removed.
-* `Async()` is now called `DispatchScript()` for consistency with other parts of
-  the Sphere API.
+* `Async()` has been renamed `DispatchScript()` for consistency with other parts
+  of the Sphere API.
+* minisphere now looks for CommonJS modules in `~sgm/lib` instead of
+  `~sgm/commonjs`.  `lib/` seems to be the de facto standard location to put
+  libraries on CommonJS platforms.
 
 
 v3.0.8 - April 17, 2016
