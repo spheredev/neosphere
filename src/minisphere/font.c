@@ -150,7 +150,7 @@ load_font(const char* filename)
 			pdest = lock->pixels + atlas_x + atlas_y * lock->pitch;
 			for (y = 0; y < glyph_hdr.height; ++y) {
 				for (x = 0; x < glyph_hdr.width; ++x)
-					pdest[x] = rgba(psrc[x], psrc[x], psrc[x], 255);
+					pdest[x] = color_new(psrc[x], psrc[x], psrc[x], 255);
 				pdest += lock->pitch;
 				psrc += glyph_hdr.width;
 			}
@@ -611,7 +611,7 @@ void
 duk_push_sphere_font(duk_context* ctx, font_t* font)
 {
 	duk_push_sphere_obj(ctx, "Font", ref_font(font));
-	duk_push_sphere_color(ctx, rgba(255, 255, 255, 255));
+	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255));
 	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
 

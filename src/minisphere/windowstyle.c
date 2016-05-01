@@ -88,7 +88,7 @@ load_windowstyle(const char* filename)
 	sfs_fclose(file);
 	winstyle->bg_style = rws.background_mode;
 	for (i = 0; i < 4; ++i) {
-		winstyle->gradient[i] = rgba(
+		winstyle->gradient[i] = color_new(
 			rws.corner_colors[i].r,
 			rws.corner_colors[i].g,
 			rws.corner_colors[i].b,
@@ -218,7 +218,7 @@ void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
 	duk_push_sphere_obj(ctx, "WindowStyle", ref_windowstyle(winstyle));
-	duk_push_sphere_color(ctx, rgba(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
 
 static duk_ret_t

@@ -621,7 +621,7 @@ js_new_Shape(duk_context* ctx)
 			is_missing_uv = true;
 		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
 			? duk_require_sphere_color(ctx, -1)
-			: rgba(255, 255, 255, 255);
+			: color_new(255, 255, 255, 255);
 		duk_pop_n(ctx, 6);
 		if (!shape_add_vertex(shape, vertex))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): vertex list allocation failure");

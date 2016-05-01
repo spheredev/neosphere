@@ -197,7 +197,7 @@ create_person(const char* name, spriteset_t* spriteset, bool is_persistent, scri
 	person->speed_x = 1.0;
 	person->speed_y = 1.0;
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
-	person->mask = rgba(255, 255, 255, 255);
+	person->mask = color_new(255, 255, 255, 255);
 	person->scale_x = person->scale_y = 1.0;
 	person->scripts[PERSON_SCRIPT_ON_CREATE] = create_script;
 	call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);

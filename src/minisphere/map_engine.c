@@ -322,7 +322,7 @@ initialize_map_engine(void)
 	s_delay_scripts = NULL;
 	s_talk_button = 0;
 	s_is_map_running = false;
-	s_color_mask = rgba(0, 0, 0, 0);
+	s_color_mask = color_new(0, 0, 0, 0);
 	s_on_trigger = NULL;
 }
 
@@ -737,7 +737,7 @@ load_map(const char* filename)
 			layer->is_parallax = (layer_hdr.flags & 2) != 0x0;
 			layer->is_reflective = layer_hdr.is_reflective;
 			layer->is_visible = (layer_hdr.flags & 1) == 0x0;
-			layer->color_mask = rgba(255, 255, 255, 255);
+			layer->color_mask = color_new(255, 255, 255, 255);
 			layer->width = layer_hdr.width;
 			layer->height = layer_hdr.height;
 			layer->autoscroll_x = layer->is_parallax ? layer_hdr.scrolling_x : 0.0;
@@ -1414,7 +1414,7 @@ update_map_engine(bool is_main_loop)
 	// update color mask fade level
 	if (s_fade_progress < s_fade_frames) {
 		++s_fade_progress;
-		s_color_mask = blend_colors(s_fade_color_to, s_fade_color_from,
+		s_color_mask = color_lerp(s_fade_color_to, s_fade_color_from,
 			s_fade_progress, s_fade_frames - s_fade_progress);
 	}
 	
@@ -1638,7 +1638,7 @@ js_MapEngine(duk_context* ctx)
 
 	s_is_map_running = true;
 	s_exiting = false;
-	s_color_mask = rgba(0, 0, 0, 0);
+	s_color_mask = color_new(0, 0, 0, 0);
 	s_fade_color_to = s_fade_color_from = s_color_mask;
 	s_fade_progress = s_fade_frames = 0;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));

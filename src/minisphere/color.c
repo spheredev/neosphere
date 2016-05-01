@@ -2,6 +2,12 @@
 #include "api.h"
 #include "color.h"
 
+struct colormat
+{
+	unsigned int refcount;
+	float        m[5][5];
+};
+
 static duk_ret_t js_BlendColors           (duk_context* ctx);
 static duk_ret_t js_BlendColorsWeighted   (duk_context* ctx);
 static duk_ret_t js_CreateColor           (duk_context* ctx);
@@ -14,7 +20,7 @@ static duk_ret_t js_ColorMatrix_toString  (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_apply     (duk_context* ctx);
 
 color_t
-rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
+color_new(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
 {
 	color_t color;
 
@@ -43,53 +49,171 @@ nativecolor(color_t color)
 }
 
 color_t
-blend_colors(color_t color1, color_t color2, float w1, float w2)
+color_lerp(color_t color, color_t other, float w1, float w2)
 {
 	color_t blend;
 	float   sigma;
 	
 	sigma = w1 + w2;
-	blend.r = (color1.r * w1 + color2.r * w2) / sigma;
-	blend.g = (color1.g * w1 + color2.g * w2) / sigma;
-	blend.b = (color1.b * w1 + color2.b * w2) / sigma;
-	blend.alpha = (color1.alpha * w1 + color2.alpha * w2) / sigma;
+	blend.r = (color.r * w1 + other.r * w2) / sigma;
+	blend.g = (color.g * w1 + other.g * w2) / sigma;
+	blend.b = (color.b * w1 + other.b * w2) / sigma;
+	blend.alpha = (color.alpha * w1 + other.alpha * w2) / sigma;
 	return blend;
 }
 
 colormatrix_t
-blend_color_matrices(colormatrix_t mat1, colormatrix_t mat2, int w1, int w2)
+colormatrix_lerp(colormatrix_t mat, colormatrix_t other, int w1, int w2)
 {
 	colormatrix_t blend;
 	int           sigma;
 
 	sigma = w1 + w2;
-	blend.rn = (mat1.rn * w1 + mat2.rn * w2) / sigma;
-	blend.rr = (mat1.rr * w1 + mat2.rr * w2) / sigma;
-	blend.rg = (mat1.rg * w1 + mat2.rg * w2) / sigma;
-	blend.rb = (mat1.rb * w1 + mat2.rb * w2) / sigma;
-	blend.gn = (mat1.gn * w1 + mat2.gn * w2) / sigma;
-	blend.gr = (mat1.gr * w1 + mat2.gr * w2) / sigma;
-	blend.gg = (mat1.gg * w1 + mat2.gg * w2) / sigma;
-	blend.gb = (mat1.gb * w1 + mat2.gb * w2) / sigma;
-	blend.bn = (mat1.bn * w1 + mat2.bn * w2) / sigma;
-	blend.br = (mat1.br * w1 + mat2.br * w2) / sigma;
-	blend.bg = (mat1.bg * w1 + mat2.bg * w2) / sigma;
-	blend.bb = (mat1.bb * w1 + mat2.bb * w2) / sigma;
+	blend.rn = (mat.rn * w1 + other.rn * w2) / sigma;
+	blend.rr = (mat.rr * w1 + other.rr * w2) / sigma;
+	blend.rg = (mat.rg * w1 + other.rg * w2) / sigma;
+	blend.rb = (mat.rb * w1 + other.rb * w2) / sigma;
+	blend.gn = (mat.gn * w1 + other.gn * w2) / sigma;
+	blend.gr = (mat.gr * w1 + other.gr * w2) / sigma;
+	blend.gg = (mat.gg * w1 + other.gg * w2) / sigma;
+	blend.gb = (mat.gb * w1 + other.gb * w2) / sigma;
+	blend.bn = (mat.bn * w1 + other.bn * w2) / sigma;
+	blend.br = (mat.br * w1 + other.br * w2) / sigma;
+	blend.bg = (mat.bg * w1 + other.bg * w2) / sigma;
+	blend.bb = (mat.bb * w1 + other.bb * w2) / sigma;
 	return blend;
 }
 
 color_t
-transform_pixel(color_t pixel, colormatrix_t matrix)
+color_transform(color_t color, colormatrix_t mat)
 {
 	int r, g, b;
 	
-	r = matrix.rn + (matrix.rr * pixel.r + matrix.rg * pixel.g + matrix.rb * pixel.b) / 255;
-	g = matrix.gn + (matrix.gr * pixel.r + matrix.gg * pixel.g + matrix.gb * pixel.b) / 255;
-	b = matrix.bn + (matrix.br * pixel.r + matrix.bg * pixel.g + matrix.bb * pixel.b) / 255;
+	r = mat.rn + (mat.rr * color.r + mat.rg * color.g + mat.rb * color.b) / 255;
+	g = mat.gn + (mat.gr * color.r + mat.gg * color.g + mat.gb * color.b) / 255;
+	b = mat.bn + (mat.br * color.r + mat.bg * color.g + mat.bb * color.b) / 255;
 	r = r < 0 ? 0 : r > 255 ? 255 : r;
 	g = g < 0 ? 0 : g > 255 ? 255 : g;
 	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	return rgba(r, g, b, pixel.alpha);
+	return color_new(r, g, b, color.alpha);
+}
+
+colormat_t*
+colormat_new(void)
+{
+	colormat_t* matrix;
+
+	matrix = calloc(1, sizeof(colormat_t));
+	matrix->m[0][0] = 1.0;
+	matrix->m[1][1] = 1.0;
+	matrix->m[2][2] = 1.0;
+	matrix->m[3][3] = 1.0;
+	matrix->m[4][4] = 1.0;
+	return colormat_ref(matrix);
+}
+
+colormat_t*
+colormat_clone(const colormat_t* mat)
+{
+	colormat_t* new_mat;
+
+	new_mat = malloc(sizeof(colormat_t));
+	memcpy(new_mat, mat, sizeof(colormat_t));
+	return new_mat;
+}
+
+colormat_t*
+colormat_ref(colormat_t* mat)
+{
+	++mat->refcount;
+	return mat;
+}
+
+void
+colormat_free(colormat_t* mat)
+{
+	if (--mat->refcount > 0)
+		return;
+	free(mat);
+}
+
+color_t
+colormat_apply(const colormat_t* mat, color_t color)
+{
+	float v[4];
+
+#define E(i) (fmin(fmax((0 \
+		+ mat->m[i][0] * v[0] \
+		+ mat->m[1][1] * v[1] \
+		+ mat->m[i][2] * v[2] \
+		+ mat->m[i][3] * v[3] \
+		+ mat->m[i][4] \
+	), 0), 255))
+
+	v[0] = color.r;
+	v[1] = color.g;
+	v[2] = color.b;
+	v[3] = color.alpha;
+
+	return color_new(E(0), E(1), E(2), E(3));
+
+#undef E
+}
+
+void
+colormat_compose(colormat_t* mat, const colormat_t* other)
+{
+#define E(i, j) ( 0 \
+		+ other->m[i][0] * mat->m[0][j] \
+		+ other->m[i][1] * mat->m[1][j] \
+		+ other->m[i][2] * mat->m[2][j] \
+		+ other->m[i][3] * mat->m[3][j] \
+		+ other->m[i][4] * mat->m[4][j] \
+	)
+
+	float m[5][5] = {
+		E(0, 0), E(0, 1), E(0, 2), E(0, 3), E(0, 4),
+		E(1, 0), E(1, 1), E(1, 2), E(1, 3), E(1, 4),
+		E(2, 0), E(2, 1), E(2, 2), E(2, 3), E(2, 4),
+		E(3, 0), E(3, 1), E(3, 2), E(3, 3), E(3, 4),
+		E(4, 0), E(4, 1), E(4, 2), E(4, 3), E(4, 4),
+	};
+	memcpy(mat->m, &m, sizeof(float[5][5]));
+
+#undef E
+}
+
+void
+colormat_identity(colormat_t* mat)
+{
+	memset(mat, 0, sizeof(colormat_t));
+	mat->m[0][0] = 1.0;
+	mat->m[1][1] = 1.0;
+	mat->m[2][2] = 1.0;
+	mat->m[3][3] = 1.0;
+	mat->m[4][4] = 1.0;
+}
+
+void
+colormat_scale(colormat_t* mat, float sr, float sg, float sb, float sa)
+{
+	int j;
+
+	for (j = 0; j < 5; ++j) {
+		mat->m[0][j] *= sr;
+		mat->m[1][j] *= sg;
+		mat->m[2][j] *= sb;
+		mat->m[3][j] *= sa;
+	}
+}
+
+void
+colormat_shift(colormat_t* mat, float dr, float dg, float db, float da)
+{
+	mat->m[0][4] += dr;
+	mat->m[1][4] += dg;
+	mat->m[2][4] += db;
+	mat->m[3][4] += da;
 }
 
 void
@@ -139,7 +263,7 @@ duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 	g = g < 0 ? 0 : g > 255 ? 255 : g;
 	b = b < 0 ? 0 : b > 255 ? 255 : b;
 	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
-	return rgba(r, g, b, alpha);
+	return color_new(r, g, b, alpha);
 }
 
 colormatrix_t
@@ -169,7 +293,7 @@ js_BlendColors(duk_context* ctx)
 	color_t color1 = duk_require_sphere_color(ctx, 0);
 	color_t color2 = duk_require_sphere_color(ctx, 1);
 
-	duk_push_sphere_color(ctx, blend_colors(color1, color2, 1, 1));
+	duk_push_sphere_color(ctx, color_lerp(color1, color2, 1, 1));
 	return 1;
 }
 
@@ -183,7 +307,7 @@ js_BlendColorsWeighted(duk_context* ctx)
 
 	if (w1 < 0.0 || w2 < 0.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
-	duk_push_sphere_color(ctx, blend_colors(color1, color2, w1, w2));
+	duk_push_sphere_color(ctx, color_lerp(color1, color2, w1, w2));
 	return 1;
 }
 
@@ -292,6 +416,6 @@ js_ColorMatrix_apply(duk_context* ctx)
 	duk_push_this(ctx);
 	matrix = duk_require_sphere_colormatrix(ctx, -1);
 	duk_pop(ctx);
-	duk_push_sphere_color(ctx, transform_pixel(color, matrix));
+	duk_push_sphere_color(ctx, color_transform(color, matrix));
 	return 1;
 }

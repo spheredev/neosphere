@@ -302,7 +302,7 @@ apply_color_matrix(image_t* image, colormatrix_t matrix, int x, int y, int width
 	uncache_pixels(image);
 	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
 		pixel = &lock->pixels[i_x + i_y * lock->pitch];
-		*pixel = transform_pixel(*pixel, matrix);
+		*pixel = color_transform(*pixel, matrix);
 	}
 	unlock_image(image, lock);
 	return true;
@@ -333,15 +333,15 @@ apply_color_matrix_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat,
 		// pixels.
 		i1 = y + h - 1 - i_y;
 		i2 = i_y - y;
-		mat_1 = blend_color_matrices(ul_mat, ll_mat, i1, i2);
-		mat_2 = blend_color_matrices(ur_mat, lr_mat, i1, i2);
+		mat_1 = colormatrix_lerp(ul_mat, ll_mat, i1, i2);
+		mat_2 = colormatrix_lerp(ur_mat, lr_mat, i1, i2);
 		for (i_x = x; i_x < x + w; ++i_x) {
 			// calculate the final matrix for this pixel and transform it
 			i1 = x + w - 1 - i_x;
 			i2 = i_x - x;
-			mat_3 = blend_color_matrices(mat_1, mat_2, i1, i2);
+			mat_3 = colormatrix_lerp(mat_1, mat_2, i1, i2);
 			pixel = &lock->pixels[i_x + i_y * lock->pitch];
-			*pixel = transform_pixel(*pixel, mat_3);
+			*pixel = color_transform(*pixel, mat_3);
 
 		}
 	}
@@ -418,7 +418,7 @@ draw_image_scaled_masked(image_t* image, color_t mask, int x, int y, int width, 
 void
 draw_image_tiled(image_t* image, int x, int y, int width, int height)
 {
-	draw_image_tiled_masked(image, rgba(255, 255, 255, 255), x, y, width, height);
+	draw_image_tiled_masked(image, color_new(255, 255, 255, 255), x, y, width, height);
 }
 
 void

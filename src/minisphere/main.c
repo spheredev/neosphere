@@ -371,21 +371,21 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 	frames_till_close = 30;
 	while (!is_finished) {
 		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
-		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
-		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
-		draw_text(g_sys_font, rgba(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
-		draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
+		draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
+		draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
 			line_text = get_wraptext_line(error_info, i);
-			draw_text(g_sys_font, rgba(0, 0, 0, 255),
+			draw_text(g_sys_font, color_new(0, 0, 0, 255),
 				g_res_x / 2 + 1, 59 + i * get_font_line_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
-			draw_text(g_sys_font, rgba(192, 192, 192, 255),
+			draw_text(g_sys_font, color_new(192, 192, 192, 255),
 				g_res_x / 2, 58 + i * get_font_line_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		if (frames_till_close <= 0) {
-			draw_text(g_sys_font, rgba(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
+			draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
 				TEXT_ALIGN_CENTER,
 				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
 		}

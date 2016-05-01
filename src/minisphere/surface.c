@@ -210,7 +210,7 @@ js_new_Surface(duk_context* ctx)
 	if (n_args >= 2) {
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
-		fill_color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : rgba(0, 0, 0, 0);
+		fill_color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : color_new(0, 0, 0, 0);
 		if (!(image = create_image(width, height)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to create new surface");
 		fill_image(image, fill_color);
