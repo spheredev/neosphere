@@ -63,7 +63,14 @@ matrix_scale(matrix_t* matrix, float sx, float sy)
 }
 
 void
-matrix_translate(matrix_t* matrix, float tx, float ty)
+matrix_shear(matrix_t* matrix, float theta_x, float theta_y)
 {
-	al_translate_transform(&matrix->transform, tx, ty);
+	al_horizontal_shear_transform(&matrix->transform, theta_x);
+	al_vertical_shear_transform(&matrix->transform, theta_y);
+}
+
+void
+matrix_translate(matrix_t* matrix, float dx, float dy)
+{
+	al_translate_transform(&matrix->transform, dx, dy);
 }

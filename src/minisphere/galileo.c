@@ -25,6 +25,7 @@ static duk_ret_t js_Transform_compose       (duk_context* ctx);
 static duk_ret_t js_Transform_identity      (duk_context* ctx);
 static duk_ret_t js_Transform_rotate        (duk_context* ctx);
 static duk_ret_t js_Transform_scale         (duk_context* ctx);
+static duk_ret_t js_Transform_shear         (duk_context* ctx);
 static duk_ret_t js_Transform_translate     (duk_context* ctx);
 
 static void assign_default_uv  (shape_t* shape);
@@ -447,6 +448,7 @@ init_galileo_api(void)
 	register_api_method(g_duk, "Transform", "identity", js_Transform_identity);
 	register_api_method(g_duk, "Transform", "rotate", js_Transform_rotate);
 	register_api_method(g_duk, "Transform", "scale", js_Transform_scale);
+	register_api_method(g_duk, "Transform", "shear", js_Transform_shear);
 	register_api_method(g_duk, "Transform", "translate", js_Transform_translate);
 }
 
@@ -744,17 +746,33 @@ js_Transform_scale(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Transform_translate(duk_context* ctx)
+js_Transform_shear(duk_context* ctx)
 {
 	matrix_t* matrix;
-	float     tx;
-	float     ty;
+	float     theta_x;
+	float     theta_y;
 
 	duk_push_this(ctx);
 	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
-	tx = duk_require_number(ctx, 0);
-	ty = duk_require_number(ctx, 1);
+	theta_x = duk_require_number(ctx, 0);
+	theta_y = duk_require_number(ctx, 1);
 
-	matrix_translate(matrix, tx, ty);
+	matrix_shear(matrix, theta_x, theta_y);
+	return 0;
+}
+
+static duk_ret_t
+js_Transform_translate(duk_context* ctx)
+{
+	matrix_t* matrix;
+	float     dx;
+	float     dy;
+
+	duk_push_this(ctx);
+	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
+	dx = duk_require_number(ctx, 0);
+	dy = duk_require_number(ctx, 1);
+
+	matrix_translate(matrix, dx, dy);
 	return 0;
 }
