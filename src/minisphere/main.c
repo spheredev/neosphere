@@ -40,7 +40,7 @@ sandbox_t*           g_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
 screen_t*            g_screen = NULL;
-kevfile_t*          g_sys_conf;
+kevfile_t*           g_sys_conf;
 font_t*              g_sys_font = NULL;
 int                  g_res_x, g_res_y;
 

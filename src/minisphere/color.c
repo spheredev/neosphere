@@ -2,12 +2,6 @@
 #include "api.h"
 #include "color.h"
 
-struct colormat
-{
-	unsigned int refcount;
-	float        m[5][5];
-};
-
 static duk_ret_t js_BlendColors           (duk_context* ctx);
 static duk_ret_t js_BlendColorsWeighted   (duk_context* ctx);
 static duk_ret_t js_CreateColor           (duk_context* ctx);
@@ -18,6 +12,12 @@ static duk_ret_t js_CreateColorMatrix     (duk_context* ctx);
 static duk_ret_t js_new_ColorMatrix       (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_toString  (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_apply     (duk_context* ctx);
+
+ALLEGRO_COLOR
+nativecolor(color_t color)
+{
+	return al_map_rgba(color.r, color.g, color.b, color.alpha);
+}
 
 color_t
 color_new(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
@@ -31,8 +31,22 @@ color_new(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
 	return color;
 }
 
+color_t
+color_lerp(color_t color, color_t other, float w1, float w2)
+{
+	color_t blend;
+	float   sigma;
+
+	sigma = w1 + w2;
+	blend.r = (color.r * w1 + other.r * w2) / sigma;
+	blend.g = (color.g * w1 + other.g * w2) / sigma;
+	blend.b = (color.b * w1 + other.b * w2) / sigma;
+	blend.alpha = (color.alpha * w1 + other.alpha * w2) / sigma;
+	return blend;
+}
+
 colormatrix_t
-colormatrix(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb)
+colormatrix_new(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb)
 {
 	colormatrix_t matrix = {
 		rn, rr, rg, rb,
@@ -40,26 +54,6 @@ colormatrix(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int 
 		bn, br, bg, bb,
 	};
 	return matrix;
-}
-
-ALLEGRO_COLOR
-nativecolor(color_t color)
-{
-	return al_map_rgba(color.r, color.g, color.b, color.alpha);
-}
-
-color_t
-color_lerp(color_t color, color_t other, float w1, float w2)
-{
-	color_t blend;
-	float   sigma;
-	
-	sigma = w1 + w2;
-	blend.r = (color.r * w1 + other.r * w2) / sigma;
-	blend.g = (color.g * w1 + other.g * w2) / sigma;
-	blend.b = (color.b * w1 + other.b * w2) / sigma;
-	blend.alpha = (color.alpha * w1 + other.alpha * w2) / sigma;
-	return blend;
 }
 
 colormatrix_t
@@ -96,124 +90,6 @@ color_transform(color_t color, colormatrix_t mat)
 	g = g < 0 ? 0 : g > 255 ? 255 : g;
 	b = b < 0 ? 0 : b > 255 ? 255 : b;
 	return color_new(r, g, b, color.alpha);
-}
-
-colormat_t*
-colormat_new(void)
-{
-	colormat_t* matrix;
-
-	matrix = calloc(1, sizeof(colormat_t));
-	matrix->m[0][0] = 1.0;
-	matrix->m[1][1] = 1.0;
-	matrix->m[2][2] = 1.0;
-	matrix->m[3][3] = 1.0;
-	matrix->m[4][4] = 1.0;
-	return colormat_ref(matrix);
-}
-
-colormat_t*
-colormat_clone(const colormat_t* mat)
-{
-	colormat_t* new_mat;
-
-	new_mat = malloc(sizeof(colormat_t));
-	memcpy(new_mat, mat, sizeof(colormat_t));
-	return new_mat;
-}
-
-colormat_t*
-colormat_ref(colormat_t* mat)
-{
-	++mat->refcount;
-	return mat;
-}
-
-void
-colormat_free(colormat_t* mat)
-{
-	if (--mat->refcount > 0)
-		return;
-	free(mat);
-}
-
-color_t
-colormat_apply(const colormat_t* mat, color_t color)
-{
-	float v[4];
-
-#define E(i) (fmin(fmax((0 \
-		+ mat->m[i][0] * v[0] \
-		+ mat->m[1][1] * v[1] \
-		+ mat->m[i][2] * v[2] \
-		+ mat->m[i][3] * v[3] \
-		+ mat->m[i][4] \
-	), 0), 255))
-
-	v[0] = color.r;
-	v[1] = color.g;
-	v[2] = color.b;
-	v[3] = color.alpha;
-
-	return color_new(E(0), E(1), E(2), E(3));
-
-#undef E
-}
-
-void
-colormat_compose(colormat_t* mat, const colormat_t* other)
-{
-#define E(i, j) ( 0 \
-		+ other->m[i][0] * mat->m[0][j] \
-		+ other->m[i][1] * mat->m[1][j] \
-		+ other->m[i][2] * mat->m[2][j] \
-		+ other->m[i][3] * mat->m[3][j] \
-		+ other->m[i][4] * mat->m[4][j] \
-	)
-
-	float m[5][5] = {
-		E(0, 0), E(0, 1), E(0, 2), E(0, 3), E(0, 4),
-		E(1, 0), E(1, 1), E(1, 2), E(1, 3), E(1, 4),
-		E(2, 0), E(2, 1), E(2, 2), E(2, 3), E(2, 4),
-		E(3, 0), E(3, 1), E(3, 2), E(3, 3), E(3, 4),
-		E(4, 0), E(4, 1), E(4, 2), E(4, 3), E(4, 4),
-	};
-	memcpy(mat->m, &m, sizeof(float[5][5]));
-
-#undef E
-}
-
-void
-colormat_identity(colormat_t* mat)
-{
-	memset(mat, 0, sizeof(colormat_t));
-	mat->m[0][0] = 1.0;
-	mat->m[1][1] = 1.0;
-	mat->m[2][2] = 1.0;
-	mat->m[3][3] = 1.0;
-	mat->m[4][4] = 1.0;
-}
-
-void
-colormat_scale(colormat_t* mat, float sr, float sg, float sb, float sa)
-{
-	int j;
-
-	for (j = 0; j < 5; ++j) {
-		mat->m[0][j] *= sr;
-		mat->m[1][j] *= sg;
-		mat->m[2][j] *= sb;
-		mat->m[3][j] *= sa;
-	}
-}
-
-void
-colormat_shift(colormat_t* mat, float dr, float dg, float db, float da)
-{
-	mat->m[0][4] += dr;
-	mat->m[1][4] += dg;
-	mat->m[2][4] += db;
-	mat->m[3][4] += da;
 }
 
 void
