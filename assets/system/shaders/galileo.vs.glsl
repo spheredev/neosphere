@@ -23,7 +23,7 @@ void main()
 	// OpenGL doesn't support 5x5 matrices.
 	vec4 color = vec4(al_color.rgb, 1.0);
 	float alpha = al_color.a;
-	color *= colormatrix; color.a = alpha;
+	color = colormatrix * color; color.a = alpha;
 
 	// calculate vertex and set up varyings for the fragment shader
 	gl_Position = al_projview_matrix * al_pos;
