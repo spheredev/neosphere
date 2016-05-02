@@ -69,7 +69,7 @@ void
 shutdown_galileo(void)
 {
 	console_log(1, "shutting down Galileo");
-	free_shader(s_def_shader);
+	shader_free(s_def_shader);
 }
 
 shader_t*
@@ -86,7 +86,7 @@ get_default_shader(void)
 		fs_filename = kev_read_string(g_sys_conf, "GalileoFragShader", "shaders/galileo.fs.glsl");
 		vs_pathname = strdup(systempath(vs_filename));
 		fs_pathname = strdup(systempath(fs_filename));
-		s_def_shader = create_shader(vs_pathname, fs_pathname);
+		s_def_shader = shader_new(vs_pathname, fs_pathname);
 		free(vs_pathname);
 		free(fs_pathname);
 	}
@@ -113,7 +113,7 @@ group_new(shader_t* shader)
 	
 	group = calloc(1, sizeof(group_t));
 	group->shapes = vector_new(sizeof(shape_t*));
-	group->shader = ref_shader(shader);
+	group->shader = shader_ref(shader);
 	
 	group->id = s_next_group_id++;
 	return group_ref(group);
@@ -143,7 +143,7 @@ group_free(group_t* group)
 	while (i_shape = vector_next(&iter))
 		shape_free(*i_shape);
 	vector_free(group->shapes);
-	free_shader(group->shader);
+	shader_free(group->shader);
 	free(group);
 }
 
@@ -501,7 +501,7 @@ js_Group_get_shader(duk_context* ctx)
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 
 	shader = group_shader(group);
-	duk_push_sphere_obj(ctx, "ShaderProgram", ref_shader(shader));
+	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
 	return 1;
 }
 
@@ -531,8 +531,8 @@ js_Group_set_shader(duk_context* ctx)
 	shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
 
 	old_shader = group->shader;
-	group->shader = ref_shader(shader);
-	free_shader(old_shader);
+	group->shader = shader_ref(shader);
+	shader_free(old_shader);
 	return 0;
 }
 
@@ -578,7 +578,7 @@ js_GetDefaultShaderProgram(duk_context* ctx)
 	
 	if (!(shader = get_default_shader()))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetDefaultShaderProgram(): no default shader available or shader couldn't be built");
-	duk_push_sphere_obj(ctx, "ShaderProgram", ref_shader(shader));
+	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
 	return 1;
 }
 

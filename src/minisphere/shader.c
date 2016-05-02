@@ -1,10 +1,14 @@
 #include "minisphere.h"
 #include "api.h"
 
+#include "matrix.h"
 #include "shader.h"
 
-static duk_ret_t js_new_ShaderProgram      (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_finalize (duk_context* ctx);
+static duk_ret_t js_new_ShaderProgram       (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_finalize  (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_setFloat  (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_setInt    (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_setMatrix (duk_context* ctx);
 
 struct shader
 {
@@ -39,7 +43,7 @@ are_shaders_active(void)
 }
 
 shader_t*
-create_shader(const char* vs_filename, const char* fs_filename)
+shader_new(const char* vs_filename, const char* fs_filename)
 {
 	char*      fs_source = NULL;
 	char*      vs_source = NULL;
@@ -66,7 +70,7 @@ create_shader(const char* vs_filename, const char* fs_filename)
 #endif
 	free(vs_source);
 	free(fs_source);
-	return ref_shader(shader);
+	return shader_ref(shader);
 
 on_error:
 	free(vs_source);
@@ -80,7 +84,7 @@ on_error:
 }
 
 shader_t*
-ref_shader(shader_t* shader)
+shader_ref(shader_t* shader)
 {
 	if (shader == NULL)
 		return shader;
@@ -89,7 +93,7 @@ ref_shader(shader_t* shader)
 }
 
 void
-free_shader(shader_t* shader)
+shader_free(shader_t* shader)
 {
 	if (shader == NULL || --shader->refcount > 0)
 		return;
@@ -97,6 +101,24 @@ free_shader(shader_t* shader)
 	al_destroy_shader(shader->program);
 #endif
 	free(shader);
+}
+
+bool
+shader_set_float(shader_t* shader, const char* name, float value)
+{
+	return al_set_shader_float(name, value);
+}
+
+bool
+shader_set_int(shader_t* shader, const char* name, int value)
+{
+	return al_set_shader_int(name, value);
+}
+
+bool
+shader_set_matrix(shader_t* shader, const char* name, const matrix_t* matrix)
+{
+	return al_set_shader_matrix(name, (ALLEGRO_TRANSFORM*)matrix_transform(matrix));
 }
 
 bool
@@ -125,8 +147,10 @@ reset_shader(void)
 void
 init_shader_api(void)
 {
-	// ShaderProgram object
 	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
+	register_api_method(g_duk, "ShaderProgram", "setFloat", js_ShaderProgram_setFloat);
+	register_api_method(g_duk, "ShaderProgram", "setInt", js_ShaderProgram_setInt);
+	register_api_method(g_duk, "ShaderProgram", "setMatrix", js_ShaderProgram_setMatrix);
 }
 
 static duk_ret_t
@@ -152,7 +176,7 @@ js_new_ShaderProgram(duk_context* ctx)
 	vs_filename = duk_require_path(ctx, -2, NULL, false);
 	fs_filename = duk_require_path(ctx, -1, NULL, false);
 	duk_pop_2(ctx);
-	if (!(shader = create_shader(vs_filename, fs_filename)))
+	if (!(shader = shader_new(vs_filename, fs_filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): failed to build shader from `%s`, `%s`", vs_filename, fs_filename);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
 	return 1;
@@ -163,6 +187,54 @@ js_ShaderProgram_finalize(duk_context* ctx)
 {
 	shader_t* shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
 
-	free_shader(shader);
+	shader_free(shader);
+	return 0;
+}
+
+static duk_ret_t
+js_ShaderProgram_setFloat(duk_context* ctx)
+{
+	float       value;
+	const char* name;
+	shader_t*   shader;
+
+	duk_push_this(ctx);
+	shader = duk_require_sphere_obj(ctx, -1, "ShaderProgram");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_number(ctx, 1);
+
+	shader_set_float(shader, name, value);
+	return 0;
+}
+
+static duk_ret_t
+js_ShaderProgram_setInt(duk_context* ctx)
+{
+	int         value;
+	const char* name;
+	shader_t*   shader;
+
+	duk_push_this(ctx);
+	shader = duk_require_sphere_obj(ctx, -1, "ShaderProgram");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_int(ctx, 1);
+
+	shader_set_int(shader, name, value);
+	return 0;
+}
+
+static duk_ret_t
+js_ShaderProgram_setMatrix(duk_context* ctx)
+{
+	matrix_t*   matrix;
+	const char* name;
+	shader_t*   shader;
+
+	duk_push_this(ctx);
+	shader = duk_require_sphere_obj(ctx, -1, "ShaderProgram");
+	name = duk_require_string(ctx, 0);
+	matrix = duk_require_sphere_obj(ctx, 1, "Transform");
+
+	shader_set_matrix(shader, name, matrix);
 	return 0;
 }
