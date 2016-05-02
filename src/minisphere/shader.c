@@ -173,7 +173,7 @@ apply_shader(shader_t* shader)
 #ifdef MINISPHERE_USE_SHADERS
 	iter_t iter;
 	struct uniform* p;
-	
+
 	if (are_shaders_active()) {
 		if (!al_use_shader(shader != NULL ? shader->program : NULL))
 			return false;
