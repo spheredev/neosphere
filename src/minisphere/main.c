@@ -76,7 +76,6 @@ main(int argc, char* argv[])
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
-	bool                 have_shaders = false;
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;
@@ -203,7 +202,7 @@ main(int argc, char* argv[])
 	load_key_map();
 
 	// initialize shader support
-	initialize_shaders(have_shaders);
+	initialize_shaders(screen_have_shaders(g_screen));
 
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");

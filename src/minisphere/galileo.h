@@ -21,7 +21,7 @@ enum shape_type
 typedef
 struct vertex
 {
-	float   x, y;
+	float   x, y, z;
 	float   u, v;
 	color_t color;
 } vertex_t;
@@ -30,7 +30,7 @@ void      initialize_galileo (void);
 void      shutdown_galileo   (void);
 shader_t* get_default_shader (void);
 
-vertex_t vertex (float x, float y, float u, float v, color_t color);
+vertex_t vertex (float x, float y, float z, float u, float v, color_t color);
 
 group_t*     group_new         (shader_t* shader);
 group_t*     group_ref         (group_t* group);

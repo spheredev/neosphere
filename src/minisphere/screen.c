@@ -42,6 +42,7 @@ struct screen
 	int              fps_frames;
 	double           fps_poll_time;
 	bool             fullscreen;
+	bool             have_shaders;
 	double           last_flip_time;
 	int              max_skips;
 	double           next_frame_time;
@@ -116,6 +117,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	obj->y_size = y_size;
 	obj->max_skips = frameskip;
 	obj->avoid_sleep = avoid_sleep;
+	obj->have_shaders = use_shaders;
 
 	obj->fps_poll_time = al_get_time() + 1.0;
 	obj->next_frame_time = al_get_time();
@@ -145,6 +147,12 @@ ALLEGRO_DISPLAY*
 screen_display(const screen_t* obj)
 {
 	return obj->display;
+}
+
+bool
+screen_have_shaders(const screen_t* screen)
+{
+	return screen->have_shaders;
 }
 
 bool

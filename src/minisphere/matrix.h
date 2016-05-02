@@ -4,6 +4,7 @@
 typedef struct matrix matrix_t;
 
 matrix_t*                matrix_new       (void);
+matrix_t*                matrix_clone     (const matrix_t* matrix);
 matrix_t*                matrix_ref       (matrix_t* matrix);
 void                     matrix_free      (matrix_t* matrix);
 const ALLEGRO_TRANSFORM* matrix_transform (const matrix_t* matrix);

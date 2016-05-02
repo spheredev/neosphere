@@ -1,8 +1,8 @@
 #include "minisphere.h"
-#include "api.h"
-
-#include "matrix.h"
 #include "shader.h"
+
+#include "api.h"
+#include "matrix.h"
 
 static duk_ret_t js_new_ShaderProgram       (duk_context* ctx);
 static duk_ret_t js_ShaderProgram_finalize  (duk_context* ctx);
@@ -10,13 +10,33 @@ static duk_ret_t js_ShaderProgram_setFloat  (duk_context* ctx);
 static duk_ret_t js_ShaderProgram_setInt    (duk_context* ctx);
 static duk_ret_t js_ShaderProgram_setMatrix (duk_context* ctx);
 
+enum uniform_type
+{
+	UNIFORM_INT,
+	UNIFORM_FLOAT,
+	UNIFORM_MATRIX,
+};
+struct uniform
+{
+	char              name[256];
+	enum uniform_type type;
+	union {
+		ALLEGRO_TRANSFORM mat_value;
+		int               int_value;
+		float             float_value;
+	};
+};
+
 struct shader
 {
-	unsigned int    refcount;
+	unsigned int   refcount;
+	vector_t*      uniforms;
 #ifdef MINISPHERE_USE_SHADERS
 	ALLEGRO_SHADER* program;
 #endif
 };
+
+static void free_cached_uniform (shader_t* shader, const char* name);
 
 static bool s_have_shaders = false;
 
@@ -51,10 +71,13 @@ shader_new(const char* vs_filename, const char* fs_filename)
 
 	shader = calloc(1, sizeof(shader_t));
 	
-	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, NULL, NULL))) goto on_error;
-	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, NULL, NULL))) goto on_error;
+	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, NULL, NULL)))
+		goto on_error;
+	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, NULL, NULL)))
+		goto on_error;
 #ifdef MINISPHERE_USE_SHADERS
-	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL))) goto on_error;
+	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
+		goto on_error;
 	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
 		fprintf(stderr, "\nvertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
@@ -70,6 +93,7 @@ shader_new(const char* vs_filename, const char* fs_filename)
 #endif
 	free(vs_source);
 	free(fs_source);
+	shader->uniforms = vector_new(sizeof(struct uniform));
 	return shader_ref(shader);
 
 on_error:
@@ -100,37 +124,80 @@ shader_free(shader_t* shader)
 #ifdef MINISPHERE_USE_SHADERS
 	al_destroy_shader(shader->program);
 #endif
+	vector_free(shader->uniforms);
 	free(shader);
 }
 
-bool
+void
 shader_set_float(shader_t* shader, const char* name, float value)
 {
-	return al_set_shader_float(name, value);
+	struct uniform unif;
+	
+	free_cached_uniform(shader, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_FLOAT;
+	unif.float_value = value;
+	vector_push(shader->uniforms, &unif);
 }
 
-bool
+void
 shader_set_int(shader_t* shader, const char* name, int value)
 {
-	return al_set_shader_int(name, value);
+	struct uniform unif;
+
+	free_cached_uniform(shader, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_INT;
+	unif.int_value = value;
+	vector_push(shader->uniforms, &unif);
 }
 
-bool
+void
 shader_set_matrix(shader_t* shader, const char* name, const matrix_t* matrix)
 {
-	return al_set_shader_matrix(name, (ALLEGRO_TRANSFORM*)matrix_transform(matrix));
+	struct uniform unif;
+
+	free_cached_uniform(shader, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_MATRIX;
+	al_copy_transform(&unif.mat_value, matrix_transform(matrix));
+	vector_push(shader->uniforms, &unif);
 }
 
 bool
 apply_shader(shader_t* shader)
 {
 #ifdef MINISPHERE_USE_SHADERS
-	if (are_shaders_active())
-		return al_use_shader(shader != NULL ? shader->program : NULL);
-	else
+	iter_t iter;
+	struct uniform* p;
+	
+	if (are_shaders_active()) {
+		if (!al_use_shader(shader != NULL ? shader->program : NULL))
+			return false;
+		iter = vector_enum(shader->uniforms);
+		while (p = vector_next(&iter)) {
+			switch (p->type) {
+			case UNIFORM_FLOAT:
+				al_set_shader_float(p->name, p->float_value);
+				break;
+			case UNIFORM_INT:
+				al_set_shader_int(p->name, p->int_value);
+				break;
+			case UNIFORM_MATRIX:
+				al_set_shader_matrix(p->name, &p->mat_value);
+				break;
+			}
+		}
+		return true;
+	}
+	else {
 		// if shaders are not supported, degrade gracefully. this simplifies the rest
 		// of the engine, which simply assumes shaders are always supported.
 		return true;
+	}
 #else
 	return true;
 #endif
@@ -142,6 +209,19 @@ reset_shader(void)
 #ifdef MINISPHERE_USE_SHADERS
 	if (s_have_shaders) al_use_shader(NULL);
 #endif
+}
+
+static void
+free_cached_uniform(shader_t* shader, const char* name)
+{
+	iter_t iter;
+	struct uniform* p;
+
+	iter = vector_enum(shader->uniforms);
+	while (p = vector_next(&iter)) {
+		if (strcmp(p->name, name) == 0)
+			iter_remove(&iter);
+	}
 }
 
 void

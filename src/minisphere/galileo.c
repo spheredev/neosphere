@@ -94,12 +94,15 @@ get_default_shader(void)
 }
 
 vertex_t
-vertex(float x, float y, float u, float v, color_t color)
+vertex(float x, float y, float z, float u, float v, color_t color)
 {
 	vertex_t vertex;
 
-	vertex.x = x; vertex.y = y;
-	vertex.u = u; vertex.v = v;
+	vertex.x = x;
+	vertex.y = y;
+	vertex.z = z;
+	vertex.u = u;
+	vertex.v = v;
 	vertex.color = color;
 	return vertex;
 }
@@ -113,6 +116,7 @@ group_new(shader_t* shader)
 	
 	group = calloc(1, sizeof(group_t));
 	group->shapes = vector_new(sizeof(shape_t*));
+	group->transform = matrix_new();
 	group->shader = shader_ref(shader);
 	
 	group->id = s_next_group_id++;
@@ -144,6 +148,7 @@ group_free(group_t* group)
 		shape_free(*i_shape);
 	vector_free(group->shapes);
 	shader_free(group->shader);
+	matrix_free(group->transform);
 	free(group);
 }
 
@@ -468,7 +473,7 @@ js_new_Group(duk_context* ctx)
 		: get_default_shader();
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "argument 1 to Shape() must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "argument 1 to Group() must be an array");
 	if (!(group = group_new(shader)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create Galileo group");
 	num_shapes = duk_get_length(ctx, 0);
@@ -515,7 +520,7 @@ js_Group_get_transform(duk_context* ctx)
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 
 	matrix = group_transform(group);
-	duk_push_sphere_obj(ctx, "Matrix", matrix_ref(matrix));
+	duk_push_sphere_obj(ctx, "Transform", matrix_ref(matrix));
 	return 1;
 }
 
@@ -545,7 +550,7 @@ js_Group_set_transform(duk_context* ctx)
 
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
-	matrix = duk_require_sphere_obj(ctx, 0, "Matrix");
+	matrix = duk_require_sphere_obj(ctx, 0, "Transform");
 
 	old_matrix = group->transform;
 	group->transform = matrix_ref(matrix);
@@ -609,6 +614,8 @@ js_new_Shape(duk_context* ctx)
 		duk_get_prop_index(ctx, 0, i); stack_idx = duk_normalize_index(ctx, -1);
 		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0f;
 		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0f;
+		if (duk_get_prop_string(ctx, stack_idx, "z"))
+			vertex.z = duk_require_number(ctx, -1);
 		if (duk_get_prop_string(ctx, stack_idx, "u"))
 			vertex.u = duk_require_number(ctx, -1);
 		else
@@ -698,7 +705,7 @@ js_Transform_compose(duk_context* ctx)
 	other = duk_require_sphere_obj(ctx, 0, "Transform");
 
 	matrix_compose(matrix, other);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
@@ -710,7 +717,7 @@ js_Transform_identity(duk_context* ctx)
 	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
 
 	matrix_identity(matrix);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
@@ -734,7 +741,7 @@ js_Transform_rotate(duk_context* ctx)
 	}
 
 	matrix_rotate(matrix, theta, vx, vy, vz);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
@@ -755,7 +762,7 @@ js_Transform_scale(duk_context* ctx)
 		sz = duk_require_number(ctx, 2);
 
 	matrix_scale(matrix, sx, sy, sz);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t
@@ -776,5 +783,5 @@ js_Transform_translate(duk_context* ctx)
 		dz = duk_require_number(ctx, 2);
 
 	matrix_translate(matrix, dx, dy, dz);
-	return 0;
+	return 1;
 }

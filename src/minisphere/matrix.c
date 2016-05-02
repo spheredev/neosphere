@@ -18,6 +18,16 @@ matrix_new(void)
 }
 
 matrix_t*
+matrix_clone(const matrix_t* matrix)
+{
+	matrix_t* new_matrix;
+
+	new_matrix = calloc(1, sizeof(matrix_t));
+	al_copy_transform(&new_matrix->transform, &matrix->transform);
+	return matrix_ref(new_matrix);
+}
+
+matrix_t*
 matrix_ref(matrix_t* matrix)
 {
 	++matrix->refcount;

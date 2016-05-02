@@ -17,6 +17,8 @@ v3.1.0 - TBD
   libraries on CommonJS platforms.
 * `Async()` is now called `DispatchScript()` for consistency.
 * `ListeningSocket` is now called `Server`.
+* Adds the ability to set uniforms in GLSL shaders using `shader.setInt()`,
+  `shader.setFloat()`, and `shader.setMatrix()`.
 
 
 v3.0.8 - April 17, 2016
