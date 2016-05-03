@@ -14,40 +14,39 @@ ifndef CFLAGS
 CFLAGS=-O3
 endif
 
-engine_sources=src/minisphere/main.c \
+engine_sources=src/engine/main.c \
    src/shared/duktape.c src/shared/dyad.c src/shared/mt19937ar.c \
    src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
    src/shared/vector.c \
-   src/minisphere/animation.c src/minisphere/api.c \
-   src/minisphere/async.c src/minisphere/atlas.c \
-   src/minisphere/audialis.c src/minisphere/bytearray.c \
-   src/minisphere/color.c src/minisphere/console.c \
-   src/minisphere/debugger.c src/minisphere/file.c \
-   src/minisphere/font.c src/minisphere/galileo.c \
-   src/minisphere/geometry.c src/minisphere/image.c \
-   src/minisphere/input.c src/minisphere/logger.c \
-   src/minisphere/map_engine.c src/minisphere/matrix.c src/minisphere/obsmap.c \
-   src/minisphere/persons.c src/minisphere/rng.c src/minisphere/screen.c \
-   src/minisphere/script.c src/minisphere/shader.c src/minisphere/sockets.c \
-   src/minisphere/spherefs.c src/minisphere/spk.c src/minisphere/spriteset.c \
-   src/minisphere/surface.c src/minisphere/tileset.c src/minisphere/transpiler.c \
-   src/minisphere/utility.c src/minisphere/windowstyle.c
+   src/engine/animation.c src/engine/api.c src/engine/async.c \
+   src/engine/atlas.c src/engine/audialis.c src/engine/bytearray.c \
+   src/engine/color.c src/engine/console.c src/engine/debugger.c \
+   src/engine/file.c src/engine/font.c src/engine/galileo.c \
+   src/engine/geometry.c src/engine/image.c src/engine/input.c \
+   src/engine/logger.c src/engine/map_engine.c src/engine/matrix.c \
+   src/engine/obsmap.c src/engine/persons.c src/engine/rng.c \
+   src/engine/screen.c src/engine/script.c src/engine/shader.c \
+   src/engine/sockets.c src/engine/spherefs.c src/engine/spk.c \
+   src/engine/spriteset.c src/engine/surface.c src/engine/tileset.c \
+   src/engine/transpiler.c src/engine/utility.c src/engine/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
    -lmng -lz -lm
 
-cell_sources=src/cell/main.c \
+cell_sources=src/compiler/main.c \
    src/shared/duktape.c src/shared/path.c src/shared/vector.c \
-   src/cell/assets.c src/cell/build.c src/cell/spk_writer.c src/cell/utility.c
+   src/compiler/assets.c src/compiler/build.c src/compiler/spk_writer.c \
+   src/compiler/utility.c
 cell_libs= \
    -lz -lm
 
-ssj_sources=src/ssj/main.c \
+ssj_sources=src/debugger/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
-   src/ssj/backtrace.c src/ssj/dvalue.c src/ssj/help.c src/ssj/inferior.c \
-   src/ssj/message.c src/ssj/objview.c src/ssj/parser.c src/ssj/session.c \
-   src/ssj/sockets.c src/ssj/source.c
+   src/debugger/backtrace.c src/debugger/dvalue.c src/debugger/help.c \
+   src/debugger/inferior.c src/debugger/message.c src/debugger/objview.c \
+   src/debugger/parser.c src/debugger/session.c src/debugger/sockets.c \
+   src/debugger/source.c
 
 .PHONY: all
 all: minisphere spherun cell ssj
@@ -110,14 +109,14 @@ clean:
 
 bin/minisphere:
 	mkdir -p bin
-	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/engine \
 	      -DDUK_OPT_HAVE_CUSTOM_H \
 	      $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
-	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/engine \
 	      -DDUK_OPT_HAVE_CUSTOM_H -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
 

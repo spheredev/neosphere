@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}</ProjectGuid>
+    <ProjectGuid>{9C731E06-D435-43AF-8730-7BD51A6C731D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>cell</RootNamespace>
+    <RootNamespace>SSJ</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>Cell</ProjectName>
+    <ProjectName>debugger</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -71,28 +71,28 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>cell</TargetName>
+    <TargetName>ssj</TargetName>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>debug64\</OutDir>
-    <IntDir>obj64\debug\cell\</IntDir>
+    <IntDir>obj64\debug\ssj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>cell</TargetName>
+    <TargetName>ssj</TargetName>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>debug\</OutDir>
-    <IntDir>obj\debug\cell\</IntDir>
+    <IntDir>obj\debug\ssj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
-    <TargetName>cell</TargetName>
+    <TargetName>ssj</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\msw64\</OutDir>
-    <IntDir>obj64\console\cell\</IntDir>
+    <IntDir>obj64\console\ssj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
-    <TargetName>cell</TargetName>
+    <TargetName>ssj</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\msw\</OutDir>
-    <IntDir>obj\console\cell\</IntDir>
+    <IntDir>obj\console\ssj\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -102,15 +102,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -121,15 +118,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
@@ -138,23 +132,21 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>No</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -163,56 +155,64 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>include;..\src\shared</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>No</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\shared\duktape.c" />
+    <ClCompile Include="..\src\shared\dyad.c" />
     <ClCompile Include="..\src\shared\lstring.c" />
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
     <ClCompile Include="..\src\shared\vector.c" />
-    <ClCompile Include="..\src\cell\assets.c" />
-    <ClCompile Include="..\src\cell\build.c" />
-    <ClCompile Include="..\src\cell\main.c" />
-    <ClCompile Include="..\src\cell\spk_writer.c" />
-    <ClCompile Include="..\src\cell\utility.c" />
+    <ClCompile Include="..\src\debugger\backtrace.c" />
+    <ClCompile Include="..\src\debugger\objview.c" />
+    <ClCompile Include="..\src\debugger\session.c" />
+    <ClCompile Include="..\src\debugger\parser.c" />
+    <ClCompile Include="..\src\debugger\dvalue.c" />
+    <ClCompile Include="..\src\debugger\help.c" />
+    <ClCompile Include="..\src\debugger\message.c" />
+    <ClCompile Include="..\src\debugger\main.c" />
+    <ClCompile Include="..\src\debugger\inferior.c" />
+    <ClCompile Include="..\src\debugger\sockets.c" />
+    <ClCompile Include="..\src\debugger\source.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\shared\duktape.h" />
-    <ClInclude Include="..\src\shared\duk_config.h" />
+    <ClInclude Include="..\src\shared\dyad.h" />
     <ClInclude Include="..\src\shared\lstring.h" />
     <ClInclude Include="..\src\shared\path.h" />
-    <ClInclude Include="..\src\shared\tinydir.h" />
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
-    <ClInclude Include="..\src\cell\assets.h" />
-    <ClInclude Include="..\src\cell\build.h" />
-    <ClInclude Include="..\src\cell\cell.h" />
-    <ClInclude Include="..\src\cell\posix.h" />
-    <ClInclude Include="..\src\cell\spk_writer.h" />
-    <ClInclude Include="..\src\cell\utility.h" />
-    <ClInclude Include="resource1.h" />
+    <ClInclude Include="..\src\debugger\backtrace.h" />
+    <ClInclude Include="..\src\debugger\objview.h" />
+    <ClInclude Include="..\src\debugger\session.h" />
+    <ClInclude Include="..\src\debugger\parser.h" />
+    <ClInclude Include="..\src\debugger\dvalue.h" />
+    <ClInclude Include="..\src\debugger\help.h" />
+    <ClInclude Include="..\src\debugger\message.h" />
+    <ClInclude Include="..\src\debugger\posix.h" />
+    <ClInclude Include="..\src\debugger\inferior.h" />
+    <ClInclude Include="..\src\debugger\sockets.h" />
+    <ClInclude Include="..\src\debugger\source.h" />
+    <ClInclude Include="..\src\debugger\ssj.h" />
+    <ClInclude Include="resource2.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="cell.rc" />
+    <ResourceCompile Include="ssj.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

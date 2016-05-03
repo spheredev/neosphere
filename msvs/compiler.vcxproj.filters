@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\cell\main.c">
+    <ClCompile Include="..\src\compiler\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\duktape.c">
@@ -33,16 +33,16 @@
     <ClCompile Include="..\src\shared\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cell\assets.c">
+    <ClCompile Include="..\src\compiler\assets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cell\build.c">
+    <ClCompile Include="..\src\compiler\build.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cell\spk_writer.c">
+    <ClCompile Include="..\src\compiler\spk_writer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cell\utility.c">
+    <ClCompile Include="..\src\compiler\utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,22 +71,22 @@
     <ClInclude Include="..\src\shared\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cell\cell.h">
+    <ClInclude Include="..\src\compiler\cell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cell\assets.h">
+    <ClInclude Include="..\src\compiler\assets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cell\build.h">
+    <ClInclude Include="..\src\compiler\build.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cell\posix.h">
+    <ClInclude Include="..\src\compiler\posix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cell\spk_writer.h">
+    <ClInclude Include="..\src\compiler\spk_writer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cell\utility.h">
+    <ClInclude Include="..\src\compiler\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource1.h">

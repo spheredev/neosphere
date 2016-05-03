@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minisphere", "minisphere.vcxproj", "{9DA07B08-F2C7-4FFC-8770-9933EAB9D103}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "engine", "engine.vcxproj", "{9DA07B08-F2C7-4FFC-8770-9933EAB9D103}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cell", "cell.vcxproj", "{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "compiler", "compiler.vcxproj", "{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin", "..\src\plugin\Plugin.csproj", "{D242F8EF-7D85-4B6B-9446-6758B68A7F54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "plugin", "..\src\plugin\plugin.csproj", "{D242F8EF-7D85-4B6B-9446-6758B68A7F54}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SSJ", "ssj.vcxproj", "{9C731E06-D435-43AF-8730-7BD51A6C731D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "debugger", "debugger.vcxproj", "{9C731E06-D435-43AF-8730-7BD51A6C731D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
