@@ -454,13 +454,13 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="minisphere.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="minisphere.ico" />
+    <ResourceCompile Include="engine.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="spherical.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

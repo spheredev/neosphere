@@ -212,7 +212,7 @@
     <ClInclude Include="resource2.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ssj.rc" />
+    <ResourceCompile Include="debugger.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
