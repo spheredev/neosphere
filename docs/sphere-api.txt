@@ -145,8 +145,8 @@ require(module_id);
     semantics as in, e.g. Node.js.  If the module cannot be found, an error will
     be thrown.  minisphere will look for modules in the following locations:
 
-        ~sgm/commonjs
-        ~sys/commonjs
+        ~sgm/lib/
+        ~sys/modules/
 
     If require() is called inside of a module and the ID provided is prefixed
     with either './' or '../', this specifies a path relative to the calling
