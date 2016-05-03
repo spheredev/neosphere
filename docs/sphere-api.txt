@@ -31,7 +31,7 @@ GetVersionString()
     Returns the engine's version identification string. The string returned will
     be in the following format:
 
-        v2.0 (minisphere 3.1a0)
+        v2.0 (minisphere 3.1a1)
 
 GetExtensions()
 
@@ -790,30 +790,32 @@ Image:height (read-only)
 
     Gets the width or height of the image, in pixels.
 
-new Matrix();
+new Transform();
 
-    Constructs a transformation matrix.  The object represents a 4x4 matrix and
-    is initialized as an identity matrix.
+    Constructs a transformation.  The object represents a 4x4 matrix and is
+    initialized as an identity matrix.
 
-Matrix:identity();
+Transform:identity();
 
     Initializes this matrix as an identity matrix.
 
-Matrix:compose(otherMatrix);
+Transform:compose(otherMatrix);
 
-    Multiplies this matrix by `otherMatrix`.
+    Composes this transform with another.  `otherMatrix` is multiplied from the
+    left such that transformations are performed in the order you specify.
 
-Matrix:rotate(theta);
+Transform:rotate(theta[, vx, vy, vz]);
 
     Applies a rotation transformation to this matrix.  `theta` is the angle of
-    rotation, in radians.
+    rotation, in radians.  (vx, vy, vz) is the vector to rotate about.  For
+    example the default is (0, 0, 1) which rotates about the Z axis.
 
-Matrix:scale(sx, sy);
+Transform:scale(sx, sy);
 
     Applies a scaling transformation to this matrix.  `sx` and `sy` are the
     horizontal and vertical scaling factors, respectively.
 
-Matrix:translate(tx, ty);
+Transform:translate(tx, ty);
 
     Applies a translation transformation to this matrix.  `tx` and `ty` are the
     horizontal and vertical translations, respectively.

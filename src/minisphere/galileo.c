@@ -380,15 +380,13 @@ shape_add_vertex(shape_t* shape, vertex_t vertex)
 }
 
 void
-shape_draw(shape_t* shape, matrix_t* matrix, shader_t* shader, image_t* surface)
+shape_draw(shape_t* shape, matrix_t* matrix, image_t* surface)
 {
 	if (surface != NULL)
 		al_set_target_bitmap(get_image_bitmap(surface));
-	apply_shader(shader);
 	screen_transform(g_screen, matrix);
 	render_shape(shape);
 	screen_transform(g_screen, NULL);
-	reset_shader();
 	if (surface != NULL)
 		al_set_target_backbuffer(screen_display(g_screen));
 }
@@ -545,6 +543,7 @@ init_galileo_api(void)
 
 	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
 	register_api_prop(g_duk, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
+	register_api_method(g_duk, "Shape", "draw", js_Shape_draw);
 
 	register_api_ctor(g_duk, "Transform", js_new_Transform, js_Transform_finalize);
 	register_api_method(g_duk, "Transform", "compose", js_Transform_compose);
@@ -811,12 +810,33 @@ static duk_ret_t
 js_Shape_set_texture(duk_context* ctx)
 {
 	shape_t* shape;
-	image_t* texture = duk_require_sphere_obj(ctx, 0, "Image");
+	image_t* texture;
 
 	duk_push_this(ctx);
 	shape = duk_require_sphere_obj(ctx, -1, "Shape");
-	duk_pop(ctx);
+	texture = duk_require_sphere_obj(ctx, 0, "Image");
+
 	shape_set_texture(shape, texture);
+	return 0;
+}
+
+static duk_ret_t
+js_Shape_draw(duk_context* ctx)
+{
+	int       num_args;
+	shape_t*  shape;
+	image_t*  surface = NULL;
+	matrix_t* transform = NULL;
+
+	duk_push_this(ctx);
+	num_args = duk_get_top(ctx) - 1;
+	shape = duk_require_sphere_obj(ctx, -1, "Shape");
+	if (num_args >= 1)
+		surface = duk_require_sphere_obj(ctx, 0, "Surface");
+	if (num_args >= 2)
+		transform = duk_require_sphere_obj(ctx, 1, "Transform");
+
+	shape_draw(shape, transform, surface);
 	return 0;
 }
 

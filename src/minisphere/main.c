@@ -683,7 +683,7 @@ print_banner(bool want_copyright, bool want_deps)
 	lstring_t* al_version;
 	uint32_t   al_version_id;
 	
-	printf("%s Sphere Game Engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	printf("%s JS Game Engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
 		printf("a lightweight JavaScript-based 2D game engine\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");

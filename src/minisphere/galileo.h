@@ -49,7 +49,7 @@ float_rect_t shape_bounds      (const shape_t* shape);
 image_t*     shape_texture     (const shape_t* shape);
 void         shape_set_texture (shape_t* shape, image_t* texture);
 bool         shape_add_vertex  (shape_t* shape, vertex_t vertex);
-void         shape_draw        (shape_t* shape, matrix_t* matrix, shader_t* shader, image_t* surface);
+void         shape_draw        (shape_t* shape, matrix_t* matrix, image_t* surface);
 void         shape_upload      (shape_t* shape);
 
 void init_galileo_api (void);
