@@ -913,21 +913,40 @@ Group:draw([surface]);
     primitive.  `surface` specifies the Surface to draw on, or null for the
     backbuffer.
 
+Group:setFloat(name, value);
+Group:setInt(name, value);
+Group:setMatrix(name, transform);
+
+    Sets the value of a GLSL uniform.  When the group is drawn, if its shader
+    program contains a uniform called `name` of the proper type, the value will
+    be uploaded to that uniform.  It is safe to call this even if the uniform
+    turns out not to exist (in which case the call is effectively a no-op).
+
 GetDefaultShaderProgram();
 
     Gets the default Galileo shader program.  This is a very barebones shader
     which uses screen coordinates for vertices and performs only basic texture
-    mapping in the fragment shader.
+    mapping.
 
-new ShaderProgram(shader_files);
+new ShaderProgram(options);
 
     SphereFS compliant.
 
-    Constructs a ShaderProgram from a set of shader sources.  `shader_files`
-    should be an object with the following properties:
+    Constructs a ShaderProgram from a set of shader sources.  `options` should
+    be an object with the following properties:
 
-        .vertex:   The filename of the source for the vertex shader.
-        .fragment: The filename of the source for the fragment shader.
+        options.vertex
+
+            The name of the file containing source code for the GL vertex
+            shader.
+
+        options.fragment
+
+            The name of the file containing source code for the GLSL fragment
+            shader.
+
+	Shader code is expected to be GLSL.  HLSL (DirectX) shaders are not
+	supported, even on Windows.  Geometry shaders are not yet supported.
 
 
 Color Matrices

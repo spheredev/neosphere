@@ -6,37 +6,14 @@
 
 static duk_ret_t js_new_ShaderProgram       (duk_context* ctx);
 static duk_ret_t js_ShaderProgram_finalize  (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_setFloat  (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_setInt    (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_setMatrix (duk_context* ctx);
-
-enum uniform_type
-{
-	UNIFORM_INT,
-	UNIFORM_FLOAT,
-	UNIFORM_MATRIX,
-};
-struct uniform
-{
-	char              name[256];
-	enum uniform_type type;
-	union {
-		ALLEGRO_TRANSFORM mat_value;
-		int               int_value;
-		float             float_value;
-	};
-};
 
 struct shader
 {
 	unsigned int   refcount;
-	vector_t*      uniforms;
 #ifdef MINISPHERE_USE_SHADERS
 	ALLEGRO_SHADER* program;
 #endif
 };
-
-static void free_cached_uniform (shader_t* shader, const char* name);
 
 static bool s_have_shaders = false;
 
@@ -93,7 +70,6 @@ shader_new(const char* vs_filename, const char* fs_filename)
 #endif
 	free(vs_source);
 	free(fs_source);
-	shader->uniforms = vector_new(sizeof(struct uniform));
 	return shader_ref(shader);
 
 on_error:
@@ -124,73 +100,16 @@ shader_free(shader_t* shader)
 #ifdef MINISPHERE_USE_SHADERS
 	al_destroy_shader(shader->program);
 #endif
-	vector_free(shader->uniforms);
 	free(shader);
-}
-
-void
-shader_set_float(shader_t* shader, const char* name, float value)
-{
-	struct uniform unif;
-	
-	free_cached_uniform(shader, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_FLOAT;
-	unif.float_value = value;
-	vector_push(shader->uniforms, &unif);
-}
-
-void
-shader_set_int(shader_t* shader, const char* name, int value)
-{
-	struct uniform unif;
-
-	free_cached_uniform(shader, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_INT;
-	unif.int_value = value;
-	vector_push(shader->uniforms, &unif);
-}
-
-void
-shader_set_matrix(shader_t* shader, const char* name, const matrix_t* matrix)
-{
-	struct uniform unif;
-
-	free_cached_uniform(shader, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_MATRIX;
-	al_copy_transform(&unif.mat_value, matrix_transform(matrix));
-	vector_push(shader->uniforms, &unif);
 }
 
 bool
 apply_shader(shader_t* shader)
 {
 #ifdef MINISPHERE_USE_SHADERS
-	iter_t iter;
-	struct uniform* p;
-
 	if (are_shaders_active()) {
 		if (!al_use_shader(shader != NULL ? shader->program : NULL))
 			return false;
-		iter = vector_enum(shader->uniforms);
-		while (p = vector_next(&iter)) {
-			switch (p->type) {
-			case UNIFORM_FLOAT:
-				al_set_shader_float(p->name, p->float_value);
-				break;
-			case UNIFORM_INT:
-				al_set_shader_int(p->name, p->int_value);
-				break;
-			case UNIFORM_MATRIX:
-				al_set_shader_matrix(p->name, &p->mat_value);
-				break;
-			}
-		}
 		return true;
 	}
 	else {
@@ -211,26 +130,10 @@ reset_shader(void)
 #endif
 }
 
-static void
-free_cached_uniform(shader_t* shader, const char* name)
-{
-	iter_t iter;
-	struct uniform* p;
-
-	iter = vector_enum(shader->uniforms);
-	while (p = vector_next(&iter)) {
-		if (strcmp(p->name, name) == 0)
-			iter_remove(&iter);
-	}
-}
-
 void
 init_shader_api(void)
 {
 	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
-	register_api_method(g_duk, "ShaderProgram", "setFloat", js_ShaderProgram_setFloat);
-	register_api_method(g_duk, "ShaderProgram", "setInt", js_ShaderProgram_setInt);
-	register_api_method(g_duk, "ShaderProgram", "setMatrix", js_ShaderProgram_setMatrix);
 }
 
 static duk_ret_t
@@ -268,53 +171,5 @@ js_ShaderProgram_finalize(duk_context* ctx)
 	shader_t* shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
 
 	shader_free(shader);
-	return 0;
-}
-
-static duk_ret_t
-js_ShaderProgram_setFloat(duk_context* ctx)
-{
-	float       value;
-	const char* name;
-	shader_t*   shader;
-
-	duk_push_this(ctx);
-	shader = duk_require_sphere_obj(ctx, -1, "ShaderProgram");
-	name = duk_require_string(ctx, 0);
-	value = duk_require_number(ctx, 1);
-
-	shader_set_float(shader, name, value);
-	return 0;
-}
-
-static duk_ret_t
-js_ShaderProgram_setInt(duk_context* ctx)
-{
-	int         value;
-	const char* name;
-	shader_t*   shader;
-
-	duk_push_this(ctx);
-	shader = duk_require_sphere_obj(ctx, -1, "ShaderProgram");
-	name = duk_require_string(ctx, 0);
-	value = duk_require_int(ctx, 1);
-
-	shader_set_int(shader, name, value);
-	return 0;
-}
-
-static duk_ret_t
-js_ShaderProgram_setMatrix(duk_context* ctx)
-{
-	matrix_t*   matrix;
-	const char* name;
-	shader_t*   shader;
-
-	duk_push_this(ctx);
-	shader = duk_require_sphere_obj(ctx, -1, "ShaderProgram");
-	name = duk_require_string(ctx, 0);
-	matrix = duk_require_sphere_obj(ctx, 1, "Transform");
-
-	shader_set_matrix(shader, name, matrix);
 	return 0;
 }

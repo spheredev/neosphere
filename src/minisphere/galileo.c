@@ -14,6 +14,9 @@ static duk_ret_t js_Group_get_transform     (duk_context* ctx);
 static duk_ret_t js_Group_set_shader        (duk_context* ctx);
 static duk_ret_t js_Group_set_transform     (duk_context* ctx);
 static duk_ret_t js_Group_draw              (duk_context* ctx);
+static duk_ret_t js_Group_setFloat          (duk_context* ctx);
+static duk_ret_t js_Group_setInt            (duk_context* ctx);
+static duk_ret_t js_Group_setMatrix         (duk_context* ctx);
 static duk_ret_t js_new_Shape               (duk_context* ctx);
 static duk_ret_t js_Shape_finalize          (duk_context* ctx);
 static duk_ret_t js_Shape_get_texture       (duk_context* ctx);
@@ -27,9 +30,29 @@ static duk_ret_t js_Transform_rotate        (duk_context* ctx);
 static duk_ret_t js_Transform_scale         (duk_context* ctx);
 static duk_ret_t js_Transform_translate     (duk_context* ctx);
 
-static void assign_default_uv  (shape_t* shape);
-static bool have_vertex_buffer (const shape_t* shape);
-static void render_shape       (shape_t* shape);
+static void assign_default_uv   (shape_t* shape);
+static void free_cached_uniform (group_t* group, const char* name);
+static bool have_vertex_buffer  (const shape_t* shape);
+static void render_shape        (shape_t* shape);
+
+enum uniform_type
+{
+	UNIFORM_INT,
+	UNIFORM_INT_VEC,
+	UNIFORM_FLOAT,
+	UNIFORM_FLOAT_VEC,
+	UNIFORM_MATRIX,
+};
+struct uniform
+{
+	char              name[256];
+	enum uniform_type type;
+	union {
+		ALLEGRO_TRANSFORM mat_value;
+		int               int_value;
+		float             float_value;
+	};
+};
 
 struct shape
 {
@@ -40,7 +63,7 @@ struct shape
 	ALLEGRO_VERTEX*        sw_vbuf;
 	int                    max_vertices;
 	int                    num_vertices;
-	vertex_t               *vertices;
+	vertex_t*              vertices;
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	ALLEGRO_VERTEX_BUFFER* vbuf;
 #endif
@@ -53,6 +76,7 @@ struct group
 	shader_t*    shader;
 	vector_t*    shapes;
 	matrix_t*    transform;
+	vector_t*    uniforms;
 };
 
 static shader_t*    s_def_shader = NULL;
@@ -118,6 +142,7 @@ group_new(shader_t* shader)
 	group->shapes = vector_new(sizeof(shape_t*));
 	group->transform = matrix_new();
 	group->shader = shader_ref(shader);
+	group->uniforms = vector_new(sizeof(struct uniform));
 	
 	group->id = s_next_group_id++;
 	return group_ref(group);
@@ -149,6 +174,7 @@ group_free(group_t* group)
 	vector_free(group->shapes);
 	shader_free(group->shader);
 	matrix_free(group->transform);
+	vector_free(group->uniforms);
 	free(group);
 }
 
@@ -178,11 +204,29 @@ void
 group_draw(const group_t* group, image_t* surface)
 {
 	iter_t iter;
+	struct uniform* p;
 
 	if (surface != NULL)
 		al_set_target_bitmap(get_image_bitmap(surface));
 	
 	apply_shader(group->shader != NULL ? group->shader : get_default_shader());
+	if (are_shaders_active()) {
+		iter = vector_enum(group->uniforms);
+		while (p = vector_next(&iter)) {
+			switch (p->type) {
+			case UNIFORM_FLOAT:
+				al_set_shader_float(p->name, p->float_value);
+				break;
+			case UNIFORM_INT:
+				al_set_shader_int(p->name, p->int_value);
+				break;
+			case UNIFORM_MATRIX:
+				al_set_shader_matrix(p->name, &p->mat_value);
+				break;
+			}
+		}
+	}
+
 	screen_transform(g_screen, group->transform);
 	iter = vector_enum(group->shapes);
 	while (vector_next(&iter))
@@ -192,6 +236,45 @@ group_draw(const group_t* group, image_t* surface)
 
 	if (surface != NULL)
 		al_set_target_backbuffer(screen_display(g_screen));
+}
+
+void
+group_put_float(group_t* group, const char* name, float value)
+{
+	struct uniform unif;
+
+	free_cached_uniform(group, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_FLOAT;
+	unif.float_value = value;
+	vector_push(group->uniforms, &unif);
+}
+
+void
+group_put_int(group_t* group, const char* name, int value)
+{
+	struct uniform unif;
+
+	free_cached_uniform(group, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_INT;
+	unif.int_value = value;
+	vector_push(group->uniforms, &unif);
+}
+
+void
+group_put_matrix(group_t* group, const char* name, const matrix_t* matrix)
+{
+	struct uniform unif;
+
+	free_cached_uniform(group, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_MATRIX;
+	al_copy_transform(&unif.mat_value, matrix_transform(matrix));
+	vector_push(group->uniforms, &unif);
 }
 
 shape_t*
@@ -394,7 +477,20 @@ have_vertex_buffer(const shape_t* shape)
 #endif
 }
 
-void
+static void
+free_cached_uniform(group_t* group, const char* name)
+{
+	iter_t iter;
+	struct uniform* p;
+
+	iter = vector_enum(group->uniforms);
+	while (p = vector_next(&iter)) {
+		if (strcmp(p->name, name) == 0)
+			iter_remove(&iter);
+	}
+}
+
+static void
 render_shape(shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
@@ -443,6 +539,9 @@ init_galileo_api(void)
 	register_api_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
 	register_api_prop(g_duk, "Group", "transform", js_Group_get_transform, js_Group_set_transform);
 	register_api_method(g_duk, "Group", "draw", js_Group_draw);
+	register_api_method(g_duk, "Group", "setFloat", js_Group_setFloat);
+	register_api_method(g_duk, "Group", "setInt", js_Group_setInt);
+	register_api_method(g_duk, "Group", "setMatrix", js_Group_setMatrix);
 
 	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
 	register_api_prop(g_duk, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
@@ -574,6 +673,54 @@ js_Group_draw(duk_context* ctx)
 	if (!screen_is_skipframe(g_screen))
 		group_draw(group, surface);
 	return 0;
+}
+
+static duk_ret_t
+js_Group_setFloat(duk_context* ctx)
+{
+	group_t*    group;
+	const char* name;
+	float       value;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_number(ctx, 1);
+
+	group_put_float(group, name, value);
+	return 1;
+}
+
+static duk_ret_t
+js_Group_setInt(duk_context* ctx)
+{
+	group_t*    group;
+	const char* name;
+	int         value;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_int(ctx, 1);
+
+	group_put_int(group, name, value);
+	return 1;
+}
+
+static duk_ret_t
+js_Group_setMatrix(duk_context* ctx)
+{
+	group_t*    group;
+	matrix_t*   matrix;
+	const char* name;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Group");
+	name = duk_require_string(ctx, 0);
+	matrix = duk_require_sphere_obj(ctx, 1, "Transform");
+
+	group_put_matrix(group, name, matrix);
+	return 1;
 }
 
 static duk_ret_t

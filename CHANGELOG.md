@@ -9,16 +9,17 @@ v3.1.0 - TBD
   and miniRT/render allows pre-rendering of expensive-to-draw components such
   as text.
 * Adds a new Transform object which allows working with transformation matrices.
-* Improves the Galileo API: Shapes can now be drawn directly, and Groups now
-  have a `transform` property which allows the transformation matrix to be
+* Improves the Galileo API: Shapes can now be drawn directly, and Groups have
+  a `transform` property which allows the transformation matrix to be
   manipulated directly.
 * minisphere now looks for CommonJS modules in `~sgm/lib` instead of
   `~sgm/commonjs`.  `lib/` seems to be the de facto standard location to put
   libraries on CommonJS platforms.
-* `Async()` is now called `DispatchScript()` for consistency.
+* `Async()` has been renamed to `DispatchScript()` for consistency.
 * `ListeningSocket` is now called `Server`.
-* Adds the ability to set uniforms in GLSL shaders using `shader.setInt()`,
-  `shader.setFloat()`, and `shader.setMatrix()`.
+* Adds the ability to set shader uniforms for individual Groups using
+  `group.setInt()`, `group.setFloat()`, and `group.setMatrix()`.  These values
+  are cached and reuploaded automatically when the group is drawn.
 
 
 v3.0.8 - April 17, 2016
