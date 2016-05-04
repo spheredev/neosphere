@@ -22,7 +22,8 @@
 
 #include "api.h"
 
-static double const SPHERE_API_VERSION = 2.0;
+#define SPHERE_API_VERSION 2.0
+#define SPHERE_API_LEVEL   1
 
 static const char* const SPHERE_EXTENSIONS[] =
 {
@@ -216,10 +217,10 @@ have_api_extension(const char* name)
 	return false;
 }
 
-double
-get_api_version(void)
+int
+get_api_level(void)
 {
-	return SPHERE_API_VERSION;
+	return SPHERE_API_LEVEL;
 }
 
 void

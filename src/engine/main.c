@@ -470,7 +470,7 @@ initialize_engine(void)
 	return true;
 
 on_error:
-	al_show_native_message_box(screen_display(g_screen), "Unable to Start", "Engine initialized failed.",
+	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
 		"One or more components failed to initialize properly. minisphere cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
@@ -740,7 +740,7 @@ report_error(const char* fmt, ...)
 #if defined(MINISPHERE_SPHERUN)
 	fprintf(stderr, "spherun: ERROR: %s", lstr_cstr(error_text));
 #else
-	al_show_native_message_box(screen_display(g_screen),
+	al_show_native_message_box(NULL,
 		"minisphere", "An error occurred starting the engine.", lstr_cstr(error_text),
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
@@ -770,9 +770,9 @@ verify_requirements(sandbox_t* fs)
 		duk_pop(g_duk);
 
 		// check for minimum API version
-		if (duk_get_prop_string(g_duk, -1, "apiVersion")) {
+		if (duk_get_prop_string(g_duk, -1, "apiLevel")) {
 			if (duk_is_number(g_duk, -1)) {
-				if (duk_get_number(g_duk, -1) > get_api_version())
+				if (duk_get_int(g_duk, -1) > get_api_level())
 					goto is_unsupported;
 			}
 		}
@@ -807,6 +807,6 @@ is_unsupported:
 			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
 			"\n\nNo specific recommendation was provided by the game developer.", PRODUCT_NAME);
 	}
-	al_show_native_message_box(screen_display(g_screen), "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	al_show_native_message_box(NULL, "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
 }
