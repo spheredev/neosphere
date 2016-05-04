@@ -343,7 +343,7 @@ load_key_map(void)
 
 	int i, j;
 
-	filename = g_fs != NULL ? "keymap.kev" : "~sys/minisphere.conf";
+	filename = g_fs != NULL ? "keymap.kev" : "#/minisphere.conf";
 	if (!(file = kev_open(g_fs, filename))) return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"

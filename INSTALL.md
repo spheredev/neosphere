@@ -1,4 +1,4 @@
-minisphere 3.0 Install Instructions
+minisphere 3.1 Install Instructions
 ===================================
 
 minisphere compiles on all three major platforms (Windows, Linux, and OS X).

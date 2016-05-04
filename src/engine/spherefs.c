@@ -245,13 +245,11 @@ make_sfs_path(const char* filename, const char* base_dir_name)
 	path = path_new(filename);
 	if (path_is_rooted(path))  // absolute path?
 		return path;
-	
+
 	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
 	if (path_num_hops(path) == 0)
 		path_rebase(path, base_path);
-	else if (path_hop_cmp(path, 0, "~") || path_hop_cmp(path, 0, "~sgm"))
-		path_remove_hop(path, 0);
-	else if (path_hop_cmp(path, 0, "~sys") || path_hop_cmp(path, 0, "~usr")) {
+	else if (path_hop_cmp(path, 0, "#") || path_hop_cmp(path, 0, "~")) {
 		prefix = strdup(path_hop_cstr(path, 0));
 		path_remove_hop(path, 0);
 		path_collapse(path, true);
@@ -610,7 +608,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
 	// Sphere SPK package, etc.
-	
+
 	path_t* origin;
 
 	*out_path = path_new(filename);
@@ -619,12 +617,12 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 		return true;
 	}
 	path_free(*out_path);
-	
+	*out_path = NULL;
+
 	// process SphereFS path
-	if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {  // ~/ prefix
-		// the ~/ prefix is maintained for backwards compatibility.
-		// counterintuitively, it references the directory containing the game manifest,
-		// and NOT the user's home directory.
+	if (strlen(filename) >= 2 && memcmp(filename, "@/", 2) == 0) {
+		// the @/ prefix is an alias for the game directory.  it is used in contexts
+		// where a bare SphereFS filename may be ambiguous, e.g. in a require() call.
 		if (fs == NULL)
 			goto on_error;
 		*out_path = path_new(filename + 2);
@@ -632,32 +630,25 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;
 	}
-	else if (strlen(filename) >= 5 && filename[0] == '~' && filename[4] == '/') {  // SphereFS ~xxx/ prefix
-		*out_path = path_new(filename + 5);
-		if (memcmp(filename, "~sgm/", 5) == 0) {  // game root
-			if (fs == NULL) goto on_error;
-			if (fs->type == SPHEREFS_LOCAL)
-				path_rebase(*out_path, fs->root_path);
-			*out_fs_type = fs->type;
-		}
-		else if (memcmp(filename, "~sys/", 5) == 0) {  // engine's "system" directory
-			origin = path_rebase(path_new("system/"), enginepath());
-			if (!path_resolve(origin, NULL)) {
-				path_free(origin);
-				origin = path_rebase(path_new("../share/minisphere/system/"), enginepath());
-			}
-			path_rebase(*out_path, origin);
+	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {
+		// the ~/ prefix refers to the user's home directory, specificially a Sphere Data subfolder
+		// of it.  this is where saved game data should be placed.
+		origin = path_rebase(path_new("Sphere 2.0/saveData/"), homepath());
+		path_rebase(*out_path, origin);
+		path_free(origin);
+		*out_fs_type = SPHEREFS_LOCAL;
+	}
+	else if (strlen(filename) >= 2 && memcmp(filename, "#/", 2) == 0) {
+		// the #/ prefix refers to the engine's "system" directory.
+		*out_path = path_new(filename + 2);
+		origin = path_rebase(path_new("system/"), enginepath());
+		if (!path_resolve(origin, NULL)) {
 			path_free(origin);
-			*out_fs_type = SPHEREFS_LOCAL;
+			origin = path_rebase(path_new("../share/minisphere/system/"), enginepath());
 		}
-		else if (memcmp(filename, "~usr/", 5) == 0) {  // user profile
-			origin = path_rebase(path_new("Sphere 2.0/saveData/"), homepath());
-			path_rebase(*out_path, origin);
-			path_free(origin);
-			*out_fs_type = SPHEREFS_LOCAL;
-		}
-		else  // unrecognized prefix
-			goto on_error;
+		path_rebase(*out_path, origin);
+		path_free(origin);
+		*out_fs_type = SPHEREFS_LOCAL;
 	}
 	else {  // default case: assume relative path
 		if (fs == NULL)
@@ -667,7 +658,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;
 	}
-	
+
 	return true;
 
 on_error:

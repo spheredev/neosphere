@@ -184,7 +184,7 @@ main(int argc, char* argv[])
 	// disabled.
 	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
 	if (!(icon = load_image("~sgm/icon.png")))
-		icon = load_image("~sys/icon.png");
+		icon = load_image("#/icon.png");
 	g_screen = screen_new(get_sgm_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a render context.",
@@ -414,7 +414,7 @@ on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
 
 show_error_box:
 	// use a native message box only as a last resort
-	al_show_native_message_box(screen_display(g_screen), "Script Error",
+	al_show_native_message_box(NULL, "Script Error",
 		"minisphere encountered an error during game execution.",
 		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
@@ -452,7 +452,7 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "loading system configuration");
-	g_sys_conf = kev_open(NULL, "~sys/system.ini");
+	g_sys_conf = kev_open(NULL, "#/system.ini");
 
 	// initialize engine components
 	initialize_async();
@@ -685,7 +685,7 @@ print_banner(bool want_copyright, bool want_deps)
 	
 	printf("%s JS Game Engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
-		printf("a lightweight JavaScript-based 2D game engine\n");
+		printf("a lightweight JavaScript-based game engine\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");
 	}
 	if (want_deps) {
@@ -766,8 +766,8 @@ verify_requirements(sandbox_t* fs)
 		if (duk_get_prop_string(g_duk, -1, "recommend")) {
 			if (duk_is_string(g_duk, -1))
 				recommendation = duk_get_string(g_duk, -1);
-			duk_pop(g_duk);
 		}
+		duk_pop(g_duk);
 
 		// check for minimum API version
 		if (duk_get_prop_string(g_duk, -1, "apiVersion")) {
@@ -775,12 +775,12 @@ verify_requirements(sandbox_t* fs)
 				if (duk_get_number(g_duk, -1) > get_api_version())
 					goto is_unsupported;
 			}
-			duk_pop(g_duk);
 		}
+		duk_pop(g_duk);
 
 		// check API extensions
 		if (duk_get_prop_string(g_duk, -1, "extensions")) {
-			if (duk_is_array(g_duk, -1))
+			if (duk_is_array(g_duk, -1)) {
 				for (i = 0; i < duk_get_length(g_duk, -1); ++i) {
 					duk_get_prop_index(g_duk, -1, (duk_uarridx_t)i);
 					extension_name = duk_get_string(g_duk, -1);
@@ -788,6 +788,7 @@ verify_requirements(sandbox_t* fs)
 					if (extension_name != NULL && !have_api_extension(extension_name))
 						goto is_unsupported;
 				}
+			}
 			duk_pop(g_duk);
 		}
 		duk_pop(g_duk);

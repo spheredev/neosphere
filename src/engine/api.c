@@ -481,9 +481,9 @@ duk_mod_search(duk_context* ctx)
 	filename = lstr_newf("lib/%s.js", name); vector_push(filenames, &filename);
 	filename = lstr_newf("lib/%s.ts", name); vector_push(filenames, &filename);
 	filename = lstr_newf("lib/%s.coffee", name); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.js", name); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.ts", name); vector_push(filenames, &filename);
-	filename = lstr_newf("~sys/modules/%s.coffee", name); vector_push(filenames, &filename);
+	filename = lstr_newf("#/modules/%s.js", name); vector_push(filenames, &filename);
+	filename = lstr_newf("#/modules/%s.ts", name); vector_push(filenames, &filename);
+	filename = lstr_newf("#/modules/%s.coffee", name); vector_push(filenames, &filename);
 	filename = NULL;
 	iter = vector_enum(filenames);
 	while (p = vector_next(&iter)) {
@@ -494,7 +494,7 @@ duk_mod_search(duk_context* ctx)
 	vector_free(filenames);
 	if (filename == NULL)
 		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "CommonJS module `%s` not found", name);
-	console_log(2, "loading JS module `%s` as `%s`", name, lstr_cstr(filename));
+	console_log(2, "initializing JS module `%s` as `%s`", name, lstr_cstr(filename));
 	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), NULL, &len)))
 		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "unable to read script `%s`", lstr_cstr(filename));
 	source_text = lstr_from_buf(slurp, len);
@@ -564,7 +564,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 
 	sprintf(path, "scripts/lib/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
-		sprintf(path, "~sys/scripts/%s", filename);
+		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): system script `%s` not found", filename);
 	if (!evaluate_script(path))
@@ -606,7 +606,7 @@ js_RequireSystemScript(duk_context* ctx)
 
 	sprintf(path, "scripts/lib/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
-		sprintf(path, "~sys/scripts/%s", filename);
+		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): system script `%s` not found", filename);
 

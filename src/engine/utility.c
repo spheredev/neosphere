@@ -40,7 +40,7 @@ systempath(const char* filename)
 	static char retval[SPHERE_PATH_MAX];
 
 	retval[SPHERE_PATH_MAX - 1] = '\0';
-	snprintf(retval, SPHERE_PATH_MAX - 1, "~sys/%s", filename);
+	snprintf(retval, SPHERE_PATH_MAX - 1, "#/%s", filename);
 	return retval;
 }
 

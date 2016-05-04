@@ -86,8 +86,8 @@ on_error:
 static bool
 load_coffeescript(void)
 {
-	if (sfs_fexist(g_fs, "~sys/coffee-script.js", NULL)) {
-		if (evaluate_script("~sys/coffee-script.js")) {
+	if (sfs_fexist(g_fs, "#/coffee-script.js", NULL)) {
+		if (evaluate_script("#/coffee-script.js")) {
 			if (!duk_get_global_string(g_duk, "CoffeeScript")) {
 				duk_pop_2(g_duk);
 				console_log(1, "    'CoffeeScript' not defined");
@@ -118,8 +118,8 @@ on_error:
 static bool
 load_typescript(void)
 {
-	if (sfs_fexist(g_fs, "~sys/typescriptServices.js", NULL)) {
-		if (evaluate_script("~sys/typescriptServices.js")) {
+	if (sfs_fexist(g_fs, "#/typescriptServices.js", NULL)) {
+		if (evaluate_script("#/typescriptServices.js")) {
 			if (!duk_get_global_string(g_duk, "ts")) {
 				duk_pop_2(g_duk);
 				console_log(1, "    'ts' not defined");
