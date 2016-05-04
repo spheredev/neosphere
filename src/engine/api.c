@@ -547,7 +547,7 @@ js_EvaluateScript(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "scripts", false);
+	filename = duk_require_path(ctx, 0, "scripts", true);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): file `%s` not found", filename);
 	if (!evaluate_script(filename))
@@ -578,7 +578,7 @@ js_RequireScript(duk_context* ctx)
 	const char* filename;
 	bool        is_required;
 
-	filename = duk_require_path(ctx, 0, "scripts", false);
+	filename = duk_require_path(ctx, 0, "scripts", true);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): file `%s` not found", filename);
 	duk_push_global_stash(ctx);

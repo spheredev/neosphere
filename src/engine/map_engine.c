@@ -1066,7 +1066,7 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		path = make_sfs_path(lstr_cstr(person_info->spriteset), "spritesets");
+		path = make_sfs_path(lstr_cstr(person_info->spriteset), "spritesets", true);
 		spriteset = load_spriteset(path_cstr(path));
 		path_free(path);
 		if (spriteset == NULL)
@@ -1104,7 +1104,7 @@ change_map(const char* filename, bool preserve_persons)
 		sound_free(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
-		path = make_sfs_path(lstr_cstr(s_map->bgm_file), "sounds");
+		path = make_sfs_path(lstr_cstr(s_map->bgm_file), "sounds", true);
 		if (s_map_bgm_stream = sound_load(path_cstr(path), get_default_mixer())) {
 			sound_set_looping(s_map_bgm_stream, true);
 			sound_play(s_map_bgm_stream);
@@ -1632,7 +1632,7 @@ js_MapEngine(duk_context* ctx)
 	int         num_args;
 	
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "maps", false);
+	filename = duk_require_path(ctx, 0, "maps", true);
 	framerate = num_args >= 2 ? duk_require_int(ctx, 1)
 		: g_framerate;
 
@@ -2819,7 +2819,7 @@ js_ChangeMap(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "maps", false);
+	filename = duk_require_path(ctx, 0, "maps", true);
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ChangeMap(): map engine not running");
 	if (!change_map(filename, false))

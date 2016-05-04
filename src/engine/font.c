@@ -628,7 +628,7 @@ js_LoadFont(duk_context* ctx)
 	const char* filename;
 	font_t*     font;
 
-	filename = duk_require_path(ctx, 0, "fonts", false);
+	filename = duk_require_path(ctx, 0, "fonts", true);
 	font = load_font(filename);
 	if (font == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): unable to load font file `%s`", filename);

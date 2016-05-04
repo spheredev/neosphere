@@ -218,7 +218,7 @@ js_LoadAnimation(duk_context* ctx)
 	animation_t* anim;
 	const char*  filename;
 
-	filename = duk_require_path(ctx, 0, "animations", false);
+	filename = duk_require_path(ctx, 0, "animations", true);
 	if (!(anim = load_animation(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);

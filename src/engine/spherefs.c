@@ -43,15 +43,16 @@ static unsigned int s_next_sandbox_id = 0;
 sandbox_t*
 new_sandbox(const char* game_path)
 {
-	sandbox_t*  fs;
-	path_t*     path;
-	int         res_x, res_y;
-	size_t      sgm_size;
+	sandbox_t* fs;
+	path_t*    path;
+	int        res_x;
+	int        res_y;
+	size_t     sgm_size;
 	kevfile_t* sgm_file;
-	char*       sgm_text = NULL;
-	spk_t*      spk;
-	void*       sourcemap_data;
-	size_t      sourcemap_size;
+	char*      sgm_text = NULL;
+	spk_t*     spk;
+	void*      sourcemap_data;
+	size_t     sourcemap_size;
 
 	console_log(1, "opening `%s` in sandbox #%u", game_path, s_next_sandbox_id);
 	
@@ -121,7 +122,7 @@ new_sandbox(const char* game_path)
 			fs->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
 			fs->res_x = kev_read_float(sgm_file, "screen_width", 320);
 			fs->res_y = kev_read_float(sgm_file, "screen_height", 240);
-			fs->script_path = make_sfs_path(kev_read_string(sgm_file, "script", "main.js"), "scripts");
+			fs->script_path = make_sfs_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
 			kev_close(sgm_file);
 
 			// generate a JSON manifest (used by, e.g. GetGameManifest())
@@ -232,7 +233,7 @@ get_sgm_script_path(sandbox_t* fs)
 }
 
 path_t*
-make_sfs_path(const char* filename, const char* base_dir_name)
+make_sfs_path(const char* filename, const char* base_dir_name, bool legacy)
 {
 	// note: make_sfs_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
@@ -246,9 +247,18 @@ make_sfs_path(const char* filename, const char* base_dir_name)
 	if (path_is_rooted(path))  // absolute path?
 		return path;
 
+	if (legacy && path_num_hops(path) >= 1 && path_hop_cmp(path, 0, "~")) {
+		path_remove_hop(path, 0);
+		path_insert_hop(path, 0, "@");
+	}
+	
 	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
 	if (path_num_hops(path) == 0)
 		path_rebase(path, base_path);
+	else if (path_hop_cmp(path, 0, "@")) {
+		path_remove_hop(path, 0);
+		path_collapse(path, true);
+	}
 	else if (path_hop_cmp(path, 0, "#") || path_hop_cmp(path, 0, "~")) {
 		prefix = strdup(path_hop_cstr(path, 0));
 		path_remove_hop(path, 0);
@@ -616,8 +626,6 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 		*out_fs_type = SPHEREFS_LOCAL;
 		return true;
 	}
-	path_free(*out_path);
-	*out_path = NULL;
 
 	// process SphereFS path
 	if (strlen(filename) >= 2 && memcmp(filename, "@/", 2) == 0) {
@@ -653,7 +661,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 	else {  // default case: assume relative path
 		if (fs == NULL)
 			goto on_error;
-		*out_path = make_sfs_path(filename, base_dir);
+		*out_path = make_sfs_path(filename, base_dir, false);
 		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
 			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;

@@ -179,7 +179,7 @@ module.exports = (function()
 	// push the current BGM onto the stack and begin playing another track.  the
 	// previous BGM can be resumed by calling music.pop().
 	// arguments:
-	//     path:     the path to the sound file to play, relative to ~sgm/sounds.
+	//     path:     the SphereFS path of the sound file to play
 	//     fadeTime: optional.  the amount of crossfade to apply, in seconds. (default: 0.0)
 	function push(path, fadeTime)
 	{

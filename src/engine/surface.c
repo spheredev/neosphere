@@ -184,12 +184,12 @@ js_LoadSurface(duk_context* ctx)
 	// LoadSurface(filename); (legacy)
 	// Constructs a new Surface object from an image file.
 	// Arguments:
-	//     filename: The name of the image file, relative to ~sgm/images.
+	//     filename: The name of the image file, relative to @/images.
 
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images", false);
+	filename = duk_require_path(ctx, 0, "images", true);
 	if (!(image = load_image(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Surface", image);
@@ -883,7 +883,7 @@ js_Surface_save(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	filename = duk_require_path(ctx, 0, "images", false);
+	filename = duk_require_path(ctx, 0, "images", true);
 	save_image(image, filename);
 	return 1;
 }

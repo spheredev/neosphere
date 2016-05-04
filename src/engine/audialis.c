@@ -726,7 +726,7 @@ js_LoadSound(duk_context* ctx)
 	const char* filename;
 	sound_t*    sound;
 
-	filename = duk_require_path(ctx, 0, "sounds", false);
+	filename = duk_require_path(ctx, 0, "sounds", true);
 	if (!(sound = sound_load(filename, get_default_mixer())))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSound(): unable to load sound file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);

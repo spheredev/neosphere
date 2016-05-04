@@ -28,7 +28,7 @@ const char*      get_sgm_author      (sandbox_t* fs);
 const char*      get_sgm_summary     (sandbox_t* fs);
 const path_t*    get_sgm_script_path (sandbox_t* fs);
 vector_t*        list_filenames      (sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
-path_t*          make_sfs_path       (const char* filename, const char* base_dir_name);
+path_t*          make_sfs_path       (const char* filename, const char* base_dir_name, bool legacy);
 
 sfs_file_t* sfs_fopen  (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
 void        sfs_fclose (sfs_file_t* file);

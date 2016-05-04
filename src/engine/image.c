@@ -734,7 +734,7 @@ js_LoadImage(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images", false);
+	filename = duk_require_path(ctx, 0, "images", true);
 	if (!(image = load_image(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
 	duk_push_sphere_image(ctx, image);
