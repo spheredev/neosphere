@@ -104,10 +104,10 @@ shader_free(shader_t* shader)
 }
 
 bool
-apply_shader(shader_t* shader)
+shader_use(shader_t* shader)
 {
 #ifdef MINISPHERE_USE_SHADERS
-	if (are_shaders_active()) {
+	if (s_have_shaders) {
 		if (!al_use_shader(shader != NULL ? shader->program : NULL))
 			return false;
 		return true;

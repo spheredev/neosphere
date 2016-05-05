@@ -4,18 +4,19 @@ minisphere Changelog
 v3.1.0 - TBD
 ------------
 
+* SphereFS now uses single-character aliases: `#/` for built-in engine assets,
+  `@/` for the root of the sandbox, and `~/` for the user data directory (for
+  save data)
 * Adds some new components to miniRT: miniRT/binary allows easy loading of
   structured binary data, miniRT/xml is a simple XML parser and DOM generator,
   and miniRT/render allows pre-rendering of expensive-to-draw components such
   as text.
 * Adds a new Transform object which allows working with transformation matrices.
 * Improves the Galileo API: Shapes can now be drawn directly, and Groups have
-  a `transform` property which allows the transformation matrix to be
-  manipulated directly.
-* minisphere now looks for CommonJS modules in `~sgm/lib` instead of
-  `~sgm/commonjs`.  `lib/` seems to be the de facto standard location to put
-  libraries on CommonJS platforms.
-* `Async()` has been renamed to `DispatchScript()` for consistency.
+  a `transform` property which allows their transformation matrices to be
+  manipulated.
+* minisphere now looks for CommonJS modules in `lib/` instead of `commonjs/`.
+* `Async()` is now called `DispatchScript()` for API consistency.
 * `ListeningSocket` is now called `Server`.
 * Adds the ability to set shader uniforms for individual Groups using
   `group.setInt()`, `group.setFloat()`, and `group.setMatrix()`.  These values

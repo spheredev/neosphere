@@ -1,6 +1,20 @@
 Release Notes
 =============
 
+minisphere 3.1
+--------------
+
+* SphereFS prefixes have changed.  Single-character prefixes are now used for
+  SphereFS paths instead of the `~usr`, `~sgm`, and `~sys` aliases used in
+  previous versions.  Any code depending on the old prefixes will need to be
+  updated.
+* The Galileo API has been updated with new features.  There may be some minor
+  breaking changes, refer to the API reference for details.
+* The search path for CommonJS modules has changed since 3.0.  Modules are now
+  searched for in `@/lib/` instead of `@/commonjs/`.
+* `ListeningSocket` has been renamed to `Server`.  Networking code will need to
+  be updated.
+
 minisphere 3.0
 --------------
 

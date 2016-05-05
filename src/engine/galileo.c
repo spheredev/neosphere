@@ -209,7 +209,7 @@ group_draw(const group_t* group, image_t* surface)
 	if (surface != NULL)
 		al_set_target_bitmap(get_image_bitmap(surface));
 	
-	apply_shader(group->shader != NULL ? group->shader : get_default_shader());
+	shader_use(group->shader != NULL ? group->shader : get_default_shader());
 	if (are_shaders_active()) {
 		iter = vector_enum(group->uniforms);
 		while (p = vector_next(&iter)) {

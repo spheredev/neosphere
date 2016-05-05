@@ -17,7 +17,7 @@ bool      are_shaders_active (void);
 shader_t* shader_new         (const char* vs_path, const char* fs_path);
 shader_t* shader_ref         (shader_t* shader);
 void      shader_free        (shader_t* shader);
-bool      apply_shader       (shader_t* shader);
+bool      shader_use       (shader_t* shader);
 void      reset_shader       (void);
 
 void init_shader_api (void);
