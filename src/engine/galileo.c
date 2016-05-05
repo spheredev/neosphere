@@ -232,7 +232,7 @@ group_draw(const group_t* group, image_t* surface)
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
 	screen_transform(g_screen, NULL);
-	reset_shader();
+	shader_use(NULL);
 
 	if (surface != NULL)
 		al_set_target_backbuffer(screen_display(g_screen));

@@ -3,10 +3,10 @@
 
 typedef struct animation animation_t;
 
-animation_t* load_animation   (const char* path);
-animation_t* ref_animation    (animation_t* anim);
-void         free_animation   (animation_t* anim);
-bool         update_animation (animation_t* anim);
+animation_t* animation_new    (const char* path);
+animation_t* animation_ref    (animation_t* anim);
+void         animation_free   (animation_t* anim);
+bool         animation_update (animation_t* anim);
 
 void init_animation_api (void);
 

@@ -24,7 +24,7 @@ initialize_shaders(bool enable_shading)
 #ifdef MINISPHERE_USE_SHADERS
 	s_have_shaders = enable_shading;
 #endif
-	reset_shader();
+	shader_use(NULL);
 }
 
 void
@@ -107,8 +107,11 @@ bool
 shader_use(shader_t* shader)
 {
 #ifdef MINISPHERE_USE_SHADERS
+	ALLEGRO_SHADER* al_shader;
+
 	if (s_have_shaders) {
-		if (!al_use_shader(shader != NULL ? shader->program : NULL))
+		al_shader = shader != NULL ? shader->program : NULL;
+		if (!al_use_shader(al_shader))
 			return false;
 		return true;
 	}
@@ -119,14 +122,6 @@ shader_use(shader_t* shader)
 	}
 #else
 	return true;
-#endif
-}
-
-void
-reset_shader(void)
-{
-#ifdef MINISPHERE_USE_SHADERS
-	if (s_have_shaders) al_use_shader(NULL);
 #endif
 }
 

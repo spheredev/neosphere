@@ -44,7 +44,7 @@ struct animation
 static unsigned int s_next_animation_id = 0;
 
 animation_t*
-load_animation(const char* path)
+animation_new(const char* path)
 {
 	animation_t* anim;
 
@@ -67,10 +67,10 @@ load_animation(const char* path)
 	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
 	anim->id = s_next_animation_id++;
 	
-	if (!update_animation(anim))
+	if (!animation_update(anim))
 		goto on_error;
 	
-	return ref_animation(anim);
+	return animation_ref(anim);
 
 on_error:
 	console_log(2, "failed to load animation #%u", s_next_animation_id++);
@@ -86,14 +86,14 @@ on_error:
 }
 
 animation_t*
-ref_animation(animation_t* animation)
+animation_ref(animation_t* animation)
 {
 	++animation->refcount;
 	return animation;
 }
 
 void
-free_animation(animation_t* animation)
+animation_free(animation_t* animation)
 {
 	if (animation == NULL || --animation->refcount > 0)
 		return;
@@ -107,11 +107,12 @@ free_animation(animation_t* animation)
 }
 
 bool
-update_animation(animation_t* anim)
+animation_update(animation_t* anim)
 {
 	if (!(anim->lock = lock_image(anim->frame)))
 		return false;
-	if (!anim->is_frame_ready) mng_display(anim->stream);
+	if (!anim->is_frame_ready)
+		mng_display(anim->stream);
 	else if (mng_display_resume(anim->stream) != MNG_NEEDTIMERWAIT)
 		mng_display_reset(anim->stream);
 	unlock_image(anim->frame, anim->lock);
@@ -219,7 +220,7 @@ js_LoadAnimation(duk_context* ctx)
 	const char*  filename;
 
 	filename = duk_require_path(ctx, 0, "animations", true);
-	if (!(anim = load_animation(filename)))
+	if (!(anim = animation_new(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
@@ -232,7 +233,7 @@ js_new_Animation(duk_context* ctx)
 	const char*  filename;
 
 	filename = duk_require_path(ctx, 0, NULL, false);
-	if (!(anim = load_animation(filename)))
+	if (!(anim = animation_new(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): unable to load animation file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Animation", anim);
 	return 1;
@@ -244,7 +245,7 @@ js_Animation_finalize(duk_context* ctx)
 	animation_t* anim;
 
 	anim = duk_require_sphere_obj(ctx, 0, "Animation");
-	free_animation(anim);
+	animation_free(anim);
 	return 0;
 }
 
@@ -337,6 +338,6 @@ js_Animation_readNextFrame(duk_context* ctx)
 	duk_push_this(ctx);
 	anim = duk_require_sphere_obj(ctx, -1, "Animation");
 	duk_pop(ctx);
-	update_animation(anim);
+	animation_update(anim);
 	return 0;
 }

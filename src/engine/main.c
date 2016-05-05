@@ -680,8 +680,9 @@ missing_argument:
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	lstring_t* al_version;
-	uint32_t   al_version_id;
+	char*    al_version;
+	uint32_t al_version_id;
+	char*    duk_version;
 	
 	printf("%s JS Game Engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
@@ -690,13 +691,16 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		al_version_id = al_get_allegro_version();
-		al_version = lstr_newf("%d.%d.%d.%d", al_version_id >> 24,
+		al_version = strnewf("%d.%d.%d.%d", al_version_id >> 24,
 			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF,
 			(al_version_id & 0xFF) - 1);
+		duk_version = strnewf("%ld.%ld.%ld", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 		printf("\n");
-		printf("    Allegro: v%-8s    libmng: v%s\n", lstr_cstr(al_version), mng_version_text());
-		printf("     Dyad.c: v%-8s      zlib: v%s\n", dyad_getVersion(), zlibVersion());
-		printf("    Duktape: v%ld.%ld.%ld\n", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
+		printf("    Allegro: v%-8s   libmng: v%s\n", al_version, mng_version_text());
+		printf("    Duktape: v%-8s     zlib: v%s\n", duk_version, zlibVersion());
+		printf("     Dyad.c: v%-8s\n", dyad_getVersion());
+		free(al_version);
+		free(duk_version);
 	}
 }
 

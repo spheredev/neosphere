@@ -203,15 +203,15 @@ load_spriteset(const char* filename)
 			spriteset->poses[i].name = lstr_newf("%s", def_dir_names[i]);
 		if ((spriteset->images = calloc(spriteset->num_images, sizeof(image_t*))) == NULL)
 			goto on_error;
-		if (!(atlas = create_atlas(spriteset->num_images, rss.frame_width, rss.frame_height)))
+		if (!(atlas = atlas_new(spriteset->num_images, rss.frame_width, rss.frame_height)))
 			goto on_error;
-		lock_atlas(atlas);
+		atlas_lock(atlas);
 		for (i = 0; i < spriteset->num_images; ++i) {
-			if (!(spriteset->images[i] = read_atlas_image(atlas, file, i, rss.frame_width, rss.frame_height)))
+			if (!(spriteset->images[i] = atlas_load(atlas, file, i, rss.frame_width, rss.frame_height)))
 				goto on_error;
 		}
-		unlock_atlas(atlas);
-		free_atlas(atlas);
+		atlas_unlock(atlas);
+		atlas_free(atlas);
 		for (i = 0; i < spriteset->num_poses; ++i) {
 			if ((spriteset->poses[i].frames = calloc(8, sizeof(spriteset_frame_t))) == NULL)
 				goto on_error;
@@ -253,18 +253,18 @@ load_spriteset(const char* filename)
 			goto on_error;
 
 		// pass 2 - read images and frame data
-		if (!(atlas = create_atlas(spriteset->num_images, max_width, max_height)))
+		if (!(atlas = atlas_new(spriteset->num_images, max_width, max_height)))
 			goto on_error;
 		sfs_fseek(file, v2_data_offset, SFS_SEEK_SET);
 		image_index = 0;
-		lock_atlas(atlas);
+		atlas_lock(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			for (j = 0; j < dir_v2.num_frames; ++j) {
 				if (sfs_fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
-				spriteset->images[image_index] = read_atlas_image(atlas, file, image_index,
+				spriteset->images[image_index] = atlas_load(atlas, file, image_index,
 					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
 					rss.frame_height != 0 ? rss.frame_height : frame_v2.height);
 				spriteset->poses[i].frames[j].image_idx = image_index;
@@ -272,8 +272,8 @@ load_spriteset(const char* filename)
 				++image_index;
 			}
 		}
-		unlock_atlas(atlas);
-		free_atlas(atlas);
+		atlas_unlock(atlas);
+		atlas_free(atlas);
 		break;
 	case 3: // RSSv3, can be done in a single pass thankfully
 		spriteset->num_images = rss.num_images;
@@ -282,15 +282,15 @@ load_spriteset(const char* filename)
 			goto on_error;
 		if ((spriteset->poses = calloc(spriteset->num_poses, sizeof(spriteset_pose_t))) == NULL)
 			goto on_error;
-		if (!(atlas = create_atlas(spriteset->num_images, rss.frame_width, rss.frame_height)))
+		if (!(atlas = atlas_new(spriteset->num_images, rss.frame_width, rss.frame_height)))
 			goto on_error;
-		lock_atlas(atlas);
+		atlas_lock(atlas);
 		for (i = 0; i < rss.num_images; ++i) {
-			if (!(spriteset->images[i] = read_atlas_image(atlas, file, i, rss.frame_width, rss.frame_height)))
+			if (!(spriteset->images[i] = atlas_load(atlas, file, i, rss.frame_width, rss.frame_height)))
 				goto on_error;
 		}
-		unlock_atlas(atlas);
-		free_atlas(atlas);
+		atlas_unlock(atlas);
+		atlas_free(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (sfs_fread(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
 				goto on_error;
@@ -337,8 +337,8 @@ on_error:
 		free(spriteset);
 	}
 	if (atlas != NULL) {
-		unlock_atlas(atlas);
-		free_atlas(atlas);
+		atlas_unlock(atlas);
+		atlas_free(atlas);
 	}
 	return NULL;
 }

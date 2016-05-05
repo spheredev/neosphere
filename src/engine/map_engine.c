@@ -357,7 +357,7 @@ get_map_bounds(void)
 	rect_t bounds;
 	int    tile_w, tile_h;
 	
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	bounds.x1 = 0; bounds.y1 = 0;
 	bounds.x2 = s_map->width * tile_w;
 	bounds.y2 = s_map->height * tile_h;
@@ -571,7 +571,7 @@ normalize_map_entity_xy(double* inout_x, double* inout_y, int layer)
 		return;  // can't normalize if no map loaded
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax)
 		return;
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
 	layer_h = s_map->layers[layer].height * tile_h;
 	if (inout_x)
@@ -619,7 +619,7 @@ resize_map_layer(int layer, int x_size, int y_size)
 				tilemap[x + y * x_size] = s_map->layers[layer].tilemap[x + y * old_width];
 			else {
 				tile = &tilemap[x + y * x_size];
-				tile->frames_left = get_tile_delay(s_map->tileset, 0);
+				tile->frames_left = tileset_get_delay(s_map->tileset, 0);
 				tile->tile_index = 0;
 			}
 		}
@@ -633,7 +633,7 @@ resize_map_layer(int layer, int x_size, int y_size)
 
 	// if we resize the largest layer, the overall map size will change.
 	// recalcuate it.
-	get_tile_size(s_map->tileset, &tile_width, &tile_height);
+	tileset_get_size(s_map->tileset, &tile_width, &tile_height);
 	s_map->width = 0;
 	s_map->height = 0;
 	for (i = 0; i < s_map->num_layers; ++i) {
@@ -832,11 +832,11 @@ load_map(const char* filename)
 		if (strcmp(lstr_cstr(strings[0]), "") != 0) {
 			tileset_path = path_strip(path_new(filename));
 			path_append(tileset_path, lstr_cstr(strings[0]));
-			tileset = load_tileset(path_cstr(tileset_path));
+			tileset = tileset_new(path_cstr(tileset_path));
 			path_free(tileset_path);
 		}
 		else {
-			tileset = read_tileset(file);
+			tileset = tileset_read(file);
 		}
 		if (tileset == NULL) goto on_error;
 
@@ -846,7 +846,7 @@ load_map(const char* filename)
 			for (x = 0; x < layer->width; ++x) for (y = 0; y < layer->height; ++y) {
 				i = x + y * layer->width;
 				map->layers[z].tilemap[i].frames_left =
-					get_tile_delay(tileset, map->layers[z].tilemap[i].tile_index);
+					tileset_get_delay(tileset, map->layers[z].tilemap[i].tile_index);
 			}
 		}
 
@@ -949,7 +949,7 @@ free_map(struct map* map)
 	while (zone = vector_next(&iter))
 		free_script(zone->script);
 	lstr_free(s_map->bgm_file);
-	free_tileset(map->tileset);
+	tileset_free(map->tileset);
 	free(map->layers);
 	free(map->persons);
 	vector_free(map->triggers);
@@ -990,7 +990,7 @@ get_trigger_at(int x, int y, int layer, int* out_index)
 
 	iter_t iter;
 
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
 	while (trigger = vector_next(&iter)) {
 		if (trigger->z != layer && false)  // layer ignored for compatibility reasons
@@ -1148,7 +1148,7 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	int    x_offset, y_offset;
 	
 	// get layer and screen metrics
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
 	layer_h = s_map->layers[layer].height * tile_h;
 	center_x = g_res_x / 2;
@@ -1193,7 +1193,7 @@ map_screen_to_map(int camera_x, int camera_y, int* inout_x, int* inout_y)
 	int    x_offset, y_offset;
 
 	// get layer and screen metrics
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
 	center_x = g_res_x / 2;
@@ -1327,7 +1327,7 @@ render_map(void)
 		return;
 	
 	// render map layers from bottom to top (+Z = up)
-	get_tile_size(s_map->tileset, &tile_width, &tile_height);
+	tileset_get_size(s_map->tileset, &tile_width, &tile_height);
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
 		is_repeating = s_map->is_repeating || layer->is_parallax;
@@ -1358,7 +1358,7 @@ render_map(void)
 				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
 					continue;
 				tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
-				draw_tile(s_map->tileset, layer->color_mask, x * tile_width - off_x % tile_width, y * tile_height - off_y % tile_height, tile_index);
+				tileset_draw(s_map->tileset, layer->color_mask, x * tile_width - off_x % tile_width, y * tile_height - off_y % tile_height, tile_index);
 			}
 		}
 
@@ -1401,11 +1401,11 @@ update_map_engine(bool is_main_loop)
 	int i, j, k;
 	
 	++s_frames;
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
 	
-	animate_tileset(s_map->tileset);
+	tileset_update(s_map->tileset);
 
 	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL)
 		get_person_xy(s_players[i].person, &start_x[i], &start_y[i], false);
@@ -1887,9 +1887,9 @@ js_GetNextAnimatedTile(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetNextAnimatedTile(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetNextAnimatedTile(): invalid tile index (%d)", tile_index);
-	duk_push_int(ctx, get_next_tile(s_map->tileset, tile_index));
+	duk_push_int(ctx, tileset_get_next(s_map->tileset, tile_index));
 	return 1;
 }
 
@@ -1907,7 +1907,7 @@ js_GetNumTiles(duk_context* ctx)
 {
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetNumTiles(): map engine not running");
-	duk_push_int(ctx, get_tile_count(s_map->tileset));
+	duk_push_int(ctx, tileset_len(s_map->tileset));
 	return 1;
 }
 
@@ -1974,9 +1974,9 @@ js_GetTileDelay(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileDelay(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileDelay(): invalid tile index (%d)", tile_index);
-	duk_push_int(ctx, get_tile_delay(s_map->tileset, tile_index));
+	duk_push_int(ctx, tileset_get_delay(s_map->tileset, tile_index));
 	return 1;
 }
 
@@ -1987,7 +1987,7 @@ js_GetTileHeight(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileHeight(): map engine not running");
-	get_tile_size(s_map->tileset, &w, &h);
+	tileset_get_size(s_map->tileset, &w, &h);
 	duk_push_int(ctx, h);
 	return 1;
 }
@@ -1999,9 +1999,9 @@ js_GetTileImage(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileImage(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileImage(): invalid tile index (%d)", tile_index);
-	duk_push_sphere_image(ctx, get_tile_image(s_map->tileset, tile_index));
+	duk_push_sphere_image(ctx, tileset_get_image(s_map->tileset, tile_index));
 	return 1;
 }
 
@@ -2014,9 +2014,9 @@ js_GetTileName(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileName(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileName(): invalid tile index (%d)", tile_index);
-	tile_name = get_tile_name(s_map->tileset, tile_index);
+	tile_name = tileset_get_name(s_map->tileset, tile_index);
 	duk_push_lstring_t(ctx, tile_name);
 	return 1;
 }
@@ -2030,9 +2030,9 @@ js_GetTileSurface(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileSurface(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileSurface(): invalid tile index (%d)", tile_index);
-	if ((image = clone_image(get_tile_image(s_map->tileset, tile_index))) == NULL)
+	if ((image = clone_image(tileset_get_image(s_map->tileset, tile_index))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileSurface(): unable to create new surface image");
 	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
@@ -2045,7 +2045,7 @@ js_GetTileWidth(duk_context* ctx)
 	
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileWidth(): map engine not running");
-	get_tile_size(s_map->tileset, &w, &h);
+	tileset_get_size(s_map->tileset, &w, &h);
 	duk_push_int(ctx, w);
 	return 1;
 }
@@ -2402,11 +2402,11 @@ js_SetNextAnimatedTile(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetNextAnimatedTile(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetNextAnimatedTile(): invalid tile index (%d)", tile_index);
-	if (next_index < 0 || next_index >= get_tile_count(s_map->tileset))
+	if (next_index < 0 || next_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetNextAnimatedTile(): invalid tile index for next tile (%d)", tile_index);
-	set_next_tile(s_map->tileset, tile_index, next_index);
+	tileset_set_next(s_map->tileset, tile_index, next_index);
 	return 0;
 }
 
@@ -2459,7 +2459,7 @@ js_SetTile(duk_context* ctx)
 	layer_h = s_map->layers[layer].height;
 	tilemap = s_map->layers[layer].tilemap;
 	tilemap[x + y * layer_w].tile_index = tile_index;
-	tilemap[x + y * layer_w].frames_left = get_tile_delay(s_map->tileset, tile_index);
+	tilemap[x + y * layer_w].frames_left = tileset_get_delay(s_map->tileset, tile_index);
 	return 0;
 }
 
@@ -2471,11 +2471,11 @@ js_SetTileDelay(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileDelay(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileDelay(): invalid tile index (%d)", tile_index);
 	if (delay < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileDelay(): delay must be positive (got: %d)", delay);
-	set_tile_delay(s_map->tileset, tile_index, delay);
+	tileset_set_delay(s_map->tileset, tile_index, delay);
 	return 0;
 }
 
@@ -2491,15 +2491,15 @@ js_SetTileImage(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileImage(): map engine not running");
-	c_tiles = get_tile_count(s_map->tileset);
+	c_tiles = tileset_len(s_map->tileset);
 	if (tile_index < 0 || tile_index >= c_tiles)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileImage(): invalid tile index (%d)", tile_index);
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	image_w = get_image_width(image);
 	image_h = get_image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
-	set_tile_image(s_map->tileset, tile_index, image);
+	tileset_set_image(s_map->tileset, tile_index, image);
 	return 0;
 }
 
@@ -2511,9 +2511,9 @@ js_SetTileName(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileName(): map engine not running");
-	if (tile_index < 0 || tile_index >= get_tile_count(s_map->tileset))
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileName(): invalid tile index (%d)", tile_index);
-	if (!set_tile_name(s_map->tileset, tile_index, name))
+	if (!tileset_set_name(s_map->tileset, tile_index, name))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileName(): unable to set tile name");
 	lstr_free(name);
 	return 0;
@@ -2531,15 +2531,15 @@ js_SetTileSurface(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileSurface(): map engine not running");
-	num_tiles = get_tile_count(s_map->tileset);
+	num_tiles = tileset_len(s_map->tileset);
 	if (tile_index < 0 || tile_index >= num_tiles)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileSurface(): invalid tile index (%d)", tile_index);
-	get_tile_size(s_map->tileset, &tile_w, &tile_h);
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	image_w = get_image_width(image);
 	image_h = get_image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileSurface(): surface dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
-	set_tile_image(s_map->tileset, tile_index, image);
+	tileset_set_image(s_map->tileset, tile_index, image);
 	return 0;
 }
 
@@ -3009,9 +3009,9 @@ js_ReplaceTilesOnLayer(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ReplaceTilesOnLayer(): map engine not running");
-	if (old_index < 0 || old_index >= get_tile_count(s_map->tileset))
+	if (old_index < 0 || old_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ReplaceTilesOnLayer(): old invalid tile index (%d)", old_index);
-	if (new_index < 0 || new_index >= get_tile_count(s_map->tileset))
+	if (new_index < 0 || new_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ReplaceTilesOnLayer(): new invalid tile index (%d)", new_index);
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;

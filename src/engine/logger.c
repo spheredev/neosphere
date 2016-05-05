@@ -30,7 +30,7 @@ static duk_ret_t js_Logger_write      (duk_context* ctx);
 static unsigned int s_next_logger_id = 0;
 
 logger_t*
-open_log_file(const char* filename)
+log_open(const char* filename)
 {
 	lstring_t* log_entry;
 	logger_t*  logger = NULL;
@@ -49,7 +49,7 @@ open_log_file(const char* filename)
 	lstr_free(log_entry);
 	
 	logger->id = s_next_logger_id++;
-	return ref_logger(logger);
+	return log_ref(logger);
 
 on_error: // oh no!
 	console_log(2, "failed to open file for logger #%u", s_next_logger_id++);
@@ -58,14 +58,14 @@ on_error: // oh no!
 }
 
 logger_t*
-ref_logger(logger_t* logger)
+log_ref(logger_t* logger)
 {
 	++logger->refcount;
 	return logger;
 }
 
 void
-free_logger(logger_t* logger)
+log_close(logger_t* logger)
 {
 	lstring_t* log_entry;
 	time_t     now;
@@ -84,7 +84,7 @@ free_logger(logger_t* logger)
 }
 
 bool
-begin_log_block(logger_t* logger, const char* title)
+log_begin_block(logger_t* logger, const char* title)
 {
 	lstring_t*        block_name;
 	struct log_block* blocks;
@@ -97,25 +97,25 @@ begin_log_block(logger_t* logger, const char* title)
 		logger->max_blocks = new_count * 2;
 	}
 	if (!(block_name = lstr_newf("%s", title))) return false;
-	write_log_line(logger, "BEGIN", lstr_cstr(block_name));
+	log_write(logger, "BEGIN", lstr_cstr(block_name));
 	logger->blocks[logger->num_blocks].name = block_name;
 	++logger->num_blocks;
 	return true;
 }
 
 void
-end_log_block(logger_t* logger)
+log_end_block(logger_t* logger)
 {
 	lstring_t* block_name;
 	
 	--logger->num_blocks;
 	block_name = logger->blocks[logger->num_blocks].name;
-	write_log_line(logger, "END", lstr_cstr(block_name));
+	log_write(logger, "END", lstr_cstr(block_name));
 	lstr_free(block_name);
 }
 
 void
-write_log_line(logger_t* logger, const char* prefix, const char* text)
+log_write(logger_t* logger, const char* prefix, const char* text)
 {
 	time_t now;
 	char   timestamp[100];
@@ -154,7 +154,7 @@ js_OpenLog(duk_context* ctx)
 	logger_t*   logger;
 
 	filename = duk_require_path(ctx, 0, "logs", true);
-	if (!(logger = open_log_file(filename)))
+	if (!(logger = log_open(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenLog(): unable to open file for logging `%s`", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
@@ -167,7 +167,7 @@ js_new_Logger(duk_context* ctx)
 	logger_t*   logger;
 
 	filename = duk_require_path(ctx, 0, NULL, false);
-	if (!(logger = open_log_file(filename)))
+	if (!(logger = log_open(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Logger(): unable to open file for logging `%s`", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
 	return 1;
@@ -179,7 +179,7 @@ js_Logger_finalize(duk_context* ctx)
 	logger_t* logger;
 
 	logger = duk_require_sphere_obj(ctx, 0, "Logger");
-	free_logger(logger);
+	log_close(logger);
 	return 0;
 }
 
@@ -199,7 +199,7 @@ js_Logger_beginBlock(duk_context* ctx)
 
 	duk_push_this(ctx);
 	logger = duk_require_sphere_obj(ctx, -1, "Logger");
-	if (!begin_log_block(logger, title))
+	if (!log_begin_block(logger, title))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): unable to create new log block");
 	return 0;
 }
@@ -211,7 +211,7 @@ js_Logger_endBlock(duk_context* ctx)
 
 	duk_push_this(ctx);
 	logger = duk_require_sphere_obj(ctx, -1, "Logger");
-	end_log_block(logger);
+	log_end_block(logger);
 	return 0;
 }
 
@@ -224,6 +224,6 @@ js_Logger_write(duk_context* ctx)
 
 	duk_push_this(ctx);
 	logger = duk_require_sphere_obj(ctx, -1, "Logger");
-	write_log_line(logger, NULL, text);
+	log_write(logger, NULL, text);
 	return 0;
 }

@@ -16,7 +16,7 @@ struct atlas
 static unsigned int s_next_atlas_id = 0;
 
 atlas_t*
-create_atlas(int num_images, int max_width, int max_height)
+atlas_new(int num_images, int max_width, int max_height)
 {
 	atlas_t* atlas;
 
@@ -44,7 +44,7 @@ on_error:
 }
 
 void
-free_atlas(atlas_t* atlas)
+atlas_free(atlas_t* atlas)
 {
 	console_log(4, "disposing atlas #%u no longer in use", atlas->id);
 	
@@ -55,13 +55,13 @@ free_atlas(atlas_t* atlas)
 }
 
 image_t*
-get_atlas_image(const atlas_t* atlas)
+atlas_image(const atlas_t* atlas)
 {
 	return atlas->image;
 }
 
 float_rect_t
-get_atlas_uv(const atlas_t* atlas, int image_index)
+atlas_uv(const atlas_t* atlas, int image_index)
 {
 	float        atlas_height;
 	float        atlas_width;
@@ -77,7 +77,7 @@ get_atlas_uv(const atlas_t* atlas, int image_index)
 }
 
 rect_t
-get_atlas_xy(const atlas_t* atlas, int image_index)
+atlas_xy(const atlas_t* atlas, int image_index)
 {
 	float  atlas_height;
 	float  atlas_width;
@@ -93,14 +93,14 @@ get_atlas_xy(const atlas_t* atlas, int image_index)
 }
 
 void
-lock_atlas(atlas_t* atlas)
+atlas_lock(atlas_t* atlas)
 {
 	console_log(4, "locking atlas #%u for direct access", atlas->id);
 	atlas->lock = lock_image(atlas->image);
 }
 
 void
-unlock_atlas(atlas_t* atlas)
+atlas_unlock(atlas_t* atlas)
 {
 	console_log(4, "unlocking atlas #%u", atlas->id);
 	unlock_image(atlas->image, atlas->lock);
@@ -108,7 +108,7 @@ unlock_atlas(atlas_t* atlas)
 }
 
 image_t*
-read_atlas_image(atlas_t* atlas, sfs_file_t* file, int index, int width, int height)
+atlas_load(atlas_t* atlas, sfs_file_t* file, int index, int width, int height)
 {
 	int off_x, off_y;
 	
