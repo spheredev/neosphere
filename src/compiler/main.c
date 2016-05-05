@@ -85,19 +85,19 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--package") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (s_out_path != NULL) {
-					printf("cell: ERROR: too many outputs requested\n");
+					printf("cell: too many outputs\n");
 					return false;
 				}
 				s_out_path = path_new(argv[i]);
 				if (path_filename_cstr(s_out_path) == NULL) {
-					printf("cell: ERROR: %s argument cannot be a directory\n", argv[i - 1]);
+					printf("cell: `%s` argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
 			}
 			else if (strcmp(argv[i], "--build") == 0) {
 				if (++i >= argc) goto missing_argument;
 				if (s_out_path != NULL) {
-					printf("cell: ERROR: too many outputs requested\n");
+					printf("cell: too many outputs\n");
 					return false;
 				}
 				s_out_path = path_new_dir(argv[i]);
@@ -106,7 +106,7 @@ parse_cmdline(int argc, char* argv[])
 				s_want_source_map = true;
 			}
 			else {
-				printf("cell: ERROR: unknown option `%s`\n", argv[i]);
+				printf("cell: unknown option `%s`\n", argv[i]);
 				return false;
 			}
 		}
@@ -117,7 +117,7 @@ parse_cmdline(int argc, char* argv[])
 				case 'b':
 					if (++i >= argc) goto missing_argument;
 					if (s_out_path != NULL) {
-						printf("cell: ERROR: too many outputs requested\n");
+						printf("cell: too many outputs\n");
 						return false;
 					}
 					s_out_path = path_new_dir(argv[i]);
@@ -125,12 +125,12 @@ parse_cmdline(int argc, char* argv[])
 				case 'p':
 					if (++i >= argc) goto missing_argument;
 					if (s_out_path != NULL) {
-						printf("cell: ERROR: too many outputs requested\n");
+						printf("cell: too many outputs\n");
 						return false;
 					}
 					s_out_path = path_new(argv[i]);
 					if (path_filename_cstr(s_out_path) == NULL) {
-						printf("cell: ERROR: %s argument cannot be a directory\n", short_args);
+						printf("cell: `%s` argument cannot be a directory\n", short_args);
 						return false;
 					}
 					break;
@@ -138,7 +138,7 @@ parse_cmdline(int argc, char* argv[])
 					s_want_source_map = true;
 					break;
 				default:
-					printf("cell: ERROR: unknown option '-%c'\n", short_args[i_arg]);
+					printf("cell: unknown option `-%c`\n", short_args[i_arg]);
 					return false;
 				}
 			}
@@ -159,7 +159,7 @@ parse_cmdline(int argc, char* argv[])
 	cellscript_path = path_rebase(path_new("Cellscript.js"), s_in_path);
 	if (!path_resolve(cellscript_path, NULL)) {
 		path_free(cellscript_path);
-		printf("cell: ERROR: no Cellscript.js in current directory\n");
+		printf("no Cellscript.js found in source directory\n");
 		return false;
 	}
 	
@@ -167,7 +167,7 @@ parse_cmdline(int argc, char* argv[])
 	return true;
 
 missing_argument:
-	printf("cell: ERROR: no argument provided for `%s`\n", argv[i - 1]);
+	printf("cell: `%s` requires an argument\n", argv[i - 1]);
 	return false;
 }
 

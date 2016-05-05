@@ -60,7 +60,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	// check for Cellscript.js in input directory
 	script_path = path_rebase(path_new("Cellscript.js"), in_path);
 	if (stat(path_cstr(script_path), &stat_buf) != 0 || !(stat_buf.st_mode & S_IFREG)) {
-		fprintf(stderr, "ERROR: unable to stat Cellscript.js\n");
+		fprintf(stderr, "error: unable to stat Cellscript.js\n");
 		return NULL;
 	}
 	build->timestamp = stat_buf.st_mtime;
@@ -88,7 +88,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	if (path_filename_cstr(out_path)) {
 		build->spk = spk_create(path_cstr(out_path));
 		if (build->spk == NULL) {
-			fprintf(stderr, "ERROR: unable to create package `%s`\n", path_cstr(out_path));
+			fprintf(stderr, "error: unable to create package `%s`\n", path_cstr(out_path));
 			goto on_error;
 		}
 	}
@@ -101,7 +101,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	build->staging_path = path_rebase(path_new(".cell/"), build->in_path);
 
 	if (build->out_path == NULL) {
-		fprintf(stderr, "ERROR: unable to create `%s`\n", path_cstr(out_path));
+		fprintf(stderr, "error: unable to create `%s`\n", path_cstr(out_path));
 		goto on_error;
 	}
 	return build;
@@ -189,7 +189,7 @@ build_emit_error(build_t* build, const char* fmt, ...)
 
 	++build->num_errors;
 	va_start(ap, fmt);
-	printf("\n  ERROR: ");
+	printf("\n  error: ");
 	vprintf(fmt, ap);
 	va_end(ap);
 }
@@ -333,7 +333,7 @@ build_run(build_t* build)
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
 			path_free(path);
-			fprintf(stderr, "\nERROR: failed to write source map\n");
+			fprintf(stderr, "\nerror: failed to write source map\n");
 			return false;
 		}
 		if (build->spk != NULL)

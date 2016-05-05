@@ -430,8 +430,9 @@ initialize_engine(void)
 
 	// initialize Allegro
 	al_version = al_get_allegro_version();
-	console_log(1, "initializing Allegro (%d.%d.%d)",
-		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF);
+	console_log(1, "initializing Allegro v%u.%u.%u.%u",
+		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF,
+		(al_version & 0xFF) - 1);
 	al_set_org_name("Fat Cerberus");
 	al_set_app_name("minisphere");
 	if (!al_init())
@@ -441,12 +442,12 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
-	console_log(1, "initializing Dyad (%s)", dyad_getVersion());
+	console_log(1, "initializing Dyad v%s", dyad_getVersion());
 	dyad_init();
 	dyad_setUpdateTimeout(0.0);
 
 	// initialize JavaScript
-	console_log(1, "initializing Duktape (%s)", DUK_GIT_DESCRIBE);
+	console_log(1, "initializing Duktape v%ld.%ld.%ld", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
 		goto on_error;
 
@@ -571,7 +572,7 @@ parse_command_line(
 {
 	bool parse_options = true;
 
-	int i;
+	int i, j;
 
 	// establish default settings
 #if defined(MINISPHERE_SPHERUN)
@@ -630,29 +631,19 @@ parse_command_line(
 #endif
 		}
 		else if (argv[i][0] == '-' && parse_options) {
-			if (strcmp(argv[i], "-game") == 0 || strcmp(argv[i], "-package") == 0) {
-				// -game and -package are provided for backwards compatibility; to minisphere
-				// the two options are equivalent.
-				if (++i >= argc) goto missing_argument;
-				if (*out_game_path != NULL) {
-					report_error("more than one game specified on command line\n");
+			for (j = 1; j < (int)strlen(argv[i]); ++j) {
+				switch (argv[i][j]) {
+				case '0': case '1': case '2': case '3': case '4':
+					*out_verbosity = argv[i][j] - '0';
+					break;
+				case 'd':
+					*out_want_debug = true;
+					break;
+				default:
+					report_error("unrecognized option `-%c`\n", argv[i][j]);
 					return false;
 				}
-				*out_game_path = path_new(argv[i]);
 			}
-#if defined(MINISPHERE_SPHERUN)
-			else if (strcmp(argv[i], "-v") == 0) {
-				if (++i >= argc) goto missing_argument;
-				*out_verbosity = atoi(argv[i]);
-			}
-			else {
-				report_error("unrecognized option `%s`\n", argv[i]);
-				return false;
-			}
-#else
-			else if (strcmp(argv[i], "-v") == 0)
-				++i;
-#endif
 		}
 		else {
 			if (*out_game_path != NULL) {
@@ -710,21 +701,19 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   spherun [--fullscreen | --window] [--frameskip <n>] [--no-sleep] [--debug]\n");
-	printf("           [--verbose <n>] <game_path>                                       \n");
+	printf("   spherun [--fullscreen | --window] [--frameskip <n>] [--no-sleep] [--debug] \n");
+	printf("           [--verbose <n>] <game_path>                                        \n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --fullscreen   Start the engine in fullscreen mode.                   \n");
-	printf("       --window       Start the engine in windowed mode. This is the default.\n");
-	printf("       --frameskip    Set the maximum number of consecutive frames to skip.  \n");
-	printf("       --no-sleep     Prevent the engine from sleeping between frames.       \n");
-	printf("       --debug        Wait 30 seconds for the debugger to attach. If nothing \n");
-	printf("                      attaches, minisphere will exit.                        \n");
-	printf("   -v, --verbose      Set the engine's verbosity level. Valid levels are 0-4.\n");
-	printf("                      Higher levels are more verbose. The default is 0, which\n");
-	printf("                      only shows game output.                                \n");
-	printf("       --version      Show the version number of the installed minisphere.   \n");
-	printf("       --help         Show this help text.                                   \n");
+	printf("       --fullscreen   Start minisphere in fullscreen mode.                    \n");
+	printf("       --window       Start minisphere in windowed mode.  This is the default.\n");
+	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
+	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
+	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
+	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
+	printf("                      be abbreviated as `-n`, where n is [0-4].               \n");
+	printf("       --version      Show which version of minisphere is installed.          \n");
+	printf("       --help         Show this help text.                                    \n");
 	printf("\n");
 	printf("NOTE:\n");
 	printf("   spherun(1) is used to execute Sphere games in a development environment. If\n");

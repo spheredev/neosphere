@@ -433,19 +433,21 @@ duk_is_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 void
 duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
 {
-	duk_idx_t index;
+	duk_idx_t obj_index;
 
-	duk_push_object(ctx); index = duk_normalize_index(ctx, -1);
-	duk_push_pointer(ctx, udata); duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_push_object(ctx);
+	obj_index = duk_normalize_index(ctx, -1);
+	duk_push_pointer(ctx, udata);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "prototypes");
 	duk_get_prop_string(ctx, -1, ctor_name);
 	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor")) {
-		duk_set_finalizer(ctx, index);
+		duk_set_finalizer(ctx, obj_index);
 	}
 	else
 		duk_pop(ctx);
-	duk_set_prototype(ctx, index);
+	duk_set_prototype(ctx, obj_index);
 	duk_pop_2(ctx);
 }
 
@@ -456,8 +458,10 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 
 	index = duk_require_normalize_index(ctx, index);
 	if (!duk_is_sphere_obj(ctx, index, ctor_name))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "not a Sphere %s", ctor_name);
-	duk_get_prop_string(ctx, index, "\xFF" "udata"); udata = duk_get_pointer(ctx, -1); duk_pop(ctx);
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "expected a %s object", ctor_name);
+	duk_get_prop_string(ctx, index, "\xFF" "udata");
+	udata = duk_get_pointer(ctx, -1);
+	duk_pop(ctx);
 	return udata;
 }
 

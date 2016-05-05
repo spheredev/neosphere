@@ -12,7 +12,8 @@ v3.1.0 - TBD
 * Adds some new components to miniRT: miniRT/binary for easy loading of
   structured binary data, miniRT/xml for XML parsing and DOM generation, and
   miniRT/prim to pre-render expensive-to-draw primitives like text.
-* Adds a new Transform object which allows working with transformation matrices.
+* Adds a new Transform object which allows working with transformation
+  matrices.
 * Improves the Galileo API: Shapes can now be drawn directly, and Groups have
   a `transform` property which allows their transformation matrices to be
   manipulated.
@@ -22,6 +23,8 @@ v3.1.0 - TBD
 * Adds the ability to set shader uniforms for individual Groups using
   `group.setInt()`, `group.setFloat()`, and `group.setMatrix()`.  These values
   are cached and reuploaded automatically when the group is drawn.
+* You can now use `-0` through `-4` on the command-line to specify the
+  verbosity level.
 
 
 v3.0.8 - April 17, 2016

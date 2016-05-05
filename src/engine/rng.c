@@ -23,10 +23,10 @@ initialize_rng(void)
 {
 	unsigned long seed;
 	
-	console_log(1, "initializing MT19937");
+	console_log(1, "initializing random number generator");
 	
 	seed = (unsigned long)time(NULL);
-	console_log(2, "    seed: %lu", seed);
+	console_log(2, "    initial seed: %lu", seed);
 	init_genrand(seed);
 
 	s_corpus_size = (long)strlen(RNG_STRING_CORPUS);
@@ -35,8 +35,8 @@ initialize_rng(void)
 void
 seed_rng(unsigned long seed)
 {
-	console_log(2, "reseeding Mersenne Twister");
-	console_log(2, "    seed: %lu", seed);
+	console_log(2, "seeding random number generator");
+	console_log(2, "    seed value: %lu", seed);
 	
 	init_genrand(seed);
 }
