@@ -38,7 +38,7 @@ namespace minisphere.Gdk
 
             Panes.Initialize(this);
 
-            _sphereApiRefCommand = new ToolStripMenuItem("Sphere 2.0 API Reference", Resources.EvalIcon);
+            _sphereApiRefCommand = new ToolStripMenuItem("Spherical API Reference", Resources.EvalIcon);
             _sphereApiRefCommand.Click += sphereApiRefCommand_Click;
             _miniRTApiRefCommand = new ToolStripMenuItem("miniRT API Reference", Resources.EvalIcon);
             _miniRTApiRefCommand.Click += miniRTApiRefCommand_Click;
@@ -62,7 +62,7 @@ namespace minisphere.Gdk
 
         private void sphereApiRefCommand_Click(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Conf.GdkPath, "documentation", "sphere-api.txt");
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "spherical-api.txt");
             PluginManager.Core.OpenFile(filePath);
         }
 
@@ -74,7 +74,7 @@ namespace minisphere.Gdk
 
         private void cellApiRefCommand_Click(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Conf.GdkPath, "documentation", "cell-api.txt");
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "cellscript-api.txt");
             PluginManager.Core.OpenFile(filePath);
         }
 

@@ -1,5 +1,5 @@
-Sphere 2.0 API Reference
-========================
+Spherical API Reference
+=======================
 
 minisphere uses JavaScript for game logic.  This is the same programming
 language used by the original Sphere engine, which minisphere is the successor
@@ -7,8 +7,9 @@ to.  In fact, minisphere implements most of the Sphere 1.5 API, with several
 backwards-compatible enhancements.
 
 This file documents the functions exposed by minisphere for use in game scripts.
-The list may not be exhaustive; refer to the Sphere 1.x API reference for a full
-list of legacy functions (a few of those may not be supported, however).
+The list may not be exhaustive, particularly in regards to legacy functions;
+refer to the Sphere 1.x API reference for a full list of legacy functions (note
+that a few of these may not be supported, however):
 
     Sphere 1.x API Reference:
     https://github.com/sphere-group/sphere/blob/master/sphere/docs/development/api.txt
@@ -17,8 +18,8 @@ list of legacy functions (a few of those may not be supported, however).
 Engine Identification
 ---------------------
 
-The functions below can be used to determine, at a broad level, the
-engine's level of support for various features.
+The functions below can be used to determine, at a broad level, the engine's
+level of support for various features.
 
 GetVersion()
 
@@ -105,29 +106,37 @@ SphereFS File System
 minisphere follows the SphereFS standard for file paths. When providing a
 filename to a function or method, it will be treated as relative to a specific
 directory by default, generally a subdirectory below the current game's
-game.sgm. To get around this and load files from a different location, you can
-use one of the following SphereFS prefixes:
+game.sgm. To load files from a different location, you can use one of the
+following SphereFS prefixes:
 
-    ~usr/: The current user's save data directory.  This may be used to store
-           save files and other such data where the user can easily access it.
-           Guaranteed to be writable on all systems.  As of minisphere 3.0, this
-           maps to <documents>/Sphere 2.0/saveData.
-    ~sgm/: The directory containing game.sgm.  For backwards compatibility, this
-           may also be specified as ~/.  You should not assume this is writable.
-    ~sys/: minisphere's "system" directory.  This contains assets included with
-           the engine.  Not likely to be writable.
+    @/: The root of the game's sandboxed file system.  Usually redundant, but
+        can be useful to qualify filenames in situations where a bare SphereFS
+        filename is ambiguous, for example in a require() call.
+    ~/: The current user's save data directory, guaranteed to be writable.  This
+        is generally used to store save data and such where the user can easily
+        access it.
+    #/: The engine's system directory.  This contains assets included with the
+        engine.  In most cases this directory is read-only.  Games should NOT
+        try to write anything here as doing so can damage the host minisphere
+        installation.
 
-By way of example, the following will open the kevfile `eaty-pigs.conf` from the
-user's save data directory:
+The following will open the kevfile `eaty-pigs.conf` from the user's save data
+directory:
 
-    var file = new KevFile("~usr/eaty-pigs.conf");
+    var file = new KevFile("~/eaty-pigs.conf");
+
+Absolute paths are never allowed, and any attempt to circumvent the sandbox,
+e.g. "@/../maggie.fat", will be met with a Sandbox Violation error.
 
 Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
-For an API to be considered compliant, any method accepting a filename must
-treat an unprefixed, relative path as being relative to either ~sgm/ or ~usr/.
-Most legacy APIs are not SphereFS compliant and treat filenames as relative to a
-subdirectory of ~sgm/.  These cannot be made compliant without breaking
-compatibility with Sphere 1.x.
+For an API to be considered compliant, methods accepting a filename MUST treat
+unprefixed paths as though they were prefixed with @/.
+
+Keep in mind that legacy calls such as LoadImage() are NOT SphereFS compliant
+and cannot be made so without breaking backward compatibility.  These functions
+interpret the ~/ prefix as the root of the sandbox (instead of user data, as in
+SphereFS) and everything else as relative to a specific subdirectory of the
+sandbox.
 
 
 CommonJS
@@ -145,12 +154,12 @@ require(module_id);
     semantics as in, e.g. Node.js.  If the module cannot be found, an error will
     be thrown.  minisphere will look for modules in the following locations:
 
-        ~sgm/lib/
-        ~sys/modules/
+        lib/
+        #/modules/
 
     If require() is called inside of a module and the ID provided is prefixed
-    with either './' or '../', this specifies a path relative to the calling
-    module.
+    with either './' or '../', this indicates a path relative to the location of
+    the calling module.
 
 
 Classic Dependency Management
@@ -947,20 +956,20 @@ new ShaderProgram(options);
             The name of the file containing source code for the GLSL fragment
             shader.
 
-	Shader code is expected to be GLSL.  HLSL (DirectX) shaders are not
-	supported, even on Windows.  Geometry shaders are not yet supported.
+    Shader code is expected to be GLSL.  HLSL (DirectX) shaders are not
+    supported, even on Windows.  Geometry shaders are not yet supported.
 
 
 Color Matrices
 --------------
 
-A color matrix is used to transform indivual pixel colors similar to the way
-matrices are used in graphics to transform points. Color matrices operate on the
-individual color components (RGB) of the pixel, as follows:
+Color matrices is used to transform colors similar to the way matrices are used
+in 3D graphics to transform vertices.  Color matrices operate on the individual
+components (RGB) of a pixel, as follows:
 
-    [ rn, rr, rg, rb ]   [r]    r' = rn + (rr * r + rg * g + rb * b) / 255
-    [ gn, gr, gg, gb ] x [g]    g' = gn + (gr * r + gg * g + gb * b) / 255
-    [ bn, br, bg, bb ]   [b]    b' = bn + (br * r + bg * g + bb * b) / 255
+    [ rr, rg, rb, rn ]   [r]    r' = (rr * r + rg * g + rb * b) / 255 + rn
+    [ gr, gg, gb, gn ] x [g]    g' = (gr * r + gg * g + gb * b) / 255 + gn
+    [ br, bg, bb, bn ]   [b]    b' = (br * r + bg * g + bb * b) / 255 + bn
 
 new ColorMatrix(rn, rr, rg, rb, gn, gr, gg, gb, bn, br, bg, bb);
 
@@ -1696,7 +1705,7 @@ FileStream:writePString(string, lenSize[, little_endian]);
     to false.
 
     Note: If the string is too long for its length to be encoded in `lenSize`
-		  bytes, this method will throw a TypeError.
+          bytes, this method will throw a TypeError.
 
 FileStream:writeString(string);
 

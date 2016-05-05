@@ -90,8 +90,8 @@ install: all
 	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
 	cp -r bin/system $(installdir)/share/minisphere
-	gzip docs/sphere-api.txt -c > $(installdir)/share/doc/minisphere/sphere-api.gz
-	gzip docs/cell-api.txt -c > $(installdir)/share/doc/minisphere/cell-api.gz
+	gzip docs/spherical-api.txt -c > $(installdir)/share/doc/minisphere/spherical-api.gz
+	gzip docs/cellscript-api.txt -c > $(installdir)/share/doc/minisphere/cellscript-api.gz
 	gzip docs/miniRT-api.txt -c > $(installdir)/share/doc/minisphere/miniRT-api.gz
 	gzip manpages/minisphere.1 -c > $(installdir)/share/man/man1/minisphere.1.gz
 	gzip manpages/spherun.1 -c > $(installdir)/share/man/man1/spherun.1.gz
