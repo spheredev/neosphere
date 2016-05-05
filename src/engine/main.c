@@ -134,7 +134,7 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("Sphere 2.0/games/"), homepath());
+	games_path = path_rebase(path_new("minisphere/games/"), homepath());
 	path_mkdir(games_path);
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game

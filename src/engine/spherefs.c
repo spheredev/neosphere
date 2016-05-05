@@ -641,7 +641,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {
 		// the ~/ prefix refers to the user's home directory, specificially a Sphere Data subfolder
 		// of it.  this is where saved game data should be placed.
-		origin = path_rebase(path_new("Sphere 2.0/saveData/"), homepath());
+		origin = path_rebase(path_new("minisphere/save/"), homepath());
 		path_rebase(*out_path, origin);
 		path_free(origin);
 		*out_fs_type = SPHEREFS_LOCAL;

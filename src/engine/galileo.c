@@ -424,7 +424,7 @@ shape_upload(shape_t* shape)
 	for (i = 0; i < shape->num_vertices; ++i) {
 		vertices[i].x = shape->vertices[i].x;
 		vertices[i].y = shape->vertices[i].y;
-		vertices[i].z = 0;
+		vertices[i].z = shape->vertices[i].z;
 		vertices[i].color = nativecolor(shape->vertices[i].color);
 		vertices[i].u = shape->vertices[i].u;
 		vertices[i].v = shape->vertices[i].v;
@@ -736,19 +736,22 @@ js_GetDefaultShaderProgram(duk_context* ctx)
 static duk_ret_t
 js_new_Shape(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	duk_require_object_coercible(ctx, 0);
-	image_t* texture = duk_is_null(ctx, 1) ? NULL : duk_require_sphere_obj(ctx, 1, "Image");
-	shape_type_t type = n_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
-
-	bool      is_missing_uv = false;
-	size_t    num_vertices;
-	shape_t*  shape;
-	duk_idx_t stack_idx;
-	vertex_t  vertex;
+	bool         is_missing_uv = false;
+	int          num_args;
+	size_t       num_vertices;
+	shape_t*     shape;
+	duk_idx_t    stack_idx;
+	image_t*     texture;
+	shape_type_t type;
+	vertex_t     vertex;
 
 	duk_uarridx_t i;
 
+	num_args = duk_get_top(ctx);
+	duk_require_object_coercible(ctx, 0);
+	texture = !duk_is_null(ctx, 1) ? duk_require_sphere_obj(ctx, 1, "Image") : NULL;
+	type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
+	
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): first argument must be an array");
 	if (type < 0 || type >= SHAPE_MAX)
@@ -757,11 +760,11 @@ js_new_Shape(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): unable to create shape object");
 	num_vertices = duk_get_length(ctx, 0);
 	for (i = 0; i < num_vertices; ++i) {
-		duk_get_prop_index(ctx, 0, i); stack_idx = duk_normalize_index(ctx, -1);
-		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0f;
-		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0f;
-		if (duk_get_prop_string(ctx, stack_idx, "z"))
-			vertex.z = duk_require_number(ctx, -1);
+		duk_get_prop_index(ctx, 0, i);
+		stack_idx = duk_normalize_index(ctx, -1);
+		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0;
+		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0;
+		vertex.z = duk_get_prop_string(ctx, stack_idx, "z") ? duk_require_number(ctx, -1) : 0.0;
 		if (duk_get_prop_string(ctx, stack_idx, "u"))
 			vertex.u = duk_require_number(ctx, -1);
 		else
@@ -774,8 +777,7 @@ js_new_Shape(duk_context* ctx)
 			? duk_require_sphere_color(ctx, -1)
 			: color_new(255, 255, 255, 255);
 		duk_pop_n(ctx, 6);
-		if (!shape_add_vertex(shape, vertex))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): vertex list allocation failure");
+		shape_add_vertex(shape, vertex);
 	}
 	if (is_missing_uv)
 		assign_default_uv(shape);
@@ -801,8 +803,8 @@ js_Shape_get_texture(duk_context* ctx)
 
 	duk_push_this(ctx);
 	shape = duk_require_sphere_obj(ctx, -1, "Shape");
-	duk_pop(ctx);
-	duk_push_sphere_obj(ctx, "Shape", ref_image(shape_texture(shape)));
+
+	duk_push_sphere_obj(ctx, "Image", ref_image(shape_texture(shape)));
 	return 1;
 }
 
@@ -832,11 +834,13 @@ js_Shape_draw(duk_context* ctx)
 	num_args = duk_get_top(ctx) - 1;
 	shape = duk_require_sphere_obj(ctx, -1, "Shape");
 	if (num_args >= 1)
-		surface = duk_require_sphere_obj(ctx, 0, "Surface");
+		transform = duk_require_sphere_obj(ctx, 0, "Transform");
 	if (num_args >= 2)
-		transform = duk_require_sphere_obj(ctx, 1, "Transform");
+		surface = duk_require_sphere_obj(ctx, 1, "Surface");
 
+	shader_use(get_default_shader());
 	shape_draw(shape, transform, surface);
+	shader_use(NULL);
 	return 0;
 }
 

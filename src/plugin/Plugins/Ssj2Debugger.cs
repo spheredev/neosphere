@@ -311,14 +311,14 @@ namespace minisphere.Gdk.Plugins
         {
             if (Path.IsPathRooted(path))
                 return path.Replace('/', Path.DirectorySeparatorChar);
-            if (path.StartsWith("~/") || path.StartsWith("~sgm/"))
-                path = Path.Combine(sourcePath, path.Substring(path.IndexOf('/') + 1));
-            else if (path.StartsWith("~sys/"))
-                path = Path.Combine(engineDir, "system", path.Substring(5));
-            else if (path.StartsWith("~usr/"))
+            if (path.StartsWith("@/"))
+                path = Path.Combine(sourcePath, path.Substring(2));
+            else if (path.StartsWith("#/"))
+                path = Path.Combine(engineDir, "system", path.Substring(2));
+            else if (path.StartsWith("~/"))
                 path = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                    "minisphere", path.Substring(5));
+                    "minisphere", path.Substring(2));
             else
                 path = Path.Combine(sourcePath, path);
             return path.Replace('/', Path.DirectorySeparatorChar);
@@ -337,7 +337,7 @@ namespace minisphere.Gdk.Plugins
             string sysRoot = Path.Combine(engineDir, @"system") + pathSep;
 
             if (path.StartsWith(sysRoot))
-                path = string.Format("~sys/{0}", path.Substring(sysRoot.Length).Replace(pathSep, "/"));
+                path = string.Format("#/{0}", path.Substring(sysRoot.Length).Replace(pathSep, "/"));
             else if (path.StartsWith(sourceRoot))
                 path = path.Substring(sourceRoot.Length).Replace(pathSep, "/");
             return path;

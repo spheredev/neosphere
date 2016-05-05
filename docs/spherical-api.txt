@@ -62,7 +62,7 @@ GetExtensions()
 S2GM Manifest Format
 --------------------
 
-A game targeting Sphere 2.0 may opt to use the S2GM format for its metadata
+A game targeting a Sphere 2.0 may opt to use the S2GM format for its metadata
 instead of--or in addition to--the legacy game.sgm format.  game.s2gm file is
 simply a JSON file and looks like this:
 
@@ -893,11 +893,11 @@ Shape:texture (read/write)
     case the vertex colors alone will determine the rendered shape's
     appearance.
 
-Shape:draw([surface[, transform]]);
+Shape:draw([transform[, surface]]);
 
-    Draws the shape.  `surface` specifies the surface to drawn the shape on, or
-    null to draw to the backbuffer.  `transform` is the Matrix to use to
-    transform the shape.
+    Draws the shape.  `transform` is the Transform to use, and `surface` is the
+    Surface to draw on.  If `surface` is omitted, the shape is drawn on the
+    backbuffer.
 
 new Group(shapes[, shader]);
 
@@ -963,8 +963,8 @@ new ShaderProgram(options);
 Color Matrices
 --------------
 
-Color matrices is used to transform colors similar to the way matrices are used
-in 3D graphics to transform vertices.  Color matrices operate on the individual
+Color matrices are used to transform colors similar to the way matrices work in
+3D graphics to transform vertices.  A 3x4 matrix is applied to the individual
 components (RGB) of a pixel, as follows:
 
     [ rr, rg, rb, rn ]   [r]    r' = (rr * r + rg * g + rb * b) / 255 + rn

@@ -9,13 +9,15 @@ static duk_ret_t js_ShaderProgram_finalize  (duk_context* ctx);
 
 struct shader
 {
+	unsigned int   id;
 	unsigned int   refcount;
 #ifdef MINISPHERE_USE_SHADERS
 	ALLEGRO_SHADER* program;
 #endif
 };
 
-static bool s_have_shaders = false;
+static bool         s_have_shaders = false;
+static unsigned int s_next_id = 1;
 
 void
 initialize_shaders(bool enable_shading)
@@ -48,6 +50,8 @@ shader_new(const char* vs_filename, const char* fs_filename)
 
 	shader = calloc(1, sizeof(shader_t));
 	
+	console_log(2, "compiling new shader program #%u", s_next_id);
+	
 	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, NULL, NULL)))
 		goto on_error;
 	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, NULL, NULL)))
@@ -70,6 +74,8 @@ shader_new(const char* vs_filename, const char* fs_filename)
 #endif
 	free(vs_source);
 	free(fs_source);
+	
+	shader->id = s_next_id++;
 	return shader_ref(shader);
 
 on_error:
@@ -97,6 +103,8 @@ shader_free(shader_t* shader)
 {
 	if (shader == NULL || --shader->refcount > 0)
 		return;
+
+	console_log(3, "disposing shader program #%u no longer in use", shader->id);
 #ifdef MINISPHERE_USE_SHADERS
 	al_destroy_shader(shader->program);
 #endif
@@ -109,6 +117,10 @@ shader_use(shader_t* shader)
 #ifdef MINISPHERE_USE_SHADERS
 	ALLEGRO_SHADER* al_shader;
 
+	if (shader != NULL)
+		console_log(4, "activating shader program #%u", shader->id);
+	else
+		console_log(4, "activating null shader");
 	if (s_have_shaders) {
 		al_shader = shader != NULL ? shader->program : NULL;
 		if (!al_use_shader(al_shader))

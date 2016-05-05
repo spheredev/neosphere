@@ -7,10 +7,11 @@ v3.1.0 - TBD
 * SphereFS now uses single-character aliases: `#/` for built-in engine assets,
   `@/` for the root of the sandbox, and `~/` for the user data directory (for
   save data)
-* Adds some new components to miniRT: miniRT/binary allows easy loading of
-  structured binary data, miniRT/xml is a simple XML parser and DOM generator,
-  and miniRT/render allows pre-rendering of expensive-to-draw components such
-  as text.
+* Changes the user data directory name back to "minisphere" to be more friendly
+  to Linux users.
+* Adds some new components to miniRT: miniRT/binary for easy loading of
+  structured binary data, miniRT/xml for XML parsing and DOM generation, and
+  miniRT/prim to pre-render expensive-to-draw primitives like text.
 * Adds a new Transform object which allows working with transformation matrices.
 * Improves the Galileo API: Shapes can now be drawn directly, and Groups have
   a `transform` property which allows their transformation matrices to be

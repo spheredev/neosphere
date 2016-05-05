@@ -28,9 +28,9 @@ own section below:
       also provides the Pact object (its namesake), which simplifies code to
       fulfill and reject promises.
 	
-	* miniRT/render
-	  Allows pre-rendering of elements such as text which are expensive to draw
-	  in immediate mode.
+	* miniRT/prim
+	  Allows pre-rendering of primitives such as text which are expensive to
+	  draw in immediate mode.
 
     * miniRT/scenes:
       An extensible cutscene engine with support for multiple timelines and a
