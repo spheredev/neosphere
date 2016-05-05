@@ -450,19 +450,29 @@ Pact:welsh(reason);
     reject with, usually an Error object.
 
 
-miniRT/render
+miniRT/prim
 -------------
 
-miniRT/render allows games to pre-render common screen elements which are
-otherwise expensive to draw and cause slowdown when rendered in immediate mode
-(i.e. in realtime), such as text.
+miniRT/prim allows games to pre-render common primitives which are otherwise
+expensive to draw and may cause slowdown when rendered in realtime, such as
+circles.
 
-    var render = require('miniRT/render');
+    var prim = require('miniRT/prim');
 
-new render.TextRender(text[, options]);
+new prim.Circle(x, y, radius, color[, outer_color]);
 
-    Constructs a render of `text`.  `options` specifies rendering options and
-    may include one or more of the following properties:
+    Renders a circle with the specified radius and color(s) and constructs a
+    Galileo Shape which can be used to draw it.  If `outer_color` is provided,
+    specifies a gradient circle, otherwise it is solid.
+    
+    Note: The texture coordinates of the circle are preset such that setting a
+    texture the the shape will center the texture image in the circle.
+
+new prim.Text(text[, options]);
+
+    Renders `text` and constructs a Galileo Shape used to draw it.  `options`
+    specifies rendering options and may include one or more of the following
+    properties:
 
         options.color (Color object)
 
@@ -480,10 +490,6 @@ new render.TextRender(text[, options]);
             provided or zero, no shadow will be rendered.  This can be negative,
             in which case the light source will be on the bottom right instead
             of the top left.
-
-TextRender#draw(x, y);
-
-    Draws the pre-rendered text to the backbuffer at (x, y).
 
 
 miniRT/scenes
