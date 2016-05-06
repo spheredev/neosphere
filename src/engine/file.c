@@ -74,7 +74,7 @@ static bool write_vsize_uint (sfs_file_t* file, intmax_t value, int size, bool l
 static unsigned int s_next_file_id = 0;
 
 kevfile_t*
-kev_open(sandbox_t* fs, const char* filename)
+kev_open(sandbox_t* fs, const char* filename, bool can_create)
 {
 	kevfile_t*   file;
 	ALLEGRO_FILE* memfile = NULL;
@@ -92,7 +92,7 @@ kev_open(sandbox_t* fs, const char* filename)
 	}
 	else {
 		console_log(3, "    `%s` doesn't exist", filename);
-		if (!(file->conf = al_create_config()))
+		if (!can_create || !(file->conf = al_create_config()))
 			goto on_error;
 	}
 	file->fs = ref_sandbox(fs);
@@ -566,7 +566,7 @@ js_OpenFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save", true);
-	if (!(file = kev_open(g_fs, filename)))
+	if (!(file = kev_open(g_fs, filename, true)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenFile(): unable to create or open file `%s`", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;
@@ -579,7 +579,7 @@ js_new_KevFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, NULL, false);
-	if (!(file = kev_open(g_fs, filename)))
+	if (!(file = kev_open(g_fs, filename, true)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File(): unable to create or open file `%s`", filename);
 	duk_push_sphere_obj(ctx, "KevFile", file);
 	return 1;

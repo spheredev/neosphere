@@ -102,7 +102,7 @@ new_sandbox(const char* game_path)
 	// try to load the game manifest if one hasn't been synthesized already
 	if (fs->name == NULL) {
 		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
-			console_log(1, "parsing Sphere 2.0 manifest in sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing Spherical manifest in sandbox #%u", s_next_sandbox_id);
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
@@ -115,8 +115,8 @@ new_sandbox(const char* game_path)
 			free(sgm_text);
 			sgm_text = NULL;
 		}
-		else if (sgm_file = kev_open(fs, "game.sgm")) {
-			console_log(1, "parsing Sphere 1.x manifest in sandbox #%u", s_next_sandbox_id);
+		else if (sgm_file = kev_open(fs, "game.sgm", false)) {
+			console_log(1, "parsing legacy manifest in sandbox #%u", s_next_sandbox_id);
 			fs->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			fs->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			fs->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
@@ -153,7 +153,7 @@ new_sandbox(const char* game_path)
 	return fs;
 
 on_error:
-	console_log(1, "failed to create sandbox #%u", s_next_sandbox_id++);
+	console_log(1, "unable to create sandbox #%u ", s_next_sandbox_id++);
 	path_free(path);
 	free(sgm_text);
 	if (fs != NULL) {

@@ -344,7 +344,8 @@ load_key_map(void)
 	int i, j;
 
 	filename = g_fs != NULL ? "keymap.kev" : "#/minisphere.conf";
-	if (!(file = kev_open(g_fs, filename))) return;
+	if (!(file = kev_open(g_fs, filename, true)))
+		return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"
 			: j == PLAYER_KEY_DOWN ? "DOWN"
@@ -375,7 +376,7 @@ save_key_map(void)
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
 	console_log(1, "saving player key mappings");
-	file = kev_open(g_fs, "keymap.kev");
+	file = kev_open(g_fs, "keymap.kev", true);
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"
 			: j == PLAYER_KEY_DOWN ? "DOWN"

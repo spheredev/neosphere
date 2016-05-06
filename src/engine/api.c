@@ -94,7 +94,7 @@ initialize_api(duk_context* ctx)
 
 	console_log(1, "initializing Sphere API");
 
-	s_user_agent = lstr_newf("v%.1f (%s)", SPHERE_API_VERSION, PRODUCT_NAME);
+	s_user_agent = lstr_newf("v%.1f (%s %s)", SPHERE_API_VERSION, PRODUCT_NAME, VERSION_NAME);
 	console_log(1, "    API %s", lstr_cstr(s_user_agent));
 
 	// register API extensions

@@ -276,7 +276,7 @@ module.exports = (function() {
 		if (nextLine > 0) {
 			var lineText = buffer[(nextLine - 1) % bufferSize];
 			DebugPrint(lineText.substr(1));
-			if (log !== null)
+			if (logger !== null)
 				logger.write(lineText);
 		}
 		var lineInBuffer = nextLine % bufferSize;

@@ -173,6 +173,8 @@ main(int argc, char* argv[])
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
 			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+#else
+		fprintf(stderr, "ERROR: unable to start `%s`\n", path_cstr(g_game_path));
 #endif
 		exit_game(false);
 	}
@@ -453,7 +455,8 @@ initialize_engine(void)
 
 	// load system configuraton
 	console_log(1, "loading system configuration");
-	g_sys_conf = kev_open(NULL, "#/system.ini");
+	if (!(g_sys_conf = kev_open(NULL, "#/system.ini", false)))
+		goto on_error;
 
 	// initialize engine components
 	initialize_async();
@@ -646,11 +649,19 @@ parse_command_line(
 			}
 		}
 		else {
-			if (*out_game_path != NULL) {
+			if (*out_game_path == NULL) {
+				*out_game_path = path_new(argv[i]);
+				if (!path_resolve(*out_game_path, NULL)) {
+					report_error("pathname not found `%s`\n", path_cstr(*out_game_path));
+					path_free(*out_game_path);
+					*out_game_path = NULL;
+					return false;
+				}
+			}
+			else {
 				report_error("more than one game specified on command line\n");
 				return false;
 			}
-			*out_game_path = path_new(argv[i]);
 		}
 	}
 
@@ -675,7 +686,7 @@ print_banner(bool want_copyright, bool want_deps)
 	uint32_t al_version_id;
 	char*    duk_version;
 	
-	printf("%s JS Game Engine (%s)\n", PRODUCT_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	printf("%s %s JS Game Engine (%s)\n", PRODUCT_NAME, VERSION_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
 		printf("a lightweight JavaScript-based game engine\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");

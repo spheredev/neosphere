@@ -3,7 +3,7 @@
 
 typedef struct kevfile kevfile_t;
 
-kevfile_t*  kev_open         (sandbox_t* fs, const char* filename);
+kevfile_t*  kev_open         (sandbox_t* fs, const char* filename, bool can_create);
 void        kev_close        (kevfile_t* file);
 int         kev_num_keys     (kevfile_t* file);
 const char* kev_get_key      (kevfile_t* file, int index);
