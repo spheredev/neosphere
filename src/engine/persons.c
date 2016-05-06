@@ -313,7 +313,7 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 
 	// no obstructing person, check map-defined obstructions
 	obsmap = get_map_layer_obsmap(layer);
-	if (test_obsmap_rect(obsmap, my_base))
+	if (obsmap_test_rect(obsmap, my_base))
 		is_obstructed = true;
 	
 	// check for obstructing tiles
@@ -329,7 +329,7 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 		for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
 			base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
 			obsmap = tileset_obsmap(tileset, get_map_tile(i_x, i_y, layer));
-			if (obsmap != NULL && test_obsmap_rect(obsmap, base)) {
+			if (obsmap != NULL && obsmap_test_rect(obsmap, base)) {
 				is_obstructed = true;
 				if (out_tile_index)
 					*out_tile_index = get_map_tile(i_x, i_y, layer);

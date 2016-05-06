@@ -751,7 +751,7 @@ load_map(const char* filename)
 			if (!(layer->tilemap = malloc(layer_hdr.width * layer_hdr.height * sizeof(struct map_tile))))
 				goto on_error;
 			layer->name = read_lstring(file, true);
-			layer->obsmap = new_obsmap();
+			layer->obsmap = obsmap_new();
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL) goto on_error;
 			if (sfs_fread(tile_data, 2, num_tiles, file) != num_tiles)
@@ -760,7 +760,7 @@ load_map(const char* filename)
 				layer->tilemap[j].tile_index = tile_data[j];
 			for (j = 0; j < layer_hdr.num_segments; ++j) {
 				if (!fread_rect_32(file, &segment)) goto on_error;
-				add_obsmap_line(layer->obsmap, segment);
+				obsmap_add_line(layer->obsmap, segment);
 			}
 			free(tile_data); tile_data = NULL;
 		}
@@ -891,7 +891,7 @@ on_error:
 			for (i = 0; i < rmp.num_layers; ++i) {
 				lstr_free(map->layers[i].name);
 				free(map->layers[i].tilemap);
-				free_obsmap(map->layers[i].obsmap);
+				obsmap_free(map->layers[i].obsmap);
 			}
 			free(map->layers);
 		}
@@ -931,7 +931,7 @@ free_map(struct map* map)
 		free_script(map->layers[i].render_script);
 		lstr_free(map->layers[i].name);
 		free(map->layers[i].tilemap);
-		free_obsmap(map->layers[i].obsmap);
+		obsmap_free(map->layers[i].obsmap);
 	}
 	for (i = 0; i < map->num_persons; ++i) {
 		lstr_free(map->persons[i].name);

@@ -13,7 +13,7 @@ struct obsmap
 static unsigned int s_next_obsmap_id = 0;
 
 obsmap_t*
-new_obsmap(void)
+obsmap_new(void)
 {
 	obsmap_t* obsmap = NULL;
 
@@ -28,7 +28,7 @@ new_obsmap(void)
 }
 
 void
-free_obsmap(obsmap_t* obsmap)
+obsmap_free(obsmap_t* obsmap)
 {
 	if (obsmap == NULL)
 		return;
@@ -38,7 +38,7 @@ free_obsmap(obsmap_t* obsmap)
 }
 
 bool
-add_obsmap_line(obsmap_t* obsmap, rect_t line)
+obsmap_add_line(obsmap_t* obsmap, rect_t line)
 {
 	int    new_size;
 	rect_t *line_list;
@@ -59,7 +59,7 @@ add_obsmap_line(obsmap_t* obsmap, rect_t line)
 }
 
 bool
-test_obsmap_line(const obsmap_t* obsmap, rect_t line)
+obsmap_test_line(const obsmap_t* obsmap, rect_t line)
 {
 	int i;
 
@@ -71,10 +71,10 @@ test_obsmap_line(const obsmap_t* obsmap, rect_t line)
 }
 
 bool
-test_obsmap_rect(const obsmap_t* obsmap, rect_t rect)
+obsmap_test_rect(const obsmap_t* obsmap, rect_t rect)
 {
-	return test_obsmap_line(obsmap, new_rect(rect.x1, rect.y1, rect.x2, rect.y1))
-		|| test_obsmap_line(obsmap, new_rect(rect.x2, rect.y1, rect.x2, rect.y2))
-		|| test_obsmap_line(obsmap, new_rect(rect.x1, rect.y2, rect.x2, rect.y2))
-		|| test_obsmap_line(obsmap, new_rect(rect.x1, rect.y1, rect.x1, rect.y2));
+	return obsmap_test_line(obsmap, new_rect(rect.x1, rect.y1, rect.x2, rect.y1))
+		|| obsmap_test_line(obsmap, new_rect(rect.x2, rect.y1, rect.x2, rect.y2))
+		|| obsmap_test_line(obsmap, new_rect(rect.x1, rect.y2, rect.x2, rect.y2))
+		|| obsmap_test_line(obsmap, new_rect(rect.x1, rect.y1, rect.x1, rect.y2));
 }

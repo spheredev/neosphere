@@ -132,11 +132,11 @@ tileset_read(sfs_file_t* file)
 				break;
 			case 2:  // line segment-based obstruction
 				tiles[i].num_obs_lines = tilehdr.num_segments;
-				if ((tiles[i].obsmap = new_obsmap()) == NULL) goto on_error;
+				if ((tiles[i].obsmap = obsmap_new()) == NULL) goto on_error;
 				for (j = 0; j < tilehdr.num_segments; ++j) {
 					if (!fread_rect_16(file, &segment))
 						goto on_error;
-					add_obsmap_line(tiles[i].obsmap, segment);
+					obsmap_add_line(tiles[i].obsmap, segment);
 				}
 				break;
 			default:
@@ -160,7 +160,7 @@ on_error:  // oh no!
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
 			lstr_free(tiles[i].name);
-			free_obsmap(tiles[i].obsmap);
+			obsmap_free(tiles[i].obsmap);
 			free_image(tiles[i].image);
 		}
 		free(tileset->tiles);
@@ -180,7 +180,7 @@ tileset_free(tileset_t* tileset)
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);
 		free_image(tileset->tiles[i].image);
-		free_obsmap(tileset->tiles[i].obsmap);
+		obsmap_free(tileset->tiles[i].obsmap);
 	}
 	atlas_free(tileset->atlas);
 	free(tileset->tiles);
