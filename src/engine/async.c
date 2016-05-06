@@ -57,7 +57,7 @@ queue_async_script(script_t* script)
 void
 init_async_api(void)
 {
-	register_api_method(g_duk, NULL, "DispatchScript", js_DispatchScript);
+	api_register_method(g_duk, NULL, "DispatchScript", js_DispatchScript);
 }
 
 static duk_ret_t

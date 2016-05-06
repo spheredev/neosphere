@@ -95,20 +95,20 @@ color_transform(color_t color, colormatrix_t mat)
 void
 init_color_api(void)
 {
-	register_api_method(g_duk, NULL, "BlendColors", js_BlendColors);
-	register_api_method(g_duk, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
-	register_api_method(g_duk, NULL, "CreateColor", js_CreateColor);
-	register_api_method(g_duk, NULL, "CreateColorMatrix", js_CreateColorMatrix);
+	api_register_method(g_duk, NULL, "BlendColors", js_BlendColors);
+	api_register_method(g_duk, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
+	api_register_method(g_duk, NULL, "CreateColor", js_CreateColor);
+	api_register_method(g_duk, NULL, "CreateColorMatrix", js_CreateColorMatrix);
 
 	// register Color methods and properties
-	register_api_ctor(g_duk, "Color", js_new_Color, NULL);
-	register_api_method(g_duk, "Color", "toString", js_Color_toString);
-	register_api_method(g_duk, "Color", "clone", js_Color_clone);
+	api_register_ctor(g_duk, "Color", js_new_Color, NULL);
+	api_register_method(g_duk, "Color", "toString", js_Color_toString);
+	api_register_method(g_duk, "Color", "clone", js_Color_clone);
 	
 	// register ColorMatrix methods and properties
-	register_api_ctor(g_duk, "ColorMatrix", js_new_ColorMatrix, NULL);
-	register_api_method(g_duk, "ColorMatrix", "toString", js_ColorMatrix_toString);
-	register_api_method(g_duk, "ColorMatrix", "apply", js_ColorMatrix_apply);
+	api_register_ctor(g_duk, "ColorMatrix", js_new_ColorMatrix, NULL);
+	api_register_method(g_duk, "ColorMatrix", "toString", js_ColorMatrix_toString);
+	api_register_method(g_duk, "ColorMatrix", "apply", js_ColorMatrix_apply);
 }
 
 void

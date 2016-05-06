@@ -117,14 +117,14 @@ rng_uniform(double mean, double variance)
 void
 init_rng_api(void)
 {
-	register_api_function(g_duk, "RNG", "seed", js_RNG_seed);
-	register_api_function(g_duk, "RNG", "chance", js_RNG_chance);
-	register_api_function(g_duk, "RNG", "normal", js_RNG_normal);
-	register_api_function(g_duk, "RNG", "random", js_RNG_random);
-	register_api_function(g_duk, "RNG", "range", js_RNG_range);
-	register_api_function(g_duk, "RNG", "sample", js_RNG_sample);
-	register_api_function(g_duk, "RNG", "string", js_RNG_string);
-	register_api_function(g_duk, "RNG", "uniform", js_RNG_uniform);
+	api_register_function(g_duk, "RNG", "seed", js_RNG_seed);
+	api_register_function(g_duk, "RNG", "chance", js_RNG_chance);
+	api_register_function(g_duk, "RNG", "normal", js_RNG_normal);
+	api_register_function(g_duk, "RNG", "random", js_RNG_random);
+	api_register_function(g_duk, "RNG", "range", js_RNG_range);
+	api_register_function(g_duk, "RNG", "sample", js_RNG_sample);
+	api_register_function(g_duk, "RNG", "string", js_RNG_string);
+	api_register_function(g_duk, "RNG", "uniform", js_RNG_uniform);
 }
 
 static duk_ret_t

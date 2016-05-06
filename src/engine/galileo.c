@@ -179,15 +179,35 @@ group_free(group_t* group)
 }
 
 shader_t*
-group_shader(const group_t* group)
+group_get_shader(const group_t* group)
 {
 	return group->shader;
 }
 
 matrix_t*
-group_transform(const group_t* group)
+group_get_transform(const group_t* group)
 {
 	return group->transform;
+}
+
+void
+group_set_shader(group_t* group, shader_t* shader)
+{
+	shader_t* old_shader;
+
+	old_shader = group->shader;
+	group->shader = shader_ref(shader);
+	shader_free(old_shader);
+}
+
+void
+group_set_transform(group_t* group, matrix_t* transform)
+{
+	matrix_t* old_transform;
+
+	old_transform = group->transform;
+	group->transform = matrix_ref(transform);
+	matrix_free(old_transform);
 }
 
 bool
@@ -283,11 +303,12 @@ shape_new(shape_type_t type, image_t* texture)
 	shape_t*    shape;
 	const char* type_name;
 
-	type_name = type == SHAPE_POINT_LIST ? "point list"
-		: type == SHAPE_LINE_LIST ? "line list"
-		: type == SHAPE_TRIANGLE_LIST ? "triangle list"
-		: type == SHAPE_TRIANGLE_FAN ? "triangle fan"
-		: type == SHAPE_TRIANGLE_STRIP ? "triangle strip"
+	type_name = type == SHAPE_POINTS ? "point list"
+		: type == SHAPE_LINES ? "line list"
+		: type == SHAPE_LINE_LOOP ? "line loop"
+		: type == SHAPE_TRIANGLES ? "triangle list"
+		: type == SHAPE_TRI_FAN ? "triangle fan"
+		: type == SHAPE_TRI_STRIP ? "triangle strip"
 		: "automatic";
 	console_log(4, "creating shape #%u as %s", s_next_shape_id, type_name);
 	
@@ -504,10 +525,12 @@ render_shape(shape_t* shape)
 			: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
 			: ALLEGRO_PRIM_TRIANGLE_STRIP;
 	else
-		draw_mode = shape->type == SHAPE_LINE_LIST ? ALLEGRO_PRIM_LINE_LIST
-			: shape->type == SHAPE_TRIANGLE_LIST ? ALLEGRO_PRIM_TRIANGLE_LIST
-			: shape->type == SHAPE_TRIANGLE_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
-			: shape->type == SHAPE_TRIANGLE_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
+		draw_mode = shape->type == SHAPE_LINES ? ALLEGRO_PRIM_LINE_LIST
+			: shape->type == SHAPE_LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+			: shape->type == SHAPE_LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
+			: shape->type == SHAPE_TRIANGLES ? ALLEGRO_PRIM_TRIANGLE_LIST
+			: shape->type == SHAPE_TRI_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
+			: shape->type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
 			: ALLEGRO_PRIM_POINT_LIST;
 	
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
@@ -524,33 +547,33 @@ render_shape(shape_t* shape)
 void
 init_galileo_api(void)
 {
-	register_api_const(g_duk, "SHAPE_AUTO", SHAPE_AUTO);
-	register_api_const(g_duk, "SHAPE_POINTS", SHAPE_POINT_LIST);
-	register_api_const(g_duk, "SHAPE_LINES", SHAPE_LINE_LIST);
-	register_api_const(g_duk, "SHAPE_TRIANGLES", SHAPE_TRIANGLE_LIST);
-	register_api_const(g_duk, "SHAPE_TRI_STRIP", SHAPE_TRIANGLE_STRIP);
-	register_api_const(g_duk, "SHAPE_TRI_FAN", SHAPE_TRIANGLE_FAN);
+	api_register_function(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
 
-	register_api_method(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
+	api_register_ctor(g_duk, "Group", js_new_Group, js_Group_finalize);
+	api_register_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
+	api_register_prop(g_duk, "Group", "transform", js_Group_get_transform, js_Group_set_transform);
+	api_register_method(g_duk, "Group", "draw", js_Group_draw);
+	api_register_method(g_duk, "Group", "setFloat", js_Group_setFloat);
+	api_register_method(g_duk, "Group", "setInt", js_Group_setInt);
+	api_register_method(g_duk, "Group", "setMatrix", js_Group_setMatrix);
+	api_register_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
+	api_register_prop(g_duk, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
+	api_register_method(g_duk, "Shape", "draw", js_Shape_draw);
+	api_register_ctor(g_duk, "Transform", js_new_Transform, js_Transform_finalize);
+	api_register_method(g_duk, "Transform", "compose", js_Transform_compose);
+	api_register_method(g_duk, "Transform", "identity", js_Transform_identity);
+	api_register_method(g_duk, "Transform", "rotate", js_Transform_rotate);
+	api_register_method(g_duk, "Transform", "scale", js_Transform_scale);
+	api_register_method(g_duk, "Transform", "translate", js_Transform_translate);
 
-	register_api_ctor(g_duk, "Group", js_new_Group, js_Group_finalize);
-	register_api_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
-	register_api_prop(g_duk, "Group", "transform", js_Group_get_transform, js_Group_set_transform);
-	register_api_method(g_duk, "Group", "draw", js_Group_draw);
-	register_api_method(g_duk, "Group", "setFloat", js_Group_setFloat);
-	register_api_method(g_duk, "Group", "setInt", js_Group_setInt);
-	register_api_method(g_duk, "Group", "setMatrix", js_Group_setMatrix);
-
-	register_api_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
-	register_api_prop(g_duk, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
-	register_api_method(g_duk, "Shape", "draw", js_Shape_draw);
-
-	register_api_ctor(g_duk, "Transform", js_new_Transform, js_Transform_finalize);
-	register_api_method(g_duk, "Transform", "compose", js_Transform_compose);
-	register_api_method(g_duk, "Transform", "identity", js_Transform_identity);
-	register_api_method(g_duk, "Transform", "rotate", js_Transform_rotate);
-	register_api_method(g_duk, "Transform", "scale", js_Transform_scale);
-	register_api_method(g_duk, "Transform", "translate", js_Transform_translate);
+	api_register_const(g_duk, "SHAPE_AUTO", SHAPE_AUTO);
+	api_register_const(g_duk, "SHAPE_POINTS", SHAPE_POINTS);
+	api_register_const(g_duk, "SHAPE_LINES", SHAPE_LINES);
+	api_register_const(g_duk, "SHAPE_LINE_LOOP", SHAPE_LINE_LOOP);
+	api_register_const(g_duk, "SHAPE_LINE_STRIP", SHAPE_LINE_STRIP);
+	api_register_const(g_duk, "SHAPE_TRIANGLES", SHAPE_TRIANGLES);
+	api_register_const(g_duk, "SHAPE_TRI_STRIP", SHAPE_TRI_STRIP);
+	api_register_const(g_duk, "SHAPE_TRI_FAN", SHAPE_TRI_FAN);
 }
 
 static duk_ret_t
@@ -603,7 +626,7 @@ js_Group_get_shader(duk_context* ctx)
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 
-	shader = group_shader(group);
+	shader = group_get_shader(group);
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
 	return 1;
 }
@@ -617,7 +640,7 @@ js_Group_get_transform(duk_context* ctx)
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 
-	matrix = group_transform(group);
+	matrix = group_get_transform(group);
 	duk_push_sphere_obj(ctx, "Transform", matrix_ref(matrix));
 	return 1;
 }
@@ -626,16 +649,13 @@ static duk_ret_t
 js_Group_set_shader(duk_context* ctx)
 {
 	group_t*  group;
-	shader_t* old_shader;
 	shader_t* shader;
 
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 	shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
 
-	old_shader = group->shader;
-	group->shader = shader_ref(shader);
-	shader_free(old_shader);
+	group_set_shader(group, shader);
 	return 0;
 }
 
@@ -643,16 +663,13 @@ static duk_ret_t
 js_Group_set_transform(duk_context* ctx)
 {
 	group_t*  group;
-	matrix_t* matrix;
-	matrix_t* old_matrix;
+	matrix_t* transform;
 
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
-	matrix = duk_require_sphere_obj(ctx, 0, "Transform");
+	transform = duk_require_sphere_obj(ctx, 0, "Transform");
 
-	old_matrix = group->transform;
-	group->transform = matrix_ref(matrix);
-	matrix_free(old_matrix);
+	group_set_transform(group, transform);
 	return 0;
 }
 

@@ -765,7 +765,7 @@ verify_requirements(sandbox_t* fs)
 		// check for minimum API version
 		if (duk_get_prop_string(g_duk, -1, "apiLevel")) {
 			if (duk_is_number(g_duk, -1)) {
-				if (duk_get_int(g_duk, -1) > get_api_level())
+				if (duk_get_int(g_duk, -1) > api_level())
 					goto is_unsupported;
 			}
 		}
@@ -778,7 +778,7 @@ verify_requirements(sandbox_t* fs)
 					duk_get_prop_index(g_duk, -1, (duk_uarridx_t)i);
 					extension_name = duk_get_string(g_duk, -1);
 					duk_pop(g_duk);
-					if (extension_name != NULL && !have_api_extension(extension_name))
+					if (extension_name != NULL && !api_have_extension(extension_name))
 						goto is_unsupported;
 				}
 			}

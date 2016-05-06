@@ -495,11 +495,11 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 void
 init_spriteset_api(duk_context* ctx)
 {
-	register_api_method(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
-	register_api_ctor(ctx, "Spriteset", js_new_Spriteset, js_Spriteset_finalize);
-	register_api_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
-	register_api_method(ctx, "Spriteset", "toString", js_Spriteset_toString);
-	register_api_method(ctx, "Spriteset", "clone", js_Spriteset_clone);
+	api_register_method(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
+	api_register_ctor(ctx, "Spriteset", js_new_Spriteset, js_Spriteset_finalize);
+	api_register_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
+	api_register_method(ctx, "Spriteset", "toString", js_Spriteset_toString);
+	api_register_method(ctx, "Spriteset", "clone", js_Spriteset_clone);
 }
 
 void

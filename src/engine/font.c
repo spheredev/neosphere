@@ -585,26 +585,26 @@ void
 init_font_api(duk_context* ctx)
 {
 	// Font API functions
-	register_api_method(ctx, NULL, "GetSystemFont", js_GetSystemFont);
+	api_register_method(ctx, NULL, "GetSystemFont", js_GetSystemFont);
 	
 	// Font object
-	register_api_method(ctx, NULL, "LoadFont", js_LoadFont);
-	register_api_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
-	register_api_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
-	register_api_prop(ctx, "Font", "height", js_Font_get_height, NULL);
-	register_api_method(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
-	register_api_method(ctx, "Font", "getColorMask", js_Font_get_colorMask);
-	register_api_method(ctx, "Font", "getHeight", js_Font_get_height);
-	register_api_method(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
-	register_api_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
-	register_api_method(ctx, "Font", "setCharacterImage", js_Font_setCharacterImage);
-	register_api_method(ctx, "Font", "setColorMask", js_Font_set_colorMask);
-	register_api_method(ctx, "Font", "toString", js_Font_toString);
-	register_api_method(ctx, "Font", "clone", js_Font_clone);
-	register_api_method(ctx, "Font", "drawText", js_Font_drawText);
-	register_api_method(ctx, "Font", "drawTextBox", js_Font_drawTextBox);
-	register_api_method(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
-	register_api_method(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
+	api_register_method(ctx, NULL, "LoadFont", js_LoadFont);
+	api_register_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
+	api_register_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
+	api_register_prop(ctx, "Font", "height", js_Font_get_height, NULL);
+	api_register_method(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
+	api_register_method(ctx, "Font", "getColorMask", js_Font_get_colorMask);
+	api_register_method(ctx, "Font", "getHeight", js_Font_get_height);
+	api_register_method(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
+	api_register_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
+	api_register_method(ctx, "Font", "setCharacterImage", js_Font_setCharacterImage);
+	api_register_method(ctx, "Font", "setColorMask", js_Font_set_colorMask);
+	api_register_method(ctx, "Font", "toString", js_Font_toString);
+	api_register_method(ctx, "Font", "clone", js_Font_clone);
+	api_register_method(ctx, "Font", "drawText", js_Font_drawText);
+	api_register_method(ctx, "Font", "drawTextBox", js_Font_drawTextBox);
+	api_register_method(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
+	api_register_method(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
 }
 
 void

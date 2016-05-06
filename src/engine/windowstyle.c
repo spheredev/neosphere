@@ -202,16 +202,16 @@ init_windowstyle_api(void)
 	}
 
 	// WindowStyle API functions
-	register_api_method(g_duk, NULL, "GetSystemWindowStyle", js_GetSystemWindowStyle);
+	api_register_method(g_duk, NULL, "GetSystemWindowStyle", js_GetSystemWindowStyle);
 	
 	// WindowStyle object
-	register_api_method(g_duk, NULL, "LoadWindowStyle", js_LoadWindowStyle);
-	register_api_ctor(g_duk, "WindowStyle", js_new_WindowStyle, js_WindowStyle_finalize);
-	register_api_prop(g_duk, "WindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
-	register_api_method(g_duk, "WindowStyle", "toString", js_WindowStyle_toString);
-	register_api_method(g_duk, "WindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
-	register_api_method(g_duk, "WindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
-	register_api_method(g_duk, "WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
+	api_register_method(g_duk, NULL, "LoadWindowStyle", js_LoadWindowStyle);
+	api_register_ctor(g_duk, "WindowStyle", js_new_WindowStyle, js_WindowStyle_finalize);
+	api_register_prop(g_duk, "WindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
+	api_register_method(g_duk, "WindowStyle", "toString", js_WindowStyle_toString);
+	api_register_method(g_duk, "WindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
+	api_register_method(g_duk, "WindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
+	api_register_method(g_duk, "WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
 }
 
 void

@@ -202,15 +202,15 @@ mng_cb_settimer(mng_handle stream, mng_uint32 msecs)
 void
 init_animation_api(void)
 {
-	register_api_method(g_duk, NULL, "LoadAnimation", js_LoadAnimation);
-	register_api_ctor(g_duk, "Animation", js_new_Animation, js_Animation_finalize);
-	register_api_prop(g_duk, "Animation", "width", js_Animation_get_width, NULL);
-	register_api_prop(g_duk, "Animation", "height", js_Animation_get_height, NULL);
-	register_api_method(g_duk, "Animation", "getDelay", js_Animation_getDelay);
-	register_api_method(g_duk, "Animation", "getNumFrames", js_Animation_getNumFrames);
-	register_api_method(g_duk, "Animation", "drawFrame", js_Animation_drawFrame);
-	register_api_method(g_duk, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
-	register_api_method(g_duk, "Animation", "readNextFrame", js_Animation_readNextFrame);
+	api_register_method(g_duk, NULL, "LoadAnimation", js_LoadAnimation);
+	api_register_ctor(g_duk, "Animation", js_new_Animation, js_Animation_finalize);
+	api_register_prop(g_duk, "Animation", "width", js_Animation_get_width, NULL);
+	api_register_prop(g_duk, "Animation", "height", js_Animation_get_height, NULL);
+	api_register_method(g_duk, "Animation", "getDelay", js_Animation_getDelay);
+	api_register_method(g_duk, "Animation", "getNumFrames", js_Animation_getNumFrames);
+	api_register_method(g_duk, "Animation", "drawFrame", js_Animation_drawFrame);
+	api_register_method(g_duk, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
+	api_register_method(g_duk, "Animation", "readNextFrame", js_Animation_readNextFrame);
 }
 
 static duk_ret_t

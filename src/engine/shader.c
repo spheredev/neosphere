@@ -140,7 +140,7 @@ shader_use(shader_t* shader)
 void
 init_shader_api(void)
 {
-	register_api_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
+	api_register_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
 }
 
 static duk_ret_t

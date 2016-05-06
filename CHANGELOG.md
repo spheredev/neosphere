@@ -14,17 +14,16 @@ v3.1.0 - TBD
   miniRT/prim to pre-render expensive-to-draw primitives like text.
 * Adds a new Transform object which allows working with transformation
   matrices.
-* Improves the Galileo API: Shapes can now be drawn directly, and Groups have
-  a `transform` property which allows their transformation matrices to be
-  manipulated.
+* Improves the Galileo API: Shapes can now be drawn directly, Groups have a
+  `transform` property which allows their transformation matrices to be
+  manipulated, and shader uniforms can be set using `group.setInt()`,
+  `group.setFloat()`, and `group.setMatrix()`.
+* Adds new Galileo Shape types `SHAPE_LINE_LOOP` and `SHAPE_LINE_STRIP`.
 * minisphere now looks for CommonJS modules in `lib/` instead of `commonjs/`.
 * `Async()` is now called `DispatchScript()` for API consistency.
 * `ListeningSocket` is now called `Server`.
-* Adds the ability to set shader uniforms for individual Groups using
-  `group.setInt()`, `group.setFloat()`, and `group.setMatrix()`.  These values
-  are cached and reuploaded automatically when the group is drawn.
-* You can now use `-0` through `-4` on the command-line to specify the
-  verbosity level.
+* You can now use `-0` through `-4` command line options to specify the
+  engine log verbosity level.
 
 
 v3.0.8 - April 17, 2016

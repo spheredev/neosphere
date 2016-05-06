@@ -610,51 +610,51 @@ void
 init_audialis_api(void)
 {
 	// core Audialis API functions
-	register_api_method(g_duk, NULL, "GetDefaultMixer", js_GetDefaultMixer);
+	api_register_method(g_duk, NULL, "GetDefaultMixer", js_GetDefaultMixer);
 
 	// Mixer object
-	register_api_ctor(g_duk, "Mixer", js_new_Mixer, js_Mixer_finalize);
-	register_api_prop(g_duk, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
+	api_register_ctor(g_duk, "Mixer", js_new_Mixer, js_Mixer_finalize);
+	api_register_prop(g_duk, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
 
 	// SoundStream object
-	register_api_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
-	register_api_prop(g_duk, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
-	register_api_prop(g_duk, "SoundStream", "mixer", js_SoundStream_get_mixer, js_SoundStream_set_mixer);
-	register_api_method(g_duk, "SoundStream", "pause", js_SoundStream_pause);
-	register_api_method(g_duk, "SoundStream", "play", js_SoundStream_play);
-	register_api_method(g_duk, "SoundStream", "stop", js_SoundStream_stop);
-	register_api_method(g_duk, "SoundStream", "write", js_SoundStream_write);
+	api_register_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
+	api_register_prop(g_duk, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
+	api_register_prop(g_duk, "SoundStream", "mixer", js_SoundStream_get_mixer, js_SoundStream_set_mixer);
+	api_register_method(g_duk, "SoundStream", "pause", js_SoundStream_pause);
+	api_register_method(g_duk, "SoundStream", "play", js_SoundStream_play);
+	api_register_method(g_duk, "SoundStream", "stop", js_SoundStream_stop);
+	api_register_method(g_duk, "SoundStream", "write", js_SoundStream_write);
 
 	// Sound object
-	register_api_method(g_duk, NULL, "LoadSound", js_LoadSound);
-	register_api_ctor(g_duk, "Sound", js_new_Sound, js_Sound_finalize);
-	register_api_method(g_duk, "Sound", "toString", js_Sound_toString);
-	register_api_prop(g_duk, "Sound", "length", js_Sound_get_length, NULL);
-	register_api_prop(g_duk, "Sound", "mixer", js_Sound_get_mixer, js_Sound_set_mixer);
-	register_api_prop(g_duk, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
-	register_api_prop(g_duk, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
-	register_api_prop(g_duk, "Sound", "playing", js_Sound_get_playing, NULL);
-	register_api_prop(g_duk, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
-	register_api_prop(g_duk, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
-	register_api_prop(g_duk, "Sound", "seekable", js_Sound_get_seekable, NULL);
-	register_api_prop(g_duk, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
-	register_api_method(g_duk, "Sound", "isPlaying", js_Sound_get_playing);
-	register_api_method(g_duk, "Sound", "isSeekable", js_Sound_get_seekable);
-	register_api_method(g_duk, "Sound", "getLength", js_Sound_get_length);
-	register_api_method(g_duk, "Sound", "getPan", js_Sound_get_pan);
-	register_api_method(g_duk, "Sound", "getPitch", js_Sound_get_pitch);
-	register_api_method(g_duk, "Sound", "getPosition", js_Sound_get_position);
-	register_api_method(g_duk, "Sound", "getRepeat", js_Sound_get_repeat);
-	register_api_method(g_duk, "Sound", "getVolume", js_Sound_getVolume);
-	register_api_method(g_duk, "Sound", "setPan", js_Sound_set_pan);
-	register_api_method(g_duk, "Sound", "setPitch", js_Sound_set_pitch);
-	register_api_method(g_duk, "Sound", "setPosition", js_Sound_set_position);
-	register_api_method(g_duk, "Sound", "setRepeat", js_Sound_set_repeat);
-	register_api_method(g_duk, "Sound", "setVolume", js_Sound_setVolume);
-	register_api_method(g_duk, "Sound", "pause", js_Sound_pause);
-	register_api_method(g_duk, "Sound", "play", js_Sound_play);
-	register_api_method(g_duk, "Sound", "reset", js_Sound_reset);
-	register_api_method(g_duk, "Sound", "stop", js_Sound_stop);
+	api_register_method(g_duk, NULL, "LoadSound", js_LoadSound);
+	api_register_ctor(g_duk, "Sound", js_new_Sound, js_Sound_finalize);
+	api_register_method(g_duk, "Sound", "toString", js_Sound_toString);
+	api_register_prop(g_duk, "Sound", "length", js_Sound_get_length, NULL);
+	api_register_prop(g_duk, "Sound", "mixer", js_Sound_get_mixer, js_Sound_set_mixer);
+	api_register_prop(g_duk, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
+	api_register_prop(g_duk, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
+	api_register_prop(g_duk, "Sound", "playing", js_Sound_get_playing, NULL);
+	api_register_prop(g_duk, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
+	api_register_prop(g_duk, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
+	api_register_prop(g_duk, "Sound", "seekable", js_Sound_get_seekable, NULL);
+	api_register_prop(g_duk, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
+	api_register_method(g_duk, "Sound", "isPlaying", js_Sound_get_playing);
+	api_register_method(g_duk, "Sound", "isSeekable", js_Sound_get_seekable);
+	api_register_method(g_duk, "Sound", "getLength", js_Sound_get_length);
+	api_register_method(g_duk, "Sound", "getPan", js_Sound_get_pan);
+	api_register_method(g_duk, "Sound", "getPitch", js_Sound_get_pitch);
+	api_register_method(g_duk, "Sound", "getPosition", js_Sound_get_position);
+	api_register_method(g_duk, "Sound", "getRepeat", js_Sound_get_repeat);
+	api_register_method(g_duk, "Sound", "getVolume", js_Sound_getVolume);
+	api_register_method(g_duk, "Sound", "setPan", js_Sound_set_pan);
+	api_register_method(g_duk, "Sound", "setPitch", js_Sound_set_pitch);
+	api_register_method(g_duk, "Sound", "setPosition", js_Sound_set_position);
+	api_register_method(g_duk, "Sound", "setRepeat", js_Sound_set_repeat);
+	api_register_method(g_duk, "Sound", "setVolume", js_Sound_setVolume);
+	api_register_method(g_duk, "Sound", "pause", js_Sound_pause);
+	api_register_method(g_duk, "Sound", "play", js_Sound_play);
+	api_register_method(g_duk, "Sound", "reset", js_Sound_reset);
+	api_register_method(g_duk, "Sound", "stop", js_Sound_stop);
 }
 
 static duk_ret_t

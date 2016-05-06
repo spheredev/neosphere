@@ -102,7 +102,7 @@ initialize_api(duk_context* ctx)
 	num_extensions = sizeof SPHERE_EXTENSIONS / sizeof SPHERE_EXTENSIONS[0];
 	for (i = 0; i < num_extensions; ++i) {
 		console_log(1, "    %s", SPHERE_EXTENSIONS[i]);
-		register_api_extension(SPHERE_EXTENSIONS[i]);
+		api_register_extension(SPHERE_EXTENSIONS[i]);
 	}
 
 	// register the 'global' global object alias (like Node.js!).
@@ -141,39 +141,39 @@ initialize_api(duk_context* ctx)
 	duk_pop(ctx);
 
 	// register core API functions
-	register_api_method(ctx, NULL, "GetVersion", js_GetVersion);
-	register_api_method(ctx, NULL, "GetVersionString", js_GetVersionString);
-	register_api_method(ctx, NULL, "GetExtensions", js_GetExtensions);
-	register_api_method(ctx, NULL, "EvaluateScript", js_EvaluateScript);
-	register_api_method(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
-	register_api_method(ctx, NULL, "RequireScript", js_RequireScript);
-	register_api_method(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
-	register_api_method(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
-	register_api_method(ctx, NULL, "GetFrameRate", js_GetFrameRate);
-	register_api_method(ctx, NULL, "GetGameManifest", js_GetGameManifest);
-	register_api_method(ctx, NULL, "GetGameList", js_GetGameList);
-	register_api_method(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
-	register_api_method(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
-	register_api_method(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
-	register_api_method(ctx, NULL, "GetSeconds", js_GetSeconds);
-	register_api_method(ctx, NULL, "GetTime", js_GetTime);
-	register_api_method(ctx, NULL, "SetFrameRate", js_SetFrameRate);
-	register_api_method(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
-	register_api_method(ctx, NULL, "SetScreenSize", js_SetScreenSize);
-	register_api_method(ctx, NULL, "Abort", js_Abort);
-	register_api_method(ctx, NULL, "Alert", js_Alert);
-	register_api_method(ctx, NULL, "Assert", js_Assert);
-	register_api_method(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
-	register_api_method(ctx, NULL, "DebugPrint", js_DebugPrint);
-	register_api_method(ctx, NULL, "Delay", js_Delay);
-	register_api_method(ctx, NULL, "DoEvents", js_DoEvents);
-	register_api_method(ctx, NULL, "Exit", js_Exit);
-	register_api_method(ctx, NULL, "ExecuteGame", js_ExecuteGame);
-	register_api_method(ctx, NULL, "FlipScreen", js_FlipScreen);
-	register_api_method(ctx, NULL, "GarbageCollect", js_GarbageCollect);
-	register_api_method(ctx, NULL, "Print", js_Print);
-	register_api_method(ctx, NULL, "RestartGame", js_RestartGame);
-	register_api_method(ctx, NULL, "UnskipFrame", js_UnskipFrame);
+	api_register_method(ctx, NULL, "GetVersion", js_GetVersion);
+	api_register_method(ctx, NULL, "GetVersionString", js_GetVersionString);
+	api_register_method(ctx, NULL, "GetExtensions", js_GetExtensions);
+	api_register_method(ctx, NULL, "EvaluateScript", js_EvaluateScript);
+	api_register_method(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
+	api_register_method(ctx, NULL, "RequireScript", js_RequireScript);
+	api_register_method(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
+	api_register_method(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
+	api_register_method(ctx, NULL, "GetFrameRate", js_GetFrameRate);
+	api_register_method(ctx, NULL, "GetGameManifest", js_GetGameManifest);
+	api_register_method(ctx, NULL, "GetGameList", js_GetGameList);
+	api_register_method(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
+	api_register_method(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
+	api_register_method(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
+	api_register_method(ctx, NULL, "GetSeconds", js_GetSeconds);
+	api_register_method(ctx, NULL, "GetTime", js_GetTime);
+	api_register_method(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	api_register_method(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
+	api_register_method(ctx, NULL, "SetScreenSize", js_SetScreenSize);
+	api_register_method(ctx, NULL, "Abort", js_Abort);
+	api_register_method(ctx, NULL, "Alert", js_Alert);
+	api_register_method(ctx, NULL, "Assert", js_Assert);
+	api_register_method(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
+	api_register_method(ctx, NULL, "DebugPrint", js_DebugPrint);
+	api_register_method(ctx, NULL, "Delay", js_Delay);
+	api_register_method(ctx, NULL, "DoEvents", js_DoEvents);
+	api_register_method(ctx, NULL, "Exit", js_Exit);
+	api_register_method(ctx, NULL, "ExecuteGame", js_ExecuteGame);
+	api_register_method(ctx, NULL, "FlipScreen", js_FlipScreen);
+	api_register_method(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	api_register_method(ctx, NULL, "Print", js_Print);
+	api_register_method(ctx, NULL, "RestartGame", js_RestartGame);
+	api_register_method(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
 	// initialize subsystem APIs
 	init_animation_api();
@@ -206,7 +206,7 @@ shutdown_api(void)
 }
 
 bool
-have_api_extension(const char* name)
+api_have_extension(const char* name)
 {
 	iter_t iter;
 	char* *i_name;
@@ -218,13 +218,13 @@ have_api_extension(const char* name)
 }
 
 int
-get_api_level(void)
+api_level(void)
 {
 	return SPHERE_API_LEVEL;
 }
 
 void
-register_api_const(duk_context* ctx, const char* name, double value)
+api_register_const(duk_context* ctx, const char* name, double value)
 {
 	duk_push_global_object(ctx);
 	duk_push_string(ctx, name); duk_push_number(ctx, value);
@@ -234,7 +234,7 @@ register_api_const(duk_context* ctx, const char* name, double value)
 }
 
 void
-register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
+api_register_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
 {
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
@@ -275,7 +275,7 @@ register_api_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 }
 
 bool
-register_api_extension(const char* designation)
+api_register_extension(const char* designation)
 {
 	char* string;
 
@@ -286,7 +286,7 @@ register_api_extension(const char* designation)
 }
 
 void
-register_api_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
+api_register_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 
@@ -317,7 +317,7 @@ register_api_function(duk_context* ctx, const char* namespace_name, const char* 
 }
 
 void
-register_api_method(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
+api_register_method(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
@@ -347,7 +347,7 @@ register_api_method(duk_context* ctx, const char* ctor_name, const char* name, d
 }
 
 void
-register_api_prop(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
+api_register_prop(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	duk_uint_t flags;
 	int        obj_index;

@@ -491,26 +491,26 @@ refresh_display(screen_t* obj)
 void
 init_screen_api(void)
 {
-	register_api_method(g_duk, NULL, "GetClippingRectangle", js_GetClippingRectangle);
-	register_api_method(g_duk, NULL, "SetClippingRectangle", js_SetClippingRectangle);
-	register_api_method(g_duk, NULL, "ApplyColorMask", js_ApplyColorMask);
-	register_api_method(g_duk, NULL, "GradientCircle", js_GradientCircle);
-	register_api_method(g_duk, NULL, "GradientRectangle", js_GradientRectangle);
-	register_api_method(g_duk, NULL, "Line", js_Line);
-	register_api_method(g_duk, NULL, "LineSeries", js_LineSeries);
-	register_api_method(g_duk, NULL, "OutlinedCircle", js_OutlinedCircle);
-	register_api_method(g_duk, NULL, "OutlinedRectangle", js_OutlinedRectangle);
-	register_api_method(g_duk, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
-	register_api_method(g_duk, NULL, "Point", js_Point);
-	register_api_method(g_duk, NULL, "PointSeries", js_PointSeries);
-	register_api_method(g_duk, NULL, "Rectangle", js_Rectangle);
-	register_api_method(g_duk, NULL, "RoundRectangle", js_RoundRectangle);
-	register_api_method(g_duk, NULL, "Triangle", js_Triangle);
+	api_register_method(g_duk, NULL, "GetClippingRectangle", js_GetClippingRectangle);
+	api_register_method(g_duk, NULL, "SetClippingRectangle", js_SetClippingRectangle);
+	api_register_method(g_duk, NULL, "ApplyColorMask", js_ApplyColorMask);
+	api_register_method(g_duk, NULL, "GradientCircle", js_GradientCircle);
+	api_register_method(g_duk, NULL, "GradientRectangle", js_GradientRectangle);
+	api_register_method(g_duk, NULL, "Line", js_Line);
+	api_register_method(g_duk, NULL, "LineSeries", js_LineSeries);
+	api_register_method(g_duk, NULL, "OutlinedCircle", js_OutlinedCircle);
+	api_register_method(g_duk, NULL, "OutlinedRectangle", js_OutlinedRectangle);
+	api_register_method(g_duk, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
+	api_register_method(g_duk, NULL, "Point", js_Point);
+	api_register_method(g_duk, NULL, "PointSeries", js_PointSeries);
+	api_register_method(g_duk, NULL, "Rectangle", js_Rectangle);
+	api_register_method(g_duk, NULL, "RoundRectangle", js_RoundRectangle);
+	api_register_method(g_duk, NULL, "Triangle", js_Triangle);
 
 	// line series types
-	register_api_const(g_duk, "LINE_MULTIPLE", LINE_MULTIPLE);
-	register_api_const(g_duk, "LINE_STRIP", LINE_STRIP);
-	register_api_const(g_duk, "LINE_LOOP", LINE_LOOP);
+	api_register_const(g_duk, "LINE_MULTIPLE", LINE_MULTIPLE);
+	api_register_const(g_duk, "LINE_STRIP", LINE_STRIP);
+	api_register_const(g_duk, "LINE_LOOP", LINE_LOOP);
 }
 
 static duk_ret_t

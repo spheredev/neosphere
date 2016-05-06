@@ -337,40 +337,40 @@ void
 init_sockets_api(void)
 {
 	// core Sockets API functions
-	register_api_method(g_duk, NULL, "GetLocalAddress", js_GetLocalAddress);
-	register_api_method(g_duk, NULL, "GetLocalName", js_GetLocalName);
+	api_register_method(g_duk, NULL, "GetLocalAddress", js_GetLocalAddress);
+	api_register_method(g_duk, NULL, "GetLocalName", js_GetLocalName);
 	
 	// Socket object (Sphere 1.5-style socket)
-	register_api_method(g_duk, NULL, "ListenOnPort", js_ListenOnPort);
-	register_api_method(g_duk, NULL, "OpenAddress", js_OpenAddress);
-	register_api_ctor(g_duk, "Socket", js_new_Socket, js_Socket_finalize);
-	register_api_prop(g_duk, "Socket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
-	register_api_prop(g_duk, "Socket", "remotePort", js_IOSocket_get_remotePort, NULL);
-	register_api_method(g_duk, "Socket", "toString", js_Socket_toString);
-	register_api_method(g_duk, "Socket", "isConnected", js_Socket_isConnected);
-	register_api_method(g_duk, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
-	register_api_method(g_duk, "Socket", "close", js_Socket_close);
-	register_api_method(g_duk, "Socket", "read", js_Socket_read);
-	register_api_method(g_duk, "Socket", "readString", js_Socket_readString);
-	register_api_method(g_duk, "Socket", "write", js_Socket_write);
+	api_register_method(g_duk, NULL, "ListenOnPort", js_ListenOnPort);
+	api_register_method(g_duk, NULL, "OpenAddress", js_OpenAddress);
+	api_register_ctor(g_duk, "Socket", js_new_Socket, js_Socket_finalize);
+	api_register_prop(g_duk, "Socket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
+	api_register_prop(g_duk, "Socket", "remotePort", js_IOSocket_get_remotePort, NULL);
+	api_register_method(g_duk, "Socket", "toString", js_Socket_toString);
+	api_register_method(g_duk, "Socket", "isConnected", js_Socket_isConnected);
+	api_register_method(g_duk, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	api_register_method(g_duk, "Socket", "close", js_Socket_close);
+	api_register_method(g_duk, "Socket", "read", js_Socket_read);
+	api_register_method(g_duk, "Socket", "readString", js_Socket_readString);
+	api_register_method(g_duk, "Socket", "write", js_Socket_write);
 
 	// Server object
-	register_api_ctor(g_duk, "Server", js_new_Server, js_Server_finalize);
-	register_api_method(g_duk, "Server", "close", js_Server_close);
-	register_api_method(g_duk, "Server", "accept", js_Server_accept);
+	api_register_ctor(g_duk, "Server", js_new_Server, js_Server_finalize);
+	api_register_method(g_duk, "Server", "close", js_Server_close);
+	api_register_method(g_duk, "Server", "accept", js_Server_accept);
 	
 	// IOSocket object
-	register_api_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
-	register_api_prop(g_duk, "IOSocket", "bytesPending", js_IOSocket_get_bytesPending, NULL);
-	register_api_prop(g_duk, "IOSocket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
-	register_api_prop(g_duk, "IOSocket", "remotePort", js_IOSocket_get_remotePort, NULL);
-	register_api_method(g_duk, "IOSocket", "isConnected", js_IOSocket_isConnected);
-	register_api_method(g_duk, "IOSocket", "close", js_IOSocket_close);
-	register_api_method(g_duk, "IOSocket", "pipe", js_IOSocket_pipe);
-	register_api_method(g_duk, "IOSocket", "read", js_IOSocket_read);
-	register_api_method(g_duk, "IOSocket", "readString", js_IOSocket_readString);
-	register_api_method(g_duk, "IOSocket", "unpipe", js_IOSocket_unpipe);
-	register_api_method(g_duk, "IOSocket", "write", js_IOSocket_write);
+	api_register_ctor(g_duk, "IOSocket", js_new_IOSocket, js_IOSocket_finalize);
+	api_register_prop(g_duk, "IOSocket", "bytesPending", js_IOSocket_get_bytesPending, NULL);
+	api_register_prop(g_duk, "IOSocket", "remoteAddress", js_IOSocket_get_remoteAddress, NULL);
+	api_register_prop(g_duk, "IOSocket", "remotePort", js_IOSocket_get_remotePort, NULL);
+	api_register_method(g_duk, "IOSocket", "isConnected", js_IOSocket_isConnected);
+	api_register_method(g_duk, "IOSocket", "close", js_IOSocket_close);
+	api_register_method(g_duk, "IOSocket", "pipe", js_IOSocket_pipe);
+	api_register_method(g_duk, "IOSocket", "read", js_IOSocket_read);
+	api_register_method(g_duk, "IOSocket", "readString", js_IOSocket_readString);
+	api_register_method(g_duk, "IOSocket", "unpipe", js_IOSocket_unpipe);
+	api_register_method(g_duk, "IOSocket", "write", js_IOSocket_write);
 }
 
 static duk_ret_t
