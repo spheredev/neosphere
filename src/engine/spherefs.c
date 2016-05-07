@@ -35,7 +35,11 @@ struct sfs_file
 	spk_file_t*   spk_file;
 };
 
+#if DUK_VERSION >= 19999
+static duk_ret_t duk_load_s2gm (duk_context* ctx, void *udata);
+#else
 static duk_ret_t duk_load_s2gm (duk_context* ctx);
+#endif
 static bool      resolve_path  (sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_sandbox_id = 0;
@@ -106,7 +110,11 @@ new_sandbox(const char* game_path)
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
+#if DUK_VERSION >= 19999
+			if (duk_safe_call(g_duk, duk_load_s2gm, NULL, 2, 1) != 0) {
+#else
 			if (duk_safe_call(g_duk, duk_load_s2gm, 2, 1) != 0) {
+#endif
 				console_log(0, "error parsing JSON manifest `game.s2gm`\n    %s", duk_to_string(g_duk, -1));
 				duk_pop(g_duk);
 				goto on_error;
@@ -571,14 +579,23 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 	}
 }
 
+#if DUK_VERSION >= 19999
+static duk_ret_t
+duk_load_s2gm(duk_context* ctx, void *udata)
+#else
 static duk_ret_t
 duk_load_s2gm(duk_context* ctx)
+#endif
 {
 	// arguments: -2 = sandbox_t* fs (pointer)
 	//            -1 = .s2gm JSON text (string)
 	
 	sandbox_t* fs;
 	duk_idx_t  json_idx;
+	
+#if DUK_VERSION >= 19999
+	(void) udata;
+#endif
 	
 	fs = duk_get_pointer(ctx, -2);
 	json_idx = duk_normalize_index(ctx, -1);

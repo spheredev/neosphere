@@ -114,7 +114,11 @@ update_debugger(void)
 			console_log(1, "connected to SSJ at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
+#if DUK_VERSION >= 19999
+			duk_debugger_attach(g_duk,
+#else
 			duk_debugger_attach_custom(g_duk,
+#endif
 				duk_cb_debug_read,
 				duk_cb_debug_write,
 				duk_cb_debug_peek,
