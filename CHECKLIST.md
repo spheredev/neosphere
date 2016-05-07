@@ -14,7 +14,7 @@ new commit.
 * Version number in `src/shared/version.h`
 * Version number in `src/plugin/PluginMain.cs`
 * Version number in `src/plugin/Properties/AssemblyInfo.cs`
-* Version number in `docs/sphere-api.txt`
+* Version number in `docs/spherical-api.txt`
 * Version number in `setup/minisphere.iss`
 * Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)

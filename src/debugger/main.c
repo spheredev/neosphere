@@ -255,7 +255,7 @@ print_banner(bool want_copyright, bool want_deps)
 {
 	printf("SSJ %s Sphere JavaScript Debugger (%s)\n", VERSION_NAME, sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("a powerful JavaScript debugger for minisphere\n");
+		printf("easy-to-use JavaScript debugger for minisphere\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");
 	}
 	if (want_deps) {

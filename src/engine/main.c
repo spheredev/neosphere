@@ -688,7 +688,7 @@ print_banner(bool want_copyright, bool want_deps)
 	
 	printf("%s %s JS Game Engine (%s)\n", PRODUCT_NAME, VERSION_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
-		printf("a lightweight JavaScript-based game engine\n");
+		printf("the lightweight JavaScript-based game engine\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");
 	}
 	if (want_deps) {

@@ -69,17 +69,29 @@ matrix_compose(matrix_t* matrix, const matrix_t* other)
 void
 matrix_rotate(matrix_t* matrix, float theta, float vx, float vy, float vz)
 {
+#if defined(MINISPHERE_USE_3D_TRANSFORM)
 	al_rotate_transform_3d(&matrix->transform, vx, vy, vz, theta);
+#else
+	al_rotate_transform(&matrix->transform, theta);
+#endif
 }
 
 void
 matrix_scale(matrix_t* matrix, float sx, float sy, float sz)
 {
+#if defined(MINISPHERE_USE_3D_TRANSFORM)
 	al_scale_transform_3d(&matrix->transform, sx, sy, sz);
+#else
+	al_scale_transform(&matrix->transform, sx, sy);
+#endif
 }
 
 void
 matrix_translate(matrix_t* matrix, float dx, float dy, float dz)
 {
+#if defined(MINISPHERE_USE_3D_TRANSFORM)
 	al_translate_transform_3d(&matrix->transform, dx, dy, dz);
+#else
+	al_translate_transform(&matrix->transform, dx, dy);
+#endif
 }

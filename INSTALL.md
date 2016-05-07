@@ -1,5 +1,5 @@
-minisphere 3.1 Install Instructions
-===================================
+minisphere Installation Instructions
+====================================
 
 minisphere compiles on all three major platforms (Windows, Linux, and OS X).
 This file contains instructions for how to compile and install the engine on

@@ -229,8 +229,9 @@ group_draw(const group_t* group, image_t* surface)
 	if (surface != NULL)
 		al_set_target_bitmap(get_image_bitmap(surface));
 	
-	shader_use(group->shader != NULL ? group->shader : get_default_shader());
+#if defined(MINISPHERE_USE_SHADERS)
 	if (are_shaders_active()) {
+		shader_use(group->shader != NULL ? group->shader : get_default_shader());
 		iter = vector_enum(group->uniforms);
 		while (p = vector_next(&iter)) {
 			switch (p->type) {
@@ -246,13 +247,17 @@ group_draw(const group_t* group, image_t* surface)
 			}
 		}
 	}
+#endif
 
 	screen_transform(g_screen, group->transform);
 	iter = vector_enum(group->shapes);
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
 	screen_transform(g_screen, NULL);
+	
+#if defined(MINISPHERE_USE_SHADERS)
 	shader_use(NULL);
+#endif
 
 	if (surface != NULL)
 		al_set_target_backbuffer(screen_display(g_screen));

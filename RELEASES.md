@@ -8,12 +8,13 @@ minisphere 3.1
   SphereFS paths instead of the `~usr`, `~sgm`, and `~sys` aliases used in
   previous versions.  Any code depending on the old prefixes will need to be
   updated.
-* The user data folder has been renamed again, to `minisphere`.  This was done
-  to be more friendly to Linux users, for whom filenames with spaces are often
+* The user data folder has been renamed to "minisphere".  This was done to be
+  more friendly to Linux users, for whom filenames with spaces are often
   inconvenient.  If you need to keep your save data from minisphere 3.0, move
   it into `<documents>/minisphere/save`.
-* The Galileo API has been updated with new features.  There may be some minor
-  breaking changes, refer to the API reference for details.
+* The Galileo API has been updated with new features.  These improvements bring
+  some minor breaking changes with them as well.  Refer to the API reference
+  for details.
 * The search path for CommonJS modules has changed since 3.0.  Modules are now
   searched for in `@/lib/` instead of `@/commonjs/`.
 * `ListeningSocket` has been renamed to `Server`.  Networking code will need to

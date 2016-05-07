@@ -1,17 +1,17 @@
 minisphere Changelog
 ====================
 
-v3.1.0 - TBD
-------------
+v3.1.0 - May 7, 2015
+--------------------
 
 * SphereFS now uses single-character aliases: `#/` for built-in engine assets,
   `@/` for the root of the sandbox, and `~/` for the user data directory (for
-  save data)
+  save data).
 * Changes the user data directory name back to "minisphere" to be more friendly
   to Linux users.
 * Adds some new components to miniRT: miniRT/binary for easy loading of
   structured binary data, miniRT/xml for XML parsing and DOM generation, and
-  miniRT/prim to pre-render expensive-to-draw primitives like text.
+  miniRT/prim to pre-render expensive-to-draw primitives like circles.
 * Adds a new Transform object which allows working with transformation
   matrices.
 * Improves the Galileo API: Shapes can now be drawn directly, Groups have a
@@ -22,8 +22,8 @@ v3.1.0 - TBD
 * minisphere now looks for CommonJS modules in `lib/` instead of `commonjs/`.
 * `Async()` is now called `DispatchScript()` for API consistency.
 * `ListeningSocket` is now called `Server`.
-* You can now use `-0` through `-4` command line options to specify the
-  engine log verbosity level.
+* You can now use `-0` through `-4` on the command line to specify the engine
+  log verbosity level.
 
 
 v3.0.8 - April 17, 2016
