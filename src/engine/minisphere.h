@@ -26,7 +26,7 @@
 
 #include "version.h"
 
-#include "duktape.h"
+#include "rubber_duk.h"
 #include "dyad.h"
 #include "console.h"
 #include "spherefs.h"

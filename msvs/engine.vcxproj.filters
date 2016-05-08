@@ -138,6 +138,9 @@
     <ClCompile Include="..\src\engine\matrix.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\rubber_duk.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -273,6 +276,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\engine\matrix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\rubber_duk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
