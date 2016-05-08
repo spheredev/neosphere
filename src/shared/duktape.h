@@ -1,12 +1,12 @@
 /*
- *  Duktape public API for Duktape 1.99.99.
+ *  Duktape public API for Duktape 1.5.0.
  *
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 627f01f3b8058f8c30cbd0da7ada9524d60d772a (v1.5.0-56-g627f01f).
+ *  Git commit 83d557704ee63f68ab40b6fcb00995c9b3d6777c (v1.5.0).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -181,7 +181,7 @@ typedef void (*duk_free_function) (void *udata, void *ptr);
 typedef void (*duk_fatal_function) (duk_context *ctx, duk_errcode_t code, const char *msg);
 typedef void (*duk_decode_char_function) (void *udata, duk_codepoint_t codepoint);
 typedef duk_codepoint_t (*duk_map_char_function) (void *udata, duk_codepoint_t codepoint);
-typedef duk_ret_t (*duk_safe_call_function) (duk_context *ctx, void *udata);
+typedef duk_ret_t (*duk_safe_call_function) (duk_context *ctx);
 typedef duk_size_t (*duk_debug_read_function) (void *udata, char *buffer, duk_size_t length);
 typedef duk_size_t (*duk_debug_write_function) (void *udata, const char *buffer, duk_size_t length);
 typedef duk_size_t (*duk_debug_peek_function) (void *udata);
@@ -218,19 +218,19 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       19999L
+#define DUK_VERSION                       10500L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "627f01f3b8058f8c30cbd0da7ada9524d60d772a"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-56-g627f01f"
+#define DUK_GIT_COMMIT                    "83d557704ee63f68ab40b6fcb00995c9b3d6777c"
+#define DUK_GIT_DESCRIBE                  "v1.5.0"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
-#define DUK_DEBUG_PROTOCOL_VERSION        2
+#define DUK_DEBUG_PROTOCOL_VERSION        1
 
 /* Used to represent invalid index; if caller uses this without checking,
  * this index will map to a non-existent stack entry.  Also used in some
@@ -291,7 +291,9 @@ struct duk_number_list_entry {
 #define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 5)    /* enumerate a proxy object itself without invoking proxy behavior */
 
 /* Compilation flags for duk_compile() and duk_eval() */
-/* DUK_COMPILE_xxx bits 0-2 are reserved for an internal 'nargs' argument.
+/* DUK_COMPILE_xxx bits 0-2 are reserved for an internal 'nargs' argument
+ * (the nargs value passed is direct stack arguments + 1 to account for an
+ * internal extra argument).
  */
 #define DUK_COMPILE_EVAL                  (1 << 3)    /* compile eval code (instead of global code) */
 #define DUK_COMPILE_FUNCTION              (1 << 4)    /* compile function code (instead of global code) */
@@ -903,7 +905,7 @@ DUK_EXTERNAL_DECL duk_int_t duk_pcall_method(duk_context *ctx, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_int_t duk_pcall_prop(duk_context *ctx, duk_idx_t obj_index, duk_idx_t nargs);
 DUK_EXTERNAL_DECL void duk_new(duk_context *ctx, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_int_t duk_pnew(duk_context *ctx, duk_idx_t nargs);
-DUK_EXTERNAL_DECL duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, void *udata, duk_idx_t nargs, duk_idx_t nrets);
+DUK_EXTERNAL_DECL duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, duk_idx_t nargs, duk_idx_t nrets);
 
 /*
  *  Thread management
@@ -922,103 +924,103 @@ DUK_EXTERNAL_DECL duk_int_t duk_compile_raw(duk_context *ctx, const char *src_bu
 
 /* plain */
 #define duk_eval(ctx)  \
-	((void) duk_eval_raw((ctx), NULL, 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOFILENAME))
+	((void) duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOFILENAME))
 
 #define duk_eval_noresult(ctx)  \
-	((void) duk_eval_raw((ctx), NULL, 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
+	((void) duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
 
 #define duk_peval(ctx)  \
-	(duk_eval_raw((ctx), NULL, 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOFILENAME))
+	(duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOFILENAME))
 
 #define duk_peval_noresult(ctx)  \
-	(duk_eval_raw((ctx), NULL, 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
+	(duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
 
 #define duk_compile(ctx,flags)  \
-	((void) duk_compile_raw((ctx), NULL, 0, 2 /*args*/ | (flags)))
+	((void) duk_compile_raw((ctx), NULL, 0, 3 /*args*/ | (flags)))
 
 #define duk_pcompile(ctx,flags)  \
-	(duk_compile_raw((ctx), NULL, 0, 2 /*args*/ | (flags) | DUK_COMPILE_SAFE))
+	(duk_compile_raw((ctx), NULL, 0, 3 /*args*/ | (flags) | DUK_COMPILE_SAFE))
 
 /* string */
 #define duk_eval_string(ctx,src)  \
-	((void) duk_eval_raw((ctx), (src), 0, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
+	((void) duk_eval_raw((ctx), (src), 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
 
 #define duk_eval_string_noresult(ctx,src)  \
-	((void) duk_eval_raw((ctx), (src), 0, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
+	((void) duk_eval_raw((ctx), (src), 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
 
 #define duk_peval_string(ctx,src)  \
-	(duk_eval_raw((ctx), (src), 0, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
+	(duk_eval_raw((ctx), (src), 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
 
 #define duk_peval_string_noresult(ctx,src)  \
-	(duk_eval_raw((ctx), (src), 0, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
+	(duk_eval_raw((ctx), (src), 0, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
 
 #define duk_compile_string(ctx,flags,src)  \
-	((void) duk_compile_raw((ctx), (src), 0, 0 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
+	((void) duk_compile_raw((ctx), (src), 0, 1 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
 
 #define duk_compile_string_filename(ctx,flags,src)  \
-	((void) duk_compile_raw((ctx), (src), 0, 1 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
+	((void) duk_compile_raw((ctx), (src), 0, 2 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
 
 #define duk_pcompile_string(ctx,flags,src)  \
-	(duk_compile_raw((ctx), (src), 0, 0 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
+	(duk_compile_raw((ctx), (src), 0, 1 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NOFILENAME))
 
 #define duk_pcompile_string_filename(ctx,flags,src)  \
-	(duk_compile_raw((ctx), (src), 0, 1 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
+	(duk_compile_raw((ctx), (src), 0, 2 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
 
 /* lstring */
 #define duk_eval_lstring(ctx,buf,len)  \
-	((void) duk_eval_raw((ctx), buf, len, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NOFILENAME))
+	((void) duk_eval_raw((ctx), buf, len, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NOFILENAME))
 
 #define duk_eval_lstring_noresult(ctx,buf,len)  \
-	((void) duk_eval_raw((ctx), buf, len, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
+	((void) duk_eval_raw((ctx), buf, len, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
 
 #define duk_peval_lstring(ctx,buf,len)  \
-	(duk_eval_raw((ctx), buf, len, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_SAFE | DUK_COMPILE_NOFILENAME))
+	(duk_eval_raw((ctx), buf, len, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_SAFE | DUK_COMPILE_NOFILENAME))
 
 #define duk_peval_lstring_noresult(ctx,buf,len)  \
-	(duk_eval_raw((ctx), buf, len, 0 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
+	(duk_eval_raw((ctx), buf, len, 1 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NORESULT | DUK_COMPILE_NOFILENAME))
 
 #define duk_compile_lstring(ctx,flags,buf,len)  \
-	((void) duk_compile_raw((ctx), buf, len, 0 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NOFILENAME))
+	((void) duk_compile_raw((ctx), buf, len, 1 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NOFILENAME))
 
 #define duk_compile_lstring_filename(ctx,flags,buf,len)  \
-	((void) duk_compile_raw((ctx), buf, len, 1 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE))
+	((void) duk_compile_raw((ctx), buf, len, 2 /*args*/ | (flags) | DUK_COMPILE_NOSOURCE))
 
 #define duk_pcompile_lstring(ctx,flags,buf,len)  \
-	(duk_compile_raw((ctx), buf, len, 0 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NOFILENAME))
+	(duk_compile_raw((ctx), buf, len, 1 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NOFILENAME))
 
 #define duk_pcompile_lstring_filename(ctx,flags,buf,len)  \
-	(duk_compile_raw((ctx), buf, len, 1 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE))
+	(duk_compile_raw((ctx), buf, len, 2 /*args*/ | (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE))
 
 /* file */
 #define duk_eval_file(ctx,path)  \
 	((void) duk_push_string_file_raw((ctx), (path), 0), \
 	 (void) duk_push_string((ctx), (path)), \
-	 (void) duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL))
+	 (void) duk_eval_raw((ctx), NULL, 0, 3 /*args*/ | DUK_COMPILE_EVAL))
 
 #define duk_eval_file_noresult(ctx,path)  \
 	((void) duk_push_string_file_raw((ctx), (path), 0), \
 	 (void) duk_push_string((ctx), (path)), \
-	 (void) duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
+	 (void) duk_eval_raw((ctx), NULL, 0, 3 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
 
 #define duk_peval_file(ctx,path)  \
 	((void) duk_push_string_file_raw((ctx), (path), DUK_STRING_PUSH_SAFE), \
 	 (void) duk_push_string((ctx), (path)), \
-	 duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
+	 duk_eval_raw((ctx), NULL, 0, 3 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
 
 #define duk_peval_file_noresult(ctx,path)  \
 	((void) duk_push_string_file_raw((ctx), (path), DUK_STRING_PUSH_SAFE), \
 	 (void) duk_push_string((ctx), (path)), \
-	 duk_eval_raw((ctx), NULL, 0, 2 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
+	 duk_eval_raw((ctx), NULL, 0, 3 /*args*/ | DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
 
 #define duk_compile_file(ctx,flags,path)  \
 	((void) duk_push_string_file_raw((ctx), (path), 0), \
 	 (void) duk_push_string((ctx), (path)), \
-	 (void) duk_compile_raw((ctx), NULL, 0, 2 /*args*/ | (flags)))
+	 (void) duk_compile_raw((ctx), NULL, 0, 3 /*args*/ | (flags)))
 
 #define duk_pcompile_file(ctx,flags,path)  \
 	((void) duk_push_string_file_raw((ctx), (path), DUK_STRING_PUSH_SAFE), \
 	 (void) duk_push_string((ctx), (path)), \
-	 duk_compile_raw((ctx), NULL, 0, 2 /*args*/ | (flags) | DUK_COMPILE_SAFE))
+	 duk_compile_raw((ctx), NULL, 0, 3 /*args*/ | (flags) | DUK_COMPILE_SAFE))
 
 /*
  *  Bytecode load/dump
@@ -1040,19 +1042,40 @@ DUK_EXTERNAL_DECL void duk_log_va(duk_context *ctx, duk_int_t level, const char 
 
 DUK_EXTERNAL_DECL void duk_push_context_dump(duk_context *ctx);
 
+#if defined(DUK_USE_FILE_IO)
+/* internal use */
+#define duk_dump_context_filehandle(ctx,fh) \
+	(duk_push_context_dump((ctx)), \
+	 DUK_FPRINTF((fh), "%s\n", duk_safe_to_string(ctx, -1)), \
+	 duk_pop(ctx))
+
+/* external use */
+#define duk_dump_context_stdout(ctx) \
+	duk_dump_context_filehandle((ctx), DUK_STDOUT)
+#define duk_dump_context_stderr(ctx) \
+	duk_dump_context_filehandle((ctx), DUK_STDERR)
+#else  /* DUK_USE_FILE_IO */
+#define duk_dump_context_stdout(ctx)  ((void) 0)
+#define duk_dump_context_stderr(ctx)  ((void) 0)
+#endif  /* DUK_USE_FILE_IO */
+
 /*
  *  Debugger (debug protocol)
  */
 
-DUK_EXTERNAL_DECL void duk_debugger_attach(duk_context *ctx,
-                                           duk_debug_read_function read_cb,
-                                           duk_debug_write_function write_cb,
-                                           duk_debug_peek_function peek_cb,
-                                           duk_debug_read_flush_function read_flush_cb,
-                                           duk_debug_write_flush_function write_flush_cb,
-                                           duk_debug_request_function request_cb,
-                                           duk_debug_detached_function detached_cb,
-                                           void *udata);
+#define duk_debugger_attach(ctx,read_cb,write_cb,peek_cb,read_flush_cb,write_flush_cb,detached_cb,udata) \
+	duk_debugger_attach_custom((ctx), (read_cb), (write_cb), (peek_cb), (read_flush_cb), (write_flush_cb), \
+	                           NULL, (detached_cb), (udata))
+
+DUK_EXTERNAL_DECL void duk_debugger_attach_custom(duk_context *ctx,
+                                                  duk_debug_read_function read_cb,
+                                                  duk_debug_write_function write_cb,
+                                                  duk_debug_peek_function peek_cb,
+                                                  duk_debug_read_flush_function read_flush_cb,
+                                                  duk_debug_write_flush_function write_flush_cb,
+                                                  duk_debug_request_function request_cb,
+                                                  duk_debug_detached_function detached_cb,
+                                                  void *udata);
 DUK_EXTERNAL_DECL void duk_debugger_detach(duk_context *ctx);
 DUK_EXTERNAL_DECL void duk_debugger_cooperate(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_bool_t duk_debugger_notify(duk_context *ctx, duk_idx_t nvalues);

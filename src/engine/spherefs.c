@@ -106,7 +106,7 @@ new_sandbox(const char* game_path)
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
-			if (duk_rb_safe_call(g_duk, duk_load_s2gm, 2, 1) != 0) {
+			if (dukrub_safe_call(g_duk, duk_load_s2gm, 2, 1) != 0) {
 				console_log(0, "error parsing JSON manifest `game.s2gm`\n    %s", duk_to_string(g_duk, -1));
 				duk_pop(g_duk);
 				goto on_error;
