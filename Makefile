@@ -19,7 +19,7 @@ engine_sources=src/engine/main.c \
    src/shared/lstring.c src/shared/path.c src/shared/rubber_duk.c \
    src/shared/unicode.c src/shared/vector.c \
    src/engine/animation.c src/engine/api.c src/engine/async.c \
-   src/engine/atlas.c src/engine/audialis.c src/engine/bytearray.c \
+   src/engine/atlas.c src/engine/audio.c src/engine/bytearray.c \
    src/engine/color.c src/engine/console.c src/engine/debugger.c \
    src/engine/file.c src/engine/font.c src/engine/galileo.c \
    src/engine/geometry.c src/engine/image.c src/engine/input.c \
