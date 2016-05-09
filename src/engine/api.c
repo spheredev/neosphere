@@ -79,9 +79,17 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
+struct module
+{
+	char*          name;
+	duk_c_function initializer;
+	duk_c_function finalizer;
+};
+
 static duk_ret_t duk_mod_search (duk_context* ctx);
 
 static vector_t*  s_extensions;
+static vector_t*  s_modules;
 static void*      s_print_ptr;
 static lstring_t* s_user_agent;
 
@@ -139,6 +147,7 @@ initialize_api(duk_context* ctx)
 	duk_push_c_function(ctx, duk_mod_search, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "modSearch");
 	duk_pop(ctx);
+	s_modules = vector_new(sizeof(struct module));
 
 	// register core API functions
 	api_register_method(ctx, NULL, "GetVersion", js_GetVersion);
@@ -203,6 +212,7 @@ shutdown_api(void)
 	console_log(1, "shutting down Sphere API");
 
 	lstr_free(s_user_agent);
+	vector_free(s_modules);
 }
 
 bool
@@ -347,6 +357,21 @@ api_register_method(duk_context* ctx, const char* ctor_name, const char* name, d
 }
 
 void
+api_register_module(const char* name, duk_c_function initializer, duk_c_function finalizer)
+{
+	// `initializer` should set up any components required to use the module
+	// and leave an object on the top of the stack which will serve as the module's
+	// export table.
+
+	struct module module;
+
+	module.name = strdup(name);
+	module.initializer = initializer;
+	module.finalizer = finalizer;
+	vector_push(s_modules, &module);
+}
+
+void
 api_register_prop(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	duk_uint_t flags;
@@ -373,6 +398,26 @@ api_register_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
+}
+
+void
+api_register_type(duk_context* ctx, const char* name, duk_c_function finalizer)
+{
+	// construct a prototype for our new type
+	duk_push_object(ctx);
+	duk_push_string(ctx, name);
+	duk_put_prop_string(ctx, -2, "\xFF" "ctor");
+	if (finalizer != NULL) {
+		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
+		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
+	}
+
+	// stash the new prototype
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "prototypes");
+	duk_dup(ctx, -3);
+	duk_put_prop_string(ctx, -2, name);
+	duk_pop_3(ctx);
 }
 
 noreturn
@@ -468,20 +513,37 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 static duk_ret_t
 duk_mod_search(duk_context* ctx)
 {
-	vector_t*   filenames;
-	lstring_t*  filename;
-	size_t      len;
-	const char* name;
-	char*       slurp;
-	lstring_t*  source_text;
-
-	iter_t     iter;
-	lstring_t* *p;
+	vector_t*      filenames;
+	lstring_t*     filename;
+	iter_t         iter;
+	size_t         len;
+	struct module* module;
+	const char*    name;
+	lstring_t**    p_string;
+	char*          slurp;
+	lstring_t*     source_text;
 
 	name = duk_get_string(ctx, 0);
-	if (name[0] == '~')
-		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "SphereFS prefix not allowed in module ID");
+	if (name[0] == '~' || name[0] == '#' || name[0] == '@')
+		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "SphereFS alias not allowed in module ID");
 
+	// check whether we're requiring a built-in module
+	iter = vector_enum(s_modules);
+	while (module = vector_next(&iter)) {
+		if (strcmp(name, module->name) == 0) {
+			console_log(1, "initializing native module `%s`", name);
+			duk_push_c_function(ctx, module->initializer, DUK_VARARGS);
+			duk_call(ctx, 0);
+			if (module->finalizer != NULL) {
+				duk_push_c_function(ctx, module->finalizer, DUK_VARARGS);
+				duk_set_finalizer(ctx, -2);
+			}
+			duk_put_prop_string(ctx, 3, "exports");
+			return 0;
+		}
+	}
+
+	// that didn't work, look for a JavaScript module
 	filenames = vector_new(sizeof(lstring_t*));
 	filename = lstr_newf("lib/%s.js", name); vector_push(filenames, &filename);
 	filename = lstr_newf("lib/%s.ts", name); vector_push(filenames, &filename);
@@ -491,15 +553,15 @@ duk_mod_search(duk_context* ctx)
 	filename = lstr_newf("#/modules/%s.coffee", name); vector_push(filenames, &filename);
 	filename = NULL;
 	iter = vector_enum(filenames);
-	while (p = vector_next(&iter)) {
-		if (filename == NULL && sfs_fexist(g_fs, lstr_cstr(*p), NULL))
-			filename = lstr_dup(*p);
-		lstr_free(*p);
+	while (p_string = vector_next(&iter)) {
+		if (filename == NULL && sfs_fexist(g_fs, lstr_cstr(*p_string), NULL))
+			filename = lstr_dup(*p_string);
+		lstr_free(*p_string);
 	}
 	vector_free(filenames);
 	if (filename == NULL)
-		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "CommonJS module `%s` not found", name);
-	console_log(2, "initializing JS module `%s` as `%s`", name, lstr_cstr(filename));
+		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "module `%s` not found", name);
+	console_log(1, "initializing JS module `%s` as `%s`", name, lstr_cstr(filename));
 	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), NULL, &len)))
 		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "unable to read script `%s`", lstr_cstr(filename));
 	source_text = lstr_from_buf(slurp, len);
