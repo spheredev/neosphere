@@ -30,13 +30,13 @@ module.exports = (function()
 		'override': function(trackName, fadeTime) {
 			try { override(trackName, fadeTime); }
 			catch(e) {
-				console.write("error playing `" + trackName + "`");
+				console.log("error playing `" + trackName + "`");
 			}
 		},
 		'play': function(trackName, fadeTime) {
 			try { play(trackName, fadeTime); }
 			catch(e) {
-				console.write("error playing `" + trackName + "`");
+				console.log("error playing `" + trackName + "`");
 			}
 		},
 		'pop': function(fadeTime) {
@@ -45,7 +45,7 @@ module.exports = (function()
 		'push': function(trackName, fadeTime) {
 			try { push(trackName, fadeTime); }
 			catch(e) {
-				console.write("error playing `" + trackName + "`");
+				console.log("error playing `" + trackName + "`");
 			}
 		},
 		'reset': function(fadeTime) {
