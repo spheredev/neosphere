@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__AUDIALIS_H__INCLUDED
-#define MINISPHERE__AUDIALIS_H__INCLUDED
+#ifndef MINISPHERE__AUDIO_H__INCLUDED
+#define MINISPHERE__AUDIO_H__INCLUDED
 
 typedef struct mixer  mixer_t;
 typedef struct sound  sound_t;
@@ -48,4 +48,4 @@ void      stream_stop       (stream_t* stream);
 
 void init_audialis_api (void);
 
-#endif // MINISPHERE__AUDIALIS_H__INCLUDED
+#endif // MINISPHERE__AUDIO_H__INCLUDED

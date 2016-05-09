@@ -1,7 +1,7 @@
 #include "minisphere.h"
 #include "api.h"
 #include "async.h"
-#include "audialis.h"
+#include "audio.h"
 #include "debugger.h"
 #include "galileo.h"
 #include "input.h"

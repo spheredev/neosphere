@@ -51,9 +51,6 @@
     <ClCompile Include="..\src\engine\atlas.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\audialis.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\engine\bytearray.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,6 +138,9 @@
     <ClCompile Include="..\src\shared\rubber_duk.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\engine\audio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -183,9 +183,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\engine\atlas.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\engine\audialis.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\engine\bytearray.h">
@@ -279,6 +276,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\rubber_duk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\engine\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

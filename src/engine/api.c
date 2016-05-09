@@ -1,7 +1,7 @@
 #include "minisphere.h"
 #include "animation.h"
 #include "async.h"
-#include "audialis.h"
+#include "audio.h"
 #include "bytearray.h"
 #include "color.h"
 #include "debugger.h"

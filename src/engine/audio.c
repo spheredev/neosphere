@@ -1,8 +1,9 @@
 #include "minisphere.h"
+#include "audio.h"
+
 #include "api.h"
 #include "bytearray.h"
 
-#include "audialis.h"
 
 static duk_ret_t js_GetDefaultMixer            (duk_context* ctx);
 static duk_ret_t js_new_Mixer                  (duk_context* ctx);

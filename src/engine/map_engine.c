@@ -1,6 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
-#include "audialis.h"
+#include "audio.h"
 #include "color.h"
 #include "image.h"
 #include "input.h"
