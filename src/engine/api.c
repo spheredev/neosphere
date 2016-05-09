@@ -187,7 +187,7 @@ initialize_api(duk_context* ctx)
 	// initialize subsystem APIs
 	init_animation_api();
 	init_async_api();
-	init_audialis_api();
+	init_audio_api();
 	init_bytearray_api();
 	init_color_api();
 	init_file_api();

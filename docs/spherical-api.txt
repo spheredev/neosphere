@@ -1166,17 +1166,13 @@ Mixer:volume (read/write)
     Gets or sets the output volume of the mixer. This will affect the volume of
     any sounds played through the mixer.
 
-new Sound(filename[, mixer]);
+new Sound(filename);
 
     SphereFS compliant.
 
     Constructs a Sound object from the specified audio file.  Supported sound
     formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  minisphere does
     not support mp3 or MIDI.
-
-    `mixer`, if provided, specifies the mixer which will be used to play the
-    sound.  If no mixer is specified, the built-in stereo mixer will be used.
-    See GetDefaultMixer() above.
 
 Sound:playing (read-only)
 
@@ -1185,10 +1181,6 @@ Sound:playing (read-only)
 Sound:length (read-only)
 
     Gets the length of the sound in microseconds.
-
-Sound:mixer (read/write)
-
-    Gets or sets the mixer used to play the sound.
 
 Sound:pan (read/write)
 
@@ -1224,7 +1216,7 @@ Sound:pause();
 
     Pauses the sound.  If it is already paused, this has no effect.
 
-Sound:play([is_looping]);
+Sound:play([mixer, ][is_looping]);
 
     Begins or resumes sound playback. The semantics of this function are a bit
     counterintuitive, but match the behavior of Sphere 1.5.  When called with no
@@ -1232,6 +1224,10 @@ Sound:play([is_looping]);
     restarted from the beginning (even if it was already playing).  If
     `is_looping` is true, the sound will automatically repeat when playback
     ends.
+
+    `mixer`, if provided, specifies the mixer which will be used to play the
+    sound.  If no mixer is specified, the built-in stereo mixer will be used.
+    See GetDefaultMixer() above.
 
 Sound:reset();
 
@@ -1262,7 +1258,8 @@ SoundStream:bufferSize (read-only)
 
 SoundStream:mixer (read/write)
 
-    Gets or sets the mixer used to play the stream.
+    Gets the mixer current being used to play the stream.  This will be null if
+    the stream is stopped.
 
 SoundStream:play([mixer]);
 

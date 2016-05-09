@@ -135,6 +135,7 @@ static duk_ret_t js_ScreenToMapY            (duk_context* ctx);
 static duk_ret_t js_SetDelayScript          (duk_context* ctx);
 static duk_ret_t js_UpdateMapEngine         (duk_context* ctx);
 
+static mixer_t*            s_bgm_mixer = NULL;
 static person_t*           s_camera_person = NULL;
 static int                 s_cam_x = 0;
 static int                 s_cam_y = 0;
@@ -308,6 +309,9 @@ initialize_map_engine(void)
 	console_log(1, "initializing map engine");
 	
 	initialize_persons_manager();
+	initialize_audio();
+	s_bgm_mixer = mixer_new(44100, 16, 2);
+	
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
 	s_map = NULL; s_map_filename = NULL;
 	s_camera_person = NULL;
@@ -342,7 +346,11 @@ shutdown_map_engine(void)
 	free_script(s_render_script);
 	free_map(s_map);
 	free(s_players);
+	
+	mixer_free(s_bgm_mixer);
+	
 	shutdown_persons_manager();
+	shutdown_audio();
 }
 
 bool
@@ -1105,9 +1113,9 @@ change_map(const char* filename, bool preserve_persons)
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
 		path = make_sfs_path(lstr_cstr(s_map->bgm_file), "sounds", true);
-		if (s_map_bgm_stream = sound_load(path_cstr(path), get_default_mixer())) {
-			sound_set_looping(s_map_bgm_stream, true);
-			sound_play(s_map_bgm_stream);
+		if (s_map_bgm_stream = sound_new(path_cstr(path))) {
+			sound_set_repeat(s_map_bgm_stream, true);
+			sound_play(s_map_bgm_stream, s_bgm_mixer);
 		}
 		path_free(path);
 	}

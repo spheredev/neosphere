@@ -86,13 +86,13 @@ static unsigned int s_next_shape_id = 0;
 void
 initialize_galileo(void)
 {
-	console_log(1, "initializing Galileo");
+	console_log(1, "initializing Galileo subsystem");
 }
 
 void
 shutdown_galileo(void)
 {
-	console_log(1, "shutting down Galileo");
+	console_log(1, "shutting down Galileo subsystem");
 	shader_free(s_def_shader);
 }
 
