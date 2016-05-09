@@ -142,7 +142,7 @@ initialize_api(duk_context* ctx)
 	duk_put_prop_string(ctx, -2, "prototypes");
 	duk_pop(ctx);
 
-	// register module search callback
+	// register the CommonJS module loader
 	duk_get_global_string(ctx, "Duktape");
 	duk_push_c_function(ctx, duk_mod_search, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "modSearch");

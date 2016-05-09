@@ -1,6 +1,17 @@
 minisphere Changelog
 ====================
 
+v3.1.1 - TBD
+------------
+
+* Fixes a bug in miniRT/music where it referenced `console.write()` instead of
+  `console.log()`, causing it to throw an error and potentially crash the game
+  when logging error messages.
+* Sound.play() will now accept a Mixer as its second or third argument.
+  Previously the Mixer had to be passed to the Sound constructor, which was
+  awkward.
+* The map engine now uses its own mixer for map-defined BGM.
+
 v3.1.0 - May 7, 2015
 --------------------
 
