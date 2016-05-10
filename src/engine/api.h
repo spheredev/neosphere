@@ -10,7 +10,9 @@ void   api_register_ctor      (duk_context* ctx, const char* name, duk_c_functio
 bool   api_register_extension (const char* designation);
 void   api_register_function  (duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn);
 void   api_register_method    (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
+void   api_register_module    (const char* name, duk_c_function initializer, duk_c_function finalizer);
 void   api_register_prop      (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter);
+void   api_register_type      (duk_context* ctx, const char* name, duk_c_function finalizer);
 
 duk_bool_t duk_is_sphere_obj      (duk_context* ctx, duk_idx_t index, const char* ctor_name);
 noreturn   duk_error_ni           (duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...);
