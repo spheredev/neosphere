@@ -1,5 +1,5 @@
 /**
- *  Link 0.3.0 for Sphere 2.0  (c) 2015 Andrew Helenius
+ *  Link 0.3.0 for minisphere  (c) 2015 Andrew Helenius
  *  CommonJS module by Fat Cerberus
  * 
  *  Link is a very fast general-purpose functional programming library inspired

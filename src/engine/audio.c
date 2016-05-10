@@ -71,14 +71,15 @@ struct sound
 	float                 gain;
 	bool                  is_looping;
 	mixer_t*              mixer;
+	bool                  has_played;
 	char*                 path;
 	float                 pan;
 	float                 pitch;
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
-static bool reload_sound(sound_t* sound);
-static void update_stream(stream_t* stream);
+static bool reload_sound  (sound_t* sound);
+static void update_stream (stream_t* stream);
 
 static bool                 s_have_sound;
 static ALLEGRO_AUDIO_DEPTH  s_bit_depth;
@@ -393,7 +394,9 @@ sound_play(sound_t* sound, mixer_t* mixer)
 		old_mixer = sound->mixer;
 		sound->mixer = mixer_ref(mixer);
 		mixer_free(old_mixer);
-		reload_sound(sound);
+		if (sound->has_played)
+			reload_sound(sound);
+		sound->has_played = true;
 		al_attach_audio_stream_to_mixer(sound->stream, sound->mixer->ptr);
 		al_set_audio_stream_playing(sound->stream, true);
 		sound_ref(sound);
@@ -596,6 +599,7 @@ reload_sound(sound_t* sound)
 		al_set_audio_stream_playmode(sound->stream, play_mode);
 		al_set_audio_stream_playing(sound->stream, false);
 	}
+	sound->has_played = false;
 	return true;
 
 on_error:

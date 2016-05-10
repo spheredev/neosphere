@@ -4,8 +4,7 @@
  *	(c) 2015-2016 Fat Cerberus
 **/
 
-if (typeof exports === 'undefined')
-{
+if (typeof exports === 'undefined') {
 	throw new TypeError("script must be loaded with require()");
 }
 

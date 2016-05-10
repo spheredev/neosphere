@@ -1,5 +1,5 @@
-minisphere 3.1
-==============
+minisphere 3.1.1
+================
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
 (https://travis-ci.org/fatcerberus/minisphere)
@@ -42,8 +42,8 @@ Download
 ========
 
 The latest stable minisphere release at the time of this writing is
-**minisphere 3.1.0**, released on Saturday, May 7, 2016.  The binaries are
-provided through GitHub, and the latest version is always available for
+**minisphere 3.1.1**, released on Tuesday, May 10, 2016.  minisphere binaries
+are provided through GitHub, and the latest version is always available for
 download here:
 
 * <https://github.com/fatcerberus/minisphere/releases>
@@ -55,7 +55,7 @@ refer to [`RELEASES.md`](RELEASES.md).
 License
 =======
 
-minisphere and accompanying command-line tools are licensed under the terms of
-the BSD-3-clause license.  Practically speaking, this means the engine can be
-used for any purpose, even commercially, with no restriction other than
+minisphere and its accompanying command-line tools are licensed under the terms
+of the BSD-3-clause license.  Practically speaking, this means the engine can
+be used for any purpose, even commercially, with no restriction other than
 maintain the original copyright notice.

@@ -7,8 +7,7 @@
  *  for Sphere 1.5.
 **/
 
-if (typeof exports === 'undefined')
-{
+if (typeof exports === 'undefined') {
     throw new TypeError("script must be loaded with require()");
 }
 

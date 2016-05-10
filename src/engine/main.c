@@ -1,6 +1,7 @@
 #include "minisphere.h"
 
 #include <libmng.h>
+#include <zlib.h>
 #include "api.h"
 #include "async.h"
 #include "audio.h"
@@ -688,7 +689,7 @@ print_banner(bool want_copyright, bool want_deps)
 	
 	printf("%s %s JS Game Engine (%s)\n", PRODUCT_NAME, VERSION_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
-		printf("the lightweight JavaScript-based game engine\n");
+		printf("a lightweight JavaScript-powered game engine\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");
 	}
 	if (want_deps) {

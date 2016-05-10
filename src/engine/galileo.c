@@ -137,13 +137,13 @@ group_new(shader_t* shader)
 	group_t* group;
 
 	console_log(4, "creating new group #%u", s_next_group_id);
-	
+
 	group = calloc(1, sizeof(group_t));
 	group->shapes = vector_new(sizeof(shape_t*));
 	group->transform = matrix_new();
 	group->shader = shader_ref(shader);
 	group->uniforms = vector_new(sizeof(struct uniform));
-	
+
 	group->id = s_next_group_id++;
 	return group_ref(group);
 }
@@ -160,7 +160,7 @@ void
 group_free(group_t* group)
 {
 	shape_t** i_shape;
-	
+
 	iter_t iter;
 
 	if (group == NULL || --group->refcount > 0)
@@ -228,7 +228,7 @@ group_draw(const group_t* group, image_t* surface)
 
 	if (surface != NULL)
 		al_set_target_bitmap(get_image_bitmap(surface));
-	
+
 #if defined(MINISPHERE_USE_SHADERS)
 	if (are_shaders_active()) {
 		shader_use(group->shader != NULL ? group->shader : get_default_shader());
@@ -254,7 +254,7 @@ group_draw(const group_t* group, image_t* surface)
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
 	screen_transform(g_screen, NULL);
-	
+
 #if defined(MINISPHERE_USE_SHADERS)
 	shader_use(NULL);
 #endif
@@ -316,11 +316,11 @@ shape_new(shape_type_t type, image_t* texture)
 		: type == SHAPE_TRI_STRIP ? "triangle strip"
 		: "automatic";
 	console_log(4, "creating shape #%u as %s", s_next_shape_id, type_name);
-	
+
 	shape = calloc(1, sizeof(shape_t));
 	shape->texture = ref_image(texture);
 	shape->type = type;
-	
+
 	shape->id = s_next_shape_id++;
 	return shape_ref(shape);
 }
@@ -380,7 +380,7 @@ void
 shape_set_texture(shape_t* shape, image_t* texture)
 {
 	image_t* old_texture;
-	
+
 	old_texture = shape->texture;
 	shape->texture = ref_image(texture);
 	free_image(old_texture);
@@ -474,7 +474,7 @@ assign_default_uv(shape_t* shape)
 	// winding from top left is assumed; if the shape is wound any other way, the
 	// texture will be rotated accordingly. if this is not what you want, explicit U/V
 	// coordinates should be supplied.
-	
+
 	double phi;
 
 	int i;
@@ -537,7 +537,7 @@ render_shape(shape_t* shape)
 			: shape->type == SHAPE_TRI_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
 			: shape->type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
 			: ALLEGRO_PRIM_POINT_LIST;
-	
+
 	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (shape->vbuf != NULL)
@@ -748,7 +748,7 @@ static duk_ret_t
 js_GetDefaultShaderProgram(duk_context* ctx)
 {
 	shader_t* shader;
-	
+
 	if (!(shader = get_default_shader()))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetDefaultShaderProgram(): no default shader available or shader couldn't be built");
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
@@ -773,7 +773,7 @@ js_new_Shape(duk_context* ctx)
 	duk_require_object_coercible(ctx, 0);
 	texture = !duk_is_null(ctx, 1) ? duk_require_sphere_obj(ctx, 1, "Image") : NULL;
 	type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
-	
+
 	if (!duk_is_array(ctx, 0))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): first argument must be an array");
 	if (type < 0 || type >= SHAPE_MAX)
@@ -870,7 +870,7 @@ static duk_ret_t
 js_new_Transform(duk_context* ctx)
 {
 	matrix_t* matrix;
-	
+
 	matrix = matrix_new();
 	duk_push_sphere_obj(ctx, "Transform", matrix);
 	return 1;
