@@ -209,9 +209,14 @@ initialize_api(duk_context* ctx)
 void
 shutdown_api(void)
 {
+	iter_t         iter;
+	struct module* module;
+
 	console_log(1, "shutting down Sphere API");
 
-	lstr_free(s_user_agent);
+	iter = vector_enum(s_modules);
+	while (module = vector_next(&iter))
+		free(module->name);
 	vector_free(s_modules);
 }
 
