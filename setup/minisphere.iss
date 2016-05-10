@@ -49,17 +49,17 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Types]
 Name: "normal"; Description: "Standard Redistributable (engine only)"
-Name: "developer"; Description: "minisphere Game Development Kit (GDK)"
+Name: "developer"; Description: "Spherical Game Development Kit (minisphere Console)"
 Name: "custom"; Description: "Custom Installation"; Flags: iscustom
 
 [Components]
-Name: "engine"; Description: "{#AppName} JavaScript Game Engine {#AppVersion3} [Required]"; Types: normal developer custom; Flags: fixed
-Name: "spherun"; Description: "Game Development Kit with minisphere Console"; Types: developer; Flags: checkablealone
+Name: "engine"; Description: "{#AppName} {#AppVersion3} JavaScript Game Engine [Required]"; Types: normal developer custom; Flags: fixed
+Name: "spherun"; Description: "Spherical GDK / minisphere Console"; Types: developer; Flags: checkablealone
 #ifdef HAVE_SPHERE_STUDIO
 Name: "spherun/ide"; Description: "Sphere Studio 1.2.1: integrated development environment"; Types: developer
 #endif
-Name: "spherun/cell"; Description: "Cell v{#AppVersion2}: the Sphere Packaging Compiler"; Types: developer
-Name: "spherun/ssj"; Description: "SSJ v{#AppVersion2}: the JavaScript debugger for Sphere"; Types: developer
+Name: "spherun/cell"; Description: "Cell v{#AppVersion2}: the Sphere packaging compiler"; Types: developer
+Name: "spherun/ssj"; Description: "SSJ v{#AppVersion2}: the Sphere JavaScript debugger"; Types: developer
 
 [Tasks]
 Name: "assoc"; Description: "&Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
