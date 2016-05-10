@@ -152,6 +152,7 @@ update_audio(void)
 	while (p_sound = vector_next(&iter)) {
 		if (sound_playing(*p_sound))
 			continue;
+		(*p_sound)->has_played = true;
 		sound_free(*p_sound);
 		iter_remove(&iter);
 	}
@@ -396,7 +397,8 @@ sound_play(sound_t* sound, mixer_t* mixer)
 		mixer_free(old_mixer);
 		if (sound->has_played)
 			reload_sound(sound);
-		sound->has_played = true;
+		else
+			al_rewind_audio_stream(sound->stream);
 		al_attach_audio_stream_to_mixer(sound->stream, sound->mixer->ptr);
 		al_set_audio_stream_playing(sound->stream, true);
 		sound_ref(sound);

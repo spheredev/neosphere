@@ -1,13 +1,20 @@
 minisphere Changelog
 ====================
 
+v3.1.2 - TBD
+------------
+
+* Fixes an issue where a sound would be reloaded the first a script called
+  `Sound#play()`, potentially triggering a deadlock bug in Allegro 5.0.  This
+  affected Ubuntu only, as the Windows build uses Allegro 5.2.
+
 v3.1.1 - May 10, 2016
 ---------------------
 
 * Fixes a bug in miniRT/music where it tried to call `console.write()` instead
   of `console.log()`, causing it to throw an error and potentially crash the
   game when logging error messages.
-* Sound.play() will now accept a Mixer as its second or third argument.
+* `Sound#play()` will now accept a Mixer as its second or third argument.
   Previously the Mixer had to be passed to the Sound constructor, which was
   awkward.
 * The map engine now uses its own mixer for map-defined BGM.

@@ -30,7 +30,6 @@ static duk_ret_t js_Transform_rotate        (duk_context* ctx);
 static duk_ret_t js_Transform_scale         (duk_context* ctx);
 static duk_ret_t js_Transform_translate     (duk_context* ctx);
 
-static void assign_default_uv   (shape_t* shape);
 static void free_cached_uniform (group_t* group, const char* name);
 static bool have_vertex_buffer  (const shape_t* shape);
 static void render_shape        (shape_t* shape);
@@ -406,6 +405,30 @@ shape_add_vertex(shape_t* shape, vertex_t vertex)
 }
 
 void
+shape_calculate_uv(shape_t* shape)
+{
+	// this assigns default UV coordinates to a shape's vertices. note that clockwise
+	// winding from top left is assumed; if the shape is wound any other way, the
+	// texture will be rotated accordingly. if this is not what you want, explicit U/V
+	// coordinates should be supplied.
+
+	double phi;
+
+	int i;
+
+	console_log(4, "auto-calculating U/V for shape #%u", shape->id);
+
+	for (i = 0; i < shape->num_vertices; ++i) {
+		// circumscribe the UV coordinate space.
+		// the circumcircle is rotated 135 degrees counterclockwise, which ensures
+		// that the top-left corner of a clockwise quad is mapped to (0,0).
+		phi = 2 * M_PI * i / shape->num_vertices - M_PI_4 * 3;
+		shape->vertices[i].u = cos(phi) * M_SQRT1_2 + 0.5;
+		shape->vertices[i].v = sin(phi) * -M_SQRT1_2 + 0.5;
+	}
+}
+
+void
 shape_draw(shape_t* shape, matrix_t* matrix, image_t* surface)
 {
 	if (surface != NULL)
@@ -465,30 +488,6 @@ shape_upload(shape_t* shape)
 		shape->vbuf = NULL;
 	}
 #endif
-}
-
-static void
-assign_default_uv(shape_t* shape)
-{
-	// this assigns default UV coordinates to a shape's vertices. note that clockwise
-	// winding from top left is assumed; if the shape is wound any other way, the
-	// texture will be rotated accordingly. if this is not what you want, explicit U/V
-	// coordinates should be supplied.
-
-	double phi;
-
-	int i;
-
-	console_log(4, "auto-calculating U/V for shape #%u", shape->id);
-
-	for (i = 0; i < shape->num_vertices; ++i) {
-		// circumscribe the UV coordinate space.
-		// the circumcircle is rotated 135 degrees counterclockwise, which ensures
-		// that the top-left corner of a clockwise quad is mapped to (0,0).
-		phi = 2 * M_PI * i / shape->num_vertices - M_PI_4 * 3;
-		shape->vertices[i].u = cos(phi) * M_SQRT1_2 + 0.5;
-		shape->vertices[i].v = sin(phi) * -M_SQRT1_2 + 0.5;
-	}
 }
 
 static bool
@@ -802,7 +801,7 @@ js_new_Shape(duk_context* ctx)
 		shape_add_vertex(shape, vertex);
 	}
 	if (is_missing_uv)
-		assign_default_uv(shape);
+		shape_calculate_uv(shape);
 	shape_upload(shape);
 	duk_push_sphere_obj(ctx, "Shape", shape);
 	return 1;
