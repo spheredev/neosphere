@@ -1,9 +1,9 @@
 #include "minisphere.h"
+#include "tileset.h"
+
 #include "atlas.h"
 #include "image.h"
 #include "obsmap.h"
-
-#include "tileset.h"
 
 struct tileset
 {

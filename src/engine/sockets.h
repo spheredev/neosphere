@@ -1,3 +1,6 @@
+#ifndef MINISPHERE__SOCKETS_H__INCLUDED
+#define MINISPHERE__SOCKETS_H__INCLUDED
+
 typedef struct socket socket_t;
 
 socket_t*   connect_to_host     (const char* hostname, int port, size_t buffer_size);
@@ -16,3 +19,5 @@ void        shutdown_socket     (socket_t* socket);
 void        write_socket        (socket_t* socket, const uint8_t* data, size_t n_bytes);
 
 void init_sockets_api (void);
+
+#endif // MINISPHERE__SOCKETS_H__INCLUDED

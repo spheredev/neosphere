@@ -1,7 +1,7 @@
 #include "minisphere.h"
-#include "api.h"
-
 #include "bytearray.h"
+
+#include "api.h"
 
 static duk_ret_t js_CreateStringFromByteArray (duk_context* ctx);
 static duk_ret_t js_HashByteArray             (duk_context* ctx);

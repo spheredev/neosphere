@@ -1,4 +1,6 @@
 #include "minisphere.h"
+#include "api.h"
+
 #include "animation.h"
 #include "async.h"
 #include "audio.h"
@@ -19,8 +21,6 @@
 #include "surface.h"
 #include "transpiler.h"
 #include "windowstyle.h"
-
-#include "api.h"
 
 #define SPHERE_API_VERSION 2.0
 #define SPHERE_API_LEVEL   1

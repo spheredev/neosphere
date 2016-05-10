@@ -1,7 +1,7 @@
 #include "minisphere.h"
-#include "vector.h"
-
 #include "spk.h"
+
+#include "vector.h"
 
 struct spk
 {

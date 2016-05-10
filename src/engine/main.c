@@ -1,4 +1,6 @@
 #include "minisphere.h"
+
+#include <libmng.h>
 #include "api.h"
 #include "async.h"
 #include "audio.h"
@@ -8,8 +10,6 @@
 #include "map_engine.h"
 #include "rng.h"
 #include "spriteset.h"
-
-#include <libmng.h>
 
 // enable Windows visual styles (MSVC)
 #ifdef _MSC_VER

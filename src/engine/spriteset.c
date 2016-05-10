@@ -1,10 +1,10 @@
 #include "minisphere.h"
+#include "spriteset.h"
+
 #include "api.h"
 #include "atlas.h"
 #include "image.h"
 #include "vector.h"
-
-#include "spriteset.h"
 
 #pragma pack(push, 1)
 struct rss_header

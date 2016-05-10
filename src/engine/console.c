@@ -1,5 +1,4 @@
 #include "minisphere.h"
-
 #include "console.h"
 
 static int s_verbosity = 1;

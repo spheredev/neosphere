@@ -1,9 +1,9 @@
 #include "minisphere.h"
+#include "image.h"
+
 #include "api.h"
 #include "color.h"
 #include "surface.h"
-
-#include "image.h"
 
 struct image
 {

@@ -1,8 +1,9 @@
 #include "minisphere.h"
+#include "input.h"
+
 #include "api.h"
 #include "debugger.h"
 #include "file.h"
-#include "input.h"
 #include "vector.h"
 
 #define MAX_JOYSTICKS   4

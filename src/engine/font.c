@@ -1,11 +1,11 @@
 #include "minisphere.h"
+#include "font.h"
+
 #include "api.h"
 #include "atlas.h"
 #include "color.h"
 #include "image.h"
 #include "unicode.h"
-
-#include "font.h"
 
 static duk_ret_t js_GetSystemFont          (duk_context* ctx);
 static duk_ret_t js_LoadFont               (duk_context* ctx);

@@ -1,3 +1,6 @@
+#ifndef MINISPHERE__WINDOWSTYLE_H__INCLUDED
+#define MINISPHERE__WINDOWSTYLE_H__INCLUDED
+
 #include "color.h"
 
 typedef struct windowstyle windowstyle_t;
@@ -9,3 +12,5 @@ void           draw_window      (windowstyle_t* winstyle, color_t mask, int x, i
 
 void init_windowstyle_api        (void);
 void duk_push_sphere_windowstyle (duk_context* ctx, windowstyle_t* winstyle);
+
+#endif // MINISPHERE__WINDOWSTYLE_H__INCLUDED

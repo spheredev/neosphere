@@ -1,7 +1,7 @@
 #include "minisphere.h"
-#include "image.h"
-
 #include "atlas.h"
+
+#include "image.h"
 
 struct atlas
 {

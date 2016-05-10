@@ -1,9 +1,9 @@
 #include "minisphere.h"
+#include "surface.h"
+
 #include "api.h"
 #include "color.h"
 #include "image.h"
-
-#include "surface.h"
 
 static uint8_t* duk_require_rgba_lut (duk_context* ctx, duk_idx_t index);
 

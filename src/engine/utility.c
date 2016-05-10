@@ -1,7 +1,7 @@
 #include "minisphere.h"
-#include "api.h"
-
 #include "utility.h"
+
+#include "api.h"
 
 const path_t*
 enginepath(void)

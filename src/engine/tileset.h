@@ -3,6 +3,7 @@
 
 #include "atlas.h"
 #include "image.h"
+#include "obsmap.h"
 
 typedef struct tileset tileset_t;
 

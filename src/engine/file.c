@@ -1,8 +1,8 @@
 #include "minisphere.h"
+#include "file.h"
+
 #include "api.h"
 #include "bytearray.h"
-
-#include "file.h"
 
 static duk_ret_t js_DoesFileExist    (duk_context* ctx);
 static duk_ret_t js_GetDirectoryList (duk_context* ctx);

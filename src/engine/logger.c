@@ -1,8 +1,8 @@
 #include "minisphere.h"
+#include "logger.h"
+
 #include "api.h"
 #include "lstring.h"
-
-#include "logger.h"
 
 struct logger
 {

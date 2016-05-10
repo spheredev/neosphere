@@ -1,10 +1,9 @@
 #include "minisphere.h"
-#include "api.h"
-#include "image.h"
-
 #include "animation.h"
 
 #include <libmng.h>
+#include "api.h"
+#include "image.h"
 
 static duk_ret_t js_LoadAnimation             (duk_context* ctx);
 static duk_ret_t js_new_Animation             (duk_context* ctx);

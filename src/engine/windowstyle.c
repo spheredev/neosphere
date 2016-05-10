@@ -1,9 +1,9 @@
 #include "minisphere.h"
+#include "windowstyle.h"
+
 #include "api.h"
 #include "color.h"
 #include "image.h"
-
-#include "windowstyle.h"
 
 static duk_ret_t js_GetSystemWindowStyle      (duk_context* ctx);
 static duk_ret_t js_LoadWindowStyle           (duk_context* ctx);

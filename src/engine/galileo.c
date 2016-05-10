@@ -1,10 +1,10 @@
 #include "minisphere.h"
+#include "galileo.h"
+
 #include "api.h"
 #include "color.h"
 #include "shader.h"
 #include "vector.h"
-
-#include "galileo.h"
 
 static duk_ret_t js_GetDefaultShaderProgram (duk_context* ctx);
 static duk_ret_t js_new_Group               (duk_context* ctx);

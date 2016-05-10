@@ -1,8 +1,8 @@
 #include "minisphere.h"
+#include "rng.h"
+
 #include "api.h"
 #include "mt19937ar.h"
-
-#include "rng.h"
 
 static duk_ret_t js_RNG_seed    (duk_context* ctx);
 static duk_ret_t js_RNG_chance  (duk_context* ctx);

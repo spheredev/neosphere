@@ -1,11 +1,11 @@
 #include "minisphere.h"
+#include "persons.h"
+
 #include "api.h"
 #include "color.h"
 #include "map_engine.h"
 #include "obsmap.h"
 #include "spriteset.h"
-
-#include "persons.h"
 
 struct person
 {

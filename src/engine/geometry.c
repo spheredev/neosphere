@@ -1,5 +1,4 @@
 #include "minisphere.h"
-
 #include "geometry.h"
 
 rect_t

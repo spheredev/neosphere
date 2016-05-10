@@ -1,5 +1,4 @@
 #include "minisphere.h"
-
 #include "obsmap.h"
 
 struct obsmap

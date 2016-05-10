@@ -1,4 +1,6 @@
 #include "minisphere.h"
+#include "map_engine.h"
+
 #include "api.h"
 #include "audio.h"
 #include "color.h"
@@ -10,8 +12,6 @@
 #include "surface.h"
 #include "tileset.h"
 #include "vector.h"
-
-#include "map_engine.h"
 
 #define MAX_PLAYERS 4
 
