@@ -55,6 +55,36 @@ struct socket
 };
 
 unsigned int s_next_socket_id = 0;
+unsigned int s_num_refs       = 0;
+
+bool
+initialize_sockets(void)
+{
+	if (++s_num_refs > 1)
+		return true;
+
+	console_log(1, "initializing sockets subsystem");
+	console_log(2, "    Dyad.c %s", dyad_getVersion());
+	dyad_init();
+	dyad_setUpdateTimeout(0.0);
+	return true;
+}
+
+void
+shutdown_sockets(void)
+{
+	if (--s_num_refs > 0)
+		return;
+
+	console_log(1, "shutting down sockets subsystem");
+	dyad_shutdown();
+}
+
+void
+update_sockets(void)
+{
+	dyad_update();
+}
 
 socket_t*
 connect_to_host(const char* hostname, int port, size_t buffer_size)

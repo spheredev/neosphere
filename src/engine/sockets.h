@@ -3,6 +3,9 @@
 
 typedef struct socket socket_t;
 
+bool        initialize_sockets  (void);
+void        shutdown_sockets    (void);
+void        update_sockets      (void);
 socket_t*   connect_to_host     (const char* hostname, int port, size_t buffer_size);
 socket_t*   listen_on_port      (const char* hostname, int port, size_t buffer_size, int max_backlog);
 socket_t*   ref_socket          (socket_t* socket);

@@ -10,6 +10,7 @@
 #include "input.h"
 #include "map_engine.h"
 #include "rng.h"
+#include "sockets.h"
 #include "spriteset.h"
 
 // enable Windows visual styles (MSVC)
@@ -301,7 +302,7 @@ do_events(void)
 {
 	ALLEGRO_EVENT event;
 
-	dyad_update();
+	update_sockets();
 
 #if defined(MINISPHERE_SPHERUN)
 	update_debugger();
@@ -465,6 +466,7 @@ initialize_engine(void)
 	initialize_galileo();
 	initialize_audio();
 	initialize_input();
+	initialize_sockets();
 	initialize_spritesets();
 	initialize_map_engine();
 	initialize_scripts();
@@ -493,6 +495,7 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	shutdown_input();
 	shutdown_scripts();
+	shutdown_sockets();
 
 	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);
