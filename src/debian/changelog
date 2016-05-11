@@ -1,3 +1,15 @@
+minisphere (3.1.2) trusty; urgency=low
+
+  * Fixes an issue where sounds were reinitialized whenever a script called
+    `Sound#play()` (including the first time), potentially triggering a deadlock
+    bug in Allegro 5.0.  This affects Linux only, as Allegro 5.2 is used on
+    Windows.
+  * Fixes a regression in minisphere 3.1.0 which could cause games with an
+    otherwise valid `.s2gm` manifest to fail to start with an Unsupported Engine
+    error.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 11 May 2016 00:00:00 -0500
+
 minisphere (3.1.1) trusty; urgency=low
 
   * Fixes a bug in miniRT/music where it tried to call `console.write()` instead
@@ -8,7 +20,7 @@ minisphere (3.1.1) trusty; urgency=low
     awkward.
   * The map engine now uses its own mixer for map-defined BGM.
 
- -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 10 May 2016 00:00:00 -0500
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 10 May 2016 00:00:00 -0500
 
 minisphere (3.1.0) trusty; urgency=low
 

@@ -1,4 +1,4 @@
-minisphere 3.1.1
+minisphere 3.1.2
 ================
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
@@ -42,7 +42,7 @@ Download
 ========
 
 The latest stable minisphere release at the time of this writing is
-**minisphere 3.1.1**, released on Tuesday, May 10, 2016.  minisphere binaries
+**minisphere 3.1.2**, released on Wednesday, May 11, 2016.  minisphere binaries
 are provided through GitHub, and the latest version is always available for
 download here:
 

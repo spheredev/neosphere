@@ -9,7 +9,7 @@
 #define AppName "minisphere"
 #define AppPublisher "Fat Cerberus"
 #define AppVersion2 "3.1"
-#define AppVersion3 "3.1.1"
+#define AppVersion3 "3.1.2"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -56,10 +56,10 @@ Name: "custom"; Description: "Custom Installation"; Flags: iscustom
 Name: "engine"; Description: "{#AppName} {#AppVersion3} JavaScript Game Engine [Required]"; Types: normal developer custom; Flags: fixed
 Name: "spherun"; Description: "Spherical GDK / minisphere Console"; Types: developer; Flags: checkablealone
 #ifdef HAVE_SPHERE_STUDIO
-Name: "spherun/ide"; Description: "Sphere Studio 1.2.1: integrated development environment"; Types: developer
+Name: "spherun/ide"; Description: "Sphere Studio - the Sphere development environment"; Types: developer
 #endif
-Name: "spherun/cell"; Description: "Cell v{#AppVersion2}: the Sphere packaging compiler"; Types: developer
-Name: "spherun/ssj"; Description: "SSJ v{#AppVersion2}: the Sphere JavaScript debugger"; Types: developer
+Name: "spherun/cell"; Description: "Cell - the Sphere packaging compiler"; Types: developer
+Name: "spherun/ssj"; Description: "SSJ - the Sphere JavaScript debugger"; Types: developer
 
 [Tasks]
 Name: "assoc"; Description: "&Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
