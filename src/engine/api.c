@@ -232,10 +232,10 @@ api_have_extension(const char* name)
 	return false;
 }
 
-int
-api_level(void)
+double
+api_version(void)
 {
-	return SPHERE_API_LEVEL;
+	return SPHERE_API_VERSION;
 }
 
 void

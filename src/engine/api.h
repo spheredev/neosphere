@@ -4,7 +4,7 @@
 void   initialize_api         (duk_context* ctx);
 void   shutdown_api           (void);
 bool   api_have_extension     (const char* name);
-int    api_level              (void);
+double api_version            (void);
 void   api_register_const     (duk_context* ctx, const char* name, double value);
 void   api_register_ctor      (duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer);
 bool   api_register_extension (const char* designation);

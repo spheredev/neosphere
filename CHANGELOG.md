@@ -4,9 +4,12 @@ minisphere Changelog
 v3.1.2 - TBD
 ------------
 
-* Fixes an issue where a sound would be reloaded the first a script called
-  `Sound#play()`, potentially triggering a deadlock bug in Allegro 5.0.  This
-  affected Ubuntu only, as the Windows build uses Allegro 5.2.
+* Fixes an issue where a sound would be reinitialized whenever a script called
+  `Sound#play()` (including the first time), potentially triggering a deadlock
+  bug in Allegro 5.0.  This affects Linux only, as Allegro 5.2 is used on
+  Windows.
+* Fixes a regression in 3.1.0 which could cause games with an otherwise valid
+  `.s2gm` manifest to fail to start with an Unsupported Engine error.
 
 v3.1.1 - May 10, 2016
 ---------------------

@@ -778,9 +778,9 @@ verify_requirements(sandbox_t* fs)
 		duk_pop(g_duk);
 
 		// check for minimum API version
-		if (duk_get_prop_string(g_duk, -1, "apiLevel")) {
+		if (duk_get_prop_string(g_duk, -1, "apiVersion")) {
 			if (duk_is_number(g_duk, -1)) {
-				if (duk_get_int(g_duk, -1) > api_level())
+				if (duk_get_number(g_duk, -1) > api_version())
 					goto is_unsupported;
 			}
 		}

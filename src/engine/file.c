@@ -76,7 +76,7 @@ static unsigned int s_next_file_id = 0;
 kevfile_t*
 kev_open(sandbox_t* fs, const char* filename, bool can_create)
 {
-	kevfile_t*   file;
+	kevfile_t*    file;
 	ALLEGRO_FILE* memfile = NULL;
 	void*         slurp;
 	size_t        slurp_size;
@@ -562,7 +562,7 @@ js_Rename(duk_context* ctx)
 static duk_ret_t
 js_OpenFile(duk_context* ctx)
 {
-	kevfile_t* file;
+	kevfile_t*  file;
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save", true);
@@ -575,7 +575,7 @@ js_OpenFile(duk_context* ctx)
 static duk_ret_t
 js_new_KevFile(duk_context* ctx)
 {
-	kevfile_t* file;
+	kevfile_t*  file;
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, NULL, false);
