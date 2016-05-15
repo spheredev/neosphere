@@ -31,7 +31,11 @@ static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static bool verify_requirements (sandbox_t* fs);
 
+#if DUK_VERSION >= 19999
+static void on_duk_fatal (void *udata, const char* msg);
+#else
 static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
+#endif
 
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
@@ -277,7 +281,11 @@ on_js_error:
 		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);
 		duk_push_string(g_duk, err_msg);
 	}
+#if DUK_VERSION >= 19999
+	duk_fatal(g_duk, duk_get_string(g_duk, -1));
+#else
 	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
+#endif
 }
 
 void
@@ -335,8 +343,13 @@ restart_engine(void)
 	longjmp(s_jmp_restart, 1);
 }
 
+#if DUK_VERSION >= 19999
+static void
+on_duk_fatal (void *udata, const char* msg)
+#else
 static void
 on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
+#endif
 {
 	wraptext_t*            error_info;
 	bool                   is_copied = true;
