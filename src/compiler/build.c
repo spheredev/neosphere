@@ -48,6 +48,48 @@ static void emit_op_begin       (build_t* build, const char* fmt, ...);
 static void emit_op_end         (build_t* build, const char* fmt, ...);
 static void validate_targets    (build_t* build);
 
+// Helper to push a file as a string.
+static const char *
+push_string_file(duk_context *ctx, const char *path)
+{
+	FILE* f = NULL;
+	char* buf;
+	long sz;
+
+	if (!path) {
+		goto fail;
+	}
+	f = fopen(path, "rb");
+	if (!f) {
+		goto fail;
+	}
+	if (fseek(f, 0, SEEK_END) < 0) {
+		goto fail;
+	}
+	sz = ftell(f);
+	if (sz < 0) {
+		goto fail;
+	}
+	if (fseek(f, 0, SEEK_SET) < 0) {
+		goto fail;
+	}
+	buf = (char *) duk_push_fixed_buffer(ctx, (duk_size_t) sz);
+	if ((size_t) fread(buf, 1, (size_t) sz, f) != (size_t) sz) {
+		goto fail;
+	}
+	(void) fclose(f);  /* ignore fclose() error */
+	f = NULL;
+	return duk_to_string(ctx, -1);
+
+ fail:
+	if (f) {
+		fclose(f);
+	}
+
+	duk_error(ctx, DUK_ERR_TYPE_ERROR, "read file error");
+	return NULL;
+}
+
 build_t*
 build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 {
@@ -221,6 +263,8 @@ build_prime(build_t* build, const char* rule_name)
 {
 	char    func_name[255];
 	path_t* script_path;
+	const char *ptr_path;
+	duk_int_t rc;
 
 	build->rule_name = strdup(rule_name);
 
@@ -228,12 +272,25 @@ build_prime(build_t* build, const char* rule_name)
 	emit_op_begin(build, "processing Cellscript.js rule `%s`", rule_name);
 	sprintf(func_name, "$%s", rule_name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
-	if (duk_peval_file(build->duktape, path_cstr(script_path)) != 0) {
-		path_free(script_path);
+
+	ptr_path = path_cstr(script_path);
+	push_string_file(build->duktape, ptr_path);  // Source file
+	duk_push_string(build->duktape, ptr_path);   // .fileName property for source
+	path_free(script_path); ptr_path = NULL;
+	rc = duk_pcompile(build->duktape, DUK_COMPILE_EVAL);
+	if (rc != 0) {
+		// XXX: pop?
 		build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
 		goto on_error;
 	}
-	path_free(script_path);
+	duk_push_global_object(build->duktape);
+	rc = duk_pcall_method(build->duktape, 0);
+	if (rc != 0) {
+		// XXX: pop?
+		build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+		goto on_error;
+	}
+
 	if (duk_get_global_string(build->duktape, func_name) && duk_is_callable(build->duktape, -1)) {
 		if (duk_pcall(build->duktape, 0) != 0) {
 			build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
