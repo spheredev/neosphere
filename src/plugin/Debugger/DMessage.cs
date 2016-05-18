@@ -55,6 +55,16 @@ namespace minisphere.Gdk.Debugger
         DebugPrint = 0x01,
     }
 
+    enum PrintType
+    {
+        Normal = 0x00,
+        Assert = 0x01,
+        Debug = 0x02,
+        Error = 0x03,
+        Info = 0x04,
+        Warn = 0x05,
+    }
+
     class DMessage
     {
         private DValue[] _fields;

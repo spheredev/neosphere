@@ -88,7 +88,6 @@ namespace minisphere.Gdk.Plugins
                     Inferior.Attached += duktape_Attached;
                     Inferior.Detached += duktape_Detached;
                     Inferior.Throw += duktape_ErrorThrown;
-                    Inferior.Alert += duktape_Print;
                     Inferior.Print += duktape_Print;
                     Inferior.Status += duktape_Status;
                     await Inferior.Connect(hostname, port);

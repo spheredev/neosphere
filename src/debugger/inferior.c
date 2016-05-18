@@ -479,7 +479,9 @@ on_error:
 static bool
 handle_notify(inferior_t* obj, const message_t* msg)
 {
-	int status_type;
+	const char*   heading;
+	enum print_op print_op;
+	int           status_type;
 
 	switch (message_tag(msg)) {
 	case MESSAGE_NFY:
@@ -487,7 +489,19 @@ handle_notify(inferior_t* obj, const message_t* msg)
 		case NFY_APPNOTIFY:
 			switch (message_get_int(msg, 1)) {
 			case APPNFY_DEBUG_PRINT:
-				printf("t: %s", message_get_string(msg, 2));
+				print_op = (enum print_op)message_get_int(msg, 2);
+				heading = print_op == PRINT_ASSERT ? "ASSERT"
+					: print_op == PRINT_DEBUG ? "debug"
+					: print_op == PRINT_ERROR ? "ERROR"
+					: print_op == PRINT_INFO ? "info"
+					: print_op == PRINT_WARN ? "warn"
+					: "log";
+				if (print_op == PRINT_ASSERT || print_op == PRINT_ERROR)
+					printf("\33[31;1m");
+				else if (print_op == PRINT_WARN)
+					printf("\33[33;1m");
+				printf("%s: %s\n", heading, message_get_string(msg, 3));
+				printf("\33[m");
 				break;
 			}
 			break;
@@ -496,15 +510,6 @@ handle_notify(inferior_t* obj, const message_t* msg)
 			obj->is_paused = status_type != 0;
 			if (!obj->is_paused)
 				clear_pause_cache(obj);
-			break;
-		case NFY_PRINT:
-			printf("p: %s", message_get_string(msg, 1));
-			break;
-		case NFY_ALERT:
-			printf("a: %s", message_get_string(msg, 1));
-			break;
-		case NFY_LOG:
-			printf("l: %s", message_get_string(msg, 1));
 			break;
 		case NFY_THROW:
 			if ((status_type = message_get_int(msg, 1)) == 0)

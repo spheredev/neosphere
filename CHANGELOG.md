@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v3.2.0 - TBD
+------------
+
+* Adds support for `console.log()`.  As stdout is reserved for under-the-hood
+  logging, console.log() output will only be visible when SSJ is attached.
+
+
 v3.1.2 - May 11, 2016
 ---------------------
 

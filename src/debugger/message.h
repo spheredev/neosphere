@@ -61,6 +61,16 @@ enum err_command
 	ERR_APP_ERROR = 0x04,
 };
 
+enum print_op
+{
+	PRINT_NORMAL,
+	PRINT_ASSERT,
+	PRINT_DEBUG,
+	PRINT_ERROR,
+	PRINT_INFO,
+	PRINT_WARN,
+};
+
 enum appnotify
 {
 	APPNFY_NOP,

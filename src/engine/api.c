@@ -90,7 +90,6 @@ static duk_ret_t duk_mod_search (duk_context* ctx);
 
 static vector_t*  s_extensions;
 static vector_t*  s_modules;
-static void*      s_print_ptr;
 static lstring_t* s_user_agent;
 
 void
@@ -125,11 +124,6 @@ initialize_api(duk_context* ctx)
 		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
 		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
-
-	// save built-in print() in case a script overwrites it
-	duk_get_global_string(ctx, "print");
-	s_print_ptr = duk_get_heapptr(ctx, -1);
-	duk_pop(ctx);
 
 	// set up RequireScript() inclusion tracking table
 	duk_push_global_stash(ctx);
@@ -190,6 +184,7 @@ initialize_api(duk_context* ctx)
 	init_audio_api();
 	init_bytearray_api();
 	init_color_api();
+	init_console_api();
 	init_file_api();
 	init_font_api(g_duk);
 	init_galileo_api();
@@ -964,12 +959,9 @@ js_DebugPrint(duk_context* ctx)
 	// separate printed values with a space
 	duk_push_string(ctx, " ");
 	duk_insert(ctx, 0);
+	duk_join(ctx, num_items);
 
-	// tack on a newline and concatenate the values
-	duk_push_string(ctx, "\n");
-	duk_join(ctx, num_items + 1);
-
-	debug_print(duk_get_string(ctx, -1));
+	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL);
 	return 0;
 }
 
@@ -1040,9 +1032,13 @@ js_Print(duk_context* ctx)
 	int num_items;
 
 	num_items = duk_get_top(ctx);
-	duk_push_heapptr(ctx, s_print_ptr);
+
+	// separate printed values with a space
+	duk_push_string(ctx, " ");
 	duk_insert(ctx, 0);
-	duk_call(ctx, num_items);
+	duk_join(ctx, num_items);
+
+	printf("%s\n", duk_get_string(ctx, -1));
 	return 0;
 }
 

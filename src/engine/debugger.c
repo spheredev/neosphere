@@ -217,11 +217,12 @@ cache_source(const char* name, const lstring_t* text)
 }
 
 void
-debug_print(const char* text)
+debug_print(const char* text, print_op_t op)
 {
 	duk_push_int(g_duk, APPNFY_DEBUG_PRINT);
+	duk_push_int(g_duk, (int)op);
 	duk_push_string(g_duk, text);
-	duk_debugger_notify(g_duk, 2);
+	duk_debugger_notify(g_duk, 3);
 }
 
 static bool

@@ -81,7 +81,6 @@ namespace minisphere.Gdk.Debugger
         public void Dispose()
         {
             messenger?.Abort();
-            Alert = null;
             Attached = null;
             Detached = null;
             Print = null;
@@ -89,11 +88,6 @@ namespace minisphere.Gdk.Debugger
             Throw = null;
             tcp.Close();
         }
-
-        /// <summary>
-        /// Fires when a script calls alert().
-        /// </summary>
-        public event EventHandler<TraceEventArgs> Alert;
 
         /// <summary>
         /// Fires when the debugger is attached to a target.
@@ -399,14 +393,6 @@ namespace minisphere.Gdk.Debugger
                             Running = (int)message[2] == 0;
                             Status?.Invoke(this, EventArgs.Empty);
                             break;
-                        case Notify.Print:
-                            string printText = (string)message[2];
-                            Print?.Invoke(this, new TraceEventArgs("p: " + printText));
-                            break;
-                        case Notify.Alert:
-                            string alertText = (string)message[2];
-                            Alert?.Invoke(this, new TraceEventArgs("a: " + alertText));
-                            break;
                         case Notify.Throw:
                             Throw?.Invoke(this, new ThrowEventArgs(
                                 (string)message[3], (string)message[4], (int)message[5],
@@ -420,8 +406,15 @@ namespace minisphere.Gdk.Debugger
                             switch ((AppNotify)(int)message[2])
                             {
                                 case AppNotify.DebugPrint:
-                                    string debugText = (string)message[3];
-                                    Print?.Invoke(this, new TraceEventArgs("t: " + debugText));
+                                    PrintType type = (PrintType)(int)message[3];
+                                    string debugText = (string)message[4];
+                                    string prefix = type == PrintType.Assert ? "ASSERT"
+                                        : type == PrintType.Debug ? "debug"
+                                        : type == PrintType.Error ? "ERROR"
+                                        : type == PrintType.Info ? "info"
+                                        : type == PrintType.Warn ? "warn"
+                                        : "log";
+                                    Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));
                                     break;
                             }
                             break;
