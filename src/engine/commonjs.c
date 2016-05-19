@@ -2,6 +2,7 @@
 #include "commonjs.h"
 
 #include "api.h"
+#include "transpiler.h"
 
 static duk_ret_t js_require (duk_context* ctx);
 
@@ -20,8 +21,9 @@ duk_peval_module(const char* filename)
 	//       behavior, the filename should be canonicalized first.
 	//     - if the module code throws, the exception will propogate out of this call.
 
-	size_t  code_size;
-	char*   code_string;
+	lstring_t* code_string;
+	size_t     source_size;
+	char*      source;
 
 	// is the requested module already in the cache?
 	duk_push_global_stash(g_duk);
@@ -37,12 +39,21 @@ duk_peval_module(const char* filename)
 
 	// synthesize a function to wrap the module code.  this is the easiest way to
 	// guarantee CommonJS semantics and matches the behavior of Node.js.
-	code_string = sfs_fslurp(g_fs, filename, NULL, &code_size);
-	duk_push_sprintf(g_duk, "(function(exports,require,module){%s})", code_string);
+	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
+	code_string = lstr_from_buf(source, source_size);
+	free(source);
+	if (!transpile_to_js(&code_string, filename)) {
+		lstr_free(code_string);
+		return DUK_EXEC_ERROR;
+	}
+	duk_push_string(g_duk, "(function(exports,require,module){");
+	duk_push_lstring_t(g_duk, code_string);
+	duk_push_string(g_duk, "})");
+	duk_concat(g_duk, 3);
 	duk_push_string(g_duk, filename);
 	duk_compile(g_duk, DUK_COMPILE_EVAL);
 	duk_call(g_duk, 0);
-	free(code_string);
+	lstr_free(code_string);
 
 	// construct a `module` object for the new module
 	duk_push_object(g_duk);
@@ -122,7 +133,7 @@ cjs_resolve(const char* id, const char* origin, const char* sys_origin)
 
 	if (strlen(id) >= 2 && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		// resolve module relative to calling module
-		origin_path = path_new(origin);
+		origin_path = path_new(origin != NULL ? origin : "./");
 	else
 		// resolve module from designated module repository
 		origin_path = path_new(sys_origin);
