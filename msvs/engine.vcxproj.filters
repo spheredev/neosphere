@@ -141,6 +141,9 @@
     <ClCompile Include="..\src\engine\audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\engine\commonjs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -279,6 +282,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\engine\audio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\engine\commonjs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,6 +6,8 @@
 #include "audio.h"
 #include "bytearray.h"
 #include "color.h"
+#include "commonjs.h"
+#include "console.h"
 #include "debugger.h"
 #include "file.h"
 #include "font.h"
@@ -79,17 +81,9 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-struct module
-{
-	char*          name;
-	duk_c_function initializer;
-	duk_c_function finalizer;
-};
-
 static duk_ret_t duk_mod_search (duk_context* ctx);
 
 static vector_t*  s_extensions;
-static vector_t*  s_modules;
 static lstring_t* s_user_agent;
 
 void
@@ -141,7 +135,6 @@ initialize_api(duk_context* ctx)
 	duk_push_c_function(ctx, duk_mod_search, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "modSearch");
 	duk_pop(ctx);
-	s_modules = vector_new(sizeof(struct module));
 
 	// register core API functions
 	api_register_method(ctx, NULL, "GetVersion", js_GetVersion);
@@ -184,6 +177,7 @@ initialize_api(duk_context* ctx)
 	init_audio_api();
 	init_bytearray_api();
 	init_color_api();
+	init_commonjs_api();
 	init_console_api();
 	init_file_api();
 	init_font_api(g_duk);
@@ -204,15 +198,7 @@ initialize_api(duk_context* ctx)
 void
 shutdown_api(void)
 {
-	iter_t         iter;
-	struct module* module;
-
 	console_log(1, "shutting down Sphere API");
-
-	iter = vector_enum(s_modules);
-	while (module = vector_next(&iter))
-		free(module->name);
-	vector_free(s_modules);
 }
 
 bool
@@ -354,21 +340,6 @@ api_register_method(duk_context* ctx, const char* ctor_name, const char* name, d
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
-}
-
-void
-api_register_module(const char* name, duk_c_function initializer, duk_c_function finalizer)
-{
-	// `initializer` should set up any components required to use the module
-	// and leave an object on the top of the stack which will serve as the module's
-	// export table.
-
-	struct module module;
-
-	module.name = strdup(name);
-	module.initializer = initializer;
-	module.finalizer = finalizer;
-	vector_push(s_modules, &module);
 }
 
 void
@@ -517,7 +488,6 @@ duk_mod_search(duk_context* ctx)
 	lstring_t*     filename;
 	iter_t         iter;
 	size_t         len;
-	struct module* module;
 	const char*    name;
 	lstring_t**    p_string;
 	char*          slurp;
@@ -527,23 +497,7 @@ duk_mod_search(duk_context* ctx)
 	if (name[0] == '~' || name[0] == '#' || name[0] == '@')
 		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "SphereFS alias not allowed in module ID");
 
-	// check whether we're requiring a built-in module
-	iter = vector_enum(s_modules);
-	while (module = vector_next(&iter)) {
-		if (strcmp(name, module->name) == 0) {
-			console_log(1, "initializing native module `%s`", name);
-			duk_push_c_function(ctx, module->initializer, DUK_VARARGS);
-			duk_call(ctx, 0);
-			if (module->finalizer != NULL) {
-				duk_push_c_function(ctx, module->finalizer, DUK_VARARGS);
-				duk_set_finalizer(ctx, -2);
-			}
-			duk_put_prop_string(ctx, 3, "exports");
-			return 0;
-		}
-	}
-
-	// that didn't work, look for a JavaScript module
+	// search for a JavaScript module
 	filenames = vector_new(sizeof(lstring_t*));
 	filename = lstr_newf("lib/%s.js", name); vector_push(filenames, &filename);
 	filename = lstr_newf("lib/%s.ts", name); vector_push(filenames, &filename);
@@ -561,6 +515,8 @@ duk_mod_search(duk_context* ctx)
 	vector_free(filenames);
 	if (filename == NULL)
 		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "module `%s` not found", name);
+	
+	// transpile the module if needed and give it to Duktape
 	console_log(1, "initializing JS module `%s` as `%s`", name, lstr_cstr(filename));
 	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), NULL, &len)))
 		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "unable to read script `%s`", lstr_cstr(filename));

@@ -364,6 +364,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\engine\commonjs.c" />
     <ClCompile Include="..\src\engine\matrix.c" />
     <ClCompile Include="..\src\engine\screen.c" />
     <ClCompile Include="..\src\engine\transpiler.c" />
@@ -408,6 +409,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\engine\windowstyle.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\engine\commonjs.h" />
     <ClInclude Include="..\src\engine\matrix.h" />
     <ClInclude Include="..\src\engine\screen.h" />
     <ClInclude Include="..\src\engine\transpiler.h" />
