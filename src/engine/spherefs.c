@@ -20,6 +20,7 @@ struct sandbox
 	lstring_t*   name;
 	lstring_t*   author;
 	lstring_t*   summary;
+	bool         is_legacy;
 	int          res_x;
 	int          res_y;
 	path_t*      script_path;
@@ -102,7 +103,7 @@ new_sandbox(const char* game_path)
 	// try to load the game manifest if one hasn't been synthesized already
 	if (fs->name == NULL) {
 		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
-			console_log(1, "parsing Spherical manifest in sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing Sphere 2 manifest for sandbox #%u", s_next_sandbox_id);
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
@@ -116,7 +117,7 @@ new_sandbox(const char* game_path)
 			sgm_text = NULL;
 		}
 		else if (sgm_file = kev_open(fs, "game.sgm", false)) {
-			console_log(1, "parsing legacy manifest in sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing legacy manifest for sandbox #%u", s_next_sandbox_id);
 			fs->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			fs->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			fs->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
@@ -134,6 +135,8 @@ new_sandbox(const char* game_path)
 			duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
 			fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
 			duk_pop(g_duk);
+
+			fs->is_legacy = true;
 		}
 		else
 			goto on_error;
@@ -187,6 +190,12 @@ free_sandbox(sandbox_t* fs)
 	path_free(fs->root_path);
 	lstr_free(fs->manifest);
 	free(fs);
+}
+
+bool
+fs_is_vanilla(const sandbox_t* fs)
+{
+	return fs->is_legacy;
 }
 
 const lstring_t*

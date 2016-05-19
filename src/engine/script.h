@@ -5,7 +5,7 @@ typedef struct script script_t;
 
 void             initialize_scripts (void);
 void             shutdown_scripts   (void);
-bool             evaluate_script    (const char* filename);
+bool             evaluate_script    (const char* filename, bool as_module);
 script_t*        compile_script     (const lstring_t* script, const char* fmt_name, ...);
 script_t*        ref_script         (script_t* script);
 void             free_script        (script_t* script);

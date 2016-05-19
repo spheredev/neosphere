@@ -5,26 +5,28 @@
 
 static duk_ret_t js_require (duk_context* ctx);
 
-bool
-cjs_require(const char* id, const char* caller_id)
+duk_int_t
+duk_peval_module(const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
 	// very messy very quickly when dealing with object properties.  I tried to add
 	// comments to hint at what's going on, but it's still likely to be confusing for
 	// someone not familiar with the code.  proceed with caution.
-	
+
+	// notes:
+	//     - the final value of `module.exports` is left on top of the Duktape value stack.
+	//     - `module.id` is set to the given filename.  in order to guarantee proper cache
+	//       behavior, the filename should be canonicalized first.
+	//     - if the module code throws, the exception will propogate out of this call.
+
 	size_t  code_size;
 	char*   code_string;
-	path_t* path;
 
-	if (!(path = cjs_resolve(id, caller_id)))
-		return false;
-
-	// do we already have the requested module in the cache?
+	// is the requested module already in the cache?
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "moduleCache");
-	if (duk_get_prop_string(g_duk, -1, path_cstr(path))) {
+	if (duk_get_prop_string(g_duk, -1, filename)) {
 		duk_remove(g_duk, -2);
 		duk_remove(g_duk, -2);
 		goto have_module;
@@ -32,11 +34,12 @@ cjs_require(const char* id, const char* caller_id)
 	else {
 		duk_pop_3(g_duk);
 	}
-	
-	// compile as CommonJS module
-	code_string = sfs_fslurp(g_fs, path_cstr(path), NULL, &code_size);
-	duk_push_sprintf(g_duk, "(function(exports, require, module) {%s})", code_string);
-	duk_push_string(g_duk, path_cstr(path));
+
+	// synthesize a function to wrap the module code.  this is the easiest way to
+	// guarantee CommonJS semantics and matches the behavior of Node.js.
+	code_string = sfs_fslurp(g_fs, filename, NULL, &code_size);
+	duk_push_sprintf(g_duk, "(function(exports,require,module){%s})", code_string);
+	duk_push_string(g_duk, filename);
 	duk_compile(g_duk, DUK_COMPILE_EVAL);
 	duk_call(g_duk, 0);
 	free(code_string);
@@ -44,23 +47,27 @@ cjs_require(const char* id, const char* caller_id)
 	// construct a `module` object for the new module
 	duk_push_object(g_duk);
 	duk_push_object(g_duk);
-	duk_put_prop_string(g_duk, -2, "exports");  // module.exports
-	duk_push_string(g_duk, path_cstr(path));
+	duk_put_prop_string(g_duk, -2, "exports");  // module.exports = {}
+	duk_push_string(g_duk, filename);
+	duk_put_prop_string(g_duk, -2, "filename");  // module.filename
+	duk_push_string(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "id");  // module.id
+	duk_push_boolean(g_duk, false);
+	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
 
-	// cache the module object.  we need to do this in advance in order to
-	// support circular require chains.
+	// cache the `module` object.  this is done in advance so that circular
+	// requires don't topple the stack.
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "moduleCache");
 	duk_dup(g_duk, -3);
-	duk_put_prop_string(g_duk, -2, path_cstr(path));
+	duk_put_prop_string(g_duk, -2, filename);
 	duk_pop_2(g_duk);
 
 	// move the `module` object above the function about to be called.
 	// we'll need it afterwards.
 	duk_insert(g_duk, -2);
 
-	// set up to call the module's function wrapper
+	// set up to call the synthesized function
 	duk_get_prop_string(g_duk, -2, "exports");  // exports
 	duk_push_c_function(g_duk, js_require, DUK_VARARGS);  // require
 	duk_push_string(g_duk, "cache");
@@ -69,32 +76,35 @@ cjs_require(const char* id, const char* caller_id)
 	duk_remove(g_duk, -2);
 	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
 	duk_push_string(g_duk, "id");
-	duk_push_string(g_duk, path_cstr(path));
+	duk_push_string(g_duk, filename);
 	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
 	duk_dup(g_duk, -4);  // module
-	
+
 	// go, go, go!
 	if (duk_pcall(g_duk, 3) != DUK_EXEC_SUCCESS) {
 		// hm, the module threw an error during initialization.  the caller may
 		// want to retry, so we'll remove it from the cache...
 		duk_push_global_stash(g_duk);
 		duk_get_prop_string(g_duk, -1, "moduleCache");
-		duk_del_prop_string(g_duk, -1, path_cstr(path));
+		duk_del_prop_string(g_duk, -1, filename);
 		duk_pop_2(g_duk);
-		duk_throw(g_duk);  // ...and rethrow the error.
+		duk_remove(g_duk, -2);  // ...and leave the error on the stack.
+		return DUK_EXEC_ERROR;
 	}
 	duk_pop(g_duk);
 
 have_module:
 	// `module` should be all that's left on the stack.  we actually
 	// just want its exports at this point, though.
+	duk_push_boolean(g_duk, true);
+	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = true
 	duk_get_prop_string(g_duk, -1, "exports");
 	duk_remove(g_duk, -2);
-	return true;
+	return DUK_EXEC_SUCCESS;
 }
 
 path_t*
-cjs_resolve(const char* id, const char* caller_id)
+cjs_resolve(const char* id, const char* origin, const char* sys_origin)
 {
 	const char* const filenames[] =
 	{
@@ -103,23 +113,20 @@ cjs_resolve(const char* id, const char* caller_id)
 		"%s/index.js",
 	};
 	
-	path_t* caller_path;
+	path_t* origin_path;
 	char*   filename;
 	path_t* path;
 
 	int i;
 
-	if (caller_id == NULL)
-		caller_id = "./";
-	
 	if (strlen(id) >= 2 && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		// resolve module relative to calling module
-		caller_path = path_new(caller_id);
+		origin_path = path_new(origin);
 	else
-		caller_path = path_new("#/modules/");
+		origin_path = path_new(sys_origin);
 	
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
-		path = path_dup(caller_path);
+		path = path_dup(origin_path);
 		filename = strnewf(filenames[i], id);
 		path_strip(path);
 		path_append(path, filename);
@@ -150,13 +157,19 @@ js_require(duk_context* ctx)
 {
 	const char* caller_id;
 	const char* id;
+	path_t*     path;
 
 	duk_push_current_function(ctx);
 	duk_get_prop_string(ctx, -1, "id");
 	caller_id = duk_get_string(ctx, -1);
 	id = duk_require_string(ctx, 0);
 
-	if (!cjs_require(id, caller_id))
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "unable to resolve module ID `%s`", id);
+	if (!(path = cjs_resolve(id, caller_id, "lib/"))
+		&& !(path = cjs_resolve(id, caller_id, "#/modules/")))
+	{
+		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "unable to resolve require `%s`", id);
+	}
+	if (duk_peval_module(path_cstr(path)) != DUK_EXEC_SUCCESS)
+		duk_throw(ctx);
 	return 1;
 }

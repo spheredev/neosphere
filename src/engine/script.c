@@ -2,6 +2,7 @@
 #include "script.h"
 
 #include "api.h"
+#include "commonjs.h"
 #include "debugger.h"
 #include "transpiler.h"
 #include "utility.h"
@@ -38,7 +39,7 @@ shutdown_scripts(void)
 }
 
 bool
-evaluate_script(const char* filename)
+evaluate_script(const char* filename, bool as_module)
 {
 	sfs_file_t*    file = NULL;
 	path_t*        path;
@@ -47,29 +48,36 @@ evaluate_script(const char* filename)
 	char*          slurp;
 	size_t         size;
 	
-	path = make_sfs_path(filename, NULL, false);
-	source_name = get_source_name(path_cstr(path));
-	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
-		goto on_error;
-	source_text = lstr_from_buf(slurp, size);
-	free(slurp);
+	if (as_module) {
+		if (duk_peval_module(filename) != DUK_EXEC_SUCCESS)
+			return false;
+		return true;
+	}
+	else {
+		path = make_sfs_path(filename, NULL, false);
+		source_name = get_source_name(path_cstr(path));
+		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
+			goto on_error;
+		source_text = lstr_from_buf(slurp, size);
+		free(slurp);
 
-	// ensure non-JS scripts are transpiled to JS first.  this is needed to support
-	// TypeScript, CoffeeScript, etc. transparently.
-	if (!transpile_to_js(&source_text, source_name))
-		goto on_error;
+		// ensure non-JS scripts are transpiled to JS first.  this is needed to support
+		// TypeScript, CoffeeScript, etc. transparently.
+		if (!transpile_to_js(&source_text, source_name))
+			goto on_error;
 
-	// ready for launch in T-10...9...*munch*
-	duk_push_lstring_t(g_duk, source_text);
-	duk_push_string(g_duk, source_name);
-	if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
-		goto on_error;
-	if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
-		goto on_error;
-	
-	lstr_free(source_text);
-	path_free(path);
-	return true;
+		// ready for launch in T-10...9...*munch*
+		duk_push_lstring_t(g_duk, source_text);
+		duk_push_string(g_duk, source_name);
+		if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+			goto on_error;
+
+		lstr_free(source_text);
+		path_free(path);
+		return true;
+	}
 
 on_error:
 	lstr_free(source_text);

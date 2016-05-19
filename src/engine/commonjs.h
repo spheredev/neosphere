@@ -1,8 +1,8 @@
 #ifndef MINISPHERE__COMMONJS_H__INCLUDED
 #define MINISPHERE__COMMONJS_H__INCLUDED
 
-bool    cjs_require (const char* id, const char* caller_id);
-path_t* cjs_resolve (const char* id, const char* caller_id);
+duk_int_t duk_peval_module (const char* filename);
+path_t*   cjs_resolve      (const char* id, const char* origin, const char* sys_origin);
 
 void init_commonjs_api (void);
 

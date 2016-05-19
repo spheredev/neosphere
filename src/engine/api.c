@@ -81,8 +81,6 @@ static duk_ret_t js_Print                (duk_context* ctx);
 static duk_ret_t js_RestartGame          (duk_context* ctx);
 static duk_ret_t js_UnskipFrame          (duk_context* ctx);
 
-static duk_ret_t duk_mod_search (duk_context* ctx);
-
 static vector_t*  s_extensions;
 static lstring_t* s_user_agent;
 
@@ -128,12 +126,6 @@ initialize_api(duk_context* ctx)
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "prototypes");
-	duk_pop(ctx);
-
-	// register the CommonJS module loader
-	duk_get_global_string(ctx, "Duktape");
-	duk_push_c_function(ctx, duk_mod_search, DUK_VARARGS);
-	duk_put_prop_string(ctx, -2, "modSearch");
 	duk_pop(ctx);
 
 	// register core API functions
@@ -482,59 +474,6 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 }
 
 static duk_ret_t
-duk_mod_search(duk_context* ctx)
-{
-	vector_t*      filenames;
-	lstring_t*     filename;
-	iter_t         iter;
-	size_t         len;
-	const char*    name;
-	lstring_t**    p_string;
-	char*          slurp;
-	lstring_t*     source_text;
-
-	name = duk_get_string(ctx, 0);
-	if (name[0] == '~' || name[0] == '#' || name[0] == '@')
-		duk_error_ni(ctx, -2, DUK_ERR_TYPE_ERROR, "SphereFS alias not allowed in module ID");
-
-	// search for a JavaScript module
-	filenames = vector_new(sizeof(lstring_t*));
-	filename = lstr_newf("lib/%s.js", name); vector_push(filenames, &filename);
-	filename = lstr_newf("lib/%s.ts", name); vector_push(filenames, &filename);
-	filename = lstr_newf("lib/%s.coffee", name); vector_push(filenames, &filename);
-	filename = lstr_newf("#/modules/%s.js", name); vector_push(filenames, &filename);
-	filename = lstr_newf("#/modules/%s.ts", name); vector_push(filenames, &filename);
-	filename = lstr_newf("#/modules/%s.coffee", name); vector_push(filenames, &filename);
-	filename = NULL;
-	iter = vector_enum(filenames);
-	while (p_string = vector_next(&iter)) {
-		if (filename == NULL && sfs_fexist(g_fs, lstr_cstr(*p_string), NULL))
-			filename = lstr_dup(*p_string);
-		lstr_free(*p_string);
-	}
-	vector_free(filenames);
-	if (filename == NULL)
-		duk_error_ni(ctx, -2, DUK_ERR_REFERENCE_ERROR, "module `%s` not found", name);
-	
-	// transpile the module if needed and give it to Duktape
-	console_log(1, "initializing JS module `%s` as `%s`", name, lstr_cstr(filename));
-	if (!(slurp = sfs_fslurp(g_fs, lstr_cstr(filename), NULL, &len)))
-		duk_error_ni(ctx, -2, DUK_ERR_ERROR, "unable to read script `%s`", lstr_cstr(filename));
-	source_text = lstr_from_buf(slurp, len);
-	free(slurp);
-	if (!transpile_to_js(&source_text, lstr_cstr(filename))) {
-		lstr_free(source_text);
-		duk_throw(ctx);
-	}
-	duk_push_lstring_t(ctx, filename);
-	duk_put_prop_string(ctx, 3, "filename");
-	duk_push_lstring_t(ctx, source_text);
-	lstr_free(source_text);
-	lstr_free(filename);
-	return 1;
-}
-
-static duk_ret_t
 js_GetVersion(duk_context* ctx)
 {
 	duk_push_number(ctx, SPHERE_API_VERSION);
@@ -573,7 +512,7 @@ js_EvaluateScript(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "scripts", true);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): file `%s` not found", filename);
-	if (!evaluate_script(filename))
+	if (!evaluate_script(filename, false))
 		duk_throw(ctx);
 	return 1;
 }
@@ -590,7 +529,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): system script `%s` not found", filename);
-	if (!evaluate_script(path))
+	if (!evaluate_script(path, false))
 		duk_throw(ctx);
 	return 1;
 }
@@ -612,7 +551,7 @@ js_RequireScript(duk_context* ctx)
 	if (!is_required) {
 		duk_push_true(ctx);
 		duk_put_prop_string(ctx, -2, filename);
-		if (!evaluate_script(filename))
+		if (!evaluate_script(filename, false))
 			duk_throw(ctx);
 	}
 	duk_pop_3(ctx);
@@ -641,7 +580,7 @@ js_RequireSystemScript(duk_context* ctx)
 	if (!is_required) {
 		duk_push_true(ctx);
 		duk_put_prop_string(ctx, -2, path);
-		if (!evaluate_script(path))
+		if (!evaluate_script(path, false))
 			duk_throw(ctx);
 	}
 	duk_pop_2(ctx);

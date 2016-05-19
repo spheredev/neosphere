@@ -20,6 +20,7 @@ enum sfs_whence
 sandbox_t*       new_sandbox         (const char* pathname);
 sandbox_t*       ref_sandbox         (sandbox_t* fs);
 void             free_sandbox        (sandbox_t* fs);
+bool             fs_is_vanilla       (const sandbox_t* fs);
 const lstring_t* get_game_manifest   (const sandbox_t* fs);
 const path_t*    get_game_path       (const sandbox_t* fs);
 void             get_sgm_resolution (sandbox_t* fs, int *out_width, int *out_height);
