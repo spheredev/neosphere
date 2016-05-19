@@ -52,7 +52,7 @@ duk_peval_module(const char* filename)
 	duk_put_prop_string(g_duk, -2, "filename");  // module.filename
 	duk_push_string(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "id");  // module.id
-	duk_push_boolean(g_duk, false);
+	duk_push_false(g_duk);
 	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
 
 	// cache the `module` object.  this is done in advance so that circular
@@ -92,12 +92,13 @@ duk_peval_module(const char* filename)
 		return DUK_EXEC_ERROR;
 	}
 	duk_pop(g_duk);
+	
+	// set `module.loaded` to true
+	duk_push_true(g_duk);
+	duk_put_prop_string(g_duk, -2, "loaded");
 
 have_module:
-	// `module` should be all that's left on the stack.  we actually
-	// just want its exports at this point, though.
-	duk_push_boolean(g_duk, true);
-	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = true
+	// `module` should be on the stack, we need `module.exports`
 	duk_get_prop_string(g_duk, -1, "exports");
 	duk_remove(g_duk, -2);
 	return DUK_EXEC_SUCCESS;
@@ -123,6 +124,7 @@ cjs_resolve(const char* id, const char* origin, const char* sys_origin)
 		// resolve module relative to calling module
 		origin_path = path_new(origin);
 	else
+		// resolve module from designated module repository
 		origin_path = path_new(sys_origin);
 	
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
