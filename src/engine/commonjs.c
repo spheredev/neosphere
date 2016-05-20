@@ -22,7 +22,8 @@ duk_peval_module(const char* filename)
 	//     - the final value of `module.exports` is left on top of the Duktape value stack.
 	//     - `module.id` is set to the given filename.  in order to guarantee proper cache
 	//       behavior, the filename should be in canonical form.
-	//     - if the module code throws, the exception will propogate out of this call.
+	//     - as this is a protected call, if the module throws, the error will be caught
+	//       and left on top of the stack for the caller to deal with.
 
 	lstring_t* code_string;
 	path_t*    dir_path;
@@ -64,7 +65,7 @@ duk_peval_module(const char* filename)
 	lstr_free(code_string);
 
 	// construct a `module` object for the new module
-	duk_push_object(g_duk);  // module
+	duk_push_object(g_duk);  // module object
 	duk_push_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "exports");  // module.exports = {}
 	duk_push_string(g_duk, filename);
@@ -103,7 +104,7 @@ duk_peval_module(const char* filename)
 		duk_get_prop_string(g_duk, -1, "moduleCache");
 		duk_del_prop_string(g_duk, -1, filename);
 		duk_pop_2(g_duk);
-		duk_remove(g_duk, -2);  // ...but leave the error on the stack for now.
+		duk_remove(g_duk, -2);  // ...and leave the error on the stack.
 		return DUK_EXEC_ERROR;
 	}
 	duk_pop(g_duk);
