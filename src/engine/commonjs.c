@@ -71,6 +71,8 @@ duk_peval_module(const char* filename)
 	duk_put_prop_string(g_duk, -2, "id");  // module.id
 	duk_push_false(g_duk);
 	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
+	duk_push_require_function(g_duk, filename);  // require
+	duk_put_prop_string(g_duk, -2, "require");  // module.require
 
 	// cache the `module` object.  this is done in advance so that circular
 	// requires don't topple the stack.
@@ -80,13 +82,13 @@ duk_peval_module(const char* filename)
 	duk_put_prop_string(g_duk, -2, filename);
 	duk_pop_2(g_duk);
 
-	// move the `module` object above the function about to be called.
-	// we'll need it afterwards.
+	// move the `module` object before the function about to be called.
+	// we'll need it again after the call.
 	duk_insert(g_duk, -2);
 
 	// set up to call the module
 	duk_get_prop_string(g_duk, -2, "exports");  // exports
-	duk_push_require_function(g_duk, filename);  // require
+	duk_get_prop_string(g_duk, -3, "require");  // require
 	duk_dup(g_duk, -4);  // module
 	duk_push_string(g_duk, filename);  // __filename
 	duk_push_string(g_duk, path_cstr(dir_path));  // __dirname

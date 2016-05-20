@@ -4,11 +4,13 @@ minisphere Changelog
 v3.2.0 - TBD
 ------------
 
-* Adds support for `console.log()`.  As stdout is reserved for under-the-hood
-  logging, console.log() output will only be visible when SSJ is attached.
-* `require()` can now be used to load JS modules from anywhere in the game's
-  file system by prefixing the module ID with a SphereFS alias (`@/`, `~/`, or
+* The module system has been overhauled to be more Node.js-like, including
+  support for `require.cache`, `module.loaded`, and `module.require`.
+* `require()` can now be used to load JS modules from anywhere in a game's file
+  system by prefixing the module ID with a SphereFS alias (`@/`, `~/`, or
   `#/`).
+* Adds support for `console.log()`.  `stdout` is reserved for under-the-hood
+  logging, so console.log() output will only be visible when SSJ is attached.
 * Improves frameskip behavior: The frame timer is now reset only if the
   frameskip limit is hit.  This should ensure a more consistent update rate
   even under lag conditions.
