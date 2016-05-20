@@ -2,14 +2,15 @@
 #include "commonjs.h"
 
 #include "api.h"
-#include "transpiler.h"
+#include "transpile.h"
 
 static duk_ret_t js_require (duk_context* ctx);
 
-static path_t* find_module (const char* id, const char* origin, const char* sys_origin);
+static void    duk_push_require_function (duk_context* ctx, const char* module_id);
+static path_t* find_module               (const char* id, const char* origin, const char* sys_origin);
 
 duk_int_t
-cjs_eval_module(const char* filename)
+duk_peval_module(const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
@@ -83,17 +84,9 @@ cjs_eval_module(const char* filename)
 	// we'll need it afterwards.
 	duk_insert(g_duk, -2);
 
-	// set up to call the synthesized function
+	// set up to call the module
 	duk_get_prop_string(g_duk, -2, "exports");  // exports
-	duk_push_c_function(g_duk, js_require, DUK_VARARGS);  // require
-	duk_push_string(g_duk, "cache");
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "moduleCache");
-	duk_remove(g_duk, -2);
-	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
-	duk_push_string(g_duk, "id");
-	duk_push_string(g_duk, filename);
-	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
+	duk_push_require_function(g_duk, filename);  // require
 	duk_dup(g_duk, -4);  // module
 	duk_push_string(g_duk, filename);  // __filename
 	duk_push_string(g_duk, path_cstr(dir_path));  // __dirname
@@ -122,6 +115,25 @@ have_module:
 	return DUK_EXEC_SUCCESS;
 }
 
+static void
+duk_push_require_function(duk_context* ctx, const char* module_id)
+{
+	duk_push_c_function(ctx, js_require, 1);
+	duk_push_string(ctx, "name");
+	duk_push_string(ctx, "require");
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.name
+	duk_push_string(g_duk, "cache");
+	duk_push_global_stash(g_duk);
+	duk_get_prop_string(g_duk, -1, "moduleCache");
+	duk_remove(g_duk, -2);
+	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
+	if (module_id != NULL) {
+		duk_push_string(g_duk, "id");
+		duk_push_string(g_duk, module_id);
+		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
+	}
+}
+
 static path_t*
 find_module(const char* id, const char* origin, const char* sys_origin)
 {
@@ -142,7 +154,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 
 	int i;
 
-	if (strlen(id) >= 2 && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0)
 		// resolve module relative to calling module
 		origin_path = path_new(origin != NULL ? origin : "./");
 	else
@@ -150,8 +162,11 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		origin_path = path_new(sys_origin);
 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
-		path = path_dup(origin_path);
 		filename = strnewf(filenames[i], id);
+		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0)
+			path = path_new("./");
+		else
+			path = path_dup(origin_path);
 		path_strip(path);
 		path_append(path, filename);
 		path_collapse(path, true);
@@ -167,31 +182,39 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 void
 init_commonjs_api(void)
 {
-	api_register_function(g_duk, NULL, "require", js_require);
+	const path_t* script_path;
 
 	duk_push_global_stash(g_duk);
 	duk_push_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "moduleCache");
+	duk_pop(g_duk);
+	
+	script_path = get_sgm_script_path(g_fs);
+	duk_push_global_object(g_duk);
+	duk_push_string(g_duk, "require");
+	duk_push_require_function(g_duk, NULL);
+	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 }
 
 static duk_ret_t
 js_require(duk_context* ctx)
 {
-	const char* caller_id;
 	const char* id;
+	const char* parent_id = NULL;
 	path_t*     path;
 
 	duk_push_current_function(ctx);
-	duk_get_prop_string(ctx, -1, "id");
-	caller_id = duk_get_string(ctx, -1);
+	if (duk_get_prop_string(ctx, -1, "id"))
+		parent_id = duk_get_string(ctx, -1);
 	id = duk_require_string(ctx, 0);
 
-	if (!(path = find_module(id, caller_id, "lib/"))
-		&& !(path = find_module(id, caller_id, "#/modules/")))
-	{
+	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "illegal relative require in global code");
+	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
 		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "unable to resolve require `%s`", id);
-	}
-	if (cjs_eval_module(path_cstr(path)) != DUK_EXEC_SUCCESS)
+	if (duk_peval_module(path_cstr(path)) != DUK_EXEC_SUCCESS)
 		duk_throw(ctx);
 	return 1;
 }

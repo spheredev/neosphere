@@ -20,7 +20,6 @@ struct sandbox
 	lstring_t*   name;
 	lstring_t*   author;
 	lstring_t*   summary;
-	bool         is_legacy;
 	int          res_x;
 	int          res_y;
 	path_t*      script_path;
@@ -135,8 +134,6 @@ new_sandbox(const char* game_path)
 			duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
 			fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
 			duk_pop(g_duk);
-
-			fs->is_legacy = true;
 		}
 		else
 			goto on_error;
@@ -190,12 +187,6 @@ free_sandbox(sandbox_t* fs)
 	path_free(fs->root_path);
 	lstr_free(fs->manifest);
 	free(fs);
-}
-
-bool
-fs_is_vanilla(const sandbox_t* fs)
-{
-	return fs->is_legacy;
 }
 
 const lstring_t*

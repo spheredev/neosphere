@@ -367,7 +367,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\engine\commonjs.c" />
     <ClCompile Include="..\src\engine\matrix.c" />
     <ClCompile Include="..\src\engine\screen.c" />
-    <ClCompile Include="..\src\engine\transpiler.c" />
+    <ClCompile Include="..\src\engine\transpile.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\dyad.c" />
     <ClCompile Include="..\src\shared\mt19937ar.c" />
@@ -412,7 +412,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\engine\commonjs.h" />
     <ClInclude Include="..\src\engine\matrix.h" />
     <ClInclude Include="..\src\engine\screen.h" />
-    <ClInclude Include="..\src\engine\transpiler.h" />
+    <ClInclude Include="..\src\engine\transpile.h" />
     <ClInclude Include="..\src\shared\duktape.h" />
     <ClInclude Include="..\src\shared\duk_config.h" />
     <ClInclude Include="..\src\shared\dyad.h" />

@@ -181,6 +181,8 @@ main(int argc, char* argv[])
 #endif
 		exit_game(false);
 	}
+
+	initialize_api(g_duk);
 	if (!verify_requirements(g_fs))
 		exit_game(false);
 
@@ -471,9 +473,6 @@ initialize_engine(void)
 	initialize_spritesets();
 	initialize_map_engine();
 	initialize_scripts();
-
-	// register the Sphere API
-	initialize_api(g_duk);
 
 	return true;
 

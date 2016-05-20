@@ -1,5 +1,5 @@
 #include "minisphere.h"
-#include "transpiler.h"
+#include "transpile.h"
 
 #include "debugger.h"
 
