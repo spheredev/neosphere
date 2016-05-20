@@ -46,24 +46,6 @@ duk_peval_module(const char* filename)
 
 	console_log(1, "initializing JS module `%s`", filename);
 
-	// synthesize a function to wrap the module code.  this is the easiest way to
-	// guarantee CommonJS semantics and matches the behavior of Node.js.
-	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
-	code_string = lstr_from_buf(source, source_size);
-	free(source);
-	if (!transpile_to_js(&code_string, filename)) {
-		lstr_free(code_string);
-		return DUK_EXEC_ERROR;
-	}
-	duk_push_string(g_duk, "(function module(exports, require, module, __filename, __dirname) { ");
-	duk_push_lstring_t(g_duk, code_string);
-	duk_push_string(g_duk, " })");
-	duk_concat(g_duk, 3);
-	duk_push_string(g_duk, filename);
-	duk_compile(g_duk, DUK_COMPILE_EVAL);
-	duk_call(g_duk, 0);
-	lstr_free(code_string);
-
 	// construct a `module` object for the new module
 	duk_push_object(g_duk);  // module object
 	duk_push_object(g_duk);
@@ -77,17 +59,31 @@ duk_peval_module(const char* filename)
 	duk_push_require_function(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "require");  // module.require
 
+	// synthesize a function to wrap the module code.  this is the easiest way to
+	// guarantee CommonJS semantics and matches the behavior of Node.js.
+	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
+	code_string = lstr_from_buf(source, source_size);
+	free(source);
+	if (!transpile_to_js(&code_string, filename)) {
+		lstr_free(code_string);
+		return DUK_EXEC_ERROR;
+	}
+	duk_push_string(g_duk, "(function main(exports, require, module, __filename, __dirname) { ");
+	duk_push_lstring_t(g_duk, code_string);
+	duk_push_string(g_duk, " })");
+	duk_concat(g_duk, 3);
+	duk_push_string(g_duk, filename);
+	duk_compile(g_duk, DUK_COMPILE_EVAL);
+	duk_call(g_duk, 0);
+	lstr_free(code_string);
+
 	// cache the `module` object.  this is done in advance so that circular
 	// requires don't topple the stack.
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "moduleCache");
-	duk_dup(g_duk, -3);
+	duk_dup(g_duk, -4);
 	duk_put_prop_string(g_duk, -2, filename);
 	duk_pop_2(g_duk);
-
-	// move the `module` object before the function about to be called.
-	// we'll need it again after the call.
-	duk_insert(g_duk, -2);
 
 	// set up to call the module
 	duk_get_prop_string(g_duk, -2, "exports");  // exports
@@ -98,7 +94,7 @@ duk_peval_module(const char* filename)
 
 	// go, go, go!
 	if (duk_pcall(g_duk, 5) != DUK_EXEC_SUCCESS) {
-		// if a module throws an error during initialization, the game may
+		// if the module throws an error during initialization, the game may
 		// want to retry, so we'll remove it from the cache...
 		duk_push_global_stash(g_duk);
 		duk_get_prop_string(g_duk, -1, "moduleCache");
