@@ -338,7 +338,7 @@ screen_flip(screen_t* obj, int framerate)
 				al_wait_for_event_timed(g_events, NULL, time_left);
 			do_events();
 		} while (al_get_time() < obj->next_frame_time);
-		if (!is_backbuffer_valid && !obj->skip_frame)  // did we just finish skipping frames?
+		if (obj->num_skips >= obj->max_skips)  // did we skip too many frames?
 			obj->next_frame_time = al_get_time() + 1.0 / framerate;
 		else
 			obj->next_frame_time += 1.0 / framerate;

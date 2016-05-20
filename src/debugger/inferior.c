@@ -518,7 +518,6 @@ handle_notify(inferior_t* obj, const message_t* msg)
 			printf("uncaught exception! - at %s:%d\n",
 				message_get_string(msg, 3),
 				message_get_int(msg, 4));
-			printf("    value: ");
 			dvalue_print(message_get_dvalue(msg, 2), true);
 			printf("\n**************************************************\n\n");
 			break;
