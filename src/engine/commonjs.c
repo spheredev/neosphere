@@ -43,6 +43,8 @@ duk_peval_module(const char* filename)
 		duk_pop_3(g_duk);
 	}
 
+	console_log(1, "initializing JS module `%s`", filename);
+
 	// synthesize a function to wrap the module code.  this is the easiest way to
 	// guarantee CommonJS semantics and matches the behavior of Node.js.
 	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
@@ -62,7 +64,7 @@ duk_peval_module(const char* filename)
 	lstr_free(code_string);
 
 	// construct a `module` object for the new module
-	duk_push_object(g_duk);
+	duk_push_object(g_duk);  // module
 	duk_push_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "exports");  // module.exports = {}
 	duk_push_string(g_duk, filename);
@@ -71,7 +73,7 @@ duk_peval_module(const char* filename)
 	duk_put_prop_string(g_duk, -2, "id");  // module.id
 	duk_push_false(g_duk);
 	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
-	duk_push_require_function(g_duk, filename);  // require
+	duk_push_require_function(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "require");  // module.require
 
 	// cache the `module` object.  this is done in advance so that circular

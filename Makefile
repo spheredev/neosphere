@@ -28,7 +28,7 @@ engine_sources=src/engine/main.c \
    src/engine/rng.c src/engine/screen.c src/engine/script.c \
    src/engine/shader.c src/engine/sockets.c src/engine/spherefs.c \
    src/engine/spk.c src/engine/spriteset.c src/engine/surface.c \
-   src/engine/tileset.c src/engine/transpiler.c src/engine/utility.c \
+   src/engine/tileset.c src/engine/transpile.c src/engine/utility.c \
    src/engine/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \

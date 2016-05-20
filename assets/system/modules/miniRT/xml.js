@@ -4,15 +4,14 @@
  *  (c) 2015-2016 Fat Cerberus
 **/
 
-if (typeof exports === 'undefined') {
-	throw new TypeError("script must be loaded with require()");
-}
-
+'use strict';
 module.exports =
 {
     load:  load,
     parse: parse,
 };
+
+const sax = require('./lib/sax');
 
 function load(fileName)
 {
@@ -26,7 +25,6 @@ function parse(xmlText)
 {
     var dom = { type: 'root', nodes: [] };
     var currentNode = dom, parents = [];
-    var sax = require('sax');
 
     var saxParser = sax.parser(true, { normalize: true });
     saxParser.onopentag = function(tag) {
