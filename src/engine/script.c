@@ -49,7 +49,7 @@ evaluate_script(const char* filename, bool as_module)
 	size_t         size;
 	
 	if (as_module) {
-		if (duk_peval_module(filename) != DUK_EXEC_SUCCESS)
+		if (!cjs_eval_module(filename))
 			return false;
 		return true;
 	}

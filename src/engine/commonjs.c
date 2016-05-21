@@ -9,14 +9,14 @@ static duk_ret_t js_require (duk_context* ctx);
 static void    duk_push_require_function (duk_context* ctx, const char* module_id);
 static path_t* find_module               (const char* id, const char* origin, const char* sys_origin);
 
-duk_int_t
-duk_peval_module(const char* filename)
+bool
+cjs_eval_module(const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
 	// very messy very quickly when dealing with object properties.  I tried to add
-	// comments to hint at what's going on, but it's still likely to be confusing for
-	// someone not familiar with the code.  proceed with caution.
+	// comments to illuminate what's going on, but it's still likely to be confusing for
+	// someone not familiar with Duktape code.  proceed with caution.
 
 	// notes:
 	//     - the final value of `module.exports` is left on top of the Duktape value stack.
@@ -66,7 +66,7 @@ duk_peval_module(const char* filename)
 	free(source);
 	if (!transpile_to_js(&code_string, filename)) {
 		lstr_free(code_string);
-		return DUK_EXEC_ERROR;
+		return false;
 	}
 	duk_push_string(g_duk, "(function main(exports, require, module, __filename, __dirname) { ");
 	duk_push_lstring_t(g_duk, code_string);
@@ -85,14 +85,12 @@ duk_peval_module(const char* filename)
 	duk_put_prop_string(g_duk, -2, filename);
 	duk_pop_2(g_duk);
 
-	// set up to call the module
+	// go, go, go!
 	duk_get_prop_string(g_duk, -2, "exports");  // exports
 	duk_get_prop_string(g_duk, -3, "require");  // require
 	duk_dup(g_duk, -4);  // module
 	duk_push_string(g_duk, filename);  // __filename
 	duk_push_string(g_duk, path_cstr(dir_path));  // __dirname
-
-	// go, go, go!
 	if (duk_pcall(g_duk, 5) != DUK_EXEC_SUCCESS) {
 		// if the module throws an error during initialization, the game may
 		// want to retry, so we'll remove it from the cache...
@@ -101,7 +99,7 @@ duk_peval_module(const char* filename)
 		duk_del_prop_string(g_duk, -1, filename);
 		duk_pop_2(g_duk);
 		duk_remove(g_duk, -2);  // ...and leave the error on the stack.
-		return DUK_EXEC_ERROR;
+		return false;
 	}
 	duk_pop(g_duk);
 	
@@ -113,7 +111,7 @@ have_module:
 	// `module` is on the stack, we need `module.exports`
 	duk_get_prop_string(g_duk, -1, "exports");
 	duk_remove(g_duk, -2);
-	return DUK_EXEC_SUCCESS;
+	return true;
 }
 
 static void
@@ -215,7 +213,7 @@ js_require(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "illegal relative require in global code");
 	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
 		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "unable to resolve require `%s`", id);
-	if (duk_peval_module(path_cstr(path)) != DUK_EXEC_SUCCESS)
+	if (!cjs_eval_module(path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
 }

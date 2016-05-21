@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+minisphere 3.2
+--------------
+
+* Module IDs passed to `require()` are resolved using a different algorithm
+  from previous versions.  Backwards compatibility is mostly retained, however
+  there may be subtle differences in the handling of relative IDs.
+
 minisphere 3.1
 --------------
 

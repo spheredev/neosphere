@@ -9,11 +9,12 @@ v3.2.0 - TBD
 * `require()` can now be used to load JS modules from anywhere in a game's file
   system by prefixing the module ID with a SphereFS alias (`@/`, `~/`, or
   `#/`).
-* Adds support for `console.log()`.  `stdout` is reserved for under-the-hood
-  logging, so console.log() output will only be visible when SSJ is attached.
-* Improves frameskip behavior: The frame timer is now reset only if the
-  frameskip limit is hit.  This should ensure a more consistent update rate
-  even under lag conditions.
+* Adds support for `console.log()` and friends.  `stdout` is reserved for
+  under-the-hood logging, so `console` output will only be visible when SSJ is
+  attached.
+* Improves frameskip behavior: The frame timer is now reset only if the skip
+  limit is hit.  This should ensure a more consistent update rate even under
+  lag conditions.
 
 
 v3.1.2 - May 11, 2016
