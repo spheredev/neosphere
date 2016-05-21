@@ -3,6 +3,8 @@
 
 #include "api.h"
 
+static duk_ret_t safe_decode_json (duk_context* ctx);
+
 const path_t*
 enginepath(void)
 {
@@ -112,6 +114,12 @@ strnewf(const char* fmt, ...)
 	return buffer;
 }
 
+duk_int_t
+duk_json_pdecode(duk_context* ctx)
+{
+	return dukrub_safe_call(ctx, safe_decode_json, 1, 1);
+}
+
 void
 duk_push_lstring_t(duk_context* ctx, const lstring_t* string)
 {
@@ -149,4 +157,11 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	s_paths[s_index] = path;
 	s_index = (s_index + 1) % 10;
 	return path_cstr(path);
+}
+
+static duk_ret_t
+safe_decode_json(duk_context* ctx)
+{
+	duk_json_decode(ctx, -1);
+	return 1;
 }
