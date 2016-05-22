@@ -19,7 +19,7 @@ enum resume_op
 
 void               inferiors_init            (void);
 void               inferiors_deinit          (void);
-inferior_t*        inferior_new              (const char* hostname, int port);
+inferior_t*        inferior_new              (const char* hostname, int port, bool show_trace);
 void               inferior_free             (inferior_t* obj);
 bool               inferior_update           (inferior_t* obj);
 bool               inferior_attached         (const inferior_t* obj);

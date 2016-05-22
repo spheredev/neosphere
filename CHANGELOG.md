@@ -4,11 +4,11 @@ minisphere Changelog
 v3.2.0 - TBD
 ------------
 
-* The module system has been overhauled to be more Node.js-like, including
-  support for `require.cache`, `module.loaded`, and `module.require`.
-* `require()` can now be used to load JS modules from anywhere in a game's file
-  system by prefixing the module ID with a SphereFS alias (`@/`, `~/`, or
-  `#/`).
+* The module system has been overhauled to work more like Node.js, and now has
+  support for `package.json` files, parsing JSON files as objects, and useful
+  APIs such as `require.cache`, `module.loaded`, and `module.require`.
+* `require()` can now load JS modules from anywhere in a game's file system by
+  prefixing the module ID with a SphereFS alias (`@/`, `~/`, or `#/`).
 * Adds support for `console.log()` and friends.  `stdout` is reserved for
   under-the-hood logging, so `console` output will only be visible when SSJ is
   attached.

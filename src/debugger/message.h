@@ -68,6 +68,7 @@ enum print_op
 	PRINT_DEBUG,
 	PRINT_ERROR,
 	PRINT_INFO,
+	PRINT_TRACE,
 	PRINT_WARN,
 };
 

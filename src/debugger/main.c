@@ -8,6 +8,7 @@ struct cmdline
 {
 	path_t* path;
 	bool    run_now;
+	bool    show_trace;
 };
 
 static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
@@ -35,7 +36,7 @@ main(int argc, char* argv[])
 
 	inferiors_init();
 
-	if (!(inferior = inferior_new("127.0.0.1", 1208)))
+	if (!(inferior = inferior_new("127.0.0.1", 1208, cmdline->show_trace)))
 		return EXIT_FAILURE;
 	printf("\n");
 	session = session_new(inferior);
@@ -176,6 +177,8 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 				have_target = true;
 			else if (strcmp(argv[i], "--run") == 0)
 				cmdline->run_now = true;
+			else if (strcmp(argv[i], "--trace") == 0)
+				cmdline->show_trace = true;
 			else {
 				printf("ssj: error: unknown option `%s`\n", argv[i]);
 				goto on_output_only;
@@ -190,6 +193,9 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 					break;
 				case 'r':
 					cmdline->run_now = true;
+					break;
+				case 't':
+					cmdline->show_trace = true;
 					break;
 				default:
 					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
@@ -278,6 +284,7 @@ print_usage(void)
 	printf("                   connection can be made within 30 seconds, SSJ will exit.    \n");
 	printf("   -r, --run       Prevent SSJ from pausing execution on attach.  When starting\n");
 	printf("                   a new instance, begin execution immediately.                \n");
+	printf("   -t, --trace     Show output from console.trace().                           \n");
 	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
 	printf("       --help      Print this help text.                                       \n");
 }

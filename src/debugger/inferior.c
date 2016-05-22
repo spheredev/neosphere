@@ -29,6 +29,7 @@ struct inferior
 	bool           have_debug_info;
 	int            line_no;
 	uint8_t        ptr_size;
+	bool           show_trace;
 	socket_t*      socket;
 	struct source* sources;
 };
@@ -52,7 +53,7 @@ inferiors_deinit(void)
 }
 
 inferior_t*
-inferior_new(const char* hostname, int port)
+inferior_new(const char* hostname, int port, bool show_trace)
 {
 	inferior_t* obj;
 	message_t*  req;
@@ -81,6 +82,7 @@ inferior_new(const char* hostname, int port)
 	printf("    author: %s\n", obj->author);
 
 	obj->id_no = s_next_id_no++;
+	obj->show_trace = show_trace;
 	return obj;
 
 on_error:
@@ -494,8 +496,11 @@ handle_notify(inferior_t* obj, const message_t* msg)
 					: print_op == PRINT_DEBUG ? "debug"
 					: print_op == PRINT_ERROR ? "ERROR"
 					: print_op == PRINT_INFO ? "info"
+					: print_op == PRINT_TRACE ? "trace"
 					: print_op == PRINT_WARN ? "warn"
 					: "log";
+				if (print_op == PRINT_TRACE && !obj->show_trace)
+					break;
 				if (print_op == PRINT_ASSERT || print_op == PRINT_ERROR)
 					printf("\33[31;1m");
 				else if (print_op == PRINT_WARN)

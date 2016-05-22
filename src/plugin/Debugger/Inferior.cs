@@ -407,6 +407,8 @@ namespace minisphere.Gdk.Debugger
                             {
                                 case AppNotify.DebugPrint:
                                     PrintType type = (PrintType)(int)message[3];
+                                    if (type == PrintType.Trace)
+                                        break;
                                     string debugText = (string)message[4];
                                     string prefix = type == PrintType.Assert ? "ASSERT"
                                         : type == PrintType.Debug ? "debug"

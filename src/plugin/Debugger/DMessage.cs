@@ -62,7 +62,8 @@ namespace minisphere.Gdk.Debugger
         Debug = 0x02,
         Error = 0x03,
         Info = 0x04,
-        Warn = 0x05,
+        Trace = 0x05,
+        Warn = 0x06,
     }
 
     class DMessage
