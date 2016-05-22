@@ -11,6 +11,7 @@ path_t*     path_new_dir       (const char* pathname);
 path_t*     path_dup           (const path_t* path);
 void        path_free          (path_t* path);
 const char* path_cstr          (const path_t* path);
+const char* path_ext_cstr      (const path_t* path);
 const char* path_filename_cstr (const path_t* path);
 const char* path_hop_cstr      (const path_t* path, size_t idx);
 path_t*     path_insert_hop    (path_t* path, size_t idx, const char* name);

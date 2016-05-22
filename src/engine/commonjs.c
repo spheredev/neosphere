@@ -28,10 +28,12 @@ cjs_eval_module(const char* filename)
 
 	lstring_t* code_string;
 	path_t*    dir_path;
+	path_t*    file_path;
 	size_t     source_size;
 	char*      source;
 
-	dir_path = path_strip(path_new(filename));
+	file_path = path_new(filename);
+	dir_path = path_strip(path_dup(file_path));
 
 	// is the requested module already in the cache?
 	duk_push_global_stash(g_duk);
@@ -47,7 +49,15 @@ cjs_eval_module(const char* filename)
 
 	console_log(1, "initializing JS module `%s`", filename);
 
-	// construct a `module` object for the new module
+	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
+	code_string = lstr_from_buf(source, source_size);
+	free(source);
+	if (!transpile_to_js(&code_string, filename)) {
+		lstr_free(code_string);
+		return false;
+	}
+
+	// construct a module object for the new module
 	duk_push_object(g_duk);  // module object
 	duk_push_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "exports");  // module.exports = {}
@@ -60,49 +70,43 @@ cjs_eval_module(const char* filename)
 	duk_push_require_function(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "require");  // module.require
 
-	// synthesize a function to wrap the module code.  this is the easiest way to
-	// guarantee CommonJS semantics and matches the behavior of Node.js.
-	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
-	code_string = lstr_from_buf(source, source_size);
-	free(source);
-	if (!transpile_to_js(&code_string, filename)) {
-		lstr_free(code_string);
-		return false;
-	}
-	duk_push_string(g_duk, "(function main(exports, require, module, __filename, __dirname) { ");
-	duk_push_lstring_t(g_duk, code_string);
-	duk_push_string(g_duk, " })");
-	duk_concat(g_duk, 3);
-	duk_push_string(g_duk, filename);
-	duk_compile(g_duk, DUK_COMPILE_EVAL);
-	duk_call(g_duk, 0);
-	lstr_free(code_string);
-
-	// cache the `module` object.  this is done in advance so that circular
-	// requires don't topple the stack.
+	// cache the module object in advance
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "moduleCache");
-	duk_dup(g_duk, -4);
+	duk_dup(g_duk, -3);
 	duk_put_prop_string(g_duk, -2, filename);
 	duk_pop_2(g_duk);
 
-	// go, go, go!
-	duk_get_prop_string(g_duk, -2, "exports");  // exports
-	duk_get_prop_string(g_duk, -3, "require");  // require
-	duk_dup(g_duk, -4);  // module
-	duk_push_string(g_duk, filename);  // __filename
-	duk_push_string(g_duk, path_cstr(dir_path));  // __dirname
-	if (duk_pcall(g_duk, 5) != DUK_EXEC_SUCCESS) {
-		// if the module throws an error during initialization, the game may
-		// want to retry, so we'll remove it from the cache...
-		duk_push_global_stash(g_duk);
-		duk_get_prop_string(g_duk, -1, "moduleCache");
-		duk_del_prop_string(g_duk, -1, filename);
-		duk_pop_2(g_duk);
-		duk_remove(g_duk, -2);  // ...and leave the error on the stack.
-		return false;
+	if (strcmp(path_ext_cstr(file_path), ".json") == 0) {
+		// JSON file, decode to JavaScript object
+		duk_push_lstring_t(g_duk, code_string);
+		lstr_free(code_string);
+		if (duk_json_pdecode(g_duk) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_put_prop_string(g_duk, -2, "exports");
 	}
-	duk_pop(g_duk);
+	else {
+		// synthesize a function to wrap the module code.  this is the easiest way to
+		// guarantee CommonJS semantics and matches the behavior of Node.js.
+		duk_push_string(g_duk, "(function main(exports, require, module, __filename, __dirname) { ");
+		duk_push_lstring_t(g_duk, code_string);
+		duk_push_string(g_duk, " })");
+		duk_concat(g_duk, 3);
+		duk_push_string(g_duk, filename);
+		duk_compile(g_duk, DUK_COMPILE_EVAL);
+		duk_call(g_duk, 0);
+		lstr_free(code_string);
+
+		// go, go, go!
+		duk_get_prop_string(g_duk, -2, "exports");  // exports
+		duk_get_prop_string(g_duk, -3, "require");  // require
+		duk_dup(g_duk, -4);  // module
+		duk_push_string(g_duk, filename);  // __filename
+		duk_push_string(g_duk, path_cstr(dir_path));  // __dirname
+		if (duk_pcall(g_duk, 5) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_pop(g_duk);
+	}
 	
 	// module executed successfully, set `module.loaded` to true
 	duk_push_true(g_duk);
@@ -113,6 +117,16 @@ have_module:
 	duk_get_prop_string(g_duk, -1, "exports");
 	duk_remove(g_duk, -2);
 	return true;
+
+on_error:
+	// note: it's assumed that at this point, the only things left in our portion of the
+	//       Duktape stack are the module object and the thrown error.
+	duk_push_global_stash(g_duk);
+	duk_get_prop_string(g_duk, -1, "moduleCache");
+	duk_del_prop_string(g_duk, -1, filename);
+	duk_pop_2(g_duk);
+	duk_remove(g_duk, -2);  // leave the error on the stack
+	return false;
 }
 
 static void
@@ -143,10 +157,12 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		"%s.js",
 		"%s.ts",
 		"%s.coffee",
+		"%s.json",
 		"%s/package.json",
 		"%s/index.js",
 		"%s/index.ts",
 		"%s/index.coffee",
+		"%s/index.json",
 	};
 
 	path_t*   origin_path;

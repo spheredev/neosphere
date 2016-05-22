@@ -92,6 +92,21 @@ path_cstr(const path_t* path)
 }
 
 const char*
+path_ext_cstr(const path_t* path)
+{
+	char* p;
+	
+	if (path->filename == NULL)
+		return NULL;
+	else {
+		if (p = strrchr(path->filename, '.'))
+			return p;
+		else
+			return "";
+	}
+}
+
+const char*
 path_filename_cstr(const path_t* path)
 {
 	return path->filename;
