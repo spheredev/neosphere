@@ -8,6 +8,7 @@ static duk_ret_t js_require (duk_context* ctx);
 
 static void    duk_push_require_function (duk_context* ctx, const char* module_id);
 static path_t* find_module               (const char* id, const char* origin, const char* sys_origin);
+static path_t* load_package_json         (const char* filename);
 
 bool
 cjs_eval_module(const char* filename)
@@ -31,7 +32,7 @@ cjs_eval_module(const char* filename)
 	char*      source;
 
 	dir_path = path_strip(path_new(filename));
-	
+
 	// is the requested module already in the cache?
 	duk_push_global_stash(g_duk);
 	duk_get_prop_string(g_duk, -1, "moduleCache");
@@ -142,16 +143,15 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		"%s.js",
 		"%s.ts",
 		"%s.coffee",
+		"%s/package.json",
 		"%s/index.js",
 		"%s/index.ts",
 		"%s/index.coffee",
 	};
 
 	path_t*   origin_path;
-	duk_idx_t duk_top;
 	char*     filename;
-	char*     json;
-	size_t    json_size;
+	path_t*   main_path;
 	path_t*   path;
 
 	int i;
@@ -163,7 +163,6 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		// resolve module from designated module repository
 		origin_path = path_new(sys_origin);
 
-	// check for loose modules
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0)
@@ -174,44 +173,54 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		path_append(path, filename);
 		path_collapse(path, true);
 		free(filename);
-		if (sfs_fexist(g_fs, path_cstr(path), NULL))
-			return path;
-		path_free(path);
-	}
-
-	// check for package.json
-	filename = strnewf("%s/package.json", id);
-	if (strncmp(id, "@/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0)
-		path = path_new("./");
-	else
-		path = path_dup(origin_path);
-	path_strip(path);
-	path_append(path, filename);
-	path_collapse(path, true);
-	free(filename);
-	duk_top = duk_get_top(g_duk);
-	if (json = sfs_fslurp(g_fs, path_cstr(path), NULL, &json_size)) {
-		duk_push_lstring(g_duk, json, json_size);
-		free(json);
-		if (duk_json_pdecode(g_duk) != DUK_EXEC_SUCCESS)
-			goto on_json_error;
-		if (!duk_is_object_coercible(g_duk, -1))
-			goto on_json_error;
-		duk_get_prop_string(g_duk, -1, "main");
-		path_strip(path);
-		path_append(path, duk_safe_to_string(g_duk, -1));
-		path_collapse(path, true);
 		if (sfs_fexist(g_fs, path_cstr(path), NULL)) {
-			duk_set_top(g_duk, duk_top);
-			return path;
+			if (strcmp(path_filename_cstr(path), "package.json") != 0)
+				return path;
+			else {
+				if (!(main_path = load_package_json(path_cstr(path))))
+					goto next_filename;
+				if (sfs_fexist(g_fs, path_cstr(main_path), NULL)) {
+					path_free(path);
+					return main_path;
+				}
+			}
 		}
+
+	next_filename:
 		path_free(path);
 	}
 
-	path = NULL;
+	return NULL;
+}
 
-on_json_error:
-	path_free(path);
+static path_t*
+load_package_json(const char* filename)
+{
+	duk_idx_t duk_top;
+	char*     json;
+	size_t    json_size;
+	path_t*   path;
+	
+	duk_top = duk_get_top(g_duk);
+	if (!(json = sfs_fslurp(g_fs, filename, NULL, &json_size)))
+		goto on_error;
+	duk_push_lstring(g_duk, json, json_size);
+	free(json);
+	if (duk_json_pdecode(g_duk) != DUK_EXEC_SUCCESS)
+		goto on_error;
+	if (!duk_is_object_coercible(g_duk, -1))
+		goto on_error;
+	duk_get_prop_string(g_duk, -1, "main");
+	if (!duk_is_string(g_duk, -1))
+		goto on_error;
+	path = path_strip(path_new(filename));
+	path_append(path, duk_get_string(g_duk, -1));
+	path_collapse(path, true);
+	if (!sfs_fexist(g_fs, path_cstr(path), NULL))
+		goto on_error;
+	return path;
+
+on_error:
 	duk_set_top(g_duk, duk_top);
 	return NULL;
 }
