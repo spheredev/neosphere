@@ -32,7 +32,7 @@ GetVersionString()
     Returns the engine's version identification string. The string returned will
     be in the following format:
 
-        v2.0 (minisphere 3.1.99)
+        v2.0 (minisphere 3.2.0)
 
 GetExtensions()
 

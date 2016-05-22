@@ -1,3 +1,19 @@
+minisphere (3.2.0) trusty; urgency=low
+
+  * The module system has been overhauled to work more like Node.js, and now has
+    support for `package.json` files, parsing JSON files as objects, and useful
+    APIs such as `require.cache`, `module.loaded`, and `module.require`.
+  * `require()` can now load JS modules from anywhere in a game's file system by
+    prefixing the module ID with a SphereFS alias (`@/`, `~/`, or `#/`).
+  * Adds support for `console.log()` and friends.  `stdout` is reserved for
+    under-the-hood logging, so `console` output will only be visible when SSJ is
+    attached.
+  * Improves frameskip behavior: The frame timer is now reset only if the skip
+    limit is hit.  This should ensure a more consistent update rate even under
+    lag conditions.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 22 May 2016 00:00:00 -0500
+
 minisphere (3.1.2) trusty; urgency=low
 
   * Fixes an issue where sounds were reinitialized whenever a script called

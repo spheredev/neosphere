@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.2.0 - TBD
-------------
+v3.2.0 - May 22, 2016
+---------------------
 
 * The module system has been overhauled to work more like Node.js, and now has
   support for `package.json` files, parsing JSON files as objects, and useful

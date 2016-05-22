@@ -4,9 +4,12 @@ Release Notes
 minisphere 3.2
 --------------
 
-* Module IDs passed to `require()` are resolved using a different algorithm
-  from previous versions.  Backwards compatibility is mostly retained, however
-  there may be subtle differences in the handling of relative IDs.
+* Module IDs passed to `require()` are resolved using a more advanced algorithm
+  designed to emulate the behavior of Node.js.  Compatibility is mostly
+  retained; however, there may be subtle differences, for example in the
+  handling of relative IDs.
+* minisphere 3.2 supports `console.log()` and its variants.  Output produced
+  this way will only be visible with the debugger (SSJ) attached.
 
 minisphere 3.1
 --------------
