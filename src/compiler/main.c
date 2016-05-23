@@ -30,7 +30,7 @@ main(int argc, char* argv[])
 
 	if (!(build = build_new(s_in_path, s_out_path, s_want_source_map)))
 		goto shutdown;
-	if (!build_prime(build, s_target_name)) goto shutdown;
+	if (!build_eval_rule(build, s_target_name)) goto shutdown;
 	if (!build_run(build)) goto shutdown;
 	retval = EXIT_SUCCESS;
 

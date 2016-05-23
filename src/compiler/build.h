@@ -15,7 +15,7 @@ vector_t* build_add_files  (build_t* build, const path_t* pattern, bool recursiv
 void      build_emit_error (build_t* build, const char* fmt, ...);
 void      build_emit_warn  (build_t* build, const char* fmt, ...);
 void      build_install    (build_t* build, const target_t* target, const path_t* path);
-bool      build_prime      (build_t* build, const char* rule_name);
+bool      build_eval_rule      (build_t* build, const char* rule_name);
 bool      build_run        (build_t* build);
 
 #endif // CELL__BUILD_H__INCLUDED

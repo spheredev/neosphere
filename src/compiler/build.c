@@ -7,7 +7,7 @@
 
 struct build
 {
-	duk_context*  duktape;
+	duk_context*  js_ctx;
 	path_t*       in_path;
 	vector_t*     installs;
 	path_t*       out_path;
@@ -67,21 +67,21 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	path_free(script_path);
 
 	// initialize JavaScript environment
-	build->duktape = duk_create_heap_default();
-	duk_push_global_stash(build->duktape);
-	duk_push_pointer(build->duktape, build);
-	duk_put_prop_string(build->duktape, -2, "\xFF""environ");
-	duk_pop(build->duktape);
+	build->js_ctx = duk_create_heap_default();
+	duk_push_global_stash(build->js_ctx);
+	duk_push_pointer(build->js_ctx, build);
+	duk_put_prop_string(build->js_ctx, -2, "\xFF""environ");
+	duk_pop(build->js_ctx);
 
 	// wire up JavaScript API
-	duk_push_c_function(build->duktape, js_api_install, DUK_VARARGS);
-	duk_put_global_string(build->duktape, "install");
-	duk_push_c_function(build->duktape, js_api_files, DUK_VARARGS);
-	duk_put_global_string(build->duktape, "files");
-	duk_push_c_function(build->duktape, js_api_s2gm, DUK_VARARGS);
-	duk_put_global_string(build->duktape, "s2gm");
-	duk_push_c_function(build->duktape, js_api_sgm, DUK_VARARGS);
-	duk_put_global_string(build->duktape, "sgm");
+	duk_push_c_function(build->js_ctx, js_api_install, DUK_VARARGS);
+	duk_put_global_string(build->js_ctx, "install");
+	duk_push_c_function(build->js_ctx, js_api_files, DUK_VARARGS);
+	duk_put_global_string(build->js_ctx, "files");
+	duk_push_c_function(build->js_ctx, js_api_s2gm, DUK_VARARGS);
+	duk_put_global_string(build->js_ctx, "s2gm");
+	duk_push_c_function(build->js_ctx, js_api_sgm, DUK_VARARGS);
+	duk_put_global_string(build->js_ctx, "sgm");
 
 	// set up build environment (ensure directory exists, etc.)
 	path_mkdir(out_path);
@@ -107,7 +107,7 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	return build;
 
 on_error:
-	duk_destroy_heap(build->duktape);
+	duk_destroy_heap(build->js_ctx);
 	free(build);
 	return NULL;
 }
@@ -122,7 +122,7 @@ build_free(build_t* build)
 	if (build == NULL)
 		return;
 	
-	duk_destroy_heap(build->duktape);
+	duk_destroy_heap(build->js_ctx);
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		asset_free((*p_target)->asset);
@@ -217,34 +217,50 @@ build_install(build_t* build, const target_t* target, const path_t* path)
 }
 
 bool
-build_prime(build_t* build, const char* rule_name)
+build_eval_rule(build_t* build, const char* rule_name)
 {
 	char    func_name[255];
 	path_t* script_path;
+	char*   source;
+	size_t  source_len;
 
 	build->rule_name = strdup(rule_name);
 
-	// process build script
+	// load the build script
 	emit_op_begin(build, "processing Cellscript.js rule `%s`", rule_name);
 	sprintf(func_name, "$%s", rule_name);
 	script_path = path_rebase(path_new("Cellscript.js"), build->in_path);
-	if (duk_peval_file(build->duktape, path_cstr(script_path)) != 0) {
-		path_free(script_path);
-		build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+	if (!(source = fslurp(path_cstr(script_path), &source_len)))
+		goto on_error;
+	duk_push_lstring(build->js_ctx, source, source_len);
+	duk_push_string(build->js_ctx, path_cstr(script_path));
+	path_free(script_path);
+	free(source);
+	if (duk_pcompile(build->js_ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS
+	    || duk_pcall(build->js_ctx, 0) != DUK_EXEC_SUCCESS)
+	{
+		duk_pop(build->js_ctx);
+		build_emit_error(build, "JS: %s", duk_safe_to_string(build->js_ctx, -1));
 		goto on_error;
 	}
-	path_free(script_path);
-	if (duk_get_global_string(build->duktape, func_name) && duk_is_callable(build->duktape, -1)) {
-		if (duk_pcall(build->duktape, 0) != 0) {
-			build_emit_error(build, "JS: %s", duk_safe_to_string(build->duktape, -1));
+	duk_pop(build->js_ctx);
+	
+	// evaluate the requested rule
+	if (duk_get_global_string(build->js_ctx, func_name) && duk_is_callable(build->js_ctx, -1)) {
+		if (duk_pcall(build->js_ctx, 0) != 0) {
+			duk_pop(build->js_ctx);
+			build_emit_error(build, "JS: %s", duk_safe_to_string(build->js_ctx, -1));
 			goto on_error;
 		}
+		duk_pop(build->js_ctx);
 	}
 	else {
+		duk_pop(build->js_ctx);
 		build_emit_error(build, "no Cellscript rule named `%s`", rule_name);
 		goto on_error;
 	}
 
+	// validate the build
 	validate_targets(build);
 	if (build->num_errors)
 		goto on_error;
@@ -314,20 +330,20 @@ build_run(build_t* build)
 	// generate source map
 	if (build->make_source_map) {
 		printf("generating source map... ");
-		duk_push_object(build->duktape);
-		duk_push_string(build->duktape, path_cstr(build->in_path));
-		duk_put_prop_string(build->duktape, -2, "origin");
-		duk_push_object(build->duktape);
+		duk_push_object(build->js_ctx);
+		duk_push_string(build->js_ctx, path_cstr(build->in_path));
+		duk_put_prop_string(build->js_ctx, -2, "origin");
+		duk_push_object(build->js_ctx);
 		iter = vector_enum(build->installs);
 		while (p_inst = vector_next(&iter)) {
 			path = path_resolve(path_dup(asset_object_path(p_inst->target->asset)), build->in_path);
-			duk_push_string(build->duktape, path_cstr(path));
-			duk_put_prop_string(build->duktape, -2, path_cstr(p_inst->path));
+			duk_push_string(build->js_ctx, path_cstr(path));
+			duk_put_prop_string(build->js_ctx, -2, path_cstr(p_inst->path));
 			path_free(path);
 		}
-		duk_put_prop_string(build->duktape, -2, "fileMap");
-		duk_json_encode(build->duktape, -1);
-		json = duk_get_lstring(build->duktape, -1, &json_size);
+		duk_put_prop_string(build->js_ctx, -2, "fileMap");
+		duk_json_encode(build->js_ctx, -1);
+		json = duk_get_lstring(build->js_ctx, -1, &json_size);
 		path = path_rebase(path_new("sourcemap.json"),
 			build->spk != NULL ? build->staging_path : build->out_path);
 		path_mkdir(build->out_path);

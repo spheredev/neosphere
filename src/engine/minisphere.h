@@ -22,12 +22,13 @@
 #include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
+#include <duktape.h>
+#include <duk_rubber.h>
+#include <dyad.h>
 #include <zlib.h>
 
 #include "version.h"
 
-#include "rubber_duk.h"
-#include "dyad.h"
 #include "console.h"
 #include "spherefs.h"
 #include "file.h"

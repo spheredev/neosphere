@@ -1,4 +1,4 @@
-#include "rubber_duk.h"
+#include "duk_rubber.h"
 
 #include "duktape.h"
 
@@ -7,7 +7,7 @@ struct safe_call_args
 	dukrub_safe_call_function func;
 };
 
-static duk_ret_t handle_duk2_safe_call (duk_context* ctx, void* udata);
+static duk_ret_t shim_v1_safe_call (duk_context* ctx, void* udata);
 
 void
 dukrub_debugger_attach(duk_context* ctx,
@@ -30,14 +30,14 @@ dukrub_safe_call(duk_context* ctx, dukrub_safe_call_function func, duk_int_t nar
 	struct safe_call_args safe_args;
 	
 	safe_args.func = func;
-	return duk_safe_call(ctx, handle_duk2_safe_call, &safe_args, nargs, nrets);
+	return duk_safe_call(ctx, shim_v1_safe_call, &safe_args, nargs, nrets);
 #else
 	return duk_safe_call(ctx, func, nargs, nrets);
 #endif
 }
 
 static duk_ret_t
-handle_duk2_safe_call(duk_context* ctx, void* udata)
+shim_v1_safe_call(duk_context* ctx, void* udata)
 {
 	struct safe_call_args* safe_args;
 

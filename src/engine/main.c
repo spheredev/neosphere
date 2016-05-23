@@ -32,9 +32,8 @@ static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path,
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
+static void show_error_screen   (const char* message);
 static bool verify_requirements (sandbox_t* fs);
-
-static void on_duk_fatal (duk_context* ctx, duk_errcode_t code, const char* msg);
 
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
@@ -282,7 +281,8 @@ on_js_error:
 		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);
 		duk_push_string(g_duk, err_msg);
 	}
-	duk_fatal(g_duk, err_code, duk_get_string(g_duk, -1));
+	show_error_screen(duk_get_string(g_duk, -1));
+	exit_game(false);
 }
 
 void
@@ -340,94 +340,6 @@ restart_engine(void)
 	longjmp(s_jmp_restart, 1);
 }
 
-static void
-on_duk_fatal(duk_context* ctx, duk_errcode_t code, const char* msg)
-{
-	wraptext_t*            error_info;
-	bool                   is_copied = true;
-	bool                   is_finished;
-	int                    frames_till_close;
-	ALLEGRO_KEYBOARD_STATE keyboard;
-	const char*            line_text;
-	int                    num_lines;
-	const char*            subtitle;
-	const char*            title;
-	int                    title_index;
-
-	int i;
-
-#ifdef MINISPHERE_USE_CLIPBOARD
-	is_copied = false;
-#endif
-
-	title_index = rand() % (sizeof(ERROR_TEXT) / sizeof(const char*) / 2);
-	title = ERROR_TEXT[title_index][0];
-	subtitle = ERROR_TEXT[title_index][1];
-	if (g_sys_font == NULL)
-		goto show_error_box;
-
-	// create wraptext from error message
-	if (!(error_info = word_wrap_text(g_sys_font, msg, g_res_x - 84)))
-		goto show_error_box;
-	num_lines = get_wraptext_line_count(error_info);
-
-	// show error in-engine, Sphere 1.x style
-	screen_unskip_frame(g_screen);
-	is_finished = false;
-	frames_till_close = 30;
-	while (!is_finished) {
-		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
-		draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
-		draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
-		draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
-		draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
-		for (i = 0; i < num_lines; ++i) {
-			line_text = get_wraptext_line(error_info, i);
-			draw_text(g_sys_font, color_new(0, 0, 0, 255),
-				g_res_x / 2 + 1, 59 + i * get_font_line_height(g_sys_font),
-				TEXT_ALIGN_CENTER, line_text);
-			draw_text(g_sys_font, color_new(192, 192, 192, 255),
-				g_res_x / 2, 58 + i * get_font_line_height(g_sys_font),
-				TEXT_ALIGN_CENTER, line_text);
-		}
-		if (frames_till_close <= 0) {
-			draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
-				TEXT_ALIGN_CENTER,
-				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
-		}
-		screen_flip(g_screen, 30);
-		if (frames_till_close <= 0) {
-			al_get_keyboard_state(&keyboard);
-			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
-				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
-
-			// if Ctrl+C is pressed, copy the error message and location to clipboard
-#ifdef MINISPHERE_USE_CLIPBOARD
-			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
-			    && al_key_down(&keyboard, ALLEGRO_KEY_C))
-			{
-				is_copied = true;
-				al_set_clipboard_text(screen_display(g_screen), msg);
-			}
-#endif
-		}
-		else {
-			--frames_till_close;
-		}
-	}
-	free_wraptext(error_info);
-	shutdown_engine();
-	exit(EXIT_SUCCESS);
-
-show_error_box:
-	// use a native message box only as a last resort
-	al_show_native_message_box(NULL, "Script Error",
-		"minisphere encountered an error during game execution.",
-		msg, NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	shutdown_engine();
-	exit(EXIT_SUCCESS);
-}
-
 static bool
 initialize_engine(void)
 {
@@ -455,7 +367,7 @@ initialize_engine(void)
 
 	// initialize JavaScript
 	console_log(1, "initializing Duktape v%ld.%ld.%ld", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
-	if (!(g_duk = duk_create_heap(NULL, NULL, NULL, NULL, &on_duk_fatal)))
+	if (!(g_duk = duk_create_heap_default()))
 		goto on_error;
 
 	// load system configuraton
@@ -753,6 +665,94 @@ report_error(const char* fmt, ...)
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
 	lstr_free(error_text);
+}
+
+static void
+show_error_screen(const char* message)
+{
+	wraptext_t*            error_info;
+	bool                   is_copied = true;
+	bool                   is_finished;
+	int                    frames_till_close;
+	ALLEGRO_KEYBOARD_STATE keyboard;
+	const char*            line_text;
+	int                    num_lines;
+	const char*            subtitle;
+	const char*            title;
+	int                    title_index;
+
+	int i;
+
+#ifdef MINISPHERE_USE_CLIPBOARD
+	is_copied = false;
+#endif
+
+	title_index = rand() % (sizeof(ERROR_TEXT) / sizeof(const char*) / 2);
+	title = ERROR_TEXT[title_index][0];
+	subtitle = ERROR_TEXT[title_index][1];
+	if (g_sys_font == NULL)
+		goto show_error_box;
+
+	// create wraptext from error message
+	if (!(error_info = word_wrap_text(g_sys_font, message, g_res_x - 84)))
+		goto show_error_box;
+	num_lines = get_wraptext_line_count(error_info);
+
+	// show error in-engine, Sphere 1.x style
+	screen_unskip_frame(g_screen);
+	is_finished = false;
+	frames_till_close = 30;
+	while (!is_finished) {
+		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
+		draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
+		draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
+		draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
+		for (i = 0; i < num_lines; ++i) {
+			line_text = get_wraptext_line(error_info, i);
+			draw_text(g_sys_font, color_new(0, 0, 0, 255),
+				g_res_x / 2 + 1, 59 + i * get_font_line_height(g_sys_font),
+				TEXT_ALIGN_CENTER, line_text);
+			draw_text(g_sys_font, color_new(192, 192, 192, 255),
+				g_res_x / 2, 58 + i * get_font_line_height(g_sys_font),
+				TEXT_ALIGN_CENTER, line_text);
+		}
+		if (frames_till_close <= 0) {
+			draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - get_font_line_height(g_sys_font),
+				TEXT_ALIGN_CENTER,
+				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
+		}
+		screen_flip(g_screen, 30);
+		if (frames_till_close <= 0) {
+			al_get_keyboard_state(&keyboard);
+			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
+				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
+
+			// if Ctrl+C is pressed, copy the error message and location to clipboard
+#ifdef MINISPHERE_USE_CLIPBOARD
+			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
+				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
+			{
+				is_copied = true;
+				al_set_clipboard_text(screen_display(g_screen), message);
+			}
+#endif
+		}
+		else {
+			--frames_till_close;
+		}
+	}
+	free_wraptext(error_info);
+	shutdown_engine();
+	exit(EXIT_SUCCESS);
+
+show_error_box:
+	// use a native message box only as a last resort
+	al_show_native_message_box(NULL, "Script Error",
+		"minisphere encountered an error during game execution.",
+		message, NULL, ALLEGRO_MESSAGEBOX_ERROR);
+	shutdown_engine();
+	exit(EXIT_SUCCESS);
 }
 
 static bool
