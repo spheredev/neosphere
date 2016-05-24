@@ -21,18 +21,18 @@ new commit.
 * Release date in CHANGELOG.md
 * Changelog entry in `src/debian/changelog`
 
+
 Build the Release
 -----------------
 
 * In Windows using Visual Studio 2015:
-    - Delete `msw/` and `msw64/`, then Clean and Build the following
-      configurations:
+    - Run `git clean -xdf`, then build the following project configurations:
         + **minisphere:** x64 Redist, x64 Console, Win32 Redist, Win32 Console
         + **Cell:** x64 Console, Win32 Console
         + **SSJ:** x64 Console, Win32 Console
         + **Plugin:** AnyCPU Release
-    - Copy latest Sphere Studio "Release" build into `msw/ide/`
-    - Compile `setup/minisphere.iss` using Inno Setup 5.5
+    - Copy the latest Sphere Studio "Release" build into `msw/ide/`
+    - Compile `setup/minisphere.iss` using the latest version of Inno Setup
     - `minisphereSetup-X.Y.Z.exe` will be in `setup/`
 * Using a 64-bit installation of Ubuntu 14.04:
     - Run `make clean dist deb && cd dist`
@@ -42,6 +42,7 @@ Build the Release
     - `minisphere_X.Y.Z.tar.gz` will be in `dist/`
     - `minisphere_X.Y.Z_amd64.deb` will be in `~/pbuilder/trusty_result/`
     - `minisphere_X.Y.Z_i386.deb` will be in `~/pbuilder/trusty-i386_result/`
+
 
 Unleash the Beast!
 ------------------
