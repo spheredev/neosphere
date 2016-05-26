@@ -3,16 +3,15 @@
 
 #include "api.h"
 
-static duk_ret_t js_BlendColors           (duk_context* ctx);
-static duk_ret_t js_BlendColorsWeighted   (duk_context* ctx);
-static duk_ret_t js_CreateColor           (duk_context* ctx);
-static duk_ret_t js_new_Color             (duk_context* ctx);
-static duk_ret_t js_Color_toString        (duk_context* ctx);
-static duk_ret_t js_Color_clone           (duk_context* ctx);
-static duk_ret_t js_CreateColorMatrix     (duk_context* ctx);
-static duk_ret_t js_new_ColorMatrix       (duk_context* ctx);
-static duk_ret_t js_ColorMatrix_toString  (duk_context* ctx);
-static duk_ret_t js_ColorMatrix_apply     (duk_context* ctx);
+static duk_ret_t js_CreateColor          (duk_context* ctx);
+static duk_ret_t js_new_Color            (duk_context* ctx);
+static duk_ret_t js_Color_mix            (duk_context* ctx);
+static duk_ret_t js_Color_toString       (duk_context* ctx);
+static duk_ret_t js_Color_clone          (duk_context* ctx);
+static duk_ret_t js_CreateColorMatrix    (duk_context* ctx);
+static duk_ret_t js_new_ColorMatrix      (duk_context* ctx);
+static duk_ret_t js_ColorMatrix_toString (duk_context* ctx);
+static duk_ret_t js_ColorMatrix_apply    (duk_context* ctx);
 
 ALLEGRO_COLOR
 nativecolor(color_t color)
@@ -96,13 +95,14 @@ color_transform(color_t color, colormatrix_t mat)
 void
 init_color_api(void)
 {
-	api_register_method(g_duk, NULL, "BlendColors", js_BlendColors);
-	api_register_method(g_duk, NULL, "BlendColorsWeighted", js_BlendColorsWeighted);
+	api_register_method(g_duk, NULL, "BlendColors", js_Color_mix);
+	api_register_method(g_duk, NULL, "BlendColorsWeighted", js_Color_mix);
 	api_register_method(g_duk, NULL, "CreateColor", js_CreateColor);
 	api_register_method(g_duk, NULL, "CreateColorMatrix", js_CreateColorMatrix);
 
 	// register Color methods and properties
 	api_register_ctor(g_duk, "Color", js_new_Color, NULL);
+	api_register_function(g_duk, "Color", "mix", js_Color_mix);
 	api_register_method(g_duk, "Color", "toString", js_Color_toString);
 	api_register_method(g_duk, "Color", "clone", js_Color_clone);
 	
@@ -165,25 +165,25 @@ duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
 }
 
 static duk_ret_t
-js_BlendColors(duk_context* ctx)
+js_Color_mix(duk_context* ctx)
 {
-	color_t color1 = duk_require_sphere_color(ctx, 0);
-	color_t color2 = duk_require_sphere_color(ctx, 1);
+	color_t color1;
+	color_t color2;
+	int     num_args;
+	float   w1 = 1.0;
+	float   w2 = 1.0;
 
-	duk_push_sphere_color(ctx, color_lerp(color1, color2, 1, 1));
-	return 1;
-}
-
-static duk_ret_t
-js_BlendColorsWeighted(duk_context* ctx)
-{
-	color_t color1 = duk_require_sphere_color(ctx, 0);
-	color_t color2 = duk_require_sphere_color(ctx, 1);
-	float w1 = duk_require_number(ctx, 2);
-	float w2 = duk_require_number(ctx, 3);
-
+	num_args = duk_get_top(ctx);
+	color1 = duk_require_sphere_color(ctx, 0);
+	color2 = duk_require_sphere_color(ctx, 1);
+	if (num_args > 2) {
+		w1 = duk_require_number(ctx, 2);
+		w2 = duk_require_number(ctx, 3);
+	}
+	
 	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BlendColorsWeighted(): weights cannot be negative ({ w1: %f, w2: %f })", w1, w2);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "weight cannot be negative", w1, w2);
+	
 	duk_push_sphere_color(ctx, color_lerp(color1, color2, w1, w2));
 	return 1;
 }

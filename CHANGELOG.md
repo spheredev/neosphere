@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v3.2.1 - TBD
+------------
+
+* Adds a new `Color.mix()` API call to perform color mixing (either
+  proportional or weighted).  `BlendColors()` and `BlendColorsWeighted()` are
+  retained for backward compatibility.
+
 v3.2.0 - May 22, 2016
 ---------------------
 
