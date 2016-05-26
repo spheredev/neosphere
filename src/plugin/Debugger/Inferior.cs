@@ -153,9 +153,9 @@ namespace minisphere.Gdk.Debugger
                 }
             });
             string[] handshake = line.Trim().Split(new[] { ' ' }, 4);
-            int debuggerVersion = int.Parse(handshake[0]);
-            if (debuggerVersion != 1)
-                throw new NotSupportedException("Error communicating with debug server");
+            int protocol = int.Parse(handshake[0]);
+            if (protocol < 1 || protocol > 2)
+                throw new NotSupportedException("Unsupported Duktape debugger protocol version!");
 
             Version = handshake[2];
             TargetID = handshake[3];

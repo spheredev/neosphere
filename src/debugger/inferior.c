@@ -450,6 +450,7 @@ do_handshake(socket_t* socket)
 
 	ptrdiff_t    idx;
 	char*        next_token;
+	int          protocol;
 	char*        token;
 
 	printf("verifying... ");
@@ -464,7 +465,9 @@ do_handshake(socket_t* socket)
 	// parse handshake line
 	if (!(token = strtok_r(handshake, " ", &next_token)))
 		goto on_error;
-	if (atoi(token) != 1) goto on_error;
+	protocol = atoi(token);
+	if (protocol < 1 || protocol > 2)
+		goto on_error;
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	if (!(token = strtok_r(NULL, " ", &next_token)))
