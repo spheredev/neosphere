@@ -120,10 +120,10 @@ following SphereFS prefixes:
         try to write anything here as doing so can damage the host minisphere
         installation.
 
-The following will open the kevfile `eaty-pigs.conf` from the user's save data
+The following will open the kevfile `eaty_pigs.conf` from the user's save data
 directory:
 
-    var file = new KevFile("~/eaty-pigs.conf");
+    var file = new KevFile("~/eaty_pigs.conf");
 
 Absolute paths are never allowed, and any attempt to circumvent the sandbox,
 e.g. "@/../maggie.fat", will be met with a Sandbox Violation error.
@@ -172,7 +172,7 @@ Any new code should make use of CommonJS instead (see above).
 RequireScript(filename)
 EvaluateScript(filename)
 
-    Not SphereFS compliant: `filename` is relative to ~sgm/scripts.
+    Not SphereFS compliant: `filename` is relative to scripts/.
 
     Evaluates the contents of `filename`, as if the code contained within were
     part of the script containing the call.  If you've ever worked in C or C++,
@@ -185,7 +185,7 @@ EvaluateScript(filename)
 RequireSystemScript(filename)
 EvaluateSystemScript(filename)
 
-    `filename` is relative to ~sys/scripts.  SphereFS prefixes are not allowed.
+    `filename` is relative to #/scripts.  SphereFS prefixes are not allowed.
 
     Same as above, except the script is loaded from the engine's system
     directory.  These are used to import scripts included with the engine.
@@ -1019,7 +1019,7 @@ Surface:clone();
 
 Surface:save(filename);
 
-    Not SphereFS compliant: `filename` is relative to ~sgm/images.
+    Not SphereFS compliant: `filename` is relative to images/.
 
     Saves the contents of the surface to an image file.  The filename extension
     determines the format of the saved image.  Supported formats are PNG, BMP
@@ -1464,21 +1464,21 @@ File and Directory Management
 -----------------------------
 
 These functions allow you to manage the file system. For all of these functions,
-file and directory names are relative to ~sgm/save.
+file and directory names are relative to save/.
 
 GetFileList([dirname]);
 
-    Not SphereFS compliant.  `dirname` is relative to ~sgm/.
+    Not SphereFS compliant.  `dirname` is relative to @/.
 
     Returns an array of strings naming files found in the specified directory.
-    If `dirname` is not provided, ~sgm/save is assumed.
+    If `dirname` is not provided, save/ is assumed.
 
 GetDirectoryList([dirname]);
 
-    Not SphereFS compliant.  `dirname` is relative to ~sgm/.
+    Not SphereFS compliant.  `dirname` is relative to @/.
 
     Returns an array of strings naming subdirectories found in the specified
-    directory.  If 'dirname' is not provided, ~sgm/ is assumed.  This is
+    directory.  If 'dirname' is not provided, @/ is assumed.  This is
     inconsistent with GetFileList(), but is compatible with Sphere 1.x.
 
 DoesFileExist(filename);
@@ -1719,7 +1719,7 @@ for the full set of map functions.
 
 MapEngine(filename[, framerate]);
 
-    Not SphereFS compliant: `filename` is relative to ~sgm/maps.
+    Not SphereFS compliant: `filename` is relative to maps/.
 
     Starts the map engine, loading `map_file` as the initial map.  `framerate`
     specifies the framerate the map engine will run at; a framerate of 0 will
@@ -1735,7 +1735,7 @@ IsMapEngineRunning();
 
 ChangeMap(filename);
 
-    Not SphereFS compliant: `filename` is relative to ~sgm/maps.
+    Not SphereFS compliant: `filename` is relative to maps/.
 
     Loads a new map into the map engine.  This destroys any transient persons
     automatically.  Transient persons are those defined in the map file as well
@@ -1768,7 +1768,7 @@ GetMapEngineFrameRate();
 
 GetCurrentMap();
 
-    Gets the filename of the current map, relative to ~sgm/maps.
+    Gets the filename of the current map, relative to maps/.
 
 SetLayerWidth(layer, width);
 SetLayerHeight(layer, height);
@@ -1955,7 +1955,7 @@ loaded.
 
 CreatePerson(name, spriteset, transient);
 
-    Not SphereFS compliant: `spriteset` is relative to ~sgm/spritesets.
+    Not SphereFS compliant: `spriteset` is relative to spritesets/.
 
     Creates a person using the spriteset specified by `spriteset`.  This can
     either be an .rss spriteset filename or a Spriteset object.  If `transient`
