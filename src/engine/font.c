@@ -9,6 +9,7 @@
 
 static duk_ret_t js_GetSystemFont          (duk_context* ctx);
 static duk_ret_t js_LoadFont               (duk_context* ctx);
+static duk_ret_t js_Font_get_Default       (duk_context* ctx);
 static duk_ret_t js_new_Font               (duk_context* ctx);
 static duk_ret_t js_Font_finalize          (duk_context* ctx);
 static duk_ret_t js_Font_toString          (duk_context* ctx);
@@ -590,6 +591,7 @@ init_font_api(duk_context* ctx)
 	// Font object
 	api_register_method(ctx, NULL, "LoadFont", js_LoadFont);
 	api_register_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
+	api_register_static_prop(ctx, "Font", "Default", js_Font_get_Default, NULL);
 	api_register_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
 	api_register_prop(ctx, "Font", "height", js_Font_get_height, NULL);
 	api_register_method(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
@@ -631,9 +633,26 @@ js_LoadFont(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "fonts", true);
 	font = load_font(filename);
 	if (font == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadFont(): unable to load font file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load font `%s`", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
+	return 1;
+}
+
+static duk_ret_t
+js_Font_get_Default(duk_context* ctx)
+{
+	duk_push_sphere_font(ctx, g_sys_font);
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Default");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
 	return 1;
 }
 
@@ -646,7 +665,7 @@ js_new_Font(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 	font = load_font(filename);
 	if (font == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font(): unable to load font file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load font `%s`", filename);
 	duk_push_sphere_font(ctx, font);
 	free_font(font);
 	return 1;
