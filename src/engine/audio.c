@@ -5,6 +5,7 @@
 #include "bytearray.h"
 
 static duk_ret_t js_GetDefaultMixer            (duk_context* ctx);
+static duk_ret_t js_Mixer_get_Default          (duk_context* ctx);
 static duk_ret_t js_new_Mixer                  (duk_context* ctx);
 static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
 static duk_ret_t js_Mixer_get_volume           (duk_context* ctx);
@@ -628,6 +629,7 @@ init_audio_api(void)
 	api_register_method(g_duk, NULL, "GetDefaultMixer", js_GetDefaultMixer);
 
 	api_register_ctor(g_duk, "Mixer", js_new_Mixer, js_Mixer_finalize);
+	api_register_static_prop(g_duk, "Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_register_prop(g_duk, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
 	
 	api_register_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
@@ -666,20 +668,29 @@ init_audio_api(void)
 	api_register_method(g_duk, "Sound", "play", js_Sound_play);
 	api_register_method(g_duk, "Sound", "reset", js_Sound_reset);
 	api_register_method(g_duk, "Sound", "stop", js_Sound_stop);
-
-	duk_get_global_string(g_duk, "Mixer");
-	duk_push_string(g_duk, "Default");
-	duk_push_sphere_obj(g_duk, "Mixer", mixer_ref(s_def_mixer));
-	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
 }
 
 static duk_ret_t
 js_GetDefaultMixer(duk_context* ctx)
 {
 	duk_push_sphere_obj(ctx, "Mixer", mixer_ref(s_def_mixer));
+	return 1;
+}
+
+static duk_ret_t
+js_Mixer_get_Default(duk_context* ctx)
+{
+	duk_push_sphere_obj(ctx, "Mixer", mixer_ref(s_def_mixer));
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Default");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
 	return 1;
 }
 

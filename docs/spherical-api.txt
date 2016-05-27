@@ -904,7 +904,7 @@ new Group(shapes[, shader]);
 
     When a Group is created, its transformation matrix is set to the identity
     matrix.  If `shader` is not provided, the default shader program will be
-    used (see `GetDefaultShaderProgram()`).
+    used (see `ShaderProgram.Default`).
 
 Group:shader [read/write]
 
@@ -930,7 +930,7 @@ Group:setMatrix(name, transform);
     be uploaded to that uniform.  It is safe to call this even if the uniform
     turns out not to exist (in which case the call is effectively a no-op).
 
-GetDefaultShaderProgram();
+ShaderProgram.Default [read-only]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     which uses screen coordinates for vertices and performs only basic texture
@@ -1141,10 +1141,10 @@ which can be used to adjust certain parameters across all sounds associated with
 that mixer.  This is useful for implementing global volume controls, for
 example.
 
-GetDefaultMixer();
+Mixer.Default [read-only]
 
-    Gets the default Audialis mixer.  The default mixer outputs 44.1 kHz 16-bit
-    sound with two channels, i.e. CD quality.
+    Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
+    16-bit stereo sound, i.e. CD quality.
 
 new Mixer(frequency, bits[, channels]);
 
@@ -1224,7 +1224,7 @@ Sound:play([mixer, ][is_looping]);
 
     `mixer`, if provided, specifies the mixer which will be used to play the
     sound.  If no mixer is specified, the built-in stereo mixer will be used.
-    See GetDefaultMixer() above.
+    See `Mixer.Default` above.
 
 Sound:reset();
 
@@ -1265,8 +1265,8 @@ SoundStream:play([mixer]);
     buffer underrun.
 
     `mixer` is optional and specifies the mixer used to play the stream.  If no
-    mixer is provided, Audialis will use the default mixer (see
-    GetDefaultMixer()) to play the stream.
+    mixer is provided, minisphere will use the default mixer to play the
+    stream (see `Mixer.Default`).
 
 SoundStream:pause();
 
