@@ -56,7 +56,7 @@ function Text(text, options)
 {
 	options = options != null ? options : {};
 
-	var font = 'font' in options ? options.font : GetSystemFont();
+	var font = 'font' in options ? options.font : Font.Default;
 	var color = 'color' in options ? options.color : new Color(255, 255, 255, 255);
 	var shadow = 'shadow' in options ? options.shadow : 0;
 

@@ -16,7 +16,7 @@ var console =
 module.exports = (function() {
 	var game = GetGameManifest();
 
-	var font = GetSystemFont();
+	var font = Font.Default;
 	var nextLine = 0;
 	var numLines = 0;
 	var visible = { yes: false, fade: 0.0, line: 0.0 };

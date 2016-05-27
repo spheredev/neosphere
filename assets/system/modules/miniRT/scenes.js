@@ -512,7 +512,7 @@ scenes.scenelet('marquee',
 		this.text = text;
 		this.color = color;
 		this.background = backgroundColor;
-		this.font = GetSystemFont();
+		this.font = Font.Default;
 		this.windowSize = GetScreenWidth() + this.font.getStringWidth(this.text);
 		this.height = this.font.getHeight() + 10;
 		this.textHeight = this.font.getHeight();

@@ -1034,6 +1034,10 @@ You can create as many windowstyle objects as you want, so they provide a
 standardized way to allow the player to customize the style of such elements in
 a game.
 
+WindowStyle.Default [read-only]
+
+    Gets the engine default window style.
+
 new WindowStyle(filename);
 
     SphereFS compliant.
@@ -1061,11 +1065,10 @@ Fonts and Text Rendering
 A common task in a game engine, at some point you will probably want to get text
 on the screen.  In minisphere, you use a Font object to do this.
 
-GetSystemFont();
+Font.Default [read-only]
 
-    Returns a Font object for the engine's built-in default font.  This can be
-    used in lieu of the Font constructor for prototyping--or even if you just
-    prefer the default font.
+    Gets the engine default font.  This is the same font used for the FPS
+    counter and other system output.
 
 new Font(filename);
 
