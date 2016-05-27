@@ -7,6 +7,8 @@ v3.2.1 - TBD
 * Adds a new `Color.mix()` API call to perform color mixing (either
   proportional or weighted).  `BlendColors()` and `BlendColorsWeighted()` are
   retained for backward compatibility.
+* The default audio mixer is now available as `Mixer.Default`.
+* The default shader program is now available as `ShaderProgram.Default`.
 
 v3.2.0 - May 22, 2016
 ---------------------

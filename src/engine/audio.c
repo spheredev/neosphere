@@ -625,14 +625,11 @@ update_stream(stream_t* stream)
 void
 init_audio_api(void)
 {
-	// core Audialis API functions
 	api_register_method(g_duk, NULL, "GetDefaultMixer", js_GetDefaultMixer);
 
-	// Mixer object
 	api_register_ctor(g_duk, "Mixer", js_new_Mixer, js_Mixer_finalize);
 	api_register_prop(g_duk, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
-
-	// SoundStream object
+	
 	api_register_ctor(g_duk, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
 	api_register_prop(g_duk, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
 	api_register_prop(g_duk, "SoundStream", "mixer", js_SoundStream_get_mixer, NULL);
@@ -640,9 +637,8 @@ init_audio_api(void)
 	api_register_method(g_duk, "SoundStream", "pause", js_SoundStream_pause);
 	api_register_method(g_duk, "SoundStream", "play", js_SoundStream_play);
 	api_register_method(g_duk, "SoundStream", "stop", js_SoundStream_stop);
-
-	// Sound object
 	api_register_method(g_duk, NULL, "LoadSound", js_LoadSound);
+	
 	api_register_ctor(g_duk, "Sound", js_new_Sound, js_Sound_finalize);
 	api_register_method(g_duk, "Sound", "toString", js_Sound_toString);
 	api_register_prop(g_duk, "Sound", "length", js_Sound_get_length, NULL);
@@ -670,6 +666,14 @@ init_audio_api(void)
 	api_register_method(g_duk, "Sound", "play", js_Sound_play);
 	api_register_method(g_duk, "Sound", "reset", js_Sound_reset);
 	api_register_method(g_duk, "Sound", "stop", js_Sound_stop);
+
+	duk_get_global_string(g_duk, "Mixer");
+	duk_push_string(g_duk, "Default");
+	duk_push_sphere_obj(g_duk, "Mixer", mixer_ref(s_def_mixer));
+	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 }
 
 static duk_ret_t

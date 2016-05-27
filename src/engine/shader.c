@@ -2,10 +2,13 @@
 #include "shader.h"
 
 #include "api.h"
+#include "galileo.h"
 #include "matrix.h"
 
-static duk_ret_t js_new_ShaderProgram       (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_finalize  (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_get_Default (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_set_Default (duk_context* ctx);
+static duk_ret_t js_new_ShaderProgram         (duk_context* ctx);
+static duk_ret_t js_ShaderProgram_finalize    (duk_context* ctx);
 
 struct shader
 {
@@ -141,6 +144,41 @@ void
 init_shader_api(void)
 {
 	api_register_ctor(g_duk, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
+	api_register_static_prop(g_duk, "ShaderProgram", "Default", js_ShaderProgram_get_Default, js_ShaderProgram_set_Default);
+}
+
+static duk_ret_t
+js_ShaderProgram_get_Default(duk_context* ctx)
+{
+	shader_t* shader;
+
+	if (!(shader = get_default_shader()))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to build default shader program");
+	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Default");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_ENUMERABLE);
+	duk_pop(ctx);
+
+	return 1;
+}
+
+static duk_ret_t
+js_ShaderProgram_set_Default(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Default");
+	duk_dup(ctx, 0);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_ENUMERABLE);
+	return 0;
 }
 
 static duk_ret_t

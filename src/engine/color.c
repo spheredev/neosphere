@@ -102,7 +102,7 @@ init_color_api(void)
 
 	// register Color methods and properties
 	api_register_ctor(g_duk, "Color", js_new_Color, NULL);
-	api_register_function(g_duk, "Color", "mix", js_Color_mix);
+	api_register_static_func(g_duk, "Color", "mix", js_Color_mix);
 	api_register_method(g_duk, "Color", "toString", js_Color_toString);
 	api_register_method(g_duk, "Color", "clone", js_Color_clone);
 	

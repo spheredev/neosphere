@@ -551,7 +551,7 @@ render_shape(shape_t* shape)
 void
 init_galileo_api(void)
 {
-	api_register_function(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
+	api_register_static_func(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
 
 	api_register_ctor(g_duk, "Group", js_new_Group, js_Group_finalize);
 	api_register_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
@@ -749,7 +749,7 @@ js_GetDefaultShaderProgram(duk_context* ctx)
 	shader_t* shader;
 
 	if (!(shader = get_default_shader()))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetDefaultShaderProgram(): no default shader available or shader couldn't be built");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to build default shader program");
 	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
 	return 1;
 }

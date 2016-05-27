@@ -46,13 +46,13 @@ console_log(int level, const char* fmt, ...)
 void
 init_console_api(void)
 {
-	api_register_function(g_duk, "console", "assert", js_console_assert);
-	api_register_function(g_duk, "console", "debug", js_console_debug);
-	api_register_function(g_duk, "console", "error", js_console_error);
-	api_register_function(g_duk, "console", "info", js_console_info);
-	api_register_function(g_duk, "console", "log", js_console_log);
-	api_register_function(g_duk, "console", "trace", js_console_trace);
-	api_register_function(g_duk, "console", "warn", js_console_warn);
+	api_register_static_func(g_duk, "console", "assert", js_console_assert);
+	api_register_static_func(g_duk, "console", "debug", js_console_debug);
+	api_register_static_func(g_duk, "console", "error", js_console_error);
+	api_register_static_func(g_duk, "console", "info", js_console_info);
+	api_register_static_func(g_duk, "console", "log", js_console_log);
+	api_register_static_func(g_duk, "console", "trace", js_console_trace);
+	api_register_static_func(g_duk, "console", "warn", js_console_warn);
 
 	// `console` is a Proxy so that unimplemented methods do not throw
 	duk_eval_string_noresult(g_duk,
