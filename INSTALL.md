@@ -15,7 +15,7 @@ Visual Studio Community 2015 can be downloaded free of charge from here:
 
 [Download Visual Studio Community 2015]
 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
-  
+
 Allegro is provided through NuGet, and static libraries and/or source are included
 for all other dependencies, so no additional software is required to build for
 Windows.

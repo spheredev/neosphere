@@ -3,7 +3,7 @@ minisphere Coding Conventions and Etiquette
 
 You don't *have* to follow these guidelines, but if you don't, do note that I
 suffer from OCD and will almost assuredly edit your code mercilessly afterwards!
-:o) 
+:o)
 
 Use of Monster Drinks
 ---------------------
