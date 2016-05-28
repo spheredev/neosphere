@@ -794,6 +794,14 @@ Color#alpha [read/write]
     range of [0-255] are accepted, but the engine will automatically clamp them
     during rendering.
 
+Color#fade(alpha);
+
+    Scales the color's alpha channel by `alpha`, between 0 and 255.  The red,
+    green, and blue components are left alone.  This is useful when you need
+    to make a predefined color translucent, for instance:
+
+        var translucentBlue = Color.Blue.fade(128);
+
 new Image(filename);
 
     SphereFS compliant.

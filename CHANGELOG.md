@@ -10,6 +10,9 @@ v3.3.0 - TBD
 * Adds a complete set of predefined colors based on the X11 color set, provided
   as static properties of the `Color` object.  For example, `Color.White`,
   `Color.DodgerBlue`, `Color.Chartreuse`, etc.
+* Adds a new method `Color#fade()` to scale the alpha channel of a color.  This
+  allows you to create translucent versions of predefined colors without
+  resorting to the Color constructor, e.g. `Color.Blue.fade(128)`.
 * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
   `.Default` properties which refer to the corresponding built-in default
   assets.

@@ -9,6 +9,7 @@ static duk_ret_t js_new_Color            (duk_context* ctx);
 static duk_ret_t js_Color_mix            (duk_context* ctx);
 static duk_ret_t js_Color_toString       (duk_context* ctx);
 static duk_ret_t js_Color_clone          (duk_context* ctx);
+static duk_ret_t js_Color_fade           (duk_context* ctx);
 static duk_ret_t js_CreateColorMatrix    (duk_context* ctx);
 static duk_ret_t js_new_ColorMatrix      (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_toString (duk_context* ctx);
@@ -107,6 +108,7 @@ init_color_api(void)
 	api_register_static_func(g_duk, "Color", "mix", js_Color_mix);
 	api_register_method(g_duk, "Color", "toString", js_Color_toString);
 	api_register_method(g_duk, "Color", "clone", js_Color_clone);
+	api_register_method(g_duk, "Color", "fade", js_Color_fade);
 
 	api_register_ctor(g_duk, "ColorMatrix", js_new_ColorMatrix, NULL);
 	api_register_method(g_duk, "ColorMatrix", "toString", js_ColorMatrix_toString);
@@ -245,6 +247,7 @@ init_color_api(void)
 	add_js_color_const("Teal", color_new(0, 128, 128, 255));
 	add_js_color_const("Thistle", color_new(216, 191, 216, 255));
 	add_js_color_const("Tomato", color_new(255, 99, 71, 255));
+	add_js_color_const("Transparent", color_new(0, 0, 0, 0));
 	add_js_color_const("Turquoise", color_new(64, 224, 208, 255));
 	add_js_color_const("Violet", color_new(238, 130, 238, 255));
 	add_js_color_const("Wheat", color_new(245, 222, 179, 255));
@@ -400,7 +403,23 @@ js_Color_clone(duk_context* ctx)
 
 	duk_push_this(ctx);
 	color = duk_require_sphere_color(ctx, -1);
-	duk_pop(ctx);
+
+	duk_push_sphere_color(ctx, color);
+	return 1;
+}
+
+static duk_ret_t
+js_Color_fade(duk_context* ctx)
+{
+	int     alpha;
+	color_t color;
+
+	duk_push_this(ctx);
+	color = duk_require_sphere_color(ctx, -1);
+	alpha = duk_require_int(ctx, 0);
+
+	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
+	color.alpha = color.alpha * alpha / 255;
 	duk_push_sphere_color(ctx, color);
 	return 1;
 }
