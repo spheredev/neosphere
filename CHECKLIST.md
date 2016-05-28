@@ -18,7 +18,7 @@ new commit.
 * Version number in `setup/minisphere.iss`
 * Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)
-* Release date in CHANGELOG.md
+* Release date in `CHANGELOG.md`
 * Changelog entry in `src/debian/changelog`
 
 

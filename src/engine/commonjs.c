@@ -23,8 +23,8 @@ cjs_eval_module(const char* filename)
 	//     - the final value of `module.exports` is left on top of the Duktape value stack.
 	//     - `module.id` is set to the given filename.  in order to guarantee proper cache
 	//       behavior, the filename should be in canonical form.
-	//     - as this is a protected call, if the module throws, the error will be caught
-	//       and left on top of the stack for the caller to deal with.
+	//     - this is a protected call.  if the module being loaded throws, the error will be
+	//       caught and left on top of the stack for the caller to deal with.
 
 	lstring_t* code_string;
 	path_t*    dir_path;
@@ -86,8 +86,8 @@ cjs_eval_module(const char* filename)
 		duk_put_prop_string(g_duk, -2, "exports");
 	}
 	else {
-		// synthesize a function to wrap the module code.  this is the easiest way to
-		// guarantee CommonJS semantics and matches the behavior of Node.js.
+		// synthesize a function to wrap the module code.  this is the simplest way to
+		// implement CommonJS semantics and matches the behavior of Node.js.
 		duk_push_string(g_duk, "(function main(exports, require, module, __filename, __dirname) { ");
 		duk_push_lstring_t(g_duk, code_string);
 		duk_push_string(g_duk, " })");

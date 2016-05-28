@@ -748,6 +748,25 @@ objects.  With these, you precompose a complex object out of a set of vertices
 and textures which are then uploaded to the GPU to save time during the main
 render loop.
 
+Color.Red [read-only]
+Color.Green [read-only]
+Color.Blue [read-only]
+etc...
+
+    Gets a copy of a predefined color.  The entire X11 color set is provided
+    this way, not just the basic colors.  This gives you access to such colors
+    as `DodgerBlue`, `Chartreuse`, `AntiqueWhite`, etc.
+    
+    Each of these is an accessor which returns a new Color object every time
+    it is invoked.  This ensures that code like what's shown below won't cause
+    undesirable side effects:
+    
+        var color = Color.Red;
+        color.blue = 255;  // needed magenta instead
+	
+	The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
+	false since a new object is created each time the property is accessed.
+
 Color.mix(color1, color2[, w1, w2]);
 
     Calculates a weighted average of two colors.  `w1` and `w2` are optional

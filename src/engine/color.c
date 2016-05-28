@@ -4,6 +4,7 @@
 #include "api.h"
 
 static duk_ret_t js_CreateColor          (duk_context* ctx);
+static duk_ret_t js_Color_get_Color      (duk_context* ctx);
 static duk_ret_t js_new_Color            (duk_context* ctx);
 static duk_ret_t js_Color_mix            (duk_context* ctx);
 static duk_ret_t js_Color_toString       (duk_context* ctx);
@@ -12,6 +13,8 @@ static duk_ret_t js_CreateColorMatrix    (duk_context* ctx);
 static duk_ret_t js_new_ColorMatrix      (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_toString (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_apply    (duk_context* ctx);
+
+static add_js_color_const (const char* name, color_t color);
 
 ALLEGRO_COLOR
 nativecolor(color_t color)
@@ -100,16 +103,155 @@ init_color_api(void)
 	api_register_method(g_duk, NULL, "CreateColor", js_CreateColor);
 	api_register_method(g_duk, NULL, "CreateColorMatrix", js_CreateColorMatrix);
 
-	// register Color methods and properties
 	api_register_ctor(g_duk, "Color", js_new_Color, NULL);
 	api_register_static_func(g_duk, "Color", "mix", js_Color_mix);
 	api_register_method(g_duk, "Color", "toString", js_Color_toString);
 	api_register_method(g_duk, "Color", "clone", js_Color_clone);
-	
-	// register ColorMatrix methods and properties
+
 	api_register_ctor(g_duk, "ColorMatrix", js_new_ColorMatrix, NULL);
 	api_register_method(g_duk, "ColorMatrix", "toString", js_ColorMatrix_toString);
 	api_register_method(g_duk, "ColorMatrix", "apply", js_ColorMatrix_apply);
+
+	add_js_color_const("AliceBlue", color_new(240, 248, 255, 255));
+	add_js_color_const("AntiqueWhite", color_new(250, 235, 215, 255));
+	add_js_color_const("Aqua", color_new(0, 255, 255, 255));
+	add_js_color_const("Aquamarine", color_new(127, 255, 212, 255));
+	add_js_color_const("Azure", color_new(240, 255, 255, 255));
+	add_js_color_const("Beige", color_new(245, 245, 220, 255));
+	add_js_color_const("Bisque", color_new(255, 228, 196, 255));
+	add_js_color_const("Black", color_new(0, 0, 0, 255));
+	add_js_color_const("BlanchedAlmond", color_new(255, 235, 205, 255));
+	add_js_color_const("Blue", color_new(0, 0, 255, 255));
+	add_js_color_const("BlueViolet", color_new(138, 43, 226, 255));
+	add_js_color_const("Brown", color_new(165, 42, 42, 255));
+	add_js_color_const("BurlyWood", color_new(222, 184, 135, 255));
+	add_js_color_const("CadetBlue", color_new(95, 158, 160, 255));
+	add_js_color_const("Chartreuse", color_new(127, 255, 0, 255));
+	add_js_color_const("Chocolate", color_new(210, 105, 30, 255));
+	add_js_color_const("Coral", color_new(255, 127, 80, 255));
+	add_js_color_const("CornflowerBlue", color_new(100, 149, 237, 255));
+	add_js_color_const("CornSilk", color_new(255, 248, 220, 255));
+	add_js_color_const("Crimson", color_new(220, 20, 60, 255));
+	add_js_color_const("Cyan", color_new(0, 255, 255, 255));
+	add_js_color_const("DarkBlue", color_new(0, 0, 139, 255));
+	add_js_color_const("DarkCyan", color_new(0, 139, 139, 255));
+	add_js_color_const("DarkGoldenrod", color_new(184, 134, 11, 255));
+	add_js_color_const("DarkGray", color_new(169, 169, 169, 255));
+	add_js_color_const("DarkGreen", color_new(0, 100, 0, 255));
+	add_js_color_const("DarkKhaki", color_new(189, 183, 107, 255));
+	add_js_color_const("DarkMagenta", color_new(139, 0, 139, 255));
+	add_js_color_const("DarkOliveGreen", color_new(85, 107, 47, 255));
+	add_js_color_const("DarkOrange", color_new(255, 140, 0, 255));
+	add_js_color_const("DarkOrchid", color_new(153, 50, 204, 255));
+	add_js_color_const("DarkRed", color_new(139, 0, 0, 255));
+	add_js_color_const("DarkSalmon", color_new(233, 150, 122, 255));
+	add_js_color_const("DarkSeaGreen", color_new(143, 188, 143, 255));
+	add_js_color_const("DarkSlateBlue", color_new(72, 61, 139, 255));
+	add_js_color_const("DarkSlateGray", color_new(47, 79, 79, 255));
+	add_js_color_const("DarkTurquoise", color_new(0, 206, 209, 255));
+	add_js_color_const("DarkViolet", color_new(148, 0, 211, 255));
+	add_js_color_const("DeepPink", color_new(255, 20, 147, 255));
+	add_js_color_const("DeepSkyBlue", color_new(0, 191, 255, 255));
+	add_js_color_const("DimGray", color_new(105, 105, 105, 255));
+	add_js_color_const("DodgerBlue", color_new(30, 144, 255, 255));
+	add_js_color_const("FireBrick", color_new(178, 34, 34, 255));
+	add_js_color_const("FloralWhite", color_new(255, 250, 240, 255));
+	add_js_color_const("ForestGreen", color_new(34, 139, 34, 255));
+	add_js_color_const("Fuchsia", color_new(255, 0, 255, 255));
+	add_js_color_const("Gainsboro", color_new(220, 220, 220, 255));
+	add_js_color_const("GhostWhite", color_new(248, 248, 255, 255));
+	add_js_color_const("Gold", color_new(255, 215, 0, 255));
+	add_js_color_const("Goldenrod", color_new(218, 165, 32, 255));
+	add_js_color_const("Gray", color_new(128, 128, 128, 255));
+	add_js_color_const("Green", color_new(0, 128, 0, 255));
+	add_js_color_const("GreenYellow", color_new(173, 255, 47, 255));
+	add_js_color_const("Honeydew", color_new(240, 255, 240, 255));
+	add_js_color_const("HotPink", color_new(255, 105, 180, 255));
+	add_js_color_const("IndianRed", color_new(205, 92, 92, 255));
+	add_js_color_const("Indigo", color_new(75, 0, 130, 255));
+	add_js_color_const("Ivory", color_new(255, 255, 240, 255));
+	add_js_color_const("Khaki", color_new(240, 230, 140, 255));
+	add_js_color_const("Lavender", color_new(230, 230, 250, 255));
+	add_js_color_const("LavenderBlush", color_new(255, 240, 245, 255));
+	add_js_color_const("LawnGreen", color_new(124, 252, 0, 255));
+	add_js_color_const("LemonChiffon", color_new(255, 250, 205, 255));
+	add_js_color_const("LightBlue", color_new(173, 216, 230, 255));
+	add_js_color_const("LightCoral", color_new(240, 128, 128, 255));
+	add_js_color_const("LightCyan", color_new(224, 255, 255, 255));
+	add_js_color_const("LightGoldenrodYellow", color_new(250, 250, 210, 255));
+	add_js_color_const("LightGray", color_new(211, 211, 211, 255));
+	add_js_color_const("LightGreen", color_new(144, 238, 144, 255));
+	add_js_color_const("LightPink", color_new(255, 182, 193, 255));
+	add_js_color_const("LightSalmon", color_new(255, 160, 122, 255));
+	add_js_color_const("LightSeaGreen", color_new(32, 178, 170, 255));
+	add_js_color_const("LightSkyBlue", color_new(135, 206, 250, 255));
+	add_js_color_const("LightSlateGray", color_new(119, 136, 153, 255));
+	add_js_color_const("LightSteelBlue", color_new(176, 196, 222, 255));
+	add_js_color_const("LightYellow", color_new(255, 255, 224, 255));
+	add_js_color_const("Lime", color_new(0, 255, 0, 255));
+	add_js_color_const("LimeGreen", color_new(50, 205, 50, 255));
+	add_js_color_const("Linen", color_new(250, 240, 230, 255));
+	add_js_color_const("Magenta", color_new(255, 0, 255, 255));
+	add_js_color_const("Maroon", color_new(128, 0, 0, 255));
+	add_js_color_const("MediumAquamarine", color_new(102, 205, 170, 255));
+	add_js_color_const("MediumBlue", color_new(0, 0, 205, 255));
+	add_js_color_const("MediumOrchid", color_new(186, 85, 211, 255));
+	add_js_color_const("MediumPurple", color_new(147, 112, 219, 255));
+	add_js_color_const("MediumSeaGreen", color_new(60, 179, 113, 255));
+	add_js_color_const("MediumSlateBlue", color_new(123, 104, 238, 255));
+	add_js_color_const("MediumSpringGreen", color_new(0, 250, 154, 255));
+	add_js_color_const("MediumTurquoise", color_new(72, 209, 204, 255));
+	add_js_color_const("MediumVioletRed", color_new(199, 21, 133, 255));
+	add_js_color_const("MidnightBlue", color_new(25, 25, 112, 255));
+	add_js_color_const("MintCream", color_new(245, 255, 250, 255));
+	add_js_color_const("MistyRose", color_new(255, 228, 225, 255));
+	add_js_color_const("Moccasin", color_new(255, 228, 181, 255));
+	add_js_color_const("NavajoWhite", color_new(255, 222, 173, 255));
+	add_js_color_const("Navy", color_new(0, 0, 128, 255));
+	add_js_color_const("OldLace", color_new(253, 245, 230, 255));
+	add_js_color_const("Olive", color_new(128, 128, 0, 255));
+	add_js_color_const("OliveDrab", color_new(107, 142, 35, 255));
+	add_js_color_const("Orange", color_new(255, 165, 0, 255));
+	add_js_color_const("OrangeRed", color_new(255, 69, 0, 255));
+	add_js_color_const("Orchid", color_new(218, 112, 214, 255));
+	add_js_color_const("PaleGoldenrod", color_new(238, 232, 170, 255));
+	add_js_color_const("PaleGreen", color_new(152, 251, 152, 255));
+	add_js_color_const("PaleTurquoise", color_new(175, 238, 238, 255));
+	add_js_color_const("PaleVioletRed", color_new(219, 112, 147, 255));
+	add_js_color_const("PapayaWhip", color_new(225, 239, 213, 255));
+	add_js_color_const("PeachPuff", color_new(255, 218, 185, 255));
+	add_js_color_const("Peru", color_new(205, 133, 63, 255));
+	add_js_color_const("Pink", color_new(255, 192, 203, 255));
+	add_js_color_const("Plum", color_new(221, 160, 221, 255));
+	add_js_color_const("PowderBlue", color_new(176, 224, 230, 255));
+	add_js_color_const("Purple", color_new(128, 0, 128, 255));
+	add_js_color_const("Red", color_new(255, 0, 0, 255));
+	add_js_color_const("RosyBrown", color_new(188, 143, 143, 255));
+	add_js_color_const("RoyalBlue", color_new(65, 105, 225, 255));
+	add_js_color_const("SaddleBrown", color_new(139, 69, 19, 255));
+	add_js_color_const("Salmon", color_new(250, 128, 114, 255));
+	add_js_color_const("SandyBrown", color_new(244, 164, 96, 255));
+	add_js_color_const("SeaGreen", color_new(46, 139, 87, 255));
+	add_js_color_const("Seashell", color_new(255, 245, 238, 255));
+	add_js_color_const("Sienna", color_new(160, 82, 45, 255));
+	add_js_color_const("Silver", color_new(192, 192, 192, 255));
+	add_js_color_const("SkyBlue", color_new(135, 206, 235, 255));
+	add_js_color_const("SlateBlue", color_new(106, 90, 205, 255));
+	add_js_color_const("SlateGray", color_new(112, 128, 144, 255));
+	add_js_color_const("Snow", color_new(255, 250, 250, 255));
+	add_js_color_const("SpringGreen", color_new(0, 255, 127, 255));
+	add_js_color_const("SteelBlue", color_new(70, 130, 180, 255));
+	add_js_color_const("Tan", color_new(210, 180, 140, 255));
+	add_js_color_const("Teal", color_new(0, 128, 128, 255));
+	add_js_color_const("Thistle", color_new(216, 191, 216, 255));
+	add_js_color_const("Tomato", color_new(255, 99, 71, 255));
+	add_js_color_const("Turquoise", color_new(64, 224, 208, 255));
+	add_js_color_const("Violet", color_new(238, 130, 238, 255));
+	add_js_color_const("Wheat", color_new(245, 222, 179, 255));
+	add_js_color_const("White", color_new(255, 255, 255, 255));
+	add_js_color_const("WhiteSmoke", color_new(245, 245, 245, 255));
+	add_js_color_const("Yellow", color_new(255, 255, 0, 255));
+	add_js_color_const("YellowGreen", color_new(154, 205, 50, 255));
 }
 
 void
@@ -162,6 +304,32 @@ duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
 	duk_get_prop_string(ctx, index, "bg"); matrix.bg = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "bb"); matrix.bb = duk_get_int(ctx, -1); duk_pop(ctx);
 	return matrix;
+}
+
+static
+add_js_color_const(const char* name, color_t color)
+{
+	duk_get_global_string(g_duk, "Color");
+	duk_push_string(g_duk, name);
+	duk_push_c_function(g_duk, js_Color_get_Color, DUK_VARARGS);
+	duk_push_sphere_color(g_duk, color);
+	duk_put_prop_string(g_duk, -2, "\xFF" "color");
+	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_GETTER
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(g_duk);
+}
+
+static duk_ret_t
+js_Color_get_Color(duk_context* ctx)
+{
+	color_t color;
+	
+	duk_push_current_function(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color");
+	color = duk_require_sphere_color(ctx, -1);
+	duk_push_sphere_color(ctx, color);
+	return 1;
 }
 
 static duk_ret_t

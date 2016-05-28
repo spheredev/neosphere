@@ -7,8 +7,11 @@ v3.3.0 - TBD
 * Adds a new `Color.mix()` API call to perform color mixing (either
   proportional or weighted).  `BlendColors()` and `BlendColorsWeighted()` are
   retained for backward compatibility.
+* Adds a complete set of predefined colors based on the X11 color set, provided
+  as static properties of the `Color` object.  For example, `Color.White`,
+  `Color.DodgerBlue`, `Color.Chartreuse`, etc.
 * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
-  `.Default` properties which reference the corresponding built-in default
+  `.Default` properties which refer to the corresponding built-in default
   assets.
 
 
