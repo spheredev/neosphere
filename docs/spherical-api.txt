@@ -767,11 +767,23 @@ etc...
 	The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
 	false since a new object is created each time the property is accessed.
 
+Color.Transparent [read-only]
+
+    Gets a Color with ARGB signature #00FFFFFF.  Anything rendered in this
+    color will be invisible as it has an alpha value of zero.
+
 Color.mix(color1, color2[, w1, w2]);
 
     Calculates a weighted average of two colors.  `w1` and `w2` are optional
     and specify the relative weights of `color1` and `color2` respectively.  If
-    the weights are omitted, performs a 50/50 blend.
+    the weights are omitted, the mix is 50/50.
+
+Color.of(name);
+
+    Returns a Color object from `name`, which can either be the name of a
+    predefined X11 color without spaces (e.g. "chartreuse"), or an ARGB
+    signature such as "#800000FF".  If `name` cannot be resolved to a color,
+    throws a TypeError.
 
 new Color(red, green, blue[, alpha]);
 
@@ -780,10 +792,11 @@ new Color(red, green, blue[, alpha]);
     the range [0-255] and out-of-range values will be silently clamped.  `alpha`
     specifies opacity and defaults to 255 if not provided.
 
-Color#clone();
+Color#name [read-only]
 
-    Copies this Color object to a new one.  Changes to the cloned object will
-    not affect the original.
+    Gets the name of the Color according to its component values such that
+    Color.of(color.name) will give back a Color with the same values.  Useful
+    for saving and reading back colors from save files.
 
 Color#red [read/write]
 Color#green [read/write]
@@ -793,6 +806,11 @@ Color#alpha [read/write]
     Gets or sets the individual components of the color.  Values outside the
     range of [0-255] are accepted, but the engine will automatically clamp them
     during rendering.
+
+Color#clone();
+
+    Returns a copy of this Color object.  Changes to the clone will not affect
+    the original object.
 
 Color#fade(alpha);
 

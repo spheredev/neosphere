@@ -4,15 +4,10 @@ minisphere Changelog
 v3.3.0 - TBD
 ------------
 
-* Adds a new `Color.mix()` API call to perform color mixing (either
-  proportional or weighted).  `BlendColors()` and `BlendColorsWeighted()` are
-  retained for backward compatibility.
-* Adds a complete set of predefined colors based on the X11 color set, provided
-  as static properties of the `Color` object.  For example, `Color.White`,
-  `Color.DodgerBlue`, `Color.Chartreuse`, etc.
-* Adds a new method `Color#fade()` to scale the alpha channel of a color.  This
-  allows you to create translucent versions of predefined colors without
-  resorting to the Color constructor, e.g. `Color.Blue.fade(128)`.
+* Adds a bunch of new API calls to make working with Color objects easier:
+  `Color.fade()`, `Color.of()`, `Color.mix()` (which supersedes the old
+  blending functions), `Color#name`, and a bunch of predefined colors such as
+  `Color.Chartreuse`, `Color.Blue`, etc.
 * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
   `.Default` properties which refer to the corresponding built-in default
   assets.
