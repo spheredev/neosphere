@@ -756,14 +756,14 @@ etc...
     Gets a copy of a predefined color.  The entire X11 color set is provided
     this way, not just the basic colors.  This gives you access to such colors
     as `DodgerBlue`, `Chartreuse`, `AntiqueWhite`, etc.
-    
+
     Each of these is an accessor which returns a new Color object every time
     it is invoked.  This ensures that code like what's shown below won't cause
     undesirable side effects:
-    
+
         var color = Color.Red;
         color.blue = 255;  // needed magenta instead
-	
+
 	The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
 	false since a new object is created each time the property is accessed.
 
@@ -814,9 +814,10 @@ Color#clone();
 
 Color#fade(alpha);
 
-    Scales the color's alpha channel by `alpha`, between 0 and 255.  The red,
-    green, and blue components are left alone.  This is useful when you need
-    to make a predefined color translucent, for instance:
+    Scales this color's alpha channel by `alpha`, between 0 and 255, and
+    returns the result.  The red, green, and blue components are not modified.
+    This is useful when you need to make a predefined color translucent, for
+    instance:
 
         var translucentBlue = Color.Blue.fade(128);
 

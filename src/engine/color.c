@@ -160,9 +160,9 @@ static const struct x11_color X11_COLOR[] =
 
 static duk_ret_t js_CreateColor          (duk_context* ctx);
 static duk_ret_t js_Color_get_Color      (duk_context* ctx);
-static duk_ret_t js_new_Color            (duk_context* ctx);
 static duk_ret_t js_Color_mix            (duk_context* ctx);
 static duk_ret_t js_Color_of             (duk_context* ctx);
+static duk_ret_t js_new_Color            (duk_context* ctx);
 static duk_ret_t js_Color_get_name       (duk_context* ctx);
 static duk_ret_t js_Color_toString       (duk_context* ctx);
 static duk_ret_t js_Color_clone          (duk_context* ctx);
@@ -171,8 +171,6 @@ static duk_ret_t js_CreateColorMatrix    (duk_context* ctx);
 static duk_ret_t js_new_ColorMatrix      (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_toString (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_apply    (duk_context* ctx);
-
-static add_js_color_const (const char* name, color_t color);
 
 ALLEGRO_COLOR
 nativecolor(color_t color)
@@ -340,11 +338,6 @@ duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
 	duk_get_prop_string(ctx, index, "bg"); matrix.bg = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "bb"); matrix.bb = duk_get_int(ctx, -1); duk_pop(ctx);
 	return matrix;
-}
-
-static
-add_js_color_const(const char* name, color_t color)
-{
 }
 
 static duk_ret_t

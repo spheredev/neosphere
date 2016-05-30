@@ -602,7 +602,7 @@ print_banner(bool want_copyright, bool want_deps)
 	uint32_t al_version_id;
 	char*    duk_version;
 	
-	printf("%s %s JS Game Engine (%s)\n", PRODUCT_NAME, VERSION_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	printf("%s %s JS game engine (%s)\n", PRODUCT_NAME, VERSION_NAME, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
 		printf("a lightweight JavaScript-powered game engine\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");
