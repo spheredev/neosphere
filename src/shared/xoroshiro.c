@@ -7,10 +7,18 @@
 //
 //     http://creativecommons.org/publicdomain/zero/1.0/
 
+#if defined(_MSC_VER)
+#define _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "xoroshiro.h"
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #define ROTL64(x, n) ((x) << (n) | (x) >> (64 - (n)))
 
@@ -117,4 +125,45 @@ xoro_reseed(xoro_t* xoro, uint64_t seed)
 		z = (z ^ (z >> 27)) * 0x94D049BB133111EBUi64;
 		xoro->s[i] = z ^ (z >> 31);
 	}
+}
+
+bool
+xoro_resume(xoro_t* xoro, const char* snapshot)
+{
+	char     hex[3];
+	size_t   length;
+	uint8_t* p;
+
+	int i;
+
+	// snapshot must be 32 bytes and consist entirely of hex digits
+	length = strlen(snapshot);
+	if (length != 32 || strspn(snapshot, "0123456789abcdefABCDEF") != 32)
+		return false;
+	
+	p = (uint8_t*)xoro->s;
+	for (i = 0; i < 16; ++i) {
+		memcpy(hex, &snapshot[i * 2], 2);
+		hex[2] = '\0';
+		*p++ = (uint8_t)strtoul(hex, NULL, 16);
+	}
+	return true;
+}
+
+void
+xoro_snapshot(xoro_t* xoro, char* buffer)
+{
+	// note: `buffer` must have space for 33 characters (32 hex digits + NUL)
+
+	char     hex[3];
+	uint8_t* p;
+
+	int i;
+
+	p = (uint8_t*)xoro->s;
+	for (i = 0; i < 16; ++i) {
+		sprintf(hex, "%.2x", *p++);
+		memcpy(&buffer[i * 2], hex, 2);
+	}
+	buffer[32] = '\0';
 }

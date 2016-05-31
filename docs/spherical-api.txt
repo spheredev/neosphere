@@ -609,12 +609,23 @@ IsMouseButtonPressed(button);
 Random Number Generation
 ------------------------
 
-Many games have need of a good random number generator, particularly RPGs.  All
-JavaScript engines have a built-in generator in the form of the Math.random()
-function; however, this is based on a very simple linear generator and produces
-low-quality random numbers.  minisphere provides the RNG object, which uses the
-MT19937 (Mersenne Twister) algorithm to generate high-quality random values and
-also allows manual seeding.
+Many games have need of a good random number generator, particularly RPGs.
+JavaScript has a basic built-in generator in the form of the Math.random()
+function, however minisphere goes beyond this and provides the RNG object.
+
+The RNG object uses the xoroshiro128+ algorithm to generate high-quality random
+values and allows manual seeding, as well as saving and restoring the state
+of the generator at any time, which can be used to implement time travel
+mechanics, or as a deterrent for save scumming.
+
+RNG.state [read/write]
+
+    Gets or sets the internal state of the random number generator.  The state
+    is a 32-digit hexidecimal string which makes it easy to save and restore.
+
+    When setting `RNG.state`, the string given must be exactly 32 characters
+    and consist only of hexidecimal digits (0-9, A-F), otherwise a TypeError
+    will be thrown.
 
 RNG.chance(odds);
 

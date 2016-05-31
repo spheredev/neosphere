@@ -4,6 +4,11 @@ minisphere Changelog
 v3.3.0 - TBD
 ------------
 
+* Now uses xoroshiro128+ as the random number generator instead of the slower
+  Mersenne Twister.
+* Adds a new property to the RNG object, `RNG.state`.  This allows you to save
+  and restore the internal state of the random number generator, for example to
+  deter save scumming.
 * Adds a bunch of new API calls to make working with Color objects easier:
   `Color.fade()`, `Color.of()`, `Color.mix()` (which supersedes the old
   blending functions), `Color#name`, and a bunch of predefined colors such as
@@ -11,9 +16,6 @@ v3.3.0 - TBD
 * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
   `.Default` properties which refer to the corresponding built-in default
   assets.
-* Now uses xoroshiro128+ as the random number generator instead of the slower
-  Mersenne Twister.
-
 
 v3.2.0 - May 22, 2016
 ---------------------

@@ -4,14 +4,16 @@
 #include "api.h"
 #include "xoroshiro.h"
 
-static duk_ret_t js_RNG_seed     (duk_context* ctx);
-static duk_ret_t js_RNG_chance   (duk_context* ctx);
-static duk_ret_t js_RNG_normal   (duk_context* ctx);
-static duk_ret_t js_RNG_random   (duk_context* ctx);
-static duk_ret_t js_RNG_range    (duk_context* ctx);
-static duk_ret_t js_RNG_sample   (duk_context* ctx);
-static duk_ret_t js_RNG_string   (duk_context* ctx);
-static duk_ret_t js_RNG_uniform  (duk_context* ctx);
+static duk_ret_t js_RNG_get_state (duk_context* ctx);
+static duk_ret_t js_RNG_set_state (duk_context* ctx);
+static duk_ret_t js_RNG_seed      (duk_context* ctx);
+static duk_ret_t js_RNG_chance    (duk_context* ctx);
+static duk_ret_t js_RNG_normal    (duk_context* ctx);
+static duk_ret_t js_RNG_random    (duk_context* ctx);
+static duk_ret_t js_RNG_range     (duk_context* ctx);
+static duk_ret_t js_RNG_sample    (duk_context* ctx);
+static duk_ret_t js_RNG_string    (duk_context* ctx);
+static duk_ret_t js_RNG_uniform   (duk_context* ctx);
 
 static const char* const RNG_STRING_CORPUS =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -124,6 +126,7 @@ rng_uniform(double mean, double variance)
 void
 init_rng_api(void)
 {
+	api_register_static_prop(g_duk, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_register_static_func(g_duk, "RNG", "seed", js_RNG_seed);
 	api_register_static_func(g_duk, "RNG", "chance", js_RNG_chance);
 	api_register_static_func(g_duk, "RNG", "normal", js_RNG_normal);
@@ -135,9 +138,31 @@ init_rng_api(void)
 }
 
 static duk_ret_t
+js_RNG_get_state(duk_context* ctx)
+{
+	char snapshot[33];
+
+	xoro_snapshot(s_xoro, snapshot);
+	duk_push_string(ctx, snapshot);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_set_state(duk_context* ctx)
+{
+	const char* snapshot;
+
+	snapshot = duk_require_string(ctx, 0);
+	
+	if (!xoro_resume(s_xoro, snapshot))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "not a valid RNG state string");
+	return 0;
+}
+
+static duk_ret_t
 js_RNG_seed(duk_context* ctx)
 {
-	unsigned long new_seed;
+	uint64_t new_seed;
 	
 	new_seed = duk_require_number(ctx, 0);
 	seed_rng(new_seed);
