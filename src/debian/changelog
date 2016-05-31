@@ -1,3 +1,20 @@
+minisphere (3.3.0) trusty; urgency=low
+
+  * Now uses xoroshiro128+ as the random number generator instead of the slower
+    Mersenne Twister.
+  * Adds a new property to the RNG object, `RNG.state`.  This allows you to save
+    and restore the internal state of the random number generator, for example to
+    deter save scumming.
+  * Adds a bunch of new API calls to make working with Color objects easier:
+    `Color.fade()`, `Color.of()`, `Color.mix()` (which supersedes the old
+    blending functions), `Color#name`, and a bunch of predefined colors such as
+    `Color.Chartreuse`, `Color.Blue`, etc.
+  * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
+    `.Default` properties which refer to the corresponding built-in default
+    assets.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 31 May 2016 00:00:00 -0500
+
 minisphere (3.2.0) trusty; urgency=low
 
   * The module system has been overhauled to work more like Node.js, and now has

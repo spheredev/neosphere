@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v3.3.0 - TBD
-------------
+v3.3.0 - May 31, 2016
+---------------------
 
 * Now uses xoroshiro128+ as the random number generator instead of the slower
   Mersenne Twister.
@@ -16,6 +16,7 @@ v3.3.0 - TBD
 * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
   `.Default` properties which refer to the corresponding built-in default
   assets.
+
 
 v3.2.0 - May 22, 2016
 ---------------------

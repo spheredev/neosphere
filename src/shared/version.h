@@ -2,6 +2,6 @@
 #define MINISPHERE__VERSION_H__INCLUDED
 
 #define PRODUCT_NAME "minisphere"
-#define VERSION_NAME "3.2.0"
+#define VERSION_NAME "3.3.0"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED

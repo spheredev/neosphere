@@ -18,6 +18,11 @@ minisphere 3.3
   constructing Color objects manually, and makes code dealing with known colors
   much more readable.
 
+* minisphere now uses the much faster xoroshiro128+ algorithm to generate
+  random numbers instead of Mersenne Twister used in past versions.  This may
+  affect games using `RNG.reseed()` to manually seed the generator, since the
+  generated values will differ.
+
 
 minisphere 3.2
 --------------

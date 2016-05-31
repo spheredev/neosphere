@@ -103,7 +103,7 @@ xoro_gen_double(xoro_t* xoro)
 	uint64_t                        x;
 
 	x = xoro_gen_uint(xoro);
-	u.i = 0x3ffUi64 << 52 | x >> 12;
+	u.i = 0x3ffULL << 52 | x >> 12;
 	return u.d - 1.0;
 
 }
@@ -142,7 +142,7 @@ xoro_jump(xoro_t* xoro)
 
 	for (i = 0; i < sizeof JUMP / sizeof *JUMP; ++i) {
 		for (b = 0; b < 64; ++b) {
-			if (JUMP[i] & 1Ui64 << b) {
+			if (JUMP[i] & 1ULL << b) {
 				s0 ^= xoro->s[0];
 				s1 ^= xoro->s[1];
 			}
@@ -163,9 +163,9 @@ xoro_reseed(xoro_t* xoro, uint64_t seed)
 
 	// seed xoroshiro128+ using SplitMix64
 	for (i = 0; i < 2; ++i) {
-		z = (seed += 0x9E3779B97F4A7C15Ui64);
-		z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9Ui64;
-		z = (z ^ (z >> 27)) * 0x94D049BB133111EBUi64;
+		z = (seed += 0x9E3779B97F4A7C15ULL);
+		z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+		z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
 		xoro->s[i] = z ^ (z >> 31);
 	}
 }
