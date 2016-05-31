@@ -7,7 +7,7 @@ void        seed_rng       (uint64_t seed);
 bool        rng_chance     (double odds);
 double      rng_normal     (double mean, double sigma);
 double      rng_random     (void);
-int         rng_ranged     (int lower, int upper);
+int         rng_int     (int lower, int upper);
 const char* rng_string     (int length);
 double      rng_uniform    (double mean, double variance);
 

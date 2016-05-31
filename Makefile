@@ -16,8 +16,8 @@ endif
 
 engine_sources=src/engine/main.c \
    src/shared/duktape.c src/shared/duk_rubber.c src/shared/dyad.c \
-   src/shared/mt19937ar.c src/shared/lstring.c src/shared/path.c \
-   src/shared/unicode.c src/shared/vector.c \
+   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
+   src/shared/vector.c src/shared/xoroshiro.c \
    src/engine/animation.c src/engine/api.c src/engine/async.c \
    src/engine/atlas.c src/engine/audio.c src/engine/bytearray.c \
    src/engine/color.c src/engine/commonjs.c src/engine/console.c \

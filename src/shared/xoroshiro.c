@@ -53,20 +53,63 @@ xoro_free(xoro_t* xoro)
 	free(xoro);
 }
 
+bool
+xoro_set_state(xoro_t* xoro, const char* snapshot)
+{
+	char     hex[3];
+	size_t   length;
+	uint8_t* p;
+
+	int i;
+
+	// snapshot must be 32 bytes and consist entirely of hex digits
+	length = strlen(snapshot);
+	if (length != 32 || strspn(snapshot, "0123456789abcdefABCDEF") != 32)
+		return false;
+
+	p = (uint8_t*)xoro->s;
+	for (i = 0; i < 16; ++i) {
+		memcpy(hex, &snapshot[i * 2], 2);
+		hex[2] = '\0';
+		*p++ = (uint8_t)strtoul(hex, NULL, 16);
+	}
+
+	return true;
+}
+
+void
+xoro_get_state(xoro_t* xoro, char* buffer)
+{
+	// note: buffer must have space for at least 32 hex digits and a
+	//       NUL terminator.
+
+	char     hex[3];
+	uint8_t* p;
+
+	int i;
+
+	p = (uint8_t*)xoro->s;
+	for (i = 0; i < 16; ++i) {
+		sprintf(hex, "%.2x", *p++);
+		memcpy(&buffer[i * 2], hex, 2);
+	}
+	buffer[32] = '\0';
+}
+
 double
 xoro_gen_double(xoro_t* xoro)
 {
 	union { uint64_t i; double d; } u;
 	uint64_t                        x;
 
-	x = xoro_gen_int(xoro);
+	x = xoro_gen_uint(xoro);
 	u.i = 0x3ffUi64 << 52 | x >> 12;
 	return u.d - 1.0;
 
 }
 
 uint64_t
-xoro_gen_int(xoro_t* xoro)
+xoro_gen_uint(xoro_t* xoro)
 {
 	uint64_t s0;
 	uint64_t s1;
@@ -103,7 +146,7 @@ xoro_jump(xoro_t* xoro)
 				s0 ^= xoro->s[0];
 				s1 ^= xoro->s[1];
 			}
-			xoro_gen_int(xoro);
+			xoro_gen_uint(xoro);
 		}
 	}
 
@@ -125,45 +168,4 @@ xoro_reseed(xoro_t* xoro, uint64_t seed)
 		z = (z ^ (z >> 27)) * 0x94D049BB133111EBUi64;
 		xoro->s[i] = z ^ (z >> 31);
 	}
-}
-
-bool
-xoro_resume(xoro_t* xoro, const char* snapshot)
-{
-	char     hex[3];
-	size_t   length;
-	uint8_t* p;
-
-	int i;
-
-	// snapshot must be 32 bytes and consist entirely of hex digits
-	length = strlen(snapshot);
-	if (length != 32 || strspn(snapshot, "0123456789abcdefABCDEF") != 32)
-		return false;
-	
-	p = (uint8_t*)xoro->s;
-	for (i = 0; i < 16; ++i) {
-		memcpy(hex, &snapshot[i * 2], 2);
-		hex[2] = '\0';
-		*p++ = (uint8_t)strtoul(hex, NULL, 16);
-	}
-	return true;
-}
-
-void
-xoro_snapshot(xoro_t* xoro, char* buffer)
-{
-	// note: `buffer` must have space for 33 characters (32 hex digits + NUL)
-
-	char     hex[3];
-	uint8_t* p;
-
-	int i;
-
-	p = (uint8_t*)xoro->s;
-	for (i = 0; i < 16; ++i) {
-		sprintf(hex, "%.2x", *p++);
-		memcpy(&buffer[i * 2], hex, 2);
-	}
-	buffer[32] = '\0';
 }

@@ -621,7 +621,8 @@ mechanics, or as a deterrent for save scumming.
 RNG.state [read/write]
 
     Gets or sets the internal state of the random number generator.  The state
-    is a 32-digit hexidecimal string which makes it easy to save and restore.
+    is represented as a 32-digit hexidecimal string which makes it easy to save
+    and restore.
 
     When setting `RNG.state`, the string given must be exactly 32 characters
     and consist only of hexidecimal digits (0-9, A-F), otherwise a TypeError
@@ -641,23 +642,24 @@ RNG.normal(mean, sigma);
 
 RNG.random();
 
-    Returns a floating point value in the range [0,1).  This is the basic method
-    of random number generation, and is a direct, drop-in replacement for
-    Math.random().
+    Returns a floating point value in the range [0,1).  This is the basic
+    method of random number generation, and is a direct, drop-in replacement
+    for Math.random().
 
 RNG.range(min, max);
 
-    Returns a random integer uniformly distributed within the range [min,max].
+    Returns a random integer uniformly distributed within the range [min, max].
+
+RNG.reseed(seed);
+
+    Reseeds the random number generator; different seeds will generate
+    different random sequences.  If `seed` is floating point, it will be
+    truncated to an integer: a seed of 812.88, for example, is treated the same
+    as 812.
 
 RNG.sample(array);
 
     Returns a single randomly-chosen item from `array`.
-
-RNG.seed(seed);
-
-    Seeds the random number generator with `seed`.  If the seed is floating
-    point, it will be truncated to an integer; using a seed of 812.88, for
-    example, has the same effect as 812.
 
 RNG.string([length]);
 

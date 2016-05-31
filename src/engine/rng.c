@@ -6,7 +6,7 @@
 
 static duk_ret_t js_RNG_get_state (duk_context* ctx);
 static duk_ret_t js_RNG_set_state (duk_context* ctx);
-static duk_ret_t js_RNG_seed      (duk_context* ctx);
+static duk_ret_t js_RNG_reseed      (duk_context* ctx);
 static duk_ret_t js_RNG_chance    (duk_context* ctx);
 static duk_ret_t js_RNG_normal    (duk_context* ctx);
 static duk_ret_t js_RNG_random    (duk_context* ctx);
@@ -90,11 +90,11 @@ rng_random(void)
 }
 
 int
-rng_ranged(int lower, int upper)
+rng_int(int lower, int upper)
 {
 	int range = abs(upper - lower) + 1;
 	return (lower < upper ? lower : upper)
-		+ xoro_gen_int(s_xoro) % range;
+		+ xoro_gen_uint(s_xoro) % range;
 }
 
 const char*
@@ -107,7 +107,7 @@ rng_string(int length)
 	int i;
 
 	for (i = 0; i < length; ++i) {
-		index = rng_ranged(0, s_corpus_size - 1);
+		index = rng_int(0, s_corpus_size - 1);
 		s_name[i] = RNG_STRING_CORPUS[index];
 	}
 	s_name[length - 1] = '\0';
@@ -127,11 +127,11 @@ void
 init_rng_api(void)
 {
 	api_register_static_prop(g_duk, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
-	api_register_static_func(g_duk, "RNG", "seed", js_RNG_seed);
 	api_register_static_func(g_duk, "RNG", "chance", js_RNG_chance);
 	api_register_static_func(g_duk, "RNG", "normal", js_RNG_normal);
 	api_register_static_func(g_duk, "RNG", "random", js_RNG_random);
 	api_register_static_func(g_duk, "RNG", "range", js_RNG_range);
+	api_register_static_func(g_duk, "RNG", "reseed", js_RNG_reseed);
 	api_register_static_func(g_duk, "RNG", "sample", js_RNG_sample);
 	api_register_static_func(g_duk, "RNG", "string", js_RNG_string);
 	api_register_static_func(g_duk, "RNG", "uniform", js_RNG_uniform);
@@ -142,7 +142,7 @@ js_RNG_get_state(duk_context* ctx)
 {
 	char snapshot[33];
 
-	xoro_snapshot(s_xoro, snapshot);
+	xoro_get_state(s_xoro, snapshot);
 	duk_push_string(ctx, snapshot);
 	return 1;
 }
@@ -154,18 +154,8 @@ js_RNG_set_state(duk_context* ctx)
 
 	snapshot = duk_require_string(ctx, 0);
 	
-	if (!xoro_resume(s_xoro, snapshot))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "not a valid RNG state string");
-	return 0;
-}
-
-static duk_ret_t
-js_RNG_seed(duk_context* ctx)
-{
-	uint64_t new_seed;
-	
-	new_seed = duk_require_number(ctx, 0);
-	seed_rng(new_seed);
+	if (!xoro_set_state(s_xoro, snapshot))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
 	return 0;
 }
 
@@ -206,8 +196,18 @@ js_RNG_range(duk_context* ctx)
 
 	lower = duk_require_number(ctx, 0);
 	upper = duk_require_number(ctx, 1);
-	duk_push_number(ctx, rng_ranged(lower, upper));
+	duk_push_number(ctx, rng_int(lower, upper));
 	return 1;
+}
+
+static duk_ret_t
+js_RNG_reseed(duk_context* ctx)
+{
+	uint64_t new_seed;
+
+	new_seed = duk_require_number(ctx, 0);
+	seed_rng(new_seed);
+	return 0;
 }
 
 static duk_ret_t
@@ -218,7 +218,7 @@ js_RNG_sample(duk_context* ctx)
 
 	duk_require_object_coercible(ctx, 0);
 	length = (long)duk_get_length(ctx, 0);
-	index = rng_ranged(0, length - 1);
+	index = rng_int(0, length - 1);
 	duk_get_prop_index(ctx, 0, index);
 	return 1;
 }

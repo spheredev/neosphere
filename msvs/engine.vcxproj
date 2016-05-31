@@ -454,8 +454,8 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\engine\tileset.h" />
     <ClInclude Include="..\src\engine\utility.h" />
     <ClInclude Include="..\src\engine\windowstyle.h" />
+    <ClInclude Include="..\src\shared\xoroshiro.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="xoroshiro.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="engine.rc" />
