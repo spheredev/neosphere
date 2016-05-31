@@ -2,49 +2,56 @@
 #include "rng.h"
 
 #include "api.h"
-#include "mt19937ar.h"
+#include "xoroshiro.h"
 
-static duk_ret_t js_RNG_seed    (duk_context* ctx);
-static duk_ret_t js_RNG_chance  (duk_context* ctx);
-static duk_ret_t js_RNG_normal  (duk_context* ctx);
-static duk_ret_t js_RNG_random  (duk_context* ctx);
-static duk_ret_t js_RNG_range   (duk_context* ctx);
-static duk_ret_t js_RNG_sample  (duk_context* ctx);
-static duk_ret_t js_RNG_string  (duk_context* ctx);
-static duk_ret_t js_RNG_uniform (duk_context* ctx);
+static duk_ret_t js_RNG_seed     (duk_context* ctx);
+static duk_ret_t js_RNG_chance   (duk_context* ctx);
+static duk_ret_t js_RNG_normal   (duk_context* ctx);
+static duk_ret_t js_RNG_random   (duk_context* ctx);
+static duk_ret_t js_RNG_range    (duk_context* ctx);
+static duk_ret_t js_RNG_sample   (duk_context* ctx);
+static duk_ret_t js_RNG_string   (duk_context* ctx);
+static duk_ret_t js_RNG_uniform  (duk_context* ctx);
 
 static const char* const RNG_STRING_CORPUS =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-static long s_corpus_size;
+static long    s_corpus_size;
+static xoro_t* s_xoro;
 
 void
 initialize_rng(void)
 {
-	unsigned long seed;
+	uint64_t seed;
 	
 	console_log(1, "initializing random number generator");
 	
-	seed = (unsigned long)time(NULL);
-	console_log(2, "    initial seed: %lu", seed);
-	init_genrand(seed);
+	seed = time(NULL);
+	s_xoro = xoro_new(seed);
+	console_log(2, "    seed: 0x%"PRIx64, seed);
 
 	s_corpus_size = (long)strlen(RNG_STRING_CORPUS);
 }
 
 void
-seed_rng(unsigned long seed)
+shutdown_rng(void)
+{
+	xoro_free(s_xoro);
+}
+
+void
+seed_rng(uint64_t seed)
 {
 	console_log(2, "seeding random number generator");
-	console_log(2, "    seed value: %lu", seed);
+	console_log(2, "    new seed: 0x%"PRIx64, seed);
 	
-	init_genrand(seed);
+	xoro_reseed(s_xoro, seed);
 }
 
 bool
 rng_chance(double odds)
 {
-	return odds > genrand_real2();
+	return odds > xoro_gen_double(s_xoro);
 }
 
 double
@@ -58,8 +65,8 @@ rng_normal(double mean, double sigma)
 
 	if (!s_have_y) {
 		do {
-			u = 2.0 * genrand_res53() - 1.0;
-			v = 2.0 * genrand_res53() - 1.0;
+			u = 2.0 * xoro_gen_double(s_xoro) - 1.0;
+			v = 2.0 * xoro_gen_double(s_xoro) - 1.0;
 			w = u * u + v * v;
 		} while (w >= 1.0);
 		w = sqrt(-2 * log(w) / w);
@@ -77,15 +84,15 @@ rng_normal(double mean, double sigma)
 double
 rng_random(void)
 {
-	return genrand_res53();
+	return xoro_gen_double(s_xoro);
 }
 
-long
-rng_ranged(long lower, long upper)
+int
+rng_ranged(int lower, int upper)
 {
-	long range = abs(upper - lower) + 1;
+	int range = abs(upper - lower) + 1;
 	return (lower < upper ? lower : upper)
-		+ genrand_int31() % range;
+		+ xoro_gen_int(s_xoro) % range;
 }
 
 const char*
@@ -110,7 +117,7 @@ rng_uniform(double mean, double variance)
 {
 	double error;
 	
-	error = variance * 2 * (0.5 - genrand_real2());
+	error = variance * 2 * (0.5 - xoro_gen_double(s_xoro));
 	return mean + error;
 }
 

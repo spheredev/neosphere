@@ -11,6 +11,8 @@ v3.3.0 - TBD
 * `Font`, `Mixer`, `ShaderProgram` and `WindowStyle` now include static
   `.Default` properties which refer to the corresponding built-in default
   assets.
+* Now uses xoroshiro128+ as the random number generator instead of the slower
+  Mersenne Twister.
 
 
 v3.2.0 - May 22, 2016

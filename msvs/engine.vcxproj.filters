@@ -21,9 +21,6 @@
     <ClCompile Include="..\src\shared\dyad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\mt19937ar.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\lstring.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -144,6 +141,9 @@
     <ClCompile Include="..\src\shared\duk_rubber.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\xoroshiro.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -153,9 +153,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\dyad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\mt19937ar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\lstring.h">
@@ -285,6 +282,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\duk_rubber.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xoroshiro.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
