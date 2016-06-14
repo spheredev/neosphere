@@ -2,19 +2,7 @@
 #include "animation.h"
 
 #include <libmng.h>
-#include "api.h"
 #include "image.h"
-
-static duk_ret_t js_LoadAnimation             (duk_context* ctx);
-static duk_ret_t js_new_Animation             (duk_context* ctx);
-static duk_ret_t js_Animation_finalize        (duk_context* ctx);
-static duk_ret_t js_Animation_get_height      (duk_context* ctx);
-static duk_ret_t js_Animation_get_width       (duk_context* ctx);
-static duk_ret_t js_Animation_getDelay        (duk_context* ctx);
-static duk_ret_t js_Animation_getNumFrames    (duk_context* ctx);
-static duk_ret_t js_Animation_drawFrame       (duk_context* ctx);
-static duk_ret_t js_Animation_drawZoomedFrame (duk_context* ctx);
-static duk_ret_t js_Animation_readNextFrame   (duk_context* ctx);
 
 static mng_ptr    mng_cb_malloc        (mng_size_t size);
 static void       mng_cb_free          (mng_ptr ptr, mng_size_t size);
@@ -31,7 +19,7 @@ struct animation
 {
 	unsigned int  refcount;
 	unsigned int  id;
-	unsigned int  delay;
+	int           delay;
 	sfs_file_t*   file;
 	image_t*      frame;
 	bool          is_frame_ready;
@@ -103,6 +91,36 @@ animation_free(animation_t* animation)
 	sfs_fclose(animation->file);
 	image_free(animation->frame);
 	free(animation);
+}
+
+int
+animation_delay(const animation_t* anim)
+{
+	return anim->delay;
+}
+
+image_t*
+animation_frame(const animation_t* anim)
+{
+	return anim->frame;
+}
+
+int
+animation_height(const animation_t* anim)
+{
+	return anim->h;
+}
+
+int
+animation_num_frames(const animation_t* anim)
+{
+	return mng_get_framecount(anim->stream);
+}
+
+int
+animation_width(const animation_t* anim)
+{
+	return anim->w;
 }
 
 bool
@@ -196,147 +214,4 @@ mng_cb_settimer(mng_handle stream, mng_uint32 msecs)
 
 	anim->delay = msecs;
 	return MNG_TRUE;
-}
-
-void
-init_animation_api(void)
-{
-	api_register_method(g_duk, NULL, "LoadAnimation", js_LoadAnimation);
-	api_register_ctor(g_duk, "Animation", js_new_Animation, js_Animation_finalize);
-	api_register_prop(g_duk, "Animation", "width", js_Animation_get_width, NULL);
-	api_register_prop(g_duk, "Animation", "height", js_Animation_get_height, NULL);
-	api_register_method(g_duk, "Animation", "getDelay", js_Animation_getDelay);
-	api_register_method(g_duk, "Animation", "getNumFrames", js_Animation_getNumFrames);
-	api_register_method(g_duk, "Animation", "drawFrame", js_Animation_drawFrame);
-	api_register_method(g_duk, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
-	api_register_method(g_duk, "Animation", "readNextFrame", js_Animation_readNextFrame);
-}
-
-static duk_ret_t
-js_LoadAnimation(duk_context* ctx)
-{
-	animation_t* anim;
-	const char*  filename;
-
-	filename = duk_require_path(ctx, 0, "animations", true);
-	if (!(anim = animation_new(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
-	duk_push_sphere_obj(ctx, "Animation", anim);
-	return 1;
-}
-
-static duk_ret_t
-js_new_Animation(duk_context* ctx)
-{
-	animation_t* anim;
-	const char*  filename;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
-	if (!(anim = animation_new(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Animation(): unable to load animation file `%s`", filename);
-	duk_push_sphere_obj(ctx, "Animation", anim);
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_finalize(duk_context* ctx)
-{
-	animation_t* anim;
-
-	anim = duk_require_sphere_obj(ctx, 0, "Animation");
-	animation_free(anim);
-	return 0;
-}
-
-static duk_ret_t
-js_Animation_get_height(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	duk_push_int(ctx, anim->h);
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_get_width(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	duk_push_int(ctx, anim->w);
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_getDelay(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	duk_push_uint(ctx, anim->delay);
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_getNumFrames(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	duk_push_uint(ctx, mng_get_framecount(anim->stream));
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_drawFrame(duk_context* ctx)
-{
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
-	
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	image_draw(anim->frame, x, y);
-	return 0;
-}
-
-static duk_ret_t
-js_Animation_drawZoomedFrame(duk_context* ctx)
-{
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
-	double scale = duk_require_number(ctx, 2);
-
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	if (scale < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Animation:drawZoomedFrame(): scale must be positive (got: %g)", scale);
-	image_draw_scaled(anim->frame, x, y, anim->w * scale, anim->h * scale);
-	return 0;
-}
-
-static duk_ret_t
-js_Animation_readNextFrame(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
-	duk_pop(ctx);
-	animation_update(anim);
-	return 0;
 }

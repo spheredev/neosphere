@@ -6,9 +6,9 @@
 
 static duk_ret_t js_require (duk_context* ctx);
 
-static void    duk_push_require_function (duk_context* ctx, const char* module_id);
-static path_t* find_module               (const char* id, const char* origin, const char* sys_origin);
-static path_t* load_package_json         (const char* filename);
+static void    duk_push_require  (duk_context* ctx, const char* module_id);
+static path_t* find_module       (const char* id, const char* origin, const char* sys_origin);
+static path_t* load_package_json (const char* filename);
 
 bool
 cjs_eval_module(const char* filename)
@@ -67,7 +67,7 @@ cjs_eval_module(const char* filename)
 	duk_put_prop_string(g_duk, -2, "id");  // module.id
 	duk_push_false(g_duk);
 	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
-	duk_push_require_function(g_duk, filename);
+	duk_push_require(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "require");  // module.require
 
 	// cache the module object in advance
@@ -130,7 +130,7 @@ on_error:
 }
 
 static void
-duk_push_require_function(duk_context* ctx, const char* module_id)
+duk_push_require(duk_context* ctx, const char* module_id)
 {
 	duk_push_c_function(ctx, js_require, 1);
 	duk_push_string(ctx, "name");
@@ -254,7 +254,7 @@ init_commonjs_api(void)
 	script_path = get_sgm_script_path(g_fs);
 	duk_push_global_object(g_duk);
 	duk_push_string(g_duk, "require");
-	duk_push_require_function(g_duk, NULL);
+	duk_push_require(g_duk, NULL);
 	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);

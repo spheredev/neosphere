@@ -16,6 +16,7 @@ enum text_align
 } text_align_t;
 
 font_t*     font_load        (const char* path);
+font_t*     font_clone       (const font_t* font);
 font_t*     font_ref         (font_t* font);
 void        font_free        (font_t* font);
 image_t*    font_glyph       (const font_t* font, uint32_t cp);
@@ -29,7 +30,6 @@ void        wraptext_free    (wraptext_t* wraptext);
 int         wraptext_len     (const wraptext_t* wraptext);
 const char* wraptext_line    (const wraptext_t* wraptext, int line_index);
 
-void init_font_api        (duk_context* ctx);
 void duk_push_sphere_font (duk_context* ctx, font_t* font);
 
 #endif // MINISPHERE__FONT_H__INCLUDED

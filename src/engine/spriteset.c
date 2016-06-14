@@ -51,7 +51,6 @@ struct rss_frame_v3
 #pragma pack(pop)
 
 static duk_ret_t js_LoadSpriteset          (duk_context* ctx);
-static duk_ret_t js_new_Spriteset          (duk_context* ctx);
 static duk_ret_t js_Spriteset_finalize     (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_filename (duk_context* ctx);
 static duk_ret_t js_Spriteset_toString     (duk_context* ctx);
@@ -59,7 +58,7 @@ static duk_ret_t js_Spriteset_clone        (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_image    (duk_context* ctx);
 static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 
-static const spriteset_pose_t* find_sprite_pose    (const spriteset_t* spriteset, const char* pose_name);
+static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 
 static vector_t*    s_load_cache;
 static unsigned int s_next_spriteset_id = 0;
@@ -495,8 +494,8 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 void
 init_spriteset_api(duk_context* ctx)
 {
-	api_register_method(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
-	api_register_ctor(ctx, "Spriteset", js_new_Spriteset, js_Spriteset_finalize);
+	api_register_static_func(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
+	api_register_type(ctx, "Spriteset", js_Spriteset_finalize);
 	api_register_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
 	api_register_method(ctx, "Spriteset", "toString", js_Spriteset_toString);
 	api_register_method(ctx, "Spriteset", "clone", js_Spriteset_clone);
@@ -565,20 +564,6 @@ js_LoadSpriteset(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	filename = duk_require_path(ctx, 0, "spritesets", true);
-	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file `%s`", filename);
-	duk_push_sphere_spriteset(ctx, spriteset);
-	free_spriteset(spriteset);
-	return 1;
-}
-
-static duk_ret_t
-js_new_Spriteset(duk_context* ctx)
-{
-	const char*  filename;
-	spriteset_t* spriteset;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);

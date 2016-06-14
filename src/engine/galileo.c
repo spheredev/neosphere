@@ -1,34 +1,9 @@
 #include "minisphere.h"
 #include "galileo.h"
 
-#include "api.h"
 #include "color.h"
 #include "shader.h"
 #include "vector.h"
-
-static duk_ret_t js_GetDefaultShaderProgram (duk_context* ctx);
-static duk_ret_t js_new_Group               (duk_context* ctx);
-static duk_ret_t js_Group_finalize          (duk_context* ctx);
-static duk_ret_t js_Group_get_shader        (duk_context* ctx);
-static duk_ret_t js_Group_get_transform     (duk_context* ctx);
-static duk_ret_t js_Group_set_shader        (duk_context* ctx);
-static duk_ret_t js_Group_set_transform     (duk_context* ctx);
-static duk_ret_t js_Group_draw              (duk_context* ctx);
-static duk_ret_t js_Group_setFloat          (duk_context* ctx);
-static duk_ret_t js_Group_setInt            (duk_context* ctx);
-static duk_ret_t js_Group_setMatrix         (duk_context* ctx);
-static duk_ret_t js_new_Shape               (duk_context* ctx);
-static duk_ret_t js_Shape_finalize          (duk_context* ctx);
-static duk_ret_t js_Shape_get_texture       (duk_context* ctx);
-static duk_ret_t js_Shape_set_texture       (duk_context* ctx);
-static duk_ret_t js_Shape_draw              (duk_context* ctx);
-static duk_ret_t js_new_Transform           (duk_context* ctx);
-static duk_ret_t js_Transform_finalize      (duk_context* ctx);
-static duk_ret_t js_Transform_compose       (duk_context* ctx);
-static duk_ret_t js_Transform_identity      (duk_context* ctx);
-static duk_ret_t js_Transform_rotate        (duk_context* ctx);
-static duk_ret_t js_Transform_scale         (duk_context* ctx);
-static duk_ret_t js_Transform_translate     (duk_context* ctx);
 
 static void free_cached_uniform (group_t* group, const char* name);
 static bool have_vertex_buffer  (const shape_t* shape);

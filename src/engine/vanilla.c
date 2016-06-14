@@ -1,58 +1,91 @@
 #include "minisphere.h"
 #include "vanilla.h"
 
+#include "animation.h"
 #include "api.h"
 #include "async.h"
 #include "debugger.h"
+#include "font.h"
+#include "logger.h"
 
-static duk_ret_t js_IsSkippedFrame         (duk_context* ctx);
-static duk_ret_t js_GetClippingRectangle   (duk_context* ctx);
-static duk_ret_t js_GetFrameRate           (duk_context* ctx);
-static duk_ret_t js_GetGameList            (duk_context* ctx);
-static duk_ret_t js_GetGameManifest        (duk_context* ctx);
-static duk_ret_t js_GetMaxFrameSkips       (duk_context* ctx);
-static duk_ret_t js_GetScreenHeight        (duk_context* ctx);
-static duk_ret_t js_GetScreenWidth         (duk_context* ctx);
-static duk_ret_t js_GetSeconds             (duk_context* ctx);
-static duk_ret_t js_GetTime                (duk_context* ctx);
-static duk_ret_t js_GetVersion             (duk_context* ctx);
-static duk_ret_t js_GetVersionString       (duk_context* ctx);
-static duk_ret_t js_SetClippingRectangle   (duk_context* ctx);
-static duk_ret_t js_SetFrameRate           (duk_context* ctx);
-static duk_ret_t js_SetMaxFrameSkips       (duk_context* ctx);
-static duk_ret_t js_SetScreenSize          (duk_context* ctx);
-static duk_ret_t js_Abort                  (duk_context* ctx);
-static duk_ret_t js_Alert                  (duk_context* ctx);
-static duk_ret_t js_ApplyColorMask         (duk_context* ctx);
-static duk_ret_t js_Assert                 (duk_context* ctx);
-static duk_ret_t js_CreateStringFromCode   (duk_context* ctx);
-static duk_ret_t js_DebugPrint             (duk_context* ctx);
-static duk_ret_t js_Delay                  (duk_context* ctx);
-static duk_ret_t js_DispatchScript         (duk_context* ctx);
-static duk_ret_t js_DoEvents               (duk_context* ctx);
-static duk_ret_t js_EvaluateScript         (duk_context* ctx);
-static duk_ret_t js_EvaluateSystemScript   (duk_context* ctx);
-static duk_ret_t js_ExecuteGame            (duk_context* ctx);
-static duk_ret_t js_Exit                   (duk_context* ctx);
-static duk_ret_t js_FlipScreen             (duk_context* ctx);
-static duk_ret_t js_GarbageCollect         (duk_context* ctx);
-static duk_ret_t js_GradientCircle         (duk_context* ctx);
-static duk_ret_t js_GradientRectangle      (duk_context* ctx);
-static duk_ret_t js_Line                   (duk_context* ctx);
-static duk_ret_t js_LineSeries             (duk_context* ctx);
-static duk_ret_t js_OutlinedCircle         (duk_context* ctx);
-static duk_ret_t js_OutlinedRectangle      (duk_context* ctx);
-static duk_ret_t js_OutlinedRoundRectangle (duk_context* ctx);
-static duk_ret_t js_Point                  (duk_context* ctx);
-static duk_ret_t js_PointSeries            (duk_context* ctx);
-static duk_ret_t js_Print                  (duk_context* ctx);
-static duk_ret_t js_Rectangle              (duk_context* ctx);
-static duk_ret_t js_RequireScript          (duk_context* ctx);
-static duk_ret_t js_RequireSystemScript    (duk_context* ctx);
-static duk_ret_t js_RestartGame            (duk_context* ctx);
-static duk_ret_t js_RoundRectangle         (duk_context* ctx);
-static duk_ret_t js_Triangle               (duk_context* ctx);
-static duk_ret_t js_UnskipFrame            (duk_context* ctx);
+static duk_ret_t js_IsSkippedFrame            (duk_context* ctx);
+static duk_ret_t js_GetClippingRectangle      (duk_context* ctx);
+static duk_ret_t js_GetFrameRate              (duk_context* ctx);
+static duk_ret_t js_GetGameList               (duk_context* ctx);
+static duk_ret_t js_GetGameManifest           (duk_context* ctx);
+static duk_ret_t js_GetMaxFrameSkips          (duk_context* ctx);
+static duk_ret_t js_GetScreenHeight           (duk_context* ctx);
+static duk_ret_t js_GetScreenWidth            (duk_context* ctx);
+static duk_ret_t js_GetSystemFont             (duk_context* ctx);
+static duk_ret_t js_GetTime                   (duk_context* ctx);
+static duk_ret_t js_GetVersion                (duk_context* ctx);
+static duk_ret_t js_GetVersionString          (duk_context* ctx);
+static duk_ret_t js_SetClippingRectangle      (duk_context* ctx);
+static duk_ret_t js_SetFrameRate              (duk_context* ctx);
+static duk_ret_t js_SetMaxFrameSkips          (duk_context* ctx);
+static duk_ret_t js_SetScreenSize             (duk_context* ctx);
+static duk_ret_t js_Abort                     (duk_context* ctx);
+static duk_ret_t js_Alert                     (duk_context* ctx);
+static duk_ret_t js_ApplyColorMask            (duk_context* ctx);
+static duk_ret_t js_Assert                    (duk_context* ctx);
+static duk_ret_t js_CreateStringFromCode      (duk_context* ctx);
+static duk_ret_t js_DebugPrint                (duk_context* ctx);
+static duk_ret_t js_Delay                     (duk_context* ctx);
+static duk_ret_t js_DispatchScript            (duk_context* ctx);
+static duk_ret_t js_DoEvents                  (duk_context* ctx);
+static duk_ret_t js_EvaluateScript            (duk_context* ctx);
+static duk_ret_t js_EvaluateSystemScript      (duk_context* ctx);
+static duk_ret_t js_ExecuteGame               (duk_context* ctx);
+static duk_ret_t js_Exit                      (duk_context* ctx);
+static duk_ret_t js_FlipScreen                (duk_context* ctx);
+static duk_ret_t js_GarbageCollect            (duk_context* ctx);
+static duk_ret_t js_GradientCircle            (duk_context* ctx);
+static duk_ret_t js_GradientRectangle         (duk_context* ctx);
+static duk_ret_t js_Line                      (duk_context* ctx);
+static duk_ret_t js_LineSeries                (duk_context* ctx);
+static duk_ret_t js_LoadAnimation             (duk_context* ctx);
+static duk_ret_t js_LoadFont                  (duk_context* ctx);
+static duk_ret_t js_OpenLog                   (duk_context* ctx);
+static duk_ret_t js_OutlinedCircle            (duk_context* ctx);
+static duk_ret_t js_OutlinedRectangle         (duk_context* ctx);
+static duk_ret_t js_OutlinedRoundRectangle    (duk_context* ctx);
+static duk_ret_t js_Point                     (duk_context* ctx);
+static duk_ret_t js_PointSeries               (duk_context* ctx);
+static duk_ret_t js_Print                     (duk_context* ctx);
+static duk_ret_t js_Rectangle                 (duk_context* ctx);
+static duk_ret_t js_RequireScript             (duk_context* ctx);
+static duk_ret_t js_RequireSystemScript       (duk_context* ctx);
+static duk_ret_t js_RestartGame               (duk_context* ctx);
+static duk_ret_t js_RoundRectangle            (duk_context* ctx);
+static duk_ret_t js_Triangle                  (duk_context* ctx);
+static duk_ret_t js_UnskipFrame               (duk_context* ctx);
+static duk_ret_t js_Animation_finalize        (duk_context* ctx);
+static duk_ret_t js_Animation_get_height      (duk_context* ctx);
+static duk_ret_t js_Animation_get_width       (duk_context* ctx);
+static duk_ret_t js_Animation_getDelay        (duk_context* ctx);
+static duk_ret_t js_Animation_getNumFrames    (duk_context* ctx);
+static duk_ret_t js_Animation_drawFrame       (duk_context* ctx);
+static duk_ret_t js_Animation_drawZoomedFrame (duk_context* ctx);
+static duk_ret_t js_Animation_readNextFrame   (duk_context* ctx);
+static duk_ret_t js_Font_finalize             (duk_context* ctx);
+static duk_ret_t js_Font_toString             (duk_context* ctx);
+static duk_ret_t js_Font_get_colorMask        (duk_context* ctx);
+static duk_ret_t js_Font_set_colorMask        (duk_context* ctx);
+static duk_ret_t js_Font_get_height           (duk_context* ctx);
+static duk_ret_t js_Font_getCharacterImage    (duk_context* ctx);
+static duk_ret_t js_Font_setCharacterImage    (duk_context* ctx);
+static duk_ret_t js_Font_getStringHeight      (duk_context* ctx);
+static duk_ret_t js_Font_getStringWidth       (duk_context* ctx);
+static duk_ret_t js_Font_clone                (duk_context* ctx);
+static duk_ret_t js_Font_drawText             (duk_context* ctx);
+static duk_ret_t js_Font_drawTextBox          (duk_context* ctx);
+static duk_ret_t js_Font_drawZoomedText       (duk_context* ctx);
+static duk_ret_t js_Font_wordWrapString       (duk_context* ctx);
+static duk_ret_t js_Logger_finalize           (duk_context* ctx);
+static duk_ret_t js_Logger_toString           (duk_context* ctx);
+static duk_ret_t js_Logger_beginBlock         (duk_context* ctx);
+static duk_ret_t js_Logger_endBlock           (duk_context* ctx);
+static duk_ret_t js_Logger_write              (duk_context* ctx);
 
 enum line_series_type
 {
@@ -66,6 +99,8 @@ static unsigned int s_next_async_id = 1;
 void
 initialize_vanilla_api(duk_context* ctx)
 {
+	console_log(1, "initializing Vanilla (v1.5)");
+	
 	// add polyfills for __defineGetter__/__defineSetter__.  Sphere 1.x predates ES5
 	// and as a result there are a lot of games that expect these to exist.
 	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
@@ -88,7 +123,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
 	api_register_static_func(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
 	api_register_static_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
-	api_register_static_func(ctx, NULL, "GetSeconds", js_GetSeconds);
+	api_register_static_func(ctx, NULL, "GetSystemFont", js_GetSystemFont);
 	api_register_static_func(ctx, NULL, "GetTime", js_GetTime);
 	api_register_static_func(ctx, NULL, "GetVersion", js_GetVersion);
 	api_register_static_func(ctx, NULL, "GetVersionString", js_GetVersionString);
@@ -115,6 +150,9 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "GradientRectangle", js_GradientRectangle);
 	api_register_static_func(ctx, NULL, "Line", js_Line);
 	api_register_static_func(ctx, NULL, "LineSeries", js_LineSeries);
+	api_register_static_func(ctx, NULL, "LoadAnimation", js_LoadAnimation);
+	api_register_static_func(ctx, NULL, "LoadFont", js_LoadFont);
+	api_register_static_func(ctx, NULL, "OpenLog", js_OpenLog);
 	api_register_static_func(ctx, NULL, "OutlinedCircle", js_OutlinedCircle);
 	api_register_static_func(ctx, NULL, "OutlinedRectangle", js_OutlinedRectangle);
 	api_register_static_func(ctx, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
@@ -129,6 +167,38 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "Triangle", js_Triangle);
 	api_register_static_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
+	api_register_type(ctx, "Animation", js_Animation_finalize);
+	api_register_prop(ctx, "Animation", "width", js_Animation_get_width, NULL);
+	api_register_prop(ctx, "Animation", "height", js_Animation_get_height, NULL);
+	api_register_method(ctx, "Animation", "getDelay", js_Animation_getDelay);
+	api_register_method(ctx, "Animation", "getNumFrames", js_Animation_getNumFrames);
+	api_register_method(ctx, "Animation", "drawFrame", js_Animation_drawFrame);
+	api_register_method(ctx, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
+	api_register_method(ctx, "Animation", "readNextFrame", js_Animation_readNextFrame);
+
+	api_register_type(ctx, "Font", js_Font_finalize);
+	api_register_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
+	api_register_prop(ctx, "Font", "height", js_Font_get_height, NULL);
+	api_register_method(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
+	api_register_method(ctx, "Font", "getColorMask", js_Font_get_colorMask);
+	api_register_method(ctx, "Font", "getHeight", js_Font_get_height);
+	api_register_method(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
+	api_register_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
+	api_register_method(ctx, "Font", "setCharacterImage", js_Font_setCharacterImage);
+	api_register_method(ctx, "Font", "setColorMask", js_Font_set_colorMask);
+	api_register_method(ctx, "Font", "toString", js_Font_toString);
+	api_register_method(ctx, "Font", "clone", js_Font_clone);
+	api_register_method(ctx, "Font", "drawText", js_Font_drawText);
+	api_register_method(ctx, "Font", "drawTextBox", js_Font_drawTextBox);
+	api_register_method(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
+	api_register_method(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
+	
+	api_register_type(ctx, "Logger", js_Logger_finalize);
+	api_register_method(ctx, "Logger", "toString", js_Logger_toString);
+	api_register_method(ctx, "Logger", "beginBlock", js_Logger_beginBlock);
+	api_register_method(ctx, "Logger", "endBlock", js_Logger_endBlock);
+	api_register_method(ctx, "Logger", "write", js_Logger_write);
+	
 	// line series types
 	api_register_const(ctx, NULL, "LINE_MULTIPLE", LINE_MULTIPLE);
 	api_register_const(ctx, NULL, "LINE_STRIP", LINE_STRIP);
@@ -234,9 +304,9 @@ js_GetScreenWidth(duk_context* ctx)
 }
 
 static duk_ret_t
-js_GetSeconds(duk_context* ctx)
+js_GetSystemFont(duk_context* ctx)
 {
-	duk_push_number(ctx, al_get_time());
+	duk_push_sphere_font(ctx, g_sys_font);
 	return 1;
 }
 
@@ -682,6 +752,46 @@ js_LineSeries(duk_context* ctx)
 }
 
 static duk_ret_t
+js_LoadAnimation(duk_context* ctx)
+{
+	animation_t* anim;
+	const char*  filename;
+
+	filename = duk_require_path(ctx, 0, "animations", true);
+	if (!(anim = animation_new(filename)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
+	duk_push_sphere_obj(ctx, "Animation", anim);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadFont(duk_context* ctx)
+{
+	const char* filename;
+	font_t*     font;
+
+	filename = duk_require_path(ctx, 0, "fonts", true);
+	if (!(font = font_load(filename)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load font `%s`", filename);
+	duk_push_sphere_font(ctx, font);
+	font_free(font);
+	return 1;
+}
+
+static duk_ret_t
+js_OpenLog(duk_context* ctx)
+{
+	const char* filename;
+	logger_t*   logger;
+
+	filename = duk_require_path(ctx, 0, "logs", true);
+	if (!(logger = log_open(filename)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
+	duk_push_sphere_obj(ctx, "Logger", logger);
+	return 1;
+}
+
+static duk_ret_t
 js_OutlinedCircle(duk_context* ctx)
 {
 	float x = duk_require_int(ctx, 0) + 0.5;
@@ -898,5 +1008,415 @@ static duk_ret_t
 js_UnskipFrame(duk_context* ctx)
 {
 	screen_unskip_frame(g_screen);
+	return 0;
+}
+
+static duk_ret_t
+js_Animation_finalize(duk_context* ctx)
+{
+	animation_t* anim;
+
+	anim = duk_require_sphere_obj(ctx, 0, "Animation");
+	animation_free(anim);
+	return 0;
+}
+
+static duk_ret_t
+js_Animation_get_height(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+
+	duk_push_int(ctx, animation_height(anim));
+	return 1;
+}
+
+static duk_ret_t
+js_Animation_get_width(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+
+	duk_push_int(ctx, animation_width(anim));
+	return 1;
+}
+
+static duk_ret_t
+js_Animation_getDelay(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	duk_pop(ctx);
+	duk_push_int(ctx, animation_delay(anim));
+	return 1;
+}
+
+static duk_ret_t
+js_Animation_getNumFrames(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+
+	duk_push_int(ctx, animation_num_frames(anim));
+	return 1;
+}
+
+static duk_ret_t
+js_Animation_drawFrame(duk_context* ctx)
+{
+	int x = duk_require_number(ctx, 0);
+	int y = duk_require_number(ctx, 1);
+
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+
+	image_draw(animation_frame(anim), x, y);
+	return 0;
+}
+
+static duk_ret_t
+js_Animation_drawZoomedFrame(duk_context* ctx)
+{
+	animation_t* anim;
+	int          height;
+	double       scale;
+	int          width;
+	int          x;
+	int          y;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	x = duk_require_number(ctx, 0);
+	y = duk_require_number(ctx, 1);
+	scale = duk_require_number(ctx, 2);
+
+	if (scale < 0.0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "zoom must be positive");
+	width = animation_width(anim);
+	height = animation_height(anim);
+	image_draw_scaled(animation_frame(anim), x, y, width * scale, height * scale);
+	return 0;
+}
+
+static duk_ret_t
+js_Animation_readNextFrame(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	duk_pop(ctx);
+	animation_update(anim);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_finalize(duk_context* ctx)
+{
+	font_t* font;
+
+	font = duk_require_sphere_obj(ctx, 0, "Font");
+	font_free(font);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object font]");
+	return 1;
+}
+
+static duk_ret_t
+js_Font_getCharacterImage(duk_context* ctx)
+{
+	uint32_t cp;
+	font_t*  font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	cp = duk_require_uint(ctx, 0);
+
+	duk_push_sphere_image(ctx, font_glyph(font, cp));
+	return 1;
+}
+
+static duk_ret_t
+js_Font_get_colorMask(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
+	duk_remove(ctx, -2);
+	return 1;
+}
+
+static duk_ret_t
+js_Font_set_colorMask(duk_context* ctx)
+{
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask"); duk_pop(ctx);
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_get_height(duk_context* ctx)
+{
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_pop(ctx);
+	duk_push_int(ctx, font_height(font));
+	return 1;
+}
+
+static duk_ret_t
+js_Font_setCharacterImage(duk_context* ctx)
+{
+	int cp = duk_require_int(ctx, 0);
+	image_t* image = duk_require_sphere_image(ctx, 1);
+
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+
+	font_set_glyph(font, cp, image);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_clone(duk_context* ctx)
+{
+	font_t* dolly_font;
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_pop(ctx);
+	if (!(dolly_font = font_clone(font)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font:clone(): unable to clone font");
+	duk_push_sphere_font(ctx, dolly_font);
+	return 1;
+}
+
+static duk_ret_t
+js_Font_drawText(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	const char* text = duk_to_string(ctx, 2);
+
+	font_t* font;
+	color_t mask;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!screen_is_skipframe(g_screen))
+		font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_drawZoomedText(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	float scale = duk_require_number(ctx, 2);
+	const char* text = duk_to_string(ctx, 3);
+
+	ALLEGRO_BITMAP* bitmap;
+	font_t*         font;
+	color_t         mask;
+	int             text_w, text_h;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!screen_is_skipframe(g_screen)) {
+		text_w = font_get_width(font, text);
+		text_h = font_height(font);
+		bitmap = al_create_bitmap(text_w, text_h);
+		al_set_target_bitmap(bitmap);
+		font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
+		al_set_target_backbuffer(screen_display(g_screen));
+		al_draw_scaled_bitmap(bitmap, 0, 0, text_w, text_h, x, y, text_w * scale, text_h * scale, 0x0);
+		al_destroy_bitmap(bitmap);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Font_drawTextBox(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+	int offset = duk_require_int(ctx, 4);
+	const char* text = duk_to_string(ctx, 5);
+
+	font_t*     font;
+	int         line_height;
+	const char* line_text;
+	color_t     mask;
+	int         num_lines;
+
+	int i;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!screen_is_skipframe(g_screen)) {
+		duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
+		duk_push_this(ctx);
+		duk_push_string(ctx, text);
+		duk_push_int(ctx, w);
+		duk_call_method(ctx, 2);
+		duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
+		line_height = font_height(font);
+		for (i = 0; i < num_lines; ++i) {
+			duk_get_prop_index(ctx, -1, i); line_text = duk_get_string(ctx, -1); duk_pop(ctx);
+			font_draw_text(font, mask, x + offset, y, TEXT_ALIGN_LEFT, line_text);
+			y += line_height;
+		}
+		duk_pop(ctx);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Font_getStringHeight(duk_context* ctx)
+{
+	const char* text = duk_to_string(ctx, 0);
+	int width = duk_require_int(ctx, 1);
+
+	font_t* font;
+	int     num_lines;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_pop(ctx);
+	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
+	duk_push_this(ctx);
+	duk_push_string(ctx, text);
+	duk_push_int(ctx, width);
+	duk_call_method(ctx, 2);
+	duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	duk_push_int(ctx, font_height(font) * num_lines);
+	return 1;
+}
+
+static duk_ret_t
+js_Font_getStringWidth(duk_context* ctx)
+{
+	const char* text = duk_to_string(ctx, 0);
+
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_pop(ctx);
+	duk_push_int(ctx, font_get_width(font, text));
+	return 1;
+}
+
+static duk_ret_t
+js_Font_wordWrapString(duk_context* ctx)
+{
+	const char* text = duk_to_string(ctx, 0);
+	int         width = duk_require_int(ctx, 1);
+
+	font_t*     font;
+	int         num_lines;
+	wraptext_t* wraptext;
+
+	int i;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+	duk_pop(ctx);
+	wraptext = wraptext_new(text, font, width);
+	num_lines = wraptext_len(wraptext);
+	duk_push_array(ctx);
+	for (i = 0; i < num_lines; ++i) {
+		duk_push_string(ctx, wraptext_line(wraptext, i));
+		duk_put_prop_index(ctx, -2, i);
+	}
+	wraptext_free(wraptext);
+	return 1;
+}
+
+static duk_ret_t
+js_Logger_finalize(duk_context* ctx)
+{
+	logger_t* logger;
+
+	logger = duk_require_sphere_obj(ctx, 0, "Logger");
+	log_close(logger);
+	return 0;
+}
+
+static duk_ret_t
+js_Logger_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object log]");
+	return 1;
+}
+
+static duk_ret_t
+js_Logger_beginBlock(duk_context* ctx)
+{
+	const char* title = duk_to_string(ctx, 0);
+
+	logger_t* logger;
+
+	duk_push_this(ctx);
+	logger = duk_require_sphere_obj(ctx, -1, "Logger");
+	if (!log_begin_block(logger, title))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): unable to create new log block");
+	return 0;
+}
+
+static duk_ret_t
+js_Logger_endBlock(duk_context* ctx)
+{
+	logger_t* logger;
+
+	duk_push_this(ctx);
+	logger = duk_require_sphere_obj(ctx, -1, "Logger");
+	log_end_block(logger);
+	return 0;
+}
+
+static duk_ret_t
+js_Logger_write(duk_context* ctx)
+{
+	const char* text = duk_to_string(ctx, 0);
+
+	logger_t* logger;
+
+	duk_push_this(ctx);
+	logger = duk_require_sphere_obj(ctx, -1, "Logger");
+	log_write(logger, NULL, text);
 	return 0;
 }

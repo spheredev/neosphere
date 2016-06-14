@@ -14,7 +14,6 @@
 #include "galileo.h"
 #include "image.h"
 #include "input.h"
-#include "logger.h"
 #include "map_engine.h"
 #include "rng.h"
 #include "shader.h"
@@ -46,16 +45,13 @@ initialize_api(duk_context* ctx)
 	initialize_vanilla_api(ctx);
 
 	// initialize subsystem APIs
-	init_animation_api();
 	init_audio_api();
 	init_bytearray_api();
 	init_color_api();
 	init_commonjs_api();
 	init_file_api();
-	init_font_api(g_duk);
 	init_image_api(g_duk);
 	init_input_api();
-	init_logging_api();
 	init_map_engine_api(g_duk);
 	init_sockets_api();
 	init_spriteset_api(g_duk);
