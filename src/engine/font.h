@@ -15,22 +15,19 @@ enum text_align
 	TEXT_ALIGN_RIGHT
 } text_align_t;
 
-font_t*     load_font            (const char* path);
-font_t*     clone_font           (const font_t* src_font);
-font_t*     ref_font             (font_t* font);
-void        free_font            (font_t* font);
-int         get_font_line_height (const font_t* font);
-void        get_font_metrics     (const font_t* font, int* min_width, int* max_width, int* out_line_height);
-image_t*    get_glyph_image      (const font_t* font, int codepoint);
-int         get_glyph_width      (const font_t* font, int codepoint);
-int         get_text_width       (const font_t* font, const char* text);
-void        set_glyph_image      (font_t* font, int codepoint, image_t* image);
-void        draw_text            (const font_t* font, color_t mask, int x, int y, text_align_t alignment, const char* text);
-
-wraptext_t* word_wrap_text          (const font_t* font, const char* text, int width);
-void        free_wraptext           (wraptext_t* wraptext);
-const char* get_wraptext_line       (const wraptext_t* wraptext, int line_index);
-int         get_wraptext_line_count (const wraptext_t* wraptext);
+font_t*     font_load        (const char* path);
+font_t*     font_ref         (font_t* font);
+void        font_free        (font_t* font);
+image_t*    font_glyph       (const font_t* font, uint32_t cp);
+int         font_height      (const font_t* font);
+void        font_set_glyph   (font_t* font, uint32_t cp, image_t* image);
+void        font_draw_text   (const font_t* font, color_t mask, int x, int y, text_align_t alignment, const char* text);
+void        font_get_metrics (const font_t* font, int* min_width, int* max_width, int* out_line_height);
+int         font_get_width   (const font_t* font, const char* text);
+wraptext_t* wraptext_new     (const char* text, const font_t* font, int width);
+void        wraptext_free    (wraptext_t* wraptext);
+int         wraptext_len     (const wraptext_t* wraptext);
+const char* wraptext_line    (const wraptext_t* wraptext, int line_index);
 
 void init_font_api        (duk_context* ctx);
 void duk_push_sphere_font (duk_context* ctx, font_t* font);

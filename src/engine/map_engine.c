@@ -1241,14 +1241,14 @@ process_map_input(void)
 	int i;
 
 	// clear out excess keys from key queue
-	clear_key_queue();
+	kb_clear_queue();
 	
 	// check for player control of input persons, if there are any
 	for (i = 0; i < MAX_PLAYERS; ++i) {
 		person = s_players[i].person;
 		if (person != NULL) {
-			if (is_key_down(get_player_key(i, PLAYER_KEY_A))
-				|| is_key_down(s_players[i].talk_key)
+			if (kb_is_key_down(get_player_key(i, PLAYER_KEY_A))
+				|| kb_is_key_down(s_players[i].talk_key)
 				|| is_joy_button_down(i, s_talk_button))
 			{
 				if (s_players[i].is_talk_allowed)
@@ -1259,10 +1259,10 @@ process_map_input(void)
 				s_players[i].is_talk_allowed = true;
 			mv_x = 0; mv_y = 0;
 			if (!is_person_busy(person)) {  // allow player control only if input person is idle
-				if (is_key_down(get_player_key(i, PLAYER_KEY_UP))) mv_y = -1;
-				if (is_key_down(get_player_key(i, PLAYER_KEY_RIGHT))) mv_x = 1;
-				if (is_key_down(get_player_key(i, PLAYER_KEY_DOWN))) mv_y = 1;
-				if (is_key_down(get_player_key(i, PLAYER_KEY_LEFT))) mv_x = -1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_UP))) mv_y = -1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_RIGHT))) mv_x = 1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_DOWN))) mv_y = 1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_LEFT))) mv_x = -1;
 			}
 			switch (mv_x + mv_y * 3) {
 			case -3: // north
@@ -1601,12 +1601,12 @@ init_map_engine_api(duk_context* ctx)
 	api_register_method(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	// Map script types
-	api_register_const(ctx, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
-	api_register_const(ctx, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
-	api_register_const(ctx, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
-	api_register_const(ctx, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
-	api_register_const(ctx, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
-	api_register_const(ctx, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
+	api_register_const(ctx, NULL, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
+	api_register_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
+	api_register_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
+	api_register_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
+	api_register_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
+	api_register_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
 
 	// initialize subcomponent APIs (persons, etc.)
 	init_persons_api();
@@ -2040,7 +2040,7 @@ js_GetTileSurface(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileSurface(): map engine not running");
 	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileSurface(): invalid tile index (%d)", tile_index);
-	if ((image = clone_image(tileset_get_image(s_map->tileset, tile_index))) == NULL)
+	if ((image = image_clone(tileset_get_image(s_map->tileset, tile_index))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileSurface(): unable to create new surface image");
 	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
@@ -2503,8 +2503,8 @@ js_SetTileImage(duk_context* ctx)
 	if (tile_index < 0 || tile_index >= c_tiles)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileImage(): invalid tile index (%d)", tile_index);
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
-	image_w = get_image_width(image);
-	image_h = get_image_height(image);
+	image_w = image_width(image);
+	image_h = image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
 	tileset_set_image(s_map->tileset, tile_index, image);
@@ -2543,8 +2543,8 @@ js_SetTileSurface(duk_context* ctx)
 	if (tile_index < 0 || tile_index >= num_tiles)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileSurface(): invalid tile index (%d)", tile_index);
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
-	image_w = get_image_width(image);
-	image_h = get_image_height(image);
+	image_w = image_width(image);
+	image_h = image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileSurface(): surface dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
 	tileset_set_image(s_map->tileset, tile_index, image);

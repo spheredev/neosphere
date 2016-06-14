@@ -104,9 +104,9 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		al_set_new_bitmap_flags(
 			ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR
 			| bitmap_flags);
-		icon = clone_image(icon);
-		rescale_image(icon, 32, 32);
-		icon_bitmap = get_image_bitmap(icon);
+		icon = image_clone(icon);
+		image_rescale(icon, 32, 32);
+		icon_bitmap = image_bitmap(icon);
 		al_set_new_bitmap_flags(bitmap_flags);
 		al_set_display_icon(display, icon_bitmap);
 	}
@@ -221,8 +221,8 @@ screen_draw_status(screen_t* obj, const char* text)
 
 	screen_cx = al_get_display_width(obj->display);
 	screen_cy = al_get_display_height(obj->display);
-	width = get_text_width(g_sys_font, text) + 20;
-	height = get_font_line_height(g_sys_font) + 10;
+	width = font_get_width(g_sys_font, text) + 20;
+	height = font_height(g_sys_font) + 10;
 	bounds.x1 = 8 + obj->x_offset;
 	bounds.y1 = screen_cy - obj->y_offset - height - 8;
 	bounds.x2 = bounds.x1 + width;
@@ -231,9 +231,9 @@ screen_draw_status(screen_t* obj, const char* text)
 	al_use_transform(&trans);
 	al_draw_filled_rounded_rectangle(bounds.x1, bounds.y1, bounds.x2, bounds.y2, 4, 4,
 		al_map_rgba(16, 16, 16, 192));
-	draw_text(g_sys_font, color_new(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
+	font_draw_text(g_sys_font, color_new(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
-	draw_text(g_sys_font, color_new(255, 255, 255, 255), (bounds.x2 + bounds.x1) / 2,
+	font_draw_text(g_sys_font, color_new(255, 255, 255, 255), (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
 	screen_transform(obj, NULL);
 }
@@ -313,8 +313,8 @@ screen_flip(screen_t* obj, int framerate)
 			al_identity_transform(&trans);
 			al_use_transform(&trans);
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
-			draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
-			draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
+			font_draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
+			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 			screen_transform(g_screen, NULL);
 		}
 		al_flip_display();
@@ -372,18 +372,18 @@ screen_grab(screen_t* obj, int x, int y, int width, int height)
 	scale_width = width * obj->x_scale;
 	scale_height = height * obj->y_scale;
 	
-	if (!(image = create_image(scale_width, scale_height)))
+	if (!(image = image_new(scale_width, scale_height)))
 		goto on_error;
 	backbuffer = al_get_backbuffer(obj->display);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_bitmap_region(backbuffer, x, y, scale_width, scale_height, 0, 0, 0x0);
 	al_set_target_backbuffer(obj->display);
-	if (!rescale_image(image, width, height))
+	if (!image_rescale(image, width, height))
 		goto on_error;
 	return image;
 
 on_error:
-	free_image(image);
+	image_free(image);
 	return NULL;
 }
 
@@ -508,9 +508,9 @@ init_screen_api(void)
 	api_register_method(g_duk, NULL, "Triangle", js_Triangle);
 
 	// line series types
-	api_register_const(g_duk, "LINE_MULTIPLE", LINE_MULTIPLE);
-	api_register_const(g_duk, "LINE_STRIP", LINE_STRIP);
-	api_register_const(g_duk, "LINE_LOOP", LINE_LOOP);
+	api_register_const(g_duk, NULL, "LINE_MULTIPLE", LINE_MULTIPLE);
+	api_register_const(g_duk, NULL, "LINE_STRIP", LINE_STRIP);
+	api_register_const(g_duk, NULL, "LINE_LOOP", LINE_LOOP);
 }
 
 static duk_ret_t

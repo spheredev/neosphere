@@ -66,11 +66,6 @@ struct kevfile
 	bool            is_dirty;
 };
 
-static bool read_vsize_int   (sfs_file_t* file, intmax_t* p_value, int size, bool little_endian);
-static bool read_vsize_uint  (sfs_file_t* file, intmax_t* p_value, int size, bool little_endian);
-static bool write_vsize_int  (sfs_file_t* file, intmax_t value, int size, bool little_endian);
-static bool write_vsize_uint (sfs_file_t* file, intmax_t value, int size, bool little_endian);
-
 static unsigned int s_next_file_id = 0;
 
 kevfile_t*
@@ -253,125 +248,6 @@ kev_write_string(kevfile_t* file, const char* key, const char* value)
 	console_log(3, "writing string to kevfile #%u, key `%s`", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);
 	file->is_dirty = true;
-}
-
-static bool
-read_vsize_int(sfs_file_t* file, intmax_t* p_value, int size, bool little_endian)
-{
-	// NOTE: supports decoding values up to 48-bit (6 bytes).  don't specify
-	//       size > 6 unless you want a segfault!
-
-	uint8_t data[6];
-	int     mul = 1;
-	
-	int i;
-	
-	if (sfs_fread(data, 1, size, file) != size)
-		return false;
-	
-	// variable-sized int decoding adapted from Node.js
-	if (little_endian) {
-		*p_value = data[i = 0];
-		while (++i < size && (mul *= 0x100))
-			*p_value += data[i] * mul;
-	}
-	else {
-		*p_value = data[i = size - 1];
-		while (i > 0 && (mul *= 0x100))
-			*p_value += data[--i] * mul;
-	}
-	if (*p_value >= mul * 0x80)
-		*p_value -= pow(2, 8 * size);
-
-	return true;
-}
-
-static bool
-read_vsize_uint(sfs_file_t* file, intmax_t* p_value, int size, bool little_endian)
-{
-	// NOTE: supports decoding values up to 48-bit (6 bytes).  don't specify
-	//       size > 6 unless you want a segfault!
-
-	uint8_t data[6];
-	int     mul = 1;
-
-	int i;
-
-	if (sfs_fread(data, 1, size, file) != size)
-		return false;
-
-	// variable-sized uint decoding adapted from Node.js
-	if (little_endian) {
-		*p_value = data[i = 0];
-		while (++i < size && (mul *= 0x100))
-			*p_value += data[i] * mul;
-	}
-	else {
-		*p_value = data[--size];
-		while (size > 0 && (mul *= 0x100))
-			*p_value += data[--size] * mul;
-	}
-
-	return true;
-}
-
-static bool
-write_vsize_int(sfs_file_t* file, intmax_t value, int size, bool little_endian)
-{
-	// NOTE: supports encoding values up to 48-bit (6 bytes).  don't specify
-	//       size > 6 unless you want a segfault!
-
-	uint8_t data[6];
-	int     mul = 1;
-	int     sub = 0;
-
-	int i;
-
-	// variable-sized int encoding adapted from Node.js
-	if (little_endian) {
-		data[i = 0] = value & 0xFF;
-		while (++i < size && (mul *= 0x100)) {
-			if (value < 0 && sub == 0 && data[i - 1] != 0)
-				sub = 1;
-			data[i] = (value / mul - sub) & 0xFF;
-		}
-	}
-	else {
-		data[i = size - 1] = value & 0xFF;
-		while (--i >= 0 && (mul *= 0x100)) {
-			if (value < 0 && sub == 0 && data[i + 1] != 0)
-				sub = 1;
-			data[i] = (value / mul - sub) & 0xFF;
-		}
-	}
-	
-	return sfs_fwrite(data, 1, size, file) == size;
-}
-
-static bool
-write_vsize_uint(sfs_file_t* file, intmax_t value, int size, bool little_endian)
-{
-	// NOTE: supports encoding values up to 48-bit (6 bytes).  don't specify
-	//       size > 6 unless you want a segfault!
-	
-	uint8_t data[6];
-	int     mul = 1;
-
-	int i;
-
-	// variable-sized uint encoding adapted from Node.js
-	if (little_endian) {
-		data[i = 0] = value & 0xFF;
-		while (++i < size && (mul *= 0x100))
-			data[i] = (value / mul) & 0xFF;
-	}
-	else {
-		data[i = size - 1] = value & 0xFF;
-		while (--i >= 0 && (mul *= 0x100))
-			data[i] = (value / mul) & 0xFF;
-	}
-
-	return sfs_fwrite(data, 1, size, file) == size;
 }
 
 void
@@ -1152,7 +1028,7 @@ js_FileStream_readInt(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (num_bytes < 1 || num_bytes > 6)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "int byte size must be in [1-6] range");
-	if (!read_vsize_int(file, &value, num_bytes, little_endian))
+	if (!sfs_read_int(file, &value, num_bytes, little_endian))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read int from file");
 	duk_push_number(ctx, (double)value);
 	return 1;
@@ -1178,7 +1054,7 @@ js_FileStream_readPString(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (uint_size < 1 || uint_size > 4)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "length bytes must be in [1-4] range (got: %d)", uint_size);
-	if (!read_vsize_uint(file, &length, uint_size, little_endian))
+	if (!sfs_read_uint(file, &length, uint_size, little_endian))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read pstring from file");
 	buffer = malloc((size_t)length);
 	if (sfs_fread(buffer, 1, (size_t)length, file) != (size_t)length)
@@ -1246,7 +1122,7 @@ js_FileStream_readUInt(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
 	if (num_bytes < 1 || num_bytes > 6)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "uint byte size must be in [1-6] range");
-	if (!read_vsize_uint(file, &value, num_bytes, little_endian))
+	if (!sfs_read_uint(file, &value, num_bytes, little_endian))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to read uint from file");
 	duk_push_number(ctx, (double)value);
 	return 1;
@@ -1361,7 +1237,7 @@ js_FileStream_writeInt(duk_context* ctx)
 	max_value = pow(2, num_bytes * 8 - 1) - 1;
 	if (value < min_value || value > max_value)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "value is unrepresentable in `%d` bytes", num_bytes);
-	if (!write_vsize_int(file, value, num_bytes, little_endian))
+	if (!sfs_write_int(file, value, num_bytes, little_endian))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write int to file");
 	return 0;
 }
@@ -1394,7 +1270,7 @@ js_FileStream_writePString(duk_context* ctx)
 	num_bytes = (intmax_t)string_len;
 	if (num_bytes > max_len)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "string is too long for `%d`-byte length", uint_size);
-	if (!write_vsize_uint(file, num_bytes, uint_size, little_endian)
+	if (!sfs_write_uint(file, num_bytes, uint_size, little_endian)
 		|| sfs_fwrite(string, 1, string_len, file) != string_len)
 	{
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write pstring to file");
@@ -1447,7 +1323,7 @@ js_FileStream_writeUInt(duk_context* ctx)
 	max_value = pow(2, num_bytes * 8) - 1;
 	if (value < 0 || value > max_value)
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "value is unrepresentable in `%d` bytes", num_bytes);
-	if (!write_vsize_uint(file, value, num_bytes, little_endian))
+	if (!sfs_write_uint(file, value, num_bytes, little_endian))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write int to file");
 	return 0;
 }

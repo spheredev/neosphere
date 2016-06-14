@@ -228,6 +228,12 @@ get_socket_port(socket_t* socket)
 	return dyad_getPort(socket->stream);
 }
 
+size_t
+get_socket_read_size(socket_t* socket)
+{
+	return socket->pend_size;
+}
+
 socket_t*
 accept_next_socket(socket_t* listener)
 {

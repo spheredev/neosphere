@@ -1036,31 +1036,31 @@ init_persons_api(void)
 	api_register_method(g_duk, NULL, "QueuePersonScript", js_QueuePersonScript);
 
 	// movement script specifier constants
-	api_register_const(g_duk, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
-	api_register_const(g_duk, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
-	api_register_const(g_duk, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
-	api_register_const(g_duk, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
-	api_register_const(g_duk, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
+	api_register_const(g_duk, NULL, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
+	api_register_const(g_duk, NULL, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
+	api_register_const(g_duk, NULL, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
+	api_register_const(g_duk, NULL, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
+	api_register_const(g_duk, NULL, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
 
 	// person movement commands
-	api_register_const(g_duk, "COMMAND_WAIT", COMMAND_WAIT);
-	api_register_const(g_duk, "COMMAND_ANIMATE", COMMAND_ANIMATE);
-	api_register_const(g_duk, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
-	api_register_const(g_duk, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
-	api_register_const(g_duk, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
-	api_register_const(g_duk, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
-	api_register_const(g_duk, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
-	api_register_const(g_duk, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
-	api_register_const(g_duk, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
-	api_register_const(g_duk, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
-	api_register_const(g_duk, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
-	api_register_const(g_duk, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
-	api_register_const(g_duk, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
-	api_register_const(g_duk, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
-	api_register_const(g_duk, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
-	api_register_const(g_duk, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
-	api_register_const(g_duk, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
-	api_register_const(g_duk, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
+	api_register_const(g_duk, NULL, "COMMAND_WAIT", COMMAND_WAIT);
+	api_register_const(g_duk, NULL, "COMMAND_ANIMATE", COMMAND_ANIMATE);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
+	api_register_const(g_duk, NULL, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
+	api_register_const(g_duk, NULL, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
 static duk_ret_t

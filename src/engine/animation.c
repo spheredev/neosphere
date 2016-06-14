@@ -77,7 +77,7 @@ on_error:
 		if (anim->stream != NULL) mng_cleanup(&anim->stream);
 		if (anim->file != NULL) sfs_fclose(anim->file);
 		if (anim->frame != NULL) {
-			free_image(anim->frame);
+			image_free(anim->frame);
 		}
 		free(anim);
 	}
@@ -101,20 +101,20 @@ animation_free(animation_t* animation)
 		animation->id);
 	mng_cleanup(&animation->stream);
 	sfs_fclose(animation->file);
-	free_image(animation->frame);
+	image_free(animation->frame);
 	free(animation);
 }
 
 bool
 animation_update(animation_t* anim)
 {
-	if (!(anim->lock = lock_image(anim->frame)))
+	if (!(anim->lock = image_lock(anim->frame)))
 		return false;
 	if (!anim->is_frame_ready)
 		mng_display(anim->stream);
 	else if (mng_display_resume(anim->stream) != MNG_NEEDTIMERWAIT)
 		mng_display_reset(anim->stream);
-	unlock_image(anim->frame, anim->lock);
+	image_unlock(anim->frame, anim->lock);
 	anim->is_frame_ready = true;
 	return true;
 }
@@ -163,14 +163,14 @@ mng_cb_processheader(mng_handle stream, mng_uint32 width, mng_uint32 height)
 	animation_t* anim = mng_get_userdata(stream);
 
 	anim->w = width; anim->h = height;
-	free_image(anim->frame);
-	if (!(anim->frame = create_image(anim->w, anim->h)))
+	image_free(anim->frame);
+	if (!(anim->frame = image_new(anim->w, anim->h)))
 		goto on_error;
 	mng_set_canvasstyle(stream, MNG_CANVAS_RGBA8);
 	return MNG_TRUE;
 
 on_error:
-	free_image(anim->frame);
+	image_free(anim->frame);
 	return MNG_FALSE;
 }
 
@@ -307,7 +307,7 @@ js_Animation_drawFrame(duk_context* ctx)
 	duk_push_this(ctx);
 	anim = duk_require_sphere_obj(ctx, -1, "Animation");
 	duk_pop(ctx);
-	draw_image(anim->frame, x, y);
+	image_draw(anim->frame, x, y);
 	return 0;
 }
 
@@ -325,7 +325,7 @@ js_Animation_drawZoomedFrame(duk_context* ctx)
 	duk_pop(ctx);
 	if (scale < 0.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Animation:drawZoomedFrame(): scale must be positive (got: %g)", scale);
-	draw_image_scaled(anim->frame, x, y, anim->w * scale, anim->h * scale);
+	image_draw_scaled(anim->frame, x, y, anim->w * scale, anim->h * scale);
 	return 0;
 }
 

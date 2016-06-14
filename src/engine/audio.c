@@ -324,7 +324,7 @@ sound_playing(sound_t* sound)
 }
 
 float
-sound_pitch(sound_t* sound)
+sound_speed(sound_t* sound)
 {
 	return sound->pitch;
 }
@@ -372,7 +372,7 @@ sound_set_pan(sound_t* sound, float pan)
 }
 
 void
-sound_set_pitch(sound_t* sound, float pitch)
+sound_set_speed(sound_t* sound, float pitch)
 {
 	if (sound->stream != NULL)
 		al_set_audio_stream_speed(sound->stream, pitch);
@@ -869,7 +869,7 @@ js_Sound_get_pitch(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 
-	duk_push_number(ctx, sound_pitch(sound));
+	duk_push_number(ctx, sound_speed(sound));
 	return 1;
 }
 
@@ -883,7 +883,7 @@ js_Sound_set_pitch(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "Sound");
 
-	sound_set_pitch(sound, new_pitch);
+	sound_set_speed(sound, new_pitch);
 	return 0;
 }
 

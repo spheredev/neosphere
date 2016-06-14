@@ -226,7 +226,7 @@ group_draw(const group_t* group, image_t* surface)
 	struct uniform* p;
 
 	if (surface != NULL)
-		al_set_target_bitmap(get_image_bitmap(surface));
+		al_set_target_bitmap(image_bitmap(surface));
 
 #if defined(MINISPHERE_USE_SHADERS)
 	if (are_shaders_active()) {
@@ -317,7 +317,7 @@ shape_new(shape_type_t type, image_t* texture)
 	console_log(4, "creating shape #%u as %s", s_next_shape_id, type_name);
 
 	shape = calloc(1, sizeof(shape_t));
-	shape->texture = ref_image(texture);
+	shape->texture = image_ref(texture);
 	shape->type = type;
 
 	shape->id = s_next_shape_id++;
@@ -338,7 +338,7 @@ shape_free(shape_t* shape)
 	if (shape == NULL || --shape->refcount > 0)
 		return;
 	console_log(4, "disposing shape #%u no longer in use", shape->id);
-	free_image(shape->texture);
+	image_free(shape->texture);
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (shape->vbuf != NULL)
 		al_destroy_vertex_buffer(shape->vbuf);
@@ -381,8 +381,8 @@ shape_set_texture(shape_t* shape, image_t* texture)
 	image_t* old_texture;
 
 	old_texture = shape->texture;
-	shape->texture = ref_image(texture);
-	free_image(old_texture);
+	shape->texture = image_ref(texture);
+	image_free(old_texture);
 	shape_upload(shape);
 }
 
@@ -432,7 +432,7 @@ void
 shape_draw(shape_t* shape, matrix_t* matrix, image_t* surface)
 {
 	if (surface != NULL)
-		al_set_target_bitmap(get_image_bitmap(surface));
+		al_set_target_bitmap(image_bitmap(surface));
 	screen_transform(g_screen, matrix);
 	render_shape(shape);
 	screen_transform(g_screen, NULL);
@@ -454,7 +454,7 @@ shape_upload(shape_t* shape)
 		al_destroy_vertex_buffer(shape->vbuf);
 #endif
 	free(shape->sw_vbuf); shape->sw_vbuf = NULL;
-	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+	bitmap = shape->texture != NULL ? image_bitmap(shape->texture) : NULL;
 
 	// create a vertex buffer
 #ifdef MINISPHERE_USE_VERTEX_BUF
@@ -537,7 +537,7 @@ render_shape(shape_t* shape)
 			: shape->type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
 			: ALLEGRO_PRIM_POINT_LIST;
 
-	bitmap = shape->texture != NULL ? get_image_bitmap(shape->texture) : NULL;
+	bitmap = shape->texture != NULL ? image_bitmap(shape->texture) : NULL;
 #ifdef MINISPHERE_USE_VERTEX_BUF
 	if (shape->vbuf != NULL)
 		al_draw_vertex_buffer(shape->vbuf, bitmap, 0, shape->num_vertices, draw_mode);
@@ -546,434 +546,4 @@ render_shape(shape_t* shape)
 #else
 	al_draw_prim(shape->sw_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
 #endif
-}
-
-void
-init_galileo_api(void)
-{
-	api_register_static_func(g_duk, NULL, "GetDefaultShaderProgram", js_GetDefaultShaderProgram);
-
-	api_register_ctor(g_duk, "Group", js_new_Group, js_Group_finalize);
-	api_register_prop(g_duk, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
-	api_register_prop(g_duk, "Group", "transform", js_Group_get_transform, js_Group_set_transform);
-	api_register_method(g_duk, "Group", "draw", js_Group_draw);
-	api_register_method(g_duk, "Group", "setFloat", js_Group_setFloat);
-	api_register_method(g_duk, "Group", "setInt", js_Group_setInt);
-	api_register_method(g_duk, "Group", "setMatrix", js_Group_setMatrix);
-	api_register_ctor(g_duk, "Shape", js_new_Shape, js_Shape_finalize);
-	api_register_prop(g_duk, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
-	api_register_method(g_duk, "Shape", "draw", js_Shape_draw);
-	api_register_ctor(g_duk, "Transform", js_new_Transform, js_Transform_finalize);
-	api_register_method(g_duk, "Transform", "compose", js_Transform_compose);
-	api_register_method(g_duk, "Transform", "identity", js_Transform_identity);
-	api_register_method(g_duk, "Transform", "rotate", js_Transform_rotate);
-	api_register_method(g_duk, "Transform", "scale", js_Transform_scale);
-	api_register_method(g_duk, "Transform", "translate", js_Transform_translate);
-
-	api_register_const(g_duk, "SHAPE_AUTO", SHAPE_AUTO);
-	api_register_const(g_duk, "SHAPE_POINTS", SHAPE_POINTS);
-	api_register_const(g_duk, "SHAPE_LINES", SHAPE_LINES);
-	api_register_const(g_duk, "SHAPE_LINE_LOOP", SHAPE_LINE_LOOP);
-	api_register_const(g_duk, "SHAPE_LINE_STRIP", SHAPE_LINE_STRIP);
-	api_register_const(g_duk, "SHAPE_TRIANGLES", SHAPE_TRIANGLES);
-	api_register_const(g_duk, "SHAPE_TRI_STRIP", SHAPE_TRI_STRIP);
-	api_register_const(g_duk, "SHAPE_TRI_FAN", SHAPE_TRI_FAN);
-}
-
-static duk_ret_t
-js_new_Group(duk_context* ctx)
-{
-	group_t*  group;
-	int       num_args;
-	size_t    num_shapes;
-	shader_t* shader;
-	shape_t*  shape;
-
-	duk_uarridx_t i;
-
-	num_args = duk_get_top(ctx);
-	duk_require_object_coercible(ctx, 0);
-	shader = num_args >= 2
-		? duk_require_sphere_obj(ctx, 1, "ShaderProgram")
-		: get_default_shader();
-
-	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "argument 1 to Group() must be an array");
-	if (!(group = group_new(shader)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create Galileo group");
-	num_shapes = duk_get_length(ctx, 0);
-	for (i = 0; i < num_shapes; ++i) {
-		duk_get_prop_index(ctx, 0, i);
-		shape = duk_require_sphere_obj(ctx, -1, "Shape");
-		group_add_shape(group, shape);
-	}
-	duk_push_sphere_obj(ctx, "Group", group);
-	return 1;
-}
-
-static duk_ret_t
-js_Group_finalize(duk_context* ctx)
-{
-	group_t* group;
-
-	group = duk_require_sphere_obj(ctx, 0, "Group");
-	group_free(group);
-	return 0;
-}
-
-static duk_ret_t
-js_Group_get_shader(duk_context* ctx)
-{
-	group_t*  group;
-	shader_t* shader;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-
-	shader = group_get_shader(group);
-	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
-	return 1;
-}
-
-static duk_ret_t
-js_Group_get_transform(duk_context* ctx)
-{
-	group_t*  group;
-	matrix_t* matrix;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-
-	matrix = group_get_transform(group);
-	duk_push_sphere_obj(ctx, "Transform", matrix_ref(matrix));
-	return 1;
-}
-
-static duk_ret_t
-js_Group_set_shader(duk_context* ctx)
-{
-	group_t*  group;
-	shader_t* shader;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
-
-	group_set_shader(group, shader);
-	return 0;
-}
-
-static duk_ret_t
-js_Group_set_transform(duk_context* ctx)
-{
-	group_t*  group;
-	matrix_t* transform;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	transform = duk_require_sphere_obj(ctx, 0, "Transform");
-
-	group_set_transform(group, transform);
-	return 0;
-}
-
-static duk_ret_t
-js_Group_draw(duk_context* ctx)
-{
-	group_t* group;
-	int      num_args;
-	image_t* surface;
-
-	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	surface = num_args >= 1 ? duk_require_sphere_obj(ctx, 0, "Surface")
-		: NULL;
-
-	if (!screen_is_skipframe(g_screen))
-		group_draw(group, surface);
-	return 0;
-}
-
-static duk_ret_t
-js_Group_setFloat(duk_context* ctx)
-{
-	group_t*    group;
-	const char* name;
-	float       value;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	name = duk_require_string(ctx, 0);
-	value = duk_require_number(ctx, 1);
-
-	group_put_float(group, name, value);
-	return 1;
-}
-
-static duk_ret_t
-js_Group_setInt(duk_context* ctx)
-{
-	group_t*    group;
-	const char* name;
-	int         value;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	name = duk_require_string(ctx, 0);
-	value = duk_require_int(ctx, 1);
-
-	group_put_int(group, name, value);
-	return 1;
-}
-
-static duk_ret_t
-js_Group_setMatrix(duk_context* ctx)
-{
-	group_t*    group;
-	matrix_t*   matrix;
-	const char* name;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "Group");
-	name = duk_require_string(ctx, 0);
-	matrix = duk_require_sphere_obj(ctx, 1, "Transform");
-
-	group_put_matrix(group, name, matrix);
-	return 1;
-}
-
-static duk_ret_t
-js_GetDefaultShaderProgram(duk_context* ctx)
-{
-	shader_t* shader;
-
-	if (!(shader = get_default_shader()))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to build default shader program");
-	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
-	return 1;
-}
-
-static duk_ret_t
-js_new_Shape(duk_context* ctx)
-{
-	bool         is_missing_uv = false;
-	int          num_args;
-	size_t       num_vertices;
-	shape_t*     shape;
-	duk_idx_t    stack_idx;
-	image_t*     texture;
-	shape_type_t type;
-	vertex_t     vertex;
-
-	duk_uarridx_t i;
-
-	num_args = duk_get_top(ctx);
-	duk_require_object_coercible(ctx, 0);
-	texture = !duk_is_null(ctx, 1) ? duk_require_sphere_obj(ctx, 1, "Image") : NULL;
-	type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
-
-	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): first argument must be an array");
-	if (type < 0 || type >= SHAPE_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Shape(): invalid shape type constant");
-	if (!(shape = shape_new(type, texture)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): unable to create shape object");
-	num_vertices = duk_get_length(ctx, 0);
-	for (i = 0; i < num_vertices; ++i) {
-		duk_get_prop_index(ctx, 0, i);
-		stack_idx = duk_normalize_index(ctx, -1);
-		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0;
-		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0;
-		vertex.z = duk_get_prop_string(ctx, stack_idx, "z") ? duk_require_number(ctx, -1) : 0.0;
-		if (duk_get_prop_string(ctx, stack_idx, "u"))
-			vertex.u = duk_require_number(ctx, -1);
-		else
-			is_missing_uv = true;
-		if (duk_get_prop_string(ctx, stack_idx, "v"))
-			vertex.v = duk_require_number(ctx, -1);
-		else
-			is_missing_uv = true;
-		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
-			? duk_require_sphere_color(ctx, -1)
-			: color_new(255, 255, 255, 255);
-		duk_pop_n(ctx, 6);
-		shape_add_vertex(shape, vertex);
-	}
-	if (is_missing_uv)
-		shape_calculate_uv(shape);
-	shape_upload(shape);
-	duk_push_sphere_obj(ctx, "Shape", shape);
-	return 1;
-}
-
-static duk_ret_t
-js_Shape_finalize(duk_context* ctx)
-{
-	shape_t* shape;
-
-	shape = duk_require_sphere_obj(ctx, 0, "Shape");
-	shape_free(shape);
-	return 0;
-}
-
-static duk_ret_t
-js_Shape_get_texture(duk_context* ctx)
-{
-	shape_t* shape;
-
-	duk_push_this(ctx);
-	shape = duk_require_sphere_obj(ctx, -1, "Shape");
-
-	duk_push_sphere_obj(ctx, "Image", ref_image(shape_texture(shape)));
-	return 1;
-}
-
-static duk_ret_t
-js_Shape_set_texture(duk_context* ctx)
-{
-	shape_t* shape;
-	image_t* texture;
-
-	duk_push_this(ctx);
-	shape = duk_require_sphere_obj(ctx, -1, "Shape");
-	texture = duk_require_sphere_obj(ctx, 0, "Image");
-
-	shape_set_texture(shape, texture);
-	return 0;
-}
-
-static duk_ret_t
-js_Shape_draw(duk_context* ctx)
-{
-	int       num_args;
-	shape_t*  shape;
-	image_t*  surface = NULL;
-	matrix_t* transform = NULL;
-
-	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
-	shape = duk_require_sphere_obj(ctx, -1, "Shape");
-	if (num_args >= 1)
-		transform = duk_require_sphere_obj(ctx, 0, "Transform");
-	if (num_args >= 2)
-		surface = duk_require_sphere_obj(ctx, 1, "Surface");
-
-	shader_use(get_default_shader());
-	shape_draw(shape, transform, surface);
-	shader_use(NULL);
-	return 0;
-}
-
-static duk_ret_t
-js_new_Transform(duk_context* ctx)
-{
-	matrix_t* matrix;
-
-	matrix = matrix_new();
-	duk_push_sphere_obj(ctx, "Transform", matrix);
-	return 1;
-}
-
-static duk_ret_t
-js_Transform_finalize(duk_context* ctx)
-{
-	matrix_t* matrix;
-
-	matrix = duk_require_sphere_obj(ctx, 0, "Transform");
-
-	matrix_free(matrix);
-	return 0;
-}
-
-static duk_ret_t
-js_Transform_compose(duk_context* ctx)
-{
-	matrix_t* matrix;
-	matrix_t* other;
-
-	duk_push_this(ctx);
-	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
-	other = duk_require_sphere_obj(ctx, 0, "Transform");
-
-	matrix_compose(matrix, other);
-	return 1;
-}
-
-static duk_ret_t
-js_Transform_identity(duk_context* ctx)
-{
-	matrix_t* matrix;
-
-	duk_push_this(ctx);
-	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
-
-	matrix_identity(matrix);
-	return 1;
-}
-
-static duk_ret_t
-js_Transform_rotate(duk_context* ctx)
-{
-	matrix_t* matrix;
-	int       num_args;
-	float     theta;
-	float     vx = 0.0;
-	float     vy = 0.0;
-	float     vz = 1.0;
-
-	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
-	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
-	theta = duk_require_number(ctx, 0);
-	if (num_args >= 2) {
-		vx = duk_require_number(ctx, 1);
-		vy = duk_require_number(ctx, 2);
-		vz = duk_require_number(ctx, 3);
-	}
-
-	matrix_rotate(matrix, theta, vx, vy, vz);
-	return 1;
-}
-
-static duk_ret_t
-js_Transform_scale(duk_context* ctx)
-{
-	matrix_t* matrix;
-	int       num_args;
-	float     sx;
-	float     sy;
-	float     sz = 1.0;
-
-	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
-	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
-	sx = duk_require_number(ctx, 0);
-	sy = duk_require_number(ctx, 1);
-	if (num_args >= 3)
-		sz = duk_require_number(ctx, 2);
-
-	matrix_scale(matrix, sx, sy, sz);
-	return 1;
-}
-
-static duk_ret_t
-js_Transform_translate(duk_context* ctx)
-{
-	matrix_t* matrix;
-	int       num_args;
-	float     dx;
-	float     dy;
-	float     dz = 0.0;
-
-	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
-	matrix = duk_require_sphere_obj(ctx, -1, "Transform");
-	dx = duk_require_number(ctx, 0);
-	dy = duk_require_number(ctx, 1);
-	if (num_args >= 3)
-		dz = duk_require_number(ctx, 2);
-
-	matrix_translate(matrix, dx, dy, dz);
-	return 1;
 }

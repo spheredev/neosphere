@@ -161,7 +161,7 @@ on_error:  // oh no!
 		for (i = 0; i < rts.num_tiles; ++i) {
 			lstr_free(tiles[i].name);
 			obsmap_free(tiles[i].obsmap);
-			free_image(tiles[i].image);
+			image_free(tiles[i].image);
 		}
 		free(tileset->tiles);
 	}
@@ -179,7 +179,7 @@ tileset_free(tileset_t* tileset)
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);
-		free_image(tileset->tiles[i].image);
+		image_free(tileset->tiles[i].image);
 		obsmap_free(tileset->tiles[i].obsmap);
 	}
 	atlas_free(tileset->atlas);
@@ -259,7 +259,7 @@ tileset_set_image(tileset_t* tileset, int tile_index, image_t* image)
 	rect_t xy;
 	
 	xy = atlas_xy(tileset->atlas, tile_index);
-	blit_image(image, tileset->texture, xy.x1, xy.y1);
+	image_blit(image, tileset->texture, xy.x1, xy.y1);
 }
 
 bool
@@ -296,6 +296,6 @@ tileset_draw(const tileset_t* tileset, color_t mask, float x, float y, int tile_
 	if (tile_index < 0)
 		return;
 	tile_index = tileset->tiles[tile_index].image_index;
-	al_draw_tinted_bitmap(get_image_bitmap(tileset->tiles[tile_index].image),
+	al_draw_tinted_bitmap(image_bitmap(tileset->tiles[tile_index].image),
 		al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
 }

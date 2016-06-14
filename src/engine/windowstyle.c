@@ -70,7 +70,7 @@ load_windowstyle(const char* filename)
 	switch (rws.version) {
 	case 1:
 		for (i = 0; i < 9; ++i) {
-			if (!(image = read_image(file, rws.edge_w_h, rws.edge_w_h)))
+			if (!(image = image_read(file, rws.edge_w_h, rws.edge_w_h)))
 				goto on_error;
 			winstyle->images[i] = image;
 		}
@@ -79,7 +79,7 @@ load_windowstyle(const char* filename)
 		for (i = 0; i < 9; ++i) {
 			if (sfs_fread(&w, 2, 1, file) != 1 || sfs_fread(&h, 2, 1, file) != 1)
 				goto on_error;
-			if (!(image = read_image(file, w, h))) goto on_error;
+			if (!(image = image_read(file, w, h))) goto on_error;
 			winstyle->images[i] = image;
 		}
 		break;
@@ -101,7 +101,7 @@ on_error:
 	if (file != NULL) sfs_fclose(file);
 	if (winstyle != NULL) {
 		for (i = 0; i < 9; ++i)
-			free_image(winstyle->images[i]);
+			image_free(winstyle->images[i]);
 		free(winstyle);
 	}
 	return NULL;
@@ -122,7 +122,7 @@ free_windowstyle(windowstyle_t* winstyle)
 	if (winstyle == NULL || --winstyle->refcount > 0)
 		return;
 	for (i = 0; i < 9; ++i) {
-		free_image(winstyle->images[i]);
+		image_free(winstyle->images[i]);
 	}
 	free(winstyle);
 }
@@ -146,8 +146,8 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 	// 8 - background
 
 	for (i = 0; i < 9; ++i) {
-		w[i] = get_image_width(winstyle->images[i]);
-		h[i] = get_image_height(winstyle->images[i]);
+		w[i] = image_width(winstyle->images[i]);
+		h[i] = image_height(winstyle->images[i]);
 	}
 	for (i = 0; i < 4; ++i) {
 		gradient[i].r = mask.r * winstyle->gradient[i].r / 255;
@@ -164,31 +164,31 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 	
 	switch (winstyle->bg_style) {
 	case WSTYLE_BG_TILE:
-		draw_image_tiled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);
 		break;
 	case WSTYLE_BG_STRETCH:
-		draw_image_scaled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_scaled_masked(winstyle->images[8], mask, x, y, width, height);
 		break;
 	case WSTYLE_BG_GRADIENT:
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	case WSTYLE_BG_TILE_GRADIENT:
-		draw_image_tiled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	case WSTYLE_BG_STRETCH_GRADIENT:
-		draw_image_scaled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_scaled_masked(winstyle->images[8], mask, x, y, width, height);
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	}
-	draw_image_masked(winstyle->images[0], mask, x - w[0], y - h[0]);
-	draw_image_masked(winstyle->images[2], mask, x + width, y - h[2]);
-	draw_image_masked(winstyle->images[4], mask, x + width, y + height);
-	draw_image_masked(winstyle->images[6], mask, x - w[6], y + height);
-	draw_image_tiled_masked(winstyle->images[1], mask, x, y - h[1], width, h[1]);
-	draw_image_tiled_masked(winstyle->images[3], mask, x + width, y, w[3], height);
-	draw_image_tiled_masked(winstyle->images[5], mask, x, y + height, width, h[5]);
-	draw_image_tiled_masked(winstyle->images[7], mask, x - w[7], y, w[7], height);
+	image_draw_masked(winstyle->images[0], mask, x - w[0], y - h[0]);
+	image_draw_masked(winstyle->images[2], mask, x + width, y - h[2]);
+	image_draw_masked(winstyle->images[4], mask, x + width, y + height);
+	image_draw_masked(winstyle->images[6], mask, x - w[6], y + height);
+	image_draw_tiled_masked(winstyle->images[1], mask, x, y - h[1], width, h[1]);
+	image_draw_tiled_masked(winstyle->images[3], mask, x + width, y, w[3], height);
+	image_draw_tiled_masked(winstyle->images[5], mask, x, y + height, width, h[5]);
+	image_draw_tiled_masked(winstyle->images[7], mask, x - w[7], y, w[7], height);
 }
 
 void

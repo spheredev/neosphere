@@ -170,17 +170,14 @@ initialize_api(duk_context* ctx)
 	init_bytearray_api();
 	init_color_api();
 	init_commonjs_api();
-	init_console_api();
 	init_file_api();
 	init_font_api(g_duk);
-	init_galileo_api();
 	init_image_api(g_duk);
 	init_input_api();
 	init_logging_api();
 	init_map_engine_api(g_duk);
 	init_rng_api();
 	init_screen_api();
-	init_shader_api();
 	init_sockets_api();
 	init_spriteset_api(g_duk);
 	init_surface_api();
@@ -212,12 +209,43 @@ api_version(void)
 }
 
 void
-api_register_const(duk_context* ctx, const char* name, double value)
+api_register_const(duk_context* ctx, const char* enum_name, const char* name, double value)
 {
 	duk_push_global_object(ctx);
-	duk_push_string(ctx, name); duk_push_number(ctx, value);
+
+	// ensure the namespace object exists
+	if (enum_name != NULL) {
+		if (!duk_get_prop_string(ctx, -1, enum_name)) {
+			duk_pop(ctx);
+			duk_push_string(ctx, enum_name);
+			duk_push_object(ctx);
+			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+				| DUK_DEFPROP_CLEAR_ENUMERABLE
+				| DUK_DEFPROP_SET_WRITABLE
+				| DUK_DEFPROP_SET_CONFIGURABLE);
+			duk_get_prop_string(ctx, -1, enum_name);
+		}
+	}
+
+	// generate TypeScript-style symmetrical enumerations, in other words:
+	//     enum[key] = value
+	//     enum[value] = key
+	duk_push_string(ctx, name);
+	duk_push_number(ctx, value);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_push_number(ctx, value);
+	duk_to_string(ctx, -1);
+	duk_push_string(ctx, name);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+
+	if (enum_name != NULL)
+		duk_pop(ctx);
 	duk_pop(ctx);
 }
 
@@ -357,6 +385,35 @@ api_register_static_func(duk_context* ctx, const char* namespace_name, const cha
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	if (namespace_name != NULL)
+		duk_pop(ctx);
+	duk_pop(ctx);
+}
+
+void
+api_register_static_obj(duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata)
+{
+	duk_push_global_object(ctx);
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
+			duk_pop(ctx);
+			duk_push_string(ctx, namespace_name);
+			duk_push_object(ctx);
+			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+				| DUK_DEFPROP_SET_WRITABLE
+				| DUK_DEFPROP_SET_CONFIGURABLE);
+			duk_get_prop_string(ctx, -1, namespace_name);
+		}
+	}
+
+	duk_push_string(ctx, name);
+	duk_push_sphere_obj(ctx, ctor_name, udata);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 	if (namespace_name != NULL)
 		duk_pop(ctx);

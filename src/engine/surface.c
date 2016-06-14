@@ -54,15 +54,15 @@ init_surface_api(void)
 	api_register_method(g_duk, NULL, "GrabSurface", js_GrabSurface);
 	
 	// register Surface API constants	
-	api_register_const(g_duk, "BLEND", BLEND_BLEND);
-	api_register_const(g_duk, "REPLACE", BLEND_REPLACE);
-	api_register_const(g_duk, "RGB_ONLY", BLEND_RGB_ONLY);
-	api_register_const(g_duk, "ALPHA_ONLY", BLEND_ALPHA_ONLY);
-	api_register_const(g_duk, "ADD", BLEND_ADD);
-	api_register_const(g_duk, "SUBTRACT", BLEND_SUBTRACT);
-	api_register_const(g_duk, "MULTIPLY", BLEND_MULTIPLY);
-	api_register_const(g_duk, "AVERAGE", BLEND_AVERAGE);
-	api_register_const(g_duk, "INVERT", BLEND_INVERT);
+	api_register_const(g_duk, NULL, "BLEND", BLEND_BLEND);
+	api_register_const(g_duk, NULL, "REPLACE", BLEND_REPLACE);
+	api_register_const(g_duk, NULL, "RGB_ONLY", BLEND_RGB_ONLY);
+	api_register_const(g_duk, NULL, "ALPHA_ONLY", BLEND_ALPHA_ONLY);
+	api_register_const(g_duk, NULL, "ADD", BLEND_ADD);
+	api_register_const(g_duk, NULL, "SUBTRACT", BLEND_SUBTRACT);
+	api_register_const(g_duk, NULL, "MULTIPLY", BLEND_MULTIPLY);
+	api_register_const(g_duk, NULL, "AVERAGE", BLEND_AVERAGE);
+	api_register_const(g_duk, NULL, "INVERT", BLEND_INVERT);
 	
 	// register Surface methods and properties
 	api_register_method(g_duk, NULL, "CreateSurface", js_CreateSurface);
@@ -190,7 +190,7 @@ js_LoadSurface(duk_context* ctx)
 	image_t*    image;
 
 	filename = duk_require_path(ctx, 0, "images", true);
-	if (!(image = load_image(filename)))
+	if (!(image = image_load(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file `%s`", filename);
 	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
@@ -211,18 +211,18 @@ js_new_Surface(duk_context* ctx)
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		fill_color = n_args >= 3 ? duk_require_sphere_color(ctx, 2) : color_new(0, 0, 0, 0);
-		if (!(image = create_image(width, height)))
+		if (!(image = image_new(width, height)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to create new surface");
-		fill_image(image, fill_color);
+		image_fill(image, fill_color);
 	}
 	else if (duk_is_sphere_obj(ctx, 0, "Image")) {
 		src_image = duk_require_sphere_image(ctx, 0);
-		if (!(image = clone_image(src_image)))
+		if (!(image = image_clone(src_image)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to create surface from image");
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false);
-		image = load_image(filename);
+		image = image_load(filename);
 		if (image == NULL)
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface(): unable to load image file `%s`", filename);
 	}
@@ -236,7 +236,7 @@ js_Surface_finalize(duk_context* ctx)
 	image_t* image;
 	
 	image = duk_require_sphere_obj(ctx, 0, "Surface");
-	free_image(image);
+	image_free(image);
 	return 0;
 }
 
@@ -248,7 +248,10 @@ js_Surface_get_height(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	duk_push_int(ctx, get_image_height(image));
+	if (image != NULL)
+		duk_push_int(ctx, image_height(image));
+	else
+		duk_push_int(ctx, g_res_y);
 	return 1;
 }
 
@@ -260,7 +263,10 @@ js_Surface_get_width(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	duk_push_int(ctx, get_image_width(image));
+	if (image != NULL)
+		duk_push_int(ctx, image_width(image));
+	else
+		duk_push_int(ctx, g_res_x);
 	return 1;
 }
 
@@ -283,7 +289,7 @@ js_Surface_setPixel(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	set_image_pixel(image, x, y, color);
+	image_set_pixel(image, x, y, color);
 	return 0;
 }
 
@@ -302,11 +308,11 @@ js_Surface_getPixel(duk_context* ctx)
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 
-	width = get_image_width(image);
-	height = get_image_height(image);
+	width = image_width(image);
+	height = image_height(image);
 	if (x < 0 || x >= width || y < 0 || y >= height)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
-	pixel = get_image_pixel(image, x, y);
+	pixel = image_get_pixel(image, x, y);
 	duk_push_sphere_color(ctx, pixel);
 	return 1;
 }
@@ -330,9 +336,9 @@ js_Surface_applyColorFX(duk_context* ctx)
 	height = duk_require_int(ctx, 3);
 	matrix = duk_require_sphere_colormatrix(ctx, 4);
 
-	if (x < 0 || y < 0 || x + width > get_image_width(image) || y + height > get_image_height(image))
+	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, width, height);
-	if (!apply_color_matrix(image, matrix, x, y, width, height))
+	if (!image_apply_colormat(image, matrix, x, y, width, height))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): unable to apply transformation");
 	return 0;
 }
@@ -354,9 +360,9 @@ js_Surface_applyColorFX4(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
+	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
-	if (!apply_color_matrix_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
+	if (!image_apply_colormat_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX4(): unable to apply transformation");
 	return 0;
 }
@@ -378,9 +384,9 @@ js_Surface_applyLookup(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	if (x < 0 || y < 0 || x + w > get_image_width(image) || y + h > get_image_height(image))
+	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
-	if (!apply_image_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
+	if (!image_apply_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyLookup(): unable to apply lookup transformation");
 	free(red_lu);
 	free(green_lu);
@@ -401,7 +407,7 @@ js_Surface_blit(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
 	if (!screen_is_skipframe(g_screen))
-		al_draw_bitmap(get_image_bitmap(image), x, y, 0x0);
+		al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
@@ -422,8 +428,8 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_tinted_bitmap(get_image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_tinted_bitmap(image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
@@ -445,8 +451,8 @@ js_Surface_blitSurface(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
-	al_draw_bitmap(get_image_bitmap(src_image), x, y, 0x0);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_bitmap(image_bitmap(src_image), x, y, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
@@ -461,7 +467,7 @@ js_Surface_clone(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	if ((new_image = clone_image(image)) == NULL)
+	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:clone() - Unable to create new surface image");
 	duk_push_sphere_obj(ctx, "Surface", new_image);
 	return 1;
@@ -484,10 +490,10 @@ js_Surface_cloneSection(duk_context* ctx)
 	width = duk_require_int(ctx, 2);
 	height = duk_require_int(ctx, 3);
 
-	if ((new_image = create_image(width, height)) == NULL)
+	if ((new_image = image_new(width, height)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection(): unable to create surface");
-	al_set_target_bitmap(get_image_bitmap(new_image));
-	al_draw_bitmap_region(get_image_bitmap(image), x, y, width, height, 0, 0, 0x0);
+	al_set_target_bitmap(image_bitmap(new_image));
+	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
 	duk_push_sphere_obj(ctx, "Surface", new_image);
 	return 1;
@@ -502,10 +508,10 @@ js_Surface_createImage(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
-	if ((new_image = clone_image(image)) == NULL)
+	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:createImage(): unable to create image");
 	duk_push_sphere_image(ctx, new_image);
-	free_image(new_image);
+	image_free(new_image);
 	return 1;
 }
 
@@ -528,8 +534,8 @@ js_Surface_drawText(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
-	draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
+	al_set_target_bitmap(image_bitmap(image));
+	font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
@@ -552,7 +558,7 @@ js_Surface_filledCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_filled_circle(x, y, radius, nativecolor(color));
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
@@ -567,7 +573,7 @@ js_Surface_flipHorizontally(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	flip_image(image, true, false);
+	image_flip(image, true, false);
 	return 0;
 }
 
@@ -579,7 +585,7 @@ js_Surface_flipVertically(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	flip_image(image, false, true);
+	image_flip(image, false, true);
 	return 0;
 }
 
@@ -607,7 +613,7 @@ js_Surface_gradientCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
 	s_vbuf[0].color = nativecolor(in_color);
@@ -649,7 +655,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
@@ -681,7 +687,7 @@ js_Surface_line(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
@@ -705,7 +711,7 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_circle(x, y, radius, nativecolor(color), 1);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
@@ -747,7 +753,7 @@ js_Surface_pointSeries(duk_context* ctx)
 		vertices[i].color = vtx_color;
 	}
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
@@ -775,7 +781,7 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
@@ -793,7 +799,7 @@ js_Surface_replaceColor(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	if (!replace_image_color(image, color, new_color))
+	if (!image_replace_color(image, color, new_color))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:replaceColor() - Failed to perform replacement");
 	return 0;
 }
@@ -809,7 +815,7 @@ js_Surface_rescale(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	if (!rescale_image(image, width, height))
+	if (!image_rescale(image, width, height))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rescale() - Failed to rescale image");
 	duk_push_this(ctx);
 	return 1;
@@ -830,20 +836,20 @@ js_Surface_rotate(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	w = new_w = get_image_width(image);
-	h = new_h = get_image_height(image);
+	w = new_w = image_width(image);
+	h = new_h = image_height(image);
 	if (want_resize) {
 		// TODO: implement in-place resizing for Surface:rotate()
 	}
-	if ((new_image = create_image(new_w, new_h)) == NULL)
+	if ((new_image = image_new(new_w, new_h)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rotate() - Failed to create new surface bitmap");
-	al_set_target_bitmap(get_image_bitmap(new_image));
-	al_draw_rotated_bitmap(get_image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
+	al_set_target_bitmap(image_bitmap(new_image));
+	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
 	
 	// free old image and replace internal image pointer
 	// at one time this was an acceptable thing to do; now it's just a hack
-	free_image(image);
+	image_free(image);
 	duk_push_this(ctx);
 	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	return 1;
@@ -867,7 +873,7 @@ js_Surface_rectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(get_image_bitmap(image));
+	al_set_target_bitmap(image_bitmap(image));
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
@@ -884,7 +890,7 @@ js_Surface_save(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
 	filename = duk_require_path(ctx, 0, "images", true);
-	save_image(image, filename);
+	image_save(image, filename);
 	return 1;
 }
 
@@ -905,17 +911,17 @@ js_Surface_setAlpha(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 	duk_pop(ctx);
-	if (!(lock = lock_image(image)))
+	if (!(lock = image_lock(image)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): unable to lock surface");
-	w = get_image_width(image);
-	h = get_image_height(image);
+	w = image_width(image);
+	h = image_height(image);
 	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
 	for (i_y = h - 1; i_y >= 0; --i_y) for (i_x = w - 1; i_x >= 0; --i_x) {
 		pixel = &lock->pixels[i_x + i_y * lock->pitch];
 		pixel->alpha = want_all || pixel->alpha != 0
 			? alpha : pixel->alpha;
 	}
-	unlock_image(image, lock);
+	image_unlock(image, lock);
 	return 0;
 }
 

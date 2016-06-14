@@ -166,7 +166,7 @@ initialize_input(void)
 	s_default_key_map[3][PLAYER_KEY_MENU] = ALLEGRO_KEY_TAB;
 
 	// load global key mappings
-	load_key_map();
+	kb_load_keymap();
 }
 
 void
@@ -208,7 +208,7 @@ shutdown_input(void)
 }
 
 bool
-is_any_key_down(void)
+kb_is_any_key_down(void)
 {
 	int i_key;
 
@@ -219,24 +219,10 @@ is_any_key_down(void)
 }
 
 bool
-is_joy_button_down(int joy_index, int button)
-{
-	ALLEGRO_JOYSTICK_STATE joy_state;
-	ALLEGRO_JOYSTICK*      joystick;
-
-	if (!s_have_joystick)
-		return false;
-	if (!(joystick = s_joy_handles[joy_index]))
-		return 0.0;
-	al_get_joystick_state(joystick, &joy_state);
-	return joy_state.button[button] > 0;
-}
-
-bool
-is_key_down(int keycode)
+kb_is_key_down(int keycode)
 {
 	bool is_pressed;
-	
+
 	update_input();
 	switch (keycode) {
 	case ALLEGRO_KEY_LSHIFT:
@@ -255,6 +241,113 @@ is_key_down(int keycode)
 		is_pressed = s_key_state[keycode];
 	}
 	return is_pressed;
+}
+
+bool
+kb_is_toggled(int keycode)
+{
+	int flag;
+
+	flag = keycode == ALLEGRO_KEY_CAPSLOCK ? ALLEGRO_KEYMOD_CAPSLOCK
+		: keycode == ALLEGRO_KEY_NUMLOCK ? ALLEGRO_KEYMOD_NUMLOCK
+		: keycode == ALLEGRO_KEY_SCROLLLOCK ? ALLEGRO_KEYMOD_SCROLLLOCK
+		: 0x0;
+	return (s_keymod_state & flag) != 0;
+}
+
+void
+kb_clear_queue(void)
+{
+	s_key_queue.num_keys = 0;
+}
+
+int
+kb_get_key(void)
+{
+	int keycode;
+
+	if (s_key_queue.num_keys == 0)
+		return 0;
+	keycode = s_key_queue.keys[0];
+	--s_key_queue.num_keys;
+	memmove(s_key_queue.keys, &s_key_queue.keys[1], sizeof(int) * s_key_queue.num_keys);
+	return keycode;
+}
+
+void
+kb_load_keymap(void)
+{
+	kevfile_t*     file;
+	const char* key_name;
+	char*       filename;
+	lstring_t*  setting;
+
+	int i, j;
+
+	filename = g_fs != NULL ? "keymap.kev" : "#/minisphere.conf";
+	if (!(file = kev_open(g_fs, filename, true)))
+		return;
+	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+		key_name = j == PLAYER_KEY_UP ? "UP"
+			: j == PLAYER_KEY_DOWN ? "DOWN"
+			: j == PLAYER_KEY_LEFT ? "LEFT"
+			: j == PLAYER_KEY_RIGHT ? "RIGHT"
+			: j == PLAYER_KEY_A ? "A"
+			: j == PLAYER_KEY_B ? "B"
+			: j == PLAYER_KEY_X ? "X"
+			: j == PLAYER_KEY_Y ? "Y"
+			: j == PLAYER_KEY_MENU ? "MENU"
+			: "8:12";
+		setting = lstr_newf("keymap_Player%i_%s", i + 1, key_name);
+		s_key_map[i][j] = kev_read_float(file, lstr_cstr(setting), s_default_key_map[i][j]);
+		lstr_free(setting);
+	}
+	kev_close(file);
+}
+
+void
+kb_save_keymap(void)
+{
+	kevfile_t*     file;
+	const char* key_name;
+	lstring_t*  setting;
+
+	int i, j;
+
+	if (!s_has_keymap_changed || g_game_path == NULL)
+		return;
+	console_log(1, "saving player key mappings");
+	file = kev_open(g_fs, "keymap.kev", true);
+	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
+		key_name = j == PLAYER_KEY_UP ? "UP"
+			: j == PLAYER_KEY_DOWN ? "DOWN"
+			: j == PLAYER_KEY_LEFT ? "LEFT"
+			: j == PLAYER_KEY_RIGHT ? "RIGHT"
+			: j == PLAYER_KEY_A ? "A"
+			: j == PLAYER_KEY_B ? "B"
+			: j == PLAYER_KEY_X ? "X"
+			: j == PLAYER_KEY_Y ? "Y"
+			: j == PLAYER_KEY_MENU ? "MENU"
+			: "8:12";
+		setting = lstr_newf("keymap_Player%i_%s", i + 1, key_name);
+		kev_write_float(file, lstr_cstr(setting), s_key_map[i][j]);
+		lstr_free(setting);
+	}
+	kev_close(file);
+}
+
+bool
+is_joy_button_down(int joy_index, int button)
+{
+	ALLEGRO_JOYSTICK_STATE joy_state;
+	ALLEGRO_JOYSTICK*      joystick;
+
+	if (!s_have_joystick)
+		return false;
+	if (!(joystick = s_joy_handles[joy_index]))
+		return 0.0;
+	al_get_joystick_state(joystick, &joy_state);
+	return joy_state.button[button] > 0;
 }
 
 float
@@ -326,74 +419,6 @@ set_player_key(int player, player_key_t vkey, int keycode)
 {
 	s_key_map[player][vkey] = keycode;
 	s_has_keymap_changed = g_game_path != NULL;
-}
-
-void
-clear_key_queue(void)
-{
-	s_key_queue.num_keys = 0;
-}
-
-void
-load_key_map(void)
-{
-	kevfile_t*     file;
-	const char* key_name;
-	char*       filename;
-	lstring_t*  setting;
-
-	int i, j;
-
-	filename = g_fs != NULL ? "keymap.kev" : "#/minisphere.conf";
-	if (!(file = kev_open(g_fs, filename, true)))
-		return;
-	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
-		key_name = j == PLAYER_KEY_UP ? "UP"
-			: j == PLAYER_KEY_DOWN ? "DOWN"
-			: j == PLAYER_KEY_LEFT ? "LEFT"
-			: j == PLAYER_KEY_RIGHT ? "RIGHT"
-			: j == PLAYER_KEY_A ? "A"
-			: j == PLAYER_KEY_B ? "B"
-			: j == PLAYER_KEY_X ? "X"
-			: j == PLAYER_KEY_Y ? "Y"
-			: j == PLAYER_KEY_MENU ? "MENU"
-			: "8:12";
-		setting = lstr_newf("keymap_Player%i_%s", i + 1, key_name);
-		s_key_map[i][j] = kev_read_float(file, lstr_cstr(setting), s_default_key_map[i][j]);
-		lstr_free(setting);
-	}
-	kev_close(file);
-}
-
-void
-save_key_map(void)
-{
-	kevfile_t*     file;
-	const char* key_name;
-	lstring_t*  setting;
-	
-	int i, j;
-
-	if (!s_has_keymap_changed || g_game_path == NULL)
-		return;
-	console_log(1, "saving player key mappings");
-	file = kev_open(g_fs, "keymap.kev", true);
-	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
-		key_name = j == PLAYER_KEY_UP ? "UP"
-			: j == PLAYER_KEY_DOWN ? "DOWN"
-			: j == PLAYER_KEY_LEFT ? "LEFT"
-			: j == PLAYER_KEY_RIGHT ? "RIGHT"
-			: j == PLAYER_KEY_A ? "A"
-			: j == PLAYER_KEY_B ? "B"
-			: j == PLAYER_KEY_X ? "X"
-			: j == PLAYER_KEY_Y ? "Y"
-			: j == PLAYER_KEY_MENU ? "MENU"
-			: "8:12";
-		setting = lstr_newf("keymap_Player%i_%s", i + 1, key_name);
-		kev_write_float(file, lstr_cstr(setting), s_key_map[i][j]);
-		lstr_free(setting);
-	}
-	kev_close(file);
 }
 
 void
@@ -588,124 +613,124 @@ bind_key(vector_t* bindings, int keycode, script_t* on_down_script, script_t* on
 void
 init_input_api(void)
 {
-	api_register_const(g_duk, "PLAYER_1", 0);
-	api_register_const(g_duk, "PLAYER_2", 1);
-	api_register_const(g_duk, "PLAYER_3", 2);
-	api_register_const(g_duk, "PLAYER_4", 3);
-	api_register_const(g_duk, "PLAYER_KEY_MENU", PLAYER_KEY_MENU);
-	api_register_const(g_duk, "PLAYER_KEY_UP", PLAYER_KEY_UP);
-	api_register_const(g_duk, "PLAYER_KEY_DOWN", PLAYER_KEY_DOWN);
-	api_register_const(g_duk, "PLAYER_KEY_LEFT", PLAYER_KEY_LEFT);
-	api_register_const(g_duk, "PLAYER_KEY_RIGHT", PLAYER_KEY_RIGHT);
-	api_register_const(g_duk, "PLAYER_KEY_A", PLAYER_KEY_A);
-	api_register_const(g_duk, "PLAYER_KEY_B", PLAYER_KEY_B);
-	api_register_const(g_duk, "PLAYER_KEY_X", PLAYER_KEY_X);
-	api_register_const(g_duk, "PLAYER_KEY_Y", PLAYER_KEY_Y);
-	api_register_const(g_duk, "KEY_NONE", 0);
-	api_register_const(g_duk, "KEY_SHIFT", ALLEGRO_KEY_LSHIFT);
-	api_register_const(g_duk, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
-	api_register_const(g_duk, "KEY_ALT", ALLEGRO_KEY_ALT);
-	api_register_const(g_duk, "KEY_UP", ALLEGRO_KEY_UP);
-	api_register_const(g_duk, "KEY_DOWN", ALLEGRO_KEY_DOWN);
-	api_register_const(g_duk, "KEY_LEFT", ALLEGRO_KEY_LEFT);
-	api_register_const(g_duk, "KEY_RIGHT", ALLEGRO_KEY_RIGHT);
-	api_register_const(g_duk, "KEY_APOSTROPHE", ALLEGRO_KEY_QUOTE);
-	api_register_const(g_duk, "KEY_BACKSLASH", ALLEGRO_KEY_BACKSLASH);
-	api_register_const(g_duk, "KEY_BACKSPACE", ALLEGRO_KEY_BACKSPACE);
-	api_register_const(g_duk, "KEY_CLOSEBRACE", ALLEGRO_KEY_CLOSEBRACE);
-	api_register_const(g_duk, "KEY_CAPSLOCK", ALLEGRO_KEY_CAPSLOCK);
-	api_register_const(g_duk, "KEY_COMMA", ALLEGRO_KEY_COMMA);
-	api_register_const(g_duk, "KEY_DELETE", ALLEGRO_KEY_DELETE);
-	api_register_const(g_duk, "KEY_END", ALLEGRO_KEY_END);
-	api_register_const(g_duk, "KEY_ENTER", ALLEGRO_KEY_ENTER);
-	api_register_const(g_duk, "KEY_EQUALS", ALLEGRO_KEY_EQUALS);
-	api_register_const(g_duk, "KEY_ESCAPE", ALLEGRO_KEY_ESCAPE);
-	api_register_const(g_duk, "KEY_HOME", ALLEGRO_KEY_HOME);
-	api_register_const(g_duk, "KEY_INSERT", ALLEGRO_KEY_INSERT);
-	api_register_const(g_duk, "KEY_MINUS", ALLEGRO_KEY_MINUS);
-	api_register_const(g_duk, "KEY_NUMLOCK", ALLEGRO_KEY_NUMLOCK);
-	api_register_const(g_duk, "KEY_OPENBRACE", ALLEGRO_KEY_OPENBRACE);
-	api_register_const(g_duk, "KEY_PAGEDOWN", ALLEGRO_KEY_PGDN);
-	api_register_const(g_duk, "KEY_PAGEUP", ALLEGRO_KEY_PGUP);
-	api_register_const(g_duk, "KEY_PERIOD", ALLEGRO_KEY_FULLSTOP);
-	api_register_const(g_duk, "KEY_SCROLLOCK", ALLEGRO_KEY_SCROLLLOCK);
-	api_register_const(g_duk, "KEY_SCROLLLOCK", ALLEGRO_KEY_SCROLLLOCK);
-	api_register_const(g_duk, "KEY_SEMICOLON", ALLEGRO_KEY_SEMICOLON);
-	api_register_const(g_duk, "KEY_SPACE", ALLEGRO_KEY_SPACE);
-	api_register_const(g_duk, "KEY_SLASH", ALLEGRO_KEY_SLASH);
-	api_register_const(g_duk, "KEY_TAB", ALLEGRO_KEY_TAB);
-	api_register_const(g_duk, "KEY_TILDE", ALLEGRO_KEY_TILDE);
-	api_register_const(g_duk, "KEY_F1", ALLEGRO_KEY_F1);
-	api_register_const(g_duk, "KEY_F2", ALLEGRO_KEY_F2);
-	api_register_const(g_duk, "KEY_F3", ALLEGRO_KEY_F3);
-	api_register_const(g_duk, "KEY_F4", ALLEGRO_KEY_F4);
-	api_register_const(g_duk, "KEY_F5", ALLEGRO_KEY_F5);
-	api_register_const(g_duk, "KEY_F6", ALLEGRO_KEY_F6);
-	api_register_const(g_duk, "KEY_F7", ALLEGRO_KEY_F7);
-	api_register_const(g_duk, "KEY_F8", ALLEGRO_KEY_F8);
-	api_register_const(g_duk, "KEY_F9", ALLEGRO_KEY_F9);
-	api_register_const(g_duk, "KEY_F10", ALLEGRO_KEY_F10);
-	api_register_const(g_duk, "KEY_F11", ALLEGRO_KEY_F11);
-	api_register_const(g_duk, "KEY_F12", ALLEGRO_KEY_F12);
-	api_register_const(g_duk, "KEY_A", ALLEGRO_KEY_A);
-	api_register_const(g_duk, "KEY_B", ALLEGRO_KEY_B);
-	api_register_const(g_duk, "KEY_C", ALLEGRO_KEY_C);
-	api_register_const(g_duk, "KEY_D", ALLEGRO_KEY_D);
-	api_register_const(g_duk, "KEY_E", ALLEGRO_KEY_E);
-	api_register_const(g_duk, "KEY_F", ALLEGRO_KEY_F);
-	api_register_const(g_duk, "KEY_G", ALLEGRO_KEY_G);
-	api_register_const(g_duk, "KEY_H", ALLEGRO_KEY_H);
-	api_register_const(g_duk, "KEY_I", ALLEGRO_KEY_I);
-	api_register_const(g_duk, "KEY_J", ALLEGRO_KEY_J);
-	api_register_const(g_duk, "KEY_K", ALLEGRO_KEY_K);
-	api_register_const(g_duk, "KEY_L", ALLEGRO_KEY_L);
-	api_register_const(g_duk, "KEY_M", ALLEGRO_KEY_M);
-	api_register_const(g_duk, "KEY_N", ALLEGRO_KEY_N);
-	api_register_const(g_duk, "KEY_O", ALLEGRO_KEY_O);
-	api_register_const(g_duk, "KEY_P", ALLEGRO_KEY_P);
-	api_register_const(g_duk, "KEY_Q", ALLEGRO_KEY_Q);
-	api_register_const(g_duk, "KEY_R", ALLEGRO_KEY_R);
-	api_register_const(g_duk, "KEY_S", ALLEGRO_KEY_S);
-	api_register_const(g_duk, "KEY_T", ALLEGRO_KEY_T);
-	api_register_const(g_duk, "KEY_U", ALLEGRO_KEY_U);
-	api_register_const(g_duk, "KEY_V", ALLEGRO_KEY_V);
-	api_register_const(g_duk, "KEY_W", ALLEGRO_KEY_W);
-	api_register_const(g_duk, "KEY_X", ALLEGRO_KEY_X);
-	api_register_const(g_duk, "KEY_Y", ALLEGRO_KEY_Y);
-	api_register_const(g_duk, "KEY_Z", ALLEGRO_KEY_Z);
-	api_register_const(g_duk, "KEY_1", ALLEGRO_KEY_1);
-	api_register_const(g_duk, "KEY_2", ALLEGRO_KEY_2);
-	api_register_const(g_duk, "KEY_3", ALLEGRO_KEY_3);
-	api_register_const(g_duk, "KEY_4", ALLEGRO_KEY_4);
-	api_register_const(g_duk, "KEY_5", ALLEGRO_KEY_5);
-	api_register_const(g_duk, "KEY_6", ALLEGRO_KEY_6);
-	api_register_const(g_duk, "KEY_7", ALLEGRO_KEY_7);
-	api_register_const(g_duk, "KEY_8", ALLEGRO_KEY_8);
-	api_register_const(g_duk, "KEY_9", ALLEGRO_KEY_9);
-	api_register_const(g_duk, "KEY_0", ALLEGRO_KEY_0);
-	api_register_const(g_duk, "KEY_NUM_1", ALLEGRO_KEY_PAD_1);
-	api_register_const(g_duk, "KEY_NUM_2", ALLEGRO_KEY_PAD_2);
-	api_register_const(g_duk, "KEY_NUM_3", ALLEGRO_KEY_PAD_3);
-	api_register_const(g_duk, "KEY_NUM_4", ALLEGRO_KEY_PAD_4);
-	api_register_const(g_duk, "KEY_NUM_5", ALLEGRO_KEY_PAD_5);
-	api_register_const(g_duk, "KEY_NUM_6", ALLEGRO_KEY_PAD_6);
-	api_register_const(g_duk, "KEY_NUM_7", ALLEGRO_KEY_PAD_7);
-	api_register_const(g_duk, "KEY_NUM_8", ALLEGRO_KEY_PAD_8);
-	api_register_const(g_duk, "KEY_NUM_9", ALLEGRO_KEY_PAD_9);
-	api_register_const(g_duk, "KEY_NUM_0", ALLEGRO_KEY_PAD_0);
+	api_register_const(g_duk, NULL, "PLAYER_1", 0);
+	api_register_const(g_duk, NULL, "PLAYER_2", 1);
+	api_register_const(g_duk, NULL, "PLAYER_3", 2);
+	api_register_const(g_duk, NULL, "PLAYER_4", 3);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_MENU", PLAYER_KEY_MENU);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_UP", PLAYER_KEY_UP);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_DOWN", PLAYER_KEY_DOWN);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_LEFT", PLAYER_KEY_LEFT);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_RIGHT", PLAYER_KEY_RIGHT);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_A", PLAYER_KEY_A);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_B", PLAYER_KEY_B);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_X", PLAYER_KEY_X);
+	api_register_const(g_duk, NULL, "PLAYER_KEY_Y", PLAYER_KEY_Y);
+	api_register_const(g_duk, NULL, "KEY_NONE", 0);
+	api_register_const(g_duk, NULL, "KEY_SHIFT", ALLEGRO_KEY_LSHIFT);
+	api_register_const(g_duk, NULL, "KEY_CTRL", ALLEGRO_KEY_LCTRL);
+	api_register_const(g_duk, NULL, "KEY_ALT", ALLEGRO_KEY_ALT);
+	api_register_const(g_duk, NULL, "KEY_UP", ALLEGRO_KEY_UP);
+	api_register_const(g_duk, NULL, "KEY_DOWN", ALLEGRO_KEY_DOWN);
+	api_register_const(g_duk, NULL, "KEY_LEFT", ALLEGRO_KEY_LEFT);
+	api_register_const(g_duk, NULL, "KEY_RIGHT", ALLEGRO_KEY_RIGHT);
+	api_register_const(g_duk, NULL, "KEY_APOSTROPHE", ALLEGRO_KEY_QUOTE);
+	api_register_const(g_duk, NULL, "KEY_BACKSLASH", ALLEGRO_KEY_BACKSLASH);
+	api_register_const(g_duk, NULL, "KEY_BACKSPACE", ALLEGRO_KEY_BACKSPACE);
+	api_register_const(g_duk, NULL, "KEY_CLOSEBRACE", ALLEGRO_KEY_CLOSEBRACE);
+	api_register_const(g_duk, NULL, "KEY_CAPSLOCK", ALLEGRO_KEY_CAPSLOCK);
+	api_register_const(g_duk, NULL, "KEY_COMMA", ALLEGRO_KEY_COMMA);
+	api_register_const(g_duk, NULL, "KEY_DELETE", ALLEGRO_KEY_DELETE);
+	api_register_const(g_duk, NULL, "KEY_END", ALLEGRO_KEY_END);
+	api_register_const(g_duk, NULL, "KEY_ENTER", ALLEGRO_KEY_ENTER);
+	api_register_const(g_duk, NULL, "KEY_EQUALS", ALLEGRO_KEY_EQUALS);
+	api_register_const(g_duk, NULL, "KEY_ESCAPE", ALLEGRO_KEY_ESCAPE);
+	api_register_const(g_duk, NULL, "KEY_HOME", ALLEGRO_KEY_HOME);
+	api_register_const(g_duk, NULL, "KEY_INSERT", ALLEGRO_KEY_INSERT);
+	api_register_const(g_duk, NULL, "KEY_MINUS", ALLEGRO_KEY_MINUS);
+	api_register_const(g_duk, NULL, "KEY_NUMLOCK", ALLEGRO_KEY_NUMLOCK);
+	api_register_const(g_duk, NULL, "KEY_OPENBRACE", ALLEGRO_KEY_OPENBRACE);
+	api_register_const(g_duk, NULL, "KEY_PAGEDOWN", ALLEGRO_KEY_PGDN);
+	api_register_const(g_duk, NULL, "KEY_PAGEUP", ALLEGRO_KEY_PGUP);
+	api_register_const(g_duk, NULL, "KEY_PERIOD", ALLEGRO_KEY_FULLSTOP);
+	api_register_const(g_duk, NULL, "KEY_SCROLLOCK", ALLEGRO_KEY_SCROLLLOCK);
+	api_register_const(g_duk, NULL, "KEY_SCROLLLOCK", ALLEGRO_KEY_SCROLLLOCK);
+	api_register_const(g_duk, NULL, "KEY_SEMICOLON", ALLEGRO_KEY_SEMICOLON);
+	api_register_const(g_duk, NULL, "KEY_SPACE", ALLEGRO_KEY_SPACE);
+	api_register_const(g_duk, NULL, "KEY_SLASH", ALLEGRO_KEY_SLASH);
+	api_register_const(g_duk, NULL, "KEY_TAB", ALLEGRO_KEY_TAB);
+	api_register_const(g_duk, NULL, "KEY_TILDE", ALLEGRO_KEY_TILDE);
+	api_register_const(g_duk, NULL, "KEY_F1", ALLEGRO_KEY_F1);
+	api_register_const(g_duk, NULL, "KEY_F2", ALLEGRO_KEY_F2);
+	api_register_const(g_duk, NULL, "KEY_F3", ALLEGRO_KEY_F3);
+	api_register_const(g_duk, NULL, "KEY_F4", ALLEGRO_KEY_F4);
+	api_register_const(g_duk, NULL, "KEY_F5", ALLEGRO_KEY_F5);
+	api_register_const(g_duk, NULL, "KEY_F6", ALLEGRO_KEY_F6);
+	api_register_const(g_duk, NULL, "KEY_F7", ALLEGRO_KEY_F7);
+	api_register_const(g_duk, NULL, "KEY_F8", ALLEGRO_KEY_F8);
+	api_register_const(g_duk, NULL, "KEY_F9", ALLEGRO_KEY_F9);
+	api_register_const(g_duk, NULL, "KEY_F10", ALLEGRO_KEY_F10);
+	api_register_const(g_duk, NULL, "KEY_F11", ALLEGRO_KEY_F11);
+	api_register_const(g_duk, NULL, "KEY_F12", ALLEGRO_KEY_F12);
+	api_register_const(g_duk, NULL, "KEY_A", ALLEGRO_KEY_A);
+	api_register_const(g_duk, NULL, "KEY_B", ALLEGRO_KEY_B);
+	api_register_const(g_duk, NULL, "KEY_C", ALLEGRO_KEY_C);
+	api_register_const(g_duk, NULL, "KEY_D", ALLEGRO_KEY_D);
+	api_register_const(g_duk, NULL, "KEY_E", ALLEGRO_KEY_E);
+	api_register_const(g_duk, NULL, "KEY_F", ALLEGRO_KEY_F);
+	api_register_const(g_duk, NULL, "KEY_G", ALLEGRO_KEY_G);
+	api_register_const(g_duk, NULL, "KEY_H", ALLEGRO_KEY_H);
+	api_register_const(g_duk, NULL, "KEY_I", ALLEGRO_KEY_I);
+	api_register_const(g_duk, NULL, "KEY_J", ALLEGRO_KEY_J);
+	api_register_const(g_duk, NULL, "KEY_K", ALLEGRO_KEY_K);
+	api_register_const(g_duk, NULL, "KEY_L", ALLEGRO_KEY_L);
+	api_register_const(g_duk, NULL, "KEY_M", ALLEGRO_KEY_M);
+	api_register_const(g_duk, NULL, "KEY_N", ALLEGRO_KEY_N);
+	api_register_const(g_duk, NULL, "KEY_O", ALLEGRO_KEY_O);
+	api_register_const(g_duk, NULL, "KEY_P", ALLEGRO_KEY_P);
+	api_register_const(g_duk, NULL, "KEY_Q", ALLEGRO_KEY_Q);
+	api_register_const(g_duk, NULL, "KEY_R", ALLEGRO_KEY_R);
+	api_register_const(g_duk, NULL, "KEY_S", ALLEGRO_KEY_S);
+	api_register_const(g_duk, NULL, "KEY_T", ALLEGRO_KEY_T);
+	api_register_const(g_duk, NULL, "KEY_U", ALLEGRO_KEY_U);
+	api_register_const(g_duk, NULL, "KEY_V", ALLEGRO_KEY_V);
+	api_register_const(g_duk, NULL, "KEY_W", ALLEGRO_KEY_W);
+	api_register_const(g_duk, NULL, "KEY_X", ALLEGRO_KEY_X);
+	api_register_const(g_duk, NULL, "KEY_Y", ALLEGRO_KEY_Y);
+	api_register_const(g_duk, NULL, "KEY_Z", ALLEGRO_KEY_Z);
+	api_register_const(g_duk, NULL, "KEY_1", ALLEGRO_KEY_1);
+	api_register_const(g_duk, NULL, "KEY_2", ALLEGRO_KEY_2);
+	api_register_const(g_duk, NULL, "KEY_3", ALLEGRO_KEY_3);
+	api_register_const(g_duk, NULL, "KEY_4", ALLEGRO_KEY_4);
+	api_register_const(g_duk, NULL, "KEY_5", ALLEGRO_KEY_5);
+	api_register_const(g_duk, NULL, "KEY_6", ALLEGRO_KEY_6);
+	api_register_const(g_duk, NULL, "KEY_7", ALLEGRO_KEY_7);
+	api_register_const(g_duk, NULL, "KEY_8", ALLEGRO_KEY_8);
+	api_register_const(g_duk, NULL, "KEY_9", ALLEGRO_KEY_9);
+	api_register_const(g_duk, NULL, "KEY_0", ALLEGRO_KEY_0);
+	api_register_const(g_duk, NULL, "KEY_NUM_1", ALLEGRO_KEY_PAD_1);
+	api_register_const(g_duk, NULL, "KEY_NUM_2", ALLEGRO_KEY_PAD_2);
+	api_register_const(g_duk, NULL, "KEY_NUM_3", ALLEGRO_KEY_PAD_3);
+	api_register_const(g_duk, NULL, "KEY_NUM_4", ALLEGRO_KEY_PAD_4);
+	api_register_const(g_duk, NULL, "KEY_NUM_5", ALLEGRO_KEY_PAD_5);
+	api_register_const(g_duk, NULL, "KEY_NUM_6", ALLEGRO_KEY_PAD_6);
+	api_register_const(g_duk, NULL, "KEY_NUM_7", ALLEGRO_KEY_PAD_7);
+	api_register_const(g_duk, NULL, "KEY_NUM_8", ALLEGRO_KEY_PAD_8);
+	api_register_const(g_duk, NULL, "KEY_NUM_9", ALLEGRO_KEY_PAD_9);
+	api_register_const(g_duk, NULL, "KEY_NUM_0", ALLEGRO_KEY_PAD_0);
 
-	api_register_const(g_duk, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
-	api_register_const(g_duk, "MOUSE_MIDDLE", MOUSE_BUTTON_MIDDLE);
-	api_register_const(g_duk, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
-	api_register_const(g_duk, "MOUSE_WHEEL_UP", MOUSE_WHEEL_UP);
-	api_register_const(g_duk, "MOUSE_WHEEL_DOWN", MOUSE_WHEEL_DOWN);
+	api_register_const(g_duk, NULL, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
+	api_register_const(g_duk, NULL, "MOUSE_MIDDLE", MOUSE_BUTTON_MIDDLE);
+	api_register_const(g_duk, NULL, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
+	api_register_const(g_duk, NULL, "MOUSE_WHEEL_UP", MOUSE_WHEEL_UP);
+	api_register_const(g_duk, NULL, "MOUSE_WHEEL_DOWN", MOUSE_WHEEL_DOWN);
 
-	api_register_const(g_duk, "JOYSTICK_AXIS_X", 0);
-	api_register_const(g_duk, "JOYSTICK_AXIS_Y", 1);
-	api_register_const(g_duk, "JOYSTICK_AXIS_Z", 2);
-	api_register_const(g_duk, "JOYSTICK_AXIS_R", 3);
-	api_register_const(g_duk, "JOYSTICK_AXIS_U", 4);
-	api_register_const(g_duk, "JOYSTICK_AXIS_V", 5);
+	api_register_const(g_duk, NULL, "JOYSTICK_AXIS_X", 0);
+	api_register_const(g_duk, NULL, "JOYSTICK_AXIS_Y", 1);
+	api_register_const(g_duk, NULL, "JOYSTICK_AXIS_Z", 2);
+	api_register_const(g_duk, NULL, "JOYSTICK_AXIS_R", 3);
+	api_register_const(g_duk, NULL, "JOYSTICK_AXIS_U", 4);
+	api_register_const(g_duk, NULL, "JOYSTICK_AXIS_V", 5);
 
 	api_register_method(g_duk, NULL, "AreKeysLeft", js_AreKeysLeft);
 	api_register_method(g_duk, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
@@ -765,7 +790,7 @@ js_AreKeysLeft(duk_context* ctx)
 static duk_ret_t
 js_IsAnyKeyPressed(duk_context* ctx)
 {
-	duk_push_boolean(ctx, is_any_key_down());
+	duk_push_boolean(ctx, kb_is_any_key_down());
 	return 1;
 }
 
@@ -784,7 +809,7 @@ js_IsKeyPressed(duk_context* ctx)
 {
 	int keycode = duk_require_int(ctx, 0);
 
-	duk_push_boolean(ctx, is_key_down(keycode));
+	duk_push_boolean(ctx, kb_is_key_down(keycode));
 	return 1;
 }
 
@@ -819,15 +844,9 @@ js_GetJoystickAxis(duk_context* ctx)
 static duk_ret_t
 js_GetKey(duk_context* ctx)
 {
-	int keycode;
-
-	while (s_key_queue.num_keys == 0) {
+	while (s_key_queue.num_keys == 0)
 		do_events();
-	}
-	keycode = s_key_queue.keys[0];
-	--s_key_queue.num_keys;
-	memmove(s_key_queue.keys, &s_key_queue.keys[1], sizeof(int) * s_key_queue.num_keys);
-	duk_push_int(ctx, keycode);
+	duk_push_int(ctx, kb_get_key());
 	return 1;
 }
 
@@ -1061,7 +1080,7 @@ js_BindKey(duk_context* ctx)
 static duk_ret_t
 js_ClearKeyQueue(duk_context* ctx)
 {
-	clear_key_queue();
+	kb_clear_queue();
 	return 0;
 }
 

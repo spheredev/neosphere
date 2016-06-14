@@ -106,7 +106,7 @@ clone_spriteset(const spriteset_t* spriteset)
 	if (!(clone->images = calloc(clone->num_images, sizeof(image_t*))))
 		goto on_error;
 	for (i = 0; i < spriteset->num_images; ++i)
-		clone->images[i] = ref_image(spriteset->images[i]);
+		clone->images[i] = image_ref(spriteset->images[i]);
 	if (!(clone->poses = calloc(clone->num_poses, sizeof(spriteset_pose_t))))
 		goto on_error;
 	for (i = 0; i < spriteset->num_poses; ++i) {
@@ -124,7 +124,7 @@ clone_spriteset(const spriteset_t* spriteset)
 
 on_error:
 	if (clone != NULL) {
-		for (i = 0; i < clone->num_images; ++i) free_image(clone->images[i]);
+		for (i = 0; i < clone->num_images; ++i) image_free(clone->images[i]);
 		if (clone->poses != NULL)
 			for (i = 0; i < clone->num_poses; ++i) {
 				lstr_free(clone->poses[i].name);
@@ -360,7 +360,7 @@ free_spriteset(spriteset_t* spriteset)
 	
 	console_log(3, "disposing spriteset #%u no longer in use", spriteset->id);
 	for (i = 0; i < spriteset->num_images; ++i)
-		free_image(spriteset->images[i]);
+		image_free(spriteset->images[i]);
 	free(spriteset->images);
 	for (i = 0; i < spriteset->num_poses; ++i) {
 		free(spriteset->poses[i].frames);
@@ -394,8 +394,8 @@ get_sprite_size(const spriteset_t* spriteset, int* out_width, int* out_height)
 	image_t* image;
 	
 	image = spriteset->images[0];
-	if (out_width) *out_width = get_image_width(image);
-	if (out_height) *out_height = get_image_height(image);
+	if (out_width) *out_width = image_width(image);
+	if (out_height) *out_height = image_height(image);
 }
 
 void
@@ -428,8 +428,8 @@ set_spriteset_image(const spriteset_t* spriteset, int image_index, image_t* imag
 	image_t* old_image;
 	
 	old_image = spriteset->images[image_index];
-	spriteset->images[image_index] = ref_image(image);
-	free_image(old_image);
+	spriteset->images[image_index] = image_ref(image);
+	image_free(old_image);
 }
 
 void
@@ -451,13 +451,13 @@ draw_sprite(const spriteset_t* spriteset, color_t mask, bool is_flipped, double 
 	if (!is_flipped)
 		y -= (base.y1 + base.y2) / 2;
 	image = spriteset->images[image_index];
-	image_w = get_image_width(image);
-	image_h = get_image_height(image);
+	image_w = image_width(image);
+	image_h = image_height(image);
 	scale_w = image_w * scale_x;
 	scale_h = image_h * scale_y;
 	if (x + scale_w <= 0 || x >= g_res_x || y + scale_h <= 0 || y >= g_res_y)
 		return;
-	al_draw_tinted_scaled_rotated_bitmap(get_image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
+	al_draw_tinted_scaled_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
 		(float)image_w / 2, (float)image_h / 2, x + scale_w / 2, y + scale_h / 2,
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }

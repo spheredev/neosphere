@@ -365,7 +365,9 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\engine\commonjs.c" />
+    <ClCompile Include="..\src\engine\vanilla.c" />
     <ClCompile Include="..\src\engine\matrix.c" />
+    <ClCompile Include="..\src\engine\pegasus.c" />
     <ClCompile Include="..\src\engine\screen.c" />
     <ClCompile Include="..\src\engine\transpile.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
@@ -410,7 +412,9 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\engine\commonjs.h" />
+    <ClInclude Include="..\src\engine\vanilla.h" />
     <ClInclude Include="..\src\engine\matrix.h" />
+    <ClInclude Include="..\src\engine\pegasus.h" />
     <ClInclude Include="..\src\engine\screen.h" />
     <ClInclude Include="..\src\engine\transpile.h" />
     <ClInclude Include="..\src\shared\duktape.h" />
