@@ -6,6 +6,7 @@
 #include "map_engine.h"
 #include "obsmap.h"
 #include "spriteset.h"
+#include "vanilla.h"
 
 struct person
 {

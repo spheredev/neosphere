@@ -1,7 +1,6 @@
 #include "minisphere.h"
 #include "spriteset.h"
 
-#include "api.h"
 #include "atlas.h"
 #include "image.h"
 #include "vector.h"
@@ -50,13 +49,6 @@ struct rss_frame_v3
 };
 #pragma pack(pop)
 
-static duk_ret_t js_LoadSpriteset          (duk_context* ctx);
-static duk_ret_t js_Spriteset_finalize     (duk_context* ctx);
-static duk_ret_t js_Spriteset_get_filename (duk_context* ctx);
-static duk_ret_t js_Spriteset_toString     (duk_context* ctx);
-static duk_ret_t js_Spriteset_clone        (duk_context* ctx);
-static duk_ret_t js_Spriteset_get_image    (duk_context* ctx);
-static duk_ret_t js_Spriteset_set_image    (duk_context* ctx);
 
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 
@@ -422,7 +414,7 @@ get_spriteset_pose_info(const spriteset_t* spriteset, const char* pose_name, int
 }
 
 void
-set_spriteset_image(const spriteset_t* spriteset, int image_index, image_t* image)
+set_spriteset_image(spriteset_t* spriteset, int image_index, image_t* image)
 {
 	image_t* old_image;
 	
@@ -489,158 +481,4 @@ find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 			break;
 	}
 	return pose != NULL ? pose : &spriteset->poses[0];
-}
-
-void
-init_spriteset_api(duk_context* ctx)
-{
-	api_register_static_func(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
-	api_register_type(ctx, "Spriteset", js_Spriteset_finalize);
-	api_register_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
-	api_register_method(ctx, "Spriteset", "toString", js_Spriteset_toString);
-	api_register_method(ctx, "Spriteset", "clone", js_Spriteset_clone);
-}
-
-void
-duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
-{
-	char prop_name[20];
-	
-	int i, j;
-
-	duk_push_sphere_obj(ctx, "Spriteset", ref_spriteset(spriteset));
-
-	// Spriteset:base
-	duk_push_object(ctx);
-	duk_push_int(ctx, spriteset->base.x1); duk_put_prop_string(ctx, -2, "x1");
-	duk_push_int(ctx, spriteset->base.y1); duk_put_prop_string(ctx, -2, "y1");
-	duk_push_int(ctx, spriteset->base.x2); duk_put_prop_string(ctx, -2, "x2");
-	duk_push_int(ctx, spriteset->base.y2); duk_put_prop_string(ctx, -2, "y2");
-	duk_put_prop_string(ctx, -2, "base");
-
-	// Spriteset:images
-	duk_push_array(ctx);
-	for (i = 0; i < spriteset->num_images; ++i) {
-		sprintf(prop_name, "%i", i);
-		duk_push_string(ctx, prop_name);
-		duk_push_c_function(ctx, js_Spriteset_get_image, DUK_VARARGS);
-			duk_get_prop_string(ctx, -1, "bind"); duk_dup(ctx, -2);
-			duk_dup(ctx, -6);
-			duk_call_method(ctx, 1);
-			duk_remove(ctx, -2);
-		duk_push_c_function(ctx, js_Spriteset_set_image, DUK_VARARGS);
-			duk_get_prop_string(ctx, -1, "bind"); duk_dup(ctx, -2);
-			duk_dup(ctx, -7);
-			duk_call_method(ctx, 1);
-			duk_remove(ctx, -2);
-		duk_def_prop(ctx, -4, DUK_DEFPROP_HAVE_GETTER | DUK_DEFPROP_HAVE_SETTER
-			| DUK_DEFPROP_HAVE_ENUMERABLE | DUK_DEFPROP_ENUMERABLE);
-	}
-	duk_put_prop_string(ctx, -2, "images");
-
-	// Spriteset:directions
-	duk_push_array(ctx);
-	for (i = 0; i < spriteset->num_poses; ++i) {
-		duk_push_object(ctx);
-		duk_push_lstring_t(ctx, spriteset->poses[i].name);
-		duk_put_prop_string(ctx, -2, "name");
-		duk_push_array(ctx);
-		for (j = 0; j < spriteset->poses[i].num_frames; ++j) {
-			duk_push_object(ctx);
-			duk_push_int(ctx, spriteset->poses[i].frames[j].image_idx); duk_put_prop_string(ctx, -2, "index");
-			duk_push_int(ctx, spriteset->poses[i].frames[j].delay); duk_put_prop_string(ctx, -2, "delay");
-			duk_put_prop_index(ctx, -2, j);
-		}
-		duk_put_prop_string(ctx, -2, "frames");
-		duk_put_prop_index(ctx, -2, i);
-	}
-	duk_put_prop_string(ctx, -2, "directions");
-}
-
-static duk_ret_t
-js_LoadSpriteset(duk_context* ctx)
-{
-	const char*  filename;
-	spriteset_t* spriteset;
-
-	filename = duk_require_path(ctx, 0, "spritesets", true);
-	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file `%s`", filename);
-	duk_push_sphere_spriteset(ctx, spriteset);
-	free_spriteset(spriteset);
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_finalize(duk_context* ctx)
-{
-	spriteset_t* spriteset;
-	
-	spriteset = duk_require_sphere_obj(ctx, 0, "Spriteset");
-	free_spriteset(spriteset);
-	return 0;
-}
-
-static duk_ret_t
-js_Spriteset_get_filename(duk_context* ctx)
-{
-	spriteset_t* spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
-	duk_push_string(ctx, spriteset->filename);
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object spriteset]");
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_clone(duk_context* ctx)
-{
-	spriteset_t* new_spriteset;
-	spriteset_t* spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
-	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): unable to create new spriteset");
-	duk_push_sphere_spriteset(ctx, new_spriteset);
-	free_spriteset(new_spriteset);
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_get_image(duk_context* ctx)
-{
-	duk_uarridx_t index = duk_to_int(ctx, 0);
-	
-	spriteset_t* spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
-	duk_push_sphere_image(ctx, get_spriteset_image(spriteset, index));
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_set_image(duk_context* ctx)
-{
-	image_t* image = duk_require_sphere_image(ctx, 0);
-	duk_uarridx_t index = duk_to_int(ctx, 1);
-
-	spriteset_t* spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
-	set_spriteset_image(spriteset, index, image);
-	return 0;
 }

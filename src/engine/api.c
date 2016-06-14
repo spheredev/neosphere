@@ -1,28 +1,15 @@
 #include "minisphere.h"
 #include "api.h"
 
-#include "animation.h"
-#include "async.h"
-#include "audio.h"
 #include "bytearray.h"
 #include "color.h"
 #include "commonjs.h"
-#include "console.h"
-#include "debugger.h"
 #include "file.h"
-#include "font.h"
-#include "galileo.h"
 #include "image.h"
 #include "input.h"
 #include "map_engine.h"
-#include "rng.h"
-#include "shader.h"
-#include "sockets.h"
-#include "spriteset.h"
-#include "surface.h"
 #include "transpile.h"
 #include "vanilla.h"
-#include "windowstyle.h"
 
 void
 initialize_api(duk_context* ctx)
@@ -45,7 +32,6 @@ initialize_api(duk_context* ctx)
 	initialize_vanilla_api(ctx);
 
 	// initialize subsystem APIs
-	init_audio_api();
 	init_bytearray_api();
 	init_color_api();
 	init_commonjs_api();
@@ -53,10 +39,6 @@ initialize_api(duk_context* ctx)
 	init_image_api(g_duk);
 	init_input_api();
 	init_map_engine_api(g_duk);
-	init_sockets_api();
-	init_spriteset_api(g_duk);
-	init_surface_api();
-	init_windowstyle_api();
 }
 
 void

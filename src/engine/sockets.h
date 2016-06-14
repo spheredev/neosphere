@@ -22,6 +22,4 @@ size_t      read_socket          (socket_t* socket, uint8_t* buffer, size_t n_by
 void        shutdown_socket      (socket_t* socket);
 void        write_socket         (socket_t* socket, const uint8_t* data, size_t n_bytes);
 
-void init_sockets_api (void);
-
 #endif // MINISPHERE__SOCKETS_H__INCLUDED

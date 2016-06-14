@@ -3,21 +3,4 @@
 
 #include "image.h"
 
-void init_surface_api (void);
-
-typedef
-enum blend_mode
-{
-	BLEND_BLEND,
-	BLEND_REPLACE,
-	BLEND_RGB_ONLY,
-	BLEND_ALPHA_ONLY,
-	BLEND_ADD,
-	BLEND_SUBTRACT,
-	BLEND_MULTIPLY,
-	BLEND_AVERAGE,
-	BLEND_INVERT,
-	BLEND_MAX
-} blend_mode_t;
-
 #endif // MINISPHERE__SURFACE_H__INCLUDED
