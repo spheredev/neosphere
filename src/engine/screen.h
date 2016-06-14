@@ -28,6 +28,4 @@ void             screen_toggle_fullscreen (screen_t* obj);
 void             screen_transform         (screen_t* obj, const matrix_t* matrix);
 void             screen_unskip_frame      (screen_t* obj);
 
-void init_screen_api (void);
-
 #endif // MINISPHERE__DISPLAY_H__INCLUDED

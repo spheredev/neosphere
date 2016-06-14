@@ -762,11 +762,8 @@ verify_requirements(sandbox_t* fs)
 	// NOTE: before calling this function, the Sphere API must already have been
 	//       initialized using initialize_api().
 
-	const char* extension_name;
 	lstring_t*  message;
 	const char* recommendation = NULL;
-
-	duk_size_t i;
 
 	duk_push_lstring_t(g_duk, get_game_manifest(g_fs));
 	duk_json_decode(g_duk, -1);
@@ -781,24 +778,9 @@ verify_requirements(sandbox_t* fs)
 		// check for minimum API version
 		if (duk_get_prop_string(g_duk, -1, "apiVersion")) {
 			if (duk_is_number(g_duk, -1)) {
-				if (duk_get_number(g_duk, -1) > api_version())
+				if (duk_get_int(g_duk, -1) > 2)
 					goto is_unsupported;
 			}
-		}
-		duk_pop(g_duk);
-
-		// check API extensions
-		if (duk_get_prop_string(g_duk, -1, "extensions")) {
-			if (duk_is_array(g_duk, -1)) {
-				for (i = 0; i < duk_get_length(g_duk, -1); ++i) {
-					duk_get_prop_index(g_duk, -1, (duk_uarridx_t)i);
-					extension_name = duk_get_string(g_duk, -1);
-					duk_pop(g_duk);
-					if (extension_name != NULL && !api_have_extension(extension_name))
-						goto is_unsupported;
-				}
-			}
-			duk_pop(g_duk);
 		}
 		duk_pop(g_duk);
 	}

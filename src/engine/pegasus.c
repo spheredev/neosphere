@@ -19,7 +19,7 @@
 #define SPHERE_API_VERSION 2
 #define SPHERE_API_LEVEL   1
 
-static const char* const SPHERE_EXTENSIONS[] =
+static const char* const EXTENSIONS[] =
 {
 	"sphere_fs_system_alias",
 };
@@ -567,8 +567,8 @@ js_engine_get_extensions(duk_context* ctx)
 	int i;
 
 	duk_push_array(ctx);
-	for (i = 0; i < sizeof SPHERE_EXTENSIONS / sizeof *SPHERE_EXTENSIONS; ++i) {
-		duk_push_string(ctx, SPHERE_EXTENSIONS[i]);
+	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i) {
+		duk_push_string(ctx, EXTENSIONS[i]);
 		duk_put_prop_index(ctx, -2, i++);
 	}
 

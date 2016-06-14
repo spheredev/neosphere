@@ -1,14 +1,10 @@
 #include "minisphere.h"
 #include "async.h"
 
-#include "api.h"
 #include "script.h"
 #include "vector.h"
 
-static duk_ret_t js_DispatchScript (duk_context* ctx);
-
-static unsigned int s_next_script_id = 1;
-static vector_t*    s_scripts;
+static vector_t* s_scripts;
 
 bool
 initialize_async(void)
@@ -52,25 +48,4 @@ queue_async_script(script_t* script)
 		return vector_push(s_scripts, &script);
 	else
 		return false;
-}
-
-void
-init_async_api(void)
-{
-	api_register_method(g_duk, NULL, "DispatchScript", js_DispatchScript);
-}
-
-static duk_ret_t
-js_DispatchScript(duk_context* ctx)
-{
-	script_t* script;
-	char*     script_name;
-
-	script_name = strnewf("synth:async~%u.js", s_next_script_id++);
-	script = duk_require_sphere_script(ctx, 0, script_name);
-	free(script_name);
-
-	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch async script");
-	return 0;
 }
