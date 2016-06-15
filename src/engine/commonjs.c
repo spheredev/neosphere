@@ -242,7 +242,7 @@ on_error:
 }
 
 void
-init_commonjs_api(void)
+initialize_commonjs_api(void)
 {
 	const path_t* script_path;
 

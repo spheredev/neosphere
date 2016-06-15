@@ -62,9 +62,12 @@ static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
 static duk_ret_t js_Assert                     (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton         (duk_context* ctx);
 static duk_ret_t js_BindKey                    (duk_context* ctx);
+static duk_ret_t js_BlendColors                (duk_context* ctx);
 static duk_ret_t js_ClearKeyQueue              (duk_context* ctx);
 static duk_ret_t js_CreateByteArray            (duk_context* ctx);
 static duk_ret_t js_CreateByteArrayFromString  (duk_context* ctx);
+static duk_ret_t js_CreateColor                (duk_context* ctx);
+static duk_ret_t js_CreateColorMatrix          (duk_context* ctx);
 static duk_ret_t js_CreateStringFromByteArray  (duk_context* ctx);
 static duk_ret_t js_CreateDirectory            (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode       (duk_context* ctx);
@@ -137,6 +140,9 @@ static duk_ret_t js_ByteArray_concat           (duk_context* ctx);
 static duk_ret_t js_ByteArray_deflate          (duk_context* ctx);
 static duk_ret_t js_ByteArray_inflate          (duk_context* ctx);
 static duk_ret_t js_ByteArray_slice            (duk_context* ctx);
+static duk_ret_t js_Color_toString             (duk_context* ctx);
+static duk_ret_t js_ColorMatrix_apply          (duk_context* ctx);
+static duk_ret_t js_ColorMatrix_toString       (duk_context* ctx);
 static duk_ret_t js_File_finalize              (duk_context* ctx);
 static duk_ret_t js_File_get_numKeys           (duk_context* ctx);
 static duk_ret_t js_File_getKey                (duk_context* ctx);
@@ -375,11 +381,15 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "Assert", js_Assert);
 	api_register_static_func(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
 	api_register_static_func(ctx, NULL, "BindKey", js_BindKey);
+	api_register_static_func(ctx, NULL, "BlendColors", js_BlendColors);
+	api_register_static_func(ctx, NULL, "BlendColorsWeighted", js_BlendColors);
 	api_register_static_func(ctx, NULL, "ClearKeyQueue", js_ClearKeyQueue);
 	api_register_static_func(ctx, NULL, "CreateByteArray", js_CreateByteArray);
 	api_register_static_func(ctx, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
-	api_register_static_func(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
+	api_register_static_func(ctx, NULL, "CreateColor", js_CreateColor);
+	api_register_static_func(ctx, NULL, "CreateColorMatrix", js_CreateColorMatrix);
 	api_register_static_func(ctx, NULL, "CreateDirectory", js_CreateDirectory);
+	api_register_static_func(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
 	api_register_static_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	api_register_static_func(ctx, NULL, "CreateSurface", js_CreateSurface);
 	api_register_static_func(ctx, NULL, "DebugPrint", js_DebugPrint);
@@ -451,6 +461,13 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "ByteArray", "deflate", js_ByteArray_deflate);
 	api_register_method(ctx, "ByteArray", "inflate", js_ByteArray_inflate);
 	api_register_method(ctx, "ByteArray", "slice", js_ByteArray_slice);
+
+	api_register_type(ctx, "Color", NULL);
+	api_register_method(ctx, "Color", "toString", js_Color_toString);
+
+	api_register_type(ctx, "ColorMatrix", NULL);
+	api_register_method(ctx, "ColorMatrix", "apply", js_ColorMatrix_apply);
+	api_register_method(ctx, "ColorMatrix", "toString", js_ColorMatrix_toString);
 
 	api_register_type(ctx, "File", js_File_finalize);
 	api_register_prop(ctx, "File", "numKeys", js_File_get_numKeys, NULL);
@@ -757,6 +774,27 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 }
 
 void
+duk_push_sphere_color(duk_context* ctx, color_t color)
+{
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Color");
+	duk_push_number(ctx, color.r);
+	duk_push_number(ctx, color.g);
+	duk_push_number(ctx, color.b);
+	duk_push_number(ctx, color.alpha);
+	duk_new(ctx, 4);
+	duk_remove(ctx, -2);
+}
+
+void
+duk_push_sphere_font(duk_context* ctx, font_t* font)
+{
+	duk_push_sphere_obj(ctx, "Font", font_ref(font));
+	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255));
+	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+}
+
+void
 duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 {
 	char prop_name[20];
@@ -810,6 +848,45 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 		duk_put_prop_index(ctx, -2, i);
 	}
 	duk_put_prop_string(ctx, -2, "directions");
+}
+
+color_t
+duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
+{
+	int r, g, b;
+	int alpha;
+
+	duk_require_sphere_obj(ctx, index, "Color");
+	duk_get_prop_string(ctx, index, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "alpha"); alpha = duk_get_int(ctx, -1); duk_pop(ctx);
+	r = r < 0 ? 0 : r > 255 ? 255 : r;
+	g = g < 0 ? 0 : g > 255 ? 255 : g;
+	b = b < 0 ? 0 : b > 255 ? 255 : b;
+	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
+	return color_new(r, g, b, alpha);
+}
+
+colormatrix_t
+duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
+{
+	colormatrix_t matrix;
+
+	duk_require_sphere_obj(ctx, index, "ColorMatrix");
+	duk_get_prop_string(ctx, index, "rn"); matrix.rn = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "rr"); matrix.rr = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "rg"); matrix.rg = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "rb"); matrix.rb = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gn"); matrix.gn = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gr"); matrix.gr = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gg"); matrix.gg = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "gb"); matrix.gb = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "bn"); matrix.bn = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "br"); matrix.br = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "bg"); matrix.bg = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "bb"); matrix.bb = duk_get_int(ctx, -1); duk_pop(ctx);
+	return matrix;
 }
 
 static void
@@ -1542,6 +1619,30 @@ js_BindKey(duk_context* ctx)
 }
 
 static duk_ret_t
+js_BlendColors(duk_context* ctx)
+{
+	color_t color1;
+	color_t color2;
+	int     num_args;
+	float   w1 = 1.0;
+	float   w2 = 1.0;
+
+	num_args = duk_get_top(ctx);
+	color1 = duk_require_sphere_color(ctx, 0);
+	color2 = duk_require_sphere_color(ctx, 1);
+	if (num_args > 2) {
+		w1 = duk_require_number(ctx, 2);
+		w2 = duk_require_number(ctx, 3);
+	}
+
+	if (w1 < 0.0 || w2 < 0.0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "weights cannot be negative", w1, w2);
+
+	duk_push_sphere_color(ctx, color_mix(color1, color2, w1, w2));
+	return 1;
+}
+
+static duk_ret_t
 js_ClearKeyQueue(duk_context* ctx)
 {
 	kb_clear_queue();
@@ -1578,6 +1679,63 @@ js_CreateByteArrayFromString(duk_context* ctx)
 	lstr_free(string);
 	duk_push_sphere_bytearray(ctx, array);
 	free_bytearray(array);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateColor(duk_context* ctx)
+{
+	int num_args = duk_get_top(ctx);
+	int r = duk_require_int(ctx, 0);
+	int g = duk_require_int(ctx, 1);
+	int b = duk_require_int(ctx, 2);
+	int alpha = num_args >= 4 ? duk_require_int(ctx, 3) : 255;
+
+	// clamp components to 8-bit [0-255]
+	r = r < 0 ? 0 : r > 255 ? 255 : r;
+	g = g < 0 ? 0 : g > 255 ? 255 : g;
+	b = b < 0 ? 0 : b > 255 ? 255 : b;
+	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
+
+	// construct a Color object
+	duk_push_sphere_obj(ctx, "Color", NULL);
+	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "red");
+	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "green");
+	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "blue");
+	duk_push_int(ctx, alpha); duk_put_prop_string(ctx, -2, "alpha");
+	return 1;
+}
+
+static duk_ret_t
+js_CreateColorMatrix(duk_context* ctx)
+{
+	int rn = duk_require_int(ctx, 0);
+	int rr = duk_require_int(ctx, 1);
+	int rg = duk_require_int(ctx, 2);
+	int rb = duk_require_int(ctx, 3);
+	int gn = duk_require_int(ctx, 4);
+	int gr = duk_require_int(ctx, 5);
+	int gg = duk_require_int(ctx, 6);
+	int gb = duk_require_int(ctx, 7);
+	int bn = duk_require_int(ctx, 8);
+	int br = duk_require_int(ctx, 9);
+	int bg = duk_require_int(ctx, 10);
+	int bb = duk_require_int(ctx, 11);
+
+	// construct a ColorMatrix object
+	duk_push_sphere_obj(ctx, "ColorMatrix", NULL);
+	duk_push_int(ctx, rn); duk_put_prop_string(ctx, -2, "rn");
+	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
+	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
+	duk_push_int(ctx, rb); duk_put_prop_string(ctx, -2, "rb");
+	duk_push_int(ctx, gn); duk_put_prop_string(ctx, -2, "gn");
+	duk_push_int(ctx, gr); duk_put_prop_string(ctx, -2, "gr");
+	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gg");
+	duk_push_int(ctx, gb); duk_put_prop_string(ctx, -2, "gb");
+	duk_push_int(ctx, bn); duk_put_prop_string(ctx, -2, "bn");
+	duk_push_int(ctx, br); duk_put_prop_string(ctx, -2, "br");
+	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bg");
+	duk_push_int(ctx, bb); duk_put_prop_string(ctx, -2, "bb");
 	return 1;
 }
 
@@ -2698,6 +2856,34 @@ js_ByteArray_slice(duk_context* ctx)
 	if (!(new_array = slice_bytearray(array, start, end_norm - start)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to slice byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_Color_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object color]");
+	return 1;
+}
+
+static duk_ret_t
+js_ColorMatrix_apply(duk_context* ctx)
+{
+	color_t color = duk_require_sphere_color(ctx, 0);
+
+	colormatrix_t matrix;
+
+	duk_push_this(ctx);
+	matrix = duk_require_sphere_colormatrix(ctx, -1);
+	duk_pop(ctx);
+	duk_push_sphere_color(ctx, color_transform(color, matrix));
+	return 1;
+}
+
+static duk_ret_t
+js_ColorMatrix_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object colormatrix]");
 	return 1;
 }
 

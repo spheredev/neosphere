@@ -15,6 +15,7 @@
 #include "rng.h"
 #include "shader.h"
 #include "sockets.h"
+#include "vanilla.h"
 
 #define SPHERE_API_VERSION 2
 #define SPHERE_API_LEVEL   1

@@ -1,8 +1,6 @@
 #include "minisphere.h"
 #include "color.h"
 
-#include "api.h"
-
 struct x11_color
 {
 	const char* name;
@@ -158,20 +156,6 @@ static const struct x11_color X11_COLOR[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
-static duk_ret_t js_CreateColor          (duk_context* ctx);
-static duk_ret_t js_Color_get_Color      (duk_context* ctx);
-static duk_ret_t js_Color_mix            (duk_context* ctx);
-static duk_ret_t js_Color_of             (duk_context* ctx);
-static duk_ret_t js_new_Color            (duk_context* ctx);
-static duk_ret_t js_Color_get_name       (duk_context* ctx);
-static duk_ret_t js_Color_toString       (duk_context* ctx);
-static duk_ret_t js_Color_clone          (duk_context* ctx);
-static duk_ret_t js_Color_fade           (duk_context* ctx);
-static duk_ret_t js_CreateColorMatrix    (duk_context* ctx);
-static duk_ret_t js_new_ColorMatrix      (duk_context* ctx);
-static duk_ret_t js_ColorMatrix_toString (duk_context* ctx);
-static duk_ret_t js_ColorMatrix_apply    (duk_context* ctx);
-
 ALLEGRO_COLOR
 nativecolor(color_t color)
 {
@@ -191,7 +175,7 @@ color_new(uint8_t r, uint8_t g, uint8_t b, uint8_t alpha)
 }
 
 color_t
-color_lerp(color_t color, color_t other, float w1, float w2)
+color_mix(color_t color, color_t other, float w1, float w2)
 {
 	color_t blend;
 	float   sigma;
@@ -251,95 +235,7 @@ color_transform(color_t color, colormatrix_t mat)
 	return color_new(r, g, b, color.alpha);
 }
 
-void
-init_color_api(void)
-{
-	const struct x11_color* p;
-	
-	api_register_method(g_duk, NULL, "BlendColors", js_Color_mix);
-	api_register_method(g_duk, NULL, "BlendColorsWeighted", js_Color_mix);
-	api_register_method(g_duk, NULL, "CreateColor", js_CreateColor);
-	api_register_method(g_duk, NULL, "CreateColorMatrix", js_CreateColorMatrix);
-
-	api_register_ctor(g_duk, "Color", js_new_Color, NULL);
-	api_register_static_func(g_duk, "Color", "mix", js_Color_mix);
-	api_register_static_func(g_duk, "Color", "of", js_Color_of);
-	api_register_prop(g_duk, "Color", "name", js_Color_get_name, NULL);
-	api_register_method(g_duk, "Color", "toString", js_Color_toString);
-	api_register_method(g_duk, "Color", "clone", js_Color_clone);
-	api_register_method(g_duk, "Color", "fade", js_Color_fade);
-
-	api_register_ctor(g_duk, "ColorMatrix", js_new_ColorMatrix, NULL);
-	api_register_method(g_duk, "ColorMatrix", "toString", js_ColorMatrix_toString);
-	api_register_method(g_duk, "ColorMatrix", "apply", js_ColorMatrix_apply);
-
-	p = &X11_COLOR[0];
-	while (p->name != NULL) {
-		duk_get_global_string(g_duk, "Color");
-		duk_push_string(g_duk, p->name);
-		duk_push_c_function(g_duk, js_Color_get_Color, DUK_VARARGS);
-		duk_push_sphere_color(g_duk, color_new(p->r, p->g, p->b, p->a));
-		duk_put_prop_string(g_duk, -2, "\xFF" "color");
-		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_GETTER
-			| DUK_DEFPROP_CLEAR_ENUMERABLE
-			| DUK_DEFPROP_SET_CONFIGURABLE);
-		duk_pop(g_duk);
-		++p;
-	}
-}
-
-void
-duk_push_sphere_color(duk_context* ctx, color_t color)
-{
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Color");
-	duk_push_number(ctx, color.r);
-	duk_push_number(ctx, color.g);
-	duk_push_number(ctx, color.b);
-	duk_push_number(ctx, color.alpha);
-	duk_new(ctx, 4);
-	duk_remove(ctx, -2);
-}
-
-color_t
-duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
-{
-	int r, g, b;
-	int alpha;
-	
-	duk_require_sphere_obj(ctx, index, "Color");
-	duk_get_prop_string(ctx, index, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "alpha"); alpha = duk_get_int(ctx, -1); duk_pop(ctx);
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
-	return color_new(r, g, b, alpha);
-}
-
-colormatrix_t
-duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
-{
-	colormatrix_t matrix;
-
-	duk_require_sphere_obj(ctx, index, "ColorMatrix");
-	duk_get_prop_string(ctx, index, "rn"); matrix.rn = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "rr"); matrix.rr = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "rg"); matrix.rg = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "rb"); matrix.rb = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "gn"); matrix.gn = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "gr"); matrix.gr = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "gg"); matrix.gg = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "gb"); matrix.gb = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "bn"); matrix.bn = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "br"); matrix.br = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "bg"); matrix.bg = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "bb"); matrix.bb = duk_get_int(ctx, -1); duk_pop(ctx);
-	return matrix;
-}
-
+/*
 static duk_ret_t
 js_Color_get_Color(duk_context* ctx)
 {
@@ -372,7 +268,7 @@ js_Color_mix(duk_context* ctx)
 	if (w1 < 0.0 || w2 < 0.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "weights cannot be negative", w1, w2);
 	
-	duk_push_sphere_color(ctx, color_lerp(color1, color2, w1, w2));
+	duk_push_sphere_color(ctx, color_mix(color1, color2, w1, w2));
 	return 1;
 }
 
@@ -412,12 +308,6 @@ js_Color_of(duk_context* ctx)
 	color.b = value & 0xFF;
 	duk_push_sphere_color(ctx, color);
 	return 1;
-}
-
-static duk_ret_t
-js_CreateColor(duk_context* ctx)
-{
-	return js_new_Color(ctx);
 }
 
 static duk_ret_t
@@ -470,13 +360,6 @@ js_Color_get_name(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Color_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object color]");
-	return 1;
-}
-
-static duk_ret_t
 js_Color_clone(duk_context* ctx)
 {
 	color_t color;
@@ -503,63 +386,4 @@ js_Color_fade(duk_context* ctx)
 	duk_push_sphere_color(ctx, color);
 	return 1;
 }
-
-static duk_ret_t
-js_CreateColorMatrix(duk_context* ctx)
-{
-	return js_new_ColorMatrix(ctx);
-}
-
-static duk_ret_t
-js_new_ColorMatrix(duk_context* ctx)
-{
-	int rn = duk_require_int(ctx, 0);
-	int rr = duk_require_int(ctx, 1);
-	int rg = duk_require_int(ctx, 2);
-	int rb = duk_require_int(ctx, 3);
-	int gn = duk_require_int(ctx, 4);
-	int gr = duk_require_int(ctx, 5);
-	int gg = duk_require_int(ctx, 6);
-	int gb = duk_require_int(ctx, 7);
-	int bn = duk_require_int(ctx, 8);
-	int br = duk_require_int(ctx, 9);
-	int bg = duk_require_int(ctx, 10);
-	int bb = duk_require_int(ctx, 11);
-
-	// construct a ColorMatrix object
-	duk_push_sphere_obj(ctx, "ColorMatrix", NULL);
-	duk_push_int(ctx, rn); duk_put_prop_string(ctx, -2, "rn");
-	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
-	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
-	duk_push_int(ctx, rb); duk_put_prop_string(ctx, -2, "rb");
-	duk_push_int(ctx, gn); duk_put_prop_string(ctx, -2, "gn");
-	duk_push_int(ctx, gr); duk_put_prop_string(ctx, -2, "gr");
-	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gg");
-	duk_push_int(ctx, gb); duk_put_prop_string(ctx, -2, "gb");
-	duk_push_int(ctx, bn); duk_put_prop_string(ctx, -2, "bn");
-	duk_push_int(ctx, br); duk_put_prop_string(ctx, -2, "br");
-	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bg");
-	duk_push_int(ctx, bb); duk_put_prop_string(ctx, -2, "bb");
-	return 1;
-}
-
-static duk_ret_t
-js_ColorMatrix_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object colormatrix]");
-	return 1;
-}
-
-static duk_ret_t
-js_ColorMatrix_apply(duk_context* ctx)
-{
-	color_t color = duk_require_sphere_color(ctx, 0);
-	
-	colormatrix_t matrix;
-
-	duk_push_this(ctx);
-	matrix = duk_require_sphere_colormatrix(ctx, -1);
-	duk_pop(ctx);
-	duk_push_sphere_color(ctx, color_transform(color, matrix));
-	return 1;
-}
+*/

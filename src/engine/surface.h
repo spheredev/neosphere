@@ -1,6 +1,0 @@
-#ifndef MINISPHERE__SURFACE_H__INCLUDED
-#define MINISPHERE__SURFACE_H__INCLUDED
-
-#include "image.h"
-
-#endif // MINISPHERE__SURFACE_H__INCLUDED

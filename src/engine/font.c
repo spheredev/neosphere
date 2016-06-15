@@ -1,7 +1,6 @@
 #include "minisphere.h"
 #include "font.h"
 
-#include "api.h"
 #include "color.h"
 #include "image.h"
 #include "unicode.h"
@@ -550,12 +549,4 @@ update_font_metrics(font_t* font)
 	font->min_width = min_width;
 	font->max_width = max_x;
 	font->height = max_y;
-}
-
-void
-duk_push_sphere_font(duk_context* ctx, font_t* font)
-{
-	duk_push_sphere_obj(ctx, "Font", font_ref(font));
-	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255));
-	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }

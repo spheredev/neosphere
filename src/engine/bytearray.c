@@ -1,8 +1,6 @@
 #include "minisphere.h"
 #include "bytearray.h"
 
-#include "api.h"
-
 struct bytearray
 {
 	int          refcount;

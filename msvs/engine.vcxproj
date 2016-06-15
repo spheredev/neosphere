@@ -404,7 +404,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\engine\spherefs.c" />
     <ClCompile Include="..\src\engine\spk.c" />
     <ClCompile Include="..\src\engine\spriteset.c" />
-    <ClCompile Include="..\src\engine\surface.c" />
     <ClCompile Include="..\src\engine\tileset.c" />
     <ClCompile Include="..\src\engine\utility.c" />
     <ClCompile Include="..\src\engine\windowstyle.c" />
@@ -454,7 +453,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\engine\spherefs.h" />
     <ClInclude Include="..\src\engine\spk.h" />
     <ClInclude Include="..\src\engine\spriteset.h" />
-    <ClInclude Include="..\src\engine\surface.h" />
     <ClInclude Include="..\src\engine\tileset.h" />
     <ClInclude Include="..\src\engine\utility.h" />
     <ClInclude Include="..\src\engine\windowstyle.h" />

@@ -1,9 +1,6 @@
 #include "minisphere.h"
 #include "sockets.h"
 
-#include "api.h"
-#include "bytearray.h"
-
 static void on_dyad_accept  (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
 

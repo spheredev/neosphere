@@ -1,10 +1,6 @@
 #include "minisphere.h"
 #include "audio.h"
 
-#include "api.h"
-#include "bytearray.h"
-
-
 struct mixer
 {
 	unsigned int   refcount;

@@ -1,7 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
 
-#include "color.h"
 #include "commonjs.h"
 #include "map_engine.h"
 #include "vanilla.h"
@@ -22,11 +21,10 @@ initialize_api(duk_context* ctx)
 	duk_put_prop_string(ctx, -2, "prototypes");
 	duk_pop(ctx);
 
+	initialize_commonjs_api();
 	initialize_vanilla_api(ctx);
 
 	// initialize subsystem APIs
-	init_color_api();
-	init_commonjs_api();
 	init_map_engine_api(g_duk);
 }
 

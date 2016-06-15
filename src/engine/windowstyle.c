@@ -1,7 +1,6 @@
 #include "minisphere.h"
 #include "windowstyle.h"
 
-#include "api.h"
 #include "color.h"
 #include "image.h"
 
