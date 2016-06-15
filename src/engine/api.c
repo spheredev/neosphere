@@ -4,11 +4,8 @@
 #include "bytearray.h"
 #include "color.h"
 #include "commonjs.h"
-#include "file.h"
-#include "image.h"
 #include "input.h"
 #include "map_engine.h"
-#include "transpile.h"
 #include "vanilla.h"
 
 void
@@ -35,8 +32,6 @@ initialize_api(duk_context* ctx)
 	init_bytearray_api();
 	init_color_api();
 	init_commonjs_api();
-	init_file_api();
-	init_image_api(g_duk);
 	init_input_api();
 	init_map_engine_api(g_duk);
 }

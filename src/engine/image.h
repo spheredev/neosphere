@@ -42,9 +42,4 @@ bool            image_rescale            (image_t* image, int width, int height)
 bool            image_save               (image_t* image, const char* filename);
 void            image_unlock             (image_t* image, image_lock_t* lock);
 
-void init_image_api (duk_context* ctx);
-
-void     duk_push_sphere_image    (duk_context* ctx, image_t* image);
-image_t* duk_require_sphere_image (duk_context* ctx, duk_idx_t index);
-
 #endif // MINISPHERE__IMAGE_H__INCLUDED

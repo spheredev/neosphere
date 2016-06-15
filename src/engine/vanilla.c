@@ -8,6 +8,7 @@
 #include "bytearray.h"
 #include "debugger.h"
 #include "font.h"
+#include "image.h"
 #include "logger.h"
 #include "sockets.h"
 #include "spriteset.h"
@@ -16,28 +17,33 @@
 static duk_ret_t js_IsSkippedFrame             (duk_context* ctx);
 static duk_ret_t js_GetClippingRectangle       (duk_context* ctx);
 static duk_ret_t js_GetFrameRate               (duk_context* ctx);
+static duk_ret_t js_GetDirectoryList           (duk_context* ctx);
+static duk_ret_t js_GetFileList                (duk_context* ctx);
 static duk_ret_t js_GetGameList                (duk_context* ctx);
 static duk_ret_t js_GetGameManifest            (duk_context* ctx);
 static duk_ret_t js_GetLocalAddress            (duk_context* ctx);
 static duk_ret_t js_GetLocalName               (duk_context* ctx);
-static duk_ret_t js_GetMaxFrameSkips           (duk_context* ctx);
 static duk_ret_t js_GetScreenHeight            (duk_context* ctx);
 static duk_ret_t js_GetScreenWidth             (duk_context* ctx);
+static duk_ret_t js_GetSystemArrow             (duk_context* ctx);
+static duk_ret_t js_GetSystemDownArrow         (duk_context* ctx);
 static duk_ret_t js_GetSystemFont              (duk_context* ctx);
+static duk_ret_t js_GetSystemUpArrow           (duk_context* ctx);
 static duk_ret_t js_GetSystemWindowStyle       (duk_context* ctx);
 static duk_ret_t js_GetTime                    (duk_context* ctx);
 static duk_ret_t js_GetVersion                 (duk_context* ctx);
 static duk_ret_t js_GetVersionString           (duk_context* ctx);
 static duk_ret_t js_SetClippingRectangle       (duk_context* ctx);
 static duk_ret_t js_SetFrameRate               (duk_context* ctx);
-static duk_ret_t js_SetMaxFrameSkips           (duk_context* ctx);
 static duk_ret_t js_SetScreenSize              (duk_context* ctx);
 static duk_ret_t js_Abort                      (duk_context* ctx);
 static duk_ret_t js_Alert                      (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
 static duk_ret_t js_Assert                     (duk_context* ctx);
+static duk_ret_t js_CreateDirectory            (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode       (duk_context* ctx);
 static duk_ret_t js_CreateSurface              (duk_context* ctx);
+static duk_ret_t js_DoesFileExist              (duk_context* ctx);
 static duk_ret_t js_DebugPrint                 (duk_context* ctx);
 static duk_ret_t js_Delay                      (duk_context* ctx);
 static duk_ret_t js_DispatchScript             (duk_context* ctx);
@@ -48,20 +54,25 @@ static duk_ret_t js_ExecuteGame                (duk_context* ctx);
 static duk_ret_t js_Exit                       (duk_context* ctx);
 static duk_ret_t js_FlipScreen                 (duk_context* ctx);
 static duk_ret_t js_GarbageCollect             (duk_context* ctx);
+static duk_ret_t js_GrabImage                  (duk_context* ctx);
 static duk_ret_t js_GrabSurface                (duk_context* ctx);
 static duk_ret_t js_GradientCircle             (duk_context* ctx);
 static duk_ret_t js_GradientRectangle          (duk_context* ctx);
+static duk_ret_t js_HashRawFile                (duk_context* ctx);
 static duk_ret_t js_Line                       (duk_context* ctx);
 static duk_ret_t js_LineSeries                 (duk_context* ctx);
 static duk_ret_t js_ListenOnPort               (duk_context* ctx);
 static duk_ret_t js_LoadAnimation              (duk_context* ctx);
 static duk_ret_t js_LoadFont                   (duk_context* ctx);
+static duk_ret_t js_LoadImage                  (duk_context* ctx);
 static duk_ret_t js_LoadSound                  (duk_context* ctx);
 static duk_ret_t js_LoadSpriteset              (duk_context* ctx);
 static duk_ret_t js_LoadSurface                (duk_context* ctx);
 static duk_ret_t js_LoadWindowStyle            (duk_context* ctx);
 static duk_ret_t js_OpenAddress                (duk_context* ctx);
+static duk_ret_t js_OpenFile                   (duk_context* ctx);
 static duk_ret_t js_OpenLog                    (duk_context* ctx);
+static duk_ret_t js_OpenRawFile                (duk_context* ctx);
 static duk_ret_t js_OutlinedCircle             (duk_context* ctx);
 static duk_ret_t js_OutlinedRectangle          (duk_context* ctx);
 static duk_ret_t js_OutlinedRoundRectangle     (duk_context* ctx);
@@ -69,6 +80,9 @@ static duk_ret_t js_Point                      (duk_context* ctx);
 static duk_ret_t js_PointSeries                (duk_context* ctx);
 static duk_ret_t js_Print                      (duk_context* ctx);
 static duk_ret_t js_Rectangle                  (duk_context* ctx);
+static duk_ret_t js_RemoveDirectory            (duk_context* ctx);
+static duk_ret_t js_RemoveFile                 (duk_context* ctx);
+static duk_ret_t js_Rename                     (duk_context* ctx);
 static duk_ret_t js_RequireScript              (duk_context* ctx);
 static duk_ret_t js_RequireSystemScript        (duk_context* ctx);
 static duk_ret_t js_RestartGame                (duk_context* ctx);
@@ -83,6 +97,14 @@ static duk_ret_t js_Animation_getNumFrames     (duk_context* ctx);
 static duk_ret_t js_Animation_drawFrame        (duk_context* ctx);
 static duk_ret_t js_Animation_drawZoomedFrame  (duk_context* ctx);
 static duk_ret_t js_Animation_readNextFrame    (duk_context* ctx);
+static duk_ret_t js_File_finalize              (duk_context* ctx);
+static duk_ret_t js_File_get_numKeys           (duk_context* ctx);
+static duk_ret_t js_File_getKey                (duk_context* ctx);
+static duk_ret_t js_File_close                 (duk_context* ctx);
+static duk_ret_t js_File_flush                 (duk_context* ctx);
+static duk_ret_t js_File_read                  (duk_context* ctx);
+static duk_ret_t js_File_toString              (duk_context* ctx);
+static duk_ret_t js_File_write                 (duk_context* ctx);
 static duk_ret_t js_Font_finalize              (duk_context* ctx);
 static duk_ret_t js_Font_toString              (duk_context* ctx);
 static duk_ret_t js_Font_get_colorMask         (duk_context* ctx);
@@ -97,11 +119,33 @@ static duk_ret_t js_Font_drawText              (duk_context* ctx);
 static duk_ret_t js_Font_drawTextBox           (duk_context* ctx);
 static duk_ret_t js_Font_drawZoomedText        (duk_context* ctx);
 static duk_ret_t js_Font_wordWrapString        (duk_context* ctx);
+static duk_ret_t js_Image_finalize             (duk_context* ctx);
+static duk_ret_t js_Image_toString             (duk_context* ctx);
+static duk_ret_t js_Image_get_height           (duk_context* ctx);
+static duk_ret_t js_Image_get_width            (duk_context* ctx);
+static duk_ret_t js_Image_blit                 (duk_context* ctx);
+static duk_ret_t js_Image_blitMask             (duk_context* ctx);
+static duk_ret_t js_Image_createSurface        (duk_context* ctx);
+static duk_ret_t js_Image_rotateBlit           (duk_context* ctx);
+static duk_ret_t js_Image_rotateBlitMask       (duk_context* ctx);
+static duk_ret_t js_Image_transformBlit        (duk_context* ctx);
+static duk_ret_t js_Image_transformBlitMask    (duk_context* ctx);
+static duk_ret_t js_Image_zoomBlit             (duk_context* ctx);
+static duk_ret_t js_Image_zoomBlitMask         (duk_context* ctx);
 static duk_ret_t js_Logger_finalize            (duk_context* ctx);
 static duk_ret_t js_Logger_toString            (duk_context* ctx);
 static duk_ret_t js_Logger_beginBlock          (duk_context* ctx);
 static duk_ret_t js_Logger_endBlock            (duk_context* ctx);
 static duk_ret_t js_Logger_write               (duk_context* ctx);
+static duk_ret_t js_RawFile_finalize           (duk_context* ctx);
+static duk_ret_t js_RawFile_get_position       (duk_context* ctx);
+static duk_ret_t js_RawFile_set_position       (duk_context* ctx);
+static duk_ret_t js_RawFile_get_size           (duk_context* ctx);
+static duk_ret_t js_RawFile_close              (duk_context* ctx);
+static duk_ret_t js_RawFile_read               (duk_context* ctx);
+static duk_ret_t js_RawFile_readString         (duk_context* ctx);
+static duk_ret_t js_RawFile_toString           (duk_context* ctx);
+static duk_ret_t js_RawFile_write              (duk_context* ctx);
 static duk_ret_t js_Socket_finalize            (duk_context* ctx);
 static duk_ret_t js_Socket_get_remoteAddress   (duk_context* ctx);
 static duk_ret_t js_Socket_get_remotePort      (duk_context* ctx);
@@ -200,6 +244,9 @@ enum line_series_type
 
 static mixer_t*       s_def_mixer;
 static unsigned int   s_next_async_id = 1;
+static image_t*       s_sys_arrow = NULL;
+static image_t*       s_sys_dn_arrow = NULL;
+static image_t*       s_sys_up_arrow = NULL;
 static windowstyle_t* s_sys_winstyle;
 
 void
@@ -211,6 +258,16 @@ initialize_vanilla_api(duk_context* ctx)
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 	
+	// load system-provided images
+	if (g_sys_conf != NULL) {
+		filename = kev_read_string(g_sys_conf, "Arrow", "pointer.png");
+		s_sys_arrow = image_load(systempath(filename));
+		filename = kev_read_string(g_sys_conf, "UpArrow", "up_arrow.png");
+		s_sys_up_arrow = image_load(systempath(filename));
+		filename = kev_read_string(g_sys_conf, "DownArrow", "down_arrow.png");
+		s_sys_dn_arrow = image_load(systempath(filename));
+	}
+
 	// load system window style
 	if (g_sys_conf != NULL) {
 		filename = kev_read_string(g_sys_conf, "WindowStyle", "system.rws");
@@ -233,53 +290,63 @@ initialize_vanilla_api(duk_context* ctx)
 	// register the absolutely massive Sphere 1.x API
 	api_register_static_func(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
 	api_register_static_func(ctx, NULL, "GetClippingRectangle", js_GetClippingRectangle);
+	api_register_static_func(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
+	api_register_static_func(ctx, NULL, "GetFileList", js_GetFileList);
 	api_register_static_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
 	api_register_static_func(ctx, NULL, "GetGameManifest", js_GetGameManifest);
 	api_register_static_func(ctx, NULL, "GetGameList", js_GetGameList);
 	api_register_static_func(ctx, NULL, "GetLocalAddress", js_GetLocalAddress);
 	api_register_static_func(ctx, NULL, "GetLocalName", js_GetLocalName);
-	api_register_static_func(ctx, NULL, "GetMaxFrameSkips", js_GetMaxFrameSkips);
 	api_register_static_func(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
 	api_register_static_func(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
+	api_register_static_func(ctx, NULL, "GetSystemArrow", js_GetSystemArrow);
+	api_register_static_func(ctx, NULL, "GetSystemDownArrow", js_GetSystemDownArrow);
 	api_register_static_func(ctx, NULL, "GetSystemFont", js_GetSystemFont);
+	api_register_static_func(ctx, NULL, "GetSystemUpArrow", js_GetSystemUpArrow);
 	api_register_static_func(ctx, NULL, "GetSystemWindowStyle", js_GetSystemWindowStyle);
 	api_register_static_func(ctx, NULL, "GetTime", js_GetTime);
 	api_register_static_func(ctx, NULL, "GetVersion", js_GetVersion);
 	api_register_static_func(ctx, NULL, "GetVersionString", js_GetVersionString);
 	api_register_static_func(ctx, NULL, "SetClippingRectangle", js_SetClippingRectangle);
 	api_register_static_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
-	api_register_static_func(ctx, NULL, "SetMaxFrameSkips", js_SetMaxFrameSkips);
 	api_register_static_func(ctx, NULL, "SetScreenSize", js_SetScreenSize);
 	api_register_static_func(ctx, NULL, "Abort", js_Abort);
 	api_register_static_func(ctx, NULL, "Alert", js_Alert);
 	api_register_static_func(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
 	api_register_static_func(ctx, NULL, "Assert", js_Assert);
+	api_register_static_func(ctx, NULL, "CreateDirectory", js_CreateDirectory);
 	api_register_static_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	api_register_static_func(ctx, NULL, "CreateSurface", js_CreateSurface);
 	api_register_static_func(ctx, NULL, "DebugPrint", js_DebugPrint);
 	api_register_static_func(ctx, NULL, "Delay", js_Delay);
 	api_register_static_func(ctx, NULL, "DispatchScript", js_DispatchScript);
 	api_register_static_func(ctx, NULL, "DoEvents", js_DoEvents);
+	api_register_static_func(ctx, NULL, "DoesFileExist", js_DoesFileExist);
 	api_register_static_func(ctx, NULL, "EvaluateScript", js_EvaluateScript);
 	api_register_static_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
 	api_register_static_func(ctx, NULL, "Exit", js_Exit);
 	api_register_static_func(ctx, NULL, "ExecuteGame", js_ExecuteGame);
 	api_register_static_func(ctx, NULL, "FlipScreen", js_FlipScreen);
 	api_register_static_func(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	api_register_static_func(ctx, NULL, "GrabImage", js_GrabImage);
 	api_register_static_func(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_register_static_func(ctx, NULL, "GradientCircle", js_GradientCircle);
 	api_register_static_func(ctx, NULL, "GradientRectangle", js_GradientRectangle);
+	api_register_static_func(ctx, NULL, "HashRawFile", js_HashRawFile);
 	api_register_static_func(ctx, NULL, "Line", js_Line);
 	api_register_static_func(ctx, NULL, "LineSeries", js_LineSeries);
 	api_register_static_func(ctx, NULL, "ListenOnPort", js_ListenOnPort);
 	api_register_static_func(ctx, NULL, "LoadAnimation", js_LoadAnimation);
 	api_register_static_func(ctx, NULL, "LoadFont", js_LoadFont);
+	api_register_static_func(ctx, NULL, "LoadImage", js_LoadImage);
 	api_register_static_func(ctx, NULL, "LoadSound", js_LoadSound);
 	api_register_static_func(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
 	api_register_static_func(ctx, NULL, "LoadSurface", js_LoadSurface);
 	api_register_static_func(ctx, NULL, "LoadWindowStyle", js_LoadWindowStyle);
 	api_register_static_func(ctx, NULL, "OpenAddress", js_OpenAddress);
+	api_register_static_func(ctx, NULL, "OpenFile", js_OpenFile);
 	api_register_static_func(ctx, NULL, "OpenLog", js_OpenLog);
+	api_register_static_func(ctx, NULL, "OpenRawFile", js_OpenRawFile);
 	api_register_static_func(ctx, NULL, "OutlinedCircle", js_OutlinedCircle);
 	api_register_static_func(ctx, NULL, "OutlinedRectangle", js_OutlinedRectangle);
 	api_register_static_func(ctx, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
@@ -287,6 +354,9 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "PointSeries", js_PointSeries);
 	api_register_static_func(ctx, NULL, "Print", js_Print);
 	api_register_static_func(ctx, NULL, "Rectangle", js_Rectangle);
+	api_register_static_func(ctx, NULL, "RemoveDirectory", js_RemoveDirectory);
+	api_register_static_func(ctx, NULL, "RemoveFile", js_RemoveFile);
+	api_register_static_func(ctx, NULL, "Rename", js_Rename);
 	api_register_static_func(ctx, NULL, "RequireScript", js_RequireScript);
 	api_register_static_func(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
 	api_register_static_func(ctx, NULL, "RestartGame", js_RestartGame);
@@ -302,6 +372,16 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "Animation", "drawFrame", js_Animation_drawFrame);
 	api_register_method(ctx, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
 	api_register_method(ctx, "Animation", "readNextFrame", js_Animation_readNextFrame);
+
+	api_register_type(g_duk, "File", js_File_finalize);
+	api_register_prop(g_duk, "File", "numKeys", js_File_get_numKeys, NULL);
+	api_register_method(g_duk, "File", "getKey", js_File_getKey);
+	api_register_method(g_duk, "File", "getNumKeys", js_File_get_numKeys);
+	api_register_method(g_duk, "File", "close", js_File_close);
+	api_register_method(g_duk, "File", "flush", js_File_flush);
+	api_register_method(g_duk, "File", "read", js_File_read);
+	api_register_method(g_duk, "File", "toString", js_File_toString);
+	api_register_method(g_duk, "File", "write", js_File_write);
 
 	api_register_type(ctx, "Font", js_Font_finalize);
 	api_register_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
@@ -320,48 +400,75 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
 	api_register_method(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
 	
+	api_register_type(ctx, "Image", js_Image_finalize);
+	api_register_prop(ctx, "Image", "height", js_Image_get_height, NULL);
+	api_register_prop(ctx, "Image", "width", js_Image_get_width, NULL);
+	api_register_method(ctx, "Image", "blit", js_Image_blit);
+	api_register_method(ctx, "Image", "blitMask", js_Image_blitMask);
+	api_register_method(ctx, "Image", "createSurface", js_Image_createSurface);
+	api_register_method(ctx, "Image", "rotateBlit", js_Image_rotateBlit);
+	api_register_method(ctx, "Image", "rotateBlitMask", js_Image_rotateBlitMask);
+	api_register_method(ctx, "Image", "toString", js_Image_toString);
+	api_register_method(ctx, "Image", "transformBlit", js_Image_transformBlit);
+	api_register_method(ctx, "Image", "transformBlitMask", js_Image_transformBlitMask);
+	api_register_method(ctx, "Image", "zoomBlit", js_Image_zoomBlit);
+	api_register_method(ctx, "Image", "zoomBlitMask", js_Image_zoomBlitMask);
+
 	api_register_type(ctx, "Logger", js_Logger_finalize);
 	api_register_method(ctx, "Logger", "toString", js_Logger_toString);
 	api_register_method(ctx, "Logger", "beginBlock", js_Logger_beginBlock);
 	api_register_method(ctx, "Logger", "endBlock", js_Logger_endBlock);
 	api_register_method(ctx, "Logger", "write", js_Logger_write);
 
-	api_register_type(g_duk, "Socket", js_Socket_finalize);
-	api_register_method(g_duk, "Socket", "toString", js_Socket_toString);
-	api_register_method(g_duk, "Socket", "isConnected", js_Socket_isConnected);
-	api_register_method(g_duk, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
-	api_register_method(g_duk, "Socket", "close", js_Socket_close);
-	api_register_method(g_duk, "Socket", "read", js_Socket_read);
-	api_register_method(g_duk, "Socket", "readString", js_Socket_readString);
-	api_register_method(g_duk, "Socket", "write", js_Socket_write);
+	api_register_type(g_duk, "RawFile", js_RawFile_finalize);
+	api_register_prop(g_duk, "RawFile", "length", js_RawFile_get_size, NULL);
+	api_register_prop(g_duk, "RawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
+	api_register_prop(g_duk, "RawFile", "size", js_RawFile_get_size, NULL);
+	api_register_method(g_duk, "RawFile", "getPosition", js_RawFile_get_position);
+	api_register_method(g_duk, "RawFile", "setPosition", js_RawFile_set_position);
+	api_register_method(g_duk, "RawFile", "getSize", js_RawFile_get_size);
+	api_register_method(g_duk, "RawFile", "close", js_RawFile_close);
+	api_register_method(g_duk, "RawFile", "read", js_RawFile_read);
+	api_register_method(g_duk, "RawFile", "readString", js_RawFile_readString);
+	api_register_method(g_duk, "RawFile", "toString", js_RawFile_toString);
+	api_register_method(g_duk, "RawFile", "write", js_RawFile_write);
 
-	api_register_type(g_duk, "Sound", js_Sound_finalize);
-	api_register_prop(g_duk, "Sound", "length", js_Sound_get_length, NULL);
-	api_register_prop(g_duk, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
-	api_register_prop(g_duk, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
-	api_register_prop(g_duk, "Sound", "playing", js_Sound_get_playing, NULL);
-	api_register_prop(g_duk, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
-	api_register_prop(g_duk, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
-	api_register_prop(g_duk, "Sound", "seekable", js_Sound_get_seekable, NULL);
-	api_register_prop(g_duk, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
-	api_register_method(g_duk, "Sound", "isPlaying", js_Sound_get_playing);
-	api_register_method(g_duk, "Sound", "isSeekable", js_Sound_get_seekable);
-	api_register_method(g_duk, "Sound", "getLength", js_Sound_get_length);
-	api_register_method(g_duk, "Sound", "getPan", js_Sound_get_pan);
-	api_register_method(g_duk, "Sound", "getPitch", js_Sound_get_pitch);
-	api_register_method(g_duk, "Sound", "getPosition", js_Sound_get_position);
-	api_register_method(g_duk, "Sound", "getRepeat", js_Sound_get_repeat);
-	api_register_method(g_duk, "Sound", "getVolume", js_Sound_getVolume);
-	api_register_method(g_duk, "Sound", "setPan", js_Sound_set_pan);
-	api_register_method(g_duk, "Sound", "setPitch", js_Sound_set_pitch);
-	api_register_method(g_duk, "Sound", "setPosition", js_Sound_set_position);
-	api_register_method(g_duk, "Sound", "setRepeat", js_Sound_set_repeat);
-	api_register_method(g_duk, "Sound", "setVolume", js_Sound_setVolume);
-	api_register_method(g_duk, "Sound", "pause", js_Sound_pause);
-	api_register_method(g_duk, "Sound", "play", js_Sound_play);
-	api_register_method(g_duk, "Sound", "reset", js_Sound_reset);
-	api_register_method(g_duk, "Sound", "stop", js_Sound_stop);
-	api_register_method(g_duk, "Sound", "toString", js_Sound_toString);
+	api_register_type(ctx, "Socket", js_Socket_finalize);
+	api_register_method(ctx, "Socket", "toString", js_Socket_toString);
+	api_register_method(ctx, "Socket", "isConnected", js_Socket_isConnected);
+	api_register_method(ctx, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	api_register_method(ctx, "Socket", "close", js_Socket_close);
+	api_register_method(ctx, "Socket", "read", js_Socket_read);
+	api_register_method(ctx, "Socket", "readString", js_Socket_readString);
+	api_register_method(ctx, "Socket", "write", js_Socket_write);
+
+	api_register_type(ctx, "Sound", js_Sound_finalize);
+	api_register_prop(ctx, "Sound", "length", js_Sound_get_length, NULL);
+	api_register_prop(ctx, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
+	api_register_prop(ctx, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
+	api_register_prop(ctx, "Sound", "playing", js_Sound_get_playing, NULL);
+	api_register_prop(ctx, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
+	api_register_prop(ctx, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
+	api_register_prop(ctx, "Sound", "seekable", js_Sound_get_seekable, NULL);
+	api_register_prop(ctx, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
+	api_register_method(ctx, "Sound", "isPlaying", js_Sound_get_playing);
+	api_register_method(ctx, "Sound", "isSeekable", js_Sound_get_seekable);
+	api_register_method(ctx, "Sound", "getLength", js_Sound_get_length);
+	api_register_method(ctx, "Sound", "getPan", js_Sound_get_pan);
+	api_register_method(ctx, "Sound", "getPitch", js_Sound_get_pitch);
+	api_register_method(ctx, "Sound", "getPosition", js_Sound_get_position);
+	api_register_method(ctx, "Sound", "getRepeat", js_Sound_get_repeat);
+	api_register_method(ctx, "Sound", "getVolume", js_Sound_getVolume);
+	api_register_method(ctx, "Sound", "setPan", js_Sound_set_pan);
+	api_register_method(ctx, "Sound", "setPitch", js_Sound_set_pitch);
+	api_register_method(ctx, "Sound", "setPosition", js_Sound_set_position);
+	api_register_method(ctx, "Sound", "setRepeat", js_Sound_set_repeat);
+	api_register_method(ctx, "Sound", "setVolume", js_Sound_setVolume);
+	api_register_method(ctx, "Sound", "pause", js_Sound_pause);
+	api_register_method(ctx, "Sound", "play", js_Sound_play);
+	api_register_method(ctx, "Sound", "reset", js_Sound_reset);
+	api_register_method(ctx, "Sound", "stop", js_Sound_stop);
+	api_register_method(ctx, "Sound", "toString", js_Sound_toString);
 
 	api_register_type(ctx, "Spriteset", js_Spriteset_finalize);
 	api_register_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
@@ -401,12 +508,12 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "Surface", "save", js_Surface_save);
 	api_register_method(ctx, "Surface", "toString", js_Surface_toString);
 
-	api_register_type(g_duk, "WindowStyle", js_WindowStyle_finalize);
-	api_register_prop(g_duk, "WindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
-	api_register_method(g_duk, "WindowStyle", "toString", js_WindowStyle_toString);
-	api_register_method(g_duk, "WindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
-	api_register_method(g_duk, "WindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
-	api_register_method(g_duk, "WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
+	api_register_type(ctx, "WindowStyle", js_WindowStyle_finalize);
+	api_register_prop(ctx, "WindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
+	api_register_method(ctx, "WindowStyle", "toString", js_WindowStyle_toString);
+	api_register_method(ctx, "WindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
+	api_register_method(ctx, "WindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
+	api_register_method(ctx, "WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
 	
 	// blend modes for Surfaces
 	api_register_const(ctx, NULL, "BLEND", BLEND_BLEND);
@@ -565,6 +672,58 @@ js_GetClippingRectangle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetDirectoryList(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* dirname = n_args >= 1
+		? duk_require_path(ctx, 0, NULL, true)
+		: "";
+
+	vector_t*  list;
+	lstring_t* *p_filename;
+
+	iter_t iter;
+
+	list = list_filenames(g_fs, dirname, NULL, true);
+	duk_push_array(ctx);
+	iter = vector_enum(list);
+	while (p_filename = vector_next(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		lstr_free(*p_filename);
+	}
+	vector_free(list);
+	return 1;
+}
+
+static duk_ret_t
+js_GetFileList(duk_context* ctx)
+{
+	const char* directory_name;
+	vector_t*   list;
+	int         num_args;
+
+	iter_t iter;
+	lstring_t* *p_filename;
+
+	num_args = duk_get_top(ctx);
+	directory_name = num_args >= 1
+		? duk_require_path(ctx, 0, NULL, true)
+		: "save";
+
+	list = list_filenames(g_fs, directory_name, NULL, false);
+	duk_push_array(ctx);
+	iter = vector_enum(list);
+	while (p_filename = vector_next(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		lstr_free(*p_filename);
+	}
+	vector_free(list);
+	return 1;
+}
+
+static duk_ret_t
 js_GetFrameRate(duk_context* ctx)
 {
 	duk_push_int(ctx, g_framerate);
@@ -635,13 +794,6 @@ js_GetLocalName(duk_context* ctx)
 }
 
 static duk_ret_t
-js_GetMaxFrameSkips(duk_context* ctx)
-{
-	duk_push_int(ctx, screen_get_frameskip(g_screen));
-	return 1;
-}
-
-static duk_ret_t
 js_GetScreenHeight(duk_context* ctx)
 {
 	duk_push_int(ctx, g_res_y);
@@ -656,9 +808,36 @@ js_GetScreenWidth(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetSystemArrow(duk_context* ctx)
+{
+	if (s_sys_arrow == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system arrow image");
+	duk_push_sphere_obj(ctx, "Image", image_ref(s_sys_arrow));
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemDownArrow(duk_context* ctx)
+{
+	if (s_sys_dn_arrow == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system down arrow image");
+	duk_push_sphere_obj(ctx, "Image", image_ref(s_sys_dn_arrow));
+	return 1;
+}
+
+static duk_ret_t
 js_GetSystemFont(duk_context* ctx)
 {
 	duk_push_sphere_font(ctx, g_sys_font);
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemUpArrow(duk_context* ctx)
+{
+	if (s_sys_up_arrow == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system up arrow image");
+	duk_push_sphere_obj(ctx, "Image", image_ref(s_sys_up_arrow));
 	return 1;
 }
 
@@ -713,17 +892,6 @@ js_SetFrameRate(duk_context* ctx)
 	if (framerate < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): framerate must be positive (got: %d)", framerate);
 	g_framerate = framerate;
-	return 0;
-}
-
-static duk_ret_t
-js_SetMaxFrameSkips(duk_context* ctx)
-{
-	int max_skips = duk_require_int(ctx, 0);
-
-	if (max_skips < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetMaxFrameSkips(): value cannot be negative (%d)", max_skips);
-	screen_set_frameskip(g_screen, max_skips);
 	return 0;
 }
 
@@ -863,6 +1031,17 @@ js_Assert(duk_context* ctx)
 }
 
 static duk_ret_t
+js_CreateDirectory(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, "save", true);
+	if (!sfs_mkdir(g_fs, name, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to create directory `%s`", name);
+	return 0;
+}
+
+static duk_ret_t
 js_CreateStringFromCode(duk_context* ctx)
 {
 	int code = duk_require_int(ctx, 0);
@@ -948,6 +1127,16 @@ js_DoEvents(duk_context* ctx)
 }
 
 static duk_ret_t
+js_DoesFileExist(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, true);
+	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
+	return 1;
+}
+
+static duk_ret_t
 js_EvaluateScript(duk_context* ctx)
 {
 	const char* filename;
@@ -1017,6 +1206,22 @@ js_GarbageCollect(duk_context* ctx)
 	duk_gc(ctx, 0x0);
 	duk_gc(ctx, 0x0);
 	return 0;
+}
+
+static duk_ret_t
+js_GrabImage(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	int w = duk_require_int(ctx, 2);
+	int h = duk_require_int(ctx, 3);
+
+	image_t* image;
+
+	if (!(image = screen_grab(g_screen, x, y, w, h)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): unable to grab backbuffer image");
+	duk_push_sphere_obj(ctx, "Image", image);
+	return 1;
 }
 
 static duk_ret_t
@@ -1093,6 +1298,21 @@ js_GradientRectangle(duk_context* ctx)
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	}
 	return 0;
+}
+
+static duk_ret_t
+js_HashRawFile(duk_context* ctx)
+{
+	sfs_file_t* file;
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, true);
+	file = sfs_fopen(g_fs, filename, "other", "rb");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open `%s` for reading");
+	sfs_fclose(file);
+	// TODO: implement raw file hashing
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "function is not yet implemented");
 }
 
 static duk_ret_t
@@ -1193,6 +1413,19 @@ js_LoadFont(duk_context* ctx)
 }
 
 static duk_ret_t
+js_LoadImage(duk_context* ctx)
+{
+	const char* filename;
+	image_t*    image;
+
+	filename = duk_require_path(ctx, 0, "images", true);
+	if (!(image = image_load(filename)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
+	duk_push_sphere_obj(ctx, "Image", image);
+	return 1;
+}
+
+static duk_ret_t
 js_LoadSound(duk_context* ctx)
 {
 	const char* filename;
@@ -1265,6 +1498,20 @@ js_OpenAddress(duk_context* ctx)
 }
 
 static duk_ret_t
+js_OpenFile(duk_context* ctx)
+{
+	kevfile_t*  file;
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "save", true);
+
+	if (!(file = kev_open(g_fs, filename, true)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
+	duk_push_sphere_obj(ctx, "File", file);
+	return 1;
+}
+
+static duk_ret_t
 js_OpenLog(duk_context* ctx)
 {
 	const char* filename;
@@ -1274,6 +1521,28 @@ js_OpenLog(duk_context* ctx)
 	if (!(logger = log_open(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
 	duk_push_sphere_obj(ctx, "Logger", logger);
+	return 1;
+}
+
+static duk_ret_t
+js_OpenRawFile(duk_context* ctx)
+{
+	sfs_file_t* file;
+	const char* filename;
+	int         num_args;
+	bool        writable;
+
+	num_args = duk_get_top(ctx);
+	filename = duk_require_path(ctx, 0, "other", true);
+	writable = num_args >= 2
+		? duk_require_boolean(ctx, 1)
+		: false;
+
+	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file `%s` for %s",
+			filename, writable ? "writing" : "reading");
+	duk_push_sphere_obj(ctx, "RawFile", file);
 	return 1;
 }
 
@@ -1397,6 +1666,41 @@ js_Rectangle(duk_context* ctx)
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveDirectory(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, "save", true);
+	if (!sfs_rmdir(g_fs, name, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to remove directory `%s`", name);
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveFile(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "save", true);
+	if (!sfs_unlink(g_fs, filename, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): unable to delete file `%s`", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_Rename(duk_context* ctx)
+{
+	const char* name1;
+	const char* name2;
+
+	name1 = duk_require_path(ctx, 0, "save", true);
+	name2 = duk_require_path(ctx, 1, "save", true);
+	if (!sfs_rename(g_fs, name1, name2, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
 
@@ -1607,6 +1911,136 @@ js_Animation_readNextFrame(duk_context* ctx)
 }
 
 static duk_ret_t
+js_File_finalize(duk_context* ctx)
+{
+	kevfile_t* file;
+
+	file = duk_require_sphere_obj(ctx, 0, "File");
+	kev_close(file);
+	return 0;
+}
+
+static duk_ret_t
+js_File_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object file]");
+	return 1;
+}
+
+static duk_ret_t
+js_File_get_numKeys(duk_context* ctx)
+{
+	kevfile_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file was closed");
+	duk_push_int(ctx, kev_num_keys(file));
+	return 1;
+}
+
+static duk_ret_t
+js_File_getKey(duk_context* ctx)
+{
+	int index = duk_require_int(ctx, 0);
+
+	kevfile_t*  file;
+	const char* key;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): file was closed");
+	if (key = kev_get_key(file, index))
+		duk_push_string(ctx, key);
+	else
+		duk_push_null(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_File_flush(duk_context* ctx)
+{
+	kevfile_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file was closed");
+	kev_save(file);
+	return 0;
+}
+
+static duk_ret_t
+js_File_close(duk_context* ctx)
+{
+	kevfile_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
+	duk_pop(ctx);
+	kev_close(file);
+	duk_push_this(ctx);
+	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_File_read(duk_context* ctx)
+{
+	const char* key = duk_to_string(ctx, 0);
+
+	bool        def_bool;
+	double      def_num;
+	const char* def_string;
+	kevfile_t*  file;
+	const char* value;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): file was closed");
+	switch (duk_get_type(ctx, 1)) {
+	case DUK_TYPE_BOOLEAN:
+		def_bool = duk_get_boolean(ctx, 1);
+		duk_push_boolean(ctx, kev_read_bool(file, key, def_bool));
+		break;
+	case DUK_TYPE_NUMBER:
+		def_num = duk_get_number(ctx, 1);
+		duk_push_number(ctx, kev_read_float(file, key, def_num));
+		break;
+	default:
+		def_string = duk_to_string(ctx, 1);
+		value = kev_read_string(file, key, def_string);
+		duk_push_string(ctx, value);
+		break;
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_File_write(duk_context* ctx)
+{
+	const char* key = duk_to_string(ctx, 0);
+
+	kevfile_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "File");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): file was closed");
+	kev_write_string(file, key, duk_to_string(ctx, 1));
+	return 0;
+}
+
+static duk_ret_t
 js_Font_finalize(duk_context* ctx)
 {
 	font_t* font;
@@ -1633,7 +2067,7 @@ js_Font_getCharacterImage(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	cp = duk_require_uint(ctx, 0);
 
-	duk_push_sphere_image(ctx, font_glyph(font, cp));
+	duk_push_sphere_obj(ctx, "Image", image_ref(font_glyph(font, cp)));
 	return 1;
 }
 
@@ -1674,7 +2108,7 @@ static duk_ret_t
 js_Font_setCharacterImage(duk_context* ctx)
 {
 	int cp = duk_require_int(ctx, 0);
-	image_t* image = duk_require_sphere_image(ctx, 1);
+	image_t* image = duk_require_sphere_obj(ctx, 1, "Image");
 
 	font_t* font;
 
@@ -1853,6 +2287,271 @@ js_Font_wordWrapString(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Image_finalize(duk_context* ctx)
+{
+	image_t* image;
+
+	image = duk_require_sphere_obj(ctx, 0, "Image");
+	image_free(image);
+	return 0;
+}
+
+static duk_ret_t
+js_Image_get_height(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	duk_pop(ctx);
+	duk_push_int(ctx, image_height(image));
+	return 1;
+}
+
+static duk_ret_t
+js_Image_get_width(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	duk_pop(ctx);
+	duk_push_int(ctx, image_width(image));
+	return 1;
+}
+
+static duk_ret_t
+js_Image_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object image]");
+	return 1;
+}
+
+static duk_ret_t
+js_Image_blit(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	duk_pop(ctx);
+	if (!screen_is_skipframe(g_screen)) al_draw_bitmap(image_bitmap(image), x, y, 0x0);
+	return 0;
+}
+
+static duk_ret_t
+js_Image_blitMask(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	color_t mask = duk_require_sphere_color(ctx, 2);
+
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	duk_pop(ctx);
+	if (!screen_is_skipframe(g_screen)) al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
+	return 0;
+}
+
+static duk_ret_t
+js_Image_createSurface(duk_context* ctx)
+{
+	image_t* image;
+	image_t* new_image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	duk_pop(ctx);
+	if ((new_image = image_clone(image)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): unable to create new surface image");
+	duk_push_sphere_obj(ctx, "Surface", new_image);
+	return 1;
+}
+
+static duk_ret_t
+js_Image_rotateBlit(duk_context* ctx)
+{
+	float    angle;
+	int      height;
+	image_t* image;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	angle = duk_require_number(ctx, 2);
+
+	if (!screen_is_skipframe(g_screen)) {
+		width = image_width(image);
+		height = image_height(image);
+		al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2,
+			x + width / 2, y + height / 2, angle, 0x0);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Image_rotateBlitMask(duk_context* ctx)
+{
+	int      height;
+	image_t* image;
+	int      width;
+	int      x;
+	int      y;
+	float    angle;
+	color_t  mask;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	angle = duk_require_number(ctx, 2);
+	mask = duk_require_sphere_color(ctx, 3);
+
+	if (!screen_is_skipframe(g_screen)) {
+		width = image_width(image);
+		height = image_height(image);
+		al_draw_tinted_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
+			width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Image_transformBlit(duk_context* ctx)
+{
+	int           height;
+	image_t*      image;
+	ALLEGRO_COLOR mask;
+	int           width;
+	int           x1, y1;
+	int           x2, y2;
+	int           x3, y3;
+	int           x4, y4;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	x1 = duk_require_int(ctx, 0);
+	y1 = duk_require_int(ctx, 1);
+	x2 = duk_require_int(ctx, 2);
+	y2 = duk_require_int(ctx, 3);
+	x3 = duk_require_int(ctx, 4);
+	y3 = duk_require_int(ctx, 5);
+	x4 = duk_require_int(ctx, 6);
+	y4 = duk_require_int(ctx, 7);
+
+	width = image_width(image);
+	height = image_height(image);
+	mask = al_map_rgba(255, 255, 255, 255);
+	ALLEGRO_VERTEX v[] = {
+		{ x1 + 0.5, y1 + 0.5, 0, 0, 0, mask },
+		{ x2 + 0.5, y2 + 0.5, 0, width, 0, mask },
+		{ x4 + 0.5, y4 + 0.5, 0, 0, height, mask },
+		{ x3 + 0.5, y3 + 0.5, 0, width, height, mask }
+	};
+	if (!screen_is_skipframe(g_screen))
+		al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	return 0;
+}
+
+static duk_ret_t
+js_Image_transformBlitMask(duk_context* ctx)
+{
+	int      height;
+	image_t* image;
+	color_t  mask;
+	int      width;
+	int      x1, y1;
+	int      x2, y2;
+	int      x3, y3;
+	int      x4, y4;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	x1 = duk_require_int(ctx, 0);
+	y1 = duk_require_int(ctx, 1);
+	x2 = duk_require_int(ctx, 2);
+	y2 = duk_require_int(ctx, 3);
+	x3 = duk_require_int(ctx, 4);
+	y3 = duk_require_int(ctx, 5);
+	x4 = duk_require_int(ctx, 6);
+	y4 = duk_require_int(ctx, 7);
+	mask = duk_require_sphere_color(ctx, 8);
+
+	width = image_width(image);
+	height = image_height(image);
+	ALLEGRO_VERTEX v[] = {
+		{ x1 + 0.5, y1 + 0.5, 0, 0, 0, nativecolor(mask) },
+		{ x2 + 0.5, y2 + 0.5, 0, width, 0, nativecolor(mask) },
+		{ x4 + 0.5, y4 + 0.5, 0, 0, height, nativecolor(mask) },
+		{ x3 + 0.5, y3 + 0.5, 0, width, height, nativecolor(mask) }
+	};
+	if (!screen_is_skipframe(g_screen))
+		al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	return 0;
+}
+
+static duk_ret_t
+js_Image_zoomBlit(duk_context* ctx)
+{
+	int      height;
+	image_t* image;
+	float    scale;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	scale = duk_require_number(ctx, 2);
+
+	if (!screen_is_skipframe(g_screen)) {
+		width = image_width(image);
+		height = image_height(image);
+		al_draw_scaled_bitmap(image_bitmap(image), 0, 0, width, height, 
+			x, y, width * scale, height * scale, 0x0);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Image_zoomBlitMask(duk_context* ctx)
+{
+	int      height;
+	image_t* image;
+	color_t  mask;
+	float    scale;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	scale = duk_require_number(ctx, 2);
+	mask = duk_require_sphere_color(ctx, 3);
+
+	if (!screen_is_skipframe(g_screen)) {
+		width = image_width(image);
+		height = image_height(image);
+		al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
+			0, 0, width, height, x, y, width * scale, height * scale, 0x0);
+	}
+	return 0;
+}
+
+static duk_ret_t
 js_Logger_finalize(duk_context* ctx)
 {
 	logger_t* logger;
@@ -1904,6 +2603,180 @@ js_Logger_write(duk_context* ctx)
 	duk_push_this(ctx);
 	logger = duk_require_sphere_obj(ctx, -1, "Logger");
 	log_write(logger, NULL, text);
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_finalize(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	file = duk_require_sphere_obj(ctx, 0, "RawFile");
+	if (file != NULL) sfs_fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object rawfile]");
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_get_position(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
+	duk_push_int(ctx, sfs_ftell(file));
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_set_position(duk_context* ctx)
+{
+	int new_pos = duk_require_int(ctx, 0);
+
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
+	if (!sfs_fseek(file, new_pos, SEEK_SET))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_get_size(duk_context* ctx)
+{
+	sfs_file_t* file;
+	long  file_pos;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size: file was closed");
+	file_pos = sfs_ftell(file);
+	sfs_fseek(file, 0, SEEK_END);
+	duk_push_int(ctx, sfs_ftell(file));
+	sfs_fseek(file, file_pos, SEEK_SET);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_close(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_push_pointer(ctx, NULL);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file was closed");
+	sfs_fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_read(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	bytearray_t* array;
+	sfs_file_t*        file;
+	long         pos;
+	void*        read_buffer;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
+	if (n_args < 1) {  // if no arguments, read entire file back to front
+		pos = sfs_ftell(file);
+		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
+		sfs_fseek(file, 0, SEEK_SET);
+	}
+	if (num_bytes <= 0 || num_bytes > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): read size out of range (%u)", num_bytes);
+	if (!(read_buffer = malloc(num_bytes)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to allocate buffer for file read");
+	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
+	if (n_args < 1)  // reset file position after whole-file read
+		sfs_fseek(file, pos, SEEK_SET);
+	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to create byte array");
+	duk_push_sphere_bytearray(ctx, array);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_readString(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	sfs_file_t* file;
+	long  pos;
+	void* read_buffer;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
+	if (n_args < 1) {  // if no arguments, read entire file back to front
+		pos = sfs_ftell(file);
+		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
+		sfs_fseek(file, 0, SEEK_SET);
+	}
+	if (num_bytes <= 0 || num_bytes > INT_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): read size out of range (%i)", num_bytes);
+	if (!(read_buffer = malloc(num_bytes)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to allocate buffer for file read");
+	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
+	if (n_args < 1)  // reset file position after whole-file read
+		sfs_fseek(file, pos, SEEK_SET);
+	duk_push_lstring(ctx, read_buffer, num_bytes);
+	return 1;
+}
+
+static duk_ret_t
+js_RawFile_write(duk_context* ctx)
+{
+	bytearray_t* array;
+	const void*  data;
+	sfs_file_t*  file;
+	duk_size_t   write_size;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	duk_pop(ctx);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): file was closed");
+	if (duk_is_string(ctx, 0))
+		data = duk_get_lstring(ctx, 0, &write_size);
+	else if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
+		array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+		data = get_bytearray_buffer(array);
+		write_size = get_bytearray_size(array);
+	}
+	else {
+		data = duk_require_buffer_data(ctx, 0, &write_size);
+	}
+	if (sfs_fwrite(data, 1, write_size, file) != write_size)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): error writing to file");
 	return 0;
 }
 
@@ -2358,7 +3231,7 @@ js_Spriteset_clone(duk_context* ctx)
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
+
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): unable to create new spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
@@ -2375,22 +3248,23 @@ js_Spriteset_get_image(duk_context* ctx)
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
-	duk_push_sphere_image(ctx, get_spriteset_image(spriteset, index));
+
+	duk_push_sphere_obj(ctx, "Image", image_ref(get_spriteset_image(spriteset, index)));
 	return 1;
 }
 
 static duk_ret_t
 js_Spriteset_set_image(duk_context* ctx)
 {
-	image_t* image = duk_require_sphere_image(ctx, 0);
-	duk_uarridx_t index = duk_to_int(ctx, 1);
-
-	spriteset_t* spriteset;
+	image_t*      image;
+	duk_uarridx_t index;
+	spriteset_t*  spriteset;
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	duk_pop(ctx);
+	image = duk_require_sphere_obj(ctx, 0, "Image");
+	index = duk_require_int(ctx, 1);
+
 	set_spriteset_image(spriteset, index, image);
 	return 0;
 }
@@ -2675,8 +3549,7 @@ js_Surface_createImage(duk_context* ctx)
 
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:createImage(): unable to create image");
-	duk_push_sphere_image(ctx, new_image);
-	image_free(new_image);
+	duk_push_sphere_obj(ctx, "Image", new_image);
 	return 1;
 }
 

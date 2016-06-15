@@ -2009,7 +2009,7 @@ js_GetTileImage(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileImage(): map engine not running");
 	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileImage(): invalid tile index (%d)", tile_index);
-	duk_push_sphere_image(ctx, tileset_get_image(s_map->tileset, tile_index));
+	duk_push_sphere_obj(ctx, "Image", image_ref(tileset_get_image(s_map->tileset, tile_index)));
 	return 1;
 }
 
@@ -2490,23 +2490,25 @@ js_SetTileDelay(duk_context* ctx)
 static duk_ret_t
 js_SetTileImage(duk_context* ctx)
 {
-	int tile_index = duk_require_int(ctx, 0);
-	image_t* image = duk_require_sphere_image(ctx, 1);
+	image_t* image;
+	int      image_h;
+	int      image_w;
+	int      tile_index;
+	int      tile_h;
+	int      tile_w;
 
-	int c_tiles;
-	int image_w, image_h;
-	int tile_w, tile_h;
+	tile_index = duk_require_int(ctx, 0);
+	image = duk_require_sphere_obj(ctx, 1, "Image");
 
 	if (!is_map_engine_running())
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetTileImage(): map engine not running");
-	c_tiles = tileset_len(s_map->tileset);
-	if (tile_index < 0 || tile_index >= c_tiles)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTileImage(): invalid tile index (%d)", tile_index);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "map engine is not running");
+	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	image_w = image_width(image);
 	image_h = image_height(image);
 	if (image_w != tile_w || image_h != tile_h)
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "SetTileImage(): image dimensions (%dx%d) don't match tile dimensions (%dx%d)", image_w, image_h, tile_w, tile_h);
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "image dimensions don't match tile dimensions");
 	tileset_set_image(s_map->tileset, tile_index, image);
 	return 0;
 }

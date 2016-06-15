@@ -1949,7 +1949,7 @@ js_new_Image(duk_context* ctx)
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		if (buffer_size < width * height * sizeof(color_t))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "buffer is too small to describe a %dx%d image", width, height);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "buffer is too small to describe %dx%d image", width, height);
 		if (!(image = image_new(width, height)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create image");
 		if (!(lock = image_lock(image))) {

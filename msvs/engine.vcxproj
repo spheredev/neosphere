@@ -387,7 +387,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\engine\color.c" />
     <ClCompile Include="..\src\engine\console.c" />
     <ClCompile Include="..\src\engine\debugger.c" />
-    <ClCompile Include="..\src\engine\file.c" />
+    <ClCompile Include="..\src\engine\kevfile.c" />
     <ClCompile Include="..\src\engine\font.c" />
     <ClCompile Include="..\src\engine\galileo.c" />
     <ClCompile Include="..\src\engine\geometry.c" />
@@ -437,7 +437,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\engine\console.h" />
     <ClInclude Include="..\src\engine\debugger.h" />
     <ClInclude Include="..\src\engine\duk_custom.h" />
-    <ClInclude Include="..\src\engine\file.h" />
+    <ClInclude Include="..\src\engine\kevfile.h" />
     <ClInclude Include="..\src\engine\font.h" />
     <ClInclude Include="..\src\engine\geometry.h" />
     <ClInclude Include="..\src\engine\image.h" />

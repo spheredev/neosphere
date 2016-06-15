@@ -3,13 +3,12 @@
 
 #include "api.h"
 
-static duk_ret_t js_CreateStringFromByteArray (duk_context* ctx);
-static duk_ret_t js_HashByteArray             (duk_context* ctx);
 static duk_ret_t js_CreateByteArray           (duk_context* ctx);
 static duk_ret_t js_CreateByteArrayFromString (duk_context* ctx);
+static duk_ret_t js_CreateStringFromByteArray (duk_context* ctx);
 static duk_ret_t js_DeflateByteArray          (duk_context* ctx);
+static duk_ret_t js_HashByteArray             (duk_context* ctx);
 static duk_ret_t js_InflateByteArray          (duk_context* ctx);
-static duk_ret_t js_new_ByteArray             (duk_context* ctx);
 static duk_ret_t js_ByteArray_finalize        (duk_context* ctx);
 static duk_ret_t js_ByteArray_get_length      (duk_context* ctx);
 static duk_ret_t js_ByteArray_toString        (duk_context* ctx);
@@ -282,14 +281,14 @@ slice_bytearray(bytearray_t* array, int start, int length)
 void
 init_bytearray_api(void)
 {
-	// core ByteArray API
-	api_register_method(g_duk, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
-	api_register_method(g_duk, NULL, "HashByteArray", js_HashByteArray);
+	api_register_static_func(g_duk, NULL, "CreateByteArray", js_CreateByteArray);
+	api_register_static_func(g_duk, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
+	api_register_static_func(g_duk, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
+	api_register_static_func(g_duk, NULL, "DeflateByteArray", js_DeflateByteArray);
+	api_register_static_func(g_duk, NULL, "HashByteArray", js_HashByteArray);
+	api_register_static_func(g_duk, NULL, "InflateByteArray", js_InflateByteArray);
 
-	// ByteArray object
-	api_register_method(g_duk, NULL, "CreateByteArray", js_CreateByteArray);
-	api_register_method(g_duk, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
-	api_register_ctor(g_duk, "ByteArray", js_new_ByteArray, js_ByteArray_finalize);
+	api_register_type(g_duk, "ByteArray", js_ByteArray_finalize);
 	api_register_prop(g_duk, "ByteArray", "length", js_ByteArray_get_length, NULL);
 	api_register_prop(g_duk, "ByteArray", "size", js_ByteArray_get_length, NULL);
 	api_register_method(g_duk, "ByteArray", "toString", js_ByteArray_toString);
@@ -328,9 +327,44 @@ duk_require_sphere_bytearray(duk_context* ctx, duk_idx_t index)
 }
 
 static duk_ret_t
+js_CreateByteArray(duk_context* ctx)
+{
+	bytearray_t* array;
+	int          size;
+
+	size = duk_require_int(ctx, 0);
+
+	if (size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "size cannot be negative");
+	if (!(array = new_bytearray(size)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+	duk_push_sphere_bytearray(ctx, array);
+	free_bytearray(array);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateByteArrayFromString(duk_context* ctx)
+{
+	bytearray_t* array;
+	lstring_t*   string;
+
+	string = duk_require_lstring_t(ctx, 0);
+
+	if (!(array = bytearray_from_lstring(string)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+	lstr_free(string);
+	duk_push_sphere_bytearray(ctx, array);
+	free_bytearray(array);
+	return 1;
+}
+
+static duk_ret_t
 js_CreateStringFromByteArray(duk_context* ctx)
 {
-	bytearray_t* array = duk_require_sphere_bytearray(ctx, 0);
+	bytearray_t* array;
+	
+	array = duk_require_sphere_bytearray(ctx, 0);
 
 	duk_push_lstring(ctx, (char*)array->buffer, array->size);
 	return 1;
@@ -359,7 +393,7 @@ js_HashByteArray(duk_context* ctx)
 	duk_require_sphere_bytearray(ctx, 0);
 	
 	// TODO: implement byte array hashing
-	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "HashByteArray(): function is not implemented");
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "function is not implemented");
 }
 
 static duk_ret_t
@@ -376,51 +410,6 @@ js_InflateByteArray(duk_context* ctx)
 	if (!(new_array = inflate_bytearray(array, max_size)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateByteArray(duk_context* ctx)
-{
-	duk_require_number(ctx, 0);
-
-	js_new_ByteArray(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateByteArrayFromString(duk_context* ctx)
-{
-	duk_require_string(ctx, 0);
-
-	js_new_ByteArray(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_new_ByteArray(duk_context* ctx)
-{
-	bytearray_t* array;
-	lstring_t*   string;
-	int          size;
-
-	if (duk_is_string(ctx, 0)) {
-		string = duk_require_lstring_t(ctx, 0);
-		if (lstr_len(string) > INT_MAX)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): input string is too long");
-		if (!(array = bytearray_from_lstring(string)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): unable to create byte array from string");
-		lstr_free(string);
-	}
-	else {
-		size = duk_require_int(ctx, 0);
-		if (size < 0)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray(): size must not be negative (got: %d)", size);
-		if (!(array = new_bytearray(size)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray(): unable to create new byte array");
-	}
-	duk_push_sphere_bytearray(ctx, array);
-	free_bytearray(array);
 	return 1;
 }
 

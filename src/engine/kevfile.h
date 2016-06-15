@@ -15,6 +15,4 @@ void        kev_write_bool   (kevfile_t* file, const char* key, bool value);
 void        kev_write_float  (kevfile_t* file, const char* key, double value);
 void        kev_write_string (kevfile_t* file, const char* key, const char* value);
 
-void init_file_api (void);
-
 #endif // MINISPHERE__FILE_H__INCLUDED
