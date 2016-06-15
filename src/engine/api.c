@@ -1,7 +1,6 @@
 #include "minisphere.h"
 #include "api.h"
 
-#include "bytearray.h"
 #include "color.h"
 #include "commonjs.h"
 #include "input.h"
@@ -29,7 +28,6 @@ initialize_api(duk_context* ctx)
 	initialize_vanilla_api(ctx);
 
 	// initialize subsystem APIs
-	init_bytearray_api();
 	init_color_api();
 	init_commonjs_api();
 	init_input_api();

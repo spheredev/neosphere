@@ -18,8 +18,4 @@ bytearray_t*   inflate_bytearray      (bytearray_t* array, int max_size);
 bool           resize_bytearray       (bytearray_t* array, int new_size);
 bytearray_t*   slice_bytearray        (bytearray_t* array, int start, int length);
 
-void         init_bytearray_api           (void);
-void         duk_push_sphere_bytearray    (duk_context* ctx, bytearray_t* array);
-bytearray_t* duk_require_sphere_bytearray (duk_context* ctx, duk_idx_t index);
-
 #endif // MINISPHERE__BYTEARRAY_H__INCLUDED

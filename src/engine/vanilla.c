@@ -40,9 +40,13 @@ static duk_ret_t js_Abort                      (duk_context* ctx);
 static duk_ret_t js_Alert                      (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
 static duk_ret_t js_Assert                     (duk_context* ctx);
+static duk_ret_t js_CreateByteArray            (duk_context* ctx);
+static duk_ret_t js_CreateByteArrayFromString  (duk_context* ctx);
+static duk_ret_t js_CreateStringFromByteArray  (duk_context* ctx);
 static duk_ret_t js_CreateDirectory            (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode       (duk_context* ctx);
 static duk_ret_t js_CreateSurface              (duk_context* ctx);
+static duk_ret_t js_DeflateByteArray           (duk_context* ctx);
 static duk_ret_t js_DoesFileExist              (duk_context* ctx);
 static duk_ret_t js_DebugPrint                 (duk_context* ctx);
 static duk_ret_t js_Delay                      (duk_context* ctx);
@@ -58,7 +62,9 @@ static duk_ret_t js_GrabImage                  (duk_context* ctx);
 static duk_ret_t js_GrabSurface                (duk_context* ctx);
 static duk_ret_t js_GradientCircle             (duk_context* ctx);
 static duk_ret_t js_GradientRectangle          (duk_context* ctx);
+static duk_ret_t js_HashByteArray              (duk_context* ctx);
 static duk_ret_t js_HashRawFile                (duk_context* ctx);
+static duk_ret_t js_InflateByteArray           (duk_context* ctx);
 static duk_ret_t js_Line                       (duk_context* ctx);
 static duk_ret_t js_LineSeries                 (duk_context* ctx);
 static duk_ret_t js_ListenOnPort               (duk_context* ctx);
@@ -97,6 +103,15 @@ static duk_ret_t js_Animation_getNumFrames     (duk_context* ctx);
 static duk_ret_t js_Animation_drawFrame        (duk_context* ctx);
 static duk_ret_t js_Animation_drawZoomedFrame  (duk_context* ctx);
 static duk_ret_t js_Animation_readNextFrame    (duk_context* ctx);
+static duk_ret_t js_ByteArray_finalize         (duk_context* ctx);
+static duk_ret_t js_ByteArray_get_length       (duk_context* ctx);
+static duk_ret_t js_ByteArray_toString         (duk_context* ctx);
+static duk_ret_t js_ByteArray_getProp          (duk_context* ctx);
+static duk_ret_t js_ByteArray_setProp          (duk_context* ctx);
+static duk_ret_t js_ByteArray_concat           (duk_context* ctx);
+static duk_ret_t js_ByteArray_deflate          (duk_context* ctx);
+static duk_ret_t js_ByteArray_inflate          (duk_context* ctx);
+static duk_ret_t js_ByteArray_slice            (duk_context* ctx);
 static duk_ret_t js_File_finalize              (duk_context* ctx);
 static duk_ret_t js_File_get_numKeys           (duk_context* ctx);
 static duk_ret_t js_File_getKey                (duk_context* ctx);
@@ -314,10 +329,14 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "Alert", js_Alert);
 	api_register_static_func(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
 	api_register_static_func(ctx, NULL, "Assert", js_Assert);
+	api_register_static_func(ctx, NULL, "CreateByteArray", js_CreateByteArray);
+	api_register_static_func(ctx, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
+	api_register_static_func(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
 	api_register_static_func(ctx, NULL, "CreateDirectory", js_CreateDirectory);
 	api_register_static_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	api_register_static_func(ctx, NULL, "CreateSurface", js_CreateSurface);
 	api_register_static_func(ctx, NULL, "DebugPrint", js_DebugPrint);
+	api_register_static_func(ctx, NULL, "DeflateByteArray", js_DeflateByteArray);
 	api_register_static_func(ctx, NULL, "Delay", js_Delay);
 	api_register_static_func(ctx, NULL, "DispatchScript", js_DispatchScript);
 	api_register_static_func(ctx, NULL, "DoEvents", js_DoEvents);
@@ -332,7 +351,9 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_register_static_func(ctx, NULL, "GradientCircle", js_GradientCircle);
 	api_register_static_func(ctx, NULL, "GradientRectangle", js_GradientRectangle);
+	api_register_static_func(ctx, NULL, "HashByteArray", js_HashByteArray);
 	api_register_static_func(ctx, NULL, "HashRawFile", js_HashRawFile);
+	api_register_static_func(ctx, NULL, "InflateByteArray", js_InflateByteArray);
 	api_register_static_func(ctx, NULL, "Line", js_Line);
 	api_register_static_func(ctx, NULL, "LineSeries", js_LineSeries);
 	api_register_static_func(ctx, NULL, "ListenOnPort", js_ListenOnPort);
@@ -372,6 +393,15 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "Animation", "drawFrame", js_Animation_drawFrame);
 	api_register_method(ctx, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
 	api_register_method(ctx, "Animation", "readNextFrame", js_Animation_readNextFrame);
+
+	api_register_type(ctx, "ByteArray", js_ByteArray_finalize);
+	api_register_prop(ctx, "ByteArray", "length", js_ByteArray_get_length, NULL);
+	api_register_prop(ctx, "ByteArray", "size", js_ByteArray_get_length, NULL);
+	api_register_method(ctx, "ByteArray", "toString", js_ByteArray_toString);
+	api_register_method(ctx, "ByteArray", "concat", js_ByteArray_concat);
+	api_register_method(ctx, "ByteArray", "deflate", js_ByteArray_deflate);
+	api_register_method(ctx, "ByteArray", "inflate", js_ByteArray_inflate);
+	api_register_method(ctx, "ByteArray", "slice", js_ByteArray_slice);
 
 	api_register_type(g_duk, "File", js_File_finalize);
 	api_register_prop(g_duk, "File", "numKeys", js_File_get_numKeys, NULL);
@@ -530,6 +560,28 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_const(ctx, NULL, "LINE_MULTIPLE", LINE_MULTIPLE);
 	api_register_const(ctx, NULL, "LINE_STRIP", LINE_STRIP);
 	api_register_const(ctx, NULL, "LINE_LOOP", LINE_LOOP);
+}
+
+void
+duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
+{
+	duk_idx_t obj_index;
+
+	duk_push_sphere_obj(ctx, "ByteArray", ref_bytearray(array));
+	obj_index = duk_normalize_index(ctx, -1);
+
+	// return proxy object so we can catch array accesses
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Proxy");
+	duk_dup(ctx, obj_index);
+	duk_push_object(ctx);
+	duk_push_c_function(ctx, js_ByteArray_getProp, DUK_VARARGS); duk_put_prop_string(ctx, -2, "get");
+	duk_push_c_function(ctx, js_ByteArray_setProp, DUK_VARARGS); duk_put_prop_string(ctx, -2, "set");
+	duk_new(ctx, 2);
+	duk_get_prototype(ctx, obj_index);
+	duk_set_prototype(ctx, -2);
+	duk_remove(ctx, -2);
+	duk_remove(ctx, -2);
 }
 
 void
@@ -1031,6 +1083,54 @@ js_Assert(duk_context* ctx)
 }
 
 static duk_ret_t
+js_CreateByteArray(duk_context* ctx)
+{
+	bytearray_t* array;
+	int          size;
+
+	size = duk_require_int(ctx, 0);
+
+	if (size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "size cannot be negative");
+	if (!(array = new_bytearray(size)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+	duk_push_sphere_bytearray(ctx, array);
+	free_bytearray(array);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateByteArrayFromString(duk_context* ctx)
+{
+	bytearray_t* array;
+	lstring_t*   string;
+
+	string = duk_require_lstring_t(ctx, 0);
+
+	if (!(array = bytearray_from_lstring(string)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+	lstr_free(string);
+	duk_push_sphere_bytearray(ctx, array);
+	free_bytearray(array);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateStringFromByteArray(duk_context* ctx)
+{
+	bytearray_t* array;
+	uint8_t*     buffer;
+	size_t       size;
+
+	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+
+	buffer = get_bytearray_buffer(array);
+	size = get_bytearray_size(array);
+	duk_push_lstring(ctx, (char*)buffer, size);
+	return 1;
+}
+
+static duk_ret_t
 js_CreateDirectory(duk_context* ctx)
 {
 	const char* name;
@@ -1090,6 +1190,23 @@ js_DebugPrint(duk_context* ctx)
 
 	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL);
 	return 0;
+}
+
+static duk_ret_t
+js_DeflateByteArray(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	int level = n_args >= 2 ? duk_require_int(ctx, 1) : -1;
+
+	bytearray_t* new_array;
+
+	if ((level < 0 || level > 9) && n_args >= 2)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DeflateByteArray(): compression level must be [0-9] (got: %i)", level);
+	if (!(new_array = deflate_bytearray(array, level)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DeflateByteArray(): unable to deflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
 }
 
 static duk_ret_t
@@ -1301,6 +1418,15 @@ js_GradientRectangle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_HashByteArray(duk_context* ctx)
+{
+	duk_require_sphere_obj(ctx, 0, "ByteArray");
+
+	// TODO: implement byte array hashing
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "function is not implemented");
+}
+
+static duk_ret_t
 js_HashRawFile(duk_context* ctx)
 {
 	sfs_file_t* file;
@@ -1313,6 +1439,23 @@ js_HashRawFile(duk_context* ctx)
 	sfs_fclose(file);
 	// TODO: implement raw file hashing
 	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "function is not yet implemented");
+}
+
+static duk_ret_t
+js_InflateByteArray(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	int max_size = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+
+	bytearray_t* new_array;
+
+	if (max_size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "InflateByteArray(): buffer size must not be negative (got: %d)", max_size);
+	if (!(new_array = inflate_bytearray(array, max_size)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): unable to inflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
 }
 
 static duk_ret_t
@@ -1908,6 +2051,163 @@ js_Animation_readNextFrame(duk_context* ctx)
 	duk_pop(ctx);
 	animation_update(anim);
 	return 0;
+}
+
+static duk_ret_t
+js_ByteArray_finalize(duk_context* ctx)
+{
+	bytearray_t* array;
+
+	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	free_bytearray(array);
+	return 0;
+}
+
+static duk_ret_t
+js_ByteArray_get_length(duk_context* ctx)
+{
+	bytearray_t* array;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	duk_pop(ctx);
+	duk_push_int(ctx, get_bytearray_size(array));
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object byte_array]");
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_getProp(duk_context* ctx)
+{
+	bytearray_t* array;
+	int          index;
+	int          size;
+
+	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	if (duk_is_number(ctx, 1)) {
+		index = duk_to_int(ctx, 1);
+		size = get_bytearray_size(array);
+		if (index < 0 || index >= size)
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
+		duk_push_uint(ctx, get_byte(array, index));
+		return 1;
+	}
+	else {
+		duk_dup(ctx, 1);
+		duk_get_prop(ctx, 0);
+		return 1;
+	}
+}
+
+static duk_ret_t
+js_ByteArray_setProp(duk_context* ctx)
+{
+	bytearray_t* array;
+	int          index;
+	int          size;
+
+	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	if (duk_is_number(ctx, 1)) {
+		index = duk_to_int(ctx, 1);
+		size = get_bytearray_size(array);
+		if (index < 0 || index >= size)
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
+		set_byte(array, index, duk_require_uint(ctx, 2));
+		return 0;
+	}
+	else {
+		duk_dup(ctx, 1);
+		duk_dup(ctx, 2);
+		duk_put_prop(ctx, 0);
+		return 0;
+	}
+}
+
+static duk_ret_t
+js_ByteArray_concat(duk_context* ctx)
+{
+	bytearray_t* array[2];
+	bytearray_t* new_array;
+
+	duk_push_this(ctx);
+	array[0] = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	array[1] = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	
+	if (!(new_array = concat_bytearrays(array[0], array[1])))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to concatenate byte arrays");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_deflate(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int level = n_args >= 1 ? duk_require_int(ctx, 0) : -1;
+
+	bytearray_t* array;
+	bytearray_t* new_array;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	duk_pop(ctx);
+	if ((level < 0 || level > 9) && n_args >= 1)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): compression level must be [0-9] (got: %d)", level);
+	if (!(new_array = deflate_bytearray(array, level)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:deflate(): unable to deflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_inflate(duk_context* ctx)
+{
+	bytearray_t* array;
+	bytearray_t* new_array;
+
+	int n_args = duk_get_top(ctx);
+	int max_size = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	duk_pop(ctx);
+	if (max_size < 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): buffer size must not be negative (got: %d)", max_size);
+	if (!(new_array = inflate_bytearray(array, max_size)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): unable to inflate source ByteArray");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_slice(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int start = duk_require_int(ctx, 0);
+	int end = (n_args >= 2) ? duk_require_int(ctx, 1) : INT_MAX;
+
+	bytearray_t* array;
+	int          end_norm;
+	bytearray_t* new_array;
+	int          size;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+
+	size = get_bytearray_size(array);
+	end_norm = fmin(end >= 0 ? end : size + end, size);
+	if (end_norm < start || end_norm > size)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "start and/or end is out of bounds");
+	if (!(new_array = slice_bytearray(array, start, end_norm - start)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to slice byte array");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
 }
 
 static duk_ret_t
@@ -2904,7 +3204,7 @@ js_Socket_write(duk_context* ctx)
 	if (duk_is_string(ctx, 0))
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
 	else {
-		array = duk_require_sphere_bytearray(ctx, 0);
+		array = duk_require_sphere_obj(ctx, 0, "ByteArray");
 		payload = get_bytearray_buffer(array);
 		write_size = get_bytearray_size(array);
 	}
@@ -3233,7 +3533,7 @@ js_Spriteset_clone(duk_context* ctx)
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset:clone(): unable to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to clone spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;
@@ -3242,12 +3542,12 @@ js_Spriteset_clone(duk_context* ctx)
 static duk_ret_t
 js_Spriteset_get_image(duk_context* ctx)
 {
-	duk_uarridx_t index = duk_to_int(ctx, 0);
-
-	spriteset_t* spriteset;
+	duk_uarridx_t index;
+	spriteset_t*  spriteset;
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
+	index = duk_to_int(ctx, 0);
 
 	duk_push_sphere_obj(ctx, "Image", image_ref(get_spriteset_image(spriteset, index)));
 	return 1;
@@ -3263,7 +3563,7 @@ js_Spriteset_set_image(duk_context* ctx)
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
 	image = duk_require_sphere_obj(ctx, 0, "Image");
-	index = duk_require_int(ctx, 1);
+	index = duk_to_int(ctx, 1);
 
 	set_spriteset_image(spriteset, index, image);
 	return 0;
