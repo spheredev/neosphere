@@ -3,15 +3,12 @@
 
 #include "color.h"
 #include "commonjs.h"
-#include "input.h"
 #include "map_engine.h"
 #include "vanilla.h"
 
 void
 initialize_api(duk_context* ctx)
 {
-	console_log(1, "initializing Sphere API", PRODUCT_NAME, VERSION_NAME);
-
 	// register the 'global' global object alias (like Node.js!).
 	// this provides direct access to the global object from any scope.
 	duk_push_global_object(ctx);
@@ -30,14 +27,12 @@ initialize_api(duk_context* ctx)
 	// initialize subsystem APIs
 	init_color_api();
 	init_commonjs_api();
-	init_input_api();
 	init_map_engine_api(g_duk);
 }
 
 void
 shutdown_api(void)
 {
-	console_log(1, "shutting down Sphere API");
 }
 
 void

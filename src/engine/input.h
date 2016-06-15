@@ -1,6 +1,9 @@
 #ifndef MINISPHERE__INPUT_H__INCLUDED
 #define MINISPHERE__INPUT_H__INCLUDED
 
+#define MAX_JOYSTICKS   4
+#define MAX_JOY_BUTTONS 32
+
 typedef
 enum player_key
 {
@@ -16,26 +19,46 @@ enum player_key
 	PLAYER_KEY_MAX
 } player_key_t;
 
-void  initialize_input   (void);
-void  shutdown_input     (void);
-bool  kb_is_any_key_down (void);
-bool  kb_is_key_down     (int keycode);
-bool  kb_is_toggled      (int keycode);
-void  kb_clear_queue     (void);
-int   kb_get_key         (void);
-void  kb_load_keymap     (void);
-void  kb_save_keymap     (void);
+typedef
+enum mouse_button
+{
+	MOUSE_BUTTON_LEFT,
+	MOUSE_BUTTON_RIGHT,
+	MOUSE_BUTTON_MIDDLE
+} mouse_button_t;
 
-bool  is_joy_button_down   (int joy_index, int button);
-float get_joy_axis         (int joy_index, int axis_index);
-int   get_joy_axis_count   (int joy_index);
-int   get_joy_button_count (int joy_index);
+typedef
+enum mouse_key
+{
+	MOUSE_WHEEL_UP,
+	MOUSE_WHEEL_DOWN
+} mouse_key_t;
+
+void initialize_input   (void);
+void shutdown_input     (void);
+
+bool        joy_is_button_down (int joy_index, int button);
+int         joy_num_axes       (int joy_index);
+int         joy_num_buttons    (int joy_index);
+int         joy_num_sticks     (void);
+float       joy_position       (int joy_index, int axis_index);
+void        joy_bind_button    (int joy_index, int button, script_t* on_down_script, script_t* on_up_script);
+bool        kb_is_any_key_down (void);
+bool        kb_is_key_down     (int keycode);
+bool        kb_is_toggled      (int keycode);
+int         kb_queue_len       (void);
+void        kb_bind_key        (int keycode, script_t* on_down_script, script_t* on_up_script);
+void        kb_clear_queue     (void);
+int         kb_get_key         (void);
+void        kb_load_keymap     (void);
+void        kb_save_keymap     (void);
+int         mouse_queue_len    (void);
+mouse_key_t mouse_get_key      (void);
+
 int   get_player_key       (int player, player_key_t vkey);
 void  set_player_key       (int player, player_key_t vkey, int keycode);
 void  attach_input_display (void);
 void  update_bound_keys    (bool use_map_keys);
 void  update_input         (void);
-
-void init_input_api (void);
 
 #endif // MINISPHERE__INPUT_H__INCLUDED

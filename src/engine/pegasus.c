@@ -182,7 +182,7 @@ static int      s_framerate = 60;
 void
 initialize_pegasus(duk_context* ctx)
 {
-	console_log(1, "initializing Pegasus (v%d Lv.%d)", SPHERE_API_VERSION, SPHERE_API_LEVEL);
+	console_log(1, "initializing Pegasus API (v%d Lv.%d)", SPHERE_API_VERSION, SPHERE_API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 

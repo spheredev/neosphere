@@ -1249,7 +1249,7 @@ process_map_input(void)
 		if (person != NULL) {
 			if (kb_is_key_down(get_player_key(i, PLAYER_KEY_A))
 				|| kb_is_key_down(s_players[i].talk_key)
-				|| is_joy_button_down(i, s_talk_button))
+				|| joy_is_button_down(i, s_talk_button))
 			{
 				if (s_players[i].is_talk_allowed)
 					talk_person(person);
