@@ -1383,7 +1383,7 @@ render_map(void)
 		run_script(layer->render_script, false);
 	}
 
-	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.alpha);
+	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.a);
 	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
 	run_script(s_render_script, false);
 }
@@ -2009,7 +2009,7 @@ js_GetTileImage(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileImage(): map engine not running");
 	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileImage(): invalid tile index (%d)", tile_index);
-	duk_push_sphere_obj(ctx, "Image", image_ref(tileset_get_image(s_map->tileset, tile_index)));
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(tileset_get_image(s_map->tileset, tile_index)));
 	return 1;
 }
 
@@ -2042,7 +2042,7 @@ js_GetTileSurface(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetTileSurface(): invalid tile index (%d)", tile_index);
 	if ((image = image_clone(tileset_get_image(s_map->tileset, tile_index))) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetTileSurface(): unable to create new surface image");
-	duk_push_sphere_obj(ctx, "Surface", image);
+	duk_push_sphere_obj(ctx, "ssSurface", image);
 	return 1;
 }
 
@@ -2498,7 +2498,7 @@ js_SetTileImage(duk_context* ctx)
 	int      tile_w;
 
 	tile_index = duk_require_int(ctx, 0);
-	image = duk_require_sphere_obj(ctx, 1, "Image");
+	image = duk_require_sphere_obj(ctx, 1, "ssImage");
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "map engine is not running");
@@ -2533,7 +2533,7 @@ static duk_ret_t
 js_SetTileSurface(duk_context* ctx)
 {
 	int tile_index = duk_require_int(ctx, 0);
-	image_t* image = duk_require_sphere_obj(ctx, 1, "Surface");
+	image_t* image = duk_require_sphere_obj(ctx, 1, "ssSurface");
 
 	int image_w, image_h;
 	int num_tiles;

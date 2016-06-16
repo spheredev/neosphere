@@ -88,20 +88,24 @@ cjs_eval_module(const char* filename)
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
-		duk_push_string(g_duk, "(function main(exports, require, module, __filename, __dirname) { ");
+		duk_push_string(g_duk, "(function(exports, require, module, __filename, __dirname) { ");
 		duk_push_lstring_t(g_duk, code_string);
 		duk_push_string(g_duk, " })");
 		duk_concat(g_duk, 3);
 		duk_push_string(g_duk, filename);
-		duk_compile(g_duk, DUK_COMPILE_EVAL);
+		if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+			goto on_error;
 		duk_call(g_duk, 0);
+		duk_push_string(g_duk, "name");
+		duk_push_string(g_duk, "main");
+		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_FORCE);
 		lstr_free(code_string);
 
 		// go, go, go!
-		duk_get_prop_string(g_duk, -2, "exports");  // exports
-		duk_get_prop_string(g_duk, -3, "require");  // require
-		duk_dup(g_duk, -4);  // module
-		duk_push_string(g_duk, filename);  // __filename
+		duk_get_prop_string(g_duk, -2, "exports");    // exports
+		duk_get_prop_string(g_duk, -3, "require");    // require
+		duk_dup(g_duk, -4);                           // module
+		duk_push_string(g_duk, filename);             // __filename
 		duk_push_string(g_duk, path_cstr(dir_path));  // __dirname
 		if (duk_pcall(g_duk, 5) != DUK_EXEC_SUCCESS)
 			goto on_error;

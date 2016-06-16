@@ -371,7 +371,7 @@ image_draw(image_t* image, int x, int y)
 void
 image_draw_masked(image_t* image, color_t mask, int x, int y)
 {
-	al_draw_tinted_bitmap(image->bitmap, al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
+	al_draw_tinted_bitmap(image->bitmap, al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
 }
 
 void
@@ -443,7 +443,7 @@ image_fill(image_t* image, color_t color)
 	al_reset_clipping_rectangle();
 	last_target = al_get_target_bitmap();
 	al_set_target_bitmap(image->bitmap);
-	al_clear_to_color(al_map_rgba(color.r, color.g, color.b, color.alpha));
+	al_clear_to_color(al_map_rgba(color.r, color.g, color.b, color.a));
 	al_set_target_bitmap(last_target);
 	al_set_clipping_rectangle(clip_x, clip_y, clip_w, clip_h);
 }
@@ -507,12 +507,12 @@ image_replace_color(image_t* image, color_t color, color_t new_color)
 		if (pixel[0] == color.r &&
 		    pixel[1] == color.g &&
 		    pixel[2] == color.b &&
-		    pixel[3] == color.alpha)
+		    pixel[3] == color.a)
 		{
 			pixel[0] = new_color.r;
 			pixel[1] = new_color.g;
 			pixel[2] = new_color.b;
-			pixel[3] = new_color.alpha;
+			pixel[3] = new_color.a;
 		}
 	}
 	al_unlock_bitmap(bitmap);

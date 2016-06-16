@@ -300,7 +300,7 @@ initialize_vanilla_api(duk_context* ctx)
 {
 	const char* filename;
 	
-	console_log(1, "initializing Vanilla API (v1.5)");
+	console_log(1, "initializing Vanilla API v1.5");
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 	
@@ -316,7 +316,7 @@ initialize_vanilla_api(duk_context* ctx)
 
 	// load system window style
 	if (g_sys_conf != NULL) {
-		filename = kev_read_string(g_sys_conf, "WindowStyle", "system.rws");
+		filename = kev_read_string(g_sys_conf, "ssWindowStyle", "system.rws");
 		s_sys_winstyle = load_windowstyle(systempath(filename));
 	}
 	
@@ -444,172 +444,172 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "UnbindKey", js_UnbindKey);
 	api_register_static_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
-	api_register_type(ctx, "Animation", js_Animation_finalize);
-	api_register_prop(ctx, "Animation", "width", js_Animation_get_width, NULL);
-	api_register_prop(ctx, "Animation", "height", js_Animation_get_height, NULL);
-	api_register_method(ctx, "Animation", "getDelay", js_Animation_getDelay);
-	api_register_method(ctx, "Animation", "getNumFrames", js_Animation_getNumFrames);
-	api_register_method(ctx, "Animation", "drawFrame", js_Animation_drawFrame);
-	api_register_method(ctx, "Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
-	api_register_method(ctx, "Animation", "readNextFrame", js_Animation_readNextFrame);
+	api_register_type(ctx, "ssAnimation", js_Animation_finalize);
+	api_register_prop(ctx, "ssAnimation", "width", js_Animation_get_width, NULL);
+	api_register_prop(ctx, "ssAnimation", "height", js_Animation_get_height, NULL);
+	api_register_method(ctx, "ssAnimation", "getDelay", js_Animation_getDelay);
+	api_register_method(ctx, "ssAnimation", "getNumFrames", js_Animation_getNumFrames);
+	api_register_method(ctx, "ssAnimation", "drawFrame", js_Animation_drawFrame);
+	api_register_method(ctx, "ssAnimation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
+	api_register_method(ctx, "ssAnimation", "readNextFrame", js_Animation_readNextFrame);
 
-	api_register_type(ctx, "ByteArray", js_ByteArray_finalize);
-	api_register_prop(ctx, "ByteArray", "length", js_ByteArray_get_length, NULL);
-	api_register_prop(ctx, "ByteArray", "size", js_ByteArray_get_length, NULL);
-	api_register_method(ctx, "ByteArray", "toString", js_ByteArray_toString);
-	api_register_method(ctx, "ByteArray", "concat", js_ByteArray_concat);
-	api_register_method(ctx, "ByteArray", "deflate", js_ByteArray_deflate);
-	api_register_method(ctx, "ByteArray", "inflate", js_ByteArray_inflate);
-	api_register_method(ctx, "ByteArray", "slice", js_ByteArray_slice);
+	api_register_type(ctx, "ssByteArray", js_ByteArray_finalize);
+	api_register_prop(ctx, "ssByteArray", "length", js_ByteArray_get_length, NULL);
+	api_register_prop(ctx, "ssByteArray", "size", js_ByteArray_get_length, NULL);
+	api_register_method(ctx, "ssByteArray", "toString", js_ByteArray_toString);
+	api_register_method(ctx, "ssByteArray", "concat", js_ByteArray_concat);
+	api_register_method(ctx, "ssByteArray", "deflate", js_ByteArray_deflate);
+	api_register_method(ctx, "ssByteArray", "inflate", js_ByteArray_inflate);
+	api_register_method(ctx, "ssByteArray", "slice", js_ByteArray_slice);
 
-	api_register_type(ctx, "Color", NULL);
-	api_register_method(ctx, "Color", "toString", js_Color_toString);
+	api_register_type(ctx, "ssColor", NULL);
+	api_register_method(ctx, "ssColor", "toString", js_Color_toString);
 
-	api_register_type(ctx, "ColorMatrix", NULL);
-	api_register_method(ctx, "ColorMatrix", "apply", js_ColorMatrix_apply);
-	api_register_method(ctx, "ColorMatrix", "toString", js_ColorMatrix_toString);
+	api_register_type(ctx, "ssColorMatrix", NULL);
+	api_register_method(ctx, "ssColorMatrix", "apply", js_ColorMatrix_apply);
+	api_register_method(ctx, "ssColorMatrix", "toString", js_ColorMatrix_toString);
 
-	api_register_type(ctx, "File", js_File_finalize);
-	api_register_prop(ctx, "File", "numKeys", js_File_get_numKeys, NULL);
-	api_register_method(ctx, "File", "getKey", js_File_getKey);
-	api_register_method(ctx, "File", "getNumKeys", js_File_get_numKeys);
-	api_register_method(ctx, "File", "close", js_File_close);
-	api_register_method(ctx, "File", "flush", js_File_flush);
-	api_register_method(ctx, "File", "read", js_File_read);
-	api_register_method(ctx, "File", "toString", js_File_toString);
-	api_register_method(ctx, "File", "write", js_File_write);
+	api_register_type(ctx, "ssFile", js_File_finalize);
+	api_register_prop(ctx, "ssFile", "numKeys", js_File_get_numKeys, NULL);
+	api_register_method(ctx, "ssFile", "getKey", js_File_getKey);
+	api_register_method(ctx, "ssFile", "getNumKeys", js_File_get_numKeys);
+	api_register_method(ctx, "ssFile", "close", js_File_close);
+	api_register_method(ctx, "ssFile", "flush", js_File_flush);
+	api_register_method(ctx, "ssFile", "read", js_File_read);
+	api_register_method(ctx, "ssFile", "toString", js_File_toString);
+	api_register_method(ctx, "ssFile", "write", js_File_write);
 
-	api_register_type(ctx, "Font", js_Font_finalize);
-	api_register_prop(ctx, "Font", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
-	api_register_prop(ctx, "Font", "height", js_Font_get_height, NULL);
-	api_register_method(ctx, "Font", "getCharacterImage", js_Font_getCharacterImage);
-	api_register_method(ctx, "Font", "getColorMask", js_Font_get_colorMask);
-	api_register_method(ctx, "Font", "getHeight", js_Font_get_height);
-	api_register_method(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
-	api_register_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
-	api_register_method(ctx, "Font", "setCharacterImage", js_Font_setCharacterImage);
-	api_register_method(ctx, "Font", "setColorMask", js_Font_set_colorMask);
-	api_register_method(ctx, "Font", "toString", js_Font_toString);
-	api_register_method(ctx, "Font", "clone", js_Font_clone);
-	api_register_method(ctx, "Font", "drawText", js_Font_drawText);
-	api_register_method(ctx, "Font", "drawTextBox", js_Font_drawTextBox);
-	api_register_method(ctx, "Font", "drawZoomedText", js_Font_drawZoomedText);
-	api_register_method(ctx, "Font", "wordWrapString", js_Font_wordWrapString);
+	api_register_type(ctx, "ssFont", js_Font_finalize);
+	api_register_prop(ctx, "ssFont", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
+	api_register_prop(ctx, "ssFont", "height", js_Font_get_height, NULL);
+	api_register_method(ctx, "ssFont", "getCharacterImage", js_Font_getCharacterImage);
+	api_register_method(ctx, "ssFont", "getColorMask", js_Font_get_colorMask);
+	api_register_method(ctx, "ssFont", "getHeight", js_Font_get_height);
+	api_register_method(ctx, "ssFont", "getStringHeight", js_Font_getStringHeight);
+	api_register_method(ctx, "ssFont", "getStringWidth", js_Font_getStringWidth);
+	api_register_method(ctx, "ssFont", "setCharacterImage", js_Font_setCharacterImage);
+	api_register_method(ctx, "ssFont", "setColorMask", js_Font_set_colorMask);
+	api_register_method(ctx, "ssFont", "toString", js_Font_toString);
+	api_register_method(ctx, "ssFont", "clone", js_Font_clone);
+	api_register_method(ctx, "ssFont", "drawText", js_Font_drawText);
+	api_register_method(ctx, "ssFont", "drawTextBox", js_Font_drawTextBox);
+	api_register_method(ctx, "ssFont", "drawZoomedText", js_Font_drawZoomedText);
+	api_register_method(ctx, "ssFont", "wordWrapString", js_Font_wordWrapString);
 	
-	api_register_type(ctx, "Image", js_Image_finalize);
-	api_register_prop(ctx, "Image", "height", js_Image_get_height, NULL);
-	api_register_prop(ctx, "Image", "width", js_Image_get_width, NULL);
-	api_register_method(ctx, "Image", "blit", js_Image_blit);
-	api_register_method(ctx, "Image", "blitMask", js_Image_blitMask);
-	api_register_method(ctx, "Image", "createSurface", js_Image_createSurface);
-	api_register_method(ctx, "Image", "rotateBlit", js_Image_rotateBlit);
-	api_register_method(ctx, "Image", "rotateBlitMask", js_Image_rotateBlitMask);
-	api_register_method(ctx, "Image", "toString", js_Image_toString);
-	api_register_method(ctx, "Image", "transformBlit", js_Image_transformBlit);
-	api_register_method(ctx, "Image", "transformBlitMask", js_Image_transformBlitMask);
-	api_register_method(ctx, "Image", "zoomBlit", js_Image_zoomBlit);
-	api_register_method(ctx, "Image", "zoomBlitMask", js_Image_zoomBlitMask);
+	api_register_type(ctx, "ssImage", js_Image_finalize);
+	api_register_prop(ctx, "ssImage", "height", js_Image_get_height, NULL);
+	api_register_prop(ctx, "ssImage", "width", js_Image_get_width, NULL);
+	api_register_method(ctx, "ssImage", "blit", js_Image_blit);
+	api_register_method(ctx, "ssImage", "blitMask", js_Image_blitMask);
+	api_register_method(ctx, "ssImage", "createSurface", js_Image_createSurface);
+	api_register_method(ctx, "ssImage", "rotateBlit", js_Image_rotateBlit);
+	api_register_method(ctx, "ssImage", "rotateBlitMask", js_Image_rotateBlitMask);
+	api_register_method(ctx, "ssImage", "toString", js_Image_toString);
+	api_register_method(ctx, "ssImage", "transformBlit", js_Image_transformBlit);
+	api_register_method(ctx, "ssImage", "transformBlitMask", js_Image_transformBlitMask);
+	api_register_method(ctx, "ssImage", "zoomBlit", js_Image_zoomBlit);
+	api_register_method(ctx, "ssImage", "zoomBlitMask", js_Image_zoomBlitMask);
 
-	api_register_type(ctx, "Logger", js_Logger_finalize);
-	api_register_method(ctx, "Logger", "toString", js_Logger_toString);
-	api_register_method(ctx, "Logger", "beginBlock", js_Logger_beginBlock);
-	api_register_method(ctx, "Logger", "endBlock", js_Logger_endBlock);
-	api_register_method(ctx, "Logger", "write", js_Logger_write);
+	api_register_type(ctx, "ssLogger", js_Logger_finalize);
+	api_register_method(ctx, "ssLogger", "toString", js_Logger_toString);
+	api_register_method(ctx, "ssLogger", "beginBlock", js_Logger_beginBlock);
+	api_register_method(ctx, "ssLogger", "endBlock", js_Logger_endBlock);
+	api_register_method(ctx, "ssLogger", "write", js_Logger_write);
 
-	api_register_type(ctx, "RawFile", js_RawFile_finalize);
-	api_register_prop(ctx, "RawFile", "length", js_RawFile_get_size, NULL);
-	api_register_prop(ctx, "RawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
-	api_register_prop(ctx, "RawFile", "size", js_RawFile_get_size, NULL);
-	api_register_method(ctx, "RawFile", "getPosition", js_RawFile_get_position);
-	api_register_method(ctx, "RawFile", "setPosition", js_RawFile_set_position);
-	api_register_method(ctx, "RawFile", "getSize", js_RawFile_get_size);
-	api_register_method(ctx, "RawFile", "close", js_RawFile_close);
-	api_register_method(ctx, "RawFile", "read", js_RawFile_read);
-	api_register_method(ctx, "RawFile", "readString", js_RawFile_readString);
-	api_register_method(ctx, "RawFile", "toString", js_RawFile_toString);
-	api_register_method(ctx, "RawFile", "write", js_RawFile_write);
+	api_register_type(ctx, "ssRawFile", js_RawFile_finalize);
+	api_register_prop(ctx, "ssRawFile", "length", js_RawFile_get_size, NULL);
+	api_register_prop(ctx, "ssRawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
+	api_register_prop(ctx, "ssRawFile", "size", js_RawFile_get_size, NULL);
+	api_register_method(ctx, "ssRawFile", "getPosition", js_RawFile_get_position);
+	api_register_method(ctx, "ssRawFile", "setPosition", js_RawFile_set_position);
+	api_register_method(ctx, "ssRawFile", "getSize", js_RawFile_get_size);
+	api_register_method(ctx, "ssRawFile", "close", js_RawFile_close);
+	api_register_method(ctx, "ssRawFile", "read", js_RawFile_read);
+	api_register_method(ctx, "ssRawFile", "readString", js_RawFile_readString);
+	api_register_method(ctx, "ssRawFile", "toString", js_RawFile_toString);
+	api_register_method(ctx, "ssRawFile", "write", js_RawFile_write);
 
-	api_register_type(ctx, "Socket", js_Socket_finalize);
-	api_register_method(ctx, "Socket", "toString", js_Socket_toString);
-	api_register_method(ctx, "Socket", "isConnected", js_Socket_isConnected);
-	api_register_method(ctx, "Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
-	api_register_method(ctx, "Socket", "close", js_Socket_close);
-	api_register_method(ctx, "Socket", "read", js_Socket_read);
-	api_register_method(ctx, "Socket", "readString", js_Socket_readString);
-	api_register_method(ctx, "Socket", "write", js_Socket_write);
+	api_register_type(ctx, "ssSocket", js_Socket_finalize);
+	api_register_method(ctx, "ssSocket", "toString", js_Socket_toString);
+	api_register_method(ctx, "ssSocket", "isConnected", js_Socket_isConnected);
+	api_register_method(ctx, "ssSocket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	api_register_method(ctx, "ssSocket", "close", js_Socket_close);
+	api_register_method(ctx, "ssSocket", "read", js_Socket_read);
+	api_register_method(ctx, "ssSocket", "readString", js_Socket_readString);
+	api_register_method(ctx, "ssSocket", "write", js_Socket_write);
 
-	api_register_type(ctx, "Sound", js_Sound_finalize);
-	api_register_prop(ctx, "Sound", "length", js_Sound_get_length, NULL);
-	api_register_prop(ctx, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
-	api_register_prop(ctx, "Sound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
-	api_register_prop(ctx, "Sound", "playing", js_Sound_get_playing, NULL);
-	api_register_prop(ctx, "Sound", "position", js_Sound_get_position, js_Sound_set_position);
-	api_register_prop(ctx, "Sound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
-	api_register_prop(ctx, "Sound", "seekable", js_Sound_get_seekable, NULL);
-	api_register_prop(ctx, "Sound", "volume", js_Sound_get_volume, js_Sound_set_volume);
-	api_register_method(ctx, "Sound", "isPlaying", js_Sound_get_playing);
-	api_register_method(ctx, "Sound", "isSeekable", js_Sound_get_seekable);
-	api_register_method(ctx, "Sound", "getLength", js_Sound_get_length);
-	api_register_method(ctx, "Sound", "getPan", js_Sound_get_pan);
-	api_register_method(ctx, "Sound", "getPitch", js_Sound_get_pitch);
-	api_register_method(ctx, "Sound", "getPosition", js_Sound_get_position);
-	api_register_method(ctx, "Sound", "getRepeat", js_Sound_get_repeat);
-	api_register_method(ctx, "Sound", "getVolume", js_Sound_getVolume);
-	api_register_method(ctx, "Sound", "setPan", js_Sound_set_pan);
-	api_register_method(ctx, "Sound", "setPitch", js_Sound_set_pitch);
-	api_register_method(ctx, "Sound", "setPosition", js_Sound_set_position);
-	api_register_method(ctx, "Sound", "setRepeat", js_Sound_set_repeat);
-	api_register_method(ctx, "Sound", "setVolume", js_Sound_setVolume);
-	api_register_method(ctx, "Sound", "pause", js_Sound_pause);
-	api_register_method(ctx, "Sound", "play", js_Sound_play);
-	api_register_method(ctx, "Sound", "reset", js_Sound_reset);
-	api_register_method(ctx, "Sound", "stop", js_Sound_stop);
-	api_register_method(ctx, "Sound", "toString", js_Sound_toString);
+	api_register_type(ctx, "ssSound", js_Sound_finalize);
+	api_register_prop(ctx, "ssSound", "length", js_Sound_get_length, NULL);
+	api_register_prop(ctx, "ssSound", "pan", js_Sound_get_pan, js_Sound_set_pan);
+	api_register_prop(ctx, "ssSound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
+	api_register_prop(ctx, "ssSound", "playing", js_Sound_get_playing, NULL);
+	api_register_prop(ctx, "ssSound", "position", js_Sound_get_position, js_Sound_set_position);
+	api_register_prop(ctx, "ssSound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
+	api_register_prop(ctx, "ssSound", "seekable", js_Sound_get_seekable, NULL);
+	api_register_prop(ctx, "ssSound", "volume", js_Sound_get_volume, js_Sound_set_volume);
+	api_register_method(ctx, "ssSound", "isPlaying", js_Sound_get_playing);
+	api_register_method(ctx, "ssSound", "isSeekable", js_Sound_get_seekable);
+	api_register_method(ctx, "ssSound", "getLength", js_Sound_get_length);
+	api_register_method(ctx, "ssSound", "getPan", js_Sound_get_pan);
+	api_register_method(ctx, "ssSound", "getPitch", js_Sound_get_pitch);
+	api_register_method(ctx, "ssSound", "getPosition", js_Sound_get_position);
+	api_register_method(ctx, "ssSound", "getRepeat", js_Sound_get_repeat);
+	api_register_method(ctx, "ssSound", "getVolume", js_Sound_getVolume);
+	api_register_method(ctx, "ssSound", "setPan", js_Sound_set_pan);
+	api_register_method(ctx, "ssSound", "setPitch", js_Sound_set_pitch);
+	api_register_method(ctx, "ssSound", "setPosition", js_Sound_set_position);
+	api_register_method(ctx, "ssSound", "setRepeat", js_Sound_set_repeat);
+	api_register_method(ctx, "ssSound", "setVolume", js_Sound_setVolume);
+	api_register_method(ctx, "ssSound", "pause", js_Sound_pause);
+	api_register_method(ctx, "ssSound", "play", js_Sound_play);
+	api_register_method(ctx, "ssSound", "reset", js_Sound_reset);
+	api_register_method(ctx, "ssSound", "stop", js_Sound_stop);
+	api_register_method(ctx, "ssSound", "toString", js_Sound_toString);
 
-	api_register_type(ctx, "Spriteset", js_Spriteset_finalize);
-	api_register_prop(ctx, "Spriteset", "filename", js_Spriteset_get_filename, NULL);
-	api_register_method(ctx, "Spriteset", "toString", js_Spriteset_toString);
-	api_register_method(ctx, "Spriteset", "clone", js_Spriteset_clone);
+	api_register_type(ctx, "ssSpriteset", js_Spriteset_finalize);
+	api_register_prop(ctx, "ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
+	api_register_method(ctx, "ssSpriteset", "toString", js_Spriteset_toString);
+	api_register_method(ctx, "ssSpriteset", "clone", js_Spriteset_clone);
 
-	api_register_type(ctx, "Surface", js_Surface_finalize);
-	api_register_prop(ctx, "Surface", "height", js_Surface_get_height, NULL);
-	api_register_prop(ctx, "Surface", "width", js_Surface_get_width, NULL);
-	api_register_method(ctx, "Surface", "getPixel", js_Surface_getPixel);
-	api_register_method(ctx, "Surface", "setAlpha", js_Surface_setAlpha);
-	api_register_method(ctx, "Surface", "setBlendMode", js_Surface_setBlendMode);
-	api_register_method(ctx, "Surface", "setPixel", js_Surface_setPixel);
-	api_register_method(ctx, "Surface", "applyColorFX", js_Surface_applyColorFX);
-	api_register_method(ctx, "Surface", "applyColorFX4", js_Surface_applyColorFX4);
-	api_register_method(ctx, "Surface", "applyLookup", js_Surface_applyLookup);
-	api_register_method(ctx, "Surface", "blit", js_Surface_blit);
-	api_register_method(ctx, "Surface", "blitMaskSurface", js_Surface_blitMaskSurface);
-	api_register_method(ctx, "Surface", "blitSurface", js_Surface_blitSurface);
-	api_register_method(ctx, "Surface", "clone", js_Surface_clone);
-	api_register_method(ctx, "Surface", "cloneSection", js_Surface_cloneSection);
-	api_register_method(ctx, "Surface", "createImage", js_Surface_createImage);
-	api_register_method(ctx, "Surface", "drawText", js_Surface_drawText);
-	api_register_method(ctx, "Surface", "filledCircle", js_Surface_filledCircle);
-	api_register_method(ctx, "Surface", "flipHorizontally", js_Surface_flipHorizontally);
-	api_register_method(ctx, "Surface", "flipVertically", js_Surface_flipVertically);
-	api_register_method(ctx, "Surface", "gradientCircle", js_Surface_gradientCircle);
-	api_register_method(ctx, "Surface", "gradientRectangle", js_Surface_gradientRectangle);
-	api_register_method(ctx, "Surface", "line", js_Surface_line);
-	api_register_method(ctx, "Surface", "outlinedCircle", js_Surface_outlinedCircle);
-	api_register_method(ctx, "Surface", "outlinedRectangle", js_Surface_outlinedRectangle);
-	api_register_method(ctx, "Surface", "pointSeries", js_Surface_pointSeries);
-	api_register_method(ctx, "Surface", "rotate", js_Surface_rotate);
-	api_register_method(ctx, "Surface", "rectangle", js_Surface_rectangle);
-	api_register_method(ctx, "Surface", "replaceColor", js_Surface_replaceColor);
-	api_register_method(ctx, "Surface", "rescale", js_Surface_rescale);
-	api_register_method(ctx, "Surface", "save", js_Surface_save);
-	api_register_method(ctx, "Surface", "toString", js_Surface_toString);
+	api_register_type(ctx, "ssSurface", js_Surface_finalize);
+	api_register_prop(ctx, "ssSurface", "height", js_Surface_get_height, NULL);
+	api_register_prop(ctx, "ssSurface", "width", js_Surface_get_width, NULL);
+	api_register_method(ctx, "ssSurface", "getPixel", js_Surface_getPixel);
+	api_register_method(ctx, "ssSurface", "setAlpha", js_Surface_setAlpha);
+	api_register_method(ctx, "ssSurface", "setBlendMode", js_Surface_setBlendMode);
+	api_register_method(ctx, "ssSurface", "setPixel", js_Surface_setPixel);
+	api_register_method(ctx, "ssSurface", "applyColorFX", js_Surface_applyColorFX);
+	api_register_method(ctx, "ssSurface", "applyColorFX4", js_Surface_applyColorFX4);
+	api_register_method(ctx, "ssSurface", "applyLookup", js_Surface_applyLookup);
+	api_register_method(ctx, "ssSurface", "blit", js_Surface_blit);
+	api_register_method(ctx, "ssSurface", "blitMaskSurface", js_Surface_blitMaskSurface);
+	api_register_method(ctx, "ssSurface", "blitSurface", js_Surface_blitSurface);
+	api_register_method(ctx, "ssSurface", "clone", js_Surface_clone);
+	api_register_method(ctx, "ssSurface", "cloneSection", js_Surface_cloneSection);
+	api_register_method(ctx, "ssSurface", "createImage", js_Surface_createImage);
+	api_register_method(ctx, "ssSurface", "drawText", js_Surface_drawText);
+	api_register_method(ctx, "ssSurface", "filledCircle", js_Surface_filledCircle);
+	api_register_method(ctx, "ssSurface", "flipHorizontally", js_Surface_flipHorizontally);
+	api_register_method(ctx, "ssSurface", "flipVertically", js_Surface_flipVertically);
+	api_register_method(ctx, "ssSurface", "gradientCircle", js_Surface_gradientCircle);
+	api_register_method(ctx, "ssSurface", "gradientRectangle", js_Surface_gradientRectangle);
+	api_register_method(ctx, "ssSurface", "line", js_Surface_line);
+	api_register_method(ctx, "ssSurface", "outlinedCircle", js_Surface_outlinedCircle);
+	api_register_method(ctx, "ssSurface", "outlinedRectangle", js_Surface_outlinedRectangle);
+	api_register_method(ctx, "ssSurface", "pointSeries", js_Surface_pointSeries);
+	api_register_method(ctx, "ssSurface", "rotate", js_Surface_rotate);
+	api_register_method(ctx, "ssSurface", "rectangle", js_Surface_rectangle);
+	api_register_method(ctx, "ssSurface", "replaceColor", js_Surface_replaceColor);
+	api_register_method(ctx, "ssSurface", "rescale", js_Surface_rescale);
+	api_register_method(ctx, "ssSurface", "save", js_Surface_save);
+	api_register_method(ctx, "ssSurface", "toString", js_Surface_toString);
 
-	api_register_type(ctx, "WindowStyle", js_WindowStyle_finalize);
-	api_register_prop(ctx, "WindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
-	api_register_method(ctx, "WindowStyle", "toString", js_WindowStyle_toString);
-	api_register_method(ctx, "WindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
-	api_register_method(ctx, "WindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
-	api_register_method(ctx, "WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
+	api_register_type(ctx, "ssWindowStyle", js_WindowStyle_finalize);
+	api_register_prop(ctx, "ssWindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
+	api_register_method(ctx, "ssWindowStyle", "toString", js_WindowStyle_toString);
+	api_register_method(ctx, "ssWindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
+	api_register_method(ctx, "ssWindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
+	api_register_method(ctx, "ssWindowStyle", "drawWindow", js_WindowStyle_drawWindow);
 	
 	// blend modes for Surfaces
 	api_register_const(ctx, NULL, "BLEND", BLEND_BLEND);
@@ -756,7 +756,7 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 {
 	duk_idx_t obj_index;
 
-	duk_push_sphere_obj(ctx, "ByteArray", ref_bytearray(array));
+	duk_push_sphere_obj(ctx, "ssByteArray", ref_bytearray(array));
 	obj_index = duk_normalize_index(ctx, -1);
 
 	// return proxy object so we can catch array accesses
@@ -764,8 +764,10 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 	duk_get_prop_string(ctx, -1, "Proxy");
 	duk_dup(ctx, obj_index);
 	duk_push_object(ctx);
-	duk_push_c_function(ctx, js_ByteArray_getProp, DUK_VARARGS); duk_put_prop_string(ctx, -2, "get");
-	duk_push_c_function(ctx, js_ByteArray_setProp, DUK_VARARGS); duk_put_prop_string(ctx, -2, "set");
+	duk_push_c_function(ctx, js_ByteArray_getProp, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "get");
+	duk_push_c_function(ctx, js_ByteArray_setProp, DUK_VARARGS);
+	duk_put_prop_string(ctx, -2, "set");
 	duk_new(ctx, 2);
 	duk_get_prototype(ctx, obj_index);
 	duk_set_prototype(ctx, -2);
@@ -776,20 +778,18 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 void
 duk_push_sphere_color(duk_context* ctx, color_t color)
 {
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Color");
+	duk_get_global_string(ctx, "CreateColor");
 	duk_push_number(ctx, color.r);
 	duk_push_number(ctx, color.g);
 	duk_push_number(ctx, color.b);
-	duk_push_number(ctx, color.alpha);
-	duk_new(ctx, 4);
-	duk_remove(ctx, -2);
+	duk_push_number(ctx, color.a);
+	duk_call(ctx, 4);
 }
 
 void
 duk_push_sphere_font(duk_context* ctx, font_t* font)
 {
-	duk_push_sphere_obj(ctx, "Font", font_ref(font));
+	duk_push_sphere_obj(ctx, "ssFont", font_ref(font));
 	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255));
 	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
@@ -801,7 +801,7 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 
 	int i, j;
 
-	duk_push_sphere_obj(ctx, "Spriteset", ref_spriteset(spriteset));
+	duk_push_sphere_obj(ctx, "ssSpriteset", ref_spriteset(spriteset));
 
 	// Spriteset:base
 	duk_push_object(ctx);
@@ -854,18 +854,18 @@ color_t
 duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 {
 	int r, g, b;
-	int alpha;
+	int a;
 
-	duk_require_sphere_obj(ctx, index, "Color");
+	duk_require_sphere_obj(ctx, index, "ssColor");
 	duk_get_prop_string(ctx, index, "red"); r = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "green"); g = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "blue"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "alpha"); alpha = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, index, "alpha"); a = duk_get_int(ctx, -1); duk_pop(ctx);
 	r = r < 0 ? 0 : r > 255 ? 255 : r;
 	g = g < 0 ? 0 : g > 255 ? 255 : g;
 	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
-	return color_new(r, g, b, alpha);
+	a = a < 0 ? 0 : a > 255 ? 255 : a;
+	return color_new(r, g, b, a);
 }
 
 colormatrix_t
@@ -873,7 +873,7 @@ duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
 {
 	colormatrix_t matrix;
 
-	duk_require_sphere_obj(ctx, index, "ColorMatrix");
+	duk_require_sphere_obj(ctx, index, "ssColorMatrix");
 	duk_get_prop_string(ctx, index, "rn"); matrix.rn = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "rr"); matrix.rr = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_get_prop_string(ctx, index, "rg"); matrix.rg = duk_get_int(ctx, -1); duk_pop(ctx);
@@ -892,8 +892,9 @@ duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
 static void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
-	duk_push_sphere_obj(ctx, "WindowStyle", ref_windowstyle(winstyle));
-	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255)); duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_push_sphere_obj(ctx, "ssWindowStyle", ref_windowstyle(winstyle));
+	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255));
+	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
 
 static uint8_t*
@@ -1324,7 +1325,7 @@ js_GetSystemArrow(duk_context* ctx)
 {
 	if (s_sys_arrow == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system arrow image");
-	duk_push_sphere_obj(ctx, "Image", image_ref(s_sys_arrow));
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(s_sys_arrow));
 	return 1;
 }
 
@@ -1333,7 +1334,7 @@ js_GetSystemDownArrow(duk_context* ctx)
 {
 	if (s_sys_dn_arrow == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system down arrow image");
-	duk_push_sphere_obj(ctx, "Image", image_ref(s_sys_dn_arrow));
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(s_sys_dn_arrow));
 	return 1;
 }
 
@@ -1349,7 +1350,7 @@ js_GetSystemUpArrow(duk_context* ctx)
 {
 	if (s_sys_up_arrow == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system up arrow image");
-	duk_push_sphere_obj(ctx, "Image", image_ref(s_sys_up_arrow));
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(s_sys_up_arrow));
 	return 1;
 }
 
@@ -1381,7 +1382,7 @@ js_GetToggleState(duk_context* ctx)
 		&& keycode != ALLEGRO_KEY_NUMLOCK
 		&& keycode != ALLEGRO_KEY_SCROLLLOCK)
 	{
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetToggleState(): invalid toggle key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid toggle key constant");
 	}
 
 	duk_push_boolean(ctx, kb_is_toggled(keycode));
@@ -1398,7 +1399,7 @@ js_GetVersion(duk_context* ctx)
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_sprintf(ctx, "v1.5 (%s %s)", PRODUCT_NAME, VERSION_NAME);
+	duk_push_sprintf(ctx, "v1.5", PRODUCT_NAME, VERSION_NAME);
 	return 1;
 }
 
@@ -1689,20 +1690,20 @@ js_CreateColor(duk_context* ctx)
 	int r = duk_require_int(ctx, 0);
 	int g = duk_require_int(ctx, 1);
 	int b = duk_require_int(ctx, 2);
-	int alpha = num_args >= 4 ? duk_require_int(ctx, 3) : 255;
+	int a = num_args >= 4 ? duk_require_int(ctx, 3) : 255;
 
 	// clamp components to 8-bit [0-255]
 	r = r < 0 ? 0 : r > 255 ? 255 : r;
 	g = g < 0 ? 0 : g > 255 ? 255 : g;
 	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
+	a = a < 0 ? 0 : a > 255 ? 255 : a;
 
 	// construct a Color object
-	duk_push_sphere_obj(ctx, "Color", NULL);
+	duk_push_sphere_obj(ctx, "ssColor", NULL);
 	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "red");
 	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "green");
 	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_int(ctx, alpha); duk_put_prop_string(ctx, -2, "alpha");
+	duk_push_int(ctx, a); duk_put_prop_string(ctx, -2, "alpha");
 	return 1;
 }
 
@@ -1723,7 +1724,7 @@ js_CreateColorMatrix(duk_context* ctx)
 	int bb = duk_require_int(ctx, 11);
 
 	// construct a ColorMatrix object
-	duk_push_sphere_obj(ctx, "ColorMatrix", NULL);
+	duk_push_sphere_obj(ctx, "ssColorMatrix", NULL);
 	duk_push_int(ctx, rn); duk_put_prop_string(ctx, -2, "rn");
 	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
 	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
@@ -1746,7 +1747,7 @@ js_CreateStringFromByteArray(duk_context* ctx)
 	uint8_t*     buffer;
 	size_t       size;
 
-	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 
 	buffer = get_bytearray_buffer(array);
 	size = get_bytearray_size(array);
@@ -1796,7 +1797,7 @@ js_CreateSurface(duk_context* ctx)
 	if (!(image = image_new(width, height)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
 	image_fill(image, fill_color);
-	duk_push_sphere_obj(ctx, "Surface", image);
+	duk_push_sphere_obj(ctx, "ssSurface", image);
 	return 1;
 }
 
@@ -1820,7 +1821,7 @@ static duk_ret_t
 js_DeflateByteArray(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	int level = n_args >= 2 ? duk_require_int(ctx, 1) : -1;
 
 	bytearray_t* new_array;
@@ -1961,7 +1962,7 @@ js_GrabImage(duk_context* ctx)
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): unable to grab backbuffer image");
-	duk_push_sphere_obj(ctx, "Image", image);
+	duk_push_sphere_obj(ctx, "ssImage", image);
 	return 1;
 }
 
@@ -1977,7 +1978,7 @@ js_GrabSurface(duk_context* ctx)
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): unable to grab backbuffer image");
-	duk_push_sphere_obj(ctx, "Surface", image);
+	duk_push_sphere_obj(ctx, "ssSurface", image);
 	return 1;
 }
 
@@ -2044,7 +2045,7 @@ js_GradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_HashByteArray(duk_context* ctx)
 {
-	duk_require_sphere_obj(ctx, 0, "ByteArray");
+	duk_require_sphere_obj(ctx, 0, "ssByteArray");
 
 	// TODO: implement byte array hashing
 	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "function is not implemented");
@@ -2069,7 +2070,7 @@ static duk_ret_t
 js_InflateByteArray(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	int max_size = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
 
 	bytearray_t* new_array;
@@ -2146,7 +2147,7 @@ js_ListenOnPort(duk_context* ctx)
 	port = duk_require_int(ctx, 0);
 
 	if (socket = listen_on_port(NULL, port, 1024, 0))
-		duk_push_sphere_obj(ctx, "Socket", socket);
+		duk_push_sphere_obj(ctx, "ssSocket", socket);
 	else
 		duk_push_null(ctx);
 	return 1;
@@ -2161,7 +2162,7 @@ js_LoadAnimation(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "animations", true);
 	if (!(anim = animation_new(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
-	duk_push_sphere_obj(ctx, "Animation", anim);
+	duk_push_sphere_obj(ctx, "ssAnimation", anim);
 	return 1;
 }
 
@@ -2188,7 +2189,7 @@ js_LoadImage(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "images", true);
 	if (!(image = image_load(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
-	duk_push_sphere_obj(ctx, "Image", image);
+	duk_push_sphere_obj(ctx, "ssImage", image);
 	return 1;
 }
 
@@ -2202,7 +2203,7 @@ js_LoadSound(duk_context* ctx)
 
 	if (!(sound = sound_new(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load sound `%s`", filename);
-	duk_push_sphere_obj(ctx, "Sound", sound);
+	duk_push_sphere_obj(ctx, "ssSound", sound);
 	return 1;
 }
 
@@ -2229,7 +2230,7 @@ js_LoadSurface(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "images", true);
 	if (!(image = image_load(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file `%s`", filename);
-	duk_push_sphere_obj(ctx, "Surface", image);
+	duk_push_sphere_obj(ctx, "ssSurface", image);
 	return 1;
 }
 
@@ -2258,7 +2259,7 @@ js_OpenAddress(duk_context* ctx)
 	port = duk_require_int(ctx, 1);
 	
 	if ((socket = connect_to_host(hostname, port, 1024)) != NULL)
-		duk_push_sphere_obj(ctx, "Socket", socket);
+		duk_push_sphere_obj(ctx, "ssSocket", socket);
 	else
 		duk_push_null(ctx);
 	return 1;
@@ -2274,7 +2275,7 @@ js_OpenFile(duk_context* ctx)
 
 	if (!(file = kev_open(g_fs, filename, true)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
-	duk_push_sphere_obj(ctx, "File", file);
+	duk_push_sphere_obj(ctx, "ssFile", file);
 	return 1;
 }
 
@@ -2287,7 +2288,7 @@ js_OpenLog(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "logs", true);
 	if (!(logger = log_open(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
-	duk_push_sphere_obj(ctx, "Logger", logger);
+	duk_push_sphere_obj(ctx, "ssLogger", logger);
 	return 1;
 }
 
@@ -2309,7 +2310,7 @@ js_OpenRawFile(duk_context* ctx)
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file `%s` for %s",
 			filename, writable ? "writing" : "reading");
-	duk_push_sphere_obj(ctx, "RawFile", file);
+	duk_push_sphere_obj(ctx, "ssRawFile", file);
 	return 1;
 }
 
@@ -2598,7 +2599,7 @@ js_Animation_finalize(duk_context* ctx)
 {
 	animation_t* anim;
 
-	anim = duk_require_sphere_obj(ctx, 0, "Animation");
+	anim = duk_require_sphere_obj(ctx, 0, "ssAnimation");
 	animation_free(anim);
 	return 0;
 }
@@ -2609,7 +2610,7 @@ js_Animation_get_height(duk_context* ctx)
 	animation_t* anim;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 
 	duk_push_int(ctx, animation_height(anim));
 	return 1;
@@ -2621,7 +2622,7 @@ js_Animation_get_width(duk_context* ctx)
 	animation_t* anim;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 
 	duk_push_int(ctx, animation_width(anim));
 	return 1;
@@ -2633,7 +2634,7 @@ js_Animation_getDelay(duk_context* ctx)
 	animation_t* anim;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 	duk_pop(ctx);
 	duk_push_int(ctx, animation_delay(anim));
 	return 1;
@@ -2645,7 +2646,7 @@ js_Animation_getNumFrames(duk_context* ctx)
 	animation_t* anim;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 
 	duk_push_int(ctx, animation_num_frames(anim));
 	return 1;
@@ -2660,7 +2661,7 @@ js_Animation_drawFrame(duk_context* ctx)
 	animation_t* anim;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 
 	image_draw(animation_frame(anim), x, y);
 	return 0;
@@ -2677,7 +2678,7 @@ js_Animation_drawZoomedFrame(duk_context* ctx)
 	int          y;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 	x = duk_require_number(ctx, 0);
 	y = duk_require_number(ctx, 1);
 	scale = duk_require_number(ctx, 2);
@@ -2696,7 +2697,7 @@ js_Animation_readNextFrame(duk_context* ctx)
 	animation_t* anim;
 
 	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "Animation");
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 	duk_pop(ctx);
 	animation_update(anim);
 	return 0;
@@ -2707,7 +2708,7 @@ js_ByteArray_finalize(duk_context* ctx)
 {
 	bytearray_t* array;
 
-	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	free_bytearray(array);
 	return 0;
 }
@@ -2718,7 +2719,7 @@ js_ByteArray_get_length(duk_context* ctx)
 	bytearray_t* array;
 
 	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 	duk_pop(ctx);
 	duk_push_int(ctx, get_bytearray_size(array));
 	return 1;
@@ -2738,7 +2739,7 @@ js_ByteArray_getProp(duk_context* ctx)
 	int          index;
 	int          size;
 
-	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	if (duk_is_number(ctx, 1)) {
 		index = duk_to_int(ctx, 1);
 		size = get_bytearray_size(array);
@@ -2761,7 +2762,7 @@ js_ByteArray_setProp(duk_context* ctx)
 	int          index;
 	int          size;
 
-	array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	if (duk_is_number(ctx, 1)) {
 		index = duk_to_int(ctx, 1);
 		size = get_bytearray_size(array);
@@ -2785,8 +2786,8 @@ js_ByteArray_concat(duk_context* ctx)
 	bytearray_t* new_array;
 
 	duk_push_this(ctx);
-	array[0] = duk_require_sphere_obj(ctx, -1, "ByteArray");
-	array[1] = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	array[0] = duk_require_sphere_obj(ctx, -1, "ssByteArray");
+	array[1] = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	
 	if (!(new_array = concat_bytearrays(array[0], array[1])))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to concatenate byte arrays");
@@ -2804,7 +2805,7 @@ js_ByteArray_deflate(duk_context* ctx)
 	bytearray_t* new_array;
 
 	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 	duk_pop(ctx);
 	if ((level < 0 || level > 9) && n_args >= 1)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): compression level must be [0-9] (got: %d)", level);
@@ -2824,7 +2825,7 @@ js_ByteArray_inflate(duk_context* ctx)
 	int max_size = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
 
 	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 	duk_pop(ctx);
 	if (max_size < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): buffer size must not be negative (got: %d)", max_size);
@@ -2847,7 +2848,7 @@ js_ByteArray_slice(duk_context* ctx)
 	int          size;
 
 	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ByteArray");
+	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 
 	size = get_bytearray_size(array);
 	end_norm = fmin(end >= 0 ? end : size + end, size);
@@ -2892,7 +2893,7 @@ js_File_finalize(duk_context* ctx)
 {
 	kevfile_t* file;
 
-	file = duk_require_sphere_obj(ctx, 0, "File");
+	file = duk_require_sphere_obj(ctx, 0, "ssFile");
 	kev_close(file);
 	return 0;
 }
@@ -2910,7 +2911,7 @@ js_File_get_numKeys(duk_context* ctx)
 	kevfile_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file was closed");
@@ -2927,7 +2928,7 @@ js_File_getKey(duk_context* ctx)
 	const char* key;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): file was closed");
@@ -2944,7 +2945,7 @@ js_File_flush(duk_context* ctx)
 	kevfile_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file was closed");
@@ -2958,7 +2959,7 @@ js_File_close(duk_context* ctx)
 	kevfile_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	kev_close(file);
 	duk_push_this(ctx);
@@ -2979,7 +2980,7 @@ js_File_read(duk_context* ctx)
 	const char* value;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): file was closed");
@@ -3009,7 +3010,7 @@ js_File_write(duk_context* ctx)
 	kevfile_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "File");
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): file was closed");
@@ -3022,7 +3023,7 @@ js_Font_finalize(duk_context* ctx)
 {
 	font_t* font;
 
-	font = duk_require_sphere_obj(ctx, 0, "Font");
+	font = duk_require_sphere_obj(ctx, 0, "ssFont");
 	font_free(font);
 	return 0;
 }
@@ -3041,10 +3042,10 @@ js_Font_getCharacterImage(duk_context* ctx)
 	font_t*  font;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	cp = duk_require_uint(ctx, 0);
 
-	duk_push_sphere_obj(ctx, "Image", image_ref(font_glyph(font, cp)));
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(font_glyph(font, cp)));
 	return 1;
 }
 
@@ -3063,7 +3064,7 @@ js_Font_set_colorMask(duk_context* ctx)
 	font_t* font;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask"); duk_pop(ctx);
 	duk_pop(ctx);
 	return 0;
@@ -3075,7 +3076,7 @@ js_Font_get_height(duk_context* ctx)
 	font_t* font;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	duk_push_int(ctx, font_height(font));
 	return 1;
@@ -3085,12 +3086,12 @@ static duk_ret_t
 js_Font_setCharacterImage(duk_context* ctx)
 {
 	int cp = duk_require_int(ctx, 0);
-	image_t* image = duk_require_sphere_obj(ctx, 1, "Image");
+	image_t* image = duk_require_sphere_obj(ctx, 1, "ssImage");
 
 	font_t* font;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 
 	font_set_glyph(font, cp, image);
 	return 0;
@@ -3103,7 +3104,7 @@ js_Font_clone(duk_context* ctx)
 	font_t* font;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	if (!(dolly_font = font_clone(font)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font:clone(): unable to clone font");
@@ -3122,7 +3123,7 @@ js_Font_drawText(duk_context* ctx)
 	color_t mask;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!screen_is_skipframe(g_screen))
@@ -3144,7 +3145,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 	int             text_w, text_h;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!screen_is_skipframe(g_screen)) {
@@ -3179,7 +3180,7 @@ js_Font_drawTextBox(duk_context* ctx)
 	int i;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!screen_is_skipframe(g_screen)) {
@@ -3210,7 +3211,7 @@ js_Font_getStringHeight(duk_context* ctx)
 	int     num_lines;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
 	duk_push_this(ctx);
@@ -3231,7 +3232,7 @@ js_Font_getStringWidth(duk_context* ctx)
 	font_t* font;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	duk_push_int(ctx, font_get_width(font, text));
 	return 1;
@@ -3250,7 +3251,7 @@ js_Font_wordWrapString(duk_context* ctx)
 	int i;
 
 	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	wraptext = wraptext_new(text, font, width);
 	num_lines = wraptext_len(wraptext);
@@ -3268,7 +3269,7 @@ js_Image_finalize(duk_context* ctx)
 {
 	image_t* image;
 
-	image = duk_require_sphere_obj(ctx, 0, "Image");
+	image = duk_require_sphere_obj(ctx, 0, "ssImage");
 	image_free(image);
 	return 0;
 }
@@ -3279,7 +3280,7 @@ js_Image_get_height(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
 	duk_push_int(ctx, image_height(image));
 	return 1;
@@ -3291,7 +3292,7 @@ js_Image_get_width(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
 	duk_push_int(ctx, image_width(image));
 	return 1;
@@ -3313,7 +3314,7 @@ js_Image_blit(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
 	if (!screen_is_skipframe(g_screen)) al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	return 0;
@@ -3329,9 +3330,9 @@ js_Image_blitMask(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha), x, y, 0x0);
+	if (!screen_is_skipframe(g_screen)) al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
 	return 0;
 }
 
@@ -3342,11 +3343,11 @@ js_Image_createSurface(duk_context* ctx)
 	image_t* new_image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): unable to create new surface image");
-	duk_push_sphere_obj(ctx, "Surface", new_image);
+	duk_push_sphere_obj(ctx, "ssSurface", new_image);
 	return 1;
 }
 
@@ -3361,7 +3362,7 @@ js_Image_rotateBlit(duk_context* ctx)
 	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	angle = duk_require_number(ctx, 2);
@@ -3387,7 +3388,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	color_t  mask;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	angle = duk_require_number(ctx, 2);
@@ -3396,7 +3397,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	if (!screen_is_skipframe(g_screen)) {
 		width = image_width(image);
 		height = image_height(image);
-		al_draw_tinted_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.alpha),
+		al_draw_tinted_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a),
 			width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	}
 	return 0;
@@ -3415,7 +3416,7 @@ js_Image_transformBlit(duk_context* ctx)
 	int           x4, y4;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	x1 = duk_require_int(ctx, 0);
 	y1 = duk_require_int(ctx, 1);
 	x2 = duk_require_int(ctx, 2);
@@ -3452,7 +3453,7 @@ js_Image_transformBlitMask(duk_context* ctx)
 	int      x4, y4;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	x1 = duk_require_int(ctx, 0);
 	y1 = duk_require_int(ctx, 1);
 	x2 = duk_require_int(ctx, 2);
@@ -3487,7 +3488,7 @@ js_Image_zoomBlit(duk_context* ctx)
 	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	scale = duk_require_number(ctx, 2);
@@ -3513,7 +3514,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Image");
+	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	scale = duk_require_number(ctx, 2);
@@ -3533,7 +3534,7 @@ js_Logger_finalize(duk_context* ctx)
 {
 	logger_t* logger;
 
-	logger = duk_require_sphere_obj(ctx, 0, "Logger");
+	logger = duk_require_sphere_obj(ctx, 0, "ssLogger");
 	log_close(logger);
 	return 0;
 }
@@ -3553,7 +3554,7 @@ js_Logger_beginBlock(duk_context* ctx)
 	logger_t* logger;
 
 	duk_push_this(ctx);
-	logger = duk_require_sphere_obj(ctx, -1, "Logger");
+	logger = duk_require_sphere_obj(ctx, -1, "ssLogger");
 	if (!log_begin_block(logger, title))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): unable to create new log block");
 	return 0;
@@ -3565,7 +3566,7 @@ js_Logger_endBlock(duk_context* ctx)
 	logger_t* logger;
 
 	duk_push_this(ctx);
-	logger = duk_require_sphere_obj(ctx, -1, "Logger");
+	logger = duk_require_sphere_obj(ctx, -1, "ssLogger");
 	log_end_block(logger);
 	return 0;
 }
@@ -3578,7 +3579,7 @@ js_Logger_write(duk_context* ctx)
 	logger_t* logger;
 
 	duk_push_this(ctx);
-	logger = duk_require_sphere_obj(ctx, -1, "Logger");
+	logger = duk_require_sphere_obj(ctx, -1, "ssLogger");
 	log_write(logger, NULL, text);
 	return 0;
 }
@@ -3588,7 +3589,7 @@ js_RawFile_finalize(duk_context* ctx)
 {
 	sfs_file_t* file;
 
-	file = duk_require_sphere_obj(ctx, 0, "RawFile");
+	file = duk_require_sphere_obj(ctx, 0, "ssRawFile");
 	if (file != NULL) sfs_fclose(file);
 	return 0;
 }
@@ -3606,7 +3607,7 @@ js_RawFile_get_position(duk_context* ctx)
 	sfs_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
@@ -3622,7 +3623,7 @@ js_RawFile_set_position(duk_context* ctx)
 	sfs_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
@@ -3638,7 +3639,7 @@ js_RawFile_get_size(duk_context* ctx)
 	long  file_pos;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:size: file was closed");
@@ -3655,7 +3656,7 @@ js_RawFile_close(duk_context* ctx)
 	sfs_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (file == NULL)
@@ -3676,7 +3677,7 @@ js_RawFile_read(duk_context* ctx)
 	void*        read_buffer;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
@@ -3709,7 +3710,7 @@ js_RawFile_readString(duk_context* ctx)
 	void* read_buffer;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
@@ -3738,14 +3739,14 @@ js_RawFile_write(duk_context* ctx)
 	duk_size_t   write_size;
 
 	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "RawFile");
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): file was closed");
 	if (duk_is_string(ctx, 0))
 		data = duk_get_lstring(ctx, 0, &write_size);
-	else if (duk_is_sphere_obj(ctx, 0, "ByteArray")) {
-		array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+	else if (duk_is_sphere_obj(ctx, 0, "ssByteArray")) {
+		array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 		data = get_bytearray_buffer(array);
 		write_size = get_bytearray_size(array);
 	}
@@ -3762,7 +3763,7 @@ js_Socket_finalize(duk_context* ctx)
 {
 	socket_t* socket;
 
-	socket = duk_require_sphere_obj(ctx, 0, "Socket");
+	socket = duk_require_sphere_obj(ctx, 0, "ssSocket");
 	free_socket(socket);
 	return 1;
 }
@@ -3780,7 +3781,7 @@ js_Socket_isConnected(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "Socket");
+	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (socket != NULL)
 		duk_push_boolean(ctx, is_socket_live(socket));
@@ -3795,7 +3796,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "Socket");
+	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): socket has been closed");
@@ -3809,7 +3810,7 @@ js_Socket_close(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "Socket");
+	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (socket != NULL)
@@ -3827,7 +3828,7 @@ js_Socket_read(duk_context* ctx)
 	socket_t*    socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "Socket");
+	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (length <= 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): must read at least 1 byte (got: %i)", length);
@@ -3853,7 +3854,7 @@ js_Socket_readString(duk_context* ctx)
 	socket_t* socket;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "Socket");
+	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): socket has been closed");
@@ -3876,12 +3877,12 @@ js_Socket_write(duk_context* ctx)
 	size_t         write_size;
 
 	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "Socket");
+	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (duk_is_string(ctx, 0))
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
 	else {
-		array = duk_require_sphere_obj(ctx, 0, "ByteArray");
+		array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 		payload = get_bytearray_buffer(array);
 		write_size = get_bytearray_size(array);
 	}
@@ -3898,7 +3899,7 @@ js_Sound_finalize(duk_context* ctx)
 {
 	sound_t* sound;
 
-	sound = duk_require_sphere_obj(ctx, 0, "Sound");
+	sound = duk_require_sphere_obj(ctx, 0, "ssSound");
 	sound_free(sound);
 	return 0;
 }
@@ -3916,7 +3917,7 @@ js_Sound_getVolume(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_int(ctx, sound_gain(sound) * 255);
 	return 1;
@@ -3930,7 +3931,7 @@ js_Sound_setVolume(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
 	sound_set_gain(sound, (float)volume / 255);
@@ -3943,7 +3944,7 @@ js_Sound_get_length(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_number(ctx, floor(sound_len(sound) * 1000000));
 	return 1;
@@ -3955,7 +3956,7 @@ js_Sound_get_pan(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_int(ctx, sound_pan(sound) * 255);
 	return 1;
@@ -3969,7 +3970,7 @@ js_Sound_set_pan(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_set_pan(sound, (float)new_pan / 255);
 	return 0;
@@ -3981,7 +3982,7 @@ js_Sound_get_pitch(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_number(ctx, sound_speed(sound));
 	return 1;
@@ -3995,7 +3996,7 @@ js_Sound_set_pitch(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_set_speed(sound, new_pitch);
 	return 0;
@@ -4007,7 +4008,7 @@ js_Sound_get_playing(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_boolean(ctx, sound_playing(sound));
 	return 1;
@@ -4019,7 +4020,7 @@ js_Sound_get_position(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_number(ctx, floor(sound_tell(sound) * 1000000));
 	return 1;
@@ -4032,7 +4033,7 @@ js_Sound_set_position(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 	new_pos = duk_require_number(ctx, 0);
 
 	sound_seek(sound, floor(new_pos) / 1000000);
@@ -4045,7 +4046,7 @@ js_Sound_get_repeat(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_boolean(ctx, sound_repeat(sound));
 	return 1;
@@ -4059,7 +4060,7 @@ js_Sound_set_repeat(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_set_repeat(sound, is_looped);
 	return 0;
@@ -4078,7 +4079,7 @@ js_Sound_get_volume(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	duk_push_number(ctx, sound_gain(sound));
 	return 1;
@@ -4092,7 +4093,7 @@ js_Sound_set_volume(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_set_gain(sound, volume);
 	return 0;
@@ -4104,7 +4105,7 @@ js_Sound_pause(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_pause(sound, true);
 	return 0;
@@ -4119,7 +4120,7 @@ js_Sound_play(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	// Sound:play() has some really convoluted argument semantics.
 	// unfortunately, this is necessary to be able to maintain Sphere 1.x compatibility
@@ -4153,7 +4154,7 @@ js_Sound_reset(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_seek(sound, 0.0);
 	return 0;
@@ -4165,7 +4166,7 @@ js_Sound_stop(duk_context* ctx)
 	sound_t* sound;
 
 	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	sound_stop(sound);
 	return 0;
@@ -4176,7 +4177,7 @@ js_Spriteset_finalize(duk_context* ctx)
 {
 	spriteset_t* spriteset;
 
-	spriteset = duk_require_sphere_obj(ctx, 0, "Spriteset");
+	spriteset = duk_require_sphere_obj(ctx, 0, "ssSpriteset");
 	free_spriteset(spriteset);
 	return 0;
 }
@@ -4187,7 +4188,7 @@ js_Spriteset_get_filename(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
+	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
 	duk_pop(ctx);
 	duk_push_string(ctx, spriteset->filename);
 	return 1;
@@ -4207,7 +4208,7 @@ js_Spriteset_clone(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
+	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
 
 	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to clone spriteset");
@@ -4223,10 +4224,10 @@ js_Spriteset_get_image(duk_context* ctx)
 	spriteset_t*  spriteset;
 
 	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
+	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
 	index = duk_to_int(ctx, 0);
 
-	duk_push_sphere_obj(ctx, "Image", image_ref(get_spriteset_image(spriteset, index)));
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(get_spriteset_image(spriteset, index)));
 	return 1;
 }
 
@@ -4238,8 +4239,8 @@ js_Spriteset_set_image(duk_context* ctx)
 	spriteset_t*  spriteset;
 
 	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "Spriteset");
-	image = duk_require_sphere_obj(ctx, 0, "Image");
+	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
+	image = duk_require_sphere_obj(ctx, 0, "ssImage");
 	index = duk_to_int(ctx, 1);
 
 	set_spriteset_image(spriteset, index, image);
@@ -4251,7 +4252,7 @@ js_Surface_finalize(duk_context* ctx)
 {
 	image_t* image;
 
-	image = duk_require_sphere_obj(ctx, 0, "Surface");
+	image = duk_require_sphere_obj(ctx, 0, "ssSurface");
 	image_free(image);
 	return 0;
 }
@@ -4262,7 +4263,7 @@ js_Surface_get_height(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (image != NULL)
 		duk_push_int(ctx, image_height(image));
@@ -4277,7 +4278,7 @@ js_Surface_get_width(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (image != NULL)
 		duk_push_int(ctx, image_width(image));
@@ -4303,7 +4304,7 @@ js_Surface_setPixel(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	image_set_pixel(image, x, y, color);
 	return 0;
@@ -4320,7 +4321,7 @@ js_Surface_getPixel(duk_context* ctx)
 	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 
@@ -4345,7 +4346,7 @@ js_Surface_applyColorFX(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	width = duk_require_int(ctx, 2);
@@ -4374,7 +4375,7 @@ js_Surface_applyColorFX4(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
@@ -4398,7 +4399,7 @@ js_Surface_applyLookup(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
@@ -4420,7 +4421,7 @@ js_Surface_blit(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_bitmap(image_bitmap(image), x, y, 0x0);
@@ -4430,7 +4431,7 @@ js_Surface_blit(duk_context* ctx)
 static duk_ret_t
 js_Surface_blitMaskSurface(duk_context* ctx)
 {
-	image_t* src_image = duk_require_sphere_obj(ctx, 0, "Surface");
+	image_t* src_image = duk_require_sphere_obj(ctx, 0, "ssSurface");
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 	color_t mask = duk_require_sphere_color(ctx, 3);
@@ -4439,7 +4440,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
@@ -4454,7 +4455,7 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 static duk_ret_t
 js_Surface_blitSurface(duk_context* ctx)
 {
-	image_t* src_image = duk_require_sphere_obj(ctx, 0, "Surface");
+	image_t* src_image = duk_require_sphere_obj(ctx, 0, "ssSurface");
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 
@@ -4462,7 +4463,7 @@ js_Surface_blitSurface(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
@@ -4481,11 +4482,11 @@ js_Surface_clone(duk_context* ctx)
 	image_t* new_image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:clone() - Unable to create new surface image");
-	duk_push_sphere_obj(ctx, "Surface", new_image);
+	duk_push_sphere_obj(ctx, "ssSurface", new_image);
 	return 1;
 }
 
@@ -4500,7 +4501,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	int      y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	width = duk_require_int(ctx, 2);
@@ -4511,7 +4512,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	al_set_target_bitmap(image_bitmap(new_image));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
-	duk_push_sphere_obj(ctx, "Surface", new_image);
+	duk_push_sphere_obj(ctx, "ssSurface", new_image);
 	return 1;
 }
 
@@ -4522,18 +4523,18 @@ js_Surface_createImage(duk_context* ctx)
 	image_t* new_image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:createImage(): unable to create image");
-	duk_push_sphere_obj(ctx, "Image", new_image);
+	duk_push_sphere_obj(ctx, "ssImage", new_image);
 	return 1;
 }
 
 static duk_ret_t
 js_Surface_drawText(duk_context* ctx)
 {
-	font_t* font = duk_require_sphere_obj(ctx, 0, "Font");
+	font_t* font = duk_require_sphere_obj(ctx, 0, "ssFont");
 	int x = duk_require_int(ctx, 1);
 	int y = duk_require_int(ctx, 2);
 	const char* text = duk_to_string(ctx, 3);
@@ -4543,7 +4544,7 @@ js_Surface_drawText(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
@@ -4568,7 +4569,7 @@ js_Surface_filledCircle(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4586,7 +4587,7 @@ js_Surface_flipHorizontally(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	image_flip(image, true, false);
 	return 0;
@@ -4598,7 +4599,7 @@ js_Surface_flipVertically(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	image_flip(image, false, true);
 	return 0;
@@ -4623,7 +4624,7 @@ js_Surface_gradientCircle(duk_context* ctx)
 	int i;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4665,7 +4666,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	image_t*      image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4697,7 +4698,7 @@ js_Surface_line(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4721,7 +4722,7 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4748,7 +4749,7 @@ js_Surface_pointSeries(duk_context* ctx)
 	unsigned int i;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4791,7 +4792,7 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4812,7 +4813,7 @@ js_Surface_replaceColor(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	if (!image_replace_color(image, color, new_color))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:replaceColor() - Failed to perform replacement");
@@ -4828,7 +4829,7 @@ js_Surface_rescale(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	if (!image_rescale(image, width, height))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rescale() - Failed to rescale image");
@@ -4849,7 +4850,7 @@ js_Surface_rotate(duk_context* ctx)
 	int      w, h;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	w = new_w = image_width(image);
 	h = new_h = image_height(image);
@@ -4883,7 +4884,7 @@ js_Surface_rectangle(duk_context* ctx)
 	int      blend_mode;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
@@ -4902,7 +4903,7 @@ js_Surface_save(duk_context* ctx)
 	image_t*    image;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	filename = duk_require_path(ctx, 0, "images", true);
 	image_save(image, filename);
@@ -4913,7 +4914,7 @@ static duk_ret_t
 js_Surface_setAlpha(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int alpha = duk_require_int(ctx, 0);
+	int a = duk_require_int(ctx, 0);
 	bool want_all = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
 
 	image_t*      image;
@@ -4924,17 +4925,17 @@ js_Surface_setAlpha(duk_context* ctx)
 	int i_x, i_y;
 
 	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "Surface");
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	if (!(lock = image_lock(image)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): unable to lock surface");
 	w = image_width(image);
 	h = image_height(image);
-	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
+	a = a < 0 ? 0 : a > 255 ? 255 : a;
 	for (i_y = h - 1; i_y >= 0; --i_y) for (i_x = w - 1; i_x >= 0; --i_x) {
 		pixel = &lock->pixels[i_x + i_y * lock->pitch];
-		pixel->alpha = want_all || pixel->alpha != 0
-			? alpha : pixel->alpha;
+		pixel->a = want_all || pixel->a != 0
+			? a : pixel->a;
 	}
 	image_unlock(image, lock);
 	return 0;
@@ -4954,7 +4955,7 @@ js_WindowStyle_finalize(duk_context* ctx)
 {
 	windowstyle_t* winstyle;
 
-	winstyle = duk_require_sphere_obj(ctx, 0, "WindowStyle");
+	winstyle = duk_require_sphere_obj(ctx, 0, "ssWindowStyle");
 	free_windowstyle(winstyle);
 	return 0;
 }
@@ -4970,7 +4971,7 @@ static duk_ret_t
 js_WindowStyle_get_colorMask(duk_context* ctx)
 {
 	duk_push_this(ctx);
-	duk_require_sphere_obj(ctx, -1, "WindowStyle");
+	duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
 	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
 	duk_remove(ctx, -2);
 	return 1;
@@ -4982,7 +4983,7 @@ js_WindowStyle_set_colorMask(duk_context* ctx)
 	color_t mask = duk_require_sphere_color(ctx, 0);
 
 	duk_push_this(ctx);
-	duk_require_sphere_obj(ctx, -1, "WindowStyle");
+	duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
 	duk_push_sphere_color(ctx, mask);
 	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 	duk_pop(ctx);
@@ -5001,8 +5002,10 @@ js_WindowStyle_drawWindow(duk_context* ctx)
 	windowstyle_t* winstyle;
 
 	duk_push_this(ctx);
-	winstyle = duk_require_sphere_obj(ctx, -1, "WindowStyle");
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	winstyle = duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
+	mask = duk_require_sphere_color(ctx, -1);
+	duk_pop(ctx);
 	duk_pop(ctx);
 	draw_window(winstyle, mask, x, y, w, h);
 	return 0;

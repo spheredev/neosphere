@@ -3,6 +3,7 @@
 
 #include "commonjs.h"
 #include "map_engine.h"
+#include "pegasus.h"
 #include "vanilla.h"
 
 void
@@ -23,6 +24,7 @@ initialize_api(duk_context* ctx)
 
 	initialize_commonjs_api();
 	initialize_vanilla_api(ctx);
+	initialize_pegasus_api(ctx);
 
 	// initialize subsystem APIs
 	init_map_engine_api(g_duk);
@@ -326,7 +328,7 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	duk_push_int(ctx, line_number);
 	duk_put_prop_string(ctx, -2, "lineNumber");
 	free(filename);
-	
+
 	duk_throw(ctx);
 }
 
@@ -375,7 +377,7 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 
 	index = duk_require_normalize_index(ctx, index);
 	if (!duk_is_sphere_obj(ctx, index, ctor_name))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "expected a %s object", ctor_name);
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "expected %s object", ctor_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata");
 	udata = duk_get_pointer(ctx, -1);
 	duk_pop(ctx);

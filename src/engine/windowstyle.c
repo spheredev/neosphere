@@ -142,7 +142,7 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 		gradient[i].r = mask.r * winstyle->gradient[i].r / 255;
 		gradient[i].g = mask.g * winstyle->gradient[i].g / 255;
 		gradient[i].b = mask.b * winstyle->gradient[i].b / 255;
-		gradient[i].alpha = mask.alpha * winstyle->gradient[i].alpha / 255;
+		gradient[i].a = mask.a * winstyle->gradient[i].a / 255;
 	}
 	ALLEGRO_VERTEX verts[] = {
 		{ x, y, 0, 0, 0, nativecolor(gradient[0]) },
