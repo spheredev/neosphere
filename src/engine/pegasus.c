@@ -348,7 +348,7 @@ initialize_pegasus_api(duk_context* ctx)
 {
 	const struct x11_color* p;
 	
-	console_log(1, "initializing Pegasus API v%d.0 L%d", SPHERE_API_VERSION, SPHERE_API_LEVEL);
+	console_log(1, "initializing Pegasus API v%d.0 Lv. %d", SPHERE_API_VERSION, SPHERE_API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 

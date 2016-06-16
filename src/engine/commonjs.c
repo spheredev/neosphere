@@ -248,14 +248,11 @@ on_error:
 void
 initialize_commonjs_api(void)
 {
-	const path_t* script_path;
-
 	duk_push_global_stash(g_duk);
 	duk_push_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "moduleCache");
 	duk_pop(g_duk);
 	
-	script_path = get_sgm_script_path(g_fs);
 	duk_push_global_object(g_duk);
 	duk_push_string(g_duk, "require");
 	duk_push_require(g_duk, NULL);

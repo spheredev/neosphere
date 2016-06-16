@@ -22,12 +22,11 @@ initialize_api(duk_context* ctx)
 	duk_put_prop_string(ctx, -2, "prototypes");
 	duk_pop(ctx);
 
-	initialize_commonjs_api();
 	initialize_vanilla_api(ctx);
-	initialize_pegasus_api(ctx);
-
-	// initialize subsystem APIs
 	init_map_engine_api(g_duk);
+	
+	initialize_commonjs_api();
+	initialize_pegasus_api(ctx);
 }
 
 void

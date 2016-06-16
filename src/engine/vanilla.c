@@ -288,8 +288,8 @@ enum line_series_type
 	LINE_LOOP
 };
 
-static mixer_t*       s_def_mixer;
 static unsigned int   s_next_async_id = 1;
+static mixer_t*       s_sound_mixer;
 static image_t*       s_sys_arrow = NULL;
 static image_t*       s_sys_dn_arrow = NULL;
 static image_t*       s_sys_up_arrow = NULL;
@@ -302,7 +302,7 @@ initialize_vanilla_api(duk_context* ctx)
 	
 	console_log(1, "initializing Vanilla API v1.5");
 
-	s_def_mixer = mixer_new(44100, 16, 2);
+	s_sound_mixer = mixer_new(44100, 16, 2);
 	
 	// load system-provided images
 	if (g_sys_conf != NULL) {
@@ -756,7 +756,7 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 {
 	duk_idx_t obj_index;
 
-	duk_push_sphere_obj(ctx, "ssByteArray", ref_bytearray(array));
+	duk_push_sphere_obj(ctx, "ssByteArray", bytearray_ref(array));
 	obj_index = duk_normalize_index(ctx, -1);
 
 	// return proxy object so we can catch array accesses
@@ -1660,10 +1660,10 @@ js_CreateByteArray(duk_context* ctx)
 
 	if (size < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "size cannot be negative");
-	if (!(array = new_bytearray(size)))
+	if (!(array = bytearray_new(size)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
-	free_bytearray(array);
+	bytearray_free(array);
 	return 1;
 }
 
@@ -1679,7 +1679,7 @@ js_CreateByteArrayFromString(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	lstr_free(string);
 	duk_push_sphere_bytearray(ctx, array);
-	free_bytearray(array);
+	bytearray_free(array);
 	return 1;
 }
 
@@ -1749,8 +1749,8 @@ js_CreateStringFromByteArray(duk_context* ctx)
 
 	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 
-	buffer = get_bytearray_buffer(array);
-	size = get_bytearray_size(array);
+	buffer = bytearray_buffer(array);
+	size = bytearray_len(array);
 	duk_push_lstring(ctx, (char*)buffer, size);
 	return 1;
 }
@@ -1828,7 +1828,7 @@ js_DeflateByteArray(duk_context* ctx)
 
 	if ((level < 0 || level > 9) && n_args >= 2)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DeflateByteArray(): compression level must be [0-9] (got: %i)", level);
-	if (!(new_array = deflate_bytearray(array, level)))
+	if (!(new_array = bytearray_deflate(array, level)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DeflateByteArray(): unable to deflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -2077,7 +2077,7 @@ js_InflateByteArray(duk_context* ctx)
 
 	if (max_size < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "InflateByteArray(): buffer size must not be negative (got: %d)", max_size);
-	if (!(new_array = inflate_bytearray(array, max_size)))
+	if (!(new_array = bytearray_inflate(array, max_size)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -2709,7 +2709,7 @@ js_ByteArray_finalize(duk_context* ctx)
 	bytearray_t* array;
 
 	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
-	free_bytearray(array);
+	bytearray_free(array);
 	return 0;
 }
 
@@ -2721,7 +2721,7 @@ js_ByteArray_get_length(duk_context* ctx)
 	duk_push_this(ctx);
 	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 	duk_pop(ctx);
-	duk_push_int(ctx, get_bytearray_size(array));
+	duk_push_int(ctx, bytearray_len(array));
 	return 1;
 }
 
@@ -2742,10 +2742,10 @@ js_ByteArray_getProp(duk_context* ctx)
 	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	if (duk_is_number(ctx, 1)) {
 		index = duk_to_int(ctx, 1);
-		size = get_bytearray_size(array);
+		size = bytearray_len(array);
 		if (index < 0 || index >= size)
 			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
-		duk_push_uint(ctx, get_byte(array, index));
+		duk_push_uint(ctx, bytearray_get(array, index));
 		return 1;
 	}
 	else {
@@ -2765,10 +2765,10 @@ js_ByteArray_setProp(duk_context* ctx)
 	array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	if (duk_is_number(ctx, 1)) {
 		index = duk_to_int(ctx, 1);
-		size = get_bytearray_size(array);
+		size = bytearray_len(array);
 		if (index < 0 || index >= size)
 			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
-		set_byte(array, index, duk_require_uint(ctx, 2));
+		bytearray_set(array, index, duk_require_uint(ctx, 2));
 		return 0;
 	}
 	else {
@@ -2789,7 +2789,7 @@ js_ByteArray_concat(duk_context* ctx)
 	array[0] = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 	array[1] = duk_require_sphere_obj(ctx, 0, "ssByteArray");
 	
-	if (!(new_array = concat_bytearrays(array[0], array[1])))
+	if (!(new_array = bytearray_concat(array[0], array[1])))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to concatenate byte arrays");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -2809,7 +2809,7 @@ js_ByteArray_deflate(duk_context* ctx)
 	duk_pop(ctx);
 	if ((level < 0 || level > 9) && n_args >= 1)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): compression level must be [0-9] (got: %d)", level);
-	if (!(new_array = deflate_bytearray(array, level)))
+	if (!(new_array = bytearray_deflate(array, level)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:deflate(): unable to deflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -2829,7 +2829,7 @@ js_ByteArray_inflate(duk_context* ctx)
 	duk_pop(ctx);
 	if (max_size < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): buffer size must not be negative (got: %d)", max_size);
-	if (!(new_array = inflate_bytearray(array, max_size)))
+	if (!(new_array = bytearray_inflate(array, max_size)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -2850,11 +2850,11 @@ js_ByteArray_slice(duk_context* ctx)
 	duk_push_this(ctx);
 	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
 
-	size = get_bytearray_size(array);
+	size = bytearray_len(array);
 	end_norm = fmin(end >= 0 ? end : size + end, size);
 	if (end_norm < start || end_norm > size)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "start and/or end is out of bounds");
-	if (!(new_array = slice_bytearray(array, start, end_norm - start)))
+	if (!(new_array = bytearray_slice(array, start, end_norm - start)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to slice byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
@@ -3747,8 +3747,8 @@ js_RawFile_write(duk_context* ctx)
 		data = duk_get_lstring(ctx, 0, &write_size);
 	else if (duk_is_sphere_obj(ctx, 0, "ssByteArray")) {
 		array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
-		data = get_bytearray_buffer(array);
-		write_size = get_bytearray_size(array);
+		data = bytearray_buffer(array);
+		write_size = bytearray_len(array);
 	}
 	else {
 		data = duk_require_buffer_data(ctx, 0, &write_size);
@@ -3883,8 +3883,8 @@ js_Socket_write(duk_context* ctx)
 		payload = (uint8_t*)duk_get_lstring(ctx, 0, &write_size);
 	else {
 		array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
-		payload = get_bytearray_buffer(array);
-		write_size = get_bytearray_size(array);
+		payload = bytearray_buffer(array);
+		write_size = bytearray_len(array);
 	}
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): socket has been closed");
@@ -4114,7 +4114,6 @@ js_Sound_pause(duk_context* ctx)
 static duk_ret_t
 js_Sound_play(duk_context* ctx)
 {
-	mixer_t* mixer;
 	int      num_args;
 	sound_t* sound;
 
@@ -4122,27 +4121,14 @@ js_Sound_play(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
-	// Sound:play() has some really convoluted argument semantics.
-	// unfortunately, this is necessary to be able to maintain Sphere 1.x compatibility
-	// and still support mixers.
-	if (num_args >= 1 && duk_is_sphere_obj(ctx, 0, "Mixer")) {
-		if (num_args >= 2)
-			sound_set_repeat(sound, duk_require_boolean(ctx, 1));
-		else
-			sound_set_repeat(sound, false);
-		mixer = duk_require_sphere_obj(ctx, 0, "Mixer");
-		sound_play(sound, mixer);
+	if (num_args >= 1) {
+		sound_set_repeat(sound, duk_require_boolean(ctx, 0));
+		sound_play(sound, s_sound_mixer);
 	}
 	else {
-		if (num_args >= 1) {
-			sound_set_repeat(sound, duk_require_boolean(ctx, 0));
-			sound_play(sound, s_def_mixer);
-		}
-		else {
-			sound_pause(sound, false);
-			if (!sound_playing(sound))
-				sound_play(sound, s_def_mixer);
-		}
+		sound_pause(sound, false);
+		if (!sound_playing(sound))
+			sound_play(sound, s_sound_mixer);
 	}
 
 	return 0;
