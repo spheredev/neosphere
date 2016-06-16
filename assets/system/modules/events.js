@@ -1,19 +1,15 @@
 /**
- *  miniRT/delegates CommonJS module
- *  a multicast delegate implementation inspired by .NET events
+ *  miniRT events CommonJS module
  *  (c) 2015-2016 Fat Cerberus
 **/
 
-if (typeof exports === 'undefined') {
-	throw new TypeError("script must be loaded with require()");
-}
-
-const link = require('link');
-
+'use strict';
 module.exports =
 {
     Delegate: Delegate,
 };
+
+const link = require('link');
 
 function Delegate()
 {
