@@ -2,9 +2,8 @@
 #include "script.h"
 
 #include "api.h"
-#include "commonjs.h"
 #include "debugger.h"
-#include "transpile.h"
+#include "pegasus.h"
 #include "utility.h"
 
 struct script
@@ -27,15 +26,12 @@ initialize_scripts(void)
 	duk_push_array(g_duk);
 	duk_put_prop_string(g_duk, -2, "scripts");
 	duk_pop(g_duk);
-
-	initialize_transpiler();
 }
 
 void
 shutdown_scripts(void)
 {
 	console_log(1, "shutting down JS script manager");
-	shutdown_transpiler();
 }
 
 bool
@@ -49,7 +45,7 @@ evaluate_script(const char* filename, bool as_module)
 	size_t         size;
 	
 	if (as_module) {
-		if (!cjs_eval_module(filename))
+		if (!duk_pegasus_eval_module(g_duk, filename))
 			return false;
 		return true;
 	}
@@ -60,11 +56,6 @@ evaluate_script(const char* filename, bool as_module)
 			goto on_error;
 		source_text = lstr_from_buf(slurp, size);
 		free(slurp);
-
-		// ensure non-JS scripts are transpiled to JS first.  this is needed to support
-		// TypeScript, CoffeeScript, etc. transparently.
-		if (!transpile_to_js(&source_text, source_name))
-			goto on_error;
 
 		// ready for launch in T-10...9...*munch*
 		duk_push_lstring_t(g_duk, source_text);

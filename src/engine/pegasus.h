@@ -3,4 +3,6 @@
 
 void initialize_pegasus_api (duk_context* ctx);
 
+duk_bool_t duk_pegasus_eval_module (duk_context* ctx, const char* filename);
+
 #endif // MINISPHERE__PEGASUS_H__INCLUDED

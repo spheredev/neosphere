@@ -5,7 +5,6 @@
 #include "api.h"
 #include "async.h"
 #include "audio.h"
-#include "commonjs.h"
 #include "debugger.h"
 #include "galileo.h"
 #include "input.h"

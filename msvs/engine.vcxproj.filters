@@ -126,12 +126,6 @@
     <ClCompile Include="..\src\engine\audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\commonjs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\engine\transpile.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\duk_rubber.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -270,12 +264,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\engine\audio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\engine\commonjs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\engine\transpile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\duk_rubber.h">

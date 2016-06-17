@@ -53,7 +53,7 @@ initialize_input(void)
 {
 	int i;
 
-	console_log(1, "initializing input");
+	console_log(1, "initializing input subsystem");
 	
 	al_install_keyboard();
 	if (!(s_have_mouse = al_install_mouse()))
@@ -131,7 +131,7 @@ shutdown_input(void)
 	iter_t iter;
 
 	// save player key mappings
-	console_log(1, "shutting down input");
+	console_log(1, "shutting down input subsystem");
 
 	// free bound key scripts
 	iter = vector_enum(s_bound_buttons);
