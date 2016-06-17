@@ -20,7 +20,6 @@ static duk_ret_t js_IsAnyKeyPressed            (duk_context* ctx);
 static duk_ret_t js_IsJoystickButtonPressed    (duk_context* ctx);
 static duk_ret_t js_IsKeyPressed               (duk_context* ctx);
 static duk_ret_t js_IsMouseButtonPressed       (duk_context* ctx);
-static duk_ret_t js_IsSkippedFrame             (duk_context* ctx);
 static duk_ret_t js_GetClippingRectangle       (duk_context* ctx);
 static duk_ret_t js_GetFrameRate               (duk_context* ctx);
 static duk_ret_t js_GetDirectoryList           (duk_context* ctx);
@@ -122,29 +121,25 @@ static duk_ret_t js_RoundRectangle             (duk_context* ctx);
 static duk_ret_t js_Triangle                   (duk_context* ctx);
 static duk_ret_t js_UnbindJoystickButton       (duk_context* ctx);
 static duk_ret_t js_UnbindKey                  (duk_context* ctx);
-static duk_ret_t js_UnskipFrame                (duk_context* ctx);
 static duk_ret_t js_Animation_finalize         (duk_context* ctx);
 static duk_ret_t js_Animation_get_height       (duk_context* ctx);
 static duk_ret_t js_Animation_get_width        (duk_context* ctx);
-static duk_ret_t js_Animation_getDelay         (duk_context* ctx);
-static duk_ret_t js_Animation_getNumFrames     (duk_context* ctx);
 static duk_ret_t js_Animation_drawFrame        (duk_context* ctx);
 static duk_ret_t js_Animation_drawZoomedFrame  (duk_context* ctx);
+static duk_ret_t js_Animation_getDelay         (duk_context* ctx);
+static duk_ret_t js_Animation_getNumFrames     (duk_context* ctx);
 static duk_ret_t js_Animation_readNextFrame    (duk_context* ctx);
 static duk_ret_t js_ByteArray_finalize         (duk_context* ctx);
+static duk_ret_t js_ByteArray_trap_get         (duk_context* ctx);
+static duk_ret_t js_ByteArray_trap_set         (duk_context* ctx);
 static duk_ret_t js_ByteArray_get_length       (duk_context* ctx);
-static duk_ret_t js_ByteArray_toString         (duk_context* ctx);
-static duk_ret_t js_ByteArray_getProp          (duk_context* ctx);
-static duk_ret_t js_ByteArray_setProp          (duk_context* ctx);
 static duk_ret_t js_ByteArray_concat           (duk_context* ctx);
-static duk_ret_t js_ByteArray_deflate          (duk_context* ctx);
-static duk_ret_t js_ByteArray_inflate          (duk_context* ctx);
 static duk_ret_t js_ByteArray_slice            (duk_context* ctx);
+static duk_ret_t js_ByteArray_toString         (duk_context* ctx);
 static duk_ret_t js_Color_toString             (duk_context* ctx);
-static duk_ret_t js_ColorMatrix_apply          (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_toString       (duk_context* ctx);
 static duk_ret_t js_File_finalize              (duk_context* ctx);
-static duk_ret_t js_File_get_numKeys           (duk_context* ctx);
+static duk_ret_t js_File_getNumKeys            (duk_context* ctx);
 static duk_ret_t js_File_getKey                (duk_context* ctx);
 static duk_ret_t js_File_close                 (duk_context* ctx);
 static duk_ret_t js_File_flush                 (duk_context* ctx);
@@ -152,21 +147,20 @@ static duk_ret_t js_File_read                  (duk_context* ctx);
 static duk_ret_t js_File_toString              (duk_context* ctx);
 static duk_ret_t js_File_write                 (duk_context* ctx);
 static duk_ret_t js_Font_finalize              (duk_context* ctx);
-static duk_ret_t js_Font_toString              (duk_context* ctx);
-static duk_ret_t js_Font_get_colorMask         (duk_context* ctx);
-static duk_ret_t js_Font_set_colorMask         (duk_context* ctx);
-static duk_ret_t js_Font_get_height            (duk_context* ctx);
-static duk_ret_t js_Font_getCharacterImage     (duk_context* ctx);
-static duk_ret_t js_Font_setCharacterImage     (duk_context* ctx);
-static duk_ret_t js_Font_getStringHeight       (duk_context* ctx);
-static duk_ret_t js_Font_getStringWidth        (duk_context* ctx);
 static duk_ret_t js_Font_clone                 (duk_context* ctx);
 static duk_ret_t js_Font_drawText              (duk_context* ctx);
 static duk_ret_t js_Font_drawTextBox           (duk_context* ctx);
 static duk_ret_t js_Font_drawZoomedText        (duk_context* ctx);
+static duk_ret_t js_Font_getCharacterImage     (duk_context* ctx);
+static duk_ret_t js_Font_getColorMask          (duk_context* ctx);
+static duk_ret_t js_Font_getHeight             (duk_context* ctx);
+static duk_ret_t js_Font_getStringHeight       (duk_context* ctx);
+static duk_ret_t js_Font_getStringWidth        (duk_context* ctx);
+static duk_ret_t js_Font_setCharacterImage     (duk_context* ctx);
+static duk_ret_t js_Font_setColorMask          (duk_context* ctx);
+static duk_ret_t js_Font_toString              (duk_context* ctx);
 static duk_ret_t js_Font_wordWrapString        (duk_context* ctx);
 static duk_ret_t js_Image_finalize             (duk_context* ctx);
-static duk_ret_t js_Image_toString             (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
 static duk_ret_t js_Image_blit                 (duk_context* ctx);
@@ -174,38 +168,32 @@ static duk_ret_t js_Image_blitMask             (duk_context* ctx);
 static duk_ret_t js_Image_createSurface        (duk_context* ctx);
 static duk_ret_t js_Image_rotateBlit           (duk_context* ctx);
 static duk_ret_t js_Image_rotateBlitMask       (duk_context* ctx);
+static duk_ret_t js_Image_toString             (duk_context* ctx);
 static duk_ret_t js_Image_transformBlit        (duk_context* ctx);
 static duk_ret_t js_Image_transformBlitMask    (duk_context* ctx);
 static duk_ret_t js_Image_zoomBlit             (duk_context* ctx);
 static duk_ret_t js_Image_zoomBlitMask         (duk_context* ctx);
 static duk_ret_t js_Logger_finalize            (duk_context* ctx);
-static duk_ret_t js_Logger_toString            (duk_context* ctx);
 static duk_ret_t js_Logger_beginBlock          (duk_context* ctx);
 static duk_ret_t js_Logger_endBlock            (duk_context* ctx);
+static duk_ret_t js_Logger_toString            (duk_context* ctx);
 static duk_ret_t js_Logger_write               (duk_context* ctx);
 static duk_ret_t js_RawFile_finalize           (duk_context* ctx);
-static duk_ret_t js_RawFile_get_position       (duk_context* ctx);
-static duk_ret_t js_RawFile_set_position       (duk_context* ctx);
-static duk_ret_t js_RawFile_get_size           (duk_context* ctx);
 static duk_ret_t js_RawFile_close              (duk_context* ctx);
+static duk_ret_t js_RawFile_getPosition        (duk_context* ctx);
+static duk_ret_t js_RawFile_getSize            (duk_context* ctx);
 static duk_ret_t js_RawFile_read               (duk_context* ctx);
-static duk_ret_t js_RawFile_readString         (duk_context* ctx);
+static duk_ret_t js_RawFile_setPosition        (duk_context* ctx);
 static duk_ret_t js_RawFile_toString           (duk_context* ctx);
 static duk_ret_t js_RawFile_write              (duk_context* ctx);
 static duk_ret_t js_Socket_finalize            (duk_context* ctx);
-static duk_ret_t js_Socket_get_remoteAddress   (duk_context* ctx);
-static duk_ret_t js_Socket_get_remotePort      (duk_context* ctx);
-static duk_ret_t js_Socket_toString            (duk_context* ctx);
-static duk_ret_t js_Socket_isConnected         (duk_context* ctx);
-static duk_ret_t js_Socket_getPendingReadSize  (duk_context* ctx);
 static duk_ret_t js_Socket_close               (duk_context* ctx);
+static duk_ret_t js_Socket_getPendingReadSize  (duk_context* ctx);
+static duk_ret_t js_Socket_isConnected         (duk_context* ctx);
 static duk_ret_t js_Socket_read                (duk_context* ctx);
-static duk_ret_t js_Socket_readString          (duk_context* ctx);
+static duk_ret_t js_Socket_toString            (duk_context* ctx);
 static duk_ret_t js_Socket_write               (duk_context* ctx);
 static duk_ret_t js_Sound_finalize             (duk_context* ctx);
-static duk_ret_t js_Sound_toString             (duk_context* ctx);
-static duk_ret_t js_Sound_getVolume            (duk_context* ctx);
-static duk_ret_t js_Sound_setVolume            (duk_context* ctx);
 static duk_ret_t js_Sound_get_length           (duk_context* ctx);
 static duk_ret_t js_Sound_get_pan              (duk_context* ctx);
 static duk_ret_t js_Sound_set_pan              (duk_context* ctx);
@@ -219,24 +207,22 @@ static duk_ret_t js_Sound_set_repeat           (duk_context* ctx);
 static duk_ret_t js_Sound_get_seekable         (duk_context* ctx);
 static duk_ret_t js_Sound_get_volume           (duk_context* ctx);
 static duk_ret_t js_Sound_set_volume           (duk_context* ctx);
+static duk_ret_t js_Sound_getVolume            (duk_context* ctx);
 static duk_ret_t js_Sound_pause                (duk_context* ctx);
 static duk_ret_t js_Sound_play                 (duk_context* ctx);
 static duk_ret_t js_Sound_reset                (duk_context* ctx);
+static duk_ret_t js_Sound_setVolume            (duk_context* ctx);
 static duk_ret_t js_Sound_stop                 (duk_context* ctx);
+static duk_ret_t js_Sound_toString             (duk_context* ctx);
 static duk_ret_t js_Spriteset_finalize         (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_filename     (duk_context* ctx);
-static duk_ret_t js_Spriteset_toString         (duk_context* ctx);
-static duk_ret_t js_Spriteset_clone            (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_image        (duk_context* ctx);
 static duk_ret_t js_Spriteset_set_image        (duk_context* ctx);
+static duk_ret_t js_Spriteset_clone            (duk_context* ctx);
+static duk_ret_t js_Spriteset_toString         (duk_context* ctx);
 static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
 static duk_ret_t js_Surface_get_width          (duk_context* ctx);
-static duk_ret_t js_Surface_toString           (duk_context* ctx);
-static duk_ret_t js_Surface_getPixel           (duk_context* ctx);
-static duk_ret_t js_Surface_setAlpha           (duk_context* ctx);
-static duk_ret_t js_Surface_setBlendMode       (duk_context* ctx);
-static duk_ret_t js_Surface_setPixel           (duk_context* ctx);
 static duk_ret_t js_Surface_applyColorFX       (duk_context* ctx);
 static duk_ret_t js_Surface_applyColorFX4      (duk_context* ctx);
 static duk_ret_t js_Surface_applyLookup        (duk_context* ctx);
@@ -250,6 +236,7 @@ static duk_ret_t js_Surface_drawText           (duk_context* ctx);
 static duk_ret_t js_Surface_filledCircle       (duk_context* ctx);
 static duk_ret_t js_Surface_flipHorizontally   (duk_context* ctx);
 static duk_ret_t js_Surface_flipVertically     (duk_context* ctx);
+static duk_ret_t js_Surface_getPixel           (duk_context* ctx);
 static duk_ret_t js_Surface_gradientCircle     (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle  (duk_context* ctx);
 static duk_ret_t js_Surface_line               (duk_context* ctx);
@@ -261,9 +248,13 @@ static duk_ret_t js_Surface_rectangle          (duk_context* ctx);
 static duk_ret_t js_Surface_replaceColor       (duk_context* ctx);
 static duk_ret_t js_Surface_rescale            (duk_context* ctx);
 static duk_ret_t js_Surface_save               (duk_context* ctx);
+static duk_ret_t js_Surface_setAlpha           (duk_context* ctx);
+static duk_ret_t js_Surface_setBlendMode       (duk_context* ctx);
+static duk_ret_t js_Surface_setPixel           (duk_context* ctx);
+static duk_ret_t js_Surface_toString           (duk_context* ctx);
 static duk_ret_t js_WindowStyle_finalize       (duk_context* ctx);
-static duk_ret_t js_WindowStyle_get_colorMask  (duk_context* ctx);
-static duk_ret_t js_WindowStyle_set_colorMask  (duk_context* ctx);
+static duk_ret_t js_WindowStyle_getColorMask  (duk_context* ctx);
+static duk_ret_t js_WindowStyle_setColorMask  (duk_context* ctx);
 static duk_ret_t js_WindowStyle_toString       (duk_context* ctx);
 static duk_ret_t js_WindowStyle_drawWindow     (duk_context* ctx);
 
@@ -339,7 +330,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
 	api_register_static_func(ctx, NULL, "IsKeyPressed", js_IsKeyPressed);
 	api_register_static_func(ctx, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
-	api_register_static_func(ctx, NULL, "IsSkippedFrame", js_IsSkippedFrame);
 	api_register_static_func(ctx, NULL, "GetClippingRectangle", js_GetClippingRectangle);
 	api_register_static_func(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
 	api_register_static_func(ctx, NULL, "GetFileList", js_GetFileList);
@@ -442,7 +432,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "Triangle", js_Triangle);
 	api_register_static_func(ctx, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
 	api_register_static_func(ctx, NULL, "UnbindKey", js_UnbindKey);
-	api_register_static_func(ctx, NULL, "UnskipFrame", js_UnskipFrame);
 
 	api_register_type(ctx, "ssAnimation", js_Animation_finalize);
 	api_register_prop(ctx, "ssAnimation", "width", js_Animation_get_width, NULL);
@@ -455,47 +444,40 @@ initialize_vanilla_api(duk_context* ctx)
 
 	api_register_type(ctx, "ssByteArray", js_ByteArray_finalize);
 	api_register_prop(ctx, "ssByteArray", "length", js_ByteArray_get_length, NULL);
-	api_register_prop(ctx, "ssByteArray", "size", js_ByteArray_get_length, NULL);
-	api_register_method(ctx, "ssByteArray", "toString", js_ByteArray_toString);
 	api_register_method(ctx, "ssByteArray", "concat", js_ByteArray_concat);
-	api_register_method(ctx, "ssByteArray", "deflate", js_ByteArray_deflate);
-	api_register_method(ctx, "ssByteArray", "inflate", js_ByteArray_inflate);
 	api_register_method(ctx, "ssByteArray", "slice", js_ByteArray_slice);
+	api_register_method(ctx, "ssByteArray", "toString", js_ByteArray_toString);
 
 	api_register_type(ctx, "ssColor", NULL);
 	api_register_method(ctx, "ssColor", "toString", js_Color_toString);
 
 	api_register_type(ctx, "ssColorMatrix", NULL);
-	api_register_method(ctx, "ssColorMatrix", "apply", js_ColorMatrix_apply);
 	api_register_method(ctx, "ssColorMatrix", "toString", js_ColorMatrix_toString);
 
 	api_register_type(ctx, "ssFile", js_File_finalize);
-	api_register_prop(ctx, "ssFile", "numKeys", js_File_get_numKeys, NULL);
-	api_register_method(ctx, "ssFile", "getKey", js_File_getKey);
-	api_register_method(ctx, "ssFile", "getNumKeys", js_File_get_numKeys);
 	api_register_method(ctx, "ssFile", "close", js_File_close);
 	api_register_method(ctx, "ssFile", "flush", js_File_flush);
+	api_register_method(ctx, "ssFile", "getKey", js_File_getKey);
+	api_register_method(ctx, "ssFile", "getNumKeys", js_File_getNumKeys);
 	api_register_method(ctx, "ssFile", "read", js_File_read);
 	api_register_method(ctx, "ssFile", "toString", js_File_toString);
 	api_register_method(ctx, "ssFile", "write", js_File_write);
 
 	api_register_type(ctx, "ssFont", js_Font_finalize);
-	api_register_prop(ctx, "ssFont", "colorMask", js_Font_get_colorMask, js_Font_set_colorMask);
-	api_register_prop(ctx, "ssFont", "height", js_Font_get_height, NULL);
-	api_register_method(ctx, "ssFont", "getCharacterImage", js_Font_getCharacterImage);
-	api_register_method(ctx, "ssFont", "getColorMask", js_Font_get_colorMask);
-	api_register_method(ctx, "ssFont", "getHeight", js_Font_get_height);
-	api_register_method(ctx, "ssFont", "getStringHeight", js_Font_getStringHeight);
-	api_register_method(ctx, "ssFont", "getStringWidth", js_Font_getStringWidth);
-	api_register_method(ctx, "ssFont", "setCharacterImage", js_Font_setCharacterImage);
-	api_register_method(ctx, "ssFont", "setColorMask", js_Font_set_colorMask);
-	api_register_method(ctx, "ssFont", "toString", js_Font_toString);
 	api_register_method(ctx, "ssFont", "clone", js_Font_clone);
 	api_register_method(ctx, "ssFont", "drawText", js_Font_drawText);
 	api_register_method(ctx, "ssFont", "drawTextBox", js_Font_drawTextBox);
 	api_register_method(ctx, "ssFont", "drawZoomedText", js_Font_drawZoomedText);
+	api_register_method(ctx, "ssFont", "getCharacterImage", js_Font_getCharacterImage);
+	api_register_method(ctx, "ssFont", "getColorMask", js_Font_getColorMask);
+	api_register_method(ctx, "ssFont", "getHeight", js_Font_getHeight);
+	api_register_method(ctx, "ssFont", "getStringHeight", js_Font_getStringHeight);
+	api_register_method(ctx, "ssFont", "getStringWidth", js_Font_getStringWidth);
+	api_register_method(ctx, "ssFont", "setCharacterImage", js_Font_setCharacterImage);
+	api_register_method(ctx, "ssFont", "setColorMask", js_Font_setColorMask);
+	api_register_method(ctx, "ssFont", "toString", js_Font_toString);
 	api_register_method(ctx, "ssFont", "wordWrapString", js_Font_wordWrapString);
-	
+
 	api_register_type(ctx, "ssImage", js_Image_finalize);
 	api_register_prop(ctx, "ssImage", "height", js_Image_get_height, NULL);
 	api_register_prop(ctx, "ssImage", "width", js_Image_get_width, NULL);
@@ -517,25 +499,20 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "ssLogger", "write", js_Logger_write);
 
 	api_register_type(ctx, "ssRawFile", js_RawFile_finalize);
-	api_register_prop(ctx, "ssRawFile", "length", js_RawFile_get_size, NULL);
-	api_register_prop(ctx, "ssRawFile", "position", js_RawFile_get_position, js_RawFile_set_position);
-	api_register_prop(ctx, "ssRawFile", "size", js_RawFile_get_size, NULL);
-	api_register_method(ctx, "ssRawFile", "getPosition", js_RawFile_get_position);
-	api_register_method(ctx, "ssRawFile", "setPosition", js_RawFile_set_position);
-	api_register_method(ctx, "ssRawFile", "getSize", js_RawFile_get_size);
 	api_register_method(ctx, "ssRawFile", "close", js_RawFile_close);
+	api_register_method(ctx, "ssRawFile", "getPosition", js_RawFile_getPosition);
+	api_register_method(ctx, "ssRawFile", "getSize", js_RawFile_getSize);
 	api_register_method(ctx, "ssRawFile", "read", js_RawFile_read);
-	api_register_method(ctx, "ssRawFile", "readString", js_RawFile_readString);
+	api_register_method(ctx, "ssRawFile", "setPosition", js_RawFile_setPosition);
 	api_register_method(ctx, "ssRawFile", "toString", js_RawFile_toString);
 	api_register_method(ctx, "ssRawFile", "write", js_RawFile_write);
 
 	api_register_type(ctx, "ssSocket", js_Socket_finalize);
-	api_register_method(ctx, "ssSocket", "toString", js_Socket_toString);
-	api_register_method(ctx, "ssSocket", "isConnected", js_Socket_isConnected);
-	api_register_method(ctx, "ssSocket", "getPendingReadSize", js_Socket_getPendingReadSize);
 	api_register_method(ctx, "ssSocket", "close", js_Socket_close);
+	api_register_method(ctx, "ssSocket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	api_register_method(ctx, "ssSocket", "isConnected", js_Socket_isConnected);
 	api_register_method(ctx, "ssSocket", "read", js_Socket_read);
-	api_register_method(ctx, "ssSocket", "readString", js_Socket_readString);
+	api_register_method(ctx, "ssSocket", "toString", js_Socket_toString);
 	api_register_method(ctx, "ssSocket", "write", js_Socket_write);
 
 	api_register_type(ctx, "ssSound", js_Sound_finalize);
@@ -574,10 +551,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_type(ctx, "ssSurface", js_Surface_finalize);
 	api_register_prop(ctx, "ssSurface", "height", js_Surface_get_height, NULL);
 	api_register_prop(ctx, "ssSurface", "width", js_Surface_get_width, NULL);
-	api_register_method(ctx, "ssSurface", "getPixel", js_Surface_getPixel);
-	api_register_method(ctx, "ssSurface", "setAlpha", js_Surface_setAlpha);
-	api_register_method(ctx, "ssSurface", "setBlendMode", js_Surface_setBlendMode);
-	api_register_method(ctx, "ssSurface", "setPixel", js_Surface_setPixel);
 	api_register_method(ctx, "ssSurface", "applyColorFX", js_Surface_applyColorFX);
 	api_register_method(ctx, "ssSurface", "applyColorFX4", js_Surface_applyColorFX4);
 	api_register_method(ctx, "ssSurface", "applyLookup", js_Surface_applyLookup);
@@ -591,6 +564,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "ssSurface", "filledCircle", js_Surface_filledCircle);
 	api_register_method(ctx, "ssSurface", "flipHorizontally", js_Surface_flipHorizontally);
 	api_register_method(ctx, "ssSurface", "flipVertically", js_Surface_flipVertically);
+	api_register_method(ctx, "ssSurface", "getPixel", js_Surface_getPixel);
 	api_register_method(ctx, "ssSurface", "gradientCircle", js_Surface_gradientCircle);
 	api_register_method(ctx, "ssSurface", "gradientRectangle", js_Surface_gradientRectangle);
 	api_register_method(ctx, "ssSurface", "line", js_Surface_line);
@@ -602,15 +576,17 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "ssSurface", "replaceColor", js_Surface_replaceColor);
 	api_register_method(ctx, "ssSurface", "rescale", js_Surface_rescale);
 	api_register_method(ctx, "ssSurface", "save", js_Surface_save);
+	api_register_method(ctx, "ssSurface", "setAlpha", js_Surface_setAlpha);
+	api_register_method(ctx, "ssSurface", "setBlendMode", js_Surface_setBlendMode);
+	api_register_method(ctx, "ssSurface", "setPixel", js_Surface_setPixel);
 	api_register_method(ctx, "ssSurface", "toString", js_Surface_toString);
 
 	api_register_type(ctx, "ssWindowStyle", js_WindowStyle_finalize);
-	api_register_prop(ctx, "ssWindowStyle", "colorMask", js_WindowStyle_get_colorMask, js_WindowStyle_set_colorMask);
-	api_register_method(ctx, "ssWindowStyle", "toString", js_WindowStyle_toString);
-	api_register_method(ctx, "ssWindowStyle", "getColorMask", js_WindowStyle_get_colorMask);
-	api_register_method(ctx, "ssWindowStyle", "setColorMask", js_WindowStyle_set_colorMask);
 	api_register_method(ctx, "ssWindowStyle", "drawWindow", js_WindowStyle_drawWindow);
-	
+	api_register_method(ctx, "ssWindowStyle", "getColorMask", js_WindowStyle_getColorMask);
+	api_register_method(ctx, "ssWindowStyle", "setColorMask", js_WindowStyle_setColorMask);
+	api_register_method(ctx, "ssWindowStyle", "toString", js_WindowStyle_toString);
+
 	// blend modes for Surfaces
 	api_register_const(ctx, NULL, "BLEND", BLEND_BLEND);
 	api_register_const(ctx, NULL, "REPLACE", BLEND_REPLACE);
@@ -764,9 +740,9 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 	duk_get_prop_string(ctx, -1, "Proxy");
 	duk_dup(ctx, obj_index);
 	duk_push_object(ctx);
-	duk_push_c_function(ctx, js_ByteArray_getProp, DUK_VARARGS);
+	duk_push_c_function(ctx, js_ByteArray_trap_get, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "get");
-	duk_push_c_function(ctx, js_ByteArray_setProp, DUK_VARARGS);
+	duk_push_c_function(ctx, js_ByteArray_trap_set, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "set");
 	duk_new(ctx, 2);
 	duk_get_prototype(ctx, obj_index);
@@ -1001,13 +977,6 @@ js_IsMouseButtonPressed(duk_context* ctx)
 	al_get_mouse_state(&mouse_state);
 	display = screen_display(g_screen);
 	duk_push_boolean(ctx, mouse_state.display == display && al_mouse_button_down(&mouse_state, button_id));
-	return 1;
-}
-
-static duk_ret_t
-js_IsSkippedFrame(duk_context* ctx)
-{
-	duk_push_boolean(ctx, screen_is_skipframe(g_screen));
 	return 1;
 }
 
@@ -2588,13 +2557,6 @@ js_UnbindKey(duk_context* ctx)
 }
 
 static duk_ret_t
-js_UnskipFrame(duk_context* ctx)
-{
-	screen_unskip_frame(g_screen);
-	return 0;
-}
-
-static duk_ret_t
 js_Animation_finalize(duk_context* ctx)
 {
 	animation_t* anim;
@@ -2625,30 +2587,6 @@ js_Animation_get_width(duk_context* ctx)
 	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
 
 	duk_push_int(ctx, animation_width(anim));
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_getDelay(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
-	duk_pop(ctx);
-	duk_push_int(ctx, animation_delay(anim));
-	return 1;
-}
-
-static duk_ret_t
-js_Animation_getNumFrames(duk_context* ctx)
-{
-	animation_t* anim;
-
-	duk_push_this(ctx);
-	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
-
-	duk_push_int(ctx, animation_num_frames(anim));
 	return 1;
 }
 
@@ -2692,6 +2630,30 @@ js_Animation_drawZoomedFrame(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Animation_getDelay(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
+	duk_pop(ctx);
+	duk_push_int(ctx, animation_delay(anim));
+	return 1;
+}
+
+static duk_ret_t
+js_Animation_getNumFrames(duk_context* ctx)
+{
+	animation_t* anim;
+
+	duk_push_this(ctx);
+	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
+
+	duk_push_int(ctx, animation_num_frames(anim));
+	return 1;
+}
+
+static duk_ret_t
 js_Animation_readNextFrame(duk_context* ctx)
 {
 	animation_t* anim;
@@ -2714,26 +2676,7 @@ js_ByteArray_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ByteArray_get_length(duk_context* ctx)
-{
-	bytearray_t* array;
-
-	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
-	duk_pop(ctx);
-	duk_push_int(ctx, bytearray_len(array));
-	return 1;
-}
-
-static duk_ret_t
-js_ByteArray_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object byte_array]");
-	return 1;
-}
-
-static duk_ret_t
-js_ByteArray_getProp(duk_context* ctx)
+js_ByteArray_trap_get(duk_context* ctx)
 {
 	bytearray_t* array;
 	int          index;
@@ -2744,7 +2687,7 @@ js_ByteArray_getProp(duk_context* ctx)
 		index = duk_to_int(ctx, 1);
 		size = bytearray_len(array);
 		if (index < 0 || index >= size)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "byte index `%d` out of bounds", index);
 		duk_push_uint(ctx, bytearray_get(array, index));
 		return 1;
 	}
@@ -2756,7 +2699,7 @@ js_ByteArray_getProp(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ByteArray_setProp(duk_context* ctx)
+js_ByteArray_trap_set(duk_context* ctx)
 {
 	bytearray_t* array;
 	int          index;
@@ -2767,7 +2710,7 @@ js_ByteArray_setProp(duk_context* ctx)
 		index = duk_to_int(ctx, 1);
 		size = bytearray_len(array);
 		if (index < 0 || index >= size)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray[]: index `%d` out of bounds (size: %i)", index, size);
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "byte index `%d` out of bounds", index);
 		bytearray_set(array, index, duk_require_uint(ctx, 2));
 		return 0;
 	}
@@ -2777,6 +2720,18 @@ js_ByteArray_setProp(duk_context* ctx)
 		duk_put_prop(ctx, 0);
 		return 0;
 	}
+}
+
+static duk_ret_t
+js_ByteArray_get_length(duk_context* ctx)
+{
+	bytearray_t* array;
+
+	duk_push_this(ctx);
+	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
+	duk_pop(ctx);
+	duk_push_int(ctx, bytearray_len(array));
+	return 1;
 }
 
 static duk_ret_t
@@ -2791,46 +2746,6 @@ js_ByteArray_concat(duk_context* ctx)
 	
 	if (!(new_array = bytearray_concat(array[0], array[1])))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to concatenate byte arrays");
-	duk_push_sphere_bytearray(ctx, new_array);
-	return 1;
-}
-
-static duk_ret_t
-js_ByteArray_deflate(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	int level = n_args >= 1 ? duk_require_int(ctx, 0) : -1;
-
-	bytearray_t* array;
-	bytearray_t* new_array;
-
-	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
-	duk_pop(ctx);
-	if ((level < 0 || level > 9) && n_args >= 1)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:deflate(): compression level must be [0-9] (got: %d)", level);
-	if (!(new_array = bytearray_deflate(array, level)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:deflate(): unable to deflate source ByteArray");
-	duk_push_sphere_bytearray(ctx, new_array);
-	return 1;
-}
-
-static duk_ret_t
-js_ByteArray_inflate(duk_context* ctx)
-{
-	bytearray_t* array;
-	bytearray_t* new_array;
-
-	int n_args = duk_get_top(ctx);
-	int max_size = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
-
-	duk_push_this(ctx);
-	array = duk_require_sphere_obj(ctx, -1, "ssByteArray");
-	duk_pop(ctx);
-	if (max_size < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "ByteArray:inflate(): buffer size must not be negative (got: %d)", max_size);
-	if (!(new_array = bytearray_inflate(array, max_size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ByteArray:inflate(): unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -2857,6 +2772,13 @@ js_ByteArray_slice(duk_context* ctx)
 	if (!(new_array = bytearray_slice(array, start, end_norm - start)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to slice byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_ByteArray_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object byte_array]");
 	return 1;
 }
 
@@ -2899,14 +2821,22 @@ js_File_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_File_toString(duk_context* ctx)
+js_File_close(duk_context* ctx)
 {
-	duk_push_string(ctx, "[object file]");
-	return 1;
+	kevfile_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "ssFile");
+	duk_pop(ctx);
+	kev_close(file);
+	duk_push_this(ctx);
+	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_pop(ctx);
+	return 0;
 }
 
 static duk_ret_t
-js_File_get_numKeys(duk_context* ctx)
+js_File_flush(duk_context* ctx)
 {
 	kevfile_t* file;
 
@@ -2914,9 +2844,9 @@ js_File_get_numKeys(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file was closed");
-	duk_push_int(ctx, kev_num_keys(file));
-	return 1;
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file was closed");
+	kev_save(file);
+	return 0;
 }
 
 static duk_ret_t
@@ -2940,7 +2870,7 @@ js_File_getKey(duk_context* ctx)
 }
 
 static duk_ret_t
-js_File_flush(duk_context* ctx)
+js_File_getNumKeys(duk_context* ctx)
 {
 	kevfile_t* file;
 
@@ -2948,24 +2878,9 @@ js_File_flush(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file was closed");
-	kev_save(file);
-	return 0;
-}
-
-static duk_ret_t
-js_File_close(duk_context* ctx)
-{
-	kevfile_t* file;
-
-	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "ssFile");
-	duk_pop(ctx);
-	kev_close(file);
-	duk_push_this(ctx);
-	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	duk_pop(ctx);
-	return 0;
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file was closed");
+	duk_push_int(ctx, kev_num_keys(file));
+	return 1;
 }
 
 static duk_ret_t
@@ -3003,6 +2918,13 @@ js_File_read(duk_context* ctx)
 }
 
 static duk_ret_t
+js_File_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object file]");
+	return 1;
+}
+
+static duk_ret_t
 js_File_write(duk_context* ctx)
 {
 	const char* key = duk_to_string(ctx, 0);
@@ -3025,75 +2947,6 @@ js_Font_finalize(duk_context* ctx)
 
 	font = duk_require_sphere_obj(ctx, 0, "ssFont");
 	font_free(font);
-	return 0;
-}
-
-static duk_ret_t
-js_Font_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object font]");
-	return 1;
-}
-
-static duk_ret_t
-js_Font_getCharacterImage(duk_context* ctx)
-{
-	uint32_t cp;
-	font_t*  font;
-
-	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "ssFont");
-	cp = duk_require_uint(ctx, 0);
-
-	duk_push_sphere_obj(ctx, "ssImage", image_ref(font_glyph(font, cp)));
-	return 1;
-}
-
-static duk_ret_t
-js_Font_get_colorMask(duk_context* ctx)
-{
-	duk_push_this(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
-	duk_remove(ctx, -2);
-	return 1;
-}
-
-static duk_ret_t
-js_Font_set_colorMask(duk_context* ctx)
-{
-	font_t* font;
-
-	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "ssFont");
-	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask"); duk_pop(ctx);
-	duk_pop(ctx);
-	return 0;
-}
-
-static duk_ret_t
-js_Font_get_height(duk_context* ctx)
-{
-	font_t* font;
-
-	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "ssFont");
-	duk_pop(ctx);
-	duk_push_int(ctx, font_height(font));
-	return 1;
-}
-
-static duk_ret_t
-js_Font_setCharacterImage(duk_context* ctx)
-{
-	int cp = duk_require_int(ctx, 0);
-	image_t* image = duk_require_sphere_obj(ctx, 1, "ssImage");
-
-	font_t* font;
-
-	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "ssFont");
-
-	font_set_glyph(font, cp, image);
 	return 0;
 }
 
@@ -3128,36 +2981,6 @@ js_Font_drawText(duk_context* ctx)
 	duk_pop(ctx);
 	if (!screen_is_skipframe(g_screen))
 		font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
-	return 0;
-}
-
-static duk_ret_t
-js_Font_drawZoomedText(duk_context* ctx)
-{
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	float scale = duk_require_number(ctx, 2);
-	const char* text = duk_to_string(ctx, 3);
-
-	ALLEGRO_BITMAP* bitmap;
-	font_t*         font;
-	color_t         mask;
-	int             text_w, text_h;
-
-	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "ssFont");
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) {
-		text_w = font_get_width(font, text);
-		text_h = font_height(font);
-		bitmap = al_create_bitmap(text_w, text_h);
-		al_set_target_bitmap(bitmap);
-		font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
-		al_set_target_backbuffer(screen_display(g_screen));
-		al_draw_scaled_bitmap(bitmap, 0, 0, text_w, text_h, x, y, text_w * scale, text_h * scale, 0x0);
-		al_destroy_bitmap(bitmap);
-	}
 	return 0;
 }
 
@@ -3202,6 +3025,71 @@ js_Font_drawTextBox(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Font_drawZoomedText(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	float scale = duk_require_number(ctx, 2);
+	const char* text = duk_to_string(ctx, 3);
+
+	ALLEGRO_BITMAP* bitmap;
+	font_t*         font;
+	color_t         mask;
+	int             text_w, text_h;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	if (!screen_is_skipframe(g_screen)) {
+		text_w = font_get_width(font, text);
+		text_h = font_height(font);
+		bitmap = al_create_bitmap(text_w, text_h);
+		al_set_target_bitmap(bitmap);
+		font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
+		al_set_target_backbuffer(screen_display(g_screen));
+		al_draw_scaled_bitmap(bitmap, 0, 0, text_w, text_h, x, y, text_w * scale, text_h * scale, 0x0);
+		al_destroy_bitmap(bitmap);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_Font_getCharacterImage(duk_context* ctx)
+{
+	uint32_t cp;
+	font_t*  font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
+	cp = duk_require_uint(ctx, 0);
+
+	duk_push_sphere_obj(ctx, "ssImage", image_ref(font_glyph(font, cp)));
+	return 1;
+}
+
+static duk_ret_t
+js_Font_getColorMask(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
+	duk_remove(ctx, -2);
+	return 1;
+}
+
+static duk_ret_t
+js_Font_getHeight(duk_context* ctx)
+{
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
+	duk_pop(ctx);
+	duk_push_int(ctx, font_height(font));
+	return 1;
+}
+
+static duk_ret_t
 js_Font_getStringHeight(duk_context* ctx)
 {
 	const char* text = duk_to_string(ctx, 0);
@@ -3235,6 +3123,40 @@ js_Font_getStringWidth(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	duk_push_int(ctx, font_get_width(font, text));
+	return 1;
+}
+
+static duk_ret_t
+js_Font_setCharacterImage(duk_context* ctx)
+{
+	int cp = duk_require_int(ctx, 0);
+	image_t* image = duk_require_sphere_obj(ctx, 1, "ssImage");
+
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
+
+	font_set_glyph(font, cp, image);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_setColorMask(duk_context* ctx)
+{
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "ssFont");
+	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask"); duk_pop(ctx);
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_Font_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object font]");
 	return 1;
 }
 
@@ -3295,13 +3217,6 @@ js_Image_get_width(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
 	duk_push_int(ctx, image_width(image));
-	return 1;
-}
-
-static duk_ret_t
-js_Image_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object image]");
 	return 1;
 }
 
@@ -3401,6 +3316,13 @@ js_Image_rotateBlitMask(duk_context* ctx)
 			width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	}
 	return 0;
+}
+
+static duk_ret_t
+js_Image_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object image]");
+	return 1;
 }
 
 static duk_ret_t
@@ -3540,13 +3462,6 @@ js_Logger_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Logger_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object log]");
-	return 1;
-}
-
-static duk_ret_t
 js_Logger_beginBlock(duk_context* ctx)
 {
 	const char* title = duk_to_string(ctx, 0);
@@ -3569,6 +3484,13 @@ js_Logger_endBlock(duk_context* ctx)
 	logger = duk_require_sphere_obj(ctx, -1, "ssLogger");
 	log_end_block(logger);
 	return 0;
+}
+
+static duk_ret_t
+js_Logger_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object log]");
+	return 1;
 }
 
 static duk_ret_t
@@ -3595,14 +3517,22 @@ js_RawFile_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_RawFile_toString(duk_context* ctx)
+js_RawFile_close(duk_context* ctx)
 {
-	duk_push_string(ctx, "[object rawfile]");
-	return 1;
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
+	duk_push_pointer(ctx, NULL);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file was closed");
+	sfs_fclose(file);
+	return 0;
 }
 
 static duk_ret_t
-js_RawFile_get_position(duk_context* ctx)
+js_RawFile_getPosition(duk_context* ctx)
 {
 	sfs_file_t* file;
 
@@ -3616,24 +3546,7 @@ js_RawFile_get_position(duk_context* ctx)
 }
 
 static duk_ret_t
-js_RawFile_set_position(duk_context* ctx)
-{
-	int new_pos = duk_require_int(ctx, 0);
-
-	sfs_file_t* file;
-
-	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
-	duk_pop(ctx);
-	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
-	if (!sfs_fseek(file, new_pos, SEEK_SET))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
-	return 0;
-}
-
-static duk_ret_t
-js_RawFile_get_size(duk_context* ctx)
+js_RawFile_getSize(duk_context* ctx)
 {
 	sfs_file_t* file;
 	long  file_pos;
@@ -3648,21 +3561,6 @@ js_RawFile_get_size(duk_context* ctx)
 	duk_push_int(ctx, sfs_ftell(file));
 	sfs_fseek(file, file_pos, SEEK_SET);
 	return 1;
-}
-
-static duk_ret_t
-js_RawFile_close(duk_context* ctx)
-{
-	sfs_file_t* file;
-
-	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
-	duk_push_pointer(ctx, NULL);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file was closed");
-	sfs_fclose(file);
-	return 0;
 }
 
 static duk_ret_t
@@ -3700,33 +3598,26 @@ js_RawFile_read(duk_context* ctx)
 }
 
 static duk_ret_t
-js_RawFile_readString(duk_context* ctx)
+js_RawFile_setPosition(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+	int new_pos = duk_require_int(ctx, 0);
 
 	sfs_file_t* file;
-	long  pos;
-	void* read_buffer;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
-	if (n_args < 1) {  // if no arguments, read entire file back to front
-		pos = sfs_ftell(file);
-		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
-		sfs_fseek(file, 0, SEEK_SET);
-	}
-	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): read size out of range (%i)", num_bytes);
-	if (!(read_buffer = malloc(num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to allocate buffer for file read");
-	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
-	if (n_args < 1)  // reset file position after whole-file read
-		sfs_fseek(file, pos, SEEK_SET);
-	duk_push_lstring(ctx, read_buffer, num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
+	if (!sfs_fseek(file, new_pos, SEEK_SET))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
+	return 0;
+}
+
+static duk_ret_t
+js_RawFile_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object rawfile]");
 	return 1;
 }
 
@@ -3842,29 +3733,6 @@ js_Socket_read(duk_context* ctx)
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
-	return 1;
-}
-
-static duk_ret_t
-js_Socket_readString(duk_context* ctx)
-{
-	size_t length = duk_require_uint(ctx, 0);
-
-	uint8_t*  buffer;
-	socket_t* socket;
-
-	duk_push_this(ctx);
-	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
-	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): socket has been closed");
-	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): socket is not connected");
-	if (!(buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:readString(): unable to allocate read buffer");
-	read_socket(socket, buffer, length);
-	duk_push_lstring(ctx, (char*)buffer, length);
-	free(buffer);
 	return 1;
 }
 
@@ -4181,29 +4049,6 @@ js_Spriteset_get_filename(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Spriteset_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object spriteset]");
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_clone(duk_context* ctx)
-{
-	spriteset_t* new_spriteset;
-	spriteset_t* spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
-
-	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to clone spriteset");
-	duk_push_sphere_spriteset(ctx, new_spriteset);
-	free_spriteset(new_spriteset);
-	return 1;
-}
-
-static duk_ret_t
 js_Spriteset_get_image(duk_context* ctx)
 {
 	duk_uarridx_t index;
@@ -4231,6 +4076,29 @@ js_Spriteset_set_image(duk_context* ctx)
 
 	set_spriteset_image(spriteset, index, image);
 	return 0;
+}
+
+static duk_ret_t
+js_Spriteset_clone(duk_context* ctx)
+{
+	spriteset_t* new_spriteset;
+	spriteset_t* spriteset;
+
+	duk_push_this(ctx);
+	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
+
+	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to clone spriteset");
+	duk_push_sphere_spriteset(ctx, new_spriteset);
+	free_spriteset(new_spriteset);
+	return 1;
+}
+
+static duk_ret_t
+js_Spriteset_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object spriteset]");
+	return 1;
 }
 
 static duk_ret_t
@@ -4270,53 +4138,6 @@ js_Surface_get_width(duk_context* ctx)
 		duk_push_int(ctx, image_width(image));
 	else
 		duk_push_int(ctx, g_res_x);
-	return 1;
-}
-
-static duk_ret_t
-js_Surface_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object surface]");
-	return 1;
-}
-
-static duk_ret_t
-js_Surface_setPixel(duk_context* ctx)
-{
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	color_t color = duk_require_sphere_color(ctx, 2);
-
-	image_t* image;
-
-	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-
-	image_set_pixel(image, x, y, color);
-	return 0;
-}
-
-static duk_ret_t
-js_Surface_getPixel(duk_context* ctx)
-{
-	int      height;
-	image_t* image;
-	color_t  pixel;
-	int      width;
-	int      x;
-	int      y;
-
-	duk_push_this(ctx);
-	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-
-	width = image_width(image);
-	height = image_height(image);
-	if (x < 0 || x >= width || y < 0 || y >= height)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
-	pixel = image_get_pixel(image, x, y);
-	duk_push_sphere_color(ctx, pixel);
 	return 1;
 }
 
@@ -4589,6 +4410,30 @@ js_Surface_flipVertically(duk_context* ctx)
 	duk_pop(ctx);
 	image_flip(image, false, true);
 	return 0;
+}
+
+static duk_ret_t
+js_Surface_getPixel(duk_context* ctx)
+{
+	int      height;
+	image_t* image;
+	color_t  pixel;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+
+	width = image_width(image);
+	height = image_height(image);
+	if (x < 0 || x >= width || y < 0 || y >= height)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
+	pixel = image_get_pixel(image, x, y);
+	duk_push_sphere_color(ctx, pixel);
+	return 1;
 }
 
 static duk_ret_t
@@ -4937,42 +4782,35 @@ js_Surface_setBlendMode(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_setPixel(duk_context* ctx)
+{
+	int x = duk_require_int(ctx, 0);
+	int y = duk_require_int(ctx, 1);
+	color_t color = duk_require_sphere_color(ctx, 2);
+
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
+
+	image_set_pixel(image, x, y, color);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object surface]");
+	return 1;
+}
+
+static duk_ret_t
 js_WindowStyle_finalize(duk_context* ctx)
 {
 	windowstyle_t* winstyle;
 
 	winstyle = duk_require_sphere_obj(ctx, 0, "ssWindowStyle");
 	free_windowstyle(winstyle);
-	return 0;
-}
-
-static duk_ret_t
-js_WindowStyle_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object windowstyle]");
-	return 1;
-}
-
-static duk_ret_t
-js_WindowStyle_get_colorMask(duk_context* ctx)
-{
-	duk_push_this(ctx);
-	duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
-	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_remove(ctx, -2);
-	return 1;
-}
-
-static duk_ret_t
-js_WindowStyle_set_colorMask(duk_context* ctx)
-{
-	color_t mask = duk_require_sphere_color(ctx, 0);
-
-	duk_push_this(ctx);
-	duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
-	duk_push_sphere_color(ctx, mask);
-	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_pop(ctx);
 	return 0;
 }
 
@@ -4995,4 +4833,34 @@ js_WindowStyle_drawWindow(duk_context* ctx)
 	duk_pop(ctx);
 	draw_window(winstyle, mask, x, y, w, h);
 	return 0;
+}
+
+static duk_ret_t
+js_WindowStyle_getColorMask(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
+	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_remove(ctx, -2);
+	return 1;
+}
+
+static duk_ret_t
+js_WindowStyle_setColorMask(duk_context* ctx)
+{
+	color_t mask = duk_require_sphere_color(ctx, 0);
+
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "ssWindowStyle");
+	duk_push_sphere_color(ctx, mask);
+	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
+	duk_pop(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_WindowStyle_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object windowstyle]");
+	return 1;
 }
