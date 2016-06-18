@@ -21,7 +21,7 @@ initialize_api(duk_context* ctx, int version)
 	switch (version) {
 	case 1:
 		initialize_vanilla_api(ctx);
-		init_map_engine_api(g_duk);
+		init_map_engine_api(ctx);
 		break;
 	case 2:
 		initialize_pegasus_api(ctx);

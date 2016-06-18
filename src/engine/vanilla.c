@@ -15,6 +15,9 @@
 #include "spriteset.h"
 #include "windowstyle.h"
 
+#define API_VERSION        1.5
+#define API_VERSION_STRING "v1.5"
+
 static duk_ret_t js_AreKeysLeft                (duk_context* ctx);
 static duk_ret_t js_IsAnyKeyPressed            (duk_context* ctx);
 static duk_ret_t js_IsJoystickButtonPressed    (duk_context* ctx);
@@ -283,7 +286,7 @@ initialize_vanilla_api(duk_context* ctx)
 {
 	const char* filename;
 	
-	console_log(1, "initializing Vanilla API v1.5");
+	console_log(1, "initializing Vanilla API, %s", API_VERSION_STRING);
 
 	s_sound_mixer = mixer_new(44100, 16, 2);
 	
@@ -1346,14 +1349,14 @@ js_GetToggleState(duk_context* ctx)
 static duk_ret_t
 js_GetVersion(duk_context* ctx)
 {
-	duk_push_number(ctx, 1.5);
+	duk_push_number(ctx, API_VERSION);
 	return 1;
 }
 
 static duk_ret_t
 js_GetVersionString(duk_context* ctx)
 {
-	duk_push_sprintf(ctx, "v1.5", PRODUCT_NAME, VERSION_NAME);
+	duk_push_string(ctx, API_VERSION_STRING);
 	return 1;
 }
 

@@ -348,7 +348,7 @@ initialize_engine(void)
 
 	// initialize Allegro
 	al_version = al_get_allegro_version();
-	console_log(1, "initializing Allegro v%u.%u.%u.%u",
+	console_log(1, "initializing Allegro, v%u.%u.%u.%u",
 		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF,
 		(al_version & 0xFF) - 1);
 	al_set_org_name("Fat Cerberus");
@@ -360,12 +360,12 @@ initialize_engine(void)
 	if (!al_init_image_addon()) goto on_error;
 
 	// initialize networking
-	console_log(1, "initializing Dyad v%s", dyad_getVersion());
+	console_log(1, "initializing Dyad, v%s", dyad_getVersion());
 	dyad_init();
 	dyad_setUpdateTimeout(0.0);
 
 	// initialize JavaScript
-	console_log(1, "initializing Duktape v%ld.%ld.%ld", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
+	console_log(1, "initializing Duktape, v%ld.%ld.%ld", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 	if (!(g_duk = duk_create_heap_default()))
 		goto on_error;
 

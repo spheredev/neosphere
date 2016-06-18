@@ -15,9 +15,15 @@
 #include "shader.h"
 #include "sockets.h"
 
-#define SPHERE_API_VERSION 2
-#define SPHERE_API_LEVEL   1
+#define API_VERSION 2
+#define API_LEVEL   1
 
+static const char* const EXTENSIONS[] =
+{
+	"sphere_fs_system_alias"
+};
+
+static const
 struct x11_color
 {
 	const char* name;
@@ -25,9 +31,8 @@ struct x11_color
 	uint8_t     g;
 	uint8_t     b;
 	uint8_t     a;
-};
-
-static const struct x11_color COLORS[] =
+}
+COLORS[] =
 {
 	{ "AliceBlue", 240, 248, 255, 255 },
 	{ "AntiqueWhite", 250, 235, 215, 255 },
@@ -171,11 +176,6 @@ static const struct x11_color COLORS[] =
 	{ "Yellow", 255, 255, 0, 255 },
 	{ "YellowGreen", 154, 205, 50, 255 },
 	{ NULL, 0, 0, 0, 0 }
-};
-
-static const char* const EXTENSIONS[] =
-{
-	"sphere_fs_system_alias",
 };
 
 static duk_ret_t js_console_assert             (duk_context* ctx);
@@ -350,8 +350,12 @@ void
 initialize_pegasus_api(duk_context* ctx)
 {
 	const struct x11_color* p;
+	int i;
 	
-	console_log(1, "initializing Pegasus API v%d.0 Lv. %d", SPHERE_API_VERSION, SPHERE_API_LEVEL);
+	console_log(1, "initializing Pegasus API, v%d.0 Lv. %d", API_VERSION, API_LEVEL);
+	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i)
+		console_log(1, "    %s", EXTENSIONS[i]);
+	
 	s_def_mixer = mixer_new(44100, 16, 2);
 
 	// `global` global object binding
@@ -380,6 +384,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_prop(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_register_method(ctx, "Color", "clone", js_Color_clone);
 	api_register_method(ctx, "Color", "fade", js_Color_fade);
+
 	api_register_type(ctx, "FileStream", js_FileStream_finalize);
 	api_register_prop(ctx, "FileStream", "length", js_FileStream_get_length, NULL);
 	api_register_prop(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
@@ -399,6 +404,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "FileStream", "writePString", js_FileStream_writePString);
 	api_register_method(ctx, "FileStream", "writeString", js_FileStream_writeString);
 	api_register_method(ctx, "FileStream", "writeUInt", js_FileStream_writeUInt);
+
 	api_register_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
 	api_register_static_prop(ctx, "Font", "Default", js_Font_get_Default, NULL);
 	api_register_prop(ctx, "Font", "height", js_Font_get_height, NULL);
@@ -406,6 +412,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
 	api_register_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
+
 	api_register_ctor(ctx, "Group", js_new_Group, js_Group_finalize);
 	api_register_prop(ctx, "Group", "shader", js_Group_get_shader, js_Group_set_shader);
 	api_register_prop(ctx, "Group", "transform", js_Group_get_transform, js_Group_set_transform);
@@ -413,20 +420,26 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Group", "setFloat", js_Group_setFloat);
 	api_register_method(ctx, "Group", "setInt", js_Group_setInt);
 	api_register_method(ctx, "Group", "setMatrix", js_Group_setMatrix);
+
 	api_register_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
 	api_register_prop(ctx, "Image", "height", js_Image_get_height, NULL);
 	api_register_prop(ctx, "Image", "width", js_Image_get_width, NULL);
+
 	api_register_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
 	api_register_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_register_prop(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
+
 	api_register_ctor(ctx, "Server", js_new_Server, js_Server_finalize);
 	api_register_method(ctx, "Server", "close", js_Server_close);
 	api_register_method(ctx, "Server", "accept", js_Server_accept);
+
 	api_register_ctor(ctx, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
 	api_register_static_prop(ctx, "ShaderProgram", "Default", js_ShaderProgram_get_Default, NULL);
+
 	api_register_ctor(ctx, "Shape", js_new_Shape, js_Shape_finalize);
 	api_register_prop(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
 	api_register_method(ctx, "Shape", "draw", js_Shape_draw);
+
 	api_register_ctor(ctx, "Socket", js_new_Socket, js_Socket_finalize);
 	api_register_prop(ctx, "Socket", "bytesPending", js_Socket_get_bytesPending, NULL);
 	api_register_prop(ctx, "Socket", "connected", js_Socket_get_connected, NULL);
@@ -435,12 +448,14 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Socket", "close", js_Socket_close);
 	api_register_method(ctx, "Socket", "read", js_Socket_read);
 	api_register_method(ctx, "Socket", "write", js_Socket_write);
+
 	api_register_ctor(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
 	api_register_prop(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
 	api_register_method(ctx, "SoundStream", "buffer", js_SoundStream_buffer);
 	api_register_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
 	api_register_method(ctx, "SoundStream", "play", js_SoundStream_play);
 	api_register_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
+
 	api_register_ctor(ctx, "Sound", js_new_Sound, js_Sound_finalize);
 	api_register_prop(ctx, "Sound", "length", js_Sound_get_length, NULL);
 	api_register_prop(ctx, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
@@ -452,10 +467,12 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Sound", "pause", js_Sound_pause);
 	api_register_method(ctx, "Sound", "play", js_Sound_play);
 	api_register_method(ctx, "Sound", "stop", js_Sound_stop);
+
 	api_register_ctor(ctx, "Surface", js_new_Surface, js_Surface_finalize);
 	api_register_prop(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_register_prop(ctx, "Surface", "width", js_Surface_get_width, NULL);
 	api_register_method(ctx, "Surface", "toImage", js_Surface_toImage);
+
 	api_register_ctor(ctx, "Transform", js_new_Transform, js_Transform_finalize);
 	api_register_method(ctx, "Transform", "compose", js_Transform_compose);
 	api_register_method(ctx, "Transform", "identity", js_Transform_identity);
@@ -474,6 +491,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "console", "log", js_console_log);
 	api_register_static_func(ctx, "console", "trace", js_console_trace);
 	api_register_static_func(ctx, "console", "warn", js_console_warn);
+	
 	api_register_static_prop(ctx, "engine", "apiLevel", js_engine_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "engine", "apiVersion", js_engine_get_apiVersion, NULL);
 	api_register_static_prop(ctx, "engine", "extensions", js_engine_get_extensions, NULL);
@@ -486,12 +504,14 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "engine", "exit", js_engine_exit);
 	api_register_static_func(ctx, "engine", "restart", js_engine_restart);
 	api_register_static_func(ctx, "engine", "sleep", js_engine_sleep);
+	
 	api_register_static_func(ctx, "fs", "exists", js_fs_exists);
 	api_register_static_func(ctx, "fs", "open", js_fs_open);
 	api_register_static_func(ctx, "fs", "mkdir", js_fs_mkdir);
 	api_register_static_func(ctx, "fs", "rename", js_fs_rename);
 	api_register_static_func(ctx, "fs", "rmdir", js_fs_rmdir);
 	api_register_static_func(ctx, "fs", "unlink", js_fs_unlink);
+	
 	api_register_static_prop(ctx, "keyboard", "capsLock", js_keyboard_get_capsLock, NULL);
 	api_register_static_prop(ctx, "keyboard", "numLock", js_keyboard_get_numLock, NULL);
 	api_register_static_prop(ctx, "keyboard", "scrollLock", js_keyboard_get_scrollLock, NULL);
@@ -499,6 +519,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "keyboard", "getKey", js_keyboard_getKey);
 	api_register_static_func(ctx, "keyboard", "isDown", js_keyboard_isDown);
 	api_register_static_func(ctx, "keyboard", "keyChar", js_keyboard_keyChar);
+	
 	api_register_static_func(ctx, "random", "chance", js_random_chance);
 	api_register_static_func(ctx, "random", "normal", js_random_normal);
 	api_register_static_func(ctx, "random", "random", js_random_random);
@@ -507,6 +528,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "random", "sample", js_random_sample);
 	api_register_static_func(ctx, "random", "string", js_random_string);
 	api_register_static_func(ctx, "random", "uniform", js_random_uniform);
+	
 	api_register_static_obj(ctx, NULL, "screen", "Surface", NULL);
 	api_register_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_register_static_func(ctx, "screen", "clipTo", js_screen_clipTo);
@@ -528,6 +550,18 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_const(ctx, "Key", "Enter", ALLEGRO_KEY_ENTER);
 	api_register_const(ctx, "Key", "Equals", ALLEGRO_KEY_EQUALS);
 	api_register_const(ctx, "Key", "Escape", ALLEGRO_KEY_ESCAPE);
+	api_register_const(ctx, "Key", "F1", ALLEGRO_KEY_F1);
+	api_register_const(ctx, "Key", "F2", ALLEGRO_KEY_F2);
+	api_register_const(ctx, "Key", "F3", ALLEGRO_KEY_F3);
+	api_register_const(ctx, "Key", "F4", ALLEGRO_KEY_F4);
+	api_register_const(ctx, "Key", "F5", ALLEGRO_KEY_F5);
+	api_register_const(ctx, "Key", "F6", ALLEGRO_KEY_F6);
+	api_register_const(ctx, "Key", "F7", ALLEGRO_KEY_F7);
+	api_register_const(ctx, "Key", "F8", ALLEGRO_KEY_F8);
+	api_register_const(ctx, "Key", "F9", ALLEGRO_KEY_F9);
+	api_register_const(ctx, "Key", "F10", ALLEGRO_KEY_F10);
+	api_register_const(ctx, "Key", "F11", ALLEGRO_KEY_F11);
+	api_register_const(ctx, "Key", "F12", ALLEGRO_KEY_F12);
 	api_register_const(ctx, "Key", "Home", ALLEGRO_KEY_HOME);
 	api_register_const(ctx, "Key", "Hyphen", ALLEGRO_KEY_MINUS);
 	api_register_const(ctx, "Key", "Insert", ALLEGRO_KEY_INSERT);
@@ -549,18 +583,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_const(ctx, "Key", "Tab", ALLEGRO_KEY_TAB);
 	api_register_const(ctx, "Key", "Tilde", ALLEGRO_KEY_TILDE);
 	api_register_const(ctx, "Key", "Up", ALLEGRO_KEY_UP);
-	api_register_const(ctx, "Key", "F1", ALLEGRO_KEY_F1);
-	api_register_const(ctx, "Key", "F2", ALLEGRO_KEY_F2);
-	api_register_const(ctx, "Key", "F3", ALLEGRO_KEY_F3);
-	api_register_const(ctx, "Key", "F4", ALLEGRO_KEY_F4);
-	api_register_const(ctx, "Key", "F5", ALLEGRO_KEY_F5);
-	api_register_const(ctx, "Key", "F6", ALLEGRO_KEY_F6);
-	api_register_const(ctx, "Key", "F7", ALLEGRO_KEY_F7);
-	api_register_const(ctx, "Key", "F8", ALLEGRO_KEY_F8);
-	api_register_const(ctx, "Key", "F9", ALLEGRO_KEY_F9);
-	api_register_const(ctx, "Key", "F10", ALLEGRO_KEY_F10);
-	api_register_const(ctx, "Key", "F11", ALLEGRO_KEY_F11);
-	api_register_const(ctx, "Key", "F12", ALLEGRO_KEY_F12);
 	api_register_const(ctx, "Key", "A", ALLEGRO_KEY_A);
 	api_register_const(ctx, "Key", "B", ALLEGRO_KEY_B);
 	api_register_const(ctx, "Key", "C", ALLEGRO_KEY_C);
@@ -613,6 +635,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_const(ctx, "Key", "Divide", ALLEGRO_KEY_PAD_SLASH);
 	api_register_const(ctx, "Key", "Multiply", ALLEGRO_KEY_PAD_ASTERISK);
 	api_register_const(ctx, "Key", "Subtract", ALLEGRO_KEY_PAD_MINUS);
+
 	api_register_const(ctx, "ShapeType", "Auto", SHAPE_AUTO);
 	api_register_const(ctx, "ShapeType", "Fan", SHAPE_TRI_FAN);
 	api_register_const(ctx, "ShapeType", "Lines", SHAPE_LINES);
@@ -1020,14 +1043,14 @@ js_console_warn(duk_context* ctx)
 static duk_ret_t
 js_engine_get_apiLevel(duk_context* ctx)
 {
-	duk_push_int(ctx, SPHERE_API_LEVEL);
+	duk_push_int(ctx, API_LEVEL);
 	return 1;
 }
 
 static duk_ret_t
 js_engine_get_apiVersion(duk_context* ctx)
 {
-	duk_push_int(ctx, SPHERE_API_VERSION);
+	duk_push_int(ctx, API_VERSION);
 	return 1;
 }
 
