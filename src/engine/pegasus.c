@@ -354,7 +354,14 @@ initialize_pegasus_api(duk_context* ctx)
 	console_log(1, "initializing Pegasus API v%d.0 Lv. %d", SPHERE_API_VERSION, SPHERE_API_LEVEL);
 	s_def_mixer = mixer_new(44100, 16, 2);
 
-	// initialize CommonJS subsystem
+	// `global` global object binding
+	duk_push_global_object(ctx);
+	duk_push_string(ctx, "global");
+	duk_push_global_object(ctx);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+	duk_pop(ctx);
+
+	// initialize CommonJS cache and global require()
 	duk_push_global_stash(g_duk);
 	duk_push_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "moduleCache");

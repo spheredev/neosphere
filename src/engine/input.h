@@ -40,7 +40,7 @@ void shutdown_input     (void);
 bool        joy_is_button_down (int joy_index, int button);
 int         joy_num_axes       (int joy_index);
 int         joy_num_buttons    (int joy_index);
-int         joy_num_sticks     (void);
+int         joy_num_devices    (void);
 float       joy_position       (int joy_index, int axis_index);
 void        joy_bind_button    (int joy_index, int button, script_t* on_down_script, script_t* on_up_script);
 bool        kb_is_any_key_down (void);

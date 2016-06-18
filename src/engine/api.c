@@ -24,11 +24,6 @@ initialize_api(duk_context* ctx, int version)
 		init_map_engine_api(g_duk);
 		break;
 	case 2:
-		duk_push_global_object(ctx);
-		duk_push_string(ctx, "global");
-		duk_push_global_object(ctx);
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-
 		initialize_pegasus_api(ctx);
 		break;
 	}

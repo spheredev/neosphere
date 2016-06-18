@@ -1210,14 +1210,16 @@ js_GetMouseY(duk_context* ctx)
 static duk_ret_t
 js_GetNumJoysticks(duk_context* ctx)
 {
-	duk_push_int(ctx, joy_num_sticks());
+	duk_push_int(ctx, joy_num_devices());
 	return 1;
 }
 
 static duk_ret_t
 js_GetNumJoystickAxes(duk_context* ctx)
 {
-	int joy_index = duk_require_int(ctx, 0);
+	int joy_index;
+	
+	joy_index = duk_require_int(ctx, 0);
 
 	duk_push_int(ctx, joy_num_axes(joy_index));
 	return 1;
@@ -1226,7 +1228,9 @@ js_GetNumJoystickAxes(duk_context* ctx)
 static duk_ret_t
 js_GetNumJoystickButtons(duk_context* ctx)
 {
-	int joy_index = duk_require_int(ctx, 0);
+	int joy_index;
+	
+	joy_index = duk_require_int(ctx, 0);
 
 	duk_push_int(ctx, joy_num_buttons(joy_index));
 	return 1;
@@ -1242,13 +1246,16 @@ js_GetNumMouseWheelEvents(duk_context* ctx)
 static duk_ret_t
 js_GetPlayerKey(duk_context* ctx)
 {
-	int player = duk_require_int(ctx, 0);
-	int key_type = duk_require_int(ctx, 1);
+	int player;
+	int key_type;
+
+	player = duk_require_int(ctx, 0);
+	key_type = duk_require_int(ctx, 1);
 
 	if (player < 0 || player >= 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): player index out of range");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "player index out of range");
 	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "GetPlayerKey(): invalid key type constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key type constant");
 	duk_push_int(ctx, get_player_key(player, key_type));
 	return 1;
 }
@@ -2250,6 +2257,7 @@ js_Print(duk_context* ctx)
 
 	text = strnewf("%s", duk_get_string(ctx, -1));
 	debug_print(text, PRINT_NORMAL);
+	printf("print: %s\n", text);
 	return 0;
 }
 

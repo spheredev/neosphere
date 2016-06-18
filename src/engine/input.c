@@ -197,7 +197,7 @@ joy_num_buttons(int joy_index)
 }
 
 int
-joy_num_sticks(void)
+joy_num_devices(void)
 {
 	return s_num_joysticks;
 }
