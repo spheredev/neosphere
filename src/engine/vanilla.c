@@ -21,9 +21,9 @@ static duk_ret_t js_IsJoystickButtonPressed    (duk_context* ctx);
 static duk_ret_t js_IsKeyPressed               (duk_context* ctx);
 static duk_ret_t js_IsMouseButtonPressed       (duk_context* ctx);
 static duk_ret_t js_GetClippingRectangle       (duk_context* ctx);
-static duk_ret_t js_GetFrameRate               (duk_context* ctx);
 static duk_ret_t js_GetDirectoryList           (duk_context* ctx);
 static duk_ret_t js_GetFileList                (duk_context* ctx);
+static duk_ret_t js_GetFrameRate               (duk_context* ctx);
 static duk_ret_t js_GetGameList                (duk_context* ctx);
 static duk_ret_t js_GetGameManifest            (duk_context* ctx);
 static duk_ret_t js_GetLocalAddress            (duk_context* ctx);
@@ -53,16 +53,13 @@ static duk_ret_t js_GetVersionString           (duk_context* ctx);
 static duk_ret_t js_SetClippingRectangle       (duk_context* ctx);
 static duk_ret_t js_SetFrameRate               (duk_context* ctx);
 static duk_ret_t js_SetMousePosition           (duk_context* ctx);
-static duk_ret_t js_SetPlayerKey               (duk_context* ctx);
 static duk_ret_t js_SetScreenSize              (duk_context* ctx);
 static duk_ret_t js_Abort                      (duk_context* ctx);
 static duk_ret_t js_Alert                      (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
-static duk_ret_t js_Assert                     (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton         (duk_context* ctx);
 static duk_ret_t js_BindKey                    (duk_context* ctx);
 static duk_ret_t js_BlendColors                (duk_context* ctx);
-static duk_ret_t js_ClearKeyQueue              (duk_context* ctx);
 static duk_ret_t js_CreateByteArray            (duk_context* ctx);
 static duk_ret_t js_CreateByteArrayFromString  (duk_context* ctx);
 static duk_ret_t js_CreateColor                (duk_context* ctx);
@@ -73,10 +70,7 @@ static duk_ret_t js_CreateStringFromCode       (duk_context* ctx);
 static duk_ret_t js_CreateSurface              (duk_context* ctx);
 static duk_ret_t js_DeflateByteArray           (duk_context* ctx);
 static duk_ret_t js_DoesFileExist              (duk_context* ctx);
-static duk_ret_t js_DebugPrint                 (duk_context* ctx);
 static duk_ret_t js_Delay                      (duk_context* ctx);
-static duk_ret_t js_DispatchScript             (duk_context* ctx);
-static duk_ret_t js_DoEvents                   (duk_context* ctx);
 static duk_ret_t js_EvaluateScript             (duk_context* ctx);
 static duk_ret_t js_EvaluateSystemScript       (duk_context* ctx);
 static duk_ret_t js_ExecuteGame                (duk_context* ctx);
@@ -88,7 +82,7 @@ static duk_ret_t js_GrabSurface                (duk_context* ctx);
 static duk_ret_t js_GradientCircle             (duk_context* ctx);
 static duk_ret_t js_GradientRectangle          (duk_context* ctx);
 static duk_ret_t js_HashByteArray              (duk_context* ctx);
-static duk_ret_t js_HashRawFile                (duk_context* ctx);
+static duk_ret_t js_HashFromFile               (duk_context* ctx);
 static duk_ret_t js_InflateByteArray           (duk_context* ctx);
 static duk_ret_t js_Line                       (duk_context* ctx);
 static duk_ret_t js_LineSeries                 (duk_context* ctx);
@@ -109,7 +103,6 @@ static duk_ret_t js_OutlinedRectangle          (duk_context* ctx);
 static duk_ret_t js_OutlinedRoundRectangle     (duk_context* ctx);
 static duk_ret_t js_Point                      (duk_context* ctx);
 static duk_ret_t js_PointSeries                (duk_context* ctx);
-static duk_ret_t js_Print                      (duk_context* ctx);
 static duk_ret_t js_Rectangle                  (duk_context* ctx);
 static duk_ret_t js_RemoveDirectory            (duk_context* ctx);
 static duk_ret_t js_RemoveFile                 (duk_context* ctx);
@@ -194,23 +187,21 @@ static duk_ret_t js_Socket_read                (duk_context* ctx);
 static duk_ret_t js_Socket_toString            (duk_context* ctx);
 static duk_ret_t js_Socket_write               (duk_context* ctx);
 static duk_ret_t js_Sound_finalize             (duk_context* ctx);
-static duk_ret_t js_Sound_get_length           (duk_context* ctx);
-static duk_ret_t js_Sound_get_pan              (duk_context* ctx);
-static duk_ret_t js_Sound_set_pan              (duk_context* ctx);
-static duk_ret_t js_Sound_get_pitch            (duk_context* ctx);
-static duk_ret_t js_Sound_set_pitch            (duk_context* ctx);
-static duk_ret_t js_Sound_get_playing          (duk_context* ctx);
-static duk_ret_t js_Sound_get_position         (duk_context* ctx);
-static duk_ret_t js_Sound_set_position         (duk_context* ctx);
-static duk_ret_t js_Sound_get_repeat           (duk_context* ctx);
-static duk_ret_t js_Sound_set_repeat           (duk_context* ctx);
-static duk_ret_t js_Sound_get_seekable         (duk_context* ctx);
-static duk_ret_t js_Sound_get_volume           (duk_context* ctx);
-static duk_ret_t js_Sound_set_volume           (duk_context* ctx);
+static duk_ret_t js_Sound_getLength            (duk_context* ctx);
+static duk_ret_t js_Sound_getPan               (duk_context* ctx);
+static duk_ret_t js_Sound_getPitch             (duk_context* ctx);
+static duk_ret_t js_Sound_getPosition          (duk_context* ctx);
+static duk_ret_t js_Sound_getRepeat            (duk_context* ctx);
 static duk_ret_t js_Sound_getVolume            (duk_context* ctx);
+static duk_ret_t js_Sound_isPlaying            (duk_context* ctx);
+static duk_ret_t js_Sound_isSeekable           (duk_context* ctx);
 static duk_ret_t js_Sound_pause                (duk_context* ctx);
 static duk_ret_t js_Sound_play                 (duk_context* ctx);
 static duk_ret_t js_Sound_reset                (duk_context* ctx);
+static duk_ret_t js_Sound_setPan               (duk_context* ctx);
+static duk_ret_t js_Sound_setPitch             (duk_context* ctx);
+static duk_ret_t js_Sound_setPosition          (duk_context* ctx);
+static duk_ret_t js_Sound_setRepeat            (duk_context* ctx);
 static duk_ret_t js_Sound_setVolume            (duk_context* ctx);
 static duk_ret_t js_Sound_stop                 (duk_context* ctx);
 static duk_ret_t js_Sound_toString             (duk_context* ctx);
@@ -253,10 +244,10 @@ static duk_ret_t js_Surface_setBlendMode       (duk_context* ctx);
 static duk_ret_t js_Surface_setPixel           (duk_context* ctx);
 static duk_ret_t js_Surface_toString           (duk_context* ctx);
 static duk_ret_t js_WindowStyle_finalize       (duk_context* ctx);
-static duk_ret_t js_WindowStyle_getColorMask  (duk_context* ctx);
-static duk_ret_t js_WindowStyle_setColorMask  (duk_context* ctx);
-static duk_ret_t js_WindowStyle_toString       (duk_context* ctx);
 static duk_ret_t js_WindowStyle_drawWindow     (duk_context* ctx);
+static duk_ret_t js_WindowStyle_getColorMask   (duk_context* ctx);
+static duk_ret_t js_WindowStyle_setColorMask   (duk_context* ctx);
+static duk_ret_t js_WindowStyle_toString       (duk_context* ctx);
 
 enum blend_mode
 {
@@ -363,17 +354,14 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "SetClippingRectangle", js_SetClippingRectangle);
 	api_register_static_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
 	api_register_static_func(ctx, NULL, "SetMousePosition", js_SetMousePosition);
-	api_register_static_func(ctx, NULL, "SetPlayerKey", js_SetPlayerKey);
 	api_register_static_func(ctx, NULL, "SetScreenSize", js_SetScreenSize);
 	api_register_static_func(ctx, NULL, "Abort", js_Abort);
 	api_register_static_func(ctx, NULL, "Alert", js_Alert);
 	api_register_static_func(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
-	api_register_static_func(ctx, NULL, "Assert", js_Assert);
 	api_register_static_func(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
 	api_register_static_func(ctx, NULL, "BindKey", js_BindKey);
 	api_register_static_func(ctx, NULL, "BlendColors", js_BlendColors);
 	api_register_static_func(ctx, NULL, "BlendColorsWeighted", js_BlendColors);
-	api_register_static_func(ctx, NULL, "ClearKeyQueue", js_ClearKeyQueue);
 	api_register_static_func(ctx, NULL, "CreateByteArray", js_CreateByteArray);
 	api_register_static_func(ctx, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
 	api_register_static_func(ctx, NULL, "CreateColor", js_CreateColor);
@@ -382,11 +370,8 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
 	api_register_static_func(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	api_register_static_func(ctx, NULL, "CreateSurface", js_CreateSurface);
-	api_register_static_func(ctx, NULL, "DebugPrint", js_DebugPrint);
 	api_register_static_func(ctx, NULL, "DeflateByteArray", js_DeflateByteArray);
 	api_register_static_func(ctx, NULL, "Delay", js_Delay);
-	api_register_static_func(ctx, NULL, "DispatchScript", js_DispatchScript);
-	api_register_static_func(ctx, NULL, "DoEvents", js_DoEvents);
 	api_register_static_func(ctx, NULL, "DoesFileExist", js_DoesFileExist);
 	api_register_static_func(ctx, NULL, "EvaluateScript", js_EvaluateScript);
 	api_register_static_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
@@ -399,7 +384,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "GradientCircle", js_GradientCircle);
 	api_register_static_func(ctx, NULL, "GradientRectangle", js_GradientRectangle);
 	api_register_static_func(ctx, NULL, "HashByteArray", js_HashByteArray);
-	api_register_static_func(ctx, NULL, "HashRawFile", js_HashRawFile);
+	api_register_static_func(ctx, NULL, "HashFromFile", js_HashFromFile);
 	api_register_static_func(ctx, NULL, "InflateByteArray", js_InflateByteArray);
 	api_register_static_func(ctx, NULL, "Line", js_Line);
 	api_register_static_func(ctx, NULL, "LineSeries", js_LineSeries);
@@ -420,7 +405,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
 	api_register_static_func(ctx, NULL, "Point", js_Point);
 	api_register_static_func(ctx, NULL, "PointSeries", js_PointSeries);
-	api_register_static_func(ctx, NULL, "Print", js_Print);
 	api_register_static_func(ctx, NULL, "Rectangle", js_Rectangle);
 	api_register_static_func(ctx, NULL, "RemoveDirectory", js_RemoveDirectory);
 	api_register_static_func(ctx, NULL, "RemoveFile", js_RemoveFile);
@@ -516,37 +500,29 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_method(ctx, "ssSocket", "write", js_Socket_write);
 
 	api_register_type(ctx, "ssSound", js_Sound_finalize);
-	api_register_prop(ctx, "ssSound", "length", js_Sound_get_length, NULL);
-	api_register_prop(ctx, "ssSound", "pan", js_Sound_get_pan, js_Sound_set_pan);
-	api_register_prop(ctx, "ssSound", "pitch", js_Sound_get_pitch, js_Sound_set_pitch);
-	api_register_prop(ctx, "ssSound", "playing", js_Sound_get_playing, NULL);
-	api_register_prop(ctx, "ssSound", "position", js_Sound_get_position, js_Sound_set_position);
-	api_register_prop(ctx, "ssSound", "repeat", js_Sound_get_repeat, js_Sound_set_repeat);
-	api_register_prop(ctx, "ssSound", "seekable", js_Sound_get_seekable, NULL);
-	api_register_prop(ctx, "ssSound", "volume", js_Sound_get_volume, js_Sound_set_volume);
-	api_register_method(ctx, "ssSound", "isPlaying", js_Sound_get_playing);
-	api_register_method(ctx, "ssSound", "isSeekable", js_Sound_get_seekable);
-	api_register_method(ctx, "ssSound", "getLength", js_Sound_get_length);
-	api_register_method(ctx, "ssSound", "getPan", js_Sound_get_pan);
-	api_register_method(ctx, "ssSound", "getPitch", js_Sound_get_pitch);
-	api_register_method(ctx, "ssSound", "getPosition", js_Sound_get_position);
-	api_register_method(ctx, "ssSound", "getRepeat", js_Sound_get_repeat);
+	api_register_method(ctx, "ssSound", "getLength", js_Sound_getLength);
+	api_register_method(ctx, "ssSound", "getPan", js_Sound_getPan);
+	api_register_method(ctx, "ssSound", "getPitch", js_Sound_getPitch);
+	api_register_method(ctx, "ssSound", "getPosition", js_Sound_getPosition);
+	api_register_method(ctx, "ssSound", "getRepeat", js_Sound_getRepeat);
 	api_register_method(ctx, "ssSound", "getVolume", js_Sound_getVolume);
-	api_register_method(ctx, "ssSound", "setPan", js_Sound_set_pan);
-	api_register_method(ctx, "ssSound", "setPitch", js_Sound_set_pitch);
-	api_register_method(ctx, "ssSound", "setPosition", js_Sound_set_position);
-	api_register_method(ctx, "ssSound", "setRepeat", js_Sound_set_repeat);
-	api_register_method(ctx, "ssSound", "setVolume", js_Sound_setVolume);
+	api_register_method(ctx, "ssSound", "isPlaying", js_Sound_isPlaying);
+	api_register_method(ctx, "ssSound", "isSeekable", js_Sound_isSeekable);
 	api_register_method(ctx, "ssSound", "pause", js_Sound_pause);
 	api_register_method(ctx, "ssSound", "play", js_Sound_play);
 	api_register_method(ctx, "ssSound", "reset", js_Sound_reset);
+	api_register_method(ctx, "ssSound", "setPan", js_Sound_setPan);
+	api_register_method(ctx, "ssSound", "setPitch", js_Sound_setPitch);
+	api_register_method(ctx, "ssSound", "setPosition", js_Sound_setPosition);
+	api_register_method(ctx, "ssSound", "setRepeat", js_Sound_setRepeat);
+	api_register_method(ctx, "ssSound", "setVolume", js_Sound_setVolume);
 	api_register_method(ctx, "ssSound", "stop", js_Sound_stop);
 	api_register_method(ctx, "ssSound", "toString", js_Sound_toString);
 
 	api_register_type(ctx, "ssSpriteset", js_Spriteset_finalize);
 	api_register_prop(ctx, "ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
-	api_register_method(ctx, "ssSpriteset", "toString", js_Spriteset_toString);
 	api_register_method(ctx, "ssSpriteset", "clone", js_Spriteset_clone);
+	api_register_method(ctx, "ssSpriteset", "toString", js_Spriteset_toString);
 
 	api_register_type(ctx, "ssSurface", js_Surface_finalize);
 	api_register_prop(ctx, "ssSurface", "height", js_Surface_get_height, NULL);
@@ -1408,23 +1384,6 @@ js_SetMousePosition(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SetPlayerKey(duk_context* ctx)
-{
-	int player = duk_require_int(ctx, 0);
-	int key_type = duk_require_int(ctx, 1);
-	int keycode = duk_require_int(ctx, 2);
-
-	if (player < 0 || player >= 4)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): player index `%d` out of range", player);
-	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): invalid key type constant");
-	if (keycode < 0 || key_type >= ALLEGRO_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetPlayerKey(): invalid key constant");
-	set_player_key(player, key_type, keycode);
-	return 0;
-}
-
-static duk_ret_t
 js_SetScreenSize(duk_context* ctx)
 {
 	int  res_width;
@@ -1505,61 +1464,6 @@ js_ApplyColorMask(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Assert(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	bool        result;
-	int         stack_offset;
-	lstring_t*  text;
-
-	num_args = duk_get_top(ctx);
-	result = duk_to_boolean(ctx, 0);
-	message = duk_require_string(ctx, 1);
-	stack_offset = num_args >= 3 ? duk_require_int(ctx, 2)
-		: 0;
-
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): stack offset must be negative");
-
-	if (!result) {
-		// get the offending script and line number from the call stack
-		duk_push_global_object(ctx);
-		duk_get_prop_string(ctx, -1, "Duktape");
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-		if (!duk_is_object(ctx, -1)) {
-			duk_pop(ctx);
-			duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-		}
-		duk_remove(ctx, -2);
-		duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
-		duk_pop_2(ctx);
-		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
-
-		// if an assertion fails in a game being debugged:
-		//   - the user may choose to ignore it, in which case execution continues.  this is useful
-		//     in some debugging scenarios.
-		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
-		//     over control to the attached debugger.
-		if (is_debugger_attached()) {
-			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
-			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
-				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
-			{
-				duk_debugger_pause(ctx);
-			}
-			lstr_free(text);
-		}
-	}
-	duk_dup(ctx, 0);
-	return 1;
-}
-
-static duk_ret_t
 js_BindJoystickButton(duk_context* ctx)
 {
 	int joy_index = duk_require_int(ctx, 0);
@@ -1610,13 +1514,6 @@ js_BlendColors(duk_context* ctx)
 
 	duk_push_sphere_color(ctx, color_mix(color1, color2, w1, w2));
 	return 1;
-}
-
-static duk_ret_t
-js_ClearKeyQueue(duk_context* ctx)
-{
-	kb_clear_queue();
-	return 0;
 }
 
 static duk_ret_t
@@ -1771,22 +1668,6 @@ js_CreateSurface(duk_context* ctx)
 }
 
 static duk_ret_t
-js_DebugPrint(duk_context* ctx)
-{
-	int num_items;
-
-	num_items = duk_get_top(ctx);
-
-	// separate printed values with a space
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL);
-	return 0;
-}
-
-static duk_ret_t
 js_DeflateByteArray(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
@@ -1809,32 +1690,9 @@ js_Delay(duk_context* ctx)
 	double millisecs = floor(duk_require_number(ctx, 0));
 
 	if (millisecs < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Delay(): delay must be positive (got: %.0f)", millisecs);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "time cannot be negative", millisecs);
 	delay(millisecs / 1000);
 	return 0;
-}
-
-static duk_ret_t
-js_DispatchScript(duk_context* ctx)
-{
-	script_t* script;
-	char*     script_name;
-
-	script_name = strnewf("synth:async~%u.js", s_next_async_id++);
-	script = duk_require_sphere_script(ctx, 0, script_name);
-	free(script_name);
-
-	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch async script");
-	return 0;
-}
-
-static duk_ret_t
-js_DoEvents(duk_context* ctx)
-{
-	do_events();
-	duk_push_boolean(ctx, true);
-	return 1;
 }
 
 static duk_ret_t
@@ -2021,7 +1879,7 @@ js_HashByteArray(duk_context* ctx)
 }
 
 static duk_ret_t
-js_HashRawFile(duk_context* ctx)
+js_HashFromFile(duk_context* ctx)
 {
 	sfs_file_t* file;
 	const char* filename;
@@ -2373,22 +2231,6 @@ js_PointSeries(duk_context* ctx)
 	}
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	free(vertices);
-	return 0;
-}
-
-static duk_ret_t
-js_Print(duk_context* ctx)
-{
-	int num_items;
-
-	num_items = duk_get_top(ctx);
-
-	// separate printed values with a space
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	printf("%s\n", duk_get_string(ctx, -1));
 	return 0;
 }
 
@@ -3660,24 +3502,16 @@ js_Socket_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Socket_toString(duk_context* ctx)
-{
-	duk_push_string(ctx, "[object socket]");
-	return 1;
-}
-
-static duk_ret_t
-js_Socket_isConnected(duk_context* ctx)
+js_Socket_close(duk_context* ctx)
 {
 	socket_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
+	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (socket != NULL)
-		duk_push_boolean(ctx, is_socket_live(socket));
-	else
-		duk_push_false(ctx);
+		free_socket(socket);
 	return 1;
 }
 
@@ -3696,16 +3530,17 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Socket_close(duk_context* ctx)
+js_Socket_isConnected(duk_context* ctx)
 {
 	socket_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
-	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (socket != NULL)
-		free_socket(socket);
+		duk_push_boolean(ctx, is_socket_live(socket));
+	else
+		duk_push_false(ctx);
 	return 1;
 }
 
@@ -3733,6 +3568,13 @@ js_Socket_read(duk_context* ctx)
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
+	return 1;
+}
+
+static duk_ret_t
+js_Socket_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object socket]");
 	return 1;
 }
 
@@ -3773,9 +3615,62 @@ js_Sound_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_toString(duk_context* ctx)
+js_Sound_getLength(duk_context* ctx)
 {
-	duk_push_string(ctx, "[object sound]");
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+
+	duk_push_number(ctx, floor(sound_len(sound) * 1000000));
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_getPan(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+
+	duk_push_int(ctx, sound_pan(sound) * 255);
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_getPitch(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+
+	duk_push_number(ctx, sound_speed(sound));
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_getPosition(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+
+	duk_push_number(ctx, floor(sound_tell(sound) * 1000000));
+	return 1;
+}
+
+static duk_ret_t
+js_Sound_getRepeat(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+
+	duk_push_boolean(ctx, sound_repeat(sound));
 	return 1;
 }
 
@@ -3792,86 +3687,7 @@ js_Sound_getVolume(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_setVolume(duk_context* ctx)
-{
-	int volume = duk_require_int(ctx, 0);
-
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
-	sound_set_gain(sound, (float)volume / 255);
-	return 0;
-}
-
-static duk_ret_t
-js_Sound_get_length(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	duk_push_number(ctx, floor(sound_len(sound) * 1000000));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_get_pan(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	duk_push_int(ctx, sound_pan(sound) * 255);
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_set_pan(duk_context* ctx)
-{
-	int new_pan = duk_require_int(ctx, 0);
-
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	sound_set_pan(sound, (float)new_pan / 255);
-	return 0;
-}
-
-static duk_ret_t
-js_Sound_get_pitch(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	duk_push_number(ctx, sound_speed(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_set_pitch(duk_context* ctx)
-{
-	float new_pitch = duk_require_number(ctx, 0);
-
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	sound_set_speed(sound, new_pitch);
-	return 0;
-}
-
-static duk_ret_t
-js_Sound_get_playing(duk_context* ctx)
+js_Sound_isPlaying(duk_context* ctx)
 {
 	sound_t* sound;
 
@@ -3883,88 +3699,10 @@ js_Sound_get_playing(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sound_get_position(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	duk_push_number(ctx, floor(sound_tell(sound) * 1000000));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_set_position(duk_context* ctx)
-{
-	double   new_pos;
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-	new_pos = duk_require_number(ctx, 0);
-
-	sound_seek(sound, floor(new_pos) / 1000000);
-	return 0;
-}
-
-static duk_ret_t
-js_Sound_get_repeat(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	duk_push_boolean(ctx, sound_repeat(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_set_repeat(duk_context* ctx)
-{
-	bool is_looped = duk_require_boolean(ctx, 0);
-
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	sound_set_repeat(sound, is_looped);
-	return 0;
-}
-
-static duk_ret_t
-js_Sound_get_seekable(duk_context* ctx)
+js_Sound_isSeekable(duk_context* ctx)
 {
 	duk_push_true(ctx);
 	return 1;
-}
-
-static duk_ret_t
-js_Sound_get_volume(duk_context* ctx)
-{
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	duk_push_number(ctx, sound_gain(sound));
-	return 1;
-}
-
-static duk_ret_t
-js_Sound_set_volume(duk_context* ctx)
-{
-	float volume = duk_require_number(ctx, 0);
-
-	sound_t* sound;
-
-	duk_push_this(ctx);
-	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-
-	sound_set_gain(sound, volume);
-	return 0;
 }
 
 static duk_ret_t
@@ -4015,6 +3753,78 @@ js_Sound_reset(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Sound_setPan(duk_context* ctx)
+{
+	int      new_pan;
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+	new_pan = duk_require_int(ctx, 0);
+
+	sound_set_pan(sound, (float)new_pan / 255);
+	return 0;
+}
+
+static duk_ret_t
+js_Sound_setPitch(duk_context* ctx)
+{
+	float    new_pitch;
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+	new_pitch = duk_require_number(ctx, 0);
+
+	sound_set_speed(sound, new_pitch);
+	return 0;
+}
+
+static duk_ret_t
+js_Sound_setPosition(duk_context* ctx)
+{
+	double   new_pos;
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+	new_pos = duk_require_number(ctx, 0);
+
+	sound_seek(sound, floor(new_pos) / 1000000);
+	return 0;
+}
+
+static duk_ret_t
+js_Sound_setRepeat(duk_context* ctx)
+{
+	bool     is_looped;
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+	is_looped = duk_require_boolean(ctx, 0);
+
+	sound_set_repeat(sound, is_looped);
+	return 0;
+}
+
+static duk_ret_t
+js_Sound_setVolume(duk_context* ctx)
+{
+	int volume;
+
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
+	volume = duk_require_int(ctx, 0);
+
+	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
+	sound_set_gain(sound, (float)volume / 255);
+	return 0;
+}
+
+static duk_ret_t
 js_Sound_stop(duk_context* ctx)
 {
 	sound_t* sound;
@@ -4024,6 +3834,13 @@ js_Sound_stop(duk_context* ctx)
 
 	sound_stop(sound);
 	return 0;
+}
+
+static duk_ret_t
+js_Sound_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object sound]");
+	return 1;
 }
 
 static duk_ret_t
@@ -4682,14 +4499,14 @@ js_Surface_rotate(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-	duk_pop(ctx);
+
 	w = new_w = image_width(image);
 	h = new_h = image_height(image);
 	if (want_resize) {
 		// TODO: implement in-place resizing for Surface:rotate()
 	}
 	if ((new_image = image_new(new_w, new_h)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:rotate() - Failed to create new surface bitmap");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "failed to create new surface bitmap");
 	al_set_target_bitmap(image_bitmap(new_image));
 	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
@@ -4698,7 +4515,8 @@ js_Surface_rotate(duk_context* ctx)
 	// at one time this was an acceptable thing to do; now it's just a hack
 	image_free(image);
 	duk_push_this(ctx);
-	duk_push_pointer(ctx, new_image); duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_push_pointer(ctx, new_image);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	return 1;
 }
 
