@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__API_H__INCLUDED
 #define MINISPHERE__API_H__INCLUDED
 
-void   initialize_api           (duk_context* ctx);
+void   initialize_api           (duk_context* ctx, int version);
 void   shutdown_api             (void);
 void   api_register_const       (duk_context* ctx, const char* enum_name, const char* name, double value);
 void   api_register_ctor        (duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer);

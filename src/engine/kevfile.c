@@ -34,7 +34,7 @@ kev_open(sandbox_t* fs, const char* filename, bool can_create)
 		if (!can_create || !(file->conf = al_create_config()))
 			goto on_error;
 	}
-	file->fs = ref_sandbox(fs);
+	file->fs = fs_ref(fs);
 	file->filename = strdup(filename);
 	file->id = s_next_file_id++;
 	return file;
@@ -58,7 +58,7 @@ kev_close(kevfile_t* file)
 	if (file->is_dirty)
 		kev_save(file);
 	al_destroy_config(file->conf);
-	free_sandbox(file->fs);
+	fs_free(file->fs);
 	free(file);
 }
 

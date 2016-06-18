@@ -51,7 +51,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
-	game_path = get_game_path(g_fs);
+	game_path = fs_path(g_fs);
 	if (data = sfs_fslurp(g_fs, "sourcemap.json", NULL, &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
@@ -169,7 +169,7 @@ get_compiled_name(const char* source_name)
 const char*
 get_source_name(const char* compiled_name)
 {
-	// note: pathname must be canonicalized using make_sfs_path() otherwise
+	// note: pathname must be canonicalized using fs_make_path() otherwise
 	//       the source map lookup will fail.
 
 	static char retval[SPHERE_PATH_MAX];
@@ -293,10 +293,10 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
-		get_sgm_resolution(g_fs, &x_size, &y_size);
-		duk_push_string(ctx, get_sgm_name(g_fs));
-		duk_push_string(ctx, get_sgm_author(g_fs));
-		duk_push_string(ctx, get_sgm_summary(g_fs));
+		fs_get_resolution(g_fs, &x_size, &y_size);
+		duk_push_string(ctx, fs_name(g_fs));
+		duk_push_string(ctx, fs_author(g_fs));
+		duk_push_string(ctx, fs_summary(g_fs));
 		duk_push_int(ctx, x_size);
 		duk_push_int(ctx, y_size);
 		return 5;

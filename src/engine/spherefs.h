@@ -17,18 +17,19 @@ enum sfs_whence
 	SFS_SEEK_END,
 } sfs_whence_t;
 
-sandbox_t*       new_sandbox         (const char* pathname);
-sandbox_t*       ref_sandbox         (sandbox_t* fs);
-void             free_sandbox        (sandbox_t* fs);
-const lstring_t* get_game_manifest   (const sandbox_t* fs);
-const path_t*    get_game_path       (const sandbox_t* fs);
-void             get_sgm_resolution (sandbox_t* fs, int *out_width, int *out_height);
-const char*      get_sgm_name        (sandbox_t* fs);
-const char*      get_sgm_author      (sandbox_t* fs);
-const char*      get_sgm_summary     (sandbox_t* fs);
-const path_t*    get_sgm_script_path (sandbox_t* fs);
-vector_t*        list_filenames      (sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
-path_t*          make_sfs_path       (const char* filename, const char* base_dir_name, bool legacy);
+sandbox_t*       fs_new            (const char* pathname);
+sandbox_t*       fs_ref            (sandbox_t* fs);
+void             fs_free           (sandbox_t* fs);
+int              fs_version        (const sandbox_t* fs);
+const lstring_t* fs_manifest       (const sandbox_t* fs);
+const char*      fs_name           (const sandbox_t* fs);
+const path_t*    fs_path           (const sandbox_t* fs);
+const char*      fs_author         (const sandbox_t* fs);
+const char*      fs_summary        (const sandbox_t* fs);
+const path_t*    fs_script_path    (const sandbox_t* fs);
+void             fs_get_resolution (const sandbox_t* fs, int *out_width, int *out_height);
+vector_t*        fs_list_dir       (const sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
+path_t*          fs_make_path      (const char* filename, const char* base_dir_name, bool legacy);
 
 sfs_file_t* sfs_fopen      (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
 void        sfs_fclose     (sfs_file_t* file);

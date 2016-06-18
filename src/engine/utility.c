@@ -146,7 +146,7 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = make_sfs_path(pathname, origin_name, legacy);
+	path = fs_make_path(pathname, origin_name, legacy);
 	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
 	    || path_is_rooted(path))
 	{

@@ -32,7 +32,6 @@ static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static void show_error_screen   (const char* message);
-static bool verify_requirements (sandbox_t* fs);
 
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
@@ -142,7 +141,7 @@ main(int argc, char* argv[])
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
 		// user provided a path or startup game was found, attempt to load it
-		g_fs = new_sandbox(path_cstr(g_game_path));
+		g_fs = fs_new(path_cstr(g_game_path));
 	else {
 		// no game path provided and no startup game, let user find one
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", PRODUCT_NAME);
@@ -154,7 +153,7 @@ main(int argc, char* argv[])
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
 			path_free(g_game_path);
 			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
-			g_fs = new_sandbox(path_cstr(g_game_path));
+			g_fs = fs_new(path_cstr(g_game_path));
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
@@ -180,17 +179,15 @@ main(int argc, char* argv[])
 		exit_game(false);
 	}
 
-	initialize_api(g_duk);
-	if (!verify_requirements(g_fs))
-		exit_game(false);
+	initialize_api(g_duk, fs_version(g_fs));
 
 	// try to create a display. if we can't get a programmable pipeline, try again but
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be
 	// disabled.
-	get_sgm_resolution(g_fs, &g_res_x, &g_res_y);
+	fs_get_resolution(g_fs, &g_res_x, &g_res_y);
 	if (!(icon = image_load("icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(get_sgm_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
+	g_screen = screen_new(fs_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a render context.",
 			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
@@ -247,16 +244,19 @@ main(int argc, char* argv[])
 
 	// evaluate startup script
 	screen_show_mouse(g_screen, false);
-	script_path = get_sgm_script_path(g_fs);
-	if (!evaluate_script(path_cstr(script_path), false))
+	script_path = fs_script_path(g_fs);
+	if (!evaluate_script(path_cstr(script_path), fs_version(g_fs) > 1))
 		goto on_js_error;
 	duk_pop(g_duk);
 
-	// call game() function in script
-	duk_get_global_string(g_duk, "game");
-	if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
-		goto on_js_error;
-	duk_pop(g_duk);
+	// if running in Vanilla mode, call game() function
+	if (fs_version(g_fs) == 1) {
+		duk_get_global_string(g_duk, "game");
+		if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+			goto on_js_error;
+		duk_pop(g_duk);
+	}
+	
 	exit_game(false);
 
 on_js_error:
@@ -426,7 +426,7 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
-	free_sandbox(g_fs);
+	fs_free(g_fs);
 	g_fs = NULL;
 	if (g_sys_conf != NULL)
 		kev_close(g_sys_conf);
@@ -753,50 +753,4 @@ show_error_box:
 		message, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	shutdown_engine();
 	exit(EXIT_SUCCESS);
-}
-
-static bool
-verify_requirements(sandbox_t* fs)
-{
-	// NOTE: before calling this function, the Sphere API must already have been
-	//       initialized using initialize_api().
-
-	lstring_t*  message;
-	const char* recommendation = NULL;
-
-	duk_push_lstring_t(g_duk, get_game_manifest(g_fs));
-	duk_json_decode(g_duk, -1);
-
-	if (duk_get_prop_string(g_duk, -1, "minimumPlatform")) {
-		if (duk_get_prop_string(g_duk, -1, "recommend")) {
-			if (duk_is_string(g_duk, -1))
-				recommendation = duk_get_string(g_duk, -1);
-		}
-		duk_pop(g_duk);
-
-		// check for minimum API version
-		if (duk_get_prop_string(g_duk, -1, "apiVersion")) {
-			if (duk_is_number(g_duk, -1)) {
-				if (duk_get_int(g_duk, -1) > 2)
-					goto is_unsupported;
-			}
-		}
-		duk_pop(g_duk);
-	}
-	duk_pop(g_duk);
-	return true;
-
-is_unsupported:
-	if (recommendation != NULL) {
-		message = lstr_newf(
-			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
-			"\n\nThe game developer recommends using %s.", PRODUCT_NAME, recommendation);
-	}
-	else {
-		message = lstr_newf(
-			"A feature needed by this game is not supported in %s.  You may need to use a later version of minisphere or a different engine to play this game."
-			"\n\nNo specific recommendation was provided by the game developer.", PRODUCT_NAME);
-	}
-	al_show_native_message_box(NULL, "Unsupported Engine", path_cstr(g_game_path), lstr_cstr(message), NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	return false;
 }

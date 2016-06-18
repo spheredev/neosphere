@@ -255,7 +255,7 @@ screen_flip(screen_t* obj, int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(al_get_backbuffer(obj->display));
 			al_restore_state(&old_state);
-			game_path = get_game_path(g_fs);
+			game_path = fs_path(g_fs);
 			game_filename = path_is_file(game_path)
 				? path_filename_cstr(game_path)
 				: path_hop_cstr(game_path, path_num_hops(game_path) - 1);

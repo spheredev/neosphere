@@ -337,9 +337,9 @@ static duk_ret_t js_Transform_rotate           (duk_context* ctx);
 static duk_ret_t js_Transform_scale            (duk_context* ctx);
 static duk_ret_t js_Transform_translate        (duk_context* ctx);
 
-static void    duk_push_pegasus_color    (duk_context* ctx, color_t color);
-static void    duk_push_require          (duk_context* ctx, const char* module_id);
-static color_t duk_require_pegasus_color (duk_context* ctx, duk_idx_t index);
+static void    duk_pegasus_push_color    (duk_context* ctx, color_t color);
+static void    duk_pegasus_push_require  (duk_context* ctx, const char* module_id);
+static color_t duk_pegasus_require_color (duk_context* ctx, duk_idx_t index);
 static path_t* find_module               (const char* id, const char* origin, const char* sys_origin);
 static path_t* load_package_json         (const char* filename);
 
@@ -362,7 +362,7 @@ initialize_pegasus_api(duk_context* ctx)
 
 	duk_push_global_object(g_duk);
 	duk_push_string(g_duk, "require");
-	duk_push_require(g_duk, NULL);
+	duk_pegasus_push_require(g_duk, NULL);
 	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
@@ -693,7 +693,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 	duk_put_prop_string(g_duk, -2, "id");  // module.id
 	duk_push_false(g_duk);
 	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
-	duk_push_require(g_duk, filename);
+	duk_pegasus_push_require(g_duk, filename);
 	duk_put_prop_string(g_duk, -2, "require");  // module.require
 
 	// cache the module object in advance
@@ -760,7 +760,7 @@ on_error:
 }
 
 static void
-duk_push_pegasus_color(duk_context* ctx, color_t color)
+duk_pegasus_push_color(duk_context* ctx, color_t color)
 {
 	duk_get_global_string(ctx, "Color");
 	duk_push_number(ctx, color.r);
@@ -771,7 +771,7 @@ duk_push_pegasus_color(duk_context* ctx, color_t color)
 }
 
 static void
-duk_push_require(duk_context* ctx, const char* module_id)
+duk_pegasus_push_require(duk_context* ctx, const char* module_id)
 {
 	duk_push_c_function(ctx, js_require, 1);
 	duk_push_string(ctx, "name");
@@ -790,7 +790,7 @@ duk_push_require(duk_context* ctx, const char* module_id)
 }
 
 static color_t
-duk_require_pegasus_color(duk_context* ctx, duk_idx_t index)
+duk_pegasus_require_color(duk_context* ctx, duk_idx_t index)
 {
 	int r, g, b;
 	int a;
@@ -1050,7 +1050,7 @@ js_engine_get_extensions(duk_context* ctx)
 static duk_ret_t
 js_engine_get_game(duk_context* ctx)
 {
-	duk_push_lstring_t(ctx, get_game_manifest(g_fs));
+	duk_push_lstring_t(ctx, fs_manifest(g_fs));
 	duk_json_decode(ctx, -1);
 
 	duk_push_this(ctx);
@@ -1600,7 +1600,7 @@ js_Color_get_Color(duk_context* ctx)
 	index = duk_get_int(ctx, -1);
 	
 	data = &COLORS[index];
-	duk_push_pegasus_color(ctx, color_new(data->r, data->g, data->b, data->a));
+	duk_pegasus_push_color(ctx, color_new(data->r, data->g, data->b, data->a));
 	return 1;
 }
 
@@ -1614,8 +1614,8 @@ js_Color_mix(duk_context* ctx)
 	float   w2 = 1.0;
 
 	num_args = duk_get_top(ctx);
-	color1 = duk_require_pegasus_color(ctx, 0);
-	color2 = duk_require_pegasus_color(ctx, 1);
+	color1 = duk_pegasus_require_color(ctx, 0);
+	color2 = duk_pegasus_require_color(ctx, 1);
 	if (num_args > 2) {
 		w1 = duk_require_number(ctx, 2);
 		w2 = duk_require_number(ctx, 3);
@@ -1624,7 +1624,7 @@ js_Color_mix(duk_context* ctx)
 	if (w1 < 0.0 || w2 < 0.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "weights cannot be negative", w1, w2);
 
-	duk_push_pegasus_color(ctx, color_mix(color1, color2, w1, w2));
+	duk_pegasus_push_color(ctx, color_mix(color1, color2, w1, w2));
 	return 1;
 }
 
@@ -1645,7 +1645,7 @@ js_Color_of(duk_context* ctx)
 	p = &COLORS[0];
 	while (p->name != NULL) {
 		if (strcasecmp(name, p->name) == 0) {
-			duk_push_pegasus_color(ctx, color_new(p->r, p->g, p->b, p->a));
+			duk_pegasus_push_color(ctx, color_new(p->r, p->g, p->b, p->a));
 			return 1;
 		}
 		++p;
@@ -1662,7 +1662,7 @@ js_Color_of(duk_context* ctx)
 	color.r = (value >> 16) & 0xFF;
 	color.g = (value >> 8) & 0xFF;
 	color.b = value & 0xFF;
-	duk_push_pegasus_color(ctx, color);
+	duk_pegasus_push_color(ctx, color);
 	return 1;
 }
 
@@ -1698,7 +1698,7 @@ js_Color_get_name(duk_context* ctx)
 	const struct x11_color* p;
 
 	duk_push_this(ctx);
-	color = duk_require_pegasus_color(ctx, -1);
+	color = duk_pegasus_require_color(ctx, -1);
 
 	p = &COLORS[0];
 	while (p->name != NULL) {
@@ -1721,9 +1721,9 @@ js_Color_clone(duk_context* ctx)
 	color_t color;
 
 	duk_push_this(ctx);
-	color = duk_require_pegasus_color(ctx, -1);
+	color = duk_pegasus_require_color(ctx, -1);
 
-	duk_push_pegasus_color(ctx, color);
+	duk_pegasus_push_color(ctx, color);
 	return 1;
 }
 
@@ -1734,12 +1734,12 @@ js_Color_fade(duk_context* ctx)
 	color_t color;
 
 	duk_push_this(ctx);
-	color = duk_require_pegasus_color(ctx, -1);
+	color = duk_pegasus_require_color(ctx, -1);
 	a = duk_require_int(ctx, 0);
 
 	a = a < 0 ? 0 : a > 255 ? 255 : a;
 	color.a = color.a * a / 255;
-	duk_push_pegasus_color(ctx, color);
+	duk_pegasus_push_color(ctx, color);
 	return 1;
 }
 
@@ -2251,11 +2251,10 @@ js_new_Font(duk_context* ctx)
 	font_t*     font;
 
 	filename = duk_require_path(ctx, 0, NULL, false);
-	font = font_load(filename);
-	if (font == NULL)
+
+	if (!(font = font_load(filename)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load font `%s`", filename);
 	duk_push_sphere_obj(ctx, "Font", font);
-	font_free(font);
 	return 1;
 }
 
@@ -2276,7 +2275,7 @@ js_Font_get_height(duk_context* ctx)
 
 	duk_push_this(ctx);
 	font = duk_require_sphere_obj(ctx, -1, "Font");
-	duk_pop(ctx);
+
 	duk_push_int(ctx, font_height(font));
 	return 1;
 }
@@ -2304,7 +2303,7 @@ js_Font_drawText(duk_context* ctx)
 	x = duk_require_int(ctx, 1);
 	y = duk_require_int(ctx, 2);
 	text = duk_to_string(ctx, 3);
-	color = num_args >= 5 ? duk_require_pegasus_color(ctx, 4)
+	color = num_args >= 5 ? duk_pegasus_require_color(ctx, 4)
 		: color_new(255, 255, 255, 255);
 	width = num_args >= 6 ? duk_require_int(ctx, 5) : 0;
 
@@ -2576,7 +2575,7 @@ js_new_Image(duk_context* ctx)
 		// create an Image filled with a single pixel value
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
-		fill_color = duk_require_pegasus_color(ctx, 2);
+		fill_color = duk_pegasus_require_color(ctx, 2);
 		if (!(image = image_new(width, height)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create new image");
 		image_fill(image, fill_color);
@@ -2885,7 +2884,7 @@ js_new_Shape(duk_context* ctx)
 		else
 			is_missing_uv = true;
 		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
-			? duk_require_pegasus_color(ctx, -1)
+			? duk_pegasus_require_color(ctx, -1)
 			: color_new(255, 255, 255, 255);
 		duk_pop_n(ctx, 6);
 		shape_add_vertex(shape, vertex);
@@ -3447,7 +3446,7 @@ js_new_Surface(duk_context* ctx)
 	if (n_args >= 2) {
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
-		fill_color = n_args >= 3 ? duk_require_pegasus_color(ctx, 2) : color_new(0, 0, 0, 0);
+		fill_color = n_args >= 3 ? duk_pegasus_require_color(ctx, 2) : color_new(0, 0, 0, 0);
 		if (!(image = image_new(width, height)))
 			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
 		image_fill(image, fill_color);

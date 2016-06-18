@@ -103,6 +103,7 @@ static duk_ret_t js_OutlinedRectangle          (duk_context* ctx);
 static duk_ret_t js_OutlinedRoundRectangle     (duk_context* ctx);
 static duk_ret_t js_Point                      (duk_context* ctx);
 static duk_ret_t js_PointSeries                (duk_context* ctx);
+static duk_ret_t js_Print                      (duk_context* ctx);
 static duk_ret_t js_Rectangle                  (duk_context* ctx);
 static duk_ret_t js_RemoveDirectory            (duk_context* ctx);
 static duk_ret_t js_RemoveFile                 (duk_context* ctx);
@@ -405,6 +406,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
 	api_register_static_func(ctx, NULL, "Point", js_Point);
 	api_register_static_func(ctx, NULL, "PointSeries", js_PointSeries);
+	api_register_static_func(ctx, NULL, "Print", js_Print);
 	api_register_static_func(ctx, NULL, "Rectangle", js_Rectangle);
 	api_register_static_func(ctx, NULL, "RemoveDirectory", js_RemoveDirectory);
 	api_register_static_func(ctx, NULL, "RemoveFile", js_RemoveFile);
@@ -983,7 +985,7 @@ js_GetDirectoryList(duk_context* ctx)
 
 	iter_t iter;
 
-	list = list_filenames(g_fs, dirname, NULL, true);
+	list = fs_list_dir(g_fs, dirname, NULL, true);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -1010,7 +1012,7 @@ js_GetFileList(duk_context* ctx)
 		? duk_require_path(ctx, 0, NULL, true)
 		: "save";
 
-	list = list_filenames(g_fs, directory_name, NULL, false);
+	list = fs_list_dir(g_fs, directory_name, NULL, false);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -1051,13 +1053,13 @@ js_GetGameList(duk_context* ctx)
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				path = path_new(al_get_fs_entry_name(file_info));
-				if (sandbox = new_sandbox(path_cstr(path))) {
-					duk_push_lstring_t(ctx, get_game_manifest(sandbox));
+				if (sandbox = fs_new(path_cstr(path))) {
+					duk_push_lstring_t(ctx, fs_manifest(sandbox));
 					duk_json_decode(ctx, -1);
 					duk_push_string(ctx, path_cstr(path));
 					duk_put_prop_string(ctx, -2, "directory");
 					duk_put_prop_index(ctx, -2, j++);
-					free_sandbox(sandbox);
+					fs_free(sandbox);
 				}
 				path_free(path);
 			}
@@ -1071,9 +1073,9 @@ js_GetGameList(duk_context* ctx)
 static duk_ret_t
 js_GetGameManifest(duk_context* ctx)
 {
-	duk_push_lstring_t(ctx, get_game_manifest(g_fs));
+	duk_push_lstring_t(ctx, fs_manifest(g_fs));
 	duk_json_decode(ctx, -1);
-	duk_push_string(ctx, path_cstr(get_game_path(g_fs)));
+	duk_push_string(ctx, path_cstr(fs_path(g_fs)));
 	duk_put_prop_string(ctx, -2, "directory");
 	return 1;
 }
@@ -1744,7 +1746,7 @@ js_ExecuteGame(duk_context* ctx)
 	filename = duk_require_string(ctx, 0);
 
 	// store the old game path so we can relaunch when the chained game exits
-	g_last_game_path = path_dup(get_game_path(g_fs));
+	g_last_game_path = path_dup(fs_path(g_fs));
 
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
@@ -2231,6 +2233,23 @@ js_PointSeries(duk_context* ctx)
 	}
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	free(vertices);
+	return 0;
+}
+
+js_Print(duk_context* ctx)
+{
+	int   num_items;
+	char* text;
+
+	num_items = duk_get_top(ctx);
+
+	// separate printed values with a space
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+	duk_join(ctx, num_items);
+
+	text = strnewf("%s", duk_get_string(ctx, -1));
+	debug_print(text, PRINT_NORMAL);
 	return 0;
 }
 

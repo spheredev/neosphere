@@ -6,25 +6,32 @@
 #include "vanilla.h"
 
 void
-initialize_api(duk_context* ctx)
+initialize_api(duk_context* ctx, int version)
 {
-	// register the 'global' global object alias (like Node.js!).
-	// this provides direct access to the global object from any scope.
-	duk_push_global_object(ctx);
-	duk_push_string(ctx, "global");
-	duk_push_global_object(ctx);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-
 	// stash an object to hold prototypes for built-in objects
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "prototypes");
 	duk_pop(ctx);
 
-	initialize_vanilla_api(ctx);
-	initialize_pegasus_api(ctx);
-	
-	init_map_engine_api(g_duk);
+	// initialize the correct API depending on the version number in
+	// the game manifest
+	//     - v1: Vanilla API (Sphere 1.x)
+	//     - v2: Pegasus API (Sphere 2.0)
+	switch (version) {
+	case 1:
+		initialize_vanilla_api(ctx);
+		init_map_engine_api(g_duk);
+		break;
+	case 2:
+		duk_push_global_object(ctx);
+		duk_push_string(ctx, "global");
+		duk_push_global_object(ctx);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+
+		initialize_pegasus_api(ctx);
+		break;
+	}
 }
 
 void

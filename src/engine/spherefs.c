@@ -26,6 +26,7 @@ struct sandbox
 	lstring_t*   sourcemap;
 	spk_t*       spk;
 	int          type;
+	int          version;
 };
 
 struct sfs_file
@@ -36,12 +37,12 @@ struct sfs_file
 };
 
 static duk_ret_t duk_load_s2gm (duk_context* ctx);
-static bool      resolve_path  (sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
+static bool      resolve_path  (const sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_sandbox_id = 0;
 
 sandbox_t*
-new_sandbox(const char* game_path)
+fs_new(const char* game_path)
 {
 	sandbox_t* fs;
 	path_t*    path;
@@ -56,7 +57,7 @@ new_sandbox(const char* game_path)
 
 	console_log(1, "opening `%s` in sandbox #%u", game_path, s_next_sandbox_id);
 	
-	fs = ref_sandbox(calloc(1, sizeof(sandbox_t)));
+	fs = fs_ref(calloc(1, sizeof(sandbox_t)));
 	
 	fs->id = s_next_sandbox_id;
 	path = path_new(game_path);
@@ -78,6 +79,7 @@ new_sandbox(const char* game_path)
 		// transparent to the rest of the engine, keeping things simple.
 		console_log(1, "synthesizing manifest for `%s` in sandbox #%u", path_cstr(path),
 			s_next_sandbox_id);
+		fs->version = 1;
 		fs->name = lstr_new(path_filename_cstr(path));
 		fs->author = lstr_new("Author Unknown");
 		fs->summary = lstr_new(path_cstr(path));
@@ -117,12 +119,13 @@ new_sandbox(const char* game_path)
 		}
 		else if (sgm_file = kev_open(fs, "game.sgm", false)) {
 			console_log(1, "parsing legacy manifest for sandbox #%u", s_next_sandbox_id);
+			fs->version = 1;
 			fs->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			fs->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			fs->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
 			fs->res_x = kev_read_float(sgm_file, "screen_width", 320);
 			fs->res_y = kev_read_float(sgm_file, "screen_height", 240);
-			fs->script_path = make_sfs_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
+			fs->script_path = fs_make_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
 			kev_close(sgm_file);
 
 			// generate a JSON manifest (used by, e.g. GetGameManifest())
@@ -139,9 +142,9 @@ new_sandbox(const char* game_path)
 			goto on_error;
 	}
 
-	get_sgm_resolution(fs, &res_x, &res_y);
-	console_log(1, "    title: %s", get_sgm_name(fs));
-	console_log(1, "    author: %s", get_sgm_author(fs));
+	fs_get_resolution(fs, &res_x, &res_y);
+	console_log(1, "    title: %s", fs_name(fs));
+	console_log(1, "    author: %s", fs_author(fs));
 	console_log(1, "    resolution: %ix%i", res_x, res_y);
 	
 	// load the source map
@@ -164,7 +167,7 @@ on_error:
 }
 
 sandbox_t*
-ref_sandbox(sandbox_t* fs)
+fs_ref(sandbox_t* fs)
 {
 	if (fs == NULL)
 		return NULL;
@@ -174,7 +177,7 @@ ref_sandbox(sandbox_t* fs)
 }
 
 void
-free_sandbox(sandbox_t* fs)
+fs_free(sandbox_t* fs)
 {
 	if (fs == NULL || --fs->refcount > 0)
 		return;
@@ -190,52 +193,58 @@ free_sandbox(sandbox_t* fs)
 }
 
 const lstring_t*
-get_game_manifest(const sandbox_t* fs)
+fs_manifest(const sandbox_t* fs)
 {
 	return fs->manifest;
 }
 
 const path_t*
-get_game_path(const sandbox_t* fs)
+fs_path(const sandbox_t* fs)
 {
 	return fs->root_path;
 }
 
 void
-get_sgm_resolution(sandbox_t* fs, int *out_width, int *out_height)
+fs_get_resolution(const sandbox_t* fs, int *out_width, int *out_height)
 {
 	*out_width = fs->res_x;
 	*out_height = fs->res_y;
 }
 
+int
+fs_version(const sandbox_t* fs)
+{
+	return fs->version;
+}
+
 const char*
-get_sgm_name(sandbox_t* fs)
+fs_name(const sandbox_t* fs)
 {
 	return lstr_cstr(fs->name);
 }
 
 const char*
-get_sgm_author(sandbox_t* fs)
+fs_author(const sandbox_t* fs)
 {
 	return lstr_cstr(fs->author);
 }
 
 const char*
-get_sgm_summary(sandbox_t* fs)
+fs_summary(const sandbox_t* fs)
 {
 	return lstr_cstr(fs->summary);
 }
 
 const path_t*
-get_sgm_script_path(sandbox_t* fs)
+fs_script_path(const sandbox_t* fs)
 {
 	return fs->script_path;
 }
 
 path_t*
-make_sfs_path(const char* filename, const char* base_dir_name, bool legacy)
+fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 {
-	// note: make_sfs_path() collapses '../' path hops unconditionally, as per
+	// note: fs_make_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
 	//       sandbox by navigating outside of its directory via a symbolic link.
 
@@ -274,7 +283,7 @@ make_sfs_path(const char* filename, const char* base_dir_name, bool legacy)
 }
 
 vector_t*
-list_filenames(sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs)
+fs_list_dir(const sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs)
 {
 	path_t*           dir_path;
 	ALLEGRO_FS_ENTRY* file_info;
@@ -716,6 +725,10 @@ duk_load_s2gm(duk_context* ctx)
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
 
 	// game summary is optional, use a default summary if one is not provided.
+	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
+		fs->version = duk_get_number(g_duk, -1);
+	else
+		fs->version = 1;
 	if (duk_get_prop_string(g_duk, -4, "author") && duk_is_string(g_duk, -1))
 		fs->author = lstr_new(duk_get_string(g_duk, -1));
 	else
@@ -732,7 +745,7 @@ on_error:
 }
 
 static bool
-resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type)
+resolve_path(const sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type)
 {
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
@@ -783,7 +796,7 @@ resolve_path(sandbox_t* fs, const char* filename, const char* base_dir, path_t* 
 	else {  // default case: assume relative path
 		if (fs == NULL)
 			goto on_error;
-		*out_path = make_sfs_path(filename, base_dir, false);
+		*out_path = fs_make_path(filename, base_dir, false);
 		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
 			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;
