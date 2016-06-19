@@ -286,7 +286,7 @@ initialize_vanilla_api(duk_context* ctx)
 {
 	const char* filename;
 	
-	console_log(1, "initializing Vanilla API, %s", API_VERSION_STRING);
+	console_log(1, "initializing Sphere G1 API %s", API_VERSION_STRING);
 
 	s_sound_mixer = mixer_new(44100, 16, 2);
 	
