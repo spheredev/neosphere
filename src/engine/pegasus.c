@@ -362,7 +362,10 @@ initialize_pegasus_api(duk_context* ctx)
 	duk_push_global_object(ctx);
 	duk_push_string(ctx, "global");
 	duk_push_global_object(ctx);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 	duk_pop(ctx);
 
 	// initialize CommonJS cache and global require()
@@ -375,6 +378,7 @@ initialize_pegasus_api(duk_context* ctx)
 	duk_push_string(g_duk, "require");
 	duk_pegasus_push_require(g_duk, NULL);
 	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 	

@@ -7,7 +7,7 @@ function $default()
 {{
 	// this tells Cell which files to install when packaging the game.
 	// see the Cell API documentation for more information.
-	
+
 	install(files("scripts/*", true), "scripts");
 	install(files("commonjs/*", true), "commonjs");
 	install(files("animations/*", true), "animations");
@@ -18,16 +18,16 @@ function $default()
 	install(files("spritesets/*", true), "spritesets");
 	install(files("windowstyles/*", true), "sounds");
 	install(files("icon.png"));
-	
+
 	// this builds and installs the game manifest.
-	// the arguments passed to sgm() specify the data contained in the
+	// the arguments passed to manifest() specify the data contained in the
 	// manifest:
-	
-	install(sgm({{
+
+	install(manifest({{
 		name: "{0}",
 		author: "{1}",
 		summary: "{2}",
 		resolution: "{3}x{4}",
-		script: "scripts/main.js",
+		main: "main.js",
 	}}));
 }}

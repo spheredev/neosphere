@@ -90,7 +90,7 @@ fs_new(const char* game_path)
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
 		duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
 		duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
-		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
+		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "main");
 		fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
 		duk_pop(g_duk);
 	}
@@ -134,7 +134,7 @@ fs_new(const char* game_path)
 			duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
 			duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
 			duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
-			duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "script");
+			duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "main");
 			fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
 			duk_pop(g_duk);
 		}
@@ -720,12 +720,12 @@ duk_load_s2gm(duk_context* ctx)
 	if (!duk_get_prop_string(g_duk, -2, "resolution") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
-	if (!duk_get_prop_string(g_duk, -3, "script") || !duk_is_string(g_duk, -1))
+	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
 
 	// game summary is optional, use a default summary if one is not provided.
-	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
+	if (duk_get_prop_string(g_duk, -4, "generation") && duk_is_number(g_duk, -1))
 		fs->version = duk_get_number(g_duk, -1);
 	else
 		fs->version = 2;
