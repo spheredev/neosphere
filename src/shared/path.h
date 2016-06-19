@@ -19,6 +19,7 @@ bool        path_has_extension (const path_t* path, const char* extension);
 bool        path_is_file       (const path_t* path);
 bool        path_is_rooted     (const path_t* path);
 size_t      path_num_hops      (const path_t* path);
+bool        path_filename_cmp  (const path_t* path, const char* name);
 bool        path_hop_cmp       (const path_t* path, size_t idx, const char* name);
 path_t*     path_append        (path_t* path, const char* pathname);
 path_t*     path_append_dir    (path_t* path, const char* pathname);

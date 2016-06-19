@@ -156,6 +156,14 @@ path_num_hops(const path_t* path)
 }
 
 bool
+path_filename_cmp(const path_t* path, const char* name)
+{
+	if (path->filename == NULL)
+		return false;
+	return strcmp(path->filename, name) == 0;
+}
+
+bool
 path_hop_cmp(const path_t* path, size_t idx, const char* name)
 {
 	return strcmp(path->hops[idx], name) == 0;

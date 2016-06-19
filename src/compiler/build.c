@@ -35,10 +35,10 @@ struct target
 	path_t*      subpath;
 };
 
-static duk_ret_t js_api_install (duk_context* ctx);
-static duk_ret_t js_api_files   (duk_context* ctx);
-static duk_ret_t js_api_s2gm    (duk_context* ctx);
-static duk_ret_t js_api_sgm     (duk_context* ctx);
+static duk_ret_t js_api_install  (duk_context* ctx);
+static duk_ret_t js_api_files    (duk_context* ctx);
+static duk_ret_t js_api_manifest (duk_context* ctx);
+static duk_ret_t js_api_sgm      (duk_context* ctx);
 
 static int  compare_asset_names (const void* in_a, const void* in_b);
 static void do_add_files        (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
@@ -78,8 +78,8 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	duk_put_global_string(build->js_ctx, "install");
 	duk_push_c_function(build->js_ctx, js_api_files, DUK_VARARGS);
 	duk_put_global_string(build->js_ctx, "files");
-	duk_push_c_function(build->js_ctx, js_api_s2gm, DUK_VARARGS);
-	duk_put_global_string(build->js_ctx, "s2gm");
+	duk_push_c_function(build->js_ctx, js_api_manifest, DUK_VARARGS);
+	duk_put_global_string(build->js_ctx, "manifest");
 	duk_push_c_function(build->js_ctx, js_api_sgm, DUK_VARARGS);
 	duk_put_global_string(build->js_ctx, "sgm");
 
@@ -344,7 +344,7 @@ build_run(build_t* build)
 		duk_put_prop_string(build->js_ctx, -2, "fileMap");
 		duk_json_encode(build->js_ctx, -1);
 		json = duk_get_lstring(build->js_ctx, -1, &json_size);
-		path = path_rebase(path_new("sourcemap.json"),
+		path = path_rebase(path_new("source.json"),
 			build->spk != NULL ? build->staging_path : build->out_path);
 		path_mkdir(build->out_path);
 		if (!fspew(json, json_size, path_cstr(path))) {
@@ -359,7 +359,7 @@ build_run(build_t* build)
 	}
 	else if (build->spk == NULL) {
 		// non-debug build, remove any existing source map
-		path = path_rebase(path_new("sourcemap.json"), build->out_path);
+		path = path_rebase(path_new("source.json"), build->out_path);
 		unlink(path_cstr(path));
 		path_free(path);
 	}
@@ -666,7 +666,7 @@ js_api_sgm(duk_context* ctx)
 }
 
 static duk_ret_t
-js_api_s2gm(duk_context* ctx)
+js_api_manifest(duk_context* ctx)
 {
 	build_t*    build;
 	const char* json;
@@ -679,13 +679,13 @@ js_api_s2gm(duk_context* ctx)
 	duk_pop_2(ctx);
 
 	if (!duk_get_prop_string(ctx, 0, "author"))
-		build_emit_warn(build, "s2gm(): 'author' field is missing");
+		build_emit_warn(build, "manifest(): 'author' field is missing");
 	if (!duk_get_prop_string(ctx, 0, "summary"))
-		build_emit_warn(build, "s2gm(): 'summary' field is missing");
+		build_emit_warn(build, "manifest(): 'summary' field is missing");
 	duk_pop_2(ctx);
 
 	json = duk_json_encode(ctx, 0);
-	name = path_new("game.s2gm");
+	name = path_new("game.json");
 	target = build_add_asset(build,
 		asset_new_raw(name, json, strlen(json), build->timestamp),
 		NULL);

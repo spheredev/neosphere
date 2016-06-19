@@ -67,7 +67,7 @@ fs_new(const char* game_path)
 		fs->root_path = path_dup(path);
 		fs->spk = spk;
 	}
-	else if (path_has_extension(path, ".sgm") || path_has_extension(path, ".s2gm")) {  // game manifest
+	else if (path_has_extension(path, ".sgm") || path_filename_cmp(path, "game.json")) {  // game manifest
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
 	}
@@ -103,13 +103,13 @@ fs_new(const char* game_path)
 
 	// try to load the game manifest if one hasn't been synthesized already
 	if (fs->name == NULL) {
-		if (sgm_text = sfs_fslurp(fs, "game.s2gm", NULL, &sgm_size)) {
-			console_log(1, "parsing Sphere 2 manifest for sandbox #%u", s_next_sandbox_id);
+		if (sgm_text = sfs_fslurp(fs, "game.json", NULL, &sgm_size)) {
+			console_log(1, "parsing JSON manifest for sandbox #%u", s_next_sandbox_id);
 			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
 			if (dukrub_safe_call(g_duk, duk_load_s2gm, 2, 1) != DUK_EXEC_SUCCESS) {
-				console_log(0, "error parsing JSON manifest `game.s2gm`\n    %s", duk_to_string(g_duk, -1));
+				console_log(0, "error parsing manifest `game.json`\n    %s", duk_to_string(g_duk, -1));
 				duk_pop(g_duk);
 				goto on_error;
 			}
@@ -118,7 +118,7 @@ fs_new(const char* game_path)
 			sgm_text = NULL;
 		}
 		else if (sgm_file = kev_open(fs, "game.sgm", false)) {
-			console_log(1, "parsing legacy manifest for sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing Vanilla manifest for sandbox #%u", s_next_sandbox_id);
 			fs->version = 1;
 			fs->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			fs->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
@@ -148,7 +148,7 @@ fs_new(const char* game_path)
 	console_log(1, "    resolution: %ix%i", res_x, res_y);
 	
 	// load the source map
-	if (sourcemap_data = sfs_fslurp(fs, "sourcemap.json", NULL, &sourcemap_size))
+	if (sourcemap_data = sfs_fslurp(fs, "source.json", NULL, &sourcemap_size))
 		fs->sourcemap = lstr_from_buf(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
 
@@ -703,7 +703,7 @@ static duk_ret_t
 duk_load_s2gm(duk_context* ctx)
 {
 	// arguments: -2 = sandbox_t* fs (pointer)
-	//            -1 = .s2gm JSON text (string)
+	//            -1 = game.json text (string)
 	
 	sandbox_t* fs;
 	duk_idx_t  json_idx;
@@ -728,7 +728,7 @@ duk_load_s2gm(duk_context* ctx)
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
 		fs->version = duk_get_number(g_duk, -1);
 	else
-		fs->version = 1;
+		fs->version = 2;
 	if (duk_get_prop_string(g_duk, -4, "author") && duk_is_string(g_duk, -1))
 		fs->author = lstr_new(duk_get_string(g_duk, -1));
 	else
