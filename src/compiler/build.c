@@ -38,7 +38,6 @@ struct target
 static duk_ret_t js_api_install  (duk_context* ctx);
 static duk_ret_t js_api_files    (duk_context* ctx);
 static duk_ret_t js_api_manifest (duk_context* ctx);
-static duk_ret_t js_api_sgm      (duk_context* ctx);
 
 static int  compare_asset_names (const void* in_a, const void* in_b);
 static void do_add_files        (build_t* build, const char* wildcard, const path_t* path, const path_t* subpath, bool recursive, vector_t* *inout_targets);
@@ -80,8 +79,6 @@ build_new(const path_t* in_path, const path_t* out_path, bool make_source_map)
 	duk_put_global_string(build->js_ctx, "files");
 	duk_push_c_function(build->js_ctx, js_api_manifest, DUK_VARARGS);
 	duk_put_global_string(build->js_ctx, "manifest");
-	duk_push_c_function(build->js_ctx, js_api_sgm, DUK_VARARGS);
-	duk_put_global_string(build->js_ctx, "sgm");
 
 	// set up build environment (ensure directory exists, etc.)
 	path_mkdir(out_path);
@@ -622,46 +619,6 @@ js_api_files(duk_context* ctx)
 	}
 	vector_free(targets);
 	path_free(pattern);
-	return 1;
-}
-
-static duk_ret_t
-js_api_sgm(duk_context* ctx)
-{
-	build_t*   build;
-	sgm_info_t manifest;
-	char*      token;
-	char*      next_token;
-	char*      res_string;
-	target_t*  target;
-
-	duk_require_object_coercible(ctx, 0);
-	duk_push_global_stash(ctx);
-	build = (duk_get_prop_string(ctx, -1, "\xFF""environ"), duk_get_pointer(ctx, -1));
-	duk_pop_2(ctx);
-
-	duk_get_prop_string(ctx, 0, "name");
-	duk_get_prop_string(ctx, 0, "author");
-	duk_get_prop_string(ctx, 0, "summary");
-	duk_get_prop_string(ctx, 0, "resolution");
-	duk_get_prop_string(ctx, 0, "script");
-	strcpy(manifest.name, duk_require_string(ctx, -5));
-	strcpy(manifest.author, duk_require_string(ctx, -4));
-	strcpy(manifest.description, duk_require_string(ctx, -3));
-	strcpy(manifest.script, duk_require_string(ctx, -1));
-	
-	// parse the screen resolution string
-	res_string = strdup(duk_require_string(ctx, -2));
-	token = strtok_r(res_string, "x", &next_token);
-	manifest.width = atoi(token);
-	if (!(token = strtok_r(NULL, "x", &next_token)))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution `%s`", duk_require_string(ctx, -2));
-	manifest.height = atoi(token);
-	if (strtok_r(NULL, "x", &next_token) || manifest.width <= 0 || manifest.height <= 0)
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "sgm(): malformed resolution `%s`", duk_require_string(ctx, -2));
-	free(res_string);
-	target = build_add_asset(build, asset_new_sgm(manifest, build->timestamp), NULL);
-	duk_push_pointer(ctx, target);
 	return 1;
 }
 
