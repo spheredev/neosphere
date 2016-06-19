@@ -127,8 +127,8 @@ static duk_ret_t js_Animation_getDelay         (duk_context* ctx);
 static duk_ret_t js_Animation_getNumFrames     (duk_context* ctx);
 static duk_ret_t js_Animation_readNextFrame    (duk_context* ctx);
 static duk_ret_t js_ByteArray_finalize         (duk_context* ctx);
-static duk_ret_t js_ByteArray_trap_get         (duk_context* ctx);
-static duk_ret_t js_ByteArray_trap_set         (duk_context* ctx);
+static duk_ret_t js_ByteArray_proxy_get        (duk_context* ctx);
+static duk_ret_t js_ByteArray_proxy_set        (duk_context* ctx);
 static duk_ret_t js_ByteArray_get_length       (duk_context* ctx);
 static duk_ret_t js_ByteArray_concat           (duk_context* ctx);
 static duk_ret_t js_ByteArray_slice            (duk_context* ctx);
@@ -136,10 +136,10 @@ static duk_ret_t js_ByteArray_toString         (duk_context* ctx);
 static duk_ret_t js_Color_toString             (duk_context* ctx);
 static duk_ret_t js_ColorMatrix_toString       (duk_context* ctx);
 static duk_ret_t js_File_finalize              (duk_context* ctx);
-static duk_ret_t js_File_getNumKeys            (duk_context* ctx);
-static duk_ret_t js_File_getKey                (duk_context* ctx);
 static duk_ret_t js_File_close                 (duk_context* ctx);
 static duk_ret_t js_File_flush                 (duk_context* ctx);
+static duk_ret_t js_File_getKey                (duk_context* ctx);
+static duk_ret_t js_File_getNumKeys            (duk_context* ctx);
 static duk_ret_t js_File_read                  (duk_context* ctx);
 static duk_ret_t js_File_toString              (duk_context* ctx);
 static duk_ret_t js_File_write                 (duk_context* ctx);
@@ -721,9 +721,9 @@ duk_push_sphere_bytearray(duk_context* ctx, bytearray_t* array)
 	duk_get_prop_string(ctx, -1, "Proxy");
 	duk_dup(ctx, obj_index);
 	duk_push_object(ctx);
-	duk_push_c_function(ctx, js_ByteArray_trap_get, DUK_VARARGS);
+	duk_push_c_function(ctx, js_ByteArray_proxy_get, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "get");
-	duk_push_c_function(ctx, js_ByteArray_trap_set, DUK_VARARGS);
+	duk_push_c_function(ctx, js_ByteArray_proxy_set, DUK_VARARGS);
 	duk_put_prop_string(ctx, -2, "set");
 	duk_new(ctx, 2);
 	duk_get_prototype(ctx, obj_index);
@@ -2548,7 +2548,7 @@ js_ByteArray_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ByteArray_trap_get(duk_context* ctx)
+js_ByteArray_proxy_get(duk_context* ctx)
 {
 	bytearray_t* array;
 	int          index;
@@ -2571,7 +2571,7 @@ js_ByteArray_trap_get(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ByteArray_trap_set(duk_context* ctx)
+js_ByteArray_proxy_set(duk_context* ctx)
 {
 	bytearray_t* array;
 	int          index;

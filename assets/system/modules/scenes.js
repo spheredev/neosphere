@@ -14,7 +14,7 @@ const link    = require('link');
 const prim    = require('prim');
 const threads = require('threads');
 
-var screenMask = new Color(0, 0, 0, 0);
+var screenMask = new Color(0.0, 0.0, 0.0, 0.0);
 var priority = 99;
 var threadID = threads.create({
 	update: _updateScenes,

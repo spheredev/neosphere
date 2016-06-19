@@ -793,10 +793,10 @@ static void
 duk_pegasus_push_color(duk_context* ctx, color_t color)
 {
 	duk_get_global_string(ctx, "Color");
-	duk_push_number(ctx, color.r);
-	duk_push_number(ctx, color.g);
-	duk_push_number(ctx, color.b);
-	duk_push_number(ctx, color.a);
+	duk_push_number(ctx, color.r / 255.0);
+	duk_push_number(ctx, color.g / 255.0);
+	duk_push_number(ctx, color.b / 255.0);
+	duk_push_number(ctx, color.a / 255.0);
 	duk_new(ctx, 4);
 }
 
@@ -822,18 +822,22 @@ duk_pegasus_push_require(duk_context* ctx, const char* module_id)
 static color_t
 duk_pegasus_require_color(duk_context* ctx, duk_idx_t index)
 {
-	int r, g, b;
-	int a;
+	float a;
+	float b;
+	float g;
+	float r;
 
+	index = duk_require_normalize_index(ctx, index);
 	duk_require_sphere_obj(ctx, index, "Color");
-	duk_get_prop_string(ctx, index, "r"); r = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "g"); g = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "b"); b = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, index, "a"); a = duk_get_int(ctx, -1); duk_pop(ctx);
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	a = a < 0 ? 0 : a > 255 ? 255 : a;
+	duk_get_prop_string(ctx, index, "r");
+	duk_get_prop_string(ctx, index, "g");
+	duk_get_prop_string(ctx, index, "b");
+	duk_get_prop_string(ctx, index, "a");
+	a = fmin(fmax(duk_get_number(ctx, -1) * 255, 0), 255);
+	b = fmin(fmax(duk_get_number(ctx, -2) * 255, 0), 255);
+	g = fmin(fmax(duk_get_number(ctx, -3) * 255, 0), 255);
+	r = fmin(fmax(duk_get_number(ctx, -4) * 255, 0), 255);
+	duk_pop_n(ctx, 4);
 	return color_new(r, g, b, a);
 }
 
@@ -1573,10 +1577,13 @@ js_assert(duk_context* ctx)
 			duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
 		}
 		duk_remove(ctx, -2);
-		duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "lineNumber");
+		line_number = duk_get_int(ctx, -1);
+		duk_pop(ctx);
 		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
-		duk_pop_2(ctx);
+		duk_get_prop_string(ctx, -1, "fileName");
+		filename = duk_get_string(ctx, -1);
+		duk_pop_3(ctx);
 		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
 
 		// if an assertion fails in a game being debugged:
@@ -1699,24 +1706,30 @@ js_Color_of(duk_context* ctx)
 static duk_ret_t
 js_new_Color(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int r = duk_require_int(ctx, 0);
-	int g = duk_require_int(ctx, 1);
-	int b = duk_require_int(ctx, 2);
-	int a = n_args >= 4 ? duk_require_int(ctx, 3) : 255;
-
-	// clamp components to 8-bit [0-255]
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	a = a < 0 ? 0 : a > 255 ? 255 : a;
+	float a;
+	float b;
+	float g;
+	int   num_args;
+	int   obj_index;
+	float r;
+	
+	num_args = duk_get_top(ctx);
+	r = duk_require_number(ctx, 0);
+	g = duk_require_number(ctx, 1);
+	b = duk_require_number(ctx, 2);
+	a = num_args >= 4 ? duk_require_number(ctx, 3) : 1.0;
 
 	// construct a Color object
 	duk_push_sphere_obj(ctx, "Color", NULL);
-	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "r");
-	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "g");
-	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "b");
-	duk_push_int(ctx, a); duk_put_prop_string(ctx, -2, "a");
+	obj_index = duk_normalize_index(ctx, -1);
+	duk_push_number(ctx, r);
+	duk_push_number(ctx, g);
+	duk_push_number(ctx, b);
+	duk_push_number(ctx, a);
+	duk_put_prop_string(ctx, obj_index, "a");
+	duk_put_prop_string(ctx, obj_index, "b");
+	duk_put_prop_string(ctx, obj_index, "g");
+	duk_put_prop_string(ctx, obj_index, "r");
 	return 1;
 }
 
@@ -1760,15 +1773,14 @@ js_Color_clone(duk_context* ctx)
 static duk_ret_t
 js_Color_fade(duk_context* ctx)
 {
-	int     a;
+	float   a;
 	color_t color;
 
 	duk_push_this(ctx);
 	color = duk_pegasus_require_color(ctx, -1);
-	a = duk_require_int(ctx, 0);
+	a = duk_require_number(ctx, 0);
 
-	a = a < 0 ? 0 : a > 255 ? 255 : a;
-	color.a = color.a * a / 255;
+	color.a = fmin(fmax(color.a * a, 0), 255);
 	duk_pegasus_push_color(ctx, color);
 	return 1;
 }
