@@ -240,7 +240,7 @@ print_cell_quote(void)
 		"Chanting a little prayer before you die?",
 		"Don't you realize yet you're up against the perfect weapon?!",
 		"YES! I can feel you slipping...!",
-		"These are your last minutes, boy. So try to make them COUNT!"
+		"These are your last minutes, boy. So try to make them COUNT!",
 		"Would you stop interfering!?",
 		"You're all so anxious to die, aren't you? Well all you had to do WAS ASK!",
 		"Why can't you people JUST STAY DOWN!!",

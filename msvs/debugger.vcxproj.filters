@@ -124,7 +124,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ssj.rc">
+    <ResourceCompile Include="debugger.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
