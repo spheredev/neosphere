@@ -8,7 +8,7 @@ module.exports =
 {
 	isVisible:  isVisible,
 	hide:       hide,
-	print:      print,
+	log:        log,
 	register:   register,
 	show:       show,
 	unregister: unregister,
@@ -45,9 +45,9 @@ threads.create({
 	getInput: getInput,
 }, Infinity);
 
-print(engine.game.name + " Console");
-print(engine.name + " " + engine.version + " (API v" + engine.apiVersion + " Lv. " + engine.apiLevel + ")");
-print("");
+log(engine.game.name + " Console");
+log(engine.name + " " + engine.version + " (API v" + engine.apiVersion + " Lv. " + engine.apiLevel + ")");
+log("");
 
 function executeCommand(command)
 {
@@ -66,11 +66,11 @@ function executeCommand(command)
 		.pluck('entity')
 		.contains(entity))
 	{
-		print("Entity name '" + entity + "' not recognized");
+		log("Entity name '" + entity + "' not recognized");
 		return;
 	}
 	if (tokens.length < 2) {
-		print("No instruction provided for '" + entity + "'");
+		log("No instruction provided for '" + entity + "'");
 		return;
 	}
 	if (!link(commands)
@@ -78,7 +78,7 @@ function executeCommand(command)
 		.pluck('instruction')
 		.contains(instruction))
 	{
-		print("Instruction '" + instruction + "' not valid for '" + entity + "'");
+		log("Instruction '" + instruction + "' not valid for '" + entity + "'");
 		return;
 	}
 
@@ -120,7 +120,7 @@ function getInput()
 		var keycode = keyboard.getKey();
 		switch (keycode) {
 			case Key.Enter:
-				print("Command entered: '" + entry + "'");
+				log("Command entered: '" + entry + "'");
 				executeCommand(entry);
 				entry = "";
 				break;
@@ -202,7 +202,7 @@ function hide()
 		.run();
 }
 
-function print(/*...*/)
+function log(/*...*/)
 {
 	var lineInBuffer = nextLine % bufferSize;
 	buffer[lineInBuffer] = ">" + arguments[0];

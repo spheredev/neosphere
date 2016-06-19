@@ -283,9 +283,9 @@ static duk_ret_t js_new_Server                 (duk_context* ctx);
 static duk_ret_t js_Server_finalize            (duk_context* ctx);
 static duk_ret_t js_Server_close               (duk_context* ctx);
 static duk_ret_t js_Server_accept              (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_get_Default  (duk_context* ctx);
-static duk_ret_t js_new_ShaderProgram          (duk_context* ctx);
-static duk_ret_t js_ShaderProgram_finalize     (duk_context* ctx);
+static duk_ret_t js_Shader_get_Default         (duk_context* ctx);
+static duk_ret_t js_new_Shader                 (duk_context* ctx);
+static duk_ret_t js_Shader_finalize            (duk_context* ctx);
 static duk_ret_t js_new_Shape                  (duk_context* ctx);
 static duk_ret_t js_Shape_finalize             (duk_context* ctx);
 static duk_ret_t js_Shape_get_texture          (duk_context* ctx);
@@ -433,8 +433,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Server", "close", js_Server_close);
 	api_register_method(ctx, "Server", "accept", js_Server_accept);
 
-	api_register_ctor(ctx, "ShaderProgram", js_new_ShaderProgram, js_ShaderProgram_finalize);
-	api_register_static_prop(ctx, "ShaderProgram", "Default", js_ShaderProgram_get_Default, NULL);
+	api_register_ctor(ctx, "Shader", js_new_Shader, js_Shader_finalize);
+	api_register_static_prop(ctx, "Shader", "Default", js_Shader_get_Default, NULL);
 
 	api_register_ctor(ctx, "Shape", js_new_Shape, js_Shape_finalize);
 	api_register_prop(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
@@ -2446,7 +2446,7 @@ js_new_Group(duk_context* ctx)
 	num_args = duk_get_top(ctx);
 	duk_require_object_coercible(ctx, 0);
 	shader = num_args >= 2
-		? duk_require_sphere_obj(ctx, 1, "ShaderProgram")
+		? duk_require_sphere_obj(ctx, 1, "Shader")
 		: get_default_shader();
 
 	if (!duk_is_array(ctx, 0))
@@ -2483,7 +2483,7 @@ js_Group_get_shader(duk_context* ctx)
 	group = duk_require_sphere_obj(ctx, -1, "Group");
 
 	shader = group_get_shader(group);
-	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
+	duk_push_sphere_obj(ctx, "Shader", shader_ref(shader));
 	return 1;
 }
 
@@ -2509,7 +2509,7 @@ js_Group_set_shader(duk_context* ctx)
 
 	duk_push_this(ctx);
 	group = duk_require_sphere_obj(ctx, -1, "Group");
-	shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
+	shader = duk_require_sphere_obj(ctx, 0, "Shader");
 
 	group_set_shader(group, shader);
 	return 0;
@@ -2827,13 +2827,13 @@ js_Server_close(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ShaderProgram_get_Default(duk_context* ctx)
+js_Shader_get_Default(duk_context* ctx)
 {
 	shader_t* shader;
 
 	if (!(shader = get_default_shader()))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to build default shader program");
-	duk_push_sphere_obj(ctx, "ShaderProgram", shader_ref(shader));
+	duk_push_sphere_obj(ctx, "Shader", shader_ref(shader));
 
 	duk_push_this(ctx);
 	duk_push_string(ctx, "Default");
@@ -2848,22 +2848,22 @@ js_ShaderProgram_get_Default(duk_context* ctx)
 }
 
 static duk_ret_t
-js_new_ShaderProgram(duk_context* ctx)
+js_new_Shader(duk_context* ctx)
 {
 	const char* fs_filename;
 	const char* vs_filename;
 	shader_t*   shader;
 
 	if (!duk_is_object(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): JS object expected as argument");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shader(): JS object expected as argument");
 	if (duk_get_prop_string(ctx, 0, "vertex"), !duk_is_string(ctx, -1))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): 'vertex' property, string required");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shader(): 'vertex' property, string required");
 	if (duk_get_prop_string(ctx, 0, "fragment"), !duk_is_string(ctx, -1))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "ShaderProgram(): 'fragment' property, string required");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shader(): 'fragment' property, string required");
 	duk_pop_2(ctx);
 
 	if (!are_shaders_active())
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): shaders not supported on this system");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shader(): shaders not supported on this system");
 
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
@@ -2871,15 +2871,15 @@ js_new_ShaderProgram(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "ShaderProgram(): failed to build shader from `%s`, `%s`", vs_filename, fs_filename);
-	duk_push_sphere_obj(ctx, "ShaderProgram", shader);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shader(): failed to build shader from `%s`, `%s`", vs_filename, fs_filename);
+	duk_push_sphere_obj(ctx, "Shader", shader);
 	return 1;
 }
 
 static duk_ret_t
-js_ShaderProgram_finalize(duk_context* ctx)
+js_Shader_finalize(duk_context* ctx)
 {
-	shader_t* shader = duk_require_sphere_obj(ctx, 0, "ShaderProgram");
+	shader_t* shader = duk_require_sphere_obj(ctx, 0, "Shader");
 
 	shader_free(shader);
 	return 0;
