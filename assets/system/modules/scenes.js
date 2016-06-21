@@ -368,42 +368,6 @@ defScenelet('fadeTo',
 	}
 });
 
-defScenelet('marquee',
-{
-	start: function(scene, text, backgroundColor, color) {
-		backgroundColor = backgroundColor || Color.Black;
-		color = color || Color.White;
-
-		this.text = text;
-		this.color = color;
-		this.background = backgroundColor;
-		this.font = Font.Default;
-		this.windowSize = screen.width + this.font.getStringWidth(this.text);
-		this.height = this.font.height + 10;
-		this.textHeight = this.font.height;
-		this.fadeness = 0.0;
-		this.scroll = 0.0;
-		this.animation = new Scene()
-			.tween(this, 0.25, 'linear', { fadeness: 1.0 })
-			.tween(this, 1.0, 'easeOutExpo', { scroll: 0.5 })
-			.tween(this, 1.0, 'easeInExpo', { scroll: 1.0 })
-			.tween(this, 0.25, 'linear', { fadeness: 0.0 })
-			.run();
-	},
-	render: function(scene) {
-		var boxHeight = this.height * this.fadeness;
-		var boxY = screen.height / 2 - boxHeight / 2;
-		var textX = screen.width - this.scroll * this.windowSize;
-		var textY = boxY + boxHeight / 2 - this.textHeight / 2;
-		prim.rect(screen, 0, boxY, screen.width, boxHeight, this.background);
-		this.font.drawText(screen, textX + 1, textY + 1, this.text, Color.Black.fade(this.color.a));
-		this.font.drawText(screen, textX, textY, this.text, this.color);
-	},
-	update: function(scene) {
-		return this.animation.isRunning();
-	}
-});
-
 defScenelet('pause',
 {
 	start: function(scene, duration) {
@@ -424,7 +388,7 @@ defScenelet('playSound',
 		return true;
 	},
 	update: function(scene) {
-		return this.sound.isPlaying();
+		return this.sound.playing;
 	}
 });
 

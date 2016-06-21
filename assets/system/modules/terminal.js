@@ -46,7 +46,7 @@ threads.create({
 }, Infinity);
 
 log(engine.game.name + " Console");
-log(engine.name + " " + engine.version + " (API v" + engine.apiVersion + " Lv. " + engine.apiLevel + ")");
+log(engine.name + " " + engine.version + " (G" + engine.apiVersion + ", API v" + engine.apiLevel + ")");
 log("");
 
 function executeCommand(command)

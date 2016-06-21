@@ -28,7 +28,6 @@ static duk_ret_t js_GetDirectoryList           (duk_context* ctx);
 static duk_ret_t js_GetFileList                (duk_context* ctx);
 static duk_ret_t js_GetFrameRate               (duk_context* ctx);
 static duk_ret_t js_GetGameList                (duk_context* ctx);
-static duk_ret_t js_GetGameManifest            (duk_context* ctx);
 static duk_ret_t js_GetLocalAddress            (duk_context* ctx);
 static duk_ret_t js_GetLocalName               (duk_context* ctx);
 static duk_ret_t js_GetJoystickAxis            (duk_context* ctx);
@@ -329,7 +328,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
 	api_register_static_func(ctx, NULL, "GetFileList", js_GetFileList);
 	api_register_static_func(ctx, NULL, "GetFrameRate", js_GetFrameRate);
-	api_register_static_func(ctx, NULL, "GetGameManifest", js_GetGameManifest);
 	api_register_static_func(ctx, NULL, "GetGameList", js_GetGameList);
 	api_register_static_func(ctx, NULL, "GetJoystickAxis", js_GetJoystickAxis);
 	api_register_static_func(ctx, NULL, "GetLocalAddress", js_GetLocalAddress);
@@ -1070,16 +1068,6 @@ js_GetGameList(duk_context* ctx)
 		al_destroy_fs_entry(fse);
 		path_free(paths[i]);
 	}
-	return 1;
-}
-
-static duk_ret_t
-js_GetGameManifest(duk_context* ctx)
-{
-	duk_push_lstring_t(ctx, fs_manifest(g_fs));
-	duk_json_decode(ctx, -1);
-	duk_push_string(ctx, path_cstr(fs_path(g_fs)));
-	duk_put_prop_string(ctx, -2, "directory");
 	return 1;
 }
 
