@@ -1485,15 +1485,15 @@ js_screen_flip(duk_context* ctx)
 static duk_ret_t
 js_screen_resize(duk_context* ctx)
 {
-	int  res_width;
-	int  res_height;
+	int  width;
+	int  height;
 
-	res_width = duk_require_int(ctx, 0);
-	res_height = duk_require_int(ctx, 1);
+	width = duk_require_int(ctx, 0);
+	height = duk_require_int(ctx, 1);
 
-	if (res_width < 0 || res_height < 0)
+	if (width < 0 || height < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "illegal screen resolution");
-	screen_resize(g_screen, res_width, res_height);
+	screen_resize(g_screen, width, height);
 	return 0;
 }
 

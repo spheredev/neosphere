@@ -55,7 +55,6 @@ static duk_ret_t js_GetVersionString           (duk_context* ctx);
 static duk_ret_t js_SetClippingRectangle       (duk_context* ctx);
 static duk_ret_t js_SetFrameRate               (duk_context* ctx);
 static duk_ret_t js_SetMousePosition           (duk_context* ctx);
-static duk_ret_t js_SetScreenSize              (duk_context* ctx);
 static duk_ret_t js_Abort                      (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton         (duk_context* ctx);
@@ -355,7 +354,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "SetClippingRectangle", js_SetClippingRectangle);
 	api_register_static_func(ctx, NULL, "SetFrameRate", js_SetFrameRate);
 	api_register_static_func(ctx, NULL, "SetMousePosition", js_SetMousePosition);
-	api_register_static_func(ctx, NULL, "SetScreenSize", js_SetScreenSize);
 	api_register_static_func(ctx, NULL, "Abort", js_Abort);
 	api_register_static_func(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
 	api_register_static_func(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
@@ -1378,22 +1376,6 @@ js_SetMousePosition(duk_context* ctx)
 	x = duk_require_int(ctx, 0);
 	y = duk_require_int(ctx, 1);
 	screen_set_mouse_xy(g_screen, x, y);
-	return 0;
-}
-
-static duk_ret_t
-js_SetScreenSize(duk_context* ctx)
-{
-	int  res_width;
-	int  res_height;
-
-	res_width = duk_require_int(ctx, 0);
-	res_height = duk_require_int(ctx, 1);
-
-	if (res_width < 0 || res_height < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetScreenSize(): dimensions cannot be negative (got X: %d, Y: %d)",
-			res_width, res_height);
-	screen_resize(g_screen, res_width, res_height);
 	return 0;
 }
 
