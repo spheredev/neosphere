@@ -15,99 +15,13 @@ that a few of these may not be supported, however):
     https://github.com/sphere-group/sphere/blob/master/sphere/docs/development/api.txt
 
 
-Engine Identification
----------------------
-
-The functions below can be used to determine, at a broad level, the engine's
-level of support for various features.
-
-GetVersion()
-
-    Returns the Sphere API version level as a floating point number. When called
-    under this version of minisphere, this function returns 2.0, indicating
-    version 2 of the Sphere API.
-
-GetVersionString()
-
-    Returns the engine's version identification string. The string returned will
-    be in the following format:
-
-        v2.0 (minisphere 3.3.0)
-
-GetExtensions()
-
-    Returns an array of strings representing the engine's built-in capabilities.
-    minisphere currently supports the following extensions (most of these should
-    be self-explanatory):
-
-        sphere-legacy-api
-        sphere-obj-constructors
-        sphere-obj-props
-        sphere-async-api
-        sphere-audialis
-        sphere-coffeescript
-        sphere-commonjs
-        sphere-file-streams
-        sphere-frameskip-api
-        sphere-galileo
-        sphere-galileo-shaders
-        sphere-map-engine
-        sphere-new-sockets
-        sphere-rng-object
-        sphere-s2gm
-        sphere-spherefs
-        sphere-typescript
-
-
-S2GM Manifest Format
---------------------
-
-A game targeting a Sphere 2.0 may opt to use the S2GM format for its metadata
-instead of--or in addition to--the legacy game.sgm format.  game.s2gm file is
-simply a JSON file and looks like this:
-
-    {
-        "name": "Spectacles: Bruce's Story",
-        "author": "Fat Cerberus",
-        "summary": "Follow Scott Starcross in his quest to stop the Primus.",
-        "resolution": "320x240",
-        "script": "scripts/main.js",
-
-        "minimumPlatform": {
-            "recommend": "minisphere 3.0 or later",
-            "apiVersion": 2.0,
-            "extensions": [
-                "sphere-legacy-api",
-                "sphere-obj-constructors",
-                "sphere-obj-props",
-                "sphere-map-engine",
-                "sphere-rng-object",
-                "sphere-s2gm",
-                "sphere-spherefs"
-            ]
-        }
-    }
-
-An important note on `apiVersion`: This refers to the Sphere API level, NOT the
-engine version.  minisphere currently supports Sphere API version 2.0.
-
-minimumPlatform, if present, is checked by the engine on startup and, if the
-declared requirements are not met, the game will fail to start.  Besides that,
-an S2GM may contain any amount of data in any layout, which will then be
-available to game code at any time by calling GetGameManifest().
-
-When building a game using Cell, you can compile an S2GM manifest using the
-s2gm() asset.  See the Cell API reference for more details.
-
-
 SphereFS File System
 --------------------
 
-minisphere follows the SphereFS standard for file paths. When providing a
-filename to a function or method, it will be treated as relative to a specific
-directory by default, generally a subdirectory below the current game's
-game.sgm. To load files from a different location, you can use one of the
-following SphereFS prefixes:
+minisphere follows the SphereFS standard for file paths.  When a relative path
+is passed to a function or method, it will be resolved relative to the root of
+the game package (i.e. where `game.json` is located).  To load files from a
+different location, you can use one of the following SphereFS prefixes:
 
     @/: The root of the game's sandboxed file system.  Usually redundant, but
         can be useful to qualify filenames in situations where a bare SphereFS
@@ -120,32 +34,45 @@ following SphereFS prefixes:
         try to write anything here as doing so can damage the host minisphere
         installation.
 
-The following will open the kevfile `eaty_pigs.conf` from the user's save data
-directory:
+As an example, the following will open the file `EatyPig.bin` from the user's
+save data directory for reading in binary mode:
 
-    var file = new KevFile("~/eaty_pigs.conf");
+    var file = fs.open("~/EatyPig.bin", "rb");
 
-Absolute paths are never allowed, and any attempt to circumvent the sandbox,
-e.g. "@/../maggie.fat", will be met with a Sandbox Violation error.
+Absolute paths are not allowed, and any attempt to circumvent the sandbox, e.g.
+"@/../maggie.fat", will be met with an error indicating a sandbox violation.
 
-Starting with minisphere 2.0, several APIs are marked as "SphereFS compliant".
-For an API to be considered compliant, methods accepting a filename MUST treat
-unprefixed paths as though they were prefixed with @/.
 
-Keep in mind that legacy calls such as LoadImage() are NOT SphereFS compliant
-and cannot be made so without breaking backward compatibility.  These functions
-interpret the ~/ prefix as the root of the sandbox (instead of user data, as in
-SphereFS) and everything else as relative to a specific subdirectory of the
-sandbox.
+game.json
+---------
+
+Sphere 1.x games include a file called `game.sgm` with the game's metadata.
+Sphere 2.0 instead uses a JSON file, `game.json`, for this purpose, which
+enables much richer metadata and better integration with JavaScript.  All data
+in game.json is available to game code by accessing `engine.game`.
+
+A basic `game.json` might look like this:
+
+    {
+        "name": "Spectacles: Bruce's Story",
+        "author": "Fat Cerberus",
+        "summary": "Follow Scott Starcross in his quest to stop the Primus.",
+        "resolution": "320x240",
+        "main": "main.js",
+    }
+
+Most of the values shown above should be self-explanatory.  `main` is a
+SphereFS path naming the game's main JavaScript module.
 
 
 CommonJS
 --------
 
-In addition to the legacy dependency management functions described below,
-minisphere supports CommonJS modules, and this is the preferred method for
-managing dependencies.  The built-in require() function is provided for this
-purpose.
+Second-generation Sphere engines like minisphere use CommonJS for dependency
+management.  In CommonJS, scripts are run as functions, which enables more
+granular control of exports.  In addition, because the code importing a module
+decides where to store its exports (if at all), naming collisions between
+modules are impossible.
 
 require(module_id);
 
@@ -154,217 +81,147 @@ require(module_id);
     semantics as in, e.g. Node.js.  If the module cannot be found, an error will
     be thrown.  minisphere will look for modules in the following locations:
 
-        lib/
+        @/lib/
         #/modules/
 
     If require() is called inside of a module and the ID provided is prefixed
-    with either './' or '../', this indicates a path relative to the location of
-    the calling module.
+    with either './' or '../', this indicates a path relative to the location
+    of the calling module.
 
 
-Classic Dependency Management
------------------------------
+`engine` Global Variable
+------------------------
 
-The functions described below are maintained for backwards compatibility with
-games and scripts written for Sphere 1.x, but should be considered deprecated.
-Any new code should make use of CommonJS instead (see above).
+`engine` provides a way for games to communicate with the underlying Sphere
+platform.  The object's properties provide access to the engine's name and
+version number as well as the API level supported, and there are several
+methods for controlling engine execution, for example `engine.sleep()`.
 
-RequireScript(filename)
-EvaluateScript(filename)
+engine.name [read-only]
 
-    Not SphereFS compliant: `filename` is relative to scripts/.
+    The name of the engine.  In this case, "minisphere".
 
-    Evaluates the contents of `filename`, as if the code contained within were
-    part of the script containing the call.  If you've ever worked in C or C++,
-    this is a bit like including a header file.
+engine.version [read-only]
 
-    Note: RequireScript only executes a given script once, regardless of how
-    many RequireScript() calls specifying it are encountered.  This is generally
-    preferable to EvaluateScript(), which always executes the script.
+    Gets the version number of the engine, e.g. "4.0.0"
 
-RequireSystemScript(filename)
-EvaluateSystemScript(filename)
+engine.apiVersion [read-only]
+engine.apiLevel [read-only]
 
-    `filename` is relative to #/scripts.  SphereFS prefixes are not allowed.
+    Gets the API version and level supported by the engine, respectively.  API
+    version indicates which generation of the Sphere API is supported (Gen 2,
+    in our case), while API level reflects the level of functionality within a
+    generation.  Whenever new API calls or object properties are added to the
+    core API without breaking compatibility, the API level is bumped.
 
-    Same as above, except the script is loaded from the engine's system
-    directory.  These are used to import scripts included with the engine.
+engine.extensions [read-only]
 
+    Gets an array of Sphere API extension strings supported by the engine.
+    Extensions are used to advertise support for features which are provided by
+    the engine but not yet part of the core API.
 
-Basic Debugging
----------------
+engine.time [read-only]
 
-Since minisphere 1.6, full single-step debugging has been available through
-Sphere Studio, and minisphere 3.0 introduced the SSJ command-line debugger.  The
-functions below may still come in handy as a sort of "poor man's debugging",
-however:
+    Gets the amount of time, in seconds, since the engine started running.  The
+    granularity varies, but is typically less than a microsecond.
 
-Abort(message[, stack_offset])
+engine.dispatch(func);
 
-    Forces the engine to close, displaying a specified error message.  The error
-    is normally reported to originate at the location of the Abort() call; you
-    may pass an optional negative stack offset to blame it on a function earlier
-    in the call chain.  For example, the following code will report an error at
-    the point PassTheBuck() is called, instead of at the Abort() call:
+    Queues a function to be called on the next event loop iteration, rather
+    than immediately.  This is intended for use when implementing asynchronous
+    systems such as promises.
 
-        function PassTheBuck() {
-            Abort("PassTheBuck() says: It's not my fault!", -1);
-        }
-        PassTheBuck();
+engine.doEvents();
 
-Alert(message[, stack_offset])
+    Runs a single iteration of the engine's event loop.  Always returns true so
+    that doEvents() can be used in a loop condition:
 
-    Similar to Abort(), except the message is displayed in a dialog box and the
-    game continues running as normal afterwards.  Useful for examining variables
-    at runtime when debugging.
-
-Assert(condition, error_message[, stack_offset]);
-
-    If `condition` evaluates to true, does nothing.  Otherwise the behavior
-    depends on whether a debugger is attached.  Without a debugger attached, the
-    error is ignored (except for logging it to the console).  If a debugger *is*
-    attached, the user has the option to continue execution, ignoring the error,
-    or trigger a breakpoint, allowing it to be debugged.
-
-    As with Abort(), `stack_offset` determines which callstack frame the error
-    is blamed on.
-
-DebugPrint(value1, value2, ...);
-
-    Prints the provided values in the debugger.  This function has no effect
-    if a debugger is not attached, so it's useful for logging low-level
-    debugging information.
-
-Print(value1, value2, ...);
-
-    Like DebugPrint(), but sends the output to the console as well.  This should
-    be used for general logging which might be helpful when debugging offline.
-
-
-Logging
--------
-
-Logging is another useful debugging tool.  When trying to diagnose a stubborn
-bug, it often helps to have a persistent summary of everything that happened
-when the issue surfaced.  Of course, this requires some vigilance on the part of
-the developer to emit enough log entries!
-
-new Logger(filename)
-
-    SphereFS compliant.
-
-    Opens a file for logging and constructs an object you can use to access the
-    log.  An error will be thrown if the file cannot be opened for writing.
-
-Logger:beginBlock(name)
-
-    Opens a block with the heading `name` and increases the indent level.
-    Blocks can be nested and are useful to group related log entries.
-
-Logger:endBlock()
-
-    Closes the innermost block and decreases the indent level.
-
-Logger:write(text)
-
-    Logs a line with the specified `text` at the current indent level.
-
-
-Timing Functions
-----------------
-
-These are used to measure elapsed time during gameplay and coordinate timed
-events.
-
-Delay(ms);
-
-    Suspends game execution for `ms` milliseconds.  The engine will "spin down"
-    during this time and relinquish its CPU cycles to other applications.
-
-GetSeconds();
-
-    Returns the amount of time in seconds, in floating point, since some
-    arbitrary point in time.  Precision is guaranteed to be < 1µs.
-
-GetTime();
-
-    Returns the number of milliseconds elapsed since some arbitrary point in
-    time (usually engine start, but this is not guaranteed).  If you need more
-    precision, use GetSeconds() instead.
-
-
-Execution Control and Game Management
--------------------------------------
-
-Many of these are only useful for startup games, which serve as launchers to
-allow the user to choose a game to play.  For a game to be visible to a startup
-game, it should be stored in `<documents>/Sphere 2.0/games`, or alternatively
-(for backwards compatibility) in `<enginedir>/games`.
-
-GetGameManifest()
-
-    Returns an object describing the currently running game.  The object is of
-    the same form as those returned by GetGameList() (see below) and is
-    constructed from the game manifest (game.sgm or game.s2gm).
-
-GetGameList()
-
-    Returns an array of objects, one for each Sphere game found on the system.
-    Each object has at least the following properties, and may have more
-    depending on the content of the game manifest:
-
-        .name:        The game's title, taken from the game manifest.
-        .directory:   The absolute path of the directory the game was found in.
-                      For packaged games, this is the filename of the package
-                      file instead of a directory name.
-        .author:      The game's author, taken from the game manifest.
-        .description: A short description of the game, taken from the game
-                      manifest.
-
-    GetGameList() searches for games in the following directories, in the order
-    listed:
-
-        <enginedir>/games/
-        <documents>/Sphere 2.0/games/
-
-Async(script);
-
-    Queues a script or function to be executed on the next FlipScreen() call.
-    This is similar to setTimeout(func, 0); in the browser.
-
-DoEvents();
-
-    Performs a single iteration of the engine's event loop.  DoEvents() can be
-    used in place of FlipScreen() (which clears the backbuffer) in a long-
-    running loop when you don't want to disturb the contents of the screen.
-
-    DoEvents() always returns `true`, allowing you to use it as part of a loop
-    condition:
-
-        while (condition && DoEvents()) {
-            // do stuff...
+        while (!isDone && engine.doEvents()) {
+            // do stuff here
         }
 
-ExecuteGame(directory)
+engine.exit();
 
-    Not SphereFS compliant: SphereFS prefixes are not honored.
+    Shuts down the engine unconditionally.  Unsaved data will be lost.
 
-    Replaces the currently running game with the one found in the specified
-    directory.  The directory is assumed to be relative to <enginedir>/games.
+engine.restart();
 
-    Unlike most of the minisphere API, this function will accept an absolute
-    path.
+    Restarts the engine then reloads the currently running game.  Unsaved data
+    will be lost.
 
-Exit()
+engine.sleep(time);
 
-    Exits the current game and shuts down the engine.  If the current game was
-    started by via ExecuteGame(), the original game will be restarted following
-    the Exit() call.
+    Suspends game execution for `time` seconds.  The engine will "spin down"
+    during this time and relinquish its CPU cycles to other applications.  No
+    JavaScript code will be executed until the timeout expires.
 
-RestartGame()
 
-    Restarts the current game.  All game state is cleared and game() is called
-    again, as if the game was just started.
+`random` Global Variable
+------------------------
+
+Games often have need of a good random number generator, particularly in the
+case of RPGs.  JavaScript has a basic generator in the form of Math.random().
+The Sphere API takes it a step further and provides the `random` object.
+
+minisphere uses the xoroshiro128+ algorithm to generate high-quality random
+values and allows manually seeding the generator, as well as saving and
+restoring the state of the generator at any time, which may be used to
+implement a time travel mechanic, or as a deterrent for save scumming.
+
+random.state [read/write]
+
+    Gets or sets the internal state of the random number generator.  The state
+    is represented as a 32-digit hexidecimal string which makes it easy to save
+    and restore.
+
+    When setting `random.state`, the string given must be exactly 32 characters
+    and consist only of hexidecimal digits (0-9, A-F), otherwise a TypeError
+    will be thrown.
+
+random.chance(odds);
+
+    Takes a chance and returns true or false depending on the outcome.  `odds`
+    is a value in the range [0-1] and represents a percentage: 0.75, for
+    instance, will pass 75% of the time.
+
+random.normal(mean, sigma);
+
+    Returns a random floating point value normally distributed around `mean`
+    with a standard deviation of `sigma`.  The probability distribution of this
+    function is sometimes termed a "bell curve."
+
+random.random();
+
+    Returns a floating point value in the range [0,1).  This is the basic
+    method of random number generation, and is a direct, drop-in replacement
+    for Math.random().
+
+random.range(min, max);
+
+    Returns a random integer uniformly distributed within the range [min, max].
+
+random.reseed(seed);
+
+    Reseeds the random number generator; different seeds will generate
+    different random sequences.  If `seed` is floating point, it will be
+    truncated to an integer: a seed of 812.88, for example, is treated the same
+    as 812.
+
+random.sample(array);
+
+    Returns a single randomly-chosen item from `array`.
+
+random.string([length]);
+
+    Returns a randomly-generated string consisting of alphanumeric characters.
+    The generated string looks something like a YouTube video hash (e.g.
+    YlHRHDrKS) and is useful for uniquely identifying things, for example to
+    generate temporary filenames.  If no length is provided, the default is 10.
+
+random.uniform(mean, variance);
+
+    Returns a random floating point value uniformly distributed around `mean`
+    with absolute maximum deviation specified by `variance`.
 
 
 Keyboard Routines
@@ -604,74 +461,6 @@ IsMouseButtonPressed(button);
         MOUSE_LEFT:   Left button
         MOUSE_MIDDLE: Middle or wheel button
         MOUSE_RIGHT:  Right button
-
-
-Random Number Generation
-------------------------
-
-Many games have need of a good random number generator, particularly RPGs.
-JavaScript has a basic built-in generator in the form of the Math.random()
-function, however minisphere goes beyond this and provides the RNG object.
-
-The RNG object uses the xoroshiro128+ algorithm to generate high-quality random
-values and allows manual seeding, as well as saving and restoring the state
-of the generator at any time, which can be used to implement time travel
-mechanics, or as a deterrent for save scumming.
-
-RNG.state [read/write]
-
-    Gets or sets the internal state of the random number generator.  The state
-    is represented as a 32-digit hexidecimal string which makes it easy to save
-    and restore.
-
-    When setting `RNG.state`, the string given must be exactly 32 characters
-    and consist only of hexidecimal digits (0-9, A-F), otherwise a TypeError
-    will be thrown.
-
-RNG.chance(odds);
-
-    Takes a chance and returns true or false depending on the outcome.  `odds`
-    is a value in the range [0-1] and represents a percentage: 0.75, for
-    instance, will pass 75% of the time.
-
-RNG.normal(mean, sigma);
-
-    Returns a random floating point value normally distributed around `mean`
-    with a standard deviation of `sigma`.  The probability distribution of this
-    function is sometimes termed a "bell curve."
-
-RNG.random();
-
-    Returns a floating point value in the range [0,1).  This is the basic
-    method of random number generation, and is a direct, drop-in replacement
-    for Math.random().
-
-RNG.range(min, max);
-
-    Returns a random integer uniformly distributed within the range [min, max].
-
-RNG.reseed(seed);
-
-    Reseeds the random number generator; different seeds will generate
-    different random sequences.  If `seed` is floating point, it will be
-    truncated to an integer: a seed of 812.88, for example, is treated the same
-    as 812.
-
-RNG.sample(array);
-
-    Returns a single randomly-chosen item from `array`.
-
-RNG.string([length]);
-
-    Returns a randomly-generated string consisting of alphanumeric characters.
-    The generated string looks something like a YouTube video hash (e.g.
-    YlHRHDrKS) and is useful for uniquely identifying things, for example to
-    generate temporary filenames.  If no length is provided, the default is 10.
-
-RNG.uniform(mean, variance);
-
-    Returns a random floating point value uniformly distributed around `mean`
-    with absolute maximum deviation specified by `variance`.
 
 
 Graphics Routines

@@ -224,7 +224,6 @@ static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
 static duk_ret_t js_abort                      (duk_context* ctx);
-static duk_ret_t js_alert                      (duk_context* ctx);
 static duk_ret_t js_assert                     (duk_context* ctx);
 static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
@@ -485,7 +484,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
 	api_register_static_func(ctx, NULL, "abort", js_abort);
-	api_register_static_func(ctx, NULL, "alert", js_alert);
 	api_register_static_func(ctx, NULL, "assert", js_assert);
 
 	api_register_static_func(ctx, "console", "assert", js_console_assert);
@@ -1509,46 +1507,6 @@ js_abort(duk_context* ctx)
 	if (stack_offset > 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): stack offset must be negative");
 	duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
-}
-
-static duk_ret_t
-js_alert(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* text = n_args >= 1 && !duk_is_null_or_undefined(ctx, 0)
-		? duk_to_string(ctx, 0) : "It's 8:12... do you know where the pig is?\n\nIt's...\n\n\n\n\n\n\nBEHIND YOU! *MUNCH*";
-	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
-
-	const char* caller_info;
-	const char* filename;
-	int         line_number;
-
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): stack offset must be negative");
-
-	// get filename and line number of Alert() call
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-	if (!duk_is_object(ctx, -1)) {
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-	}
-	duk_remove(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
-	duk_pop_2(ctx);
-
-	// show the message
-	screen_show_mouse(g_screen, true);
-	caller_info =
-		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
-		duk_get_string(ctx, -1);
-	al_show_native_message_box(screen_display(g_screen), "Alert from Sphere game", caller_info, text, NULL, 0x0);
-	screen_show_mouse(g_screen, false);
-
-	return 0;
 }
 
 static duk_ret_t

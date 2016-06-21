@@ -57,7 +57,6 @@ static duk_ret_t js_SetFrameRate               (duk_context* ctx);
 static duk_ret_t js_SetMousePosition           (duk_context* ctx);
 static duk_ret_t js_SetScreenSize              (duk_context* ctx);
 static duk_ret_t js_Abort                      (duk_context* ctx);
-static duk_ret_t js_Alert                      (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton         (duk_context* ctx);
 static duk_ret_t js_BindKey                    (duk_context* ctx);
@@ -358,7 +357,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "SetMousePosition", js_SetMousePosition);
 	api_register_static_func(ctx, NULL, "SetScreenSize", js_SetScreenSize);
 	api_register_static_func(ctx, NULL, "Abort", js_Abort);
-	api_register_static_func(ctx, NULL, "Alert", js_Alert);
 	api_register_static_func(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
 	api_register_static_func(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
 	api_register_static_func(ctx, NULL, "BindKey", js_BindKey);
@@ -1396,46 +1394,6 @@ js_SetScreenSize(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetScreenSize(): dimensions cannot be negative (got X: %d, Y: %d)",
 			res_width, res_height);
 	screen_resize(g_screen, res_width, res_height);
-	return 0;
-}
-
-static duk_ret_t
-js_Alert(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* text = n_args >= 1 && !duk_is_null_or_undefined(ctx, 0)
-		? duk_to_string(ctx, 0) : "It's 8:12... do you know where the pig is?\n\nIt's...\n\n\n\n\n\n\nBEHIND YOU! *MUNCH*";
-	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
-
-	const char* caller_info;
-	const char* filename;
-	int         line_number;
-
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Alert(): stack offset must be negative");
-
-	// get filename and line number of Alert() call
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-	if (!duk_is_object(ctx, -1)) {
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-	}
-	duk_remove(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber"); line_number = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
-	duk_get_prop_string(ctx, -1, "fileName"); filename = duk_get_string(ctx, -1); duk_pop(ctx);
-	duk_pop_2(ctx);
-
-	// show the message
-	screen_show_mouse(g_screen, true);
-	caller_info =
-		duk_push_sprintf(ctx, "%s (line %i)", filename, line_number),
-		duk_get_string(ctx, -1);
-	al_show_native_message_box(screen_display(g_screen), "Alert from Sphere game", caller_info, text, NULL, 0x0);
-	screen_show_mouse(g_screen, false);
-
 	return 0;
 }
 
