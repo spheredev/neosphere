@@ -8,7 +8,9 @@
 void
 initialize_api(duk_context* ctx, int version)
 {
-	// stash an object to hold prototypes for built-in objects
+	// set up a prototype stash.  this ensures the prototypes for built-in objects
+	// remain accessible to the engine even if the constructors are overwritten.  it
+	// also allows for constructorless objects, as in the Sphere 1.x API.
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "prototypes");

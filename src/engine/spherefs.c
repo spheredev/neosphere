@@ -61,7 +61,8 @@ fs_new(const char* game_path)
 	
 	fs->id = s_next_sandbox_id;
 	path = path_new(game_path);
-	if (!path_resolve(path, NULL)) goto on_error;
+	if (!path_resolve(path, NULL))
+		goto on_error;
 	if (spk = open_spk(path_cstr(path))) {  // Sphere Package (.spk)
 		fs->type = SPHEREFS_SPK;
 		fs->root_path = path_dup(path);
@@ -118,7 +119,7 @@ fs_new(const char* game_path)
 			sgm_text = NULL;
 		}
 		else if (sgm_file = kev_open(fs, "game.sgm", false)) {
-			console_log(1, "parsing Vanilla manifest for sandbox #%u", s_next_sandbox_id);
+			console_log(1, "parsing Sphere manifest for sandbox #%u", s_next_sandbox_id);
 			fs->version = 1;
 			fs->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			fs->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
