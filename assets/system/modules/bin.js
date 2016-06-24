@@ -37,7 +37,9 @@ function _fixup(value, data)
 	// because files are loaded sequentially, references can only be to
 	// earlier fields.
 
-	if (typeof value == 'string' && value[0] == '@')
+	if (typeof value === 'function')
+		return value.call(data);
+	if (typeof value === 'string' && value[0] == '@')
 		return data[value.substr(1)];
 	else
 		return value;
@@ -134,18 +136,21 @@ function _readField(stream, fieldType, data)
 
 	// verify the value we got against the schema
 	var isValidValue = true;
-	if (Array.isArray(fieldType.values)) {
-		if (!link(fieldType.values).contains(value)) {
+	if (typeof fieldType.regex === 'string' && typeof value === 'string') {
+		var regex = new RegExp(fieldType.regex);
+		if (!regex.test(value))
 			isValidValue = false;
-		}
+	}
+	else if (Array.isArray(fieldType.values)) {
+		if (!link(fieldType.values).contains(value))
+			isValidValue = false;
 	}
 	else if (Array.isArray(fieldType.range) && fieldType.range.length == 2
 		&& typeof fieldType.range[0] === typeof value
 		&& typeof fieldType.range[1] === typeof value)
 	{
-		if (value < fieldType.range[0] || value > fieldType.range[1]) {
+		if (value < fieldType.range[0] || value > fieldType.range[1])
 			isValidValue = false;
-		}
 	}
 
 	// if the value passes muster, return it.  otherwise, throw.

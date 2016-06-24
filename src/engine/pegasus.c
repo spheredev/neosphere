@@ -167,7 +167,7 @@ COLORS[] =
 	{ "Teal", 0, 128, 128, 255 },
 	{ "Thistle", 216, 191, 216, 255 },
 	{ "Tomato", 255, 99, 71, 255 },
-	{ "Transparent", 255, 255, 255, 0 },
+	{ "Transparent", 0, 0, 0, 0 },
 	{ "Turquoise", 64, 224, 208, 255 },
 	{ "Violet", 238, 130, 238, 255 },
 	{ "Wheat", 245, 222, 179, 255 },
@@ -1421,7 +1421,7 @@ js_random_string(duk_context* ctx)
 	length = num_args >= 1 ? duk_require_number(ctx, 0)
 		: 10;
 	if (length < 1 || length > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RNG.string(): length must be [1-255] (got: %d)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "length out of range");
 
 	duk_push_string(ctx, rng_string(length));
 	return 1;
@@ -1479,7 +1479,6 @@ static duk_ret_t
 js_screen_flip(duk_context* ctx)
 {
 	screen_flip(g_screen, s_framerate);
-	screen_set_clipping(g_screen, new_rect(0, 0, g_res_x, g_res_y));
 	return 0;
 }
 
@@ -2419,7 +2418,7 @@ js_new_Image(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = duk_pegasus_require_color(ctx, 2);
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create new image");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create texture");
 		image_fill(image, fill_color);
 	}
 	else if (num_args >= 3 && (buffer = duk_get_buffer_data(ctx, 2, &buffer_size))) {
@@ -2427,12 +2426,12 @@ js_new_Image(duk_context* ctx)
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		if (buffer_size < width * height * sizeof(color_t))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "buffer is too small to describe %dx%d image", width, height);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "buffer is too small to describe image");
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create image");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create texture");
 		if (!(lock = image_lock(image))) {
 			image_free(image);
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to lock pixels for writing");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to lock image pixels");
 		}
 		p_line = lock->pixels;
 		for (y = 0; y < height; ++y) {
@@ -2445,14 +2444,14 @@ js_new_Image(duk_context* ctx)
 		// create an Image from a Surface
 		src_image = duk_require_sphere_obj(ctx, 0, "Surface");
 		if (!(image = image_clone(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to create image from surface");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create texture");
 	}
 	else {
 		// create an Image by loading an image file
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load image `%s`", filename);
 	}
 	duk_push_sphere_obj(ctx, "Image", image);
 	return 1;
