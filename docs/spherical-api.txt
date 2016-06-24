@@ -68,10 +68,10 @@ CommonJS
 --------
 
 Second-generation Sphere engines like minisphere use CommonJS for dependency
-management.  In CommonJS, scripts are run as functions, which enables more
-granular control of exports.  In addition, because the code importing a module
-decides where to store its exports (if at all), naming collisions between
-modules are avoided entirely.
+management.  In CommonJS, each script is run as a function, which isolates
+modules from one another and enables more granular control of exports.  In
+addition, because the code importing a module decides where to store its
+exports (if at all), naming collisions between modules are avoided entirely.
 
 require(module_id);
 
@@ -83,9 +83,9 @@ require(module_id);
         @/lib/
         #/modules/
 
-    If require() is called inside of a module and the ID provided is prefixed
-    with either './' or '../', this indicates a path relative to the location
-    of the calling module.
+    If require() is provided with a module ID beginning with either `./` or
+    `../`, this indicates a path relative to the location of the calling
+    module.
 
 
 `engine` Global Variable
@@ -370,14 +370,15 @@ keyboard.keyChar(key, shifted)
 Graphics API
 ------------
 
-Unlike in Sphere 1.x, in second-generation games all rendering is done through
-the Galileo API.  Galileo represents a more modern, polygon-based approach to
-graphics.  Scenes are built from groups of shapes which can be transformed and
-rendered as a unit.
+Unlike in Sphere 1.x, in second-generation games all rendering, both 2D and 3D,
+is done through the Galileo API.  Galileo represents a more modern, polygon-
+based approach to graphics.  Scenes are built from groups of Shape object which
+represent graphics primitives (triangle strips, fans, etc.).
 
 Color.Red [read-only]
 Color.Green [read-only]
 Color.Blue [read-only]
+Color.Transparent [read-only]
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -393,11 +394,6 @@ etc...
 
 	The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
 	false, but this is rarely an issue in practice.
-
-Color.Transparent [read-only]
-
-    Gets a Color with ARGB signature #00000000.  Anything rendered in this
-    color will be invisible as it has an alpha value of zero.
 
 Color.mix(color1, color2[, w1, w2]);
 
@@ -460,15 +456,39 @@ new Image(width, height, pixels);
 
     Constructs a new Image from a pixel buffer.  `width` and `height` specify
     the size of the image, and `pixels` is an ArrayBuffer containing the RGBA
-    pixel data to use to initialize the image.
+    pixel data to use to initialize the image.  The pixel data should not be
+    padded (i.e. stride is equal to width).
     
     An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
-    cover the entire image.
+    describe the entire image.
 
 Image#width [read-only]
 Image#height [read-only]
 
     Gets the width or height of the image, in pixels.
+
+Shader.Default [read-only]
+
+    Gets the default Galileo shader program.  This is a very barebones shader
+    which uses screen coordinates for vertices and performs only basic texture
+    mapping.
+
+new Shader(options);
+
+    Constructs a Shader from a set of shader sources.  `options` should be an
+    object with the following properties:
+
+        options.vertex
+
+            The name of the file containing source code for the GLSL vertex
+            shader.
+
+        options.fragment
+
+            The name of the file containing source code for the GLSL fragment
+            shader.
+
+    Note that HLSL (DirectX) shaders are not supported, even on Windows.
 
 ShapeType [enumeration]
 
@@ -483,36 +503,6 @@ ShapeType [enumeration]
         ShapeType.Points
         ShapeType.Triangles
         ShapeType.TriStrip
-
-new Transform();
-
-    Constructs a transformation matrix.  The object represents a 4x4 matrix
-    and is initialized to identity.
-
-Transform#identity();
-
-    Re-initializes this matrix as an identity matrix.
-
-Transform#compose(otherMatrix);
-
-    Composes this transform with another.  `otherMatrix` is multiplied from the
-    left such that transformations are performed in the order you specify.
-
-Transform#rotate(theta[, vx, vy, vz]);
-
-    Applies a rotation transformation to this matrix.  `theta` is the angle of
-    rotation, in radians.  (vx, vy, vz) is the vector to rotate about.  For
-    example the default is (0, 0, 1) which rotates about the Z axis.
-
-Transform#scale(sx, sy);
-
-    Applies a scaling transformation to this matrix.  `sx` and `sy` are the
-    horizontal and vertical scaling factors, respectively.
-
-Transform#translate(tx, ty);
-
-    Applies a translation transformation to this matrix.  `tx` and `ty` are the
-    horizontal and vertical translations, respectively.
 
 new Shape(vertices[, texture[, type]]);
 
@@ -586,43 +576,15 @@ ShapeGroup#setMatrix(name, transform);
     be uploaded to that uniform.  It is safe to call this even if the uniform
     turns out not to exist (in which case the call is effectively a no-op).
 
-Shader.Default [read-only]
-
-    Gets the default Galileo shader program.  This is a very barebones shader
-    which uses screen coordinates for vertices and performs only basic texture
-    mapping.
-
-new Shader(options);
-
-    Constructs a Shader from a set of shader sources.  `options` should be an
-    object with the following properties:
-
-        options.vertex
-
-            The name of the file containing source code for the GLSL vertex
-            shader.
-
-        options.fragment
-
-            The name of the file containing source code for the GLSL fragment
-            shader.
-
-    Note that HLSL (DirectX) shaders are not supported, even on Windows.
-
-
-Surfaces
---------
-
-A surface is a writable graphics buffer to which you can render primitives,
-images and even other surfaces in order to compose an image behind-the-scenes
-and later render it all at once.  For convenience, the backbuffer is also
-exposed in the API as a Surface object.
-
 new Surface(width, height[, fill_color]);
 
-    Constructs a new Surface with the specified width and height, optionally
+    Constructs a new surface with the specified width and height, optionally
     filled with 'fill_color'.  If a fill color is not provided, the created
     surface will be filled with transparent pixels.
+    
+    Surfaces are meant to used as render targets from drawing operations.  This
+    enables static elements of a scene, such as a HUD, to be rendered in
+    advance, potentially improving performance.
 
 new Surface(filename);
 
@@ -639,6 +601,36 @@ Surface#toImage();
     Creates an Image from the current contents of this Surface and returns it.
     Note that drawing to the surface afterwards will not affect the generated
     image, which is read-only.
+
+new Transform();
+
+    Constructs a transformation matrix.  The object represents a 4x4 matrix
+    and is initialized to identity.
+
+Transform#identity();
+
+    Re-initializes this matrix as an identity matrix.
+
+Transform#compose(otherMatrix);
+
+    Composes this transform with another.  `otherMatrix` is multiplied from the
+    left such that transformations are performed in the order you specify.
+
+Transform#rotate(theta[, vx, vy, vz]);
+
+    Applies a rotation transformation to this matrix.  `theta` is the angle of
+    rotation, in radians.  (vx, vy, vz) is the vector to rotate about.  For
+    example the default is (0, 0, 1) which rotates about the Z axis.
+
+Transform#scale(sx, sy);
+
+    Applies a scaling transformation to this matrix.  `sx` and `sy` are the
+    horizontal and vertical scaling factors, respectively.
+
+Transform#translate(tx, ty);
+
+    Applies a translation transformation to this matrix.  `tx` and `ty` are the
+    horizontal and vertical translations, respectively.
 
 
 Fonts and Text Rendering
@@ -814,79 +806,6 @@ SoundStream#stop();
     call, but you will have to feed new audio data.
 
 
-Networking (Sockets)
---------------------
-
-minisphere includes an advanced sockets API which is more flexible than the one
-Sphere provides.  The old routines are still available, but should be considered
-deprecated.  Under minisphere, sockets are divided into two types: Listening
-sockets, used for servers, and I/O sockets, for clients.
-
-new Server(port[, backlog_size]);
-
-    Constructs a new server to listen for connections on the specified port.
-    `backlog_size` specifies the size of the backlog. If the backlog fills, new
-    connections will be dropped.
-
-Server#accept();
-
-    If one or more connections are waiting in the backlog, accepts one of them
-    and returns a Socket object representing the connection.  Otherwise,
-    returns null.  This should be called regularly to prevent the backlog from
-    filling up.
-
-Server#close();
-
-    Shuts down the server.  Any connections in the backlog will be dropped and
-    no new connections can be made unless a new Server is created.
-
-new Socket(hostname, port);
-
-    Connects to `hostname` on `port` and constructs an Socket representing the
-    connection.  The hostname can either be a named address (e.g. google.com)
-    or an IP address (e.g. 127.0.0.1).  As this operation is non-blocking, a
-    Socket object will be returned even if the connection can be not be made;
-    you must poll Socket#connected to find out when the connection has opened.
-
-Socket#bytesPending;
-
-    Gets the amount of data, in bytes, currently in the receive buffer.  Call
-    Socket#read() to retrieve this data.
-
-Socket#connected [read-only]
-
-    Gets whether the connection has been established.  As long as this returns
-    false, you cannot call any other methods on the socket object.  Doing so
-    will cause an error to be thrown.
-
-Socket#remoteAddress [read-only]
-
-    Gets the IP address of the upstream end of the socket.  Throws an error if
-    accessed before a connection has been established.
-
-Socket#remotePort [read-only]
-
-    Gets the port that the remote machine is using for the connection.
-    Generally not a useful statistic, but it's there if you need it.  Throws an
-    error if accessed before a connection is established.
-
-Socket#close();
-
-    Disconnects the socket.  Note that any given Socket object is tied to a
-    specific session and so cannot be reused after it has been closed.
-
-Socket#read(num_bytes);
-
-    Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
-    containing the data received.  This method is non-blocking: If more bytes
-    are requested than are available, only the available data will be returned.
-
-Socket#write(data);
-
-    Writes data to the socket, which can be read at the other end.  `data` can
-    be either an ArrayBuffer, TypedArray view, or DataView.
-
-
 File Streams
 ------------
 
@@ -996,3 +915,76 @@ FileStream#writePString(string, lenSize[, little_endian]);
 FileStream#writeString(string);
 
     Writes a UTF-8-encoded string to the file and advances the file pointer.
+
+
+Networking (Sockets)
+--------------------
+
+minisphere includes an advanced sockets API which is more flexible than the one
+Sphere provides.  The old routines are still available, but should be considered
+deprecated.  Under minisphere, sockets are divided into two types: Listening
+sockets, used for servers, and I/O sockets, for clients.
+
+new Server(port[, backlog_size]);
+
+    Constructs a new server to listen for connections on the specified port.
+    `backlog_size` specifies the size of the backlog. If the backlog fills, new
+    connections will be dropped.
+
+Server#accept();
+
+    If one or more connections are waiting in the backlog, accepts one of them
+    and returns a Socket object representing the connection.  Otherwise,
+    returns null.  This should be called regularly to prevent the backlog from
+    filling up.
+
+Server#close();
+
+    Shuts down the server.  Any connections in the backlog will be dropped and
+    no new connections can be made unless a new Server is created.
+
+new Socket(hostname, port);
+
+    Connects to `hostname` on `port` and constructs an Socket representing the
+    connection.  The hostname can either be a named address (e.g. google.com)
+    or an IP address (e.g. 127.0.0.1).  As this operation is non-blocking, a
+    Socket object will be returned even if the connection can be not be made;
+    you must poll Socket#connected to find out when the connection has opened.
+
+Socket#bytesPending;
+
+    Gets the amount of data, in bytes, currently in the receive buffer.  Call
+    Socket#read() to retrieve this data.
+
+Socket#connected [read-only]
+
+    Gets whether the connection has been established.  As long as this returns
+    false, you cannot call any other methods on the socket object.  Doing so
+    will cause an error to be thrown.
+
+Socket#remoteAddress [read-only]
+
+    Gets the IP address of the upstream end of the socket.  Throws an error if
+    accessed before a connection has been established.
+
+Socket#remotePort [read-only]
+
+    Gets the port that the remote machine is using for the connection.
+    Generally not a useful statistic, but it's there if you need it.  Throws an
+    error if accessed before a connection is established.
+
+Socket#close();
+
+    Disconnects the socket.  Note that any given Socket object is tied to a
+    specific session and so cannot be reused after it has been closed.
+
+Socket#read(num_bytes);
+
+    Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
+    containing the data received.  This method is non-blocking: If more bytes
+    are requested than are available, only the available data will be returned.
+
+Socket#write(data);
+
+    Writes data to the socket, which can be read at the other end.  `data` can
+    be either an ArrayBuffer, TypedArray view, or DataView.
