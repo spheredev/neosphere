@@ -15,12 +15,33 @@ that a few of these may not be supported, however):
     https://github.com/sphere-group/sphere/blob/master/sphere/docs/development/api.txt
 
 
+game.json (Game Manifest)
+-------------------------
+
+Sphere 2.0 games must provide a file called `game.json` in the root of the game
+package which holds the metadata for the game.  All values in game.json are
+available to game code through `engine.game` (see below).
+
+A basic `game.json` might look like this:
+
+    {
+        "name": "Spectacles: Bruce's Story",
+        "author": "Fat Cerberus",
+        "summary": "Follow Scott Starcross in his quest to stop the Primus.",
+        "resolution": "320x240",
+        "main": "main.js",
+    }
+
+Most of these values should be self-explanatory.  `main` is a SphereFS path
+naming the game's main JavaScript module.
+
+
 SphereFS File System
 --------------------
 
 minisphere follows the SphereFS standard for file paths.  When a relative path
 is passed to a function or method, it will be resolved relative to the root of
-the game package (i.e. where `game.json` is located).  To load files from a
+the game package (where `game.json` is located).  To load files from a
 different location, you can use one of the following SphereFS prefixes:
 
     @/: The root of the game's sandboxed file system.  Usually redundant, but
@@ -43,28 +64,6 @@ Absolute paths are not allowed, and any attempt to circumvent the sandbox, e.g.
 "@/../maggie.fat", will be met with an error indicating a sandbox violation.
 
 
-game.json
----------
-
-Sphere 1.x games include a file called `game.sgm` with the game's metadata.
-Sphere 2.0 instead uses a JSON file, `game.json`, for this purpose, which
-enables much richer metadata and better integration with JavaScript.  All data
-in game.json is available to game code by accessing `engine.game`.
-
-A basic `game.json` might look like this:
-
-    {
-        "name": "Spectacles: Bruce's Story",
-        "author": "Fat Cerberus",
-        "summary": "Follow Scott Starcross in his quest to stop the Primus.",
-        "resolution": "320x240",
-        "main": "main.js",
-    }
-
-Most of the values shown above should be self-explanatory.  `main` is a
-SphereFS path naming the game's main JavaScript module.
-
-
 CommonJS
 --------
 
@@ -72,7 +71,7 @@ Second-generation Sphere engines like minisphere use CommonJS for dependency
 management.  In CommonJS, scripts are run as functions, which enables more
 granular control of exports.  In addition, because the code importing a module
 decides where to store its exports (if at all), naming collisions between
-modules are impossible.
+modules are avoided entirely.
 
 require(module_id);
 
@@ -227,351 +226,177 @@ random.uniform(mean, variance);
 Keyboard Routines
 -----------------
 
-What would a game be without the ability for the player to control it?  This set
-of functions allows your game to accept input via the keyboard, the most common
-input method for a PC game.  First of all, the available keycodes:
-
-    KEY_ESCAPE
-    KEY_F1
-    KEY_F2
-    KEY_F3
-    KEY_F4
-    KEY_F5
-    KEY_F6
-    KEY_F7
-    KEY_F8
-    KEY_F9
-    KEY_F10
-    KEY_F11
-    KEY_F12
-    KEY_TILDE
-    KEY_0
-    KEY_1
-    KEY_2
-    KEY_3
-    KEY_4
-    KEY_5
-    KEY_6
-    KEY_7
-    KEY_8
-    KEY_9
-    KEY_MINUS
-    KEY_EQUALS
-    KEY_BACKSPACE
-    KEY_TAB
-    KEY_A
-    KEY_B
-    KEY_C
-    KEY_D
-    KEY_E
-    KEY_F
-    KEY_G
-    KEY_H
-    KEY_I
-    KEY_J
-    KEY_K
-    KEY_L
-    KEY_M
-    KEY_N
-    KEY_O
-    KEY_P
-    KEY_Q
-    KEY_R
-    KEY_S
-    KEY_T
-    KEY_U
-    KEY_V
-    KEY_W
-    KEY_X
-    KEY_Y
-    KEY_Z
-    KEY_SHIFT
-    KEY_CTRL
-    KEY_ALT
-    KEY_SPACE
-    KEY_OPENBRACE
-    KEY_CLOSEBRACE
-    KEY_SEMICOLON
-    KEY_APOSTROPHE
-    KEY_COMMA
-    KEY_PERIOD
-    KEY_SLASH
-    KEY_BACKSLASH
-    KEY_ENTER
-    KEY_INSERT
-    KEY_DELETE
-    KEY_HOME
-    KEY_END
-    KEY_PAGEUP
-    KEY_PAGEDOWN
-    KEY_UP
-    KEY_RIGHT
-    KEY_DOWN
-    KEY_LEFT
-    KEY_NUM_0
-    KEY_NUM_1
-    KEY_NUM_2
-    KEY_NUM_3
-    KEY_NUM_4
-    KEY_NUM_5
-    KEY_NUM_6
-    KEY_NUM_7
-    KEY_NUM_8
-    KEY_NUM_9
-    KEY_CAPSLOCK
-    KEY_NUMLOCK
-    KEY_SCROLLLOCK
-
-GetPlayerKey(player, button);
-SetPlayerKey(player, button, keycode);
-
-    Gets or sets the keycode mapped to a specified playerkey.  Playerkeys mirror
-    the layout of a Super NES controller.  GetPlayerKey() should be used in
-    place of hardcoded keys whenever possible, in order to allow the player to
-    customize the mappings.  'player' can be one of the following values:
+What would a game be without the ability for the player to control it?  This
+set of functions allows your game to accept input via the keyboard, the most
+common input method for a PC game.
+
+Key [enumeration]
+
+    Specifies a keyboard key.  Can be one of the following:
+
+        Key.None
+        Key.Alt
+        Key.AltGr
+        Key.Apostrophe
+        Key.Backslash
+        Key.Backspace
+        Key.CapsLock
+        Key.CloseBrace
+        Key.Comma
+        Key.Delete
+        Key.Down
+        Key.End
+        Key.Enter
+        Key.Equals
+        Key.Escape
+        Key.F1
+        Key.F2
+        Key.F3
+        Key.F4
+        Key.F5
+        Key.F6
+        Key.F7
+        Key.F8
+        Key.F9
+        Key.F10
+        Key.F11
+        Key.F12
+        Key.Home
+        Key.Hyphen
+        Key.Insert
+        Key.LCtrl
+        Key.LShift
+        Key.Left
+        Key.NumLock
+        Key.OpenBrace
+        Key.PageDown
+        Key.PageUp
+        Key.Period
+        Key.RCtrl
+        Key.RShift
+        Key.Right
+        Key.ScrollLock
+        Key.Semicolon
+        Key.Slash
+        Key.Space
+        Key.Tab
+        Key.Tilde
+        Key.Up
+        Key.A
+        Key.B
+        Key.C
+        Key.D
+        Key.E
+        Key.F
+        Key.G
+        Key.H
+        Key.I
+        Key.J
+        Key.K
+        Key.L
+        Key.M
+        Key.N
+        Key.O
+        Key.P
+        Key.Q
+        Key.R
+        Key.S
+        Key.T
+        Key.U
+        Key.V
+        Key.W
+        Key.X
+        Key.Y
+        Key.Z
+        Key.D1
+        Key.D2
+        Key.D3
+        Key.D4
+        Key.D5
+        Key.D6
+        Key.D7
+        Key.D8
+        Key.D9
+        Key.D0
+        Key.NumPad1
+        Key.NumPad2
+        Key.NumPad3
+        Key.NumPad4
+        Key.NumPad5
+        Key.NumPad6
+        Key.NumPad7
+        Key.NumPad8
+        Key.NumPad9
+        Key.NumPad0
+        Key.NumPadEnter
+        Key.Add
+        Key.Decimal
+        Key.Divide
+        Key.Multiply
+        Key.Subtract
+    
+    Note: Keys D0-D9 refer to the row of numbers above the letter keys and
+    below the function keys, while NumPad0-NumPad9 refer to the numbers on the
+    numeric keypad.
 
-        PLAYER_1 (or 0)
-        PLAYER_2 (or 1)
-        PLAYER_3 (or 2)
-        PLAYER_4 (or 3)
+keyboard.capsLock [read-only]
+keyboard.numLock [read-only]
+keyboard.scrollLock [read-only]
 
-    'button' can be one of the following:
+    Gets the state of the corresponding lock key.  true if the lock is on,
+    false if not.
 
-        PLAYER_KEY_UP
-        PLAYER_KEY_RIGHT
-        PLAYER_KEY_DOWN
-        PLAYER_KEY_LEFT
-        PLAYER_KEY_MENU
-        PLAYER_KEY_A
-        PLAYER_KEY_B
-        PLAYER_KEY_X
-        PLAYER_KEY_Y
+keyboard.clearQueue()
 
-    Modifications made by SetPlayerKey() are persistent; the new mapping will be
-    saved to your game's "save" directory when the engine exits and reloaded
-    when the game is started again.  Key mappings for other games are not
-    affected.
+    Removes all keys from the keyboard queue.  If another key is not pressed
+    in the interim, the next getKey() will return Key.None.
 
-    See key-mapping.txt for more information on these functions and an easy way
-    you can allow your players to change the key mappings.
+keyboard.getKey()
 
-GetToggleState(keycode);
+    Gets the next key in the keyboard queue, or Key.None if the queue is empty.
 
-    Gets the state of the specified toggle key, which should be one of the
-    following:
+keyboard.isPressed(key);
 
-        KEY_CAPSLOCK
-        KEY_NUMLOCK
-        KEY_SCROLLLOCK
+    Returns true if the user is currently pressing the specified key.  `key`
+    should be a member of the Key enumeration.
 
-    Passing any other keycode will throw an error.
+keyboard.keyChar(key, shifted)
 
-IsKeyPressed(keycode);
-IsAnyKeyPressed();
+    Gets the character that would be generated if a specified key is pressed.
+    For example, Key.A becomes "a" (or "A" if shifted).  `shifted` specifies
+    whether to assume the Shift key is pressed.
 
-    Returns true if the user is currently pressing either a specified key, or
-    any key on the keyboard, respectively.
 
-AreKeysLeft();
-GetKey();
+Graphics API
+------------
 
-    GetKey() returns the keycode of the next key in the keyboard queue.  If the
-    queue is empty, it will wait until the user presses a key.  AreKeysLeft()
-    returns true if keys are pending, and should be used to avoid delays if such
-    behavior is undesirable.
-
-ClearKeyQueue();
-
-    Removes all keys from the keyboard queue.
-
-BindKey(keycode, on_down_script, on_up_script);
-UnbindKey(keycode);
-
-    BindKey() executes a script whenever the player presses or releases a
-    specified key.  The scripts can be either functions, source code strings, or
-    null/undefined (to do nothing).  Note that bound keys are only honored
-    during the main loop of a MapEngine() call.
-
-    UnbindKey() removes a binding created by BindKey().
-
-
-Joystick Routines
------------------
-
-These functions allow your game to accept joystick and gamepad input for a more
-console-like experience.
-
-GetNumJoysticks();
-
-    Returns the number of joysticks currently available for use.
-
-GetNumJoystickAxes(joystick);
-GetJoystickAxis(joystick, axis);
-
-    Gets the current position of a joystick axis.  'joystick' and 'axis' are
-    zero-based indices whose exact meaning depends on the device and system.
-    Return value ranges from -1.0 to 1.0, with zero indicating dead center.
-    Call GetNumJoystickAxes() to get the number of available axes.
-
-    Note: Joystick axis indices may differ from device to device.
-
-GetNumJoystickButtons(joystick);
-IsJoystickButtonPressed(joystick, button);
-
-    Returns true if a specified joystick button is pressed.  'button' is a zero-
-    based index whose exact mapping depends on the device and system.  Call
-    GetNumJoystickButtons() to get the number of available buttons.
-
-    Note: Joystick button indices may differ from device to device.
-
-BindJoystickButton(joystick, button, on_down_script, on_up_script);
-UnbindJoystickButton(joystick, button);
-
-    Like BindKey() and UnbindKey() above, but binds a joystick button instead of
-    a keyboard key.  As with BindKey(), bound joystick buttons are only honored
-    in the main MapEngine() loop.
-
-
-Mouse Input Routines
---------------------
-
-Rounding out the input routines are the mouse functions. Most games don't need
-mouse support, but it's available if you do need it.
-
-GetMouseX();
-GetMouseY();
-SetMousePosition(x, y);
-
-    Gets or sets the location of the mouse cursor, in pixels, relative to the
-    game screen.
-
-GetNumMouseWheelEvents();
-GetMouseWheelEvent();
-
-    GetMouseWheelEvent() returns the next mouse wheel event in the wheel queue.
-    If the queue is empty, waits until the player moves the wheel. If this
-    behavior is undesirable, call GetNumMouseWheelEvents() first to make sure
-    the queue isn't empty.
-
-IsMouseButtonPressed(button);
-
-    Returns true if the player is pressing the specified mouse button. 'button'
-    can be one of the following:
-
-        MOUSE_LEFT:   Left button
-        MOUSE_MIDDLE: Middle or wheel button
-        MOUSE_RIGHT:  Right button
-
-
-Graphics Routines
------------------
-
-minisphere, like Sphere, uses double-buffered rendering.  In this scheme, all
-drawing is done to a backbuffer, which is not visible to the user, and then
-"flipped" once per frame, so that the player only sees the final rendering
-output.
-
-GetClippingRectangle();
-SetClippingRectangle(x, y, width, height);
-
-    Gets or sets the clipping rectangle. All rendering done to the backbuffer is
-    constrained to this rectangle. Note that GetClippingRectangle() returns the
-    current clipping rectangle as an object describing it, with `x`, `y`,
-    `width` and `height` properties.
-
-GetFrameRate();
-SetFrameRate(fps);
-
-    Gets or sets the current target frame rate. Your game will be automatically
-    throttled to match this framerate. If `fps` is zero, the game will be
-    unthrottled, which may be useful for benchmarks but otherwise is usually a
-    waste of CPU resources.
-
-GetScreenWidth();
-GetScreenHeight();
-SetScreenSize(width, height);
-
-    Gets or sets the current screen resolution.
-
-ApplyColorMask(color);
-
-    Applies a full-screen color mask. The color passed in is multiplied with the
-    pixels of the backbuffer to tint the screen. This may be used for, e.g.
-    day/night effects.
-
-FlipScreen();
-
-    Flips the backbuffer.  This also performs event loop processing, so if it is
-    not called regularly (or DoEvents() in its place, see above), the engine
-    will stop responding.
-
-
-Frame Skipping
---------------
-
-minisphere has an aggressive frame skipping algorithm which avoids rendering
-to the backbuffer if it determines that a frame will be late.  This helps keep
-the engine running at full speed even on lower-end computers.  The following
-functions are provided to manage frame skipping.
-
-GetMaxFrameSkips();
-SetMaxFrameSkips(max_skips);
-
-    Gets or sets the maximum number of consecutive frames the engine is allowed
-    to skip.  The default is 5 frames.  If your game uses GrabImage() or
-    GrabSurface() pervasively, it may be useful to set this to zero.  This will
-    almost certainly cause lag, however.
-
-IsSkippedFrame();
-
-    Returns true if the engine has marked the current frame for skipping. Useful
-    to avoid performing extra rendering calculations when nothing is going to be
-    rendered anyway.
-
-UnskipFrame();
-
-    Instructs the engine to re-enable rendering for the current frame if it has
-    been marked for skipping.  This also clears the backbuffer.  This call can
-    be used in lieu of SetMaxFrameSkips(0) during sections which make heavy use
-    of GrabImage() or GrabSurface() without impacting performance for the rest
-    of the game.
-
-
-Galileo Graphics API
---------------------
-
-Wondered what that `sphere-galileo` extension was above?  This is it!  It's a
-more modern approach to graphics rendering based on precomposing scenes from
-groups of shapes which can then be transformed and rendered as a unit.
-
-All the old-school primitives provided by Sphere 1.5 are still available in
-minisphere.  However, there's a newer, much more modern way: the Shape and Group
-objects.  With these, you precompose a complex object out of a set of vertices
-and textures which are then uploaded to the GPU to save time during the main
-render loop.
+Unlike in Sphere 1.x, in second-generation games all rendering is done through
+the Galileo API.  Galileo represents a more modern, polygon-based approach to
+graphics.  Scenes are built from groups of shapes which can be transformed and
+rendered as a unit.
 
 Color.Red [read-only]
 Color.Green [read-only]
 Color.Blue [read-only]
 etc...
 
-    Gets a copy of a predefined color.  The entire X11 color set is provided
-    this way, not just the basic colors.  This gives you access to such colors
-    as `DodgerBlue`, `Chartreuse`, `AntiqueWhite`, etc.
+    Gets a copy of a predefined color.  The entire X11 color set is provided,
+    giving you access to such colors as `DodgerBlue` and `Chartreuse` in
+    addition to the standard red, green, blue, yellow, etc.
 
     Each of these is an accessor which returns a new Color object every time
     it is invoked.  This ensures that code like what's shown below won't cause
     undesirable side effects:
 
         var color = Color.Red;
-        color.blue = 255;  // needed magenta instead
+        color.blue = 255;  // we needed magenta instead
 
 	The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
-	false since a new object is created each time the property is accessed.
+	false, but this is rarely an issue in practice.
 
 Color.Transparent [read-only]
 
-    Gets a Color with ARGB signature #00FFFFFF.  Anything rendered in this
+    Gets a Color with ARGB signature #00000000.  Anything rendered in this
     color will be invisible as it has an alpha value of zero.
 
 Color.mix(color1, color2[, w1, w2]);
@@ -591,8 +416,8 @@ new Color(red, green, blue[, alpha]);
 
     Constructs a new Color object.  Color objects are used to specify the color
     of elements such as vertices and primitives.  Color components should be in
-    the range [0-255] and out-of-range values will be silently clamped.  `alpha`
-    specifies opacity and defaults to 255 if not provided.
+    the range [0.0-1.0] and out-of-range values will be silently clamped.
+    `alpha` specifies opacity and defaults to 1.0 if not provided.
 
 Color#name [read-only]
 
@@ -600,13 +425,13 @@ Color#name [read-only]
     Color.of(color.name) will give back a Color with the same values.  Useful
     for saving and reading back colors from save files.
 
-Color#red [read/write]
-Color#green [read/write]
-Color#blue [read/write]
-Color#alpha [read/write]
+Color#r [read/write]
+Color#g [read/write]
+Color#b [read/write]
+Color#a [read/write]
 
     Gets or sets the individual components of the color.  Values outside the
-    range of [0-255] are accepted, but the engine will automatically clamp them
+    range of [0-1] are accepted, but the engine will automatically clamp them
     during rendering.
 
 Color#clone();
@@ -616,65 +441,80 @@ Color#clone();
 
 Color#fade(alpha);
 
-    Scales this color's alpha channel by `alpha`, between 0 and 255, and
+    Scales this color's alpha channel by `alpha`, between 0.0 and 1.0, and
     returns the result.  The red, green, and blue components are not modified.
     This is useful when you need to make a predefined color translucent, for
     instance:
 
-        var translucentBlue = Color.Blue.fade(128);
+        var translucentBlue = Color.Blue.fade(0.5);
 
 new Image(filename);
 
-    SphereFS compliant.
+    Constructs a new Image object from an image file.  An Image cannot be
+    rendered directly and must instead be used as a texture for a Shape object.
 
-    Constructs a new Image object from an image file.  Images can be used as
-    textures for Shape objects or drawn directly using the legacy method
-    Image:blit().
+    Note that Images are read-only.  If you need a writable image, you should
+    use a Surface object instead.
 
-    Images are read-only.  If you need a writable image, you should use a
-    Surface object instead.
+new Image(width, height, pixels);
 
-new Image(surface);
+    Constructs a new Image from a pixel buffer.  `width` and `height` specify
+    the size of the image, and `pixels` is an ArrayBuffer containing the RGBA
+    pixel data to use to initialize the image.
+    
+    An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
+    cover the entire image.
 
-    Creates an Image object with the contents of a specified surface.  This can
-    be used to regain rendering performance after composing the surface.
-
-Image:width [read-only]
-Image:height [read-only]
+Image#width [read-only]
+Image#height [read-only]
 
     Gets the width or height of the image, in pixels.
 
+ShapeType [enumeration]
+
+    Specifies the type of graphics primitive represented by a Shape object.
+    Can be one of the following:
+    
+        ShapeType.Auto
+        ShapeType.Fan
+        ShapeType.Lines
+        ShapeType.LineLoop
+        ShapeType.LineStrip
+        ShapeType.Points
+        ShapeType.Triangles
+        ShapeType.TriStrip
+
 new Transform();
 
-    Constructs a transformation.  The object represents a 4x4 matrix and is
-    initialized as an identity matrix.
+    Constructs a transformation matrix.  The object represents a 4x4 matrix
+    and is initialized to identity.
 
-Transform:identity();
+Transform#identity();
 
-    Initializes this matrix as an identity matrix.
+    Re-initializes this matrix as an identity matrix.
 
-Transform:compose(otherMatrix);
+Transform#compose(otherMatrix);
 
     Composes this transform with another.  `otherMatrix` is multiplied from the
     left such that transformations are performed in the order you specify.
 
-Transform:rotate(theta[, vx, vy, vz]);
+Transform#rotate(theta[, vx, vy, vz]);
 
     Applies a rotation transformation to this matrix.  `theta` is the angle of
     rotation, in radians.  (vx, vy, vz) is the vector to rotate about.  For
     example the default is (0, 0, 1) which rotates about the Z axis.
 
-Transform:scale(sx, sy);
+Transform#scale(sx, sy);
 
     Applies a scaling transformation to this matrix.  `sx` and `sy` are the
     horizontal and vertical scaling factors, respectively.
 
-Transform:translate(tx, ty);
+Transform#translate(tx, ty);
 
     Applies a translation transformation to this matrix.  `tx` and `ty` are the
     horizontal and vertical translations, respectively.
 
-new Shape(vertices[, texture[, primitive_type]]);
+new Shape(vertices[, texture[, type]]);
 
     Constructs a primitive shape out of the provided array of vertices textured
     with the Image specified by `texture`.
@@ -699,101 +539,67 @@ new Shape(vertices[, texture[, primitive_type]]);
             texture pixels to determine the final color of each pixel in a
             shape.
 
-    `primitive_type` can be one of the following:
+    `type` specifies the type of primitive (see ShapeType above).  If `type` is
+    ShapeType.Auto (the default), the type is determined automatically based on
+    the number of vertices.
 
-        SHAPE_AUTO
+Shape#texture [read/write]
 
-            Primitive type is determined automatically based on the number of
-            vertices.  This is the default.
+    The Image to use when texturing the shape. This can be null, in which case
+    the vertex colors alone will determine the shape's appearance.
 
-        SHAPE_POINTS
-
-            A point list. Each vertex represents a single point to be rendered.
-            Useful for particle effects.
-
-        SHAPE_LINES
-
-            A line list.  Each pair of vertices represents a line segment.
-
-        SHAPE_TRIANGLES
-
-            A triangle will be drawn for every 3 vertices.
-
-        SHAPE_TRI_STRIP
-
-            A triangle strip.  The first 3 vertices represent a complete
-            triangle, and each subsequent vertex is combined with the previous
-            two to form another.  Number of triangles drawn is equal to
-            (num_verts - 2).
-
-        SHAPE_TRI_FAN
-
-            A series of triangles is drawn, all sharing the first vertex.  As
-            with a strip, the total number of triangles is equal to
-            (num_verts - 2).s
-
-Shape:texture [read/write]
-
-    The Image to be used when texturing the shape. This can be null, in which
-    case the vertex colors alone will determine the rendered shape's
-    appearance.
-
-Shape:draw([transform[, surface]]);
+Shape#draw(surface[, transform]);
 
     Draws the shape.  `transform` is the Transform to use, and `surface` is the
     Surface to draw on.  If `surface` is omitted, the shape is drawn on the
     backbuffer.
 
-new Group(shapes[, shader]);
+new ShapeGroup(shapes[, shader]);
 
-    Constructs a Group out of the provided array of Shape objects.  `shader` is
-    the shader program to use when rendering the group.  See below for more
+    Constructs a ShapeGroup out of the provided array of Shape objects.
+    `shader` is the Shader to use when rendering the group.  See below for more
     information on shaders.
 
-    When a Group is created, its transformation matrix is set to the identity
-    matrix.  If `shader` is not provided, the default shader program will be
-    used (see `ShaderProgram.Default`).
+    When a ShapeGroup is created, its transformation matrix is set to the
+    identity matrix.  If `shader` is not provided, the default shader program
+    will be used (see `Shader.Default`).
 
-Group:shader [read/write]
+ShapeGroup#shader [read/write]
 
-    Gets or sets the ShaderProgram to use when drawing this group.
+    Gets or sets the Shader to use when drawing this group.
 
-Group:transform [read/write]
+ShapeGroup#transform [read/write]
 
     Gets or sets the transformation matrix to use when drawing this group.
 
-Group:draw([surface]);
+ShapeGroup#draw(surface);
 
-    Draws the group to the backbuffer. Any transformations defined for the
-    group (see below) are applied as if the entire group were a single
-    primitive.  `surface` specifies the Surface to draw on, or null for the
-    backbuffer.
+    Draws the group on `surface`. Any transformations defined for the group
+    (see below) are applied as if the entire group were a single primitive.
 
-Group:setFloat(name, value);
-Group:setInt(name, value);
-Group:setMatrix(name, transform);
+ShapeGroup#setFloat(name, value);
+ShapeGroup#setInt(name, value);
+ShapeGroup#setMatrix(name, transform);
 
     Sets the value of a GLSL uniform.  When the group is drawn, if its shader
     program contains a uniform called `name` of the proper type, the value will
     be uploaded to that uniform.  It is safe to call this even if the uniform
     turns out not to exist (in which case the call is effectively a no-op).
 
-ShaderProgram.Default [read-only]
+Shader.Default [read-only]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     which uses screen coordinates for vertices and performs only basic texture
     mapping.
 
-new ShaderProgram(options);
+new Shader(options);
 
-    SphereFS compliant.
-
-    Constructs a ShaderProgram from a set of shader sources.  `options` should
-    be an object with the following properties:
+    Constructs a Shader from a set of shader sources.  `options` should be an
+    object with the following properties:
 
         options.vertex
 
-            The name of the file containing source code for the GL vertex
+            The name of the file containing source code for the GLSL vertex
             shader.
 
         options.fragment
@@ -801,117 +607,45 @@ new ShaderProgram(options);
             The name of the file containing source code for the GLSL fragment
             shader.
 
-    Shader code is expected to be GLSL.  HLSL (DirectX) shaders are not
-    supported, even on Windows.  Geometry shaders are not yet supported.
-
-
-Color Matrices
---------------
-
-Color matrices are used to transform colors similar to the way matrices work in
-3D graphics to transform vertices.  A 3x4 matrix is applied to the individual
-components (RGB) of a pixel, as follows:
-
-    [ rr, rg, rb, rn ]   [r]    r' = (rr * r + rg * g + rb * b) / 255 + rn
-    [ gr, gg, gb, gn ] x [g]    g' = (gr * r + gg * g + gb * b) / 255 + gn
-    [ br, bg, bb, bn ]   [b]    b' = (br * r + bg * g + bb * b) / 255 + bn
-
-new ColorMatrix(rn, rr, rg, rb, gn, gr, gg, gb, bn, br, bg, bb);
-
-    Constructs a new ColorMatrix object which can be used in color
-    transformation operations.  All arguments are required and specify the
-    contents of the matrix.
-
-ColorMatrix.apply(color);
-
-    Applies the matrix to the specified color value and returns the output
-    color.
+    Note that HLSL (DirectX) shaders are not supported, even on Windows.
 
 
 Surfaces
 --------
 
-A surface is a writable image to which you can render primitives, images and
-even other surfaces in order to compose an image behind-the-scenes and later
-render it all at once.  Surfaces are allocated from main memory, which allows
-fast manipulation at the expense of direct rendering performance.
+A surface is a writable graphics buffer to which you can render primitives,
+images and even other surfaces in order to compose an image behind-the-scenes
+and later render it all at once.  For convenience, the backbuffer is also
+exposed in the API as a Surface object.
 
 new Surface(width, height[, fill_color]);
 
-    Constructs a new surface with the specified width and height, optionally
+    Constructs a new Surface with the specified width and height, optionally
     filled with 'fill_color'.  If a fill color is not provided, the created
     surface will be filled with transparent pixels.
 
 new Surface(filename);
 
-    SphereFS compliant.
+    Constructs a new Surface whose initial contents are taken from the
+    specified image file.
 
-    Constructs a new surface from the specified image file.
+Surface#width [read-only]
+Surface#height [read-only]
 
-GrabSurface(x, y, width, height);
+    Gets the width and height of the surface, in pixels.
 
-    Creates a surface with the contents of the specified portion of the
-    backbuffer. If this called during a skipped frame, the content of the
-    created surface is undefined. See the documentation for the Frameskip API
-    above for information on how to mitigate this.
+Surface#toImage();
 
-Surface:width [read-only]
-Surface:height [read-only]
-
-    Gets the width or height of the surface, in pixels.
-
-Surface:clone();
-
-    Creates a new surface from the contents of this one. Modifications to the
-    new surface will not affect the original.
-
-Surface:save(filename);
-
-    Not SphereFS compliant: `filename` is relative to images/.
-
-    Saves the contents of the surface to an image file.  The filename extension
-    determines the format of the saved image.  Supported formats are PNG, BMP
-    and JPG.
-
-
-Windowstyles
-------------
-
-Windowstyles are used add flair to menus and text boxes, especially in RPGs.
-You can create as many windowstyle objects as you want, so they provide a
-standardized way to allow the player to customize the style of such elements in
-a game.
-
-WindowStyle.Default [read-only]
-
-    Gets the engine default window style.
-
-new WindowStyle(filename);
-
-    SphereFS compliant.
-
-    Constructs a WindowStyle object from a windowstyle file. The file must be in
-    Sphere RWS format.
-
-WindowStyle:colorMask [read/write]
-
-    Gets or sets the windowstyle color mask.  This is the color that is combined
-    with the windowstyle images to tint the rendered window.  If this is not
-    modified, the default color is #FFFFFFFF and the windowstyle will be
-    rendered as-is.
-
-WindowStyle:drawWindow(x, y, width, height);
-
-    Renders a window to the backbuffer using this windowstyle.  Note that the
-    dimensions provided include the window border, so you will need to make it a
-    bit larger than your content.
+    Creates an Image from the current contents of this Surface and returns it.
+    Note that drawing to the surface afterwards will not affect the generated
+    image, which is read-only.
 
 
 Fonts and Text Rendering
 ------------------------
 
-A common task in a game engine, at some point you will probably want to get text
-on the screen.  In minisphere, you use a Font object to do this.
+A common task in a game engine, at some point you will probably want to get
+text on the screen.  In minisphere, you use a Font object to do this.
 
 Font.Default [read-only]
 
@@ -920,67 +654,38 @@ Font.Default [read-only]
 
 new Font(filename);
 
-    SphereFS compliant.
+    Constructs a Font object from a font file.  Currently only Sphere 1.x RFN
+    format is supported.
 
-    Constructs a Font object from a font file. The file must be in Sphere RFN
-    format.
-
-Font:clone();
-
-    Creates a new Font object by copying everything from this one.
-    Modifications to the cloned font then won't affect the original.
-
-Font:colorMask [read/write]
-
-    Gets or sets the color mask, which is blended with the font bitmaps when
-    text is rendered using the font.
-
-Font:height [read-only]
+Font#height [read-only]
 
     Gets the line height, in pixels, for text rendered using this font.
 
-Font:getCharacterImage(cp);
+Font:drawText(surface, x, y, text[, color[, wrap_width]]);
 
-    Gets an Image object for a specified character glyph.  `cp` is an integer in
-    the range [0-255] specifying the ASCII character code.
+    Renders `text` to the specified surface at (x,y).  `color` defaults to
+    Color.White if not provided, and `wrap_width` specifies the width in which
+    to constrain the text.  If `wrap_width` is not provided, no wrapping is
+    performed.
 
-Font:setCharacterImage(cp, image);
+Font:getStringHeight(string, wrap_width);
 
-    Sets the glyph image for a specified character.  `cp` has the same meaning
-    as above and `image` is the replacement Image object.  Note that replacing
-    glyph images requires the font metrics to be recalculated, which may cause
-    performance issues if overused.
+    Gets the height, in pixels, of the string when it is rendered using
+    Font:drawText(), passing `wrap_width`.
 
 Font:getStringWidth(string);
 
     Gets the width, in pixels, of `string` when it is rendered using this font.
 
-Font:getStringHeight(string, wrap_width);
+Font:wordWrap(text, wrap_width);
 
-    Gets the height, in pixels, of the string when it is rendered using
-    Font:drawTextBox(), passing `wrap_width`.
-
-Font:wordWrapString(text, wrap_width);
-
-    Wraps `text` as if it were drawn with Font:drawTextBox() with the specified
-    wrap width.  Returns an array of strings, representing the lines of the
-    wrapped string.
-
-Font:drawText(x, y, text);
-
-    Renders `text` at (x,y) using this font.  The text is not wrapped.
-
-Font:drawZoomedText(x, y, scale, text);
-
-    Renders `text` at (x, y) using this font, scaled according to `scale`. For
-    example, a scale of 2.0 is double size.  As with Font:drawText(), the text
-    is not wrapped.
-
-Font:drawTextBox(x, y, width, height, x_offset, text);
-
-    Renders `text` at (x, y) wrapped and constrained to a box of the specified
-    width and height.  `x_offset` is added to the X coordinate to offset the
-    text.
+    Wraps `text` as if it were drawn with Font#drawText() using the specified
+    wrap width.  Returns an array of strings, representing the lines in the
+    wrapped text.
+    
+    When drawing large amounts of word-wrapped text every frame, for example in
+    a text box, this function should be used to pre-wrap the text since
+    performing wrapping calculations every frame can get expensive.
 
 
 Audialis Sound Routines
@@ -1009,85 +714,65 @@ new Mixer(frequency, bits[, channels]);
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer:volume [read/write]
+Mixer#volume [read/write]
 
-    Gets or sets the output volume of the mixer. This will affect the volume of
-    any sounds played through the mixer.
+    Gets or sets the output volume of the mixer.  This will affect the volume
+    of any sounds played through the mixer.
 
 new Sound(filename);
 
-    SphereFS compliant.
-
     Constructs a Sound object from the specified audio file.  Supported sound
-    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  minisphere does
-    not support mp3 or MIDI.
+    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  minisphere
+    does not support mp3 or MIDI.
 
-Sound:playing [read-only]
-
-    true if the sound is currently playing, false otherwise.
-
-Sound:length [read-only]
+Sound#length [read-only]
 
     Gets the length of the sound in microseconds.
 
-Sound:pan [read/write]
+Sound#pan [read/write]
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound:pitch [read/write]
+Sound#playing [read-only]
 
-    Gets the current relative pitch of the sound. 1.0 is normal.  Note that this
-    is not a true pitch adjustment: the playback speed will be altered.
+    true if the sound is currently playing, false otherwise.
 
-Sound:position [read/write]
+Sound#position [read/write]
 
-    Gets or sets the playback position within the sound, in microseconds.
+    Gets or sets the playback position within the sound, in seconds.
 
-Sound:repeat [read/write]
+Sound#repeat [read/write]
 
-    Gets or sets whether the sound will automatically repeat when it reaches the
-    end.
+    Gets or sets whether the sound will automatically repeat when it reaches
+    the end.
 
-Sound:seekable [read-only]
+Sound#speed [read/write]
 
-    Gets or sets whether the sound is seekable.  Currently all supported formats
-    are seekable, so this will always be true.
+    Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
+    speed, etc.  Note that changing the playback speed affects the pitch as
+    well.
 
-Sound:volume [read/write]
+Sound#volume [read/write]
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
     clipping.
 
-Sound:pause();
+Sound#pause();
 
     Pauses the sound.  If it is already paused, this has no effect.
 
-Sound:play([mixer, ][is_looping]);
+Sound#play([mixer]);
 
-    Begins or resumes sound playback. The semantics of this function are a bit
-    counterintuitive, but match the behavior of Sphere 1.5.  When called with no
-    arguments, Sound:play() resumes a paused sound.  Otherwise, the sound is
-    restarted from the beginning (even if it was already playing).  If
-    `is_looping` is true, the sound will automatically repeat when playback
-    ends.
+    Begins or resumes sound playback.  When called with no `mixer` argument,
+    Sound#play() will resume playback for a paused sound.  Otherwise, the sound
+    is started from the beginning on the specified mixer.
 
-    `mixer`, if provided, specifies the mixer which will be used to play the
-    sound.  If no mixer is specified, the built-in stereo mixer will be used.
-    See `Mixer.Default` above.
+Sound#stop();
 
-Sound:reset();
-
-    Seeks to the beginning of the stream.  Playback state is not altered; if the
-    sound is playing at the time of this call, it simply starts over from the
-    beginning.  Essentially, this has the same effect as setting Sound:position
-    to zero.
-
-Sound:stop();
-
-    Stops the sound.  The playback position will be reset to the beginning, even
-    if the sound was not playing.
+    Stops the sound.  Playback position will be reset to the beginning (0.0s),
+    even if the sound was not playing.
 
 new SoundStream([frequency[, bits[, channels]]]);
 
@@ -1100,113 +785,33 @@ new SoundStream([frequency[, bits[, channels]]]);
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream:bufferSize [read-only]
+SoundStream#bufferSize [read-only]
 
     Gets the total number of samples in the stream's buffer.
 
-SoundStream:mixer [read/write]
+SoundStream#buffer(data);
 
-    Gets the mixer current being used to play the stream.  This will be null if
-    the stream is stopped.
+    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
+    TypedArray or DataView containing the data to write.  While a stream is
+    playing, audio data should be fed into it continuously to prevent skipping.
 
-SoundStream:play([mixer]);
+SoundStream#pause();
 
-    Starts the stream playing. Ideally, some audio should be pre-buffered into
-    the stream (see SoundStream:write() below) first to minimize the risk of
-    buffer underrun.
+    Pauses playback of the stream.  Has no effect if the stream is already
+    paused.
 
-    `mixer` is optional and specifies the mixer used to play the stream.  If no
-    mixer is provided, minisphere will use the default mixer to play the
-    stream (see `Mixer.Default`).
+SoundStream#play([mixer]);
 
-SoundStream:pause();
+    Starts the stream playing, or if no mixer is specified, resumes a paused
+    stream.  Before beginning playback, it is recommended to pre-buffer some
+    audio into the stream (see SoundStream:buffer() below).  This will minimize
+    the risk of a buffer underrun and subsequent skipping during playback.
 
-    Temporarily pauses playback of the stream.
-
-SoundStream:stop();
+SoundStream#stop();
 
     Stops playback of the stream and frees its buffer.  This should be called
     when you are done using a stream.  The stream may be reused after a stop()
     call, but you will have to feed new audio data.
-
-SoundStream:write(data);
-
-    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
-    TypedArray or DataView containing the data to write.  Audio data must be fed
-    into a stream continuously while it is playing to prevent interruption.
-
-
-Byte Arrays
------------
-
-A byte array is a buffer containing raw data. Byte arrays are used for both
-networking as well as in binary file I/O.  See the sections below for more
-information about those.  Byte arrays can be used like any other array, via the
-indexing operator [], however values written to the array must be numeric and
-are automatically coerced to 8-bit integers (range 0-255).
-
-As of minisphere 2.0, the ByteArray object is deprecated and has been retained
-only for backwards compatibility.  New games should use the native JavaScript
-ArrayBuffer, TypedArray, or DataView objects instead.
-
-new ByteArray(num_bytes);
-
-    Constructs a byte array which can hold 'num_bytes' of data.  A byte array
-    cannot be resized after it is created, so you will have to plan ahead to
-    choose the right size.  Note that byte arrays start out empty, with all
-    bytes set to zero.
-
-new ByteArray(string);
-
-    Constructs a byte array from the bytes of the provided string.  The size of
-    the created byte array will be the number of bytes in the string (which may
-    be greater than the string length!).
-
-ByteArray:length [read-only]
-ByteArray:size [read-only]
-
-    Gets the size of the byte array, in bytes.
-
-ByteArray:concat(byte_array);
-
-    Returns a new byte array which is the result of appending 'byte_array' to
-    the end of the one this method is called for.
-
-ByteArray:deflate([level]);
-
-    Compresses the data in the byte array using the zlib deflate algorithm and
-    returns a new ByteArray containing the compressed data. 'level' specifies
-    the relative compression level in the range [0-9].  If not provided, a
-    default level is used (usually 6).
-
-ByteArray:inflate([max_size]);
-
-    Decompresses a byte array containing deflated data.  If the byte array
-    doesn't contain valid compressed data such as generated by deflate(), an
-    error will be thrown.  `max_size` specifies the maximum size of the
-    uncompressed data.  If it is omitted, the inflate buffer will be dynamically
-    sized to fit the data.
-
-    Important: It is recommended to provide a maximum buffer size to inflate()
-               whenever possible.  Not doing so leaves your game vulnerable to
-               zip bomb-style exploits.
-
-ByteArray:resize(new_size);
-
-    Resizes the byte array to hold the specified number of bytes. The existing
-    contents are preserved to the extent possible, and if the new size is
-    larger, all additional bytes will be set to zero.
-
-ByteArray:slice(start[, end])
-
-    Returns a new byte array which is the result of copying all bytes between
-    start and end, exclusive. If 'end' is negative, it is relative to the end of
-    the byte array; if it is omitted, the entirety of the array from 'start'
-    onwards is taken.
-
-CreateStringFromByteArray(byte_array);
-
-    Builds a string from the bytes in 'byte_array'.
 
 
 Networking (Sockets)
@@ -1217,239 +822,76 @@ Sphere provides.  The old routines are still available, but should be considered
 deprecated.  Under minisphere, sockets are divided into two types: Listening
 sockets, used for servers, and I/O sockets, for clients.
 
-GetLocalName();
+new Server(port[, backlog_size]);
 
-    Returns the calling machine's network name.
-
-GetLocalAddress();
-
-    Returns the calling machine's local IP address.
-
-new ListeningSocket(port[, backlog_size]);
-
-    Constructs a new listening socket which listens for connections on `port`.
+    Constructs a new server to listen for connections on the specified port.
     `backlog_size` specifies the size of the backlog. If the backlog fills, new
     connections will be dropped.
 
-ListeningSocket:accept();
+Server#accept();
 
     If one or more connections are waiting in the backlog, accepts one of them
-    and returns an IOSocket object representing the connection.  Otherwise,
+    and returns a Socket object representing the connection.  Otherwise,
     returns null.  This should be called regularly to prevent the backlog from
     filling up.
 
-ListeningSocket:close();
+Server#close();
 
-    Disconnects the socket. Any sockets in the backlog will be purged and no new
-    connections can be made unless a new ListeningSocket is created.
+    Shuts down the server.  Any connections in the backlog will be dropped and
+    no new connections can be made unless a new Server is created.
 
-new IOSocket(hostname, port);
+new Socket(hostname, port);
 
-    Connects to `hostname` on `port` and constructs an IOSocket representing the
-    connection.  The hostname can either be a named address (e.g. google.com) or
-    an IP address (e.g. 127.0.0.1).  As this operation is non-blocking, a valid
-    socket will be returned even if the connection can be not be made; you must
-    call IOSocket:isConnected() to find out when the connection has opened.
+    Connects to `hostname` on `port` and constructs an Socket representing the
+    connection.  The hostname can either be a named address (e.g. google.com)
+    or an IP address (e.g. 127.0.0.1).  As this operation is non-blocking, a
+    Socket object will be returned even if the connection can be not be made;
+    you must poll Socket#connected to find out when the connection has opened.
 
-IOSocket:remoteAddress [read-only]
+Socket#bytesPending;
+
+    Gets the amount of data, in bytes, currently in the receive buffer.  Call
+    Socket#read() to retrieve this data.
+
+Socket#connected [read-only]
+
+    Gets whether the connection has been established.  As long as this returns
+    false, you cannot call any other methods on the socket object.  Doing so
+    will cause an error to be thrown.
+
+Socket#remoteAddress [read-only]
 
     Gets the IP address of the upstream end of the socket.  Throws an error if
     accessed before a connection has been established.
 
-IOSocket:remotePort [read-only]
+Socket#remotePort [read-only]
 
     Gets the port that the remote machine is using for the connection.
     Generally not a useful statistic, but it's there if you need it.  Throws an
     error if accessed before a connection is established.
 
-IOSocket:isConnected();
+Socket#close();
 
-    Returns true if a connection has been established.  As long as this returns
-    false, you cannot call any other methods on the socket object.  Doing so
-    will cause an error to be thrown.
+    Disconnects the socket.  Note that any given Socket object is tied to a
+    specific session and so cannot be reused after it has been closed.
 
-IOSocket:getPendingReadSize();
+Socket#read(num_bytes);
 
-    Gets the amount of data, in bytes, currently in the receive buffer.  Call
-    IOSocket:read() or :readString() to retrieve this data.
+    Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
+    containing the data received.  This method is non-blocking: If more bytes
+    are requested than are available, only the available data will be returned.
 
-IOSocket:pipe(destination);
-
-    Automatically pipes the data received by the socket to the specified
-    destination socket.  Piping a socket into itself will create an echo server.
-    Note that only one pipe can be active at a time for a given socket; calling
-    pipe() multiple times will simply change the destination.
-
-IOSocket:read(bytes);
-
-    Reads up to `bytes` bytes from the socket and returns a ByteArray containing
-    the data received.
-
-IOSocket:readString(bytes);
-
-    Same as IOSocket:read(), but returns a string instead of a ByteArray. This
-    may be more convenient, depending on your use case.
-
-IOSocket:unpipe();
-
-    Reverses the effect of a pipe() call and closes the pipe.  read() can be
-    called normally afterwards.
-
-IOSocket:write(data);
+Socket#write(data);
 
     Writes data to the socket, which can be read at the other end.  `data` can
-    be either a ByteArray, ArrayBuffer, TypedArray, or string.
-
-    If a string is provided, it will be written encoded as UTF-8.
-
-IOSocket:close();
-
-    Disconnects the socket.  Note that a socket object cannot be reused after it
-    has been closed; a new one must be created.
-
-
-File and Directory Management
------------------------------
-
-These functions allow you to manage the file system. For all of these functions,
-file and directory names are relative to save/.
-
-GetFileList([dirname]);
-
-    Not SphereFS compliant.  `dirname` is relative to @/.
-
-    Returns an array of strings naming files found in the specified directory.
-    If `dirname` is not provided, save/ is assumed.
-
-GetDirectoryList([dirname]);
-
-    Not SphereFS compliant.  `dirname` is relative to @/.
-
-    Returns an array of strings naming subdirectories found in the specified
-    directory.  If 'dirname' is not provided, @/ is assumed.  This is
-    inconsistent with GetFileList(), but is compatible with Sphere 1.x.
-
-DoesFileExist(filename);
-
-    Returns true if the specified file exists, false otherwise.
-
-CreateDirectory(dirname);
-
-    Recursively creates a directory.  It is safe to call this function if the
-    directory already exists.  In that case, nothing happens.
-
-RemoveDirectory(dirname);
-
-    Removes the specified directory from the file system.  The directory must be
-    empty, otherwise an error will be thrown.
-
-RemoveFile(filename);
-
-    Deletes a file from the file system.  If the file cannot be deleted, an
-    error will be thrown.
-
-Rename(filename, new_filename);
-
-    Renames a file on the file system.  If the file cannot be renamed, an error
-    will be thrown.
-
-
-File I/O
---------
-
-When developing a game, at some point you will need to be able to read and write
-data to a file, whether to save and load game progress or something else.
-
-new KevFile(filename);
-
-    Opens a kevfile.  The file format used for kevfiles is similar to a Windows
-    INI file, containing key/value pairs separated by an equals sign, for
-    instance:
-
-        playerName=maggie
-        playtime=812:00:00
-        currentMap=foodville.rmp
-        # etc.
-
-KevFile:read(key, defval);
-
-    Reads a value from the kevfile.  If the key doesn't exist in the file,
-    `defval` is returned.  The return type depends on the type of `defval`,
-    either boolean (true/false), number, or string.
-
-KevFile:write(key, value);
-
-    Writes a value to the kevfile under a specified key.  If the key already
-    exists, it will be overwritten.  Writes are cached, and not written to the
-    file until flushed, either by calling KevFile:flush() or automatically when
-    it is closed.
-
-KevFile:flush()
-
-    Flushes the file.  All pending changes will be written out to the file on
-    disk.  The file will remain open afterwards.
-
-KevFile:close()
-
-    Closes the file, writing any changes out to the file on disk in the process.
-    You should not call any other methods on the object after this (it is safe
-    to call KevFile:close() more than once, however).  Doing so will throw an
-    error.
-
-new RawFile(filename[, is_writable]);
-
-    SphereFS compliant.
-
-    Opens a binary file, allowing raw data to be read and/or written.  If
-    `is_writable` is false, the file must exist and will be opened for reading
-    only.  Otherwise, the file is overwritten (be careful!) and opened for
-    writing.  If it cannot be opened for writing, an error will be thrown.
-
-RawFile:position [read/write]
-
-    Gets or sets the current file position.  This determines where the next read
-    or write operation will start.
-
-RawFile:size [read-only]
-
-    Gets the current size of the file in bytes.  Can also be specified as
-    RawFile:length.
-
-RawFile:read([num_bytes]);
-
-    Reads data from the file and advances the file position.  `num_bytes`
-    specifies the amount of data to read; it can be omitted to read the entire
-    file at once (the file position will not change in this case).  Returns a
-    ByteArray.
-
-RawFile:readString([num_bytes]);
-
-    Like RawFile:read(), but returns a UTF-8 string instead of a ByteArray.
-    This may be more convenient in some cases.
-
-RawFile:write(data);
-
-    Writes data to the file and advances the file position.  The file must be
-    opened for writing or an error will be thrown.  `data` can be either a
-    ByteArray, ArrayBuffer, TypedArray, or string.
-
-    If a string is provided, it will be written encoded as UTF-8.
-
-RawFile:close();
-
-    Closes the file.  You should not call any other methods on the object after
-    this (it is safe to call RawFile:close() more than once, however).  Doing so
-    will throw an error.
+    be either an ArrayBuffer, TypedArray view, or DataView.
 
 
 File Streams
 ------------
 
-The RawFile object documented above was deprecated in minisphere 2.0 and is now
-retained only for backwards compatibility with Sphere 1.x. New games should
-instead use the much more flexible FileStream object.
-
-The FileStream API is fully SphereFS compliant.
+FileStreams are used to directly work with binary data in files.  They are an
+evolution of the RawFile object in Sphere 1.x.
 
 new FileStream(filename, mode);
 
@@ -1466,74 +908,73 @@ new FileStream(filename, mode);
     A valid mode must be provided, otherwise stream construction will fail and
     throw an error.
 
-FileStream:length [read-only]
-FileStream:size [read-only]
-
-    Gets the size of the underlying file, in bytes.
-
-FileStream:position [read/write]
+FileStream#position [read/write]
 
     Gets or sets the file position, which determines where in the file the next
     read or write will start from.  Expressed in bytes.
 
     Note: For files opened for writing, it is valid to seek past the end of the
-    stream.  In this case the next write operation will be done at the new
-    position and the gap filled with NUL bytes.
+    stream.  In this case the next write will be at the new position and the
+    intervening space filled with NUL bytes.
 
-FileStream:close();
+FileStream#size [read-only]
+
+    Gets the size of the underlying file, in bytes.
+
+FileStream#close();
 
     Closes the stream, after which the FileStream object should not be used.
     Attempting to read or write to a stream after it is closed will throw an
     error.
 
-FileStream:read([numBytes]);
+FileStream#read([num_bytes]);
 
     Reads data from the file, up to the specified number of bytes, and returns
-    it in an ArrayBuffer.  As a convenience, `numBytes` can be omitted to read
-    the entire file without affecting the file position. The file must be opened
-    for reading.
+    it as an ArrayBuffer.  As a convenience, `num_bytes` can be omitted to read
+    the entire file without affecting the file position.  The file must be
+    opened for reading.
 
-FileStream:readFloat([little_endian]);
-FileStream:readDouble([little_endian]);
+FileStream#readFloat([little_endian]);
+FileStream#readDouble([little_endian]);
 
     Reads a floating point value from the file and advances the file pointer.
     `little_endian` is optional and defaults to false.
 
-FileStream:readInt([size[, little_endian]]);
-FileStream:readUInt([size[, little_endian]]);
+FileStream#readInt([size[, little_endian]]);
+FileStream#readUInt([size[, little_endian]]);
 
     Reads a signed or unsigned integer from the file and advances the file
     pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
     value to read.  This allows integer values of up to 48 bits to be read.
 
-FileStream:readPString(lenSize[, little_endian]);
+FileStream#readPString(lenSize[, little_endian]);
 
     Reads a length-prefixed (Pascal) string from the file.  `lenSize` specifies
     the number of bytes [1-4] used to encode the string length.  `little_endian`
     is optional and defaults to false.
 
-FileStream:readString([numBytes]);
+FileStream#readString([num_bytes]);
 
-    Reads a fixed-length string from the file.  `numBytes` specifies how many
+    Reads a fixed-length string from the file.  `num_bytes` specifies how many
     bytes to read and can be omitted to read the entire file at once without
     affecting the file pointer.
 
     Note: Strings in minisphere are UTF-8 encoded.  As a result, the number of
           bytes in a string may not match the number of characters.
 
-FileStream:write(data);
+FileStream#write(data);
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
 
-FileStream:writeFloat(value[, little_endian]);
-FileStream:writeDouble(value[, little_endian]);
+FileStream#writeFloat(value[, little_endian]);
+FileStream#writeDouble(value[, little_endian]);
 
     Writes a floating point value to the file and advances the file pointer.
     `little_endian` is optional and defaults to false.
 
-FileStream:writeInt(value[, size[, little_endian]]);
-FileStream:writeUInt(value[, size[, little_endian]]);
+FileStream#writeInt(value[, size[, little_endian]]);
+FileStream#writeUInt(value[, size[, little_endian]]);
 
     Writes a signed or unsigned integer to the file and advances the file
     pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
@@ -1542,7 +983,7 @@ FileStream:writeUInt(value[, size[, little_endian]]);
     Note: If `value` is too large or small to be represented in `size` bytes,
           this method will throw a TypeError.
 
-FileStream:writePString(string, lenSize[, little_endian]);
+FileStream#writePString(string, lenSize[, little_endian]);
 
     Writes a UTF-8-encoded, length-prefixed (Pascal-style) string to the file
     and advances the file pointer.  `lenSize` specifies the number of bytes [1-4]
@@ -1552,465 +993,6 @@ FileStream:writePString(string, lenSize[, little_endian]);
     Note: If the string is too long for its length to be encoded in `lenSize`
           bytes, this method will throw a TypeError.
 
-FileStream:writeString(string);
+FileStream#writeString(string);
 
     Writes a UTF-8-encoded string to the file and advances the file pointer.
-
-
-Map Engine
-----------
-
-minisphere's map engine is fully compatible with the one found in Sphere 1.5 and
-very powerful.  It's also very easy to get up and running. This section is
-incomplete; the APIs below are only the basics. See the Sphere 1.x API reference
-for the full set of map functions.
-
-MapEngine(filename[, framerate]);
-
-    Not SphereFS compliant: `filename` is relative to maps/.
-
-    Starts the map engine, loading `map_file` as the initial map.  `framerate`
-    specifies the framerate the map engine will run at; a framerate of 0 will
-    run unthrottled, which may be useful for benchmarks but is generally useless
-    otherwise.
-
-    Unlike Sphere 1.x, `framerate` is optional.  If it is not provided, the
-    FlipScreen() framerate (set using SetFrameRate()) will be used.
-
-IsMapEngineRunning();
-
-    Returns true if the map engine is currently running.
-
-ChangeMap(filename);
-
-    Not SphereFS compliant: `filename` is relative to maps/.
-
-    Loads a new map into the map engine.  This destroys any transient persons
-    automatically.  Transient persons are those defined in the map file as well
-    as any created by passing `true` as the third argument to CreatePerson().
-
-MapToScreenX(layer, x);
-MapToScreenY(layer, y);
-ScreenToMapX(layer, x);
-ScreenToMapY(layer, y);
-
-    Converts between map and screen coordinates.
-
-SetUpdateScript(fn);
-SetRenderScript(fn);
-
-    Sets a function `fn` to be called once per map engine frame.  Game state
-    should be updated in the update script, while drawing is done in the render
-    script.  The distinction is important, as render calls can be skipped to
-    minimize lag.
-
-    Note: You shouldn't call these functions when using miniRT.  The runtime
-    uses update and render scripts internally and switching them out will break
-    things.
-
-SetMapEngineFrameRate(fps);
-GetMapEngineFrameRate();
-
-    Gets or sets the map engine framerate.  Set it to 0 to run the map engine
-    unthrottled (not generally useful outside of benchmarks).
-
-GetCurrentMap();
-
-    Gets the filename of the current map, relative to maps/.
-
-SetLayerWidth(layer, width);
-SetLayerHeight(layer, height);
-SetLayerSize(layer, width, height);
-GetLayerWidth(layer);
-GetLayerHeight(layer);
-
-    Gets or sets the size, in tiles, of the specified map layer.  Newly created
-    map tiles will be set to use tile number 0 (the first image in the tileset).
-    The change persists until the next ChangeMap() call.
-
-    Note: If a map becomes smaller as a result of resize calls, zones and
-    triggers which are fully outside the map will be deleted.  Any zones which
-    are only partially out-of-bounds will be resized to fit.
-
-AttachInput(name);
-DetachInput();
-IsInputAttached();
-GetInputPerson();
-
-    Attaches, detaches or gets the input focus.  The player will have control of
-    the person with input focus.  `name` is the name of the person as passed to
-    CreatePerson().
-
-AttachCamera(name);
-DetachCamera();
-IsCameraAttached();
-GetCameraPerson();
-
-    Attaches, detaches, or gets the camera focus.  The camera will remain
-    centered on whichever person it's attached to as they move about the map.
-    `name` is the name of the person as passed to CreatePerson().
-
-SetCameraX();
-SetCameraY();
-GetCameraX();
-GetCameraY();
-
-    Gets or sets the camera position. Note: If the camera is placed beyond the
-    edge of a non-repeating map, the map's corresponding edge script will be
-    called.
-
-UpdateMapEngine();
-
-    Updates the map engine per frame. Used to keep the map engine operating in
-    the background when running a tight loop. Note that map input will not be
-    accepted during an UpdateMapEngine() loop.
-
-RenderMap();
-
-    Renders the current map and set of persons to the backbuffer. Used along
-    with UpdateMapEngine() to keep the map engine operating when running a tight
-    loop.
-
-ExitMapEngine();
-
-    Tells the map engine to shut down at the start of the next frame.  If the
-    map engine is presently held up in an UpdateMapEngine() loop (see below),
-    this call will not take effect until control returns to the map engine
-    proper.
-
-
-Trigger Management
-------------------
-
-A trigger is a non-obstructing entity which automatically executes custom code
-when stepped on by a player-controlled person. This is useful for triggering
-events when the player reaches a certain point while exploring, as well as
-implementing warp points between maps.
-
-Note that trigger modifications at runtime are transient. This means they will
-need to be redone if the map is reloaded. Persistent modifications require
-triggers to be edited in the map file itself.
-
-GetCurrentTrigger();
-
-    When called in a trigger script, returns the trigger ID of the executing
-    trigger. Calling this in any other context will throw an error.
-
-AddTrigger(x, y, layer, script);
-
-    Adds a trigger to the current map and returns its trigger ID.  `script` can
-    be either a code string or a function.  Triggers created this way are
-    transient and will need to be recreated if the map is reloaded.  For
-    compatibility reasons, the layer is ignored by the engine when processing
-    triggers.
-
-RemoveTrigger(trigger_id);
-
-    Removes the trigger with the specified trigger ID from the map.  As with
-    AddTrigger(), the modification is transient.
-
-GetNumTriggers();
-
-    Gets the number of triggers on the current map.
-
-GetTriggerX(trigger_id);
-GetTriggerY(trigger_id);
-GetTriggerLayer(trigger_id);
-SetTriggerXY(trigger_id, x, y);
-SetTriggerLayer(trigger_id, layer);
-
-    Gets or sets the location of a trigger on the map, in pixels.
-
-SetTriggerScript(trigger_id, script);
-
-    Sets the specified trigger's script. Like most trigger modifications, this
-    is transient.
-
-IsTriggerAt(x, y, layer);
-
-    Returns true if there is a trigger at the specified location, false
-    otherwise.  'layer' is required, but ignored for compatibility reasons.
-
-ExecuteTrigger(x, y, layer);
-
-    Fires the trigger at the specified location, if one exists.  As above,
-    `layer` is required but ignored.
-
-
-Zone Management
----------------
-
-Zones are similar to triggers, except they can cover more than one tile and run
-their associated scripts periodically as long as the player is moving and
-remains inside the zone. A potential use for these is implementing random
-battles.  They have other uses as well, as demonstrated by, e.g., Lithonite.
-
-As with triggers, all zone modifications at runtime are transient.
-
-GetCurrentZone();
-
-    When called in a zone script, returns the zone ID of the executing zones.
-    Calling this in any other context will throw an error.
-
-AddZone(x, y, width, height, layer, script);
-
-    Adds a zone to the current map.  `script` can be either a code string or a
-    function.  As with triggers, the layer is ignored by the engine when
-    processing zones.
-
-RemoveZone(zone_id);
-
-    Removes the zone with the specified zone ID from the map.
-
-GetNumZones();
-
-    Returns the number of zones on the current map.
-
-GetZoneX(zone_id);
-GetZoneY(zone_id);
-GetZoneWidth(zone_id);
-GetZoneHeight(zone_id);
-GetZoneLayer(zone_id);
-SetZoneMetrics(zone_id, x, y, width, height[, layer]);
-
-    Gets or sets the location and size of a zone, in pixels.
-
-GetZoneSteps(zone_id);
-SetZoneSteps(zone_id);
-
-    Gets or sets the zone's step count.  The zone script will execute every time
-    the input character takes this number of steps while inside the zone.
-
-AreZonesAt(x, y, layer);
-
-    Returns true if the specified point is inside of a zone, or false otherwise.
-    'layer' is required, but ignored for compatibility reasons.
-
-ExecuteZones(x, y, layer);
-
-    Executes the scripts of all zones straddling the specified point, if any.
-    As above, 'layer' is required but ignored.
-
-
-Persons Management
-------------------
-
-Persons are the Sphere term for what most RPG map engines call 'entities'.  They
-are so named for their typical use case--representing persons on a map.
-Typically you create one or more persistent persons to represent your player
-characters, and the rest are transient, to be destroyed when a new map is
-loaded.
-
-CreatePerson(name, spriteset, transient);
-
-    Not SphereFS compliant: `spriteset` is relative to spritesets/.
-
-    Creates a person using the spriteset specified by `spriteset`.  This can
-    either be an .rss spriteset filename or a Spriteset object.  If `transient`
-    is true, the person is transient and will automatically be destroyed when a
-    new map is loaded via ChangeMap().
-
-DestroyPerson(name);
-
-    Destroys the person, removing it from play.  This works on persons created
-    manually via CreatePerson() as well as those created during map load, so be
-    careful!
-
-GetPersonList();
-
-    Returns an array of person names representing all the persons that currently
-    exist.
-
-DoesPersonExist(name);
-
-    Returns true if a person named `name` currently exists, otherwise returns
-    false.
-
-GetPersonX(name);
-GetPersonY(name);
-GetPersonLayer(name);
-SetPersonX(name, new_x);
-SetPersonY(name, new_y);
-SetPersonLayer(name, layer);
-
-    Gets or sets a person's position relative to the current map.  `layer` can
-    be either a 0-based layer index or a layer name.  Note: For compatibility
-    reasons, GetPersonLayer() always returns the index.
-
-SetPersonXYFloat(name, new_x, new_y);
-GetPersonXFloat(name);
-GetPersonYFloat(name);
-
-    Gets or sets a person's position relative to the current map, with subpixel
-    precision.
-
-SetPersonDirection(name, new_dir);
-GetPersonDirection(name);
-
-    Gets or sets a person's current direction.  The "direction" is actually the
-    name of a pose as defined in the person's spriteset.  Note: A spriteset is
-    required to have a pose for at least each of the 4 cardinal directions
-    (north, east, south and west).
-
-FollowPerson(name, leader_name, distance);
-
-    Makes a person follow another person at a distance specified by `distance`.
-    The distance is not absolute and the actual trailing distance depends on the
-    leader's speed.  Faster leaders will put more distance between themselves
-    and their followers.
-
-    To detach a follower and make them independent again, call the function
-    again like this:
-
-        FollowPerson("<name>", null, 0);
-
-GetPersonLeader(name);
-
-    Gets the person `name` is currently following.  If no leader exists (the
-    person is independent), returns an empty string ("").
-
-GetPersonFollowers(name);
-
-    Gets an array of names of persons following a specified person.
-
-GetPersonFollowDistance(name);
-SetPersonFollowDistance(name);
-
-    Gets or sets the named person's follow distance.  Throws an error if the
-    person is not following anyone.
-
-IsPersonVisible()
-SetPersonVisible(is_visible)
-
-    Gets or sets the person's visibility status.  `true` if visible, `false` if
-    not.
-
-IsPersonObstructed(name, x, y);
-
-    Checks whether the person would be obstructed at a given location.  Useful
-    for pathfinding.
-
-GetObstructingPerson(name, x, y);
-
-    If the person named `name` is obstructed by a person at the given location,
-    returns the offending person's name.  Otherwise, returns an empty string.
-
-GetObstructingTile(name, x, y);
-
-  If the person named `name` is obstructed by a map tile at the given location,
-  returns the tile index.  Otherwise, returns -1.
-
-SetPersonSpeed(name, speed);
-SetPersonSpeedXY(name, new_speed_x, new_speed_y);
-GetPersonSpeedX(name);
-GetPersonSpeedY(name);
-
-    Gets or sets the person's speed in two dimensions.  This function is
-    shorthand for SetPersonSpeedXY(name, speed, speed).
-
-SetPersonSpriteset(name, spriteset);
-GetPersonSpriteset(name);
-
-    Gets the person's current spriteset as a Spriteset object.
-
-IsIgnoringPersonObstructions(name);
-IgnorePersonObstructions(name, ignore);
-
-    Gets or sets whether the person is ignoring other persons.  Ignored persons
-    do not affect collision and cannot be talked to.  Note that ignoring is
-    mutual between persons.
-
-IsIgnoringTileObstructions(name);
-IgnoreTileObstructions(name, ignore);
-
-    Gets or sets whether the person is ignoring tile obstructions.  As with
-    ignored persons, this disables tile collision.
-
-QueuePersonCommand(name, command[, is_immediate]);
-
-    Adds a command to the person's command queue. If `is_immediate` is true, the
-    engine will immediately execute the next command in the queue. Otherwise,
-    execution will halt until the next frame.  The default is false. The
-    following commands are supported:
-
-        COMMAND_WAIT - do nothing, useful as a non-immediate command to delay for
-                       a frame.
-
-        COMMAND_ANIMATE - advance the person's animation state by one frame.
-                          Queue these continuously to animate the sprite.
-
-        COMMAND_FACE_NORTH
-        COMMAND_FACE_NORTHEAST
-        COMMAND_FACE_EAST
-        COMMAND_FACE_SOUTHEAST
-        COMMAND_FACE_SOUTH
-        COMMAND_FACE_SOUTHWEST
-        COMMAND_FACE_WEST
-        COMMAND_FACE_NORTHWEST
-
-            Changes the person's facing direction.  If the specified direction
-            isn't available in the person's spriteset, the engine will use the
-            closest match.
-
-        COMMAND_MOVE_NORTH
-        COMMAND_MOVE_NORTHEAST
-        COMMAND_MOVE_EAST
-        COMMAND_MOVE_SOUTHEAST
-        COMMAND_MOVE_SOUTH
-        COMMAND_MOVE_SOUTHWEST
-        COMMAND_MOVE_WEST
-        COMMAND_MOVE_NORTHWEST
-
-            Moves the person a number of pixels determined by their speed.  See
-            SetPersonSpeed() above.
-
-QueuePersonScript(name, script[, is_immediate]);
-
-  Adds a script to the person's command queue.  `is_immediate` has the same
-  meaning and semantics as in QueuePersonCommand() above.  `script` can be
-  either a JavaScript source string or a function.
-
-IsCommandQueueEmpty(name);
-
-    Returns true if the person's command queue is empty, false otherwise.
-
-ClearCommandQueue(name);
-
-  Removes all commands and scripts from the person's command queue.
-
-
-Tileset Management
-------------------
-
-These functions aren't generally needed for most use cases.  They are used to
-modify the current map's tileset.  As with most map modifications, these are
-transient and must be redone if the map is reloaded.
-
-GetNumTiles();
-
-    Returns the number of the tiles in the current map's tileset.
-
-GetTileDelay(tile_id);
-SetTileDelay(tile_id, frames);
-
-    Gets or sets a tile's animation delay.  This is the number of frames which
-    must elapse before the tile switches to the next one in its animation
-    sequence.
-
-GetNextAnimatedTile(tile_id);
-SetNextAnimatedTile(tile_id, next_tile_id);
-
-    Gets or sets the next tile in the tile animation sequence.
-
-GetTileImage(tile_id);
-SetTileImage(tile_id, image);
-
-    Gets or sets the Image associated with a tile.  The dimensions of the Image
-    must match the tile dimensions, or an error will be thrown.
-
-GetTileSurface(tile_id);
-SetTileSurface(tile_id, surface);
-
-    Like Get/SetTileImage(), but uses Surface objects instead.  Note: Drawing to
-    the Surface after calling either of these functions will not modify the
-    tile.

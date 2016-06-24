@@ -208,7 +208,7 @@ static duk_ret_t js_keyboard_get_numLock       (duk_context* ctx);
 static duk_ret_t js_keyboard_get_scrollLock    (duk_context* ctx);
 static duk_ret_t js_keyboard_clearQueue        (duk_context* ctx);
 static duk_ret_t js_keyboard_getKey            (duk_context* ctx);
-static duk_ret_t js_keyboard_isDown            (duk_context* ctx);
+static duk_ret_t js_keyboard_isPressed         (duk_context* ctx);
 static duk_ret_t js_keyboard_keyChar           (duk_context* ctx);
 static duk_ret_t js_random_chance              (duk_context* ctx);
 static duk_ret_t js_random_normal              (duk_context* ctx);
@@ -234,8 +234,8 @@ static duk_ret_t js_Color_clone                (duk_context* ctx);
 static duk_ret_t js_Color_fade                 (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
+static duk_ret_t js_FileStream_get_size        (duk_context* ctx);
 static duk_ret_t js_FileStream_set_position    (duk_context* ctx);
-static duk_ret_t js_FileStream_get_length      (duk_context* ctx);
 static duk_ret_t js_FileStream_close           (duk_context* ctx);
 static duk_ret_t js_FileStream_read            (duk_context* ctx);
 static duk_ret_t js_FileStream_readDouble      (duk_context* ctx);
@@ -389,9 +389,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Color", "fade", js_Color_fade);
 
 	api_register_type(ctx, "FileStream", js_FileStream_finalize);
-	api_register_prop(ctx, "FileStream", "length", js_FileStream_get_length, NULL);
 	api_register_prop(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
-	api_register_prop(ctx, "FileStream", "size", js_FileStream_get_length, NULL);
+	api_register_prop(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
 	api_register_method(ctx, "FileStream", "close", js_FileStream_close);
 	api_register_method(ctx, "FileStream", "read", js_FileStream_read);
 	api_register_method(ctx, "FileStream", "readDouble", js_FileStream_readDouble);
@@ -519,7 +518,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_prop(ctx, "keyboard", "scrollLock", js_keyboard_get_scrollLock, NULL);
 	api_register_static_func(ctx, "keyboard", "clearQueue", js_keyboard_clearQueue);
 	api_register_static_func(ctx, "keyboard", "getKey", js_keyboard_getKey);
-	api_register_static_func(ctx, "keyboard", "isDown", js_keyboard_isDown);
+	api_register_static_func(ctx, "keyboard", "isPressed", js_keyboard_isPressed);
 	api_register_static_func(ctx, "keyboard", "keyChar", js_keyboard_keyChar);
 	
 	api_register_static_func(ctx, "random", "chance", js_random_chance);
@@ -1239,7 +1238,7 @@ js_fs_unlink(duk_context* ctx)
 }
 
 static duk_ret_t
-js_keyboard_isDown(duk_context* ctx)
+js_keyboard_isPressed(duk_context* ctx)
 {
 	int keycode;
 
@@ -1769,20 +1768,7 @@ js_FileStream_get_position(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FileStream_set_position(duk_context* ctx)
-{
-	sfs_file_t* file;
-	long long   new_pos;
-
-	duk_push_this(ctx);
-	file = duk_require_sphere_obj(ctx, -1, "FileStream");
-	new_pos = duk_require_number(ctx, 0);
-	sfs_fseek(file, new_pos, SFS_SEEK_SET);
-	return 0;
-}
-
-static duk_ret_t
-js_FileStream_get_length(duk_context* ctx)
+js_FileStream_get_size(duk_context* ctx)
 {
 	sfs_file_t* file;
 	long        file_pos;
@@ -1797,6 +1783,19 @@ js_FileStream_get_length(duk_context* ctx)
 	duk_push_number(ctx, sfs_ftell(file));
 	sfs_fseek(file, file_pos, SEEK_SET);
 	return 1;
+}
+
+static duk_ret_t
+js_FileStream_set_position(duk_context* ctx)
+{
+	sfs_file_t* file;
+	long long   new_pos;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "FileStream");
+	new_pos = duk_require_number(ctx, 0);
+	sfs_fseek(file, new_pos, SFS_SEEK_SET);
+	return 0;
 }
 
 static duk_ret_t
