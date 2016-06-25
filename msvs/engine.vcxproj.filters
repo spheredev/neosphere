@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="CommonJS Modules">
+      <UniqueIdentifier>{ac56467a-720e-42e6-9d95-17fd52312722}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\shared\duktape.c">
@@ -289,6 +292,36 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\assets\system\modules\bin.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\events.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\link.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\music.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\pacts.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\prim.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\scenes.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\terminal.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\threads.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
+    <None Include="..\assets\system\modules\xml.js">
+      <Filter>CommonJS Modules</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="spherical.ico">

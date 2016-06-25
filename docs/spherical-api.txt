@@ -338,32 +338,32 @@ Key [enumeration]
     below the function keys, while NumPad0-NumPad9 refer to the numbers on the
     numeric keypad.
 
-keyboard.capsLock [read-only]
-keyboard.numLock [read-only]
-keyboard.scrollLock [read-only]
+kb.capsLock [read-only]
+kb.numLock [read-only]
+kb.scrollLock [read-only]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
-keyboard.clearQueue()
+kb.clearQueue();
 
     Removes all keys from the keyboard queue.  If another key is not pressed
     in the interim, the next getKey() will return Key.None.
 
-keyboard.getKey()
+kb.getKey();
 
     Gets the next key in the keyboard queue, or Key.None if the queue is empty.
 
-keyboard.isPressed(key);
+kb.isPressed(key);
 
     Returns true if the user is currently pressing the specified key.  `key`
     should be a member of the Key enumeration.
 
-keyboard.keyChar(key, shifted)
+kb.keyString(key, shifted);
 
-    Gets the character that would be generated if a specified key is pressed.
-    For example, Key.A becomes "a" (or "A" if shifted).  `shifted` specifies
-    whether to assume the Shift key is pressed.
+    Gets the character(s) that would be generated if a specified key is
+    pressed.  For example, Key.A becomes "a" (or "A" if shifted).  `shifted`
+    specifies whether to assume the Shift key is pressed.
 
 
 Graphics API

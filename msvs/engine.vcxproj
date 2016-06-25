@@ -459,6 +459,16 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ResourceCompile Include="engine.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\assets\system\modules\bin.js" />
+    <None Include="..\assets\system\modules\events.js" />
+    <None Include="..\assets\system\modules\link.js" />
+    <None Include="..\assets\system\modules\music.js" />
+    <None Include="..\assets\system\modules\pacts.js" />
+    <None Include="..\assets\system\modules\prim.js" />
+    <None Include="..\assets\system\modules\scenes.js" />
+    <None Include="..\assets\system\modules\terminal.js" />
+    <None Include="..\assets\system\modules\threads.js" />
+    <None Include="..\assets\system\modules\xml.js" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
