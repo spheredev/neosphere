@@ -3,24 +3,22 @@ Spherical API Reference
 
 minisphere uses JavaScript for game logic.  This is the same programming
 language used by the original Sphere engine, which minisphere is the successor
-to.  In fact, minisphere implements most of the Sphere 1.5 API, with several
-backwards-compatible enhancements.
+to.  In fact, minisphere implements most of the Sphere 1.5 API.
 
-This file documents the functions exposed by minisphere for use in game scripts.
-The list may not be exhaustive, particularly in regards to legacy functions;
-refer to the Sphere 1.x API reference for a full list of legacy functions (note
-that a few of these may not be supported, however):
-
-    Sphere 1.x API Reference:
-    https://github.com/sphere-group/sphere/blob/master/sphere/docs/development/api.txt
+However, the Sphere 1.x API is quite old and, as of minisphere 4.0, has been
+deprecated.  It is beyond the scope of this file to document it; while games
+using legacy functions will continue to work without issue in minisphere for
+the foreseeable, new projects should prefer the modern Sphere 2.0 API, which is
+what's documented here.
 
 
 game.json (Game Manifest)
 -------------------------
 
-Sphere 2.0 games must provide a file called `game.json` in the root of the game
-package which holds the metadata for the game.  All values in game.json are
-available to game code through `engine.game` (see below).
+In order to use Sphere 2.0 features, a game must provide a file called
+`game.json` in the root of the game package which holds its metadata.  All
+values in `game.json` are available to game code through `engine.game` (see
+below).
 
 A basic `game.json` might look like this:
 
@@ -39,10 +37,10 @@ naming the game's main JavaScript module.
 SphereFS File System
 --------------------
 
-minisphere follows the SphereFS standard for file paths.  When a relative path
-is passed to a function or method, it will be resolved relative to the root of
-the game package (where `game.json` is located).  To load files from a
-different location, you can use one of the following SphereFS prefixes:
+Sphere uses the SphereFS standard to interpret file paths.  Under SphereFS,
+when a relative path is used in an API call, it will be resolved relative to
+the root of the game package (where `game.json` is located).  To load files
+from a different location, you can use one of the SphereFS prefixes:
 
     @/: The root of the game's sandboxed file system.  Usually redundant, but
         can be useful to qualify filenames in situations where a bare SphereFS
@@ -60,25 +58,25 @@ save data directory for reading in binary mode:
 
     var file = fs.open("~/EatyPig.bin", "rb");
 
-Absolute paths are not allowed, and any attempt to circumvent the sandbox, e.g.
-"@/../maggie.fat", will be met with an error indicating a sandbox violation.
+Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
+"@/../maggie.fat", will be met with a sandbox violation error.
 
 
-CommonJS
---------
+CommonJS API
+------------
 
-Second-generation Sphere engines like minisphere use CommonJS for dependency
-management.  In CommonJS, each script is run as a function, which isolates
-modules from one another and enables more granular control of exports.  In
-addition, because the code importing a module decides where to store its
-exports (if at all), naming collisions between modules are avoided entirely.
+Sphere uses the CommonJS system for dependency management.  With CommonJS, each
+script is run as a function, which isolates modules from one another and
+enables more granular control of exports.  In addition, because the code
+importing a module decides where to store its exports (if at all), naming
+conflicts between modules are avoided entirely.
 
 require(module_id);
 
     Loads a CommonJS module and returns its export table.  `module_id` is an
     abstract path (a string) identifying the module to load, with the same
     semantics as in, e.g. Node.js.  If the module cannot be found, an error will
-    be thrown.  minisphere will look for modules in the following locations:
+    be thrown.  The engine will look for modules in the following locations:
 
         @/lib/
         #/modules/
@@ -88,13 +86,13 @@ require(module_id);
     module.
 
 
-`engine` Global Variable
-------------------------
+Engine Control API
+------------------
 
-`engine` provides a way for games to communicate with the underlying Sphere
-platform.  The object's properties provide access to the engine's name and
-version number as well as the API level supported, and there are several
-methods for controlling engine execution, for example `engine.sleep()`.
+The `engine` global variable is provided to allow games to communicate with the
+underlying Sphere platform.  The `engine` object's properties provide access to
+the engine's name and version number as well as the API level supported, and
+there are also several methods for managing engine execution.
 
 engine.name [read-only]
 
@@ -155,12 +153,13 @@ engine.sleep(time);
     JavaScript code will be executed until the timeout expires.
 
 
-`random` Global Variable
-------------------------
+Random Number Generation API
+----------------------------
 
-Games often have need of a good random number generator, particularly in the
-case of RPGs.  JavaScript has a basic generator in the form of Math.random().
-The Sphere API takes it a step further and provides the `random` object.
+Games often have need of a good psuedorandom number generator, particularly in\
+the case of RPGs.  JavaScript provides a basic generator in the form of
+Math.random().  Sphere takes it a step further and provides the `random`
+object.
 
 minisphere uses the xoroshiro128+ algorithm to generate high-quality random
 values and allows manually seeding the generator, as well as saving and
@@ -415,12 +414,6 @@ new Color(red, green, blue[, alpha]);
     the range [0.0-1.0] and out-of-range values will be silently clamped.
     `alpha` specifies opacity and defaults to 1.0 if not provided.
 
-Color#name [read-only]
-
-    Gets the name of the Color according to its component values such that
-    Color.of(color.name) will give back a Color with the same values.  Useful
-    for saving and reading back colors from save files.
-
 Color#r [read/write]
 Color#g [read/write]
 Color#b [read/write]
@@ -429,6 +422,12 @@ Color#a [read/write]
     Gets or sets the individual components of the color.  Values outside the
     range of [0-1] are accepted, but the engine will automatically clamp them
     during rendering.
+
+Color#name [read-only]
+
+    Gets the name of the Color according to its component values such that
+    Color.of(color.name) will give back a Color with the same values.  Useful
+    for saving and reading back colors from save files.
 
 Color#clone();
 
@@ -443,6 +442,46 @@ Color#fade(alpha);
     instance:
 
         var translucentBlue = Color.Blue.fade(0.5);
+
+Font.Default [read-only]
+
+    Gets the default engine font.  This is the font used for the FPS counter
+    and system messages.
+
+new Font(filename);
+
+    Constructs a Font object from a font file.  Currently only the Sphere RFN
+    font format is supported.
+
+Font#height [read-only]
+
+    Gets the line height, in pixels, for text rendered using this font.
+
+Font:drawText(surface, x, y, text[, color[, wrap_width]]);
+
+    Renders `text` to the specified surface at (x,y).  `color` defaults to
+    Color.White if not provided, and `wrap_width` specifies the width in which
+    to constrain the text.  If `wrap_width` is not provided, no wrapping is
+    performed.
+
+Font:getStringHeight(string, wrap_width);
+
+    Gets the height, in pixels, of the string when it is rendered using
+    Font:drawText(), passing `wrap_width`.
+
+Font:getStringWidth(string);
+
+    Gets the width, in pixels, of `string` when it is rendered using this font.
+
+Font:wordWrap(text, wrap_width);
+
+    Wraps `text` as if it were drawn with Font#drawText() using the specified
+    wrap width.  Returns an array of strings, representing the lines in the
+    wrapped text.
+    
+    When drawing large amounts of word-wrapped text every frame, for example in
+    a text box, this function should be used to pre-wrap the text since
+    performing wrapping calculations every frame can get expensive.
 
 new Image(filename);
 
@@ -633,55 +672,8 @@ Transform#translate(tx, ty);
     horizontal and vertical translations, respectively.
 
 
-Fonts and Text Rendering
-------------------------
-
-A common task in a game engine, at some point you will probably want to get
-text on the screen.  In minisphere, you use a Font object to do this.
-
-Font.Default [read-only]
-
-    Gets the engine default font.  This is the same font used for the FPS
-    counter and other system output.
-
-new Font(filename);
-
-    Constructs a Font object from a font file.  Currently only Sphere 1.x RFN
-    format is supported.
-
-Font#height [read-only]
-
-    Gets the line height, in pixels, for text rendered using this font.
-
-Font:drawText(surface, x, y, text[, color[, wrap_width]]);
-
-    Renders `text` to the specified surface at (x,y).  `color` defaults to
-    Color.White if not provided, and `wrap_width` specifies the width in which
-    to constrain the text.  If `wrap_width` is not provided, no wrapping is
-    performed.
-
-Font:getStringHeight(string, wrap_width);
-
-    Gets the height, in pixels, of the string when it is rendered using
-    Font:drawText(), passing `wrap_width`.
-
-Font:getStringWidth(string);
-
-    Gets the width, in pixels, of `string` when it is rendered using this font.
-
-Font:wordWrap(text, wrap_width);
-
-    Wraps `text` as if it were drawn with Font#drawText() using the specified
-    wrap width.  Returns an array of strings, representing the lines in the
-    wrapped text.
-    
-    When drawing large amounts of word-wrapped text every frame, for example in
-    a text box, this function should be used to pre-wrap the text since
-    performing wrapping calculations every frame can get expensive.
-
-
-Audialis Sound Routines
------------------------
+Audio API
+---------
 
 Playing sounds and music are both handled in minisphere by Audialis, the
 evolution of Sphere 1.x's audio subsystem.  Audialis allows you to create mixers
@@ -714,8 +706,8 @@ Mixer#volume [read/write]
 new Sound(filename);
 
     Constructs a Sound object from the specified audio file.  Supported sound
-    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  minisphere
-    does not support mp3 or MIDI.
+    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
+    unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
 
 Sound#length [read-only]
 
@@ -806,16 +798,27 @@ SoundStream#stop();
     call, but you will have to feed new audio data.
 
 
-File Streams
-------------
+File System API
+---------------
 
-FileStreams are used to directly work with binary data in files.  They are an
-evolution of the RawFile object in Sphere 1.x.
+minisphere provides the `fs` global variable to allow games to access asset and
+save files, create or remove directories, and so on.
 
-new FileStream(filename, mode);
+fs.exists(filename);
 
-    Constructs a new FileStream from the specified file.  `mode` is a string in
-    the same format as that of C fopen() specifying how to open the file:
+    Checks whether the specified file exists and returns true if it does.
+	Otherwise, returns false.
+
+fs.mkdir(dirname);
+
+    Creates the specified directory and any of its parent directories that
+    don't already exist.
+
+fs.open(filename, mode);
+
+    Opens the specified file and constructs a new FileStream to access it.
+    `mode` is a string in the same format as that of C fopen() specifying the
+    mode in which to open the file:
 
         r:  Open file for reading.
         r+: Open file for update (reading and writing).
@@ -824,8 +827,23 @@ new FileStream(filename, mode);
         a:  Open file (create if not found) with file position at end of file.
         a+: Open file for update with initial position at end of file.
 
-    A valid mode must be provided, otherwise stream construction will fail and
-    throw an error.
+	Note that calling `fs.open` is the only way to get a FileStream object, as
+	there is no FileStream constructor.
+
+fs.rename(srcname, destname);
+
+    Renames the file named by `srcname` to `destname`, both of which are
+    assumed to be full SphereFS paths.  This can also be used to move a file
+    between directories; if so, the destination directory must already exist.
+
+fs.rmdir(dirname);
+
+    Deletes the specified directory.  The directory must be empty or an error
+    will be thrown.
+
+fs.unlink(filename);
+
+    Deletes the specified file.
 
 FileStream#position [read/write]
 
@@ -917,31 +935,30 @@ FileStream#writeString(string);
     Writes a UTF-8-encoded string to the file and advances the file pointer.
 
 
-Networking (Sockets)
---------------------
+Networking API
+--------------
 
-minisphere includes an advanced sockets API which is more flexible than the one
-Sphere provides.  The old routines are still available, but should be considered
-deprecated.  Under minisphere, sockets are divided into two types: Listening
-sockets, used for servers, and I/O sockets, for clients.
+minisphere includes basic support for TCP sockets.  There are two object types:
+Socket and Server.  A Server is persistent and listens for connections on a
+given port, while Sockets represent individual client connections.
 
 new Server(port[, backlog_size]);
 
-    Constructs a new server to listen for connections on the specified port.
-    `backlog_size` specifies the size of the backlog. If the backlog fills, new
-    connections will be dropped.
+    Constructs a new server which listens for connections on the specified
+    port.  `backlog_size` specifies the size of the backlog.  If the backlog
+    fills, new connections will be dropped.
 
 Server#accept();
 
-    If one or more connections are waiting in the backlog, accepts one of them
-    and returns a Socket object representing the connection.  Otherwise,
+    If one or more connections are waiting in the backlog, removes it from the
+    queue and returns a Socket object representing the connection.  Otherwise,
     returns null.  This should be called regularly to prevent the backlog from
     filling up.
 
 Server#close();
 
     Shuts down the server.  Any connections in the backlog will be dropped and
-    no new connections can be made unless a new Server is created.
+    no new connections can be made until a new Server is created.
 
 new Socket(hostname, port);
 
@@ -951,7 +968,7 @@ new Socket(hostname, port);
     Socket object will be returned even if the connection can be not be made;
     you must poll Socket#connected to find out when the connection has opened.
 
-Socket#bytesPending;
+Socket#bytesPending [read-only]
 
     Gets the amount of data, in bytes, currently in the receive buffer.  Call
     Socket#read() to retrieve this data.

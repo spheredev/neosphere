@@ -178,6 +178,7 @@ COLORS[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
+static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
 static duk_ret_t js_console_debug              (duk_context* ctx);
 static duk_ret_t js_console_error              (duk_context* ctx);
@@ -185,6 +186,8 @@ static duk_ret_t js_console_info               (duk_context* ctx);
 static duk_ret_t js_console_log                (duk_context* ctx);
 static duk_ret_t js_console_trace              (duk_context* ctx);
 static duk_ret_t js_console_warn               (duk_context* ctx);
+static duk_ret_t js_debug_abort                (duk_context* ctx);
+static duk_ret_t js_debug_assert               (duk_context* ctx);
 static duk_ret_t js_engine_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_engine_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_engine_get_extensions      (duk_context* ctx);
@@ -223,9 +226,6 @@ static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
-static duk_ret_t js_abort                      (duk_context* ctx);
-static duk_ret_t js_assert                     (duk_context* ctx);
-static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
 static duk_ret_t js_Color_mix                  (duk_context* ctx);
 static duk_ret_t js_new_Color                  (duk_context* ctx);
@@ -482,9 +482,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_register_static_func(ctx, NULL, "abort", js_abort);
-	api_register_static_func(ctx, NULL, "assert", js_assert);
-
 	api_register_static_func(ctx, "console", "assert", js_console_assert);
 	api_register_static_func(ctx, "console", "debug", js_console_debug);
 	api_register_static_func(ctx, "console", "error", js_console_error);
@@ -493,6 +490,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "console", "trace", js_console_trace);
 	api_register_static_func(ctx, "console", "warn", js_console_warn);
 	
+	api_register_static_func(ctx, "debug", "abort", js_debug_abort);
+	api_register_static_func(ctx, "debug", "assert", js_debug_assert);
+
 	api_register_static_prop(ctx, "engine", "apiLevel", js_engine_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "engine", "apiVersion", js_engine_get_apiVersion, NULL);
 	api_register_static_prop(ctx, "engine", "extensions", js_engine_get_extensions, NULL);
@@ -936,6 +936,27 @@ on_error:
 }
 
 static duk_ret_t
+js_require(duk_context* ctx)
+{
+	const char* id;
+	const char* parent_id = NULL;
+	path_t*     path;
+
+	duk_push_current_function(ctx);
+	if (duk_get_prop_string(ctx, -1, "id"))
+		parent_id = duk_get_string(ctx, -1);
+	id = duk_require_string(ctx, 0);
+
+	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
+	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
+		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
+	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
+		duk_throw(ctx);
+	return 1;
+}
+
+static duk_ret_t
 js_console_assert(duk_context* ctx)
 {
 	const char* message;
@@ -1043,6 +1064,79 @@ js_console_warn(duk_context* ctx)
 
 	debug_print(duk_get_string(ctx, -1), PRINT_WARN);
 	return 0;
+}
+
+static duk_ret_t
+js_debug_abort(duk_context* ctx)
+{
+	const char* message;
+	int         num_args;
+
+	num_args = duk_get_top(ctx);
+	message = num_args >= 1
+		? duk_to_string(ctx, 0)
+		: "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
+
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "%s", message);
+	return 0;
+}
+
+static duk_ret_t
+js_debug_assert(duk_context* ctx)
+{
+	const char* filename;
+	int         line_number;
+	const char* message;
+	int         num_args;
+	bool        result;
+	int         stack_offset;
+	lstring_t*  text;
+
+	num_args = duk_get_top(ctx);
+	result = duk_to_boolean(ctx, 0);
+	message = duk_require_string(ctx, 1);
+	stack_offset = num_args >= 3 ? duk_require_int(ctx, 2)
+		: 0;
+
+	if (stack_offset > 0)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): stack offset must be negative");
+
+	if (!result) {
+		// get the offending script and line number from the call stack
+		duk_push_global_object(ctx);
+		duk_get_prop_string(ctx, -1, "Duktape");
+		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
+		if (!duk_is_object(ctx, -1)) {
+			duk_pop(ctx);
+			duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
+		}
+		duk_remove(ctx, -2);
+		duk_get_prop_string(ctx, -1, "lineNumber");
+		line_number = duk_get_int(ctx, -1);
+		duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "function");
+		duk_get_prop_string(ctx, -1, "fileName");
+		filename = duk_get_string(ctx, -1);
+		duk_pop_3(ctx);
+		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
+
+		// if an assertion fails in a game being debugged:
+		//   - the user may choose to ignore it, in which case execution continues.  this is useful
+		//     in some debugging scenarios.
+		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
+		//     over control to the attached debugger.
+		if (is_debugger_attached()) {
+			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
+			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
+				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
+			{
+				duk_debugger_pause(ctx);
+			}
+			lstr_free(text);
+		}
+	}
+	duk_dup(ctx, 0);
+	return 1;
 }
 
 static duk_ret_t
@@ -1491,100 +1585,9 @@ js_screen_resize(duk_context* ctx)
 	height = duk_require_int(ctx, 1);
 
 	if (width < 0 || height < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "illegal screen resolution");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid screen resolution");
 	screen_resize(g_screen, width, height);
 	return 0;
-}
-
-static duk_ret_t
-js_abort(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
-	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
-
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): stack offset must be negative");
-	duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
-}
-
-static duk_ret_t
-js_assert(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	bool        result;
-	int         stack_offset;
-	lstring_t*  text;
-
-	num_args = duk_get_top(ctx);
-	result = duk_to_boolean(ctx, 0);
-	message = duk_require_string(ctx, 1);
-	stack_offset = num_args >= 3 ? duk_require_int(ctx, 2)
-		: 0;
-
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): stack offset must be negative");
-
-	if (!result) {
-		// get the offending script and line number from the call stack
-		duk_push_global_object(ctx);
-		duk_get_prop_string(ctx, -1, "Duktape");
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-		if (!duk_is_object(ctx, -1)) {
-			duk_pop(ctx);
-			duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-		}
-		duk_remove(ctx, -2);
-		duk_get_prop_string(ctx, -1, "lineNumber");
-		line_number = duk_get_int(ctx, -1);
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName");
-		filename = duk_get_string(ctx, -1);
-		duk_pop_3(ctx);
-		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
-
-		// if an assertion fails in a game being debugged:
-		//   - the user may choose to ignore it, in which case execution continues.  this is useful
-		//     in some debugging scenarios.
-		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
-		//     over control to the attached debugger.
-		if (is_debugger_attached()) {
-			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
-			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
-				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
-			{
-				duk_debugger_pause(ctx);
-			}
-			lstr_free(text);
-		}
-	}
-	duk_dup(ctx, 0);
-	return 1;
-}
-
-static duk_ret_t
-js_require(duk_context* ctx)
-{
-	const char* id;
-	const char* parent_id = NULL;
-	path_t*     path;
-
-	duk_push_current_function(ctx);
-	if (duk_get_prop_string(ctx, -1, "id"))
-		parent_id = duk_get_string(ctx, -1);
-	id = duk_require_string(ctx, 0);
-
-	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "illegal relative require in global code");
-	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
-		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "unable to resolve require `%s`", id);
-	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
-		duk_throw(ctx);
-	return 1;
 }
 
 static duk_ret_t
