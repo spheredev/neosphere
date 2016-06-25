@@ -17,7 +17,7 @@ function load(filename, schema)
 	if (!Array.isArray(schema))
 		throw new TypeError("expected an Array object for `schema`");
 
-	var stream = new FileStream(filename, 'rb');
+	var stream = fs.open(filename, 'rb');
 	var object = binary.read(stream, schema);
 	stream.close();
 	return object;

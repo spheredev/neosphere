@@ -22,8 +22,6 @@ var threads = [];
 
 function create(entity, priority)
 {
-	assert(entity instanceof Object || entity === null, "create() argument must be a valid object");
-
 	priority = priority !== undefined ? priority : 0;
 
 	var update = entity.update;

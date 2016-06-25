@@ -245,8 +245,8 @@ build_eval_rule(build_t* build, const char* rule_name)
 	// evaluate the requested rule
 	if (duk_get_global_string(build->js_ctx, func_name) && duk_is_callable(build->js_ctx, -1)) {
 		if (duk_pcall(build->js_ctx, 0) != 0) {
-			duk_pop(build->js_ctx);
 			build_emit_error(build, "JS: %s", duk_safe_to_string(build->js_ctx, -1));
+			duk_pop(build->js_ctx);
 			goto on_error;
 		}
 		duk_pop(build->js_ctx);
