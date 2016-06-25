@@ -376,8 +376,8 @@ represent graphics primitives (triangle strips, fans, etc.).
 
 screen [global variable]
 
-    A Surface (see below) representing the primary render target--specifically,
-    the backbuffer.  Anything drawn to this surface will become directly
+    A Surface object (see below) representing the primary render target--
+    specifically, the backbuffer.  Anything drawn to this surface will become
     visible to the player when calling `screen.flip()`.
 
 screen.frameRate [read/write]
@@ -398,9 +398,14 @@ screen.clipTo(x, y, width, height);
 
 screen.flip();
 
-    Flips the backbuffer to the screen.  `screen.frameRate` determines the
-    maximum number of flip calls that can be done per second; this makes it
-    easy to regulate your game's update rate.
+    Performs event loop processing and flips the backbuffer to the screen.
+    `screen.frameRate` determines the maximum number of flips to perform per
+    second; this makes it easier to regulate your game's update rate.
+
+    Note that after a flip, the backbuffer is cleared to black.  If you need to
+    perform a long operation without disturbing the contents of the screen, you
+    should use engine.doEvents() to perform event loop processing instead of
+    screen.flip().
     
     Note: Calling screen.flip() resets the clipping rectangle to the entire
           screen.  See screen.clipTo() above.
