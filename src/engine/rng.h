@@ -4,6 +4,8 @@
 void        initialize_rng (void);
 void        shutdown_rng   (void);
 void        seed_rng       (uint64_t seed);
+void        rng_get_state  (char* buffer);
+bool        rng_set_state  (const char* state);
 bool        rng_chance     (double odds);
 double      rng_normal     (double mean, double sigma);
 double      rng_random     (void);

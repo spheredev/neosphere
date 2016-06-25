@@ -38,6 +38,18 @@ seed_rng(uint64_t seed)
 	xoro_reseed(s_xoro, seed);
 }
 
+void
+rng_get_state(char* buffer)
+{
+	xoro_get_state(s_xoro, buffer);
+}
+
+bool
+rng_set_state(const char* state)
+{
+	return xoro_set_state(s_xoro, state);
+}
+
 bool
 rng_chance(double odds)
 {

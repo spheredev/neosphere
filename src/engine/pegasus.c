@@ -213,12 +213,15 @@ static duk_ret_t js_keyboard_clearQueue        (duk_context* ctx);
 static duk_ret_t js_keyboard_getKey            (duk_context* ctx);
 static duk_ret_t js_keyboard_isPressed         (duk_context* ctx);
 static duk_ret_t js_keyboard_keyChar           (duk_context* ctx);
+static duk_ret_t js_random_get_state           (duk_context* ctx);
+static duk_ret_t js_random_set_state           (duk_context* ctx);
 static duk_ret_t js_random_chance              (duk_context* ctx);
 static duk_ret_t js_random_normal              (duk_context* ctx);
 static duk_ret_t js_random_random              (duk_context* ctx);
 static duk_ret_t js_random_range               (duk_context* ctx);
 static duk_ret_t js_random_reseed              (duk_context* ctx);
 static duk_ret_t js_random_sample              (duk_context* ctx);
+static duk_ret_t js_random_get_state           (duk_context* ctx);
 static duk_ret_t js_random_string              (duk_context* ctx);
 static duk_ret_t js_random_uniform             (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
@@ -521,6 +524,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "keyboard", "isPressed", js_keyboard_isPressed);
 	api_register_static_func(ctx, "keyboard", "keyChar", js_keyboard_keyChar);
 	
+	api_register_static_prop(ctx, "random", "state", js_random_get_state, js_random_set_state);
 	api_register_static_func(ctx, "random", "chance", js_random_chance);
 	api_register_static_func(ctx, "random", "normal", js_random_normal);
 	api_register_static_func(ctx, "random", "random", js_random_random);
@@ -1438,6 +1442,28 @@ js_keyboard_getKey(duk_context* ctx)
 {
 	duk_push_int(ctx, kb_get_key());
 	return 1;
+}
+
+static duk_ret_t
+js_random_get_state(duk_context* ctx)
+{
+	char state[33];
+
+	rng_get_state(state);
+	duk_push_string(ctx, state);
+	return 1;
+}
+
+static duk_ret_t
+js_random_set_state(duk_context* ctx)
+{
+	const char* state;
+
+	state = duk_require_string(ctx, 0);
+
+	if (!rng_set_state(state))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+	return 0;
 }
 
 static duk_ret_t
