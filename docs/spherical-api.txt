@@ -374,6 +374,42 @@ is done through the Galileo API.  Galileo represents a more modern, polygon-
 based approach to graphics.  Scenes are built from groups of Shape object which
 represent graphics primitives (triangle strips, fans, etc.).
 
+screen [global variable]
+
+    A Surface (see below) representing the primary render target--specifically,
+    the backbuffer.  Anything drawn to this surface will become directly
+    visible to the player when calling `screen.flip()`.
+
+screen.frameRate [read/write]
+
+    Gets or sets the framerate used to regulate `screen.flip()` (see below).
+    Set this to 0 for unthrottled rendering.
+
+screen.width [read-only]
+screen.height [read-only]
+
+    Gets the width and height of the current screen resolution.
+
+screen.clipTo(x, y, width, height);
+
+    Changes the clipping rectangle.  Anything drawn outside of the clipping
+    rectangle won't be rendered.  The effect lasts until the next backbuffer
+    flip.
+
+screen.flip();
+
+    Flips the backbuffer to the screen.  `screen.frameRate` determines the
+    maximum number of flip calls that can be done per second; this makes it
+    easy to regulate your game's update rate.
+    
+    Note: Calling screen.flip() resets the clipping rectangle to the entire
+          screen.  See screen.clipTo() above.
+
+screen.resize(width, height);
+
+    Changes the game's resolution.  The change is not persistent and lasts only
+    until the engine is closed.
+
 Color.Red [read-only]
 Color.Green [read-only]
 Color.Blue [read-only]
