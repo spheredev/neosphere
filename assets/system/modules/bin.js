@@ -18,7 +18,7 @@ function load(filename, schema)
 		throw new TypeError("expected an Array object for `schema`");
 
 	var stream = fs.open(filename, 'rb');
-	var object = binary.read(stream, schema);
+	var object = read(stream, schema);
 	stream.close();
 	return object;
 }
