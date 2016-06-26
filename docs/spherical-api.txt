@@ -498,23 +498,23 @@ Font#height [read-only]
 
     Gets the line height, in pixels, for text rendered using this font.
 
-Font:drawText(surface, x, y, text[, color[, wrap_width]]);
+Font#drawText(surface, x, y, text[, color[, wrap_width]]);
 
     Renders `text` to the specified surface at (x,y).  `color` defaults to
     Color.White if not provided, and `wrap_width` specifies the width in which
     to constrain the text.  If `wrap_width` is not provided, no wrapping is
     performed.
 
-Font:getStringHeight(string, wrap_width);
+Font#getStringHeight(string, wrap_width);
 
     Gets the height, in pixels, of the string when it is rendered using
     Font:drawText(), passing `wrap_width`.
 
-Font:getStringWidth(string);
+Font#getStringWidth(string);
 
     Gets the width, in pixels, of `string` when it is rendered using this font.
 
-Font:wordWrap(text, wrap_width);
+Font#wordWrap(text, wrap_width);
 
     Wraps `text` as if it were drawn with Font#drawText() using the specified
     wrap width.  Returns an array of strings, representing the lines in the
