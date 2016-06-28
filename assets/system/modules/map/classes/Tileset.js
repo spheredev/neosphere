@@ -47,8 +47,16 @@ function Tileset(filename)
 	for (var i = 0; i < rts.numTiles; ++i)
 		atlas.blit(i, rts.tiles[i]);
 
+	Object.defineProperty(this, 'height', {
+		get: function() { return atlas.cellHeight; }
+	});
+
 	Object.defineProperty(this, 'texture', {
 		get: function() { return atlas.toImage(); }
+	});
+
+	Object.defineProperty(this, 'width', {
+		get: function() { return atlas.cellWidth; }
 	});
 
 	this.uv = function uv(index)

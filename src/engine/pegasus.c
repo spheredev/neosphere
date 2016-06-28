@@ -2733,11 +2733,11 @@ js_new_Shape(duk_context* ctx)
 	type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shape(): first argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "first argument must be an array");
 	if (type < 0 || type >= SHAPE_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Shape(): invalid shape type constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
 	if (!(shape = shape_new(type, texture)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shape(): unable to create shape object");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to construct a Shape");
 	num_vertices = duk_get_length(ctx, 0);
 	for (i = 0; i < num_vertices; ++i) {
 		duk_get_prop_index(ctx, 0, i);
@@ -2756,7 +2756,7 @@ js_new_Shape(duk_context* ctx)
 		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
 			? duk_pegasus_require_color(ctx, -1)
 			: color_new(255, 255, 255, 255);
-		duk_pop_n(ctx, 6);
+		duk_pop_n(ctx, 7);
 		shape_add_vertex(shape, vertex);
 	}
 	if (is_missing_uv)
@@ -3355,12 +3355,6 @@ js_Sound_stop(duk_context* ctx)
 static duk_ret_t
 js_new_SoundStream(duk_context* ctx)
 {
-	// new SoundStream(frequency[, bits[, channels]]);
-	// Arguments:
-	//     frequency: Audio frequency in Hz. (default: 22050)
-	//     bits:      Bit depth. (default: 8)
-	//     channels:  Number of independent channels. (default: 1)
-
 	stream_t* stream;
 	int       argc;
 	int       frequency;
