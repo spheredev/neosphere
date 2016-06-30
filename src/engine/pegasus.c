@@ -1294,8 +1294,7 @@ js_fs_open(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open `%s` in mode `%s`",
-			filename, mode);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open `%s` in mode `%s`", filename, mode);
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;
 }
