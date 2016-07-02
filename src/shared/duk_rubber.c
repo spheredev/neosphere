@@ -7,17 +7,21 @@ struct safe_call_args
 	dukrub_safe_call_function func;
 };
 
-static duk_ret_t shim_v1_safe_call (duk_context* ctx, void* udata);
+static void      shim_v1_debug_detached (duk_context* ctx, void* udata);
+static duk_ret_t shim_v1_safe_call      (duk_context* ctx, void* udata);
+
+static dukrub_debug_detached_function s_detached_cb;
 
 void
 dukrub_debugger_attach(duk_context* ctx,
 	duk_debug_read_function read_cb, duk_debug_write_function write_cb, duk_debug_peek_function peek_cb,
 	duk_debug_read_flush_function read_flush_cb, duk_debug_write_flush_function write_flush_cb,
-	duk_debug_request_function request_cb, duk_debug_detached_function detached_cb,
+	duk_debug_request_function request_cb, dukrub_debug_detached_function detached_cb,
 	void* udata)
 {
 #if DUK_VERSION >= 19999
-	duk_debugger_attach(ctx, read_cb, write_cb, peek_cb, read_flush_cb, write_flush_cb, request_cb, detached_cb, udata);
+	s_detached_cb = detached_cb;
+	duk_debugger_attach(ctx, read_cb, write_cb, peek_cb, read_flush_cb, write_flush_cb, request_cb, shim_v1_debug_detached, udata);
 #else
 	duk_debugger_attach_custom(ctx, read_cb, write_cb, peek_cb, read_flush_cb, write_flush_cb, request_cb, detached_cb, udata);
 #endif
@@ -43,4 +47,10 @@ shim_v1_safe_call(duk_context* ctx, void* udata)
 
 	safe_args = (struct safe_call_args*)udata;
 	return safe_args->func(ctx);
+}
+
+static void
+shim_v1_debug_detached(duk_context* ctx, void* udata)
+{
+	s_detached_cb(udata);
 }

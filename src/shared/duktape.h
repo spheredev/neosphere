@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 29605d21e08201921c4d2ffbdc9a6148f2613233 (v1.5.0-291-g29605d2).
+ *  Git commit 179fe6cac2bede38cf29373a5f1dc0ed8135cd89 (v1.5.0-306-g179fe6c).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -194,7 +194,7 @@ typedef duk_size_t (*duk_debug_peek_function) (void *udata);
 typedef void (*duk_debug_read_flush_function) (void *udata);
 typedef void (*duk_debug_write_flush_function) (void *udata);
 typedef duk_idx_t (*duk_debug_request_function) (duk_context *ctx, void *udata, duk_idx_t nvalues);
-typedef void (*duk_debug_detached_function) (void *udata);
+typedef void (*duk_debug_detached_function) (duk_context *ctx, void *udata);
 
 struct duk_memory_functions {
 	duk_alloc_function alloc_func;
@@ -242,8 +242,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "29605d21e08201921c4d2ffbdc9a6148f2613233"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-291-g29605d2"
+#define DUK_GIT_COMMIT                    "179fe6cac2bede38cf29373a5f1dc0ed8135cd89"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-306-g179fe6c"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
