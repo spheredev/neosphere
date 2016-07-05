@@ -128,7 +128,7 @@ namespace minisphere.Gdk.Debugger
 
         public static explicit operator string(DValue dvalue)
         {
-            return dvalue._tag == DValueTag.String ? dvalue._value : 0;
+            return dvalue._tag == DValueTag.String ? dvalue._value : "(unknown value)";
         }
 
         public static explicit operator HeapPtr(DValue dvalue)
