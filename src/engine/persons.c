@@ -216,15 +216,18 @@ destroy_person(person_t* person)
 	// we want to give it a chance to do so.
 	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i]->leader == person) s_persons[i]->leader = NULL;
+		if (s_persons[i]->leader == person)
+			s_persons[i]->leader = NULL;
 	}
 
 	// remove the person from the engine
 	detach_person(person);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person) {
-			for (j = i; j < s_num_persons - 1; ++j) s_persons[j] = s_persons[j + 1];
-			--s_num_persons; --i;
+			for (j = i; j < s_num_persons - 1; ++j)
+				s_persons[j] = s_persons[j + 1];
+			--s_num_persons;
+			--i;
 		}
 	}
 	
@@ -721,7 +724,8 @@ command_person(person_t* person, int command)
 	double          new_x, new_y;
 	person_t*       person_to_touch;
 
-	new_x = person->x; new_y = person->y;
+	new_x = person->x;
+	new_y = person->y;
 	switch (command) {
 	case COMMAND_ANIMATE:
 		person->revert_frames = person->revert_delay;

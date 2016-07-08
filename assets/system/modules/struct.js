@@ -1,6 +1,6 @@
 /**
- *  miniRT bin CommonJS module
- *  (c) 2015-2016 Fat Cerberus
+ *  miniRT struct CommonJS module
+ *  (c) 2016 Fat Cerberus
 **/
 
 'use strict';
@@ -8,6 +8,7 @@ module.exports =
 {
 	load: load,
 	read: read,
+	Enum: Enum
 };
 
 const link = require('link');
@@ -29,6 +30,18 @@ function read(stream, schema)
 		throw new TypeError("expected an Array object for `schema`");
 
 	return _readObject(stream, schema, null);
+}
+
+function Enum(memberNames)
+{
+	if (!(this instanceof Enum))
+		return new Enum(memberNames);
+
+	this.max = memberNames.length;
+	for (var i = 0; i < memberNames.length; ++i) {
+		this[memberNames[i]] = i;
+		this[i] = memberNames[i];
+	}
 }
 
 function _fixup(value, data)

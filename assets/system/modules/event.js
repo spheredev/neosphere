@@ -43,16 +43,16 @@ function Delegate()
     // calls all methods in this delegate's invocation list.
     // returns:
     //     the return value of the last handler called.
-    function invoke()
+    function invoke(/*...*/)
     {
-        var lastReturn = undefined;
+        var lastResult = undefined;
         var invokeArgs = arguments;
         link(invokeList).each(function(v) {
-            lastReturn = v.handler.apply(v.thisObj, invokeArgs);
+            lastResult = v.handler.apply(v.thisObj, invokeArgs);
         });
 
-        // mirror return value of the last handler called
-        return lastReturn;
+        // use the return value of the last handler called
+        return lastResult;
     }
 
     // Delegate:remove()
