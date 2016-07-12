@@ -7,8 +7,8 @@ v4.0.0 - TBD
 * Introduces the new Sphere G2 API.  The Sphere 1.x ("G1") API, including the
   map engine, has been deprecated wholesale and will no longer be available to
   G2 games (i.e. those with a JSON manifest).  For information on the new API,
-  see the API reference.
-* For Sphere G2 games, the main script is now loaded as a CommonJS module, as
+  see `docs/spherical-api.txt`.
+* For Sphere G2 games, the main script is now loaded as a CommonJS module, like
   in Node.js.
 * miniRT has been overhauled and made into an official part of the Spherical
   standard library.  miniRT modules can thus be referred to more concisely,
