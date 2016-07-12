@@ -8,15 +8,12 @@ lower-level Sphere API provides.
 miniRT is made up of several components, each of which is documented under its
 own section below:
 
-    * miniRT/binary
-      Allows reading structured data from binary files based on a simple JSON
-      schema.
+    * miniRT/thread:
+      An advanced cooperative threading engine which replaces Sphere 1.x-style
+      update and render scripts.  A large portion of miniRT is built on top of
+      this module.
 
-    * miniRT/console:
-      A ready-made text console with full logging support and a built-in command
-      parser.
-
-    * miniRT/delegates:
+    * miniRT/event:
       A multicast delegate implementation inspired by the .NET event model.
 
     * miniRT/music:
@@ -36,39 +33,43 @@ own section below:
       An extensible cutscene engine with support for multiple timelines and a
       simple but powerful timeline synchronization system.
 
-    * miniRT/threads:
-      An advanced cooperative threading engine which replaces Sphere 1.x-style
-      update and render scripts.
+    * miniRT/struct
+      Allows reading structured data from binary files based on a simple JSON
+      schema.
+
+    * miniRT/terminal:
+      A ready-made text console with full logging support and a built-in command
+      parser.
 
     * miniRT/xml
       A simple XML parser and DOM builder based on the "sax js" parser.
 
 
-miniRT/threads
---------------
+miniRT/thread
+-------------
 
-miniRT/threads is the cornerstone of miniRT and is therefore documented first.
+miniRT/thread is the cornerstone of miniRT and is therefore documented first.
 Nearly all other miniRT components depend on it, and this affects your code even
 if you don't use the threader yourself--notably, by preventing the legacy frame
 management functionality from being used by game code.
 
-miniRT/threads is an advanced cooperative threading engine.  Each thread has its
+miniRT/thread is an advanced cooperative threading engine.  Each thread has its
 own update and render functions, which are called once per frame.  This allows
 many actions to run simultaneously.  For example, you might have a thread to
 run the in-game clock and another to manage animations.  An active-time battle
 engine might even use several threads to manage each of the units on the
 battlefield.
 
-    var threads = require('miniRT/threads');
+    var thread = require('thread');
 
-An important note: When miniRT/threads is initialized, it commandeers a few
+An important note: When miniRT/thread is initialized, it commandeers a few
 legacy facilities related to frame management.  Specifically, setting update and
 render scripts is disabled (calling SetUpdateScript or SetRenderScript will
 throw an error), and both the general and map engine frame rates are set to the
 value of the `frameRate` property in the manifest (or 60fps, if the property is
 not present or using a legacy manifest).
 
-threads.create(def[, priority]);
+thread.create(def[, priority]);
 
     Creates a new thread and returns its thread ID (an integer).  `def` should
     be an object with the following properties:
@@ -100,19 +101,13 @@ threads.create(def[, priority]);
     This can be used to implement an "entity": a full object implementing the
     above functions which manages its own thread.
 
-threads.frameRate (read/write)
-
-    Gets or sets the miniRT frame rate.  When using miniRT/threads, this must be
-    used to change the frame rate instead of SetFrameRate(), which will throw an
-    error if called.
-
-threads.isRunning(tid);
+thread.isRunning(tid);
 
     true if a thread with thread ID `tid` is running.  miniRT never recycles
     thread IDs, so this can be counted on to return false if given the tid of a
     thread which has terminated.
 
-threads.join(tid);
+thread.join(tid);
 
     Blocks the caller and awaits termination of the thread with thread ID `tid`.
     Any running threads (and the map engine, if it's in use) will continue to
@@ -125,147 +120,30 @@ threads.join(tid);
     first one terminates, the corresponding join cannot be satisfied until the
     second thread also terminates.
 
-threads.kill(tid);
+thread.kill(tid);
 
     Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
     invalid or has already terminated, nothing happens.
 
-threads.self();
+thread.self();
 
     When called from an update or render function, returns the thread ID of the
     active thread.  Otherwise, returns 0.
 
 
-miniRT/binary
--------------
+miniRT/event
+------------
 
-miniRT/binary allows you to load structured binary files like those used for
-Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
-
-    var binary = require('miniRT/binary');
-
-binary.load(filename, schema);
-
-    Loads the binary file `filename` based on `schema`.  This is a convenience
-    function, and is shorthand for the following:
-
-        var file = new FileStream(filename, 'rb');
-        var data = binary.read(file, schema);
-        file.close();
-
-    See below for more information on schemas.  If an entire file can't be
-    described by a single, cohesive schema, binary.read() (see below) should be
-    used instead.
-
-binary.read(stream, schema);
-
-    Reads an object from the FileStream `stream`, based on `schema`.  The schema
-    is an array of field descriptors describing the layout of the data; for
-    example the following will read the 256-byte header from a Sphere 1.x format
-    map file:
-
-        binary.read(stream, [
-            { id: 'signature', type: 'fstring', size: 4, regex: "\\.rmp" },
-            { id: 'version', type: 'uintLE', size: 2 },
-            { id: 'type', type: 'uintLE', size: 1 },
-            { id: 'numLayers', type: 'uintLE', size: 1 },
-            { type: 'reserved', size: 1 },  // reserved
-            { id: 'numEntities', type: 'uintLE', size: 2 },
-            { id: 'startX', type: 'uintLE', size: 2 },
-            { id: 'startY', type: 'uintLE', size: 2 },
-            { id: 'startLayer', type: 'uintLE', size: 1 },
-            { id: 'startDir', type: 'uintLE', size: 1 },
-            { id: 'numStrings', type: 'uintLE', size: 2 },
-            { id: 'numZones', type: 'uintLE', size: 2 },
-            { id: 'repeating', type: 'bool' },
-            { type: 'reserved', size: 234 },  // reserved
-        ]);
-
-    For many binary file formats, miniRT/binary is powerful enough for an entire
-    file to be described using a single, sometimes multi-level, schema, in which
-    case you can use binary.load() instead.  More complex formats usually
-    require multiple binary.read() calls with indepedent schemas.
-
-
-miniRT/console
---------------
-
-miniRT/console allows you to add a text-based interface to your game.  The
-console provides a full command parser, all your game is responsible for is
-providing the names and implementations of supported commands!
-
-During gameplay, if the game allows it, the console may be shown and hidden
-using the Player 1 `Menu` key (Tab by default).
-
-    var console = require('miniRT/console');
-
-console.isOpen();
-
-    `true` if the console is currently visible to the player.
-
-console.append(text);
-
-    Appends text to the end of last line logged to the console.  See
-    `console.log()` below.
-
-console.close();
-
-    Closes the console, hiding it from view of the player.
-
-console.log(text);
-
-    Logs a line of text to the console.  This line can be extended by following
-    up with one or more console.append() calls.
-
-console.open();
-
-    Opens the console, making it visible to the player.
-
-console.register(objectName, thisObj, commands);
-
-    Registers an object and a set of commands with the console.  `commands` is
-    an object providing the names and implementations of the commands being
-    added, which will be associated with the name specified by `objectName`.
-    Each property of `commands` has as its key the command name, and a function
-    as its value, which will be called when the command is invoked.  `thisObj`
-    specifies a `this` binding to use when calling a command function.
-
-    As this API is complex and difficult to explain, an example might help
-    illuminate things.  An example console.register() call might look something
-    like this:
-
-        console.register('sound', null, {
-            'play': function(filename) {
-                if (DoesFileExist(filename)) new Sound(filename).play();
-            }
-        });
-
-    The player could then type `sound play sounds/munch.wav` into the console to
-    play that sound (assuming it exists).  Note that if an error is thrown while
-    processing a command, the console will not catch it.  Games should perform
-    some form of error checking in their command functions to prevent the player
-    from destabilizing the game.
-
-console.unregister(objectName);
-
-    Unregisters all commands previously registered under `objectName`.  See
-    `console.register()` below for more information.  Note: It is not currently
-    possible to unregister individual commands.
-
-
-miniRT/delegates
-----------------
-
-miniRT/delegates provides a simple multicast delegate implementation which works
-similarly to events in .NET.  An object exposes one or more delegates, which can
-have functions registered to them.  When something interesting happens, the
+miniRT/event provides a simple multicast delegate implementation which works
+similarly to events in .NET.  An object exposes one or more delegates, which
+can have functions registered to them.  When something interesting happens, the
 object owning the delegate invokes it, which calls all the registered functions
 in turn.  In this way outside code can react to changing situations without
 breaking encapsulation.
 
-    var delegates = require('miniRT/delegates');
+    var event = require('event');
 
-new delegates.Delegate();
+new event.Delegate();
 
     Constructs a new delegate.  The delegate starts out empty, with no handlers
     attached.  Unlike .NET however, it is safe to invoke in this state.
@@ -300,7 +178,7 @@ song on top of the stack with another track, to overriding the contents of the
 stack entirely, which is often useful in RPGs to override the battle music for
 storyline reasons.
 
-    var music = require('miniRT/music');
+    var music = require('music');
 
 music.isAdjusting();
 
@@ -382,7 +260,7 @@ promises which can then be resolved through that pact.  In this way
 encapsulation of the Promise object is maintained while keeping things simple
 for the code handing them out.
 
-    var pacts = require('miniRT/pacts');
+    var pacts = require('pacts');
 
 new pacts.Promise(fn);
 
@@ -457,7 +335,7 @@ miniRT/prim allows games to pre-render common primitives which are otherwise
 expensive to draw and may cause slowdown when rendered in realtime, such as
 circles.
 
-    var prim = require('miniRT/prim');
+    var prim = require('prim');
 
 new prim.Circle(x, y, radius, color[, outer_color]);
 
@@ -504,9 +382,9 @@ the forked timelines finish before continuing.
 
 miniRT/scenes is originally based on the Scenario standalone cutscene engine for
 Sphere 1.5, updated to take advantage of Sphere 2.0 features and to integrate
-more seamlessly with miniRT/threads.
+more seamlessly with miniRT/thread.
 
-    var scenes = require('miniRT/scenes');
+    var scenes = require('scenes');
 
 A scene consists of a chain of scenelet invocations, with optional forks and
 resync points.  For example, supposing the scenelets used have been properly
@@ -523,7 +401,7 @@ only when both are complete:
         .changeBGM('maggieIsHungry')
 
 This scene can be played back at any time by calling `myScene.run()`.  miniRT's
-scene engine uses miniRT/threads and by default, scenes are nonblocking.  See
+scene engine uses miniRT/thread and by default, scenes are nonblocking.  See
 the documentation for `Scene.run()` below to find out how to play a scene in
 blocking mode.
 
@@ -547,7 +425,7 @@ scenes.scenelet(name, def);
 
         def.update(scene)
 
-            Required.  The scenelet's update function.  As with miniRT/threads,
+            Required.  The scenelet's update function.  As with miniRT/thread,
             this is called once per game frame and should return true to
             continue scenelet execution or false to finish.
 
@@ -635,6 +513,123 @@ Scene:stop();
     player: The next time the scene is run, it will start from the beginning.
 
 
+miniRT/struct
+-------------
+
+miniRT/struct allows you to load structured binary files like those used for
+Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
+
+    var struct = require('struct');
+
+struct.load(filename, schema);
+
+    Loads the binary file `filename` based on `schema`.  This is a convenience
+    function, and is shorthand for the following:
+
+        var file = new FileStream(filename, 'rb');
+        var data = struct.read(file, schema);
+        file.close();
+
+    See below for more information on schemas.  If an entire file can't be
+    described by a single, cohesive schema, binary.read() (see below) should be
+    used instead.
+
+struct.read(stream, schema);
+
+    Reads an object from the FileStream `stream`, based on `schema`.  The schema
+    is an array of field descriptors describing the layout of the data; for
+    example the following will read the 256-byte header from a Sphere 1.x format
+    map file:
+
+        binary.read(stream, [
+            { id: 'signature', type: 'fstring', size: 4, regex: "\\.rmp" },
+            { id: 'version', type: 'uintLE', size: 2 },
+            { id: 'type', type: 'uintLE', size: 1 },
+            { id: 'numLayers', type: 'uintLE', size: 1 },
+            { type: 'reserved', size: 1 },  // reserved
+            { id: 'numEntities', type: 'uintLE', size: 2 },
+            { id: 'startX', type: 'uintLE', size: 2 },
+            { id: 'startY', type: 'uintLE', size: 2 },
+            { id: 'startLayer', type: 'uintLE', size: 1 },
+            { id: 'startDir', type: 'uintLE', size: 1 },
+            { id: 'numStrings', type: 'uintLE', size: 2 },
+            { id: 'numZones', type: 'uintLE', size: 2 },
+            { id: 'repeating', type: 'bool' },
+            { type: 'reserved', size: 234 },  // reserved
+        ]);
+
+    For many binary file formats, miniRT/struct is powerful enough for an entire
+    file to be described using a single, sometimes multi-level, schema, in which
+    case you can use binary.load() instead.  More complex formats usually
+    require multiple binary.read() calls with indepedent schemas.
+
+
+miniRT/terminal
+---------------
+
+The Terminal module allows you to add a text-based debug console to your game.
+Terminal provides a full command parser, so all your game is responsible for is
+providing the names and implementations of supported terminal commands.
+
+During gameplay, if the game allows it, the console may be shown and hidden
+using the Player 1 `Menu` key (Tab by default).
+
+    var terminal = require('terminal');
+
+terminal.isOpen();
+
+    `true` if the console is currently visible to the player.
+
+terminal.append(text);
+
+    Appends text to the end of last line logged to the console.  See
+    `console.log()` below.
+
+terminal.close();
+
+    Closes the console, hiding it from view of the player.
+
+terminal.log(text);
+
+    Logs a line of text to the console.  This line can be extended by following
+    up with one or more console.append() calls.
+
+terminal.open();
+
+    Opens the console, making it visible to the player.
+
+terminal.register(objectName, thisObj, commands);
+
+    Registers an object and a set of commands with the console.  `commands` is
+    an object providing the names and implementations of the commands being
+    added, which will be associated with the name specified by `objectName`.
+    Each property of `commands` has as its key the command name, and a function
+    as its value, which will be called when the command is invoked.  `thisObj`
+    specifies a `this` binding to use when calling a command function.
+
+    As this API is complex and difficult to explain, an example might help
+    illuminate things.  An example console.register() call might look something
+    like this:
+
+        console.register('sound', null, {
+            'play': function(filename) {
+                if (DoesFileExist(filename)) new Sound(filename).play();
+            }
+        });
+
+    The player could then type `sound play sounds/munch.wav` into the console to
+    play that sound (assuming it exists).  Note that if an error is thrown while
+    processing a command, the console will not catch it.  Games should perform
+    some form of error checking in their command functions to prevent the player
+    from destabilizing the game.
+
+terminal.unregister(objectName);
+
+    Unregisters all commands previously registered under `objectName`.  See
+    `console.register()` below for more information.  Note: It is not currently
+    possible to unregister individual commands.
+
+
 miniRT/xml
 ----------
 
@@ -642,7 +637,7 @@ miniRT/xml parses XML-formatted data and builds a document object model (DOM)
 from it.  It is based on the MIT-licensed "sax js" parser.  The API is very
 simple but should cover most use cases for game development.
 
-    var xml = require('miniRT/xml');
+    var xml = require('xml');
 
 xml.load(fileName);
 
