@@ -14,10 +14,10 @@ module.exports =
 	unregister: unregister,
 };
 
-const link	  = require('link');
-const prim	  = require('prim');
-const scenes  = require('scenes');
-const threads = require('threads');
+const link	 = require('link');
+const prim	 = require('prim');
+const scenes = require('scenes');
+const thread = require('thread');
 
 var font = Font.Default;
 var nextLine = 0;
@@ -39,7 +39,7 @@ new scenes.Scene()
 		.tween(cursorColor, 0.25, 'easeOutSine', { alpha: 64 })
 	.end()
 	.run();
-threads.create({
+thread.create({
 	update:	  update,
 	render:	  render,
 	getInput: getInput,
@@ -94,7 +94,7 @@ function executeCommand(command)
 		.filterBy('entity', entity)
 		.each(function(desc)
 	{
-		threads.create({
+		thread.create({
 			update: function() {
 				desc.method.apply(desc.that, tokens.slice(2));
 			}

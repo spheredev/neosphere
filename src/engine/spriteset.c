@@ -147,7 +147,8 @@ load_spriteset(const char* filename)
 	struct rss_frame_v3 frame_v3;
 	sfs_file_t*         file = NULL;
 	int                 image_index;
-	int                 max_width = 0, max_height = 0;
+	int                 max_height = 0;
+	int                 max_width = 0;
 	struct rss_header   rss;
 	long                skip_size;
 	spriteset_t*        spriteset = NULL;
@@ -224,7 +225,7 @@ load_spriteset(const char* filename)
 			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			spriteset->num_images += dir_v2.num_frames;
-			sprintf(extra_v2_dir_name, "extra %i", i);
+			sprintf(extra_v2_dir_name, "extra %d", i);
 			spriteset->poses[i].name = lstr_newf("%s", i < 8 ? def_dir_names[i] : extra_v2_dir_name);
 			spriteset->poses[i].num_frames = dir_v2.num_frames;
 			if (!(spriteset->poses[i].frames = calloc(dir_v2.num_frames, sizeof(spriteset_frame_t))))

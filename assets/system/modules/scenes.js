@@ -10,13 +10,13 @@ module.exports =
 	Scene:       Scene
 };
 
-const link    = require('link');
-const prim    = require('prim');
-const threads = require('threads');
+const link   = require('link');
+const prim   = require('prim');
+const thread = require('thread');
 
 var screenMask = new Color(0.0, 0.0, 0.0, 0.0);
 var priority = 99;
-var threadID = threads.create({
+var threadID = thread.create({
 	update: _updateScenes,
 	render: _renderScenes,
 }, priority);
@@ -75,7 +75,7 @@ function Scene()
 	function runTimeline(ctx)
 	{
 		if ('opThread' in ctx) {
-			if (threads.isRunning(ctx.opThread))
+			if (thread.isRunning(ctx.opThread))
 				return true;
 			else {
 				link(tasks)
@@ -100,7 +100,7 @@ function Scene()
 				activation = null;
 			}
 			if (ctx.op.update != null) {
-				ctx.opThread = threads.create({
+				ctx.opThread = thread.create({
 					update: ctx.op.update.bind(ctx.opctx, this),
 					render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
 					getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
@@ -113,10 +113,10 @@ function Scene()
 			return true;
 		} else {
 			if (link(ctx.forks)
-				.where(function(thread) { return threads.isRunning(thread); })
+				.where(function(thread) { return thread.isRunning(thread); })
 				.length() == 0)
 			{
-				var self = threads.self();
+				var self = thread.self();
 				link(tasks)
 					.where(function(thread) { return self == thread })
 					.remove();
@@ -133,7 +133,7 @@ function Scene()
 	//     true if the scene is still executing commands; false otherwise.
 	function isRunning()
 	{
-		return threads.isRunning(mainThread);
+		return thread.isRunning(mainThread);
 	};
 
 	// Scene:doIf()
@@ -199,7 +199,7 @@ function Scene()
 							pc: 0,
 							forks: [],
 						};
-						var tid = threads.create({
+						var tid = thread.create({
 							update: runTimeline.bind(scene, ctx)
 						});
 						tasks.push(tid);
@@ -274,7 +274,7 @@ function Scene()
 			},
 			update: function(scene) {
 				return link(forks)
-					.where(function(tid) { return threads.isRunning(tid); })
+					.where(function(tid) { return thread.isRunning(tid); })
 					.length() > 0;
 			}
 		};
@@ -296,12 +296,12 @@ function Scene()
 			pc: 0,
 			forks: [],
 		};
-		mainThread = threads.create({
+		mainThread = thread.create({
 			update: runTimeline.bind(this, ctx)
 		});
 		tasks.push(mainThread);
 		if (waitUntilDone)
-			threads.join(mainThread);
+			thread.join(mainThread);
 		return this;
 	};
 
@@ -315,7 +315,7 @@ function Scene()
 		link(tasks)
 			.each(function(tid)
 		{
-			threads.kill(tid);
+			thread.kill(tid);
 		});
 	};
 
