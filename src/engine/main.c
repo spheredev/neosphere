@@ -70,12 +70,12 @@ main(int argc, char* argv[])
 	// something of a hairball over time, and likely quite fragile.  don't be surprised if
 	// attempting to edit it causes something to break. :o)
 
-	path_t*              games_path;
 	lstring_t*           dialog_name;
 	duk_errcode_t        err_code;
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	const char*          filename;
+	path_t*              games_path;
 	image_t*             icon;
 	int                  line_num;
 	const path_t*        script_path;

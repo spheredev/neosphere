@@ -410,7 +410,7 @@ inferior_request(inferior_t* obj, message_t* msg)
 	return response;
 
 lost_connection:
-	printf("inferior lost connection with the target.\n");
+	printf("debugger lost connection with the target.\n");
 	message_free(msg);
 	obj->is_detached = true;
 	return NULL;
@@ -532,9 +532,9 @@ handle_notify(inferior_t* obj, const message_t* msg)
 		case NFY_DETACHING:
 			status_type = message_get_int(msg, 1);
 			if (status_type == 0)
-				printf("inferior disconnected normally.\n");
+				printf("debugger disconnected normally.\n");
 			else
-				printf("inferior disconnected due to an error.\n");
+				printf("debugger disconnected due to an error.\n");
 			obj->is_detached = true;
 			return false;
 		}

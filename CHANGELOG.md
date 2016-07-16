@@ -4,19 +4,17 @@ minisphere Changelog
 v4.0.0 - TBD
 ------------
 
-* Introduces the new Sphere G2 API.  The Sphere 1.x ("G1") API, including the
-  map engine, has been deprecated wholesale and will no longer be available to
-  G2 games (i.e. those with a JSON manifest).  For information on the new API,
+* Introduces the new Sphere v2 API.  The Sphere 1.5 API, including the map
+  engine, has been deprecated wholesale and will no longer be available to
+  v2 games (i.e. those with a JSON manifest).  For information on the new API,
   see `docs/spherical-api.txt`.
-* For Sphere G2 games, the main script is now loaded as a CommonJS module, like
-  in Node.js.
+* For Sphere v2 games, the main script is now loaded as a CommonJS module.
 * miniRT has been overhauled and made into an official part of the Spherical
   standard library.  miniRT modules can thus be referred to more concisely,
-  e.g. `require("threads")` instead of `require("miniRT/threads")`.
+  e.g. `require("thread")` instead of `require("miniRT/threads")`.
 * Removes support for on-the-fly transpilation of TypeScript and CoffeeScript.
-  Duktape performs this task rather slowly so it's not really practical.  If
-  you have any game code in these languages, transpilation must now be done in
-  advance.
+  Duktape performs this task rather slowly so it's best left up to a separate
+  build step.
 
 
 v3.3.0 - May 31, 2016

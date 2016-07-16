@@ -1,5 +1,5 @@
 /**
- *  miniRT events CommonJS module
+ *  miniRT event CommonJS module
  *  (c) 2015-2016 Fat Cerberus
 **/
 
@@ -35,7 +35,7 @@ function Delegate()
     function add(handler, thisObj)
     {
         if (haveHandler(handler, thisObj))
-            Abort("Delegate:add(): attempt to add duplicate handler", -1);
+            throw new Error("cannot have duplicate handler");
         invokeList.push({ thisObj: thisObj, handler: handler });
     }
 
@@ -63,7 +63,7 @@ function Delegate()
     function remove(handler, thisObj)
     {
         if (!haveHandler(handler, thisObj))
-            Abort("Delegate:remove(): no such handler is registered", -1);
+            throw new Error("handler is not registered");
         link(invokeList)
             .where(function(v) { return v.handler == handler; })
             .where(function(v) { return v.thisObj == thisObj; })

@@ -384,7 +384,7 @@ initialize_pegasus_api(duk_context* ctx)
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 	
-	// initialize the Sphere 2.0 API
+	// initialize the Sphere v2 API
 	api_register_ctor(ctx, "Color", js_new_Color, NULL);
 	api_register_static_func(ctx, "Color", "mix", js_Color_mix);
 	api_register_prop(ctx, "Color", "name", js_Color_get_name, NULL);

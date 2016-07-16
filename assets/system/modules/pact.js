@@ -1,5 +1,5 @@
 /**
- *  miniRT pacts CommonJS module
+ *  miniRT pact CommonJS module
  *  (c) 2015-2016 Fat Cerberus
 **/
 

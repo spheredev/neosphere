@@ -14,7 +14,7 @@ initialize_rng(void)
 {
 	uint64_t seed;
 	
-	console_log(1, "initializing random number generator");
+	console_log(1, "initializing RNG subsystem");
 	
 	seed = time(NULL);
 	s_xoro = xoro_new(seed);
@@ -32,7 +32,7 @@ shutdown_rng(void)
 void
 seed_rng(uint64_t seed)
 {
-	console_log(2, "seeding random number generator");
+	console_log(2, "reseeding random number generator");
 	console_log(2, "    new seed: 0x%"PRIx64, seed);
 	
 	xoro_reseed(s_xoro, seed);
