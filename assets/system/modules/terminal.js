@@ -104,13 +104,13 @@ function executeCommand(command)
 
 function getInput()
 {
-	if (!wasKeyDown && kb.isPressed(Key.Tab)) {
+	if (!wasKeyDown && kb.isPressed(Key.Tilde)) {
 		if (!isVisible())
 			show();
 		else
 			hide();
 	}
-	wasKeyDown = kb.isPressed(Key.Tab);
+	wasKeyDown = kb.isPressed(Key.Tilde);
 	if (isVisible()) {
 		if (kb.isPressed(Key.PageUp)) {
 			visible.line = Math.min(visible.line + 0.5, buffer.length - numLines);
@@ -119,6 +119,10 @@ function getInput()
 		}
 		var keycode = kb.getKey();
 		switch (keycode) {
+			case Key.None:
+			case Key.Tab:
+			case Key.Tilde:
+				break;
 			case Key.Enter:
 				log("Command entered: '" + entry + "'");
 				executeCommand(entry);
@@ -138,8 +142,6 @@ function getInput()
 					.tween(visible, 0.125, 'easeOut', { line: 0.0 })
 					.run();
 				break;
-			case Key.Tab: break;
-			case Key.None: break;
 			default:
 				var isShifted = kb.isPressed(Key.LShift) || kb.isPressed(Key.RShift);
 				var ch = kb.keyString(keycode, isShifted);

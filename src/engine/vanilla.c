@@ -1362,7 +1362,7 @@ js_SetFrameRate(duk_context* ctx)
 	int framerate = duk_require_int(ctx, 0);
 
 	if (framerate < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetFrameRate(): framerate must be positive (got: %d)", framerate);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "framerate cannot be negative", framerate);
 	g_framerate = framerate;
 	return 0;
 }
