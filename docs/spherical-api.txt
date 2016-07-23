@@ -877,6 +877,17 @@ fs.rename(srcname, destname);
     assumed to be full SphereFS paths.  This can also be used to move a file
     between directories; if so, the destination directory must already exist.
 
+fs.resolve(path);
+
+    Resolves a path (which may contain relative components) to its canonical
+    SphereFS representation.  This can be useful when data is associated with
+    individual assets, such as map files, and you need to ensure the same data
+    is pulled for a given file regardless of the path used to access it.
+    
+    Note that the resource referred to by the path doesn't need to exist.  As
+    with other FS methods, fs.resolve() will throw an error if an absolute path
+    is passed in.
+
 fs.rmdir(dirname);
 
     Deletes the specified directory.  The directory must be empty or an error

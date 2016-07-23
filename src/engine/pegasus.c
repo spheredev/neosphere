@@ -204,6 +204,7 @@ static duk_ret_t js_fs_exists                  (duk_context* ctx);
 static duk_ret_t js_fs_mkdir                   (duk_context* ctx);
 static duk_ret_t js_fs_open                    (duk_context* ctx);
 static duk_ret_t js_fs_rename                  (duk_context* ctx);
+static duk_ret_t js_fs_resolve                 (duk_context* ctx);
 static duk_ret_t js_fs_rmdir                   (duk_context* ctx);
 static duk_ret_t js_fs_unlink                  (duk_context* ctx);
 static duk_ret_t js_kb_get_capsLock            (duk_context* ctx);
@@ -513,6 +514,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "fs", "open", js_fs_open);
 	api_register_static_func(ctx, "fs", "mkdir", js_fs_mkdir);
 	api_register_static_func(ctx, "fs", "rename", js_fs_rename);
+	api_register_static_func(ctx, "fs", "resolve", js_fs_resolve);
 	api_register_static_func(ctx, "fs", "rmdir", js_fs_rmdir);
 	api_register_static_func(ctx, "fs", "unlink", js_fs_unlink);
 	
@@ -1307,9 +1309,21 @@ js_fs_rename(duk_context* ctx)
 
 	name1 = duk_require_path(ctx, 0, NULL, false);
 	name2 = duk_require_path(ctx, 1, NULL, false);
+	
 	if (!sfs_rename(g_fs, name1, name2, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to rename `%s` to `%s`", name1, name2);
 	return 0;
+}
+
+static duk_ret_t
+js_fs_resolve(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, false);
+	
+	duk_push_string(ctx, filename);
+	return 1;
 }
 
 static duk_ret_t
