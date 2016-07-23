@@ -17,7 +17,7 @@ void             screen_get_mouse_xy      (const screen_t* obj, int* o_x, int* o
 void             screen_set_clipping      (screen_t* obj, rect_t clip_rect);
 void             screen_set_frameskip     (screen_t* obj, int max_skips);
 void             screen_set_mouse_xy      (screen_t* obj, int x, int y);
-void             screen_draw_status       (screen_t* obj, const char* text);
+void             screen_draw_status       (screen_t* obj, const char* text, color_t color);
 void             screen_flip              (screen_t* obj, int framerate);
 image_t*         screen_grab              (screen_t* obj, int x, int y, int width, int height);
 void             screen_queue_screenshot  (screen_t* obj);

@@ -69,7 +69,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	
 	// listen for SSJ connection on TCP port 1208. the listening socket will remain active
 	// for the duration of the session, allowing a debugger to be attached at any time.
-	console_log(1, "listening for debugger on TCP %i", TCP_DEBUG_PORT);
+	console_log(1, "listening for debugger on TCP port %d", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
 	s_server = listen_on_port(hostname, TCP_DEBUG_PORT, 1024, 1);
 

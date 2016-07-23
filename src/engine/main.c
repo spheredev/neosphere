@@ -226,7 +226,7 @@ main(int argc, char* argv[])
 	// display loading message, scripts may take a bit to compile
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_draw_status(g_screen, "waiting for SSJ...");
+		screen_draw_status(g_screen, "waiting for SSJ...", color_new(255, 255, 255, 255));
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
@@ -238,7 +238,7 @@ main(int argc, char* argv[])
 
 	// display loading message, scripts may take a bit to compile
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	screen_draw_status(g_screen, "starting up...");
+	screen_draw_status(g_screen, "starting up...", color_new(255, 255, 255, 255));
 	al_flip_display();
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 

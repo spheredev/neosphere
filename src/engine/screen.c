@@ -186,7 +186,7 @@ screen_set_mouse_xy(screen_t* obj, int x, int y)
 }
 
 void
-screen_draw_status(screen_t* obj, const char* text)
+screen_draw_status(screen_t* obj, const char* text, color_t color)
 {
 	rect_t            bounds;
 	int               screen_cx;
@@ -209,7 +209,7 @@ screen_draw_status(screen_t* obj, const char* text)
 		al_map_rgba(16, 16, 16, 192));
 	font_draw_text(g_sys_font, color_new(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
-	font_draw_text(g_sys_font, color_new(255, 255, 255, 255), (bounds.x2 + bounds.x1) / 2,
+	font_draw_text(g_sys_font, color, (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
 	screen_transform(obj, NULL);
 }
@@ -278,7 +278,7 @@ screen_flip(screen_t* obj, int framerate)
 			obj->take_screenshot = false;
 		}
 		if (is_debugger_attached())
-			screen_draw_status(obj, "SSJ");
+			screen_draw_status(obj, "SSJ", color_new(255, 224, 0, 255));
 		if (obj->show_fps) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", obj->fps_flips, obj->fps_frames);
