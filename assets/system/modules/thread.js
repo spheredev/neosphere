@@ -17,8 +17,16 @@ const link = require('link');
 
 var currentSelf = 0;
 var hasUpdated = false;
+var haveMapEngine = typeof MapEngine === 'function';
 var nextThreadID = 1;
 var threads = [];
+if (haveMapEngine) {
+    global.SetUpdateScript(_updateAll);
+    global.SetRenderScript(_renderAll);
+    global.SetUpdateScript = global.SetRenderScript = function() {
+        throw new Error("API is not compatible with miniRT threads");
+    }
+}
 
 function create(entity, priority)
 {
@@ -53,9 +61,17 @@ function join(threadIDs)
 		.filterBy('id', threadIDs)
 		.length() > 0)
 	{
-		_renderAll();
+		var mapInUse = haveMapEngine && IsMapEngineRunning();
+		if (mapInUse)
+            RenderMap();
+        else
+            _renderAll();
 		screen.flip();
-		_updateAll();
+		hasUpdated = false;
+		if (mapInUse)
+            UpdateMapEngine();
+        if (!hasUpdated)
+            _updateAll();
 	}
 }
 

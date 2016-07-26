@@ -16,19 +16,12 @@ initialize_api(duk_context* ctx, int version)
 	duk_put_prop_string(ctx, -2, "prototypes");
 	duk_pop(ctx);
 
-	// initialize the correct API depending on the version number in
-	// the game manifest
-	//     - v1: Vanilla API (Sphere 1.x)
-	//     - v2: Pegasus API (Sphere 2.0)
-	switch (version) {
-	case 1:
-		initialize_vanilla_api(ctx);
-		init_map_engine_api(ctx);
-		break;
-	case 2:
-		initialize_pegasus_api(ctx);
-		break;
-	}
+	// initialize the Sphere v1 and v2 APIs.  it wasn't the original plan
+	// to allow them to co-exist, but since there's no official v2 map engine,
+	// this makes migration a bit less painful.
+	initialize_vanilla_api(ctx);
+	init_map_engine_api(ctx);
+	initialize_pegasus_api(ctx);
 }
 
 void

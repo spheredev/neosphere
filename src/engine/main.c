@@ -245,17 +245,15 @@ main(int argc, char* argv[])
 	// evaluate startup script
 	screen_show_mouse(g_screen, false);
 	script_path = fs_script_path(g_fs);
-	if (!evaluate_script(path_cstr(script_path), fs_version(g_fs) > 1))
+	if (!evaluate_script(path_cstr(script_path), false))
 		goto on_js_error;
 	duk_pop(g_duk);
 
-	// if running in Vanilla mode, call game() function
-	if (fs_version(g_fs) == 1) {
-		duk_get_global_string(g_duk, "game");
-		if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
-			goto on_js_error;
-		duk_pop(g_duk);
-	}
+	// call game() function (if one exists)
+	duk_get_global_string(g_duk, "game");
+	if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+		goto on_js_error;
+	duk_pop(g_duk);
 	
 	exit_game(false);
 
