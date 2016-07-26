@@ -270,10 +270,10 @@ function Scene()
 		var command = {
 			arguments: [],
 			start: function(scene) {
-				forks = activation.forks;
+				this.forks = activation.forks;
 			},
 			update: function(scene) {
-				return link(forks)
+				return link(this.forks)
 					.where(function(tid) { return thread.isRunning(tid); })
 					.length() > 0;
 			}
