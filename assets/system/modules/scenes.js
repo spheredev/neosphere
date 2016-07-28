@@ -14,7 +14,7 @@ const link   = require('link');
 const prim   = require('prim');
 const thread = require('thread');
 
-var screenMask = new Color(0.0, 0.0, 0.0, 0.0);
+var screenMask = Color.Transparent;
 var priority = 99;
 var threadID = thread.create({
 	update: _updateScenes,
@@ -79,7 +79,7 @@ function Scene()
 				return true;
 			else {
 				link(tasks)
-					.where(function(thread) { return ctx.opThread == thread })
+					.where(function(tid) { return ctx.opThread == tid })
 					.remove();
 				delete ctx.opThread;
 				activation = ctx;
@@ -113,12 +113,12 @@ function Scene()
 			return true;
 		} else {
 			if (link(ctx.forks)
-				.where(function(thread) { return thread.isRunning(thread); })
+				.where(function(tid) { return thread.isRunning(tid); })
 				.length() == 0)
 			{
 				var self = thread.self();
 				link(tasks)
-					.where(function(thread) { return self == thread })
+					.where(function(tid) { return self == tid })
 					.remove();
 				return false;
 			} else {

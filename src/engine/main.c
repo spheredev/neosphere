@@ -703,6 +703,7 @@ show_error_screen(const char* message)
 
 	// show error in-engine, Sphere 1.x style
 	screen_unskip_frame(g_screen);
+	screen_set_clipping(g_screen, new_rect(0, 0, g_res_x, g_res_y));
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {

@@ -355,7 +355,7 @@ initialize_pegasus_api(duk_context* ctx)
 	const struct x11_color* p;
 	int i;
 	
-	console_log(1, "initializing Sphere v%d Lv. %d API", API_VERSION, API_LEVEL);
+	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i)
 		console_log(1, "    %s", EXTENSIONS[i]);
 	

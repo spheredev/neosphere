@@ -46,7 +46,7 @@ thread.create({
 }, Infinity);
 
 log(engine.game.name + " Debug Console");
-log(engine.name + " " + engine.version + " (Sphere v" + engine.apiVersion + " Lv. " + engine.apiLevel + ")");
+log(engine.name + " " + engine.version + " (Sphere v" + engine.apiVersion + " L" + engine.apiLevel + ")");
 log("");
 
 function executeCommand(command)
