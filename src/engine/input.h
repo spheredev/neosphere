@@ -30,8 +30,12 @@ enum mouse_button
 typedef
 enum mouse_key
 {
-	MOUSE_WHEEL_UP,
-	MOUSE_WHEEL_DOWN
+	MOUSE_KEY_NONE,
+	MOUSE_KEY_LEFT,
+	MOUSE_KEY_RIGHT,
+	MOUSE_KEY_MIDDLE,
+	MOUSE_KEY_WHEEL_UP,
+	MOUSE_KEY_WHEEL_DOWN,
 } mouse_key_t;
 
 void initialize_input   (void);

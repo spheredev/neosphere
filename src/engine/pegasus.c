@@ -214,6 +214,9 @@ static duk_ret_t js_kb_clearQueue              (duk_context* ctx);
 static duk_ret_t js_kb_getKey                  (duk_context* ctx);
 static duk_ret_t js_kb_isPressed               (duk_context* ctx);
 static duk_ret_t js_kb_keyString               (duk_context* ctx);
+static duk_ret_t js_mouse_get_x                (duk_context* ctx);
+static duk_ret_t js_mouse_get_y                (duk_context* ctx);
+static duk_ret_t js_mouse_getKey               (duk_context* ctx);
 static duk_ret_t js_random_get_state           (duk_context* ctx);
 static duk_ret_t js_random_set_state           (duk_context* ctx);
 static duk_ret_t js_random_chance              (duk_context* ctx);
@@ -526,6 +529,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "kb", "isPressed", js_kb_isPressed);
 	api_register_static_func(ctx, "kb", "keyString", js_kb_keyString);
 	
+	api_register_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
+	api_register_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
+	api_register_static_func(ctx, "mouse", "getKey", js_mouse_getKey);
+
 	api_register_static_prop(ctx, "random", "state", js_random_get_state, js_random_set_state);
 	api_register_static_func(ctx, "random", "chance", js_random_chance);
 	api_register_static_func(ctx, "random", "normal", js_random_normal);
@@ -642,6 +649,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_const(ctx, "Key", "Divide", ALLEGRO_KEY_PAD_SLASH);
 	api_register_const(ctx, "Key", "Multiply", ALLEGRO_KEY_PAD_ASTERISK);
 	api_register_const(ctx, "Key", "Subtract", ALLEGRO_KEY_PAD_MINUS);
+
+	api_register_const(ctx, "MouseKey", "None", MOUSE_KEY_NONE);
+	api_register_const(ctx, "MouseKey", "Left", MOUSE_KEY_LEFT);
+	api_register_const(ctx, "MouseKey", "Right", MOUSE_KEY_RIGHT);
+	api_register_const(ctx, "MouseKey", "Middle", MOUSE_KEY_MIDDLE);
+	api_register_const(ctx, "MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
+	api_register_const(ctx, "MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
 
 	api_register_const(ctx, "ShapeType", "Auto", SHAPE_AUTO);
 	api_register_const(ctx, "ShapeType", "Fan", SHAPE_TRI_FAN);
@@ -1419,6 +1433,38 @@ js_kb_keyString(duk_context* ctx)
 	default:
 		duk_push_string(ctx, "");
 	}
+	return 1;
+}
+
+static duk_ret_t
+js_mouse_get_x(duk_context* ctx)
+{
+	int x;
+	int y;
+	
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, x);
+	return 1;
+}
+
+static duk_ret_t
+js_mouse_get_y(duk_context* ctx)
+{
+	int x;
+	int y;
+
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_mouse_getKey(duk_context* ctx)
+{
+	if (mouse_queue_len() > 0)
+		duk_push_int(ctx, mouse_get_key());
+	else
+		duk_push_int(ctx, MOUSE_KEY_NONE);
 	return 1;
 }
 

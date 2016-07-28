@@ -46,7 +46,7 @@ thread.create({
 }, Infinity);
 
 log(engine.game.name + " Debug Console");
-log(engine.name + " " + engine.version + " (Sphere v" + engine.apiVersion + " L" + engine.apiLevel + ")");
+log(engine.name + " " + engine.version + " (Sphere v" + engine.apiVersion + " L" + engine.apiLevel + " API)");
 log("");
 
 function executeCommand(command)
@@ -112,10 +112,12 @@ function getInput()
 	}
 	wasKeyDown = kb.isPressed(Key.Tilde);
 	if (isVisible()) {
-		if (kb.isPressed(Key.PageUp)) {
-			visible.line = Math.min(visible.line + 0.5, buffer.length - numLines);
-		} else if (kb.isPressed(Key.PageDown)) {
-			visible.line = Math.max(visible.line - 0.5, 0);
+		var mouseKey = mouse.getKey();
+		var speed = mouseKey !== MouseKey.None ? 1.0 : 0.5;
+		if (kb.isPressed(Key.PageUp) || mouseKey === MouseKey.WheelUp) {
+			visible.line = Math.min(visible.line + speed, buffer.length - numLines);
+		} else if (kb.isPressed(Key.PageDown) || mouseKey === MouseKey.WheelDown) {
+			visible.line = Math.max(visible.line - speed, 0);
 		}
 		var keycode = kb.getKey();
 		switch (keycode) {

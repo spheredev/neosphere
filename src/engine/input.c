@@ -540,9 +540,9 @@ update_input(void)
 	if (s_have_mouse) {
 		al_get_mouse_state(&mouse_state);
 		if (mouse_state.z > s_last_wheel_pos)
-			queue_wheel_event(MOUSE_WHEEL_UP);
+			queue_wheel_event(MOUSE_KEY_WHEEL_UP);
 		if (mouse_state.z < s_last_wheel_pos)
-			queue_wheel_event(MOUSE_WHEEL_DOWN);
+			queue_wheel_event(MOUSE_KEY_WHEEL_DOWN);
 		s_last_wheel_pos = mouse_state.z;
 	}
 }

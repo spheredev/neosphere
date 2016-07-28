@@ -366,6 +366,43 @@ kb.keyString(key, shifted);
     specifies whether to assume the Shift key is pressed.
 
 
+Mouse Routines
+--------------
+
+These methods allow access to the mouse, another common input method for games.
+As with the Keyboard API, the Mouse API provides access to an event queue which
+accumulates mouse clicks and other events until the game is ready to process
+them.
+
+MouseKey [enumeration]
+
+    Specifies a mouse click or other event (such as a wheel movement).  Can
+    be one of the following:
+    
+        MouseKey.None
+        MouseKey.Left
+        MouseKey.Middle
+        MouseKey.Right
+        MouseKey.WheelUp
+        MouseKey.WheelDown
+
+mouse.x [read-only]
+mouse.y [read-only]
+
+    Gets the X and Y position of the mouse cursor relative to the game's
+    rendering area.
+
+mouse.clearQueue();
+
+    Removes all events from the mouse event queue.  If another event is not
+    received in the interim, the next getKey() will return MouseKey.None.
+
+mouse.getKey();
+
+    Gets the next click or event in the mouse event queue, or MouseKey.None if
+    the queue is empty.
+
+
 Graphics API
 ------------
 

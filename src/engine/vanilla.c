@@ -683,8 +683,8 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_const(ctx, NULL, "MOUSE_LEFT", MOUSE_BUTTON_LEFT);
 	api_register_const(ctx, NULL, "MOUSE_MIDDLE", MOUSE_BUTTON_MIDDLE);
 	api_register_const(ctx, NULL, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
-	api_register_const(ctx, NULL, "MOUSE_WHEEL_UP", MOUSE_WHEEL_UP);
-	api_register_const(ctx, NULL, "MOUSE_WHEEL_DOWN", MOUSE_WHEEL_DOWN);
+	api_register_const(ctx, NULL, "MOUSE_WHEEL_UP", MOUSE_KEY_WHEEL_UP);
+	api_register_const(ctx, NULL, "MOUSE_WHEEL_DOWN", MOUSE_KEY_WHEEL_DOWN);
 	
 	api_register_const(ctx, NULL, "PLAYER_1", 0);
 	api_register_const(ctx, NULL, "PLAYER_2", 1);
