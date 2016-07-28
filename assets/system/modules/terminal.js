@@ -112,11 +112,13 @@ function getInput()
 	}
 	wasKeyDown = kb.isPressed(Key.Tilde);
 	if (isVisible()) {
-		var mouseKey = mouse.getKey();
-		var speed = mouseKey !== MouseKey.None ? 1.0 : 0.5;
-		if (kb.isPressed(Key.PageUp) || mouseKey === MouseKey.WheelUp) {
+		var mouseEvent = mouse.getEvent();
+		var wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
+		var wheelDown = mouseEvent !== null && mouseEvent.key == MouseKey.WheelDown;
+		var speed = (wheelUp || wheelDown) ? 1.0 : 0.5;
+		if (kb.isPressed(Key.PageUp) || wheelUp) {
 			visible.line = Math.min(visible.line + speed, buffer.length - numLines);
-		} else if (kb.isPressed(Key.PageDown) || mouseKey === MouseKey.WheelDown) {
+		} else if (kb.isPressed(Key.PageDown) || wheelDown) {
 			visible.line = Math.max(visible.line - speed, 0);
 		}
 		var keycode = kb.getKey();

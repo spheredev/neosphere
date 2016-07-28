@@ -389,18 +389,39 @@ MouseKey [enumeration]
 mouse.x [read-only]
 mouse.y [read-only]
 
-    Gets the X and Y position of the mouse cursor relative to the game's
-    rendering area.
+    Gets the immediate X and Y position of the mouse cursor relative to the
+    game's rendering area.
 
 mouse.clearQueue();
 
     Removes all events from the mouse event queue.  If another event is not
     received in the interim, the next getKey() will return MouseKey.None.
 
-mouse.getKey();
+mouse.getEvent();
 
-    Gets the next click or event in the mouse event queue, or MouseKey.None if
-    the queue is empty.
+    Gets the next event in the mouse event queue.  `null` is returned if the
+    queue is empty.
+    
+    The object returned has the following properties:
+    
+        event.key
+        
+            A MouseKey value representing the type of the click or other event.
+            For example, a left mouse click is represented as MouseKey.Left.
+
+        event.x
+        event.y
+
+            The X and Y position of the mouse cursor relative to the rendering
+            area at the time the event was received.
+
+mouse.isPressed(key);
+
+    Gets whether the specified mouse button is currently pressed.  `key` is one
+    of the MouseKey constants listed above.
+    
+    Note: This function always returns false for virtual keys such as WheelUp
+          and WheelDown.
 
 
 Graphics API

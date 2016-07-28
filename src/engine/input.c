@@ -12,7 +12,7 @@ struct key_queue
 };
 
 static void queue_key         (int keycode);
-static void queue_wheel_event (int event);
+static void queue_mouse_event (mouse_key_t key, int x, int y);
 
 static vector_t*            s_bound_buttons;
 static vector_t*            s_bound_keys;
@@ -26,10 +26,10 @@ static struct key_queue     s_key_queue;
 static bool                 s_key_state[ALLEGRO_KEY_MAX];
 static int                  s_keymod_state;
 static int                  s_last_wheel_pos = 0;
+static mouse_event_t        s_mouse_queue[255];
 static int                  s_num_joysticks = 0;
-static int                  s_num_wheel_events = 0;
+static int                  s_num_mouse_events = 0;
 static bool                 s_has_keymap_changed = false;
-static mouse_key_t          s_wheel_queue[255];
 
 struct bound_button
 {
@@ -397,21 +397,49 @@ kb_save_keymap(void)
 int
 mouse_queue_len(void)
 {
-	return s_num_wheel_events;
+	return s_num_mouse_events;
 }
 
-mouse_key_t
-mouse_get_key(void)
+void
+mouse_clear_queue(void)
 {
-	mouse_key_t key;
+	s_num_mouse_events = 0;
+}
+
+mouse_event_t
+mouse_get_event(void)
+{
+	mouse_event_t event;
 
 	int i;
 
-	key = s_wheel_queue[0];
-	--s_num_wheel_events;
-	for (i = 0; i < s_num_wheel_events; ++i)
-		s_wheel_queue[i] = s_wheel_queue[i + 1];
-	return key;
+	event = s_mouse_queue[0];
+	--s_num_mouse_events;
+	for (i = 0; i < s_num_mouse_events; ++i)
+		s_mouse_queue[i] = s_mouse_queue[i + 1];
+	return event;
+}
+
+bool
+mouse_is_key_down(mouse_key_t key)
+{
+	ALLEGRO_DISPLAY*    display;
+	ALLEGRO_MOUSE_STATE state;
+	
+	display = screen_display(g_screen);
+	al_get_mouse_state(&state);
+	if (state.display != display)
+		return false;
+	switch (key) {
+	case MOUSE_KEY_LEFT:
+		return al_mouse_button_down(&state, 1);
+	case MOUSE_KEY_MIDDLE:
+		return al_mouse_button_down(&state, 3);
+	case MOUSE_KEY_RIGHT:
+		return al_mouse_button_down(&state, 2);
+	default:
+		return false;
+	}
 }
 
 int
@@ -536,14 +564,24 @@ update_input(void)
 		}
 	}
 	
-	// check whether mouse wheel moved since last update
 	if (s_have_mouse) {
+		// check for mouse wheel movement
 		al_get_mouse_state(&mouse_state);
 		if (mouse_state.z > s_last_wheel_pos)
-			queue_wheel_event(MOUSE_KEY_WHEEL_UP);
+			queue_mouse_event(MOUSE_KEY_WHEEL_UP, mouse_state.x, mouse_state.y);
 		if (mouse_state.z < s_last_wheel_pos)
-			queue_wheel_event(MOUSE_KEY_WHEEL_DOWN);
+			queue_mouse_event(MOUSE_KEY_WHEEL_DOWN, mouse_state.x, mouse_state.y);
 		s_last_wheel_pos = mouse_state.z;
+		
+		// check for mouse clicks.  clicks are queued in order of left->right->middle.
+		if (mouse_state.display == screen_display(g_screen)) {
+			if (al_mouse_button_down(&mouse_state, 1))
+				queue_mouse_event(MOUSE_KEY_LEFT, mouse_state.x, mouse_state.y);
+			if (al_mouse_button_down(&mouse_state, 2))
+				queue_mouse_event(MOUSE_KEY_RIGHT, mouse_state.x, mouse_state.y);
+			if (al_mouse_button_down(&mouse_state, 3))
+				queue_mouse_event(MOUSE_KEY_MIDDLE, mouse_state.x, mouse_state.y);
+		}
 	}
 }
 
@@ -593,10 +631,15 @@ queue_key(int keycode)
 }
 
 static void
-queue_wheel_event(int event)
+queue_mouse_event(mouse_key_t key, int x, int y)
 {
-	if (s_num_wheel_events < 255) {
-		s_wheel_queue[s_num_wheel_events] = event;
-		++s_num_wheel_events;
+	mouse_event_t* p_event;
+	
+	if (s_num_mouse_events < 255) {
+		p_event = &s_mouse_queue[s_num_mouse_events];
+		p_event->key = key;
+		p_event->x = x;
+		p_event->y = y;
+		++s_num_mouse_events;
 	}
 }

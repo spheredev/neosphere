@@ -216,7 +216,9 @@ static duk_ret_t js_kb_isPressed               (duk_context* ctx);
 static duk_ret_t js_kb_keyString               (duk_context* ctx);
 static duk_ret_t js_mouse_get_x                (duk_context* ctx);
 static duk_ret_t js_mouse_get_y                (duk_context* ctx);
-static duk_ret_t js_mouse_getKey               (duk_context* ctx);
+static duk_ret_t js_mouse_clearQueue           (duk_context* ctx);
+static duk_ret_t js_mouse_getEvent             (duk_context* ctx);
+static duk_ret_t js_mouse_isPressed            (duk_context* ctx);
 static duk_ret_t js_random_get_state           (duk_context* ctx);
 static duk_ret_t js_random_set_state           (duk_context* ctx);
 static duk_ret_t js_random_chance              (duk_context* ctx);
@@ -531,7 +533,9 @@ initialize_pegasus_api(duk_context* ctx)
 	
 	api_register_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
 	api_register_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
-	api_register_static_func(ctx, "mouse", "getKey", js_mouse_getKey);
+	api_register_static_func(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
+	api_register_static_func(ctx, "mouse", "getEvent", js_mouse_getEvent);
+	api_register_static_func(ctx, "mouse", "isPressed", js_mouse_isPressed);
 
 	api_register_static_prop(ctx, "random", "state", js_random_get_state, js_random_set_state);
 	api_register_static_func(ctx, "random", "chance", js_random_chance);
@@ -1459,12 +1463,42 @@ js_mouse_get_y(duk_context* ctx)
 }
 
 static duk_ret_t
-js_mouse_getKey(duk_context* ctx)
+js_mouse_clearQueue(duk_context* ctx)
 {
-	if (mouse_queue_len() > 0)
-		duk_push_int(ctx, mouse_get_key());
-	else
-		duk_push_int(ctx, MOUSE_KEY_NONE);
+	mouse_clear_queue();
+	return 0;
+}
+
+static duk_ret_t
+js_mouse_getEvent(duk_context* ctx)
+{
+	mouse_event_t event;
+	
+	if (mouse_queue_len() == 0)
+		duk_push_null(ctx);
+	else {
+		event = mouse_get_event();
+		duk_push_object(ctx);
+		duk_push_int(ctx, event.key);
+		duk_put_prop_string(ctx, -2, "key");
+		duk_push_int(ctx, event.x);
+		duk_put_prop_string(ctx, -2, "x");
+		duk_push_int(ctx, event.y);
+		duk_put_prop_string(ctx, -2, "y");
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_mouse_isPressed(duk_context* ctx)
+{
+	mouse_key_t key;
+
+	key = duk_require_int(ctx, 0);
+	if (key < 0 || key >= MOUSE_KEY_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid mouse key constant");
+
+	duk_push_boolean(ctx, mouse_is_key_down(key));
 	return 1;
 }
 
