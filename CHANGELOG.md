@@ -5,15 +5,21 @@ v4.0.0 - TBD
 ------------
 
 * Introduces the new Sphere v2 API.  The Sphere 1.5 API, including the map
-  engine, has been deprecated wholesale and will no longer be available to
-  v2 games (i.e. those with a JSON manifest).  For information on the new API,
-  see `docs/spherical-api.txt`.
-* For Sphere v2 games, the main script is now loaded as a CommonJS module.
-* miniRT has been overhauled and made into an official part of the Spherical
-  standard library.  miniRT modules can thus be referred to more concisely,
-  e.g. `require("thread")` instead of `require("miniRT/threads")`.
+  engine, should be considered deprecated and is not recommended for use in new
+  games.  For information on using the functions in the new API, see
+  `docs/spherical-api.txt`.
+* Repuposes the constructors for Sphere types, e.g. `new Image()` as part of
+  the Sphere v2 API.  Legacy types such as ByteArray have had their
+  constructors removed entirely.
+* Objects created using a Sphere v2 function--such as the Image constructor,
+  Color.Black et al., and so on--are no longer compatible with the Sphere v1
+  API.  For example, you can't pass a v2 Color object to Rectangle() or assign
+  a v2 Image to a v1 Spriteset without causing a type error.
+* miniRT has been overhauled and repurposed as the reference implementation of
+  the Sphere v2 standard library.  miniRT modules can thus be referred to more
+  concisely, e.g. `require("thread")` instead of `require("miniRT/threads")`.
 * Removes support for on-the-fly transpilation of TypeScript and CoffeeScript.
-  Duktape performs this task rather slowly so it's best left up to a separate
+  Duktape performs this task rather slowly so it's best handled in a separate
   build step.
 
 

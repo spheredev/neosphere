@@ -1,6 +1,31 @@
 Release Notes
 =============
 
+minisphere 4.0
+--------------
+
+* Several object constructors such as `Image`, `Color`, and `Surface` have been
+  repurposed as Sphere v2 APIs, while constructors for legacy objects such as
+  `ByteArray` have been removed entirely.  Any code using the constructors will
+  need to be updated.
+
+* Objects generated using a Sphere v2 API--such as the `Image` constructor (see
+  above), `Color.Black` et al., and so on--are no longer compatible with the
+  Sphere v1 API.  For example, you can't use a v2 `Color` object with
+  `Rectangle()` or assign a v2 `Image` to a v1 spriteset.  Doing so will cause
+  a `TypeError`.
+
+* The Sphere v1 API is now deprecated in its entirety.  It is not recommended
+  to use any Sphere v1 functions in new games, and the v1 API is thus no longer
+  documented.  New games should use the Sphere v2 API exclusively and migration
+  is highly recommended for existing games.
+
+* Automatic CoffeeScript and TypeScript transpilation has been removed from the
+  engine.  This was always a bit of a misfeature as Duktape isn't quite fast
+  enough to do this on demand without causing unwieldy delays.  Any
+  transpilation must now be done in advance.
+
+
 minisphere 3.3
 --------------
 
