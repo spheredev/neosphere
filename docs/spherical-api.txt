@@ -156,7 +156,7 @@ engine.sleep(time);
 Random Number Generation API
 ----------------------------
 
-Games often have need of a good psuedorandom number generator, particularly in\
+Games often have need of a good psuedorandom number generator, particularly in
 the case of RPGs.  JavaScript provides a basic generator in the form of
 Math.random().  Sphere takes it a step further and provides the `random`
 object.
@@ -176,50 +176,18 @@ random.state [read/write]
     and consist only of hexidecimal digits (0-9, A-F), otherwise a TypeError
     will be thrown.
 
-random.chance(odds);
+random.init([seed]);
 
-    Takes a chance and returns true or false depending on the outcome.  `odds`
-    is a value in the range [0-1] and represents a percentage: 0.75, for
-    instance, will pass 75% of the time.
+    Initializes the random number generator.  `seed` is a number value to use
+    as a seed.  Different seeds will generate different random sequences.  If
+    a seed is not provided, a default one will be used based on the current
+    date and time.
 
-random.normal(mean, sigma);
+random.next();
 
-    Returns a random floating point value normally distributed around `mean`
-    with a standard deviation of `sigma`.  The probability distribution of this
-    function is sometimes termed a "bell curve."
-
-random.random();
-
-    Returns a floating point value in the range [0,1).  This is the basic
-    method of random number generation, and is a direct, drop-in replacement
-    for Math.random().
-
-random.range(min, max);
-
-    Returns a random integer uniformly distributed within the range [min, max].
-
-random.reseed(seed);
-
-    Reseeds the random number generator; different seeds will generate
-    different random sequences.  If `seed` is floating point, it will be
-    truncated to an integer: a seed of 812.88, for example, is treated the same
-    as 812.
-
-random.sample(array);
-
-    Returns a single randomly-chosen item from `array`.
-
-random.string([length]);
-
-    Returns a randomly-generated string consisting of alphanumeric characters.
-    The generated string looks something like a YouTube video hash (e.g.
-    YlHRHDrKS) and is useful for uniquely identifying things, for example to
-    generate temporary filenames.  If no length is provided, the default is 10.
-
-random.uniform(mean, variance);
-
-    Returns a random floating point value uniformly distributed around `mean`
-    with absolute maximum deviation specified by `variance`.
+    Gets the next random number in range [0-1).  The specific sequence of
+    values generated depends on the initial seed; see the description of
+    `random.init()` for more information.
 
 
 Keyboard Routines

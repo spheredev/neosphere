@@ -221,15 +221,8 @@ static duk_ret_t js_mouse_getEvent             (duk_context* ctx);
 static duk_ret_t js_mouse_isPressed            (duk_context* ctx);
 static duk_ret_t js_random_get_state           (duk_context* ctx);
 static duk_ret_t js_random_set_state           (duk_context* ctx);
-static duk_ret_t js_random_chance              (duk_context* ctx);
-static duk_ret_t js_random_normal              (duk_context* ctx);
-static duk_ret_t js_random_random              (duk_context* ctx);
-static duk_ret_t js_random_range               (duk_context* ctx);
-static duk_ret_t js_random_reseed              (duk_context* ctx);
-static duk_ret_t js_random_sample              (duk_context* ctx);
-static duk_ret_t js_random_get_state           (duk_context* ctx);
-static duk_ret_t js_random_string              (duk_context* ctx);
-static duk_ret_t js_random_uniform             (duk_context* ctx);
+static duk_ret_t js_random_init                (duk_context* ctx);
+static duk_ret_t js_random_next                (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
@@ -538,15 +531,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "mouse", "isPressed", js_mouse_isPressed);
 
 	api_register_static_prop(ctx, "random", "state", js_random_get_state, js_random_set_state);
-	api_register_static_func(ctx, "random", "chance", js_random_chance);
-	api_register_static_func(ctx, "random", "normal", js_random_normal);
-	api_register_static_func(ctx, "random", "random", js_random_random);
-	api_register_static_func(ctx, "random", "range", js_random_range);
-	api_register_static_func(ctx, "random", "reseed", js_random_reseed);
-	api_register_static_func(ctx, "random", "sample", js_random_sample);
-	api_register_static_func(ctx, "random", "string", js_random_string);
-	api_register_static_func(ctx, "random", "uniform", js_random_uniform);
-	
+	api_register_static_func(ctx, "random", "init", js_random_init);
+	api_register_static_func(ctx, "random", "next", js_random_next);
+
 	api_register_static_obj(ctx, NULL, "screen", "Surface", NULL);
 	api_register_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_register_static_func(ctx, "screen", "clipTo", js_screen_clipTo);
@@ -1560,48 +1547,7 @@ js_random_set_state(duk_context* ctx)
 }
 
 static duk_ret_t
-js_random_chance(duk_context* ctx)
-{
-	double odds;
-
-	odds = duk_require_number(ctx, 0);
-	duk_push_boolean(ctx, rng_chance(odds));
-	return 1;
-}
-
-static duk_ret_t
-js_random_normal(duk_context* ctx)
-{
-	double mean;
-	double sigma;
-
-	mean = duk_require_number(ctx, 0);
-	sigma = duk_require_number(ctx, 1);
-	duk_push_number(ctx, rng_normal(mean, sigma));
-	return 1;
-}
-
-static duk_ret_t
-js_random_random(duk_context* ctx)
-{
-	duk_push_number(ctx, rng_random());
-	return 1;
-}
-
-static duk_ret_t
-js_random_range(duk_context* ctx)
-{
-	long lower;
-	long upper;
-
-	lower = duk_require_number(ctx, 0);
-	upper = duk_require_number(ctx, 1);
-	duk_push_number(ctx, rng_int(lower, upper));
-	return 1;
-}
-
-static duk_ret_t
-js_random_reseed(duk_context* ctx)
+js_random_init(duk_context* ctx)
 {
 	uint64_t new_seed;
 
@@ -1611,43 +1557,9 @@ js_random_reseed(duk_context* ctx)
 }
 
 static duk_ret_t
-js_random_sample(duk_context* ctx)
+js_random_next(duk_context* ctx)
 {
-	duk_uarridx_t index;
-	long          length;
-
-	duk_require_object_coercible(ctx, 0);
-	length = (long)duk_get_length(ctx, 0);
-	index = rng_int(0, length - 1);
-	duk_get_prop_index(ctx, 0, index);
-	return 1;
-}
-
-static duk_ret_t
-js_random_string(duk_context* ctx)
-{
-	int num_args;
-	int length;
-
-	num_args = duk_get_top(ctx);
-	length = num_args >= 1 ? duk_require_number(ctx, 0)
-		: 10;
-	if (length < 1 || length > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "length out of range");
-
-	duk_push_string(ctx, rng_string(length));
-	return 1;
-}
-
-static duk_ret_t
-js_random_uniform(duk_context* ctx)
-{
-	double mean;
-	double variance;
-
-	mean = duk_require_number(ctx, 0);
-	variance = duk_require_number(ctx, 1);
-	duk_push_number(ctx, rng_uniform(mean, variance));
+	duk_push_number(ctx, rng_random());
 	return 1;
 }
 
@@ -2456,22 +2368,24 @@ js_Font_drawText(duk_context* ctx)
 static duk_ret_t
 js_Font_getStringHeight(duk_context* ctx)
 {
-	const char* text = duk_to_string(ctx, 0);
-	int width = duk_require_int(ctx, 1);
-
-	font_t* font;
-	int     num_lines;
+	font_t*     font;
+	int         num_lines;
+	const char* text;
+	int         width;
 
 	duk_push_this(ctx);
 	font = duk_require_sphere_obj(ctx, -1, "Font");
 	duk_pop(ctx);
+	text = duk_to_string(ctx, 0);
+	width = duk_require_int(ctx, 1);
+
 	duk_push_c_function(ctx, js_Font_wordWrap, DUK_VARARGS);
 	duk_push_this(ctx);
 	duk_push_string(ctx, text);
 	duk_push_int(ctx, width);
 	duk_call_method(ctx, 2);
-	duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "length");
+	num_lines = duk_get_int(ctx, -1);
 	duk_push_int(ctx, font_height(font) * num_lines);
 	return 1;
 }
@@ -2479,9 +2393,10 @@ js_Font_getStringHeight(duk_context* ctx)
 static duk_ret_t
 js_Font_getStringWidth(duk_context* ctx)
 {
-	const char* text = duk_to_string(ctx, 0);
-
-	font_t* font;
+	font_t*     font;
+	const char* text;
+	
+	text = duk_to_string(ctx, 0);
 
 	duk_push_this(ctx);
 	font = duk_require_sphere_obj(ctx, -1, "Font");
