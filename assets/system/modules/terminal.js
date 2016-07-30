@@ -14,10 +14,10 @@ module.exports =
 	unregister: unregister,
 };
 
-const link	 = require('link');
-const prim	 = require('prim');
-const scenes = require('scenes');
-const thread = require('thread');
+const link	  = require('link');
+const prim	  = require('prim');
+const scenes  = require('scenes');
+const threads = require('threads');
 
 var font = Font.Default;
 var nextLine = 0;
@@ -39,14 +39,14 @@ new scenes.Scene()
 		.tween(cursorColor, 0.25, 'easeOutSine', { alpha: 64 })
 	.end()
 	.run();
-thread.create({
+threads.create({
 	update:	  update,
 	render:	  render,
 	getInput: getInput,
 }, Infinity);
 
-log(engine.game.name + " Debug Console");
-log(engine.name + " " + engine.version + " - Sphere v" + engine.apiVersion + " L" + engine.apiLevel + " API");
+log(system.game.name + " Debug Console");
+log(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
 log("");
 
 function executeCommand(command)
@@ -94,7 +94,7 @@ function executeCommand(command)
 		.filterBy('entity', entity)
 		.each(function(desc)
 	{
-		thread.create({
+		threads.create({
 			update: function() {
 				desc.method.apply(desc.that, tokens.slice(2));
 			}

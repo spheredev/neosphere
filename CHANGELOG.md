@@ -8,19 +8,14 @@ v4.0.0 - TBD
   engine, should be considered deprecated and is not recommended for use in new
   games.  For information on using the functions in the new API, see
   `docs/spherical-api.txt`.
-* Repuposes the constructors for Sphere types, e.g. `new Image()` as part of
-  the Sphere v2 API.  Legacy types such as ByteArray have had their
-  constructors removed entirely.
-* Objects created using a Sphere v2 function--such as the Image constructor,
-  Color.Black et al., and so on--are no longer compatible with the Sphere v1
-  API.  For example, you can't pass a v2 Color object to Rectangle() or assign
-  a v2 Image to a v1 Spriteset without causing a type error.
 * miniRT has been overhauled and repurposed as the reference implementation of
   the Sphere v2 standard library.  miniRT modules can thus be referred to more
   concisely, e.g. `require("thread")` instead of `require("miniRT/threads")`.
+* Objects created using a Sphere v2 function--such as the `Image` constructor,
+  `Color.Black` et al., and so on--are no longer compatible with the Sphere v1
+  API.
+* Removes constructors for legacy types such as ByteArray.
 * Removes support for on-the-fly transpilation of TypeScript and CoffeeScript.
-  Duktape performs this task rather slowly so it's best handled in a separate
-  build step.
 
 
 v3.3.0 - May 31, 2016

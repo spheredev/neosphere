@@ -179,6 +179,21 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
+static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
+static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
+static duk_ret_t js_system_get_extensions      (duk_context* ctx);
+static duk_ret_t js_system_get_game            (duk_context* ctx);
+static duk_ret_t js_system_get_name            (duk_context* ctx);
+static duk_ret_t js_system_get_time            (duk_context* ctx);
+static duk_ret_t js_system_get_version         (duk_context* ctx);
+static duk_ret_t js_system_abort               (duk_context* ctx);
+static duk_ret_t js_system_assert              (duk_context* ctx);
+static duk_ret_t js_system_dispatch            (duk_context* ctx);
+static duk_ret_t js_system_doEvents            (duk_context* ctx);
+static duk_ret_t js_system_exit                (duk_context* ctx);
+static duk_ret_t js_system_random              (duk_context* ctx);
+static duk_ret_t js_system_restart             (duk_context* ctx);
+static duk_ret_t js_system_sleep               (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
 static duk_ret_t js_console_debug              (duk_context* ctx);
 static duk_ret_t js_console_error              (duk_context* ctx);
@@ -186,20 +201,6 @@ static duk_ret_t js_console_info               (duk_context* ctx);
 static duk_ret_t js_console_log                (duk_context* ctx);
 static duk_ret_t js_console_trace              (duk_context* ctx);
 static duk_ret_t js_console_warn               (duk_context* ctx);
-static duk_ret_t js_debug_abort                (duk_context* ctx);
-static duk_ret_t js_debug_assert               (duk_context* ctx);
-static duk_ret_t js_engine_get_apiLevel        (duk_context* ctx);
-static duk_ret_t js_engine_get_apiVersion      (duk_context* ctx);
-static duk_ret_t js_engine_get_extensions      (duk_context* ctx);
-static duk_ret_t js_engine_get_game            (duk_context* ctx);
-static duk_ret_t js_engine_get_name            (duk_context* ctx);
-static duk_ret_t js_engine_get_time            (duk_context* ctx);
-static duk_ret_t js_engine_get_version         (duk_context* ctx);
-static duk_ret_t js_engine_dispatch            (duk_context* ctx);
-static duk_ret_t js_engine_doEvents            (duk_context* ctx);
-static duk_ret_t js_engine_exit                (duk_context* ctx);
-static duk_ret_t js_engine_restart             (duk_context* ctx);
-static duk_ret_t js_engine_sleep               (duk_context* ctx);
 static duk_ret_t js_fs_exists                  (duk_context* ctx);
 static duk_ret_t js_fs_mkdir                   (duk_context* ctx);
 static duk_ret_t js_fs_open                    (duk_context* ctx);
@@ -222,7 +223,6 @@ static duk_ret_t js_mouse_isPressed            (duk_context* ctx);
 static duk_ret_t js_random_get_state           (duk_context* ctx);
 static duk_ret_t js_random_set_state           (duk_context* ctx);
 static duk_ret_t js_random_init                (duk_context* ctx);
-static duk_ret_t js_random_next                (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
@@ -484,6 +484,22 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
+	api_register_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
+	api_register_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
+	api_register_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
+	api_register_static_prop(ctx, "system", "game", js_system_get_game, NULL);
+	api_register_static_prop(ctx, "system", "name", js_system_get_name, NULL);
+	api_register_static_prop(ctx, "system", "time", js_system_get_time, NULL);
+	api_register_static_prop(ctx, "system", "version", js_system_get_version, NULL);
+	api_register_static_func(ctx, "system", "abort", js_system_abort);
+	api_register_static_func(ctx, "system", "assert", js_system_assert);
+	api_register_static_func(ctx, "system", "dispatch", js_system_dispatch);
+	api_register_static_func(ctx, "system", "doEvents", js_system_doEvents);
+	api_register_static_func(ctx, "system", "exit", js_system_exit);
+	api_register_static_func(ctx, "system", "random", js_system_random);
+	api_register_static_func(ctx, "system", "restart", js_system_restart);
+	api_register_static_func(ctx, "system", "sleep", js_system_sleep);
+
 	api_register_static_func(ctx, "console", "assert", js_console_assert);
 	api_register_static_func(ctx, "console", "debug", js_console_debug);
 	api_register_static_func(ctx, "console", "error", js_console_error);
@@ -491,22 +507,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "console", "log", js_console_log);
 	api_register_static_func(ctx, "console", "trace", js_console_trace);
 	api_register_static_func(ctx, "console", "warn", js_console_warn);
-	
-	api_register_static_func(ctx, "debug", "abort", js_debug_abort);
-	api_register_static_func(ctx, "debug", "assert", js_debug_assert);
-
-	api_register_static_prop(ctx, "engine", "apiLevel", js_engine_get_apiLevel, NULL);
-	api_register_static_prop(ctx, "engine", "apiVersion", js_engine_get_apiVersion, NULL);
-	api_register_static_prop(ctx, "engine", "extensions", js_engine_get_extensions, NULL);
-	api_register_static_prop(ctx, "engine", "game", js_engine_get_game, NULL);
-	api_register_static_prop(ctx, "engine", "name", js_engine_get_name, NULL);
-	api_register_static_prop(ctx, "engine", "time", js_engine_get_time, NULL);
-	api_register_static_prop(ctx, "engine", "version", js_engine_get_version, NULL);
-	api_register_static_func(ctx, "engine", "dispatch", js_engine_dispatch);
-	api_register_static_func(ctx, "engine", "doEvents", js_engine_doEvents);
-	api_register_static_func(ctx, "engine", "exit", js_engine_exit);
-	api_register_static_func(ctx, "engine", "restart", js_engine_restart);
-	api_register_static_func(ctx, "engine", "sleep", js_engine_sleep);
 	
 	api_register_static_func(ctx, "fs", "exists", js_fs_exists);
 	api_register_static_func(ctx, "fs", "open", js_fs_open);
@@ -530,9 +530,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "mouse", "getEvent", js_mouse_getEvent);
 	api_register_static_func(ctx, "mouse", "isPressed", js_mouse_isPressed);
 
-	api_register_static_prop(ctx, "random", "state", js_random_get_state, js_random_set_state);
-	api_register_static_func(ctx, "random", "init", js_random_init);
-	api_register_static_func(ctx, "random", "next", js_random_next);
+	api_register_static_prop(ctx, "rng", "state", js_random_get_state, js_random_set_state);
+	api_register_static_func(ctx, "rng", "init", js_random_init);
 
 	api_register_static_obj(ctx, NULL, "screen", "Surface", NULL);
 	api_register_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
@@ -968,6 +967,197 @@ js_require(duk_context* ctx)
 }
 
 static duk_ret_t
+js_system_get_apiLevel(duk_context* ctx)
+{
+	duk_push_int(ctx, API_LEVEL);
+	return 1;
+}
+
+static duk_ret_t
+js_system_get_apiVersion(duk_context* ctx)
+{
+	duk_push_int(ctx, API_VERSION);
+	return 1;
+}
+
+static duk_ret_t
+js_system_get_extensions(duk_context* ctx)
+{
+	int i;
+
+	duk_push_array(ctx);
+	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i) {
+		duk_push_string(ctx, EXTENSIONS[i]);
+		duk_put_prop_index(ctx, -2, i++);
+	}
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "extensions");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
+	return 1;
+}
+
+static duk_ret_t
+js_system_get_game(duk_context* ctx)
+{
+	duk_push_lstring_t(ctx, fs_manifest(g_fs));
+	duk_json_decode(ctx, -1);
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "game");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
+	return 1;
+}
+
+static duk_ret_t
+js_system_get_name(duk_context* ctx)
+{
+	duk_push_string(ctx, PRODUCT_NAME);
+	return 1;
+}
+
+static duk_ret_t
+js_system_get_time(duk_context* ctx)
+{
+	duk_push_number(ctx, al_get_time());
+	return 1;
+}
+
+static duk_ret_t
+js_system_get_version(duk_context* ctx)
+{
+	duk_push_string(ctx, VERSION_NAME);
+	return 1;
+}
+
+static duk_ret_t
+js_system_abort(duk_context* ctx)
+{
+	const char* message;
+	int         num_args;
+
+	num_args = duk_get_top(ctx);
+	message = num_args >= 1
+		? duk_to_string(ctx, 0)
+		: "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
+
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "%s", message);
+	return 0;
+}
+
+static duk_ret_t
+js_system_assert(duk_context* ctx)
+{
+	const char* filename;
+	int         line_number;
+	const char* message;
+	int         num_args;
+	bool        result;
+	lstring_t*  text;
+
+	num_args = duk_get_top(ctx);
+	result = duk_to_boolean(ctx, 0);
+	message = duk_require_string(ctx, 1);
+
+	if (!result) {
+		// get the offending script and line number from the call stack
+		duk_push_global_object(ctx);
+		duk_get_prop_string(ctx, -1, "Duktape");
+		duk_get_prop_string(ctx, -1, "act");
+		duk_push_int(ctx, -3);
+		duk_call(ctx, 1);
+		duk_remove(ctx, -2);
+		duk_get_prop_string(ctx, -1, "lineNumber");
+		line_number = duk_get_int(ctx, -1);
+		duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "function");
+		duk_get_prop_string(ctx, -1, "fileName");
+		filename = duk_get_string(ctx, -1);
+		duk_pop_3(ctx);
+		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
+
+		// if an assertion fails in a game being debugged:
+		//   - the user may choose to ignore it, in which case execution continues.  this is useful
+		//     in some debugging scenarios.
+		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
+		//     over control to the attached debugger.
+		if (is_debugger_attached()) {
+			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
+			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
+				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
+			{
+				duk_debugger_pause(ctx);
+			}
+			lstr_free(text);
+		}
+	}
+	duk_dup(ctx, 0);
+	return 1;
+}
+
+static duk_ret_t
+js_system_dispatch(duk_context* ctx)
+{
+	script_t* script;
+
+	script = duk_require_sphere_script(ctx, 0, "synth:async.js");
+
+	if (!queue_async_script(script))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch async script");
+	return 0;
+}
+
+static duk_ret_t
+js_system_doEvents(duk_context* ctx)
+{
+	do_events();
+	duk_push_boolean(ctx, true);
+	return 1;
+}
+
+static duk_ret_t
+js_system_exit(duk_context* ctx)
+{
+	exit_game(false);
+}
+
+static duk_ret_t
+js_system_random(duk_context* ctx)
+{
+	duk_push_number(ctx, rng_random());
+	return 1;
+}
+
+static duk_ret_t
+js_system_restart(duk_context* ctx)
+{
+	restart_engine();
+}
+
+static duk_ret_t
+js_system_sleep(duk_context* ctx)
+{
+	double timeout;
+
+	timeout = duk_require_number(ctx, 0);
+
+	delay(timeout);
+	return 0;
+}
+
+static duk_ret_t
 js_console_assert(duk_context* ctx)
 {
 	const char* message;
@@ -1074,198 +1264,6 @@ js_console_warn(duk_context* ctx)
 	duk_join(ctx, num_items);
 
 	debug_print(duk_get_string(ctx, -1), PRINT_WARN);
-	return 0;
-}
-
-static duk_ret_t
-js_debug_abort(duk_context* ctx)
-{
-	const char* message;
-	int         num_args;
-
-	num_args = duk_get_top(ctx);
-	message = num_args >= 1
-		? duk_to_string(ctx, 0)
-		: "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
-
-	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "%s", message);
-	return 0;
-}
-
-static duk_ret_t
-js_debug_assert(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	bool        result;
-	int         stack_offset;
-	lstring_t*  text;
-
-	num_args = duk_get_top(ctx);
-	result = duk_to_boolean(ctx, 0);
-	message = duk_require_string(ctx, 1);
-	stack_offset = num_args >= 3 ? duk_require_int(ctx, 2)
-		: 0;
-
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Assert(): stack offset must be negative");
-
-	if (!result) {
-		// get the offending script and line number from the call stack
-		duk_push_global_object(ctx);
-		duk_get_prop_string(ctx, -1, "Duktape");
-		duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3 + stack_offset); duk_call(ctx, 1);
-		if (!duk_is_object(ctx, -1)) {
-			duk_pop(ctx);
-			duk_get_prop_string(ctx, -1, "act"); duk_push_int(ctx, -3); duk_call(ctx, 1);
-		}
-		duk_remove(ctx, -2);
-		duk_get_prop_string(ctx, -1, "lineNumber");
-		line_number = duk_get_int(ctx, -1);
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName");
-		filename = duk_get_string(ctx, -1);
-		duk_pop_3(ctx);
-		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
-
-		// if an assertion fails in a game being debugged:
-		//   - the user may choose to ignore it, in which case execution continues.  this is useful
-		//     in some debugging scenarios.
-		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
-		//     over control to the attached debugger.
-		if (is_debugger_attached()) {
-			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
-			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
-				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
-			{
-				duk_debugger_pause(ctx);
-			}
-			lstr_free(text);
-		}
-	}
-	duk_dup(ctx, 0);
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_apiLevel(duk_context* ctx)
-{
-	duk_push_int(ctx, API_LEVEL);
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_apiVersion(duk_context* ctx)
-{
-	duk_push_int(ctx, API_VERSION);
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_extensions(duk_context* ctx)
-{
-	int i;
-
-	duk_push_array(ctx);
-	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i) {
-		duk_push_string(ctx, EXTENSIONS[i]);
-		duk_put_prop_index(ctx, -2, i++);
-	}
-
-	duk_push_this(ctx);
-	duk_push_string(ctx, "extensions");
-	duk_dup(ctx, -3);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
-
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_game(duk_context* ctx)
-{
-	duk_push_lstring_t(ctx, fs_manifest(g_fs));
-	duk_json_decode(ctx, -1);
-
-	duk_push_this(ctx);
-	duk_push_string(ctx, "game");
-	duk_dup(ctx, -3);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
-
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_name(duk_context* ctx)
-{
-	duk_push_string(ctx, PRODUCT_NAME);
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_time(duk_context* ctx)
-{
-	duk_push_number(ctx, al_get_time());
-	return 1;
-}
-
-static duk_ret_t
-js_engine_get_version(duk_context* ctx)
-{
-	duk_push_string(ctx, VERSION_NAME);
-	return 1;
-}
-
-static duk_ret_t
-js_engine_dispatch(duk_context* ctx)
-{
-	script_t* script;
-
-	script = duk_require_sphere_script(ctx, 0, "synth:async.js");
-
-	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch async script");
-	return 0;
-}
-
-static duk_ret_t
-js_engine_doEvents(duk_context* ctx)
-{
-	do_events();
-	duk_push_boolean(ctx, true);
-	return 1;
-}
-
-static duk_ret_t
-js_engine_exit(duk_context* ctx)
-{
-	exit_game(false);
-}
-
-static duk_ret_t
-js_engine_restart(duk_context* ctx)
-{
-	restart_engine();
-}
-
-static duk_ret_t
-js_engine_sleep(duk_context* ctx)
-{
-	double timeout;
-
-	timeout = duk_require_number(ctx, 0);
-
-	delay(timeout);
 	return 0;
 }
 
@@ -1554,13 +1552,6 @@ js_random_init(duk_context* ctx)
 	new_seed = duk_require_number(ctx, 0);
 	seed_rng(new_seed);
 	return 0;
-}
-
-static duk_ret_t
-js_random_next(duk_context* ctx)
-{
-	duk_push_number(ctx, rng_random());
-	return 1;
 }
 
 static duk_ret_t

@@ -1387,13 +1387,14 @@ js_SetMousePosition(duk_context* ctx)
 static duk_ret_t
 js_Abort(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	const char* message = n_args >= 1 ? duk_to_string(ctx, 0) : "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
-	int stack_offset = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+	const char* message;
+	int         num_args;
 
-	if (stack_offset > 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Abort(): stack offset must be negative");
-	duk_error_ni(ctx, -1 + stack_offset, DUK_ERR_ERROR, "%s", message);
+	num_args = duk_get_top(ctx);
+	message = num_args >= 1 ? duk_to_string(ctx, 0)
+		: "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
+
+	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "%s", message);
 }
 
 static duk_ret_t

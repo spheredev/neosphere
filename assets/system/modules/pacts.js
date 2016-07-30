@@ -21,7 +21,7 @@ function Promise(fn)
 	{
 		if (state == 'pending')
 			deferred.push(handler);
-		else engine.dispatch(function() {
+		else system.dispatch(function() {
 			var callback = state == 'fulfilled' ? handler.fulfiller
 				: state == 'rejected' ? handler.rejector
 				: undefined;

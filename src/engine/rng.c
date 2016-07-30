@@ -56,6 +56,14 @@ rng_chance(double odds)
 	return odds > xoro_gen_double(s_xoro);
 }
 
+int
+rng_int(int lower, int upper)
+{
+	int range = abs(upper - lower) + 1;
+	return (lower < upper ? lower : upper)
+		+ xoro_gen_uint(s_xoro) % range;
+}
+
 double
 rng_normal(double mean, double sigma)
 {
@@ -89,29 +97,20 @@ rng_random(void)
 	return xoro_gen_double(s_xoro);
 }
 
-int
-rng_int(int lower, int upper)
-{
-	int range = abs(upper - lower) + 1;
-	return (lower < upper ? lower : upper)
-		+ xoro_gen_uint(s_xoro) % range;
-}
-
 const char*
 rng_string(int length)
 {
-	static char s_name[256];
-
 	long index;
-	
+	char string[256];
+
 	int i;
 
 	for (i = 0; i < length; ++i) {
 		index = rng_int(0, s_corpus_size - 1);
-		s_name[i] = RNG_STRING_CORPUS[index];
+		string[i] = RNG_STRING_CORPUS[index];
 	}
-	s_name[length - 1] = '\0';
-	return s_name;
+	string[length - 1] = '\0';
+	return string;
 }
 
 double
