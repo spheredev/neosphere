@@ -14,10 +14,7 @@ module.exports =
     uniform:  uniform,
 };
 
-const Corpus = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-var haveY = false;
-var y;
+const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 function chance(odds)
 {
@@ -35,15 +32,16 @@ function discrete(min, max)
     max >>= 0;
     var range = Math.abs(max - min) + 1;
     min = min < max ? min : max;
-    return Math.floor(RNG.Default.next() * range);
+    return min + Math.floor(RNG.Default.next() * range);
 }
 
+normal.y = null;
 function normal(mean, sigma)
 {
     system.assert(typeof mean === 'number', "mean must be a number");
     system.assert(typeof sigma === 'number', "sigma must be a number");
 
-    if (!haveY) {
+    if (normal.y === null) {
         do {
             var u = 2.0 * RNG.Default.next() - 1.0;
             var v = 2.0 * RNG.Default.next() - 1.0;
@@ -51,12 +49,11 @@ function normal(mean, sigma)
         } while (w >= 1.0);
         w = Math.sqrt(-2.0 * Math.log(w) / w);
         var x = u * w;
-        y = v * w;
-        haveY = true;
+        normal.y = v * w;
     }
     else {
-        x = y;
-        haveY = false;
+        x = normal.y;
+        normal.y = null;
     }
     return mean + x * sigma;
 }
@@ -80,8 +77,8 @@ function string(length)
     length >>= 0;
     var string = "";
     for (var i = 0; i < length; ++i) {
-        var index = discrete(0, Corpus.length);
-        string += Corpus[index];
+        var index = discrete(0, CORPUS.length - 1);
+        string += CORPUS[index];
     }
     return string;
 }
