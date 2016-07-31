@@ -14,6 +14,7 @@
 #include "rng.h"
 #include "shader.h"
 #include "sockets.h"
+#include "xoroshiro.h"
 
 #define API_VERSION 2
 #define API_LEVEL   1
@@ -220,9 +221,6 @@ static duk_ret_t js_mouse_get_y                (duk_context* ctx);
 static duk_ret_t js_mouse_clearQueue           (duk_context* ctx);
 static duk_ret_t js_mouse_getEvent             (duk_context* ctx);
 static duk_ret_t js_mouse_isPressed            (duk_context* ctx);
-static duk_ret_t js_random_get_state           (duk_context* ctx);
-static duk_ret_t js_random_set_state           (duk_context* ctx);
-static duk_ret_t js_random_init                (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
@@ -270,6 +268,13 @@ static duk_ret_t js_new_Mixer                  (duk_context* ctx);
 static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
 static duk_ret_t js_Mixer_get_volume           (duk_context* ctx);
 static duk_ret_t js_Mixer_set_volume           (duk_context* ctx);
+static duk_ret_t js_RNG_fromSeed               (duk_context* ctx);
+static duk_ret_t js_RNG_fromState              (duk_context* ctx);
+static duk_ret_t js_new_RNG                    (duk_context* ctx);
+static duk_ret_t js_RNG_finalize               (duk_context* ctx);
+static duk_ret_t js_RNG_get_state              (duk_context* ctx);
+static duk_ret_t js_RNG_set_state              (duk_context* ctx);
+static duk_ret_t js_RNG_next                   (duk_context* ctx);
 static duk_ret_t js_new_Server                 (duk_context* ctx);
 static duk_ret_t js_Server_finalize            (duk_context* ctx);
 static duk_ret_t js_Server_close               (duk_context* ctx);
@@ -352,11 +357,11 @@ initialize_pegasus_api(duk_context* ctx)
 {
 	const struct x11_color* p;
 	int i;
-	
+
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i)
 		console_log(1, "    %s", EXTENSIONS[i]);
-	
+
 	s_def_mixer = mixer_new(44100, 16, 2);
 
 	// `global` global object binding
@@ -417,6 +422,12 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
+	api_register_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
+	api_register_static_func(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
+	api_register_static_func(ctx, "RNG", "fromState", js_RNG_fromState);
+	api_register_prop(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
+	api_register_method(ctx, "RNG", "next", js_RNG_next);
+	
 	api_register_ctor(ctx, "ShapeGroup", js_new_ShapeGroup, js_ShapeGroup_finalize);
 	api_register_prop(ctx, "ShapeGroup", "shader", js_ShapeGroup_get_shader, js_ShapeGroup_set_shader);
 	api_register_prop(ctx, "ShapeGroup", "transform", js_ShapeGroup_get_transform, js_ShapeGroup_set_transform);
@@ -496,7 +507,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "system", "dispatch", js_system_dispatch);
 	api_register_static_func(ctx, "system", "doEvents", js_system_doEvents);
 	api_register_static_func(ctx, "system", "exit", js_system_exit);
-	api_register_static_func(ctx, "system", "random", js_system_random);
 	api_register_static_func(ctx, "system", "restart", js_system_restart);
 	api_register_static_func(ctx, "system", "sleep", js_system_sleep);
 
@@ -529,9 +539,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
 	api_register_static_func(ctx, "mouse", "getEvent", js_mouse_getEvent);
 	api_register_static_func(ctx, "mouse", "isPressed", js_mouse_isPressed);
-
-	api_register_static_prop(ctx, "rng", "state", js_random_get_state, js_random_set_state);
-	api_register_static_func(ctx, "rng", "init", js_random_init);
 
 	api_register_static_obj(ctx, NULL, "screen", "Surface", NULL);
 	api_register_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
@@ -1134,13 +1141,6 @@ js_system_exit(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_random(duk_context* ctx)
-{
-	duk_push_number(ctx, rng_random());
-	return 1;
-}
-
-static duk_ret_t
 js_system_restart(duk_context* ctx)
 {
 	restart_engine();
@@ -1520,38 +1520,6 @@ js_kb_getKey(duk_context* ctx)
 {
 	duk_push_int(ctx, kb_get_key());
 	return 1;
-}
-
-static duk_ret_t
-js_random_get_state(duk_context* ctx)
-{
-	char state[33];
-
-	rng_get_state(state);
-	duk_push_string(ctx, state);
-	return 1;
-}
-
-static duk_ret_t
-js_random_set_state(duk_context* ctx)
-{
-	const char* state;
-
-	state = duk_require_string(ctx, 0);
-
-	if (!rng_set_state(state))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
-	return 0;
-}
-
-static duk_ret_t
-js_random_init(duk_context* ctx)
-{
-	uint64_t new_seed;
-
-	new_seed = duk_require_number(ctx, 0);
-	seed_rng(new_seed);
-	return 0;
 }
 
 static duk_ret_t
@@ -2590,6 +2558,98 @@ js_Mixer_set_volume(duk_context* ctx)
 
 	mixer_set_gain(mixer, volume);
 	return 0;
+}
+
+static duk_ret_t
+js_RNG_fromSeed(duk_context* ctx)
+{
+	uint64_t seed;
+	xoro_t*  xoro;
+
+	seed = duk_require_number(ctx, 0);
+	
+	xoro = xoro_new(seed);
+	duk_push_sphere_obj(ctx, "RNG", xoro);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_fromState(duk_context* ctx)
+{
+	const char* state;
+	xoro_t*     xoro;
+
+	state = duk_require_string(ctx, 0);
+
+	xoro = xoro_new(0);
+	if (!xoro_set_state(xoro, state)) {
+		xoro_free(xoro);
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+	}
+	duk_push_sphere_obj(ctx, "RNG", xoro);
+	return 1;
+}
+
+static duk_ret_t
+js_new_RNG(duk_context* ctx)
+{
+	xoro_t* xoro;
+	
+	xoro = xoro_new((uint64_t)time(NULL));
+	duk_push_sphere_obj(ctx, "RNG", xoro);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_finalize(duk_context* ctx)
+{
+	xoro_t* xoro;
+
+	xoro = duk_require_sphere_obj(ctx, 0, "RNG");
+
+	xoro_free(xoro);
+	return 0;
+}
+
+static duk_ret_t
+js_RNG_get_state(duk_context* ctx)
+{
+	char    state[33];
+	xoro_t* xoro;
+
+	duk_push_this(ctx);
+	xoro = duk_require_sphere_obj(ctx, -1, "RNG");
+	
+	xoro_get_state(xoro, state);
+	duk_push_string(ctx, state);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_set_state(duk_context* ctx)
+{
+	const char* state;
+	xoro_t*     xoro;
+
+	duk_push_this(ctx);
+	xoro = duk_require_sphere_obj(ctx, -1, "RNG");
+	state = duk_require_string(ctx, 0);
+
+	if (!xoro_set_state(xoro, state))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+	return 0;
+}
+
+static duk_ret_t
+js_RNG_next(duk_context* ctx)
+{
+	xoro_t*     xoro;
+
+	duk_push_this(ctx);
+	xoro = duk_require_sphere_obj(ctx, -1, "RNG");
+
+	duk_push_number(ctx, xoro_gen_double(xoro));
+	return 1;
 }
 
 static duk_ret_t

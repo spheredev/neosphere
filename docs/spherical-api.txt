@@ -17,7 +17,7 @@ game.json (Game Manifest)
 
 In order to use Sphere 2.0 features, a game must provide a file called
 `game.json` in the root of the game package which holds its metadata.  All
-values in `game.json` are available to game code through `engine.game` (see
+values in `game.json` are available to game code through `system.game` (see
 below).
 
 A basic `game.json` might look like this:
@@ -86,24 +86,24 @@ require(module_id);
     module.
 
 
-Engine Control API
-------------------
+Low-Level System API
+--------------------
 
-The `engine` global variable is provided to allow games to communicate with the
-underlying Sphere platform.  The `engine` object's properties provide access to
+The `system` global variable is provided to allow games to communicate with the
+underlying Sphere platform.  The `system` object's properties provide access to
 the engine's name and version number as well as the API level supported, and
 there are also several methods for managing engine execution.
 
-engine.name [read-only]
+system.name [read-only]
 
     The name of the engine.  In this case, "minisphere".
 
-engine.version [read-only]
+system.version [read-only]
 
     Gets the version number of the engine, e.g. "4.0.0"
 
-engine.apiVersion [read-only]
-engine.apiLevel [read-only]
+system.apiVersion [read-only]
+system.apiLevel [read-only]
 
     Gets the API version and level supported by the engine, respectively.  API
     version indicates which generation of the Sphere API is supported (Gen 2,
@@ -111,42 +111,46 @@ engine.apiLevel [read-only]
     generation.  Whenever new API calls or object properties are added to the
     core API without breaking compatibility, the API level is bumped.
 
-engine.extensions [read-only]
+system.extensions [read-only]
 
     Gets an array of Sphere API extension strings supported by the engine.
     Extensions are used to advertise support for features which are provided by
     the engine but not yet part of the core API.
 
-engine.time [read-only]
+system.time [read-only]
 
     Gets the amount of time, in seconds, since the engine started running.  The
     granularity varies, but is typically less than a microsecond.
 
-engine.dispatch(func);
+system.dispatch(func);
 
     Queues a function to be called on the next event loop iteration, rather
     than immediately.  This is intended for use when implementing asynchronous
     systems such as promises.
 
-engine.doEvents();
+system.doEvents();
 
     Runs a single iteration of the engine's event loop.  Always returns true so
     that doEvents() can be used in a loop condition:
 
-        while (!isDone && engine.doEvents()) {
+        while (!isDone && system.doEvents()) {
             // do stuff here
         }
 
-engine.exit();
+system.exit();
 
     Shuts down the engine unconditionally.  Unsaved data will be lost.
 
-engine.restart();
+system.random();
+
+    Generates a random number in range [0-1) and returns it.
+
+system.restart();
 
     Restarts the engine then reloads the currently running game.  Unsaved data
     will be lost.
 
-engine.sleep(time);
+system.sleep(time);
 
     Suspends game execution for `time` seconds.  The engine will "spin down"
     during this time and relinquish its CPU cycles to other applications.  No
@@ -182,12 +186,6 @@ random.init([seed]);
     as a seed.  Different seeds will generate different random sequences.  If
     a seed is not provided, a default one will be used based on the current
     date and time.
-
-random.next();
-
-    Gets the next random number in range [0-1).  The specific sequence of
-    values generated depends on the initial seed; see the description of
-    `random.init()` for more information.
 
 
 Keyboard Routines
@@ -430,7 +428,7 @@ screen.flip();
 
     Note that after a flip, the backbuffer is cleared to black.  If you need to
     perform a long operation without disturbing the contents of the screen, you
-    should use engine.doEvents() to perform event loop processing instead of
+    should use system.doEvents() to perform event loop processing instead of
     screen.flip().
     
     Note: Calling screen.flip() resets the clipping rectangle to the entire
