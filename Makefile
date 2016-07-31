@@ -25,10 +25,10 @@ engine_sources=src/engine/main.c \
    src/engine/image.c src/engine/input.c src/engine/kevfile.c \
    src/engine/logger.c src/engine/map_engine.c src/engine/matrix.c \
    src/engine/obsmap.c src/engine/pegasus.c src/engine/persons.c \
-   src/engine/rng.c src/engine/screen.c src/engine/script.c \
-   src/engine/shader.c src/engine/sockets.c src/engine/spherefs.c \
-   src/engine/spk.c src/engine/spriteset.c src/engine/tileset.c \
-   src/engine/utility.c src/engine/vanilla.c src/engine/windowstyle.c
+   src/engine/screen.c src/engine/script.c src/engine/shader.c \
+   src/engine/sockets.c src/engine/spherefs.c src/engine/spk.c \
+   src/engine/spriteset.c src/engine/tileset.c src/engine/utility.c \
+   src/engine/vanilla.c src/engine/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \

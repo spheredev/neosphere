@@ -9,7 +9,6 @@
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
-#include "rng.h"
 #include "sockets.h"
 #include "spriteset.h"
 
@@ -378,7 +377,6 @@ initialize_engine(void)
 		goto on_error;
 
 	// initialize engine components
-	initialize_rng();
 	initialize_async();
 	initialize_galileo();
 	initialize_audio();
@@ -421,7 +419,6 @@ shutdown_engine(void)
 	shutdown_audio();
 	shutdown_galileo();
 	shutdown_async();
-	shutdown_rng();
 
 	console_log(1, "shutting down Allegro");
 	screen_free(g_screen);

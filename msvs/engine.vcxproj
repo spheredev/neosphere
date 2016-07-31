@@ -395,7 +395,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\engine\map_engine.c" />
     <ClCompile Include="..\src\engine\obsmap.c" />
     <ClCompile Include="..\src\engine\persons.c" />
-    <ClCompile Include="..\src\engine\rng.c" />
     <ClCompile Include="..\src\engine\script.c" />
     <ClCompile Include="..\src\engine\shader.c" />
     <ClCompile Include="..\src\engine\sockets.c" />
@@ -442,7 +441,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\engine\galileo.h" />
     <ClInclude Include="..\src\engine\obsmap.h" />
     <ClInclude Include="..\src\engine\persons.h" />
-    <ClInclude Include="..\src\engine\rng.h" />
     <ClInclude Include="..\src\engine\script.h" />
     <ClInclude Include="..\src\engine\shader.h" />
     <ClInclude Include="..\src\engine\sockets.h" />

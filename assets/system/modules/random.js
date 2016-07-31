@@ -65,7 +65,7 @@ function sample(array)
 {
     system.assert(Array.isArray(array), "argument must be an array");
 
-    var index = discrete(0, array.length);
+    var index = discrete(0, array.length - 1);
     return array[index];
 }
 

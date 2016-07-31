@@ -11,7 +11,6 @@
 #include "galileo.h"
 #include "image.h"
 #include "input.h"
-#include "rng.h"
 #include "shader.h"
 #include "sockets.h"
 #include "xoroshiro.h"
