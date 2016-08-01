@@ -122,6 +122,21 @@ system.time [read-only]
     Gets the amount of time, in seconds, since the engine started running.  The
     granularity varies, but is typically less than a microsecond.
 
+system.abort(message);
+
+    Unconditionally aborts execution.  `message` will be displayed on the error
+    screen.
+
+system.assert(condition[, message]);
+
+    `condition` is a boolean expression.  If the debugger is not attached or
+    `condition` evaluates to true, nothing happens.  If the debugger is
+    attached and `condition` is false, an alert is displayed, with an option to
+    trigger a breakpoint.
+
+    `message` is optional but highly recommended; the boolean expression will
+    not be displayed in the alert box.
+
 system.dispatch(func);
 
     Queues a function to be called on the next event loop iteration, rather
@@ -157,35 +172,59 @@ system.sleep(time);
     JavaScript code will be executed until the timeout expires.
 
 
-Random Number Generation API
-----------------------------
+Random Number Generator API
+---------------------------
 
 Games often have need of a good psuedorandom number generator, particularly in
 the case of RPGs.  JavaScript provides a basic generator in the form of
-Math.random().  Sphere takes it a step further and provides the `random`
-object.
+Math.random().  Sphere takes it a step further with the powerful `RNG` object.
 
 minisphere uses the xoroshiro128+ algorithm to generate high-quality random
-values and allows manually seeding the generator, as well as saving and
-restoring the state of the generator at any time, which may be used to
-implement a time travel mechanic, or as a deterrent for save scumming.
+numbers and allows manually seeding the generator, as well as saving and
+restoring the exact state of the generator at any time.  RNG state is often
+saved along with other save data as a way to deter save scumming.
 
-random.state [read/write]
+RNG.Default [read-only]
 
-    Gets or sets the internal state of the random number generator.  The state
-    is represented as a 32-digit hexidecimal string which makes it easy to save
-    and restore.
+    Gets the default random number generator.  This generator is seeded on
+    first use using the current system time, ensuring the default sequence is
+    unpredictable.
 
-    When setting `random.state`, the string given must be exactly 32 characters
-    and consist only of hexidecimal digits (0-9, A-F), otherwise a TypeError
+RNG.fromSeed(seed);
+
+    Constructs a new random number generator seeded using the specified value.
+    See RNG#seed() for more information on seeding.
+
+RNG.fromState(state);
+
+    Constructs a new random number generator which starts in the specified
+    state.  See RNG#state for more information.
+
+new RNG();
+
+    Constructs a new random number generator using a default seed.
+
+RNG#state [read/write]
+
+    Gets or sets the current state of this generator.  State is encoded as
+    a 32-digit hexadecimal string which makes it easy to save and restore.
+
+    When setting `RNG#state`, the string given must be exactly 32 characters
+    and consist only of hexadecimal digits (0-9, A-F), otherwise a TypeError
     will be thrown.
 
-random.init([seed]);
+RNG#next();
 
-    Initializes the random number generator.  `seed` is a number value to use
-    as a seed.  Different seeds will generate different random sequences.  If
-    a seed is not provided, a default one will be used based on the current
-    date and time.
+    Gets the next random number in the sequence.  Numbers range [0-1).
+
+RNG#seed(seed);
+
+    Reseeds this generator.  `seed` is the value to use as a seed.  The
+    specific sequence of numbers generated is entirely defined by the seed: The
+    same seed will always generate the same sequence.
+
+    If you need to save the state of the random number generator to continue
+    later, you should use RNG#state (see above) instead.
 
 
 Keyboard Routines
@@ -299,7 +338,7 @@ Key [enumeration]
         Key.Divide
         Key.Multiply
         Key.Subtract
-    
+
     Note: Keys D0-D9 refer to the row of numbers above the letter keys and
     below the function keys, while NumPad0-NumPad9 refer to the numbers on the
     numeric keypad.
@@ -344,7 +383,7 @@ MouseKey [enumeration]
 
     Specifies a mouse click or other event (such as a wheel movement).  Can
     be one of the following:
-    
+
         MouseKey.None
         MouseKey.Left
         MouseKey.Middle
@@ -367,11 +406,11 @@ mouse.getEvent();
 
     Gets the next event in the mouse event queue.  `null` is returned if the
     queue is empty.
-    
+
     The object returned has the following properties:
-    
+
         event.key
-        
+
             A MouseKey value representing the type of the click or other event.
             For example, a left mouse click is represented as MouseKey.Left.
 
@@ -385,7 +424,7 @@ mouse.isPressed(key);
 
     Gets whether the specified mouse button is currently pressed.  `key` is one
     of the MouseKey constants listed above.
-    
+
     Note: This function always returns false for virtual keys such as WheelUp
           and WheelDown.
 
@@ -412,7 +451,7 @@ screen.frameRate [read/write]
 screen.width [read-only]
 screen.height [read-only]
 
-    Gets the width and height of the current screen resolution.
+    Gets the width and height of the screen resolution.
 
 screen.clipTo(x, y, width, height);
 
@@ -430,7 +469,7 @@ screen.flip();
     perform a long operation without disturbing the contents of the screen, you
     should use system.doEvents() to perform event loop processing instead of
     screen.flip().
-    
+
     Note: Calling screen.flip() resets the clipping rectangle to the entire
           screen.  See screen.clipTo() above.
 
@@ -543,7 +582,7 @@ Font#wordWrap(text, wrap_width);
     Wraps `text` as if it were drawn with Font#drawText() using the specified
     wrap width.  Returns an array of strings, representing the lines in the
     wrapped text.
-    
+
     When drawing large amounts of word-wrapped text every frame, for example in
     a text box, this function should be used to pre-wrap the text since
     performing wrapping calculations every frame can get expensive.
@@ -562,7 +601,7 @@ new Image(width, height, pixels);
     the size of the image, and `pixels` is an ArrayBuffer containing the RGBA
     pixel data to use to initialize the image.  The pixel data should not be
     padded (i.e. stride is equal to width).
-    
+
     An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
     describe the entire image.
 
@@ -598,7 +637,7 @@ ShapeType [enumeration]
 
     Specifies the type of graphics primitive represented by a Shape object.
     Can be one of the following:
-    
+
         ShapeType.Auto
         ShapeType.Fan
         ShapeType.Lines
@@ -685,7 +724,7 @@ new Surface(width, height[, fill_color]);
     Constructs a new surface with the specified width and height, optionally
     filled with 'fill_color'.  If a fill color is not provided, the created
     surface will be filled with transparent pixels.
-    
+
     Surfaces are meant to used as render targets from drawing operations.  This
     enables static elements of a scene, such as a HUD, to be rendered in
     advance, potentially improving performance.
@@ -907,7 +946,7 @@ fs.resolve(path);
     SphereFS representation.  This can be useful when data is associated with
     individual assets, such as map files, and you need to ensure the same data
     is pulled for a given file regardless of the path used to access it.
-    
+
     Note that the resource referred to by the path doesn't need to exist.  As
     with other FS methods, fs.resolve() will throw an error if an absolute path
     is passed in.
