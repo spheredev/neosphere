@@ -53,6 +53,25 @@ xoro_free(xoro_t* xoro)
 	free(xoro);
 }
 
+void
+xoro_get_state(xoro_t* xoro, char* buffer)
+{
+	// note: buffer must have space for at least 32 hex digits and a
+	//       NUL terminator.
+
+	char     hex[3];
+	uint8_t* p;
+
+	int i;
+
+	p = (uint8_t*)xoro->s;
+	for (i = 0; i < 16; ++i) {
+		sprintf(hex, "%.2x", *p++);
+		memcpy(&buffer[i * 2], hex, 2);
+	}
+	buffer[32] = '\0';
+}
+
 bool
 xoro_set_state(xoro_t* xoro, const char* snapshot)
 {
@@ -75,25 +94,6 @@ xoro_set_state(xoro_t* xoro, const char* snapshot)
 	}
 
 	return true;
-}
-
-void
-xoro_get_state(xoro_t* xoro, char* buffer)
-{
-	// note: buffer must have space for at least 32 hex digits and a
-	//       NUL terminator.
-
-	char     hex[3];
-	uint8_t* p;
-
-	int i;
-
-	p = (uint8_t*)xoro->s;
-	for (i = 0; i < 16; ++i) {
-		sprintf(hex, "%.2x", *p++);
-		memcpy(&buffer[i * 2], hex, 2);
-	}
-	buffer[32] = '\0';
 }
 
 double

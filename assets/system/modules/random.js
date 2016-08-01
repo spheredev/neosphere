@@ -20,7 +20,7 @@ function chance(odds)
 {
     system.assert(typeof odds === 'number', "odds must be a number");
 
-    return RNG.Default.next() < odds;
+    return odds > RNG.Default.next();
 }
 
 function discrete(min, max)
@@ -41,6 +41,9 @@ function normal(mean, sigma)
     system.assert(typeof mean === 'number', "mean must be a number");
     system.assert(typeof sigma === 'number', "sigma must be a number");
 
+    // normal deviates are calculated in pairs.  we return the first one
+    // immediately, and save the second to be returned on the next call to
+    // random.normal().
     if (normal.y === null) {
         do {
             var u = 2.0 * RNG.Default.next() - 1.0;

@@ -390,7 +390,7 @@ initialize_engine(void)
 
 on_error:
 	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
-		"One or more components failed to initialize properly. minisphere cannot continue in this state and will now close.",
+		"One or more components failed to initialize.  minisphere cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
 }
