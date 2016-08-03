@@ -3,19 +3,19 @@ Spherical API Reference
 
 minisphere uses JavaScript for game logic.  This is the same programming
 language used by the original Sphere engine, which minisphere is the successor
-to.  In fact, minisphere implements most of the Sphere 1.5 API.
+to.  In fact, minisphere implements the majority of the Sphere 1.5 API.
 
-However, the Sphere 1.x API is quite old and, as of minisphere 4.0, has been
-deprecated.  It is beyond the scope of this file to document it; while games
-using legacy functions will continue to work without issue in minisphere for
-the foreseeable, new projects should prefer the modern Sphere 2.0 API, which is
-what's documented here.
+However, the Sphere v1 API is quite old and, as of minisphere 4.0, has been
+deprecated.  As such, it is not documented here at all; while games using the
+legacy functions will continue to work without issue in minisphere for the
+foreseeable future, new projects should prefer the modern Sphere v2 API, which
+is what's documented here.
 
 
 game.json (Game Manifest)
 -------------------------
 
-In order to use Sphere 2.0 features, a game must provide a file called
+In order to use Sphere v2 features, a game must provide a file called
 `game.json` in the root of the game package which holds its metadata.  All
 values in `game.json` are available to game code through `system.game` (see
 below).
@@ -184,16 +184,15 @@ numbers and allows manually seeding the generator, as well as saving and
 restoring the exact state of the generator at any time.  RNG state is often
 saved along with other save data as a way to deter save scumming.
 
-RNG.Default [read-only]
-
-    Gets the default random number generator.  This generator is seeded on
-    first use using the current system time, ensuring the default sequence is
-    unpredictable.
-
 RNG.fromSeed(seed);
 
     Constructs a new random number generator seeded using the specified value.
-    See RNG#seed() for more information on seeding.
+    The specific sequence of numbers generated is entirely defined by the seed,
+    which is to say that two generators running in parallel, initialized from
+    the same seed, will produce the same sequence.
+
+    `seed` is a number greater than zero.  If the seed is fractional, only the
+    integer part is used; everything after the decimal point is ignored.
 
 RNG.fromState(state);
 
@@ -202,7 +201,8 @@ RNG.fromState(state);
 
 new RNG();
 
-    Constructs a new random number generator using a default seed.
+    Constructs a new random number generator seeded from the current system
+    time.
 
 RNG#state [read/write]
 
@@ -215,16 +215,8 @@ RNG#state [read/write]
 
 RNG#next();
 
-    Gets the next random number in the sequence.  Numbers range [0-1).
-
-RNG#seed(seed);
-
-    Reseeds this generator.  `seed` is the value to use as a seed.  The
-    specific sequence of numbers generated is entirely defined by the seed: The
-    same seed will always generate the same sequence.
-
-    If you need to save the state of the random number generator to continue
-    later, you should use RNG#state (see above) instead.
+    Gets the next random number in the sequence.  Value returned is in the
+    range [0-1).
 
 
 Keyboard Routines

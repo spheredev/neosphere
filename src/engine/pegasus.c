@@ -266,7 +266,6 @@ static duk_ret_t js_new_Mixer                  (duk_context* ctx);
 static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
 static duk_ret_t js_Mixer_get_volume           (duk_context* ctx);
 static duk_ret_t js_Mixer_set_volume           (duk_context* ctx);
-static duk_ret_t js_RNG_get_Default            (duk_context* ctx);
 static duk_ret_t js_RNG_fromSeed               (duk_context* ctx);
 static duk_ret_t js_RNG_fromState              (duk_context* ctx);
 static duk_ret_t js_new_RNG                    (duk_context* ctx);
@@ -274,7 +273,6 @@ static duk_ret_t js_RNG_finalize               (duk_context* ctx);
 static duk_ret_t js_RNG_get_state              (duk_context* ctx);
 static duk_ret_t js_RNG_set_state              (duk_context* ctx);
 static duk_ret_t js_RNG_next                   (duk_context* ctx);
-static duk_ret_t js_RNG_seed                   (duk_context* ctx);
 static duk_ret_t js_new_Server                 (duk_context* ctx);
 static duk_ret_t js_Server_finalize            (duk_context* ctx);
 static duk_ret_t js_Server_close               (duk_context* ctx);
@@ -423,12 +421,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
 	api_register_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
-	api_register_static_prop(ctx, "RNG", "Default", js_RNG_get_Default, NULL);
 	api_register_static_func(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
 	api_register_static_func(ctx, "RNG", "fromState", js_RNG_fromState);
 	api_register_prop(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_register_method(ctx, "RNG", "next", js_RNG_next);
-	api_register_method(ctx, "RNG", "seed", js_RNG_seed);
 
 	api_register_ctor(ctx, "ShapeGroup", js_new_ShapeGroup, js_ShapeGroup_finalize);
 	api_register_prop(ctx, "ShapeGroup", "shader", js_ShapeGroup_get_shader, js_ShapeGroup_set_shader);
@@ -2563,26 +2559,6 @@ js_Mixer_set_volume(duk_context* ctx)
 }
 
 static duk_ret_t
-js_RNG_get_Default(duk_context* ctx)
-{
-	xoro_t* xoro;
-
-	xoro = xoro_new((uint64_t)time(NULL));
-	duk_push_sphere_obj(ctx, "RNG", xoro);
-
-	duk_push_this(ctx);
-	duk_push_string(ctx, "Default");
-	duk_dup(ctx, -3);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
-
-	return 1;
-}
-
-static duk_ret_t
 js_RNG_fromSeed(duk_context* ctx)
 {
 	uint64_t seed;
@@ -2616,6 +2592,9 @@ static duk_ret_t
 js_new_RNG(duk_context* ctx)
 {
 	xoro_t* xoro;
+	
+	if (!duk_is_constructor_call(ctx))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor RNG requires `new`");
 	
 	xoro = xoro_new((uint64_t)time(NULL));
 	duk_push_sphere_obj(ctx, "RNG", xoro);
@@ -2672,20 +2651,6 @@ js_RNG_next(duk_context* ctx)
 
 	duk_push_number(ctx, xoro_gen_double(xoro));
 	return 1;
-}
-
-static duk_ret_t
-js_RNG_seed(duk_context* ctx)
-{
-	uint64_t seed;
-	xoro_t*  xoro;
-
-	duk_push_this(ctx);
-	xoro = duk_require_sphere_obj(ctx, -1, "RNG");
-	seed = duk_require_number(ctx, 0);
-
-	xoro_reseed(xoro, seed);
-	return 0;
 }
 
 static duk_ret_t

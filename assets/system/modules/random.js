@@ -16,11 +16,13 @@ module.exports =
 
 const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+var rng = new RNG();
+
 function chance(odds)
 {
     system.assert(typeof odds === 'number', "odds must be a number");
 
-    return odds > RNG.Default.next();
+    return odds > rng.next();
 }
 
 function discrete(min, max)
@@ -32,7 +34,7 @@ function discrete(min, max)
     max >>= 0;
     var range = Math.abs(max - min) + 1;
     min = min < max ? min : max;
-    return min + Math.floor(RNG.Default.next() * range);
+    return min + Math.floor(rng.next() * range);
 }
 
 normal.y = null;
@@ -46,8 +48,8 @@ function normal(mean, sigma)
     // random.normal().
     if (normal.y === null) {
         do {
-            var u = 2.0 * RNG.Default.next() - 1.0;
-            var v = 2.0 * RNG.Default.next() - 1.0;
+            var u = 2.0 * rng.next() - 1.0;
+            var v = 2.0 * rng.next() - 1.0;
             var w = u * u + v * v;
         } while (w >= 1.0);
         w = Math.sqrt(-2.0 * Math.log(w) / w);
@@ -91,6 +93,6 @@ function uniform(mean, variance)
     system.assert(typeof mean === 'number', "mean must be a number");
     system.assert(typeof variance === 'number', "variance must be a number");
     
-    var error = variance * 2.0 * (0.5 - RNG.Default.next());
+    var error = variance * 2.0 * (0.5 - rng.next());
     return mean + error;
 }
