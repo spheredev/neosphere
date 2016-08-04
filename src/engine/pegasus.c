@@ -178,6 +178,7 @@ COLORS[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
+static duk_ret_t js_assert                     (duk_context* ctx);
 static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
@@ -187,7 +188,6 @@ static duk_ret_t js_system_get_name            (duk_context* ctx);
 static duk_ret_t js_system_get_time            (duk_context* ctx);
 static duk_ret_t js_system_get_version         (duk_context* ctx);
 static duk_ret_t js_system_abort               (duk_context* ctx);
-static duk_ret_t js_system_assert              (duk_context* ctx);
 static duk_ret_t js_system_dispatch            (duk_context* ctx);
 static duk_ret_t js_system_doEvents            (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
@@ -501,7 +501,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_prop(ctx, "system", "time", js_system_get_time, NULL);
 	api_register_static_prop(ctx, "system", "version", js_system_get_version, NULL);
 	api_register_static_func(ctx, "system", "abort", js_system_abort);
-	api_register_static_func(ctx, "system", "assert", js_system_assert);
 	api_register_static_func(ctx, "system", "dispatch", js_system_dispatch);
 	api_register_static_func(ctx, "system", "doEvents", js_system_doEvents);
 	api_register_static_func(ctx, "system", "exit", js_system_exit);
@@ -543,6 +542,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_register_static_func(ctx, "screen", "flip", js_screen_flip);
 	api_register_static_func(ctx, "screen", "resize", js_screen_resize);
+
+	api_register_static_func(ctx, NULL, "assert", js_assert);
 
 	api_register_const(ctx, "Key", "None", 0);
 	api_register_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
@@ -951,6 +952,56 @@ on_error:
 }
 
 static duk_ret_t
+js_assert(duk_context* ctx)
+{
+	const char* filename;
+	int         line_number;
+	const char* message;
+	int         num_args;
+	bool        result;
+	lstring_t*  text;
+
+	num_args = duk_get_top(ctx);
+	result = duk_to_boolean(ctx, 0);
+	message = duk_require_string(ctx, 1);
+
+	if (!result) {
+		// get the offending script and line number from the call stack
+		duk_push_global_object(ctx);
+		duk_get_prop_string(ctx, -1, "Duktape");
+		duk_get_prop_string(ctx, -1, "act");
+		duk_push_int(ctx, -3);
+		duk_call(ctx, 1);
+		duk_remove(ctx, -2);
+		duk_get_prop_string(ctx, -1, "lineNumber");
+		line_number = duk_get_int(ctx, -1);
+		duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "function");
+		duk_get_prop_string(ctx, -1, "fileName");
+		filename = duk_get_string(ctx, -1);
+		duk_pop_3(ctx);
+		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
+
+		// if an assertion fails in a game being debugged:
+		//   - the user may choose to ignore it, in which case execution continues.  this is useful
+		//     in some debugging scenarios.
+		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
+		//     over control to the attached debugger.
+		if (is_debugger_attached()) {
+			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
+			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
+				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
+			{
+				duk_debugger_pause(ctx);
+			}
+			lstr_free(text);
+		}
+	}
+	duk_dup(ctx, 0);
+	return 1;
+}
+
+static duk_ret_t
 js_require(duk_context* ctx)
 {
 	const char* id;
@@ -1060,56 +1111,6 @@ js_system_abort(duk_context* ctx)
 
 	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "%s", message);
 	return 0;
-}
-
-static duk_ret_t
-js_system_assert(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	bool        result;
-	lstring_t*  text;
-
-	num_args = duk_get_top(ctx);
-	result = duk_to_boolean(ctx, 0);
-	message = duk_require_string(ctx, 1);
-
-	if (!result) {
-		// get the offending script and line number from the call stack
-		duk_push_global_object(ctx);
-		duk_get_prop_string(ctx, -1, "Duktape");
-		duk_get_prop_string(ctx, -1, "act");
-		duk_push_int(ctx, -3);
-		duk_call(ctx, 1);
-		duk_remove(ctx, -2);
-		duk_get_prop_string(ctx, -1, "lineNumber");
-		line_number = duk_get_int(ctx, -1);
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName");
-		filename = duk_get_string(ctx, -1);
-		duk_pop_3(ctx);
-		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
-
-		// if an assertion fails in a game being debugged:
-		//   - the user may choose to ignore it, in which case execution continues.  this is useful
-		//     in some debugging scenarios.
-		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
-		//     over control to the attached debugger.
-		if (is_debugger_attached()) {
-			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
-			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
-				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
-			{
-				duk_debugger_pause(ctx);
-			}
-			lstr_free(text);
-		}
-	}
-	duk_dup(ctx, 0);
-	return 1;
 }
 
 static duk_ret_t

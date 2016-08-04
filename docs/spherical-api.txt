@@ -86,6 +86,22 @@ require(module_id);
     module.
 
 
+Debugging Functions
+-------------------
+
+The debugging functions below are exposed as globals for ease of typing.
+
+assert(condition[, message]);
+
+    `condition` is a boolean expression.  If the debugger is not attached or
+    `condition` evaluates to true, nothing happens.  If the debugger is
+    attached and `condition` is false, an alert is displayed, with an option to
+    trigger a breakpoint.
+
+    `message` is optional but highly recommended; the boolean expression will
+    not be displayed in the alert box.
+
+
 Low-Level System API
 --------------------
 
@@ -126,16 +142,6 @@ system.abort(message);
 
     Unconditionally aborts execution.  `message` will be displayed on the error
     screen.
-
-system.assert(condition[, message]);
-
-    `condition` is a boolean expression.  If the debugger is not attached or
-    `condition` evaluates to true, nothing happens.  If the debugger is
-    attached and `condition` is false, an alert is displayed, with an option to
-    trigger a breakpoint.
-
-    `message` is optional but highly recommended; the boolean expression will
-    not be displayed in the alert box.
 
 system.dispatch(func);
 
