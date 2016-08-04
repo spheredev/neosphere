@@ -493,6 +493,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
+	api_register_static_func(ctx, NULL, "assert", js_assert);
+
 	api_register_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
 	api_register_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
@@ -542,8 +544,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_register_static_func(ctx, "screen", "flip", js_screen_flip);
 	api_register_static_func(ctx, "screen", "resize", js_screen_resize);
-
-	api_register_static_func(ctx, NULL, "assert", js_assert);
 
 	api_register_const(ctx, "Key", "None", 0);
 	api_register_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
@@ -2597,7 +2597,7 @@ js_new_RNG(duk_context* ctx)
 	if (!duk_is_constructor_call(ctx))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor RNG requires `new`");
 	
-	xoro = xoro_new((uint64_t)time(NULL));
+	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
 	duk_push_sphere_obj(ctx, "RNG", xoro);
 	return 1;
 }
