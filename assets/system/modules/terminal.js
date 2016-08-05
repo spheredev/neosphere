@@ -121,12 +121,8 @@ function getInput()
 		} else if (kb.isPressed(Key.PageDown) || wheelDown) {
 			visible.line = Math.max(visible.line - speed, 0);
 		}
-		var keycode = kb.readKey();
+		var keycode = kb.getKey();
 		switch (keycode) {
-			case Key.None:
-			case Key.Tab:
-			case Key.Tilde:
-				break;
 			case Key.Enter:
 				log("Command entered: '" + entry + "'");
 				executeCommand(entry);
@@ -146,6 +142,10 @@ function getInput()
 					.tween(visible, 0.125, 'easeOut', { line: 0.0 })
 					.run();
 				break;
+			case Key.Tab:
+			case Key.Tilde:
+			case null:
+                break;
 			default:
 				var isShifted = kb.isPressed(Key.LShift) || kb.isPressed(Key.RShift);
 				var ch = kb.getChar(keycode, isShifted);

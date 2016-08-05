@@ -133,11 +133,6 @@ system.extensions [read-only]
     Extensions are used to advertise support for features which are provided by
     the engine but not yet part of the core API.
 
-system.time [read-only]
-
-    Gets the amount of time, in seconds, since the engine started running.  The
-    granularity varies, but is typically less than a microsecond.
-
 system.abort(message);
 
     Unconditionally aborts execution.  `message` will be displayed on the error
@@ -162,9 +157,10 @@ system.exit();
 
     Shuts down the engine unconditionally.  Unsaved data will be lost.
 
-system.random();
+system.getTime();
 
-    Generates a random number in range [0-1) and returns it.
+    Returns the amount of time, in seconds, since the engine started running.
+    Granularity varies, but is typically less than a microsecond.
 
 system.restart();
 
@@ -236,7 +232,6 @@ Key [enumeration]
 
     Specifies a keyboard key.  Can be one of the following:
 
-        Key.None
         Key.Alt
         Key.AltGr
         Key.Apostrophe
@@ -351,22 +346,25 @@ kb.scrollLock [read-only]
 kb.clearQueue();
 
     Removes all keys from the keyboard queue.  If another key is not pressed
-    in the interim, the next getKey() will return Key.None.
+    in the interim, the next getKey() will return null.
+
+kb.getChar(key, shifted);
+
+    Gets the character(s) that would be generated if a specified key is
+    pressed.  For example, Key.A becomes "a" (or "A" if shifted).  `shifted`
+    specifies whether to assume the Shift key is pressed.
+    
+    An empty string is returned if the specified key is not associated with a
+    character (a modifier key, for example).
 
 kb.getKey();
 
-    Gets the next key in the keyboard queue, or Key.None if the queue is empty.
+    Gets the next key in the keyboard queue, or null if the queue is empty.
 
 kb.isPressed(key);
 
     Returns true if the user is currently pressing the specified key.  `key`
     should be a member of the Key enumeration.
-
-kb.keyString(key, shifted);
-
-    Gets the character(s) that would be generated if a specified key is
-    pressed.  For example, Key.A becomes "a" (or "A" if shifted).  `shifted`
-    specifies whether to assume the Shift key is pressed.
 
 
 Mouse Routines
@@ -382,7 +380,6 @@ MouseKey [enumeration]
     Specifies a mouse click or other event (such as a wheel movement).  Can
     be one of the following:
 
-        MouseKey.None
         MouseKey.Left
         MouseKey.Middle
         MouseKey.Right
@@ -398,7 +395,7 @@ mouse.y [read-only]
 mouse.clearQueue();
 
     Removes all events from the mouse event queue.  If another event is not
-    received in the interim, the next getKey() will return MouseKey.None.
+    received in the interim, the next getEvent() will return null.
 
 mouse.getEvent();
 
@@ -1036,9 +1033,9 @@ FileStream#writeUInt(value[, size[, little_endian]]);
 FileStream#writePString(string, lenSize[, little_endian]);
 
     Writes a UTF-8-encoded, length-prefixed (Pascal-style) string to the file
-    and advances the file pointer.  `lenSize` specifies the number of bytes [1-4]
-    used to encode the string length.  `little_endian` is optional and defaults
-    to false.
+    and advances the file pointer.  `lenSize` specifies the number of
+    bytes [1-4] used to encode the string length.  `little_endian` is optional
+    and defaults to false.
 
     Note: If the string is too long for its length to be encoded in `lenSize`
           bytes, this method will throw a TypeError.
@@ -1083,12 +1080,17 @@ new Socket(hostname, port);
 
 Socket#bytesPending [read-only]
 
-    Gets the amount of data, in bytes, currently in the receive buffer.  Call
+    Gets the number of bytes of data currently in the receive buffer.  Call
     Socket#read() to retrieve this data.
+    
+    Note that more data may be received between the time this is checked the
+    time a read is performed.  It's recommended to poll this value from time to
+    time and perform reads in order to keep the size of the receive buffer
+    down.    
 
 Socket#connected [read-only]
 
-    Gets whether the connection has been established.  As long as this returns
+    Gets whether the connection has been established.  As long as this is
     false, you cannot call any other methods on the socket object.  Doing so
     will cause an error to be thrown.
 

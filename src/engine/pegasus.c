@@ -185,12 +185,12 @@ static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_system_get_extensions      (duk_context* ctx);
 static duk_ret_t js_system_get_game            (duk_context* ctx);
 static duk_ret_t js_system_get_name            (duk_context* ctx);
-static duk_ret_t js_system_get_time            (duk_context* ctx);
 static duk_ret_t js_system_get_version         (duk_context* ctx);
 static duk_ret_t js_system_abort               (duk_context* ctx);
 static duk_ret_t js_system_dispatch            (duk_context* ctx);
 static duk_ret_t js_system_doEvents            (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
+static duk_ret_t js_system_getTime             (duk_context* ctx);
 static duk_ret_t js_system_restart             (duk_context* ctx);
 static duk_ret_t js_system_sleep               (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
@@ -212,8 +212,8 @@ static duk_ret_t js_kb_get_numLock             (duk_context* ctx);
 static duk_ret_t js_kb_get_scrollLock          (duk_context* ctx);
 static duk_ret_t js_kb_clearQueue              (duk_context* ctx);
 static duk_ret_t js_kb_getChar                 (duk_context* ctx);
+static duk_ret_t js_kb_getKey                  (duk_context* ctx);
 static duk_ret_t js_kb_isPressed               (duk_context* ctx);
-static duk_ret_t js_kb_readKey                 (duk_context* ctx);
 static duk_ret_t js_mouse_get_x                (duk_context* ctx);
 static duk_ret_t js_mouse_get_y                (duk_context* ctx);
 static duk_ret_t js_mouse_clearQueue           (duk_context* ctx);
@@ -500,12 +500,12 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
 	api_register_static_prop(ctx, "system", "game", js_system_get_game, NULL);
 	api_register_static_prop(ctx, "system", "name", js_system_get_name, NULL);
-	api_register_static_prop(ctx, "system", "time", js_system_get_time, NULL);
 	api_register_static_prop(ctx, "system", "version", js_system_get_version, NULL);
 	api_register_static_func(ctx, "system", "abort", js_system_abort);
 	api_register_static_func(ctx, "system", "dispatch", js_system_dispatch);
 	api_register_static_func(ctx, "system", "doEvents", js_system_doEvents);
 	api_register_static_func(ctx, "system", "exit", js_system_exit);
+	api_register_static_func(ctx, "system", "getTime", js_system_getTime);
 	api_register_static_func(ctx, "system", "restart", js_system_restart);
 	api_register_static_func(ctx, "system", "sleep", js_system_sleep);
 
@@ -530,8 +530,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_prop(ctx, "kb", "scrollLock", js_kb_get_scrollLock, NULL);
 	api_register_static_func(ctx, "kb", "clearQueue", js_kb_clearQueue);
 	api_register_static_func(ctx, "kb", "getChar", js_kb_getChar);
+	api_register_static_func(ctx, "kb", "getKey", js_kb_getKey);
 	api_register_static_func(ctx, "kb", "isPressed", js_kb_isPressed);
-	api_register_static_func(ctx, "kb", "readKey", js_kb_readKey);
 
 	api_register_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
 	api_register_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
@@ -545,7 +545,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "screen", "flip", js_screen_flip);
 	api_register_static_func(ctx, "screen", "resize", js_screen_resize);
 
-	api_register_const(ctx, "Key", "None", 0);
 	api_register_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_register_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_register_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
@@ -646,7 +645,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_const(ctx, "Key", "Multiply", ALLEGRO_KEY_PAD_ASTERISK);
 	api_register_const(ctx, "Key", "Subtract", ALLEGRO_KEY_PAD_MINUS);
 
-	api_register_const(ctx, "MouseKey", "None", MOUSE_KEY_NONE);
 	api_register_const(ctx, "MouseKey", "Left", MOUSE_KEY_LEFT);
 	api_register_const(ctx, "MouseKey", "Right", MOUSE_KEY_RIGHT);
 	api_register_const(ctx, "MouseKey", "Middle", MOUSE_KEY_MIDDLE);
@@ -1085,13 +1083,6 @@ js_system_get_name(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_get_time(duk_context* ctx)
-{
-	duk_push_number(ctx, al_get_time());
-	return 1;
-}
-
-static duk_ret_t
 js_system_get_version(duk_context* ctx)
 {
 	duk_push_string(ctx, VERSION_NAME);
@@ -1137,6 +1128,13 @@ static duk_ret_t
 js_system_exit(duk_context* ctx)
 {
 	exit_game(false);
+}
+
+static duk_ret_t
+js_system_getTime(duk_context* ctx)
+{
+	duk_push_number(ctx, al_get_time());
+	return 1;
 }
 
 static duk_ret_t
@@ -1442,6 +1440,16 @@ js_kb_getChar(duk_context* ctx)
 }
 
 static duk_ret_t
+js_kb_getKey(duk_context* ctx)
+{
+	if (kb_queue_len() > 0)
+		duk_push_int(ctx, kb_get_key());
+	else
+		duk_push_null(ctx);
+	return 1;
+}
+
+static duk_ret_t
 js_kb_isPressed(duk_context* ctx)
 {
 	int keycode;
@@ -1449,13 +1457,6 @@ js_kb_isPressed(duk_context* ctx)
 	keycode = duk_require_int(ctx, 0);
 
 	duk_push_boolean(ctx, kb_is_key_down(keycode));
-	return 1;
-}
-
-static duk_ret_t
-js_kb_readKey(duk_context* ctx)
-{
-	duk_push_int(ctx, kb_get_key());
 	return 1;
 }
 
@@ -1492,7 +1493,7 @@ static duk_ret_t
 js_mouse_getEvent(duk_context* ctx)
 {
 	mouse_event_t event;
-	
+
 	if (mouse_queue_len() == 0)
 		duk_push_null(ctx);
 	else {
