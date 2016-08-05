@@ -15,8 +15,8 @@
 #include "spriteset.h"
 #include "windowstyle.h"
 
-#define API_VERSION        1.5
-#define API_VERSION_STRING "v1.5"
+#define API_VERSION        2.0
+#define API_VERSION_STRING "v2.0"
 
 static duk_ret_t js_AreKeysLeft                (duk_context* ctx);
 static duk_ret_t js_IsAnyKeyPressed            (duk_context* ctx);
