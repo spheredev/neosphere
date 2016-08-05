@@ -121,7 +121,7 @@ function getInput()
 		} else if (kb.isPressed(Key.PageDown) || wheelDown) {
 			visible.line = Math.max(visible.line - speed, 0);
 		}
-		var keycode = kb.getKey();
+		var keycode = kb.readKey();
 		switch (keycode) {
 			case Key.None:
 			case Key.Tab:
@@ -148,7 +148,7 @@ function getInput()
 				break;
 			default:
 				var isShifted = kb.isPressed(Key.LShift) || kb.isPressed(Key.RShift);
-				var ch = kb.keyString(keycode, isShifted);
+				var ch = kb.getChar(keycode, isShifted);
 				ch = kb.capsLock ? ch.toUpperCase() : ch;
 				entry += ch;
 		}

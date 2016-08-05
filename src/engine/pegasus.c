@@ -211,9 +211,9 @@ static duk_ret_t js_kb_get_capsLock            (duk_context* ctx);
 static duk_ret_t js_kb_get_numLock             (duk_context* ctx);
 static duk_ret_t js_kb_get_scrollLock          (duk_context* ctx);
 static duk_ret_t js_kb_clearQueue              (duk_context* ctx);
-static duk_ret_t js_kb_getKey                  (duk_context* ctx);
+static duk_ret_t js_kb_getChar                 (duk_context* ctx);
 static duk_ret_t js_kb_isPressed               (duk_context* ctx);
-static duk_ret_t js_kb_keyString               (duk_context* ctx);
+static duk_ret_t js_kb_readKey                 (duk_context* ctx);
 static duk_ret_t js_mouse_get_x                (duk_context* ctx);
 static duk_ret_t js_mouse_get_y                (duk_context* ctx);
 static duk_ret_t js_mouse_clearQueue           (duk_context* ctx);
@@ -529,10 +529,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_prop(ctx, "kb", "numLock", js_kb_get_numLock, NULL);
 	api_register_static_prop(ctx, "kb", "scrollLock", js_kb_get_scrollLock, NULL);
 	api_register_static_func(ctx, "kb", "clearQueue", js_kb_clearQueue);
-	api_register_static_func(ctx, "kb", "getKey", js_kb_getKey);
+	api_register_static_func(ctx, "kb", "getChar", js_kb_getChar);
 	api_register_static_func(ctx, "kb", "isPressed", js_kb_isPressed);
-	api_register_static_func(ctx, "kb", "keyString", js_kb_keyString);
-	
+	api_register_static_func(ctx, "kb", "readKey", js_kb_readKey);
+
 	api_register_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
 	api_register_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
 	api_register_static_func(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
@@ -1351,18 +1351,35 @@ js_fs_unlink(duk_context* ctx)
 }
 
 static duk_ret_t
-js_kb_isPressed(duk_context* ctx)
+js_kb_get_capsLock(duk_context* ctx)
 {
-	int keycode;
-
-	keycode = duk_require_int(ctx, 0);
-
-	duk_push_boolean(ctx, kb_is_key_down(keycode));
+	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
 	return 1;
 }
 
 static duk_ret_t
-js_kb_keyString(duk_context* ctx)
+js_kb_get_numLock(duk_context* ctx)
+{
+	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_NUMLOCK));
+	return 1;
+}
+
+static duk_ret_t
+js_kb_get_scrollLock(duk_context* ctx)
+{
+	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_SCROLLLOCK));
+	return 1;
+}
+
+static duk_ret_t
+js_kb_clearQueue(duk_context* ctx)
+{
+	kb_clear_queue();
+	return 0;
+}
+
+static duk_ret_t
+js_kb_getChar(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int keycode = duk_require_int(ctx, 0);
@@ -1425,6 +1442,24 @@ js_kb_keyString(duk_context* ctx)
 }
 
 static duk_ret_t
+js_kb_isPressed(duk_context* ctx)
+{
+	int keycode;
+
+	keycode = duk_require_int(ctx, 0);
+
+	duk_push_boolean(ctx, kb_is_key_down(keycode));
+	return 1;
+}
+
+static duk_ret_t
+js_kb_readKey(duk_context* ctx)
+{
+	duk_push_int(ctx, kb_get_key());
+	return 1;
+}
+
+static duk_ret_t
 js_mouse_get_x(duk_context* ctx)
 {
 	int x;
@@ -1483,41 +1518,6 @@ js_mouse_isPressed(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid mouse key constant");
 
 	duk_push_boolean(ctx, mouse_is_key_down(key));
-	return 1;
-}
-
-static duk_ret_t
-js_kb_get_capsLock(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
-	return 1;
-}
-
-static duk_ret_t
-js_kb_get_numLock(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_NUMLOCK));
-	return 1;
-}
-
-static duk_ret_t
-js_kb_get_scrollLock(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_SCROLLLOCK));
-	return 1;
-}
-
-static duk_ret_t
-js_kb_clearQueue(duk_context* ctx)
-{
-	kb_clear_queue();
-	return 0;
-}
-
-static duk_ret_t
-js_kb_getKey(duk_context* ctx)
-{
-	duk_push_int(ctx, kb_get_key());
 	return 1;
 }
 
