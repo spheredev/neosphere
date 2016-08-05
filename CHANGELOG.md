@@ -9,12 +9,12 @@ v4.0.0 - TBD
   games.  For information on using the functions in the new API, see
   `docs/spherical-api.txt`.
 * miniRT has been overhauled and repurposed as the reference implementation of
-  the Sphere v2 standard library.  miniRT modules can thus be referred to more
-  concisely, e.g. `require("thread")` instead of `require("miniRT/threads")`.
+  the Sphere v2 standard library.  The modules can thus be referred to more
+  concisely, e.g. `require("threads")` instead of `require("miniRT/threads")`.
 * Objects created using a Sphere v2 function--such as the `Image` constructor,
   `Color.Black` et al., and so on--are no longer compatible with the Sphere v1
   API.
-* Removes constructors for legacy types such as ByteArray.
+* Removes the constructors for legacy types such as ByteArray.
 * Removes support for on-the-fly transpilation of TypeScript and CoffeeScript.
 
 
