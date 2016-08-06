@@ -180,6 +180,7 @@ COLORS[] =
 
 static duk_ret_t js_assert                     (duk_context* ctx);
 static duk_ret_t js_require                    (duk_context* ctx);
+static duk_ret_t js_trace                      (duk_context* ctx);
 static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_system_get_extensions      (duk_context* ctx);
@@ -494,6 +495,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
 	api_register_static_func(ctx, NULL, "assert", js_assert);
+	api_register_static_func(ctx, NULL, "trace", js_trace);
 
 	api_register_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
@@ -1018,6 +1020,21 @@ js_require(duk_context* ctx)
 	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
+}
+
+static duk_ret_t
+js_trace(duk_context* ctx)
+{
+	int num_items;
+
+	// join the passed-in arguments separated with spaces
+	num_items = duk_get_top(ctx);
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+	duk_join(ctx, num_items);
+
+	debug_print(duk_get_string(ctx, -1), PRINT_TRACE);
+	return 0;
 }
 
 static duk_ret_t

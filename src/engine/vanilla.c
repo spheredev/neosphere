@@ -69,6 +69,7 @@ static duk_ret_t js_CreateDirectory            (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode       (duk_context* ctx);
 static duk_ret_t js_CreateSurface              (duk_context* ctx);
 static duk_ret_t js_DeflateByteArray           (duk_context* ctx);
+static duk_ret_t js_DoEvents                   (duk_context* ctx);
 static duk_ret_t js_DoesFileExist              (duk_context* ctx);
 static duk_ret_t js_Delay                      (duk_context* ctx);
 static duk_ret_t js_EvaluateScript             (duk_context* ctx);
@@ -370,6 +371,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "CreateSurface", js_CreateSurface);
 	api_register_static_func(ctx, NULL, "DeflateByteArray", js_DeflateByteArray);
 	api_register_static_func(ctx, NULL, "Delay", js_Delay);
+	api_register_static_func(ctx, NULL, "DoEvents", js_DoEvents);
 	api_register_static_func(ctx, NULL, "DoesFileExist", js_DoesFileExist);
 	api_register_static_func(ctx, NULL, "EvaluateScript", js_EvaluateScript);
 	api_register_static_func(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
@@ -1639,6 +1641,14 @@ js_Delay(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "time cannot be negative", millisecs);
 	delay(millisecs / 1000);
 	return 0;
+}
+
+static duk_ret_t
+js_DoEvents(duk_context* ctx)
+{
+	do_events();
+	duk_push_boolean(ctx, true);
+	return 1;
 }
 
 static duk_ret_t
