@@ -146,10 +146,7 @@ function lineRect(surface, x, y, width, height, thickness, color)
 
 function point(surface, x, y, color)
 {
-	var shape = new Shape([
-		{ x: x, y: y, color: color }
-	], null, ShapeType.Points);
-	shape.draw(surface);
+	prim.rect(surface, x, y, 1, 1, color);
 }
 
 function rect(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)

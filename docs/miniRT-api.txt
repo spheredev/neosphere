@@ -1,75 +1,33 @@
 miniRT API Reference
 ====================
 
-minisphere comes with a set of CommonJS modules, collectively called miniRT,
-which provide advanced, high-level functionality above and beyond what the
-lower-level Sphere API provides.
+Sphere v2 specifies a set of CommonJS modules known as the standard library.
+The standard library provides high-level functionality above and beyond what
+the lower-level Sphere API provides.
 
-miniRT is made up of several components, each of which is documented under its
-own section below:
-
-    * miniRT/thread:
-      An advanced cooperative threading engine which replaces Sphere 1.x-style
-      update and render scripts.  A large portion of miniRT is built on top of
-      this module.
-
-    * miniRT/event:
-      A multicast delegate implementation inspired by the .NET event model.
-
-    * miniRT/music:
-      A BGM manager based on a pushdown stack which integrates well with finite
-      state machine architectures.
-
-    * miniRT/pacts:
-      A Promises/A+ implementation used for asynchronous logic.  miniRT/pacts
-      also provides the Pact object (its namesake), which simplifies code to
-      fulfill and reject promises.
-
-	* miniRT/prim
-	  Allows pre-rendering of primitives such as text which are expensive to
-	  draw in immediate mode.
-
-    * miniRT/scenes:
-      An extensible cutscene engine with support for multiple timelines and a
-      simple but powerful timeline synchronization system.
-
-    * miniRT/struct
-      Allows reading structured data from binary files based on a simple JSON
-      schema.
-
-    * miniRT/terminal:
-      A ready-made text console with full logging support and a built-in command
-      parser.
-
-    * miniRT/xml
-      A simple XML parser and DOM builder based on the "sax js" parser.
+minisphere's implementation of the standard library is called miniRT and is
+made up of several components, each of which is documented below.
 
 
-miniRT/thread
--------------
+`threads` Module
+----------------
 
-miniRT/thread is the cornerstone of miniRT and is therefore documented first.
-Nearly all other miniRT components depend on it, and this affects your code even
-if you don't use the threader yourself--notably, by preventing the legacy frame
-management functionality from being used by game code.
+This is an easy-to-use cooperative threading engine.  In Sphere v1, games could
+define an update and render script, which would called each frame.  In miniRT,
+multiple threads can be created, each with its own update and render function.
+This allows many actions to run simultaneously.  For example, you might have a
+thread to run the in-game clock and another to manage animations.  An
+active-time battle engine might even use several threads to manage each of the
+units on the battlefield.
 
-miniRT/thread is an advanced cooperative threading engine.  Each thread has its
-own update and render functions, which are called once per frame.  This allows
-many actions to run simultaneously.  For example, you might have a thread to
-run the in-game clock and another to manage animations.  An active-time battle
-engine might even use several threads to manage each of the units on the
-battlefield.
+    const threads = require('threads');
 
-    var thread = require('thread');
+An important note: When the threads module is initialized, in order to work
+with the Sphere v1 map engine, the update and render functionality is
+commandeered by the threader and disabled (calling SetUpdateScript or
+SetRenderScript will throw an error).
 
-An important note: When miniRT/thread is initialized, it commandeers a few
-legacy facilities related to frame management.  Specifically, setting update and
-render scripts is disabled (calling SetUpdateScript or SetRenderScript will
-throw an error), and both the general and map engine frame rates are set to the
-value of the `frameRate` property in the manifest (or 60fps, if the property is
-not present or using a legacy manifest).
-
-thread.create(def[, priority]);
+threads.create(def[, priority]);
 
     Creates a new thread and returns its thread ID (an integer).  `def` should
     be an object with the following properties:
@@ -101,13 +59,13 @@ thread.create(def[, priority]);
     This can be used to implement an "entity": a full object implementing the
     above functions which manages its own thread.
 
-thread.isRunning(tid);
+threads.isRunning(tid);
 
     true if a thread with thread ID `tid` is running.  miniRT never recycles
     thread IDs, so this can be counted on to return false if given the tid of a
     thread which has terminated.
 
-thread.join(tid);
+threads.join(tid);
 
     Blocks the caller and awaits termination of the thread with thread ID `tid`.
     Any running threads (and the map engine, if it's in use) will continue to
@@ -120,33 +78,105 @@ thread.join(tid);
     first one terminates, the corresponding join cannot be satisfied until the
     second thread also terminates.
 
-thread.kill(tid);
+threads.kill(tid);
 
     Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
     invalid or has already terminated, nothing happens.
 
-thread.self();
+threads.self();
 
     When called from an update or render function, returns the thread ID of the
     active thread.  Otherwise, returns 0.
 
 
-miniRT/event
-------------
+`random` Module
+---------------
 
-miniRT/event provides a simple multicast delegate implementation which works
-similarly to events in .NET.  An object exposes one or more delegates, which
-can have functions registered to them.  When something interesting happens, the
-object owning the delegate invokes it, which calls all the registered functions
-in turn.  In this way outside code can react to changing situations without
-breaking encapsulation.
+Many games don't need the full power of the Sphere `RNG` object and just need
+a convenient way to generate random numbers for various purposes.
 
-    var event = require('event');
+    const random = require('random');
 
-new event.Delegate();
+random.chance(odds);
+
+    Returns true or false depending on the given odds.  `odds` is a number in
+    the range [0-1] specifying the odds of returning true.  For example, odds
+    of 0.75 will return true 75% of the time.
+
+random.discrete(min, max);
+
+    Returns a random integer uniformly distributed within the range [min,max].
+
+random.normal(mean, sigma);
+
+    Returns a random floating point number from a normal distribution
+    (sometimes called a bell curve) with expected value of `mean` and standard
+    deviation `sigma`.
+
+random.sample(array);
+
+    Returns a randomly chosen item from the specified array.
+
+random.string(length);
+
+    Returns a randomly generated string consisting of alphanumeric characters.
+    The generated string looks something like a YouTube video hash (e.g.
+    YlHRHDrKS) and is useful for uniquely identifying things, for example to
+    generate temporary filenames.
+
+random.uniform(mean, variance);
+
+    Returns a random floating point value uniformly distributed around `mean`
+    with an absolute maximum deviation ("give or take") specified by
+    `variance`.
+
+
+`logger` Module
+---------------
+
+The logger module provides basic logging functionality.  Your game can use this
+to log lines of text to a file complete with timestamps for each, often useful
+for debugging purposes.
+
+    const logger = require('logger');
+
+new logger.Log(filename);
+
+    Opens the given file for logging.  If the file cannot be opened for
+    writing, an error is thrown.
+
+Log#beginGroup(text);
+
+    Begins an group.  All log entries in a group will be indented.  Groups can
+    be nested.
+
+Log#endGroup();
+
+    Closes the most recently opened group.  There should be a corresponding
+    endGroup() for each beginGroup() call.
+
+Log#write(text);
+
+    Writes a timestamped entry to the log.  `text` should contain no newline
+    characters, although this is not enforced.
+
+
+`events` Module
+---------------
+
+A simple multicast delegate implementation which works similarly to events in
+.NET.  An object exposes one or more delegates, which can have handler
+functions registered to them by outside code.  When something interesting
+happens, the object owning the delegate invokes it, which calls all the
+registered handlers in turn.  In this way outside code can react to changing
+situations without breaking encapsulation.
+
+    const events = require('events');
+
+new events.Delegate();
 
     Constructs a new delegate.  The delegate starts out empty, with no handlers
-    attached.  Unlike .NET however, it is safe to invoke in this state.
+    attached.
 
 Delegate:add(handler[, thisObj]);
 
@@ -155,7 +185,8 @@ Delegate:add(handler[, thisObj]);
     `thisObj` is optional and specifies an object to use for the `this` binding
     when calling `handler`.
 
-    add() will throw an error if a matching handler has already been registered.
+    add() will throw an error if a matching handler has already been
+    registered.
 
 Delegate:remove(handler[, thisObj]);
 
@@ -163,22 +194,22 @@ Delegate:remove(handler[, thisObj]);
     if no matching handler is registered.
 
 
-miniRT/music
-------------
+`music` Module
+--------------
 
-miniRT/music is a flexible system based on Audialis for managing playback of
-background music.  The design, based on a pushdown stack, integrates well with
-finite state machine architectures, which are often themselves based on a stack
-of states.  Code can push new BGM to the music stack, and when it is later
-popped, the previous track resumes right where it left off.
+A flexible system based on Audialis for managing playback of background music.
+The design, based on a pushdown stack, integrates well with finite state
+machine architectures, which are often themselves based on a stack of states.
+Code can push new BGM to the music stack, and when it is later popped, the
+previous track resumes right where it left off.
 
-miniRT/music supports crossfading, which helps smooth out BGM transitions.  It
-also allows the stack to be bypassed when needed, from simply switching out the
-song on top of the stack with another track, to overriding the contents of the
-stack entirely, which is often useful in RPGs to override the battle music for
-storyline reasons.
+miniRT supports crossfading, which helps smooth out BGM transitions.  The stack
+can also be bypassed when needed, from simply switching out the song on top of
+the stack with another track, to overriding the contents of the stack entirely,
+which is often useful in RPGs to override the battle music for storyline
+reasons.
 
-    var music = require('music');
+    const music = require('music');
 
 music.isAdjusting();
 
@@ -228,27 +259,27 @@ music.reset([fadeTime]);
     overrides.  `fadeTime` is the amount of crossfade to apply, in seconds.
 
 
-miniRT/pacts
-------------
+`pacts` Module
+--------------
 
-miniRT/pacts is an implementation of the Promises/A+ standard.  These are
-commonly used in JavaScript frameworks such as Node.js to implement asynchronous
-logic.  Code which receives a promise can register a function to be called when
+Pacts is an implementation of the Promises/A+ standard.  Promises are commonly
+used in JavaScript frameworks such as Node.js to implement asynchronous logic.
+Code which receives a promise can register a function to be called once when
 the promise is fulfilled, which allows normal execution to continue while some
 long-running operation takes place in the background.
 
-Promises are so called because they represent a promise to "return" a value,
-which is provided by the code fulfilling it.  Promises can be chained, which
-enables something akin to C#'s `async` and `await` keywords.  This is done by
-having a promise's fulfillment function return a promise object, which will then
-be used as input for the next link in the chain:
+Promises are so called because they represent a promise to return a value at
+some later time.  Promises can be chained, which enables something akin to C#'s
+`async` and `await` keywords.  This is done by having a promise's fulfillment
+function itself return a promise, which will then be used as input for the next
+link in the chain:
 
     loadHugePigFile()                    // <- makes a promise, then works in background
         .then(function(file) {           // <- receives fulfillment value
             return processPigFile(file); // <- also makes a promise
         }).then(function(numPigs) {      // <- receives fulfillment value
-            DebugPrint("Wow, that actually finished?!");
-            DebugPrint("Loaded " + numPigs + " big fat pigs! *MUNCH*");
+            console.log("Wow, that actually finished?!");
+            console.log("Loaded " + numPigs + " big fat pigs! *MUNCH*");
         });
 
 Outside code must not be allowed to resolve a promise prematurely.  Only the
@@ -260,7 +291,7 @@ promises which can then be resolved through that pact.  In this way
 encapsulation of the Promise object is maintained while keeping things simple
 for the code handing them out.
 
-    var pacts = require('pacts');
+    const pacts = require('pacts');
 
 new pacts.Promise(fn);
 
@@ -303,8 +334,8 @@ Promise.resolve(value);
 
 new pacts.Pact();
 
-    Creates a new pact.  As described above, Pacts are used to generate promises
-    which can then be resolved via the pact.
+    Creates a new pact.  As described above, Pacts are used to generate
+    promises which can then be resolved through the pact.
 
 Pact:promise();
 
@@ -328,63 +359,86 @@ Pact:welsh(reason);
     reject with, usually an Error object.
 
 
-miniRT/prim
+`prim` Module
 -------------
 
-miniRT/prim allows games to pre-render common primitives which are otherwise
-expensive to draw and may cause slowdown when rendered in realtime, such as
-circles.
+The prim module provides convenience functions for drawing common graphics
+primitives such as circles and rectangles.  This mimics the primitives provided
+in Sphere v1 but is based on Galileo, the Sphere v2 graphics framework.
 
-    var prim = require('prim');
+    const prim = require('prim');
 
-new prim.Circle(x, y, radius, color[, outer_color]);
+prim.blit(surface, x, y, image[, mask]);
 
-    Renders a circle with the specified radius and color(s) and constructs a
-    Galileo Shape which can be used to draw it.  If `outer_color` is provided,
-    specifies a gradient circle, otherwise it is solid.
+    Draws an image as a textured quad.  `mask` is used to color the quad's
+    vertices and has the effect of tinting the rendered image.  If no mask is
+    specified, `Color.White` is assumed, which leaves the image colors as-is.
 
-    Note: The texture coordinates of the circle are preset such that setting a
-    texture the the shape will center the texture image in the circle.
+prim.circle(surface, x, y, radius, color[, color2]);
 
-new prim.Text(text[, options]);
+    Draws a solid circle.  If `color2` is given, draws a gradient circle where
+    `color` is the color in the center and `color2` is the color at the edges
+    of the circle.
 
-    Renders `text` and constructs a Galileo Shape used to draw it.  `options`
-    specifies rendering options and may include one or more of the following
-    properties:
+prim.ellipse(surface, x, y, rx, ry, color[, color2]);
 
-        options.color (Color object)
+    Like prim.circle(), but draws a solid ellipse instead of a circle.  `rx` is
+    the horizontal radius and `ry` the vertical radius.
 
-            A color object specifying the color and opacity of the text.  The
-            default is white (#FFFFFFFF).
+prim.fill(surface, color);
 
-        options.font (Font object)
+    Fills a surface with a specified color.  This is effectively shorthand for
+    drawing a rectangle of the specified color over the whole surface.
 
-            The Font object used to render the text.  If this is not provided,
-            the Sphere default font will be used.
+prim.line(surface, x1, y1, x2, y2, thickness, color[, color2]);
 
-        options.shadow (number)
+    Draws a line segment of given thickness from (x1,y1) to (x2,y2).  If
+    `color2` is provided, draws a gradient line.
 
-            The length of the shadow cast by the text, in pixels.  If not
-            provided or zero, no shadow will be rendered.  This can be negative,
-            in which case the light source will be on the bottom right instead
-            of the top left.
+prim.lineCircle(surface, x, y, radius, color);
+
+    Draws the outline of a circle.
+
+prim.lineEllipse(surface, x, y, rx, ry, color);
+
+    Like prim.lineCircle(), but draws the outline of an ellipse instead of a
+    circle.
+
+prim.lineRect(surface, x, y, width, height, thickness, color);
+
+    Draws the outline of a rectangle with given thickness.
+
+prim.point(suface, x, y, color);
+
+    Draws a single pixel.
+
+prim.rect(surface, x, y, width, height, color_ul[, color_ur, color_lr, color_ll]);
+
+    Draws a solid rectangle.  If four colors are given instead of one, draws a
+    gradient rectangle with each corner a different color.  Colors are given in
+    clockwise order starting from the upper left.
+
+prim.triangle(surface, x1, y1, x2, y2, x3, y3, color[, color2, color3]);
+
+    Draws a solid triangle.  If three colors are given instead of one, draws a
+    gradient triangle with each vertex a different color.
 
 
-miniRT/scenes
--------------
+`scenes` Module
+---------------
 
-miniRT/scenes is a powerful scene engine which can run multiple operations in
-parallel, and then sync the timelines up as needed.  An example of this would be
-where several characters need to move into place for a cutscene, but may take
-differing amounts of time to get there.  The game can fork the timeline once for
-each character, and then resync on the main timeline, which will wait until all
+A powerful scene engine which can run multiple operations in parallel, and then
+sync the timelines up as needed.  An example of this would be where several
+characters need to move into place for a cutscene, but may take differing
+amounts of time to get there.  The game can fork the timeline once for each
+character, and then resync on the main timeline, which will wait until all
 the forked timelines finish before continuing.
 
-miniRT/scenes is originally based on the Scenario standalone cutscene engine for
-Sphere 1.5, updated to take advantage of Sphere 2.0 features and to integrate
-more seamlessly with miniRT/thread.
+The scenes module is originally based on the Scenario standalone cutscene
+engine for Sphere v1, updated to take advantage of Sphere v2 features and to
+integrate more seamlessly with other miniRT components.
 
-    var scenes = require('scenes');
+    const scenes = require('scenes');
 
 A scene consists of a chain of scenelet invocations, with optional forks and
 resync points.  For example, supposing the scenelets used have been properly
@@ -401,11 +455,11 @@ only when both are complete:
         .changeBGM('maggieIsHungry')
 
 This scene can be played back at any time by calling `myScene.run()`.  miniRT's
-scene engine uses miniRT/thread and by default, scenes are nonblocking.  See
-the documentation for `Scene.run()` below to find out how to play a scene in
-blocking mode.
+scene engine uses the threads module and by default, scenes are nonblocking.
+See the documentation for `Scene#run()` below to find out how to play a scene
+in blocking mode.
 
-scenes.scenelet(name, def);
+scenes.defScenelet(name, def);
 
     Registers a new scenelet with miniRT.  `name` is the name of the scenelet
     and should be a valid JavaScript identifier (although this is not enforced).
@@ -425,9 +479,9 @@ scenes.scenelet(name, def);
 
         def.update(scene)
 
-            Required.  The scenelet's update function.  As with miniRT/thread,
-            this is called once per game frame and should return true to
-            continue scenelet execution or false to finish.
+            Required.  The scenelet's update function.  As with threads, this
+            is called once per game frame and should return true to continue
+            scenelet execution or false to finish.
 
         def.render(scene)
 
@@ -452,23 +506,23 @@ new scenes.Scene();
     will do nothing when run.  Calling any method other than .run() on the scene
     will add scenelets, and this is how you build a scene.
 
-Scene:isRunning();
+Scene#isRunning();
 
     true if scene execution is in progress, false if not.
 
-Scene:doIf(fn);
+Scene#doIf(fn);
 
     `fn` should be a function.  Any scenelets between the doIf() and its
     corresponding end() will be executed only if the function returns true.
     This is like to an `if` statement in JavaScript.
 
-Scene:doWhile(fn);
+Scene#doWhile(fn);
 
     `fn` should be a function.  Any scenelets between the doWhile() and its
     corresponding end() will be executed in a loop as long as the function
     keeps returning true.  This is like to a `while` statement in JavaScript.
 
-Scene:end();
+Scene#end();
 
     A metascenelet which closes the open context.  Currently, metascenelets
     which open a context and therefore require an end() marker are:
@@ -477,19 +531,19 @@ Scene:end();
         doWhile()
         fork()
 
-Scene:fork();
+Scene#fork();
 
     A metascenelet which forks the timeline.  This opens a new timeline to which
     all subsequent scenelets are added until an end() metascenelet is
     encountered.  Forked timelines run in parallel with the timeline that
     spawned them.
 
-Scene:restart();
+Scene#restart();
 
     Restarts a scene from the beginning, regardless of whether or not it was
     running at the time restart() is called.
 
-Scene:resync();
+Scene#resync();
 
     A metascenelet which adds a resync point to the open timeline.  Timelines
     may be forked to run operations in parallel, but it is sometimes necessary
@@ -501,47 +555,47 @@ Scene:resync();
     this means that a scene will not complete until all of its timelines have
     completed.
 
-Scene:run([blocking]);
+Scene#run([blocking]);
 
     Plays back this scene.  `blocking` is an optional boolean argument
     specifying whether to wait for the scene to finish before returning.  If not
     provided, the default is false.
 
-Scene:stop();
+Scene#stop();
 
     Stops scene execution immediately.  This works like the Stop button on a CD
     player: The next time the scene is run, it will start from the beginning.
 
 
-miniRT/struct
--------------
+`struct` Module
+---------------
 
-miniRT/struct allows you to load structured binary files like those used for
-Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
+The struct module allows you to load structured binary files like those used
+for Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
 
-    var struct = require('struct');
+    const struct = require('struct');
 
 struct.load(filename, schema);
 
     Loads the binary file `filename` based on `schema`.  This is a convenience
     function, and is shorthand for the following:
 
-        var file = new FileStream(filename, 'rb');
+        var file = fs.open(filename, 'rb');
         var data = struct.read(file, schema);
         file.close();
 
     See below for more information on schemas.  If an entire file can't be
-    described by a single, cohesive schema, binary.read() (see below) should be
+    described by a single, cohesive schema, struct.read() (see below) should be
     used instead.
 
 struct.read(stream, schema);
 
-    Reads an object from the FileStream `stream`, based on `schema`.  The schema
-    is an array of field descriptors describing the layout of the data; for
-    example the following will read the 256-byte header from a Sphere 1.x format
-    map file:
+    Reads an object from the FileStream `stream`, based on `schema`.  The
+    schema is an array of field descriptors describing the layout of the data;
+    for example, the following will read the 256-byte header from a Sphere v1
+    format map file:
 
-        binary.read(stream, [
+        struct.read(stream, [
             { id: 'signature', type: 'fstring', size: 4, regex: "\\.rmp" },
             { id: 'version', type: 'uintLE', size: 2 },
             { id: 'type', type: 'uintLE', size: 1 },
@@ -558,41 +612,36 @@ struct.read(stream, schema);
             { type: 'reserved', size: 234 },  // reserved
         ]);
 
-    For many binary file formats, miniRT/struct is powerful enough for an entire
-    file to be described using a single, sometimes multi-level, schema, in which
-    case you can use binary.load() instead.  More complex formats usually
-    require multiple binary.read() calls with indepedent schemas.
+    For many binary file formats, this system is powerful enough for an entire
+    file to be described using a single, sometimes multi-level, schema, in
+    which case you can use struct.load() instead.  More complex formats usually
+    require multiple struct.read() calls using indepedent schemas.
 
 
-miniRT/terminal
----------------
+`terminal` Module
+-----------------
 
-The Terminal module allows you to add a text-based debug console to your game.
-Terminal provides a full command parser, so all your game is responsible for is
+The terminal module allows you to add a text-based debug console to your game.
+miniRT provides a full command parser, so all your game is responsible for is
 providing the names and implementations of supported terminal commands.
 
 During gameplay, if the game allows it, the console may be shown and hidden
-using the Player 1 `Menu` key (Tab by default).
+using the tilde key (`~`).
 
-    var terminal = require('terminal');
+    const terminal = require('terminal');
 
 terminal.isOpen();
 
     `true` if the console is currently visible to the player.
 
-terminal.append(text);
-
-    Appends text to the end of last line logged to the console.  See
-    `console.log()` below.
-
 terminal.close();
 
     Closes the console, hiding it from view of the player.
 
-terminal.log(text);
+terminal.log(text[, text2[, ...]]);
 
-    Logs a line of text to the console.  This line can be extended by following
-    up with one or more console.append() calls.
+    Logs a line of text to the console.  Passing more than one value will
+    cause the strings to be separated with chevrons (`>>`).
 
 terminal.open();
 
@@ -630,14 +679,14 @@ terminal.unregister(objectName);
     possible to unregister individual commands.
 
 
-miniRT/xml
-----------
+`xml` Module
+------------
 
-miniRT/xml parses XML-formatted data and builds a document object model (DOM)
-from it.  It is based on the MIT-licensed "sax js" parser.  The API is very
-simple but should cover most use cases for game development.
+Parses XML-formatted data and builds a document object model (DOM) from it.
+This module is based on the MIT-licensed "sax js" parser.  The API is simple
+but should cover most use cases for game development.
 
-    var xml = require('xml');
+    const xml = require('xml');
 
 xml.load(fileName);
 
