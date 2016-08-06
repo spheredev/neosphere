@@ -1,4 +1,4 @@
-Spherical API Reference
+Sphere v2 API Reference
 =======================
 
 minisphere uses JavaScript for game logic.  This is the same programming

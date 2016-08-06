@@ -15,11 +15,10 @@ const prim    = require('prim');
 const threads = require('threads');
 
 var screenMask = Color.Transparent;
-var priority = 99;
 var threadID = threads.create({
 	update: _updateScenes,
 	render: _renderScenes,
-}, priority);
+}, Infinity);
 
 // scenes.defScenelet()
 // register a new scenelet.
@@ -104,8 +103,7 @@ function Scene()
 					update: ctx.op.update.bind(ctx.opctx, this),
 					render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
 					getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
-					priority: priority,
-				});
+				}, Infinity);
 				tasks.push(ctx.opThread);
 			} else {
 				ctx.opThread = 0;

@@ -4003,13 +4003,14 @@ js_Surface_applyLookup(duk_context* ctx)
 static duk_ret_t
 js_Surface_blit(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-
 	image_t* image;
+	int      x;
+	int      y;
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_bitmap(image_bitmap(image), x, y, 0x0);

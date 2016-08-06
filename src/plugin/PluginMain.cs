@@ -38,7 +38,7 @@ namespace minisphere.Gdk
 
             Panes.Initialize(this);
 
-            _sphereApiRefCommand = new ToolStripMenuItem("Spherical API Reference", Resources.EvalIcon);
+            _sphereApiRefCommand = new ToolStripMenuItem("Sphere v2 API Reference", Resources.EvalIcon);
             _sphereApiRefCommand.Click += sphereApiRefCommand_Click;
             _miniRTApiRefCommand = new ToolStripMenuItem("miniRT API Reference", Resources.EvalIcon);
             _miniRTApiRefCommand.Click += miniRTApiRefCommand_Click;
