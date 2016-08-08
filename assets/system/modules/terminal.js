@@ -43,7 +43,7 @@ threads.create({
 	update:	  update,
 	render:	  render,
 	getInput: getInput,
-}, Infinity);
+}, 100);
 
 log(system.game.name + " Debug Console");
 log(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
