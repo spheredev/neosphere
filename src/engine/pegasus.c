@@ -178,9 +178,9 @@ COLORS[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
-static duk_ret_t js_assert                     (duk_context* ctx);
 static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_trace                      (duk_context* ctx);
+static duk_ret_t js_ssj_assert                 (duk_context* ctx);
+static duk_ret_t js_ssj_trace                  (duk_context* ctx);
 static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_system_get_extensions      (duk_context* ctx);
@@ -191,7 +191,7 @@ static duk_ret_t js_system_abort               (duk_context* ctx);
 static duk_ret_t js_system_dispatch            (duk_context* ctx);
 static duk_ret_t js_system_doEvents            (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
-static duk_ret_t js_system_getTime             (duk_context* ctx);
+static duk_ret_t js_system_now                 (duk_context* ctx);
 static duk_ret_t js_system_restart             (duk_context* ctx);
 static duk_ret_t js_system_sleep               (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
@@ -494,8 +494,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_register_static_func(ctx, NULL, "assert", js_assert);
-	api_register_static_func(ctx, NULL, "trace", js_trace);
+	api_register_static_func(ctx, "ssj", "assert", js_ssj_assert);
+	api_register_static_func(ctx, "ssj", "trace", js_ssj_trace);
 
 	api_register_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
@@ -507,7 +507,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "system", "dispatch", js_system_dispatch);
 	api_register_static_func(ctx, "system", "doEvents", js_system_doEvents);
 	api_register_static_func(ctx, "system", "exit", js_system_exit);
-	api_register_static_func(ctx, "system", "getTime", js_system_getTime);
+	api_register_static_func(ctx, "system", "now", js_system_now);
 	api_register_static_func(ctx, "system", "restart", js_system_restart);
 	api_register_static_func(ctx, "system", "sleep", js_system_sleep);
 
@@ -952,7 +952,28 @@ on_error:
 }
 
 static duk_ret_t
-js_assert(duk_context* ctx)
+js_require(duk_context* ctx)
+{
+	const char* id;
+	const char* parent_id = NULL;
+	path_t*     path;
+
+	duk_push_current_function(ctx);
+	if (duk_get_prop_string(ctx, -1, "id"))
+		parent_id = duk_get_string(ctx, -1);
+	id = duk_require_string(ctx, 0);
+
+	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
+	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
+		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
+	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
+		duk_throw(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_ssj_assert(duk_context* ctx)
 {
 	const char* filename;
 	int         line_number;
@@ -1002,28 +1023,7 @@ js_assert(duk_context* ctx)
 }
 
 static duk_ret_t
-js_require(duk_context* ctx)
-{
-	const char* id;
-	const char* parent_id = NULL;
-	path_t*     path;
-
-	duk_push_current_function(ctx);
-	if (duk_get_prop_string(ctx, -1, "id"))
-		parent_id = duk_get_string(ctx, -1);
-	id = duk_require_string(ctx, 0);
-
-	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
-	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
-		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
-	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
-		duk_throw(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_trace(duk_context* ctx)
+js_ssj_trace(duk_context* ctx)
 {
 	int num_items;
 
@@ -1148,7 +1148,7 @@ js_system_exit(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_getTime(duk_context* ctx)
+js_system_now(duk_context* ctx)
 {
 	duk_push_number(ctx, al_get_time());
 	return 1;

@@ -62,7 +62,7 @@ namespace minisphere.Gdk
 
         private void sphereApiRefCommand_Click(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Conf.GdkPath, "documentation", "spherical-api.txt");
+            string filePath = Path.Combine(Conf.GdkPath, "documentation", "sphere2-api.txt");
             PluginManager.Core.OpenFile(filePath);
         }
 

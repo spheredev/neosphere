@@ -4,13 +4,13 @@ minisphere Changelog
 v4.0.0 - TBD
 ------------
 
-* Introduces the new Sphere v2 API.  The Sphere 1.5 API, including the map
-  engine, should be considered deprecated and is not recommended for use in new
+* Introduces the new Sphere v2 API.  The entire Sphere v1 API, including the
+  map engine, has been deprecated and is no longer recommended for use in new
   games.  For information on using the functions in the new API, see
-  `docs/spherical-api.txt`.
+  `docs/sphere2-api.txt`.
 * miniRT has been overhauled and repurposed as the reference implementation of
-  the Sphere v2 standard library.  The modules can thus be referred to more
-  concisely, e.g. `require("threads")` instead of `require("miniRT/threads")`.
+  the Sphere v2 standard library.  See `docs/minirt-api.txt` for more
+  information.
 * Objects created using a Sphere v2 function--such as the `Image` constructor,
   `Color.Black` et al., and so on--are no longer compatible with the Sphere v1
   API.

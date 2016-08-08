@@ -89,17 +89,22 @@ require(module_id);
 Debugging Functions
 -------------------
 
-The debugging functions below are exposed as globals for ease of typing.
+These debugging functions only have an effect while a debugger (e.g. SSJ) is
+attached, otherwise they are no-ops.  In order to communicate this in written
+code, they are exposed as members of the built-in `ssj` object.
 
-assert(condition[, message]);
+ssj.assert(condition[, message]);
 
-    `condition` is a boolean expression.  If the debugger is not attached or
-    `condition` evaluates to true, nothing happens.  If the debugger is
-    attached and `condition` is false, an alert is displayed, with an option to
-    trigger a breakpoint.
+    `condition` is a boolean expression.  If the condition is true, nothing
+    happens.  If it is false and a debugger is attached, an alert is displayed,
+    with an option to trigger a breakpoint.
 
     `message` is optional but highly recommended; the boolean expression will
     not be displayed in the alert box.
+
+ssj.trace(text);
+
+    Outputs text to the attached debugger.  Useful for diagnostics.
 
 
 Low-Level System API
@@ -157,7 +162,7 @@ system.exit();
 
     Shuts down the engine unconditionally.  Unsaved data will be lost.
 
-system.getTime();
+system.now();
 
     Returns the amount of time, in seconds, since the engine started running.
     Granularity varies, but is typically less than a microsecond.

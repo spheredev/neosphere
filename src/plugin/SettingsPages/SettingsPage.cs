@@ -48,7 +48,7 @@ namespace minisphere.Gdk.SettingsPages
         private void BrowseButton_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog fb = new FolderBrowserDialog();
-            fb.Description = "Select the folder where the minisphere GDK is installed. (minisphere 2.0+ required)";
+            fb.Description = "Select the folder where the minisphere GDK is installed.";
             fb.ShowNewFolderButton = false;
             if (fb.ShowDialog(this) == DialogResult.OK)
             {
