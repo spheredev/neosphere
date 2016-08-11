@@ -1,15 +1,14 @@
 Sphere v2 API Reference
 =======================
 
-minisphere uses JavaScript for game logic.  This is the same programming
-language used by the original Sphere engine, which minisphere is the successor
-to.  In fact, minisphere implements the majority of the Sphere 1.5 API.
+As a Sphere-compatible engine, minisphere implements nearly the entire
+Sphere v1 API.  However, the v1 API is quite dated and, as of minisphere 4.0,
+has been deprecated.  It is not documented here at all; while games using the
+legacy functions will continue to run, new code should be written against the
+modern Sphere v2 API, documented here.
 
-However, the Sphere v1 API is quite old and, as of minisphere 4.0, has been
-deprecated.  As such, it is not documented here at all; while games using the
-legacy functions will continue to work without issue in minisphere for the
-foreseeable future, new projects should prefer the modern Sphere v2 API, which
-is what's documented here.
+To ease migration, v1 and v2 API calls may be freely intermingled within the
+same codebase.
 
 
 game.json (Game Manifest)
@@ -86,12 +85,12 @@ require(module_id);
     module.
 
 
-Debugging Functions
--------------------
+SSJ Debugger API
+----------------
 
-These debugging functions only have an effect while a debugger (e.g. SSJ) is
-attached, otherwise they are no-ops.  In order to communicate this in written
-code, they are exposed as members of the built-in `ssj` object.
+The following functions only have an effect while a debugger such as SSJ is in
+use, otherwise they do nothing.  This ensures they won't hinder performance in
+production.
 
 ssj.assert(condition[, message]);
 
