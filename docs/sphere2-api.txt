@@ -126,9 +126,9 @@ system.apiVersion [read-only]
 system.apiLevel [read-only]
 
     Gets the API version and level supported by the engine, respectively.  API
-    version indicates which generation of the Sphere API is supported (Gen 2,
-    in our case), while API level reflects the level of functionality within a
-    generation.  Whenever new API calls or object properties are added to the
+    version indicates which generation of the Sphere API is supported (v2, in
+    our case), while API level reflects the level of functionality within that
+    generation.  Whenever new methods or object properties are added to the
     core API without breaking compatibility, the API level is bumped.
 
 system.extensions [read-only]
@@ -183,7 +183,8 @@ Random Number Generator API
 
 Games often have need of a good psuedorandom number generator, particularly in
 the case of RPGs.  JavaScript provides a basic generator in the form of
-Math.random().  Sphere takes it a step further with the powerful `RNG` object.
+Math.random().  Sphere v2 takes it a step further with the powerful `RNG`
+object.
 
 minisphere uses the xoroshiro128+ algorithm to generate high-quality random
 numbers and allows manually seeding the generator, as well as saving and

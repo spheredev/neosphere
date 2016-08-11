@@ -1,21 +1,18 @@
 minisphere Changelog
 ====================
 
-v4.0.0 - TBD
-------------
+v4.0.0 - August 12, 2016
+------------------------
 
 * Introduces the new Sphere v2 API.  The entire Sphere v1 API, including the
   map engine, has been deprecated and is no longer recommended for use in new
   games.  For information on using the functions in the new API, see
   `docs/sphere2-api.txt`.
-* miniRT has been overhauled and repurposed as the reference implementation of
-  the Sphere v2 standard library.  See `docs/minirt-api.txt` for more
+* miniRT has been overhauled and repurposed as minisphere's implementation of
+  the Sphere v2 standard library.  See `docs/miniRT-api.txt` for more
   information.
-* Objects created using a Sphere v2 function--such as the `Image` constructor,
-  `Color.Black` et al., and so on--are no longer compatible with the Sphere v1
-  API.
-* Removes the constructors for legacy types such as ByteArray.
-* Removes support for on-the-fly transpilation of TypeScript and CoffeeScript.
+* Drops support for on-the-fly transpilation of TypeScript and CoffeeScript.
+  This must now be done in a separate step.
 
 
 v3.3.0 - May 31, 2016

@@ -42,7 +42,7 @@ Download
 ========
 
 The latest stable minisphere release at the time of this writing is
-**minisphere 3.3.0**, released on Tuesday, May 31, 2016.  minisphere binaries
+**minisphere 4.0.0**, released on Friday, August 12, 2016.  minisphere binaries
 are provided through GitHub, and the latest version is always available for
 download here:
 

@@ -1,3 +1,20 @@
+minisphere (4.0.0) trusty; urgency=low
+
+  * Introduces the new Sphere v2 API.  The entire Sphere v1 API, including the
+    map engine, has been deprecated and is no longer recommended for use in new
+    games.  For information on using the functions in the new API, see
+    `docs/sphere2-api.txt`.
+  * miniRT has been overhauled and repurposed as the reference implementation of
+    the Sphere v2 standard library.  See `docs/minirt-api.txt` for more
+    information.
+  * Objects created using a Sphere v2 function--such as the `Image` constructor,
+    `Color.Black` et al., and so on--are no longer compatible with the Sphere v1
+    API.
+  * Removes the constructors for legacy types such as ByteArray.
+  * Removes support for on-the-fly transpilation of TypeScript and CoffeeScript.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 12 Aug 2016 00:00:00 -0500
+
 minisphere (3.3.0) trusty; urgency=low
 
   * Now uses xoroshiro128+ as the random number generator instead of the slower

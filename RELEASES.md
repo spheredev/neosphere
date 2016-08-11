@@ -9,9 +9,9 @@ minisphere 4.0
   `ByteArray` have been removed entirely.  Any code using the constructors will
   need to be updated.
 
-* Objects generated using a Sphere v2 API--such as the `Image` constructor (see
-  above), `Color.Black` et al., and so on--are no longer compatible with the
-  Sphere v1 API.  For example, you can't use a v2 `Color` object with
+* Objects constructed using a Sphere v2 API--such as the `Image` constructor
+  (see above), `Color.Black` et al., and so on--are no longer compatible with
+  the Sphere v1 API.  For example, you can't use a v2 `Color` object with
   `Rectangle()` or assign a v2 `Image` to a v1 spriteset.  Doing so will cause
   a `TypeError`.
 

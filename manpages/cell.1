@@ -1,6 +1,6 @@
-.TH CELL 1 "2016-08-05" "minisphere-4.0a2" "minisphere Game Development Kit"
+.TH CELL 1 "2016-08-12" "minisphere-4.0.0" "minisphere Game Development Kit"
 .SH NAME
-cell \- Sphere game compiler and packager
+cell \- Sphere v2 game compiler and packager
 .SH SYNOPSIS
 .nh
 .na
@@ -17,12 +17,12 @@ cell \- Sphere game compiler and packager
 .ad
 .hy
 .SH DESCRIPTION
-Cell compiles and packages games for use with a Sphere-compatible game engine such as minisphere.
+Cell compiles and packages games for use with a Sphere v2 game engine such as minisphere.
 The build process is controlled by a JS script named
 .I Cellscript.js
 in the root of the game's source tree.
 .P
-A minimal Cellscript for a Sphere 1.x-compatible game might look like this:
+A minimal Cellscript for a Sphere v2 game might look like this:
 .P
 .RS 0
 function $default()
@@ -31,7 +31,7 @@ function $default()
 .RS 0
     install(files("*", true));
 .RS 0
-    install(sgm({
+    install(manifest({
 .RS 0
         name: "Showdown at 8:12 PM",
 .RS 0
@@ -49,7 +49,7 @@ function $default()
 .P
 The above script packages the entire source tree, which is usually overkill.
 At that point it would be simpler to write the
-.I .sgm
+.I game.json
 file manually, archive the entire source tree, and distribute the archive, forgoing Cell entirely.
 The real power of Cell comes from its asset system, of which the
 .B files()
