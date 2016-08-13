@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #if !defined(_WIN32)
 #include <unistd.h>

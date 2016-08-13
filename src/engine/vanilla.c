@@ -2190,6 +2190,7 @@ js_PointSeries(duk_context* ctx)
 	return 0;
 }
 
+static duk_ret_t
 js_Print(duk_context* ctx)
 {
 	int   num_items;
