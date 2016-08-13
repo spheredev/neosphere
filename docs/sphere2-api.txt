@@ -116,26 +116,27 @@ there are also several methods for managing engine execution.
 
 system.name [read-only]
 
-    The name of the engine.  In this case, "minisphere".
+    The name of the engine.  In our case, "minisphere".
 
 system.version [read-only]
 
-    Gets the version number of the engine, e.g. "4.0.0"
+    The version number of the engine, e.g. "4.0.0".
 
 system.apiVersion [read-only]
 system.apiLevel [read-only]
 
-    Gets the API version and level supported by the engine, respectively.  API
+    The API version and level supported by the engine, respectively.  The API
     version indicates which generation of the Sphere API is supported (v2, in
-    our case), while API level reflects the level of functionality within that
+    our case), while the API level reflects the level of functionality within a
     generation.  Whenever new methods or object properties are added to the
     core API without breaking compatibility, the API level is bumped.
 
 system.extensions [read-only]
 
-    Gets an array of Sphere API extension strings supported by the engine.
-    Extensions are used to advertise support for features which are provided by
-    the engine but not yet part of the core API.
+    An array of strings specifying which extensions (optional features) are
+    supported by the engine.  Code making use of extensions should check for
+    the presence of the relevant string(s) in `system.extensions` and either
+    show an error message or degrade gracefully if it isn't present.
 
 system.abort(message);
 
