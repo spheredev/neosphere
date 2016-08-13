@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v4.0.1 - TBD
+------------
+
+* `system.extensions` now includes properties for individual extensions.  Each
+  has a value of `true`, which allows games to check for extensions via, e.g.
+  `if (system.extensions.sphere_stateful_rng) { ... }`.
+* Fixes a bug which caused the `system.extensions` array to be missing entries.
+
 v4.0.0 - August 12, 2016
 ------------------------
 
