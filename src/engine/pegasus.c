@@ -1062,7 +1062,7 @@ js_system_get_extensions(duk_context* ctx)
 	duk_push_array(ctx);
 	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i) {
 		duk_push_string(ctx, EXTENSIONS[i]);
-		duk_put_prop_index(ctx, -2, i++);
+		duk_put_prop_index(ctx, -2, i);
 	}
 
 	duk_push_this(ctx);
