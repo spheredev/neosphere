@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.0.1 - TBD
-------------
+v4.0.1 - August 14, 2016
+------------------------
 
 * `system.extensions` now includes properties for individual extensions.  Each
   has a value of `true`, which allows games to check for extensions via, e.g.
