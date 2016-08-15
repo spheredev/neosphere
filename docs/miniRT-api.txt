@@ -9,158 +9,6 @@ minisphere's implementation of the standard library is called miniRT and is
 made up of several components, each of which is documented below.
 
 
-`threads` Module
-----------------
-
-This is an easy-to-use cooperative threading engine.  In Sphere v1, games could
-define an update and render script, which would called each frame.  In miniRT,
-multiple threads can be created, each with its own update and render function.
-This allows many actions to run simultaneously.  For example, you might have a
-thread to run the in-game clock and another to manage animations.  An
-active-time battle engine might even use several threads to manage each of the
-units on the battlefield.
-
-    const threads = require('threads');
-
-An important note: When the threads module is initialized, in order to work
-with the Sphere v1 map engine, the update and render functionality is
-commandeered by the threader and disabled (calling SetUpdateScript or
-SetRenderScript will throw an error).
-
-threads.create(def[, priority]);
-
-    Creates a new thread and returns its thread ID (an integer).  `def` should
-    be an object with the following properties:
-
-        def.update()
-
-            The thread's update function.  This is called once per game frame to
-            update any state maintained by the thread.  The update function
-            should return true to keep the thread going.  If it ever returns
-            false, the thread will terminate.
-
-        def.render()
-
-            Optional.  The thread's render function.  This is called once per
-            render frame to perform any rendering related to the thread.  For
-            example, a thread managing a battle unit could render its sprite.
-            Render order of threads is determined by `priority`, with higher
-            priority threads being rendered later (closer to the screen).
-
-        def.getInput()
-
-            Optional.  Called once per frame to process player input for the
-            thread.  In the current version of miniRT (2.0), getInput() and
-            update() calls will always match 1:1.  Future versions may change
-            this however, for example by implementing an input stack or
-            Z-ordering of some form.
-
-    Each of the above functions is called with its `this` binding set to `def`.
-    This can be used to implement an "entity": a full object implementing the
-    above functions which manages its own thread.
-
-threads.isRunning(tid);
-
-    true if a thread with thread ID `tid` is running.  miniRT never recycles
-    thread IDs, so this can be counted on to return false if given the tid of a
-    thread which has terminated.
-
-threads.join(tid);
-
-    Blocks the caller and awaits termination of the thread with thread ID `tid`.
-    Any running threads (and the map engine, if it's in use) will continue to
-    run.  If called during a thread update, the calling thread will be blocked
-    from updating or accepting input until the join is satisfied.
-
-    Note that due to limitations inherent to JavaScript's single-threaded
-    architecture, join is implemented recursively and can only be satisfied in
-    a last-in-first-out manner.  So if two threads are being awaited and the
-    first one terminates, the corresponding join cannot be satisfied until the
-    second thread also terminates.
-
-threads.kill(tid);
-
-    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
-    invalid or has already terminated, nothing happens.
-
-threads.self();
-
-    When called from an update or render function, returns the thread ID of the
-    active thread.  Otherwise, returns 0.
-
-
-`random` Module
----------------
-
-Many games don't need the full power of the Sphere `RNG` object and just need
-a convenient way to generate random numbers for various purposes.
-
-    const random = require('random');
-
-random.chance(odds);
-
-    Returns true or false depending on the given odds.  `odds` is a number in
-    the range [0-1] specifying the odds of returning true.  For example, odds
-    of 0.75 will return true 75% of the time.
-
-random.discrete(min, max);
-
-    Returns a random integer uniformly distributed within the range [min,max].
-
-random.normal(mean, sigma);
-
-    Returns a random floating point number from a normal distribution
-    (sometimes called a bell curve) with expected value of `mean` and standard
-    deviation `sigma`.
-
-random.sample(array);
-
-    Returns a randomly chosen item from the specified array.
-
-random.string(length);
-
-    Returns a randomly generated string consisting of alphanumeric characters.
-    The generated string looks something like a YouTube video hash (e.g.
-    YlHRHDrKS) and is useful for uniquely identifying things, for example to
-    generate temporary filenames.
-
-random.uniform(mean, variance);
-
-    Returns a random floating point value uniformly distributed around `mean`
-    with an absolute maximum deviation ("give or take") specified by
-    `variance`.
-
-
-`logger` Module
----------------
-
-The logger module provides basic logging functionality.  Your game can use this
-to log lines of text to a file complete with timestamps for each, often useful
-for debugging purposes.
-
-    const logger = require('logger');
-
-new logger.Log(filename);
-
-    Opens the given file for logging.  If the file cannot be opened for
-    writing, an error is thrown.
-
-Log#beginGroup(text);
-
-    Begins an group.  All log entries in a group will be indented.  Groups can
-    be nested.
-
-Log#endGroup();
-
-    Closes the most recently opened group.  There should be a corresponding
-    endGroup() for each beginGroup() call.
-
-Log#write(text);
-
-    Writes a timestamped entry to the log.  `text` should contain no newline
-    characters, although this is not enforced.
-
-
 `events` Module
 ---------------
 
@@ -192,6 +40,36 @@ Delegate:remove(handler[, thisObj]);
 
     Removes a previously-registered handler from the delegate.  Throws an error
     if no matching handler is registered.
+
+
+`logger` Module
+---------------
+
+The logger module provides basic logging functionality.  Your game can use this
+to log lines of text to a file complete with timestamps for each, often useful
+for debugging purposes.
+
+    const logger = require('logger');
+
+new logger.Log(filename);
+
+    Opens the given file for logging.  If the file cannot be opened for
+    writing, an error is thrown.
+
+Log#beginGroup(text);
+
+    Begins an group.  All log entries in a group will be indented.  Groups can
+    be nested.
+
+Log#endGroup();
+
+    Closes the most recently opened group.  There should be a corresponding
+    endGroup() for each beginGroup() call.
+
+Log#write(text);
+
+    Writes a timestamped entry to the log.  `text` should contain no newline
+    characters, although this is not enforced.
 
 
 `music` Module
@@ -422,6 +300,48 @@ prim.triangle(surface, x1, y1, x2, y2, x3, y3, color[, color2, color3]);
 
     Draws a solid triangle.  If three colors are given instead of one, draws a
     gradient triangle with each vertex a different color.
+
+
+`random` Module
+---------------
+
+Many games don't need the full power of the Sphere `RNG` object and just need
+a convenient way to generate random numbers for various purposes.
+
+    const random = require('random');
+
+random.chance(odds);
+
+    Returns true or false depending on the given odds.  `odds` is a number in
+    the range [0-1] specifying the odds of returning true.  For example, odds
+    of 0.75 will return true 75% of the time.
+
+random.discrete(min, max);
+
+    Returns a random integer uniformly distributed within the range [min,max].
+
+random.normal(mean, sigma);
+
+    Returns a random floating point number from a normal distribution
+    (sometimes called a bell curve) with expected value of `mean` and standard
+    deviation `sigma`.
+
+random.sample(array);
+
+    Returns a randomly chosen item from the specified array.
+
+random.string(length);
+
+    Returns a randomly generated string consisting of alphanumeric characters.
+    The generated string looks something like a YouTube video hash (e.g.
+    YlHRHDrKS) and is useful for uniquely identifying things, for example to
+    generate temporary filenames.
+
+random.uniform(mean, variance);
+
+    Returns a random floating point value uniformly distributed around `mean`
+    with an absolute maximum deviation ("give or take") specified by
+    `variance`.
 
 
 `scenes` Module
@@ -677,6 +597,86 @@ terminal.unregister(objectName);
     Unregisters all commands previously registered under `objectName`.  See
     `console.register()` below for more information.  Note: It is not currently
     possible to unregister individual commands.
+
+
+`threads` Module
+----------------
+
+This is an easy-to-use cooperative threading engine.  In Sphere v1, games could
+define an update and render script, which would called each frame.  In miniRT,
+multiple threads can be created, each with its own update and render function.
+This allows many actions to run simultaneously.  For example, you might have a
+thread to run the in-game clock and another to manage animations.  An
+active-time battle engine might even use several threads to manage each of the
+units on the battlefield.
+
+    const threads = require('threads');
+
+An important note: When the threads module is initialized, in order to work
+with the Sphere v1 map engine, the update and render functionality is
+commandeered by the threader and disabled (calling SetUpdateScript or
+SetRenderScript will throw an error).
+
+threads.create(def[, priority]);
+
+    Creates a new thread and returns its thread ID (an integer).  `def` should
+    be an object with the following properties:
+
+        def.update()
+
+            The thread's update function.  This is called once per game frame to
+            update any state maintained by the thread.  The update function
+            should return true to keep the thread going.  If it ever returns
+            false, the thread will terminate.
+
+        def.render()
+
+            Optional.  The thread's render function.  This is called once per
+            render frame to perform any rendering related to the thread.  For
+            example, a thread managing a battle unit could render its sprite.
+            Render order of threads is determined by `priority`, with higher
+            priority threads being rendered later (closer to the screen).
+
+        def.getInput()
+
+            Optional.  Called once per frame to process player input for the
+            thread.  In the current version of miniRT (2.0), getInput() and
+            update() calls will always match 1:1.  Future versions may change
+            this however, for example by implementing an input stack or
+            Z-ordering of some form.
+
+    Each of the above functions is called with its `this` binding set to `def`.
+    This can be used to implement an "entity": a full object implementing the
+    above functions which manages its own thread.
+
+threads.isRunning(tid);
+
+    true if a thread with thread ID `tid` is running.  miniRT never recycles
+    thread IDs, so this can be counted on to return false if given the tid of a
+    thread which has terminated.
+
+threads.join(tid);
+
+    Blocks the caller and awaits termination of the thread with thread ID `tid`.
+    Any running threads (and the map engine, if it's in use) will continue to
+    run.  If called during a thread update, the calling thread will be blocked
+    from updating or accepting input until the join is satisfied.
+
+    Note that due to limitations inherent to JavaScript's single-threaded
+    architecture, join is implemented recursively and can only be satisfied in
+    a last-in-first-out manner.  So if two threads are being awaited and the
+    first one terminates, the corresponding join cannot be satisfied until the
+    second thread also terminates.
+
+threads.kill(tid);
+
+    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
+    invalid or has already terminated, nothing happens.
+
+threads.self();
+
+    When called from an update or render function, returns the thread ID of the
+    active thread.  Otherwise, returns 0.
 
 
 `xml` Module

@@ -35,35 +35,26 @@ files(pattern[, recursive]);
     specifying the directory (relative to the input directory) to be searched.
     If 'recursive' is true, searches subdirectories as well.
 
-sgm(manifest);
+manifest(manifest);
 
-    Only one sgm() asset may be built in a single run.
+    Only one manifest() asset may be built in a single run.
 
-    Builds a Sphere 1.x game manifest.  'manifest' is an object with metadata
-    for the manifest being built.  The following properties must be present:
+    Builds a Sphere v2 game manifest.  `manifest` will be converted to JSON and
+    the output saved in a file named `game.json`, which should be installed in
+    the root of the package.
+    
+    The following properties must be present:
 
         name:       The title of the game, displayed in the engine's title bar.
-        resolution: The game's default screen resolution.
-        script:     The SphereFS path of the script containing the game()
-                    function.
+        resolution: The game's initial screen resolution, in the format
+                    "[width]x[height]".  Games can change this once execution
+                    begins by calling `screen.resize()` (see the Sphere v2 API
+                    reference).
+        script:     The SphereFS path of the startup script.
 
     The properties below are optional, but highly recommended:
 
         author:  The name of the author. If not provided, Cell will write
-                 "Author Unknown".
+                 "Author Unknown" to the manifest.
         summary: A short, one-line summary of your game.  If not provided, Cell
                  will write "No description available." to the manifest.
-
-    Any other properties will be ignored.  If you need additional metadata, you
-    should use an s2gm() asset.
-
-s2gm(manifest);
-
-    Only one s2gm() asset may be built in a single run.
-
-    Builds a Sphere 2.0 game manifest.  `manifest` will be converted to JSON and
-    stored in the S2GM file as-is.  For required and recommended properties, see
-    the documentation for the sgm() asset above.
-
-    Note that if you need to maintain compatibility with Sphere 1.x, you can
-    include an sgm() asset as well.
