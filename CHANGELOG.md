@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v4.1.0 - TBD
+------------
+
+* Adds a new module to the standard library: "assert", based on the assert
+  module included with Node.js.  Unlike `ssj.assert()`, this module will throw
+  an AssertionError in case of a failed check.
+* `system.doEvents()` has been renamed to `system.run()`.
+
 v4.0.1 - August 14, 2016
 ------------------------
 
