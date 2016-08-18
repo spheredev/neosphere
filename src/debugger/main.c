@@ -284,7 +284,7 @@ print_usage(void)
 	printf("                   connection can be made within 30 seconds, SSJ will exit.    \n");
 	printf("   -r, --run       Prevent SSJ from pausing execution on attach.  When starting\n");
 	printf("                   a new instance, begin execution immediately.                \n");
-	printf("   -t, --trace     Show output from console.trace().                           \n");
+	printf("   -t, --trace     Show trace-level logging, e.g., ssj.trace().                \n");
 	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
 	printf("       --help      Print this help text.                                       \n");
 }

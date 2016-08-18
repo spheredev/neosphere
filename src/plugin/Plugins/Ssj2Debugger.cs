@@ -171,6 +171,8 @@ namespace minisphere.Gdk.Plugins
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
+                if (e.Text.StartsWith("trace: ") && !plugin.Conf.ShowTraceInfo)
+                    return;
                 Panes.Console.Print(e.Text);
             }), null);
         }

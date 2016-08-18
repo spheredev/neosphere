@@ -407,13 +407,12 @@ namespace minisphere.Gdk.Debugger
                             {
                                 case AppNotify.DebugPrint:
                                     PrintType type = (PrintType)(int)message[3];
-                                    if (type == PrintType.Trace)
-                                        break;
                                     string debugText = (string)message[4];
                                     string prefix = type == PrintType.Assert ? "ASSERT"
                                         : type == PrintType.Debug ? "debug"
                                         : type == PrintType.Error ? "ERROR"
                                         : type == PrintType.Info ? "info"
+                                        : type == PrintType.Trace ? "trace"
                                         : type == PrintType.Warn ? "warn"
                                         : "log";
                                     Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));

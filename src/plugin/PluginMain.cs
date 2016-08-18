@@ -131,6 +131,12 @@ namespace minisphere.Gdk
             set { Conf.SetValue("makeDebugPackages", value); }
         }
 
+        public bool ShowTraceInfo
+        {
+            get { return Conf.GetBoolean("showTraceOutput", false); }
+            set { Conf.SetValue("showTraceOutput", value); }
+        }
+
         public bool TestInWindow
         {
             get { return Conf.GetBoolean("testInWindow", false); }

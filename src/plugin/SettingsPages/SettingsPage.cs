@@ -30,6 +30,7 @@ namespace minisphere.Gdk.SettingsPages
             _main.Conf.GdkPath = GdkPathTextBox.Text;
             _main.Conf.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
             _main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
+            _main.Conf.ShowTraceInfo = ShowTraceCheckBox.Checked;
             _main.Conf.TestInWindow = TestInWindowCheckBox.Checked;
             _main.Conf.Verbosity = VerbosityComboBox.SelectedIndex;
             return true;
@@ -39,6 +40,7 @@ namespace minisphere.Gdk.SettingsPages
         {
             GdkPathTextBox.Text = _main.Conf.GdkPath;
             MakeDebugPackageCheckBox.Checked = _main.Conf.MakeDebugPackages;
+            ShowTraceCheckBox.Checked = _main.Conf.ShowTraceInfo;
             TestWithConsoleCheckBox.Checked = _main.Conf.AlwaysUseConsole;
             TestInWindowCheckBox.Checked = _main.Conf.TestInWindow;
             VerbosityComboBox.SelectedIndex = _main.Conf.Verbosity;

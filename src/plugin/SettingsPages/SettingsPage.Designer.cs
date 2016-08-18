@@ -44,6 +44,7 @@
 			this.GdkPathTextBox = new System.Windows.Forms.TextBox();
 			this.PathLabel = new System.Windows.Forms.Label();
 			this.editorLabel1 = new Sphere.Core.Editor.EditorLabel();
+			this.ShowTraceCheckBox = new System.Windows.Forms.CheckBox();
 			this.TabView.SuspendLayout();
 			this.MainTabPage.SuspendLayout();
 			this.panel2.SuspendLayout();
@@ -79,6 +80,7 @@
 			// 
 			// panel2
 			// 
+			this.panel2.Controls.Add(this.ShowTraceCheckBox);
 			this.panel2.Controls.Add(this.TestInWindowCheckBox);
 			this.panel2.Controls.Add(this.MakeDebugPackageCheckBox);
 			this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -117,7 +119,7 @@
 			this.editorLabel3.Name = "editorLabel3";
 			this.editorLabel3.Size = new System.Drawing.Size(562, 23);
 			this.editorLabel3.TabIndex = 4;
-			this.editorLabel3.Text = "Additional settings";
+			this.editorLabel3.Text = "Debugging options";
 			this.editorLabel3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// panel3
@@ -236,6 +238,16 @@
 			this.editorLabel1.Text = "Where is the minisphere GDK installed?";
 			this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
+			// ShowTraceCheckBox
+			// 
+			this.ShowTraceCheckBox.AutoSize = true;
+			this.ShowTraceCheckBox.Location = new System.Drawing.Point(12, 58);
+			this.ShowTraceCheckBox.Name = "ShowTraceCheckBox";
+			this.ShowTraceCheckBox.Size = new System.Drawing.Size(331, 17);
+			this.ShowTraceCheckBox.TabIndex = 4;
+			this.ShowTraceCheckBox.Text = "Show output from ssj.trace() and console.trace() while debugging";
+			this.ShowTraceCheckBox.UseVisualStyleBackColor = true;
+			// 
 			// SettingsPage
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -273,5 +285,6 @@
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.ComboBox VerbosityComboBox;
         private System.Windows.Forms.Label label2;
-    }
+		private System.Windows.Forms.CheckBox ShowTraceCheckBox;
+	}
 }
