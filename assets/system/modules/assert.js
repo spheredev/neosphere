@@ -16,8 +16,11 @@ module.exports =
 	notStrictEqual:		notStrictEqual,
 	ok:					ok,
 	strictEqual:		strictEqual,
+	throws:             throws,
 	AssertionError:		AssertionError,
 };
+
+const assert = require('assert');
 
 function deepEqual(actual, expected, message)
 {
@@ -88,6 +91,37 @@ function strictEqual(actual, expected, message)
 	if (actual === expected)
 		return;
 	fail(actual, expected, message, '===');
+}
+
+function throws(block, expected, message)
+{
+	if (typeof block !== 'function')
+		throw new TypeError("`block` argument is not callable");
+	if (typeof expected === 'string') {
+		message = expected;
+		expected = undefined;
+	}
+
+	var hasThrown = false;
+	var actual;
+	try {
+		block();
+	}
+	catch (err) {
+		hasThrown = true;
+		actual = err;
+	}
+	if (hasThrown) {
+		if (expected instanceof RegExp && expected.test(actual))
+			return;
+		else if (typeof expected === 'function') {
+			if (actual instanceof expected || expected(actual))
+				return;
+		}
+		else
+			fail(block, expected, message, "throws");
+	}
+	fail(block, expected, message, "throws");
 }
 
 AssertionError.prototype = Object.create(Error.prototype);

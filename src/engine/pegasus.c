@@ -194,7 +194,7 @@ static duk_ret_t js_system_abort               (duk_context* ctx);
 static duk_ret_t js_system_dispatch            (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
 static duk_ret_t js_system_now                 (duk_context* ctx);
-static duk_ret_t js_system_restart             (duk_context* ctx);
+static duk_ret_t js_system_reset               (duk_context* ctx);
 static duk_ret_t js_system_run                 (duk_context* ctx);
 static duk_ret_t js_system_sleep               (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
@@ -510,7 +510,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "system", "dispatch", js_system_dispatch);
 	api_register_static_func(ctx, "system", "exit", js_system_exit);
 	api_register_static_func(ctx, "system", "now", js_system_now);
-	api_register_static_func(ctx, "system", "restart", js_system_restart);
+	api_register_static_func(ctx, "system", "reset", js_system_reset);
 	api_register_static_func(ctx, "system", "run", js_system_run);
 	api_register_static_func(ctx, "system", "sleep", js_system_sleep);
 
@@ -1152,7 +1152,7 @@ js_system_now(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_restart(duk_context* ctx)
+js_system_reset(duk_context* ctx)
 {
 	restart_engine();
 }

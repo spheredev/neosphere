@@ -6,8 +6,9 @@ v4.1.0 - TBD
 
 * Adds a new module to the standard library: "assert", based on the assert
   module included with Node.js.  Unlike `ssj.assert()`, the functions in this
-  module throw `AssertionError` when an assertion is violated.
-* `system.doEvents()` has been renamed to `system.run()`.
+  module throw `AssertionError` when an assertion fails.
+* Renames a few `system` APIs.  Check the API documentation to see what's
+  changed.
 * Adds support for `ssj.trace()` in the Sphere Studio plugin, avoiding the need
   to drop to the command line to see trace output.
 

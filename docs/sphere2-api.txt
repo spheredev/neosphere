@@ -158,7 +158,7 @@ system.now();
     Returns the amount of time, in seconds, since the engine started running.
     Granularity varies, but is typically less than a microsecond.
 
-system.restart();
+system.reset();
 
     Restarts the engine then reloads the currently running game.  Unsaved data
     will be lost.
