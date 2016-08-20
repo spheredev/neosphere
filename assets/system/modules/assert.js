@@ -115,11 +115,17 @@ function throws(block, expected, message)
 		if (expected instanceof RegExp && expected.test(actual))
 			return;
 		else if (typeof expected === 'function') {
-			if (actual instanceof expected || expected(actual))
+			if (Error.isPrototypeOf(expected)) {
+				if (actual instanceof expected)
+					return;
+				throw actual;
+			}
+			if (expected(actual))
 				return;
+			throw actual;
 		}
 		else
-			fail(block, expected, message, "throws");
+			throw actual;
 	}
 	fail(block, expected, message, "throws");
 }
