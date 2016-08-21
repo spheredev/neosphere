@@ -115,7 +115,7 @@ function throws(block, expected, message)
 		if (expected instanceof RegExp && expected.test(actual))
 			return;
 		else if (typeof expected === 'function') {
-			if (Error.isPrototypeOf(expected)) {
+			if (expected === Error || expected.prototype instanceof Error) {
 				if (actual instanceof expected)
 					return;
 				throw actual;
@@ -144,11 +144,11 @@ function AssertionError(options)
 
 function _equiv(a, b, strict)
 {
-	// equality implies equivalence, so we avoid a lot of unnecessary work by
+	// equality implies equivalence, so we avoid a ton of unnecessary work by
 	// testing for that first.	as a nice side effect, if we don't return here,
 	// the rest of the function can safely assume the values are non-equal,
 	// which avoids a lot of extra comparisons.
-	if ((!strict && a == b) || a === b)
+	if (a === b || (!strict && a == b))
 		return true;
 
 	if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null)
