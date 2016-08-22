@@ -6,21 +6,20 @@
 'use strict';
 module.exports =
 {
-	deepEqual:			deepEqual,
-	deepStrictEqual:	deepStrictEqual,
-	equal:				equal,
-	fail:				fail,
-	notDeepEqual:		notDeepEqual,
+	deepEqual:          deepEqual,
+	deepStrictEqual:    deepStrictEqual,
+	doesNotThrow:       doesNotThrow,
+	equal:              equal,
+	fail:               fail,
+	notDeepEqual:       notDeepEqual,
 	notDeepStrictEqual: notDeepStrictEqual,
-	notEqual:			notEqual,
-	notStrictEqual:		notStrictEqual,
-	ok:					ok,
-	strictEqual:		strictEqual,
+	notEqual:           notEqual,
+	notStrictEqual:     notStrictEqual,
+	ok:                 ok,
+	strictEqual:        strictEqual,
 	throws:             throws,
-	AssertionError:		AssertionError,
+	AssertionError:     AssertionError,
 };
-
-const assert = require('assert');
 
 function deepEqual(actual, expected, message)
 {
@@ -34,6 +33,20 @@ function deepStrictEqual(actual, expected, message)
 	if (_equiv(actual, expected, true))
 		return;
 	fail(actual, expected, message, 'strictDeepEqual');
+}
+
+function doesNotThrow(block, expected, message)
+{
+	if (typeof block !== 'function')
+		throw new TypeError("`block` argument not callable");
+	if (typeof expected === 'string') {
+		message = expected;
+		expected = undefined;
+	}
+
+	if (!_checkIfThrows(block, expected))
+		return;
+	fail(block, expected, message || "unwanted exception");
 }
 
 function equal(actual, expected, message)
@@ -83,7 +96,7 @@ function notStrictEqual(actual, expected, message)
 
 function ok(guard, message)
 {
-	equal(guard, true, message);
+	equal(!!guard, true, message);
 }
 
 function strictEqual(actual, expected, message)
@@ -102,6 +115,25 @@ function throws(block, expected, message)
 		expected = undefined;
 	}
 
+	if (_checkIfThrows(block, expected))
+		return;
+	fail(block, expected, message || "no exception thrown");
+}
+
+AssertionError.prototype = Object.create(Error.prototype);
+AssertionError.prototype.constructor = AssertionError;
+AssertionError.prototype.name = "AssertionError";
+Object.setPrototypeOf(AssertionError, Error);
+function AssertionError(options)
+{
+	this.actual = options.actual;
+	this.expected = options.expected;
+	this.message = options.message
+		|| this.actual + " " + options.operator + " " + this.expected;
+}
+
+function _checkIfThrows(block, expected)
+{
 	var hasThrown = false;
 	var actual;
 	try {
@@ -117,7 +149,7 @@ function throws(block, expected, message)
 		else if (typeof expected === 'function') {
 			if (expected === Error || expected.prototype instanceof Error) {
 				if (actual instanceof expected)
-					return;
+					return true;
 				throw actual;
 			}
 			if (expected(actual))
@@ -127,19 +159,7 @@ function throws(block, expected, message)
 		else
 			throw actual;
 	}
-	fail(block, expected, message, "throws");
-}
-
-AssertionError.prototype = Object.create(Error.prototype);
-AssertionError.prototype.constructor = AssertionError;
-AssertionError.prototype.name = "AssertionError";
-function AssertionError(options)
-{
-	this.actual = options.actual;
-	this.expected = options.expected;
-	this.operator = options.operator;
-	this.message = options.message
-		|| this.actual + " " + this.operator + " " + this.expected;
+	return false;
 }
 
 function _equiv(a, b, strict)
