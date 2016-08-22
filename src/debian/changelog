@@ -1,3 +1,14 @@
+minisphere (4.1.0) trusty; urgency=low
+
+  * Adds a new module to the standard library: `assert`, based on the Node.js
+    built-in assert module.  Unlike `ssj.assert()`, the functions in this module
+    throw an `AssertionError` when an assertion fails.
+  * Renames a few `system` APIs.  See `RELEASES.md` for details.
+  * Adds an option to show `ssj.trace()` output while debugging a game with
+    Sphere Studio.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 22 Aug 2016 00:00:00 -0500
+
 minisphere (4.0.1) trusty; urgency=low
 
   * `system.extensions` now includes properties for individual extensions.  Each

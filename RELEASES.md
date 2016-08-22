@@ -1,6 +1,22 @@
 Release Notes
 =============
 
+minisphere 4.1
+--------------
+
+* There is a new Standard Library module included, `assert`.  It is based on
+  the Node.js built-in module of the same name, and includes most of the same
+  methods with identical semantics.
+
+* A handful of `system` object functions have been renamed and given simpler
+  names.  Specifically: `system.doEvents()` is now `system.run()`, and
+  `system.restart()` is now `system.reset()`.
+
+* The Sphere Studio plugin now includes an option to display `ssj.trace()`
+  output.  Previously this output would always be invisible while using the GUI
+  debugger, with no way to show or even retrieve it.
+
+
 minisphere 4.0
 --------------
 

@@ -1,16 +1,15 @@
 minisphere Changelog
 ====================
 
-v4.1.0 - TBD
-------------
+v4.1.0 - August 22, 2016
+------------------------
 
-* Adds a new module to the standard library: "assert", based on the assert
-  module included with Node.js.  Unlike `ssj.assert()`, the functions in this
-  module throw `AssertionError` when an assertion fails.
-* Renames a few `system` APIs.  Check the API documentation to see what's
-  changed.
-* Adds support for `ssj.trace()` in the Sphere Studio plugin, avoiding the need
-  to drop to the command line to see trace output.
+* Adds a new module to the standard library: `assert`, based on the Node.js
+  built-in assert module.  Unlike `ssj.assert()`, the functions in this module
+  throw an `AssertionError` when an assertion fails.
+* Renames a few `system` APIs, giving them easier-to-remember names.
+* Adds an option to show `ssj.trace()` output while debugging a game with
+  Sphere Studio.
 
 
 v4.0.1 - August 14, 2016
