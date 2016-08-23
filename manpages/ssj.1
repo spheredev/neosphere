@@ -33,7 +33,11 @@ Sometimes you have a good idea of where a bug is, and single-stepping to that po
 By setting a breakpoint on a line of source code, the debugger will automatically pause execution when that line is reached.
 .IP \(bu 3
 View debug traces.
-Games will often log interesting events using the DebugPrint() function.
+Games will often log interesting events using
+.B ssj.trace()
+or the
+.B console
+object.
 SSJ will let you see that output.
 .P
 Unless you use the

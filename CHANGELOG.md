@@ -1,6 +1,15 @@
 minisphere Changelog
 ====================
 
+v4.2.0 - TBD
+------------
+
+* When starting a game with a JSON manifest, the main script is now run as a
+  CommonJS module unless the manifest explicitly specifies `version: 1`.
+* `console` methods now actually send text to the console.
+* Sphere Studio now runs minisphere Console at V0 verbosity by default.
+
+
 v4.1.0 - August 22, 2016
 ------------------------
 

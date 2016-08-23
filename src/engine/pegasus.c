@@ -1036,7 +1036,7 @@ js_ssj_trace(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_TRACE);
+	debug_print(duk_get_string(ctx, -1), PRINT_TRACE, false);
 	return 0;
 }
 
@@ -1186,7 +1186,7 @@ js_console_assert(duk_context* ctx)
 	message = duk_safe_to_string(ctx, 1);
 
 	if (!result)
-		debug_print(message, PRINT_ASSERT);
+		debug_print(message, PRINT_ASSERT, true);
 	return 0;
 }
 
@@ -1201,7 +1201,7 @@ js_console_debug(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_DEBUG);
+	debug_print(duk_get_string(ctx, -1), PRINT_DEBUG, true);
 	return 0;
 }
 
@@ -1216,7 +1216,7 @@ js_console_error(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_ERROR);
+	debug_print(duk_get_string(ctx, -1), PRINT_ERROR, true);
 	return 0;
 }
 
@@ -1231,7 +1231,7 @@ js_console_info(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_INFO);
+	debug_print(duk_get_string(ctx, -1), PRINT_INFO, true);
 	return 0;
 }
 
@@ -1249,7 +1249,7 @@ js_console_log(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL);
+	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL, true);
 	return 0;
 }
 
@@ -1267,7 +1267,7 @@ js_console_trace(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_TRACE);
+	debug_print(duk_get_string(ctx, -1), PRINT_TRACE, true);
 	return 0;
 }
 
@@ -1282,7 +1282,7 @@ js_console_warn(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_WARN);
+	debug_print(duk_get_string(ctx, -1), PRINT_WARN, true);
 	return 0;
 }
 

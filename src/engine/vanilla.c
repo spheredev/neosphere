@@ -2204,7 +2204,7 @@ js_Print(duk_context* ctx)
 	duk_join(ctx, num_items);
 
 	text = strnewf("%s", duk_get_string(ctx, -1));
-	debug_print(text, PRINT_NORMAL);
+	debug_print(text, PRINT_NORMAL, true);
 	printf("print: %s\n", text);
 	return 0;
 }

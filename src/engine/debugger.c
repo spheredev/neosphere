@@ -217,15 +217,25 @@ cache_source(const char* name, const lstring_t* text)
 }
 
 void
-debug_print(const char* text, print_op_t op)
+debug_print(const char* text, print_op_t op, bool use_console)
 {
+	const char* heading;
+	
 	duk_push_int(g_duk, APPNFY_DEBUG_PRINT);
 	duk_push_int(g_duk, (int)op);
 	duk_push_string(g_duk, text);
 	duk_debugger_notify(g_duk, 3);
 
-	if (op == PRINT_NORMAL)
-		console_log(0, "log: %s", text);
+	if (use_console) {
+		heading = op == PRINT_ASSERT ? "ASSERT"
+			: op == PRINT_DEBUG ? "debug"
+			: op == PRINT_ERROR ? "ERROR"
+			: op == PRINT_INFO ? "info"
+			: op == PRINT_TRACE ? "trace"
+			: op == PRINT_WARN ? "WARN"
+			: "log";
+		console_log(0, "%s: %s", heading, text);
+	}
 }
 
 static bool
