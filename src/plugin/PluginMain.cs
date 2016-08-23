@@ -145,7 +145,7 @@ namespace minisphere.Gdk
 
         public int Verbosity
         {
-            get { return Math.Min(Math.Max(Conf.GetInteger("verbosity", 2), 0), 4); }
+            get { return Math.Min(Math.Max(Conf.GetInteger("verbosity", 0), 0), 4); }
             set { Conf.SetValue("verbosity", Math.Min(Math.Max(value, 0), 4)); }
         }
     }
