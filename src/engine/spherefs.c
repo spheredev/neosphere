@@ -129,7 +129,7 @@ fs_new(const char* game_path)
 			fs->script_path = fs_make_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
 			kev_close(sgm_file);
 
-			// generate a JSON manifest (used by, e.g. GetGameManifest())
+			// generate a JSON manifest (used by, e.g. system.game)
 			duk_push_object(g_duk);
 			duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 			duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
@@ -726,7 +726,7 @@ duk_load_s2gm(duk_context* ctx)
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
 
 	// game summary is optional, use a default summary if one is not provided.
-	if (duk_get_prop_string(g_duk, -4, "generation") && duk_is_number(g_duk, -1))
+	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
 		fs->version = duk_get_number(g_duk, -1);
 	else
 		fs->version = 2;
