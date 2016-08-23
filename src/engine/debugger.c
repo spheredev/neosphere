@@ -106,12 +106,12 @@ update_debugger(void)
 
 	if (socket = accept_next_socket(s_server)) {
 		if (s_client != NULL) {
-			console_log(2, "rejected debugger connection from %s, already attached",
+			console_log(2, "rejected debug connection from %s, already attached",
 				get_socket_host(socket));
 			free_socket(socket);
 		}
 		else {
-			console_log(1, "connected to debugger at %s", get_socket_host(socket));
+			console_log(0, "connected to debug client at %s", get_socket_host(socket));
 			s_client = socket;
 			duk_debugger_detach(g_duk);
 			dukrub_debugger_attach(g_duk,
@@ -223,6 +223,9 @@ debug_print(const char* text, print_op_t op)
 	duk_push_int(g_duk, (int)op);
 	duk_push_string(g_duk, text);
 	duk_debugger_notify(g_duk, 3);
+
+	if (op == PRINT_NORMAL)
+		console_log(0, "log: %s", text);
 }
 
 static bool
@@ -230,7 +233,7 @@ do_attach_debugger(void)
 {
 	double timeout;
 
-	printf("waiting for debugger to connect\n");
+	printf("waiting for connection from debug client...\n");
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
@@ -238,7 +241,7 @@ do_attach_debugger(void)
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
-		printf("timed out waiting for debugger\n");
+		printf("timed out waiting for debug client\n");
 	return s_client != NULL;
 }
 

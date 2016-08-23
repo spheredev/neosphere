@@ -126,10 +126,14 @@ system.apiVersion [read-only]
 system.apiLevel [read-only]
 
     The API version and level supported by the engine, respectively.  The API
-    version indicates which generation of the Sphere API is supported (v2, in
-    our case), while the API level reflects the level of functionality within a
-    generation.  Whenever new methods or object properties are added to the
-    core API without breaking compatibility, the API level is bumped.
+    version indicates which version of the Sphere API is supported (currently
+    v2), while the API level reflects the level of functionality within a
+    version.  When new methods or object properties are added to the core API
+    without breaking compatibility, the API level is bumped.
+
+    Note: Sometimes new functionality is added to the engine as an extension,
+          without increasing the reported API level.  See `system.extensions`
+          below for how to check for supported extensions.
 
 system.extensions [read-only]
 
@@ -138,10 +142,17 @@ system.extensions [read-only]
     the presence of the relevant string(s) in `system.extensions` and either
     show an error message or degrade gracefully if it isn't present.
 
+    minisphere currently supports the following extensions:
+    
+        sphere_glsl_shader_support
+        sphere_stateful_rng
+        sphere_v1_compatible_api
+        minisphere_ssj_api
+
 system.abort(message);
 
-    Unconditionally aborts execution.  `message` will be displayed on the error
-    screen.
+    Unconditionally aborts execution and displays an error screen before
+    closing the engine.  `message` will be displayed on the error screen.
 
 system.dispatch(func);
 

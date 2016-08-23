@@ -20,9 +20,9 @@
 
 static const char* const EXTENSIONS[] =
 {
-	"sphere_gl_shader_support",
+	"sphere_glsl_shader_support",
 	"sphere_stateful_rng",
-	"sphere_v1_compatible",
+	"sphere_v1_compatible_api",
 	"minisphere_ssj_api",
 };
 
