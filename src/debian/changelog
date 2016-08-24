@@ -1,3 +1,12 @@
+minisphere (4.1.1) trusty; urgency=low
+
+  * When starting a game with a JSON manifest, the main script is now run as a
+    CommonJS module unless the manifest explicitly specifies `version: 1`.
+  * `console` methods now actually send text to the console.
+  * Sphere Studio now runs minisphere Console at V0 verbosity by default.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 24 Aug 2016 00:00:00 -0500
+
 minisphere (4.1.0) trusty; urgency=low
 
   * Adds a new module to the standard library: `assert`, based on the Node.js

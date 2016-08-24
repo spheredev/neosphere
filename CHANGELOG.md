@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.2.0 - TBD
-------------
+v4.1.1 - August 24, 2016
+------------------------
 
 * When starting a game with a JSON manifest, the main script is now run as a
   CommonJS module unless the manifest explicitly specifies `version: 1`.
