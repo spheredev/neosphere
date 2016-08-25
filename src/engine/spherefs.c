@@ -703,6 +703,10 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 static duk_ret_t
 duk_load_s2gm(duk_context* ctx)
 {
+	// note: this whole thing needs to be cleaned up.  it must be pretty bad when Duktape
+	//       does the JSON parsing for us and yet the JSON manifest loader is STILL more
+	//       complicated than the game.sgm loader.
+	
 	// arguments: -2 = sandbox_t* fs (pointer)
 	//            -1 = game.json text (string)
 	

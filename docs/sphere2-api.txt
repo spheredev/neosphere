@@ -12,12 +12,15 @@ modern API calls may be freely intermingled within the same codebase, and this
 is true even when the engine is running in compatibility mode.
 
 
-game.json (Game Manifest)
--------------------------
+JSON Game Manifest (`game.json`)
+--------------------------------
 
-In order to enable all Sphere v2 features, a game must include a file named
-`game.json` in its root directory which holds its metadata.  A basic manifest
-might look like this:
+To take full advantage of the Sphere v2 platform, a game package must include a
+file named `game.json` in its root directory.  This file holds metadata such as
+the title and author, as well as some control information which affects how the
+engine runs the game.
+
+Here's a sample manifest:
 
     {
         "version": 2,
@@ -28,22 +31,21 @@ might look like this:
         "main": "main.js"
     }
 
-Many of these values should be self explanatory.  Below is the full list of
-values recognized by the engine.  As the manifest is JSON, additional fields
-may be added as needed, and accessed from JavaScript through `system.game`.
+JSON fields defined by the Sphere v2 specification are documented below.
+Because the manifest format is JSON, as many additional fields may be added as
+needed, and their values accessed from JavaScript through `system.game`.
 
 "version" [default: 2]
 
-    The Sphere standards version the game is build against.  If `version` is 2,
+    The Sphere standards version the game was developed against.  If this is 2,
     the game runs in Sphere v2 mode.  In Sphere v2 mode, the main script is
     loaded as a CommonJS module, which enables use of relative paths in
-    `require()` calls (see below), as well as ensuring variable and function
+    require() calls (see below), as well as ensuring variable and function
     declarations remain local to the module.
 
-    If `version` is 1, the game runs in Sphere v1 compatibility mode.  In this
-    mode, the main module is executed as normal program code, and minisphere
-    calls the global `game()` function--if one is provided--to begin game
-    execution.
+    If this is 1, the game runs in Sphere v1 compatibility mode.  In this mode,
+    the main module is executed as normal program code, and minisphere calls
+    the global game() function--if one is provided--to begin game execution.
 
     Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
           be available for use by game code.  The version in the manifest
@@ -58,7 +60,7 @@ may be added as needed, and accessed from JavaScript through `system.game`.
 
     The SphereFS path of the main JavaScript module (see below for more on
     SphereFS).  This is the script minisphere will run when the game is
-    started.  If no `main` field is present, the game will not start.
+    started.  If no "main" field is present, the game will not start.
 
 "name" [default: "Untitled"]
 
@@ -71,8 +73,7 @@ may be added as needed, and accessed from JavaScript through `system.game`.
     form "WxH", specifying the number of pixels across and down.  For example,
     720p resolution would be expressed as "1280x720".
 
-    Note: The screen resolution can be changed at runtime by calling
-          `screen.resize()`.
+    Note: The resolution can be changed at runtime by calling screen.resize().
 
 "summary" [default: none]
 
@@ -255,9 +256,9 @@ saved along with other save data as a way to deter save scumming.
 RNG.fromSeed(seed);
 
     Constructs a new random number generator seeded using the specified value.
-    The specific sequence of numbers generated is entirely defined by the seed,
-    which is to say that two generators running in parallel, initialized from
-    the same seed, will produce the same sequence.
+    The specific sequence of numbers generated is entirely defined by the seed:
+    Two generators running in parallel, initialized with the same seed, will
+    always produce the same sequence.
 
     `seed` is a number greater than zero.  If the seed is fractional, only the
     integer part is used; everything after the decimal point is ignored.
@@ -530,8 +531,8 @@ screen.flip();
     long operation without disturbing the contents of the screen, you should
     use system.run() instead of screen.flip() to run the event loop.
 
-    Note: Calling screen.flip() resets the clipping rectangle to the entire
-          screen.  See screen.clipTo() above.
+    Note: Calling screen.flip() resets the clipping rectangle.  See the entry
+          for screen.clipTo() above.
 
 screen.resize(width, height);
 
@@ -555,8 +556,8 @@ etc...
         var color = Color.Red;
         color.blue = 255;  // we needed magenta instead
 
-	The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
-	false, but this is rarely an issue in practice.
+    The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
+    false, but this is rarely an issue in practice.
 
 Color.mix(color1, color2[, w1, w2]);
 
@@ -971,7 +972,7 @@ save files, create or remove directories, and so on.
 fs.exists(filename);
 
     Checks whether the specified file exists and returns true if it does.
-	Otherwise, returns false.
+    Otherwise, returns false.
 
 fs.mkdir(dirname);
 
@@ -991,8 +992,8 @@ fs.open(filename, mode);
         a:  Open file (create if not found) with file position at end of file.
         a+: Open file for update with initial position at end of file.
 
-	Note that calling `fs.open` is the only way to get a FileStream object, as
-	there is no FileStream constructor.
+    Note that calling `fs.open` is the only way to get a FileStream object, as
+    there is no FileStream constructor.
 
 fs.rename(srcname, destname);
 
