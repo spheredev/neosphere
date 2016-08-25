@@ -7,30 +7,79 @@ has been deprecated.  It is not documented here at all; while games using the
 legacy functions will continue to run, new code should be written against the
 modern Sphere v2 API, documented here.
 
-To ease migration, v1 and v2 API calls may be freely intermingled within the
-same codebase.
+To ease migration of existing Sphere v1 codebases to Sphere v2, legacy and
+modern API calls may be freely intermingled within the same codebase, and this
+is true even when the engine is running in compatibility mode.
 
 
 game.json (Game Manifest)
 -------------------------
 
-In order to use Sphere v2 features, a game must provide a file called
-`game.json` in the root of the game package which holds its metadata.  All
-values in `game.json` are available to game code through `system.game` (see
-below).
-
-A basic `game.json` might look like this:
+In order to enable all Sphere v2 features, a game must include a file named
+`game.json` in its root directory which holds its metadata.  A basic manifest
+might look like this:
 
     {
+        "version": 2,
         "name": "Spectacles: Bruce's Story",
         "author": "Fat Cerberus",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
         "resolution": "320x240",
-        "main": "main.js",
+        "main": "main.js"
     }
 
-Most of these values should be self-explanatory.  `main` is a SphereFS path
-naming the game's main JavaScript module.
+Many of these values should be self explanatory.  Below is the full list of
+values recognized by the engine.  As the manifest is JSON, additional fields
+may be added as needed, and accessed from JavaScript through `system.game`.
+
+"version" [default: 2]
+
+    The Sphere standards version the game is build against.  If `version` is 2,
+    the game runs in Sphere v2 mode.  In Sphere v2 mode, the main script is
+    loaded as a CommonJS module, which enables use of relative paths in
+    `require()` calls (see below), as well as ensuring variable and function
+    declarations remain local to the module.
+
+    If `version` is 1, the game runs in Sphere v1 compatibility mode.  In this
+    mode, the main module is executed as normal program code, and minisphere
+    calls the global `game()` function--if one is provided--to begin game
+    execution.
+
+    Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
+          be available for use by game code.  The version in the manifest
+          currently only affects the way the main module is run.  This may
+          change in the future, however.
+
+"author" [default: none]
+
+    The name of the person or company who developed the game.
+
+"main" [required]
+
+    The SphereFS path of the main JavaScript module (see below for more on
+    SphereFS).  This is the script minisphere will run when the game is
+    started.  If no `main` field is present, the game will not start.
+
+"name" [default: "Untitled"]
+
+    The title of the game.  This field must be present; if it is not, the game
+    will not start.
+
+"resolution" [required]
+
+    The default screen resolution of the game, expressed as a string of the
+    form "WxH", specifying the number of pixels across and down.  For example,
+    720p resolution would be expressed as "1280x720".
+
+    Note: The screen resolution can be changed at runtime by calling
+          `screen.resize()`.
+
+"summary" [default: none]
+
+    A short summary of the game.  While there is no imposed length limit, it
+    is recommended to keep this short (150 characters or less) with no line
+    breaks.
+
 
 
 SphereFS File System
@@ -120,7 +169,7 @@ system.name [read-only]
 
 system.version [read-only]
 
-    The version number of the engine, e.g. "4.1.1".
+    The version number of the engine; e.g. "4.1.1".
 
 system.apiVersion [read-only]
 system.apiLevel [read-only]
@@ -132,7 +181,7 @@ system.apiLevel [read-only]
     without breaking compatibility, the API level is bumped.
 
     Note: Sometimes new functionality is added to the engine as an extension,
-          without increasing the reported API level.  See `system.extensions`
+          without changing the reported API level.  See `system.extensions`
           below for how to check for supported extensions.
 
 system.extensions [read-only]
@@ -143,7 +192,7 @@ system.extensions [read-only]
     show an error message or degrade gracefully if it isn't present.
 
     minisphere currently supports the following extensions:
-    
+
         sphere_glsl_shader_support
         sphere_stateful_rng
         sphere_v1_compatible_api
@@ -370,7 +419,7 @@ kb.getChar(key, shifted);
     Gets the character(s) that would be generated if a specified key is
     pressed.  For example, Key.A becomes "a" (or "A" if shifted).  `shifted`
     specifies whether to assume the Shift key is pressed.
-    
+
     An empty string is returned if the specified key is not associated with a
     character (a modifier key, for example).
 
@@ -1098,11 +1147,11 @@ Socket#bytesPending [read-only]
 
     Gets the number of bytes of data currently in the receive buffer.  Call
     Socket#read() to retrieve this data.
-    
+
     Note that more data may be received between the time this is checked the
     time a read is performed.  It's recommended to poll this value from time to
     time and perform reads in order to keep the size of the receive buffer
-    down.    
+    down.
 
 Socket#connected [read-only]
 
