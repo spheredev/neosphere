@@ -163,12 +163,12 @@ function render()
 	// draw the command prompt...
 	var boxY = -22 * (1.0 - visible.fade);
 	prim.rect(screen, 0, boxY, screen.width, 22, Color.Black.fade(visible.fade * 0.875));
-	var promptWidth = font.getStringWidth(prompt + " ");
+	var promptWidth = font.getTextSize(prompt + " ").width;
 	font.drawText(screen, 6, 6 + boxY, prompt, Color.Black.fade(visible.fade * 0.75));
 	font.drawText(screen, 5, 5 + boxY, prompt, Color.Gray.fade(visible.fade * 0.75));
 	font.drawText(screen, 6 + promptWidth, 6 + boxY, entry, Color.Black.fade(visible.fade * 0.75));
 	font.drawText(screen, 5 + promptWidth, 5 + boxY, entry, Color.Gold.fade(visible.fade * 0.75));
-	font.drawText(screen, 5 + promptWidth + font.getStringWidth(entry), 5 + boxY, "_", cursorColor);
+	font.drawText(screen, 5 + promptWidth + font.getTextSize(entry).width, 5 + boxY, "_", cursorColor);
 
 	// ...then the console output
 	var boxHeight = numLines * font.height + 10;

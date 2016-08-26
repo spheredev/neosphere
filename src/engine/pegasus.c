@@ -246,8 +246,7 @@ static duk_ret_t js_new_Font                   (duk_context* ctx);
 static duk_ret_t js_Font_finalize              (duk_context* ctx);
 static duk_ret_t js_Font_get_height            (duk_context* ctx);
 static duk_ret_t js_Font_drawText              (duk_context* ctx);
-static duk_ret_t js_Font_getStringHeight       (duk_context* ctx);
-static duk_ret_t js_Font_getStringWidth        (duk_context* ctx);
+static duk_ret_t js_Font_getTextSize           (duk_context* ctx);
 static duk_ret_t js_Font_wordWrap              (duk_context* ctx);
 static duk_ret_t js_new_Image                  (duk_context* ctx);
 static duk_ret_t js_Image_finalize             (duk_context* ctx);
@@ -396,8 +395,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_prop(ctx, "Font", "Default", js_Font_get_Default, NULL);
 	api_register_prop(ctx, "Font", "height", js_Font_get_height, NULL);
 	api_register_method(ctx, "Font", "drawText", js_Font_drawText);
-	api_register_method(ctx, "Font", "getStringHeight", js_Font_getStringHeight);
-	api_register_method(ctx, "Font", "getStringWidth", js_Font_getStringWidth);
+	api_register_method(ctx, "Font", "getTextSize", js_Font_getTextSize);
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
 	api_register_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
@@ -1961,42 +1959,38 @@ js_Font_drawText(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Font_getStringHeight(duk_context* ctx)
+js_Font_getTextSize(duk_context* ctx)
 {
 	font_t*     font;
+	int         num_args;
 	int         num_lines;
 	const char* text;
 	int         width;
+	wraptext_t* wraptext;
 
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	font = duk_require_sphere_obj(ctx, -1, "Font");
-	duk_pop(ctx);
 	text = duk_to_string(ctx, 0);
-	width = duk_require_int(ctx, 1);
+	if (num_args >= 2)
+		width = duk_require_int(ctx, 1);
 
-	duk_push_c_function(ctx, js_Font_wordWrap, DUK_VARARGS);
-	duk_push_this(ctx);
-	duk_push_string(ctx, text);
-	duk_push_int(ctx, width);
-	duk_call_method(ctx, 2);
-	duk_get_prop_string(ctx, -1, "length");
-	num_lines = duk_get_int(ctx, -1);
-	duk_push_int(ctx, font_height(font) * num_lines);
-	return 1;
-}
-
-static duk_ret_t
-js_Font_getStringWidth(duk_context* ctx)
-{
-	font_t*     font;
-	const char* text;
-	
-	text = duk_to_string(ctx, 0);
-
-	duk_push_this(ctx);
-	font = duk_require_sphere_obj(ctx, -1, "Font");
-	duk_pop(ctx);
-	duk_push_int(ctx, font_get_width(font, text));
+	duk_push_object(ctx);
+	if (num_args >= 2) {
+		wraptext = wraptext_new(text, font, width);
+		num_lines = wraptext_len(wraptext);
+		wraptext_free(wraptext);
+		duk_push_int(ctx, width);
+		duk_put_prop_string(ctx, -2, "width");
+		duk_push_int(ctx, font_height(font) * num_lines);
+		duk_put_prop_string(ctx, -2, "height");
+	}
+	else {
+		duk_push_int(ctx, font_get_width(font, text));
+		duk_put_prop_string(ctx, -2, "width");
+		duk_push_int(ctx, font_height(font));
+		duk_put_prop_string(ctx, -2, "height");
+	}
 	return 1;
 }
 
