@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v4.2.0 - TBD
+------------
+
+* Simplifies the FileStream API.  The convenience methods for reading and
+  writing typed values have been removed, leaving only the `read()` and
+  `write()` methods which deal in ArrayBuffers.
+
+
 v4.1.1 - August 24, 2016
 ------------------------
 
@@ -8,7 +16,6 @@ v4.1.1 - August 24, 2016
   CommonJS module unless the manifest explicitly specifies `version: 1`.
 * `console` methods now actually send text to the console.
 * Sphere Studio now runs minisphere Console at V0 verbosity by default.
-
 
 v4.1.0 - August 22, 2016
 ------------------------

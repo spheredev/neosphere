@@ -1047,68 +1047,10 @@ FileStream#read([num_bytes]);
     the entire file without affecting the file position.  The file must be
     opened for reading.
 
-FileStream#readFloat([little_endian]);
-FileStream#readDouble([little_endian]);
-
-    Reads a floating point value from the file and advances the file pointer.
-    `little_endian` is optional and defaults to false.
-
-FileStream#readInt([size[, little_endian]]);
-FileStream#readUInt([size[, little_endian]]);
-
-    Reads a signed or unsigned integer from the file and advances the file
-    pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
-    value to read.  This allows integer values of up to 48 bits to be read.
-
-FileStream#readPString(lenSize[, little_endian]);
-
-    Reads a length-prefixed (Pascal) string from the file.  `lenSize` specifies
-    the number of bytes [1-4] used to encode the string length.  `little_endian`
-    is optional and defaults to false.
-
-FileStream#readString([num_bytes]);
-
-    Reads a fixed-length string from the file.  `num_bytes` specifies how many
-    bytes to read and can be omitted to read the entire file at once without
-    affecting the file pointer.
-
-    Note: Strings in minisphere are UTF-8 encoded.  As a result, the number of
-          bytes in a string may not match the number of characters.
-
 FileStream#write(data);
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
-
-FileStream#writeFloat(value[, little_endian]);
-FileStream#writeDouble(value[, little_endian]);
-
-    Writes a floating point value to the file and advances the file pointer.
-    `little_endian` is optional and defaults to false.
-
-FileStream#writeInt(value[, size[, little_endian]]);
-FileStream#writeUInt(value[, size[, little_endian]]);
-
-    Writes a signed or unsigned integer to the file and advances the file
-    pointer.  `size` is an integer [1-6] and specifies the size in bytes of the
-    value to write.  This allows integer values of up to 48 bits to be written.
-
-    Note: If `value` is too large or small to be represented in `size` bytes,
-          this method will throw a TypeError.
-
-FileStream#writePString(string, lenSize[, little_endian]);
-
-    Writes a UTF-8-encoded, length-prefixed (Pascal-style) string to the file
-    and advances the file pointer.  `lenSize` specifies the number of
-    bytes [1-4] used to encode the string length.  `little_endian` is optional
-    and defaults to false.
-
-    Note: If the string is too long for its length to be encoded in `lenSize`
-          bytes, this method will throw a TypeError.
-
-FileStream#writeString(string);
-
-    Writes a UTF-8-encoded string to the file and advances the file pointer.
 
 
 Networking API
