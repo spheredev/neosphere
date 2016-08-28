@@ -5,8 +5,8 @@ v4.2.0 - TBD
 ------------
 
 * Simplifies the FileStream API.  The convenience methods for reading and
-  writing typed values have been removed, leaving only the `read()` and
-  `write()` methods which deal in ArrayBuffers.
+  writing typed values have been removed, leaving only the `.read()` and
+  `.write()` methods which deal in ArrayBuffers.
 
 
 v4.1.1 - August 24, 2016
