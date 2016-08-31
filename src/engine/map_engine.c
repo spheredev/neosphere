@@ -1259,10 +1259,10 @@ process_map_input(void)
 				s_players[i].is_talk_allowed = true;
 			mv_x = 0; mv_y = 0;
 			if (!is_person_busy(person)) {  // allow player control only if input person is idle
-				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_UP))) mv_y = -1;
-				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_RIGHT))) mv_x = 1;
-				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_DOWN))) mv_y = 1;
-				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_LEFT))) mv_x = -1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_UP)) || joy_position(i, 1) <= -0.5) mv_y = -1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_RIGHT)) || joy_position(i, 0) >= 0.5) mv_x = 1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_DOWN)) || joy_position(i, 1) >= 0.5) mv_y = 1;
+				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_LEFT)) || joy_position(i, 0) <= -0.5) mv_x = -1;
 			}
 			switch (mv_x + mv_y * 3) {
 			case -3: // north
