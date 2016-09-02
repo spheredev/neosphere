@@ -252,6 +252,11 @@ static duk_ret_t js_new_Image                  (duk_context* ctx);
 static duk_ret_t js_Image_finalize             (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
+static duk_ret_t js_Joystick_get               (duk_context* ctx);
+static duk_ret_t js_Joystick_get_numAxes       (duk_context* ctx);
+static duk_ret_t js_Joystick_get_numButtons    (duk_context* ctx);
+static duk_ret_t js_Joystick_getPosition       (duk_context* ctx);
+static duk_ret_t js_Joystick_isPressed         (duk_context* ctx);
 static duk_ret_t js_Mixer_get_Default          (duk_context* ctx);
 static duk_ret_t js_new_Mixer                  (duk_context* ctx);
 static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
@@ -398,6 +403,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "getTextSize", js_Font_getTextSize);
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
+	api_register_type(ctx, "Joystick", NULL);
+	api_register_static_func(ctx, "Joystick", "get", js_Joystick_get);
+	api_register_prop(ctx, "Joystick", "numAxes", js_Joystick_get_numAxes, NULL);
+	api_register_prop(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
+	api_register_method(ctx, "Joystick", "getPosition", js_Joystick_getPosition);
+	api_register_method(ctx, "Joystick", "isPressed", js_Joystick_isPressed);
+	
 	api_register_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
 	api_register_static_func(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
 	api_register_static_func(ctx, "RNG", "fromState", js_RNG_fromState);
@@ -473,7 +485,6 @@ initialize_pegasus_api(duk_context* ctx)
 
 	api_register_static_func(ctx, "ssj", "assert", js_ssj_assert);
 	api_register_static_func(ctx, "ssj", "trace", js_ssj_trace);
-
 	api_register_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
 	api_register_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
@@ -487,7 +498,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "system", "reset", js_system_reset);
 	api_register_static_func(ctx, "system", "run", js_system_run);
 	api_register_static_func(ctx, "system", "sleep", js_system_sleep);
-
 	api_register_static_func(ctx, "console", "assert", js_console_assert);
 	api_register_static_func(ctx, "console", "debug", js_console_debug);
 	api_register_static_func(ctx, "console", "error", js_console_error);
@@ -495,7 +505,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "console", "log", js_console_log);
 	api_register_static_func(ctx, "console", "trace", js_console_trace);
 	api_register_static_func(ctx, "console", "warn", js_console_warn);
-	
 	api_register_static_func(ctx, "fs", "exists", js_fs_exists);
 	api_register_static_func(ctx, "fs", "open", js_fs_open);
 	api_register_static_func(ctx, "fs", "mkdir", js_fs_mkdir);
@@ -503,7 +512,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "fs", "resolve", js_fs_resolve);
 	api_register_static_func(ctx, "fs", "rmdir", js_fs_rmdir);
 	api_register_static_func(ctx, "fs", "unlink", js_fs_unlink);
-	
 	api_register_static_prop(ctx, "kb", "capsLock", js_kb_get_capsLock, NULL);
 	api_register_static_prop(ctx, "kb", "numLock", js_kb_get_numLock, NULL);
 	api_register_static_prop(ctx, "kb", "scrollLock", js_kb_get_scrollLock, NULL);
@@ -511,13 +519,11 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "kb", "getChar", js_kb_getChar);
 	api_register_static_func(ctx, "kb", "getKey", js_kb_getKey);
 	api_register_static_func(ctx, "kb", "isPressed", js_kb_isPressed);
-
 	api_register_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
 	api_register_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
 	api_register_static_func(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
 	api_register_static_func(ctx, "mouse", "getEvent", js_mouse_getEvent);
 	api_register_static_func(ctx, "mouse", "isPressed", js_mouse_isPressed);
-
 	api_register_static_obj(ctx, NULL, "screen", "Surface", NULL);
 	api_register_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_register_static_func(ctx, "screen", "clipTo", js_screen_clipTo);
@@ -2114,6 +2120,68 @@ js_Image_get_width(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "Image");
 
 	duk_push_int(ctx, image_width(image));
+	return 1;
+}
+
+static duk_ret_t
+js_Joystick_get(duk_context* ctx)
+{
+	int device_id;
+
+	device_id = duk_require_int(ctx, 0);
+	duk_push_sphere_obj(ctx, "Joystick", (void*)device_id);
+	return 1;
+}
+
+static duk_ret_t
+js_Joystick_get_numAxes(duk_context* ctx)
+{
+	int joy_index;
+
+	duk_push_this(ctx);
+	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	
+	duk_push_int(ctx, joy_num_axes(joy_index));
+	return 1;
+}
+
+static duk_ret_t
+js_Joystick_get_numButtons(duk_context* ctx)
+{
+	int joy_index;
+
+	duk_push_this(ctx);
+	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	
+	duk_push_int(ctx, joy_num_buttons(joy_index));
+	return 1;
+}
+
+static duk_ret_t
+js_Joystick_getPosition(duk_context* ctx)
+{
+	int axis_index;
+	int joy_index;
+
+	duk_push_this(ctx);
+	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	axis_index = duk_require_int(ctx, 0);
+	
+	duk_push_number(ctx, joy_position(joy_index, axis_index));
+	return 1;
+}
+
+static duk_ret_t
+js_Joystick_isPressed(duk_context* ctx)
+{
+	int button_index;
+	int joy_index;
+
+	duk_push_this(ctx);
+	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	button_index = duk_require_int(ctx, 0);
+
+	duk_push_boolean(ctx, joy_is_button_down(joy_index, button_index));
 	return 1;
 }
 

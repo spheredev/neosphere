@@ -434,6 +434,49 @@ kb.isPressed(key);
     should be a member of the Key enumeration.
 
 
+Joystick Routines
+-----------------
+
+Joystick.get(deviceID);
+
+    Gets a Joystick object for a connected gamepad or joystick.  `deviceID` is
+    a zero-based index specifying which connected device to use.  Multiple
+    calls to this function with the same device ID will return the same device.
+
+    Note: If no device is connected with the requested ID, Joystick.get()
+          returns a null device.  A null device acts just like a real one, but
+          always reports neutral values when polled.
+
+Joystick#numAxes [read-only]
+
+    Gets the number of analog axes supported by the device.
+
+Joystick#numButtons [read-only]
+
+    Gets the number of buttons supported by the device.
+
+Joystick#getPosition(axisID);
+
+    Polls the device and gets the current position along the specified analog
+    axis.  To get the number of axes supported by a device, use the `numAxes`
+    property.
+
+    Note: Axes are numbered sequentially, starting from 0.  Which physical axis
+          is associated with any given axis ID will vary from device to device.
+          For gamepads with analog sticks, though, it's generally a safe bet
+          that the primary analog stick will be mapped to the first two axes.
+
+Joystick#isPressed(buttonID);
+
+    Polls the device and returns true if the specified button is currently
+    depressed.  To get the number of buttons supported by a device, use the
+    `numButtons` property.
+
+    Note: Buttons are numbered sequentially, starting from 0.  As with axes,
+          which physical button is associated with any given button ID will
+          vary from device to device.
+
+
 Mouse Routines
 --------------
 

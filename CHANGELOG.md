@@ -4,10 +4,12 @@ minisphere Changelog
 v4.2.0 - TBD
 ------------
 
-* Simplifies the FileStream API.  The convenience methods for reading and
-  writing typed values have been removed, leaving only the `.read()` and
-  `.write()` methods which deal in ArrayBuffers.
-* Fixes a long-standing map engine bug where the input person can't be moved
+* Adds native joystick support to the Sphere v2 API.  Previously, using a
+  joystick or gamepad required calling Sphere v1 legacy functions.
+* Simplifies the FileStream API.  The methods for reading and writing typed
+  values have been removed, leaving only `.read()` and `.write()` which deal
+  directly in ArrayBuffers.
+* Fixes a long-standing map engine bug where the input person(s) can't be moved
   with the joystick.
 
 
