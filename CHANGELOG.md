@@ -6,6 +6,8 @@ v4.2.0 - TBD
 
 * Adds native joystick support to the Sphere v2 API.  Previously, using a
   joystick or gamepad required calling Sphere v1 legacy functions.
+* The `kb` built-in object is now called `keyboard`, making keyboard input code
+  significantly easier to read at the cost of some extra verbosity.
 * Simplifies the FileStream API.  The methods for reading and writing typed
   values have been removed, leaving only `.read()` and `.write()` which deal
   directly in ArrayBuffers.

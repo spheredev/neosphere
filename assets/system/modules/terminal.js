@@ -104,24 +104,24 @@ function executeCommand(command)
 
 function getInput()
 {
-	if (!wasKeyDown && kb.isPressed(Key.Tilde)) {
+	if (!wasKeyDown && keyboard.isPressed(Key.Tilde)) {
 		if (!isVisible())
 			show();
 		else
 			hide();
 	}
-	wasKeyDown = kb.isPressed(Key.Tilde);
+	wasKeyDown = keyboard.isPressed(Key.Tilde);
 	if (isVisible()) {
 		var mouseEvent = mouse.getEvent();
 		var wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
 		var wheelDown = mouseEvent !== null && mouseEvent.key == MouseKey.WheelDown;
 		var speed = (wheelUp || wheelDown) ? 1.0 : 0.5;
-		if (kb.isPressed(Key.PageUp) || wheelUp) {
+		if (keyboard.isPressed(Key.PageUp) || wheelUp) {
 			visible.line = Math.min(visible.line + speed, buffer.length - numLines);
-		} else if (kb.isPressed(Key.PageDown) || wheelDown) {
+		} else if (keyboard.isPressed(Key.PageDown) || wheelDown) {
 			visible.line = Math.max(visible.line - speed, 0);
 		}
-		var keycode = kb.getKey();
+		var keycode = keyboard.getKey();
 		switch (keycode) {
 			case Key.Enter:
 				log("Command entered: '" + entry + "'");
@@ -147,9 +147,9 @@ function getInput()
 			case null:
                 break;
 			default:
-				var isShifted = kb.isPressed(Key.LShift) || kb.isPressed(Key.RShift);
-				var ch = kb.getChar(keycode, isShifted);
-				ch = kb.capsLock ? ch.toUpperCase() : ch;
+				var isShifted = keyboard.isPressed(Key.LShift) || keyboard.isPressed(Key.RShift);
+				var ch = keyboard.getChar(keycode, isShifted);
+				ch = keyboard.capsLock ? ch.toUpperCase() : ch;
 				entry += ch;
 		}
 	}
