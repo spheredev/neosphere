@@ -253,6 +253,7 @@ static duk_ret_t js_Image_finalize             (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
 static duk_ret_t js_Joystick_get               (duk_context* ctx);
+static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
 static duk_ret_t js_Joystick_get_numAxes       (duk_context* ctx);
 static duk_ret_t js_Joystick_get_numButtons    (duk_context* ctx);
 static duk_ret_t js_Joystick_getPosition       (duk_context* ctx);
@@ -403,7 +404,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "getTextSize", js_Font_getTextSize);
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
-	api_register_type(ctx, "Joystick", NULL);
+	api_register_type(ctx, "Joystick", js_Joystick_finalize);
 	api_register_static_func(ctx, "Joystick", "get", js_Joystick_get);
 	api_register_prop(ctx, "Joystick", "numAxes", js_Joystick_get_numAxes, NULL);
 	api_register_prop(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
@@ -2126,62 +2127,78 @@ js_Image_get_width(duk_context* ctx)
 static duk_ret_t
 js_Joystick_get(duk_context* ctx)
 {
-	int device_id;
+	int* device;
+	int  device_id;
 
 	device_id = duk_require_int(ctx, 0);
-	duk_push_sphere_obj(ctx, "Joystick", (void*)device_id);
+
+	// the device ID is simply an integer, but casting directly between integer and pointer values is
+	// bad juju, so we use a pointer to a copy of the device ID instead.
+	device = malloc(sizeof(int));
+	*device = device_id;
+	duk_push_sphere_obj(ctx, "Joystick", device);
 	return 1;
+}
+
+static duk_ret_t
+js_Joystick_finalize(duk_context* ctx)
+{
+	int* device;
+
+	device = duk_require_sphere_obj(ctx, 0, "Joystick");
+	free(device);
+	return 0;
 }
 
 static duk_ret_t
 js_Joystick_get_numAxes(duk_context* ctx)
 {
-	int joy_index;
+	int* device;
 
 	duk_push_this(ctx);
-	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	device = duk_require_sphere_obj(ctx, -1, "Joystick");
 	
-	duk_push_int(ctx, joy_num_axes(joy_index));
+	duk_push_int(ctx, joy_num_axes(*device));
 	return 1;
 }
 
 static duk_ret_t
 js_Joystick_get_numButtons(duk_context* ctx)
 {
-	int joy_index;
+	int* device;
 
 	duk_push_this(ctx);
-	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	device = duk_require_sphere_obj(ctx, -1, "Joystick");
 	
-	duk_push_int(ctx, joy_num_buttons(joy_index));
+	duk_push_int(ctx, joy_num_buttons(*device));
 	return 1;
 }
 
 static duk_ret_t
 js_Joystick_getPosition(duk_context* ctx)
 {
-	int axis_index;
-	int joy_index;
+	int  axis_index;
+	int* device;
 
 	duk_push_this(ctx);
-	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	device = duk_require_sphere_obj(ctx, -1, "Joystick");
 	axis_index = duk_require_int(ctx, 0);
 	
-	duk_push_number(ctx, joy_position(joy_index, axis_index));
+	duk_push_number(ctx, joy_position(*device, axis_index));
 	return 1;
 }
 
 static duk_ret_t
 js_Joystick_isPressed(duk_context* ctx)
 {
-	int button_index;
-	int joy_index;
+	int  button_index;
+	int* device;
 
 	duk_push_this(ctx);
-	joy_index = (int)duk_require_sphere_obj(ctx, -1, "Joystick");
+	device = duk_require_sphere_obj(ctx, -1, "Joystick");
 	button_index = duk_require_int(ctx, 0);
 
-	duk_push_boolean(ctx, joy_is_button_down(joy_index, button_index));
+	duk_push_boolean(ctx, joy_is_button_down(*device, button_index));
 	return 1;
 }
 
