@@ -403,19 +403,19 @@ Key [enumeration]
     below the function keys, while NumPad0-NumPad9 refer to the numbers on the
     numeric keypad.
 
-kb.capsLock [read-only]
-kb.numLock [read-only]
-kb.scrollLock [read-only]
+keyboard.capsLock [read-only]
+keyboard.numLock [read-only]
+keyboard.scrollLock [read-only]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
-kb.clearQueue();
+keyboard.clearQueue();
 
     Removes all keys from the keyboard queue.  If another key is not pressed
     in the interim, the next getKey() will return null.
 
-kb.getChar(key, shifted);
+keyboard.getChar(key, shifted);
 
     Gets the character(s) that would be generated if a specified key is
     pressed.  For example, Key.A becomes "a" (or "A" if shifted).  `shifted`
@@ -424,11 +424,11 @@ kb.getChar(key, shifted);
     An empty string is returned if the specified key is not associated with a
     character (a modifier key, for example).
 
-kb.getKey();
+keyboard.getKey();
 
     Gets the next key in the keyboard queue, or null if the queue is empty.
 
-kb.isPressed(key);
+keyboard.isPressed(key);
 
     Returns true if the user is currently pressing the specified key.  `key`
     should be a member of the Key enumeration.
