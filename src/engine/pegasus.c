@@ -252,6 +252,7 @@ static duk_ret_t js_new_Image                  (duk_context* ctx);
 static duk_ret_t js_Image_finalize             (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
+static duk_ret_t js_Joystick_get_numDevices    (duk_context* ctx);
 static duk_ret_t js_Joystick_get               (duk_context* ctx);
 static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
 static duk_ret_t js_Joystick_get_numAxes       (duk_context* ctx);
@@ -405,6 +406,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
 	api_register_type(ctx, "Joystick", js_Joystick_finalize);
+	api_register_static_prop(ctx, "Joystick", "numDevices", js_Joystick_get_numDevices, NULL);
 	api_register_static_func(ctx, "Joystick", "get", js_Joystick_get);
 	api_register_prop(ctx, "Joystick", "numAxes", js_Joystick_get_numAxes, NULL);
 	api_register_prop(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
@@ -2121,6 +2123,13 @@ js_Image_get_width(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "Image");
 
 	duk_push_int(ctx, image_width(image));
+	return 1;
+}
+
+static duk_ret_t
+js_Joystick_get_numDevices(duk_context* ctx)
+{
+	duk_push_int(ctx, joy_num_devices());
 	return 1;
 }
 
