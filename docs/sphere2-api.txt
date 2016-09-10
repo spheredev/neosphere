@@ -437,29 +437,18 @@ keyboard.isPressed(key);
 Joystick Routines
 -----------------
 
-Joystick.numDevices [read-only]
+Joystick.getDevices();
 
-    Gets the number of connected joystick and gamepad devices.
-
-Joystick.get(deviceID);
-
-    Gets a Joystick object for a connected gamepad or joystick.  `deviceID` is
-    a zero-based index specifying which connected device to use.  Multiple
-    calls to this function with the same device ID will return the same device.
-
-    Note: If no device is connected with the requested ID, Joystick.get()
-          returns a null device.  A null device acts just like a real one, but
-          always reports neutral values when polled.
+    Gets an array of Joystick objects, one for each connected gamepad or
+    joystick.
 
 Joystick#numAxes [read-only]
 
-    Gets the number of analog axes supported by the device, or 0 in case of a
-    null device.
+    Gets the number of analog axes supported by the device.
 
 Joystick#numButtons [read-only]
 
-    Gets the number of buttons supported by the device, or 0 in case of a null
-    device.
+    Gets the number of buttons supported by the device.
 
 Joystick#getPosition(axisID);
 

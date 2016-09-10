@@ -252,8 +252,7 @@ static duk_ret_t js_new_Image                  (duk_context* ctx);
 static duk_ret_t js_Image_finalize             (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
-static duk_ret_t js_Joystick_get_numDevices    (duk_context* ctx);
-static duk_ret_t js_Joystick_get               (duk_context* ctx);
+static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
 static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
 static duk_ret_t js_Joystick_get_numAxes       (duk_context* ctx);
 static duk_ret_t js_Joystick_get_numButtons    (duk_context* ctx);
@@ -343,6 +342,7 @@ static void    duk_pegasus_push_color    (duk_context* ctx, color_t color);
 static void    duk_pegasus_push_require  (duk_context* ctx, const char* module_id);
 static color_t duk_pegasus_require_color (duk_context* ctx, duk_idx_t index);
 static path_t* find_module               (const char* id, const char* origin, const char* sys_origin);
+static void    load_joysticks            (duk_context* ctx);
 static path_t* load_package_json         (const char* filename);
 
 static mixer_t* s_def_mixer;
@@ -383,7 +383,7 @@ initialize_pegasus_api(duk_context* ctx)
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
-	
+
 	// initialize the Sphere v2 API
 	api_register_ctor(ctx, "Color", js_new_Color, NULL);
 	api_register_static_func(ctx, "Color", "mix", js_Color_mix);
@@ -406,8 +406,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 
 	api_register_type(ctx, "Joystick", js_Joystick_finalize);
-	api_register_static_prop(ctx, "Joystick", "numDevices", js_Joystick_get_numDevices, NULL);
-	api_register_static_func(ctx, "Joystick", "get", js_Joystick_get);
+	api_register_static_func(ctx, "Joystick", "getDevices", js_Joystick_getDevices);
 	api_register_prop(ctx, "Joystick", "numAxes", js_Joystick_get_numAxes, NULL);
 	api_register_prop(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
 	api_register_method(ctx, "Joystick", "getPosition", js_Joystick_getPosition);
@@ -647,6 +646,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_const(ctx, "ShapeType", "Points", SHAPE_POINTS);
 	api_register_const(ctx, "ShapeType", "Triangles", SHAPE_TRIANGLES);
 	api_register_const(ctx, "ShapeType", "TriStrip", SHAPE_TRI_STRIP);
+
+	// pre-create joystick objects for Joystick.getDevices().  this ensures that
+	// multiple requests for the device list return the same Joystick object(s).
+	load_joysticks(g_duk);
 
 	// register predefined X11 colors
 	duk_get_global_string(ctx, "Color");
@@ -903,6 +906,27 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	}
 
 	return NULL;
+}
+
+static void
+load_joysticks(duk_context* ctx)
+{
+	int* device;
+	int  num_devices;
+
+	int i;
+
+	duk_push_global_stash(ctx);
+	duk_push_array(ctx);
+	num_devices = joy_num_devices();
+	for (i = 0; i < num_devices; ++i) {
+		device = malloc(sizeof(int));
+		*device = i;
+		duk_push_sphere_obj(ctx, "Joystick", device);
+		duk_put_prop_index(ctx, -2, i);
+	}
+	duk_put_prop_string(ctx, -2, "joystickObjects");
+	duk_pop(ctx);
 }
 
 static path_t*
@@ -2127,25 +2151,20 @@ js_Image_get_width(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Joystick_get_numDevices(duk_context* ctx)
+js_Joystick_getDevices(duk_context* ctx)
 {
-	duk_push_int(ctx, joy_num_devices());
-	return 1;
-}
+	int num_devices;
 
-static duk_ret_t
-js_Joystick_get(duk_context* ctx)
-{
-	int* device;
-	int  device_id;
+	int i;
 
-	device_id = duk_require_int(ctx, 0);
-
-	// the device ID is simply an integer, but casting directly between integer and pointer values is
-	// bad juju, so we use a pointer to a copy of the device ID instead.
-	device = malloc(sizeof(int));
-	*device = device_id;
-	duk_push_sphere_obj(ctx, "Joystick", device);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "joystickObjects");
+	num_devices = (int)duk_get_length(ctx, -1);
+	duk_push_array(ctx);
+	for (i = 0; i < num_devices; ++i) {
+		duk_get_prop_index(ctx, -2, i);
+		duk_put_prop_index(ctx, -2, i);
+	}
 	return 1;
 }
 
