@@ -442,6 +442,11 @@ Joystick.getDevices();
     Gets an array of Joystick objects, one for each connected gamepad or
     joystick.
 
+Joystick#name [read-only]
+
+    Gets the name of the device, as reported by the Allegro backend.  Xbox
+    controllers are reported as "XInput Joystick <n>"
+
 Joystick#numAxes [read-only]
 
     Gets the number of analog axes supported by the device.

@@ -168,6 +168,16 @@ joy_is_button_down(int joy_index, int button)
 	return joy_state.button[button] > 0;
 }
 
+const char*
+joy_name(int joy_index)
+{
+	ALLEGRO_JOYSTICK* joystick;
+
+	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
+		return "null joystick";
+	return al_get_joystick_name(joystick);
+}
+
 int
 joy_num_axes(int joy_index)
 {

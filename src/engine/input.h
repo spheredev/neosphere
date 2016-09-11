@@ -51,6 +51,7 @@ void initialize_input   (void);
 void shutdown_input     (void);
 
 bool          joy_is_button_down (int joy_index, int button);
+const char*   joy_name           (int joy_index);
 int           joy_num_axes       (int joy_index);
 int           joy_num_buttons    (int joy_index);
 int           joy_num_devices    (void);
