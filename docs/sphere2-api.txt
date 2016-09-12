@@ -437,6 +437,12 @@ keyboard.isPressed(key);
 Joystick Routines
 -----------------
 
+Joystick.Null [read-only]
+
+    Gets the null joystick.  When polled, a null joystick returns neutral
+    values for all inputs.  Joystick.Null can be used in place of a real
+    Joystick object to simplify input code.
+
 Joystick.getDevices();
 
     Gets an array of Joystick objects, one for each connected gamepad or
