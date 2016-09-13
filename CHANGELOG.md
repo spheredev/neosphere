@@ -6,11 +6,13 @@ v4.2.0 - TBD
 
 * Adds native joystick support to the Sphere v2 API.  Previously, using a
   joystick or gamepad required calling Sphere v1 legacy functions.
-* The `kb` built-in object is now called `keyboard`, making keyboard input code
-  significantly easier to read at the cost of some extra verbosity.
+* Adds W3C Encoding support (`TextEncoder` and `TextDecoder` objects) to the
+  Sphere v2 API.  This allows reading and writing text from ArrayBuffer views.
 * Simplifies the FileStream API.  The methods for reading and writing typed
   values have been removed, leaving only `.read()` and `.write()` which deal
   directly in ArrayBuffers.
+* The `kb` built-in object is now called `keyboard`, making keyboard input code
+  significantly easier to read at the cost of some extra verbosity.
 * Fixes a long-standing map engine bug where the input person(s) can't be moved
   with the joystick.
 
