@@ -1,8 +1,8 @@
 #ifndef MINISPHERE__INPUT_H__INCLUDED
 #define MINISPHERE__INPUT_H__INCLUDED
 
-#define MAX_JOYSTICKS   4
-#define MAX_JOY_BUTTONS 32
+#define MAX_JOYSTICKS   16
+#define MAX_JOY_BUTTONS 64
 
 typedef
 enum player_key

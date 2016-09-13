@@ -2223,7 +2223,10 @@ js_Joystick_get_numAxes(duk_context* ctx)
 	duk_push_this(ctx);
 	device = duk_require_sphere_obj(ctx, -1, "Joystick");
 	
-	duk_push_int(ctx, joy_num_axes(*device));
+	if (*device != -1)
+		duk_push_int(ctx, joy_num_axes(*device));
+	else
+		duk_push_number(ctx, INFINITY);
 	return 1;
 }
 
@@ -2235,35 +2238,44 @@ js_Joystick_get_numButtons(duk_context* ctx)
 	duk_push_this(ctx);
 	device = duk_require_sphere_obj(ctx, -1, "Joystick");
 	
-	duk_push_int(ctx, joy_num_buttons(*device));
+	if (*device != -1)
+		duk_push_int(ctx, joy_num_buttons(*device));
+	else
+		duk_push_number(ctx, INFINITY);
 	return 1;
 }
 
 static duk_ret_t
 js_Joystick_getPosition(duk_context* ctx)
 {
-	int  axis_index;
+	int  index;
 	int* device;
 
 	duk_push_this(ctx);
 	device = duk_require_sphere_obj(ctx, -1, "Joystick");
-	axis_index = duk_require_int(ctx, 0);
+	index = duk_require_int(ctx, 0);
 	
-	duk_push_number(ctx, joy_position(*device, axis_index));
+	if (*device != -1 && (index < 0 || index >= joy_num_axes(*device)))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick axis ID out of range");
+
+	duk_push_number(ctx, joy_position(*device, index));
 	return 1;
 }
 
 static duk_ret_t
 js_Joystick_isPressed(duk_context* ctx)
 {
-	int  button_index;
+	int  index;
 	int* device;
 
 	duk_push_this(ctx);
 	device = duk_require_sphere_obj(ctx, -1, "Joystick");
-	button_index = duk_require_int(ctx, 0);
+	index = duk_require_int(ctx, 0);
 
-	duk_push_boolean(ctx, joy_is_button_down(*device, button_index));
+	if (*device != -1 && (index < 0 || index >= joy_num_buttons(*device)))
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick button ID out of range");
+
+	duk_push_boolean(ctx, joy_is_button_down(*device, index));
 	return 1;
 }
 
