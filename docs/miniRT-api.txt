@@ -42,6 +42,30 @@ Delegate:remove(handler[, thisObj]);
     if no matching handler is registered.
 
 
+`joy` module
+------------
+
+The joy module provides a simplified interface for games that want to support
+joystick input without the complexity of the Sphere v2 Joystick API.  Using
+this module, a game can support joystick input for up to 4 players
+simultaneously.
+
+    const joy = require('joy');
+
+joy.P1 [read-only]
+joy.P2 [read-only]
+joy.P3 [read-only]
+joy.P4 [read-only]
+
+    Gets a Joystick object representing a connected device.  `joy.P1` always
+    refers to the same device within a session; likewise for the other
+    properties.  If no suitable device is available for the specified player,
+    `Joystick.Null` is returned instead.
+    
+    Note: Only connected devices with at least 5 buttons and 2 axes are
+          considered.
+
+
 `logger` Module
 ---------------
 
