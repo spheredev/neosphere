@@ -3423,6 +3423,8 @@ js_Surface_toImage(duk_context* ctx)
 static duk_ret_t
 js_new_TextDecoder(duk_context* ctx)
 {
+	if (!duk_is_constructor_call(ctx))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "TextDecoder must be called with 'new'");
 	return 0;
 }
 
@@ -3466,6 +3468,8 @@ js_TextDecoder_decode(duk_context* ctx)
 static duk_ret_t
 js_new_TextEncoder(duk_context* ctx)
 {
+	if (!duk_is_constructor_call(ctx))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "TextEncoder must be called with 'new'");
 	return 0;
 }
 

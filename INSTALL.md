@@ -20,6 +20,7 @@ Allegro is provided through NuGet, and static libraries and/or source are includ
 for all other dependencies, so no additional software is required to build for
 Windows.
 
+
 Linux
 -----
 
@@ -45,6 +46,7 @@ Once you have Allegro and other necessary dependencies installed, simply switch
 to the directory where you checked out minisphere and run `make` on the
 command-line. This will build minisphere and all GDK tools in `bin/`. To
 install minisphere on your system, follow this up with `sudo make install`.
+
 
 Mac OS X
 --------

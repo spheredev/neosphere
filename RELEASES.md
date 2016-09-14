@@ -1,6 +1,22 @@
 Release Notes
 =============
 
+minisphere 4.2
+--------------
+
+* minisphere now includes support for the Encoding API (`TextEncoder` and
+  `TextDecoder` objects).  However, only UTF-8 is currently supported.  Future
+  versions of minisphere will support more encodings.
+
+* The Sphere v2 subsystem now natively supports joystick input.  Games using
+  the Sphere 1.x joystick functions will continue to work as before; however,
+  the new joystick API is much more flexible and should be preferred when
+  writing new code.
+
+* `kb` is now called `keyboard`.  This should make keyboard input code clearer,
+  but any existing Sphere v2 code will need to be updated.
+
+
 minisphere 4.1
 --------------
 

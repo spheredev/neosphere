@@ -1,16 +1,19 @@
 minisphere Changelog
 ====================
 
-v4.2.0 - TBD
-------------
+v4.2.0 - September 14, 2016
+---------------------------
 
 * Adds native joystick support to the Sphere v2 API.  Previously, using a
   joystick or gamepad required calling Sphere v1 legacy functions.
+* Adds a new module to miniRT, `joy`.  This provides a simplified joystick
+  interface for games that don't need the full flexibility of the Sphere v2
+  Joystick API.
 * Adds W3C Encoding support (`TextEncoder` and `TextDecoder` objects) to the
   Sphere v2 API.  This allows reading and writing text from ArrayBuffer views.
-* Simplifies the FileStream API.  The methods for reading and writing typed
-  values have been removed, leaving only `.read()` and `.write()` which deal
-  directly in ArrayBuffers.
+* Simplifies the FileStream API.  All methods for reading and writing typed
+  values from files have been removed, leaving only `read()` and `write()`
+  which deal with ArrayBuffers directly.
 * The `kb` built-in object is now called `keyboard`, making keyboard input code
   significantly easier to read at the cost of some extra verbosity.
 * Fixes a long-standing map engine bug where the input person(s) can't be moved
