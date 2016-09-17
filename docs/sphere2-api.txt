@@ -139,10 +139,10 @@ SSJ Debugger API
 ----------------
 
 The following functions only have an effect while a debugger such as SSJ is in
-use, otherwise they do nothing.  This ensures they won't hinder performance in
-production.
+use, otherwise they do nothing.  This helps to minimize the performance impact
+in production.
 
-ssj.assert(condition[, message]);
+SSJ.assert(condition[, message]);
 
     `condition` is a boolean expression.  If the condition is true, nothing
     happens.  If it is false and a debugger is attached, an alert is displayed,
@@ -151,7 +151,7 @@ ssj.assert(condition[, message]);
     `message` is optional but highly recommended; the boolean expression will
     not be displayed in the alert box.
 
-ssj.trace(text);
+SSJ.trace(text);
 
     Outputs text to the attached debugger.  Useful for diagnostics.
 

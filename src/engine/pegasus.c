@@ -182,8 +182,6 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_ssj_assert                 (duk_context* ctx);
-static duk_ret_t js_ssj_trace                  (duk_context* ctx);
 static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_system_get_extensions      (duk_context* ctx);
@@ -327,6 +325,8 @@ static duk_ret_t js_SoundStream_buffer         (duk_context* ctx);
 static duk_ret_t js_SoundStream_play           (duk_context* ctx);
 static duk_ret_t js_SoundStream_pause          (duk_context* ctx);
 static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
+static duk_ret_t js_SSJ_assert                 (duk_context* ctx);
+static duk_ret_t js_SSJ_trace                  (duk_context* ctx);
 static duk_ret_t js_new_Surface                (duk_context* ctx);
 static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
@@ -507,8 +507,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_register_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_register_static_func(ctx, "ssj", "assert", js_ssj_assert);
-	api_register_static_func(ctx, "ssj", "trace", js_ssj_trace);
+	api_register_static_func(ctx, "SSJ", "assert", js_SSJ_assert);
+	api_register_static_func(ctx, "SSJ", "trace", js_SSJ_trace);
 	api_register_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
 	api_register_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
 	api_register_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
@@ -1005,7 +1005,7 @@ js_require(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ssj_assert(duk_context* ctx)
+js_SSJ_assert(duk_context* ctx)
 {
 	const char* filename;
 	int         line_number;
@@ -1055,7 +1055,7 @@ js_ssj_assert(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ssj_trace(duk_context* ctx)
+js_SSJ_trace(duk_context* ctx)
 {
 	int num_items;
 

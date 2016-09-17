@@ -20,15 +20,15 @@ var rng = new RNG();
 
 function chance(odds)
 {
-    ssj.assert(typeof odds === 'number', "odds must be a number");
+    SSJ.assert(typeof odds === 'number', "odds must be a number");
 
     return odds > rng.next();
 }
 
 function discrete(min, max)
 {
-    ssj.assert(typeof min === 'number', "min must be a number");
-    ssj.assert(typeof max === 'number', "max must be a number");
+    SSJ.assert(typeof min === 'number', "min must be a number");
+    SSJ.assert(typeof max === 'number', "max must be a number");
 
     min >>= 0;
     max >>= 0;
@@ -40,8 +40,8 @@ function discrete(min, max)
 normal.y = null;
 function normal(mean, sigma)
 {
-    ssj.assert(typeof mean === 'number', "mean must be a number");
-    ssj.assert(typeof sigma === 'number', "sigma must be a number");
+    SSJ.assert(typeof mean === 'number', "mean must be a number");
+    SSJ.assert(typeof sigma === 'number', "sigma must be a number");
 
     // normal deviates are calculated in pairs.  we return the first one
     // immediately, and save the second to be returned on the next call to
@@ -65,7 +65,7 @@ function normal(mean, sigma)
 
 function sample(array)
 {
-    ssj.assert(Array.isArray(array), "argument must be an array");
+    SSJ.assert(Array.isArray(array), "argument must be an array");
 
     var index = discrete(0, array.length - 1);
     return array[index];
@@ -76,8 +76,8 @@ function string(length)
     if (length === void null)
         length = 10;
 
-    ssj.assert(typeof length === 'number', "length must be a number");
-    ssj.assert(length > 0, "length must be greater than zero");
+    SSJ.assert(typeof length === 'number', "length must be a number");
+    SSJ.assert(length > 0, "length must be greater than zero");
 
     length >>= 0;
     var string = "";
@@ -90,8 +90,8 @@ function string(length)
 
 function uniform(mean, variance)
 {
-    ssj.assert(typeof mean === 'number', "mean must be a number");
-    ssj.assert(typeof variance === 'number', "variance must be a number");
+    SSJ.assert(typeof mean === 'number', "mean must be a number");
+    SSJ.assert(typeof variance === 'number', "variance must be a number");
     
     var error = variance * 2.0 * (0.5 - rng.next());
     return mean + error;
