@@ -1,21 +1,21 @@
 /**
- *  miniRT terminal CommonJS module
+ *  miniRT term CommonJS module
  *  (c) 2015-2016 Fat Cerberus
 **/
 
 'use strict';
 module.exports =
 {
-	isVisible:  isVisible,
-	hide:       hide,
-	log:        log,
-	register:   register,
-	show:       show,
-	unregister: unregister,
+	isVisible: isVisible,
+	define:    define,
+	hide:      hide,
+	log:       log,
+	show:      show,
+	undefine:  undefine,
 };
 
-const link	  = require('link');
-const prim	  = require('prim');
+const link    = require('link');
+const prim    = require('prim');
 const scenes  = require('scenes');
 const threads = require('threads');
 
@@ -45,7 +45,7 @@ threads.create({
 	getInput: getInput,
 }, 100);
 
-log(system.game.name + " Debug Console");
+log(system.game.name + " miniRT Console");
 log(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
 log("");
 
@@ -221,7 +221,7 @@ function log(/*...*/)
 	console.log(buffer[lineInBuffer]);
 }
 
-function register(name, that, methods)
+function define(name, that, methods)
 {
 	for (var instruction in methods) {
 		commands.push({
@@ -241,7 +241,7 @@ function show()
 		.run();
 }
 
-function unregister(name)
+function undefine(name)
 {
 	commands = link(commands)
 		.where(function(command) { return command.entity != name; })
