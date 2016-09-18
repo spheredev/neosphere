@@ -182,6 +182,8 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
+static duk_ret_t js_SSJ_assert                 (duk_context* ctx);
+static duk_ret_t js_SSJ_trace                  (duk_context* ctx);
 static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_system_get_extensions      (duk_context* ctx);
@@ -209,13 +211,13 @@ static duk_ret_t js_fs_rename                  (duk_context* ctx);
 static duk_ret_t js_fs_resolve                 (duk_context* ctx);
 static duk_ret_t js_fs_rmdir                   (duk_context* ctx);
 static duk_ret_t js_fs_unlink                  (duk_context* ctx);
-static duk_ret_t js_kb_get_capsLock            (duk_context* ctx);
-static duk_ret_t js_kb_get_numLock             (duk_context* ctx);
-static duk_ret_t js_kb_get_scrollLock          (duk_context* ctx);
-static duk_ret_t js_kb_clearQueue              (duk_context* ctx);
-static duk_ret_t js_kb_getChar                 (duk_context* ctx);
-static duk_ret_t js_kb_getKey                  (duk_context* ctx);
-static duk_ret_t js_kb_isPressed               (duk_context* ctx);
+static duk_ret_t js_keyboard_get_capsLock      (duk_context* ctx);
+static duk_ret_t js_keyboard_get_numLock       (duk_context* ctx);
+static duk_ret_t js_keyboard_get_scrollLock    (duk_context* ctx);
+static duk_ret_t js_keyboard_clearQueue        (duk_context* ctx);
+static duk_ret_t js_keyboard_getChar           (duk_context* ctx);
+static duk_ret_t js_keyboard_getKey            (duk_context* ctx);
+static duk_ret_t js_keyboard_isPressed         (duk_context* ctx);
 static duk_ret_t js_mouse_get_x                (duk_context* ctx);
 static duk_ret_t js_mouse_get_y                (duk_context* ctx);
 static duk_ret_t js_mouse_clearQueue           (duk_context* ctx);
@@ -325,8 +327,6 @@ static duk_ret_t js_SoundStream_buffer         (duk_context* ctx);
 static duk_ret_t js_SoundStream_play           (duk_context* ctx);
 static duk_ret_t js_SoundStream_pause          (duk_context* ctx);
 static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
-static duk_ret_t js_SSJ_assert                 (duk_context* ctx);
-static duk_ret_t js_SSJ_trace                  (duk_context* ctx);
 static duk_ret_t js_new_Surface                (duk_context* ctx);
 static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
@@ -536,13 +536,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_static_func(ctx, "fs", "resolve", js_fs_resolve);
 	api_register_static_func(ctx, "fs", "rmdir", js_fs_rmdir);
 	api_register_static_func(ctx, "fs", "unlink", js_fs_unlink);
-	api_register_static_prop(ctx, "keyboard", "capsLock", js_kb_get_capsLock, NULL);
-	api_register_static_prop(ctx, "keyboard", "numLock", js_kb_get_numLock, NULL);
-	api_register_static_prop(ctx, "keyboard", "scrollLock", js_kb_get_scrollLock, NULL);
-	api_register_static_func(ctx, "keyboard", "clearQueue", js_kb_clearQueue);
-	api_register_static_func(ctx, "keyboard", "getChar", js_kb_getChar);
-	api_register_static_func(ctx, "keyboard", "getKey", js_kb_getKey);
-	api_register_static_func(ctx, "keyboard", "isPressed", js_kb_isPressed);
+	api_register_static_prop(ctx, "keyboard", "capsLock", js_keyboard_get_capsLock, NULL);
+	api_register_static_prop(ctx, "keyboard", "numLock", js_keyboard_get_numLock, NULL);
+	api_register_static_prop(ctx, "keyboard", "scrollLock", js_keyboard_get_scrollLock, NULL);
+	api_register_static_func(ctx, "keyboard", "clearQueue", js_keyboard_clearQueue);
+	api_register_static_func(ctx, "keyboard", "getChar", js_keyboard_getChar);
+	api_register_static_func(ctx, "keyboard", "getKey", js_keyboard_getKey);
+	api_register_static_func(ctx, "keyboard", "isPressed", js_keyboard_isPressed);
 	api_register_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
 	api_register_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
 	api_register_static_func(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
@@ -1400,35 +1400,35 @@ js_fs_unlink(duk_context* ctx)
 }
 
 static duk_ret_t
-js_kb_get_capsLock(duk_context* ctx)
+js_keyboard_get_capsLock(duk_context* ctx)
 {
 	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
 	return 1;
 }
 
 static duk_ret_t
-js_kb_get_numLock(duk_context* ctx)
+js_keyboard_get_numLock(duk_context* ctx)
 {
 	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_NUMLOCK));
 	return 1;
 }
 
 static duk_ret_t
-js_kb_get_scrollLock(duk_context* ctx)
+js_keyboard_get_scrollLock(duk_context* ctx)
 {
 	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_SCROLLLOCK));
 	return 1;
 }
 
 static duk_ret_t
-js_kb_clearQueue(duk_context* ctx)
+js_keyboard_clearQueue(duk_context* ctx)
 {
 	kb_clear_queue();
 	return 0;
 }
 
 static duk_ret_t
-js_kb_getChar(duk_context* ctx)
+js_keyboard_getChar(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int keycode = duk_require_int(ctx, 0);
@@ -1491,7 +1491,7 @@ js_kb_getChar(duk_context* ctx)
 }
 
 static duk_ret_t
-js_kb_getKey(duk_context* ctx)
+js_keyboard_getKey(duk_context* ctx)
 {
 	if (kb_queue_len() > 0)
 		duk_push_int(ctx, kb_get_key());
@@ -1501,7 +1501,7 @@ js_kb_getKey(duk_context* ctx)
 }
 
 static duk_ret_t
-js_kb_isPressed(duk_context* ctx)
+js_keyboard_isPressed(duk_context* ctx)
 {
 	int keycode;
 
