@@ -1,3 +1,13 @@
+minisphere (4.2.1) trusty; urgency=low
+
+  * The `ssj` global is now called `SSJ`, to align with usual JavaScript naming
+    conventions for namespace-like objects.
+  * The `terminal` standard library module is now called `term`.
+  * Passing an invalid argument to a miniRT `random` module function will now
+    result in a hard `AssertionError`, rather than just a debugger trap.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 21 Sep 2016 00:00:00 -0500
+
 minisphere (4.2.0) trusty; urgency=low
 
   * Adds native joystick support to the Sphere v2 API.  Previously, using a

@@ -1,6 +1,16 @@
 minisphere Changelog
 ====================
 
+v4.2.1 - September 21, 2016
+---------------------------
+
+* The `ssj` global is now called `SSJ`, to align with usual JavaScript naming
+  conventions for namespace-like objects.
+* The `terminal` standard library module is now called `term`.
+* Passing an invalid argument to a miniRT `random` module function will now
+  result in a hard `AssertionError`, rather than just a debugger trap.
+
+
 v4.2.0 - September 14, 2016
 ---------------------------
 
