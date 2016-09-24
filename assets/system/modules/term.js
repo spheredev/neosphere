@@ -6,11 +6,10 @@
 'use strict';
 module.exports =
 {
-	isVisible: isVisible,
+	get visible() { return visible.yes; },
+	set visible(value) { value ? _show() : _hide(); },
 	define:    define,
-	hide:      hide,
 	log:       log,
-	show:      show,
 	undefine:  undefine,
 };
 
@@ -105,13 +104,13 @@ function executeCommand(command)
 function getInput()
 {
 	if (!wasKeyDown && keyboard.isPressed(Key.Tilde)) {
-		if (!isVisible())
-			show();
+		if (!visible.yes)
+			_show();
 		else
-			hide();
+			_hide();
 	}
 	wasKeyDown = keyboard.isPressed(Key.Tilde);
-	if (isVisible()) {
+	if (visible.yes) {
 		var mouseEvent = mouse.getEvent();
 		var wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
 		var wheelDown = mouseEvent !== null && mouseEvent.key == MouseKey.WheelDown;
@@ -196,19 +195,6 @@ function update()
 	return true;
 }
 
-function isVisible()
-{
-	return visible.yes;
-}
-
-function hide()
-{
-	new scenes.Scene()
-		.tween(visible, 0.25, 'easeInQuad', { fade: 0.0 })
-		.call(function() { visible.yes = false; entry = ""; })
-		.run();
-}
-
 function log(/*...*/)
 {
 	var lineInBuffer = nextLine % bufferSize;
@@ -233,17 +219,25 @@ function define(name, that, methods)
 	}
 }
 
-function show()
-{
-	new scenes.Scene()
-		.tween(visible, 0.25, 'easeOutQuad', { fade: 1.0 })
-		.call(function() { visible.yes = true; })
-		.run();
-}
-
 function undefine(name)
 {
 	commands = link(commands)
 		.where(function(command) { return command.entity != name; })
 		.toArray();
+}
+
+function _hide()
+{
+	new scenes.Scene()
+		.tween(visible, 0.25, 'easeInQuad', { fade: 0.0 })
+		.call(function() { visible.yes = false; entry = ""; })
+		.run();
+}
+
+function _show()
+{
+	new scenes.Scene()
+		.tween(visible, 0.25, 'easeOutQuad', { fade: 1.0 })
+		.call(function() { visible.yes = true; })
+		.run();
 }

@@ -574,24 +574,11 @@ using the tilde key (`~`).
 
     const terminal = require('terminal');
 
-terminal.isOpen();
+term.visible [read/write]
 
-    `true` if the console is currently visible to the player.
+    Gets or sets whether the console is visible to the player.
 
-terminal.close();
-
-    Closes the console, hiding it from view of the player.
-
-terminal.log(text[, text2[, ...]]);
-
-    Logs a line of text to the console.  Passing more than one value will
-    cause the strings to be separated with chevrons (`>>`).
-
-terminal.open();
-
-    Opens the console, making it visible to the player.
-
-terminal.register(objectName, thisObj, commands);
+term.define(objectName, thisObj, commands);
 
     Registers an object and a set of commands with the console.  `commands` is
     an object providing the names and implementations of the commands being
@@ -601,25 +588,32 @@ terminal.register(objectName, thisObj, commands);
     specifies a `this` binding to use when calling a command function.
 
     As this API is complex and difficult to explain, an example might help
-    illuminate things.  An example console.register() call might look something
-    like this:
+    illuminate things.  A sample term.define() call might look something like
+    this:
 
-        console.register('sound', null, {
+        term.define('sound', null, {
             'play': function(filename) {
-                if (DoesFileExist(filename)) new Sound(filename).play();
+                if (fs.exists(filename)) {
+					new Sound(filename).play(Mixer.Default);
+				}
             }
         });
 
-    The player could then type `sound play sounds/munch.wav` into the console to
-    play that sound (assuming it exists).  Note that if an error is thrown while
-    processing a command, the console will not catch it.  Games should perform
-    some form of error checking in their command functions to prevent the player
-    from destabilizing the game.
+    The player could then type `sound play sounds/munch.wav` into the console
+    to play that sound (assuming it exists).  Note that if an error is thrown
+    while processing a command, the console will not catch it.  Games should
+    perform some form of error checking in their command functions to prevent
+    the player from destabilizing the game.
 
-terminal.unregister(objectName);
+term.log(text[, text2[, ...]]);
+
+    Logs a line of text to the console.  Passing more than one value will
+    cause the strings to be separated with chevrons (`>>`).
+
+term.undefine(objectName);
 
     Unregisters all commands previously registered under `objectName`.  See
-    `console.register()` below for more information.  Note: It is not currently
+    `term.define()` for more information.  Note: It is not currently
     possible to unregister individual commands.
 
 
