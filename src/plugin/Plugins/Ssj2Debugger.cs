@@ -116,8 +116,8 @@ namespace minisphere.Gdk.Plugins
                 Panes.Errors.Clear();
                 Panes.Inspector.Clear();
 
-                Panes.Console.Print(string.Format("SSJ2 " + plugin.Version + " minisphere GUI Debugger"));
-                Panes.Console.Print(string.Format("a graphical JS debugger for Sphere Studio"));
+                Panes.Console.Print(string.Format("SSJ Blue " + plugin.Version + " Sphere JavaScript debugger"));
+                Panes.Console.Print(string.Format("a graphical stepping debugger for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2015-2016 Fat Cerberus"));
                 Panes.Console.Print("");
             }), null);

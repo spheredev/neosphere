@@ -163,7 +163,7 @@
             this.Name = "ObjectViewer";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "SSJ2 Object Viewer";
+            this.Text = "JavaScript Object Viewer";
             this.Load += new System.EventHandler(this.this_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
