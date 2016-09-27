@@ -1016,7 +1016,8 @@ js_SSJ_assert(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	result = duk_to_boolean(ctx, 0);
-	message = duk_require_string(ctx, 1);
+	message = num_args >= 2 ? duk_require_string(ctx, 1)
+		: "assertion failed";
 
 	if (!result) {
 		// get the offending script and line number from the call stack

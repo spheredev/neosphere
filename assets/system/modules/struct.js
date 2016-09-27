@@ -11,7 +11,8 @@ module.exports =
 	Enum: Enum
 };
 
-const link = require('link');
+const assert = require('assert');
+const link   = require('link');
 
 function load(filename, schema)
 {
@@ -90,22 +91,28 @@ function _readField(stream, fieldType, data)
 			}
 			break;
 		case 'bool':
-			value = stream.readUInt(1) != 0;
+			var view = new DataView(stream.read(1));
+			value = view.getUint8(0) != 0;
 			break;
 		case 'double':
-			value = stream.readDouble();
+			var view = new DataView(stream.read(8));
+			value = view.getFloat64(0);
 			break;
 		case 'doubleLE':
-			value = stream.readDouble(true);
+			var view = new DataView(stream.read(8));
+			value = view.getFloat64(0, true);
 			break;
 		case 'float':
-			value = stream.readFloat();
+			var view = new DataView(stream.read(4));
+			value = view.getFloat32(0);
 			break;
 		case 'floatLE':
-			value = stream.readFloat(true);
+			var view = new DataView(stream.read(4));
+			value = view.getFloat32(0, true);
 			break;
 		case 'fstring':
-			value = stream.readString(dataSize);
+			var bytes = stream.read(dataSize);
+			value = new TextDecoder('utf-8').decode(bytes);
 			break;
 		case 'image':
 			var width = _fixup(fieldType.width, data);
@@ -116,32 +123,35 @@ function _readField(stream, fieldType, data)
 			value = new Image(width, height, pixelData);
 			break;
 		case 'int':
-			value = stream.readInt(dataSize);
+			value = _readInt(stream, dataSize, true, false);
 			break;
 		case 'intLE':
-			value = stream.readInt(dataSize, true);
+			value = _readInt(stream, dataSize, true, true);
 			break;
 		case 'object':
 			value = _readObject(stream, fieldType.schema, data);
 			break;
 		case 'pstring':
-			value = stream.readPString(dataSize);
+			var length = _readInt(stream, dataSize, false, false);
+			var bytes = stream.read(length);
+			value = new TextDecoder('utf-8').decode(bytes);
 			break;
 		case 'pstringLE':
-			value = stream.readPString(dataSize, true);
+			var length = _readInt(stream, dataSize, false, true);
+			var bytes = stream.read(length);
+			value = new TextDecoder('utf-8').decode(bytes);
 			break;
 		case 'raw':
 			value = stream.read(dataSize);
 			break;
 		case 'reserved':
-			var buf = stream.read(dataSize);
-			value = undefined;
+			stream.read(dataSize);
 			break;
 		case 'uint':
-			value = stream.readUInt(dataSize);
+			value = _readInt(stream, dataSize, false, false);
 			break;
 		case 'uintLE':
-			value = stream.readUInt(dataSize, true);
+			value = _readInt(stream, dataSize, false, true);
 			break;
 		default:
 			throw new TypeError("unknown field type `" + fieldType.type + "` in schema");
@@ -170,6 +180,33 @@ function _readField(stream, fieldType, data)
 	if (!isValidValue) {
 		throw new Error("binary field `" + fieldType.id + "` is invalid");
 	}
+	return value;
+}
+
+function _readInt(stream, size, signed, littleEndian)
+{
+	// variable size two's complement integer decoding algorithm stolen from
+	// Node.js.  this allows us to read integer values up to 48 bits in size.
+	
+	assert.ok(size >= 1 && size <= 6, "(u)int field size out of range");
+
+	var bytes = new Uint8Array(stream.read(size));
+	var mul = 1;
+	var value;
+	if (littleEndian) {
+		var ptr = 0;
+		value = bytes[ptr];
+		while (++ptr < size && (mul *= 0x100))
+			value += bytes[ptr] * mul;
+	}
+	else {
+		var ptr = size - 1;
+		value = bytes[ptr];
+		while (ptr > 0 && (mul *= 0x100))
+			value += bytes[--ptr] * mul;
+	}
+	if (signed && value > mul * 0x80)
+		value -= Math.pow(2, 8 * size);
 	return value;
 }
 
