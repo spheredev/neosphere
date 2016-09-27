@@ -44,9 +44,9 @@ utf8_decode(uint32_t* state, uint32_t* codep, uint8_t byte)
 size_t
 utf8_encode(uint32_t codep, uint8_t* buffer)
 {
-	// canonical UTF-8 encoder: code points above U+FFFF are encoded directly
-	// (i.e. not as surrogate pairs).  May emit up to 4 bytes.  Code points
-	// past U+10FFFF are not legal and will not be encoded.
+	// canonical UTF-8: code points above U+FFFF are encoded directly (i.e. not as
+	// surrogate pairs).  May emit up to 4 bytes per code point.  Surrogate code
+	// points and code points beyond U+10FFFF are not legal and will not be encoded.
 	
 	if (codep <= 0x007f) {
 		buffer[0] = (uint8_t)codep;
@@ -58,6 +58,8 @@ utf8_encode(uint32_t codep, uint8_t* buffer)
 		return 2;
 	}
 	else if (codep <= 0xffff) {
+		if (codep >= 0xd800 && codep <= 0xdfff)
+			return 0;  // don't encode surrogates
 		buffer[0] = (codep >> 12) + 0xe0;
 		buffer[1] = 0x80 + (codep >> 6 & 0x3f);
 		buffer[2] = 0x80 + (codep & 0x3f);
@@ -71,7 +73,7 @@ utf8_encode(uint32_t codep, uint8_t* buffer)
 		return 4;
 	}
 	else {
-		// illegal code point, don't encode anything
+		// not a legal Unicode code point, signal error
 		return 0;
 	}
 }
