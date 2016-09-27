@@ -1,4 +1,4 @@
-// utf8decode function (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+// utf8_decode function (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
 #include "unicode.h"
@@ -29,7 +29,7 @@ static const uint8_t utf8d[] =
 };
 
 uint32_t
-utf8decode(uint32_t* state, uint32_t* codep, uint8_t byte)
+utf8_decode(uint32_t* state, uint32_t* codep, uint8_t byte)
 {
 	uint32_t type = utf8d[byte];
 
@@ -42,17 +42,36 @@ utf8decode(uint32_t* state, uint32_t* codep, uint8_t byte)
 }
 
 size_t
-utf8len(const char* string)
+utf8_encode(uint32_t codep, uint8_t* buffer)
 {
-	uint8_t  byte;
-	uint32_t cp;
-	size_t   length = 0;
-	uint32_t utf8state;
-
-	while ((byte = *string++) != '\0') {
-		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, byte) > UTF8_REJECT);
-		++length;
+	// canonical UTF-8 encoder: code points above U+FFFF are encoded directly
+	// (i.e. not as surrogate pairs).  May emit up to 4 bytes.  Code points
+	// past U+10FFFF are not legal and will not be encoded.
+	
+	if (codep <= 0x007f) {
+		buffer[0] = (uint8_t)codep;
+		return 1;
 	}
-	return length;
+	else if (codep <= 0x07ff) {
+		buffer[0] = (codep >> 6) + 0xc0;
+		buffer[1] = 0x80 + (codep & 0x3f);
+		return 2;
+	}
+	else if (codep <= 0xffff) {
+		buffer[0] = (codep >> 12) + 0xe0;
+		buffer[1] = 0x80 + (codep >> 6 & 0x3f);
+		buffer[2] = 0x80 + (codep & 0x3f);
+		return 3;
+	}
+	else if (codep <= 0x10ffff) {
+		buffer[0] = (codep >> 18) + 0xf0;
+		buffer[1] = 0x80 + (codep >> 12 & 0x3f);
+		buffer[2] = 0x80 + (codep >> 6 & 0x3f);
+		buffer[3] = 0x80 + (codep & 0x3f);
+		return 4;
+	}
+	else {
+		// illegal code point, don't encode anything
+		return 0;
+	}
 }

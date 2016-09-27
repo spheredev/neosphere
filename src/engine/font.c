@@ -269,7 +269,7 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 	al_hold_bitmap_drawing(true);
 	for (;;) {
 		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, ch_byte = *text++) > UTF8_REJECT);
+		while (utf8_decode(&utf8state, &cp, ch_byte = *text++) > UTF8_REJECT);
 		if (utf8state == UTF8_REJECT && ch_byte == '\0')
 			--text;  // don't eat NUL terminator
 		cp = cp == 0x20AC ? 128
@@ -333,7 +333,7 @@ font_get_width(const font_t* font, const char* text)
 
 	for (;;) {
 		utf8state = UTF8_ACCEPT;
-		while (utf8decode(&utf8state, &cp, ch_byte = *text++) > UTF8_REJECT);
+		while (utf8_decode(&utf8state, &cp, ch_byte = *text++) > UTF8_REJECT);
 		if (utf8state == UTF8_REJECT && ch_byte == '\0')
 			--text;  // don't eat NUL terminator
 		cp = cp == 0x20AC ? 128
@@ -413,7 +413,7 @@ wraptext_new(const char* text, const font_t* font, int width)
 	p = text;
 	do {
 		utf8state = UTF8_ACCEPT; start = p;
-		while (utf8decode(&utf8state, &cp, ch_byte = *p++) > UTF8_REJECT);
+		while (utf8_decode(&utf8state, &cp, ch_byte = *p++) > UTF8_REJECT);
 		if (utf8state == UTF8_REJECT && ch_byte == '\0')
 			--p;  // don't eat NUL terminator
 		ch_size = p - start;

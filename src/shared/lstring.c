@@ -332,7 +332,7 @@ lstr_from_buf(const char* buffer, size_t length)
 	// check that the string isn't already UTF-8
 	p_src = buffer;
 	for (i = 0; i < length; ++i) {
-		if (utf8decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
+		if (utf8_decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
 			break;
 	}
 
