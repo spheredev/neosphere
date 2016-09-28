@@ -8,10 +8,11 @@
 exports.Log = Log;
 function Log(fileName)
 {
+	var _encoder = new TextEncoder();
 	var _file = fs.open(fileName, 'at');
 	var _groups = [];
 	var timestamp = new Date().toISOString();
-	_file.writeString("\nLOG FILE OPENED: " + timestamp + "\n");
+	_file.write(_encoder.encode("\nLOG FILE OPENED: " + timestamp + "\n"));
 	
 	this.beginGroup = beginGroup;
 	function beginGroup(text)
@@ -32,9 +33,9 @@ function Log(fileName)
 	{
 		var timestamp = new Date().toISOString();
 		var line = text.toString() + "\n";
-		_file.writeString(timestamp + " .. ");
+		_file.write(_encoder.encode(timestamp + " .. "));
 		for (var i = 0; i < _groups.length; ++i)
-			_file.writeString("  ");
-		_file.writeString(text.toString() + "\n");
+			_file.write(_encoder.encode("  "));
+		_file.write(_encoder.encode(text.toString() + "\n"));
 	}
 }

@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v4.2.2 - TBD
+------------
+
+* Adds a new property, `term.visible` to the `term` module and removes the
+  `.show()` and `.hide()` methods.
+* Fixes the `struct` and `logger` modules, which were unintentionally broken by
+  the changes in 4.2.0.
+
 v4.2.1 - September 21, 2016
 ---------------------------
 
@@ -9,7 +17,6 @@ v4.2.1 - September 21, 2016
 * The `terminal` standard library module is now called `term`.
 * Passing an invalid argument to a miniRT `random` module function will now
   result in a hard `AssertionError`, rather than just a debugger trap.
-
 
 v4.2.0 - September 14, 2016
 ---------------------------

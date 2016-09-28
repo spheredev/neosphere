@@ -3493,7 +3493,9 @@ js_TextEncoder_encode(duk_context* ctx)
 	if (num_args >= 1)
 		input = duk_require_lstring(ctx, 0, &input_len);
 
-	// this is not standards compliant, Duktape strings are CESU-8
+	// FIXME: this is not standards compliant.  Duktape strings are CESU-8 encoded,
+	//        but the Encoding standard requires canonical UTF-8.  this needs to be
+	//        fixed, preferably sooner rather than later.
 	buffer = duk_push_fixed_buffer(ctx, input_len);
 	memcpy(buffer, input, input_len);
 	duk_push_buffer_object(ctx, -1, 0, input_len, DUK_BUFOBJ_UINT8ARRAY);

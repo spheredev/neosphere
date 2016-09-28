@@ -562,17 +562,17 @@ struct.read(stream, schema);
     require multiple struct.read() calls using indepedent schemas.
 
 
-`terminal` Module
------------------
+`term` Module
+-------------
 
-The terminal module allows you to add a text-based debug console to your game.
+The term module allows you to add a text-based debug console to your game.
 miniRT provides a full command parser, so all your game is responsible for is
 providing the names and implementations of supported terminal commands.
 
 During gameplay, if the game allows it, the console may be shown and hidden
 using the tilde key (`~`).
 
-    const terminal = require('terminal');
+    const term = require('term');
 
 term.visible [read/write]
 
