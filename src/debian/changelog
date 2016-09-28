@@ -1,3 +1,12 @@
+minisphere (4.2.2) trusty; urgency=low
+
+  * Adds a new property, `term.visible` to the `term` module and removes the
+    `.show()` and `.hide()` methods.
+  * Fixes the `struct` and `logger` modules, which were unintentionally broken by
+    the changes in 4.2.0.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 28 Sep 2016 00:00:00 -0500
+
 minisphere (4.2.1) trusty; urgency=low
 
   * The `ssj` global is now called `SSJ`, to align with usual JavaScript naming

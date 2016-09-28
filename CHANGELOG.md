@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.2.2 - TBD
-------------
+v4.2.2 - September 28, 2016
+---------------------------
 
 * Adds a new property, `term.visible` to the `term` module and removes the
   `.show()` and `.hide()` methods.
