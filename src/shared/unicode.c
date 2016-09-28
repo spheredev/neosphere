@@ -73,7 +73,7 @@ utf8_encode(uint32_t codep, uint8_t* buffer)
 		return 4;
 	}
 	else {
-		// not a legal Unicode code point, signal error
+		// not a legal Unicode code point, don't encode
 		return 0;
 	}
 }

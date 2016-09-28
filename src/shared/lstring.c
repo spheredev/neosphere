@@ -14,8 +14,8 @@ struct lstring
 	char*  cstr;
 };
 
-// the Windows-1252 codepage
-static uint32_t cp1252[256] =
+// map CP-1252 codepage to Unicode
+static uint16_t cp1252[256] =
 {
 	(uint32_t) 0x0000,
 	(uint32_t) 0x0001,
@@ -318,10 +318,9 @@ lstr_vnewf(const char* fmt, va_list args)
 lstring_t*
 lstr_from_buf(const char* buffer, size_t length)
 {
-	// courtesy of Sami Vaarala, adapted for use in minisphere.  this function
-	// converts CP-1252 encoded text to UTF-8.  as Duktape will only accept UTF-8
-	// encoded source code, this preprocessing is necessary for full compatibility
-	// with Sphere v1 scripts.
+	// this function converts plain text in CP-1252 to UTF-8.  as the Duktape API
+	// will only accept UTF-8 strings, this preprocessing is necessary for full
+	// compatibility with Sphere v1 scripts.
 
 	uint32_t            cp;
 	unsigned char*      out_buf;
@@ -347,20 +346,10 @@ lstr_from_buf(const char* buffer, size_t length)
 		p = out_buf;
 		p_src = buffer;
 		for (i = 0; i < length; ++i) {
-			cp = cp1252[*p_src++] & 0xffffUL;
-			if (cp < 0x80)
-				*p++ = cp;
-			else if (cp < 0x800UL) {
-				*p++ = (unsigned char)(0xc0 + ((cp >> 6) & 0x1f));
-				*p++ = (unsigned char)(0x80 + (cp & 0x3f));
-			}
-			else {
-				*p++ = (unsigned char)(0xe0 + ((cp >> 12) & 0x0f));
-				*p++ = (unsigned char)(0x80 + ((cp >> 6) & 0x3f));
-				*p++ = (unsigned char)(0x80 + (cp & 0x3f));
-			}
+			cp = cp1252[*p_src++];
+			p += utf8_encode(cp, p);
 		}
-		*p = '\0';  // nifty NUL terminator
+		*p = '\0';  // NUL terminator
 		length = p - out_buf;
 	}
 	else {
@@ -369,12 +358,20 @@ lstr_from_buf(const char* buffer, size_t length)
 			return NULL;
 		out_buf = (char*)string + sizeof(lstring_t);
 		memcpy(out_buf, buffer, length);
-		out_buf[length] = '\0';  // nifty NUL terminator
+		out_buf[length] = '\0';  // NUL terminator
 	}
 
 	string->cstr = out_buf;
 	string->length = length;
 	return string;
+}
+
+lstring_t*
+lstr_from_cesu8(uint8_t* buffer, size_t length)
+{
+	// create an lstring (UTF-8) from CESU-8 encoded text.
+
+	return NULL;
 }
 
 void
