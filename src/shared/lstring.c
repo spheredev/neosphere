@@ -318,7 +318,10 @@ lstr_vnewf(const char* fmt, va_list args)
 lstring_t*
 lstr_from_buf(const char* buffer, size_t length)
 {
-	// courtesy of Sami Vaarala, adapted for use in minisphere.
+	// courtesy of Sami Vaarala, adapted for use in minisphere.  this function
+	// converts CP-1252 encoded text to UTF-8.  as Duktape will only accept UTF-8
+	// encoded source code, this preprocessing is necessary for full compatibility
+	// with Sphere v1 scripts.
 
 	uint32_t            cp;
 	unsigned char*      out_buf;
@@ -329,7 +332,7 @@ lstr_from_buf(const char* buffer, size_t length)
 
 	size_t i;
 
-	// check that the string isn't already UTF-8
+	// check that the string isn't already valid UTF-8
 	p_src = buffer;
 	for (i = 0; i < length; ++i) {
 		if (utf8_decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
@@ -357,16 +360,16 @@ lstr_from_buf(const char* buffer, size_t length)
 				*p++ = (unsigned char)(0x80 + (cp & 0x3f));
 			}
 		}
-		*p = '\0';  // fake NUL terminator
+		*p = '\0';  // nifty NUL terminator
 		length = p - out_buf;
 	}
 	else {
-		// string is already UTF-8, copy buffer as-is
+		// string is valid UTF-8, copy buffer as-is
 		if (!(string = malloc(sizeof(lstring_t) + length + 1)))
 			return NULL;
 		out_buf = (char*)string + sizeof(lstring_t);
 		memcpy(out_buf, buffer, length);
-		out_buf[length] = '\0';  // fake NUL terminator
+		out_buf[length] = '\0';  // nifty NUL terminator
 	}
 
 	string->cstr = out_buf;
