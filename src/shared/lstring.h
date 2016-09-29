@@ -2,6 +2,7 @@
 #define MINISPHERE__LSTRING_H__INCLUDED
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -12,6 +13,7 @@ lstring_t*  lstr_newf       (const char* fmt, ...);
 lstring_t*  lstr_vnewf      (const char* fmt, va_list args);
 lstring_t*  lstr_from_buf   (const char* buffer, size_t length);
 lstring_t*  lstr_from_cesu8 (const uint8_t* text, size_t length);
+lstring_t*  lstr_from_utf8  (const uint8_t* text, size_t length, bool fatal_mode);
 void        lstr_free       (lstring_t* string);
 const char* lstr_cstr       (const lstring_t* string);
 int         lstr_cmp        (const lstring_t* string1, const lstring_t* string2);

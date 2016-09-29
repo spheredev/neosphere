@@ -3454,15 +3454,25 @@ static duk_ret_t
 js_TextDecoder_decode(duk_context* ctx)
 {
 	const char* input = "";
-	duk_size_t  input_len = 0;
+	duk_size_t  length = 0;
 	int         num_args;
+	lstring_t*  string;
+	bool        streaming = false;
 
 	num_args = duk_get_top(ctx);
 	if (num_args >= 1)
-		input = duk_require_buffer_data(ctx, 0, &input_len);
+		input = duk_require_buffer_data(ctx, 0, &length);
+	if (num_args > 2) {
+		duk_require_object_coercible(ctx, 1);
+		if (duk_get_prop_string(ctx, 1, "stream"))
+			streaming = duk_require_boolean(ctx, -1);
+	}
 
-	// this is not standards compliant, Duktape strings are CESU-8
-	duk_push_lstring(ctx, input, input_len);
+	// use lstr_from_utf8() to pre-decode the string.  Duktape won't like us
+	// if we give it a malformed UTF-8 string.
+	string = lstr_from_utf8(input, length, false);
+	duk_push_lstring_t(ctx, string);
+	lstr_free(string);
 	return 1;
 }
 
@@ -3494,12 +3504,14 @@ js_TextEncoder_encode(duk_context* ctx)
 	if (num_args >= 1)
 		input = duk_require_lstring(ctx, 0, &input_len);
 
-	// re-encode Duktape string (CESU-8) to UTF-8
+	// re-encode Duktape string (CESU-8) into UTF-8...
 	utf8 = lstr_from_cesu8(input, input_len);
 	
+	// ...then stuff the output into a byte array and return it
 	buffer = duk_push_fixed_buffer(ctx, input_len);
 	memcpy(buffer, lstr_cstr(utf8), lstr_len(utf8));
 	duk_push_buffer_object(ctx, -1, 0, input_len, DUK_BUFOBJ_UINT8ARRAY);
+	lstr_free(utf8);
 	return 1;
 }
 

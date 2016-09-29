@@ -373,6 +373,8 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 	// the input is assumed to be mostly well-formed.  unpaired surrogates are replaced
 	// with U+FFFD.
 
+	const uint32_t REPLACEMENT = 0xFFFD;
+	
 	uint8_t        byte;
 	uint32_t       codep;
 	int            needed = 0;
@@ -414,8 +416,8 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 						utf16_hi = codep;
 					else {
 						// consecutive high surrogates, emit U+FFFD in their place
-						num_bytes += utf8_encode(0xfffd, &p_out);
-						num_bytes += utf8_encode(0xfffd, &p_out);
+						num_bytes += utf8_encode(REPLACEMENT, &p_out);
+						num_bytes += utf8_encode(REPLACEMENT, &p_out);
 						utf16_hi = 0x0000;
 					}
 				}
@@ -425,14 +427,14 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 					// proceed to decode it.
 					codep = utf16_hi != 0x0000
 						? 0x010000 + ((utf16_hi - 0xd800) << 10) + (codep - 0xdc00)
-						: 0xfffd;
+						: REPLACEMENT;
 					num_bytes += utf8_encode(codep, &p_out);
 					utf16_hi = 0x0000;
 				}
 				else {
 					// in case of an outstanding surrogate, clear it and emit U+FFFD.
 					if (utf16_hi != 0x0000)
-						num_bytes += utf8_encode(0xfffd, &p_out);
+						num_bytes += utf8_encode(REPLACEMENT, &p_out);
 					num_bytes += utf8_encode(codep, &p_out);
 					utf16_hi = 0x0000;
 				}
@@ -443,12 +445,90 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 		}
 	}
 	if (utf16_hi != 0x0000)  // outstanding surrogate?
-		num_bytes += utf8_encode(0xfffd, &p_out);
+		num_bytes += utf8_encode(REPLACEMENT, &p_out);
 	*p_out = '\0';  // NUL terminator
 
 	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
 	string->length = num_bytes;
 	return string;
+}
+
+lstring_t*
+lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
+{
+	// create a well-formed lstring from UTF-8 text which may be malformed.
+	// when an encoding error is encountered, it is handled according to the value of `fatal_mode`:
+	//     - if `fatal_mode` is true, conversion is aborted and the function returns NULL.
+	//     - otherwise the invalid sequence is replaced with FFFD.
+
+	const uint32_t REPLACEMENT = 0xFFFD;
+
+	uint8_t        byte;
+	uint32_t       codep;
+	int            needed = 0;
+	size_t         num_bytes = 0;
+	int            seen = 0;
+	lstring_t*     string;
+	const uint8_t* p_in;
+	uint8_t*       p_out;
+
+	// worst case scenario, every byte in the source is replaced with U+FFFD, which
+	// requires 3 bytes in UTF-8.
+	if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
+		return NULL;
+
+	p_in = text;
+	p_out = (uint8_t*)string + sizeof(lstring_t);
+	while (p_in < text + length) {
+		byte = *p_in++;
+		if (needed == 0) {
+			if (byte <= 0x7f)
+				num_bytes += utf8_encode(byte, &p_out);
+			else if (byte >= 0xc2 && byte <= 0xdf) {
+				needed = 1;
+				codep = byte & 0x1f;
+			}
+			else if (byte >= 0xe0 && byte <= 0xef) {
+				needed = 2;
+				codep = byte & 0xf;
+			}
+			else if (byte >= 0xf0 && byte <= 0xf4) {
+				needed = 3;
+				codep = byte & 0x7;
+			}
+			else {
+				if (fatal_mode)
+					goto abort;
+				else
+					num_bytes += utf8_encode(byte, &p_out);
+			}
+		}
+		else {
+			codep = (codep << 6) | (byte & 0x3f);
+			if (++seen == needed) {
+				if (codep >= 0xd800 && codep <= 0xdfff) {
+					if (fatal_mode)
+						goto abort;
+					else	
+						num_bytes += utf8_encode(REPLACEMENT, &p_out);
+				}
+				else
+					num_bytes += utf8_encode(codep, &p_out);
+				codep = 0x0000;
+				needed = 0;
+				seen = 0;
+			}
+		}
+	}
+	*p_out = '\0';  // NUL terminator
+
+	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
+	string->length = num_bytes;
+	return string;
+
+abort:
+	free(string);
+	return NULL;
 }
 
 void
