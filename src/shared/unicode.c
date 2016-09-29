@@ -42,34 +42,34 @@ utf8_decode(uint32_t* state, uint32_t* codep, uint8_t byte)
 }
 
 size_t
-utf8_encode(uint32_t codep, uint8_t* buffer)
+utf8_encode(uint32_t codep, uint8_t* *p_ptr)
 {
 	// canonical UTF-8: code points above U+FFFF are encoded directly (i.e. not as
 	// surrogate pairs).  May emit up to 4 bytes per code point.  Surrogate code
 	// points and code points beyond U+10FFFF are not legal and will not be encoded.
 	
 	if (codep <= 0x007f) {
-		buffer[0] = (uint8_t)codep;
+		*(*p_ptr)++ = (uint8_t)codep;
 		return 1;
 	}
 	else if (codep <= 0x07ff) {
-		buffer[0] = (codep >> 6) + 0xc0;
-		buffer[1] = 0x80 + (codep & 0x3f);
+		*(*p_ptr)++ = (codep >> 6) + 0xc0;
+		*(*p_ptr)++ = 0x80 + (codep & 0x3f);
 		return 2;
 	}
 	else if (codep <= 0xffff) {
 		if (codep >= 0xd800 && codep <= 0xdfff)
 			return 0;  // don't encode surrogates
-		buffer[0] = (codep >> 12) + 0xe0;
-		buffer[1] = 0x80 + (codep >> 6 & 0x3f);
-		buffer[2] = 0x80 + (codep & 0x3f);
+		*(*p_ptr)++ = (codep >> 12) + 0xe0;
+		*(*p_ptr)++ = 0x80 + (codep >> 6 & 0x3f);
+		*(*p_ptr)++ = 0x80 + (codep & 0x3f);
 		return 3;
 	}
 	else if (codep <= 0x10ffff) {
-		buffer[0] = (codep >> 18) + 0xf0;
-		buffer[1] = 0x80 + (codep >> 12 & 0x3f);
-		buffer[2] = 0x80 + (codep >> 6 & 0x3f);
-		buffer[3] = 0x80 + (codep & 0x3f);
+		*(*p_ptr)++ = (codep >> 18) + 0xf0;
+		*(*p_ptr)++ = 0x80 + (codep >> 12 & 0x3f);
+		*(*p_ptr)++ = 0x80 + (codep >> 6 & 0x3f);
+		*(*p_ptr)++ = 0x80 + (codep & 0x3f);
 		return 4;
 	}
 	else {

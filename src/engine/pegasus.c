@@ -3487,17 +3487,18 @@ js_TextEncoder_encode(duk_context* ctx)
 	void*       buffer;
 	const char* input = "";
 	duk_size_t  input_len = 0;
+	lstring_t*  utf8;
 	int         num_args;
 	
 	num_args = duk_get_top(ctx);
 	if (num_args >= 1)
 		input = duk_require_lstring(ctx, 0, &input_len);
 
-	// FIXME: this is not standards compliant.  Duktape strings are CESU-8 encoded,
-	//        but the Encoding standard requires canonical UTF-8.  this needs to be
-	//        fixed, preferably sooner rather than later.
+	// re-encode Duktape string (CESU-8) to UTF-8
+	utf8 = lstr_from_cesu8(input, input_len);
+	
 	buffer = duk_push_fixed_buffer(ctx, input_len);
-	memcpy(buffer, input, input_len);
+	memcpy(buffer, lstr_cstr(utf8), lstr_len(utf8));
 	duk_push_buffer_object(ctx, -1, 0, input_len, DUK_BUFOBJ_UINT8ARRAY);
 	return 1;
 }

@@ -331,7 +331,7 @@ lstr_from_buf(const char* buffer, size_t length)
 
 	size_t i;
 
-	// check that the string isn't already valid UTF-8
+	// check that the string isn't already UTF-8-encoded
 	p_src = buffer;
 	for (i = 0; i < length; ++i) {
 		if (utf8_decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
@@ -347,13 +347,13 @@ lstr_from_buf(const char* buffer, size_t length)
 		p_src = buffer;
 		for (i = 0; i < length; ++i) {
 			cp = cp1252[*p_src++];
-			p += utf8_encode(cp, p);
+			utf8_encode(cp, &p);
 		}
 		*p = '\0';  // NUL terminator
 		length = p - out_buf;
 	}
 	else {
-		// string is valid UTF-8, copy buffer as-is
+		// string is already UTF-8, copy buffer as-is
 		if (!(string = malloc(sizeof(lstring_t) + length + 1)))
 			return NULL;
 		out_buf = (char*)string + sizeof(lstring_t);
@@ -367,11 +367,88 @@ lstr_from_buf(const char* buffer, size_t length)
 }
 
 lstring_t*
-lstr_from_cesu8(uint8_t* buffer, size_t length)
+lstr_from_cesu8(const uint8_t* text, size_t length)
 {
-	// create an lstring (UTF-8) from CESU-8 encoded text.
+	// create an lstring (UTF-8) from CESU-8-encoded text.
+	// the input is assumed to be mostly well-formed.  unpaired surrogates are replaced
+	// with U+FFFD.
 
-	return NULL;
+	uint8_t        byte;
+	uint32_t       codep;
+	int            needed = 0;
+	size_t         num_bytes = 0;
+	int            seen = 0;
+	lstring_t*     string;
+	uint32_t       utf16_hi = 0x0000;
+	const uint8_t* p_in;
+	uint8_t*       p_out;
+
+	// conveniently for us, UTF-8 output size <= CESU-8 input size.
+	string = malloc(sizeof(lstring_t) + length + 1);
+	
+	p_in = text;
+	p_out = (uint8_t*)string + sizeof(lstring_t);
+	while (p_in < text + length) {
+		byte = *p_in++;
+		if (needed == 0) {
+			if (byte <= 0x7f)
+				num_bytes += utf8_encode(byte, &p_out);
+			else if (byte >= 0xc2 && byte <= 0xdf) {
+				needed = 1;
+				codep = byte & 0x1f;
+			}
+			else if (byte >= 0xe0 && byte <= 0xef) {
+				needed = 2;
+				codep = byte & 0xf;
+			}
+			else if (byte >= 0xf0 && byte <= 0xf4) {
+				needed = 3;
+				codep = byte & 0x7;
+			}
+		}
+		else {
+			codep = (codep << 6) | (byte & 0x3f);
+			if (++seen == needed) {
+				if (codep >= 0xd800 && codep <= 0xdbff) {
+					if (utf16_hi == 0x0000)
+						utf16_hi = codep;
+					else {
+						// consecutive high surrogates, emit U+FFFD in their place
+						num_bytes += utf8_encode(0xfffd, &p_out);
+						num_bytes += utf8_encode(0xfffd, &p_out);
+						utf16_hi = 0x0000;
+					}
+				}
+				else if (codep >= 0xdc00 && codep <= 0xdfff) {
+					// if we find a low surrogate without a corresponding high surrogate,
+					// replace it with U+FFFD.  otherwise we now have a surrogate pair and can
+					// proceed to decode it.
+					codep = utf16_hi != 0x0000
+						? 0x010000 + ((utf16_hi - 0xd800) << 10) + (codep - 0xdc00)
+						: 0xfffd;
+					num_bytes += utf8_encode(codep, &p_out);
+					utf16_hi = 0x0000;
+				}
+				else {
+					// in case of an outstanding surrogate, clear it and emit U+FFFD.
+					if (utf16_hi != 0x0000)
+						num_bytes += utf8_encode(0xfffd, &p_out);
+					num_bytes += utf8_encode(codep, &p_out);
+					utf16_hi = 0x0000;
+				}
+				codep = 0x0000;
+				needed = 0;
+				seen = 0;
+			}
+		}
+	}
+	if (utf16_hi != 0x0000)  // outstanding surrogate?
+		num_bytes += utf8_encode(0xfffd, &p_out);
+	*p_out = '\0';  // NUL terminator
+
+	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
+	string->length = num_bytes;
+	return string;
 }
 
 void
