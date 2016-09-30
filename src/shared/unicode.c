@@ -3,6 +3,7 @@
 
 #include "unicode.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -32,7 +33,7 @@ size_t
 cesu8_encode(uint32_t codep, uint8_t* *p_ptr)
 {
 	// CESU-8: code points above U+FFFF are encoded as a surrogate pair, like UTF-16.
-	// May emit up to 6 bytes per code point.  Surrogate code points themselves and code
+	// may emit up to 6 bytes per code point.  surrogate code points themselves and code
 	// points beyond U+10FFFF are not legal and will not be encoded.
 
 	uint32_t utf16_hi;
@@ -74,7 +75,7 @@ size_t
 utf8_encode(uint32_t codep, uint8_t* *p_ptr)
 {
 	// canonical UTF-8: code points above U+FFFF are encoded directly (i.e. not as
-	// surrogate pairs).  May emit up to 4 bytes per code point.  Surrogate code
+	// surrogate pairs).  may emit up to 4 bytes per code point.  surrogate code
 	// points and code points beyond U+10FFFF are not legal and will not be encoded.
 	
 	if (codep <= 0x007f) {

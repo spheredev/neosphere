@@ -106,7 +106,7 @@ fs_new(const char* game_path)
 	if (fs->name == NULL) {
 		if (sgm_text = sfs_fslurp(fs, "game.json", NULL, &sgm_size)) {
 			console_log(1, "parsing JSON manifest for sandbox #%u", s_next_sandbox_id);
-			fs->manifest = lstr_from_buf(sgm_text, sgm_size);
+			fs->manifest = lstr_from_cp1252(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
 			if (dukrub_safe_call(g_duk, duk_load_s2gm, 2, 1) != DUK_EXEC_SUCCESS) {
@@ -150,7 +150,7 @@ fs_new(const char* game_path)
 	
 	// load the source map
 	if (sourcemap_data = sfs_fslurp(fs, "source.json", NULL, &sourcemap_size))
-		fs->sourcemap = lstr_from_buf(sourcemap_data, sourcemap_size);
+		fs->sourcemap = lstr_from_cp1252(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
 
 	s_next_sandbox_id++;

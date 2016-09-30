@@ -54,7 +54,7 @@ evaluate_script(const char* filename, bool as_module)
 		source_name = get_source_name(path_cstr(path));
 		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
 			goto on_error;
-		source_text = lstr_from_buf(slurp, size);
+		source_text = lstr_from_cp1252(slurp, size);
 		free(slurp);
 
 		// ready for launch in T-10...9...*munch*

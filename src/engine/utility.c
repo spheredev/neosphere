@@ -85,7 +85,7 @@ read_lstring_raw(sfs_file_t* file, size_t length, bool trim_null)
 	buffer[length] = '\0';
 	if (trim_null)
 		length = strchr(buffer, '\0') - buffer;
-	string = lstr_from_buf(buffer, length);
+	string = lstr_from_cp1252(buffer, length);
 	free(buffer);
 	return string;
 
@@ -133,7 +133,7 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 	size_t      length;
 
 	buffer = duk_require_lstring(ctx, index, &length);
-	return lstr_from_buf(buffer, length);
+	return lstr_from_cp1252(buffer, length);
 }
 
 const char*

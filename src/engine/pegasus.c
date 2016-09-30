@@ -738,7 +738,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 	console_log(1, "initializing JS module `%s`", filename);
 
 	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
-	code_string = lstr_from_buf(source, source_size);
+	code_string = lstr_from_cp1252(source, source_size);
 	free(source);
 
 	// construct a module object for the new module
@@ -3468,8 +3468,6 @@ js_TextDecoder_decode(duk_context* ctx)
 			streaming = duk_require_boolean(ctx, -1);
 	}
 
-	// use lstr_from_utf8() to pre-decode the string.  Duktape won't like us
-	// if we give it a malformed UTF-8 string.
 	string = lstr_from_utf8(input, length, false);
 	duk_push_lstring_t(ctx, string);
 	lstr_free(string);
