@@ -28,6 +28,35 @@ static const uint8_t utf8d[] =
 	12,36,12,12,12,12,12,12,12,12,12,12, 
 };
 
+size_t
+cesu8_encode(uint32_t codep, uint8_t* *p_ptr)
+{
+	// CESU-8: code points above U+FFFF are encoded as a surrogate pair, like UTF-16.
+	// May emit up to 6 bytes per code point.  Surrogate code points themselves and code
+	// points beyond U+10FFFF are not legal and will not be encoded.
+
+	uint32_t utf16_hi;
+	uint32_t utf16_lo;
+
+	if (codep <= 0xffff)
+		return utf8_encode(codep, p_ptr);
+	else if (codep <= 0x10ffff) {
+		utf16_hi = 0xd800 + ((codep - 0x010000) >> 10);
+		utf16_lo = 0xdc00 + ((codep - 0x010000) & 0x3ff);
+		*(*p_ptr)++ = (utf16_hi >> 12) + 0xe0;
+		*(*p_ptr)++ = 0x80 + (utf16_hi >> 6 & 0x3f);
+		*(*p_ptr)++ = 0x80 + (utf16_hi & 0x3f);
+		*(*p_ptr)++ = (utf16_lo >> 12) + 0xe0;
+		*(*p_ptr)++ = 0x80 + (utf16_lo >> 6 & 0x3f);
+		*(*p_ptr)++ = 0x80 + (utf16_lo & 0x3f);
+		return 4;
+	}
+	else {
+		// not a legal Unicode code point, don't encode
+		return 0;
+	}
+}
+
 uint32_t
 utf8_decode(uint32_t* state, uint32_t* codep, uint8_t byte)
 {

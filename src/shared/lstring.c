@@ -456,10 +456,10 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 lstring_t*
 lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 {
-	// create a well-formed lstring from UTF-8 text which may be malformed.
+	// create an lstring from UTF-8 text which may be malformed.
 	// when an encoding error is encountered, it is handled according to the value of `fatal_mode`:
 	//     - if `fatal_mode` is true, conversion is aborted and the function returns NULL.
-	//     - otherwise the invalid sequence is replaced with FFFD.
+	//     - otherwise the invalid sequence of bytes is replaced with FFFD.
 
 	const uint32_t REPLACEMENT = 0xFFFD;
 
@@ -473,7 +473,7 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 	uint8_t*       p_out;
 
 	// worst case scenario, every byte in the source is replaced with U+FFFD, which
-	// requires 3 bytes in UTF-8.
+	// requires 3 bytes to encode.
 	if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 		return NULL;
 
@@ -498,19 +498,19 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 			}
 			else {
 				if (fatal_mode)
-					goto abort;
-				else
 					num_bytes += utf8_encode(byte, &p_out);
+				else
+					goto abort;
 			}
 		}
 		else {
 			codep = (codep << 6) | (byte & 0x3f);
 			if (++seen == needed) {
 				if (codep >= 0xd800 && codep <= 0xdfff) {
-					if (fatal_mode)
-						goto abort;
-					else	
+					if (!fatal_mode)
 						num_bytes += utf8_encode(REPLACEMENT, &p_out);
+					else
+						goto abort;
 				}
 				else
 					num_bytes += utf8_encode(codep, &p_out);
