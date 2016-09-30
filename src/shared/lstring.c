@@ -343,7 +343,7 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 		byte = *p_in++;
 		if (needed == 0) {
 			if (byte <= 0x7f)
-				num_bytes += utf8_encode(byte, &p_out);
+				num_bytes += utf8_emit(byte, &p_out);
 			else if (byte >= 0xc2 && byte <= 0xdf) {
 				needed = 1;
 				codep = byte & 0x1f;
@@ -365,8 +365,8 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 						utf16_hi = codep;
 					else {
 						// consecutive high surrogates, emit U+FFFD in their place
-						num_bytes += utf8_encode(REPLACEMENT, &p_out);
-						num_bytes += utf8_encode(REPLACEMENT, &p_out);
+						num_bytes += utf8_emit(REPLACEMENT, &p_out);
+						num_bytes += utf8_emit(REPLACEMENT, &p_out);
 						utf16_hi = 0x0000;
 					}
 				}
@@ -377,14 +377,14 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 					codep = utf16_hi != 0x0000
 						? 0x010000 + ((utf16_hi - 0xd800) << 10) + (codep - 0xdc00)
 						: REPLACEMENT;
-					num_bytes += utf8_encode(codep, &p_out);
+					num_bytes += utf8_emit(codep, &p_out);
 					utf16_hi = 0x0000;
 				}
 				else {
 					// in case of an outstanding surrogate, clear it and emit U+FFFD.
 					if (utf16_hi != 0x0000)
-						num_bytes += utf8_encode(REPLACEMENT, &p_out);
-					num_bytes += utf8_encode(codep, &p_out);
+						num_bytes += utf8_emit(REPLACEMENT, &p_out);
+					num_bytes += utf8_emit(codep, &p_out);
 					utf16_hi = 0x0000;
 				}
 				codep = 0x0000;
@@ -394,7 +394,7 @@ lstr_from_cesu8(const uint8_t* text, size_t length)
 		}
 	}
 	if (utf16_hi != 0x0000)  // outstanding surrogate?
-		num_bytes += utf8_encode(REPLACEMENT, &p_out);
+		num_bytes += utf8_emit(REPLACEMENT, &p_out);
 	*p_out = '\0';  // NUL terminator
 
 	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
@@ -411,21 +411,22 @@ lstr_from_cp1252(const char* text, size_t length)
 
 	uint32_t            cp;
 	unsigned char*      out_buf;
+	utf8_ret_t          ret;
 	lstring_t*          string;
-	uint32_t            utf8state = UTF8_ACCEPT;
+	utf8ctx_t*          utf8;
 	unsigned char       *p;
 	const unsigned char *p_src;
 
 	size_t i;
 
 	// check that the string isn't actually already UTF-8
-	p_src = text;
-	for (i = 0; i < length; ++i) {
-		if (utf8_decode(&utf8state, &cp, *p_src++) == UTF8_REJECT)
+	utf8 = utf8_decode((uint8_t*)text, length);
+	while (ret = utf8_next(utf8, &cp)) {
+		if (ret == UTF8_ERROR)
 			break;
 	}
 
-	if (utf8state != UTF8_ACCEPT) {
+	if (ret == UTF8_ERROR) {
 		// note: UTF-8 conversion may expand the string by up to 3x
 		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 			return NULL;
@@ -434,7 +435,7 @@ lstr_from_cp1252(const char* text, size_t length)
 		p_src = text;
 		for (i = 0; i < length; ++i) {
 			cp = cp1252[*p_src++];
-			utf8_encode(cp, &p);
+			utf8_emit(cp, &p);
 		}
 		*p = '\0';  // NUL terminator
 		length = p - out_buf;
@@ -483,7 +484,7 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 		byte = *p_in++;
 		if (needed == 0) {
 			if (byte <= 0x7f)
-				num_bytes += utf8_encode(byte, &p_out);
+				num_bytes += utf8_emit(byte, &p_out);
 			else if (byte >= 0xc2 && byte <= 0xdf) {
 				needed = 1;
 				codep = byte & 0x1f;
@@ -498,7 +499,7 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 			}
 			else {
 				if (fatal_mode)
-					num_bytes += utf8_encode(byte, &p_out);
+					num_bytes += utf8_emit(byte, &p_out);
 				else
 					goto abort;
 			}
@@ -508,12 +509,12 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 			if (++seen == needed) {
 				if (codep >= 0xd800 && codep <= 0xdfff) {
 					if (!fatal_mode)
-						num_bytes += utf8_encode(REPLACEMENT, &p_out);
+						num_bytes += utf8_emit(REPLACEMENT, &p_out);
 					else
 						goto abort;
 				}
 				else
-					num_bytes += utf8_encode(codep, &p_out);
+					num_bytes += utf8_emit(codep, &p_out);
 				codep = 0x0000;
 				needed = 0;
 				seen = 0;
