@@ -343,7 +343,7 @@ lstr_from_cp1252(const char* text, size_t length)
 		is_utf8 = false;
 
 	if (!is_utf8) {
-		// note: UTF-8 conversion may expand the string by up to 3x
+		// note: CESU-8 conversion may expand the string by up to 3x
 		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 			return NULL;
 		out_buf = (char*)string + sizeof(lstring_t);
@@ -351,13 +351,13 @@ lstr_from_cp1252(const char* text, size_t length)
 		p_src = text;
 		for (i = 0; i < length; ++i) {
 			codepoint = cp1252[*p_src++];
-			utf8_emit(codepoint, &p);
+			cesu8_emit(codepoint, &p);
 		}
 		*p = '\0';  // NUL terminator
 		length = p - out_buf;
 	}
 	else {
-		// string is already UTF-8, copy buffer as-is
+		// string is already UTF-8/CESU-8, copy buffer as-is
 		if (!(string = malloc(sizeof(lstring_t) + length + 1)))
 			return NULL;
 		out_buf = (char*)string + sizeof(lstring_t);
@@ -405,10 +405,10 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool strict, bool fatal_mode)
 		}
 		if (ret == UTF8_RETRY)
 			--p_in;
-		num_bytes += utf8_emit(codepoint, &p_out);
+		num_bytes += cesu8_emit(codepoint, &p_out);
 	}
 	if (utf8_decode_end(utf8) >= UTF8_ERROR)
-		num_bytes += utf8_emit(REPLACEMENT, &p_out);
+		num_bytes += cesu8_emit(REPLACEMENT, &p_out);
 	*p_out = '\0';  // NUL terminator
 
 	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
