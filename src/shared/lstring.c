@@ -316,102 +316,15 @@ lstr_vnewf(const char* fmt, va_list args)
 }
 
 lstring_t*
-lstr_from_cesu8(const uint8_t* text, size_t length)
-{
-	// create an lstring from CESU-8-encoded text.
-	// the input is assumed to be mostly well-formed.  unpaired surrogates are replaced
-	// with U+FFFD.
-
-	const uint32_t REPLACEMENT = 0xFFFD;
-	
-	uint8_t        byte;
-	uint32_t       codep;
-	int            needed = 0;
-	size_t         num_bytes = 0;
-	int            seen = 0;
-	lstring_t*     string;
-	uint32_t       utf16_hi = 0x0000;
-	const uint8_t* p_in;
-	uint8_t*       p_out;
-
-	// conveniently for us, UTF-8 output size <= CESU-8 input size.
-	string = malloc(sizeof(lstring_t) + length + 1);
-	
-	p_in = text;
-	p_out = (uint8_t*)string + sizeof(lstring_t);
-	while (p_in < text + length) {
-		byte = *p_in++;
-		if (needed == 0) {
-			if (byte <= 0x7f)
-				num_bytes += utf8_emit(byte, &p_out);
-			else if (byte >= 0xc2 && byte <= 0xdf) {
-				needed = 1;
-				codep = byte & 0x1f;
-			}
-			else if (byte >= 0xe0 && byte <= 0xef) {
-				needed = 2;
-				codep = byte & 0xf;
-			}
-			else if (byte >= 0xf0 && byte <= 0xf4) {
-				needed = 3;
-				codep = byte & 0x7;
-			}
-		}
-		else {
-			codep = (codep << 6) | (byte & 0x3f);
-			if (++seen == needed) {
-				if (codep >= 0xd800 && codep <= 0xdbff) {
-					if (utf16_hi == 0x0000)
-						utf16_hi = codep;
-					else {
-						// consecutive high surrogates, emit U+FFFD in their place
-						num_bytes += utf8_emit(REPLACEMENT, &p_out);
-						num_bytes += utf8_emit(REPLACEMENT, &p_out);
-						utf16_hi = 0x0000;
-					}
-				}
-				else if (codep >= 0xdc00 && codep <= 0xdfff) {
-					// if we find a low surrogate without a corresponding high surrogate,
-					// replace it with U+FFFD.  otherwise we now have a surrogate pair and can
-					// proceed to decode it.
-					codep = utf16_hi != 0x0000
-						? 0x010000 + ((utf16_hi - 0xd800) << 10) + (codep - 0xdc00)
-						: REPLACEMENT;
-					num_bytes += utf8_emit(codep, &p_out);
-					utf16_hi = 0x0000;
-				}
-				else {
-					// in case of an outstanding surrogate, clear it and emit U+FFFD.
-					if (utf16_hi != 0x0000)
-						num_bytes += utf8_emit(REPLACEMENT, &p_out);
-					num_bytes += utf8_emit(codep, &p_out);
-					utf16_hi = 0x0000;
-				}
-				codep = 0x0000;
-				needed = 0;
-				seen = 0;
-			}
-		}
-	}
-	if (utf16_hi != 0x0000)  // outstanding surrogate?
-		num_bytes += utf8_emit(REPLACEMENT, &p_out);
-	*p_out = '\0';  // NUL terminator
-
-	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
-	string->length = num_bytes;
-	return string;
-}
-
-lstring_t*
 lstr_from_cp1252(const char* text, size_t length)
 {
 	// create an lstring from plain text.  CP-1252 is assumed.  as Duktape
 	// expects JS code to be CESU-8 encoded, this functionality is needed for
 	// full compatibility with Sphere v1 scripts.
 
-	uint32_t            cp;
+	uint32_t            codepoint;
+	bool                is_utf8 = true;
 	unsigned char*      out_buf;
-	utf8_ret_t          ret;
 	lstring_t*          string;
 	utf8ctx_t*          utf8;
 	unsigned char       *p;
@@ -420,13 +333,16 @@ lstr_from_cp1252(const char* text, size_t length)
 	size_t i;
 
 	// check that the string isn't actually already UTF-8
-	utf8 = utf8_decode((uint8_t*)text, length);
-	while (ret = utf8_next(utf8, &cp)) {
-		if (ret == UTF8_ERROR)
-			break;
+	utf8 = utf8_decode_start(false);
+	p_src = text;
+	while (*p_src != '\0') {
+		if (utf8_decode_next(utf8, *p_src++, NULL) >= UTF8_ERROR)
+			is_utf8 = false;
 	}
+	if (utf8_decode_end(utf8) >= UTF8_ERROR)
+		is_utf8 = false;
 
-	if (ret == UTF8_ERROR) {
+	if (!is_utf8) {
 		// note: UTF-8 conversion may expand the string by up to 3x
 		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 			return NULL;
@@ -434,8 +350,8 @@ lstr_from_cp1252(const char* text, size_t length)
 		p = out_buf;
 		p_src = text;
 		for (i = 0; i < length; ++i) {
-			cp = cp1252[*p_src++];
-			utf8_emit(cp, &p);
+			codepoint = cp1252[*p_src++];
+			utf8_emit(codepoint, &p);
 		}
 		*p = '\0';  // NUL terminator
 		length = p - out_buf;
@@ -455,7 +371,7 @@ lstr_from_cp1252(const char* text, size_t length)
 }
 
 lstring_t*
-lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
+lstr_from_utf8(const uint8_t* text, size_t length, bool strict, bool fatal_mode)
 {
 	// create an lstring from UTF-8 text which may be malformed.
 	// when an encoding error is encountered, it is handled according to the value of `fatal_mode`:
@@ -464,12 +380,11 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 
 	const uint32_t REPLACEMENT = 0xFFFD;
 
-	uint8_t        byte;
-	uint32_t       codep;
-	int            needed = 0;
+	uint32_t       codepoint;
 	size_t         num_bytes = 0;
-	int            seen = 0;
+	utf8_ret_t     ret;
 	lstring_t*     string;
+	utf8ctx_t*     utf8;
 	const uint8_t* p_in;
 	uint8_t*       p_out;
 
@@ -480,47 +395,20 @@ lstr_from_utf8(const uint8_t* text, size_t length, bool fatal_mode)
 
 	p_in = text;
 	p_out = (uint8_t*)string + sizeof(lstring_t);
+	utf8 = utf8_decode_start(strict);
 	while (p_in < text + length) {
-		byte = *p_in++;
-		if (needed == 0) {
-			if (byte <= 0x7f)
-				num_bytes += utf8_emit(byte, &p_out);
-			else if (byte >= 0xc2 && byte <= 0xdf) {
-				needed = 1;
-				codep = byte & 0x1f;
-			}
-			else if (byte >= 0xe0 && byte <= 0xef) {
-				needed = 2;
-				codep = byte & 0xf;
-			}
-			else if (byte >= 0xf0 && byte <= 0xf4) {
-				needed = 3;
-				codep = byte & 0x7;
-			}
-			else {
-				if (fatal_mode)
-					num_bytes += utf8_emit(byte, &p_out);
-				else
-					goto abort;
-			}
+		while ((ret = utf8_decode_next(utf8, *p_in++, &codepoint)) == UTF8_CONTINUE);
+		if (ret >= UTF8_ERROR) {
+			codepoint = REPLACEMENT;
+			if (fatal_mode)
+				goto abort;
 		}
-		else {
-			codep = (codep << 6) | (byte & 0x3f);
-			if (++seen == needed) {
-				if (codep >= 0xd800 && codep <= 0xdfff) {
-					if (!fatal_mode)
-						num_bytes += utf8_emit(REPLACEMENT, &p_out);
-					else
-						goto abort;
-				}
-				else
-					num_bytes += utf8_emit(codep, &p_out);
-				codep = 0x0000;
-				needed = 0;
-				seen = 0;
-			}
-		}
+		if (ret == UTF8_RETRY)
+			--p_in;
+		num_bytes += utf8_emit(codepoint, &p_out);
 	}
+	if (utf8_decode_end(utf8) >= UTF8_ERROR)
+		num_bytes += utf8_emit(REPLACEMENT, &p_out);
 	*p_out = '\0';  // NUL terminator
 
 	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));

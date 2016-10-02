@@ -5,8 +5,7 @@
 #include "image.h"
 #include "unicode.h"
 
-static uint32_t decode              (uint32_t* state, uint32_t* codep, uint8_t byte);
-static void     update_font_metrics (font_t* font);
+static void update_font_metrics (font_t* font);
 
 struct font
 {
@@ -48,31 +47,6 @@ struct rfn_glyph_header
 	char     reserved[28];
 };
 #pragma pack(pop)
-
-static const uint32_t UTF8_ACCEPT = 0;
-static const uint32_t UTF8_REJECT = 12;
-
-static const uint8_t utf8d[] =
-{
-	// The first part of the table maps bytes to character classes that
-	// to reduce the size of the transition table and create bitmasks.
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-	10,3,3,3,3,3,3,3,3,3,3,3,3,4,3,3, 11,6,6,6,5,8,8,8,8,8,8,8,8,8,8,8,
-
-	// The second part is a transition table that maps a combination
-	// of a state of the automaton and a character class to a state.
-	0,12,24,36,60,96,84,12,12,12,48,72, 12,12,12,12,12,12,12,12,12,12,12,12,
-	12, 0,12,12,12,12,12, 0,12, 0,12,12, 12,24,12,12,12,12,12,24,12,24,12,12,
-	12,12,12,12,12,12,12,24,12,12,12,12, 12,24,12,12,12,12,12,12,12,24,12,12,
-	12,12,12,12,12,12,12,36,12,36,12,12, 12,36,12,12,12,12,12,36,12,36,12,12,
-	12,36,12,12,12,12,12,12,12,12,12,12,
-};
 
 static unsigned int s_next_font_id = 0;
 
@@ -293,10 +267,11 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 
 	tab_width = font->glyphs[' '].width * 3;
 	al_hold_bitmap_drawing(true);
-	utf8 = utf8_decode((uint8_t*)text, strlen(text));
-	while (ret = utf8_next(utf8, &cp)) {
-		if (ret == UTF8_CONTINUE)
-			continue;
+	utf8 = utf8_decode_start(false);
+	do {
+		while ((ret = utf8_decode_next(utf8, *text++, &cp)) == UTF8_CONTINUE);
+		if (ret == UTF8_RETRY)
+			--text;
 		cp = cp == 0x20AC ? 128
 			: cp == 0x201A ? 130
 			: cp == 0x0192 ? 131
@@ -330,11 +305,12 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 			: 0x1A;
 		if (cp == '\t')
 			x += tab_width;
-		else {
+		else if (cp != '\0') {
 			image_draw_masked(font->glyphs[cp].image, color, x, y);
 			x += font->glyphs[cp].width;
 		}
-	}
+	} while (cp != '\0');
+	utf8_decode_end(utf8);
 	al_hold_bitmap_drawing(false);
 }
 
@@ -354,10 +330,11 @@ font_get_width(const font_t* font, const char* text)
 	utf8ctx_t* utf8;
 	int        width = 0;
 
-	utf8 = utf8_decode((uint8_t*)text, strlen(text));
-	while (ret = utf8_next(utf8, &cp)) {
-		if (ret == UTF8_CONTINUE)
-			continue;
+	utf8 = utf8_decode_start(false);
+	do {
+		while ((ret = utf8_decode_next(utf8, *text++, &cp)) == UTF8_CONTINUE);
+		if (ret == UTF8_RETRY)
+			--text;
 		cp = cp == 0x20AC ? 128
 			: cp == 0x201A ? 130
 			: cp == 0x0192 ? 131
@@ -389,8 +366,10 @@ font_get_width(const font_t* font, const char* text)
 		cp = ret == UTF8_CODEPOINT
 			? cp < font->num_glyphs ? cp : 0x1A
 			: 0x1A;
-		width += font->glyphs[cp].width;
-	}
+		if (cp != '\0')
+			width += font->glyphs[cp].width;
+	} while (cp != '\0');
+	utf8_decode_end(utf8);
 	return width;
 }
 
@@ -414,7 +393,8 @@ wraptext_new(const char* text, const font_t* font, int width)
 	size_t      line_length;
 	char*       new_buffer;
 	size_t      pitch;
-	uint32_t    utf8state;
+	utf8_ret_t  ret;
+	utf8ctx_t*  utf8;
 	wraptext_t* wraptext;
 	const char  *p, *start;
 
@@ -431,12 +411,13 @@ wraptext_new(const char* text, const font_t* font, int width)
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
 	memset(line_buffer, 0, pitch);  // fill line with NULs
+	utf8 = utf8_decode_start(false);
 	p = text;
 	do {
-		utf8state = UTF8_ACCEPT; start = p;
-		while (decode(&utf8state, &cp, ch_byte = *p++) > UTF8_REJECT);
-		if (utf8state == UTF8_REJECT && ch_byte == '\0')
-			--p;  // don't eat NUL terminator
+		start = p;
+		while ((ret = utf8_decode_next(utf8, ch_byte = *p++, &cp)) == UTF8_CONTINUE);
+		if (ret == UTF8_RETRY)
+			--p;
 		ch_size = p - start;
 		cp = cp == 0x20AC ? 128
 			: cp == 0x201A ? 130
@@ -466,12 +447,13 @@ wraptext_new(const char* text, const font_t* font, int width)
 			: cp == 0x017E ? 158
 			: cp == 0x0178 ? 159
 			: cp;
-		cp = utf8state == UTF8_ACCEPT
+		cp = ret == UTF8_CODEPOINT
 			? cp < (uint32_t)font->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		switch (cp) {
 		case '\n': case '\r':  // explicit newline
-			if (cp == '\r' && *p == '\n') ++text;  // CRLF
+			if (cp == '\r' && *p == '\n')
+				++text;  // CRLF
 			is_line_end = true;
 			break;
 		case '\t':  // tab
@@ -488,7 +470,8 @@ wraptext_new(const char* text, const font_t* font, int width)
 			line_width += font->glyphs[cp].width;
 			is_line_end = false;
 		}
-		if (is_line_end) carry[0] = '\0';
+		if (is_line_end)
+			carry[0] = '\0';
 		if (line_width > width || line_length >= pitch - 1) {
 			// wrap width exceeded, carry current word to next line
 			is_line_end = true;
@@ -550,19 +533,6 @@ const char*
 wraptext_line(const wraptext_t* wraptext, int line_index)
 {
 	return wraptext->buffer + line_index * wraptext->pitch;
-}
-
-static uint32_t
-decode(uint32_t* state, uint32_t* codep, uint8_t byte)
-{
-	uint32_t type = utf8d[byte];
-
-	*codep = (*state != UTF8_ACCEPT)
-		? (byte & 0x3fu) | (*codep << 6)
-		: (0xff >> type) & (byte);
-
-	*state = utf8d[256 + *state + type];
-	return *state;
 }
 
 static void

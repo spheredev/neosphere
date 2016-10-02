@@ -3468,7 +3468,7 @@ js_TextDecoder_decode(duk_context* ctx)
 			streaming = duk_require_boolean(ctx, -1);
 	}
 
-	string = lstr_from_utf8(input, length, false);
+	string = lstr_from_utf8(input, length, true, false);
 	duk_push_lstring_t(ctx, string);
 	lstr_free(string);
 	return 1;
@@ -3503,7 +3503,7 @@ js_TextEncoder_encode(duk_context* ctx)
 		input = duk_require_lstring(ctx, 0, &input_len);
 
 	// re-encode Duktape string (CESU-8) into UTF-8...
-	utf8 = lstr_from_cesu8(input, input_len);
+	utf8 = lstr_from_utf8(input, input_len, false, false);
 	
 	// ...then stuff the output into a byte array and return it
 	buffer = duk_push_fixed_buffer(ctx, input_len);
