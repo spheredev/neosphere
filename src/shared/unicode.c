@@ -37,7 +37,7 @@ cesu8_emit(uint32_t codepoint, uint8_t* *p_ptr)
 		*(*p_ptr)++ = (utf16_lo >> 12) + 0xe0;
 		*(*p_ptr)++ = 0x80 + (utf16_lo >> 6 & 0x3f);
 		*(*p_ptr)++ = 0x80 + (utf16_lo & 0x3f);
-		return 4;
+		return 6;
 	}
 	else {
 		// not a legal Unicode code point, don't encode

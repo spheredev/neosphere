@@ -3468,7 +3468,7 @@ js_TextDecoder_decode(duk_context* ctx)
 			streaming = duk_require_boolean(ctx, -1);
 	}
 
-	string = lstr_from_utf8(input, length, true, false);
+	string = lstr_from_utf8(input, length, false, false);
 	duk_push_lstring_t(ctx, string);
 	lstr_free(string);
 	return 1;
