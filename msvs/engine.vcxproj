@@ -364,6 +364,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\engine\encoding.c" />
     <ClCompile Include="..\src\engine\vanilla.c" />
     <ClCompile Include="..\src\engine\matrix.c" />
     <ClCompile Include="..\src\engine\pegasus.c" />
@@ -407,6 +408,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\engine\encoding.h" />
     <ClInclude Include="..\src\engine\vanilla.h" />
     <ClInclude Include="..\src\engine\matrix.h" />
     <ClInclude Include="..\src\engine\pegasus.h" />

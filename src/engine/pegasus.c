@@ -7,6 +7,7 @@
 #include "color.h"
 #include "console.h"
 #include "debugger.h"
+#include "encoding.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
@@ -3424,9 +3425,28 @@ js_Surface_toImage(duk_context* ctx)
 static duk_ret_t
 js_new_TextDecoder(duk_context* ctx)
 {
+	decoder_t*  decoder;
+	bool        fatal = false;
+	bool        ignoreBOM = false;
+	int         num_args;
+	const char* label = "utf-8";
+	
 	if (!duk_is_constructor_call(ctx))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "TextDecoder must be called with 'new'");
-	return 0;
+	num_args = duk_get_top(ctx);
+	if (num_args >= 1)
+		label = duk_require_string(ctx, 0);
+	if (num_args >= 2) {
+		duk_require_object_coercible(ctx, 1);
+		if (duk_get_prop_string(ctx, -1, "fatal"))
+			fatal = duk_require_boolean(ctx, -1);
+		if (duk_get_prop_string(ctx, -2, "ignoreBOM"))
+			ignoreBOM = duk_require_boolean(ctx, -1);
+	}
+	
+	decoder = decoder_new(fatal, ignoreBOM);
+	duk_push_sphere_obj(ctx, "TextDecoder", decoder);
+	return 1;
 }
 
 static duk_ret_t
@@ -3439,20 +3459,31 @@ js_TextDecoder_get_encoding(duk_context* ctx)
 static duk_ret_t
 js_TextDecoder_get_fatal(duk_context* ctx)
 {
-	duk_push_boolean(ctx, false);
+	decoder_t*  decoder;
+
+	duk_push_this(ctx);
+	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
+
+	duk_push_boolean(ctx, decoder_fatal(decoder));
 	return 1;
 }
 
 static duk_ret_t
 js_TextDecoder_get_ignoreBOM(duk_context* ctx)
 {
-	duk_push_boolean(ctx, false);
+	decoder_t*  decoder;
+
+	duk_push_this(ctx);
+	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
+
+	duk_push_boolean(ctx, decoder_ignoreBOM(decoder));
 	return 1;
 }
 
 static duk_ret_t
 js_TextDecoder_decode(duk_context* ctx)
 {
+	decoder_t*  decoder;
 	const char* input = "";
 	duk_size_t  length = 0;
 	int         num_args;
@@ -3460,6 +3491,8 @@ js_TextDecoder_decode(duk_context* ctx)
 	bool        streaming = false;
 
 	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
 	if (num_args >= 1)
 		input = duk_require_buffer_data(ctx, 0, &length);
 	if (num_args > 2) {
@@ -3468,7 +3501,8 @@ js_TextDecoder_decode(duk_context* ctx)
 			streaming = duk_require_boolean(ctx, -1);
 	}
 
-	string = lstr_from_utf8(input, length, false, false);
+	if (!(string = decoder_decode(decoder, input, length)))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "unable to decode utf-8 text");
 	duk_push_lstring_t(ctx, string);
 	lstr_free(string);
 	return 1;
