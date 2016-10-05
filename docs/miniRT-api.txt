@@ -605,9 +605,9 @@ term.define(objectName, thisObj, commands);
     perform some form of error checking in their command functions to prevent
     the player from destabilizing the game.
 
-term.log(text[, text2[, ...]]);
+term.print(text[, text2[, ...]]);
 
-    Logs a line of text to the console.  Passing more than one value will
+    Prints a line of text to the console.  Passing more than one value will
     cause the strings to be separated with chevrons (`>>`).
 
 term.undefine(objectName);

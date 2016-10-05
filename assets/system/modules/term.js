@@ -9,7 +9,7 @@ module.exports =
 	get visible() { return visible.yes; },
 	set visible(value) { value ? _show() : _hide(); },
 	define:    define,
-	log:       log,
+	print:     print,
 	undefine:  undefine,
 };
 
@@ -44,9 +44,9 @@ threads.create({
 	getInput: getInput,
 }, 100);
 
-log(system.game.name + " miniRT Console");
-log(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
-log("");
+print(system.game.name + " miniRT Console");
+print(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
+print("");
 
 function executeCommand(command)
 {
@@ -65,11 +65,11 @@ function executeCommand(command)
 		.pluck('entity')
 		.contains(entity))
 	{
-		log("Entity name '" + entity + "' not recognized");
+		print("Entity name '" + entity + "' not recognized");
 		return;
 	}
 	if (tokens.length < 2) {
-		log("No instruction provided for '" + entity + "'");
+		print("No instruction provided for '" + entity + "'");
 		return;
 	}
 	if (!link(commands)
@@ -77,7 +77,7 @@ function executeCommand(command)
 		.pluck('instruction')
 		.contains(instruction))
 	{
-		log("Instruction '" + instruction + "' not valid for '" + entity + "'");
+		print("Instruction '" + instruction + "' not valid for '" + entity + "'");
 		return;
 	}
 
@@ -123,7 +123,7 @@ function getInput()
 		var keycode = keyboard.getKey();
 		switch (keycode) {
 			case Key.Enter:
-				log("Command entered: '" + entry + "'");
+				print("Command entered: '" + entry + "'");
 				executeCommand(entry);
 				entry = "";
 				break;
@@ -195,7 +195,7 @@ function update()
 	return true;
 }
 
-function log(/*...*/)
+function print(/*...*/)
 {
 	var lineInBuffer = nextLine % bufferSize;
 	buffer[lineInBuffer] = ">" + arguments[0];
