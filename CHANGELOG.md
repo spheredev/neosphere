@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v4.3.0 - TBD
+------------
+
+* Adds support for the new JavaScript exponentiation operator (e.g.
+  `x ** 2`), allowing powers to be calculated without the performance
+  impact of a `Math.pow()` call.
+
+
 v4.2.2 - September 28, 2016
 ---------------------------
 
