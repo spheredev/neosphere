@@ -3440,9 +3440,9 @@ js_new_TextDecoder(duk_context* ctx)
 		label = duk_require_string(ctx, 0);
 	if (num_args >= 2) {
 		duk_require_object_coercible(ctx, 1);
-		if (duk_get_prop_string(ctx, -1, "fatal"))
+		if (duk_get_prop_string(ctx, 1, "fatal"))
 			fatal = duk_require_boolean(ctx, -1);
-		if (duk_get_prop_string(ctx, -2, "ignoreBOM"))
+		if (duk_get_prop_string(ctx, 1, "ignoreBOM"))
 			ignore_bom = duk_require_boolean(ctx, -1);
 	}
 
@@ -3521,7 +3521,7 @@ js_TextDecoder_decode(duk_context* ctx)
 	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
 	if (num_args >= 1)
 		input = duk_require_buffer_data(ctx, 0, &length);
-	if (num_args > 2) {
+	if (num_args >= 2) {
 		duk_require_object_coercible(ctx, 1);
 		if (duk_get_prop_string(ctx, 1, "stream"))
 			streaming = duk_require_boolean(ctx, -1);
@@ -3529,7 +3529,7 @@ js_TextDecoder_decode(duk_context* ctx)
 
 	// streaming is unsupported for now.
 	if (streaming)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "streaming is not implemented");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "'stream' is not supported");
 
 	if (!(string = decoder_run(decoder, input, length)))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
