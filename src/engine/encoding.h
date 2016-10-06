@@ -9,6 +9,7 @@ decoder_t* decoder_ref       (decoder_t* decoder);
 void       decoder_free      (decoder_t* decoder);
 bool       decoder_fatal     (const decoder_t* decoder);
 bool       decoder_ignoreBOM (const decoder_t* decoder);
+lstring_t* decoder_finish    (decoder_t* decoder);
 lstring_t* decoder_run       (decoder_t* decoder, const uint8_t* buffer, size_t size);
 encoder_t* encoder_new       (void);
 encoder_t* encoder_ref       (encoder_t* encoder);

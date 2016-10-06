@@ -55,33 +55,55 @@ decoder_ignoreBOM(const decoder_t* decoder)
 	return decoder->ignore_bom;
 }
 
-void
-decoder_reset(decoder_t* decoder)
+lstring_t*
+decoder_finish(decoder_t* decoder)
 {
+	uint8_t    output[6];
+	utf8_ret_t state;
+	lstring_t* string;
+	uint8_t    *p_out;
+	
+	p_out = output;
+	state = utf8_decode_end(decoder->context);
+	decoder->context = NULL;
 	decoder->bom_seen = false;
+	if (state >= UTF8_ERROR) {
+		if (!decoder->fatal)
+			cesu8_emit(0xFFFD, &p_out);
+		else
+			goto on_error;
+	}
+	string = lstr_from_cp1252(output, p_out - output);
+	return string;
+
+on_error:
+	free(output);
+	return NULL;
 }
 
 lstring_t*
 decoder_run(decoder_t* decoder, const uint8_t* buffer, size_t size)
 {
-	uint32_t       codepoint;
-	utf8ctx_t*     ctx;
-	utf8_ret_t     ret;
-	uint8_t*       output;
-	lstring_t*     string;
-	const uint8_t* p_in;
-	uint8_t*       p_out;
+	uint32_t      codepoint;
+	uint8_t*      output;
+	utf8_ret_t    state;
+	lstring_t*    string;
+	const uint8_t *p_in;
+	uint8_t       *p_out;
 
 	output = malloc(size * 3);
 	p_in = buffer;
 	p_out = output;
 
-	ctx = utf8_decode_start(true);
+	if (decoder->context == NULL)
+		decoder->context = utf8_decode_start(true);
 	while (p_in < buffer + size) {
-		while ((ret = utf8_decode_next(ctx, *p_in++, &codepoint)) == UTF8_CONTINUE);
-		if (ret == UTF8_RETRY)
+		state = utf8_decode_next(decoder->context, *p_in++, &codepoint);
+		if (state == UTF8_CONTINUE)
+			continue;
+		if (state == UTF8_RETRY)
 			--p_in;
-		if (ret >= UTF8_ERROR) {
+		if (state >= UTF8_ERROR) {
 			if (!decoder->fatal)
 				codepoint = 0xFFFD;
 			else
@@ -90,13 +112,6 @@ decoder_run(decoder_t* decoder, const uint8_t* buffer, size_t size)
 		if (codepoint != 0xFEFF || decoder->ignore_bom || decoder->bom_seen)
 			cesu8_emit(codepoint, &p_out);
 		decoder->bom_seen = true;
-	}
-	ret = utf8_decode_end(ctx);
-	if (ret >= UTF8_ERROR) {
-		if (!decoder->fatal)
-			cesu8_emit(0xFFFD, &p_out);
-		else
-			goto on_error;
 	}
 	string = lstr_from_cp1252(output, p_out - output);
 	return string;

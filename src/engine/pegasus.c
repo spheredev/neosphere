@@ -3527,14 +3527,17 @@ js_TextDecoder_decode(duk_context* ctx)
 			streaming = duk_require_boolean(ctx, -1);
 	}
 
-	// streaming is unsupported for now.
-	if (streaming)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "streaming is not supported");
-
 	if (!(string = decoder_run(decoder, input, length)))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
 	duk_push_lstring_t(ctx, string);
 	lstr_free(string);
+	if (!streaming) {
+		if (!(string = decoder_finish(decoder)))
+			duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
+		duk_push_lstring_t(ctx, string);
+		lstr_free(string);
+		duk_concat(ctx, 2);
+	}
 	return 1;
 }
 
