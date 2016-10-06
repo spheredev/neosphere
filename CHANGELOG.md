@@ -1,13 +1,15 @@
 minisphere Changelog
 ====================
 
-v4.3.0 - TBD
-------------
+v4.2.3 - October 6, 2016
+------------------------
 
 * Adds support for the new JavaScript exponentiation operator (e.g.
   `x ** 2`), allowing powers to be calculated without the performance
   impact of a `Math.pow()` call.
 * `term.log()` is renamed to `term.print()`.
+* Updates the Encoding API implementation to more closely follow the
+  algorithms described in the WHATWG standard.
 
 
 v4.2.2 - September 28, 2016

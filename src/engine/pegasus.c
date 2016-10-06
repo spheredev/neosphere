@@ -3529,7 +3529,7 @@ js_TextDecoder_decode(duk_context* ctx)
 
 	// streaming is unsupported for now.
 	if (streaming)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "'stream' is not supported");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "streaming is not supported");
 
 	if (!(string = decoder_run(decoder, input, length)))
 		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");

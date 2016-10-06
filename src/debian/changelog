@@ -1,3 +1,14 @@
+minisphere (4.2.3) trusty; urgency=low
+
+  * Adds support for the new JavaScript exponentiation operator (e.g.
+    `x ** 2`), allowing powers to be calculated without the performance
+    impact of a `Math.pow()` call.
+  * `term.log()` is renamed to `term.print()`.
+  * Updates the Encoding API implementation to more closely follow the
+    algorithms described in the WHATWG standard.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 6 Oct 2016 00:00:00 -0500
+
 minisphere (4.2.2) trusty; urgency=low
 
   * Adds a new property, `term.visible` to the `term` module and removes the
