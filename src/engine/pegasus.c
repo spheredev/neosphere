@@ -1036,8 +1036,8 @@ js_SSJ_assert(duk_context* ctx)
 		duk_get_prop_string(ctx, -1, "function");
 		duk_get_prop_string(ctx, -1, "fileName");
 		filename = duk_get_string(ctx, -1);
-		duk_pop_3(ctx);
 		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
+		duk_pop_3(ctx);
 
 		// if an assertion fails in a game being debugged:
 		//   - the user may choose to ignore it, in which case execution continues.  this is useful
@@ -1147,16 +1147,33 @@ js_system_get_version(duk_context* ctx)
 static duk_ret_t
 js_system_abort(duk_context* ctx)
 {
+	const char* filename;
+	int         line_number;
 	const char* message;
 	int         num_args;
+	char*       text;
 
 	num_args = duk_get_top(ctx);
 	message = num_args >= 1
 		? duk_to_string(ctx, 0)
 		: "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
 
-	duk_error_ni(ctx, -1, DUK_ERR_ERROR, "%s", message);
-	return 0;
+	duk_push_global_object(ctx);
+	duk_get_prop_string(ctx, -1, "Duktape");
+	duk_get_prop_string(ctx, -1, "act");
+	duk_push_int(ctx, -3);
+	duk_call(ctx, 1);
+	duk_remove(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber");
+	line_number = duk_get_int(ctx, -1);
+	duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -1, "fileName");
+	filename = duk_get_string(ctx, -1);
+	text = strnewf("%s:%i\nsystem.abort()\n\n%s", filename, line_number, message);
+	duk_pop_3(ctx);
+	
+	abort_game(text);
 }
 
 static duk_ret_t

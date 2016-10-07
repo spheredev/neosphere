@@ -5,6 +5,8 @@ v4.2.4 - TBD
 ------------
 
 * Adds streaming support for `TextDecoder`.
+* `system.abort()` now aborts unconditionally, as described in the API
+  documentation.
 * Fixes a bug in the UTF-8 validation logic that caused Unicode strings to be
   double-encoded, leading to undesirable side effects and in rare cases, a
   crash.

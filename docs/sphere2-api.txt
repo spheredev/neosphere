@@ -203,6 +203,10 @@ system.abort(message);
 
     Unconditionally aborts execution and displays an error screen before
     closing the engine.  `message` will be displayed on the error screen.
+    
+    Note: system.abort() bypasses all exception handling mechanisms, including
+          SSJ.  Be sure you know what you're doing before you call this
+          function.
 
 system.dispatch(func);
 

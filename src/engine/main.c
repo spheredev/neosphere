@@ -283,6 +283,13 @@ on_js_error:
 	exit_game(false);
 }
 
+noreturn
+abort_game(const char* message)
+{
+	show_error_screen(message);
+	exit_game(false);
+}
+
 void
 delay(double time)
 {

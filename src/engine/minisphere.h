@@ -77,6 +77,7 @@ extern font_t*              g_sys_font;
 extern int                  g_res_x;
 extern int                  g_res_y;
 
+noreturn abort_game        (const char* message);
 void     delay             (double time);
 void     do_events         (void);
 noreturn exit_game         (bool force_shutdown);
