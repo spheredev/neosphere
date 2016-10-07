@@ -50,7 +50,7 @@ decoder_fatal(const decoder_t* decoder)
 }
 
 bool
-decoder_ignoreBOM(const decoder_t* decoder)
+decoder_ignore_bom(const decoder_t* decoder)
 {
 	return decoder->ignore_bom;
 }

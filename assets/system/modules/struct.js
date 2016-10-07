@@ -6,31 +6,119 @@
 'use strict';
 module.exports =
 {
-	load: load,
-	read: read,
-	Enum: Enum
+	DataReader: DataReader,
+	Enum:       Enum
 };
 
 const assert = require('assert');
 const link   = require('link');
 
-function load(filename, schema)
+function DataReader(stream)
 {
-	if (!Array.isArray(schema))
-		throw new TypeError("expected an Array object for `schema`");
+	assert.ok(this instanceof DataReader, "constructor called with 'new'");
 
-	var stream = fs.open(filename, 'rb');
-	var object = read(stream, schema);
-	stream.close();
-	return object;
-}
+	var m_decoder = new TextDecoder('utf-8');
+	var m_stream = stream;
 
-function read(stream, schema)
-{
-	if (!Array.isArray(schema))
-		throw new TypeError("expected an Array object for `schema`");
+	this.readFloat32 = m_readFloat32;
+	function m_readFloat32(littleEndian)
+	{
+		var view = new DataView(m_stream.read(4));
+		value = view.getFloat32(0, littleEndian);
+	}
 
-	return _readObject(stream, schema, null);
+	this.readFloat64 = m_readFloat64;
+	function m_readFloat64(littleEndian)
+	{
+		var view = new DataView(m_stream.read(8));
+		value = view.getFloat64(0, littleEndian);
+	}
+
+	this.readInt8 = m_readInt8
+	function m_readInt8()
+	{
+		return _readInt(m_stream, 1, true);
+	}
+
+	this.readInt16 = m_readInt16
+	function m_readInt16(littleEndian)
+	{
+		assert.equal(typeof littleEndian, 'boolean');
+
+		return _readInt(m_stream, 2, true, littleEndian);
+	}
+
+	this.readInt32 = m_readInt32
+	function m_readInt32(littleEndian)
+	{
+		assert.equal(typeof littleEndian, 'boolean');
+
+		return _readInt(m_stream, 4, true, littleEndian);
+	}
+
+	this.readString = m_readString;
+	function m_readString(length)
+	{
+		assert.equal(typeof length, 'number');
+
+		var data = m_stream.read(length);
+		return m_decoder.decode(data);
+	}
+
+	this.readString8 = m_readString8;
+	function m_readString8()
+	{
+		var length = _readInt(m_stream, 1, false);
+		return m_readString(length);
+	}
+
+	this.readString16 = m_readString16;
+	function m_readString16(littleEndian)
+	{
+		assert.equal(typeof littleEndian, 'boolean');
+
+		var length = _readInt(m_stream, 2, false, littleEndian);
+		return m_readString(length);
+	}
+
+	this.readString32 = m_readString32;
+	function m_readString32(littleEndian)
+	{
+		assert.equal(typeof littleEndian, 'boolean');
+
+		var length = _readInt(m_stream, 4, false, littleEndian);
+		return m_readString(length);
+	}
+
+	this.readStruct = m_readStruct;
+	function m_readStruct(schema)
+	{
+		assert.ok(Array.isArray(schema), "schema is array");
+
+		return _readObject(m_stream, schema, null);
+	}
+
+	this.readUint8 = m_readUint8
+	function m_readUint8()
+	{
+		return _readInt(m_stream, 1, false);
+	}
+
+	this.readUint16 = m_readUint16
+	function m_readUint16(littleEndian)
+	{
+		assert.equal(typeof littleEndian, 'boolean');
+
+		return _readInt(m_stream, 2, false, littleEndian);
+	}
+
+	this.readUint32 = m_readUint32
+	function m_readUint32(littleEndian)
+	{
+		assert.equal(typeof littleEndian, 'boolean');
+
+		return _readInt(m_stream, 4, false, littleEndian);
+	}
 }
 
 function Enum(memberNames)
@@ -185,10 +273,10 @@ function _readField(stream, fieldType, data)
 
 function _readInt(stream, size, signed, littleEndian)
 {
-	// variable size two's complement integer decoding algorithm stolen from
+	// variable-size two's complement integer decoding algorithm borrowed from
 	// Node.js.  this allows us to read integer values up to 48 bits in size.
-	
-	assert.ok(size >= 1 && size <= 6, "(u)int field size out of range");
+
+	assert.ok(size >= 1 && size <= 6, "(u)int field size is [1-6]");
 
 	var bytes = new Uint8Array(stream.read(size));
 	var mul = 1;

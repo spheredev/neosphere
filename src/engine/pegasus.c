@@ -3519,7 +3519,7 @@ js_TextDecoder_get_ignoreBOM(duk_context* ctx)
 	duk_push_this(ctx);
 	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
 
-	duk_push_boolean(ctx, decoder_ignoreBOM(decoder));
+	duk_push_boolean(ctx, decoder_ignore_bom(decoder));
 	return 1;
 }
 

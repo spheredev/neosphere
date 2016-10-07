@@ -61,7 +61,7 @@ joy.P4 [read-only]
     refers to the same device within a session; likewise for the other
     properties.  If no suitable device is available for the specified player,
     `Joystick.Null` is returned instead.
-    
+
     Note: Only connected devices with at least 5 buttons and 2 axes are
           considered.
 
@@ -514,32 +514,71 @@ Scene#stop();
 `struct` Module
 ---------------
 
-The struct module allows you to load structured binary files like those used
-for Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
+The struct module allows you to read from structured binary files like those
+used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
+schema.
 
     const struct = require('struct');
 
-struct.load(filename, schema);
+new struct.DataReader(stream, schema);
 
-    Loads the binary file `filename` based on `schema`.  This is a convenience
-    function, and is shorthand for the following:
+    Creates a DataReader object which can be used to read binary data from
+    `stream`.
 
-        var file = fs.open(filename, 'rb');
-        var data = struct.read(file, schema);
-        file.close();
+DataReader#readFloat32(littleEndian);
 
-    See below for more information on schemas.  If an entire file can't be
-    described by a single, cohesive schema, struct.read() (see below) should be
-    used instead.
+    Reads a 32-bit floating point number from the associated stream.  If
+    `littleEndian` is true, reads in little endian mode.
 
-struct.read(stream, schema);
+DataReader#readFloat64(littleEndian);
 
-    Reads an object from the FileStream `stream`, based on `schema`.  The
-    schema is an array of field descriptors describing the layout of the data;
-    for example, the following will read the 256-byte header from a Sphere v1
+    Reads a 64-bit floating point number from the associated stream.  If
+    `littleEndian` is true, reads in little endian mode.
+
+DataReader#readInt8();
+
+    Reads an 8-bit integer from the associated stream.
+
+DataReader#readInt16(littleEndian);
+
+    Reads a 16-bit integer from the associated stream.  Big endian is assumed;
+    specify true for `littleEndian` to read a little endian integer.
+
+DataReader#readInt32(littleEndian);
+
+    Reads a 32-bit integer from the associated stream.  Big endian is assumed;
+    specify true for `littleEndian` to read a little endian integer.
+
+DataReader#readString(length);
+
+    Reads a UTF-8 string from the associated stream.  `length` specifies how
+    many bytes to read.
+
+DataReader#readString8();
+
+    Reads a UTF-8 length-prefixed string from the associated stream, where the
+    length in bytes is stored as an unsigned 8-bit integer.
+
+DataReader#readString16(littleEndian);
+
+    Reads a UTF-8 length-prefixed string from the associated stream, where the
+    length in bytes is stored as an unsigned 16-bit integer.  If `littleEndian`
+    is true, the length is read in little endian mode.
+
+DataReader#readString32(littleEndian);
+
+    Reads a UTF-8 length-prefixed string from the associated stream, where the
+    length in bytes is stored as an unsigned 32-bit integer.  If `littleEndian`
+    is true, the length is read in little endian mode.
+
+DataReader#readStruct(schema);
+
+    Reads an object from the associated stream, based on `schema`.  The schema
+    is an array of field descriptors describing the layout of the data; for
+    example, the following will read the 256-byte header from a Sphere v1
     format map file:
 
-        struct.read(stream, [
+        readerObj.readStruct([
             { id: 'signature', type: 'fstring', size: 4, regex: "\\.rmp" },
             { id: 'version', type: 'uintLE', size: 2 },
             { id: 'type', type: 'uintLE', size: 1 },
@@ -557,9 +596,23 @@ struct.read(stream, schema);
         ]);
 
     For many binary file formats, this system is powerful enough for an entire
-    file to be described using a single, sometimes multi-level, schema, in
-    which case you can use struct.load() instead.  More complex formats usually
-    require multiple struct.read() calls using indepedent schemas.
+    file to be described using a single, sometimes multi-level, schema.  More
+    complex formats usually require multiple .readStruct() calls using
+    indepedent schemas.
+
+DataReader#readUint8();
+
+    Reads an 8-bit unsigned integer (byte) from the associated stream.
+
+DataReader#readUint16(littleEndian);
+
+    Reads a 16-bit unsigned integer from the associated stream.  Big endian is
+    assumed; specify true for `littleEndian` to read a little endian integer.
+
+DataReader#readUint32(littleEndian);
+
+    Reads a 32-bit unsigned integer from the associated stream.  Big endian is
+    assumed; specify true for `littleEndian` to read a little endian integer.
 
 
 `term` Module
