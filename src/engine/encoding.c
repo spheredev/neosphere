@@ -60,7 +60,6 @@ decoder_finish(decoder_t* decoder)
 {
 	uint8_t    output[6];
 	utf8_ret_t state;
-	lstring_t* string;
 	uint8_t    *p_out;
 	
 	p_out = output;
@@ -71,14 +70,9 @@ decoder_finish(decoder_t* decoder)
 		if (!decoder->fatal)
 			cesu8_emit(0xFFFD, &p_out);
 		else
-			goto on_error;
+			return NULL;
 	}
-	string = lstr_from_cp1252(output, p_out - output);
-	return string;
-
-on_error:
-	free(output);
-	return NULL;
+	return lstr_from_cp1252(output, p_out - output);
 }
 
 lstring_t*

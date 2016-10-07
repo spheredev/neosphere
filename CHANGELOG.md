@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.2.4 - TBD
-------------
+v4.2.4 - October 7, 2016
+------------------------
 
 * Adds streaming support for `TextDecoder`.
 * `system.abort()` now aborts unconditionally, as described in the API
