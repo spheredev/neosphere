@@ -1,16 +1,23 @@
 minisphere Changelog
 ====================
 
+v4.2.4 - TBD
+------------
+
+* Adds streaming support for `TextDecoder`.
+* Fixes a bug in the UTF-8 validation logic that caused Unicode strings to be
+  double-encoded, leading to undesirable side effects and in rare cases, a
+  crash.
+
 v4.2.3 - October 6, 2016
 ------------------------
 
-* Adds support for the new JavaScript exponentiation operator (e.g.
-  `x ** 2`), allowing powers to be calculated without the performance
-  impact of a `Math.pow()` call.
+* Adds support for the new JavaScript exponentiation operator (e.g. `x ** 2`),
+  allowing powers to be calculated without the performance impact of a
+  `Math.pow()` call.
 * `term.log()` is renamed to `term.print()`.
-* Updates the Encoding API implementation to more closely follow the
-  algorithms described in the WHATWG standard.
-
+* Updates the Encoding API implementation to more closely follow the algorithms
+  described in the WHATWG standard.
 
 v4.2.2 - September 28, 2016
 ---------------------------

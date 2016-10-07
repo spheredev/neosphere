@@ -322,21 +322,24 @@ lstr_from_cp1252(const char* text, size_t length)
 	// expects JS code to be CESU-8 encoded, this functionality is needed for
 	// full compatibility with Sphere v1 scripts.
 
-	uint32_t            codepoint;
-	bool                is_utf8 = true;
-	unsigned char*      out_buf;
-	lstring_t*          string;
-	utf8ctx_t*          utf8;
-	unsigned char       *p;
-	const unsigned char *p_src;
+	uint8_t*      buffer;
+	uint32_t      codepoint;
+	uint8_t*      input;
+	bool          is_utf8 = true;
+	lstring_t*    string;
+	utf8ctx_t*    utf8;
+	uint8_t       *p_out;
+	const uint8_t *p_in;
 
 	size_t i;
 
-	// check that the string isn't actually already UTF-8
+	input = (uint8_t*)text;
+	
+	// check that the string isn't already properly encoded
 	utf8 = utf8_decode_start(false);
-	p_src = text;
-	while (*p_src != '\0') {
-		if (utf8_decode_next(utf8, *p_src++, NULL) >= UTF8_ERROR)
+	p_in = input;
+	while (p_in < input + length && is_utf8) {
+		if (utf8_decode_next(utf8, *p_in++, NULL) >= UTF8_ERROR)
 			is_utf8 = false;
 	}
 	if (utf8_decode_end(utf8) >= UTF8_ERROR)
@@ -346,26 +349,26 @@ lstr_from_cp1252(const char* text, size_t length)
 		// note: CESU-8 conversion may expand the string by up to 3x
 		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 			return NULL;
-		out_buf = (char*)string + sizeof(lstring_t);
-		p = out_buf;
-		p_src = text;
+		buffer = (char*)string + sizeof(lstring_t);
+		p_out = buffer;
+		p_in = input;
 		for (i = 0; i < length; ++i) {
-			codepoint = cp1252[*p_src++];
-			cesu8_emit(codepoint, &p);
+			codepoint = cp1252[*p_in++];
+			cesu8_emit(codepoint, &p_out);
 		}
-		*p = '\0';  // NUL terminator
-		length = p - out_buf;
+		*p_out = '\0';  // NUL terminator
+		length = p_out - buffer;
 	}
 	else {
-		// string is already UTF-8/CESU-8, copy buffer as-is
+		// string is UTF-8/CESU-8, copy buffer as-is
 		if (!(string = malloc(sizeof(lstring_t) + length + 1)))
 			return NULL;
-		out_buf = (char*)string + sizeof(lstring_t);
-		memcpy(out_buf, text, length);
-		out_buf[length] = '\0';  // NUL terminator
+		buffer = (uint8_t*)string + sizeof(lstring_t);
+		memcpy(buffer, text, length);
+		buffer[length] = '\0';  // NUL terminator
 	}
 
-	string->cstr = out_buf;
+	string->cstr = (char*)buffer;
 	string->length = length;
 	return string;
 }
