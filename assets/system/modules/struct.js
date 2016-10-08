@@ -7,6 +7,7 @@
 module.exports =
 {
 	DataReader: DataReader,
+	DataWriter: DataWriter,
 	Enum:       Enum
 };
 
@@ -16,6 +17,7 @@ const link   = require('link');
 function DataReader(stream)
 {
 	assert.ok(this instanceof DataReader, "constructor called with 'new'");
+	assert.ok('write' in stream, "stream supports .read()");
 
 	var m_decoder = new TextDecoder('utf-8');
 	var m_stream = stream;
@@ -118,6 +120,134 @@ function DataReader(stream)
 		assert.equal(typeof littleEndian, 'boolean');
 
 		return _readInt(m_stream, 4, false, littleEndian);
+	}
+}
+
+function DataWriter(stream)
+{
+	assert.ok(this instanceof DataWriter, "constructor called with 'new'");
+	assert.ok('write' in stream, "stream supports .write()");
+
+	var m_encoder = new TextEncoder('utf-8');
+	var m_stream = stream;
+
+	this.writeFloat32 = m_writeFloat32;
+	function m_writeFloat32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(4));
+		dv.setFloat32(0, value, littleEndian);
+		m_stream.write(dv);
+	}
+
+	this.writeFloat64 = m_writeFloat64;
+	function m_writeFloat64(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(8));
+		dv.setFloat64(0, value, littleEndian);
+		m_stream.write(dv);
+	}
+
+	this.writeInt8 = m_writeInt8;
+	function m_writeInt8(value)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(1));
+		dv.setInt8(0, value);
+		m_stream.write(dv);
+	}
+
+	this.writeInt16 = m_writeInt16;
+	function m_writeInt16(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(2));
+		dv.setInt16(0, value, littleEndian);
+		m_stream.write(dv);
+	}
+
+	this.writeInt32 = m_writeInt32;
+	function m_writeInt32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(4));
+		dv.setInt32(0, value, littleEndian);
+		m_stream.write(dv);
+	}
+
+	this.writeString = m_writeString;
+	function m_writeString(string)
+	{
+		assert.equal(typeof value, 'string');
+
+		var bytes = m_encoder.encode(string);
+		m_stream.write(dv);
+	}
+
+	this.writeString8 = m_writeString8;
+	function m_writeString8(string)
+	{
+		assert.equal(typeof value, 'string');
+
+		var bytes = m_encoder.encode(string);
+		m_writeUint8(bytes.length);
+		m_stream.write(bytes);
+	}
+
+	this.writeString16 = m_writeString16;
+	function m_writeString16(string, littleEndian)
+	{
+		assert.equal(typeof value, 'string');
+
+		var bytes = m_encoder.encode(string);
+		m_writeUint16(bytes.length, littleEndian);
+		m_stream.write(bytes);
+	}
+
+	this.writeString32 = m_writeString32;
+	function m_writeString32(string, littleEndian)
+	{
+		assert.equal(typeof value, 'string');
+
+		var bytes = m_encoder.encode(string);
+		m_writeUint32(bytes.length, littleEndian);
+		m_stream.write(bytes);
+	}
+
+	this.writeUint8 = m_writeUint8;
+	function m_writeUint8(value)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(1));
+		dv.setUint8(0, value);
+		m_stream.write(dv);
+	}
+
+	this.writeUint16 = m_writeUint16;
+	function m_writeUint16(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(2));
+		dv.setUint16(0, value, littleEndian);
+		m_stream.write(dv);
+	}
+
+	this.writeUint32 = m_writeUint32;
+	function m_writeUint32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		var dv = new DataView(new ArrayBuffer(4));
+		dv.setUint32(0, value, littleEndian);
+		m_stream.write(dv);
 	}
 }
 

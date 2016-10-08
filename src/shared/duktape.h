@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 4cad05a0b0855402b60c101b49abd9c5299a58bb (v1.5.0-687-g4cad05a).
- *  Git branch exponentiation-operator.
+ *  Git commit b4eda00e8982d8781a9e921d7218e2bcd1929c98 (v1.5.0-700-gb4eda00).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -256,9 +256,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "4cad05a0b0855402b60c101b49abd9c5299a58bb"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-687-g4cad05a"
-#define DUK_GIT_BRANCH                    "exponentiation-operator"
+#define DUK_GIT_COMMIT                    "b4eda00e8982d8781a9e921d7218e2bcd1929c98"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-700-gb4eda00"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
