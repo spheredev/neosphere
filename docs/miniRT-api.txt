@@ -523,31 +523,28 @@ schema.
 new struct.DataReader(stream, schema);
 
     Creates a DataReader object which can be used to read binary data from
-    `stream`.
+    a stream.  `stream` is an object with a read() method taking a byte count
+    and returning an ArrayBuffer, such as a FileStream or Socket.
 
-DataReader#readFloat32(littleEndian);
+DataReader#readFloat32([littleEndian]);
+DataReader#readFloat64([littleEndian]);
 
-    Reads a 32-bit floating point number from the associated stream.  If
-    `littleEndian` is true, reads in little endian mode.
-
-DataReader#readFloat64(littleEndian);
-
-    Reads a 64-bit floating point number from the associated stream.  If
-    `littleEndian` is true, reads in little endian mode.
+    Reads an IEEE floating point value from the associated stream.  If
+    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
+    big-endian mode.
 
 DataReader#readInt8();
+DataReader#readInt16([littleEndian]);
+DataReader#readInt32([littleEndian]);
+DataReader#readUint8();
+DataReader#readUint16([littleEndian]);
+DataReader#readUint32([littleEndian]);
 
-    Reads an 8-bit integer from the associated stream.
+    Reads an integer value from the associated stream.  If `littleEndian` is
+    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
-DataReader#readInt16(littleEndian);
-
-    Reads a 16-bit integer from the associated stream.  Big endian is assumed;
-    specify true for `littleEndian` to read a little endian integer.
-
-DataReader#readInt32(littleEndian);
-
-    Reads a 32-bit integer from the associated stream.  Big endian is assumed;
-    specify true for `littleEndian` to read a little endian integer.
+    Note: "readUint" variants read unsigned values.  "readInt" variants read
+    signed ("two's complement") values.
 
 DataReader#readString(length);
 
@@ -555,21 +552,12 @@ DataReader#readString(length);
     many bytes to read.
 
 DataReader#readString8();
+DataReader#readString16([littleEndian]);
+DataReader#readString32([littleEndian]);
 
     Reads a UTF-8 length-prefixed string from the associated stream, where the
-    length in bytes is stored as an unsigned 8-bit integer.
-
-DataReader#readString16(littleEndian);
-
-    Reads a UTF-8 length-prefixed string from the associated stream, where the
-    length in bytes is stored as an unsigned 16-bit integer.  If `littleEndian`
-    is true, the length is read in little endian mode.
-
-DataReader#readString32(littleEndian);
-
-    Reads a UTF-8 length-prefixed string from the associated stream, where the
-    length in bytes is stored as an unsigned 32-bit integer.  If `littleEndian`
-    is true, the length is read in little endian mode.
+    length in bytes is stored as an unsigned integer.  If `littleEndian` is
+    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
 DataReader#readStruct(schema);
 
@@ -600,19 +588,42 @@ DataReader#readStruct(schema);
     complex formats usually require multiple .readStruct() calls using
     indepedent schemas.
 
-DataReader#readUint8();
+new DataWriter(stream);
 
-    Reads an 8-bit unsigned integer (byte) from the associated stream.
+    Creates a DataWriter object which can be used to write binary data to a
+    stream.  `stream` is an object with a write() method that takes an
+    ArrayBuffer, such as a FileStream or Socket.
 
-DataReader#readUint16(littleEndian);
+DataWriter#writeFloat32(value[, littleEndian]);
+DataWriter#writeFloat64(value[, littleEndian]);
 
-    Reads a 16-bit unsigned integer from the associated stream.  Big endian is
-    assumed; specify true for `littleEndian` to read a little endian integer.
+    Writes a floating point value to the stream.  If `littleEndian` is true,
+    writes in little-endian mode.  Otherwise writes in big-endian mode.
 
-DataReader#readUint32(littleEndian);
+DataWriter#writeInt8(value);
+DataWriter#writeInt16(value[, littleEndian]);
+DataWriter#writeInt32(value[, littleEndian]);
+DataWriter#writeUint8(value);
+DataWriter#writeUint16(value[, littleEndian]);
+DataWriter#writeUint32(value[, littleEndian]);
 
-    Reads a 32-bit unsigned integer from the associated stream.  Big endian is
-    assumed; specify true for `littleEndian` to read a little endian integer.
+    Writes an integer value to the associated stream.  If `littleEndian` is
+    true, writes in little-endian mode.  Otherwise writes in big-endian mode.
+
+    Note: "writeUint" variants write unsigned values.  "writeInt" variants
+          write signed ("two's complement") values.
+
+DataWriter#writeString(value);
+
+    Writes a UTF-8 string to the associated stream.
+
+DataWriter#writeString8(value);
+DataWriter#writeString16(value[, littleEndian]);
+DataWriter#writeString32(value[, littleEndian]);
+
+    Writes a UTF-8 length-prefixed string to the associated stream, where the
+    length is stored as an unsigned integer.  If `littleEndian` is true, writes
+    in little-endian mode.  Otherwise, writes in big-endian mode.
 
 
 `term` Module

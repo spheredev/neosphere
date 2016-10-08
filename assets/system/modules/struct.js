@@ -128,7 +128,7 @@ function DataWriter(stream)
 	assert.ok(this instanceof DataWriter, "constructor called with 'new'");
 	assert.ok('write' in stream, "stream supports .write()");
 
-	var m_encoder = new TextEncoder('utf-8');
+	var m_encoder = new TextEncoder();
 	var m_stream = stream;
 
 	this.writeFloat32 = m_writeFloat32;
