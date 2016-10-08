@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v4.3.0 - TBD
+------------
+
+* Improves the `struct` module.  Use the new DataReader and DataWriter objects
+  to read and write binary data in files and network sockets.
+
+
 v4.2.4 - October 7, 2016
 ------------------------
 
