@@ -322,14 +322,14 @@ lstr_from_cp1252(const char* text, size_t length)
 	// expects JS code to be CESU-8 encoded, this functionality is needed for
 	// full compatibility with Sphere v1 scripts.
 
-	uint8_t*      buffer;
-	uint32_t      codepoint;
-	uint8_t*      input;
-	bool          is_utf8 = true;
-	lstring_t*    string;
-	utf8ctx_t*    utf8;
-	uint8_t       *p_out;
-	const uint8_t *p_in;
+	uint8_t*       buffer;
+	uint32_t       codepoint;
+	uint8_t*       input;
+	bool           is_utf8 = true;
+	lstring_t*     string;
+	utf8_decode_t* utf8;
+	uint8_t        *p_out;
+	const uint8_t  *p_in;
 
 	size_t i;
 
@@ -371,56 +371,6 @@ lstr_from_cp1252(const char* text, size_t length)
 	string->cstr = (char*)buffer;
 	string->length = length;
 	return string;
-}
-
-lstring_t*
-lstr_from_utf8(const uint8_t* text, size_t length, bool strict, bool fatal_mode)
-{
-	// create an lstring from UTF-8 text which may be malformed.
-	// when an encoding error is encountered, it is handled according to the value of `fatal_mode`:
-	//     - if `fatal_mode` is true, conversion is aborted and the function returns NULL.
-	//     - otherwise the invalid sequence of bytes is replaced with FFFD.
-
-	const uint32_t REPLACEMENT = 0xFFFD;
-
-	uint32_t       codepoint;
-	size_t         num_bytes = 0;
-	utf8_ret_t     ret;
-	lstring_t*     string;
-	utf8ctx_t*     utf8;
-	const uint8_t* p_in;
-	uint8_t*       p_out;
-
-	// worst case scenario, every byte in the source is replaced with U+FFFD, which
-	// requires 3 bytes to encode.
-	if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
-		return NULL;
-
-	p_in = text;
-	p_out = (uint8_t*)string + sizeof(lstring_t);
-	utf8 = utf8_decode_start(strict);
-	while (p_in < text + length) {
-		while ((ret = utf8_decode_next(utf8, *p_in++, &codepoint)) == UTF8_CONTINUE);
-		if (ret >= UTF8_ERROR) {
-			codepoint = REPLACEMENT;
-			if (fatal_mode)
-				goto abort;
-		}
-		if (ret == UTF8_RETRY)
-			--p_in;
-		num_bytes += cesu8_emit(codepoint, &p_out);
-	}
-	if (utf8_decode_end(utf8) >= UTF8_ERROR)
-		num_bytes += cesu8_emit(REPLACEMENT, &p_out);
-	*p_out = '\0';  // NUL terminator
-
-	string->cstr = (char*)((uint8_t*)string + sizeof(lstring_t));
-	string->length = num_bytes;
-	return string;
-
-abort:
-	free(string);
-	return NULL;
 }
 
 void

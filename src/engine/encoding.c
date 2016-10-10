@@ -5,11 +5,11 @@
 
 struct decoder
 {
-	unsigned int refcount;
-	bool         bom_seen;
-	utf8ctx_t*   context;
-	bool         ignore_bom;
-	bool         fatal;
+	unsigned int   refcount;
+	bool           bom_seen;
+	bool           ignore_bom;
+	bool           fatal;
+	utf8_decode_t* stream;
 };
 
 struct encoder
@@ -23,8 +23,8 @@ decoder_new(bool fatal, bool ignore_bom)
 	decoder_t* decoder;
 
 	decoder = calloc(1, sizeof(decoder_t));
-	decoder->ignore_bom = ignore_bom;
 	decoder->fatal = fatal;
+	decoder->ignore_bom = ignore_bom;
 	return decoder_ref(decoder);
 }
 
@@ -63,8 +63,8 @@ decoder_finish(decoder_t* decoder)
 	uint8_t    *p_out;
 	
 	p_out = output;
-	state = utf8_decode_end(decoder->context);
-	decoder->context = NULL;
+	state = utf8_decode_end(decoder->stream);
+	decoder->stream = NULL;
 	decoder->bom_seen = false;
 	if (state >= UTF8_ERROR) {
 		if (!decoder->fatal)
@@ -89,10 +89,10 @@ decoder_run(decoder_t* decoder, const uint8_t* buffer, size_t size)
 	p_in = buffer;
 	p_out = output;
 
-	if (decoder->context == NULL)
-		decoder->context = utf8_decode_start(true);
+	if (decoder->stream == NULL)
+		decoder->stream = utf8_decode_start(true);
 	while (p_in < buffer + size) {
-		state = utf8_decode_next(decoder->context, *p_in++, &codepoint);
+		state = utf8_decode_next(decoder->stream, *p_in++, &codepoint);
 		if (state == UTF8_CONTINUE)
 			continue;
 		if (state == UTF8_RETRY)
@@ -144,7 +144,7 @@ encoder_run(encoder_t* encoder, const lstring_t* string, size_t *out_size)
 {
 	uint8_t*       output;
 	uint32_t       codepoint;
-	utf8ctx_t*     ctx;
+	utf8_decode_t* cx;
 	size_t         length;
 	uint8_t*       text;
 	const uint8_t* p_in;
@@ -157,12 +157,15 @@ encoder_run(encoder_t* encoder, const lstring_t* string, size_t *out_size)
 	p_in = lstr_cstr(string);
 	p_out = output;
 
-	ctx = utf8_decode_start(false);
+	cx = utf8_decode_start(false);
 	while (p_in < text + length) {
-		while (utf8_decode_next(ctx, *p_in++, &codepoint) == UTF8_CONTINUE);
+		// no error check is needed because lstring_t is well-formed by definition.
+		// barring memory corruption or some such shenanigans, a decoding error here
+		// can't possibly happen.  I know, famous last words and all...
+		while (utf8_decode_next(cx, *p_in++, &codepoint) == UTF8_CONTINUE);
 		utf8_emit(codepoint, &p_out);
 	}
-	utf8_decode_end(ctx);
+	utf8_decode_end(cx);
 	*out_size = p_out - output;
 	return output;
 }

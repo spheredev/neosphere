@@ -255,10 +255,10 @@ font_set_glyph(font_t* font, uint32_t cp, image_t* image)
 void
 font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
-	uint32_t   cp;
-	utf8_ret_t ret;
-	int        tab_width;
-	utf8ctx_t* utf8;
+	uint32_t       cp;
+	utf8_ret_t     ret;
+	int            tab_width;
+	utf8_decode_t* utf8;
 
 	if (alignment == TEXT_ALIGN_CENTER)
 		x -= font_get_width(font, text) / 2;
@@ -325,10 +325,10 @@ font_get_metrics(const font_t* font, int* out_min_width, int* out_max_width, int
 int
 font_get_width(const font_t* font, const char* text)
 {
-	uint32_t   cp;
-	utf8_ret_t ret;
-	utf8ctx_t* utf8;
-	int        width = 0;
+	uint32_t       cp;
+	utf8_ret_t     ret;
+	utf8_decode_t* utf8;
+	int            width = 0;
 
 	utf8 = utf8_decode_start(false);
 	do {
@@ -376,27 +376,27 @@ font_get_width(const font_t* font, const char* text)
 wraptext_t*
 wraptext_new(const char* text, const font_t* font, int width)
 {
-	char*       buffer = NULL;
-	uint8_t     ch_byte;
-	char*		carry;
-	size_t      ch_size;
-	uint32_t    cp;
-	int         glyph_width;
-	bool        is_line_end = false;
-	int         line_idx;
-	int         line_width;
-	int         max_lines = 10;
-	char*       last_break;
-	char*       last_space;
-	char*       last_tab;
-	char*       line_buffer;
-	size_t      line_length;
-	char*       new_buffer;
-	size_t      pitch;
-	utf8_ret_t  ret;
-	utf8ctx_t*  utf8;
-	wraptext_t* wraptext;
-	const char  *p, *start;
+	char*          buffer = NULL;
+	uint8_t        ch_byte;
+	char*          carry;
+	size_t         ch_size;
+	uint32_t       cp;
+	int            glyph_width;
+	bool           is_line_end = false;
+	int            line_idx;
+	int            line_width;
+	int            max_lines = 10;
+	char*          last_break;
+	char*          last_space;
+	char*          last_tab;
+	char*          line_buffer;
+	size_t         line_length;
+	char*          new_buffer;
+	size_t         pitch;
+	utf8_ret_t     ret;
+	utf8_decode_t* utf8;
+	wraptext_t*    wraptext;
+	const char     *p, *start;
 
 	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
 
