@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit b4eda00e8982d8781a9e921d7218e2bcd1929c98 (v1.5.0-700-gb4eda00).
- *  Git branch master.
+ *  Git commit 7a3b3b4f60e2abb2520fdf167da2e85e09a531b5 (v1.5.0-747-g7a3b3b4).
+ *  Git branch whatwg-encoding.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -256,9 +256,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "b4eda00e8982d8781a9e921d7218e2bcd1929c98"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-700-gb4eda00"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "7a3b3b4f60e2abb2520fdf167da2e85e09a531b5"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-747-g7a3b3b4"
+#define DUK_GIT_BRANCH                    "whatwg-encoding"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2

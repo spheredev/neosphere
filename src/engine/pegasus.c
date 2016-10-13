@@ -7,7 +7,6 @@
 #include "color.h"
 #include "console.h"
 #include "debugger.h"
-#include "encoding.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
@@ -333,16 +332,6 @@ static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
 static duk_ret_t js_Surface_get_width          (duk_context* ctx);
 static duk_ret_t js_Surface_toImage            (duk_context* ctx);
-static duk_ret_t js_new_TextDecoder            (duk_context* ctx);
-static duk_ret_t js_TextDecoder_finalize       (duk_context* ctx);
-static duk_ret_t js_TextDecoder_get_encoding   (duk_context* ctx);
-static duk_ret_t js_TextDecoder_get_fatal      (duk_context* ctx);
-static duk_ret_t js_TextDecoder_get_ignoreBOM  (duk_context* ctx);
-static duk_ret_t js_TextDecoder_decode         (duk_context* ctx);
-static duk_ret_t js_new_TextEncoder            (duk_context* ctx);
-static duk_ret_t js_TextEncoder_finalize       (duk_context* ctx);
-static duk_ret_t js_TextEncoder_get_encoding   (duk_context* ctx);
-static duk_ret_t js_TextEncoder_encode         (duk_context* ctx);
 static duk_ret_t js_new_Transform              (duk_context* ctx);
 static duk_ret_t js_Transform_finalize         (duk_context* ctx);
 static duk_ret_t js_Transform_compose          (duk_context* ctx);
@@ -492,16 +481,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_register_prop(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_register_prop(ctx, "Surface", "width", js_Surface_get_width, NULL);
 	api_register_method(ctx, "Surface", "toImage", js_Surface_toImage);
-
-	api_register_ctor(ctx, "TextDecoder", js_new_TextDecoder, js_TextDecoder_finalize);
-	api_register_prop(ctx, "TextDecoder", "encoding", js_TextDecoder_get_encoding, NULL);
-	api_register_prop(ctx, "TextDecoder", "fatal", js_TextDecoder_get_fatal, NULL);
-	api_register_prop(ctx, "TextDecoder", "ignoreBOM", js_TextDecoder_get_ignoreBOM, NULL);
-	api_register_method(ctx, "TextDecoder", "decode", js_TextDecoder_decode);
-
-	api_register_ctor(ctx, "TextEncoder", js_new_TextEncoder, js_TextEncoder_finalize);
-	api_register_prop(ctx, "TextEncoder", "encoding", js_TextEncoder_get_encoding, NULL);
-	api_register_method(ctx, "TextEncoder", "encode", js_TextEncoder_encode);
 
 	api_register_ctor(ctx, "Transform", js_new_Transform, js_Transform_finalize);
 	api_register_method(ctx, "Transform", "compose", js_Transform_compose);
@@ -3438,185 +3417,6 @@ js_Surface_toImage(duk_context* ctx)
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create image");
 	duk_push_sphere_obj(ctx, "Image", new_image);
-	return 1;
-}
-
-static duk_ret_t
-js_new_TextDecoder(duk_context* ctx)
-{
-	decoder_t*  decoder;
-	bool        fatal = false;
-	bool        ignore_bom = false;
-	int         num_args;
-	const char* label = "utf-8";
-	
-	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
-	num_args = duk_get_top(ctx);
-	if (num_args >= 1)
-		label = duk_require_string(ctx, 0);
-	if (num_args >= 2) {
-		duk_require_object_coercible(ctx, 1);
-		if (duk_get_prop_string(ctx, 1, "fatal"))
-			fatal = duk_require_boolean(ctx, -1);
-		if (duk_get_prop_string(ctx, 1, "ignoreBOM"))
-			ignore_bom = duk_require_boolean(ctx, -1);
-	}
-
-	// TextDecoder only supports UTF-8 for now.  in the future it'd be nice to support
-	// at least UTF-16 and maybe CP-1252.
-	if (strcasecmp(label, "unicode-1-1-utf-8") != 0
-		&& strcasecmp(label, "utf-8") != 0
-		&& strcasecmp(label, "utf8") != 0)
-	{
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "unsupported encoding '%s'", label);
-	}
-
-	decoder = decoder_new(fatal, ignore_bom);
-	duk_push_sphere_obj(ctx, "TextDecoder", decoder);
-	return 1;
-}
-
-static duk_ret_t
-js_TextDecoder_finalize(duk_context* ctx)
-{
-	decoder_t* decoder;
-
-	decoder = duk_require_sphere_obj(ctx, 0, "TextDecoder");
-	decoder_free(decoder);
-	return 0;
-}
-
-static duk_ret_t
-js_TextDecoder_get_encoding(duk_context* ctx)
-{
-	decoder_t* decoder;
-
-	duk_push_this(ctx);
-	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
-
-	duk_push_string(ctx, "utf-8");
-	return 1;
-}
-
-static duk_ret_t
-js_TextDecoder_get_fatal(duk_context* ctx)
-{
-	decoder_t* decoder;
-
-	duk_push_this(ctx);
-	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
-
-	duk_push_boolean(ctx, decoder_fatal(decoder));
-	return 1;
-}
-
-static duk_ret_t
-js_TextDecoder_get_ignoreBOM(duk_context* ctx)
-{
-	decoder_t* decoder;
-
-	duk_push_this(ctx);
-	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
-
-	duk_push_boolean(ctx, decoder_ignore_bom(decoder));
-	return 1;
-}
-
-static duk_ret_t
-js_TextDecoder_decode(duk_context* ctx)
-{
-	decoder_t*  decoder;
-	const char* input = "";
-	duk_size_t  length = 0;
-	int         num_args;
-	lstring_t*  string;
-	bool        streaming = false;
-
-	num_args = duk_get_top(ctx);
-	duk_push_this(ctx);
-	decoder = duk_require_sphere_obj(ctx, -1, "TextDecoder");
-	if (num_args >= 1)
-		input = duk_require_buffer_data(ctx, 0, &length);
-	if (num_args >= 2) {
-		duk_require_object_coercible(ctx, 1);
-		if (duk_get_prop_string(ctx, 1, "stream"))
-			streaming = duk_require_boolean(ctx, -1);
-	}
-
-	if (!(string = decoder_run(decoder, input, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
-	duk_push_lstring_t(ctx, string);
-	lstr_free(string);
-	if (!streaming) {
-		if (!(string = decoder_finish(decoder)))
-			duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
-		duk_push_lstring_t(ctx, string);
-		lstr_free(string);
-		duk_concat(ctx, 2);
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_new_TextEncoder(duk_context* ctx)
-{
-	encoder_t* encoder;
-	
-	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
-	
-	encoder = encoder_new();
-	duk_push_sphere_obj(ctx, "TextEncoder", encoder);
-	return 1;
-}
-
-static duk_ret_t
-js_TextEncoder_finalize(duk_context* ctx)
-{
-	encoder_t* encoder;
-
-	encoder = duk_require_sphere_obj(ctx, 0, "TextEncoder");
-	encoder_free(encoder);
-	return 0;
-}
-
-static duk_ret_t
-js_TextEncoder_get_encoding(duk_context* ctx)
-{
-	encoder_t* encoder;
-
-	duk_push_this(ctx);
-	encoder = duk_require_sphere_obj(ctx, -1, "TextEncoder");
-
-	duk_push_string(ctx, "utf-8");
-	return 1;
-}
-
-static duk_ret_t
-js_TextEncoder_encode(duk_context* ctx)
-{
-	void*      buffer;
-	lstring_t* input;
-	uint8_t*   output;
-	size_t     size;
-	int        num_args;
-	
-	encoder_t* encoder;
-
-	num_args = duk_get_top(ctx);
-	duk_push_this(ctx);
-	encoder = duk_require_sphere_obj(ctx, -1, "TextEncoder");
-	if (num_args >= 1)
-		input = duk_require_lstring_t(ctx, 0);
-	else
-		input = lstr_new("");
-
-	output = encoder_run(encoder, input, &size);
-	buffer = duk_push_fixed_buffer(ctx, size);
-	memcpy(buffer, output, size);
-	duk_push_buffer_object(ctx, -1, 0, size, DUK_BUFOBJ_UINT8ARRAY);
-	lstr_free(input);
 	return 1;
 }
 
