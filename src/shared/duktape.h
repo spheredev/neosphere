@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 7a3b3b4f60e2abb2520fdf167da2e85e09a531b5 (v1.5.0-747-g7a3b3b4).
+ *  Git commit 1177a73bb5e568f02fac656da61e8ad25f3f9c78 (v1.5.0-757-g1177a73).
  *  Git branch whatwg-encoding.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -256,8 +256,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "7a3b3b4f60e2abb2520fdf167da2e85e09a531b5"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-747-g7a3b3b4"
+#define DUK_GIT_COMMIT                    "1177a73bb5e568f02fac656da61e8ad25f3f9c78"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-757-g1177a73"
 #define DUK_GIT_BRANCH                    "whatwg-encoding"
 
 /* Duktape debug protocol version used by this build. */
@@ -585,7 +585,7 @@ DUK_EXTERNAL_DECL void *duk_push_buffer_raw(duk_context *ctx, duk_size_t size, d
 
 #define DUK_BUFOBJ_CREATE_ARRBUF       (1 << 4)  /* internal flag: create backing ArrayBuffer; keep in one byte */
 #define DUK_BUFOBJ_ARRAYBUFFER         0
-#define DUK_BUFOBJ_NODEJS_BUFFER       1
+#define DUK_BUFOBJ_NODEJS_BUFFER       (1 | DUK_BUFOBJ_CREATE_ARRBUF)
 #define DUK_BUFOBJ_DATAVIEW            (2 | DUK_BUFOBJ_CREATE_ARRBUF)
 #define DUK_BUFOBJ_INT8ARRAY           (3 | DUK_BUFOBJ_CREATE_ARRBUF)
 #define DUK_BUFOBJ_UINT8ARRAY          (4 | DUK_BUFOBJ_CREATE_ARRBUF)
