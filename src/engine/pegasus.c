@@ -1112,7 +1112,7 @@ js_system_get_game(duk_context* ctx)
 static duk_ret_t
 js_system_get_name(duk_context* ctx)
 {
-	duk_push_string(ctx, PRODUCT_NAME);
+	duk_push_string(ctx, ENGINE_NAME);
 	return 1;
 }
 
