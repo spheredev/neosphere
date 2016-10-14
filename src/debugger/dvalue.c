@@ -21,7 +21,6 @@ CLASS_NAMES[] = {
 	"global",
 	"ObjEnv",
 	"DecEnv",
-	"Buffer",
 	"Pointer",
 	"Thread",
 	"ArrayBuffer",

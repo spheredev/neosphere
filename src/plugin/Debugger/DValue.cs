@@ -49,7 +49,6 @@ namespace minisphere.Gdk.Debugger
         Global,
         ObjEnv,
         DecEnv,
-        Buffer,
         Pointer,
         Thread,
         ArrayBuffer,
