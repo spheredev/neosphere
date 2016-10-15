@@ -10,8 +10,13 @@ module.exports =
 	Promise: Promise,
 };
 
-function Promise(fn)
+function Promise(executor)
 {
+	if (!(this instanceof Promise))
+		throw new TypeError("constructor must use 'new'");
+	if (typeof executor !== 'function')
+		throw new TypeError("executor is not callable");
+	
 	var deferred = [];
 	var state = 'pending';
 	var result = undefined;
@@ -37,7 +42,7 @@ function Promise(fn)
 	function resolve(value)
 	{
 		if (value === self) {
-			reject(new TypeError("Attempt to fulfill a promise with itself"));
+			reject(new TypeError("cannot fulfill promise with itself"));
 			return;
 		} else if (state != 'pending')
 			return;
@@ -63,8 +68,9 @@ function Promise(fn)
 
 	function reject(reason)
 	{
-		if (state != 'pending') return;
-		state = 'rejected'
+		if (state !== 'pending')
+			return;
+		state = 'rejected';
 		result = reason;
 		for (var i = 0; i < deferred.length; ++i)
 			handle(deferred[i]);
@@ -73,9 +79,7 @@ function Promise(fn)
 
 	this.toString = function()
 	{
-		return state != 'pending'
-			? "[promise: " + state + " `" + result + "`]"
-			: "[promise: pending]";
+		return "[object Promise]";
 	}
 
 	this.catch = function(errback)
@@ -104,7 +108,7 @@ function Promise(fn)
 	};
 
 	try {
-		fn.call(this, resolve, reject);
+		executor.call(this, resolve, reject);
 	} catch(e) {
 		reject(e);
 	}
@@ -173,10 +177,10 @@ function Pact()
 	function checkPromise(promise)
 	{
 		if (!(promise instanceof Promise))
-			Abort("argument is not a promise", -2);
+			throw new TypeError("value is not a promise");
 		for (var i = handlers.length - 1; i >= 0; --i)
 			if (handlers[i].that == promise) return handlers[i];
-		Abort("promise was not made from this pact", -2);
+		throw new TypeError("promise is not from this pact");
 	};
 
 	// Pact:promise()
@@ -231,6 +235,6 @@ function Pact()
 
 	this.toString = function()
 	{
-		return "[pact: " + numPending.toString() + " outstanding]";
+		return "[object Pact]";
 	};
 }
