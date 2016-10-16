@@ -127,10 +127,10 @@ find_verb(const char* abbrev, const char* *o_pattern)
 		short_name = command_db[1 + i * 3];
 		if (strcmp(abbrev, short_name) == 0) {
 			matches[0] = full_name;
-			num_matches = 1;  // canonical short name is never ambiguous
+			num_matches = 1;
 			if (o_pattern != NULL)
 				*o_pattern = command_db[2 + i * 3];
-			break;
+			break;  // canonical short name is never ambiguous
 		}
 		if (strstr(full_name, abbrev) == full_name) {
 			matches[num_matches] = full_name;
@@ -311,7 +311,8 @@ resolve_command(command_t* command)
 	
 	if (!(verb = find_verb(command_get_string(command, 0), &pattern)))
 		return NULL;
-	return validate_args(command, verb, pattern) ? verb : NULL;
+	return validate_args(command, verb, pattern)
+		? verb : NULL;
 }
 
 static void
@@ -647,7 +648,7 @@ preview_frame(session_t* obj, int frame)
 	filename = backtrace_get_filename(calls, frame);
 	lineno = backtrace_get_linenum(calls, frame);
 	if (lineno == 0)
-		printf("system call - no source provided\n");
+		printf("system call, no source provided.\n");
 	else {
 		if (!(source = inferior_get_source(obj->inferior, filename)))
 			printf("source unavailable for %s.\n", filename);
@@ -675,8 +676,10 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 	}
 	p_type = pattern;
 	while (index < command_len(this) - 1) {
-		if (*p_type == '~') ++p_type;
-		if (*p_type == '\0') break;
+		if (*p_type == '~')
+			++p_type;
+		if (*p_type == '\0')
+			break;
 		switch (*p_type) {
 		case 's':
 			want_tag = TOK_STRING;

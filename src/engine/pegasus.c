@@ -2406,7 +2406,7 @@ js_new_RNG(duk_context* ctx)
 	xoro_t* xoro;
 	
 	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor RNG requires `new`");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 	
 	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
 	duk_push_sphere_obj(ctx, "RNG", xoro);

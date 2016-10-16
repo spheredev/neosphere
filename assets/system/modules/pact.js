@@ -177,10 +177,10 @@ function Pact()
 	function checkPromise(promise)
 	{
 		if (!(promise instanceof Promise))
-			throw new TypeError("value is not a promise");
+			throw new TypeError("argument is not a promise");
 		for (var i = handlers.length - 1; i >= 0; --i)
 			if (handlers[i].that == promise) return handlers[i];
-		throw new TypeError("promise is not from this pact");
+		throw new TypeError("unrecognized promise");
 	};
 
 	// Pact:promise()
