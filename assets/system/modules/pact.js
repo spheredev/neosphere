@@ -103,8 +103,11 @@ function Promise(executor)
 	this.done = function(callback, errback)
 	{
 		var self = arguments.length > 0 ? this.then.apply(this, arguments) : this;
-		if (typeof errback !== 'function')
-			self.catch(function(reason) { throw reason; });
+		if (typeof errback !== 'function') {
+			self.catch(function(reason) {
+				system.dispatch(function() { throw reason; });
+			});
+		}
 	};
 
 	try {

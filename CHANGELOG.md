@@ -4,6 +4,8 @@ minisphere Changelog
 v4.3.0 - TBD
 ------------
 
+* Adds support for new JavaScript reflection functions such as `Reflect.has()`,
+  `Reflect.construct()`, etc.
 * Improves the `struct` module.  Use the new DataReader and DataWriter objects
   to read and write binary data in files and network sockets.
 
