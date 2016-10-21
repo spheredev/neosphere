@@ -362,14 +362,14 @@ initialize_pegasus_api(duk_context* ctx)
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 
-	// `global` global object binding
+	// JavaScript 'global' binding (like Node.js)
 	duk_push_global_object(ctx);
 	duk_push_string(ctx, "global");
 	duk_push_global_object(ctx);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+		| DUK_DEFPROP_CLEAR_CONFIGURABLE);
 	duk_pop(ctx);
 
 	// initialize CommonJS cache and global require()
