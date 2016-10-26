@@ -6,18 +6,18 @@
 'use strict';
 module.exports =
 {
-	DataReader: DataReader,
-	DataWriter: DataWriter,
-	Enum:       Enum
+	Enum:   Enum
+	Reader: Reader,
+	Writer: Writer,
 };
 
 const assert = require('assert');
 const link   = require('link');
 
-function DataReader(stream)
+function Reader(stream)
 {
-	assert.ok(this instanceof DataReader, "constructor called with 'new'");
-	assert.ok('write' in stream, "stream supports .read()");
+	assert.ok(this instanceof Reader, "constructor requires 'new'");
+	assert.ok('read' in stream, "not a readable stream");
 
 	var m_decoder = new TextDecoder('utf-8');
 	var m_stream = stream;
@@ -123,10 +123,10 @@ function DataReader(stream)
 	}
 }
 
-function DataWriter(stream)
+function Writer(stream)
 {
-	assert.ok(this instanceof DataWriter, "constructor called with 'new'");
-	assert.ok('write' in stream, "stream supports .write()");
+	assert.ok(this instanceof Writer, "constructor requires 'new'");
+	assert.ok('write' in stream, "not a writable stream");
 
 	var m_encoder = new TextEncoder();
 	var m_stream = stream;

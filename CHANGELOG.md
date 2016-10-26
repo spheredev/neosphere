@@ -6,8 +6,10 @@ v4.3.0 - TBD
 
 * Adds support for new JavaScript reflection functions such as `Reflect.has()`,
   `Reflect.construct()`, etc.
-* Improves the `struct` module.  Use the new DataReader and DataWriter objects
-  to read and write binary data in files and network sockets.
+* Promises are now supported through an automated polyfill, without needing to
+  pull in the miniRT "pact" module.
+* Adds `struct.Reader` and `struct.Writer` which allow games to read and write
+  binary data in files and network sockets.
 
 
 v4.2.4 - October 7, 2016

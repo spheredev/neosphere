@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 3e98fd56e261067c65f9d372b337bfdfe54aa81a (v1.5.0-788-g3e98fd5).
- *  Git branch master.
+ *  Git commit a9d6366502957959be3f6c8c375e89a391f85494 (v1.5.0-799-ga9d6366).
+ *  Git branch es6-reflect-builtin.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -256,9 +256,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "3e98fd56e261067c65f9d372b337bfdfe54aa81a"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-788-g3e98fd5"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "a9d6366502957959be3f6c8c375e89a391f85494"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-799-ga9d6366"
+#define DUK_GIT_BRANCH                    "es6-reflect-builtin"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2

@@ -17,7 +17,7 @@ function load(fileName)
 	var file = fs.open(fileName, 'r');
 	var fileData = file.read();
 	file.close();
-	var xmlText = new TextDecoder().decode(fileData);
+	var xmlText = new TextDecoder('utf-8').decode(fileData);
 	return parse(xmlText);
 }
 
