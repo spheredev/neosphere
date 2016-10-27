@@ -6,7 +6,7 @@
 'use strict';
 module.exports =
 {
-	Enum:   Enum
+	Enum:   Enum,
 	Reader: Reader,
 	Writer: Writer,
 };
