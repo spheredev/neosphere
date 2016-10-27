@@ -1,10 +1,11 @@
 'use strict';
-global.Promise = Promise;
+if (global.Promise === undefined)
+	global.Promise = Promise;
 
 function Promise(executor)
 {
 	if (!(this instanceof Promise))
-		throw new TypeError("constructor must use 'new'");
+		throw new TypeError("constructor requires 'new'");
 	if (typeof executor !== 'function')
 		throw new TypeError("executor is not callable");
 	
