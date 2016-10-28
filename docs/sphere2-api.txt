@@ -231,11 +231,16 @@ system.reset();
 system.run();
 
     Runs a single iteration of the Sphere event loop.  This function always
-    returns true so that you can use it in a loop condition:
+    returns true, allowing it to be used in a loop condition:
 
         while (!isDone && system.run()) {
             // do stuff here
         }
+
+    Note: Be careful.  This function runs all pending events in the event
+          queue, including settlement of outstanding promises.  This may lead
+          to undesirable side effects if a promise handler modifies a global
+          variable, for example.
 
 system.sleep(time);
 

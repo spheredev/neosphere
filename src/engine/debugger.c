@@ -49,7 +49,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	const char*   hostname;
 
 	s_banner_text = lstr_new("debug");
-	s_banner_color = color_new(128, 128, 128, 255);
+	s_banner_color = color_new(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
 	
 	// load the source map, if one is available
