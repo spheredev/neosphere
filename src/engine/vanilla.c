@@ -82,6 +82,7 @@ static duk_ret_t js_GrabImage                  (duk_context* ctx);
 static duk_ret_t js_GrabSurface                (duk_context* ctx);
 static duk_ret_t js_GradientCircle             (duk_context* ctx);
 static duk_ret_t js_GradientRectangle          (duk_context* ctx);
+static duk_ret_t js_GradientTriangle           (duk_context* ctx);
 static duk_ret_t js_HashByteArray              (duk_context* ctx);
 static duk_ret_t js_HashFromFile               (duk_context* ctx);
 static duk_ret_t js_InflateByteArray           (duk_context* ctx);
@@ -383,6 +384,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_register_static_func(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_register_static_func(ctx, NULL, "GradientCircle", js_GradientCircle);
 	api_register_static_func(ctx, NULL, "GradientRectangle", js_GradientRectangle);
+	api_register_static_func(ctx, NULL, "GradientTriangle", js_GradientTriangle);
 	api_register_static_func(ctx, NULL, "HashByteArray", js_HashByteArray);
 	api_register_static_func(ctx, NULL, "HashFromFile", js_HashFromFile);
 	api_register_static_func(ctx, NULL, "InflateByteArray", js_InflateByteArray);
@@ -1819,6 +1821,33 @@ js_GradientRectangle(duk_context* ctx)
 			{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
 			{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
 			{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
+		};
+		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_GradientTriangle(duk_context* ctx)
+{
+	int     x1, y1, x2, y2, x3, y3;
+	color_t color1, color2, color3;
+
+	x1 = duk_require_int(ctx, 0);
+	y1 = duk_require_int(ctx, 1);
+	x2 = duk_require_int(ctx, 2);
+	y2 = duk_require_int(ctx, 3);
+	x3 = duk_require_int(ctx, 4);
+	y3 = duk_require_int(ctx, 5);
+	color1 = duk_require_sphere_color(ctx, 6);
+	color2 = duk_require_sphere_color(ctx, 7);
+	color3 = duk_require_sphere_color(ctx, 8);
+
+	if (!screen_is_skipframe(g_screen)) {
+		ALLEGRO_VERTEX verts[] = {
+			{ x1, y1, 0, 0, 0, nativecolor(color1) },
+			{ x2, y2, 0, 0, 0, nativecolor(color2) },
+			{ x3, y3, 0, 0, 0, nativecolor(color3) },
 		};
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	}
