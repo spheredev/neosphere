@@ -160,7 +160,7 @@ joy_is_button_down(int joy_index, int button)
 	ALLEGRO_JOYSTICK_STATE joy_state;
 	ALLEGRO_JOYSTICK*      joystick;
 
-	if (!s_have_joystick)
+	if (!s_have_joystick || joy_index < 0)
 		return false;
 	if (!(joystick = s_joy_handles[joy_index]))
 		return 0.0;
@@ -173,7 +173,7 @@ joy_name(int joy_index)
 {
 	ALLEGRO_JOYSTICK* joystick;
 
-	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || joy_index < 0 || !(joystick = s_joy_handles[joy_index]))
 		return "null joystick";
 	return al_get_joystick_name(joystick);
 }
@@ -187,7 +187,7 @@ joy_num_axes(int joy_index)
 
 	int i;
 
-	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || joy_index < 0 || !(joystick = s_joy_handles[joy_index]))
 		return 0;
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	n_axes = 0;
@@ -201,7 +201,7 @@ joy_num_buttons(int joy_index)
 {
 	ALLEGRO_JOYSTICK* joystick;
 
-	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || joy_index < 0 || !(joystick = s_joy_handles[joy_index]))
 		return 0;
 	return al_get_joystick_num_buttons(joystick);
 }
@@ -222,7 +222,7 @@ joy_position(int joy_index, int axis_index)
 
 	int i;
 
-	if (!s_have_joystick || !(joystick = s_joy_handles[joy_index]))
+	if (!s_have_joystick || joy_index < 0 || !(joystick = s_joy_handles[joy_index]))
 		return 0.0;
 	al_get_joystick_state(joystick, &joy_state);
 	n_sticks = al_get_joystick_num_sticks(joystick);
