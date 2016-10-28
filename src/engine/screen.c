@@ -278,7 +278,7 @@ screen_flip(screen_t* obj, int framerate)
 			obj->take_screenshot = false;
 		}
 		if (is_debugger_attached())
-			screen_draw_status(obj, "SSJ", color_new(255, 224, 0, 255));
+			screen_draw_status(obj, get_debugger_name(), get_debugger_color());
 		if (obj->show_fps) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", obj->fps_flips, obj->fps_frames);

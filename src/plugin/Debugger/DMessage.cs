@@ -48,6 +48,7 @@ namespace minisphere.Gdk.Debugger
     {
         GetGameInfo = 0x01,
         GetSource = 0x02,
+        SetWatermark = 0x03,
     }
 
     enum AppNotify

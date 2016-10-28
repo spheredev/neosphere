@@ -18,6 +18,7 @@ enum apprequest
 {
 	APPREQ_GAME_INFO = 0x01,
 	APPREQ_SOURCE = 0x02,
+	APPREQ_WATERMARK = 0x03,
 };
 
 static const int TCP_DEBUG_PORT = 1208;
@@ -30,12 +31,14 @@ static duk_size_t duk_cb_debug_peek    (void* udata);
 static duk_size_t duk_cb_debug_read    (void* udata, char* buffer, duk_size_t bufsize);
 static duk_size_t duk_cb_debug_write   (void* udata, const char* data, duk_size_t size);
 
-static bool      s_is_attached = false;
-static socket_t* s_client;
-static bool      s_have_source_map;
-static socket_t* s_server;
-static vector_t* s_sources;
-static bool      s_want_attach;
+static bool       s_is_attached = false;
+static color_t    s_banner_color;
+static lstring_t* s_banner_text;
+static socket_t*  s_client;
+static bool       s_have_source_map;
+static socket_t*  s_server;
+static vector_t*  s_sources;
+static bool       s_want_attach;
 
 void
 initialize_debugger(bool want_attach, bool allow_remote)
@@ -45,6 +48,8 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	const path_t* game_path;
 	const char*   hostname;
 
+	s_banner_text = lstr_new("debug");
+	s_banner_color = color_new(128, 128, 128, 255);
 	s_sources = vector_new(sizeof(struct source));
 	
 	// load the source map, if one is available
@@ -164,6 +169,18 @@ get_compiled_name(const char* source_name)
 		duk_pop_n(g_duk, 4);
 	}
 	return retval;
+}
+
+color_t
+get_debugger_color(void)
+{
+	return s_banner_color;
+}
+
+const char*
+get_debugger_name(void)
+{
+	return lstr_cstr(s_banner_text);
 }
 
 const char*
@@ -340,6 +357,21 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		
 		duk_push_sprintf(ctx, "no source available for `%s`", name);
 		return -1;
+	case APPREQ_WATERMARK:
+		if (nvalues < 1 || !duk_is_string(ctx, -nvalues + 1)) {
+			duk_push_string(ctx, "missing debug client name");
+			return -1;
+		}
+
+		s_banner_text = duk_require_lstring_t(ctx, -nvalues + 1);
+		if (nvalues >= 4) {
+			s_banner_color = color_new(
+				duk_get_int(ctx, -nvalues + 2),
+				duk_get_int(ctx, -nvalues + 3),
+				duk_get_int(ctx, -nvalues + 4),
+				255);
+		}
+		return 0;
 	default:
 		duk_push_sprintf(ctx, "invalid AppRequest command number `%d`", request_id);
 		return -1;

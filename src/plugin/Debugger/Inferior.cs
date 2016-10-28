@@ -163,6 +163,7 @@ namespace minisphere.Gdk.Debugger
             // start the communication thread
             messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
+            await DoRequest(DValueTag.REQ, Request.AppRequest, AppRequest.SetWatermark, "ssj blue", 0, 255, 255);
             Attached?.Invoke(this, EventArgs.Empty);
         }
 

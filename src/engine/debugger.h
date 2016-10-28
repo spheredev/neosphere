@@ -18,6 +18,8 @@ void        shutdown_debugger    (void);
 void        update_debugger      (void);
 bool        is_debugger_attached (void);
 const char* get_compiled_name    (const char* source_name);
+color_t     get_debugger_color   (void);
+const char* get_debugger_name    (void);
 const char* get_source_name      (const char* pathname);
 void        cache_source         (const char* name, const lstring_t* text);
 void        debug_print          (const char* text, print_op_t op, bool use_console);

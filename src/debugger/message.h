@@ -83,6 +83,7 @@ enum apprequest
 	APPREQ_NOP,
 	APPREQ_GAME_INFO,
 	APPREQ_SOURCE,
+	APPREQ_WATERMARK,
 };
 
 message_t*      message_new          (message_tag_t tag);

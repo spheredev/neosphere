@@ -68,6 +68,17 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	if (!do_handshake(obj->socket))
 		goto on_error;
 
+	// set watermark (shown on bottom left)
+	req = message_new(MESSAGE_REQ);
+	message_add_int(req, REQ_APPREQUEST);
+	message_add_int(req, APPREQ_WATERMARK);
+	message_add_string(req, "ssj");
+	message_add_int(req, 255);
+	message_add_int(req, 224);
+	message_add_int(req, 0);
+	rep = inferior_request(obj, req);
+	message_free(rep);
+
 	printf("querying target... ");
 	req = message_new(MESSAGE_REQ);
 	message_add_int(req, REQ_APPREQUEST);
