@@ -1093,7 +1093,7 @@ js_GetKeyString(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int keycode = duk_require_int(ctx, 0);
-	bool shift = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
+	bool shift = n_args >= 2 ? duk_to_boolean(ctx, 1) : false;
 
 	switch (keycode) {
 	case ALLEGRO_KEY_A: duk_push_string(ctx, shift ? "A" : "a"); break;
@@ -2086,7 +2086,7 @@ js_OpenRawFile(duk_context* ctx)
 	num_args = duk_get_top(ctx);
 	filename = duk_require_path(ctx, 0, "other", true);
 	writable = num_args >= 2
-		? duk_require_boolean(ctx, 1)
+		? duk_to_boolean(ctx, 1)
 		: false;
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
@@ -3703,7 +3703,7 @@ js_Sound_play(duk_context* ctx)
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
 
 	if (num_args >= 1) {
-		sound_set_repeat(sound, duk_require_boolean(ctx, 0));
+		sound_set_repeat(sound, duk_to_boolean(ctx, 0));
 		sound_play(sound, s_sound_mixer);
 	}
 	else {
@@ -3777,7 +3777,7 @@ js_Sound_setRepeat(duk_context* ctx)
 
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-	is_looped = duk_require_boolean(ctx, 0);
+	is_looped = duk_to_boolean(ctx, 0);
 
 	sound_set_repeat(sound, is_looped);
 	return 0;
@@ -4466,7 +4466,7 @@ js_Surface_rotate(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	float angle = duk_require_number(ctx, 0);
-	bool want_resize = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
+	bool want_resize = n_args >= 2 ? duk_to_boolean(ctx, 1) : true;
 
 	image_t* image;
 	image_t* new_image;
@@ -4540,7 +4540,7 @@ js_Surface_setAlpha(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	int a = duk_require_int(ctx, 0);
-	bool want_all = n_args >= 2 ? duk_require_boolean(ctx, 1) : true;
+	bool want_all = n_args >= 2 ? duk_to_boolean(ctx, 1) : true;
 
 	image_t*      image;
 	image_lock_t* lock;

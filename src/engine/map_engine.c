@@ -2320,7 +2320,7 @@ static duk_ret_t
 js_SetLayerReflective(duk_context* ctx)
 {
 	int layer = duk_require_map_layer(ctx, 0);
-	bool is_reflective = duk_require_boolean(ctx, 1);
+	bool is_reflective = duk_to_boolean(ctx, 1);
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetLayerReflective(): map engine not running");
@@ -2369,7 +2369,7 @@ static duk_ret_t
 js_SetLayerVisible(duk_context* ctx)
 {
 	int layer = duk_require_map_layer(ctx, 0);
-	bool is_visible = duk_require_boolean(ctx, 1);
+	bool is_visible = duk_to_boolean(ctx, 1);
 
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SetLayerVisible(): map engine not running");

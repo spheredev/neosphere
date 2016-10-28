@@ -1073,7 +1073,7 @@ js_CreatePerson(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 	spriteset_t* spriteset;
-	bool destroy_with_map = duk_require_boolean(ctx, 2);
+	bool destroy_with_map = duk_to_boolean(ctx, 2);
 
 	const char* filename;
 	person_t*   person;
@@ -1990,7 +1990,7 @@ static duk_ret_t
 js_SetPersonVisible(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	bool is_visible = duk_require_boolean(ctx, 1);
+	bool is_visible = duk_to_boolean(ctx, 1);
 
 	person_t* person;
 
@@ -2128,7 +2128,7 @@ static duk_ret_t
 js_IgnorePersonObstructions(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	bool is_ignoring = duk_require_boolean(ctx, 1);
+	bool is_ignoring = duk_to_boolean(ctx, 1);
 
 	person_t* person;
 
@@ -2142,7 +2142,7 @@ static duk_ret_t
 js_IgnoreTileObstructions(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	bool is_ignoring = duk_require_boolean(ctx, 1);
+	bool is_ignoring = duk_to_boolean(ctx, 1);
 
 	person_t* person;
 
@@ -2158,7 +2158,7 @@ js_QueuePersonCommand(duk_context* ctx)
 	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
 	int command = duk_require_int(ctx, 1);
-	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
+	bool is_immediate = n_args >= 3 ? duk_to_boolean(ctx, 2) : false;
 
 	person_t* person;
 
@@ -2182,7 +2182,7 @@ js_QueuePersonScript(duk_context* ctx)
 	const char* name = duk_require_string(ctx, 0);
 	lstring_t* script_name = lstr_newf("%s/%s/queueScript.js", get_map_name(), name, s_queued_id++);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
-	bool is_immediate = n_args >= 3 ? duk_require_boolean(ctx, 2) : false;
+	bool is_immediate = n_args >= 3 ? duk_to_boolean(ctx, 2) : false;
 
 	person_t* person;
 
