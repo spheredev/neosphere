@@ -7,12 +7,13 @@ v4.3.0 - TBD
 * Adds `struct.Reader` and `struct.Writer` which allow games to read and write
   binary data from files and network sockets.
 * Adds support for the JavaScript Reflect API.
-* Adds native support for JavaScript Promises.
-* When debugging with Sphere Studio, minisphere now displays "SSJ Blue" in the
-  bottom right to more easily distinguish interactive debugging sessions from
-  command-line sessions.
-* Sphere v1 functions now perform type coercion for boolean arguments instead
-  of rejecting non-boolean values, improving Sphere 1.x compatibility.
+* Adds native support for JavaScript Promises via a polyfill.
+* Improves Sphere 1.x compatibility.  Many games which historically didn't run
+  properly in minisphere, including Kefka's Revenge and Trial and Error, are
+  now fully playable without issue.
+* When debugging with Sphere Studio, the gold "ssj" watermark in the bottom
+  right is changed to blue to more easily distinguish interactive debugging
+  sessions from command-line sessions.
 
 
 v4.2.4 - October 7, 2016
