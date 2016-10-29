@@ -867,7 +867,7 @@ duk_require_rgba_lut(duk_context* ctx, duk_idx_t index)
 	for (i = length; i < 256; ++i) lut[i] = i;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(ctx, index, i);
-		lut[i] = fmin(fmax(duk_require_int(ctx, -1), 0), 255);
+		lut[i] = fmin(fmax(duk_to_int(ctx, -1), 0), 255);
 		duk_pop(ctx);
 	}
 	return lut;
@@ -925,8 +925,8 @@ js_IsAnyKeyPressed(duk_context* ctx)
 static duk_ret_t
 js_IsJoystickButtonPressed(duk_context* ctx)
 {
-	int joy_index = duk_require_int(ctx, 0);
-	int button = duk_require_int(ctx, 1);
+	int joy_index = duk_to_int(ctx, 0);
+	int button = duk_to_int(ctx, 1);
 
 	duk_push_boolean(ctx, joy_is_button_down(joy_index, button));
 	return 1;
@@ -935,7 +935,7 @@ js_IsJoystickButtonPressed(duk_context* ctx)
 static duk_ret_t
 js_IsKeyPressed(duk_context* ctx)
 {
-	int keycode = duk_require_int(ctx, 0);
+	int keycode = duk_to_int(ctx, 0);
 
 	duk_push_boolean(ctx, kb_is_key_down(keycode));
 	return 1;
@@ -949,7 +949,7 @@ js_IsMouseButtonPressed(duk_context* ctx)
 	ALLEGRO_DISPLAY*    display;
 	ALLEGRO_MOUSE_STATE mouse_state;
 
-	button = duk_require_int(ctx, 0);
+	button = duk_to_int(ctx, 0);
 	button_id = button == MOUSE_BUTTON_RIGHT ? 2
 		: button == MOUSE_BUTTON_MIDDLE ? 3
 		: 1;
@@ -1074,8 +1074,8 @@ js_GetGameList(duk_context* ctx)
 static duk_ret_t
 js_GetJoystickAxis(duk_context* ctx)
 {
-	int joy_index = duk_require_int(ctx, 0);
-	int axis_index = duk_require_int(ctx, 1);
+	int joy_index = duk_to_int(ctx, 0);
+	int axis_index = duk_to_int(ctx, 1);
 
 	duk_push_number(ctx, joy_position(joy_index, axis_index));
 	return 1;
@@ -1094,7 +1094,7 @@ static duk_ret_t
 js_GetKeyString(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int keycode = duk_require_int(ctx, 0);
+	int keycode = duk_to_int(ctx, 0);
 	bool shift = n_args >= 2 ? duk_to_boolean(ctx, 1) : false;
 
 	switch (keycode) {
@@ -1215,7 +1215,7 @@ js_GetNumJoystickAxes(duk_context* ctx)
 {
 	int joy_index;
 	
-	joy_index = duk_require_int(ctx, 0);
+	joy_index = duk_to_int(ctx, 0);
 
 	duk_push_int(ctx, joy_num_axes(joy_index));
 	return 1;
@@ -1226,7 +1226,7 @@ js_GetNumJoystickButtons(duk_context* ctx)
 {
 	int joy_index;
 	
-	joy_index = duk_require_int(ctx, 0);
+	joy_index = duk_to_int(ctx, 0);
 
 	duk_push_int(ctx, joy_num_buttons(joy_index));
 	return 1;
@@ -1245,8 +1245,8 @@ js_GetPlayerKey(duk_context* ctx)
 	int player;
 	int key_type;
 
-	player = duk_require_int(ctx, 0);
-	key_type = duk_require_int(ctx, 1);
+	player = duk_to_int(ctx, 0);
+	key_type = duk_to_int(ctx, 1);
 
 	if (player < 0 || player >= 4)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "player index out of range");
@@ -1326,7 +1326,7 @@ js_GetToggleState(duk_context* ctx)
 {
 	int keycode;
 	
-	keycode = duk_require_int(ctx, 0);
+	keycode = duk_to_int(ctx, 0);
 
 	if (keycode != ALLEGRO_KEY_CAPSLOCK
 		&& keycode != ALLEGRO_KEY_NUMLOCK
@@ -1356,10 +1356,10 @@ js_GetVersionString(duk_context* ctx)
 static duk_ret_t
 js_SetClippingRectangle(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int width = duk_require_int(ctx, 2);
-	int height = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int width = duk_to_int(ctx, 2);
+	int height = duk_to_int(ctx, 3);
 
 	screen_set_clipping(g_screen, new_rect(x, y, x + width, y + height));
 	return 0;
@@ -1368,7 +1368,7 @@ js_SetClippingRectangle(duk_context* ctx)
 static duk_ret_t
 js_SetFrameRate(duk_context* ctx)
 {
-	int framerate = duk_require_int(ctx, 0);
+	int framerate = duk_to_int(ctx, 0);
 
 	if (framerate < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "framerate cannot be negative", framerate);
@@ -1382,8 +1382,8 @@ js_SetMousePosition(duk_context* ctx)
 	int x;
 	int y;
 
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
 	screen_set_mouse_xy(g_screen, x, y);
 	return 0;
 }
@@ -1416,8 +1416,8 @@ js_ApplyColorMask(duk_context* ctx)
 static duk_ret_t
 js_BindJoystickButton(duk_context* ctx)
 {
-	int joy_index = duk_require_int(ctx, 0);
-	int button = duk_require_int(ctx, 1);
+	int joy_index = duk_to_int(ctx, 0);
+	int button = duk_to_int(ctx, 1);
 	script_t* on_down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
 	script_t* on_up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
@@ -1432,7 +1432,7 @@ js_BindJoystickButton(duk_context* ctx)
 static duk_ret_t
 js_BindKey(duk_context* ctx)
 {
-	int keycode = duk_require_int(ctx, 0);
+	int keycode = duk_to_int(ctx, 0);
 	script_t* on_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
 	script_t* on_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
 
@@ -1455,8 +1455,8 @@ js_BlendColors(duk_context* ctx)
 	color1 = duk_require_sphere_color(ctx, 0);
 	color2 = duk_require_sphere_color(ctx, 1);
 	if (num_args > 2) {
-		w1 = duk_require_number(ctx, 2);
-		w2 = duk_require_number(ctx, 3);
+		w1 = duk_to_number(ctx, 2);
+		w2 = duk_to_number(ctx, 3);
 	}
 
 	if (w1 < 0.0 || w2 < 0.0)
@@ -1472,7 +1472,7 @@ js_CreateByteArray(duk_context* ctx)
 	bytearray_t* array;
 	int          size;
 
-	size = duk_require_int(ctx, 0);
+	size = duk_to_int(ctx, 0);
 
 	if (size < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "size cannot be negative");
@@ -1503,10 +1503,10 @@ static duk_ret_t
 js_CreateColor(duk_context* ctx)
 {
 	int num_args = duk_get_top(ctx);
-	int r = duk_require_int(ctx, 0);
-	int g = duk_require_int(ctx, 1);
-	int b = duk_require_int(ctx, 2);
-	int a = num_args >= 4 ? duk_require_int(ctx, 3) : 255;
+	int r = duk_to_int(ctx, 0);
+	int g = duk_to_int(ctx, 1);
+	int b = duk_to_int(ctx, 2);
+	int a = num_args >= 4 ? duk_to_int(ctx, 3) : 255;
 
 	// clamp components to 8-bit [0-255]
 	r = r < 0 ? 0 : r > 255 ? 255 : r;
@@ -1526,18 +1526,18 @@ js_CreateColor(duk_context* ctx)
 static duk_ret_t
 js_CreateColorMatrix(duk_context* ctx)
 {
-	int rn = duk_require_int(ctx, 0);
-	int rr = duk_require_int(ctx, 1);
-	int rg = duk_require_int(ctx, 2);
-	int rb = duk_require_int(ctx, 3);
-	int gn = duk_require_int(ctx, 4);
-	int gr = duk_require_int(ctx, 5);
-	int gg = duk_require_int(ctx, 6);
-	int gb = duk_require_int(ctx, 7);
-	int bn = duk_require_int(ctx, 8);
-	int br = duk_require_int(ctx, 9);
-	int bg = duk_require_int(ctx, 10);
-	int bb = duk_require_int(ctx, 11);
+	int rn = duk_to_int(ctx, 0);
+	int rr = duk_to_int(ctx, 1);
+	int rg = duk_to_int(ctx, 2);
+	int rb = duk_to_int(ctx, 3);
+	int gn = duk_to_int(ctx, 4);
+	int gr = duk_to_int(ctx, 5);
+	int gg = duk_to_int(ctx, 6);
+	int gb = duk_to_int(ctx, 7);
+	int bn = duk_to_int(ctx, 8);
+	int br = duk_to_int(ctx, 9);
+	int bg = duk_to_int(ctx, 10);
+	int bb = duk_to_int(ctx, 11);
 
 	// construct a ColorMatrix object
 	duk_push_sphere_obj(ctx, "ssColorMatrix", NULL);
@@ -1585,7 +1585,7 @@ js_CreateDirectory(duk_context* ctx)
 static duk_ret_t
 js_CreateStringFromCode(duk_context* ctx)
 {
-	int code = duk_require_int(ctx, 0);
+	int code = duk_to_int(ctx, 0);
 
 	char cstr[2];
 
@@ -1606,8 +1606,8 @@ js_CreateSurface(duk_context* ctx)
 	int         width;
 
 	num_args = duk_get_top(ctx);
-	width = duk_require_int(ctx, 0);
-	height = duk_require_int(ctx, 1);
+	width = duk_to_int(ctx, 0);
+	height = duk_to_int(ctx, 1);
 	fill_color = num_args >= 3 ? duk_require_sphere_color(ctx, 2) : color_new(0, 0, 0, 0);
 
 	if (!(image = image_new(width, height)))
@@ -1622,7 +1622,7 @@ js_DeflateByteArray(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
-	int level = n_args >= 2 ? duk_require_int(ctx, 1) : -1;
+	int level = n_args >= 2 ? duk_to_int(ctx, 1) : -1;
 
 	bytearray_t* new_array;
 
@@ -1637,7 +1637,7 @@ js_DeflateByteArray(duk_context* ctx)
 static duk_ret_t
 js_Delay(duk_context* ctx)
 {
-	double millisecs = floor(duk_require_number(ctx, 0));
+	double millisecs = floor(duk_to_number(ctx, 0));
 
 	if (millisecs < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "time cannot be negative", millisecs);
@@ -1738,10 +1738,10 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_GrabImage(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 
 	image_t* image;
 
@@ -1754,10 +1754,10 @@ js_GrabImage(duk_context* ctx)
 static duk_ret_t
 js_GrabSurface(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 
 	image_t* image;
 
@@ -1772,9 +1772,9 @@ js_GradientCircle(duk_context* ctx)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
-	int radius = duk_require_number(ctx, 2);
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int radius = duk_to_number(ctx, 2);
 	color_t in_color = duk_require_sphere_color(ctx, 3);
 	color_t out_color = duk_require_sphere_color(ctx, 4);
 
@@ -1806,10 +1806,10 @@ js_GradientCircle(duk_context* ctx)
 static duk_ret_t
 js_GradientRectangle(duk_context* ctx)
 {
-	int x1 = duk_require_int(ctx, 0);
-	int y1 = duk_require_int(ctx, 1);
-	int x2 = x1 + duk_require_int(ctx, 2);
-	int y2 = y1 + duk_require_int(ctx, 3);
+	int x1 = duk_to_int(ctx, 0);
+	int y1 = duk_to_int(ctx, 1);
+	int x2 = x1 + duk_to_int(ctx, 2);
+	int y2 = y1 + duk_to_int(ctx, 3);
 	color_t color_ul = duk_require_sphere_color(ctx, 4);
 	color_t color_ur = duk_require_sphere_color(ctx, 5);
 	color_t color_lr = duk_require_sphere_color(ctx, 6);
@@ -1833,12 +1833,12 @@ js_GradientTriangle(duk_context* ctx)
 	int     x1, y1, x2, y2, x3, y3;
 	color_t color1, color2, color3;
 
-	x1 = duk_require_int(ctx, 0);
-	y1 = duk_require_int(ctx, 1);
-	x2 = duk_require_int(ctx, 2);
-	y2 = duk_require_int(ctx, 3);
-	x3 = duk_require_int(ctx, 4);
-	y3 = duk_require_int(ctx, 5);
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = duk_to_int(ctx, 2);
+	y2 = duk_to_int(ctx, 3);
+	x3 = duk_to_int(ctx, 4);
+	y3 = duk_to_int(ctx, 5);
 	color1 = duk_require_sphere_color(ctx, 6);
 	color2 = duk_require_sphere_color(ctx, 7);
 	color3 = duk_require_sphere_color(ctx, 8);
@@ -1883,7 +1883,7 @@ js_InflateByteArray(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	bytearray_t* array = duk_require_sphere_obj(ctx, 0, "ssByteArray");
-	int max_size = n_args >= 2 ? duk_require_int(ctx, 1) : 0;
+	int max_size = n_args >= 2 ? duk_to_int(ctx, 1) : 0;
 
 	bytearray_t* new_array;
 
@@ -1898,10 +1898,10 @@ js_InflateByteArray(duk_context* ctx)
 static duk_ret_t
 js_Line(duk_context* ctx)
 {
-	float x1 = duk_require_int(ctx, 0) + 0.5;
-	float y1 = duk_require_int(ctx, 1) + 0.5;
-	float x2 = duk_require_int(ctx, 2) + 0.5;
-	float y2 = duk_require_int(ctx, 3) + 0.5;
+	float x1 = duk_to_int(ctx, 0) + 0.5;
+	float y1 = duk_to_int(ctx, 1) + 0.5;
+	float x2 = duk_to_int(ctx, 2) + 0.5;
+	float y2 = duk_to_int(ctx, 3) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 4);
 
 	if (!screen_is_skipframe(g_screen))
@@ -1914,7 +1914,7 @@ js_LineSeries(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	color_t color = duk_require_sphere_color(ctx, 1);
-	int type = n_args >= 3 ? duk_require_int(ctx, 2) : LINE_MULTIPLE;
+	int type = n_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
 
 	size_t          num_points;
 	int             x, y;
@@ -1935,8 +1935,8 @@ js_LineSeries(duk_context* ctx)
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
@@ -1956,7 +1956,7 @@ js_ListenOnPort(duk_context* ctx)
 	int       port;
 	socket_t* socket;
 	
-	port = duk_require_int(ctx, 0);
+	port = duk_to_int(ctx, 0);
 
 	if (socket = listen_on_port(NULL, port, 1024, 0))
 		duk_push_sphere_obj(ctx, "ssSocket", socket);
@@ -2068,7 +2068,7 @@ js_OpenAddress(duk_context* ctx)
 	socket_t*   socket;
 	
 	hostname = duk_require_string(ctx, 0);
-	port = duk_require_int(ctx, 1);
+	port = duk_to_int(ctx, 1);
 	
 	if ((socket = connect_to_host(hostname, port, 1024)) != NULL)
 		duk_push_sphere_obj(ctx, "ssSocket", socket);
@@ -2129,9 +2129,9 @@ js_OpenRawFile(duk_context* ctx)
 static duk_ret_t
 js_OutlinedCircle(duk_context* ctx)
 {
-	float x = duk_require_int(ctx, 0) + 0.5;
-	float y = duk_require_int(ctx, 1) + 0.5;
-	float radius = duk_require_int(ctx, 2);
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
+	float radius = duk_to_int(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
 
 	if (!screen_is_skipframe(g_screen))
@@ -2143,12 +2143,12 @@ static duk_ret_t
 js_OutlinedRectangle(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	float x1 = duk_require_int(ctx, 0) + 0.5;
-	float y1 = duk_require_int(ctx, 1) + 0.5;
-	float x2 = x1 + duk_require_int(ctx, 2) - 1;
-	float y2 = y1 + duk_require_int(ctx, 3) - 1;
+	float x1 = duk_to_int(ctx, 0) + 0.5;
+	float y1 = duk_to_int(ctx, 1) + 0.5;
+	float x2 = x1 + duk_to_int(ctx, 2) - 1;
+	float y2 = y1 + duk_to_int(ctx, 3) - 1;
 	color_t color = duk_require_sphere_color(ctx, 4);
-	int thickness = n_args >= 6 ? duk_require_int(ctx, 5) : 1;
+	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
@@ -2159,13 +2159,13 @@ static duk_ret_t
 js_OutlinedRoundRectangle(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	float x = duk_require_int(ctx, 0) + 0.5;
-	float y = duk_require_int(ctx, 1) + 0.5;
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
-	float radius = duk_require_number(ctx, 4);
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
+	float radius = duk_to_number(ctx, 4);
 	color_t color = duk_require_sphere_color(ctx, 5);
-	int thickness = n_args >= 7 ? duk_require_int(ctx, 6) : 1;
+	int thickness = n_args >= 7 ? duk_to_int(ctx, 6) : 1;
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
@@ -2175,8 +2175,8 @@ js_OutlinedRoundRectangle(duk_context* ctx)
 static duk_ret_t
 js_Point(duk_context* ctx)
 {
-	float x = duk_require_int(ctx, 0) + 0.5;
-	float y = duk_require_int(ctx, 1) + 0.5;
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 2);
 
 	if (!screen_is_skipframe(g_screen))
@@ -2208,8 +2208,8 @@ js_PointSeries(duk_context* ctx)
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
@@ -2234,17 +2234,16 @@ js_Print(duk_context* ctx)
 
 	text = strnewf("%s", duk_get_string(ctx, -1));
 	debug_print(text, PRINT_NORMAL, true);
-	printf("print: %s\n", text);
 	return 0;
 }
 
 static duk_ret_t
 js_Rectangle(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
 	if (!screen_is_skipframe(g_screen))
@@ -2349,11 +2348,11 @@ js_RestartGame(duk_context* ctx)
 static duk_ret_t
 js_RoundRectangle(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
-	float radius = duk_require_number(ctx, 4);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
+	float radius = duk_to_number(ctx, 4);
 	color_t color = duk_require_sphere_color(ctx, 5);
 
 	if (!screen_is_skipframe(g_screen))
@@ -2364,12 +2363,12 @@ js_RoundRectangle(duk_context* ctx)
 static duk_ret_t
 js_Triangle(duk_context* ctx)
 {
-	int x1 = duk_require_int(ctx, 0);
-	int y1 = duk_require_int(ctx, 1);
-	int x2 = duk_require_int(ctx, 2);
-	int y2 = duk_require_int(ctx, 3);
-	int x3 = duk_require_int(ctx, 4);
-	int y3 = duk_require_int(ctx, 5);
+	int x1 = duk_to_int(ctx, 0);
+	int y1 = duk_to_int(ctx, 1);
+	int x2 = duk_to_int(ctx, 2);
+	int y2 = duk_to_int(ctx, 3);
+	int x3 = duk_to_int(ctx, 4);
+	int y3 = duk_to_int(ctx, 5);
 	color_t color = duk_require_sphere_color(ctx, 6);
 
 	if (!screen_is_skipframe(g_screen))
@@ -2380,8 +2379,8 @@ js_Triangle(duk_context* ctx)
 static duk_ret_t
 js_UnbindJoystickButton(duk_context* ctx)
 {
-	int joy_index = duk_require_int(ctx, 0);
-	int button = duk_require_int(ctx, 1);
+	int joy_index = duk_to_int(ctx, 0);
+	int button = duk_to_int(ctx, 1);
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): joystick index `%d` out of range", joy_index);
@@ -2394,7 +2393,7 @@ js_UnbindJoystickButton(duk_context* ctx)
 static duk_ret_t
 js_UnbindKey(duk_context* ctx)
 {
-	int keycode = duk_require_int(ctx, 0);
+	int keycode = duk_to_int(ctx, 0);
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindKey(): invalid key constant");
@@ -2439,8 +2438,8 @@ js_Animation_get_width(duk_context* ctx)
 static duk_ret_t
 js_Animation_drawFrame(duk_context* ctx)
 {
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
 
 	animation_t* anim;
 
@@ -2463,9 +2462,9 @@ js_Animation_drawZoomedFrame(duk_context* ctx)
 
 	duk_push_this(ctx);
 	anim = duk_require_sphere_obj(ctx, -1, "ssAnimation");
-	x = duk_require_number(ctx, 0);
-	y = duk_require_number(ctx, 1);
-	scale = duk_require_number(ctx, 2);
+	x = duk_to_number(ctx, 0);
+	y = duk_to_number(ctx, 1);
+	scale = duk_to_number(ctx, 2);
 
 	if (scale < 0.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "zoom must be positive");
@@ -2600,8 +2599,8 @@ static duk_ret_t
 js_ByteArray_slice(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int start = duk_require_int(ctx, 0);
-	int end = (n_args >= 2) ? duk_require_int(ctx, 1) : INT_MAX;
+	int start = duk_to_int(ctx, 0);
+	int end = (n_args >= 2) ? duk_to_int(ctx, 1) : INT_MAX;
 
 	bytearray_t* array;
 	int          end_norm;
@@ -2698,7 +2697,7 @@ js_File_flush(duk_context* ctx)
 static duk_ret_t
 js_File_getKey(duk_context* ctx)
 {
-	int index = duk_require_int(ctx, 0);
+	int index = duk_to_int(ctx, 0);
 
 	kevfile_t*  file;
 	const char* key;
@@ -2814,8 +2813,8 @@ js_Font_clone(duk_context* ctx)
 static duk_ret_t
 js_Font_drawText(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
 	const char* text = duk_to_string(ctx, 2);
 
 	font_t* font;
@@ -2833,11 +2832,11 @@ js_Font_drawText(duk_context* ctx)
 static duk_ret_t
 js_Font_drawTextBox(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
-	int offset = duk_require_int(ctx, 4);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
+	int offset = duk_to_int(ctx, 4);
 	const char* text = duk_to_string(ctx, 5);
 
 	font_t*     font;
@@ -2873,9 +2872,9 @@ js_Font_drawTextBox(duk_context* ctx)
 static duk_ret_t
 js_Font_drawZoomedText(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	float scale = duk_require_number(ctx, 2);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	float scale = duk_to_number(ctx, 2);
 	const char* text = duk_to_string(ctx, 3);
 
 	ALLEGRO_BITMAP* bitmap;
@@ -2939,7 +2938,7 @@ static duk_ret_t
 js_Font_getStringHeight(duk_context* ctx)
 {
 	const char* text = duk_to_string(ctx, 0);
-	int width = duk_require_int(ctx, 1);
+	int width = duk_to_int(ctx, 1);
 
 	font_t* font;
 	int     num_lines;
@@ -2975,7 +2974,7 @@ js_Font_getStringWidth(duk_context* ctx)
 static duk_ret_t
 js_Font_setCharacterImage(duk_context* ctx)
 {
-	int cp = duk_require_int(ctx, 0);
+	int cp = duk_to_int(ctx, 0);
 	image_t* image = duk_require_sphere_obj(ctx, 1, "ssImage");
 
 	font_t* font;
@@ -3010,7 +3009,7 @@ static duk_ret_t
 js_Font_wordWrapString(duk_context* ctx)
 {
 	const char* text = duk_to_string(ctx, 0);
-	int         width = duk_require_int(ctx, 1);
+	int         width = duk_to_int(ctx, 1);
 
 	font_t*     font;
 	int         num_lines;
@@ -3069,8 +3068,8 @@ js_Image_get_width(duk_context* ctx)
 static duk_ret_t
 js_Image_blit(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
 
 	image_t* image;
 
@@ -3084,8 +3083,8 @@ js_Image_blit(duk_context* ctx)
 static duk_ret_t
 js_Image_blitMask(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
 	color_t mask = duk_require_sphere_color(ctx, 2);
 
 	image_t* image;
@@ -3124,9 +3123,9 @@ js_Image_rotateBlit(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	angle = duk_require_number(ctx, 2);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	angle = duk_to_number(ctx, 2);
 
 	if (!screen_is_skipframe(g_screen)) {
 		width = image_width(image);
@@ -3150,9 +3149,9 @@ js_Image_rotateBlitMask(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	angle = duk_require_number(ctx, 2);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	angle = duk_to_number(ctx, 2);
 	mask = duk_require_sphere_color(ctx, 3);
 
 	if (!screen_is_skipframe(g_screen)) {
@@ -3185,14 +3184,14 @@ js_Image_transformBlit(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
-	x1 = duk_require_int(ctx, 0);
-	y1 = duk_require_int(ctx, 1);
-	x2 = duk_require_int(ctx, 2);
-	y2 = duk_require_int(ctx, 3);
-	x3 = duk_require_int(ctx, 4);
-	y3 = duk_require_int(ctx, 5);
-	x4 = duk_require_int(ctx, 6);
-	y4 = duk_require_int(ctx, 7);
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = duk_to_int(ctx, 2);
+	y2 = duk_to_int(ctx, 3);
+	x3 = duk_to_int(ctx, 4);
+	y3 = duk_to_int(ctx, 5);
+	x4 = duk_to_int(ctx, 6);
+	y4 = duk_to_int(ctx, 7);
 
 	width = image_width(image);
 	height = image_height(image);
@@ -3222,14 +3221,14 @@ js_Image_transformBlitMask(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
-	x1 = duk_require_int(ctx, 0);
-	y1 = duk_require_int(ctx, 1);
-	x2 = duk_require_int(ctx, 2);
-	y2 = duk_require_int(ctx, 3);
-	x3 = duk_require_int(ctx, 4);
-	y3 = duk_require_int(ctx, 5);
-	x4 = duk_require_int(ctx, 6);
-	y4 = duk_require_int(ctx, 7);
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = duk_to_int(ctx, 2);
+	y2 = duk_to_int(ctx, 3);
+	x3 = duk_to_int(ctx, 4);
+	y3 = duk_to_int(ctx, 5);
+	x4 = duk_to_int(ctx, 6);
+	y4 = duk_to_int(ctx, 7);
 	mask = duk_require_sphere_color(ctx, 8);
 
 	width = image_width(image);
@@ -3257,9 +3256,9 @@ js_Image_zoomBlit(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	scale = duk_require_number(ctx, 2);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	scale = duk_to_number(ctx, 2);
 
 	if (!screen_is_skipframe(g_screen)) {
 		width = image_width(image);
@@ -3283,9 +3282,9 @@ js_Image_zoomBlitMask(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	scale = duk_require_number(ctx, 2);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	scale = duk_to_number(ctx, 2);
 	mask = duk_require_sphere_color(ctx, 3);
 
 	if (!screen_is_skipframe(g_screen)) {
@@ -3413,7 +3412,7 @@ static duk_ret_t
 js_RawFile_read(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	long num_bytes = n_args >= 1 ? duk_require_int(ctx, 0) : 0;
+	long num_bytes = n_args >= 1 ? duk_to_int(ctx, 0) : 0;
 
 	bytearray_t* array;
 	sfs_file_t*        file;
@@ -3446,7 +3445,7 @@ js_RawFile_read(duk_context* ctx)
 static duk_ret_t
 js_RawFile_setPosition(duk_context* ctx)
 {
-	int new_pos = duk_require_int(ctx, 0);
+	int new_pos = duk_to_int(ctx, 0);
 
 	sfs_file_t* file;
 
@@ -3551,7 +3550,7 @@ js_Socket_isConnected(duk_context* ctx)
 static duk_ret_t
 js_Socket_read(duk_context* ctx)
 {
-	int length = duk_require_int(ctx, 0);
+	int length = duk_to_int(ctx, 0);
 
 	bytearray_t* array;
 	void*        read_buffer;
@@ -3764,7 +3763,7 @@ js_Sound_setPan(duk_context* ctx)
 
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-	new_pan = duk_require_int(ctx, 0);
+	new_pan = duk_to_int(ctx, 0);
 
 	sound_set_pan(sound, (float)new_pan / 255);
 	return 0;
@@ -3778,7 +3777,7 @@ js_Sound_setPitch(duk_context* ctx)
 
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-	new_pitch = duk_require_number(ctx, 0);
+	new_pitch = duk_to_number(ctx, 0);
 
 	sound_set_speed(sound, new_pitch);
 	return 0;
@@ -3792,7 +3791,7 @@ js_Sound_setPosition(duk_context* ctx)
 
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-	new_pos = duk_require_number(ctx, 0);
+	new_pos = duk_to_number(ctx, 0);
 
 	sound_seek(sound, floor(new_pos) / 1000000);
 	return 0;
@@ -3821,7 +3820,7 @@ js_Sound_setVolume(duk_context* ctx)
 
 	duk_push_this(ctx);
 	sound = duk_require_sphere_obj(ctx, -1, "ssSound");
-	volume = duk_require_int(ctx, 0);
+	volume = duk_to_int(ctx, 0);
 
 	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
 	sound_set_gain(sound, (float)volume / 255);
@@ -3975,10 +3974,10 @@ js_Surface_applyColorFX(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	width = duk_require_int(ctx, 2);
-	height = duk_require_int(ctx, 3);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
 	matrix = duk_require_sphere_colormatrix(ctx, 4);
 
 	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
@@ -3991,10 +3990,10 @@ js_Surface_applyColorFX(duk_context* ctx)
 static duk_ret_t
 js_Surface_applyColorFX4(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 	colormatrix_t ul_mat = duk_require_sphere_colormatrix(ctx, 4);
 	colormatrix_t ur_mat = duk_require_sphere_colormatrix(ctx, 5);
 	colormatrix_t ll_mat = duk_require_sphere_colormatrix(ctx, 6);
@@ -4015,10 +4014,10 @@ js_Surface_applyColorFX4(duk_context* ctx)
 static duk_ret_t
 js_Surface_applyLookup(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 	uint8_t* red_lu = duk_require_rgba_lut(ctx, 4);
 	uint8_t* green_lu = duk_require_rgba_lut(ctx, 5);
 	uint8_t* blue_lu = duk_require_rgba_lut(ctx, 6);
@@ -4049,8 +4048,8 @@ js_Surface_blit(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_bitmap(image_bitmap(image), x, y, 0x0);
@@ -4061,8 +4060,8 @@ static duk_ret_t
 js_Surface_blitMaskSurface(duk_context* ctx)
 {
 	image_t* src_image = duk_require_sphere_obj(ctx, 0, "ssSurface");
-	int x = duk_require_int(ctx, 1);
-	int y = duk_require_int(ctx, 2);
+	int x = duk_to_int(ctx, 1);
+	int y = duk_to_int(ctx, 2);
 	color_t mask = duk_require_sphere_color(ctx, 3);
 
 	int      blend_mode;
@@ -4085,8 +4084,8 @@ static duk_ret_t
 js_Surface_blitSurface(duk_context* ctx)
 {
 	image_t* src_image = duk_require_sphere_obj(ctx, 0, "ssSurface");
-	int x = duk_require_int(ctx, 1);
-	int y = duk_require_int(ctx, 2);
+	int x = duk_to_int(ctx, 1);
+	int y = duk_to_int(ctx, 2);
 
 	int      blend_mode;
 	image_t* image;
@@ -4131,10 +4130,10 @@ js_Surface_cloneSection(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	width = duk_require_int(ctx, 2);
-	height = duk_require_int(ctx, 3);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
 
 	if ((new_image = image_new(width, height)) == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection(): unable to create surface");
@@ -4164,8 +4163,8 @@ static duk_ret_t
 js_Surface_drawText(duk_context* ctx)
 {
 	font_t* font = duk_require_sphere_obj(ctx, 0, "ssFont");
-	int x = duk_require_int(ctx, 1);
-	int y = duk_require_int(ctx, 2);
+	int x = duk_to_int(ctx, 1);
+	int y = duk_to_int(ctx, 2);
 	const char* text = duk_to_string(ctx, 3);
 
 	int      blend_mode;
@@ -4189,9 +4188,9 @@ js_Surface_drawText(duk_context* ctx)
 static duk_ret_t
 js_Surface_filledCircle(duk_context* ctx)
 {
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
-	int radius = duk_require_number(ctx, 2);
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int radius = duk_to_number(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
 
 	int      blend_mode;
@@ -4246,8 +4245,8 @@ js_Surface_getPixel(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
 
 	width = image_width(image);
 	height = image_height(image);
@@ -4263,9 +4262,9 @@ js_Surface_gradientCircle(duk_context* ctx)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
-	int radius = duk_require_number(ctx, 2);
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int radius = duk_to_number(ctx, 2);
 	color_t in_color = duk_require_sphere_color(ctx, 3);
 	color_t out_color = duk_require_sphere_color(ctx, 4);
 
@@ -4306,10 +4305,10 @@ js_Surface_gradientCircle(duk_context* ctx)
 static duk_ret_t
 js_Surface_gradientRectangle(duk_context* ctx)
 {
-	int x1 = duk_require_int(ctx, 0);
-	int y1 = duk_require_int(ctx, 1);
-	int x2 = x1 + duk_require_int(ctx, 2);
-	int y2 = y1 + duk_require_int(ctx, 3);
+	int x1 = duk_to_int(ctx, 0);
+	int y1 = duk_to_int(ctx, 1);
+	int x2 = x1 + duk_to_int(ctx, 2);
+	int y2 = y1 + duk_to_int(ctx, 3);
 	color_t color_ul = duk_require_sphere_color(ctx, 4);
 	color_t color_ur = duk_require_sphere_color(ctx, 5);
 	color_t color_lr = duk_require_sphere_color(ctx, 6);
@@ -4341,10 +4340,10 @@ js_Surface_gradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_Surface_line(duk_context* ctx)
 {
-	float x1 = duk_require_int(ctx, 0) + 0.5;
-	float y1 = duk_require_int(ctx, 1) + 0.5;
-	float x2 = duk_require_int(ctx, 2) + 0.5;
-	float y2 = duk_require_int(ctx, 3) + 0.5;
+	float x1 = duk_to_int(ctx, 0) + 0.5;
+	float y1 = duk_to_int(ctx, 1) + 0.5;
+	float x2 = duk_to_int(ctx, 2) + 0.5;
+	float y2 = duk_to_int(ctx, 3) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 4);
 
 	int      blend_mode;
@@ -4366,9 +4365,9 @@ js_Surface_line(duk_context* ctx)
 static duk_ret_t
 js_Surface_outlinedCircle(duk_context* ctx)
 {
-	int x = duk_require_number(ctx, 0);
-	int y = duk_require_number(ctx, 1);
-	int radius = duk_require_number(ctx, 2);
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int radius = duk_to_number(ctx, 2);
 	color_t color = duk_require_sphere_color(ctx, 3);
 
 	int      blend_mode;
@@ -4415,8 +4414,8 @@ js_Surface_pointSeries(duk_context* ctx)
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
-		duk_get_prop_string(ctx, 0, "x"); x = duk_require_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "y"); y = duk_require_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, 0, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
@@ -4434,12 +4433,12 @@ static duk_ret_t
 js_Surface_outlinedRectangle(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	float x1 = duk_require_int(ctx, 0) + 0.5;
-	float y1 = duk_require_int(ctx, 1) + 0.5;
-	float x2 = x1 + duk_require_int(ctx, 2) - 1;
-	float y2 = y1 + duk_require_int(ctx, 3) - 1;
+	float x1 = duk_to_int(ctx, 0) + 0.5;
+	float y1 = duk_to_int(ctx, 1) + 0.5;
+	float x2 = x1 + duk_to_int(ctx, 2) - 1;
+	float y2 = y1 + duk_to_int(ctx, 3) - 1;
 	color_t color = duk_require_sphere_color(ctx, 4);
-	int thickness = n_args >= 6 ? duk_require_int(ctx, 5) : 1;
+	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 
 	int      blend_mode;
 	image_t* image;
@@ -4476,8 +4475,8 @@ js_Surface_replaceColor(duk_context* ctx)
 static duk_ret_t
 js_Surface_rescale(duk_context* ctx)
 {
-	int width = duk_require_int(ctx, 0);
-	int height = duk_require_int(ctx, 1);
+	int width = duk_to_int(ctx, 0);
+	int height = duk_to_int(ctx, 1);
 
 	image_t* image;
 
@@ -4494,7 +4493,7 @@ static duk_ret_t
 js_Surface_rotate(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	float angle = duk_require_number(ctx, 0);
+	float angle = duk_to_number(ctx, 0);
 	bool want_resize = n_args >= 2 ? duk_to_boolean(ctx, 1) : true;
 
 	image_t* image;
@@ -4528,10 +4527,10 @@ js_Surface_rotate(duk_context* ctx)
 static duk_ret_t
 js_Surface_rectangle(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
 	image_t* image;
@@ -4568,7 +4567,7 @@ static duk_ret_t
 js_Surface_setAlpha(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
-	int a = duk_require_int(ctx, 0);
+	int a = duk_to_int(ctx, 0);
 	bool want_all = n_args >= 2 ? duk_to_boolean(ctx, 1) : true;
 
 	image_t*      image;
@@ -4607,8 +4606,8 @@ js_Surface_setBlendMode(duk_context* ctx)
 static duk_ret_t
 js_Surface_setPixel(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
 	color_t color = duk_require_sphere_color(ctx, 2);
 
 	image_t* image;
@@ -4640,10 +4639,10 @@ js_WindowStyle_finalize(duk_context* ctx)
 static duk_ret_t
 js_WindowStyle_drawWindow(duk_context* ctx)
 {
-	int x = duk_require_int(ctx, 0);
-	int y = duk_require_int(ctx, 1);
-	int w = duk_require_int(ctx, 2);
-	int h = duk_require_int(ctx, 3);
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
 
 	color_t        mask;
 	windowstyle_t* winstyle;

@@ -1653,7 +1653,7 @@ static duk_ret_t
 js_SetPersonAngle(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	double theta = duk_require_number(ctx, 1);
+	double theta = duk_to_number(ctx, 1);
 
 	person_t* person;
 
@@ -1875,8 +1875,8 @@ static duk_ret_t
 js_SetPersonScaleFactor(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	double scale_x = duk_require_number(ctx, 1);
-	double scale_y = duk_require_number(ctx, 2);
+	double scale_x = duk_to_number(ctx, 1);
+	double scale_y = duk_to_number(ctx, 2);
 
 	person_t* person;
 
@@ -1918,7 +1918,7 @@ static duk_ret_t
 js_SetPersonSpeed(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	double speed = duk_require_number(ctx, 1);
+	double speed = duk_to_number(ctx, 1);
 
 	person_t*  person;
 
@@ -1932,8 +1932,8 @@ static duk_ret_t
 js_SetPersonSpeedXY(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	double x_speed = duk_require_number(ctx, 1);
-	double y_speed = duk_require_number(ctx, 2);
+	double x_speed = duk_to_number(ctx, 1);
+	double y_speed = duk_to_number(ctx, 2);
 
 	person_t*  person;
 
