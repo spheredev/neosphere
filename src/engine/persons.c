@@ -2004,7 +2004,7 @@ static duk_ret_t
 js_SetPersonX(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	int x = duk_require_int(ctx, 1);
+	int x = duk_to_int(ctx, 1);
 
 	person_t* person;
 
@@ -2018,8 +2018,8 @@ static duk_ret_t
 js_SetPersonXYFloat(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	double x = duk_require_number(ctx, 1);
-	double y = duk_require_number(ctx, 2);
+	double x = duk_to_number(ctx, 1);
+	double y = duk_to_number(ctx, 2);
 
 	person_t* person;
 
@@ -2033,7 +2033,7 @@ static duk_ret_t
 js_SetPersonY(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	int y = duk_require_int(ctx, 1);
+	int y = duk_to_int(ctx, 1);
 	
 	person_t* person;
 
@@ -2046,7 +2046,7 @@ js_SetPersonY(duk_context* ctx)
 static duk_ret_t
 js_SetTalkDistance(duk_context* ctx)
 {
-	int pixels = duk_require_int(ctx, 0);
+	int pixels = duk_to_int(ctx, 0);
 
 	if (pixels < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SetTalkDistance(): distance must be positive (got: %i)", pixels);

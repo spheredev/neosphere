@@ -1615,21 +1615,38 @@ init_map_engine_api(duk_context* ctx)
 int
 duk_require_map_layer(duk_context* ctx, duk_idx_t index)
 {
-	int         layer;
+	long        strtol_out;
+	int         layer_index;
 	const char* name;
+	char*       p_end;
 
 	duk_require_type_mask(ctx, index, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
+	
 	if (duk_is_number(ctx, index)) {
-		layer = duk_get_int(ctx, index);
-		if (layer < 0 || layer >= s_map->num_layers)
-			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "layer index out of range (%d)", layer);
+		layer_index = duk_get_int(ctx, index);
+		goto have_index;
 	}
 	else {
+		// don't anyone ever say I'm not dedicated to compatibility!  there are a few
+		// poorly written Sphere 1.5 games that pass layer IDs as strings.  usually this
+		// would fail because minisphere supports named layers, but here I go out of my
+		// way to support it anyway.
 		name = duk_get_string(ctx, index);
-		if ((layer = find_layer(name)) == -1)
-			duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no layer exists with name `%s`", name);
+		strtol_out = strtol(name, &p_end, 0);
+		if ((layer_index = find_layer(name)) >= 0)
+			goto have_index;
+		else if (name[0] != '\0' && *p_end == '\0') {
+			layer_index = (int)strtol_out;
+			goto have_index;
+		}
+		else
+			duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "layer name does not exist '%s'", name);
 	}
-	return layer;
+	
+have_index:
+	if (layer_index < 0 || layer_index >= s_map->num_layers)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "layer index out of range");
+	return layer_index;
 }
 
 static duk_ret_t
