@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit cb1e2a068dfc8aed77e306b7784a49c360388bbb (v1.5.0-823-gcb1e2a0).
+ *  Git commit 0a61e7b664dace94a74e5a1ac4c7d87979a9f1c5 (v1.5.0-841-g0a61e7b).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -141,14 +141,14 @@
  *  BEGIN PUBLIC API
  */
 
-#ifndef DUK_API_PUBLIC_H_INCLUDED
+#if !defined(DUK_API_PUBLIC_H_INCLUDED)
 #define DUK_API_PUBLIC_H_INCLUDED
 
 /*
  *  Avoid C++ name mangling
  */
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -157,7 +157,7 @@ extern "C" {
  */
 
 #undef DUK_API_VARIADIC_MACROS
-#ifdef DUK_USE_VARIADIC_MACROS
+#if defined(DUK_USE_VARIADIC_MACROS)
 #define DUK_API_VARIADIC_MACROS
 #endif
 
@@ -256,8 +256,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "cb1e2a068dfc8aed77e306b7784a49c360388bbb"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-823-gcb1e2a0"
+#define DUK_GIT_COMMIT                    "0a61e7b664dace94a74e5a1ac4c7d87979a9f1c5"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-841-g0a61e7b"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -430,29 +430,99 @@ DUK_EXTERNAL_DECL void duk_gc(duk_context *ctx, duk_uint_t flags);
  *  Error handling
  */
 
-DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_throw(duk_context *ctx));
-DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_fatal(duk_context *ctx, const char *err_msg));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_throw_raw(duk_context *ctx));
+#define duk_throw(ctx) \
+	(duk_throw_raw((ctx)), (duk_ret_t) 0)
+DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_fatal_raw(duk_context *ctx, const char *err_msg));
+#define duk_fatal(ctx,err_msg) \
+	(duk_fatal_raw((ctx), (err_msg)), (duk_ret_t) 0)
 
+#if defined(DUK_API_VARIADIC_MACROS)
 DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_error_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, ...));
-
-#ifdef DUK_API_VARIADIC_MACROS
 #define duk_error(ctx,err_code,...)  \
-	duk_error_raw((ctx), (duk_errcode_t) (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__)
-#else
-DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_error_stash(duk_context *ctx, duk_errcode_t err_code, const char *fmt, ...));
-/* One problem with this macro is that expressions like the following fail
- * to compile: "(void) duk_error(...)".  But because duk_error() is noreturn,
- * they make little sense anyway.
+	(duk_error_raw((ctx), (duk_errcode_t) (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_generic_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_eval_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_EVAL_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_range_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_RANGE_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_reference_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_REFERENCE_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_syntax_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_SYNTAX_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_type_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_TYPE_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#define duk_uri_error(ctx,...)  \
+	(duk_error_raw((ctx), (duk_errcode_t) DUK_ERR_URI_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
+#else  /* DUK_API_VARIADIC_MACROS */
+/* For legacy compilers without variadic macros a macro hack is used to allow
+ * variable arguments.  While the macro allows "return duk_error(...)", it
+ * will fail with e.g. "(void) duk_error(...)".  The calls are noreturn but
+ * with a return value to allow the "return duk_error(...)" idiom.  This may
+ * cause some compiler warnings, but without noreturn the generated code is
+ * often worse.  The same approach as with variadic macros (using
+ * "(duk_error(...), 0)") won't work due to the macro hack structure.
  */
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_error_stash(duk_context *ctx, duk_errcode_t err_code, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_generic_error_stash(duk_context *ctx, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_eval_error_stash(duk_context *ctx, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_range_error_stash(duk_context *ctx, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_reference_error_stash(duk_context *ctx, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_syntax_error_stash(duk_context *ctx, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_type_error_stash(duk_context *ctx, const char *fmt, ...));
+DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_uri_error_stash(duk_context *ctx, const char *fmt, ...));
 #define duk_error  \
 	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
 	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
 	 duk_error_stash)  /* last value is func pointer, arguments follow in parens */
-#endif
+#define duk_generic_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_generic_error_stash)
+#define duk_eval_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_eval_error_stash)
+#define duk_range_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_range_error_stash)
+#define duk_reference_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_reference_error_stash)
+#define duk_syntax_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_syntax_error_stash)
+#define duk_type_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_type_error_stash)
+#define duk_uri_error  \
+	(duk_api_global_filename = (const char *) (DUK_FILE_MACRO), \
+	 duk_api_global_line = (duk_int_t) (DUK_LINE_MACRO), \
+	 duk_uri_error_stash)
+#endif  /* DUK_API_VARIADIC_MACROS */
 
 DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_error_va_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, va_list ap));
 #define duk_error_va(ctx,err_code,fmt,ap)  \
-	duk_error_va_raw((ctx), (duk_errcode_t) (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap))
+	(duk_error_va_raw((ctx), (duk_errcode_t) (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_generic_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_eval_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_EVAL_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_range_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_RANGE_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_reference_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_REFERENCE_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_syntax_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_SYNTAX_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_type_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_TYPE_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
+#define duk_uri_error_va(ctx,fmt,ap)  \
+	(duk_error_va_raw((ctx), (duk_errcode_t) DUK_ERR_URI_ERROR, (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
 
 /*
  *  Other state related functions
@@ -552,7 +622,7 @@ DUK_EXTERNAL_DECL duk_idx_t duk_push_thread_raw(duk_context *ctx, duk_uint_t fla
 
 DUK_EXTERNAL_DECL duk_idx_t duk_push_error_object_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, ...);
 
-#ifdef DUK_API_VARIADIC_MACROS
+#if defined(DUK_API_VARIADIC_MACROS)
 #define duk_push_error_object(ctx,err_code,...)  \
 	duk_push_error_object_raw((ctx), (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__)
 #else
@@ -1128,7 +1198,7 @@ DUK_EXTERNAL_DECL const void * const duk_rom_compressed_pointers[];
  *  C++ name mangling
  */
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 /* end 'extern "C"' wrapper */
 }
 #endif

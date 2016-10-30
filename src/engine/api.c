@@ -30,7 +30,7 @@ shutdown_api(void)
 }
 
 void
-api_register_const(duk_context* ctx, const char* enum_name, const char* name, double value)
+api_define_const(duk_context* ctx, const char* enum_name, const char* name, double value)
 {
 	duk_push_global_object(ctx);
 
@@ -48,22 +48,24 @@ api_register_const(duk_context* ctx, const char* enum_name, const char* name, do
 		}
 	}
 
-	// generate TypeScript-style symmetrical enumerations, in other words:
-	//     enum[key] = value
-	//     enum[value] = key
 	duk_push_string(ctx, name);
 	duk_push_number(ctx, value);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_CLEAR_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_push_number(ctx, value);
-	duk_to_string(ctx, -1);
-	duk_push_string(ctx, name);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	if (enum_name != NULL) {
+		// generate a TypeScript-style bidirectional enumeration:
+		//     enum[key] = value
+		//     enum[value] = key
+		duk_push_number(ctx, value);
+		duk_to_string(ctx, -1);
+		duk_push_string(ctx, name);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_CLEAR_ENUMERABLE
+			| DUK_DEFPROP_CLEAR_WRITABLE
+			| DUK_DEFPROP_SET_CONFIGURABLE);
+	}
 
 	if (enum_name != NULL)
 		duk_pop(ctx);
@@ -71,7 +73,7 @@ api_register_const(duk_context* ctx, const char* enum_name, const char* name, do
 }
 
 void
-api_register_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
+api_define_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
 {
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
@@ -112,7 +114,38 @@ api_register_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_f
 }
 
 void
-api_register_method(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
+api_define_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
+{
+	duk_push_global_object(ctx);
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
+			duk_pop(ctx);
+			duk_push_string(ctx, namespace_name);
+			duk_push_object(ctx);
+			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+				| DUK_DEFPROP_SET_WRITABLE
+				| DUK_DEFPROP_SET_CONFIGURABLE);
+			duk_get_prop_string(ctx, -1, namespace_name);
+		}
+	}
+
+	duk_push_string(ctx, name);
+	duk_push_c_function(ctx, fn, DUK_VARARGS);
+	duk_push_string(ctx, "name");
+	duk_push_string(ctx, name);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	if (namespace_name != NULL)
+		duk_pop(ctx);
+	duk_pop(ctx);
+}
+
+void
+api_define_method(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 	if (ctor_name != NULL) {
@@ -142,7 +175,7 @@ api_register_method(duk_context* ctx, const char* ctor_name, const char* name, d
 }
 
 void
-api_register_prop(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
+api_define_property(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	duk_uint_t flags;
 	int        obj_index;
@@ -171,38 +204,7 @@ api_register_prop(duk_context* ctx, const char* ctor_name, const char* name, duk
 }
 
 void
-api_register_static_func(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
-{
-	duk_push_global_object(ctx);
-
-	// ensure the namespace object exists
-	if (namespace_name != NULL) {
-		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
-			duk_pop(ctx);
-			duk_push_string(ctx, namespace_name);
-			duk_push_object(ctx);
-			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-				| DUK_DEFPROP_SET_WRITABLE
-				| DUK_DEFPROP_SET_CONFIGURABLE);
-			duk_get_prop_string(ctx, -1, namespace_name);
-		}
-	}
-
-	duk_push_string(ctx, name);
-	duk_push_c_function(ctx, fn, DUK_VARARGS);
-	duk_push_string(ctx, "name");
-	duk_push_string(ctx, name);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	if (namespace_name != NULL)
-		duk_pop(ctx);
-	duk_pop(ctx);
-}
-
-void
-api_register_static_obj(duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata)
+api_define_static_obj(duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata)
 {
 	duk_push_global_object(ctx);
 
@@ -231,7 +233,7 @@ api_register_static_obj(duk_context* ctx, const char* namespace_name, const char
 }
 
 void
-api_register_static_prop(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter)
+api_define_static_prop(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	int       flags;
 	duk_idx_t obj_index;
@@ -269,7 +271,7 @@ api_register_static_prop(duk_context* ctx, const char* namespace_name, const cha
 }
 
 void
-api_register_type(duk_context* ctx, const char* name, duk_c_function finalizer)
+api_define_type(duk_context* ctx, const char* name, duk_c_function finalizer)
 {
 	// construct a prototype for our new type
 	duk_push_object(ctx);
