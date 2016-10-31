@@ -238,7 +238,7 @@ screen_flip(screen_t* obj, int framerate)
 
 	size_t i;
 
-	async_run(ASYNC_RENDER);
+	async_run_jobs(ASYNC_RENDER);
 
 	// update FPS with 1s granularity
 	if (al_get_time() >= obj->fps_poll_time) {
@@ -337,7 +337,7 @@ screen_flip(screen_t* obj, int framerate)
 		screen_set_clipping(obj, obj->clip_rect);
 	}
 
-	async_run(ASYNC_UPDATE);
+	async_run_jobs(ASYNC_UPDATE);
 }
 
 image_t*

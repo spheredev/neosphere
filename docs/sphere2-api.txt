@@ -221,11 +221,10 @@ system.abort(message);
 system.defer(hint, func);
 
     Queues a function to be called by the engine later on behalf of the caller
-    of system.defer().  This is intended for use when implementing asynchronous
-    systems such as promises.
+    of system.defer().  `hint` is a member of the Defer enumeration specifying
+    the type of job to be performed.
 
-    `hint` is a member of the Defer enumeration and specifies what type of job
-    is being performed.
+    Returns a JobToken which can be used to cancel the job.
 
 system.exit();
 
@@ -238,7 +237,8 @@ system.now();
 
 system.recur(hint, func);
 
-    Similar to system.defer(), except that the job is recurring.
+    Similar to system.defer(), except that the job will continue to fire until
+    its token is explicitly cancelled.
 
 system.reset();
 
@@ -264,6 +264,11 @@ system.sleep(time);
     Suspends all JavaScript execution for `time` seconds.  The engine will
     "spin down" during this time and relinquish its CPU cycles to other
     applications.
+
+JobToken#cancel();
+
+    Cancels the job associated with this JobToken.  See system.defer() and
+    system.recur() above.
 
 
 Random Number Generator API

@@ -7,9 +7,11 @@
 struct job
 {
 	async_hint_t hint;
+	uint64_t     token;
 	script_t*    script;
 };
 
+static uint64_t  s_next_token = 1;
 static vector_t* s_onetime;
 static vector_t* s_recurring;
 
@@ -17,8 +19,8 @@ void
 async_init(void)
 {
 	console_log(1, "initializing async subsystem");
-	s_onetime = vector_new(sizeof(struct job));
-	s_recurring = vector_new(sizeof(struct job));
+	s_onetime = vector_new(sizeof(job_t*));
+	s_recurring = vector_new(sizeof(job_t*));
 }
 
 void
@@ -29,41 +31,70 @@ async_uninit(void)
 	vector_free(s_recurring);
 }
 
-bool
-async_dispatch(script_t* script, async_hint_t hint)
+void
+async_cancel(uint64_t token)
 {
-	struct job job;
+	iter_t  iter;
+	job_t** p_job;
 
-	if (s_onetime == NULL)
-		return false;
-	job.script = script;
-	job.hint = hint;
-	return vector_push(s_onetime, &job);
+	iter = vector_enum(s_onetime);
+	while (p_job = vector_next(&iter)) {
+		if ((*p_job)->token == token) {
+			iter_remove(&iter);
+			free(*p_job);
+		}
+	}
+	iter = vector_enum(s_recurring);
+	while (p_job = vector_next(&iter)) {
+		if ((*p_job)->token == token) {
+			iter_remove(&iter);
+			free(*p_job);
+		}
+	}
 }
 
-bool
+uint64_t
+async_defer(script_t* script, async_hint_t hint)
+{
+	job_t* job;
+
+	if (s_onetime == NULL)
+		return 0;
+	job = calloc(1, sizeof(job_t));
+	job->token = s_next_token++;
+	job->script = script;
+	job->hint = hint;
+	vector_push(s_onetime, &job);
+	return job->token;
+}
+
+uint64_t
 async_recur(script_t* script, async_hint_t hint)
 {
-	struct job job;
+	job_t* job;
 
 	if (s_recurring == NULL)
-		return false;
-	job.script = script;
-	job.hint = hint;
-	return vector_push(s_recurring, &job);
+		return 0;
+	job = calloc(1, sizeof(job_t));
+	job->token = s_next_token++;
+	job->script = script;
+	job->hint = hint;
+	vector_push(s_recurring, &job);
+	return job->token;
 }
 
 void
-async_run(async_hint_t hint)
+async_run_jobs(async_hint_t hint)
 {
-	struct job* job;
-	vector_t*   vector;
+	job_t*    job;
+	vector_t* vector;
 
 	iter_t iter;
 
 	// process recurring jobs
 	iter = vector_enum(s_recurring);
-	while (job = vector_next(&iter)) {
+	while (vector_next(&iter)) {
+		job = *(job_t**)iter.ptr;
 		if (job->hint == hint)
 			run_script(job->script, true);
 	}
@@ -71,10 +102,11 @@ async_run(async_hint_t hint)
 	// process one-time jobs.  swap in a fresh queue first to allow nested callbacks
 	// to work.
 	vector = s_onetime;
-	s_onetime = vector_new(sizeof(struct job));
+	s_onetime = vector_new(sizeof(job_t*));
 	if (vector != NULL) {
 		iter = vector_enum(vector);
-		while (job = vector_next(&iter)) {
+		while (vector_next(&iter)) {
+			job = *(job_t**)iter.ptr;
 			if (job->hint == hint) {
 				run_script(job->script, false);
 				free_script(job->script);
