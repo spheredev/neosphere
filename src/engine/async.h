@@ -3,9 +3,20 @@
 
 #include "script.h"
 
-bool async_init     (void);
+typedef
+enum async_hint
+{
+	ASYNC_ASAP,
+	ASYNC_RENDER,
+	ASYNC_UPDATE,
+	ASYNC_MAX
+} async_hint_t;
+
+
+void async_init     (void);
 void async_uninit   (void);
-void async_update   (void);
-bool async_dispatch (script_t* script);
+bool async_dispatch (script_t* script, async_hint_t hint);
+bool async_recur    (script_t* script, async_hint_t hint);
+void async_run      (async_hint_t hint);
 
 #endif // MINISPHERE__ASYNC_H__INCLUDED

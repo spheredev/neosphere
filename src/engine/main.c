@@ -318,7 +318,7 @@ do_events(void)
 	update_debugger();
 #endif
 
-	async_update();
+	async_run(ASYNC_ASAP);
 	update_input();
 	update_audio();
 

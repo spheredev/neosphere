@@ -5,6 +5,7 @@
 #include "minisphere.h"
 #include "screen.h"
 
+#include "async.h"
 #include "debugger.h"
 #include "image.h"
 #include "matrix.h"
@@ -237,6 +238,8 @@ screen_flip(screen_t* obj, int framerate)
 
 	size_t i;
 
+	async_run(ASYNC_RENDER);
+
 	// update FPS with 1s granularity
 	if (al_get_time() >= obj->fps_poll_time) {
 		obj->fps_flips = obj->num_flips;
@@ -333,6 +336,8 @@ screen_flip(screen_t* obj, int framerate)
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		screen_set_clipping(obj, obj->clip_rect);
 	}
+
+	async_run(ASYNC_UPDATE);
 }
 
 image_t*

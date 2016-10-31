@@ -4,48 +4,85 @@
 #include "script.h"
 #include "vector.h"
 
-static vector_t* s_scripts;
+struct job
+{
+	async_hint_t hint;
+	script_t*    script;
+};
 
-bool
+static vector_t* s_onetime;
+static vector_t* s_recurring;
+
+void
 async_init(void)
 {
 	console_log(1, "initializing async subsystem");
-	if (!(s_scripts = vector_new(sizeof(script_t*))))
-		return false;
-	return true;
+	s_onetime = vector_new(sizeof(struct job));
+	s_recurring = vector_new(sizeof(struct job));
 }
 
 void
 async_uninit(void)
 {
 	console_log(1, "shutting down async subsystem");
-	vector_free(s_scripts);
-}
-
-void
-async_update(void)
-{
-	iter_t     iter;
-	script_t** p_script;
-	vector_t*  vector;
-	
-	vector = s_scripts;
-	s_scripts = vector_new(sizeof(script_t*));
-	if (vector != NULL) {
-		iter = vector_enum(vector);
-		while (p_script = vector_next(&iter)) {
-			run_script(*p_script, false);
-			free_script(*p_script);
-		}
-		vector_free(vector);
-	}
+	vector_free(s_onetime);
+	vector_free(s_recurring);
 }
 
 bool
-async_dispatch(script_t* script)
+async_dispatch(script_t* script, async_hint_t hint)
 {
-	if (s_scripts != NULL)
-		return vector_push(s_scripts, &script);
-	else
+	struct job job;
+
+	if (s_onetime == NULL)
 		return false;
+	job.script = script;
+	job.hint = hint;
+	return vector_push(s_onetime, &job);
+}
+
+bool
+async_recur(script_t* script, async_hint_t hint)
+{
+	struct job job;
+
+	if (s_recurring == NULL)
+		return false;
+	job.script = script;
+	job.hint = hint;
+	return vector_push(s_recurring, &job);
+}
+
+void
+async_run(async_hint_t hint)
+{
+	struct job* job;
+	vector_t*   vector;
+
+	iter_t iter;
+
+	// process recurring jobs
+	iter = vector_enum(s_recurring);
+	while (job = vector_next(&iter)) {
+		if (job->hint == hint)
+			run_script(job->script, true);
+	}
+
+	// process one-time jobs.  swap in a fresh queue first to allow nested callbacks
+	// to work.
+	vector = s_onetime;
+	s_onetime = vector_new(sizeof(struct job));
+	if (vector != NULL) {
+		iter = vector_enum(vector);
+		while (job = vector_next(&iter)) {
+			if (job->hint == hint) {
+				run_script(job->script, false);
+				free_script(job->script);
+			}
+			else {
+				vector_push(s_onetime, job);
+			}
+		}
+		vector_free(vector);
+	}
 }

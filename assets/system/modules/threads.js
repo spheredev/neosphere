@@ -19,8 +19,8 @@ var currentSelf = 0;
 var haveMapEngine = typeof MapEngine === 'function';
 var nextThreadID = 1;
 var threads = [];
-system.dispatch(_updateAll);
-system.dispatch(_renderAll);
+system.recur(Defer.Update, _updateAll);
+system.recur(Defer.Render, _renderAll);
 
 function create(entity, priority)
 {
@@ -113,7 +113,6 @@ function _renderAll()
 	{
 		thread.renderer();
 	});
-	system.dispatch(_renderAll);
 }
 
 function _updateAll()
@@ -140,5 +139,4 @@ function _updateAll()
 	{
 		kill(threadID);
 	});
-	system.dispatch(_updateAll);
 }

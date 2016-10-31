@@ -18,7 +18,7 @@ function Promise(executor)
 	{
 		if (state == 'pending')
 			deferred.push(handler);
-		else system.defer(function() {
+		else system.defer(Async.ASAP, function() {
 			var callback = state == 'fulfilled' ? handler.fulfiller
 				: state == 'rejected' ? handler.rejector
 				: undefined;

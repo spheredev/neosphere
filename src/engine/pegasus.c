@@ -194,6 +194,7 @@ static duk_ret_t js_system_abort               (duk_context* ctx);
 static duk_ret_t js_system_defer               (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
 static duk_ret_t js_system_now                 (duk_context* ctx);
+static duk_ret_t js_system_recur               (duk_context* ctx);
 static duk_ret_t js_system_reset               (duk_context* ctx);
 static duk_ret_t js_system_run                 (duk_context* ctx);
 static duk_ret_t js_system_sleep               (duk_context* ctx);
@@ -501,6 +502,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "system", "defer", js_system_defer);
 	api_define_function(ctx, "system", "exit", js_system_exit);
 	api_define_function(ctx, "system", "now", js_system_now);
+	api_define_function(ctx, "system", "recur", js_system_recur);
 	api_define_function(ctx, "system", "reset", js_system_reset);
 	api_define_function(ctx, "system", "run", js_system_run);
 	api_define_function(ctx, "system", "sleep", js_system_sleep);
@@ -536,6 +538,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
 
+	api_define_const(ctx, "Defer", "ASAP", ASYNC_ASAP);
+	api_define_const(ctx, "Defer", "Render", ASYNC_RENDER);
+	api_define_const(ctx, "Defer", "Update", ASYNC_UPDATE);
 	api_define_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_define_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_define_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
@@ -1158,12 +1163,16 @@ js_system_abort(duk_context* ctx)
 static duk_ret_t
 js_system_defer(duk_context* ctx)
 {
-	script_t* script;
+	script_t*    script;
+	async_hint_t hint;
 
-	script = duk_require_sphere_script(ctx, 0, "synth:deferred.js");
+	hint = duk_require_int(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "synth:deferred.js");
+	if (hint < 0 || hint >= ASYNC_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid defer hint");
 
-	if (!async_dispatch(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to queue async call");
+	if (!async_dispatch(script, hint))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch call");
 	return 0;
 }
 
@@ -1178,6 +1187,22 @@ js_system_now(duk_context* ctx)
 {
 	duk_push_number(ctx, al_get_time());
 	return 1;
+}
+
+static duk_ret_t
+js_system_recur(duk_context* ctx)
+{
+	script_t*    script;
+	async_hint_t hint;
+
+	hint = duk_require_int(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "synth:recurring.js");
+	if (hint < 0 || hint >= ASYNC_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid async hint");
+
+	if (!async_recur(script, hint))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch call");
+	return 0;
 }
 
 static duk_ret_t
@@ -1360,7 +1385,7 @@ js_fs_rename(duk_context* ctx)
 
 	name1 = duk_require_path(ctx, 0, NULL, false);
 	name2 = duk_require_path(ctx, 1, NULL, false);
-	
+
 	if (!sfs_rename(g_fs, name1, name2, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to rename `%s` to `%s`", name1, name2);
 	return 0;
@@ -1372,7 +1397,7 @@ js_fs_resolve(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, NULL, false);
-	
+
 	duk_push_string(ctx, filename);
 	return 1;
 }
@@ -1430,60 +1455,65 @@ js_keyboard_clearQueue(duk_context* ctx)
 static duk_ret_t
 js_keyboard_getChar(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int keycode = duk_require_int(ctx, 0);
-	bool shift = n_args >= 2 ? duk_require_boolean(ctx, 1) : false;
+	int  keycode;
+	int  num_args;
+	bool shifted;
+
+	num_args = duk_get_top(ctx);
+	keycode = duk_require_int(ctx, 0);
+	shifted = num_args >= 2 ? duk_require_boolean(ctx, 1)
+		: false;
 
 	switch (keycode) {
-	case ALLEGRO_KEY_A: duk_push_string(ctx, shift ? "A" : "a"); break;
-	case ALLEGRO_KEY_B: duk_push_string(ctx, shift ? "B" : "b"); break;
-	case ALLEGRO_KEY_C: duk_push_string(ctx, shift ? "C" : "c"); break;
-	case ALLEGRO_KEY_D: duk_push_string(ctx, shift ? "D" : "d"); break;
-	case ALLEGRO_KEY_E: duk_push_string(ctx, shift ? "E" : "e"); break;
-	case ALLEGRO_KEY_F: duk_push_string(ctx, shift ? "F" : "f"); break;
-	case ALLEGRO_KEY_G: duk_push_string(ctx, shift ? "G" : "g"); break;
-	case ALLEGRO_KEY_H: duk_push_string(ctx, shift ? "H" : "h"); break;
-	case ALLEGRO_KEY_I: duk_push_string(ctx, shift ? "I" : "i"); break;
-	case ALLEGRO_KEY_J: duk_push_string(ctx, shift ? "J" : "j"); break;
-	case ALLEGRO_KEY_K: duk_push_string(ctx, shift ? "K" : "k"); break;
-	case ALLEGRO_KEY_L: duk_push_string(ctx, shift ? "L" : "l"); break;
-	case ALLEGRO_KEY_M: duk_push_string(ctx, shift ? "M" : "m"); break;
-	case ALLEGRO_KEY_N: duk_push_string(ctx, shift ? "N" : "n"); break;
-	case ALLEGRO_KEY_O: duk_push_string(ctx, shift ? "O" : "o"); break;
-	case ALLEGRO_KEY_P: duk_push_string(ctx, shift ? "P" : "p"); break;
-	case ALLEGRO_KEY_Q: duk_push_string(ctx, shift ? "Q" : "q"); break;
-	case ALLEGRO_KEY_R: duk_push_string(ctx, shift ? "R" : "r"); break;
-	case ALLEGRO_KEY_S: duk_push_string(ctx, shift ? "S" : "s"); break;
-	case ALLEGRO_KEY_T: duk_push_string(ctx, shift ? "T" : "t"); break;
-	case ALLEGRO_KEY_U: duk_push_string(ctx, shift ? "U" : "u"); break;
-	case ALLEGRO_KEY_V: duk_push_string(ctx, shift ? "V" : "v"); break;
-	case ALLEGRO_KEY_W: duk_push_string(ctx, shift ? "W" : "w"); break;
-	case ALLEGRO_KEY_X: duk_push_string(ctx, shift ? "X" : "x"); break;
-	case ALLEGRO_KEY_Y: duk_push_string(ctx, shift ? "Y" : "y"); break;
-	case ALLEGRO_KEY_Z: duk_push_string(ctx, shift ? "Z" : "z"); break;
-	case ALLEGRO_KEY_1: duk_push_string(ctx, shift ? "!" : "1"); break;
-	case ALLEGRO_KEY_2: duk_push_string(ctx, shift ? "@" : "2"); break;
-	case ALLEGRO_KEY_3: duk_push_string(ctx, shift ? "#" : "3"); break;
-	case ALLEGRO_KEY_4: duk_push_string(ctx, shift ? "$" : "4"); break;
-	case ALLEGRO_KEY_5: duk_push_string(ctx, shift ? "%" : "5"); break;
-	case ALLEGRO_KEY_6: duk_push_string(ctx, shift ? "^" : "6"); break;
-	case ALLEGRO_KEY_7: duk_push_string(ctx, shift ? "&" : "7"); break;
-	case ALLEGRO_KEY_8: duk_push_string(ctx, shift ? "*" : "8"); break;
-	case ALLEGRO_KEY_9: duk_push_string(ctx, shift ? "(" : "9"); break;
-	case ALLEGRO_KEY_0: duk_push_string(ctx, shift ? ")" : "0"); break;
-	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shift ? "|" : "\\"); break;
-	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shift ? ">" : "."); break;
-	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shift ? "}" : "]"); break;
-	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shift ? "<" : ","); break;
-	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shift ? "+" : "="); break;
-	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shift ? "_" : "-"); break;
-	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shift ? "\"" : "'"); break;
-	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shift ? "{" : "["); break;
-	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shift ? ":" : ";"); break;
-	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shift ? "?" : "/"); break;
+	case ALLEGRO_KEY_A: duk_push_string(ctx, shifted ? "A" : "a"); break;
+	case ALLEGRO_KEY_B: duk_push_string(ctx, shifted ? "B" : "b"); break;
+	case ALLEGRO_KEY_C: duk_push_string(ctx, shifted ? "C" : "c"); break;
+	case ALLEGRO_KEY_D: duk_push_string(ctx, shifted ? "D" : "d"); break;
+	case ALLEGRO_KEY_E: duk_push_string(ctx, shifted ? "E" : "e"); break;
+	case ALLEGRO_KEY_F: duk_push_string(ctx, shifted ? "F" : "f"); break;
+	case ALLEGRO_KEY_G: duk_push_string(ctx, shifted ? "G" : "g"); break;
+	case ALLEGRO_KEY_H: duk_push_string(ctx, shifted ? "H" : "h"); break;
+	case ALLEGRO_KEY_I: duk_push_string(ctx, shifted ? "I" : "i"); break;
+	case ALLEGRO_KEY_J: duk_push_string(ctx, shifted ? "J" : "j"); break;
+	case ALLEGRO_KEY_K: duk_push_string(ctx, shifted ? "K" : "k"); break;
+	case ALLEGRO_KEY_L: duk_push_string(ctx, shifted ? "L" : "l"); break;
+	case ALLEGRO_KEY_M: duk_push_string(ctx, shifted ? "M" : "m"); break;
+	case ALLEGRO_KEY_N: duk_push_string(ctx, shifted ? "N" : "n"); break;
+	case ALLEGRO_KEY_O: duk_push_string(ctx, shifted ? "O" : "o"); break;
+	case ALLEGRO_KEY_P: duk_push_string(ctx, shifted ? "P" : "p"); break;
+	case ALLEGRO_KEY_Q: duk_push_string(ctx, shifted ? "Q" : "q"); break;
+	case ALLEGRO_KEY_R: duk_push_string(ctx, shifted ? "R" : "r"); break;
+	case ALLEGRO_KEY_S: duk_push_string(ctx, shifted ? "S" : "s"); break;
+	case ALLEGRO_KEY_T: duk_push_string(ctx, shifted ? "T" : "t"); break;
+	case ALLEGRO_KEY_U: duk_push_string(ctx, shifted ? "U" : "u"); break;
+	case ALLEGRO_KEY_V: duk_push_string(ctx, shifted ? "V" : "v"); break;
+	case ALLEGRO_KEY_W: duk_push_string(ctx, shifted ? "W" : "w"); break;
+	case ALLEGRO_KEY_X: duk_push_string(ctx, shifted ? "X" : "x"); break;
+	case ALLEGRO_KEY_Y: duk_push_string(ctx, shifted ? "Y" : "y"); break;
+	case ALLEGRO_KEY_Z: duk_push_string(ctx, shifted ? "Z" : "z"); break;
+	case ALLEGRO_KEY_1: duk_push_string(ctx, shifted ? "!" : "1"); break;
+	case ALLEGRO_KEY_2: duk_push_string(ctx, shifted ? "@" : "2"); break;
+	case ALLEGRO_KEY_3: duk_push_string(ctx, shifted ? "#" : "3"); break;
+	case ALLEGRO_KEY_4: duk_push_string(ctx, shifted ? "$" : "4"); break;
+	case ALLEGRO_KEY_5: duk_push_string(ctx, shifted ? "%" : "5"); break;
+	case ALLEGRO_KEY_6: duk_push_string(ctx, shifted ? "^" : "6"); break;
+	case ALLEGRO_KEY_7: duk_push_string(ctx, shifted ? "&" : "7"); break;
+	case ALLEGRO_KEY_8: duk_push_string(ctx, shifted ? "*" : "8"); break;
+	case ALLEGRO_KEY_9: duk_push_string(ctx, shifted ? "(" : "9"); break;
+	case ALLEGRO_KEY_0: duk_push_string(ctx, shifted ? ")" : "0"); break;
+	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shifted ? "|" : "\\"); break;
+	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shifted ? ">" : "."); break;
+	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shifted ? "}" : "]"); break;
+	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shifted ? "<" : ","); break;
+	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shifted ? "+" : "="); break;
+	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shifted ? "_" : "-"); break;
+	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shifted ? "\"" : "'"); break;
+	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shifted ? "{" : "["); break;
+	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shifted ? ":" : ";"); break;
+	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shifted ? "?" : "/"); break;
 	case ALLEGRO_KEY_SPACE: duk_push_string(ctx, " "); break;
 	case ALLEGRO_KEY_TAB: duk_push_string(ctx, "\t"); break;
-	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shift ? "~" : "`"); break;
+	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shifted ? "~" : "`"); break;
 	default:
 		duk_push_string(ctx, "");
 	}
