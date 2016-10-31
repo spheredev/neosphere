@@ -3,11 +3,9 @@
 
 #include "script.h"
 
-bool initialize_async   (void);
-void shutdown_async     (void);
-void update_async       (void);
-bool queue_async_script (script_t* script);
-
-void init_async_api (void);
+bool async_init     (void);
+void async_uninit   (void);
+void async_update   (void);
+bool async_dispatch (script_t* script);
 
 #endif // MINISPHERE__ASYNC_H__INCLUDED

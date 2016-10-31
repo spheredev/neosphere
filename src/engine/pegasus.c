@@ -191,7 +191,7 @@ static duk_ret_t js_system_get_game            (duk_context* ctx);
 static duk_ret_t js_system_get_name            (duk_context* ctx);
 static duk_ret_t js_system_get_version         (duk_context* ctx);
 static duk_ret_t js_system_abort               (duk_context* ctx);
-static duk_ret_t js_system_dispatch            (duk_context* ctx);
+static duk_ret_t js_system_defer               (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
 static duk_ret_t js_system_now                 (duk_context* ctx);
 static duk_ret_t js_system_reset               (duk_context* ctx);
@@ -498,7 +498,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "system", "name", js_system_get_name, NULL);
 	api_define_static_prop(ctx, "system", "version", js_system_get_version, NULL);
 	api_define_function(ctx, "system", "abort", js_system_abort);
-	api_define_function(ctx, "system", "dispatch", js_system_dispatch);
+	api_define_function(ctx, "system", "defer", js_system_defer);
 	api_define_function(ctx, "system", "exit", js_system_exit);
 	api_define_function(ctx, "system", "now", js_system_now);
 	api_define_function(ctx, "system", "reset", js_system_reset);
@@ -530,7 +530,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
 	api_define_function(ctx, "mouse", "getEvent", js_mouse_getEvent);
 	api_define_function(ctx, "mouse", "isPressed", js_mouse_isPressed);
-	api_define_static_obj(ctx, NULL, "screen", "Surface", NULL);
+	api_define_object(ctx, NULL, "screen", "Surface", NULL);
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
@@ -1156,14 +1156,14 @@ js_system_abort(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_dispatch(duk_context* ctx)
+js_system_defer(duk_context* ctx)
 {
 	script_t* script;
 
-	script = duk_require_sphere_script(ctx, 0, "synth:async.js");
+	script = duk_require_sphere_script(ctx, 0, "synth:deferred.js");
 
-	if (!queue_async_script(script))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch async script");
+	if (!async_dispatch(script))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to queue async call");
 	return 0;
 }
 

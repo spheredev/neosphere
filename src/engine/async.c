@@ -7,7 +7,7 @@
 static vector_t* s_scripts;
 
 bool
-initialize_async(void)
+async_init(void)
 {
 	console_log(1, "initializing async subsystem");
 	if (!(s_scripts = vector_new(sizeof(script_t*))))
@@ -16,14 +16,14 @@ initialize_async(void)
 }
 
 void
-shutdown_async(void)
+async_uninit(void)
 {
 	console_log(1, "shutting down async subsystem");
 	vector_free(s_scripts);
 }
 
 void
-update_async(void)
+async_update(void)
 {
 	iter_t     iter;
 	script_t** p_script;
@@ -42,7 +42,7 @@ update_async(void)
 }
 
 bool
-queue_async_script(script_t* script)
+async_dispatch(script_t* script)
 {
 	if (s_scripts != NULL)
 		return vector_push(s_scripts, &script);

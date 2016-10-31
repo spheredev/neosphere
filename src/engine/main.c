@@ -318,7 +318,7 @@ do_events(void)
 	update_debugger();
 #endif
 
-	update_async();
+	async_update();
 	update_input();
 	update_audio();
 
@@ -388,7 +388,7 @@ initialize_engine(void)
 		goto on_error;
 
 	// initialize engine components
-	initialize_async();
+	async_init();
 	initialize_galileo();
 	initialize_audio();
 	initialize_input();
@@ -429,7 +429,7 @@ shutdown_engine(void)
 	shutdown_spritesets();
 	shutdown_audio();
 	shutdown_galileo();
-	shutdown_async();
+	async_uninit();
 
 	console_log(1, "shutting down Allegro");
 	screen_free(g_screen);

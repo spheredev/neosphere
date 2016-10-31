@@ -7,8 +7,8 @@ void   api_define_const       (duk_context* ctx, const char* enum_name, const ch
 void   api_define_ctor        (duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer);
 void   api_define_function    (duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn);
 void   api_define_method      (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
-void   api_define_property        (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter);
-void   api_define_static_obj  (duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata);
+void   api_define_object      (duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata);
+void   api_define_property    (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter);
 void   api_define_static_prop (duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter);
 void   api_define_type        (duk_context* ctx, const char* name, duk_c_function finalizer);
 

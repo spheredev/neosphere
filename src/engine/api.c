@@ -175,6 +175,35 @@ api_define_method(duk_context* ctx, const char* ctor_name, const char* name, duk
 }
 
 void
+api_define_object(duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata)
+{
+	duk_push_global_object(ctx);
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
+			duk_pop(ctx);
+			duk_push_string(ctx, namespace_name);
+			duk_push_object(ctx);
+			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+				| DUK_DEFPROP_SET_WRITABLE
+				| DUK_DEFPROP_SET_CONFIGURABLE);
+			duk_get_prop_string(ctx, -1, namespace_name);
+		}
+	}
+
+	duk_push_string(ctx, name);
+	duk_push_sphere_obj(ctx, ctor_name, udata);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	if (namespace_name != NULL)
+		duk_pop(ctx);
+	duk_pop(ctx);
+}
+
+void
 api_define_property(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	duk_uint_t flags;
@@ -200,35 +229,6 @@ api_define_property(duk_context* ctx, const char* ctor_name, const char* name, d
 	duk_def_prop(g_duk, obj_index, flags);
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
-	duk_pop(ctx);
-}
-
-void
-api_define_static_obj(duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata)
-{
-	duk_push_global_object(ctx);
-
-	// ensure the namespace object exists
-	if (namespace_name != NULL) {
-		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
-			duk_pop(ctx);
-			duk_push_string(ctx, namespace_name);
-			duk_push_object(ctx);
-			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-				| DUK_DEFPROP_SET_WRITABLE
-				| DUK_DEFPROP_SET_CONFIGURABLE);
-			duk_get_prop_string(ctx, -1, namespace_name);
-		}
-	}
-
-	duk_push_string(ctx, name);
-	duk_push_sphere_obj(ctx, ctor_name, udata);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	if (namespace_name != NULL)
-		duk_pop(ctx);
 	duk_pop(ctx);
 }
 

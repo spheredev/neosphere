@@ -208,11 +208,10 @@ system.abort(message);
           SSJ.  Be sure you know what you're doing before you call this
           function.
 
-system.dispatch(func);
+system.defer(func);
 
-    Queues a function to be called on the next event loop iteration, rather
-    than immediately.  This is intended for use when implementing asynchronous
-    systems such as promises.
+    Queues a function to be called on the next event loop iteration.  This is
+    intended for use when implementing asynchronous systems such as promises.
 
 system.exit();
 
