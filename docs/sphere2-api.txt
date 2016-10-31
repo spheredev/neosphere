@@ -164,15 +164,15 @@ underlying Sphere platform.  The `system` object's properties provide access to
 the engine's name and version number as well as the API level supported, and
 there are also several methods for managing engine execution.
 
-Defer [enumeration]
+Dispatch [enumeration]
 
-    Specifies the appropriate time to call a deferred function.  See the
+    Specifies the appropriate time to perform an asynchronous job.  See the
     documentation for system.defer() and system.recur() below for more
     information.  Can be one of the following:
 
-        Defer.ASAP
-        Defer.Render
-        Defer.Update
+        Dispatch.ASAP
+        Dispatch.Render
+        Dispatch.Update
 
 system.name [read-only]
 

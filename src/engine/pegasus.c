@@ -544,9 +544,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
 
-	api_define_const(ctx, "Defer", "ASAP", ASYNC_ASAP);
-	api_define_const(ctx, "Defer", "Render", ASYNC_RENDER);
-	api_define_const(ctx, "Defer", "Update", ASYNC_UPDATE);
+	api_define_const(ctx, "Dispatch", "ASAP", ASYNC_ASAP);
+	api_define_const(ctx, "Dispatch", "Render", ASYNC_RENDER);
+	api_define_const(ctx, "Dispatch", "Update", ASYNC_UPDATE);
+
 	api_define_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_define_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_define_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
@@ -1186,7 +1187,7 @@ js_system_defer(duk_context* ctx)
 	hint = duk_require_int(ctx, 0);
 	script = duk_require_sphere_script(ctx, 1, "synth:deferred.js");
 	if (hint < 0 || hint >= ASYNC_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid defer hint");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid dispatch hint");
 
 	if (!(token = async_defer(script, hint)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch call");
@@ -1217,7 +1218,7 @@ js_system_recur(duk_context* ctx)
 	hint = duk_require_int(ctx, 0);
 	script = duk_require_sphere_script(ctx, 1, "synth:recurring.js");
 	if (hint < 0 || hint >= ASYNC_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid async hint");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid dispatch hint");
 
 	if (!(token = async_recur(script, hint)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch call");
