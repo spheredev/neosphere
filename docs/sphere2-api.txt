@@ -135,27 +135,6 @@ require(module_id);
     module.
 
 
-SSJ Debugger API
-----------------
-
-The following functions only have an effect while a debugger such as SSJ is in
-use, otherwise they do nothing.  This helps to minimize the performance impact
-in production.
-
-SSJ.assert(condition[, message]);
-
-    `condition` is a boolean expression.  If the condition is true, nothing
-    happens.  If it is false and a debugger is attached, an alert is displayed,
-    with an option to trigger a breakpoint.
-
-    `message` is optional but highly recommended; the boolean expression will
-    not be displayed in the alert box.
-
-SSJ.trace(text);
-
-    Outputs text to the attached debugger.  Useful for diagnostics.
-
-
 Low-Level System API
 --------------------
 
@@ -207,7 +186,6 @@ system.extensions [read-only]
         sphere_glsl_shader_support
         sphere_stateful_rng
         sphere_v1_compatible_api
-        minisphere_ssj_api
 
 system.abort(message);
 

@@ -694,11 +694,6 @@ units on the battlefield.
 
     const threads = require('threads');
 
-An important note: When the threads module is initialized, in order to work
-with the Sphere v1 map engine, the update and render functionality is
-commandeered by the threader and disabled (calling SetUpdateScript or
-SetRenderScript will throw an error).
-
 threads.create(def[, priority]);
 
     Creates a new thread and returns its thread ID (an integer).  `def` should

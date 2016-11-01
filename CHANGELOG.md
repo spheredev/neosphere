@@ -4,15 +4,21 @@ minisphere Changelog
 v4.3.0 - TBD
 ------------
 
-* Adds `struct.Reader` and `struct.Writer` which allow games to read and write
-  binary data from files and network sockets.
+* Adds a new API for setting up cancellable async jobs.  Jobs can now be called
+  from a designated part of the event loop; for example, Render jobs are
+  processed just before flipping the backbuffer.
 * Adds support for the JavaScript Reflect API.
 * Adds native support for JavaScript Promises via a polyfill.
+* Adds `struct.Reader` and `struct.Writer` which allow games to read and write
+  binary data from files and network sockets.
 * Adds a `.fileName` property to objects such as Image and Sound, which returns
   the canonicalized name of the file the object was constructed from.
+* Removes the superfluous `SSJ` functions from the API.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, are
   now fully playable without issue.
+* miniRT no longer commandeers the Sphere v1 update and render scripts for
+  itself.
 * When debugging with Sphere Studio, the gold "ssj" watermark in the bottom
   right is changed to blue to more easily distinguish interactive debugging
   sessions from command-line sessions.

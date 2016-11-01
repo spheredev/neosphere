@@ -23,7 +23,6 @@ static const char* const EXTENSIONS[] =
 	"sphere_glsl_shader_support",
 	"sphere_stateful_rng",
 	"sphere_v1_compatible_api",
-	"minisphere_ssj_api",
 };
 
 static const
@@ -182,8 +181,6 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_SSJ_assert                 (duk_context* ctx);
-static duk_ret_t js_SSJ_trace                  (duk_context* ctx);
 static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
 static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
 static duk_ret_t js_system_get_extensions      (duk_context* ctx);
@@ -486,8 +483,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_define_function(ctx, "SSJ", "assert", js_SSJ_assert);
-	api_define_function(ctx, "SSJ", "trace", js_SSJ_trace);
 	api_define_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
 	api_define_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
 	api_define_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
@@ -993,72 +988,6 @@ js_require(duk_context* ctx)
 	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
-}
-
-static duk_ret_t
-js_SSJ_assert(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	bool        result;
-	lstring_t*  text;
-
-	num_args = duk_get_top(ctx);
-	result = duk_to_boolean(ctx, 0);
-	message = num_args >= 2 ? duk_require_string(ctx, 1)
-		: "assertion failed";
-
-	if (!result) {
-		// get the offending script and line number from the call stack
-		duk_push_global_object(ctx);
-		duk_get_prop_string(ctx, -1, "Duktape");
-		duk_get_prop_string(ctx, -1, "act");
-		duk_push_int(ctx, -3);
-		duk_call(ctx, 1);
-		duk_remove(ctx, -2);
-		duk_get_prop_string(ctx, -1, "lineNumber");
-		line_number = duk_get_int(ctx, -1);
-		duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "function");
-		duk_get_prop_string(ctx, -1, "fileName");
-		filename = duk_get_string(ctx, -1);
-		fprintf(stderr, "ASSERT: `%s:%i` : %s\n", filename, line_number, message);
-		duk_pop_3(ctx);
-
-		// if an assertion fails in a game being debugged:
-		//   - the user may choose to ignore it, in which case execution continues.  this is useful
-		//     in some debugging scenarios.
-		//   - if the user chooses not to continue, a prompt breakpoint will be triggered, turning
-		//     over control to the attached debugger.
-		if (is_debugger_attached()) {
-			text = lstr_newf("%s (line: %i)\n%s\n\nYou can ignore the error, or pause execution, turning over control to the attached debugger.  If you choose to debug, execution will pause at the statement following the failed Assert().\n\nIgnore the error and continue?", filename, line_number, message);
-			if (!al_show_native_message_box(screen_display(g_screen), "Script Error", "Assertion failed!",
-				lstr_cstr(text), NULL, ALLEGRO_MESSAGEBOX_WARN | ALLEGRO_MESSAGEBOX_YES_NO))
-			{
-				duk_debugger_pause(ctx);
-			}
-			lstr_free(text);
-		}
-	}
-	duk_dup(ctx, 0);
-	return 1;
-}
-
-static duk_ret_t
-js_SSJ_trace(duk_context* ctx)
-{
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_TRACE, false);
-	return 0;
 }
 
 static duk_ret_t
