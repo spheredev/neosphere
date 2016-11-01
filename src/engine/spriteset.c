@@ -49,7 +49,6 @@ struct rss_frame_v3
 };
 #pragma pack(pop)
 
-
 static const spriteset_pose_t* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
 
 static vector_t*    s_load_cache;
@@ -91,6 +90,7 @@ clone_spriteset(const spriteset_t* spriteset)
 		s_next_spriteset_id, spriteset->id);
 	
 	clone = calloc(1, sizeof(spriteset_t));
+	clone->filename = strdup(spriteset->filename);
 	clone->base = spriteset->base;
 	clone->num_images = spriteset->num_images;
 	clone->num_poses = spriteset->num_poses;
@@ -179,8 +179,10 @@ load_spriteset(const char* filename)
 		goto on_error;
 	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
-	if (memcmp(rss.signature, ".rss", 4) != 0) goto on_error;
-	if (!(spriteset->filename = strdup(filename))) goto on_error;
+	if (memcmp(rss.signature, ".rss", 4) != 0)
+		goto on_error;
+	if (!(spriteset->filename = strdup(filename)))
+		goto on_error;
 	spriteset->base.x1 = rss.base_x1;
 	spriteset->base.y1 = rss.base_y1;
 	spriteset->base.x2 = rss.base_x2;
@@ -388,6 +390,12 @@ get_sprite_size(const spriteset_t* spriteset, int* out_width, int* out_height)
 	image = spriteset->images[0];
 	if (out_width) *out_width = image_width(image);
 	if (out_height) *out_height = image_height(image);
+}
+
+const char*
+get_spriteset_path(const spriteset_t* spriteset)
+{
+	return spriteset->filename;
 }
 
 void

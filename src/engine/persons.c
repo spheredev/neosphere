@@ -1501,9 +1501,9 @@ js_GetPersonSpriteset(duk_context* ctx)
 	person_t*    person;
 
 	if ((person = find_person(name)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "GetPersonSpriteset(): no such person `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if ((new_spriteset = clone_spriteset(get_person_spriteset(person))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GetPersonSpriteset(): unable to create new spriteset");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to get spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	free_spriteset(new_spriteset);
 	return 1;

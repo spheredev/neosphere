@@ -3864,7 +3864,7 @@ js_Spriteset_get_filename(duk_context* ctx)
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_obj(ctx, -1, "ssSpriteset");
 	duk_pop(ctx);
-	duk_push_string(ctx, spriteset->filename);
+	duk_push_string(ctx, get_spriteset_path(spriteset));
 	return 1;
 }
 
