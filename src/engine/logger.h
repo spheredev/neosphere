@@ -10,6 +10,4 @@ bool      log_begin_block (logger_t* logger, const char* title);
 void      log_end_block   (logger_t* logger);
 void      log_write       (logger_t* logger, const char* prefix, const char* text);
 
-void init_logging_api (void);
-
 #endif // MINISPHERE__LOGGER_H__INCLUDED

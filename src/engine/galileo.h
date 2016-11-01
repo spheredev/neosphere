@@ -57,6 +57,4 @@ void         shape_calculate_uv  (shape_t* shape);
 void         shape_draw          (shape_t* shape, matrix_t* matrix, image_t* surface);
 void         shape_upload        (shape_t* shape);
 
-void init_galileo_api (void);
-
 #endif // MINISPHERE__GALILEO_H__INCLUDED

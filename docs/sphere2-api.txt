@@ -215,30 +215,28 @@ system.abort(message);
     closing the engine.  `message` will be displayed on the error screen.
     
     Note: system.abort() bypasses all exception handling mechanisms, including
-          SSJ.  Be sure you know what you're doing before you call this
-          function.
+          SSJ.  Be sure you know what you're doing before you use it.
 
-system.defer(hint, func);
+system.defer(hint, fn);
 
-    Queues a function to be called by the engine later on behalf of the caller
-    of system.defer().  `hint` is a member of the Defer enumeration specifying
-    the type of job to be performed.
-
-    Returns a JobToken which can be used to cancel the job.
+    Queues a job to call a function from the event loop.  `hint` is a member of
+    the Dispatch enumeration specifying the type of job to perform.  Returns a
+    JobToken which can be used to cancel the job early.
 
 system.exit();
 
-    Shuts down the engine unconditionally.  Unsaved data will be lost.
+    Shuts down the engine.  Be careful; this function will not return so any
+    unsaved data will be lost.
 
 system.now();
 
     Returns the amount of time, in seconds, since the engine started running.
     Granularity varies, but is typically less than a microsecond.
 
-system.recur(hint, func);
+system.recur(hint, fn);
 
-    Similar to system.defer(), except that the job will continue to fire until
-    its token is explicitly cancelled.
+    Similar to system.defer(), except that the job will continue being called
+    indefinitely until its token is cancelled.
 
 system.reset();
 
@@ -254,7 +252,7 @@ system.run();
             // do stuff here
         }
 
-    Note: Be careful.  This function runs all pending events in the event
+    Note: Be careful.  This function runs all pending ASAP jobs in the job
           queue, including settlement of outstanding promises.  This may lead
           to undesirable side effects if a promise handler modifies a global
           variable, for example.

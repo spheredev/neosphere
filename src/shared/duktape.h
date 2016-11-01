@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 88d4c926b10a2d9ca46bde1f52a81300c98e2e41 (v1.5.0-854-g88d4c92).
+ *  Git commit 490f634ce805251d7c182ac1e1c047929e469d53 (v1.5.0-858-g490f634).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -256,8 +256,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "88d4c926b10a2d9ca46bde1f52a81300c98e2e41"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-854-g88d4c92"
+#define DUK_GIT_COMMIT                    "490f634ce805251d7c182ac1e1c047929e469d53"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-858-g490f634"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -1585,6 +1585,12 @@ typedef union duk_double_union duk_double_union;
 
 /* Reverse operation is the same. */
 #define DUK_DBLUNION_DOUBLE_NTOH(u) DUK_DBLUNION_DOUBLE_HTON((u))
+
+/* Sign check. */
+#define DUK_DBLUNION_HAS_SIGNBIT(u) (((u)->ui[DUK_DBL_IDX_UI0] & 0x80000000UL))
+
+/* Sign bit as 1 (negative) or 0 (positive). */
+#define DUK_DBLUNION_GET_SIGNBIT(u) (((u)->ui[DUK_DBL_IDX_UI0] >> 31U))
 
 #endif  /* DUK_DBLUNION_H_INCLUDED */
 
