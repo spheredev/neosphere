@@ -19,8 +19,8 @@ var currentSelf = 0;
 var haveMapEngine = typeof MapEngine === 'function';
 var nextThreadID = 1;
 var threads = [];
-var updateJob = system.recur(Dispatch.Update, _updateAll);
-var renderJob = system.recur(Dispatch.Render, _renderAll);
+Dispatch.onUpdate(_updateAll);
+Dispatch.onFlip(_renderAll);
 
 function create(entity, priority)
 {

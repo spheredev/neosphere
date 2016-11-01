@@ -143,16 +143,6 @@ underlying Sphere platform.  The `system` object's properties provide access to
 the engine's name and version number as well as the API level supported, and
 there are also several methods for managing engine execution.
 
-Dispatch [enumeration]
-
-    Specifies the appropriate time to perform an asynchronous job.  See the
-    documentation for system.defer() and system.recur() below for more
-    information.  Can be one of the following:
-
-        Dispatch.ASAP
-        Dispatch.Render
-        Dispatch.Update
-
 system.name [read-only]
 
     The name of the engine.  In our case, "minisphere".
@@ -195,12 +185,6 @@ system.abort(message);
     Note: system.abort() bypasses all exception handling mechanisms, including
           SSJ.  Be sure you know what you're doing before you use it.
 
-system.defer(hint, fn);
-
-    Queues a job to call a function from the event loop.  `hint` is a member of
-    the Dispatch enumeration specifying the type of job to perform.  Returns a
-    JobToken which can be used to cancel the job early.
-
 system.exit();
 
     Shuts down the engine.  Be careful; this function will not return so any
@@ -210,11 +194,6 @@ system.now();
 
     Returns the amount of time, in seconds, since the engine started running.
     Granularity varies, but is typically less than a microsecond.
-
-system.recur(hint, fn);
-
-    Similar to system.defer(), except that the job will continue being called
-    indefinitely until its token is cancelled.
 
 system.reset();
 
@@ -241,11 +220,34 @@ system.sleep(time);
     "spin down" during this time and relinquish its CPU cycles to other
     applications.
 
-JobToken#cancel();
 
-    Cancels the job associated with this JobToken.  See system.defer() and
-    system.recur() above.
+Dispatch API
+------------
 
+The Dispatch API is used to set up asynchronous function calls which are later
+performed from a designated part of the Sphere event loop.  This is like an
+advanced version of Sphere v1 update and render scripts, but better integrated
+and available throughout the engine.
+
+Dispatch.now(fn);
+
+    Sets up a one-time job to call `fn` on the next tick.  This works like
+    `setTimeout(fn, 0)` in the browser.  Useful for performing operations that
+    need to be done from the event loop, such as promise resolution.  Returns
+    an AsyncJob object used to manage to job.
+
+Dispatch.onFlip(fn);
+Dispatch.onUpdate(fn);
+
+    Sets up a recurring job to call `fn` in a given context.  For example,
+    `onFlip()` jobs are called when the backbuffer is flipped, and `onUpdate()`
+    jobs are called at the beginning of each frame.  Returns an AsyncJob
+    object used to manage the job.
+
+AsyncJob#cancel();
+
+    Cancels the job associated with this job token.  For one-time jobs,
+    cancellation has no effect if the job has already been processed.
 
 Random Number Generator API
 ---------------------------

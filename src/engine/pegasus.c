@@ -188,10 +188,8 @@ static duk_ret_t js_system_get_game            (duk_context* ctx);
 static duk_ret_t js_system_get_name            (duk_context* ctx);
 static duk_ret_t js_system_get_version         (duk_context* ctx);
 static duk_ret_t js_system_abort               (duk_context* ctx);
-static duk_ret_t js_system_defer               (duk_context* ctx);
 static duk_ret_t js_system_exit                (duk_context* ctx);
 static duk_ret_t js_system_now                 (duk_context* ctx);
-static duk_ret_t js_system_recur               (duk_context* ctx);
 static duk_ret_t js_system_reset               (duk_context* ctx);
 static duk_ret_t js_system_run                 (duk_context* ctx);
 static duk_ret_t js_system_sleep               (duk_context* ctx);
@@ -226,12 +224,17 @@ static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
+static duk_ret_t js_AsyncJob_finalize          (duk_context* ctx);
+static duk_ret_t js_AsyncJob_cancel            (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
 static duk_ret_t js_Color_mix                  (duk_context* ctx);
 static duk_ret_t js_new_Color                  (duk_context* ctx);
 static duk_ret_t js_Color_get_name             (duk_context* ctx);
 static duk_ret_t js_Color_clone                (duk_context* ctx);
 static duk_ret_t js_Color_fade                 (duk_context* ctx);
+static duk_ret_t js_Dispatch_now               (duk_context* ctx);
+static duk_ret_t js_Dispatch_onFlip            (duk_context* ctx);
+static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_size        (duk_context* ctx);
@@ -252,8 +255,6 @@ static duk_ret_t js_Image_finalize             (duk_context* ctx);
 static duk_ret_t js_Image_get_fileName         (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
-static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
-static duk_ret_t js_JobToken_cancel            (duk_context* ctx);
 static duk_ret_t js_Joystick_get_Null          (duk_context* ctx);
 static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
 static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
@@ -391,11 +392,16 @@ initialize_pegasus_api(duk_context* ctx)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// initialize the Sphere v2 API
+	api_define_type(ctx, "AsyncJob", js_AsyncJob_finalize);
+	api_define_method(ctx, "AsyncJob", "cancel", js_AsyncJob_cancel);
 	api_define_ctor(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
+	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
+	api_define_function(ctx, "Dispatch", "onFlip", js_Dispatch_onFlip);
+	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
 	api_define_type(ctx, "FileStream", js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
@@ -413,8 +419,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
 	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
 	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
-	api_define_type(ctx, "JobToken", js_JobToken_finalize);
-	api_define_method(ctx, "JobToken", "cancel", js_JobToken_cancel);
 	api_define_type(ctx, "Joystick", js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function(ctx, "Joystick", "getDevices", js_Joystick_getDevices);
@@ -490,10 +494,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "system", "name", js_system_get_name, NULL);
 	api_define_static_prop(ctx, "system", "version", js_system_get_version, NULL);
 	api_define_function(ctx, "system", "abort", js_system_abort);
-	api_define_function(ctx, "system", "defer", js_system_defer);
 	api_define_function(ctx, "system", "exit", js_system_exit);
 	api_define_function(ctx, "system", "now", js_system_now);
-	api_define_function(ctx, "system", "recur", js_system_recur);
 	api_define_function(ctx, "system", "reset", js_system_reset);
 	api_define_function(ctx, "system", "run", js_system_run);
 	api_define_function(ctx, "system", "sleep", js_system_sleep);
@@ -529,9 +531,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
 
-	api_define_const(ctx, "Dispatch", "ASAP", ASYNC_ASAP);
-	api_define_const(ctx, "Dispatch", "Render", ASYNC_RENDER);
-	api_define_const(ctx, "Dispatch", "Update", ASYNC_UPDATE);
 	api_define_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_define_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_define_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
@@ -811,7 +810,7 @@ duk_pegasus_push_job_token(duk_context* ctx, uint64_t token)
 
 	ptr = malloc(sizeof(uint64_t));
 	*ptr = token;
-	duk_push_sphere_obj(ctx, "JobToken", ptr);
+	duk_push_sphere_obj(ctx, "AsyncJob", ptr);
 }
 
 static void
@@ -1094,19 +1093,43 @@ js_system_abort(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_defer(duk_context* ctx)
+js_Dispatch_now(duk_context* ctx)
 {
-	async_hint_t hint;
-	script_t*    script;
-	uint64_t     token;
+	script_t* script;
+	uint64_t  token;
 
-	hint = duk_require_int(ctx, 0);
-	script = duk_require_sphere_script(ctx, 1, "synth:deferred.js");
-	if (hint < 0 || hint >= ASYNC_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid dispatch hint");
+	script = duk_require_sphere_script(ctx, 0, "synth:dispatch.js");
 
-	if (!(token = async_defer(script, hint)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch call");
+	if (!(token = async_defer(script, ASYNC_ASAP)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to set up call");
+	duk_pegasus_push_job_token(ctx, token);
+	return 1;
+}
+
+static duk_ret_t
+js_Dispatch_onFlip(duk_context* ctx)
+{
+	script_t* script;
+	uint64_t  token;
+
+	script = duk_require_sphere_script(ctx, 0, "synth:onFlip.js");
+
+	if (!(token = async_recur(script, ASYNC_RENDER)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to set up call");
+	duk_pegasus_push_job_token(ctx, token);
+	return 1;
+}
+
+static duk_ret_t
+js_Dispatch_onUpdate(duk_context* ctx)
+{
+	script_t* script;
+	uint64_t  token;
+
+	script = duk_require_sphere_script(ctx, 0, "synth:onFlip.js");
+
+	if (!(token = async_recur(script, ASYNC_UPDATE)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to set up call");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1121,24 +1144,6 @@ static duk_ret_t
 js_system_now(duk_context* ctx)
 {
 	duk_push_number(ctx, al_get_time());
-	return 1;
-}
-
-static duk_ret_t
-js_system_recur(duk_context* ctx)
-{
-	async_hint_t hint;
-	script_t*    script;
-	uint64_t     token;
-
-	hint = duk_require_int(ctx, 0);
-	script = duk_require_sphere_script(ctx, 1, "synth:recurring.js");
-	if (hint < 0 || hint >= ASYNC_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid dispatch hint");
-
-	if (!(token = async_recur(script, hint)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to dispatch call");
-	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
 
@@ -1596,6 +1601,29 @@ js_screen_resize(duk_context* ctx)
 	if (width < 0 || height < 0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid screen resolution");
 	screen_resize(g_screen, width, height);
+	return 0;
+}
+
+static duk_ret_t
+js_AsyncJob_finalize(duk_context* ctx)
+{
+	uint64_t* p_token;
+
+	p_token = duk_require_sphere_obj(ctx, 0, "AsyncJob");
+
+	free(p_token);
+	return 0;
+}
+
+static duk_ret_t
+js_AsyncJob_cancel(duk_context* ctx)
+{
+	uint64_t* p_token;
+
+	duk_push_this(ctx);
+	p_token = duk_require_sphere_obj(ctx, -1, "AsyncJob");
+
+	async_cancel(*p_token);
 	return 0;
 }
 
@@ -2165,29 +2193,6 @@ js_Image_get_width(duk_context* ctx)
 
 	duk_push_int(ctx, image_width(image));
 	return 1;
-}
-
-static duk_ret_t
-js_JobToken_finalize(duk_context* ctx)
-{
-	uint64_t* p_token;
-
-	p_token = duk_require_sphere_obj(ctx, 0, "JobToken");
-
-	free(p_token);
-	return 0;
-}
-
-static duk_ret_t
-js_JobToken_cancel(duk_context* ctx)
-{
-	uint64_t* p_token;
-
-	duk_push_this(ctx);
-	p_token = duk_require_sphere_obj(ctx, -1, "JobToken");
-
-	async_cancel(*p_token);
-	return 0;
 }
 
 static duk_ret_t
