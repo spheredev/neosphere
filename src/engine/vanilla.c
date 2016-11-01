@@ -1849,7 +1849,7 @@ js_GradientTriangle(duk_context* ctx)
 			{ x2, y2, 0, 0, 0, nativecolor(color2) },
 			{ x3, y3, 0, 0, 0, nativecolor(color3) },
 		};
-		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+		al_draw_prim(verts, NULL, NULL, 0, 3, ALLEGRO_PRIM_TRIANGLE_LIST);
 	}
 	return 0;
 }
