@@ -698,6 +698,11 @@ new Font(filename);
     Constructs a Font object from a font file.  Currently only the Sphere RFN
     font format is supported.
 
+Font#fileName [read-only]
+
+    Gets the full normalized SphereFS filename of the file used to construct
+    this Font object.
+
 Font#height [read-only]
 
     Gets the line height, in pixels, for text rendered using this font.
@@ -742,6 +747,11 @@ new Image(width, height, pixels);
 
     An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
     describe the entire image.
+
+Image#fileName [read-only]
+
+    Gets the full normalized SphereFS path to the file used to construct this
+    Image object.  For synthesized images, returns null.
 
 Image#width [read-only]
 Image#height [read-only]
@@ -950,6 +960,11 @@ new Sound(filename);
     Constructs a Sound object from the specified audio file.  Supported sound
     formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
     unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
+
+Sound#fileName [read-only]
+
+    Gets the full normalized SphereFS filename of the file used to construct
+    this Sound object.
 
 Sound#length [read-only]
 

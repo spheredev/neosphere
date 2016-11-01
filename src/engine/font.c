@@ -14,6 +14,7 @@ struct font
 	int                height;
 	int                min_width;
 	int                max_width;
+	char*              path;
 	uint32_t           num_glyphs;
 	struct font_glyph* glyphs;
 };
@@ -79,7 +80,8 @@ font_load(const char* filename)
 
 	if ((file = sfs_fopen(g_fs, filename, NULL, "rb")) == NULL)
 		goto on_error;
-	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
+	if (!(font = calloc(1, sizeof(font_t))))
+		goto on_error;
 	if (sfs_fread(&rfn, sizeof(struct rfn_header), 1, file) != 1)
 		goto on_error;
 	pixel_size = (rfn.version == 1) ? 1 : 4;
@@ -146,6 +148,7 @@ font_load(const char* filename)
 	sfs_fclose(file);
 	image_free(atlas);
 
+	font->path = strdup(filename);
 	font->id = s_next_font_id++;
 	return font_ref(font);
 
@@ -240,6 +243,12 @@ int
 font_height(const font_t* font)
 {
 	return font->height;
+}
+
+const char*
+font_path(const font_t* font)
+{
+	return font->path;
 }
 
 void

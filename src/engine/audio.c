@@ -265,6 +265,12 @@ sound_mixer(sound_t* sound)
 	return sound_playing(sound) ? sound->mixer : NULL;
 }
 
+const char*
+sound_path(const sound_t* sound)
+{
+	return sound->path;
+}
+
 float
 sound_pan(sound_t* sound)
 {

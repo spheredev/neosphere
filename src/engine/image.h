@@ -21,9 +21,8 @@ image_t*        image_ref                (image_t* image);
 void            image_free               (image_t* image);
 ALLEGRO_BITMAP* image_bitmap             (image_t* image);
 int             image_height             (const image_t* image);
-color_t         image_get_pixel          (image_t* image, int x, int y);
+const char*     image_path               (const image_t* image);
 int             image_width              (const image_t* image);
-void            image_set_pixel          (image_t* image, int x, int y, color_t color);
 bool            image_apply_colormat     (image_t* image, colormatrix_t matrix, int x, int y, int width, int height);
 bool            image_apply_colormat_4   (image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int width, int height);
 bool            image_apply_lookup       (image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256]);
@@ -36,10 +35,12 @@ void            image_draw_tiled         (image_t* image, int x, int y, int widt
 void            image_draw_tiled_masked  (image_t* image, color_t mask, int x, int y, int width, int height);
 void            image_fill               (image_t* image, color_t color);
 bool            image_flip               (image_t* image, bool is_h_flip, bool is_v_flip);
+color_t         image_get_pixel          (image_t* image, int x, int y);
 image_lock_t*   image_lock               (image_t* image);
 bool            image_replace_color      (image_t* image, color_t color, color_t new_color);
 bool            image_rescale            (image_t* image, int width, int height);
 bool            image_save               (image_t* image, const char* filename);
+void            image_set_pixel          (image_t* image, int x, int y, color_t color);
 void            image_unlock             (image_t* image, image_lock_t* lock);
 
 #endif // MINISPHERE__IMAGE_H__INCLUDED

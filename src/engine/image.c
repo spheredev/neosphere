@@ -11,6 +11,7 @@ struct image
 	unsigned int    cache_hits;
 	image_lock_t    lock;
 	unsigned int    lock_count;
+	char*           path;
 	color_t*        pixel_cache;
 	int             width;
 	int             height;
@@ -116,7 +117,8 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	
+
+	image->path = strdup(filename);
 	image->id = s_next_image_id++;
 	return image_ref(image);
 
@@ -218,6 +220,7 @@ image_free(image_t* image)
 	uncache_pixels(image);
 	al_destroy_bitmap(image->bitmap);
 	image_free(image->parent);
+	free(image->path);
 	free(image);
 }
 
@@ -234,34 +237,16 @@ image_height(const image_t* image)
 	return image->height;
 }
 
-color_t
-image_get_pixel(image_t* image, int x, int y)
+const char*
+image_path(const image_t* image)
 {
-	if (image->pixel_cache == NULL) {
-		console_log(4, "image_get_pixel() cache miss for image #%u", image->id);
-		cache_pixels(image);
-	}
-	else
-		++image->cache_hits;
-	return image->pixel_cache[x + y * image->width];
+	return image->path;
 }
 
 int
 image_width(const image_t* image)
 {
 	return image->width;
-}
-
-void
-image_set_pixel(image_t* image, int x, int y, color_t color)
-{
-	ALLEGRO_BITMAP* old_target;
-
-	uncache_pixels(image);
-	old_target = al_get_target_bitmap();
-	al_set_target_bitmap(image->bitmap);
-	al_draw_pixel(x + 0.5, y + 0.5, nativecolor(color));
-	al_set_target_bitmap(old_target);
 }
 
 bool
@@ -470,6 +455,18 @@ image_flip(image_t* image, bool is_h_flip, bool is_v_flip)
 	return true;
 }
 
+color_t
+image_get_pixel(image_t* image, int x, int y)
+{
+	if (image->pixel_cache == NULL) {
+		console_log(4, "image_get_pixel() cache miss for image #%u", image->id);
+		cache_pixels(image);
+	}
+	else
+		++image->cache_hits;
+	return image->pixel_cache[x + y * image->width];
+}
+
 image_lock_t*
 image_lock(image_t* image)
 {
@@ -566,6 +563,18 @@ image_save(image_t* image, const char* filename)
 	result = sfs_fspew(g_fs, filename, NULL, buffer, file_size);
 	free(buffer);
 	return result;
+}
+
+void
+image_set_pixel(image_t* image, int x, int y, color_t color)
+{
+	ALLEGRO_BITMAP* old_target;
+
+	uncache_pixels(image);
+	old_target = al_get_target_bitmap();
+	al_set_target_bitmap(image->bitmap);
+	al_draw_pixel(x + 0.5, y + 0.5, nativecolor(color));
+	al_set_target_bitmap(old_target);
 }
 
 void

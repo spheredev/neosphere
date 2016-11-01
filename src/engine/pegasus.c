@@ -245,12 +245,14 @@ static duk_ret_t js_FileStream_write           (duk_context* ctx);
 static duk_ret_t js_Font_get_Default           (duk_context* ctx);
 static duk_ret_t js_new_Font                   (duk_context* ctx);
 static duk_ret_t js_Font_finalize              (duk_context* ctx);
+static duk_ret_t js_Font_get_fileName          (duk_context* ctx);
 static duk_ret_t js_Font_get_height            (duk_context* ctx);
 static duk_ret_t js_Font_drawText              (duk_context* ctx);
 static duk_ret_t js_Font_getTextSize           (duk_context* ctx);
 static duk_ret_t js_Font_wordWrap              (duk_context* ctx);
 static duk_ret_t js_new_Image                  (duk_context* ctx);
 static duk_ret_t js_Image_finalize             (duk_context* ctx);
+static duk_ret_t js_Image_get_fileName         (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
 static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
@@ -308,6 +310,7 @@ static duk_ret_t js_Socket_read                (duk_context* ctx);
 static duk_ret_t js_Socket_write               (duk_context* ctx);
 static duk_ret_t js_new_Sound                  (duk_context* ctx);
 static duk_ret_t js_Sound_finalize             (duk_context* ctx);
+static duk_ret_t js_Sound_get_fileName         (duk_context* ctx);
 static duk_ret_t js_Sound_get_length           (duk_context* ctx);
 static duk_ret_t js_Sound_get_pan              (duk_context* ctx);
 static duk_ret_t js_Sound_get_playing          (duk_context* ctx);
@@ -396,21 +399,25 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
-
 	api_define_type(ctx, "FileStream", js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
 	api_define_method(ctx, "FileStream", "close", js_FileStream_close);
 	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
 	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
-
 	api_define_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
 	api_define_static_prop(ctx, "Font", "Default", js_Font_get_Default, NULL);
+	api_define_property(ctx, "Font", "fileName", js_Font_get_fileName, NULL);
 	api_define_property(ctx, "Font", "height", js_Font_get_height, NULL);
 	api_define_method(ctx, "Font", "drawText", js_Font_drawText);
 	api_define_method(ctx, "Font", "getTextSize", js_Font_getTextSize);
 	api_define_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
-
+	api_define_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
+	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
+	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
+	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
+	api_define_type(ctx, "JobToken", js_JobToken_finalize);
+	api_define_method(ctx, "JobToken", "cancel", js_JobToken_cancel);
 	api_define_type(ctx, "Joystick", js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function(ctx, "Joystick", "getDevices", js_Joystick_getDevices);
@@ -419,13 +426,22 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
 	api_define_method(ctx, "Joystick", "getPosition", js_Joystick_getPosition);
 	api_define_method(ctx, "Joystick", "isPressed", js_Joystick_isPressed);
-	
+	api_define_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
+	api_define_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
+	api_define_property(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
 	api_define_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
 	api_define_function(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
 	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_define_method(ctx, "RNG", "next", js_RNG_next);
-
+	api_define_ctor(ctx, "Server", js_new_Server, js_Server_finalize);
+	api_define_method(ctx, "Server", "close", js_Server_close);
+	api_define_method(ctx, "Server", "accept", js_Server_accept);
+	api_define_ctor(ctx, "Shader", js_new_Shader, js_Shader_finalize);
+	api_define_static_prop(ctx, "Shader", "Default", js_Shader_get_Default, NULL);
+	api_define_ctor(ctx, "Shape", js_new_Shape, js_Shape_finalize);
+	api_define_property(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
+	api_define_method(ctx, "Shape", "draw", js_Shape_draw);
 	api_define_ctor(ctx, "ShapeGroup", js_new_ShapeGroup, js_ShapeGroup_finalize);
 	api_define_property(ctx, "ShapeGroup", "shader", js_ShapeGroup_get_shader, js_ShapeGroup_set_shader);
 	api_define_property(ctx, "ShapeGroup", "transform", js_ShapeGroup_get_transform, js_ShapeGroup_set_transform);
@@ -433,26 +449,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "ShapeGroup", "setFloat", js_ShapeGroup_setFloat);
 	api_define_method(ctx, "ShapeGroup", "setInt", js_ShapeGroup_setInt);
 	api_define_method(ctx, "ShapeGroup", "setMatrix", js_ShapeGroup_setMatrix);
-
-	api_define_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
-	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
-	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
-
-	api_define_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
-	api_define_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
-	api_define_property(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
-
-	api_define_ctor(ctx, "Server", js_new_Server, js_Server_finalize);
-	api_define_method(ctx, "Server", "close", js_Server_close);
-	api_define_method(ctx, "Server", "accept", js_Server_accept);
-
-	api_define_ctor(ctx, "Shader", js_new_Shader, js_Shader_finalize);
-	api_define_static_prop(ctx, "Shader", "Default", js_Shader_get_Default, NULL);
-
-	api_define_ctor(ctx, "Shape", js_new_Shape, js_Shape_finalize);
-	api_define_property(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
-	api_define_method(ctx, "Shape", "draw", js_Shape_draw);
-
 	api_define_ctor(ctx, "Socket", js_new_Socket, js_Socket_finalize);
 	api_define_property(ctx, "Socket", "bytesPending", js_Socket_get_bytesPending, NULL);
 	api_define_property(ctx, "Socket", "connected", js_Socket_get_connected, NULL);
@@ -461,15 +457,14 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Socket", "close", js_Socket_close);
 	api_define_method(ctx, "Socket", "read", js_Socket_read);
 	api_define_method(ctx, "Socket", "write", js_Socket_write);
-
 	api_define_ctor(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
 	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
 	api_define_method(ctx, "SoundStream", "buffer", js_SoundStream_buffer);
 	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
 	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
 	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
-
 	api_define_ctor(ctx, "Sound", js_new_Sound, js_Sound_finalize);
+	api_define_property(ctx, "Sound", "fileName", js_Sound_get_fileName, NULL);
 	api_define_property(ctx, "Sound", "length", js_Sound_get_length, NULL);
 	api_define_property(ctx, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
 	api_define_property(ctx, "Sound", "playing", js_Sound_get_playing, NULL);
@@ -480,12 +475,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Sound", "pause", js_Sound_pause);
 	api_define_method(ctx, "Sound", "play", js_Sound_play);
 	api_define_method(ctx, "Sound", "stop", js_Sound_stop);
-
 	api_define_ctor(ctx, "Surface", js_new_Surface, js_Surface_finalize);
 	api_define_property(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_define_property(ctx, "Surface", "width", js_Surface_get_width, NULL);
 	api_define_method(ctx, "Surface", "toImage", js_Surface_toImage);
-
 	api_define_ctor(ctx, "Transform", js_new_Transform, js_Transform_finalize);
 	api_define_method(ctx, "Transform", "compose", js_Transform_compose);
 	api_define_method(ctx, "Transform", "identity", js_Transform_identity);
@@ -493,9 +486,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_define_type(ctx, "JobToken", js_JobToken_finalize);
-	api_define_method(ctx, "JobToken", "cancel", js_JobToken_cancel);
-	
 	api_define_function(ctx, "SSJ", "assert", js_SSJ_assert);
 	api_define_function(ctx, "SSJ", "trace", js_SSJ_trace);
 	api_define_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
@@ -547,7 +537,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_const(ctx, "Dispatch", "ASAP", ASYNC_ASAP);
 	api_define_const(ctx, "Dispatch", "Render", ASYNC_RENDER);
 	api_define_const(ctx, "Dispatch", "Update", ASYNC_UPDATE);
-
 	api_define_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_define_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_define_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
@@ -647,13 +636,11 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_const(ctx, "Key", "Divide", ALLEGRO_KEY_PAD_SLASH);
 	api_define_const(ctx, "Key", "Multiply", ALLEGRO_KEY_PAD_ASTERISK);
 	api_define_const(ctx, "Key", "Subtract", ALLEGRO_KEY_PAD_MINUS);
-
 	api_define_const(ctx, "MouseKey", "Left", MOUSE_KEY_LEFT);
 	api_define_const(ctx, "MouseKey", "Right", MOUSE_KEY_RIGHT);
 	api_define_const(ctx, "MouseKey", "Middle", MOUSE_KEY_MIDDLE);
 	api_define_const(ctx, "MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
 	api_define_const(ctx, "MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
-
 	api_define_const(ctx, "ShapeType", "Auto", SHAPE_AUTO);
 	api_define_const(ctx, "ShapeType", "Fan", SHAPE_TRI_FAN);
 	api_define_const(ctx, "ShapeType", "Lines", SHAPE_LINES);
@@ -2006,6 +1993,18 @@ js_Font_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Font_get_fileName(duk_context* ctx)
+{
+	font_t* font;
+
+	duk_push_this(ctx);
+	font = duk_require_sphere_obj(ctx, -1, "Font");
+
+	duk_push_string(ctx, font_path(font));
+	return 1;
+}
+
+static duk_ret_t
 js_Font_get_height(duk_context* ctx)
 {
 	font_t* font;
@@ -2197,6 +2196,22 @@ js_Image_finalize(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, 0, "Image");
 	image_free(image);
 	return 0;
+}
+
+static duk_ret_t
+js_Image_get_fileName(duk_context* ctx)
+{
+	image_t*    image;
+	const char* path;
+
+	duk_push_this(ctx);
+	image = duk_require_sphere_obj(ctx, -1, "Image");
+
+	if (path = image_path(image))
+		duk_push_string(ctx, path);
+	else
+		duk_push_null(ctx);
+	return 1;
 }
 
 static duk_ret_t
@@ -3098,6 +3113,18 @@ js_Sound_finalize(duk_context* ctx)
 	sound = duk_require_sphere_obj(ctx, 0, "Sound");
 	sound_free(sound);
 	return 0;
+}
+
+static duk_ret_t
+js_Sound_get_fileName(duk_context* ctx)
+{
+	sound_t* sound;
+
+	duk_push_this(ctx);
+	sound = duk_require_sphere_obj(ctx, -1, "Sound");
+
+	duk_push_string(ctx, sound_path(sound));
+	return 1;
 }
 
 static duk_ret_t

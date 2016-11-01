@@ -8,6 +8,8 @@ v4.3.0 - TBD
   binary data from files and network sockets.
 * Adds support for the JavaScript Reflect API.
 * Adds native support for JavaScript Promises via a polyfill.
+* Adds a `.fileName` property to objects such as Image and Sound, which returns
+  the canonicalized name of the file the object was constructed from.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, are
   now fully playable without issue.
