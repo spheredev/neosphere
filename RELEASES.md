@@ -1,6 +1,31 @@
 Release Notes
 =============
 
+minisphere 4.3
+--------------
+
+* This release introduces a new Dispatch API which allows functions to be
+  called asynchronously from the event loop.  Calls may either be performed on
+  a time delay, or once per frame.  Refer to the included Sphere v2 API
+  reference for more information.
+* miniRT "struct" now provides `Reader` and `Writer` objects which work for
+  both files and sockets.  Refer to the included miniRT API reference for more
+  information.
+* The mostly redundant and non-standard `SSJ` functions have been removed from
+  the API.  The "assert" module should be used for assertions, and
+  `SSJ.trace()` can be replaced with `console.trace()` with no loss of
+  functionality.
+* Promises are now supported natively through a polyfill.  miniRT "pact" may
+  still be useful to manage promises, but this allows them to be used without
+  it if that's desired.
+* File-based objects such as `Image` and `Sound` now expose a `.fileName`
+  property which allows access to the canonicalized SphereFS filename used to
+  construct the object.  This may be useful in certain encapsulation scenarios.
+* miniRT's threader now takes advantage of the Dispatch API and no longer
+  interferes with Sphere v1 update and render scripts.  This should help with
+  migration.
+
+
 minisphere 4.2
 --------------
 

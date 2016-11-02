@@ -12,7 +12,7 @@ v4.3.0 - TBD
 * Adds `struct.Reader` and `struct.Writer` which allow games to read and write
   binary data from files and network sockets.
 * Adds a `.fileName` property to objects such as Image and Sound, which returns
-  the canonicalized name of the file the object was constructed from.
+  the canonicalized name of the file the object was loaded from.
 * Removes the superfluous `SSJ` functions from the API.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, should

@@ -1074,7 +1074,7 @@ js_system_abort(duk_context* ctx)
 	num_args = duk_get_top(ctx);
 	message = num_args >= 1
 		? duk_to_string(ctx, 0)
-		: "Some type of weird pig just ate your game!\n\n\n\n\n\n\n\n...and you*munch*";
+		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
 
 	duk_push_global_object(ctx);
 	duk_get_prop_string(ctx, -1, "Duktape");
@@ -1090,7 +1090,7 @@ js_system_abort(duk_context* ctx)
 	filename = duk_get_string(ctx, -1);
 	text = strnewf("%s:%d\nsystem.abort()\n\n%s", filename, line_number, message);
 	duk_pop_3(ctx);
-	
+
 	abort_game(text);
 }
 
