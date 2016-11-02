@@ -698,7 +698,7 @@ new Font(filename);
 
 Font#fileName [read-only]
 
-    Gets the full normalized SphereFS filename of the file used to construct
+    Gets the full canonicalized SphereFS filename of the file used to construct
     this Font object.
 
 Font#height [read-only]
@@ -748,8 +748,8 @@ new Image(width, height, pixels);
 
 Image#fileName [read-only]
 
-    Gets the full normalized SphereFS path to the file used to construct this
-    Image object.  For synthesized images, returns null.
+    Gets the full canonicalized SphereFS filename of the file used to construct
+    this Image object.  For synthesized images, returns null.
 
 Image#width [read-only]
 Image#height [read-only]
@@ -961,7 +961,7 @@ new Sound(filename);
 
 Sound#fileName [read-only]
 
-    Gets the full normalized SphereFS filename of the file used to construct
+    Gets the full canonicalized SphereFS filename of the file used to construct
     this Sound object.
 
 Sound#length [read-only]
@@ -1110,6 +1110,10 @@ fs.rmdir(dirname);
 fs.unlink(filename);
 
     Deletes the specified file.
+
+FileStream#fileName [read-only]
+
+    Gets the full canonicalized SphereFS filename of the underlying file.
 
 FileStream#position [read/write]
 

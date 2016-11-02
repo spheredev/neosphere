@@ -235,6 +235,7 @@ static duk_ret_t js_Dispatch_now               (duk_context* ctx);
 static duk_ret_t js_Dispatch_onFlip            (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
+static duk_ret_t js_FileStream_get_fileName    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_size        (duk_context* ctx);
 static duk_ret_t js_FileStream_set_position    (duk_context* ctx);
@@ -403,6 +404,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Dispatch", "onFlip", js_Dispatch_onFlip);
 	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
 	api_define_type(ctx, "FileStream", js_FileStream_finalize);
+	api_define_property(ctx, "FileStream", "fileName", js_FileStream_get_fileName, NULL);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
 	api_define_method(ctx, "FileStream", "close", js_FileStream_close);
@@ -1332,7 +1334,7 @@ js_fs_open(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file open failed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;
 }
@@ -1792,12 +1794,25 @@ js_FileStream_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FileStream_get_fileName(duk_context* ctx)
+{
+	sfs_file_t* file;
+
+	duk_push_this(ctx);
+	file = duk_require_sphere_obj(ctx, -1, "FileStream");
+
+	duk_push_string(ctx, sfs_fpath(file));
+	return 1;
+}
+
+static duk_ret_t
 js_FileStream_get_position(duk_context* ctx)
 {
 	sfs_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
+
 	duk_push_number(ctx, sfs_ftell(file));
 	return 1;
 }

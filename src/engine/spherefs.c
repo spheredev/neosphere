@@ -33,6 +33,7 @@ struct sfs_file
 {
 	enum fs_type  fs_type;
 	ALLEGRO_FILE* handle;
+	const char*   path;
 	spk_file_t*   spk_file;
 };
 
@@ -337,6 +338,7 @@ sfs_fopen(sandbox_t* fs, const char* filename, const char* base_dir, const char*
 	path_t*     file_path = NULL;
 
 	file = calloc(1, sizeof(sfs_file_t));
+	file->path = strdup(filename);
 	
 	if (!resolve_path(fs, filename, base_dir, &file_path, &file->fs_type))
 		goto on_error;
@@ -390,6 +392,12 @@ sfs_fexist(sandbox_t* fs, const char* filename, const char* base_dir)
 		return false;
 	sfs_fclose(file);
 	return true;
+}
+
+const char*
+sfs_fpath(sfs_file_t* file)
+{
+	return file->path;
 }
 
 int

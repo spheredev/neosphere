@@ -34,6 +34,7 @@ path_t*          fs_make_path      (const char* filename, const char* base_dir_n
 sfs_file_t* sfs_fopen  (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
 void        sfs_fclose (sfs_file_t* file);
 bool        sfs_fexist (sandbox_t* fs, const char* filename, const char* base_dir);
+const char* sfs_fpath  (sfs_file_t* file);
 int         sfs_fputc  (int ch, sfs_file_t* file);
 int         sfs_fputs  (const char* string, sfs_file_t* file);
 size_t      sfs_fread  (void* buf, size_t size, size_t count, sfs_file_t* file);
