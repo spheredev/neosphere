@@ -181,7 +181,7 @@ system.abort(message);
 
     Unconditionally aborts execution and displays an error screen before
     closing the engine.  `message` will be displayed on the error screen.
-    
+
     Note: system.abort() bypasses all exception handling mechanisms, including
           SSJ.  Be sure you know what you're doing before you use it.
 
@@ -233,21 +233,33 @@ Dispatch.now(fn);
 
     Sets up a one-time job to call `fn` on the next tick.  This works like
     `setTimeout(fn, 0)` in the browser.  Useful for performing operations that
-    need to be done from the event loop, such as promise resolution.  Returns
-    an AsyncJob object used to manage to job.
+    need to be done from the event loop, such as promise resolution.
+
+    Returns a JobToken used to manage to job.
 
 Dispatch.onFlip(fn);
 Dispatch.onUpdate(fn);
 
-    Sets up a recurring job to call `fn` in a given context.  For example,
-    `onFlip()` jobs are called when the backbuffer is flipped, and `onUpdate()`
-    jobs are called at the beginning of each frame.  Returns an AsyncJob
-    object used to manage the job.
+    Sets up a recurring job to call `fn` from a given part of the event loop.
+    For example, `onFlip()` jobs are called when the backbuffer is flipped, and
+    `onUpdate()` jobs are called at the start of a frame.
 
-AsyncJob#cancel();
+    Returns a JobToken used to manage the job.
 
-    Cancels the job associated with this job token.  For one-time jobs,
-    cancellation has no effect if the job has already been processed.
+    Note: Update jobs are processed at the beginning of a frame, while render
+          jobs are processed at the end, just before the backbuffer is flipped.
+          This ensures that:
+
+          1) Local game loops always have access to up-to-date game state for
+             the current frame.
+          2) Objects drawn by an asynchronous render job can't be obscured by
+			 those rendered synchronously.
+
+JobToken#cancel();
+
+    Cancels the job associated with this job token.  Note that for one-time
+    jobs, cancellation has no effect if the job has already been processed.
+
 
 Random Number Generator API
 ---------------------------

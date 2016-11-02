@@ -224,8 +224,6 @@ static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
-static duk_ret_t js_AsyncJob_finalize          (duk_context* ctx);
-static duk_ret_t js_AsyncJob_cancel            (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
 static duk_ret_t js_Color_mix                  (duk_context* ctx);
 static duk_ret_t js_new_Color                  (duk_context* ctx);
@@ -255,6 +253,8 @@ static duk_ret_t js_Image_finalize             (duk_context* ctx);
 static duk_ret_t js_Image_get_fileName         (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
+static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
+static duk_ret_t js_JobToken_cancel            (duk_context* ctx);
 static duk_ret_t js_Joystick_get_Null          (duk_context* ctx);
 static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
 static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
@@ -392,8 +392,6 @@ initialize_pegasus_api(duk_context* ctx)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// initialize the Sphere v2 API
-	api_define_type(ctx, "AsyncJob", js_AsyncJob_finalize);
-	api_define_method(ctx, "AsyncJob", "cancel", js_AsyncJob_cancel);
 	api_define_ctor(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
@@ -419,6 +417,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
 	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
 	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
+	api_define_type(ctx, "JobToken", js_JobToken_finalize);
+	api_define_method(ctx, "JobToken", "cancel", js_JobToken_cancel);
 	api_define_type(ctx, "Joystick", js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function(ctx, "Joystick", "getDevices", js_Joystick_getDevices);
@@ -810,7 +810,7 @@ duk_pegasus_push_job_token(duk_context* ctx, uint64_t token)
 
 	ptr = malloc(sizeof(uint64_t));
 	*ptr = token;
-	duk_push_sphere_obj(ctx, "AsyncJob", ptr);
+	duk_push_sphere_obj(ctx, "JobToken", ptr);
 }
 
 static void
@@ -1086,7 +1086,7 @@ js_system_abort(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "function");
 	duk_get_prop_string(ctx, -1, "fileName");
 	filename = duk_get_string(ctx, -1);
-	text = strnewf("%s:%i\nsystem.abort()\n\n%s", filename, line_number, message);
+	text = strnewf("%s:%d\nsystem.abort()\n\n%s", filename, line_number, message);
 	duk_pop_3(ctx);
 	
 	abort_game(text);
@@ -1101,7 +1101,7 @@ js_Dispatch_now(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 0, "synth:dispatch.js");
 
 	if (!(token = async_defer(script, ASYNC_ASAP)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to set up call");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1115,7 +1115,7 @@ js_Dispatch_onFlip(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 0, "synth:onFlip.js");
 
 	if (!(token = async_recur(script, ASYNC_RENDER)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to set up call");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1129,7 +1129,7 @@ js_Dispatch_onUpdate(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 0, "synth:onFlip.js");
 
 	if (!(token = async_recur(script, ASYNC_UPDATE)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to set up call");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1299,7 +1299,7 @@ js_fs_mkdir(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false);
 	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to make directory `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }
 
@@ -1314,7 +1314,7 @@ js_fs_open(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to open `%s` in mode `%s`", filename, mode);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file open failed");
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;
 }
@@ -1329,7 +1329,7 @@ js_fs_rename(duk_context* ctx)
 	name2 = duk_require_path(ctx, 1, NULL, false);
 
 	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to rename `%s` to `%s`", name1, name2);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
 
@@ -1351,7 +1351,7 @@ js_fs_rmdir(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false);
 	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
 	return 0;
 }
 
@@ -1362,7 +1362,7 @@ js_fs_unlink(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to unlink `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
 	return 0;
 }
 
@@ -1539,7 +1539,7 @@ js_mouse_isPressed(duk_context* ctx)
 
 	key = duk_require_int(ctx, 0);
 	if (key < 0 || key >= MOUSE_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid mouse key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid MouseKey constant");
 
 	duk_push_boolean(ctx, mouse_is_key_down(key));
 	return 1;
@@ -1560,7 +1560,7 @@ js_screen_set_frameRate(duk_context* ctx)
 	framerate = duk_require_int(ctx, 0);
 
 	if (framerate < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "frameRate cannot be negative");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
 	s_framerate = framerate;
 	return 0;
 }
@@ -1605,29 +1605,6 @@ js_screen_resize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_AsyncJob_finalize(duk_context* ctx)
-{
-	uint64_t* p_token;
-
-	p_token = duk_require_sphere_obj(ctx, 0, "AsyncJob");
-
-	free(p_token);
-	return 0;
-}
-
-static duk_ret_t
-js_AsyncJob_cancel(duk_context* ctx)
-{
-	uint64_t* p_token;
-
-	duk_push_this(ctx);
-	p_token = duk_require_sphere_obj(ctx, -1, "AsyncJob");
-
-	async_cancel(*p_token);
-	return 0;
-}
-
-static duk_ret_t
 js_Color_get_Color(duk_context* ctx)
 {
 	const struct x11_color* data;
@@ -1660,7 +1637,7 @@ js_Color_mix(duk_context* ctx)
 	}
 
 	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "weights cannot be negative", w1, w2);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid weight(s)", w1, w2);
 
 	duk_pegasus_push_color(ctx, color_mix(color1, color2, w1, w2));
 	return 1;
@@ -1691,10 +1668,10 @@ js_Color_of(duk_context* ctx)
 
 	// is `name` an RGB or ARGB signature?
 	if (name[0] != '#')
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "unknown color name `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "unrecognized color name");
 	hex_length = strspn(&name[1], "0123456789ABCDEFabcdef");
 	if (hex_length != strlen(name) - 1 || (hex_length != 6 && hex_length != 8))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RGB signature `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RGB signature");
 	value = strtoul(&name[1], NULL, 16);
 	color.a = hex_length == 8 ? (value >> 24) & 0xFF : 255;
 	color.r = (value >> 16) & 0xFF;
@@ -1817,7 +1794,7 @@ js_FileStream_get_size(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, sfs_ftell(file));
@@ -1872,14 +1849,14 @@ js_FileStream_read(duk_context* ctx)
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "string length must be zero or greater");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	num_bytes = (int)sfs_fread(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
@@ -1902,9 +1879,9 @@ js_FileStream_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "FileStream was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to write data to file");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file write failed");
 	return 0;
 }
 
@@ -1934,7 +1911,7 @@ js_new_Font(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 
 	if (!(font = font_load(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load font `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
 	duk_push_sphere_obj(ctx, "Font", font);
 	return 1;
 }
@@ -2106,7 +2083,7 @@ js_new_Image(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = duk_pegasus_require_color(ctx, 2);
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create texture");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 		image_fill(image, fill_color);
 	}
 	else if (num_args >= 3 && (buffer = duk_get_buffer_data(ctx, 2, &buffer_size))) {
@@ -2114,12 +2091,12 @@ js_new_Image(duk_context* ctx)
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		if (buffer_size < width * height * sizeof(color_t))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "buffer is too small to describe image");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "not enough data in buffer");
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create texture");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 		if (!(lock = image_lock(image))) {
 			image_free(image);
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to lock image pixels");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image lock failed");
 		}
 		p_line = lock->pixels;
 		for (y = 0; y < height; ++y) {
@@ -2132,14 +2109,14 @@ js_new_Image(duk_context* ctx)
 		// create an Image from a Surface
 		src_image = duk_require_sphere_obj(ctx, 0, "Surface");
 		if (!(image = image_clone(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create texture");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 	}
 	else {
 		// create an Image by loading an image file
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load image `%s`", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	}
 	duk_push_sphere_obj(ctx, "Image", image);
 	return 1;
@@ -2193,6 +2170,29 @@ js_Image_get_width(duk_context* ctx)
 
 	duk_push_int(ctx, image_width(image));
 	return 1;
+}
+
+static duk_ret_t
+js_JobToken_finalize(duk_context* ctx)
+{
+	uint64_t* p_token;
+
+	p_token = duk_require_sphere_obj(ctx, 0, "JobToken");
+
+	free(p_token);
+	return 0;
+}
+
+static duk_ret_t
+js_JobToken_cancel(duk_context* ctx)
+{
+	uint64_t* p_token;
+
+	duk_push_this(ctx);
+	p_token = duk_require_sphere_obj(ctx, -1, "JobToken");
+
+	async_cancel(*p_token);
+	return 0;
 }
 
 static duk_ret_t
@@ -2348,11 +2348,11 @@ js_new_Mixer(duk_context* ctx)
 	mixer_t* mixer;
 
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): invalid bit depth for mixer (%i)", bits);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth");
 	if (channels < 1 || channels > 7)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Mixer(): invalid channel count for mixer (%i)", channels);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid channel count");
 	if (!(mixer = mixer_new(freq, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Mixer(): unable to create %i-bit %ich voice", bits, channels);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot create %d-bit %dch voice", bits, channels);
 	duk_push_sphere_obj(ctx, "Mixer", mixer);
 	return 1;
 }
@@ -2526,7 +2526,7 @@ js_Server_accept(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Server");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Server:accept(): socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	new_socket = accept_next_socket(socket);
 	if (new_socket)
 		duk_push_sphere_obj(ctx, "Socket", new_socket);
@@ -2555,7 +2555,7 @@ js_Shader_get_Default(duk_context* ctx)
 	shader_t* shader;
 
 	if (!(shader = get_default_shader()))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to build default shader program");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "shader compile failed");
 	duk_push_sphere_obj(ctx, "Shader", shader_ref(shader));
 
 	duk_push_this(ctx);
@@ -2578,15 +2578,15 @@ js_new_Shader(duk_context* ctx)
 	shader_t*   shader;
 
 	if (!duk_is_object(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shader(): JS object expected as argument");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "options must be an object");
 	if (duk_get_prop_string(ctx, 0, "vertex"), !duk_is_string(ctx, -1))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shader(): 'vertex' property, string required");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "'vertex' must be a string");
 	if (duk_get_prop_string(ctx, 0, "fragment"), !duk_is_string(ctx, -1))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "Shader(): 'fragment' property, string required");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "'fragment' must be a string");
 	duk_pop_2(ctx);
 
 	if (!are_shaders_active())
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shader(): shaders not supported on this system");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "no shader support");
 
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
@@ -2594,7 +2594,7 @@ js_new_Shader(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Shader(): failed to build shader from `%s`, `%s`", vs_filename, fs_filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "shader compiler failed");
 	duk_push_sphere_obj(ctx, "Shader", shader);
 	return 1;
 }
@@ -2624,15 +2624,17 @@ js_new_Shape(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	duk_require_object_coercible(ctx, 0);
-	texture = !duk_is_null(ctx, 1) ? duk_require_sphere_obj(ctx, 1, "Image") : NULL;
-	type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
+	texture = !duk_is_null(ctx, 1) ? duk_require_sphere_obj(ctx, 1, "Image")
+		: NULL;
+	type = num_args >= 3 ? duk_require_int(ctx, 2)
+		: SHAPE_AUTO;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "first argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
 	if (type < 0 || type >= SHAPE_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
-	if (!(shape = shape_new(type, texture)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to construct a Shape");
+	
+	shape = shape_new(type, texture);
 	num_vertices = duk_get_length(ctx, 0);
 	for (i = 0; i < num_vertices; ++i) {
 		duk_get_prop_index(ctx, 0, i);
@@ -2737,9 +2739,9 @@ js_new_ShapeGroup(duk_context* ctx)
 		: get_default_shader();
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "argument 1 to Group() must be an array");
-	if (!(group = group_new(shader)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create Galileo group");
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
+
+	group = group_new(shader);
 	num_shapes = duk_get_length(ctx, 0);
 	for (i = 0; i < num_shapes; ++i) {
 		duk_get_prop_index(ctx, 0, i);
@@ -2916,7 +2918,7 @@ js_Socket_get_bytesPending(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:bytesPending: Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	duk_push_uint(ctx, (duk_uint_t)get_socket_read_size(socket));
 	return 1;
 }
@@ -2945,9 +2947,9 @@ js_Socket_get_remoteAddress(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remoteAddress - Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	duk_push_string(ctx, get_socket_host(socket));
 	return 1;
 }
@@ -2961,9 +2963,9 @@ js_Socket_get_remotePort(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:remotePort - Socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	duk_push_int(ctx, get_socket_port(socket));
 	return 1;
 }
@@ -2997,7 +2999,7 @@ js_Socket_read(duk_context* ctx)
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is disconnected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	bytes_read = read_socket(socket, buffer, num_bytes);
 	duk_push_buffer_object(ctx, -1, 0, bytes_read, DUK_BUFOBJ_ARRAYBUFFER);
@@ -3018,7 +3020,7 @@ js_Socket_write(duk_context* ctx)
 	if (socket == NULL)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is disconnected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
@@ -3034,7 +3036,7 @@ js_new_Sound(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 
 	if (!(sound = sound_new(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load sound `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
@@ -3273,9 +3275,9 @@ js_new_SoundStream(duk_context* ctx)
 	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
 	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "SoundStream(): invalid bit depth (%i)", bits);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
 	if (!(stream = stream_new(frequency, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "SoundStream(): stream creation failed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream creation failed");
 	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
 }
@@ -3382,19 +3384,19 @@ js_new_Surface(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = n_args >= 3 ? duk_pegasus_require_color(ctx, 2) : color_new(0, 0, 0, 0);
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 		image_fill(image, fill_color);
 	}
 	else if (duk_is_sphere_obj(ctx, 0, "Image")) {
 		src_image = duk_require_sphere_obj(ctx, 0, "Image");
 		if (!(image = image_clone(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create surface from image");
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load image `%s`", filename);
+			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	}
 	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
@@ -3450,7 +3452,7 @@ js_Surface_toImage(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
 	if ((new_image = image_clone(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 	duk_push_sphere_obj(ctx, "Image", new_image);
 	return 1;
 }

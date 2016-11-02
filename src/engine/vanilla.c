@@ -1422,9 +1422,9 @@ js_BindJoystickButton(duk_context* ctx)
 	script_t* on_up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): joystick index `%d` out of range", joy_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick index `%d` out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): button index `%d` out of range", button);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "button index `%d` out of range", button);
 	joy_bind_button(joy_index, button, on_down_script, on_up_script);
 	return 0;
 }
@@ -1437,7 +1437,7 @@ js_BindKey(duk_context* ctx)
 	script_t* on_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindKey(): invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key constant");
 	kb_bind_key(keycode, on_down_script, on_up_script);
 	return 0;
 }
@@ -1578,7 +1578,7 @@ js_CreateDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save", true);
 	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to create directory `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
 	return 0;
 }
 
@@ -1590,7 +1590,7 @@ js_CreateStringFromCode(duk_context* ctx)
 	char cstr[2];
 
 	if (code < 0 || code > 255)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "CreateStringFromCode(): character code is out of ASCII range (%i)", code);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "character code is out of ASCII range (%i)", code);
 	cstr[0] = (char)code; cstr[1] = '\0';
 	duk_push_string(ctx, cstr);
 	return 1;
@@ -1627,9 +1627,9 @@ js_DeflateByteArray(duk_context* ctx)
 	bytearray_t* new_array;
 
 	if ((level < 0 || level > 9) && n_args >= 2)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "DeflateByteArray(): compression level must be [0-9] (got: %i)", level);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "compression level must be [0-9] (got: %i)", level);
 	if (!(new_array = bytearray_deflate(array, level)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "DeflateByteArray(): unable to deflate source ByteArray");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to deflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -1670,7 +1670,7 @@ js_EvaluateScript(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "scripts", true);
 	if (!sfs_fexist(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateScript(): file `%s` not found", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	if (!evaluate_script(filename, false))
 		duk_throw(ctx);
 	return 1;
@@ -1687,7 +1687,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 	if (!sfs_fexist(g_fs, path, NULL))
 		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "EvaluateSystemScript(): system script `%s` not found", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 	if (!evaluate_script(path, false))
 		duk_throw(ctx);
 	return 1;
@@ -1746,7 +1746,7 @@ js_GrabImage(duk_context* ctx)
 	image_t* image;
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabImage(): unable to grab backbuffer image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to grab backbuffer image");
 	duk_push_sphere_obj(ctx, "ssImage", image);
 	return 1;
 }
@@ -1762,7 +1762,7 @@ js_GrabSurface(duk_context* ctx)
 	image_t* image;
 
 	if (!(image = screen_grab(g_screen, x, y, w, h)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "GrabSurface(): unable to grab backbuffer image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to grab backbuffer image");
 	duk_push_sphere_obj(ctx, "ssSurface", image);
 	return 1;
 }
@@ -1888,9 +1888,9 @@ js_InflateByteArray(duk_context* ctx)
 	bytearray_t* new_array;
 
 	if (max_size < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "InflateByteArray(): buffer size must not be negative (got: %d)", max_size);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "buffer size must not be negative (got: %d)", max_size);
 	if (!(new_array = bytearray_inflate(array, max_size)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "InflateByteArray(): unable to inflate source ByteArray");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to inflate source ByteArray");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -1924,14 +1924,14 @@ js_LineSeries(duk_context* ctx)
 	size_t i;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): first argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points < 2)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): two or more vertices required");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "two or more vertices required");
 	if (num_points > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "LineSeries(): too many vertices");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LineSeries(): unable to allocate vertex buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
@@ -1973,7 +1973,7 @@ js_LoadAnimation(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "animations", true);
 	if (!(anim = animation_new(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadAnimation(): unable to load animation file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load animation `%s`", filename);
 	duk_push_sphere_obj(ctx, "ssAnimation", anim);
 	return 1;
 }
@@ -1986,7 +1986,7 @@ js_LoadFont(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "fonts", true);
 	if (!(font = font_load(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load font `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
 	duk_push_sphere_font(ctx, font);
 	font_free(font);
 	return 1;
@@ -2000,7 +2000,7 @@ js_LoadImage(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "images", true);
 	if (!(image = image_load(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image(): unable to load image file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	duk_push_sphere_obj(ctx, "ssImage", image);
 	return 1;
 }
@@ -2014,7 +2014,7 @@ js_LoadSound(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "sounds", true);
 
 	if (!(sound = sound_new(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load sound `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
 	duk_push_sphere_obj(ctx, "ssSound", sound);
 	return 1;
 }
@@ -2027,7 +2027,7 @@ js_LoadSpriteset(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "spritesets", true);
 	if ((spriteset = load_spriteset(filename)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Spriteset(): unable to load spriteset file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load spriteset `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	free_spriteset(spriteset);
 	return 1;
@@ -2041,7 +2041,7 @@ js_LoadSurface(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "images", true);
 	if (!(image = image_load(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "LoadSurface(): unable to load image file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	duk_push_sphere_obj(ctx, "ssSurface", image);
 	return 1;
 }
@@ -2054,7 +2054,7 @@ js_LoadWindowStyle(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "windowstyles", true);
 	if (!(winstyle = load_windowstyle(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load windowstyle `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load windowstyle `%s`", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
 	free_windowstyle(winstyle);
 	return 1;
@@ -2120,8 +2120,8 @@ js_OpenRawFile(duk_context* ctx)
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "OpenRawFile(): unable to open file `%s` for %s",
-			filename, writable ? "writing" : "reading");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot open file for %s",
+			writable ? "write" : "read");
 	duk_push_sphere_obj(ctx, "ssRawFile", file);
 	return 1;
 }
@@ -2197,14 +2197,14 @@ js_PointSeries(duk_context* ctx)
 	size_t i;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): first argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points < 1)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): one or more vertices required");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "one or more vertices required");
 	if (num_points > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "PointSeries(): too many vertices");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "PointSeries(): unable to allocate vertex buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
@@ -2258,7 +2258,7 @@ js_RemoveDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save", true);
 	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "CreateDirectory(): unable to remove directory `%s`", name);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
 	return 0;
 }
 
@@ -2269,7 +2269,7 @@ js_RemoveFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "save", true);
 	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RemoveFile(): unable to delete file `%s`", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
 	return 0;
 }
 
@@ -2282,7 +2282,7 @@ js_Rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, "save", true);
 	name2 = duk_require_path(ctx, 1, "save", true);
 	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Rename(): unable to rename file `%s` to `%s`", name1, name2);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
 
@@ -2294,7 +2294,7 @@ js_RequireScript(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "scripts", true);
 	if (!sfs_fexist(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireScript(): file `%s` not found", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
 	duk_get_prop_string(ctx, -1, filename);
@@ -2322,7 +2322,7 @@ js_RequireSystemScript(duk_context* ctx)
 	if (!sfs_fexist(g_fs, path, NULL))
 		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RequireSystemScript(): system script `%s` not found", filename);
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
@@ -2383,9 +2383,9 @@ js_UnbindJoystickButton(duk_context* ctx)
 	int button = duk_to_int(ctx, 1);
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): joystick index `%d` out of range", joy_index);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick index `%d` out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "BindJoystickButton(): button index `%d` out of range", button);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "button index `%d` out of range", button);
 	joy_bind_button(joy_index, button, NULL, NULL);
 	return 0;
 }
@@ -2396,7 +2396,7 @@ js_UnbindKey(duk_context* ctx)
 	int keycode = duk_to_int(ctx, 0);
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "UnbindKey(): invalid key constant");
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key constant");
 	kb_bind_key(keycode, NULL, NULL);
 	return 0;
 }
@@ -2689,7 +2689,7 @@ js_File_flush(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:flush(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	kev_save(file);
 	return 0;
 }
@@ -2706,7 +2706,7 @@ js_File_getKey(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getKey(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	if (key = kev_get_key(file, index))
 		duk_push_string(ctx, key);
 	else
@@ -2723,7 +2723,7 @@ js_File_getNumKeys(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:getNumKeys(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	duk_push_int(ctx, kev_num_keys(file));
 	return 1;
 }
@@ -2743,7 +2743,7 @@ js_File_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:read(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	switch (duk_get_type(ctx, 1)) {
 	case DUK_TYPE_BOOLEAN:
 		def_bool = duk_get_boolean(ctx, 1);
@@ -2780,7 +2780,7 @@ js_File_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "File:write(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	kev_write_string(file, key, duk_to_string(ctx, 1));
 	return 0;
 }
@@ -2805,7 +2805,7 @@ js_Font_clone(duk_context* ctx)
 	font = duk_require_sphere_obj(ctx, -1, "ssFont");
 	duk_pop(ctx);
 	if (!(dolly_font = font_clone(font)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Font:clone(): unable to clone font");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to clone font");
 	duk_push_sphere_font(ctx, dolly_font);
 	return 1;
 }
@@ -3106,7 +3106,7 @@ js_Image_createSurface(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "ssImage");
 	duk_pop(ctx);
 	if ((new_image = image_clone(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Image:createSurface(): unable to create new surface image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
 	duk_push_sphere_obj(ctx, "ssSurface", new_image);
 	return 1;
 }
@@ -3316,7 +3316,7 @@ js_Logger_beginBlock(duk_context* ctx)
 	duk_push_this(ctx);
 	logger = duk_require_sphere_obj(ctx, -1, "ssLogger");
 	if (!log_begin_block(logger, title))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Log:beginBlock(): unable to create new log block");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create new log block");
 	return 0;
 }
 
@@ -3371,7 +3371,7 @@ js_RawFile_close(duk_context* ctx)
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:close(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	sfs_fclose(file);
 	return 0;
 }
@@ -3423,21 +3423,21 @@ js_RawFile_read(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	if (n_args < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "RawFile:read(): read size out of range (%u)", num_bytes);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "read size out of range (%u)", num_bytes);
 	if (!(read_buffer = malloc(num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to allocate buffer for file read");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to allocate buffer for file read");
 	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
 	if (n_args < 1)  // reset file position after whole-file read
 		sfs_fseek(file, pos, SEEK_SET);
 	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:read(): unable to create byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -3478,7 +3478,7 @@ js_RawFile_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): file was closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	if (duk_is_string(ctx, 0))
 		data = duk_get_lstring(ctx, 0, &write_size);
 	else if (duk_is_sphere_obj(ctx, 0, "ssByteArray")) {
@@ -3490,7 +3490,7 @@ js_RawFile_write(duk_context* ctx)
 		data = duk_require_buffer_data(ctx, 0, &write_size);
 	}
 	if (sfs_fwrite(data, 1, write_size, file) != write_size)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "RawFile:write(): error writing to file");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "error writing to file");
 	return 0;
 }
 
@@ -3527,7 +3527,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:getPendingReadSize(): socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
 	duk_push_uint(ctx, (duk_uint_t)peek_socket(socket));
 	return 1;
 }
@@ -3560,16 +3560,16 @@ js_Socket_read(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (length <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Socket:read(): must read at least 1 byte (got: %i)", length);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "must read at least 1 byte (got: %i)", length);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
 	if (!(read_buffer = malloc(length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): unable to allocate read buffer");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to allocate read buffer");
 	read_socket(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:read(): unable to create byte array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -3600,9 +3600,9 @@ js_Socket_write(duk_context* ctx)
 		write_size = bytearray_len(array);
 	}
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): socket has been closed");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Socket:write(): socket is not connected");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
@@ -3981,9 +3981,9 @@ js_Surface_applyColorFX(duk_context* ctx)
 	matrix = duk_require_sphere_colormatrix(ctx, 4);
 
 	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, width, height);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "area of effect extends past image (%i,%i,%i,%i)", x, y, width, height);
 	if (!image_apply_colormat(image, matrix, x, y, width, height))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX(): unable to apply transformation");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to apply transformation");
 	return 0;
 }
 
@@ -4005,9 +4005,9 @@ js_Surface_applyColorFX4(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX4(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!image_apply_colormat_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyColorFX4(): unable to apply transformation");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to apply transformation");
 	return 0;
 }
 
@@ -4029,9 +4029,9 @@ js_Surface_applyLookup(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:applyColorFX(): area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
 	if (!image_apply_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:applyLookup(): unable to apply lookup transformation");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to apply lookup transformation");
 	free(red_lu);
 	free(green_lu);
 	free(blue_lu);
@@ -4136,7 +4136,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	height = duk_to_int(ctx, 3);
 
 	if ((new_image = image_new(width, height)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:cloneSection(): unable to create surface");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
 	al_set_target_bitmap(image_bitmap(new_image));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
@@ -4154,7 +4154,7 @@ js_Surface_createImage(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 
 	if ((new_image = image_clone(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:createImage(): unable to create image");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to create image");
 	duk_push_sphere_obj(ctx, "ssImage", new_image);
 	return 1;
 }
@@ -4251,7 +4251,7 @@ js_Surface_getPixel(duk_context* ctx)
 	width = image_width(image);
 	height = image_height(image);
 	if (x < 0 || x >= width || y < 0 || y >= height)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:getPixel(): X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
 	pixel = image_get_pixel(image, x, y);
 	duk_push_sphere_color(ctx, pixel);
 	return 1;
@@ -4406,10 +4406,10 @@ js_Surface_pointSeries(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:pointSeries(): first argument must be an array");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
 	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
 	if (num_points > INT_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "Surface:pointSeries(): too many vertices (%u)", num_points);
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices (%u)", num_points);
 	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
@@ -4581,7 +4581,7 @@ js_Surface_setAlpha(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
 	if (!(lock = image_lock(image)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "Surface:setAlpha(): unable to lock surface");
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to lock surface");
 	w = image_width(image);
 	h = image_height(image);
 	a = a < 0 ? 0 : a > 255 ? 255 : a;
