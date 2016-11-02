@@ -229,11 +229,19 @@ performed from a designated part of the Sphere event loop.  This is like an
 advanced version of Sphere v1 update and render scripts, but better integrated
 and available throughout the engine.
 
+Dispatch.later(timeout, fn);
+
+    Sets up a one-time job to call `fn` from the event loop at some point in
+    the future.  `timeout` is in seconds and may be fractional.
+
+    Returns a JobToken used to manage the job.
+
 Dispatch.now(fn);
 
-    Sets up a one-time job to call `fn` on the next tick.  This works like
-    `setTimeout(fn, 0)` in the browser.  Useful for performing operations that
-    need to be done from the event loop, such as promise resolution.
+    Sets up a one-time job to call `fn` from the event loop as soon as
+    possible.  This function is shorthand for `Dispatch.later(0.0, fn)` and is
+    useful for performing operations that need to be done from the event loop
+    with minimal delay, such as promise resolution.
 
     Returns a JobToken used to manage to job.
 

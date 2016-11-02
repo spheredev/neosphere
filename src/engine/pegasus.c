@@ -230,6 +230,7 @@ static duk_ret_t js_new_Color                  (duk_context* ctx);
 static duk_ret_t js_Color_get_name             (duk_context* ctx);
 static duk_ret_t js_Color_clone                (duk_context* ctx);
 static duk_ret_t js_Color_fade                 (duk_context* ctx);
+static duk_ret_t js_Dispatch_later             (duk_context* ctx);
 static duk_ret_t js_Dispatch_now               (duk_context* ctx);
 static duk_ret_t js_Dispatch_onFlip            (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
@@ -397,6 +398,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
+	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);
 	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
 	api_define_function(ctx, "Dispatch", "onFlip", js_Dispatch_onFlip);
 	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
@@ -1093,6 +1095,22 @@ js_system_abort(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Dispatch_later(duk_context* ctx)
+{
+	script_t* script;
+	double    timeout;
+	uint64_t  token;
+
+	timeout = duk_require_number(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "synth:dispatch.js");
+
+	if (!(token = async_defer(script, timeout, ASYNC_ASAP)))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+	duk_pegasus_push_job_token(ctx, token);
+	return 1;
+}
+
+static duk_ret_t
 js_Dispatch_now(duk_context* ctx)
 {
 	script_t* script;
@@ -1100,7 +1118,7 @@ js_Dispatch_now(duk_context* ctx)
 
 	script = duk_require_sphere_script(ctx, 0, "synth:dispatch.js");
 
-	if (!(token = async_defer(script, ASYNC_ASAP)))
+	if (!(token = async_defer(script, 0.0, ASYNC_ASAP)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
@@ -1126,7 +1144,7 @@ js_Dispatch_onUpdate(duk_context* ctx)
 	script_t* script;
 	uint64_t  token;
 
-	script = duk_require_sphere_script(ctx, 0, "synth:onFlip.js");
+	script = duk_require_sphere_script(ctx, 0, "synth:onUpdate.js");
 
 	if (!(token = async_recur(script, ASYNC_UPDATE)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
