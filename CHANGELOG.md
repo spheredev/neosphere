@@ -13,6 +13,7 @@ v4.3.0 - TBD
   binary data from files and network sockets.
 * Adds a `.fileName` property to objects such as Image and Sound, which returns
   the canonicalized name of the file the object was loaded from.
+* Adds `assert()` as an alias for `assert.ok()`, like in Node.js.
 * Removes the superfluous `SSJ` functions from the API.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, should

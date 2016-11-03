@@ -4,23 +4,15 @@
 **/
 
 'use strict';
-module.exports =
-{
-	deepEqual:          deepEqual,
-	deepStrictEqual:    deepStrictEqual,
-	doesNotThrow:       doesNotThrow,
-	equal:              equal,
-	fail:               fail,
-	notDeepEqual:       notDeepEqual,
-	notDeepStrictEqual: notDeepStrictEqual,
-	notEqual:           notEqual,
-	notStrictEqual:     notStrictEqual,
-	ok:                 ok,
-	strictEqual:        strictEqual,
-	throws:             throws,
-	AssertionError:     AssertionError,
-};
+module.exports = assert;
 
+assert.ok = assert;
+function assert(guard, message)
+{
+	equal(!!guard, true, message);
+}
+
+assert.deepEqual = deepEqual;
 function deepEqual(actual, expected, message)
 {
 	if (_equiv(actual, expected, false))
@@ -28,6 +20,7 @@ function deepEqual(actual, expected, message)
 	fail(actual, expected, message, 'deepEqual');
 }
 
+assert.deepStrictEqual = deepStrictEqual;
 function deepStrictEqual(actual, expected, message)
 {
 	if (_equiv(actual, expected, true))
@@ -35,6 +28,7 @@ function deepStrictEqual(actual, expected, message)
 	fail(actual, expected, message, 'strictDeepEqual');
 }
 
+assert.doesNotThrow = doesNotThrow;
 function doesNotThrow(block, expected, message)
 {
 	if (typeof block !== 'function')
@@ -49,6 +43,7 @@ function doesNotThrow(block, expected, message)
 	fail(block, expected, message || "unwanted exception");
 }
 
+assert.equal = equal;
 function equal(actual, expected, message)
 {
 	if (actual == expected)
@@ -56,6 +51,7 @@ function equal(actual, expected, message)
 	fail(actual, expected, message, '==');
 }
 
+assert.fail = fail;
 function fail(actual, expected, message, operator)
 {
 	throw new AssertionError({
@@ -66,6 +62,7 @@ function fail(actual, expected, message, operator)
 	});
 }
 
+assert.notDeepEqual = notDeepEqual;
 function notDeepEqual(actual, expected, message)
 {
 	if (!_equiv(actual, expected, false))
@@ -73,6 +70,7 @@ function notDeepEqual(actual, expected, message)
 	fail(actual, expected, message, 'notDeepEqual');
 }
 
+assert.notDeepStrictEqual = notDeepStrictEqual;
 function notDeepStrictEqual(actual, expected, message)
 {
 	if (!_equiv(actual, expected, true))
@@ -80,6 +78,7 @@ function notDeepStrictEqual(actual, expected, message)
 	fail(actual, expected, message, 'notDeepStrictEqual');
 }
 
+assert.notEqual = notEqual;
 function notEqual(actual, expected, message)
 {
 	if (actual != expected)
@@ -87,6 +86,7 @@ function notEqual(actual, expected, message)
 	fail(actual, expected, message, '!=');
 }
 
+assert.notStrictEqual = notStrictEqual;
 function notStrictEqual(actual, expected, message)
 {
 	if (actual !== expected)
@@ -94,11 +94,7 @@ function notStrictEqual(actual, expected, message)
 	fail(actual, expected, message, '!==');
 }
 
-function ok(guard, message)
-{
-	equal(!!guard, true, message);
-}
-
+assert.strictEqual = strictEqual;
 function strictEqual(actual, expected, message)
 {
 	if (actual === expected)
@@ -106,6 +102,7 @@ function strictEqual(actual, expected, message)
 	fail(actual, expected, message, '===');
 }
 
+assert.throws = throws;
 function throws(block, expected, message)
 {
 	if (typeof block !== 'function')
@@ -120,6 +117,7 @@ function throws(block, expected, message)
 	fail(block, expected, message || "no exception thrown");
 }
 
+assert.AssertionError = AssertionError;
 AssertionError.prototype = Object.create(Error.prototype);
 AssertionError.prototype.constructor = AssertionError;
 AssertionError.prototype.name = "AssertionError";

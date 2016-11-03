@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 490f634ce805251d7c182ac1e1c047929e469d53 (v1.5.0-858-g490f634).
+ *  Git commit bac161d556f6ac5e25a599cdfb9336c805461dd3 (v1.5.0-863-gbac161d).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -256,8 +256,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "490f634ce805251d7c182ac1e1c047929e469d53"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-858-g490f634"
+#define DUK_GIT_COMMIT                    "bac161d556f6ac5e25a599cdfb9336c805461dd3"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-863-gbac161d"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -1287,7 +1287,7 @@ typedef union duk_double_union duk_double_union;
  */
 
 #if defined(DUK_USE_DOUBLE_LE)
-#ifdef DUK_USE_64BIT_OPS
+#if defined(DUK_USE_64BIT_OPS)
 #define DUK_DBL_IDX_ULL0   0
 #endif
 #define DUK_DBL_IDX_UI0    1
@@ -1307,7 +1307,7 @@ typedef union duk_double_union duk_double_union;
 #define DUK_DBL_IDX_VP0    DUK_DBL_IDX_UI0  /* packed tval */
 #define DUK_DBL_IDX_VP1    DUK_DBL_IDX_UI1  /* packed tval */
 #elif defined(DUK_USE_DOUBLE_BE)
-#ifdef DUK_USE_64BIT_OPS
+#if defined(DUK_USE_64BIT_OPS)
 #define DUK_DBL_IDX_ULL0   0
 #endif
 #define DUK_DBL_IDX_UI0    0
@@ -1327,7 +1327,7 @@ typedef union duk_double_union duk_double_union;
 #define DUK_DBL_IDX_VP0    DUK_DBL_IDX_UI0  /* packed tval */
 #define DUK_DBL_IDX_VP1    DUK_DBL_IDX_UI1  /* packed tval */
 #elif defined(DUK_USE_DOUBLE_ME)
-#ifdef DUK_USE_64BIT_OPS
+#if defined(DUK_USE_64BIT_OPS)
 #define DUK_DBL_IDX_ULL0   0  /* not directly applicable, byte order differs from a double */
 #endif
 #define DUK_DBL_IDX_UI0    0
@@ -1363,8 +1363,8 @@ typedef union duk_double_union duk_double_union;
 		(u)->ui[DUK_DBL_IDX_UI0] = (duk_uint32_t) (v); \
 	} while (0)
 
-#ifdef DUK_USE_64BIT_OPS
-#ifdef DUK_USE_DOUBLE_ME
+#if defined(DUK_USE_64BIT_OPS)
+#if defined(DUK_USE_DOUBLE_ME)
 #define DUK_DBLUNION_SET_HIGH32_ZERO_LOW32(u,v)  do { \
 		(u)->ull[DUK_DBL_IDX_ULL0] = (duk_uint64_t) (v); \
 	} while (0)
@@ -1388,8 +1388,8 @@ typedef union duk_double_union duk_double_union;
 #define DUK_DBLUNION_GET_HIGH32(u)  ((u)->ui[DUK_DBL_IDX_UI0])
 #define DUK_DBLUNION_GET_LOW32(u)   ((u)->ui[DUK_DBL_IDX_UI1])
 
-#ifdef DUK_USE_64BIT_OPS
-#ifdef DUK_USE_DOUBLE_ME
+#if defined(DUK_USE_64BIT_OPS)
+#if defined(DUK_USE_DOUBLE_ME)
 #define DUK_DBLUNION_SET_UINT64(u,v)  do { \
 		(u)->ui[DUK_DBL_IDX_UI0] = (duk_uint32_t) ((v) >> 32); \
 		(u)->ui[DUK_DBL_IDX_UI1] = (duk_uint32_t) (v); \
@@ -1433,65 +1433,72 @@ typedef union duk_double_union duk_double_union;
  *  This is not full ARM support but suffices for some environments.
  */
 
-#ifdef DUK_USE_64BIT_OPS
-#ifdef DUK_USE_DOUBLE_ME
+#if defined(DUK_USE_64BIT_OPS)
+#if defined(DUK_USE_DOUBLE_ME)
+/* Macros for 64-bit ops + mixed endian doubles. */
 #define DUK__DBLUNION_SET_NAN_FULL(u)  do { \
 		(u)->ull[DUK_DBL_IDX_ULL0] = 0x000000007ff80000ULL; \
 	} while (0)
+#define DUK__DBLUNION_IS_NAN_FULL(u) \
+	((((u)->ull[DUK_DBL_IDX_ULL0] & 0x000000007ff00000ULL) == 0x000000007ff00000ULL) && \
+	 ((((u)->ull[DUK_DBL_IDX_ULL0]) & 0xffffffff000fffffULL) != 0))
+#define DUK__DBLUNION_IS_NORMALIZED_NAN_FULL(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x000000007ff80000ULL)
+#define DUK__DBLUNION_IS_ANYINF(u) \
+	(((u)->ull[DUK_DBL_IDX_ULL0] & 0xffffffff7fffffffULL) == 0x000000007ff00000ULL)
+#define DUK__DBLUNION_IS_POSINF(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x000000007ff00000ULL)
+#define DUK__DBLUNION_IS_NEGINF(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x00000000fff00000ULL)
 #else
+/* Macros for 64-bit ops + big/little endian doubles. */
 #define DUK__DBLUNION_SET_NAN_FULL(u)  do { \
 		(u)->ull[DUK_DBL_IDX_ULL0] = 0x7ff8000000000000ULL; \
 	} while (0)
+#define DUK__DBLUNION_IS_NAN_FULL(u) \
+	((((u)->ull[DUK_DBL_IDX_ULL0] & 0x7ff0000000000000ULL) == 0x7ff0000000000000UL) && \
+	 ((((u)->ull[DUK_DBL_IDX_ULL0]) & 0x000fffffffffffffULL) != 0))
+#define DUK__DBLUNION_IS_NORMALIZED_NAN_FULL(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x7ff8000000000000ULL)
+#define DUK__DBLUNION_IS_ANYINF(u) \
+	(((u)->ull[DUK_DBL_IDX_ULL0] & 0x7fffffffffffffffULL) == 0x7ff0000000000000ULL)
+#define DUK__DBLUNION_IS_POSINF(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x7ff0000000000000ULL)
+#define DUK__DBLUNION_IS_NEGINF(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0xfff0000000000000ULL)
 #endif
 #else  /* DUK_USE_64BIT_OPS */
+/* Macros for no 64-bit ops, any endianness. */
 #define DUK__DBLUNION_SET_NAN_FULL(u)  do { \
 		(u)->ui[DUK_DBL_IDX_UI0] = (duk_uint32_t) 0x7ff80000UL; \
 		(u)->ui[DUK_DBL_IDX_UI1] = (duk_uint32_t) 0x00000000UL; \
 	} while (0)
+#define DUK__DBLUNION_IS_NAN_FULL(u) \
+	((((u)->ui[DUK_DBL_IDX_UI0] & 0x7ff00000UL) == 0x7ff00000UL) && \
+	 (((u)->ui[DUK_DBL_IDX_UI0] & 0x000fffffUL) != 0 || \
+          (u)->ui[DUK_DBL_IDX_UI1] != 0))
+#define DUK__DBLUNION_IS_NORMALIZED_NAN_FULL(u) \
+	(((u)->ui[DUK_DBL_IDX_UI0] == 0x7ff80000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
+#define DUK__DBLUNION_IS_ANYINF(u) \
+	((((u)->ui[DUK_DBL_IDX_UI0] & 0x7fffffffUL) == 0x7ff00000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
+#define DUK__DBLUNION_IS_POSINF(u) \
+	(((u)->ui[DUK_DBL_IDX_UI0] == 0x7ff00000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
+#define DUK__DBLUNION_IS_NEGINF(u) \
+	(((u)->ui[DUK_DBL_IDX_UI0] == 0xfff00000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
 #endif  /* DUK_USE_64BIT_OPS */
 
 #define DUK__DBLUNION_SET_NAN_NOTFULL(u)  do { \
 		(u)->us[DUK_DBL_IDX_US0] = 0x7ff8UL; \
 	} while (0)
 
-#ifdef DUK_USE_64BIT_OPS
-#ifdef DUK_USE_DOUBLE_ME
-#define DUK__DBLUNION_IS_NAN_FULL(u) \
-	/* E == 0x7ff, F != 0 => NaN */ \
-	((((u)->us[DUK_DBL_IDX_US0] & 0x7ff0UL) == 0x7ff0UL) && \
-	 ((((u)->ull[DUK_DBL_IDX_ULL0]) & 0xffffffff000fffffULL) != 0))
-#else
-#define DUK__DBLUNION_IS_NAN_FULL(u) \
-	/* E == 0x7ff, F != 0 => NaN */ \
-	((((u)->us[DUK_DBL_IDX_US0] & 0x7ff0UL) == 0x7ff0UL) && \
-	 ((((u)->ull[DUK_DBL_IDX_ULL0]) & 0x000fffffffffffffULL) != 0))
-#endif
-#else  /* DUK_USE_64BIT_OPS */
-#define DUK__DBLUNION_IS_NAN_FULL(u) \
-	/* E == 0x7ff, F != 0 => NaN */ \
-	((((u)->ui[DUK_DBL_IDX_UI0] & 0x7ff00000UL) == 0x7ff00000UL) && \
-	 (((u)->ui[DUK_DBL_IDX_UI0] & 0x000fffffUL) != 0 || \
-          (u)->ui[DUK_DBL_IDX_UI1] != 0))
-#endif  /* DUK_USE_64BIT_OPS */
-
 #define DUK__DBLUNION_IS_NAN_NOTFULL(u) \
 	/* E == 0x7ff, topmost four bits of F != 0 => assume NaN */ \
 	((((u)->us[DUK_DBL_IDX_US0] & 0x7ff0UL) == 0x7ff0UL) && \
 	 (((u)->us[DUK_DBL_IDX_US0] & 0x000fUL) != 0x0000UL))
-
-#ifdef DUK_USE_64BIT_OPS
-#ifdef DUK_USE_DOUBLE_ME
-#define DUK__DBLUNION_IS_NORMALIZED_NAN_FULL(u) \
-	((u)->ull[DUK_DBL_IDX_ULL0] == 0x000000007ff80000ULL)
-#else
-#define DUK__DBLUNION_IS_NORMALIZED_NAN_FULL(u) \
-	((u)->ull[DUK_DBL_IDX_ULL0] == 0x7ff8000000000000ULL)
-#endif
-#else  /* DUK_USE_64BIT_OPS */
-#define DUK__DBLUNION_IS_NORMALIZED_NAN_FULL(u) \
-	(((u)->ui[DUK_DBL_IDX_UI0] == 0x7ff80000UL) && \
-	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
-#endif  /* DUK_USE_64BIT_OPS */
 
 #define DUK__DBLUNION_IS_NORMALIZED_NAN_NOTFULL(u) \
 	/* E == 0x7ff, F == 8 => normalized NaN */ \
@@ -1541,6 +1548,10 @@ typedef union duk_double_union duk_double_union;
 	} while (0)
 #endif  /* DUK_USE_PACKED_TVAL */
 
+#define DUK_DBLUNION_IS_ANYINF(u) DUK__DBLUNION_IS_ANYINF((u))
+#define DUK_DBLUNION_IS_POSINF(u) DUK__DBLUNION_IS_POSINF((u))
+#define DUK_DBLUNION_IS_NEGINF(u) DUK__DBLUNION_IS_NEGINF((u))
+
 /* XXX: native 64-bit byteswaps when available */
 
 /* 64-bit byteswap, same operation independent of target endianness. */
@@ -1586,11 +1597,14 @@ typedef union duk_double_union duk_double_union;
 /* Reverse operation is the same. */
 #define DUK_DBLUNION_DOUBLE_NTOH(u) DUK_DBLUNION_DOUBLE_HTON((u))
 
-/* Sign check. */
-#define DUK_DBLUNION_HAS_SIGNBIT(u) (((u)->ui[DUK_DBL_IDX_UI0] & 0x80000000UL))
-
-/* Sign bit as 1 (negative) or 0 (positive). */
+/* Some sign bit helpers. */
+#if defined(DUK_USE_64BIT_OPS)
+#define DUK_DBLUNION_HAS_SIGNBIT(u) (((u)->ull[DUK_DBL_IDX_ULL0] & 0x8000000000000000ULL) != 0)
+#define DUK_DBLUNION_GET_SIGNBIT(u) (((u)->ull[DUK_DBL_IDX_ULL0] >> 63U))
+#else
+#define DUK_DBLUNION_HAS_SIGNBIT(u) (((u)->ui[DUK_DBL_IDX_UI0] & 0x80000000UL) != 0)
 #define DUK_DBLUNION_GET_SIGNBIT(u) (((u)->ui[DUK_DBL_IDX_UI0] >> 31U))
+#endif
 
 #endif  /* DUK_DBLUNION_H_INCLUDED */
 
