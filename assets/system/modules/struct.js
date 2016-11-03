@@ -16,8 +16,8 @@ const link   = require('link');
 
 function Reader(stream)
 {
-	assert.ok(this instanceof Reader, "constructor requires 'new'");
-	assert.ok('read' in stream, "not a readable stream");
+	assert(this instanceof Reader, "constructor requires 'new'");
+	assert('read' in stream, "not a readable stream");
 
 	var m_decoder = new TextDecoder('utf-8');
 	var m_stream = stream;
@@ -95,7 +95,7 @@ function Reader(stream)
 	this.readStruct = m_readStruct;
 	function m_readStruct(schema)
 	{
-		assert.ok(Array.isArray(schema), "schema is array");
+		assert(Array.isArray(schema), "array expected");
 
 		return _readObject(m_stream, schema, null);
 	}
@@ -125,8 +125,8 @@ function Reader(stream)
 
 function Writer(stream)
 {
-	assert.ok(this instanceof Writer, "constructor requires 'new'");
-	assert.ok('write' in stream, "not a writable stream");
+	assert(this instanceof Writer, "constructor requires 'new'");
+	assert('write' in stream, "not a writable stream");
 
 	var m_encoder = new TextEncoder();
 	var m_stream = stream;
@@ -220,6 +220,40 @@ function Writer(stream)
 		m_stream.write(bytes);
 	}
 
+	this.writeStruct = m_writeStruct;
+	function m_writeStruct(object, desc)
+	{
+		var keys = Reflect.ownKeys(desc);
+		for (var i = 0; i < keys.length; ++i) {
+			var value = 'key' in object ? object[key]
+				: desc[key].default
+			switch (desc[key].type) {
+				case 'float32be': m_writeFloat32(value); break;
+				case 'float32le': m_writeFloat32(value, true); break;
+				case 'float64be': m_writeFloat64(value); break;
+				case 'float64le': m_writeFloat64(value, true); break;
+				case 'int8': m_writeInt8(value); break;
+				case 'int16be': m_writeInt16(value); break;
+				case 'int16le': m_writeInt16(value, true); break;
+				case 'int32be': m_writeInt32(value); break;
+				case 'int32le': m_writeInt32(value, true); break;
+				case 'uint8': m_writeUint8(value); break;
+				case 'uint16be': m_writeUint16(value); break;
+				case 'uint16le': m_writeUint16(value, true); break;
+				case 'uint32be': m_writeUint32(value); break;
+				case 'uint32le': m_writeUint32(value, true); break;
+				case 'string': m_writeString(value); break;
+				case 'lstr8': m_writeString8(value); break;
+				case 'lstr16be': m_writeString16(value); break;
+				case 'lstr16le': m_writeString16(value, true); break;
+				case 'lstr32be': m_writeString32(value); break;
+				case 'lstr32le': m_writeString32(value, true); break;
+				default:
+					assert(false, "malformed struct descriptor");
+			}
+		}
+	};
+	
 	this.writeUint8 = m_writeUint8;
 	function m_writeUint8(value)
 	{
@@ -406,7 +440,7 @@ function _readInt(stream, size, signed, littleEndian)
 	// variable-size two's complement integer decoding algorithm borrowed from
 	// Node.js.  this allows us to read integer values up to 48 bits in size.
 
-	assert.ok(size >= 1 && size <= 6, "(u)int field size is [1-6]");
+	assert(size >= 1 && size <= 6, "(u)int field size is [1-6]");
 
 	var bytes = new Uint8Array(stream.read(size));
 	var mul = 1;
