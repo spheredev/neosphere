@@ -1129,12 +1129,14 @@ js_Dispatch_now(duk_context* ctx)
 static duk_ret_t
 js_Dispatch_onFlip(duk_context* ctx)
 {
+	double    priority;
 	script_t* script;
 	uint64_t  token;
 
-	script = duk_require_sphere_script(ctx, 0, "synth:onFlip.js");
+	priority = duk_require_number(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "synth:onFlip.js");
 
-	if (!(token = async_recur(script, ASYNC_RENDER)))
+	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
@@ -1148,7 +1150,7 @@ js_Dispatch_onUpdate(duk_context* ctx)
 
 	script = duk_require_sphere_script(ctx, 0, "synth:onUpdate.js");
 
-	if (!(token = async_recur(script, ASYNC_UPDATE)))
+	if (!(token = async_recur(script, 0.0, ASYNC_UPDATE)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;

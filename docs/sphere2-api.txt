@@ -245,16 +245,20 @@ Dispatch.now(fn);
 
     Returns a JobToken used to manage to job.
 
-Dispatch.onFlip(fn);
+Dispatch.onFlip(priority, fn);
 Dispatch.onUpdate(fn);
 
     Sets up a recurring job to call `fn` from a given part of the event loop.
     For example, `onFlip()` jobs are called when the backbuffer is flipped, and
     `onUpdate()` jobs are called at the start of a frame.
 
+    For onFlip jobs, `priority` affects the order of calls when there is more
+    than one job.  Jobs are performed in ascending priority order, so that the
+    highest-priority render appears visually "on top".
+
     Returns a JobToken used to manage the job.
 
-    Note: Update jobs are processed at the beginning of a frame, while render
+    Note: onUpdate jobs are processed at the beginning of a frame, while onFlip
           jobs are processed at the end, just before the backbuffer is flipped.
           This ensures that:
 

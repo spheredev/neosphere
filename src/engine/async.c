@@ -7,10 +7,13 @@
 struct job
 {
 	async_hint_t hint;
+	double       priority;
 	double       timeout;
 	uint64_t     token;
 	script_t*    script;
 };
+
+static int sort_jobs (const void* in_a, const void* in_b);
 
 static uint64_t  s_next_token = 1;
 static vector_t* s_onetime;
@@ -71,7 +74,7 @@ async_defer(script_t* script, double timeout, async_hint_t hint)
 }
 
 uint64_t
-async_recur(script_t* script, async_hint_t hint)
+async_recur(script_t* script, double priority, async_hint_t hint)
 {
 	job_t* job;
 
@@ -81,7 +84,9 @@ async_recur(script_t* script, async_hint_t hint)
 	job->token = s_next_token++;
 	job->script = script;
 	job->hint = hint;
+	job->priority = priority;
 	vector_push(s_recurring, &job);
+	vector_sort(s_recurring, sort_jobs);
 	return job->token;
 }
 
@@ -119,4 +124,17 @@ async_run_jobs(async_hint_t hint)
 		}
 		vector_free(vector);
 	}
+}
+
+static int
+sort_jobs(const void* in_a, const void* in_b)
+{
+	double    diff;
+	ptrdiff_t order;
+	
+	diff = (*(job_t**)in_a)->priority - (*(job_t**)in_b)->priority;
+	order = (uint8_t*)in_a - (uint8_t*)in_b;
+	return diff < 0.0 ? -1 : diff > 0.0 ? 1
+		: order < 0 ? -1 : order > 0 ? 1
+		: 0;
 }
