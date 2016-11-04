@@ -347,7 +347,7 @@ static duk_ret_t js_Transform_scale            (duk_context* ctx);
 static duk_ret_t js_Transform_translate        (duk_context* ctx);
 
 static void    duk_pegasus_push_color     (duk_context* ctx, color_t color);
-static void    duk_pegasus_push_job_token (duk_context* ctx, uint64_t token);
+static void    duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
 static void    duk_pegasus_push_require   (duk_context* ctx, const char* module_id);
 static color_t duk_pegasus_require_color  (duk_context* ctx, duk_idx_t index);
 static path_t* find_module                (const char* id, const char* origin, const char* sys_origin);
@@ -808,11 +808,11 @@ duk_pegasus_push_color(duk_context* ctx, color_t color)
 }
 
 static void
-duk_pegasus_push_job_token(duk_context* ctx, uint64_t token)
+duk_pegasus_push_job_token(duk_context* ctx, int64_t token)
 {
-	uint64_t* ptr;
+	int64_t* ptr;
 
-	ptr = malloc(sizeof(uint64_t));
+	ptr = malloc(sizeof(int64_t));
 	*ptr = token;
 	duk_push_sphere_obj(ctx, "JobToken", ptr);
 }
@@ -1099,7 +1099,7 @@ js_system_abort(duk_context* ctx)
 static duk_ret_t
 js_Dispatch_cancel(duk_context* ctx)
 {
-	uint64_t* token;
+	int64_t* token;
 
 	token = duk_require_sphere_obj(ctx, 0, "JobToken");
 
@@ -1112,7 +1112,7 @@ js_Dispatch_later(duk_context* ctx)
 {
 	script_t* script;
 	double    timeout;
-	uint64_t  token;
+	int64_t   token;
 
 	timeout = duk_require_number(ctx, 0);
 	script = duk_require_sphere_script(ctx, 1, "synth:dispatch.js");
@@ -1127,7 +1127,7 @@ static duk_ret_t
 js_Dispatch_now(duk_context* ctx)
 {
 	script_t* script;
-	uint64_t  token;
+	int64_t   token;
 
 	script = duk_require_sphere_script(ctx, 0, "synth:dispatch.js");
 
@@ -1142,7 +1142,7 @@ js_Dispatch_onFlip(duk_context* ctx)
 {
 	double    priority;
 	script_t* script;
-	uint64_t  token;
+	int64_t   token;
 
 	priority = duk_require_number(ctx, 0);
 	script = duk_require_sphere_script(ctx, 1, "synth:onFlip.js");
@@ -1157,7 +1157,7 @@ static duk_ret_t
 js_Dispatch_onUpdate(duk_context* ctx)
 {
 	script_t* script;
-	uint64_t  token;
+	int64_t   token;
 
 	script = duk_require_sphere_script(ctx, 0, "synth:onUpdate.js");
 
@@ -2221,7 +2221,7 @@ js_Image_get_width(duk_context* ctx)
 static duk_ret_t
 js_JobToken_finalize(duk_context* ctx)
 {
-	uint64_t* token;
+	int64_t* token;
 
 	token = duk_require_sphere_obj(ctx, 0, "JobToken");
 

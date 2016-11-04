@@ -9,13 +9,13 @@ struct job
 	async_hint_t hint;
 	double       priority;
 	double       timeout;
-	uint64_t     token;
+	int64_t      token;
 	script_t*    script;
 };
 
 static int sort_jobs (const void* in_a, const void* in_b);
 
-static uint64_t  s_next_token = 1;
+static int64_t   s_next_token = 1;
 static vector_t* s_onetime;
 static vector_t* s_recurring;
 
@@ -36,7 +36,7 @@ async_uninit(void)
 }
 
 void
-async_cancel(uint64_t token)
+async_cancel(int64_t token)
 {
 	iter_t  iter;
 	job_t** p_job;
@@ -57,7 +57,7 @@ async_cancel(uint64_t token)
 	}
 }
 
-uint64_t
+int64_t
 async_defer(script_t* script, double timeout, async_hint_t hint)
 {
 	job_t* job;
@@ -73,7 +73,7 @@ async_defer(script_t* script, double timeout, async_hint_t hint)
 	return job->token;
 }
 
-uint64_t
+int64_t
 async_recur(script_t* script, double priority, async_hint_t hint)
 {
 	job_t* job;
@@ -129,12 +129,20 @@ async_run_jobs(async_hint_t hint)
 static int
 sort_jobs(const void* in_a, const void* in_b)
 {
-	double    diff;
-	ptrdiff_t order;
+	// qsort() is not stable.  luckily job tokens are strictly sequential,
+	// so we can maintain FIFO order by just using the token as part of the
+	// sort key.
 	
-	diff = (*(job_t**)in_a)->priority - (*(job_t**)in_b)->priority;
-	order = (uint8_t*)in_a - (uint8_t*)in_b;
-	return diff < 0.0 ? -1 : diff > 0.0 ? 1
-		: order < 0 ? -1 : order > 0 ? 1
+	job_t*  job_a;
+	job_t*  job_b;
+	double  delta;
+	int64_t fifo_delta;
+	
+	job_a = *(job_t**)in_a;
+	job_b = *(job_t**)in_b;
+	delta = job_a->priority - job_b->priority;
+	fifo_delta = job_a->token - job_b->token;
+	return delta < 0.0 ? -1 : delta > 0.0 ? 1
+		: fifo_delta < 0 ? -1 : fifo_delta > 0 ? 1
 		: 0;
 }

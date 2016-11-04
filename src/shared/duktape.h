@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit bac161d556f6ac5e25a599cdfb9336c805461dd3 (v1.5.0-863-gbac161d).
+ *  Git commit 990a295d259e7da633cf9528448c80a969770dc3 (v1.5.0-868-g990a295).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -256,8 +256,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "bac161d556f6ac5e25a599cdfb9336c805461dd3"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-863-gbac161d"
+#define DUK_GIT_COMMIT                    "990a295d259e7da633cf9528448c80a969770dc3"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-868-g990a295"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -1450,6 +1450,12 @@ typedef union duk_double_union duk_double_union;
 	((u)->ull[DUK_DBL_IDX_ULL0] == 0x000000007ff00000ULL)
 #define DUK__DBLUNION_IS_NEGINF(u) \
 	((u)->ull[DUK_DBL_IDX_ULL0] == 0x00000000fff00000ULL)
+#define DUK__DBLUNION_IS_ANYZERO(u) \
+	(((u)->ull[DUK_DBL_IDX_ULL0] & 0xffffffff7fffffffULL) == 0x0000000000000000ULL)
+#define DUK__DBLUNION_IS_POSZERO(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x0000000000000000ULL)
+#define DUK__DBLUNION_IS_NEGZERO(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x0000000080000000ULL)
 #else
 /* Macros for 64-bit ops + big/little endian doubles. */
 #define DUK__DBLUNION_SET_NAN_FULL(u)  do { \
@@ -1466,6 +1472,12 @@ typedef union duk_double_union duk_double_union;
 	((u)->ull[DUK_DBL_IDX_ULL0] == 0x7ff0000000000000ULL)
 #define DUK__DBLUNION_IS_NEGINF(u) \
 	((u)->ull[DUK_DBL_IDX_ULL0] == 0xfff0000000000000ULL)
+#define DUK__DBLUNION_IS_ANYZERO(u) \
+	(((u)->ull[DUK_DBL_IDX_ULL0] & 0x7fffffffffffffffULL) == 0x0000000000000000ULL)
+#define DUK__DBLUNION_IS_POSZERO(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x0000000000000000ULL)
+#define DUK__DBLUNION_IS_NEGZERO(u) \
+	((u)->ull[DUK_DBL_IDX_ULL0] == 0x8000000000000000ULL)
 #endif
 #else  /* DUK_USE_64BIT_OPS */
 /* Macros for no 64-bit ops, any endianness. */
@@ -1488,6 +1500,15 @@ typedef union duk_double_union duk_double_union;
 	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
 #define DUK__DBLUNION_IS_NEGINF(u) \
 	(((u)->ui[DUK_DBL_IDX_UI0] == 0xfff00000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
+#define DUK__DBLUNION_IS_ANYZERO(u) \
+	((((u)->ui[DUK_DBL_IDX_UI0] & 0x7fffffffUL) == 0x00000000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
+#define DUK__DBLUNION_IS_POSZERO(u) \
+	(((u)->ui[DUK_DBL_IDX_UI0] == 0x00000000UL) && \
+	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
+#define DUK__DBLUNION_IS_NEGZERO(u) \
+	(((u)->ui[DUK_DBL_IDX_UI0] == 0x80000000UL) && \
 	 ((u)->ui[DUK_DBL_IDX_UI1] == 0x00000000UL))
 #endif  /* DUK_USE_64BIT_OPS */
 
@@ -1539,8 +1560,8 @@ typedef union duk_double_union duk_double_union;
 	 DUK_DBLUNION_IS_NORMALIZED_NAN((u)))  /* or is a normalized NaN */
 #else  /* DUK_USE_PACKED_TVAL */
 #define DUK_DBLUNION_NORMALIZE_NAN_CHECK(u)  /* nop: no need to normalize */
-#define DUK_DBLUNION_IS_NAN(u)               (DUK_ISNAN((u)->d))
-#define DUK_DBLUNION_IS_NORMALIZED_NAN(u)    (DUK_ISNAN((u)->d))
+#define DUK_DBLUNION_IS_NAN(u)               DUK__DBLUNION_IS_NAN_FULL((u))  /* (DUK_ISNAN((u)->d)) */
+#define DUK_DBLUNION_IS_NORMALIZED_NAN(u)    DUK__DBLUNION_IS_NAN_FULL((u))  /* (DUK_ISNAN((u)->d)) */
 #define DUK_DBLUNION_IS_NORMALIZED(u)        1  /* all doubles are considered normalized */
 #define DUK_DBLUNION_SET_NAN(u)  do { \
 		/* in non-packed representation we don't care about which NaN is used */ \
@@ -1551,6 +1572,10 @@ typedef union duk_double_union duk_double_union;
 #define DUK_DBLUNION_IS_ANYINF(u) DUK__DBLUNION_IS_ANYINF((u))
 #define DUK_DBLUNION_IS_POSINF(u) DUK__DBLUNION_IS_POSINF((u))
 #define DUK_DBLUNION_IS_NEGINF(u) DUK__DBLUNION_IS_NEGINF((u))
+
+#define DUK_DBLUNION_IS_ANYZERO(u) DUK__DBLUNION_IS_ANYZERO((u))
+#define DUK_DBLUNION_IS_POSZERO(u) DUK__DBLUNION_IS_POSZERO((u))
+#define DUK_DBLUNION_IS_NEGZERO(u) DUK__DBLUNION_IS_NEGZERO((u))
 
 /* XXX: native 64-bit byteswaps when available */
 
