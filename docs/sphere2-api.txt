@@ -229,13 +229,6 @@ performed from a designated part of the Sphere event loop.  This is like an
 advanced version of Sphere v1 update and render scripts, but better integrated
 and available throughout the engine.
 
-Dispatch.later(timeout, fn);
-
-    Sets up a one-time job to call `fn` from the event loop at some point in
-    the future.  `timeout` is in seconds and may be fractional.
-
-    Returns a JobToken used to manage the job.
-
 Dispatch.now(fn);
 
     Sets up a one-time job to call `fn` from the event loop as soon as
@@ -243,7 +236,14 @@ Dispatch.now(fn);
     useful for performing operations that need to be done from the event loop
     with minimal delay, such as promise resolution.
 
-    Returns a JobToken used to manage to job.
+    Returns a JobToken for use with Dispatch.cancel().
+
+Dispatch.later(timeout, fn);
+
+    Sets up a one-time job to call `fn` from the event loop at some point in
+    the future.  `timeout` is in seconds and may be fractional.
+
+    Returns a JobToken for use with Dispatch.cancel().
 
 Dispatch.onFlip(priority, fn);
 Dispatch.onUpdate(fn);
@@ -256,7 +256,7 @@ Dispatch.onUpdate(fn);
     than one job.  Jobs are performed in ascending priority order, so that the
     highest-priority render appears visually "on top".
 
-    Returns a JobToken used to manage the job.
+    Returns a JobToken for use with Dispatch.cancel().
 
     Note: onUpdate jobs are processed at the beginning of a frame, while onFlip
           jobs are processed at the end, just before the backbuffer is flipped.
@@ -267,10 +267,11 @@ Dispatch.onUpdate(fn);
           2) Objects drawn by an asynchronous render job can't be obscured by
 			 those rendered synchronously.
 
-JobToken#cancel();
+Dispatch.cancel(token);
 
-    Cancels the job associated with this job token.  Note that for one-time
-    jobs, cancellation has no effect if the job has already been processed.
+    Cancels the job associated with the JobToken `token`.  Note that for
+    one-time jobs, cancellation has no effect if the job has already been
+    processed.
 
 
 Random Number Generator API

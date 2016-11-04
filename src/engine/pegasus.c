@@ -230,6 +230,7 @@ static duk_ret_t js_new_Color                  (duk_context* ctx);
 static duk_ret_t js_Color_get_name             (duk_context* ctx);
 static duk_ret_t js_Color_clone                (duk_context* ctx);
 static duk_ret_t js_Color_fade                 (duk_context* ctx);
+static duk_ret_t js_Dispatch_cancel            (duk_context* ctx);
 static duk_ret_t js_Dispatch_later             (duk_context* ctx);
 static duk_ret_t js_Dispatch_now               (duk_context* ctx);
 static duk_ret_t js_Dispatch_onFlip            (duk_context* ctx);
@@ -256,7 +257,6 @@ static duk_ret_t js_Image_get_fileName         (duk_context* ctx);
 static duk_ret_t js_Image_get_height           (duk_context* ctx);
 static duk_ret_t js_Image_get_width            (duk_context* ctx);
 static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
-static duk_ret_t js_JobToken_cancel            (duk_context* ctx);
 static duk_ret_t js_Joystick_get_Null          (duk_context* ctx);
 static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
 static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
@@ -399,6 +399,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
+	api_define_function(ctx, "Dispatch", "cancel", js_Dispatch_cancel);
 	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);
 	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
 	api_define_function(ctx, "Dispatch", "onFlip", js_Dispatch_onFlip);
@@ -422,7 +423,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
 	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
 	api_define_type(ctx, "JobToken", js_JobToken_finalize);
-	api_define_method(ctx, "JobToken", "cancel", js_JobToken_cancel);
 	api_define_type(ctx, "Joystick", js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function(ctx, "Joystick", "getDevices", js_Joystick_getDevices);
@@ -1094,6 +1094,17 @@ js_system_abort(duk_context* ctx)
 	duk_pop_3(ctx);
 
 	abort_game(text);
+}
+
+static duk_ret_t
+js_Dispatch_cancel(duk_context* ctx)
+{
+	uint64_t* token;
+
+	token = duk_require_sphere_obj(ctx, 0, "JobToken");
+
+	async_cancel(*token);
+	return 0;
 }
 
 static duk_ret_t
@@ -2210,23 +2221,11 @@ js_Image_get_width(duk_context* ctx)
 static duk_ret_t
 js_JobToken_finalize(duk_context* ctx)
 {
-	uint64_t* p_token;
+	uint64_t* token;
 
-	p_token = duk_require_sphere_obj(ctx, 0, "JobToken");
+	token = duk_require_sphere_obj(ctx, 0, "JobToken");
 
-	free(p_token);
-	return 0;
-}
-
-static duk_ret_t
-js_JobToken_cancel(duk_context* ctx)
-{
-	uint64_t* p_token;
-
-	duk_push_this(ctx);
-	p_token = duk_require_sphere_obj(ctx, -1, "JobToken");
-
-	async_cancel(*p_token);
+	free(token);
 	return 0;
 }
 
