@@ -14,9 +14,9 @@ const sax = require('./lib/sax');
 
 function load(fileName)
 {
-	var file = fs.open(fileName, 'r');
-	var fileData = file.read();
-	file.close();
+	var stream = FS.open(fileName, 'r');
+	var fileData = stream.read();
+	stream.close();
 	var xmlText = new TextDecoder('utf-8').decode(fileData);
 	return parse(xmlText);
 }

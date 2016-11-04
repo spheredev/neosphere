@@ -105,7 +105,7 @@ from a different location, you can use one of the SphereFS prefixes:
 As an example, the following will open the file `EatyPig.bin` from the user's
 save data directory for reading in binary mode:
 
-    var file = fs.open("~/EatyPig.bin", "rb");
+    var file = FS.open("~/EatyPig.bin", "rb");
 
 Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
 "@/../maggie.fat", will be met with a sandbox violation error.
@@ -1047,9 +1047,10 @@ SoundStream#pause();
 SoundStream#play([mixer]);
 
     Starts the stream playing, or if no mixer is specified, resumes a paused
-    stream.  Before beginning playback, it is recommended to pre-buffer some
-    audio into the stream (see SoundStream:buffer() below).  This will minimize
-    the risk of a buffer underrun and subsequent skipping during playback.
+    stream.  Before beginning playback, it is recommended to pre-buffer a few
+    seconds of audio into the stream (see SoundStream:buffer() below).  This
+    will minimize the risk of a buffer underrun and subsequent skipping during
+    playback.
 
 SoundStream#stop();
 
@@ -1061,20 +1062,20 @@ SoundStream#stop();
 File System API
 ---------------
 
-minisphere provides the `fs` global variable to allow games to access asset and
-save files, create or remove directories, and so on.
+minisphere provides the `FS` object to allow games to access asset and save
+files, create or remove directories, and so on.
 
-fs.exists(filename);
+FS.exists(filename);
 
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
 
-fs.mkdir(dirname);
+FS.mkdir(dirname);
 
     Creates the specified directory and any of its parent directories that
     don't already exist.
 
-fs.open(filename, mode);
+FS.open(filename, mode);
 
     Opens the specified file and constructs a new FileStream to access it.
     `mode` is a string in the same format as that of C fopen() specifying the
@@ -1087,16 +1088,16 @@ fs.open(filename, mode);
         a:  Open file (create if not found) with file position at end of file.
         a+: Open file for update with initial position at end of file.
 
-    Note that calling `fs.open` is the only way to get a FileStream object, as
+    Note that calling FS.open() is the only way to get a FileStream object;
     there is no FileStream constructor.
 
-fs.rename(srcname, destname);
+FS.rename(srcname, destname);
 
     Renames the file named by `srcname` to `destname`, both of which are
     assumed to be full SphereFS paths.  This can also be used to move a file
     between directories; if so, the destination directory must already exist.
 
-fs.resolve(path);
+FS.resolve(path);
 
     Resolves a path (which may contain relative components) to its canonical
     SphereFS representation.  This can be useful when data is associated with
@@ -1104,15 +1105,15 @@ fs.resolve(path);
     is pulled for a given file regardless of the path used to access it.
 
     Note that the resource referred to by the path doesn't need to exist.  As
-    with other FS methods, fs.resolve() will throw an error if an absolute path
+    with other FS methods, FS.resolve() will throw an error if an absolute path
     is passed in.
 
-fs.rmdir(dirname);
+FS.rmdir(dirname);
 
     Deletes the specified directory.  The directory must be empty or an error
     will be thrown.
 
-fs.unlink(filename);
+FS.unlink(filename);
 
     Deletes the specified file.
 

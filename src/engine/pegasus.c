@@ -200,13 +200,6 @@ static duk_ret_t js_console_info               (duk_context* ctx);
 static duk_ret_t js_console_log                (duk_context* ctx);
 static duk_ret_t js_console_trace              (duk_context* ctx);
 static duk_ret_t js_console_warn               (duk_context* ctx);
-static duk_ret_t js_fs_exists                  (duk_context* ctx);
-static duk_ret_t js_fs_mkdir                   (duk_context* ctx);
-static duk_ret_t js_fs_open                    (duk_context* ctx);
-static duk_ret_t js_fs_rename                  (duk_context* ctx);
-static duk_ret_t js_fs_resolve                 (duk_context* ctx);
-static duk_ret_t js_fs_rmdir                   (duk_context* ctx);
-static duk_ret_t js_fs_unlink                  (duk_context* ctx);
 static duk_ret_t js_keyboard_get_capsLock      (duk_context* ctx);
 static duk_ret_t js_keyboard_get_numLock       (duk_context* ctx);
 static duk_ret_t js_keyboard_get_scrollLock    (duk_context* ctx);
@@ -235,6 +228,13 @@ static duk_ret_t js_Dispatch_later             (duk_context* ctx);
 static duk_ret_t js_Dispatch_now               (duk_context* ctx);
 static duk_ret_t js_Dispatch_onFlip            (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
+static duk_ret_t js_FS_exists                  (duk_context* ctx);
+static duk_ret_t js_FS_mkdir                   (duk_context* ctx);
+static duk_ret_t js_FS_open                    (duk_context* ctx);
+static duk_ret_t js_FS_rename                  (duk_context* ctx);
+static duk_ret_t js_FS_resolve                 (duk_context* ctx);
+static duk_ret_t js_FS_rmdir                   (duk_context* ctx);
+static duk_ret_t js_FS_unlink                  (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
 static duk_ret_t js_FileStream_get_fileName    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
@@ -418,6 +418,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Font", "drawText", js_Font_drawText);
 	api_define_method(ctx, "Font", "getTextSize", js_Font_getTextSize);
 	api_define_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
+	api_define_function(ctx, "FS", "exists", js_FS_exists);
+	api_define_function(ctx, "FS", "open", js_FS_open);
+	api_define_function(ctx, "FS", "mkdir", js_FS_mkdir);
+	api_define_function(ctx, "FS", "rename", js_FS_rename);
+	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
+	api_define_function(ctx, "FS", "rmdir", js_FS_rmdir);
+	api_define_function(ctx, "FS", "unlink", js_FS_unlink);
 	api_define_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
 	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
 	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
@@ -510,13 +517,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "console", "log", js_console_log);
 	api_define_function(ctx, "console", "trace", js_console_trace);
 	api_define_function(ctx, "console", "warn", js_console_warn);
-	api_define_function(ctx, "fs", "exists", js_fs_exists);
-	api_define_function(ctx, "fs", "open", js_fs_open);
-	api_define_function(ctx, "fs", "mkdir", js_fs_mkdir);
-	api_define_function(ctx, "fs", "rename", js_fs_rename);
-	api_define_function(ctx, "fs", "resolve", js_fs_resolve);
-	api_define_function(ctx, "fs", "rmdir", js_fs_rmdir);
-	api_define_function(ctx, "fs", "unlink", js_fs_unlink);
 	api_define_static_prop(ctx, "keyboard", "capsLock", js_keyboard_get_capsLock, NULL);
 	api_define_static_prop(ctx, "keyboard", "numLock", js_keyboard_get_numLock, NULL);
 	api_define_static_prop(ctx, "keyboard", "scrollLock", js_keyboard_get_scrollLock, NULL);
@@ -1316,90 +1316,6 @@ js_console_warn(duk_context* ctx)
 }
 
 static duk_ret_t
-js_fs_exists(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
-	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
-	return 1;
-}
-
-static duk_ret_t
-js_fs_mkdir(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_path(ctx, 0, NULL, false);
-	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
-	return 0;
-}
-
-static duk_ret_t
-js_fs_open(duk_context* ctx)
-{
-	sfs_file_t* file;
-	const char* filename;
-	const char* mode;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
-	mode = duk_require_string(ctx, 1);
-	file = sfs_fopen(g_fs, filename, NULL, mode);
-	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
-	duk_push_sphere_obj(ctx, "FileStream", file);
-	return 1;
-}
-
-static duk_ret_t
-js_fs_rename(duk_context* ctx)
-{
-	const char* name1;
-	const char* name2;
-
-	name1 = duk_require_path(ctx, 0, NULL, false);
-	name2 = duk_require_path(ctx, 1, NULL, false);
-
-	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
-	return 0;
-}
-
-static duk_ret_t
-js_fs_resolve(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
-
-	duk_push_string(ctx, filename);
-	return 1;
-}
-
-static duk_ret_t
-js_fs_rmdir(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_path(ctx, 0, NULL, false);
-	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
-	return 0;
-}
-
-static duk_ret_t
-js_fs_unlink(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
-	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
-	return 0;
-}
-
-static duk_ret_t
 js_keyboard_get_capsLock(duk_context* ctx)
 {
 	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
@@ -1794,6 +1710,90 @@ js_Color_fade(duk_context* ctx)
 	color.a = fmin(fmax(color.a * a, 0), 255);
 	duk_pegasus_push_color(ctx, color);
 	return 1;
+}
+
+static duk_ret_t
+js_FS_exists(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, false);
+	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
+	return 1;
+}
+
+static duk_ret_t
+js_FS_mkdir(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, NULL, false);
+	if (!sfs_mkdir(g_fs, name, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
+	return 0;
+}
+
+static duk_ret_t
+js_FS_open(duk_context* ctx)
+{
+	sfs_file_t* file;
+	const char* filename;
+	const char* mode;
+
+	filename = duk_require_path(ctx, 0, NULL, false);
+	mode = duk_require_string(ctx, 1);
+	file = sfs_fopen(g_fs, filename, NULL, mode);
+	if (file == NULL)
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
+	duk_push_sphere_obj(ctx, "FileStream", file);
+	return 1;
+}
+
+static duk_ret_t
+js_FS_rename(duk_context* ctx)
+{
+	const char* name1;
+	const char* name2;
+
+	name1 = duk_require_path(ctx, 0, NULL, false);
+	name2 = duk_require_path(ctx, 1, NULL, false);
+
+	if (!sfs_rename(g_fs, name1, name2, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
+	return 0;
+}
+
+static duk_ret_t
+js_FS_resolve(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, false);
+
+	duk_push_string(ctx, filename);
+	return 1;
+}
+
+static duk_ret_t
+js_FS_rmdir(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, NULL, false);
+	if (!sfs_rmdir(g_fs, name, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
+	return 0;
+}
+
+static duk_ret_t
+js_FS_unlink(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, false);
+	if (!sfs_unlink(g_fs, filename, NULL))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
+	return 0;
 }
 
 static duk_ret_t

@@ -373,7 +373,7 @@ duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 
 	index = duk_require_normalize_index(ctx, index);
 	if (!duk_is_sphere_obj(ctx, index, ctor_name))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "expected %s object", ctor_name);
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "%s object required", ctor_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata");
 	udata = duk_get_pointer(ctx, -1);
 	duk_pop(ctx);

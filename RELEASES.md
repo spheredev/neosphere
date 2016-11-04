@@ -11,6 +11,9 @@ minisphere 4.3
 * miniRT "struct" now provides `Reader` and `Writer` objects which work for
   both files and sockets.  Refer to the included miniRT API reference for more
   information.
+* The `fs` object has been renamed to `FS` to match other namespace-like
+  objects.  There's little reason for it to be treated as a concrete object
+  representing the file system, and doing so limits future extensibility.
 * The mostly redundant and non-standard `SSJ` functions have been removed from
   the API.  The "assert" module should be used for assertions, and
   `SSJ.trace()` can be replaced with `console.trace()` with no loss of
