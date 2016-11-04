@@ -539,20 +539,28 @@ MouseKey [enumeration]
         MouseKey.WheelUp
         MouseKey.WheelDown
 
-mouse.x [read-only]
-mouse.y [read-only]
+Mouse.Default [read-only]
+
+    Gets the default mouse device.
+
+    Note: minisphere currently only supports a single mouse.  Without that
+          support, multiple mice will just be treated as one by the operating
+          system.
+
+Mouse#x [read-only]
+Mouse#y [read-only]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
 
-mouse.clearQueue();
+Mouse#clearQueue();
 
-    Removes all events from the mouse event queue.  If another event is not
+    Removes all events from this mouse's event queue.  If another event is not
     received in the interim, the next getEvent() will return null.
 
-mouse.getEvent();
+Mouse#getEvent();
 
-    Gets the next event in the mouse event queue.  `null` is returned if the
+    Gets the next event in this mouse's event queue.  `null` is returned if the
     queue is empty.
 
     The object returned has the following properties:
@@ -568,7 +576,7 @@ mouse.getEvent();
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
 
-mouse.isPressed(key);
+Mouse#isPressed(key);
 
     Gets whether the specified mouse button is currently pressed.  `key` is one
     of the MouseKey constants listed above.

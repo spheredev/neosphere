@@ -207,11 +207,6 @@ static duk_ret_t js_keyboard_clearQueue        (duk_context* ctx);
 static duk_ret_t js_keyboard_getChar           (duk_context* ctx);
 static duk_ret_t js_keyboard_getKey            (duk_context* ctx);
 static duk_ret_t js_keyboard_isPressed         (duk_context* ctx);
-static duk_ret_t js_mouse_get_x                (duk_context* ctx);
-static duk_ret_t js_mouse_get_y                (duk_context* ctx);
-static duk_ret_t js_mouse_clearQueue           (duk_context* ctx);
-static duk_ret_t js_mouse_getEvent             (duk_context* ctx);
-static duk_ret_t js_mouse_isPressed            (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
@@ -270,6 +265,12 @@ static duk_ret_t js_new_Mixer                  (duk_context* ctx);
 static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
 static duk_ret_t js_Mixer_get_volume           (duk_context* ctx);
 static duk_ret_t js_Mixer_set_volume           (duk_context* ctx);
+static duk_ret_t js_Mouse_get_Default          (duk_context* ctx);
+static duk_ret_t js_Mouse_get_x                (duk_context* ctx);
+static duk_ret_t js_Mouse_get_y                (duk_context* ctx);
+static duk_ret_t js_Mouse_clearQueue           (duk_context* ctx);
+static duk_ret_t js_Mouse_getEvent             (duk_context* ctx);
+static duk_ret_t js_Mouse_isPressed            (duk_context* ctx);
 static duk_ret_t js_RNG_fromSeed               (duk_context* ctx);
 static duk_ret_t js_RNG_fromState              (duk_context* ctx);
 static duk_ret_t js_new_RNG                    (duk_context* ctx);
@@ -441,6 +442,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
 	api_define_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_define_property(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
+	api_define_type(ctx, "Mouse", NULL);
+	api_define_static_prop(ctx, "Mouse", "Default", js_Mouse_get_Default, NULL);
+	api_define_property(ctx, "Mouse", "x", js_Mouse_get_x, NULL);
+	api_define_property(ctx, "Mouse", "y", js_Mouse_get_y, NULL);
+	api_define_method(ctx, "Mouse", "clearQueue", js_Mouse_clearQueue);
+	api_define_method(ctx, "Mouse", "getEvent", js_Mouse_getEvent);
+	api_define_method(ctx, "Mouse", "isPressed", js_Mouse_isPressed);
 	api_define_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
 	api_define_function(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
@@ -524,11 +532,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "keyboard", "getChar", js_keyboard_getChar);
 	api_define_function(ctx, "keyboard", "getKey", js_keyboard_getKey);
 	api_define_function(ctx, "keyboard", "isPressed", js_keyboard_isPressed);
-	api_define_static_prop(ctx, "mouse", "x", js_mouse_get_x, NULL);
-	api_define_static_prop(ctx, "mouse", "y", js_mouse_get_y, NULL);
-	api_define_function(ctx, "mouse", "clearQueue", js_mouse_clearQueue);
-	api_define_function(ctx, "mouse", "getEvent", js_mouse_getEvent);
-	api_define_function(ctx, "mouse", "isPressed", js_mouse_isPressed);
 	api_define_object(ctx, NULL, "screen", "Surface", NULL);
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
@@ -1432,68 +1435,6 @@ js_keyboard_isPressed(duk_context* ctx)
 	keycode = duk_require_int(ctx, 0);
 
 	duk_push_boolean(ctx, kb_is_key_down(keycode));
-	return 1;
-}
-
-static duk_ret_t
-js_mouse_get_x(duk_context* ctx)
-{
-	int x;
-	int y;
-	
-	screen_get_mouse_xy(g_screen, &x, &y);
-	duk_push_int(ctx, x);
-	return 1;
-}
-
-static duk_ret_t
-js_mouse_get_y(duk_context* ctx)
-{
-	int x;
-	int y;
-
-	screen_get_mouse_xy(g_screen, &x, &y);
-	duk_push_int(ctx, y);
-	return 1;
-}
-
-static duk_ret_t
-js_mouse_clearQueue(duk_context* ctx)
-{
-	mouse_clear_queue();
-	return 0;
-}
-
-static duk_ret_t
-js_mouse_getEvent(duk_context* ctx)
-{
-	mouse_event_t event;
-
-	if (mouse_queue_len() == 0)
-		duk_push_null(ctx);
-	else {
-		event = mouse_get_event();
-		duk_push_object(ctx);
-		duk_push_int(ctx, event.key);
-		duk_put_prop_string(ctx, -2, "key");
-		duk_push_int(ctx, event.x);
-		duk_put_prop_string(ctx, -2, "x");
-		duk_push_int(ctx, event.y);
-		duk_put_prop_string(ctx, -2, "y");
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_mouse_isPressed(duk_context* ctx)
-{
-	mouse_key_t key;
-
-	key = duk_require_int(ctx, 0);
-	if (key < 0 || key >= MOUSE_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid MouseKey constant");
-
-	duk_push_boolean(ctx, mouse_is_key_down(key));
 	return 1;
 }
 
@@ -2428,6 +2369,100 @@ js_Mixer_set_volume(duk_context* ctx)
 
 	mixer_set_gain(mixer, volume);
 	return 0;
+}
+
+static duk_ret_t
+js_Mouse_get_Default(duk_context* ctx)
+{
+	duk_push_sphere_obj(ctx, "Mouse", NULL);
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Default");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
+	return 1;
+}
+
+static duk_ret_t
+js_Mouse_get_x(duk_context* ctx)
+{
+	int x;
+	int y;
+
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Mouse");
+	
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, x);
+	return 1;
+}
+
+static duk_ret_t
+js_Mouse_get_y(duk_context* ctx)
+{
+	int x;
+	int y;
+
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Mouse");
+
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_Mouse_clearQueue(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Mouse");
+
+	mouse_clear_queue();
+	return 0;
+}
+
+static duk_ret_t
+js_Mouse_getEvent(duk_context* ctx)
+{
+	mouse_event_t event;
+
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Mouse");
+
+	if (mouse_queue_len() == 0)
+		duk_push_null(ctx);
+	else {
+		event = mouse_get_event();
+		duk_push_object(ctx);
+		duk_push_int(ctx, event.key);
+		duk_put_prop_string(ctx, -2, "key");
+		duk_push_int(ctx, event.x);
+		duk_put_prop_string(ctx, -2, "x");
+		duk_push_int(ctx, event.y);
+		duk_put_prop_string(ctx, -2, "y");
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_Mouse_isPressed(duk_context* ctx)
+{
+	mouse_key_t key;
+
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Mouse");
+
+	key = duk_require_int(ctx, 0);
+	if (key < 0 || key >= MOUSE_KEY_MAX)
+		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid MouseKey constant");
+
+	duk_push_boolean(ctx, mouse_is_key_down(key));
+	return 1;
 }
 
 static duk_ret_t
