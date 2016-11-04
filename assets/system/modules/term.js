@@ -18,6 +18,8 @@ const prim    = require('prim');
 const scenes  = require('scenes');
 const threads = require('threads');
 
+var keyboard = Keyboard.Default;
+var mouse = Mouse.Default;
 var font = Font.Default;
 var nextLine = 0;
 var numLines = 0;

@@ -440,32 +440,37 @@ Key [enumeration]
     below the function keys, while NumPad0-NumPad9 refer to the numbers on the
     numeric keypad.
 
-keyboard.capsLock [read-only]
-keyboard.numLock [read-only]
-keyboard.scrollLock [read-only]
+Keyboard.Default [read-only]
+
+    Gets the default keyboard device.  minisphere currently only supports a
+    single keyboard.
+
+Keyboard#capsLock [read-only]
+Keyboard#numLock [read-only]
+Keyboard#scrollLock [read-only]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
-keyboard.clearQueue();
+Keyboard#clearQueue();
 
     Removes all keys from the keyboard queue.  If another key is not pressed
     in the interim, the next getKey() will return null.
 
-keyboard.getChar(key, shifted);
+Keyboard#getChar(key, shifted);
 
-    Gets the character(s) that would be generated if a specified key is
-    pressed.  For example, Key.A becomes "a" (or "A" if shifted).  `shifted`
-    specifies whether to assume the Shift key is pressed.
+    Gets the character(s) that would be generated if a specified key is pressed
+    on this keyboard.  For example, Key.A becomes "a" (or "A" if shifted).
+    `shifted` specifies whether to assume the Shift key is pressed.
 
     An empty string is returned if the specified key is not associated with a
     character (a modifier key, for example).
 
-keyboard.getKey();
+Keyboard#getKey();
 
     Gets the next key in the keyboard queue, or null if the queue is empty.
 
-keyboard.isPressed(key);
+Keyboard#isPressed(key);
 
     Returns true if the user is currently pressing the specified key.  `key`
     should be a member of the Key enumeration.
@@ -541,11 +546,8 @@ MouseKey [enumeration]
 
 Mouse.Default [read-only]
 
-    Gets the default mouse device.
-
-    Note: minisphere currently only supports a single mouse.  Without that
-          support, multiple mice will just be treated as one by the operating
-          system.
+    Gets the default mouse device.  minisphere currently only supports a single
+    mouse.
 
 Mouse#x [read-only]
 Mouse#y [read-only]

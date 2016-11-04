@@ -200,13 +200,14 @@ static duk_ret_t js_console_info               (duk_context* ctx);
 static duk_ret_t js_console_log                (duk_context* ctx);
 static duk_ret_t js_console_trace              (duk_context* ctx);
 static duk_ret_t js_console_warn               (duk_context* ctx);
-static duk_ret_t js_keyboard_get_capsLock      (duk_context* ctx);
-static duk_ret_t js_keyboard_get_numLock       (duk_context* ctx);
-static duk_ret_t js_keyboard_get_scrollLock    (duk_context* ctx);
-static duk_ret_t js_keyboard_clearQueue        (duk_context* ctx);
-static duk_ret_t js_keyboard_getChar           (duk_context* ctx);
-static duk_ret_t js_keyboard_getKey            (duk_context* ctx);
-static duk_ret_t js_keyboard_isPressed         (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_Default       (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_capsLock      (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_numLock       (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_scrollLock    (duk_context* ctx);
+static duk_ret_t js_Keyboard_clearQueue        (duk_context* ctx);
+static duk_ret_t js_Keyboard_getChar           (duk_context* ctx);
+static duk_ret_t js_Keyboard_getKey            (duk_context* ctx);
+static duk_ret_t js_Keyboard_isPressed         (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
@@ -439,6 +440,15 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
 	api_define_method(ctx, "Joystick", "getPosition", js_Joystick_getPosition);
 	api_define_method(ctx, "Joystick", "isPressed", js_Joystick_isPressed);
+	api_define_type(ctx, "Keyboard", NULL);
+	api_define_static_prop(ctx, "Keyboard", "Default", js_Keyboard_get_Default, NULL);
+	api_define_property(ctx, "Keyboard", "capsLock", js_Keyboard_get_capsLock, NULL);
+	api_define_property(ctx, "Keyboard", "numLock", js_Keyboard_get_numLock, NULL);
+	api_define_property(ctx, "Keyboard", "scrollLock", js_Keyboard_get_scrollLock, NULL);
+	api_define_method(ctx, "Keyboard", "clearQueue", js_Keyboard_clearQueue);
+	api_define_method(ctx, "Keyboard", "getChar", js_Keyboard_getChar);
+	api_define_method(ctx, "Keyboard", "getKey", js_Keyboard_getKey);
+	api_define_method(ctx, "Keyboard", "isPressed", js_Keyboard_isPressed);
 	api_define_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
 	api_define_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_define_property(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
@@ -525,13 +535,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "console", "log", js_console_log);
 	api_define_function(ctx, "console", "trace", js_console_trace);
 	api_define_function(ctx, "console", "warn", js_console_warn);
-	api_define_static_prop(ctx, "keyboard", "capsLock", js_keyboard_get_capsLock, NULL);
-	api_define_static_prop(ctx, "keyboard", "numLock", js_keyboard_get_numLock, NULL);
-	api_define_static_prop(ctx, "keyboard", "scrollLock", js_keyboard_get_scrollLock, NULL);
-	api_define_function(ctx, "keyboard", "clearQueue", js_keyboard_clearQueue);
-	api_define_function(ctx, "keyboard", "getChar", js_keyboard_getChar);
-	api_define_function(ctx, "keyboard", "getKey", js_keyboard_getKey);
-	api_define_function(ctx, "keyboard", "isPressed", js_keyboard_isPressed);
 	api_define_object(ctx, NULL, "screen", "Surface", NULL);
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
@@ -1319,123 +1322,6 @@ js_console_warn(duk_context* ctx)
 
 	debug_print(duk_get_string(ctx, -1), PRINT_WARN, true);
 	return 0;
-}
-
-static duk_ret_t
-js_keyboard_get_capsLock(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
-	return 1;
-}
-
-static duk_ret_t
-js_keyboard_get_numLock(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_NUMLOCK));
-	return 1;
-}
-
-static duk_ret_t
-js_keyboard_get_scrollLock(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_SCROLLLOCK));
-	return 1;
-}
-
-static duk_ret_t
-js_keyboard_clearQueue(duk_context* ctx)
-{
-	kb_clear_queue();
-	return 0;
-}
-
-static duk_ret_t
-js_keyboard_getChar(duk_context* ctx)
-{
-	int  keycode;
-	int  num_args;
-	bool shifted;
-
-	num_args = duk_get_top(ctx);
-	keycode = duk_require_int(ctx, 0);
-	shifted = num_args >= 2 ? duk_require_boolean(ctx, 1)
-		: false;
-
-	switch (keycode) {
-	case ALLEGRO_KEY_A: duk_push_string(ctx, shifted ? "A" : "a"); break;
-	case ALLEGRO_KEY_B: duk_push_string(ctx, shifted ? "B" : "b"); break;
-	case ALLEGRO_KEY_C: duk_push_string(ctx, shifted ? "C" : "c"); break;
-	case ALLEGRO_KEY_D: duk_push_string(ctx, shifted ? "D" : "d"); break;
-	case ALLEGRO_KEY_E: duk_push_string(ctx, shifted ? "E" : "e"); break;
-	case ALLEGRO_KEY_F: duk_push_string(ctx, shifted ? "F" : "f"); break;
-	case ALLEGRO_KEY_G: duk_push_string(ctx, shifted ? "G" : "g"); break;
-	case ALLEGRO_KEY_H: duk_push_string(ctx, shifted ? "H" : "h"); break;
-	case ALLEGRO_KEY_I: duk_push_string(ctx, shifted ? "I" : "i"); break;
-	case ALLEGRO_KEY_J: duk_push_string(ctx, shifted ? "J" : "j"); break;
-	case ALLEGRO_KEY_K: duk_push_string(ctx, shifted ? "K" : "k"); break;
-	case ALLEGRO_KEY_L: duk_push_string(ctx, shifted ? "L" : "l"); break;
-	case ALLEGRO_KEY_M: duk_push_string(ctx, shifted ? "M" : "m"); break;
-	case ALLEGRO_KEY_N: duk_push_string(ctx, shifted ? "N" : "n"); break;
-	case ALLEGRO_KEY_O: duk_push_string(ctx, shifted ? "O" : "o"); break;
-	case ALLEGRO_KEY_P: duk_push_string(ctx, shifted ? "P" : "p"); break;
-	case ALLEGRO_KEY_Q: duk_push_string(ctx, shifted ? "Q" : "q"); break;
-	case ALLEGRO_KEY_R: duk_push_string(ctx, shifted ? "R" : "r"); break;
-	case ALLEGRO_KEY_S: duk_push_string(ctx, shifted ? "S" : "s"); break;
-	case ALLEGRO_KEY_T: duk_push_string(ctx, shifted ? "T" : "t"); break;
-	case ALLEGRO_KEY_U: duk_push_string(ctx, shifted ? "U" : "u"); break;
-	case ALLEGRO_KEY_V: duk_push_string(ctx, shifted ? "V" : "v"); break;
-	case ALLEGRO_KEY_W: duk_push_string(ctx, shifted ? "W" : "w"); break;
-	case ALLEGRO_KEY_X: duk_push_string(ctx, shifted ? "X" : "x"); break;
-	case ALLEGRO_KEY_Y: duk_push_string(ctx, shifted ? "Y" : "y"); break;
-	case ALLEGRO_KEY_Z: duk_push_string(ctx, shifted ? "Z" : "z"); break;
-	case ALLEGRO_KEY_1: duk_push_string(ctx, shifted ? "!" : "1"); break;
-	case ALLEGRO_KEY_2: duk_push_string(ctx, shifted ? "@" : "2"); break;
-	case ALLEGRO_KEY_3: duk_push_string(ctx, shifted ? "#" : "3"); break;
-	case ALLEGRO_KEY_4: duk_push_string(ctx, shifted ? "$" : "4"); break;
-	case ALLEGRO_KEY_5: duk_push_string(ctx, shifted ? "%" : "5"); break;
-	case ALLEGRO_KEY_6: duk_push_string(ctx, shifted ? "^" : "6"); break;
-	case ALLEGRO_KEY_7: duk_push_string(ctx, shifted ? "&" : "7"); break;
-	case ALLEGRO_KEY_8: duk_push_string(ctx, shifted ? "*" : "8"); break;
-	case ALLEGRO_KEY_9: duk_push_string(ctx, shifted ? "(" : "9"); break;
-	case ALLEGRO_KEY_0: duk_push_string(ctx, shifted ? ")" : "0"); break;
-	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shifted ? "|" : "\\"); break;
-	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shifted ? ">" : "."); break;
-	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shifted ? "}" : "]"); break;
-	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shifted ? "<" : ","); break;
-	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shifted ? "+" : "="); break;
-	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shifted ? "_" : "-"); break;
-	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shifted ? "\"" : "'"); break;
-	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shifted ? "{" : "["); break;
-	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shifted ? ":" : ";"); break;
-	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shifted ? "?" : "/"); break;
-	case ALLEGRO_KEY_SPACE: duk_push_string(ctx, " "); break;
-	case ALLEGRO_KEY_TAB: duk_push_string(ctx, "\t"); break;
-	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shifted ? "~" : "`"); break;
-	default:
-		duk_push_string(ctx, "");
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_keyboard_getKey(duk_context* ctx)
-{
-	if (kb_queue_len() > 0)
-		duk_push_int(ctx, kb_get_key());
-	else
-		duk_push_null(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_keyboard_isPressed(duk_context* ctx)
-{
-	int keycode;
-
-	keycode = duk_require_int(ctx, 0);
-
-	duk_push_boolean(ctx, kb_is_key_down(keycode));
-	return 1;
 }
 
 static duk_ret_t
@@ -2295,6 +2181,159 @@ js_Joystick_isPressed(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick button ID out of range");
 
 	duk_push_boolean(ctx, joy_is_button_down(*device, index));
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_get_Default(duk_context* ctx)
+{
+	duk_push_sphere_obj(ctx, "Keyboard", NULL);
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Default");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_get_capsLock(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+	
+	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_get_numLock(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+
+	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_NUMLOCK));
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_get_scrollLock(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+
+	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_SCROLLLOCK));
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_clearQueue(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+
+	kb_clear_queue();
+	return 0;
+}
+
+static duk_ret_t
+js_Keyboard_getChar(duk_context* ctx)
+{
+	int  keycode;
+	int  num_args;
+	bool shifted;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+	keycode = duk_require_int(ctx, 0);
+	shifted = num_args >= 2 ? duk_require_boolean(ctx, 1)
+		: false;
+
+	switch (keycode) {
+	case ALLEGRO_KEY_A: duk_push_string(ctx, shifted ? "A" : "a"); break;
+	case ALLEGRO_KEY_B: duk_push_string(ctx, shifted ? "B" : "b"); break;
+	case ALLEGRO_KEY_C: duk_push_string(ctx, shifted ? "C" : "c"); break;
+	case ALLEGRO_KEY_D: duk_push_string(ctx, shifted ? "D" : "d"); break;
+	case ALLEGRO_KEY_E: duk_push_string(ctx, shifted ? "E" : "e"); break;
+	case ALLEGRO_KEY_F: duk_push_string(ctx, shifted ? "F" : "f"); break;
+	case ALLEGRO_KEY_G: duk_push_string(ctx, shifted ? "G" : "g"); break;
+	case ALLEGRO_KEY_H: duk_push_string(ctx, shifted ? "H" : "h"); break;
+	case ALLEGRO_KEY_I: duk_push_string(ctx, shifted ? "I" : "i"); break;
+	case ALLEGRO_KEY_J: duk_push_string(ctx, shifted ? "J" : "j"); break;
+	case ALLEGRO_KEY_K: duk_push_string(ctx, shifted ? "K" : "k"); break;
+	case ALLEGRO_KEY_L: duk_push_string(ctx, shifted ? "L" : "l"); break;
+	case ALLEGRO_KEY_M: duk_push_string(ctx, shifted ? "M" : "m"); break;
+	case ALLEGRO_KEY_N: duk_push_string(ctx, shifted ? "N" : "n"); break;
+	case ALLEGRO_KEY_O: duk_push_string(ctx, shifted ? "O" : "o"); break;
+	case ALLEGRO_KEY_P: duk_push_string(ctx, shifted ? "P" : "p"); break;
+	case ALLEGRO_KEY_Q: duk_push_string(ctx, shifted ? "Q" : "q"); break;
+	case ALLEGRO_KEY_R: duk_push_string(ctx, shifted ? "R" : "r"); break;
+	case ALLEGRO_KEY_S: duk_push_string(ctx, shifted ? "S" : "s"); break;
+	case ALLEGRO_KEY_T: duk_push_string(ctx, shifted ? "T" : "t"); break;
+	case ALLEGRO_KEY_U: duk_push_string(ctx, shifted ? "U" : "u"); break;
+	case ALLEGRO_KEY_V: duk_push_string(ctx, shifted ? "V" : "v"); break;
+	case ALLEGRO_KEY_W: duk_push_string(ctx, shifted ? "W" : "w"); break;
+	case ALLEGRO_KEY_X: duk_push_string(ctx, shifted ? "X" : "x"); break;
+	case ALLEGRO_KEY_Y: duk_push_string(ctx, shifted ? "Y" : "y"); break;
+	case ALLEGRO_KEY_Z: duk_push_string(ctx, shifted ? "Z" : "z"); break;
+	case ALLEGRO_KEY_1: duk_push_string(ctx, shifted ? "!" : "1"); break;
+	case ALLEGRO_KEY_2: duk_push_string(ctx, shifted ? "@" : "2"); break;
+	case ALLEGRO_KEY_3: duk_push_string(ctx, shifted ? "#" : "3"); break;
+	case ALLEGRO_KEY_4: duk_push_string(ctx, shifted ? "$" : "4"); break;
+	case ALLEGRO_KEY_5: duk_push_string(ctx, shifted ? "%" : "5"); break;
+	case ALLEGRO_KEY_6: duk_push_string(ctx, shifted ? "^" : "6"); break;
+	case ALLEGRO_KEY_7: duk_push_string(ctx, shifted ? "&" : "7"); break;
+	case ALLEGRO_KEY_8: duk_push_string(ctx, shifted ? "*" : "8"); break;
+	case ALLEGRO_KEY_9: duk_push_string(ctx, shifted ? "(" : "9"); break;
+	case ALLEGRO_KEY_0: duk_push_string(ctx, shifted ? ")" : "0"); break;
+	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shifted ? "|" : "\\"); break;
+	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shifted ? ">" : "."); break;
+	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shifted ? "}" : "]"); break;
+	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shifted ? "<" : ","); break;
+	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shifted ? "+" : "="); break;
+	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shifted ? "_" : "-"); break;
+	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shifted ? "\"" : "'"); break;
+	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shifted ? "{" : "["); break;
+	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shifted ? ":" : ";"); break;
+	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shifted ? "?" : "/"); break;
+	case ALLEGRO_KEY_SPACE: duk_push_string(ctx, " "); break;
+	case ALLEGRO_KEY_TAB: duk_push_string(ctx, "\t"); break;
+	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shifted ? "~" : "`"); break;
+	default:
+		duk_push_string(ctx, "");
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_getKey(duk_context* ctx)
+{
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+
+	if (kb_queue_len() > 0)
+		duk_push_int(ctx, kb_get_key());
+	else
+		duk_push_null(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_Keyboard_isPressed(duk_context* ctx)
+{
+	int keycode;
+
+	duk_push_this(ctx);
+	duk_require_sphere_obj(ctx, -1, "Keyboard");
+	keycode = duk_require_int(ctx, 0);
+
+	duk_push_boolean(ctx, kb_is_key_down(keycode));
 	return 1;
 }
 
