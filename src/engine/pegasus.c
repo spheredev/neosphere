@@ -226,7 +226,7 @@ static duk_ret_t js_Color_fade                 (duk_context* ctx);
 static duk_ret_t js_Dispatch_cancel            (duk_context* ctx);
 static duk_ret_t js_Dispatch_later             (duk_context* ctx);
 static duk_ret_t js_Dispatch_now               (duk_context* ctx);
-static duk_ret_t js_Dispatch_onFlip            (duk_context* ctx);
+static duk_ret_t js_Dispatch_onRender          (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
 static duk_ret_t js_FS_exists                  (duk_context* ctx);
 static duk_ret_t js_FS_mkdir                   (duk_context* ctx);
@@ -402,7 +402,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Dispatch", "cancel", js_Dispatch_cancel);
 	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);
 	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
-	api_define_function(ctx, "Dispatch", "onFlip", js_Dispatch_onFlip);
+	api_define_function(ctx, "Dispatch", "onRender", js_Dispatch_onRender);
 	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
 	api_define_type(ctx, "FileStream", js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "fileName", js_FileStream_get_fileName, NULL);
@@ -1138,14 +1138,17 @@ js_Dispatch_now(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Dispatch_onFlip(duk_context* ctx)
+js_Dispatch_onRender(duk_context* ctx)
 {
+	int       num_args;
 	double    priority;
 	script_t* script;
 	int64_t   token;
 
-	priority = duk_require_number(ctx, 0);
-	script = duk_require_sphere_script(ctx, 1, "synth:onFlip.js");
+	num_args = duk_get_top(ctx);
+	script = duk_require_sphere_script(ctx, 0, "synth:onRender.js");
+	priority = num_args >= 2 ? duk_require_number(ctx, 1)
+		: 0.0;
 
 	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");

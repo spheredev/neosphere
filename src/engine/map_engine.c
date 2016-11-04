@@ -1490,9 +1490,10 @@ update_map_engine(bool is_main_loop)
 			script_to_run = s_delay_scripts[i].script;
 			for (j = i; j < s_num_delay_scripts - 1; ++j)
 				s_delay_scripts[j] = s_delay_scripts[j + 1];
-			--s_num_delay_scripts; --i;
+			--s_num_delay_scripts;
 			run_script(script_to_run, false);
 			free_script(script_to_run);
+			--i;
 		}
 	}
 	

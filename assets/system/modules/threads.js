@@ -20,7 +20,7 @@ var haveMapEngine = typeof MapEngine === 'function';
 var nextThreadID = 1;
 var threads = [];
 Dispatch.onUpdate(_updateAll);
-Dispatch.onFlip(0.0, _renderAll);
+Dispatch.onRender(_renderAll);
 
 function create(entity, priority)
 {
