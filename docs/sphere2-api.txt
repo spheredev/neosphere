@@ -245,7 +245,7 @@ Dispatch.later(timeout, fn);
 
     Returns a JobToken for use with Dispatch.cancel().
 
-Dispatch.onRender(fn, priority);
+Dispatch.onRender(fn[, priority]);
 Dispatch.onUpdate(fn);
 
     Sets up a recurring job to call `fn` from a given part of the event loop.
@@ -254,7 +254,10 @@ Dispatch.onUpdate(fn);
 
     For onRender jobs, `priority` affects the order of calls when there is more
     than one job.  Jobs are performed in ascending priority order, so that the
-    highest-priority render appears visually "on top".
+    highest-priority render appears visually "on top".  If no priority is
+    given, it defaults to 0.0.  Render priority can be negative and fractional
+    priorities are honored: 8.12 is considered a higher priority than 8, for
+    example.
 
     Returns a JobToken for use with Dispatch.cancel().
 
