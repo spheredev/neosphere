@@ -4,9 +4,9 @@ minisphere Changelog
 v4.3.0 - TBD
 ------------
 
-* Adds a new API for setting up cancellable async jobs.  Jobs can now be called
-  from a designated part of the event loop; for example, `Dispatch.onFlip()`
-  jobs are processed just before flipping the backbuffer.
+* Adds the Dispatch API for setting up asynchronous jobs.  Jobs are called from
+  designated parts of the event loop; for example, `Dispatch.onUpdate()` jobs
+  are processed at the start of a frame.
 * Adds support for the JavaScript Reflect API.
 * Adds native support for JavaScript Promises via a polyfill.
 * Adds `struct.Reader` and `struct.Writer` which allow games to read and write
@@ -21,8 +21,7 @@ v4.3.0 - TBD
   now be fully playable.
 * Updates error messages to be more concise, making it clearer what went wrong
   at a quick glance.
-* miniRT no longer commandeers the Sphere v1 update and render scripts for
-  itself.
+* miniRT no longer commandeers Sphere v1 update and render scripts for itself.
 * When debugging with Sphere Studio, the gold "ssj" watermark in the bottom
   right is changed to blue to more easily distinguish interactive debugging
   sessions from command-line sessions.

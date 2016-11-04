@@ -80,7 +80,7 @@ void feed_cow     (int num_cats, bool eat_pig);
 bool feed_gorilla (bool eat_cow, bool eat_universe);
 ```
 
-Don't try to line up individual parameters, it would be a mess.
+Don't try to line up individual parameters, it ends up being a mess.
 
 Variable Declarations
 ---------------------
@@ -114,25 +114,25 @@ Indentation
 -----------
 
 Use tabs for indentation, not spaces.  OCD notwithstanding, I don't generally
-obsess over the "proper" number of spaces to use for indentation.  Better to use
-tabs and let everyone choose their own preferred indent size.
+obsess over the "proper" number of spaces to use for indentation.  Better to
+use tabs and let everyone choose their own preferred indent size.
 
 Use of Typecasts
 ----------------
 
 Keep typecasting to a minimum.  If the compiler warns you about storing the
-value of a wider type into a narrower one (`int64_t` -> `int`, for instance), it
-might be worth rethinking your approach.  Don't blindly add casts to shut the
-compiler up; not only does that make the code more difficult to read, but it can
-easily hide bugs.
+value of a wider type into a narrower one (`int64_t` -> `int`, for instance),
+it might be worth rethinking your approach.  Don't blindly add casts to shut
+the compiler up; not only does that make the code more difficult to read, but
+it can easily hide bugs.
 
 Const Correctness
 -----------------
 
 Try to maintain const correctness at all times.  It's nearly always the wrong
-solution to cast away constness: If a function returns a const pointer, the
-pointer is const for a reason.  Fail to respect that and things may just blow up
-in your face!
+solution to cast away constness: If a function returns a const pointer, it's
+const for a reason.  Fail to respect that and things may just blow up in your
+face! (or eat you...)
 
 Pull Requests
 -------------
@@ -144,15 +144,16 @@ be edited for style before the changes are merged.
 Commit Etiquette
 ----------------
 
-* Commit titles should be written in the imperative ("Fix the hunger-pig bug")
-  and, if possible, descriptions in the simple present tense ("Fixes a bug where
-  a hunger-pig eats you in 2 seconds"). If you have a copy of the repository and
-  apply a commit, the commit message should describe what will happen to your
-  copy. Note that I'm more worried about the title than the body: Past-tense
-  commit titles (e.g. "Fixed X bug") suggest retroactivity and are thus more
-  confusing to work with. Avoid them.
+* Commit titles should be written in the imperative ("Fix the hunger-pig bug"),
+  and, if possible, descriptions in the past tense ("Fixed a bug where a
+  hunger-pig eats you in 2 seconds").  The idea is for the commit title to
+  describe what _will_ happen to your copy of the source if you apply it.  Note
+  that I'm more worried about the title than the body: Past-tense commit titles
+  (e.g. "Fixed X bug") suggest retroactivity and are thus more confusing to
+  work with. Avoid them.
 
-* Avoid logging commits with only non-functional changes. Too many of these make
-  bisection (using `git bisect`) harder as it adds extra noise to the process.
-  Again, I will edit pull requests for style before merging them, so extra
-  commits to fix whitespace, etc. are entirely redundant.
+* Try to avoid logging commits with only non-functional changes. Too many of
+  these make bisection (using `git bisect`) harder as it adds extra noise to
+  the process.  Again, I will edit pull requests for style before merging them,
+  so extra commits to fix whitespace, etc. are entirely redundant.  If you must
+  do this, squash them afterwards.
