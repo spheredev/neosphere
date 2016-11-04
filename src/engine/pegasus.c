@@ -1165,12 +1165,17 @@ js_Dispatch_onRender(duk_context* ctx)
 static duk_ret_t
 js_Dispatch_onUpdate(duk_context* ctx)
 {
+	int       num_args;
+	double    priority;
 	script_t* script;
 	int64_t   token;
 
+	num_args = duk_get_top(ctx);
 	script = duk_require_sphere_script(ctx, 0, "synth:onUpdate.js");
+	priority = num_args >= 2 ? duk_require_number(ctx, 1)
+		: 0.0;
 
-	if (!(token = async_recur(script, 0.0, ASYNC_UPDATE)))
+	if (!(token = async_recur(script, priority, ASYNC_UPDATE)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;

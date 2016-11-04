@@ -15,6 +15,9 @@ v4.3.0 - TBD
   the canonicalized name of the file the object was loaded from.
 * Adds `assert()` as an alias for `assert.ok()`, like in Node.js.
 * Renames the `fs` global object to `FS` to match other namespace-like objects.
+* Renames `mouse` to `Mouse.Default` to allow future support for multiple mice.
+* Renames `keyboard` to `Keyboard.Default` to allow future support for multiple
+  keyboards.
 * Removes the superfluous `SSJ` functions from the API.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, should
