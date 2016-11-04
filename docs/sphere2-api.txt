@@ -603,7 +603,7 @@ screen [global variable]
 screen.frameRate [read/write]
 
     Gets or sets the framerate used to regulate `screen.flip()` (see below).
-    Set this to 0 for unthrottled rendering.
+    Set this to Infinity for unthrottled rendering.
 
 screen.width [read-only]
 screen.height [read-only]

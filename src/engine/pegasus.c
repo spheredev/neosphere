@@ -1332,20 +1332,25 @@ js_console_warn(duk_context* ctx)
 static duk_ret_t
 js_screen_get_frameRate(duk_context* ctx)
 {
-	duk_push_int(ctx, s_framerate);
+	// as far as Sphere v2 code is concerned, unthrottled = infinity.
+	// internally however it's stored as 0, so we need to translate.
+	duk_push_number(ctx, s_framerate > 0 ? s_framerate : INFINITY);
 	return 1;
 }
 
 static duk_ret_t
 js_screen_set_frameRate(duk_context* ctx)
 {
-	int framerate;
+	double framerate;
 
-	framerate = duk_require_int(ctx, 0);
+	framerate = duk_require_number(ctx, 0);
 
-	if (framerate < 0)
+	if (framerate < 1.0)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
-	s_framerate = framerate;
+	if (framerate != INFINITY)
+		s_framerate = framerate;
+	else
+		s_framerate = 0;  // unthrottled
 	return 0;
 }
 
