@@ -43,7 +43,7 @@ evaluate_script(const char* filename, bool as_module)
 	lstring_t*     source_text = NULL;
 	char*          slurp;
 	size_t         size;
-	
+
 	if (as_module) {
 		// the existence check here is needed because eval_module() will segfault if the
 		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
