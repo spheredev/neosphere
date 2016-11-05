@@ -19,6 +19,7 @@ v4.3.0 - TBD
 * Renames `keyboard` to `Keyboard.Default` to allow future support for multiple
   keyboards.
 * Removes the superfluous `SSJ` functions from the API.
+* Fixes several bugs discovered since minisphere 4.2.4 was released.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, should
   now be fully playable.
