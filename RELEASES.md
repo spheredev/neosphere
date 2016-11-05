@@ -4,23 +4,29 @@ Release Notes
 minisphere 4.3
 --------------
 
-* This release introduces a new Dispatch API which allows functions to be
-  called asynchronously from the event loop.  Calls may either be performed on
-  a time delay, or once per frame.  Refer to the included Sphere v2 API
-  reference for more information.
+* The new Dispatch API allows functions to be called asynchronously from the
+  event loop.  Calls may either be performed on the next tick, on a time delay,
+  or once per frame.  Refer to the included Sphere v2 API reference for more
+  information.
 * miniRT "struct" now provides `Reader` and `Writer` objects which work for
   both files and sockets.  Refer to the included miniRT API reference for more
   information.
+* `screen.frameRate` will no longer accept `0` as a valid value.  It must now
+  be set to `Infinity` to disable the frame limiter.
 * The `fs` object has been renamed to `FS` to match other namespace-like
   objects.  There's little reason for it to be treated as a concrete object
   representing the file system, and doing so limits future extensibility.
+* The `mouse` and `keyboard` global variables have been removed and are now
+  exposed as `Mouse.Default` and `Keyboard.Default`, respectively.  This will
+  allow support for multiple keyboards and mice to be implemented in the future
+  without a breaking API change.
 * The mostly redundant and non-standard `SSJ` functions have been removed from
-  the API.  The "assert" module should be used for assertions, and
-  `SSJ.trace()` can be replaced with `console.trace()` with no loss of
+  the API.  Going forward, the "assert" module should be used for assertions,
+  and `SSJ.trace()` can be replaced with `console.trace()` with no loss of
   functionality.
 * Promises are now supported natively through a polyfill.  miniRT "pact" may
   still be useful to manage promises, but this allows them to be used without
-  it if that's desired.
+  a pact if that's desired.
 * File-based objects such as `Image` and `Sound` now expose a `.fileName`
   property which allows access to the canonicalized SphereFS filename used to
   construct the object.  This may be useful in certain encapsulation scenarios.
