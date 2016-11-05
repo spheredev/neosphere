@@ -6,7 +6,6 @@
 'use strict';
 module.exports =
 {
-	Enum:   Enum,
 	Reader: Reader,
 	Writer: Writer,
 };
@@ -63,8 +62,13 @@ function Reader(stream)
 	{
 		assert.equal(typeof length, 'number');
 
-		var data = m_stream.read(length);
-		return m_decoder.decode(data);
+		var bytes = m_stream.read(length);
+		var string = m_decoder.decode(bytes);
+		var nulIndex = string.indexOf('\0');
+		if (nulIndex !== -1)
+			return string.substring(0, nulIndex);
+		else
+			return string;
 	}
 
 	this.readString8 = m_readString8;
@@ -93,11 +97,43 @@ function Reader(stream)
 	}
 
 	this.readStruct = m_readStruct;
-	function m_readStruct(schema)
+	function m_readStruct(desc)
 	{
-		assert(Array.isArray(schema), "array expected");
+		_checkStructDescriptor(desc);
 
-		return _readObject(m_stream, schema, null);
+		var keys = Reflect.ownKeys(desc);
+		var object = {};
+		for (var i = 0; i < keys.length; ++i) {
+			var key = keys[i];
+			var fieldDesc = desc[key];
+			var value;
+			switch (fieldDesc.type) {
+				case 'bool': value = m_readUint8() != 0; break;
+				case 'float32be': value = m_readFloat32(); break;
+				case 'float32le': value = m_readFloat32(true); break;
+				case 'float64be': value = m_readFloat64(); break;
+				case 'float64le': value = m_readFloat64(true); break;
+				case 'int8': value = m_readInt8(); break;
+				case 'int16be': value = m_readInt16(); break;
+				case 'int16le': value = m_readInt16(true); break;
+				case 'int32be': value = m_readInt32(); break;
+				case 'int32le': value = m_readInt32(true); break;
+				case 'uint8': value = m_readUint8(); break;
+				case 'uint16be': value = m_readUint16(); break;
+				case 'uint16le': value = m_readUint16(true); break;
+				case 'uint32be': value = m_readUint32(); break;
+				case 'uint32le': value = m_readUint32(true); break;
+				case 'fstring': value = m_readString(fieldDesc.length); break;
+				case 'lstr8': value = m_readString8(); break;
+				case 'lstr16be': value = m_readString16(); break;
+				case 'lstr16le': value = m_readString16(true); break;
+				case 'lstr32be': value = m_readString32(); break;
+				case 'lstr32le': value = m_readString32(true); break;
+				case 'raw': value = m_stream.read(fieldDesc.size); break;
+			}
+			object[key] = value;
+		}
+		return object;
 	}
 
 	this.readUint8 = m_readUint8
@@ -182,40 +218,43 @@ function Writer(stream)
 	}
 
 	this.writeString = m_writeString;
-	function m_writeString(string)
+	function m_writeString(value, length)
 	{
 		assert.equal(typeof value, 'string');
+		assert.equal(typeof length, 'number');
 
-		var bytes = m_encoder.encode(string);
-		m_stream.write(dv);
+		var encoded = m_encoder.encode(value);
+		var bytes = new Uint8Array(length);
+		bytes.set(encoded.subarray(0, length));
+		m_stream.write(bytes);
 	}
 
 	this.writeString8 = m_writeString8;
-	function m_writeString8(string)
+	function m_writeString8(value)
 	{
 		assert.equal(typeof value, 'string');
 
-		var bytes = m_encoder.encode(string);
+		var bytes = m_encoder.encode(value);
 		m_writeUint8(bytes.length);
 		m_stream.write(bytes);
 	}
 
 	this.writeString16 = m_writeString16;
-	function m_writeString16(string, littleEndian)
+	function m_writeString16(value, littleEndian)
 	{
 		assert.equal(typeof value, 'string');
 
-		var bytes = m_encoder.encode(string);
+		var bytes = m_encoder.encode(value);
 		m_writeUint16(bytes.length, littleEndian);
 		m_stream.write(bytes);
 	}
 
 	this.writeString32 = m_writeString32;
-	function m_writeString32(string, littleEndian)
+	function m_writeString32(value, littleEndian)
 	{
 		assert.equal(typeof value, 'string');
 
-		var bytes = m_encoder.encode(string);
+		var bytes = m_encoder.encode(value);
 		m_writeUint32(bytes.length, littleEndian);
 		m_stream.write(bytes);
 	}
@@ -223,11 +262,15 @@ function Writer(stream)
 	this.writeStruct = m_writeStruct;
 	function m_writeStruct(object, desc)
 	{
+		_checkStructDescriptor(desc);
+
 		var keys = Reflect.ownKeys(desc);
 		for (var i = 0; i < keys.length; ++i) {
-			var value = 'key' in object ? object[key]
+			var key = keys[i];
+			var value = key in object ? object[key]
 				: desc[key].default
 			switch (desc[key].type) {
+				case 'bool': m_writeUint8(value ? 1 : 0); break;
 				case 'float32be': m_writeFloat32(value); break;
 				case 'float32le': m_writeFloat32(value, true); break;
 				case 'float64be': m_writeFloat64(value); break;
@@ -242,18 +285,17 @@ function Writer(stream)
 				case 'uint16le': m_writeUint16(value, true); break;
 				case 'uint32be': m_writeUint32(value); break;
 				case 'uint32le': m_writeUint32(value, true); break;
-				case 'string': m_writeString(value); break;
+				case 'fstring': m_writeString(value, desc[key].length); break;
 				case 'lstr8': m_writeString8(value); break;
 				case 'lstr16be': m_writeString16(value); break;
 				case 'lstr16le': m_writeString16(value, true); break;
 				case 'lstr32be': m_writeString32(value); break;
 				case 'lstr32le': m_writeString32(value, true); break;
-				default:
-					assert(false, "malformed struct descriptor");
+				case 'raw': m_stream.write(value); break;
 			}
 		}
 	};
-	
+
 	this.writeUint8 = m_writeUint8;
 	function m_writeUint8(value)
 	{
@@ -285,162 +327,42 @@ function Writer(stream)
 	}
 }
 
-function Enum(memberNames)
+function _checkStructDescriptor(desc)
 {
-	if (!(this instanceof Enum))
-		return new Enum(memberNames);
+	var types = [
+		'float32be', 'float32le', 'float64be', 'float64le',
+		'int8', 'int16be', 'int16le', 'int32be', 'int32le',
+		'uint8', 'uint16be', 'uint16le', 'uint32be', 'uint32le',
+		'fstring', 'lstr8', 'lstr16be', 'lstr16le', 'lstr32be', 'lstr32le',
+		'bool', 'raw',
+	];
 
-	this.max = memberNames.length;
-	for (var i = 0; i < memberNames.length; ++i) {
-		this[memberNames[i]] = i;
-		this[i] = memberNames[i];
+	var attributes = {
+		'fstring': [ 'length' ],
+		'raw':     [ 'size' ],
+	};
+
+	var keys = Reflect.ownKeys(desc);
+	for (var i = 0; i < keys.length; ++i) {
+		var fieldDesc = desc[keys[i]];
+		var fieldType = fieldDesc.type;
+		if (!link(types).contains(fieldType))
+			throw new TypeError("unrecognized field type '" + fieldType + "'");
+		if (fieldType in attributes) {
+			var haveAttributes = link(attributes[fieldType])
+				.every(function(x) { return x in fieldDesc; });
+			if (!haveAttributes)
+				throw new TypeError("missing attributes for " + fieldType);
+		}
 	}
-}
-
-function _fixup(value, data)
-{
-	// this fixes up backreferences in the schema, for example '@numPigs'.
-	// because files are loaded sequentially, references can only be to
-	// earlier fields.
-
-	if (typeof value === 'function')
-		return value.call(data);
-	if (typeof value === 'string' && value[0] == '@')
-		return data[value.substr(1)];
-	else
-		return value;
-}
-
-function _readField(stream, fieldType, data)
-{
-	var dataSize = _fixup(fieldType.size, data);
-	var itemCount = _fixup(fieldType.count, data);
-
-	// read a value or object from the stream
-	var value;
-	switch (fieldType.type) {
-		case 'switch':
-			var control = data[fieldType.field];
-			var checkType = null;
-			for (var i = 0; i < fieldType.cases.length; ++i) {
-				var checkType = fieldType.cases[i];
-				if (('value' in checkType && typeof control == typeof checkType.value && control === checkType.value)
-					|| ('range' in checkType && typeof control == 'number' && control >= checkType.range[0] && control <= checkType.range[1]))
-				{
-					break;
-				}
-				checkType = null;
-			}
-			if (checkType != null)
-				value = _readField(stream, checkType, data);
-			else
-				throw new Error("binary field `" + fieldType.field + "` is invalid");
-			break;
-		case 'array':
-			value = [];
-			for (var i = 0; i < itemCount; ++i) {
-				value[i] = _readField(stream, fieldType.subtype, data);
-			}
-			break;
-		case 'bool':
-			var view = new DataView(stream.read(1));
-			value = view.getUint8(0) != 0;
-			break;
-		case 'double':
-			var view = new DataView(stream.read(8));
-			value = view.getFloat64(0);
-			break;
-		case 'doubleLE':
-			var view = new DataView(stream.read(8));
-			value = view.getFloat64(0, true);
-			break;
-		case 'float':
-			var view = new DataView(stream.read(4));
-			value = view.getFloat32(0);
-			break;
-		case 'floatLE':
-			var view = new DataView(stream.read(4));
-			value = view.getFloat32(0, true);
-			break;
-		case 'fstring':
-			var bytes = stream.read(dataSize);
-			value = new TextDecoder('utf-8').decode(bytes);
-			break;
-		case 'image':
-			var width = _fixup(fieldType.width, data);
-			var height = _fixup(fieldType.height, data);
-			if (typeof width != 'number' || typeof height != 'number')
-				throw new Error("missing or invalid width/height for `image` field");
-			var pixelData = stream.read(width * height * 4);
-			value = new Image(width, height, pixelData);
-			break;
-		case 'int':
-			value = _readInt(stream, dataSize, true, false);
-			break;
-		case 'intLE':
-			value = _readInt(stream, dataSize, true, true);
-			break;
-		case 'object':
-			value = _readObject(stream, fieldType.schema, data);
-			break;
-		case 'pstring':
-			var length = _readInt(stream, dataSize, false, false);
-			var bytes = stream.read(length);
-			value = new TextDecoder('utf-8').decode(bytes);
-			break;
-		case 'pstringLE':
-			var length = _readInt(stream, dataSize, false, true);
-			var bytes = stream.read(length);
-			value = new TextDecoder('utf-8').decode(bytes);
-			break;
-		case 'raw':
-			value = stream.read(dataSize);
-			break;
-		case 'reserved':
-			stream.read(dataSize);
-			break;
-		case 'uint':
-			value = _readInt(stream, dataSize, false, false);
-			break;
-		case 'uintLE':
-			value = _readInt(stream, dataSize, false, true);
-			break;
-		default:
-			throw new TypeError("unknown field type `" + fieldType.type + "` in schema");
-	}
-
-	// verify the value we got against the schema
-	var isValidValue = true;
-	if (typeof fieldType.regex === 'string' && typeof value === 'string') {
-		var regex = new RegExp(fieldType.regex);
-		if (!regex.test(value))
-			isValidValue = false;
-	}
-	else if (Array.isArray(fieldType.values)) {
-		if (!link(fieldType.values).contains(value))
-			isValidValue = false;
-	}
-	else if (Array.isArray(fieldType.range) && fieldType.range.length == 2
-		&& typeof fieldType.range[0] === typeof value
-		&& typeof fieldType.range[1] === typeof value)
-	{
-		if (value < fieldType.range[0] || value > fieldType.range[1])
-			isValidValue = false;
-	}
-
-	// if the value passes muster, return it.  otherwise, throw.
-	if (!isValidValue) {
-		throw new Error("binary field `" + fieldType.id + "` is invalid");
-	}
-	return value;
 }
 
 function _readInt(stream, size, signed, littleEndian)
 {
-	// variable-size two's complement integer decoding algorithm borrowed from
+	// variable-size two's complement integer decoding algorithm jacked from
 	// Node.js.  this allows us to read integer values up to 48 bits in size.
 
-	assert(size >= 1 && size <= 6, "(u)int field size is [1-6]");
+	assert(size >= 1 && size <= 6, "(u)int size out of range");
 
 	var bytes = new Uint8Array(stream.read(size));
 	var mul = 1;
@@ -460,17 +382,4 @@ function _readInt(stream, size, signed, littleEndian)
 	if (signed && value > mul * 0x80)
 		value -= Math.pow(2, 8 * size);
 	return value;
-}
-
-function _readObject(stream, schema, parentObj)
-{
-	var object = Object.create(parentObj);
-	for (var i = 0; i < schema.length; ++i) {
-		var fieldType = schema[i];
-		var value = _readField(stream, fieldType, object);
-		if ('id' in fieldType) {
-			object[fieldType.id] = value;
-		}
-	}
-	return object;
 }

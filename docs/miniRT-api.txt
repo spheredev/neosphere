@@ -520,25 +520,25 @@ schema.
 
     const struct = require('struct');
 
-new struct.DataReader(stream, schema);
+new struct.Reader(stream, schema);
 
-    Creates a DataReader object which can be used to read binary data from
+    Creates a Reader object which can be used to read binary data from
     a stream.  `stream` is an object with a read() method taking a byte count
     and returning an ArrayBuffer, such as a FileStream or Socket.
 
-DataReader#readFloat32([littleEndian]);
-DataReader#readFloat64([littleEndian]);
+Reader#readFloat32([littleEndian]);
+Reader#readFloat64([littleEndian]);
 
     Reads an IEEE floating point value from the associated stream.  If
     `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
     big-endian mode.
 
-DataReader#readInt8();
-DataReader#readInt16([littleEndian]);
-DataReader#readInt32([littleEndian]);
-DataReader#readUint8();
-DataReader#readUint16([littleEndian]);
-DataReader#readUint32([littleEndian]);
+Reader#readInt8();
+Reader#readInt16([littleEndian]);
+Reader#readInt32([littleEndian]);
+Reader#readUint8();
+Reader#readUint16([littleEndian]);
+Reader#readUint32([littleEndian]);
 
     Reads an integer value from the associated stream.  If `littleEndian` is
     true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
@@ -546,66 +546,61 @@ DataReader#readUint32([littleEndian]);
     Note: "readUint" variants read unsigned values.  "readInt" variants read
     signed ("two's complement") values.
 
-DataReader#readString(length);
+Reader#readString(length);
 
     Reads a UTF-8 string from the associated stream.  `length` specifies how
     many bytes to read.
 
-DataReader#readString8();
-DataReader#readString16([littleEndian]);
-DataReader#readString32([littleEndian]);
+Reader#readString8();
+Reader#readString16([littleEndian]);
+Reader#readString32([littleEndian]);
 
     Reads a UTF-8 length-prefixed string from the associated stream, where the
     length in bytes is stored as an unsigned integer.  If `littleEndian` is
     true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
-DataReader#readStruct(schema);
+Reader#readStruct(desc);
 
-    Reads an object from the associated stream, based on `schema`.  The schema
-    is an array of field descriptors describing the layout of the data; for
+    Reads an object from the associated stream, based on `desc`.  The
+    descriptor is an object describing the layout and typing of the data; for
     example, the following will read the 256-byte header from a Sphere v1
     format map file:
 
-        readerObj.readStruct([
-            { id: 'signature', type: 'fstring', size: 4, regex: "\\.rmp" },
-            { id: 'version', type: 'uintLE', size: 2 },
-            { id: 'type', type: 'uintLE', size: 1 },
-            { id: 'numLayers', type: 'uintLE', size: 1 },
-            { type: 'reserved', size: 1 },  // reserved
-            { id: 'numEntities', type: 'uintLE', size: 2 },
-            { id: 'startX', type: 'uintLE', size: 2 },
-            { id: 'startY', type: 'uintLE', size: 2 },
-            { id: 'startLayer', type: 'uintLE', size: 1 },
-            { id: 'startDir', type: 'uintLE', size: 1 },
-            { id: 'numStrings', type: 'uintLE', size: 2 },
-            { id: 'numZones', type: 'uintLE', size: 2 },
-            { id: 'repeating', type: 'bool' },
-            { type: 'reserved', size: 234 },  // reserved
-        ]);
+        rmp_header = myReader.readStruct({
+            signature: { type: 'fstring', length: 4 },
+            version: { type: 'uint16le' },
+            type: { type: 'uint8' },
+            numLayers: { type: 'uint8' },
+            reserved1: { type: 'raw', size: 1 },
+            numEntities: { type: 'uint16le' },
+            startX: { type: 'uint16le' },
+            startY: { type: 'uint16le' },
+            startLayer: { type: 'uint8' },
+            startDir: { type: 'uint8' },
+            numStrings: { type: 'uint16le' },
+            numZones: { type: 'uint16le' },
+            repeating: { type: 'bool' },
+            reserved2: { type: 'raw', size: 234 },
+        });
 
-    For many binary file formats, this system is powerful enough for an entire
-    file to be described using a single, sometimes multi-level, schema.  More
-    complex formats usually require multiple .readStruct() calls using
-    indepedent schemas.
+new Writer(stream);
 
-new DataWriter(stream);
-
-    Creates a DataWriter object which can be used to write binary data to a
+    Creates a Writer object which can be used to write binary data to a
     stream.  `stream` is an object with a write() method that takes an
     ArrayBuffer, such as a FileStream or Socket.
 
-DataWriter#writeFloat32(value[, littleEndian]);
-DataWriter#writeFloat64(value[, littleEndian]);
+Writer#writeFloat32(value[, littleEndian]);
+Writer#writeFloat64(value[, littleEndian]);
 
     Writes a floating point value to the stream.  If `littleEndian` is true,
     writes in little-endian mode.  Otherwise writes in big-endian mode.
 
-DataWriter#writeInt8(value);
-DataWriter#writeInt16(value[, littleEndian]);
-DataWriter#writeInt32(value[, littleEndian]);
-DataWriter#writeUint8(value);
-DataWriter#writeUint16(value[, littleEndian]);
-DataWriter#writeUint32(value[, littleEndian]);
+Writer#writeInt8(value);
+Writer#writeInt16(value[, littleEndian]);
+Writer#writeInt32(value[, littleEndian]);
+Writer#writeUint8(value);
+Writer#writeUint16(value[, littleEndian]);
+Writer#writeUint32(value[, littleEndian]);
 
     Writes an integer value to the associated stream.  If `littleEndian` is
     true, writes in little-endian mode.  Otherwise writes in big-endian mode.
@@ -613,13 +608,13 @@ DataWriter#writeUint32(value[, littleEndian]);
     Note: "writeUint" variants write unsigned values.  "writeInt" variants
           write signed ("two's complement") values.
 
-DataWriter#writeString(value);
+Writer#writeString(value);
 
     Writes a UTF-8 string to the associated stream.
 
-DataWriter#writeString8(value);
-DataWriter#writeString16(value[, littleEndian]);
-DataWriter#writeString32(value[, littleEndian]);
+Writer#writeString8(value);
+Writer#writeString16(value[, littleEndian]);
+Writer#writeString32(value[, littleEndian]);
 
     Writes a UTF-8 length-prefixed string to the associated stream, where the
     length is stored as an unsigned integer.  If `littleEndian` is true, writes

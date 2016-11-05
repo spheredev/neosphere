@@ -1332,8 +1332,8 @@ js_console_warn(duk_context* ctx)
 static duk_ret_t
 js_screen_get_frameRate(duk_context* ctx)
 {
-	// as far as Sphere v2 code is concerned, unthrottled = infinity.
-	// internally however it's stored as 0, so we need to translate.
+	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
+	// that's stored as a zero internally though, so we need to translate.
 	duk_push_number(ctx, s_framerate > 0 ? s_framerate : INFINITY);
 	return 1;
 }
