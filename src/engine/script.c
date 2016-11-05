@@ -38,15 +38,20 @@ bool
 evaluate_script(const char* filename, bool as_module)
 {
 	sfs_file_t*    file = NULL;
-	path_t*        path;
+	path_t*        path = NULL;
 	const char*    source_name;
 	lstring_t*     source_text = NULL;
 	char*          slurp;
 	size_t         size;
 	
 	if (as_module) {
+		// the existence check here is needed because eval_module() will segfault if the
+		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
+		// that I'm not up for right now.
+		if (!sfs_fexist(g_fs, filename, NULL))
+			goto on_error;
 		if (!duk_pegasus_eval_module(g_duk, filename))
-			return false;
+			goto on_error;
 		return true;
 	}
 	else {
@@ -74,7 +79,7 @@ on_error:
 	lstr_free(source_text);
 	path_free(path);
 	if (!duk_is_error(g_duk, -1))
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script `%s` not found\n", filename);
+		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script not found `%s`\n", filename);
 	return false;
 }
 
