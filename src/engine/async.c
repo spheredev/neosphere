@@ -8,7 +8,7 @@ struct job
 {
 	async_hint_t hint;
 	double       priority;
-	double       timeout;
+	uint32_t     timer;
 	int64_t      token;
 	script_t*    script;
 };
@@ -58,14 +58,14 @@ async_cancel(int64_t token)
 }
 
 int64_t
-async_defer(script_t* script, double timeout, async_hint_t hint)
+async_defer(script_t* script, uint32_t timeout, async_hint_t hint)
 {
 	job_t* job;
 
 	if (s_onetime == NULL)
 		return 0;
 	job = calloc(1, sizeof(job_t));
-	job->timeout = al_get_time() + timeout;
+	job->timer = timeout;
 	job->token = s_next_token++;
 	job->script = script;
 	job->hint = hint;
@@ -114,7 +114,7 @@ async_run_jobs(async_hint_t hint)
 		iter = vector_enum(vector);
 		while (vector_next(&iter)) {
 			job = *(job_t**)iter.ptr;
-			if (job->hint == hint && al_get_time() >= job->timeout) {
+			if (job->hint == hint && job->timer-- == 0) {
 				run_script(job->script, false);
 				free_script(job->script);
 			}

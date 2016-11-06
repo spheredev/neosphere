@@ -192,8 +192,11 @@ system.exit();
 
 system.now();
 
-    Returns the amount of time, in seconds, since the engine started running.
-    Granularity varies, but is typically less than a microsecond.
+    Returns the number of frames processed since the engine started running.
+
+    Note: This value will wrap around to zero after about 2.1 billion frames.
+          This typically isn't an issue: At 60 FPS, a game would need to run
+          continuously for more than a year before it would roll over.
 
 system.reset();
 
@@ -209,7 +212,7 @@ system.run();
             // do stuff here
         }
 
-    Note: Be careful.  This function runs all pending ASAP jobs in the job
+    Note: Be careful.  This function runs all pending immediate jobs in the job
           queue, including settlement of outstanding promises.  This may lead
           to undesirable side effects if a promise handler modifies a global
           variable, for example.
@@ -231,17 +234,20 @@ and available throughout the engine.
 
 Dispatch.now(fn);
 
-    Sets up a one-time job to call `fn` from the event loop as soon as
-    possible.  This function is shorthand for `Dispatch.later(0.0, fn)` and is
-    useful for performing operations that need to be done from the event loop
-    with minimal delay, such as promise resolution.
+    Sets up a one-time job to call `fn` from the event loop on the next tick.
+    This is useful for performing operations that need to be done from the
+    event loop with minimal delay, such as promise resolution.
 
     Returns a JobToken for use with Dispatch.cancel().
 
-Dispatch.later(timeout, fn);
+    Note: Dispatch.now(fn) is *NOT* an alias for Dispatch.later(0, fn).  The
+          latter runs at the beginning of the next frame; Dispatch.now() always
+          runs on the very next tick even if no frame processing is done.
 
-    Sets up a one-time job to call `fn` from the event loop at some point in
-    the future.  `timeout` is in seconds and may be fractional.
+Dispatch.later(num_frames, fn);
+
+    Sets up a one-time job to call `fn` from the event loop after a specified
+    number of frames have been processed.
 
     Returns a JobToken for use with Dispatch.cancel().
 
@@ -254,9 +260,9 @@ Dispatch.onUpdate(fn[, priority]);
 
     `priority` affects the order of calls when there is more than one job.
     Jobs are performed in ascending priority order, which ensures an intuitive
-    rendering order.  If no priority is given, it defaults to 0.0.  Priority
-    can be negative, and fractional priorities are honored: 8.12 is considered
-    a higher priority than 8, for example.
+    rendering order.  If no priority is given, the default is 0.0.  Priority
+    can be negative, and fractional priorities are honored: 8.12, for example,
+    is considered a higher priority than 8.
 
     Returns a JobToken for use with Dispatch.cancel().
 

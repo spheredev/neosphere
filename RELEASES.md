@@ -5,21 +5,21 @@ minisphere 4.3
 --------------
 
 * The new Dispatch API allows functions to be called asynchronously from the
-  event loop.  Calls may either be performed on the next tick, on a time delay,
-  or once per frame.  Refer to the included Sphere v2 API reference for more
-  information.
+  event loop.  Calls may either be performed on the next tick, on a
+  frame-perfect time delay, or once per frame.  Refer to the included Sphere v2
+  API reference for more information.
 * miniRT "struct" now provides `Reader` and `Writer` objects which work for
   both files and sockets.  Refer to the included miniRT API reference for more
   information.
-* `screen.frameRate` will no longer accept `0` as a valid value.  It must now
-  be set to `Infinity` to disable the frame limiter.
+* `screen.frameRate` will no longer accept `0` as a valid value.  To disable
+  the frame limiter, the frame rate must now be set to `Infinity`.
 * The `fs` object has been renamed to `FS` to match other namespace-like
   objects.  There's little reason for it to be treated as a concrete object
   representing the file system, and doing so limits future extensibility.
 * The `mouse` and `keyboard` global variables have been removed and are now
-  exposed as `Mouse.Default` and `Keyboard.Default`, respectively.  This will
-  allow support for multiple keyboards and mice to be implemented in the future
-  without a breaking API change.
+  exposed as `Mouse.Default` and `Keyboard.Default`, respectively.  This was
+  done to allow support for multiple keyboards and mice to be implemented in
+  a future version without a breaking API change.
 * The mostly redundant and non-standard `SSJ` functions have been removed from
   the API.  Going forward, the "assert" module should be used for assertions,
   and `SSJ.trace()` can be replaced with `console.trace()` with no loss of

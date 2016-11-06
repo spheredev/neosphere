@@ -319,7 +319,7 @@ do_events(void)
 	update_debugger();
 #endif
 
-	async_run_jobs(ASYNC_ASAP);
+	async_run_jobs(ASYNC_TICK);
 	update_input();
 	update_audio();
 

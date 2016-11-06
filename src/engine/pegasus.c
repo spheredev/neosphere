@@ -1117,13 +1117,13 @@ static duk_ret_t
 js_Dispatch_later(duk_context* ctx)
 {
 	script_t* script;
-	double    timeout;
+	uint32_t  timeout;
 	int64_t   token;
 
-	timeout = duk_require_number(ctx, 0);
+	timeout = duk_require_uint(ctx, 0);
 	script = duk_require_sphere_script(ctx, 1, "synth:dispatch.js");
 
-	if (!(token = async_defer(script, timeout, ASYNC_ASAP)))
+	if (!(token = async_defer(script, timeout, ASYNC_UPDATE)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
@@ -1137,7 +1137,7 @@ js_Dispatch_now(duk_context* ctx)
 
 	script = duk_require_sphere_script(ctx, 0, "synth:dispatch.js");
 
-	if (!(token = async_defer(script, 0.0, ASYNC_ASAP)))
+	if (!(token = async_defer(script, 0, ASYNC_TICK)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;

@@ -6,7 +6,7 @@ v4.3.0 - TBD
 
 * Adds a new Dispatch API for setting up asynchronous jobs.  Jobs are called
   from the event loop; for example, `Dispatch.onUpdate()` is processed at the
-  start of a frame.
+  start of every frame.
 * Adds support for the JavaScript Reflect API.
 * Adds native support for JavaScript Promises via a polyfill.
 * Adds `struct.Reader` and `struct.Writer` which allow games to read and write
