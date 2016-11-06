@@ -34,10 +34,11 @@ var buffer = [];
 var commands = [];
 var entry = "";
 var cursorColor = Color.Gold;
+var fps = screen.frameRate;
 new scenes.Scene()
 	.doWhile(function() { return true; })
-		.tween(cursorColor, 0.25, 'easeInSine', { alpha: 255 })
-		.tween(cursorColor, 0.25, 'easeOutSine', { alpha: 64 })
+		.tween(cursorColor, 0.25 * fps, 'easeInSine', { alpha: 255 })
+		.tween(cursorColor, 0.25 * fps, 'easeOutSine', { alpha: 64 })
 	.end()
 	.run();
 threads.create({
@@ -123,6 +124,7 @@ function getInput()
 			visible.line = Math.max(visible.line - speed, 0);
 		}
 		var keycode = keyboard.getKey();
+		var fps = screen.frameRate;
 		switch (keycode) {
 			case Key.Enter:
 				print("Command entered: '" + entry + "'");
@@ -135,12 +137,12 @@ function getInput()
 			case Key.Home:
 				var newLine = buffer.length - numLines;
 				new scenes.Scene()
-					.tween(visible, 0.125, 'easeOut', { line: newLine })
+					.tween(visible, 0.125 * fps, 'easeOut', { line: newLine })
 					.run();
 				break;
 			case Key.End:
 				new scenes.Scene()
-					.tween(visible, 0.125, 'easeOut', { line: 0.0 })
+					.tween(visible, 0.125 * fps, 'easeOut', { line: 0.0 })
 					.run();
 				break;
 			case Key.Tab:
@@ -230,16 +232,18 @@ function undefine(name)
 
 function _hide()
 {
+	var fps = screen.frameRate;
 	new scenes.Scene()
-		.tween(visible, 0.25, 'easeInQuad', { fade: 0.0 })
+		.tween(visible, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
 		.call(function() { visible.yes = false; entry = ""; })
 		.run();
 }
 
 function _show()
 {
+	var fps = screen.frameRate;
 	new scenes.Scene()
-		.tween(visible, 0.25, 'easeOutQuad', { fade: 1.0 })
+		.tween(visible, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
 		.call(function() { visible.yes = true; })
 		.run();
 }

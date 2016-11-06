@@ -35,19 +35,19 @@ function isAdjusting()
 // Smoothly adjusts the volume of the current BGM.
 // Arguments:
 //     newVolume: The new volume level, between 0.0 and 1.0 inclusive.
-//     duration:  Optional. The length of time, in seconds, over which to perform the adjustment.
-//                (default: 0.0).
-function adjust(newVolume, duration)
+//     frames:    Optional.  The number of frames over which to perform the
+//                adjustment. (default: 0).
+function adjust(newVolume, frames)
 {
-	duration = duration !== undefined ? duration : 0.0;
+	frames = frames !== undefined ? frames >>> 0 : 0;
 
 	newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 	if (adjuster != null && adjuster.isRunning()) {
 		adjuster.stop();
 	}
-	if (duration > 0.0) {
+	if (frames > 0) {
 		adjuster = new scenes.Scene()
-			.tween(mixer, duration, 'linear', { volume: newVolume })
+			.tween(mixer, frames, 'linear', { volume: newVolume })
 			.run();
 	} else {
 		mixer.volume = newVolume;
@@ -57,9 +57,9 @@ function adjust(newVolume, duration)
 // music.override()
 // override the BGM with a given track.  push, pop and play operations
 // will be deferred until the BGM is reset by calling music.reset().
-function override(path, fadeTime)
+function override(path, frames)
 {
-	_crossfade(path, fadeTime, true);
+	_crossfade(path, frames, true);
 	haveOverride = true;
 };
 
@@ -71,8 +71,6 @@ function override(path, fadeTime)
 //     fadeTime: optional.  the amount of crossfade to apply, in seconds. (default: 0.0)
 function play(path, fadeTime)
 {
-	fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-
 	topmostSound = _crossfade(path, fadeTime, false);
 };
 
@@ -84,8 +82,8 @@ function play(path, fadeTime)
 //     if the BGM stack is empty, this is a no-op.
 function pop(fadeTime)
 {
-	fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
-
+	fadeTime = fadeTime !== undefined ? fadeTime >>> 0 : 0;
+	
 	if (oldSounds.length == 0)
 		return;
 	currentSound.fader.stop();
@@ -120,7 +118,7 @@ function push(path, fadeTime)
 // reset the BGM manager, which removes any outstanding overrides.
 function reset(fadeTime)
 {
-	fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+	fadeTime = fadeTime !== undefined ? fadeTime >>> 0 : 0;
 
 	if (!haveOverride)
 		return;
@@ -140,15 +138,15 @@ function reset(fadeTime)
 	}
 };
 
-function _crossfade(path, fadeTime, forceChange)
+function _crossfade(path, frames, forceChange)
 {
-	fadeTime = fadeTime !== undefined ? fadeTime : 0.0;
+	frames = frames !== undefined ? frames >>> 0 : 0.0;
 
 	var allowChange = !haveOverride || forceChange;
 	if (currentSound != null && allowChange) {
 		currentSound.fader.stop();
 		currentSound.fader = new scenes.Scene()
-			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
+			.tween(currentSound.stream, frames, 'linear', { volume: 0.0 })
 			.run();
 	}
 	if (path !== null) {
@@ -157,7 +155,7 @@ function _crossfade(path, fadeTime, forceChange)
 		stream.volume = 0.0;
 		stream.play(mixer);
 		var fader = new scenes.Scene()
-			.tween(stream, fadeTime, 'linear', { volume: 1.0 })
+			.tween(stream, frames, 'linear', { volume: 1.0 })
 		var newSound = { stream: stream, fader: fader };
 		if (allowChange) {
 			currentSound = newSound;

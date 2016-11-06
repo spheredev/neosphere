@@ -10,6 +10,7 @@ module.exports =
 	Scene:       Scene
 };
 
+const assert  = require('assert');
 const link    = require('link');
 const prim    = require('prim');
 const threads = require('threads');
@@ -354,11 +355,11 @@ defScenelet('call',
 
 defScenelet('fadeTo',
 {
-	start: function(scene, color, duration) {
-		duration = duration !== undefined ? duration : 0.25;
+	start: function(scene, color, frames) {
+		assert.ok(typeof frames === 'number');
 
 		this.fader = new Scene()
-			.tween(screenMask, duration, 'linear', color)
+			.tween(screenMask, frames, 'linear', color)
 			.run();
 	},
 	update: function(scene) {
@@ -368,12 +369,12 @@ defScenelet('fadeTo',
 
 defScenelet('pause',
 {
-	start: function(scene, duration) {
-		this.duration = duration;
+	start: function(scene, frames) {
+		this.duration = frames;
 		this.elapsed = 0;
 	},
 	update: function(scene) {
-		this.elapsed += 1.0 / screen.frameRate;
+		++this.elapsed;
 		return this.elapsed < this.duration;
 	}
 });
@@ -392,7 +393,7 @@ defScenelet('playSound',
 
 defScenelet('tween',
 {
-	start: function(scene, object, duration, easingType, endValues) {
+	start: function(scene, object, frames, easingType, endValues) {
 		this.easers = {
 			linear: function(t, b, c, d) {
 				return c * t / d + b;
@@ -523,7 +524,7 @@ defScenelet('tween',
 			}
 		};
 		this.change = {};
-		this.duration = duration;
+		this.duration = frames;
 		this.elapsed = 0.0;
 		this.object = object;
 		this.startValues = {};
@@ -539,7 +540,7 @@ defScenelet('tween',
 		}
 	},
 	update: function(scene) {
-		this.elapsed += 1.0 / screen.frameRate;
+		++this.elapsed;
 		if (this.elapsed < this.duration) {
 			for (var p in this.change) {
 				this.object[p] = this.easers[this.type](this.elapsed, this.startValues[p], this.change[p], this.duration);
