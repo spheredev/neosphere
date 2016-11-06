@@ -23,6 +23,7 @@ struct screen
 	double           last_flip_time;
 	int              max_skips;
 	double           next_frame_time;
+	uint32_t         now;
 	int              num_flips;
 	int              num_frames;
 	int              num_skips;
@@ -136,6 +137,12 @@ bool
 screen_is_skipframe(const screen_t* obj)
 {
 	return obj->skip_frame;
+}
+
+uint32_t
+screen_now(const screen_t* screen)
+{
+	return screen->now;
 }
 
 rect_t
@@ -338,6 +345,8 @@ screen_flip(screen_t* obj, int framerate)
 	}
 
 	async_run_jobs(ASYNC_UPDATE);
+
+	++obj->now;
 }
 
 image_t*

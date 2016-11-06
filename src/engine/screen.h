@@ -11,6 +11,7 @@ void             screen_free              (screen_t* obj);
 ALLEGRO_DISPLAY* screen_display           (const screen_t* obj);
 bool             screen_have_shaders      (const screen_t* screen);
 bool             screen_is_skipframe      (const screen_t* obj);
+uint32_t         screen_now               (const screen_t* screen);
 rect_t           screen_get_clipping      (screen_t* obj);
 int              screen_get_frameskip     (const screen_t* obj);
 void             screen_get_mouse_xy      (const screen_t* obj, int* o_x, int* o_y);

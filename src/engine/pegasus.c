@@ -1190,7 +1190,7 @@ js_system_exit(duk_context* ctx)
 static duk_ret_t
 js_system_now(duk_context* ctx)
 {
-	duk_push_number(ctx, al_get_time());
+	duk_push_number(ctx, screen_now(g_screen));
 	return 1;
 }
 
