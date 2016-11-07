@@ -1084,8 +1084,10 @@ js_GetJoystickAxis(duk_context* ctx)
 static duk_ret_t
 js_GetKey(duk_context* ctx)
 {
-	while (kb_queue_len() == 0)
+	while (kb_queue_len() == 0) {
+		delay(0.05);
 		do_events();
+	}
 	duk_push_int(ctx, kb_get_key());
 	return 1;
 }
@@ -1173,8 +1175,10 @@ js_GetMouseWheelEvent(duk_context* ctx)
 	mouse_event_t event;
 	
 	do {
-		while (mouse_queue_len() == 0)
+		while (mouse_queue_len() == 0) {
+			delay(0.05);
 			do_events();
+		}
 		event = mouse_get_event();
 	} while (event.key != MOUSE_KEY_WHEEL_UP && event.key != MOUSE_KEY_WHEEL_DOWN);
 	duk_push_int(ctx, event.key);

@@ -202,7 +202,7 @@ minisphere 3.0
 
 * When a debugger is attached, minisphere 3.0 co-opts the `F12` key, normally
   used to take screenshots, for the purpose of triggering a prompt breakpoint.
-  This may be surprising for those who aren’t expecting it.
+  This may be surprising for those who aren't expecting it.
 
 * TypeScript support in minisphere 3.0 is mostly provisional.  In order to
   maintain normal Sphere script semantics, the TypeScript compiler API
