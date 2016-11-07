@@ -266,6 +266,16 @@ static duk_ret_t js_new_Mixer                  (duk_context* ctx);
 static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
 static duk_ret_t js_Mixer_get_volume           (duk_context* ctx);
 static duk_ret_t js_Mixer_set_volume           (duk_context* ctx);
+static duk_ret_t js_new_Model                  (duk_context* ctx);
+static duk_ret_t js_Model_finalize             (duk_context* ctx);
+static duk_ret_t js_Model_get_shader           (duk_context* ctx);
+static duk_ret_t js_Model_get_transform        (duk_context* ctx);
+static duk_ret_t js_Model_set_shader           (duk_context* ctx);
+static duk_ret_t js_Model_set_transform        (duk_context* ctx);
+static duk_ret_t js_Model_draw                 (duk_context* ctx);
+static duk_ret_t js_Model_setFloat             (duk_context* ctx);
+static duk_ret_t js_Model_setInt               (duk_context* ctx);
+static duk_ret_t js_Model_setMatrix            (duk_context* ctx);
 static duk_ret_t js_Mouse_get_Default          (duk_context* ctx);
 static duk_ret_t js_Mouse_get_x                (duk_context* ctx);
 static duk_ret_t js_Mouse_get_y                (duk_context* ctx);
@@ -291,16 +301,6 @@ static duk_ret_t js_Shape_finalize             (duk_context* ctx);
 static duk_ret_t js_Shape_get_texture          (duk_context* ctx);
 static duk_ret_t js_Shape_set_texture          (duk_context* ctx);
 static duk_ret_t js_Shape_draw                 (duk_context* ctx);
-static duk_ret_t js_new_ShapeGroup             (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_finalize        (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_get_shader      (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_get_transform   (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_set_shader      (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_set_transform   (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_draw            (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_setFloat        (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_setInt          (duk_context* ctx);
-static duk_ret_t js_ShapeGroup_setMatrix       (duk_context* ctx);
 static duk_ret_t js_new_Socket                 (duk_context* ctx);
 static duk_ret_t js_Socket_finalize            (duk_context* ctx);
 static duk_ret_t js_Socket_get_bytesPending    (duk_context* ctx);
@@ -452,6 +452,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
 	api_define_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_define_property(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
+	api_define_ctor(ctx, "Model", js_new_Model, js_Model_finalize);
+	api_define_property(ctx, "Model", "shader", js_Model_get_shader, js_Model_set_shader);
+	api_define_property(ctx, "Model", "transform", js_Model_get_transform, js_Model_set_transform);
+	api_define_method(ctx, "Model", "draw", js_Model_draw);
+	api_define_method(ctx, "Model", "setFloat", js_Model_setFloat);
+	api_define_method(ctx, "Model", "setInt", js_Model_setInt);
+	api_define_method(ctx, "Model", "setMatrix", js_Model_setMatrix);
 	api_define_type(ctx, "Mouse", NULL);
 	api_define_static_prop(ctx, "Mouse", "Default", js_Mouse_get_Default, NULL);
 	api_define_property(ctx, "Mouse", "x", js_Mouse_get_x, NULL);
@@ -472,13 +479,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_ctor(ctx, "Shape", js_new_Shape, js_Shape_finalize);
 	api_define_property(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
 	api_define_method(ctx, "Shape", "draw", js_Shape_draw);
-	api_define_ctor(ctx, "ShapeGroup", js_new_ShapeGroup, js_ShapeGroup_finalize);
-	api_define_property(ctx, "ShapeGroup", "shader", js_ShapeGroup_get_shader, js_ShapeGroup_set_shader);
-	api_define_property(ctx, "ShapeGroup", "transform", js_ShapeGroup_get_transform, js_ShapeGroup_set_transform);
-	api_define_method(ctx, "ShapeGroup", "draw", js_ShapeGroup_draw);
-	api_define_method(ctx, "ShapeGroup", "setFloat", js_ShapeGroup_setFloat);
-	api_define_method(ctx, "ShapeGroup", "setInt", js_ShapeGroup_setInt);
-	api_define_method(ctx, "ShapeGroup", "setMatrix", js_ShapeGroup_setMatrix);
 	api_define_ctor(ctx, "Socket", js_new_Socket, js_Socket_finalize);
 	api_define_property(ctx, "Socket", "bytesPending", js_Socket_get_bytesPending, NULL);
 	api_define_property(ctx, "Socket", "connected", js_Socket_get_connected, NULL);
@@ -2426,6 +2426,169 @@ js_Mixer_set_volume(duk_context* ctx)
 }
 
 static duk_ret_t
+js_new_Model(duk_context* ctx)
+{
+	group_t*  group;
+	int       num_args;
+	size_t    num_shapes;
+	shader_t* shader;
+	shape_t*  shape;
+
+	duk_uarridx_t i;
+
+	num_args = duk_get_top(ctx);
+	duk_require_object_coercible(ctx, 0);
+	shader = num_args >= 2
+		? duk_require_sphere_obj(ctx, 1, "Shader")
+		: get_default_shader();
+
+	if (!duk_is_array(ctx, 0))
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
+
+	group = group_new(shader);
+	num_shapes = duk_get_length(ctx, 0);
+	for (i = 0; i < num_shapes; ++i) {
+		duk_get_prop_index(ctx, 0, i);
+		shape = duk_require_sphere_obj(ctx, -1, "Shape");
+		group_add_shape(group, shape);
+	}
+	duk_push_sphere_obj(ctx, "Model", group);
+	return 1;
+}
+
+static duk_ret_t
+js_Model_finalize(duk_context* ctx)
+{
+	group_t* group;
+
+	group = duk_require_sphere_obj(ctx, 0, "Model");
+	group_free(group);
+	return 0;
+}
+
+static duk_ret_t
+js_Model_get_shader(duk_context* ctx)
+{
+	group_t*  group;
+	shader_t* shader;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+
+	shader = group_get_shader(group);
+	duk_push_sphere_obj(ctx, "Shader", shader_ref(shader));
+	return 1;
+}
+
+static duk_ret_t
+js_Model_get_transform(duk_context* ctx)
+{
+	group_t*  group;
+	matrix_t* matrix;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+
+	matrix = group_get_transform(group);
+	duk_push_sphere_obj(ctx, "Transform", matrix_ref(matrix));
+	return 1;
+}
+
+static duk_ret_t
+js_Model_set_shader(duk_context* ctx)
+{
+	group_t*  group;
+	shader_t* shader;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+	shader = duk_require_sphere_obj(ctx, 0, "Shader");
+
+	group_set_shader(group, shader);
+	return 0;
+}
+
+static duk_ret_t
+js_Model_set_transform(duk_context* ctx)
+{
+	group_t*  group;
+	matrix_t* transform;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+	transform = duk_require_sphere_obj(ctx, 0, "Transform");
+
+	group_set_transform(group, transform);
+	return 0;
+}
+
+static duk_ret_t
+js_Model_draw(duk_context* ctx)
+{
+	group_t* group;
+	int      num_args;
+	image_t* surface;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+	surface = num_args >= 1 ? duk_require_sphere_obj(ctx, 0, "Surface")
+		: NULL;
+
+	if (!screen_is_skipframe(g_screen))
+		group_draw(group, surface);
+	return 0;
+}
+
+static duk_ret_t
+js_Model_setFloat(duk_context* ctx)
+{
+	group_t*    group;
+	const char* name;
+	float       value;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_number(ctx, 1);
+
+	group_put_float(group, name, value);
+	return 1;
+}
+
+static duk_ret_t
+js_Model_setInt(duk_context* ctx)
+{
+	group_t*    group;
+	const char* name;
+	int         value;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_int(ctx, 1);
+
+	group_put_int(group, name, value);
+	return 1;
+}
+
+static duk_ret_t
+js_Model_setMatrix(duk_context* ctx)
+{
+	group_t*    group;
+	matrix_t*   matrix;
+	const char* name;
+
+	duk_push_this(ctx);
+	group = duk_require_sphere_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	matrix = duk_require_sphere_obj(ctx, 1, "Transform");
+
+	group_put_matrix(group, name, matrix);
+	return 1;
+}
+
+static duk_ret_t
 js_Mouse_get_Default(duk_context* ctx)
 {
 	duk_push_sphere_obj(ctx, "Mouse", NULL);
@@ -2845,169 +3008,6 @@ js_Shape_draw(duk_context* ctx)
 	shape_draw(shape, transform, surface);
 	shader_use(NULL);
 	return 0;
-}
-
-static duk_ret_t
-js_new_ShapeGroup(duk_context* ctx)
-{
-	group_t*  group;
-	int       num_args;
-	size_t    num_shapes;
-	shader_t* shader;
-	shape_t*  shape;
-
-	duk_uarridx_t i;
-
-	num_args = duk_get_top(ctx);
-	duk_require_object_coercible(ctx, 0);
-	shader = num_args >= 2
-		? duk_require_sphere_obj(ctx, 1, "Shader")
-		: get_default_shader();
-
-	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
-
-	group = group_new(shader);
-	num_shapes = duk_get_length(ctx, 0);
-	for (i = 0; i < num_shapes; ++i) {
-		duk_get_prop_index(ctx, 0, i);
-		shape = duk_require_sphere_obj(ctx, -1, "Shape");
-		group_add_shape(group, shape);
-	}
-	duk_push_sphere_obj(ctx, "ShapeGroup", group);
-	return 1;
-}
-
-static duk_ret_t
-js_ShapeGroup_finalize(duk_context* ctx)
-{
-	group_t* group;
-
-	group = duk_require_sphere_obj(ctx, 0, "ShapeGroup");
-	group_free(group);
-	return 0;
-}
-
-static duk_ret_t
-js_ShapeGroup_get_shader(duk_context* ctx)
-{
-	group_t*  group;
-	shader_t* shader;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-
-	shader = group_get_shader(group);
-	duk_push_sphere_obj(ctx, "Shader", shader_ref(shader));
-	return 1;
-}
-
-static duk_ret_t
-js_ShapeGroup_get_transform(duk_context* ctx)
-{
-	group_t*  group;
-	matrix_t* matrix;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-
-	matrix = group_get_transform(group);
-	duk_push_sphere_obj(ctx, "Transform", matrix_ref(matrix));
-	return 1;
-}
-
-static duk_ret_t
-js_ShapeGroup_set_shader(duk_context* ctx)
-{
-	group_t*  group;
-	shader_t* shader;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-	shader = duk_require_sphere_obj(ctx, 0, "Shader");
-
-	group_set_shader(group, shader);
-	return 0;
-}
-
-static duk_ret_t
-js_ShapeGroup_set_transform(duk_context* ctx)
-{
-	group_t*  group;
-	matrix_t* transform;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-	transform = duk_require_sphere_obj(ctx, 0, "Transform");
-
-	group_set_transform(group, transform);
-	return 0;
-}
-
-static duk_ret_t
-js_ShapeGroup_draw(duk_context* ctx)
-{
-	group_t* group;
-	int      num_args;
-	image_t* surface;
-
-	num_args = duk_get_top(ctx);
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-	surface = num_args >= 1 ? duk_require_sphere_obj(ctx, 0, "Surface")
-		: NULL;
-
-	if (!screen_is_skipframe(g_screen))
-		group_draw(group, surface);
-	return 0;
-}
-
-static duk_ret_t
-js_ShapeGroup_setFloat(duk_context* ctx)
-{
-	group_t*    group;
-	const char* name;
-	float       value;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-	name = duk_require_string(ctx, 0);
-	value = duk_require_number(ctx, 1);
-
-	group_put_float(group, name, value);
-	return 1;
-}
-
-static duk_ret_t
-js_ShapeGroup_setInt(duk_context* ctx)
-{
-	group_t*    group;
-	const char* name;
-	int         value;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-	name = duk_require_string(ctx, 0);
-	value = duk_require_int(ctx, 1);
-
-	group_put_int(group, name, value);
-	return 1;
-}
-
-static duk_ret_t
-js_ShapeGroup_setMatrix(duk_context* ctx)
-{
-	group_t*    group;
-	matrix_t*   matrix;
-	const char* name;
-
-	duk_push_this(ctx);
-	group = duk_require_sphere_obj(ctx, -1, "ShapeGroup");
-	name = duk_require_string(ctx, 0);
-	matrix = duk_require_sphere_obj(ctx, 1, "Transform");
-
-	group_put_matrix(group, name, matrix);
-	return 1;
 }
 
 static duk_ret_t

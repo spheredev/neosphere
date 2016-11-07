@@ -18,8 +18,12 @@ v4.3.0 - TBD
 * Renames `mouse` to `Mouse.Default` to allow future support for multiple mice.
 * Renames `keyboard` to `Keyboard.Default` to allow future support for multiple
   keyboards.
+* Renames `ShapeGroup` to `Model`, better describing the object's purpose.
 * Removes the superfluous `SSJ` functions from the API.
 * Fixes several bugs discovered since minisphere 4.2.4 was released.
+* Updates the Sphere v2 API to use frame-perfect timing throughout.  For
+  example, `system.now()` returns the number of frames processed since engine
+  start.
 * Improves Sphere 1.x compatibility.  Many games which historically didn't run
   properly in minisphere, including Kefka's Revenge and Trial and Error, should
   now be fully playable.

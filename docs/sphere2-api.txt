@@ -598,8 +598,8 @@ Graphics API
 
 Unlike in Sphere 1.x, in second-generation games all rendering, both 2D and 3D,
 is done through the Galileo API.  Galileo represents a more modern, polygon-
-based approach to graphics.  Scenes are built from groups of Shape object which
-represent graphics primitives (triangle strips, fans, etc.).
+based approach to graphics.  Scenes are built from groups of Shape objects
+representing graphics primitives (triangle strips, fans, etc.).
 
 screen [global variable]
 
@@ -780,6 +780,39 @@ Image#height [read-only]
 
     Gets the width or height of the image, in pixels.
 
+new Model(shapes[, shader]);
+
+    Constructs a Model out of the provided array of Shape objects.  `shader` is
+    the Shader to use when rendering the model.  See below for more information
+    on shaders.
+
+    When a Model is created, its transformation matrix is set to the
+    identity matrix.  If `shader` is not provided, the default shader program
+    will be used (see `Shader.Default`).
+
+Model#shader [read/write]
+
+    Gets or sets the Shader to use when drawing this model.
+
+Model#transform [read/write]
+
+    Gets or sets the transformation matrix to use when drawing this model.
+
+Model#draw(surface);
+
+    Draws the model on `surface`.  Any transformations defined for the model
+    (see below) are applied as if all the shapes comprising it were a single
+    primitive.
+
+Model#setFloat(name, value);
+Model#setInt(name, value);
+Model#setMatrix(name, transform);
+
+    Sets the value of a GLSL uniform.  When the model is drawn, if its shader
+    program contains a uniform called `name` of the proper type, the value will
+    be uploaded to that uniform.  It is safe to call this even if the uniform
+    turns out not to exist (in which case the call is effectively a no-op).
+
 Shader.Default [read-only]
 
     Gets the default Galileo shader program.  This is a very barebones shader
@@ -856,38 +889,6 @@ Shape#draw(surface[, transform]);
     Draws the shape.  `transform` is the Transform to use, and `surface` is the
     Surface to draw on.  If `surface` is omitted, the shape is drawn on the
     backbuffer.
-
-new ShapeGroup(shapes[, shader]);
-
-    Constructs a ShapeGroup out of the provided array of Shape objects.
-    `shader` is the Shader to use when rendering the group.  See below for more
-    information on shaders.
-
-    When a ShapeGroup is created, its transformation matrix is set to the
-    identity matrix.  If `shader` is not provided, the default shader program
-    will be used (see `Shader.Default`).
-
-ShapeGroup#shader [read/write]
-
-    Gets or sets the Shader to use when drawing this group.
-
-ShapeGroup#transform [read/write]
-
-    Gets or sets the transformation matrix to use when drawing this group.
-
-ShapeGroup#draw(surface);
-
-    Draws the group on `surface`. Any transformations defined for the group
-    (see below) are applied as if the entire group were a single primitive.
-
-ShapeGroup#setFloat(name, value);
-ShapeGroup#setInt(name, value);
-ShapeGroup#setMatrix(name, transform);
-
-    Sets the value of a GLSL uniform.  When the group is drawn, if its shader
-    program contains a uniform called `name` of the proper type, the value will
-    be uploaded to that uniform.  It is safe to call this even if the uniform
-    turns out not to exist (in which case the call is effectively a no-op).
 
 new Surface(width, height[, fill_color]);
 
