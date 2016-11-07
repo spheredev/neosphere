@@ -1,3 +1,37 @@
+minisphere (4.3.0) trusty; urgency=low
+
+  * Adds a new Dispatch API for setting up asynchronous jobs.  Jobs are called
+    from the event loop; for example, `Dispatch.onUpdate()` is processed at the
+    start of every frame.
+  * Adds support for the JavaScript Reflect API.
+  * Adds native support for JavaScript Promises via a polyfill.
+  * Adds `struct.Reader` and `struct.Writer` which allow games to read and write
+    binary data from files and network sockets.
+  * Adds a `.fileName` property to objects such as Image and Sound, which returns
+    the canonicalized name of the file the object was loaded from.
+  * Adds `assert()` as an alias for `assert.ok()`, like in Node.js.
+  * Renames the `fs` global object to `FS` to match other namespace-like objects.
+  * Renames `mouse` to `Mouse.Default` to allow future support for multiple mice.
+  * Renames `keyboard` to `Keyboard.Default` to allow future support for multiple
+    keyboards.
+  * Renames `ShapeGroup` to `Model`, better describing the object's purpose.
+  * Removes the superfluous `SSJ` functions from the API.
+  * Fixes several bugs discovered since minisphere 4.2.4 was released.
+  * Updates the Sphere v2 API to use frame-perfect timing throughout.  For
+    example, `system.now()` returns the number of frames processed since engine
+    start.
+  * Improves Sphere 1.x compatibility.  Many games which historically didn't run
+    properly in minisphere, including Kefka's Revenge and Trial and Error, should
+    now be fully playable.
+  * Updates error messages to be more concise, making it clearer what went wrong
+    at a quick glance.
+  * miniRT no longer commandeers the legacy update and render scripts for itself.
+  * When debugging with Sphere Studio, the gold "ssj" watermark in the bottom
+    right is changed to blue to more easily distinguish interactive debugging
+    sessions from command-line sessions.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 7 Nov 2016 00:00:00 -0500
+
 minisphere (4.2.4) trusty; urgency=low
 
   * Adds streaming support for `TextDecoder`.

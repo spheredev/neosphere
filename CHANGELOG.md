@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.3.0 - TBD
-------------
+v4.3.0 - November 7, 2016
+-------------------------
 
 * Adds a new Dispatch API for setting up asynchronous jobs.  Jobs are called
   from the event loop; for example, `Dispatch.onUpdate()` is processed at the
