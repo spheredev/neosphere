@@ -192,9 +192,10 @@ system.exit();
 
 system.now();
 
-    Returns the number of frames processed since the engine started running.
+    Returns the number of frames processed by the engine since it started
+    running.
 
-    Note: This value will wrap around to zero after about 2.1 billion frames.
+    Note: This value will wrap around to zero after around 2.1 billion frames.
           This typically isn't an issue: At 60 FPS, a game would need to run
           continuously for more than a year before it would roll over.
 
@@ -217,11 +218,11 @@ system.run();
           to undesirable side effects if a promise handler modifies a global
           variable, for example.
 
-system.sleep(time);
+system.sleep(num_frames);
 
-    Suspends all JavaScript execution for `time` seconds.  The engine will
-    "spin down" during this time and relinquish its CPU cycles to other
-    applications.
+    Suspends execution for the specified number of frames.  This runs its own
+    frame loop, so any asynchronous update and render jobs set up with the
+    Dispatch API will continue to be processed as usual.
 
 
 Dispatch API
