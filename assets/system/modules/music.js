@@ -6,7 +6,10 @@
 'use strict';
 module.exports =
 {
-	isAdjusting: isAdjusting,
+	get adjusting() {
+		return _isAdjusting();
+	},
+
 	adjust:      adjust,
 	override:    override,
 	play:        play,
@@ -23,13 +26,6 @@ var haveOverride = false;
 var mixer = new Mixer(44100, 16, 2);
 var oldSounds = [];
 var topmostSound = null;
-
-// music.isAdjusting()
-// get whether or not the volume level is being adjusted.
-function isAdjusting()
-{
-	return adjuster != null && adjuster.isRunning();
-};
 
 // music.adjust()
 // Smoothly adjusts the volume of the current BGM.
@@ -167,3 +163,8 @@ function _crossfade(path, frames, forceChange)
 		return null;
 	}
 }
+
+function _isAdjusting()
+{
+	return adjuster != null && adjuster.isRunning();
+};

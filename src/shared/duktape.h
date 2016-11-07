@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit d9f052d34b1c52b0b7fa3fd20e67ff7474a3e9f0 (v1.5.0-875-gd9f052d).
+ *  Git commit e8f13a1288552a387eb4152e484c06e0ccb3b024 (v1.5.0-886-ge8f13a1).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -256,8 +256,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "d9f052d34b1c52b0b7fa3fd20e67ff7474a3e9f0"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-875-gd9f052d"
+#define DUK_GIT_COMMIT                    "e8f13a1288552a387eb4152e484c06e0ccb3b024"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-886-ge8f13a1"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -316,10 +316,10 @@ struct duk_time_components {
 
 /* Enumeration flags for duk_enum() */
 #define DUK_ENUM_INCLUDE_NONENUMERABLE    (1 << 0)    /* enumerate non-numerable properties in addition to enumerable */
-#define DUK_ENUM_INCLUDE_INTERNAL         (1 << 1)    /* enumerate internal properties (regardless of enumerability) */
+#define DUK_ENUM_INCLUDE_INTERNAL         (1 << 1)    /* enumerate internal properties */
 #define DUK_ENUM_OWN_PROPERTIES_ONLY      (1 << 2)    /* don't walk prototype chain, only check own properties */
 #define DUK_ENUM_ARRAY_INDICES_ONLY       (1 << 3)    /* only enumerate array indices */
-#define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 4)    /* sort array indices, use with DUK_ENUM_ARRAY_INDICES_ONLY */
+#define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 4)    /* sort array indices (applied to full enumeration result, including inherited array indices) */
 #define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 5)    /* enumerate a proxy object itself without invoking proxy behavior */
 
 /* Compilation flags for duk_compile() and duk_eval() */

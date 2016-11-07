@@ -113,16 +113,16 @@ reasons.
 
     const music = require('music');
 
-music.isAdjusting();
+music.adjusting [read-only]
 
     true if the music volume is currently being adjusted by a call to
-    music.adjust() (see below).
+    music.adjust() (see below), otherwise false.
 
-music.adjust(newVolume, duration);
+music.adjust(newVolume, time);
 
     Smoothly adjusts the BGM volume level.  `newVolume` should be a value
-    between 0 and 1, where 0 is silent and 1 is full volume.  `duration` is
-    how long the adjustment should take, in seconds.
+    between 0 and 1, where 0 is silent and 1 is full volume.  `time` is the
+    amount of game time the adjustment should take, in frames.
 
 music.override(path[, fadeTime]);
 
@@ -130,7 +130,7 @@ music.override(path[, fadeTime]);
     times.  This may be useful in RPGs, for example to override the battle music
     during an important storyline event.
 
-    `fadeTime` is the amount of crossfade to apply, in seconds.
+    `fadeTime` is the amount of crossfade to apply, in frames.
 
     Note that overriding the BGM doesn't prevent music stack tracking.  So once
     the override is lifted (by calling reset()), the song on top of the stack at
@@ -142,7 +142,7 @@ music.play(path[, fadeTime]);
     This is not the same as an override; if play() or push() is called
     afterwards, the BGM will change.
 
-    `fadeTime` is the amount of crossfade to apply, in seconds.
+    `fadeTime` is the amount of crossfade to apply, in frames.
 
 music.pop([fadeTime]);
 
@@ -153,12 +153,12 @@ music.push(path[, fadeTime]);
 
     Pushes a new song to the music stack.  If pop() is called later, the
     previous BGM will resume from where it left off.  `fadeTime` is the amount
-    of crossfade to apply, in seconds.
+    of crossfade to apply, in frames.
 
 music.reset([fadeTime]);
 
     Resets the BGM manager to normal operation, removing any outstanding
-    overrides.  `fadeTime` is the amount of crossfade to apply, in seconds.
+    overrides.  `fadeTime` is the amount of crossfade to apply, in frames.
 
 
 `pacts` Module

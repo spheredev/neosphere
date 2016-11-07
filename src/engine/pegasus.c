@@ -1218,10 +1218,7 @@ js_system_sleep(duk_context* ctx)
 	// note: even if the frame counter rolls over this still works because
 	//       unsigned arithmetic is (mod 2^N) by definition.
 	timeout += screen_now(g_screen);
-	
-	// run a frame loop until the timeout expires.  note that if there are no render
-	// jobs set up, the screen will go black.  this is not a bug; it's just the
-	// nature of the beast.
+
 	while (screen_now(g_screen) < timeout)
 		screen_flip(g_screen, s_framerate);
 	return 0;
