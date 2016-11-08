@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Improves Sphere v2 behavior: minisphere will now run a frame loop until there
+  are no more Dispatch API jobs active before exiting.
+
+
 v4.3.0 - November 7, 2016
 -------------------------
 

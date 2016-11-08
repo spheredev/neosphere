@@ -9,6 +9,7 @@
 #include "galileo.h"
 #include "input.h"
 #include "map_engine.h"
+#include "pegasus.h"
 #include "sockets.h"
 #include "spriteset.h"
 
@@ -251,14 +252,19 @@ main(int argc, char* argv[])
 		goto on_js_error;
 	duk_pop(g_duk);
 
-	// call game() (only in Sphere v1 BC mode)
+	// Sphere v1 BC mode: call game() function, if it exists
 	if (fs_version(g_fs) < 2) {
 		duk_get_global_string(g_duk, "game");
 		if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 			goto on_js_error;
 		duk_pop(g_duk);
 	}
-	
+
+	// start the Sphere v2 frame loop.  note that this isn't contingent on the
+	// game's API version: the loop terminates when there are no Dispatch API jobs,
+	// so Sphere 1.x compatibility is not compromised.
+	pegasus_run();
+
 	exit_game(false);
 
 on_js_error:

@@ -16,6 +16,7 @@ enum async_hint
 
 void    async_init     (void);
 void    async_uninit   (void);
+bool    async_busy     (void);
 void    async_cancel   (int64_t token);
 int64_t async_defer    (script_t* script, uint32_t timeout, async_hint_t hint);
 int64_t async_recur    (script_t* script, double priority, async_hint_t hint);

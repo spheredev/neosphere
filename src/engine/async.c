@@ -35,6 +35,13 @@ async_uninit(void)
 	vector_free(s_recurring);
 }
 
+bool
+async_busy(void)
+{
+	return vector_len(s_recurring) > 0
+		|| vector_len(s_onetime) > 0;
+}
+
 void
 async_cancel(int64_t token)
 {

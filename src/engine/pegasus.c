@@ -683,6 +683,13 @@ initialize_pegasus_api(duk_context* ctx)
 	);
 }
 
+void
+pegasus_run(void)
+{
+	while (async_busy())
+		screen_flip(g_screen, s_framerate);
+}
+
 duk_bool_t
 duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 {
