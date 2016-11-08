@@ -15,15 +15,15 @@ throw new Error(message);
 
 function doUpdate()
 {
-	// add code here to update your game every frame, for example moving
+	// put code here to update your game every frame, for example moving
 	// sprites and updating animations.
 	
 }
 
-function onRender()
+function doRender()
 {
 	// put code here to draw a frame.  don't do anything other than rendering
 	// here, as renders can be skipped and thus are not guaranteed to match the
 	// frame rate.
-	prim.rect(screen, 0, 0, screen.width, screen.height, Color.Chartreuse);
+	prim.rect(screen, 0, 0, screen.width, screen.height, Color.DodgerBlue);
 }

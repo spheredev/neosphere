@@ -43,6 +43,13 @@ async_busy(void)
 }
 
 void
+async_cancel_all(void)
+{
+	vector_clear(s_recurring);
+	vector_clear(s_onetime);
+}
+
+void
 async_cancel(int64_t token)
 {
 	iter_t  iter;

@@ -14,12 +14,13 @@ enum async_hint
 	ASYNC_MAX
 } async_hint_t;
 
-void    async_init     (void);
-void    async_uninit   (void);
-bool    async_busy     (void);
-void    async_cancel   (int64_t token);
-int64_t async_defer    (script_t* script, uint32_t timeout, async_hint_t hint);
-int64_t async_recur    (script_t* script, double priority, async_hint_t hint);
-void    async_run_jobs (async_hint_t hint);
+void    async_init       (void);
+void    async_uninit     (void);
+bool    async_busy       (void);
+void    async_cancel     (int64_t token);
+void    async_cancel_all (void);
+int64_t async_defer      (script_t* script, uint32_t timeout, async_hint_t hint);
+int64_t async_recur      (script_t* script, double priority, async_hint_t hint);
+void    async_run_jobs   (async_hint_t hint);
 
 #endif // MINISPHERE__ASYNC_H__INCLUDED
