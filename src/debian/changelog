@@ -1,3 +1,10 @@
+minisphere (4.3.1) trusty; urgency=low
+
+  * Improves Sphere v2 behavior: minisphere will now run a frame loop until there
+    are no more Dispatch API jobs active before exiting.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 8 Nov 2016 00:00:00 -0500
+
 minisphere (4.3.0) trusty; urgency=low
 
   * Adds a new Dispatch API for setting up asynchronous jobs.  Jobs are called
