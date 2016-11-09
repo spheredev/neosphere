@@ -348,13 +348,14 @@ static duk_ret_t js_Transform_rotate           (duk_context* ctx);
 static duk_ret_t js_Transform_scale            (duk_context* ctx);
 static duk_ret_t js_Transform_translate        (duk_context* ctx);
 
-static void    duk_pegasus_push_color     (duk_context* ctx, color_t color);
-static void    duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
-static void    duk_pegasus_push_require   (duk_context* ctx, const char* module_id);
-static color_t duk_pegasus_require_color  (duk_context* ctx, duk_idx_t index);
-static path_t* find_module                (const char* id, const char* origin, const char* sys_origin);
-static void    load_joysticks             (duk_context* ctx);
-static path_t* load_package_json          (const char* filename);
+static void      duk_pegasus_push_color     (duk_context* ctx, color_t color);
+static void      duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
+static void      duk_pegasus_push_require   (duk_context* ctx, const char* module_id);
+static color_t   duk_pegasus_require_color  (duk_context* ctx, duk_idx_t index);
+static duk_ret_t duk_safe_event_loop        (duk_context* ctx, void* udata);
+static path_t*   find_module                (const char* id, const char* origin, const char* sys_origin);
+static void      load_joysticks             (duk_context* ctx);
+static path_t*   load_package_json          (const char* filename);
 
 static mixer_t* s_def_mixer;
 static int      s_framerate = 60;
@@ -683,11 +684,17 @@ initialize_pegasus_api(duk_context* ctx)
 	);
 }
 
-void
+bool
 pegasus_run(void)
 {
-	while (async_busy())
-		screen_flip(g_screen, s_framerate);
+	if (duk_safe_call(g_duk, duk_safe_event_loop, NULL, 0, 1) == 0) {
+		duk_pop(g_duk);  // don't need return value
+		return true;
+	}
+	else {
+		// leave the error for the caller, don't pop it off
+		return false;
+	}
 }
 
 duk_bool_t
@@ -869,6 +876,14 @@ duk_pegasus_require_color(duk_context* ctx, duk_idx_t index)
 	r = fmin(fmax(duk_get_number(ctx, -4) * 255, 0), 255);
 	duk_pop_n(ctx, 4);
 	return color_new(r, g, b, a);
+}
+
+static duk_ret_t
+duk_safe_event_loop(duk_context* ctx, void* udata)
+{
+	while (async_busy())
+		screen_flip(g_screen, s_framerate);
+	return 0;
 }
 
 static path_t*

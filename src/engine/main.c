@@ -263,7 +263,8 @@ main(int argc, char* argv[])
 	// start the Sphere v2 frame loop.  note that this isn't contingent on the
 	// game's API version: the loop terminates when there are no Dispatch API jobs,
 	// so Sphere 1.x compatibility is not compromised.
-	pegasus_run();
+	if (!pegasus_run())
+		goto on_js_error;
 
 	exit_game(false);
 

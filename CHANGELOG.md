@@ -1,12 +1,18 @@
 minisphere Changelog
 ====================
 
+v4.3.2 - TBD
+------------
+
+* Fixes jobs not being cancelled after an uncaught exception.
+* Fixes uncaught exceptions within the central frame loop crashing the engine
+  instead of displaying the error screen.
+
 v4.3.1 - November 8, 2016
 -------------------------
 
 * Improves Sphere v2 behavior: minisphere will now run a frame loop until there
   are no more Dispatch API jobs active before exiting.
-
 
 v4.3.0 - November 7, 2016
 -------------------------
