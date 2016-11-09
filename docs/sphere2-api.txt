@@ -260,19 +260,19 @@ Dispatch.onUpdate(fn[, priority]);
     and `onUpdate()` jobs are called at the start of a frame.
 
     `priority` affects the order of calls when there is more than one job.
-    Jobs are performed in ascending priority order, which ensures an intuitive
-    rendering order.  If no priority is given, the default is 0.0.  Priority
-    can be negative, and fractional priorities are honored: 8.12, for example,
-    is considered a higher priority than 8.
+    Render jobs are performed in ascending priority order, while update jobs
+    are performed in descending priority order.  If no priority is given, the
+    default is 0.0.  Priority can be negative, and fractional priorities are
+    honored: 8.12, for example, is considered a higher priority than 8.
 
     Returns a JobToken for use with Dispatch.cancel().
 
-    Note: onUpdate jobs are processed at the beginning of a frame, while
-          onRender jobs are processed at the end, just before the backbuffer is
-          flipped.  This ensures that:
+    Note: Update jobs are processed at the beginning of a frame, while render
+          jobs are processed at the end, just before the backbuffer is flipped.
+          This ensures that:
 
-          1) Local game loops always have access to up-to-date game state for
-             the current frame.
+          1) Frame loops always have access to up-to-date game state for the
+             current frame.
           2) Objects drawn by an asynchronous render job can't be obscured by
 			 those rendered synchronously.
 
