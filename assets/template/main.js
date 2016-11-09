@@ -15,7 +15,7 @@ Dispatch.onRender(doRender);
 
 // when you're ready to start programming, delete this comment block and the
 // two lines below.  but first, click Debug and see what happens!
-var message = "this game has not been implemented";
+var message = "oops! bug not fixed";
 throw new Error(message);
 
 function doUpdate()
