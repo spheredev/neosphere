@@ -7,6 +7,8 @@ v4.3.2 - TBD
 * Adds an API call, `Dispatch.cancelAll()` to cancel all pending one-time jobs
   (recurring jobs must still be cancelled individually).
 * Adds support for ECMAScript 2015 binary (0b1000) and octal (0o1454) literals.
+* Improves the Sphere Studio project template to show off more features and
+  better illustrate how the Sphere v2 API works.
 * Improves Dispatch API priority handling.  Update jobs are now executed in
   order from highest to lowest priority, rather than the other way around.
 * Fixes jobs continuing to run after an uncaught exception.

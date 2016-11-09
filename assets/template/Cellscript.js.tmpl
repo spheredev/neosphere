@@ -1,21 +1,21 @@
-// this is your game's Cellscript, used to instruct the Cell compiler how
-// to build your game.  like a Sphere game, the Cellscript is written in
-// JS, however with a different set of bindings tailored to game
-// compilation and packaging.
+// this is your game's Cellscript, used to instruct the Cell compiler how to
+// build your game.  like a Sphere game, the Cellscript is written in
+// JavaScript, however with a different set of bindings tailored for compiling
+// and packaging games.
 
 function $default()
 {{
-	// this tells Cell which files to install when packaging the game.
-	// see the Cell API documentation for more information.
-
-	/* install(files(filter[, recursive])[, destDir]); */
+	// this tells Cell which files to include from the source when packaging
+	// the game.  see the Cell API documentation for more information.
+	// in general:
+	//    install(files(filter[, recursive])[, destDir]);
+	install(files("images/*.png", true), "images/");
 	install(files("main.js"));
 	install(files("icon.png"));
 
 	// this builds and installs the JSON game manifest.
-	// the arguments passed to manifest() specify the data contained in the
-	// manifest:
-
+	// the object passed to manifest() is JSON-encoded and stored in
+	// the manifest file as-is, accessible via `system.game`.
 	install(manifest({{
 		name: "{0}",
 		author: "{1}",
