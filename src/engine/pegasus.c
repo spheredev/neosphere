@@ -220,6 +220,7 @@ static duk_ret_t js_Color_get_name             (duk_context* ctx);
 static duk_ret_t js_Color_clone                (duk_context* ctx);
 static duk_ret_t js_Color_fade                 (duk_context* ctx);
 static duk_ret_t js_Dispatch_cancel            (duk_context* ctx);
+static duk_ret_t js_Dispatch_cancelAll         (duk_context* ctx);
 static duk_ret_t js_Dispatch_later             (duk_context* ctx);
 static duk_ret_t js_Dispatch_now               (duk_context* ctx);
 static duk_ret_t js_Dispatch_onRender          (duk_context* ctx);
@@ -403,6 +404,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
 	api_define_function(ctx, "Dispatch", "cancel", js_Dispatch_cancel);
+	api_define_function(ctx, "Dispatch", "cancelAll", js_Dispatch_cancelAll);
 	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);
 	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
 	api_define_function(ctx, "Dispatch", "onRender", js_Dispatch_onRender);
@@ -1132,6 +1134,13 @@ js_Dispatch_cancel(duk_context* ctx)
 	token = duk_require_sphere_obj(ctx, 0, "JobToken");
 
 	async_cancel(*token);
+	return 0;
+}
+
+static duk_ret_t
+js_Dispatch_cancelAll(duk_context* ctx)
+{
+	async_cancel_all(false);
 	return 0;
 }
 

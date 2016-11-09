@@ -43,10 +43,11 @@ async_busy(void)
 }
 
 void
-async_cancel_all(void)
+async_cancel_all(bool recurring)
 {
-	vector_clear(s_recurring);
 	vector_clear(s_onetime);
+	if (recurring)
+		vector_clear(s_recurring);
 }
 
 void

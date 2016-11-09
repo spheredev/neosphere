@@ -4,7 +4,10 @@ minisphere Changelog
 v4.3.2 - TBD
 ------------
 
-* Fixes jobs not being cancelled after an uncaught exception.
+* Adds an API call, `Dispatch.cancelAll()` to cancel all pending one-time jobs
+  (recurring jobs must still be cancelled individually).
+* Adds support for ECMAScript 2015 binary (0b1000) and octal (0o1454) literals.
+* Fixes jobs continuing to run after an uncaught exception.
 * Fixes uncaught exceptions within the central frame loop crashing the engine
   instead of displaying the error screen.
 

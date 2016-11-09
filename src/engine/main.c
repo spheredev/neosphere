@@ -699,9 +699,9 @@ show_error_screen(const char* message)
 
 	int i;
 
-	// cancel all jobs, including recurring.  the error screen runs a frame loop
-	// and we don't want any game code to execute after this point.
-	async_cancel_all();
+	// cancel all jobs, including recurring.  we need to run a frame loop
+	// and we don't want any JS code to execute after this point.
+	async_cancel_all(true);
 
 #ifdef MINISPHERE_USE_CLIPBOARD
 	is_copied = false;

@@ -278,9 +278,14 @@ Dispatch.onUpdate(fn[, priority]);
 
 Dispatch.cancel(token);
 
-    Cancels the job associated with the JobToken `token`.  Note that for
-    one-time jobs, cancellation has no effect if the job has already been
-    processed.
+    Cancels the job associated with JobToken `token`.  Note that for one-time
+    jobs, cancellation has no effect if the job has already been processed.
+
+Dispatch.cancelAll();
+
+    Cancels all one-time jobs currently in the job queue.  To help prevent
+    mishaps, recurring jobs are not affected by this call and must be cancelled
+    individually.
 
 
 Random Number Generator API
