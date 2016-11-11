@@ -1,11 +1,11 @@
 Sphere v2 API Reference
 =======================
 
-As a Sphere-compatible engine, minisphere implements nearly the entire
-Sphere v1 API.  However, the v1 API is quite dated and, as of minisphere 4.0,
-has been deprecated.  It is not documented here at all; while games using the
-legacy functions will continue to run, new code should be written against the
-modern Sphere v2 API, documented here.
+As the successor to the original Sphere engine, minisphere implements nearly
+the entire Sphere v1 API.  However, the v1 API is quite dated and, as of
+minisphere 4.0, has been deprecated in its entirety.  It is not documented here
+at all; while games using the legacy functions will continue to run, new code
+should be written against the modern Sphere v2 API, documented here.
 
 To ease migration of existing Sphere v1 codebases to Sphere v2, legacy and
 modern API calls may be freely intermingled within the same codebase, and this
