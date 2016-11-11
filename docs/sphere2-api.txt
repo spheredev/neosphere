@@ -183,11 +183,12 @@ system.abort(message);
     closing the engine.  `message` will be displayed on the error screen.
 
     Note: system.abort() bypasses all exception handling mechanisms, including
-          SSJ.  Be sure you know what you're doing before you use it.
+          the debugger.  Be sure you know what you're doing before you call
+          this function.
 
 system.exit();
 
-    Shuts down the engine.  Be careful; this function will not return so any
+    Shuts down the engine.  Be careful; this function will not return, so any
     unsaved data will be lost.
 
 system.now();
@@ -195,9 +196,9 @@ system.now();
     Returns the number of frames processed by the engine since it started
     running.
 
-    Note: This value will wrap around to zero after around 2.1 billion frames.
-          This typically isn't an issue: At 60 FPS, a game would need to run
-          continuously for more than a year before it would roll over.
+    Note: This value will wrap around to zero after around 4.3 billion frames.
+          This typically isn't an issue: at 60 FPS, a game would need to run
+          continuously for *over 2 years* before it would roll over.
 
 system.reset();
 
@@ -233,6 +234,24 @@ performed from a designated part of the Sphere event loop.  This is like an
 advanced version of Sphere v1 update and render scripts, but better integrated
 and available throughout the engine.
 
+Dispatch.cancel(token);
+
+    Cancels the job associated with JobToken `token`.  Note that for one-time
+    jobs, cancellation has no effect if the job has already been processed.
+
+Dispatch.cancelAll();
+
+    Cancels all one-time jobs currently in the job queue.  To help prevent
+    mishaps, recurring jobs are not affected by this call and must be cancelled
+    individually.
+
+Dispatch.later(num_frames, fn);
+
+    Sets up a one-time job to call `fn` from the event loop after a specified
+    number of frames have been processed.
+
+    Returns a JobToken for use with Dispatch.cancel().
+
 Dispatch.now(fn);
 
     Sets up a one-time job to call `fn` from the event loop on the next tick.
@@ -244,13 +263,6 @@ Dispatch.now(fn);
     Note: Dispatch.now(fn) is *NOT* an alias for Dispatch.later(0, fn).  The
           latter runs at the beginning of the next frame; Dispatch.now() always
           runs on the very next tick even if no frame processing is done.
-
-Dispatch.later(num_frames, fn);
-
-    Sets up a one-time job to call `fn` from the event loop after a specified
-    number of frames have been processed.
-
-    Returns a JobToken for use with Dispatch.cancel().
 
 Dispatch.onRender(fn[, priority]);
 Dispatch.onUpdate(fn[, priority]);
@@ -274,18 +286,7 @@ Dispatch.onUpdate(fn[, priority]);
           1) Frame loops always have access to up-to-date game state for the
              current frame.
           2) Objects drawn by an asynchronous render job can't be obscured by
-			 those rendered synchronously.
-
-Dispatch.cancel(token);
-
-    Cancels the job associated with JobToken `token`.  Note that for one-time
-    jobs, cancellation has no effect if the job has already been processed.
-
-Dispatch.cancelAll();
-
-    Cancels all one-time jobs currently in the job queue.  To help prevent
-    mishaps, recurring jobs are not affected by this call and must be cancelled
-    individually.
+             those rendered synchronously.
 
 
 Random Number Generator API
@@ -448,8 +449,8 @@ Key [enumeration]
         Key.Subtract
 
     Note: Keys D0-D9 refer to the row of numbers above the letter keys and
-    below the function keys, while NumPad0-NumPad9 refer to the numbers on the
-    numeric keypad.
+          below the function keys, while NumPad0-NumPad9 refer to the numbers
+          on the numeric keypad.
 
 Keyboard.Default [read-only]
 
@@ -1152,8 +1153,8 @@ FileStream#position [read/write]
     read or write will start from.  Expressed in bytes.
 
     Note: For files opened for writing, it is valid to seek past the end of the
-    stream.  In this case the next write will be at the new position and the
-    intervening space filled with NUL bytes.
+          stream.  In this case the next write will be at the new position and
+          the intervening space filled with NUL bytes.
 
 FileStream#size [read-only]
 

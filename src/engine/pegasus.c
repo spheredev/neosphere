@@ -1120,7 +1120,7 @@ js_system_abort(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "function");
 	duk_get_prop_string(ctx, -1, "fileName");
 	filename = duk_get_string(ctx, -1);
-	text = strnewf("%s:%d\nsystem.abort()\n\n%s", filename, line_number, message);
+	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
 	duk_pop_3(ctx);
 
 	abort_game(text);

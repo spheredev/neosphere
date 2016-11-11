@@ -6,6 +6,7 @@ vX.X.X - TBD
 
 * Adds a new miniRT "test" module based on the CommonJS Unit Testing/1.0
   specification.
+* Fixes `Abort()` to exit the game unconditionally, like Sphere 1.x.
 
 
 v4.3.2 - November 9, 2016

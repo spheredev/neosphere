@@ -764,14 +764,11 @@ show_error_screen(const char* message)
 		}
 	}
 	wraptext_free(error_info);
-	shutdown_engine();
-	exit(EXIT_SUCCESS);
+	return;
 
 show_error_box:
 	// use a native message box only as a last resort
 	al_show_native_message_box(NULL, "Script Error",
 		"minisphere encountered an error during game execution.",
 		message, NULL, ALLEGRO_MESSAGEBOX_ERROR);
-	shutdown_engine();
-	exit(EXIT_SUCCESS);
 }
