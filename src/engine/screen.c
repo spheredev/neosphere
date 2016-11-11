@@ -128,6 +128,12 @@ screen_display(const screen_t* obj)
 }
 
 bool
+screen_fullscreen(const screen_t* screen)
+{
+	return screen->fullscreen;
+}
+
+bool
 screen_have_shaders(const screen_t* screen)
 {
 	return screen->have_shaders;

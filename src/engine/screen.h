@@ -9,6 +9,7 @@ typedef struct screen screen_t;
 screen_t*        screen_new               (const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep);
 void             screen_free              (screen_t* obj);
 ALLEGRO_DISPLAY* screen_display           (const screen_t* obj);
+bool             screen_fullscreen        (const screen_t* screen);
 bool             screen_have_shaders      (const screen_t* screen);
 bool             screen_is_skipframe      (const screen_t* obj);
 uint32_t         screen_now               (const screen_t* screen);

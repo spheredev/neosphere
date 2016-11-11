@@ -116,6 +116,7 @@ main(int argc, char* argv[])
 	// set up jump points for script bailout
 	console_log(1, "setting up jump points for longjmp");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
+		use_fullscreen = screen_fullscreen(g_screen);
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
@@ -127,6 +128,7 @@ main(int argc, char* argv[])
 		}
 	}
 	if (setjmp(s_jmp_restart)) {  // script called RestartGame() or ExecuteGame()
+		use_fullscreen = screen_fullscreen(g_screen);
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(g_game_path));
