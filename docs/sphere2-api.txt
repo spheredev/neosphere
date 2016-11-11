@@ -248,7 +248,7 @@ Dispatch.cancelAll();
 Dispatch.later(num_frames, fn);
 
     Sets up a one-time job to call `fn` from the event loop after a specified
-    number of frames have been processed.
+    number of frames have passed.
 
     Returns a JobToken for use with Dispatch.cancel().
 
@@ -275,7 +275,7 @@ Dispatch.onUpdate(fn[, priority]);
     Render jobs are performed in ascending priority order, while update jobs
     are performed in descending priority order.  If no priority is given, the
     default is 0.0.  Priority can be negative, and fractional priorities are
-    honored: 8.12, for example, is considered a higher priority than 8.
+    honored: 8.12, for example, is considered a higher priority than 8.0.
 
     Returns a JobToken for use with Dispatch.cancel().
 

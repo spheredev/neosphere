@@ -6,6 +6,7 @@ vX.X.X - TBD
 
 * Adds a new miniRT "test" module based on the CommonJS Unit Testing/1.0
   specification.
+* Adds support for ECMAScript 2015 `Object.assign()`.
 * Fixes `Abort()` to exit the game unconditionally, like Sphere 1.x.
 * Fixes `ExecuteGame()` resetting the fullscreen/window state.
 
