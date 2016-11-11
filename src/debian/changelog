@@ -1,3 +1,13 @@
+minisphere (4.3.3) trusty; urgency=low
+
+  * Adds a new miniRT "test" module based on the CommonJS Unit Testing/1.0
+    specification.
+  * Adds support for ECMAScript 2015 `Object.assign()`.
+  * Fixes `Abort()` to exit the game unconditionally, like Sphere 1.x.
+  * Fixes `ExecuteGame()` resetting the fullscreen/window state.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 11 Nov 2016 00:00:00 -0500
+
 minisphere (4.3.2) trusty; urgency=low
 
   * Adds an API call, `Dispatch.cancelAll()` to cancel all pending one-time jobs

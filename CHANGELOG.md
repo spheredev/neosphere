@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.3.3 - November 11, 2016
+--------------------------
 
 * Adds a new miniRT "test" module based on the CommonJS Unit Testing/1.0
   specification.
