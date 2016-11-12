@@ -21,7 +21,7 @@ function Delegate()
 
     function haveHandler(handler, thisObj)
     {
-        return link(invokeList).contains(function(v) {
+        return link.Q(invokeList).contains(function(v) {
             return v.handler == handler && v.thisObj == thisObj;
         });
     }
@@ -47,7 +47,7 @@ function Delegate()
     {
         var lastResult = undefined;
         var invokeArgs = arguments;
-        link(invokeList).each(function(v) {
+        link.Q(invokeList).forEach(function(v) {
             lastResult = v.handler.apply(v.thisObj, invokeArgs);
         });
 
@@ -64,7 +64,7 @@ function Delegate()
     {
         if (!haveHandler(handler, thisObj))
             throw new Error("handler is not registered");
-        link(invokeList)
+        link.Q(invokeList)
             .where(function(v) { return v.handler == handler; })
             .where(function(v) { return v.thisObj == thisObj; })
             .remove();

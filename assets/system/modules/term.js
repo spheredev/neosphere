@@ -64,7 +64,7 @@ function executeCommand(command)
 	var instruction = tokens[1];
 
 	// check that the instruction is valid
-	if (!link(commands)
+	if (!link.Q(commands)
 		.pluck('entity')
 		.contains(entity))
 	{
@@ -75,7 +75,7 @@ function executeCommand(command)
 		print("No instruction provided for '" + entity + "'");
 		return;
 	}
-	if (!link(commands)
+	if (!link.Q(commands)
 		.filterBy('entity', entity)
 		.pluck('instruction')
 		.contains(instruction))
@@ -91,10 +91,10 @@ function executeCommand(command)
 	}
 
 	// execute the command
-	link(commands)
+	link.Q(commands)
 		.filterBy('instruction', instruction)
 		.filterBy('entity', entity)
-		.each(function(desc)
+		.forEach(function(desc)
 	{
 		threads.create({
 			update: function() {
@@ -225,7 +225,7 @@ function define(name, that, methods)
 
 function undefine(name)
 {
-	commands = link(commands)
+	commands = link.Q(commands)
 		.where(function(command) { return command.entity != name; })
 		.toArray();
 }
