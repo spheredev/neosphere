@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v?.?.? - TBD
+------------
+
+* Adds support for ECMAScript 2015 `Object.is()` and `Math.hypot()`.
+
+
 v4.3.3 - November 11, 2016
 --------------------------
 
@@ -9,7 +15,6 @@ v4.3.3 - November 11, 2016
 * Adds support for ECMAScript 2015 `Object.assign()`.
 * Fixes `Abort()` to exit the game unconditionally, like Sphere 1.x.
 * Fixes `ExecuteGame()` resetting the fullscreen/window state.
-
 
 v4.3.2 - November 9, 2016
 -------------------------

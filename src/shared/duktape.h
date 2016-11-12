@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit e053ccfb61dcb73a96b0a9f665bc1e4c155c2859 (v1.5.0-905-ge053ccf).
- *  Git branch master.
+ *  Git commit 3b9023449983222a18d745e0ae07c436fc796749 (v1.5.0-913-g3b90234).
+ *  Git branch math-hypot.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -258,9 +258,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "e053ccfb61dcb73a96b0a9f665bc1e4c155c2859"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-905-ge053ccf"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "3b9023449983222a18d745e0ae07c436fc796749"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-913-g3b90234"
+#define DUK_GIT_BRANCH                    "math-hypot"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
@@ -968,6 +968,7 @@ DUK_EXTERNAL_DECL duk_codepoint_t duk_char_code_at(duk_context *ctx, duk_idx_t i
 
 DUK_EXTERNAL_DECL duk_bool_t duk_equals(duk_context *ctx, duk_idx_t idx1, duk_idx_t idx2);
 DUK_EXTERNAL_DECL duk_bool_t duk_strict_equals(duk_context *ctx, duk_idx_t idx1, duk_idx_t idx2);
+DUK_EXTERNAL_DECL duk_bool_t duk_samevalue(duk_context *ctx, duk_idx_t idx1, duk_idx_t idx2);
 DUK_EXTERNAL_DECL duk_bool_t duk_instanceof(duk_context *ctx, duk_idx_t idx1, duk_idx_t idx2);
 
 /*
