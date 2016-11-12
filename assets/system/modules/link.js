@@ -7,7 +7,7 @@
 		Still somewhat experimental, and still under construction.
 **/
 
-var Link = (function(undefined) {
+var Link = (function (undefined) {
 	"use strict";
 
 	var _slice = [].slice,
@@ -30,11 +30,11 @@ var Link = (function(undefined) {
 		this.func = fn;
 	}
 
-	WherePoint.prototype.exec = function(item, i) {
+	WherePoint.prototype.exec = function (item, i) {
 		if (this.func(item)) this.next.exec(item, i);
 	};
 
-	WherePoint.prototype.run = function(a) {
+	WherePoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			f = this.func, n = this.next;
 		if (e.take) {
@@ -49,7 +49,7 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	HasPoint.prototype.exec = function(item, i) {
+	HasPoint.prototype.exec = function (item, i) {
 		if (_IndexOf(item[this.prop], this.item) >= 0) this.next.exec(item, i);
 	};
 
@@ -58,7 +58,7 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	HasFuncPoint.prototype.exec = function(item, i) {
+	HasFuncPoint.prototype.exec = function (item, i) {
 		var array = item[this.prop];
 		for (var i = 0, l = array.length; i < l; ++i) {
 			if (this.func(array[i], i)) { this.next.exec(item, i); break; }
@@ -69,11 +69,11 @@ var Link = (function(undefined) {
 		this.func = fn;
 	}
 
-	RejectPoint.prototype.exec = function(item, i) {
+	RejectPoint.prototype.exec = function (item, i) {
 		if (!this.func(item, i)) this.next.exec(item, i);
 	};
 
-	RejectPoint.prototype.run = function(a) {
+	RejectPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env, f = this.func, n = this.next;
 		if (e.take) {
 			while (i < l && !e.stop) { if (!f(a[i], i)) n.exec(a[i], i); i++; }
@@ -87,11 +87,11 @@ var Link = (function(undefined) {
 		this.vals = values;
 	}
 
-	FilterByPoint.prototype.exec = function(item, i) {
+	FilterByPoint.prototype.exec = function (item, i) {
 		if (_IndexOf(this.vals, item[this.key])) this.next.exec(item, i);
 	};
 
-	FilterByPoint.prototype.run = function(a) {
+	FilterByPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			k = this.key, v = this.vals, n = this.next;
 		if (e.take) {
@@ -112,11 +112,11 @@ var Link = (function(undefined) {
 		this.val = val;
 	}
 
-	FilterByOnePoint.prototype.exec = function(item, i) {
+	FilterByOnePoint.prototype.exec = function (item, i) {
 		if (item[this.key] === this.val) this.next.exec(item, i);
 	};
 
-	FilterByOnePoint.prototype.run = function(a) {
+	FilterByOnePoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			v = this.val, k = this.key, n = this.next;
 		if (e.take) {
@@ -130,11 +130,11 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	PluckPoint.prototype.exec = function(item, i) {
+	PluckPoint.prototype.exec = function (item, i) {
 		this.next.exec(item[this.prop], i);
 	};
 
-	PluckPoint.prototype.run = function(a) {
+	PluckPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env, k = this.prop, n = this.next;
 		if (e.take) {
 			while (i < l && !e.stop) { n.exec(a[i][k], i); i++; }
@@ -145,7 +145,7 @@ var Link = (function(undefined) {
 
 	function ValuesPoint() { }
 
-	ValuesPoint.prototype.exec = function(item) {
+	ValuesPoint.prototype.exec = function (item) {
 		for (var i in item) {
 			this.next.exec(item[i]);
 		}
@@ -155,7 +155,7 @@ var Link = (function(undefined) {
 		this.args = args;
 	}
 
-	SelectPoint.prototype.exec = function(item, i) {
+	SelectPoint.prototype.exec = function (item, i) {
 		var obj = { }, i = this.args.length;
 		while (i--) {
 			obj[this.args[i]] = item[this.args[i]];
@@ -168,7 +168,7 @@ var Link = (function(undefined) {
 		this.text  = "";
 	}
 
-	ArrayJoinPoint.prototype.exec = function(item, i) {
+	ArrayJoinPoint.prototype.exec = function (item, i) {
 		this.text += item + this.delim;
 	};
 
@@ -177,7 +177,7 @@ var Link = (function(undefined) {
 		this.cond  = cond;
 	}
 
-	JoinPoint.prototype.exec = function(item, i) {
+	JoinPoint.prototype.exec = function (item, i) {
 		for (var i = 0, l = this.other.length; i < l; ++i) {
 			var other = this.other[i];
 			if (this.cond(item, other)) {
@@ -193,11 +193,11 @@ var Link = (function(undefined) {
 		this.func = fn;
 	}
 
-	MapPoint.prototype.exec = function(item, i) {
+	MapPoint.prototype.exec = function (item, i) {
 		this.next.exec(this.func(item, i), i);
 	};
 
-	MapPoint.prototype.run = function(a) {
+	MapPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			f = this.func, n = this.next;
 		if (e.take) {
@@ -212,11 +212,11 @@ var Link = (function(undefined) {
 		this.map2 = fn2;
 	}
 
-	Map2Point.prototype.exec = function(item, i) {
+	Map2Point.prototype.exec = function (item, i) {
 		this.next.exec(this.map2(this.map1(item, i), i));
 	};
 
-	Map2Point.prototype.run = function(a) {
+	Map2Point.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			f1 = this.map1, f2 = this.map2, n = this.next;
 		if (e.take) {
@@ -231,7 +231,7 @@ var Link = (function(undefined) {
 		this.map   = fn2;
 	}
 
-	WhereMapPoint.prototype.exec = function(item, i) {
+	WhereMapPoint.prototype.exec = function (item, i) {
 		if (this.where(item, i)) this.next.exec(this.map(item, i), i);
 	};
 
@@ -240,12 +240,12 @@ var Link = (function(undefined) {
 		this.where = fn2;
 	}
 
-	MapWherePoint.prototype.exec = function(item, i) {
+	MapWherePoint.prototype.exec = function (item, i) {
 		var v = this.map(item, i);
 		if (this.where(v, i)) this.next.exec(v, i);
 	};
 
-	MapWherePoint.prototype.run = function(a) {
+	MapWherePoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			f1 = this.where, f2 = this.map, n = this.next;
 		if (e.take) {
@@ -264,11 +264,11 @@ var Link = (function(undefined) {
 		this.where2 = fn2;
 	}
 
-	Where2Point.prototype.exec = function(item, i) {
+	Where2Point.prototype.exec = function (item, i) {
 		if (this.where1(item, i) && this.where2(item, i)) this.next.exec(item, i);
 	};
 
-	Where2Point.prototype.run = function(a) {
+	Where2Point.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			f1 = this.where1, f2 = this.where2, n = this.next;
 		if (e.take) {
@@ -289,11 +289,11 @@ var Link = (function(undefined) {
 		this.i = 0;
 	}
 
-	ZipPoint.prototype.exec = function(item, i) {
+	ZipPoint.prototype.exec = function (item, i) {
 		this.next.exec([item, array[this.i++]], i);
 	};
 
-	ZipPoint.prototype.reset = function() {
+	ZipPoint.prototype.reset = function () {
 		this.i = 0;
 	};
 
@@ -301,7 +301,7 @@ var Link = (function(undefined) {
 		this.items = [];
 	}
 
-	RemovePoint.prototype.exec = function(item, i) {
+	RemovePoint.prototype.exec = function (item, i) {
 		this.items.push(i);
 	};
 
@@ -312,7 +312,7 @@ var Link = (function(undefined) {
 		this.indices = [];
 	}
 
-	GroupByPoint.prototype.exec = function(item, i) {
+	GroupByPoint.prototype.exec = function (item, i) {
 		var value = this.func(item, i);
 		if (this.isObj) {
 			if (!this.group[value]) {
@@ -337,7 +337,7 @@ var Link = (function(undefined) {
 		this.b = b;
 	}
 
-	SlicePoint.prototype.exec = function(item, i) {
+	SlicePoint.prototype.exec = function (item, i) {
 		if (this.i >= this.b) {
 			this.env.stop = true;
 			this.i = 0;
@@ -352,13 +352,13 @@ var Link = (function(undefined) {
 		this.func = fn;
 	}
 
-	FirstFuncPoint.prototype.exec = function(item, i) {
+	FirstFuncPoint.prototype.exec = function (item, i) {
 		if (this.func(item, i)) { this.env.stop = true; this.next.exec(item, i); }
 	};
 
 	function FirstPoint() { }
 
-	FirstPoint.prototype.exec = function(item, i) {
+	FirstPoint.prototype.exec = function (item, i) {
 		this.env.stop = true;
 		this.next.exec(item, i);
 	};
@@ -368,7 +368,7 @@ var Link = (function(undefined) {
 		this.i   = 0;
 	}
 
-	FirstCountPoint.prototype.exec = function(item, i) {
+	FirstCountPoint.prototype.exec = function (item, i) {
 		if (++this.i == this.num) this.env.stop = true;
 		this.next.exec(item, i);
 	};
@@ -378,7 +378,7 @@ var Link = (function(undefined) {
 		this.val  = value;
 	}
 
-	UpdatePoint.prototype.exec = function(item, i) {
+	UpdatePoint.prototype.exec = function (item, i) {
 		item[this.prop] = this.val;
 	};
 
@@ -386,11 +386,11 @@ var Link = (function(undefined) {
 		this.inst = inst;
 	}
 
-	IsPoint.prototype.exec = function(item, i) {
+	IsPoint.prototype.exec = function (item, i) {
 		if (item instanceof this.inst) this.next.exec(item, i);
 	};
 
-	IsPoint.prototype.run = function(a) {
+	IsPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			ins = this.inst, n = this.next;
 		if (e.take) {
@@ -404,11 +404,11 @@ var Link = (function(undefined) {
 		this.type = type;
 	}
 
-	TypePoint.prototype.exec = function(item, i) {
+	TypePoint.prototype.exec = function (item, i) {
 		if (typeof item == this.type) this.next.exec(item, i);
 	};
 
-	TypePoint.prototype.run = function(a) {
+	TypePoint.prototype.run = function (a) {
 		var i = 0, l = a.length, e = this.env,
 			t = this.type, n = this.next;
 		if (e.take) {
@@ -423,7 +423,7 @@ var Link = (function(undefined) {
 		this.skip = 0;
 	}
 
-	SkipPoint.prototype.exec = function(item, i) {
+	SkipPoint.prototype.exec = function (item, i) {
 		if (this.skip == this.n) {
 			this.next.exec(item, i);
 		} else {
@@ -431,7 +431,7 @@ var Link = (function(undefined) {
 		}
 	};
 
-	SkipPoint.prototype.reset = function() {
+	SkipPoint.prototype.reset = function () {
 		this.skip = 0;
 	};
 
@@ -441,7 +441,7 @@ var Link = (function(undefined) {
 		this.obj = null;
 	}
 
-	GetPoint.prototype.exec = function(item, i) {
+	GetPoint.prototype.exec = function (item, i) {
 		if (this.c == this.n) {
 			this.env.stop = true;
 			this.obj = item;
@@ -453,7 +453,7 @@ var Link = (function(undefined) {
 		this.pass = false;
 	}
 
-	ContainsFuncPoint.prototype.exec = function(item, i) {
+	ContainsFuncPoint.prototype.exec = function (item, i) {
 		if (this.func(item, i)) this.pass = this.env.stop = true;
 	};
 
@@ -462,11 +462,11 @@ var Link = (function(undefined) {
 		this.pass = false;
 	}
 
-	ContainsPoint.prototype.exec = function(item, i) {
+	ContainsPoint.prototype.exec = function (item, i) {
 		if (item === this.obj) this.pass = this.env.stop = true;
 	};
 
-	ContainsPoint.prototype.run = function(a) {
+	ContainsPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, t = this.obj;
 		while (i < l) { if (a[i++] === t) { this.pass = true; break; } }
 	};
@@ -476,11 +476,11 @@ var Link = (function(undefined) {
 		this.pass = false;
 	}
 
-	ContainsAnyPoint.prototype.exec = function(item, i) {
+	ContainsAnyPoint.prototype.exec = function (item, i) {
 		if (_IndexOf(this.arr, item) >= 0) this.pass = this.env.stop = true;
 	};
 
-	ContainsAnyPoint.prototype.run = function(a) {
+	ContainsAnyPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, arr = this.arr;
 		while (i < l) {
 			if (_IndexOf(this.arr, a[i++]) >= 0) { this.pass = true; break; }
@@ -492,7 +492,7 @@ var Link = (function(undefined) {
 		this.func = func;
 	}
 
-	EveryPoint.prototype.exec = function(item, i) {
+	EveryPoint.prototype.exec = function (item, i) {
 		if (!this.func(item, i)) { this.pass = false; this.env.stop = true; }
 	};
 
@@ -501,7 +501,7 @@ var Link = (function(undefined) {
 		this.func = func;
 	}
 
-	NonePoint.prototype.exec = function(item, i) {
+	NonePoint.prototype.exec = function (item, i) {
 		if (this.func(item, i)) { this.pass = false; this.env.stop = true; }
 	};
 
@@ -511,12 +511,12 @@ var Link = (function(undefined) {
 		this.found = false;
 	}
 
-	IndexOfPoint.prototype.exec = function(item, i) {
+	IndexOfPoint.prototype.exec = function (item, i) {
 		if (item == this.value) this.env.stop = this.found = true;
 		else this.index++;
 	};
 
-	IndexOfPoint.prototype.run = function(a) {
+	IndexOfPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, v = this.value, n = this.next;
 		while (i < l) { if (a[i] == v) { this.index = i; this.found = true; break; } else i++; }
 	};
@@ -527,12 +527,12 @@ var Link = (function(undefined) {
 		this.found = false;
 	}
 
-	IndexOfFuncPoint.prototype.exec = function(item, i) {
+	IndexOfFuncPoint.prototype.exec = function (item, i) {
 		if (this.func(item, i)) this.env.stop = this.found = true;
 		else this.index++;
 	};
 
-	IndexOfFuncPoint.prototype.run = function(a) {
+	IndexOfFuncPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, fn = this.func, n = this.next;
 		while (i < l) { if (fn(a[i], i)) { this.index = i; this.found = true; break; } else i++; }
 	};
@@ -543,12 +543,12 @@ var Link = (function(undefined) {
 		this.index = 0;
 	}
 
-	IndexOfPropPoint.prototype.exec = function(item, i) {
+	IndexOfPropPoint.prototype.exec = function (item, i) {
 		if (item[this.prop] == this.value) this.env.stop = this.found = true;
 		else this.index++;
 	};
 
-	IndexOfPropPoint.prototype.run = function(a) {
+	IndexOfPropPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, p = this.prop, v = this.value, n = this.next;
 		while (i < l) { if (a[i][p] == v) { this.index = i; this.found = true; break; } else i++; }
 	};
@@ -559,7 +559,7 @@ var Link = (function(undefined) {
 		this.func = fn;
 	}
 
-	ExecutePoint.prototype.exec = function(item, i) {
+	ExecutePoint.prototype.exec = function (item, i) {
 		this.func(item, i);
 		this.next.exec(item, i);
 	};
@@ -569,7 +569,7 @@ var Link = (function(undefined) {
 		this.items = 0;
 	}
 
-	AveragePoint.prototype.exec = function(item, i) {
+	AveragePoint.prototype.exec = function (item, i) {
 		this.total += item;
 		this.items++;
 	};
@@ -580,7 +580,7 @@ var Link = (function(undefined) {
 		this.items = 0;
 	}
 
-	AveragePropPoint.prototype.exec = function(item, i) {
+	AveragePropPoint.prototype.exec = function (item, i) {
 		this.total += item[this.prop];
 		this.items++;
 	};
@@ -591,7 +591,7 @@ var Link = (function(undefined) {
 		this.items = 0;
 	}
 
-	AverageFuncPoint.prototype.exec = function(item, i) {
+	AverageFuncPoint.prototype.exec = function (item, i) {
 		this.total += this.func(item, i);
 		this.items++;
 	};
@@ -600,7 +600,7 @@ var Link = (function(undefined) {
 		this.total = 0;
 	}
 
-	SumPoint.prototype.exec = function(item, i) {
+	SumPoint.prototype.exec = function (item, i) {
 		this.total += item;
 	};
 
@@ -609,7 +609,7 @@ var Link = (function(undefined) {
 		this.total = 0;
 	}
 
-	SumPropPoint.prototype.exec = function(item, i) {
+	SumPropPoint.prototype.exec = function (item, i) {
 		this.total += item[this.prop];
 	};
 
@@ -618,7 +618,7 @@ var Link = (function(undefined) {
 		this.total = 0;
 	}
 
-	SumFuncPoint.prototype.exec = function(item, i) {
+	SumFuncPoint.prototype.exec = function (item, i) {
 		this.total += this.func(item, i);
 	};
 
@@ -628,7 +628,7 @@ var Link = (function(undefined) {
 		this.obj   = undefined;
 	}
 
-	MinPoint.prototype.exec = function(item, i) {
+	MinPoint.prototype.exec = function (item, i) {
 		var v = this.func(item, i);
 		if (v < this.value) { this.value = v; this.obj = item; }
 	};
@@ -639,7 +639,7 @@ var Link = (function(undefined) {
 		this.obj   = undefined;
 	}
 
-	MaxPoint.prototype.exec = function(item, i) {
+	MaxPoint.prototype.exec = function (item, i) {
 		var v = this.func(item, i);
 		if (v > this.value) { this.value = v; this.obj = item; }
 	};
@@ -648,11 +648,11 @@ var Link = (function(undefined) {
 		this.name = method;
 	}
 
-	InvokePoint.prototype.exec = function(item, i) {
+	InvokePoint.prototype.exec = function (item, i) {
 		item[this.name]();
 	};
 
-	InvokePoint.prototype.run = function(a) {
+	InvokePoint.prototype.run = function (a) {
 		var i = 0, l = a.length, n = this.name;
 		while(i < l) { a[i++][n](); }
 	};
@@ -662,18 +662,18 @@ var Link = (function(undefined) {
 		this.args = args;
 	}
 
-	InvokeArgsPoint.prototype.exec = function(item, i) {
+	InvokeArgsPoint.prototype.exec = function (item, i) {
 		item[this.name].apply(item, this.args);
 	};
 
-	InvokeArgsPoint.prototype.run = function(a) {
+	InvokeArgsPoint.prototype.run = function (a) {
 		var i = 0, l = a.length, n = this.name, args = this.args;
 		while(i < l) { var m = a[i++]; m[n].apply(m, args); }
 	};
 
 	function ExpandPoint() { }
 
-	ExpandPoint.prototype.exec = function(item, i) {
+	ExpandPoint.prototype.exec = function (item, i) {
 		var i = 0, l = item.length, e = this.env, n = this.next;
 		if (e.take) {
 			while (i < l && !e.stop) { n.exec(item[i], i); i++; }
@@ -686,7 +686,7 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	ExpandPropPoint.prototype.exec = function(item, i) {
+	ExpandPropPoint.prototype.exec = function (item, i) {
 		var i = 0, a = item[this.prop], l = a.length;
 		while (i < l) { this.next.exec(a[i], i); i++; }
 	};
@@ -696,7 +696,7 @@ var Link = (function(undefined) {
 		this.num  = size;
 	}
 
-	TakePoint.prototype.exec = function(item, i) {
+	TakePoint.prototype.exec = function (item, i) {
 		this.next.exec(item, i);
 		if (++this.i == this.num) { this.env.stop = true; this.i = 0; }
 	};
@@ -706,7 +706,7 @@ var Link = (function(undefined) {
 		this.counts = { num: 0, total: 0 };
 	}
 
-	CountPoint.prototype.exec = function(item, i) {
+	CountPoint.prototype.exec = function (item, i) {
 		this.counts.total++;
 		if (this.func(item, i)) this.counts.num++;
 	};
@@ -716,7 +716,7 @@ var Link = (function(undefined) {
 		this.first = first;
 	}
 
-	CrossPoint.prototype.exec = function(item, n) {
+	CrossPoint.prototype.exec = function (item, n) {
 		var o = this.other, next = this.next;
 		if (this.first) item = [item];
 		for (var i = 0, l = o.length; i < l; ++i) {
@@ -734,7 +734,7 @@ var Link = (function(undefined) {
 		this.ref  = []; // for object references
 	}
 
-	UniqPoint.prototype.exec = function(item, i) {
+	UniqPoint.prototype.exec = function (item, i) {
 		if (typeof item == "object") {
 			var i = this.ref.length;
 			if (this.test) {
@@ -750,7 +750,7 @@ var Link = (function(undefined) {
 		}
 	};
 
-	UniqPoint.prototype.reset = function() {
+	UniqPoint.prototype.reset = function () {
 		this.set.length = 0;
 		this.ref.length = 0;
 	};
@@ -759,7 +759,7 @@ var Link = (function(undefined) {
 		this.num = 0;
 	}
 
-	LengthPoint.prototype.exec = function(item, i) {
+	LengthPoint.prototype.exec = function (item, i) {
 		this.num++;
 	};
 
@@ -767,7 +767,7 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	RecursePoint.prototype.exec = function(item) {
+	RecursePoint.prototype.exec = function (item) {
 		if (item && this.prop in item) {
 			var a = item[this.prop], l = a.length;
 			for (var i = 0; i < l; ++i) { this.next.exec(a[i]); this.exec(a[i]); }
@@ -779,7 +779,7 @@ var Link = (function(undefined) {
 		this.memo = m;
 	}
 
-	ReducePoint.prototype.exec = function(item, i) {
+	ReducePoint.prototype.exec = function (item, i) {
 		if (this.memo === undefined) {
 			this.memo = item;
 		} else {
@@ -791,11 +791,11 @@ var Link = (function(undefined) {
 		this.array = [];
 	}
 
-	AllPoint.prototype.exec = function(item, i) {
+	AllPoint.prototype.exec = function (item, i) {
 		this.array[this.array.length] = item;
 	};
 
-	AllPoint.prototype.run = function(a) {
+	AllPoint.prototype.run = function (a) {
 		var i = a.length, b = this.array;
 		while (i--) b[i] = a[i];
 	};
@@ -804,13 +804,13 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	CoalescePropPoint.prototype.exec = function(item, i) {
+	CoalescePropPoint.prototype.exec = function (item, i) {
 		this.env.target[i][this.prop] = item;
 	};
 
 	function CoalescePoint() { } // end point
 
-	CoalescePoint.prototype.exec = function(item, i) {
+	CoalescePoint.prototype.exec = function (item, i) {
 		this.env.target[i] = item;
 	};
 
@@ -818,7 +818,7 @@ var Link = (function(undefined) {
 		this.prop = prop;
 	}
 
-	UnpluckPoint.prototype.exec = function(item, i) {
+	UnpluckPoint.prototype.exec = function (item, i) {
 		this.env.target[i][this.prop] = item;
 		this.next.exec(this.env.target[i], i);
 	};
@@ -828,12 +828,22 @@ var Link = (function(undefined) {
 		this.word = "";
 	}
 
-	SplitPoint.prototype.exec = function(item, i) {
+	SplitPoint.prototype.exec = function (item, i) {
 		if (item == this.del || item == "\0") {
 			this.next.exec(this.word, i);
 			this.word = "";
 		} else {
 			this.word += item;
+		}
+	};
+
+	function KeysPoint() { }
+
+	KeysPoint.prototype.exec = function (item) {
+		var a = Object.keys(item),
+			l = a.length;
+		for (var i = 0; i < l; ++i) {
+			this.next.exec(a[i]);
 		}
 	};
 
@@ -891,6 +901,11 @@ var Link = (function(undefined) {
 
 		// remove end point for so we can recycle the chain:
 		this.points.length--;
+	}
+
+	function Keys() {
+		this.pushPoint(new KeysPoint());
+		return this;
 	}
 
 	function ToArray() {
@@ -1256,14 +1271,16 @@ var Link = (function(undefined) {
 	}
 
 	/** Interface Layer **/
-	function LinkException(message, chain) {
+	LinkError.prototype = Object.create(Error.prototype);
+	LinkError.prototype.constructor = LinkError;
+	LinkError.prototype.name = "LinkError";
+	Object.setPrototypeOf(LinkError, Error);
+	function LinkError(message, chain) {
+		if (!(this instanceof LinkError))
+			return new LinkError(message, chain);
 		this.message = message;
 		this.link    = chain || null;
 	}
-
-	LinkException.prototype.toString = function() {
-		return "Link Exception: " + this.message;
-	};
 
 	function LinkChain(source) {
 		this.env    = { take: false, stop: false, target: this.target };
@@ -1274,7 +1291,7 @@ var Link = (function(undefined) {
 		} else if (_IsArray(source) || typeof source == "string") {
 			this.target = source;
 		} else {
-			throw new LinkException("Source must be an Array, String or Link chain.");
+			throw LinkError("array, string or Link chain required");
 		}
 	}
 
@@ -1294,6 +1311,7 @@ var Link = (function(undefined) {
 		drop      : Skip,
 		each      : Each,
 		every     : Every,
+		exec      : Execute,
 		execute   : Execute,
 		exists    : Contains,
 		expand    : Expand,
@@ -1302,6 +1320,7 @@ var Link = (function(undefined) {
 		filterBy  : FilterBy,
 		filterOut : Reject,
 		first     : First,
+		forEach   : Each,
 		fuse      : Coalesce,
 		get       : Get,
 		groupBy   : GroupBy,
@@ -1310,6 +1329,7 @@ var Link = (function(undefined) {
 		invoke    : Invoke,
 		is        : Is,
 		join      : Join,
+		keys      : Keys,
 		last      : Last,
 		length    : Length,
 		map       : Map,
@@ -1353,7 +1373,7 @@ var Link = (function(undefined) {
 		var a = _slice.call(arguments, 0);
 
 		if (a.length == 0) {
-			throw new LinkException("Null parameters.");
+			throw LinkError("array(s) required");
 		} else if (a.length == 1) {
 			return new LinkChain(a[0]);
 		} else {
@@ -1361,7 +1381,7 @@ var Link = (function(undefined) {
 		}
 	}
 
-	Link.create = function() {
+	Link.create = function () {
 		var args = _slice.call(arguments, 0),
 			stop = args.length - 1,
 			v    = args[stop],
@@ -1379,23 +1399,24 @@ var Link = (function(undefined) {
 		}
 
 		return CreateArray(0);
-	}
+	};
 
-	Link.range = function(num) {
+	Link.range = function (num) {
 		var a = [];
 		while (num--) { a[num] = num; }
 		return a;
-	}
+	};
 
-	Link.alias = function(from, to) {
+	Link.alias = function (from, to) {
 		LinkChain.prototype[to] = LinkChain.prototype[from];
 		return this;
-	}
+	};
 
 	return Link;
 })();
 
 // CommonJS export table
+// allows the script to be loaded using require().
 if (typeof module !== 'undefined') {
     module.exports = Link;
 }

@@ -124,6 +124,8 @@ AssertionError.prototype.name = "AssertionError";
 Object.setPrototypeOf(AssertionError, Error);
 function AssertionError(options)
 {
+	if (!(this instanceof AssertionError))
+		return new AssertionError(options);
 	this.actual = options.actual;
 	this.expected = options.expected;
 	this.message = options.message
