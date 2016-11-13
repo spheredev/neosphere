@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 3b9023449983222a18d745e0ae07c436fc796749 (v1.5.0-913-g3b90234).
- *  Git branch math-hypot.
+ *  Git commit 8ab2ba01585bcb4f0ce9456464a368bb164c23e5 (v1.5.0-925-g8ab2ba0).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -258,9 +258,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "3b9023449983222a18d745e0ae07c436fc796749"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-913-g3b90234"
-#define DUK_GIT_BRANCH                    "math-hypot"
+#define DUK_GIT_COMMIT                    "8ab2ba01585bcb4f0ce9456464a368bb164c23e5"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-925-g8ab2ba0"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
