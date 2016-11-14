@@ -211,6 +211,7 @@ static duk_ret_t js_new_Color                  (duk_context* ctx);
 static duk_ret_t js_Color_get_name             (duk_context* ctx);
 static duk_ret_t js_Color_clone                (duk_context* ctx);
 static duk_ret_t js_Color_fade                 (duk_context* ctx);
+static duk_ret_t js_Color_of                   (duk_context* ctx);
 static duk_ret_t js_Dispatch_cancel            (duk_context* ctx);
 static duk_ret_t js_Dispatch_cancelAll         (duk_context* ctx);
 static duk_ret_t js_Dispatch_later             (duk_context* ctx);
@@ -403,6 +404,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
+	api_define_method(ctx, "Color", "of", js_Color_of);
 	api_define_function(ctx, "Dispatch", "cancel", js_Dispatch_cancel);
 	api_define_function(ctx, "Dispatch", "cancelAll", js_Dispatch_cancelAll);
 	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);

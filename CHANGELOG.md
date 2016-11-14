@@ -5,6 +5,7 @@ v?.?.? - TBD
 ------------
 
 * Adds support for ECMAScript 2015 `Object.is()` and `Math.hypot()`.
+* Fixes a bug where `Color.of()` was undefined and not callable.
 
 
 v4.3.3 - November 11, 2016
