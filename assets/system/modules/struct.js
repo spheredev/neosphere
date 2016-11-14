@@ -346,10 +346,10 @@ function _checkStructDescriptor(desc)
 	for (var i = 0; i < keys.length; ++i) {
 		var fieldDesc = desc[keys[i]];
 		var fieldType = fieldDesc.type;
-		if (!link.Q(types).contains(fieldType))
+		if (!link(types).contains(fieldType))
 			throw new TypeError("unrecognized field type '" + fieldType + "'");
 		if (fieldType in attributes) {
-			var haveAttributes = link.Q(attributes[fieldType])
+			var haveAttributes = link(attributes[fieldType])
 				.every(function(x) { return x in fieldDesc; });
 			if (!haveAttributes)
 				throw new TypeError("missing attributes for " + fieldType);

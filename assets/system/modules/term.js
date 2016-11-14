@@ -64,7 +64,7 @@ function executeCommand(command)
 	var instruction = tokens[1];
 
 	// check that the instruction is valid
-	if (!link.Q(commands)
+	if (!link(commands)
 		.pluck('entity')
 		.contains(entity))
 	{
@@ -75,7 +75,7 @@ function executeCommand(command)
 		print("No instruction provided for '" + entity + "'");
 		return;
 	}
-	if (!link.Q(commands)
+	if (!link(commands)
 		.filterBy('entity', entity)
 		.pluck('instruction')
 		.contains(instruction))
@@ -91,7 +91,7 @@ function executeCommand(command)
 	}
 
 	// execute the command
-	link.Q(commands)
+	link(commands)
 		.filterBy('instruction', instruction)
 		.filterBy('entity', entity)
 		.forEach(function(desc)
@@ -225,7 +225,7 @@ function define(name, that, methods)
 
 function undefine(name)
 {
-	commands = link.Q(commands)
+	commands = link(commands)
 		.where(function(command) { return command.entity != name; })
 		.toArray();
 }

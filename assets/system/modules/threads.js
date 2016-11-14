@@ -51,7 +51,7 @@ function isRunning(threadID)
 function join(threadIDs)
 {
 	threadIDs = threadIDs instanceof Array ? threadIDs : [ threadIDs ];
-	while (link.Q(threads)
+	while (link(threads)
 		.filterBy('id', threadIDs)
 		.length() > 0)
 	{
@@ -65,7 +65,7 @@ function join(threadIDs)
 
 function kill(threadID)
 {
-	link.Q(threads)
+	link(threads)
 		.where(function(thread) { return thread.id == threadID })
 		.execute(function(thread) { thread.isValid = false; })
 		.remove();
@@ -106,7 +106,7 @@ function _makeThread(that, threadDesc)
 
 function _renderAll()
 {
-	link.Q(link.Q(threads).sort(_compare))
+	link(link(threads).sort(_compare))
 		.where(function(thread) { return thread.isValid; })
 		.where(function(thread) { return thread.renderer !== undefined; })
 		.forEach(function(thread)
@@ -118,7 +118,7 @@ function _renderAll()
 function _updateAll()
 {
 	var threadsEnding = [];
-	link.Q(link.Q(threads).toArray())
+	link(link(threads).toArray())
 		.where(function(thread) { return thread.isValid; })
 		.where(function(thread) { return !thread.isBusy; })
 		.forEach(function(thread)
@@ -134,7 +134,7 @@ function _updateAll()
 		if (!isRunning)
 			threadsEnding.push(thread.id);
 	});
-	link.Q(threadsEnding)
+	link(threadsEnding)
 		.forEach(function(threadID)
 	{
 		kill(threadID);

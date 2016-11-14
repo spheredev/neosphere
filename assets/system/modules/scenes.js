@@ -78,7 +78,7 @@ function Scene()
 			if (threads.isRunning(ctx.opThread))
 				return true;
 			else {
-				link.Q(tasks)
+				link(tasks)
 					.where(function(tid) { return ctx.opThread == tid })
 					.remove();
 				delete ctx.opThread;
@@ -111,12 +111,12 @@ function Scene()
 			}
 			return true;
 		} else {
-			if (link.Q(ctx.forks)
+			if (link(ctx.forks)
 				.where(function(tid) { return threads.isRunning(tid); })
 				.length() == 0)
 			{
 				var self = threads.self();
-				link.Q(tasks)
+				link(tasks)
 					.where(function(tid) { return self == tid })
 					.remove();
 				return false;
@@ -272,7 +272,7 @@ function Scene()
 				this.forks = activation.forks;
 			},
 			update: function(scene) {
-				return link.Q(this.forks)
+				return link(this.forks)
 					.where(function(tid) { return threads.isRunning(tid); })
 					.length() > 0;
 			}
@@ -311,7 +311,7 @@ function Scene()
 	//     beginning.
 	function stop()
 	{
-		link.Q(tasks)
+		link(tasks)
 			.forEach(function(tid)
 		{
 			threads.kill(tid);

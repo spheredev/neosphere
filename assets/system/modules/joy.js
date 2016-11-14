@@ -16,7 +16,7 @@ const link = require('link');
 
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and
 // 5 buttons (A, B, X, Y, Start) for full operation.
-var devices = link.Q(Joystick.getDevices())
+var devices = link(Joystick.getDevices())
 	.where(function(it) { return it.numAxes >= 2; })
 	.where(function(it) { return it.numButtons >= 5; })
 	.toArray();

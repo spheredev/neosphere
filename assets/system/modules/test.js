@@ -13,7 +13,7 @@ const link = require('link');
 
 function run(tests)
 {
-	link.Q(Object.keys(tests))
+	link(Object.keys(tests))
 		.where(function(key) { return key.substring(0, 4) === 'test'; })
 		.where(function(key) { return key !== 'test' })
 		.map(function(key) { return tests[key]; })
