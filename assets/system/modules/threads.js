@@ -14,7 +14,6 @@ module.exports =
 };
 
 const from = require('from');
-const link = require('link');
 
 var currentSelf = 0;
 var haveMapEngine = typeof MapEngine === 'function';
@@ -52,9 +51,9 @@ function isRunning(threadID)
 function join(threadIDs)
 {
 	threadIDs = threadIDs instanceof Array ? threadIDs : [ threadIDs ];
-	while (link(threads)
-		.filterBy('id', threadIDs)
-		.length() > 0)
+	while (from.Array(threads)
+		.where(function(t) { return threadIDs.indexOf(t.id) >= 0; })
+		.count() > 0)
 	{
 		if (haveMapEngine && IsMapEngineRunning()) {
             UpdateMapEngine();
@@ -102,14 +101,15 @@ function _makeThread(that, threadDesc)
 		updater: update,
 	};
 	threads.push(newThread);
+	threads.sort(_compare);
 	return newThread.id;
 }
 
 function _renderAll()
 {
-	link(link(threads).sort(_compare))
-		.where(function(thread) { return thread.isValid; })
-		.where(function(thread) { return thread.renderer !== undefined; })
+	from.Array(threads.slice())
+		.where(function(t) { return t.isValid; })
+		.where(function(t) { return t.renderer !== undefined; })
 		.forEach(function(thread)
 	{
 		thread.renderer();
@@ -119,9 +119,9 @@ function _renderAll()
 function _updateAll()
 {
 	var threadsEnding = [];
-	link(link(threads).toArray())
-		.where(function(thread) { return thread.isValid; })
-		.where(function(thread) { return !thread.isBusy; })
+	from.Array(threads.slice())
+		.where(function(t) { return t.isValid; })
+		.where(function(t) { return !t.isBusy; })
 		.forEach(function(thread)
 	{
 		var lastSelf = currentSelf;

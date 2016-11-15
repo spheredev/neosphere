@@ -13,7 +13,7 @@ module.exports =
 	undefine:  undefine,
 };
 
-const link    = require('link');
+const from    = require('from');
 const prim    = require('prim');
 const scenes  = require('scenes');
 const threads = require('threads');
@@ -64,9 +64,8 @@ function executeCommand(command)
 	var instruction = tokens[1];
 
 	// check that the instruction is valid
-	if (!link(commands)
-		.pluck('entity')
-		.contains(entity))
+	if (!from.Array(commands)
+		.any(function(c) { return entity == c.entity; }))
 	{
 		print("Entity name '" + entity + "' not recognized");
 		return;
@@ -75,10 +74,9 @@ function executeCommand(command)
 		print("No instruction provided for '" + entity + "'");
 		return;
 	}
-	if (!link(commands)
-		.filterBy('entity', entity)
-		.pluck('instruction')
-		.contains(instruction))
+	if (!from.Array(commands)
+		.where(function(c) { return entity == c.entity; })
+		.any(function(c) { return instruction == c.instruction; }))
 	{
 		print("Instruction '" + instruction + "' not valid for '" + entity + "'");
 		return;
@@ -91,9 +89,9 @@ function executeCommand(command)
 	}
 
 	// execute the command
-	link(commands)
-		.filterBy('instruction', instruction)
-		.filterBy('entity', entity)
+	from.Array(commands)
+		.where(function(c) { return entity == c.entity; })
+		.where(function(c) { return instruction == c.instruction; })
 		.forEach(function(desc)
 	{
 		threads.create({
@@ -225,9 +223,9 @@ function define(name, that, methods)
 
 function undefine(name)
 {
-	commands = link(commands)
-		.where(function(command) { return command.entity != name; })
-		.toArray();
+	from.Array(commands)
+		.where(function(c) { return c.entity == name; })
+		.remove();
 }
 
 function _hide()

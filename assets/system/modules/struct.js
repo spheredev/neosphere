@@ -11,7 +11,7 @@ module.exports =
 };
 
 const assert = require('assert');
-const link   = require('link');
+const from   = require('from');
 
 function Reader(stream)
 {
@@ -346,11 +346,11 @@ function _checkStructDescriptor(desc)
 	for (var i = 0; i < keys.length; ++i) {
 		var fieldDesc = desc[keys[i]];
 		var fieldType = fieldDesc.type;
-		if (!link(types).contains(fieldType))
+		if (!from(types).any(function(v) { return fieldType === v; }))
 			throw new TypeError("unrecognized field type '" + fieldType + "'");
 		if (fieldType in attributes) {
-			var haveAttributes = link(attributes[fieldType])
-				.every(function(x) { return x in fieldDesc; });
+			var haveAttributes = from(attributes[fieldType])
+				.all(function(x) { return x in fieldDesc; });
 			if (!haveAttributes)
 				throw new TypeError("missing attributes for " + fieldType);
 		}
