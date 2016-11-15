@@ -11,7 +11,7 @@ module.exports =
 };
 
 const assert  = require('assert');
-const link    = require('link');
+const from    = require('from');
 const prim    = require('prim');
 const threads = require('threads');
 
@@ -78,7 +78,7 @@ function Scene()
 			if (threads.isRunning(ctx.opThread))
 				return true;
 			else {
-				link(tasks)
+				from(tasks)
 					.where(function(tid) { return ctx.opThread == tid })
 					.remove();
 				delete ctx.opThread;
@@ -111,12 +111,12 @@ function Scene()
 			}
 			return true;
 		} else {
-			if (link(ctx.forks)
+			if (from(ctx.forks)
 				.where(function(tid) { return threads.isRunning(tid); })
-				.length() == 0)
+				.count() == 0)
 			{
 				var self = threads.self();
-				link(tasks)
+				from(tasks)
 					.where(function(tid) { return self == tid })
 					.remove();
 				return false;
@@ -272,9 +272,9 @@ function Scene()
 				this.forks = activation.forks;
 			},
 			update: function(scene) {
-				return link(this.forks)
+				return from(this.forks)
 					.where(function(tid) { return threads.isRunning(tid); })
-					.length() > 0;
+					.count() > 0;
 			}
 		};
 		enqueue(command);
@@ -311,9 +311,7 @@ function Scene()
 	//     beginning.
 	function stop()
 	{
-		link(tasks)
-			.forEach(function(tid)
-		{
+		from(tasks).forEach(function(tid) {
 			threads.kill(tid);
 		});
 	};

@@ -12,11 +12,11 @@ module.exports =
 	get P4() { return devices[3] || Joystick.Null; },
 };
 
-const link = require('link');
+const from = require('from');
 
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and
 // 5 buttons (A, B, X, Y, Start) for full operation.
-var devices = link(Joystick.getDevices())
-	.where(function(it) { return it.numAxes >= 2; })
-	.where(function(it) { return it.numButtons >= 5; })
-	.toArray();
+var devices = from(Joystick.getDevices())
+	.where(function(d) { return d.numAxes >= 2; })
+	.where(function(d) { return d.numButtons >= 5; })
+	.select();

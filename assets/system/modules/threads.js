@@ -13,6 +13,7 @@ module.exports =
 	self:      self,
 };
 
+const from = require('from');
 const link = require('link');
 
 var currentSelf = 0;
@@ -65,9 +66,9 @@ function join(threadIDs)
 
 function kill(threadID)
 {
-	link(threads)
-		.where(function(thread) { return thread.id == threadID })
-		.execute(function(thread) { thread.isValid = false; })
+	from.Array(threads)
+		.where(function(t) { return t.id == threadID })
+		.besides(function(t) { t.isValid = false; })
 		.remove();
 }
 
@@ -134,7 +135,7 @@ function _updateAll()
 		if (!isRunning)
 			threadsEnding.push(thread.id);
 	});
-	link(threadsEnding)
+	from.Array(threadsEnding)
 		.forEach(function(threadID)
 	{
 		kill(threadID);

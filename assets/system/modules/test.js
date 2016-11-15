@@ -9,14 +9,13 @@ module.exports =
 	run: run
 };
 
-const link = require('link');
+const from = require('from');
 
 function run(tests)
 {
-	link(Object.keys(tests))
-		.where(function(key) { return key.substring(0, 4) === 'test'; })
-		.where(function(key) { return key !== 'test' })
-		.map(function(key) { return tests[key]; })
+	from.Object(tests)
+		.where(function(test, k) { return k.substring(0, 4) === 'test'; })
+		.where(function(test, k) { return k !== 'test' })
 		.forEach(function(test)
 	{
 		if (typeof test === 'function')
