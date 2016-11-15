@@ -42,6 +42,118 @@ Delegate:remove(handler[, thisObj]);
     if no matching handler is registered.
 
 
+`from` module
+-------------
+
+The `from` module provides games with the ability to perform advanced queries
+on arrays and objects, similarly to LINQ in C#.  One use case is in battle
+engines: for example, you could loop through only those battlers on the enemy
+side, or narrow down the scope of status effects using a query.  Even enemy AI
+code can benefit from queries!
+
+    const from = require('from');
+
+from(target);
+
+    Initiates a query against the specified array or object.  The enumeration
+    mode (keyed or indexed) is decided based on whether `target` is an object
+    or array; if you need a specific enumeration mode, you should use one of
+    the specialized calls below.
+    
+    Returns a Query object.
+
+from.Array(array);
+
+    Initiates a query against an array or array-like object.  The object must
+    have a `length` property, and only integer properties in the range
+    [0,length) will be enumerated.
+
+    Returns a Query object.
+
+    Throws a TypeError if the object either doesn't have a `length` property or
+    its value is non-numeric.
+
+from.Object(object)
+
+    Initiates a query against the specified object.  Note that only enumerable
+    own properties of the object will be queried.  Non-enumerable and inherited
+    properties are ignored.
+
+    Returns a Query object.
+
+Query#all(callback);
+
+    Runs the query, calling `callback` on each result.  The callback is
+    expected to return a boolean value (true or false); if all results pass the
+    check, all() returns true.  Otherwise it returns false.
+
+    This operation is short-circuiting: The first item that fails the check
+    terminates the query.
+
+Query#any(callback);
+
+    Runs the query, calling `callback` for each result.  The callback is
+    expected to return a boolean value (true or false); if any of the results
+    pass the check, any() returns true.  Otherwise it returns false.
+
+    This operation is short-circuiting: The first item that passes the check
+    terminates the query.
+
+Query#besides(callback);
+
+    Calls `callback` for each result, ignoring the return value and continuing
+    with the query.  This is useful for performing ancillary operations in the
+    middle of a query; for example, tallying intermediate results.
+
+Query#count([callback]);
+
+    Runs the query, returning the number of results.  `callback` is an optional
+    check function: It returns true or false to determine whether the result
+    should be counted.  If no callback is provided, all results are counted.
+
+Query#forEach(callback);
+
+    Runs the query, calling `callback` for each result.  The return value of
+    the callback is ignored.  This used to loop over the results of a query,
+    the way you would loop over an array using arrayObj.forEach() in standard
+    JavaScript.
+
+Query#map(callback);
+
+    Calls `callback` for each result, passing the return value on to subsequent
+    operations.  This is used to transform results in the middle of a query,
+    which can help code readability as well as avoiding multiple requests for
+    the same data, which can slow the game down.
+
+Query#remove([callback]);
+
+    Removes results from the target object or array.  `callback` is an optional
+    check function: It returns true or false to determine whether the result
+    should be removed.  If no callback is provided, all results are removed.
+
+Query#select([callback]);
+
+    Runs the query, assembling the results into an array.  `callback` is an
+    optional mapping function whose return value is what ultimately gets
+    selected.  If no callback is provided, results are used as-is.  Returns the
+    assembled array.
+
+Query#skip(count);
+
+    Drops the first `count` results received.  Subsequent results are passed
+    through as-is.
+
+Query#take(count);
+
+    Passes the first `count` results through as-is, dropping the rest.
+
+Query#where(callback);
+
+    Calls `callback` for each result.  The callback should return true to keep
+    the result, or false to filter it out.  Only those results that pass the
+    check will be seen by the remainder of the query.
+
+
 `joy` module
 ------------
 

@@ -9,7 +9,7 @@ module.exports =
     Delegate: Delegate,
 };
 
-const link = require('link');
+const from = require('from');
 
 function Delegate()
 {
@@ -21,7 +21,7 @@ function Delegate()
 
     function haveHandler(handler, thisObj)
     {
-        return link(invokeList).contains(function(v) {
+        return from(invokeList).any(function(v) {
             return v.handler == handler && v.thisObj == thisObj;
         });
     }
@@ -47,7 +47,7 @@ function Delegate()
     {
         var lastResult = undefined;
         var invokeArgs = arguments;
-        link(invokeList).forEach(function(v) {
+        from(invokeList).forEach(function(v) {
             lastResult = v.handler.apply(v.thisObj, invokeArgs);
         });
 
@@ -64,7 +64,7 @@ function Delegate()
     {
         if (!haveHandler(handler, thisObj))
             throw new Error("handler is not registered");
-        link(invokeList)
+        from(invokeList)
             .where(function(v) { return v.handler == handler; })
             .where(function(v) { return v.thisObj == thisObj; })
             .remove();

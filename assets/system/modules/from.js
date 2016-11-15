@@ -20,87 +20,100 @@ function PROPDESC(flags, value)
 
 function from(target)
 {
-	return new Chain(target);
+	if (Array.isArray(target)
+		|| typeof target === 'string' || target instanceof String
+		|| Reflect.apply({}.toString, target) === '[object Arguments]')
+	{
+		return from.Array(target);
+	}
+	else {
+		return from.Object(target);
+	}
+};
+
+from.Array = fromArray;
+function fromArray(target)
+{
+	return new Query(target);
 }
 
-function Chain(target)
+from.Object = fromObject;
+function fromObject(target)
+{
+	return new Query(target, true);
+}
+
+function Query(target, asObject)
 {
 	Object.defineProperties(this,
 	{
 		all:     PROPDESC('wc', m_makeAdder(MapLink, AllOp)),
 		any:     PROPDESC('wc', m_makeAdder(MapLink, AnyOp)),
 		besides: PROPDESC('wc', m_makeAdder(ForEachLink)),
-		count:   PROPDESC('wc', m_makeAdder(MapLink, CountOp)),
-		forEach: PROPDESC('wc', m_makeAdder(ForEachLink, null)),
+		count:   PROPDESC('wc', m_makeAdder(WhereLink, CountOp)),
+		forEach: PROPDESC('wc', m_makeAdder(ForEachLink, NullOp)),
 		map:     PROPDESC('wc', m_makeAdder(MapLink)),
-		remove:  PROPDESC('wc', m_makeAdder(MapLink, RemoveOp)),
+		remove:  PROPDESC('wc', m_makeAdder(WhereLink, RemoveOp)),
 		select:  PROPDESC('wc', m_makeAdder(MapLink, SelectOp)),
+		skip:    PROPDESC('wc', m_makeAdder(SkipLink)),
 		take:    PROPDESC('wc', m_makeAdder(TakeLink)),
 		where:   PROPDESC('wc', m_makeAdder(WhereLink)),
 	});
 
-	var m_arrayLike = Array.isArray(target);
-	var m_chain = this;
+	var m_asObject = !!asObject;
 	var m_links = [];
 	var m_target = target;
 
 	function m_addLink(link)
 	{
-		if (m_links.length > 0)
-			m_links[m_links.length - 1].next = link;
-		m_links.push(link);
-		return m_chain;
+		m_links[m_links.length] = link;
 	}
 
-	function m_makeAdder(linkType, endpoint)
+	function m_makeAdder(linkType, op)
 	{
-		if (endpoint !== undefined) {
+		if (op !== undefined) {
 			return function() {
 				m_addLink(Reflect.construct(linkType, arguments));
-				return m_run(endpoint);
+				var result = m_run(op);
+				--m_links.length;
+				return result;
 			};
 		}
 		else {
 			return function() {
-				return m_addLink(Reflect.construct(linkType, arguments));
+				m_addLink(Reflect.construct(linkType, arguments));
+				return this;
 			};
 		}
 	}
 
 	function m_run(opType)
 	{
-		// we only need the first link.  the rest get called recursively.
-		var firstLink = m_links[0];
+		var op = Reflect.construct(opType, [ m_target, m_asObject ]);
+		var numLinks = m_links.length;
 
-		// prepare and run the query
-		var op = opType !== null
-			? Reflect.construct(opType, [ m_target ])
-			: { record: function() {} };
-		if (m_arrayLike) {
-			var numEntries = m_target.length;
-			for (var i = 0; i < numEntries; ++i) {
-				var result = firstLink.run(m_target[i], i);
-				if (result !== null)
-					i = op.record(result.v, result.k);
+		var keys = m_asObject ? Object.keys(m_target) : null;
+		var numKeys = m_asObject ? keys.length : m_target.length;
+		var env = {};
+		for (var i = 0; i < numKeys; ++i) {
+			var key = m_asObject ? keys[i] : i;
+			env.v = m_target[key];
+			env.k = key;
+			var accept = true;
+			for (var j = 0; j < numLinks; ++j) {
+				accept = m_links[j].run(env);
+				if (!accept)
+					break;
 			}
+			if (accept && !op.record(env))
+				break;
 		}
-		else {
-			var keys = Object.keys(m_target);
-			var numEntries = keys.length;
-			for (var i = 0; i < numEntries; ++i) {
-				var key = keys[i];
-				var result = firstLink.run(m_target[key], key);
-				if (result !== null)
-					op.record(result.v, result.k);
-			}
-		}
+		if ('commit' in op)
+			op.commit();
 
-		// remove the final link so the chain can be reused
-		--m_links.length;
-		var lastLink = m_links[m_links.length - 1];
-		delete lastLink.next;
+		// reset state of all links so the chain can be reused if needed
 		for (var i = 0; i < m_links.length; ++i)
-			('reset' in m_links[i]) && m_links[i].reset();
+			if ('reset' in m_links[i]) m_links[i].reset();
 
 		return op.value;
 	}
@@ -110,11 +123,10 @@ function ForEachLink(fn)
 {
 	this.fn = fn;
 
-	this.run = function run(v, k)
+	this.run = function run(env)
 	{
-		this.fn.call(undefined, v, k);
-		if ('next' in this)
-			return this.next.run(v, k);
+		this.fn.call(undefined, env.v, env.k);
+		return true;
 	};
 }
 
@@ -122,31 +134,40 @@ function MapLink(fn)
 {
 	this.fn = fn || function(v) { return v; };
 
-	this.run = function run(v, k)
+	this.run = function run(env)
 	{
-		v = this.fn.call(undefined, v, k);
-		if ('next' in this)
-			return this.next.run(v, k);
-		else
-			return { v: v, k: k };
+		env.v = this.fn.call(undefined, env.v, env.k);
+		return true;
+	};
+}
+
+function SkipLink(count)
+{
+	var left = Number(count);
+
+	this.reset = function reset()
+	{
+		left = Number(count);
+	};
+
+	this.run = function run(env)
+	{
+		return left-- <= 0;
 	};
 }
 
 function TakeLink(count)
 {
-	this.count = Number(count);
-	this.left = this.count;
+	var left = Number(count);
 
 	this.reset = function reset()
 	{
-		this.left = this.count;
+		left = Number(count);
 	};
 
-	this.run = function run(v, k)
+	this.run = function run(env)
 	{
-		return this.left-- > 0
-			? this.next.run(v, k)
-			: null;
+		return left-- > 0;
 	};
 }
 
@@ -154,12 +175,9 @@ function WhereLink(fn)
 {
 	this.fn = fn || function() { return true; };
 
-	this.run = function(v, k)
+	this.run = function(env)
 	{
-		return this.fn.call(undefined, v, k)
-			? this.next.run(v, k)
-			: null;
-
+		return !!this.fn.call(undefined, env.v, env.k);
 	};
 }
 
@@ -167,10 +185,10 @@ function AllOp(target)
 {
 	this.value = true;
 
-	this.record = function(v, k)
+	this.record = function(env)
 	{
-		this.value = this.value && !!v;
-		return k;
+		this.value = this.value && !!env.v;
+		return this.value;
 	};
 }
 
@@ -178,10 +196,10 @@ function AnyOp(target)
 {
 	this.value = false;
 
-	this.record = function(v, k)
+	this.record = function(env)
 	{
-		this.value = this.value || !!v;
-		return k;
+		this.value = this.value || !!env.v;
+		return !this.value;
 	};
 }
 
@@ -189,45 +207,55 @@ function CountOp(target)
 {
 	this.value = 0;
 
-	this.record = function(v, k)
+	this.record = function(env)
 	{
 		++this.value;
-		return k;
+		return true;
 	};
 }
 
-function RemoveOp(target)
+function NullOp(target)
 {
-	var arrayLike = Array.isArray(target);
+	this.value = undefined;
+
+	this.record = function(env)
+	{
+		return true;
+	};
+}
+
+function RemoveOp(target, asObject)
+{
+	var toRemove = [];
 
 	this.value = target;
 
-	this.record = function(v, k)
+	this.commit = function()
 	{
-		if (arrayLike) {
-			target.splice(k, 1);
-			return k - 1;
+		for (var i = toRemove.length - 1; i >= 0; --i) {
+			if (asObject)
+				delete target[toRemove[i]];
+			else
+				target.splice(toRemove[i], 1);
 		}
-		else {
-			delete target[k];
-			return k;
-		}
+	};
+
+	this.record = function(env)
+	{
+		toRemove[toRemove.length] = env.k;
+		return true;
 	};
 }
 
 function SelectOp(target)
 {
-	var arrayLike = Array.isArray(target);
 	var index = 0;
 
-	this.value = arrayLike ? [] : {};
+	this.value = [];
 
-	this.record = function(v, k)
+	this.record = function(env)
 	{
-		if (arrayLike)
-			this.value[index++] = v;
-		else
-			this.value[k] = v;
-		return k;
+		this.value[index++] = env.v;
+		return true;
 	};
 }
