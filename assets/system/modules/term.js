@@ -92,7 +92,7 @@ function executeCommand(command)
 	from.Array(commands)
 		.where(function(c) { return entity == c.entity; })
 		.where(function(c) { return instruction == c.instruction; })
-		.forEach(function(desc)
+		.each(function(desc)
 	{
 		threads.create({
 			update: function() {
