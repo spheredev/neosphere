@@ -4,9 +4,10 @@ minisphere Changelog
 v?.?.? - TBD
 ------------
 
-* Adds a new miniRT module, "from", which allows performing queries against
-  the contents of objects and arrays.  "from" replaces the third-party "link"
-  module which was included with previous versions of minisphere.
+* Adds a new miniRT module, "from", which enables performing queries against
+  the contents of objects, arrays, and strings.  This module replaces the
+  third-party "link" module which was included with previous versions of the
+  engine.
 * Adds support for ECMAScript 2015 `Object.is()` and `Math.hypot()`.
 * Fixes a bug where `Color.of()` was undefined and not callable.
 

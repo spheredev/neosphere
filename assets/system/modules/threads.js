@@ -110,7 +110,7 @@ function _renderAll()
 	from.Array(threads.slice())
 		.where(function(t) { return t.isValid; })
 		.where(function(t) { return t.renderer !== undefined; })
-		.forEach(function(thread)
+		.each(function(thread)
 	{
 		thread.renderer();
 	});
@@ -122,7 +122,7 @@ function _updateAll()
 	from.Array(threads.slice())
 		.where(function(t) { return t.isValid; })
 		.where(function(t) { return !t.isBusy; })
-		.forEach(function(thread)
+		.each(function(thread)
 	{
 		var lastSelf = currentSelf;
 		thread.isBusy = true;
@@ -136,7 +136,7 @@ function _updateAll()
 			threadsEnding.push(thread.id);
 	});
 	from.Array(threadsEnding)
-		.forEach(function(threadID)
+		.each(function(threadID)
 	{
 		kill(threadID);
 	});

@@ -311,7 +311,7 @@ function Scene()
 	//     beginning.
 	function stop()
 	{
-		from.Array(tasks).forEach(function(tid) {
+		from.Array(tasks).each(function(tid) {
 			threads.kill(tid);
 		});
 	};

@@ -16,7 +16,7 @@ function run(tests)
 	from.Object(tests)
 		.where(function(test, k) { return k.substring(0, 4) === 'test'; })
 		.where(function(test, k) { return k !== 'test' })
-		.forEach(function(test)
+		.each(function(test)
 	{
 		if (typeof test === 'function')
 			test();

@@ -21,7 +21,9 @@ function PROPDESC(flags, value)
 function from(target)
 {
 	target = Object(target);
-	if ('length' in target)
+	if (typeof target === 'string' || target instanceof String)
+		return fromString(target);
+	else if ('length' in target)
 		return fromArray(target);
 	else
 		return fromObject(target);
@@ -32,7 +34,7 @@ function fromArray(target)
 {
 	target = Object(target);
 	if (typeof target.length !== 'number')
-		throw new TypeError("object has no 'length'");
+		throw new TypeError("object with 'length' required");
 	return new Query(target);
 }
 
@@ -43,23 +45,31 @@ function fromObject(target)
 	return new Query(target, true);
 }
 
+from.String = fromString;
+function fromString(target)
+{
+	if (typeof target !== 'string' && !(target instanceof String))
+		throw new TypeError("string or String object required");
+	return new Query(target);
+}
+
 function Query(target, asObject)
 {
 	Object.defineProperties(this,
 	{
-		all:     PROPDESC('wc', m_makeAdder(MapLink, AllOp)),
-		any:     PROPDESC('wc', m_makeAdder(MapLink, AnyOp)),
-		besides: PROPDESC('wc', m_makeAdder(ForEachLink)),
-		count:   PROPDESC('wc', m_makeAdder(WhereLink, CountOp)),
-		first:   PROPDESC('wc', m_makeAdder(TakeLink, SelectOp)),
-		forEach: PROPDESC('wc', m_makeAdder(ForEachLink, NullOp)),
-		map:     PROPDESC('wc', m_makeAdder(MapLink)),
-		remove:  PROPDESC('wc', m_makeAdder(WhereLink, RemoveOp)),
-		select:  PROPDESC('wc', m_makeAdder(MapLink, SelectOp)),
-		skip:    PROPDESC('wc', m_makeAdder(SkipLink)),
-		take:    PROPDESC('wc', m_makeAdder(TakeLink)),
-		update:  PROPDESC('wc', m_makeAdder(MapLink, UpdateOp)),
-		where:   PROPDESC('wc', m_makeAdder(WhereLink)),
+		all:     PROPDESC('wc', m_makeAdder(MapPoint, AllOp)),
+		any:     PROPDESC('wc', m_makeAdder(MapPoint, AnyOp)),
+		besides: PROPDESC('wc', m_makeAdder(EachPoint)),
+		count:   PROPDESC('wc', m_makeAdder(WherePoint, CountOp)),
+		each:    PROPDESC('wc', m_makeAdder(EachPoint, NullOp)),
+		first:   PROPDESC('wc', m_makeAdder(TakePoint, SelectOp)),
+		map:     PROPDESC('wc', m_makeAdder(MapPoint)),
+		remove:  PROPDESC('wc', m_makeAdder(WherePoint, RemoveOp)),
+		select:  PROPDESC('wc', m_makeAdder(MapPoint, SelectOp)),
+		skip:    PROPDESC('wc', m_makeAdder(SkipPoint)),
+		take:    PROPDESC('wc', m_makeAdder(TakePoint)),
+		update:  PROPDESC('wc', m_makeAdder(MapPoint, UpdateOp)),
+		where:   PROPDESC('wc', m_makeAdder(WherePoint)),
 	});
 
 	var m_asObject = !!asObject;
@@ -109,18 +119,19 @@ function Query(target, asObject)
 			if (accepted && !op.record(env))
 				break;
 		}
+		var output = undefined;
 		if ('commit' in op)
-			op.commit();
+			output = op.commit();
 
 		// reset state of all links so the chain can be reused if needed
 		for (var i = 0; i < m_links.length; ++i)
 			if ('reset' in m_links[i]) m_links[i].reset();
 
-		return op.value;
+		return output;
 	}
 }
 
-function ForEachLink(fn)
+function EachPoint(fn)
 {
 	this.fn = fn;
 
@@ -131,7 +142,7 @@ function ForEachLink(fn)
 	};
 }
 
-function MapLink(fn)
+function MapPoint(fn)
 {
 	this.fn = fn || function(v) { return v; };
 
@@ -142,7 +153,7 @@ function MapLink(fn)
 	};
 }
 
-function SkipLink(count)
+function SkipPoint(count)
 {
 	var left = Number(count);
 
@@ -157,7 +168,7 @@ function SkipLink(count)
 	};
 }
 
-function TakeLink(count)
+function TakePoint(count)
 {
 	var left = Number(count);
 
@@ -172,7 +183,7 @@ function TakeLink(count)
 	};
 }
 
-function WhereLink(fn)
+function WherePoint(fn)
 {
 	this.fn = fn || function() { return true; };
 
@@ -184,60 +195,54 @@ function WhereLink(fn)
 
 function AllOp(target)
 {
-	this.value = true;
+	var result = true;
+
+	this.commit = function()
+	{
+		return result;
+	};
 
 	this.record = function(env)
 	{
-		this.value = this.value && !!env.v;
-		return this.value;
+		result = result && !!env.v;
+		return !!result;
 	};
 }
 
 function AnyOp(target)
 {
-	this.value = false;
+	var result = false;
+
+	this.commit = function()
+	{
+		return result;
+	};
 
 	this.record = function(env)
 	{
-		this.value = this.value || !!env.v;
-		return !this.value;
+		result = result || !!env.v;
+		return !result;
 	};
 }
 
 function CountOp(target)
 {
-	this.value = 0;
-
-	this.record = function(env)
-	{
-		++this.value;
-		return true;
-	};
-}
-
-function FirstOp(target)
-{
-	var numWanted = 1;
-
-	this.value = [];
+	var numItems = 0;
 
 	this.commit = function()
 	{
-		if (numWanted === 1)
-			this.value = this.value[0];
+		return numItems;
 	};
 
 	this.record = function(env)
 	{
-		this.value[this.value.length] = env.v;
-		return this.value.length < numWanted;
+		++numItems;
+		return true;
 	};
 }
 
 function NullOp(target)
 {
-	this.value = undefined;
-
 	this.record = function(env)
 	{
 		return true;
@@ -247,8 +252,6 @@ function NullOp(target)
 function RemoveOp(target, asObject)
 {
 	var toRemove = [];
-
-	this.value = target;
 
 	this.commit = function()
 	{
@@ -270,21 +273,23 @@ function RemoveOp(target, asObject)
 
 function SelectOp(target)
 {
-	var index = 0;
+	var results = [],
+	    index = 0;
 
-	this.value = [];
+	this.commit = function()
+	{
+		return results;
+	};
 
 	this.record = function(env)
 	{
-		this.value[index++] = env.v;
+		results[index++] = env.v;
 		return true;
 	};
 }
 
 function UpdateOp(target)
 {
-	this.value = target;
-
 	this.record = function(env)
 	{
 		target[env.k] = env.v;

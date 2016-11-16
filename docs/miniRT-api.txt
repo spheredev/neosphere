@@ -55,11 +55,11 @@ code can benefit from queries!
 
 from(target);
 
-    Initiates a query against the specified array or object.  The enumeration
-    mode (keyed or indexed) is decided based on whether `target` is an object
-    or array; if you need a specific enumeration mode, you should use one of
-    the specialized calls below.
-    
+    Initiates a query against the specified array, object, or string.  The
+    enumeration mode (keyed or indexed) is decided based on whether `target`
+    is an object or array/string; if you need a specific enumeration mode, you
+    should use one of the specialized calls.
+
     Returns a Query object.
 
 from.Array(array);
@@ -73,11 +73,18 @@ from.Array(array);
     Throws a TypeError if the object either doesn't have a `length` property or
     its value is non-numeric.
 
-from.Object(object)
+from.Object(object);
 
     Initiates a query against the specified object.  Note that only enumerable
     own properties of the object will be queried.  Non-enumerable and inherited
     properties are ignored.
+
+    Returns a Query object.
+
+from.String(string);
+
+    Initiates a query against the individual characters of a string.  `string`
+    must be either a primitive string value or a String object.
 
     Returns a Query object.
 
@@ -111,12 +118,27 @@ Query#count([callback]);
     check function: It returns true or false to determine whether the result
     should be counted.  If no callback is provided, all results are counted.
 
-Query#forEach(callback);
+Query#each(callback);
 
     Runs the query, calling `callback` for each result.  The return value of
-    the callback is ignored.  This used to loop over the results of a query,
+    the callback is ignored.  This is used to loop over the results of a query,
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
+
+Query#first([count]);
+
+    Runs the query, assembling the first `count` results into an array.  The
+    query may be terminated early if there are more results than requested.  If
+    the query yields fewer results than requested, only those results will be
+    returned.
+    
+    `count` defaults to 1 if not specified.  This implies special handling; see
+    the note below.
+
+    Note: If `count` is 1 (the default), then the single result is returned
+          directly without constructing an array.  If there are no results at
+          all, then first() returns undefined in this case instead of an empty
+          array.
 
 Query#map(callback);
 
@@ -140,18 +162,17 @@ Query#select([callback]);
 
 Query#skip(count);
 
-    Drops the first `count` results received.  Subsequent results are passed
-    through as-is.
+    Filters out the first `count` results.
 
 Query#take(count);
 
-    Passes the first `count` results through as-is, dropping the rest.
+    Filters out all results after the first `count`.
 
 Query#update(callback);
 
     Writes all results back into the target object or array.  `callback` is an
-    optional mapping function to decide what gets written back.  If no callback
-    is provided, results are written as-is.  Returns the target object.
+    optional mapping function to decide what value gets written back.  If no
+    callback is provided, results are written as-is.
 
 Query#where(callback);
 

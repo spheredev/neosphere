@@ -47,7 +47,7 @@ function Delegate()
     {
         var lastResult = undefined;
         var invokeArgs = arguments;
-        from.Array(invokeList).forEach(function(v) {
+        from.Array(invokeList).each(function(v) {
             lastResult = v.handler.apply(v.thisObj, invokeArgs);
         });
 
