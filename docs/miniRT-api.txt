@@ -136,7 +136,7 @@ Query#select([callback]);
     Runs the query, assembling the results into an array.  `callback` is an
     optional mapping function whose return value is what ultimately gets
     selected.  If no callback is provided, results are used as-is.  Returns the
-    assembled array.
+    newly assembled array.
 
 Query#skip(count);
 
@@ -146,6 +146,12 @@ Query#skip(count);
 Query#take(count);
 
     Passes the first `count` results through as-is, dropping the rest.
+
+Query#update(callback);
+
+    Writes all results back into the target object or array.  `callback` is an
+    optional mapping function to decide what gets written back.  If no callback
+    is provided, results are written as-is.  Returns the target object.
 
 Query#where(callback);
 
