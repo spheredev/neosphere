@@ -1,5 +1,12 @@
+/*
+ *  <title of your new Sphere game goes here>
+ *  (c) <year> <whoever made the game>
+ */
+
+// pull in some useful modules.  these are all part of the Sphere v2 standard
+// library so you can count on them being available.
 const assert = require('assert');
-const link   = require('link');
+const from   = require('from');
 const prim   = require('prim');
 const random = require('random');
 
@@ -8,14 +15,17 @@ var image = new Image('images/saiyan.png');
 var x = 0, xVel = 1;
 var y = 0, yVel = 1;
 
-// initialize the game
 screen.frameRate = 60;  // note: 60fps is the default.
+
+// tell the engine which functions to call to update and render the game.  if
+// no update or render functions are registered the game will terminate as soon
+// as the main script finishes running.  we don't want that.
 Dispatch.onUpdate(doUpdate);
 Dispatch.onRender(doRender);
 
 // when you're ready to start programming, delete this comment block and the
 // two lines below.  but first, click Debug and see what happens!
-var message = "oops! bug not fixed";
+var message = "This game is buggy!";
 throw new Error(message);
 
 function doUpdate()
