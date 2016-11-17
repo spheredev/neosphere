@@ -1,11 +1,11 @@
 minisphere Changelog
 ====================
 
-v?.?.? - TBD
-------------
+v4.3.4 - November 17, 2016
+--------------------------
 
 * Adds a new miniRT module, "from", which enables performing queries against
-  the contents of objects, arrays, and strings.  This module replaces the
+  the contents of objects, arrays, and strings.  This replaces the undocumented
   third-party "link" module which was included with previous versions of the
   engine.
 * Adds support for ECMAScript 2015 `Object.is()` and `Math.hypot()`.
