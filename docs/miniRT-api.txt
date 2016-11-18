@@ -94,8 +94,8 @@ Query#all(callback);
     expected to return a boolean value (true or false); if all results pass the
     check, all() returns true.  Otherwise it returns false.
 
-    This operation is short-circuiting: The first item that fails the check
-    terminates the query.
+    Note: If there are no results, all() returns true.  This operation is
+    short-circuiting: the first item that fails the check terminates the query.
 
 Query#any(callback);
 
@@ -103,8 +103,18 @@ Query#any(callback);
     expected to return a boolean value (true or false); if any of the results
     pass the check, any() returns true.  Otherwise it returns false.
 
-    This operation is short-circuiting: The first item that passes the check
-    terminates the query.
+    Note: If there are no results, any() returns false.  This operation is
+          short-circuiting: the first item that passes the check terminates the
+          query.
+
+Query#anyIs(value);
+
+    Runs the query and returns true if any result matches the value, otherwise
+    returns false.
+
+    Note: If there are no results, anyIs() returns false.  This operation is
+          short-circuiting: the first item that passes the check terminates the
+          query.
 
 Query#besides(callback);
 
@@ -131,7 +141,7 @@ Query#first([count]);
     query may be terminated early if there are more results than requested.  If
     the query yields fewer results than requested, only those results will be
     returned.
-    
+
     `count` defaults to 1 if not specified.  This implies special handling; see
     the note below.
 

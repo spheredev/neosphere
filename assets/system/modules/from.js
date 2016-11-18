@@ -59,6 +59,7 @@ function Query(target, asObject)
 	{
 		all:     PROPDESC('wc', m_makeAdder(MapPoint, AllOp)),
 		any:     PROPDESC('wc', m_makeAdder(MapPoint, AnyOp)),
+		anyIs:   PROPDESC('wc', m_makeAdder(IsPoint, AnyOp)),
 		besides: PROPDESC('wc', m_makeAdder(EachPoint)),
 		count:   PROPDESC('wc', m_makeAdder(WherePoint, CountOp)),
 		each:    PROPDESC('wc', m_makeAdder(EachPoint, NullOp)),
@@ -138,6 +139,15 @@ function EachPoint(fn)
 	this.run = function run(env)
 	{
 		this.fn.call(undefined, env.v, env.k);
+		return true;
+	};
+}
+
+function IsPoint(value)
+{
+	this.run = function run(env)
+	{
+		env.v = Object.is(env.v, value);
 		return true;
 	};
 }
