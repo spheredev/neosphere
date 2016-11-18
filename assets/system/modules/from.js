@@ -58,7 +58,9 @@ function Query(target, asObject)
 	Object.defineProperties(this,
 	{
 		all:     PROPDESC('wc', m_makeAdder(MapPoint, AllOp)),
+		allIn:   PROPDESC('wc', m_makeAdder(InPoint, AllOp)),
 		any:     PROPDESC('wc', m_makeAdder(MapPoint, AnyOp)),
+		anyIn:   PROPDESC('wc', m_makeAdder(InPoint, AnyOp)),
 		anyIs:   PROPDESC('wc', m_makeAdder(IsPoint, AnyOp)),
 		besides: PROPDESC('wc', m_makeAdder(EachPoint)),
 		count:   PROPDESC('wc', m_makeAdder(WherePoint, CountOp)),
@@ -141,6 +143,20 @@ function EachPoint(fn)
 	this.run = function run(item)
 	{
 		fn(item.v, item.k, item.t);
+		return true;
+	};
+}
+
+function InPoint(values)
+{
+	this.run = function run(item)
+	{
+		var haveMatch = false;
+		for (var i = 0; i < values.length; ++i) {
+			if (haveMatch = Object.is(item.v, values[i]))
+				break;
+		}
+		item.v = haveMatch;
 		return true;
 	};
 }

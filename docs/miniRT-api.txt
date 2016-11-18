@@ -68,9 +68,9 @@ with a single query:
         .where(function(b) { return b.level % 5 == 0; }
         .where(function() { return random.chance(0.75); })
         .each(function(b)
-	{
-		b.damage(move.power * attacker.strength);
-	}
+    {
+        b.damage(move.power * attacker.strength);
+    }
 
 
 from(target);
@@ -115,7 +115,15 @@ Query#all(predicate);
     predicate, all() returns true.  Otherwise it returns false.
 
     Note: If there are no results, all() returns true.  This operation is
-    short-circuiting: the first non-matching item terminates the query.
+          short-circuiting: the first non-matching item terminates the query.
+
+Query#allIn(values);
+
+    Runs the query and returns true if and only if all results match a value
+    in the array `values`, otherwise returns false.
+
+    Note: If there are no results, allIn() returns true.  This operation is
+          short-circuiting: the first non-matching item terminates the query.
 
 Query#any(predicate);
 
@@ -126,14 +134,21 @@ Query#any(predicate);
     Note: If there are no results, any() returns false.  This operation is
           short-circuiting: the first matching item terminates the query.
 
+Query#anyIn(values);
+
+    Runs the query and returns true if any results matches a value in the
+    array `values`, otherwise returns false.
+
+    Note: If there are no results, anyIn() returns false.  This operation is
+          short-circuiting: the first matching item terminates the query.
+
 Query#anyIs(value);
 
-    Runs the query and returns true if any result matches the value, otherwise
-    returns false.
+    Runs the query and returns true if any result matches the given value,
+    otherwise returns false.
 
     Note: If there are no results, anyIs() returns false.  This operation is
-          short-circuiting: the first item that passes the check terminates the
-          query.
+          short-circuiting: the first matching item terminates the query.
 
 Query#besides(callback);
 
@@ -836,8 +851,8 @@ term.define(objectName, thisObj, commands);
         term.define('sound', null, {
             'play': function(filename) {
                 if (fs.exists(filename)) {
-					new Sound(filename).play(Mixer.Default);
-				}
+                    new Sound(filename).play(Mixer.Default);
+                }
             }
         });
 
