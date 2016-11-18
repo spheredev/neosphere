@@ -107,17 +107,18 @@ function Query(target, asObject)
 
 		var keys = m_asObject ? Object.keys(m_target) : null;
 		var numKeys = m_asObject ? keys.length : m_target.length;
-		var env = {};
+		var item = {};
 		for (var i = 0; i < numKeys; ++i) {
 			var key = m_asObject ? keys[i] : i;
-			env.v = m_target[key];
-			env.k = key;
+			item.v = m_target[key];
+			item.k = key;
+			item.t = m_target;
 			var accepted = true;
 			for (var j = 0; j < numLinks; ++j) {
-				if (!(accepted = m_links[j].run(env)))
+				if (!(accepted = m_links[j].run(item)))
 					break;
 			}
-			if (accepted && !op.record(env))
+			if (accepted && !op.record(item))
 				break;
 		}
 		var output = undefined;
@@ -136,18 +137,18 @@ function EachPoint(fn)
 {
 	this.fn = fn;
 
-	this.run = function run(env)
+	this.run = function run(item)
 	{
-		this.fn.call(undefined, env.v, env.k);
+		this.fn.call(undefined, item.v, item.k);
 		return true;
 	};
 }
 
 function IsPoint(value)
 {
-	this.run = function run(env)
+	this.run = function run(item)
 	{
-		env.v = Object.is(env.v, value);
+		item.v = Object.is(item.v, value);
 		return true;
 	};
 }
@@ -156,9 +157,9 @@ function MapPoint(fn)
 {
 	this.fn = fn || function(v) { return v; };
 
-	this.run = function run(env)
+	this.run = function run(item)
 	{
-		env.v = this.fn.call(undefined, env.v, env.k);
+		item.v = this.fn.call(undefined, item.v, item.k);
 		return true;
 	};
 }
@@ -172,7 +173,7 @@ function SkipPoint(count)
 		left = Number(count);
 	};
 
-	this.run = function run(env)
+	this.run = function run(item)
 	{
 		return left-- <= 0;
 	};
@@ -187,7 +188,7 @@ function TakePoint(count)
 		left = Number(count);
 	};
 
-	this.run = function run(env)
+	this.run = function run(item)
 	{
 		return left-- > 0;
 	};
@@ -197,9 +198,9 @@ function WherePoint(fn)
 {
 	this.fn = fn || function() { return true; };
 
-	this.run = function(env)
+	this.run = function(item)
 	{
-		return !!this.fn.call(undefined, env.v, env.k);
+		return !!this.fn.call(undefined, item.v, item.k);
 	};
 }
 
@@ -212,9 +213,9 @@ function AllOp(target)
 		return result;
 	};
 
-	this.record = function(env)
+	this.record = function(item)
 	{
-		result = result && !!env.v;
+		result = result && !!item.v;
 		return !!result;
 	};
 }
@@ -228,9 +229,9 @@ function AnyOp(target)
 		return result;
 	};
 
-	this.record = function(env)
+	this.record = function(item)
 	{
-		result = result || !!env.v;
+		result = result || !!item.v;
 		return !result;
 	};
 }
@@ -244,7 +245,7 @@ function CountOp(target)
 		return numItems;
 	};
 
-	this.record = function(env)
+	this.record = function(item)
 	{
 		++numItems;
 		return true;
@@ -253,7 +254,7 @@ function CountOp(target)
 
 function NullOp(target)
 {
-	this.record = function(env)
+	this.record = function(item)
 	{
 		return true;
 	};
@@ -261,22 +262,22 @@ function NullOp(target)
 
 function RemoveOp(target, asObject)
 {
-	var toRemove = [];
+	var keysToRemove = [];
 
 	this.commit = function()
 	{
 		var doSplice = [].splice.bind(target);
-		for (var i = toRemove.length - 1; i >= 0; --i) {
+		for (var i = keysToRemove.length - 1; i >= 0; --i) {
 			if (asObject)
-				delete target[toRemove[i]];
+				delete target[keysToRemove[i]];
 			else
-				doSplice(toRemove[i], 1);
+				doSplice(keysToRemove[i], 1);
 		}
 	};
 
-	this.record = function(env)
+	this.record = function(item)
 	{
-		toRemove[toRemove.length] = env.k;
+		keysToRemove[keysToRemove.length] = item.k;
 		return true;
 	};
 }
@@ -291,18 +292,18 @@ function SelectOp(target)
 		return results;
 	};
 
-	this.record = function(env)
+	this.record = function(item)
 	{
-		results[index++] = env.v;
+		results[index++] = item.v;
 		return true;
 	};
 }
 
 function UpdateOp(target)
 {
-	this.record = function(env)
+	this.record = function(item)
 	{
-		target[env.k] = env.v;
+		target[item.k] = item.v;
 		return true;
 	};
 }
