@@ -63,7 +63,8 @@ function Query(target, asObject)
 		besides: PROPDESC('wc', m_makeAdder(EachPoint)),
 		count:   PROPDESC('wc', m_makeAdder(WherePoint, CountOp)),
 		each:    PROPDESC('wc', m_makeAdder(EachPoint, NullOp)),
-		first:   PROPDESC('wc', m_makeAdder(TakePoint, SelectOp)),
+		first:   PROPDESC('wc', m_makeAdder(WherePoint, FirstOp)),
+		last:    PROPDESC('wc', m_makeAdder(WherePoint, LastOp)),
 		map:     PROPDESC('wc', m_makeAdder(MapPoint)),
 		remove:  PROPDESC('wc', m_makeAdder(WherePoint, RemoveOp)),
 		select:  PROPDESC('wc', m_makeAdder(MapPoint, SelectOp)),
@@ -248,6 +249,38 @@ function CountOp(target)
 	this.record = function(item)
 	{
 		++numItems;
+		return true;
+	};
+}
+
+function FirstOp(target)
+{
+	var m_value;
+
+	this.commit = function()
+	{
+		return m_value;
+	};
+
+	this.record = function(item)
+	{
+		m_value = item.v;
+		return false;
+	};
+}
+
+function LastOp(target)
+{
+	var m_value;
+
+	this.commit = function()
+	{
+		return m_value;
+	};
+
+	this.record = function(item)
+	{
+		m_value = item.v;
 		return true;
 	};
 }

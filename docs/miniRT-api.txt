@@ -135,20 +135,21 @@ Query#each(callback);
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
 
-Query#first([count]);
+Query#first([predicate]);
 
-    Runs the query, assembling the first `count` results into an array.  The
-    query may be terminated early if there are more results than requested.  If
-    the query yields fewer results than requested, only those results will be
-    returned.
+    Runs the query, calling `predicate` for each result, and returns the first
+    value that matches.
 
-    `count` defaults to 1 if not specified.  This implies special handling; see
-    the note below.
+    Note: If there are no matching results, first() returns undefined.  This
+          operation is short-circuiting: the first item that passes the check
+          terminates the query.
 
-    Note: If `count` is 1 (the default), then the single result is returned
-          directly without constructing an array.  If there are no results at
-          all, then first() returns undefined in this case instead of an empty
-          array.
+Query#last([predicate]);
+
+    Runs the query, calling `predicate` for each result, and returns the last
+    value that matches.
+
+    Note: If there are no matching results, last() returns undefined.
 
 Query#map(callback);
 
