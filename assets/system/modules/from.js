@@ -135,11 +135,11 @@ function Query(target, asObject)
 
 function EachPoint(fn)
 {
-	this.fn = fn;
+	fn = fn || function() {};
 
 	this.run = function run(item)
 	{
-		this.fn.call(undefined, item.v, item.k);
+		fn(item.v, item.k, item.t);
 		return true;
 	};
 }
@@ -155,11 +155,11 @@ function IsPoint(value)
 
 function MapPoint(fn)
 {
-	this.fn = fn || function(v) { return v; };
+	fn = fn || function(v) { return v; };
 
 	this.run = function run(item)
 	{
-		item.v = this.fn.call(undefined, item.v, item.k);
+		item.v = fn(item.v, item.k, item.t);
 		return true;
 	};
 }
@@ -196,11 +196,11 @@ function TakePoint(count)
 
 function WherePoint(fn)
 {
-	this.fn = fn || function() { return true; };
+	fn = fn || function() { return true; };
 
 	this.run = function(item)
 	{
-		return !!this.fn.call(undefined, item.v, item.k);
+		return !!fn(item.v, item.k, item.t);
 	};
 }
 
