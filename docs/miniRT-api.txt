@@ -21,6 +21,7 @@ situations without breaking encapsulation.
 
     const events = require('events');
 
+
 new events.Delegate();
 
     Constructs a new delegate.  The delegate starts out empty, with no handlers
@@ -45,20 +46,39 @@ Delegate:remove(handler[, thisObj]);
 `from` module
 -------------
 
-The `from` module provides games with the ability to perform advanced queries
-on arrays and objects, similarly to LINQ in C#.  One use case is in battle
-engines: for example, you could loop through only those battlers on the enemy
-side, or narrow down the scope of status effects using a query.  Even enemy AI
-code can benefit from queries!
+The `from` module provides games with the ability to perform complex queries
+against the contents of arrays and objects.  One use case is in battle engines:
+you could, for instance, query for only those battlers on the enemy side, or
+use a query to narrow down the scope of status effects.  Even enemy AI code can
+benefit from queries!
 
     const from = require('from');
+
+If you're familiar with C#, the from() function exposed by this module works a
+lot like LINQ.  A query is built from a number of predicates and mappings, and
+typically ends in an each() or select() clause that executes the query.
+
+Here's an example.  Suppose you were making an attack that damages all opposing
+battlers whose level is a multiple of 5, but only hits 75% of the time.
+Depending on the architecture of your battle engine, that might be implemented
+with a single query:
+
+    from(battlers)
+        .where(function(b) { return b.isEnemyOf(attacker) })
+        .where(function(b) { return b.level % 5 == 0; }
+        .where(function() { return random.chance(0.75); })
+        .each(function(b)
+	{
+		b.damage(move.power * attacker.strength);
+	}
+
 
 from(target);
 
     Initiates a query against the specified array, object, or string.  The
-    enumeration mode (keyed or indexed) is decided based on whether `target`
-    is an object or array/string; if you need a specific enumeration mode, you
-    should use one of the specialized calls.
+    enumeration mode (keyed or indexed) depends on whether `target` is an
+    object or array/string; if you need a specific enumeration mode, you should
+    use one of the specialized calls below.
 
     Returns a Query object.
 
@@ -88,24 +108,23 @@ from.String(string);
 
     Returns a Query object.
 
-Query#all(callback);
+Query#all(predicate);
 
-    Runs the query, calling `callback` on each result.  The callback is
-    expected to return a boolean value (true or false); if all results pass the
-    check, all() returns true.  Otherwise it returns false.
+    Runs the query, calling `predicate` for each result.  The predicate should
+    return a boolean value (true or false); if and only if all items match the
+    predicate, all() returns true.  Otherwise it returns false.
 
     Note: If there are no results, all() returns true.  This operation is
-    short-circuiting: the first item that fails the check terminates the query.
+    short-circuiting: the first non-matching item terminates the query.
 
-Query#any(callback);
+Query#any(predicate);
 
-    Runs the query, calling `callback` for each result.  The callback is
-    expected to return a boolean value (true or false); if any of the results
-    pass the check, any() returns true.  Otherwise it returns false.
+    Runs the query, calling `predicate` for each result.  The predicate should
+    return a boolean value (true or false); if any item matches the predicate,
+    any() returns true.  Otherwise it returns false.
 
     Note: If there are no results, any() returns false.  This operation is
-          short-circuiting: the first item that passes the check terminates the
-          query.
+          short-circuiting: the first matching item terminates the query.
 
 Query#anyIs(value);
 
@@ -118,15 +137,18 @@ Query#anyIs(value);
 
 Query#besides(callback);
 
-    Calls `callback` for each result, ignoring the return value and continuing
-    with the query.  This is useful for performing ancillary operations in the
-    middle of a query; for example, tallying intermediate results.
+    Calls `callback` for each result, ignoring the return value and passing on
+    the result as is.  This is useful if you need to perform ancillary actions
+    in the middle of a query; for example, tallying intermediate results.
 
-Query#count([callback]);
+    Note: Avoid causing side effects that modify the query target.  Bad things
+          can happen otherwise! (such as: the pig eating you)
 
-    Runs the query, returning the number of results.  `callback` is an optional
-    check function: It returns true or false to determine whether the result
-    should be counted.  If no callback is provided, all results are counted.
+Query#count([predicate]);
+
+    Runs the query, returning the number of results.  `predicate` is optional;
+    if provided, it should return true to count the result, or false to exclude
+    it.  If no predicate function is provided, all results are counted.
 
 Query#each(callback);
 
@@ -138,7 +160,8 @@ Query#each(callback);
 Query#first([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the first
-    value that matches.
+    value that matches.  If `predicate` is omitted, the very first result is
+    returned.
 
     Note: If there are no matching results, first() returns undefined.  This
           operation is short-circuiting: the first item that passes the check
@@ -147,49 +170,50 @@ Query#first([predicate]);
 Query#last([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the last
-    value that matches.
+    value that matches.  If `predicate` is omitted, the absolute last result is
+    returned.
 
     Note: If there are no matching results, last() returns undefined.
 
-Query#map(callback);
+Query#map(mapper);
 
-    Calls `callback` for each result, passing the return value on to subsequent
+    Calls `mapper` for each result, passing the return value on to subsequent
     operations.  This is used to transform results in the middle of a query,
     which can help code readability as well as avoiding multiple requests for
-    the same data, which can slow the game down.
+    the same data.
 
-Query#remove([callback]);
+Query#remove([predicate]);
 
-    Removes results from the target object or array.  `callback` is an optional
-    check function: It returns true or false to determine whether the result
-    should be removed.  If no callback is provided, all results are removed.
+    Removes results from the target object or array.  `predicate` is optional;
+    if provided, it should return true to remove the result, or false to keep
+    it.  If no predicate function is provided, all results are removed.
 
-Query#select([callback]);
+Query#select([mapper]);
 
-    Runs the query, assembling the results into an array.  `callback` is an
+    Runs the query, assembling the results into an array.  `mapper` is an
     optional mapping function whose return value is what ultimately gets
     selected.  If no callback is provided, results are used as-is.  Returns the
     newly assembled array.
 
 Query#skip(count);
 
-    Filters out the first `count` results.
+    Filters out the first `count` results.  The rest are passed through as is.
 
 Query#take(count);
 
     Filters out all results after the first `count`.
 
-Query#update(callback);
+Query#update(mapper);
 
-    Writes all results back into the target object or array.  `callback` is an
+    Writes all results back into the target object or array.  `mapper` is an
     optional mapping function to decide what value gets written back.  If no
     callback is provided, results are written as-is.
 
-Query#where(callback);
+Query#where(predicate);
 
-    Calls `callback` for each result.  The callback should return true to keep
-    the result, or false to filter it out.  Only those results that pass the
-    check will be seen by the remainder of the query.
+    Calls `predicate` for each result.  The predicate function should return
+    true to keep the result, or false to filter it out.  Only those results
+    that match the predicate will be passed on.
 
 
 `joy` module
@@ -201,6 +225,7 @@ this module, a game can support joystick input for up to 4 players
 simultaneously.
 
     const joy = require('joy');
+
 
 joy.P1 [read-only]
 joy.P2 [read-only]
@@ -224,6 +249,7 @@ to log lines of text to a file complete with timestamps for each, often useful
 for debugging purposes.
 
     const logger = require('logger');
+
 
 new logger.Log(filename);
 
@@ -262,6 +288,7 @@ which is often useful in RPGs to override the battle music for storyline
 reasons.
 
     const music = require('music');
+
 
 music.adjusting [read-only]
 
@@ -345,6 +372,7 @@ for the code handing them out.
 
     const pacts = require('pacts');
 
+
 new pacts.Promise(fn);
 
     Makes a promise.  `fn` should be a function with the following signature,
@@ -420,6 +448,7 @@ in Sphere v1 but is based on Galileo, the Sphere v2 graphics framework.
 
     const prim = require('prim');
 
+
 prim.blit(surface, x, y, image[, mask]);
 
     Draws an image as a textured quad.  `mask` is used to color the quad's
@@ -483,6 +512,7 @@ Many games don't need the full power of the Sphere `RNG` object and just need
 a convenient way to generate random numbers for various purposes.
 
     const random = require('random');
+
 
 random.chance(odds);
 
@@ -552,6 +582,7 @@ This scene can be played back at any time by calling `myScene.run()`.  miniRT's
 scene engine uses the threads module and by default, scenes are nonblocking.
 See the documentation for `Scene#run()` below to find out how to play a scene
 in blocking mode.
+
 
 scenes.defScenelet(name, def);
 
@@ -670,6 +701,7 @@ schema.
 
     const struct = require('struct');
 
+
 new struct.Reader(stream, schema);
 
     Creates a Reader object which can be used to read binary data from
@@ -783,6 +815,7 @@ using the tilde key (`~`).
 
     const term = require('term');
 
+
 term.visible [read/write]
 
     Gets or sets whether the console is visible to the player.
@@ -838,6 +871,7 @@ active-time battle engine might even use several threads to manage each of the
 units on the battlefield.
 
     const threads = require('threads');
+
 
 threads.create(def[, priority]);
 
@@ -909,6 +943,7 @@ This module is based on the MIT-licensed "sax js" parser.  The API is simple
 but should cover most use cases for game development.
 
     const xml = require('xml');
+
 
 xml.load(fileName);
 
