@@ -177,6 +177,13 @@ from#first([predicate]);
           operation is short-circuiting: the first item that passes the check
           terminates the query.
 
+from#get(key);
+
+    Gets the value of the property named `key` from each result and passes it
+    on to subsequent operations.  This is shorthand for a map() operation that
+    does the same.  Results must be object coercible, otherwise this will throw
+    a TypeError during query execution.
+
 from#last([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the last
@@ -185,9 +192,9 @@ from#last([predicate]);
 
     Note: If there are no matching results, last() returns undefined.
 
-from#map(mapper);
+from#map(selector);
 
-    Calls `mapper` for each result, passing the return value on to subsequent
+    Calls `selector` for each result, passing the return value on to subsequent
     operations.  This is used to transform results in the middle of a query,
     which can help code readability as well as avoiding multiple requests for
     the same data.
@@ -198,11 +205,11 @@ from#remove([predicate]);
     if provided, it should return true to remove the result, or false to keep
     it.  If no predicate function is provided, all results are removed.
 
-from#select([mapper]);
+from#select([selector]);
 
-    Runs the query, assembling the results into an array.  `mapper` is an
-    optional mapping function whose return value is what ultimately gets
-    selected.  If no callback is provided, results are used as-is.  Returns the
+    Runs the query, assembling the results into an array.  `selector` is an
+    optional mapping function whose return value decides the output of the
+    query.  If no selector is provided, results are used as-is.  Returns the
     newly assembled array.
 
 from#skip(count);
@@ -213,11 +220,11 @@ from#take(count);
 
     Filters out all results after the first `count`.
 
-from#update(mapper);
+from#update(selector);
 
-    Writes all results back into the target object or array.  `mapper` is an
+    Writes all results back into the target object or array.  `selector` is an
     optional mapping function to decide what value gets written back.  If no
-    callback is provided, results are written as-is.
+    selector is provided, results are written as-is.
 
 from#where(predicate);
 

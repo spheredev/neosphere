@@ -4,8 +4,9 @@ minisphere Changelog
 v4.3.5 - TBD
 ------------
 
+* Adds `from#get()` for drilling down into object properties during a query.
 * Adds `from#allIn()`, `from#anyIn()`, and `from#anyIs()`, providing a quick
-  way to check whether a query matches specified values without the need to
+  way to check whether a query matches specific values without the need to
   write a predicate function.
 * Adds `from#first()` and `from#last()` to get the very first or very last
   result of a query, respectively.
