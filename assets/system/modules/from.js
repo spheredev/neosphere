@@ -85,19 +85,19 @@ function Query(target, asObject)
 		m_links[m_links.length] = link;
 	}
 
-	function m_makeAdder(linkType, op)
+	function m_makeAdder(pointType, opType)
 	{
-		if (op !== undefined) {
+		if (opType !== undefined) {
 			return function() {
-				m_addLink(Reflect.construct(linkType, arguments));
-				var result = m_run(op);
+				m_addLink(Reflect.construct(pointType, arguments));
+				var result = m_run(opType);
 				--m_links.length;
 				return result;
 			};
 		}
 		else {
 			return function() {
-				m_addLink(Reflect.construct(linkType, arguments));
+				m_addLink(Reflect.construct(pointType, arguments));
 				return this;
 			};
 		}
@@ -136,13 +136,13 @@ function Query(target, asObject)
 	}
 }
 
-function EachPoint(fn)
+function EachPoint(callback)
 {
-	fn = fn || function() {};
+	callback = callback || function() {};
 
 	this.run = function run(item)
 	{
-		fn(item.v, item.k, item.t);
+		callback(item.v, item.k, item.t);
 		return true;
 	};
 }
@@ -170,13 +170,13 @@ function IsPoint(value)
 	};
 }
 
-function MapPoint(fn)
+function MapPoint(selector)
 {
-	fn = fn || function(v) { return v; };
+	selector = selector || function(v) { return v; };
 
 	this.run = function run(item)
 	{
-		item.v = fn(item.v, item.k, item.t);
+		item.v = selector(item.v, item.k, item.t);
 		return true;
 	};
 }
@@ -211,13 +211,13 @@ function TakePoint(count)
 	};
 }
 
-function WherePoint(fn)
+function WherePoint(predicate)
 {
-	fn = fn || function() { return true; };
+	predicate = predicate || function() { return true; };
 
 	this.run = function(item)
 	{
-		return !!fn(item.v, item.k, item.t);
+		return !!predicate(item.v, item.k, item.t);
 	};
 }
 
@@ -352,7 +352,7 @@ function UpdateOp(target)
 {
 	this.record = function(item)
 	{
-		target[item.k] = item.v;
+		item.t[item.k] = item.v;
 		return true;
 	};
 }

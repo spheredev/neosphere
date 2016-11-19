@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 03474054b358bed8003ba08dd054c7195f8c54f2 (v1.5.0-939-g0347405).
- *  Git branch master.
+ *  Git commit 72bc736b0fb6c0bccaffeb3a1d038d87b19fadba (v1.5.0-960-g72bc736).
+ *  Git branch math-cbrt.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -258,9 +258,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "03474054b358bed8003ba08dd054c7195f8c54f2"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-939-g0347405"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "72bc736b0fb6c0bccaffeb3a1d038d87b19fadba"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-960-g72bc736"
+#define DUK_GIT_BRANCH                    "math-cbrt"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
@@ -900,6 +900,8 @@ DUK_EXTERNAL_DECL duk_bool_t duk_has_prop(duk_context *ctx, duk_idx_t obj_idx);
 DUK_EXTERNAL_DECL duk_bool_t duk_has_prop_string(duk_context *ctx, duk_idx_t obj_idx, const char *key);
 DUK_EXTERNAL_DECL duk_bool_t duk_has_prop_lstring(duk_context *ctx, duk_idx_t obj_idx, const char *key, duk_size_t key_len);
 DUK_EXTERNAL_DECL duk_bool_t duk_has_prop_index(duk_context *ctx, duk_idx_t obj_idx, duk_uarridx_t arr_idx);
+
+DUK_EXTERNAL_DECL void duk_get_prop_desc(duk_context *ctx, duk_idx_t obj_idx, duk_uint_t flags);
 DUK_EXTERNAL_DECL void duk_def_prop(duk_context *ctx, duk_idx_t obj_idx, duk_uint_t flags);
 
 DUK_EXTERNAL_DECL duk_bool_t duk_get_global_string(duk_context *ctx, const char *key);

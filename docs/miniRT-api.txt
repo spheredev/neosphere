@@ -86,9 +86,7 @@ from.Array(array);
 
     Initiates a query against an array or array-like object.  The object must
     have a `length` property, and only integer properties in the range
-    [0,length) will be enumerated.
-
-    Returns a Query object.
+    [0,length) will be enumerated.  Returns a 'from' query object.
 
     Throws a TypeError if the object either doesn't have a `length` property or
     its value is non-numeric.
@@ -97,18 +95,15 @@ from.Object(object);
 
     Initiates a query against the specified object.  Note that only enumerable
     own properties of the object will be queried.  Non-enumerable and inherited
-    properties are ignored.
-
-    Returns a Query object.
+    properties are ignored.  Returns a 'from' query object.
 
 from.String(string);
 
     Initiates a query against the individual characters of a string.  `string`
-    must be either a primitive string value or a String object.
+    must be either a primitive string value or a String object.  Returns a
+	'from' query object.
 
-    Returns a Query object.
-
-Query#all(predicate);
+from#all(predicate);
 
     Runs the query, calling `predicate` for each result.  The predicate should
     return a boolean value (true or false); if and only if all items match the
@@ -117,7 +112,7 @@ Query#all(predicate);
     Note: If there are no results, all() returns true.  This operation is
           short-circuiting: the first non-matching item terminates the query.
 
-Query#allIn(values);
+from#allIn(values);
 
     Runs the query and returns true if and only if all results match a value
     in the array `values`, otherwise returns false.
@@ -125,7 +120,7 @@ Query#allIn(values);
     Note: If there are no results, allIn() returns true.  This operation is
           short-circuiting: the first non-matching item terminates the query.
 
-Query#any(predicate);
+from#any(predicate);
 
     Runs the query, calling `predicate` for each result.  The predicate should
     return a boolean value (true or false); if any item matches the predicate,
@@ -134,7 +129,7 @@ Query#any(predicate);
     Note: If there are no results, any() returns false.  This operation is
           short-circuiting: the first matching item terminates the query.
 
-Query#anyIn(values);
+from#anyIn(values);
 
     Runs the query and returns true if any results matches a value in the
     array `values`, otherwise returns false.
@@ -142,7 +137,7 @@ Query#anyIn(values);
     Note: If there are no results, anyIn() returns false.  This operation is
           short-circuiting: the first matching item terminates the query.
 
-Query#anyIs(value);
+from#anyIs(value);
 
     Runs the query and returns true if any result matches the given value,
     otherwise returns false.
@@ -150,7 +145,7 @@ Query#anyIs(value);
     Note: If there are no results, anyIs() returns false.  This operation is
           short-circuiting: the first matching item terminates the query.
 
-Query#besides(callback);
+from#besides(callback);
 
     Calls `callback` for each result, ignoring the return value and passing on
     the result as is.  This is useful if you need to perform ancillary actions
@@ -159,20 +154,20 @@ Query#besides(callback);
     Note: Avoid causing side effects that modify the query target.  Bad things
           can happen otherwise! (such as: the pig eating you)
 
-Query#count([predicate]);
+from#count([predicate]);
 
     Runs the query, returning the number of results.  `predicate` is optional;
     if provided, it should return true to count the result, or false to exclude
     it.  If no predicate function is provided, all results are counted.
 
-Query#each(callback);
+from#each(callback);
 
     Runs the query, calling `callback` for each result.  The return value of
     the callback is ignored.  This is used to loop over the results of a query,
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
 
-Query#first([predicate]);
+from#first([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the first
     value that matches.  If `predicate` is omitted, the very first result is
@@ -182,7 +177,7 @@ Query#first([predicate]);
           operation is short-circuiting: the first item that passes the check
           terminates the query.
 
-Query#last([predicate]);
+from#last([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the last
     value that matches.  If `predicate` is omitted, the absolute last result is
@@ -190,41 +185,41 @@ Query#last([predicate]);
 
     Note: If there are no matching results, last() returns undefined.
 
-Query#map(mapper);
+from#map(mapper);
 
     Calls `mapper` for each result, passing the return value on to subsequent
     operations.  This is used to transform results in the middle of a query,
     which can help code readability as well as avoiding multiple requests for
     the same data.
 
-Query#remove([predicate]);
+from#remove([predicate]);
 
     Removes results from the target object or array.  `predicate` is optional;
     if provided, it should return true to remove the result, or false to keep
     it.  If no predicate function is provided, all results are removed.
 
-Query#select([mapper]);
+from#select([mapper]);
 
     Runs the query, assembling the results into an array.  `mapper` is an
     optional mapping function whose return value is what ultimately gets
     selected.  If no callback is provided, results are used as-is.  Returns the
     newly assembled array.
 
-Query#skip(count);
+from#skip(count);
 
     Filters out the first `count` results.  The rest are passed through as is.
 
-Query#take(count);
+from#take(count);
 
     Filters out all results after the first `count`.
 
-Query#update(mapper);
+from#update(mapper);
 
     Writes all results back into the target object or array.  `mapper` is an
     optional mapping function to decide what value gets written back.  If no
     callback is provided, results are written as-is.
 
-Query#where(predicate);
+from#where(predicate);
 
     Calls `predicate` for each result.  The predicate function should return
     true to keep the result, or false to filter it out.  Only those results

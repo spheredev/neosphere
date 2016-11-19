@@ -1,6 +1,16 @@
 minisphere Changelog
 ====================
 
+v4.3.5 - TBD
+------------
+
+* Adds `from#allIn()`, `from#anyIn()`, and `from#anyIs()`, providing a quick
+  way to check whether a query matches specified values without the need to
+  write a predicate function.
+* Adds `from#first()` and `from#last()` to get the very first or very last
+  result of a query, respectively.
+* Adds support for ECMAScript 2015 `Math.cbrt()`.
+
 v4.3.4 - November 17, 2016
 --------------------------
 
@@ -10,7 +20,6 @@ v4.3.4 - November 17, 2016
   engine.
 * Adds support for ECMAScript 2015 `Object.is()` and `Math.hypot()`.
 * Fixes a bug where `Color.of()` was undefined and not callable.
-
 
 v4.3.3 - November 11, 2016
 --------------------------
