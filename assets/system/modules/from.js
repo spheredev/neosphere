@@ -66,7 +66,6 @@ function Query(target, asObject)
 		count:   PROPDESC('wc', m_makeAdder(WherePoint, CountOp)),
 		each:    PROPDESC('wc', m_makeAdder(EachPoint, NullOp)),
 		first:   PROPDESC('wc', m_makeAdder(WherePoint, FirstOp)),
-		get:     PROPDESC('wc', m_makeAdder(GetPoint)),
 		last:    PROPDESC('wc', m_makeAdder(WherePoint, LastOp)),
 		map:     PROPDESC('wc', m_makeAdder(MapPoint)),
 		remove:  PROPDESC('wc', m_makeAdder(WherePoint, RemoveOp)),
@@ -146,17 +145,6 @@ function EachPoint(callback)
 		callback(item.v, item.k, item.t);
 		return true;
 	};
-}
-
-function GetPoint(key)
-{
-    key = String(key);
-    
-    this.run = function run(item)
-    {
-        item.v = item.v[key];
-        return true;
-    }
 }
 
 function InPoint(values)

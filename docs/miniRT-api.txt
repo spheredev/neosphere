@@ -177,13 +177,6 @@ from#first([predicate]);
           operation is short-circuiting: the first item that passes the check
           terminates the query.
 
-from#get(key);
-
-    Gets the value of the property named `key` from each result and passes it
-    on to subsequent operations.  This is shorthand for a map() operation that
-    does the same.  Results must be object coercible, otherwise this will throw
-    a TypeError during query execution.
-
 from#last([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the last
