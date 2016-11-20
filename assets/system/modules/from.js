@@ -23,7 +23,7 @@ function from(target)
 	target = Object(target);
 	if (typeof target === 'string' || target instanceof String)
 		return fromString(target);
-	else if ('length' in target)
+	else if (typeof target.length === 'number')
 		return fromArray(target);
 	else
 		return fromObject(target);
