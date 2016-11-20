@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit d1bfad938170b0654d7286830e38de5f5e9bad57 (v1.5.0-960-gd1bfad9).
+ *  Git commit db5d0d30d79ecc7d60009d2561b8b06d004b16f7 (v1.5.0-962-gdb5d0d3).
  *  Git branch math-cbrt.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -258,8 +258,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "d1bfad938170b0654d7286830e38de5f5e9bad57"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-960-gd1bfad9"
+#define DUK_GIT_COMMIT                    "db5d0d30d79ecc7d60009d2561b8b06d004b16f7"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-962-gdb5d0d3"
 #define DUK_GIT_BRANCH                    "math-cbrt"
 
 /* Duktape debug protocol version used by this build. */
