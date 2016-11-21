@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v?.?.? - TBD
+------------
+
+* Adds support for composable from() queries, allowing partial application of
+  queries as in LINQ.
+
+
 v4.3.5 - November 20, 2016
 --------------------------
 

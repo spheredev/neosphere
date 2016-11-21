@@ -55,60 +55,57 @@ function fromString(target)
 	return new Query(target);
 }
 
-function Query(target, asObject)
+function Query(target, asObject, memo)
 {
 	Object.defineProperties(this,
 	{
-		all:     PROPDESC('wc', m_makeAdder(MapPoint, AllOp)),
-		allIn:   PROPDESC('wc', m_makeAdder(InPoint, AllOp)),
-		any:     PROPDESC('wc', m_makeAdder(MapPoint, AnyOp)),
-		anyIn:   PROPDESC('wc', m_makeAdder(InPoint, AnyOp)),
-		anyIs:   PROPDESC('wc', m_makeAdder(IsPoint, AnyOp)),
-		besides: PROPDESC('wc', m_makeAdder(EachPoint)),
-		count:   PROPDESC('wc', m_makeAdder(WherePoint, CountOp)),
-		each:    PROPDESC('wc', m_makeAdder(EachPoint, NullOp)),
-		first:   PROPDESC('wc', m_makeAdder(WherePoint, FirstOp)),
-		last:    PROPDESC('wc', m_makeAdder(WherePoint, LastOp)),
-		map:     PROPDESC('wc', m_makeAdder(MapPoint)),
-		remove:  PROPDESC('wc', m_makeAdder(WherePoint, RemoveOp)),
-		select:  PROPDESC('wc', m_makeAdder(MapPoint, SelectOp)),
-		skip:    PROPDESC('wc', m_makeAdder(SkipPoint)),
-		take:    PROPDESC('wc', m_makeAdder(TakePoint)),
-		update:  PROPDESC('wc', m_makeAdder(MapPoint, UpdateOp)),
-		where:   PROPDESC('wc', m_makeAdder(WherePoint)),
+		all:     PROPDESC('wc', m_makePoint(MapPoint, AllOp)),
+		allIn:   PROPDESC('wc', m_makePoint(InPoint, AllOp)),
+		any:     PROPDESC('wc', m_makePoint(MapPoint, AnyOp)),
+		anyIn:   PROPDESC('wc', m_makePoint(InPoint, AnyOp)),
+		anyIs:   PROPDESC('wc', m_makePoint(IsPoint, AnyOp)),
+		besides: PROPDESC('wc', m_makePoint(EachPoint)),
+		count:   PROPDESC('wc', m_makePoint(WherePoint, CountOp)),
+		each:    PROPDESC('wc', m_makePoint(EachPoint, NullOp)),
+		first:   PROPDESC('wc', m_makePoint(WherePoint, FirstOp)),
+		last:    PROPDESC('wc', m_makePoint(WherePoint, LastOp)),
+		map:     PROPDESC('wc', m_makePoint(MapPoint)),
+		remove:  PROPDESC('wc', m_makePoint(WherePoint, RemoveOp)),
+		select:  PROPDESC('wc', m_makePoint(MapPoint, SelectOp)),
+		skip:    PROPDESC('wc', m_makePoint(SkipPoint)),
+		take:    PROPDESC('wc', m_makePoint(TakePoint)),
+		update:  PROPDESC('wc', m_makePoint(MapPoint, UpdateOp)),
+		where:   PROPDESC('wc', m_makePoint(WherePoint)),
 	});
 
 	var m_asObject = !!asObject;
-	var m_links = [];
+	var m_points = memo ? memo.points.slice() : [];
 	var m_target = target;
+	if (memo)
+		m_points[m_points.length] = memo.newPoint;
 
-	function m_addLink(link)
-	{
-		m_links[m_links.length] = link;
-	}
-
-	function m_makeAdder(pointType, opType)
+	function m_makePoint(pointType, opType)
 	{
 		if (opType !== undefined) {
 			return function() {
-				m_addLink(Reflect.construct(pointType, arguments));
-				var result = m_run(opType);
-				--m_links.length;
-				return result;
+				var point = Reflect.construct(pointType, arguments);
+				return m_run(point, opType);
 			};
 		}
 		else {
 			return function() {
-				m_addLink(Reflect.construct(pointType, arguments));
-				return this;
+				return new Query(m_target, m_asObject, {
+					points:   m_points,
+					newPoint: Reflect.construct(pointType, arguments) });
 			};
 		}
 	}
 
-	function m_run(opType)
+	function m_run(lastPoint, opType)
 	{
+		var points = m_points.concat(lastPoint);
+		var numLinks = points.length;
 		var op = Reflect.construct(opType, [ m_target, m_asObject ]);
-		var numLinks = m_links.length;
 
 		var keys = m_asObject ? Object.keys(m_target) : null;
 		var numKeys = m_asObject ? keys.length : m_target.length;
@@ -120,7 +117,7 @@ function Query(target, asObject)
 			item.t = m_target;
 			var accepted = true;
 			for (var j = 0; j < numLinks; ++j) {
-				if (!(accepted = m_links[j].run(item)))
+				if (!(accepted = points[j].run(item)))
 					break;
 			}
 			if (accepted && !op.record(item))
@@ -131,8 +128,8 @@ function Query(target, asObject)
 			output = op.commit();
 
 		// reset state of all links so the chain can be reused if needed
-		for (var i = 0; i < m_links.length; ++i)
-			if ('reset' in m_links[i]) m_links[i].reset();
+		for (var i = 0; i < points.length; ++i)
+			if ('reset' in points[i]) points[i].reset();
 
 		return output;
 	}

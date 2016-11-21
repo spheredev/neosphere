@@ -149,7 +149,7 @@ system.name [read-only]
 
 system.version [read-only]
 
-    The version number of the engine; e.g. "4.3.5".
+    The version number of the engine; e.g. "X.X.X".
 
 system.apiVersion [read-only]
 system.apiLevel [read-only]
