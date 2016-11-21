@@ -62,6 +62,22 @@ function fail(actual, expected, message, operator)
 	});
 }
 
+assert.is = is;
+function is(actual, expected, message)
+{
+	if (Object.is(actual, expected))
+		return;
+	fail(actual, expected, message, 'is');
+}
+
+assert.isNot = isNot;
+function isNot(actual, expected, message)
+{
+	if (!Object.is(actual, expected))
+		return;
+	fail(actual, expected, message, 'isNot');
+}
+
 assert.notDeepEqual = notDeepEqual;
 function notDeepEqual(actual, expected, message)
 {

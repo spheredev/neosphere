@@ -6,6 +6,8 @@
 'use strict';
 module.exports = from;
 
+const assert = require('assert');
+
 function PROPDESC(flags, value)
 {
 	var desc = {};
@@ -139,6 +141,7 @@ function Query(target, asObject)
 function EachPoint(callback)
 {
 	callback = callback || function() {};
+	assert.equal(typeof callback, 'function');
 
 	this.run = function run(item)
 	{
@@ -173,6 +176,7 @@ function IsPoint(value)
 function MapPoint(selector)
 {
 	selector = selector || function(v) { return v; };
+	assert.equal(typeof selector, 'function');
 
 	this.run = function run(item)
 	{
@@ -183,11 +187,12 @@ function MapPoint(selector)
 
 function SkipPoint(count)
 {
-	var left = Number(count);
+	var left = Math.trunc(count);
+	assert.ok(left >= 0);
 
 	this.reset = function reset()
 	{
-		left = Number(count);
+		left = Math.trunc(count);
 	};
 
 	this.run = function run(item)
@@ -198,11 +203,12 @@ function SkipPoint(count)
 
 function TakePoint(count)
 {
-	var left = Number(count);
+	var left = Math.trunc(count);
+	assert.ok(left >= 0);
 
 	this.reset = function reset()
 	{
-		left = Number(count);
+		left = Math.trunc(count);
 	};
 
 	this.run = function run(item)
@@ -214,6 +220,7 @@ function TakePoint(count)
 function WherePoint(predicate)
 {
 	predicate = predicate || function() { return true; };
+	assert.equal(typeof predicate, 'function');
 
 	this.run = function(item)
 	{
