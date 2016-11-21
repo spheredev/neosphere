@@ -1,3 +1,15 @@
+minisphere (4.3.5) trusty; urgency=low
+
+  * Adds `from#allIn()`, `from#anyIn()`, and `from#anyIs()`, providing a quick
+    way to check whether a query matches specific values without the need to
+    write a predicate function.
+  * Adds `from#first()` and `from#last()` to get the very first or very last
+    result of a query, respectively.
+  * Adds support for `Math.cbrt()`, `Math.log2()`, `Math.log10()`, and
+    `Math.trunc()`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 20 Nov 2016 00:00:00 -0500
+
 minisphere (4.3.4) trusty; urgency=low
 
   * Adds a new miniRT module, "from", which enables performing queries against

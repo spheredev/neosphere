@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.3.5 - TBD
-------------
+v4.3.5 - November 20, 2016
+--------------------------
 
 * Adds `from#allIn()`, `from#anyIn()`, and `from#anyIs()`, providing a quick
   way to check whether a query matches specific values without the need to
