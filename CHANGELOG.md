@@ -9,7 +9,8 @@ v4.3.5 - TBD
   write a predicate function.
 * Adds `from#first()` and `from#last()` to get the very first or very last
   result of a query, respectively.
-* Adds support for `Math.cbrt()`, `Math.log2()`, and `Math.log10()`.
+* Adds support for `Math.cbrt()`, `Math.log2()`, `Math.log10()`, and
+  `Math.trunc()`.
 
 v4.3.4 - November 17, 2016
 --------------------------
