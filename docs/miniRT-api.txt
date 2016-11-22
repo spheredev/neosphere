@@ -185,7 +185,7 @@ from#last([predicate]);
 
     Note: If there are no matching results, last() returns undefined.
 
-from#map(selector);
+from#mapTo(selector);
 
     Calls `selector` for each result, passing the return value on to subsequent
     operations.  This is used to transform results in the middle of a query,

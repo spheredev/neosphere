@@ -69,7 +69,7 @@ function Query(target, asObject, memo)
 		each:    PROPDESC('wc', m_makePoint(EachPoint, NullOp)),
 		first:   PROPDESC('wc', m_makePoint(WherePoint, FirstOp)),
 		last:    PROPDESC('wc', m_makePoint(WherePoint, LastOp)),
-		map:     PROPDESC('wc', m_makePoint(MapPoint)),
+		mapTo:   PROPDESC('wc', m_makePoint(MapPoint)),
 		remove:  PROPDESC('wc', m_makePoint(WherePoint, RemoveOp)),
 		select:  PROPDESC('wc', m_makePoint(MapPoint, SelectOp)),
 		skip:    PROPDESC('wc', m_makePoint(SkipPoint)),
