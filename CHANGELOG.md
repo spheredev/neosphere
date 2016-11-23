@@ -1,11 +1,11 @@
 minisphere Changelog
 ====================
 
-v?.?.? - TBD
-------------
+v4.3.6 - November 23, 2016
+--------------------------
 
-* Adds support for composable from() queries, allowing partial application of
-  queries as in LINQ.
+* Adds support for composable query operators, allowing partial application of
+  `from()` queries, like in LINQ.
 * Renames from#map() to from#mapTo().
 
 
