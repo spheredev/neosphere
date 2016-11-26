@@ -7,6 +7,7 @@
 module.exports = from;
 
 const assert = require('assert');
+const random = require('random');
 
 function PROPDESC(flags, value)
 {
@@ -34,329 +35,503 @@ function from(target)
 from.Array = fromArray;
 function fromArray(target)
 {
+	var source;
+
 	target = Object(target);
 	if (typeof target.length !== 'number')
 		throw new TypeError("object with 'length' required");
-	return new Query(target);
+	source = new ArraySource(target);
+	return new Queryable(source);
 }
 
 from.Object = fromObject;
 function fromObject(target)
 {
-	target = Object(target);
-	return new Query(target, true);
+	var source;
+
+	source = new ObjectSource(Object(target));
+	return new Queryable(source);
 }
 
 from.String = fromString;
 function fromString(target)
 {
+	var source;
+
 	if (typeof target !== 'string' && !(target instanceof String))
 		throw new TypeError("string or String object required");
-	return new Query(target);
+	source = new ArraySource(target);
+	return new Queryable(source);
 }
 
-function Query(target, asObject, memo)
+function Queryable(source)
 {
 	Object.defineProperties(this,
 	{
-		all:     PROPDESC('wc', m_makePoint(MapPoint, AllOp)),
-		allIn:   PROPDESC('wc', m_makePoint(InPoint, AllOp)),
-		any:     PROPDESC('wc', m_makePoint(MapPoint, AnyOp)),
-		anyIn:   PROPDESC('wc', m_makePoint(InPoint, AnyOp)),
-		anyIs:   PROPDESC('wc', m_makePoint(IsPoint, AnyOp)),
-		besides: PROPDESC('wc', m_makePoint(EachPoint)),
-		count:   PROPDESC('wc', m_makePoint(WherePoint, CountOp)),
-		each:    PROPDESC('wc', m_makePoint(EachPoint, NullOp)),
-		first:   PROPDESC('wc', m_makePoint(WherePoint, FirstOp)),
-		last:    PROPDESC('wc', m_makePoint(WherePoint, LastOp)),
-		mapTo:   PROPDESC('wc', m_makePoint(MapPoint)),
-		remove:  PROPDESC('wc', m_makePoint(WherePoint, RemoveOp)),
-		select:  PROPDESC('wc', m_makePoint(MapPoint, SelectOp)),
-		skip:    PROPDESC('wc', m_makePoint(SkipPoint)),
-		take:    PROPDESC('wc', m_makePoint(TakePoint)),
-		update:  PROPDESC('wc', m_makePoint(MapPoint, UpdateOp)),
-		where:   PROPDESC('wc', m_makePoint(WherePoint)),
+		all:     PROPDESC('wc', m_makePoint(MapSource, allOp)),
+		allIn:   PROPDESC('wc', m_makePoint(InSource, allOp)),
+		any:     PROPDESC('wc', m_makePoint(MapSource, anyOp)),
+		anyIn:   PROPDESC('wc', m_makePoint(InSource, anyOp)),
+		anyIs:   PROPDESC('wc', m_makePoint(IsSource, anyOp)),
+		besides: PROPDESC('wc', m_makePoint(CallbackSource)),
+		count:   PROPDESC('wc', m_makePoint(FilterSource, countOp)),
+		each:    PROPDESC('wc', m_makePoint(CallbackSource, nullOp)),
+		first:   PROPDESC('wc', m_makePoint(FilterSource, firstOp)),
+		from:    PROPDESC('wc', m_makePoint(FromSource)),
+		last:    PROPDESC('wc', m_makePoint(FilterSource, lastOp)),
+		mapTo:   PROPDESC('wc', m_makePoint(MapSource)),
+		orderBy: PROPDESC('wc', m_makePoint(OrderedSource)),
+		remove:  PROPDESC('wc', m_makePoint(FilterSource, removeOp)),
+		select:  PROPDESC('wc', m_makePoint(MapSource, collectOp)),
+		shuffle: PROPDESC('wc', m_makePoint(ShuffledSource)),
+		skip:    PROPDESC('wc', m_makePoint(SkipSource)),
+		take:    PROPDESC('wc', m_makePoint(TakeSource)),
+		update:  PROPDESC('wc', m_makePoint(MapSource, updateOp)),
+		where:   PROPDESC('wc', m_makePoint(FilterSource)),
 	});
 
-	var m_asObject = !!asObject;
-	var m_points = memo ? memo.points.slice() : [];
-	var m_target = target;
-	if (memo)
-		m_points[m_points.length] = memo.newPoint;
+	var m_source = source;
 
-	function m_makePoint(pointType, opType)
+	function m_makePoint(sourceType, op)
 	{
-		if (opType !== undefined) {
-			return function() {
-				var point = Reflect.construct(pointType, arguments);
-				return m_run(point, opType);
-			};
-		}
-		else {
-			return function() {
-				return new Query(m_target, m_asObject, {
-					points:   m_points,
-					newPoint: Reflect.construct(pointType, arguments) });
-			};
-		}
+		return function()
+		{
+			var constructArgs = [ m_source ]
+				.concat([].slice.call(arguments));
+			var source = Reflect.construct(sourceType, constructArgs);
+			return op !== undefined
+				? op(source)
+				: new Queryable(source);
+		};
 	}
+}
 
-	function m_run(lastPoint, opType)
+function ArraySource(target)
+{
+	var m_index;
+	var m_length;
+
+	this.init =
+	function init()
 	{
-		var points = m_points.concat(lastPoint);
-		var numLinks = points.length;
-		var op = Reflect.construct(opType, [ m_target, m_asObject ]);
+		m_index = 0;
+		m_length = target.length;
+	};
 
-		var keys = m_asObject ? Object.keys(m_target) : null;
-		var numKeys = m_asObject ? keys.length : m_target.length;
-		var item = {};
-		for (var i = 0; i < numKeys; ++i) {
-			var key = m_asObject ? keys[i] : i;
-			item.v = m_target[key];
-			item.k = key;
-			item.t = m_target;
-			var accepted = true;
-			for (var j = 0; j < numLinks; ++j) {
-				if (!(accepted = points[j].run(item)))
-					break;
+	this.next =
+	function next()
+	{
+		if (m_index >= m_length)
+			return null;
+		return {
+			v: target[m_index],
+			k: m_index++,
+			t: target
+		};
+	}
+}
+
+function ObjectSource(target)
+{
+	var m_index;
+	var m_keys;
+	var m_length;
+
+	this.init =
+	function init()
+	{
+		m_keys = Object.keys(target);
+		m_index = 0;
+		m_length = m_keys.length;
+	};
+
+	this.next =
+	function next()
+	{
+		var key;
+
+		if (m_index >= m_length);
+			return null;
+		key = m_keys[m_index++];
+		return {
+			v: target[key],
+			k: key,
+			t: target
+		};
+	};
+}
+
+function CallbackSource(source, callback)
+{
+	this.init =
+	function init()
+	{
+		source.init();
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+
+		if (item = source.next())
+			callback(item.v, item.k, item.t);
+		return item;
+	};
+}
+
+function FilterSource(source, predicate)
+{
+	predicate = predicate || function(v) { return true; };
+
+	this.init =
+	function init()
+	{
+		source.init();
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+
+		while (item = source.next()) {
+			if (predicate(item.v, item.k, item.t))
+				break;
+		}
+		return item;
+	};
+}
+
+function FromSource(source, selector)
+{
+	var m_index;
+	var m_items = null;
+	var m_selector = selector || function(v) { return v; };
+
+	this.init =
+	function init()
+	{
+		source.init();
+		m_list = null;
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+		var target;
+
+		if (m_items == null) {
+			if (item = source.next()) {
+				target = m_selector(item.v, item.k, item.t);
+				m_index = 0;
+				m_items = from(target).select(function(v, k, t) {
+					return { v: v, k: k, t: t };
+				});
 			}
-			if (accepted && !op.record(item))
-				break;
+			else
+				return null;
 		}
-		var output = undefined;
-		if ('commit' in op)
-			output = op.commit();
 
-		// reset state of all links so the chain can be reused if needed
-		for (var i = 0; i < points.length; ++i)
-			if ('reset' in points[i]) points[i].reset();
-
-		return output;
-	}
-}
-
-function EachPoint(callback)
-{
-	callback = callback || function() {};
-	assert.equal(typeof callback, 'function');
-
-	this.run = function run(item)
-	{
-		callback(item.v, item.k, item.t);
-		return true;
+		item = m_items[m_index++];
+		if (m_index >= m_list.length)
+			m_items = null;
+		return item;
 	};
 }
 
-function InPoint(values)
+function InSource(source, values)
 {
-	this.run = function run(item)
+	this.init =
+	function init()
 	{
-		var haveMatch = false;
-		for (var i = 0; i < values.length; ++i) {
-			if (haveMatch = Object.is(item.v, values[i]))
-				break;
+		source.init();
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+
+		if (item = source.next()) {
+			for (var i = values.length - 1; i >= 0; --i) {
+				if (Object.is(item.v, values[i])) {
+					item.v = true;
+					return;
+				}
+			}
+			item.v = false;
 		}
-		item.v = haveMatch;
-		return true;
+		return item;
 	};
 }
 
-function IsPoint(value)
+function IsSource(source, value)
 {
-	this.run = function run(item)
+	this.init =
+	function init()
 	{
-		item.v = Object.is(item.v, value);
-		return true;
+		source.init();
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+
+		if (item = source.next())
+			item.v = Object.is(item.v, value);
+		return item;
 	};
 }
 
-function MapPoint(selector)
+function MapSource(source, selector)
 {
 	selector = selector || function(v) { return v; };
-	assert.equal(typeof selector, 'function');
 
-	this.run = function run(item)
+	this.init =
+	function init()
 	{
-		item.v = selector(item.v, item.k, item.t);
-		return true;
+		source.init();
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+
+		if (item = source.next())
+			item.v = selector(item.v, item.k, item.t);
+		return item;
 	};
 }
 
-function SkipPoint(count)
+function OrderedSource(source, keySelector)
 {
-	var left = Math.trunc(count);
-	assert.ok(left >= 0);
+	var m_index = 0;
+	var m_length;
+	var m_ordered = [];
 
-	this.reset = function reset()
+	this.init =
+	function init()
 	{
-		left = Math.trunc(count);
+		var index;
+		var item;
+
+		source.init();
+		while (item = source.next()) {
+			index = m_ordered.length;
+			m_ordered[index] = {
+				index: index,  // to stabilize the sort
+				item:  item,
+				key:   keySelector(item.v, item.k, item.t)
+			};
+		}
+		m_ordered.sort(function(a, b) {
+			return a.key < b.key ? -1
+				: a.key > b.key ? 1
+				: a.index - b.index;
+		});
+		m_index = 0;
+		m_length = m_ordered.length;
 	};
 
-	this.run = function run(item)
+	this.next =
+	function next()
 	{
-		return left-- <= 0;
+		if (m_index < m_length)
+			return m_ordered[m_index++].item;
+		else
+			return null;
 	};
 }
 
-function TakePoint(count)
+function ShuffledSource(source)
 {
-	var left = Math.trunc(count);
-	assert.ok(left >= 0);
+	var m_index = 0;
+	var m_length;
+	var m_shuffled = [];
 
-	this.reset = function reset()
+	this.init =
+	function init()
 	{
-		left = Math.trunc(count);
+		var index;
+		var item;
+		var temp;
+
+		source.init();
+		while (item = source.next()) {
+			index = m_shuffled.length;
+			m_shuffled[index] = {
+				index: index,  // to stabilize the sort
+				item:  item,
+				key:   keySelector(item.v, item.k, item.t)
+			};
+		}
+		for (var i = m_shuffled.length - 1; i >= 1; --i) {
+			index = random.discrete(0, i);
+			temp = m_shuffled[index];
+			m_shuffled[index] = m_shuffled[i];
+			m_shuffled[i] = temp;
+		}
+		m_index = 0;
+		m_length = m_shuffled.length;
 	};
 
-	this.run = function run(item)
+	this.next =
+	function next()
 	{
-		return left-- > 0;
+		if (m_index < m_length)
+			return m_shuffled[m_index++].item;
+		else
+			return null;
 	};
 }
 
-function WherePoint(predicate)
+function SkipSource(source, count)
 {
-	predicate = predicate || function() { return true; };
-	assert.equal(typeof predicate, 'function');
+	var m_count = Number(count);
+	var m_numSkipped;
 
-	this.run = function(item)
+	this.init =
+	function init()
 	{
-		return !!predicate(item.v, item.k, item.t);
+		source.init();
+		m_numSkipped = 0;
+	};
+
+	this.next =
+	function next()
+	{
+		var item;
+
+		item = m_numSkipped++ >= m_count
+			? source.next() : null;
+		return item;
 	};
 }
 
-function AllOp(target)
+function TakeSource(source, count)
 {
-	var result = true;
+	var m_count = Number(count);
+	var m_numTaken;
 
-	this.commit = function()
+	this.init =
+	function init()
 	{
-		return result;
+		source.init();
+		m_numTaken = 0;
 	};
 
-	this.record = function(item)
+	this.next =
+	function next()
 	{
-		result = result && !!item.v;
-		return !!result;
+		var item;
+
+		item = m_numTaken++ < m_count
+			? source.next() : null;
+		return item;
 	};
 }
 
-function AnyOp(target)
+function allOp(source)
 {
-	var result = false;
+	var item;
 
-	this.commit = function()
-	{
-		return result;
-	};
+	source.init();
+	while (item = source.next()) {
+		if (!item.v)
+			return false;
+	}
+	return true;
+};
 
-	this.record = function(item)
-	{
-		result = result || !!item.v;
-		return !result;
-	};
-}
+function anyOp(source)
+{
+	var item;
 
-function CountOp(target)
+	source.init();
+	while (item = source.next()) {
+		if (!!item.v)
+			return true;
+	}
+	return false;
+};
+
+function collectOp(source)
+{
+	var collection = [];
+	var item;
+
+	source.init();
+	while (item = source.next())
+		collection[collection.length] = item.v;
+	return collection;
+};
+
+function countOp(source)
 {
 	var numItems = 0;
 
-	this.commit = function()
-	{
-		return numItems;
-	};
-
-	this.record = function(item)
-	{
+	source.init();
+	while (source.next())
 		++numItems;
-		return true;
-	};
-}
+	return numItems;
+};
 
-function FirstOp(target)
+function firstOp(source)
 {
-	var m_value;
+	var item;
 
-	this.commit = function()
-	{
-		return m_value;
-	};
+	source.init();
+	if (item = source.next())
+		return item.v;
+};
 
-	this.record = function(item)
-	{
-		m_value = item.v;
-		return false;
-	};
-}
-
-function LastOp(target)
+function lastOp(source)
 {
-	var m_value;
+	var lastResult;
+	var item;
 
-	this.commit = function()
-	{
-		return m_value;
-	};
+	source.init();
+	while (item = source.next()) {
+		lastResult = item.v;
+	}
+	return lastResult;
+};
 
-	this.record = function(item)
-	{
-		m_value = item.v;
-		return true;
-	};
-}
-
-function NullOp(target)
+function nullOp(source)
 {
-	this.record = function(item)
-	{
-		return true;
-	};
-}
+	source.init();
+	while (source.next()) {
+		/* no-op */
+	}
+};
 
-function RemoveOp(target, asObject)
+function removeOp(source)
 {
-	var keysToRemove = [];
+	var item;
+	var splice = Array.prototype.splice;
+	var toRemove = [];
 
-	this.commit = function()
-	{
-		var doSplice = [].splice.bind(target);
-		for (var i = keysToRemove.length - 1; i >= 0; --i) {
-			if (asObject)
-				delete target[keysToRemove[i]];
-			else
-				doSplice(keysToRemove[i], 1);
-		}
-	};
+	source.init();
+	while (item = source.next())
+		toRemove[toRemove.length] = { k: item.k, t: item.t };
+	for (var i = toRemove.length - 1; i >= 0; --i) {
+		item = toRemove[i];
+		if ('length' in item.t)
+			splice.call(item.t, item.k, 1);
+		else
+			delete item.t[item.k]
+	}
+};
 
-	this.record = function(item)
-	{
-		keysToRemove[keysToRemove.length] = item.k;
-		return true;
-	};
-}
-
-function SelectOp(target)
+function updateOp(source)
 {
-	var results = [],
-	    index = 0;
+	var item;
 
-	this.commit = function()
-	{
-		return results;
-	};
-
-	this.record = function(item)
-	{
-		results[index++] = item.v;
-		return true;
-	};
-}
-
-function UpdateOp(target)
-{
-	this.record = function(item)
-	{
+	source.init();
+	while (item = source.next())
 		item.t[item.k] = item.v;
-		return true;
-	};
-}
+};
