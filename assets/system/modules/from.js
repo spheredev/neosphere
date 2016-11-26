@@ -363,11 +363,7 @@ function ShuffledSource(source)
 		source.init();
 		while (item = source.next()) {
 			index = m_shuffled.length;
-			m_shuffled[index] = {
-				index: index,  // to stabilize the sort
-				item:  item,
-				key:   keySelector(item.v, item.k, item.t)
-			};
+			m_shuffled[index] = item;
 		}
 		for (var i = m_shuffled.length - 1; i >= 1; --i) {
 			index = random.discrete(0, i);
@@ -383,7 +379,7 @@ function ShuffledSource(source)
 	function next()
 	{
 		if (m_index < m_length)
-			return m_shuffled[m_index++].item;
+			return m_shuffled[m_index++];
 		else
 			return null;
 	};
