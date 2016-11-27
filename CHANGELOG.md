@@ -1,6 +1,13 @@
 minisphere Changelog
 ====================
 
+v4.3.7 - TBD
+------------
+
+* Adds a bunch of new `from()` query operators: `.shuffle()`, `.random()`,
+  `.sample()`, `.ascending()`/`.descending()`, and `.from()`.
+* Adds support for ECMAScript 2016 `Array.prototype.includes()`.
+
 v4.3.6 - November 23, 2016
 --------------------------
 

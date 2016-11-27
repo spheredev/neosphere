@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit d0962cb775eef26c1bf51b446c8336f88bb2651f (v1.5.0-981-gd0962cb).
- *  Git branch master.
+ *  Git commit 743bb46302f63d73ffc5db9551d381a1ad9c1976 (v1.5.0-1022-g743bb46).
+ *  Git branch es6-array-includes.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -86,6 +86,7 @@
  *  * Jakub Ch\u0142api\u0144ski (https://github.com/jchlapinski)
  *  * Brett Vickers (https://github.com/beevik)
  *  * Dominik Okwieka (https://github.com/okitec)
+ *  * Remko Tron\u00e7on (https://el-tramo.be)
  *  
  *  Other contributions
  *  ===================
@@ -258,9 +259,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "d0962cb775eef26c1bf51b446c8336f88bb2651f"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-981-gd0962cb"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "743bb46302f63d73ffc5db9551d381a1ad9c1976"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1022-g743bb46"
+#define DUK_GIT_BRANCH                    "es6-array-includes"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2

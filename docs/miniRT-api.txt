@@ -145,6 +145,12 @@ from#anyIs(value);
     Note: If there are no results, anyIs() returns false.  This operation is
           short-circuiting: the first matching item terminates the query.
 
+from#ascending([keySelector]);
+
+    Calls `keySelector` to get a sort key for each result and orders the
+    results in ascending order (least to greatest) by key.  If no key selector
+    is provided, the result itself is used as the key.
+
 from#besides(callback);
 
     Calls `callback` for each result, ignoring the return value and passing on
@@ -159,6 +165,12 @@ from#count([predicate]);
     Runs the query, returning the number of results.  `predicate` is optional;
     if provided, it should return true to count the result, or false to exclude
     it.  If no predicate function is provided, all results are counted.
+
+from#descending([keySelector]);
+
+    Calls `keySelector` to get a sort key for each result and orders the
+    results in descending order (greatest to least) by key.  If no key selector
+    is provided, the result itself is used as the key.
 
 from#each(callback);
 
@@ -177,6 +189,12 @@ from#first([predicate]);
           operation is short-circuiting: the first item that passes the check
           terminates the query.
 
+from#from(selector);
+
+    Calls `selector` for each result and uses the contents of the returned
+    object or array as the results of the operator.  This is used to expand a
+    query into subcollections.
+
 from#last([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the last
@@ -192,11 +210,22 @@ from#mapTo(selector);
     which can help code readability as well as avoiding multiple requests for
     the same data.
 
+from#random(count);
+
+    Takes `count` random results and filters out the rest.  Note that this may
+    sample a result more than once.  If you don't want duplicates, use
+    from#sample() instead.
+
 from#remove([predicate]);
 
     Removes results from the target object or array.  `predicate` is optional;
     if provided, it should return true to remove the result, or false to keep
     it.  If no predicate function is provided, all results are removed.
+
+from#sample(count);
+
+    Takes `count` random results and filters out the rest.  Unlike
+    from#random(), this will not sample the same result more than once.
 
 from#select([selector]);
 
@@ -204,6 +233,11 @@ from#select([selector]);
     optional mapping function whose return value decides the output of the
     query.  If no selector is provided, results are used as-is.  Returns the
     newly assembled array.
+
+from#shuffle();
+
+    Shuffles the results.  Subsequent operators will see them in a random
+    order.
 
 from#skip(count);
 
