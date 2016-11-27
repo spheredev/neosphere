@@ -151,6 +151,10 @@ from#ascending([keySelector]);
     results in ascending order (least to greatest) by key.  If no key selector
     is provided, the result itself is used as the key.
 
+    Note: from#ascending() performs a stable sort: items with the same key
+          remain in the same relative order.  This allows chained ordering
+          operators to work as expected.
+
 from#besides(callback);
 
     Calls `callback` for each result, ignoring the return value and passing on
@@ -171,6 +175,10 @@ from#descending([keySelector]);
     Calls `keySelector` to get a sort key for each result and orders the
     results in descending order (greatest to least) by key.  If no key selector
     is provided, the result itself is used as the key.
+
+    Note: from#descending() performs a stable sort: items with the same key
+          remain in the same relative order.  This allows chained ordering
+          operators to work as expected.
 
 from#each(callback);
 

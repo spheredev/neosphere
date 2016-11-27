@@ -73,18 +73,18 @@ function Queryable(source)
 		any:        PROPDESC('wc', m_makePoint(MapSource, anyOp)),
 		anyIn:      PROPDESC('wc', m_makePoint(InSource, anyOp)),
 		anyIs:      PROPDESC('wc', m_makePoint(IsSource, anyOp)),
-		ascending:  PROPDESC('wc', m_makePoint(AscendingSource)),
+		ascending:  PROPDESC('wc', m_makePoint(OrderedSource(false))),
 		besides:    PROPDESC('wc', m_makePoint(CallbackSource)),
 		count:      PROPDESC('wc', m_makePoint(FilterSource, countOp)),
-		descending: PROPDESC('wc', m_makePoint(DescendingSource)),
+		descending: PROPDESC('wc', m_makePoint(OrderedSource(true))),
 		each:       PROPDESC('wc', m_makePoint(CallbackSource, nullOp)),
 		first:      PROPDESC('wc', m_makePoint(FilterSource, firstOp)),
 		from:       PROPDESC('wc', m_makePoint(FromSource)),
 		last:       PROPDESC('wc', m_makePoint(FilterSource, lastOp)),
 		mapTo:      PROPDESC('wc', m_makePoint(MapSource)),
-		random:     PROPDESC('wc', m_makePoint(RandomSource)),
+		random:     PROPDESC('wc', m_makePoint(SampleSource(false))),
 		remove:     PROPDESC('wc', m_makePoint(FilterSource, removeOp)),
-		sample:     PROPDESC('wc', m_makePoint(SampleSource)),
+		sample:     PROPDESC('wc', m_makePoint(SampleSource(true))),
 		select:     PROPDESC('wc', m_makePoint(MapSource, collectOp)),
 		shuffle:    PROPDESC('wc', m_makePoint(ShuffledSource)),
 		skip:       PROPDESC('wc', m_makePoint(SkipSource)),
@@ -164,43 +164,47 @@ function ObjectSource(target)
 	};
 }
 
-function AscendingSource(source, keySelector)
+function OrderedSource(descending)
 {
-	var m_index = 0;
-	var m_length;
-	var m_ordered = [];
-
-	this.init =
-	function init()
+	return function(source, keySelector)
 	{
-		var index;
-		var item;
+		var m_index = 0;
+		var m_length;
+		var m_ordered = [];
 
-		source.init();
-		while (item = source.next()) {
-			index = m_ordered.length;
-			m_ordered[index] = {
-				index: index,  // to stabilize the sort
-				item:  item,
-				key:   keySelector(item.v, item.k, item.t)
-			};
-		}
-		m_ordered.sort(function(a, b) {
-			return a.key < b.key ? -1
-				: a.key > b.key ? 1
-				: a.index - b.index;
-		});
-		m_index = 0;
-		m_length = m_ordered.length;
-	};
+		this.init =
+		function init()
+		{
+			var index;
+			var item;
+			var ordering = descending ? -1 : 1;
 
-	this.next =
-	function next()
-	{
-		if (m_index < m_length)
-			return m_ordered[m_index++].item;
-		else
-			return null;
+			source.init();
+			while (item = source.next()) {
+				index = m_ordered.length;
+				m_ordered[index] = {
+					index: index,  // to stabilize the sort
+					item:  item,
+					key:   keySelector(item.v, item.k, item.t)
+				};
+			}
+			m_ordered.sort(function(a, b) {
+				return a.key < b.key ? -1 * ordering
+					: a.key > b.key ? 1 * ordering
+					: a.index - b.index;
+			});
+			m_index = 0;
+			m_length = m_ordered.length;
+		};
+
+		this.next =
+		function next()
+		{
+			if (m_index < m_length)
+				return m_ordered[m_index++].item;
+			else
+				return null;
+		};
 	};
 }
 
@@ -220,46 +224,6 @@ function CallbackSource(source, callback)
 		if (item = source.next())
 			callback(item.v, item.k, item.t);
 		return item;
-	};
-}
-
-function DescendingSource(source, keySelector)
-{
-	var m_index = 0;
-	var m_length;
-	var m_ordered = [];
-
-	this.init =
-	function init()
-	{
-		var index;
-		var item;
-
-		source.init();
-		while (item = source.next()) {
-			index = m_ordered.length;
-			m_ordered[index] = {
-				index: index,  // to stabilize the sort
-				item:  item,
-				key:   keySelector(item.v, item.k, item.t)
-			};
-		}
-		m_ordered.sort(function(b, a) {
-			return a.key < b.key ? -1
-				: a.key > b.key ? 1
-				: a.index - b.index;
-		});
-		m_index = 0;
-		m_length = m_ordered.length;
-	};
-
-	this.next =
-	function next()
-	{
-		if (m_index < m_length)
-			return m_ordered[m_index++].item;
-		else
-			return null;
 	};
 }
 
@@ -390,64 +354,41 @@ function MapSource(source, selector)
 	};
 }
 
-function RandomSource(source, count)
+function SampleSource(uniqueOnly)
 {
-	var m_count = Number(count);
-	var m_numSamples;
-	var m_items = [];
-
-	this.init =
-	function init()
+	return function(source, count)
 	{
-		var item;
+		var m_count = Number(count);
+		var m_items = [];
+		var m_numSamples;
 
-		source.init();
-		while (item = source.next())
-			m_items[m_items.length] = item;
-		m_numSampled = 0;
-	};
+		this.init =
+		function init()
+		{
+			var item;
 
-	this.next =
-	function next()
-	{
-		if (m_numSamples++ < m_count)
-			return random.sample(m_items);
-		else
-			return null;
-	};
-}
+			source.init();
+			while (item = source.next())
+				m_items[m_items.length] = item;
+			m_numSamples = 0;
+		};
 
-function SampleSource(source, count)
-{
-	var m_count = Number(count);
-	var m_numSamples;
-	var m_items = [];
+		this.next =
+		function next()
+		{
+			var index;
+			var item;
 
-	this.init =
-	function init()
-	{
-		var item;
-
-		source.init();
-		while (item = source.next())
-			m_items[m_items.length] = item;
-		m_numSampled = 0;
-	};
-
-	this.next =
-	function next()
-	{
-		var index;
-		var item;
-
-		if (m_numSamples++ < m_count) {
-			index = random.discrete(0, m_items.length);
-			item = m_items[index];
-			m_items.splice(index, 0);
-			return item;
-		}
-		else
-			return null;
+			if (m_numSamples++ < m_count) {
+				index = random.discrete(0, m_items.length);
+				item = m_items[index];
+				if (uniqueOnly)
+					m_items.splice(index, 1);
+				return item;
+			}
+			else
+				return null;
+		};
 	};
 }
 
