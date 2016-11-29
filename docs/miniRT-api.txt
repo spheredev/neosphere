@@ -73,20 +73,20 @@ with a single query:
     }
 
 
-from(target);
+from(target[, ...]);
 
-    Initiates a query against the specified array, object, or string.  The
-    enumeration mode (keyed or indexed) depends on whether `target` is an
+    Initiates a query against one or more arrays, objects, or strings.  The
+    enumeration mode for each (keyed or indexed) depends on whether it's an
     object or array/string; if you need a specific enumeration mode, you should
-    use one of the specialized calls below.
+    use one of the specialized calls below and work through one at a time.
 
-    Returns a Query object.
+    Returns a Queryable.
 
 from.Array(array);
 
     Initiates a query against an array or array-like object.  The object must
     have a `length` property, and only integer properties in the range
-    [0,length) will be enumerated.  Returns a 'from' query object.
+    [0,length) will be enumerated.  Returns a Queryable.
 
     Throws a TypeError if the object either doesn't have a `length` property or
     its value is non-numeric.
@@ -95,13 +95,13 @@ from.Object(object);
 
     Initiates a query against the specified object.  Note that only enumerable
     own properties of the object will be queried.  Non-enumerable and inherited
-    properties are ignored.  Returns a 'from' query object.
+    properties are ignored.  Returns a Queryable.
 
 from.String(string);
 
     Initiates a query against the individual characters of a string.  `string`
     must be either a primitive string value or a String object.  Returns a
-	'from' query object.
+	Queryable.
 
 from#all(predicate);
 

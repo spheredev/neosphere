@@ -11,6 +11,13 @@ const random = require('random');
 
 function from(target)
 {
+	var collections;
+
+	if (arguments.length > 1) {
+		collections = Array.prototype.slice.call(arguments);
+		return from.call(this, collections).from();
+	}
+
 	target = Object(target);
 	if (typeof target === 'string' || target instanceof String)
 		return fromString(target);
@@ -77,19 +84,19 @@ function PROPDESC(flags, valueOrGetter, setter)
 // reduction to perform for a terminal operator.
 function MAKEPOINT(sourceType, op)
 {
-    return function()
-    {
-        var constructArgs;
-        var newSource;
-        var source;
+	return function()
+	{
+		var constructArgs;
+		var newSource;
+		var source;
 
-        source = this[sym.QuerySource];
-        constructArgs = [ source ].concat([].slice.call(arguments));
-        newSource = Reflect.construct(sourceType, constructArgs);
-        return op !== undefined
-            ? op(newSource)
-            : new Queryable(newSource);
-    };
+		source = this[sym.QuerySource];
+		constructArgs = [ source ].concat([].slice.call(arguments));
+		newSource = Reflect.construct(sourceType, constructArgs);
+		return op !== undefined
+			? op(newSource)
+			: new Queryable(newSource);
+	};
 }
 
 // private symbols.  these are used as keys for various internal properties.
@@ -105,36 +112,36 @@ const sym =
 // in LINQ.
 function Queryable(source)
 {
-    this[sym.QuerySource] = source;
+	this[sym.QuerySource] = source;
 }
 
 Object.defineProperties(Queryable.prototype,
 {
-    // refer to the miniRT API reference (miniRT-api.txt) to find out what each
-    // of these methods does.
-    all:        PROPDESC('wc', MAKEPOINT(MapSource, allOp)),
-    allIn:      PROPDESC('wc', MAKEPOINT(InSource, allOp)),
-    any:        PROPDESC('wc', MAKEPOINT(MapSource, anyOp)),
-    anyIn:      PROPDESC('wc', MAKEPOINT(InSource, anyOp)),
-    anyIs:      PROPDESC('wc', MAKEPOINT(IsSource, anyOp)),
-    ascending:  PROPDESC('wc', MAKEPOINT(OrderedSource(false))),
-    besides:    PROPDESC('wc', MAKEPOINT(CallbackSource)),
-    count:      PROPDESC('wc', MAKEPOINT(FilterSource, countOp)),
-    descending: PROPDESC('wc', MAKEPOINT(OrderedSource(true))),
-    each:       PROPDESC('wc', MAKEPOINT(CallbackSource, nullOp)),
-    first:      PROPDESC('wc', MAKEPOINT(FilterSource, firstOp)),
-    from:       PROPDESC('wc', MAKEPOINT(FromSource)),
-    last:       PROPDESC('wc', MAKEPOINT(FilterSource, lastOp)),
-    mapTo:      PROPDESC('wc', MAKEPOINT(MapSource)),
-    random:     PROPDESC('wc', MAKEPOINT(SampleSource(false))),
-    remove:     PROPDESC('wc', MAKEPOINT(FilterSource, removeOp)),
-    sample:     PROPDESC('wc', MAKEPOINT(SampleSource(true))),
-    select:     PROPDESC('wc', MAKEPOINT(MapSource, collectOp)),
-    shuffle:    PROPDESC('wc', MAKEPOINT(ShuffledSource)),
-    skip:       PROPDESC('wc', MAKEPOINT(SkipSource)),
-    take:       PROPDESC('wc', MAKEPOINT(TakeSource)),
-    update:     PROPDESC('wc', MAKEPOINT(MapSource, updateOp)),
-    where:      PROPDESC('wc', MAKEPOINT(FilterSource)),
+	// refer to the miniRT API reference (miniRT-api.txt) to find out what each
+	// of these methods does.
+	all:        PROPDESC('wc', MAKEPOINT(MapSource, allOp)),
+	allIn:      PROPDESC('wc', MAKEPOINT(InSource, allOp)),
+	any:        PROPDESC('wc', MAKEPOINT(MapSource, anyOp)),
+	anyIn:      PROPDESC('wc', MAKEPOINT(InSource, anyOp)),
+	anyIs:      PROPDESC('wc', MAKEPOINT(IsSource, anyOp)),
+	ascending:  PROPDESC('wc', MAKEPOINT(OrderedSource(false))),
+	besides:    PROPDESC('wc', MAKEPOINT(CallbackSource)),
+	count:      PROPDESC('wc', MAKEPOINT(FilterSource, countOp)),
+	descending: PROPDESC('wc', MAKEPOINT(OrderedSource(true))),
+	each:       PROPDESC('wc', MAKEPOINT(CallbackSource, nullOp)),
+	first:      PROPDESC('wc', MAKEPOINT(FilterSource, firstOp)),
+	from:       PROPDESC('wc', MAKEPOINT(FromSource)),
+	last:       PROPDESC('wc', MAKEPOINT(FilterSource, lastOp)),
+	mapTo:      PROPDESC('wc', MAKEPOINT(MapSource)),
+	random:     PROPDESC('wc', MAKEPOINT(SampleSource(false))),
+	remove:     PROPDESC('wc', MAKEPOINT(FilterSource, removeOp)),
+	sample:     PROPDESC('wc', MAKEPOINT(SampleSource(true))),
+	select:     PROPDESC('wc', MAKEPOINT(MapSource, collectOp)),
+	shuffle:    PROPDESC('wc', MAKEPOINT(ShuffledSource)),
+	skip:       PROPDESC('wc', MAKEPOINT(SkipSource)),
+	take:       PROPDESC('wc', MAKEPOINT(TakeSource)),
+	update:     PROPDESC('wc', MAKEPOINT(MapSource, updateOp)),
+	where:      PROPDESC('wc', MAKEPOINT(FilterSource)),
 });
 
 function ArraySource(target)
@@ -244,7 +251,7 @@ function FromSource(source, selector)
 	function init()
 	{
 		source.init();
-		m_list = null;
+		m_items = null;
 	};
 
 	this.next =
@@ -266,7 +273,7 @@ function FromSource(source, selector)
 		}
 
 		item = m_items[m_index++];
-		if (m_index >= m_list.length)
+		if (m_index >= m_items.length)
 			m_items = null;
 		return item;
 	};
@@ -604,7 +611,7 @@ function removeOp(source)
 		toRemove[toRemove.length] = { k: item.k, t: item.t };
 	for (var i = toRemove.length - 1; i >= 0; --i) {
 		item = toRemove[i];
-		if ('length' in item.t)
+		if (typeof item.t.length === 'number')
 			splice.call(item.t, item.k, 1);
 		else
 			delete item.t[item.k]
