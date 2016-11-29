@@ -237,8 +237,8 @@ from#sample(count);
 
 from#select([selector]);
 
-    Runs the query, assembling the results into an array.  `selector` is an
-    optional mapping function whose return value decides the output of the
+    Runs the query, assembling the final results into an array.  `selector` is
+    an optional mapping function whose return value decides the output of the
     query.  If no selector is provided, results are used as-is.  Returns the
     newly assembled array.
 

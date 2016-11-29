@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 743bb46302f63d73ffc5db9551d381a1ad9c1976 (v1.5.0-1022-g743bb46).
- *  Git branch es6-array-includes.
+ *  Git commit e1f003db9fe32534793c491397fb029e0e85c15e (v1.5.0-1043-ge1f003d).
+ *  Git branch es6-symbol-initial.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -259,9 +259,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "743bb46302f63d73ffc5db9551d381a1ad9c1976"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1022-g743bb46"
-#define DUK_GIT_BRANCH                    "es6-array-includes"
+#define DUK_GIT_COMMIT                    "e1f003db9fe32534793c491397fb029e0e85c15e"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1043-ge1f003d"
+#define DUK_GIT_BRANCH                    "es6-symbol-initial"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
@@ -319,11 +319,13 @@ struct duk_time_components {
 
 /* Enumeration flags for duk_enum() */
 #define DUK_ENUM_INCLUDE_NONENUMERABLE    (1 << 0)    /* enumerate non-numerable properties in addition to enumerable */
-#define DUK_ENUM_INCLUDE_INTERNAL         (1 << 1)    /* enumerate internal properties */
-#define DUK_ENUM_OWN_PROPERTIES_ONLY      (1 << 2)    /* don't walk prototype chain, only check own properties */
-#define DUK_ENUM_ARRAY_INDICES_ONLY       (1 << 3)    /* only enumerate array indices */
-#define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 4)    /* sort array indices (applied to full enumeration result, including inherited array indices) */
-#define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 5)    /* enumerate a proxy object itself without invoking proxy behavior */
+#define DUK_ENUM_INCLUDE_HIDDEN           (1 << 1)    /* enumerate hidden symbols too (in Duktape 1.x called internal properties) */
+#define DUK_ENUM_INCLUDE_SYMBOLS          (1 << 2)    /* enumerate symbols */
+#define DUK_ENUM_EXCLUDE_STRINGS          (1 << 3)    /* exclude strings */
+#define DUK_ENUM_OWN_PROPERTIES_ONLY      (1 << 4)    /* don't walk prototype chain, only check own properties */
+#define DUK_ENUM_ARRAY_INDICES_ONLY       (1 << 5)    /* only enumerate array indices */
+#define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 6)    /* sort array indices (applied to full enumeration result, including inherited array indices) */
+#define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 6)    /* enumerate a proxy object itself without invoking proxy behavior */
 
 /* Compilation flags for duk_compile() and duk_eval() */
 /* DUK_COMPILE_xxx bits 0-2 are reserved for an internal 'nargs' argument.
@@ -724,7 +726,7 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t 
 
 /* Buffers and lightfuncs are not considered primitive because they mimic
  * objects and e.g. duk_to_primitive() will coerce them instead of returning
- * them as is.
+ * them as is.  Symbols are represented as strings internally.
  */
 #define duk_is_primitive(ctx,idx) \
 	duk_check_type_mask((ctx), (idx), DUK_TYPE_MASK_UNDEFINED | \
@@ -734,6 +736,7 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t 
 	                                  DUK_TYPE_MASK_STRING | \
 	                                  DUK_TYPE_MASK_POINTER)
 
+/* Symbols are object coercibly, covered by DUK_TYPE_MASK_STRING. */
 #define duk_is_object_coercible(ctx,idx) \
 	duk_check_type_mask((ctx), (idx), DUK_TYPE_MASK_BOOLEAN | \
 	                                  DUK_TYPE_MASK_NUMBER | \
@@ -807,6 +810,7 @@ DUK_EXTERNAL_DECL void duk_require_function(duk_context *ctx, duk_idx_t idx);
 	duk_require_function((ctx), (idx))
 DUK_EXTERNAL_DECL void *duk_require_heapptr(duk_context *ctx, duk_idx_t idx);
 
+/* Symbols are object coercible and covered by DUK_TYPE_MASK_STRING. */
 #define duk_require_object_coercible(ctx,idx) \
 	((void) duk_check_type_mask((ctx), (idx), DUK_TYPE_MASK_BOOLEAN | \
 	                                            DUK_TYPE_MASK_NUMBER | \

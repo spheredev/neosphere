@@ -1,12 +1,12 @@
 minisphere Changelog
 ====================
 
-v4.3.7 - TBD
+v4.4.0 - TBD
 ------------
 
+* Adds support for ECMAScript 2015 `Symbol()` and `Symbol.for()`.
 * Adds a bunch of new `from()` query operators: `.shuffle()`, `.random()`,
   `.sample()`, `.ascending()`/`.descending()`, and `.from()`.
-* Adds support for ECMAScript 2016 `Array.prototype.includes()`.
 
 v4.3.6 - November 23, 2016
 --------------------------

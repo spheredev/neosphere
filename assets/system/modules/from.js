@@ -9,6 +9,8 @@ module.exports = from;
 const assert = require('assert');
 const random = require('random');
 
+const kQuerySource = Symbol("query source");
+
 function PROPDESC(flags, value)
 {
 	var desc = {};
@@ -20,6 +22,23 @@ function PROPDESC(flags, value)
 		value:        value
 	};
 };
+
+function MAKEPOINT(sourceType, op)
+{
+    return function()
+    {
+        var constructArgs;
+        var newSource;
+        var source;
+        
+        source = this[kQuerySource];
+        constructArgs = [ source ].concat([].slice.call(arguments));
+        newSource = Reflect.construct(sourceType, constructArgs);
+        return op !== undefined
+            ? op(newSource)
+            : new Queryable(newSource);
+    };
+}
 
 function from(target)
 {
@@ -66,48 +85,35 @@ function fromString(target)
 
 function Queryable(source)
 {
-	Object.defineProperties(this,
-	{
-		all:        PROPDESC('wc', m_makePoint(MapSource, allOp)),
-		allIn:      PROPDESC('wc', m_makePoint(InSource, allOp)),
-		any:        PROPDESC('wc', m_makePoint(MapSource, anyOp)),
-		anyIn:      PROPDESC('wc', m_makePoint(InSource, anyOp)),
-		anyIs:      PROPDESC('wc', m_makePoint(IsSource, anyOp)),
-		ascending:  PROPDESC('wc', m_makePoint(OrderedSource(false))),
-		besides:    PROPDESC('wc', m_makePoint(CallbackSource)),
-		count:      PROPDESC('wc', m_makePoint(FilterSource, countOp)),
-		descending: PROPDESC('wc', m_makePoint(OrderedSource(true))),
-		each:       PROPDESC('wc', m_makePoint(CallbackSource, nullOp)),
-		first:      PROPDESC('wc', m_makePoint(FilterSource, firstOp)),
-		from:       PROPDESC('wc', m_makePoint(FromSource)),
-		last:       PROPDESC('wc', m_makePoint(FilterSource, lastOp)),
-		mapTo:      PROPDESC('wc', m_makePoint(MapSource)),
-		random:     PROPDESC('wc', m_makePoint(SampleSource(false))),
-		remove:     PROPDESC('wc', m_makePoint(FilterSource, removeOp)),
-		sample:     PROPDESC('wc', m_makePoint(SampleSource(true))),
-		select:     PROPDESC('wc', m_makePoint(MapSource, collectOp)),
-		shuffle:    PROPDESC('wc', m_makePoint(ShuffledSource)),
-		skip:       PROPDESC('wc', m_makePoint(SkipSource)),
-		take:       PROPDESC('wc', m_makePoint(TakeSource)),
-		update:     PROPDESC('wc', m_makePoint(MapSource, updateOp)),
-		where:      PROPDESC('wc', m_makePoint(FilterSource)),
-	});
-
-	var m_source = source;
-
-	function m_makePoint(sourceType, op)
-	{
-		return function()
-		{
-			var constructArgs = [ m_source ]
-				.concat([].slice.call(arguments));
-			var source = Reflect.construct(sourceType, constructArgs);
-			return op !== undefined
-				? op(source)
-				: new Queryable(source);
-		};
-	}
+    this[kQuerySource] = source;
 }
+
+Object.defineProperties(Queryable.prototype,
+{
+    all:        PROPDESC('wc', MAKEPOINT(MapSource, allOp)),
+    allIn:      PROPDESC('wc', MAKEPOINT(InSource, allOp)),
+    any:        PROPDESC('wc', MAKEPOINT(MapSource, anyOp)),
+    anyIn:      PROPDESC('wc', MAKEPOINT(InSource, anyOp)),
+    anyIs:      PROPDESC('wc', MAKEPOINT(IsSource, anyOp)),
+    ascending:  PROPDESC('wc', MAKEPOINT(OrderedSource(false))),
+    besides:    PROPDESC('wc', MAKEPOINT(CallbackSource)),
+    count:      PROPDESC('wc', MAKEPOINT(FilterSource, countOp)),
+    descending: PROPDESC('wc', MAKEPOINT(OrderedSource(true))),
+    each:       PROPDESC('wc', MAKEPOINT(CallbackSource, nullOp)),
+    first:      PROPDESC('wc', MAKEPOINT(FilterSource, firstOp)),
+    from:       PROPDESC('wc', MAKEPOINT(FromSource)),
+    last:       PROPDESC('wc', MAKEPOINT(FilterSource, lastOp)),
+    mapTo:      PROPDESC('wc', MAKEPOINT(MapSource)),
+    random:     PROPDESC('wc', MAKEPOINT(SampleSource(false))),
+    remove:     PROPDESC('wc', MAKEPOINT(FilterSource, removeOp)),
+    sample:     PROPDESC('wc', MAKEPOINT(SampleSource(true))),
+    select:     PROPDESC('wc', MAKEPOINT(MapSource, collectOp)),
+    shuffle:    PROPDESC('wc', MAKEPOINT(ShuffledSource)),
+    skip:       PROPDESC('wc', MAKEPOINT(SkipSource)),
+    take:       PROPDESC('wc', MAKEPOINT(TakeSource)),
+    update:     PROPDESC('wc', MAKEPOINT(MapSource, updateOp)),
+    where:      PROPDESC('wc', MAKEPOINT(FilterSource)),
+});
 
 function ArraySource(target)
 {
