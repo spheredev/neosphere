@@ -39,7 +39,7 @@ function discrete(min, max)
     return min + Math.floor(rng.next() * range);
 }
 
-normal.y = null;
+normal.memo = null;
 function normal(mean, sigma)
 {
     assert.ok(typeof mean === 'number', "mean must be a number");
@@ -48,19 +48,20 @@ function normal(mean, sigma)
     // normal deviates are calculated in pairs.  we return the first one
     // immediately, and save the second to be returned on the next call to
     // random.normal().
-    if (normal.y === null) {
+    var x, u, v, w;
+    if (normal.memo === null) {
         do {
-            var u = 2.0 * rng.next() - 1.0;
-            var v = 2.0 * rng.next() - 1.0;
-            var w = u * u + v * v;
+            u = 2.0 * rng.next() - 1.0;
+            v = 2.0 * rng.next() - 1.0;
+            w = u * u + v * v;
         } while (w >= 1.0);
         w = Math.sqrt(-2.0 * Math.log(w) / w);
-        var x = u * w;
-        normal.y = v * w;
+        x = u * w;
+        normal.memo = v * w;
     }
     else {
-        x = normal.y;
-        normal.y = null;
+        x = normal.memo;
+        normal.memo = null;
     }
     return mean + x * sigma;
 }

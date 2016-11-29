@@ -9,37 +9,6 @@ module.exports = from;
 const assert = require('assert');
 const random = require('random');
 
-const kQuerySource = Symbol("query source");
-
-function PROPDESC(flags, value)
-{
-	var desc = {};
-
-	return {
-		writable:     flags.indexOf('w') !== -1,
-		enumerable:   flags.indexOf('e') !== -1,
-		configurable: flags.indexOf('c') !== -1,
-		value:        value
-	};
-};
-
-function MAKEPOINT(sourceType, op)
-{
-    return function()
-    {
-        var constructArgs;
-        var newSource;
-        var source;
-        
-        source = this[kQuerySource];
-        constructArgs = [ source ].concat([].slice.call(arguments));
-        newSource = Reflect.construct(sourceType, constructArgs);
-        return op !== undefined
-            ? op(newSource)
-            : new Queryable(newSource);
-    };
-}
-
 function from(target)
 {
 	target = Object(target);
@@ -54,42 +23,95 @@ function from(target)
 from.Array = fromArray;
 function fromArray(target)
 {
-	var source;
+	var itemSource;
 
 	target = Object(target);
 	if (typeof target.length !== 'number')
 		throw new TypeError("object with 'length' required");
-	source = new ArraySource(target);
-	return new Queryable(source);
+	itemSource = new ArraySource(target);
+	return new Queryable(itemSource);
 }
 
 from.Object = fromObject;
 function fromObject(target)
 {
-	var source;
+	var itemSource;
 
-	source = new ObjectSource(Object(target));
-	return new Queryable(source);
+	itemSource = new ObjectSource(Object(target));
+	return new Queryable(itemSource);
 }
 
 from.String = fromString;
 function fromString(target)
 {
-	var source;
+	var itemSource;
 
 	if (typeof target !== 'string' && !(target instanceof String))
 		throw new TypeError("string or String object required");
-	source = new ArraySource(target);
-	return new Queryable(source);
+	itemSource = new ArraySource(target);
+	return new Queryable(itemSource);
 }
 
+// convenience function for concise declaration of property descriptors, used
+// in calls to Object.defineProperties() and Object.create().
+function PROPDESC(flags, valueOrGetter, setter)
+{
+	var desc;
+
+	desc = {
+		writable:     flags.indexOf('w') !== -1,
+		enumerable:   flags.indexOf('e') !== -1,
+		configurable: flags.indexOf('c') !== -1,
+	};
+	if (flags.indexOf('a') === -1)
+		desc.value = valueOrGetter;
+	else {
+		desc.get = valueOrGetter;
+		desc.set = setter;
+	}
+	return desc;
+};
+
+// defines new query operators.  the first parameter is a Source constructor,
+// e.g. MapSource.  the second parameter is optional and specifies the final
+// reduction to perform for a terminal operator.
+function MAKEPOINT(sourceType, op)
+{
+    return function()
+    {
+        var constructArgs;
+        var newSource;
+        var source;
+
+        source = this[sym.QuerySource];
+        constructArgs = [ source ].concat([].slice.call(arguments));
+        newSource = Reflect.construct(sourceType, constructArgs);
+        return op !== undefined
+            ? op(newSource)
+            : new Queryable(newSource);
+    };
+}
+
+// private symbols.  these are used as keys for various internal properties.
+// they can be accessed using reflection methods like Reflect.ownKeys() but
+// that's par for the course for reflection anyway.
+const sym =
+{
+	QuerySource: Symbol("sym.QuerySource"),
+};
+
+// the Queryable class encapsulates a chain of query operators.  Appending a
+// new operator creates a new Queryable, allowing for partial application like
+// in LINQ.
 function Queryable(source)
 {
-    this[kQuerySource] = source;
+    this[sym.QuerySource] = source;
 }
 
 Object.defineProperties(Queryable.prototype,
 {
+    // refer to the miniRT API reference (miniRT-api.txt) to find out what each
+    // of these methods does.
     all:        PROPDESC('wc', MAKEPOINT(MapSource, allOp)),
     allIn:      PROPDESC('wc', MAKEPOINT(InSource, allOp)),
     any:        PROPDESC('wc', MAKEPOINT(MapSource, anyOp)),
@@ -166,50 +188,6 @@ function ObjectSource(target)
 			v: target[key],
 			k: key,
 			t: target
-		};
-	};
-}
-
-function OrderedSource(descending)
-{
-	return function(source, keySelector)
-	{
-		var m_index = 0;
-		var m_length;
-		var m_ordered = [];
-
-		this.init =
-		function init()
-		{
-			var index;
-			var item;
-			var ordering = descending ? -1 : 1;
-
-			source.init();
-			while (item = source.next()) {
-				index = m_ordered.length;
-				m_ordered[index] = {
-					index: index,  // to stabilize the sort
-					item:  item,
-					key:   keySelector(item.v, item.k, item.t)
-				};
-			}
-			m_ordered.sort(function(a, b) {
-				return a.key < b.key ? -1 * ordering
-					: a.key > b.key ? 1 * ordering
-					: a.index - b.index;
-			});
-			m_index = 0;
-			m_length = m_ordered.length;
-		};
-
-		this.next =
-		function next()
-		{
-			if (m_index < m_length)
-				return m_ordered[m_index++].item;
-			else
-				return null;
 		};
 	};
 }
@@ -360,6 +338,63 @@ function MapSource(source, selector)
 	};
 }
 
+// this uses pigsort, which is awesome.  pigsort is based on the idea that if
+// you put a bunch of big fat eaty pigs in close proximity (i.e. within a
+// hundred-mile radius of each other) and leave them to their devices for a
+// while, the whole menagerie of pigs will have invariably come to resemble a
+// Matryoshka doll by the time you decide to come back.  so basically it's like
+// bubble sort, but with eaty pigs.
+function OrderedSource(descending)
+{
+	return function(source, keySelector)
+	{
+		var m_index = 0;
+		var m_length;
+		var m_list = [];
+
+		this.init =
+		function init()
+		{
+			var index;
+			var item;
+			var order = descending ? -1 : 1;
+
+			// this is kind of ugly pulling all results in advance, but there's
+			// not much we can do about it here.  we could sort as we go, but
+			// since the rest of the query can't do anything until the results
+			// are fully sorted anyway, that doesn't buy us much.
+			source.init();
+			while (item = source.next()) {
+				index = m_list.length;
+				m_list[index] = {
+					index: index,  // to stabilize the sort
+					item:  item,
+					key:   keySelector(item.v, item.k, item.t)
+				};
+			}
+
+			// Array#sort() is not guaranteed to be stable.  to stabilize it,
+			// we use the item's position in the input stream as a tiebreaker.
+			m_list.sort(function(a, b) {
+				return a.key < b.key ? -1 * order
+					: a.key > b.key ? 1 * order
+					: a.index - b.index;
+			});
+			m_index = 0;
+			m_length = m_list.length;
+		};
+
+		this.next =
+		function next()
+		{
+			if (m_index < m_length)
+				return m_list[m_index++].item;
+			else
+				return null;
+		};
+	};
+}
+
 function SampleSource(uniqueOnly)
 {
 	return function(source, count)
@@ -402,7 +437,7 @@ function ShuffledSource(source)
 {
 	var m_index = 0;
 	var m_length;
-	var m_shuffled = [];
+	var m_list = [];
 
 	this.init =
 	function init()
@@ -411,26 +446,28 @@ function ShuffledSource(source)
 		var item;
 		var temp;
 
+		// as with the sorting operators, Fisher-Yates shuffle doesn't really
+		// lend itself to streaming so we just pull everything in advance.
 		source.init();
 		while (item = source.next()) {
-			index = m_shuffled.length;
-			m_shuffled[index] = item;
+			index = m_list.length;
+			m_list[index] = item;
 		}
-		for (var i = m_shuffled.length - 1; i >= 1; --i) {
+		for (var i = m_list.length - 1; i >= 1; --i) {
 			index = random.discrete(0, i);
-			temp = m_shuffled[index];
-			m_shuffled[index] = m_shuffled[i];
-			m_shuffled[i] = temp;
+			temp = m_list[index];
+			m_list[index] = m_list[i];
+			m_list[i] = temp;
 		}
 		m_index = 0;
-		m_length = m_shuffled.length;
+		m_length = m_list.length;
 	};
 
 	this.next =
 	function next()
 	{
 		if (m_index < m_length)
-			return m_shuffled[m_index++];
+			return m_list[m_index++];
 		else
 			return null;
 	};
