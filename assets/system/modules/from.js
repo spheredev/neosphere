@@ -117,6 +117,22 @@ function Queryable(source)
 
 Object.defineProperties(Queryable.prototype,
 {
+	[Symbol.iterator]:
+	PROPDESC('wc', function iterate()
+	{
+		var source = this[sym.QuerySource];
+		source.init();
+		return { next: next };
+
+		function next()
+		{
+			var item = source.next();
+			return item !== null
+				? { value: item, done: false }
+				: { done: true };
+		}
+	}),
+
 	// refer to the miniRT API reference (miniRT-api.txt) to find out what each
 	// of these methods does.
 	all:        PROPDESC('wc', MAKEPOINT(MapSource, allOp)),

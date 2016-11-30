@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 97c3ffeea4eab92e5737d7127a615d04974c80b2 (v1.5.0-1043-g97c3ffe).
+ *  Git commit beb1f99c9e74bfa7511eaf6a037d1912067de4c5 (v1.5.0-1045-gbeb1f99).
  *  Git branch es6-symbol-initial.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -259,8 +259,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "97c3ffeea4eab92e5737d7127a615d04974c80b2"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1043-g97c3ffe"
+#define DUK_GIT_COMMIT                    "beb1f99c9e74bfa7511eaf6a037d1912067de4c5"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1045-gbeb1f99"
 #define DUK_GIT_BRANCH                    "es6-symbol-initial"
 
 /* Duktape debug protocol version used by this build. */
@@ -325,7 +325,7 @@ struct duk_time_components {
 #define DUK_ENUM_OWN_PROPERTIES_ONLY      (1 << 4)    /* don't walk prototype chain, only check own properties */
 #define DUK_ENUM_ARRAY_INDICES_ONLY       (1 << 5)    /* only enumerate array indices */
 #define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 6)    /* sort array indices (applied to full enumeration result, including inherited array indices) */
-#define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 6)    /* enumerate a proxy object itself without invoking proxy behavior */
+#define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 7)    /* enumerate a proxy object itself without invoking proxy behavior */
 
 /* Compilation flags for duk_compile() and duk_eval() */
 /* DUK_COMPILE_xxx bits 0-2 are reserved for an internal 'nargs' argument.
