@@ -127,6 +127,7 @@ Object.defineProperties(Queryable.prototype,
 	each:       PROPDESC('wc', MAKEPOINT(CallbackSource, nullOp)),
 	first:      PROPDESC('wc', MAKEPOINT(FilterSource, firstOp)),
 	from:       PROPDESC('wc', MAKEPOINT(FromSource)),
+	include:    PROPDESC('wc', MAKEPOINT(IncludeSource)),
 	last:       PROPDESC('wc', MAKEPOINT(FilterSource, lastOp)),
 	mapTo:      PROPDESC('wc', MAKEPOINT(MapSource)),
 	random:     PROPDESC('wc', MAKEPOINT(SampleSource(false))),
@@ -288,6 +289,29 @@ function InSource(source, values)
 				}
 			}
 			item.v = false;
+		}
+		return item;
+	};
+}
+
+function IncludeSource(source, collection)
+{
+	var m_iterator = from(collection)[Symbol.iterator]();
+
+	this.init =
+	function init()
+	{
+		source.init();
+	};
+
+	this.next =
+	function next()
+	{
+		var item = source.next();
+		if (item === null) {
+			var result;
+			if (!(result = m_iterator.next()).done)
+				item = result.value;
 		}
 		return item;
 	};
