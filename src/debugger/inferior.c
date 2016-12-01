@@ -28,6 +28,7 @@ struct inferior
 	int            frame_index;
 	bool           have_debug_info;
 	int            line_no;
+	int            protocol;
 	uint8_t        ptr_size;
 	bool           show_trace;
 	socket_t*      socket;
@@ -35,7 +36,7 @@ struct inferior
 };
 
 static void clear_pause_cache (inferior_t* obj);
-static bool do_handshake      (socket_t* socket);
+static int  do_handshake      (socket_t* socket);
 static bool handle_notify     (inferior_t* obj, const message_t* msg);
 
 static unsigned int s_next_id_no = 1;
@@ -65,7 +66,8 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	if (!(obj->socket = socket_connect(hostname, port, 30.0)))
 		goto on_error;
 	printf("OK.\n");
-	if (!do_handshake(obj->socket))
+	obj->protocol = do_handshake(obj->socket);
+	if (obj->protocol == 0)
 		goto on_error;
 
 	// set watermark (shown on bottom left)
@@ -382,8 +384,14 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 
 	msg = message_new(MESSAGE_REQ);
 	message_add_int(msg, REQ_EVAL);
-	message_add_string(msg, expr);
-	message_add_int(msg, -(1 + frame));
+	if (obj->protocol == 2) {
+		message_add_int(msg, -(1 + frame));
+		message_add_string(msg, expr);
+	}
+	else {
+		message_add_string(msg, expr);
+		message_add_int(msg, -(1 + frame));
+	}
 	msg = inferior_request(obj, msg);
 	dvalue = dvalue_dup(message_get_dvalue(msg, 1));
 	*out_is_error = message_get_int(msg, 0) != 0;
@@ -454,7 +462,7 @@ clear_pause_cache(inferior_t* obj)
 	obj->calls = NULL;
 }
 
-static bool
+static int
 do_handshake(socket_t* socket)
 {
 	static char handshake[128];
@@ -485,11 +493,11 @@ do_handshake(socket_t* socket)
 		goto on_error;
 	printf("OK.\n");
 
-	return true;
+	return protocol;
 
 on_error:
 	printf("\33[31;1merror!\33[m\n");
-	return false;
+	return 0;
 }
 
 static bool

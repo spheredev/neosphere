@@ -297,13 +297,14 @@ function InSource(source, values)
 function IncludeSource(source, target)
 {
 	var m_iterator;
+	var m_targets = Array.prototype.slice.call(arguments, 1);
 
 	this.init =
 	function init()
 	{
 		source.init();
-		var targets = Array.prototype.slice.call(arguments, 1);
-		m_iterator = from(targets).from()[Symbol.iterator]();
+		m_iterator = from(m_targets)
+			.from()[Symbol.iterator]();
 	};
 
 	this.next =
