@@ -73,7 +73,7 @@ with a single query:
     }
 
 
-from(target[, ...]);
+from(source[, ...]);
 
     Initiates a query against one or more arrays, objects, or strings.  The
     enumeration mode for each (keyed or indexed) depends on whether it's an
@@ -161,7 +161,7 @@ from#besides(callback);
     the result as is.  This is useful if you need to perform ancillary actions
     in the middle of a query; for example, tallying intermediate results.
 
-    Note: Avoid causing side effects that modify the query target.  Bad things
+    Note: Avoid causing side effects that modify the query source.  Bad things
           can happen otherwise! (such as: the pig eating you)
 
 from#count([predicate]);
@@ -203,6 +203,12 @@ from#from(selector);
     object or array as the results of the operator.  This is used to expand a
     query into subcollections.
 
+from#including(source[, ...]);
+
+    Adds results from the specified source(s).  This is not the same as
+    from#from(); while the latter expands a source per result, from#including()
+    only does so once, after all other results have been processed.
+
 from#last([predicate]);
 
     Runs the query, calling `predicate` for each result, and returns the last
@@ -226,7 +232,7 @@ from#random(count);
 
 from#remove([predicate]);
 
-    Removes results from the target object or array.  `predicate` is optional;
+    Removes results from the source object or array.  `predicate` is optional;
     if provided, it should return true to remove the result, or false to keep
     it.  If no predicate function is provided, all results are removed.
 
@@ -257,7 +263,7 @@ from#take(count);
 
 from#update(selector);
 
-    Writes all results back into the target object or array.  `selector` is an
+    Writes all results back into the source object or array.  `selector` is an
     optional mapping function to decide what value gets written back.  If no
     selector is provided, results are written as-is.
 
