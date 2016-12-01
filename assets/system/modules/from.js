@@ -9,13 +9,13 @@ module.exports = from;
 const assert = require('assert');
 const random = require('random');
 
-function from(target)
+function from(target/*, ...*/)
 {
-	var collections;
-
+	// for multiple targets, just do a query against the list of targets and
+	// unroll with .from().
 	if (arguments.length > 1) {
-		collections = Array.prototype.slice.call(arguments);
-		return from.call(this, collections).from();
+		var targets = Array.prototype.slice.call(arguments);
+		return from.call(this, targets).from();
 	}
 
 	target = Object(target);
@@ -30,42 +30,53 @@ function from(target)
 from.Array = fromArray;
 function fromArray(target)
 {
-	var itemSource;
-
 	target = Object(target);
 	if (typeof target.length !== 'number')
 		throw new TypeError("object with 'length' required");
-	itemSource = new ArraySource(target);
+	var itemSource = new ArraySource(target);
 	return new Queryable(itemSource);
 }
 
 from.Object = fromObject;
 function fromObject(target)
 {
-	var itemSource;
-
-	itemSource = new ObjectSource(Object(target));
+	var itemSource = new ObjectSource(Object(target));
 	return new Queryable(itemSource);
 }
 
 from.String = fromString;
 function fromString(target)
 {
-	var itemSource;
-
 	if (typeof target !== 'string' && !(target instanceof String))
 		throw new TypeError("string or String object required");
-	itemSource = new ArraySource(target);
+	var itemSource = new ArraySource(target);
 	return new Queryable(itemSource);
 }
 
-// convenience function for concise declaration of property descriptors, used
-// in calls to Object.defineProperties() and Object.create().
+const PK =
+{
+	ItemSource: Symbol("PK.ItemSource")
+};
+
+function MAKEPOINT(sourceType, op)
+{
+	// here's some crazy witchcraft, don't try this at home!
+	const makeArray = Function.prototype.call.bind(Array.prototype.slice);
+
+	return function()
+	{
+		var source = this[PK.ItemSource];
+		var constructArgs = [ source ].concat(makeArray(arguments));
+		var newSource = Reflect.construct(sourceType, constructArgs);
+		return op !== undefined
+			? op(newSource)
+			: new Queryable(newSource);
+	};
+}
+
 function PROPDESC(flags, valueOrGetter, setter)
 {
-	var desc;
-
-	desc = {
+	var desc = {
 		writable:     flags.indexOf('w') !== -1,
 		enumerable:   flags.indexOf('e') !== -1,
 		configurable: flags.indexOf('c') !== -1,
@@ -79,40 +90,9 @@ function PROPDESC(flags, valueOrGetter, setter)
 	return desc;
 };
 
-// defines new query operators.  the first parameter is a Source constructor,
-// e.g. MapSource.  the second parameter is optional and specifies the final
-// reduction to perform for a terminal operator.
-function MAKEPOINT(sourceType, op)
-{
-	return function()
-	{
-		var constructArgs;
-		var newSource;
-		var source;
-
-		source = this[sym.QuerySource];
-		constructArgs = [ source ].concat([].slice.call(arguments));
-		newSource = Reflect.construct(sourceType, constructArgs);
-		return op !== undefined
-			? op(newSource)
-			: new Queryable(newSource);
-	};
-}
-
-// private symbols.  these are used as keys for various internal properties.
-// they can be accessed using reflection methods like Reflect.ownKeys() but
-// that's par for the course for reflection anyway.
-const sym =
-{
-	QuerySource: Symbol("sym.QuerySource"),
-};
-
-// the Queryable class encapsulates a chain of query operators.  Appending a
-// new operator creates a new Queryable, allowing for partial application like
-// in LINQ.
 function Queryable(source)
 {
-	this[sym.QuerySource] = source;
+	this[PK.ItemSource] = source;
 }
 
 Object.defineProperties(Queryable.prototype,
@@ -120,7 +100,7 @@ Object.defineProperties(Queryable.prototype,
 	[Symbol.iterator]:
 	PROPDESC('wc', function iterate()
 	{
-		var source = this[sym.QuerySource];
+		var source = this[PK.ItemSource];
 		source.init();
 		return { next: next };
 
@@ -202,11 +182,9 @@ function ObjectSource(target)
 	this.next =
 	function next()
 	{
-		var key;
-
 		if (m_index >= m_length);
 			return null;
-		key = m_keys[m_index++];
+		var key = m_keys[m_index++];
 		return {
 			v: target[key],
 			k: key,
@@ -226,9 +204,8 @@ function CallbackSource(source, callback)
 	this.next =
 	function next()
 	{
-		var item;
-
-		if (item = source.next())
+		var item = source.next();
+		if (item !== null)
 			callback(item.v, item.k, item.t);
 		return item;
 	};
@@ -248,7 +225,6 @@ function FilterSource(source, predicate)
 	function next()
 	{
 		var item;
-
 		while (item = source.next()) {
 			if (predicate(item.v, item.k, item.t))
 				break;
@@ -259,38 +235,35 @@ function FilterSource(source, predicate)
 
 function FromSource(source, selector)
 {
-	var m_index;
-	var m_items = null;
+	var m_iterator;
+	var m_nextItem;
 	var m_selector = selector || function(v) { return v; };
 
 	this.init =
 	function init()
 	{
 		source.init();
-		m_items = null;
+		m_iterator = null;
 	};
 
 	this.next =
 	function next()
 	{
-		var item;
-		var target;
-
-		if (m_items == null) {
-			if (item = source.next()) {
-				target = m_selector(item.v, item.k, item.t);
-				m_index = 0;
-				m_items = from(target).select(function(v, k, t) {
-					return { v: v, k: k, t: t };
-				});
+		while (m_iterator === null) {
+			var item = source.next();
+			if (item !== null) {
+				var target = m_selector(item.v, item.k, item.t);
+				m_iterator = from(target)[Symbol.iterator]();
+				if ((m_nextItem = m_iterator.next()).done)
+					m_iterator = null;
 			}
 			else
 				return null;
 		}
 
-		item = m_items[m_index++];
-		if (m_index >= m_items.length)
-			m_items = null;
+		var item = m_nextItem.value;
+		if ((m_nextItem = m_iterator.next()).done)
+			m_iterator = null;
 		return item;
 	};
 }
@@ -306,9 +279,8 @@ function InSource(source, values)
 	this.next =
 	function next()
 	{
-		var item;
-
-		if (item = source.next()) {
+		var item = source.next();
+		if (item !== null) {
 			for (var i = values.length - 1; i >= 0; --i) {
 				if (Object.is(item.v, values[i])) {
 					item.v = true;
@@ -332,9 +304,8 @@ function IsSource(source, value)
 	this.next =
 	function next()
 	{
-		var item;
-
-		if (item = source.next())
+		var item = source.next();
+		if (item !== null)
 			item.v = Object.is(item.v, value);
 		return item;
 	};
@@ -353,9 +324,8 @@ function MapSource(source, selector)
 	this.next =
 	function next()
 	{
-		var item;
-
-		if (item = source.next())
+		var item = source.next();
+		if (item !== null)
 			item.v = selector(item.v, item.k, item.t);
 		return item;
 	};
