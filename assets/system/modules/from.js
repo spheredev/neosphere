@@ -294,14 +294,16 @@ function InSource(source, values)
 	};
 }
 
-function IncludeSource(source, collection)
+function IncludeSource(source, target)
 {
-	var m_iterator = from(collection)[Symbol.iterator]();
+	var m_iterator;
 
 	this.init =
 	function init()
 	{
 		source.init();
+		var targets = Array.prototype.slice.call(arguments, 1);
+		m_iterator = from(targets).from()[Symbol.iterator]();
 	};
 
 	this.next =
