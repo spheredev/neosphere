@@ -19,9 +19,7 @@ function from(target/*, ...*/)
 	}
 
 	target = Object(target);
-	if (typeof target === 'string' || target instanceof String)
-		return fromString(target);
-	else if (typeof target.length === 'number')
+	if (typeof target.length === 'number')
 		return fromArray(target);
 	else
 		return fromObject(target);
@@ -41,15 +39,6 @@ from.Object = fromObject;
 function fromObject(target)
 {
 	var itemSource = new ObjectSource(Object(target));
-	return new Queryable(itemSource);
-}
-
-from.String = fromString;
-function fromString(target)
-{
-	if (typeof target !== 'string' && !(target instanceof String))
-		throw new TypeError("string or String object required");
-	var itemSource = new ArraySource(target);
 	return new Queryable(itemSource);
 }
 

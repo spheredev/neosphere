@@ -64,12 +64,12 @@ Depending on the architecture of your battle engine, that might be implemented
 with a single query:
 
     from(battlers)
-        .where(function(b) { return b.isEnemyOf(attacker) })
-        .where(function(b) { return b.level % 5 == 0; }
-        .where(function() { return random.chance(0.75); })
-        .each(function(b)
+        .where(function(v) { return v.isEnemyOf(attacker) })
+        .where(function(v) { return v.level % 5 == 0; }
+        .where(function(v) { return random.chance(0.75); })
+        .each(function(v)
     {
-        b.damage(move.power * attacker.strength);
+        v.damage(move.power * attacker.strength);
     }
 
 
@@ -96,12 +96,6 @@ from.Object(object);
     Initiates a query against the specified object.  Note that only enumerable
     own properties of the object will be queried.  Non-enumerable and inherited
     properties are ignored.  Returns a Queryable.
-
-from.String(string);
-
-    Initiates a query against the individual characters of a string.  `string`
-    must be either a primitive string value or a String object.  Returns a
-	Queryable.
 
 from#all(predicate);
 
@@ -197,11 +191,12 @@ from#first([predicate]);
           operation is short-circuiting: the first item that passes the check
           terminates the query.
 
-from#from(selector);
+from#from([selector]);
 
     Calls `selector` for each result and uses the contents of the returned
     object or array as the results of the operator.  This is used to expand a
-    query into subcollections.
+    query into subcollections.  If no selector is provided, the results
+    themselves are assumed to be query sources.
 
 from#including(source[, ...]);
 
