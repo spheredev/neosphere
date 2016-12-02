@@ -36,7 +36,7 @@ dukrub_push_bare_object(duk_context* ctx)
 	duk_idx_t idx;
 
 	idx = duk_push_object(ctx);
-	duk_push_null(ctx);
+	duk_push_undefined(ctx);
 	duk_set_prototype(ctx, -2);
 	return idx;
 #endif
