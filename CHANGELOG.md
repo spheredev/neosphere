@@ -1,12 +1,18 @@
 minisphere Changelog
 ====================
 
+TBD
+---
+
+* Fixes a bug where `from#anyIn()` would always return false.
+
+
 v4.3.7 - December 2, 2016
 -------------------------
 
 * Adds experimental support for ECMAScript 2015 `Symbol()` and `Symbol.for()`.
-* Adds a bunch of new query operators: shuffle, random, sample, ascending,
-  descending, and from.
+* Adds a bunch of new query operators: `shuffle()`, `random()`, `sample()`,
+  `including()`, `ascending()`, `descending()`, and `from()`.
 
 v4.3.6 - November 23, 2016
 --------------------------

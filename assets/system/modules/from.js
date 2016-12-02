@@ -274,7 +274,7 @@ function InSource(source, values)
 			for (var i = values.length - 1; i >= 0; --i) {
 				if (Object.is(item.v, values[i])) {
 					item.v = true;
-					return;
+					return item;
 				}
 			}
 			item.v = false;
