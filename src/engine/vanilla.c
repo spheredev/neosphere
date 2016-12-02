@@ -314,7 +314,7 @@ initialize_vanilla_api(duk_context* ctx)
 
 	// set up a dictionary to track RequireScript() calls
 	duk_push_global_stash(ctx);
-	duk_push_object(ctx);
+	dukrub_push_bare_object(ctx);
 	duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 

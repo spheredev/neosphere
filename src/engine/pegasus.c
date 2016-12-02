@@ -386,7 +386,7 @@ initialize_pegasus_api(duk_context* ctx)
 
 	// initialize CommonJS cache and global require()
 	duk_push_global_stash(g_duk);
-	duk_push_object(g_duk);
+	dukrub_push_bare_object(g_duk);
 	duk_put_prop_string(g_duk, -2, "moduleCache");
 	duk_pop(g_duk);
 

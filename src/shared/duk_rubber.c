@@ -27,6 +27,21 @@ dukrub_debugger_attach(duk_context* ctx,
 #endif
 }
 
+duk_idx_t
+dukrub_push_bare_object(duk_context* ctx)
+{
+#if DUK_VERSION >= 19999
+	return duk_push_bare_object(ctx);
+#else
+	duk_idx_t idx;
+
+	idx = duk_push_object(ctx);
+	duk_push_null(ctx);
+	duk_set_prototype(ctx, -2);
+	return idx;
+#endif
+}
+
 duk_int_t
 dukrub_safe_call(duk_context* ctx, dukrub_safe_call_function func, duk_int_t nargs, duk_int_t nrets)
 {

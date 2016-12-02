@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit beb1f99c9e74bfa7511eaf6a037d1912067de4c5 (v1.5.0-1045-gbeb1f99).
+ *  Git commit 227286388a2994a70216f8e82e4f0ab71b8b041d (v1.5.0-1068-g2272863).
  *  Git branch es6-symbol-initial.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -259,8 +259,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "beb1f99c9e74bfa7511eaf6a037d1912067de4c5"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1045-gbeb1f99"
+#define DUK_GIT_COMMIT                    "227286388a2994a70216f8e82e4f0ab71b8b041d"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1068-g2272863"
 #define DUK_GIT_BRANCH                    "es6-symbol-initial"
 
 /* Duktape debug protocol version used by this build. */
@@ -359,6 +359,9 @@ struct duk_time_components {
 
 /* Flags for duk_push_thread_raw() */
 #define DUK_THREAD_NEW_GLOBAL_ENV         (1 << 0)    /* create a new global environment */
+
+/* Flags for duk_gc() */
+#define DUK_GC_COMPACT                    (1 << 0)    /* compact heap objects */
 
 /* Error codes (must be 8 bits at most, see duk_error.h) */
 #define DUK_ERR_NONE                      0    /* no error (e.g. from duk_get_error_code()) */
@@ -614,6 +617,7 @@ DUK_EXTERNAL_DECL void duk_push_global_stash(duk_context *ctx);
 DUK_EXTERNAL_DECL void duk_push_thread_stash(duk_context *ctx, duk_context *target_ctx);
 
 DUK_EXTERNAL_DECL duk_idx_t duk_push_object(duk_context *ctx);
+DUK_EXTERNAL_DECL duk_idx_t duk_push_bare_object(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_array(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_c_function(duk_context *ctx, duk_c_function func, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_c_lightfunc(duk_context *ctx, duk_c_function func, duk_idx_t nargs, duk_idx_t length, duk_int_t magic);
