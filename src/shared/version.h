@@ -5,6 +5,6 @@
 #define COMPILER_NAME "Cell"
 #define DEBUGGER_NAME "SSJ"
 
-#define VERSION_NAME  "4.3.6"
+#define VERSION_NAME  "4.3.7"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED

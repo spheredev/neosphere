@@ -1,3 +1,11 @@
+minisphere (4.3.7) trusty; urgency=low
+
+  * Adds experimental support for ECMAScript 2015 `Symbol()` and `Symbol.for()`.
+  * Adds a bunch of new query operators: shuffle, random, sample, ascending,
+    descending, and from.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 2 Dec 2016 00:00:00 -0500
+
 minisphere (4.3.6) trusty; urgency=low
 
   * Adds support for composable from() queries, allowing partial application of
