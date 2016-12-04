@@ -16,7 +16,7 @@ const prim    = require('prim');
 const threads = require('threads');
 
 var screenMask = Color.Transparent;
-var threadID = threads.create({
+threads.create({
 	update: _updateScenes,
 	render: _renderScenes,
 }, 99);
