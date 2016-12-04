@@ -45,7 +45,7 @@ threads.create({
 	update:	  update,
 	render:	  render,
 	getInput: getInput,
-}, 100);
+}, Infinity);
 
 print(system.game.name + " miniRT Console");
 print(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
