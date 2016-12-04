@@ -1,3 +1,9 @@
+minisphere (4.3.8) trusty; urgency=low
+
+  * Fixes a bug which caused `from#anyIn()` to always return `false`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 4 Dec 2016 00:00:00 -0500
+
 minisphere (4.3.7) trusty; urgency=low
 
   * Adds experimental support for ECMAScript 2015 `Symbol()` and `Symbol.for()`.

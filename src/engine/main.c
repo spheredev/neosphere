@@ -330,7 +330,7 @@ do_events(void)
 
 	async_run_jobs(ASYNC_TICK);
 	update_input();
-	update_audio();
+	audio_update();
 
 	// process Allegro events
 	while (al_get_next_event(g_events, &event)) {
@@ -400,7 +400,7 @@ initialize_engine(void)
 	// initialize engine components
 	async_init();
 	initialize_galileo();
-	initialize_audio();
+	audio_init();
 	initialize_input();
 	initialize_sockets();
 	initialize_spritesets();
@@ -437,7 +437,7 @@ shutdown_engine(void)
 	dyad_shutdown();
 
 	shutdown_spritesets();
-	shutdown_audio();
+	audio_uninit();
 	shutdown_galileo();
 	async_uninit();
 

@@ -5,10 +5,9 @@ typedef struct mixer  mixer_t;
 typedef struct sound  sound_t;
 typedef struct stream stream_t;
 
-void      initialize_audio  (void);
-void      shutdown_audio    (void);
-void      update_audio      (void);
-
+void        audio_init        (void);
+void        audio_uninit      (void);
+void        audio_update      (void);
 mixer_t*    mixer_new         (int frequency, int bits, int channels);
 mixer_t*    mixer_ref         (mixer_t* mixer);
 void        mixer_free        (mixer_t* mixer);

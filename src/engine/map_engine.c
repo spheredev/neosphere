@@ -309,7 +309,7 @@ initialize_map_engine(void)
 	console_log(1, "initializing map engine");
 	
 	initialize_persons_manager();
-	initialize_audio();
+	audio_init();
 	s_bgm_mixer = mixer_new(44100, 16, 2);
 	
 	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
@@ -350,7 +350,7 @@ shutdown_map_engine(void)
 	mixer_free(s_bgm_mixer);
 	
 	shutdown_persons_manager();
-	shutdown_audio();
+	audio_uninit();
 }
 
 bool

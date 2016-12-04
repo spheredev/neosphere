@@ -52,7 +52,7 @@ static unsigned int         s_num_refs = 0;
 static vector_t*            s_streams;
 
 void
-initialize_audio(void)
+audio_init(void)
 {
 	if (++s_num_refs > 1)
 		return;
@@ -72,7 +72,7 @@ initialize_audio(void)
 }
 
 void
-shutdown_audio(void)
+audio_uninit(void)
 {
 	iter_t iter;
 	sound_t* *p_sound;
@@ -92,7 +92,7 @@ shutdown_audio(void)
 }
 
 void
-update_audio(void)
+audio_update(void)
 {
 	sound_t*  *p_sound;
 	stream_t* *p_stream;

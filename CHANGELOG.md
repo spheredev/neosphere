@@ -1,11 +1,10 @@
 minisphere Changelog
 ====================
 
-TBD
----
+v4.3.8 - December 4, 2016
+-------------------------
 
-* Fixes a bug where `from#anyIn()` would always return false.
-
+* Fixes a bug which caused `from#anyIn()` to always return `false`.
 
 v4.3.7 - December 2, 2016
 -------------------------

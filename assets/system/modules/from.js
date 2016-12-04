@@ -32,14 +32,14 @@ function fromArray(target)
 	if (typeof target.length !== 'number')
 		throw new TypeError("object with 'length' required");
 	var itemSource = new ArraySource(target);
-	return new Queryable(itemSource);
+	return new FromQuery(itemSource);
 }
 
 from.Object = fromObject;
 function fromObject(target)
 {
 	var itemSource = new ObjectSource(Object(target));
-	return new Queryable(itemSource);
+	return new FromQuery(itemSource);
 }
 
 const PK =
@@ -59,7 +59,7 @@ function MAKEPOINT(sourceType, op)
 		var newSource = Reflect.construct(sourceType, constructArgs);
 		return op !== undefined
 			? op(newSource)
-			: new Queryable(newSource);
+			: new FromQuery(newSource);
 	};
 }
 
@@ -79,12 +79,12 @@ function PROPDESC(flags, valueOrGetter, setter)
 	return desc;
 };
 
-function Queryable(source)
+function FromQuery(source)
 {
 	this[PK.ItemSource] = source;
 }
 
-Object.defineProperties(Queryable.prototype,
+Object.defineProperties(FromQuery.prototype,
 {
 	[Symbol.iterator]:
 	PROPDESC('wc', function iterate()

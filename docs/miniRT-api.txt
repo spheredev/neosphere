@@ -75,27 +75,26 @@ with a single query:
 
 from(source[, ...]);
 
-    Initiates a query against one or more arrays, objects, or strings.  The
-    enumeration mode for each (keyed or indexed) depends on whether it's an
-    object or array/string; if you need a specific enumeration mode, you should
-    use one of the specialized calls below and work through one at a time.
-
-    Returns a Queryable.
+    Constructs a FromQuery against one or more arrays or objects.  The
+    enumeration mode (keyed or indexed) for each source depends on whether it's
+    a plain object, or array-like; if you need a specific enumeration mode, you
+    should use one of the specialized calls below and work through one at a
+    time.
 
 from.Array(array);
 
-    Initiates a query against an array or array-like object.  The object must
-    have a `length` property, and only integer properties in the range
-    [0,length) will be enumerated.  Returns a Queryable.
+    Constructs a FromQuery against an array or array-like object.  `array` must
+    have a number-valued `length` property, and only sequential integer keys in
+    the range [0,length) will be enumerated.
 
     Throws a TypeError if the object either doesn't have a `length` property or
     its value is non-numeric.
 
 from.Object(object);
 
-    Initiates a query against the specified object.  Note that only enumerable
-    own properties of the object will be queried.  Non-enumerable and inherited
-    properties are ignored.  Returns a Queryable.
+    Constructs a FromQuery against a JavaScript object.  Only enumerable own
+    properties of the object will be queried.  Non-enumerable and inherited
+    properties will be ignored.
 
 from#all(predicate);
 
