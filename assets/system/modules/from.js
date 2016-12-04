@@ -44,21 +44,25 @@ function fromObject(target)
 
 const PK =
 {
-	ItemSource: Symbol("PK.ItemSource")
+	ItemSource: '@@source',
 };
 
 function MAKEPOINT(sourceType, op)
 {
-	// here's some crazy witchcraft, don't try this at home!
+	// this is some crazy witchcraft, don't try this at home!
 	const makeArray = Function.prototype.call.bind(Array.prototype.slice);
 
-	return function()
+	return function(/*...*/)
 	{
+		// some more crazy witchcraft to emulate ES6 Reflect.construct().
 		var source = this[PK.ItemSource];
-		var constructArgs = [ source ].concat(makeArray(arguments));
-		var newSource = Reflect.construct(sourceType, constructArgs);
-		return op !== undefined
-			? op(newSource)
+		var boundArgs = [ null, source ].concat(makeArray(arguments));
+		var constructor = Function.prototype.bind.apply(sourceType, boundArgs);
+		var newSource = new constructor();
+
+		// if it's a terminal operator, run the query.  otherwise construct
+		// a new FromQuery.  this allows LINQ-style composition.
+		return op !== undefined ? op(newSource)
 			: new FromQuery(newSource);
 	};
 }
@@ -86,8 +90,8 @@ function FromQuery(source)
 
 Object.defineProperties(FromQuery.prototype,
 {
-	[Symbol.iterator]:
-	PROPDESC('wc', function iterate()
+	enumerate:
+	PROPDESC('wc', function enumerate()
 	{
 		var source = this[PK.ItemSource];
 		source.init();
@@ -243,7 +247,7 @@ function FromSource(source, selector)
 			var item = source.next();
 			if (item !== null) {
 				var target = m_selector(item.v, item.k, item.t);
-				m_iterator = from(target)[Symbol.iterator]();
+				m_iterator = from(target).enumerate();
 				if ((m_nextItem = m_iterator.next()).done)
 					m_iterator = null;
 			}
@@ -272,7 +276,7 @@ function InSource(source, values)
 		var item = source.next();
 		if (item !== null) {
 			for (var i = values.length - 1; i >= 0; --i) {
-				if (Object.is(item.v, values[i])) {
+				if (item.v === values[i]) {
 					item.v = true;
 					return item;
 				}
@@ -292,8 +296,8 @@ function IncludeSource(source, target)
 	function init()
 	{
 		source.init();
-		m_iterator = from(m_targets)
-			.from()[Symbol.iterator]();
+		m_iterator = from(m_targets).from()
+			.enumerate();
 	};
 
 	this.next =
@@ -322,7 +326,7 @@ function IsSource(source, value)
 	{
 		var item = source.next();
 		if (item !== null)
-			item.v = Object.is(item.v, value);
+			item.v = item.v === value;
 		return item;
 	};
 }

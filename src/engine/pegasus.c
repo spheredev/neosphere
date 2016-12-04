@@ -354,7 +354,7 @@ static void      duk_pegasus_push_color     (duk_context* ctx, color_t color);
 static void      duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
 static void      duk_pegasus_push_require   (duk_context* ctx, const char* module_id);
 static color_t   duk_pegasus_require_color  (duk_context* ctx, duk_idx_t index);
-static duk_ret_t duk_safe_event_loop        (duk_context* ctx, void* udata);
+static duk_ret_t duk_safe_event_loop        (duk_context* ctx);
 static path_t*   find_module                (const char* id, const char* origin, const char* sys_origin);
 static void      load_joysticks             (duk_context* ctx);
 static path_t*   load_package_json          (const char* filename);
@@ -691,7 +691,7 @@ initialize_pegasus_api(duk_context* ctx)
 bool
 pegasus_run(void)
 {
-	if (duk_safe_call(g_duk, duk_safe_event_loop, NULL, 0, 1) == 0) {
+	if (dukrub_safe_call(g_duk, duk_safe_event_loop, 0, 1) == 0) {
 		duk_pop(g_duk);  // don't need return value
 		return true;
 	}
@@ -883,7 +883,7 @@ duk_pegasus_require_color(duk_context* ctx, duk_idx_t index)
 }
 
 static duk_ret_t
-duk_safe_event_loop(duk_context* ctx, void* udata)
+duk_safe_event_loop(duk_context* ctx)
 {
 	while (async_busy())
 		screen_flip(g_screen, s_framerate);
