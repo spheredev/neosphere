@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+TBD
+---
+
+* No changes yet.
+
+
 v4.3.8 - December 4, 2016
 -------------------------
 

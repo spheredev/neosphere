@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+TBD
+---
+
+* No breaking changes yet.
+
+
 minisphere 4.3
 --------------
 
