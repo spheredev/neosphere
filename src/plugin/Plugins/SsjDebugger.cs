@@ -15,7 +15,7 @@ using minisphere.Gdk.Debugger;
 
 namespace minisphere.Gdk.Plugins
 {
-    class Ssj2Debugger : IDebugger, IDisposable
+    class SsjDebugger : IDebugger, IDisposable
     {
         private string sgmPath;
         private Process engineProcess;
@@ -28,7 +28,7 @@ namespace minisphere.Gdk.Plugins
         private bool expectDetach = false;
         private PluginMain plugin;
 
-        public Ssj2Debugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
+        public SsjDebugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
         {
             plugin = main;
             sgmPath = gamePath;
@@ -274,7 +274,7 @@ namespace minisphere.Gdk.Plugins
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
-                Ssj2Debugger me = (Ssj2Debugger)state;
+                SsjDebugger me = (SsjDebugger)state;
                 try
                 {
                     NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
@@ -293,7 +293,7 @@ namespace minisphere.Gdk.Plugins
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                Ssj2Debugger me = (Ssj2Debugger)state;
+                SsjDebugger me = (SsjDebugger)state;
                 var callStack = await me.Inferior.GetCallStack();
                 if (!me.Running)
                 {

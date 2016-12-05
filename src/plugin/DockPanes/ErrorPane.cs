@@ -23,7 +23,7 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint => DockHint.Bottom;
         public Bitmap DockIcon => Resources.ErrorIcon;
 
-        public Ssj2Debugger Ssj { get; set; }
+        public SsjDebugger Ssj { get; set; }
 
         public void Add(string value, bool isFatal, string filename, int line)
         {

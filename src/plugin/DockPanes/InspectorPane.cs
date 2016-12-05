@@ -34,7 +34,7 @@ namespace minisphere.Gdk.DockPanes
         public DockHint DockHint => DockHint.Right;
         public Bitmap DockIcon => Resources.VisibleIcon;
 
-        public Ssj2Debugger Ssj { get; set; }
+        public SsjDebugger Ssj { get; set; }
 
         public void Clear()
         {

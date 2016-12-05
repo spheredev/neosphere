@@ -89,7 +89,7 @@
     <Compile Include="DockPanes\InspectorPane.Designer.cs">
       <DependentUpon>InspectorPane.cs</DependentUpon>
     </Compile>
-    <Compile Include="Plugins\Ssj2Debugger.cs" />
+    <Compile Include="Plugins\SsjDebugger.cs" />
     <Compile Include="Debugger\Inferior.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="PluginMain.cs" />

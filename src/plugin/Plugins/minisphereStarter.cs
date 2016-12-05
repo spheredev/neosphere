@@ -50,7 +50,7 @@ namespace minisphere.Gdk.Plugins
             string options = string.Format(@"--verbose {0} --debug ""{1}""",
                 _main.Conf.Verbosity, gamePath);
             Process engine = Process.Start(enginePath, options);
-            return new Ssj2Debugger(_main, gamePath, enginePath, engine, project);
+            return new SsjDebugger(_main, gamePath, enginePath, engine, project);
         }
     }
 }

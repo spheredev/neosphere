@@ -1393,7 +1393,7 @@ render_map(void)
 }
 
 static void
-update_map_engine(bool is_main_loop)
+update_map_engine(bool in_main_loop)
 {
 	int                 index;
 	int                 last_trigger;
@@ -1438,7 +1438,7 @@ update_map_engine(bool is_main_loop)
 
 	// run edge script if the camera has moved past the edge of the map
 	// note: only applies for non-repeating maps
-	if (is_main_loop && !s_map->is_repeating) {
+	if (in_main_loop && !s_map->is_repeating) {
 		script_type = s_cam_y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
 			: s_cam_x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
 			: s_cam_y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
@@ -1509,7 +1509,6 @@ update_map_engine(bool is_main_loop)
 void
 init_map_engine_api(duk_context* ctx)
 {
-	api_define_function(ctx, NULL, "MapEngine", js_MapEngine);
 	api_define_function(ctx, NULL, "AreZonesAt", js_AreZonesAt);
 	api_define_function(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
 	api_define_function(ctx, NULL, "IsInputAttached", js_IsInputAttached);
@@ -1594,6 +1593,7 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
 	api_define_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	api_define_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
+	api_define_function(ctx, NULL, "MapEngine", js_MapEngine);
 	api_define_function(ctx, NULL, "MapToScreenX", js_MapToScreenX);
 	api_define_function(ctx, NULL, "MapToScreenY", js_MapToScreenY);
 	api_define_function(ctx, NULL, "RemoveTrigger", js_RemoveTrigger);
@@ -1652,38 +1652,6 @@ have_index:
 	if (layer_index < 0 || layer_index >= s_map->num_layers)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "layer index out of range");
 	return layer_index;
-}
-
-static duk_ret_t
-js_MapEngine(duk_context* ctx)
-{
-	const char* filename;
-	int         framerate;
-	int         num_args;
-	
-	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "maps", true);
-	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
-		: g_framerate;
-
-	s_is_map_running = true;
-	s_exiting = false;
-	s_color_mask = color_new(0, 0, 0, 0);
-	s_fade_color_to = s_fade_color_from = s_color_mask;
-	s_fade_progress = s_fade_frames = 0;
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	s_framerate = framerate;
-	if (!change_map(filename, true))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load map `%s`", filename);
-	while (!s_exiting) {
-		render_map();
-		screen_flip(g_screen, s_framerate);
-		update_map_engine(true);
-		process_map_input();
-	}
-	reset_persons(false);
-	s_is_map_running = false;
-	return 0;
 }
 
 static duk_ret_t
@@ -2983,6 +2951,38 @@ js_ExitMapEngine(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	s_exiting = true;
+	return 0;
+}
+
+static duk_ret_t
+js_MapEngine(duk_context* ctx)
+{
+	const char* filename;
+	int         framerate;
+	int         num_args;
+
+	num_args = duk_get_top(ctx);
+	filename = duk_require_path(ctx, 0, "maps", true);
+	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
+		: g_framerate;
+
+	s_is_map_running = true;
+	s_exiting = false;
+	s_color_mask = color_new(0, 0, 0, 0);
+	s_fade_color_to = s_fade_color_from = s_color_mask;
+	s_fade_progress = s_fade_frames = 0;
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	s_framerate = framerate;
+	if (!change_map(filename, true))
+		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unable to load map `%s`", filename);
+	while (!s_exiting) {
+		render_map();
+		screen_flip(g_screen, s_framerate);
+		update_map_engine(true);
+		process_map_input();
+	}
+	reset_persons(false);
+	s_is_map_running = false;
 	return 0;
 }
 
