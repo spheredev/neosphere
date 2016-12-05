@@ -247,10 +247,10 @@ main(int argc, char* argv[])
 
 	// evaluate startup script
 	screen_show_mouse(g_screen, false);
-	if (sfs_fexist(g_fs, "#/polyfill.js", NULL) && !evaluate_script("#/polyfill.js", false))
+	if (sfs_fexist(g_fs, "#/polyfill.js", NULL) && !script_eval("#/polyfill.js", false))
 		goto on_js_error;
 	script_path = fs_script_path(g_fs);
-	if (!evaluate_script(path_cstr(script_path), fs_version(g_fs) >= 2))
+	if (!script_eval(path_cstr(script_path), fs_version(g_fs) >= 2))
 		goto on_js_error;
 	duk_pop(g_duk);
 
@@ -405,7 +405,7 @@ initialize_engine(void)
 	initialize_sockets();
 	initialize_spritesets();
 	initialize_map_engine();
-	initialize_scripts();
+	scripts_init();
 
 	return true;
 
@@ -427,7 +427,7 @@ shutdown_engine(void)
 
 	shutdown_map_engine();
 	shutdown_input();
-	shutdown_scripts();
+	scripts_uninit();
 	shutdown_sockets();
 
 	console_log(1, "shutting down Duktape");

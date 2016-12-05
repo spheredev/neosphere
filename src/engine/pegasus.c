@@ -365,6 +365,7 @@ static void      duk_pegasus_push_color     (duk_context* ctx, color_t color);
 static void      duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
 static void      duk_pegasus_push_require   (duk_context* ctx, const char* module_id);
 static color_t   duk_pegasus_require_color  (duk_context* ctx, duk_idx_t index);
+static script_t* duk_pegasus_require_script (duk_context* ctx, duk_idx_t index);
 static duk_ret_t duk_safe_event_loop        (duk_context* ctx);
 static path_t*   find_module                (const char* id, const char* origin, const char* sys_origin);
 static void      load_joysticks             (duk_context* ctx);
@@ -901,6 +902,12 @@ duk_pegasus_require_color(duk_context* ctx, duk_idx_t index)
 	return color_new(r, g, b, a);
 }
 
+static script_t*
+duk_pegasus_require_script(duk_context* ctx, duk_idx_t index)
+{
+	return script_new_func(ctx, index);
+}
+
 static duk_ret_t
 duk_safe_event_loop(duk_context* ctx)
 {
@@ -1173,7 +1180,7 @@ js_Dispatch_later(duk_context* ctx)
 	int64_t   token;
 
 	timeout = duk_require_uint(ctx, 0);
-	script = duk_require_sphere_script(ctx, 1, "synth:dispatch.js");
+	script = duk_pegasus_require_script(ctx, 1);
 
 	if (!(token = async_defer(script, timeout, ASYNC_UPDATE)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
@@ -1187,7 +1194,7 @@ js_Dispatch_now(duk_context* ctx)
 	script_t* script;
 	int64_t   token;
 
-	script = duk_require_sphere_script(ctx, 0, "synth:dispatch.js");
+	script = duk_pegasus_require_script(ctx, 0);
 
 	if (!(token = async_defer(script, 0, ASYNC_TICK)))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
@@ -1204,7 +1211,7 @@ js_Dispatch_onRender(duk_context* ctx)
 	int64_t   token;
 
 	num_args = duk_get_top(ctx);
-	script = duk_require_sphere_script(ctx, 0, "synth:onRender.js");
+	script = duk_pegasus_require_script(ctx, 0);
 	priority = num_args >= 2 ? duk_require_number(ctx, 1)
 		: 0.0;
 
@@ -1223,7 +1230,7 @@ js_Dispatch_onUpdate(duk_context* ctx)
 	int64_t   token;
 
 	num_args = duk_get_top(ctx);
-	script = duk_require_sphere_script(ctx, 0, "synth:onUpdate.js");
+	script = duk_pegasus_require_script(ctx, 0);
 	priority = num_args >= 2 ? duk_require_number(ctx, 1)
 		: 0.0;
 

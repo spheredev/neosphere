@@ -12,5 +12,6 @@ void          duk_push_sphere_font           (duk_context* ctx, font_t* font);
 void          duk_push_sphere_spriteset      (duk_context* ctx, spriteset_t* spriteset);
 color_t       duk_require_sphere_color       (duk_context* ctx, duk_idx_t index);
 colormatrix_t duk_require_sphere_colormatrix (duk_context* ctx, duk_idx_t index);
+script_t*     duk_require_sphere_script      (duk_context* ctx, duk_idx_t index, const char* name);
 
 #endif // MINISPHERE__VANILLA_H__INCLUDED

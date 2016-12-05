@@ -97,7 +97,6 @@ audio_resume(void)
 {
 	iter_t iter;
 	sound_t*  *p_sound;
-	stream_t* *p_stream;
 
 	iter = vector_enum(s_playing_sounds);
 	while (p_sound = vector_next(&iter)) {
@@ -111,7 +110,6 @@ audio_suspend(void)
 {
 	iter_t iter;
 	sound_t*  *p_sound;
-	stream_t* *p_stream;
 
 	iter = vector_enum(s_playing_sounds);
 	while (p_sound = vector_next(&iter)) {

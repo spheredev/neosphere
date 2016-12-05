@@ -171,7 +171,7 @@ shutdown_persons_manager(void)
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
-		free_script(s_def_scripts[i]);
+		script_free(s_def_scripts[i]);
 	free(s_persons);
 }
 
@@ -440,7 +440,7 @@ set_person_scale(person_t* person, double scale_x, double scale_y)
 void
 set_person_script(person_t* person, int type, script_t* script)
 {
-	free_script(person->scripts[type]);
+	script_free(person->scripts[type]);
 	person->scripts[type] = script;
 }
 
@@ -480,9 +480,9 @@ call_person_script(const person_t* person, int type, bool use_default)
 	last_person = s_current_person;
 	s_current_person = person;
 	if (use_default)
-		run_script(s_def_scripts[type], false);
+		script_run(s_def_scripts[type], false);
 	if (does_person_exist(person))
-		run_script(person->scripts[type], false);
+		script_run(person->scripts[type], false);
 	s_current_person = last_person;
 	return true;
 }
@@ -502,7 +502,7 @@ compile_person_script(person_t* person, int type, const lstring_t* codestring)
 		: type == PERSON_SCRIPT_GENERATOR ? "genCommands"
 		: NULL;
 	if (script_name == NULL) return false;
-	script = compile_script(codestring, "%s/%s/%s.js", get_map_name(), person_name, script_name);
+	script = script_new(codestring, "%s/%s/%s.js", get_map_name(), person_name, script_name);
 	set_person_script(person, type, script);
 	return true;
 }
@@ -820,7 +820,7 @@ free_person(person_t* person)
 
 	free(person->steps);
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
-		free_script(person->scripts[i]);
+		script_free(person->scripts[i]);
 	free_spriteset(person->sprite);
 	free(person->commands);
 	free(person->name);
@@ -911,9 +911,9 @@ update_person(person_t* person, bool* out_has_moved)
 			if (command.type != COMMAND_RUN_SCRIPT)
 				command_person(person, command.type);
 			else
-				run_script(command.script, false);
+				script_run(command.script, false);
 			s_current_person = last_person;
-			free_script(command.script);
+			script_free(command.script);
 			is_finished = !does_person_exist(person)  // stop if person was destroyed
 				|| !command.is_immediate || person->num_commands == 0;
 		}
@@ -1644,7 +1644,7 @@ js_SetDefaultPersonScript(duk_context* ctx)
 
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	free_script(s_def_scripts[type]);
+	script_free(s_def_scripts[type]);
 	s_def_scripts[type] = script;
 	return 0;
 }
@@ -2068,7 +2068,7 @@ js_CallDefaultPersonScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
 	last_person = s_current_person;
 	s_current_person = person;
-	run_script(s_def_scripts[type], false);
+	script_run(s_def_scripts[type], false);
 	s_current_person = last_person;
 	return 0;
 }

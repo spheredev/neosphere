@@ -127,7 +127,7 @@ async_run_jobs(async_hint_t hint)
 	while (vector_next(&iter)) {
 		job = *(job_t**)iter.ptr;
 		if (job->hint == hint)
-			run_script(job->script, true);
+			script_run(job->script, true);
 	}
 
 	// process one-time jobs.  swap in a fresh queue first to allow nested callbacks
@@ -139,8 +139,8 @@ async_run_jobs(async_hint_t hint)
 		while (vector_next(&iter)) {
 			job = *(job_t**)iter.ptr;
 			if (job->hint == hint && job->timer-- == 0) {
-				run_script(job->script, false);
-				free_script(job->script);
+				script_run(job->script, false);
+				script_free(job->script);
 			}
 			else {
 				vector_push(s_onetime, &job);

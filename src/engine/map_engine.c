@@ -338,12 +338,12 @@ shutdown_map_engine(void)
 	console_log(1, "shutting down map engine");
 	
 	for (i = 0; i < s_num_delay_scripts; ++i)
-		free_script(s_delay_scripts[i].script);
+		script_free(s_delay_scripts[i].script);
 	free(s_delay_scripts);
 	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
-		free_script(s_def_scripts[i]);
-	free_script(s_update_script);
-	free_script(s_render_script);
+		script_free(s_def_scripts[i]);
+	script_free(s_update_script);
+	script_free(s_render_script);
 	free_map(s_map);
 	free(s_players);
 	
@@ -468,8 +468,8 @@ set_trigger_script(int trigger_index, script_t* script)
 
 	trigger = vector_get(s_map->triggers, trigger_index);
 	old_script = trigger->script;
-	trigger->script = ref_script(script);
-	free_script(old_script);
+	trigger->script = script_ref(script);
+	script_free(old_script);
 }
 
 void
@@ -509,8 +509,8 @@ set_zone_script(int zone_index, script_t* script)
 	
 	zone = vector_get(s_map->zones, zone_index);
 	old_script = zone->script;
-	zone->script = ref_script(script);
-	free_script(old_script);
+	zone->script = script_ref(script);
+	script_free(old_script);
 }
 
 void
@@ -533,7 +533,7 @@ add_trigger(int x, int y, int layer, script_t* script)
 	
 	trigger.x = x; trigger.y = y;
 	trigger.z = layer;
-	trigger.script = ref_script(script);
+	trigger.script = script_ref(script);
 	if (!vector_push(s_map->triggers, &trigger))
 		return false;
 	return true;
@@ -550,7 +550,7 @@ add_zone(rect_t bounds, int layer, script_t* script, int steps)
 	memset(&zone, 0, sizeof(struct map_zone));
 	zone.bounds = bounds;
 	zone.layer = layer;
-	zone.script = ref_script(script);
+	zone.script = script_ref(script);
 	zone.interval = steps;
 	zone.steps_left = 0;
 	if (!vector_push(s_map->zones, &zone))
@@ -808,7 +808,7 @@ load_map(const char* filename)
 				trigger.x = entity_hdr.x;
 				trigger.y = entity_hdr.y;
 				trigger.z = entity_hdr.z;
-				trigger.script = compile_script(script, "%s/trig%d", filename, vector_len(map->triggers));
+				trigger.script = script_new(script, "%s/trig%d", filename, vector_len(map->triggers));
 				if (!vector_push(map->triggers, &trigger))
 					return false;
 				lstr_free(script);
@@ -829,7 +829,7 @@ load_map(const char* filename)
 			zone.bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			zone.interval = zone_hdr.interval;
 			zone.steps_left = 0;
-			zone.script = compile_script(script, "%s/zone%d", filename, vector_len(map->zones));
+			zone.script = script_new(script, "%s/zone%d", filename, vector_len(map->zones));
 			normalize_rect(&zone.bounds);
 			if (!vector_push(map->zones, &zone))
 				return false;
@@ -868,14 +868,14 @@ load_map(const char* filename)
 		map->origin.z = rmp.start_layer;
 		map->tileset = tileset;
 		if (rmp.num_strings >= 5) {
-			map->scripts[MAP_SCRIPT_ON_ENTER] = compile_script(strings[3], "%s/onEnter", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE] = compile_script(strings[4], "%s/onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_ENTER] = script_new(strings[3], "%s/onEnter", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE] = script_new(strings[4], "%s/onLeave", filename);
 		}
 		if (rmp.num_strings >= 9) {
-			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = compile_script(strings[5], "%s/onLeave", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = compile_script(strings[6], "%s/onLeaveEast", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = compile_script(strings[7], "%s/onLeaveSouth", filename);
-			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = compile_script(strings[8], "%s/onLeaveWest", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_NORTH] = script_new(strings[5], "%s/onLeave", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_EAST] = script_new(strings[6], "%s/onLeaveEast", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_SOUTH] = script_new(strings[7], "%s/onLeaveSouth", filename);
+			map->scripts[MAP_SCRIPT_ON_LEAVE_WEST] = script_new(strings[8], "%s/onLeaveWest", filename);
 		}
 		for (i = 0; i < rmp.num_strings; ++i)
 			lstr_free(strings[i]);
@@ -934,9 +934,9 @@ free_map(struct map* map)
 	if (map == NULL)
 		return;
 	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
-		free_script(map->scripts[i]);
+		script_free(map->scripts[i]);
 	for (i = 0; i < map->num_layers; ++i) {
-		free_script(map->layers[i].render_script);
+		script_free(map->layers[i].render_script);
 		lstr_free(map->layers[i].name);
 		free(map->layers[i].tilemap);
 		obsmap_free(map->layers[i].obsmap);
@@ -952,10 +952,10 @@ free_map(struct map* map)
 	}
 	iter = vector_enum(s_map->triggers);
 	while (trigger = vector_next(&iter))
-		free_script(trigger->script);
+		script_free(trigger->script);
 	iter = vector_enum(s_map->zones);
 	while (zone = vector_next(&iter))
-		free_script(zone->script);
+		script_free(zone->script);
 	lstr_free(s_map->bgm_file);
 	tileset_free(map->tileset);
 	free(map->layers);
@@ -1059,14 +1059,14 @@ change_map(const char* filename, bool preserve_persons)
 	if (map == NULL) return false;
 	if (s_map != NULL) {
 		// run map exit scripts first, before loading new map
-		run_script(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
-		run_script(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
+		script_run(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
+		script_run(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
 	}
 	
 	// close out old map and prep for new one
 	free_map(s_map); free(s_map_filename);
 	for (i = 0; i < s_num_delay_scripts; ++i)
-		free_script(s_delay_scripts[i].script);
+		script_free(s_delay_scripts[i].script);
 	s_num_delay_scripts = 0;
 	s_map = map; s_map_filename = strdup(filename);
 	reset_persons(preserve_persons);
@@ -1121,8 +1121,8 @@ change_map(const char* filename, bool preserve_persons)
 	}
 
 	// run map entry scripts
-	run_script(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
-	run_script(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
+	script_run(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
+	script_run(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
 
 	s_frames = 0;
 	return true;
@@ -1384,12 +1384,12 @@ render_map(void)
 		}
 		al_hold_bitmap_drawing(false);
 
-		run_script(layer->render_script, false);
+		script_run(layer->render_script, false);
 	}
 
 	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.a);
 	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
-	run_script(s_render_script, false);
+	script_run(s_render_script, false);
 }
 
 static void
@@ -1445,8 +1445,8 @@ update_map_engine(bool in_main_loop)
 			: s_cam_x < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
 			: MAP_SCRIPT_MAX;
 		if (script_type < MAP_SCRIPT_MAX) {
-			run_script(s_def_scripts[script_type], false);
-			run_script(s_map->scripts[script_type], false);
+			script_run(s_def_scripts[script_type], false);
+			script_run(s_map->scripts[script_type], false);
 		}
 	}
 
@@ -1460,7 +1460,7 @@ update_map_engine(bool in_main_loop)
 			s_current_trigger = index;
 			s_on_trigger = trigger;
 			if (trigger)
-				run_script(trigger->script, false);
+				script_run(trigger->script, false);
 			s_current_trigger = last_trigger;
 		}
 	}
@@ -1480,7 +1480,7 @@ update_map_engine(bool in_main_loop)
 					last_zone = s_current_zone;
 					s_current_zone = index;
 					zone->steps_left = zone->interval;
-					run_script(zone->script, true);
+					script_run(zone->script, true);
 					s_current_zone = last_zone;
 				}
 			}
@@ -1495,15 +1495,15 @@ update_map_engine(bool in_main_loop)
 			for (j = i; j < s_num_delay_scripts - 1; ++j)
 				s_delay_scripts[j] = s_delay_scripts[j + 1];
 			--s_num_delay_scripts;
-			run_script(script_to_run, false);
-			free_script(script_to_run);
+			script_run(script_to_run, false);
+			script_free(script_to_run);
 			--i;
 		}
 	}
 	
 	// now that everything else is in order, we can run the
 	// update script!
-	run_script(s_update_script, false);
+	script_run(s_update_script, false);
 }
 
 void
@@ -2248,7 +2248,7 @@ js_SetDefaultMapScript(duk_context* ctx)
 
 	if (script_type < 0 || script_type >= MAP_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "invalid map script constant");
-	free_script(s_def_scripts[script_type]);
+	script_free(s_def_scripts[script_type]);
 	s_def_scripts[script_type] = script;
 	return 0;
 }
@@ -2330,7 +2330,7 @@ js_SetLayerRenderer(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	sprintf(script_name, "[layer %d render script]", layer);
 	script = duk_require_sphere_script(ctx, 1, script_name);
-	free_script(s_map->layers[layer].render_script);
+	script_free(s_map->layers[layer].render_script);
 	s_map->layers[layer].render_script = script;
 	return 0;
 }
@@ -2413,7 +2413,7 @@ js_SetRenderScript(duk_context* ctx)
 {
 	script_t* script = duk_require_sphere_script(ctx, 0, "default/renderScript");
 
-	free_script(s_render_script);
+	script_free(s_render_script);
 	s_render_script = script;
 	return 0;
 }
@@ -2574,7 +2574,7 @@ js_SetTriggerScript(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
 	set_trigger_script(trigger_index, script);
-	free_script(script);
+	script_free(script);
 	return 0;
 }
 
@@ -2598,7 +2598,7 @@ js_SetUpdateScript(duk_context* ctx)
 {
 	script_t* script = duk_require_sphere_script(ctx, 0, "default/updateScript");
 
-	free_script(s_update_script);
+	script_free(s_update_script);
 	s_update_script = script;
 	return 0;
 }
@@ -2662,7 +2662,7 @@ js_SetZoneScript(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
 	set_zone_script(zone_index, script);
-	free_script(script);
+	script_free(script);
 	return 0;
 }
 
@@ -2797,7 +2797,7 @@ js_CallDefaultMapScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (type < 0 || type >= MAP_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
-	run_script(s_def_scripts[type], false);
+	script_run(s_def_scripts[type], false);
 	return 0;
 }
 
@@ -2810,7 +2810,7 @@ js_CallMapScript(duk_context* ctx)
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (type < 0 || type >= MAP_SCRIPT_MAX)
 		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
-	run_script(s_map->scripts[type], false);
+	script_run(s_map->scripts[type], false);
 	return 0;
 }
 
@@ -2914,7 +2914,7 @@ js_ExecuteTrigger(duk_context* ctx)
 	if (trigger = get_trigger_at(x, y, layer, &index)) {
 		last_trigger = s_current_trigger;
 		s_current_trigger = index;
-		run_script(trigger->script, true);
+		script_run(trigger->script, true);
 		s_current_trigger = last_trigger;
 	}
 	return 0;
@@ -2939,7 +2939,7 @@ js_ExecuteZones(duk_context* ctx)
 	while (zone = get_zone_at(x, y, layer, i++, &index)) {
 		last_zone = s_current_zone;
 		s_current_zone = index;
-		run_script(zone->script, true);
+		script_run(zone->script, true);
 		s_current_zone = last_zone;
 	}
 	return 0;

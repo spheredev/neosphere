@@ -1,10 +1,11 @@
 minisphere Changelog
 ====================
 
-TBD
----
+v5.0.0 - TBD
+------------
 
-* No changes yet.
+* Dispatch API functions will no longer accept a JavaScript source code string
+  as a callback, the callback must now always be a function.
 
 
 v4.3.8 - December 4, 2016

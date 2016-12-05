@@ -844,6 +844,31 @@ duk_require_sphere_colormatrix(duk_context* ctx, duk_idx_t index)
 	return matrix;
 }
 
+script_t*
+duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
+{
+	lstring_t* codestring;
+	script_t*  script;
+
+	index = duk_require_normalize_index(ctx, index);
+
+	if (duk_is_callable(ctx, index)) {
+		// caller passed function directly
+		script = script_new_func(ctx, index);
+	}
+	else if (duk_is_string(ctx, index)) {
+		// caller passed code string, compile it
+		codestring = duk_require_lstring_t(ctx, index);
+		script = script_new(codestring, "%s", name);
+		lstr_free(codestring);
+	}
+	else if (duk_is_null_or_undefined(ctx, index))
+		return NULL;
+	else
+		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "script must be string, function, or null/undefined");
+	return script;
+}
+
 static void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
@@ -1693,7 +1718,7 @@ js_EvaluateScript(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "scripts", true);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
-	if (!evaluate_script(filename, false))
+	if (!script_eval(filename, false))
 		duk_throw(ctx);
 	return 1;
 }
@@ -1710,7 +1735,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
-	if (!evaluate_script(path, false))
+	if (!script_eval(path, false))
 		duk_throw(ctx);
 	return 1;
 }
@@ -2325,7 +2350,7 @@ js_RequireScript(duk_context* ctx)
 	if (!is_required) {
 		duk_push_true(ctx);
 		duk_put_prop_string(ctx, -2, filename);
-		if (!evaluate_script(filename, false))
+		if (!script_eval(filename, false))
 			duk_throw(ctx);
 	}
 	duk_pop_3(ctx);
@@ -2354,7 +2379,7 @@ js_RequireSystemScript(duk_context* ctx)
 	if (!is_required) {
 		duk_push_true(ctx);
 		duk_put_prop_string(ctx, -2, path);
-		if (!evaluate_script(path, false))
+		if (!script_eval(path, false))
 			duk_throw(ctx);
 	}
 	duk_pop_2(ctx);

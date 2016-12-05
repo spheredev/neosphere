@@ -136,13 +136,13 @@ shutdown_input(void)
 	// free bound key scripts
 	iter = vector_enum(s_bound_buttons);
 	while (pbutton = vector_next(&iter)) {
-		free_script(pbutton->on_down_script);
-		free_script(pbutton->on_up_script);
+		script_free(pbutton->on_down_script);
+		script_free(pbutton->on_up_script);
 	}
 	iter = vector_enum(s_bound_keys);
 	while (pkey = vector_next(&iter)) {
-		free_script(pkey->on_down_script);
-		free_script(pkey->on_up_script);
+		script_free(pkey->on_down_script);
+		script_free(pkey->on_up_script);
 	}
 	vector_free(s_bound_buttons);
 	vector_free(s_bound_keys);
@@ -259,9 +259,9 @@ joy_bind_button(int joy_index, int button, script_t* on_down_script, script_t* o
 			old_up_script = bound->on_up_script;
 			memcpy(bound, &new_binding, sizeof(struct bound_button));
 			if (old_down_script != bound->on_down_script)
-				free_script(old_down_script);
+				script_free(old_down_script);
 			if (old_up_script != bound->on_up_script)
-				free_script(old_up_script);
+				script_free(old_up_script);
 			is_new_entry = false;
 		}
 	}
@@ -487,9 +487,9 @@ update_bound_keys(bool use_map_keys)
 		while (key = vector_next(&iter)) {
 			is_down = s_key_state[key->keycode];
 			if (is_down && !key->is_pressed)
-				run_script(key->on_down_script, false);
+				script_run(key->on_down_script, false);
 			if (!is_down && key->is_pressed)
-				run_script(key->on_up_script, false);
+				script_run(key->on_up_script, false);
 			key->is_pressed = is_down;
 		}
 	}
@@ -499,9 +499,9 @@ update_bound_keys(bool use_map_keys)
 	while (button = vector_next(&iter)) {
 		is_down = joy_is_button_down(button->joystick_id, button->button);
 		if (is_down && !button->is_pressed)
-			run_script(button->on_down_script, false);
+			script_run(button->on_down_script, false);
 		if (!is_down && button->is_pressed)
-			run_script(button->on_up_script, false);
+			script_run(button->on_up_script, false);
 		button->is_pressed = is_down;
 	}
 }
@@ -618,9 +618,9 @@ kb_bind_key(int keycode, script_t* on_down_script, script_t* on_up_script)
 			old_up_script = key->on_up_script;
 			memcpy(key, &new_binding, sizeof(struct bound_key));
 			if (old_down_script != key->on_down_script)
-				free_script(old_down_script);
+				script_free(old_down_script);
 			if (old_up_script != key->on_up_script)
-				free_script(old_up_script);
+				script_free(old_up_script);
 			is_new_key = false;
 		}
 	}
