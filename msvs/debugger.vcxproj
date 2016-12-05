@@ -188,7 +188,7 @@
     <ClCompile Include="..\src\debugger\parser.c" />
     <ClCompile Include="..\src\debugger\dvalue.c" />
     <ClCompile Include="..\src\debugger\help.c" />
-    <ClCompile Include="..\src\debugger\message.c" />
+    <ClCompile Include="..\src\debugger\dmessage.c" />
     <ClCompile Include="..\src\debugger\main.c" />
     <ClCompile Include="..\src\debugger\inferior.c" />
     <ClCompile Include="..\src\debugger\sockets.c" />
@@ -207,7 +207,7 @@
     <ClInclude Include="..\src\debugger\parser.h" />
     <ClInclude Include="..\src\debugger\dvalue.h" />
     <ClInclude Include="..\src\debugger\help.h" />
-    <ClInclude Include="..\src\debugger\message.h" />
+    <ClInclude Include="..\src\debugger\dmessage.h" />
     <ClInclude Include="..\src\debugger\posix.h" />
     <ClInclude Include="..\src\debugger\inferior.h" />
     <ClInclude Include="..\src\debugger\sockets.h" />

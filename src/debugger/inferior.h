@@ -2,7 +2,7 @@
 #define SSJ__INFERIOR_H__INCLUDED
 
 #include "backtrace.h"
-#include "message.h"
+#include "dmessage.h"
 #include "objview.h"
 #include "source.h"
 
@@ -35,7 +35,7 @@ bool               inferior_clear_breakpoint (inferior_t* obj, int handle);
 void               inferior_detach           (inferior_t* obj);
 dvalue_t*          inferior_eval             (inferior_t* obj, const char* expr, int frame, bool* out_is_error);
 bool               inferior_pause            (inferior_t* obj);
-message_t*         inferior_request          (inferior_t* obj, message_t* msg);
+dmessage_t*        inferior_request          (inferior_t* obj, dmessage_t* msg);
 bool               inferior_resume           (inferior_t* obj, resume_op_t op);
 
 #endif // SSJ__INFERIOR_H__INCLUDED

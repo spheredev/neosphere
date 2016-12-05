@@ -30,9 +30,6 @@
     <ClCompile Include="..\src\debugger\source.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\debugger\message.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\debugger\dvalue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,6 +60,9 @@
     <ClCompile Include="..\src\debugger\objview.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\debugger\dmessage.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\dyad.h">
@@ -87,9 +87,6 @@
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\debugger\source.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\debugger\message.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\debugger\dvalue.h">
@@ -120,6 +117,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\debugger\objview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\debugger\dmessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

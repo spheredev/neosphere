@@ -43,8 +43,8 @@ cell_libs= \
 
 ssj_sources=src/debugger/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
-   src/debugger/backtrace.c src/debugger/dvalue.c src/debugger/help.c \
-   src/debugger/inferior.c src/debugger/message.c src/debugger/objview.c \
+   src/debugger/backtrace.c src/debugger/dmessage.c src/debugger/dvalue.c \
+   src/debugger/help.c src/debugger/inferior.c src/debugger/objview.c \
    src/debugger/parser.c src/debugger/session.c src/debugger/sockets.c \
    src/debugger/source.c
 

@@ -1,27 +1,27 @@
 #include "ssj.h"
-#include "message.h"
+#include "dmessage.h"
 
 #include "dvalue.h"
 
-struct message
+struct dmessage
 {
 	message_tag_t tag;
 	vector_t*     dvalues;
 };
 
-message_t*
-message_new(message_tag_t tag)
+dmessage_t*
+dmessage_new(message_tag_t tag)
 {
-	message_t* o;
+	dmessage_t* o;
 
-	o = calloc(1, sizeof(message_t));
+	o = calloc(1, sizeof(dmessage_t));
 	o->dvalues = vector_new(sizeof(dvalue_t*));
 	o->tag = tag;
 	return o;
 }
 
 void
-message_free(message_t* o)
+dmessage_free(dmessage_t* o)
 {
 	iter_t iter;
 
@@ -38,19 +38,19 @@ message_free(message_t* o)
 }
 
 int
-message_len(const message_t* o)
+dmessage_len(const dmessage_t* o)
 {
 	return (int)vector_len(o->dvalues);
 }
 
 message_tag_t
-message_tag(const message_t* o)
+dmessage_tag(const dmessage_t* o)
 {
 	return o->tag;
 }
 
 dvalue_tag_t
-message_get_atom_tag(const message_t* o, int index)
+dmessage_get_atom_tag(const dmessage_t* o, int index)
 {
 	dvalue_t* dvalue;
 
@@ -59,13 +59,13 @@ message_get_atom_tag(const message_t* o, int index)
 }
 
 const dvalue_t*
-message_get_dvalue(const message_t* o, int index)
+dmessage_get_dvalue(const dmessage_t* o, int index)
 {
 	return *(dvalue_t**)vector_get(o->dvalues, index);
 }
 
 double
-message_get_float(const message_t* o, int index)
+dmessage_get_float(const dmessage_t* o, int index)
 {
 	dvalue_t* dvalue;
 
@@ -74,7 +74,7 @@ message_get_float(const message_t* o, int index)
 }
 
 int
-message_get_int(const message_t* o, int index)
+dmessage_get_int(const dmessage_t* o, int index)
 {
 	dvalue_t* dvalue;
 
@@ -83,7 +83,7 @@ message_get_int(const message_t* o, int index)
 }
 
 const char*
-message_get_string(const message_t* o, int index)
+dmessage_get_string(const dmessage_t* o, int index)
 {
 	dvalue_t* dvalue;
 
@@ -92,7 +92,7 @@ message_get_string(const message_t* o, int index)
 }
 
 void
-message_add_dvalue(message_t* o, const dvalue_t* dvalue)
+dmessage_add_dvalue(dmessage_t* o, const dvalue_t* dvalue)
 {
 	dvalue_t* dup;
 
@@ -101,7 +101,7 @@ message_add_dvalue(message_t* o, const dvalue_t* dvalue)
 }
 
 void
-message_add_float(message_t* o, double value)
+dmessage_add_float(dmessage_t* o, double value)
 {
 	dvalue_t* dvalue;
 
@@ -110,7 +110,7 @@ message_add_float(message_t* o, double value)
 }
 
 void
-message_add_heapptr(message_t* o, remote_ptr_t heapptr)
+dmessage_add_heapptr(dmessage_t* o, remote_ptr_t heapptr)
 {
 	dvalue_t* dvalue;
 
@@ -119,7 +119,7 @@ message_add_heapptr(message_t* o, remote_ptr_t heapptr)
 }
 
 void
-message_add_int(message_t* o, int value)
+dmessage_add_int(dmessage_t* o, int value)
 {
 	dvalue_t* dvalue;
 
@@ -128,7 +128,7 @@ message_add_int(message_t* o, int value)
 }
 
 void
-message_add_string(message_t* o, const char* value)
+dmessage_add_string(dmessage_t* o, const char* value)
 {
 	dvalue_t* dvalue;
 
@@ -136,15 +136,15 @@ message_add_string(message_t* o, const char* value)
 	vector_push(o->dvalues, &dvalue);
 }
 
-message_t*
-message_recv(socket_t* socket)
+dmessage_t*
+dmessage_recv(socket_t* socket)
 {
-	message_t* obj;
+	dmessage_t* obj;
 	dvalue_t* dvalue;
 
 	iter_t iter;
 
-	obj = calloc(1, sizeof(message_t));
+	obj = calloc(1, sizeof(dmessage_t));
 	obj->dvalues = vector_new(sizeof(dvalue_t*));
 	if (!(dvalue = dvalue_recv(socket))) goto lost_dvalue;
 	obj->tag = dvalue_tag(dvalue) == DVALUE_REQ ? MESSAGE_REQ
@@ -173,7 +173,7 @@ lost_dvalue:
 }
 
 bool
-message_send(const message_t* o, socket_t* socket)
+dmessage_send(const dmessage_t* o, socket_t* socket)
 {
 	dvalue_t*    dvalue;
 	dvalue_tag_t lead_tag;
