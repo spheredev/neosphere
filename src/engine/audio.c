@@ -35,6 +35,7 @@ struct sound
 	char*                 path;
 	float                 pan;
 	float                 pitch;
+	bool                  suspended;
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
@@ -89,6 +90,34 @@ audio_uninit(void)
 	vector_free(s_streams);
 	if (s_have_sound)
 		al_uninstall_audio();
+}
+
+void
+audio_resume(void)
+{
+	iter_t iter;
+	sound_t*  *p_sound;
+	stream_t* *p_stream;
+
+	iter = vector_enum(s_playing_sounds);
+	while (p_sound = vector_next(&iter)) {
+		if ((*p_sound)->suspended)
+			sound_pause(*p_sound, false);
+	}
+}
+
+void
+audio_suspend(void)
+{
+	iter_t iter;
+	sound_t*  *p_sound;
+	stream_t* *p_stream;
+
+	iter = vector_enum(s_playing_sounds);
+	while (p_sound = vector_next(&iter)) {
+		(*p_sound)->suspended = sound_playing(*p_sound);
+		sound_pause(*p_sound, true);
+	}
 }
 
 void

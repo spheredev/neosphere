@@ -81,6 +81,11 @@ namespace minisphere.Gdk.Debugger
             _tag = value;
         }
 
+        public DValue(bool value)
+        {
+            _tag = value ? DValueTag.True : DValueTag.False;
+        }
+
         public DValue(byte[] buffer)
         {
             _tag = DValueTag.Buffer;

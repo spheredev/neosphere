@@ -62,7 +62,7 @@ namespace minisphere.Gdk.Debugger
         private object replyLock = new object();
         private Queue<DMessage> requests = new Queue<DMessage>();
         private Dictionary<DMessage, DMessage> replies = new Dictionary<DMessage, DMessage>();
-        private int protocol;
+        private int protocolVersion;
 
         /// <summary>
         /// Constructs an Inferior to control a Duktape debuggee.
@@ -154,8 +154,8 @@ namespace minisphere.Gdk.Debugger
                 }
             });
             string[] handshake = line.Trim().Split(new[] { ' ' }, 4);
-            protocol = int.Parse(handshake[0]);
-            if (protocol < 1 || protocol > 2)
+            protocolVersion = int.Parse(handshake[0]);
+            if (protocolVersion < 1 || protocolVersion > 2)
                 throw new NotSupportedException("Unsupported Duktape debugger protocol version!");
 
             Version = handshake[2];
@@ -212,7 +212,7 @@ namespace minisphere.Gdk.Debugger
         /// <returns>The value produced by the expression.</returns>
         public async Task<DValue> Eval(string expression, int stackOffset = -1)
         {
-            var reply = protocol == 2
+            var reply = protocolVersion == 2
                 ? await DoRequest(DValueTag.REQ, Request.Eval, stackOffset, expression)
                 : await DoRequest(DValueTag.REQ, Request.Eval, expression, stackOffset);
             return reply[2];

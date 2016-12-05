@@ -358,8 +358,8 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		duk_push_sprintf(ctx, "no source available for `%s`", name);
 		return -1;
 	case APPREQ_WATERMARK:
-		if (nvalues < 1 || !duk_is_string(ctx, -nvalues + 1)) {
-			duk_push_string(ctx, "missing debug client name");
+		if (nvalues < 2 || !duk_is_string(ctx, -nvalues + 1)) {
+			duk_push_string(ctx, "missing or invalid debugger name string");
 			return -1;
 		}
 

@@ -7,6 +7,8 @@ typedef struct stream stream_t;
 
 void        audio_init        (void);
 void        audio_uninit      (void);
+void        audio_resume      (void);
+void        audio_suspend     (void);
 void        audio_update      (void);
 mixer_t*    mixer_new         (int frequency, int bits, int channels);
 mixer_t*    mixer_ref         (mixer_t* mixer);
