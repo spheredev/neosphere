@@ -11,12 +11,10 @@ const random = require('random');
 
 function from(target/*, ...*/)
 {
-	// for multiple targets, just do a query against the list of targets and
-	// unroll with .from().
-	if (arguments.length > 1) {
-		var targets = Array.prototype.slice.call(arguments);
-		return from.call(this, targets).from();
-	}
+	// for multiple targets, query against the list of targets and unroll with
+	// .from().
+	if (arguments.length > 1)
+		return from(arguments).from();
 
 	target = Object(target);
 	if (typeof target.length === 'number')
