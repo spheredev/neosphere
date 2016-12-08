@@ -1136,21 +1136,13 @@ js_system_abort(duk_context* ctx)
 		? duk_to_string(ctx, 0)
 		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
 
-	duk_push_global_object(ctx);
-	duk_get_prop_string(ctx, -1, "Duktape");
-	duk_get_prop_string(ctx, -1, "act");
-	duk_push_int(ctx, -3);
-	duk_call(ctx, 1);
-	duk_remove(ctx, -2);
+	dukrub_inspect_callstack_entry(ctx, -2);
 	duk_get_prop_string(ctx, -1, "lineNumber");
-	line_number = duk_get_int(ctx, -1);
-	duk_pop(ctx);
-	duk_get_prop_string(ctx, -1, "function");
+	duk_get_prop_string(ctx, -2, "function");
 	duk_get_prop_string(ctx, -1, "fileName");
 	filename = duk_get_string(ctx, -1);
+	line_number = duk_get_int(ctx, -2);
 	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
-	duk_pop_3(ctx);
-
 	abort_game(text);
 }
 

@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 850f08e79517d996cf3544f173bff1bc305528a7 (v1.5.0-1123-g850f08e7).
+ *  Git commit 31783ba3aa300df4adca2f271a68c6d219b839dd (v1.5.0-1141-g31783ba).
  *  Git branch es6-object-function-coercion.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -259,8 +259,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "850f08e79517d996cf3544f173bff1bc305528a7"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1123-g850f08e7"
+#define DUK_GIT_COMMIT                    "31783ba3aa300df4adca2f271a68c6d219b839dd"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1141-g31783ba"
 #define DUK_GIT_BRANCH                    "es6-object-function-coercion"
 
 /* Duktape debug protocol version used by this build. */
@@ -913,6 +913,13 @@ DUK_EXTERNAL_DECL duk_bool_t duk_get_global_string(duk_context *ctx, const char 
 DUK_EXTERNAL_DECL duk_bool_t duk_get_global_lstring(duk_context *ctx, const char *key, duk_size_t key_len);
 DUK_EXTERNAL_DECL duk_bool_t duk_put_global_string(duk_context *ctx, const char *key);
 DUK_EXTERNAL_DECL duk_bool_t duk_put_global_lstring(duk_context *ctx, const char *key, duk_size_t key_len);
+
+/*
+ *  Inspection
+ */
+
+DUK_EXTERNAL_DECL void duk_inspect_value(duk_context *ctx, duk_idx_t idx);
+DUK_EXTERNAL_DECL void duk_inspect_callstack_entry(duk_context *ctx, duk_int_t level);
 
 /*
  *  Object prototype

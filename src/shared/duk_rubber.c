@@ -42,6 +42,18 @@ dukrub_push_bare_object(duk_context* ctx)
 #endif
 }
 
+void
+dukrub_inspect_callstack_entry(duk_context* ctx, duk_int_t level)
+{
+#if DUK_VERSION >= 19999
+	duk_inspect_callstack_entry(ctx, level);
+#else
+	duk_eval_string(ctx, "Duktape.act");
+	duk_push_int(ctx, level - 1);
+	duk_call(ctx, 1);
+#endif
+}
+
 duk_int_t
 dukrub_safe_call(duk_context* ctx, dukrub_safe_call_function func, duk_int_t nargs, duk_int_t nrets)
 {

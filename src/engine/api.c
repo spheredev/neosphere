@@ -298,22 +298,17 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 	int     line_number;
 
 	// get filename and line number from Duktape call stack
-	duk_get_global_string(g_duk, "Duktape");
-	duk_get_prop_string(g_duk, -1, "act");
-	duk_push_int(g_duk, -2 + blame_offset);
-	duk_call(g_duk, 1);
+	dukrub_inspect_callstack_entry(ctx, -1 + blame_offset);
 	if (!duk_is_object(g_duk, -1)) {
-		duk_pop(g_duk);
-		duk_get_prop_string(g_duk, -1, "act");
-		duk_push_int(g_duk, -2);
-		duk_call(g_duk, 1);
+		dukrub_inspect_callstack_entry(ctx, -1);
+		duk_replace(ctx, -2);
 	}
 	duk_get_prop_string(g_duk, -1, "lineNumber");
 	duk_get_prop_string(g_duk, -2, "function");
 	duk_get_prop_string(g_duk, -1, "fileName");
 	filename = strdup(duk_safe_to_string(g_duk, -1));
 	line_number = duk_to_int(g_duk, -3);
-	duk_pop_n(g_duk, 5);
+	duk_pop_n(g_duk, 4);
 
 	// construct an Error object
 	va_start(ap, fmt);
