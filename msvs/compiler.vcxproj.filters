@@ -94,7 +94,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="cell.rc">
+    <ResourceCompile Include="compiler.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

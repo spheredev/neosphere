@@ -41,6 +41,8 @@ cell_sources=src/compiler/main.c \
 cell_libs= \
    -lz -lm
 
+majin_sources=src/preptool/main.c
+
 ssj_sources=src/debugger/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
    src/debugger/backtrace.c src/debugger/dmessage.c src/debugger/dvalue.c \
@@ -59,6 +61,9 @@ spherun: bin/minisphere bin/spherun
 
 .PHONY: cell
 cell: bin/cell
+
+.PHONY: majin
+majin: bin/majin
 
 .PHONY: ssj
 ssj: bin/ssj
@@ -88,7 +93,7 @@ install: all
 	mkdir -p $(installdir)/share/mime/packages
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
-	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
+	cp bin/minisphere bin/spherun bin/cell bin/majin bin/ssj $(installdir)/bin
 	cp -r bin/system $(installdir)/share/minisphere
 	gzip docs/sphere2-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-api.gz
 	gzip docs/cellscript-api.txt -c > $(installdir)/share/doc/minisphere/cellscript-api.gz
@@ -123,6 +128,10 @@ bin/spherun:
 bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared $(cell_sources) $(cell_libs)
+
+bin/majin:
+	mkdir -p bin
+	$(CC) -o bin/majin $(CFLAGS) -Isrc/shared $(majin_sources)
 
 bin/ssj:
 	mkdir -p bin

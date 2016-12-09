@@ -190,7 +190,7 @@
       <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
       <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -216,7 +216,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
       <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
       <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
