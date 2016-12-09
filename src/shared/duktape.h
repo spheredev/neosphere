@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 31783ba3aa300df4adca2f271a68c6d219b839dd (v1.5.0-1141-g31783ba).
- *  Git branch es6-object-function-coercion.
+ *  Git commit f8f789e9c1a4bc9020d441d4d2eceb2dce273305 (v1.5.0-1161-gf8f789e9).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -259,9 +259,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "31783ba3aa300df4adca2f271a68c6d219b839dd"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1141-g31783ba"
-#define DUK_GIT_BRANCH                    "es6-object-function-coercion"
+#define DUK_GIT_COMMIT                    "f8f789e9c1a4bc9020d441d4d2eceb2dce273305"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1161-gf8f789e9"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2

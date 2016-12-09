@@ -9,6 +9,64 @@ minisphere's implementation of the standard library is called miniRT and is
 made up of several components, each of which is documented below.
 
 
+`assert` Module
+---------------
+
+An implementation of the standard CommonJS assertions module.  Assertions are
+useful both for making unit tests as well as verifying that runtime conditions
+match development assumptions.  By writing an assertion, you are asserting that
+the condition is true (hence the name); if that turns out not to be the case,
+an AssertionError will be thrown instead of continuing normal operation.  With
+strategic placement of assertions, bugs can be uncovered faster.
+
+Each function in this module accepts an optional `error_text` parameter.  This
+specifies the error message to use if an AssertionError is thrown.  If no
+message is specified, a default message will be used approximating the
+offending expression, e.g. "AssertionError: 2 < 1"
+
+    const assert = require('assert');
+
+
+assert(condition[, error_text]);
+assert.ok(condition[, error_text]);
+
+    Asserts that a boolean expression evaluates to true.
+
+assert.deepEqual(value, expected[, error_text]);
+assert.deepStrictEqual(value, expected[, error_text]);
+
+    Asserts that two objects are equivalent.  Objects are equivalent if and
+    only if they have the same own properties, their subobjects have the same
+    own properties, etc. and all properties with primitive values are equal in
+    value according to either the equality operator (==) or strict equality
+    operator (===), respectively.
+
+    Note: assert.deepStrictEqual() has an additional requirement that the
+          objects must have the same prototype.  assert.deepEqual(), by
+          contrast, doesn't look at the objects' prototypes at all.
+
+assert.equal(value, expected[, error_text]);
+assert.strictEqual(value, expected[, error_text]);
+assert.notEqual(value, unexpected[, error_text]);
+assert.notStrictEqual(value, expected[, error_text]);
+
+    Asserts that two values either match or do not match, respectively.
+    The standard variants test for loose equality (==), while the "strict"
+    variants test for strict equality (===).
+
+assert.throws(func, expected[, error_text]);
+assert.doesNotThrow(func, expected[, error_text]);
+
+    Asserts that the specified function either throws or does not throw a
+    specified class of exception.  `expected` can either be an error
+    constructor such as TypeError or ReferenceError, or a predicate function.
+    If it's a predicate function, the function should return true if the thrown
+    exception matches, or false otherwise.
+
+    Note: To avoid suppressing unrelated exceptions, any exception that doesn't
+          match the specified criteria will be rethrown as-is.
+
+
 `events` Module
 ---------------
 
@@ -909,6 +967,28 @@ term.undefine(objectName);
     Unregisters all commands previously registered under `objectName`.  See
     `term.define()` for more information.  Note: It is not currently
     possible to unregister individual commands.
+
+
+`test` Module
+-------------
+
+An implementation of the standard CommonJS testing module.  The primary use for
+this module is to automate unit testing.  Its API consists of a single
+function.  Unit test code itself can likely benefit from the `assert` module
+though; see above for more information about that one.
+
+    const test = require('test');
+
+
+test.run(tests);
+
+    Runs all unit tests in `tests`.  `tests` is an object with a number of
+    methods beginning with the word "test", e.g. testPig(), testCow(), etc.
+    Each one will be called in turn, in Object.keys() order.
+
+    Note: If you need a bit more organization, `tests` can also have subobjects
+          beginning with the word "test".  Any test methods found in subobjects
+          will be called as well.
 
 
 `threads` Module

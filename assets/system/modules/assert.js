@@ -145,7 +145,7 @@ function _checkIfThrows(block, expected)
 	}
 	if (hasThrown) {
 		if (expected instanceof RegExp && expected.test(actual))
-			return;
+			return true;
 		else if (typeof expected === 'function') {
 			if (expected === Error || expected.prototype instanceof Error) {
 				if (actual instanceof expected)
@@ -153,7 +153,7 @@ function _checkIfThrows(block, expected)
 				throw actual;
 			}
 			if (expected(actual))
-				return;
+				return true;
 			throw actual;
 		}
 		else
