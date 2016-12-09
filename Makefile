@@ -51,7 +51,7 @@ ssj_sources=src/debugger/main.c \
    src/debugger/source.c
 
 .PHONY: all
-all: minisphere spherun cell ssj
+all: minisphere spherun cell majin ssj
 
 .PHONY: minisphere
 minisphere: bin/minisphere
