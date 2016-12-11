@@ -264,7 +264,7 @@ api_define_static_prop(duk_context* ctx, const char* namespace_name, const char*
 		duk_push_c_function(ctx, setter, DUK_VARARGS);
 		flags |= DUK_DEFPROP_HAVE_SETTER;
 	}
-	duk_def_prop(g_duk, obj_index, flags);
+	duk_def_prop(ctx, obj_index, flags);
 	if (namespace_name != NULL)
 		duk_pop(ctx);
 	duk_pop(ctx);

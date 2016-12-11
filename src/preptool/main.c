@@ -35,7 +35,7 @@ print_quote(void)
 	srand((unsigned int)time(NULL));
 	printf("...and that's why it has to end like this!  You'll have to learn the hard way,\n");
 	printf("and know what it feels like to have YOUR life taken away against YOUR will!\n");
-	printf("It's wrong!\n\n");
+	printf("It's WRONG!\n\n");
 	printf("    Buu says:\n    \"%s\"\n",
 		MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
 }

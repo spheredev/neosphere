@@ -36,8 +36,8 @@ engine_libs= \
 
 cell_sources=src/compiler/main.c \
    src/shared/duktape.c src/shared/path.c src/shared/vector.c \
-   src/compiler/assets.c src/compiler/build.c src/compiler/spk_writer.c \
-   src/compiler/utility.c
+   src/compiler/assets.c src/compiler/build.c src/compiler/cellscript.c \
+   src/compiler/spk_writer.c src/compiler/utility.c
 cell_libs= \
    -lz -lm
 

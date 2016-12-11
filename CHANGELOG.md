@@ -4,6 +4,9 @@ minisphere Changelog
 v5.0.0 - TBD
 ------------
 
+* Introducing Majin, a new command-line project management tool for Sphere v2
+  projects.  Majin allows you to edit your game manifest from the command line,
+  avoiding the need to edit game.json by hand or use Sphere Studio.
 * Dispatch API functions will no longer accept a JavaScript source code string
   as a callback, the callback must now always be a function.
 
