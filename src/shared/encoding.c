@@ -1,6 +1,9 @@
-#include "minisphere.h"
 #include "encoding.h"
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include "lstring.h"
 #include "unicode.h"
 
 struct decoder

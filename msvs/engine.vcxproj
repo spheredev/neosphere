@@ -364,13 +364,13 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\engine\encoding.c" />
     <ClCompile Include="..\src\engine\vanilla.c" />
     <ClCompile Include="..\src\engine\matrix.c" />
     <ClCompile Include="..\src\engine\pegasus.c" />
     <ClCompile Include="..\src\engine\screen.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\dyad.c" />
+    <ClCompile Include="..\src\shared\encoding.c" />
     <ClCompile Include="..\src\shared\lstring.c" />
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\duk_rubber.c" />
@@ -408,7 +408,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\engine\encoding.h" />
     <ClInclude Include="..\src\engine\vanilla.h" />
     <ClInclude Include="..\src\engine\matrix.h" />
     <ClInclude Include="..\src\engine\pegasus.h" />
@@ -416,6 +415,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\shared\duktape.h" />
     <ClInclude Include="..\src\shared\duk_config.h" />
     <ClInclude Include="..\src\shared\dyad.h" />
+    <ClInclude Include="..\src\shared\encoding.h" />
     <ClInclude Include="..\src\shared\lstring.h" />
     <ClInclude Include="..\src\shared\path.h" />
     <ClInclude Include="..\src\shared\duk_rubber.h" />

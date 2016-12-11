@@ -138,7 +138,7 @@
     <ClCompile Include="..\src\engine\kevfile.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\encoding.c">
+    <ClCompile Include="..\src\shared\encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -278,7 +278,7 @@
     <ClInclude Include="..\src\engine\kevfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\encoding.h">
+    <ClInclude Include="..\src\shared\encoding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

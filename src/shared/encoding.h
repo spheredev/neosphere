@@ -1,6 +1,10 @@
 #ifndef MINISPHERE__ENCODING_H__INCLUDED
 #define MINISPHERE__ENCODING_H__INCLUDED
 
+#include <stdbool.h>
+#include <stdint.h>
+#include "lstring.h"
+
 typedef struct decoder decoder_t;
 typedef struct encoder encoder_t;
 
