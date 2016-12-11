@@ -5,6 +5,7 @@
 
 #include <zlib.h>
 #include "duktape.h"
+#include "duk_rubber.h"
 #include "lstring.h"
 #include "path.h"
 #include "utility.h"
@@ -20,5 +21,15 @@
 #include <sys/stat.h>
 
 #include "version.h"
+
+#if defined(__GNUC__)
+#define no_return __attribute__((no_return)) void
+#elif defined(__clang__)
+#define no_return __attribute__((no_return)) void
+#elif defined(_MSC_VER)
+#define no_return __declspec(noreturn) void
+#else
+#define no_return void
+#endif
 
 #endif // CELL__CELL_H__INCLUDED

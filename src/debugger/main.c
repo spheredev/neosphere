@@ -54,21 +54,19 @@ bool
 launch_minisphere(path_t* game_path)
 {
 #if defined(_WIN32)
-	char*   command_line;
-	HMODULE h_module;
-	TCHAR   pathname[MAX_PATH];
+	char*               command_line;
+	TCHAR               pathname[MAX_PATH];
+	STARTUPINFOA        si;
+	PROCESS_INFORMATION pi;
 
 	printf("starting %s... ", path_cstr(game_path));
 	fflush(stdout);
-	h_module = GetModuleHandle(NULL);
-	GetModuleFileName(h_module, pathname, MAX_PATH);
+	GetModuleFileName(NULL, pathname, MAX_PATH);
 	PathRemoveFileSpec(pathname);
 	SetCurrentDirectory(pathname);
 	if (!PathFileExists(TEXT(".\\spherun.exe")))
 		goto on_error;
 	else {
-		STARTUPINFOA si;
-		PROCESS_INFORMATION pi;
 		memset(&si, 0, sizeof(STARTUPINFOA));
 		si.cb = sizeof(STARTUPINFOA);
 		si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;

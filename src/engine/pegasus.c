@@ -397,15 +397,15 @@ initialize_pegasus_api(duk_context* ctx)
 	duk_pop(ctx);
 
 	// initialize CommonJS cache and global require()
-	duk_push_global_stash(g_duk);
-	dukrub_push_bare_object(g_duk);
-	duk_put_prop_string(g_duk, -2, "moduleCache");
-	duk_pop(g_duk);
+	duk_push_global_stash(ctx);
+	dukrub_push_bare_object(ctx);
+	duk_put_prop_string(ctx, -2, "moduleCache");
+	duk_pop(ctx);
 
-	duk_push_global_object(g_duk);
-	duk_push_string(g_duk, "require");
-	duk_pegasus_push_require(g_duk, NULL);
-	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE
+	duk_push_global_object(ctx);
+	duk_push_string(ctx, "require");
+	duk_pegasus_push_require(ctx, NULL);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
@@ -681,7 +681,7 @@ initialize_pegasus_api(duk_context* ctx)
 
 	// pre-create joystick objects for Joystick.getDevices().  this ensures that
 	// multiple requests for the device list return the same Joystick object(s).
-	load_joysticks(g_duk);
+	load_joysticks(ctx);
 
 	// register predefined X11 colors
 	duk_get_global_string(ctx, "Color");
@@ -699,7 +699,7 @@ initialize_pegasus_api(duk_context* ctx)
 	duk_pop(ctx);
 
 	// `console` is a Proxy so that unimplemented methods do not throw
-	duk_eval_string_noresult(g_duk,
+	duk_eval_string_noresult(ctx,
 		"global.console = new Proxy(global.console, {\n"
 		"    get: function(t, name) {\n"
 		"        return name in t ? t[name] : function() {};\n"
@@ -747,15 +747,15 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 	dir_path = path_strip(path_dup(file_path));
 
 	// is the requested module already in the cache?
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "moduleCache");
-	if (duk_get_prop_string(g_duk, -1, filename)) {
-		duk_remove(g_duk, -2);
-		duk_remove(g_duk, -2);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	if (duk_get_prop_string(ctx, -1, filename)) {
+		duk_remove(ctx, -2);
+		duk_remove(ctx, -2);
 		goto have_module;
 	}
 	else {
-		duk_pop_3(g_duk);
+		duk_pop_3(ctx);
 	}
 
 	console_log(1, "initializing JS module `%s`", filename);
@@ -765,78 +765,78 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 	free(source);
 
 	// construct a module object for the new module
-	duk_push_object(g_duk);  // module object
-	duk_push_object(g_duk);
-	duk_put_prop_string(g_duk, -2, "exports");  // module.exports = {}
-	duk_push_string(g_duk, filename);
-	duk_put_prop_string(g_duk, -2, "filename");  // module.filename
-	duk_push_string(g_duk, filename);
-	duk_put_prop_string(g_duk, -2, "id");  // module.id
-	duk_push_false(g_duk);
-	duk_put_prop_string(g_duk, -2, "loaded");  // module.loaded = false
-	duk_pegasus_push_require(g_duk, filename);
-	duk_put_prop_string(g_duk, -2, "require");  // module.require
+	duk_push_object(ctx);  // module object
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "exports");  // module.exports = {}
+	duk_push_string(ctx, filename);
+	duk_put_prop_string(ctx, -2, "filename");  // module.filename
+	duk_push_string(ctx, filename);
+	duk_put_prop_string(ctx, -2, "id");  // module.id
+	duk_push_false(ctx);
+	duk_put_prop_string(ctx, -2, "loaded");  // module.loaded = false
+	duk_pegasus_push_require(ctx, filename);
+	duk_put_prop_string(ctx, -2, "require");  // module.require
 
 	// cache the module object in advance
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "moduleCache");
-	duk_dup(g_duk, -3);
-	duk_put_prop_string(g_duk, -2, filename);
-	duk_pop_2(g_duk);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	duk_dup(ctx, -3);
+	duk_put_prop_string(ctx, -2, filename);
+	duk_pop_2(ctx);
 
 	if (strcmp(path_ext_cstr(file_path), ".json") == 0) {
 		// JSON file, decode to JavaScript object
-		duk_push_lstring_t(g_duk, code_string);
+		duk_push_lstring_t(ctx, code_string);
 		lstr_free(code_string);
-		if (duk_json_pdecode(g_duk) != DUK_EXEC_SUCCESS)
+		if (duk_json_pdecode(ctx) != DUK_EXEC_SUCCESS)
 			goto on_error;
-		duk_put_prop_string(g_duk, -2, "exports");
+		duk_put_prop_string(ctx, -2, "exports");
 	}
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
-		duk_push_string(g_duk, "(function(exports, require, module, __filename, __dirname) { ");
-		duk_push_lstring_t(g_duk, code_string);
-		duk_push_string(g_duk, " })");
-		duk_concat(g_duk, 3);
-		duk_push_string(g_duk, filename);
-		if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+		duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
+		duk_push_lstring_t(ctx, code_string);
+		duk_push_string(ctx, " })");
+		duk_concat(ctx, 3);
+		duk_push_string(ctx, filename);
+		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 			goto on_error;
-		duk_call(g_duk, 0);
-		duk_push_string(g_duk, "name");
-		duk_push_string(g_duk, "main");
-		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_FORCE);
+		duk_call(ctx, 0);
+		duk_push_string(ctx, "name");
+		duk_push_string(ctx, "main");
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_FORCE);
 		lstr_free(code_string);
 
 		// go, go, go!
-		duk_get_prop_string(g_duk, -2, "exports");    // exports
-		duk_get_prop_string(g_duk, -3, "require");    // require
-		duk_dup(g_duk, -4);                           // module
-		duk_push_string(g_duk, filename);             // __filename
-		duk_push_string(g_duk, path_cstr(dir_path));  // __dirname
-		if (duk_pcall(g_duk, 5) != DUK_EXEC_SUCCESS)
+		duk_get_prop_string(ctx, -2, "exports");    // exports
+		duk_get_prop_string(ctx, -3, "require");    // require
+		duk_dup(ctx, -4);                           // module
+		duk_push_string(ctx, filename);             // __filename
+		duk_push_string(ctx, path_cstr(dir_path));  // __dirname
+		if (duk_pcall(ctx, 5) != DUK_EXEC_SUCCESS)
 			goto on_error;
-		duk_pop(g_duk);
+		duk_pop(ctx);
 	}
 
 	// module executed successfully, set `module.loaded` to true
-	duk_push_true(g_duk);
-	duk_put_prop_string(g_duk, -2, "loaded");
+	duk_push_true(ctx);
+	duk_put_prop_string(ctx, -2, "loaded");
 
 have_module:
 	// `module` is on the stack, we need `module.exports`
-	duk_get_prop_string(g_duk, -1, "exports");
-	duk_remove(g_duk, -2);
+	duk_get_prop_string(ctx, -1, "exports");
+	duk_remove(ctx, -2);
 	return 1;
 
 on_error:
 	// note: it's assumed that at this point, the only things left in our portion of the
 	//       Duktape stack are the module object and the thrown error.
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "moduleCache");
-	duk_del_prop_string(g_duk, -1, filename);
-	duk_pop_2(g_duk);
-	duk_remove(g_duk, -2);  // leave the error on the stack
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	duk_del_prop_string(ctx, -1, filename);
+	duk_pop_2(ctx);
+	duk_remove(ctx, -2);  // leave the error on the stack
 	return 0;
 }
 
@@ -868,15 +868,15 @@ duk_pegasus_push_require(duk_context* ctx, const char* module_id)
 	duk_push_string(ctx, "name");
 	duk_push_string(ctx, "require");
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.name
-	duk_push_string(g_duk, "cache");
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "moduleCache");
-	duk_remove(g_duk, -2);
-	duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
+	duk_push_string(ctx, "cache");
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	duk_remove(ctx, -2);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
 	if (module_id != NULL) {
-		duk_push_string(g_duk, "id");
-		duk_push_string(g_duk, module_id);
-		duk_def_prop(g_duk, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
+		duk_push_string(ctx, "id");
+		duk_push_string(ctx, module_id);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
 	}
 }
 
@@ -1043,9 +1043,9 @@ js_require(duk_context* ctx)
 	id = duk_require_string(ctx, 0);
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
 	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
-		duk_error_ni(g_duk, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
+		duk_error_blamed(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
 	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
@@ -1175,7 +1175,7 @@ js_Dispatch_later(duk_context* ctx)
 	script = duk_pegasus_require_script(ctx, 1);
 
 	if (!(token = async_defer(script, timeout, ASYNC_UPDATE)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1189,7 +1189,7 @@ js_Dispatch_now(duk_context* ctx)
 	script = duk_pegasus_require_script(ctx, 0);
 
 	if (!(token = async_defer(script, 0, ASYNC_TICK)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1208,7 +1208,7 @@ js_Dispatch_onRender(duk_context* ctx)
 		: 0.0;
 
 	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1227,7 +1227,7 @@ js_Dispatch_onUpdate(duk_context* ctx)
 		: 0.0;
 
 	if (!(token = async_recur(script, priority, ASYNC_UPDATE)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
 	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
@@ -1402,7 +1402,7 @@ js_screen_set_frameRate(duk_context* ctx)
 	framerate = duk_require_number(ctx, 0);
 
 	if (framerate < 1.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
 	if (framerate != INFINITY)
 		s_framerate = framerate;
 	else
@@ -1444,7 +1444,7 @@ js_screen_resize(duk_context* ctx)
 	height = duk_require_int(ctx, 1);
 
 	if (width < 0 || height < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid screen resolution");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid screen resolution");
 	screen_resize(g_screen, width, height);
 	return 0;
 }
@@ -1482,7 +1482,7 @@ js_Color_mix(duk_context* ctx)
 	}
 
 	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid weight(s)", w1, w2);
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid weight(s)", w1, w2);
 
 	duk_pegasus_push_color(ctx, color_mix(color1, color2, w1, w2));
 	return 1;
@@ -1513,10 +1513,10 @@ js_Color_of(duk_context* ctx)
 
 	// is `name` an RGB or ARGB signature?
 	if (name[0] != '#')
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "unrecognized color name");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "unrecognized color name");
 	hex_length = strspn(&name[1], "0123456789ABCDEFabcdef");
 	if (hex_length != strlen(name) - 1 || (hex_length != 6 && hex_length != 8))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RGB signature");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RGB signature");
 	value = strtoul(&name[1], NULL, 16);
 	color.a = hex_length == 8 ? (value >> 24) & 0xFF : 255;
 	color.r = (value >> 16) & 0xFF;
@@ -1625,7 +1625,7 @@ js_FS_mkdir(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false);
 	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }
 
@@ -1640,7 +1640,7 @@ js_FS_open(duk_context* ctx)
 	mode = duk_require_string(ctx, 1);
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
 	duk_push_sphere_obj(ctx, "FileStream", file);
 	return 1;
 }
@@ -1655,7 +1655,7 @@ js_FS_rename(duk_context* ctx)
 	name2 = duk_require_path(ctx, 1, NULL, false);
 
 	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
 
@@ -1677,7 +1677,7 @@ js_FS_rmdir(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false);
 	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
 	return 0;
 }
 
@@ -1688,7 +1688,7 @@ js_FS_unlink(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false);
 	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
 	return 0;
 }
 
@@ -1736,7 +1736,7 @@ js_FileStream_get_size(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, sfs_ftell(file));
@@ -1791,14 +1791,14 @@ js_FileStream_read(duk_context* ctx)
 	duk_push_this(ctx);
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes < 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	num_bytes = (int)sfs_fread(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
@@ -1821,9 +1821,9 @@ js_FileStream_write(duk_context* ctx)
 	file = duk_require_sphere_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "file write failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "file write failed");
 	return 0;
 }
 
@@ -1853,7 +1853,7 @@ js_new_Font(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 
 	if (!(font = font_load(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
 	duk_push_sphere_obj(ctx, "Font", font);
 	return 1;
 }
@@ -2025,7 +2025,7 @@ js_new_Image(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = duk_pegasus_require_color(ctx, 2);
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 		image_fill(image, fill_color);
 	}
 	else if (num_args >= 3 && (buffer = duk_get_buffer_data(ctx, 2, &buffer_size))) {
@@ -2033,12 +2033,12 @@ js_new_Image(duk_context* ctx)
 		width = duk_require_int(ctx, 0);
 		height = duk_require_int(ctx, 1);
 		if (buffer_size < width * height * sizeof(color_t))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "not enough data in buffer");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "not enough data in buffer");
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 		if (!(lock = image_lock(image))) {
 			image_free(image);
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image lock failed");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "image lock failed");
 		}
 		p_line = lock->pixels;
 		for (y = 0; y < height; ++y) {
@@ -2051,14 +2051,14 @@ js_new_Image(duk_context* ctx)
 		// create an Image from a Surface
 		src_image = duk_require_sphere_obj(ctx, 0, "Surface");
 		if (!(image = image_clone(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 	}
 	else {
 		// create an Image by loading an image file
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	}
 	duk_push_sphere_obj(ctx, "Image", image);
 	return 1;
@@ -2227,7 +2227,7 @@ js_Joystick_getPosition(duk_context* ctx)
 	index = duk_require_int(ctx, 0);
 	
 	if (*device != -1 && (index < 0 || index >= joy_num_axes(*device)))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick axis ID out of range");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick axis ID out of range");
 
 	duk_push_number(ctx, joy_position(*device, index));
 	return 1;
@@ -2244,7 +2244,7 @@ js_Joystick_isPressed(duk_context* ctx)
 	index = duk_require_int(ctx, 0);
 
 	if (*device != -1 && (index < 0 || index >= joy_num_buttons(*device)))
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick button ID out of range");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick button ID out of range");
 
 	duk_push_boolean(ctx, joy_is_button_down(*device, index));
 	return 1;
@@ -2431,11 +2431,11 @@ js_new_Mixer(duk_context* ctx)
 	mixer_t* mixer;
 
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth");
 	if (channels < 1 || channels > 7)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid channel count");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid channel count");
 	if (!(mixer = mixer_new(freq, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot create %d-bit %dch voice", bits, channels);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot create %d-bit %dch voice", bits, channels);
 	duk_push_sphere_obj(ctx, "Mixer", mixer);
 	return 1;
 }
@@ -2494,7 +2494,7 @@ js_new_Model(duk_context* ctx)
 		: get_default_shader();
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
 
 	group = group_new(shader);
 	num_shapes = duk_get_length(ctx, 0);
@@ -2727,7 +2727,7 @@ js_Mouse_isPressed(duk_context* ctx)
 
 	key = duk_require_int(ctx, 0);
 	if (key < 0 || key >= MOUSE_KEY_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid MouseKey constant");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid MouseKey constant");
 
 	duk_push_boolean(ctx, mouse_is_key_down(key));
 	return 1;
@@ -2757,7 +2757,7 @@ js_RNG_fromState(duk_context* ctx)
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
 		xoro_free(xoro);
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
 	}
 	duk_push_sphere_obj(ctx, "RNG", xoro);
 	return 1;
@@ -2769,7 +2769,7 @@ js_new_RNG(duk_context* ctx)
 	xoro_t* xoro;
 	
 	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 	
 	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
 	duk_push_sphere_obj(ctx, "RNG", xoro);
@@ -2812,7 +2812,7 @@ js_RNG_set_state(duk_context* ctx)
 	state = duk_require_string(ctx, 0);
 
 	if (!xoro_set_state(xoro, state))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
 	return 0;
 }
 
@@ -2838,7 +2838,7 @@ js_new_Server(duk_context* ctx)
 	socket_t* socket;
 
 	if (max_backlog <= 0)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "max_backlog cannot be <= 0", max_backlog);
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "max_backlog cannot be <= 0", max_backlog);
 	if (socket = listen_on_port(NULL, port, 1024, max_backlog))
 		duk_push_sphere_obj(ctx, "Server", socket);
 	else
@@ -2866,7 +2866,7 @@ js_Server_accept(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Server");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	new_socket = accept_next_socket(socket);
 	if (new_socket)
 		duk_push_sphere_obj(ctx, "Socket", new_socket);
@@ -2895,7 +2895,7 @@ js_Shader_get_Default(duk_context* ctx)
 	shader_t* shader;
 
 	if (!(shader = get_default_shader()))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "shader compile failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "shader compile failed");
 	duk_push_sphere_obj(ctx, "Shader", shader_ref(shader));
 
 	duk_push_this(ctx);
@@ -2918,15 +2918,15 @@ js_new_Shader(duk_context* ctx)
 	shader_t*   shader;
 
 	if (!duk_is_object(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "options must be an object");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "options must be an object");
 	if (duk_get_prop_string(ctx, 0, "vertex"), !duk_is_string(ctx, -1))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "'vertex' must be a string");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "'vertex' must be a string");
 	if (duk_get_prop_string(ctx, 0, "fragment"), !duk_is_string(ctx, -1))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "'fragment' must be a string");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "'fragment' must be a string");
 	duk_pop_2(ctx);
 
 	if (!are_shaders_active())
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "no shader support");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "no shader support");
 
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
@@ -2934,7 +2934,7 @@ js_new_Shader(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "shader compiler failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "shader compiler failed");
 	duk_push_sphere_obj(ctx, "Shader", shader);
 	return 1;
 }
@@ -2970,9 +2970,9 @@ js_new_Shape(duk_context* ctx)
 		: SHAPE_AUTO;
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
 	if (type < 0 || type >= SHAPE_MAX)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
 	
 	shape = shape_new(type, texture);
 	num_vertices = duk_get_length(ctx, 0);
@@ -3095,7 +3095,7 @@ js_Socket_get_bytesPending(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	duk_push_uint(ctx, (duk_uint_t)get_socket_read_size(socket));
 	return 1;
 }
@@ -3124,9 +3124,9 @@ js_Socket_get_remoteAddress(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	duk_push_string(ctx, get_socket_host(socket));
 	return 1;
 }
@@ -3140,9 +3140,9 @@ js_Socket_get_remotePort(duk_context* ctx)
 	socket = duk_require_sphere_obj(ctx, -1, "Socket");
 	duk_pop(ctx);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	duk_push_int(ctx, get_socket_port(socket));
 	return 1;
 }
@@ -3174,9 +3174,9 @@ js_Socket_read(duk_context* ctx)
 	duk_pop(ctx);
 	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	bytes_read = read_socket(socket, buffer, num_bytes);
 	duk_push_buffer_object(ctx, -1, 0, bytes_read, DUK_BUFOBJ_ARRAYBUFFER);
@@ -3195,9 +3195,9 @@ js_Socket_write(duk_context* ctx)
 	payload = duk_require_buffer_data(ctx, 0, &write_size);
 
 	if (socket == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	write_socket(socket, payload, write_size);
 	return 0;
 }
@@ -3213,7 +3213,7 @@ js_new_Sound(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false);
 
 	if (!(sound = sound_new(filename)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
 	duk_push_sphere_obj(ctx, "Sound", sound);
 	return 1;
 }
@@ -3452,9 +3452,9 @@ js_new_SoundStream(duk_context* ctx)
 	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
 	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_ni(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
+		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
 	if (!(stream = stream_new(frequency, bits, channels)))
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "stream creation failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "stream creation failed");
 	duk_push_sphere_obj(ctx, "SoundStream", stream);
 	return 1;
 }
@@ -3561,19 +3561,19 @@ js_new_Surface(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = n_args >= 3 ? duk_pegasus_require_color(ctx, 2) : color_new(0, 0, 0, 0);
 		if (!(image = image_new(width, height)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 		image_fill(image, fill_color);
 	}
 	else if (duk_is_sphere_obj(ctx, 0, "Image")) {
 		src_image = duk_require_sphere_obj(ctx, 0, "Image");
 		if (!(image = image_clone(src_image)))
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_ni(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
+			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	}
 	duk_push_sphere_obj(ctx, "Surface", image);
 	return 1;
@@ -3629,7 +3629,7 @@ js_Surface_toImage(duk_context* ctx)
 	image = duk_require_sphere_obj(ctx, -1, "Surface");
 
 	if ((new_image = image_clone(image)) == NULL)
-		duk_error_ni(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 	duk_push_sphere_obj(ctx, "Image", new_image);
 	return 1;
 }
@@ -3644,7 +3644,7 @@ js_new_TextDecoder(duk_context* ctx)
 	const char* label = "utf-8";
 
 	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
 	num_args = duk_get_top(ctx);
 	if (num_args >= 1)
 		label = duk_require_string(ctx, 0);
@@ -3662,7 +3662,7 @@ js_new_TextDecoder(duk_context* ctx)
 		&& strcasecmp(label, "utf-8") != 0
 		&& strcasecmp(label, "utf8") != 0)
 	{
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "unsupported encoding '%s'", label);
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "unsupported encoding '%s'", label);
 	}
 
 	decoder = decoder_new(fatal, ignore_bom);
@@ -3738,12 +3738,12 @@ js_TextDecoder_decode(duk_context* ctx)
 	}
 
 	if (!(string = decoder_run(decoder, input, length)))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
 	duk_push_lstring_t(ctx, string);
 	lstr_free(string);
 	if (!streaming) {
 		if (!(string = decoder_finish(decoder)))
-			duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
+			duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "data is not valid utf-8");
 		duk_push_lstring_t(ctx, string);
 		lstr_free(string);
 		duk_concat(ctx, 2);
@@ -3757,7 +3757,7 @@ js_new_TextEncoder(duk_context* ctx)
 	encoder_t* encoder;
 
 	if (!duk_is_constructor_call(ctx))
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
 
 	encoder = encoder_new();
 	duk_push_sphere_obj(ctx, "TextEncoder", encoder);

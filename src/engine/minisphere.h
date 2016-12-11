@@ -49,13 +49,13 @@
 #define SPHERE_PATH_MAX 1024
 
 #if defined(__GNUC__)
-#define noreturn __attribute__((noreturn)) void
+#define no_return __attribute__((no_return)) void
 #elif defined(__clang__)
-#define noreturn __attribute__((noreturn)) void
+#define no_return __attribute__((no_return)) void
 #elif defined(_MSC_VER)
-#define noreturn __declspec(noreturn) void
+#define no_return __declspec(noreturn) void
 #else
-#define noreturn void
+#define no_return void
 #endif
 
 #if ALLEGRO_VERSION >= 5 && ALLEGRO_SUB_VERSION >= 2
@@ -77,8 +77,8 @@ extern font_t*              g_sys_font;
 extern int                  g_res_x;
 extern int                  g_res_y;
 
-noreturn abort_game        (const char* message);
+no_return abort_game        (const char* message);
 void     delay             (double time);
 void     do_events         (void);
-noreturn exit_game         (bool force_shutdown);
-noreturn restart_engine    (void);
+no_return exit_game         (bool force_shutdown);
+no_return restart_engine    (void);

@@ -295,7 +295,7 @@ on_js_error:
 	exit_game(false);
 }
 
-noreturn
+no_return
 abort_game(const char* message)
 {
 	show_error_screen(message);
@@ -341,7 +341,7 @@ do_events(void)
 	}
 }
 
-noreturn
+no_return
 exit_game(bool force_shutdown)
 {
 	if (force_shutdown) {
@@ -351,7 +351,7 @@ exit_game(bool force_shutdown)
 	longjmp(s_jmp_exit, 1);
 }
 
-noreturn
+no_return
 restart_engine(void)
 {
 	longjmp(s_jmp_restart, 1);

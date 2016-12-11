@@ -226,7 +226,7 @@ api_define_property(duk_context* ctx, const char* ctor_name, const char* name, d
 		duk_push_c_function(ctx, setter, DUK_VARARGS);
 		flags |= DUK_DEFPROP_HAVE_SETTER;
 	}
-	duk_def_prop(g_duk, obj_index, flags);
+	duk_def_prop(ctx, obj_index, flags);
 	if (ctor_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
@@ -290,8 +290,8 @@ api_define_type(duk_context* ctx, const char* name, duk_c_function finalizer)
 	duk_pop_3(ctx);
 }
 
-noreturn
-duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
+no_return
+duk_error_blamed(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
 	char*   filename;
@@ -299,16 +299,19 @@ duk_error_ni(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const c
 
 	// get filename and line number from Duktape call stack
 	dukrub_inspect_callstack_entry(ctx, -1 + blame_offset);
-	if (!duk_is_object(g_duk, -1)) {
-		dukrub_inspect_callstack_entry(ctx, -1);
+	if (!duk_is_object(ctx, -1)) {
+		// note: the topmost call is assumed to be a Duktape/C activation.  that's
+		//       probably not what's responsible for the error, so blame the function
+		//       just below it if there's nobody else to blame.
+		dukrub_inspect_callstack_entry(ctx, -2);
 		duk_replace(ctx, -2);
 	}
-	duk_get_prop_string(g_duk, -1, "lineNumber");
-	duk_get_prop_string(g_duk, -2, "function");
-	duk_get_prop_string(g_duk, -1, "fileName");
-	filename = strdup(duk_safe_to_string(g_duk, -1));
-	line_number = duk_to_int(g_duk, -3);
-	duk_pop_n(g_duk, 4);
+	duk_get_prop_string(ctx, -1, "lineNumber");
+	duk_get_prop_string(ctx, -2, "function");
+	duk_get_prop_string(ctx, -1, "fileName");
+	filename = strdup(duk_safe_to_string(ctx, -1));
+	line_number = duk_to_int(ctx, -3);
+	duk_pop_n(ctx, 4);
 
 	// construct an Error object
 	va_start(ap, fmt);

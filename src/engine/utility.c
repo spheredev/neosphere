@@ -150,7 +150,7 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
 	    || path_is_rooted(path))
 	{
-		duk_error_ni(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
 	}
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);

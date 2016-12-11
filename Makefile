@@ -35,8 +35,9 @@ engine_libs= \
    -lmng -lz -lm
 
 cell_sources=src/compiler/main.c \
-   src/shared/duktape.c src/shared/encoding.c src/shared/lstring.c \
-   src/shared/path.c src/shared/unicode.c src/shared/vector.c \
+   src/shared/duktape.c src/shared/duk_rubber.c src/shared/encoding.c \
+   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
+   src/shared/vector.c \
    src/compiler/assets.c src/compiler/build.c src/compiler/cellscript.c \
    src/compiler/spk_writer.c src/compiler/utility.c
 cell_libs= \
