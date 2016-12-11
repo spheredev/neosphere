@@ -104,8 +104,8 @@ Object.defineProperties(FromQuery.prototype,
 		}
 	}),
 
-	// refer to the miniRT API reference (miniRT-api.txt) to find out what each
-	// of these methods does.
+	// from() query operators.
+	// refer to the miniRT API reference to find out what each of these does.
 	all:        PROPDESC('wc', MAKEPOINT(MapSource, allOp)),
 	allIn:      PROPDESC('wc', MAKEPOINT(InSource, allOp)),
 	any:        PROPDESC('wc', MAKEPOINT(MapSource, anyOp)),
@@ -432,7 +432,7 @@ function SampleSource(uniqueOnly)
 			var item;
 
 			if (m_numSamples++ < m_count) {
-				index = random.discrete(0, m_items.length);
+				index = random.discrete(0, m_items.length - 1);
 				item = m_items[index];
 				if (uniqueOnly)
 					m_items.splice(index, 1);
