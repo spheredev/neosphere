@@ -1,8 +1,12 @@
 #include "cell.h"
-#include "cellscript.h"
+#include "api.h"
 
 #include "assets.h"
 #include "encoding.h"
+
+static void define_accessor    (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter);
+static void define_function    (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn);
+static void define_static_prop (duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter);
 
 static duk_ret_t js_system_get_name    (duk_context* ctx);
 static duk_ret_t js_system_get_version (duk_context* ctx);
@@ -21,12 +25,41 @@ api_init(duk_context* ctx)
 	duk_pop(ctx);
 
 	// register the Cellscript API
-	api_define_static_prop(ctx, "system", "name", js_system_get_name, NULL);
-	api_define_static_prop(ctx, "system", "version", js_system_get_version, NULL);
+	define_static_prop(ctx, "system", "name", js_system_get_name, NULL);
+	define_static_prop(ctx, "system", "version", js_system_get_version, NULL);
 }
 
-void
-api_define_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
+static void
+define_accessor(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
+{
+	duk_uint_t flags;
+	int        obj_index;
+
+	duk_push_global_object(ctx);
+	if (ctor_name != NULL) {
+		duk_push_global_stash(ctx);
+		duk_get_prop_string(ctx, -1, "prototypes");
+		duk_get_prop_string(ctx, -1, ctor_name);
+	}
+	obj_index = duk_normalize_index(ctx, -1);
+	duk_push_string(ctx, name);
+	flags = DUK_DEFPROP_SET_CONFIGURABLE;
+	if (getter != NULL) {
+		duk_push_c_function(ctx, getter, DUK_VARARGS);
+		flags |= DUK_DEFPROP_HAVE_GETTER;
+	}
+	if (setter != NULL) {
+		duk_push_c_function(ctx, setter, DUK_VARARGS);
+		flags |= DUK_DEFPROP_HAVE_SETTER;
+	}
+	duk_def_prop(ctx, obj_index, flags);
+	if (ctor_name != NULL)
+		duk_pop_3(ctx);
+	duk_pop(ctx);
+}
+
+static void
+define_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
 
@@ -56,37 +89,8 @@ api_define_function(duk_context* ctx, const char* namespace_name, const char* na
 	duk_pop(ctx);
 }
 
-void
-api_define_property(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
-{
-	duk_uint_t flags;
-	int        obj_index;
-
-	duk_push_global_object(ctx);
-	if (ctor_name != NULL) {
-		duk_push_global_stash(ctx);
-		duk_get_prop_string(ctx, -1, "prototypes");
-		duk_get_prop_string(ctx, -1, ctor_name);
-	}
-	obj_index = duk_normalize_index(ctx, -1);
-	duk_push_string(ctx, name);
-	flags = DUK_DEFPROP_SET_CONFIGURABLE;
-	if (getter != NULL) {
-		duk_push_c_function(ctx, getter, DUK_VARARGS);
-		flags |= DUK_DEFPROP_HAVE_GETTER;
-	}
-	if (setter != NULL) {
-		duk_push_c_function(ctx, setter, DUK_VARARGS);
-		flags |= DUK_DEFPROP_HAVE_SETTER;
-	}
-	duk_def_prop(ctx, obj_index, flags);
-	if (ctor_name != NULL)
-		duk_pop_3(ctx);
-	duk_pop(ctx);
-}
-
-void
-api_define_static_prop(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter)
+static void
+define_static_prop(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	int       flags;
 	duk_idx_t obj_index;

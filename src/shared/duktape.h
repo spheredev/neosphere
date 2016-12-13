@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit f8f789e9c1a4bc9020d441d4d2eceb2dce273305 (v1.5.0-1161-gf8f789e9).
+ *  Git commit 787fee61f97edf8d8a66ce8a6a2683f1f6f34a46 (v1.5.0-1212-g787fee61).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -129,7 +129,7 @@
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
  */
 
-#ifndef DUKTAPE_H_INCLUDED
+#if !defined(DUKTAPE_H_INCLUDED)
 #define DUKTAPE_H_INCLUDED
 
 #define DUK_SINGLE_FILE
@@ -247,10 +247,10 @@ struct duk_time_components {
  */
 
 /* Duktape version, (major * 10000) + (minor * 100) + patch.  Allows C code
- * to #ifdef against Duktape API version.  The same value is also available
- * to Ecmascript code in Duktape.version.  Unofficial development snapshots
- * have 99 for patch level (e.g. 0.10.99 would be a development version
- * after 0.10.0 but before the next official release).
+ * to #if (DUK_VERSION >= NNN) against Duktape API version.  The same value
+ * is also available to Ecmascript code in Duktape.version.  Unofficial
+ * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
+ * development version after 0.10.0 but before the next official release).
  */
 #define DUK_VERSION                       19999L
 
@@ -259,8 +259,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "f8f789e9c1a4bc9020d441d4d2eceb2dce273305"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1161-gf8f789e9"
+#define DUK_GIT_COMMIT                    "787fee61f97edf8d8a66ce8a6a2683f1f6f34a46"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1212-g787fee61"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -394,7 +394,7 @@ struct duk_time_components {
  *  which is ugly and not thread safe.
  */
 
-#ifndef DUK_API_VARIADIC_MACROS
+#if !defined(DUK_API_VARIADIC_MACROS)
 DUK_EXTERNAL_DECL const char *duk_api_global_filename;
 DUK_EXTERNAL_DECL duk_int_t duk_api_global_line;
 #endif
@@ -1276,7 +1276,7 @@ DUK_EXTERNAL_DECL const void * const duk_rom_compressed_pointers[];
  *  duk_tval values.  See: misc/clang_aliasing.c.
  */
 
-#ifndef DUK_DBLUNION_H_INCLUDED
+#if !defined(DUK_DBLUNION_H_INCLUDED)
 #define DUK_DBLUNION_H_INCLUDED
 
 /*
@@ -1446,7 +1446,7 @@ typedef union duk_double_union duk_double_union;
  *  feature that while doubles have a mixed byte order (32107654), unsigned
  *  long long values has a little endian byte order (76543210).  When writing
  *  a logical double value through a ULL pointer, the 32-bit words need to be
- *  swapped; hence the #ifdefs below for ULL writes with DUK_USE_DOUBLE_ME.
+ *  swapped; hence the #if defined()s below for ULL writes with DUK_USE_DOUBLE_ME.
  *  This is not full ARM support but suffices for some environments.
  */
 
