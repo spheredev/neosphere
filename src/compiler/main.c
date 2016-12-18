@@ -1,6 +1,5 @@
 #include "cell.h"
 
-#include "assets.h"
 #include "build.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
@@ -17,7 +16,6 @@ int
 main(int argc, char* argv[])
 {
 	int      retval = EXIT_FAILURE;
-	build_t* build = NULL;
 
 	srand((unsigned int)time(NULL));
 
@@ -28,21 +26,12 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
-	if (!(build = build_new(s_in_path, s_out_path, s_want_source_map)))
-		goto shutdown;
-	if (!build_eval_rule(build, s_target_name)) goto shutdown;
-	if (!build_run(build)) goto shutdown;
 	retval = EXIT_SUCCESS;
 
 shutdown:
-	if (build != NULL) {
-		if (!build_is_ok(build, NULL, NULL))
-			retval = EXIT_FAILURE;
-	}
 	path_free(s_in_path);
 	path_free(s_out_path);
 	free(s_target_name);
-	build_free(build);
 	return retval;
 }
 

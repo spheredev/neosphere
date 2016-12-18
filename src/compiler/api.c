@@ -1,7 +1,6 @@
 #include "cell.h"
 #include "api.h"
 
-#include "assets.h"
 #include "encoding.h"
 
 static void define_accessor    (duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter);

@@ -182,6 +182,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\compiler\api.c" />
+    <ClCompile Include="..\src\compiler\target.c" />
+    <ClCompile Include="..\src\compiler\tool.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\duk_rubber.c" />
     <ClCompile Include="..\src\shared\encoding.c" />
@@ -189,7 +191,6 @@
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
     <ClCompile Include="..\src\shared\vector.c" />
-    <ClCompile Include="..\src\compiler\assets.c" />
     <ClCompile Include="..\src\compiler\build.c" />
     <ClCompile Include="..\src\compiler\main.c" />
     <ClCompile Include="..\src\compiler\spk_writer.c" />
@@ -197,6 +198,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\compiler\api.h" />
+    <ClInclude Include="..\src\compiler\target.h" />
+    <ClInclude Include="..\src\compiler\tool.h" />
     <ClInclude Include="..\src\shared\duktape.h" />
     <ClInclude Include="..\src\shared\duk_config.h" />
     <ClInclude Include="..\src\shared\duk_rubber.h" />
@@ -207,7 +210,6 @@
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
-    <ClInclude Include="..\src\compiler\assets.h" />
     <ClInclude Include="..\src\compiler\build.h" />
     <ClInclude Include="..\src\compiler\cell.h" />
     <ClInclude Include="..\src\compiler\posix.h" />

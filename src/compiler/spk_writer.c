@@ -56,7 +56,8 @@ spk_close(spk_writer_t* writer)
 
 	iter_t iter;
 
-	if (writer == NULL) return;
+	if (writer == NULL)
+		return;
 	
 	// write package index
 	idx_offset = ftell(writer->file);

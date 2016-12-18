@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 787fee61f97edf8d8a66ce8a6a2683f1f6f34a46 (v1.5.0-1212-g787fee61).
+ *  Git commit 8c4f7a46c6e7b7ac02db62d0aeb7262402de57a5 (v1.5.0-1256-g8c4f7a46).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -259,8 +259,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "787fee61f97edf8d8a66ce8a6a2683f1f6f34a46"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1212-g787fee61"
+#define DUK_GIT_COMMIT                    "8c4f7a46c6e7b7ac02db62d0aeb7262402de57a5"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1256-g8c4f7a46"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -784,6 +784,7 @@ DUK_EXTERNAL_DECL duk_c_function duk_get_c_function(duk_context *ctx, duk_idx_t 
 DUK_EXTERNAL_DECL duk_context *duk_get_context(duk_context *ctx, duk_idx_t idx);
 DUK_EXTERNAL_DECL void *duk_get_heapptr(duk_context *ctx, duk_idx_t idx);
 DUK_EXTERNAL_DECL duk_size_t duk_get_length(duk_context *ctx, duk_idx_t idx);
+DUK_EXTERNAL_DECL void duk_set_length(duk_context *ctx, duk_idx_t idx, duk_size_t len);
 
 /*
  *  Require operations: no coercion, throw error if index or type
