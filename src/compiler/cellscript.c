@@ -3,6 +3,8 @@
 
 #include "api.h"
 
+static duk_ret_t js_new_Tool       (duk_context* ctx);
+static duk_ret_t js_Tool_finalize  (duk_context* ctx);
 static duk_ret_t js_system_name    (duk_context* ctx);
 static duk_ret_t js_system_version (duk_context* ctx);
 
@@ -13,6 +15,7 @@ cell_api_init(duk_context* ctx)
 
 	api_define_function(ctx, "system", "name", js_system_name);
 	api_define_function(ctx, "system", "version", js_system_version);
+
 }
 
 static duk_ret_t

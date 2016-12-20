@@ -403,17 +403,17 @@ initialize_pegasus_api(duk_context* ctx)
 	// initialize the Sphere v2 API
 	api_define_class(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
+	api_define_function(ctx, "Color", "of", js_Color_of);
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
-	api_define_method(ctx, "Color", "of", js_Color_of);
 	api_define_function(ctx, "Dispatch", "cancel", js_Dispatch_cancel);
 	api_define_function(ctx, "Dispatch", "cancelAll", js_Dispatch_cancelAll);
 	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);
 	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
 	api_define_function(ctx, "Dispatch", "onRender", js_Dispatch_onRender);
 	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
-	api_define_type(ctx, "FileStream", js_FileStream_finalize);
+	api_define_class(ctx, "FileStream", NULL, js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "fileName", js_FileStream_get_fileName, NULL);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
@@ -438,8 +438,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
 	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
 	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
-	api_define_type(ctx, "JobToken", js_JobToken_finalize);
-	api_define_type(ctx, "Joystick", js_Joystick_finalize);
+	api_define_class(ctx, "JobToken", NULL, js_JobToken_finalize);
+	api_define_class(ctx, "Joystick", NULL, js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function(ctx, "Joystick", "getDevices", js_Joystick_getDevices);
 	api_define_property(ctx, "Joystick", "name", js_Joystick_get_name, NULL);
@@ -447,7 +447,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Joystick", "numButtons", js_Joystick_get_numButtons, NULL);
 	api_define_method(ctx, "Joystick", "getPosition", js_Joystick_getPosition);
 	api_define_method(ctx, "Joystick", "isPressed", js_Joystick_isPressed);
-	api_define_type(ctx, "Keyboard", NULL);
+	api_define_class(ctx, "Keyboard", NULL, NULL);
 	api_define_static_prop(ctx, "Keyboard", "Default", js_Keyboard_get_Default, NULL);
 	api_define_property(ctx, "Keyboard", "capsLock", js_Keyboard_get_capsLock, NULL);
 	api_define_property(ctx, "Keyboard", "numLock", js_Keyboard_get_numLock, NULL);
@@ -466,7 +466,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Model", "setFloat", js_Model_setFloat);
 	api_define_method(ctx, "Model", "setInt", js_Model_setInt);
 	api_define_method(ctx, "Model", "setMatrix", js_Model_setMatrix);
-	api_define_type(ctx, "Mouse", NULL);
+	api_define_class(ctx, "Mouse", NULL, NULL);
 	api_define_static_prop(ctx, "Mouse", "Default", js_Mouse_get_Default, NULL);
 	api_define_property(ctx, "Mouse", "x", js_Mouse_get_x, NULL);
 	api_define_property(ctx, "Mouse", "y", js_Mouse_get_y, NULL);

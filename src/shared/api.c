@@ -71,15 +71,13 @@ api_define_const(duk_context* ctx, const char* enum_name, const char* name, doub
 }
 
 void
-api_define_class(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
+api_define_class(duk_context* ctx, const char* name, duk_c_function constructor, duk_c_function finalizer)
 {
-	duk_push_global_object(ctx);
-	duk_push_c_function(ctx, fn, DUK_VARARGS);
-	duk_push_string(ctx, "name");
-	duk_push_string(ctx, name);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-
-	// create a prototype. Duktape won't assign one for us.
+	// note: if no constructor function is given, a constructor binding will not be created.
+	//       this is useful for types which can only be created via factory methods.
+	
+	// construct a prototype for the new class, leaving it on the
+	// value stack afterwards.
 	duk_push_object(ctx);
 	duk_push_string(ctx, name);
 	duk_put_prop_string(ctx, -2, "\xFF" "ctor");
@@ -88,26 +86,32 @@ api_define_class(duk_context* ctx, const char* name, duk_c_function fn, duk_c_fu
 		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
 	}
 
-	// save the prototype in the prototype stash. for full compatibility with
-	// Sphere 1.5, we have to allow native objects to be created through the
-	// legacy APIs even if the corresponding constructor is overwritten or shadowed.
-	// for that to work, the prototype must remain accessible.
+	// save the prototype to the Duktape global stash.  this ensures it remains
+	// accessible internally even if the constructor is overwritten.
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "prototypes");
 	duk_dup(ctx, -3);
 	duk_put_prop_string(ctx, -2, name);
 	duk_pop_2(ctx);
 
-	// attach prototype to constructor
-	duk_push_string(ctx, "prototype");
-	duk_insert(ctx, -2);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_SET_WRITABLE);
-	duk_push_string(ctx, name);
-	duk_insert(ctx, -2);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	if (constructor != NULL) {
+		duk_push_c_function(ctx, constructor, DUK_VARARGS);
+		duk_push_string(ctx, "name");
+		duk_push_string(ctx, name);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
+		duk_push_string(ctx, "prototype");
+		duk_dup(ctx, -3);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_WRITABLE);
+		
+		duk_push_global_object(ctx);
+		duk_push_string(ctx, name);
+		duk_dup(ctx, -3);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_SET_WRITABLE
+			| DUK_DEFPROP_SET_CONFIGURABLE);
+		duk_pop_2(ctx);
+	}
+	
 	duk_pop(ctx);
 }
 
@@ -266,26 +270,6 @@ api_define_static_prop(duk_context* ctx, const char* namespace_name, const char*
 	if (namespace_name != NULL)
 		duk_pop(ctx);
 	duk_pop(ctx);
-}
-
-void
-api_define_type(duk_context* ctx, const char* name, duk_c_function finalizer)
-{
-	// construct a prototype for our new type
-	duk_push_object(ctx);
-	duk_push_string(ctx, name);
-	duk_put_prop_string(ctx, -2, "\xFF" "ctor");
-	if (finalizer != NULL) {
-		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
-		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
-	}
-
-	// stash the new prototype
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "prototypes");
-	duk_dup(ctx, -3);
-	duk_put_prop_string(ctx, -2, name);
-	duk_pop_3(ctx);
 }
 
 void

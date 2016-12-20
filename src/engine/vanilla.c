@@ -420,7 +420,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
 	api_define_function(ctx, NULL, "UnbindKey", js_UnbindKey);
 
-	api_define_type(ctx, "ssAnimation", js_Animation_finalize);
+	api_define_class(ctx, "ssAnimation", NULL, js_Animation_finalize);
 	api_define_property(ctx, "ssAnimation", "width", js_Animation_get_width, NULL);
 	api_define_property(ctx, "ssAnimation", "height", js_Animation_get_height, NULL);
 	api_define_method(ctx, "ssAnimation", "getDelay", js_Animation_getDelay);
@@ -429,19 +429,19 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssAnimation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
 	api_define_method(ctx, "ssAnimation", "readNextFrame", js_Animation_readNextFrame);
 
-	api_define_type(ctx, "ssByteArray", js_ByteArray_finalize);
+	api_define_class(ctx, "ssByteArray", NULL, js_ByteArray_finalize);
 	api_define_property(ctx, "ssByteArray", "length", js_ByteArray_get_length, NULL);
 	api_define_method(ctx, "ssByteArray", "concat", js_ByteArray_concat);
 	api_define_method(ctx, "ssByteArray", "slice", js_ByteArray_slice);
 	api_define_method(ctx, "ssByteArray", "toString", js_ByteArray_toString);
 
-	api_define_type(ctx, "ssColor", NULL);
+	api_define_class(ctx, "ssColor", NULL, NULL);
 	api_define_method(ctx, "ssColor", "toString", js_Color_toString);
 
-	api_define_type(ctx, "ssColorMatrix", NULL);
+	api_define_class(ctx, "ssColorMatrix", NULL, NULL);
 	api_define_method(ctx, "ssColorMatrix", "toString", js_ColorMatrix_toString);
 
-	api_define_type(ctx, "ssFile", js_File_finalize);
+	api_define_class(ctx, "ssFile", NULL, js_File_finalize);
 	api_define_method(ctx, "ssFile", "close", js_File_close);
 	api_define_method(ctx, "ssFile", "flush", js_File_flush);
 	api_define_method(ctx, "ssFile", "getKey", js_File_getKey);
@@ -450,7 +450,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssFile", "toString", js_File_toString);
 	api_define_method(ctx, "ssFile", "write", js_File_write);
 
-	api_define_type(ctx, "ssFont", js_Font_finalize);
+	api_define_class(ctx, "ssFont", NULL, js_Font_finalize);
 	api_define_method(ctx, "ssFont", "clone", js_Font_clone);
 	api_define_method(ctx, "ssFont", "drawText", js_Font_drawText);
 	api_define_method(ctx, "ssFont", "drawTextBox", js_Font_drawTextBox);
@@ -465,7 +465,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssFont", "toString", js_Font_toString);
 	api_define_method(ctx, "ssFont", "wordWrapString", js_Font_wordWrapString);
 
-	api_define_type(ctx, "ssImage", js_Image_finalize);
+	api_define_class(ctx, "ssImage", NULL, js_Image_finalize);
 	api_define_property(ctx, "ssImage", "height", js_Image_get_height, NULL);
 	api_define_property(ctx, "ssImage", "width", js_Image_get_width, NULL);
 	api_define_method(ctx, "ssImage", "blit", js_Image_blit);
@@ -479,13 +479,13 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssImage", "zoomBlit", js_Image_zoomBlit);
 	api_define_method(ctx, "ssImage", "zoomBlitMask", js_Image_zoomBlitMask);
 
-	api_define_type(ctx, "ssLogger", js_Logger_finalize);
+	api_define_class(ctx, "ssLogger", NULL, js_Logger_finalize);
 	api_define_method(ctx, "ssLogger", "toString", js_Logger_toString);
 	api_define_method(ctx, "ssLogger", "beginBlock", js_Logger_beginBlock);
 	api_define_method(ctx, "ssLogger", "endBlock", js_Logger_endBlock);
 	api_define_method(ctx, "ssLogger", "write", js_Logger_write);
 
-	api_define_type(ctx, "ssRawFile", js_RawFile_finalize);
+	api_define_class(ctx, "ssRawFile", NULL, js_RawFile_finalize);
 	api_define_method(ctx, "ssRawFile", "close", js_RawFile_close);
 	api_define_method(ctx, "ssRawFile", "getPosition", js_RawFile_getPosition);
 	api_define_method(ctx, "ssRawFile", "getSize", js_RawFile_getSize);
@@ -494,7 +494,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssRawFile", "toString", js_RawFile_toString);
 	api_define_method(ctx, "ssRawFile", "write", js_RawFile_write);
 
-	api_define_type(ctx, "ssSocket", js_Socket_finalize);
+	api_define_class(ctx, "ssSocket", NULL, js_Socket_finalize);
 	api_define_method(ctx, "ssSocket", "close", js_Socket_close);
 	api_define_method(ctx, "ssSocket", "getPendingReadSize", js_Socket_getPendingReadSize);
 	api_define_method(ctx, "ssSocket", "isConnected", js_Socket_isConnected);
@@ -502,7 +502,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSocket", "toString", js_Socket_toString);
 	api_define_method(ctx, "ssSocket", "write", js_Socket_write);
 
-	api_define_type(ctx, "ssSound", js_Sound_finalize);
+	api_define_class(ctx, "ssSound", NULL, js_Sound_finalize);
 	api_define_method(ctx, "ssSound", "getLength", js_Sound_getLength);
 	api_define_method(ctx, "ssSound", "getPan", js_Sound_getPan);
 	api_define_method(ctx, "ssSound", "getPitch", js_Sound_getPitch);
@@ -522,12 +522,12 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSound", "stop", js_Sound_stop);
 	api_define_method(ctx, "ssSound", "toString", js_Sound_toString);
 
-	api_define_type(ctx, "ssSpriteset", js_Spriteset_finalize);
+	api_define_class(ctx, "ssSpriteset", NULL, js_Spriteset_finalize);
 	api_define_property(ctx, "ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
 	api_define_method(ctx, "ssSpriteset", "clone", js_Spriteset_clone);
 	api_define_method(ctx, "ssSpriteset", "toString", js_Spriteset_toString);
 
-	api_define_type(ctx, "ssSurface", js_Surface_finalize);
+	api_define_class(ctx, "ssSurface", NULL, js_Surface_finalize);
 	api_define_property(ctx, "ssSurface", "height", js_Surface_get_height, NULL);
 	api_define_property(ctx, "ssSurface", "width", js_Surface_get_width, NULL);
 	api_define_method(ctx, "ssSurface", "applyColorFX", js_Surface_applyColorFX);
@@ -560,7 +560,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "setPixel", js_Surface_setPixel);
 	api_define_method(ctx, "ssSurface", "toString", js_Surface_toString);
 
-	api_define_type(ctx, "ssWindowStyle", js_WindowStyle_finalize);
+	api_define_class(ctx, "ssWindowStyle", NULL, js_WindowStyle_finalize);
 	api_define_method(ctx, "ssWindowStyle", "drawWindow", js_WindowStyle_drawWindow);
 	api_define_method(ctx, "ssWindowStyle", "getColorMask", js_WindowStyle_getColorMask);
 	api_define_method(ctx, "ssWindowStyle", "setColorMask", js_WindowStyle_setColorMask);
