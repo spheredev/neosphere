@@ -92,7 +92,7 @@ path_cstr(const path_t* path)
 }
 
 const char*
-path_ext_cstr(const path_t* path)
+path_extension(const path_t* path)
 {
 	char* p;
 	
@@ -107,13 +107,13 @@ path_ext_cstr(const path_t* path)
 }
 
 const char*
-path_filename_cstr(const path_t* path)
+path_filename(const path_t* path)
 {
 	return path->filename;
 }
 
 const char*
-path_hop_cstr(const path_t* path, size_t idx)
+path_hop(const path_t* path, size_t idx)
 {
 	return path->hops[idx];
 }
@@ -263,7 +263,7 @@ path_cmp(const path_t* path1, const path_t* path2)
 }
 
 path_t*
-path_collapse(path_t* path, bool collapse_double_dots)
+path_collapse(path_t* path, bool collapse_uplevel)
 {
 	const char* hop;
 	bool        is_rooted;
@@ -272,11 +272,11 @@ path_collapse(path_t* path, bool collapse_double_dots)
 
 	is_rooted = path_is_rooted(path);
 	for (i = 0; i < path_num_hops(path); ++i) {
-		hop = path_hop_cstr(path, i);
+		hop = path_hop(path, i);
 		if (strcmp(hop, ".") == 0)
 			path_remove_hop(path, i--);
 		else if (strcmp(hop, "..") == 0 && i > 0) {
-			if (!collapse_double_dots)
+			if (!collapse_uplevel)
 				continue;
 			path_remove_hop(path, i--);
 			if (i > 0 || !is_rooted)  // don't strip the root directory
@@ -311,13 +311,13 @@ path_mkdir(const path_t* path)
 	// appending an empty string to a path is a no-op, so we have to
 	// explicitly check for an empty string in the first hop and root the
 	// path manually.
-	parent_path = path_num_hops(path) > 0 && strcmp(path_hop_cstr(path, 0), "") == 0
+	parent_path = path_num_hops(path) > 0 && strcmp(path_hop(path, 0), "") == 0
 		? path_new("/") : path_new("./");
 	
 	// create directories recursively, starting from the rootmost
 	// ancestor and working our way down.
 	for (i = 0; i < path->num_hops; ++i) {
-		path_append_dir(parent_path, path_hop_cstr(path, i));
+		path_append_dir(parent_path, path_hop(path, i));
 		is_ok = mkdir(path_cstr(parent_path), 0777) == 0;
 	}
 	path_free(parent_path);
@@ -332,7 +332,7 @@ path_rebase(path_t* path, const path_t* root)
 
 	size_t i;
 	
-	if (path_filename_cstr(root) != NULL)
+	if (path_filename(root) != NULL)
 		return NULL;
 	if (path_is_rooted(path))
 		return path;

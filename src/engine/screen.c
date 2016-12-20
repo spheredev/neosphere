@@ -273,8 +273,8 @@ screen_flip(screen_t* obj, int framerate)
 			al_restore_state(&old_state);
 			game_path = fs_path(g_fs);
 			game_filename = path_is_file(game_path)
-				? path_filename_cstr(game_path)
-				: path_hop_cstr(game_path, path_num_hops(game_path) - 1);
+				? path_filename(game_path)
+				: path_hop(game_path, path_num_hops(game_path) - 1);
 			path = path_rebase(path_new("minisphere/screens/"), homepath());
 			path_mkdir(path);
 			time(&now);

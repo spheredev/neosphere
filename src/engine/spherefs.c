@@ -82,11 +82,11 @@ fs_new(const char* game_path)
 		console_log(1, "synthesizing manifest for `%s` in sandbox #%u", path_cstr(path),
 			s_next_sandbox_id);
 		fs->version = 1;
-		fs->name = lstr_new(path_filename_cstr(path));
+		fs->name = lstr_new(path_filename(path));
 		fs->author = lstr_new("Author Unknown");
 		fs->summary = lstr_new(path_cstr(path));
 		fs->res_x = 320; fs->res_y = 240;
-		fs->script_path = path_new(path_filename_cstr(path));
+		fs->script_path = path_new(path_filename(path));
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
@@ -271,7 +271,7 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 		path_collapse(path, true);
 	}
 	else if (path_hop_cmp(path, 0, "#") || path_hop_cmp(path, 0, "~")) {
-		prefix = strdup(path_hop_cstr(path, 0));
+		prefix = strdup(path_hop(path, 0));
 		path_remove_hop(path, 0);
 		path_collapse(path, true);
 		path_insert_hop(path, 0, prefix);
@@ -307,7 +307,7 @@ fs_list_dir(const sandbox_t* fs, const char* dirname, const char* base_dir, bool
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				file_path = path_new(al_get_fs_entry_name(file_info));
-				filename = lstr_new(path_filename_cstr(file_path));
+				filename = lstr_new(path_filename(file_path));
 				if (al_get_fs_entry_mode(file_info) & type_flag)
 					vector_push(list, &filename);
 				path_free(file_path);

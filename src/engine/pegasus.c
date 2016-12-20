@@ -774,7 +774,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 	duk_put_prop_string(ctx, -2, filename);
 	duk_pop_2(ctx);
 
-	if (strcmp(path_ext_cstr(file_path), ".json") == 0) {
+	if (strcmp(path_extension(file_path), ".json") == 0) {
 		// JSON file, decode to JavaScript object
 		duk_push_lstring_t(ctx, code_string);
 		lstr_free(code_string);
@@ -948,7 +948,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		path_collapse(path, true);
 		free(filename);
 		if (sfs_fexist(g_fs, path_cstr(path), NULL)) {
-			if (strcmp(path_filename_cstr(path), "package.json") != 0)
+			if (strcmp(path_filename(path), "package.json") != 0)
 				return path;
 			else {
 				if (!(main_path = load_package_json(path_cstr(path))))

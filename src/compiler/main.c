@@ -78,7 +78,7 @@ parse_cmdline(int argc, char* argv[])
 					return false;
 				}
 				s_out_path = path_new(argv[i]);
-				if (path_filename_cstr(s_out_path) == NULL) {
+				if (path_filename(s_out_path) == NULL) {
 					printf("cell: `%s` argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
@@ -118,7 +118,7 @@ parse_cmdline(int argc, char* argv[])
 						return false;
 					}
 					s_out_path = path_new(argv[i]);
-					if (path_filename_cstr(s_out_path) == NULL) {
+					if (path_filename(s_out_path) == NULL) {
 						printf("cell: `%s` argument cannot be a directory\n", short_args);
 						return false;
 					}
