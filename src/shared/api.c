@@ -28,11 +28,6 @@ api_init(duk_context* ctx)
 }
 
 void
-api_uninit(void)
-{
-}
-
-void
 api_define_const(duk_context* ctx, const char* enum_name, const char* name, double value)
 {
 	duk_push_global_object(ctx);
@@ -76,7 +71,7 @@ api_define_const(duk_context* ctx, const char* enum_name, const char* name, doub
 }
 
 void
-api_define_ctor(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
+api_define_class(duk_context* ctx, const char* name, duk_c_function fn, duk_c_function finalizer)
 {
 	duk_push_global_object(ctx);
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
@@ -347,23 +342,15 @@ duk_is_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 }
 
 void
-duk_push_class_obj(duk_context* ctx, const char* ctor_name, void* udata)
+duk_push_class_obj(duk_context* ctx, const char* class_name, void* udata)
 {
-	duk_idx_t obj_index;
-
 	duk_push_object(ctx);
-	obj_index = duk_normalize_index(ctx, -1);
-	duk_push_pointer(ctx, udata);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_to_class_obj(ctx, -1, class_name, udata);
+	
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "prototypes");
-	duk_get_prop_string(ctx, -1, ctor_name);
-	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor")) {
-		duk_set_finalizer(ctx, obj_index);
-	}
-	else
-		duk_pop(ctx);
-	duk_set_prototype(ctx, obj_index);
+	duk_get_prop_string(ctx, -1, class_name);
+	duk_set_prototype(ctx, -4);
 	duk_pop_2(ctx);
 }
 
@@ -379,4 +366,22 @@ duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 	udata = duk_get_pointer(ctx, -1);
 	duk_pop(ctx);
 	return udata;
+}
+
+void
+duk_to_class_obj(duk_context* ctx, duk_idx_t idx, const char* class_name, void* udata)
+{
+	idx = duk_require_normalize_index(ctx, idx);
+
+	duk_push_pointer(ctx, udata);
+	duk_put_prop_string(ctx, idx, "\xFF" "udata");
+
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "prototypes");
+	duk_get_prop_string(ctx, -1, class_name);
+	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor"))
+		duk_set_finalizer(ctx, idx);
+	else
+		duk_pop(ctx);
+	duk_pop_3(ctx);
 }

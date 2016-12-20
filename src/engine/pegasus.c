@@ -401,7 +401,7 @@ initialize_pegasus_api(duk_context* ctx)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// initialize the Sphere v2 API
-	api_define_ctor(ctx, "Color", js_new_Color, NULL);
+	api_define_class(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
@@ -420,7 +420,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "FileStream", "close", js_FileStream_close);
 	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
 	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
-	api_define_ctor(ctx, "Font", js_new_Font, js_Font_finalize);
+	api_define_class(ctx, "Font", js_new_Font, js_Font_finalize);
 	api_define_static_prop(ctx, "Font", "Default", js_Font_get_Default, NULL);
 	api_define_property(ctx, "Font", "fileName", js_Font_get_fileName, NULL);
 	api_define_property(ctx, "Font", "height", js_Font_get_height, NULL);
@@ -434,7 +434,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "rmdir", js_FS_rmdir);
 	api_define_function(ctx, "FS", "unlink", js_FS_unlink);
-	api_define_ctor(ctx, "Image", js_new_Image, js_Image_finalize);
+	api_define_class(ctx, "Image", js_new_Image, js_Image_finalize);
 	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
 	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
 	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
@@ -456,10 +456,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Keyboard", "getChar", js_Keyboard_getChar);
 	api_define_method(ctx, "Keyboard", "getKey", js_Keyboard_getKey);
 	api_define_method(ctx, "Keyboard", "isPressed", js_Keyboard_isPressed);
-	api_define_ctor(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
+	api_define_class(ctx, "Mixer", js_new_Mixer, js_Mixer_finalize);
 	api_define_static_prop(ctx, "Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_define_property(ctx, "Mixer", "volume", js_Mixer_get_volume, js_Mixer_set_volume);
-	api_define_ctor(ctx, "Model", js_new_Model, js_Model_finalize);
+	api_define_class(ctx, "Model", js_new_Model, js_Model_finalize);
 	api_define_property(ctx, "Model", "shader", js_Model_get_shader, js_Model_set_shader);
 	api_define_property(ctx, "Model", "transform", js_Model_get_transform, js_Model_set_transform);
 	api_define_method(ctx, "Model", "draw", js_Model_draw);
@@ -473,20 +473,20 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Mouse", "clearQueue", js_Mouse_clearQueue);
 	api_define_method(ctx, "Mouse", "getEvent", js_Mouse_getEvent);
 	api_define_method(ctx, "Mouse", "isPressed", js_Mouse_isPressed);
-	api_define_ctor(ctx, "RNG", js_new_RNG, js_RNG_finalize);
+	api_define_class(ctx, "RNG", js_new_RNG, js_RNG_finalize);
 	api_define_function(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
 	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_define_method(ctx, "RNG", "next", js_RNG_next);
-	api_define_ctor(ctx, "Server", js_new_Server, js_Server_finalize);
+	api_define_class(ctx, "Server", js_new_Server, js_Server_finalize);
 	api_define_method(ctx, "Server", "close", js_Server_close);
 	api_define_method(ctx, "Server", "accept", js_Server_accept);
-	api_define_ctor(ctx, "Shader", js_new_Shader, js_Shader_finalize);
+	api_define_class(ctx, "Shader", js_new_Shader, js_Shader_finalize);
 	api_define_static_prop(ctx, "Shader", "Default", js_Shader_get_Default, NULL);
-	api_define_ctor(ctx, "Shape", js_new_Shape, js_Shape_finalize);
+	api_define_class(ctx, "Shape", js_new_Shape, js_Shape_finalize);
 	api_define_property(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
 	api_define_method(ctx, "Shape", "draw", js_Shape_draw);
-	api_define_ctor(ctx, "Socket", js_new_Socket, js_Socket_finalize);
+	api_define_class(ctx, "Socket", js_new_Socket, js_Socket_finalize);
 	api_define_property(ctx, "Socket", "bytesPending", js_Socket_get_bytesPending, NULL);
 	api_define_property(ctx, "Socket", "connected", js_Socket_get_connected, NULL);
 	api_define_property(ctx, "Socket", "remoteAddress", js_Socket_get_remoteAddress, NULL);
@@ -494,13 +494,13 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Socket", "close", js_Socket_close);
 	api_define_method(ctx, "Socket", "read", js_Socket_read);
 	api_define_method(ctx, "Socket", "write", js_Socket_write);
-	api_define_ctor(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
+	api_define_class(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
 	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
 	api_define_method(ctx, "SoundStream", "buffer", js_SoundStream_buffer);
 	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
 	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
 	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
-	api_define_ctor(ctx, "Sound", js_new_Sound, js_Sound_finalize);
+	api_define_class(ctx, "Sound", js_new_Sound, js_Sound_finalize);
 	api_define_property(ctx, "Sound", "fileName", js_Sound_get_fileName, NULL);
 	api_define_property(ctx, "Sound", "length", js_Sound_get_length, NULL);
 	api_define_property(ctx, "Sound", "pan", js_Sound_get_pan, js_Sound_set_pan);
@@ -512,19 +512,19 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Sound", "pause", js_Sound_pause);
 	api_define_method(ctx, "Sound", "play", js_Sound_play);
 	api_define_method(ctx, "Sound", "stop", js_Sound_stop);
-	api_define_ctor(ctx, "Surface", js_new_Surface, js_Surface_finalize);
+	api_define_class(ctx, "Surface", js_new_Surface, js_Surface_finalize);
 	api_define_property(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_define_property(ctx, "Surface", "width", js_Surface_get_width, NULL);
 	api_define_method(ctx, "Surface", "toImage", js_Surface_toImage);
-	api_define_ctor(ctx, "TextDecoder", js_new_TextDecoder, js_TextDecoder_finalize);
+	api_define_class(ctx, "TextDecoder", js_new_TextDecoder, js_TextDecoder_finalize);
 	api_define_property(ctx, "TextDecoder", "encoding", js_TextDecoder_get_encoding, NULL);
 	api_define_property(ctx, "TextDecoder", "fatal", js_TextDecoder_get_fatal, NULL);
 	api_define_property(ctx, "TextDecoder", "ignoreBOM", js_TextDecoder_get_ignoreBOM, NULL);
 	api_define_method(ctx, "TextDecoder", "decode", js_TextDecoder_decode);
-	api_define_ctor(ctx, "TextEncoder", js_new_TextEncoder, js_TextEncoder_finalize);
+	api_define_class(ctx, "TextEncoder", js_new_TextEncoder, js_TextEncoder_finalize);
 	api_define_property(ctx, "TextEncoder", "encoding", js_TextEncoder_get_encoding, NULL);
 	api_define_method(ctx, "TextEncoder", "encode", js_TextEncoder_encode);
-	api_define_ctor(ctx, "Transform", js_new_Transform, js_Transform_finalize);
+	api_define_class(ctx, "Transform", js_new_Transform, js_Transform_finalize);
 	api_define_method(ctx, "Transform", "compose", js_Transform_compose);
 	api_define_method(ctx, "Transform", "identity", js_Transform_identity);
 	api_define_method(ctx, "Transform", "rotate", js_Transform_rotate);
@@ -1533,7 +1533,8 @@ js_new_Color(duk_context* ctx)
 	a = num_args >= 4 ? duk_require_number(ctx, 3) : 1.0;
 
 	// construct a Color object
-	duk_push_class_obj(ctx, "Color", NULL);
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Color", NULL);
 	obj_index = duk_normalize_index(ctx, -1);
 	duk_push_number(ctx, r);
 	duk_push_number(ctx, g);
@@ -1543,7 +1544,7 @@ js_new_Color(duk_context* ctx)
 	duk_put_prop_string(ctx, obj_index, "b");
 	duk_put_prop_string(ctx, obj_index, "g");
 	duk_put_prop_string(ctx, obj_index, "r");
-	return 1;
+	return 0;
 }
 
 static duk_ret_t
@@ -1844,8 +1845,9 @@ js_new_Font(duk_context* ctx)
 
 	if (!(font = font_load(filename)))
 		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
-	duk_push_class_obj(ctx, "Font", font);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Font", font);
+	return 0;
 }
 
 static duk_ret_t
@@ -2050,8 +2052,9 @@ js_new_Image(duk_context* ctx)
 		if (image == NULL)
 			duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	}
-	duk_push_class_obj(ctx, "Image", image);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Image", image);
+	return 0;
 }
 
 static duk_ret_t
@@ -2413,21 +2416,27 @@ js_Mixer_get_Default(duk_context* ctx)
 static duk_ret_t
 js_new_Mixer(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int freq = duk_require_int(ctx, 0);
-	int bits = duk_require_int(ctx, 1);
-	int channels = n_args >= 3 ? duk_require_int(ctx, 2) : 2;
-
+	int      bits;
+	int      channels = 2;
+	int      frequency;
 	mixer_t* mixer;
+	int      num_args;
+
+	num_args = duk_get_top(ctx);
+	frequency = duk_require_int(ctx, 0);
+	bits = duk_require_int(ctx, 1);
+	if (num_args >= 3)
+		channels = duk_require_int(ctx, 2);
 
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
 		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth");
 	if (channels < 1 || channels > 7)
 		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid channel count");
-	if (!(mixer = mixer_new(freq, bits, channels)))
+	if (!(mixer = mixer_new(frequency, bits, channels)))
 		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "cannot create %d-bit %dch voice", bits, channels);
-	duk_push_class_obj(ctx, "Mixer", mixer);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Mixer", mixer);
+	return 0;
 }
 
 static duk_ret_t
@@ -3656,8 +3665,9 @@ js_new_TextDecoder(duk_context* ctx)
 	}
 
 	decoder = decoder_new(fatal, ignore_bom);
-	duk_push_class_obj(ctx, "TextDecoder", decoder);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "TextDecoder", decoder);
+	return 0;
 }
 
 static duk_ret_t
@@ -3750,8 +3760,9 @@ js_new_TextEncoder(duk_context* ctx)
 		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor must be called with 'new'");
 
 	encoder = encoder_new();
-	duk_push_class_obj(ctx, "TextEncoder", encoder);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "TextEncoder", encoder);
+	return 0;
 }
 
 static duk_ret_t
