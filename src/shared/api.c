@@ -1,31 +1,34 @@
-#include "minisphere.h"
+#define _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "api.h"
 
-#include "map_engine.h"
-#include "pegasus.h"
-#include "vanilla.h"
+#include "duktape.h"
+#include "duk_rubber.h"
 
 void
-initialize_api(duk_context* ctx, int version)
+api_init(duk_context* ctx)
 {
-	// set up a prototype stash.  this ensures the prototypes for built-in objects
-	// remain accessible to the engine even if the constructors are overwritten.  it
-	// also allows for constructorless objects, as in the Sphere 1.x API.
+	// JavaScript 'global' binding (like Node.js)
+	duk_push_global_object(ctx);
+	duk_push_string(ctx, "global");
+	duk_push_global_object(ctx);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_CLEAR_CONFIGURABLE);
+	duk_pop(ctx);
+
+	// set up a prototype stash.  this ensures the prototypes for built-in classes
+	// remain accessible internally even if the constructors are overwritten.
 	duk_push_global_stash(ctx);
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "prototypes");
 	duk_pop(ctx);
-
-	// initialize the Sphere v1 and v2 APIs.  it wasn't the original plan
-	// to allow them to co-exist, but since there's no official v2 map engine,
-	// this makes migration a bit less painful.
-	initialize_vanilla_api(ctx);
-	init_map_engine_api(ctx);
-	initialize_pegasus_api(ctx);
 }
 
 void
-shutdown_api(void)
+api_uninit(void)
 {
 }
 
@@ -193,7 +196,7 @@ api_define_object(duk_context* ctx, const char* namespace_name, const char* name
 	}
 
 	duk_push_string(ctx, name);
-	duk_push_sphere_obj(ctx, ctor_name, udata);
+	duk_push_class_obj(ctx, ctor_name, udata);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_CLEAR_WRITABLE
@@ -290,7 +293,7 @@ api_define_type(duk_context* ctx, const char* name, duk_c_function finalizer)
 	duk_pop_3(ctx);
 }
 
-no_return
+void
 duk_error_blamed(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
@@ -327,7 +330,7 @@ duk_error_blamed(duk_context* ctx, int blame_offset, duk_errcode_t err_code, con
 }
 
 duk_bool_t
-duk_is_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+duk_is_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 {
 	const char* obj_ctor_name;
 	duk_bool_t  result;
@@ -344,7 +347,7 @@ duk_is_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 }
 
 void
-duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
+duk_push_class_obj(duk_context* ctx, const char* ctor_name, void* udata)
 {
 	duk_idx_t obj_index;
 
@@ -365,12 +368,12 @@ duk_push_sphere_obj(duk_context* ctx, const char* ctor_name, void* udata)
 }
 
 void*
-duk_require_sphere_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 {
 	void* udata;
 
 	index = duk_require_normalize_index(ctx, index);
-	if (!duk_is_sphere_obj(ctx, index, ctor_name))
+	if (!duk_is_class_obj(ctx, index, ctor_name))
 		duk_error(ctx, DUK_ERR_TYPE_ERROR, "%s object required", ctor_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata");
 	udata = duk_get_pointer(ctx, -1);

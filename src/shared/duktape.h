@@ -6,7 +6,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 8c4f7a46c6e7b7ac02db62d0aeb7262402de57a5 (v1.5.0-1256-g8c4f7a46).
+ *  Git commit c4bbe17051a3ae46ec20965340461207d5ce5daa (v1.5.0-1296-gc4bbe170).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -124,6 +124,7 @@
  *  * Michael Drake (https://github.com/tlsa)
  *  * https://github.com/chris-y
  *  * Laurent Zubiaur (https://github.com/lzubiaur)
+ *  * Neil Kolban (https://github.com/nkolban)
  *  
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
@@ -232,14 +233,14 @@ struct duk_number_list_entry {
 };
 
 struct duk_time_components {
-	duk_uint_t year;            /* year, e.g. 2016, Ecmascript year range */
-	duk_uint_t month;           /* month: 1-12 */
-	duk_uint_t day;             /* day: 1-31 */
-	duk_uint_t hour;            /* hour: 0-59 */
-	duk_uint_t minute;          /* minute: 0-59 */
-	duk_uint_t second;          /* second: 0-59 (in POSIX time no leap second) */
-	duk_uint_t weekday;         /* weekday: 0-6, 0=Sunday, 1=Monday, ..., 6=Saturday */
-	duk_double_t millisecond;   /* may contain sub-millisecond fractions */
+	duk_double_t year;          /* year, e.g. 2016, Ecmascript year range */
+	duk_double_t month;         /* month: 1-12 */
+	duk_double_t day;           /* day: 1-31 */
+	duk_double_t hours;         /* hour: 0-59 */
+	duk_double_t minutes;       /* minute: 0-59 */
+	duk_double_t seconds;       /* second: 0-59 (in POSIX time no leap second) */
+	duk_double_t milliseconds;  /* may contain sub-millisecond fractions */
+	duk_double_t weekday;       /* weekday: 0-6, 0=Sunday, 1=Monday, ..., 6=Saturday */
 };
 
 /*
@@ -259,8 +260,8 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "8c4f7a46c6e7b7ac02db62d0aeb7262402de57a5"
-#define DUK_GIT_DESCRIBE                  "v1.5.0-1256-g8c4f7a46"
+#define DUK_GIT_COMMIT                    "c4bbe17051a3ae46ec20965340461207d5ce5daa"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1296-gc4bbe170"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -319,11 +320,13 @@ struct duk_time_components {
 
 /* Enumeration flags for duk_enum() */
 #define DUK_ENUM_INCLUDE_NONENUMERABLE    (1 << 0)    /* enumerate non-numerable properties in addition to enumerable */
-#define DUK_ENUM_INCLUDE_INTERNAL         (1 << 1)    /* enumerate internal properties */
-#define DUK_ENUM_OWN_PROPERTIES_ONLY      (1 << 2)    /* don't walk prototype chain, only check own properties */
-#define DUK_ENUM_ARRAY_INDICES_ONLY       (1 << 3)    /* only enumerate array indices */
-#define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 4)    /* sort array indices (applied to full enumeration result, including inherited array indices) */
-#define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 5)    /* enumerate a proxy object itself without invoking proxy behavior */
+#define DUK_ENUM_INCLUDE_HIDDEN           (1 << 1)    /* enumerate hidden symbols too (in Duktape 1.x called internal properties) */
+#define DUK_ENUM_INCLUDE_SYMBOLS          (1 << 2)    /* enumerate symbols */
+#define DUK_ENUM_EXCLUDE_STRINGS          (1 << 3)    /* exclude strings */
+#define DUK_ENUM_OWN_PROPERTIES_ONLY      (1 << 4)    /* don't walk prototype chain, only check own properties */
+#define DUK_ENUM_ARRAY_INDICES_ONLY       (1 << 5)    /* only enumerate array indices */
+#define DUK_ENUM_SORT_ARRAY_INDICES       (1 << 6)    /* sort array indices (applied to full enumeration result, including inherited array indices) */
+#define DUK_ENUM_NO_PROXY_BEHAVIOR        (1 << 7)    /* enumerate a proxy object itself without invoking proxy behavior */
 
 /* Compilation flags for duk_compile() and duk_eval() */
 /* DUK_COMPILE_xxx bits 0-2 are reserved for an internal 'nargs' argument.
@@ -728,7 +731,7 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t 
 
 /* Buffers and lightfuncs are not considered primitive because they mimic
  * objects and e.g. duk_to_primitive() will coerce them instead of returning
- * them as is.
+ * them as is.  Symbols are represented as strings internally.
  */
 #define duk_is_primitive(ctx,idx) \
 	duk_check_type_mask((ctx), (idx), DUK_TYPE_MASK_UNDEFINED | \
@@ -738,6 +741,7 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t 
 	                                  DUK_TYPE_MASK_STRING | \
 	                                  DUK_TYPE_MASK_POINTER)
 
+/* Symbols are object coercible, covered by DUK_TYPE_MASK_STRING. */
 #define duk_is_object_coercible(ctx,idx) \
 	duk_check_type_mask((ctx), (idx), DUK_TYPE_MASK_BOOLEAN | \
 	                                  DUK_TYPE_MASK_NUMBER | \
@@ -812,6 +816,7 @@ DUK_EXTERNAL_DECL void duk_require_function(duk_context *ctx, duk_idx_t idx);
 	duk_require_function((ctx), (idx))
 DUK_EXTERNAL_DECL void *duk_require_heapptr(duk_context *ctx, duk_idx_t idx);
 
+/* Symbols are object coercible and covered by DUK_TYPE_MASK_STRING. */
 #define duk_require_object_coercible(ctx,idx) \
 	((void) duk_check_type_mask((ctx), (idx), DUK_TYPE_MASK_BOOLEAN | \
 	                                            DUK_TYPE_MASK_NUMBER | \

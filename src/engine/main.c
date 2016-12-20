@@ -12,6 +12,7 @@
 #include "pegasus.h"
 #include "sockets.h"
 #include "spriteset.h"
+#include "vanilla.h"
 
 // enable Windows visual styles (MSVC)
 #ifdef _MSC_VER
@@ -182,7 +183,10 @@ main(int argc, char* argv[])
 		exit_game(false);
 	}
 
-	initialize_api(g_duk, fs_version(g_fs));
+	api_init(g_duk);
+	initialize_vanilla_api(g_duk);
+	init_map_engine_api(g_duk);
+	initialize_pegasus_api(g_duk);
 
 	// try to create a display. if we can't get a programmable pipeline, try again but
 	// only request bare OpenGL. keep in mind that if this happens, shader support will be

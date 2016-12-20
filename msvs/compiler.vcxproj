@@ -181,9 +181,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\compiler\api.c" />
     <ClCompile Include="..\src\compiler\target.c" />
     <ClCompile Include="..\src\compiler\tool.c" />
+    <ClCompile Include="..\src\shared\api.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\duk_rubber.c" />
     <ClCompile Include="..\src\shared\encoding.c" />
@@ -197,9 +197,9 @@
     <ClCompile Include="..\src\compiler\utility.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\compiler\api.h" />
     <ClInclude Include="..\src\compiler\target.h" />
     <ClInclude Include="..\src\compiler\tool.h" />
+    <ClInclude Include="..\src\shared\api.h" />
     <ClInclude Include="..\src\shared\duktape.h" />
     <ClInclude Include="..\src\shared\duk_config.h" />
     <ClInclude Include="..\src\shared\duk_rubber.h" />

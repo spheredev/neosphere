@@ -1999,7 +1999,7 @@ js_GetTileImage(duk_context* ctx)
 		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
 		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
-	duk_push_sphere_obj(ctx, "ssImage", image_ref(tileset_get_image(s_map->tileset, tile_index)));
+	duk_push_class_obj(ctx, "ssImage", image_ref(tileset_get_image(s_map->tileset, tile_index)));
 	return 1;
 }
 
@@ -2032,7 +2032,7 @@ js_GetTileSurface(duk_context* ctx)
 		duk_error_blamed(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
 	if ((image = image_clone(tileset_get_image(s_map->tileset, tile_index))) == NULL)
 		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
-	duk_push_sphere_obj(ctx, "ssSurface", image);
+	duk_push_class_obj(ctx, "ssSurface", image);
 	return 1;
 }
 
@@ -2488,7 +2488,7 @@ js_SetTileImage(duk_context* ctx)
 	int      tile_w;
 
 	tile_index = duk_to_int(ctx, 0);
-	image = duk_require_sphere_obj(ctx, 1, "ssImage");
+	image = duk_require_class_obj(ctx, 1, "ssImage");
 
 	if (!is_map_engine_running())
 		duk_error_blamed(ctx, -1, DUK_ERR_ERROR, "map engine is not running");
@@ -2523,7 +2523,7 @@ static duk_ret_t
 js_SetTileSurface(duk_context* ctx)
 {
 	int tile_index = duk_to_int(ctx, 0);
-	image_t* image = duk_require_sphere_obj(ctx, 1, "ssSurface");
+	image_t* image = duk_require_class_obj(ctx, 1, "ssSurface");
 
 	int image_w, image_h;
 	int num_tiles;

@@ -48,13 +48,13 @@
     <ClCompile Include="..\src\shared\duk_rubber.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\api.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\compiler\target.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\compiler\tool.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shared\api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -107,13 +107,13 @@
     <ClInclude Include="..\src\shared\duk_rubber.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\api.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\compiler\target.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\compiler\tool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

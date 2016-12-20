@@ -1078,10 +1078,10 @@ js_CreatePerson(duk_context* ctx)
 	const char* filename;
 	person_t*   person;
 
-	if (duk_is_sphere_obj(ctx, 1, "Spriteset"))
+	if (duk_is_class_obj(ctx, 1, "Spriteset"))
 		// ref the spriteset so we can safely free it later. this avoids
 		// having to check the argument type again.
-		spriteset = ref_spriteset(duk_require_sphere_obj(ctx, 1, "ssSpriteset"));
+		spriteset = ref_spriteset(duk_require_class_obj(ctx, 1, "ssSpriteset"));
 	else {
 		filename = duk_require_path(ctx, 1, "spritesets", true);
 		if (!(spriteset = load_spriteset(filename)))
@@ -1946,7 +1946,7 @@ static duk_ret_t
 js_SetPersonSpriteset(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
-	spriteset_t* spriteset = duk_require_sphere_obj(ctx, 1, "ssSpriteset");
+	spriteset_t* spriteset = duk_require_class_obj(ctx, 1, "ssSpriteset");
 
 	spriteset_t* new_spriteset;
 	person_t*    person;
