@@ -1078,7 +1078,7 @@ js_CreatePerson(duk_context* ctx)
 	const char* filename;
 	person_t*   person;
 
-	if (duk_is_class_obj(ctx, 1, "Spriteset"))
+	if (duk_is_class_obj(ctx, 1, "ssSpriteset"))
 		// ref the spriteset so we can safely free it later. this avoids
 		// having to check the argument type again.
 		spriteset = ref_spriteset(duk_require_class_obj(ctx, 1, "ssSpriteset"));
