@@ -15,31 +15,32 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/engine/main.c \
-   src/shared/duktape.c src/shared/duk_rubber.c src/shared/dyad.c \
-   src/shared/encoding.c src/shared/lstring.c src/shared/path.c \
-   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
-   src/engine/animation.c src/engine/api.c src/engine/async.c \
-   src/engine/atlas.c src/engine/audio.c src/engine/bytearray.c \
-   src/engine/color.c src/engine/console.c src/engine/debugger.c \
-   src/engine/font.c src/engine/galileo.c src/engine/geometry.c \
-   src/engine/image.c src/engine/input.c src/engine/kevfile.c \
-   src/engine/logger.c src/engine/map_engine.c src/engine/matrix.c \
-   src/engine/obsmap.c src/engine/pegasus.c src/engine/persons.c \
-   src/engine/screen.c src/engine/script.c src/engine/shader.c \
-   src/engine/sockets.c src/engine/spherefs.c src/engine/spk.c \
-   src/engine/spriteset.c src/engine/tileset.c src/engine/utility.c \
-   src/engine/vanilla.c src/engine/windowstyle.c
+   src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
+   src/shared/dyad.c src/shared/encoding.c src/shared/lstring.c \
+   src/shared/path.c src/shared/unicode.c src/shared/vector.c \
+   src/shared/xoroshiro.c \
+   src/engine/animation.c src/engine/async.c src/engine/atlas.c \
+   src/engine/audio.c src/engine/bytearray.c src/engine/color.c \
+   src/engine/console.c src/engine/debugger.c src/engine/font.c \
+   src/engine/galileo.c src/engine/geometry.c src/engine/image.c \
+   src/engine/input.c src/engine/kevfile.c src/engine/logger.c \
+   src/engine/map_engine.c src/engine/matrix.c src/engine/obsmap.c \
+   src/engine/pegasus.c src/engine/persons.c src/engine/screen.c \
+   src/engine/script.c src/engine/shader.c src/engine/sockets.c \
+   src/engine/spherefs.c src/engine/spk.c src/engine/spriteset.c \
+   src/engine/tileset.c src/engine/utility.c src/engine/vanilla.c \
+   src/engine/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
    -lmng -lz -lm
 
 cell_sources=src/compiler/main.c \
-   src/shared/duktape.c src/shared/duk_rubber.c src/shared/encoding.c \
-   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
-   src/shared/vector.c \
-   src/compiler/api.c src/compiler/build.c src/compiler/spk_writer.c \
-   src/compiler/target.c src/compiler/tool.c src/compiler/utility.c
+   src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
+   src/shared/encoding.c src/shared/lstring.c src/shared/path.c \
+   src/shared/unicode.c src/shared/vector.c \
+   src/compiler/build.c src/compiler/spk_writer.c src/compiler/target.c \
+   src/compiler/tool.c src/compiler/utility.c
 cell_libs= \
    -lz -lm
 
