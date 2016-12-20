@@ -49,9 +49,9 @@
 #define SPHERE_PATH_MAX 1024
 
 #if defined(__GNUC__)
-#define no_return __attribute__((no_return)) void
+#define no_return __attribute__((noreturn)) void
 #elif defined(__clang__)
-#define no_return __attribute__((no_return)) void
+#define no_return __attribute__((noreturn)) void
 #elif defined(_MSC_VER)
 #define no_return __declspec(noreturn) void
 #else
@@ -78,7 +78,7 @@ extern int                  g_res_x;
 extern int                  g_res_y;
 
 no_return abort_game        (const char* message);
-void     delay             (double time);
-void     do_events         (void);
+void      delay             (double time);
+void      do_events         (void);
 no_return exit_game         (bool force_shutdown);
 no_return restart_engine    (void);
