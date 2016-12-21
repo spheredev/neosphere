@@ -1,15 +1,11 @@
 'use strict';
 module.exports =
 {
-	coffeescript: coffeescript,
 };
 
-const cs = require('./lib/coffeescript');
-const ts = require('./lib/typescript');
+const CoffeeScriptTool = new Tool(buildCoffeeScript);
 
-const CoffeeTool = new Tool(function);
-
-function coffeescript(out, in)
+function buildCoffeeScript(outName, inNames, options)
 {
-	var target = new Target(CoffeeTool, out, in);
+	CoffeeScriptTool.build(outName, inNames, options);
 }

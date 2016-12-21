@@ -6,12 +6,16 @@
 #include "tinydir.h"
 #include "tool.h"
 
-static void list_files (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static void make_file_targets (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 
 static duk_ret_t js_files           (duk_context* ctx);
 static duk_ret_t js_system_name     (duk_context* ctx);
 static duk_ret_t js_system_version  (duk_context* ctx);
+static duk_ret_t js_new_Tool        (duk_context* ctx);
+static duk_ret_t js_Tool_finalize   (duk_context* ctx);
+static duk_ret_t js_Tool_build      (duk_context* ctx);
 static duk_ret_t js_Target_finalize (duk_context* ctx);
+static duk_ret_t js_Target_get_name (duk_context* ctx);
 static duk_ret_t js_Target_get_path (duk_context* ctx);
 
 void
@@ -25,11 +29,14 @@ cell_api_init(duk_context* ctx)
 	api_define_function(ctx, "system", "version", js_system_version);
 
 	api_define_class(ctx, "Target", NULL, js_Target_finalize);
+	api_define_property(ctx, "Target", "name", js_Target_get_name, NULL);
 	api_define_property(ctx, "Target", "path", js_Target_get_path, NULL);
+	api_define_class(ctx, "Tool", js_new_Tool, js_Tool_finalize);
+	api_define_method(ctx, "Tool", "build", js_Tool_build);
 }
 
 static void
-list_files(const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive)
+make_file_targets(const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive)
 {
 	// note: 'targets' should be a vector_t initialized to sizeof(target_t*).
 
@@ -48,7 +55,7 @@ list_files(const char* wildcard, const path_t* path, const path_t* subdir, vecto
 			file_path = path_new_dir(file_info.path);
 			if (subdir != NULL)
 				path_rebase(name, subdir);
-			list_files(wildcard, file_path, name, targets, true);
+			make_file_targets(wildcard, file_path, name, targets, true);
 			path_free(file_path);
 			path_free(name);
 		}
@@ -83,8 +90,7 @@ js_files(duk_context* ctx)
 	if (num_args >= 2)
 		recursive = duk_require_boolean(ctx, 1);
 
-	// extract the wildcard, if any, from the given path.  after this,
-	// 'path' is guaranteed to refer to a directory.
+	// extract the wildcard, if any, from the given path
 	path = path_new(pattern);
 	if (!path_is_file(path))
 		wildcard = strdup("*");
@@ -93,10 +99,10 @@ js_files(duk_context* ctx)
 		path_strip(path);
 	}
 	
-	// this is potentially recursive, so we defer to list_files() to construct
-	// the targets.
+	// this is potentially recursive, so we defer to make_file_targets() to construct
+	// the targets.  note: 'path' should always be a directory at this point.
 	targets = vector_new(sizeof(target_t*));
-	list_files(wildcard, path, NULL, targets, true);
+	make_file_targets(wildcard, path, NULL, targets, true);
 	free(wildcard);
 
 	// return all the newly constructed targets as an array.
@@ -124,6 +130,65 @@ js_system_version(duk_context* ctx)
 }
 
 static duk_ret_t
+js_new_Tool(duk_context* ctx)
+{
+	tool_t* tool;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	
+	tool = tool_new();
+	
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Tool", tool);
+	return 1;
+}
+
+static duk_ret_t
+js_Tool_finalize(duk_context* ctx)
+{
+	tool_t* tool;
+
+	tool = duk_require_class_obj(ctx, 0, "Tool");
+
+	tool_free(tool);
+	return 0;
+}
+
+static duk_ret_t
+js_Tool_build(duk_context* ctx)
+{
+	duk_uarridx_t length;
+	path_t*       name;
+	path_t*       out_path;
+	target_t*     source;
+	target_t*     target;
+	tool_t*       tool;
+
+	duk_uarridx_t i;
+
+	duk_push_this(ctx);
+	tool = duk_require_class_obj(ctx, -1, "Tool");
+	out_path = path_new(duk_require_string(ctx, 0));
+	if (duk_is_array(ctx, 1))
+		duk_error_blamed(ctx, -1, DUK_ERR_TYPE_ERROR, "sources arg, array required");
+
+	name = path_new(path_filename(out_path));
+	target = target_new(name, out_path, tool);
+	length = (duk_uarridx_t)duk_get_length(ctx, 1);
+	for (i = 0; i < length; ++i) {
+		duk_get_prop_index(ctx, 1, i);
+		source = duk_require_class_obj(ctx, -1, "Target");
+		target_add_source(target, source);
+		duk_pop(ctx);
+	}
+	path_free(out_path);
+
+	duk_push_class_obj(ctx, "Target", target);
+	return 1;
+}
+
+static duk_ret_t
 js_Target_finalize(duk_context* ctx)
 {
 	target_t* target;
@@ -132,6 +197,18 @@ js_Target_finalize(duk_context* ctx)
 
 	target_free(target);
 	return 0;
+}
+
+static duk_ret_t
+js_Target_get_name(duk_context* ctx)
+{
+	target_t* target;
+
+	duk_push_this(ctx);
+	target = duk_require_class_obj(ctx, -1, "Target");
+
+	duk_push_string(ctx, path_cstr(target_name(target)));
+	return 1;
 }
 
 static duk_ret_t
