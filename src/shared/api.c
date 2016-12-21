@@ -147,14 +147,14 @@ api_define_function(duk_context* ctx, const char* namespace_name, const char* na
 }
 
 void
-api_define_method(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function fn)
+api_define_method(duk_context* ctx, const char* class_name, const char* name, duk_c_function fn)
 {
 	duk_push_global_object(ctx);
-	if (ctor_name != NULL) {
+	if (class_name != NULL) {
 		// load the prototype from the prototype stash
 		duk_push_global_stash(ctx);
 		duk_get_prop_string(ctx, -1, "prototypes");
-		duk_get_prop_string(ctx, -1, ctor_name);
+		duk_get_prop_string(ctx, -1, class_name);
 	}
 
 	duk_push_c_function(ctx, fn, DUK_VARARGS);
@@ -171,13 +171,13 @@ api_define_method(duk_context* ctx, const char* ctor_name, const char* name, duk
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
-	if (ctor_name != NULL)
+	if (class_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
 }
 
 void
-api_define_object(duk_context* ctx, const char* namespace_name, const char* name, const char* ctor_name, void* udata)
+api_define_object(duk_context* ctx, const char* namespace_name, const char* name, const char* class_name, void* udata)
 {
 	duk_push_global_object(ctx);
 
@@ -195,7 +195,7 @@ api_define_object(duk_context* ctx, const char* namespace_name, const char* name
 	}
 
 	duk_push_string(ctx, name);
-	duk_push_class_obj(ctx, ctor_name, udata);
+	duk_push_class_obj(ctx, class_name, udata);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_CLEAR_WRITABLE
@@ -206,16 +206,16 @@ api_define_object(duk_context* ctx, const char* namespace_name, const char* name
 }
 
 void
-api_define_property(duk_context* ctx, const char* ctor_name, const char* name, duk_c_function getter, duk_c_function setter)
+api_define_property(duk_context* ctx, const char* class_name, const char* name, duk_c_function getter, duk_c_function setter)
 {
 	duk_uint_t flags;
 	int        obj_index;
 
 	duk_push_global_object(ctx);
-	if (ctor_name != NULL) {
+	if (class_name != NULL) {
 		duk_push_global_stash(ctx);
 		duk_get_prop_string(ctx, -1, "prototypes");
-		duk_get_prop_string(ctx, -1, ctor_name);
+		duk_get_prop_string(ctx, -1, class_name);
 	}
 	obj_index = duk_normalize_index(ctx, -1);
 	duk_push_string(ctx, name);
@@ -229,7 +229,7 @@ api_define_property(duk_context* ctx, const char* ctor_name, const char* name, d
 		flags |= DUK_DEFPROP_HAVE_SETTER;
 	}
 	duk_def_prop(ctx, obj_index, flags);
-	if (ctor_name != NULL)
+	if (class_name != NULL)
 		duk_pop_3(ctx);
 	duk_pop(ctx);
 }
@@ -309,9 +309,9 @@ duk_error_blamed(duk_context* ctx, int blame_offset, duk_errcode_t err_code, con
 }
 
 duk_bool_t
-duk_is_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+duk_is_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
 {
-	const char* obj_ctor_name;
+	const char* obj_class_name;
 	duk_bool_t  result;
 
 	index = duk_require_normalize_index(ctx, index);
@@ -319,8 +319,8 @@ duk_is_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
 		return 0;
 
 	duk_get_prop_string(ctx, index, "\xFF" "ctor");
-	obj_ctor_name = duk_safe_to_string(ctx, -1);
-	result = strcmp(obj_ctor_name, ctor_name) == 0;
+	obj_class_name = duk_safe_to_string(ctx, -1);
+	result = strcmp(obj_class_name, class_name) == 0;
 	duk_pop(ctx);
 	return result;
 }
@@ -339,13 +339,13 @@ duk_push_class_obj(duk_context* ctx, const char* class_name, void* udata)
 }
 
 void*
-duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* ctor_name)
+duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
 {
 	void* udata;
 
 	index = duk_require_normalize_index(ctx, index);
-	if (!duk_is_class_obj(ctx, index, ctor_name))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "%s object required", ctor_name);
+	if (!duk_is_class_obj(ctx, index, class_name))
+		duk_error(ctx, DUK_ERR_TYPE_ERROR, "%s object required", class_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata");
 	udata = duk_get_pointer(ctx, -1);
 	duk_pop(ctx);
