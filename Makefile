@@ -39,7 +39,7 @@ cell_sources=src/compiler/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
    src/shared/encoding.c src/shared/lstring.c src/shared/path.c \
    src/shared/unicode.c src/shared/vector.c \
-   src/compiler/build.c src/compiler/cellscript.c src/compiler/spk_writer.c \
+   src/compiler/build.c src/compiler/script.c src/compiler/spk_writer.c \
    src/compiler/target.c src/compiler/tool.c src/compiler/utility.c
 cell_libs= \
    -lz -lm

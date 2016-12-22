@@ -273,7 +273,7 @@ api_define_static_prop(duk_context* ctx, const char* namespace_name, const char*
 }
 
 void
-duk_error_blamed(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
+duk_error_blame(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
 {
 	va_list ap;
 	char*   filename;

@@ -5,56 +5,24 @@ Cell is a scriptable build system and compiler for Sphere games. Like Sphere
 itself, it uses JavaScript to control the build process.  This file documents
 the public API used to write build scripts.
 
-General
+
+Targets
 -------
 
-install(asset, path);
-
-    Installs one or more assets in 'path'.  The path is relative to the output
-    directory.  'asset' can be either a single asset (see Assets below), or an
-    array of them.
-
-
-Assets
-------
-
-The basic build unit in Cell is an asset.  If you've ever used SCons, this is
-similar in concept to a target.  Assets may either be installed directly or used
-as input when building other assets, and Cell will automatically determine the
-correct build order at runtime.
-
-In this version of Cell, all assets are built independently.
+The basic build unit in Cell is a target.  If you've ever used SCons, this is
+the same concept.  Targets may either be installed directly or used as input
+when building other targets, and Cell will automatically determine the correct
+build order at runtime.
 
 files(pattern[, recursive]);
 
-    Returns an array of assets for files matching the specified pattern.  File
-    assets are unique: They have no build step associated with them and simply
-    use the named file as-is.
+    Constructs a target for every file matching the specified pattern.  File
+    targets are unique: They have no sources, and so are always considered to
+    be up to date.
 
     `pattern` is a wildcard (e.g. "*.png") combined with an optional path
-    specifying the directory (relative to the input directory) to be searched.
-    If 'recursive' is true, searches subdirectories as well.
+    specifying the directory (relative to the directory containing the
+    Cellscript) to be searched.  If 'recursive' is true, searches
+    subdirectories as well.
 
-manifest(manifest);
-
-    Only one manifest() asset may be built in a single run.
-
-    Builds a Sphere v2 game manifest.  `manifest` will be converted to JSON and
-    the output saved in a file named `game.json`, which should be installed in
-    the root of the package.
-    
-    The following properties must be present:
-
-        name:       The title of the game, displayed in the engine's title bar.
-        resolution: The game's initial screen resolution, in the format
-                    "[width]x[height]".  Games can change this once execution
-                    begins by calling `screen.resize()` (see the Sphere v2 API
-                    reference).
-        script:     The SphereFS path of the startup script.
-
-    The properties below are optional, but highly recommended:
-
-        author:  The name of the author. If not provided, Cell will write
-                 "Author Unknown" to the manifest.
-        summary: A short, one-line summary of your game.  If not provided, Cell
-                 will write "No description available." to the manifest.
+install(directory, targets);

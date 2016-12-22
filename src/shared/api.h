@@ -12,7 +12,7 @@ void   api_define_object      (duk_context* ctx, const char* namespace_name, con
 void   api_define_property    (duk_context* ctx, const char* class_name, const char* name, duk_c_function getter, duk_c_function setter);
 void   api_define_static_prop (duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter);
 
-void       duk_error_blamed      (duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...);
+void       duk_error_blame      (duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...);
 duk_bool_t duk_is_class_obj      (duk_context* ctx, duk_idx_t index, const char* class_name);
 void       duk_push_class_obj    (duk_context* ctx, const char* class_name, void* udata);
 void*      duk_require_class_obj (duk_context* ctx, duk_idx_t index, const char* class_name);

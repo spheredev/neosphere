@@ -57,7 +57,7 @@
     <ClCompile Include="..\src\shared\api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\cellscript.c">
+    <ClCompile Include="..\src\compiler\script.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,7 +119,7 @@
     <ClInclude Include="..\src\shared\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\cellscript.h">
+    <ClInclude Include="..\src\compiler\script.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
