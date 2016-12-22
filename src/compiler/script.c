@@ -18,7 +18,6 @@ static build_t* get_current_build (duk_context* js);
 static void     make_file_targets (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 
 static duk_ret_t js_files           (duk_context* ctx);
-static duk_ret_t js_install         (duk_context* ctx);
 static duk_ret_t js_system_name     (duk_context* ctx);
 static duk_ret_t js_system_version  (duk_context* ctx);
 static duk_ret_t js_new_Tool        (duk_context* ctx);
@@ -34,7 +33,11 @@ script_open(const path_t* path)
 	build_t*     build;
 	duk_context* js;
 	script_t*    script;
+	path_t*      script_path;
 
+	script_path = path_dup(path);
+	if (!path_is_file(script_path))
+		path_append(script_path, "Cellscript.js");
 	build = build_new();
 	js = duk_create_heap_default();
 	
@@ -45,7 +48,6 @@ script_open(const path_t* path)
 
 	api_init(js);
 	api_define_function(js, NULL, "files", js_files);
-	api_define_function(js, NULL, "install", js_install);
 	api_define_function(js, "system", "name", js_system_name);
 	api_define_function(js, "system", "version", js_system_version);
 	api_define_class(js, "Target", NULL, js_Target_finalize);

@@ -9,8 +9,9 @@
 struct script
 {
 	unsigned int  refcount;
+	unsigned int  id;
 	bool          is_in_use;
-	duk_uarridx_t id;
+	void*         heapptr;
 };
 
 static int s_next_script_id = 0;
@@ -19,11 +20,6 @@ void
 scripts_init(void)
 {
 	console_log(1, "initializing JS script manager");
-	
-	duk_push_global_stash(g_duk);
-	duk_push_array(g_duk);
-	duk_put_prop_string(g_duk, -2, "scripts");
-	duk_pop(g_duk);
 }
 
 void
@@ -85,6 +81,7 @@ script_t*
 script_new(const lstring_t* source, const char* fmt_name, ...)
 {
 	va_list    ap;
+	void*      heapptr;
 	lstring_t* name;
 	script_t*  script;
 	
@@ -95,42 +92,37 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 
 	console_log(3, "compiling script #%u as `%s`", s_next_script_id, lstr_cstr(name));
 	
-	// this wouldn't be necessary if Duktape duk_get_heapptr() gave us a strong reference.
-	// instead we get this ugliness where the compiled function is saved in the global stash
-	// so it doesn't get eaten by the garbage collector.  yummy!
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "scripts");
+	// compile the source.  Duktape gives us a function back; save its heap pointer so
+	// we can call the script later.
 	duk_push_lstring_t(g_duk, source);
 	duk_push_lstring_t(g_duk, name);
 	duk_compile(g_duk, 0x0);
-	duk_put_prop_index(g_duk, -2, s_next_script_id);
-	duk_pop_2(g_duk);
+	heapptr = duk_require_heapptr(g_duk, -1);
+	duk_ref_heapptr(g_duk, heapptr);
+	duk_pop(g_duk);
 
 	cache_source(lstr_cstr(name), source);
 	lstr_free(name);
 
 	script->id = s_next_script_id++;
+	script->heapptr = heapptr;
 	return script_ref(script);
 }
 
 script_t*
 script_new_func(duk_context* ctx, duk_idx_t idx)
 {
+	void*     heapptr;
 	script_t* script;
 
 	idx = duk_require_normalize_index(ctx, idx);
 	duk_require_function(ctx, idx);
-	
+	heapptr = duk_require_heapptr(ctx, idx);
+
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
-
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "scripts");
-	duk_dup(g_duk, idx);
-	duk_put_prop_index(g_duk, -2, s_next_script_id);
-	duk_pop_2(g_duk);
-
 	script->id = s_next_script_id++;
+	script->heapptr = heapptr;
 	return script_ref(script);
 }
 
@@ -148,13 +140,8 @@ script_free(script_t* script)
 		return;
 	
 	console_log(3, "disposing script #%u no longer in use", script->id);
-	
-	// unstash the compiled function, it's now safe to GC
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "scripts");
-	duk_del_prop_index(g_duk, -1, script->id);
-	duk_pop_2(g_duk);
 
+	duk_unref_heapptr(g_duk, script->heapptr);
 	free(script);
 }
 
@@ -181,13 +168,11 @@ script_run(script_t* script, bool allow_reentry)
 	// may be destroyed in the process and we don't want to end up crashing.
 	script_ref(script);
 	
-	// get the compiled script from the stash and run it.  so dumb...
+	// execute the script!
 	script->is_in_use = true;
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "scripts");
-	duk_get_prop_index(g_duk, -1, script->id);
+	duk_push_heapptr(g_duk, script->heapptr);
 	duk_call(g_duk, 0);
-	duk_pop_3(g_duk);
+	duk_pop(g_duk);
 	script->is_in_use = was_in_use;
 
 	script_free(script);
