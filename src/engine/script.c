@@ -118,6 +118,7 @@ script_new_func(duk_context* ctx, duk_idx_t idx)
 	idx = duk_require_normalize_index(ctx, idx);
 	duk_require_function(ctx, idx);
 	heapptr = duk_require_heapptr(ctx, idx);
+	duk_ref_heapptr(ctx, heapptr);
 
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
