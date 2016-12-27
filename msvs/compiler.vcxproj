@@ -181,7 +181,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\compiler\fs.c" />
     <ClCompile Include="..\src\compiler\script.c" />
     <ClCompile Include="..\src\compiler\target.c" />
     <ClCompile Include="..\src\compiler\tool.c" />
@@ -199,7 +198,6 @@
     <ClCompile Include="..\src\compiler\utility.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\compiler\fs.h" />
     <ClInclude Include="..\src\compiler\script.h" />
     <ClInclude Include="..\src\compiler\target.h" />
     <ClInclude Include="..\src\compiler\tool.h" />

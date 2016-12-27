@@ -1,9 +1,8 @@
 #ifndef CELL__SCRIPT_H__INCLUDED
 #define CELL__SCRIPT_H__INCLUDED
 
-typedef struct script script_t;
+#include "build.h"
 
-script_t* script_open  (const path_t* path);
-void      script_close (script_t* script);
+bool script_eval (build_t* build);
 
 #endif // CELL__SCRIPT_H__INCLUDED

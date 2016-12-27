@@ -6,13 +6,7 @@
 #include "target.h"
 #include "tinydir.h"
 #include "tool.h"
-
-struct script
-{
-	build_t*     build;
-	duk_context* js;
-	path_t*      path;
-};
+#include "utility.h"
 
 static build_t* get_current_build (duk_context* js);
 static void     make_file_targets (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
@@ -27,56 +21,45 @@ static duk_ret_t js_Target_finalize (duk_context* ctx);
 static duk_ret_t js_Target_get_name (duk_context* ctx);
 static duk_ret_t js_Target_get_path (duk_context* ctx);
 
-script_t*
-script_open(const path_t* path)
+bool
+script_eval(build_t* build)
 {
-	build_t*     build;
-	duk_context* js;
-	script_t*    script;
-	path_t*      script_path;
+	duk_context* js_env;
 
-	script_path = path_dup(path);
-	if (!path_is_file(script_path))
-		path_append(script_path, "Cellscript.js");
-	build = build_new();
-	js = duk_create_heap_default();
+	// note: no fatal error handler set here.  if a JavaScript exception is thrown
+	//       and nothing catches it, Cell will crash.
+	js_env = duk_create_heap_default();
 	
-	duk_push_global_stash(js);
-	duk_push_pointer(js, build);
-	duk_put_prop_string(js, -2, "buildPtr");
-	duk_pop(js);
+	// initialize the Cellscript API
+	api_init(js_env);
+	api_define_function(js_env, NULL, "files", js_files);
+	api_define_function(js_env, "system", "name", js_system_name);
+	api_define_function(js_env, "system", "version", js_system_version);
+	api_define_class(js_env, "Target", NULL, js_Target_finalize);
+	api_define_property(js_env, "Target", "name", js_Target_get_name, NULL);
+	api_define_property(js_env, "Target", "path", js_Target_get_path, NULL);
+	api_define_class(js_env, "Tool", js_new_Tool, js_Tool_finalize);
+	api_define_method(js_env, "Tool", "build", js_Tool_build);
 
-	api_init(js);
-	api_define_function(js, NULL, "files", js_files);
-	api_define_function(js, "system", "name", js_system_name);
-	api_define_function(js, "system", "version", js_system_version);
-	api_define_class(js, "Target", NULL, js_Target_finalize);
-	api_define_property(js, "Target", "name", js_Target_get_name, NULL);
-	api_define_property(js, "Target", "path", js_Target_get_path, NULL);
-	api_define_class(js, "Tool", js_new_Tool, js_Tool_finalize);
-	api_define_method(js, "Tool", "build", js_Tool_build);
+	// stash the build pointer for easier access by API calls
+	duk_push_global_stash(js_env);
+	duk_push_pointer(js_env, build);
+	duk_put_prop_string(js_env, -2, "buildPtr");
+	duk_pop(js_env);
 
-	script = calloc(1, sizeof(script_t));
-	script->build = build;
-	script->js = js;
-	script->path = path_dup(path);
-	return script;
-}
+	// we're done here, clean up
+	duk_destroy_heap(js_env);
+	
+	printf("ERROR: not implemented yet\n");
 
-void
-script_close(script_t* script)
-{
-	build_free(script->build);
-	path_free(script->path);
-	duk_destroy_heap(script->js);
-	free(script);
+	return false;
 }
 
 static build_t*
 get_current_build(duk_context* js)
 {
 	build_t* build;
-	
+
 	duk_push_global_stash(js);
 	duk_get_prop_string(js, -1, "buildPtr");
 	build = duk_get_pointer(js, -1);
