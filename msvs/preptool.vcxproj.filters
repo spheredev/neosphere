@@ -18,9 +18,24 @@
     <ClCompile Include="..\src\preptool\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\preptool\spk_writer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shared\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\preptool\majin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\preptool\spk_writer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\tinydir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

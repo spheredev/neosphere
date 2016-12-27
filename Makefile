@@ -44,7 +44,11 @@ cell_sources=src/compiler/main.c \
 cell_libs= \
    -lz -lm
 
-majin_sources=src/preptool/main.c
+majin_sources=src/preptool/main.c \
+   src/shared/vector.c \
+   src/shared/spk_writer.c
+majin_libs=\
+   -lz
 
 ssj_sources=src/debugger/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
@@ -134,7 +138,7 @@ bin/cell:
 
 bin/majin:
 	mkdir -p bin
-	$(CC) -o bin/majin $(CFLAGS) -Isrc/shared $(majin_sources)
+	$(CC) -o bin/majin $(CFLAGS) -Isrc/shared $(majin_sources) $(majin_libs)
 
 bin/ssj:
 	mkdir -p bin
