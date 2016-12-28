@@ -76,11 +76,14 @@ static duk_ret_t js_EvaluateScript             (duk_context* ctx);
 static duk_ret_t js_EvaluateSystemScript       (duk_context* ctx);
 static duk_ret_t js_ExecuteGame                (duk_context* ctx);
 static duk_ret_t js_Exit                       (duk_context* ctx);
+static duk_ret_t js_FilledCircle               (duk_context* ctx);
+static duk_ret_t js_FilledEllipse              (duk_context* ctx);
 static duk_ret_t js_FlipScreen                 (duk_context* ctx);
 static duk_ret_t js_GarbageCollect             (duk_context* ctx);
 static duk_ret_t js_GrabImage                  (duk_context* ctx);
 static duk_ret_t js_GrabSurface                (duk_context* ctx);
 static duk_ret_t js_GradientCircle             (duk_context* ctx);
+static duk_ret_t js_GradientEllipse            (duk_context* ctx);
 static duk_ret_t js_GradientRectangle          (duk_context* ctx);
 static duk_ret_t js_GradientTriangle           (duk_context* ctx);
 static duk_ret_t js_HashByteArray              (duk_context* ctx);
@@ -101,6 +104,7 @@ static duk_ret_t js_OpenFile                   (duk_context* ctx);
 static duk_ret_t js_OpenLog                    (duk_context* ctx);
 static duk_ret_t js_OpenRawFile                (duk_context* ctx);
 static duk_ret_t js_OutlinedCircle             (duk_context* ctx);
+static duk_ret_t js_OutlinedEllipse            (duk_context* ctx);
 static duk_ret_t js_OutlinedRectangle          (duk_context* ctx);
 static duk_ret_t js_OutlinedRoundRectangle     (duk_context* ctx);
 static duk_ret_t js_Point                      (duk_context* ctx);
@@ -228,13 +232,16 @@ static duk_ret_t js_Surface_cloneSection       (duk_context* ctx);
 static duk_ret_t js_Surface_createImage        (duk_context* ctx);
 static duk_ret_t js_Surface_drawText           (duk_context* ctx);
 static duk_ret_t js_Surface_filledCircle       (duk_context* ctx);
+static duk_ret_t js_Surface_filledEllipse      (duk_context* ctx);
 static duk_ret_t js_Surface_flipHorizontally   (duk_context* ctx);
 static duk_ret_t js_Surface_flipVertically     (duk_context* ctx);
 static duk_ret_t js_Surface_getPixel           (duk_context* ctx);
 static duk_ret_t js_Surface_gradientCircle     (duk_context* ctx);
+static duk_ret_t js_Surface_gradientEllipse    (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle  (duk_context* ctx);
 static duk_ret_t js_Surface_line               (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedCircle     (duk_context* ctx);
+static duk_ret_t js_Surface_outlinedEllipse    (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedRectangle  (duk_context* ctx);
 static duk_ret_t js_Surface_pointSeries        (duk_context* ctx);
 static duk_ret_t js_Surface_rotate             (duk_context* ctx);
@@ -378,11 +385,14 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
 	api_define_function(ctx, NULL, "Exit", js_Exit);
 	api_define_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
+	api_define_function(ctx, NULL, "FilledCircle", js_FilledCircle);
+	api_define_function(ctx, NULL, "FilledEllipse", js_FilledEllipse);
 	api_define_function(ctx, NULL, "FlipScreen", js_FlipScreen);
 	api_define_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
 	api_define_function(ctx, NULL, "GrabImage", js_GrabImage);
 	api_define_function(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_define_function(ctx, NULL, "GradientCircle", js_GradientCircle);
+	api_define_function(ctx, NULL, "GradientEllipse", js_GradientEllipse);
 	api_define_function(ctx, NULL, "GradientRectangle", js_GradientRectangle);
 	api_define_function(ctx, NULL, "GradientTriangle", js_GradientTriangle);
 	api_define_function(ctx, NULL, "HashByteArray", js_HashByteArray);
@@ -403,6 +413,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "OpenLog", js_OpenLog);
 	api_define_function(ctx, NULL, "OpenRawFile", js_OpenRawFile);
 	api_define_function(ctx, NULL, "OutlinedCircle", js_OutlinedCircle);
+	api_define_function(ctx, NULL, "OutlinedEllipse", js_OutlinedEllipse);
 	api_define_function(ctx, NULL, "OutlinedRectangle", js_OutlinedRectangle);
 	api_define_function(ctx, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
 	api_define_function(ctx, NULL, "Point", js_Point);
@@ -541,13 +552,16 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "createImage", js_Surface_createImage);
 	api_define_method(ctx, "ssSurface", "drawText", js_Surface_drawText);
 	api_define_method(ctx, "ssSurface", "filledCircle", js_Surface_filledCircle);
+	api_define_method(ctx, "ssSurface", "filledEllipse", js_Surface_filledEllipse);
 	api_define_method(ctx, "ssSurface", "flipHorizontally", js_Surface_flipHorizontally);
 	api_define_method(ctx, "ssSurface", "flipVertically", js_Surface_flipVertically);
 	api_define_method(ctx, "ssSurface", "getPixel", js_Surface_getPixel);
 	api_define_method(ctx, "ssSurface", "gradientCircle", js_Surface_gradientCircle);
+	api_define_method(ctx, "ssSurface", "gradientEllipse", js_Surface_gradientEllipse);
 	api_define_method(ctx, "ssSurface", "gradientRectangle", js_Surface_gradientRectangle);
 	api_define_method(ctx, "ssSurface", "line", js_Surface_line);
 	api_define_method(ctx, "ssSurface", "outlinedCircle", js_Surface_outlinedCircle);
+	api_define_method(ctx, "ssSurface", "outlinedEllipse", js_Surface_outlinedEllipse);
 	api_define_method(ctx, "ssSurface", "outlinedRectangle", js_Surface_outlinedRectangle);
 	api_define_method(ctx, "ssSurface", "pointSeries", js_Surface_pointSeries);
 	api_define_method(ctx, "ssSurface", "rotate", js_Surface_rotate);
@@ -1761,6 +1775,77 @@ js_Exit(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FilledCircle(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int radius = duk_to_number(ctx, 2);
+	color_t color = duk_require_sphere_color(ctx, 3);
+
+	double phi;
+	int    vcount;
+
+	int i;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	vcount = fmin(radius, 126);
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * radius;
+		s_vbuf[i + 1].y = y - sin(phi) * radius;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * radius;
+	s_vbuf[i + 1].y = y - sin(0) * radius;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_FilledEllipse(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	int x = trunc(duk_to_number(ctx, 0));
+	int y = trunc(duk_to_number(ctx, 1));
+	int rx = trunc(duk_to_number(ctx, 2));
+	int ry = trunc(duk_to_number(ctx, 3));
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	double phi;
+	int    vcount;
+
+	int i;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * rx;
+		s_vbuf[i + 1].y = y - sin(phi) * ry;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * rx;
+	s_vbuf[i + 1].y = y - sin(0) * ry;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
 	screen_flip(g_screen, g_framerate);
@@ -1837,6 +1922,43 @@ js_GradientCircle(duk_context* ctx)
 	}
 	s_vbuf[i + 1].x = x + cos(0) * radius;
 	s_vbuf[i + 1].y = y - sin(0) * radius;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(out_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_GradientEllipse(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	int x = trunc(duk_to_number(ctx, 0));
+	int y = trunc(duk_to_number(ctx, 1));
+	int rx = trunc(duk_to_number(ctx, 2));
+	int ry = trunc(duk_to_number(ctx, 3));
+	color_t in_color = duk_require_sphere_color(ctx, 4);
+	color_t out_color = duk_require_sphere_color(ctx, 5);
+
+	double phi;
+	int    vcount;
+
+	int i;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(in_color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * rx;
+		s_vbuf[i + 1].y = y - sin(phi) * ry;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(out_color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * rx;
+	s_vbuf[i + 1].y = y - sin(0) * ry;
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
@@ -2169,13 +2291,27 @@ js_OpenRawFile(duk_context* ctx)
 static duk_ret_t
 js_OutlinedCircle(duk_context* ctx)
 {
-	float x = duk_to_int(ctx, 0) + 0.5;
-	float y = duk_to_int(ctx, 1) + 0.5;
-	float radius = duk_to_int(ctx, 2);
+	float x = trunc(duk_to_number(ctx, 0)) + 0.5;
+	float y = trunc(duk_to_number(ctx, 1)) + 0.5;
+	float radius = trunc(duk_to_number(ctx, 2));
 	color_t color = duk_require_sphere_color(ctx, 3);
 
 	if (!screen_is_skipframe(g_screen))
-		al_draw_circle(x, y, radius, nativecolor(color), 1);
+		al_draw_circle(x, y, radius, nativecolor(color), 1.0);
+	return 0;
+}
+
+static duk_ret_t
+js_OutlinedEllipse(duk_context* ctx)
+{
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
+	float rx = duk_to_int(ctx, 2);
+	float ry = duk_to_int(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	if (!screen_is_skipframe(g_screen))
+		al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
 	return 0;
 }
 
@@ -4250,6 +4386,31 @@ js_Surface_filledCircle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_filledEllipse(duk_context* ctx)
+{
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int rx = duk_to_number(ctx, 2);
+	int ry = duk_to_number(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	int      blend_mode;
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_filled_ellipse(x, y, rx, ry, nativecolor(color));
+	al_set_target_backbuffer(screen_display(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
 js_Surface_flipHorizontally(duk_context* ctx)
 {
 	image_t* image;
@@ -4343,6 +4504,52 @@ js_Surface_gradientCircle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_gradientEllipse(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int rx = duk_to_number(ctx, 2);
+	int ry = duk_to_number(ctx, 3);
+	color_t in_color = duk_require_sphere_color(ctx, 4);
+	color_t out_color = duk_require_sphere_color(ctx, 5);
+
+	int      blend_mode;
+	image_t* image;
+	double   phi;
+	int      vcount;
+
+	int i;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(in_color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * rx;
+		s_vbuf[i + 1].y = y - sin(phi) * ry;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(out_color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * rx;
+	s_vbuf[i + 1].y = y - sin(0) * ry;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(out_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	al_set_target_backbuffer(screen_display(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
 js_Surface_gradientRectangle(duk_context* ctx)
 {
 	int x1 = duk_to_int(ctx, 0);
@@ -4420,7 +4627,32 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(image_bitmap(image));
-	al_draw_circle(x, y, radius, nativecolor(color), 1);
+	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
+	al_set_target_backbuffer(screen_display(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_outlinedEllipse(duk_context* ctx)
+{
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int rx = duk_to_number(ctx, 2);
+	int ry = duk_to_number(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	int      blend_mode;
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	duk_pop(ctx);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;
