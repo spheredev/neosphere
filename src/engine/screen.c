@@ -275,7 +275,7 @@ screen_flip(screen_t* obj, int framerate)
 			game_filename = path_is_file(game_path)
 				? path_filename(game_path)
 				: path_hop(game_path, path_num_hops(game_path) - 1);
-			path = path_rebase(path_new("minisphere/screens/"), homepath());
+			path = path_rebase(path_new("minisphere/screens/"), home_path());
 			path_mkdir(path);
 			time(&now);
 			strftime(timestamp, 100, "%Y%m%d", localtime(&now));

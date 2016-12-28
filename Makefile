@@ -46,7 +46,7 @@ cell_libs= \
 
 majin_sources=src/preptool/main.c \
    src/shared/vector.c \
-   src/shared/spk_writer.c
+   src/preptool/spk_writer.c
 majin_libs=\
    -lz
 

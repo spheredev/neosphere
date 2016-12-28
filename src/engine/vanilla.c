@@ -292,17 +292,17 @@ initialize_vanilla_api(duk_context* ctx)
 	// load system-provided images
 	if (g_sys_conf != NULL) {
 		filename = kev_read_string(g_sys_conf, "Arrow", "pointer.png");
-		s_sys_arrow = image_load(systempath(filename));
+		s_sys_arrow = image_load(system_path(filename));
 		filename = kev_read_string(g_sys_conf, "UpArrow", "up_arrow.png");
-		s_sys_up_arrow = image_load(systempath(filename));
+		s_sys_up_arrow = image_load(system_path(filename));
 		filename = kev_read_string(g_sys_conf, "DownArrow", "down_arrow.png");
-		s_sys_dn_arrow = image_load(systempath(filename));
+		s_sys_dn_arrow = image_load(system_path(filename));
 	}
 
 	// load system window style
 	if (g_sys_conf != NULL) {
 		filename = kev_read_string(g_sys_conf, "ssWindowStyle", "system.rws");
-		s_sys_winstyle = load_windowstyle(systempath(filename));
+		s_sys_winstyle = load_windowstyle(system_path(filename));
 	}
 	
 	// add polyfills for __defineGetter__/__defineSetter__.  Sphere 1.x predates ES5
@@ -1069,8 +1069,8 @@ js_GetGameList(duk_context* ctx)
 	int i, j = 0;
 
 	// build search paths
-	paths[0] = path_rebase(path_new("games/"), enginepath());
-	paths[1] = path_rebase(path_new("minisphere/games/"), homepath());
+	paths[0] = path_rebase(path_new("games/"), engine_path());
+	paths[1] = path_rebase(path_new("minisphere/games/"), home_path());
 
 	// search for supported games
 	duk_push_array(ctx);
@@ -1747,7 +1747,7 @@ js_ExecuteGame(duk_context* ctx)
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
 	g_game_path = path_new(filename);
-	games_path = path_rebase(path_new("games/"), enginepath());
+	games_path = path_rebase(path_new("games/"), assets_path());
 	path_rebase(g_game_path, games_path);
 	path_free(games_path);
 

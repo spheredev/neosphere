@@ -360,7 +360,7 @@ lstr_from_cp1252(const char* text, size_t length)
 		length = p_out - buffer;
 	}
 	else {
-		// string is UTF-8/CESU-8, copy buffer as-is
+		// string is already UTF-8/CESU-8, copy buffer as-is
 		if (!(string = malloc(sizeof(lstring_t) + length + 1)))
 			return NULL;
 		buffer = (uint8_t*)string + sizeof(lstring_t);

@@ -138,7 +138,7 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("minisphere/games/"), homepath());
+	games_path = path_rebase(path_new("minisphere/games/"), home_path());
 	path_mkdir(games_path);
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
@@ -217,7 +217,7 @@ main(int argc, char* argv[])
 	console_log(1, "loading system default font");
 	if (g_sys_conf != NULL) {
 		filename = kev_read_string(g_sys_conf, "Font", "system.rfn");
-		g_sys_font = font_load(systempath(filename));
+		g_sys_font = font_load(system_path(filename));
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(screen_display(g_screen), "No System Font Available", "A system font is required.",
@@ -468,14 +468,18 @@ find_startup_game(path_t* *out_path)
 	ALLEGRO_FS_ENTRY* fse;
 	int               n_spk_files = 0;
 
-	// prefer startup game alongside engine if one exists
-	*out_path = path_rebase(path_new("startup/game.sgm"), enginepath());
+	// prefer a bundled startup game over an SPK if one exists
+	*out_path = path_rebase(path_new("startup/game.sgm"), assets_path());
 	if (al_filename_exists(path_cstr(*out_path)))
-		return true;
+		return true;  // found a startup game
+	path_free(*out_path);
+	*out_path = path_rebase(path_new("startup/game.json"), assets_path());
+	if (al_filename_exists(path_cstr(*out_path)))
+		return true;  // found a startup game
 	path_free(*out_path);
 
-	// check for single SPK package alongside engine
-	*out_path = path_dup(enginepath());
+	// check for a single bundled SPK package
+	*out_path = path_dup(assets_path());
 	engine_dir = al_create_fs_entry(path_cstr(*out_path));
 	al_open_directory(engine_dir);
 	while (fse = al_read_directory(engine_dir)) {
@@ -492,11 +496,11 @@ find_startup_game(path_t* *out_path)
 		return true;  // found an SPK
 
 	// as a last resort, use the default startup game
-	*out_path = path_rebase(path_new("system/startup.spk"), enginepath());
+	*out_path = path_rebase(path_new("system/startup.spk"), assets_path());
 	if (al_filename_exists(path_cstr(*out_path)))
 		return true;
 	path_free(*out_path);
-	*out_path = path_rebase(path_new("../share/minisphere/system/startup.spk"), enginepath());
+	*out_path = path_rebase(path_new("../share/minisphere/system/startup.spk"), assets_path());
 	if (al_filename_exists(path_cstr(*out_path)))
 		return true;
 	path_free(*out_path);

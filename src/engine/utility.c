@@ -6,7 +6,7 @@
 static duk_ret_t do_decode_json (duk_context* ctx);
 
 const path_t*
-enginepath(void)
+assets_path(void)
 {
 	static path_t* retval = NULL;
 
@@ -21,7 +21,35 @@ enginepath(void)
 }
 
 const path_t*
-homepath(void)
+engine_path(void)
+{
+	static path_t* retval = NULL;
+
+	ALLEGRO_PATH* al_path;
+
+	int i;
+
+	if (retval == NULL) {
+		al_path = al_get_standard_path(ALLEGRO_EXENAME_PATH);
+		al_set_path_filename(al_path, NULL);
+		// FIXME: how do we detect if we're running from an app bundle?
+		if (false) {
+			// for OS X, we want the directory containing minisphere.app and NOT the
+			// executable directory that's buried inside.  to get there, we need to
+			// go 3 levels up from the executable:
+			//     minisphere.app/Contents/MacOS/minisphere
+			//     ^3             ^2       ^1    ^0
+			for (i = 0; i < 3; ++i)
+				al_drop_path_tail(al_path);
+		}
+		retval = path_new_dir(al_path_cstr(al_path, '/'));
+		al_destroy_path(al_path);
+	}
+	return retval;
+}
+
+const path_t*
+home_path(void)
 {
 	static path_t* retval = NULL;
 
@@ -37,7 +65,7 @@ homepath(void)
 }
 
 const char*
-systempath(const char* filename)
+system_path(const char* filename)
 {
 	static char retval[SPHERE_PATH_MAX];
 

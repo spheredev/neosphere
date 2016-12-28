@@ -24,8 +24,21 @@ static duk_ret_t js_Target_get_path (duk_context* ctx);
 bool
 script_eval(build_t* build)
 {
+	void*        file_data;
+	size_t       file_size;
 	duk_context* js_env;
+	path_t*      script_path;
+	lstring_t*   source;
 
+	script_path = path_dup(build_in_path(build));
+	path_append(script_path, "Cellscript.js");
+	if (!(file_data = fslurp(path_cstr(script_path), &file_size))) {
+		printf("ERROR: unable to open Cellscript.js, does it exist?\n");
+		return false;
+	}
+	source = lstr_from_cp1252(file_data, file_size);
+	free(file_data);
+	
 	// note: no fatal error handler set here.  if a JavaScript exception is thrown
 	//       and nothing catches it, Cell will crash.
 	js_env = duk_create_heap_default();
@@ -47,8 +60,13 @@ script_eval(build_t* build)
 	duk_put_prop_string(js_env, -2, "buildPtr");
 	duk_pop(js_env);
 
-	// we're done here, clean up
+	// execute the Cellscript
+	duk_push_lstring(js_env, lstr_cstr(source), lstr_len(source));
+	duk_push_string(js_env, "Cellscript.js");
+	duk_compile(js_env, 0x0);
+	duk_call(js_env, 0);
 	duk_destroy_heap(js_env);
+	lstr_free(source);
 	
 	printf("ERROR: not implemented yet\n");
 

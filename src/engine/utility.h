@@ -1,9 +1,10 @@
 #ifndef MINISPHERE__UTILITY_H__INCLUDED
 #define MINISPHERE__UTILITY_H__INCLUDED
 
-const path_t* enginepath (void);
-const path_t* homepath   (void);
-const char*   systempath (const char* filename);
+const path_t* assets_path (void);
+const path_t* engine_path (void);
+const path_t* home_path   (void);
+const char*   system_path (const char* filename);
 
 bool        is_cpu_little_endian  (void);
 duk_int_t   duk_json_pdecode      (duk_context* ctx);
