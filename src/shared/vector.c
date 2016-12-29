@@ -1,7 +1,7 @@
 // WARNING: be careful when using this!
 // to cut down on the number of casts needed when using this generic vector implementation,
-// void pointers are thrown around with abandon. as a result, it is not type safe at all
-// and WILL blow up in your face if you're careless with it. you have been warned!
+// void pointers are thrown around with abandon.  as a result, it is not type safe at all
+// and WILL blow up in your face if you're careless with it.  you have been warned!
 
 #include "vector.h"
 

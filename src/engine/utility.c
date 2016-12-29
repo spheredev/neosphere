@@ -154,9 +154,13 @@ duk_push_lstring_t(duk_context* ctx, const lstring_t* string)
 	duk_push_lstring(ctx, lstr_cstr(string), lstr_len(string));
 }
 
-void
-duk_ref_heapptr(duk_context* ctx, void* heapptr)
+void*
+duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 {
+	void* heapptr;
+
+	heapptr = duk_require_heapptr(ctx, idx);
+	
 	duk_push_global_stash(ctx);
 	if (!duk_get_prop_string(ctx, -1, "refs")) {
 		dukrub_push_bare_object(ctx);
@@ -191,6 +195,8 @@ duk_ref_heapptr(duk_context* ctx, void* heapptr)
 		duk_put_prop(ctx, -4);
 		duk_pop_3(ctx);
 	}
+
+	return heapptr;
 }
 
 lstring_t*

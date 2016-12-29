@@ -1,9 +1,13 @@
 #include "cell.h"
 #include "utility.h"
 
-void
-duk_ref_heapptr(duk_context* ctx, void* heapptr)
+void*
+duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 {
+	void* heapptr;
+
+	heapptr = duk_require_heapptr(ctx, idx);
+	
 	duk_push_global_stash(ctx);
 	if (!duk_get_prop_string(ctx, -1, "refs")) {
 		dukrub_push_bare_object(ctx);
@@ -38,6 +42,8 @@ duk_ref_heapptr(duk_context* ctx, void* heapptr)
 		duk_put_prop(ctx, -4);
 		duk_pop_3(ctx);
 	}
+
+	return heapptr;
 }
 
 void
@@ -76,6 +82,16 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 
 		duk_pop_3(ctx);
 	}
+}
+
+bool
+fexist(const char* filename)
+{
+	struct stat sb;
+
+	if (stat(filename, &sb) != 0)
+		return false;
+	return true;
 }
 
 void*

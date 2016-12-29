@@ -97,8 +97,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	duk_push_lstring_t(g_duk, source);
 	duk_push_lstring_t(g_duk, name);
 	duk_compile(g_duk, 0x0);
-	heapptr = duk_require_heapptr(g_duk, -1);
-	duk_ref_heapptr(g_duk, heapptr);
+	heapptr = duk_ref_heapptr(g_duk, -1);
 	duk_pop(g_duk);
 
 	cache_source(lstr_cstr(name), source);
@@ -117,8 +116,7 @@ script_new_func(duk_context* ctx, duk_idx_t idx)
 
 	idx = duk_require_normalize_index(ctx, idx);
 	duk_require_function(ctx, idx);
-	heapptr = duk_require_heapptr(ctx, idx);
-	duk_ref_heapptr(ctx, heapptr);
+	heapptr = duk_ref_heapptr(ctx, idx);
 
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;

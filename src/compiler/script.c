@@ -8,8 +8,9 @@
 #include "tool.h"
 #include "utility.h"
 
-static build_t* get_current_build (duk_context* js);
-static void     make_file_targets (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static duk_ret_t build_install     (duk_context* ctx);
+static build_t*  get_current_build (duk_context* js);
+static void      make_file_targets (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 
 static duk_ret_t js_files           (duk_context* ctx);
 static duk_ret_t js_system_name     (duk_context* ctx);
@@ -71,6 +72,11 @@ script_eval(build_t* build)
 	printf("ERROR: not implemented yet\n");
 
 	return false;
+}
+
+static duk_ret_t
+build_install(duk_context* ctx)
+{
 }
 
 static build_t*
@@ -221,8 +227,9 @@ js_new_Tool(duk_context* ctx)
 
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	duk_require_function(ctx, 0);
 
-	tool = tool_new();
+	tool = tool_new(ctx, 0);
 
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Tool", tool);
