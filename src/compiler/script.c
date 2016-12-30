@@ -8,7 +8,6 @@
 #include "tool.h"
 #include "utility.h"
 
-static duk_ret_t build_install     (duk_context* ctx);
 static build_t*  get_current_build (duk_context* js);
 static void      make_file_targets (const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 
@@ -65,18 +64,14 @@ script_eval(build_t* build)
 	duk_push_lstring(js_env, lstr_cstr(source), lstr_len(source));
 	duk_push_string(js_env, "Cellscript.js");
 	duk_compile(js_env, 0x0);
-	duk_call(js_env, 0);
+	if (duk_pcall(js_env, 0) != DUK_EXEC_SUCCESS)
+		printf("%s\n", duk_to_string(js_env, -1));
 	duk_destroy_heap(js_env);
 	lstr_free(source);
 	
 	printf("ERROR: not implemented yet\n");
 
 	return false;
-}
-
-static duk_ret_t
-build_install(duk_context* ctx)
-{
 }
 
 static build_t*
@@ -263,7 +258,7 @@ js_Tool_build(duk_context* ctx)
 	tool = duk_require_class_obj(ctx, -1, "Tool");
 	out_path = path_new(duk_require_string(ctx, 0));
 	if (duk_is_array(ctx, 1))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "sources arg, array required");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 2)");
 
 	name = path_new(path_filename(out_path));
 	target = target_new(name, out_path, tool);

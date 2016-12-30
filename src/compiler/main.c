@@ -1,6 +1,7 @@
 #include "cell.h"
 
 #include "build.h"
+#include "script.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_cell_quote (void);
@@ -15,6 +16,7 @@ static char*   s_target_name;
 int
 main(int argc, char* argv[])
 {
+	build_t* build;
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
@@ -26,6 +28,9 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
+	build = build_new(s_in_path, s_out_path);
+	script_eval(build);
+	
 	retval = EXIT_SUCCESS;
 
 shutdown:

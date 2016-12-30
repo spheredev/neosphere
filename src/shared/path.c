@@ -86,7 +86,7 @@ path_cstr(const path_t* path)
 	// important note:
 	// path_cstr() must be implemented such that path_new(path_cstr(path))
 	// results in a perfect duplicate. in practice this means directory paths
-	// will always be printed with a trailing separator.
+	// will always be printed with a trailing slash.
 
 	return path->pathname;
 }
@@ -275,9 +275,7 @@ path_collapse(path_t* path, bool collapse_uplevel)
 		hop = path_hop(path, i);
 		if (strcmp(hop, ".") == 0)
 			path_remove_hop(path, i--);
-		else if (strcmp(hop, "..") == 0 && i > 0) {
-			if (!collapse_uplevel)
-				continue;
+		else if (strcmp(hop, "..") == 0 && i > 0 && collapse_uplevel) {
 			path_remove_hop(path, i--);
 			if (i > 0 || !is_rooted)  // don't strip the root directory
 				path_remove_hop(path, i--);
