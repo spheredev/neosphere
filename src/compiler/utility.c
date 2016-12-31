@@ -1,6 +1,8 @@
 #include "cell.h"
 #include "utility.h"
 
+#include <windows.h>
+
 void*
 duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 {
@@ -83,6 +85,8 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 		duk_pop_3(ctx);
 	}
 }
+
+
 
 bool
 fexist(const char* filename)

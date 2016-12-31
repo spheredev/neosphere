@@ -6,6 +6,7 @@
 #endif
 
 #if defined(_WIN32)
+#include <windows.h>
 #include <direct.h>
 #define PATH_MAX _MAX_PATH
 #define mkdir(path, m) _mkdir(path)
@@ -56,6 +57,26 @@ path_new_dir(const char* pathname)
 	return construct_path(
 		calloc(1, sizeof(path_t)),
 		pathname, true);
+}
+
+path_t*
+path_new_self(void)
+{
+#if defined(_WIN32)
+	char    pathname[MAX_PATH];
+
+	GetModuleFileNameA(NULL, pathname, MAX_PATH);
+	return path_new(pathname);
+#else
+	char        pathname[PATH_MAX];
+	ssize_t     pathname_len;
+
+	memset(pathname, 0, sizeof pathname);
+	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX);
+	if (pathname_len == -1 || pathname_len == PATH_MAX)
+		return NULL;
+	return path_new(pathname);
+#endif
 }
 
 path_t*

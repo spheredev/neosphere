@@ -8,6 +8,7 @@ typedef struct path path_t;
 
 path_t*     path_new           (const char* pathname);
 path_t*     path_new_dir       (const char* pathname);
+path_t*     path_new_self      (void);
 path_t*     path_dup           (const path_t* path);
 void        path_free          (path_t* path);
 const char* path_cstr          (const path_t* path);
