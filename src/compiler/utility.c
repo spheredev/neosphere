@@ -1,8 +1,6 @@
 #include "cell.h"
 #include "utility.h"
 
-#include <windows.h>
-
 void*
 duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 {

@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <limits.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
