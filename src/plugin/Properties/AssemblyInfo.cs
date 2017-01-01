@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Fat Cerberus")]
 [assembly: AssemblyProduct("minisphere")]
-[assembly: AssemblyCopyright("© 2015-2016 Fat Cerberus")]
+[assembly: AssemblyCopyright("© 2015-2017 Fat Cerberus")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <limits.h>
 
 typedef struct path path_t;
 

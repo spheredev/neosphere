@@ -1,5 +1,5 @@
 minisphere JavaScript Game Engine
-Copyright (c) 2015-2016, Fat Cerberus
+Copyright (c) 2015-2017, Fat Cerberus
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
