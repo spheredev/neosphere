@@ -8,6 +8,8 @@ struct fs
 	path_t* system_path;
 };
 
+static char* resolve (const fs_t* fs, const char* filename);
+
 fs_t*
 fs_new(const char* build_dir, const char* game_dir)
 {
@@ -32,17 +34,16 @@ fs_free(fs_t* fs)
 FILE*
 fs_fopen(const fs_t* fs, const char* filename, const char* mode)
 {
-	FILE*   file;
-	path_t* path;
+	FILE* file;
+	char* resolved_name;
 
-	path = path_new(filename);
-	if (!fs_resolve(fs, path)) {
-		path_free(path);
+	if (!(resolved_name = resolve(fs, filename))) {
 		errno = EACCES;  // sandboxing violation
 		return NULL;
 	}
-	file = fopen(path_cstr(path), mode);
-	path_free(path);
+
+	file = fopen(resolved_name, mode);
+	free(resolved_name);
 	return file;
 }
 
@@ -50,24 +51,42 @@ vector_t*
 fs_list_dir(const fs_t* fs, const char* dirname, bool recursive)
 {
 	vector_t* list;
-	path_t*   path;
+	char*     resolved_name;
 
-	path = path_new_dir(dirname);
-	if (!fs_resolve(fs, path)) {
-		path_free(path);
+	if (!(resolved_name = resolve(fs, dirname)))
 		return NULL;
-	}
 
 	list = vector_new(sizeof(path_t*));
+	free(resolved_name);
 	return list;
 }
 
-bool
-fs_resolve(const fs_t* fs, path_t* path)
+int
+fs_stat(const fs_t* fs, const char* filename, struct stat* p_stat)
 {
-	if (path_is_rooted(path))
-		return false;
+	char* resolved_name;
+	int   result;
+
+	if (!(resolved_name = resolve(fs, filename))) {
+		errno = EACCES;  // sandboxing violation
+		return -1;
+	}
+
+	result = stat(resolved_name, p_stat);
+	free(resolved_name);
+	return result;
+}
+
+static char*
+resolve(const fs_t* fs, const char* filename)
+{
+	char*   resolved_name;
+	path_t* path;
 	
+	path = path_new(filename);
+	if (path_is_rooted(path))
+		goto on_error;
+
 	if (path_num_hops(path) == 0)
 		path_rebase(path, fs->build_path);
 	else if (path_hop_cmp(path, 0, "@")) {
@@ -81,21 +100,15 @@ fs_resolve(const fs_t* fs, path_t* path)
 	else if (path_hop_cmp(path, 0, "~"))
 		// ~/ is required by the SphereFS specification, but is meaningless
 		// at compile time.  treat it as a sandboxing violation.
-		return false;
+		goto on_error;
 	else
 		path_rebase(path, fs->build_path);
-	return true;
-}
+	
+	resolved_name = strdup(path_cstr(path));
+	path_free(path);
+	return resolved_name;
 
-int
-fs_stat(const fs_t* fs, const char* filename, struct stat* p_stat)
-{
-	path_t* path;
-
-	path = path_new(filename);
-	if (!fs_resolve(fs, path)) {
-		errno = EACCES;  // sandboxing violation
-		return -1;
-	}
-	return stat(path_cstr(path), p_stat);
+on_error:
+	path_free(path);
+	return NULL;
 }

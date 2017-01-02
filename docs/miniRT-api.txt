@@ -836,7 +836,7 @@ Reader#readUint32([littleEndian]);
     true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
     Note: "readUint" variants read unsigned values.  "readInt" variants read
-    signed ("two's complement") values.
+          signed ("two's complement") values.
 
 Reader#readString(length);
 
@@ -875,7 +875,7 @@ Reader#readStruct(desc);
             reserved2: { type: 'raw', size: 234 },
         });
 
-new Writer(stream);
+new struct.Writer(stream);
 
     Creates a Writer object which can be used to write binary data to a
     stream.  `stream` is an object with a write() method that takes an
