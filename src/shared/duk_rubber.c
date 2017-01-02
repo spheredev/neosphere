@@ -19,7 +19,7 @@ dukrub_debugger_attach(duk_context* ctx,
 	duk_debug_request_function request_cb, dukrub_debug_detached_function detached_cb,
 	void* udata)
 {
-#if DUK_VERSION >= 19999
+#if DUK_VERSION >= 20000
 	s_detached_cb = detached_cb;
 	duk_debugger_attach(ctx, read_cb, write_cb, peek_cb, read_flush_cb, write_flush_cb, request_cb, shim_v1_debug_detached, udata);
 #else
@@ -30,7 +30,7 @@ dukrub_debugger_attach(duk_context* ctx,
 duk_idx_t
 dukrub_push_bare_object(duk_context* ctx)
 {
-#if DUK_VERSION >= 19999
+#if DUK_VERSION >= 20000
 	return duk_push_bare_object(ctx);
 #else
 	duk_idx_t idx;
@@ -45,7 +45,7 @@ dukrub_push_bare_object(duk_context* ctx)
 void
 dukrub_inspect_callstack_entry(duk_context* ctx, duk_int_t level)
 {
-#if DUK_VERSION >= 19999
+#if DUK_VERSION >= 20000
 	duk_inspect_callstack_entry(ctx, level);
 #else
 	duk_eval_string(ctx, "Duktape.act");
@@ -57,7 +57,7 @@ dukrub_inspect_callstack_entry(duk_context* ctx, duk_int_t level)
 duk_int_t
 dukrub_safe_call(duk_context* ctx, dukrub_safe_call_function func, duk_int_t nargs, duk_int_t nrets)
 {
-#if DUK_VERSION >= 19999
+#if DUK_VERSION >= 20000
 	struct safe_call_args safe_args;
 	
 	safe_args.func = func;

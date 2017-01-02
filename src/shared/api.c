@@ -15,8 +15,8 @@ api_init(duk_context* ctx)
 	duk_push_global_object(ctx);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_CLEAR_CONFIGURABLE);
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 	duk_pop(ctx);
 
 	// set up a prototype stash.  this ensures the prototypes for built-in classes

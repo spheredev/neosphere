@@ -32,25 +32,31 @@ fs_free(fs_t* fs)
 FILE*
 fs_fopen(const fs_t* fs, const char* filename, const char* mode)
 {
+	FILE*   file;
 	path_t* path;
 
 	path = path_new(filename);
 	if (!fs_resolve(fs, path)) {
+		path_free(path);
 		errno = EACCES;  // sandboxing violation
 		return NULL;
 	}
-	return fopen(path_cstr(path), mode);
+	file = fopen(path_cstr(path), mode);
+	path_free(path);
+	return file;
 }
 
 vector_t*
-fs_list_dir(const fs_t* fs, const path_t* dir_path, bool recursive)
+fs_list_dir(const fs_t* fs, const char* dirname, bool recursive)
 {
 	vector_t* list;
 	path_t*   path;
 
-	path = path_dup(dir_path);
-	if (!fs_resolve(fs, path))
+	path = path_new_dir(dirname);
+	if (!fs_resolve(fs, path)) {
+		path_free(path);
 		return NULL;
+	}
 
 	list = vector_new(sizeof(path_t*));
 	return list;
