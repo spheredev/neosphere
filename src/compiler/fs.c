@@ -1,6 +1,8 @@
 #include "cell.h"
 #include "fs.h"
 
+#include "tinydir.h"
+
 struct fs
 {
 	path_t* build_path;
@@ -48,15 +50,32 @@ fs_fopen(const fs_t* fs, const char* filename, const char* mode)
 }
 
 vector_t*
-fs_list_dir(const fs_t* fs, const char* dirname, bool recursive)
+fs_list_dir(const fs_t* fs, const char* dirname)
 {
-	vector_t* list;
-	char*     resolved_name;
+	tinydir_dir  dir_info;
+	tinydir_file file_info;
+	vector_t*    list;
+	path_t*      origin_path;
+	path_t*      path;
+	char*        resolved_name;
 
 	if (!(resolved_name = resolve(fs, dirname)))
 		return NULL;
 
+	if (tinydir_open(&dir_info, resolved_name) != 0)
+		return NULL;
+	origin_path = path_new_dir(dirname);
 	list = vector_new(sizeof(path_t*));
+	while (dir_info.has_next) {
+		tinydir_readfile(&dir_info, &file_info);
+		tinydir_next(&dir_info);
+		path = file_info.is_dir
+			? path_new_dir(file_info.name)
+			: path_new(file_info.name);
+		path_rebase(path, origin_path);
+		vector_push(list, &path);
+	}
+	path_free(origin_path);
 	free(resolved_name);
 	return list;
 }

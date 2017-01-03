@@ -1,10 +1,12 @@
 #include "cell.h"
 #include "build.h"
 
+#include "fs.h"
 #include "spk_writer.h"
 
 struct build
 {
+	fs_t*     fs;
 	vector_t* installs;
 	path_t*   in_path;
 	path_t*   out_path;
@@ -43,6 +45,12 @@ build_free(build_t* build)
 	}
 	vector_free(build->installs);
 	free(build);
+}
+
+fs_t*
+build_fs(const build_t* build)
+{
+	return build->fs;
 }
 
 const path_t*

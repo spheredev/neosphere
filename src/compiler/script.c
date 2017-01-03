@@ -3,8 +3,8 @@
 
 #include "api.h"
 #include "build.h"
+#include "fs.h"
 #include "target.h"
-#include "tinydir.h"
 #include "tool.h"
 #include "utility.h"
 
@@ -91,28 +91,30 @@ make_file_targets(const char* wildcard, const path_t* path, const path_t* subdir
 {
 	// note: 'targets' should be a vector_t initialized to sizeof(target_t*).
 
-	tinydir_dir  dir_info;
-	tinydir_file file_info;
 	path_t*      file_path;
+	vector_t*    list;
 	path_t*      name;
 	target_t*    target;
 
-	tinydir_open(&dir_info, path_cstr(path));
-	while (dir_info.has_next) {
-		tinydir_readfile(&dir_info, &file_info);
-		tinydir_next(&dir_info);
-		if (file_info.is_dir && recursive) {
-			name = path_new_dir(file_info.name);
-			file_path = path_new_dir(file_info.path);
+	iter_t iter;
+	path_t* *p_path;
+
+	list = fs_list_dir(NULL, path_cstr(path));
+	
+	iter = vector_enum(list);
+	while (p_path = vector_next(&iter)) {
+		if (!path_is_file(*p_path) && recursive) {
+			name = path_new_dir(path_filename(*p_path));
+			file_path = path_dup(*p_path);
 			if (subdir != NULL)
 				path_rebase(name, subdir);
 			make_file_targets(wildcard, file_path, name, targets, true);
 			path_free(file_path);
 			path_free(name);
 		}
-		else if (file_info.is_reg && wildcmp(file_info.name, wildcard)) {
-			name = path_new(file_info.name);
-			file_path = path_new(file_info.path);
+		else if (path_is_file(*p_path) && wildcmp(path_filename(*p_path), wildcard)) {
+			name = path_new(path_filename(*p_path));
+			file_path = path_dup(*p_path);
 			if (subdir != NULL)
 				path_rebase(name, subdir);
 			target = target_new(name, file_path, NULL);
@@ -121,6 +123,11 @@ make_file_targets(const char* wildcard, const path_t* path, const path_t* subdir
 			path_free(name);
 		}
 	}
+
+	iter = vector_enum(list);
+	while (p_path = vector_next(&iter))
+		path_free(*p_path);
+	vector_free(list);
 }
 
 static duk_ret_t
