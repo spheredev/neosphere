@@ -59,17 +59,18 @@ build_add_target(build_t* build, target_t* target)
 void
 build_run(build_t* build)
 {
+	int           num_built = 0;
 	const path_t* path;
 	
 	iter_t iter;
 	target_t* *p;
 
+	printf("processing %zu targets...\n", vector_len(build->targets));
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);
 		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
 			continue;
-		printf("    %s\n", path_cstr(path));
 		target_build(*p, build->fs);
 	}
 }

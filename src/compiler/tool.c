@@ -8,14 +8,16 @@ struct tool
 	unsigned int refcount;
 	duk_context* js_ctx;
 	void*        js_func;
+	char*        verb;
 };
 
 tool_t*
-tool_new(duk_context* ctx, duk_idx_t idx)
+tool_new(duk_context* ctx, duk_idx_t idx, const char* verb)
 {
 	tool_t* tool;
 
 	tool = calloc(1, sizeof(tool_t));
+	tool->verb = strdup(verb);
 	tool->js_ctx = ctx;
 	tool->js_func = duk_ref_heapptr(ctx, idx);
 	return tool_ref(tool);
@@ -37,13 +39,15 @@ tool_free(tool_t* tool)
 		return;
 	
 	duk_unref_heapptr(tool->js_ctx, tool->js_func);
+	free(tool->verb);
 	free(tool);
 }
 
 bool
-tool_exec(tool_t* tool, const path_t* out_path, vector_t* in_paths)
+tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_paths)
 {
 	duk_uarridx_t array_index;
+	path_t*       dir_path;
 	duk_context*  js_ctx;
 	bool          is_outdated = false;
 	time_t        last_time = 0;
@@ -60,17 +64,24 @@ tool_exec(tool_t* tool, const path_t* out_path, vector_t* in_paths)
 	// check whether the output file is out of date with respect to its sources.
 	// this is a simple timestamp comparison for now; it might be good to eventually
 	// switch to a hash-based solution like in SCons.
-	if (stat(path_cstr(out_path), &sb) == 0)
+	if (fs_stat(fs, path_cstr(out_path), &sb) == 0)
 		last_time = sb.st_mtime;
 	iter = vector_enum(in_paths);
 	while (p_path = vector_next(&iter)) {
-		stat(path_cstr(*p_path), &sb);
+		fs_stat(fs, path_cstr(*p_path), &sb);
 		if (is_outdated = sb.st_mtime > last_time)
 			break;  // short circuit
 	}
 
 	// if the target file is out of date, invoke the tool to rebuild it.
 	if (is_outdated) {
+		printf("    %s %s\n", tool->verb, path_cstr(out_path));
+
+		// ensure the target directory exists
+		dir_path = path_strip(path_dup(out_path));
+		fs_mkdir(fs, path_cstr(dir_path));
+		path_free(dir_path);
+
 		duk_push_heapptr(js_ctx, tool->js_func);
 		duk_push_string(js_ctx, path_cstr(out_path));
 		duk_push_array(js_ctx);

@@ -81,6 +81,21 @@ fs_fslurp(const fs_t* fs, const char* filename, size_t* out_size)
 	return buffer;
 }
 
+bool
+fs_is_game_dir(const fs_t* fs, const char* dirname)
+{
+	path_t* full_path;
+	bool    retval;
+	char*   resolved_name;
+
+	if (!(resolved_name = resolve(fs, dirname)))
+		return false;
+	full_path = path_new_dir(resolved_name);
+	retval = path_cmp(full_path, fs->game_path);
+	path_free(full_path);
+	return retval;
+}
+
 vector_t*
 fs_list_dir(const fs_t* fs, const char* dirname)
 {
@@ -112,6 +127,21 @@ fs_list_dir(const fs_t* fs, const char* dirname)
 	path_free(origin_path);
 	free(resolved_name);
 	return list;
+}
+
+int
+fs_mkdir(const fs_t* fs, const char* dirname)
+{
+	char* resolved_name;
+	int   retval;
+
+	if (!(resolved_name = resolve(fs, dirname))) {
+		errno = EACCES;
+		return -1;
+	}
+	retval = tinydir_mkdir(resolved_name);
+	free(resolved_name);
+	return retval;
 }
 
 int

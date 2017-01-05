@@ -14,6 +14,7 @@ static void      make_file_targets (fs_t* fs, const char* wildcard, const path_t
 
 static duk_ret_t js_files           (duk_context* ctx);
 static duk_ret_t js_install         (duk_context* ctx);
+static duk_ret_t js_metadata        (duk_context* ctx);
 static duk_ret_t js_system_name     (duk_context* ctx);
 static duk_ret_t js_system_version  (duk_context* ctx);
 static duk_ret_t js_new_Tool        (duk_context* ctx);
@@ -27,9 +28,11 @@ bool
 script_eval(build_t* build)
 {
 	void*        file_data;
+	const char*  filename;
 	size_t       file_size;
 	tool_t*      install_tool;
 	duk_context* js_env;
+	int          line_number;
 	lstring_t*   source;
 
 	if (!(file_data = fs_fslurp(build_fs(build), "Cellscript.js", &file_size))) {
@@ -39,6 +42,8 @@ script_eval(build_t* build)
 	source = lstr_from_cp1252(file_data, file_size);
 	free(file_data);
 
+	printf("evaluating Cellscript.js...\n");
+	
 	// note: no fatal error handler set here.  if a JavaScript exception is thrown
 	//       and nothing catches it, Cell will crash.
 	js_env = duk_create_heap_default();
@@ -47,6 +52,7 @@ script_eval(build_t* build)
 	api_init(js_env);
 	api_define_function(js_env, NULL, "files", js_files);
 	api_define_function(js_env, NULL, "install", js_install);
+	api_define_function(js_env, NULL, "metadata", js_metadata);
 	api_define_function(js_env, "system", "name", js_system_name);
 	api_define_function(js_env, "system", "version", js_system_version);
 	api_define_class(js_env, "Target", NULL, js_Target_finalize);
@@ -63,7 +69,7 @@ script_eval(build_t* build)
 
 	duk_get_global_string(js_env, "install");
 	duk_push_c_function(js_env, install_target, DUK_VARARGS);
-	install_tool = tool_new(js_env, -1);
+	install_tool = tool_new(js_env, -1, "install");
 	duk_push_class_obj(js_env, "Tool", install_tool);
 	duk_replace(js_env, -2);
 	duk_put_prop_string(js_env, -2, "\xFF" "tool");
@@ -73,12 +79,23 @@ script_eval(build_t* build)
 	duk_push_lstring(js_env, lstr_cstr(source), lstr_len(source));
 	duk_push_string(js_env, "Cellscript.js");
 	duk_compile(js_env, 0x0);
-	if (duk_pcall(js_env, 0) != DUK_EXEC_SUCCESS)
-		printf("%s\n", duk_to_string(js_env, -1));
-	duk_destroy_heap(js_env);
-	lstr_free(source);
+	if (duk_pcall(js_env, 0) != DUK_EXEC_SUCCESS) {
+		duk_get_prop_string(js_env, -1, "fileName");
+		filename = duk_safe_to_string(js_env, -1);
+		duk_get_prop_string(js_env, -2, "lineNumber");
+		line_number = duk_get_int(js_env, -1);
+		duk_dup(js_env, -3);
+		duk_to_string(js_env, -1);
+		printf("    %s\n", duk_get_string(js_env, -1));
+		printf("    @ [%s:%d]\n", filename, line_number);
+		duk_pop_3(js_env);
+	}
+	duk_pop(js_env);
 	
-	return false;
+	//duk_destroy_heap(js_env);
+	lstr_free(source);
+
+	return true;
 }
 
 static build_t*
@@ -120,6 +137,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	// note: 'targets' should be a vector_t initialized to sizeof(target_t*).
 
 	path_t*      file_path;
+	bool         ignore_dir;
 	vector_t*    list;
 	path_t*      name;
 	target_t*    target;
@@ -131,7 +149,10 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	
 	iter = vector_enum(list);
 	while (p_path = vector_next(&iter)) {
-		if (!path_is_file(*p_path) && recursive) {
+		ignore_dir = fs_is_game_dir(fs, path_cstr(*p_path))
+			&& path_num_hops(path) > 0
+			&& !path_hop_cmp(path, 0, "@");
+		if (!path_is_file(*p_path) && !ignore_dir && recursive) {
 			name = path_new_dir(path_hop(*p_path, path_num_hops(*p_path) - 1));
 			file_path = path_dup(*p_path);
 			if (subdir != NULL)
@@ -190,8 +211,12 @@ js_files(duk_context* ctx)
 	// this is potentially recursive, so we defer to make_file_targets() to construct
 	// the targets.  note: 'path' should always be a directory at this point.
 	targets = vector_new(sizeof(target_t*));
-	make_file_targets(build_fs(build), wildcard, path, NULL, targets, true);
+	make_file_targets(build_fs(build), wildcard, path, NULL, targets, recursive);
 	free(wildcard);
+
+	if (vector_len(targets) == 0) {
+		printf("    warn: '%s' matches 0 files\n", pattern);
+	}
 
 	// return all the newly constructed targets as an array.
 	duk_push_array(ctx);
@@ -251,6 +276,12 @@ js_install(duk_context* ctx)
 }
 
 static duk_ret_t
+js_metadata(duk_context* ctx)
+{
+	return 0;
+}
+
+static duk_ret_t
 js_system_name(duk_context* ctx)
 {
 	duk_push_string(ctx, COMPILER_NAME);
@@ -302,13 +333,18 @@ js_Target_get_path(duk_context* ctx)
 static duk_ret_t
 js_new_Tool(duk_context* ctx)
 {
-	tool_t* tool;
+	int         num_args;
+	tool_t*     tool;
+	const char* verb = "build";
 
+	num_args = duk_get_top(ctx);
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 	duk_require_function(ctx, 0);
+	if (num_args >= 2)
+		verb = duk_require_string(ctx, 1);
 
-	tool = tool_new(ctx, 0);
+	tool = tool_new(ctx, 0, verb);
 
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Tool", tool);
