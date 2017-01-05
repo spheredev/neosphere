@@ -33,6 +33,22 @@ fs_free(fs_t* fs)
 	free(fs);
 }
 
+int
+fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwrite)
+{
+	char* resolved_dest;
+	char* resolved_src;
+
+	resolved_dest = resolve(fs, destination);
+	resolved_src = resolve(fs, source);
+	if (resolved_dest == NULL || resolved_src == NULL) {
+		errno = EACCES;  // sandboxing violation
+		return -1;
+	}
+
+	return tinydir_copy(resolved_src, resolved_dest, !overwrite);
+}
+
 FILE*
 fs_fopen(const fs_t* fs, const char* filename, const char* mode)
 {
@@ -47,6 +63,22 @@ fs_fopen(const fs_t* fs, const char* filename, const char* mode)
 	file = fopen(resolved_name, mode);
 	free(resolved_name);
 	return file;
+}
+
+void*
+fs_fslurp(const fs_t* fs, const char* filename, size_t* out_size)
+{
+	void* buffer;
+	char* resolved_name;
+
+	if (!(resolved_name = resolve(fs, filename))) {
+		errno = EACCES;  // sandboxing violation
+		return NULL;
+	}
+
+	buffer = fslurp(resolved_name, out_size);
+	free(resolved_name);
+	return buffer;
 }
 
 vector_t*
@@ -69,6 +101,8 @@ fs_list_dir(const fs_t* fs, const char* dirname)
 	while (dir_info.has_next) {
 		tinydir_readfile(&dir_info, &file_info);
 		tinydir_next(&dir_info);
+		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
+			continue;
 		path = file_info.is_dir
 			? path_new_dir(file_info.name)
 			: path_new(file_info.name);

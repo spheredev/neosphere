@@ -7,9 +7,7 @@
 struct build
 {
 	fs_t*     fs;
-	vector_t* installs;
-	path_t*   in_path;
-	path_t*   out_path;
+	vector_t* targets;
 };
 
 struct install
@@ -24,9 +22,8 @@ build_new(const path_t* in_path, const path_t* out_path)
 	build_t* build = NULL;
 
 	build = calloc(1, sizeof(build_t));
-	build->installs = vector_new(sizeof(struct install));
-	build->in_path = path_dup(in_path);
-	build->out_path = path_dup(out_path);
+	build->fs = fs_new(path_cstr(in_path), path_cstr(out_path));
+	build->targets = vector_new(sizeof(target_t*));
 	return build;
 }
 
@@ -34,16 +31,15 @@ void
 build_free(build_t* build)
 {
 	iter_t iter;
-	struct install *p;
+	target_t* *p;
 	
 	if (build == NULL)
 		return;
-	iter = vector_enum(build->installs);
+	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
-		target_free(p->target);
-		path_free(p->path);
+		target_free(*p);
 	}
-	vector_free(build->installs);
+	vector_free(build->targets);
 	free(build);
 }
 
@@ -53,60 +49,27 @@ build_fs(const build_t* build)
 	return build->fs;
 }
 
-const path_t*
-build_in_path(const build_t* build)
+void
+build_add_target(build_t* build, target_t* target)
 {
-	return build->in_path;
-}
-
-const path_t*
-build_out_path(const build_t* build)
-{
-	return build->out_path;
+	target_ref(target);
+	vector_push(build->targets, &target);
 }
 
 void
 build_run(build_t* build)
 {
-	path_t*       asset_path;
-	path_t*       install_path;
-	const path_t* name;
-	spk_writer_t* spk = NULL;
-
-	iter_t iter;
-	struct install *p;
-
-	if (path_is_file(build->out_path))
-		spk = spk_create(path_cstr(build->out_path));
-
-	iter = vector_enum(build->installs);
-	while (p = vector_next(&iter)) {
-		target_build(p->target, build->out_path);
-		name = target_name(p->target);
-		asset_path = path_rebase(path_dup(target_path(p->target)), build->in_path);
-		install_path = path_rebase(path_dup(name), p->path);
-		printf("%s => %s\n", path_cstr(name), path_cstr(install_path));
-		if (spk != NULL) {
-			spk_add_file(spk,
-				path_cstr(asset_path),
-				path_cstr(install_path));
-		}
-		else {
-			path_rebase(install_path, build->out_path);
-			// TODO: install built targets
-		}
-		path_free(install_path);
-	}
-
-	spk_close(spk);
-}
-
-void
-build_install(build_t* build, target_t* target, const path_t* path)
-{
-	struct install install;
+	const path_t* path;
 	
-	install.target = target_ref(target);
-	install.path = path_dup(path);
-	vector_push(build->installs, &install);
+	iter_t iter;
+	target_t* *p;
+
+	iter = vector_enum(build->targets);
+	while (p = vector_next(&iter)) {
+		path = target_path(*p);
+		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
+			continue;
+		printf("    %s\n", path_cstr(path));
+		target_build(*p, build->fs);
+	}
 }

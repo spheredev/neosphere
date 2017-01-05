@@ -30,6 +30,7 @@ main(int argc, char* argv[])
 
 	build = build_new(s_in_path, s_out_path);
 	script_eval(build);
+	build_run(build);
 	
 	retval = EXIT_SUCCESS;
 

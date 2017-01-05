@@ -1,6 +1,7 @@
 #include "cell.h"
 #include "target.h"
 
+#include "fs.h"
 #include "tool.h"
 
 struct target
@@ -70,7 +71,7 @@ target_add_source(target_t* target, target_t* source)
 }
 
 bool
-target_build(target_t* target, const path_t* out_path)
+target_build(target_t* target, const fs_t* fs)
 {
 	vector_t* in_paths = NULL;
 	path_t*   path;
@@ -84,9 +85,8 @@ target_build(target_t* target, const path_t* out_path)
 	in_paths = vector_new(sizeof(path_t*));
 	iter = vector_enum(target->sources);
 	while (p_target = vector_next(&iter)) {
-		target_build(*p_target, out_path);
+		target_build(*p_target, fs);
 		path = path_dup(target_path(*p_target));
-		path_rebase(path, out_path);
 		vector_push(in_paths, &path);
 	}
 

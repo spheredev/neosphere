@@ -1,6 +1,8 @@
 #include "cell.h"
 #include "tool.h"
 
+#include "fs.h"
+
 struct tool
 {
 	unsigned int refcount;
@@ -31,7 +33,7 @@ tool_ref(tool_t* tool)
 void
 tool_free(tool_t* tool)
 {
-	if (--tool->refcount > 0)
+	if (tool == NULL || --tool->refcount > 0)
 		return;
 	
 	duk_unref_heapptr(tool->js_ctx, tool->js_func);
