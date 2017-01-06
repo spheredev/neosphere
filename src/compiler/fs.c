@@ -3,6 +3,10 @@
 
 #include "tinydir.h"
 
+#if defined(_WIN32)
+#include <direct.h>
+#endif
+
 struct fs
 {
 	path_t* build_path;
@@ -47,6 +51,14 @@ fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwr
 	}
 
 	return tinydir_copy(resolved_src, resolved_dest, !overwrite);
+}
+
+bool
+fs_fexist(const fs_t* fs, const char* filename)
+{
+	struct stat sb;
+
+	return fs_stat(fs, filename, &sb) == 0;
 }
 
 FILE*
@@ -129,6 +141,47 @@ fs_list_dir(const fs_t* fs, const char* dirname)
 	return list;
 }
 
+path_t*
+fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
+{
+	// note: fs_make_path() collapses '../' path hops unconditionally, as per
+	//       SphereFS spec. this ensures an unpackaged game can't subvert the
+	//       sandbox by navigating outside of its directory via a symbolic link.
+
+	path_t* base_path = NULL;
+	path_t* path;
+	char*   prefix;
+
+	path = path_new(filename);
+	if (path_is_rooted(path))  // absolute path?
+		return path;
+
+	if (legacy && path_num_hops(path) >= 1 && path_hop_cmp(path, 0, "~")) {
+		path_remove_hop(path, 0);
+		path_insert_hop(path, 0, "@");
+	}
+
+	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
+	if (path_num_hops(path) == 0)
+		path_rebase(path, base_path);
+	else if (path_hop_cmp(path, 0, "@")) {
+		path_remove_hop(path, 0);
+		path_collapse(path, true);
+	}
+	else if (path_hop_cmp(path, 0, "#") || path_hop_cmp(path, 0, "~")) {
+		prefix = strdup(path_hop(path, 0));
+		path_remove_hop(path, 0);
+		path_collapse(path, true);
+		path_insert_hop(path, 0, prefix);
+		free(prefix);
+	}
+	else
+		path_rebase(path, base_path);
+	path_collapse(path, true);
+	path_free(base_path);
+	return path;
+}
+
 int
 fs_mkdir(const fs_t* fs, const char* dirname)
 {
@@ -145,6 +198,44 @@ fs_mkdir(const fs_t* fs, const char* dirname)
 }
 
 int
+fs_rename(const fs_t* fs, const char* old_name, const char* new_name)
+{
+	char* resolved_old;
+	char* resolved_new;
+	int   retval;
+	
+	resolved_old = resolve(fs, old_name);
+	resolved_new = resolve(fs, new_name);
+	if (resolved_old == NULL || resolved_new == NULL)
+		goto access_denied;
+	retval = rename(resolved_old, resolved_new);
+	free(resolved_old);
+	free(resolved_new);
+	return retval;
+
+access_denied:
+	free(resolved_old);
+	free(resolved_new);
+	errno = EACCES;
+	return -1;
+}
+
+int
+fs_rmdir(const fs_t* fs, const char* dirname)
+{
+	char* resolved_name;
+	int   retval;
+
+	if (!(resolved_name = resolve(fs, dirname))) {
+		errno = EACCES;
+		return -1;
+	}
+	retval = rmdir(resolved_name);
+	free(resolved_name);
+	return retval;
+}
+
+int
 fs_stat(const fs_t* fs, const char* filename, struct stat* p_stat)
 {
 	char* resolved_name;
@@ -156,6 +247,22 @@ fs_stat(const fs_t* fs, const char* filename, struct stat* p_stat)
 	}
 
 	result = stat(resolved_name, p_stat);
+	free(resolved_name);
+	return result;
+}
+
+int
+fs_unlink(const fs_t* fs, const char* filename)
+{
+	char* resolved_name;
+	int   result;
+
+	if (!(resolved_name = resolve(fs, filename))) {
+		errno = EACCES;  // sandboxing violation
+		return -1;
+	}
+
+	result = unlink(resolved_name);
 	free(resolved_name);
 	return result;
 }

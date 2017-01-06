@@ -12,17 +12,31 @@ static build_t*  get_current_build (duk_context* js);
 static duk_ret_t install_target    (duk_context* ctx);
 static void      make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 
-static duk_ret_t js_files           (duk_context* ctx);
-static duk_ret_t js_install         (duk_context* ctx);
-static duk_ret_t js_metadata        (duk_context* ctx);
-static duk_ret_t js_system_name     (duk_context* ctx);
-static duk_ret_t js_system_version  (duk_context* ctx);
-static duk_ret_t js_new_Tool        (duk_context* ctx);
-static duk_ret_t js_Tool_finalize   (duk_context* ctx);
-static duk_ret_t js_Tool_build      (duk_context* ctx);
-static duk_ret_t js_Target_finalize (duk_context* ctx);
-static duk_ret_t js_Target_get_name (duk_context* ctx);
-static duk_ret_t js_Target_get_path (duk_context* ctx);
+static duk_ret_t js_build                   (duk_context* ctx);
+static duk_ret_t js_files                   (duk_context* ctx);
+static duk_ret_t js_install                 (duk_context* ctx);
+static duk_ret_t js_metadata                (duk_context* ctx);
+static duk_ret_t js_system_name             (duk_context* ctx);
+static duk_ret_t js_system_version          (duk_context* ctx);
+static duk_ret_t js_FS_exists               (duk_context* ctx);
+static duk_ret_t js_FS_mkdir                (duk_context* ctx);
+static duk_ret_t js_FS_open                 (duk_context* ctx);
+static duk_ret_t js_FS_rename               (duk_context* ctx);
+static duk_ret_t js_FS_resolve              (duk_context* ctx);
+static duk_ret_t js_FS_rmdir                (duk_context* ctx);
+static duk_ret_t js_FS_unlink               (duk_context* ctx);
+static duk_ret_t js_FileStream_finalize     (duk_context* ctx);
+static duk_ret_t js_FileStream_get_position (duk_context* ctx);
+static duk_ret_t js_FileStream_get_size     (duk_context* ctx);
+static duk_ret_t js_FileStream_set_position (duk_context* ctx);
+static duk_ret_t js_FileStream_close        (duk_context* ctx);
+static duk_ret_t js_FileStream_read         (duk_context* ctx);
+static duk_ret_t js_FileStream_write        (duk_context* ctx);
+static duk_ret_t js_new_Tool                (duk_context* ctx);
+static duk_ret_t js_Tool_finalize           (duk_context* ctx);
+static duk_ret_t js_Target_finalize         (duk_context* ctx);
+static duk_ret_t js_Target_get_name         (duk_context* ctx);
+static duk_ret_t js_Target_get_path         (duk_context* ctx);
 
 bool
 script_eval(build_t* build)
@@ -50,16 +64,34 @@ script_eval(build_t* build)
 
 	// initialize the Cellscript API
 	api_init(js_env);
+	api_define_function(js_env, NULL, "build", js_build);
 	api_define_function(js_env, NULL, "files", js_files);
 	api_define_function(js_env, NULL, "install", js_install);
 	api_define_function(js_env, NULL, "metadata", js_metadata);
+	
 	api_define_function(js_env, "system", "name", js_system_name);
 	api_define_function(js_env, "system", "version", js_system_version);
+	
+	api_define_function(js_env, "FS", "exists", js_FS_exists);
+	api_define_function(js_env, "FS", "open", js_FS_open);
+	api_define_function(js_env, "FS", "mkdir", js_FS_mkdir);
+	api_define_function(js_env, "FS", "rename", js_FS_rename);
+	api_define_function(js_env, "FS", "resolve", js_FS_resolve);
+	api_define_function(js_env, "FS", "rmdir", js_FS_rmdir);
+	api_define_function(js_env, "FS", "unlink", js_FS_unlink);
+	
+	api_define_class(js_env, "FileStream", NULL, js_FileStream_finalize);
+	api_define_property(js_env, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
+	api_define_property(js_env, "FileStream", "size", js_FileStream_get_size, NULL);
+	api_define_method(js_env, "FileStream", "close", js_FileStream_close);
+	api_define_method(js_env, "FileStream", "read", js_FileStream_read);
+	api_define_method(js_env, "FileStream", "write", js_FileStream_write);
+
 	api_define_class(js_env, "Target", NULL, js_Target_finalize);
 	api_define_property(js_env, "Target", "name", js_Target_get_name, NULL);
 	api_define_property(js_env, "Target", "path", js_Target_get_path, NULL);
+	
 	api_define_class(js_env, "Tool", js_new_Tool, js_Tool_finalize);
-	api_define_method(js_env, "Tool", "build", js_Tool_build);
 
 	// stash the build pointer for easier access by API calls
 	duk_push_global_stash(js_env);
@@ -180,6 +212,38 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 }
 
 static duk_ret_t
+js_build(duk_context* ctx)
+{
+	duk_uarridx_t length;
+	path_t*       name;
+	path_t*       out_path;
+	target_t*     source;
+	target_t*     target;
+	tool_t*       tool;
+
+	duk_uarridx_t i;
+
+	tool = duk_require_class_obj(ctx, 0, "Tool");
+	out_path = path_new(duk_require_string(ctx, 1));
+	if (!duk_is_array(ctx, 2))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 3)");
+
+	name = path_new(path_filename(out_path));
+	target = target_new(name, out_path, tool);
+	length = (duk_uarridx_t)duk_get_length(ctx, 2);
+	for (i = 0; i < length; ++i) {
+		duk_get_prop_index(ctx, 2, i);
+		source = duk_require_class_obj(ctx, -1, "Target");
+		target_add_source(target, source);
+		duk_pop(ctx);
+	}
+	path_free(out_path);
+
+	duk_push_class_obj(ctx, "Target", target);
+	return 1;
+}
+
+static duk_ret_t
 js_files(duk_context* ctx)
 {
 	build_t*    build;
@@ -296,6 +360,233 @@ js_system_version(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_exists(duk_context* ctx)
+{
+	const char* filename;
+	fs_t*       fs;
+
+	filename = duk_require_path(ctx, 0);
+
+	fs = build_fs(get_current_build(ctx));
+	duk_push_boolean(ctx, fs_fexist(fs, filename));
+	return 1;
+}
+
+static duk_ret_t
+js_FS_mkdir(duk_context* ctx)
+{
+	fs_t*       fs;
+	const char* name;
+
+	name = duk_require_path(ctx, 0);
+
+	fs = build_fs(get_current_build(ctx));
+	if (!fs_mkdir(fs, name))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
+	return 0;
+}
+
+static duk_ret_t
+js_FS_open(duk_context* ctx)
+{
+	FILE*       file;
+	const char* filename;
+	fs_t*       fs;
+	const char* mode;
+
+	filename = duk_require_path(ctx, 0);
+	mode = duk_require_string(ctx, 1);
+	
+	fs = build_fs(get_current_build(ctx));
+	if (!(file = fs_fopen(fs, filename, mode)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
+	duk_push_class_obj(ctx, "FileStream", file);
+	return 1;
+}
+
+static duk_ret_t
+js_FS_rename(duk_context* ctx)
+{
+	fs_t*       fs;
+	const char* name1;
+	const char* name2;
+
+	name1 = duk_require_path(ctx, 0);
+	name2 = duk_require_path(ctx, 1);
+
+	fs = build_fs(get_current_build(ctx));
+	if (!fs_rename(fs, name1, name2))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
+	return 0;
+}
+
+static duk_ret_t
+js_FS_resolve(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0);
+
+	duk_push_string(ctx, filename);
+	return 1;
+}
+
+static duk_ret_t
+js_FS_rmdir(duk_context* ctx)
+{
+	fs_t*       fs;
+	const char* name;
+
+	name = duk_require_path(ctx, 0);
+
+	fs = build_fs(get_current_build(ctx));
+	if (!fs_rmdir(fs, name))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
+	return 0;
+}
+
+static duk_ret_t
+js_FS_unlink(duk_context* ctx)
+{
+	const char* filename;
+	fs_t*       fs;
+
+	filename = duk_require_path(ctx, 0);
+
+	fs = build_fs(get_current_build(ctx));
+	if (!fs_unlink(fs, filename))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_FileStream_finalize(duk_context* ctx)
+{
+	FILE* file;
+
+	file = duk_require_class_obj(ctx, 0, "FileStream");
+
+	if (file != NULL)
+		fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+js_FileStream_get_position(duk_context* ctx)
+{
+	FILE* file;
+
+	duk_push_this(ctx);
+	file = duk_require_class_obj(ctx, -1, "FileStream");
+
+	duk_push_number(ctx, ftell(file));
+	return 1;
+}
+
+static duk_ret_t
+js_FileStream_get_size(duk_context* ctx)
+{
+	FILE* file;
+	long  file_pos;
+
+	duk_push_this(ctx);
+	file = duk_require_class_obj(ctx, -1, "FileStream");
+
+	if (file == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+	file_pos = ftell(file);
+	fseek(file, 0, SEEK_END);
+	duk_push_number(ctx, ftell(file));
+	fseek(file, file_pos, SEEK_SET);
+	return 1;
+}
+
+static duk_ret_t
+js_FileStream_set_position(duk_context* ctx)
+{
+	FILE* file;
+	long  new_pos;
+
+	duk_push_this(ctx);
+	file = duk_require_class_obj(ctx, -1, "FileStream");
+	new_pos = duk_require_int(ctx, 0);
+
+	if (new_pos < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file position");
+	fseek(file, new_pos, SEEK_SET);
+	return 0;
+}
+
+static duk_ret_t
+js_FileStream_close(duk_context* ctx)
+{
+	FILE* file;
+
+	duk_push_this(ctx);
+	file = duk_require_class_obj(ctx, -1, "FileStream");
+
+	duk_push_pointer(ctx, NULL);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	fclose(file);
+	return 0;
+}
+
+static duk_ret_t
+js_FileStream_read(duk_context* ctx)
+{
+	// FileStream:read([numBytes]);
+	// Reads data from the stream, returning it in an ArrayBuffer.
+	// Arguments:
+	//     numBytes: Optional. The number of bytes to read. If not provided, the
+	//               entire file is read.
+
+	int    argc;
+	void*  buffer;
+	FILE*  file;
+	int    num_bytes;
+	long   pos;
+
+	argc = duk_get_top(ctx);
+	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
+
+	duk_push_this(ctx);
+	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (file == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+	if (argc < 1) {  // if no arguments, read entire file back to front
+		pos = ftell(file);
+		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
+		fseek(file, 0, SEEK_SET);
+	}
+	if (num_bytes < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
+	buffer = duk_push_fixed_buffer(ctx, num_bytes);
+	num_bytes = (int)fread(buffer, 1, num_bytes, file);
+	if (argc < 1)  // reset file position after whole-file read
+		fseek(file, pos, SEEK_SET);
+	duk_push_buffer_object(ctx, -1, 0, num_bytes, DUK_BUFOBJ_ARRAYBUFFER);
+	return 1;
+}
+
+static duk_ret_t
+js_FileStream_write(duk_context* ctx)
+{
+	const void* data;
+	FILE*       file;
+	duk_size_t  num_bytes;
+
+	duk_push_this(ctx);
+	file = duk_require_class_obj(ctx, -1, "FileStream");
+	data = duk_require_buffer_data(ctx, 0, &num_bytes);
+
+	if (file == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+	if (fwrite(data, 1, num_bytes, file) != num_bytes)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file write failed");
+	return 0;
+}
+
+static duk_ret_t
 js_Target_finalize(duk_context* ctx)
 {
 	target_t* target;
@@ -360,37 +651,4 @@ js_Tool_finalize(duk_context* ctx)
 
 	tool_free(tool);
 	return 0;
-}
-
-static duk_ret_t
-js_Tool_build(duk_context* ctx)
-{
-	duk_uarridx_t length;
-	path_t*       name;
-	path_t*       out_path;
-	target_t*     source;
-	target_t*     target;
-	tool_t*       tool;
-
-	duk_uarridx_t i;
-
-	duk_push_this(ctx);
-	tool = duk_require_class_obj(ctx, -1, "Tool");
-	out_path = path_new(duk_require_string(ctx, 0));
-	if (duk_is_array(ctx, 1))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 2)");
-
-	name = path_new(path_filename(out_path));
-	target = target_new(name, out_path, tool);
-	length = (duk_uarridx_t)duk_get_length(ctx, 1);
-	for (i = 0; i < length; ++i) {
-		duk_get_prop_index(ctx, 1, i);
-		source = duk_require_class_obj(ctx, -1, "Target");
-		target_add_source(target, source);
-		duk_pop(ctx);
-	}
-	path_free(out_path);
-
-	duk_push_class_obj(ctx, "Target", target);
-	return 1;
 }

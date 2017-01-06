@@ -1,8 +1,8 @@
 #ifndef MINISPHERE__SPK_H__INCLUDED
 #define MINISPHERE__SPK_H__INCLUDED
 
-typedef struct spk             spk_t;
-typedef struct spk_file        spk_file_t;
+typedef struct spk      spk_t;
+typedef struct spk_file spk_file_t;
 
 typedef
 enum spk_seek_origin

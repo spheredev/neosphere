@@ -1,6 +1,9 @@
 #include "cell.h"
 #include "utility.h"
 
+#include "api.h"
+#include "fs.h"
+
 void*
 duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 {
@@ -46,6 +49,29 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 	return heapptr;
 }
 
+const char*
+duk_require_path(duk_context* ctx, duk_idx_t index)
+{
+	static int     s_index = 0;
+	static path_t* s_paths[10];
+
+	const char* pathname;
+	path_t*     path;
+
+	pathname = duk_require_string(ctx, index);
+	path = fs_make_path(pathname, NULL, false);
+	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
+		|| path_is_rooted(path))
+	{
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
+	}
+	if (s_paths[s_index] != NULL)
+		path_free(s_paths[s_index]);
+	s_paths[s_index] = path;
+	s_index = (s_index + 1) % 10;
+	return path_cstr(path);
+}
+
 void
 duk_unref_heapptr(duk_context* ctx, void* heapptr)
 {
@@ -83,8 +109,6 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 		duk_pop_3(ctx);
 	}
 }
-
-
 
 bool
 fexist(const char* filename)
