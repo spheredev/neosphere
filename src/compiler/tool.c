@@ -48,9 +48,11 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 {
 	duk_uarridx_t array_index;
 	path_t*       dir_path;
-	duk_context*  js_ctx;
+	const char*   filename;
 	bool          is_outdated = false;
+	duk_context*  js_ctx;
 	time_t        last_time = 0;
+	int           line_number;
 	struct stat   sb;
 
 	iter_t iter;
@@ -91,7 +93,17 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 			duk_push_string(js_ctx, path_cstr(*p_path));
 			duk_put_prop_index(js_ctx, -2, array_index);
 		}
-		duk_call(js_ctx, 2);
+		if (duk_pcall(js_ctx, 2) != DUK_EXEC_SUCCESS) {
+			duk_get_prop_string(js_ctx, -1, "fileName");
+			filename = duk_safe_to_string(js_ctx, -1);
+			duk_get_prop_string(js_ctx, -2, "lineNumber");
+			line_number = duk_get_int(js_ctx, -1);
+			duk_dup(js_ctx, -3);
+			duk_to_string(js_ctx, -1);
+			printf("    %s\n", duk_get_string(js_ctx, -1));
+			printf("    @ [%s:%d]\n", filename, line_number);
+			duk_pop_3(js_ctx);
+		}
 		duk_pop(js_ctx);
 	}
 	return true;

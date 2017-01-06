@@ -4,6 +4,20 @@
 #include "api.h"
 #include "fs.h"
 
+static duk_ret_t do_decode_json (duk_context* ctx);
+
+duk_int_t
+duk_json_pdecode(duk_context* ctx)
+{
+	return dukrub_safe_call(ctx, do_decode_json, 1, 1);
+}
+
+void
+duk_push_lstring_t(duk_context* ctx, const lstring_t* string)
+{
+	duk_push_lstring(ctx, lstr_cstr(string), lstr_len(string));
+}
+
 void*
 duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 {
@@ -152,6 +166,25 @@ fspew(const void* buffer, size_t size, const char* filename)
 	return true;
 }
 
+char*
+strnewf(const char* fmt, ...)
+{
+	va_list ap, apc;
+	char* buffer;
+	int   buf_size;
+
+	va_start(ap, fmt);
+	va_copy(apc, ap);
+	buf_size = vsnprintf(NULL, 0, fmt, apc) + 1;
+	va_end(apc);
+	buffer = malloc(buf_size);
+	va_copy(apc, ap);
+	vsnprintf(buffer, buf_size, fmt, apc);
+	va_end(apc);
+	va_end(ap);
+	return buffer;
+}
+
 bool
 wildcmp(const char* filename, const char* pattern)
 {
@@ -184,4 +217,11 @@ wildcmp(const char* filename, const char* pattern)
 	while (*pattern == '*')
 		pattern++;
 	return *pattern == '\0';
+}
+
+static duk_ret_t
+do_decode_json(duk_context* ctx)
+{
+	duk_json_decode(ctx, -1);
+	return 1;
 }

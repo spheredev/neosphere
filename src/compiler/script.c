@@ -8,14 +8,19 @@
 #include "tool.h"
 #include "utility.h"
 
-static build_t*  get_current_build (duk_context* js);
-static duk_ret_t install_target    (duk_context* ctx);
-static void      make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static duk_bool_t eval_module       (duk_context* ctx, const char* filename);
+static path_t*    find_module       (duk_context* ctx, const char* id, const char* origin, const char* sys_origin);
+static build_t*   get_current_build (duk_context* js);
+static duk_ret_t  install_target    (duk_context* ctx);
+static path_t*    load_package_json (duk_context* ctx, const char* filename);
+static void       make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static void       push_require      (duk_context* ctx, const char* module_id);
 
 static duk_ret_t js_build                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
 static duk_ret_t js_metadata                (duk_context* ctx);
+static duk_ret_t js_require                 (duk_context* ctx);
 static duk_ret_t js_system_name             (duk_context* ctx);
 static duk_ret_t js_system_version          (duk_context* ctx);
 static duk_ret_t js_FS_exists               (duk_context* ctx);
@@ -61,6 +66,20 @@ script_eval(build_t* build)
 	// note: no fatal error handler set here.  if a JavaScript exception is thrown
 	//       and nothing catches it, Cell will crash.
 	js_env = duk_create_heap_default();
+
+	// initialize CommonJS cache and global require()
+	duk_push_global_stash(js_env);
+	dukrub_push_bare_object(js_env);
+	duk_put_prop_string(js_env, -2, "moduleCache");
+	duk_pop(js_env);
+
+	duk_push_global_object(js_env);
+	duk_push_string(js_env, "require");
+	push_require(js_env, NULL);
+	duk_def_prop(js_env, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// initialize the Cellscript API
 	api_init(js_env);
@@ -108,18 +127,15 @@ script_eval(build_t* build)
 	duk_pop(js_env);
 	
 	// execute the Cellscript
-	duk_push_lstring(js_env, lstr_cstr(source), lstr_len(source));
-	duk_push_string(js_env, "Cellscript.js");
-	duk_compile(js_env, 0x0);
-	if (duk_pcall(js_env, 0) != DUK_EXEC_SUCCESS) {
+	if (!eval_module(js_env, "Cellscript.js")) {
 		duk_get_prop_string(js_env, -1, "fileName");
 		filename = duk_safe_to_string(js_env, -1);
 		duk_get_prop_string(js_env, -2, "lineNumber");
 		line_number = duk_get_int(js_env, -1);
 		duk_dup(js_env, -3);
 		duk_to_string(js_env, -1);
-		printf("    %s\n", duk_get_string(js_env, -1));
-		printf("    @ [%s:%d]\n", filename, line_number);
+		printf("        %s\n", duk_get_string(js_env, -1));
+		printf("        @ [%s:%d]\n", filename, line_number);
 		duk_pop_3(js_env);
 	}
 	duk_pop(js_env);
@@ -128,6 +144,190 @@ script_eval(build_t* build)
 	lstr_free(source);
 
 	return true;
+}
+
+static duk_bool_t
+eval_module(duk_context* ctx, const char* filename)
+{
+	// HERE BE DRAGONS!
+	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
+	// very messy very quickly when dealing with object properties.  I tried to add
+	// comments to illuminate what's going on, but it's still likely to be confusing for
+	// someone not familiar with Duktape code.  proceed with caution.
+
+	// notes:
+	//     - the final value of `module.exports` is left on top of the Duktape value stack.
+	//     - `module.id` is set to the given filename.  in order to guarantee proper cache
+	//       behavior, the filename should be in canonical form.
+	//     - this is a protected call.  if the module being loaded throws, the error will be
+	//       caught and left on top of the stack for the caller to deal with.
+
+	lstring_t* code_string;
+	path_t*    dir_path;
+	path_t*    file_path;
+	fs_t*      fs;
+	size_t     source_size;
+	char*      source;
+
+	fs = build_fs(get_current_build(ctx));
+	
+	file_path = path_new(filename);
+	dir_path = path_strip(path_dup(file_path));
+
+	// is the requested module already in the cache?
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	if (duk_get_prop_string(ctx, -1, filename)) {
+		duk_remove(ctx, -2);
+		duk_remove(ctx, -2);
+		goto have_module;
+	}
+	else {
+		duk_pop_3(ctx);
+	}
+
+	source = fs_fslurp(fs, filename, &source_size);
+	code_string = lstr_from_cp1252(source, source_size);
+	free(source);
+
+	// construct a module object for the new module
+	duk_push_object(ctx);  // module object
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "exports");  // module.exports = {}
+	duk_push_string(ctx, filename);
+	duk_put_prop_string(ctx, -2, "filename");  // module.filename
+	duk_push_string(ctx, filename);
+	duk_put_prop_string(ctx, -2, "id");  // module.id
+	duk_push_false(ctx);
+	duk_put_prop_string(ctx, -2, "loaded");  // module.loaded = false
+	push_require(ctx, filename);
+	duk_put_prop_string(ctx, -2, "require");  // module.require
+
+	// cache the module object in advance
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	duk_dup(ctx, -3);
+	duk_put_prop_string(ctx, -2, filename);
+	duk_pop_2(ctx);
+
+	if (strcmp(path_extension(file_path), ".json") == 0) {
+		// JSON file, decode to JavaScript object
+		duk_push_lstring_t(ctx, code_string);
+		lstr_free(code_string);
+		if (duk_json_pdecode(ctx) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_put_prop_string(ctx, -2, "exports");
+	}
+	else {
+		// synthesize a function to wrap the module code.  this is the simplest way to
+		// implement CommonJS semantics and matches the behavior of Node.js.
+		duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
+		duk_push_lstring_t(ctx, code_string);
+		duk_push_string(ctx, " })");
+		duk_concat(ctx, 3);
+		duk_push_string(ctx, filename);
+		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_call(ctx, 0);
+		duk_push_string(ctx, "name");
+		duk_push_string(ctx, "main");
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_FORCE);
+		lstr_free(code_string);
+
+		// go, go, go!
+		duk_get_prop_string(ctx, -2, "exports");    // exports
+		duk_get_prop_string(ctx, -3, "require");    // require
+		duk_dup(ctx, -4);                           // module
+		duk_push_string(ctx, filename);             // __filename
+		duk_push_string(ctx, path_cstr(dir_path));  // __dirname
+		if (duk_pcall(ctx, 5) != DUK_EXEC_SUCCESS)
+			goto on_error;
+		duk_pop(ctx);
+	}
+
+	// module executed successfully, set `module.loaded` to true
+	duk_push_true(ctx);
+	duk_put_prop_string(ctx, -2, "loaded");
+
+have_module:
+	// `module` is on the stack, we need `module.exports`
+	duk_get_prop_string(ctx, -1, "exports");
+	duk_remove(ctx, -2);
+	return 1;
+
+on_error:
+	// note: it's assumed that at this point, the only things left in our portion of the
+	//       Duktape stack are the module object and the thrown error.
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	duk_del_prop_string(ctx, -1, filename);
+	duk_pop_2(ctx);
+	duk_remove(ctx, -2);  // leave the error on the stack
+	return 0;
+}
+
+static path_t*
+find_module(duk_context* ctx, const char* id, const char* origin, const char* sys_origin)
+{
+	const char* const filenames[] =
+	{
+		"%s",
+		"%s.js",
+		"%s.ts",
+		"%s.coffee",
+		"%s.json",
+		"%s/package.json",
+		"%s/index.js",
+		"%s/index.ts",
+		"%s/index.coffee",
+		"%s/index.json",
+	};
+
+	path_t*   origin_path;
+	char*     filename;
+	fs_t*     fs;
+	path_t*   main_path;
+	path_t*   path;
+
+	int i;
+
+	fs = build_fs(get_current_build(ctx));
+	
+	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0)
+		// resolve module relative to calling module
+		origin_path = path_new(origin != NULL ? origin : "./");
+	else
+		// resolve module from designated module repository
+		origin_path = path_new(sys_origin);
+
+	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
+		filename = strnewf(filenames[i], id);
+		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0)
+			path = path_new("./");
+		else
+			path = path_dup(origin_path);
+		path_strip(path);
+		path_append(path, filename);
+		path_collapse(path, true);
+		free(filename);
+		if (fs_fexist(fs, path_cstr(path))) {
+			if (strcmp(path_filename(path), "package.json") != 0)
+				return path;
+			else {
+				if (!(main_path = load_package_json(ctx, path_cstr(path))))
+					goto next_filename;
+				if (fs_fexist(fs, path_cstr(main_path))) {
+					path_free(path);
+					return main_path;
+				}
+			}
+		}
+
+	next_filename:
+		path_free(path);
+	}
+
+	return NULL;
 }
 
 static build_t*
@@ -161,6 +361,41 @@ install_target(duk_context* ctx)
 	result = fs_fcopy(build_fs(build), target_path, source_path, true);
 	duk_push_boolean(ctx, result == 0);
 	return 1;
+}
+
+static path_t*
+load_package_json(duk_context* ctx, const char* filename)
+{
+	duk_idx_t duk_top;
+	fs_t*     fs;
+	char*     json;
+	size_t    json_size;
+	path_t*   path;
+
+	fs = build_fs(get_current_build(ctx));
+	
+	duk_top = duk_get_top(ctx);
+	if (!(json = fs_fslurp(fs, filename, &json_size)))
+		goto on_error;
+	duk_push_lstring(ctx, json, json_size);
+	free(json);
+	if (duk_json_pdecode(ctx) != DUK_EXEC_SUCCESS)
+		goto on_error;
+	if (!duk_is_object_coercible(ctx, -1))
+		goto on_error;
+	duk_get_prop_string(ctx, -1, "main");
+	if (!duk_is_string(ctx, -1))
+		goto on_error;
+	path = path_strip(path_new(filename));
+	path_append(path, duk_get_string(ctx, -1));
+	path_collapse(path, true);
+	if (!fs_fexist(fs, path_cstr(path)))
+		goto on_error;
+	return path;
+
+on_error:
+	duk_set_top(ctx, duk_top);
+	return NULL;
 }
 
 static void
@@ -211,9 +446,29 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	vector_free(list);
 }
 
+static void
+push_require(duk_context* ctx, const char* module_id)
+{
+	duk_push_c_function(ctx, js_require, 1);
+	duk_push_string(ctx, "name");
+	duk_push_string(ctx, "require");
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.name
+	duk_push_string(ctx, "cache");
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "moduleCache");
+	duk_remove(ctx, -2);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
+	if (module_id != NULL) {
+		duk_push_string(ctx, "id");
+		duk_push_string(ctx, module_id);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
+	}
+}
+
 static duk_ret_t
 js_build(duk_context* ctx)
 {
+	build_t*      build;
 	duk_uarridx_t length;
 	path_t*       name;
 	path_t*       out_path;
@@ -222,6 +477,8 @@ js_build(duk_context* ctx)
 	tool_t*       tool;
 
 	duk_uarridx_t i;
+
+	build = get_current_build(ctx);
 
 	tool = duk_require_class_obj(ctx, 0, "Tool");
 	out_path = path_new(duk_require_string(ctx, 1));
@@ -238,6 +495,7 @@ js_build(duk_context* ctx)
 		duk_pop(ctx);
 	}
 	path_free(out_path);
+	build_add_target(build, target);
 
 	duk_push_class_obj(ctx, "Target", target);
 	return 1;
@@ -343,6 +601,27 @@ static duk_ret_t
 js_metadata(duk_context* ctx)
 {
 	return 0;
+}
+
+static duk_ret_t
+js_require(duk_context* ctx)
+{
+	const char* id;
+	const char* parent_id = NULL;
+	path_t*     path;
+
+	duk_push_current_function(ctx);
+	if (duk_get_prop_string(ctx, -1, "id"))
+		parent_id = duk_get_string(ctx, -1);
+	id = duk_require_string(ctx, 0);
+
+	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
+	if (!(path = find_module(ctx, id, parent_id, "lib/")) && !(path = find_module(ctx, id, parent_id, "#/cell_modules/")))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
+	if (!eval_module(ctx, path_cstr(path)))
+		duk_throw(ctx);
+	return 1;
 }
 
 static duk_ret_t

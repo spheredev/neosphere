@@ -1,25 +1,18 @@
 'use strict';
 module.exports = main();
 
-const coffee = require('./lib/coffee-script.lib');
+const ts = require('./lib/typescript');
 
 function main()
 {
-	var coffeeTool = new Tool(buildCoffeeScript);
-	return coffeeTool;
+	var TS = new Tool(compileTS, "transpile");
+	return {
+		TS
+	};
 }
 
-function buildCoffeeScript(outName, inNames, options)
+function compileTS(outName, inNames, options)
 {
-	if (inNames.length != 1)
-		throw new RangeError("CoffeeScript requires exactly one source");
-
-	var file = FS.open(inNames[0], 'rb');
-	var source = new TextDecoder().decode(file.read());
-	file.close();
-
-	var js = coffee.compile(source, { filename: inNames[0] });
-	file = FS.open(outName, 'wb');
-	file.write(new TextEncoder().encode(js));
-	file.close();
+	if (inNames.length == 0)
+		throw new RangeError("one or more sources required");
 }

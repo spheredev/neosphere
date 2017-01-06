@@ -345,7 +345,7 @@ duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
 
 	index = duk_require_normalize_index(ctx, index);
 	if (!duk_is_class_obj(ctx, index, class_name))
-		duk_error(ctx, DUK_ERR_TYPE_ERROR, "%s object required", class_name);
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "%s object required", class_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata");
 	udata = duk_get_pointer(ctx, -1);
 	duk_pop(ctx);
