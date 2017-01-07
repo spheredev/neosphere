@@ -8,6 +8,7 @@ void      fs_free        (fs_t* fs);
 int       fs_fcopy       (const fs_t* fs, const char* destination, const char* source, int overwrite);
 bool      fs_fexist      (const fs_t* fs, const char* filename);
 FILE*     fs_fopen       (const fs_t* fs, const char* filename, const char* mode);
+bool      fs_fspew       (const fs_t* fs, const char* filename, void* data, size_t size);
 void*     fs_fslurp      (const fs_t* fs, const char* filename, size_t* out_size);
 bool      fs_is_game_dir (const fs_t* fs, const char* dirname);
 vector_t* fs_list_dir    (const fs_t* fs, const char* dirname);

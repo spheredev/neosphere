@@ -26,10 +26,12 @@ static duk_ret_t js_system_version          (duk_context* ctx);
 static duk_ret_t js_FS_exists               (duk_context* ctx);
 static duk_ret_t js_FS_mkdir                (duk_context* ctx);
 static duk_ret_t js_FS_open                 (duk_context* ctx);
+static duk_ret_t js_FS_readFile             (duk_context* ctx);
 static duk_ret_t js_FS_rename               (duk_context* ctx);
 static duk_ret_t js_FS_resolve              (duk_context* ctx);
 static duk_ret_t js_FS_rmdir                (duk_context* ctx);
 static duk_ret_t js_FS_unlink               (duk_context* ctx);
+static duk_ret_t js_FS_writeFile            (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize     (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position (duk_context* ctx);
 static duk_ret_t js_FileStream_get_size     (duk_context* ctx);
@@ -94,11 +96,13 @@ script_eval(build_t* build)
 	api_define_function(js_env, "FS", "exists", js_FS_exists);
 	api_define_function(js_env, "FS", "open", js_FS_open);
 	api_define_function(js_env, "FS", "mkdir", js_FS_mkdir);
+	api_define_function(js_env, "FS", "readFile", js_FS_readFile);
 	api_define_function(js_env, "FS", "rename", js_FS_rename);
 	api_define_function(js_env, "FS", "resolve", js_FS_resolve);
 	api_define_function(js_env, "FS", "rmdir", js_FS_rmdir);
 	api_define_function(js_env, "FS", "unlink", js_FS_unlink);
-	
+	api_define_function(js_env, "FS", "writeFile", js_FS_writeFile);
+
 	api_define_class(js_env, "FileStream", NULL, js_FileStream_finalize);
 	api_define_property(js_env, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(js_env, "FileStream", "size", js_FileStream_get_size, NULL);
@@ -684,6 +688,28 @@ js_FS_open(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_readFile(duk_context* ctx)
+{
+	void*       buffer;
+	void*       file_data;
+	fs_t*       fs;
+	const char* name;
+	size_t      size;
+
+	name = duk_require_path(ctx, 0);
+
+	fs = build_fs(get_current_build(ctx));
+	if (!(file_data = fs_fslurp(fs, name, &size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "read file failed");
+	buffer = duk_push_fixed_buffer(ctx, size);
+	memcpy(buffer, file_data, size);
+	free(file_data);
+
+	duk_push_buffer_object(ctx, -1, 0, size, DUK_BUFOBJ_ARRAYBUFFER);
+	return 1;
+}
+
+static duk_ret_t
 js_FS_rename(duk_context* ctx)
 {
 	fs_t*       fs;
@@ -720,7 +746,7 @@ js_FS_rmdir(duk_context* ctx)
 
 	fs = build_fs(get_current_build(ctx));
 	if (!fs_rmdir(fs, name))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
 	return 0;
 }
 
@@ -735,6 +761,23 @@ js_FS_unlink(duk_context* ctx)
 	fs = build_fs(get_current_build(ctx));
 	if (!fs_unlink(fs, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_FS_writeFile(duk_context* ctx)
+{
+	void*       file_data;
+	fs_t*       fs;
+	const char* name;
+	size_t      size;
+
+	name = duk_require_path(ctx, 0);
+	file_data = duk_require_buffer_data(ctx, 1, &size);
+
+	fs = build_fs(get_current_build(ctx));
+	if (!fs_fspew(fs, name, file_data, size))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "write file failed");
 	return 0;
 }
 

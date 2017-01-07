@@ -1117,6 +1117,12 @@ FS.open(filename, mode);
     Note that calling FS.open() is the only way to get a FileStream object;
     there is no FileStream constructor.
 
+FS.readFile(filename);
+
+    Reads all data from the specified file and returns it as an ArrayBuffer.
+    This avoids the need to explicitly open and close a file when all you want
+    to do is read its contents into memory.
+
 FS.rename(srcname, destname);
 
     Renames the file named by `srcname` to `destname`, both of which are
@@ -1143,6 +1149,12 @@ FS.unlink(filename);
 
     Deletes the specified file.
 
+FS.writeFile(filename, data);
+
+    Writes an entire file in one go.  If a file already exists with the given
+    filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
+    DataView containing the data to be written.
+
 FileStream#fileName [read-only]
 
     Gets the full canonicalized SphereFS filename of the underlying file.
@@ -1166,12 +1178,10 @@ FileStream#close();
     Attempting to read or write to a stream after it is closed will throw an
     error.
 
-FileStream#read([num_bytes]);
+FileStream#read(num_bytes);
 
     Reads data from the file, up to the specified number of bytes, and returns
-    it as an ArrayBuffer.  As a convenience, `num_bytes` can be omitted to read
-    the entire file without affecting the file position.  The file must be
-    opened for reading.
+    it as an ArrayBuffer.  The file must be opened for reading.
 
 FileStream#write(data);
 

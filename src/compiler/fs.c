@@ -94,6 +94,22 @@ fs_fslurp(const fs_t* fs, const char* filename, size_t* out_size)
 }
 
 bool
+fs_fspew(const fs_t* fs, const char* filename, void* data, size_t size)
+{
+	char* resolved_name;
+	bool  retval;
+
+	if (!(resolved_name = resolve(fs, filename))) {
+		errno = EACCES;  // sandboxing violation
+		return false;
+	}
+
+	retval = fspew(data, size, resolved_name);
+	free(resolved_name);
+	return retval;
+}
+
+bool
 fs_is_game_dir(const fs_t* fs, const char* dirname)
 {
 	path_t* full_path;
