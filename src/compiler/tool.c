@@ -100,8 +100,8 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 			line_number = duk_get_int(js_ctx, -1);
 			duk_dup(js_ctx, -3);
 			duk_to_string(js_ctx, -1);
-			printf("    %s\n", duk_get_string(js_ctx, -1));
-			printf("    @ [%s:%d]\n", filename, line_number);
+			printf("        %s\n", duk_get_string(js_ctx, -1));
+			printf("        @ [%s:%d]\n", filename, line_number);
 			duk_pop_3(js_ctx);
 		}
 		duk_pop(js_ctx);

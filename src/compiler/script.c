@@ -138,8 +138,8 @@ script_eval(build_t* build)
 		line_number = duk_get_int(js_env, -1);
 		duk_dup(js_env, -3);
 		duk_to_string(js_env, -1);
-		printf("        %s\n", duk_get_string(js_env, -1));
-		printf("        @ [%s:%d]\n", filename, line_number);
+		printf("    %s\n", duk_get_string(js_env, -1));
+		printf("    @ [%s:%d]\n", filename, line_number);
 		duk_pop_3(js_env);
 	}
 	duk_pop(js_env);
