@@ -9,31 +9,35 @@
 
 struct fs
 {
-	path_t* build_path;
+	path_t* root_path;
 	path_t* game_path;
 	path_t* system_path;
+	path_t* user_path;
 };
 
 static char* resolve (const fs_t* fs, const char* filename);
 
 fs_t*
-fs_new(const char* build_dir, const char* game_dir)
+fs_new(const char* root_dir, const char* game_dir, const char* user_path)
 {
 	fs_t* fs;
 
 	fs = calloc(1, sizeof(fs_t));
-	fs->build_path = path_new_dir(build_dir);
+	fs->root_path = path_new_dir(root_dir);
 	fs->game_path = path_new_dir(game_dir);
 	fs->system_path = path_append(path_strip(path_new_self()), "system/");
+	if (user_path != NULL)
+		fs->user_path = path_new_dir(user_path);
 	return fs;
 }
 
 void
 fs_free(fs_t* fs)
 {
-	path_free(fs->build_path);
+	path_free(fs->root_path);
 	path_free(fs->game_path);
 	path_free(fs->system_path);
+	path_free(fs->user_path);
 	free(fs);
 }
 
@@ -294,7 +298,7 @@ resolve(const fs_t* fs, const char* filename)
 		goto on_error;
 
 	if (path_num_hops(path) == 0)
-		path_rebase(path, fs->build_path);
+		path_rebase(path, fs->root_path);
 	else if (path_hop_cmp(path, 0, "@")) {
 		path_remove_hop(path, 0);
 		path_rebase(path, fs->game_path);
@@ -304,11 +308,15 @@ resolve(const fs_t* fs, const char* filename)
 		path_rebase(path, fs->system_path);
 	}
 	else if (path_hop_cmp(path, 0, "~"))
-		// ~/ is required by the SphereFS specification, but is meaningless
-		// at compile time.  treat it as a sandboxing violation.
-		goto on_error;
+		if (fs->user_path == NULL)
+			// no user directory set, ~/ is a sandbox violation.
+			goto on_error;
+		else {
+			path_remove_hop(path, 0);
+			path_rebase(path, fs->user_path);
+		}
 	else
-		path_rebase(path, fs->build_path);
+		path_rebase(path, fs->root_path);
 	
 	resolved_name = strdup(path_cstr(path));
 	path_free(path);

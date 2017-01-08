@@ -22,7 +22,7 @@ build_new(const path_t* in_path, const path_t* out_path)
 	build_t* build = NULL;
 
 	build = calloc(1, sizeof(build_t));
-	build->fs = fs_new(path_cstr(in_path), path_cstr(out_path));
+	build->fs = fs_new(path_cstr(in_path), path_cstr(out_path), NULL);
 	build->targets = vector_new(sizeof(target_t*));
 	return build;
 }
