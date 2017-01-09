@@ -604,6 +604,8 @@ js_install(duk_context* ctx)
 static duk_ret_t
 js_metadata(duk_context* ctx)
 {
+	duk_require_object_coercible(ctx, 0);
+
 	return 0;
 }
 

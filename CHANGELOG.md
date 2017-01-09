@@ -7,8 +7,22 @@ v5.0.0 - TBD
 * Introducing Majin, a new command-line project management tool for Sphere v2
   projects.  Majin allows you to edit your game manifest from the command line,
   avoiding the need to edit game.json by hand or use Sphere Studio.
+
+
+v4.4.0 - TBD
+------------
+
+* Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
+  an entire file in a single operation.
+* Improves Sphere v1 compatibility by adding several missing APIs.
 * Dispatch API functions will no longer accept a JavaScript source code string
   as a callback, the callback must now always be a function.
+* Improves miniRT documentation.
+* Fixes a bug where the miniRT terminal can be rendered before other threads.
+* Fixes a bug where `random.sample()` sometimes returns `undefined`.
+* Fixes a bug where error attribution doesn't work properly if `Duktape.act()`
+  is not available at the time of the error.
+* Fixes a bug where `CreatePerson()` won't accept a Spriteset object.
 
 
 v4.3.8 - December 4, 2016

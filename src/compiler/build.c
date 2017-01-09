@@ -73,4 +73,7 @@ build_run(build_t* build)
 			continue;
 		target_build(*p, build->fs);
 	}
+
+	printf("writing game.json... ");
+	printf("OK.\n");
 }
