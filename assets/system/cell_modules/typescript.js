@@ -40,7 +40,18 @@ new Tool(function(outName, inNames) {
 	program.emit();
 }, "transpile");
 
-function TypeScript(fileName, sources)
+function TypeScript(dirName, sources)
 {
-	TSCompiler.build(fileName, sources);
+	var targets;
+	FS.mkdir(dirName);
+	for (var i = 0; i < sources.length; ++i) {
+		var fileName = FS.resolve(dirName + '/' + sources[i].name);
+		var extStart = fileName.lastIndexOf('.');
+		fileName = extStart !== -1
+			? fileName.substring(0, extStart) + '.js'
+			: fileName + '.js';
+		var target = TSCompiler.build(fileName, [ sources[i] ]);
+		targets[targets.length] = target;
+	}
+	return targets;
 }

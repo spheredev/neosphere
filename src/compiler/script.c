@@ -630,7 +630,7 @@ js_FS_mkdir(duk_context* ctx)
 	name = duk_require_path(ctx, 0);
 
 	fs = build_fs(get_current_build(ctx));
-	if (!fs_mkdir(fs, name))
+	if (fs_mkdir(fs, name) != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }

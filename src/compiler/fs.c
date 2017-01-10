@@ -44,8 +44,9 @@ fs_free(fs_t* fs)
 int
 fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwrite)
 {
-	char* resolved_dest;
-	char* resolved_src;
+	path_t* dest_path;
+	char*   resolved_dest;
+	char*   resolved_src;
 
 	resolved_dest = resolve(fs, destination);
 	resolved_src = resolve(fs, source);
@@ -54,6 +55,9 @@ fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwr
 		return -1;
 	}
 
+	dest_path = path_new(resolved_dest);
+	path_mkdir(dest_path);
+	path_free(dest_path);
 	return tinydir_copy(resolved_src, resolved_dest, !overwrite);
 }
 
@@ -204,14 +208,17 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 int
 fs_mkdir(const fs_t* fs, const char* dirname)
 {
-	char* resolved_name;
-	int   retval;
+	path_t* path;
+	char*   resolved_name;
+	int     retval;
 
 	if (!(resolved_name = resolve(fs, dirname))) {
 		errno = EACCES;
 		return -1;
 	}
-	retval = tinydir_mkdir(resolved_name);
+	path = path_new_dir(resolved_name);
+	retval = path_mkdir(path) ? 0 : -1;
+	path_free(path);
 	free(resolved_name);
 	return retval;
 }

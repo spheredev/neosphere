@@ -338,7 +338,8 @@ path_mkdir(const path_t* path)
 	// ancestor and working our way down.
 	for (i = 0; i < path->num_hops; ++i) {
 		path_append_dir(parent_path, path_hop(path, i));
-		is_ok = mkdir(path_cstr(parent_path), 0777) == 0;
+		is_ok = mkdir(path_cstr(parent_path), 0777) == 0
+			|| errno == EEXIST;
 	}
 	path_free(parent_path);
 	return is_ok;
