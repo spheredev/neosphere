@@ -16,7 +16,6 @@ static path_t*    load_package_json (duk_context* ctx, const char* filename);
 static void       make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 static void       push_require      (duk_context* ctx, const char* module_id);
 
-static duk_ret_t js_build                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
 static duk_ret_t js_metadata                (duk_context* ctx);
@@ -41,6 +40,7 @@ static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
 static duk_ret_t js_new_Tool                (duk_context* ctx);
 static duk_ret_t js_Tool_finalize           (duk_context* ctx);
+static duk_ret_t js_Tool_build              (duk_context* ctx);
 static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 static duk_ret_t js_Target_get_path         (duk_context* ctx);
@@ -85,7 +85,6 @@ script_eval(build_t* build)
 
 	// initialize the Cellscript API
 	api_init(js_env);
-	api_define_function(js_env, NULL, "build", js_build);
 	api_define_function(js_env, NULL, "files", js_files);
 	api_define_function(js_env, NULL, "install", js_install);
 	api_define_function(js_env, NULL, "metadata", js_metadata);
@@ -115,6 +114,7 @@ script_eval(build_t* build)
 	api_define_property(js_env, "Target", "path", js_Target_get_path, NULL);
 	
 	api_define_class(js_env, "Tool", js_new_Tool, js_Tool_finalize);
+	api_define_method(js_env, "Tool", "build", js_Tool_build);
 
 	// stash the build pointer for easier access by API calls
 	duk_push_global_stash(js_env);
@@ -467,42 +467,6 @@ push_require(duk_context* ctx, const char* module_id)
 		duk_push_string(ctx, module_id);
 		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
 	}
-}
-
-static duk_ret_t
-js_build(duk_context* ctx)
-{
-	build_t*      build;
-	duk_uarridx_t length;
-	path_t*       name;
-	path_t*       out_path;
-	target_t*     source;
-	target_t*     target;
-	tool_t*       tool;
-
-	duk_uarridx_t i;
-
-	build = get_current_build(ctx);
-
-	tool = duk_require_class_obj(ctx, 0, "Tool");
-	out_path = path_new(duk_require_string(ctx, 1));
-	if (!duk_is_array(ctx, 2))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 3)");
-
-	name = path_new(path_filename(out_path));
-	target = target_new(name, out_path, tool);
-	length = (duk_uarridx_t)duk_get_length(ctx, 2);
-	for (i = 0; i < length; ++i) {
-		duk_get_prop_index(ctx, 2, i);
-		source = duk_require_class_obj(ctx, -1, "Target");
-		target_add_source(target, source);
-		duk_pop(ctx);
-	}
-	path_free(out_path);
-	build_add_target(build, target);
-
-	duk_push_class_obj(ctx, "Target", target);
-	return 1;
 }
 
 static duk_ret_t
@@ -975,4 +939,41 @@ js_Tool_finalize(duk_context* ctx)
 
 	tool_free(tool);
 	return 0;
+}
+
+static duk_ret_t
+js_Tool_build(duk_context* ctx)
+{
+	build_t*      build;
+	duk_uarridx_t length;
+	path_t*       name;
+	path_t*       out_path;
+	target_t*     source;
+	target_t*     target;
+	tool_t*       tool;
+
+	duk_uarridx_t i;
+
+	build = get_current_build(ctx);
+
+	duk_push_this(ctx);
+	tool = duk_require_class_obj(ctx, -1, "Tool");
+	out_path = path_new(duk_require_string(ctx, 0));
+	if (!duk_is_array(ctx, 1))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 3)");
+
+	name = path_new(path_filename(out_path));
+	target = target_new(name, out_path, tool);
+	length = (duk_uarridx_t)duk_get_length(ctx, 1);
+	for (i = 0; i < length; ++i) {
+		duk_get_prop_index(ctx, 1, i);
+		source = duk_require_class_obj(ctx, -1, "Target");
+		target_add_source(target, source);
+		duk_pop(ctx);
+	}
+	path_free(out_path);
+	build_add_target(build, target);
+
+	duk_push_class_obj(ctx, "Target", target);
+	return 1;
 }

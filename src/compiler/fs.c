@@ -184,11 +184,10 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
 	if (path_num_hops(path) == 0)
 		path_rebase(path, base_path);
-	else if (path_hop_cmp(path, 0, "@")) {
-		path_remove_hop(path, 0);
-		path_collapse(path, true);
-	}
-	else if (path_hop_cmp(path, 0, "#") || path_hop_cmp(path, 0, "~")) {
+	else if (path_hop_cmp(path, 0, "#")
+		|| path_hop_cmp(path, 0, "~")
+		|| path_hop_cmp(path, 0, "@"))
+	{
 		prefix = strdup(path_hop(path, 0));
 		path_remove_hop(path, 0);
 		path_collapse(path, true);
