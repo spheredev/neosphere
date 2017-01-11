@@ -1,5 +1,5 @@
 'use strict';
-module.exports = TypeScript;
+module.exports = transpile;
 
 const ts = require('./lib/typescriptServices');
 
@@ -40,7 +40,7 @@ new Tool(function(outName, inNames) {
 	program.emit();
 }, "compile");
 
-function TypeScript(dirName, sources)
+function transpile(dirName, sources)
 {
 	var targets = [];
 	FS.mkdir(dirName);
