@@ -38,7 +38,7 @@ new Tool(function(outName, inNames) {
 		outFile: outName,
 	}, CompilerHost);
 	program.emit();
-}, "compile");
+}, "transpile");
 
 function transpile(dirName, sources)
 {

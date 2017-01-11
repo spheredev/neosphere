@@ -82,7 +82,7 @@ build_run(build_t* build)
 	iter_t iter;
 	target_t* *p;
 
-	printf("processing %zu targets...\n", vector_len(build->targets));
+	printf("building targets...\n");
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);

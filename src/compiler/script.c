@@ -118,17 +118,14 @@ script_eval(build_t* build)
 	duk_pop(js);
 	
 	// execute the Cellscript
-	printf("evaluating Cellscript.js... ");
-	if (eval_module(js, "Cellscript.js"))
-		printf("OK.\n");
-	else {
+	printf("evaluating Cellscript.js...\n");
+	if (!eval_module(js, "Cellscript.js")) {
 		duk_get_prop_string(js, -1, "fileName");
 		filename = duk_safe_to_string(js, -1);
 		duk_get_prop_string(js, -2, "lineNumber");
 		line_number = duk_get_int(js, -1);
 		duk_dup(js, -3);
 		duk_to_string(js, -1);
-		printf("Error!\n");
 		printf("    %s\n", duk_get_string(js, -1));
 		printf("    @ [%s:%d]\n", filename, line_number);
 		duk_pop_3(js);
@@ -516,7 +513,7 @@ js_files(duk_context* ctx)
 	free(wildcard);
 
 	if (vector_len(targets) == 0) {
-		printf("    warn: '%s' matches 0 files\n", pattern);
+		printf("    warning: '%s' matches 0 files\n", pattern);
 	}
 
 	// return all the newly constructed targets as an array.
