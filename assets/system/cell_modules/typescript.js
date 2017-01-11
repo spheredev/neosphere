@@ -38,11 +38,11 @@ new Tool(function(outName, inNames) {
 		outFile: outName,
 	}, CompilerHost);
 	program.emit();
-}, "transpile");
+}, "compile");
 
 function TypeScript(dirName, sources)
 {
-	var targets;
+	var targets = [];
 	FS.mkdir(dirName);
 	for (var i = 0; i < sources.length; ++i) {
 		var fileName = FS.resolve(dirName + '/' + sources[i].name);

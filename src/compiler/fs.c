@@ -102,7 +102,7 @@ fs_fslurp(const fs_t* fs, const char* filename, size_t* out_size)
 }
 
 bool
-fs_fspew(const fs_t* fs, const char* filename, void* data, size_t size)
+fs_fspew(const fs_t* fs, const char* filename, const void* data, size_t size)
 {
 	char* resolved_name;
 	bool  retval;

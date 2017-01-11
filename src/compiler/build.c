@@ -6,24 +6,32 @@
 
 struct build
 {
-	fs_t*     fs;
-	vector_t* targets;
-};
-
-struct install
-{
-	path_t*   path;
-	target_t* target;
+	fs_t*        fs;
+	duk_context* js;
+	vector_t*    targets;
 };
 
 build_t*
 build_new(const path_t* in_path, const path_t* out_path)
 {
-	build_t* build = NULL;
+	build_t*     build = NULL;
+	duk_context* js;
+
+	// note: Duktape is initialized without a fatal error handler.  if a JavaScript
+	//       exception is thrown and not caught, Cell will crash.
+	js = duk_create_heap_default();
+
+	// start with an empty game descriptor.  this gets JSON encoded
+	// and written to game.json as the final step of a build.
+	duk_push_global_stash(js);
+	duk_push_object(js);
+	duk_put_prop_string(js, -2, "descriptor");
+	duk_pop(js);
 
 	build = calloc(1, sizeof(build_t));
 	build->fs = fs_new(path_cstr(in_path), path_cstr(out_path), NULL);
 	build->targets = vector_new(sizeof(target_t*));
+	build->js = js;
 	return build;
 }
 
@@ -40,6 +48,7 @@ build_free(build_t* build)
 		target_free(*p);
 	}
 	vector_free(build->targets);
+	duk_destroy_heap(build->js);
 	free(build);
 }
 
@@ -47,6 +56,12 @@ fs_t*
 build_fs(const build_t* build)
 {
 	return build->fs;
+}
+
+duk_context*
+build_js_realm(const build_t* build)
+{
+	return build->js;
 }
 
 void
@@ -59,6 +74,8 @@ build_add_target(build_t* build, target_t* target)
 void
 build_run(build_t* build)
 {
+	const char*   json;
+	size_t        json_size;
 	int           num_built = 0;
 	const path_t* path;
 	
@@ -75,5 +92,11 @@ build_run(build_t* build)
 	}
 
 	printf("writing game.json... ");
+	duk_push_global_stash(build->js);
+	duk_get_prop_string(build->js, -1, "descriptor");
+	duk_json_encode(build->js, -1);
+	json = duk_get_lstring(build->js, -1, &json_size);
+	fs_fspew(build->fs, "@/game.json", json, json_size);
+	duk_pop_2(build->js);
 	printf("OK.\n");
 }

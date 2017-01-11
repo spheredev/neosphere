@@ -11,14 +11,15 @@
 static duk_bool_t eval_module       (duk_context* ctx, const char* filename);
 static path_t*    find_module       (duk_context* ctx, const char* id, const char* origin, const char* sys_origin);
 static build_t*   get_current_build (duk_context* js);
+static void       initialize_api    (duk_context* ctx);
 static duk_ret_t  install_target    (duk_context* ctx);
 static path_t*    load_package_json (duk_context* ctx, const char* filename);
 static void       make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 static void       push_require      (duk_context* ctx, const char* module_id);
 
+static duk_ret_t js_describe                (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
-static duk_ret_t js_metadata                (duk_context* ctx);
 static duk_ret_t js_require                 (duk_context* ctx);
 static duk_ret_t js_system_name             (duk_context* ctx);
 static duk_ret_t js_system_version          (duk_context* ctx);
@@ -48,105 +49,92 @@ static duk_ret_t js_Target_get_path         (duk_context* ctx);
 bool
 script_eval(build_t* build)
 {
-	void*        file_data;
 	const char*  filename;
-	size_t       file_size;
 	tool_t*      install_tool;
-	duk_context* js_env;
+	duk_context* js;
 	int          line_number;
-	lstring_t*   source;
 
-	if (!(file_data = fs_fslurp(build_fs(build), "Cellscript.js", &file_size))) {
-		printf("ERROR: unable to open Cellscript.js, does it exist?\n");
-		return false;
-	}
-	source = lstr_from_cp1252(file_data, file_size);
-	free(file_data);
-
-	printf("evaluating Cellscript.js...\n");
-	
-	// note: no fatal error handler set here.  if a JavaScript exception is thrown
-	//       and nothing catches it, Cell will crash.
-	js_env = duk_create_heap_default();
+	js = build_js_realm(build);
 
 	// initialize CommonJS cache and global require()
-	duk_push_global_stash(js_env);
-	dukrub_push_bare_object(js_env);
-	duk_put_prop_string(js_env, -2, "moduleCache");
-	duk_pop(js_env);
+	duk_push_global_stash(js);
+	dukrub_push_bare_object(js);
+	duk_put_prop_string(js, -2, "moduleCache");
+	duk_pop(js);
 
-	duk_push_global_object(js_env);
-	duk_push_string(js_env, "require");
-	push_require(js_env, NULL);
-	duk_def_prop(js_env, -3, DUK_DEFPROP_HAVE_VALUE
+	duk_push_global_object(js);
+	duk_push_string(js, "require");
+	push_require(js, NULL);
+	duk_def_prop(js, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// initialize the Cellscript API
-	api_init(js_env);
-	api_define_function(js_env, NULL, "files", js_files);
-	api_define_function(js_env, NULL, "install", js_install);
-	api_define_function(js_env, NULL, "metadata", js_metadata);
+	api_init(js);
+	api_define_function(js, NULL, "describe", js_describe);
+	api_define_function(js, NULL, "files", js_files);
+	api_define_function(js, NULL, "install", js_install);
 	
-	api_define_function(js_env, "system", "name", js_system_name);
-	api_define_function(js_env, "system", "version", js_system_version);
+	api_define_function(js, "system", "name", js_system_name);
+	api_define_function(js, "system", "version", js_system_version);
 	
-	api_define_function(js_env, "FS", "exists", js_FS_exists);
-	api_define_function(js_env, "FS", "open", js_FS_open);
-	api_define_function(js_env, "FS", "mkdir", js_FS_mkdir);
-	api_define_function(js_env, "FS", "readFile", js_FS_readFile);
-	api_define_function(js_env, "FS", "rename", js_FS_rename);
-	api_define_function(js_env, "FS", "resolve", js_FS_resolve);
-	api_define_function(js_env, "FS", "rmdir", js_FS_rmdir);
-	api_define_function(js_env, "FS", "unlink", js_FS_unlink);
-	api_define_function(js_env, "FS", "writeFile", js_FS_writeFile);
+	api_define_function(js, "FS", "exists", js_FS_exists);
+	api_define_function(js, "FS", "open", js_FS_open);
+	api_define_function(js, "FS", "mkdir", js_FS_mkdir);
+	api_define_function(js, "FS", "readFile", js_FS_readFile);
+	api_define_function(js, "FS", "rename", js_FS_rename);
+	api_define_function(js, "FS", "resolve", js_FS_resolve);
+	api_define_function(js, "FS", "rmdir", js_FS_rmdir);
+	api_define_function(js, "FS", "unlink", js_FS_unlink);
+	api_define_function(js, "FS", "writeFile", js_FS_writeFile);
 
-	api_define_class(js_env, "FileStream", NULL, js_FileStream_finalize);
-	api_define_property(js_env, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
-	api_define_property(js_env, "FileStream", "size", js_FileStream_get_size, NULL);
-	api_define_method(js_env, "FileStream", "close", js_FileStream_close);
-	api_define_method(js_env, "FileStream", "read", js_FileStream_read);
-	api_define_method(js_env, "FileStream", "write", js_FileStream_write);
+	api_define_class(js, "FileStream", NULL, js_FileStream_finalize);
+	api_define_property(js, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
+	api_define_property(js, "FileStream", "size", js_FileStream_get_size, NULL);
+	api_define_method(js, "FileStream", "close", js_FileStream_close);
+	api_define_method(js, "FileStream", "read", js_FileStream_read);
+	api_define_method(js, "FileStream", "write", js_FileStream_write);
 
-	api_define_class(js_env, "Target", NULL, js_Target_finalize);
-	api_define_property(js_env, "Target", "name", js_Target_get_name, NULL);
-	api_define_property(js_env, "Target", "path", js_Target_get_path, NULL);
+	api_define_class(js, "Target", NULL, js_Target_finalize);
+	api_define_property(js, "Target", "name", js_Target_get_name, NULL);
+	api_define_property(js, "Target", "path", js_Target_get_path, NULL);
 	
-	api_define_class(js_env, "Tool", js_new_Tool, js_Tool_finalize);
-	api_define_method(js_env, "Tool", "build", js_Tool_build);
+	api_define_class(js, "Tool", js_new_Tool, js_Tool_finalize);
+	api_define_method(js, "Tool", "build", js_Tool_build);
 
 	// stash the build pointer for easier access by API calls
-	duk_push_global_stash(js_env);
-	duk_push_pointer(js_env, build);
-	duk_put_prop_string(js_env, -2, "buildPtr");
-	duk_pop(js_env);
+	duk_push_global_stash(js);
+	duk_push_pointer(js, build);
+	duk_put_prop_string(js, -2, "buildPtr");
+	duk_pop(js);
 
-	duk_get_global_string(js_env, "install");
-	duk_push_c_function(js_env, install_target, DUK_VARARGS);
-	install_tool = tool_new(js_env, -1, "install");
-	duk_push_class_obj(js_env, "Tool", install_tool);
-	duk_replace(js_env, -2);
-	duk_put_prop_string(js_env, -2, "\xFF" "tool");
-	duk_pop(js_env);
+	duk_get_global_string(js, "install");
+	duk_push_c_function(js, install_target, DUK_VARARGS);
+	install_tool = tool_new(js, -1, "install");
+	duk_push_class_obj(js, "Tool", install_tool);
+	duk_replace(js, -2);
+	duk_put_prop_string(js, -2, "\xFF" "tool");
+	duk_pop(js);
 	
 	// execute the Cellscript
-	if (!eval_module(js_env, "Cellscript.js")) {
-		duk_get_prop_string(js_env, -1, "fileName");
-		filename = duk_safe_to_string(js_env, -1);
-		duk_get_prop_string(js_env, -2, "lineNumber");
-		line_number = duk_get_int(js_env, -1);
-		duk_dup(js_env, -3);
-		duk_to_string(js_env, -1);
-		printf("    %s\n", duk_get_string(js_env, -1));
+	printf("evaluating Cellscript.js... ");
+	if (eval_module(js, "Cellscript.js"))
+		printf("OK.\n");
+	else {
+		duk_get_prop_string(js, -1, "fileName");
+		filename = duk_safe_to_string(js, -1);
+		duk_get_prop_string(js, -2, "lineNumber");
+		line_number = duk_get_int(js, -1);
+		duk_dup(js, -3);
+		duk_to_string(js, -1);
+		printf("Error!\n");
+		printf("    %s\n", duk_get_string(js, -1));
 		printf("    @ [%s:%d]\n", filename, line_number);
-		duk_pop_3(js_env);
+		duk_pop_3(js);
 	}
-	duk_pop(js_env);
+	duk_pop(js);
 	
-	//duk_destroy_heap(js_env);
-	lstr_free(source);
-
 	return true;
 }
 
@@ -346,6 +334,12 @@ get_current_build(duk_context* js)
 	return build;
 }
 
+static void
+initialize_api(duk_context* ctx)
+{
+
+}
+
 static duk_ret_t
 install_target(duk_context* ctx)
 {
@@ -470,6 +464,23 @@ push_require(duk_context* ctx, const char* module_id)
 }
 
 static duk_ret_t
+js_describe(duk_context* ctx)
+{
+	const char* title;
+
+	title = duk_require_string(ctx, 0);
+	duk_require_object_coercible(ctx, 1);
+
+	duk_push_global_stash(ctx);
+	duk_dup(ctx, 1);
+	duk_dup(ctx, 0);
+	duk_put_prop_string(ctx, -2, "name");
+	duk_put_prop_string(ctx, -2, "descriptor");
+
+	return 0;
+}
+
+static duk_ret_t
 js_files(duk_context* ctx)
 {
 	build_t*    build;
@@ -562,14 +573,6 @@ js_install(duk_context* ctx)
 		build_add_target(build, target);
 		target_free(target);
 	}
-	return 0;
-}
-
-static duk_ret_t
-js_metadata(duk_context* ctx)
-{
-	duk_require_object_coercible(ctx, 0);
-
 	return 0;
 }
 
