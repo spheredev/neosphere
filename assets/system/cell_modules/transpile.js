@@ -8,7 +8,7 @@ const CompilerHost =
 	fileExists: FS.exists,
 	getCanonicalFileName(fileName) { return FS.resolve(fileName); },
 	getCurrentDirectory() { return '.'; },
-	getDefaultLibFileName() { return 'lib.d.ts' },
+	getDefaultLibFileName() { return '#/lib.d.ts' },
 	getNewLine() { return '\n'; },
 	getSourceFile(fileName, langVersion) {
 		try {
@@ -31,11 +31,12 @@ const CompilerHost =
 };
 
 const TSCompiler =
-new Tool(function(outName, inNames) {
-	var program = ts.createProgram(inNames, {
-		module:  ts.ModuleKind.CommonJS,
-		target:  ts.ScriptTarget.ES5,
-		outFile: outName,
+new Tool(function(outFileName, inFileNames) {
+	var program = ts.createProgram(inFileNames, {
+		outFile:        outFileName,
+		target:         ts.ScriptTarget.ES5,
+		module:         ts.ModuleKind.CommonJS,
+		removeComments: true,
 	}, CompilerHost);
 	program.emit();
 }, "transpile");
