@@ -5,10 +5,10 @@
 
 // pull in some useful modules.  these are all part of the Sphere v2 standard
 // library so you can count on them being available.
-const assert = require('assert');
-const from   = require('from');
-const prim   = require('prim');
-const random = require('random');
+import assert from 'assert';
+import from   from 'from';
+import prim   from 'prim';
+import random from 'random';
 
 // declare variables used by the game
 var image = new Image('images/saiyan.png');

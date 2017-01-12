@@ -20,14 +20,15 @@ describe("{0}", {{
 }});
 
 
-// the scripts are written in TypeScript; we need to compile them to JavaScript
-// before the engine can run them.
+// minisphere doesn't support most ES6+ syntax; if our scripts use any new
+// JavaScript features such as destructuring, minisphere won't run them.  to
+// get around that, we can have Cell transpile the scripts.
 //
-// note: transpile() creates one target file for each TypeScript source file.
-//       this is why it takes a directory as its first argument rather than
-//       a filename.  install() works similarly (see below).
+// note: transpile() creates one target file for each source file.  this is why
+//       it takes a directory as its first argument rather than a filename.
+//       install() works similarly (see below).
 
-transpile('@/scripts/', files('src/*.ts'));
+transpile('@/scripts/', files('src/*.js'));
 
 
 // this tells Cell which files to copy from the source tree when packaging the
