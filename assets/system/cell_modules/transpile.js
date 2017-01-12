@@ -1,44 +1,20 @@
 'use strict';
 module.exports = transpile;
 
-const ts = require('./lib/typescriptServices');
+const babel = require('./lib/babel');
 
-const CompilerHost =
+const TranspileTool =
+new Tool(function(outFileName, inFileNames)
 {
-	fileExists: FS.exists,
-	getCanonicalFileName(fileName) { return FS.resolve(fileName); },
-	getCurrentDirectory() { return '.'; },
-	getDefaultLibFileName() { return '#/lib.d.ts' },
-	getNewLine() { return '\n'; },
-	getSourceFile(fileName, langVersion) {
-		try {
-			var text = this.readFile(fileName);
-			return ts.createSourceFile(fileName, text, langVersion);
-		}
-		catch(e) {
-			return undefined;
-		}
-	},
-	readFile(fileName) {
-		var data = FS.readFile(fileName);
-		return new TextDecoder().decode(data);
-	},
-	useCaseSensitiveFileNames() { return true; },
-	writeFile(fileName, text) {
-		var data = new TextEncoder().encode(text);
-		FS.writeFile(fileName, data);
-	},
-};
-
-const TSCompiler =
-new Tool(function(outFileName, inFileNames) {
-	var program = ts.createProgram(inFileNames, {
-		outFile:        outFileName,
-		target:         ts.ScriptTarget.ES5,
-		module:         ts.ModuleKind.CommonJS,
-		removeComments: true,
-	}, CompilerHost);
-	program.emit();
+	var fileContent = FS.readFile(inFileNames[0]);
+	var input = new TextDecoder().decode(fileContent);
+	var output = babel.transform(input, {
+		presets: [
+			[ 'es2015', { modules: false } ],
+			'es2016'
+		]
+	});
+	FS.writeFile(outFileName, new TextEncoder().encode(output.code));
 }, "transpile");
 
 function transpile(dirName, sources)
@@ -51,7 +27,7 @@ function transpile(dirName, sources)
 		fileName = extStart !== -1
 			? fileName.substring(0, extStart) + '.js'
 			: fileName + '.js';
-		var target = TSCompiler.build(fileName, [ sources[i] ]);
+		var target = TranspileTool.build(fileName, [ sources[i] ]);
 		targets[targets.length] = target;
 	}
 	return targets;
