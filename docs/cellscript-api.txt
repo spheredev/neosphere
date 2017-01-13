@@ -17,12 +17,14 @@ build order at runtime.
 files(pattern[, recursive]);
 
     Constructs a target for every file matching the specified pattern.  File
-    targets are unique: They have no sources, and so are always considered to
-    be up to date.
+    targets are unique: They have no sources, and are always considered to be
+    up to date.
 
-    `pattern` is a wildcard (e.g. "*.png") combined with an optional path
-    specifying the directory (relative to the directory containing the
-    Cellscript) to be searched.  If 'recursive' is true, searches
-    subdirectories as well.
+    `pattern` is a wildcard (e.g. "*.png") combined with an optional SphereFS
+    path specifying the directory to be searched.  If 'recursive' is true,
+    subdirectories are searched as well.
 
 install(directory, targets);
+
+
+transpile(directory, sources);

@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 292c84fb930b042ffd11b4b5647191faf401d79e (v2.0.0-57-g292c84fb).
- *  Git branch string-table-rewrite.
+ *  Git commit a151f2ae63f203bfbf54e57c2ab4691e6a8decc7 (v2.0.0-59-ga151f2ae).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -260,9 +260,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "292c84fb930b042ffd11b4b5647191faf401d79e"
-#define DUK_GIT_DESCRIBE                  "v2.0.0-57-g292c84fb"
-#define DUK_GIT_BRANCH                    "string-table-rewrite"
+#define DUK_GIT_COMMIT                    "a151f2ae63f203bfbf54e57c2ab4691e6a8decc7"
+#define DUK_GIT_DESCRIBE                  "v2.0.0-59-ga151f2ae"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
