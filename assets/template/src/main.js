@@ -10,7 +10,7 @@ import from   from 'from';
 import prim   from 'prim';
 import random from 'random';
 
-// declare variables used by the game
+// declare variables used by the game.
 var image = new Image('images/saiyan.png');
 var x = 0, xVel = 1;
 var y = 0, yVel = 1;

@@ -4,7 +4,8 @@
 // and packaging games.
 
 
-// require() pulls in the libraries we need.
+// require() any libraries we need.
+
 const transpile = require('transpile');
 
 
@@ -20,9 +21,9 @@ describe("{0}", {{
 }});
 
 
-// minisphere doesn't support most ES6+ syntax; if our scripts use any new
-// JavaScript features such as destructuring, minisphere won't run them.  to
-// get around that, we can have Cell transpile the scripts.
+// minisphere doesn't natively support most ES6+ syntax; if our scripts use any
+// new JavaScript features such as destructuring, minisphere won't be able to
+// run them.  to get around that, we can have Cell transpile the scripts.
 //
 // note: transpile() creates one target file for each source file.  this is why
 //       it takes a directory as its first argument rather than a filename.
