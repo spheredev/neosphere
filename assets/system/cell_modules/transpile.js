@@ -9,7 +9,12 @@ new Tool(function(outFileName, inFileNames)
 	var fileContent = FS.readFile(inFileNames[0]);
 	var input = new TextDecoder().decode(fileContent);
 	var output = babel.transform(input, {
-		presets: [ 'es2015', 'es2016' ],
+		presets: [
+			[ 'es2015', { modules: false } ],
+			'es2016'
+		],
+		comments:    false,
+		retainLines: true,
 	});
 	FS.writeFile(outFileName, new TextEncoder().encode(output.code));
 }, "transpile");
