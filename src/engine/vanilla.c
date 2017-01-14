@@ -314,10 +314,10 @@ initialize_vanilla_api(duk_context* ctx)
 	
 	// add polyfills for __defineGetter__/__defineSetter__.  Sphere 1.x predates ES5
 	// and as a result there are a lot of games that expect these to exist.
-	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { value: function(name, func) {"
-		"Object.defineProperty(this, name, { get: func, configurable: true }); } });");
-	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { value: function(name, func) {"
-		"Object.defineProperty(this, name, { set: func, configurable: true }); } });");
+	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineGetter__', { writable: true, configurable: true,"
+		"value: function(name, func) { Object.defineProperty(this, name, { get: func, configurable: true }); } });");
+	duk_eval_string(ctx, "Object.defineProperty(Object.prototype, '__defineSetter__', { writable: true, configurable: true,"
+		"value: function(name, func) { Object.defineProperty(this, name, { set: func, configurable: true }); } });");
 
 	// set up a dictionary to track RequireScript() calls
 	duk_push_global_stash(ctx);

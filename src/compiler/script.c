@@ -56,6 +56,12 @@ script_eval(build_t* build)
 
 	js = build_js_realm(build);
 
+	// stash the build pointer for easier access by API calls
+	duk_push_global_stash(js);
+	duk_push_pointer(js, build);
+	duk_put_prop_string(js, -2, "buildPtr");
+	duk_pop(js);
+
 	// initialize CommonJS cache and global require()
 	duk_push_global_stash(js);
 	dukrub_push_bare_object(js);
@@ -69,6 +75,10 @@ script_eval(build_t* build)
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
+
+	// polyfill for ECMAScript 2015
+	if (fs_fexist(build_fs(build), "#/polyfill.js") && !eval_module(js, "#/polyfill.js"))
+		return false;
 
 	// initialize the Cellscript API
 	api_init(js);
@@ -102,12 +112,6 @@ script_eval(build_t* build)
 	
 	api_define_class(js, "Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method(js, "Tool", "build", js_Tool_build);
-
-	// stash the build pointer for easier access by API calls
-	duk_push_global_stash(js);
-	duk_push_pointer(js, build);
-	duk_put_prop_string(js, -2, "buildPtr");
-	duk_pop(js);
 
 	duk_get_global_string(js, "install");
 	duk_push_c_function(js, install_target, DUK_VARARGS);

@@ -1,7 +1,6 @@
 'use strict';
 module.exports = minify;
 
-require('polyfill');
 const babili = require('./lib/babili');
 
 const MinifyTool =
