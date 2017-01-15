@@ -21,7 +21,7 @@ describe("{0}", {{
 }});
 
 
-// minisphere doesn't natively support most ES6+ syntax; if our scripts use any
+// minisphere doesn't natively support ECMAScript 2015; if our scripts use any
 // new JavaScript features such as destructuring, minisphere won't be able to
 // run them.  to get around that, we can have Cell transpile the scripts.
 //
@@ -29,7 +29,8 @@ describe("{0}", {{
 //       it takes a directory as its first argument rather than a filename.
 //       install() works similarly (see below).
 
-transpile('@/scripts/', files('src/*.js'));
+// transpile as modules.  otherwise 'import' and 'export' don't work.
+transpile.modules('@/scripts/', files('src/*.js'));
 
 
 // this tells Cell which files to copy from the source tree when packaging the

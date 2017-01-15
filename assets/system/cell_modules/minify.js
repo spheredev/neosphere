@@ -1,14 +1,19 @@
+/**
+ *  Cell Standard Library 'minify' module
+ *  (c) 2017 Fat Cerberus
+**/
+
 'use strict';
 module.exports = minify;
 
-const babili = require('./lib/babili');
+const Babili = require('./lib/Babili');
 
-const MinifyTool =
+var minifyTool =
 new Tool(function(outFileName, inFileNames)
 {
 	var fileContent = FS.readFile(inFileNames[0]);
 	var input = new TextDecoder().decode(fileContent);
-	var output = babili.transform(input);
+	var output = Babili.transform(input);
 	FS.writeFile(outFileName, new TextEncoder().encode(output.code));
 }, "minify");
 
@@ -18,7 +23,7 @@ function minify(dirName, sources)
 	FS.mkdir(dirName);
 	for (var i = 0; i < sources.length; ++i) {
 		var fileName = FS.resolve(dirName + '/' + sources[i].name);
-		var target = MinifyTool.build(fileName, [ sources[i] ]);
+		var target = minifyTool.build(fileName, [ sources[i] ]);
 		targets[targets.length] = target;
 	}
 	return targets;
