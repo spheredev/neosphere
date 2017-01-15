@@ -12,18 +12,18 @@ v5.0.0 - TBD
 v4.4.0 - TBD
 ------------
 
-* Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
-  an entire file in a single operation.
-* Adds experimental support for ECMAScript 2015 built-ins such as Map and Set
-  using a polyfill.
-* Adds support to Cell for ECMAScript 2015+ transpilation via Babel.
-* Adds support to Cell for minification using Babili.
 * Overhauls the Cellscript API: require() is supported, file paths are resolved
   using SphereFS semantics, and Cellscripts and modules can now define custom
   targets and build tools for ultimate extensibility.
+* Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
+  an entire file in a single operation.
+* Adds support for ECMAScript 2015 built-ins like Map and Set using a polyfill
+  which is loaded on startup.
+* Adds support to Cell for ECMAScript 2015+ transpilation via Babel.
+* Adds support to Cell for minification using Babili.
 * Improves Sphere v1 compatibility by adding several missing APIs.
 * Dispatch API functions will no longer accept a JavaScript source code string
-  as a callback, the callback must now always be a function.
+  as a callback; the callback must now always be a function.
 * Improves miniRT documentation.
 * Fixes a bug where the miniRT terminal can be rendered before other threads.
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
