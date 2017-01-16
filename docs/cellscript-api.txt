@@ -6,13 +6,60 @@ itself, it uses JavaScript to control the build process.  This file documents
 the public API used to write build scripts.
 
 
-Targets
--------
+SphereFS File System
+--------------------
 
-The basic build unit in Cell is a target.  If you've ever used SCons, this is
-the same concept.  Targets may either be installed directly or used as input
-when building other targets, and Cell will automatically determine the correct
-build order at runtime.
+Cell, like minisphere, uses the SphereFS standard for file paths.  Under
+SphereFS, when a relative path is used in an API call, it will be resolved
+relative to the entrypoint (in Cell, the location of Cellscript.js).  To load
+files from a different location, you can use one of the SphereFS prefixes:
+
+    @/: The root of the game package being compiled.
+    ~/: The current user's save data directory, guaranteed to be writable.
+        This prefix is meaningless in Cell and using it will cause a sandboxing
+        violation error.
+    #/: The Sphere system directory.  This contains assets included with the
+        engine.  In most cases this directory is read-only.  Build scripts
+        should NOT try to write anything here as doing so can damage the host
+        minisphere installation.
+
+As an example, the following will open the file `EatyPig.bin` in the root of
+the game package for writing in binary mode:
+
+    var file = FS.open("@/EatyPig.bin", "wb");
+
+Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
+"@/../maggie.fat", will be met with a sandbox violation error.
+
+
+Core Cellscript API
+-------------------
+
+The functions and properties below are available for use at all times, by all
+Cellscripts and modules.  No require() call is necessary to use them.
+
+system.name [read-only]
+
+    The name of the compiler, "Cell".
+
+system.version [read-only]
+
+    The version number of the compiler as a string, e.g., "5.0.0".
+
+describe(title, metadata);
+
+    Defines the basic set of data to include in the game manifest.  `title` is
+    the title of the game being built and will be encoded as a property called
+    `name` in the manifest.  Everything in `metadata` will be JSON encoded and
+    the output stored in the manifest as-is.
+
+    Note that all values written to the game manifest are accessible to
+    Sphere v2 game code through `system.game`.  This provides a convenient
+    mechanism to associate static data, such as debug flags, with a built game.
+
+    Note: Values in `metadata` may be overridden by other parts of the build.
+          For example, the 'transpile' module may write generated source maps
+          to the manifest under `sourceMaps`.
 
 files(pattern[, recursive]);
 
@@ -24,7 +71,145 @@ files(pattern[, recursive]);
     path specifying the directory to be searched.  If 'recursive' is true,
     subdirectories are searched as well.
 
-install(directory, targets);
+install(directory, sources);
+
+    Copies all specified Targets into a given directory at build time.  To copy
+    existing files, you can use a files() builder to populate `sources`. (see
+    above).
+
+Target#fileName [read-only]
+
+    Gets the full SphereFS path of the output file represented by this Target.
+
+Target#name [read-only]
+
+    Gets the name of this Target.  Usually this is just the output filename
+    without any path information; however, targets constructed by files() may
+    include a relative path to make it possible to reconstruct the original
+    directory structure elsewhere.
+
+new Tool(buildFunc[, status_text]);
+
+    Constructs a Tool which can be used to build custom targets.  For example,
+    you might create a Tool to build minified scripts or compress files.
+
+    For each target built by the Tool, `buildFunc` is called and provided with
+    the target filename as well as an array of filenames for the sources needed
+    to build it.  The function is expected to create the target file or, if
+    it already exists, to update its modification date.  If it doesn't, a build
+    warning or error will result.
+
+    `buildFunc` has the signature:
+        function(outFileName, inFileNames)
+
+    `status_text` is how Cell will describe the build step, e.g. "compiling" or
+    "compressing".  If the status text is omitted, "building" is the default.
+
+Tool#build(filename, sources);
+
+    Instructs Cell to build `filename` using this Tool.  Returns a Target
+    object representing the output file.
 
 
-transpile(directory, sources);
+File System API
+---------------
+
+Cell provides the familiar Sphere v2 file system API, providing easy access to
+the file system during a build.
+
+FS.exists(filename);
+
+    Checks whether the specified file exists and returns true if it does.
+    Otherwise, returns false.
+
+FS.mkdir(dirname);
+
+    Creates the specified directory and any of its parent directories that
+    don't already exist.
+
+FS.open(filename, mode);
+
+    Opens the specified file and constructs a new FileStream to access it.
+    `mode` is a string in the same format as that of C fopen() specifying the
+    mode in which to open the file:
+
+        r:  Open file for reading.
+        r+: Open file for update (reading and writing).
+        w:  Create/truncate then open file for writing.
+        w+: Create/truncate then open file for update.
+        a:  Open file (create if not found) with file position at end of file.
+        a+: Open file for update with initial position at end of file.
+
+    Note that calling FS.open() is the only way to get a FileStream object;
+    there is no FileStream constructor.
+
+FS.readFile(filename);
+
+    Reads all data from the specified file and returns it as an ArrayBuffer.
+    This avoids the need to explicitly open and close a file when all you want
+    to do is read its contents into memory.
+
+FS.rename(srcname, destname);
+
+    Renames the file named by `srcname` to `destname`, both of which are
+    assumed to be full SphereFS paths.  This can also be used to move a file
+    between directories; if so, the destination directory must already exist.
+
+FS.resolve(path);
+
+    Resolves a path (which may contain relative components) to its canonical
+    SphereFS representation.  This can be useful when data is associated with
+    individual assets, such as map files, and you need to ensure the same data
+    is pulled for a given file regardless of the path used to access it.
+
+    Note that the resource referred to by the path doesn't need to exist.  As
+    with other FS methods, FS.resolve() will throw an error if an absolute path
+    is passed in.
+
+FS.rmdir(dirname);
+
+    Deletes the specified directory.  The directory must be empty or an error
+    will be thrown.
+
+FS.unlink(filename);
+
+    Deletes the specified file.
+
+FS.writeFile(filename, data);
+
+    Writes an entire file in one go.  If a file already exists with the given
+    filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
+    DataView containing the data to be written.
+
+FileStream#fileName [read-only]
+
+    Gets the full canonicalized SphereFS filename of the underlying file.
+
+FileStream#position [read/write]
+
+    Gets or sets the file position, which determines where in the file the next
+    read or write will start from.  Expressed in bytes.
+
+    Note: For files opened for writing, it is valid to seek past the end of the
+          stream.  In this case the next write will be at the new position and
+          the intervening space filled with NUL bytes.
+
+FileStream#size [read-only]
+
+    Gets the size of the underlying file, in bytes.
+
+FileStream#close();
+
+    Closes the stream, after which the FileStream object should not be used.
+    Attempting to read or write to a stream after it is closed will throw an
+    error.
+
+FileStream#read(num_bytes);
+
+    Reads data from the file, up to the specified number of bytes, and returns
+    it as an ArrayBuffer.  The file must be opened for reading.
+
+FileStream#write(data);
+
+    Writes data to the file and advances the file pointer.  `data` should be an
+    ArrayBuffer, TypedArray or DataView containing the data to be written.

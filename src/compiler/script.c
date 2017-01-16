@@ -43,8 +43,8 @@ static duk_ret_t js_new_Tool                (duk_context* ctx);
 static duk_ret_t js_Tool_finalize           (duk_context* ctx);
 static duk_ret_t js_Tool_build              (duk_context* ctx);
 static duk_ret_t js_Target_finalize         (duk_context* ctx);
+static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
-static duk_ret_t js_Target_get_path         (duk_context* ctx);
 
 bool
 script_eval(build_t* build)
@@ -107,8 +107,8 @@ script_eval(build_t* build)
 	api_define_method(js, "FileStream", "write", js_FileStream_write);
 
 	api_define_class(js, "Target", NULL, js_Target_finalize);
+	api_define_property(js, "Target", "fileName", js_Target_get_fileName, NULL);
 	api_define_property(js, "Target", "name", js_Target_get_name, NULL);
-	api_define_property(js, "Target", "path", js_Target_get_path, NULL);
 	
 	api_define_class(js, "Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method(js, "Tool", "build", js_Tool_build);
@@ -890,6 +890,18 @@ js_Target_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Target_get_fileName(duk_context* ctx)
+{
+	target_t* target;
+
+	duk_push_this(ctx);
+	target = duk_require_class_obj(ctx, -1, "Target");
+
+	duk_push_string(ctx, path_cstr(target_path(target)));
+	return 1;
+}
+
+static duk_ret_t
 js_Target_get_name(duk_context* ctx)
 {
 	target_t* target;
@@ -898,18 +910,6 @@ js_Target_get_name(duk_context* ctx)
 	target = duk_require_class_obj(ctx, -1, "Target");
 
 	duk_push_string(ctx, path_cstr(target_name(target)));
-	return 1;
-}
-
-static duk_ret_t
-js_Target_get_path(duk_context* ctx)
-{
-	target_t* target;
-
-	duk_push_this(ctx);
-	target = duk_require_class_obj(ctx, -1, "Target");
-	
-	duk_push_string(ctx, path_cstr(target_path(target)));
 	return 1;
 }
 
