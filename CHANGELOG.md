@@ -19,13 +19,15 @@ v4.4.0 - TBD
   an entire file in a single operation.
 * Adds support for ECMAScript 2015 built-ins like Map and Set using a polyfill
   which is loaded on startup.
+* Adds a `--rebuild` command line option which forces Cell to rebuild all
+  targets, even when they are already up to date.
 * Adds support to Cell for ECMAScript 2015+ transpilation via Babel.
 * Adds support to Cell for minification using Babili.
 * Improves Sphere v1 compatibility by adding several missing APIs.
 * Dispatch API functions will no longer accept a JavaScript source code string
   as a callback; the callback must now always be a function.
 * Improves miniRT documentation.
-* Fixes a bug where the miniRT terminal can be rendered before other threads.
+* Fixes a bug where the miniRT terminal can get rendered before other threads.
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
 * Fixes a bug where error attribution doesn't work properly if `Duktape.act()`
   is not available at the time of the error.
