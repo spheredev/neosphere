@@ -71,7 +71,7 @@ target_add_source(target_t* target, target_t* source)
 }
 
 bool
-target_build(target_t* target, const fs_t* fs)
+target_build(target_t* target, const fs_t* fs, bool forced)
 {
 	vector_t* in_paths = NULL;
 	path_t*   path;
@@ -85,13 +85,13 @@ target_build(target_t* target, const fs_t* fs)
 	in_paths = vector_new(sizeof(path_t*));
 	iter = vector_enum(target->sources);
 	while (p_target = vector_next(&iter)) {
-		target_build(*p_target, fs);
+		target_build(*p_target, fs, forced);
 		path = path_dup(target_path(*p_target));
 		vector_push(in_paths, &path);
 	}
 
 	// now build the target
-	status = tool_exec(target->tool, fs, target->path, in_paths);
+	status = tool_exec(target->tool, fs, target->path, in_paths, forced);
 	iter = vector_enum(in_paths);
 	while (p_path = vector_next(&iter))
 		path_free(*p_path);

@@ -44,7 +44,7 @@ tool_free(tool_t* tool)
 }
 
 bool
-tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_paths)
+tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_paths, bool forced)
 {
 	duk_uarridx_t array_index;
 	path_t*       dir_path;
@@ -76,7 +76,7 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 	}
 
 	// if the target file is out of date, invoke the tool to rebuild it.
-	if (is_outdated) {
+	if (is_outdated || forced) {
 		printf("    %s %s\n", tool->verb, path_cstr(out_path));
 
 		// ensure the target directory exists

@@ -72,7 +72,7 @@ build_add_target(build_t* build, target_t* target)
 }
 
 void
-build_run(build_t* build)
+build_run(build_t* build, bool rebuilding)
 {
 	const char*   json;
 	size_t        json_size;
@@ -82,13 +82,15 @@ build_run(build_t* build)
 	iter_t iter;
 	target_t* *p;
 
-	printf("building targets...\n");
+	printf(rebuilding
+		? "rebuilding targets...\n"
+		: "building targets...\n");
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);
 		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
 			continue;
-		target_build(*p, build->fs);
+		target_build(*p, build->fs, rebuilding);
 	}
 
 	printf("writing game.json... ");

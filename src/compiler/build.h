@@ -12,6 +12,6 @@ void         build_free       (build_t* build);
 fs_t*        build_fs         (const build_t* build);
 duk_context* build_js_realm (const build_t* build);
 void         build_add_target (build_t* build, target_t* target);
-void         build_run        (build_t* build);
+void         build_run        (build_t* build, bool rebuilding);
 
 #endif // CELL__BUILD_H__INCLUDED

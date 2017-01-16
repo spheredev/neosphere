@@ -10,6 +10,7 @@ static void print_usage      (void);
 
 static path_t* s_in_path;
 static path_t* s_out_path;
+bool           s_want_rebuild;
 bool           s_want_source_map;
 static char*   s_target_name;
 
@@ -30,7 +31,7 @@ main(int argc, char* argv[])
 
 	build = build_new(s_in_path, s_out_path);
 	script_eval(build);
-	build_run(build);
+	build_run(build, s_want_rebuild);
 	
 	retval = EXIT_SUCCESS;
 
@@ -55,6 +56,7 @@ parse_cmdline(int argc, char* argv[])
 	s_in_path = path_new("./");
 	s_out_path = NULL;
 	s_target_name = strdup("default");
+	s_want_rebuild = false;
 	s_want_source_map = false;
 	
 	// validate and parse the command line
@@ -76,6 +78,9 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
 				return false;
+			}
+			else if (strcmp(argv[i], "--rebuild") == 0) {
+				s_want_rebuild = true;
 			}
 			else if (strcmp(argv[i], "--package") == 0) {
 				if (++i >= argc) goto missing_argument;
@@ -128,6 +133,9 @@ parse_cmdline(int argc, char* argv[])
 						printf("cell: `%s` argument cannot be a directory\n", short_args);
 						return false;
 					}
+					break;
+				case 'r':
+					s_want_rebuild = true;
 					break;
 				case 'd':
 					s_want_source_map = true;
@@ -194,7 +202,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s Sphere packaging compiler (%s)\n", COMPILER_NAME, VERSION_NAME,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("the JavaScript-powered compiler for Sphere v2\n");
+		printf("the JavaScript-powered build tool for Sphere v2\n");
 		printf("(c) 2015-2017 Fat Cerberus\n");
 	}
 	if (want_deps) {
@@ -216,6 +224,7 @@ print_usage(void)
 	printf("OPTIONS:\n");
 	printf("       --in-dir    Set the input directory. Without this option, Cell will   \n");
 	printf("                   look for sources in the current working directory.        \n");
+	printf("   -r, --rebuild   Rebuild all targets, even when already up to date.        \n");
 	printf("   -b, --build     Build an unpackaged Sphere game distribution.             \n");
 	printf("   -p, --package   Build a Sphere package (.spk).                            \n");
 	printf("   -d, --debug     Include a debugging map in the compiled game which maps   \n");
