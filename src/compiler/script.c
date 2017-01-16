@@ -115,7 +115,7 @@ script_eval(build_t* build)
 
 	duk_get_global_string(js, "install");
 	duk_push_c_function(js, install_target, DUK_VARARGS);
-	install_tool = tool_new(js, -1, "install");
+	install_tool = tool_new(js, -1, "installing");
 	duk_push_class_obj(js, "Tool", install_tool);
 	duk_replace(js, -2);
 	duk_put_prop_string(js, -2, "\xFF" "tool");
@@ -130,6 +130,7 @@ script_eval(build_t* build)
 		line_number = duk_get_int(js, -1);
 		duk_dup(js, -3);
 		duk_to_string(js, -1);
+		printf("\n");
 		printf("    %s\n", duk_get_string(js, -1));
 		printf("    @ [%s:%d]\n", filename, line_number);
 		duk_pop_3(js);
@@ -516,9 +517,8 @@ js_files(duk_context* ctx)
 	make_file_targets(build_fs(build), wildcard, path, NULL, targets, recursive);
 	free(wildcard);
 
-	if (vector_len(targets) == 0) {
-		printf("    warning: '%s' matches 0 files\n", pattern);
-	}
+	if (vector_len(targets) == 0)
+		build_emit_warning(build, "'%s' matches 0 files", pattern);
 
 	// return all the newly constructed targets as an array.
 	duk_push_array(ctx);

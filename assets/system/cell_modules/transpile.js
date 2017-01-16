@@ -8,8 +8,8 @@ module.exports = transpile;
 
 const Babel = require('./lib/Babel');
 
-var moduleTool = new Tool(TOOLFUNC('commonjs'), "transpile module");
-var scriptTool = new Tool(TOOLFUNC(false), "transpile script");
+var moduleTool = new Tool(TOOLFUNC('commonjs'), "transpiling");
+var scriptTool = new Tool(TOOLFUNC(false), "transpiling");
 
 function TOOLFUNC(moduleType)
 {
@@ -19,7 +19,10 @@ function TOOLFUNC(moduleType)
 		var input = new TextDecoder().decode(fileContent);
 		var output = Babel.transform(input, {
 			presets: [
-				[ 'latest', { es2015: { modules: moduleType } } ]
+				[ 'latest', { es2015: {
+					modules: moduleType,
+					spec:    true,
+				} } ],
 			],
 			comments:    false,
 			retainLines: true,

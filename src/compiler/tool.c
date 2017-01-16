@@ -53,6 +53,7 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 	duk_context*  js_ctx;
 	time_t        last_time = 0;
 	int           line_number;
+	bool          result = true;
 	struct stat   sb;
 
 	iter_t iter;
@@ -77,7 +78,7 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 
 	// if the target file is out of date, invoke the tool to rebuild it.
 	if (is_outdated || forced) {
-		printf("    %s %s\n", tool->verb, path_cstr(out_path));
+		printf("%s %s...\n", tool->verb, path_cstr(out_path));
 
 		// ensure the target directory exists
 		dir_path = path_strip(path_dup(out_path));
@@ -100,11 +101,12 @@ tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_pat
 			line_number = duk_get_int(js_ctx, -1);
 			duk_dup(js_ctx, -3);
 			duk_to_string(js_ctx, -1);
-			printf("        %s\n", duk_get_string(js_ctx, -1));
-			printf("        @ [%s:%d]\n", filename, line_number);
+			printf("    %s\n", duk_get_string(js_ctx, -1));
+			printf("    @ [%s:%d]\n", filename, line_number);
 			duk_pop_3(js_ctx);
+			result = false;
 		}
 		duk_pop(js_ctx);
 	}
-	return true;
+	return result;
 }

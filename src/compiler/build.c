@@ -8,6 +8,8 @@ struct build
 {
 	fs_t*        fs;
 	duk_context* js;
+	int          num_errors;
+	int          num_warns;
 	vector_t*    targets;
 };
 
@@ -72,6 +74,32 @@ build_add_target(build_t* build, target_t* target)
 }
 
 void
+build_emit_error(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_errors;
+	va_start(ap, fmt);
+	printf("    ERROR: ");
+	vprintf(fmt, ap);
+	printf("\n");
+	va_end(ap);
+}
+
+void
+build_emit_warning(build_t* build, const char* fmt, ...)
+{
+	va_list ap;
+
+	++build->num_warns;
+	va_start(ap, fmt);
+	printf("    warning: ");
+	vprintf(fmt, ap);
+	printf("\n");
+	va_end(ap);
+}
+
+bool
 build_run(build_t* build, bool rebuilding)
 {
 	const char*   json;
@@ -82,23 +110,36 @@ build_run(build_t* build, bool rebuilding)
 	iter_t iter;
 	target_t* *p;
 
-	printf(rebuilding
-		? "rebuilding targets...\n"
-		: "building targets...\n");
+	build->num_errors = 0;
+	build->num_warns = 0;
+
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);
 		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
 			continue;
-		target_build(*p, build->fs, rebuilding);
+		if (!target_build(*p, build->fs, rebuilding)) {
+			build_emit_error(build, "cannot build '%s'", path_cstr(path));
+		}
 	}
 
-	printf("writing game.json... ");
-	duk_push_global_stash(build->js);
-	duk_get_prop_string(build->js, -1, "descriptor");
-	duk_json_encode(build->js, -1);
-	json = duk_get_lstring(build->js, -1, &json_size);
-	fs_fspew(build->fs, "@/game.json", json, json_size);
-	duk_pop_2(build->js);
-	printf("OK.\n");
+	// only generate a JSON manifest if the build finished with no errors.
+	// warnings are fine (for now).
+	if (build->num_errors == 0) {
+		printf("generating game manifest...\n");
+		duk_push_global_stash(build->js);
+		duk_get_prop_string(build->js, -1, "descriptor");
+		duk_json_encode(build->js, -1);
+		json = duk_get_lstring(build->js, -1, &json_size);
+		fs_fspew(build->fs, "@/game.json", json, json_size);
+		duk_pop_2(build->js);
+	}
+	else {
+		// delete any existing game manifest to ensure we don't accidentally
+		// generate a functional but broken distribution.
+		fs_unlink(build->fs, "@/game.json");
+	}
+
+	printf("%d error(s), %d warning(s).\n", build->num_errors, build->num_warns);
+	return build->num_errors == 0;
 }

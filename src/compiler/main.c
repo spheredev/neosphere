@@ -31,9 +31,9 @@ main(int argc, char* argv[])
 
 	build = build_new(s_in_path, s_out_path);
 	script_eval(build);
-	build_run(build, s_want_rebuild);
-	
-	retval = EXIT_SUCCESS;
+	retval = build_run(build, s_want_rebuild)
+		? EXIT_SUCCESS
+		: EXIT_FAILURE;
 
 shutdown:
 	path_free(s_in_path);
