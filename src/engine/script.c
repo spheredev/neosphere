@@ -31,6 +31,7 @@ scripts_uninit(void)
 bool
 script_eval(const char* filename, bool as_module)
 {
+	duk_idx_t      duk_top;
 	sfs_file_t*    file = NULL;
 	path_t*        path = NULL;
 	const char*    source_name;
@@ -38,6 +39,8 @@ script_eval(const char* filename, bool as_module)
 	char*          slurp;
 	size_t         size;
 
+	duk_top = duk_get_top(g_duk);
+	
 	if (as_module) {
 		// the existence check here is needed because eval_module() will segfault if the
 		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
@@ -72,7 +75,7 @@ script_eval(const char* filename, bool as_module)
 on_error:
 	lstr_free(source_text);
 	path_free(path);
-	if (!duk_is_error(g_duk, -1))
+	if (duk_get_top(g_duk) == duk_top)  // note: ugly hack, refactor
 		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script not found `%s`\n", filename);
 	return false;
 }

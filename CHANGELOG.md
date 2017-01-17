@@ -29,6 +29,8 @@ v4.4.0 - TBD
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
 * Fixes a bug where error attribution doesn't work properly if `Duktape.act()`
   is not available at the time of the error.
+* Fixes a bug where an non-Error exception thrown from global code produces a
+  confusing "script not found" error.
 * Fixes a bug where `CreatePerson()` won't accept a Spriteset object.
 
 
