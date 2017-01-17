@@ -1,37 +1,29 @@
 minisphere Changelog
 ====================
 
-v5.0.0 - TBD
-------------
-
-* Introducing Majin, a new command-line project management tool for Sphere v2
-  projects.  Majin allows you to edit your game manifest from the command line,
-  avoiding the need to edit game.json by hand or use Sphere Studio.
-
-
 v4.4.0 - TBD
 ------------
 
-* Overhauls the Cellscript API: require() is supported, file paths are resolved
-  using SphereFS semantics, and Cellscripts and modules can now define custom
-  targets and build tools for ultimate extensibility.
+* Overhauls the Cellscript API: `require()` is supported, file paths are
+  resolved using SphereFS semantics, and Cellscripts and modules can now define
+  custom targets and build tools for the ultimate in extensibility.
 * Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
   an entire file in a single operation.
 * Adds support for ECMAScript 2015 built-ins like Map and Set using a polyfill
-  which is loaded on startup.
+  which is loaded automatically on startup.
 * Adds a `--rebuild` command line option which forces Cell to rebuild all
-  targets, even when they are already up to date.
+  targets, even if they are already up to date.
 * Adds support to Cell for ECMAScript 2015+ transpilation via Babel.
-* Adds support to Cell for minification using Babili.
+* Adds support to Cell for minification via Babili.
 * Improves Sphere v1 compatibility by adding several missing APIs.
 * Dispatch API functions will no longer accept a JavaScript source code string
   as a callback; the callback must now always be a function.
-* Improves miniRT documentation.
+* Improves the miniRT API documentation.
 * Fixes a bug where the miniRT terminal can get rendered before other threads.
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
 * Fixes a bug where error attribution doesn't work properly if `Duktape.act()`
   is not available at the time of the error.
-* Fixes a bug where an non-Error exception thrown from global code produces a
+* Fixes a bug where a non-Error exception thrown from global code produces a
   confusing "script not found" error.
 * Fixes a bug where `CreatePerson()` won't accept a Spriteset object.
 

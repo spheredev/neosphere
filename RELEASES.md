@@ -1,10 +1,22 @@
 Release Notes
 =============
 
-TBD
----
+minisphere 4.4
+--------------
 
-* No breaking changes yet.
+* All ECMAScript 2015 builtins such as WeakMap, Set, and Promise are now
+  supported natively via a polyfill.  This shouldn't impact compatibility, but
+  may make some things easier so it's worth bearing in mind.
+
+* ECMAScript 2015 constructs such as destructuring assignment and arrow
+  functions are now supported.  Note that Duktape doesn't support ES2015 syntax
+  directly, so this requires a `transpile()` step in your game's Cellscript.
+  For convenience, the Sphere Studio project template in this version includes
+  such a step already.
+
+* The Cellscript API has been massively overhauled in order to improve
+  extensibility.  Cellscripts will need to be rewritten; review the Cellscript
+  API reference to see what's changed.
 
 
 minisphere 4.3

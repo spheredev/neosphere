@@ -29,7 +29,7 @@ describe("{0}", {{
 //       it takes a directory as its first argument rather than a filename.
 //       install() works similarly (see below).
 
-// transpile as modules.  otherwise 'import' and 'export' don't work.
+// transpile as modules.  this is needed so that 'import' and 'export' work.
 transpile.modules('@/scripts/', files('src/*.js'));
 
 
