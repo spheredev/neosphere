@@ -61,6 +61,13 @@ describe(title, metadata);
           For example, the 'transpile' module may write generated source maps
           to the manifest under `sourceMaps`.
 
+error(message);
+
+    Produces an error.  Errors generated during Cellscript evaluation will
+	prevent any targets from being built, while errors generated during a build
+	will not (Cell tries to build as many targets as possible).  In both cases
+	the build will ultimately fail and a game manifest will not be generated.
+
 files(pattern[, recursive]);
 
     Constructs a target for every file matching the specified pattern.  File
@@ -76,6 +83,11 @@ install(directory, sources);
     Copies all specified Targets into a given directory at build time.  To copy
     existing files, you can use a files() builder to populate `sources`. (see
     above).
+
+warn(message);
+
+    Produces a warning.  Warnings will be reported to the user but will not
+    prevent a successful build.
 
 Target#fileName [read-only]
 
@@ -105,10 +117,10 @@ new Tool(buildFunc[, status_text]);
     `status_text` is how Cell will describe the build step, e.g. "compiling" or
     "compressing".  If the status text is omitted, "building" is the default.
 
-Tool#build(filename, sources);
+Tool#stage(filename, sources);
 
     Instructs Cell to build `filename` using this Tool.  Returns a Target
-    object representing the output file.
+    object representing the target file.
 
 
 File System API

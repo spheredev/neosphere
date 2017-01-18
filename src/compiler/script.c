@@ -43,7 +43,7 @@ static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
 static duk_ret_t js_new_Tool                (duk_context* ctx);
 static duk_ret_t js_Tool_finalize           (duk_context* ctx);
-static duk_ret_t js_Tool_build              (duk_context* ctx);
+static duk_ret_t js_Tool_stage              (duk_context* ctx);
 static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
@@ -115,7 +115,7 @@ script_eval(build_t* build)
 	api_define_property(js, "Target", "name", js_Target_get_name, NULL);
 	
 	api_define_class(js, "Tool", js_new_Tool, js_Tool_finalize);
-	api_define_method(js, "Tool", "build", js_Tool_build);
+	api_define_method(js, "Tool", "stage", js_Tool_stage);
 
 	duk_get_global_string(js, "install");
 	duk_push_c_function(js, install_target, DUK_VARARGS);
@@ -975,7 +975,7 @@ js_Tool_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Tool_build(duk_context* ctx)
+js_Tool_stage(duk_context* ctx)
 {
 	build_t*      build;
 	duk_uarridx_t length;
