@@ -18,6 +18,7 @@ build_new(const path_t* in_path, const path_t* out_path)
 {
 	build_t*     build = NULL;
 	duk_context* js;
+	path_t*      tmp_path;
 
 	// note: Duktape is initialized without a fatal error handler.  if a JavaScript
 	//       exception is thrown and not caught, Cell will crash.
@@ -30,10 +31,12 @@ build_new(const path_t* in_path, const path_t* out_path)
 	duk_put_prop_string(js, -2, "descriptor");
 	duk_pop(js);
 
+	tmp_path = path_rebase(path_new(".cell_staging/"), in_path);
 	build = calloc(1, sizeof(build_t));
-	build->fs = fs_new(path_cstr(in_path), path_cstr(out_path), NULL);
+	build->fs = fs_new(path_cstr(in_path), path_cstr(out_path), path_cstr(tmp_path));
 	build->targets = vector_new(sizeof(target_t*));
 	build->js = js;
+	path_free(tmp_path);
 	return build;
 }
 
@@ -110,17 +113,13 @@ build_run(build_t* build, bool rebuilding)
 	iter_t iter;
 	target_t* *p;
 
-	build->num_errors = 0;
-	build->num_warns = 0;
-
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);
 		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
 			continue;
-		if (!target_build(*p, build->fs, rebuilding)) {
+		if (!target_build(*p, build->fs, rebuilding))
 			build_emit_error(build, "cannot build '%s'", path_cstr(path));
-		}
 	}
 
 	// only generate a JSON manifest if the build finished with no errors.

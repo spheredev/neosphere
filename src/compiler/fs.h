@@ -3,7 +3,7 @@
 
 typedef struct fs fs_t;
 
-fs_t*     fs_new         (const char* origin_dir, const char* game_dir, const char* user_path);
+fs_t*     fs_new         (const char* origin_dir, const char* game_dir, const char* home_dir);
 void      fs_free        (fs_t* fs);
 int       fs_fcopy       (const fs_t* fs, const char* destination, const char* source, int overwrite);
 bool      fs_fexist      (const fs_t* fs, const char* filename);

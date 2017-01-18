@@ -18,7 +18,7 @@ struct fs
 static char* resolve (const fs_t* fs, const char* filename);
 
 fs_t*
-fs_new(const char* root_dir, const char* game_dir, const char* user_path)
+fs_new(const char* root_dir, const char* game_dir, const char* home_dir)
 {
 	fs_t* fs;
 
@@ -26,8 +26,8 @@ fs_new(const char* root_dir, const char* game_dir, const char* user_path)
 	fs->root_path = path_new_dir(root_dir);
 	fs->game_path = path_new_dir(game_dir);
 	fs->system_path = path_append(path_strip(path_new_self()), "system/");
-	if (user_path != NULL)
-		fs->user_path = path_new_dir(user_path);
+	if (home_dir != NULL)
+		fs->user_path = path_new_dir(home_dir);
 	return fs;
 }
 

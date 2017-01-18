@@ -91,7 +91,7 @@ target_build(target_t* target, const fs_t* fs, bool forced)
 	}
 
 	// now build the target
-	status = tool_exec(target->tool, fs, target->path, in_paths, forced);
+	status = tool_run(target->tool, fs, target->path, in_paths, forced);
 	iter = vector_enum(in_paths);
 	while (p_path = vector_next(&iter))
 		path_free(*p_path);

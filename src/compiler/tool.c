@@ -44,7 +44,7 @@ tool_free(tool_t* tool)
 }
 
 bool
-tool_exec(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_paths, bool forced)
+tool_run(tool_t* tool, const fs_t* fs, const path_t* out_path, vector_t* in_paths, bool forced)
 {
 	duk_uarridx_t array_index;
 	path_t*       dir_path;
