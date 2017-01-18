@@ -18,9 +18,11 @@ static void       make_file_targets (fs_t* fs, const char* wildcard, const path_
 static void       push_require      (duk_context* ctx, const char* module_id);
 
 static duk_ret_t js_describe                (duk_context* ctx);
+static duk_ret_t js_error                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
 static duk_ret_t js_require                 (duk_context* ctx);
+static duk_ret_t js_warn                    (duk_context* ctx);
 static duk_ret_t js_system_name             (duk_context* ctx);
 static duk_ret_t js_system_version          (duk_context* ctx);
 static duk_ret_t js_FS_exists               (duk_context* ctx);
@@ -83,9 +85,11 @@ script_eval(build_t* build)
 	// initialize the Cellscript API
 	api_init(js);
 	api_define_function(js, NULL, "describe", js_describe);
+	api_define_function(js, NULL, "error", js_error);
 	api_define_function(js, NULL, "files", js_files);
 	api_define_function(js, NULL, "install", js_install);
-	
+	api_define_function(js, NULL, "warn", js_warn);
+
 	api_define_function(js, "system", "name", js_system_name);
 	api_define_function(js, "system", "version", js_system_version);
 	
@@ -130,7 +134,6 @@ script_eval(build_t* build)
 		line_number = duk_get_int(js, -1);
 		duk_dup(js, -3);
 		duk_to_string(js, -1);
-		printf("\n");
 		printf("    %s\n", duk_get_string(js, -1));
 		printf("    @ [%s:%d]\n", filename, line_number);
 		duk_pop_3(js);
@@ -483,6 +486,19 @@ js_describe(duk_context* ctx)
 }
 
 static duk_ret_t
+js_error(duk_context* ctx)
+{
+	build_t*    build;
+	const char* message;
+
+	message = duk_require_string(ctx, 0);
+
+	build = get_current_build(ctx);
+	build_emit_error(build, "%s", message);
+	return 0;
+}
+
+static duk_ret_t
 js_files(duk_context* ctx)
 {
 	build_t*    build;
@@ -596,6 +612,19 @@ js_require(duk_context* ctx)
 	if (!eval_module(ctx, path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
+}
+
+static duk_ret_t
+js_warn(duk_context* ctx)
+{
+	build_t*    build;
+	const char* message;
+
+	message = duk_require_string(ctx, 0);
+
+	build = get_current_build(ctx);
+	build_emit_warning(build, "%s", message);
+	return 0;
 }
 
 static duk_ret_t
