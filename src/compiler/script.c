@@ -436,7 +436,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 			file_path = path_dup(*p_path);
 			if (subdir != NULL)
 				path_rebase(name, subdir);
-			target = target_new(name, file_path, NULL);
+			target = target_new(name, fs, file_path, NULL);
 			vector_push(targets, &target);
 			path_free(file_path);
 			path_free(name);
@@ -490,11 +490,13 @@ js_error(duk_context* ctx)
 {
 	build_t*    build;
 	const char* message;
+	visor_t*    visor;
 
 	message = duk_require_string(ctx, 0);
 
 	build = get_current_build(ctx);
-	build_emit_error(build, "%s", message);
+	visor = build_visor(build);
+	visor_error(visor, "%s", message);
 	return 0;
 }
 
@@ -507,12 +509,14 @@ js_files(duk_context* ctx)
 	path_t*     path;
 	bool        recursive = false;
 	vector_t*   targets;
+	visor_t*    visor;
 	char*       wildcard;
 
 	iter_t iter;
 	target_t* *p;
 
 	build = get_current_build(ctx);
+	visor = build_visor(build);
 	num_args = duk_get_top(ctx);
 	pattern = duk_require_string(ctx, 0);
 	if (num_args >= 2)
@@ -534,7 +538,7 @@ js_files(duk_context* ctx)
 	free(wildcard);
 
 	if (vector_len(targets) == 0)
-		build_emit_warning(build, "'%s' matches 0 files", pattern);
+		visor_warn(visor, "'%s' matches 0 files", pattern);
 
 	// return all the newly constructed targets as an array.
 	duk_push_array(ctx);
@@ -574,7 +578,7 @@ js_install(duk_context* ctx)
 			source = duk_require_class_obj(ctx, -1, "Target");
 			name = path_dup(target_name(source));
 			path = path_rebase(path_dup(name), dest_path);
-			target = target_new(name, path, tool);
+			target = target_new(name, build_fs(build), path, tool);
 			target_add_source(target, source);
 			build_add_target(build, target);
 			target_free(target);
@@ -585,7 +589,7 @@ js_install(duk_context* ctx)
 		source = duk_require_class_obj(ctx, 1, "Target");
 		name = path_dup(target_name(source));
 		path = path_rebase(path_dup(name), dest_path);
-		target = target_new(name, path, tool);
+		target = target_new(name, build_fs(build), path, tool);
 		target_add_source(target, source);
 		build_add_target(build, target);
 		target_free(target);
@@ -619,11 +623,13 @@ js_warn(duk_context* ctx)
 {
 	build_t*    build;
 	const char* message;
+	visor_t*    visor;
 
 	message = duk_require_string(ctx, 0);
 
 	build = get_current_build(ctx);
-	build_emit_warning(build, "%s", message);
+	visor = build_visor(build);
+	visor_warn(visor, "%s", message);
 	return 0;
 }
 
@@ -996,7 +1002,7 @@ js_Tool_stage(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 3)");
 
 	name = path_new(path_filename(out_path));
-	target = target_new(name, out_path, tool);
+	target = target_new(name, build_fs(build), out_path, tool);
 	length = (duk_uarridx_t)duk_get_length(ctx, 1);
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(ctx, 1, i);
