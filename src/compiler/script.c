@@ -55,8 +55,10 @@ script_eval(build_t* build)
 	tool_t*      install_tool;
 	duk_context* js;
 	int          line_number;
+	visor_t*     visor;
 
 	js = build_js_realm(build);
+	visor = build_visor(build);
 
 	// stash the build pointer for easier access by API calls
 	duk_push_global_stash(js);
@@ -119,14 +121,14 @@ script_eval(build_t* build)
 
 	duk_get_global_string(js, "install");
 	duk_push_c_function(js, install_target, DUK_VARARGS);
-	install_tool = tool_new(js, -1, "installing");
+	install_tool = tool_new(js, -1, "install");
 	duk_push_class_obj(js, "Tool", install_tool);
 	duk_replace(js, -2);
 	duk_put_prop_string(js, -2, "\xFF" "tool");
 	duk_pop(js);
 	
 	// execute the Cellscript
-	printf("evaluating Cellscript.js...\n");
+	visor_begin_op(visor, "evaluating Cellscript.js...");
 	if (!eval_module(js, "Cellscript.js")) {
 		duk_get_prop_string(js, -1, "fileName");
 		filename = duk_safe_to_string(js, -1);
@@ -139,6 +141,7 @@ script_eval(build_t* build)
 		duk_pop_3(js);
 	}
 	duk_pop(js);
+	visor_end_op(visor);
 	
 	return true;
 }

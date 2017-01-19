@@ -79,7 +79,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 
 	// if the target file is out of date, invoke the tool to rebuild it.
 	if (is_outdated || forced) {
-		printf("%s %s...\n", tool->verb, path_cstr(out_path));
+		visor_begin_op(visor, "%s %s...", tool->verb, path_cstr(out_path));
 
 		// ensure the target directory exists
 		dir_path = path_strip(path_dup(out_path));
@@ -108,6 +108,8 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 			result = false;
 		}
 		duk_pop(js_ctx);
+
+		visor_end_op(visor);
 	}
 	return result;
 }

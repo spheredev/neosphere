@@ -99,6 +99,7 @@ build_run(build_t* build, bool rebuilding)
 	iter_t iter;
 	target_t* *p;
 
+	visor_begin_op(build->visor, "building targets");
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);
@@ -106,6 +107,7 @@ build_run(build_t* build, bool rebuilding)
 			continue;
 		target_build(*p, build->visor, rebuilding);
 	}
+	visor_end_op(build->visor);
 
 	num_errors = visor_num_errors(build->visor);
 	num_warns = visor_num_warns(build->visor);
@@ -113,13 +115,14 @@ build_run(build_t* build, bool rebuilding)
 	// only generate a JSON manifest if the build finished with no errors.
 	// warnings are fine (for now).
 	if (num_errors == 0) {
-		printf("generating game manifest...\n");
+		visor_begin_op(build->visor, "generating game manifest...");
 		duk_push_global_stash(build->js);
 		duk_get_prop_string(build->js, -1, "descriptor");
 		duk_json_encode(build->js, -1);
 		json = duk_get_lstring(build->js, -1, &json_size);
 		fs_fspew(build->fs, "@/game.json", json, json_size);
 		duk_pop_2(build->js);
+		visor_end_op(build->visor);
 	}
 	else {
 		// delete any existing game manifest to ensure we don't accidentally

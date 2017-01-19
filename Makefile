@@ -41,7 +41,7 @@ cell_sources=src/compiler/main.c \
    src/shared/unicode.c src/shared/vector.c \
    src/compiler/build.c src/compiler/fs.c src/compiler/script.c \
    src/compiler/spk_writer.c src/compiler/target.c src/compiler/tool.c \
-   src/compiler/utility.c
+   src/compiler/utility.c src/compiler/visor.c
 cell_libs= \
    -lz -lm
 
