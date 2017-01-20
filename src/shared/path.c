@@ -26,7 +26,9 @@
 #include <time.h>
 #include <sys/stat.h>
 
-#ifdef _WIN32
+#if !defined(_WIN32)
+#include <unistd.h>
+#else
 #include <io.h>
 #endif
 
