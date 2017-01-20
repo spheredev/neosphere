@@ -6,6 +6,15 @@
 
 static duk_ret_t do_decode_json (duk_context* ctx);
 
+void*
+duk_get_heap_udata(duk_context *ctx)
+{
+	duk_memory_functions mf;
+
+	duk_get_memory_functions(ctx, &mf);
+	return mf.udata;
+}
+
 duk_int_t
 duk_json_pdecode(duk_context* ctx)
 {

@@ -128,7 +128,7 @@ script_eval(build_t* build)
 	duk_pop(js);
 	
 	// execute the Cellscript
-	visor_begin_op(visor, "evaluating Cellscript.js...");
+	visor_begin_op(visor, "evaluating ./Cellscript.js...");
 	if (!eval_module(js, "Cellscript.js")) {
 		duk_get_prop_string(js, -1, "fileName");
 		filename = duk_safe_to_string(js, -1);
@@ -136,8 +136,8 @@ script_eval(build_t* build)
 		line_number = duk_get_int(js, -1);
 		duk_dup(js, -3);
 		duk_to_string(js, -1);
-		printf("    %s\n", duk_get_string(js, -1));
-		printf("    @ [%s:%d]\n", filename, line_number);
+		visor_error(visor, "%s", duk_get_string(js, -1));
+		visor_info(visor, "@ [%s:%d]", filename, line_number);
 		duk_pop_3(js);
 	}
 	duk_pop(js);

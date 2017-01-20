@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+void*       duk_get_heap_udata (duk_context* ctx);
 duk_int_t   duk_json_pdecode   (duk_context* ctx);
 void        duk_push_lstring_t (duk_context* ctx, const lstring_t* string);
 void*       duk_ref_heapptr    (duk_context* ctx, duk_idx_t idx);

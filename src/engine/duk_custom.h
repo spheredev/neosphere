@@ -2,6 +2,10 @@
 
 #define DUK_USE_FASTINT
 
+#if defined(_DEBUG)
+#define DUK_USE_ASSERTIONS
+#endif
+
 #if defined(MINISPHERE_SPHERUN)
 #undef DUK_USE_TARGET_INFO
 #define DUK_USE_TARGET_INFO ENGINE_NAME VERSION_NAME

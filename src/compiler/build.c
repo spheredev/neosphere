@@ -99,7 +99,7 @@ build_run(build_t* build, bool rebuilding)
 	iter_t iter;
 	target_t* *p;
 
-	visor_begin_op(build->visor, "building targets");
+	visor_begin_op(build->visor, "processing %zu targets...", vector_len(build->targets));
 	iter = vector_enum(build->targets);
 	while (p = vector_next(&iter)) {
 		path = target_path(*p);
@@ -130,6 +130,7 @@ build_run(build_t* build, bool rebuilding)
 		fs_unlink(build->fs, "@/game.json");
 	}
 
+	printf("\n");
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
 	return num_errors == 0;
 }
