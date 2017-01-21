@@ -618,6 +618,11 @@ screen.frameRate [read/write]
     Gets or sets the frame rate used to regulate `screen.flip()` (see below).
     Set this to Infinity to disable the frame limiter.
 
+screen.frameSkip [read/write]
+
+    Gets or sets the maximum number of frames the engine is allowed to skip in
+    order to maintain the desired frame rate.
+
 screen.width [read-only]
 screen.height [read-only]
 
