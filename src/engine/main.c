@@ -251,10 +251,10 @@ main(int argc, char* argv[])
 
 	// evaluate startup script
 	screen_show_mouse(g_screen, false);
-	if (sfs_fexist(g_fs, "#/polyfill.js", NULL) && !script_eval("#/polyfill.js", false))
+	if (sfs_fexist(g_fs, "#/polyfill.js", NULL) && !build_exec("#/polyfill.js", false))
 		goto on_js_error;
 	script_path = fs_script_path(g_fs);
-	if (!script_eval(path_cstr(script_path), fs_version(g_fs) >= 2))
+	if (!build_exec(path_cstr(script_path), fs_version(g_fs) >= 2))
 		goto on_js_error;
 	duk_pop(g_duk);
 

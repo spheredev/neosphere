@@ -33,9 +33,6 @@
     <ClCompile Include="..\src\shared\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\build.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\compiler\spk_writer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,13 +54,13 @@
     <ClCompile Include="..\src\shared\api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\script.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\compiler\fs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\compiler\visor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\compiler\build.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,9 +92,6 @@
     <ClInclude Include="..\src\compiler\cell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\build.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\compiler\posix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -125,13 +119,13 @@
     <ClInclude Include="..\src\shared\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\script.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\compiler\fs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\compiler\visor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\compiler\build.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
