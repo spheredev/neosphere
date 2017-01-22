@@ -400,6 +400,9 @@ install_target(duk_context* ctx)
 	source_path = duk_require_string(ctx, -1);
 
 	result = fs_fcopy(job->fs, target_path, source_path, true);
+	if (result == 0)
+		// touch file to prevent "target file unchanged" warning
+		fs_utime(job->fs, target_path, NULL);
 	duk_push_boolean(ctx, result == 0);
 	return 1;
 }

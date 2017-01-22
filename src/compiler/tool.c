@@ -56,9 +56,10 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	const char*   filename;
 	bool          is_outdated = false;
 	duk_context*  js_ctx;
-	time_t        last_time = 0;
+	time_t        last_mtime = 0;
 	int           line_number;
 	bool          result = true;
+	struct stat   stats;
 
 	iter_t iter;
 	path_t* *p_path;
@@ -75,6 +76,8 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	fs_mkdir(fs, path_cstr(dir_path));
 	path_free(dir_path);
 
+	if (fs_stat(fs, path_cstr(out_path), &stats) == 0)
+		last_mtime = stats.st_mtime;
 	duk_push_heapptr(js_ctx, tool->callback_ptr);
 	duk_push_string(js_ctx, path_cstr(out_path));
 	duk_push_array(js_ctx);
@@ -97,6 +100,14 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 		result = false;
 	}
 	duk_pop(js_ctx);
+
+	// verify that the tool actually did something.  if the target file doesn't exist,
+	// that's definitely an error.  if the target file does exist but hasn't changed,
+	// issue a warning because it might have been intentional (unlikely, but possible).
+	if (fs_stat(fs, path_cstr(out_path), &stats) != 0)
+		visor_error(visor, "Tool failed to build the target file");
+	else if (stats.st_mtime <= last_mtime)
+		visor_warn(visor, "target file was left unchanged");
 
 	visor_end_op(visor);
 	return result;

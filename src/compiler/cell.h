@@ -20,6 +20,12 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#if defined(_WIN32)
+#include <sys/utime.h>
+#else
+#include <utime.h>
+#endif
+
 #include "version.h"
 
 #if defined(__GNUC__)

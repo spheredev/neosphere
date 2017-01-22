@@ -293,6 +293,22 @@ fs_unlink(const fs_t* fs, const char* filename)
 	return result;
 }
 
+int
+fs_utime(const fs_t* fs, const char* filename, struct utimbuf* in_times)
+{
+	char* resolved_name;
+	int   result;
+
+	if (!(resolved_name = resolve(fs, filename))) {
+		errno = EACCES;  // sandboxing violation
+		return -1;
+	}
+
+	result = utime(resolved_name, in_times);
+	free(resolved_name);
+	return result;
+}
+
 static char*
 resolve(const fs_t* fs, const char* filename)
 {

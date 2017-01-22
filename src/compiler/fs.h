@@ -18,5 +18,6 @@ int       fs_rename      (const fs_t* fs, const char* old_name, const char* new_
 int       fs_rmdir       (const fs_t* fs, const char* dirname);
 int       fs_stat        (const fs_t* fs, const char* filename, struct stat* p_stat);
 int       fs_unlink      (const fs_t* fs, const char* filename);
+int       fs_utime       (const fs_t* fs, const char* filename, struct utimbuf* in_times);
 
 #endif // CELL__FS_H__INCLUDED
