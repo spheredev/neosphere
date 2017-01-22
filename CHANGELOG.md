@@ -9,6 +9,7 @@ v4.4.0 - TBD
   custom targets and build tools for the ultimate in extensibility.
 * Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
   an entire file in a single operation.
+* Adds a `screen.frameSkip` property to allow games to control frame skipping.
 * Adds support for ECMAScript 2015 built-ins like Map and Set using a polyfill
   which is loaded automatically on startup.
 * Adds a `--rebuild` command line option which forces Cell to rebuild all

@@ -74,11 +74,14 @@ target_add_source(target_t* target, target_t* source)
 }
 
 bool
-target_build(target_t* target, visor_t* visor, bool forced)
+target_build(target_t* target, visor_t* visor, bool rebuilding)
 {
-	vector_t* in_paths = NULL;
-	path_t*   path;
-	bool      status;
+	vector_t*   in_paths = NULL;
+	bool        is_outdated = false;
+	time_t      last_time;
+	path_t*     path;
+	bool        status;
+	struct stat sb;
 
 	iter_t iter;
 	path_t*   *p_path;
@@ -88,16 +91,37 @@ target_build(target_t* target, visor_t* visor, bool forced)
 	in_paths = vector_new(sizeof(path_t*));
 	iter = vector_enum(target->sources);
 	while (p_target = vector_next(&iter)) {
-		target_build(*p_target, visor, forced);
+		target_build(*p_target, visor, rebuilding);
 		path = path_dup(target_path(*p_target));
 		vector_push(in_paths, &path);
 	}
 
-	// now build the target
-	status = tool_run(target->tool, visor, target->fs, target->path, in_paths, forced);
-	iter = vector_enum(in_paths);
-	while (p_path = vector_next(&iter))
-		path_free(*p_path);
-	vector_free(in_paths);
-	return status;
+	// check whether the output file is out of date with respect to its sources.
+	// this is a simple timestamp comparison for now; it might be good to eventually
+	// switch to a hash-based solution like in SCons.
+	if (rebuilding)
+		is_outdated = true;
+	else {
+		if (fs_stat(target->fs, path_cstr(target->path), &sb) == 0)
+			last_time = sb.st_mtime;
+		iter = vector_enum(in_paths);
+		while (p_path = vector_next(&iter)) {
+			fs_stat(target->fs, path_cstr(*p_path), &sb);
+			if (is_outdated = sb.st_mtime > last_time)
+				break;  // short circuit
+		}
+	}
+
+	// build the target if it's out of date
+	if (is_outdated) {
+		status = tool_run(target->tool, visor, target->fs, target->path, in_paths);
+		iter = vector_enum(in_paths);
+		while (p_path = vector_next(&iter))
+			path_free(*p_path);
+		vector_free(in_paths);
+		return status;
+	}
+	else {
+		return true;
+	}
 }

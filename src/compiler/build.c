@@ -16,14 +16,6 @@ struct job
 	visor_t*     visor;
 };
 
-static duk_bool_t eval_module       (duk_context* ctx, const char* filename);
-static path_t*    find_module       (duk_context* ctx, const char* id, const char* origin, const char* sys_origin);
-static void       initialize_api    (duk_context* ctx);
-static duk_ret_t  install_target    (duk_context* ctx);
-static path_t*    load_package_json (duk_context* ctx, const char* filename);
-static void       make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
-static void       push_require      (duk_context* ctx, const char* module_id);
-
 static duk_ret_t js_describe                (duk_context* ctx);
 static duk_ret_t js_error                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
@@ -55,11 +47,18 @@ static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 
+static duk_bool_t eval_module       (duk_context* ctx, const char* filename);
+static path_t*    find_module       (duk_context* ctx, const char* id, const char* origin, const char* sys_origin);
+static void       initialize_api    (duk_context* ctx);
+static duk_ret_t  install_target    (duk_context* ctx);
+static path_t*    load_package_json (duk_context* ctx, const char* filename);
+static void       make_file_targets (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static void       push_require      (duk_context* ctx, const char* module_id);
+
 bool
 build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 {
 	const char*   filename;
-	tool_t*       install_tool;
 	struct job*   job;
 	const char*   json;
 	size_t        json_size;
@@ -125,12 +124,10 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	api_define_class(job->js_realm, "Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method(job->js_realm, "Tool", "stage", js_Tool_stage);
 
-	duk_get_global_string(job->js_realm, "install");
+	duk_push_global_stash(job->js_realm);
 	duk_push_c_function(job->js_realm, install_target, DUK_VARARGS);
-	install_tool = tool_new(job->js_realm, -1, "install");
-	duk_push_class_obj(job->js_realm, "Tool", install_tool);
-	duk_replace(job->js_realm, -2);
-	duk_put_prop_string(job->js_realm, -2, "\xFF" "tool");
+	duk_push_class_obj(job->js_realm, "Tool", tool_new(job->js_realm, "install"));
+	duk_put_prop_string(job->js_realm, -2, "installTool");
 	duk_pop(job->js_realm);
 
 	// evaluate the Cellscript
@@ -603,9 +600,12 @@ js_install(duk_context* ctx)
 
 	job = duk_get_heap_udata(ctx);
 	
-	duk_push_current_function(ctx);
-	duk_get_prop_string(ctx, -1, "\xFF" "tool");
+	// retrieve the Install tool from the stash
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "installTool");
 	tool = duk_require_class_obj(ctx, -1, "Tool");
+	duk_pop(ctx);
+
 	dest_path = path_new_dir(duk_require_string(ctx, 0));
 	
 	if (duk_is_array(ctx, 1)) {
@@ -995,8 +995,8 @@ js_new_Tool(duk_context* ctx)
 	if (num_args >= 2)
 		verb = duk_require_string(ctx, 1);
 
-	tool = tool_new(ctx, 0, verb);
-
+	duk_dup(ctx, 0);
+	tool = tool_new(ctx, verb);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Tool", tool);
 	return 1;
