@@ -530,7 +530,7 @@ parse_command_line(
 	#endif
 
 	*out_game_path = NULL;
-	*out_frameskip = 5;
+	*out_frameskip = 20;
 	*out_verbosity = 0;
 	*out_want_throttle = true;
 	*out_want_debug = false;
