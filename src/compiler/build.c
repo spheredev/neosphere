@@ -7,6 +7,7 @@
 #include "tool.h"
 #include "utility.h"
 #include "visor.h"
+#include "xoroshiro.h"
 
 struct job
 {
@@ -40,6 +41,13 @@ static duk_ret_t js_FileStream_set_position (duk_context* ctx);
 static duk_ret_t js_FileStream_close        (duk_context* ctx);
 static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
+static duk_ret_t js_RNG_fromSeed            (duk_context* ctx);
+static duk_ret_t js_RNG_fromState           (duk_context* ctx);
+static duk_ret_t js_new_RNG                 (duk_context* ctx);
+static duk_ret_t js_RNG_finalize            (duk_context* ctx);
+static duk_ret_t js_RNG_get_state           (duk_context* ctx);
+static duk_ret_t js_RNG_set_state           (duk_context* ctx);
+static duk_ret_t js_RNG_next                (duk_context* ctx);
 static duk_ret_t js_new_Tool                (duk_context* ctx);
 static duk_ret_t js_Tool_finalize           (duk_context* ctx);
 static duk_ret_t js_Tool_stage              (duk_context* ctx);
@@ -118,6 +126,11 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	api_define_method(job->js_realm, "FileStream", "close", js_FileStream_close);
 	api_define_method(job->js_realm, "FileStream", "read", js_FileStream_read);
 	api_define_method(job->js_realm, "FileStream", "write", js_FileStream_write);
+	api_define_class(job->js_realm, "RNG", js_new_RNG, js_RNG_finalize);
+	api_define_function(job->js_realm, "RNG", "fromSeed", js_RNG_fromSeed);
+	api_define_function(job->js_realm, "RNG", "fromState", js_RNG_fromState);
+	api_define_property(job->js_realm, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
+	api_define_method(job->js_realm, "RNG", "next", js_RNG_next);
 	api_define_class(job->js_realm, "Target", NULL, js_Target_finalize);
 	api_define_property(job->js_realm, "Target", "fileName", js_Target_get_fileName, NULL);
 	api_define_property(job->js_realm, "Target", "name", js_Target_get_name, NULL);
@@ -947,6 +960,101 @@ js_FileStream_write(duk_context* ctx)
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file write failed");
 	return 0;
+}
+
+static duk_ret_t
+js_RNG_fromSeed(duk_context* ctx)
+{
+	uint64_t seed;
+	xoro_t*  xoro;
+
+	seed = duk_require_number(ctx, 0);
+
+	xoro = xoro_new(seed);
+	duk_push_class_obj(ctx, "RNG", xoro);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_fromState(duk_context* ctx)
+{
+	const char* state;
+	xoro_t*     xoro;
+
+	state = duk_require_string(ctx, 0);
+
+	xoro = xoro_new(0);
+	if (!xoro_set_state(xoro, state)) {
+		xoro_free(xoro);
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+	}
+	duk_push_class_obj(ctx, "RNG", xoro);
+	return 1;
+}
+
+static duk_ret_t
+js_new_RNG(duk_context* ctx)
+{
+	xoro_t* xoro;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
+	xoro = xoro_new((uint64_t)clock());
+	duk_push_class_obj(ctx, "RNG", xoro);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_finalize(duk_context* ctx)
+{
+	xoro_t* xoro;
+
+	xoro = duk_require_class_obj(ctx, 0, "RNG");
+
+	xoro_free(xoro);
+	return 0;
+}
+
+static duk_ret_t
+js_RNG_get_state(duk_context* ctx)
+{
+	char    state[33];
+	xoro_t* xoro;
+
+	duk_push_this(ctx);
+	xoro = duk_require_class_obj(ctx, -1, "RNG");
+
+	xoro_get_state(xoro, state);
+	duk_push_string(ctx, state);
+	return 1;
+}
+
+static duk_ret_t
+js_RNG_set_state(duk_context* ctx)
+{
+	const char* state;
+	xoro_t*     xoro;
+
+	duk_push_this(ctx);
+	xoro = duk_require_class_obj(ctx, -1, "RNG");
+	state = duk_require_string(ctx, 0);
+
+	if (!xoro_set_state(xoro, state))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+	return 0;
+}
+
+static duk_ret_t
+js_RNG_next(duk_context* ctx)
+{
+	xoro_t*     xoro;
+
+	duk_push_this(ctx);
+	xoro = duk_require_class_obj(ctx, -1, "RNG");
+
+	duk_push_number(ctx, xoro_gen_double(xoro));
+	return 1;
 }
 
 static duk_ret_t

@@ -105,7 +105,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	// that's definitely an error.  if the target file does exist but hasn't changed,
 	// issue a warning because it might have been intentional (unlikely, but possible).
 	if (fs_stat(fs, path_cstr(out_path), &stats) != 0)
-		visor_error(visor, "Tool failed to build the target file");
+		visor_error(visor, "target file was not built");
 	else if (stats.st_mtime <= last_mtime)
 		visor_warn(visor, "target file was left unchanged");
 

@@ -1,7 +1,7 @@
 minisphere Changelog
 ====================
 
-v4.4.0 - TBD
+v5.0.0 - TBD
 ------------
 
 * Overhauls the Cellscript API: `require()` is supported, file paths are
@@ -16,7 +16,8 @@ v4.4.0 - TBD
   targets, even if they are already up to date.
 * Adds support to Cell for ECMAScript 2015+ transpilation via Babel.
 * Adds support to Cell for minification via Babili.
-* Improves Sphere v1 compatibility by adding several missing APIs.
+* Improves Sphere 1.x compatibility in various corner cases, and adds several
+  missing Sphere v1 APIs.
 * Dispatch API functions will no longer accept a JavaScript source code string
   as a callback; the callback must now always be a function.
 * Improves the miniRT API documentation.

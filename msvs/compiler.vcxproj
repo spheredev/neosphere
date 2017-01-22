@@ -213,6 +213,7 @@
     <ClCompile Include="..\src\compiler\main.c" />
     <ClCompile Include="..\src\compiler\spk_writer.c" />
     <ClCompile Include="..\src\compiler\utility.c" />
+    <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\compiler\fs.h" />
@@ -235,6 +236,7 @@
     <ClInclude Include="..\src\compiler\posix.h" />
     <ClInclude Include="..\src\compiler\spk_writer.h" />
     <ClInclude Include="..\src\compiler\utility.h" />
+    <ClInclude Include="..\src\shared\xoroshiro.h" />
     <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>

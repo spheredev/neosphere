@@ -38,7 +38,7 @@ engine_libs= \
 cell_sources=src/compiler/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
    src/shared/encoding.c src/shared/lstring.c src/shared/path.c \
-   src/shared/unicode.c src/shared/vector.c \
+   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
    src/compiler/build.c src/compiler/fs.c src/compiler/spk_writer.c \
    src/compiler/target.c src/compiler/tool.c src/compiler/utility.c \
    src/compiler/visor.c
