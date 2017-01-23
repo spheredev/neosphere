@@ -1130,6 +1130,7 @@ js_Tool_stage(duk_context* ctx)
 	struct job*   job;
 	duk_uarridx_t length;
 	path_t*       name;
+	int           num_args;
 	path_t*       out_path;
 	target_t*     source;
 	target_t*     target;
@@ -1138,13 +1139,25 @@ js_Tool_stage(duk_context* ctx)
 	duk_uarridx_t i;
 
 	job = duk_get_heap_udata(ctx);
+	
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	tool = duk_require_class_obj(ctx, -1, "Tool");
 	out_path = path_new(duk_require_string(ctx, 0));
 	if (!duk_is_array(ctx, 1))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array expected (argument 3)");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array required (argument #2)");
+	if (num_args >= 3)
+		duk_require_object_coercible(ctx, 2);
 
 	name = path_new(path_filename(out_path));
+	if (num_args >= 3) {
+		if (duk_get_prop_string(ctx, 2, "name")) {
+			path_free(name);
+			name = path_new(duk_require_string(ctx, -1));
+		}
+		duk_pop_n(ctx, 1);
+	}
+
 	target = target_new(name, job->fs, out_path, tool);
 	length = (duk_uarridx_t)duk_get_length(ctx, 1);
 	for (i = 0; i < length; ++i) {

@@ -23,6 +23,8 @@ v5.0.0 - TBD
 * Dispatch API functions will no longer accept a JavaScript source code string
   as a callback; the callback must now always be a function.
 * Improves the miniRT API documentation.
+* Fixes ANSI text coloration for SSJ in Windows 10 Anniversary Update and
+  later.
 * Fixes a bug where the miniRT terminal can get rendered before other threads.
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
 * Fixes a bug where error attribution doesn't work properly if `Duktape.act()`
