@@ -24,7 +24,19 @@ main(int argc, char* argv[])
 	inferior_t*     inferior;
 	int             retval;
 	session_t*      session;
+#if defined(_WIN32)
+	HANDLE          hStdOut;
+	DWORD           handleMode;
+#endif
 
+#if defined(_WIN32)
+	// enable ANSI colors (note: requires Windows 10+)
+	hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleMode(hStdOut, &handleMode);
+	handleMode |= 0x0004;  // ENABLE_VIRTUAL_TERMINAL_PROCESSING
+	SetConsoleMode(hStdOut, handleMode);
+#endif
+	
 	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
 		return retval;
 
