@@ -34,7 +34,7 @@ function TOOLFUNC(moduleType)
 function doTranspile(dirName, sources, tool)
 {
 	var targets = [];
-	FS.mkdir(dirName);
+	FS.createDirectory(dirName);
 	for (var i = 0; i < sources.length; ++i) {
 		var fileName = FS.resolve(dirName + '/' + sources[i].name);
 		var target = tool.stage(fileName, [ sources[i] ]);

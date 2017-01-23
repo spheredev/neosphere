@@ -14,6 +14,11 @@ minisphere 4.4
   For convenience, the Sphere Studio project template in this version includes
   such a step already.
 
+* Most of the `FS` functions have been renamed to make them easier to
+  understand at a glance.  For example, `FS.mkdir()` is now called
+  `FS.createDirectory()`.  Scripts using these functions will need to be
+  updated to work with minisphere 4.4 and later.
+
 * The Cellscript API has been massively overhauled in order to improve
   extensibility.  Cellscripts will need to be rewritten; review the Cellscript
   API reference to see what's changed.

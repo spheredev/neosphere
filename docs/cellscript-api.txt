@@ -129,17 +129,21 @@ File System API
 Cell provides the familiar Sphere v2 file system API, providing easy access to
 the file system during a build.
 
+FS.createDirectory(dir_name);
+
+    Creates the specified directory and any of its parent directories that
+    don't already exist.
+
+FS.deleteFile(filename);
+
+    Deletes `filename` from the file system.
+
 FS.exists(filename);
 
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
 
-FS.mkdir(dirname);
-
-    Creates the specified directory and any of its parent directories that
-    don't already exist.
-
-FS.open(filename, mode);
+FS.openFile(filename, mode);
 
     Opens the specified file and constructs a new FileStream to access it.
     `mode` is a string in the same format as that of C fopen() specifying the
@@ -161,6 +165,11 @@ FS.readFile(filename);
     This avoids the need to explicitly open and close a file when all you want
     to do is read its contents into memory.
 
+FS.removeDirectory(dir_name);
+
+    Deletes the specified directory.  The directory must be empty or an error
+    will be thrown.
+
 FS.rename(srcname, destname);
 
     Renames the file named by `srcname` to `destname`, both of which are
@@ -177,15 +186,6 @@ FS.resolve(path);
     Note that the resource referred to by the path doesn't need to exist.  As
     with other FS methods, FS.resolve() will throw an error if an absolute path
     is passed in.
-
-FS.rmdir(dirname);
-
-    Deletes the specified directory.  The directory must be empty or an error
-    will be thrown.
-
-FS.unlink(filename);
-
-    Deletes the specified file.
 
 FS.writeFile(filename, data);
 

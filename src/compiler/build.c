@@ -26,13 +26,13 @@ static duk_ret_t js_warn                    (duk_context* ctx);
 static duk_ret_t js_system_name             (duk_context* ctx);
 static duk_ret_t js_system_version          (duk_context* ctx);
 static duk_ret_t js_FS_exists               (duk_context* ctx);
-static duk_ret_t js_FS_mkdir                (duk_context* ctx);
-static duk_ret_t js_FS_open                 (duk_context* ctx);
+static duk_ret_t js_FS_createDirectory      (duk_context* ctx);
+static duk_ret_t js_FS_deleteFile           (duk_context* ctx);
+static duk_ret_t js_FS_openFile             (duk_context* ctx);
 static duk_ret_t js_FS_readFile             (duk_context* ctx);
 static duk_ret_t js_FS_rename               (duk_context* ctx);
 static duk_ret_t js_FS_resolve              (duk_context* ctx);
-static duk_ret_t js_FS_rmdir                (duk_context* ctx);
-static duk_ret_t js_FS_unlink               (duk_context* ctx);
+static duk_ret_t js_FS_removeDirectory      (duk_context* ctx);
 static duk_ret_t js_FS_writeFile            (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize     (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position (duk_context* ctx);
@@ -111,14 +111,14 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	api_define_function(job->js_realm, NULL, "warn", js_warn);
 	api_define_function(job->js_realm, "system", "name", js_system_name);
 	api_define_function(job->js_realm, "system", "version", js_system_version);
+	api_define_function(job->js_realm, "FS", "createDirectory", js_FS_createDirectory);
+	api_define_function(job->js_realm, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(job->js_realm, "FS", "exists", js_FS_exists);
-	api_define_function(job->js_realm, "FS", "open", js_FS_open);
-	api_define_function(job->js_realm, "FS", "mkdir", js_FS_mkdir);
+	api_define_function(job->js_realm, "FS", "openFile", js_FS_openFile);
 	api_define_function(job->js_realm, "FS", "readFile", js_FS_readFile);
+	api_define_function(job->js_realm, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(job->js_realm, "FS", "rename", js_FS_rename);
 	api_define_function(job->js_realm, "FS", "resolve", js_FS_resolve);
-	api_define_function(job->js_realm, "FS", "rmdir", js_FS_rmdir);
-	api_define_function(job->js_realm, "FS", "unlink", js_FS_unlink);
 	api_define_function(job->js_realm, "FS", "writeFile", js_FS_writeFile);
 	api_define_class(job->js_realm, "FileStream", NULL, js_FileStream_finalize);
 	api_define_property(job->js_realm, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
@@ -697,6 +697,34 @@ js_system_version(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_createDirectory(duk_context* ctx)
+{
+	struct job* job;
+	const char* name;
+
+	job = duk_get_heap_udata(ctx);
+	name = duk_require_path(ctx, 0);
+
+	if (fs_mkdir(job->fs, name) != 0)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory");
+	return 0;
+}
+
+static duk_ret_t
+js_FS_deleteFile(duk_context* ctx)
+{
+	const char* filename;
+	struct job* job;
+
+	job = duk_get_heap_udata(ctx);
+	filename = duk_require_path(ctx, 0);
+
+	if (!fs_unlink(job->fs, filename))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file", filename);
+	return 0;
+}
+
+static duk_ret_t
 js_FS_exists(duk_context* ctx)
 {
 	const char* filename;
@@ -710,21 +738,7 @@ js_FS_exists(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FS_mkdir(duk_context* ctx)
-{
-	struct job* job;
-	const char* name;
-
-	job = duk_get_heap_udata(ctx);
-	name = duk_require_path(ctx, 0);
-
-	if (fs_mkdir(job->fs, name) != 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
-	return 0;
-}
-
-static duk_ret_t
-js_FS_open(duk_context* ctx)
+js_FS_openFile(duk_context* ctx)
 {
 	FILE*       file;
 	const char* filename;
@@ -764,6 +778,20 @@ js_FS_readFile(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_removeDirectory(duk_context* ctx)
+{
+	struct job* job;
+	const char* name;
+
+	job = duk_get_heap_udata(ctx);
+	name = duk_require_path(ctx, 0);
+
+	if (!fs_rmdir(job->fs, name))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
+	return 0;
+}
+
+static duk_ret_t
 js_FS_rename(duk_context* ctx)
 {
 	struct job* job;
@@ -788,34 +816,6 @@ js_FS_resolve(duk_context* ctx)
 
 	duk_push_string(ctx, filename);
 	return 1;
-}
-
-static duk_ret_t
-js_FS_rmdir(duk_context* ctx)
-{
-	struct job* job;
-	const char* name;
-
-	job = duk_get_heap_udata(ctx);
-	name = duk_require_path(ctx, 0);
-
-	if (!fs_rmdir(job->fs, name))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
-	return 0;
-}
-
-static duk_ret_t
-js_FS_unlink(duk_context* ctx)
-{
-	const char* filename;
-	struct job* job;
-
-	job = duk_get_heap_udata(ctx);
-	filename = duk_require_path(ctx, 0);
-
-	if (!fs_unlink(job->fs, filename))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
-	return 0;
 }
 
 static duk_ret_t

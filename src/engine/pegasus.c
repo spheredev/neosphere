@@ -221,14 +221,14 @@ static duk_ret_t js_Dispatch_later             (duk_context* ctx);
 static duk_ret_t js_Dispatch_now               (duk_context* ctx);
 static duk_ret_t js_Dispatch_onRender          (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
+static duk_ret_t js_FS_createDirectory         (duk_context* ctx);
+static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
 static duk_ret_t js_FS_exists                  (duk_context* ctx);
-static duk_ret_t js_FS_mkdir                   (duk_context* ctx);
-static duk_ret_t js_FS_open                    (duk_context* ctx);
+static duk_ret_t js_FS_openFile                (duk_context* ctx);
 static duk_ret_t js_FS_readFile                (duk_context* ctx);
 static duk_ret_t js_FS_rename                  (duk_context* ctx);
 static duk_ret_t js_FS_resolve                 (duk_context* ctx);
-static duk_ret_t js_FS_rmdir                   (duk_context* ctx);
-static duk_ret_t js_FS_unlink                  (duk_context* ctx);
+static duk_ret_t js_FS_removeDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_writeFile               (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
 static duk_ret_t js_FileStream_get_fileName    (duk_context* ctx);
@@ -431,14 +431,14 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Font", "drawText", js_Font_drawText);
 	api_define_method(ctx, "Font", "getTextSize", js_Font_getTextSize);
 	api_define_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
+	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
+	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "exists", js_FS_exists);
-	api_define_function(ctx, "FS", "open", js_FS_open);
-	api_define_function(ctx, "FS", "mkdir", js_FS_mkdir);
+	api_define_function(ctx, "FS", "openFile", js_FS_openFile);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
+	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
 	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
-	api_define_function(ctx, "FS", "rmdir", js_FS_rmdir);
-	api_define_function(ctx, "FS", "unlink", js_FS_unlink);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
 	api_define_class(ctx, "Image", js_new_Image, js_Image_finalize);
 	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
@@ -1627,6 +1627,30 @@ js_Color_fade(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_createDirectory(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, NULL, false);
+
+	if (!sfs_mkdir(g_fs, name, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
+	return 0;
+}
+
+static duk_ret_t
+js_FS_deleteFile(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, false);
+
+	if (!sfs_unlink(g_fs, filename, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
+	return 0;
+}
+
+static duk_ret_t
 js_FS_exists(duk_context* ctx)
 {
 	const char* filename;
@@ -1638,15 +1662,20 @@ js_FS_exists(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FS_mkdir(duk_context* ctx)
+js_FS_openFile(duk_context* ctx)
 {
-	const char* name;
+	sfs_file_t* file;
+	const char* filename;
+	const char* mode;
 
-	name = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false);
+	mode = duk_require_string(ctx, 1);
 
-	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
-	return 0;
+	file = sfs_fopen(g_fs, filename, NULL, mode);
+	if (file == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
+	duk_push_class_obj(ctx, "FileStream", file);
+	return 1;
 }
 
 static duk_ret_t
@@ -1669,20 +1698,15 @@ js_FS_readFile(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FS_open(duk_context* ctx)
+js_FS_removeDirectory(duk_context* ctx)
 {
-	sfs_file_t* file;
-	const char* filename;
-	const char* mode;
+	const char* name;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
-	mode = duk_require_string(ctx, 1);
+	name = duk_require_path(ctx, 0, NULL, false);
 
-	file = sfs_fopen(g_fs, filename, NULL, mode);
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
-	duk_push_class_obj(ctx, "FileStream", file);
-	return 1;
+	if (!sfs_rmdir(g_fs, name, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
+	return 0;
 }
 
 static duk_ret_t
@@ -1708,30 +1732,6 @@ js_FS_resolve(duk_context* ctx)
 
 	duk_push_string(ctx, filename);
 	return 1;
-}
-
-static duk_ret_t
-js_FS_rmdir(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_path(ctx, 0, NULL, false);
-
-	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
-	return 0;
-}
-
-static duk_ret_t
-js_FS_unlink(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, NULL, false);
-
-	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
-	return 0;
 }
 
 static duk_ret_t

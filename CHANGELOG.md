@@ -7,6 +7,8 @@ v5.0.0 - TBD
 * Overhauls the Cellscript API: `require()` is supported, file paths are
   resolved using SphereFS semantics, and Cellscripts and modules can now define
   custom targets and build tools for the ultimate in extensibility.
+* Improves the naming of the `FS` functions to make their intent clearer.  For
+  instance, `FS.mkdir()` -> `FS.createDirectory()`.
 * Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
   an entire file in a single operation.
 * Adds a `screen.frameSkip` property to allow games to control frame skipping.
