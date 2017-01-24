@@ -1017,7 +1017,7 @@ js_GetDirectoryList(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* dirname = n_args >= 1
-		? duk_require_path(ctx, 0, NULL, true)
+		? duk_require_path(ctx, 0, NULL, true, false)
 		: "";
 
 	vector_t*  list;
@@ -1049,7 +1049,7 @@ js_GetFileList(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	directory_name = num_args >= 1
-		? duk_require_path(ctx, 0, NULL, true)
+		? duk_require_path(ctx, 0, NULL, true, false)
 		: "save";
 
 	list = fs_list_dir(g_fs, directory_name, NULL, false);
@@ -1630,7 +1630,7 @@ js_CreateDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, "save", true);
+	name = duk_require_path(ctx, 0, "save", true, true);
 	if (!sfs_mkdir(g_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
 	return 0;
@@ -1712,7 +1712,7 @@ js_DoesFileExist(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, true);
+	filename = duk_require_path(ctx, 0, NULL, true, false);
 	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
 	return 1;
 }
@@ -1722,7 +1722,7 @@ js_EvaluateScript(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "scripts", true);
+	filename = duk_require_path(ctx, 0, "scripts", true, false);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	if (!build_exec(filename, false))
@@ -2031,7 +2031,7 @@ js_HashFromFile(duk_context* ctx)
 	sfs_file_t* file;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, true);
+	filename = duk_require_path(ctx, 0, NULL, true, false);
 	file = sfs_fopen(g_fs, filename, "other", "rb");
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open `%s` for reading");
@@ -2133,7 +2133,7 @@ js_LoadAnimation(duk_context* ctx)
 	animation_t* anim;
 	const char*  filename;
 
-	filename = duk_require_path(ctx, 0, "animations", true);
+	filename = duk_require_path(ctx, 0, "animations", true, false);
 	if (!(anim = animation_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load animation `%s`", filename);
 	duk_push_class_obj(ctx, "ssAnimation", anim);
@@ -2146,7 +2146,7 @@ js_LoadFont(duk_context* ctx)
 	const char* filename;
 	font_t*     font;
 
-	filename = duk_require_path(ctx, 0, "fonts", true);
+	filename = duk_require_path(ctx, 0, "fonts", true, false);
 	if (!(font = font_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
 	duk_push_sphere_font(ctx, font);
@@ -2160,7 +2160,7 @@ js_LoadImage(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images", true);
+	filename = duk_require_path(ctx, 0, "images", true, false);
 	if (!(image = image_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	duk_push_class_obj(ctx, "ssImage", image);
@@ -2173,7 +2173,7 @@ js_LoadSound(duk_context* ctx)
 	const char* filename;
 	sound_t*    sound;
 
-	filename = duk_require_path(ctx, 0, "sounds", true);
+	filename = duk_require_path(ctx, 0, "sounds", true, false);
 
 	if (!(sound = sound_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
@@ -2187,7 +2187,7 @@ js_LoadSpriteset(duk_context* ctx)
 	const char*  filename;
 	spriteset_t* spriteset;
 
-	filename = duk_require_path(ctx, 0, "spritesets", true);
+	filename = duk_require_path(ctx, 0, "spritesets", true, false);
 	if ((spriteset = load_spriteset(filename)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load spriteset `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
@@ -2201,7 +2201,7 @@ js_LoadSurface(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images", true);
+	filename = duk_require_path(ctx, 0, "images", true, false);
 	if (!(image = image_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	duk_push_class_obj(ctx, "ssSurface", image);
@@ -2214,7 +2214,7 @@ js_LoadWindowStyle(duk_context* ctx)
 	const char*    filename;
 	windowstyle_t* winstyle;
 
-	filename = duk_require_path(ctx, 0, "windowstyles", true);
+	filename = duk_require_path(ctx, 0, "windowstyles", true, false);
 	if (!(winstyle = load_windowstyle(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load windowstyle `%s`", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
@@ -2245,7 +2245,7 @@ js_OpenFile(duk_context* ctx)
 	kevfile_t*  file;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "save", true);
+	filename = duk_require_path(ctx, 0, "save", true, true);
 
 	if (!(file = kev_open(g_fs, filename, true)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
@@ -2259,7 +2259,7 @@ js_OpenLog(duk_context* ctx)
 	const char* filename;
 	logger_t*   logger;
 
-	filename = duk_require_path(ctx, 0, "logs", true);
+	filename = duk_require_path(ctx, 0, "logs", true, true);
 	if (!(logger = log_open(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
 	duk_push_class_obj(ctx, "ssLogger", logger);
@@ -2275,10 +2275,8 @@ js_OpenRawFile(duk_context* ctx)
 	bool        writable;
 
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "other", true);
-	writable = num_args >= 2
-		? duk_to_boolean(ctx, 1)
-		: false;
+	writable = num_args >= 2 ? duk_to_boolean(ctx, 1) : false;
+	filename = duk_require_path(ctx, 0, "other", true, writable);
 
 	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
@@ -2432,7 +2430,7 @@ js_RemoveDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, "save", true);
+	name = duk_require_path(ctx, 0, "save", true, true);
 	if (!sfs_rmdir(g_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
 	return 0;
@@ -2443,7 +2441,7 @@ js_RemoveFile(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "save", true);
+	filename = duk_require_path(ctx, 0, "save", true, true);
 	if (!sfs_unlink(g_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
 	return 0;
@@ -2455,8 +2453,8 @@ js_Rename(duk_context* ctx)
 	const char* name1;
 	const char* name2;
 
-	name1 = duk_require_path(ctx, 0, "save", true);
-	name2 = duk_require_path(ctx, 1, "save", true);
+	name1 = duk_require_path(ctx, 0, "save", true, true);
+	name2 = duk_require_path(ctx, 1, "save", true, true);
 	if (!sfs_rename(g_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
@@ -2468,7 +2466,7 @@ js_RequireScript(duk_context* ctx)
 	const char* filename;
 	bool        is_required;
 
-	filename = duk_require_path(ctx, 0, "scripts", true);
+	filename = duk_require_path(ctx, 0, "scripts", true, false);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	duk_push_global_stash(ctx);
@@ -4830,7 +4828,7 @@ js_Surface_save(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
-	filename = duk_require_path(ctx, 0, "images", true);
+	filename = duk_require_path(ctx, 0, "images", true, false);
 	image_save(image, filename);
 	return 1;
 }

@@ -2819,7 +2819,8 @@ js_ChangeMap(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "maps", true);
+	filename = duk_require_path(ctx, 0, "maps", true, false);
+
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (!change_map(filename, false))
@@ -2962,7 +2963,7 @@ js_MapEngine(duk_context* ctx)
 	int         num_args;
 
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "maps", true);
+	filename = duk_require_path(ctx, 0, "maps", true, false);
 	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
 		: g_framerate;
 

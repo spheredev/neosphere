@@ -1631,7 +1631,7 @@ js_FS_createDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, NULL, false);
+	name = duk_require_path(ctx, 0, NULL, false, true);
 
 	if (!sfs_mkdir(g_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
@@ -1643,7 +1643,7 @@ js_FS_deleteFile(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, true);
 
 	if (!sfs_unlink(g_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
@@ -1655,7 +1655,7 @@ js_FS_exists(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
 	return 1;
@@ -1667,9 +1667,11 @@ js_FS_openFile(duk_context* ctx)
 	sfs_file_t* file;
 	const char* filename;
 	const char* mode;
+	bool        writing;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
 	mode = duk_require_string(ctx, 1);
+	writing = strchr(mode, 'w') != NULL || strchr(mode, '+') != NULL || strchr(mode, 'a') != NULL;
+	filename = duk_require_path(ctx, 0, NULL, false, writing);
 
 	file = sfs_fopen(g_fs, filename, NULL, mode);
 	if (file == NULL)
@@ -1686,7 +1688,7 @@ js_FS_readFile(duk_context* ctx)
 	size_t      file_size;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(file_data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot read file '%s'", filename);
@@ -1702,7 +1704,7 @@ js_FS_removeDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, NULL, false);
+	name = duk_require_path(ctx, 0, NULL, false, true);
 
 	if (!sfs_rmdir(g_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
@@ -1715,8 +1717,8 @@ js_FS_rename(duk_context* ctx)
 	const char* name1;
 	const char* name2;
 
-	name1 = duk_require_path(ctx, 0, NULL, false);
-	name2 = duk_require_path(ctx, 1, NULL, false);
+	name1 = duk_require_path(ctx, 0, NULL, false, true);
+	name2 = duk_require_path(ctx, 1, NULL, false, true);
 
 	if (!sfs_rename(g_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
@@ -1728,7 +1730,7 @@ js_FS_resolve(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	duk_push_string(ctx, filename);
 	return 1;
@@ -1741,7 +1743,7 @@ js_FS_writeFile(duk_context* ctx)
 	const char* filename;
 	size_t      size;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, true);
 	buffer = duk_require_buffer_data(ctx, 1, &size);
 
 	if (!sfs_fspew(g_fs, filename, NULL, buffer, size))
@@ -1907,7 +1909,7 @@ js_new_Font(duk_context* ctx)
 	const char* filename;
 	font_t*     font;
 
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(font = font_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
@@ -2113,7 +2115,7 @@ js_new_Image(duk_context* ctx)
 	}
 	else {
 		// create an Image by loading an image file
-		filename = duk_require_path(ctx, 0, NULL, false);
+		filename = duk_require_path(ctx, 0, NULL, false, false);
 		image = image_load(filename);
 		if (image == NULL)
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
@@ -2995,8 +2997,8 @@ js_new_Shader(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
-	vs_filename = duk_require_path(ctx, -2, NULL, false);
-	fs_filename = duk_require_path(ctx, -1, NULL, false);
+	vs_filename = duk_require_path(ctx, -2, NULL, false, false);
+	fs_filename = duk_require_path(ctx, -1, NULL, false, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "shader compiler failed");
@@ -3275,7 +3277,7 @@ js_new_Sound(duk_context* ctx)
 	sound_t*    sound;
 
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, NULL, false);
+	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(sound = sound_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
@@ -3635,7 +3637,7 @@ js_new_Surface(duk_context* ctx)
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 	}
 	else {
-		filename = duk_require_path(ctx, 0, NULL, false);
+		filename = duk_require_path(ctx, 0, NULL, false, false);
 		image = image_load(filename);
 		if (image == NULL)
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);

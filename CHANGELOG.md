@@ -1,7 +1,7 @@
 minisphere Changelog
 ====================
 
-v5.0.0 - TBD
+v4.4.0 - TBD
 ------------
 
 * Overhauls the Cellscript API: `require()` is supported, file paths are
@@ -9,6 +9,9 @@ v5.0.0 - TBD
   custom targets and build tools for the ultimate in extensibility.
 * Improves the naming of the `FS` functions to make their intent clearer.  For
   instance, `FS.mkdir()` -> `FS.createDirectory()`.
+* Strengthens the SphereFS sandbox.  Only the user directory (`~/`) is now
+  writable; passing any other path to an API that requires write access will
+  result in a TypeError.
 * Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
   an entire file in a single operation.
 * Adds a `screen.frameSkip` property to allow games to control frame skipping.
