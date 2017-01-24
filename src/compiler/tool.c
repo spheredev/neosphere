@@ -95,7 +95,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 		duk_dup(js_ctx, -3);
 		duk_to_string(js_ctx, -1);
 		visor_error(visor, "%s", duk_get_string(js_ctx, -1));
-		visor_info(visor, "@ [%s:%d]", filename, line_number);
+		visor_print(visor, "@ [%s:%d]", filename, line_number);
 		duk_pop_3(js_ctx);
 		result = false;
 	}

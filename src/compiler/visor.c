@@ -5,9 +5,10 @@ static void print_indent (int level);
 
 struct visor
 {
-	int indent_level;
-	int num_errors;
-	int num_warns;
+	vector_t* filenames;
+	int       indent_level;
+	int       num_errors;
+	int       num_warns;
 };
 
 visor_t*
@@ -16,13 +17,25 @@ visor_new(void)
 	visor_t* visor;
 
 	visor = calloc(1, sizeof(visor_t));
+	visor->filenames = vector_new(sizeof(char*));
 	return visor;
 }
 
 void
 visor_free(visor_t* visor)
 {
+	int i;
+
+	for (i = 0; i < vector_len(visor->filenames); ++i)
+		free(*(char**)vector_get(visor->filenames, i));
+	vector_free(visor->filenames);
 	free(visor);
+}
+
+vector_t*
+visor_filenames(const visor_t* visor)
+{
+	return visor->filenames;
 }
 
 int
@@ -35,6 +48,15 @@ int
 visor_num_warns(const visor_t* visor)
 {
 	return visor->num_warns;
+}
+
+void
+visor_add_file(visor_t* visor, const char* filename)
+{
+	char* filename_copy;
+
+	filename_copy = strdup(filename);
+	vector_push(visor->filenames, &filename_copy);
 }
 
 void
@@ -73,7 +95,7 @@ visor_error(visor_t* visor, const char* fmt, ...)
 }
 
 void
-visor_info(visor_t* visor, const char* fmt, ...)
+visor_print(visor_t* visor, const char* fmt, ...)
 {
 	va_list ap;
 

@@ -13,10 +13,11 @@ struct target
 	path_t*      path;
 	vector_t*    sources;
 	tool_t*      tool;
+	bool         tracked;
 };
 
 target_t*
-target_new(const path_t* name, fs_t* fs, const path_t* path, tool_t* tool)
+target_new(const path_t* name, fs_t* fs, const path_t* path, tool_t* tool, bool tracked)
 {
 	target_t* target;
 
@@ -26,6 +27,7 @@ target_new(const path_t* name, fs_t* fs, const path_t* path, tool_t* tool)
 	target->path = path_dup(path);
 	target->sources = vector_new(sizeof(target_t*));
 	target->tool = tool_ref(tool);
+	target->tracked = tracked;
 	return target_ref(target);
 }
 
@@ -95,6 +97,9 @@ target_build(target_t* target, visor_t* visor, bool rebuilding)
 		path = path_dup(target_path(*p_target));
 		vector_push(in_paths, &path);
 	}
+
+	if (target->tracked)
+		visor_add_file(visor, path_cstr(target->path));
 
 	// check whether the output file is out of date with respect to its sources.
 	// this is a simple timestamp comparison for now; it might be good to eventually

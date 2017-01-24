@@ -69,6 +69,7 @@ bool
 build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 {
 	const char*   filename;
+	vector_t*     filenames;
 	struct job*   job;
 	const char*   json;
 	size_t        json_size;
@@ -80,7 +81,8 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	path_t*       staging_path;
 
 	iter_t iter;
-	target_t** p_target;
+	const char** p_filename;
+	target_t**   p_target;
 
 	job = calloc(1, sizeof(struct job));
 	if (path_is_file(out_path)) {
@@ -166,7 +168,7 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 		duk_dup(job->js_realm, -3);
 		duk_to_string(job->js_realm, -1);
 		visor_error(job->visor, "%s", duk_get_string(job->js_realm, -1));
-		visor_info(job->visor, "@ [%s:%d]", filename, line_number);
+		visor_print(job->visor, "@ [%s:%d]", filename, line_number);
 		duk_pop_3(job->js_realm);
 	}
 	duk_pop(job->js_realm);
@@ -224,6 +226,19 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 		}
 		visor_end_op(job->visor);
 	}
+
+	visor_begin_op(job->visor, "finishing up...");
+	filenames = visor_filenames(job->visor);
+	duk_push_array(job->js_realm);
+	iter = vector_enum(filenames);
+	while (p_filename = vector_next(&iter)) {
+		duk_push_string(job->js_realm, *p_filename);
+		duk_put_prop_index(job->js_realm, -2, (duk_uarridx_t)iter.index);
+	}
+	duk_json_encode(job->js_realm, -1);
+	json = duk_get_lstring(job->js_realm, -1, &json_size);
+	fs_fspew(job->fs, ".cell_targets.json", json, json_size);
+	visor_end_op(job->visor);
 
 	printf("\n");
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
