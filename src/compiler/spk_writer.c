@@ -1,6 +1,7 @@
 #include "cell.h"
 #include "spk_writer.h"
 
+#include "fs.h"
 #include "vector.h"
 
 #pragma pack(push, 1)
@@ -96,34 +97,26 @@ spk_close(spk_writer_t* writer)
 }
 
 bool
-spk_add_file(spk_writer_t* writer, const char* filename, const char* spk_pathname)
+spk_add_file(spk_writer_t* writer, fs_t* fs, const char* filename, const char* spk_pathname)
 {
 	uLong            bufsize;
 	struct spk_entry idx_entry;
-	FILE*            file;
 	void*            file_data = NULL;
-	long             file_size;
+	size_t           file_size;
 	long             offset;
 	void*            packdata;
 
-	if (!(file = fopen(filename, "rb")))
+	if (!(file_data = fs_fslurp(fs, filename, &file_size)))
 		goto on_error;
-	fseek(file, 0, SEEK_END);
-	file_size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	file_data = malloc(file_size);
-	if (fread(file_data, 1, file_size, file) != file_size)
-		goto on_error;
-	fclose(file);
-	packdata = malloc(bufsize = compressBound(file_size));
-	compress(packdata, &bufsize, file_data, file_size);
+	packdata = malloc(bufsize = compressBound((uLong)file_size));
+	compress(packdata, &bufsize, file_data, (uLong)file_size);
 	offset = ftell(writer->file);
 	fwrite(packdata, bufsize, 1, writer->file);
 	free(file_data);
 	free(packdata);
 
 	idx_entry.pathname = strdup(spk_pathname);
-	idx_entry.file_size = file_size;
+	idx_entry.file_size = (uint32_t)file_size;
 	idx_entry.pack_size = bufsize;
 	idx_entry.offset = offset;
 	vector_push(writer->index, &idx_entry);

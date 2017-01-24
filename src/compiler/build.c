@@ -3,6 +3,7 @@
 
 #include "api.h"
 #include "fs.h"
+#include "spk_writer.h"
 #include "target.h"
 #include "tool.h"
 #include "utility.h"
@@ -11,10 +12,11 @@
 
 struct job
 {
-	fs_t*        fs;
-	duk_context* js_realm;
-	vector_t*    targets;
-	visor_t*     visor;
+	fs_t*         fs;
+	duk_context*  js_realm;
+	spk_writer_t* spk_writer;
+	vector_t*     targets;
+	visor_t*      visor;
 };
 
 static duk_ret_t js_describe                (duk_context* ctx);
@@ -74,12 +76,22 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	int           num_errors;
 	int           num_warns;
 	const path_t* path;
+	path_t*       spk_path;
+	path_t*       staging_path;
 
 	iter_t iter;
 	target_t** p_target;
 
 	job = calloc(1, sizeof(struct job));
-	job->fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
+	if (path_is_file(out_path)) {
+		staging_path = path_rebase(path_new(".cell_staging/@/"), source_path);
+		job->spk_writer = spk_create(path_cstr(out_path));
+		job->fs = fs_new(path_cstr(source_path), path_cstr(staging_path), NULL);
+		path_free(staging_path);
+	}
+	else {
+		job->fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
+	}
 	job->js_realm = duk_create_heap(NULL, NULL, NULL, job, NULL);
 	job->targets = vector_new(sizeof(target_t*));
 	job->visor = visor_new();
@@ -137,6 +149,7 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	api_define_class(job->js_realm, "Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method(job->js_realm, "Tool", "stage", js_Tool_stage);
 
+	// create a Tool for the install() function to use
 	duk_push_global_stash(job->js_realm);
 	duk_push_c_function(job->js_realm, install_target, DUK_VARARGS);
 	duk_push_class_obj(job->js_realm, "Tool", tool_new(job->js_realm, "install"));
@@ -160,7 +173,7 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	visor_end_op(job->visor);
 
 	// process the build
-	visor_begin_op(job->visor, "processing %zu targets...", vector_len(job->targets));
+	visor_begin_op(job->visor, "processing Cellscript targets...", vector_len(job->targets));
 	iter = vector_enum(job->targets);
 	while (p_target = vector_next(&iter)) {
 		path = target_path(*p_target);
@@ -175,7 +188,7 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	// only generate a JSON manifest if the build finished with no errors.
 	// warnings are fine (for now).
 	if (num_errors == 0) {
-		visor_begin_op(job->visor, "generating game manifest...");
+		visor_begin_op(job->visor, "generating JSON manifest...");
 		duk_push_global_stash(job->js_realm);
 		duk_get_prop_string(job->js_realm, -1, "descriptor");
 		duk_json_encode(job->js_realm, -1);
@@ -188,12 +201,34 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 		// delete any existing game manifest to ensure we don't accidentally
 		// generate a functional but broken distribution.
 		fs_unlink(job->fs, "@/game.json");
+		goto clean_up;
+	}
+
+	// package all targets (if applicable)
+	if (job->spk_writer != NULL) {
+		visor_begin_op(job->visor, "packaging assets...");
+		spk_add_file(job->spk_writer, job->fs, "@/game.json", "game.json");
+		iter = vector_enum(job->targets);
+		while (p_target = vector_next(&iter)) {
+			path = target_path(*p_target);
+			if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
+				continue;
+			spk_path = path_dup(target_path(*p_target));
+			path_remove_hop(spk_path, 0);
+			visor_begin_op(job->visor, "package %s", path_cstr(spk_path));
+			spk_add_file(job->spk_writer, job->fs,
+				path_cstr(target_path(*p_target)),
+				path_cstr(spk_path));
+			path_free(spk_path);
+			visor_end_op(job->visor);
+		}
+		visor_end_op(job->visor);
 	}
 
 	printf("\n");
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
 
-	// clean up
+clean_up:
 	iter = vector_enum(job->targets);
 	while (p_target = vector_next(&iter))
 		target_free(*p_target);
@@ -201,9 +236,10 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 	duk_destroy_heap(job->js_realm);
 	visor_free(job->visor);
 	fs_free(job->fs);
+	spk_close(job->spk_writer);
 	free(job);
 	
-	return true;
+	return num_errors == 0;
 }
 
 static duk_bool_t
