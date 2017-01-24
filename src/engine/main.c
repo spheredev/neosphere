@@ -230,29 +230,24 @@ main(int argc, char* argv[])
 	if (use_fullscreen)
 		screen_toggle_fullscreen(g_screen);
 
-	// display loading message, scripts may take a bit to compile
+	screen_show_mouse(g_screen, false);
+	if (sfs_fexist(g_fs, "#/polyfills.js", NULL) && !build_exec("#/polyfills.js", false))
+		goto on_js_error;
+
+	// display status message if we need to wait for SSJ
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_draw_status(g_screen, "waiting for SSJ...", color_new(255, 255, 255, 255));
+		screen_draw_status(g_screen, "waiting for SSJ", color_new(255, 255, 255, 255));
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
 
-	// enable debugging support
+	// enable the SSJ debug server
 #if defined(MINISPHERE_SPHERUN)
 	initialize_debugger(want_debug, false);
 #endif
 
-	// display loading message, scripts may take a bit to compile
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	screen_draw_status(g_screen, "starting up...", color_new(255, 255, 255, 255));
-	al_flip_display();
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-
-	// evaluate startup script
-	screen_show_mouse(g_screen, false);
-	if (sfs_fexist(g_fs, "#/polyfill.js", NULL) && !build_exec("#/polyfill.js", false))
-		goto on_js_error;
+	// execute the main script
 	script_path = fs_script_path(g_fs);
 	if (!build_exec(path_cstr(script_path), fs_version(g_fs) >= 2))
 		goto on_js_error;

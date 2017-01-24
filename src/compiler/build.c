@@ -111,7 +111,7 @@ build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// polyfill for ECMAScript 2015
-	if (fs_fexist(job->fs, "#/polyfill.js") && !eval_module(job->js_realm, "#/polyfill.js"))
+	if (fs_fexist(job->fs, "#/polyfills.js") && !eval_module(job->js_realm, "#/polyfills.js"))
 		return false;
 
 	// initialize the Cellscript API
