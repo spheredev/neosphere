@@ -78,7 +78,7 @@ target_build(target_t* target, visor_t* visor, bool rebuilding)
 {
 	vector_t*   in_paths = NULL;
 	bool        is_outdated = false;
-	time_t      last_time;
+	time_t      last_time = 0;
 	path_t*     path;
 	bool        status;
 	struct stat sb;
