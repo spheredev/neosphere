@@ -7,7 +7,7 @@
 
 typedef struct target target_t;
 
-target_t*     target_new        (const path_t* name, fs_t* fs, const path_t* path, tool_t* tool);
+target_t*     target_new        (const path_t* name, fs_t* fs, const path_t* path, tool_t* tool, bool tracked);
 target_t*     target_ref        (target_t* target);
 void          target_free       (target_t* target);
 const path_t* target_name       (const target_t* target);
