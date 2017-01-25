@@ -155,15 +155,15 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	// load artifacts from previous build
 	artifacts = vector_new(sizeof(char*));
-	if (json = fs_fslurp(fs, "@/.cell_artifacts", &json_size)) {
+	if (json = fs_fslurp(fs, "@/artifacts.json", &json_size)) {
 		duk_push_lstring(ctx, json, json_size);
 		free(json);
-		if (duk_json_pdecode(ctx) == DUK_EXEC_SUCCESS) {
-			duk_enum(ctx, -1, DUK_ENUM_OWN_PROPERTIES_ONLY);
-			while (duk_next(ctx, -1, false)) {
+		if (duk_json_pdecode(ctx) == DUK_EXEC_SUCCESS && duk_is_array(ctx, -1)) {
+			duk_enum(ctx, -1, DUK_ENUM_ARRAY_INDICES_ONLY);
+			while (duk_next(ctx, -1, true)) {
 				filename = strdup(duk_to_string(ctx, -1));
 				vector_push(artifacts, &filename);
-				duk_pop(ctx);
+				duk_pop_2(ctx);
 			}
 		}
 		duk_pop(ctx);
@@ -226,7 +226,7 @@ bool
 build_clean(build_t* build)
 {
 	clean_old_artifacts(build, false);
-	fs_unlink(build->fs, "@/.cell_artifacts");
+	fs_unlink(build->fs, "@/artifacts.json");
 	return true;
 }
 
@@ -299,16 +299,15 @@ build_run(build_t* build, bool rebuild_all)
 	}
 
 	filenames = visor_filenames(build->visor);
-	duk_push_object(build->js_context);
+	duk_push_array(build->js_context);
 	iter = vector_enum(filenames);
 	while (vector_next(&iter)) {
 		duk_push_string(build->js_context, *(char**)iter.ptr);
-		duk_push_null(build->js_context);
-		duk_put_prop(build->js_context, -3);
+		duk_put_prop_index(build->js_context, -2, (duk_uarridx_t)iter.index);
 	}
 	duk_json_encode(build->js_context, -1);
 	json = duk_get_lstring(build->js_context, -1, &json_size);
-	fs_fspew(build->fs, "@/.cell_artifacts", json, json_size);
+	fs_fspew(build->fs, "@/artifacts.json", json, json_size);
 
 finished:
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
