@@ -13,6 +13,6 @@ void          target_free       (target_t* target);
 const path_t* target_name       (const target_t* target);
 const path_t* target_path       (const target_t* target);
 void          target_add_source (target_t* target, target_t* source);
-bool          target_build      (target_t* target, visor_t* visor, bool rebuilding);
+bool          target_build      (target_t* target, visor_t* visor, bool force_build);
 
 #endif // CELL__TARGET_H__INCLUDED

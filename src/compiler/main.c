@@ -16,7 +16,8 @@ static char*   s_target_name;
 int
 main(int argc, char* argv[])
 {
-	int retval = EXIT_FAILURE;
+	build_t* build;
+	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
 
@@ -27,7 +28,9 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 	
-	retval = build_exec(s_in_path, s_out_path, s_want_rebuild)
+	build = build_new(s_in_path, s_out_path);
+	build_eval(build, "Cellscript.js");
+	retval = build_run(build, s_want_rebuild)
 		? EXIT_SUCCESS : EXIT_FAILURE;
 
 shutdown:

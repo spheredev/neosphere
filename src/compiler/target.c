@@ -76,7 +76,7 @@ target_add_source(target_t* target, target_t* source)
 }
 
 bool
-target_build(target_t* target, visor_t* visor, bool rebuilding)
+target_build(target_t* target, visor_t* visor, bool force_build)
 {
 	vector_t*   in_paths = NULL;
 	bool        is_outdated = false;
@@ -93,7 +93,7 @@ target_build(target_t* target, visor_t* visor, bool rebuilding)
 	in_paths = vector_new(sizeof(path_t*));
 	iter = vector_enum(target->sources);
 	while (p_target = vector_next(&iter)) {
-		target_build(*p_target, visor, rebuilding);
+		target_build(*p_target, visor, force_build);
 		path = path_dup(target_path(*p_target));
 		vector_push(in_paths, &path);
 	}
@@ -104,7 +104,7 @@ target_build(target_t* target, visor_t* visor, bool rebuilding)
 	// check whether the output file is out of date with respect to its sources.
 	// this is a simple timestamp comparison for now; it might be good to eventually
 	// switch to a hash-based solution like in SCons.
-	if (rebuilding)
+	if (force_build)
 		is_outdated = true;
 	else {
 		if (fs_stat(target->fs, path_cstr(target->path), &sb) == 0)

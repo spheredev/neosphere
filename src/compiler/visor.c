@@ -24,7 +24,7 @@ visor_new(void)
 void
 visor_free(visor_t* visor)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < vector_len(visor->filenames); ++i)
 		free(*(char**)vector_get(visor->filenames, i));
@@ -67,7 +67,7 @@ visor_begin_op(visor_t* visor, const char* fmt, ...)
 	va_start(ap, fmt);
 	print_indent(visor->indent_level);
 	vprintf(fmt, ap);
-	printf("\n");
+	printf(".\n");
 	va_end(ap);
 
 	++visor->indent_level;

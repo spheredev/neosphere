@@ -8,8 +8,8 @@ module.exports = transpile;
 
 const Babel = require('./lib/Babel');
 
-var moduleTool = new Tool(TOOLFUNC('commonjs'), "transpile");
-var scriptTool = new Tool(TOOLFUNC(false), "transpile");
+var moduleTool = new Tool(TOOLFUNC('commonjs'), "transpiling");
+var scriptTool = new Tool(TOOLFUNC(false), "transpiling");
 
 function TOOLFUNC(moduleType)
 {

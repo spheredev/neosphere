@@ -10,20 +10,21 @@
 #include "visor.h"
 #include "xoroshiro.h"
 
-struct job
+struct build
 {
+	vector_t*     artifacts;
 	fs_t*         fs;
-	duk_context*  js_realm;
+	duk_context*  js_context;
 	spk_writer_t* spk_writer;
 	vector_t*     targets;
 	visor_t*      visor;
 };
 
+static duk_ret_t js_require                 (duk_context* ctx);
 static duk_ret_t js_describe                (duk_context* ctx);
 static duk_ret_t js_error                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
-static duk_ret_t js_require                 (duk_context* ctx);
 static duk_ret_t js_warn                    (duk_context* ctx);
 static duk_ret_t js_system_name             (duk_context* ctx);
 static duk_ret_t js_system_version          (duk_context* ctx);
@@ -57,236 +58,284 @@ static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 
-static duk_bool_t eval_module         (duk_context* ctx, const char* filename);
-static bool       evaluate_cellscript (struct job* job);
-static path_t*    find_module         (duk_context* ctx, const char* id, const char* origin, const char* sys_origin);
-static void       initialize_api      (duk_context* ctx);
+static void       clean_old_artifacts (struct build* job);
+static duk_bool_t eval_cjs_module     (duk_context* ctx, fs_t* fs, const char* filename);
+static path_t*    find_cjs_module     (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static duk_ret_t  install_target      (duk_context* ctx);
 static path_t*    load_package_json   (duk_context* ctx, const char* filename);
 static void       make_file_targets   (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
 static void       push_require        (duk_context* ctx, const char* module_id);
-static void       tidy_build          (struct job* job);
+
+build_t*
+build_new(const path_t* source_path, const path_t* out_path)
+{
+	vector_t*     artifacts;
+	build_t*      build;
+	duk_context*  ctx;
+	char*         filename;
+	fs_t*         fs;
+	char*         json;
+	size_t        json_size;
+	spk_writer_t* spk_writer = NULL;
+	path_t*       staging_path;
+
+	build = calloc(1, sizeof(build_t));
+	
+	// set up the SphereFS sandbox
+	if (!path_is_file(out_path))
+		fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
+	else {
+		staging_path = path_rebase(path_new(".cell_staging/@/"), source_path);
+		spk_writer = spk_create(path_cstr(out_path));
+		fs = fs_new(path_cstr(source_path), path_cstr(staging_path), NULL);
+		path_free(staging_path);
+	}
+
+	ctx = duk_create_heap(NULL, NULL, NULL, build, NULL);
+
+	// initialize the CommonJS cache and global require()
+	duk_push_global_stash(ctx);
+	dukrub_push_bare_object(ctx);
+	duk_put_prop_string(ctx, -2, "moduleCache");
+	duk_pop(ctx);
+
+	duk_push_global_object(ctx);
+	duk_push_string(ctx, "require");
+	push_require(ctx, NULL);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_SET_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+
+	// polyfill for ECMAScript 2015
+	if (fs_fexist(fs, "#/polyfills.js") && !eval_cjs_module(ctx, fs, "#/polyfills.js"))
+		return false;
+
+	// initialize the Cellscript API
+	api_init(ctx);
+	api_define_function(ctx, NULL, "describe", js_describe);
+	api_define_function(ctx, NULL, "error", js_error);
+	api_define_function(ctx, NULL, "files", js_files);
+	api_define_function(ctx, NULL, "install", js_install);
+	api_define_function(ctx, NULL, "warn", js_warn);
+	api_define_function(ctx, "system", "name", js_system_name);
+	api_define_function(ctx, "system", "version", js_system_version);
+	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
+	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
+	api_define_function(ctx, "FS", "exists", js_FS_exists);
+	api_define_function(ctx, "FS", "openFile", js_FS_openFile);
+	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
+	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
+	api_define_function(ctx, "FS", "rename", js_FS_rename);
+	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
+	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
+	api_define_class(ctx, "FileStream", NULL, js_FileStream_finalize);
+	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
+	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
+	api_define_method(ctx, "FileStream", "close", js_FileStream_close);
+	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
+	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
+	api_define_class(ctx, "RNG", js_new_RNG, js_RNG_finalize);
+	api_define_function(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
+	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
+	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
+	api_define_method(ctx, "RNG", "next", js_RNG_next);
+	api_define_class(ctx, "Target", NULL, js_Target_finalize);
+	api_define_property(ctx, "Target", "fileName", js_Target_get_fileName, NULL);
+	api_define_property(ctx, "Target", "name", js_Target_get_name, NULL);
+	api_define_class(ctx, "Tool", js_new_Tool, js_Tool_finalize);
+	api_define_method(ctx, "Tool", "stage", js_Tool_stage);
+
+	// create a Tool for the install() function to use
+	duk_push_global_stash(ctx);
+	duk_push_c_function(ctx, install_target, DUK_VARARGS);
+	duk_push_class_obj(ctx, "Tool", tool_new(ctx, "installing"));
+	duk_put_prop_string(ctx, -2, "installTool");
+	duk_pop(ctx);
+
+	// load artifacts from previous build
+	artifacts = vector_new(sizeof(char*));
+	if (json = fs_fslurp(fs, "@/.cell_artifacts", &json_size)) {
+		duk_push_lstring(ctx, json, json_size);
+		free(json);
+		if (duk_json_pdecode(ctx) == DUK_EXEC_SUCCESS) {
+			duk_enum(ctx, -1, DUK_ENUM_OWN_PROPERTIES_ONLY);
+			while (duk_next(ctx, -1, false)) {
+				filename = strdup(duk_to_string(ctx, -1));
+				vector_push(artifacts, &filename);
+				duk_pop(ctx);
+			}
+		}
+		duk_pop(ctx);
+	}
+
+	build->visor = visor_new();
+	build->fs = fs;
+	build->js_context = ctx;
+	build->spk_writer = spk_writer;
+	build->artifacts = artifacts;
+	build->targets = vector_new(sizeof(target_t*));
+	return build;
+}
+
+void
+build_free(build_t* build)
+{
+	iter_t iter;
+
+	iter = vector_enum(build->artifacts);
+	while (vector_next(&iter))
+		free(*(char**)iter.ptr);
+	iter = vector_enum(build->targets);
+	while (vector_next(&iter))
+		target_free(*(target_t**)iter.ptr);
+
+	duk_destroy_heap(build->js_context);
+	spk_close(build->spk_writer);
+	fs_free(build->fs);
+	visor_free(build->visor);
+	free(build);
+}
 
 bool
-build_exec(const path_t* source_path, const path_t* out_path, bool rebuilding)
+build_eval(build_t* build, const char* filename)
+{
+	const char* err_filename;
+	int         err_line;
+	bool        is_ok = true;
+
+	visor_begin_op(build->visor, "evaluating script %s", filename);
+	if (!eval_cjs_module(build->js_context, build->fs, filename)) {
+		is_ok = false;
+		duk_get_prop_string(build->js_context, -1, "fileName");
+		err_filename = duk_safe_to_string(build->js_context, -1);
+		duk_get_prop_string(build->js_context, -2, "lineNumber");
+		err_line = duk_get_int(build->js_context, -1);
+		duk_dup(build->js_context, -3);
+		duk_to_string(build->js_context, -1);
+		visor_error(build->visor, "%s", duk_get_string(build->js_context, -1));
+		visor_print(build->visor, "@ [%s:%d]", err_filename, err_line);
+		duk_pop_3(build->js_context);
+	}
+	duk_pop(build->js_context);
+	visor_end_op(build->visor);
+	return is_ok;
+}
+
+bool
+build_run(build_t* build, bool rebuild_all)
 {
 	vector_t*     filenames;
-	struct job*   job;
 	const char*   json;
 	size_t        json_size;
 	int           num_errors;
 	int           num_warns;
 	const path_t* path;
 	path_t*       spk_path;
-	path_t*       staging_path;
 
 	iter_t iter;
-	const char** p_filename;
-	target_t**   p_target;
+	target_t** p_target;
 
-	job = calloc(1, sizeof(struct job));
-	if (path_is_file(out_path)) {
-		staging_path = path_rebase(path_new(".cell_staging/@/"), source_path);
-		job->spk_writer = spk_create(path_cstr(out_path));
-		job->fs = fs_new(path_cstr(source_path), path_cstr(staging_path), NULL);
-		path_free(staging_path);
-	}
-	else {
-		job->fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
-	}
-	job->js_realm = duk_create_heap(NULL, NULL, NULL, job, NULL);
-	job->targets = vector_new(sizeof(target_t*));
-	job->visor = visor_new();
-
-	// initialize CommonJS cache and global require()
-	duk_push_global_stash(job->js_realm);
-	dukrub_push_bare_object(job->js_realm);
-	duk_put_prop_string(job->js_realm, -2, "moduleCache");
-	duk_pop(job->js_realm);
-
-	duk_push_global_object(job->js_realm);
-	duk_push_string(job->js_realm, "require");
-	push_require(job->js_realm, NULL);
-	duk_def_prop(job->js_realm, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-
-	// polyfill for ECMAScript 2015
-	if (fs_fexist(job->fs, "#/polyfills.js") && !eval_module(job->js_realm, "#/polyfills.js"))
-		return false;
-
-	// initialize the Cellscript API
-	api_init(job->js_realm);
-	api_define_function(job->js_realm, NULL, "describe", js_describe);
-	api_define_function(job->js_realm, NULL, "error", js_error);
-	api_define_function(job->js_realm, NULL, "files", js_files);
-	api_define_function(job->js_realm, NULL, "install", js_install);
-	api_define_function(job->js_realm, NULL, "warn", js_warn);
-	api_define_function(job->js_realm, "system", "name", js_system_name);
-	api_define_function(job->js_realm, "system", "version", js_system_version);
-	api_define_function(job->js_realm, "FS", "createDirectory", js_FS_createDirectory);
-	api_define_function(job->js_realm, "FS", "deleteFile", js_FS_deleteFile);
-	api_define_function(job->js_realm, "FS", "exists", js_FS_exists);
-	api_define_function(job->js_realm, "FS", "openFile", js_FS_openFile);
-	api_define_function(job->js_realm, "FS", "readFile", js_FS_readFile);
-	api_define_function(job->js_realm, "FS", "removeDirectory", js_FS_removeDirectory);
-	api_define_function(job->js_realm, "FS", "rename", js_FS_rename);
-	api_define_function(job->js_realm, "FS", "resolve", js_FS_resolve);
-	api_define_function(job->js_realm, "FS", "writeFile", js_FS_writeFile);
-	api_define_class(job->js_realm, "FileStream", NULL, js_FileStream_finalize);
-	api_define_property(job->js_realm, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
-	api_define_property(job->js_realm, "FileStream", "size", js_FileStream_get_size, NULL);
-	api_define_method(job->js_realm, "FileStream", "close", js_FileStream_close);
-	api_define_method(job->js_realm, "FileStream", "read", js_FileStream_read);
-	api_define_method(job->js_realm, "FileStream", "write", js_FileStream_write);
-	api_define_class(job->js_realm, "RNG", js_new_RNG, js_RNG_finalize);
-	api_define_function(job->js_realm, "RNG", "fromSeed", js_RNG_fromSeed);
-	api_define_function(job->js_realm, "RNG", "fromState", js_RNG_fromState);
-	api_define_property(job->js_realm, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
-	api_define_method(job->js_realm, "RNG", "next", js_RNG_next);
-	api_define_class(job->js_realm, "Target", NULL, js_Target_finalize);
-	api_define_property(job->js_realm, "Target", "fileName", js_Target_get_fileName, NULL);
-	api_define_property(job->js_realm, "Target", "name", js_Target_get_name, NULL);
-	api_define_class(job->js_realm, "Tool", js_new_Tool, js_Tool_finalize);
-	api_define_method(job->js_realm, "Tool", "stage", js_Tool_stage);
-
-	// create a Tool for the install() function to use
-	duk_push_global_stash(job->js_realm);
-	duk_push_c_function(job->js_realm, install_target, DUK_VARARGS);
-	duk_push_class_obj(job->js_realm, "Tool", tool_new(job->js_realm, "install"));
-	duk_put_prop_string(job->js_realm, -2, "installTool");
-	duk_pop(job->js_realm);
-
-	// evaluate the Cellscript
-	evaluate_cellscript(job);
-
-	// process the build
-	visor_begin_op(job->visor, "building Cellscript targets...", vector_len(job->targets));
-	iter = vector_enum(job->targets);
+	// build all relevant targets
+	visor_begin_op(build->visor, "building Cellscript targets", vector_len(build->targets));
+	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		path = target_path(*p_target);
 		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
 			continue;
-		target_build(*p_target, job->visor, rebuilding);
+		target_build(*p_target, build->visor, rebuild_all);
 	}
-	visor_end_op(job->visor);
-	num_errors = visor_num_errors(job->visor);
-	num_warns = visor_num_warns(job->visor);
-
-	tidy_build(job);
+	visor_end_op(build->visor);
+	num_errors = visor_num_errors(build->visor);
+	num_warns = visor_num_warns(build->visor);
 
 	// only generate a JSON manifest if the build finished with no errors.
 	// warnings are fine (for now).
 	if (num_errors == 0) {
-		visor_begin_op(job->visor, "generating JSON manifest...");
-		duk_push_global_stash(job->js_realm);
-		duk_get_prop_string(job->js_realm, -1, "descriptor");
-		duk_json_encode(job->js_realm, -1);
-		json = duk_get_lstring(job->js_realm, -1, &json_size);
-		fs_fspew(job->fs, "@/game.json", json, json_size);
-		duk_pop_2(job->js_realm);
-		visor_end_op(job->visor);
+		clean_old_artifacts(build);
+		visor_begin_op(build->visor, "generating JSON manifest");
+		duk_push_global_stash(build->js_context);
+		duk_get_prop_string(build->js_context, -1, "descriptor");
+		duk_json_encode(build->js_context, -1);
+		json = duk_get_lstring(build->js_context, -1, &json_size);
+		fs_fspew(build->fs, "@/game.json", json, json_size);
+		duk_pop_2(build->js_context);
+		visor_end_op(build->visor);
 	}
 	else {
 		// delete any existing game manifest to ensure we don't accidentally
 		// generate a functional but broken distribution.
-		fs_unlink(job->fs, "@/game.json");
-		goto clean_up;
+		fs_unlink(build->fs, "@/game.json");
+		goto finished;
 	}
 
 	// package all targets (if applicable)
-	if (job->spk_writer != NULL) {
-		visor_begin_op(job->visor, "packaging assets...");
-		spk_add_file(job->spk_writer, job->fs, "@/game.json", "game.json");
-		iter = vector_enum(job->targets);
+	if (build->spk_writer != NULL) {
+		visor_begin_op(build->visor, "packaging assets");
+		spk_add_file(build->spk_writer, build->fs, "@/game.json", "game.json");
+		iter = vector_enum(build->targets);
 		while (p_target = vector_next(&iter)) {
 			path = target_path(*p_target);
 			if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
 				continue;
 			spk_path = path_dup(target_path(*p_target));
 			path_remove_hop(spk_path, 0);
-			visor_begin_op(job->visor, "package %s", path_cstr(spk_path));
-			spk_add_file(job->spk_writer, job->fs,
+			visor_begin_op(build->visor, "packaging %s", path_cstr(spk_path));
+			spk_add_file(build->spk_writer, build->fs,
 				path_cstr(target_path(*p_target)),
 				path_cstr(spk_path));
 			path_free(spk_path);
-			visor_end_op(job->visor);
+			visor_end_op(build->visor);
 		}
-		visor_end_op(job->visor);
+		visor_end_op(build->visor);
 	}
 
-	filenames = visor_filenames(job->visor);
-	duk_push_object(job->js_realm);
+	filenames = visor_filenames(build->visor);
+	duk_push_object(build->js_context);
 	iter = vector_enum(filenames);
-	while (p_filename = vector_next(&iter)) {
-		duk_push_string(job->js_realm, *p_filename);
-		duk_push_true(job->js_realm);
-		duk_put_prop(job->js_realm, -3);
+	while (vector_next(&iter)) {
+		duk_push_string(build->js_context, *(char**)iter.ptr);
+		duk_push_null(build->js_context);
+		duk_put_prop(build->js_context, -3);
 	}
-	duk_json_encode(job->js_realm, -1);
-	json = duk_get_lstring(job->js_realm, -1, &json_size);
-	fs_fspew(job->fs, "@/.cell_artifacts", json, json_size);
+	duk_json_encode(build->js_context, -1);
+	json = duk_get_lstring(build->js_context, -1, &json_size);
+	fs_fspew(build->fs, "@/.cell_artifacts", json, json_size);
 
+finished:
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
-
-clean_up:
-	iter = vector_enum(job->targets);
-	while (p_target = vector_next(&iter))
-		target_free(*p_target);
-	vector_free(job->targets);
-	duk_destroy_heap(job->js_realm);
-	visor_free(job->visor);
-	fs_free(job->fs);
-	spk_close(job->spk_writer);
-	free(job);
-	
 	return num_errors == 0;
 }
 
-static bool
-evaluate_cellscript(struct job* job)
+static void
+clean_old_artifacts(struct build* build)
 {
-	const char* filename;
-	int         line_number;
-	char*       json;
-	size_t      json_size;
-	
-	visor_begin_op(job->visor, "evaluating ./Cellscript.js...");
-	if (!eval_module(job->js_realm, "Cellscript.js")) {
-		duk_get_prop_string(job->js_realm, -1, "fileName");
-		filename = duk_safe_to_string(job->js_realm, -1);
-		duk_get_prop_string(job->js_realm, -2, "lineNumber");
-		line_number = duk_get_int(job->js_realm, -1);
-		duk_dup(job->js_realm, -3);
-		duk_to_string(job->js_realm, -1);
-		visor_error(job->visor, "%s", duk_get_string(job->js_realm, -1));
-		visor_print(job->visor, "@ [%s:%d]", filename, line_number);
-		duk_pop_3(job->js_realm);
-	}
-	duk_pop(job->js_realm);
-	visor_end_op(job->visor);
+	vector_t* filenames;
+	bool      have_file;
 
-	duk_push_global_stash(job->js_realm);
-	if (json = fs_fslurp(job->fs, "@/.cell_artifacts", &json_size)) {
-		duk_push_lstring(job->js_realm, json, json_size);
-		free(json);
-		if (duk_json_pdecode(job->js_realm) != DUK_EXEC_SUCCESS) {
-			duk_push_object(job->js_realm);
-			duk_replace(job->js_realm, -2);
+	iter_t iter_i, iter_j;
+
+	visor_begin_op(build->visor, "cleaning up old artifacts");
+	filenames = visor_filenames(build->visor);
+	iter_i = vector_enum(build->artifacts);
+	while (vector_next(&iter_i)) {
+		have_file = false;
+		iter_j = vector_enum(filenames);
+		while (vector_next(&iter_j)) {
+			if (strcmp(*(char**)iter_j.ptr, *(char**)iter_i.ptr) == 0)
+				have_file = true;
+		}
+		if (!have_file) {
+			visor_begin_op(build->visor, "removing %s", *(char**)iter_i.ptr);
+			fs_unlink(build->fs, *(char**)iter_i.ptr);
+			visor_end_op(build->visor);
 		}
 	}
-	else {
-		duk_push_object(job->js_realm);
-	}
-	duk_put_prop_string(job->js_realm, -2, "artifacts");
-	duk_pop(job->js_realm);
-
-	return true;
+	visor_end_op(build->visor);
 }
 
 static duk_bool_t
-eval_module(duk_context* ctx, const char* filename)
+eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
@@ -304,12 +353,9 @@ eval_module(duk_context* ctx, const char* filename)
 	lstring_t*  code_string;
 	path_t*     dir_path;
 	path_t*     file_path;
-	struct job* job;
 	size_t      source_size;
 	char*       source;
 
-	job = duk_get_heap_udata(ctx);
-	
 	file_path = path_new(filename);
 	dir_path = path_strip(path_dup(file_path));
 
@@ -325,7 +371,7 @@ eval_module(duk_context* ctx, const char* filename)
 		duk_pop_3(ctx);
 	}
 
-	source = fs_fslurp(job->fs, filename, &source_size);
+	source = fs_fslurp(fs, filename, &source_size);
 	code_string = lstr_from_cp1252(source, source_size);
 	free(source);
 
@@ -406,7 +452,7 @@ on_error:
 }
 
 static path_t*
-find_module(duk_context* ctx, const char* id, const char* origin, const char* sys_origin)
+find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin)
 {
 	const char* const filenames[] =
 	{
@@ -424,14 +470,11 @@ find_module(duk_context* ctx, const char* id, const char* origin, const char* sy
 
 	path_t*     origin_path;
 	char*       filename;
-	struct job* job;
 	path_t*     main_path;
 	path_t*     path;
 
 	int i;
 
-	job = duk_get_heap_udata(ctx);
-	
 	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0)
 		// resolve module relative to calling module
 		origin_path = path_new(origin != NULL ? origin : "./");
@@ -449,13 +492,13 @@ find_module(duk_context* ctx, const char* id, const char* origin, const char* sy
 		path_append(path, filename);
 		path_collapse(path, true);
 		free(filename);
-		if (fs_fexist(job->fs, path_cstr(path))) {
+		if (fs_fexist(fs, path_cstr(path))) {
 			if (strcmp(path_filename(path), "package.json") != 0)
 				return path;
 			else {
 				if (!(main_path = load_package_json(ctx, path_cstr(path))))
 					goto next_filename;
-				if (fs_fexist(job->fs, path_cstr(main_path))) {
+				if (fs_fexist(fs, path_cstr(main_path))) {
 					path_free(path);
 					return main_path;
 				}
@@ -469,19 +512,13 @@ find_module(duk_context* ctx, const char* id, const char* origin, const char* sy
 	return NULL;
 }
 
-static void
-initialize_api(duk_context* ctx)
-{
-
-}
-
 static duk_ret_t
 install_target(duk_context* ctx)
 {
 	// note: install targets never have more than one source because an individual
 	//       target is constructed for each file installed.
 
-	struct job* job;
+	struct build* job;
 	int         result;
 	const char* source_path;
 	const char* target_path;
@@ -503,7 +540,7 @@ static path_t*
 load_package_json(duk_context* ctx, const char* filename)
 {
 	duk_idx_t   duk_top;
-	struct job* job;
+	struct build* job;
 	char*       json;
 	size_t      json_size;
 	path_t*     path;
@@ -601,41 +638,6 @@ push_require(duk_context* ctx, const char* module_id)
 	}
 }
 
-static void
-tidy_build(struct job* job)
-{
-	vector_t*   filenames;
-	const char* filename;
-	bool        have_file;
-
-	iter_t iter;
-	const char** p_name;
-
-	visor_begin_op(job->visor, "cleaning up after previous build...");
-	filenames = visor_filenames(job->visor);
-	duk_push_global_stash(job->js_realm);
-	duk_get_prop_string(job->js_realm, -1, "artifacts");
-	duk_enum(job->js_realm, -1, DUK_ENUM_OWN_PROPERTIES_ONLY);
-	while (duk_next(job->js_realm, -1, true)) {
-		filename = duk_to_string(job->js_realm, -2);
-		have_file = false;
-		if (duk_to_boolean(job->js_realm, -1)) {
-			iter = vector_enum(filenames);
-			while (p_name = vector_next(&iter)) {
-				if (strcmp(*p_name, filename) == 0)
-					have_file = true;
-			}
-		}
-		if (!have_file) {
-			visor_begin_op(job->visor, "remove %s", filename);
-			fs_unlink(job->fs, filename);
-			visor_end_op(job->visor);
-		}
-		duk_pop_2(job->js_realm);
-	}
-	visor_end_op(job->visor);
-}
-
 static duk_ret_t
 js_describe(duk_context* ctx)
 {
@@ -656,7 +658,7 @@ js_describe(duk_context* ctx)
 static duk_ret_t
 js_error(duk_context* ctx)
 {
-	struct job* job;
+	struct build* job;
 	const char* message;
 
 	job = duk_get_heap_udata(ctx);
@@ -669,7 +671,7 @@ js_error(duk_context* ctx)
 static duk_ret_t
 js_files(duk_context* ctx)
 {
-	struct job* job;
+	struct build* job;
 	int         num_args;
 	const char* pattern;
 	path_t*     path;
@@ -718,7 +720,7 @@ static duk_ret_t
 js_install(duk_context* ctx)
 {
 	path_t*       dest_path;
-	struct job*   job;
+	struct build*   job;
 	duk_uarridx_t length;
 	target_t*     source;
 	path_t*       name;
@@ -765,9 +767,12 @@ js_install(duk_context* ctx)
 static duk_ret_t
 js_require(duk_context* ctx)
 {
+	build_t*    build;
 	const char* id;
 	const char* parent_id = NULL;
 	path_t*     path;
+
+	build = duk_get_heap_udata(ctx);
 
 	duk_push_current_function(ctx);
 	if (duk_get_prop_string(ctx, -1, "id"))
@@ -776,9 +781,12 @@ js_require(duk_context* ctx)
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
-	if (!(path = find_module(ctx, id, parent_id, "lib/")) && !(path = find_module(ctx, id, parent_id, "#/cell_modules/")))
+	if (!(path = find_cjs_module(ctx, build->fs, id, parent_id, "lib/"))
+		&& !(path = find_cjs_module(ctx, build->fs, id, parent_id, "#/cell_modules/")))
+	{
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
-	if (!eval_module(ctx, path_cstr(path)))
+	}
+	if (!eval_cjs_module(ctx, build->fs, path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
 }
@@ -786,7 +794,7 @@ js_require(duk_context* ctx)
 static duk_ret_t
 js_warn(duk_context* ctx)
 {
-	struct job* job;
+	struct build* job;
 	const char* message;
 
 	job = duk_get_heap_udata(ctx);
@@ -813,7 +821,7 @@ js_system_version(duk_context* ctx)
 static duk_ret_t
 js_FS_createDirectory(duk_context* ctx)
 {
-	struct job* job;
+	struct build* job;
 	const char* name;
 
 	job = duk_get_heap_udata(ctx);
@@ -828,7 +836,7 @@ static duk_ret_t
 js_FS_deleteFile(duk_context* ctx)
 {
 	const char* filename;
-	struct job* job;
+	struct build* job;
 
 	job = duk_get_heap_udata(ctx);
 	filename = duk_require_path(ctx, 0);
@@ -842,7 +850,7 @@ static duk_ret_t
 js_FS_exists(duk_context* ctx)
 {
 	const char* filename;
-	struct job* job;
+	struct build* job;
 
 	job = duk_get_heap_udata(ctx);
 	filename = duk_require_path(ctx, 0);
@@ -856,7 +864,7 @@ js_FS_openFile(duk_context* ctx)
 {
 	FILE*       file;
 	const char* filename;
-	struct job* job;
+	struct build* job;
 	const char* mode;
 
 	job = duk_get_heap_udata(ctx);
@@ -874,7 +882,7 @@ js_FS_readFile(duk_context* ctx)
 {
 	void*       buffer;
 	void*       file_data;
-	struct job* job;
+	struct build* job;
 	const char* name;
 	size_t      size;
 
@@ -894,7 +902,7 @@ js_FS_readFile(duk_context* ctx)
 static duk_ret_t
 js_FS_removeDirectory(duk_context* ctx)
 {
-	struct job* job;
+	struct build* job;
 	const char* name;
 
 	job = duk_get_heap_udata(ctx);
@@ -908,7 +916,7 @@ js_FS_removeDirectory(duk_context* ctx)
 static duk_ret_t
 js_FS_rename(duk_context* ctx)
 {
-	struct job* job;
+	struct build* job;
 	const char* name1;
 	const char* name2;
 
@@ -936,7 +944,7 @@ static duk_ret_t
 js_FS_writeFile(duk_context* ctx)
 {
 	void*       file_data;
-	struct job* job;
+	struct build* job;
 	const char* name;
 	size_t      size;
 
@@ -1082,7 +1090,7 @@ js_RNG_fromSeed(duk_context* ctx)
 	uint64_t seed;
 	xoro_t*  xoro;
 
-	seed = duk_require_number(ctx, 0);
+	seed = (uint64_t)duk_require_number(ctx, 0);
 
 	xoro = xoro_new(seed);
 	duk_push_class_obj(ctx, "RNG", xoro);
@@ -1211,7 +1219,7 @@ js_new_Tool(duk_context* ctx)
 {
 	int         num_args;
 	tool_t*     tool;
-	const char* verb = "build";
+	const char* verb = "building";
 
 	num_args = duk_get_top(ctx);
 	if (!duk_is_constructor_call(ctx))
@@ -1241,7 +1249,7 @@ js_Tool_finalize(duk_context* ctx)
 static duk_ret_t
 js_Tool_stage(duk_context* ctx)
 {
-	struct job*   job;
+	struct build*   job;
 	duk_uarridx_t length;
 	path_t*       name;
 	int           num_args;

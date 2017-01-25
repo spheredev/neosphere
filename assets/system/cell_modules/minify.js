@@ -15,7 +15,7 @@ new Tool(function(outFileName, inFileNames)
 	var input = new TextDecoder().decode(fileContent);
 	var output = Babili.transform(input);
 	FS.writeFile(outFileName, new TextEncoder().encode(output.code));
-}, "minify");
+}, "minifying");
 
 function minify(dirName, sources)
 {
