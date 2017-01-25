@@ -37,6 +37,7 @@ main(int argc, char* argv[])
 		retval = build_run(build, s_want_rebuild)
 			? EXIT_SUCCESS : EXIT_FAILURE;
 	}
+	build_free(build);
 
 shutdown:
 	path_free(s_in_path);
