@@ -9,6 +9,7 @@ static void print_usage      (void);
 
 static path_t* s_in_path;
 static path_t* s_out_path;
+bool           s_want_clean;
 bool           s_want_rebuild;
 bool           s_want_source_map;
 static char*   s_target_name;
@@ -30,8 +31,12 @@ main(int argc, char* argv[])
 	
 	build = build_new(s_in_path, s_out_path);
 	build_eval(build, "Cellscript.js");
-	retval = build_run(build, s_want_rebuild)
-		? EXIT_SUCCESS : EXIT_FAILURE;
+	if (s_want_clean)
+		build_clean(build);
+	else {
+		retval = build_run(build, s_want_rebuild)
+			? EXIT_SUCCESS : EXIT_FAILURE;
+	}
 
 shutdown:
 	path_free(s_in_path);
@@ -54,6 +59,7 @@ parse_cmdline(int argc, char* argv[])
 	s_in_path = path_new("./");
 	s_out_path = NULL;
 	s_target_name = strdup("default");
+	s_want_clean = false;
 	s_want_rebuild = false;
 	s_want_source_map = false;
 	
@@ -76,6 +82,9 @@ parse_cmdline(int argc, char* argv[])
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
 				return false;
+			}
+			else if (strcmp(argv[i], "--clean") == 0) {
+				s_want_clean = true;
 			}
 			else if (strcmp(argv[i], "--rebuild") == 0) {
 				s_want_rebuild = true;
@@ -131,6 +140,9 @@ parse_cmdline(int argc, char* argv[])
 						printf("cell: `%s` argument cannot be a directory\n", short_args);
 						return false;
 					}
+					break;
+				case 'c':
+					s_want_clean = true;
 					break;
 				case 'r':
 					s_want_rebuild = true;
@@ -205,8 +217,9 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("   Duktape: %s\n", DUK_GIT_DESCRIBE);
-		printf("      zlib: v%s\n", zlibVersion());
+		printf("    Duktape: v%d.%d.%d    zlib: v%s\n",
+			DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100,
+			zlibVersion());
 	}
 }
 
@@ -222,9 +235,10 @@ print_usage(void)
 	printf("OPTIONS:\n");
 	printf("       --in-dir    Set the input directory. Without this option, Cell will   \n");
 	printf("                   look for sources in the current working directory.        \n");
-	printf("   -r, --rebuild   Rebuild all targets, even when already up to date.        \n");
 	printf("   -b, --build     Build an unpackaged Sphere game distribution.             \n");
 	printf("   -p, --package   Build a Sphere package (.spk).                            \n");
+	printf("   -r, --rebuild   Rebuild all targets, even when already up to date.        \n");
+	printf("   -c, --clean     Clean up all artifacts from the previous build.           \n");
 	printf("   -d, --debug     Include a debugging map in the compiled game which maps   \n");
 	printf("                   compiled assets to their corresponding source files.      \n");
 	printf("       --version   Print the version number of Cell and its dependencies.    \n");

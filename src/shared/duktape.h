@@ -1,13 +1,13 @@
 /*
- *  Duktape public API for Duktape 2.0.99.
+ *  Duktape public API for Duktape 2.0.0.
  *
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 070c29599ff64001d8bc6ca42a52c9e19025a8bc (v2.0.0-146-g070c2959).
- *  Git branch master.
+ *  Git commit 4180966c47d6d87106008dd4338de8d507c8072b (v2.0.0).
+ *  Git branch HEAD.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -87,7 +87,6 @@
  *  * Brett Vickers (https://github.com/beevik)
  *  * Dominik Okwieka (https://github.com/okitec)
  *  * Remko Tron\u00e7on (https://el-tramo.be)
- *  * Romero Malaquias (rbsm@ic.ufal.br)
  *  
  *  Other contributions
  *  ===================
@@ -254,16 +253,16 @@ struct duk_time_components {
  * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
  * development version after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       20099L
+#define DUK_VERSION                       20000L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "070c29599ff64001d8bc6ca42a52c9e19025a8bc"
-#define DUK_GIT_DESCRIBE                  "v2.0.0-146-g070c2959"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "4180966c47d6d87106008dd4338de8d507c8072b"
+#define DUK_GIT_DESCRIBE                  "v2.0.0"
+#define DUK_GIT_BRANCH                    "HEAD"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
@@ -664,18 +663,19 @@ DUK_EXTERNAL_DECL void *duk_push_buffer_raw(duk_context *ctx, duk_size_t size, d
 #define duk_push_external_buffer(ctx) \
 	((void) duk_push_buffer_raw((ctx), 0, DUK_BUF_FLAG_DYNAMIC | DUK_BUF_FLAG_EXTERNAL))
 
+#define DUK_BUFOBJ_CREATE_ARRBUF       (1 << 4)  /* internal flag: create backing ArrayBuffer; keep in one byte */
 #define DUK_BUFOBJ_ARRAYBUFFER         0
-#define DUK_BUFOBJ_NODEJS_BUFFER       1
-#define DUK_BUFOBJ_DATAVIEW            2
-#define DUK_BUFOBJ_INT8ARRAY           3
-#define DUK_BUFOBJ_UINT8ARRAY          4
-#define DUK_BUFOBJ_UINT8CLAMPEDARRAY   5
-#define DUK_BUFOBJ_INT16ARRAY          6
-#define DUK_BUFOBJ_UINT16ARRAY         7
-#define DUK_BUFOBJ_INT32ARRAY          8
-#define DUK_BUFOBJ_UINT32ARRAY         9
-#define DUK_BUFOBJ_FLOAT32ARRAY        10
-#define DUK_BUFOBJ_FLOAT64ARRAY        11
+#define DUK_BUFOBJ_NODEJS_BUFFER       (1 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_DATAVIEW            (2 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_INT8ARRAY           (3 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT8ARRAY          (4 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT8CLAMPEDARRAY   (5 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_INT16ARRAY          (6 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT16ARRAY         (7 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_INT32ARRAY          (8 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT32ARRAY         (9 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_FLOAT32ARRAY        (10 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_FLOAT64ARRAY        (11 | DUK_BUFOBJ_CREATE_ARRBUF)
 
 DUK_EXTERNAL_DECL void duk_push_buffer_object(duk_context *ctx, duk_idx_t idx_buffer, duk_size_t byte_offset, duk_size_t byte_length, duk_uint_t flags);
 

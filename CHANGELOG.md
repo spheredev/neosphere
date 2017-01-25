@@ -17,8 +17,10 @@ v4.4.0 - TBD
 * Adds a `screen.frameSkip` property to allow games to control frame skipping.
 * Adds support for ECMAScript 2015 built-ins like Map and Set using a polyfill
   which is loaded automatically on startup.
-* Adds a `--rebuild` command line option which forces Cell to rebuild all
-  targets, even if they are already up to date.
+* Adds a `--clean` command line option to have Cell delete all artifacts from
+  the most recent build.
+* Adds a `--rebuild` command line option to have Cell build all targets, even
+  if they are already up to date.
 * Adds support to Cell for ECMAScript 2015+ transpilation via Babel.
 * Adds support to Cell for minification via Babili.
 * Improves Sphere 1.x compatibility in various corner cases, and adds several

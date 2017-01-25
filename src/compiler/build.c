@@ -58,7 +58,7 @@ static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 
-static void       clean_old_artifacts (struct build* job);
+static void       clean_old_artifacts (struct build* build, bool keep_targets);
 static duk_bool_t eval_cjs_module     (duk_context* ctx, fs_t* fs, const char* filename);
 static path_t*    find_cjs_module     (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static duk_ret_t  install_target      (duk_context* ctx);
@@ -223,6 +223,14 @@ build_eval(build_t* build, const char* filename)
 }
 
 bool
+build_clean(build_t* build)
+{
+	clean_old_artifacts(build, false);
+	fs_unlink(build->fs, "@/.cell_artifacts");
+	return true;
+}
+
+bool
 build_run(build_t* build, bool rebuild_all)
 {
 	vector_t*     filenames;
@@ -252,7 +260,7 @@ build_run(build_t* build, bool rebuild_all)
 	// only generate a JSON manifest if the build finished with no errors.
 	// warnings are fine (for now).
 	if (num_errors == 0) {
-		clean_old_artifacts(build);
+		clean_old_artifacts(build, true);
 		visor_begin_op(build->visor, "generating JSON manifest");
 		duk_push_global_stash(build->js_context);
 		duk_get_prop_string(build->js_context, -1, "descriptor");
@@ -308,24 +316,26 @@ finished:
 }
 
 static void
-clean_old_artifacts(struct build* build)
+clean_old_artifacts(struct build* build, bool keep_targets)
 {
 	vector_t* filenames;
-	bool      have_file;
+	bool      keep_file;
 
 	iter_t iter_i, iter_j;
 
-	visor_begin_op(build->visor, "cleaning up old artifacts");
+	visor_begin_op(build->visor, "cleaning up old build artifacts");
 	filenames = visor_filenames(build->visor);
 	iter_i = vector_enum(build->artifacts);
 	while (vector_next(&iter_i)) {
-		have_file = false;
-		iter_j = vector_enum(filenames);
-		while (vector_next(&iter_j)) {
-			if (strcmp(*(char**)iter_j.ptr, *(char**)iter_i.ptr) == 0)
-				have_file = true;
+		keep_file = false;
+		if (keep_targets) {
+			iter_j = vector_enum(filenames);
+			while (vector_next(&iter_j)) {
+				if (strcmp(*(char**)iter_j.ptr, *(char**)iter_i.ptr) == 0)
+					keep_file = true;
+			}
 		}
-		if (!have_file) {
+		if (!keep_file) {
 			visor_begin_op(build->visor, "removing %s", *(char**)iter_i.ptr);
 			fs_unlink(build->fs, *(char**)iter_i.ptr);
 			visor_end_op(build->visor);
