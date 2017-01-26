@@ -796,7 +796,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 		duk_push_lstring_t(ctx, code_string);
 		duk_push_string(ctx, " })");
 		duk_concat(ctx, 3);
-		duk_push_string(ctx, filename);
+		duk_push_string(ctx, get_source_name(filename));
 		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 			goto on_error;
 		duk_call(ctx, 0);

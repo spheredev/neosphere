@@ -29,7 +29,7 @@ scripts_uninit(void)
 }
 
 bool
-build_exec(const char* filename, bool as_module)
+script_eval(const char* filename, bool as_module)
 {
 	duk_idx_t      duk_top;
 	sfs_file_t*    file = NULL;

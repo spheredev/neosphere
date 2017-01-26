@@ -35,7 +35,7 @@ static bool       s_is_attached = false;
 static color_t    s_banner_color;
 static lstring_t* s_banner_text;
 static socket_t*  s_client;
-static bool       s_have_source_map;
+static bool       s_have_source_map = false;
 static socket_t*  s_server;
 static vector_t*  s_sources;
 static bool       s_want_attach;

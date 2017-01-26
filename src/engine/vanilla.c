@@ -1725,7 +1725,7 @@ js_EvaluateScript(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
 	if (!sfs_fexist(g_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
-	if (!build_exec(filename, false))
+	if (!script_eval(filename, false))
 		duk_throw(ctx);
 	return 1;
 }
@@ -1742,7 +1742,7 @@ js_EvaluateSystemScript(duk_context* ctx)
 		sprintf(path, "#/scripts/%s", filename);
 	if (!sfs_fexist(g_fs, path, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
-	if (!build_exec(path, false))
+	if (!script_eval(path, false))
 		duk_throw(ctx);
 	return 1;
 }
@@ -2477,7 +2477,7 @@ js_RequireScript(duk_context* ctx)
 	if (!is_required) {
 		duk_push_true(ctx);
 		duk_put_prop_string(ctx, -2, filename);
-		if (!build_exec(filename, false))
+		if (!script_eval(filename, false))
 			duk_throw(ctx);
 	}
 	duk_pop_3(ctx);
@@ -2506,7 +2506,7 @@ js_RequireSystemScript(duk_context* ctx)
 	if (!is_required) {
 		duk_push_true(ctx);
 		duk_put_prop_string(ctx, -2, path);
-		if (!build_exec(path, false))
+		if (!script_eval(path, false))
 			duk_throw(ctx);
 	}
 	duk_pop_2(ctx);

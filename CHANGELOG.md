@@ -30,6 +30,9 @@ v4.4.0 - TBD
 * Improves the miniRT API documentation.
 * Fixes ANSI text coloration for SSJ in Windows 10 Anniversary Update and
   later.
+* Fixes a bug where CommonJS module filenames don't get mapped to their source
+  tree names when using SSJ Blue, causing the debugger to not be able to find
+  them.
 * Fixes a bug where the miniRT terminal can get rendered before other threads.
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
 * Fixes a bug where error attribution doesn't work properly if `Duktape.act()`

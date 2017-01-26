@@ -231,7 +231,7 @@ main(int argc, char* argv[])
 		screen_toggle_fullscreen(g_screen);
 
 	screen_show_mouse(g_screen, false);
-	if (sfs_fexist(g_fs, "#/polyfills.js", NULL) && !build_exec("#/polyfills.js", false))
+	if (sfs_fexist(g_fs, "#/polyfills.js", NULL) && !script_eval("#/polyfills.js", false))
 		goto on_js_error;
 
 	// display status message if we need to wait for SSJ
@@ -249,7 +249,7 @@ main(int argc, char* argv[])
 
 	// execute the main script
 	script_path = fs_script_path(g_fs);
-	if (!build_exec(path_cstr(script_path), fs_version(g_fs) >= 2))
+	if (!script_eval(path_cstr(script_path), fs_version(g_fs) >= 2))
 		goto on_js_error;
 	duk_pop(g_duk);
 
