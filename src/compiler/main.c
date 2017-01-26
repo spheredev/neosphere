@@ -34,7 +34,7 @@ main(int argc, char* argv[])
 	if (s_want_clean)
 		build_clean(build);
 	else {
-		retval = build_run(build, s_want_rebuild)
+		retval = build_run(build, s_want_source_map, s_want_rebuild)
 			? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 	build_free(build);

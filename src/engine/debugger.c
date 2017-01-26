@@ -57,7 +57,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
 	game_path = fs_path(g_fs);
-	if (data = sfs_fslurp(g_fs, "sourcemap.json", NULL, &data_size)) {
+	if (data = sfs_fslurp(g_fs, "sourceMap.json", NULL, &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
 		duk_put_prop_string(g_duk, -2, "debugMap");

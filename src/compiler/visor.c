@@ -86,7 +86,7 @@ visor_error(visor_t* visor, const char* fmt, ...)
 
 	va_start(ap, fmt);
 	print_indent(visor->indent_level);
-	printf("ERROR: ");
+	printf("error: ");
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);
@@ -113,7 +113,7 @@ visor_warn(visor_t* visor, const char* fmt, ...)
 
 	va_start(ap, fmt);
 	print_indent(visor->indent_level);
-	printf("warning: ");
+	printf("warn: ");
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);

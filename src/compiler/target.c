@@ -68,6 +68,19 @@ target_path(const target_t* target)
 	return target->path;
 }
 
+const path_t*
+target_source_path(const target_t* target)
+{
+	target_t* source;
+	
+	if (vector_len(target->sources) != 1)
+		return NULL;
+	source = *(target_t**)vector_get(target->sources, 0);
+	if (source->tool != NULL)
+		return NULL;
+	return target_path(source);
+}
+
 void
 target_add_source(target_t* target, target_t* source)
 {

@@ -232,8 +232,9 @@ build_clean(build_t* build)
 }
 
 bool
-build_run(build_t* build, bool rebuild_all)
+build_run(build_t* build, bool want_debug, bool rebuild_all)
 {
+	path_t*       dest_path;
 	const char*   filename;
 	vector_t*     filenames;
 	const char*   json;
@@ -243,14 +244,17 @@ build_run(build_t* build, bool rebuild_all)
 	int           num_matches = 1;
 	int           num_warns;
 	const path_t* path;
+	const path_t* source_path;
 	path_t*       spk_path;
 	vector_t*     sorted_targets;
 
 	iter_t iter;
 	target_t** p_target;
 
-	// ensure there are no conflicts before building.
-	visor_begin_op(build->visor, "checking for conflicts");
+	// ensure there are no conflicting targets before building.  to simplify the check,
+	// we sort the targets by filename first and then look for runs of identical filenames.
+	// by doing this, we only have to walk the list once.
+	visor_begin_op(build->visor, "building Cellscript targets", vector_len(build->targets));
 	sorted_targets = vector_dup(build->targets);
 	vector_sort(sorted_targets, sort_targets_by_path);
 	iter = vector_enum(sorted_targets);
@@ -266,12 +270,12 @@ build_run(build_t* build, bool rebuild_all)
 		last_filename = filename;
 	}
 	vector_free(sorted_targets);
-	visor_end_op(build->visor);
-	if (visor_num_errors(build->visor) > 0)
+	if (visor_num_errors(build->visor) > 0) {
+		visor_end_op(build->visor);
 		goto finished;
+	}
 	
 	// build all relevant targets
-	visor_begin_op(build->visor, "building Cellscript targets", vector_len(build->targets));
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		path = target_path(*p_target);
@@ -303,10 +307,41 @@ build_run(build_t* build, bool rebuild_all)
 		goto finished;
 	}
 
+	// generate the source map
+	if (want_debug) {
+		visor_begin_op(build->visor, "generating source map");
+		duk_push_object(build->js_context);
+		duk_push_object(build->js_context);
+		iter = vector_enum(build->targets);
+		while (p_target = vector_next(&iter)) {
+			path = target_path(*p_target);
+			if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
+				continue;
+			if (!(source_path = target_source_path(*p_target)))
+				continue;
+			dest_path = path_remove_hop(path_dup(path), 0);
+			duk_push_string(build->js_context, path_cstr(dest_path));
+			duk_push_string(build->js_context, path_cstr(source_path));
+			duk_put_prop(build->js_context, -3);
+			path_free(dest_path);
+		}
+		duk_put_prop_string(build->js_context, -2, "fileMap");
+		duk_json_encode(build->js_context, -1);
+		json = duk_get_lstring(build->js_context, -1, &json_size);
+		fs_fspew(build->fs, "@/sourceMap.json", json, json_size);
+		duk_pop(build->js_context);
+		visor_end_op(build->visor);
+	}
+	else {
+		fs_unlink(build->fs, "@/sourceMap.json");
+	}
+	
 	// package all targets (if applicable)
 	if (build->spk_writer != NULL) {
 		visor_begin_op(build->visor, "packaging assets");
 		spk_add_file(build->spk_writer, build->fs, "@/game.json", "game.json");
+		if (want_debug)
+			spk_add_file(build->spk_writer, build->fs, "@/sourceMap.json", "sourceMap.json");
 		iter = vector_enum(build->targets);
 		while (p_target = vector_next(&iter)) {
 			path = target_path(*p_target);
@@ -338,6 +373,7 @@ build_run(build_t* build, bool rebuild_all)
 finished:
 	num_errors = visor_num_errors(build->visor);
 	num_warns = visor_num_warns(build->visor);
+	printf("\n");
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
 	return num_errors == 0;
 }
