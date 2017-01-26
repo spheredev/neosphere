@@ -58,13 +58,14 @@ static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 
-static void       clean_old_artifacts (struct build* build, bool keep_targets);
-static duk_bool_t eval_cjs_module     (duk_context* ctx, fs_t* fs, const char* filename);
-static path_t*    find_cjs_module     (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
-static duk_ret_t  install_target      (duk_context* ctx);
-static path_t*    load_package_json   (duk_context* ctx, const char* filename);
-static void       make_file_targets   (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
-static void       push_require        (duk_context* ctx, const char* module_id);
+static void       clean_old_artifacts  (struct build* build, bool keep_targets);
+static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename);
+static path_t*    find_cjs_module      (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static duk_ret_t  install_target       (duk_context* ctx);
+static path_t*    load_package_json    (duk_context* ctx, const char* filename);
+static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static void       push_require         (duk_context* ctx, const char* module_id);
+static int        sort_targets_by_path (const void* p_a, const void* p_b);
 
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
@@ -233,17 +234,42 @@ build_clean(build_t* build)
 bool
 build_run(build_t* build, bool rebuild_all)
 {
+	const char*   filename;
 	vector_t*     filenames;
 	const char*   json;
 	size_t        json_size;
+	const char*   last_filename = "";
 	int           num_errors;
+	int           num_matches = 1;
 	int           num_warns;
 	const path_t* path;
 	path_t*       spk_path;
+	vector_t*     sorted_targets;
 
 	iter_t iter;
 	target_t** p_target;
 
+	// ensure there are no conflicts before building.
+	visor_begin_op(build->visor, "checking for conflicts");
+	sorted_targets = vector_dup(build->targets);
+	vector_sort(sorted_targets, sort_targets_by_path);
+	iter = vector_enum(sorted_targets);
+	while (vector_next(&iter)) {
+		filename = path_cstr(target_path(*(target_t**)iter.ptr));
+		if (strcmp(filename, last_filename) == 0)
+			++num_matches;
+		else {
+			if (num_matches > 1)
+				visor_error(build->visor, "%d-way conflict %s", num_matches, filename);
+			num_matches = 1;
+		}
+		last_filename = filename;
+	}
+	vector_free(sorted_targets);
+	visor_end_op(build->visor);
+	if (visor_num_errors(build->visor) > 0)
+		goto finished;
+	
 	// build all relevant targets
 	visor_begin_op(build->visor, "building Cellscript targets", vector_len(build->targets));
 	iter = vector_enum(build->targets);
@@ -310,6 +336,8 @@ build_run(build_t* build, bool rebuild_all)
 	fs_fspew(build->fs, "@/artifacts.json", json, json_size);
 
 finished:
+	num_errors = visor_num_errors(build->visor);
+	num_warns = visor_num_warns(build->visor);
 	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
 	return num_errors == 0;
 }
@@ -645,6 +673,17 @@ push_require(duk_context* ctx, const char* module_id)
 		duk_push_string(ctx, module_id);
 		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
 	}
+}
+
+static int
+sort_targets_by_path(const void* p_a, const void* p_b)
+{
+	const target_t* a;
+	const target_t* b;
+	
+	a = *(const target_t**)p_a;
+	b = *(const target_t**)p_b;
+	return strcmp(path_cstr(target_path(a)), path_cstr(target_path(b)));
 }
 
 static duk_ret_t
