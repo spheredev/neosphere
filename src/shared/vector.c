@@ -40,6 +40,7 @@ vector_dup(const vector_t* vector)
 	copy = vector_new(vector->pitch);
 	vector_resize(copy, vector->num_items);
 	memcpy(copy->buffer, vector->buffer, vector->pitch * vector->num_items);
+	copy->num_items = vector->num_items;
 	return copy;
 }
 
