@@ -32,6 +32,27 @@ Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
 "@/../maggie.fat", will be met with a sandbox violation error.
 
 
+Sphere v2 API
+-------------
+
+To make things easier for Sphere v2 developers, Cell provides a subset of the
+Sphere v2 API and standard library for use in Cellscripts.  Specifically, the
+following are provided:
+
+    - Encoding API (`TextEncoder`, `TextDecoder` classes)
+    - File System API (`FS` object, FileStream class)
+    - Random Number Generator API (`RNG` object)
+    - Several standard library modules:
+        - `assert` module
+        - `from` module
+        - `random` module
+        - `struct` module
+        - `xml` module
+
+Refer to `sphere2-api.txt` and/or `miniRT-api.txt` for more information on how
+to use those APIs.
+
+
 Core Cellscript API
 -------------------
 
@@ -123,105 +144,45 @@ Tool#stage(filename, sources);
     object representing the target file.
 
 
-File System API
+`transpile` Module
+------------------
+
+This module allows you to use ECMAScript 2015 features such as destructuring
+assignment and arrow functions in Sphere games.  These syntax features are not
+natively supported by Duktape (the JavaScript engine used in minisphere), but
+can be used by translating the ES 2015 scripts to ES5 first.
+
+    const transpile = require('transpile');
+
+transpile.scripts(targetPath, sources);
+
+    Stages a build that translates each Target in `sources` from ES 2015 to ES5
+    and places the resulting scripts in the directory named by `targetPath`.
+    Scripts are processed as program code; if you want to use `import` and
+    `export` (ES 2015 modules), you should call `transpile.modules()` instead.
+    
+transpile.modules(targetPath, sources);
+
+    Like `transpile.scripts()`, but processes the sources as ES 2015 modules
+    and converts them to CommonJS (i.e. imported using `require()`) modules.
+    This is the preferred translation module for Sphere v2 games and allows use
+    of ES 2015 `import` and `export`.
+
+    Note: For convenience, this function's name can be abbreviated as
+          `transpile()`.
+
+
+`minify` Module
 ---------------
 
-Cell provides the familiar Sphere v2 file system API, providing easy access to
-the file system during a build.
+`minify` allows you to minify scripts, which may allow them to compress better
+when packaged in a SPK and also serves to obfuscate your game's source code
+(note, however, that minification can be reversed, at least partially, with the
+proper tools).
 
-FS.createDirectory(dir_name);
+    const minify = require('minify');
 
-    Creates the specified directory and any of its parent directories that
-    don't already exist.
+minify(targetPath, sources);
 
-FS.deleteFile(filename);
-
-    Deletes `filename` from the file system.
-
-FS.exists(filename);
-
-    Checks whether the specified file exists and returns true if it does.
-    Otherwise, returns false.
-
-FS.openFile(filename, mode);
-
-    Opens the specified file and constructs a new FileStream to access it.
-    `mode` is a string in the same format as that of C fopen() specifying the
-    mode in which to open the file:
-
-        r:  Open file for reading.
-        r+: Open file for update (reading and writing).
-        w:  Create/truncate then open file for writing.
-        w+: Create/truncate then open file for update.
-        a:  Open file (create if not found) with file position at end of file.
-        a+: Open file for update with initial position at end of file.
-
-    Note that calling FS.open() is the only way to get a FileStream object;
-    there is no FileStream constructor.
-
-FS.readFile(filename);
-
-    Reads all data from the specified file and returns it as an ArrayBuffer.
-    This avoids the need to explicitly open and close a file when all you want
-    to do is read its contents into memory.
-
-FS.removeDirectory(dir_name);
-
-    Deletes the specified directory.  The directory must be empty or an error
-    will be thrown.
-
-FS.rename(srcname, destname);
-
-    Renames the file named by `srcname` to `destname`, both of which are
-    assumed to be full SphereFS paths.  This can also be used to move a file
-    between directories; if so, the destination directory must already exist.
-
-FS.resolve(path);
-
-    Resolves a path (which may contain relative components) to its canonical
-    SphereFS representation.  This can be useful when data is associated with
-    individual assets, such as map files, and you need to ensure the same data
-    is pulled for a given file regardless of the path used to access it.
-
-    Note that the resource referred to by the path doesn't need to exist.  As
-    with other FS methods, FS.resolve() will throw an error if an absolute path
-    is passed in.
-
-FS.writeFile(filename, data);
-
-    Writes an entire file in one go.  If a file already exists with the given
-    filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
-    DataView containing the data to be written.
-
-FileStream#fileName [read-only]
-
-    Gets the full canonicalized SphereFS filename of the underlying file.
-
-FileStream#position [read/write]
-
-    Gets or sets the file position, which determines where in the file the next
-    read or write will start from.  Expressed in bytes.
-
-    Note: For files opened for writing, it is valid to seek past the end of the
-          stream.  In this case the next write will be at the new position and
-          the intervening space filled with NUL bytes.
-
-FileStream#size [read-only]
-
-    Gets the size of the underlying file, in bytes.
-
-FileStream#close();
-
-    Closes the stream, after which the FileStream object should not be used.
-    Attempting to read or write to a stream after it is closed will throw an
-    error.
-
-FileStream#read(num_bytes);
-
-    Reads data from the file, up to the specified number of bytes, and returns
-    it as an ArrayBuffer.  The file must be opened for reading.
-
-FileStream#write(data);
-
-    Writes data to the file and advances the file pointer.  `data` should be an
-    ArrayBuffer, TypedArray or DataView containing the data to be written.
+    Stages a build that runs each Target in `sources` through a JS minifier and
+    places the resulting scripts in the directory named by `targetPath`.
