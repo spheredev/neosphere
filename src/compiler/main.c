@@ -17,7 +17,7 @@ bool           s_want_source_map;
 int
 main(int argc, char* argv[])
 {
-	build_t* build;
+	build_t* build = NULL;
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
@@ -30,7 +30,8 @@ main(int argc, char* argv[])
 	printf("\n");
 	
 	build = build_new(s_in_path, s_out_path);
-	build_eval(build, "Cellscript.js");
+	if (!build_eval(build, "Cellscript.js"))
+		goto shutdown;
 	if (s_want_clean)
 		build_clean(build);
 	else {
@@ -39,10 +40,10 @@ main(int argc, char* argv[])
 		if (s_package_path != NULL)
 			build_package(build, path_cstr(s_package_path));
 	}
-	build_free(build);
 	retval = EXIT_SUCCESS;
 
 shutdown:
+	build_free(build);
 	path_free(s_in_path);
 	path_free(s_out_path);
 	return retval;
@@ -224,7 +225,7 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Duktape: v%d.%d.%d    zlib: v%s\n",
+		printf("    Duktape: v%ld.%ld.%ld    zlib: v%s\n",
 			DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100,
 			zlibVersion());
 	}

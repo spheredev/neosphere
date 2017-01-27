@@ -4,24 +4,33 @@ Release Notes
 minisphere 4.4
 --------------
 
+* The Cellscript API has been massively overhauled in order to improve
+  extensibility.  Cellscripts will need to be rewritten; review the Cellscript
+  API reference to see what's changed.
+
+* Cell's command line interface has been updated to make it easier to use.  It
+  is now possible to initiate a build by simply entering `cell` while in the
+  source directory.  Doing so will build your game in `./dist`.
+
+* SphereFS sandboxing has been strengthened: Attempting to make changes in a
+  location which is specified to be read-only (such as the game package) will
+  now throw a TypeError.  Save data should always be stored in `~/` or a
+  subdirectory.
+
+* ECMAScript 2015 constructs such as destructuring assignment and arrow
+  functions are now supported in Sphere games.  Note that Duktape doesn't
+  support ES2015 syntax directly, so this requires a `transpile()` step in your
+  game's Cellscript.  For convenience, the Sphere Studio project template in
+  this version includes such a step already.
+
 * All ECMAScript 2015 builtins such as WeakMap, Set, and Promise are now
   supported natively via a polyfill.  This shouldn't impact compatibility, but
   may make some things easier so it's worth bearing in mind.
-
-* ECMAScript 2015 constructs such as destructuring assignment and arrow
-  functions are now supported.  Note that Duktape doesn't support ES2015 syntax
-  directly, so this requires a `transpile()` step in your game's Cellscript.
-  For convenience, the Sphere Studio project template in this version includes
-  such a step already.
 
 * Most of the `FS` functions have been renamed to make them easier to
   understand at a glance.  For example, `FS.mkdir()` is now called
   `FS.createDirectory()`.  Scripts using these functions will need to be
   updated to work with minisphere 4.4 and later.
-
-* The Cellscript API has been massively overhauled in order to improve
-  extensibility.  Cellscripts will need to be rewritten; review the Cellscript
-  API reference to see what's changed.
 
 
 minisphere 4.3

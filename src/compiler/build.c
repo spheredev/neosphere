@@ -177,6 +177,9 @@ build_free(build_t* build)
 	
 	iter_t iter;
 
+	if (build == NULL)
+		return;
+
 	num_errors = visor_num_errors(build->visor);
 	num_warns = visor_num_warns(build->visor);
 	printf("\n");

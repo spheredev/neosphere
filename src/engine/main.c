@@ -638,7 +638,7 @@ print_banner(bool want_copyright, bool want_deps)
 		printf("\n");
 		printf("    Allegro: v%-8s   libmng: v%s\n", al_version, mng_version_text());
 		printf("     Dyad.c: v%-8s     zlib: v%s\n", dyad_getVersion(), zlibVersion());
-		printf("    Duktape: v%d.%d.%d\n", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
+		printf("    Duktape: v%ld.%ld.%ld\n", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 		free(al_version);
 	}
 }

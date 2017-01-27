@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.4.0 - TBD
-------------
+v4.4.0 - January 27, 2017
+-------------------------
 
 * Overhauls the Cellscript API: `require()` is supported, file paths are
   resolved using SphereFS semantics, and Cellscripts and modules can now define
