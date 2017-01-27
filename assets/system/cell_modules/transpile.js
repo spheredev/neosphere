@@ -45,14 +45,14 @@ function doTranspile(dirName, sources, tool)
 	return targets;
 }
 
-transpile.module = transpile;
+transpile.v2 = transpile;
 function transpile(dirName, sources)
 {
 	return doTranspile(dirName, sources, moduleTool);
 }
 
-transpile.scripts = transpileScripts
-function transpileScripts(dirName, sources)
+transpile.v1 = transpileAsScripts;
+function transpileAsScripts(dirName, sources)
 {
 	return doTranspile(dirName, sources, scriptTool);
 }

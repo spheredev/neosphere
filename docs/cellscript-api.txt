@@ -154,21 +154,22 @@ can be used by translating the ES 2015 scripts to ES5 first.
 
     const transpile = require('transpile');
 
-transpile.scripts(targetPath, sources);
+transpile.v1(targetPath, sources);
 
     Stages a build that translates each Target in `sources` from ES 2015 to ES5
     and places the resulting scripts in the directory named by `targetPath`.
-    Scripts are processed as program code; if you want to use `import` and
-    `export` (ES 2015 modules), you should call `transpile.modules()` instead.
-    
-transpile.modules(targetPath, sources);
+    For compatibility with Sphere v1 code, this treats input scripts as program
+    code; if you want to use `import` and `export` (ES 2015 modules), you
+    should call `transpile.v2()` instead.
 
-    Like `transpile.scripts()`, but processes the sources as ES 2015 modules
-    and converts them to CommonJS (i.e. imported using `require()`) modules.
-    This is the preferred translation module for Sphere v2 games and allows use
-    of ES 2015 `import` and `export`.
+transpile.v2(targetPath, sources);
 
-    Note: For convenience, this function's name can be abbreviated as
+    Like `transpile.v1()` above, but processes the input scripts as ES 2015
+    modules and converts them to CommonJS (i.e. imported using `require()`)
+    modules.  This is the preferred transpilation mode for Sphere v2 games and
+    allows use of ES 2015 `import` and `export`.
+
+    Note: For convenience, `transpile.v2()` can be abbreviated as
           `transpile()`.
 
 
