@@ -236,8 +236,8 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   cell [-i <in-dir>] [-o <out-dir>] [options]\n");
-	printf("   cell [-i <in-dir>] [-o <out-dir>] -p <out-file> [options]\n");
+	printf("   cell [-i <in-dir>] [-o <out-dir>] [-p <out-pkgfile>] [options]\n");
+	printf("   cell -c [-i <in-dir>] [-o <out-dir>]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   -i, --in-dir    Set the input directory.  If not provided, Cell will look \n");

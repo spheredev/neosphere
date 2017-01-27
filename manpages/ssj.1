@@ -6,8 +6,8 @@ ssj \- the JavaScript debugger for minisphere
 .na
 .TP 4
 .B ssj
-.RB [ \-\-run ]
-.RB [ \-\-connect " | "
+.RB [ \-\-no\-pause ]
+.RB [ \-\-attach " | "
 .IR gamefile ]
 .ad
 .hy
@@ -41,7 +41,7 @@ object.
 SSJ will let you see that output.
 .P
 Unless you use the
-.B \-\-connect
+.B \-\-attach
 option (see below), SSJ will start minisphere for you.
 This avoids to need to open a separate terminal for debugging.
 Simply provide the name of a Sphere game directory or package as the last argument to the
@@ -49,17 +49,17 @@ Simply provide the name of a Sphere game directory or package as the last argume
 command, and SSJ will do the rest.
 .SH OPTIONS
 .TP
-.BR \-c ", " \-\-connect
+.BR \-c ", " \-\-attach
 Connects to a running game which was starting using the
 .BR spherun (1)
 command.
 This can be invaluable by allowing you to debug hard-to-reproduce bugs when they happen.
 .TP
-.BR \-r ", " \-\-run
+.BR \-\-no\-pause
 Sends a resume command upon attachment.
 Normally SSJ automatically pauses execution so you can see the program exactly as it was when the debugger attached.
 Use the
-.B \-\-run
+.B \-\-no\-pause
 option to override this behavior.
 .TP
 .B \-\-version

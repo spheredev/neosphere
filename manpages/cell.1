@@ -8,9 +8,9 @@ cell \- Sphere v2 game compiler and packager
 .B cell
 .RB [ \-i
 .IR indir ]
-.RB [ \-b
-.I gamedir
-.RB "| " \-p
+.RB [ \-o
+.IR outdir ]
+.RB [ \-p
 .IR spkfile ]
 [\fB\-\-debug\fR]
 .RI [ targetname ]
@@ -25,40 +25,34 @@ in the root of the game's source tree.
 A minimal Cellscript for a Sphere v2 game might look like this:
 .P
 .RS 0
-function $default()
+    describe("Showdown at 8:12", {
 .RS 0
-{
-.RS 0
-    install(files("*", true));
-.RS 0
-    install(manifest({
-.RS 0
-        name: "Showdown at 8:12 PM",
-.RS 0
-        author: "maggie Pigg",
+        author: "maggie the Pigg",
 .RS 0
         summary: "Have fun getting eaten!",
 .RS 0
         resolution: '320x240',
 .RS 0
-        script: 'scripts/start.js',
+        main: 'scripts/main.js',
 .RS 0
-    }));
+    });
 .RS 0
-}
+.
+.RS 0
+    install('@/', files('*', true));
 .P
 The above script packages the entire source tree, which is usually overkill.
 At that point it would be simpler to write the
 .I game.json
 file manually, archive the entire source tree, and distribute the archive, forgoing Cell entirely.
-The real power of Cell comes from its asset system, of which the
+The real power of Cell comes from its target system, of which the
 .B files()
 function used above is just one component.
 .P
-In Cell, an
-.I asset
+In Cell, a
+.I target
 represents the output of a single step in the build process.
-Assets may either be
+Targets may either be
 .I installed
 (using the
 .B install()
@@ -68,32 +62,38 @@ used as a
 in building another asset.
 For example, you might build a tileset from a set of image files.
 With a properly-written Cellscript, Cell can figure out all the dependencies for you, and build everything in the proper order to make a working package.
-.SH ASSETS
+.SH TARGETS
 .TP
 .B files(pattern[, recursive = false])
-An asset that stands in for a set of files.
+Constructs a set of targets representing all files matching a specified pattern.
 .B files()
-is unique in that it doesn't actually build anything - the files named are used as-is.
-However, like all other assets, a
+is unique among targets in that it doesn't actually build anything - the files named are used as-is.
+However, like all other targets, a
 .B files()
-asset may be installed directly (which will copy the files into the final package), or used as input for building another asset.
+asset may be installed directly (which will copy the files into the final package), or used as input for building another target.
 .P
-Asset functions only declare assets.
-At build time, Cell will compile only assets which are part of the dependency chain for an asset which is ultimately installed.
-Therefore, you must pass any assets which need to be included in the final package to the
+Target functions only declare assets.
+At build time, Cell will compile only those targets which are part of the dependency chain for a target which is ultimately installed into the game package.
+Therefore, you must pass any targets which need to be included in the final package to the
 .B install()
 function:
 .TP
-.B install(asset[, subdir])
-Install an asset. The optional
+.B install(subdir, targets)
+Install one or more targets. The
 .I subdir
-parameter specifies the subdirectory path, relative to the root of the package, where the asset will be installed.
+parameter specifies the directory where the asset will be installed.
+Because Cell uses SphereFS to sandbox the build, you must prefix the directory path with
+.B @/
+to install the target into the game package.
 (note: Recursive
 .B files()
-assets, when installed, will recreate the matching portion of the original directory tree in the install location.)
+targets, when installed, will recreate the matching portion of the original directory tree in the install location.)
 .SH READ MORE
 Complete API documentation for Cell has been installed in
 .BR /usr/share/doc/minisphere .
+Refer to
+.B cellscript-api.gz
+to learn about everything that can go into a Cellscript.
 .SH BUGS
 Report any bugs found in minisphere or the GDK tools to:
 .br
