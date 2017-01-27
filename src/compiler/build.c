@@ -15,7 +15,6 @@ struct build
 	vector_t*     artifacts;
 	fs_t*         fs;
 	duk_context*  js_context;
-	spk_writer_t* spk_writer;
 	vector_t*     targets;
 	visor_t*      visor;
 };
@@ -70,27 +69,18 @@ static int        sort_targets_by_path (const void* p_a, const void* p_b);
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
 {
-	vector_t*     artifacts;
-	build_t*      build;
-	duk_context*  ctx;
-	char*         filename;
-	fs_t*         fs;
-	char*         json;
-	size_t        json_size;
-	spk_writer_t* spk_writer = NULL;
-	path_t*       staging_path;
+	vector_t*    artifacts;
+	build_t*     build;
+	duk_context* ctx;
+	char*        filename;
+	fs_t*        fs;
+	char*        json;
+	size_t       json_size;
 
 	build = calloc(1, sizeof(build_t));
 	
 	// set up the SphereFS sandbox
-	if (!path_is_file(out_path))
-		fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
-	else {
-		staging_path = path_rebase(path_new(".cell_staging/@/"), source_path);
-		spk_writer = spk_create(path_cstr(out_path));
-		fs = fs_new(path_cstr(source_path), path_cstr(staging_path), NULL);
-		path_free(staging_path);
-	}
+	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
 
 	ctx = duk_create_heap(NULL, NULL, NULL, build, NULL);
 
@@ -173,7 +163,6 @@ build_new(const path_t* source_path, const path_t* out_path)
 	build->visor = visor_new();
 	build->fs = fs;
 	build->js_context = ctx;
-	build->spk_writer = spk_writer;
 	build->artifacts = artifacts;
 	build->targets = vector_new(sizeof(target_t*));
 	return build;
@@ -182,7 +171,15 @@ build_new(const path_t* source_path, const path_t* out_path)
 void
 build_free(build_t* build)
 {
+	int num_errors;
+	int num_warns;
+	
 	iter_t iter;
+
+	num_errors = visor_num_errors(build->visor);
+	num_warns = visor_num_warns(build->visor);
+	printf("\n");
+	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
 
 	iter = vector_enum(build->artifacts);
 	while (vector_next(&iter))
@@ -192,7 +189,6 @@ build_free(build_t* build)
 		target_free(*(target_t**)iter.ptr);
 
 	duk_destroy_heap(build->js_context);
-	spk_close(build->spk_writer);
 	fs_free(build->fs);
 	visor_free(build->visor);
 	free(build);
@@ -232,6 +228,39 @@ build_clean(build_t* build)
 }
 
 bool
+build_package(build_t* build, const char* filename)
+{
+	const path_t* in_path;
+	path_t*       out_path;
+	spk_writer_t* spk;
+
+	iter_t iter;
+	target_t** p_target;
+
+	visor_begin_op(build->visor, "packaging game to '%s'", filename);
+	spk = spk_create(filename);
+	spk_add_file(spk, build->fs, "@/game.json", "game.json");
+	spk_add_file(spk, build->fs, "@/sourceMap.json", "sourceMap.json");
+	iter = vector_enum(build->targets);
+	while (p_target = vector_next(&iter)) {
+		in_path = target_path(*p_target);
+		if (path_num_hops(in_path) == 0 || !path_hop_cmp(in_path, 0, "@"))
+			continue;
+		out_path = path_dup(target_path(*p_target));
+		path_remove_hop(out_path, 0);
+		visor_begin_op(build->visor, "packaging %s", path_cstr(out_path));
+		spk_add_file(spk, build->fs,
+			path_cstr(target_path(*p_target)),
+			path_cstr(out_path));
+		path_free(out_path);
+		visor_end_op(build->visor);
+	}
+	spk_close(spk);
+	visor_end_op(build->visor);
+	return true;
+}
+
+bool
 build_run(build_t* build, bool want_debug, bool rebuild_all)
 {
 	path_t*       dest_path;
@@ -245,7 +274,6 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	int           num_warns;
 	const path_t* path;
 	const path_t* source_path;
-	path_t*       spk_path;
 	vector_t*     sorted_targets;
 
 	iter_t iter;
@@ -336,29 +364,6 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		fs_unlink(build->fs, "@/sourceMap.json");
 	}
 	
-	// package all targets (if applicable)
-	if (build->spk_writer != NULL) {
-		visor_begin_op(build->visor, "packaging assets");
-		spk_add_file(build->spk_writer, build->fs, "@/game.json", "game.json");
-		if (want_debug)
-			spk_add_file(build->spk_writer, build->fs, "@/sourceMap.json", "sourceMap.json");
-		iter = vector_enum(build->targets);
-		while (p_target = vector_next(&iter)) {
-			path = target_path(*p_target);
-			if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
-				continue;
-			spk_path = path_dup(target_path(*p_target));
-			path_remove_hop(spk_path, 0);
-			visor_begin_op(build->visor, "packaging %s", path_cstr(spk_path));
-			spk_add_file(build->spk_writer, build->fs,
-				path_cstr(target_path(*p_target)),
-				path_cstr(spk_path));
-			path_free(spk_path);
-			visor_end_op(build->visor);
-		}
-		visor_end_op(build->visor);
-	}
-
 	filenames = visor_filenames(build->visor);
 	duk_push_array(build->js_context);
 	iter = vector_enum(filenames);
@@ -371,10 +376,6 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	fs_fspew(build->fs, "@/artifacts.json", json, json_size);
 
 finished:
-	num_errors = visor_num_errors(build->visor);
-	num_warns = visor_num_warns(build->visor);
-	printf("\n");
-	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
 	return num_errors == 0;
 }
 

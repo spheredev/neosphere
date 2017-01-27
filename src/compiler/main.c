@@ -9,6 +9,7 @@ static void print_usage      (void);
 
 static path_t* s_in_path;
 static path_t* s_out_path;
+static path_t* s_package_path;
 bool           s_want_clean;
 bool           s_want_rebuild;
 bool           s_want_source_map;
@@ -34,10 +35,13 @@ main(int argc, char* argv[])
 	if (s_want_clean)
 		build_clean(build);
 	else {
-		retval = build_run(build, s_want_source_map, s_want_rebuild)
-			? EXIT_SUCCESS : EXIT_FAILURE;
+		if (!build_run(build, s_want_source_map, s_want_rebuild))
+			goto shutdown;
+		if (s_package_path != NULL)
+			build_package(build, path_cstr(s_package_path));
 	}
 	build_free(build);
+	retval = EXIT_SUCCESS;
 
 shutdown:
 	path_free(s_in_path);
@@ -92,22 +96,16 @@ parse_cmdline(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--package") == 0) {
 				if (++i >= argc) goto missing_argument;
-				if (s_out_path != NULL) {
-					printf("cell: too many outputs\n");
-					return false;
-				}
-				s_out_path = path_new(argv[i]);
-				if (path_filename(s_out_path) == NULL) {
+				path_free(s_package_path);
+				s_package_path = path_new(argv[i]);
+				if (path_filename(s_package_path) == NULL) {
 					printf("cell: `%s` argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
 			}
-			else if (strcmp(argv[i], "--build") == 0) {
+			else if (strcmp(argv[i], "--out-dir") == 0) {
 				if (++i >= argc) goto missing_argument;
-				if (s_out_path != NULL) {
-					printf("cell: too many outputs\n");
-					return false;
-				}
+				path_free(s_out_path);
 				s_out_path = path_new_dir(argv[i]);
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
@@ -122,22 +120,21 @@ parse_cmdline(int argc, char* argv[])
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'b':
+				case 'i':
 					if (++i >= argc) goto missing_argument;
-					if (s_out_path != NULL) {
-						printf("cell: too many outputs\n");
-						return false;
-					}
+					path_free(s_in_path);
+					s_in_path = path_new_dir(argv[i]);
+					break;
+				case 'o':
+					if (++i >= argc) goto missing_argument;
+					path_free(s_out_path);
 					s_out_path = path_new_dir(argv[i]);
 					break;
 				case 'p':
 					if (++i >= argc) goto missing_argument;
-					if (s_out_path != NULL) {
-						printf("cell: too many outputs\n");
-						return false;
-					}
-					s_out_path = path_new(argv[i]);
-					if (path_filename(s_out_path) == NULL) {
+					path_free(s_package_path);
+					s_package_path = path_new(argv[i]);
+					if (path_filename(s_package_path) == NULL) {
 						printf("cell: `%s` argument cannot be a directory\n", short_args);
 						return false;
 					}
@@ -164,16 +161,16 @@ parse_cmdline(int argc, char* argv[])
 	}
 	
 	// validate command line
-	if (s_out_path == NULL) {
-		print_usage();
-		return false;
-	}
+	if (s_out_path == NULL)
+		s_out_path = path_new("dist/");
 	
 	// check if a Cellscript exists
 	cellscript_path = path_rebase(path_new("Cellscript.js"), s_in_path);
 	if (!path_resolve(cellscript_path, NULL)) {
 		path_free(cellscript_path);
-		printf("no Cellscript.js found in source directory\n");
+		print_usage();
+		/*printf("no Cellscript.js found in source directory\n");
+		printf("enter 'cell --help' for more information");*/
 		return false;
 	}
 	
@@ -230,18 +227,19 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   cell -b <out-dir> [options] [target]\n");
-	printf("   cell -p <out-file> [options] [target]\n");
+	printf("   cell [-o <out-dir>] [options] [target]\n");
+	printf("   cell [-o <out-dir>] -p <out-file> [options] [target]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --in-dir    Set the input directory. Without this option, Cell will   \n");
-	printf("                   look for sources in the current working directory.        \n");
-	printf("   -b, --build     Build an unpackaged Sphere game distribution.             \n");
-	printf("   -p, --package   Build a Sphere package (.spk).                            \n");
+	printf("   -i, --in-dir    Set the input directory.  If not provided, Cell will look \n");
+	printf("                   for sources in the current working directory.             \n");
+	printf("   -o, --out-dir   Set the output directory.  If not provided, the output    \n");
+	printf("                   directory defaults to './dist'.                           \n");
+	printf("   -p, --package   Build a Sphere game package (.spk).                       \n");
 	printf("   -r, --rebuild   Rebuild all targets, even when already up to date.        \n");
 	printf("   -c, --clean     Clean up all artifacts from the previous build.           \n");
 	printf("   -d, --debug     Include a debugging map in the compiled game which maps   \n");
-	printf("                   compiled assets to their corresponding source files.      \n");
+	printf("                   compiled targets to their corresponding source files.     \n");
 	printf("       --version   Print the version number of Cell and its dependencies.    \n");
 	printf("       --help      Print this help text.                                     \n");
 }

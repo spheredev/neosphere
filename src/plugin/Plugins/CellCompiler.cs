@@ -57,7 +57,7 @@ namespace minisphere.Gdk.Plugins
 
         public async Task<bool> Build(IProject project, string outPath, IConsole con)
         {
-            string cellOptions = string.Format(@"--in-dir ""{0}"" --build ""{1}"" --debug",
+            string cellOptions = string.Format(@"--in-dir ""{0}"" --out-dir ""{1}"" --debug",
                 project.RootPath.Replace(Path.DirectorySeparatorChar, '/'),
                 outPath.Replace(Path.DirectorySeparatorChar, '/'));
             return await RunCell(cellOptions, con);
@@ -65,7 +65,7 @@ namespace minisphere.Gdk.Plugins
 
         public async Task<bool> Package(IProject project, string fileName, IConsole con)
         {
-            string cellOptions = string.Format(@"--in-dir ""{0}"" --package ""{1}""",
+            string cellOptions = string.Format(@"--in-dir ""{0}"" --out-dir ""{0}/.staging"" --package ""{1}""",
                 project.RootPath.Replace(Path.DirectorySeparatorChar, '/'),
                 fileName.Replace(Path.DirectorySeparatorChar, '/'));
             if (_main.Conf.MakeDebugPackages)

@@ -1,12 +1,12 @@
 /*
- *  Duktape public API for Duktape 2.0.0.
+ *  Duktape public API for Duktape 2.0.1.
  *
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 4180966c47d6d87106008dd4338de8d507c8072b (v2.0.0).
+ *  Git commit 3f5e91704aff97c754f6ef5d44aedc5e529d1b16 (v2.0.1).
  *  Git branch HEAD.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -253,15 +253,15 @@ struct duk_time_components {
  * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
  * development version after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       20000L
+#define DUK_VERSION                       20001L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "4180966c47d6d87106008dd4338de8d507c8072b"
-#define DUK_GIT_DESCRIBE                  "v2.0.0"
+#define DUK_GIT_COMMIT                    "3f5e91704aff97c754f6ef5d44aedc5e529d1b16"
+#define DUK_GIT_DESCRIBE                  "v2.0.1"
 #define DUK_GIT_BRANCH                    "HEAD"
 
 /* Duktape debug protocol version used by this build. */
