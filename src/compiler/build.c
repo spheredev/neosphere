@@ -16,6 +16,7 @@ struct build
 	fs_t*         fs;
 	duk_context*  js_context;
 	vector_t*     targets;
+	time_t        timestamp;
 	visor_t*      visor;
 };
 
@@ -57,12 +58,12 @@ static duk_ret_t js_Target_finalize         (duk_context* ctx);
 static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 
-static void       clean_old_artifacts  (struct build* build, bool keep_targets);
+static void       clean_old_artifacts  (build_t* build, bool keep_targets);
 static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename);
 static path_t*    find_cjs_module      (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static duk_ret_t  install_target       (duk_context* ctx);
 static path_t*    load_package_json    (duk_context* ctx, const char* filename);
-static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive);
+static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void       push_require         (duk_context* ctx, const char* module_id);
 static int        sort_targets_by_path (const void* p_a, const void* p_b);
 
@@ -200,8 +201,11 @@ build_eval(build_t* build, const char* filename)
 	const char* err_filename;
 	int         err_line;
 	bool        is_ok = true;
+	struct stat stats;
 
 	visor_begin_op(build->visor, "evaluating script %s", filename);
+	if (fs_stat(build->fs, filename, &stats) == 0)
+		build->timestamp = stats.st_mtime;
 	if (!eval_cjs_module(build->js_context, build->fs, filename)) {
 		is_ok = false;
 		duk_get_prop_string(build->js_context, -1, "fileName");
@@ -380,7 +384,7 @@ finished:
 }
 
 static void
-clean_old_artifacts(struct build* build, bool keep_targets)
+clean_old_artifacts(build_t* build, bool keep_targets)
 {
 	vector_t* filenames;
 	bool      keep_file;
@@ -592,20 +596,21 @@ install_target(duk_context* ctx)
 	// note: install targets never have more than one source because an individual
 	//       target is constructed for each file installed.
 
-	struct build* job;
+	build_t*    build;
 	int         result;
 	const char* source_path;
 	const char* target_path;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	target_path = duk_require_string(ctx, 0);
 	duk_get_prop_index(ctx, 1, 0);
 	source_path = duk_require_string(ctx, -1);
 
-	result = fs_fcopy(job->fs, target_path, source_path, true);
+	result = fs_fcopy(build->fs, target_path, source_path, true);
 	if (result == 0)
 		// touch file to prevent "target file unchanged" warning
-		fs_utime(job->fs, target_path, NULL);
+		fs_utime(build->fs, target_path, NULL);
 	duk_push_boolean(ctx, result == 0);
 	return 1;
 }
@@ -613,16 +618,16 @@ install_target(duk_context* ctx)
 static path_t*
 load_package_json(duk_context* ctx, const char* filename)
 {
+	build_t*    build;
 	duk_idx_t   duk_top;
-	struct build* job;
 	char*       json;
 	size_t      json_size;
 	path_t*     path;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
 	
 	duk_top = duk_get_top(ctx);
-	if (!(json = fs_fslurp(job->fs, filename, &json_size)))
+	if (!(json = fs_fslurp(build->fs, filename, &json_size)))
 		goto on_error;
 	duk_push_lstring(ctx, json, json_size);
 	free(json);
@@ -636,7 +641,7 @@ load_package_json(duk_context* ctx, const char* filename)
 	path = path_strip(path_new(filename));
 	path_append(path, duk_get_string(ctx, -1));
 	path_collapse(path, true);
-	if (!fs_fexist(job->fs, path_cstr(path)))
+	if (!fs_fexist(build->fs, path_cstr(path)))
 		goto on_error;
 	return path;
 
@@ -646,7 +651,7 @@ on_error:
 }
 
 static void
-make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive)
+make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp)
 {
 	// note: 'targets' should be a vector_t initialized to sizeof(target_t*).
 
@@ -671,7 +676,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 			file_path = path_dup(*p_path);
 			if (subdir != NULL)
 				path_rebase(name, subdir);
-			make_file_targets(fs, wildcard, file_path, name, targets, true);
+			make_file_targets(fs, wildcard, file_path, name, targets, true, timestamp);
 			path_free(file_path);
 			path_free(name);
 		}
@@ -680,7 +685,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 			file_path = path_dup(*p_path);
 			if (subdir != NULL)
 				path_rebase(name, subdir);
-			target = target_new(name, fs, file_path, NULL, false);
+			target = target_new(name, fs, file_path, NULL, timestamp, false);
 			vector_push(targets, &target);
 			path_free(file_path);
 			path_free(name);
@@ -743,20 +748,21 @@ js_describe(duk_context* ctx)
 static duk_ret_t
 js_error(duk_context* ctx)
 {
-	struct build* job;
+	build_t*    build;
 	const char* message;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	message = duk_require_string(ctx, 0);
 
-	visor_error(job->visor, "%s", message);
+	visor_error(build->visor, "%s", message);
 	return 0;
 }
 
 static duk_ret_t
 js_files(duk_context* ctx)
 {
-	struct build* job;
+	build_t*    build;
 	int         num_args;
 	const char* pattern;
 	path_t*     path;
@@ -767,7 +773,8 @@ js_files(duk_context* ctx)
 	iter_t iter;
 	target_t* *p;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	num_args = duk_get_top(ctx);
 	pattern = duk_require_string(ctx, 0);
 	if (num_args >= 2)
@@ -785,11 +792,11 @@ js_files(duk_context* ctx)
 	// this is potentially recursive, so we defer to make_file_targets() to construct
 	// the targets.  note: 'path' should always be a directory at this point.
 	targets = vector_new(sizeof(target_t*));
-	make_file_targets(job->fs, wildcard, path, NULL, targets, recursive);
+	make_file_targets(build->fs, wildcard, path, NULL, targets, recursive, build->timestamp);
 	free(wildcard);
 
 	if (vector_len(targets) == 0)
-		visor_warn(job->visor, "'%s' matches 0 files", pattern);
+		visor_warn(build->visor, "'%s' matches 0 files", pattern);
 
 	// return all the newly constructed targets as an array.
 	duk_push_array(ctx);
@@ -804,8 +811,8 @@ js_files(duk_context* ctx)
 static duk_ret_t
 js_install(duk_context* ctx)
 {
+	build_t*      build;
 	path_t*       dest_path;
-	struct build*   job;
 	duk_uarridx_t length;
 	target_t*     source;
 	path_t*       name;
@@ -815,7 +822,7 @@ js_install(duk_context* ctx)
 
 	duk_uarridx_t i;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
 	
 	// retrieve the Install tool from the stash
 	duk_push_global_stash(ctx);
@@ -832,9 +839,9 @@ js_install(duk_context* ctx)
 			source = duk_require_class_obj(ctx, -1, "Target");
 			name = path_dup(target_name(source));
 			path = path_rebase(path_dup(name), dest_path);
-			target = target_new(name, job->fs, path, tool, true);
+			target = target_new(name, build->fs, path, tool, build->timestamp, true);
 			target_add_source(target, source);
-			vector_push(job->targets, &target);
+			vector_push(build->targets, &target);
 			duk_pop(ctx);
 		}
 	}
@@ -842,9 +849,9 @@ js_install(duk_context* ctx)
 		source = duk_require_class_obj(ctx, 1, "Target");
 		name = path_dup(target_name(source));
 		path = path_rebase(path_dup(name), dest_path);
-		target = target_new(name, job->fs, path, tool, true);
+		target = target_new(name, build->fs, path, tool, build->timestamp, true);
 		target_add_source(target, source);
-		vector_push(job->targets, &target);
+		vector_push(build->targets, &target);
 	}
 	return 0;
 }
@@ -879,13 +886,14 @@ js_require(duk_context* ctx)
 static duk_ret_t
 js_warn(duk_context* ctx)
 {
-	struct build* job;
+	build_t*    build;
 	const char* message;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	message = duk_require_string(ctx, 0);
 
-	visor_warn(job->visor, "%s", message);
+	visor_warn(build->visor, "%s", message);
 	return 0;
 }
 
@@ -906,13 +914,14 @@ js_system_version(duk_context* ctx)
 static duk_ret_t
 js_FS_createDirectory(duk_context* ctx)
 {
-	struct build* job;
+	build_t*    build;
 	const char* name;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	name = duk_require_path(ctx, 0);
 
-	if (fs_mkdir(job->fs, name) != 0)
+	if (fs_mkdir(build->fs, name) != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory");
 	return 0;
 }
@@ -920,13 +929,14 @@ js_FS_createDirectory(duk_context* ctx)
 static duk_ret_t
 js_FS_deleteFile(duk_context* ctx)
 {
+	build_t*    build;
 	const char* filename;
-	struct build* job;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	filename = duk_require_path(ctx, 0);
 
-	if (!fs_unlink(job->fs, filename))
+	if (!fs_unlink(build->fs, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file", filename);
 	return 0;
 }
@@ -934,29 +944,31 @@ js_FS_deleteFile(duk_context* ctx)
 static duk_ret_t
 js_FS_exists(duk_context* ctx)
 {
+	build_t*    build;
 	const char* filename;
-	struct build* job;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	filename = duk_require_path(ctx, 0);
 
-	duk_push_boolean(ctx, fs_fexist(job->fs, filename));
+	duk_push_boolean(ctx, fs_fexist(build->fs, filename));
 	return 1;
 }
 
 static duk_ret_t
 js_FS_openFile(duk_context* ctx)
 {
+	build_t*    build;
 	FILE*       file;
 	const char* filename;
-	struct build* job;
 	const char* mode;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	filename = duk_require_path(ctx, 0);
 	mode = duk_require_string(ctx, 1);
 	
-	if (!(file = fs_fopen(job->fs, filename, mode)))
+	if (!(file = fs_fopen(build->fs, filename, mode)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
 	duk_push_class_obj(ctx, "FileStream", file);
 	return 1;
@@ -966,15 +978,16 @@ static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
 	void*       buffer;
+	build_t*    build;
 	void*       file_data;
-	struct build* job;
 	const char* name;
 	size_t      size;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	name = duk_require_path(ctx, 0);
 
-	if (!(file_data = fs_fslurp(job->fs, name, &size)))
+	if (!(file_data = fs_fslurp(build->fs, name, &size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "read file failed");
 	buffer = duk_push_fixed_buffer(ctx, size);
 	memcpy(buffer, file_data, size);
@@ -987,13 +1000,14 @@ js_FS_readFile(duk_context* ctx)
 static duk_ret_t
 js_FS_removeDirectory(duk_context* ctx)
 {
-	struct build* job;
+	build_t*    build;
 	const char* name;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	name = duk_require_path(ctx, 0);
 
-	if (!fs_rmdir(job->fs, name))
+	if (!fs_rmdir(build->fs, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
 	return 0;
 }
@@ -1001,15 +1015,16 @@ js_FS_removeDirectory(duk_context* ctx)
 static duk_ret_t
 js_FS_rename(duk_context* ctx)
 {
-	struct build* job;
+	build_t*    build;
 	const char* name1;
 	const char* name2;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
+
 	name1 = duk_require_path(ctx, 0);
 	name2 = duk_require_path(ctx, 1);
 
-	if (!fs_rename(job->fs, name1, name2))
+	if (!fs_rename(build->fs, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
@@ -1028,16 +1043,16 @@ js_FS_resolve(duk_context* ctx)
 static duk_ret_t
 js_FS_writeFile(duk_context* ctx)
 {
+	build_t*    build;
 	void*       file_data;
-	struct build* job;
 	const char* name;
 	size_t      size;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
 	name = duk_require_path(ctx, 0);
 	file_data = duk_require_buffer_data(ctx, 1, &size);
 
-	if (!fs_fspew(job->fs, name, file_data, size))
+	if (!fs_fspew(build->fs, name, file_data, size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "write file failed");
 	return 0;
 }
@@ -1334,7 +1349,7 @@ js_Tool_finalize(duk_context* ctx)
 static duk_ret_t
 js_Tool_stage(duk_context* ctx)
 {
-	struct build*   job;
+	build_t*      build;
 	duk_uarridx_t length;
 	path_t*       name;
 	int           num_args;
@@ -1345,7 +1360,7 @@ js_Tool_stage(duk_context* ctx)
 
 	duk_uarridx_t i;
 
-	job = duk_get_heap_udata(ctx);
+	build = duk_get_heap_udata(ctx);
 	
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
@@ -1365,7 +1380,7 @@ js_Tool_stage(duk_context* ctx)
 		duk_pop_n(ctx, 1);
 	}
 
-	target = target_new(name, job->fs, out_path, tool, true);
+	target = target_new(name, build->fs, out_path, tool, build->timestamp, true);
 	length = (duk_uarridx_t)duk_get_length(ctx, 1);
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(ctx, 1, i);
@@ -1374,7 +1389,7 @@ js_Tool_stage(duk_context* ctx)
 		duk_pop(ctx);
 	}
 	path_free(out_path);
-	vector_push(job->targets, &target);
+	vector_push(build->targets, &target);
 
 	duk_push_class_obj(ctx, "Target", target_ref(target));
 	return 1;

@@ -33,6 +33,8 @@ v4.4.0 - TBD
 * Improves the miniRT API documentation.
 * Fixes ANSI text coloration for SSJ in Windows 10 Anniversary Update and
   later.
+* Fixes an issue where Cell doesn't automatically rebuild a game if the
+  Cellscript is modified between runs.
 * Fixes a bug where CommonJS module filenames don't get mapped to their source
   names when using SSJ Blue, causing the debugger to not be able to find them.
 * Fixes a bug where the miniRT terminal can get rendered before other threads.
