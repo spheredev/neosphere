@@ -20,14 +20,22 @@ static char* resolve (const fs_t* fs, const char* filename);
 fs_t*
 fs_new(const char* root_dir, const char* game_dir, const char* home_dir)
 {
-	fs_t* fs;
+	path_t* app_path;
+	fs_t*   fs;
 
 	fs = calloc(1, sizeof(fs_t));
 	fs->root_path = path_new_dir(root_dir);
 	fs->game_path = path_new_dir(game_dir);
-	fs->system_path = path_append(path_strip(path_new_self()), "system/");
+	app_path = path_new_self();
+	fs->system_path = path_rebase(path_new("system/"), app_path);
+	if (!path_resolve(fs->system_path, NULL)) {
+		path_free(fs->system_path);
+		fs->system_path = path_rebase(path_new("../share/minisphere/system/"), app_path);
+		path_resolve(fs->system_path, NULL);
+	}
 	if (home_dir != NULL)
 		fs->user_path = path_new_dir(home_dir);
+	path_free(app_path);
 	return fs;
 }
 

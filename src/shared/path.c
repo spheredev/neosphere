@@ -356,8 +356,6 @@ path_rebase(path_t* path, const path_t* root)
 
 	size_t i;
 	
-	if (path_filename(root) != NULL)
-		return NULL;
 	if (path_is_rooted(path))
 		return path;
 	new_hops = malloc(PATH_MAX_HOPS * sizeof(char*));
