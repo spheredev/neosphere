@@ -12,6 +12,9 @@ v4.4.0 - TBD
 * Strengthens the SphereFS sandbox.  Only the user directory (`~/`) is now
   writable; passing any other path to an API that requires write access will
   result in a TypeError.
+* Simplies the command-line interface for Cell.  You can now initiate a build
+  simply by running `cell` (with no additional options) from any directory with
+  a Cellscript in it.
 * Adds `FS.readFile()` and `FS.writeFile()` which allow reading and writing
   an entire file in a single operation.
 * Adds a `screen.frameSkip` property to allow games to control frame skipping.
@@ -31,8 +34,7 @@ v4.4.0 - TBD
 * Fixes ANSI text coloration for SSJ in Windows 10 Anniversary Update and
   later.
 * Fixes a bug where CommonJS module filenames don't get mapped to their source
-  tree names when using SSJ Blue, causing the debugger to not be able to find
-  them.
+  names when using SSJ Blue, causing the debugger to not be able to find them.
 * Fixes a bug where the miniRT terminal can get rendered before other threads.
 * Fixes a bug where `random.sample()` sometimes returns `undefined`.
 * Fixes a bug where error attribution doesn't work properly if `Duktape.act()`

@@ -13,7 +13,6 @@ static path_t* s_package_path;
 bool           s_want_clean;
 bool           s_want_rebuild;
 bool           s_want_source_map;
-static char*   s_target_name;
 
 int
 main(int argc, char* argv[])
@@ -46,7 +45,6 @@ main(int argc, char* argv[])
 shutdown:
 	path_free(s_in_path);
 	path_free(s_out_path);
-	free(s_target_name);
 	return retval;
 }
 
@@ -54,6 +52,7 @@ static bool
 parse_cmdline(int argc, char* argv[])
 {
 	path_t*     cellscript_path;
+	bool        have_in_dir = false;
 	int         num_targets = 0;
 	const char* short_args;
 
@@ -63,7 +62,6 @@ parse_cmdline(int argc, char* argv[])
 	// establish default options
 	s_in_path = path_new("./");
 	s_out_path = NULL;
-	s_target_name = strdup("default");
 	s_want_clean = false;
 	s_want_rebuild = false;
 	s_want_source_map = false;
@@ -83,6 +81,7 @@ parse_cmdline(int argc, char* argv[])
 				if (++i >= argc) goto missing_argument;
 				path_free(s_in_path);
 				s_in_path = path_new_dir(argv[i]);
+				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--explode") == 0) {
 				print_cell_quote();
@@ -90,9 +89,11 @@ parse_cmdline(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--clean") == 0) {
 				s_want_clean = true;
+				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--rebuild") == 0) {
 				s_want_rebuild = true;
+				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--package") == 0) {
 				if (++i >= argc) goto missing_argument;
@@ -102,6 +103,7 @@ parse_cmdline(int argc, char* argv[])
 					printf("cell: `%s` argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
+				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--out-dir") == 0) {
 				if (++i >= argc) goto missing_argument;
@@ -110,6 +112,7 @@ parse_cmdline(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
 				s_want_source_map = true;
+				have_in_dir = true;
 			}
 			else {
 				printf("cell: unknown option `%s`\n", argv[i]);
@@ -124,6 +127,7 @@ parse_cmdline(int argc, char* argv[])
 					if (++i >= argc) goto missing_argument;
 					path_free(s_in_path);
 					s_in_path = path_new_dir(argv[i]);
+					have_in_dir = true;
 					break;
 				case 'o':
 					if (++i >= argc) goto missing_argument;
@@ -138,15 +142,19 @@ parse_cmdline(int argc, char* argv[])
 						printf("cell: `%s` argument cannot be a directory\n", short_args);
 						return false;
 					}
+					have_in_dir = true;
 					break;
 				case 'c':
 					s_want_clean = true;
+					have_in_dir = true;
 					break;
 				case 'r':
 					s_want_rebuild = true;
+					have_in_dir = true;
 					break;
 				case 'd':
 					s_want_source_map = true;
+					have_in_dir = true;
 					break;
 				default:
 					printf("cell: unknown option `-%c`\n", short_args[i_arg]);
@@ -155,8 +163,8 @@ parse_cmdline(int argc, char* argv[])
 			}
 		}
 		else {
-			free(s_target_name);
-			s_target_name = strdup(argv[i]);
+			printf("cell: unexpected argument `%s`\n", argv[i]);
+			return false;
 		}
 	}
 	
@@ -168,9 +176,10 @@ parse_cmdline(int argc, char* argv[])
 	cellscript_path = path_rebase(path_new("Cellscript.js"), s_in_path);
 	if (!path_resolve(cellscript_path, NULL)) {
 		path_free(cellscript_path);
-		print_usage();
-		/*printf("no Cellscript.js found in source directory\n");
-		printf("enter 'cell --help' for more information");*/
+		if (have_in_dir)
+			printf("no Cellscript.js found in source directory.\n");
+		else
+			print_usage();
 		return false;
 	}
 	
@@ -227,8 +236,8 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   cell [-o <out-dir>] [options] [target]\n");
-	printf("   cell [-o <out-dir>] -p <out-file> [options] [target]\n");
+	printf("   cell [-i <in-dir>] [-o <out-dir>] [options]\n");
+	printf("   cell [-i <in-dir>] [-o <out-dir>] -p <out-file> [options]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   -i, --in-dir    Set the input directory.  If not provided, Cell will look \n");

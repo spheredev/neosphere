@@ -183,9 +183,9 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 				print_cell_quote();
 				goto on_output_only;
 			}
-			else if (strcmp(argv[i], "--connect") == 0)
+			else if (strcmp(argv[i], "--attach") == 0)
 				have_target = true;
-			else if (strcmp(argv[i], "--run") == 0)
+			else if (strcmp(argv[i], "--no-pause") == 0)
 				cmdline->run_now = true;
 			else if (strcmp(argv[i], "--trace") == 0)
 				cmdline->show_trace = true;
@@ -198,11 +198,8 @@ parse_cmdline(int argc, char* argv[], int *out_retval)
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'c':
+				case 'a':
 					have_target = true;
-					break;
-				case 'r':
-					cmdline->run_now = true;
 					break;
 				case 't':
 					cmdline->show_trace = true;
@@ -287,15 +284,14 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   ssj [--run] <game-path>\n");
-	printf("   ssj -c [--run]\n");
+	printf("   ssj [--no-pause] <game-path>\n");
+	printf("   ssj -a [--no-pause]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -c, --connect   Connect to a target which has already been started.  If no  \n");
-	printf("                   connection can be made within 30 seconds, SSJ will exit.    \n");
-	printf("   -r, --run       Prevent SSJ from pausing execution on attach.  When starting\n");
-	printf("                   a new instance, begin execution immediately.                \n");
-	printf("   -t, --trace     Show trace-level logging, e.g., ssj.trace().                \n");
-	printf("       --version   Print the version number of SSJ and its dependencies.       \n");
-	printf("       --help      Print this help text.                                       \n");
+	printf("   -a, --attach     Attach to a target which has already been started.  If no  \n");
+	printf("                    connection can be made within 30 seconds, SSJ will exit.   \n");
+	printf("       --no-pause   Prevent SSJ from pausing execution on attach.              \n");
+	printf("   -t, --trace      Show trace-level output, e.g., from console.trace().       \n");
+	printf("       --version    Print the version number of SSJ and its dependencies.      \n");
+	printf("       --help       Print this help text.                                      \n");
 }
