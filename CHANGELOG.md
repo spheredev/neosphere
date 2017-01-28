@@ -1,6 +1,14 @@
 minisphere Changelog
 ====================
 
+v4.4.1 - TBD
+------------
+
+* Fixes a bug which caused the Arch and Ubuntu installations of Cell to be
+  unable to find the standard library modules.
+* Fixes a bug which caused minisphere to crash on startup when trying to load
+  a malformed Sphere v2 manifest.
+
 v4.4.0 - January 27, 2017
 -------------------------
 

@@ -117,7 +117,8 @@ main(int argc, char* argv[])
 	// set up jump points for script bailout
 	console_log(1, "setting up jump points for longjmp");
 	if (setjmp(s_jmp_exit)) {  // user closed window, script called Exit(), etc.
-		use_fullscreen = screen_fullscreen(g_screen);
+		if (g_screen != NULL)
+			use_fullscreen = screen_fullscreen(g_screen);
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
@@ -175,10 +176,10 @@ main(int argc, char* argv[])
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
-			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists and contains a valid Sphere game.",
+			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists--and if it does, that it contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
-		fprintf(stderr, "ERROR: unable to start `%s`\n", path_cstr(g_game_path));
+		fprintf(stderr, "ERROR: failed to start `%s`\n", path_cstr(g_game_path));
 #endif
 		exit_game(false);
 	}
@@ -280,14 +281,15 @@ on_js_error:
 	duk_get_prop_string(g_duk, -2, "fileName");
 	filename = duk_get_string(g_duk, -1);
 	if (filename != NULL) {
-		fprintf(stderr, "Unhandled JS exception caught by engine\n  [%s:%d] %s\n", filename, line_num, err_msg);
+		fprintf(stderr, "!!! %s\n", err_msg);
+		fprintf(stderr, "   @ [%s:%d]\n", filename, line_num);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n ", filename, line_num, err_msg);
 		else
 			duk_push_sprintf(g_duk, "%s\n ", err_msg);
 	}
 	else {
-		fprintf(stderr, "Unhandled JS error caught by engine.\n%s\n", err_msg);
+		fprintf(stderr, "!!! %s\n", err_msg);
 		duk_push_string(g_duk, err_msg);
 	}
 	show_error_screen(duk_get_string(g_duk, -1));

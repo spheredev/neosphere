@@ -45,16 +45,16 @@ static unsigned int s_next_sandbox_id = 0;
 sandbox_t*
 fs_new(const char* game_path)
 {
-	sandbox_t* fs;
-	path_t*    path;
-	int        res_x;
-	int        res_y;
-	size_t     sgm_size;
-	kevfile_t* sgm_file;
-	char*      sgm_text = NULL;
-	spk_t*     spk;
-	void*      sourcemap_data;
-	size_t     sourcemap_size;
+	sandbox_t*  fs;
+	path_t*     path;
+	int         res_x;
+	int         res_y;
+	size_t      sgm_size;
+	kevfile_t*  sgm_file;
+	char*       sgm_text = NULL;
+	spk_t*      spk;
+	void*       sourcemap_data;
+	size_t      sourcemap_size;
 
 	console_log(1, "opening `%s` in sandbox #%u", game_path, s_next_sandbox_id);
 	
@@ -111,7 +111,8 @@ fs_new(const char* game_path)
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
 			if (dukrub_safe_call(g_duk, duk_load_s2gm, 2, 1) != DUK_EXEC_SUCCESS) {
-				console_log(0, "error parsing manifest `game.json`\n    %s", duk_to_string(g_duk, -1));
+				console_log(0, "!!! %s", duk_to_string(g_duk, -1));
+				console_log(0, "   @ [game.json:?]");
 				duk_pop(g_duk);
 				goto on_error;
 			}
@@ -592,8 +593,8 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 static duk_ret_t
 duk_load_s2gm(duk_context* ctx)
 {
-	// note: this whole thing needs to be cleaned up.  it must be pretty bad when Duktape
-	//       does the JSON parsing for us and yet the JSON manifest loader is STILL more
+	// note: this whole thing needs to be cleaned up.  it's pretty bad when Duktape
+	//       does the JSON parsing for us yet the JSON manifest loader is STILL more
 	//       complicated than the game.sgm loader.
 	
 	// arguments: -2 = sandbox_t* fs (pointer)
