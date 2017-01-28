@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.4.1 - TBD
-------------
+v4.4.1 - January 28, 2017
+-------------------------
 
 * Fixes a bug which caused the Arch and Ubuntu installations of Cell to be
   unable to find the standard library modules.

@@ -1,3 +1,12 @@
+minisphere (4.4.1) trusty; urgency=low
+
+  * Fixes a bug which caused the Arch and Ubuntu installations of Cell to be
+    unable to find the standard library modules.
+  * Fixes a bug which caused minisphere to crash on startup when trying to load
+    a malformed Sphere v2 manifest.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 28 Jan 2017 00:00:00 -0500
+
 minisphere (4.4.0) trusty; urgency=low
 
   * Overhauls the Cellscript API: `require()` is supported, file paths are
