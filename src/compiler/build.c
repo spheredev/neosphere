@@ -667,7 +667,8 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	iter_t iter;
 	path_t* *p_path;
 
-	list = fs_list_dir(fs, path_cstr(path));
+	if (!(list = fs_list_dir(fs, path_cstr(path))))
+		return;
 	
 	iter = vector_enum(list);
 	while (p_path = vector_next(&iter)) {

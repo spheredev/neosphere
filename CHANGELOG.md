@@ -1,6 +1,12 @@
 minisphere Changelog
 ====================
 
+v4.4.2 - TBD
+------------
+
+* Fixes a bug where specifying a nonexistent directory in a Cellscript files()
+  call would crash the compiler.
+
 v4.4.1 - January 28, 2017
 -------------------------
 
