@@ -1,13 +1,13 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("./babel"));
+		module.exports = factory(require("./babel-core"));
 	else if(typeof define === 'function' && define.amd)
-		define(["./babel"], factory);
+		define(["./babel-core"], factory);
 	else if(typeof exports === 'object')
-		exports["Babili"] = factory(require("./babel"));
+		exports["Babili"] = factory(require("./babel-core"));
 	else
 		root["Babili"] = factory(root["Babel"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_35__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_44__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -50,7 +50,30 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -65,33 +88,33 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports.transform = transform;
 
-	var _babelStandalone = __webpack_require__(35);
+	var _babelStandalone = __webpack_require__(44);
 
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	(0, _babelStandalone.registerPlugins)({
-	  'minify-constant-folding': __webpack_require__(4),
-	  'minify-dead-code-elimination': __webpack_require__(5),
-	  'minify-empty-function': __webpack_require__(20),
-	  'minify-flip-comparisons': __webpack_require__(6),
-	  'minify-guarded-expressions': __webpack_require__(7),
-	  'minify-infinity': __webpack_require__(21),
-	  'minify-mangle-names': __webpack_require__(8),
-	  'minify-replace': __webpack_require__(9),
+	  'minify-constant-folding': __webpack_require__(5),
+	  'minify-dead-code-elimination': __webpack_require__(6),
+	  'minify-empty-function': __webpack_require__(23),
+	  'minify-flip-comparisons': __webpack_require__(7),
+	  'minify-guarded-expressions': __webpack_require__(8),
+	  'minify-infinity': __webpack_require__(24),
+	  'minify-mangle-names': __webpack_require__(9),
+	  'minify-replace': __webpack_require__(26),
 	  'minify-simplify': __webpack_require__(10),
 	  'minify-type-constructors': __webpack_require__(11),
-	  'transform-inline-environment-variables': __webpack_require__(24),
+	  'transform-inline-environment-variables': __webpack_require__(33),
 	  'transform-member-expression-literals': __webpack_require__(12),
 	  'transform-merge-sibling-variables': __webpack_require__(13),
 	  'transform-minify-booleans': __webpack_require__(14),
-	  'transform-node-env-inline': __webpack_require__(25),
+	  'transform-node-env-inline': __webpack_require__(34),
 	  'transform-property-literals': __webpack_require__(15),
-	  'transform-remove-console': __webpack_require__(27),
-	  'transform-remove-debugger': __webpack_require__(28),
-	  'transform-simplify-comparison-operators': __webpack_require__(16),
-	  'transform-undefined-to-void': __webpack_require__(17)
+	  'transform-remove-console': __webpack_require__(16),
+	  'transform-remove-debugger': __webpack_require__(17),
+	  'transform-simplify-comparison-operators': __webpack_require__(18),
+	  'transform-undefined-to-void': __webpack_require__(19)
 	});
-	(0, _babelStandalone.registerPreset)('babili', __webpack_require__(30));
+	(0, _babelStandalone.registerPreset)('babili', __webpack_require__(37));
 
 	function transform(code) {
 	  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -109,6 +132,72 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 
+	var _createClass = function () {
+	  function defineProperties(target, props) {
+	    for (var i = 0; i < props.length; i++) {
+	      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+	    }
+	  }return function (Constructor, protoProps, staticProps) {
+	    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+	  };
+	}();
+
+	function _classCallCheck(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
+
+	var NotImplementedError = Error("NotImplementedError");
+
+	var Collapser = function () {
+	  function Collapser() {
+	    _classCallCheck(this, Collapser);
+	  }
+
+	  _createClass(Collapser, [{
+	    key: "isInitTypeValid",
+	    value: function isInitTypeValid() {
+	      throw NotImplementedError;
+	    }
+	  }, {
+	    key: "isExpressionTypeValid",
+	    value: function isExpressionTypeValid() {
+	      throw NotImplementedError;
+	    }
+	  }, {
+	    key: "getExpressionChecker",
+	    value: function getExpressionChecker() {
+	      throw NotImplementedError;
+	    }
+	  }, {
+	    key: "extractAssignment",
+	    value: function extractAssignment() {
+	      throw NotImplementedError;
+	    }
+	  }, {
+	    key: "addSuccessfully",
+	    value: function addSuccessfully() {
+	      throw NotImplementedError;
+	    }
+	  }, {
+	    key: "isSizeSmaller",
+	    value: function isSizeSmaller() {
+	      return true;
+	    }
+	  }]);
+
+	  return Collapser;
+	}();
+
+	module.exports = Collapser;
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	"use strict";
+
 	var flipSeen = Symbol("flipSeen");
 
 	module.exports = function (t) {
@@ -117,10 +206,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return !!node[flipSeen];
 	    },
 
+
 	    // Takes an expressions and determines if it has
 	    // more nodes that could benifit from flipping than not.
 	    shouldFlip: function shouldFlip(topNode) {
-	      var savings = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+	      var savings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
 	      visit(topNode);
 	      return savings > 0;
@@ -150,9 +240,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      ret[flipSeen] = true;
 
 	      if (resultNotUsed && lastNodeDesc) {
-	        var _lastNodeDesc = lastNodeDesc;
-	        var parent = _lastNodeDesc.parent;
-	        var key = _lastNodeDesc.key;
+	        var _lastNodeDesc = lastNodeDesc,
+	            parent = _lastNodeDesc.parent,
+	            key = _lastNodeDesc.key;
 
 	        if (parent && key && t.isUnaryExpression(parent[key], { operator: "!" })) {
 	          parent[key] = parent[key].argument;
@@ -203,7 +293,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -215,7 +305,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -246,12 +336,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var evaluate = __webpack_require__(18);
+	var evaluate = __webpack_require__(21);
 
 	module.exports = function (_ref) {
 	  var t = _ref.types,
@@ -373,7 +463,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -390,13 +480,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
-	var some = __webpack_require__(32);
+	var some = __webpack_require__(41);
 
 	module.exports = function (_ref) {
 	  var t = _ref.types,
 	      traverse = _ref.traverse;
 
-	  var removeOrVoid = __webpack_require__(3)(t);
+	  var removeOrVoid = __webpack_require__(4)(t);
 	  var shouldRevisit = Symbol("shouldRevisit");
 
 	  // this is used for tracking fn params that can be removed
@@ -1160,8 +1250,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    // Remove named function expression name. While this is dangerous as it changes
 	    // `function.name` all minifiers do it and hence became a standard.
-	    "FunctionExpression|ClassExpression": function FunctionExpressionClassExpression(path) {
+	    "FunctionExpression": function FunctionExpression(path) {
 	      if (!this.keepFnName) {
+	        removeUnreferencedId(path);
+	      }
+	    },
+
+
+	    // remove class names
+	    "ClassExpression": function ClassExpression(path) {
+	      if (!this.keepClassName) {
 	        removeUnreferencedId(path);
 	      }
 	    },
@@ -1215,25 +1313,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	          path.remove();
 	        }
 	      },
-	      Program: function Program(path) {
-	        var _ref4 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-	            _ref4$opts = _ref4.opts;
 
-	        _ref4$opts = _ref4$opts === undefined ? {} : _ref4$opts;
-	        var _ref4$opts$optimizeRa = _ref4$opts.optimizeRawSize,
-	            optimizeRawSize = _ref4$opts$optimizeRa === undefined ? false : _ref4$opts$optimizeRa,
-	            _ref4$opts$keepFnName = _ref4$opts.keepFnName,
-	            keepFnName = _ref4$opts$keepFnName === undefined ? false : _ref4$opts$keepFnName,
-	            _ref4$opts$keepFnArgs = _ref4$opts.keepFnArgs,
-	            keepFnArgs = _ref4$opts$keepFnArgs === undefined ? false : _ref4$opts$keepFnArgs;
+	      Program: {
+	        exit: function exit(path) {
+	          var _ref4 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	              _ref4$opts = _ref4.opts;
 
-	        // We need to run this plugin in isolation.
-	        path.traverse(main, {
-	          functionToBindings: new Map(),
-	          optimizeRawSize: optimizeRawSize,
-	          keepFnName: keepFnName,
-	          keepFnArgs: keepFnArgs
-	        });
+	          _ref4$opts = _ref4$opts === undefined ? {} : _ref4$opts;
+	          var _ref4$opts$optimizeRa = _ref4$opts.optimizeRawSize,
+	              optimizeRawSize = _ref4$opts$optimizeRa === undefined ? false : _ref4$opts$optimizeRa,
+	              _ref4$opts$keepFnName = _ref4$opts.keepFnName,
+	              keepFnName = _ref4$opts$keepFnName === undefined ? false : _ref4$opts$keepFnName,
+	              _ref4$opts$keepClassN = _ref4$opts.keepClassName,
+	              keepClassName = _ref4$opts$keepClassN === undefined ? false : _ref4$opts$keepClassN,
+	              _ref4$opts$keepFnArgs = _ref4$opts.keepFnArgs,
+	              keepFnArgs = _ref4$opts$keepFnArgs === undefined ? false : _ref4$opts$keepFnArgs;
+
+	          traverse.clearCache();
+	          path.scope.crawl();
+
+	          // We need to run this plugin in isolation.
+	          path.traverse(main, {
+	            functionToBindings: new Map(),
+	            optimizeRawSize: optimizeRawSize,
+	            keepFnName: keepFnName,
+	            keepClassName: keepClassName,
+	            keepFnArgs: keepFnArgs
+	          });
+	        }
 	      }
 	    }
 	  };
@@ -1595,7 +1702,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1603,7 +1710,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = function (_ref) {
 	  var t = _ref.types;
 
-	  var isVoid0 = __webpack_require__(2)(t);
+	  var isVoid0 = __webpack_require__(3)(t);
 
 	  return {
 	    name: "minify-flip-comparisons",
@@ -1614,8 +1721,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // typeof blah === 'function' -> 'function' === typeof blah
 	      BinaryExpression: function BinaryExpression(path) {
 	        var node = path.node;
-	        var right = node.right;
-	        var left = node.left;
+	        var right = node.right,
+	            left = node.left;
 
 	        // Make sure we have a constant on the right.
 
@@ -1653,7 +1760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1661,7 +1768,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = function (_ref) {
 	  var t = _ref.types;
 
-	  var flipExpressions = __webpack_require__(1)(t);
+	  var flipExpressions = __webpack_require__(2)(t);
 
 	  return {
 	    name: "minify-guarded-expressions",
@@ -1731,7 +1838,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1764,6 +1871,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          blacklist = _ref2$blacklist === undefined ? {} : _ref2$blacklist,
 	          _ref2$keepFnName = _ref2.keepFnName,
 	          keepFnName = _ref2$keepFnName === undefined ? false : _ref2$keepFnName,
+	          _ref2$keepClassName = _ref2.keepClassName,
+	          keepClassName = _ref2$keepClassName === undefined ? false : _ref2$keepClassName,
 	          _ref2$eval = _ref2.eval,
 	          _eval = _ref2$eval === undefined ? false : _ref2$eval;
 
@@ -1773,6 +1882,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.program = program;
 	      this.blacklist = blacklist;
 	      this.keepFnName = keepFnName;
+	      this.keepClassName = keepClassName;
 	      this.eval = _eval;
 
 	      this.unsafeScopes = new Set();
@@ -1891,7 +2001,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	              // blacklisted
 	              || mangler.isBlacklist(oldName)
 	              // function names
-	              || (mangler.keepFnName ? isFunction(binding.path) : false)) {
+	              || (mangler.keepFnName ? isFunction(binding.path) : false)
+	              // class names
+	              || (mangler.keepClassName ? isClass(binding.path) : false)) {
 	                continue;
 	              }
 
@@ -2067,7 +2179,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	function isFunction(path) {
-	  return path.isFunctionExpression() || path.isFunctionDeclaration() || path.isClassExpression() || path.isClassDeclaration();
+	  return path.isFunctionExpression() || path.isFunctionDeclaration();
+	}
+
+	// for keepClassName
+	function isClass(path) {
+	  return path.isClassExpression() || path.isClassDeclaration();
 	}
 
 	function isLabelIdentifier(path) {
@@ -2075,107 +2192,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  return path.parentPath.isLabeledStatement({ label: node }) || path.parentPath.isBreakStatement({ label: node }) || path.parentPath.isContinueStatement({ label: node });
 	}
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	module.exports = function (_ref) {
-	  var t = _ref.types;
-
-	  var NO_MEMBER = Symbol("no member");
-
-	  var replaceVisitor = {
-	    ReferencedIdentifier: function ReferencedIdentifier(path) {
-	      var _path = path;
-	      var node = _path.node;
-
-	      var optionsMap = this.replacements[node.name];
-	      if (!optionsMap) {
-	        return;
-	      }
-
-	      var options = void 0;
-	      if (path.parentPath.isMemberExpression({ object: node })) {
-	        var property = path.parent.property;
-
-	        var key = t.isIdentifier(property) && property.name;
-	        if (typeof key === "string") {
-	          options = optionsMap[key];
-	          path = path.parentPath;
-	        }
-	      }
-
-	      if (!options) {
-	        options = optionsMap[NO_MEMBER];
-	      }
-
-	      if (!options) {
-	        return;
-	      }
-
-	      path.replaceWith(options.node);
-	    }
-	  };
-
-	  return {
-	    name: "minify-replace",
-	    visitor: {
-	      Program: function Program(path) {
-	        /**
-	           Replacements is an array of objects like this:
-	           {
-	             identifierName: 'console',
-	             member: 'log', // optional
-	             replacement: {
-	               type: 'identifier',
-	               value: '',
-	             },
-	           }
-	        **/
-
-	        if (!this.opts.replacements) {
-	          // No replacements. Bail.
-	          return;
-	        }
-
-	        var map = Object.create(null);
-	        this.opts.replacements.forEach(function (_ref2) {
-	          var identifierName = _ref2.identifierName;
-	          var replacement = _ref2.replacement;
-	          var member = _ref2.member;
-
-	          if (path.scope.globals[identifierName]) {
-	            // Convert to a node, we only allow identifiers and literals as replacements
-	            if (!replacement.type.match(/literal|identifier/i)) {
-	              throw new Error("Only literals and identifier are supported as replacements");
-	            }
-
-	            var node = t[replacement.type](replacement.value);
-	            var options = {
-	              identifierName: identifierName,
-	              node: node,
-	              member: member
-	            };
-
-	            if (!map[identifierName]) {
-	              map[identifierName] = {};
-	            }
-
-	            if (member && map[identifierName][member]) {
-	              throw new Error("Replacement collision " + identifierName + "." + member);
-	            }
-	            map[identifierName][member || NO_MEMBER] = options;
-	          }
-	        });
-
-	        path.traverse(replaceVisitor, { replacements: map });
-	      }
-	    }
-	  };
-	};
 
 /***/ },
 /* 10 */
@@ -2221,13 +2237,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
-	var PatternMatch = __webpack_require__(23);
+	var PatternMatch = __webpack_require__(27);
 
 	module.exports = function (_ref) {
 	  var t = _ref.types;
 
-	  var flipExpressions = __webpack_require__(1)(t);
-	  var toMultipleSequenceExpressions = __webpack_require__(19)(t);
+	  var flipExpressions = __webpack_require__(2)(t);
+	  var toMultipleSequenceExpressions = __webpack_require__(22)(t);
 
 	  var VOID_0 = t.unaryExpression("void", t.numericLiteral(0), true);
 	  var condExprSeen = Symbol("condExprSeen");
@@ -2477,6 +2493,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var rightExpr = path.get("right");
 	        var leftExpr = path.get("left");
+
+	        if (path.node.operator !== "=") {
+	          return;
+	        }
 
 	        var canBeUpdateExpression = rightExpr.get("right").isNumericLiteral() && rightExpr.get("right").node.value === 1 && updateOperators.has(rightExpr.node.operator);
 
@@ -3824,7 +3844,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (t.isIdentifier(node.callee, { name: "Object" }) && !path.scope.getBinding("Object")) {
 
-	    var isVoid0 = __webpack_require__(2)(t);
+	    var isVoid0 = __webpack_require__(3)(t);
 	    var arg = node.arguments[0];
 	    var binding = arg && t.isIdentifier(arg) && path.scope.getBinding(arg.name);
 
@@ -3856,8 +3876,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
-	module.exports = function (_ref) {
-	  var t = _ref.types;
+	function defaults() {
+	  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	      _ref$boolean = _ref.boolean,
+	      boolean = _ref$boolean === undefined ? true : _ref$boolean,
+	      _ref$number = _ref.number,
+	      number = _ref$number === undefined ? true : _ref$number,
+	      _ref$string = _ref.string,
+	      string = _ref$string === undefined ? true : _ref$string,
+	      _ref$array = _ref.array,
+	      array = _ref$array === undefined ? true : _ref$array,
+	      _ref$object = _ref.object,
+	      object = _ref$object === undefined ? true : _ref$object;
+
+	  return {
+	    boolean: boolean, number: number, string: string, array: array, object: object
+	  };
+	}
+
+	module.exports = function (_ref2) {
+	  var t = _ref2.types;
 
 	  return {
 	    name: "minify-type-constructors",
@@ -3865,43 +3903,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	      CallExpression: function CallExpression(path) {
 	        var node = path.node;
 
-	        // Boolean(foo) -> !!foo
+	        var opts = defaults(this.opts);
 
-	        if (t.isIdentifier(node.callee, { name: "Boolean" }) && node.arguments.length === 1 && !path.scope.getBinding("Boolean")) {
+	        // Boolean(foo) -> !!foo
+	        if (opts.boolean && t.isIdentifier(node.callee, { name: "Boolean" }) && node.arguments.length === 1 && !path.scope.getBinding("Boolean")) {
 	          path.replaceWith(t.unaryExpression("!", t.unaryExpression("!", node.arguments[0], true), true));
 	          return;
 	        }
 
 	        // Number(foo) -> +foo
-	        if (t.isIdentifier(node.callee, { name: "Number" }) && node.arguments.length === 1 && !path.scope.getBinding("Number")) {
+	        if (opts.number && t.isIdentifier(node.callee, { name: "Number" }) && node.arguments.length === 1 && !path.scope.getBinding("Number")) {
 	          path.replaceWith(t.unaryExpression("+", node.arguments[0], true));
 	          return;
 	        }
 
 	        // String(foo) -> foo + ''
-	        if (t.isIdentifier(node.callee, { name: "String" }) && node.arguments.length === 1 && !path.scope.getBinding("String")) {
+	        if (opts.string && t.isIdentifier(node.callee, { name: "String" }) && node.arguments.length === 1 && !path.scope.getBinding("String")) {
 	          path.replaceWith(t.binaryExpression("+", node.arguments[0], t.stringLiteral("")));
 	          return;
 	        }
 
 	        // Array() -> []
-	        if (replaceArray(t, path)) {
+	        if (opts.array && replaceArray(t, path)) {
 	          return;
 	        }
 
 	        // Object() -> {}
-	        if (replaceObject(t, path)) {
+	        if (opts.object && replaceObject(t, path)) {
 	          return;
 	        }
 	      },
 	      NewExpression: function NewExpression(path) {
+	        var opts = defaults(this.opts);
+
 	        // new Array() -> []
-	        if (replaceArray(t, path)) {
+	        if (opts.array && replaceArray(t, path)) {
 	          return;
 	        }
 
 	        // new Object() -> {}
-	        if (replaceObject(t, path)) {
+	        if (opts.object && replaceObject(t, path)) {
 	          return;
 	        }
 	      }
@@ -3913,22 +3954,28 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 12 */
 /***/ function(module, exports) {
 
-	/*istanbul ignore next*/"use strict";
+	"use strict";
 
-	exports.__esModule = true;
-
-	exports.default = function ( /*istanbul ignore next*/_ref) {
-	  /*istanbul ignore next*/var t = _ref.types;
+	module.exports = function (_ref) {
+	  var t = _ref.types;
 
 	  return {
+	    name: "transform-member-expression-literals",
 	    visitor: {
-	      MemberExpression: { /*istanbul ignore next*/
+	      // foo['bar'] -> foo.bar
+	      MemberExpression: {
 	        exit: function exit(_ref2) {
-	          /*istanbul ignore next*/var node = _ref2.node;
+	          var node = _ref2.node;
 
 	          var prop = node.property;
-	          if (node.computed && t.isLiteral(prop) && t.isValidIdentifier(prop.value)) {
-	            // foo["bar"] => foo.bar
+	          if (!node.computed || !t.isStringLiteral(prop)) {
+	            return;
+	          }
+
+	          if (prop.value.match(/^\d+$/)) {
+	            node.property = t.numericLiteral(parseInt(prop.value, 10));
+	            node.computed = false;
+	          } else if (t.isValidIdentifier(prop.value)) {
 	            node.property = t.identifier(prop.value);
 	            node.computed = false;
 	          }
@@ -3938,37 +3985,108 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	};
 
-	/*istanbul ignore next*/module.exports = exports["default"];
-
 /***/ },
 /* 13 */
 /***/ function(module, exports) {
 
-	/*istanbul ignore next*/"use strict";
+	"use strict";
 
-	exports.__esModule = true;
+	module.exports = function (_ref) {
+	  var t = _ref.types;
 
-	exports.default = function () {
+	  function liftDeclaration(path, body, kind) {
+	    if (body[0] && body[0].isVariableDeclaration({ kind: kind })) {
+
+	      if (body[0].node.declarations.length > 1) {
+	        return;
+	      }
+
+	      if (body[1] && body[1].isVariableDeclaration({ kind: kind })) {
+	        return;
+	      }
+
+	      var firstNode = body[0].node.declarations[0];
+
+	      if (!t.isIdentifier(firstNode.id) || !firstNode.init) {
+	        return;
+	      }
+
+	      var init = path.get("init");
+	      if (!init.isVariableDeclaration({ kind: kind })) {
+	        return;
+	      }
+
+	      init.node.declarations = init.node.declarations.concat(firstNode.id);
+
+	      body[0].replaceWith(t.assignmentExpression("=", t.clone(firstNode.id), t.clone(firstNode.init)));
+	    }
+	  }
+
 	  return {
-	    visitor: { /*istanbul ignore next*/
-	      VariableDeclaration: function VariableDeclaration(path) {
-	        if (!path.inList) return;
+	    name: "transform-merge-sibling-variables",
+	    visitor: {
+	      ForStatement: function ForStatement(path) {
 
-	        /*istanbul ignore next*/var node = path.node;
+	        // Lift declarations to the loop initializer
+	        var body = path.get("body");
+	        body = body.isBlockStatement() ? body.get("body") : [body];
 
-	        while (true) {
-	          var sibling = path.getSibling(path.key + 1);
-	          if (!sibling.isVariableDeclaration({ kind: node.kind })) break;
+	        liftDeclaration(path, body, "var");
+	        liftDeclaration(path, body, "let");
+	      },
 
-	          node.declarations = node.declarations.concat(sibling.node.declarations);
-	          sibling.remove();
-	        }
+	      VariableDeclaration: {
+	        enter: [
+	        // concat variables of the same kind with their siblings
+	        function (path) {
+	          if (!path.inList) {
+	            return;
+	          }
+
+	          var node = path.node;
+
+	          while (true) {
+	            var sibling = path.getSibling(path.key + 1);
+	            if (!sibling.isVariableDeclaration({ kind: node.kind })) {
+	              break;
+	            }
+
+	            node.declarations = node.declarations.concat(sibling.node.declarations);
+	            sibling.remove();
+	          }
+	        },
+
+	        // concat `var` declarations next to for loops with it's initialisers.
+	        // block-scoped `let` and `const` are not moved because the for loop
+	        // is a different block scope.
+	        function (path) {
+	          if (!path.inList) {
+	            return;
+	          }
+
+	          var node = path.node;
+
+	          if (node.kind !== "var") {
+	            return;
+	          }
+
+	          var next = path.getSibling(path.key + 1);
+	          if (!next.isForStatement()) {
+	            return;
+	          }
+
+	          var init = next.get("init");
+	          if (!init.isVariableDeclaration({ kind: node.kind })) {
+	            return;
+	          }
+
+	          init.node.declarations = node.declarations.concat(init.node.declarations);
+	          path.remove();
+	        }]
 	      }
 	    }
 	  };
 	};
-
-	/*istanbul ignore next*/module.exports = exports["default"];
 
 /***/ },
 /* 14 */
@@ -3998,22 +4116,28 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 15 */
 /***/ function(module, exports) {
 
-	/*istanbul ignore next*/"use strict";
+	"use strict";
 
-	exports.__esModule = true;
-
-	exports.default = function ( /*istanbul ignore next*/_ref) {
-	  /*istanbul ignore next*/var t = _ref.types;
+	module.exports = function (_ref) {
+	  var t = _ref.types;
 
 	  return {
+	    name: "transform-property-literals",
 	    visitor: {
-	      ObjectProperty: { /*istanbul ignore next*/
+	      // { 'foo': 'bar' } -> { foo: 'bar' }
+	      ObjectProperty: {
 	        exit: function exit(_ref2) {
-	          /*istanbul ignore next*/var node = _ref2.node;
+	          var node = _ref2.node;
 
 	          var key = node.key;
-	          if (t.isLiteral(key) && t.isValidIdentifier(key.value)) {
-	            // "foo": "bar" -> foo: "bar"
+	          if (!t.isStringLiteral(key)) {
+	            return;
+	          }
+
+	          if (key.value.match(/^\d+$/)) {
+	            node.key = t.numericLiteral(parseInt(node.key.value, 10));
+	            node.computed = false;
+	          } else if (t.isValidIdentifier(key.value)) {
 	            node.key = t.identifier(key.value);
 	            node.computed = false;
 	          }
@@ -4022,8 +4146,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  };
 	};
-
-	/*istanbul ignore next*/module.exports = exports["default"];
 
 /***/ },
 /* 16 */
@@ -4036,16 +4158,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = function () {
 	  return {
 	    visitor: { /*istanbul ignore next*/
-	      BinaryExpression: function BinaryExpression(path) {
-	        /*istanbul ignore next*/var node = path.node;
-
-	        var op = node.operator;
-	        if (op !== "===" && op !== "!==") return;
-
-	        var left = path.get("left");
-	        var right = path.get("right");
-	        if (left.baseTypeStrictlyMatches(right)) {
-	          node.operator = node.operator.slice(0, -1);
+	      CallExpression: function CallExpression(path) {
+	        if (path.get("callee").matchesPattern("console", true)) {
+	          path.remove();
 	        }
 	      }
 	    }
@@ -4056,6 +4171,57 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 17 */
+/***/ function(module, exports) {
+
+	/*istanbul ignore next*/"use strict";
+
+	exports.__esModule = true;
+
+	exports.default = function () {
+	  return {
+	    visitor: { /*istanbul ignore next*/
+	      DebuggerStatement: function DebuggerStatement(path) {
+	        path.remove();
+	      }
+	    }
+	  };
+	};
+
+	/*istanbul ignore next*/module.exports = exports["default"];
+
+/***/ },
+/* 18 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function () {
+	  return {
+	    name: "transform-simplify-comparison-operators",
+	    visitor: {
+	      // simplify comparison operations if we're 100% certain
+	      // that each value will always be of the same type
+	      BinaryExpression: function BinaryExpression(path) {
+	        var node = path.node;
+
+	        var op = node.operator;
+	        if (op !== "===" && op !== "!==") {
+	          return;
+	        }
+
+	        var left = path.get("left");
+	        var right = path.get("right");
+	        var strictMatch = left.baseTypeStrictlyMatches(right);
+	        if (strictMatch) {
+	          node.operator = node.operator.slice(0, -1);
+	        }
+	      }
+	    }
+	  };
+	};
+
+/***/ },
+/* 19 */
 /***/ function(module, exports) {
 
 	/*istanbul ignore next*/"use strict";
@@ -4079,7 +4245,153 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*istanbul ignore next*/module.exports = exports["default"];
 
 /***/ },
-/* 18 */
+/* 20 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	/**
+	 * lodash (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+	 * Released under MIT license <https://lodash.com/license>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 */
+
+	/** `Object#toString` result references. */
+	var objectTag = '[object Object]';
+
+	/**
+	 * Checks if `value` is a host object in IE < 9.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+	 */
+	function isHostObject(value) {
+	  // Many host objects are `Object` objects that can coerce to strings
+	  // despite having improperly defined `toString` methods.
+	  var result = false;
+	  if (value != null && typeof value.toString != 'function') {
+	    try {
+	      result = !!(value + '');
+	    } catch (e) {}
+	  }
+	  return result;
+	}
+
+	/**
+	 * Creates a unary function that invokes `func` with its argument transformed.
+	 *
+	 * @private
+	 * @param {Function} func The function to wrap.
+	 * @param {Function} transform The argument transform.
+	 * @returns {Function} Returns the new function.
+	 */
+	function overArg(func, transform) {
+	  return function (arg) {
+	    return func(transform(arg));
+	  };
+	}
+
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype,
+	    objectProto = Object.prototype;
+
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/** Used to infer the `Object` constructor. */
+	var objectCtorString = funcToString.call(Object);
+
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objectToString = objectProto.toString;
+
+	/** Built-in value references. */
+	var getPrototype = overArg(Object.getPrototypeOf, Object);
+
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+	function isObjectLike(value) {
+	  return !!value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) == 'object';
+	}
+
+	/**
+	 * Checks if `value` is a plain object, that is, an object created by the
+	 * `Object` constructor or one with a `[[Prototype]]` of `null`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.8.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 * }
+	 *
+	 * _.isPlainObject(new Foo);
+	 * // => false
+	 *
+	 * _.isPlainObject([1, 2, 3]);
+	 * // => false
+	 *
+	 * _.isPlainObject({ 'x': 0, 'y': 0 });
+	 * // => true
+	 *
+	 * _.isPlainObject(Object.create(null));
+	 * // => true
+	 */
+	function isPlainObject(value) {
+	  if (!isObjectLike(value) || objectToString.call(value) != objectTag || isHostObject(value)) {
+	    return false;
+	  }
+	  var proto = getPrototype(value);
+	  if (proto === null) {
+	    return true;
+	  }
+	  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
+	  return typeof Ctor == 'function' && Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString;
+	}
+
+	module.exports = isPlainObject;
+
+/***/ },
+/* 21 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4096,18 +4408,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 19 */
+/* 22 */
 /***/ function(module, exports) {
 
 	"use strict";
 
-	var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-	var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
-	  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-	} : function (obj) {
-	  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-	};
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 	module.exports = function (t) {
 	  return function toMultipleSequenceExpressions(statements) {
@@ -4228,7 +4534,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 20 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -4236,7 +4542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = function (_ref) {
 	  var t = _ref.types;
 
-	  var removeOrVoid = __webpack_require__(3)(t);
+	  var removeOrVoid = __webpack_require__(4)(t);
 
 	  var visitor = {
 	    // Remove the call if it stands on it's own.
@@ -4277,7 +4583,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 21 */
+/* 24 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4315,7 +4621,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 22 */
+/* 25 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4345,7 +4651,108 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 23 */
+/* 26 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function (_ref) {
+	  var t = _ref.types;
+
+	  var NO_MEMBER = Symbol("no member");
+
+	  var replaceVisitor = {
+	    ReferencedIdentifier: function ReferencedIdentifier(path) {
+	      var _path = path;
+	      var node = _path.node;
+
+	      var optionsMap = this.replacements[node.name];
+	      if (!optionsMap) {
+	        return;
+	      }
+
+	      var options = void 0;
+	      if (path.parentPath.isMemberExpression({ object: node })) {
+	        var property = path.parent.property;
+
+	        var key = t.isIdentifier(property) && property.name;
+	        if (typeof key === "string") {
+	          options = optionsMap[key];
+	          path = path.parentPath;
+	        }
+	      }
+
+	      if (!options) {
+	        options = optionsMap[NO_MEMBER];
+	      }
+
+	      if (!options) {
+	        return;
+	      }
+
+	      path.replaceWith(options.node);
+	    }
+	  };
+
+	  return {
+	    name: "minify-replace",
+	    visitor: {
+	      Program: function Program(path) {
+	        /**
+	           Replacements is an array of objects like this:
+	           {
+	             identifierName: 'console',
+	             member: 'log', // optional
+	             replacement: {
+	               type: 'identifier',
+	               value: '',
+	             },
+	           }
+	        **/
+
+	        if (!this.opts.replacements) {
+	          // No replacements. Bail.
+	          return;
+	        }
+
+	        var map = Object.create(null);
+	        this.opts.replacements.forEach(function (_ref2) {
+	          var identifierName = _ref2.identifierName;
+	          var replacement = _ref2.replacement;
+	          var member = _ref2.member;
+
+	          if (path.scope.globals[identifierName]) {
+	            // Convert to a node, we only allow identifiers and literals as replacements
+	            if (!replacement.type.match(/literal|identifier/i)) {
+	              throw new Error("Only literals and identifier are supported as replacements");
+	            }
+
+	            var node = t[replacement.type](replacement.value);
+	            var options = {
+	              identifierName: identifierName,
+	              node: node,
+	              member: member
+	            };
+
+	            if (!map[identifierName]) {
+	              map[identifierName] = {};
+	            }
+
+	            if (member && map[identifierName][member]) {
+	              throw new Error("Replacement collision " + identifierName + "." + member);
+	            }
+	            map[identifierName][member || NO_MEMBER] = options;
+	          }
+	        });
+
+	        path.traverse(replaceVisitor, { replacements: map });
+	      }
+	    }
+	  };
+	};
+
+/***/ },
+/* 27 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4531,7 +4938,808 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 
 /***/ },
-/* 24 */
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _createClass = function () {
+	  function defineProperties(target, props) {
+	    for (var i = 0; i < props.length; i++) {
+	      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+	    }
+	  }return function (Constructor, protoProps, staticProps) {
+	    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+	  };
+	}();
+
+	function _classCallCheck(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
+
+	function _possibleConstructorReturn(self, call) {
+	  if (!self) {
+	    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+	  }return call && ((typeof call === "undefined" ? "undefined" : _typeof(call)) === "object" || typeof call === "function") ? call : self;
+	}
+
+	function _inherits(subClass, superClass) {
+	  if (typeof superClass !== "function" && superClass !== null) {
+	    throw new TypeError("Super expression must either be null or a function, not " + (typeof superClass === "undefined" ? "undefined" : _typeof(superClass)));
+	  }subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } });if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+	}
+
+	var Collapser = __webpack_require__(1);
+
+	var ArrayCollapser = function (_Collapser) {
+	  _inherits(ArrayCollapser, _Collapser);
+
+	  function ArrayCollapser() {
+	    _classCallCheck(this, ArrayCollapser);
+
+	    return _possibleConstructorReturn(this, (ArrayCollapser.__proto__ || Object.getPrototypeOf(ArrayCollapser)).apply(this, arguments));
+	  }
+
+	  _createClass(ArrayCollapser, [{
+	    key: "isInitTypeValid",
+	    value: function isInitTypeValid(init) {
+	      return init.isArrayExpression();
+	    }
+	  }, {
+	    key: "isExpressionTypeValid",
+	    value: function isExpressionTypeValid(expr) {
+	      return expr.isCallExpression();
+	    }
+	  }, {
+	    key: "getExpressionChecker",
+	    value: function getExpressionChecker(objName, checkReference) {
+	      return function (expr) {
+	        // checks expr is of form:
+	        // foo.push(rval1, ...nrvals)
+
+	        var callee = expr.get("callee");
+
+	        if (!callee.isMemberExpression()) {
+	          return false;
+	        }
+
+	        var obj = callee.get("object"),
+	            prop = callee.get("property");
+	        if (!obj.isIdentifier() || obj.node.name !== objName || !prop.isIdentifier() || prop.node.name !== "push") {
+	          return false;
+	        }
+
+	        var args = expr.get("arguments");
+	        if (args.some(checkReference)) {
+	          return false;
+	        }
+	        return true;
+	      };
+	    }
+	  }, {
+	    key: "extractAssignment",
+	    value: function extractAssignment(expr) {
+	      return expr.node.arguments;
+	    }
+	  }, {
+	    key: "addSuccessfully",
+	    value: function addSuccessfully(t, args, init) {
+	      args.map(function (a) {
+	        return init.elements.push(a);
+	      });
+	      return true;
+	    }
+	  }]);
+
+	  return ArrayCollapser;
+	}(Collapser);
+
+	module.exports = ArrayCollapser;
+
+/***/ },
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _slicedToArray = function () {
+	  function sliceIterator(arr, i) {
+	    var _arr = [];var _n = true;var _d = false;var _e = undefined;try {
+	      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	        _arr.push(_s.value);if (i && _arr.length === i) break;
+	      }
+	    } catch (err) {
+	      _d = true;_e = err;
+	    } finally {
+	      try {
+	        if (!_n && _i["return"]) _i["return"]();
+	      } finally {
+	        if (_d) throw _e;
+	      }
+	    }return _arr;
+	  }return function (arr, i) {
+	    if (Array.isArray(arr)) {
+	      return arr;
+	    } else if (Symbol.iterator in Object(arr)) {
+	      return sliceIterator(arr, i);
+	    } else {
+	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+	    }
+	  };
+	}();
+
+	var _createClass = function () {
+	  function defineProperties(target, props) {
+	    for (var i = 0; i < props.length; i++) {
+	      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+	    }
+	  }return function (Constructor, protoProps, staticProps) {
+	    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+	  };
+	}();
+
+	function _classCallCheck(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
+
+	function _possibleConstructorReturn(self, call) {
+	  if (!self) {
+	    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+	  }return call && ((typeof call === "undefined" ? "undefined" : _typeof(call)) === "object" || typeof call === "function") ? call : self;
+	}
+
+	function _inherits(subClass, superClass) {
+	  if (typeof superClass !== "function" && superClass !== null) {
+	    throw new TypeError("Super expression must either be null or a function, not " + (typeof superClass === "undefined" ? "undefined" : _typeof(superClass)));
+	  }subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } });if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+	}
+
+	var Collapser = __webpack_require__(1);
+
+	var ArrayPropertyCollapser = function (_Collapser) {
+	  _inherits(ArrayPropertyCollapser, _Collapser);
+
+	  function ArrayPropertyCollapser() {
+	    _classCallCheck(this, ArrayPropertyCollapser);
+
+	    return _possibleConstructorReturn(this, (ArrayPropertyCollapser.__proto__ || Object.getPrototypeOf(ArrayPropertyCollapser)).apply(this, arguments));
+	  }
+
+	  _createClass(ArrayPropertyCollapser, [{
+	    key: "isInitTypeValid",
+	    value: function isInitTypeValid(init) {
+	      return init.isArrayExpression();
+	    }
+	  }, {
+	    key: "isExpressionTypeValid",
+	    value: function isExpressionTypeValid(expr) {
+	      return expr.isAssignmentExpression();
+	    }
+	  }, {
+	    key: "getExpressionChecker",
+	    value: function getExpressionChecker(objName, checkReference) {
+	      return function (expr) {
+	        // checks expr is of form:
+	        // foo[num] = rval
+
+	        var left = expr.get("left");
+
+	        if (!left.isMemberExpression()) {
+	          return false;
+	        }
+
+	        var obj = left.get("object"),
+	            prop = left.get("property");
+	        if (!obj.isIdentifier() || obj.node.name !== objName) {
+	          return false;
+	        }
+
+	        var checkIndex = function checkIndex(num) {
+	          return Number.isInteger(num) && num >= 0;
+	        };
+
+	        if (!(prop.isNumericLiteral() || prop.isStringLiteral()) || !checkIndex(Number(prop.node.value))) {
+	          return false;
+	        }
+
+	        var right = expr.get("right");
+	        if (checkReference(right)) {
+	          return false;
+	        }
+
+	        return true;
+	      };
+	    }
+	  }, {
+	    key: "extractAssignment",
+	    value: function extractAssignment(expr) {
+	      return [expr.node.left.property.value, expr.get("right")];
+	    }
+	  }, {
+	    key: "addSuccessfully",
+	    value: function addSuccessfully(t, _ref, init) {
+	      var _ref2 = _slicedToArray(_ref, 2),
+	          index = _ref2[0],
+	          rval = _ref2[1];
+
+	      var elements = init.elements;
+	      for (var i = elements.length; i <= index; i++) {
+	        elements.push(null);
+	      }
+	      if (elements[index] !== null) {
+	        return false;
+	      }
+	      elements[index] = rval.node;
+	      return true;
+	    }
+	  }, {
+	    key: "isSizeSmaller",
+	    value: function isSizeSmaller(_ref3) {
+	      var newInit = _ref3.newInit,
+	          oldInit = _ref3.oldInit,
+	          varDecl = _ref3.varDecl,
+	          assignments = _ref3.assignments,
+	          statements = _ref3.statements;
+
+	      var anyUndefined = function anyUndefined(args) {
+	        return args.some(function (a) {
+	          return a === undefined;
+	        });
+	      };
+
+	      // We make an inexact calculation of how much space we save.
+	      // It's inexact because we don't know how whitespaces will get minimized,
+	      // and other factors.
+	      if (anyUndefined([statements[statements.length - 1].node.end, varDecl.node.end])) {
+	        return false;
+	      }
+	      var statementsLength = statements[statements.length - 1].node.end - varDecl.node.end;
+
+	      // Approx. formula of the change in `init`'s length =
+	      // (# commas added) + (size of all the new rvals added), where
+	      // # commas added = (difference between the lengths of the old and new arrays)
+
+	      var numCommaAdded = newInit.elements.length - oldInit.elements.length;
+	      if (anyUndefined(assignments.map(function (_ref4) {
+	        var _ref5 = _slicedToArray(_ref4, 2),
+	            rval = _ref5[1];
+
+	        return rval.node.end;
+	      })) || anyUndefined(assignments.map(function (_ref6) {
+	        var _ref7 = _slicedToArray(_ref6, 2),
+	            rval = _ref7[1];
+
+	        return rval.node.start;
+	      }))) {
+	        return false;
+	      }
+	      var sizeOfRvals = assignments.map(function (_ref8) {
+	        var _ref9 = _slicedToArray(_ref8, 2),
+	            rval = _ref9[1];
+
+	        return rval.node.end - rval.node.start + 1;
+	      }) // add 1 for space in front
+	      .reduce(function (a, b) {
+	        return a + b;
+	      }, 0); // sum
+
+	      return numCommaAdded + sizeOfRvals < statementsLength;
+	    }
+	  }]);
+
+	  return ArrayPropertyCollapser;
+	}(Collapser);
+
+	module.exports = ArrayPropertyCollapser;
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _slicedToArray = function () {
+	  function sliceIterator(arr, i) {
+	    var _arr = [];var _n = true;var _d = false;var _e = undefined;try {
+	      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	        _arr.push(_s.value);if (i && _arr.length === i) break;
+	      }
+	    } catch (err) {
+	      _d = true;_e = err;
+	    } finally {
+	      try {
+	        if (!_n && _i["return"]) _i["return"]();
+	      } finally {
+	        if (_d) throw _e;
+	      }
+	    }return _arr;
+	  }return function (arr, i) {
+	    if (Array.isArray(arr)) {
+	      return arr;
+	    } else if (Symbol.iterator in Object(arr)) {
+	      return sliceIterator(arr, i);
+	    } else {
+	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+	    }
+	  };
+	}();
+
+	var COLLAPSERS = [__webpack_require__(31), __webpack_require__(28), __webpack_require__(29), __webpack_require__(32)].map(function (Collapser) {
+	  return new Collapser();
+	});
+
+	function getFunctionParent(path, scopeParent) {
+	  var parent = path.findParent(function (p) {
+	    return p.isFunction();
+	  });
+	  // don"t traverse higher than the function the var is defined in.
+	  return parent === scopeParent ? null : parent;
+	}
+
+	function getFunctionReferences(path, scopeParent) {
+	  var references = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Set();
+
+	  for (var func = getFunctionParent(path, scopeParent); func; func = getFunctionParent(func, scopeParent)) {
+	    var id = func.node.id;
+	    var binding = id && func.scope.getBinding(id.name);
+
+	    if (!binding) {
+	      continue;
+	    }
+
+	    binding.referencePaths.forEach(function (path) {
+	      if (!references.has(path)) {
+	        references.add(path);
+	        getFunctionReferences(path, scopeParent, references);
+	      }
+	    });
+	  }
+	  return references;
+	}
+
+	function getIdAndFunctionReferences(name, parent) {
+	  // Returns false if there's an error. Otherwise returns a list of references.
+	  var binding = parent.scope.getBinding(name);
+	  if (!binding) {
+	    return false;
+	  }
+
+	  var references = binding.referencePaths.reduce(function (references, ref) {
+	    references.add(ref);
+	    getFunctionReferences(ref, parent, references);
+	    return references;
+	  }, new Set());
+
+	  return Array.from(references);
+	}
+
+	function validateTopLevel(path) {
+	  // Ensures the structure is of the form (roughly):
+	  // {
+	  //   ...
+	  //   var foo = expr;
+	  //   ...
+	  // }
+	  // returns null if not of this form
+	  // otherwise returns [foo as string, ?rval, index of the variable declaration]
+
+	  var declarations = path.get("declarations");
+	  if (declarations.length !== 1) {
+	    return;
+	  }
+
+	  var declaration = declarations[0];
+	  var id = declaration.get("id"),
+	      init = declaration.get("init");
+	  if (!id.isIdentifier()) {
+	    return;
+	  }
+
+	  var parent = path.parentPath;
+	  if (!parent.isBlockParent() || !parent.isScopable()) {
+	    return;
+	  }
+
+	  var body = parent.get("body");
+	  if (!Array.isArray(body)) {
+	    return;
+	  }
+	  var startIndex = body.indexOf(path);
+	  if (startIndex === -1) {
+	    return;
+	  }
+
+	  return [id.node.name, init, startIndex];
+	}
+
+	function collectExpressions(path, isExprTypeValid) {
+	  // input: ExprStatement => 'a | SequenceExpression
+	  // SequenceExpression => 'a list
+	  // Validates 'a is of the right type
+	  // returns null if found inconsistency, else returns Array<"a>
+	  if (path.isExpressionStatement()) {
+	    var exprs = collectExpressions(path.get("expression"), isExprTypeValid);
+	    return exprs !== null ? exprs : null;
+	  }
+
+	  if (path.isSequenceExpression()) {
+	    var _exprs = path.get("expressions").map(function (p) {
+	      return collectExpressions(p, isExprTypeValid);
+	    });
+	    if (_exprs.some(function (e) {
+	      return e === null;
+	    })) {
+	      return null;
+	    } else {
+	      return _exprs.reduce(function (s, n) {
+	        return s.concat(n);
+	      }, []); // === Array.flatten
+	    }
+	  }
+
+	  if (isExprTypeValid(path)) {
+	    return [path];
+	  }
+
+	  return null;
+	}
+
+	function getContiguousStatementsAndExpressions(body, start, end, isExprTypeValid, checkExpr) {
+	  var statements = [];
+	  var allExprs = [];
+	  for (var i = start; i < end; i++) {
+	    var exprs = collectExpressions(body[i], isExprTypeValid);
+	    if (exprs === null || !exprs.every(function (e) {
+	      return checkExpr(e);
+	    })) {
+	      break;
+	    }
+	    statements.push(body[i]);
+	    allExprs = allExprs.concat(exprs);
+	  }
+	  return [statements, allExprs];
+	}
+
+	function getReferenceChecker(references) {
+	  // returns a function s.t. given an expr, returns true iff expr is an ancestor of a reference
+	  return function (expr) {
+	    return references.some(function (r) {
+	      return r.isDescendant(expr);
+	    });
+	  };
+	}
+
+	function tryUseCollapser(t, collapser, varDecl, topLevel, checkReference) {
+	  // Returns true iff successfully used the collapser. Otherwise returns undefined.
+	  var _topLevel = _slicedToArray(topLevel, 3),
+	      name = _topLevel[0],
+	      init = _topLevel[1],
+	      startIndex = _topLevel[2];
+
+	  var body = varDecl.parentPath.get("body");
+	  if (!collapser.isInitTypeValid(init)) {
+	    return;
+	  }
+
+	  var _getContiguousStateme = getContiguousStatementsAndExpressions(body, startIndex + 1, body.length, collapser.isExpressionTypeValid, collapser.getExpressionChecker(name, checkReference)),
+	      _getContiguousStateme2 = _slicedToArray(_getContiguousStateme, 2),
+	      statements = _getContiguousStateme2[0],
+	      exprs = _getContiguousStateme2[1];
+
+	  if (statements.length === 0) {
+	    return;
+	  }
+
+	  var assignments = exprs.map(function (e) {
+	    return collapser.extractAssignment(e);
+	  });
+	  var oldInit = init.node;
+	  var newInit = t.cloneDeep(oldInit);
+	  if (!assignments.every(function (assignment) {
+	    return collapser.addSuccessfully(t, assignment, newInit);
+	  })) {
+	    return;
+	  }
+
+	  // some collapses may increase the size
+	  if (!collapser.isSizeSmaller({ newInit: newInit, oldInit: oldInit, varDecl: varDecl, assignments: assignments, statements: statements })) {
+	    return;
+	  }
+
+	  init.replaceWith(newInit);
+	  statements.forEach(function (s) {
+	    return s.remove();
+	  });
+	  return true;
+	}
+
+	module.exports = function (_ref) {
+	  var t = _ref.types;
+
+	  return {
+	    name: "transform-inline-consecutive-adds",
+	    visitor: {
+	      VariableDeclaration: function VariableDeclaration(varDecl) {
+	        var topLevel = validateTopLevel(varDecl);
+	        if (!topLevel) {
+	          return;
+	        }
+
+	        var _topLevel2 = _slicedToArray(topLevel, 1),
+	            name = _topLevel2[0];
+
+	        var references = getIdAndFunctionReferences(name, varDecl.parentPath);
+	        if (references === false) {
+	          return;
+	        }
+	        var checkReference = getReferenceChecker(references);
+
+	        if (COLLAPSERS.some(function (c) {
+	          return tryUseCollapser(t, c, varDecl, topLevel, checkReference);
+	        })) {
+	          return;
+	        }
+	      }
+	    }
+	  };
+	};
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _slicedToArray = function () {
+	  function sliceIterator(arr, i) {
+	    var _arr = [];var _n = true;var _d = false;var _e = undefined;try {
+	      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	        _arr.push(_s.value);if (i && _arr.length === i) break;
+	      }
+	    } catch (err) {
+	      _d = true;_e = err;
+	    } finally {
+	      try {
+	        if (!_n && _i["return"]) _i["return"]();
+	      } finally {
+	        if (_d) throw _e;
+	      }
+	    }return _arr;
+	  }return function (arr, i) {
+	    if (Array.isArray(arr)) {
+	      return arr;
+	    } else if (Symbol.iterator in Object(arr)) {
+	      return sliceIterator(arr, i);
+	    } else {
+	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+	    }
+	  };
+	}();
+
+	var _createClass = function () {
+	  function defineProperties(target, props) {
+	    for (var i = 0; i < props.length; i++) {
+	      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+	    }
+	  }return function (Constructor, protoProps, staticProps) {
+	    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+	  };
+	}();
+
+	function _classCallCheck(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
+
+	function _possibleConstructorReturn(self, call) {
+	  if (!self) {
+	    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+	  }return call && ((typeof call === "undefined" ? "undefined" : _typeof(call)) === "object" || typeof call === "function") ? call : self;
+	}
+
+	function _inherits(subClass, superClass) {
+	  if (typeof superClass !== "function" && superClass !== null) {
+	    throw new TypeError("Super expression must either be null or a function, not " + (typeof superClass === "undefined" ? "undefined" : _typeof(superClass)));
+	  }subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } });if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+	}
+
+	var Collapser = __webpack_require__(1);
+
+	var ObjectCollapser = function (_Collapser) {
+	  _inherits(ObjectCollapser, _Collapser);
+
+	  function ObjectCollapser() {
+	    _classCallCheck(this, ObjectCollapser);
+
+	    return _possibleConstructorReturn(this, (ObjectCollapser.__proto__ || Object.getPrototypeOf(ObjectCollapser)).apply(this, arguments));
+	  }
+
+	  _createClass(ObjectCollapser, [{
+	    key: "isInitTypeValid",
+	    value: function isInitTypeValid(init) {
+	      return init.isObjectExpression();
+	    }
+	  }, {
+	    key: "isExpressionTypeValid",
+	    value: function isExpressionTypeValid(expr) {
+	      return expr.isAssignmentExpression();
+	    }
+	  }, {
+	    key: "getExpressionChecker",
+	    value: function getExpressionChecker(objName, checkReference) {
+	      return function (expr) {
+	        // checks expr is of form:
+	        // foo.a = rval | foo[a] = rval
+
+	        var left = expr.get("left");
+	        if (!left.isMemberExpression()) {
+	          return false;
+	        }
+
+	        var obj = left.get("object"),
+	            prop = left.get("property");
+	        if (!obj.isIdentifier() || obj.node.name !== objName) {
+	          return false;
+	        }
+	        if (!prop.isIdentifier() && checkReference(prop)) {
+	          return false;
+	        }
+	        if (left.node.computed && !(prop.isStringLiteral() || prop.isNumericLiteral())) {
+	          return false;
+	        }
+
+	        var right = expr.get("right");
+	        if (checkReference(right)) {
+	          return false;
+	        }
+
+	        return true;
+	      };
+	    }
+	  }, {
+	    key: "extractAssignment",
+	    value: function extractAssignment(expr) {
+	      return [expr.node.left.property, expr.node.right];
+	    }
+	  }, {
+	    key: "addSuccessfully",
+	    value: function addSuccessfully(t, _ref, init) {
+	      var _ref2 = _slicedToArray(_ref, 2),
+	          left = _ref2[0],
+	          right = _ref2[1];
+
+	      init.properties.push(t.objectProperty(left, right));
+	      return true;
+	    }
+	  }]);
+
+	  return ObjectCollapser;
+	}(Collapser);
+
+	module.exports = ObjectCollapser;
+
+/***/ },
+/* 32 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _createClass = function () {
+	  function defineProperties(target, props) {
+	    for (var i = 0; i < props.length; i++) {
+	      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+	    }
+	  }return function (Constructor, protoProps, staticProps) {
+	    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+	  };
+	}();
+
+	function _classCallCheck(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
+
+	function _possibleConstructorReturn(self, call) {
+	  if (!self) {
+	    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+	  }return call && ((typeof call === "undefined" ? "undefined" : _typeof(call)) === "object" || typeof call === "function") ? call : self;
+	}
+
+	function _inherits(subClass, superClass) {
+	  if (typeof superClass !== "function" && superClass !== null) {
+	    throw new TypeError("Super expression must either be null or a function, not " + (typeof superClass === "undefined" ? "undefined" : _typeof(superClass)));
+	  }subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } });if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+	}
+
+	var Collapser = __webpack_require__(1);
+
+	var SetCollapser = function (_Collapser) {
+	  _inherits(SetCollapser, _Collapser);
+
+	  function SetCollapser() {
+	    _classCallCheck(this, SetCollapser);
+
+	    return _possibleConstructorReturn(this, (SetCollapser.__proto__ || Object.getPrototypeOf(SetCollapser)).apply(this, arguments));
+	  }
+
+	  _createClass(SetCollapser, [{
+	    key: "isInitTypeValid",
+	    value: function isInitTypeValid(init) {
+	      return init.isNewExpression() && init.get("callee").isIdentifier() && init.node.callee.name === "Set" && (
+	      // other iterables might not be append-able
+	      init.node.arguments.length === 0 || init.node.arguments.length === 1 && init.get("arguments")[0].isArrayExpression());
+	    }
+	  }, {
+	    key: "isExpressionTypeValid",
+	    value: function isExpressionTypeValid(expr) {
+	      return expr.isCallExpression();
+	    }
+	  }, {
+	    key: "getExpressionChecker",
+	    value: function getExpressionChecker(objName, checkReference) {
+	      return function (expr) {
+	        // checks expr is of form:
+	        // foo.add(rval)
+
+	        var callee = expr.get("callee");
+
+	        if (!callee.isMemberExpression()) {
+	          return false;
+	        }
+
+	        var obj = callee.get("object"),
+	            prop = callee.get("property");
+	        if (!obj.isIdentifier() || obj.node.name !== objName || !prop.isIdentifier() || prop.node.name !== "add") {
+	          return false;
+	        }
+
+	        var args = expr.get("arguments");
+	        if (args.length !== 1) {
+	          return false;
+	        }
+	        if (checkReference(args)) {
+	          return false;
+	        }
+	        return true;
+	      };
+	    }
+	  }, {
+	    key: "extractAssignment",
+	    value: function extractAssignment(expr) {
+	      return expr.node.arguments[0];
+	    }
+	  }, {
+	    key: "addSuccessfully",
+	    value: function addSuccessfully(t, arg, init) {
+	      if (init.arguments.length === 0) {
+	        init.arguments.push(t.arrayExpression());
+	      }
+	      init.arguments[0].elements.push(arg);
+	      return true;
+	    }
+	  }]);
+
+	  return SetCollapser;
+	}(Collapser);
+
+	module.exports = SetCollapser;
+
+/***/ },
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/*istanbul ignore next*/"use strict";
@@ -4556,10 +5764,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/*istanbul ignore next*/module.exports = exports["default"];
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(33)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(42)))
 
 /***/ },
-/* 25 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*istanbul ignore next*/"use strict";
@@ -4590,7 +5798,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*istanbul ignore next*/module.exports = exports["default"];
 
 /***/ },
-/* 26 */
+/* 35 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4609,7 +5817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  pattern = new RegExp(pattern).source;
 	  if (prettify) {
-	    pattern = pattern.replace(/\n/g, "\\n").replace(/[\b]/g, "[\\b]").replace(/\v/g, "\\v").replace(/\f/g, "\\f").replace(/\r/g, "\\r");
+	    pattern = pattern.replace(/\n/g, "\\n").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029").replace(/[\b]/g, "[\\b]").replace(/\v/g, "\\v").replace(/\f/g, "\\f").replace(/\r/g, "\\r");
 	  }
 	  return t.regExpLiteral(pattern, flags);
 	}
@@ -4642,49 +5850,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 27 */
-/***/ function(module, exports) {
-
-	/*istanbul ignore next*/"use strict";
-
-	exports.__esModule = true;
-
-	exports.default = function () {
-	  return {
-	    visitor: { /*istanbul ignore next*/
-	      CallExpression: function CallExpression(path) {
-	        if (path.get("callee").matchesPattern("console", true)) {
-	          path.remove();
-	        }
-	      }
-	    }
-	  };
-	};
-
-	/*istanbul ignore next*/module.exports = exports["default"];
-
-/***/ },
-/* 28 */
-/***/ function(module, exports) {
-
-	/*istanbul ignore next*/"use strict";
-
-	exports.__esModule = true;
-
-	exports.default = function () {
-	  return {
-	    visitor: { /*istanbul ignore next*/
-	      DebuggerStatement: function DebuggerStatement(path) {
-	        path.remove();
-	      }
-	    }
-	  };
-	};
-
-	/*istanbul ignore next*/module.exports = exports["default"];
-
-/***/ },
-/* 29 */
+/* 36 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4877,18 +6043,388 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 30 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	module.exports = {
-	  minified: true,
-	  plugins: [__webpack_require__(4), __webpack_require__(5), __webpack_require__(6), __webpack_require__(7), __webpack_require__(31), __webpack_require__(8), __webpack_require__(22), __webpack_require__(9), __webpack_require__(10), __webpack_require__(11), __webpack_require__(12), __webpack_require__(13), __webpack_require__(14), __webpack_require__(15), __webpack_require__(26), __webpack_require__(29), __webpack_require__(16), __webpack_require__(17)]
-	};
+	var isPlainObject = __webpack_require__(20);
+
+	var _require = __webpack_require__(38),
+	    group = _require.group,
+	    option = _require.option,
+	    proxy = _require.proxy,
+	    generate = _require.generate;
+
+	// the flat plugin map
+	// This is to prevent dynamic requires - require('babel-plugin-' + name);
+	// as it suffers during bundling of this code with webpack/browserify
+
+
+	var PLUGINS = [["booleans", __webpack_require__(14), true], ["consecutiveAdds", __webpack_require__(30), true], ["deadcode", __webpack_require__(6), true], ["evaluate", __webpack_require__(5), true], ["flipComparisons", __webpack_require__(7), true], ["guards", __webpack_require__(8), true], ["infinity", __webpack_require__(39), true], ["mangle", __webpack_require__(9), true], ["memberExpressions", __webpack_require__(12), true], ["mergeVars", __webpack_require__(13), true], ["numericLiterals", __webpack_require__(25), true], ["propertyLiterals", __webpack_require__(15), true], ["regexpConstructors", __webpack_require__(35), true], ["removeConsole", __webpack_require__(16), false], ["removeDebugger", __webpack_require__(17), false], ["removeUndefined", __webpack_require__(36), true], ["replace", __webpack_require__(40), true], ["simplify", __webpack_require__(10), true], ["simplifyComparisons", __webpack_require__(18), true], ["typeConstructors", __webpack_require__(11), true], ["undefinedToVoid", __webpack_require__(19), true]];
+
+	module.exports = preset;
+
+	function preset(context) {
+	  var _opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+	  var opts = isPlainObject(_opts) ? _opts : {};
+
+	  // to track every plugin is used
+	  var usedPlugins = new Set();
+
+	  var optionsMap = PLUGINS.map(function (plugin) {
+	    return option(plugin[0], plugin[1], plugin[2]);
+	  }).reduce(function (acc, cur) {
+	    Object.defineProperty(acc, cur.name, {
+	      get: function get() {
+	        usedPlugins.add(cur.name);
+	        return cur;
+	      }
+	    });
+	    return acc;
+	  }, {});
+
+	  var optionsTree = group("options", [optionsMap.evaluate, optionsMap.deadcode, group("unsafe", [optionsMap.flipComparisons, optionsMap.simplifyComparisons, optionsMap.guards, optionsMap.typeConstructors]), optionsMap.infinity, optionsMap.mangle, optionsMap.numericLiterals, optionsMap.replace, optionsMap.simplify, group("properties", [optionsMap.consecutiveAdds, optionsMap.memberExpressions, optionsMap.propertyLiterals]), optionsMap.mergeVars, optionsMap.booleans, optionsMap.undefinedToVoid, optionsMap.regexpConstructors, optionsMap.removeConsole, optionsMap.removeDebugger, optionsMap.removeUndefined, proxy("keepFnName", [optionsMap.mangle, optionsMap.deadcode]), proxy("keepClassName", [optionsMap.mangle, optionsMap.deadcode])], "some");
+
+	  // verify all plugins are used
+	  if (usedPlugins.size !== PLUGINS.length) {
+	    var unusedPlugins = PLUGINS.filter(function (plugin) {
+	      return !usedPlugins.has(plugin[0]);
+	    }).map(function (plugin) {
+	      return plugin[0];
+	    });
+	    throw new Error("Some imported plugins unused\n" + unusedPlugins);
+	  }
+
+	  var plugins = generate(optionsTree, opts);
+
+	  return {
+	    minified: true,
+	    comments: false,
+	    presets: [{ plugins: plugins }],
+	    passPerPreset: true
+	  };
+	}
 
 /***/ },
-/* 31 */
+/* 38 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	function _toConsumableArray(arr) {
+	  if (Array.isArray(arr)) {
+	    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+	      arr2[i] = arr[i];
+	    }return arr2;
+	  } else {
+	    return Array.from(arr);
+	  }
+	}
+
+	var isPlainObject = __webpack_require__(20);
+
+	/**
+	 * Options Manager
+	 *
+	 * Input Options: Object
+	 * Output: Array of plugins enabled with their options
+	 *
+	 * Handles multiple types of input option keys
+	 *
+	 * 1. boolean and object values
+	 * { mangle: true } // should enable mangler
+	 * { mangle: { blacklist: ["foo"] } } // should enabled mangler
+	 *                                    // and pass obj to mangle plugin
+	 *
+	 * 2. group
+	 * { unsafe: true } // should enable all plugins under unsafe
+	 * { unsafe: { flip: false } } // should disable flip-comparisons plugin
+	 *                             // and other plugins should take their defaults
+	 * { unsafe: { simplify: {multipass: true}}} // should pass obj to simplify
+	 *                                           // other plugins take defaults
+	 *
+	 * 3. same option passed on to multiple plugins
+	 * { keepFnames: false } // should be passed on to mangle & dce
+	 *                       // without disturbing their own options
+	 */
+
+	module.exports = {
+	  option: option,
+	  proxy: proxy,
+	  group: group,
+	  generate: generate,
+	  resolveOptions: resolveOptions,
+	  generateResult: generateResult
+	};
+
+	/**
+	 * Generate the plugin list from option tree and inputOpts
+	 */
+	function generate(optionTree, inputOpts) {
+	  return generateResult(resolveOptions(optionTree, inputOpts));
+	}
+
+	/**
+	 * Generate plugin list from the resolvedOptionTree
+	 * where resolvedOptionTree = for every node, node.resolved = true;
+	 */
+	function generateResult(resolvedOpts) {
+	  var options = resolvedOpts.children;
+	  var result = [];
+
+	  for (var i = 0; i < options.length; i++) {
+	    var _option = options[i];
+
+	    switch (_option.type) {
+	      case "option":
+	        if (_option.resolvedValue) {
+	          result.push(_option.resolvedValue);
+	        }
+	        break;
+	      case "group":
+	        result.push.apply(result, _toConsumableArray(generateResult(_option)));
+	        break;
+	    }
+	  }
+
+	  return result;
+	}
+
+	/**
+	 * Traverses input @param{optionTree} and adds resolvedValue
+	 * calculated from @param{inputOpts} for each Node in the tree
+	 */
+	function resolveOptions(optionTree) {
+	  var inputOpts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+	  var options = optionTree.children;
+
+	  // a queue to resolve proxies at the end after all options groups are resolved
+	  var proxiesToResolve = [];
+
+	  for (var i = 0; i < options.length; i++) {
+	    var _option2 = options[i];
+	    switch (_option2.type) {
+	      case "option":
+	        resolveTypeOption(_option2, inputOpts);
+	        break;
+
+	      case "group":
+	        resolveTypeGroup(_option2, inputOpts);
+	        break;
+
+	      case "proxy":
+	        if (!hop(inputOpts, _option2.name)) {
+	          break;
+	        }
+	        proxiesToResolve.push(_option2);
+	        break;
+
+	      default:
+	        throw new TypeError("Option type not supported - " + _option2.type);
+	    }
+	  }
+
+	  // resolve proxies
+	  for (var _i = 0; _i < proxiesToResolve.length; _i++) {
+	    var _proxy = proxiesToResolve[_i];
+	    for (var j = 0; j < _proxy.to.length; j++) {
+	      var _option3 = _proxy.to[j];
+	      switch (_option3.type) {
+	        case "option":
+	          resolveTypeProxyToOption(_proxy, _option3, inputOpts);
+	          break;
+
+	        case "group":
+	        case "proxy":
+	          throw new Error("proxy option cannot proxy to group/proxy. " + _proxy.name + " proxied to " + _option3.name);
+
+	        default:
+	          throw new Error("Unsupported option type ${option.name}");
+	      }
+	    }
+	  }
+
+	  // return the same tree after modifications
+	  return optionTree;
+	}
+
+	/**
+	 * Resolve the type - simple option using the @param{inputOpts}
+	 */
+	function resolveTypeOption(option, inputOpts) {
+	  option.resolved = true;
+
+	  // option does NOT exist in inputOpts
+	  if (!hop(inputOpts, option.name)) {
+	    // default value
+	    option.resolvedValue = option.defaultValue ? option.resolvingValue : null;
+	    return;
+	  }
+
+	  // Object
+	  // { mangle: { blacklist: ["foo", "bar"] } }
+	  if (isPlainObject(inputOpts[option.name])) {
+	    option.resolvedValue = [option.resolvingValue, inputOpts[option.name]];
+	    return;
+	  }
+
+	  // any other truthy value, just enables the plugin
+	  // { mangle: true }
+	  if (inputOpts[option.name]) {
+	    option.resolvedValue = option.resolvingValue;
+	    return;
+	  }
+
+	  // disabled
+	  option.resolvedValue = null;
+	}
+
+	/**
+	 * Resolve the group using @param{inputOpts}
+	 */
+	function resolveTypeGroup(option, inputOpts) {
+	  option.resolved = true;
+
+	  // option does NOT exist in inputOpts
+	  if (!hop(inputOpts, option.name)) {
+	    var _newInputOpts = option.children.filter(function (opt) {
+	      return opt.type !== "proxy";
+	    }).reduce(function (acc, cur) {
+	      var value = void 0;
+	      switch (option.defaultValue) {
+	        case "all":
+	          value = true;break;
+	        case "some":
+	          value = cur.defaultValue;break;
+	        case "none":
+	          value = false;break;
+	        default:
+	          throw new Error("Unsupported defaultValue - " + option.defaultValue + " for option " + option.name);
+	      }
+	      return Object.assign({}, acc, _defineProperty({}, cur.name, value));
+	    }, {});
+
+	    // recurse
+	    resolveOptions(option, _newInputOpts);
+	    return;
+	  }
+
+	  // has individual options for items in group
+	  // { unsafe: { flipComparisons: true } }
+	  if (isPlainObject(inputOpts[option.name])) {
+	    resolveOptions(option, inputOpts[option.name]);
+	    return;
+	  }
+
+	  // else
+	  // { unsafe: <true | false> }
+	  var newInputOpts = option.children.filter(function (opt) {
+	    return opt.type !== "proxy";
+	  }).reduce(function (acc, cur) {
+	    return Object.assign({}, acc, _defineProperty({}, cur.name, !!inputOpts[option.name]));
+	  }, {});
+	  resolveOptions(option, newInputOpts);
+	}
+
+	/**
+	 * Resolve proxies and update the already resolved Options
+	 */
+	function resolveTypeProxyToOption(proxy, option, inputOpts) {
+	  if (!option.resolved) {
+	    throw new Error("Proxies cannot be applied before the original option is resolved");
+	  }
+
+	  // option is disabled
+	  if (!option.resolvedValue) {
+	    return;
+	  }
+
+	  // option doesn't contain any option on its own
+	  if (option.resolvedValue === option.resolvingValue) {
+	    option.resolvedValue = [option.resolvedValue, _defineProperty({}, proxy.name, inputOpts[proxy.name])];
+	  }
+
+	  // option already has its own set of options to be passed to plugins
+	  else if (Array.isArray(option.resolvedValue) && option.resolvedValue.length === 2) {
+	      // proxies should not override
+	      if (!hop(option.resolvedValue[1], proxy.name)) {
+	        option.resolvedValue = [option.resolvingValue, Object.assign({}, option.resolvedValue[1], _defineProperty({}, proxy.name, inputOpts[proxy.name]))];
+	      }
+	    }
+
+	    // plugin is invalid
+	    else {
+	        throw new Error("Invalid resolved value for option " + option.name);
+	      }
+	}
+
+	// create an option of type simple option
+	function option(name, resolvingValue) {
+	  var defaultValue = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+	  assertName(name);
+	  if (!resolvingValue) {
+	    // as plugins are truthy values
+	    throw new Error("Only truthy resolving values are supported");
+	  }
+	  return {
+	    type: "option",
+	    name: name,
+	    resolvingValue: resolvingValue,
+	    defaultValue: defaultValue
+	  };
+	}
+
+	// create an option of type proxy
+	function proxy(name, to) {
+	  assertName(name);
+	  assertArray(name, "to", to);
+	  return {
+	    type: "proxy",
+	    name: name,
+	    to: to
+	  };
+	}
+
+	// create an option of type - group of options
+	function group(name, children) {
+	  var defaultValue = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "some";
+
+	  assertName(name);
+	  assertArray(name, "children", children);
+	  return {
+	    type: "group",
+	    name: name,
+	    children: children.filter(function (x) {
+	      return !!x;
+	    }),
+	    defaultValue: defaultValue
+	  };
+	}
+
+	function hop(o, key) {
+	  return Object.hasOwnProperty.call(o, key);
+	}
+
+	function assertArray(name, prop, arr) {
+	  if (!Array.isArray(arr)) {
+	    throw new Error("Expected " + prop + " to be an array in option " + name);
+	  }
+	}
+
+	function assertName(name) {
+	  if (!name) {
+	    throw new Error("Invalid option name " + name);
+	  }
+	}
+
+/***/ },
+/* 39 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4930,7 +6466,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 32 */
+/* 40 */
+26,
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, module) {'use strict';
@@ -7244,10 +8782,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = some;
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(34)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(43)(module)))
 
 /***/ },
-/* 33 */
+/* 42 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -7433,7 +8971,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 34 */
+/* 43 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -7450,12 +8988,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 35 */
+/* 44 */
 /***/ function(module, exports) {
 
-	module.exports = __WEBPACK_EXTERNAL_MODULE_35__;
+	module.exports = __WEBPACK_EXTERNAL_MODULE_44__;
 
 /***/ }
-/******/ ])
+/******/ ])))
 });
 ;

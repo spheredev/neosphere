@@ -69,7 +69,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 
 	js_ctx = tool->js_ctx;
 
-	visor_begin_op(visor, "%s %s", tool->verb, path_cstr(out_path));
+	visor_begin_op(visor, "%s '%s'", tool->verb, path_cstr(out_path));
 
 	// ensure the target directory exists
 	dir_path = path_strip(path_dup(out_path));

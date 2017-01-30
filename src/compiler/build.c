@@ -100,7 +100,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// polyfill for ECMAScript 2015
-	if (fs_fexist(fs, "#/polyfills.js") && !eval_cjs_module(ctx, fs, "#/polyfills.js"))
+	if (fs_fexist(fs, "#/polyfill.js") && !eval_cjs_module(ctx, fs, "#/polyfill.js"))
 		return false;
 
 	// initialize the Cellscript API
@@ -203,7 +203,7 @@ build_eval(build_t* build, const char* filename)
 	bool        is_ok = true;
 	struct stat stats;
 
-	visor_begin_op(build->visor, "evaluating script %s", filename);
+	visor_begin_op(build->visor, "evaluating script '%s'", filename);
 	if (fs_stat(build->fs, filename, &stats) == 0)
 		build->timestamp = stats.st_mtime;
 	if (!eval_cjs_module(build->js_context, build->fs, filename)) {

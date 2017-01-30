@@ -19,16 +19,16 @@ function transpileScripts(dirName, sources)
 	return stageTargets(dirName, sources, scriptTool);
 }
 
-var moduleTool = makeTranspilerTool(2);
-var scriptTool = makeTranspilerTool(1);
+var moduleTool = makeTranspilerTool(2.0);
+var scriptTool = makeTranspilerTool(1.0);
 
 function makeTranspilerTool(apiVersion)
 {
 	return new Tool(function(outFileName, inFileNames) {
 		var fileContent = FS.readFile(inFileNames[0]);
 		var input = new TextDecoder().decode(fileContent);
-		var moduleType = apiVersion >= 2 ? 'commonjs' : false;
-		var sourceType = apiVersion >= 2 ? 'module' : 'script';
+		var moduleType = apiVersion >= 2.0 ? 'commonjs' : false;
+		var sourceType = apiVersion >= 2.0 ? 'module' : 'script';
 		var output = Babel.transform(input, {
 			sourceType: sourceType,
 			comments: false,

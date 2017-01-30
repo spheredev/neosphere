@@ -6,7 +6,7 @@
 'use strict';
 module.exports = minify;
 
-const Babili = require('./lib/Babili');
+const Babili = require('./lib/babel-minify');
 
 var minifyTool =
 new Tool(function(outFileName, inFileNames)
