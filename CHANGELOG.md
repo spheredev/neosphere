@@ -1,14 +1,14 @@
 minisphere Changelog
 ====================
 
-v4.4.2 - TBD
-------------
+v4.4.2 - January 30, 2017
+-------------------------
 
-* Fixes a bug where specifying a nonexistent directory in a Cellscript files()
-  call would crash the compiler.
-* Fixes a bug where transpile.v1() parses the input files in strict mode,
-  leading some otherwise valid Sphere v1 legacy code to be rejected with a
-  syntax error.
+* Fixes a bug where specifying a nonexistent directory in a Cellscript
+  `files()` directive crashes the compiler.
+* Fixes a bug where `transpile.v1()` parses input files in strict mode, causing
+  some otherwise valid Sphere v1 legacy code to be rejected with a syntax
+  error.
 * Fixes a bug which causes Cell to produce a spurious "target file not built"
   error if a Tool throws an exception.
 

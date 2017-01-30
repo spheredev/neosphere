@@ -65,7 +65,7 @@ system.name [read-only]
 
 system.version [read-only]
 
-    The version number of the compiler as a string, e.g., "4.4.1".
+    The version number of the compiler; e.g., "4.4.2".
 
 describe(title, metadata);
 
