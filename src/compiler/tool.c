@@ -58,7 +58,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	duk_context*  js_ctx;
 	time_t        last_mtime = 0;
 	int           line_number;
-	bool          result = true;
+	bool          result_ok = true;
 	struct stat   stats;
 
 	iter_t iter;
@@ -97,18 +97,23 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 		visor_error(visor, "%s", duk_get_string(js_ctx, -1));
 		visor_print(visor, "@ [%s:%d]", filename, line_number);
 		duk_pop_3(js_ctx);
-		result = false;
+		result_ok = false;
 	}
 	duk_pop(js_ctx);
 
 	// verify that the tool actually did something.  if the target file doesn't exist,
 	// that's definitely an error.  if the target file does exist but hasn't changed,
 	// issue a warning because it might have been intentional (unlikely, but possible).
-	if (fs_stat(fs, path_cstr(out_path), &stats) != 0)
-		visor_error(visor, "target file was not built");
-	else if (stats.st_mtime <= last_mtime)
-		visor_warn(visor, "target file was left unchanged");
+	if (result_ok) {
+		if (fs_stat(fs, path_cstr(out_path), &stats) != 0) {
+			visor_error(visor, "target file not found after build");
+			result_ok = false;
+		}
+		else if (stats.st_mtime == last_mtime) {
+			visor_warn(visor, "target file unmodified after build");
+		}
+	}
 
 	visor_end_op(visor);
-	return result;
+	return result_ok;
 }

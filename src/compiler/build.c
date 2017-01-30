@@ -172,18 +172,15 @@ build_new(const path_t* source_path, const path_t* out_path)
 void
 build_free(build_t* build)
 {
-	int num_errors;
-	int num_warns;
-	
 	iter_t iter;
 
 	if (build == NULL)
 		return;
 
-	num_errors = visor_num_errors(build->visor);
-	num_warns = visor_num_warns(build->visor);
 	printf("\n");
-	printf("%d error(s), %d warning(s).\n", num_errors, num_warns);
+	printf("%d error(s), %d warning(s).\n",
+		visor_num_errors(build->visor),
+		visor_num_warns(build->visor));
 
 	iter = vector_enum(build->artifacts);
 	while (vector_next(&iter))
@@ -800,7 +797,7 @@ js_files(duk_context* ctx)
 	free(wildcard);
 
 	if (vector_len(targets) == 0)
-		visor_warn(build->visor, "'%s' matches 0 files", pattern);
+		visor_warn(build->visor, "no existing files match '%s'", pattern);
 
 	// return all the newly constructed targets as an array.
 	duk_push_array(ctx);

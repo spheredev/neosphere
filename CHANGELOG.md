@@ -9,6 +9,8 @@ v4.4.2 - TBD
 * Fixes a bug where transpile.v1() parses the input files in strict mode,
   leading some otherwise valid Sphere v1 legacy code to be rejected with a
   syntax error.
+* Fixes a bug which causes Cell to produce a spurious "target file not built"
+  error if a Tool throws an exception.
 
 v4.4.1 - January 28, 2017
 -------------------------
