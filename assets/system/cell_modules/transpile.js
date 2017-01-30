@@ -2,36 +2,46 @@
  *  Cell Standard Library 'transpile' module
  *  (c) 2017 Fat Cerberus
 **/
-
 'use strict';
-module.exports = transpile;
 
-const Babel = require('./lib/Babel');
+const Babel = require('./lib/babel-core');
 
-var moduleTool = new Tool(TOOLFUNC('commonjs'), "transpiling");
-var scriptTool = new Tool(TOOLFUNC(false), "transpiling");
-
-function TOOLFUNC(moduleType)
+exports = module.exports = transpileModules;
+exports.v2 = transpileModules;
+function transpileModules(dirName, sources)
 {
-	return function(outFileName, inFileNames)
-	{
-		var fileContent = FS.readFile(inFileNames[0]);
-		var input = new TextDecoder().decode(fileContent);
-		var output = Babel.transform(input, {
-			presets: [
-				[ 'latest', { es2015: {
-					modules: moduleType,
-					spec:    true,
-				} } ],
-			],
-			comments:    false,
-			retainLines: true,
-		});
-		FS.writeFile(outFileName, new TextEncoder().encode(output.code));
-	}
+	return stageTargets(dirName, sources, moduleTool);
 }
 
-function doTranspile(dirName, sources, tool)
+exports.v1 = transpileScripts;
+function transpileScripts(dirName, sources)
+{
+	return stageTargets(dirName, sources, scriptTool);
+}
+
+var moduleTool = makeTranspilerTool(2);
+var scriptTool = makeTranspilerTool(1);
+
+function makeTranspilerTool(apiVersion)
+{
+	return new Tool(function(outFileName, inFileNames) {
+		var fileContent = FS.readFile(inFileNames[0]);
+		var input = new TextDecoder().decode(fileContent);
+		var moduleType = apiVersion >= 2 ? 'commonjs' : false;
+		var sourceType = apiVersion >= 2 ? 'module' : 'script';
+		var output = Babel.transform(input, {
+			sourceType: sourceType,
+			comments: false,
+			retainLines: true,
+			presets: [
+				[ 'latest', { es2015: { modules: moduleType } } ],
+			],
+		});
+		FS.writeFile(outFileName, new TextEncoder().encode(output.code));
+	}, "transpiling");
+}
+
+function stageTargets(dirName, sources, tool)
 {
 	var targets = [];
 	FS.createDirectory(dirName);
@@ -43,16 +53,4 @@ function doTranspile(dirName, sources, tool)
 		targets[targets.length] = target;
 	}
 	return targets;
-}
-
-transpile.v2 = transpile;
-function transpile(dirName, sources)
-{
-	return doTranspile(dirName, sources, moduleTool);
-}
-
-transpile.v1 = transpileAsScripts;
-function transpileAsScripts(dirName, sources)
-{
-	return doTranspile(dirName, sources, scriptTool);
 }

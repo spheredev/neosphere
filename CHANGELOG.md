@@ -6,6 +6,9 @@ v4.4.2 - TBD
 
 * Fixes a bug where specifying a nonexistent directory in a Cellscript files()
   call would crash the compiler.
+* Fixes a bug where transpile.v1() parses the input files in strict mode,
+  leading some otherwise valid Sphere v1 legacy code to be rejected with a
+  syntax error.
 
 v4.4.1 - January 28, 2017
 -------------------------
