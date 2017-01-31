@@ -99,9 +99,17 @@ build_new(const path_t* source_path, const path_t* out_path)
 		| DUK_DEFPROP_SET_WRITABLE
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
-	// polyfill for ECMAScript 2015
+	// prepare environment for ECMAScript 2015 support
 	if (fs_fexist(fs, "#/polyfill.js") && !eval_cjs_module(ctx, fs, "#/polyfill.js"))
 		return false;
+	if (fs_fexist(fs, "#/cell_modules/lib/babel-core.js")) {
+		duk_push_global_stash(ctx);
+		if (eval_cjs_module(ctx, fs, "#/cell_modules/lib/babel-core.js"))
+			duk_put_prop_string(ctx, -2, "babelCore");
+		else
+			duk_pop(ctx);
+		duk_pop(ctx);
+	}
 
 	// initialize the Cellscript API
 	api_init(ctx);
@@ -489,8 +497,44 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
 		duk_push_string(ctx, " })");
 		duk_concat(ctx, 3);
 		duk_push_string(ctx, filename);
-		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
-			goto on_error;
+		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
+			// syntax error, might be ES 2015+ code; try running the script through Babel.
+			duk_push_global_stash(ctx);
+			if (!duk_has_prop_string(ctx, -1, "babelCore")) {
+				duk_pop(ctx);
+				goto on_error;  // no ES 2015 support
+			}
+			duk_get_prop_string(ctx, -1, "babelCore");
+			duk_get_prop_string(ctx, -1, "transform");
+			duk_swap_top(ctx, -2);
+			duk_push_lstring_t(ctx, code_string);
+			duk_push_object(ctx);
+			duk_push_false(ctx);
+			duk_put_prop_string(ctx, -2, "comments");
+			duk_push_true(ctx);
+			duk_put_prop_string(ctx, -2, "retainLines");
+			duk_push_array(ctx);
+			duk_push_string(ctx, "latest");
+			duk_put_prop_index(ctx, -2, 0);
+			duk_put_prop_string(ctx, -2, "presets");
+			if (duk_pcall_method(ctx, 2) != DUK_EXEC_SUCCESS) {
+				duk_remove(ctx, -2);
+				goto on_error;
+			}
+			duk_get_prop_string(ctx, -1, "code");
+			lstr_free(code_string);
+			code_string = duk_require_lstring_t(ctx, -1);
+			duk_pop_n(ctx, 4);
+
+			// try to compile it again.  if this attempt fails, it's a lost cause.
+			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
+			duk_push_lstring_t(ctx, code_string);
+			duk_push_string(ctx, " })");
+			duk_concat(ctx, 3);
+			duk_push_string(ctx, filename);
+			if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+				goto on_error;
+		}
 		duk_call(ctx, 0);
 		duk_push_string(ctx, "name");
 		duk_push_string(ctx, "main");

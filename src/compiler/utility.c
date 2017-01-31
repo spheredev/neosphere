@@ -72,6 +72,16 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 	return heapptr;
 }
 
+lstring_t*
+duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
+{
+	const char* buffer;
+	size_t      length;
+
+	buffer = duk_require_lstring(ctx, index, &length);
+	return lstr_from_cp1252(buffer, length);
+}
+
 const char*
 duk_require_path(duk_context* ctx, duk_idx_t index)
 {
