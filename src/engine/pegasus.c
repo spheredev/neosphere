@@ -209,6 +209,7 @@ static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
+static duk_ret_t js_Color_is                   (duk_context* ctx);
 static duk_ret_t js_Color_mix                  (duk_context* ctx);
 static duk_ret_t js_Color_of                   (duk_context* ctx);
 static duk_ret_t js_new_Color                  (duk_context* ctx);
@@ -396,6 +397,7 @@ initialize_pegasus_api(duk_context* ctx)
 
 	// initialize the Sphere v2 API
 	api_define_class(ctx, "Color", js_new_Color, NULL);
+	api_define_function(ctx, "Color", "is", js_Color_is);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
 	api_define_function(ctx, "Color", "of", js_Color_of);
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
@@ -1460,6 +1462,21 @@ js_Color_get_Color(duk_context* ctx)
 	
 	data = &COLORS[index];
 	duk_pegasus_push_color(ctx, color_new(data->r, data->g, data->b, data->a));
+	return 1;
+}
+
+static duk_ret_t
+js_Color_is(duk_context* ctx)
+{
+	color_t color1;
+	color_t color2;
+
+	color1 = duk_pegasus_require_color(ctx, 0);
+	color2 = duk_pegasus_require_color(ctx, 1);
+
+	duk_push_boolean(ctx, color1.r == color2.r
+		&& color1.g == color2.g
+		&& color1.b == color2.b);
 	return 1;
 }
 

@@ -149,7 +149,7 @@ system.name [read-only]
 
 system.version [read-only]
 
-    The version number of the engine; e.g. "4.4.2".
+    The version number of the engine; e.g. "5.0.0".
 
 system.apiVersion [read-only]
 system.apiLevel [read-only]
@@ -671,6 +671,15 @@ etc...
 
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.
+
+Color.is(color1, color2);
+
+    Returns true if `color1` refers to the same physical color as `color2`
+    without regard to their alpha components.  Otherwise returns false.
+
+    Note: This is not the same as comparing the color objects' .name properties
+          because Color#name encodes the alpha channel in addition to the
+          physical color.
 
 Color.mix(color1, color2[, w1, w2]);
 
