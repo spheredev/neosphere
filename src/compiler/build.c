@@ -79,7 +79,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	size_t       json_size;
 
 	build = calloc(1, sizeof(build_t));
-	
+
 	// set up the SphereFS sandbox
 	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
 
@@ -508,15 +508,9 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
 			duk_get_prop_string(ctx, -1, "transform");
 			duk_swap_top(ctx, -2);
 			duk_push_lstring_t(ctx, code_string);
-			duk_push_object(ctx);
-			duk_push_false(ctx);
-			duk_put_prop_string(ctx, -2, "comments");
-			duk_push_true(ctx);
-			duk_put_prop_string(ctx, -2, "retainLines");
-			duk_push_array(ctx);
-			duk_push_string(ctx, "latest");
-			duk_put_prop_index(ctx, -2, 0);
-			duk_put_prop_string(ctx, -2, "presets");
+			duk_eval_string(ctx,
+				"({ sourceType: 'module', comments: false, retainLines: true,"
+				"   presets: [ 'latest' ] })");
 			if (duk_pcall_method(ctx, 2) != DUK_EXEC_SUCCESS) {
 				duk_remove(ctx, -2);
 				goto on_error;
@@ -542,12 +536,13 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
 		lstr_free(code_string);
 
 		// go, go, go!
-		duk_get_prop_string(ctx, -2, "exports");    // exports
-		duk_get_prop_string(ctx, -3, "require");    // require
-		duk_dup(ctx, -4);                           // module
+		duk_dup(ctx, -2);                           // this = module
+		duk_get_prop_string(ctx, -3, "exports");    // exports
+		duk_get_prop_string(ctx, -4, "require");    // require
+		duk_dup(ctx, -5);                           // module
 		duk_push_string(ctx, filename);             // __filename
 		duk_push_string(ctx, path_cstr(dir_path));  // __dirname
-		if (duk_pcall(ctx, 5) != DUK_EXEC_SUCCESS)
+		if (duk_pcall_method(ctx, 5) != DUK_EXEC_SUCCESS)
 			goto on_error;
 		duk_pop(ctx);
 	}

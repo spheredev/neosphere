@@ -2,18 +2,16 @@
  *  Cell Standard Library 'transpile' module
  *  (c) 2017 Fat Cerberus
 **/
-'use strict';
 
-const Babel = require('./lib/babel-core');
+import * as Babel from './lib/babel-core';
 
-exports = module.exports = transpileModules;
-exports.v2 = transpileModules;
-function transpileModules(dirName, sources)
+export default
+function transpile(dirName, sources)
 {
 	return stageTargets(dirName, sources, moduleTool);
 }
 
-exports.v1 = transpileScripts;
+transpile.v1 = transpileScripts;
 function transpileScripts(dirName, sources)
 {
 	return stageTargets(dirName, sources, scriptTool);
@@ -24,18 +22,18 @@ var scriptTool = makeTranspilerTool(1.0);
 
 function makeTranspilerTool(apiVersion)
 {
-	return new Tool(function(outFileName, inFileNames) {
-		var fileContent = FS.readFile(inFileNames[0]);
-		var input = new TextDecoder().decode(fileContent);
+	return new Tool((outFileName, inFileNames) => {
 		var moduleType = apiVersion >= 2.0 ? 'commonjs' : false;
 		var sourceType = apiVersion >= 2.0 ? 'module' : 'script';
+		var fileContent = FS.readFile(inFileNames[0]);
+		var input = new TextDecoder().decode(fileContent);
 		var output = Babel.transform(input, {
-			sourceType: sourceType,
+			sourceType,
 			comments: false,
 			retainLines: true,
 			presets: [
-				[ 'latest', { es2015: { modules: moduleType } } ],
-			],
+				[ 'latest', { es2015: { modules: moduleType } } ]
+			]
 		});
 		FS.writeFile(outFileName, new TextEncoder().encode(output.code));
 	}, "transpiling");
@@ -45,10 +43,10 @@ function stageTargets(dirName, sources, tool)
 {
 	var targets = [];
 	FS.createDirectory(dirName);
-	for (var i = 0; i < sources.length; ++i) {
-		var fileName = FS.resolve(dirName + '/' + sources[i].name);
-		var target = tool.stage(fileName, [ sources[i] ], {
-			name: sources[i].name,
+	for (const source of sources) {
+		var fileName = FS.resolve(dirName + '/' + source.name);
+		var target = tool.stage(fileName, [ source ], {
+			name: source.name,
 		});
 		targets[targets.length] = target;
 	}

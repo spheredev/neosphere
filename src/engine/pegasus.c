@@ -790,12 +790,13 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 		lstr_free(code_string);
 
 		// go, go, go!
-		duk_get_prop_string(ctx, -2, "exports");    // exports
-		duk_get_prop_string(ctx, -3, "require");    // require
-		duk_dup(ctx, -4);                           // module
+		duk_dup(ctx, -2);                           // this = module
+		duk_get_prop_string(ctx, -3, "exports");    // exports
+		duk_get_prop_string(ctx, -4, "require");    // require
+		duk_dup(ctx, -5);                           // module
 		duk_push_string(ctx, filename);             // __filename
 		duk_push_string(ctx, path_cstr(dir_path));  // __dirname
-		if (duk_pcall(ctx, 5) != DUK_EXEC_SUCCESS)
+		if (duk_pcall_method(ctx, 5) != DUK_EXEC_SUCCESS)
 			goto on_error;
 		duk_pop(ctx);
 	}
