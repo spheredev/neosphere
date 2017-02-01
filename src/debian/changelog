@@ -1,3 +1,15 @@
+minisphere (4.4.3) trusty; urgency=low
+
+  * Adds support for ECMAScript 2015 syntax in Cellscripts and modules.
+  * Adds a new API function, `Color.is()`, for comparing Colors without regard to
+    their alpha channels.
+  * Fixes a bug where `this` is bound to the global object in top-level module
+    code instead of the `module` object like Node.js.
+  * Fixes a bug where `require()` incorrectly picks up files with `.ts` or
+    `.coffee` extensions.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 1 Feb 2017 00:00:00 -0500
+
 minisphere (4.4.2) trusty; urgency=low
 
   * Fixes a bug where specifying a nonexistent directory in a Cellscript

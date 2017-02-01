@@ -1,8 +1,8 @@
 minisphere Changelog
 ====================
 
-v4.4.3 - TBD
-------------
+v4.4.3 - February 1, 2017
+-------------------------
 
 * Adds support for ECMAScript 2015 syntax in Cellscripts and modules.
 * Adds a new API function, `Color.is()`, for comparing Colors without regard to
