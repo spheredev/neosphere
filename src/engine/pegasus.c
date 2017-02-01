@@ -905,13 +905,9 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	{
 		"%s",
 		"%s.js",
-		"%s.ts",
-		"%s.coffee",
 		"%s.json",
 		"%s/package.json",
 		"%s/index.js",
-		"%s/index.ts",
-		"%s/index.coffee",
 		"%s/index.json",
 	};
 

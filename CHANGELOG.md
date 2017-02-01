@@ -1,7 +1,7 @@
 minisphere Changelog
 ====================
 
-v5.0.0 - TBD
+v4.4.3 - TBD
 ------------
 
 * Adds support for ECMAScript 2015 syntax in Cellscripts and modules.
@@ -9,7 +9,8 @@ v5.0.0 - TBD
   their alpha channels.
 * Fixes a bug where `this` is bound to the global object in top-level module
   code instead of the `module` object like Node.js.
-
+* Fixes a bug where `require()` incorrectly picks up files with `.ts` or
+  `.coffee` extensions.
 
 v4.4.2 - January 30, 2017
 -------------------------
