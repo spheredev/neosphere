@@ -1,4 +1,4 @@
-﻿namespace minisphere.Gdk.DockPanes
+﻿namespace miniSphere.Gdk.DockPanes
 {
     partial class ConsolePane
     {

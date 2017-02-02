@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace minisphere.Gdk
+namespace miniSphere.Gdk
 {
     static class NativeMethods
     {

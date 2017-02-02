@@ -1,4 +1,4 @@
-﻿namespace minisphere.Gdk.SettingsPages
+﻿namespace miniSphere.Gdk.SettingsPages
 {
     partial class SettingsPage
     {
@@ -75,7 +75,7 @@
 			this.MainTabPage.Padding = new System.Windows.Forms.Padding(3);
 			this.MainTabPage.Size = new System.Drawing.Size(568, 329);
 			this.MainTabPage.TabIndex = 0;
-			this.MainTabPage.Text = "minisphere GDK";
+			this.MainTabPage.Text = "miniSphere GDK";
 			this.MainTabPage.UseVisualStyleBackColor = true;
 			// 
 			// panel2
@@ -166,7 +166,7 @@
 			this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
 			this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(210, 17);
 			this.TestWithConsoleCheckBox.TabIndex = 0;
-			this.TestWithConsoleCheckBox.Text = "\"Test Game\" using minisphere &Console";
+			this.TestWithConsoleCheckBox.Text = "\"Test Game\" using miniSphere &Console";
 			this.TestWithConsoleCheckBox.UseVisualStyleBackColor = true;
 			// 
 			// editorLabel2
@@ -179,7 +179,7 @@
 			this.editorLabel2.Name = "editorLabel2";
 			this.editorLabel2.Size = new System.Drawing.Size(562, 23);
 			this.editorLabel2.TabIndex = 2;
-			this.editorLabel2.Text = "minisphere Console settings";
+			this.editorLabel2.Text = "miniSphere Console settings";
 			this.editorLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// panel1
@@ -196,7 +196,7 @@
 			// BrowseButton
 			// 
 			this.BrowseButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.BrowseButton.Image = global::minisphere.Gdk.Properties.Resources.FolderIcon;
+			this.BrowseButton.Image = global::miniSphere.Gdk.Properties.Resources.FolderIcon;
 			this.BrowseButton.Location = new System.Drawing.Point(469, 39);
 			this.BrowseButton.Name = "BrowseButton";
 			this.BrowseButton.Size = new System.Drawing.Size(80, 25);
@@ -235,7 +235,7 @@
 			this.editorLabel1.Name = "editorLabel1";
 			this.editorLabel1.Size = new System.Drawing.Size(562, 23);
 			this.editorLabel1.TabIndex = 0;
-			this.editorLabel1.Text = "Where is the minisphere GDK installed?";
+			this.editorLabel1.Text = "Where is the miniSphere GDK installed?";
 			this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// ShowTraceCheckBox

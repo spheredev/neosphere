@@ -1,11 +1,11 @@
 #ifndef MINISPHERE__VERSION_H__INCLUDED
 #define MINISPHERE__VERSION_H__INCLUDED
 
-#define ENGINE_NAME   "minisphere"
+#define ENGINE_NAME   "miniSphere"
 #define COMPILER_NAME "Cell"
 #define DEBUGGER_NAME "SSJ"
 #define PREPTOOL_NAME "Majin"
 
-#define VERSION_NAME  "4.4.3"
+#define VERSION_NAME  "X.X.X"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED

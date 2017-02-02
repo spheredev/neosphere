@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace minisphere.Gdk.Debugger
+namespace miniSphere.Gdk.Debugger
 {
     class ThrowEventArgs : EventArgs
     {

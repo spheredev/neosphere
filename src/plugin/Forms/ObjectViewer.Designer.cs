@@ -1,4 +1,4 @@
-﻿namespace minisphere.Gdk.Forms
+﻿namespace miniSphere.Gdk.Forms
 {
     partial class ObjectViewer
     {

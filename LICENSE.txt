@@ -1,4 +1,4 @@
-minisphere JavaScript Game Engine
+miniSphere JavaScript Game Engine
 Copyright (c) 2015-2017, Fat Cerberus
 All rights reserved.
 

@@ -1,4 +1,4 @@
-minisphere Coding Conventions and Etiquette
+miniSphere Coding Conventions and Etiquette
 ===========================================
 
 You don't *have* to follow these guidelines, but if you don't, do note that I
@@ -8,7 +8,7 @@ suffer from OCD and will almost assuredly edit your code mercilessly afterwards!
 Use of Monster Drinks
 ---------------------
 
-Make sure you drink a bunch of Monster drinks before writing any minisphere
+Make sure you drink a bunch of Monster drinks before writing any miniSphere
 code, especially when implementing entirely new features.  It really works!
 
 **note:** Red Bull *doesn't* work.  At all.
@@ -56,7 +56,7 @@ if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO
 Function Conventions
 --------------------
 
-Function definitions in minisphere code look like this, with the storage class
+Function definitions in miniSphere code look like this, with the storage class
 and return type on a separate line from the function name and parameters:
 
 ```c
@@ -137,7 +137,7 @@ face! (or eat you...)
 Pull Requests
 -------------
 
-Forking minisphere on GitHub and opening pull requests is allowed and very much
+Forking miniSphere on GitHub and opening pull requests is allowed and very much
 encouraged.  Of course, as mentioned at the top of this document, your code may
 be edited for style before the changes are merged.
 

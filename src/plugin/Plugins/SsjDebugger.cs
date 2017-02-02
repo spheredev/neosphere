@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins.Views;
-using minisphere.Gdk.Forms;
-using minisphere.Gdk.Debugger;
+using miniSphere.Gdk.Forms;
+using miniSphere.Gdk.Debugger;
 
-namespace minisphere.Gdk.Plugins
+namespace miniSphere.Gdk.Plugins
 {
     class SsjDebugger : IDebugger, IDisposable
     {

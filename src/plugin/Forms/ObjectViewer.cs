@@ -9,11 +9,11 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using minisphere.Gdk.Debugger;
-using minisphere.Gdk.Plugins;
-using minisphere.Gdk.Properties;
+using miniSphere.Gdk.Debugger;
+using miniSphere.Gdk.Plugins;
+using miniSphere.Gdk.Properties;
 
-namespace minisphere.Gdk.Forms
+namespace miniSphere.Gdk.Forms
 {
     partial class ObjectViewer : Form
     {

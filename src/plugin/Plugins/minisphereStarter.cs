@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 
-namespace minisphere.Gdk.Plugins
+namespace miniSphere.Gdk.Plugins
 {
     class minisphereStarter : IDebugStarter
     {
@@ -36,7 +36,7 @@ namespace minisphere.Gdk.Plugins
 
         public void Configure()
         {
-            throw new NotSupportedException("minisphere doesn't support engine configuration.");
+            throw new NotSupportedException("miniSphere doesn't support engine configuration.");
         }
 
         public IDebugger Debug(string gamePath, bool isPackage, IProject project)

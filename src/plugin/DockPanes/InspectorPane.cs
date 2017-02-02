@@ -8,12 +8,12 @@ using System.Windows.Forms;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins.Views;
-using minisphere.Gdk.Forms;
-using minisphere.Gdk.Plugins;
-using minisphere.Gdk.Properties;
-using minisphere.Gdk.Debugger;
+using miniSphere.Gdk.Forms;
+using miniSphere.Gdk.Plugins;
+using miniSphere.Gdk.Properties;
+using miniSphere.Gdk.Debugger;
 
-namespace minisphere.Gdk.DockPanes
+namespace miniSphere.Gdk.DockPanes
 {
     partial class InspectorPane : UserControl, IDockPane
     {

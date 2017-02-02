@@ -1,4 +1,4 @@
-﻿namespace minisphere.Gdk.DockPanes
+﻿namespace miniSphere.Gdk.DockPanes
 {
     partial class InspectorPane
     {
@@ -131,7 +131,7 @@
             // 
             this.EvalButton.Dock = System.Windows.Forms.DockStyle.Right;
             this.EvalButton.Enabled = false;
-            this.EvalButton.Image = global::minisphere.Gdk.Properties.Resources.EvalIcon;
+            this.EvalButton.Image = global::miniSphere.Gdk.Properties.Resources.EvalIcon;
             this.EvalButton.Location = new System.Drawing.Point(323, 0);
             this.EvalButton.Name = "EvalButton";
             this.EvalButton.Size = new System.Drawing.Size(64, 23);

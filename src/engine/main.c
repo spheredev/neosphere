@@ -59,7 +59,7 @@ static const char* const ERROR_TEXT[][2] =
 	{ "hey look, a squirrel!", "I wonder if IT'S responsible for this." },
 	{ "sorry. it's just...", "...well, this is a trainwreck of a game." },
 	{ "you better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
-	{ "an exception was thrown.", "minisphere takes exception to sucky games." },
+	{ "an exception was thrown.", "miniSphere takes exception to sucky games." },
 	{ "honk. HONK. honk. HONK. :o)", "there's a clown behind you." },
 	{ "this game has OVER NINE THOUSAND errors.", "WHAT?! 9000?! no way that can be right!" },
 };
@@ -68,7 +68,7 @@ int
 main(int argc, char* argv[])
 {
 	// HERE BE DRAGONS!
-	// as the oldest function in the minisphere codebase by definition, this has become
+	// as the oldest function in the miniSphere codebase by definition, this has become
 	// something of a hairball over time, and likely quite fragile.  don't be surprised if
 	// attempting to edit it causes something to break. :o)
 
@@ -139,7 +139,7 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("minisphere/games/"), home_path());
+	games_path = path_rebase(path_new("miniSphere/games/"), home_path());
 	path_mkdir(games_path);
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
@@ -176,7 +176,7 @@ main(int argc, char* argv[])
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
-			"minisphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists--and if it does, that it contains a valid Sphere game.",
+			"miniSphere was unable to load the game manifest or it was not found.  Check to make sure the directory above exists--and if it does, that it contains a valid Sphere game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
 		fprintf(stderr, "ERROR: failed to start `%s`\n", path_cstr(g_game_path));
@@ -197,8 +197,8 @@ main(int argc, char* argv[])
 		icon = image_load("#/icon.png");
 	g_screen = screen_new(fs_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
-		al_show_native_message_box(NULL, "Unable to Create Render Context", "minisphere was unable to create a render context.",
-			"Your hardware may be too old to run minisphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
+		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere was unable to create a render context.",
+			"Your hardware may be too old to run miniSphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -222,7 +222,7 @@ main(int argc, char* argv[])
 	}
 	if (g_sys_font == NULL) {
 		al_show_native_message_box(screen_display(g_screen), "No System Font Available", "A system font is required.",
-			"minisphere was unable to locate the system font or it failed to load.  As a usable font is necessary for correct operation, minisphere will now close.",
+			"miniSphere was unable to locate the system font or it failed to load.  As a usable font is necessary for correct operation, miniSphere will now close.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -371,7 +371,7 @@ initialize_engine(void)
 		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF,
 		(al_version & 0xFF) - 1);
 	al_set_org_name("Fat Cerberus");
-	al_set_app_name("minisphere");
+	al_set_app_name("miniSphere");
 	if (!al_init())
 		goto on_error;
 	if (!al_init_native_dialog_addon())
@@ -412,7 +412,7 @@ initialize_engine(void)
 
 on_error:
 	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
-		"One or more components failed to initialize.  minisphere cannot continue in this state and will now close.",
+		"One or more components failed to initialize.  miniSphere cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
 }
@@ -655,14 +655,14 @@ print_usage(void)
 	printf("           [--verbose <n>] <game_path>                                        \n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("       --fullscreen   Start minisphere in fullscreen mode.                    \n");
-	printf("       --window       Start minisphere in windowed mode.  This is the default.\n");
+	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");
+	printf("       --window       Start miniSphere in windowed mode.  This is the default.\n");
 	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
 	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
 	printf("                      be abbreviated as `-n`, where n is [0-4].               \n");
-	printf("       --version      Show which version of minisphere is installed.          \n");
+	printf("       --version      Show which version of miniSphere is installed.          \n");
 	printf("       --help         Show this help text.                                    \n");
 	printf("\n");
 	printf("NOTE:\n");
@@ -684,7 +684,7 @@ report_error(const char* fmt, ...)
 	fprintf(stderr, "spherun: ERROR: %s", lstr_cstr(error_text));
 #else
 	al_show_native_message_box(NULL,
-		"minisphere", "An error occurred starting the engine.", lstr_cstr(error_text),
+		"miniSphere", "An error occurred starting the engine.", lstr_cstr(error_text),
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
 	lstr_free(error_text);
@@ -776,6 +776,6 @@ show_error_screen(const char* message)
 show_error_box:
 	// use a native message box only as a last resort
 	al_show_native_message_box(NULL, "Script Error",
-		"minisphere encountered an error during game execution.",
+		"miniSphere encountered an error during game execution.",
 		message, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 }

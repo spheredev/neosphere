@@ -1,4 +1,4 @@
-minisphere Changelog
+miniSphere Changelog
 ====================
 
 v4.4.3 - February 1, 2017

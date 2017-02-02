@@ -34,10 +34,10 @@ engine_path(void)
 		al_set_path_filename(al_path, NULL);
 		// FIXME: how do we detect if we're running from an app bundle?
 		if (false) {
-			// for OS X, we want the directory containing minisphere.app and NOT the
+			// for OS X, we want the directory containing miniSphere.app and NOT the
 			// executable directory that's buried inside.  to get there, we need to
 			// go 3 levels up from the executable:
-			//     minisphere.app/Contents/MacOS/minisphere
+			//     miniSphere.app/Contents/MacOS/minisphere
 			//     ^3             ^2       ^1    ^0
 			for (i = 0; i < 3; ++i)
 				al_drop_path_tail(al_path);

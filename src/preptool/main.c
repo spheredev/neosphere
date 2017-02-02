@@ -16,7 +16,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s Sphere project prep tool (%s)\n", PREPTOOL_NAME, VERSION_NAME,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("a Sphere v2 game manifest editor for minisphere\n");
+		printf("a Sphere v2 game manifest editor for miniSphere\n");
 		printf("(c) 2015-2016 Fat Cerberus\n");
 	}
 	if (want_deps) {

@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
-using minisphere.Gdk.Properties;
+using miniSphere.Gdk.Properties;
 
-namespace minisphere.Gdk.DockPanes
+namespace miniSphere.Gdk.DockPanes
 {
     partial class ConsolePane : UserControl, IDockPane
     {

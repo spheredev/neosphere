@@ -6,19 +6,19 @@ using Microsoft.Win32;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 
-using minisphere.Gdk.DockPanes;
-using minisphere.Gdk.Plugins;
-using minisphere.Gdk.SettingsPages;
-using minisphere.Gdk.Properties;
+using miniSphere.Gdk.DockPanes;
+using miniSphere.Gdk.Plugins;
+using miniSphere.Gdk.SettingsPages;
+using miniSphere.Gdk.Properties;
 
-namespace minisphere.Gdk
+namespace miniSphere.Gdk
 {
     public class PluginMain : IPluginMain
     {
-        public string Name { get; } = "minisphere GDK";
+        public string Name { get; } = "miniSphere GDK";
         public string Author { get; } = "Fat Cerberus";
-        public string Description { get; } = "Provides support for the minisphere GDK toolchain.";
-        public string Version { get; } = "4.4.3";
+        public string Description { get; } = "Provides support for the miniSphere toolchain.";
+        public string Version { get; } = "X.X.X";
 
         internal PluginConf Conf { get; private set; }
         internal int Sessions { get; set; }
@@ -32,13 +32,13 @@ namespace minisphere.Gdk
             Conf = new PluginConf(conf);
             Sessions = 0;
 
-            PluginManager.Register(this, new minisphereStarter(this), "minisphere");
+            PluginManager.Register(this, new minisphereStarter(this), "miniSphere");
             PluginManager.Register(this, new CellCompiler(this), "Cell");
-            PluginManager.Register(this, new SettingsPage(this), "minisphere Setup");
+            PluginManager.Register(this, new SettingsPage(this), "miniSphere Setup");
 
             Panes.Initialize(this);
 
-            _sphereApiRefCommand = new ToolStripMenuItem("Sphere v2 API Reference", Resources.EvalIcon);
+            _sphereApiRefCommand = new ToolStripMenuItem("Sphere v2 Core API Reference", Resources.EvalIcon);
             _sphereApiRefCommand.Click += sphereApiRefCommand_Click;
             _miniRTApiRefCommand = new ToolStripMenuItem("miniRT API Reference", Resources.EvalIcon);
             _miniRTApiRefCommand.Click += miniRTApiRefCommand_Click;
@@ -102,7 +102,7 @@ namespace minisphere.Gdk
                     @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}_is1");
                 if (key != null)
                 {
-                    // minisphere GDK is installed, get path from registry
+                    // miniSphere GDK is installed, get path from registry
                     string defaultPath = (string)key.GetValue(@"InstallLocation") ?? "";
                     string path = Conf.GetString("gdkPath", defaultPath);
                     return !string.IsNullOrWhiteSpace(path) ? path : defaultPath;

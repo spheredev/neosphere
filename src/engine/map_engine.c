@@ -1634,7 +1634,7 @@ duk_require_map_layer(duk_context* ctx, duk_idx_t index)
 	else {
 		// don't anyone ever say I'm not dedicated to compatibility!  there are a few
 		// poorly written Sphere 1.5 games that pass layer IDs as strings.  usually this
-		// would fail because minisphere supports named layers, but here I go out of my
+		// would fail because miniSphere supports named layers, but here I go out of my
 		// way to support it anyway.
 		name = duk_get_string(ctx, index);
 		strtol_out = strtol(name, &p_end, 0);

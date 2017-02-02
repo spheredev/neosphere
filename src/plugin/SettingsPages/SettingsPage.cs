@@ -11,7 +11,7 @@ using System.Windows.Forms;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins;
 
-namespace minisphere.Gdk.SettingsPages
+namespace miniSphere.Gdk.SettingsPages
 {
     partial class SettingsPage : UserControl, ISettingsPage
     {

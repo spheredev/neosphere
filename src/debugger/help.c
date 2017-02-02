@@ -190,7 +190,7 @@ help_print(const char* command_name)
 	else if (strcmp(command_name, "quit") == 0) {
 		printf(
 			"Quit SSJ.  This will detach the debugger and return you to the shell.  In most \n"
-			"cases the minisphere debug target will also close, unless SSJ was started with \n"
+			"cases the miniSphere debug target will also close, unless SSJ was started with \n"
 			"the `-c` option to connect to a running instance.                              \n\n"
 			"SYNTAX:                                                                        \n"
 			"    quit                                                                       \n"

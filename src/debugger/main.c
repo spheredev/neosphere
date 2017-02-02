@@ -113,7 +113,7 @@ launch_minisphere(path_t* game_path)
 		if (fork() != 0)
 			path_free(path);
 		else {
-			// suppress minisphere's stdout. this is kind of a hack for now; eventually
+			// suppress miniSphere's stdout. this is kind of a hack for now; eventually
 			// I'd like to intermingle the engine's output with SSJ's, like in native
 			// debuggers e.g. GDB.
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
@@ -269,7 +269,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s Sphere JavaScript debugger (%s)\n", DEBUGGER_NAME, VERSION_NAME,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("a powerful JavaScript debugger for minisphere\n");
+		printf("a symbolic JavaScript debugger for miniSphere\n");
 		printf("(c) 2015-2017 Fat Cerberus\n");
 	}
 	if (want_deps) {

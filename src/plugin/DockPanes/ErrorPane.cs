@@ -6,10 +6,10 @@ using System.Windows.Forms;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
 using Sphere.Plugins.Views;
-using minisphere.Gdk.Plugins;
-using minisphere.Gdk.Properties;
+using miniSphere.Gdk.Plugins;
+using miniSphere.Gdk.Properties;
 
-namespace minisphere.Gdk.DockPanes
+namespace miniSphere.Gdk.DockPanes
 {
     partial class ErrorPane : UserControl, IDockPane
     {
