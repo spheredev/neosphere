@@ -102,9 +102,9 @@ build_new(const path_t* source_path, const path_t* out_path)
 	// prepare environment for ECMAScript 2015 support
 	if (fs_fexist(fs, "#/polyfill.js") && !eval_cjs_module(ctx, fs, "#/polyfill.js"))
 		return false;
-	if (fs_fexist(fs, "#/cell_modules/lib/babel-core.js")) {
+	if (fs_fexist(fs, "#/babel-core.js")) {
 		duk_push_global_stash(ctx);
-		if (eval_cjs_module(ctx, fs, "#/cell_modules/lib/babel-core.js"))
+		if (eval_cjs_module(ctx, fs, "#/babel-core.js"))
 			duk_put_prop_string(ctx, -2, "babelCore");
 		else
 			duk_pop(ctx);

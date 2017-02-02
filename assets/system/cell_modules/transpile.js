@@ -4,7 +4,7 @@
 **/
 
 module.exports = transpile;
-const Babel = require('./lib/babel-core');
+const Babel = require('#/babel-core');
 
 transpile.v2 = transpile;
 function transpile(dirName, sources)

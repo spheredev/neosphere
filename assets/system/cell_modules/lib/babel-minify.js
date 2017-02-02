@@ -1,10 +1,10 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("./babel-core"));
+		module.exports = factory(require("#/babel-core"));
 	else if(typeof define === 'function' && define.amd)
-		define(["./babel-core"], factory);
+		define(["#/babel-core"], factory);
 	else if(typeof exports === 'object')
-		exports["Babili"] = factory(require("./babel-core"));
+		exports["Babili"] = factory(require("#/babel-core"));
 	else
 		root["Babili"] = factory(root["Babel"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_44__) {
