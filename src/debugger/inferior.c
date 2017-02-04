@@ -527,6 +527,8 @@ handle_notify(inferior_t* obj, const dmessage_t* msg)
 					printf("\33[31;1m");
 				else if (print_op == PRINT_WARN)
 					printf("\33[33;1m");
+				else
+					printf("\33[36m");
 				printf("%s: %s\n", heading, dmessage_get_string(msg, 3));
 				printf("\33[m");
 				break;
@@ -551,9 +553,10 @@ handle_notify(inferior_t* obj, const dmessage_t* msg)
 		case NFY_DETACHING:
 			status_type = dmessage_get_int(msg, 1);
 			if (status_type == 0)
-				printf("debugger disconnected normally.\n");
+				printf("\33[36mdebugger disconnected normally.\n");
 			else
-				printf("debugger disconnected due to an error.\n");
+				printf("\33[31mdebugger disconnected due to an error.\n");
+			printf("\33[m");
 			obj->is_detached = true;
 			return false;
 		}

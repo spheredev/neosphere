@@ -212,7 +212,7 @@ dvalue_print(const dvalue_t* obj, bool is_verbose)
 		if (!is_verbose)
 			printf("{...}");
 		else {
-			printf("{ obj:`%s` }", CLASS_NAMES[obj->ptr.class]);
+			printf("{ obj:'%s' }", CLASS_NAMES[obj->ptr.class]);
 		}
 		break;
 	case DVALUE_PTR:

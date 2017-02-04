@@ -113,7 +113,7 @@ source_print(const source_t* source, int lineno, int num_lines, int active_linen
 			printf("%d %s\n", i + 1, text);
 		else {
 			if (i + 1 == active_lineno)
-				printf("\33[0;1m");
+				printf("\33[36;1m");
 			printf("%s %4d %s\n", arrow, i + 1, text);
 			printf("\33[m");
 		}
