@@ -93,32 +93,34 @@ from a different location, you can use one of the SphereFS prefixes:
 
     @/: The root of the game's sandboxed file system.  Usually redundant, but
         can be useful to qualify filenames in situations where a bare SphereFS
-        filename is ambiguous, for example in a require() call.
-    ~/: The current user's save data directory, guaranteed to be writable.  This
-        is generally used to store save data and such where the user can easily
-        access it.
+        filename is ambiguous, for example in a require() call.  This directory
+        is read-only; trying to save or modify anything here will throw a
+        TypeError.
     #/: The engine's system directory.  This contains assets included with the
-        engine.  In most cases this directory is read-only.  Games should NOT
-        try to write anything here as doing so can damage the host minisphere
-        installation.
+        engine.  As with `@/`, this is read-only to Sphere games.
+    ~/: The current user's save data directory.  This is generally used to
+		store save data and such where the user can easily access it.  Note
+		that all games share the same physical directory for this.  That allows
+		games to easily share save data.
 
 As an example, the following will open the file `EatyPig.bin` from the user's
 save data directory for reading in binary mode:
 
-    var file = FS.open("~/EatyPig.bin", "rb");
+    var file = FS.openFile("~/EatyPig.bin", "rb");
 
-Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
-"@/../maggie.fat", will be met with a sandbox violation error.
+Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
+      to break into the underlying file system, e.g. "@/../maggie.fat", will
+      be met with a sandbox violation error.
 
 
 CommonJS API
 ------------
 
-Sphere uses the CommonJS system for dependency management.  With CommonJS, each
+Sphere uses the CommonJS standard for dependency management.  In CommonJS, each
 script is run as a function, which isolates modules from one another and
 enables more granular control of exports.  In addition, because the code
-importing a module decides where to store its exports (if at all), naming
-conflicts between modules are avoided entirely.
+importing a module decides under what name to store the imports (if at all),
+naming conflicts between modules are avoided entirely.
 
 require(module_id);
 

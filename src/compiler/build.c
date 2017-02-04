@@ -77,13 +77,14 @@ build_new(const path_t* source_path, const path_t* out_path)
 	fs_t*        fs;
 	char*        json;
 	size_t       json_size;
+	visor_t*     visor;
 
 	build = calloc(1, sizeof(build_t));
-
-	// set up the SphereFS sandbox
+	visor = visor_new();
 	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
-
 	ctx = duk_create_heap(NULL, NULL, NULL, build, NULL);
+
+	visor_begin_op(visor, "setting up Cellscript environment");
 
 	// initialize the CommonJS cache and global require()
 	duk_push_global_stash(ctx);
@@ -169,7 +170,9 @@ build_new(const path_t* source_path, const path_t* out_path)
 		duk_pop(ctx);
 	}
 
-	build->visor = visor_new();
+	visor_end_op(visor);
+
+	build->visor = visor;
 	build->fs = fs;
 	build->js_context = ctx;
 	build->artifacts = artifacts;
@@ -211,7 +214,7 @@ build_eval(build_t* build, const char* filename)
 	bool        is_ok = true;
 	struct stat stats;
 
-	visor_begin_op(build->visor, "evaluating script '%s'", filename);
+	visor_begin_op(build->visor, "evaluating '%s'", filename);
 	if (fs_stat(build->fs, filename, &stats) == 0)
 		build->timestamp = stats.st_mtime;
 	if (!eval_cjs_module(build->js_context, build->fs, filename)) {
@@ -294,7 +297,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	// ensure there are no conflicting targets before building.  to simplify the check,
 	// we sort the targets by filename first and then look for runs of identical filenames.
 	// by doing this, we only have to walk the list once.
-	visor_begin_op(build->visor, "building Cellscript targets", vector_len(build->targets));
+	visor_begin_op(build->visor, "building targets", vector_len(build->targets));
 	sorted_targets = vector_dup(build->targets);
 	vector_sort(sorted_targets, sort_targets_by_path);
 	iter = vector_enum(sorted_targets);
