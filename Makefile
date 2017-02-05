@@ -16,9 +16,8 @@ endif
 
 engine_sources=src/engine/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
-   src/shared/dyad.c src/shared/encoding.c src/shared/lstring.c \
-   src/shared/path.c src/shared/unicode.c src/shared/vector.c \
-   src/shared/xoroshiro.c \
+   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
+   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
    src/engine/animation.c src/engine/async.c src/engine/atlas.c \
    src/engine/audio.c src/engine/bytearray.c src/engine/color.c \
    src/engine/console.c src/engine/debugger.c src/engine/font.c \
@@ -37,8 +36,8 @@ engine_libs= \
 
 cell_sources=src/compiler/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
-   src/shared/encoding.c src/shared/lstring.c src/shared/path.c \
-   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
+   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
+   src/shared/vector.c src/shared/xoroshiro.c \
    src/compiler/build.c src/compiler/fs.c src/compiler/spk_writer.c \
    src/compiler/target.c src/compiler/tool.c src/compiler/utility.c \
    src/compiler/visor.c
