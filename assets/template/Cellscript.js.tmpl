@@ -4,9 +4,11 @@
 // and packaging games.
 
 
-// require() any libraries we need.
+// import any stuff we need.  note that Cellscripts are automatically run
+// through the Babel transpiler if needed, so it's okay to use ES 2015 syntax
+// in a Cellscript if you want.
 
-const transpile = require('transpile');
+import transpile from 'transpile';
 
 
 // describe the game we're building.  this gets written to the game manifest

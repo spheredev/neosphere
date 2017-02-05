@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Renames the engine to miniSphere--with a capital 'S'--in line with the recent
+  rebranding.
+
+
 v4.4.3 - February 1, 2017
 -------------------------
 
