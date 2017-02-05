@@ -39,9 +39,6 @@
     <ClCompile Include="..\src\compiler\utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\encoding.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\duk_rubber.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -106,9 +103,6 @@
     </ClInclude>
     <ClInclude Include="resource1.h">
       <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\encoding.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\duk_rubber.h">
       <Filter>Header Files</Filter>

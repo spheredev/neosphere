@@ -7,7 +7,6 @@
 #include "color.h"
 #include "console.h"
 #include "debugger.h"
-#include "encoding.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
