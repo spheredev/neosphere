@@ -1,12 +1,12 @@
-; minisphere installer for Windows releases
+; miniSphere installer for Windows releases
 ; (C) 2015-2017 Fat Cerberus
 ; Inno Setup 5.5 or later with ISPP is required.
 ;
-; this will build a Windows installer for minisphere.  before compiling the installer,
-; you must first build the complete minisphere GDK for both x86 and x64 using Visual Studio.
+; this will build a Windows installer for miniSphere.  before compiling the installer,
+; you must first build the complete miniSphere GDK for both x86 and x64 using Visual Studio.
 ; in practical terms, this means building the full GDK and Redist solution configurations.
 
-#define AppName "minisphere"
+#define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
 #define AppVersion3 "X.X.X"
 
@@ -17,7 +17,7 @@
 #endif
 
 [Setup]
-OutputBaseFilename=minisphereSetup-{#AppVersion3}
+OutputBaseFilename=miniSphereSetup-{#AppVersion3}
 OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
@@ -32,7 +32,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
-DefaultGroupName=minisphere GDK
+DefaultGroupName=miniSphere GDK
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
 InfoBeforeFile=changelog.rtf
@@ -48,12 +48,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Types]
 Name: "normal"; Description: "Standard Redistributable (engine only)"
-Name: "developer"; Description: "Spherical Game Development Kit (minisphere Console)"
+Name: "developer"; Description: "Spherical Game Development Kit (miniSphere Console)"
 Name: "custom"; Description: "Custom Installation"; Flags: iscustom
 
 [Components]
 Name: "engine"; Description: "{#AppName} {#AppVersion3} JavaScript Game Engine [Required]"; Types: normal developer custom; Flags: fixed
-Name: "spherun"; Description: "Spherical GDK / minisphere Console"; Types: developer; Flags: checkablealone
+Name: "spherun"; Description: "Spherical GDK / miniSphere Console"; Types: developer; Flags: checkablealone
 #ifdef HAVE_SPHERE_STUDIO
 Name: "spherun/ide"; Description: "Sphere Studio - the Sphere development environment"; Types: developer
 #endif
@@ -61,7 +61,7 @@ Name: "spherun/cell"; Description: "Cell - the Sphere packaging compiler"; Types
 Name: "spherun/ssj"; Description: "SSJ - the Sphere JavaScript debugger"; Types: developer
 
 [Tasks]
-Name: "assoc"; Description: "&Associate these file extensions with minisphere:"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc"; Description: "&Associate these file extensions with miniSphere:"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/sgm"; Description: ".sgm - Sphere &legacy manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/s2gm"; Description: ".s2gm - Sphere game &manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere &SPK game package"; GroupDescription: "Automatically open Sphere file types:"
@@ -91,25 +91,25 @@ Source: "..\msw\ide\*"; DestDir: "{app}\ide"; Flags: ignoreversion recursesubdir
 #endif
 
 [Registry]
-; minisphere associations
-Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "minisphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
-Root: HKCR; Subkey: "minisphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
-Root: HKCR; Subkey: "minisphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/spk
-Root: HKCR; Subkey: "minisphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/spk
-Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "minisphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
-Root: HKCR; Subkey: "minisphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
-Root: HKCR; Subkey: "minisphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/sgm
-Root: HKCR; Subkey: "minisphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/sgm
-Root: HKCR; Subkey: ".s2gm"; ValueType: string; ValueName: ""; ValueData: "minisphere.S2GM"; Flags: uninsdeletevalue; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "minisphere.S2GM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "minisphere.S2GM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "minisphere.S2GM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/s2gm
+; miniSphere associations
+Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
+Root: HKCR; Subkey: "miniSphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
+Root: HKCR; Subkey: "miniSphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/spk
+Root: HKCR; Subkey: "miniSphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/spk
+Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
+Root: HKCR; Subkey: "miniSphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
+Root: HKCR; Subkey: "miniSphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/sgm
+Root: HKCR; Subkey: "miniSphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/sgm
+Root: HKCR; Subkey: ".s2gm"; ValueType: string; ValueName: ""; ValueData: "miniSphere.S2GM"; Flags: uninsdeletevalue; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "miniSphere.S2GM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "miniSphere.S2GM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "miniSphere.S2GM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/s2gm
 ; Sphere Studio associations
 #ifdef HAVE_SPHERE_STUDIO
-Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "minisphere.SSPROJ"; Flags: uninsdeletevalue; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "minisphere.SSPROJ"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "minisphere.SSPROJ\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\ide\Sphere Studio.exe,0"; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "minisphere.SSPROJ\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\ide\Sphere Studio.exe"" ""%1"""; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SSPROJ"; Flags: uninsdeletevalue; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: "miniSphere.SSPROJ"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: "miniSphere.SSPROJ\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\ide\Sphere Studio.exe,0"; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: "miniSphere.SSPROJ\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\ide\Sphere Studio.exe"" ""%1"""; Tasks: assoc_ss/ssproj
 #endif
 ; PATH
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"; Tasks: path
@@ -119,7 +119,7 @@ Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 #ifdef HAVE_SPHERE_STUDIO
 Name: "{group}\Sphere Studio IDE"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
 #endif
-Name: "{group}\minisphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
+Name: "{group}\miniSphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
 Name: "{group}\Sphere v2 API Reference"; Filename: "{app}\documentation\sphere2-api.txt"; Components: spherun
 Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"; Components: spherun/cell
 Name: "{group}\miniRT API Reference"; Filename: "{app}\documentation\miniRT-api.txt"; Components: spherun

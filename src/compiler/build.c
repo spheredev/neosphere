@@ -263,7 +263,7 @@ build_package(build_t* build, const char* filename)
 			continue;
 		out_path = path_dup(target_path(*p_target));
 		path_remove_hop(out_path, 0);
-		visor_begin_op(build->visor, "packaging %s", path_cstr(out_path));
+		visor_begin_op(build->visor, "packaging '%s'", path_cstr(out_path));
 		spk_add_file(spk, build->fs,
 			path_cstr(target_path(*p_target)),
 			path_cstr(out_path));
@@ -307,7 +307,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 			++num_matches;
 		else {
 			if (num_matches > 1)
-				visor_error(build->visor, "%d-way conflict %s", num_matches, filename);
+				visor_error(build->visor, "%d-way conflict '%s'", num_matches, filename);
 			num_matches = 1;
 		}
 		last_filename = filename;
@@ -415,7 +415,7 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 			}
 		}
 		if (!keep_file) {
-			visor_begin_op(build->visor, "removing %s", *(char**)iter_i.ptr);
+			visor_begin_op(build->visor, "removing '%s'", *(char**)iter_i.ptr);
 			fs_unlink(build->fs, *(char**)iter_i.ptr);
 			visor_end_op(build->visor);
 		}
