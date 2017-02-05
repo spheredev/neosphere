@@ -9,7 +9,7 @@ the public API used to write build scripts.
 SphereFS File System
 --------------------
 
-Cell, like minisphere, uses the SphereFS standard for file paths.  Under
+Cell, like miniSphere, uses the SphereFS standard for file paths.  Under
 SphereFS, when a relative path is used in an API call, it will be resolved
 relative to the entrypoint (in Cell, the location of Cellscript.js).  To load
 files from a different location, you can use one of the SphereFS prefixes:
@@ -21,7 +21,7 @@ files from a different location, you can use one of the SphereFS prefixes:
     #/: The Sphere system directory.  This contains assets included with the
         engine.  In most cases this directory is read-only.  Build scripts
         should NOT try to write anything here as doing so can damage the host
-        minisphere installation.
+        miniSphere installation.
 
 As an example, the following will open the file `EatyPig.bin` in the root of
 the game package for writing in binary mode:
@@ -149,7 +149,7 @@ Tool#stage(filename, sources);
 
 This module allows you to use ECMAScript 2015 features such as destructuring
 assignment and arrow functions in Sphere games.  These syntax features are not
-natively supported by Duktape (the JavaScript engine used in minisphere), but
+natively supported by Duktape (the JavaScript engine used in miniSphere), but
 can be used by translating the ES 2015 scripts to ES5 first.
 
     const transpile = require('transpile');

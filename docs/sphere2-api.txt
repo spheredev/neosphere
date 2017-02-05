@@ -1,9 +1,9 @@
 Sphere v2 Core API Reference
 ============================
 
-As the successor to the original Sphere engine, minisphere implements nearly
+As the successor to the original Sphere engine, miniSphere implements nearly
 the entire Sphere v1 API.  However, the v1 API is quite dated and, as of
-minisphere 4.0, has been deprecated in its entirety.  It is not documented here
+miniSphere 4.0, has been deprecated in its entirety.  It is not documented here
 at all; while games using the legacy functions will continue to run, new code
 should be written against the modern Sphere v2 API, documented here.
 
@@ -44,7 +44,7 @@ needed, and their values accessed from JavaScript through `system.game`.
     declarations remain local to the module.
 
     If this is 1, the game runs in Sphere v1 compatibility mode.  In this mode,
-    the main module is executed as normal program code, and minisphere calls
+    the main module is executed as normal program code, and miniSphere calls
     the global game() function--if one is provided--to begin game execution.
 
     Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
@@ -59,7 +59,7 @@ needed, and their values accessed from JavaScript through `system.game`.
 "main" [required]
 
     The SphereFS path of the main JavaScript module (see below for more on
-    SphereFS).  This is the script minisphere will run when the game is
+    SphereFS).  This is the script miniSphere will run when the game is
     started.  If no "main" field is present, the game will not start.
 
 "name" [default: "Untitled"]
@@ -147,7 +147,7 @@ there are also several methods for managing engine execution.
 
 system.name [read-only]
 
-    The name of the engine.  In our case, "minisphere".
+    The name of the engine.  In our case, "miniSphere".
 
 system.version [read-only]
 
@@ -173,7 +173,7 @@ system.extensions [read-only]
     the presence of the relevant string(s) in `system.extensions` and either
     show an error message or degrade gracefully if it isn't present.
 
-    minisphere currently supports the following extensions:
+    miniSphere currently supports the following extensions:
 
         sphere_glsl_shader_support
         sphere_stateful_rng
@@ -299,7 +299,7 @@ the case of RPGs.  JavaScript provides a basic generator in the form of
 Math.random().  Sphere v2 takes it a step further with the powerful `RNG`
 object.
 
-minisphere uses the xoroshiro128+ algorithm to generate high-quality random
+miniSphere uses the xoroshiro128+ algorithm to generate high-quality random
 numbers and allows manually seeding the generator, as well as saving and
 restoring the exact state of the generator at any time.  RNG state is often
 saved along with other save data as a way to deter save scumming.
@@ -456,7 +456,7 @@ Key [enumeration]
 
 Keyboard.Default [read-only]
 
-    Gets the default keyboard device.  minisphere currently only supports a
+    Gets the default keyboard device.  miniSphere currently only supports a
     single keyboard.
 
 Keyboard#capsLock [read-only]
@@ -560,7 +560,7 @@ MouseKey [enumeration]
 
 Mouse.Default [read-only]
 
-    Gets the default mouse device.  minisphere currently only supports a single
+    Gets the default mouse device.  miniSphere currently only supports a single
     mouse.
 
 Mouse#x [read-only]
@@ -972,7 +972,7 @@ Transform#translate(tx, ty);
 Audio API
 ---------
 
-Playing sounds and music are both handled in minisphere by Audialis, the
+Playing sounds and music are both handled in miniSphere by Audialis, the
 evolution of Sphere 1.x's audio subsystem.  Audialis allows you to create mixers
 which can be used to adjust certain parameters across all sounds associated with
 that mixer.  This is useful for implementing global volume controls, for
@@ -1104,7 +1104,7 @@ SoundStream#stop();
 File System API
 ---------------
 
-minisphere provides the `FS` object to allow games to access asset and save
+miniSphere provides the `FS` object to allow games to access asset and save
 files, create or remove directories, and so on.
 
 FS.createDirectory(dir_name);
@@ -1208,7 +1208,7 @@ FileStream#write(data);
 Networking API
 --------------
 
-minisphere includes basic support for TCP sockets.  There are two object types:
+miniSphere provides basic support for TCP sockets.  There are two object types:
 Socket and Server.  A Server is persistent and listens for connections on a
 given port, while Sockets represent individual client connections.
 

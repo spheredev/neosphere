@@ -237,7 +237,7 @@ namespace miniSphere.Gdk.Debugger
                 int lineNumber = (int)reply[3 + i * 4];
                 int pc = (int)reply[4 + i * 4];
                 if (lineNumber == 0)
-                    filename = "(system call)";
+                    filename = "[system call]";
                 stack.Add(Tuple.Create(functionName, filename, lineNumber));
             }
             return stack.ToArray();

@@ -4,6 +4,7 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Adds `for...of` enumeration support for `from()` queries.
 * Renames the engine to miniSphere--with a capital 'S'--in line with the recent
   rebranding.
 

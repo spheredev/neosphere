@@ -5,7 +5,7 @@ Sphere v2 specifies a set of CommonJS modules known as the standard library.
 The standard library provides high-level functionality above and beyond what
 the lower-level Sphere API provides.
 
-minisphere's implementation of the standard library is called miniRT and is
+miniSphere's implementation of the standard library is called miniRT and is
 made up of several components, each of which is documented below.
 
 
