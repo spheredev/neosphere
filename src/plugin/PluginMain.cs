@@ -18,7 +18,7 @@ namespace miniSphere.Gdk
         public string Name { get; } = "miniSphere GDK";
         public string Author { get; } = "Fat Cerberus";
         public string Description { get; } = "Provides support for the miniSphere toolchain.";
-        public string Version { get; } = "X.X.X";
+        public string Version { get; } = "4.4.4";
 
         internal PluginConf Conf { get; private set; }
         internal int Sessions { get; set; }
@@ -32,7 +32,7 @@ namespace miniSphere.Gdk
             Conf = new PluginConf(conf);
             Sessions = 0;
 
-            PluginManager.Register(this, new minisphereStarter(this), "miniSphere");
+            PluginManager.Register(this, new miniSphereStarter(this), "miniSphere");
             PluginManager.Register(this, new CellCompiler(this), "Cell");
             PluginManager.Register(this, new SettingsPage(this), "miniSphere Setup");
 

@@ -1,13 +1,20 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.4.4 - February 6, 2017
+-------------------------
 
+* The engine is now called miniSphere, with a capital 'S', both to highlight
+  its nature as a JavaScript-powered engine and to make the name more readily
+  recognizable.
 * Adds `for...of` enumeration support for `from()` queries.
-* Renames the engine to miniSphere--with a capital 'S'--in line with the recent
-  rebranding.
-
+* Improves color coding of SSJ output to give a better picture of what's going
+  on.  Engine state is highlighted in cyan; debugger state is highlighted in
+  gold.
+* Improves Symbol support by enabling native Symbols in Duktape.
+* Improves the Sphere Studio project template: the sample Cellscript now uses
+  `import` to pull in the transpile function, showcasing Cell's new built-in
+  ES 2015 support.
 
 v4.4.3 - February 1, 2017
 -------------------------

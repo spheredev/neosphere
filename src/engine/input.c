@@ -352,7 +352,7 @@ kb_load_keymap(void)
 
 	int i, j;
 
-	filename = g_fs != NULL ? "keymap.kev" : "#/minisphere.conf";
+	filename = g_fs != NULL ? "keymap.kev" : "#/miniSphere.conf";
 	if (!(file = kev_open(g_fs, filename, true)))
 		return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {

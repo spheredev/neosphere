@@ -99,9 +99,9 @@ from a different location, you can use one of the SphereFS prefixes:
     #/: The engine's system directory.  This contains assets included with the
         engine.  As with `@/`, this is read-only to Sphere games.
     ~/: The current user's save data directory.  This is generally used to
-		store save data and such where the user can easily access it.  Note
-		that all games share the same physical directory for this.  That allows
-		games to easily share save data.
+        store save data and such where the user can easily access it.  Note
+        that all games share the same physical directory for this.  That allows
+        games to easily share save data.
 
 As an example, the following will open the file `EatyPig.bin` from the user's
 save data directory for reading in binary mode:
@@ -151,7 +151,7 @@ system.name [read-only]
 
 system.version [read-only]
 
-    The version number of the engine; e.g. "X.X.X".
+    The version number of the engine; e.g. "4.4.4".
 
 system.apiVersion [read-only]
 system.apiLevel [read-only]

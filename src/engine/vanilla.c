@@ -1084,7 +1084,7 @@ js_GetGameList(duk_context* ctx)
 
 	// build search paths
 	paths[0] = path_rebase(path_new("games/"), engine_path());
-	paths[1] = path_rebase(path_new("minisphere/games/"), home_path());
+	paths[1] = path_rebase(path_new("miniSphere/games/"), home_path());
 
 	// search for supported games
 	duk_push_array(ctx);

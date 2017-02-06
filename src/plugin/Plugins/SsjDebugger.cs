@@ -319,7 +319,7 @@ namespace miniSphere.Gdk.Plugins
             else if (path.StartsWith("~/"))
                 path = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                    "minisphere", path.Substring(2));
+                    "miniSphere", path.Substring(2));
             else
                 path = Path.Combine(sourcePath, path);
             return path.Replace('/', Path.DirectorySeparatorChar);

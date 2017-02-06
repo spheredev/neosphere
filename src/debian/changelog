@@ -1,3 +1,19 @@
+minisphere (4.4.4) trusty; urgency=low
+
+  * The engine is now called miniSphere, with a capital 'S', both to highlight
+    its nature as a JavaScript-powered engine and to make the name more readily
+    recognizable.
+  * Adds `for...of` enumeration support for `from()` queries.
+  * Improves color coding of SSJ output to give a better picture of what's going
+    on.  Engine state is highlighted in cyan; debugger state is highlighted in
+    gold.
+  * Improves Symbol support by enabling native Symbols in Duktape.
+  * Improves the Sphere Studio project template: the sample Cellscript now uses
+    `import` to pull in the transpile function, showcasing Cell's new built-in
+    ES 2015 support.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 6 Feb 2017 00:00:00 -0500
+
 minisphere (4.4.3) trusty; urgency=low
 
   * Adds support for ECMAScript 2015 syntax in Cellscripts and modules.

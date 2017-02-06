@@ -11,11 +11,11 @@ using Sphere.Plugins.Interfaces;
 
 namespace miniSphere.Gdk.Plugins
 {
-    class minisphereStarter : IDebugStarter
+    class miniSphereStarter : IDebugStarter
     {
         private PluginMain _main;
 
-        public minisphereStarter(PluginMain main)
+        public miniSphereStarter(PluginMain main)
         {
             _main = main;
         }

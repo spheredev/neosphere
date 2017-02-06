@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
-Name=minisphere
-Comment=minisphere is a lightweight 2D game engine which uses JavaScript for game coding.  The engine boasts a high level of compatibility with the original Sphere RPG engine originally designed by Chad Austin, but includes many enhancements, such as a new JSON game manifest format and the ability to single-step through game code using the SSJ command-line debugger.
+Name=miniSphere
+Comment=miniSphere is a lightweight 2D game engine which uses JavaScript for game coding.  The engine boasts a high level of compatibility with the original Sphere RPG engine originally designed by Chad Austin, but includes many enhancements, such as a new JSON game manifest format and the ability to single-step through game code using the SSJ command-line debugger.
 Exec=minisphere
 MimeType=application/x-sphere-spk;application/x-sphere-sgm;application/x-sphere-s2gm;
 Icon=sphere-icon
