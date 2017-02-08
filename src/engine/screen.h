@@ -12,6 +12,7 @@ ALLEGRO_DISPLAY* screen_display           (const screen_t* obj);
 bool             screen_fullscreen        (const screen_t* screen);
 bool             screen_have_shaders      (const screen_t* screen);
 bool             screen_is_skipframe      (const screen_t* obj);
+void             screen_set_fullscreen    (screen_t* screen, bool fullscreen);
 uint32_t         screen_now               (const screen_t* screen);
 rect_t           screen_get_clipping      (screen_t* obj);
 int              screen_get_frameskip     (const screen_t* obj);

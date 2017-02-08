@@ -1424,7 +1424,7 @@ js_screen_set_fullScreen(duk_context* ctx)
 
 	fullscreen = duk_require_boolean(ctx, 0);
 	
-	// TODO: actually set the fullscreen mode
+	screen_set_fullscreen(g_screen, fullscreen);
 	return 0;
 }
 

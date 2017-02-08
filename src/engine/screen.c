@@ -192,6 +192,13 @@ screen_set_frameskip(screen_t* obj, int max_skips)
 }
 
 void
+screen_set_fullscreen(screen_t* screen, bool fullscreen)
+{
+	screen->fullscreen = fullscreen;
+	refresh_display(screen);
+}
+
+void
 screen_set_mouse_xy(screen_t* obj, int x, int y)
 {
 	x = x * obj->x_scale + obj->x_offset;
