@@ -625,6 +625,11 @@ screen.frameSkip [read/write]
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
+screen.fullScreen [read/write]
+
+    Gets or sets whether the engine is running in fullscreen mode.  Set this to
+    `true` for fullscreen, or `false` for windowed.
+
 screen.width [read-only]
 screen.height [read-only]
 

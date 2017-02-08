@@ -204,6 +204,8 @@ static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_get_frameSkip       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameSkip       (duk_context* ctx);
+static duk_ret_t js_screen_get_fullScreen      (duk_context* ctx);
+static duk_ret_t js_screen_set_fullScreen      (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
@@ -542,6 +544,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_object(ctx, NULL, "screen", "Surface", NULL);
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop(ctx, "screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
+	api_define_static_prop(ctx, "screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
@@ -1404,6 +1407,24 @@ js_screen_set_frameSkip(duk_context* ctx)
 	if (max_skips < 0.0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frameskip");
 	screen_set_frameskip(g_screen, max_skips);
+	return 0;
+}
+
+static duk_ret_t
+js_screen_get_fullScreen(duk_context* ctx)
+{
+	duk_push_boolean(ctx, screen_fullscreen(g_screen));
+	return 1;
+}
+
+static duk_ret_t
+js_screen_set_fullScreen(duk_context* ctx)
+{
+	bool fullscreen;
+
+	fullscreen = duk_require_boolean(ctx, 0);
+	
+	// TODO: actually set the fullscreen mode
 	return 0;
 }
 
