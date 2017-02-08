@@ -103,10 +103,10 @@ from a different location, you can use one of the SphereFS prefixes:
         that all games share the same physical directory for this.  That allows
         games to easily share save data.
 
-As an example, the following will open the file `EatyPig.bin` from the user's
-save data directory for reading in binary mode:
+As an example, the following will create a FileStream which allows reading from
+the file `EatyPig.bin` residing in the user's save data directory.
 
-    var file = FS.openFile("~/EatyPig.bin", "rb");
+    var file = new FileStream('~/EatyPig.bin', 'r');
 
 Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       to break into the underlying file system, e.g. "@/../maggie.fat", will
@@ -749,7 +749,7 @@ new Font(filename);
 
 Font#fileName [read-only]
 
-    Gets the full canonicalized SphereFS filename of the file used to construct
+    Gets the full, canonical SphereFS filename of the file used to construct
     this Font object.
 
 Font#height [read-only]
@@ -799,7 +799,7 @@ new Image(width, height, pixels);
 
 Image#fileName [read-only]
 
-    Gets the full canonicalized SphereFS filename of the file used to construct
+    Gets the full, canonical SphereFS filename of the file used to construct
     this Image object.  For synthesized images, returns null.
 
 Image#width [read-only]
@@ -1013,7 +1013,7 @@ new Sound(filename);
 
 Sound#fileName [read-only]
 
-    Gets the full canonicalized SphereFS filename of the file used to construct
+    Gets the full, canonical SphereFS filename of the file used to construct
     this Sound object.
 
 Sound#length [read-only]
@@ -1126,22 +1126,6 @@ FS.exists(filename);
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
 
-FS.openFile(filename, mode);
-
-    Opens the specified file and constructs a new FileStream to access it.
-    `mode` is a string in the same format as that of C fopen() specifying the
-    mode in which to open the file:
-
-        r:  Open file for reading.
-        r+: Open file for update (reading and writing).
-        w:  Create/truncate then open file for writing.
-        w+: Create/truncate then open file for update.
-        a:  Open file (create if not found) with file position at end of file.
-        a+: Open file for update with initial position at end of file.
-
-    Note that calling FS.open() is the only way to get a FileStream object;
-    there is no FileStream constructor.
-
 FS.readFile(filename);
 
     Reads all data from the specified file and returns it as an ArrayBuffer.
@@ -1176,9 +1160,24 @@ FS.writeFile(filename, data);
     filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
     DataView containing the data to be written.
 
+new FileStream(filename, mode);
+
+    Constructs a FileStream that provides access to the contents of a specified
+    file.  `mode` is a string specifying the mode in which to open the file:
+
+        'r':  Open file for reading.
+        'r+': Open file for update (reading and writing).
+        'w':  Create/truncate then open file for writing.
+        'w+': Create/truncate then open file for update.
+        'a':  Open file (create if not found) with file pointer at end of file.
+        'a+': Open file for update with file pointer at end of file.
+
+    Requesting a writable mode for a file residing in a read-only directory
+    (e.g., the system directory `#/`) will throw a TypeError.
+
 FileStream#fileName [read-only]
 
-    Gets the full canonicalized SphereFS filename of the underlying file.
+    Gets the full, canonical SphereFS filename of the underlying file.
 
 FileStream#position [read/write]
 

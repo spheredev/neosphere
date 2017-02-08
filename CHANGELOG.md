@@ -1,6 +1,15 @@
 miniSphere Changelog
 ====================
 
+v5.0.0 - TBD
+------------
+
+* Adds a `screen.fullScreen` property which allows games to set the fullscreen
+  mode programmatically.
+* Removes `FS.openFile()` in favor of a `FileStream` constructor, making
+  `FileStream` a proper class and therefore enabling it to be extended.
+
+
 v4.4.4 - February 6, 2017
 -------------------------
 

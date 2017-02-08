@@ -226,12 +226,12 @@ static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
 static duk_ret_t js_FS_exists                  (duk_context* ctx);
-static duk_ret_t js_FS_openFile                (duk_context* ctx);
 static duk_ret_t js_FS_readFile                (duk_context* ctx);
 static duk_ret_t js_FS_rename                  (duk_context* ctx);
 static duk_ret_t js_FS_resolve                 (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_writeFile               (duk_context* ctx);
+static duk_ret_t js_new_FileStream             (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
 static duk_ret_t js_FileStream_get_fileName    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
@@ -410,7 +410,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Dispatch", "now", js_Dispatch_now);
 	api_define_function(ctx, "Dispatch", "onRender", js_Dispatch_onRender);
 	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
-	api_define_class(ctx, "FileStream", NULL, js_FileStream_finalize);
+	api_define_class(ctx, "FileStream", js_new_FileStream, js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "fileName", js_FileStream_get_fileName, NULL);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
@@ -427,7 +427,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "exists", js_FS_exists);
-	api_define_function(ctx, "FS", "openFile", js_FS_openFile);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
@@ -1678,25 +1677,6 @@ js_FS_exists(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FS_openFile(duk_context* ctx)
-{
-	sfs_file_t* file;
-	const char* filename;
-	const char* mode;
-	bool        writing;
-
-	mode = duk_require_string(ctx, 1);
-	writing = strchr(mode, 'w') != NULL || strchr(mode, '+') != NULL || strchr(mode, 'a') != NULL;
-	filename = duk_require_path(ctx, 0, NULL, false, writing);
-
-	file = sfs_fopen(g_fs, filename, NULL, mode);
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
-	duk_push_class_obj(ctx, "FileStream", file);
-	return 1;
-}
-
-static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
 	void*       buffer;
@@ -1764,6 +1744,29 @@ js_FS_writeFile(duk_context* ctx)
 
 	if (!sfs_fspew(g_fs, filename, NULL, buffer, size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot write file '%s'", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_new_FileStream(duk_context* ctx)
+{
+	sfs_file_t* file;
+	const char* filename;
+	const char* mode;
+	bool        writing;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	
+	mode = duk_require_string(ctx, 1);
+	writing = strchr(mode, 'w') != NULL || strchr(mode, '+') != NULL || strchr(mode, 'a') != NULL;
+	filename = duk_require_path(ctx, 0, NULL, false, writing);
+
+	file = sfs_fopen(g_fs, filename, NULL, mode);
+	if (file == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "FileStream", file);
 	return 0;
 }
 

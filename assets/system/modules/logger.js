@@ -9,7 +9,7 @@ exports.Log = Log;
 function Log(fileName)
 {
 	var _encoder = new TextEncoder();
-	var _file = FS.openFile(fileName, 'at');
+	var _file = new FileStream(fileName, 'at');
 	var _groups = [];
 	var timestamp = new Date().toISOString();
 	_file.write(_encoder.encode("\nLOG FILE OPENED: " + timestamp + "\n"));
