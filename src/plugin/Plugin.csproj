@@ -7,8 +7,8 @@
     <ProjectGuid>{D242F8EF-7D85-4B6B-9446-6758B68A7F54}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>minisphere.Gdk</RootNamespace>
-    <AssemblyName>minisphereGdkPlugin</AssemblyName>
+    <RootNamespace>miniSphere.Gdk</RootNamespace>
+    <AssemblyName>miniSphereGdkPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
