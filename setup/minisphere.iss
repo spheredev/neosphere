@@ -8,7 +8,7 @@
 
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "4.4.4"
+#define AppVersion3 "X.X.X"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.

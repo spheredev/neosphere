@@ -23,7 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SSJ</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>debugger</ProjectName>
+    <ProjectName>SSJ debugger</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -182,17 +182,17 @@
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
     <ClCompile Include="..\src\shared\vector.c" />
-    <ClCompile Include="..\src\debugger\backtrace.c" />
-    <ClCompile Include="..\src\debugger\objview.c" />
-    <ClCompile Include="..\src\debugger\session.c" />
-    <ClCompile Include="..\src\debugger\parser.c" />
-    <ClCompile Include="..\src\debugger\dvalue.c" />
-    <ClCompile Include="..\src\debugger\help.c" />
-    <ClCompile Include="..\src\debugger\dmessage.c" />
-    <ClCompile Include="..\src\debugger\main.c" />
-    <ClCompile Include="..\src\debugger\inferior.c" />
-    <ClCompile Include="..\src\debugger\sockets.c" />
-    <ClCompile Include="..\src\debugger\source.c" />
+    <ClCompile Include="..\src\ssj\backtrace.c" />
+    <ClCompile Include="..\src\ssj\objview.c" />
+    <ClCompile Include="..\src\ssj\session.c" />
+    <ClCompile Include="..\src\ssj\parser.c" />
+    <ClCompile Include="..\src\ssj\dvalue.c" />
+    <ClCompile Include="..\src\ssj\help.c" />
+    <ClCompile Include="..\src\ssj\dmessage.c" />
+    <ClCompile Include="..\src\ssj\main.c" />
+    <ClCompile Include="..\src\ssj\inferior.c" />
+    <ClCompile Include="..\src\ssj\sockets.c" />
+    <ClCompile Include="..\src\ssj\source.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\dyad.h" />
@@ -201,22 +201,22 @@
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
-    <ClInclude Include="..\src\debugger\backtrace.h" />
-    <ClInclude Include="..\src\debugger\objview.h" />
-    <ClInclude Include="..\src\debugger\session.h" />
-    <ClInclude Include="..\src\debugger\parser.h" />
-    <ClInclude Include="..\src\debugger\dvalue.h" />
-    <ClInclude Include="..\src\debugger\help.h" />
-    <ClInclude Include="..\src\debugger\dmessage.h" />
-    <ClInclude Include="..\src\debugger\posix.h" />
-    <ClInclude Include="..\src\debugger\inferior.h" />
-    <ClInclude Include="..\src\debugger\sockets.h" />
-    <ClInclude Include="..\src\debugger\source.h" />
-    <ClInclude Include="..\src\debugger\ssj.h" />
+    <ClInclude Include="..\src\ssj\backtrace.h" />
+    <ClInclude Include="..\src\ssj\objview.h" />
+    <ClInclude Include="..\src\ssj\session.h" />
+    <ClInclude Include="..\src\ssj\parser.h" />
+    <ClInclude Include="..\src\ssj\dvalue.h" />
+    <ClInclude Include="..\src\ssj\help.h" />
+    <ClInclude Include="..\src\ssj\dmessage.h" />
+    <ClInclude Include="..\src\ssj\posix.h" />
+    <ClInclude Include="..\src\ssj\inferior.h" />
+    <ClInclude Include="..\src\ssj\sockets.h" />
+    <ClInclude Include="..\src\ssj\source.h" />
+    <ClInclude Include="..\src\ssj\ssj.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="debugger.rc" />
+    <ResourceCompile Include="ssj.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

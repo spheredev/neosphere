@@ -14,48 +14,46 @@ ifndef CFLAGS
 CFLAGS=-O3
 endif
 
-engine_sources=src/engine/main.c \
+engine_sources=src/minisphere/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
    src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
    src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
-   src/engine/animation.c src/engine/async.c src/engine/atlas.c \
-   src/engine/audio.c src/engine/bytearray.c src/engine/color.c \
-   src/engine/console.c src/engine/debugger.c src/engine/font.c \
-   src/engine/galileo.c src/engine/geometry.c src/engine/image.c \
-   src/engine/input.c src/engine/kevfile.c src/engine/logger.c \
-   src/engine/map_engine.c src/engine/matrix.c src/engine/obsmap.c \
-   src/engine/pegasus.c src/engine/persons.c src/engine/screen.c \
-   src/engine/script.c src/engine/shader.c src/engine/sockets.c \
-   src/engine/spherefs.c src/engine/spk.c src/engine/spriteset.c \
-   src/engine/tileset.c src/engine/utility.c src/engine/vanilla.c \
-   src/engine/windowstyle.c
+   src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
+   src/minisphere/audio.c src/minisphere/bytearray.c src/minisphere/color.c \
+   src/minisphere/console.c src/minisphere/debugger.c src/minisphere/font.c \
+   src/minisphere/galileo.c src/minisphere/geometry.c src/minisphere/image.c \
+   src/minisphere/input.c src/minisphere/kevfile.c src/minisphere/logger.c \
+   src/minisphere/map_engine.c src/minisphere/matrix.c src/minisphere/obsmap.c \
+   src/minisphere/pegasus.c src/minisphere/persons.c src/minisphere/screen.c \
+   src/minisphere/script.c src/minisphere/shader.c src/minisphere/sockets.c \
+   src/minisphere/spherefs.c src/minisphere/spk.c src/minisphere/spriteset.c \
+   src/minisphere/tileset.c src/minisphere/utility.c src/minisphere/vanilla.c \
+   src/minisphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
    -lmng -lz -lm
 
-cell_sources=src/compiler/main.c \
+cell_sources=src/cell/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
    src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
    src/shared/vector.c src/shared/xoroshiro.c \
-   src/compiler/build.c src/compiler/fs.c src/compiler/spk_writer.c \
-   src/compiler/target.c src/compiler/tool.c src/compiler/utility.c \
-   src/compiler/visor.c
+   src/cell/build.c src/cell/fs.c src/cell/spk_writer.c src/cell/target.c \
+   src/cell/tool.c src/cell/utility.c src/cell/visor.c
 cell_libs= \
    -lz -lm
 
-majin_sources=src/preptool/main.c \
+majin_sources=src/majin/main.c \
    src/shared/vector.c \
-   src/preptool/spk_writer.c
+   src/majin/spk_writer.c
 majin_libs=\
    -lz
 
-ssj_sources=src/debugger/main.c \
+ssj_sources=src/ssj/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
-   src/debugger/backtrace.c src/debugger/dmessage.c src/debugger/dvalue.c \
-   src/debugger/help.c src/debugger/inferior.c src/debugger/objview.c \
-   src/debugger/parser.c src/debugger/session.c src/debugger/sockets.c \
-   src/debugger/source.c
+   src/ssj/backtrace.c src/ssj/dmessage.c src/ssj/dvalue.c src/ssj/help.c \
+   src/ssj/inferior.c src/ssj/objview.c src/ssj/parser.c src/ssj/session.c \
+   src/ssj/sockets.c src/ssj/source.c
 
 .PHONY: all
 all: minisphere spherun cell majin ssj

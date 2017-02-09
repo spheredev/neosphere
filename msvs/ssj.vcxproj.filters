@@ -15,13 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\compiler\main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\shared\duktape.c">
+    <ClCompile Include="..\src\shared\dyad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\path.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shared\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\source.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\dvalue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\sockets.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\help.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssj\parser.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\lstring.c">
@@ -30,57 +48,27 @@
     <ClCompile Include="..\src\shared\unicode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\vector.c">
+    <ClCompile Include="..\src\ssj\inferior.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\spk_writer.c">
+    <ClCompile Include="..\src\ssj\session.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\utility.c">
+    <ClCompile Include="..\src\ssj\backtrace.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\duk_rubber.c">
+    <ClCompile Include="..\src\ssj\objview.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler\target.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\compiler\tool.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\shared\api.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\compiler\fs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\compiler\visor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\compiler\build.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\shared\xoroshiro.c">
+    <ClCompile Include="..\src\ssj\dmessage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\shared\duktape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\duk_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\lstring.h">
+    <ClInclude Include="..\src\shared\dyad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\path.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\tinydir.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\unicode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\vector.h">
@@ -89,48 +77,54 @@
     <ClInclude Include="..\src\shared\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\cell.h">
+    <ClInclude Include="..\src\ssj\ssj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\posix.h">
+    <ClInclude Include="..\src\ssj\posix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\spk_writer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\compiler\utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource1.h">
+    <ClInclude Include="resource2.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\duk_rubber.h">
+    <ClInclude Include="..\src\ssj\source.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\target.h">
+    <ClInclude Include="..\src\ssj\dvalue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\tool.h">
+    <ClInclude Include="..\src\ssj\sockets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\api.h">
+    <ClInclude Include="..\src\ssj\help.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\fs.h">
+    <ClInclude Include="..\src\ssj\parser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\visor.h">
+    <ClInclude Include="..\src\shared\lstring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\compiler\build.h">
+    <ClInclude Include="..\src\shared\unicode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\xoroshiro.h">
+    <ClInclude Include="..\src\ssj\inferior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\session.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\backtrace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\objview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\dmessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="compiler.rc">
+    <ResourceCompile Include="debugger.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

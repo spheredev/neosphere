@@ -1,11 +1,12 @@
 miniSphere Changelog
 ====================
 
-v5.0.0 - TBD
+vX.X.X - TBD
 ------------
 
-* Adds a `screen.fullScreen` property which allows games to set the fullscreen
+* Adds a `screen.fullScreen` property, allowing games to set the fullscreen
   mode programmatically.
+* Renames `Color` component properties back to `red`, `green`, `blue`, `alpha`.
 * Removes `FS.openFile()` in favor of a `FileStream` constructor, making
   `FileStream` a proper class and therefore enabling it to be extended.
 * Fixes bugs where calling `FileStream` methods on a disposed stream may cause

@@ -33,91 +33,91 @@
     <ClCompile Include="..\src\shared\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\main.c">
+    <ClCompile Include="..\src\minisphere\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\animation.c">
+    <ClCompile Include="..\src\minisphere\animation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\async.c">
+    <ClCompile Include="..\src\minisphere\async.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\atlas.c">
+    <ClCompile Include="..\src\minisphere\atlas.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\bytearray.c">
+    <ClCompile Include="..\src\minisphere\bytearray.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\color.c">
+    <ClCompile Include="..\src\minisphere\color.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\console.c">
+    <ClCompile Include="..\src\minisphere\console.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\debugger.c">
+    <ClCompile Include="..\src\minisphere\debugger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\font.c">
+    <ClCompile Include="..\src\minisphere\font.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\galileo.c">
+    <ClCompile Include="..\src\minisphere\galileo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\geometry.c">
+    <ClCompile Include="..\src\minisphere\geometry.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\image.c">
+    <ClCompile Include="..\src\minisphere\image.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\input.c">
+    <ClCompile Include="..\src\minisphere\input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\logger.c">
+    <ClCompile Include="..\src\minisphere\logger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\map_engine.c">
+    <ClCompile Include="..\src\minisphere\map_engine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\obsmap.c">
+    <ClCompile Include="..\src\minisphere\obsmap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\persons.c">
+    <ClCompile Include="..\src\minisphere\persons.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\script.c">
+    <ClCompile Include="..\src\minisphere\script.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\shader.c">
+    <ClCompile Include="..\src\minisphere\shader.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\sockets.c">
+    <ClCompile Include="..\src\minisphere\sockets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\spherefs.c">
+    <ClCompile Include="..\src\minisphere\spherefs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\spk.c">
+    <ClCompile Include="..\src\minisphere\spk.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\spriteset.c">
+    <ClCompile Include="..\src\minisphere\spriteset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\tileset.c">
+    <ClCompile Include="..\src\minisphere\tileset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\utility.c">
+    <ClCompile Include="..\src\minisphere\utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\windowstyle.c">
+    <ClCompile Include="..\src\minisphere\windowstyle.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\screen.c">
+    <ClCompile Include="..\src\minisphere\screen.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\matrix.c">
+    <ClCompile Include="..\src\minisphere\matrix.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\audio.c">
+    <ClCompile Include="..\src\minisphere\audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\duk_rubber.c">
@@ -126,13 +126,13 @@
     <ClCompile Include="..\src\shared\xoroshiro.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\pegasus.c">
+    <ClCompile Include="..\src\minisphere\pegasus.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\vanilla.c">
+    <ClCompile Include="..\src\minisphere\vanilla.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\engine\kevfile.c">
+    <ClCompile Include="..\src\minisphere\kevfile.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\api.c">
@@ -164,97 +164,97 @@
     <ClInclude Include="..\src\shared\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\minisphere.h">
+    <ClInclude Include="..\src\minisphere\minisphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\animation.h">
+    <ClInclude Include="..\src\minisphere\animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\async.h">
+    <ClInclude Include="..\src\minisphere\async.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\atlas.h">
+    <ClInclude Include="..\src\minisphere\atlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\bytearray.h">
+    <ClInclude Include="..\src\minisphere\bytearray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\color.h">
+    <ClInclude Include="..\src\minisphere\color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\console.h">
+    <ClInclude Include="..\src\minisphere\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\debugger.h">
+    <ClInclude Include="..\src\minisphere\debugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\duk_custom.h">
+    <ClInclude Include="..\src\minisphere\duk_custom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\font.h">
+    <ClInclude Include="..\src\minisphere\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\galileo.h">
+    <ClInclude Include="..\src\minisphere\galileo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\geometry.h">
+    <ClInclude Include="..\src\minisphere\geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\image.h">
+    <ClInclude Include="..\src\minisphere\image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\input.h">
+    <ClInclude Include="..\src\minisphere\input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\logger.h">
+    <ClInclude Include="..\src\minisphere\logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\map_engine.h">
+    <ClInclude Include="..\src\minisphere\map_engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\obsmap.h">
+    <ClInclude Include="..\src\minisphere\obsmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\persons.h">
+    <ClInclude Include="..\src\minisphere\persons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\script.h">
+    <ClInclude Include="..\src\minisphere\script.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\shader.h">
+    <ClInclude Include="..\src\minisphere\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\sockets.h">
+    <ClInclude Include="..\src\minisphere\sockets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\spherefs.h">
+    <ClInclude Include="..\src\minisphere\spherefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\spk.h">
+    <ClInclude Include="..\src\minisphere\spk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\spriteset.h">
+    <ClInclude Include="..\src\minisphere\spriteset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\tileset.h">
+    <ClInclude Include="..\src\minisphere\tileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\utility.h">
+    <ClInclude Include="..\src\minisphere\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\windowstyle.h">
+    <ClInclude Include="..\src\minisphere\windowstyle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\screen.h">
+    <ClInclude Include="..\src\minisphere\screen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\matrix.h">
+    <ClInclude Include="..\src\minisphere\matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\audio.h">
+    <ClInclude Include="..\src\minisphere\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\duk_rubber.h">
@@ -263,13 +263,13 @@
     <ClInclude Include="..\src\shared\xoroshiro.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\pegasus.h">
+    <ClInclude Include="..\src\minisphere\pegasus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\vanilla.h">
+    <ClInclude Include="..\src\minisphere\vanilla.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\engine\kevfile.h">
+    <ClInclude Include="..\src\minisphere\kevfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\api.h">

@@ -151,7 +151,7 @@ system.name [read-only]
 
 system.version [read-only]
 
-    The version number of the engine; e.g. "4.4.4".
+    The version number of the engine; e.g. "X.X.X".
 
 system.apiVersion [read-only]
 system.apiLevel [read-only]
@@ -708,10 +708,10 @@ new Color(red, green, blue[, alpha]);
     the range [0.0-1.0] and out-of-range values will be silently clamped.
     `alpha` specifies opacity and defaults to 1.0 if not provided.
 
-Color#r [read/write]
-Color#g [read/write]
-Color#b [read/write]
-Color#a [read/write]
+Color#red [read/write]
+Color#green [read/write]
+Color#blue [read/write]
+Color#alpha [read/write]
 
     Gets or sets the individual components of the color.  Values outside the
     range of [0-1] are accepted, but the engine will automatically clamp them

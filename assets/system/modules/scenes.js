@@ -334,9 +334,8 @@ function Scene()
 
 function _renderScenes()
 {
-	if (screenMask.a > 0) {
+	if (screenMask.alpha > 0.0)
 		prim.fill(screen, screenMask);
-	}
 };
 
 function _updateScenes()

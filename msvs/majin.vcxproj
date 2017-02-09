@@ -21,8 +21,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{905AD0D1-6415-4899-A093-EE53014FD31B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>preptool</RootNamespace>
+    <RootNamespace>majin</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>Majin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -174,15 +175,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\preptool\main.c" />
-    <ClCompile Include="..\src\preptool\spk_writer.c" />
     <ClCompile Include="..\src\shared\vector.c" />
+    <ClCompile Include="..\src\majin\main.c" />
+    <ClCompile Include="..\src\majin\spk_writer.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\preptool\majin.h" />
-    <ClInclude Include="..\src\preptool\spk_writer.h" />
     <ClInclude Include="..\src\shared\tinydir.h" />
     <ClInclude Include="..\src\shared\vector.h" />
+    <ClInclude Include="..\src\majin\majin.h" />
+    <ClInclude Include="..\src\majin\spk_writer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

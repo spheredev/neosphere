@@ -31,6 +31,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>minisphere</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>miniSphere</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -191,7 +192,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -217,7 +218,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -245,7 +246,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
       <DebugInformationFormat>None</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -278,7 +279,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
       <DebugInformationFormat>None</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -311,7 +312,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
       <DebugInformationFormat>None</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -343,7 +344,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
       <DebugInformationFormat>None</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\engine;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -364,10 +365,10 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\engine\vanilla.c" />
-    <ClCompile Include="..\src\engine\matrix.c" />
-    <ClCompile Include="..\src\engine\pegasus.c" />
-    <ClCompile Include="..\src\engine\screen.c" />
+    <ClCompile Include="..\src\minisphere\vanilla.c" />
+    <ClCompile Include="..\src\minisphere\matrix.c" />
+    <ClCompile Include="..\src\minisphere\pegasus.c" />
+    <ClCompile Include="..\src\minisphere\screen.c" />
     <ClCompile Include="..\src\shared\api.c" />
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\dyad.c" />
@@ -376,41 +377,41 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\shared\duk_rubber.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
     <ClCompile Include="..\src\shared\vector.c" />
-    <ClCompile Include="..\src\engine\main.c" />
-    <ClCompile Include="..\src\engine\animation.c" />
-    <ClCompile Include="..\src\engine\async.c" />
-    <ClCompile Include="..\src\engine\atlas.c" />
-    <ClCompile Include="..\src\engine\audio.c" />
-    <ClCompile Include="..\src\engine\bytearray.c" />
-    <ClCompile Include="..\src\engine\color.c" />
-    <ClCompile Include="..\src\engine\console.c" />
-    <ClCompile Include="..\src\engine\debugger.c" />
-    <ClCompile Include="..\src\engine\kevfile.c" />
-    <ClCompile Include="..\src\engine\font.c" />
-    <ClCompile Include="..\src\engine\galileo.c" />
-    <ClCompile Include="..\src\engine\geometry.c" />
-    <ClCompile Include="..\src\engine\image.c" />
-    <ClCompile Include="..\src\engine\input.c" />
-    <ClCompile Include="..\src\engine\logger.c" />
-    <ClCompile Include="..\src\engine\map_engine.c" />
-    <ClCompile Include="..\src\engine\obsmap.c" />
-    <ClCompile Include="..\src\engine\persons.c" />
-    <ClCompile Include="..\src\engine\script.c" />
-    <ClCompile Include="..\src\engine\shader.c" />
-    <ClCompile Include="..\src\engine\sockets.c" />
-    <ClCompile Include="..\src\engine\spherefs.c" />
-    <ClCompile Include="..\src\engine\spk.c" />
-    <ClCompile Include="..\src\engine\spriteset.c" />
-    <ClCompile Include="..\src\engine\tileset.c" />
-    <ClCompile Include="..\src\engine\utility.c" />
-    <ClCompile Include="..\src\engine\windowstyle.c" />
+    <ClCompile Include="..\src\minisphere\main.c" />
+    <ClCompile Include="..\src\minisphere\animation.c" />
+    <ClCompile Include="..\src\minisphere\async.c" />
+    <ClCompile Include="..\src\minisphere\atlas.c" />
+    <ClCompile Include="..\src\minisphere\audio.c" />
+    <ClCompile Include="..\src\minisphere\bytearray.c" />
+    <ClCompile Include="..\src\minisphere\color.c" />
+    <ClCompile Include="..\src\minisphere\console.c" />
+    <ClCompile Include="..\src\minisphere\debugger.c" />
+    <ClCompile Include="..\src\minisphere\kevfile.c" />
+    <ClCompile Include="..\src\minisphere\font.c" />
+    <ClCompile Include="..\src\minisphere\galileo.c" />
+    <ClCompile Include="..\src\minisphere\geometry.c" />
+    <ClCompile Include="..\src\minisphere\image.c" />
+    <ClCompile Include="..\src\minisphere\input.c" />
+    <ClCompile Include="..\src\minisphere\logger.c" />
+    <ClCompile Include="..\src\minisphere\map_engine.c" />
+    <ClCompile Include="..\src\minisphere\obsmap.c" />
+    <ClCompile Include="..\src\minisphere\persons.c" />
+    <ClCompile Include="..\src\minisphere\script.c" />
+    <ClCompile Include="..\src\minisphere\shader.c" />
+    <ClCompile Include="..\src\minisphere\sockets.c" />
+    <ClCompile Include="..\src\minisphere\spherefs.c" />
+    <ClCompile Include="..\src\minisphere\spk.c" />
+    <ClCompile Include="..\src\minisphere\spriteset.c" />
+    <ClCompile Include="..\src\minisphere\tileset.c" />
+    <ClCompile Include="..\src\minisphere\utility.c" />
+    <ClCompile Include="..\src\minisphere\windowstyle.c" />
     <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\engine\vanilla.h" />
-    <ClInclude Include="..\src\engine\matrix.h" />
-    <ClInclude Include="..\src\engine\pegasus.h" />
-    <ClInclude Include="..\src\engine\screen.h" />
+    <ClInclude Include="..\src\minisphere\vanilla.h" />
+    <ClInclude Include="..\src\minisphere\matrix.h" />
+    <ClInclude Include="..\src\minisphere\pegasus.h" />
+    <ClInclude Include="..\src\minisphere\screen.h" />
     <ClInclude Include="..\src\shared\api.h" />
     <ClInclude Include="..\src\shared\duktape.h" />
     <ClInclude Include="..\src\shared\duk_config.h" />
@@ -421,40 +422,40 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
-    <ClInclude Include="..\src\engine\minisphere.h" />
-    <ClInclude Include="..\src\engine\animation.h" />
-    <ClInclude Include="..\src\engine\async.h" />
-    <ClInclude Include="..\src\engine\atlas.h" />
-    <ClInclude Include="..\src\engine\audio.h" />
-    <ClInclude Include="..\src\engine\bytearray.h" />
-    <ClInclude Include="..\src\engine\color.h" />
-    <ClInclude Include="..\src\engine\console.h" />
-    <ClInclude Include="..\src\engine\debugger.h" />
-    <ClInclude Include="..\src\engine\duk_custom.h" />
-    <ClInclude Include="..\src\engine\kevfile.h" />
-    <ClInclude Include="..\src\engine\font.h" />
-    <ClInclude Include="..\src\engine\geometry.h" />
-    <ClInclude Include="..\src\engine\image.h" />
-    <ClInclude Include="..\src\engine\input.h" />
-    <ClInclude Include="..\src\engine\logger.h" />
-    <ClInclude Include="..\src\engine\map_engine.h" />
-    <ClInclude Include="..\src\engine\galileo.h" />
-    <ClInclude Include="..\src\engine\obsmap.h" />
-    <ClInclude Include="..\src\engine\persons.h" />
-    <ClInclude Include="..\src\engine\script.h" />
-    <ClInclude Include="..\src\engine\shader.h" />
-    <ClInclude Include="..\src\engine\sockets.h" />
-    <ClInclude Include="..\src\engine\spherefs.h" />
-    <ClInclude Include="..\src\engine\spk.h" />
-    <ClInclude Include="..\src\engine\spriteset.h" />
-    <ClInclude Include="..\src\engine\tileset.h" />
-    <ClInclude Include="..\src\engine\utility.h" />
-    <ClInclude Include="..\src\engine\windowstyle.h" />
+    <ClInclude Include="..\src\minisphere\minisphere.h" />
+    <ClInclude Include="..\src\minisphere\animation.h" />
+    <ClInclude Include="..\src\minisphere\async.h" />
+    <ClInclude Include="..\src\minisphere\atlas.h" />
+    <ClInclude Include="..\src\minisphere\audio.h" />
+    <ClInclude Include="..\src\minisphere\bytearray.h" />
+    <ClInclude Include="..\src\minisphere\color.h" />
+    <ClInclude Include="..\src\minisphere\console.h" />
+    <ClInclude Include="..\src\minisphere\debugger.h" />
+    <ClInclude Include="..\src\minisphere\duk_custom.h" />
+    <ClInclude Include="..\src\minisphere\kevfile.h" />
+    <ClInclude Include="..\src\minisphere\font.h" />
+    <ClInclude Include="..\src\minisphere\geometry.h" />
+    <ClInclude Include="..\src\minisphere\image.h" />
+    <ClInclude Include="..\src\minisphere\input.h" />
+    <ClInclude Include="..\src\minisphere\logger.h" />
+    <ClInclude Include="..\src\minisphere\map_engine.h" />
+    <ClInclude Include="..\src\minisphere\galileo.h" />
+    <ClInclude Include="..\src\minisphere\obsmap.h" />
+    <ClInclude Include="..\src\minisphere\persons.h" />
+    <ClInclude Include="..\src\minisphere\script.h" />
+    <ClInclude Include="..\src\minisphere\shader.h" />
+    <ClInclude Include="..\src\minisphere\sockets.h" />
+    <ClInclude Include="..\src\minisphere\spherefs.h" />
+    <ClInclude Include="..\src\minisphere\spk.h" />
+    <ClInclude Include="..\src\minisphere\spriteset.h" />
+    <ClInclude Include="..\src\minisphere\tileset.h" />
+    <ClInclude Include="..\src\minisphere\utility.h" />
+    <ClInclude Include="..\src\minisphere\windowstyle.h" />
     <ClInclude Include="..\src\shared\xoroshiro.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="engine.rc" />
+    <ResourceCompile Include="minisphere.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="spherical.ico" />

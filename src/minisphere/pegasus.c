@@ -884,10 +884,10 @@ duk_pegasus_require_color(duk_context* ctx, duk_idx_t index)
 
 	index = duk_require_normalize_index(ctx, index);
 	duk_require_class_obj(ctx, index, "Color");
-	duk_get_prop_string(ctx, index, "r");
-	duk_get_prop_string(ctx, index, "g");
-	duk_get_prop_string(ctx, index, "b");
-	duk_get_prop_string(ctx, index, "a");
+	duk_get_prop_string(ctx, index, "red");
+	duk_get_prop_string(ctx, index, "green");
+	duk_get_prop_string(ctx, index, "blue");
+	duk_get_prop_string(ctx, index, "alpha");
 	a = fmin(fmax(duk_get_number(ctx, -1) * 255, 0), 255);
 	b = fmin(fmax(duk_get_number(ctx, -2) * 255, 0), 255);
 	g = fmin(fmax(duk_get_number(ctx, -3) * 255, 0), 255);
@@ -1593,10 +1593,10 @@ js_new_Color(duk_context* ctx)
 	duk_push_number(ctx, g);
 	duk_push_number(ctx, b);
 	duk_push_number(ctx, a);
-	duk_put_prop_string(ctx, obj_index, "a");
-	duk_put_prop_string(ctx, obj_index, "b");
-	duk_put_prop_string(ctx, obj_index, "g");
-	duk_put_prop_string(ctx, obj_index, "r");
+	duk_put_prop_string(ctx, obj_index, "alpha");
+	duk_put_prop_string(ctx, obj_index, "blue");
+	duk_put_prop_string(ctx, obj_index, "green");
+	duk_put_prop_string(ctx, obj_index, "red");
 	return 0;
 }
 

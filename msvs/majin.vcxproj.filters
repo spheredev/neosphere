@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\preptool\main.c">
+    <ClCompile Include="..\src\majin\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\preptool\spk_writer.c">
+    <ClCompile Include="..\src\majin\spk_writer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\vector.c">
@@ -26,10 +26,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\preptool\majin.h">
+    <ClInclude Include="..\src\majin\majin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\preptool\spk_writer.h">
+    <ClInclude Include="..\src\majin\spk_writer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\vector.h">
