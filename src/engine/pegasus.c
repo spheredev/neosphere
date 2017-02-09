@@ -1773,7 +1773,7 @@ js_new_FileStream(duk_context* ctx)
 	file_op = duk_require_int(ctx, 1);
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file mode constant");
-	
+
 	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
 	if (file_op == FILE_OP_UPDATE && !sfs_fexist(g_fs, filename, NULL))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
@@ -1796,7 +1796,8 @@ js_FileStream_finalize(duk_context* ctx)
 	sfs_file_t* file;
 
 	file = duk_require_class_obj(ctx, 0, "FileStream");
-	if (file != NULL) sfs_fclose(file);
+
+	sfs_fclose(file);
 	return 0;
 }
 
@@ -1806,7 +1807,8 @@ js_FileStream_get_fileName(duk_context* ctx)
 	sfs_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
 	duk_push_string(ctx, sfs_fpath(file));
 	return 1;
@@ -1818,7 +1820,8 @@ js_FileStream_get_position(duk_context* ctx)
 	sfs_file_t* file;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
 	duk_push_number(ctx, sfs_ftell(file));
 	return 1;
@@ -1831,10 +1834,9 @@ js_FileStream_get_size(duk_context* ctx)
 	long        file_pos;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
-	duk_pop(ctx);
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object was disposed of");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, sfs_ftell(file));
@@ -1849,7 +1851,9 @@ js_FileStream_set_position(duk_context* ctx)
 	long long   new_pos;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+
 	new_pos = duk_require_number(ctx, 0);
 	sfs_fseek(file, new_pos, SFS_SEEK_SET);
 	return 0;
@@ -1862,6 +1866,7 @@ js_FileStream_dispose(duk_context* ctx)
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "FileStream");
+
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	sfs_fclose(file);
@@ -1884,18 +1889,18 @@ js_FileStream_read(duk_context* ctx)
 	long         pos;
 
 	argc = duk_get_top(ctx);
-	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
-
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object was disposed of");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
+	if (num_bytes < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
+
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
 		sfs_fseek(file, 0, SEEK_SET);
 	}
-	if (num_bytes < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
 	num_bytes = (int)sfs_fread(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
@@ -1915,10 +1920,9 @@ js_FileStream_write(duk_context* ctx)
 	data = duk_require_buffer_data(ctx, 0, &num_bytes);
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
-	duk_pop(ctx);
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object was disposed of");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file write failed");
 	return 0;

@@ -8,6 +8,8 @@ v5.0.0 - TBD
   mode programmatically.
 * Removes `FS.openFile()` in favor of a `FileStream` constructor, making
   `FileStream` a proper class and therefore enabling it to be extended.
+* Fixes bugs where calling `FileStream` methods on a disposed stream may cause
+  the engine to crash.
 
 
 v4.4.4 - February 6, 2017

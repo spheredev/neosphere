@@ -1191,6 +1191,11 @@ FileStream#dispose();
     Disposes of the FileStream object, after which it should not be used.
     Attempting to read or write to a stream after it is disposed of will throw
     an error.
+    
+    Note: While it's not strictly necessary to call `dispose()` on FileStreams,
+          it may take some time for the garbage collector to get to them.  If
+          there's an active FileStream in write mode for a given file, an error
+          will be thrown if you try to construct another one.
 
 FileStream#fileName [read-only]
 
