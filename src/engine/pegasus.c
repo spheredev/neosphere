@@ -18,6 +18,14 @@
 #define API_VERSION 2
 #define API_LEVEL   0
 
+enum file_op
+{
+	FILE_OP_READ,
+	FILE_OP_WRITE,
+	FILE_OP_UPDATE,
+	FILE_OP_MAX,
+};
+
 static const char* const EXTENSIONS[] =
 {
 	"sphere_glsl_shader_support",
@@ -548,6 +556,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
 
+	api_define_const(ctx, "FileMode", "Read", FILE_OP_READ);
+	api_define_const(ctx, "FileMode", "Write", FILE_OP_WRITE);
+	api_define_const(ctx, "FileMode", "Update", FILE_OP_UPDATE);
 	api_define_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_define_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_define_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
@@ -1750,21 +1761,30 @@ js_FS_writeFile(duk_context* ctx)
 static duk_ret_t
 js_new_FileStream(duk_context* ctx)
 {
-	sfs_file_t* file;
-	const char* filename;
-	const char* mode;
-	bool        writing;
+	sfs_file_t*  file;
+	enum file_op file_op;
+	const char*  filename;
+	const char*  mode;
 
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 	
-	mode = duk_require_string(ctx, 1);
-	writing = strchr(mode, 'w') != NULL || strchr(mode, '+') != NULL || strchr(mode, 'a') != NULL;
-	filename = duk_require_path(ctx, 0, NULL, false, writing);
-
-	file = sfs_fopen(g_fs, filename, NULL, mode);
-	if (file == NULL)
+	duk_require_string(ctx, 0);
+	file_op = duk_require_int(ctx, 1);
+	if (file_op < 0 || file_op >= FILE_OP_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file mode constant");
+	
+	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
+	if (file_op == FILE_OP_UPDATE && !sfs_fexist(g_fs, filename, NULL))
+		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
+	mode = file_op == FILE_OP_READ ? "rb"
+		: file_op == FILE_OP_WRITE ? "w+b"
+		: file_op == FILE_OP_UPDATE ? "r+b"
+		: NULL;
+	if (!(file = sfs_fopen(g_fs, filename, NULL, mode)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
+	if (file_op == FILE_OP_UPDATE)
+		sfs_fseek(file, 0, SFS_SEEK_END);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "FileStream", file);
 	return 0;

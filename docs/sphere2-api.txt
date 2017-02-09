@@ -106,7 +106,7 @@ from a different location, you can use one of the SphereFS prefixes:
 As an example, the following will create a FileStream which allows reading from
 the file `EatyPig.bin` residing in the user's save data directory.
 
-    var file = new FileStream('~/EatyPig.bin', 'r');
+    var file = new FileStream('~/EatyPig.bin', FileMode.Read);
 
 Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       to break into the underlying file system, e.g. "@/../maggie.fat", will
@@ -1163,14 +1163,25 @@ FS.writeFile(filename, data);
 new FileStream(filename, mode);
 
     Constructs a FileStream that provides access to the contents of a specified
-    file.  `mode` is a string specifying the mode in which to open the file:
+    file.  `mode` must be one of the following:
 
-        'r':  Open file for reading.
-        'r+': Open file for update (reading and writing).
-        'w':  Create/truncate then open file for writing.
-        'w+': Create/truncate then open file for update.
-        'a':  Open file (create if not found) with file pointer at end of file.
-        'a+': Open file for update with file pointer at end of file.
+        FileMode.Read
+        
+            Read data from the file.  The file must exist and will be opened in
+            read-only mode.  Any attempt to write to the file will throw a
+            TypeError.
+
+        FileMode.Write
+
+            Write data to the file.  Be careful: If the file already exists,
+            its contents will be overwritten.  If that behavior is not desired,
+            use `FileMode.Update` instead.
+
+        FileMode.Update
+        
+            Amend the file.  If a file by the specified name doesn't exist, it
+            will be created.  For convenience, the file pointer starts at the
+            end of the file.
 
     Requesting a writable mode for a file residing in a read-only directory
     (e.g., the system directory `#/`) will throw a TypeError.
