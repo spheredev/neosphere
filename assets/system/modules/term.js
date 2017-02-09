@@ -14,6 +14,7 @@ module.exports =
 };
 
 const from    = require('from');
+const Log     = require('logger').Log;
 const prim    = require('prim');
 const scenes  = require('scenes');
 const threads = require('threads');
@@ -35,6 +36,7 @@ var commands = [];
 var entry = "";
 var cursorColor = Color.Gold;
 var fps = screen.frameRate;
+var logger = new Log(system.game.logPath);
 new scenes.Scene()
 	.doWhile(function() { return true; })
 		.tween(cursorColor, 0.25 * fps, 'easeInSine', { alpha: 255 })
@@ -207,6 +209,7 @@ function print(/*...*/)
 	++nextLine;
 	visible.line = 0.0;
 	console.log(buffer[lineInBuffer]);
+	logger.write(buffer[lineInBuffer]);
 }
 
 function define(name, that, methods)

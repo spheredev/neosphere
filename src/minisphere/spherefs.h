@@ -26,6 +26,7 @@ const char*      fs_name           (const sandbox_t* fs);
 const path_t*    fs_path           (const sandbox_t* fs);
 const char*      fs_author         (const sandbox_t* fs);
 const char*      fs_summary        (const sandbox_t* fs);
+const char*      fs_save_id        (const sandbox_t* fs);
 const path_t*    fs_script_path    (const sandbox_t* fs);
 void             fs_get_resolution (const sandbox_t* fs, int *out_width, int *out_height);
 vector_t*        fs_list_dir       (const sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);

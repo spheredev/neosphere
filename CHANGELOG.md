@@ -6,6 +6,8 @@ vX.X.X - TBD
 
 * Adds a `screen.fullScreen` property, allowing games to set the fullscreen
   mode programmatically.
+* Adds support for game-specific save directories.  Set `saveID` in a game's
+  JSON manifest to control where it stores its save data.
 * Renames `Color` component properties back to `red`, `green`, `blue`, `alpha`.
 * Removes `FS.openFile()` in favor of a `FileStream` constructor, making
   `FileStream` a proper class and therefore enabling it to be extended.

@@ -119,14 +119,14 @@ clean:
 
 bin/minisphere:
 	mkdir -p bin
-	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/engine \
+	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/minisphere \
 	      -DDUK_OPT_HAVE_CUSTOM_H \
 	      $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
-	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/engine \
+	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/minisphere \
 	      -DDUK_OPT_HAVE_CUSTOM_H -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
 

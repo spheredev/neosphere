@@ -20,6 +20,7 @@ struct sandbox
 	lstring_t*   name;
 	lstring_t*   author;
 	lstring_t*   summary;
+	lstring_t*   save_id;
 	int          res_x;
 	int          res_y;
 	path_t*      script_path;
@@ -68,16 +69,19 @@ fs_new(const char* game_path)
 		fs->type = SPHEREFS_SPK;
 		fs->root_path = path_dup(path);
 		fs->spk = spk;
+		fs->save_id = lstr_newf("unknown-%s", path_filename(fs->root_path));
 	}
 	else if (path_has_extension(path, ".sgm") || path_filename_cmp(path, "game.json")) {  // game manifest
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
+		fs->save_id = lstr_newf("unknown-%s", path_hop(fs->root_path, path_num_hops(fs->root_path) - 1));
 	}
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-		
-		// synthesize a game manifest for the script. this way we make this trick
+		fs->save_id = lstr_newf("unknown-%s", path_hop(fs->root_path, path_num_hops(fs->root_path) - 1));
+
+		// synthesize a game manifest for the script.  this way we make this trick
 		// transparent to the rest of the engine, keeping things simple.
 		console_log(1, "synthesizing manifest for `%s` in sandbox #%u", path_cstr(path),
 			s_next_sandbox_id);
@@ -91,6 +95,7 @@ fs_new(const char* game_path)
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
 		duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
+		duk_push_lstring_t(g_duk, fs->save_id); duk_put_prop_string(g_duk, -2, "saveID");
 		duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
 		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "main");
 		fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
@@ -99,6 +104,7 @@ fs_new(const char* game_path)
 	else {  // default case, unpacked game folder
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
+		fs->save_id = lstr_newf("unknown-%s", path_hop(fs->root_path, path_num_hops(fs->root_path) - 1));
 	}
 	path_free(path);
 	path = NULL;
@@ -146,10 +152,11 @@ fs_new(const char* game_path)
 	}
 
 	fs_get_resolution(fs, &res_x, &res_y);
-	console_log(1, "    title: %s", fs_name(fs));
-	console_log(1, "    author: %s", fs_author(fs));
+	console_log(1, "         title: %s", fs_name(fs));
+	console_log(1, "        author: %s", fs_author(fs));
 	console_log(1, "    resolution: %ix%i", res_x, res_y);
-	
+	console_log(1, "       save ID: %s", fs_save_id(fs));
+
 	// load the source map
 	if (sourcemap_data = sfs_fslurp(fs, "source.json", NULL, &sourcemap_size))
 		fs->sourcemap = lstr_from_cp1252(sourcemap_data, sourcemap_size);
@@ -230,6 +237,12 @@ const char*
 fs_author(const sandbox_t* fs)
 {
 	return lstr_cstr(fs->author);
+}
+
+const char*
+fs_save_id(const sandbox_t* fs)
+{
+	return lstr_cstr(fs->save_id);
 }
 
 const char*
@@ -632,6 +645,8 @@ duk_load_s2gm(duk_context* ctx)
 		fs->summary = lstr_new(duk_get_string(g_duk, -1));
 	else
 		fs->summary = lstr_new("No information available.");
+	if (duk_get_prop_string(g_duk, -5, "saveID") && duk_is_string(g_duk, -1))
+		fs->save_id = lstr_new(duk_get_string(g_duk, -1));
 
 	return 0;
 
@@ -668,10 +683,12 @@ resolve_path(const sandbox_t* fs, const char* filename, const char* base_dir, pa
 		*out_fs_type = fs->type;
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {
-		// the ~/ prefix refers to the user's home directory, specificially a Sphere Data subfolder
-		// of it.  this is where saved game data should be placed.
+		// the ~/ prefix refers to the game's save data directory.  to improve sandboxing and
+		// make things easier for developers using stock code, each game gets its own save data
+		// directory.
 		*out_path = path_new(filename + 2);
 		origin = path_rebase(path_new("miniSphere/saveData/"), home_path());
+		path_append_dir(origin, fs_save_id(fs));
 		path_rebase(*out_path, origin);
 		path_free(origin);
 		*out_fs_type = SPHEREFS_LOCAL;
