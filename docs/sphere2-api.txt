@@ -1186,6 +1186,12 @@ new FileStream(filename, mode);
     Requesting a writable mode for a file residing in a read-only directory
     (e.g., the system directory `#/`) will throw a TypeError.
 
+FileStream#dispose();
+
+    Disposes of the FileStream object, after which it should not be used.
+    Attempting to read or write to a stream after it is disposed of will throw
+    an error.
+
 FileStream#fileName [read-only]
 
     Gets the full, canonical SphereFS filename of the underlying file.
@@ -1202,12 +1208,6 @@ FileStream#position [read/write]
 FileStream#size [read-only]
 
     Gets the size of the underlying file, in bytes.
-
-FileStream#close();
-
-    Closes the stream, after which the FileStream object should not be used.
-    Attempting to read or write to a stream after it is closed will throw an
-    error.
 
 FileStream#read(num_bytes);
 

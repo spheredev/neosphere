@@ -6,16 +6,16 @@
 'use strict';
 module.exports =
 {
-	Reader: Reader,
-	Writer: Writer,
+	FileReader: FileReader,
+	FileWriter: FileWriter,
 };
 
 const assert = require('assert');
 const from   = require('from');
 
-function Reader(stream)
+function FileReader(stream)
 {
-	assert(this instanceof Reader, "constructor requires 'new'");
+	assert(this instanceof FileReader, "constructor requires 'new'");
 	assert('read' in stream, "not a readable stream");
 
 	var m_decoder = new TextDecoder('utf-8');
@@ -159,9 +159,9 @@ function Reader(stream)
 	}
 }
 
-function Writer(stream)
+function FileWriter(stream)
 {
-	assert(this instanceof Writer, "constructor requires 'new'");
+	assert(this instanceof FileWriter, "constructor requires 'new'");
 	assert('write' in stream, "not a writable stream");
 
 	var m_encoder = new TextEncoder();

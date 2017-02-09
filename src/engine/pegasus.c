@@ -241,11 +241,11 @@ static duk_ret_t js_FS_removeDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_writeFile               (duk_context* ctx);
 static duk_ret_t js_new_FileStream             (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
+static duk_ret_t js_FileStream_dispose         (duk_context* ctx);
 static duk_ret_t js_FileStream_get_fileName    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
 static duk_ret_t js_FileStream_get_size        (duk_context* ctx);
 static duk_ret_t js_FileStream_set_position    (duk_context* ctx);
-static duk_ret_t js_FileStream_close           (duk_context* ctx);
 static duk_ret_t js_FileStream_read            (duk_context* ctx);
 static duk_ret_t js_FileStream_write           (duk_context* ctx);
 static duk_ret_t js_Font_get_Default           (duk_context* ctx);
@@ -419,10 +419,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Dispatch", "onRender", js_Dispatch_onRender);
 	api_define_function(ctx, "Dispatch", "onUpdate", js_Dispatch_onUpdate);
 	api_define_class(ctx, "FileStream", js_new_FileStream, js_FileStream_finalize);
+	api_define_method(ctx, "FileStream", "dispose", js_FileStream_dispose);
 	api_define_property(ctx, "FileStream", "fileName", js_FileStream_get_fileName, NULL);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
-	api_define_method(ctx, "FileStream", "close", js_FileStream_close);
 	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
 	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
 	api_define_class(ctx, "Font", js_new_Font, js_Font_finalize);
@@ -1834,7 +1834,7 @@ js_FileStream_get_size(duk_context* ctx)
 	file = duk_require_class_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object was disposed of");
 	file_pos = sfs_ftell(file);
 	sfs_fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, sfs_ftell(file));
@@ -1856,7 +1856,7 @@ js_FileStream_set_position(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FileStream_close(duk_context* ctx)
+js_FileStream_dispose(duk_context* ctx)
 {
 	sfs_file_t* file;
 
@@ -1887,9 +1887,8 @@ js_FileStream_read(duk_context* ctx)
 	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object was disposed of");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = sfs_ftell(file);
 		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
@@ -1919,7 +1918,7 @@ js_FileStream_write(duk_context* ctx)
 	file = duk_require_class_obj(ctx, -1, "FileStream");
 	duk_pop(ctx);
 	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object was disposed of");
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file write failed");
 	return 0;
