@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 0ede311e5a2eeab0e67e47f6c92cccb0a68ba91f (v2.0.0-202-g0ede311e).
- *  Git branch fix-charlen-compile-warnings.
+ *  Git commit 738b04a80266fb97ddcdab0039519174dbfacf5f (v2.0.0-204-g738b04a8).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -261,9 +261,9 @@ struct duk_time_components {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "0ede311e5a2eeab0e67e47f6c92cccb0a68ba91f"
-#define DUK_GIT_DESCRIBE                  "v2.0.0-202-g0ede311e"
-#define DUK_GIT_BRANCH                    "fix-charlen-compile-warnings"
+#define DUK_GIT_COMMIT                    "738b04a80266fb97ddcdab0039519174dbfacf5f"
+#define DUK_GIT_DESCRIBE                  "v2.0.0-204-g738b04a8"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2

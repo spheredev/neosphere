@@ -255,7 +255,7 @@ pipe_socket(socket_t* socket, socket_t* destination)
 }
 
 size_t
-read_socket(socket_t* socket, uint8_t* buffer, size_t n_bytes)
+read_socket(socket_t* socket, void* buffer, size_t n_bytes)
 {
 	n_bytes = n_bytes <= socket->pend_size ? n_bytes : socket->pend_size;
 	console_log(4, "reading %zd bytes from socket #%u", n_bytes, socket->id);
@@ -273,7 +273,7 @@ shutdown_socket(socket_t* socket)
 }
 
 void
-write_socket(socket_t* socket, const uint8_t* data, size_t n_bytes)
+write_socket(socket_t* socket, const void* data, size_t n_bytes)
 {
 	console_log(4, "writing %zd bytes to socket #%u", n_bytes, socket->id);
 	dyad_write(socket->stream, data, (int)n_bytes);

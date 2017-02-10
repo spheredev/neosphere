@@ -18,8 +18,8 @@ size_t      get_socket_read_size (socket_t* socket);
 socket_t*   accept_next_socket   (socket_t* listener);
 size_t      peek_socket          (const socket_t* socket);
 void        pipe_socket          (socket_t* socket, socket_t* destination);
-size_t      read_socket          (socket_t* socket, uint8_t* buffer, size_t n_bytes);
+size_t      read_socket          (socket_t* socket, void* buffer, size_t n_bytes);
 void        shutdown_socket      (socket_t* socket);
-void        write_socket         (socket_t* socket, const uint8_t* data, size_t n_bytes);
+void        write_socket         (socket_t* socket, const void* data, size_t n_bytes);
 
 #endif // MINISPHERE__SOCKETS_H__INCLUDED
