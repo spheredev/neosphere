@@ -69,17 +69,14 @@ fs_new(const char* game_path)
 		fs->type = SPHEREFS_SPK;
 		fs->root_path = path_dup(path);
 		fs->spk = spk;
-		fs->save_id = lstr_newf("unknown-%s", path_filename(fs->root_path));
 	}
 	else if (path_has_extension(path, ".sgm") || path_filename_cmp(path, "game.json")) {  // game manifest
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-		fs->save_id = lstr_newf("unknown-%s", path_hop(fs->root_path, path_num_hops(fs->root_path) - 1));
 	}
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-		fs->save_id = lstr_newf("unknown-%s", path_hop(fs->root_path, path_num_hops(fs->root_path) - 1));
 
 		// synthesize a game manifest for the script.  this way we make this trick
 		// transparent to the rest of the engine, keeping things simple.
@@ -95,7 +92,6 @@ fs_new(const char* game_path)
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
 		duk_push_lstring_t(g_duk, fs->summary); duk_put_prop_string(g_duk, -2, "summary");
-		duk_push_lstring_t(g_duk, fs->save_id); duk_put_prop_string(g_duk, -2, "saveID");
 		duk_push_sprintf(g_duk, "%dx%d", fs->res_x, fs->res_y); duk_put_prop_string(g_duk, -2, "resolution");
 		duk_push_string(g_duk, path_cstr(fs->script_path)); duk_put_prop_string(g_duk, -2, "main");
 		fs->manifest = lstr_new(duk_json_encode(g_duk, -1));
@@ -104,7 +100,6 @@ fs_new(const char* game_path)
 	else {  // default case, unpacked game folder
 		fs->type = SPHEREFS_LOCAL;
 		fs->root_path = path_strip(path_dup(path));
-		fs->save_id = lstr_newf("unknown-%s", path_hop(fs->root_path, path_num_hops(fs->root_path) - 1));
 	}
 	path_free(path);
 	path = NULL;
@@ -242,7 +237,8 @@ fs_author(const sandbox_t* fs)
 const char*
 fs_save_id(const sandbox_t* fs)
 {
-	return lstr_cstr(fs->save_id);
+	return fs->save_id != NULL ? lstr_cstr(fs->save_id)
+		: NULL;
 }
 
 const char*

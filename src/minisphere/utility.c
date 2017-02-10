@@ -254,6 +254,8 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 		first_hop = path_hop(path, 0);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
+	if (strcmp(first_hop, "~") == 0 && fs_save_id(g_fs) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
 	if (need_write && !legacy && strcmp(first_hop, "~") != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");
 	if (need_write && strcmp(first_hop, "#") == 0)  // `system/` is always read-only

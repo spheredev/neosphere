@@ -1,6 +1,29 @@
 Release Notes
 =============
 
+miniSphere 5.0
+--------------
+
+* Handling of save data has been improved.  A `saveID` property must now be
+  present in `game.json` and determines the subdirectory used for `~/`.  If no
+  `saveID` is defined, SphereFS paths beginning with `~/` cannot be used and
+  will instead throw a ReferenceError.
+
+* `FS.openFile()` has been refactored into a `FileStream` constructor.  The
+  `mode` argument of the constructor uses constants like `FileOp.Read` instead
+  of the C `fopen()` mode strings used by `FS.openFile()`.  In addition,
+  `FileStream#close()` has been renamed to `dispose()`.
+
+* `Color` object properties have been renamed to `red`, `green`, `blue` and
+  `alpha`, as opposed to their original single-letter representations, to make
+  color manipulation code clearer.  Any code dealing with individual color
+  components will need to be updated.
+
+* Games can now set the fullscreen mode programmatically by setting the
+  `screen.fullScreen` to either true or false.
+
+
+
 minisphere 4.4
 --------------
 
