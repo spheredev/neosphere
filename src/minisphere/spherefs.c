@@ -633,15 +633,15 @@ duk_load_s2gm(duk_context* ctx)
 		fs->version = duk_get_number(g_duk, -1);
 	else
 		fs->version = 2;
-	if (duk_get_prop_string(g_duk, -4, "author") && duk_is_string(g_duk, -1))
+	if (duk_get_prop_string(g_duk, -5, "author") && duk_is_string(g_duk, -1))
 		fs->author = lstr_new(duk_get_string(g_duk, -1));
 	else
 		fs->author = lstr_new("Author Unknown");
-	if (duk_get_prop_string(g_duk, -5, "summary") && duk_is_string(g_duk, -1))
+	if (duk_get_prop_string(g_duk, -6, "summary") && duk_is_string(g_duk, -1))
 		fs->summary = lstr_new(duk_get_string(g_duk, -1));
 	else
 		fs->summary = lstr_new("No information available.");
-	if (duk_get_prop_string(g_duk, -5, "saveID") && duk_is_string(g_duk, -1))
+	if (duk_get_prop_string(g_duk, -7, "saveID") && duk_is_string(g_duk, -1))
 		fs->save_id = lstr_new(duk_get_string(g_duk, -1));
 
 	return 0;
