@@ -2,6 +2,7 @@
 #include "utility.h"
 
 #include "api.h"
+#include "md5.h"
 
 static duk_ret_t do_decode_json (duk_context* ctx);
 
@@ -62,6 +63,31 @@ home_path(void)
 	}
 	path_mkdir(retval);
 	return retval;
+}
+
+const char*
+md5sum(void* data, size_t size)
+{
+	// note: a static buffer is used here to store the last generated hash, so
+	//       only one output can be used at a time.  be careful.
+
+	static char output[33];
+
+	MD5_CTX ctx;
+	uint8_t hash_bytes[16];
+	char    *p;
+
+	int i;
+
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, data, (unsigned long)size);
+	MD5_Final(hash_bytes, &ctx);
+	p = &output[0];
+	for (i = 0; i < 16; ++i) {
+		sprintf(p, "%.2x", (int)hash_bytes[i]);
+		p += 2;
+	}
+	return output;
 }
 
 const char*

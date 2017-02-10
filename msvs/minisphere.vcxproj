@@ -373,6 +373,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\shared\duktape.c" />
     <ClCompile Include="..\src\shared\dyad.c" />
     <ClCompile Include="..\src\shared\lstring.c" />
+    <ClCompile Include="..\src\shared\md5.c" />
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\duk_rubber.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
@@ -417,6 +418,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\shared\duk_config.h" />
     <ClInclude Include="..\src\shared\dyad.h" />
     <ClInclude Include="..\src\shared\lstring.h" />
+    <ClInclude Include="..\src\shared\md5.h" />
     <ClInclude Include="..\src\shared\path.h" />
     <ClInclude Include="..\src\shared\duk_rubber.h" />
     <ClInclude Include="..\src\shared\unicode.h" />

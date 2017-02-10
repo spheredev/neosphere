@@ -2019,25 +2019,31 @@ js_GradientTriangle(duk_context* ctx)
 static duk_ret_t
 js_HashByteArray(duk_context* ctx)
 {
-	duk_require_class_obj(ctx, 0, "ssByteArray");
+	bytearray_t* array;
+	void*        data;
+	size_t       size;
+	
+	array = duk_require_class_obj(ctx, 0, "ssByteArray");
 
-	// TODO: implement byte array hashing
-	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "function is not implemented");
+	data = bytearray_buffer(array);
+	size = bytearray_len(array);
+	duk_push_string(ctx, md5sum(data, size));
+	return 1;
 }
 
 static duk_ret_t
 js_HashFromFile(duk_context* ctx)
 {
-	sfs_file_t* file;
+	void*       data;
 	const char* filename;
+	size_t      size;
 
-	filename = duk_require_path(ctx, 0, NULL, true, false);
-	file = sfs_fopen(g_fs, filename, "other", "rb");
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open `%s` for reading");
-	sfs_fclose(file);
-	// TODO: implement raw file hashing
-	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "function is not yet implemented");
+	filename = duk_require_path(ctx, 0, "other", true, false);
+
+	if (!(data = sfs_fslurp(g_fs, filename, NULL, &size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to read file");
+	duk_push_string(ctx, md5sum(data, size));
+	return 1;
 }
 
 static duk_ret_t

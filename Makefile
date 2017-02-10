@@ -16,7 +16,7 @@ endif
 
 engine_sources=src/minisphere/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
-   src/shared/dyad.c src/shared/lstring.c src/shared/path.c \
+   src/shared/dyad.c src/shared/lstring.c src/shared/md5.c src/shared/path.c \
    src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
    src/minisphere/audio.c src/minisphere/bytearray.c src/minisphere/color.c \

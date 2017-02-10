@@ -138,6 +138,9 @@
     <ClCompile Include="..\src\shared\api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\md5.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -275,9 +278,12 @@
     <ClInclude Include="..\src\shared\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\shared\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="engine.rc">
+    <ResourceCompile Include="minisphere.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
