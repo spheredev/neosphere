@@ -106,7 +106,7 @@ from a different location, you can use one of the SphereFS prefixes:
 As an example, the following will create a FileStream which allows reading from
 the file `EatyPig.bin` residing in the user's save data directory.
 
-    var file = new FileStream('~/EatyPig.bin', FileMode.Read);
+    var file = new FileStream('~/EatyPig.bin', FileOp.Read);
 
 Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       to break into the underlying file system, e.g. "@/../maggie.fat", will
@@ -1160,38 +1160,39 @@ FS.writeFile(filename, data);
     filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
     DataView containing the data to be written.
 
-new FileStream(filename, mode);
+new FileStream(filename, op);
 
     Constructs a FileStream that provides access to the contents of a specified
-    file.  `mode` must be one of the following:
+    file.  `op` specifies the file operation requested and must be one of the
+    following:
 
-        FileMode.Read
-        
+        FileOp.Read
+
             Read data from the file.  The file must exist and will be opened in
             read-only mode.  Any attempt to write to the file will throw a
             TypeError.
 
-        FileMode.Write
+        FileOp.Write
 
             Write data to the file.  Be careful: If the file already exists,
             its contents will be overwritten.  If that behavior is not desired,
-            use `FileMode.Update` instead.
+            use `FileOp.Update` instead.
 
-        FileMode.Update
-        
+        FileOp.Update
+
             Amend the file.  If a file by the specified name doesn't exist, it
-            will be created.  For convenience, the file pointer starts at the
-            end of the file.
+            will be created.  For convenience, the file pointer is initially
+            placed at the end of the file.
 
-    Requesting a writable mode for a file residing in a read-only directory
-    (e.g., the system directory `#/`) will throw a TypeError.
+    Requesting write access to a file residing in a read-only directory (e.g.,
+    the system directory `#/`) will throw a TypeError.
 
 FileStream#dispose();
 
     Disposes of the FileStream object, after which it should not be used.
     Attempting to read or write to a stream after it is disposed of will throw
     an error.
-    
+
     Note: While it's not strictly necessary to call `dispose()` on FileStreams,
           it may take some time for the garbage collector to get to them.  If
           there's an active FileStream in write mode for a given file, an error

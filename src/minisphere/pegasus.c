@@ -556,9 +556,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
 
-	api_define_const(ctx, "FileMode", "Read", FILE_OP_READ);
-	api_define_const(ctx, "FileMode", "Write", FILE_OP_WRITE);
-	api_define_const(ctx, "FileMode", "Update", FILE_OP_UPDATE);
+	api_define_const(ctx, "FileOp", "Read", FILE_OP_READ);
+	api_define_const(ctx, "FileOp", "Write", FILE_OP_WRITE);
+	api_define_const(ctx, "FileOp", "Update", FILE_OP_UPDATE);
 	api_define_const(ctx, "Key", "Alt", ALLEGRO_KEY_ALT);
 	api_define_const(ctx, "Key", "AltGr", ALLEGRO_KEY_ALTGR);
 	api_define_const(ctx, "Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
