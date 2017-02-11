@@ -8,7 +8,6 @@ vX.X.X - TBD
   mode programmatically.
 * Adds support for game-specific save directories.  Set `saveID` in a game's
   JSON manifest to control the subdirectory to which `~/` is mapped.
-* Renames `Color` component properties back to `red`, `green`, `blue`, `alpha`.
 * Removes `FS.openFile()` in favor of a `FileStream` constructor, making
   `FileStream` a proper class and therefore enabling it to be extended.
 * Fixes bugs where calling `FileStream` methods on a disposed stream may cause

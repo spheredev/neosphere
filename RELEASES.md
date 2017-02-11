@@ -14,11 +14,6 @@ miniSphere 5.0
   of the C `fopen()` mode strings used by `FS.openFile()`.  In addition,
   `FileStream#close()` has been renamed to `dispose()`.
 
-* `Color` object properties have been renamed to `red`, `green`, `blue` and
-  `alpha`, as opposed to their original single-letter representations, to make
-  color manipulation code clearer.  Any code dealing with individual color
-  components will need to be updated.
-
 * Games can now set the fullscreen mode programmatically by setting the
   `screen.fullScreen` to either true or false.
 
