@@ -116,6 +116,11 @@ target_build(target_t* target, visor_t* visor, bool force_build)
 	if (target->tracked)
 		visor_add_file(visor, path_cstr(target->path));
 
+	if (target->tracked && vector_len(target->sources) == 0) {
+		visor_warn(visor, "always up-to-date: '%s' (no sources)", path_cstr(target->path));
+		return true;
+	}
+
 	// check whether the output file is out of date with respect to its sources.
 	// this is a simple timestamp comparison for now; it might be good to eventually
 	// switch to a hash-based solution like in SCons.
@@ -133,15 +138,12 @@ target_build(target_t* target, visor_t* visor, bool force_build)
 	}
 
 	// build the target if it's out of date
-	if (is_outdated) {
-		status = tool_run(target->tool, visor, target->fs, target->path, in_paths);
-		iter = vector_enum(in_paths);
-		while (p_path = vector_next(&iter))
-			path_free(*p_path);
-		vector_free(in_paths);
-		return status;
-	}
-	else {
-		return true;
-	}
+	status = is_outdated
+		? tool_run(target->tool, visor, target->fs, target->path, in_paths)
+		: true;
+	iter = vector_enum(in_paths);
+	while (p_path = vector_next(&iter))
+		path_free(*p_path);
+	vector_free(in_paths);
+	return status;
 }
