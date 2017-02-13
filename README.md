@@ -4,11 +4,12 @@ miniSphere
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
 (https://travis-ci.org/fatcerberus/minisphere)
 
-miniSphere is the successor to Chad Austin's original *Sphere* JavaScript game
-engine, written from the ground up in C.  Games are coded in JavaScript, making
-for a very powerful development platform on par with writing a game in C++.
+**miniSphere** is the successor to Chad Austin's original *Sphere* JavaScript
+game engine, written from the ground up in C.  Games are coded in JavaScript,
+making for a very powerful development platform on par with writing a game in
+C++.
 
-miniSphere uses [Allegro 5](https://liballeg.org) on the backend and
+miniSphere uses [Allegro 5](http://liballeg.org) on the backend and
 [Duktape](http://duktape.org/) on the frontend.  Both of these libraries are
 cross-platform and *very* portable, enabling miniSphere to be built on all
 three of the major platforms (Windows, Linux, and OS X).
@@ -105,8 +106,8 @@ available for download here:
 
 * <https://github.com/fatcerberus/minisphere/releases>
 
-For an overview of breaking changes in the current major stable release series,
-refer to [`RELEASES.md`](RELEASES.md).
+For an overview of breaking changes in the current stable release series, refer
+to [`RELEASES.md`](RELEASES.md).
 
 
 License

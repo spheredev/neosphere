@@ -20,6 +20,14 @@ struct build
 	visor_t*      visor;
 };
 
+enum file_op
+{
+	FILE_OP_READ,
+	FILE_OP_WRITE,
+	FILE_OP_UPDATE,
+	FILE_OP_MAX,
+};
+
 static duk_ret_t js_require                 (duk_context* ctx);
 static duk_ret_t js_describe                (duk_context* ctx);
 static duk_ret_t js_error                   (duk_context* ctx);
@@ -31,17 +39,17 @@ static duk_ret_t js_system_version          (duk_context* ctx);
 static duk_ret_t js_FS_exists               (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory      (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile           (duk_context* ctx);
-static duk_ret_t js_FS_openFile             (duk_context* ctx);
 static duk_ret_t js_FS_readFile             (duk_context* ctx);
 static duk_ret_t js_FS_rename               (duk_context* ctx);
 static duk_ret_t js_FS_resolve              (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory      (duk_context* ctx);
 static duk_ret_t js_FS_writeFile            (duk_context* ctx);
+static duk_ret_t js_new_FileStream          (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize     (duk_context* ctx);
+static duk_ret_t js_FileStream_dispose      (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position (duk_context* ctx);
 static duk_ret_t js_FileStream_get_size     (duk_context* ctx);
 static duk_ret_t js_FileStream_set_position (duk_context* ctx);
-static duk_ret_t js_FileStream_close        (duk_context* ctx);
 static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
 static duk_ret_t js_RNG_fromSeed            (duk_context* ctx);
@@ -124,16 +132,15 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "exists", js_FS_exists);
-	api_define_function(ctx, "FS", "openFile", js_FS_openFile);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
 	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
-	api_define_class(ctx, "FileStream", NULL, js_FileStream_finalize);
+	api_define_class(ctx, "FileStream", js_new_FileStream, js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
-	api_define_method(ctx, "FileStream", "close", js_FileStream_close);
+	api_define_method(ctx, "FileStream", "dispose", js_FileStream_dispose);
 	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
 	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
 	api_define_class(ctx, "RNG", js_new_RNG, js_RNG_finalize);
@@ -146,6 +153,10 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_property(ctx, "Target", "name", js_Target_get_name, NULL);
 	api_define_class(ctx, "Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method(ctx, "Tool", "stage", js_Tool_stage);
+	
+	api_define_const(ctx, "FileOp", "Read", FILE_OP_READ);
+	api_define_const(ctx, "FileOp", "Write", FILE_OP_WRITE);
+	api_define_const(ctx, "FileOp", "Update", FILE_OP_UPDATE);
 
 	// create a Tool for the install() function to use
 	duk_push_global_stash(ctx);
@@ -995,25 +1006,6 @@ js_FS_exists(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FS_openFile(duk_context* ctx)
-{
-	build_t*    build;
-	FILE*       file;
-	const char* filename;
-	const char* mode;
-
-	build = duk_get_heap_udata(ctx);
-
-	filename = duk_require_path(ctx, 0);
-	mode = duk_require_string(ctx, 1);
-	
-	if (!(file = fs_fopen(build->fs, filename, mode)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file '%s'", filename);
-	duk_push_class_obj(ctx, "FileStream", file);
-	return 1;
-}
-
-static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
 	void*       buffer;
@@ -1097,6 +1089,40 @@ js_FS_writeFile(duk_context* ctx)
 }
 
 static duk_ret_t
+js_new_FileStream(duk_context* ctx)
+{
+	build_t*     build;
+	FILE*        file;
+	enum file_op file_op;
+	const char*  filename;
+	const char*  mode;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
+	build = duk_get_heap_udata(ctx);
+	duk_require_string(ctx, 0);
+	file_op = duk_require_int(ctx, 1);
+	if (file_op < 0 || file_op >= FILE_OP_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
+
+	filename = duk_require_path(ctx, 0);
+	if (file_op == FILE_OP_UPDATE && !fs_fexist(build->fs, filename))
+		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
+	mode = file_op == FILE_OP_READ ? "rb"
+		: file_op == FILE_OP_WRITE ? "w+b"
+		: file_op == FILE_OP_UPDATE ? "r+b"
+		: NULL;
+	if (!(file = fs_fopen(build->fs, filename, mode)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
+	if (file_op == FILE_OP_UPDATE)
+		fseek(file, 0, SEEK_END);
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "FileStream", file);
+	return 0;
+}
+
+static duk_ret_t
 js_FileStream_finalize(duk_context* ctx)
 {
 	FILE* file;
@@ -1114,7 +1140,8 @@ js_FileStream_get_position(duk_context* ctx)
 	FILE* file;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
 	duk_push_number(ctx, ftell(file));
 	return 1;
@@ -1127,10 +1154,9 @@ js_FileStream_get_size(duk_context* ctx)
 	long  file_pos;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
 	duk_push_number(ctx, ftell(file));
@@ -1145,7 +1171,8 @@ js_FileStream_set_position(duk_context* ctx)
 	long  new_pos;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 	new_pos = duk_require_int(ctx, 0);
 
 	if (new_pos < 0)
@@ -1155,7 +1182,7 @@ js_FileStream_set_position(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FileStream_close(duk_context* ctx)
+js_FileStream_dispose(duk_context* ctx)
 {
 	FILE* file;
 
@@ -1164,7 +1191,8 @@ js_FileStream_close(duk_context* ctx)
 
 	duk_push_pointer(ctx, NULL);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	fclose(file);
+	if (file != NULL)
+		fclose(file);
 	return 0;
 }
 
@@ -1187,9 +1215,8 @@ js_FileStream_read(duk_context* ctx)
 	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 	if (argc < 1) {  // if no arguments, read entire file back to front
 		pos = ftell(file);
 		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
@@ -1213,13 +1240,12 @@ js_FileStream_write(duk_context* ctx)
 	duk_size_t  num_bytes;
 
 	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 	data = duk_require_buffer_data(ctx, 0, &num_bytes);
 
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream is closed");
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file write failed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to write to file");
 	return 0;
 }
 

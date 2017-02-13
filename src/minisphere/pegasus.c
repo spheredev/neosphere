@@ -1772,7 +1772,7 @@ js_new_FileStream(duk_context* ctx)
 	duk_require_string(ctx, 0);
 	file_op = duk_require_int(ctx, 1);
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file mode constant");
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
 	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
 	if (file_op == FILE_OP_UPDATE && !sfs_fexist(g_fs, filename, NULL))
@@ -1924,7 +1924,7 @@ js_FileStream_write(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
 	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file write failed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to write to file");
 	return 0;
 }
 

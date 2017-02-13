@@ -4,18 +4,18 @@ Release Notes
 miniSphere X.X
 --------------
 
-* Handling of save data has been improved.  A `saveID` property must now be
-  present in `game.json` and determines the subdirectory used for `~/`.  If no
-  `saveID` is defined, SphereFS paths beginning with `~/` cannot be used and
-  will instead throw a ReferenceError.
+* Handling of save data has been improved.  In order for a game to save, a
+  `saveID` field must be present in `game.json`, which determines the location
+  the engine will use for that game's save data.  If no `saveID` is defined,
+  any SphereFS path beginning with `~/` will be rejected with a ReferenceError.
 
 * `FS.openFile()` has been refactored into a `FileStream` constructor.  The
-  `mode` argument of the constructor uses constants like `FileOp.Read` instead
-  of the C `fopen()` mode strings used by `FS.openFile()`.  In addition,
-  `FileStream#close()` has been renamed to `dispose()`.
+  second argument of the constructor uses easy-to-read constants such as
+  `FileOp.Read` as opposed to the arcane C `fopen()` mode strings used with
+  `FS.openFile()`.
 
-* Games can now set the fullscreen mode programmatically by setting the
-  `screen.fullScreen` to either true or false.
+* Games can now get or set the fullscreen mode programmatically by using the
+  `screen.fullScreen` property.
 
 
 
