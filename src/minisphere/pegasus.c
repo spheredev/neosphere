@@ -189,18 +189,17 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_system_get_apiLevel        (duk_context* ctx);
-static duk_ret_t js_system_get_apiVersion      (duk_context* ctx);
-static duk_ret_t js_system_get_extensions      (duk_context* ctx);
-static duk_ret_t js_system_get_game            (duk_context* ctx);
-static duk_ret_t js_system_get_name            (duk_context* ctx);
-static duk_ret_t js_system_get_version         (duk_context* ctx);
-static duk_ret_t js_system_abort               (duk_context* ctx);
-static duk_ret_t js_system_exit                (duk_context* ctx);
-static duk_ret_t js_system_now                 (duk_context* ctx);
-static duk_ret_t js_system_reset               (duk_context* ctx);
-static duk_ret_t js_system_run                 (duk_context* ctx);
-static duk_ret_t js_system_sleep               (duk_context* ctx);
+static duk_ret_t js_Sphere_get_APILevel        (duk_context* ctx);
+static duk_ret_t js_Sphere_get_APIVersion      (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Extensions      (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Game            (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Name            (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
+static duk_ret_t js_Sphere_abort               (duk_context* ctx);
+static duk_ret_t js_Sphere_exit                (duk_context* ctx);
+static duk_ret_t js_Sphere_reset               (duk_context* ctx);
+static duk_ret_t js_Sphere_run                 (duk_context* ctx);
+static duk_ret_t js_Sphere_sleep               (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
 static duk_ret_t js_console_debug              (duk_context* ctx);
 static duk_ret_t js_console_error              (duk_context* ctx);
@@ -216,6 +215,7 @@ static duk_ret_t js_screen_get_fullScreen      (duk_context* ctx);
 static duk_ret_t js_screen_set_fullScreen      (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
+static duk_ret_t js_screen_now                 (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
 static duk_ret_t js_Color_is                   (duk_context* ctx);
@@ -529,18 +529,17 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_define_static_prop(ctx, "system", "apiLevel", js_system_get_apiLevel, NULL);
-	api_define_static_prop(ctx, "system", "apiVersion", js_system_get_apiVersion, NULL);
-	api_define_static_prop(ctx, "system", "extensions", js_system_get_extensions, NULL);
-	api_define_static_prop(ctx, "system", "game", js_system_get_game, NULL);
-	api_define_static_prop(ctx, "system", "name", js_system_get_name, NULL);
-	api_define_static_prop(ctx, "system", "version", js_system_get_version, NULL);
-	api_define_function(ctx, "system", "abort", js_system_abort);
-	api_define_function(ctx, "system", "exit", js_system_exit);
-	api_define_function(ctx, "system", "now", js_system_now);
-	api_define_function(ctx, "system", "reset", js_system_reset);
-	api_define_function(ctx, "system", "run", js_system_run);
-	api_define_function(ctx, "system", "sleep", js_system_sleep);
+	api_define_static_prop(ctx, "Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
+	api_define_static_prop(ctx, "Sphere", "APIVersion", js_Sphere_get_APIVersion, NULL);
+	api_define_static_prop(ctx, "Sphere", "Extensions", js_Sphere_get_Extensions, NULL);
+	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
+	api_define_static_prop(ctx, "Sphere", "Name", js_Sphere_get_Name, NULL);
+	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
+	api_define_function(ctx, "Sphere", "abort", js_Sphere_abort);
+	api_define_function(ctx, "Sphere", "exit", js_Sphere_exit);
+	api_define_function(ctx, "Sphere", "reset", js_Sphere_reset);
+	api_define_function(ctx, "Sphere", "run", js_Sphere_run);
+	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
 	api_define_function(ctx, "console", "assert", js_console_assert);
 	api_define_function(ctx, "console", "debug", js_console_debug);
 	api_define_function(ctx, "console", "error", js_console_error);
@@ -554,6 +553,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
+	api_define_function(ctx, "screen", "now", js_screen_now);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
 
 	api_define_const(ctx, "FileOp", "Read", FILE_OP_READ);
@@ -1042,21 +1042,21 @@ js_require(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_get_apiLevel(duk_context* ctx)
+js_Sphere_get_APILevel(duk_context* ctx)
 {
 	duk_push_int(ctx, API_LEVEL);
 	return 1;
 }
 
 static duk_ret_t
-js_system_get_apiVersion(duk_context* ctx)
+js_Sphere_get_APIVersion(duk_context* ctx)
 {
 	duk_push_int(ctx, API_VERSION);
 	return 1;
 }
 
 static duk_ret_t
-js_system_get_extensions(duk_context* ctx)
+js_Sphere_get_Extensions(duk_context* ctx)
 {
 	int i;
 
@@ -1081,7 +1081,7 @@ js_system_get_extensions(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_get_game(duk_context* ctx)
+js_Sphere_get_Game(duk_context* ctx)
 {
 	duk_push_lstring_t(ctx, fs_manifest(g_fs));
 	duk_json_decode(ctx, -1);
@@ -1099,21 +1099,21 @@ js_system_get_game(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_get_name(duk_context* ctx)
+js_Sphere_get_Name(duk_context* ctx)
 {
 	duk_push_string(ctx, ENGINE_NAME);
 	return 1;
 }
 
 static duk_ret_t
-js_system_get_version(duk_context* ctx)
+js_Sphere_get_Version(duk_context* ctx)
 {
 	duk_push_string(ctx, VERSION_NAME);
 	return 1;
 }
 
 static duk_ret_t
-js_system_abort(duk_context* ctx)
+js_Sphere_abort(duk_context* ctx)
 {
 	const char* filename;
 	int         line_number;
@@ -1223,26 +1223,19 @@ js_Dispatch_onUpdate(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_exit(duk_context* ctx)
+js_Sphere_exit(duk_context* ctx)
 {
 	exit_game(false);
 }
 
 static duk_ret_t
-js_system_now(duk_context* ctx)
-{
-	duk_push_number(ctx, screen_now(g_screen));
-	return 1;
-}
-
-static duk_ret_t
-js_system_reset(duk_context* ctx)
+js_Sphere_reset(duk_context* ctx)
 {
 	restart_engine();
 }
 
 static duk_ret_t
-js_system_run(duk_context* ctx)
+js_Sphere_run(duk_context* ctx)
 {
 	do_events();
 	duk_push_boolean(ctx, true);
@@ -1250,7 +1243,7 @@ js_system_run(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_sleep(duk_context* ctx)
+js_Sphere_sleep(duk_context* ctx)
 {
 	uint32_t timeout;
 
@@ -1460,6 +1453,13 @@ js_screen_flip(duk_context* ctx)
 	screen_flip(g_screen, s_framerate);
 	screen_set_clipping(g_screen, new_rect(0, 0, g_res_x, g_res_y));
 	return 0;
+}
+
+static duk_ret_t
+js_screen_now(duk_context* ctx)
+{
+	duk_push_number(ctx, screen_now(g_screen));
+	return 1;
 }
 
 static duk_ret_t

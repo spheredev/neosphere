@@ -36,7 +36,7 @@ var commands = [];
 var entry = "";
 var cursorColor = Color.Gold;
 var fps = screen.frameRate;
-var logger = new Log(system.game.logPath);
+var logger = new Log(Sphere.Game.logPath);
 new scenes.Scene()
 	.doWhile(function() { return true; })
 		.tween(cursorColor, 0.25 * fps, 'easeInSine', { alpha: 255 })
@@ -49,8 +49,8 @@ threads.create({
 	getInput: getInput,
 }, Infinity);
 
-print(system.game.name + " miniRT Console");
-print(system.name + " " + system.version + " - Sphere v" + system.apiVersion + " L" + system.apiLevel + " API");
+print(Sphere.Game.name + " miniRT Console");
+print(Sphere.Name + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
 print("");
 
 function executeCommand(command)
