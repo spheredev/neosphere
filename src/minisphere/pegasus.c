@@ -1050,7 +1050,7 @@ js_Sphere_get_Game(duk_context* ctx)
 	duk_json_decode(ctx, -1);
 
 	duk_push_this(ctx);
-	duk_push_string(ctx, "game");
+	duk_push_string(ctx, "Game");
 	duk_dup(ctx, -3);
 	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
 		| DUK_DEFPROP_CLEAR_ENUMERABLE
