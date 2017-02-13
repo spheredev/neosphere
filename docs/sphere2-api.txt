@@ -33,7 +33,7 @@ Here's a sample manifest:
 
 JSON fields defined by the Sphere v2 specification are documented below.
 Because the manifest format is JSON, as many additional fields may be added as
-needed, and their values accessed from JavaScript through `system.game`.
+needed, and their values accessed from JavaScript through `Sphere.Game`.
 
 "version" [default: 2]
 
@@ -137,24 +137,24 @@ require(module_id);
     module.
 
 
-Low-Level System API
---------------------
+Sphere v2 Platform API
+----------------------
 
-The `system` global variable is provided to allow games to communicate with the
-underlying Sphere platform.  The `system` object's properties provide access to
-the engine's name and version number as well as the API level supported, and
+The `Sphere` object is provided to allow games to communicate with the
+underlying Sphere v2 platform.  The `Sphere` object's properties provide access
+to the engine's name and version number as well as the API level supported, and
 there are also several methods for managing engine execution.
 
-system.name [read-only]
+Sphere.Name [read-only]
 
     The name of the engine.  In our case, "miniSphere".
 
-system.version [read-only]
+Sphere.Version [read-only]
 
     The version number of the engine; e.g. "X.X.X".
 
-system.apiVersion [read-only]
-system.apiLevel [read-only]
+Sphere.APIVersion [read-only]
+Sphere.APILevel [read-only]
 
     The API version and level supported by the engine, respectively.  The API
     version indicates which version of the Sphere API is supported (currently
@@ -163,56 +163,40 @@ system.apiLevel [read-only]
     without breaking compatibility, the API level is bumped.
 
     Note: Sometimes new functionality is added to the engine as an extension,
-          without changing the reported API level.  See `system.extensions`
+          without changing the reported API level.  See `Sphere.extensions`
           below for how to check for supported extensions.
 
-system.extensions [read-only]
+Sphere.Game [read-only]
 
-    An array of strings specifying which extensions (optional features) are
-    supported by the engine.  Code making use of extensions should check for
-    the presence of the relevant string(s) in `system.extensions` and either
-    show an error message or degrade gracefully if it isn't present.
+    Gets an object with information about the currently running game.  This
+    object consists of everything in the JSON manifest plus any fields
+    synthesized by the engine.
 
-    miniSphere currently supports the following extensions:
-
-        sphere_glsl_shader_support
-        sphere_stateful_rng
-        sphere_v1_compatible_api
-
-system.abort(message);
+Sphere.abort(message);
 
     Unconditionally aborts execution and displays an error screen before
     closing the engine.  `message` will be displayed on the error screen.
 
-    Note: system.abort() bypasses all exception handling mechanisms, including
+    Note: Sphere.abort() bypasses all exception handling mechanisms, including
           the debugger.  Be sure you know what you're doing before you call
           this function.
 
-system.exit();
+Sphere.exit();
 
     Shuts down the engine.  Be careful; this function will not return, so any
     unsaved data will be lost.
 
-system.now();
-
-    Returns the number of frames processed by the engine since it started
-    running.
-
-    Note: This value will wrap around to zero after around 4.3 billion frames.
-          This typically isn't an issue: at 60 FPS, a game would need to run
-          continuously for *over 2 years* before it would roll over.
-
-system.reset();
+Sphere.reset();
 
     Restarts the engine then reloads the currently running game.  Unsaved data
     will be lost.
 
-system.run();
+Sphere.run();
 
     Runs a single iteration of the Sphere event loop.  This function always
     returns true, allowing it to be used in a loop condition:
 
-        while (!isDone && system.run()) {
+        while (!isDone && Sphere.run()) {
             // do stuff here
         }
 
@@ -221,7 +205,7 @@ system.run();
           to undesirable side effects if a promise handler modifies a global
           variable, for example.
 
-system.sleep(num_frames);
+Sphere.sleep(num_frames);
 
     Suspends execution for the specified number of frames.  This runs its own
     frame loop, so any asynchronous update and render jobs set up with the
@@ -649,10 +633,19 @@ screen.flip();
 
     After a flip, the backbuffer is cleared to black.  If you need to perform a
     long operation without disturbing the contents of the screen, you should
-    use system.run() instead of screen.flip() to run the event loop.
+    use Sphere.run() instead of screen.flip() to run the event loop.
 
     Note: Calling screen.flip() resets the clipping rectangle.  See the entry
           for screen.clipTo() above.
+
+screen.now();
+
+    Returns the number of frames (including skipped frames) processed by the
+    engine since it started running.
+
+    Note: This value will wrap around to zero after around 4.3 billion frames.
+          That typically isn't an issue: at 60 FPS, a game would need to run
+          continuously for *over 2 years* before it would roll over.
 
 screen.resize(width, height);
 

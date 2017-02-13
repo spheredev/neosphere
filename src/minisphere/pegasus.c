@@ -26,13 +26,6 @@ enum file_op
 	FILE_OP_MAX,
 };
 
-static const char* const EXTENSIONS[] =
-{
-	"sphere_glsl_shader_support",
-	"sphere_stateful_rng",
-	"sphere_v1_compatible_api",
-};
-
 static const
 struct x11_color
 {
@@ -191,7 +184,6 @@ COLORS[] =
 static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_Sphere_get_APILevel        (duk_context* ctx);
 static duk_ret_t js_Sphere_get_APIVersion      (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Extensions      (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Game            (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Name            (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
@@ -382,11 +374,8 @@ void
 initialize_pegasus_api(duk_context* ctx)
 {
 	const struct x11_color* p;
-	int i;
 
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
-	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i)
-		console_log(1, "    %s", EXTENSIONS[i]);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 
@@ -531,7 +520,6 @@ initialize_pegasus_api(duk_context* ctx)
 
 	api_define_static_prop(ctx, "Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
 	api_define_static_prop(ctx, "Sphere", "APIVersion", js_Sphere_get_APIVersion, NULL);
-	api_define_static_prop(ctx, "Sphere", "Extensions", js_Sphere_get_Extensions, NULL);
 	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop(ctx, "Sphere", "Name", js_Sphere_get_Name, NULL);
 	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
@@ -1052,31 +1040,6 @@ static duk_ret_t
 js_Sphere_get_APIVersion(duk_context* ctx)
 {
 	duk_push_int(ctx, API_VERSION);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_get_Extensions(duk_context* ctx)
-{
-	int i;
-
-	duk_push_array(ctx);
-	for (i = 0; i < sizeof EXTENSIONS / sizeof *EXTENSIONS; ++i) {
-		duk_push_string(ctx, EXTENSIONS[i]);
-		duk_put_prop_index(ctx, -2, i);
-		duk_push_true(ctx);
-		duk_put_prop_string(ctx, -2, EXTENSIONS[i]);
-	}
-
-	duk_push_this(ctx);
-	duk_push_string(ctx, "extensions");
-	duk_dup(ctx, -3);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
-
 	return 1;
 }
 

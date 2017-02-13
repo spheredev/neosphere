@@ -8,6 +8,12 @@ vX.X.X - TBD
   mode programmatically.
 * Adds support for game-specific save directories.  Set `saveID` in a game's
   JSON manifest to control the subdirectory to which `~/` is mapped.
+* Adds a compile-time warning for Cell targets with no sources (the tool will
+  never be invoked in that case).
+* Renames `system.now()` to `screen.now()` to better reflect the fact that it's
+  based on frames.
+* Renames the `system` object to `Sphere`, and fixes the capitalization for
+  constants, e.g., `system.apiLevel` -> `Sphere.APILevel`.
 * Removes `FS.openFile()` in favor of a `FileStream` constructor, making
   `FileStream` a proper class and therefore enabling it to be extended.
 * Fixes a bug where calling `FileStream` methods on a disposed stream can cause
