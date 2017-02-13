@@ -5,28 +5,26 @@ miniSphere
 (https://travis-ci.org/fatcerberus/minisphere)
 
 miniSphere is the successor to Chad Austin's original *Sphere* JavaScript game
-engine, written from the ground up in C.  Games are written entirely in
-JavaScript, providing a powerful development platform on par with writing a
-game in C++.
+engine, written from the ground up in C.  Games are coded in JavaScript, making
+for a very powerful development platform on par with writing a game in C++.
 
-miniSphere uses [Allegro 5](https://github.com/liballeg/allegro5) on the
-backend and [Duktape](http://duktape.org/) on the frontend.  As both of these
-are portable to various platforms, miniSphere can be compiled successfully on
-all three major platforms (Windows, Linux, and OS X)--and possibly others--with
-no changes to the source.
+miniSphere uses [Allegro 5](https://liballeg.org) on the backend and
+[Duktape](http://duktape.org/) on the frontend.  Both of these libraries are
+cross-platform and *very* portable, enabling miniSphere to be built on all
+three of the major platforms (Windows, Linux, and OS X).
 
 The Game Engine
 ---------------
 
-Sphere games are written in JavaScript.  The engine exposes a collection of
-low-level functions through the JavaScript environment, leaving higher-level
-game logic entirely up to script.  In this way, any kind of game you can
-imagine can be developed.
+*Sphere* games are written in JavaScript.  The engine exposes a collection of
+low-level functions to the JavaScript environment, leaving higher-level game
+logic entirely up to script.  In this way, any kind of game you can imagine can
+be developed.
 
 The Compiler
 ------------
 
-miniSphere's compiler, **Cell**, uses JavaScript to control the build process.
+**Cell**, miniSphere's compiler, uses JavaScript to control the build process.
 Out of the box, the compiler supports ECMAScript 2015 transpilation, allowing
 you to use new JavaScript syntax such as classes and arrow functions in your
 game.  A basic Cellscript might look like this:
@@ -86,15 +84,15 @@ CopyTool.stage('@/eatypig.fat', files('eaty/pig.src'));
 The Debugger
 ------------
 
-miniSphere includes an easy-to-use command-line debugger, called SSJ.  SSJ
-allows you to step through your game's code and inspect the internal state of
-the game--variables, call stack, objects, etc.--as it executes.  Best of all,
-the original source files don't need to be present, as SSJ can download source
-code directly from the miniSphere instance being debugged.
+**SSJ**, included with miniSphere, is an easy-to-use command-line debugger for
+*Sphere* games.  SSJ allows you to step through your game's code and inspect
+the internal state of the game--variables, call stack, objects, etc.--as it
+executes.  Best of all, the original source files don't need to be present, as
+SSJ can download source code directly from the engine instance being debugged.
 
 A symbolic debugger like SSJ is an invaluable tool for development and is a
-miniSphere exclusive: No similar tool was ever made available for the original
-Sphere engine.
+miniSphere exclusive: no such tool was ever available for the original *Sphere*
+engine.
 
 
 Download
