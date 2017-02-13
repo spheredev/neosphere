@@ -57,7 +57,8 @@ Core Cellscript API
 -------------------
 
 The functions and properties below are available for use at all times, by all
-Cellscripts and modules.  No require() call is necessary to use them.
+Cellscripts and modules.  No `require()` or `import` statements are necessary
+to use them.
 
 system.name [read-only]
 
@@ -152,7 +153,9 @@ assignment and arrow functions in Sphere games.  These syntax features are not
 natively supported by Duktape (the JavaScript engine used in miniSphere), but
 can be used by translating the ES 2015 scripts to ES5 first.
 
-    const transpile = require('transpile');
+To use this module, add the following line to the top of your Cellscript:
+
+    import transpile from 'transpile';
 
 transpile.v1(targetPath, sources);
 
@@ -181,7 +184,9 @@ when packaged in a SPK and also serves to obfuscate your game's source code
 (note, however, that minification can be reversed, at least partially, with the
 proper tools).
 
-    const minify = require('minify');
+To use this module, add the following line to the top of your Cellscript:
+
+    import minify from 'minify';
 
 minify(targetPath, sources);
 
