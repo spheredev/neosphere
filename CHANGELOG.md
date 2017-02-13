@@ -10,7 +10,7 @@ vX.X.X - TBD
   JSON manifest to control the subdirectory to which `~/` is mapped.
 * Removes `FS.openFile()` in favor of a `FileStream` constructor, making
   `FileStream` a proper class and therefore enabling it to be extended.
-* Fixes bugs where calling `FileStream` methods on a disposed stream may cause
+* Fixes a bug where calling `FileStream` methods on a disposed stream can cause
   the engine to crash.
 
 

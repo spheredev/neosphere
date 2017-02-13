@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-miniSphere 5.0
+miniSphere X.X
 --------------
 
 * Handling of save data has been improved.  A `saveID` property must now be

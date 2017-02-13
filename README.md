@@ -7,70 +7,84 @@ miniSphere
 miniSphere is the successor to Chad Austin's original *Sphere* JavaScript game
 engine, written from the ground up in C.  Games are written entirely in
 JavaScript, providing a powerful development platform on par with writing a
-game in C++.  The engine can be compiled on all three major platforms (Windows,
-macOS, and Linux) with no changes to its source code.
+game in C++.
+
+miniSphere uses [Allegro 5](https://github.com/liballeg/allegro5) on the
+backend and [Duktape](http://duktape.org/) on the frontend.  As both of these
+are portable to various platforms, miniSphere can be compiled successfully on
+all three major platforms (Windows, Linux, and OS X)--and possibly others--with
+no changes to the source.
+
+The Game Engine
+---------------
 
 Sphere games are written in JavaScript.  The engine exposes a collection of
 low-level functions through the JavaScript environment, leaving higher-level
-game logic entirely up to script.  This allows any type of game you can imagine
-to be made; of course, this naturally requires more expertise than making a
-game in, say, RPG Maker or Game Maker, but the ultimate flexibility you get in
-return is very often worth it.
+game logic entirely up to script.  In this way, any kind of game you can
+imagine can be developed.
 
-The engine uses [Allegro 5](https://github.com/liballeg/allegro5) on the
-backend and the [Duktape](http://duktape.org/) JavaScript engine on the
-frontend.  As both of these are portable to various platforms, miniSphere can
-be compiled successfully on all three major platforms (Windows, Linux, and
-OS X)--and possibly others--with no changes to the source.
+The Compiler
+------------
 
-Cell: the Sphere compiler
--------------------------
-
-Like miniSphere itself, its compiler, **Cell**, also uses JavaScript to control
-the build process.  Out of the box, Cell supports ECMAScript 2015
-transpilation, allowing you to use new JavaScript syntax such as classes and
-arrow functions in your game code.  A basic Cellscript might look like this:
+miniSphere's compiler, **Cell**, uses JavaScript to control the build process.
+Out of the box, the compiler supports ECMAScript 2015 transpilation, allowing
+you to use new JavaScript syntax such as classes and arrow functions in your
+game.  A basic Cellscript might look like this:
 
 ```js
 import transpile from 'transpile';
- 
+
 // whatever is passed to describe() is written to game.json.
 describe("Game Title",
 {
-    author: "Somebody",
-    summary: "This game is probably awesome.",
+    author: "Some Guy",
+    summary: "This game is awesome.",
     resolution: '320x240',
     main: 'scripts/main.js',  // main JS module
 });
- 
+
 // miniSphere doesn't support ES 2015 syntax natively.  transpile() builds
 // compatible scripts from ES 2015 code.
-transpile('@/scripts', files('scripts/*.js', true));
- 
-// install assets into the game package
+let sources = files('scripts/*.js', true);
+transpile('@/scripts', sources);
+
+// install assets into the game package.
 install('@/images', files('images/*.png', true));
 install('@/music',  files('music/*.ogg', true));
 install('@/sounds', files('sounds/*.wav', true));
 install('@/',       files('icon.png'));
 ```
 
-Using Cell's flexible Tool API, the compiler can be extended to perform any
-kind of build.  For example, the Tool below will copy a single source file:
+If that's not enough for you, then using Cell's flexible Tool API, you can
+extend the compiler to build any kind of asset.  Simply construct a Tool
+object and provide a function which will be called when the tool is executed.
+The Tool below will write the contents of a single source file to the
+destination file:
 
 ```js
-// Second argument is optional and specifies how the engine describes the
-// tool's job.  If omitted, Cell just says "building" when running the tool.
+// the second argument to `new Tool()` is optional and describes the process
+// performed by the tool, e.g., "compiling" or "installing".  if omitted, Cell
+// just says "building".
 const CopyTool = new Tool((outName, sourceNames) => {
     let buffer = FS.readFile(sourceNames[0]);
     FS.writeFile(outName, buffer);
 }, "copying");
-
-// Invoke the Tool like so (note: destination filename comes first):
-CopyTool.stage('@/eatypig.fat', [ 'eaty/pig.src' ]);
 ```
 
-SSJ: powerful JavaScript debugging
-----------------------------------
+To instruct Cell to build a file using your new Tool, just do this:
+
+```js
+// the first argument is the destination filename, the second argument is an
+// array of Target objects specifying the sources.  Here we pass an exact
+// filename to files() to get that array.
+//
+// note: the prefix '@/' refers to the root of the game package being compiled.
+//       see `cellscript-api.txt` for more information on SphereFS prefixes.
+CopyTool.stage('@/eatypig.fat', files('eaty/pig.src'));
+```
+
+The Debugger
+------------
 
 miniSphere includes an easy-to-use command-line debugger, called SSJ.  SSJ
 allows you to step through your game's code and inspect the internal state of
