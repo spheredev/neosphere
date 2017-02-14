@@ -39,9 +39,10 @@ To make things easier for Sphere v2 developers, Cell provides a subset of the
 Sphere v2 API and standard library for use in Cellscripts.  Specifically, the
 following are provided:
 
-    - Encoding API (`TextEncoder`, `TextDecoder` classes)
-    - File System API (`FS` object, FileStream class)
-    - Random Number Generator API (`RNG` object)
+    - Text Encoding API (`TextEncoder`, `TextDecoder` classes)
+    - File System API (`FS` object, `FileStream` class)
+    - Random Number Generator API (`RNG` class)
+
     - Several standard library modules:
         - `assert` module
         - `from` module
@@ -60,11 +61,11 @@ The functions and properties below are available for use at all times, by all
 Cellscripts and modules.  No `require()` or `import` statements are necessary
 to use them.
 
-system.name [read-only]
+Sphere.Platform [read-only]
 
     The name of the compiler, "Cell".
 
-system.version [read-only]
+Sphere.Version [read-only]
 
     The version number of the compiler; e.g., "X.X.X".
 

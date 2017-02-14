@@ -145,9 +145,9 @@ underlying Sphere v2 platform.  The `Sphere` object's properties provide access
 to the engine's name and version number as well as the API level supported, and
 there are also several methods for managing engine execution.
 
-Sphere.Name [read-only]
+Sphere.Platform [read-only]
 
-    The name of the engine.  In our case, "miniSphere".
+    The name of the running engine.  In our case, "miniSphere".
 
 Sphere.Version [read-only]
 

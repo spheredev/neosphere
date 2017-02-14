@@ -50,7 +50,7 @@ threads.create({
 }, Infinity);
 
 print(Sphere.Game.name + " miniRT Console");
-print(Sphere.Name + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
+print(Sphere.Platform + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
 print("");
 
 function executeCommand(command)

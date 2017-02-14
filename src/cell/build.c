@@ -34,8 +34,8 @@ static duk_ret_t js_error                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
 static duk_ret_t js_warn                    (duk_context* ctx);
-static duk_ret_t js_system_name             (duk_context* ctx);
-static duk_ret_t js_system_version          (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Platform     (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Version      (duk_context* ctx);
 static duk_ret_t js_FS_exists               (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory      (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile           (duk_context* ctx);
@@ -127,8 +127,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function(ctx, NULL, "files", js_files);
 	api_define_function(ctx, NULL, "install", js_install);
 	api_define_function(ctx, NULL, "warn", js_warn);
-	api_define_function(ctx, "system", "name", js_system_name);
-	api_define_function(ctx, "system", "version", js_system_version);
+	api_define_property(ctx, "Sphere", "Platform", js_Sphere_get_Platform, NULL);
+	api_define_property(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "exists", js_FS_exists);
@@ -948,14 +948,14 @@ js_warn(duk_context* ctx)
 }
 
 static duk_ret_t
-js_system_name(duk_context* ctx)
+js_Sphere_get_Platform(duk_context* ctx)
 {
 	duk_push_string(ctx, COMPILER_NAME);
 	return 1;
 }
 
 static duk_ret_t
-js_system_version(duk_context* ctx)
+js_Sphere_get_Version(duk_context* ctx)
 {
 	duk_push_string(ctx, VERSION_NAME);
 	return 1;

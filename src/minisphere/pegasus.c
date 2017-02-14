@@ -182,16 +182,6 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_Sphere_get_APILevel        (duk_context* ctx);
-static duk_ret_t js_Sphere_get_APIVersion      (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Game            (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Name            (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
-static duk_ret_t js_Sphere_abort               (duk_context* ctx);
-static duk_ret_t js_Sphere_exit                (duk_context* ctx);
-static duk_ret_t js_Sphere_reset               (duk_context* ctx);
-static duk_ret_t js_Sphere_run                 (duk_context* ctx);
-static duk_ret_t js_Sphere_sleep               (duk_context* ctx);
 static duk_ret_t js_console_assert             (duk_context* ctx);
 static duk_ret_t js_console_debug              (duk_context* ctx);
 static duk_ret_t js_console_error              (duk_context* ctx);
@@ -209,6 +199,16 @@ static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_now                 (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
+static duk_ret_t js_Sphere_get_APILevel        (duk_context* ctx);
+static duk_ret_t js_Sphere_get_APIVersion      (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Game            (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Platform            (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
+static duk_ret_t js_Sphere_abort               (duk_context* ctx);
+static duk_ret_t js_Sphere_exit                (duk_context* ctx);
+static duk_ret_t js_Sphere_reset               (duk_context* ctx);
+static duk_ret_t js_Sphere_run                 (duk_context* ctx);
+static duk_ret_t js_Sphere_sleep               (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
 static duk_ret_t js_Color_is                   (duk_context* ctx);
 static duk_ret_t js_Color_mix                  (duk_context* ctx);
@@ -394,6 +394,16 @@ initialize_pegasus_api(duk_context* ctx)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// initialize the Sphere v2 API
+	api_define_static_prop(ctx, "Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
+	api_define_static_prop(ctx, "Sphere", "APIVersion", js_Sphere_get_APIVersion, NULL);
+	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
+	api_define_static_prop(ctx, "Sphere", "Platform", js_Sphere_get_Platform, NULL);
+	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
+	api_define_function(ctx, "Sphere", "abort", js_Sphere_abort);
+	api_define_function(ctx, "Sphere", "exit", js_Sphere_exit);
+	api_define_function(ctx, "Sphere", "reset", js_Sphere_reset);
+	api_define_function(ctx, "Sphere", "run", js_Sphere_run);
+	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
 	api_define_class(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "is", js_Color_is);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
@@ -518,16 +528,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_define_static_prop(ctx, "Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
-	api_define_static_prop(ctx, "Sphere", "APIVersion", js_Sphere_get_APIVersion, NULL);
-	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
-	api_define_static_prop(ctx, "Sphere", "Name", js_Sphere_get_Name, NULL);
-	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
-	api_define_function(ctx, "Sphere", "abort", js_Sphere_abort);
-	api_define_function(ctx, "Sphere", "exit", js_Sphere_exit);
-	api_define_function(ctx, "Sphere", "reset", js_Sphere_reset);
-	api_define_function(ctx, "Sphere", "run", js_Sphere_run);
-	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
 	api_define_function(ctx, "console", "assert", js_console_assert);
 	api_define_function(ctx, "console", "debug", js_console_debug);
 	api_define_function(ctx, "console", "error", js_console_error);
@@ -1030,198 +1030,6 @@ js_require(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sphere_get_APILevel(duk_context* ctx)
-{
-	duk_push_int(ctx, API_LEVEL);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_get_APIVersion(duk_context* ctx)
-{
-	duk_push_int(ctx, API_VERSION);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_get_Game(duk_context* ctx)
-{
-	duk_push_lstring_t(ctx, fs_manifest(g_fs));
-	duk_json_decode(ctx, -1);
-
-	duk_push_this(ctx);
-	duk_push_string(ctx, "Game");
-	duk_dup(ctx, -3);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
-
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_get_Name(duk_context* ctx)
-{
-	duk_push_string(ctx, ENGINE_NAME);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_get_Version(duk_context* ctx)
-{
-	duk_push_string(ctx, VERSION_NAME);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_abort(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	char*       text;
-
-	num_args = duk_get_top(ctx);
-	message = num_args >= 1
-		? duk_to_string(ctx, 0)
-		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
-
-	dukrub_inspect_callstack_entry(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber");
-	duk_get_prop_string(ctx, -2, "function");
-	duk_get_prop_string(ctx, -1, "fileName");
-	filename = duk_get_string(ctx, -1);
-	line_number = duk_get_int(ctx, -2);
-	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
-	abort_game(text);
-}
-
-static duk_ret_t
-js_Dispatch_cancel(duk_context* ctx)
-{
-	int64_t* token;
-
-	token = duk_require_class_obj(ctx, 0, "JobToken");
-
-	async_cancel(*token);
-	return 0;
-}
-
-static duk_ret_t
-js_Dispatch_cancelAll(duk_context* ctx)
-{
-	async_cancel_all(false);
-	return 0;
-}
-
-static duk_ret_t
-js_Dispatch_later(duk_context* ctx)
-{
-	script_t* script;
-	uint32_t  timeout;
-	int64_t   token;
-
-	timeout = duk_require_uint(ctx, 0);
-	script = duk_pegasus_require_script(ctx, 1);
-
-	if (!(token = async_defer(script, timeout, ASYNC_UPDATE)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
-	duk_pegasus_push_job_token(ctx, token);
-	return 1;
-}
-
-static duk_ret_t
-js_Dispatch_now(duk_context* ctx)
-{
-	script_t* script;
-	int64_t   token;
-
-	script = duk_pegasus_require_script(ctx, 0);
-
-	if (!(token = async_defer(script, 0, ASYNC_TICK)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
-	duk_pegasus_push_job_token(ctx, token);
-	return 1;
-}
-
-static duk_ret_t
-js_Dispatch_onRender(duk_context* ctx)
-{
-	int       num_args;
-	double    priority;
-	script_t* script;
-	int64_t   token;
-
-	num_args = duk_get_top(ctx);
-	script = duk_pegasus_require_script(ctx, 0);
-	priority = num_args >= 2 ? duk_require_number(ctx, 1)
-		: 0.0;
-
-	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
-	duk_pegasus_push_job_token(ctx, token);
-	return 1;
-}
-
-static duk_ret_t
-js_Dispatch_onUpdate(duk_context* ctx)
-{
-	int       num_args;
-	double    priority;
-	script_t* script;
-	int64_t   token;
-
-	num_args = duk_get_top(ctx);
-	script = duk_pegasus_require_script(ctx, 0);
-	priority = num_args >= 2 ? duk_require_number(ctx, 1)
-		: 0.0;
-
-	if (!(token = async_recur(script, priority, ASYNC_UPDATE)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
-	duk_pegasus_push_job_token(ctx, token);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_exit(duk_context* ctx)
-{
-	exit_game(false);
-}
-
-static duk_ret_t
-js_Sphere_reset(duk_context* ctx)
-{
-	restart_engine();
-}
-
-static duk_ret_t
-js_Sphere_run(duk_context* ctx)
-{
-	do_events();
-	duk_push_boolean(ctx, true);
-	return 1;
-}
-
-static duk_ret_t
-js_Sphere_sleep(duk_context* ctx)
-{
-	uint32_t timeout;
-
-	timeout = duk_require_uint(ctx, 0);
-
-	// note: even if the frame counter rolls over this still works because
-	//       unsigned arithmetic is (mod 2^N) by definition.
-	timeout += screen_now(g_screen);
-
-	while (screen_now(g_screen) < timeout)
-		screen_flip(g_screen, s_framerate);
-	return 0;
-}
-
-static duk_ret_t
 js_console_assert(duk_context* ctx)
 {
 	const char* message;
@@ -1441,6 +1249,112 @@ js_screen_resize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Sphere_get_APILevel(duk_context* ctx)
+{
+	duk_push_int(ctx, API_LEVEL);
+	return 1;
+}
+
+static duk_ret_t
+js_Sphere_get_APIVersion(duk_context* ctx)
+{
+	duk_push_int(ctx, API_VERSION);
+	return 1;
+}
+
+static duk_ret_t
+js_Sphere_get_Game(duk_context* ctx)
+{
+	duk_push_lstring_t(ctx, fs_manifest(g_fs));
+	duk_json_decode(ctx, -1);
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Game");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
+	return 1;
+}
+
+static duk_ret_t
+js_Sphere_get_Platform(duk_context* ctx)
+{
+	duk_push_string(ctx, ENGINE_NAME);
+	return 1;
+}
+
+static duk_ret_t
+js_Sphere_get_Version(duk_context* ctx)
+{
+	duk_push_string(ctx, VERSION_NAME);
+	return 1;
+}
+
+static duk_ret_t
+js_Sphere_abort(duk_context* ctx)
+{
+	const char* filename;
+	int         line_number;
+	const char* message;
+	int         num_args;
+	char*       text;
+
+	num_args = duk_get_top(ctx);
+	message = num_args >= 1
+		? duk_to_string(ctx, 0)
+		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
+
+	dukrub_inspect_callstack_entry(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber");
+	duk_get_prop_string(ctx, -2, "function");
+	duk_get_prop_string(ctx, -1, "fileName");
+	filename = duk_get_string(ctx, -1);
+	line_number = duk_get_int(ctx, -2);
+	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
+	abort_game(text);
+}
+
+static duk_ret_t
+js_Sphere_exit(duk_context* ctx)
+{
+	exit_game(false);
+}
+
+static duk_ret_t
+js_Sphere_reset(duk_context* ctx)
+{
+	restart_engine();
+}
+
+static duk_ret_t
+js_Sphere_run(duk_context* ctx)
+{
+	do_events();
+	duk_push_boolean(ctx, true);
+	return 1;
+}
+
+static duk_ret_t
+js_Sphere_sleep(duk_context* ctx)
+{
+	uint32_t timeout;
+
+	timeout = duk_require_uint(ctx, 0);
+
+	// note: even if the frame counter rolls over this still works because
+	//       unsigned arithmetic is (mod 2^N) by definition.
+	timeout += screen_now(g_screen);
+
+	while (screen_now(g_screen) < timeout)
+		screen_flip(g_screen, s_framerate);
+	return 0;
+}
+
+static duk_ret_t
 js_Color_get_Color(duk_context* ctx)
 {
 	const struct x11_color* data;
@@ -1612,6 +1526,92 @@ js_Color_fade(duk_context* ctx)
 
 	color.a = fmin(fmax(color.a * a, 0), 255);
 	duk_pegasus_push_color(ctx, color);
+	return 1;
+}
+
+static duk_ret_t
+js_Dispatch_cancel(duk_context* ctx)
+{
+	int64_t* token;
+
+	token = duk_require_class_obj(ctx, 0, "JobToken");
+
+	async_cancel(*token);
+	return 0;
+}
+
+static duk_ret_t
+js_Dispatch_cancelAll(duk_context* ctx)
+{
+	async_cancel_all(false);
+	return 0;
+}
+
+static duk_ret_t
+js_Dispatch_later(duk_context* ctx)
+{
+	script_t* script;
+	uint32_t  timeout;
+	int64_t   token;
+
+	timeout = duk_require_uint(ctx, 0);
+	script = duk_pegasus_require_script(ctx, 1);
+
+	if (!(token = async_defer(script, timeout, ASYNC_UPDATE)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+	duk_pegasus_push_job_token(ctx, token);
+	return 1;
+}
+
+static duk_ret_t
+js_Dispatch_now(duk_context* ctx)
+{
+	script_t* script;
+	int64_t   token;
+
+	script = duk_pegasus_require_script(ctx, 0);
+
+	if (!(token = async_defer(script, 0, ASYNC_TICK)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+	duk_pegasus_push_job_token(ctx, token);
+	return 1;
+}
+
+static duk_ret_t
+js_Dispatch_onRender(duk_context* ctx)
+{
+	int       num_args;
+	double    priority;
+	script_t* script;
+	int64_t   token;
+
+	num_args = duk_get_top(ctx);
+	script = duk_pegasus_require_script(ctx, 0);
+	priority = num_args >= 2 ? duk_require_number(ctx, 1)
+		: 0.0;
+
+	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+	duk_pegasus_push_job_token(ctx, token);
+	return 1;
+}
+
+static duk_ret_t
+js_Dispatch_onUpdate(duk_context* ctx)
+{
+	int       num_args;
+	double    priority;
+	script_t* script;
+	int64_t   token;
+
+	num_args = duk_get_top(ctx);
+	script = duk_pegasus_require_script(ctx, 0);
+	priority = num_args >= 2 ? duk_require_number(ctx, 1)
+		: 0.0;
+
+	if (!(token = async_recur(script, priority, ASYNC_UPDATE)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dispatch failed");
+	duk_pegasus_push_job_token(ctx, token);
 	return 1;
 }
 
