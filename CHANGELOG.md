@@ -4,20 +4,18 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* Adds a `screen.fullScreen` property, allowing games to set the fullscreen
-  mode programmatically.
 * Adds support for game-specific save directories.  Set `saveID` in a game's
   JSON manifest to control the subdirectory to which `~/` is mapped.
+* Adds a new `FileStream` constructor, which replaces `FS.openFile()` and has
+  a more intuitive API.
+* Adds a `screen.fullScreen` property to change the fullscreen mode at runtime.
 * Adds a compile-time warning for Cell targets with no sources (the tool will
   never be invoked in that case).
-* Renames `system.now()` to `screen.now()` to better reflect the fact that it's
-  based on frames.
-* Renames the `system` object to `Sphere`, and fixes the capitalization for
-  constants, e.g., `system.apiLevel` -> `Sphere.APILevel`.
-* Removes `FS.openFile()` in favor of a `FileStream` constructor, making
-  `FileStream` a proper class and therefore enabling it to be extended.
+* Renames `system.now()` to `screen.now()`.
+* Renames the `system` object to `Sphere`, and changes the capitalization of
+  runtime constants, e.g., `system.version` -> `Sphere.Version`.
 * Fixes a bug where calling `FileStream` methods on a disposed stream can cause
-  the engine to crash.
+  miniSphere (or Cell) to crash.
 
 
 v4.4.4 - February 6, 2017
