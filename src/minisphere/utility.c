@@ -66,7 +66,7 @@ home_path(void)
 }
 
 const char*
-md5sum(void* data, size_t size)
+md5sum(const void* data, size_t size)
 {
 	// note: a static buffer is used here to store the last generated hash, so
 	//       only one output can be used at a time.  be careful.

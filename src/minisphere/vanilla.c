@@ -88,6 +88,7 @@ static duk_ret_t js_GradientRectangle          (duk_context* ctx);
 static duk_ret_t js_GradientTriangle           (duk_context* ctx);
 static duk_ret_t js_HashByteArray              (duk_context* ctx);
 static duk_ret_t js_HashFromFile               (duk_context* ctx);
+static duk_ret_t js_HashFromString             (duk_context* ctx);
 static duk_ret_t js_InflateByteArray           (duk_context* ctx);
 static duk_ret_t js_Line                       (duk_context* ctx);
 static duk_ret_t js_LineSeries                 (duk_context* ctx);
@@ -2042,6 +2043,18 @@ js_HashFromFile(duk_context* ctx)
 
 	if (!(data = sfs_fslurp(g_fs, filename, NULL, &size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to read file");
+	duk_push_string(ctx, md5sum(data, size));
+	return 1;
+}
+
+static duk_ret_t
+js_HashFromString(duk_context* ctx)
+{
+	const void* data;
+	size_t      size;
+
+	data = duk_require_lstring(ctx, 0, &size);
+
 	duk_push_string(ctx, md5sum(data, size));
 	return 1;
 }
