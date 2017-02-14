@@ -186,10 +186,10 @@ Sphere.exit();
     Shuts down the engine.  Be careful; this function will not return, so any
     unsaved data will be lost.
 
-Sphere.reset();
+Sphere.restart();
 
-    Restarts the engine then reloads the currently running game.  Unsaved data
-    will be lost.
+    Restarts the currently running game from scratch, as though it were just
+    loaded.  Unsaved data will be lost.
 
 Sphere.run();
 

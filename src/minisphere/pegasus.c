@@ -206,7 +206,7 @@ static duk_ret_t js_Sphere_get_Platform            (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
 static duk_ret_t js_Sphere_abort               (duk_context* ctx);
 static duk_ret_t js_Sphere_exit                (duk_context* ctx);
-static duk_ret_t js_Sphere_reset               (duk_context* ctx);
+static duk_ret_t js_Sphere_restart               (duk_context* ctx);
 static duk_ret_t js_Sphere_run                 (duk_context* ctx);
 static duk_ret_t js_Sphere_sleep               (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
@@ -401,7 +401,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_function(ctx, "Sphere", "abort", js_Sphere_abort);
 	api_define_function(ctx, "Sphere", "exit", js_Sphere_exit);
-	api_define_function(ctx, "Sphere", "reset", js_Sphere_reset);
+	api_define_function(ctx, "Sphere", "restart", js_Sphere_restart);
 	api_define_function(ctx, "Sphere", "run", js_Sphere_run);
 	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
 	api_define_class(ctx, "Color", js_new_Color, NULL);
@@ -1325,7 +1325,7 @@ js_Sphere_exit(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sphere_reset(duk_context* ctx)
+js_Sphere_restart(duk_context* ctx)
 {
 	restart_engine();
 }
