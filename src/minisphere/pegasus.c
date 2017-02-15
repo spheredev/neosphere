@@ -1490,9 +1490,7 @@ js_Color_get_name(duk_context* ctx)
 	p = &COLORS[0];
 	while (p->name != NULL) {
 		if (color.r == p->r && color.g == p->g && color.b == p->b && color.a == p->a) {
-			duk_eval_string(ctx, "''.toLowerCase");
 			duk_push_string(ctx, p->name);
-			duk_call_method(ctx, 0);
 			return 1;
 		}
 		++p;
