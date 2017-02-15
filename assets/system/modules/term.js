@@ -36,7 +36,9 @@ var commands = [];
 var entry = "";
 var cursorColor = Color.Gold;
 var fps = screen.frameRate;
-var logger = new Log(Sphere.Game.logPath);
+var logger = 'logPath' in Sphere.Game
+    ? new Log(Sphere.Game.logPath)
+    : null;
 new scenes.Scene()
 	.doWhile(function() { return true; })
 		.tween(cursorColor, 0.25 * fps, 'easeInSine', { alpha: 255 })
@@ -209,7 +211,8 @@ function print(/*...*/)
 	++nextLine;
 	visible.line = 0.0;
 	console.log(buffer[lineInBuffer]);
-	logger.write(buffer[lineInBuffer]);
+	if (logger !== null)
+        logger.write(buffer[lineInBuffer]);
 }
 
 function define(name, that, methods)
