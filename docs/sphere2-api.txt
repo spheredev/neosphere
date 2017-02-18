@@ -205,11 +205,10 @@ Sphere.run();
           to undesirable side effects if a promise handler modifies a global
           variable, for example.
 
-Sphere.sleep(num_frames);
+Sphere.sleep(timeout);
 
-    Suspends execution for the specified number of frames.  This runs its own
-    frame loop, so any asynchronous update and render jobs set up with the
-    Dispatch API will continue to be processed as usual.
+    Suspends JavaScript execution for the specified amount of time.  `timeout`
+    is in seconds, and may include fractions (e.g., 1.5).
 
 
 Dispatch API

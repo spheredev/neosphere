@@ -1341,16 +1341,13 @@ js_Sphere_run(duk_context* ctx)
 static duk_ret_t
 js_Sphere_sleep(duk_context* ctx)
 {
-	uint32_t timeout;
+	double timeout;
 
-	timeout = duk_require_uint(ctx, 0);
+	timeout = duk_to_number(ctx, 0);
 
-	// note: even if the frame counter rolls over this still works because
-	//       unsigned arithmetic is (mod 2^N) by definition.
-	timeout += screen_now(g_screen);
-
-	while (screen_now(g_screen) < timeout)
-		screen_flip(g_screen, s_framerate);
+	if (timeout < 0.0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid sleep timeout");
+	delay(timeout);
 	return 0;
 }
 

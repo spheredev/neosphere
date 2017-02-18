@@ -359,7 +359,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 
 	// generate the source map
 	if (want_debug) {
-		visor_begin_op(build->visor, "generating source map");
+		visor_begin_op(build->visor, "writing source map");
 		duk_push_object(build->js_context);
 		duk_push_object(build->js_context);
 		iter = vector_enum(build->targets);
@@ -788,7 +788,7 @@ write_manifests(build_t* build)
 
 	ctx = build->js_context;
 	
-	visor_begin_op(build->visor, "writing Sphere game manifest");
+	visor_begin_op(build->visor, "writing Sphere manifest files");
 	
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "descriptor");

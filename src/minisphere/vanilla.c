@@ -1692,11 +1692,13 @@ js_DeflateByteArray(duk_context* ctx)
 static duk_ret_t
 js_Delay(duk_context* ctx)
 {
-	double millisecs = floor(duk_to_number(ctx, 0));
+	double timeout;
+	
+	timeout = duk_to_number(ctx, 0);
 
-	if (millisecs < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "time cannot be negative", millisecs);
-	delay(millisecs / 1000);
+	if (timeout < 0.0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay timeout");
+	delay(floor(timeout) / 1000);
 	return 0;
 }
 
