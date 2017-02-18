@@ -11,16 +11,16 @@ vX.X.X - TBD
 * Adds a `screen.fullScreen` property to change the fullscreen mode at runtime.
 * Adds a compile-time warning for Cell targets with no sources (the tool will
   never be invoked in that case).
-* Adds support to Cell for SGMv1 manifest generation, providing limited
-  cross-compatibility with Sphere 1.x to ease migration.
-* Color#name is now InterCaps for predefined colors, e.g. "DodgerBlue" instead
-  of "dodgerblue".
-* Changes `System.sleep()` to behave like `Delay()` again, taking a value in
+* Adds support to Cell for SGMv1 manifest generation, allowing limited
+  cross-compatibility with Sphere 1.x to help ease migration.
+* Renames `system.now()` to `screen.now()`.
+* Renames the `system` object to `Sphere`, and fixes capitalization for runtime
+  constants, e.g., `system.version` -> `Sphere.Version`.
+* Changes `Color#name` to return InterCaps names for predefined colors, e.g.
+  "DodgerBlue" instead of "dodgerblue".
+* Changes `Sphere.sleep()` to use its pre-4.3 behavior, taking a value in
   seconds and suspending all engine activity, including rendering, until the
   timeout expires.
-* Renames `system.now()` to `screen.now()`.
-* Renames the `system` object to `Sphere`, and changes the capitalization of
-  runtime constants, e.g., `system.version` -> `Sphere.Version`.
 * Fixes a bug where calling `FileStream` methods on a disposed stream can cause
   miniSphere (or Cell) to crash.
 
