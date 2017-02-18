@@ -13,6 +13,8 @@ vX.X.X - TBD
   never be invoked in that case).
 * Adds support to Cell for SGMv1 manifest generation, allowing limited
   cross-compatibility with Sphere 1.x to help ease migration.
+* Renames the `Image` class to `Texture` to support future compatibility with
+  Oozaru.
 * Renames `system.now()` to `screen.now()`.
 * Renames the `system` object to `Sphere`, and fixes capitalization for runtime
   constants, e.g., `system.version` -> `Sphere.Version`.

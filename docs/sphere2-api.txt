@@ -771,33 +771,34 @@ Font#wordWrap(text, wrap_width);
     a text box, this function should be used to pre-wrap the text since
     performing wrapping calculations every frame can get expensive.
 
-new Image(filename);
+new Texture(filename);
 
-    Constructs a new Image object from an image file.  An Image cannot be
-    rendered directly and must instead be used as a texture for a Shape object.
+    Constructs a new Texture object from an image file.  Unlike images in
+    Sphere v1, these cannot be rendered directly but instead must be used to
+    texture a Shape object.
 
-    Note that Images are read-only.  If you need a writable image, you should
+    Note that Textures are read-only.  If you need a writable image, you should
     use a Surface object instead.
 
-new Image(width, height, pixels);
+new Texture(width, height, pixels);
 
-    Constructs a new Image from a pixel buffer.  `width` and `height` specify
-    the size of the image, and `pixels` is an ArrayBuffer containing the RGBA
-    pixel data to use to initialize the image.  The pixel data should not be
-    padded (i.e. stride is equal to width).
+    Constructs a new Texture from a pixel buffer.  `width` and `height` specify
+    the size of the texture image, and `pixels` is an ArrayBuffer containing
+    the RGBA pixel data to use to initialize the image.  The pixel data should
+    not be padded (i.e. stride is equal to width).
 
     An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
-    describe the entire image.
+    describe the entire texture.
 
-Image#fileName [read-only]
+Texture#fileName [read-only]
 
     Gets the full, canonical SphereFS filename of the file used to construct
-    this Image object.  For synthesized images, returns null.
+    this Texture object.  For synthesized textures, returns null.
 
-Image#width [read-only]
-Image#height [read-only]
+Texture#width [read-only]
+Texture#height [read-only]
 
-    Gets the width or height of the image, in pixels.
+    Gets the width or height of the texture, in pixels.
 
 new Model(shapes[, shader]);
 
@@ -929,11 +930,11 @@ Surface#height [read-only]
 
     Gets the width and height of the surface, in pixels.
 
-Surface#toImage();
+Surface#toTexture();
 
-    Creates an Image from the current contents of this Surface and returns it.
-    Note that drawing to the surface afterwards will not affect the generated
-    image, which is read-only.
+    Returns a Texture created from the current contents of this Surface.  Note
+    that drawing to the surface afterwards will not affect the texture, which
+    is read-only.
 
 new Transform();
 

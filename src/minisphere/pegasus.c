@@ -248,11 +248,11 @@ static duk_ret_t js_Font_get_height            (duk_context* ctx);
 static duk_ret_t js_Font_drawText              (duk_context* ctx);
 static duk_ret_t js_Font_getTextSize           (duk_context* ctx);
 static duk_ret_t js_Font_wordWrap              (duk_context* ctx);
-static duk_ret_t js_new_Image                  (duk_context* ctx);
-static duk_ret_t js_Image_finalize             (duk_context* ctx);
-static duk_ret_t js_Image_get_fileName         (duk_context* ctx);
-static duk_ret_t js_Image_get_height           (duk_context* ctx);
-static duk_ret_t js_Image_get_width            (duk_context* ctx);
+static duk_ret_t js_new_Texture                (duk_context* ctx);
+static duk_ret_t js_Texture_finalize           (duk_context* ctx);
+static duk_ret_t js_Texture_get_fileName       (duk_context* ctx);
+static duk_ret_t js_Texture_get_height         (duk_context* ctx);
+static duk_ret_t js_Texture_get_width          (duk_context* ctx);
 static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
 static duk_ret_t js_Joystick_get_Null          (duk_context* ctx);
 static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
@@ -348,7 +348,7 @@ static duk_ret_t js_new_Surface                (duk_context* ctx);
 static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
 static duk_ret_t js_Surface_get_width          (duk_context* ctx);
-static duk_ret_t js_Surface_toImage            (duk_context* ctx);
+static duk_ret_t js_Surface_toTexture          (duk_context* ctx);
 static duk_ret_t js_new_Transform              (duk_context* ctx);
 static duk_ret_t js_Transform_finalize         (duk_context* ctx);
 static duk_ret_t js_Transform_compose          (duk_context* ctx);
@@ -439,10 +439,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
 	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
-	api_define_class(ctx, "Image", js_new_Image, js_Image_finalize);
-	api_define_property(ctx, "Image", "fileName", js_Image_get_fileName, NULL);
-	api_define_property(ctx, "Image", "height", js_Image_get_height, NULL);
-	api_define_property(ctx, "Image", "width", js_Image_get_width, NULL);
 	api_define_class(ctx, "JobToken", NULL, js_JobToken_finalize);
 	api_define_class(ctx, "Joystick", NULL, js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
@@ -520,7 +516,11 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_class(ctx, "Surface", js_new_Surface, js_Surface_finalize);
 	api_define_property(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_define_property(ctx, "Surface", "width", js_Surface_get_width, NULL);
-	api_define_method(ctx, "Surface", "toImage", js_Surface_toImage);
+	api_define_method(ctx, "Surface", "toTexture", js_Surface_toTexture);
+	api_define_class(ctx, "Texture", js_new_Texture, js_Texture_finalize);
+	api_define_property(ctx, "Texture", "fileName", js_Texture_get_fileName, NULL);
+	api_define_property(ctx, "Texture", "height", js_Texture_get_height, NULL);
+	api_define_property(ctx, "Texture", "width", js_Texture_get_width, NULL);
 	api_define_class(ctx, "Transform", js_new_Transform, js_Transform_finalize);
 	api_define_method(ctx, "Transform", "compose", js_Transform_compose);
 	api_define_method(ctx, "Transform", "identity", js_Transform_identity);
@@ -2062,7 +2062,7 @@ js_Font_wordWrap(duk_context* ctx)
 }
 
 static duk_ret_t
-js_new_Image(duk_context* ctx)
+js_new_Texture(duk_context* ctx)
 {
 	const color_t* buffer;
 	size_t         buffer_size;
@@ -2126,7 +2126,7 @@ js_new_Image(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Image_finalize(duk_context* ctx)
+js_Texture_finalize(duk_context* ctx)
 {
 	image_t* image;
 
@@ -2136,7 +2136,7 @@ js_Image_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Image_get_fileName(duk_context* ctx)
+js_Texture_get_fileName(duk_context* ctx)
 {
 	image_t*    image;
 	const char* path;
@@ -2152,7 +2152,7 @@ js_Image_get_fileName(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Image_get_height(duk_context* ctx)
+js_Texture_get_height(duk_context* ctx)
 {
 	image_t* image;
 
@@ -2164,7 +2164,7 @@ js_Image_get_height(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Image_get_width(duk_context* ctx)
+js_Texture_get_width(duk_context* ctx)
 {
 	image_t* image;
 
@@ -3687,7 +3687,7 @@ js_Surface_get_width(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Surface_toImage(duk_context* ctx)
+js_Surface_toTexture(duk_context* ctx)
 {
 	image_t* image;
 	image_t* new_image;

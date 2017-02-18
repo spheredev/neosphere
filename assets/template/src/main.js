@@ -11,7 +11,7 @@ import prim   from 'prim';
 import random from 'random';
 
 // declare variables used by the game.
-var image = new Image('images/saiyan.png');
+var image = new Texture('images/justSaiyan.png');
 var x = 0, xVel = 1;
 var y = 0, yVel = 1;
 
