@@ -2121,7 +2121,7 @@ js_new_Texture(duk_context* ctx)
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	}
 	duk_push_this(ctx);
-	duk_to_class_obj(ctx, -1, "Image", image);
+	duk_to_class_obj(ctx, -1, "Texture", image);
 	return 0;
 }
 
@@ -2130,7 +2130,7 @@ js_Texture_finalize(duk_context* ctx)
 {
 	image_t* image;
 
-	image = duk_require_class_obj(ctx, 0, "Image");
+	image = duk_require_class_obj(ctx, 0, "Texture");
 	image_free(image);
 	return 0;
 }
@@ -2142,7 +2142,7 @@ js_Texture_get_fileName(duk_context* ctx)
 	const char* path;
 
 	duk_push_this(ctx);
-	image = duk_require_class_obj(ctx, -1, "Image");
+	image = duk_require_class_obj(ctx, -1, "Texture");
 
 	if (path = image_path(image))
 		duk_push_string(ctx, path);
@@ -2157,7 +2157,7 @@ js_Texture_get_height(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_class_obj(ctx, -1, "Image");
+	image = duk_require_class_obj(ctx, -1, "Texture");
 
 	duk_push_int(ctx, image_height(image));
 	return 1;
@@ -2169,7 +2169,7 @@ js_Texture_get_width(duk_context* ctx)
 	image_t* image;
 
 	duk_push_this(ctx);
-	image = duk_require_class_obj(ctx, -1, "Image");
+	image = duk_require_class_obj(ctx, -1, "Texture");
 
 	duk_push_int(ctx, image_width(image));
 	return 1;
@@ -3031,7 +3031,7 @@ js_new_Shape(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	duk_require_object_coercible(ctx, 0);
-	texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 1, "Image")
+	texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 1, "Texture")
 		: NULL;
 	type = num_args >= 3 ? duk_require_int(ctx, 2)
 		: SHAPE_AUTO;
@@ -3088,7 +3088,7 @@ js_Shape_get_texture(duk_context* ctx)
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
 
-	duk_push_class_obj(ctx, "Image", image_ref(shape_texture(shape)));
+	duk_push_class_obj(ctx, "Texture", image_ref(shape_texture(shape)));
 	return 1;
 }
 
@@ -3100,7 +3100,7 @@ js_Shape_set_texture(duk_context* ctx)
 
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
-	texture = duk_require_class_obj(ctx, 0, "Image");
+	texture = duk_require_class_obj(ctx, 0, "Texture");
 
 	shape_set_texture(shape, texture);
 	return 0;
@@ -3631,8 +3631,8 @@ js_new_Surface(duk_context* ctx)
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 		image_fill(image, fill_color);
 	}
-	else if (duk_is_class_obj(ctx, 0, "Image")) {
-		src_image = duk_require_class_obj(ctx, 0, "Image");
+	else if (duk_is_class_obj(ctx, 0, "Texture")) {
+		src_image = duk_require_class_obj(ctx, 0, "Texture");
 		if (!(image = image_clone(src_image)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
 	}
@@ -3697,7 +3697,7 @@ js_Surface_toTexture(duk_context* ctx)
 
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
-	duk_push_class_obj(ctx, "Image", new_image);
+	duk_push_class_obj(ctx, "Texture", new_image);
 	return 1;
 }
 
