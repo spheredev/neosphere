@@ -74,6 +74,7 @@ static path_t*    load_package_json    (duk_context* ctx, const char* filename);
 static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void       push_require         (duk_context* ctx, const char* module_id);
 static int        sort_targets_by_path (const void* p_a, const void* p_b);
+static bool       write_manifests      (build_t* build);
 
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
@@ -266,6 +267,7 @@ build_package(build_t* build, const char* filename)
 	visor_begin_op(build->visor, "packaging game to '%s'", filename);
 	spk = spk_create(filename);
 	spk_add_file(spk, build->fs, "@/game.json", "game.json");
+	spk_add_file(spk, build->fs, "@/game.sgm", "game.sgm");
 	spk_add_file(spk, build->fs, "@/sourceMap.json", "sourceMap.json");
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
@@ -295,9 +297,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	const char*   json;
 	size_t        json_size;
 	const char*   last_filename = "";
-	int           num_errors;
 	int           num_matches = 1;
-	int           num_warns;
 	const path_t* path;
 	const path_t* source_path;
 	vector_t*     sorted_targets;
@@ -338,26 +338,22 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		target_build(*p_target, build->visor, rebuild_all);
 	}
 	visor_end_op(build->visor);
-	num_errors = visor_num_errors(build->visor);
-	num_warns = visor_num_warns(build->visor);
 
-	// only generate a JSON manifest if the build finished with no errors.
-	// warnings are fine (for now).
-	if (num_errors == 0) {
+	// only generate a game manifest if the build finished with no errors.
+	// warnings are fine.
+	if (visor_num_errors(build->visor) == 0) {
 		clean_old_artifacts(build, true);
-		visor_begin_op(build->visor, "generating JSON manifest");
-		duk_push_global_stash(build->js_context);
-		duk_get_prop_string(build->js_context, -1, "descriptor");
-		duk_json_encode(build->js_context, -1);
-		json = duk_get_lstring(build->js_context, -1, &json_size);
-		fs_fspew(build->fs, "@/game.json", json, json_size);
-		duk_pop_2(build->js_context);
-		visor_end_op(build->visor);
+		if (!write_manifests(build)) {
+			fs_unlink(build->fs, "@/game.json");
+			fs_unlink(build->fs, "@/game.sgm");
+			goto finished;
+		}
 	}
 	else {
 		// delete any existing game manifest to ensure we don't accidentally
 		// generate a functional but broken distribution.
 		fs_unlink(build->fs, "@/game.json");
+		fs_unlink(build->fs, "@/game.sgm");
 		goto finished;
 	}
 
@@ -402,7 +398,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	fs_fspew(build->fs, "@/artifacts.json", json, json_size);
 
 finished:
-	return num_errors == 0;
+	return visor_num_errors(build->visor) == 0;
 }
 
 static void
@@ -776,6 +772,93 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 	a = *(const target_t**)p_a;
 	b = *(const target_t**)p_b;
 	return strcmp(path_cstr(target_path(a)), path_cstr(target_path(b)));
+}
+
+static bool
+write_manifests(build_t* build)
+{
+	duk_context* ctx;
+	FILE*        file;
+	int          height;
+	size_t       json_size;
+	const char*  json_text;
+	path_t*      origin;
+	path_t*      script_path;
+	int          width;
+
+	ctx = build->js_context;
+	
+	visor_begin_op(build->visor, "writing Sphere game manifest");
+	
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "descriptor");
+
+	// validate game descriptor before writing manifests
+	duk_get_prop_string(ctx, -1, "name");
+	if (!duk_is_string(ctx, -1)) {
+		duk_push_string(ctx, "Untitled");
+		duk_remove(ctx, -2);
+		visor_warn(build->visor, "missing or invalid 'name' field");
+	}
+
+	duk_get_prop_string(ctx, -2, "author");
+	if (!duk_is_string(ctx, -1)) {
+		duk_push_string(ctx, "Author Unknown");
+		duk_remove(ctx, -2);
+		visor_warn(build->visor, "missing or invalid 'author' field");
+	}
+
+	duk_get_prop_string(ctx, -3, "summary");
+	if (!duk_is_string(ctx, -1)) {
+		duk_push_string(ctx, "No summary provided.");
+		duk_remove(ctx, -2);
+	}
+	
+	// note: SGMv1 encodes the resolution width and height as separate fields.
+	duk_get_prop_string(ctx, -4, "resolution");
+	if (!duk_is_string(ctx, -1)
+		|| sscanf(duk_to_string(ctx, -1), "%dx%d", &width, &height) != 2)
+	{
+		visor_error(build->visor, "missing or invalid 'resolution' field");
+		duk_pop_n(ctx, 6);
+		visor_end_op(build->visor);
+		return false;
+	}
+
+	// note: SGMv1 requires the main script path to be relative to scripts/.
+	//       this differs from v2 (game.json), where it's relative to the manifest.
+	duk_get_prop_string(ctx, -5, "main");
+	if (!duk_is_string(ctx, -1)) {
+		visor_error(build->visor, "missing or invalid 'main' field");
+		duk_pop_n(ctx, 7);
+		visor_end_op(build->visor);
+		return false;
+	}
+	script_path = path_new(duk_to_string(ctx, -1));
+	origin = path_new("scripts/");
+	path_relativize(script_path, origin);
+	path_free(origin);
+
+	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
+	file = fs_fopen(build->fs, "@/game.sgm", "wb");
+	fprintf(file, "name=%s\n", duk_to_string(ctx, -5));
+	fprintf(file, "author=%s\n", duk_to_string(ctx, -4));
+	fprintf(file, "description=%s\n", duk_to_string(ctx, -3));
+	fprintf(file, "screen_width=%d\n", width);
+	fprintf(file, "screen_height=%d\n", height);
+	fprintf(file, "script=%s\n", path_cstr(script_path));
+	fclose(file);
+	path_free(script_path);
+	duk_pop_n(ctx, 5);
+
+	// write game.json (Sphere v2 JSON manifest)
+	duk_json_encode(ctx, -1);
+	json_text = duk_get_lstring(ctx, -1, &json_size);
+	fs_fspew(build->fs, "@/game.json", json_text, json_size);
+	duk_pop_2(ctx);
+
+	visor_end_op(build->visor);
+	return true;
 }
 
 static duk_ret_t
