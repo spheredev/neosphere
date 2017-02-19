@@ -147,7 +147,7 @@ there are also several methods for managing engine execution.
 
 Sphere.Platform [read-only]
 
-    The name of the running engine.  In our case, "miniSphere".
+    The name of the engine.  In our case, that's "miniSphere".
 
 Sphere.Version [read-only]
 
@@ -159,18 +159,14 @@ Sphere.APILevel [read-only]
     The API version and level supported by the engine, respectively.  The API
     version indicates which version of the Sphere API is supported (currently
     v2), while the API level reflects the level of functionality within a
-    version.  When new methods or object properties are added to the core API
-    without breaking compatibility, the API level is bumped.
-
-    Note: Sometimes new functionality is added to the engine as an extension,
-          without changing the reported API level.  See `Sphere.extensions`
-          below for how to check for supported extensions.
+    version.  When new classes, methods, or properties are added to the Core
+    API without breaking compatibility, the API level is bumped.
 
 Sphere.Game [read-only]
 
-    Gets an object with information about the currently running game.  This
-    object consists of everything in the JSON manifest plus any fields
-    synthesized by the engine.
+    An object whose properties describe the currently running game.  The object
+    consists of everything in the JSON manifest plus any fields synthesized by
+    the engine.
 
 Sphere.abort(message);
 
@@ -193,22 +189,26 @@ Sphere.restart();
 
 Sphere.run();
 
-    Runs a single iteration of the Sphere event loop.  This function always
-    returns true, allowing it to be used in a loop condition:
+    Runs a single iteration of the Sphere v2 event loop.  This function always
+    returns true, allowing it to be used as part of a loop condition; for
+    example:
 
         while (!isDone && Sphere.run()) {
             // do stuff here
         }
 
     Note: Be careful.  This function runs all pending immediate jobs in the job
-          queue, including settlement of outstanding promises.  This may lead
-          to undesirable side effects if a promise handler modifies a global
-          variable, for example.
+          queue.  That may lead to undesirable side effects if a Dispatch job
+          modifies a global variable, for example.
 
 Sphere.sleep(timeout);
 
     Suspends JavaScript execution for the specified amount of time.  `timeout`
     is in seconds, and may include fractions (e.g., 1.5).
+    
+    Note: Any pending Dispatch.now() jobs will be run before sleeping.
+		  Depending on how long that takes, Sphere.sleep() may take longer than
+		  expected to return.
 
 
 Dispatch API
@@ -241,7 +241,7 @@ Dispatch.now(fn);
 
     Sets up a one-time job to call `fn` from the event loop on the next tick.
     This is useful for performing operations that need to be done from the
-    event loop with minimal delay, such as promise resolution.
+    event loop with minimal delay.
 
     Returns a JobToken for use with Dispatch.cancel().
 

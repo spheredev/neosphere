@@ -19,6 +19,7 @@ struct sandbox
 	lstring_t*   manifest;
 	lstring_t*   name;
 	lstring_t*   author;
+	bool         fullscreen;
 	lstring_t*   summary;
 	lstring_t*   save_id;
 	int          res_x;
@@ -88,6 +89,7 @@ fs_new(const char* game_path)
 		fs->summary = lstr_new(path_cstr(path));
 		fs->res_x = 320; fs->res_y = 240;
 		fs->script_path = path_new(path_filename(path));
+		fs->fullscreen = false;
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, fs->name); duk_put_prop_string(g_duk, -2, "name");
 		duk_push_lstring_t(g_duk, fs->author); duk_put_prop_string(g_duk, -2, "author");
@@ -130,6 +132,7 @@ fs_new(const char* game_path)
 			fs->res_x = kev_read_float(sgm_file, "screen_width", 320);
 			fs->res_y = kev_read_float(sgm_file, "screen_height", 240);
 			fs->script_path = fs_make_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
+			fs->fullscreen = true;
 			kev_close(sgm_file);
 
 			// generate a JSON manifest (used by, e.g. system.game)
@@ -216,22 +219,22 @@ fs_get_resolution(const sandbox_t* fs, int *out_width, int *out_height)
 	*out_height = fs->res_y;
 }
 
-int
-fs_version(const sandbox_t* fs)
+const char*
+fs_author(const sandbox_t* fs)
 {
-	return fs->version;
+	return lstr_cstr(fs->author);
+}
+
+bool
+fs_fullscreen(const sandbox_t* fs)
+{
+	return fs->fullscreen;
 }
 
 const char*
 fs_name(const sandbox_t* fs)
 {
 	return lstr_cstr(fs->name);
-}
-
-const char*
-fs_author(const sandbox_t* fs)
-{
-	return lstr_cstr(fs->author);
 }
 
 const char*
@@ -251,6 +254,12 @@ const path_t*
 fs_script_path(const sandbox_t* fs)
 {
 	return fs->script_path;
+}
+
+int
+fs_version(const sandbox_t* fs)
+{
+	return fs->version;
 }
 
 path_t*
@@ -621,9 +630,11 @@ duk_load_s2gm(duk_context* ctx)
 	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->name = lstr_new(duk_get_string(g_duk, -1));
+	
 	if (!duk_get_prop_string(g_duk, -2, "resolution") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	sscanf(duk_get_string(g_duk, -1), "%dx%d", &fs->res_x, &fs->res_y);
+	
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	fs->script_path = path_new(duk_get_string(g_duk, -1));
@@ -633,16 +644,24 @@ duk_load_s2gm(duk_context* ctx)
 		fs->version = duk_get_number(g_duk, -1);
 	else
 		fs->version = 2;
+	
 	if (duk_get_prop_string(g_duk, -5, "author") && duk_is_string(g_duk, -1))
 		fs->author = lstr_new(duk_get_string(g_duk, -1));
 	else
 		fs->author = lstr_new("Author Unknown");
+	
 	if (duk_get_prop_string(g_duk, -6, "summary") && duk_is_string(g_duk, -1))
 		fs->summary = lstr_new(duk_get_string(g_duk, -1));
 	else
 		fs->summary = lstr_new("No information available.");
+	
 	if (duk_get_prop_string(g_duk, -7, "saveID") && duk_is_string(g_duk, -1))
 		fs->save_id = lstr_new(duk_get_string(g_duk, -1));
+
+	if (duk_get_prop_string(g_duk, -8, "fullScreen") && duk_is_boolean(g_duk, -1))
+		fs->fullscreen = duk_get_boolean(g_duk, -1);
+	else
+		fs->fullscreen = true;
 
 	return 0;
 

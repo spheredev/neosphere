@@ -1343,7 +1343,7 @@ js_Sphere_sleep(duk_context* ctx)
 {
 	double timeout;
 
-	timeout = duk_to_number(ctx, 0);
+	timeout = duk_require_number(ctx, 0);
 
 	if (timeout < 0.0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid sleep timeout");

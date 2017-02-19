@@ -24,7 +24,7 @@ vX.X.X - TBD
   seconds and suspending all engine activity, including rendering, until the
   timeout expires.
 * Fixes a bug where calling `FileStream` methods on a disposed stream can cause
-  miniSphere (or Cell) to crash.
+  miniSphere (and Cell) to crash.
 
 
 v4.4.4 - February 6, 2017
