@@ -1,13 +1,26 @@
 Release Notes
 =============
 
-miniSphere X.X
+miniSphere 4.5
 --------------
 
-* Handling of save data has been improved.  In order for a game to save, a
-  `saveID` field must be present in `game.json`, which determines the location
-  the engine will use for that game's save data.  If no `saveID` is defined,
-  any SphereFS path beginning with `~/` will be rejected with a ReferenceError.
+* Handling of save data has been changed.  In order for a game to save, a
+  `saveID` field must now be present in `game.json`, which determines the
+  location the engine will use for that game's save data.  If no `saveID` is
+  defined, any SphereFS path beginning with `~/` will be rejected with a
+  ReferenceError.
+
+* `Image` has been renamed to `Texture` in service to eventual API convergence
+  with Oozaru.  The Web platform already exposes an incompatible `Image` class,
+  so this change was unavoidable.
+
+* `system` has been renamed to `Sphere` to better reflect its role as a
+  namespace for low-level engine services.  Additionally, properties such as
+  `.version` and `.apiLevel` have been capitalized, since they are runtime
+  constants.
+
+* `Sphere.sleep()` has reverted to its original behavior; it no longer runs a
+  frame loop and therefore now takes a time in seconds rather than frames.
 
 * `FS.openFile()` has been refactored into a `FileStream` constructor.  The
   second argument of the constructor uses easy-to-read constants such as

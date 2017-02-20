@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.5.0 - February 20, 2017
+--------------------------
 
 * Adds support for game-specific save directories.  Set `saveID` in a game's
   JSON manifest to control the subdirectory to which `~/` is mapped.
