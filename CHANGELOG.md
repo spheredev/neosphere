@@ -18,6 +18,7 @@ vX.X.X - TBD
 * Renames `system.now()` to `screen.now()`.
 * Renames the `system` object to `Sphere`, and fixes capitalization for runtime
   constants, e.g., `system.version` -> `Sphere.Version`.
+* Renames the `--window` command-line option to `--windowed`.
 * Changes `Color#name` to return InterCaps names for predefined colors, e.g.
   "DodgerBlue" instead of "dodgerblue".
 * Changes `Sphere.sleep()` to use its pre-4.3 behavior, taking a value in

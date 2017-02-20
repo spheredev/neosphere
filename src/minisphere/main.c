@@ -547,7 +547,7 @@ parse_command_line(
 			else if (strcmp(argv[i], "--fullscreen") == 0) {
 				*out_want_fullscreen = true;
 			}
-			else if (strcmp(argv[i], "--window") == 0) {
+			else if (strcmp(argv[i], "--windowed") == 0) {
 				*out_want_fullscreen = false;
 			}
 #if defined(MINISPHERE_SPHERUN)
@@ -651,12 +651,12 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   spherun [--fullscreen | --window] [--frameskip <n>] [--no-sleep] [--debug] \n");
-	printf("           [--verbose <n>] <game_path>                                        \n");
+	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--no-sleep]         \n");
+	printf("           [--debug] [--verbose <n>] <game_path>                              \n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");
-	printf("       --window       Start miniSphere in windowed mode.  This is the default.\n");
+	printf("       --windowed     Start miniSphere in windowed mode.  This is the default.\n");
 	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
 	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
