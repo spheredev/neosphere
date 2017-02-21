@@ -1,6 +1,11 @@
 miniSphere Changelog
 ====================
 
+v4.5.1 - TBD
+------------
+
+* Adds `PurwaBlue` and `RebeccaPurple` as named colors.
+
 v4.5.0 - February 20, 2017
 --------------------------
 
