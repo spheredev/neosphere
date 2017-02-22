@@ -1,3 +1,9 @@
+minisphere (4.5.1) trusty; urgency=low
+
+  * Adds `PurwaBlue` and `RebeccaPurple` as predefined colors.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 22 Feb 2017 00:00:00 -0500
+
 minisphere (4.5.0) trusty; urgency=low
 
   * Adds support for game-specific save directories.  Set `saveID` in a game's
