@@ -1,6 +1,14 @@
 miniSphere Changelog
 ====================
 
+v4.5.2 - TBD
+------------
+
+* Changes Cell `transpile` module to use automatic mode for transpile().  `.js`
+  files are compiled as scripts (which is Sphere 1.x compatible), while `.mjs`
+  files are compiled as ES6 modules.  This is in line with how Node.js will
+  eventually implement ES6 module support.
+
 v4.5.1 - February 22, 2017
 --------------------------
 

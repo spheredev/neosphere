@@ -906,9 +906,11 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	const char* const filenames[] =
 	{
 		"%s",
+		"%s.mjs",
 		"%s.js",
 		"%s.json",
 		"%s/package.json",
+		"%s/index.mjs",
 		"%s/index.js",
 		"%s/index.json",
 	};

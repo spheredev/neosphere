@@ -6,16 +6,21 @@
 module.exports = transpile;
 const Babel = require('#/babel-core');
 
-transpile.v2 = transpile;
 function transpile(dirName, sources)
 {
-	return stageTargets(dirName, sources, moduleTool);
+	return stageTargets(dirName, sources, 'auto');
 }
 
 transpile.v1 = transpileScripts;
 function transpileScripts(dirName, sources)
 {
 	return stageTargets(dirName, sources, scriptTool);
+}
+
+transpile.v2 = transpileModules;
+function transpileModules(dirName, sources)
+{
+	return stageTargets(dirName, sources, moduleTool);
 }
 
 var moduleTool = makeTranspilerTool(2.0);
@@ -46,7 +51,10 @@ function stageTargets(dirName, sources, tool)
 	FS.createDirectory(dirName);
 	for (var i = 0; i < sources.length; ++i) {
 		var fileName = FS.resolve(dirName + '/' + sources[i].name);
-		var target = tool.stage(fileName, [ sources[i] ], {
+		var currentTool = tool !== 'auto' ? tool
+			: fileName.endsWith('.mjs') ? moduleTool
+			: scriptTool;
+		var target = currentTool.stage(fileName, [ sources[i] ], {
 			name: sources[i].name,
 		});
 		targets[targets.length] = target;

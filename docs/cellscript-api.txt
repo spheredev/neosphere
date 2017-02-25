@@ -158,23 +158,15 @@ To use this module, add the following line to the top of your Cellscript:
 
     import transpile from 'transpile';
 
-transpile.v1(targetPath, sources);
+transpile(targetPath, sources);
 
-    Stages a build that translates each Target in `sources` from ES 2015 to ES5
-    and places the resulting scripts in the directory named by `targetPath`.
-    For compatibility with Sphere v1 code, this treats input scripts as program
-    code; if you want to use `import` and `export` (ES 2015 modules), you
-    should call `transpile.v2()` instead.
-
-transpile.v2(targetPath, sources);
-
-    Like `transpile.v1()` above, but processes the input scripts as ES 2015
-    modules and converts them to CommonJS (i.e. imported using `require()`)
-    modules.  This is the preferred transpilation mode for Sphere v2 games and
-    allows use of ES 2015 `import` and `export`.
-
-    Note: For convenience, `transpile.v2()` can be abbreviated as
-          `transpile()`.
+    Stages a build that translates each Target in `sources` from ES2015 to ES5
+    and places the output into the directory named by `targetPath`.  Filenames
+    ending in `.mjs` are treated as ES2015 modules; anything else is treated as
+    a normal script.
+    
+    Note: `import` and `export` keywords are supported only in ES2015 modules.
+          Using them in a normal script will produce a SyntaxError.
 
 
 `minify` Module
