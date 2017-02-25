@@ -1,3 +1,12 @@
+minisphere (4.5.2) trusty; urgency=low
+
+  * Changes Cell `transpile` module to use automatic mode for transpile().  `.js`
+    files are compiled as scripts (which is Sphere 1.x compatible), while `.mjs`
+    files are compiled as ES6 modules.  This is in line with how Node.js will
+    eventually implement ES6 module support.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 25 Feb 2017 00:00:00 -0500
+
 minisphere (4.5.1) trusty; urgency=low
 
   * Adds `PurwaBlue` and `RebeccaPurple` as predefined colors.
