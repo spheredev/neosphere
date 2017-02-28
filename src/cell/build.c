@@ -603,9 +603,11 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 	const char* const filenames[] =
 	{
 		"%s",
+		"%s.mjs",
 		"%s.js",
 		"%s.json",
 		"%s/package.json",
+		"%s/index.mjs",
 		"%s/index.js",
 		"%s/index.json",
 	};
@@ -1013,6 +1015,7 @@ js_require(duk_context* ctx)
 {
 	build_t*    build;
 	const char* id;
+	bool        is_mjs;
 	const char* parent_id = NULL;
 	path_t*     path;
 
@@ -1030,7 +1033,8 @@ js_require(duk_context* ctx)
 	{
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
 	}
-	if (!eval_cjs_module(ctx, build->fs, path_cstr(path), true))
+	is_mjs = path_has_extension(path, ".mjs");
+	if (!eval_cjs_module(ctx, build->fs, path_cstr(path), is_mjs))
 		duk_throw(ctx);
 	return 1;
 }
