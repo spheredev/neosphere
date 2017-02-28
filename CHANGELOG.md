@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v4.5.3 - TBD
-------------
+v4.5.3 - February 28, 2017
+--------------------------
 
 * Adds support for `Cellscript.mjs`.  if `Cellscript.js` is used, it will now
   be compiled as a script rather than a module.
