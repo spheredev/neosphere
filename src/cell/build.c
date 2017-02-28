@@ -67,7 +67,7 @@ static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
 static duk_ret_t js_Target_get_name         (duk_context* ctx);
 
 static void       clean_old_artifacts  (build_t* build, bool keep_targets);
-static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename);
+static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs);
 static path_t*    find_cjs_module      (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static duk_ret_t  install_target       (duk_context* ctx);
 static path_t*    load_package_json    (duk_context* ctx, const char* filename);
@@ -110,11 +110,11 @@ build_new(const path_t* source_path, const path_t* out_path)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// prepare environment for ECMAScript 2015 support
-	if (fs_fexist(fs, "#/polyfill.js") && !eval_cjs_module(ctx, fs, "#/polyfill.js"))
+	if (fs_fexist(fs, "#/polyfill.js") && !eval_cjs_module(ctx, fs, "#/polyfill.js", false))
 		return false;
 	if (fs_fexist(fs, "#/babel-core.js")) {
 		duk_push_global_stash(ctx);
-		if (eval_cjs_module(ctx, fs, "#/babel-core.js"))
+		if (eval_cjs_module(ctx, fs, "#/babel-core.js", false))
 			duk_put_prop_string(ctx, -2, "babelCore");
 		else
 			duk_pop(ctx);
@@ -223,13 +223,20 @@ build_eval(build_t* build, const char* filename)
 {
 	const char* err_filename;
 	int         err_line;
+	bool        is_mjs;
 	bool        is_ok = true;
+	path_t*     path;
 	struct stat stats;
 
+	if (fs_stat(build->fs, filename, &stats) != 0)
+		return false;
+	
 	visor_begin_op(build->visor, "evaluating '%s'", filename);
-	if (fs_stat(build->fs, filename, &stats) == 0)
-		build->timestamp = stats.st_mtime;
-	if (!eval_cjs_module(build->js_context, build->fs, filename)) {
+	build->timestamp = stats.st_mtime;
+	path = path_new(filename);
+	is_mjs = path_has_extension(path, ".mjs");
+	path_free(path);
+	if (!eval_cjs_module(build->js_context, build->fs, filename, is_mjs)) {
 		is_ok = false;
 		duk_get_prop_string(build->js_context, -1, "fileName");
 		err_filename = duk_safe_to_string(build->js_context, -1);
@@ -431,7 +438,7 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 }
 
 static duk_bool_t
-eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
+eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
@@ -502,13 +509,18 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
-		duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
-		duk_push_lstring_t(ctx, code_string);
-		duk_push_string(ctx, " })");
-		duk_concat(ctx, 3);
-		duk_push_string(ctx, filename);
-		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
-			// syntax error, might be ES 2015+ code; try running the script through Babel.
+		if (!as_mjs) {
+			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
+			duk_push_lstring_t(ctx, code_string);
+			duk_push_string(ctx, " })");
+			duk_concat(ctx, 3);
+			duk_push_string(ctx, filename);
+		}
+		else {
+			duk_push_null(ctx);  // stack balancing
+		}
+		if (as_mjs || duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
+			// potentially ES 2015+ code; try running the script through Babel.
 			duk_push_global_stash(ctx);
 			if (!duk_has_prop_string(ctx, -1, "babelCore")) {
 				duk_pop(ctx);
@@ -518,9 +530,16 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename)
 			duk_get_prop_string(ctx, -1, "transform");
 			duk_swap_top(ctx, -2);
 			duk_push_lstring_t(ctx, code_string);
-			duk_eval_string(ctx,
-				"({ sourceType: 'module', comments: false, retainLines: true,"
-				"   presets: [ 'latest' ] })");
+			if (as_mjs) {
+				duk_eval_string(ctx,
+					"({ sourceType: 'module', comments: false, retainLines: true,"
+					"   presets: [ 'latest' ] })");
+			}
+			else {
+				duk_eval_string(ctx,
+					"({ sourceType: 'script', comments: false, retainLines: true,"
+					"   presets: [ [ 'latest', { es2015: { modules: false } } ] ] })");
+			}
 			if (duk_pcall_method(ctx, 2) != DUK_EXEC_SUCCESS) {
 				duk_remove(ctx, -2);
 				goto on_error;
@@ -1011,7 +1030,7 @@ js_require(duk_context* ctx)
 	{
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
 	}
-	if (!eval_cjs_module(ctx, build->fs, path_cstr(path)))
+	if (!eval_cjs_module(ctx, build->fs, path_cstr(path), true))
 		duk_throw(ctx);
 	return 1;
 }

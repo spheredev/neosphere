@@ -42,7 +42,7 @@ function fromObject(target)
 
 const PK =
 {
-	ItemSource: '@@source',
+	ItemSource: Symbol('itemSource'),
 };
 
 function MAKEPOINT(sourceType, op)
@@ -88,7 +88,7 @@ function FromQuery(source)
 
 Object.defineProperties(FromQuery.prototype,
 {
-	enumerate:
+	[Symbol.iterator]:
 	PROPDESC('wc', function enumerate()
 	{
 		var source = this[PK.ItemSource];
@@ -174,7 +174,7 @@ function ObjectSource(target)
 	this.next =
 	function next()
 	{
-		if (m_index >= m_length);
+		if (m_index >= m_length)
 			return null;
 		var key = m_keys[m_index++];
 		return {
@@ -245,7 +245,7 @@ function FromSource(source, selector)
 			var item = source.next();
 			if (item !== null) {
 				var target = m_selector(item.v, item.k, item.t);
-				m_iterator = from(target).enumerate();
+				m_iterator = from(target)[Symbol.iterator]();
 				if ((m_nextItem = m_iterator.next()).done)
 					m_iterator = null;
 			}
@@ -294,8 +294,7 @@ function IncludeSource(source, target)
 	function init()
 	{
 		source.init();
-		m_iterator = from(m_targets).from()
-			.enumerate();
+		m_iterator = from(m_targets).from()[Symbol.iterator]();
 	};
 
 	this.next =

@@ -4,8 +4,10 @@ miniSphere Changelog
 v4.5.3 - TBD
 ------------
 
+* Adds support for `Cellscript.mjs`.  if `Cellscript.js` is used, it will now
+  be compiled as a script rather than a module.
 * Fixes a bug in `from.Object()` where no object properties are enumerated.
-* Fixes a bug where `term.print()` repeats its second parameter for each one
+* Fixes a bug where `term.print()` repeats its second parameter for every one
   beyond that.
 
 v4.5.2 - February 25, 2017

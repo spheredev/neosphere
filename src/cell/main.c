@@ -30,7 +30,7 @@ main(int argc, char* argv[])
 	printf("\n");
 	
 	build = build_new(s_in_path, s_out_path);
-	if (!build_eval(build, "Cellscript.js"))
+	if (!build_eval(build, "Cellscript.mjs") && !build_eval(build, "Cellscript.js"))
 		goto shutdown;
 	if (s_want_clean)
 		build_clean(build);
@@ -52,8 +52,9 @@ shutdown:
 static bool
 parse_cmdline(int argc, char* argv[])
 {
-	path_t*     cellscript_path;
 	bool        have_in_dir = false;
+	path_t*     js_path;
+	path_t*     mjs_path;
 	int         num_targets = 0;
 	const char* short_args;
 
@@ -174,17 +175,20 @@ parse_cmdline(int argc, char* argv[])
 		s_out_path = path_new("dist/");
 	
 	// check if a Cellscript exists
-	cellscript_path = path_rebase(path_new("Cellscript.js"), s_in_path);
-	if (!path_resolve(cellscript_path, NULL)) {
-		path_free(cellscript_path);
+	mjs_path = path_rebase(path_new("Cellscript.mjs"), s_in_path);
+	js_path = path_rebase(path_new("Cellscript.js"), s_in_path);
+	if (!path_resolve(mjs_path, NULL) && !path_resolve(js_path, NULL)) {
+		path_free(mjs_path);
+		path_free(js_path);
 		if (have_in_dir)
-			printf("no Cellscript.js found in source directory.\n");
+			printf("no Cellscript found in source directory.\n");
 		else
 			print_usage();
 		return false;
 	}
 	
-	path_free(cellscript_path);
+	path_free(mjs_path);
+	path_free(js_path);
 	return true;
 
 missing_argument:
