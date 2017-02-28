@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+v4.5.3 - TBD
+------------
+
+* Fixes a bug where `term.print()` repeats its second parameter for each one
+  beyond that.
+
 v4.5.2 - February 25, 2017
 --------------------------
 

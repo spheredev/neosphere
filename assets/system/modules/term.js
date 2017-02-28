@@ -206,7 +206,7 @@ function print(/*...*/)
 	var lineInBuffer = nextLine % bufferSize;
 	buffer[lineInBuffer] = ">" + arguments[0];
 	for (var i = 1; i < arguments.length; ++i) {
-		buffer[lineInBuffer] += " >>" + arguments[1];
+		buffer[lineInBuffer] += " >>" + arguments[i];
 	}
 	++nextLine;
 	visible.line = 0.0;
