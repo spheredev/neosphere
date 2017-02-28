@@ -4,6 +4,7 @@ miniSphere Changelog
 v4.5.3 - TBD
 ------------
 
+* Fixes a bug in `from.Object()` where no object properties are enumerated.
 * Fixes a bug where `term.print()` repeats its second parameter for each one
   beyond that.
 

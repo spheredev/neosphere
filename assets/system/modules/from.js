@@ -174,7 +174,7 @@ function ObjectSource(target)
 	this.next =
 	function next()
 	{
-		if (m_index >= m_length);
+		if (m_index >= m_length)
 			return null;
 		var key = m_keys[m_index++];
 		return {
