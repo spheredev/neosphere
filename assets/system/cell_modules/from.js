@@ -19,6 +19,8 @@ function from(target/*, ...*/)
 	target = Object(target);
 	if (typeof target.length === 'number')
 		return fromArray(target);
+	else if (typeof target[Symbol.iterator] === 'function')
+		return fromIterable(target);
 	else
 		return fromObject(target);
 };
@@ -37,6 +39,16 @@ from.Object = fromObject;
 function fromObject(target)
 {
 	var itemSource = new ObjectSource(Object(target));
+	return new FromQuery(itemSource);
+}
+
+from.iterable = fromIterable;
+function fromIterable(target)
+{
+	target = Object(target);
+	if (typeof target[Symbol.iterator] !== 'function')
+		throw new TypeError("object is not iterable");
+	var itemSource = new IterableSource(target);
 	return new FromQuery(itemSource);
 }
 
@@ -152,7 +164,31 @@ function ArraySource(target)
 		return {
 			v: target[m_index],
 			k: m_index++,
-			t: target
+			t: target,
+		};
+	}
+}
+
+function IterableSource(target)
+{
+	var m_iter;
+
+	this.init =
+	function init()
+	{
+		m_iter = target[Symbol.iterator]();
+	};
+
+	this.next =
+	function next()
+	{
+		var result = m_iter.next();
+		if (result.done)
+			return null;
+		return {
+			v: result.value,
+			k: null,
+			t: target,
 		};
 	}
 }
@@ -180,7 +216,7 @@ function ObjectSource(target)
 		return {
 			v: target[key],
 			k: key,
-			t: target
+			t: target,
 		};
 	};
 }

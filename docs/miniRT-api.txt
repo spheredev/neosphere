@@ -121,22 +121,21 @@ battlers whose level is a multiple of 5, but only hits 75% of the time.
 Depending on the architecture of your battle engine, that might be implemented
 with a single query:
 
-    from(battlers)
-        .where(function(v) { return v.isEnemyOf(attacker) })
-        .where(function(v) { return v.level % 5 == 0; }
-        .where(function(v) { return random.chance(0.75); })
-        .each(function(v)
-    {
-        v.damage(move.power * attacker.strength);
+    let targets = from(battlers)
+        .where(v => v.isEnemyOf(attacker))
+        .where(v => v.level % 5 == 0)
+        .where(v => random.chance(0.75));
+    for (let target of targets) {
+        target.damage(move.power * attacker.strength);
     }
 
 
 from(source[, ...]);
 
     Constructs a FromQuery against one or more arrays or objects.  The
-    enumeration mode (keyed or indexed) for each source depends on whether it's
-    a plain object, or array-like; if you need a specific enumeration mode, you
-    should use one of the specialized calls below and work through one at a
+    enumeration mode for each source depends on whether it's a plain object,
+    iterable object, or array-like; if you need a specific enumeration mode,
+    you should use one of the specialized calls below and work through one at a
     time.
 
 from.Array(array);
@@ -150,9 +149,16 @@ from.Array(array);
 
 from.Object(object);
 
-    Constructs a FromQuery against a JavaScript object.  Only enumerable own
-    properties of the object will be queried.  Non-enumerable and inherited
-    properties will be ignored.
+    Constructs a FromQuery against an ordinary JavaScript object.  Only
+    enumerable own properties of the object will be queried.  Non-enumerable
+    and inherited properties will be ignored.
+
+from.iterable(source);
+
+    Constructs a FromQuery against an iterable object.  Iterable objects are
+    those implementing the JavaScript "iterable protocol"; in other words,
+    objects implementing `[Symbol.iterator]`.  `from()` queries are themselves
+    iterable.
 
 from#all(predicate);
 
