@@ -1,6 +1,14 @@
 miniSphere Changelog
 ====================
 
+v4.6.0 - TBD
+------------
+
+* Adds a new global binding, `exports`, which maps to the global object.
+* Changes the default ES2015 transpiler from Babel to TypeScript, vastly
+  lowering build times for Cellscripts using the `transpile` module.
+
+
 v4.5.3 - February 28, 2017
 --------------------------
 

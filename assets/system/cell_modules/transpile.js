@@ -4,7 +4,8 @@
 **/
 
 module.exports = transpile;
-const Babel = require('#/babel-core');
+const from  = require('from');
+const ts    = require('#/typescript');
 
 function transpile(dirName, sources)
 {
@@ -29,19 +30,30 @@ var scriptTool = makeTranspilerTool(1.0);
 function makeTranspilerTool(apiVersion)
 {
 	return new Tool(function(outFileName, inFileNames) {
-		var moduleType = apiVersion >= 2.0 ? 'commonjs' : false;
-		var sourceType = apiVersion >= 2.0 ? 'module' : 'script';
 		var fileContent = FS.readFile(inFileNames[0]);
 		var input = new TextDecoder().decode(fileContent);
-		var output = Babel.transform(input, {
-			sourceType,
-			comments: false,
-			retainLines: true,
-			presets: [
-				[ 'latest', { es2015: { modules: moduleType } } ]
-			]
+		var output = ts.transpileModule(input, {
+			fileName: inFileNames[0],
+			reportDiagnostics: true,
+			compilerOptions: {
+				module: ts.ModuleKind.CommonJS,
+				moduleResolution: ts.ModuleResolutionKind.NodeJs,
+				noImplicitUseStrict: apiVersion <= 1.0,
+				newLine: ts.NewLineKind.LineFeed,
+				target: ts.ScriptTarget.ES5,
+			},
 		});
-		FS.writeFile(outFileName, new TextEncoder().encode(output.code));
+		FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
+		from(output.diagnostics)
+			.where(function(v) { return typeof v.messageText === 'string'; })
+			.each(function(line)
+		{
+			var message = "TS" + line.code + ": " + line.messageText;
+			if (line.category === ts.DiagnosticCategory.Error)
+				error(message);
+			else
+				warn(message);
+		});
 	}, "transpiling");
 }
 
