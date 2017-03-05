@@ -65,6 +65,7 @@ function stageTargets(dirName, sources, tool)
 		var fileName = FS.resolve(dirName + '/' + sources[i].name);
 		var currentTool = tool !== 'auto' ? tool
 			: fileName.endsWith('.mjs') ? moduleTool
+			: fileName.endsWith('.ts') ? moduleTool
 			: scriptTool;
 		var target = currentTool.stage(fileName, [ sources[i] ], {
 			name: sources[i].name,
