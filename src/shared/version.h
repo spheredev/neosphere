@@ -6,6 +6,6 @@
 #define DEBUGGER_NAME "SSJ"
 #define PREPTOOL_NAME "Majin"
 
-#define VERSION_NAME  "4.5.3"
+#define VERSION_NAME  "4.5.4"
 
 #endif // MINISPHERE__VERSION_H__INCLUDED

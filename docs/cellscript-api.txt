@@ -67,7 +67,7 @@ Sphere.Platform [read-only]
 
 Sphere.Version [read-only]
 
-    The version number of the compiler; e.g., "4.5.3".
+    The version number of the compiler; e.g., "4.5.4".
 
 describe(title, metadata);
 
@@ -146,7 +146,7 @@ Tool#stage(filename, sources);
     object representing the target file.
 
 
-`transpile` Module
+`compiler` Module
 ------------------
 
 This module allows you to use ECMAScript 2015 features such as destructuring
@@ -154,9 +154,11 @@ assignment and arrow functions in Sphere games.  These syntax features are not
 natively supported by Duktape (the JavaScript engine used in miniSphere), but
 can be used by translating the ES 2015 scripts to ES5 first.
 
-To use this module, add the following line to the top of your Cellscript:
+To use the `transpile()` function exposed by this module, add one (and only
+one!) of the following lines to the top of your Cellscript:
 
-    import transpile from 'transpile';
+    import { transpile } from 'compiler';  // .mjs only
+    const transpile = require('compiler').transpile;
 
 transpile(targetPath, sources);
 
@@ -177,9 +179,11 @@ when packaged in a SPK and also serves to obfuscate your game's source code
 (note, however, that minification can be reversed, at least partially, with the
 proper tools).
 
-To use this module, add the following line to the top of your Cellscript:
+To use this module, add one of the following lines to the top of your
+Cellscript:
 
-    import minify from 'minify';
+    import minify from 'minify';  // .mjs only
+    const minify = require('minify');
 
 minify(targetPath, sources);
 

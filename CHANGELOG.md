@@ -1,11 +1,16 @@
 miniSphere Changelog
 ====================
 
-v4.5.4 - TBD
-------------
+v4.5.4 - March 5, 2017
+----------------------
 
 * Adds a new global binding, `exports`, which maps to the global object, to
   better support certain transpilers (e.g., TypeScript).
+* Adds `for...of` support for `from()` queries.  Query results are enumerated
+  as key/value pairs (`.v`, `.k`).
+* Adds `from.iterable()` for querying ES6 iterables.
+* Renames the Cell "transpile" module to "compiler" and makes `transpile()` a
+  named export.
 
 
 v4.5.3 - February 28, 2017
@@ -21,10 +26,10 @@ v4.5.3 - February 28, 2017
 v4.5.2 - February 25, 2017
 --------------------------
 
-* Changes Cell `transpile` module to use automatic mode for transpile().  `.js`
-  files are compiled as scripts (which is Sphere 1.x compatible), while `.mjs`
-  files are compiled as ES6 modules.  This is in line with how Node.js will
-  eventually implement ES6 module support.
+* Changes Cell `transpile` module to use an automatic mode for `transpile()`.
+  `.js` files are compiled as scripts (which is Sphere 1.x compatible), while
+  `.mjs` files are compiled as ES6 modules.  This is in line with how Node.js
+  will eventually implement ES6 module support.
 
 v4.5.1 - February 22, 2017
 --------------------------

@@ -1,3 +1,15 @@
+minisphere (4.5.4) trusty; urgency=low
+
+  * Adds a new global binding, `exports`, which maps to the global object, to
+    better support certain transpilers (e.g., TypeScript).
+  * Adds `for...of` support for `from()` queries.  Query results are enumerated
+    as key/value pairs (`.v`, `.k`).
+  * Adds `from.iterable()` for querying ES6 iterables.
+  * Renames the Cell "transpile" module to "compiler" and makes `transpile()` a
+    named export.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 5 Mar 2017 00:00:00 -0500
+
 minisphere (4.5.3) trusty; urgency=low
 
   * Adds support for `Cellscript.mjs`.  if `Cellscript.js` is used, it will now
