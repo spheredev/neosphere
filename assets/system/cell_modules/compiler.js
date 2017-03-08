@@ -30,15 +30,16 @@ function makeTranspileTool(apiVersion)
 			fileName: inFileNames[0],
 			reportDiagnostics: true,
 			compilerOptions: {
-				downlevelIteration: true,
-				module: ts.ModuleKind.CommonJS,
-				moduleResolution: ts.ModuleResolutionKind.NodeJs,
-				noImplicitUseStrict: apiVersion <= 1.0,
-				newLine: ts.NewLineKind.LineFeed,
 				target: ts.ScriptTarget.ES5,
+				module: ts.ModuleKind.CommonJS,
+				allowJs: true,
+				downlevelIteration: true,
+				newLine: ts.NewLineKind.LineFeed,
+				noImplicitUseStrict: apiVersion <= 1.0,
 			},
 		});
-		FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
+		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; }))
+			FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
 		from(output.diagnostics)
 			.where(function(v) { return typeof v.messageText === 'string'; })
 			.each(function(line)
