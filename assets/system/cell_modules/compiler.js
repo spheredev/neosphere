@@ -3,13 +3,19 @@
  *  (c) 2017 Fat Cerberus
 **/
 
-exports.__esModule = true;
-const Babel = require('#/babel-core');
+'use strict';
+module.exports =
+{
+	__esModule: true,  // Babel interop
+	transpile: transpile,
+};
+
+const from = require('from');
+const ts   = require('#/typescript');
 
 const ModuleTool = makeTranspileTool(2.0);
 const ScriptTool = makeTranspileTool(1.0);
 
-exports.transpile = transpile;
 function transpile(dirName, sources)
 {
 	return stageTranspileJob(dirName, sources);
@@ -18,20 +24,32 @@ function transpile(dirName, sources)
 function makeTranspileTool(apiVersion)
 {
 	return new Tool(function(outFileName, inFileNames) {
-		var moduleType = apiVersion >= 2.0 ? 'commonjs' : false;
-		var sourceType = apiVersion >= 2.0 ? 'module' : 'script';
 		var fileContent = FS.readFile(inFileNames[0]);
 		var input = new TextDecoder().decode(fileContent);
-		var output = Babel.transform(input, {
-			sourceType,
-			comments: false,
-			retainLines: true,
-			presets: [
-				[ 'latest', { es2015: { modules: moduleType } } ]
-			]
+		var output = ts.transpileModule(input, {
+			fileName: inFileNames[0],
+			reportDiagnostics: true,
+			compilerOptions: {
+				downlevelIteration: true,
+				module: ts.ModuleKind.CommonJS,
+				moduleResolution: ts.ModuleResolutionKind.NodeJs,
+				noImplicitUseStrict: apiVersion <= 1.0,
+				newLine: ts.NewLineKind.LineFeed,
+				target: ts.ScriptTarget.ES5,
+			},
 		});
-		FS.writeFile(outFileName, new TextEncoder().encode(output.code));
-	}, "transpiling");
+		FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
+		from(output.diagnostics)
+			.where(function(v) { return typeof v.messageText === 'string'; })
+			.each(function(line)
+		{
+			var message = "TS" + line.code + ": " + line.messageText;
+			if (line.category === ts.DiagnosticCategory.Error)
+				error(message);
+			else
+				warn(message);
+		});
+	}, "compiling");
 }
 
 function stageTranspileJob(dirName, sources)
