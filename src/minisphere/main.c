@@ -232,7 +232,7 @@ main(int argc, char* argv[])
 		screen_toggle_fullscreen(g_screen);
 
 	screen_show_mouse(g_screen, false);
-	if (sfs_fexist(g_fs, "#/polyfill.js", NULL) && !script_eval("#/polyfill.js", false))
+	if (sfs_fexist(g_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
 	// display status message if we need to wait for SSJ

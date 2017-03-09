@@ -110,7 +110,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 		| DUK_DEFPROP_SET_CONFIGURABLE);
 
 	// prepare environment for ECMAScript 2015 support
-	if (fs_fexist(fs, "#/polyfill.js") && !eval_cjs_module(ctx, fs, "#/polyfill.js", false))
+	if (fs_fexist(fs, "#/shim.js") && !eval_cjs_module(ctx, fs, "#/shim.js", false))
 		return false;
 	if (fs_fexist(fs, "#/babel-core.js")) {
 		duk_push_global_stash(ctx);
