@@ -3126,9 +3126,13 @@ js_Shape_draw(duk_context* ctx)
 	if (num_args >= 2)
 		transform = duk_require_class_obj(ctx, 1, "Transform");
 
+	if (surface != NULL)
+		al_set_target_bitmap(image_bitmap(surface));
 	shader_use(get_default_shader());
-	shape_draw(shape, transform, surface);
+	shape_draw(shape, transform);
 	shader_use(NULL);
+	if (surface != NULL)
+		al_set_target_backbuffer(screen_display(g_screen));
 	return 0;
 }
 

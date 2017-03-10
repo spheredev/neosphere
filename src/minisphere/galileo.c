@@ -404,15 +404,11 @@ shape_calculate_uv(shape_t* shape)
 }
 
 void
-shape_draw(shape_t* shape, matrix_t* matrix, image_t* surface)
+shape_draw(shape_t* shape, matrix_t* matrix)
 {
-	if (surface != NULL)
-		al_set_target_bitmap(image_bitmap(surface));
 	screen_transform(g_screen, matrix);
 	render_shape(shape);
 	screen_transform(g_screen, NULL);
-	if (surface != NULL)
-		al_set_target_backbuffer(screen_display(g_screen));
 }
 
 void
