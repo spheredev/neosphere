@@ -288,6 +288,12 @@ namespace miniSphere.Gdk.Debugger
             return props;
         }
 
+        public async Task<string> GetSource(string fileName)
+        {
+            var reply = await DoRequest(DValueTag.REQ, Request.AppRequest, AppRequest.GetSource, fileName);
+            return reply[0].Tag != DValueTag.ERR ? (string)reply[2] : null;
+        }
+
         /// <summary>
         /// Gets a list of currently set breakpoints.
         /// </summary>

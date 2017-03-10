@@ -1,0 +1,1924 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sphere.Core</name>
+    </assembly>
+    <members>
+        <member name="T:Sphere.Core.Editor.ColorBox">
+            <summary>
+            A visual color box component.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.ColorBox.ColorChanged">
+            <summary>
+            Event handler; triggered after the color has been changed.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.ColorBox.ColorChanging">
+            <summary>
+            Event handler; triggered when a color is going to change.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.ColorBox.#ctor">
+            <summary>
+            Initializes a new instance of a ColorBox
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.ColorBox.SelectedColor">
+            <summary>
+            The color that is present in this color box.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.ColorBox.Selected">
+            <summary>
+            Gets or sets whether or not it's in a selected state.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Editor.ColorBox.components">
+            <summary> 
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.ColorBox.Dispose(System.Boolean)">
+            <summary> 
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.ColorBox.InitializeComponent">
+            <summary> 
+            Required method for Designer support - do not modify 
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.BatchEventHandler`1">
+            <summary>
+            The event handler used for batching files in the DeferredFileSystemWatcher
+            </summary>
+            <param name="sender">Usually the calling object.</param>
+            <param name="eAll">The items.</param>
+            <typeparam name="T">The type of the items.</typeparam>
+        </member>
+        <member name="T:Sphere.Core.Editor.DeferredFileSystemWatcher">
+            <summary>
+            A FileSystemWatcher that only triggers after so long of a delay.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.DeferredFileSystemWatcher.Dispose(System.Boolean)">
+            <summary>
+            Overrides the default dispose method to dispose the timer.
+            </summary>
+            <param name="disposing"></param>
+        </member>
+        <member name="M:Sphere.Core.Editor.DeferredFileSystemWatcher.#ctor">
+            <summary>
+            Initializes a new instance of the DeferredFileSystemWatcher.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.DeferredFileSystemWatcher.SynchronizingObject">
+            <summary>
+            The component whose thread the event delegates will be invoked on.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.DeferredFileSystemWatcher.Changed">
+            <summary>
+            Event handler for when a file has been changed.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.DeferredFileSystemWatcher.Created">
+            <summary>
+            Event handler for when a file is created.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.DeferredFileSystemWatcher.Deleted">
+            <summary>
+            Event handler for when a file has been deleted.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.DeferredFileSystemWatcher.Renamed">
+            <summary>
+            Event handler for when a file has been renamed.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.DeferredFileSystemWatcher.Delay">
+            <summary>
+            Gets or sets how much time, in milliseconds, must pass after the last FileSystemWatcher event
+            before batched event(s) are raised.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.EditorLabel">
+            <summary>
+            A label with a blue-themed background.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorLabel.#ctor">
+            <summary>
+            Constructs a new instance of an EditorLabel.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorLabel.OnPaintBackground(System.Windows.Forms.PaintEventArgs)">
+            <summary>
+            Overrides the default background to draw a classy blue background.
+            </summary>
+            <param name="pevent"></param>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorLabel.UpdateStyle">
+            <summary>
+            Updates the style of this label to one of the built-in styles.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.EditorObject">
+            <summary>
+            A class that opens up editor abilities.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.EditorObject.OnRestyle">
+            <summary>
+            Event handler used to attach a custom restyling callback.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Restyle">
+            <summary>
+            Invoke the restyle callback.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.EditorObject.FileName">
+            <summary>
+            Gets the FileName associated with this control.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.EditorObject.OnActivate">
+            <summary>
+            Event handler; triggers when the control goes into view.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.EditorObject.OnDeactivate">
+            <summary>
+            Event handler; triggers when control leaves view.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.EditorObject.OnTabTextChange">
+            <summary>
+            Event handler; triggers when tab text changes.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Activate">
+            <summary>
+            Occurs when entering the control on the main dock panel.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Deactivate">
+            <summary>
+            Occurs when leaving the control on the main dock panel.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.SetTabText(System.String)">
+            <summary>
+            Sets the tab text on the main dock panel.
+            </summary>
+            <param name="text">The title of this editor.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Save">
+            <summary>
+            Override this to add custom saving logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.SaveAs">
+            <summary>
+            Override this to add custom save as logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.LoadFile(System.String)">
+            <summary>
+            Override this to add custom file loading logic.
+            </summary>
+            <param name="filename"></param>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.CreateNew">
+            <summary>
+            Override this to do something on new file.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Copy">
+            <summary>
+            Override this to add copy logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Paste">
+            <summary>
+            Override this to add paste logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Cut">
+            <summary>
+            Override this to add cut logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.SelectAll">
+            <summary>
+            Override this to add select all logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Undo">
+            <summary>
+            Override this to add undo logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.Redo">
+            <summary>
+            Override this to add redo logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.ZoomIn">
+            <summary>
+            Override this to add zoom in logic.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.ZoomOut">
+            <summary>
+            Override this to add zoom out logic.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.EditorObject.HelpLabel">
+            <summary>
+            Gets or sets the help label associated with this control.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.SaveLayout">
+            <summary>
+            Override this to save it's layout.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.IsSaved">
+            <summary>
+            Gets whether or not the file has a save path.
+            </summary>
+            <returns>True if saved, false otherwise.</returns>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.IsDirty">
+            <summary>
+            Gets whether or not the file has been modified.
+            </summary>
+            <returns>True if modified, otherwise false.</returns>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorObject.MakeDirty">
+            <summary>
+            Marks the document as modified if it already hasn't.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.EditorPanel">
+            <summary>
+            A fast drawing panel for editing, without worrying about odd scroll-to behavior.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorPanel.#ctor">
+            <summary>
+            Initializes a new instance of the EditorPanel.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorPanel.ScrollToControl(System.Windows.Forms.Control)">
+            <summary>
+            For fixing the horrendous scroll-to behavior.
+            </summary>
+            <param name="activeControl">Doesn't matter.</param>
+            <returns>The display location of where you wanted to be.</returns>
+        </member>
+        <member name="M:Sphere.Core.Editor.EditorPanel.OnScroll(System.Windows.Forms.ScrollEventArgs)">
+            <summary>
+            Overrides the default scroll behavior to add grid snapping.
+            </summary>
+            <param name="se">The scrolling properties.</param>
+        </member>
+        <member name="P:Sphere.Core.Editor.EditorPanel.XSnap">
+            <summary>
+            Gets or sets the grid snap size of the x axis.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.EditorPanel.YSnap">
+            <summary>
+            Gets or sets the grid snap size of the y axis.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.HistoryManager">
+            <summary>
+            Manages undo/redo history for an editable document.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.HistoryManager.CanUndo">
+            <summary>
+            Gets whether an Undo operation can currently be carried out.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.HistoryManager.CanRedo">
+            <summary>
+            Gets whether a Redo operation can currently be carried out.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryManager.#ctor">
+            <summary>
+            Initializes a new history manager.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryManager.PushPage(Sphere.Core.Editor.HistoryPage)">
+            <summary>
+            Pushes a history page onto the top of the undo stack.
+            </summary>
+            <param name="page">The HistoryPage to be added.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryManager.Undo">
+            <summary>
+            Undoes the most recently applied action.
+            </summary>
+            <returns>true of an undo operation was carried out, false otherwise.</returns>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryManager.Redo">
+            <summary>
+            Reverts the most recent undo operation.
+            </summary>
+            <returns>true if a redo operation was carried out, false otherwise.</returns>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryManager.Dispose">
+            <summary>
+            Performs cleanup for the history manager and all pages in the undo/redo stack.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryManager.Clear">
+            <summary>
+            Clears all undo/redo history and disposes the history manager.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.HistoryPage">
+            <summary>
+            Base class for a history page. History pages represent operations that can be undone or
+            redone by a HistoryManager. This is an abstract class.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryPage.Undo">
+            <summary>
+            Undoes the change represented by the HistoryPage.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryPage.Redo">
+            <summary>
+            Replays the change represented by the HistoryPage.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.HistoryPage.Dispose">
+            <summary>
+            Cleans up resources owned by the HistoryPage.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.IStyleable">
+            <summary>
+            Defines the interface for styleable IDE controls
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.IStyleable.UpdateStyle">
+            <summary>
+            Applies the current style to the control.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.StyleSettings">
+            <summary>
+            Performs styling options on editor controls.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Editor.StyleSettings._activeStyle">
+            <summary>
+            The current style being deployed to all forms affected by styling.
+            </summary>
+        </member>
+        <member name="E:Sphere.Core.Editor.StyleSettings.StyleChanged">
+            <summary>
+            Fires when the active style is changed.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleSettings.ActiveStyle">
+            <summary>
+            Gets or sets the name of the active style.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleSettings.Styles">
+            <summary>
+            Gets a readonly version of the installed styles.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.StyleSettings.ApplyStyle(System.Windows.Forms.Control)">
+            <summary>
+            Puts the current style into the target control.
+            </summary>
+            <param name="target">The .NET Form or Control to style.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.StyleSettings.ApplySecondaryStyle(System.Windows.Forms.Control)">
+            <summary>
+            Puts the current style's secondarry options into the target control.
+            </summary>
+            <param name="target">The .NET Form or Control to style.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.StyleSettings.AddStyle(System.String,Sphere.Core.Editor.StyleGroup)">
+            <summary>
+            Adds the named style to the internal style list.
+            </summary>
+            <param name="name">Name of the style.</param>
+            <param name="group">The style to add.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.StyleSettings.RemoveStyle(System.String)">
+            <summary>
+            Removes the associated style if it exist.
+            </summary>
+            <param name="name">Name of the style.</param>
+        </member>
+        <member name="T:Sphere.Core.Editor.StringInputForm">
+            <summary>
+            Represents a form that allows the user to enter a line of text.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.StringInputForm.#ctor">
+            <summary>
+            Initializes the string input form.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StringInputForm.NumOnly">
+            <summary>
+            Set this to use numbers only or not.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StringInputForm.Input">
+            <summary>
+            The string inputted into the form.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StringInputForm.MaxLength">
+            <summary>
+            Use this to limit the number of characters one can input.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Editor.StringInputForm.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.StringInputForm.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.StringInputForm.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.Style">
+            <summary>
+            A styling object that can be applied when themeing the editor components.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.Style.BackColor">
+            <summary>
+            Gets or sets the Back Color used by this style.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.Style.ForeColor">
+            <summary>
+            Gets or sets the Fore Color used by this style.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.Style.Image">
+            <summary>
+            Gets or sets the Image used by this style.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.Style.Font">
+            <summary>
+            Gets or sets the font used by this style.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.Style.#ctor">
+            <summary>
+            Constructs a new instance of the style object.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.Style.#ctor(System.Nullable{System.Drawing.Color},System.Nullable{System.Drawing.Color},System.Drawing.Font)">
+            <summary>
+            Constructs a new instance of the style object.
+            </summary>
+            <param name="back">Back color.</param>
+            <param name="front">Text color.</param>
+            <param name="font">Font to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.Style.Apply(System.Windows.Forms.Control)">
+            <summary>
+            Adds this style to the .NET control.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Editor.Style.Default">
+            <summary>
+            Gets the default OS style.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Editor.StyleGroup">
+            <summary>
+            Styles different .NET controls with different styles.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.LabelStyle">
+            <summary>
+            Used for Labels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.PanelStyle">
+            <summary>
+            Used for Panels, TabPages, and Panes.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.SecondaryStyle">
+            <summary>
+            Used for any other control that needs a different style.
+            Usually reserved for sub-headings or sub-controls.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.ImageStyle">
+            <summary>
+            Used for PictureBoxes.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.ButtonStyle">
+            <summary>
+            Used for Buttons.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.TextBoxStyle">
+            <summary>
+            Used to style text-entry controls.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.WindowStyle">
+            <summary>
+            Used for styling dialog window backgrounds.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.StatusBarStyle">
+            <summary>
+            Used for styling the status bar.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.MenuBarStyle">
+            <summary>
+            Used for styling menubars.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Editor.StyleGroup.ToolBarStyle">
+            <summary>
+            Used for styling toolbars.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Editor.StyleGroup.ApplyPrimary(System.Windows.Forms.Control)">
+            <summary>
+            Applies a set style to the type of control.
+            </summary>
+            <param name="ctrl">The .NET control to style.</param>
+        </member>
+        <member name="M:Sphere.Core.Editor.StyleGroup.ApplySecondary(System.Windows.Forms.Control)">
+            <summary>
+            Applies a secondary style to a tertiary control or form.
+            </summary>
+            <param name="ctrl"></param>
+        </member>
+        <member name="T:Sphere.Core.Entity">
+            <summary>
+            A representation of an entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.X">
+            <summary>
+            Gets or sets the x location of this Entity in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Y">
+            <summary>
+            Gets or sets the y location of this Entity in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Layer">
+            <summary>
+            Gets or sets the layer index of this Entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Name">
+            <summary>
+            Gets or sets the name of this entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Spriteset">
+            <summary>
+            Gets or sets the spriteset filename of this entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Function">
+            <summary>
+            Gets or sets the JS function of this Entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Scripts">
+            <summary>
+            Gets the list of string associated with this Entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Visible">
+            <summary>
+            Gets or sets the visibility of this Entity.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Entity.Type">
+            <summary>
+            Gets or sets the Entity.EntityType of this Entity.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Entity.EntityType">
+            <summary>
+            A Sphere entity type.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Entity.EntityType.Person">
+            <summary>
+            A Sphere Person type.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Entity.EntityType.Trigger">
+            <summary>
+            A Sphere Trigger type.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Entity.#ctor(Sphere.Core.Entity.EntityType)">
+            <summary>
+            Creates a new Entity with the supplied type.
+            </summary>
+            <param name="type">The Entity.EntityType to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Entity.#ctor(System.IO.BinaryReader)">
+            <summary>
+            Creates a new entity that was embedded next in the stream
+            </summary>
+            <param name="stream">The System.IO.BinaryReader to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Entity.Save(System.IO.BinaryWriter)">
+            <summary>
+            Saves the entity, embedding it into a file stream.
+            </summary>
+            <param name="binwrite">The System.IO.BinaryWriter to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Entity.GetSSImage(System.String)">
+            <summary>
+            Get an image representation of this trigger / person
+            </summary>
+            <param name="rootpath">The root path of the project to find the spriteset.</param>
+            <returns>A System.Draw.Bitmap representing the entity.</returns>
+        </member>
+        <member name="M:Sphere.Core.Entity.Draw(System.Drawing.Graphics,System.Int32,System.Int32,System.Drawing.Point@,System.Int32)">
+            <summary>
+            Draws this Entity onto a System.Drawing.Graphics object.
+            </summary>
+            <param name="g">The System.Drawing.Graphics object to use.</param>
+            <param name="tileWidth">The tile width for the map.</param>
+            <param name="tileHeight">The tile height for the map.</param>
+            <param name="offset">The x/y offset to draw at.</param>
+            <param name="zoom">The zoom factor of the map.</param>
+        </member>
+        <member name="P:Sphere.Core.Entity.Image">
+            <summary>
+            Returns the image representation of this entity.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Entity.FigureOutName(System.Collections.Generic.List{Sphere.Core.Entity})">
+            <summary>
+            Used along with a list of others, it makes a unique name for this entity.
+            </summary>
+            <param name="others">A List of other types</param>
+        </member>
+        <member name="M:Sphere.Core.Entity.Copy">
+            <summary>
+            Creates a perfect copy of this entity.
+            </summary>
+            <returns>A copy of the Entity.</returns>
+        </member>
+        <member name="M:Sphere.Core.Entity.Dispose">
+            <summary>
+            Dispose and close this object.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Entity.GetSpriteDirections(System.String)">
+            <summary>
+            Gets a list of sprite directions fgor this person object:
+            </summary>
+            <param name="rootpath">The root path to find the spriteset with.</param>
+            <returns>A list of spriteset directions.</returns>
+        </member>
+        <member name="T:Sphere.Core.IniFile">
+            <summary>
+            Represents an .ini format settings file.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.IniFile.#ctor(System.String,System.Boolean)">
+            <summary>
+            Constructs an IniFile object referencing the specified .ini file.
+            </summary>
+            <param name="filepath">The fully qualified .ini file path.</param>
+            <param name="autoSave">
+            Whether to save the file automatically after a value is written. If this is false,
+            Save() must be called to persist the changes.
+            </param>
+        </member>
+        <member name="M:Sphere.Core.IniFile.Dispose">
+            <summary>
+            Releases any resources held by the INI object.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.IniFile.AutoSave">
+            <summary>
+            Gets or sets whether to save the INI file automatically when a
+            value is changed.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.IniFile.Read(System.String,System.String,System.String)">
+            <summary>
+            Reads a string from the INI file.
+            </summary>
+            <param name="section">The [section] to read from.</param>
+            <param name="key">The name of the setting to read.</param>
+            <param name="defValue">A default string to return if the key isn't found.</param>
+            <returns>The value read from the INI file, or `defValue` if the key doesn't exist.</returns>
+        </member>
+        <member name="M:Sphere.Core.IniFile.Write(System.String,System.String,System.String)">
+            <summary>
+            Writes a string to the INI file.
+            </summary>
+            <param name="section">The [section] to write.</param>
+            <param name="key">The name of the setting to write.</param>
+            <param name="value">The value of the setting.</param>
+        </member>
+        <member name="M:Sphere.Core.IniFile.Save">
+            <summary>
+            Saves the current values to the INI file.
+            </summary>
+            <returns>true if the save succeeded, otherwise false.</returns>
+        </member>
+        <member name="M:Sphere.Core.IniFile.SaveAs(System.String)">
+            <summary>
+            Saves the current values to a specified INI file.
+            </summary>
+            <param name="filepath">The fully qualified path of the file to save.</param>
+            <returns>true if the save succeeded, otherwise false.</returns>
+        </member>
+        <member name="T:Sphere.Core.Layer">
+            <summary>
+            A Sphere map layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Width">
+            <summary>
+            Gets the width of this Layer in tiles.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Height">
+            <summary>
+            Gets the height of this Layer in tiles.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.ParallaxX">
+            <summary>
+            Gets or sets the parallax x value of this Layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.ParallaxY">
+            <summary>
+            Gets or sets the parallax y value of this Layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.ScrollX">
+            <summary>
+            Gets the scroll x value of this Layer. 
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.ScrollY">
+            <summary>
+            Gets the scroll y value of this Layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Reflective">
+            <summary>
+            Gets r sets the reflectivity of this Layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Visible">
+            <summary>
+            Gets or sets the visibility of this layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Parallax">
+            <summary>
+            Gets or sets if it is parallaxed.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Flags">
+            <summary>
+            Gets the flags used by this Layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Name">
+            <summary>
+            Gets the name of this Layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Layer.Segments">
+            <summary>
+            Gets the list of obstruction segments used by this layer.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Layer.#ctor">
+            <summary>
+            Constructs a new Sphere layer.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Layer.Save(System.IO.BinaryWriter)">
+            <summary>
+            Writes data to the binary writer.
+            </summary>
+            <param name="writer">BinaryWriter to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Layer.FromBinary(System.IO.BinaryReader)">
+            <summary>
+            Creates a proper Sphere from a data stream.
+            </summary>
+            <param name="reader">BinaryReader to use.</param>
+            <returns>Sphere Layer object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Layer.CreateNew(System.Int16,System.Int16)">
+            <summary>
+            Creates a blank layer.
+            </summary>
+            <param name="width">Width in tiles to use.</param>
+            <param name="height">Height in tiles to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Layer.SetTile(System.Int32,System.Int32,System.Int16)">
+            <summary>
+            Sets a tile, if applicable.
+            </summary>
+            <param name="x">X-coord to use.</param>
+            <param name="y">Y-coord to use.</param>
+            <param name="index">Index to set to.</param>
+            <returns>True if the tile had been set.</returns>
+        </member>
+        <member name="M:Sphere.Core.Layer.Validate(System.Int32)">
+            <summary>
+            Checks to see if the layer has correct tile indicies.
+            Will set afflicted tiles to 0, if check fails.
+            </summary>
+            <param name="max">The maximum tile index expected.</param>
+            <returns>False if there are invalid tiles.</returns>
+        </member>
+        <member name="M:Sphere.Core.Layer.SetTiles(System.Int16[0:,0:])">
+            <summary>
+            Pump in a 2D array to replace current tiles with.
+            </summary>
+            <param name="tiles">New array of tile indicies to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Layer.CloneTiles">
+            <summary>
+            Creates a hard copy of the data.
+            </summary>
+            <returns>A clone of the layers tiles.</returns>
+        </member>
+        <member name="M:Sphere.Core.Layer.AdjustTiles(System.Int16,System.Int16)">
+            <summary>
+            Adjusts the tile indicies for when tiles were removed or added.
+            </summary>
+            <param name="startindex">Index to start at.</param>
+            <param name="delta">How much of a shift to make.</param>
+        </member>
+        <member name="M:Sphere.Core.Layer.GetTile(System.Int32,System.Int32)">
+            <summary>
+            Gets tile index at the (x, y) position.
+            </summary>
+            <param name="x">X-coord of tile.</param>
+            <param name="y">Y-coord of tile.</param>
+            <returns>The zero based tile index.</returns>
+        </member>
+        <member name="M:Sphere.Core.Layer.Resize(System.Int16,System.Int16)">
+            <summary>
+            Resizes the field to the new size.
+            </summary>
+            <param name="width">New width of the field.</param>
+            <param name="height">New height of the field.</param>
+        </member>
+        <member name="T:Sphere.Core.Map">
+            <summary>
+            A Sphere map object.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.WrapAround">
+            <summary>
+            Gets or sets whether the map wraps around at the edges (i.e. a repeating map)
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.StartX">
+            <summary>
+            Gets or sets the starting x position.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.StartY">
+            <summary>
+            Gets or sets the starting y position.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.StartLayer">
+            <summary>
+            Gets or sets the start layer.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Scripts">
+            <summary>
+            Gets a list of string used by this Map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Layers">
+            <summary>
+            Gets or sets a list of layers used by this Map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Entities">
+            <summary>
+            Gets a list of entities used by this Map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Zones">
+            <summary>
+            Gets a list of zones used by this map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Width">
+            <summary>
+            Gets the width of the zero'th layer in the map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Height">
+            <summary>
+            Gets the height of the zero'th layer in the Map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.Tileset">
+            <summary>
+            Gets or sets the tileset associated with this map.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Map.ErrorOnLoad">
+            <summary>
+            Gets if the map had an error while loading.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Map.#ctor">
+            <summary>
+            Creates a new, empty map.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Map.CreateNew(System.Int16,System.Int16,System.Int16,System.Int16,System.String)">
+            <summary>
+            Creates a new map with values.
+            </summary>
+            <param name="width">The width in tiles.</param>
+            <param name="height">The height in tiles.</param>
+            <param name="tileWidth">The tilewidth in pixels.</param>
+            <param name="tileHeight">The tileheight in pixels.</param>
+            <param name="tilesetPath">The path to the tileset.</param>
+        </member>
+        <member name="M:Sphere.Core.Map.Load(System.String)">
+            <summary>
+            Loads a map from the given filename.
+            </summary>
+            <param name="filename">The filename of the map.</param>
+            <returns>True if the load was a success.</returns>
+        </member>
+        <member name="M:Sphere.Core.Map.Save(System.String)">
+            <summary>
+            Attempts to save the map to the given filename.
+            </summary>
+            <param name="filename">The path to save the Map to.</param>
+            <returns>True if the save was successful.</returns>
+        </member>
+        <member name="M:Sphere.Core.Map.Dispose">
+            <summary>
+            Disposes and clears this object.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Map.ResizeAllLayers(System.Int16,System.Int16)">
+            <summary>
+            Resizes the map's layers to the new size.
+            </summary>
+            <param name="width">The new width in tiles.</param>
+            <param name="height">The new height in tiles.</param>
+        </member>
+        <member name="M:Sphere.Core.Map.CloneAllLayerTiles">
+            <summary>
+            Returns a list of copied tiles of each layer.
+            </summary>
+            <returns>A list of cloned layer tiles.</returns>
+        </member>
+        <member name="T:Sphere.Core.Properties.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Properties.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Properties.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Properties.Resources.BarImage">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Properties.Resources.editbg2">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Properties.Resources.person">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Properties.Resources.trigger">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Segment">
+            <summary>
+            An obstruction segment.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Segment.#ctor">
+            <summary>
+            Creates an empty segment.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Segment.#ctor(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Creates a segment with supplied values.
+            </summary>
+            <param name="x1">The upper left x.</param>
+            <param name="y1">The upper left y.</param>
+            <param name="x2">The lower right x.</param>
+            <param name="y2">The lower right y.</param>
+        </member>
+        <member name="M:Sphere.Core.Segment.#ctor(System.IO.BinaryReader)">
+            <summary>
+            Creates and loads a segment from a filestream.
+            </summary>
+            <param name="stream">The System.IO.BinaryReader to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Segment.DrawMe(System.Drawing.Graphics,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Draws this obstruction segement to the System.Drawings.Graphics.
+            </summary>
+            <param name="g">The System.Drawing.Graphics to use.</param>
+            <param name="offX">The offset x position.</param>
+            <param name="offY">The offset y position.</param>
+            <param name="zoom">The zoom factor to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Segment.Draw(System.Drawing.Graphics,System.Drawing.Point@,System.Int32)">
+            <summary>
+            Draws this obstruction segement to the System.Drawings.Graphics.
+            </summary>
+            <param name="g">The System.Drawing.Graphics to use.</param>
+            <param name="offset">The x/y offset to use.</param>
+            <param name="zoom">The zoom factor to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Segment.Save(System.IO.BinaryWriter)">
+            <summary>
+            Stores this segment into a filestream.
+            </summary>
+            <param name="binwrite">The System.IO.BinaryWriter to use.</param>
+        </member>
+        <member name="T:Sphere.Core.SourceMapper">
+            <summary>
+            Allows mapping positions in transpiled JS files to their positions
+            in the source using a V3 source map.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Spriteset">
+            <summary>
+            A Sphere spriteset object
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.MakeNew">
+            <summary>
+            Populates this spriteset with default info.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.Load(System.String)">
+            <summary>
+            Attempts to load the spriteset from the given filename.
+            </summary>
+            <param name="filename">The filename of the Spriteset to load.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.Save(System.String)">
+            <summary>
+            Saves the Spriteset to the filename.
+            </summary>
+            <param name="filename">The filename to store the spriteset.</param>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.Dispose">
+            <summary>
+            Disposes and clears this object.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.RemoveFrameReference(System.Int32)">
+            <summary>
+            Removes the frame from the spriteset and its image array.
+            </summary>
+            <param name="reference"></param>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.GetImage(System.String,System.Int32)">
+            <summary>
+            Attempts to grab an image by using a direction and frame.
+            </summary>
+            <param name="direction">The name of the direction to get an image from.</param>
+            <param name="frame">The frame in the direction to use.</param>
+            <returns>null if it can't find an image or the System.Drawing.Image.</returns>
+        </member>
+        <member name="P:Sphere.Core.Spriteset.SpriteWidth">
+            <summary>
+            Gets or sets the spritesets width in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Spriteset.SpriteHeight">
+            <summary>
+            Gets or sets the spritesets height in pixels.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.GetImage(System.Int32)">
+            <summary>
+            Returns an image based on the given index.
+            </summary>
+            <param name="index">The image index to use.</param>
+            <returns>The System.Drawing.Image at the index.</returns>
+        </member>
+        <member name="P:Sphere.Core.Spriteset.SpriteBase">
+            <summary>
+            Gets or sets the sprite Base of this Spriteset.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Spriteset.Directions">
+            <summary>
+            Gets the list of directions for this spriteset.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Spriteset.Images">
+            <summary>
+            Gets the image list of this spriteset.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Spriteset.GetDirections">
+            <summary>
+            Returns an array of the directions in this spriteset.
+            </summary>
+            <returns>A string[] of the directions.</returns>
+        </member>
+        <member name="T:Sphere.Core.Base">
+            <summary>
+            Represents the base to a spriteset object:
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Base.X1">
+            <summary>
+            The upper-left x location.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Base.Y1">
+            <summary>
+            The upper-left y location.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Base.X2">
+            <summary>
+            The lower-right x location.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Base.Y2">
+            <summary>
+            the lower-right y location.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Base.Height">
+            <summary>
+            Gets the height of the spriteset Base.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Base.Width">
+            <summary>
+            Gets the width of the spriteset Base.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Base.Rectangle">
+            <summary>
+            Returns the base as a .NET retcangle object. Or constructs a base from a .NET rectangle.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Frame">
+            <summary>
+            A frame of a spriteset direction.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Frame.#ctor">
+            <summary>
+            Creates a new, empty frame.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Frame.Delay">
+            <summary>
+            Gets or sets the delay of this Frame.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Frame.Index">
+            <summary>
+            Gets or sets the index of this Frame.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Direction">
+            <summary>
+            A representation of a spriteset direction.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Direction.Frames">
+            <summary>
+            The frames used witnin this Direction.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Direction.#ctor(System.String)">
+            <summary>
+            Creates a new direction with the given name.
+            </summary>
+            <param name="name">Name of the direction.</param>
+        </member>
+        <member name="P:Sphere.Core.Direction.Name">
+            <summary>
+            Gets or sets the name of this Direction.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Tile">
+            <summary>
+            A Sphere Tile object.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Tile.#ctor(System.Drawing.Bitmap)">
+            <summary>
+            Creates a tile object, from an existing image.
+            </summary>
+            <param name="image">System.Drawing.Image object to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Tile.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Create's a new tile object.
+            </summary>
+            <param name="width">The width of the tile.</param>
+            <param name="height">The height of the tile.</param>
+        </member>
+        <member name="P:Sphere.Core.Tile.Width">
+            <summary>
+            Gets or sets the width of the tile in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Height">
+            <summary>
+            Gets or sets the height of the tile in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Delay">
+            <summary>
+            Gets or sets the tile delay.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Animated">
+            <summary>
+            Gets or sets whether or not it is animated.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Blocked">
+            <summary>
+            Gets or sets whether or not it is blocked.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.NextAnim">
+            <summary>
+            Gets or sets the next animated tile index.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Obstructions">
+            <summary>
+            Gets the list of obstructions tied to this Tile.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Graphic">
+            <summary>
+            Gets or sets the graphic used by this Tile.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tile.Name">
+            <summary>
+            Gets or sets the name of this Tile.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Tile.Clone">
+            <summary>
+            Creates a perfect clone of this Tile.
+            </summary>
+            <returns>A copy of the Tile object.</returns>
+        </member>
+        <member name="T:Sphere.Core.Tileset">
+            <summary>
+            A sphree Tileset object.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tileset.Tiles">
+            <summary>
+            Gets a list of Tile objects this Tileset uses.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tileset.TileWidth">
+            <summary>
+            Gets or sets the width of a tile in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tileset.TileHeight">
+            <summary>
+            Gets or sets the height of a tile in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Tileset.IsDisposed">
+            <summary>
+            Gets if this has disposed or not.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Tileset.#ctor">
+            <summary>
+            Creates a fresh, empty tileset.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Tileset.CreateNew(System.Int16,System.Int16)">
+            <summary>
+            Adds a blank tile to the list of tiles.
+            </summary>
+            <param name="tileWidth">The tile width in pixels.</param>
+            <param name="tileHeight">The tile height in pixels.</param>
+        </member>
+        <member name="M:Sphere.Core.Tileset.FromFile(System.String)">
+            <summary>
+            Loads a tileset independantly from a file.
+            </summary>
+            <param name="filename">The filename to load from.</param>
+            <returns>A tileset object from the file or null if it doesn't exist.</returns>
+        </member>
+        <member name="M:Sphere.Core.Tileset.FromSpriteset(Sphere.Core.Spriteset)">
+            <summary>
+            Takes the images of a spriteset and creates a ileset representation of it.
+            </summary>
+            <param name="set">The spriteset to use.</param>
+            <returns>A tileset of the spritesets images.</returns>
+        </member>
+        <member name="M:Sphere.Core.Tileset.FromBinary(System.IO.BinaryReader)">
+            <summary>
+            Loads a tileset from a filestream.
+            </summary>
+            <param name="reader">The System.IO.BinrayReader to use.</param>
+            <returns>A tileset object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Tileset.Save(System.String)">
+            <summary>
+            Savbes the tileset to a separate file.
+            </summary>
+            <param name="filename">The filename to save to.</param>
+        </member>
+        <member name="M:Sphere.Core.Tileset.Dispose">
+            <summary>
+            Disposes and clears this Tileset.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Tileset.ResizeTiles(System.Int16,System.Int16,System.Boolean)">
+            <summary>
+            Resizes the tiles in the tileset.
+            </summary>
+            <param name="tw">New tile width.</param>
+            <param name="th">New tile height.</param>
+            <param name="rescale">If true rescale, else resize.</param>
+        </member>
+        <member name="M:Sphere.Core.Tileset.UpdateFromImage(System.String)">
+            <summary>
+            Updates graphics From a tileset image file.
+            </summary>
+            <param name="filename"></param>
+        </member>
+        <member name="M:Sphere.Core.Tileset.SaveImage(System.String,System.Int32)">
+            <summary>
+            Saves the tileset as an image.
+            </summary>
+            <param name="filename">The filename to save to.</param>
+            <param name="across">The amount of tiles to put across (width-wise).</param>
+        </member>
+        <member name="T:Sphere.Core.Utility.BitmapLoader">
+            <summary>
+            Efficiently loads bitmaps from a filestream.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapLoader.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Creates a new bitmap loader. Which loads bitmaps from filestreams.
+            </summary>
+            <param name="width">The image width in pixels.</param>
+            <param name="height">the image height in pixels.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapLoader.BitmapFromDIB(System.IO.MemoryStream)">
+            <summary>
+            Generates a bitmap from a DIB object.
+            </summary>
+            <param name="DIBstream">A stream representing a DIB object.</param>
+            <returns>A bitmap object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapLoader.LoadFromStream(System.IO.BinaryReader,System.Int32)">
+            <summary>
+            Creates a bitmap from a filestream.
+            </summary>
+            <param name="reader">The System.IO.BinaryReader to use.</param>
+            <param name="amount">The size in bytes of the image.</param>
+            <returns>A new bitmap object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapLoader.Close">
+            <summary>
+            Closes and releases any resources being used.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.BitmapLoader.ColorFormat">
+            <summary>
+            Gets or sets the color format.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapLoader.Dispose">
+            <summary>
+            Disposes and clears all data.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Utility.BitmapSaver">
+            <summary>
+            Saves bitmap to a filestream.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapSaver.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Creates a bitmap saver, which saves bitmaps to filestreams.
+            </summary>
+            <param name="width">The image width in pixels.</param>
+            <param name="height">The image height in pixels.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.BitmapSaver.SaveToStream(System.Drawing.Bitmap,System.IO.BinaryWriter)">
+            <summary>
+            Saves the image to a filestream.
+            </summary>
+            <param name="image">The image to save.</param>
+            <param name="writer">The System.IO.BinaryWriter to use.</param>
+        </member>
+        <member name="T:Sphere.Core.Utility.FastBitmap">
+            <summary>
+            Used to efficiently and quickly manipulate bitmaps.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.#ctor(System.Drawing.Bitmap)">
+            <summary>
+            Creates a FastBitmap wrapper for an image object.
+            </summary>
+            <param name="img">The image object to wrap.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.LockImage">
+            <summary>
+            Locks the image to get it ready for fast manipluations.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.GetPixel(System.Int32,System.Int32)">
+            <summary>
+            Gets a pixel at the x/y location.
+            </summary>
+            <param name="x">The x pixel location.</param>
+            <param name="y">The y pixel location.</param>
+            <returns>The Color at the x/y location.</returns>
+            <exception cref="T:System.Exception">Invalid color format.</exception>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.SetPixel(System.Int32,System.Int32,System.Drawing.Color)">
+            <summary>
+            Sets a pixel at the x/y location to the new color.
+            </summary>
+            <param name="x">The x pixel location.</param>
+            <param name="y">The y pixel location.</param>
+            <param name="color">The color to set the pixel to.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.UnlockImage">
+            <summary>
+            Unlocks the image.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.Clone">
+            <summary>
+            Creates a clone of the wrapped image object.
+            </summary>
+            <returns>A copy of the image object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.Clone(System.Drawing.Rectangle,System.Drawing.Imaging.PixelFormat)">
+            <summary>
+            Grabs a sub-section clone of the wrapped image.
+            </summary>
+            <param name="rect">The rectangle to cut from.</param>
+            <param name="format">The PixelFomat to use.</param>
+            <returns>A sub-bitmap object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.Clone(System.Drawing.RectangleF,System.Drawing.Imaging.PixelFormat)">
+            <summary>
+            Grabs a sub-section clone of the wrapped image.
+            </summary>
+            <param name="rect">The rectangle to cut from.</param>
+            <param name="format">The PixelFomat to use.</param>
+            <returns>A sub-bitmap object.</returns>
+        </member>
+        <member name="P:Sphere.Core.Utility.FastBitmap.Width">
+            <summary>
+            Gets the width of the wrapped Image.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.FastBitmap.Height">
+            <summary>
+            Gets the height of the wrapped Image.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.FastBitmap.Image">
+            <summary>
+            Gets or sets the image wrapped by this.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.FastBitmap.ColorFormat">
+            <summary>
+            Gets or sets the Color format used by this.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.ReplaceColor(System.Drawing.Color,System.Drawing.Color)">
+            <summary>
+            Replaces an old color with a new color.
+            </summary>
+            <param name="oldC">The color in the image to edit.</param>
+            <param name="newC">The color to replace with.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.Grayscale">
+            <summary>
+            Converts the image to a grayscale representation.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.FlattenAlpha">
+            <summary>
+            Sets all transparency to max value.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.FloodFill(System.Int32,System.Int32,System.Drawing.Color)">
+            <summary>
+            Replaces the colors of a particular area:
+            </summary>
+            <param name="x">start x</param>
+            <param name="y">start y</param>
+            <param name="newColor">color to replace with</param>
+            <returns>rectangle of the affetced area.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.ColorsEqual(System.Drawing.Color,System.Drawing.Color)">
+            <summary>
+            Determines if two colors equal.
+            </summary>
+            <param name="col1">The color to compare.</param>
+            <param name="col2">The color to compare against.</param>
+            <returns>True if they field-wise match.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.FastBitmap.DrawImage(System.Drawing.Bitmap,System.Int32,System.Int32)">
+            <summary>
+            Draws another bitmap into this image using straight-up pixel data.
+            Not as fast as the Graphics.DrawImage();
+            </summary>
+            <param name="img">The source image.</param>
+            <param name="x">x location in pixels.</param>
+            <param name="y">y location in pixels.</param>
+        </member>
+        <member name="T:Sphere.Core.Utility.PixelData">
+            <summary>
+            Pixel data of an image.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.PixelData.r">
+            <summary>
+            Red component.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.PixelData.g">
+            <summary>
+            Green component.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.PixelData.b">
+            <summary>
+            Blue component.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.PixelData.a">
+            <summary>
+            Alpha component
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Utility.ColorFormat">
+            <summary>
+            A color format for loading/saving color data.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.ColorFormat.FormatARGB">
+            <summary>
+            ARGB style.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.ColorFormat.FormatRGBA">
+            <summary>
+            RGBA style.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.ColorFormat.FormatBGRA">
+            <summary>
+            BGRA style.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Utility.ColorFormat.FormatABGR">
+            <summary>
+            ABGR style.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Utility.Line">
+            <summary>
+            A convenient Line object.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.#ctor">
+            <summary>
+            Creates a new, empty Line.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.#ctor(System.Int16,System.Int16,System.Int16,System.Int16)">
+            <summary>
+            Creates a line with some values.
+            </summary>
+            <param name="x1">The start x.</param>
+            <param name="y1">The start y.</param>
+            <param name="x2">The end x.</param>
+            <param name="y2">The end y.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.#ctor(System.Drawing.Point,System.Drawing.Point)">
+            <summary>
+            Creates a line with some values.
+            </summary>
+            <param name="start">The start Point.</param>
+            <param name="end">The end Point.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.#ctor(Sphere.Core.Utility.Line)">
+            <summary>
+            Creates a line from another line.
+            </summary>
+            <param name="copy">The other line to copy from.</param>
+        </member>
+        <member name="P:Sphere.Core.Utility.Line.X1">
+            <summary>
+            Gets or sets the starting x value.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.Line.Y1">
+            <summary>
+            Gets or sets the starting y value.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.Line.X2">
+            <summary>
+            Gets or sets the ending x value.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.Line.Y2">
+            <summary>
+            Gets or sets the ending y value.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.Line.Start">
+            <summary>
+            Gets or sets the start location of this Line.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Utility.Line.End">
+            <summary>
+            Gets or sets the end location of this Line.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.DrawLine(System.Drawing.Graphics,System.Drawing.Pen)">
+            <summary>
+            Draws this line to the System.Drawing.Graphics.
+            </summary>
+            <param name="g">The System.Drawing.graphics to use.</param>
+            <param name="pen">The pen style to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.ToRectangle(Sphere.Core.Utility.Line)">
+            <summary>
+            Grabs the area of a Line.
+            </summary>
+            <param name="l">The line to convert</param>
+            <returns>A System.Drawing.Rectangle of the area of this Line.</returns>
+        </member>
+        <member name="M:Sphere.Core.Utility.Line.ToRectangle">
+            <summary>
+            Grabs the area of this Line.
+            </summary>
+            <returns>A System.Drawing.Rectangle of the area of this Line.</returns>
+        </member>
+        <member name="T:Sphere.Core.Windowstyle">
+            <summary>
+            A Sphere windowstyle object.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.Windowstyle.RGBA">
+            <summary>
+            nested class for working with colors
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.#ctor">
+            <summary>
+            Instantitates a blank window for your use.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.#ctor(System.String)">
+            <summary>
+            Creates a new windowstyle by loading a filename.
+            </summary>
+            <param name="filename">The file where the windowstyle is saved.</param>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.#ctor(System.IO.BinaryReader)">
+            <summary>
+            Instantiates a new WindowStyle object.
+            </summary>
+            <param name="binread">The stream where the data lies</param>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.Dispose">
+            <summary>
+            Disposes any resources used by this control.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.Save(System.String)">
+            <summary>
+            Saves the windowstyle to the Sphere .rws format.
+            </summary>
+            <param name="filename">The path in which to save to.</param>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.Open(System.IO.BinaryReader)">
+            <summary>
+            Reads the windowstyle from a filestream.
+            </summary>
+            <param name="binread">The System.IO.BinaryReader to use.</param>
+        </member>
+        <member name="P:Sphere.Core.Windowstyle.Images">
+            <summary>
+            Gets a list of images that represent the windowstyle edges and center.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Windowstyle.Grid">
+            <summary>
+            Gets or sets if whether or not to show a grid.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Windowstyle.Zoom">
+            <summary>
+            Gets/sets the zoom level.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Windowstyle.Selected">
+            <summary>
+            Gets/sets the image map selected. -1 = none, 0-8 = sides.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.GeneratePreview(System.Int32,System.Int32)">
+            <summary>
+            Generates a preview, so as to cache the resultant image.
+            </summary>
+            <param name="w">width of zone to fill</param>
+            <param name="h">height of zone to fill</param>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.DrawWindow(System.Drawing.Graphics)">
+            <summary>
+            Draws the window preview to the graphics object.
+            </summary>
+            <param name="g">Standard Graphics Object.</param>
+        </member>
+        <member name="M:Sphere.Core.Windowstyle.IsPointWithinSection(System.Drawing.Point,System.Int32)">
+            <summary>
+            Returns true if a point is in a retcangular section, one of the 8.
+            </summary>
+            <param name="p">The point to compare by.</param>
+            <param name="s">The section index.</param>
+            <returns>True if within the subsection.</returns>
+        </member>
+        <member name="T:Sphere.Core.Zone">
+            <summary>
+            A Sphere Zone object.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.Layer">
+            <summary>
+            Gets or sers the layer index of this Zone.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.NumSteps">
+            <summary>
+            Gets or sets the number of steps for this Zone.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.Function">
+            <summary>
+            Gets or sets the Function used by this Zone.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.Visible">
+            <summary>
+            Gets or sets the visibility of this Zone.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.Width">
+            <summary>
+            Gets or sets the width of this Zone in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.Height">
+            <summary>
+            Gets or sets the height of this Zone in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.X">
+            <summary>
+            Gets or sets the x location of this Zone in pixels.
+            </summary>
+        </member>
+        <member name="P:Sphere.Core.Zone.Y">
+            <summary>
+            Gets or sets the y location of this zone in pixels.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Zone.#ctor">
+            <summary>
+            Creates a new, blank zone.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.Zone.FromBinary(System.IO.BinaryReader)">
+            <summary>
+            Creates a zone from a filestream.
+            </summary>
+            <param name="reader">The System.IO.BinrayReader to use.</param>
+            <returns>A zone object.</returns>
+        </member>
+        <member name="M:Sphere.Core.Zone.Save(System.IO.BinaryWriter)">
+            <summary>
+            Stores the zone into a filestream.
+            </summary>
+            <param name="writer">The System.IO.BinaryWriter to use.</param>
+        </member>
+        <member name="M:Sphere.Core.Zone.IsMouseWithin(System.Drawing.Point)">
+            <summary>
+            Gets if whather or not the mouse is in a zone.
+            </summary>
+            <param name="mouse">The System.Drawing.Point of the mouses location.</param>
+            <returns>True if mouse is inside.</returns>
+        </member>
+        <member name="M:Sphere.Core.Zone.Draw(System.Drawing.Graphics,System.Drawing.Point,System.Int32,System.Int32)">
+            <summary>
+            Draws the zone to a System.drawing.Graphics.
+            </summary>
+            <param name="map">The System.Drawing.Graphics to use.</param>
+            <param name="offset">The x/y offset of the zone.</param>
+            <param name="lighted">The state the zone is in.</param>
+            <param name="zoom">The zoom factor.</param>
+        </member>
+        <member name="M:Sphere.Core.Zone.Clone">
+            <summary>
+            Creates a perfect copy of this Zone.
+            </summary>
+            <returns>A Zone object.</returns>
+        </member>
+    </members>
+</doc>
