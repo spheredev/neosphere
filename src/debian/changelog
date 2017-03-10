@@ -1,3 +1,13 @@
+minisphere (4.5.5) trusty; urgency=low
+
+  * Changes the built-in ES6 transpiler (used by Cell's `compiler` module) to
+    TypeScript, vastly improving compile times over Babel.
+  * Fixes a bug where promise settlement causes an unexpected `TypeError`.
+  * Fixes a bug where texture coordinates are not normalized for a `Shape` drawn
+    directly to an off-screen surface (this also affected `prim.blit()`).
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 10 Mar 2017 00:00:00 -0500
+
 minisphere (4.5.4) trusty; urgency=low
 
   * Adds a new global binding, `exports`, which maps to the global object, to

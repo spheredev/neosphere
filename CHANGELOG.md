@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v4.5.5 - TBD
-------------
+v4.5.5 - March 10, 2017
+-----------------------
 
 * Changes the built-in ES6 transpiler (used by Cell's `compiler` module) to
   TypeScript, vastly improving compile times over Babel.
