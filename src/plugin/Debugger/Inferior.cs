@@ -291,7 +291,7 @@ namespace miniSphere.Gdk.Debugger
         public async Task<string> GetSource(string fileName)
         {
             var reply = await DoRequest(DValueTag.REQ, Request.AppRequest, AppRequest.GetSource, fileName);
-            return reply[0].Tag != DValueTag.ERR ? (string)reply[2] : null;
+            return reply[0].Tag != DValueTag.ERR ? (string)reply[1] : null;
         }
 
         /// <summary>

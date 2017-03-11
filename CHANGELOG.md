@@ -1,6 +1,14 @@
 miniSphere Changelog
 ====================
 
+v4.5.6 - TBD
+------------
+
+* Fixes a bug where a CommonJS module without a trailing newline and with a
+  C++-style comment (`//`) on the last line causes `require()` to throw an
+  erroneous `SyntaxError`.
+
+
 v4.5.5 - March 10, 2017
 -----------------------
 

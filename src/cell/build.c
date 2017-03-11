@@ -510,9 +510,9 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
 		if (!as_mjs) {
-			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
+			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) {");
 			duk_push_lstring_t(ctx, code_string);
-			duk_push_string(ctx, " })");
+			duk_push_string(ctx, "\n})");
 			duk_concat(ctx, 3);
 			duk_push_string(ctx, filename);
 		}
