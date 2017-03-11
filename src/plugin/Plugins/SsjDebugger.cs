@@ -8,11 +8,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Sphere.Core;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
-using Sphere.Plugins.Views;
-using miniSphere.Gdk.Forms;
 using miniSphere.Gdk.Debugger;
 
 namespace miniSphere.Gdk.Plugins
@@ -25,7 +22,6 @@ namespace miniSphere.Gdk.Plugins
         private bool haveError = false;
         private ConcurrentQueue<dynamic[]> replies = new ConcurrentQueue<dynamic[]>();
         private Timer focusTimer;
-        private SourceMapper mapper = new SourceMapper();
         private string sourcePath;
         private Timer updateTimer;
         private bool expectDetach = false;
@@ -190,12 +186,8 @@ namespace miniSphere.Gdk.Plugins
                 if (wantPause)
                 {
                     focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    string mapJson = await Inferior.GetSource(Inferior.FileName + ".map");
-                    if (mapJson != null)
-                        mapper.AddSource(Inferior.FileName, mapJson);
-                    SourcePos pos = mapper.LookUp(Inferior.FileName, Inferior.LineNumber, 0);
-                    FileName = ResolvePath(pos.FileName);
-                    LineNumber = pos.LineNumber;
+                    FileName = ResolvePath(Inferior.FileName);
+                    LineNumber = Inferior.LineNumber;
                     if (!File.Exists(FileName))
                     {
                         // filename reported by Duktape doesn't exist; walk callstack for a

@@ -39,10 +39,8 @@ function makeTranspileTool(apiVersion)
 				sourceMap: true,
 			},
 		});
-		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; })) {
+		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; }))
 			FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
-			FS.writeFile(outFileName + '.map', new TextEncoder().encode(output.sourceMapText));
-        }
 		from(output.diagnostics)
 			.where(function(v) { return typeof v.messageText === 'string'; })
 			.each(function(line)
