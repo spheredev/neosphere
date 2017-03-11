@@ -7,6 +7,7 @@ v5.0.0 - TBD
 * Changes `from#select()` to be lazy and removes `from#mapTo()` which is now
   redundant.  If you need to take a snapshot of the current query results,
   `.toArray()` can now be used for that purpose. 
+* Fixes various bugs in the Sphere Studio project template.
 
 
 v4.5.6 - March 11, 2017

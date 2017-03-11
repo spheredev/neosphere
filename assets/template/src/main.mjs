@@ -5,10 +5,10 @@
 
 // pull in some useful modules.  these are all part of the Sphere v2 standard
 // library so you can count on them being available.
-import assert from 'assert';
-import from   from 'from';
-import prim   from 'prim';
-import random from 'random';
+import assert      from 'assert';
+import from        from 'from';
+import * as prim   from 'prim';
+import * as random from 'random';
 
 // declare variables used by the game.
 var image = new Texture('images/justSaiyan.png');

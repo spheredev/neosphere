@@ -8,7 +8,7 @@
 // through the Babel transpiler if needed, so it's okay to use ES 2015 syntax
 // in a Cellscript if you want.
 
-import transpile from 'transpile';
+import {{ transpile }} from 'compiler';
 
 
 // describe the game we're building.  this gets written to the game manifest
@@ -31,6 +31,7 @@ describe("{0}", {{
 //       it takes a directory as its first argument rather than a filename.
 //       install() works similarly (see below).
 
+transpile('@/scripts/', files('src/*.mjs'));
 transpile('@/scripts/', files('src/*.js'));
 
 

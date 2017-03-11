@@ -31,11 +31,11 @@ namespace miniSphere.Gdk.Plugins
             CopyDirectory(Path.Combine(_main.Conf.GdkPath, "template"), project.RootPath);
             con.Print("OK.\n");
 
-            con.Print("Generating Cellscript.js... ");
-            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.js.tmpl");
+            con.Print("Generating Cellscript.mjs... ");
+            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.mjs.tmpl");
             try
             {
-                var scriptPath = Path.Combine(project.RootPath, "Cellscript.js");
+                var scriptPath = Path.Combine(project.RootPath, "Cellscript.mjs");
                 var template = File.ReadAllText(cellTemplatePath);
                 var script = string.Format(template,
                     JSifyString(project.Name, '"'), JSifyString(project.Author, '"'),
