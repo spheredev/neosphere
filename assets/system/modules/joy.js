@@ -19,4 +19,4 @@ const from = require('from');
 var devices = from.Array(Joystick.getDevices())
 	.where(function(d) { return d.numAxes >= 2; })
 	.where(function(d) { return d.numButtons >= 5; })
-	.select();
+	.toArray();

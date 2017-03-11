@@ -1,6 +1,14 @@
 miniSphere Changelog
 ====================
 
+v5.0.0 - TBD
+------------
+
+* Changes `from#select()` to be lazy and removes `from#mapTo()` which is now
+  redundant.  If you need to take a snapshot of the current query results,
+  `.toArray()` can now be used for that purpose. 
+
+
 v4.5.6 - March 11, 2017
 -----------------------
 
@@ -10,7 +18,6 @@ v4.5.6 - March 11, 2017
 * Fixes a bug where a CommonJS module without a trailing newline and with a
   C++-style comment (`//`) on the last line causes `require()` to throw an
   erroneous `SyntaxError`.
-
 
 v4.5.5 - March 10, 2017
 -----------------------
