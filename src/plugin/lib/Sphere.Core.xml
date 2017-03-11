@@ -1108,12 +1108,6 @@
             </summary>
             <param name="binwrite">The System.IO.BinaryWriter to use.</param>
         </member>
-        <member name="T:Sphere.Core.SourceMapper">
-            <summary>
-            Allows mapping positions in transpiled JS files to their positions
-            in the source using a V3 source map.
-            </summary>
-        </member>
         <member name="T:Sphere.Core.Spriteset">
             <summary>
             A Sphere spriteset object
