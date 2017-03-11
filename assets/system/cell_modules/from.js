@@ -101,7 +101,7 @@ function FromQuery(source)
 Object.defineProperties(FromQuery.prototype,
 {
 	[Symbol.iterator]:
-	PROPDESC('wc', function enumerate()
+	PROPDESC('wc', function enumerate(withKeys)
 	{
 		var source = this[PK.ItemSource];
 		source.init();
@@ -111,7 +111,7 @@ Object.defineProperties(FromQuery.prototype,
 		{
 			var item = source.next();
 			return item !== null
-				? { value: item, done: false }
+				? { value: (withKeys ? item : item.v), done: false }
 				: { done: true };
 		}
 	}),
@@ -281,7 +281,7 @@ function FromSource(source, selector)
 			var item = source.next();
 			if (item !== null) {
 				var target = m_selector(item.v, item.k, item.t);
-				m_iterator = from(target)[Symbol.iterator]();
+				m_iterator = from(target)[Symbol.iterator](true);
 				if ((m_nextItem = m_iterator.next()).done)
 					m_iterator = null;
 			}
@@ -330,7 +330,7 @@ function IncludeSource(source, target)
 	function init()
 	{
 		source.init();
-		m_iterator = from(m_targets).from()[Symbol.iterator]();
+		m_iterator = from(m_targets).from()[Symbol.iterator](true);
 	};
 
 	this.next =

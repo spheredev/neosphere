@@ -4,6 +4,8 @@ miniSphere Changelog
 v4.5.6 - TBD
 ------------
 
+* Improves `for...of` iteration for `from()` queries.  Only the values will now
+  be enumerated, rather than key/value pairs.
 * Fixes a bug where a CommonJS module without a trailing newline and with a
   C++-style comment (`//`) on the last line causes `require()` to throw an
   erroneous `SyntaxError`.
