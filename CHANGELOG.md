@@ -1,11 +1,12 @@
 miniSphere Changelog
 ====================
 
-v4.5.6 - TBD
-------------
+v4.5.6 - March 11, 2017
+-----------------------
 
 * Improves `for...of` iteration for `from()` queries.  Only the values will now
   be enumerated, rather than key/value pairs.
+* Reverts to Babel as the default ES6 transpiler pending source map support.
 * Fixes a bug where a CommonJS module without a trailing newline and with a
   C++-style comment (`//`) on the last line causes `require()` to throw an
   erroneous `SyntaxError`.

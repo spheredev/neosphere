@@ -67,7 +67,7 @@ Sphere.Platform [read-only]
 
 Sphere.Version [read-only]
 
-    The version number of the compiler; e.g., "4.5.5".
+    The version number of the compiler; e.g., "4.5.6".
 
 describe(title, metadata);
 

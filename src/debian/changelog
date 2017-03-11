@@ -1,3 +1,14 @@
+minisphere (4.5.6) trusty; urgency=low
+
+  * Improves `for...of` iteration for `from()` queries.  Only the values will now
+    be enumerated, rather than key/value pairs.
+  * Reverts to Babel as the default ES6 transpiler pending source map support.
+  * Fixes a bug where a CommonJS module without a trailing newline and with a
+    C++-style comment (`//`) on the last line causes `require()` to throw an
+    erroneous `SyntaxError`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 11 Mar 2017 00:00:00 -0500
+
 minisphere (4.5.5) trusty; urgency=low
 
   * Changes the built-in ES6 transpiler (used by Cell's `compiler` module) to
