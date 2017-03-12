@@ -6,6 +6,8 @@
 'use strict';
 module.exports =
 {
+	__esModule: true,
+	Threaded:  Threaded,
 	create:    create,
 	isRunning: isRunning,
 	join:      join,
@@ -21,6 +23,49 @@ var nextThreadID = 1;
 var threads = [];
 Dispatch.onUpdate(_updateAll);
 Dispatch.onRender(_renderAll);
+
+function Threaded(options)
+{
+	this.threadID = null;
+	this.threadPriority = options.priority !== undefined
+		? options.priority : 0;
+}
+
+Object.assign(Threaded.prototype,
+{
+	dispose()
+	{
+		this.stop();
+	},
+
+	get running()
+	{
+		return isRunning(this.threadID);
+	},
+
+	join()
+	{
+		join(this.threadID);
+	},
+
+	start()
+	{
+		this.threadID = create({
+			getInput: function() { this.on_checkInput(); }.bind(this),
+			update:   function() { this.on_update(); return true }.bind(this),
+			render:   function() { this.on_render(); }.bind(this),
+		}, this.threadPriority);
+	},
+
+	stop()
+	{
+		kill(this.threadID);
+	},
+
+	on_checkInput() {},
+	on_update() {},
+	on_render() {},
+});
 
 function create(entity, priority)
 {
