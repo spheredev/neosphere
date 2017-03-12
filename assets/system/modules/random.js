@@ -6,12 +6,13 @@
 'use strict';
 module.exports =
 {
-	chance:   chance,
-	discrete: discrete,
-	normal:   normal,
-	sample:   sample,
-	string:   string,
-	uniform:  uniform,
+	__esModule: true,
+	chance:     chance,
+	discrete:   discrete,
+	normal:     normal,
+	sample:     sample,
+	string:     string,
+	uniform:    uniform,
 };
 
 const assert = require('assert');

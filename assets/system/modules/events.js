@@ -6,7 +6,8 @@
 'use strict';
 module.exports =
 {
-    Delegate: Delegate,
+    __esModule: true,
+    Delegate:   Delegate,
 };
 
 const from = require('from');

@@ -6,7 +6,8 @@
 'use strict';
 module.exports =
 {
-	Pact: Pact
+	__esModule: true,
+	Pact:       Pact,
 };
 
 function Pact()

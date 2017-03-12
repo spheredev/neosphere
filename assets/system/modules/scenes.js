@@ -6,6 +6,7 @@
 'use strict';
 module.exports =
 {
+	__esModule:  true,
 	defScenelet: defScenelet,
 	Scene:       Scene
 };

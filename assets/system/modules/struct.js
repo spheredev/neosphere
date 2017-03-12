@@ -6,6 +6,7 @@
 'use strict';
 module.exports =
 {
+	__esModule: true,
 	FileReader: FileReader,
 	FileWriter: FileWriter,
 };
