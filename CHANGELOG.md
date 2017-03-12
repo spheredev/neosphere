@@ -1,7 +1,7 @@
 miniSphere Changelog
 ====================
 
-v5.0.0 - TBD
+vX.X.X - TBD
 ------------
 
 * Changes `from#select()` to be lazy and removes `from#mapTo()` which is now
