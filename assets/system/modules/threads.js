@@ -7,7 +7,7 @@
 module.exports =
 {
 	__esModule: true,
-	Threaded:  Threaded,
+	Thread:    Thread,
 	create:    create,
 	isRunning: isRunning,
 	join:      join,
@@ -24,14 +24,14 @@ var threads = [];
 Dispatch.onUpdate(_updateAll);
 Dispatch.onRender(_renderAll);
 
-function Threaded(options)
+function Thread(options)
 {
 	this.threadID = null;
 	this.threadPriority = options.priority !== undefined
 		? options.priority : 0;
 }
 
-Object.assign(Threaded.prototype,
+Object.assign(Thread.prototype,
 {
 	dispose()
 	{

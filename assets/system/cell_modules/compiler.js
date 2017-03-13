@@ -30,7 +30,9 @@ function makeTranspileTool(apiVersion)
 		var input = new TextDecoder().decode(fileContent);
 		var output = Babel.transform(input, {
 			presets: [
-				[ 'latest', { es2015: { modules: moduleType } } ],
+				[ 'latest', {
+					'es2015': { modules: moduleType },
+				} ],
 			],
 			comments: false,
 			retainLines: true,
