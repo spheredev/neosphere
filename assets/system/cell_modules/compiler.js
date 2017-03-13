@@ -49,6 +49,9 @@ function stageTranspileJob(dirName, sources)
 	for (var i = 0; i < sources.length; ++i) {
 		var fileName = FS.resolve(dirName + '/' + sources[i].name);
 		var tool = fileName.endsWith('.mjs') ? ModuleTool : ScriptTool;
+		if (fileName.endsWith('.mjs') || fileName.endsWith('.js'))
+			fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+		fileName += '.js';
 		var target = tool.stage(fileName, [ sources[i] ], {
 			name: sources[i].name,
 		});
