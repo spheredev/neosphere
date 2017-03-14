@@ -1,14 +1,16 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.5.7 - March 14, 2017
+-----------------------
 
+* Adds a new `Thread` class which can be subclassed in ES6 to make threaded
+  entities.
 * Changes `from#select()` to be lazy and removes `from#mapTo()` which is now
   redundant.  If you need to take a snapshot of the current query results,
   `.toArray()` can now be used for that purpose. 
+* Fixes an issue where `.mjs` files are not renamed to `.js` when transpiling.
 * Fixes various bugs in the Sphere Studio project template.
-
 
 v4.5.6 - March 11, 2017
 -----------------------

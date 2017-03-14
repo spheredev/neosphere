@@ -114,12 +114,11 @@ benefit from queries!
 
 If you're familiar with C#, the from() function exposed by this module works a
 lot like LINQ.  A query is built from a number of predicates and mappings, and
-typically ends in an each() or select() clause that executes the query.
+is then typically processed using a `for...of` loop.
 
-Here's an example.  Suppose you were making an attack that damages all opposing
-battlers whose level is a multiple of 5, but only hits 75% of the time.
-Depending on the architecture of your battle engine, that might be implemented
-with a single query:
+For example, suppose you wanted to code an attack that damages all opposing
+battlers whose level is a multiple of 5, but only hits 75% of the time.  That
+could look like this:
 
     let targets = from(battlers)
         .where(v => v.isEnemyOf(attacker))
@@ -243,6 +242,10 @@ from#each(callback);
     the callback is ignored.  This is used to loop over the results of a query,
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
+    
+    Note: Using a `for...of` loop is generally preferred over from#each().
+          This is mainly provided to ease things for legacy code, as pre-ES2015
+          JavaScript doesn't support `for...of`.
 
 from#first([predicate]);
 
@@ -275,13 +278,6 @@ from#last([predicate]);
 
     Note: If there are no matching results, last() returns undefined.
 
-from#mapTo(selector);
-
-    Calls `selector` for each result, passing the return value on to subsequent
-    operations.  This is used to transform results in the middle of a query,
-    which can help code readability as well as avoiding multiple requests for
-    the same data.
-
 from#random(count);
 
     Takes `count` random results and filters out the rest.  Note that this may
@@ -299,12 +295,12 @@ from#sample(count);
     Takes `count` random results and filters out the rest.  Unlike
     from#random(), this will not sample the same result more than once.
 
-from#select([selector]);
+from#select(selector);
 
-    Runs the query, assembling the final results into an array.  `selector` is
-    an optional mapping function whose return value decides the output of the
-    query.  If no selector is provided, results are used as-is.  Returns the
-    newly assembled array.
+    Calls `selector` for each result, passing the return value on to subsequent
+    operations.  This is used to transform results in the middle of a query,
+    which can help code readability as well as avoid multiple requests for the
+    same data.
 
 from#shuffle();
 
@@ -318,6 +314,11 @@ from#skip(count);
 from#take(count);
 
     Filters out all results after the first `count`.
+
+from#toArray();
+
+    Runs the query, assembling the final results into an array; returns the
+    assembled array.
 
 from#update(selector);
 
