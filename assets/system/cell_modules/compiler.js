@@ -10,8 +10,8 @@ module.exports =
 	transpile: transpile,
 };
 
-const Babel = require('#/babel-core');
 const from  = require('from');
+const ts    = require('#/typescript');
 
 const ModuleTool = makeTranspileTool(2.0);
 const ScriptTool = makeTranspileTool(1.0);
@@ -24,21 +24,42 @@ function transpile(dirName, sources)
 function makeTranspileTool(apiVersion)
 {
 	return new Tool(function(outFileName, inFileNames) {
-		var moduleType = apiVersion >= 2.0 ? 'commonjs' : false;
-		var sourceType = apiVersion >= 2.0 ? 'module' : 'script';
 		var fileContent = FS.readFile(inFileNames[0]);
 		var input = new TextDecoder().decode(fileContent);
-		var output = Babel.transform(input, {
-			presets: [
-				[ 'latest', {
-					'es2015': { modules: moduleType },
-				} ],
-			],
-			comments: false,
-			retainLines: true,
-			sourceType,
+		var output = ts.transpileModule(input, {
+			fileName: inFileNames[0],
+			reportDiagnostics: true,
+			compilerOptions: {
+				target: ts.ScriptTarget.ES5,
+				module: ts.ModuleKind.CommonJS,
+				allowJs: true,
+				downlevelIteration: true,
+				newLine: ts.NewLineKind.LineFeed,
+				noImplicitUseStrict: apiVersion <= 1.0,
+				sourceMap: true,
+			},
 		});
-		FS.writeFile(outFileName, new TextEncoder().encode(output.code));
+		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; }))
+			FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
+		from(output.diagnostics).each(function(diag) {
+			var message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
+			var errorCode = "TS" + diag.code;
+			if (diag.file !== undefined) {
+				var lineNumber = 1 + ts.getLineAndCharacterOfPosition(diag.file, diag.start).line;
+				message = errorCode + " [" + diag.file.fileName + ":" + lineNumber + "]: " + message;
+			}
+			else {
+				message = errorCode + ": " + message;
+			}
+			switch (diag.category) {
+				case ts.DiagnosticCategory.Error:
+					error(message);
+					break;
+				case ts.DiagnosticCategory.Warning:
+					warn(message);
+					break;
+			}
+		});
 	}, "transpiling");
 }
 

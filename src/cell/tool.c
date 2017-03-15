@@ -114,7 +114,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 			result_ok = false;
 		}
 		else if (stats.st_mtime == last_mtime) {
-			visor_warn(visor, "target file unmodified after build");
+			visor_warn(visor, "target file unchanged after build");
 		}
 	}
 	else {
