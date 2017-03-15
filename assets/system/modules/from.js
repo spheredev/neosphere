@@ -133,6 +133,7 @@ Object.defineProperties(FromQuery.prototype,
 	including:  PROPDESC('wc', MAKEPOINT(IncludeSource)),
 	last:       PROPDESC('wc', MAKEPOINT(FilterSource, lastOp)),
 	random:     PROPDESC('wc', MAKEPOINT(SampleSource(false))),
+	reduce:     PROPDESC('wc', MAKEPOINT(ReduceSource, firstOp)),
 	remove:     PROPDESC('wc', MAKEPOINT(FilterSource, removeOp)),
 	sample:     PROPDESC('wc', MAKEPOINT(SampleSource(true))),
 	select:     PROPDESC('wc', MAKEPOINT(MapSource)),
@@ -438,6 +439,45 @@ function OrderedSource(descending)
 			else
 				return null;
 		};
+	};
+}
+
+function ReduceSource(source, reducer, initialValue)
+{
+	var m_sentValue = false;
+	var m_value = undefined;
+
+	this.init =
+	function init()
+	{
+		var item;
+
+		// as with the sorting operators, Fisher-Yates shuffle doesn't really
+		// lend itself to streaming so we just pull everything in advance.
+		source.init();
+		if (initialValue !== undefined) {
+			m_value = initialValue;
+		}
+		else {
+			if (item = source.next())
+				m_value = item.v;
+			else
+				return;
+		}
+		while (item = source.next())
+			m_value = reducer(m_value, item.v, item.k, item.t);
+	};
+
+	this.next =
+	function next()
+	{
+		if (!m_sentValue) {
+			m_sentValue = true;
+			return { v: m_value };
+		}
+		else {
+			return null;
+		}
 	};
 }
 
