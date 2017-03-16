@@ -58,6 +58,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	duk_context*  js_ctx;
 	time_t        last_mtime = 0;
 	int           line_number;
+	int           num_errors;
 	bool          result_ok = true;
 	struct stat   stats;
 
@@ -87,6 +88,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 		duk_push_string(js_ctx, path_cstr(*p_path));
 		duk_put_prop_index(js_ctx, -2, array_index);
 	}
+	num_errors = visor_num_errors(visor);
 	if (duk_pcall(js_ctx, 2) != DUK_EXEC_SUCCESS) {
 		duk_get_prop_string(js_ctx, -1, "fileName");
 		filename = duk_safe_to_string(js_ctx, -1);
@@ -100,10 +102,12 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 		result_ok = false;
 	}
 	duk_pop(js_ctx);
+	if (visor_num_errors(visor) > num_errors)
+		result_ok = false;
 
 	// verify that the tool actually did something.  if the target file doesn't exist,
-	// that's definitely an error.  if the target file does exist but hasn't changed,
-	// issue a warning because it might have been intentional (unlikely, but possible).
+	// that's definitely an error.  if the target file does exist but the timestamp hasn't changed,
+	// only issue a warning because it might have been intentional (unlikely, but possible).
 	if (result_ok) {
 		if (fs_stat(fs, path_cstr(out_path), &stats) != 0) {
 			visor_error(visor, "target file not found after build");
