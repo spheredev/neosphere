@@ -117,6 +117,12 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 			visor_warn(visor, "target file unmodified after build");
 		}
 	}
+	else {
+		// to ensure correctness, delete the target file if there was an error.  if we don't do
+		// this, subsequent builds may not work correctly in the case that a tool accidentally
+		// writes a target file anyway after producing errors.
+		fs_unlink(fs, path_cstr(out_path));
+	}
 
 	visor_end_op(visor);
 	return result_ok;
