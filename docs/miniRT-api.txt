@@ -284,6 +284,22 @@ from#random(count);
     sample a result more than once.  If you don't want duplicates, use
     from#sample() instead.
 
+from#reduce([reducer[, initialValue]]);
+
+    Runs the query and calls `reducer` for each result, assigning the result to
+    an internal accumulator.  The current value of the accumulator is passed as
+    the first argument to the reducer function, before the value and key.
+
+    This is a pretty advanced operation, so to help illustrate, the following
+    query calculates the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).reduce((a, v) => a + v);
+
+    Note: If `initialValue` is not given, the accumulator is initialized with
+          the first query result; the reducer function will then not be called
+          for that item.  If that behavior is not desirable, be sure to provide
+          an initial value.
+
 from#remove([predicate]);
 
     Removes results from the source object or array.  `predicate` is optional;
