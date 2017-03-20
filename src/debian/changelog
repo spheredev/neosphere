@@ -1,3 +1,14 @@
+minisphere (4.5.8) trusty; urgency=low
+
+  * Add `from#reduce()` API for reducing a collection to a single value.
+  * Fixes spurious "target file unchanged after build" warnings when a target
+    fails to build due to a compile-time error.
+  * Fixes a bug where Cell doesn't delete target files that fail to build.
+  * Fixes a Duktape bug where redeclaring an existing global binding as a `var`
+    in global code resets its value to `undefined`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 20 Mar 2017 00:00:00 -0500
+
 minisphere (4.5.7) trusty; urgency=low
 
   * Adds a new `Thread` class which can be subclassed in ES6 to make threaded

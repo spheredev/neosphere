@@ -1,6 +1,16 @@
 miniSphere Changelog
 ====================
 
+v4.5.8 - March 20, 2017
+-----------------------
+
+* Add `from#reduce()` API for reducing a collection to a single value.
+* Fixes spurious "target file unchanged after build" warnings when a target
+  fails to build due to a compile-time error.
+* Fixes a bug where Cell doesn't delete target files that fail to build.
+* Fixes a Duktape bug where redeclaring an existing global binding as a `var`
+  in global code resets its value to `undefined`.
+
 v4.5.7 - March 14, 2017
 -----------------------
 
