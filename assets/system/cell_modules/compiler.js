@@ -36,7 +36,8 @@ function makeTranspileTool(apiVersion)
 				downlevelIteration: true,
 				newLine: ts.NewLineKind.LineFeed,
 				noImplicitUseStrict: apiVersion <= 1.0,
-				sourceMap: true,
+				inlineSourceMap: true,
+				inlineSources: true,
 			},
 		});
 		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; }))

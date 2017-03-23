@@ -1108,6 +1108,50 @@
             </summary>
             <param name="binwrite">The System.IO.BinaryWriter to use.</param>
         </member>
+        <member name="T:Sphere.Core.CodeLocation">
+            <summary>
+            Describes a location (line and column) in a source file.
+            </summary>
+        </member>
+        <member name="T:Sphere.Core.SourceMapper">
+            <summary>
+            Facilitates debugging by translating code locations using a V3 source map.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.SourceMapper.#ctor">
+            <summary>
+            Constructs a new SourceMapper.
+            </summary>
+        </member>
+        <member name="M:Sphere.Core.SourceMapper.AddSource(System.String,System.String)">
+            <summary>
+            Adds a JS file and associated source map to the mapper.
+            </summary>
+            <param name="fileName">The filename of a transpiled target file (NOT the source file).</param>
+            <param name="mapJson">The JSON text of the V3 source map.</param>
+        </member>
+        <member name="M:Sphere.Core.SourceMapper.Contains(System.String)">
+            <summary>
+            Finds out whether the mapper has an entry for a specified module.
+            </summary>
+            <param name="fileName">The filename of the transpiled target file.</param>
+        </member>
+        <member name="M:Sphere.Core.SourceMapper.LineInSource(System.String,System.Int32)">
+            <summary>
+            Maps a line number in a transpiled file to its original line number in the source code.
+            </summary>
+            <param name="fileName">The filename of the transpiled target file.</param>
+            <param name="lineNumber">A line number in the transpiled code.</param>
+            <returns>The corresponding line number in the original source file.</returns>
+        </member>
+        <member name="M:Sphere.Core.SourceMapper.LineInTarget(System.String,System.Int32)">
+            <summary>
+            Maps a source line number back to its line number in the transpiled code.
+            </summary>
+            <param name="fileName">The filename of the transpiled target file.</param>
+            <param name="lineNumber">A line number in the original source file.</param>
+            <returns>The corresponding line number in the transpiled code.</returns>
+        </member>
         <member name="T:Sphere.Core.Spriteset">
             <summary>
             A Sphere spriteset object

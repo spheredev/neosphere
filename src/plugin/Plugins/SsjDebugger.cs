@@ -5,11 +5,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Sphere.Core;
 using Sphere.Plugins;
 using Sphere.Plugins.Interfaces;
+
 using miniSphere.Gdk.Debugger;
 
 namespace miniSphere.Gdk.Plugins
@@ -18,7 +22,7 @@ namespace miniSphere.Gdk.Plugins
     {
         private string sgmPath;
         private Process engineProcess;
-        private string engineDir;
+        private string enginePath;
         private bool haveError = false;
         private ConcurrentQueue<dynamic[]> replies = new ConcurrentQueue<dynamic[]>();
         private Timer focusTimer;
@@ -26,6 +30,7 @@ namespace miniSphere.Gdk.Plugins
         private Timer updateTimer;
         private bool expectDetach = false;
         private PluginMain plugin;
+        private SourceMapper sourceMap = new SourceMapper();
 
         public SsjDebugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
         {
@@ -33,7 +38,7 @@ namespace miniSphere.Gdk.Plugins
             sgmPath = gamePath;
             sourcePath = project.RootPath;
             engineProcess = engine;
-            engineDir = Path.GetDirectoryName(enginePath);
+            this.enginePath = Path.GetDirectoryName(enginePath);
             focusTimer = new Timer(HandleFocusSwitch, this, Timeout.Infinite, Timeout.Infinite);
             updateTimer = new Timer(UpdateDebugViews, this, Timeout.Infinite, Timeout.Infinite);
         }
@@ -156,9 +161,11 @@ namespace miniSphere.Gdk.Plugins
 
         private void duktape_ErrorThrown(object sender, ThrowEventArgs e)
         {
-            PluginManager.Core.Invoke(new Action(() =>
+            PluginManager.Core.Invoke(new Action(async () =>
             {
-                Panes.Errors.Add(e.Message, e.IsFatal, e.FileName, e.LineNumber);
+                await this.InternSourceFile(e.FileName);
+                var lineNumber = this.sourceMap.LineInSource(e.FileName, e.LineNumber);
+                Panes.Errors.Add(e.Message, e.IsFatal, e.FileName, lineNumber);
                 PluginManager.Core.Docking.Show(Panes.Errors);
                 PluginManager.Core.Docking.Activate(Panes.Errors);
                 if (e.IsFatal)
@@ -186,8 +193,9 @@ namespace miniSphere.Gdk.Plugins
                 if (wantPause)
                 {
                     focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    await this.InternSourceFile(Inferior.FileName);
                     FileName = ResolvePath(Inferior.FileName);
-                    LineNumber = Inferior.LineNumber;
+                    LineNumber = sourceMap.LineInSource(Inferior.FileName, Inferior.LineNumber);
                     if (!File.Exists(FileName))
                     {
                         // filename reported by Duktape doesn't exist; walk callstack for a
@@ -195,8 +203,9 @@ namespace miniSphere.Gdk.Plugins
                         var callStack = await Inferior.GetCallStack();
                         var topCall = callStack.First(entry => entry.Item3 != 0);
                         var callIndex = Array.IndexOf(callStack, topCall);
+                        await this.InternSourceFile(topCall.Item2);
                         FileName = ResolvePath(topCall.Item2);
-                        LineNumber = topCall.Item3;
+                        LineNumber = this.sourceMap.LineInSource(topCall.Item2, topCall.Item3);
                         await Panes.Inspector.SetCallStack(callStack, callIndex);
                         Panes.Inspector.Enabled = true;
                     }
@@ -224,7 +233,9 @@ namespace miniSphere.Gdk.Plugins
 
         public async Task SetBreakpoint(string fileName, int lineNumber)
         {
-            fileName = UnresolvePath(fileName);
+            fileName = this.UnresolvePath(fileName);
+            await this.InternSourceFile(fileName);
+            lineNumber = this.sourceMap.LineInTarget(fileName, lineNumber);
             await Inferior.AddBreak(fileName, lineNumber);
         }
 
@@ -269,6 +280,23 @@ namespace miniSphere.Gdk.Plugins
             await Inferior.StepOver();
         }
 
+        internal string ResolvePath(string path)
+        {
+            if (Path.IsPathRooted(path))
+                return path.Replace('/', Path.DirectorySeparatorChar);
+            if (path.StartsWith("@/"))
+                path = Path.Combine(sourcePath, path.Substring(2));
+            else if (path.StartsWith("#/"))
+                path = Path.Combine(enginePath, "system", path.Substring(2));
+            else if (path.StartsWith("~/"))
+                path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    "miniSphere", path.Substring(2));
+            else
+                path = Path.Combine(sourcePath, path);
+            return path.Replace('/', Path.DirectorySeparatorChar);
+        }
+
         private static void HandleFocusSwitch(object state)
         {
             PluginManager.Core.Invoke(new Action(() =>
@@ -303,41 +331,33 @@ namespace miniSphere.Gdk.Plugins
             }), null);
         }
 
-        /// <summary>
-        /// Resolves a SphereFS path into an absolute one.
-        /// </summary>
-        /// <param name="path">The SphereFS path to resolve.</param>
-        internal string ResolvePath(string path)
+        private async Task InternSourceFile(string fileName)
         {
-            if (Path.IsPathRooted(path))
-                return path.Replace('/', Path.DirectorySeparatorChar);
-            if (path.StartsWith("@/"))
-                path = Path.Combine(sourcePath, path.Substring(2));
-            else if (path.StartsWith("#/"))
-                path = Path.Combine(engineDir, "system", path.Substring(2));
-            else if (path.StartsWith("~/"))
-                path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                    "miniSphere", path.Substring(2));
-            else
-                path = Path.Combine(sourcePath, path);
-            return path.Replace('/', Path.DirectorySeparatorChar);
+            if (!sourceMap.Contains(fileName))
+            {
+                var sourceCode = await Inferior.GetSource(fileName);
+                if (sourceCode == null)
+                    return;
+                var regex = new Regex(@"\s*\/\/(?:@|#) sourceMappingURL=data:application\/json;base64,(\S*)$", RegexOptions.Multiline);
+                var match = regex.Match(sourceCode);
+                if (match.Success)
+                {
+                    var jsonData = Convert.FromBase64String(match.Groups[1].Value);
+                    var mapJson = Encoding.UTF8.GetString(jsonData);
+                    sourceMap.AddSource(fileName, mapJson);
+                }
+            }
         }
 
-        /// <summary>
-        /// Converts an absolute path into a SphereFS path. If this is
-        /// not possible, leaves the path as-is.
-        /// </summary>
-        /// <param name="path">The absolute path to unresolve.</param>
         private string UnresolvePath(string path)
         {
             var pathSep = Path.DirectorySeparatorChar.ToString();
-            string sourceRoot = sourcePath.EndsWith(pathSep)
-                ? sourcePath : sourcePath + pathSep;
-            string sysRoot = Path.Combine(engineDir, @"system") + pathSep;
+            var sourceRoot = this.sourcePath.EndsWith(pathSep)
+                ? this.sourcePath : this.sourcePath + pathSep;
+            var systemPath = Path.Combine(this.enginePath, @"system") + pathSep;
 
-            if (path.StartsWith(sysRoot))
-                path = string.Format("#/{0}", path.Substring(sysRoot.Length).Replace(pathSep, "/"));
+            if (path.StartsWith(systemPath))
+                path = string.Format("#/{0}", path.Substring(systemPath.Length).Replace(pathSep, "/"));
             else if (path.StartsWith(sourceRoot))
                 path = path.Substring(sourceRoot.Length).Replace(pathSep, "/");
             return path;
