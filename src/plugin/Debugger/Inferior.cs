@@ -10,6 +10,20 @@ using System.Threading.Tasks;
 
 namespace miniSphere.Gdk.Debugger
 {
+    class StackFrameInfo
+    {
+        public StackFrameInfo(string functionName, string fileName, int lineNumber)
+        {
+            this.FunctionName = functionName;
+            this.FileName = fileName;
+            this.LineNumber = lineNumber;
+        }
+
+        public string FunctionName { get; set; }
+        public string FileName     { get; set; }
+        public int    LineNumber   { get; set; }
+    }
+
     class ThrowEventArgs : EventArgs
     {
         public ThrowEventArgs(string message, string filename, int lineNumber, bool isFatal)
@@ -219,17 +233,16 @@ namespace miniSphere.Gdk.Debugger
         }
 
         /// <summary>
-        /// Gets a list of function calls currently on the stack. Note that Duktape
-        /// supports tail return, so this may not reflect all active calls.
+        /// Gets a list of function calls currently on the stack.
         /// </summary>
         /// <returns>
-        /// An array of 3-tuples naming the function, filename and current line number
+        /// An array of StackFrameInfos naming the function, filename and current line number
         /// of each function call on the stack, from top to the bottom.
         /// </returns>
-        public async Task<Tuple<string, string, int>[]> GetCallStack()
+        public async Task<StackFrameInfo[]> GetCallStack()
         {
             var reply = await DoRequest(DValueTag.REQ, Request.GetCallStack);
-            var stack = new List<Tuple<string, string, int>>();
+            var stack = new List<StackFrameInfo>();
             int count = (reply.Length - 1) / 4;
             for (int i = 0; i < count; ++i) {
                 string filename = (string)reply[1 + i * 4];
@@ -238,7 +251,7 @@ namespace miniSphere.Gdk.Debugger
                 int pc = (int)reply[4 + i * 4];
                 if (lineNumber == 0)
                     filename = "[system call]";
-                stack.Add(Tuple.Create(functionName, filename, lineNumber));
+                stack.Add(new StackFrameInfo(functionName, filename, lineNumber));
             }
             return stack.ToArray();
         }

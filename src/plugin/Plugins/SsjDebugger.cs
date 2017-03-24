@@ -113,7 +113,7 @@ namespace miniSphere.Gdk.Plugins
             {
                 Attached?.Invoke(this, EventArgs.Empty);
 
-                Panes.Inspector.Ssj = this;
+                Panes.Inspector.SSJ = this;
                 Panes.Errors.Ssj = this;
                 Panes.Inspector.Enabled = false;
                 Panes.Console.Clear();
@@ -201,11 +201,15 @@ namespace miniSphere.Gdk.Plugins
                         // filename reported by Duktape doesn't exist; walk callstack for a
                         // JavaScript call as a fallback
                         var callStack = await Inferior.GetCallStack();
-                        var topCall = callStack.First(entry => entry.Item3 != 0);
-                        var callIndex = Array.IndexOf(callStack, topCall);
-                        await this.InternSourceFile(topCall.Item2);
-                        FileName = ResolvePath(topCall.Item2);
-                        LineNumber = this.sourceMap.LineInSource(topCall.Item2, topCall.Item3);
+                        foreach (var frame in callStack)
+                        {
+                            await this.InternSourceFile(frame.FileName);
+                            frame.LineNumber = this.sourceMap.LineInSource(frame.FileName, frame.LineNumber);
+                        }
+                        var topJSFrame = callStack.First(entry => entry.LineNumber != 0);
+                        var callIndex = Array.IndexOf(callStack, topJSFrame);
+                        FileName = ResolvePath(topJSFrame.FileName);
+                        LineNumber = topJSFrame.LineNumber;
                         await Panes.Inspector.SetCallStack(callStack, callIndex);
                         Panes.Inspector.Enabled = true;
                     }
@@ -322,6 +326,11 @@ namespace miniSphere.Gdk.Plugins
             {
                 SsjDebugger me = (SsjDebugger)state;
                 var callStack = await me.Inferior.GetCallStack();
+                foreach (var frame in callStack)
+                {
+                    await me.InternSourceFile(frame.FileName);
+                    frame.LineNumber = me.sourceMap.LineInSource(frame.FileName, frame.LineNumber);
+                }
                 if (!me.Running)
                 {
                     await Panes.Inspector.SetCallStack(callStack);

@@ -34,7 +34,7 @@ namespace miniSphere.Gdk.DockPanes
         public DockHint DockHint => DockHint.Right;
         public Bitmap DockIcon => Resources.VisibleIcon;
 
-        public SsjDebugger Ssj { get; set; }
+        public SsjDebugger SSJ { get; set; }
 
         public void Clear()
         {
@@ -42,16 +42,16 @@ namespace miniSphere.Gdk.DockPanes
             CallsView.Items.Clear();
         }
 
-        public async Task SetCallStack(Tuple<string, string, int>[] stack, int index = 0)
+        public async Task SetCallStack(StackFrameInfo[] stackFrames, int index = 0)
         {
             CallsView.BeginUpdate();
             CallsView.Items.Clear();
-            foreach (var entry in stack)
+            foreach (var frame in stackFrames)
             {
-                ListViewItem item = new ListViewItem(entry.Item1 != ""
-                    ? string.Format("{0}()", entry.Item1) : "anon");
-                item.SubItems.Add(entry.Item2);
-                item.SubItems.Add(entry.Item3.ToString());
+                var item = new ListViewItem(frame.FunctionName != "" ? string.Format("{0}()", frame.FunctionName) : "anon");
+                var lineNumberString = frame.LineNumber != 0 ? frame.LineNumber.ToString() : "";
+                item.SubItems.Add(frame.FileName);
+                item.SubItems.Add(lineNumberString);
                 CallsView.Items.Add(item);
             }
             CallsView.EndUpdate();
@@ -62,8 +62,8 @@ namespace miniSphere.Gdk.DockPanes
 
         private async Task DoEvaluate(string expr)
         {
-            var result = await Ssj.Inferior.Eval(expr, -(_frame + 1));
-            new ObjectViewer(Ssj.Inferior, expr, result).ShowDialog(this);
+            var result = await SSJ.Inferior.Eval(expr, -(_frame + 1));
+            new ObjectViewer(SSJ.Inferior, expr, result).ShowDialog(this);
         }
 
         private async Task LoadStackFrame(int callIndex)
@@ -73,7 +73,7 @@ namespace miniSphere.Gdk.DockPanes
             _frame = callIndex;
             CallsView.Items[_frame].ForeColor = Color.Blue;
             CallsView.SelectedItems.Clear();
-            _vars = await Ssj.Inferior.GetLocals(-(_frame + 1));
+            _vars = await SSJ.Inferior.GetLocals(-(_frame + 1));
             LocalsView.BeginUpdate();
             LocalsView.Items.Clear();
             foreach (var k in _vars.Keys)
@@ -119,8 +119,8 @@ namespace miniSphere.Gdk.DockPanes
             if (CallsView.SelectedItems.Count > 0)
             {
                 ListViewItem item = CallsView.SelectedItems[0];
-                string filename = Ssj.ResolvePath(item.SubItems[1].Text);
-                int lineNumber = int.Parse(item.SubItems[2].Text);
+                var filename = SSJ.ResolvePath(item.SubItems[1].Text);
+                int.TryParse(item.SubItems[2].Text, out int lineNumber);
                 ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
                 if (view == null)
                     SystemSounds.Hand.Play();
