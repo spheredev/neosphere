@@ -779,9 +779,10 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
 		duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) {");
+		duk_push_string(ctx, strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "");  // shebang
 		duk_push_lstring_t(ctx, code_string);
 		duk_push_string(ctx, "\n})");
-		duk_concat(ctx, 3);
+		duk_concat(ctx, 4);
 		duk_push_string(ctx, get_source_name(filename));
 		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 			goto on_error;

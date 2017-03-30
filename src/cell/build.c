@@ -511,9 +511,10 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 		// implement CommonJS semantics and matches the behavior of Node.js.
 		if (!as_mjs) {
 			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) {");
+			duk_push_string(ctx, strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "");  // shebang
 			duk_push_lstring_t(ctx, code_string);
 			duk_push_string(ctx, "\n})");
-			duk_concat(ctx, 3);
+			duk_concat(ctx, 4);
 			duk_push_string(ctx, filename);
 		}
 		else {
@@ -551,9 +552,10 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 
 			// try to compile it again.  if this attempt fails, it's a lost cause.
 			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
+			duk_push_string(ctx, strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "");  // shebang
 			duk_push_lstring_t(ctx, code_string);
 			duk_push_string(ctx, " })");
-			duk_concat(ctx, 3);
+			duk_concat(ctx, 4);
 			duk_push_string(ctx, filename);
 			if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 				goto on_error;
