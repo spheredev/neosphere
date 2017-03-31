@@ -1,3 +1,12 @@
+minisphere (4.5.9) trusty; urgency=low
+
+  * Adds tolerance for shebang lines (`#!...`) at the start of JS source files.
+  * TypeScript is once again used as the default ES6 transpiler.  A source map is
+    embedded in each transpiled script that is used by SSJ Blue to facilitate
+    debugging.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 31 Mar 2017 00:00:00 -0500
+
 minisphere (4.5.8) trusty; urgency=low
 
   * Add `from#reduce()` API for reducing a collection to a single value.
