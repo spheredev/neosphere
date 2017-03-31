@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a long-standing bug in the RFN font loader that caused RFNv1 fonts to
+  be rendered without transparency.
+
+
 v4.5.9 - March 31, 2017
 -----------------------
 

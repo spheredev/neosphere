@@ -133,7 +133,7 @@ font_load(const char* filename)
 			pdest = lock->pixels + atlas_x + atlas_y * lock->pitch;
 			for (y = 0; y < glyph_hdr.height; ++y) {
 				for (x = 0; x < glyph_hdr.width; ++x)
-					pdest[x] = color_new(psrc[x], psrc[x], psrc[x], 255);
+					pdest[x] = color_new(255, 255, 255, psrc[x]);
 				pdest += lock->pitch;
 				psrc += glyph_hdr.width;
 			}
