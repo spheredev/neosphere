@@ -345,53 +345,27 @@ interface String {
       * Matches a string with a regular expression, and returns an array containing the results of that search.
       * @param regexp A variable name or string literal containing the regular expression pattern and flags.
       */
-    match(regexp: string): RegExpMatchArray | null;
-
-    /**
-      * Matches a string with a regular expression, and returns an array containing the results of that search.
-      * @param regexp A regular expression object that contains the regular expression pattern and applicable flags.
-      */
-    match(regexp: RegExp): RegExpMatchArray | null;
+    match(regexp: string | RegExp): RegExpMatchArray | null;
 
     /**
       * Replaces text in a string, using a regular expression or search string.
       * @param searchValue A string to search for.
       * @param replaceValue A string containing the text to replace for every successful match of searchValue in this string.
       */
-    replace(searchValue: string, replaceValue: string): string;
+    replace(searchValue: string | RegExp, replaceValue: string): string;
 
     /**
       * Replaces text in a string, using a regular expression or search string.
       * @param searchValue A string to search for.
       * @param replacer A function that returns the replacement text.
       */
-    replace(searchValue: string, replacer: (substring: string, ...args: any[]) => string): string;
-
-    /**
-      * Replaces text in a string, using a regular expression or search string.
-      * @param searchValue A Regular Expression object containing the regular expression pattern and applicable flags.
-      * @param replaceValue A string containing the text to replace for every successful match of searchValue in this string.
-      */
-    replace(searchValue: RegExp, replaceValue: string): string;
-
-    /**
-      * Replaces text in a string, using a regular expression or search string.
-      * @param searchValue A Regular Expression object containing the regular expression pattern and applicable flags
-      * @param replacer A function that returns the replacement text.
-      */
-    replace(searchValue: RegExp, replacer: (substring: string, ...args: any[]) => string): string;
+    replace(searchValue: string | RegExp, replacer: (substring: string, ...args: any[]) => string): string;
 
     /**
       * Finds the first substring match in a regular expression search.
       * @param regexp The regular expression pattern and applicable flags.
       */
-    search(regexp: string): number;
-
-    /**
-      * Finds the first substring match in a regular expression search.
-      * @param regexp The regular expression pattern and applicable flags.
-      */
-    search(regexp: RegExp): number;
+    search(regexp: string | RegExp): number;
 
     /**
       * Returns a section of a string.
@@ -406,14 +380,7 @@ interface String {
       * @param separator A string that identifies character or characters to use in separating the string. If omitted, a single-element array containing the entire string is returned.
       * @param limit A value used to limit the number of elements returned in the array.
       */
-    split(separator: string, limit?: number): string[];
-
-    /**
-      * Split a string into substrings using the specified separator and return them as an array.
-      * @param separator A Regular Express that identifies character or characters to use in separating the string. If omitted, a single-element array containing the entire string is returned.
-      * @param limit A value used to limit the number of elements returned in the array.
-      */
-    split(separator: RegExp, limit?: number): string[];
+    split(separator: string | RegExp, limit?: number): string[];
 
     /**
       * Returns the substring at the specified location within a String object.
@@ -543,7 +510,7 @@ interface NumberConstructor {
 declare const Number: NumberConstructor;
 
 interface TemplateStringsArray extends ReadonlyArray<string> {
-    readonly raw: ReadonlyArray<string>
+    readonly raw: ReadonlyArray<string>;
 }
 
 interface Math {
@@ -881,9 +848,9 @@ interface RegExp {
 }
 
 interface RegExpConstructor {
-    new (pattern: RegExp): RegExp;
+    new (pattern: RegExp | string): RegExp;
     new (pattern: string, flags?: string): RegExp;
-    (pattern: RegExp): RegExp;
+    (pattern: RegExp | string): RegExp;
     (pattern: string, flags?: string): RegExp;
     readonly prototype: RegExp;
 
@@ -1407,14 +1374,14 @@ type Readonly<T> = {
  */
 type Pick<T, K extends keyof T> = {
     [P in K]: T[P];
-}
+};
 
 /**
  * Construct a type with a set of properties K of type T
  */
 type Record<K extends string, T> = {
     [P in K]: T;
-}
+};
 
 /**
  * Marker for contextual 'this' type
@@ -1436,7 +1403,7 @@ interface ArrayBuffer {
     /**
       * Returns a section of an ArrayBuffer.
       */
-    slice(begin:number, end?:number): ArrayBuffer;
+    slice(begin: number, end?: number): ArrayBuffer;
 }
 
 interface ArrayBufferConstructor {
@@ -4222,7 +4189,7 @@ declare const Float64Array: Float64ArrayConstructor;
 /// ECMAScript Internationalization API
 /////////////////////////////
 
-declare module Intl {
+declare namespace Intl {
     interface CollatorOptions {
         usage?: string;
         localeMatcher?: string;
@@ -4250,7 +4217,7 @@ declare module Intl {
         new (locales?: string | string[], options?: CollatorOptions): Collator;
         (locales?: string | string[], options?: CollatorOptions): Collator;
         supportedLocalesOf(locales: string | string[], options?: CollatorOptions): string[];
-    }
+    };
 
     interface NumberFormatOptions {
         localeMatcher?: string;
@@ -4287,7 +4254,7 @@ declare module Intl {
         new (locales?: string | string[], options?: NumberFormatOptions): NumberFormat;
         (locales?: string | string[], options?: NumberFormatOptions): NumberFormat;
         supportedLocalesOf(locales: string | string[], options?: NumberFormatOptions): string[];
-    }
+    };
 
     interface DateTimeFormatOptions {
         localeMatcher?: string;
@@ -4330,7 +4297,7 @@ declare module Intl {
         new (locales?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat;
         (locales?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat;
         supportedLocalesOf(locales: string | string[], options?: DateTimeFormatOptions): string[];
-    }
+    };
 }
 
 interface String {
@@ -5773,6 +5740,7 @@ interface AudioNode extends EventTarget {
     readonly numberOfInputs: number;
     readonly numberOfOutputs: number;
     connect(destination: AudioNode, output?: number, input?: number): AudioNode;
+    connect(destination: AudioParam, output?: number): void;
     disconnect(output?: number): void;
     disconnect(destination: AudioNode, output?: number, input?: number): void;
     disconnect(destination: AudioParam, output?: number): void;
@@ -6529,7 +6497,9 @@ interface CanvasRenderingContext2D extends Object, CanvasPathMethods {
     createPattern(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement, repetition: string): CanvasPattern;
     createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number): CanvasGradient;
     drawFocusIfNeeded(element: Element): void;
-    drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement, offsetX: number, offsetY: number, width?: number, height?: number, canvasOffsetX?: number, canvasOffsetY?: number, canvasImageWidth?: number, canvasImageHeight?: number): void;
+    drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, dstX: number, dstY: number): void;
+    drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, dstX: number, dstY: number, dstW: number, dstH: number): void;
+    drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, srcX: number, srcY: number, srcW: number, srcH: number, dstX: number, dstY: number, dstW: number, dstH: number): void;
     fill(fillRule?: string): void;
     fillRect(x: number, y: number, w: number, h: number): void;
     fillText(text: string, x: number, y: number, maxWidth?: number): void;
@@ -6826,10 +6796,10 @@ declare var DOMException: {
 }
 
 interface DOMImplementation {
-    createDocument(namespaceURI: string | null, qualifiedName: string | null, doctype: DocumentType): Document;
+    createDocument(namespaceURI: string | null, qualifiedName: string | null, doctype: DocumentType | null): Document;
     createDocumentType(qualifiedName: string, publicId: string, systemId: string): DocumentType;
     createHTMLDocument(title: string): Document;
-    hasFeature(): boolean;
+    hasFeature(feature: string | null, version: string | null): boolean;
 }
 
 declare var DOMImplementation: {
@@ -7826,6 +7796,7 @@ declare var Document: {
 }
 
 interface DocumentFragment extends Node, NodeSelector, ParentNode {
+    getElementById(elementId: string): HTMLElement | null;
 }
 
 declare var DocumentFragment: {
@@ -16214,7 +16185,7 @@ interface URL {
     protocol: string;
     search: string;
     username: string;
-    readonly searchparams: URLSearchParams;
+    readonly searchParams: URLSearchParams;
     toString(): string;
 }
 
@@ -16538,12 +16509,12 @@ interface WebGLRenderingContext {
     stencilMaskSeparate(face: number, mask: number): void;
     stencilOp(fail: number, zfail: number, zpass: number): void;
     stencilOpSeparate(face: number, fail: number, zfail: number, zpass: number): void;
-    texImage2D(target: number, level: number, internalformat: number, width: number, height: number, border: number, format: number, type: number, pixels?: ArrayBufferView): void;
-    texImage2D(target: number, level: number, internalformat: number, format: number, type: number, pixels?: ImageData | HTMLVideoElement | HTMLImageElement | HTMLCanvasElement): void;
+    texImage2D(target: number, level: number, internalformat: number, width: number, height: number, border: number, format: number, type: number, pixels: ArrayBufferView | null): void;
+    texImage2D(target: number, level: number, internalformat: number, format: number, type: number, pixels: ImageBitmap | ImageData | HTMLVideoElement | HTMLImageElement | HTMLCanvasElement): void;
     texParameterf(target: number, pname: number, param: number): void;
     texParameteri(target: number, pname: number, param: number): void;
-    texSubImage2D(target: number, level: number, xoffset: number, yoffset: number, width: number, height: number, format: number, type: number, pixels?: ArrayBufferView): void;
-    texSubImage2D(target: number, level: number, xoffset: number, yoffset: number, format: number, type: number, pixels?: ImageData | HTMLVideoElement | HTMLImageElement | HTMLCanvasElement): void;
+    texSubImage2D(target: number, level: number, xoffset: number, yoffset: number, width: number, height: number, format: number, type: number, pixels: ArrayBufferView | null): void;
+    texSubImage2D(target: number, level: number, xoffset: number, yoffset: number, format: number, type: number, pixels: ImageBitmap | ImageData | HTMLVideoElement | HTMLImageElement | HTMLCanvasElement): void;
     uniform1f(location: WebGLUniformLocation | null, x: number): void;
     uniform1fv(location: WebGLUniformLocation, v: Float32Array | number[]): void;
     uniform1i(location: WebGLUniformLocation | null, x: number): void;
@@ -17637,6 +17608,8 @@ interface Window extends EventTarget, WindowTimers, WindowSessionStorage, Window
     webkitConvertPointFromNodeToPage(node: Node, pt: WebKitPoint): WebKitPoint;
     webkitConvertPointFromPageToNode(node: Node, pt: WebKitPoint): WebKitPoint;
     webkitRequestAnimationFrame(callback: FrameRequestCallback): number;
+    createImageBitmap(image: HTMLImageElement | SVGImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | ImageData | Blob, options?: ImageBitmapOptions): Promise<ImageBitmap>;
+    createImageBitmap(image: HTMLImageElement | SVGImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | ImageData | Blob, sx: number, sy: number, sw: number, sh: number, options?: ImageBitmapOptions): Promise<ImageBitmap>;
     scroll(options?: ScrollToOptions): void;
     scrollTo(options?: ScrollToOptions): void;
     scrollBy(options?: ScrollToOptions): void;
@@ -17850,6 +17823,7 @@ interface Body {
     blob(): Promise<Blob>;
     json(): Promise<any>;
     text(): Promise<string>;
+    formData(): Promise<FormData>;
 }
 
 interface CanvasPathMethods {
@@ -18212,6 +18186,21 @@ interface Canvas2DContextAttributes {
     [attribute: string]: boolean | string | undefined;
 }
 
+interface ImageBitmapOptions {
+    imageOrientation?: "none" | "flipY";
+    premultiplyAlpha?: "none" | "premultiply" | "default";
+    colorSpaceConversion?: "none" | "default";
+    resizeWidth?: number;
+    resizeHeight?: number;
+    resizeQuality?: "pixelated" | "low" | "medium" | "high";
+}
+
+interface ImageBitmap {
+    readonly width: number;
+    readonly height: number;
+    close(): void;
+}
+
 interface URLSearchParams {
     /**
       * Appends a specified key/value pair as a new search parameter.
@@ -18256,6 +18245,7 @@ interface NodeListOf<TNode extends Node> extends NodeList {
 interface HTMLCollectionOf<T extends Element> extends HTMLCollection {
     item(index: number): T;
     namedItem(name: string): T;
+    [index: number]: T;
 }
 
 interface BlobPropertyBag {
@@ -19217,6 +19207,8 @@ declare function webkitCancelAnimationFrame(handle: number): void;
 declare function webkitConvertPointFromNodeToPage(node: Node, pt: WebKitPoint): WebKitPoint;
 declare function webkitConvertPointFromPageToNode(node: Node, pt: WebKitPoint): WebKitPoint;
 declare function webkitRequestAnimationFrame(callback: FrameRequestCallback): number;
+declare function createImageBitmap(image: HTMLImageElement | SVGImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | ImageData | Blob, options?: ImageBitmapOptions): Promise<ImageBitmap>;
+declare function createImageBitmap(image: HTMLImageElement | SVGImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | ImageData | Blob, sx: number, sy: number, sw: number, sh: number, options?: ImageBitmapOptions): Promise<ImageBitmap>;
 declare function scroll(options?: ScrollToOptions): void;
 declare function scrollTo(options?: ScrollToOptions): void;
 declare function scrollBy(options?: ScrollToOptions): void;
@@ -19295,9 +19287,9 @@ type ScrollRestoration = "auto" | "manual";
 
 
 /////////////////////////////
-/// WorkerGlobalScope APIs 
+/// WorkerGlobalScope APIs
 /////////////////////////////
-// These are only available in a Web Worker 
+// These are only available in a Web Worker
 declare function importScripts(...urls: string[]): void;
 
 
@@ -19332,7 +19324,7 @@ interface TextStreamBase {
 
     /**
      * Closes a text stream.
-     * It is not necessary to close standard streams; they close automatically when the process ends. If 
+     * It is not necessary to close standard streams; they close automatically when the process ends. If
      * you close a standard stream, be aware that any other pointers to that standard stream become invalid.
      */
     Close(): void;

@@ -1,13 +1,13 @@
 /*
- *  Duktape public API for Duktape 2.0.2.
+ *  Duktape public API for Duktape 2.0.99.
  *
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 12e0741b105e53174202b7c15f55a95f6aa0bfb0 (v2.0.2).
- *  Git branch HEAD.
+ *  Git commit 1b562eec7eb5c94b986a00c49087250aca00a2e1 (v2.0.0-398-g1b562eec).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -87,6 +87,8 @@
  *  * Brett Vickers (https://github.com/beevik)
  *  * Dominik Okwieka (https://github.com/okitec)
  *  * Remko Tron\u00e7on (https://el-tramo.be)
+ *  * Romero Malaquias (rbsm@ic.ufal.br)
+ *  * Michael Drake <michael.drake@codethink.co.uk>
  *  
  *  Other contributions
  *  ===================
@@ -253,16 +255,16 @@ struct duk_time_components {
  * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
  * development version after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       20002L
+#define DUK_VERSION                       20099L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "12e0741b105e53174202b7c15f55a95f6aa0bfb0"
-#define DUK_GIT_DESCRIBE                  "v2.0.2"
-#define DUK_GIT_BRANCH                    "HEAD"
+#define DUK_GIT_COMMIT                    "1b562eec7eb5c94b986a00c49087250aca00a2e1"
+#define DUK_GIT_DESCRIBE                  "v2.0.0-398-g1b562eec"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        2
@@ -334,11 +336,13 @@ struct duk_time_components {
 #define DUK_COMPILE_EVAL                  (1 << 3)    /* compile eval code (instead of global code) */
 #define DUK_COMPILE_FUNCTION              (1 << 4)    /* compile function code (instead of global code) */
 #define DUK_COMPILE_STRICT                (1 << 5)    /* use strict (outer) context for global, eval, or function code */
-#define DUK_COMPILE_SAFE                  (1 << 6)    /* (internal) catch compilation errors */
-#define DUK_COMPILE_NORESULT              (1 << 7)    /* (internal) omit eval result */
-#define DUK_COMPILE_NOSOURCE              (1 << 8)    /* (internal) no source string on stack */
-#define DUK_COMPILE_STRLEN                (1 << 9)    /* (internal) take strlen() of src_buffer (avoids double evaluation in macro) */
-#define DUK_COMPILE_NOFILENAME            (1 << 10)    /* (internal) no filename on stack */
+#define DUK_COMPILE_SHEBANG               (1 << 6)    /* allow shebang ('#! ...') comment on first line of source */
+#define DUK_COMPILE_SAFE                  (1 << 7)    /* (internal) catch compilation errors */
+#define DUK_COMPILE_NORESULT              (1 << 8)    /* (internal) omit eval result */
+#define DUK_COMPILE_NOSOURCE              (1 << 9)    /* (internal) no source string on stack */
+#define DUK_COMPILE_STRLEN                (1 << 10)   /* (internal) take strlen() of src_buffer (avoids double evaluation in macro) */
+#define DUK_COMPILE_NOFILENAME            (1 << 11)   /* (internal) no filename on stack */
+#define DUK_COMPILE_FUNCEXPR              (1 << 12)   /* (internal) source is a function expression (used for Function constructor) */
 
 /* Flags for duk_def_prop() and its variants */
 #define DUK_DEFPROP_WRITABLE              (1 << 0)    /* set writable (effective if DUK_DEFPROP_HAVE_WRITABLE set) */
@@ -445,9 +449,9 @@ DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_throw_raw(duk_context *ctx));
 DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_fatal_raw(duk_context *ctx, const char *err_msg));
 #define duk_fatal(ctx,err_msg) \
 	(duk_fatal_raw((ctx), (err_msg)), (duk_ret_t) 0)
+DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_error_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, ...));
 
 #if defined(DUK_API_VARIADIC_MACROS)
-DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_error_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, ...));
 #define duk_error(ctx,err_code,...)  \
 	(duk_error_raw((ctx), (duk_errcode_t) (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), __VA_ARGS__), (duk_ret_t) 0)
 #define duk_generic_error(ctx,...)  \
@@ -516,6 +520,7 @@ DUK_API_NORETURN(DUK_EXTERNAL_DECL duk_ret_t duk_uri_error_stash(duk_context *ct
 #endif  /* DUK_API_VARIADIC_MACROS */
 
 DUK_API_NORETURN(DUK_EXTERNAL_DECL void duk_error_va_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, va_list ap));
+
 #define duk_error_va(ctx,err_code,fmt,ap)  \
 	(duk_error_va_raw((ctx), (duk_errcode_t) (err_code), (const char *) (DUK_FILE_MACRO), (duk_int_t) (DUK_LINE_MACRO), (fmt), (ap)), (duk_ret_t) 0)
 #define duk_generic_error_va(ctx,fmt,ap)  \
@@ -663,19 +668,18 @@ DUK_EXTERNAL_DECL void *duk_push_buffer_raw(duk_context *ctx, duk_size_t size, d
 #define duk_push_external_buffer(ctx) \
 	((void) duk_push_buffer_raw((ctx), 0, DUK_BUF_FLAG_DYNAMIC | DUK_BUF_FLAG_EXTERNAL))
 
-#define DUK_BUFOBJ_CREATE_ARRBUF       (1 << 4)  /* internal flag: create backing ArrayBuffer; keep in one byte */
 #define DUK_BUFOBJ_ARRAYBUFFER         0
-#define DUK_BUFOBJ_NODEJS_BUFFER       (1 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_DATAVIEW            (2 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_INT8ARRAY           (3 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_UINT8ARRAY          (4 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_UINT8CLAMPEDARRAY   (5 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_INT16ARRAY          (6 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_UINT16ARRAY         (7 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_INT32ARRAY          (8 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_UINT32ARRAY         (9 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_FLOAT32ARRAY        (10 | DUK_BUFOBJ_CREATE_ARRBUF)
-#define DUK_BUFOBJ_FLOAT64ARRAY        (11 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_NODEJS_BUFFER       1
+#define DUK_BUFOBJ_DATAVIEW            2
+#define DUK_BUFOBJ_INT8ARRAY           3
+#define DUK_BUFOBJ_UINT8ARRAY          4
+#define DUK_BUFOBJ_UINT8CLAMPEDARRAY   5
+#define DUK_BUFOBJ_INT16ARRAY          6
+#define DUK_BUFOBJ_UINT16ARRAY         7
+#define DUK_BUFOBJ_INT32ARRAY          8
+#define DUK_BUFOBJ_UINT32ARRAY         9
+#define DUK_BUFOBJ_FLOAT32ARRAY        10
+#define DUK_BUFOBJ_FLOAT64ARRAY        11
 
 DUK_EXTERNAL_DECL void duk_push_buffer_object(duk_context *ctx, duk_idx_t idx_buffer, duk_size_t byte_offset, duk_size_t byte_length, duk_uint_t flags);
 

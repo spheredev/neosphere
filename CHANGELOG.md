@@ -4,7 +4,10 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* Introducing built-in TypeScript support!
+* Adds tolerance for shebang lines (`#!...`) at the start of JS source files.
+* TypeScript is once again used as the default ES6 transpiler.  A source map is
+  embedded in each transpiled script that is used by SSJ Blue to facilitate
+  debugging.
 
 
 v4.5.8 - March 20, 2017
