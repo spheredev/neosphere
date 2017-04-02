@@ -4,8 +4,9 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* Fixes a long-standing bug in the RFN font loader that caused RFNv1 fonts to
-  be rendered without transparency.
+* Fixes a bug where Sphere v1 `drawZoomedText()` ignores non-opaque pixels.
+* Fixes a bug in the RFN font loader where RFNv1 (grayscale) fonts are loaded
+  without an alpha channel.
 
 
 v4.5.9 - March 31, 2017
