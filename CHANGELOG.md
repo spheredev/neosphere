@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.5.10 - April 3, 2017
+-----------------------
 
 * Fixes a bug where Sphere v1 `drawZoomedText()` ignores non-opaque pixels.
 * Fixes a bug in the RFN font loader where RFNv1 (grayscale) fonts are loaded
