@@ -3138,10 +3138,12 @@ js_Shape_draw(duk_context* ctx)
 static duk_ret_t
 js_new_Socket(duk_context* ctx)
 {
-	const char* hostname = duk_require_string(ctx, 0);
-	int port = duk_require_int(ctx, 1);
-
+	const char* hostname;
+	int         port;
 	socket_t*   socket;
+
+	hostname = duk_require_string(ctx, 0);
+	port = duk_require_int(ctx, 1);
 
 	if ((socket = connect_to_host(hostname, port, 1024)) != NULL)
 		duk_push_class_obj(ctx, "Socket", socket);
@@ -3156,6 +3158,7 @@ js_Socket_finalize(duk_context* ctx)
 	socket_t* socket;
 
 	socket = duk_require_class_obj(ctx, 0, "Socket");
+
 	free_socket(socket);
 	return 0;
 }
@@ -3167,7 +3170,7 @@ js_Socket_get_bytesPending(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "Socket");
-	duk_pop(ctx);
+
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	duk_push_uint(ctx, (duk_uint_t)get_socket_read_size(socket));
@@ -3212,7 +3215,7 @@ js_Socket_get_remotePort(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "Socket");
-	duk_pop(ctx);
+
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
 	if (!is_socket_live(socket))
@@ -3228,8 +3231,9 @@ js_Socket_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "Socket");
-	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	duk_pop(ctx);
+	
+	duk_push_null(ctx);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (socket != NULL)
 		free_socket(socket);
 	return 0;
@@ -3245,7 +3249,7 @@ js_Socket_read(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "Socket");
-	duk_pop(ctx);
+
 	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");

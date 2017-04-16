@@ -1,13 +1,18 @@
 miniSphere Changelog
 ====================
 
+v4.5.11 - TBD
+-------------
+
+* Fixes a bug where regular expressions containing an octal escape (e.g. `\3`)
+  cause a SyntaxError.
+
 v4.5.10 - April 3, 2017
 -----------------------
 
 * Fixes a bug where Sphere v1 `drawZoomedText()` ignores non-opaque pixels.
 * Fixes a bug in the RFN font loader where RFNv1 (grayscale) fonts are loaded
   without an alpha channel.
-
 
 v4.5.9 - March 31, 2017
 -----------------------

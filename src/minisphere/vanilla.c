@@ -3052,7 +3052,9 @@ js_Font_drawTextBox(duk_context* ctx)
 		duk_push_string(ctx, text);
 		duk_push_int(ctx, w);
 		duk_call_method(ctx, 2);
-		duk_get_prop_string(ctx, -1, "length"); num_lines = duk_get_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "length");
+		num_lines = duk_get_int(ctx, -1);
+		duk_pop(ctx);
 		line_height = font_height(font);
 		for (i = 0; i < num_lines; ++i) {
 			duk_get_prop_index(ctx, -1, i); line_text = duk_get_string(ctx, -1); duk_pop(ctx);
@@ -3067,30 +3069,35 @@ js_Font_drawTextBox(duk_context* ctx)
 static duk_ret_t
 js_Font_drawZoomedText(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	float scale = duk_to_number(ctx, 2);
-	const char* text = duk_to_string(ctx, 3);
-
 	ALLEGRO_BITMAP* bitmap;
 	font_t*         font;
+	int             height;
 	color_t         mask;
-	int             text_w, text_h;
+	float           scale;
+	const char*     text;
+	int             width;
+	int             x;
+	int             y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	scale = duk_to_number(ctx, 2);
+	text = duk_to_string(ctx, 3);
 
 	duk_push_this(ctx);
 	font = duk_require_class_obj(ctx, -1, "ssFont");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	if (!screen_is_skipframe(g_screen)) {
-		text_w = font_get_width(font, text);
-		text_h = font_height(font);
+		width = font_get_width(font, text);
+		height = font_height(font);
 		apply_blend_mode(BLEND_REPLACE);
-		bitmap = al_create_bitmap(text_w, text_h);
+		bitmap = al_create_bitmap(width, height);
 		al_set_target_bitmap(bitmap);
 		font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
 		al_set_target_backbuffer(screen_display(g_screen));
 		reset_blender();
-		al_draw_scaled_bitmap(bitmap, 0, 0, text_w, text_h, x, y, text_w * scale, text_h * scale, 0x0);
+		al_draw_scaled_bitmap(bitmap, 0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 		al_destroy_bitmap(bitmap);
 	}
 	return 0;
@@ -3134,15 +3141,16 @@ js_Font_getHeight(duk_context* ctx)
 static duk_ret_t
 js_Font_getStringHeight(duk_context* ctx)
 {
-	const char* text = duk_to_string(ctx, 0);
-	int width = duk_to_int(ctx, 1);
-
-	font_t* font;
-	int     num_lines;
+	font_t*     font;
+	int         num_lines;
+	const char* text;
+	int         width;
 
 	duk_push_this(ctx);
 	font = duk_require_class_obj(ctx, -1, "ssFont");
-	duk_pop(ctx);
+	text = duk_to_string(ctx, 0);
+	width = duk_to_int(ctx, 1);
+
 	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
 	duk_push_this(ctx);
 	duk_push_string(ctx, text);
