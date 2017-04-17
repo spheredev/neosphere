@@ -521,7 +521,9 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 			duk_push_null(ctx);  // stack balancing
 		}
 		if (as_mjs || duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
-			// potentially ES 2015+ code; try running the script through Babel.
+			// potentially ES 2015+ code; try transpiling it.
+			// note: it might be better to eventually lift this functionality into a separate source file.
+			//       it's pretty involved due to Duktape's stack API and is kind of an eyesore here.
 			duk_push_global_stash(ctx);
 			if (!duk_has_prop_string(ctx, -1, "babelCore")) {
 				duk_pop(ctx);
