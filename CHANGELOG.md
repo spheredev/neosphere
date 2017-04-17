@@ -4,6 +4,7 @@ miniSphere Changelog
 v4.5.11 - TBD
 -------------
 
+* Now uses TypeScript to transpile Cellscripts, improving build times a bit.
 * Fixes a bug where regular expressions containing an octal escape (e.g. `\3`)
   cause a SyntaxError.
 

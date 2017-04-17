@@ -347,7 +347,7 @@ namespace miniSphere.Gdk.Plugins
                 var sourceCode = await Inferior.GetSource(fileName);
                 if (sourceCode == null)
                     return;
-                var regex = new Regex(@"\s*\/\/(?:@|#) sourceMappingURL=data:application\/json;base64,(\S*)$", RegexOptions.Multiline);
+                var regex = new Regex(@"\s*\/\/(?:@|#) sourceMappingURL=data:application\/json;.*base64,(\S*)$", RegexOptions.Multiline);
                 var match = regex.Match(sourceCode);
                 if (match.Success)
                 {

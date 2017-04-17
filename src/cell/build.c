@@ -112,10 +112,10 @@ build_new(const path_t* source_path, const path_t* out_path)
 	// prepare environment for ECMAScript 2015 support
 	if (fs_fexist(fs, "#/shim.js") && !eval_cjs_module(ctx, fs, "#/shim.js", false))
 		return false;
-	if (fs_fexist(fs, "#/babel-core.js")) {
+	if (fs_fexist(fs, "#/typescript.js")) {
 		duk_push_global_stash(ctx);
-		if (eval_cjs_module(ctx, fs, "#/babel-core.js", false))
-			duk_put_prop_string(ctx, -2, "babelCore");
+		if (eval_cjs_module(ctx, fs, "#/typescript.js", false))
+			duk_put_prop_string(ctx, -2, "TypeScript");
 		else
 			duk_pop(ctx);
 		duk_pop(ctx);
@@ -525,29 +525,29 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 			// note: it might be better to eventually lift this functionality into a separate source file.
 			//       it's pretty involved due to Duktape's stack API and is kind of an eyesore here.
 			duk_push_global_stash(ctx);
-			if (!duk_has_prop_string(ctx, -1, "babelCore")) {
+			if (!duk_has_prop_string(ctx, -1, "TypeScript")) {
 				duk_pop(ctx);
 				goto on_error;  // no ES 2015 support
 			}
-			duk_get_prop_string(ctx, -1, "babelCore");
-			duk_get_prop_string(ctx, -1, "transform");
+			duk_get_prop_string(ctx, -1, "TypeScript");
+			duk_get_prop_string(ctx, -1, "transpileModule");
 			duk_swap_top(ctx, -2);
 			duk_push_lstring_t(ctx, code_string);
 			if (as_mjs) {
 				duk_eval_string(ctx,
-					"({ sourceType: 'module', comments: false, retainLines: true,"
-					"   presets: [ 'latest' ] })");
+					"({ target: 1, module: 1, allowJs: true, downlevelIteration: true, newLine: 1,"
+					"   noImplicitUseStrict: false })");
 			}
 			else {
 				duk_eval_string(ctx,
-					"({ sourceType: 'script', comments: false, retainLines: true,"
-					"   presets: [ [ 'latest', { es2015: { modules: false } } ] ] })");
+					"({ target: 1, module: 1, allowJs: true, downlevelIteration: true, newLine: 1,"
+					"   noImplicitUseStrict: true })");
 			}
 			if (duk_pcall_method(ctx, 2) != DUK_EXEC_SUCCESS) {
 				duk_remove(ctx, -2);
 				goto on_error;
 			}
-			duk_get_prop_string(ctx, -1, "code");
+			duk_get_prop_string(ctx, -1, "outputText");
 			lstr_free(code_string);
 			code_string = duk_require_lstring_t(ctx, -1);
 			duk_pop_n(ctx, 4);
