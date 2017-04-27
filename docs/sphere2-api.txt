@@ -151,7 +151,7 @@ Sphere.Platform [read-only]
 
 Sphere.Version [read-only]
 
-    The version number of the engine; e.g. "X.X.X".
+    The version number of the engine; e.g. "4.5.11".
 
 Sphere.APIVersion [read-only]
 Sphere.APILevel [read-only]

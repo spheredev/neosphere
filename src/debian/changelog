@@ -1,3 +1,12 @@
+minisphere (4.5.11) trusty; urgency=low
+
+* Now uses TypeScript to transpile Cellscripts, improving build times a bit.
+* Fixes a bug where SSJ repeats the previous action after an invalid command.
+* Fixes a bug where regular expressions containing an octal escape (e.g. `\3`)
+  cause a SyntaxError.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 27 Apr 2017 00:00:00 -0500
+
 minisphere (4.5.10) trusty; urgency=low
 
   * Fixes a bug where Sphere v1 `drawZoomedText()` ignores non-opaque pixels.

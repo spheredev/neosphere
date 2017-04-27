@@ -1,10 +1,11 @@
 miniSphere Changelog
 ====================
 
-v4.5.11 - TBD
--------------
+v4.5.11 - April 27, 2017
+------------------------
 
 * Now uses TypeScript to transpile Cellscripts, improving build times a bit.
+* Fixes a bug where SSJ repeats the previous action after an invalid command.
 * Fixes a bug where regular expressions containing an octal escape (e.g. `\3`)
   cause a SyntaxError.
 

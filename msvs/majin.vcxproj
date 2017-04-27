@@ -22,7 +22,7 @@
     <ProjectGuid>{905AD0D1-6415-4899-A093-EE53014FD31B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>majin</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
     <ProjectName>Majin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

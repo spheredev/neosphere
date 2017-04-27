@@ -22,7 +22,7 @@
     <ProjectGuid>{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>cell</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
     <ProjectName>Cell compiler</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
