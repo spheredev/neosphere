@@ -217,9 +217,8 @@ do_command_line(session_t* obj)
 	// if the command line is empty, this is a cue from the user that we should
 	// repeat the last command.  the implementation of this is a bit hacky and would benefit
 	// from some refactoring in the future.
-	if (!(verb = resolve_command(command))) {
+	if (command_len(command) == 0) {
 		command_free(command);
-		command = NULL;
 		switch (obj->auto_action) {
 		case AUTO_CONTINUE:
 			command = command_parse("continue");
@@ -249,11 +248,13 @@ do_command_line(session_t* obj)
 		default:
 			printf("nothing to repeat, please enter a valid SSJ command.\n");
 			printf("type 'help' to see a list of usable commands.\n");
+			command = NULL;
 			goto finished;
 		}
-		if (!(verb = resolve_command(command)))
-			goto finished;
 	}
+
+	if (!(verb = resolve_command(command)))
+		goto finished;
 
 	// figure out which handler to run based on the command name. this could
 	// probably be refactored to get rid of the massive if/elseif tower, but for
