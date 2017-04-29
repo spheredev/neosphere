@@ -1,8 +1,7 @@
 miniSphere
 ==========
 
-[![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)]
-(https://travis-ci.org/fatcerberus/minisphere)
+[![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)](https://travis-ci.org/fatcerberus/minisphere)
 
 **miniSphere** is the official successor to Chad Austin's original *Sphere*
 JavaScript game engine, written from the ground up in C.  Games are coded in
@@ -100,7 +99,7 @@ Download
 ========
 
 The latest stable miniSphere release at the time of this writing is
-**miniSphere 4.5.9**, released on Friday, March 31, 2017.  miniSphere
+**miniSphere 4.5.11**, released on Thursday, April 27, 2017.  miniSphere
 binaries are provided through GitHub, and the latest version is always
 available for download here:
 
