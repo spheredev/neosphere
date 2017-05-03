@@ -17,7 +17,6 @@ const from    = require('from');
 const Log     = require('logger').Log;
 const prim    = require('prim');
 const scenes  = require('scenes');
-const threads = require('threads');
 
 var keyboard = Keyboard.Default;
 var mouse = Mouse.Default;
@@ -45,10 +44,10 @@ new scenes.Scene()
 		.tween(cursorColor, 0.25 * fps, 'easeOutSine', { alpha: 64 })
 	.end()
 	.run();
-threads.create({
-	update:	  update,
-	render:	  render,
-	getInput: getInput,
+Dispatch.onRender(render, Infinity);
+Dispatch.onUpdate(function() {
+	getInput();
+	update();
 }, Infinity);
 
 print(Sphere.Game.name + " miniRT Console");
@@ -98,10 +97,8 @@ function executeCommand(command)
 		.where(function(c) { return instruction == c.instruction; })
 		.each(function(desc)
 	{
-		threads.create({
-			update: function() {
-				desc.method.apply(desc.that, tokens.slice(2));
-			}
+		Dispatch.now(function() {
+			desc.method.apply(desc.that, tokens.slice(2));
 		});
 	});
 }
