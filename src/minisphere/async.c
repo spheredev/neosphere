@@ -13,8 +13,7 @@ struct job
 	script_t*    script;
 };
 
-static int sort_jobs         (const void* in_a, const void* in_b);
-static int sort_jobs_inverse (const void* in_a, const void* in_b);
+static int sort_jobs (const void* in_a, const void* in_b);
 
 static int64_t   s_next_token = 1;
 static vector_t* s_onetime;
@@ -102,15 +101,12 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 	job->hint = hint;
 	job->priority = priority;
 	vector_push(s_recurring, &job);
-	
+
 	// note: render jobs are sorted in reverse priority order.  this
 	//       ensures higher priority jobs get rendered later, i.e. closer
 	//       to the screen.
-	if (hint == ASYNC_RENDER)
-		vector_sort(s_recurring, sort_jobs_inverse);
-	else
-		vector_sort(s_recurring, sort_jobs);
-	
+	vector_sort(s_recurring, sort_jobs);
+
 	return job->token;
 }
 
@@ -159,32 +155,15 @@ sort_jobs(const void* in_a, const void* in_b)
 
 	job_t*  job_a;
 	job_t*  job_b;
-	double  delta;
+	double  delta = 0.0;
 	int64_t fifo_delta;
 
 	job_a = *(job_t**)in_a;
 	job_b = *(job_t**)in_b;
-	delta = job_b->priority - job_a->priority;
-	fifo_delta = job_a->token - job_b->token;
-	return delta < 0.0 ? -1 : delta > 0.0 ? 1
-		: fifo_delta < 0 ? -1 : fifo_delta > 0 ? 1
-		: 0;
-}
-
-static int
-sort_jobs_inverse(const void* in_a, const void* in_b)
-{
-	// it's kind of dumb that qsort() doesn't take a userdata pointer,
-	// otherwise we wouldn't need this duplicate comparer function.
-
-	job_t*  job_a;
-	job_t*  job_b;
-	double  delta;
-	int64_t fifo_delta;
-	
-	job_a = *(job_t**)in_a;
-	job_b = *(job_t**)in_b;
-	delta = job_a->priority - job_b->priority;
+	if (job_a->hint == ASYNC_UPDATE && job_b->hint == ASYNC_UPDATE)
+		delta = job_b->priority - job_a->priority;
+	else if (job_a->hint == ASYNC_RENDER && job_b->hint == ASYNC_RENDER)
+		delta = job_a->priority - job_b->priority;
 	fifo_delta = job_a->token - job_b->token;
 	return delta < 0.0 ? -1 : delta > 0.0 ? 1
 		: fifo_delta < 0 ? -1 : fifo_delta > 0 ? 1
