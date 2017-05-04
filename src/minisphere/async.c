@@ -95,6 +95,11 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 
 	if (s_recurring == NULL)
 		return 0;
+	if (hint == ASYNC_RENDER) {
+		// invert priority for render jobs.  this ensures higher priority jobs
+		// get rendered later in a frame, i.e. closer to the screen.
+		priority = -priority;
+	}
 	job = calloc(1, sizeof(job_t));
 	job->token = s_next_token++;
 	job->script = script;
@@ -102,9 +107,6 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 	job->priority = priority;
 	vector_push(s_recurring, &job);
 
-	// note: render jobs are sorted in reverse priority order.  this
-	//       ensures higher priority jobs get rendered later, i.e. closer
-	//       to the screen.
 	vector_sort(s_recurring, sort_jobs);
 
 	return job->token;
@@ -160,10 +162,7 @@ sort_jobs(const void* in_a, const void* in_b)
 
 	job_a = *(job_t**)in_a;
 	job_b = *(job_t**)in_b;
-	if (job_a->hint == ASYNC_UPDATE && job_b->hint == ASYNC_UPDATE)
-		delta = job_b->priority - job_a->priority;
-	else if (job_a->hint == ASYNC_RENDER && job_b->hint == ASYNC_RENDER)
-		delta = job_a->priority - job_b->priority;
+	delta = job_b->priority - job_a->priority;
 	fifo_delta = job_a->token - job_b->token;
 	return delta < 0.0 ? -1 : delta > 0.0 ? 1
 		: fifo_delta < 0 ? -1 : fifo_delta > 0 ? 1
