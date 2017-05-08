@@ -330,6 +330,8 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		}
 		last_filename = filename;
 	}
+	if (num_matches > 1)
+		visor_error(build->visor, "%d-way conflict '%s'", num_matches, filename);
 	vector_free(sorted_targets);
 	if (visor_num_errors(build->visor) > 0) {
 		visor_end_op(build->visor);
