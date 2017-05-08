@@ -1,6 +1,14 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* `term` now uses the Dispatch API internally instead of `threads`.
+* Fixes a bug where `Dispatch.onRender()` jobs are called in reverse order
+  following a call to `Dispatch.onUpdate()`.
+
+
 v4.5.11 - April 27, 2017
 ------------------------
 
