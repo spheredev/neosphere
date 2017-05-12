@@ -29,11 +29,11 @@ enum file_op
 };
 
 static duk_ret_t js_require                 (duk_context* ctx);
-static duk_ret_t js_describe                (duk_context* ctx);
 static duk_ret_t js_error                   (duk_context* ctx);
 static duk_ret_t js_files                   (duk_context* ctx);
 static duk_ret_t js_install                 (duk_context* ctx);
 static duk_ret_t js_warn                    (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Game         (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Platform     (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Version      (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory      (duk_context* ctx);
@@ -123,11 +123,11 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	// initialize the Cellscript API
 	api_init(ctx);
-	api_define_function(ctx, NULL, "describe", js_describe);
 	api_define_function(ctx, NULL, "error", js_error);
 	api_define_function(ctx, NULL, "files", js_files);
 	api_define_function(ctx, NULL, "install", js_install);
 	api_define_function(ctx, NULL, "warn", js_warn);
+	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop(ctx, "Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
@@ -159,6 +159,12 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_const(ctx, "FileOp", "Write", FILE_OP_WRITE);
 	api_define_const(ctx, "FileOp", "Update", FILE_OP_UPDATE);
 
+	// game manifest (gets JSON encoded at end of build)
+	duk_push_global_stash(ctx);
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "descriptor");
+	duk_pop(ctx);
+	
 	// create a Tool for the install() function to use
 	duk_push_global_stash(ctx);
 	duk_push_c_function(ctx, install_target, DUK_VARARGS);
@@ -889,23 +895,6 @@ write_manifests(build_t* build)
 }
 
 static duk_ret_t
-js_describe(duk_context* ctx)
-{
-	const char* title;
-
-	title = duk_require_string(ctx, 0);
-	duk_require_object_coercible(ctx, 1);
-
-	duk_push_global_stash(ctx);
-	duk_dup(ctx, 1);
-	duk_dup(ctx, 0);
-	duk_put_prop_string(ctx, -2, "name");
-	duk_put_prop_string(ctx, -2, "descriptor");
-
-	return 0;
-}
-
-static duk_ret_t
 js_error(duk_context* ctx)
 {
 	build_t*    build;
@@ -1057,6 +1046,24 @@ js_warn(duk_context* ctx)
 
 	visor_warn(build->visor, "%s", message);
 	return 0;
+}
+
+static duk_ret_t
+js_Sphere_get_Game(duk_context* ctx)
+{
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "descriptor");
+
+	duk_push_this(ctx);
+	duk_push_string(ctx, "Game");
+	duk_dup(ctx, -3);
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+		| DUK_DEFPROP_CLEAR_ENUMERABLE
+		| DUK_DEFPROP_CLEAR_WRITABLE
+		| DUK_DEFPROP_SET_CONFIGURABLE);
+	duk_pop(ctx);
+
+	return 1;
 }
 
 static duk_ret_t

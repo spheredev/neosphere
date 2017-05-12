@@ -4,7 +4,10 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* `term` now uses the Dispatch API internally instead of `threads`.
+* Adds support for `Sphere.Game` in Cellscripts, allowing direct modification
+  of the JSON manifest.
+* Removes `describe()` from the Cellscript API.
+* Fixes miniRT `term` to use the Dispatch API internally instead of `threads`.
 * Fixes a bug where `Dispatch.onRender()` jobs are called in reverse order
   following a call to `Dispatch.onUpdate()`.
 * Fixes a bug where Cell will sometimes not detect a filename conflict.
