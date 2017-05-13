@@ -61,6 +61,16 @@ The functions and properties below are available for use at all times, by all
 Cellscripts and modules.  No `require()` or `import` statements are necessary
 to use them.
 
+Sphere.Game [read-only]
+
+    An object whose properties will be written to the game's JSON manifest at
+    the end of the build.  For example, `Sphere.Game.name` is the game title.
+    If you need to set multiple fields at once, use `Object.assign()`.
+
+    Note: This is "read-only" only insofar as it can't be reassigned.  You are
+          free to do as you please with the object it refers to, but note that
+          only JSON-compatible values will actually be written to `game.json`.
+
 Sphere.Platform [read-only]
 
     The name of the compiler, "Cell".
@@ -68,21 +78,6 @@ Sphere.Platform [read-only]
 Sphere.Version [read-only]
 
     The version number of the compiler; e.g., "X.X.X".
-
-describe(title, metadata);
-
-    Defines the basic set of data to include in the game manifest.  `title` is
-    the title of the game being built and will be encoded as a property called
-    `name` in the manifest.  Everything in `metadata` will be JSON encoded and
-    the output stored in the manifest as-is.
-
-    Note that all values written to the game manifest are accessible to
-    Sphere v2 game code through `system.game`.  This provides a convenient
-    mechanism to associate static data, such as debug flags, with a built game.
-
-    Note: Values in `metadata` may be overridden by other parts of the build.
-          For example, the 'transpile' module may write generated source maps
-          to the manifest under `sourceMaps`.
 
 error(message);
 
