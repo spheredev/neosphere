@@ -4336,6 +4336,7 @@ js_Surface_cloneSection(duk_context* ctx)
 	if ((new_image = image_new(width, height)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
 	al_set_target_bitmap(image_bitmap(new_image));
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
 	duk_push_class_obj(ctx, "ssSurface", new_image);
@@ -4806,6 +4807,7 @@ js_Surface_rotate(duk_context* ctx)
 	if ((new_image = image_new(new_w, new_h)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failed to create new surface bitmap");
 	al_set_target_bitmap(image_bitmap(new_image));
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
 	al_set_target_backbuffer(screen_display(g_screen));
 

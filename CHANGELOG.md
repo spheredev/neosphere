@@ -10,6 +10,8 @@ vX.X.X - TBD
 * Fixes miniRT `term` to use the Dispatch API internally instead of `threads`.
 * Fixes a bug where `Dispatch.onRender()` jobs are called in reverse order
   following a call to `Dispatch.onUpdate()`.
+* Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
+  could introduce graphical artifacts on some platforms.
 * Fixes a bug where Cell will sometimes not detect a filename conflict.
 
 
