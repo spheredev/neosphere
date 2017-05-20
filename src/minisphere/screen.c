@@ -54,6 +54,9 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 
 	console_log(1, "initializing render context at %dx%d", x_size, y_size);
 
+	// try to create a display. if we can't get a programmable pipeline, try again but
+	// only request bare OpenGL. keep in mind that if this happens, shader support will be
+	// disabled.
 	x_scale = x_size <= 400 && y_size <= 300 ? 2.0 : 1.0;
 	y_scale = x_scale;
 #ifdef MINISPHERE_USE_SHADERS

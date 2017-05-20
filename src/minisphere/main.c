@@ -191,9 +191,7 @@ main(int argc, char* argv[])
 	init_map_engine_api(g_duk);
 	initialize_pegasus_api(g_duk);
 
-	// try to create a display. if we can't get a programmable pipeline, try again but
-	// only request bare OpenGL. keep in mind that if this happens, shader support will be
-	// disabled.
+	// set up the render context ("screen") so we can draw stuff
 	fs_get_resolution(g_fs, &g_res_x, &g_res_y);
 	if (!(icon = image_load("icon.png")))
 		icon = image_load("#/icon.png");
@@ -232,21 +230,20 @@ main(int argc, char* argv[])
 	// switch to fullscreen if necessary and initialize clipping
 	if (use_fullscreen)
 		screen_toggle_fullscreen(g_screen);
-
 	screen_show_mouse(g_screen, false);
+
+	// load the core-js polyfill (ES2015+ builtins)
 	if (sfs_fexist(g_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
-	// display status message if we need to wait for SSJ
+	// enable the SSJ debug server, wait for a connection if requested.
+#if defined(MINISPHERE_SPHERUN)
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_draw_status(g_screen, "waiting for SSJ", color_new(255, 255, 255, 255));
+		screen_draw_status(g_screen, "waiting for debugger", color_new(255, 255, 255, 255));
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
-
-	// enable the SSJ debug server
-#if defined(MINISPHERE_SPHERUN)
 	initialize_debugger(want_debug, false);
 #endif
 
