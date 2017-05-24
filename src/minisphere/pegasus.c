@@ -300,6 +300,10 @@ static duk_ret_t js_RNG_finalize               (duk_context* ctx);
 static duk_ret_t js_RNG_get_state              (duk_context* ctx);
 static duk_ret_t js_RNG_set_state              (duk_context* ctx);
 static duk_ret_t js_RNG_next                   (duk_context* ctx);
+static duk_ret_t js_new_Sample                 (duk_context* ctx);
+static duk_ret_t js_Sample_finalize            (duk_context* ctx);
+static duk_ret_t js_Sample_get_fileName        (duk_context* ctx);
+static duk_ret_t js_Sample_play                (duk_context* ctx);
 static duk_ret_t js_new_Server                 (duk_context* ctx);
 static duk_ret_t js_Server_finalize            (duk_context* ctx);
 static duk_ret_t js_Server_close               (duk_context* ctx);
@@ -481,6 +485,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
 	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_define_method(ctx, "RNG", "next", js_RNG_next);
+	api_define_class(ctx, "Sample", js_new_Sample, js_Sample_finalize);
+	api_define_property(ctx, "Sample", "fileName", js_Sample_get_fileName, NULL);
+	api_define_method(ctx, "Sample", "play", js_Sample_play);
 	api_define_class(ctx, "Server", js_new_Server, js_Server_finalize);
 	api_define_method(ctx, "Server", "close", js_Server_close);
 	api_define_method(ctx, "Server", "accept", js_Server_accept);
@@ -2899,16 +2906,70 @@ js_RNG_next(duk_context* ctx)
 }
 
 static duk_ret_t
+js_new_Sample(duk_context* ctx)
+{
+	const char* filename;
+	sample_t*   sample;
+
+	filename = duk_require_path(ctx, 0, NULL, false, false);
+
+	if (!(sample = sample_new(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sample `%s`", filename);
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Sample", sample);
+	return 0;
+}
+
+static duk_ret_t
+js_Sample_finalize(duk_context* ctx)
+{
+	sample_t* sample;
+
+	sample = duk_require_class_obj(ctx, 0, "Sample");
+	sample_free(sample);
+	return 0;
+}
+
+static duk_ret_t
+js_Sample_get_fileName(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "Sample");
+
+	duk_push_string(ctx, sample_path(sample));
+	return 1;
+}
+
+static duk_ret_t
+js_Sample_play(duk_context* ctx)
+{
+	mixer_t*  mixer;
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "Sample");
+	mixer = duk_require_class_obj(ctx, 0, "Mixer");
+
+	sample_play(sample, mixer);
+	return 0;
+}
+
+static duk_ret_t
 js_new_Server(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int port = duk_require_int(ctx, 0);
-	int max_backlog = n_args >= 2 ? duk_require_int(ctx, 1) : 16;
-
+	int       max_backlog;
+	int       num_args;
+	int       port;
 	socket_t* socket;
 
+	num_args = duk_get_top(ctx);
+	port = duk_require_int(ctx, 0);
+	max_backlog = num_args >= 2 ? duk_require_int(ctx, 1) : 16;
 	if (max_backlog <= 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "max_backlog cannot be <= 0", max_backlog);
+
 	if (socket = listen_on_port(NULL, port, 1024, max_backlog))
 		duk_push_class_obj(ctx, "Server", socket);
 	else
@@ -2919,7 +2980,7 @@ js_new_Server(duk_context* ctx)
 static duk_ret_t
 js_Server_finalize(duk_context* ctx)
 {
-	socket_t*   socket;
+	socket_t* socket;
 
 	socket = duk_require_class_obj(ctx, 0, "Server");
 	free_socket(socket);

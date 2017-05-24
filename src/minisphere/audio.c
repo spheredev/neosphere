@@ -39,6 +39,15 @@ struct sound
 	ALLEGRO_AUDIO_STREAM* stream;
 };
 
+struct sample
+{
+	unsigned int             refcount;
+	unsigned int             id;
+	char*                    path;
+	ALLEGRO_SAMPLE*          sample;
+	ALLEGRO_SAMPLE_INSTANCE* stream;
+};
+
 static bool reload_sound  (sound_t* sound);
 static void update_stream (stream_t* stream);
 
@@ -46,6 +55,7 @@ static bool                 s_have_sound;
 static ALLEGRO_AUDIO_DEPTH  s_bit_depth;
 static ALLEGRO_CHANNEL_CONF s_channel_conf;
 static unsigned int         s_next_mixer_id = 0;
+static unsigned int         s_next_sample_id = 0;
 static unsigned int         s_next_sound_id = 0;
 static unsigned int         s_next_stream_id = 0;
 static vector_t*            s_playing_sounds;
@@ -67,7 +77,6 @@ audio_init(void)
 		return;
 	}
 	al_init_acodec_addon();
-	al_reserve_samples(10);
 	s_streams = vector_new(sizeof(stream_t*));
 	s_playing_sounds = vector_new(sizeof(sound_t*));
 }
@@ -220,12 +229,80 @@ mixer_set_gain(mixer_t* mixer, float gain)
 	mixer->gain = gain;
 }
 
+sample_t*
+sample_new(const char* path)
+{
+	ALLEGRO_SAMPLE* al_sample;
+	ALLEGRO_FILE*   file;
+	void*           file_data;
+	size_t          file_size;
+	sample_t*       sample = NULL;
+
+	console_log(2, "loading sample #%u from `%s`", s_next_sample_id, path);
+
+	if (!(file_data = sfs_fslurp(g_fs, path, NULL, &file_size)))
+		goto on_error;
+	file = al_open_memfile(file_data, file_size, "rb");
+	al_sample = al_load_sample_f(file, strrchr(path, '.'));
+	al_fclose(file);
+
+	sample = calloc(1, sizeof(sample_t));
+	sample->id = s_next_sample_id++;
+	sample->path = strdup(path);
+	sample->sample = al_sample;
+	return sample_ref(sample);
+
+on_error:
+	console_log(2, "    failed to load sample #%u", s_next_sample_id);
+	free(sample);
+	return NULL;
+}
+
+sample_t*
+sample_ref(sample_t* sample)
+{
+	++sample->refcount;
+	return sample;
+}
+
+void
+sample_free(sample_t* sample)
+{
+	if (sample == NULL || --sample->refcount > 0)
+		return;
+	
+	console_log(3, "disposing sample #%u no longer in use", sample->id);
+	al_destroy_sample(sample->sample);
+	free(sample);
+}
+
+const char*
+sample_path(const sample_t* sample)
+{
+	return sample->path;
+}
+
+void
+sample_play(sample_t* sample, mixer_t* mixer)
+{
+	ALLEGRO_SAMPLE_INSTANCE* stream;
+	
+	console_log(2, "playing sample #%u on mixer #%u", sample->id, mixer->id);
+
+	sample_ref(sample);
+	mixer_ref(mixer);
+	
+	stream = al_create_sample_instance(sample->sample);
+	al_attach_sample_instance_to_mixer(stream, mixer->ptr);
+	al_set_sample_instance_playing(stream, true);
+}
+
 sound_t*
 sound_new(const char* path)
 {
 	sound_t* sound;
 
-	console_log(2, "loading sound #%u as `%s`", s_next_sound_id, path);
+	console_log(2, "loading sound #%u from `%s`", s_next_sound_id, path);
 
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);

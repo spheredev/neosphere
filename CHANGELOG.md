@@ -4,10 +4,13 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Adds a new `Sample` class for loading sounds into memory instead of streaming
+  them.  This may reduce latency, and allows the same sound to be played back
+  multiple times simultaneously.
 * Adds support for `Sphere.Game` in Cellscripts, allowing direct modification
   of the JSON manifest.
+* Updates the "term" module to use `Dispatch` internally instead of Threads.
 * Removes `describe()` from the Cellscript API.
-* Fixes miniRT `term` to use the Dispatch API internally instead of `threads`.
 * Fixes a bug where `Dispatch.onRender()` jobs are called in reverse order
   following a call to `Dispatch.onUpdate()`.
 * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
