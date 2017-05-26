@@ -31,7 +31,6 @@ struct sound
 	float                 gain;
 	bool                  is_looping;
 	mixer_t*              mixer;
-	bool                  has_played;
 	char*                 path;
 	float                 pan;
 	float                 pitch;
@@ -44,23 +43,30 @@ struct sample
 	unsigned int             refcount;
 	unsigned int             id;
 	char*                    path;
-	ALLEGRO_SAMPLE*          sample;
-	ALLEGRO_SAMPLE_INSTANCE* stream;
+	ALLEGRO_SAMPLE*          ptr;
+};
+
+struct sample_instance
+{
+	mixer_t*                 mixer;
+	ALLEGRO_SAMPLE_INSTANCE* ptr;
+	sample_t*                sample;
 };
 
 static bool reload_sound  (sound_t* sound);
 static void update_stream (stream_t* stream);
 
-static bool                 s_have_sound;
+static vector_t*            s_active_samples;
+static vector_t*            s_active_sounds;
+static vector_t*            s_active_streams;
 static ALLEGRO_AUDIO_DEPTH  s_bit_depth;
 static ALLEGRO_CHANNEL_CONF s_channel_conf;
+static bool                 s_have_sound;
 static unsigned int         s_next_mixer_id = 0;
 static unsigned int         s_next_sample_id = 0;
 static unsigned int         s_next_sound_id = 0;
 static unsigned int         s_next_stream_id = 0;
-static vector_t*            s_playing_sounds;
 static unsigned int         s_num_refs = 0;
-static vector_t*            s_streams;
 
 void
 audio_init(void)
@@ -77,26 +83,35 @@ audio_init(void)
 		return;
 	}
 	al_init_acodec_addon();
-	s_streams = vector_new(sizeof(stream_t*));
-	s_playing_sounds = vector_new(sizeof(sound_t*));
+	s_active_streams = vector_new(sizeof(stream_t*));
+	s_active_samples = vector_new(sizeof(struct sample_instance));
+	s_active_sounds = vector_new(sizeof(sound_t*));
 }
 
 void
 audio_uninit(void)
 {
 	iter_t iter;
-	sound_t* *p_sound;
+	struct sample_instance *p_sample;
+	sound_t*               *p_sound;
 
 	if (--s_num_refs > 0)
 		return;
 
 	console_log(1, "shutting down audio subsystem");
 	
-	iter = vector_enum(s_playing_sounds);
+	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter))
 		sound_free(*p_sound);
-	vector_free(s_playing_sounds);
-	vector_free(s_streams);
+	vector_free(s_active_sounds);
+	iter = vector_enum(s_active_samples);
+	while (p_sample = vector_next(&iter)) {
+		al_destroy_sample_instance(p_sample->ptr);
+		sample_free(p_sample->sample);
+		mixer_free(p_sample->mixer);
+	}
+	vector_free(s_active_samples);
+	vector_free(s_active_streams);
 	if (s_have_sound)
 		al_uninstall_audio();
 }
@@ -107,7 +122,7 @@ audio_resume(void)
 	iter_t iter;
 	sound_t*  *p_sound;
 
-	iter = vector_enum(s_playing_sounds);
+	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter)) {
 		if ((*p_sound)->suspended)
 			sound_pause(*p_sound, false);
@@ -120,7 +135,7 @@ audio_suspend(void)
 	iter_t iter;
 	sound_t*  *p_sound;
 
-	iter = vector_enum(s_playing_sounds);
+	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter)) {
 		(*p_sound)->suspended = sound_playing(*p_sound);
 		sound_pause(*p_sound, true);
@@ -130,23 +145,33 @@ audio_suspend(void)
 void
 audio_update(void)
 {
-	sound_t*  *p_sound;
-	stream_t* *p_stream;
+	struct sample_instance *p_sample;
+	sound_t*               *p_sound;
+	stream_t*              *p_stream;
 
 	iter_t iter;
 
 	if (s_num_refs == 0)
 		return;
 
-	iter = vector_enum(s_streams);
+	iter = vector_enum(s_active_streams);
 	while (p_stream = vector_next(&iter))
 		update_stream(*p_stream);
 
-	iter = vector_enum(s_playing_sounds);
+	iter = vector_enum(s_active_samples);
+	while (p_sample = vector_next(&iter)) {
+		if (al_get_sample_instance_playing(p_sample->ptr))
+			continue;
+		al_destroy_sample_instance(p_sample->ptr);
+		sample_free(p_sample->sample);
+		mixer_free(p_sample->mixer);
+		iter_remove(&iter);
+	}
+	
+	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter)) {
 		if (sound_playing(*p_sound))
 			continue;
-		(*p_sound)->has_played = true;
 		sound_free(*p_sound);
 		iter_remove(&iter);
 	}
@@ -249,7 +274,7 @@ sample_new(const char* path)
 	sample = calloc(1, sizeof(sample_t));
 	sample->id = s_next_sample_id++;
 	sample->path = strdup(path);
-	sample->sample = al_sample;
+	sample->ptr = al_sample;
 	return sample_ref(sample);
 
 on_error:
@@ -270,9 +295,9 @@ sample_free(sample_t* sample)
 {
 	if (sample == NULL || --sample->refcount > 0)
 		return;
-	
+
 	console_log(3, "disposing sample #%u no longer in use", sample->id);
-	al_destroy_sample(sample->sample);
+	al_destroy_sample(sample->ptr);
 	free(sample);
 }
 
@@ -285,16 +310,19 @@ sample_path(const sample_t* sample)
 void
 sample_play(sample_t* sample, mixer_t* mixer)
 {
-	ALLEGRO_SAMPLE_INSTANCE* stream;
+	struct sample_instance   instance;
+	ALLEGRO_SAMPLE_INSTANCE* stream_ptr;
 	
 	console_log(2, "playing sample #%u on mixer #%u", sample->id, mixer->id);
 
-	sample_ref(sample);
-	mixer_ref(mixer);
+	stream_ptr = al_create_sample_instance(sample->ptr);
+	al_attach_sample_instance_to_mixer(stream_ptr, mixer->ptr);
+	al_play_sample_instance(stream_ptr);
 	
-	stream = al_create_sample_instance(sample->sample);
-	al_attach_sample_instance_to_mixer(stream, mixer->ptr);
-	al_set_sample_instance_playing(stream, true);
+	instance.sample = sample_ref(sample);
+	instance.mixer = mixer_ref(mixer);
+	instance.ptr = stream_ptr;
+	vector_push(s_active_samples, &instance);
 }
 
 sound_t*
@@ -463,14 +491,11 @@ sound_play(sound_t* sound, mixer_t* mixer)
 		old_mixer = sound->mixer;
 		sound->mixer = mixer_ref(mixer);
 		mixer_free(old_mixer);
-		if (sound->has_played)
-			reload_sound(sound);
-		else
-			al_rewind_audio_stream(sound->stream);
+		al_rewind_audio_stream(sound->stream);
 		al_attach_audio_stream_to_mixer(sound->stream, sound->mixer->ptr);
 		al_set_audio_stream_playing(sound->stream, true);
 		sound_ref(sound);
-		vector_push(s_playing_sounds, &sound);
+		vector_push(s_active_sounds, &sound);
 	}
 }
 
@@ -533,7 +558,7 @@ stream_new(int frequency, int bits, int channels)
 	stream->buffer = malloc(stream->buffer_size);
 
 	stream->id = s_next_stream_id++;
-	vector_push(s_streams, &stream);
+	vector_push(s_active_streams, &stream);
 	return stream_ref(stream);
 
 on_error:
@@ -565,10 +590,10 @@ stream_free(stream_t* stream)
 	mixer_free(stream->mixer);
 	free(stream->buffer);
 	free(stream);
-	iter = vector_enum(s_streams);
+	iter = vector_enum(s_active_streams);
 	while (p_stream = vector_next(&iter)) {
 		if (*p_stream == stream) {
-			vector_remove(s_streams, iter.index);
+			vector_remove(s_active_streams, iter.index);
 			break;
 		}
 	}
@@ -645,11 +670,13 @@ stream_stop(stream_t* stream)
 static bool
 reload_sound(sound_t* sound)
 {
+	// TODO: fold this back into sound_new() as it's not used anywhere else anymore.
+	//       it was originally needed to work around a bug where Allegro wouldn't play a
+	//       stream that had already played once, but that bug has since been fixed.
+
 	ALLEGRO_FILE*         memfile;
 	ALLEGRO_AUDIO_STREAM* new_stream = NULL;
 	int                   play_mode;
-
-	console_log(4, "reloading sound #%u", sound->id);
 
 	new_stream = NULL;
 	if (s_have_sound) {
@@ -669,7 +696,6 @@ reload_sound(sound_t* sound)
 		al_set_audio_stream_playmode(sound->stream, play_mode);
 		al_set_audio_stream_playing(sound->stream, false);
 	}
-	sound->has_played = false;
 	return true;
 
 on_error:
