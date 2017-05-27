@@ -998,6 +998,33 @@ Mixer#volume [read/write]
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
 
+new Sample(filename);
+
+    Constructs a Sample from the specified audio file.  The audio data is
+    loaded into memory in its entirety and multiple instances can be played
+    simultaneously with no latency, making this very useful for sound effects.
+    Supported formats are Ogg Vorbis (.ogg), WAV, and FLAC.
+    
+    Note: Compressed formats like Vorbis will be decompressed during loading,
+          potentially using a large amount of RAM.  It is therefore not
+          recommend to use `Sample` objects for, e.g., background music.  Use a
+          `Sound` instead.
+
+Sample#fileName [read-only]
+
+    Gets the full, canonical SphereFS path of the audio file used to construct
+    this sample.
+
+Sample#play(mixer);
+
+    Plays the sample on the specified mixer.  Each time this is called, a new
+    stream is started, allowing many instances of the sound to be playing
+    simultaneously.
+
+Sample#stopAll();
+
+    Stops all currently-playing instances of this sample.
+
 new Sound(filename);
 
     Constructs a Sound object from the specified audio file.  Supported sound
