@@ -21,6 +21,7 @@ sample_t*   sample_ref        (sample_t* sample);
 void        sample_free       (sample_t* sample);
 const char* sample_path       (const sample_t* sample);
 void        sample_play       (sample_t* sample, mixer_t* mixer);
+void        sample_stop_all   (sample_t* sample);
 sound_t*    sound_new         (const char* path);
 sound_t*    sound_ref         (sound_t* sound);
 void        sound_free        (sound_t* sound);

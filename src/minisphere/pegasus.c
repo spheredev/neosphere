@@ -304,6 +304,7 @@ static duk_ret_t js_new_Sample                 (duk_context* ctx);
 static duk_ret_t js_Sample_finalize            (duk_context* ctx);
 static duk_ret_t js_Sample_get_fileName        (duk_context* ctx);
 static duk_ret_t js_Sample_play                (duk_context* ctx);
+static duk_ret_t js_Sample_stopAll             (duk_context* ctx);
 static duk_ret_t js_new_Server                 (duk_context* ctx);
 static duk_ret_t js_Server_finalize            (duk_context* ctx);
 static duk_ret_t js_Server_close               (duk_context* ctx);
@@ -488,6 +489,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_class(ctx, "Sample", js_new_Sample, js_Sample_finalize);
 	api_define_property(ctx, "Sample", "fileName", js_Sample_get_fileName, NULL);
 	api_define_method(ctx, "Sample", "play", js_Sample_play);
+	api_define_method(ctx, "Sample", "stopAll", js_Sample_stopAll);
 	api_define_class(ctx, "Server", js_new_Server, js_Server_finalize);
 	api_define_method(ctx, "Server", "close", js_Server_close);
 	api_define_method(ctx, "Server", "accept", js_Server_accept);
@@ -2953,6 +2955,18 @@ js_Sample_play(duk_context* ctx)
 	mixer = duk_require_class_obj(ctx, 0, "Mixer");
 
 	sample_play(sample, mixer);
+	return 0;
+}
+
+static duk_ret_t
+js_Sample_stopAll(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "Sample");
+
+	sample_stop_all(sample);
 	return 0;
 }
 

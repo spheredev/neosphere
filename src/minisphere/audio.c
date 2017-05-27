@@ -325,6 +325,24 @@ sample_play(sample_t* sample, mixer_t* mixer)
 	vector_push(s_active_samples, &instance);
 }
 
+void
+sample_stop_all(sample_t* sample)
+{
+	iter_t iter;
+	struct sample_instance* p_instance;
+
+	console_log(2, "stopping all instances of sample #%u", sample->id);
+	iter = vector_enum(s_active_samples);
+	while (p_instance = vector_next(&iter)) {
+		if (p_instance->sample != sample)
+			continue;
+		al_destroy_sample_instance(p_instance->ptr);
+		sample_free(p_instance->sample);
+		mixer_free(p_instance->mixer);
+		iter_remove(&iter);
+	}
+}
+
 sound_t*
 sound_new(const char* path)
 {
