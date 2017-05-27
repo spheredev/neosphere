@@ -97,6 +97,7 @@ static duk_ret_t js_LoadAnimation              (duk_context* ctx);
 static duk_ret_t js_LoadFont                   (duk_context* ctx);
 static duk_ret_t js_LoadImage                  (duk_context* ctx);
 static duk_ret_t js_LoadSound                  (duk_context* ctx);
+static duk_ret_t js_LoadSoundEffect            (duk_context* ctx);
 static duk_ret_t js_LoadSpriteset              (duk_context* ctx);
 static duk_ret_t js_LoadSurface                (duk_context* ctx);
 static duk_ret_t js_LoadWindowStyle            (duk_context* ctx);
@@ -213,6 +214,15 @@ static duk_ret_t js_Sound_setRepeat            (duk_context* ctx);
 static duk_ret_t js_Sound_setVolume            (duk_context* ctx);
 static duk_ret_t js_Sound_stop                 (duk_context* ctx);
 static duk_ret_t js_Sound_toString             (duk_context* ctx);
+static duk_ret_t js_SoundEffect_finalize       (duk_context* ctx);
+static duk_ret_t js_SoundEffect_getPan         (duk_context* ctx);
+static duk_ret_t js_SoundEffect_getPitch       (duk_context* ctx);
+static duk_ret_t js_SoundEffect_getVolume      (duk_context* ctx);
+static duk_ret_t js_SoundEffect_setPan         (duk_context* ctx);
+static duk_ret_t js_SoundEffect_setPitch       (duk_context* ctx);
+static duk_ret_t js_SoundEffect_setVolume      (duk_context* ctx);
+static duk_ret_t js_SoundEffect_play           (duk_context* ctx);
+static duk_ret_t js_SoundEffect_stop           (duk_context* ctx);
 static duk_ret_t js_Spriteset_finalize         (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_filename     (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_image        (duk_context* ctx);
@@ -399,6 +409,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "LoadFont", js_LoadFont);
 	api_define_function(ctx, NULL, "LoadImage", js_LoadImage);
 	api_define_function(ctx, NULL, "LoadSound", js_LoadSound);
+	api_define_function(ctx, NULL, "LoadSoundEffect", js_LoadSoundEffect);
 	api_define_function(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
 	api_define_function(ctx, NULL, "LoadSurface", js_LoadSurface);
 	api_define_function(ctx, NULL, "LoadWindowStyle", js_LoadWindowStyle);
@@ -526,6 +537,16 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSound", "setVolume", js_Sound_setVolume);
 	api_define_method(ctx, "ssSound", "stop", js_Sound_stop);
 	api_define_method(ctx, "ssSound", "toString", js_Sound_toString);
+
+	api_define_class(ctx, "ssSoundEffect", NULL, js_SoundEffect_finalize);
+	api_define_method(ctx, "ssSoundEffect", "getPan", js_SoundEffect_getPan);
+	api_define_method(ctx, "ssSoundEffect", "getPitch", js_SoundEffect_getPitch);
+	api_define_method(ctx, "ssSoundEffect", "getVolume", js_SoundEffect_getVolume);
+	api_define_method(ctx, "ssSoundEffect", "setPan", js_SoundEffect_setPan);
+	api_define_method(ctx, "ssSoundEffect", "setPitch", js_SoundEffect_setPitch);
+	api_define_method(ctx, "ssSoundEffect", "setVolume", js_SoundEffect_setVolume);
+	api_define_method(ctx, "ssSoundEffect", "play", js_SoundEffect_play);
+	api_define_method(ctx, "ssSoundEffect", "stop", js_SoundEffect_stop);
 
 	api_define_class(ctx, "ssSpriteset", NULL, js_Spriteset_finalize);
 	api_define_property(ctx, "ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
@@ -712,6 +733,9 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "PLAYER_KEY_B", PLAYER_KEY_B);
 	api_define_const(ctx, NULL, "PLAYER_KEY_X", PLAYER_KEY_X);
 	api_define_const(ctx, NULL, "PLAYER_KEY_Y", PLAYER_KEY_Y);
+
+	api_define_const(ctx, NULL, "SE_SINGLE", 0);
+	api_define_const(ctx, NULL, "SE_MULTIPLE", 1);
 }
 
 void
@@ -2192,6 +2216,20 @@ js_LoadSound(duk_context* ctx)
 	if (!(sound = sound_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
 	duk_push_class_obj(ctx, "ssSound", sound);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadSoundEffect(duk_context* ctx)
+{
+	const char* filename;
+	sample_t*   sample;
+
+	filename = duk_require_path(ctx, 0, "sounds", true, false);
+
+	if (!(sample = sample_new(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "could not load sound effect `%s`", filename);
+	duk_push_class_obj(ctx, "ssSoundEffect", sample);
 	return 1;
 }
 
@@ -4042,6 +4080,119 @@ js_Sound_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object sound]");
 	return 1;
+}
+
+static duk_ret_t
+js_SoundEffect_finalize(duk_context* ctx)
+{
+	sample_t* sample;
+
+	sample = duk_require_class_obj(ctx, 0, "ssSoundEffect");
+
+	sample_free(sample);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundEffect_getPan(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+
+	duk_push_number(ctx, sample_get_pan(sample) * 255.0);
+	return 1;
+}
+
+static duk_ret_t
+js_SoundEffect_getPitch(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+
+	duk_push_number(ctx, sample_get_speed(sample));
+	return 1;
+}
+
+static duk_ret_t
+js_SoundEffect_getVolume(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+
+	duk_push_number(ctx, sample_get_gain(sample) * 255.0);
+	return 1;
+}
+
+static duk_ret_t
+js_SoundEffect_setPan(duk_context* ctx)
+{
+	sample_t* sample;
+	float     pan;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+	pan = duk_to_number(ctx, 0);
+
+	sample_set_pan(sample, pan / 255.0);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundEffect_setPitch(duk_context* ctx)
+{
+	sample_t* sample;
+	float     pitch;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+	pitch = duk_to_number(ctx, 0);
+
+	sample_set_speed(sample, pitch);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundEffect_setVolume(duk_context* ctx)
+{
+	sample_t* sample;
+	float     volume;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+	volume = duk_to_number(ctx, 0);
+
+	sample_set_gain(sample, volume / 255.0);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundEffect_play(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+
+	sample_play(sample, s_sound_mixer);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundEffect_stop(duk_context* ctx)
+{
+	sample_t* sample;
+
+	duk_push_this(ctx);
+	sample = duk_require_class_obj(ctx, -1, "ssSoundEffect");
+
+	sample_stop_all(sample);
+	return 0;
 }
 
 static duk_ret_t

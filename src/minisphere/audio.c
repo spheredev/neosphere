@@ -40,10 +40,13 @@ struct sound
 
 struct sample
 {
-	unsigned int             refcount;
-	unsigned int             id;
-	char*                    path;
-	ALLEGRO_SAMPLE*          ptr;
+	unsigned int    refcount;
+	unsigned int    id;
+	float           gain;
+	float           pan;
+	char*           path;
+	float           speed;
+	ALLEGRO_SAMPLE* ptr;
 };
 
 struct sample_instance
@@ -275,6 +278,9 @@ sample_new(const char* path)
 	sample->id = s_next_sample_id++;
 	sample->path = strdup(path);
 	sample->ptr = al_sample;
+	sample->gain = 1.0;
+	sample->pan = 0.0;
+	sample->speed = 1.0;
 	return sample_ref(sample);
 
 on_error:
@@ -307,6 +313,42 @@ sample_path(const sample_t* sample)
 	return sample->path;
 }
 
+float
+sample_get_gain(const sample_t* sample)
+{
+	return sample->gain;
+}
+
+float
+sample_get_pan(const sample_t* sample)
+{
+	return sample->pan;
+}
+
+float
+sample_get_speed(const sample_t* sample)
+{
+	return sample->speed;
+}
+
+void
+sample_set_gain(sample_t* sample, float gain)
+{
+	sample->gain = gain;
+}
+
+void
+sample_set_pan(sample_t* sample, float pan)
+{
+	sample->pan = pan;
+}
+
+void
+sample_set_speed(sample_t* sample, float speed)
+{
+	sample->speed = speed;
+}
+
 void
 sample_play(sample_t* sample, mixer_t* mixer)
 {
@@ -316,6 +358,9 @@ sample_play(sample_t* sample, mixer_t* mixer)
 	console_log(2, "playing sample #%u on mixer #%u", sample->id, mixer->id);
 
 	stream_ptr = al_create_sample_instance(sample->ptr);
+	al_set_sample_instance_gain(stream_ptr, sample->gain);
+	al_set_sample_instance_speed(stream_ptr, sample->speed);
+	al_set_sample_instance_pan(stream_ptr, sample->pan);
 	al_attach_sample_instance_to_mixer(stream_ptr, mixer->ptr);
 	al_play_sample_instance(stream_ptr);
 	

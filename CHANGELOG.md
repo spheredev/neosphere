@@ -9,6 +9,7 @@ vX.X.X - TBD
   multiple times simultaneously.
 * Adds support for `Sphere.Game` in Cellscripts, allowing direct modification
   of the JSON manifest.
+* Adds support for the Sphere v1 SoundEffect API.
 * Updates the "term" module to use `Dispatch` internally instead of Threads.
 * Removes `describe()` from the Cellscript API.
 * Fixes a bug where `Dispatch.onRender()` jobs are called in reverse order
