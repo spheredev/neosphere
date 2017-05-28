@@ -223,6 +223,7 @@ static duk_ret_t js_SoundEffect_setPitch       (duk_context* ctx);
 static duk_ret_t js_SoundEffect_setVolume      (duk_context* ctx);
 static duk_ret_t js_SoundEffect_play           (duk_context* ctx);
 static duk_ret_t js_SoundEffect_stop           (duk_context* ctx);
+static duk_ret_t js_SoundEffect_toString       (duk_context* ctx);
 static duk_ret_t js_Spriteset_finalize         (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_filename     (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_image        (duk_context* ctx);
@@ -289,14 +290,12 @@ enum line_series_type
 	LINE_MULTIPLE,
 	LINE_STRIP,
 	LINE_LOOP,
-	LINE_MAX
 };
 
 enum sound_effect_mode
 {
 	SE_SINGLE,
 	SE_MULTIPLE,
-	SE_MAX
 };
 
 static unsigned int   s_next_async_id = 1;
@@ -555,6 +554,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSoundEffect", "setVolume", js_SoundEffect_setVolume);
 	api_define_method(ctx, "ssSoundEffect", "play", js_SoundEffect_play);
 	api_define_method(ctx, "ssSoundEffect", "stop", js_SoundEffect_stop);
+	api_define_method(ctx, "ssSoundEffect", "toString", js_SoundEffect_toString);
 
 	api_define_class(ctx, "ssSpriteset", NULL, js_Spriteset_finalize);
 	api_define_property(ctx, "ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
@@ -4205,6 +4205,13 @@ js_SoundEffect_stop(duk_context* ctx)
 
 	sample_stop_all(sample);
 	return 0;
+}
+
+static duk_ret_t
+js_SoundEffect_toString(duk_context* ctx)
+{
+	duk_push_string(ctx, "[object sound effect]");
+	return 1;
 }
 
 static duk_ret_t
