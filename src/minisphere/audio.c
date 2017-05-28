@@ -45,6 +45,7 @@ struct sample
 	float           gain;
 	float           pan;
 	char*           path;
+	bool            polyphonic;
 	float           speed;
 	ALLEGRO_SAMPLE* ptr;
 };
@@ -258,7 +259,7 @@ mixer_set_gain(mixer_t* mixer, float gain)
 }
 
 sample_t*
-sample_new(const char* path)
+sample_new(const char* path, bool polyphonic)
 {
 	ALLEGRO_SAMPLE* al_sample;
 	ALLEGRO_FILE*   file;
@@ -278,6 +279,7 @@ sample_new(const char* path)
 	sample->id = s_next_sample_id++;
 	sample->path = strdup(path);
 	sample->ptr = al_sample;
+	sample->polyphonic = polyphonic;
 	sample->gain = 1.0;
 	sample->pan = 0.0;
 	sample->speed = 1.0;
@@ -357,6 +359,8 @@ sample_play(sample_t* sample, mixer_t* mixer)
 	
 	console_log(2, "playing sample #%u on mixer #%u", sample->id, mixer->id);
 
+	if (!sample->polyphonic)
+		sample_stop_all(sample);
 	stream_ptr = al_create_sample_instance(sample->ptr);
 	al_set_sample_instance_gain(stream_ptr, sample->gain);
 	al_set_sample_instance_speed(stream_ptr, sample->speed);

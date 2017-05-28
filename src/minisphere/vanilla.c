@@ -288,7 +288,15 @@ enum line_series_type
 {
 	LINE_MULTIPLE,
 	LINE_STRIP,
-	LINE_LOOP
+	LINE_LOOP,
+	LINE_MAX
+};
+
+enum sound_effect_mode
+{
+	SE_SINGLE,
+	SE_MULTIPLE,
+	SE_MAX
 };
 
 static unsigned int   s_next_async_id = 1;
@@ -2223,12 +2231,16 @@ static duk_ret_t
 js_LoadSoundEffect(duk_context* ctx)
 {
 	const char* filename;
+	int         mode;
+	int         num_args;
 	sample_t*   sample;
 
+	num_args = duk_get_top(ctx);
 	filename = duk_require_path(ctx, 0, "sounds", true, false);
+	mode = num_args >= 2 ? duk_to_int(ctx, 1) : SE_SINGLE;
 
-	if (!(sample = sample_new(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "could not load sound effect `%s`", filename);
+	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load sound effect `%s`", filename);
 	duk_push_class_obj(ctx, "ssSoundEffect", sample);
 	return 1;
 }

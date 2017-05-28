@@ -2915,7 +2915,7 @@ js_new_Sample(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	if (!(sample = sample_new(filename)))
+	if (!(sample = sample_new(filename, true)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sample `%s`", filename);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Sample", sample);

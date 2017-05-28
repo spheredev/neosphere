@@ -16,7 +16,7 @@ mixer_t*    mixer_ref         (mixer_t* mixer);
 void        mixer_free        (mixer_t* mixer);
 float       mixer_get_gain    (mixer_t* mixer);
 void        mixer_set_gain    (mixer_t* mixer, float gain);
-sample_t*   sample_new        (const char* path);
+sample_t*   sample_new        (const char* path, bool polyphonic);
 sample_t*   sample_ref        (sample_t* sample);
 void        sample_free       (sample_t* sample);
 const char* sample_path       (const sample_t* sample);
